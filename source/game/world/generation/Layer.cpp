@@ -1,5 +1,6 @@
 #include "game/world/generation/Layer.hpp"
 
+#include "game/world/LevelType.hpp"
 #include "game/world/biome/Biome.hpp"
 
 Layer::Layer(long long seed)
@@ -43,6 +44,7 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
     }
 
     boost::shared_ptr<Layer> layer(new IslandLayer(1LL));
+
     layer = boost::shared_ptr<Layer>(new FuzzyZoomLayer(2000LL, layer));
     layer = boost::shared_ptr<Layer>(new AddIslandLayer(1LL, layer));
     layer = boost::shared_ptr<Layer>(new ZoomLayer(2001LL, layer));
@@ -52,6 +54,7 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
     layer = boost::shared_ptr<Layer>(new RemoveTooMuchOceanLayer(2LL, layer));
 
     boost::shared_ptr<Layer> oceanTemperatureLayer = layer;
+
     oceanTemperatureLayer = boost::shared_ptr<Layer>(new AddOceanTemperatureLayer(2LL, oceanTemperatureLayer));
     oceanTemperatureLayer = boost::shared_ptr<Layer>(new AddOceanEdgeLayer(2LL, oceanTemperatureLayer, true));
     oceanTemperatureLayer = ZoomLayer::zoom(2001LL, oceanTemperatureLayer, 6);
@@ -93,15 +96,18 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
     }
 
     boost::shared_ptr<Layer> riverLayer = layer;
+
     riverLayer = ZoomLayer::zoom(1000LL, riverLayer, 0);
     riverLayer = boost::shared_ptr<Layer>(new RiverInitLayer(100LL, riverLayer));
 
     boost::shared_ptr<Layer> biomeLayer = layer;
+
     biomeLayer = boost::shared_ptr<Layer>(new BiomeInitLayer(200LL, biomeLayer, levelType, levelTypeOptions));
     biomeLayer = ZoomLayer::zoom(1000LL, biomeLayer, biomeScale);
     biomeLayer = boost::shared_ptr<Layer>(new BiomeEdgeLayer(1000LL, biomeLayer));
 
     boost::shared_ptr<Layer> hillsLayer = riverLayer;
+
     hillsLayer = ZoomLayer::zoom(1000LL, hillsLayer, 2);
 
     biomeLayer = boost::shared_ptr<Layer>(new RegionHillsLayer(1000LL, biomeLayer, hillsLayer));
@@ -158,6 +164,7 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
     voronoiZoom->init(seed);
 
     arrayWithLength<boost::shared_ptr<Layer> > layers(3, true);
+
     layers.data[0] = biomeLayer;
     layers.data[1] = voronoiZoom;
     layers.data[2] = biomeLayer;
@@ -185,6 +192,7 @@ void Layer::init(long long seed)
 void Layer::initRandom(long long x, long long z)
 {
     chunkSeed = worldGenSeed;
+
     chunkSeed *= chunkSeed * 6364136223846793005LL + 1442695040888963407LL;
     chunkSeed += x;
     chunkSeed *= chunkSeed * 6364136223846793005LL + 1442695040888963407LL;
@@ -266,15 +274,18 @@ int Layer::random(int first, int second, int third, int fourth)
     {
         return first;
     }
-    else if (selection == 1)
+
+    if (selection == 1)
     {
         return second;
     }
-    else if (selection == 2)
+
+    if (selection == 2)
     {
         return third;
     }
-    else if (selection == 3)
+
+    if (selection == 3)
     {
         return fourth;
     }
