@@ -2,6 +2,8 @@
 #define GAME_CLIENT_AUDIO_ABSTRACTSOUNDINSTANCE_HPP
 
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/client/audio/SoundInstance.hpp"
+#include "game/client/audio/SoundSource.hpp"
 
 class AbstractSoundInstance : public virtual SoundInstance
 {
