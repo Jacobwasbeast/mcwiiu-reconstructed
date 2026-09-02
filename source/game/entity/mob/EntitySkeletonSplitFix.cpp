@@ -1,0 +1,43 @@
+#include "game/entity/mob/EntitySkeletonSplitFix.hpp"
+
+#include <string>
+
+#include "game/data/CompoundTag.hpp"
+#include "game/data/Tag.hpp"
+
+EntitySkeletonSplitFix::~EntitySkeletonSplitFix()
+{
+}
+
+int EntitySkeletonSplitFix::getVersion()
+{
+    return 701;
+}
+
+CompoundTag* EntitySkeletonSplitFix::fix(CompoundTag* tag)
+{
+    if (!CheckID(tag, L"Skeleton"))
+    {
+        return tag;
+    }
+
+    int skeletonType = tag->getInt(L"SkeletonType");
+
+    switch (skeletonType)
+    {
+    case 1:
+        tag->putString(L"id", L"WitherSkeleton");
+        break;
+
+    case 2:
+        tag->putString(L"id", L"Stray");
+        break;
+    }
+
+    Tag* skeletonTypeTag = tag->get(L"SkeletonType");
+    delete skeletonTypeTag;
+
+    tag->remove(L"SkeletonType");
+
+    return tag;
+}

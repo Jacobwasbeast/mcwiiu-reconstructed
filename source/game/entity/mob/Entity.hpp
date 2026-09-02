@@ -13,7 +13,9 @@
 #include "game/command/CommandStats.hpp"
 #include "game/client/audio/SoundSource.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/entity/mob/EntityCategory.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
+#include "game/entity/mob/MoverType.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
@@ -26,6 +28,7 @@ class DataFixerUpper;
 class Direction;
 class EntityDataAccessor_Base;
 class EntityPos;
+class HitResult;
 class EntityTooltipDataHolder;
 class EquipmentSlot;
 class Explosion;
@@ -165,7 +168,7 @@ public:
     virtual bool shouldTick();
     virtual bool repositionEntityAfterLoad();
     virtual void readAdditionalSaveData(CompoundTag* tag) = 0;
-    virtual void addAdditionalSaveData(CompoundTag* tag) = 0;
+    virtual void addAdditonalSaveData(CompoundTag* tag) = 0;
     virtual void readAdditionContructionTag(CompoundTag* tag) {}
     virtual CompoundTag* getAdditionContructionTag() { return NULL; }
     virtual void spawnAtLocation(Item* item, int count);

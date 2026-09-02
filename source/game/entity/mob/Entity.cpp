@@ -2623,7 +2623,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
         tag->put(std::wstring(L"Tags"), tags);
     }
 
-    addAdditionalSaveData(tag);
+    addAdditonalSaveData(tag);
 
     if (isVehicle())
     {
@@ -2693,7 +2693,7 @@ bool Entity::save(CompoundTag* tag)
 
 void Entity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
-    dataFixerUpper->addWalker(DataFixTypes::LEVEL, new EntityDataWalker());
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new EntityDataWalker());
 }
 
 void Entity::load(CompoundTag* tag)
