@@ -1,0 +1,44 @@
+#ifndef GAME_WORLD_CHUNK_CHUNKPOS_HPP
+#define GAME_WORLD_CHUNK_CHUNKPOS_HPP
+
+#include <cstddef>
+#include <string>
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/world/block/BlockPos.hpp"
+
+class Entity;
+
+class ChunkPos
+{
+public:
+    int x;
+    int z;
+
+    ChunkPos(int x, int z);
+    ChunkPos(const BlockPos& pos);
+
+    static long long asLong(int x, int z);
+
+    std::size_t hashCode() const;
+
+    double distanceToSqr(boost::shared_ptr<Entity> entity);
+    double distanceToSqr(double x, double z);
+
+    int getMiddleBlockX();
+    int getMiddleBlockZ();
+    int getMinBlockX() const;
+    int getMinBlockZ() const;
+    int getMaxBlockX() const;
+    int getMaxBlockZ() const;
+
+    BlockPos getMiddleBlockPosition(int y);
+    BlockPos getBlockAt(int x, int y, int z);
+    std::wstring toString();
+    BlockPos getWorldPosition() const;
+
+    static bool eq_test(const ChunkPos& lhs, const ChunkPos& rhs);
+};
+
+#endif
