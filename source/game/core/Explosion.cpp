@@ -395,7 +395,7 @@ void Explosion::explode()
 
 void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* toBlow)
 {
-    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENTITY_GENERIC_EXPLODE, SoundSource::eSoundSource_Blocks,
+    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::GENERIC_EXPLODE, SoundSource::eSoundSource_Blocks,
         4.0f, ((mLevel->mRandom->nextFloat() - mLevel->mRandom->nextFloat()) * 0.2f + 1.0f) * 0.7f, false, 16.0f);
 
     if (spawnParticles)

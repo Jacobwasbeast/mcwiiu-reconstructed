@@ -1,0 +1,43 @@
+#include "game/core/InputStreamReader.hpp"
+
+#include "game/core/DataInputStream.hpp"
+#include "game/core/InputStream.hpp"
+
+InputStreamReader::InputStreamReader(InputStream* stream)
+{
+    mStream = new DataInputStream(stream);
+}
+
+InputStreamReader::~InputStreamReader()
+{
+}
+
+void InputStreamReader::close()
+{
+    mStream->close();
+}
+
+int InputStreamReader::read()
+{
+    return mStream->readUTFChar();
+}
+
+unsigned int InputStreamReader::read(wchar_t* buffer, unsigned int offset, unsigned int length)
+{
+    unsigned int count = 0;
+
+    for (unsigned int index = offset; index < offset + length; index++)
+    {
+        int character = mStream->readUTFChar();
+
+        if (character == -1)
+        {
+            return count;
+        }
+
+        buffer[index] = (wchar_t)character;
+        count++;
+    }
+
+    return count;
+}

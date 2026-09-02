@@ -26,7 +26,7 @@ CombatEntry::~CombatEntry()
 
 bool CombatEntry::isCombatRelated()
 {
-    return mSource->getEntity() && (mSource->getEntity()->GetType() & ENTITY_TYPE_LIVINGENTITY) == ENTITY_TYPE_LIVINGENTITY;
+    return mSource->getEntity() && (mSource->getEntity()->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY;
 }
 
 const DamageSource* CombatEntry::getSource()

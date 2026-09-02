@@ -12,6 +12,11 @@ public:
 
     int getWeight() const;
 
+    static const Rarity* COMMON;
+    static const Rarity* UNCOMMON;
+    static const Rarity* RARE;
+    static const Rarity* EPIC;
+
 private:
     eMinecraftColour colour;
     std::wstring name;

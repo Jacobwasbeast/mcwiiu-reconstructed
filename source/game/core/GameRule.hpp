@@ -46,6 +46,10 @@ public:
     void write(DataOutputStream* pOutput);
     void read(DataInputStream* pInput);
 
+    friend class GameRuleDefinition;
+    friend class CompoundGameRuleDefinition;
+    friend class CollectItemRuleDefinition;
+
 private:
     typedef boost::unordered_map<std::wstring, _ValueType> ParameterMap;
 

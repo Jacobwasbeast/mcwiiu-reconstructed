@@ -1,0 +1,49 @@
+#ifndef GAME_CORE_CARTESIAN__PRODUCT_HPP
+#define GAME_CORE_CARTESIAN__PRODUCT_HPP
+
+#include <vector>
+
+#include "game/core/Boxed.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+
+namespace Cartesian
+{
+
+class Product
+{
+public:
+    class ProductIterator
+    {
+    public:
+        ProductIterator(std::vector<const std::vector<Boxed*>*>* iterables);
+        virtual ~ProductIterator();
+
+        bool hasNext();
+        arrayWithLength<Boxed*> next();
+
+    private:
+        int mIndex;
+        std::vector<const std::vector<Boxed*>*>* mIterables;
+        arrayWithLength<std::vector<Boxed*>::const_iterator> mIterators;
+        arrayWithLength<Boxed*> mResults;
+    };
+
+    Product(std::vector<const std::vector<Boxed*>*>* iterables)
+        : mIterables(iterables)
+    {
+    }
+
+    virtual ~Product();
+
+    ProductIterator* iterator()
+    {
+        return new ProductIterator(mIterables);
+    }
+
+private:
+    std::vector<const std::vector<Boxed*>*>* mIterables;
+};
+
+}
+
+#endif

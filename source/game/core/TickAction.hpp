@@ -4,7 +4,9 @@
 class TickAction
 {
 public:
-    ~TickAction();
+    virtual ~TickAction();
+
+    virtual void Execute() = 0;
 };
 
 #endif
