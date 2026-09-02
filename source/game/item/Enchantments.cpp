@@ -1,5 +1,7 @@
 #include "game/item/Enchantments.hpp"
 
+#include "game/item/Enchantment.hpp"
+#include "game/world/block/MappedRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 Enchantment* Enchantments::ALL_DAMAGE_PROTECTION = NULL;

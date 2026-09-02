@@ -1,5 +1,6 @@
 #include "game/item/Items.hpp"
 
+#include "game/item/Item.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 #include <cstddef>
@@ -229,8 +230,7 @@ Item* Items::debugFourjItem = NULL;
 
 Item* Items::get(const std::wstring& name)
 {
-    ResourceLocation location(name);
-    return Item::itemRegistry.get(ResourceLocation(location));
+    return Item::itemRegistry.get(ResourceLocation(name));
 }
 
 void Items::staticCtor()
