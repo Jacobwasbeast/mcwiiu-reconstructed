@@ -1,7 +1,10 @@
 #ifndef GAME_UTIL_RESOURCELOCATION_HPP
 #define GAME_UTIL_RESOURCELOCATION_HPP
 
+#include <cstddef>
 #include <string>
+
+#include <boost/functional/hash.hpp>
 
 #include "game/world/biome/arrayWithLength.hpp"
 
@@ -33,6 +36,16 @@ public:
     int hashCode() const;
     bool equals(const ResourceLocation* other) const;
 
+    bool operator==(const ResourceLocation& other) const
+    {
+        return equals(&other);
+    }
+
+    bool operator!=(const ResourceLocation& other) const
+    {
+        return !equals(&other);
+    }
+
 protected:
     static arrayWithLength<std::wstring> decompose(const std::wstring& name);
 
@@ -45,5 +58,17 @@ private:
     std::wstring nameSpace;
     bool preloaded;
 };
+
+namespace boost
+{
+    template <>
+    struct hash<ResourceLocation>
+    {
+        std::size_t operator()(const ResourceLocation& location) const
+        {
+            return location.hashCode();
+        }
+    };
+}
 
 #endif

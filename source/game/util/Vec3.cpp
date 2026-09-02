@@ -323,14 +323,15 @@ void Vec3::multiply(double x, double y, double z)
     this->z *= z;
 }
 
-void Vec3::multiply(double factor)
+Vec3* Vec3::multiply(double factor)
 {
     multiply(factor, factor, factor);
+    return this;
 }
 
-void Vec3::multiply(float factor)
+Vec3* Vec3::multiply(float factor)
 {
-    multiply((double)factor);
+    return multiply((double)factor);
 }
 
 double Vec3::distanceTo(AABB* box)

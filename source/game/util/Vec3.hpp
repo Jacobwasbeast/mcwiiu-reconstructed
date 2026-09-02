@@ -86,8 +86,8 @@ public:
     Vec3* zRot(float angle);
 
     void multiply(double x, double y, double z);
-    void multiply(double factor);
-    void multiply(float factor);
+    Vec3* multiply(double factor);
+    Vec3* multiply(float factor);
 
     Vec3* closestPointOnLine(Vec3* from, Vec3* to);
     double distanceFromLine(Vec3* from, Vec3* to);
