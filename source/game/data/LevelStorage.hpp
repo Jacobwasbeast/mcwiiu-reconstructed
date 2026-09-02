@@ -6,6 +6,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/data/ConsoleSavePath.hpp"
 #include "game/core/File.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
@@ -30,7 +31,7 @@ public:
     virtual PlayerIO* getPlayerIO() = 0;
     virtual void closeAll() = 0;
     virtual File getFolder() = 0;
-    virtual File getDataFile(const std::wstring& name) = 0;
+    virtual ConsoleSavePath getDataFile(const std::wstring& name) = 0;
     virtual std::wstring getLevelId() = 0;
     virtual StructureManager* getStructureManager() = 0;
     virtual ConsoleSaveFile* getSaveFile();
