@@ -1,0 +1,627 @@
+#include "game/util/AABB.hpp"
+
+#include "game/util/Vec3.hpp"
+#include "game/world/block/BlockPos.hpp"
+
+unsigned int TlsAlloc();
+void* TlsGetValue(unsigned int index);
+void TlsSetValue(unsigned int index, void* value);
+
+static const int TEMP_POOL_SIZE = 1024;
+
+static unsigned int sThreadStorageTlsIndex;
+static AABB::ThreadStorage* sDefaultThreadStorage;
+
+AABB::ThreadStorage::ThreadStorage()
+{
+    mPool = new AABB[TEMP_POOL_SIZE];
+    mNextIndex = 0;
+}
+
+AABB::ThreadStorage::~ThreadStorage()
+{
+    delete[] mPool;
+}
+
+void AABB::CreateNewThreadStorage()
+{
+    ThreadStorage* storage = new ThreadStorage();
+
+    if (sDefaultThreadStorage == NULL)
+    {
+        sThreadStorageTlsIndex = TlsAlloc();
+        sDefaultThreadStorage = storage;
+    }
+
+    TlsSetValue(sThreadStorageTlsIndex, storage);
+}
+
+void AABB::UseDefaultThreadStorage()
+{
+    TlsSetValue(sThreadStorageTlsIndex, sDefaultThreadStorage);
+}
+
+void AABB::ReleaseThreadStorage()
+{
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
+
+    if (storage != sDefaultThreadStorage)
+    {
+        delete storage;
+    }
+}
+
+AABB::AABB(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    set(x0, y0, z0, x1, y1, z1);
+}
+
+AABB* AABB::newPermanent(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    return new AABB(x0, y0, z0, x1, y1, z1);
+}
+
+AABB* AABB::newPermanent(const BlockPos& pos)
+{
+    return newPermanent((double)pos.x, (double)pos.y, (double)pos.z,
+        (double)(pos.x + 1), (double)(pos.y + 1), (double)(pos.z + 1));
+}
+
+AABB* AABB::newPermanent(const BlockPos& from, const BlockPos& to)
+{
+    return newPermanent((double)from.x, (double)from.y, (double)from.z,
+        (double)to.x, (double)to.y, (double)to.z);
+}
+
+AABB* AABB::newPermanent(const AABB* box)
+{
+    return newPermanent(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ);
+}
+
+void AABB::clearPool()
+{
+}
+
+void AABB::resetPool()
+{
+}
+
+void AABB::set(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    mMinX = x0 < x1 ? x0 : x1;
+    mMinY = y0 < y1 ? y0 : y1;
+    mMinZ = z0 < z1 ? z0 : z1;
+    mMaxX = x0 < x1 ? x1 : x0;
+    mMaxY = y0 < y1 ? y1 : y0;
+    mMaxZ = z0 < z1 ? z1 : z0;
+}
+
+AABB* AABB::newTemp(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
+
+    AABB* box = &storage->mPool[storage->mNextIndex];
+    box->set(x0, y0, z0, x1, y1, z1);
+    storage->mNextIndex = (storage->mNextIndex + 1) & (TEMP_POOL_SIZE - 1);
+
+    return box;
+}
+
+AABB* AABB::newTemp(const BlockPos& pos)
+{
+    return newTemp((double)pos.x, (double)pos.y, (double)pos.z,
+        (double)(pos.x + 1), (double)(pos.y + 1), (double)(pos.z + 1));
+}
+
+AABB* AABB::newTemp(const BlockPos& from, const BlockPos& to)
+{
+    return newTemp((double)from.x, (double)from.y, (double)from.z,
+        (double)to.x, (double)to.y, (double)to.z);
+}
+
+AABB* AABB::newTemp(const AABB* box)
+{
+    return newTemp(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ);
+}
+
+AABB* AABB::setMaxY(double maxY)
+{
+    return new AABB(mMinX, mMinY, mMinZ, mMaxX, maxY, mMaxZ);
+}
+
+bool AABB::equals(const AABB* other) const
+{
+    return other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ &&
+        other->mMaxX == mMaxX && other->mMaxY == mMaxY && other->mMaxZ == mMaxZ;
+}
+
+void AABB::set(const AABB* box)
+{
+    mMinX = box->mMinX;
+    mMinY = box->mMinY;
+    mMinZ = box->mMinZ;
+    mMaxX = box->mMaxX;
+    mMaxY = box->mMaxY;
+    mMaxZ = box->mMaxZ;
+}
+
+AABB* AABB::contract(double x, double y, double z)
+{
+    double minX = mMinX;
+    double minY = mMinY;
+    double minZ = mMinZ;
+    double maxX = mMaxX;
+    double maxY = mMaxY;
+    double maxZ = mMaxZ;
+
+    if (x < 0.0)
+    {
+        minX -= x;
+    }
+    else if (x > 0.0)
+    {
+        maxX -= x;
+    }
+
+    if (y < 0.0)
+    {
+        minY -= y;
+    }
+    else if (y > 0.0)
+    {
+        maxY -= y;
+    }
+
+    if (z < 0.0)
+    {
+        minZ -= z;
+    }
+    else if (z > 0.0)
+    {
+        maxZ -= z;
+    }
+
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+}
+
+AABB* AABB::expand(double x, double y, double z) const
+{
+    double minX = mMinX;
+    double minY = mMinY;
+    double minZ = mMinZ;
+    double maxX = mMaxX;
+    double maxY = mMaxY;
+    double maxZ = mMaxZ;
+
+    if (x < 0.0)
+    {
+        minX += x;
+    }
+
+    if (x > 0.0)
+    {
+        maxX += x;
+    }
+
+    if (y < 0.0)
+    {
+        minY += y;
+    }
+
+    if (y > 0.0)
+    {
+        maxY += y;
+    }
+
+    if (z < 0.0)
+    {
+        minZ += z;
+    }
+
+    if (z > 0.0)
+    {
+        maxZ += z;
+    }
+
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+}
+
+AABB* AABB::grow(double x, double y, double z) const
+{
+    return newTemp(mMinX - x, mMinY - y, mMinZ - z, mMaxX + x, mMaxY + y, mMaxZ + z);
+}
+
+AABB* AABB::grow(double size) const
+{
+    return grow(size, size, size);
+}
+
+AABB* AABB::intersect(const AABB* other) const
+{
+    double minX = mMinX < other->mMinX ? other->mMinX : mMinX;
+    double minY = mMinY < other->mMinY ? other->mMinY : mMinY;
+    double minZ = mMinZ < other->mMinZ ? other->mMinZ : mMinZ;
+    double maxX = mMaxX < other->mMaxX ? mMaxX : other->mMaxX;
+    double maxY = mMaxY < other->mMaxY ? mMaxY : other->mMaxY;
+    double maxZ = mMaxZ < other->mMaxZ ? mMaxZ : other->mMaxZ;
+
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+}
+
+AABB* AABB::minmax(const AABB* other)
+{
+    double minX = mMinX < other->mMinX ? mMinX : other->mMinX;
+    double minY = mMinY < other->mMinY ? mMinY : other->mMinY;
+    double minZ = mMinZ < other->mMinZ ? mMinZ : other->mMinZ;
+    double maxX = mMaxX < other->mMaxX ? other->mMaxX : mMaxX;
+    double maxY = mMaxY < other->mMaxY ? other->mMaxY : mMaxY;
+    double maxZ = mMaxZ < other->mMaxZ ? other->mMaxZ : mMaxZ;
+
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+}
+
+AABB* AABB::minmax(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    return newTemp(x0 < x1 ? x0 : x1, y0 < y1 ? y0 : y1, z0 < z1 ? z0 : z1,
+        x0 < x1 ? x1 : x0, y0 < y1 ? y1 : y0, z0 < z1 ? z1 : z0);
+}
+
+AABB* AABB::move(double x, double y, double z) const
+{
+    return newTemp(mMinX + x, mMinY + y, mMinZ + z, mMaxX + x, mMaxY + y, mMaxZ + z);
+}
+
+AABB* AABB::move(const BlockPos& pos) const
+{
+    return move((double)pos.x, (double)pos.y, (double)pos.z);
+}
+
+AABB* AABB::move(const Vec3& vec) const
+{
+    return move(vec.x, vec.y, vec.z);
+}
+
+double AABB::clipXCollide(const AABB* other, double xa) const
+{
+    if (mMinY < other->mMaxY && other->mMinY < mMaxY && mMinZ < other->mMaxZ && other->mMinZ < mMaxZ)
+    {
+        if (xa > 0.0 && other->mMaxX <= mMinX)
+        {
+            double clipped = mMinX - other->mMaxX;
+
+            if (clipped < xa)
+            {
+                xa = clipped;
+            }
+        }
+
+        if (xa < 0.0 && mMaxX <= other->mMinX)
+        {
+            double clipped = mMaxX - other->mMinX;
+
+            if (clipped > xa)
+            {
+                xa = clipped;
+            }
+        }
+    }
+
+    return xa;
+}
+
+double AABB::clipYCollide(const AABB* other, double ya) const
+{
+    if (mMinX < other->mMaxX && other->mMinX < mMaxX && mMinZ < other->mMaxZ && other->mMinZ < mMaxZ)
+    {
+        if (ya > 0.0 && other->mMaxY <= mMinY)
+        {
+            double clipped = mMinY - other->mMaxY;
+
+            if (clipped < ya)
+            {
+                ya = clipped;
+            }
+        }
+
+        if (ya < 0.0 && mMaxY <= other->mMinY)
+        {
+            double clipped = mMaxY - other->mMinY;
+
+            if (clipped > ya)
+            {
+                ya = clipped;
+            }
+        }
+    }
+
+    return ya;
+}
+
+double AABB::clipZCollide(const AABB* other, double za) const
+{
+    if (mMinX < other->mMaxX && other->mMinX < mMaxX && mMinY < other->mMaxY && other->mMinY < mMaxY)
+    {
+        if (za > 0.0 && other->mMaxZ <= mMinZ)
+        {
+            double clipped = mMinZ - other->mMaxZ;
+
+            if (clipped < za)
+            {
+                za = clipped;
+            }
+        }
+
+        if (za < 0.0 && mMaxZ <= other->mMinZ)
+        {
+            double clipped = mMaxZ - other->mMinZ;
+
+            if (clipped > za)
+            {
+                za = clipped;
+            }
+        }
+    }
+
+    return za;
+}
+
+bool AABB::intersectsInner(const AABB* other) const
+{
+    return mMinX <= other->mMaxX && other->mMinX <= mMaxX && mMinY <= other->mMaxY &&
+        other->mMinY <= mMaxY && mMinZ <= other->mMaxZ && other->mMinZ <= mMaxZ;
+}
+
+bool AABB::intersects(Vec3* from, Vec3* to) const
+{
+    return intersects(from->x < to->x ? from->x : to->x,
+        from->y < to->y ? from->y : to->y,
+        from->z < to->z ? from->z : to->z,
+        from->x < to->x ? to->x : from->x,
+        from->y < to->y ? to->y : from->y,
+        from->z < to->z ? to->z : from->z);
+}
+
+bool AABB::contains(double x, double y, double z) const
+{
+    return mMinX < x && x < mMaxX && mMinY < y && y < mMaxY && mMinZ < z && z < mMaxZ;
+}
+
+bool AABB::contains(Vec3* pos) const
+{
+    return contains(pos->x, pos->y, pos->z);
+}
+
+bool AABB::contains(const BlockPos& pos) const
+{
+    return contains((double)pos.x, (double)pos.y, (double)pos.z);
+}
+
+bool AABB::containsIncludingLowerBound(Vec3* pos) const
+{
+    return mMinX <= pos->x && pos->x < mMaxX && mMinY <= pos->y && pos->y < mMaxY &&
+        mMinZ <= pos->z && pos->z < mMaxZ;
+}
+
+double AABB::getSize() const
+{
+    return ((mMaxX - mMinX) + (mMaxY - mMinY) + (mMaxZ - mMinZ)) / 3.0;
+}
+
+AABB* AABB::shrink(double x, double y, double z) const
+{
+    return grow(-x, -y, -z);
+}
+
+AABB* AABB::shrink(double size) const
+{
+    return grow(-size);
+}
+
+bool AABB::insideYZ(Vec3* pos) const
+{
+    if (pos == NULL)
+    {
+        return false;
+    }
+
+    return mMinY <= pos->y && pos->y <= mMaxY && mMinZ <= pos->z && pos->z <= mMaxZ;
+}
+
+Vec3* AABB::collideWithXPlane(double x, Vec3* from, Vec3* to) const
+{
+    Vec3* hit = from->clipX(to, x);
+
+    if (hit != NULL && insideYZ(hit))
+    {
+        return hit;
+    }
+
+    return NULL;
+}
+
+bool AABB::isClosest(Vec3* from, Vec3* current, Vec3* candidate) const
+{
+    if (current == NULL)
+    {
+        return true;
+    }
+
+    return from->distanceToSqr(candidate) < from->distanceToSqr(current);
+}
+
+bool AABB::insideXZ(Vec3* pos) const
+{
+    if (pos == NULL)
+    {
+        return false;
+    }
+
+    return mMinX <= pos->x && pos->x <= mMaxX && mMinZ <= pos->z && pos->z <= mMaxZ;
+}
+
+Vec3* AABB::collideWithYPlane(double y, Vec3* from, Vec3* to) const
+{
+    Vec3* hit = from->clipY(to, y);
+
+    if (hit != NULL && insideXZ(hit))
+    {
+        return hit;
+    }
+
+    return NULL;
+}
+
+bool AABB::insideXY(Vec3* pos) const
+{
+    if (pos == NULL)
+    {
+        return false;
+    }
+
+    return mMinX <= pos->x && pos->x <= mMaxX && mMinY <= pos->y && pos->y <= mMaxY;
+}
+
+Vec3* AABB::collideWithZPlane(double z, Vec3* from, Vec3* to) const
+{
+    Vec3* hit = from->clipZ(to, z);
+
+    if (hit != NULL && insideXY(hit))
+    {
+        return hit;
+    }
+
+    return NULL;
+}
+
+HitResult* AABB::clip(Vec3* from, Vec3* to) const
+{
+    Vec3* hit = collideWithXPlane(mMinX, from, to);
+    const Direction* face = Direction::WEST;
+
+    Vec3* candidate = collideWithXPlane(mMaxX, from, to);
+
+    if (candidate != NULL && isClosest(from, hit, candidate))
+    {
+        hit = candidate;
+        face = Direction::EAST;
+    }
+
+    candidate = collideWithYPlane(mMinY, from, to);
+
+    if (candidate != NULL && isClosest(from, hit, candidate))
+    {
+        hit = candidate;
+        face = Direction::DOWN;
+    }
+
+    candidate = collideWithYPlane(mMaxY, from, to);
+
+    if (candidate != NULL && isClosest(from, hit, candidate))
+    {
+        hit = candidate;
+        face = Direction::UP;
+    }
+
+    candidate = collideWithZPlane(mMinZ, from, to);
+
+    if (candidate != NULL && isClosest(from, hit, candidate))
+    {
+        hit = candidate;
+        face = Direction::NORTH;
+    }
+
+    candidate = collideWithZPlane(mMaxZ, from, to);
+
+    if (candidate != NULL && isClosest(from, hit, candidate))
+    {
+        hit = candidate;
+        face = Direction::SOUTH;
+    }
+
+    if (hit == NULL)
+    {
+        return NULL;
+    }
+
+    return new HitResult(hit, face);
+}
+
+bool AABB::hasNaN() const
+{
+    return mMinX != mMinX || mMinY != mMinY || mMinZ != mMinZ ||
+        mMaxX != mMaxX || mMaxY != mMaxY || mMaxZ != mMaxZ;
+}
+
+Vec3* AABB::getCenter() const
+{
+    return Vec3::newTemp(mMinX + (mMaxX - mMinX) * 0.5,
+        mMinY + (mMaxY - mMinY) * 0.5,
+        mMinZ + (mMaxZ - mMinZ) * 0.5);
+}
+
+AABB* AABB::scale(double x, double y, double z) const
+{
+    double centerX = mMinX + (mMaxX - mMinX) * 0.5;
+    double centerY = mMinY + (mMaxY - mMinY) * 0.5;
+    double centerZ = mMinZ + (mMaxZ - mMinZ) * 0.5;
+
+    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z,
+        (mMaxX - centerX) * x, (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
+
+    scaled->mMinX += centerX;
+    scaled->mMinY += centerY;
+    scaled->mMinZ += centerZ;
+    scaled->mMaxX += centerX;
+    scaled->mMaxY += centerY;
+    scaled->mMaxZ += centerZ;
+
+    return scaled;
+}
+
+AABB* AABB::scaleAndShift(double x, double y, double z) const
+{
+    double centerX = mMinX + (mMaxX - mMinX) * 0.5;
+    double centerY = mMinY + (mMaxY - mMinY) * 0.5;
+    double centerZ = mMinZ + (mMaxZ - mMinZ) * 0.5;
+
+    AABB* scaled = newTemp((mMinX - centerX) * x, (mMinY - centerY) * y, (mMinZ - centerZ) * z,
+        (mMaxX - centerX) * x, (mMaxY - centerY) * y, (mMaxZ - centerZ) * z);
+
+    double shiftY = mMaxY - scaled->mMaxY;
+
+    scaled->mMinX += centerX;
+    scaled->mMinY += shiftY;
+    scaled->mMinZ += centerZ;
+    scaled->mMaxX += centerX;
+    scaled->mMaxY += shiftY;
+    scaled->mMaxZ += centerZ;
+
+    return scaled;
+}
+
+void AABB::divideInternalsBy(double divisor)
+{
+    mMinX /= divisor;
+    mMinY /= divisor;
+    mMinZ /= divisor;
+    mMaxX /= divisor;
+    mMaxY /= divisor;
+    mMaxZ /= divisor;
+}
+
+void AABB::correctMinMax()
+{
+    double minX = mMinX;
+    double minY = mMinY;
+    double minZ = mMinZ;
+    double maxX = mMaxX;
+    double maxY = mMaxY;
+    double maxZ = mMaxZ;
+
+    mMinX = minX < maxX ? minX : maxX;
+    mMinY = minY < maxY ? minY : maxY;
+    mMinZ = minZ < maxZ ? minZ : maxZ;
+    mMaxX = maxX < minX ? minX : maxX;
+    mMaxY = maxY < minY ? minY : maxY;
+    mMaxZ = maxZ < minZ ? minZ : maxZ;
+}
