@@ -17,7 +17,6 @@ public:
     virtual void close();
     virtual long long skip(long long count);
 
-protected:
     arrayWithLength<unsigned char> mBuffer;
     unsigned int mCount;
     unsigned int mMark;

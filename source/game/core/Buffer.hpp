@@ -7,7 +7,7 @@ public:
     Buffer(unsigned int capacity);
     virtual ~Buffer();
 
-    virtual void flip() = 0;
+    virtual Buffer* flip() = 0;
 
     void clear();
     void limit(unsigned int newLimit);

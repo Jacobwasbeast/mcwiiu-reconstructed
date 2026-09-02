@@ -25,6 +25,7 @@ public:
     static double fastInvSqrt(double value);
     static float sqrt(float value);
     static float sqrt(double value);
+    static int floor(float value);
     static long long lfloor(double value);
     static int absFloor(double value);
     static int fastFloor(double value);

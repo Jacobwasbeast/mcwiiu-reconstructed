@@ -18,7 +18,6 @@ public:
     virtual void flush();
     virtual arrayWithLength<unsigned char> toByteArray();
 
-protected:
     arrayWithLength<unsigned char> mBuffer;
     int mCount;
 };
