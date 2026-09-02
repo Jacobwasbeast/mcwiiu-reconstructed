@@ -1,6 +1,8 @@
 #ifndef GAME_WORLD_LEVELSOURCE_HPP
 #define GAME_WORLD_LEVELSOURCE_HPP
 
+#include <boost/shared_ptr.hpp>
+
 class Biome;
 class BiomeSource;
 class Block;
@@ -27,7 +29,7 @@ class LevelSource
 public:
     virtual ~LevelSource();
 
-    virtual BlockEntity* getBlockEntity(const BlockPos& pos) = 0;
+    virtual boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos) = 0;
     virtual int getLightColor(const BlockPos& pos, int lightValue, int cacheIndex) = 0;
     virtual int getBrightness(LightLayer::variety lightLayer, const BlockPos& pos) = 0;
     virtual float getBrightness(const BlockPos& pos, int lightValue) = 0;
