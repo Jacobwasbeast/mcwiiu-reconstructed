@@ -10,34 +10,36 @@ boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMappe
     boost::unordered_map<const BlockState*, ModelResourceLocation*>* mapping =
         new boost::unordered_map<const BlockState*, ModelResourceLocation*>();
 
-    boost::unordered_map<Block*, ResourceLocation>::iterator it;
+    DefaultedMappedRegistry<ResourceLocation, Block*>::iterator it;
+
     for (it = Block::blockRegistry->begin(); it != Block::blockRegistry->end(); ++it)
     {
         Block* block = it->first;
 
-        if (ignoredBlocks.find(block) == ignoredBlocks.end())
+        if (ignoredBlocks.find(block) != ignoredBlocks.end())
         {
-            bool temporary = false;
-            StateMapper* stateMapper;
+            continue;
+        }
 
-            if (stateMappers.find(block) == stateMappers.end())
-            {
-                temporary = true;
-                stateMapper = new DefaultStateMapper();
-            }
-            else
-            {
-                stateMapper = stateMappers[block];
-            }
+        bool temporary = false;
+        StateMapper* stateMapper;
 
-            boost::unordered_map<const BlockState*, ModelResourceLocation*>* states =
-                stateMapper->mapStates(block);
-            mapping->insert(states->begin(), states->end());
+        if (stateMappers.find(block) == stateMappers.end())
+        {
+            temporary = true;
+            stateMapper = new DefaultStateMapper();
+        }
+        else
+        {
+            stateMapper = stateMappers[block];
+        }
 
-            if (temporary)
-            {
-                delete stateMapper;
-            }
+        boost::unordered_map<const BlockState*, ModelResourceLocation*>* states = stateMapper->mapStates(block);
+        mapping->insert(states->begin(), states->end());
+
+        if (temporary)
+        {
+            delete stateMapper;
         }
     }
 

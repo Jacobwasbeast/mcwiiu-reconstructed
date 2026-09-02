@@ -267,6 +267,9 @@ public:
     int getFaceFlagsFast(LevelSource* levelSource, const BlockPos& pos);
     int getFaceFlags(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, bool forceAll);
     bool instanceof(EBlockType blockType);
+    Material* mMaterial;
+    int mCachedElementId;
+
     Material* getCraftingMaterial() { return mMaterial; }
 
 protected:
@@ -278,7 +281,6 @@ protected:
     bool mIsExtraBlock;
     bool mIsAlwaysRendered;
     std::wstring mIconName;
-    int mCachedElementId;
     bool mFullBlock;
     int mLightBlock;
     bool mTranslucent;
@@ -299,7 +301,6 @@ protected:
     bool mDerivedInitDone;
     const SoundType* mSoundType;
     float mParticleGravity;
-    Material* mMaterial;
     const MaterialColor* mMaterialColor;
     float mFriction;
     BlockStateDefinition* mStateDefinition;

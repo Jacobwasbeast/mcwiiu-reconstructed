@@ -1,12 +1,9 @@
 #ifndef GAME_WORLD_BLOCK_ENTITYPROPERTYONFIRE_HPP
 #define GAME_WORLD_BLOCK_ENTITYPROPERTYONFIRE_HPP
 
-#include <boost/shared_ptr.hpp>
+#include "game/world/block/EntityProperty.hpp"
 
-class Entity;
-class Random;
-
-class EntityPropertyOnFire
+class EntityPropertyOnFire : public EntityProperty
 {
 public:
     EntityPropertyOnFire(bool onFire);

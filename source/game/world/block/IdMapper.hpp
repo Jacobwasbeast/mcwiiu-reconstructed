@@ -5,10 +5,12 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "game/world/block/IdMap.hpp"
+
 class BlockState;
 
 template <class T>
-class IdMapper
+class IdMapper : public IdMap<T>
 {
 public:
     virtual int getId(T value);

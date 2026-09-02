@@ -1341,7 +1341,7 @@ void Block::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> 
 
 void Block::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity)
 {
-    entity->mDeltaMovement.y = 0.0;
+    entity->mYd = 0.0;
 }
 
 not_null_ptr<ItemInstance> Block::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)

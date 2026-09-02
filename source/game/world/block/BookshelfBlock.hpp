@@ -1,0 +1,23 @@
+#ifndef GAME_WORLD_BLOCK_BOOKSHELFBLOCK_HPP
+#define GAME_WORLD_BLOCK_BOOKSHELFBLOCK_HPP
+
+#include "game/world/block/Block.hpp"
+
+class BlockState;
+class Direction;
+class Item;
+class Random;
+class TextureAtlasSprite;
+
+class BookshelfBlock : public Block
+{
+public:
+    BookshelfBlock();
+
+    virtual ~BookshelfBlock();
+    virtual int getResourceCount(Random* random);
+    virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
+    virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
+};
+
+#endif
