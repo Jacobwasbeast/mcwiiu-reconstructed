@@ -2,7 +2,10 @@
 
 #include "game/core/DataInput.hpp"
 #include "game/core/DataOutput.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/data/EndTag.hpp"
 #include "game/data/IntArrayTag.hpp"
+#include "game/data/NumericTag.hpp"
 #include "game/data/Tag.hpp"
 
 #include <cstring>
@@ -10,10 +13,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-
-class CompoundTag;
-class EndTag;
-class NumericTag;
 
 template <class T>
 void deleteElements(const std::vector<T*, std::allocator<T*> >& elements);
