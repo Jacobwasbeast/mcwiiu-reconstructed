@@ -1,9 +1,10 @@
 #ifndef GAME_CORE_BYTEARRAYOUTPUTSTREAM_HPP
 #define GAME_CORE_BYTEARRAYOUTPUTSTREAM_HPP
 
+#include "game/core/OutputStream.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-class ByteArrayOutputStream
+class ByteArrayOutputStream : public OutputStream
 {
 public:
     ByteArrayOutputStream();
