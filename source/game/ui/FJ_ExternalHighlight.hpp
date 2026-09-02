@@ -1,7 +1,8 @@
 #ifndef GAME_UI_FJ_EXTERNALHIGHLIGHT_HPP
 #define GAME_UI_FJ_EXTERNALHIGHLIGHT_HPP
 
-class FJ_FuiNode;
+#include "game/ui/FJ_FuiNode.hpp"
+
 class fuiRenderNode;
 
 class FJ_ExternalHighlight : public FJ_FuiNode
@@ -9,9 +10,9 @@ class FJ_ExternalHighlight : public FJ_FuiNode
 public:
     FJ_ExternalHighlight(fuiRenderNode* pRenderNode);
 
-    virtual ~FJ_ExternalHighlight();
-
     static FJ_ExternalHighlight* Create(fuiRenderNode* pRenderNode);
+
+    virtual ~FJ_ExternalHighlight();
 
     virtual unsigned int getType();
 };
