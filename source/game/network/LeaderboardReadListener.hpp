@@ -1,6 +1,8 @@
 #ifndef GAME_NETWORK_LEADERBOARDREADLISTENER_HPP
 #define GAME_NETWORK_LEADERBOARDREADLISTENER_HPP
 
+#include "game/core/LeaderboardManager.hpp"
+
 class LeaderboardReadListener
 {
 public:

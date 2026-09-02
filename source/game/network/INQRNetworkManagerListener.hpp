@@ -1,7 +1,8 @@
 #ifndef GAME_NETWORK_INQRNETWORKMANAGERLISTENER_HPP
 #define GAME_NETWORK_INQRNETWORKMANAGERLISTENER_HPP
 
-class NQRNetworkManager;
+#include "platform/wiiu/NQRNetworkManager.hpp"
+
 class NQRNetworkPlayer;
 
 namespace nn
