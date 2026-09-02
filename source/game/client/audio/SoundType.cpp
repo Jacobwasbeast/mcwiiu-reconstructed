@@ -1,17 +1,20 @@
 #include "game/client/audio/SoundType.hpp"
 
-const SoundType* SoundType::WOOD;
-const SoundType* SoundType::GROUND;
-const SoundType* SoundType::PLANT;
-const SoundType* SoundType::STONE;
-const SoundType* SoundType::METAL;
-const SoundType* SoundType::GLASS;
-const SoundType* SoundType::CLOTH;
-const SoundType* SoundType::SAND;
-const SoundType* SoundType::SNOW;
-const SoundType* SoundType::LADDER;
-const SoundType* SoundType::ANVIL;
-const SoundType* SoundType::SLIME;
+#include "game/client/audio/SoundEvent.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+
+const SoundType* SoundType::WOOD = NULL;
+const SoundType* SoundType::GROUND = NULL;
+const SoundType* SoundType::PLANT = NULL;
+const SoundType* SoundType::STONE = NULL;
+const SoundType* SoundType::METAL = NULL;
+const SoundType* SoundType::GLASS = NULL;
+const SoundType* SoundType::CLOTH = NULL;
+const SoundType* SoundType::SAND = NULL;
+const SoundType* SoundType::SNOW = NULL;
+const SoundType* SoundType::LADDER = NULL;
+const SoundType* SoundType::ANVIL = NULL;
+const SoundType* SoundType::SLIME = NULL;
 
 SoundType::SoundType(float volume, float pitch, const SoundEvent* breakSound, const SoundEvent* stepSound,
                      const SoundEvent* placeSound, const SoundEvent* hitSound, const SoundEvent* fallSound)
