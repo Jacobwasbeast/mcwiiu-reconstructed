@@ -3,11 +3,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/LocatableSource.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
+
 class BlockEntity;
 class BlockPos;
-class BlockState;
-class LocatableSource;
-class Material;
 
 class BlockSource : public LocatableSource
 {
@@ -18,7 +19,7 @@ public:
     virtual double getY() = 0;
     virtual double getZ() = 0;
     virtual BlockPos getPos() = 0;
-    virtual const BlockState* getBlockState() = 0;
+    virtual BlockState* getBlockState() = 0;
     virtual Material* getMaterial() = 0;
     virtual boost::shared_ptr<BlockEntity> getEntity() = 0;
 };

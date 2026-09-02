@@ -29,7 +29,7 @@ public:
     int ordinal() const;
     float getMalus() const;
 
-private:
+public:
     static const BlockPathTypes* VALUES[19];
 
     int id;

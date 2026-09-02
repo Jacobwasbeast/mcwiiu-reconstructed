@@ -62,7 +62,7 @@ enum EBlockFaceShape
 class BlockState
 {
 public:
-    virtual ~BlockState();
+    ~BlockState();
 
     virtual Material* getMaterial() const = 0;
     virtual bool isSolid() const = 0;
@@ -117,6 +117,8 @@ public:
 
     template <typename T>
     T getValue(const AbstractProperty<T>* property) const;
+
+    int mElementId;
 };
 
 template <typename T>
