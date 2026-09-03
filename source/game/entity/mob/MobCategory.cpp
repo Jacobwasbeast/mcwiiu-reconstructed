@@ -79,6 +79,11 @@ MobCategory::MobCategory(int maxInstancesPerChunk, Material* spawnPositionMateri
     }
 }
 
+int MobCategory::getMaxInstancesPerChunk()
+{
+    return maxInstancesPerChunk;
+}
+
 void MobCategory::staticCtor()
 {
     MONSTER = new MobCategory(70, Material::AIR, false, false, 0x40ULL, false);
@@ -248,6 +253,11 @@ int MobCategory::getMaxInstancesPerLevelWithBreeding()
 int MobCategory::getMaxInstancesPerLevelWithSpawnEgg()
 {
     return maxInstancesPerLevelWithSpawnEgg;
+}
+
+Material* MobCategory::getSpawnPositionMaterial()
+{
+    return spawnPositionMaterial;
 }
 
 unsigned long long MobCategory::getEnumBaseClass()

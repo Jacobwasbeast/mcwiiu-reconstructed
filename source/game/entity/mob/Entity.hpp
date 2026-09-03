@@ -69,13 +69,23 @@ const unsigned long long ENTITY_TYPE_PRIMED_TNT = 0x000000000800000BULL;
 const unsigned long long ENTITY_TYPE_MINECART = 0x000000000A800000ULL;
 const unsigned long long ENTITY_TYPE_MINECART_RIDEABLE = 0x000000000A800001ULL;
 const unsigned long long ENTITY_TYPE_LIVING_ENTITY = 0x000000000C000000ULL;
+const unsigned long long ENTITY_TYPE_MONSTER = 0x000000004D540000ULL;
+const unsigned long long ENTITY_TYPE_ARMOR_STAND = 0x000000000C000001ULL;
 const unsigned long long ENTITY_TYPE_PLAYER = 0x000000000C800000ULL;
 const unsigned long long ENTITY_TYPE_LOCAL_PLAYER = 0x000000000C800003ULL;
 const unsigned long long ENTITY_TYPE_MOB = 0x000000000D000000ULL;
+const unsigned long long ENTITY_TYPE_VILLAGER = 0x000000000D600001ULL;
+const unsigned long long ENTITY_TYPE_DOLPHIN = 0x000000000D602001ULL;
+const unsigned long long ENTITY_TYPE_ZOMBIE = 0x000000005D550040ULL;
+const unsigned long long ENTITY_TYPE_PIG_ZOMBIE = 0x000000005D550041ULL;
+const unsigned long long ENTITY_TYPE_ZOMBIE_VILLAGER = 0x000000005D550042ULL;
+const unsigned long long ENTITY_TYPE_DROWNED = 0x000000005D550044ULL;
 const unsigned long long ENTITY_TYPE_ENDER_DRAGON = 0x000000000D000005ULL;
 const unsigned long long ENTITY_TYPE_SHEEP = 0x000000002D680002ULL;
 const unsigned long long ENTITY_TYPE_RABBIT = 0x000000002D680005ULL;
 const unsigned long long ENTITY_TYPE_HORSE = 0x000000002D690001ULL;
+const unsigned long long ENTITY_TYPE_DONKEY = 0x000000002D698001ULL;
+const unsigned long long ENTITY_TYPE_MULE = 0x000000002D698002ULL;
 const unsigned long long ENTITY_TYPE_SHULKER = 0x000000004D580043ULL;
 
 class Entity : public boost::enable_shared_from_this<Entity>, public CommandSender

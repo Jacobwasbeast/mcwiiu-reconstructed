@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntityHorseSaddleFix.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
 
 EntityHorseSaddleFix::~EntityHorseSaddleFix()

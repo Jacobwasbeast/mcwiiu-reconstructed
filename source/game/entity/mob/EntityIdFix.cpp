@@ -6,7 +6,7 @@
 
 #include "game/data/CompoundTag.hpp"
 
-const boost::unordered_map<std::wstring, std::wstring> EntityIdFix::ID_MAP;
+static boost::unordered_map<std::wstring, std::wstring> sEntityIdMap;
 
 EntityIdFix::~EntityIdFix()
 {
@@ -19,9 +19,9 @@ int EntityIdFix::getVersion()
 
 CompoundTag* EntityIdFix::fix(CompoundTag* tag)
 {
-    boost::unordered_map<std::wstring, std::wstring>::const_iterator entry = ID_MAP.find(tag->getString(L"id"));
+    boost::unordered_map<std::wstring, std::wstring>::const_iterator entry = sEntityIdMap.find(tag->getString(L"id"));
 
-    if (entry != ID_MAP.end())
+    if (entry != sEntityIdMap.end())
     {
         tag->putString(L"id", entry->second);
     }

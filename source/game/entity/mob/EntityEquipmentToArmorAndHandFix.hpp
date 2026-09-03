@@ -1,7 +1,6 @@
 #ifndef GAME_ENTITY_MOB_ENTITYEQUIPMENTTOARMORANDHANDFIX_HPP
 #define GAME_ENTITY_MOB_ENTITYEQUIPMENTTOARMORANDHANDFIX_HPP
 
-#include "game/data/CompoundTag.hpp"
 #include "game/data/DataFix.hpp"
 
 class EntityEquipmentToArmorAndHandFix : public DataFix

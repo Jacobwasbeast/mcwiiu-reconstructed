@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntityRidingToPassengersFix.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 
@@ -24,7 +22,7 @@ CompoundTag* EntityRidingToPassengersFix::extractVehicle(CompoundTag* tag)
 
 void EntityRidingToPassengersFix::addPassengerToVehicle(CompoundTag* passenger, CompoundTag* vehicle)
 {
-    ListTag* passengers = new ListTag();
+    ListTag* passengers = new ListTag(0);
     passengers->add(passenger);
     vehicle->put(L"Passengers", passengers);
 }

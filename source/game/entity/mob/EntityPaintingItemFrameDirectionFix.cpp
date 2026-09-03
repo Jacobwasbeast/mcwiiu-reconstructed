@@ -2,7 +2,10 @@
 
 #include <string>
 
+class Vec3i;
+#define GAME_UTIL_VEC3I_HPP
 #include "game/core/Direction.hpp"
+#undef GAME_UTIL_VEC3I_HPP
 #include "game/data/CompoundTag.hpp"
 
 EntityPaintingItemFrameDirectionFix::~EntityPaintingItemFrameDirectionFix()
@@ -16,10 +19,10 @@ int EntityPaintingItemFrameDirectionFix::getVersion()
 
 CompoundTag* EntityPaintingItemFrameDirectionFix::fix(CompoundTag* tag)
 {
-    bool isPainting = CheckID(tag, L"Painting");
-    bool isItemFrame = CheckID(tag, L"ItemFrame");
+    bool painting = CheckID(tag, L"Painting");
+    bool itemFrame = CheckID(tag, L"ItemFrame");
 
-    if ((isPainting || isItemFrame) && !tag->contains(L"Facing", 99))
+    if ((painting || itemFrame) && !tag->contains(L"Facing", 99))
     {
         const Direction* direction;
 
@@ -33,7 +36,7 @@ CompoundTag* EntityPaintingItemFrameDirectionFix::fix(CompoundTag* tag)
 
             tag->remove(L"Direction");
 
-            if (isItemFrame && tag->contains(L"ItemRotation", 99))
+            if (itemFrame && tag->contains(L"ItemRotation", 99))
             {
                 tag->putByte(L"ItemRotation", tag->getByte(L"ItemRotation") * 2);
             }

@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntityStringUuidFix.hpp"
 
-#include "game/data/CompoundTag.hpp"
-
 EntityStringUuidFix::~EntityStringUuidFix()
 {
 }

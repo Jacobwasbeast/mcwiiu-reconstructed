@@ -1,10 +1,5 @@
 #include "game/entity/mob/EntityElderGuardianSplitFix.hpp"
 
-#include <string>
-
-#include "game/data/CompoundTag.hpp"
-#include "game/data/Tag.hpp"
-
 EntityElderGuardianSplitFix::~EntityElderGuardianSplitFix()
 {
 }
@@ -23,7 +18,13 @@ CompoundTag* EntityElderGuardianSplitFix::fix(CompoundTag* tag)
             tag->putString(L"id", L"ElderGuardian");
         }
 
-        delete tag->get(L"Elder");
+        Tag* elder = tag->get(L"Elder");
+
+        if (elder != NULL)
+        {
+            delete elder;
+        }
+
         tag->remove(L"Elder");
     }
 

@@ -14,9 +14,6 @@ public:
     virtual ~EntityIdFix();
     virtual int getVersion();
     virtual CompoundTag* fix(CompoundTag* tag);
-
-private:
-    static const boost::unordered_map<std::wstring, std::wstring> ID_MAP;
 };
 
 #endif

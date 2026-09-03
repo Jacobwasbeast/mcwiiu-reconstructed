@@ -53,7 +53,7 @@ int EntityHealthFix::getVersion()
 
 CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
 {
-    for (unsigned int i = 0; i < sEntityIDs->size(); i++)
+    for (unsigned int i = 0; i < sEntityIDs[0].size(); ++i)
     {
         if (CheckID(tag, sEntityIDs[i]))
         {
@@ -68,7 +68,7 @@ CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
             {
                 if (!tag->contains(L"Health", 99))
                 {
-                    return tag;
+                    break;
                 }
 
                 health = tag->getFloat(L"Health");

@@ -21,7 +21,7 @@ CompoundTag* EntityZombieSplitFix::fix(CompoundTag* tag)
         return tag;
     }
 
-    int zombieType = tag->getInt(L"ZombieType");
+    unsigned int zombieType = (unsigned int)tag->getInt(L"ZombieType");
 
     if (zombieType >= 1 && zombieType <= 5)
     {

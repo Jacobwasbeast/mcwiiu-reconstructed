@@ -8,26 +8,26 @@
 #include "game/world/block/BlockState.hpp"
 
 EntityTickCache::EntityTickCache()
-    : mMinX(1),
-      mMinY(1),
-      mMinZ(1),
-      mMaxX(-1),
-      mMaxY(-1),
-      mMaxZ(-1),
-      mAccessedMinX(0),
-      mAccessedMinY(0),
-      mAccessedMinZ(0),
-      mAccessedMaxX(0),
-      mAccessedMaxY(0),
-      mAccessedMaxZ(0),
-      mLastCenterX(0),
-      mLastCenterY(0),
-      mLastCenterZ(0),
-      mElements(NULL),
-      mBlockStates(NULL),
-      mLastFrameUpdated(0),
-      mCacheChanged(true)
 {
+    mMinX = 1;
+    mMinY = 1;
+    mMinZ = 1;
+    mMaxX = -1;
+    mMaxY = -1;
+    mMaxZ = -1;
+    mAccessedMinX = 0;
+    mAccessedMinY = 0;
+    mAccessedMinZ = 0;
+    mAccessedMaxX = 0;
+    mAccessedMaxY = 0;
+    mAccessedMaxZ = 0;
+    mLastCenterX = 0;
+    mLastCenterY = 0;
+    mLastCenterZ = 0;
+    mElements = NULL;
+    mBlockStates = NULL;
+    mLastFrameUpdated = 0;
+    mCacheChanged = true;
 }
 
 EntityTickCache::~EntityTickCache()

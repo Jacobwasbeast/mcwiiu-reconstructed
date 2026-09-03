@@ -27,13 +27,13 @@
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/TrackedEntity.hpp"
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/item/DataItem.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/ProtectionEnchantment.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -105,16 +105,16 @@ int Entity::sWanderingIds[3];
 
 void Entity::staticCtor()
 {
-    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
-    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
-    DATA_CUSTOM_NAME = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
-    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_SILENT = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NO_GRAVITY = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_MOVING = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
-    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
-    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_AIR_SUPPLY_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_CUSTOM_NAME = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
+    DATA_CUSTOM_NAME_VISIBLE = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_SILENT = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_NO_GRAVITY = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_MOVING = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_OWNER_UUID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::STRING);
+    DATA_CREATED_ON_HOST = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
 }
 
 bool Entity::instanceof(const boost::shared_ptr<Entity>& entity, unsigned long long type)
@@ -1690,7 +1690,7 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
     MemSect(31);
 
     if ((GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
-        || !getSkinAdjustments().mSilentSteps)
+        || (getSkinAdjustments().mAnimFlags & 0x4) == 0)
     {
         Block* above = mLevel->getBlockState(mTickCache, pos.above())->getBlock();
 
@@ -4610,4 +4610,118 @@ void Entity::restoreLeashFromSave()
 
     delete mLeashInfoTag;
     mLeashInfoTag = NULL;
+}
+
+std::set<std::wstring>* Entity::getTags()
+{
+    return &mTags;
+}
+
+bool Entity::addTag(const std::wstring& tag)
+{
+    if (tag.empty() || mTags.size() >= 1024)
+    {
+        return false;
+    }
+    return mTags.insert(tag).second;
+}
+
+bool Entity::removeTag(const std::wstring& tag)
+{
+    return mTags.erase(tag) != 0;
+}
+
+bool Entity::isFree(float x, float y, float z, float size)
+{
+    if (mBoundingBox == NULL)
+    {
+        return false;
+    }
+    AABB* box = mBoundingBox->grow(size, 0.0, size)->move(x, y, z);
+    return isFree(box);
+}
+
+bool Entity::intersects(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    return mBoundingBox != NULL
+        && mBoundingBox->intersects(x0, y0, z0, x1, y1, z1);
+}
+
+HitResult* Entity::pick(Vec3* from, double distance, float partialTicks,
+                        bool liquids, bool ignoreEntities)
+{
+    Vec3* direction = getViewVector(partialTicks);
+    Vec3* to = Vec3::newTemp(from->x, from->y, from->z)
+                   ->add(direction->x * distance, direction->y * distance,
+                         direction->z * distance);
+    return mLevel->clip(from, to, liquids, false, true, ignoreEntities, NULL, false);
+}
+
+HitResult* Entity::pickBlockInDirection(Vec3* direction, double distance,
+                                        float partialTicks)
+{
+    Vec3* from = getEyePosition(partialTicks);
+    Vec3* to = Vec3::newTemp(from->x, from->y, from->z)
+                   ->add(direction->x * distance, direction->y * distance,
+                         direction->z * distance);
+    return mLevel->clip(from, to, false, false, true, false, NULL, false);
+}
+
+float Entity::getCurrentSwimAmount() const
+{
+    return mSwimAmount;
+}
+
+void Entity::printSmallIds() const
+{
+}
+
+unsigned int Entity::countFlagsForPIX()
+{
+    unsigned int count = 0;
+    int i;
+    for (i = 0; i < 64; ++i)
+    {
+        unsigned int value = sSmallIdsInUse[i];
+        while (value != 0)
+        {
+            count += value & 1U;
+            value >>= 1;
+        }
+    }
+    return count;
+}
+
+void Entity::resetSmallId()
+{
+    if (mId >= 0 && mId < 2048)
+    {
+        freeSmallId(mId);
+        mId = -1;
+    }
+}
+
+void Entity::createHoverEvent()
+{
+}
+
+CommandStats* Entity::getCommandStats()
+{
+    return mCommandStats;
+}
+
+void Entity::cloneStatsFrom(boost::shared_ptr<Entity> entity)
+{
+    if (entity && mCommandStats != NULL && entity->mCommandStats != NULL)
+    {
+        mCommandStats->cloneFrom(entity->mCommandStats);
+    }
+}
+
+void Entity::handleEntityTag(CompoundTag* tag)
+{
+    if (tag != NULL)
+    {
+        readAdditionalSaveData(tag);
+    }
 }

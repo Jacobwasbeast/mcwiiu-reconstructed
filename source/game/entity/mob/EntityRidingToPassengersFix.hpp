@@ -1,7 +1,6 @@
 #ifndef GAME_ENTITY_MOB_ENTITYRIDINGTOPASSENGERSFIX_HPP
 #define GAME_ENTITY_MOB_ENTITYRIDINGTOPASSENGERSFIX_HPP
 
-#include "game/data/CompoundTag.hpp"
 #include "game/data/DataFix.hpp"
 
 class EntityRidingToPassengersFix : public DataFix

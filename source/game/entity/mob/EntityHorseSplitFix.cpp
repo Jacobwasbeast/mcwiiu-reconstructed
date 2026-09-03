@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntityHorseSplitFix.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
 #include "game/data/Tag.hpp"
 
@@ -21,9 +19,9 @@ CompoundTag* EntityHorseSplitFix::fix(CompoundTag* tag)
         return tag;
     }
 
-    int type = tag->getInt(L"Type");
+    int horseType = tag->getInt(L"Type");
 
-    switch (type)
+    switch (horseType)
     {
     case 1:
         tag->putString(L"id", L"Donkey");

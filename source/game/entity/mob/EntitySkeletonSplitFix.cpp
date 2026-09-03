@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntitySkeletonSplitFix.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
 #include "game/data/Tag.hpp"
 

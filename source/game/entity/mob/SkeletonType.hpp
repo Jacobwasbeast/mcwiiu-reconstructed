@@ -1,8 +1,9 @@
 #ifndef GAME_ENTITY_MOB_SKELETONTYPE_HPP
 #define GAME_ENTITY_MOB_SKELETONTYPE_HPP
 
-#include "game/client/audio/SoundEvent.hpp"
 #include "game/util/ResourceLocation.hpp"
+
+class SoundEvent;
 
 class SkeletonType
 {

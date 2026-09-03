@@ -1,7 +1,5 @@
 #include "game/entity/mob/EntityEquipmentToArmorAndHandFix.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
 #include "game/data/FloatTag.hpp"
 #include "game/data/ListTag.hpp"

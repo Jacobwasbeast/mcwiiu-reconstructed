@@ -3,7 +3,7 @@
 #include <string>
 
 #include "game/data/CompoundTag.hpp"
-#include "game/data/DataFixerUpper.hpp"
+#include "game/data/DataFixer.hpp"
 
 ItemInstanceEntityTagWalker::~ItemInstanceEntityTagWalker()
 {
