@@ -330,20 +330,9 @@ bool ListTag::equals(Tag* other)
         return false;
     }
 
-    for (std::vector<Tag*>::iterator it = mList.begin(); it != mList.end(); ++it)
+    for (std::vector<Tag*>::const_iterator it = mList.begin(), other_it = list->mList.begin(); it != mList.end(); ++it, ++other_it)
     {
-        bool found = false;
-
-        for (std::vector<Tag*>::iterator other_it = list->mList.begin(); other_it != list->mList.end(); ++other_it)
-        {
-            if ((*it)->equals(*other_it))
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found)
+        if (!(*it)->equals(*other_it))
         {
             return false;
         }

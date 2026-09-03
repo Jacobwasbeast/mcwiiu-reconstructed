@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "game/core/File.hpp"
 #include "game/core/FileEntry.hpp"
 #include "game/core/FileHeader.hpp"
 #include "game/data/ConsoleSavePath.hpp"
+
+class File;
 
 class ConsoleSaveFile
 {

@@ -3,7 +3,6 @@
 #include "game/core/DataInput.hpp"
 #include "game/core/DataOutput.hpp"
 #include "game/core/System.hpp"
-
 #include <string.h>
 #include <wchar.h>
 

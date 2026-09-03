@@ -4,9 +4,10 @@
 #include <string>
 
 #include "game/core/DataWalker.hpp"
-#include "game/data/DataFixerUpper.hpp"
+#include "game/data/DataFixTypes.hpp"
 
 class CompoundTag;
+class DataFixer;
 
 class TagUpdateWalker : public DataWalker
 {

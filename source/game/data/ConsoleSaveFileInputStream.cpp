@@ -35,7 +35,7 @@ int ConsoleSaveFileInputStream::read(arrayWithLength<unsigned char> data)
 {
     unsigned int bytesRead;
 
-    if (mSaveFile->readFile(mFileEntry, &data, data.length, &bytesRead) && bytesRead != 0)
+    if (mSaveFile->readFile(mFileEntry, data.data, data.length, &bytesRead) && bytesRead != 0)
     {
         return bytesRead;
     }

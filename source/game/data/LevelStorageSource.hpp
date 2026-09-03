@@ -6,10 +6,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/data/LevelStorage.hpp"
-
 class ConsoleSaveFile;
 class LevelData;
+class LevelStorage;
 class LevelSummary;
 class ProgressListener;
 

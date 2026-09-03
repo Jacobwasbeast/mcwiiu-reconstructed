@@ -7,12 +7,12 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/data/ConsoleSavePath.hpp"
-#include "game/core/File.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
 class ChunkStorage;
 class ConsoleSaveFile;
 class Dimension;
+class File;
 class LevelData;
 class Player;
 class PlayerIO;

@@ -1,6 +1,7 @@
 #include "game/data/TagUpdateWalker.hpp"
 
 #include "game/data/CompoundTag.hpp"
+#include "game/data/DataFixer.hpp"
 
 TagUpdateWalker::TagUpdateWalker(const std::wstring& name, unsigned char tagType, DataFixTypes::EDataFixTypes dataFixType)
     : mName(name)

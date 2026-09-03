@@ -473,6 +473,18 @@ std::vector<std::wstring>* CompoundTag::getAllKeys()
     return keys;
 }
 
+std::vector<Tag*>* CompoundTag::getAllTags()
+{
+    std::vector<Tag*>* tags = new std::vector<Tag*>();
+
+    for (TagMap::const_iterator it = mTags.begin(); it != mTags.end(); ++it)
+    {
+        tags->push_back(it->second);
+    }
+
+    return tags;
+}
+
 boost::unordered_map<std::wstring, Tag*>& CompoundTag::getAllTagsMap()
 {
     return mTags;

@@ -11,8 +11,6 @@
 #include "game/data/ConsoleSavePath.hpp"
 #include "game/network/ProgressListener.hpp"
 
-static const std::wstring PLAYERS_PREFIX(L"players/");
-
 void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, FileEntry* entryIn, ConsoleSaveFile* saveFileOut, FileEntry* entryOut)
 {
     unsigned int bytesRead = 0;
@@ -34,19 +32,19 @@ void ConsoleSaveFileConverter::ProcessStandardRegionFile(ConsoleSaveFile* saveFi
     RegionFile sourceRegion(saveFileIn, &regionFileIn);
     RegionFile destRegion(saveFileOut, &regionFileOut);
 
-    bool bNewSaveFormat = true;
+    bool compressed = true;
 
     for (int x = 0; x < 32; x++)
     {
         for (int z = 0; z < 32; z++)
         {
-            DataInputStream* pChunkIn = sourceRegion.getChunkDataInputStream(x, z, &bNewSaveFormat);
+            DataInputStream* pChunkIn = sourceRegion.getChunkDataInputStream(x, z, &compressed);
 
             if (pChunkIn != NULL)
             {
                 int nextByte = pChunkIn->read();
 
-                DataOutputStream* pChunkOut = destRegion.getChunkDataOutputStream(x, z, bNewSaveFormat);
+                DataOutputStream* pChunkOut = destRegion.getChunkDataOutputStream(x, z, compressed);
 
                 while (nextByte != -1)
                 {
@@ -83,7 +81,7 @@ void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleS
         ProcessSimpleFile(saveFileIn, pGameRulesIn, saveFileOut, pGameRulesOut);
     }
 
-    std::vector<FileEntry*>* pPlayerFiles = saveFileIn->getFilesWithPrefix(PLAYERS_PREFIX);
+    std::vector<FileEntry*>* pPlayerFiles = saveFileIn->getFilesWithPrefix(L"players/");
 
     if (pPlayerFiles != NULL)
     {

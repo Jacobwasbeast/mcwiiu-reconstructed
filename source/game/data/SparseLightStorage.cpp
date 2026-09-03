@@ -584,6 +584,11 @@ bool SparseLightStorage::isCompressed()
     return (int)((mPlaneCountAndData >> 48) & 0xffff) < PLANE_COUNT - 1;
 }
 
+int SparseLightStorage::getAllocatedBytes()
+{
+    return sAllocatedBytes;
+}
+
 unsigned int SparseLightStorage::getRawDataMaxBytes()
 {
     return PLANE_COUNT * PLANE_BYTES + PLANE_BYTES;

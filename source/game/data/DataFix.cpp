@@ -1,7 +1,5 @@
 #include "game/data/DataFix.hpp"
 
-#include "game/data/CompoundTag.hpp"
-
 DataFix::~DataFix()
 {
 }

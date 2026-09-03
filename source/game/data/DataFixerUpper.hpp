@@ -9,8 +9,8 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixer.hpp"
 
-class DataFix;
 class DataWalker;
+class DataFix;
 
 class DataFixerUpper : public DataFixer
 {

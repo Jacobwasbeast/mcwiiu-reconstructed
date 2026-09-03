@@ -1,10 +1,12 @@
 #ifndef GAME_DATA_CONSOLESAVEFILEOUTPUTSTREAM_HPP
 #define GAME_DATA_CONSOLESAVEFILEOUTPUTSTREAM_HPP
 
-#include "game/core/FileEntry.hpp"
 #include "game/core/OutputStream.hpp"
-#include "game/data/ConsoleSaveFile.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+
+class ConsoleSaveFile;
+class ConsoleSavePath;
+class FileEntry;
 
 class ConsoleSaveFileOutputStream : public OutputStream
 {
@@ -20,8 +22,8 @@ public:
     virtual void flush();
 
 private:
-    ConsoleSaveFile* mSaveFile;
-    FileEntry* mFileEntry;
+    ConsoleSaveFile* m_saveFile;
+    FileEntry* m_fileEntry;
 };
 
 #endif

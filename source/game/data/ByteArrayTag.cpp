@@ -2,10 +2,8 @@
 
 #include "game/core/DataInput.hpp"
 #include "game/core/DataOutput.hpp"
-#include "game/core/System.hpp"
-
-#include <string.h>
-#include <wchar.h>
+#include <cstring>
+#include <cwchar>
 
 ByteArrayTag::ByteArrayTag()
 {
@@ -34,34 +32,31 @@ void ByteArrayTag::write(DataOutput* output)
 
 void ByteArrayTag::load(DataInput* input, int depth)
 {
-    int length = input->readInt();
+    unsigned int length = static_cast<unsigned int>(input->readInt());
 
-    if (mOwnsData)
-    {
-        delete[] mData.data;
-    }
-    else
+    if (!mOwnsData)
     {
         mOwnsData = true;
     }
+    else
+    {
+        delete[] mData.data;
+    }
 
     mData = arrayWithLength<unsigned char>(length, true);
-
     input->readFully(mData);
-}
-
-std::wstring ByteArrayTag::toString()
-{
-    static wchar_t description[32];
-
-    swprintf(description, 32, L"[%d bytes]", mData.length);
-
-    return description;
 }
 
 unsigned char ByteArrayTag::getId()
 {
     return 7;
+}
+
+std::wstring ByteArrayTag::toString()
+{
+    static wchar_t description[32];
+    swprintf(description, 32, L"[%d bytes]", mData.length);
+    return description;
 }
 
 bool ByteArrayTag::equals(Tag* other)
@@ -71,27 +66,22 @@ bool ByteArrayTag::equals(Tag* other)
         return false;
     }
 
-    ByteArrayTag* otherArray = (ByteArrayTag*)other;
-
+    ByteArrayTag* otherArray = static_cast<ByteArrayTag*>(other);
     if (mData.data == NULL)
     {
         return otherArray->mData.data == NULL;
     }
-
     if (mData.length != otherArray->mData.length)
     {
         return false;
     }
-
-    return memcmp(mData.data, otherArray->mData.data, mData.length) == 0;
+    return std::memcmp(mData.data, otherArray->mData.data, mData.length) == 0;
 }
 
 ByteArrayTag* ByteArrayTag::copy()
 {
     arrayWithLength<unsigned char> copiedData(mData.length, true);
-
-    System::arraycopy(mData, 0, &copiedData, 0, mData.length);
-
+    std::memcpy(copiedData.data, mData.data, mData.length);
     return new ByteArrayTag(copiedData, true);
 }
 
