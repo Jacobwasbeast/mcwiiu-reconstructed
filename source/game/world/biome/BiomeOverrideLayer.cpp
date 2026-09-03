@@ -2,6 +2,14 @@
 
 #include "game/core/IntCache.hpp"
 
+BiomeOverrideLayer::BiomeOverrideLayer(int size)
+    : Layer(0),
+      overrideWidth(size),
+      overrideHeight(size),
+      overrideBiomes(NULL)
+{
+}
+
 BiomeOverrideLayer::~BiomeOverrideLayer()
 {
 }
