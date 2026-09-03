@@ -9,12 +9,12 @@ public:
 
     RandomValueBounds();
     RandomValueBounds(int min, int max);
-    RandomValueBounds(float min, float max);
     RandomValueBounds(double min, double max);
     RandomValueBounds(int min, double max);
+    RandomValueBounds(int value);
+    RandomValueBounds(float min, float max);
     RandomValueBounds(float value);
     RandomValueBounds(double value);
-    RandomValueBounds(int value);
 };
 
 #endif

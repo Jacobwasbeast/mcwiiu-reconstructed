@@ -116,3 +116,24 @@ int Random::nextGaussianInt(int bound) {
 bool Random::rollPercentageChance(int percentage) {
     return nextInt(100) < percentage;
 }
+
+bool Random::rollPercentageChance(float percentage) {
+    return nextFloat() * 100.0f < percentage;
+}
+
+void Random::nextBytes(unsigned char* bytes, unsigned int length) {
+    unsigned int index = 0;
+    while (index < length) {
+        int randomValue = nextInt();
+        unsigned int count = length - index;
+        if (count > 4) {
+            count = 4;
+        }
+        unsigned int i = 0;
+        while (i < count) {
+            bytes[index++] = (unsigned char)randomValue;
+            randomValue >>= 8;
+            ++i;
+        }
+    }
+}

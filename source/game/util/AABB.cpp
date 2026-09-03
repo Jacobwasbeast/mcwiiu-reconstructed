@@ -2,6 +2,9 @@
 
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/core/HitResult.hpp"
+
+#include <sstream>
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -129,6 +132,12 @@ AABB* AABB::setMaxY(double maxY)
     return new AABB(mMinX, mMinY, mMinZ, mMaxX, maxY, mMaxZ);
 }
 
+AABB* AABB::setMinX(double minX) { return new AABB(minX, mMinY, mMinZ, mMaxX, mMaxY, mMaxZ); }
+AABB* AABB::setMinY(double minY) { return new AABB(mMinX, minY, mMinZ, mMaxX, mMaxY, mMaxZ); }
+AABB* AABB::setMinZ(double minZ) { return new AABB(mMinX, mMinY, minZ, mMaxX, mMaxY, mMaxZ); }
+AABB* AABB::setMaxX(double maxX) { return new AABB(mMinX, mMinY, mMinZ, maxX, mMaxY, mMaxZ); }
+AABB* AABB::setMaxZ(double maxZ) { return new AABB(mMinX, mMinY, mMinZ, mMaxX, mMaxY, maxZ); }
+
 bool AABB::equals(const AABB* other) const
 {
     return other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ &&
@@ -184,6 +193,20 @@ AABB* AABB::contract(double x, double y, double z)
     return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
+AABB* AABB::contract(double x, double y, double z) const
+{
+    double minX = mMinX;
+    double minY = mMinY;
+    double minZ = mMinZ;
+    double maxX = mMaxX;
+    double maxY = mMaxY;
+    double maxZ = mMaxZ;
+    if (x < 0.0) minX -= x; else if (x > 0.0) maxX -= x;
+    if (y < 0.0) minY -= y; else if (y > 0.0) maxY -= y;
+    if (z < 0.0) minZ -= z; else if (z > 0.0) maxZ -= z;
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+}
+
 AABB* AABB::expand(double x, double y, double z) const
 {
     double minX = mMinX;
@@ -234,6 +257,11 @@ AABB* AABB::grow(double x, double y, double z) const
 AABB* AABB::grow(double size) const
 {
     return grow(size, size, size);
+}
+
+AABB* AABB::growMax(double x, double y, double z) const
+{
+    return newTemp(mMinX, mMinY, mMinZ, mMaxX + x, mMaxY + y, mMaxZ + z);
 }
 
 AABB* AABB::intersect(const AABB* other) const
@@ -369,6 +397,24 @@ bool AABB::intersectsInner(const AABB* other) const
 {
     return mMinX <= other->mMaxX && other->mMinX <= mMaxX && mMinY <= other->mMaxY &&
         other->mMinY <= mMaxY && mMinZ <= other->mMaxZ && other->mMinZ <= mMaxZ;
+}
+
+bool AABB::intersectsIgnoringDimensions(const AABB* other, bool ignoreX, bool ignoreY, bool ignoreZ) const
+{
+    return (ignoreX || (mMinX < other->mMaxX && other->mMinX < mMaxX)) &&
+        (ignoreY || (mMinY < other->mMaxY && other->mMinY < mMaxY)) &&
+        (ignoreZ || (mMinZ < other->mMaxZ && other->mMinZ < mMaxZ));
+}
+
+AABB* AABB::getOverlap(const AABB* other) const
+{
+    double minX = mMinX > other->mMinX ? mMinX : other->mMinX;
+    double minY = mMinY > other->mMinY ? mMinY : other->mMinY;
+    double minZ = mMinZ > other->mMinZ ? mMinZ : other->mMinZ;
+    double maxX = mMaxX < other->mMaxX ? mMaxX : other->mMaxX;
+    double maxY = mMaxY < other->mMaxY ? mMaxY : other->mMaxY;
+    double maxZ = mMaxZ < other->mMaxZ ? mMaxZ : other->mMaxZ;
+    return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
 bool AABB::intersects(Vec3* from, Vec3* to) const
@@ -624,4 +670,12 @@ void AABB::correctMinMax()
     mMaxX = maxX < minX ? minX : maxX;
     mMaxY = maxY < minY ? minY : maxY;
     mMaxZ = maxZ < minZ ? minZ : maxZ;
+}
+
+std::wstring AABB::toString() const
+{
+    std::wostringstream stream;
+    stream << L"AABB[" << mMinX << L", " << mMinY << L", " << mMinZ;
+    stream << L"] -> [" << mMaxX << L", " << mMaxY << L", " << mMaxZ << L"]";
+    return stream.str();
 }

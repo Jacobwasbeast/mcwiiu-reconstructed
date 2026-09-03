@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <sstream>
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -69,6 +70,11 @@ Vec3::Vec3(double x, double y, double z)
     _init(x, y, z);
 }
 
+Vec3::Vec3(const Vec3i* pos)
+{
+    _init((double)pos->x, (double)pos->y, (double)pos->z);
+}
+
 Vec3* Vec3::newPermanent(double x, double y, double z)
 {
     return new Vec3(x, y, z);
@@ -77,6 +83,11 @@ Vec3* Vec3::newPermanent(double x, double y, double z)
 Vec3* Vec3::newPermanent(const Vec3* other)
 {
     return new Vec3(other->x, other->y, other->z);
+}
+
+Vec3* Vec3::newPermanent(const Vec3i* pos)
+{
+    return new Vec3(pos);
 }
 
 void Vec3::clearPool()
@@ -200,6 +211,14 @@ double Vec3::distanceToSqr(Vec3* other)
     double dy = other->y - y;
     double dz = other->z - z;
 
+    return dx * dx + dy * dy + dz * dz;
+}
+
+double Vec3::distanceToSqr(double x, double y, double z)
+{
+    double dx = x - this->x;
+    double dy = y - this->y;
+    double dz = z - this->z;
     return dx * dx + dy * dy + dz * dz;
 }
 
@@ -393,4 +412,45 @@ Vec3* Vec3::directionFromRotation(float xRot, float yRot)
 Vec3* Vec3::directionFromRotation(phys::Vec2* rotation)
 {
     return directionFromRotation(rotation->x, rotation->y);
+}
+
+std::wstring Vec3::toString()
+{
+    std::wostringstream stream;
+    stream << L"(" << x << L", " << y << L", " << z << L")";
+    return stream.str();
+}
+
+Vec3* Vec3::lerp(Vec3* to, double part)
+{
+    return interpolateTo(to, part);
+}
+
+Vec3* Vec3::closestPointOnLine(Vec3* from, Vec3* to)
+{
+    Vec3* direction = from->vectorTo(to);
+    double length = direction->lengthSqr();
+    if (length <= 0.0)
+    {
+        return newTemp(from);
+    }
+    Vec3* offset = from->vectorTo(this);
+    double part = offset->dot(direction) / length;
+    if (part <= 0.0)
+    {
+        return newTemp(from);
+    }
+    if (part >= 1.0)
+    {
+        return newTemp(to);
+    }
+    return newTemp(from->x + direction->x * part,
+        from->y + direction->y * part,
+        from->z + direction->z * part);
+}
+
+double Vec3::distanceFromLine(Vec3* from, Vec3* to)
+{
+    Vec3* point = closestPointOnLine(from, to);
+    return distanceTo(point);
 }

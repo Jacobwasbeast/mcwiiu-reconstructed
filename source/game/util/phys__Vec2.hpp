@@ -1,5 +1,5 @@
-#ifndef GAME_UTIL_PHYS__VEC2_HPP
-#define GAME_UTIL_PHYS__VEC2_HPP
+#ifndef GAME_UTIL_PHYS_VEC2_HPP
+#define GAME_UTIL_PHYS_VEC2_HPP
 
 namespace phys
 {
@@ -13,8 +13,8 @@ public:
         ThreadStorage();
         ~ThreadStorage();
 
-        Vec2* m_pPool;
-        int m_nextIndex;
+        Vec2* mPool;
+        int mNextIndex;
     };
 
     float x;
@@ -28,20 +28,22 @@ public:
     static void ReleaseThreadStorage();
 
     static Vec2* newPermanent(float x, float y);
+
     static void clearPool();
     static void resetPool();
+
     static Vec2* newTemp(float x, float y);
 
     Vec2* scale(float factor);
-    float dot(Vec2* other);
+    double dot(Vec2* other);
     Vec2* add(Vec2* other);
     Vec2* add(float value);
     bool equals(Vec2* other);
     Vec2* normalized();
-    float length();
-    float lengthSquared();
-    float distanceToSqr(Vec2* other);
+    double length();
+    double lengthSquared();
     Vec2* negated();
+    double distanceToSqr(Vec2* other);
 };
 
 }

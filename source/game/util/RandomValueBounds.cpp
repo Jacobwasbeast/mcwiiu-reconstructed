@@ -6,21 +6,36 @@ RandomValueBounds::RandomValueBounds()
 }
 
 RandomValueBounds::RandomValueBounds(int min, int max)
-    : min((float)min), max((float)max)
+    : min(static_cast<float>(min)), max(static_cast<float>(max))
 {
 }
 
 RandomValueBounds::RandomValueBounds(double min, double max)
-    : min((float)min), max((float)max)
+    : min(static_cast<float>(min)), max(static_cast<float>(max))
 {
 }
 
 RandomValueBounds::RandomValueBounds(int min, double max)
-    : min((float)min), max((float)max)
+    : min(static_cast<float>(min)), max(static_cast<float>(max))
 {
 }
 
 RandomValueBounds::RandomValueBounds(int value)
-    : min((float)value), max((float)value)
+    : min(static_cast<float>(value)), max(static_cast<float>(value))
+{
+}
+
+RandomValueBounds::RandomValueBounds(float min, float max)
+    : min(min), max(max)
+{
+}
+
+RandomValueBounds::RandomValueBounds(float value)
+    : min(value), max(value)
+{
+}
+
+RandomValueBounds::RandomValueBounds(double value)
+    : min(static_cast<float>(value)), max(static_cast<float>(value))
 {
 }

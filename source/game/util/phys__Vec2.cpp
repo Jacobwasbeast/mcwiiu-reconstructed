@@ -1,83 +1,139 @@
 #include "game/util/phys__Vec2.hpp"
 
-#include <stddef.h>
+#include <math.h>
 
 unsigned int TlsAlloc();
-int TlsSetValue(unsigned int index, void* pValue);
 void* TlsGetValue(unsigned int index);
+void TlsSetValue(unsigned int index, void* value);
 
-namespace phys
+static const int TEMP_POOL_SIZE = 1024;
+
+static unsigned int sThreadStorageTlsIndex;
+static phys::Vec2::ThreadStorage* sDefaultThreadStorage;
+
+phys::Vec2::ThreadStorage::ThreadStorage()
 {
-
-static const int VEC2_POOL_SIZE = 1024;
-
-static unsigned int g_vec2TlsIndex = 0;
-static Vec2::ThreadStorage* g_pDefaultThreadStorage = NULL;
-
-Vec2::ThreadStorage::ThreadStorage()
-{
-    m_pPool = new Vec2[VEC2_POOL_SIZE];
-    m_nextIndex = 0;
+    mPool = new Vec2[TEMP_POOL_SIZE];
+    mNextIndex = 0;
 }
 
-Vec2::ThreadStorage::~ThreadStorage()
+phys::Vec2::ThreadStorage::~ThreadStorage()
 {
-    delete[] m_pPool;
+    delete[] mPool;
 }
 
-void Vec2::CreateNewThreadStorage()
+void phys::Vec2::CreateNewThreadStorage()
 {
-    ThreadStorage* pStorage = new ThreadStorage();
+    ThreadStorage* storage = new ThreadStorage();
 
-    if (g_pDefaultThreadStorage == NULL)
+    if (sDefaultThreadStorage == NULL)
     {
-        g_vec2TlsIndex = TlsAlloc();
-        g_pDefaultThreadStorage = pStorage;
+        sThreadStorageTlsIndex = TlsAlloc();
+        sDefaultThreadStorage = storage;
     }
 
-    TlsSetValue(g_vec2TlsIndex, pStorage);
+    TlsSetValue(sThreadStorageTlsIndex, storage);
 }
 
-void Vec2::UseDefaultThreadStorage()
+void phys::Vec2::UseDefaultThreadStorage()
 {
-    TlsSetValue(g_vec2TlsIndex, g_pDefaultThreadStorage);
+    TlsSetValue(sThreadStorageTlsIndex, sDefaultThreadStorage);
 }
 
-void Vec2::ReleaseThreadStorage()
+void phys::Vec2::ReleaseThreadStorage()
 {
-    ThreadStorage* pStorage = (ThreadStorage*)TlsGetValue(g_vec2TlsIndex);
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
 
-    if (pStorage != g_pDefaultThreadStorage)
+    if (storage != sDefaultThreadStorage)
     {
-        delete pStorage;
+        delete storage;
     }
 }
 
-Vec2::Vec2(float x, float y)
+phys::Vec2::Vec2(float x, float y)
+    : x(x), y(y)
 {
-    this->x = x;
-    this->y = y;
 }
 
-Vec2* Vec2::newTemp(float x, float y)
+phys::Vec2* phys::Vec2::newPermanent(float x, float y)
 {
-    ThreadStorage* pStorage = (ThreadStorage*)TlsGetValue(g_vec2TlsIndex);
-
-    Vec2* pResult = &pStorage->m_pPool[pStorage->m_nextIndex];
-    pStorage->m_nextIndex = (pStorage->m_nextIndex + 1) & (VEC2_POOL_SIZE - 1);
-
-    pResult->x = x;
-    pResult->y = y;
-
-    return pResult;
+    return new Vec2(x, y);
 }
 
-float Vec2::distanceToSqr(Vec2* other)
+void phys::Vec2::clearPool()
 {
-    float dx = other->x - x;
-    float dy = other->y - y;
-
-    return dx * dx + dy * dy;
 }
 
+void phys::Vec2::resetPool()
+{
+}
+
+phys::Vec2* phys::Vec2::newTemp(float x, float y)
+{
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
+
+    Vec2* vec = &storage->mPool[storage->mNextIndex];
+    vec->x = x;
+    vec->y = y;
+    storage->mNextIndex = (storage->mNextIndex + 1) & (TEMP_POOL_SIZE - 1);
+
+    return vec;
+}
+
+phys::Vec2* phys::Vec2::scale(float factor)
+{
+    return newTemp(x * factor, y * factor);
+}
+
+double phys::Vec2::dot(Vec2* other)
+{
+    return (double)(x * other->x + y * other->y);
+}
+
+phys::Vec2* phys::Vec2::add(Vec2* other)
+{
+    return newTemp(x + other->x, y + other->y);
+}
+
+phys::Vec2* phys::Vec2::add(float value)
+{
+    return newTemp(x + value, y + value);
+}
+
+bool phys::Vec2::equals(Vec2* other)
+{
+    return other->x == x && other->y == y;
+}
+
+phys::Vec2* phys::Vec2::normalized()
+{
+    double len = length();
+
+    if (len < 1.0E-4)
+    {
+        return newTemp(0.0f, 0.0f);
+    }
+
+    return newTemp((float)(x / len), (float)(y / len));
+}
+
+double phys::Vec2::length()
+{
+    return sqrt((double)(x * x + y * y));
+}
+
+double phys::Vec2::lengthSquared()
+{
+    return (double)(x * x + y * y);
+}
+
+phys::Vec2* phys::Vec2::negated()
+{
+    return newTemp(-x, -y);
+}
+
+double phys::Vec2::distanceToSqr(Vec2* other)
+{
+    return (double)((other->x - x) * (other->x - x) +
+                    (other->y - y) * (other->y - y));
 }

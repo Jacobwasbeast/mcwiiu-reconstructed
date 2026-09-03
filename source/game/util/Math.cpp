@@ -26,7 +26,15 @@ int Math::_max(int a, int b) {
     return (a >= b) ? a : b;
 }
 
+float Math::_max(float a, float b) {
+    return (a >= b) ? a : b;
+}
+
 int Math::_min(int a, int b) {
+    return (a <= b) ? a : b;
+}
+
+float Math::_min(float a, float b) {
     return (a <= b) ? a : b;
 }
 

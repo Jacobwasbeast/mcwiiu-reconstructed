@@ -9,10 +9,10 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-class Level;
-class MutableBlockPos;
-class PathNavigation;
-class PathfinderMob;
+#include "game/world/Level.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 
 static const float PI = 3.1415927f;
 static const float HALF_PI = 1.5707964f;
