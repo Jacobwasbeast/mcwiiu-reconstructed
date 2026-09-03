@@ -5,7 +5,7 @@
 #include "game/core/InteractionResult.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/ItemInstance.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"

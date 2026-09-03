@@ -42,7 +42,7 @@ public:
 
     const Item::Tier* getTier();
 
-private:
+protected:
     void _init(float attackDamage, float attackSpeed, arrayWithLength<Block*> blocks);
 
     arrayWithLength<Block*> mBlocks;

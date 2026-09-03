@@ -10,7 +10,7 @@ ItemStat::~ItemStat()
 {
 }
 
-int ItemStat::getItemId()
+uint32_t ItemStat::getItemId()
 {
     return this->itemId;
 }

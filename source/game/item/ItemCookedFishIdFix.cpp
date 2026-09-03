@@ -5,6 +5,7 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+
 static const ResourceLocation COOKED_FISH_ID(L"cooked_fished");
 
 ItemCookedFishIdFix::~ItemCookedFishIdFix()

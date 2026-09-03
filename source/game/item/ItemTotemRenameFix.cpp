@@ -1,9 +1,5 @@
 #include "game/item/ItemTotemRenameFix.hpp"
 
-#include <string>
-
-#include "game/data/CompoundTag.hpp"
-
 ItemTotemRenameFix::~ItemTotemRenameFix()
 {
 }

@@ -1,7 +1,5 @@
 #include "game/item/ItemWrittenBookPagesStrictJsonFix.hpp"
 
-#include "game/data/CompoundTag.hpp"
-
 ItemWrittenBookPagesStrictJsonFix::~ItemWrittenBookPagesStrictJsonFix()
 {
 }

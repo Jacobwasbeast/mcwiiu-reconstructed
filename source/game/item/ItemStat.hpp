@@ -2,6 +2,7 @@
 #define GAME_ITEM_ITEMSTAT_HPP
 
 #include <string>
+#include <stdint.h>
 
 #include "game/core/Stat.hpp"
 
@@ -11,7 +12,7 @@ public:
     ItemStat(int id, const std::wstring& name, int itemId);
     virtual ~ItemStat();
 
-    int getItemId();
+    uint32_t getItemId();
 
     ItemStat* setExtended();
 

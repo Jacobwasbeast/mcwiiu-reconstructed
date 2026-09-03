@@ -1,5 +1,17 @@
 #include "game/item/SweepingEdgeEnchantment.hpp"
 
+#include "game/item/EnchantmentCategory.hpp"
+
+SweepingEdgeEnchantment::SweepingEdgeEnchantment(const Rarity* rarity, arrayWithLength<const EquipmentSlot*> slots)
+    : Enchantment(rarity, EnchantmentCategory::WEAPON, slots)
+{
+}
+
+float SweepingEdgeEnchantment::getSweepingDamageRatio(int level)
+{
+    return 1.0f - 1.0f / static_cast<float>(level + 1);
+}
+
 int SweepingEdgeEnchantment::getMaxLevel()
 {
     return 3;

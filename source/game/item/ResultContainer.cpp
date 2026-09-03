@@ -1,0 +1,115 @@
+#include "game/item/ResultContainer.hpp"
+
+#include "game/item/ContainerHelper.hpp"
+
+ResultContainer::ResultContainer()
+{
+    items = NonNullList<not_null_ptr<ItemInstance> >::withSize(1, not_null_ptr<ItemInstance>());
+}
+
+ResultContainer::~ResultContainer()
+{
+}
+
+unsigned int ResultContainer::getContainerSize()
+{
+    return 1;
+}
+
+bool ResultContainer::isEmpty()
+{
+    return false;
+}
+
+not_null_ptr<ItemInstance> ResultContainer::getItem(unsigned int slot)
+{
+    return items[0];
+}
+
+not_null_ptr<ItemInstance> ResultContainer::removeItem(unsigned int slot, int count)
+{
+    return ContainerHelper::takeItem(items, 0);
+}
+
+not_null_ptr<ItemInstance> ResultContainer::removeItemNoUpdate(int slot)
+{
+    return ContainerHelper::takeItem(items, 0);
+}
+
+void ResultContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> itemInstance)
+{
+    items[0] = itemInstance;
+}
+
+int ResultContainer::getMaxStackSize()
+{
+    return 64;
+}
+
+void ResultContainer::setChanged()
+{
+}
+
+bool ResultContainer::stillValid(boost::shared_ptr<Player> player)
+{
+    return true;
+}
+
+void ResultContainer::startOpen(boost::shared_ptr<Player> player)
+{
+}
+
+void ResultContainer::stopOpen(boost::shared_ptr<Player> player)
+{
+}
+
+bool ResultContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> itemInstance)
+{
+    return true;
+}
+
+int ResultContainer::getContainerData(int id)
+{
+    return 0;
+}
+
+void ResultContainer::setContainerData(int id, int value)
+{
+}
+
+int ResultContainer::getContainerDataCount()
+{
+    return 0;
+}
+
+void ResultContainer::clearContent()
+{
+    for (unsigned int slot = 0; slot < items.size(); ++slot)
+    {
+        items[slot] = not_null_ptr<ItemInstance>();
+    }
+}
+
+std::wstring ResultContainer::getName()
+{
+    return std::wstring();
+}
+
+std::wstring ResultContainer::getCustomName()
+{
+    return std::wstring();
+}
+
+bool ResultContainer::hasCustomName()
+{
+    return false;
+}
+
+std::wstring ResultContainer::getDisplayName()
+{
+    if (hasCustomName())
+    {
+        return getCustomName();
+    }
+    return getName();
+}

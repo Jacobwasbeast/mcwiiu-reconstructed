@@ -1,7 +1,18 @@
 #include "game/item/Potions.hpp"
 
 #include "game/item/Potion.hpp"
+#include "game/world/block/SimpleRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"
+
+struct ResourceLocationHash
+{
+    std::size_t operator()(const ResourceLocation& value) const { return value.hashCode(); }
+};
+
+struct ResourceLocationEqual
+{
+    bool operator()(const ResourceLocation& a, const ResourceLocation& b) const { return a == b; }
+};
 
 Potion* Potions::EMPTY = NULL;
 Potion* Potions::WATER = NULL;

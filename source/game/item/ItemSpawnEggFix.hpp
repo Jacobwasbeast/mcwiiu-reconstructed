@@ -15,7 +15,7 @@ public:
 
     virtual ~ItemSpawnEggFix();
     virtual int getVersion();
-    virtual CompoundTag* fix(CompoundTag* tag);
+    virtual CompoundTag* fix(CompoundTag* item);
 
 private:
     boost::unordered_map<int, std::wstring> mEntityNames;

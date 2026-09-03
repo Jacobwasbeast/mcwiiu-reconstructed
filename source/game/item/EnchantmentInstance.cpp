@@ -13,3 +13,8 @@ EnchantmentInstance::EnchantmentInstance(Enchantment* enchantment, int level)
 EnchantmentInstance::~EnchantmentInstance()
 {
 }
+
+EnchantmentInstance* EnchantmentInstance::copy()
+{
+    return new EnchantmentInstance(enchantment, level);
+}

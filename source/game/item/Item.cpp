@@ -62,7 +62,7 @@
 #include "game/item/Items.hpp"
 #include "game/item/LeadItem.hpp"
 #include "game/item/MapItem.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/MinecartItem.hpp"
 #include "game/item/NameTagItem.hpp"
 #include "game/item/PickaxeItem.hpp"
@@ -91,8 +91,8 @@
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockPlanterItem.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/CoralFanBlockItem.hpp"
+#include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/block/DirtBlock.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
 #include "game/world/block/FlowerBlock.hpp"
@@ -126,8 +126,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/util/Random.hpp"
 
-Random* Item::random = new Random();
-
 MappedRegistry<ResourceLocation,
                Item*,
                boost::hash<ResourceLocation>,
@@ -136,6 +134,8 @@ MappedRegistry<ResourceLocation,
                std::equal_to<Item*> > Item::itemRegistry;
 
 boost::unordered_map<Block*, Item*> Item::BLOCK_TO_ITEM;
+
+static const std::wstring LEATHER_HORSE_ARMOR_ICON_NAME = L"_brown";
 
 static const ItemPropertyFunction* DAMAGED_PROPERTY = new ItemPropertyFunction_Damaged();
 static const ItemPropertyFunction* DAMAGE_PROPERTY = new ItemPropertyFunction_Damage();
@@ -147,6 +147,8 @@ const Item::Tier* Item::Tier::STONE = new Item::Tier(1, 131, 4.0f, 1.0f, 5, 1);
 const Item::Tier* Item::Tier::IRON = new Item::Tier(2, 250, 6.0f, 2.0f, 14, 2);
 const Item::Tier* Item::Tier::DIAMOND = new Item::Tier(3, 1561, 8.0f, 3.0f, 10, 3);
 const Item::Tier* Item::Tier::GOLD = new Item::Tier(0, 32, 12.0f, 0.0f, 22, 4);
+
+Random* Item::random = new Random();
 
 static const int LOG_BLOCK_NAME_IDS[] = {
     193272833, 2105997958, -1148785882, 1667069235, -249805404, -1736886430
@@ -254,6 +256,26 @@ Item* Item::Tier::getTierItem() const
     }
 
     return Items::diamond;
+}
+
+int Item::Tier::ordinal() const
+{
+    return mOrdinal;
+}
+
+Material* Item::getMaterial()
+{
+    return mMaterial;
+}
+
+bool Item::IsShulkerBox(int id)
+{
+    return id >= 219 && id <= 234;
+}
+
+bool Item::IsShulkerBox(Item* item)
+{
+    return item != NULL && IsShulkerBox(getId(item));
 }
 
 Item::Item()
@@ -1441,7 +1463,7 @@ void Item::staticCtor()
     registerBlock(Blocks::concrete_powder,
         (new MultiBlockItem(Blocks::concrete_powder, Blocks::concrete_powder, ConcretePowderBlockNameResolver, NULL))->setDescriptionId(Blocks::concrete_powder->getDescriptionId(-1)));
 
-    registerBlock(Blocks::blue_ice);
+    registerBlock(Blocks::turtle_egg);
     registerBlock(Blocks::conduit);
     registerBlock(Blocks::kelp);
     registerBlock(Blocks::coral_block,
@@ -1461,15 +1483,15 @@ void Item::staticCtor()
     registerBlock(Blocks::sea_pickle,
         new SeaPickleBlockItem(Blocks::sea_pickle));
 
-    registerBlock(Blocks::turtle_egg);
+    registerBlock(Blocks::blue_ice);
     registerBlock(Blocks::prismarine_stairs);
     registerBlock(Blocks::prismarine_bricks_stairs);
     registerBlock(Blocks::dark_prismarine_stairs);
-    registerBlock(Blocks::prismarine_slab,
-        (new SlabBlockItem(Blocks::prismarine_slab, Blocks::prismarine_double_slab, Blocks::prismarine_slab))->setDescriptionId(Blocks::prismarine_slab->getDescriptionId(-1)));
-
     registerBlock(Blocks::prismarine_double_slab,
-        (new SlabBlockItem(Blocks::prismarine_double_slab, Blocks::prismarine_double_slab, Blocks::prismarine_slab))->setDescriptionId(Blocks::prismarine_double_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::prismarine_double_slab, Blocks::prismarine_slab, Blocks::prismarine_double_slab))->setDescriptionId(Blocks::prismarine_double_slab->getDescriptionId(-1)));
+
+    registerBlock(Blocks::prismarine_slab,
+        (new SlabBlockItem(Blocks::prismarine_slab, Blocks::prismarine_slab, Blocks::prismarine_double_slab))->setDescriptionId(Blocks::prismarine_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::stripped_log_spruce);
     registerBlock(Blocks::stripped_log_birch);
@@ -2072,7 +2094,7 @@ void Item::staticCtor()
         (new BoatItem(Boat::DARK_OAK))->setIconName(L"dark_oak_boat")->setBaseItemTypeAndMaterial(55, 68)->setDescriptionId(1902358143, -1945089519));
 
     registerItem(449, L"totem_of_undying",
-        (new Item())->setIconName(L"totem")->setDescriptionId(-1260771194, 62317706)->setMaxStackSize(1)->setAllowOffhand(true));
+        (new Item())->setIconName(L"totem")->setDescriptionId(-1260771194, 62252682)->setMaxStackSize(1)->setAllowOffhand(true));
 
     registerItem(450, L"shulker_shell",
         (new Item())->setIconName(L"shulker_shell")->setDescriptionId(455410489, 1410415045));
@@ -2085,7 +2107,7 @@ void Item::staticCtor()
     leatherHorseArmorDefense[1] = 210;
 
     registerItem(453, L"leather_horse_armor",
-        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(HorseArmorItem::LEATHER_HORSE_ARMOR_DETAIL)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(-589754835, 1101207137));
+        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(LEATHER_HORSE_ARMOR_ICON_NAME)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(-589754835, 1101207137));
 
     registerItem(454, L"trident",
         (new TridentItem())->setIconName(L"trident")->setDescriptionId(-743557846, 412175972));

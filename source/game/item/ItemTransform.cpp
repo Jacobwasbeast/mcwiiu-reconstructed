@@ -1,7 +1,5 @@
 #include "game/item/ItemTransform.hpp"
 
-#include "game/core/Mth.hpp"
-
 ItemTransform::ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, bool clampValues)
 {
     this->rotation = rotation;
@@ -10,13 +8,21 @@ ItemTransform::ItemTransform(Vector3f rotation, Vector3f translation, Vector3f s
 
     if (clampValues)
     {
-        this->translation.x = Mth::clamp(translation.x * 0.0625f, -5.0f, 5.0f);
-        this->translation.y = Mth::clamp(translation.y * 0.0625f, -5.0f, 5.0f);
-        this->translation.z = Mth::clamp(translation.z * 0.0625f, -5.0f, 5.0f);
+        float value;
 
-        this->scale.x = Mth::clamp(scale.x, -4.0f, 4.0f);
-        this->scale.y = Mth::clamp(scale.y, -4.0f, 4.0f);
-        this->scale.z = Mth::clamp(scale.z, -4.0f, 4.0f);
+        value = translation.x * 0.0625f;
+        this->translation.x = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
+        value = translation.y * 0.0625f;
+        this->translation.y = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
+        value = translation.z * 0.0625f;
+        this->translation.z = value < -5.0f ? -5.0f : value > 5.0f ? 5.0f : value;
+
+        value = scale.x;
+        this->scale.x = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
+        value = scale.y;
+        this->scale.y = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
+        value = scale.z;
+        this->scale.z = value < -4.0f ? -4.0f : value > 4.0f ? 4.0f : value;
     }
 }
 

@@ -89,16 +89,16 @@ int ItemSpawnEggFix::getVersion()
     return 105;
 }
 
-CompoundTag* ItemSpawnEggFix::fix(CompoundTag* tag)
+CompoundTag* ItemSpawnEggFix::fix(CompoundTag* item)
 {
-    if (!CheckID(tag, L"minecraft:spawn_egg"))
+    if (!CheckID(item, L"minecraft:spawn_egg"))
     {
-        return tag;
+        return item;
     }
 
-    CompoundTag* itemTag = tag->getCompound(L"tag");
+    CompoundTag* itemTag = item->getCompound(L"tag");
     CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
-    short damage = tag->getShort(L"Damage");
+    short damage = item->getShort(L"Damage");
 
     if (!entityTag->contains(L"id", 8))
     {
@@ -113,14 +113,14 @@ CompoundTag* ItemSpawnEggFix::fix(CompoundTag* tag)
         {
             entityTag->putString(L"id", entity->second);
             itemTag->put(L"EntityTag", entityTag);
-            tag->put(L"tag", itemTag);
+            item->put(L"tag", itemTag);
         }
     }
 
     if (damage != 0)
     {
-        tag->putShort(L"Damage", 0);
+        item->putShort(L"Damage", 0);
     }
 
-    return tag;
+    return item;
 }

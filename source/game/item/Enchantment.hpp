@@ -10,6 +10,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include "game/core/HtmlString.hpp"
+#include "game/core/Rarity.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
