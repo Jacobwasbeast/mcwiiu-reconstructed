@@ -1,0 +1,46 @@
+#ifndef GAME_WORLD_GENERATION_STRUCTUREFEATUREIO_HPP
+#define GAME_WORLD_GENERATION_STRUCTUREFEATUREIO_HPP
+
+#include <string>
+
+#include <boost/unordered_map.hpp>
+
+#include "game/world/generation/StructurePiece.hpp"
+#include "game/world/generation/StructureStart.hpp"
+
+class ByteArrayTag;
+class CompoundTag;
+class DataInputStream;
+class Level;
+
+class StructureFeatureIO
+{
+public:
+    typedef StructureStart* (*StructureStartFactory)();
+    typedef StructurePiece* (*StructurePieceFactory)();
+
+    static void staticCtor();
+
+    static void setStartId(EStructureStart id, StructureStartFactory factory, const std::wstring& name);
+    static void setPieceId(EStructurePiece id, StructurePieceFactory factory, const std::wstring& name);
+
+    static int getVersion();
+
+    static std::wstring getEncodeId(StructureStart* start);
+    static std::wstring getEncodeId(StructurePiece* piece);
+
+    static StructureStart* loadStaticStart(CompoundTag* tag, Level* level);
+    static StructureStart* loadStaticStart(ByteArrayTag* tag, Level* level);
+
+    static StructurePiece* loadStaticPiece(CompoundTag* tag, Level* level);
+    static StructurePiece* loadStaticPiece(DataInputStream* input, Level* level);
+
+private:
+    static boost::unordered_map<std::wstring, StructureStartFactory> startFactories;
+    static boost::unordered_map<unsigned int, std::wstring> startIds;
+    static boost::unordered_map<std::wstring, StructurePieceFactory> pieceFactories;
+    static boost::unordered_map<unsigned int, std::wstring> pieceIds;
+    static int version;
+};
+
+#endif

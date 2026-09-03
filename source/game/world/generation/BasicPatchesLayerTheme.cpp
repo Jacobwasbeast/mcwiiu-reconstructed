@@ -1,27 +1,34 @@
-#include <algorithm>
-#include <cstddef>
-
 #include "game/world/generation/BasicPatchesLayerTheme.hpp"
 
-BasicPatchesLayerTheme::BasicPatchesLayerTheme(unsigned int uSeed,
-                                               double dNoiseScale,
-                                               int iPatchDepth,
-                                               const std::vector<const BlockState*>& patchBlocks,
-                                               float fPatchThreshold)
-    : RandomPatchesLayerTheme(uSeed, dNoiseScale),
-      m_fPatchThreshold(fPatchThreshold),
-      m_iPatchDepth(iPatchDepth),
-      m_apPatchBlocks(patchBlocks)
+#include "game/util/Random.hpp"
+
+BasicPatchesLayerTheme::BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth, const std::vector<const BlockState*>& blocks, float noiseThreshold)
+    : RandomPatchesLayerTheme(seed, noiseScale)
+    , mNoiseThreshold(noiseThreshold)
+    , mDepth(depth)
+    , mBlocks(blocks)
 {
 }
 
-const BlockState* BasicPatchesLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
+const BlockState* BasicPatchesLayerTheme::BlockAt(Random&, float noise, int heightAboveSurface, bool isAir) const
 {
-    if (fNoise <= m_fPatchThreshold && iHeightAboveSurface <= m_iPatchDepth)
+    if (noise <= mNoiseThreshold || heightAboveSurface > mDepth)
     {
-        int iIndex = m_iPatchDepth - iHeightAboveSurface;
-        return m_apPatchBlocks.at(std::min(static_cast<int>(m_apPatchBlocks.size()) - 1, iIndex));
+        return 0;
     }
-
-    return NULL;
+    if (mBlocks.empty())
+    {
+        return 0;
+    }
+    int index = static_cast<int>(mBlocks.size()) - 1;
+    const int depth = mDepth - heightAboveSurface;
+    if (depth < index)
+    {
+        index = depth;
+    }
+    if (index < 0)
+    {
+        return 0;
+    }
+    return mBlocks.at(static_cast<std::vector<const BlockState*>::size_type>(index));
 }

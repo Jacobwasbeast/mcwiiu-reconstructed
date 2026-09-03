@@ -84,3 +84,13 @@ int IQNetPlayer::GetUserIndex()
 {
     return this - s_localPlayers;
 }
+
+void IQNetPlayer::SetCustomDataValue(unsigned long customDataValue)
+{
+    m_customDataValue = customDataValue;
+}
+
+unsigned long IQNetPlayer::GetCustomDataValue()
+{
+    return m_customDataValue;
+}

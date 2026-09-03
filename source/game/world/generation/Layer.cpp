@@ -1,6 +1,5 @@
 #include "game/world/generation/Layer.hpp"
 
-#include "game/world/LevelType.hpp"
 #include "game/world/biome/Biome.hpp"
 
 Layer::Layer(long long seed)

@@ -72,6 +72,16 @@ StructureTemplate::~StructureTemplate()
     }
 }
 
+void StructureTemplate::setAuthor(const std::wstring& author)
+{
+    mAuthor = author;
+}
+
+std::wstring StructureTemplate::getAuthor()
+{
+    return mAuthor;
+}
+
 BlockPos StructureTemplate::getSize() const
 {
     return mSize;
@@ -114,6 +124,23 @@ BlockPos StructureTemplate::transform(const BlockPos& pos, Mirror* mirror, Rotat
     default:
         return mirrored ? BlockPos(x, y, z) : pos;
     }
+}
+
+BlockPos StructureTemplate::transform(const BlockPos& pos, const Direction* direction)
+{
+    if (direction == Direction::NORTH)
+    {
+        return pos;
+    }
+    if (direction == Direction::SOUTH)
+    {
+        return BlockPos(-pos.x, pos.y, -pos.z);
+    }
+    if (direction == Direction::WEST)
+    {
+        return BlockPos(pos.z, pos.y, -pos.x);
+    }
+    return BlockPos(-pos.z, pos.y, pos.x);
 }
 
 BlockPos StructureTemplate::calculateRelativePosition(const StructurePlaceSettings* settings, const BlockPos& pos)

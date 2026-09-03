@@ -43,6 +43,11 @@ std::wstring StructureFeatureSavedData::createFeatureTagId(int chunkX, int chunk
     return L"[" + _toString(chunkX) + L"," + _toString(chunkZ) + L"]";
 }
 
+arrayWithLength<unsigned char> StructureFeatureSavedData::getFeatureTag(int chunkX, int chunkZ)
+{
+    return mFullTag->getByteArray(createFeatureTagId(chunkX, chunkZ));
+}
+
 void StructureFeatureSavedData::putFeatureTag(arrayWithLength<unsigned char> featureData, int chunkX, int chunkZ)
 {
     mFullTag->putByteArray(createFeatureTagId(chunkX, chunkZ), featureData);

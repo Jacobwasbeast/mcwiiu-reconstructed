@@ -2,6 +2,16 @@
 
 #include "game/world/generation/RandomTowersLayerTheme.hpp"
 
+RandomTowersLayerTheme::RandomTowersLayerTheme(unsigned int uSeed,
+                                               double dNoiseScale,
+                                               double dTowerThreshold,
+                                               const std::vector<const BlockState*>& towerBlocks)
+    : RandomPatchesLayerTheme(uSeed, dNoiseScale),
+      m_dTowerThreshold(dTowerThreshold),
+      m_apTowerBlocks(towerBlocks)
+{
+}
+
 const BlockState* RandomTowersLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
 {
     if (fNoise < m_dTowerThreshold && iHeightAboveSurface < 2)

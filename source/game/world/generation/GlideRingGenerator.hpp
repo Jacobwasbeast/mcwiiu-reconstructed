@@ -2,6 +2,7 @@
 #define GAME_WORLD_GENERATION_GLIDERINGGENERATOR_HPP
 
 #include <vector>
+#include <string>
 
 #include "game/world/block/BlockPos.hpp"
 

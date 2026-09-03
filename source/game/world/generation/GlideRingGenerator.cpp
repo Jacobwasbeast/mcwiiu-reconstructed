@@ -6,11 +6,11 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 
-static const int GLIDE_RING_CORNER_COUNTS[GlideRingGenerator::eGlideRingSize_Count] = { 0, 1, 3 };
-static const int GLIDE_RING_EDGE_RADIUS[GlideRingGenerator::eGlideRingSize_Count] = { 2, 3, 4 };
-static const int GLIDE_RING_CORNER_RADIUS[GlideRingGenerator::eGlideRingSize_Count] = { 0, 2, 3 };
-static const int GLIDE_RING_EDGE_OFFSETS[3] = { -1, 0, 1 };
-static const int GLIDE_RING_CORNER_OFFSETS[3] = { -2, -3, 2 };
+static const int GLIDE_RING_CORNER_COUNTS[GlideRingGenerator::eGlideRingSize_Count] = {0, 1, 3};
+static const int GLIDE_RING_EDGE_RADIUS[GlideRingGenerator::eGlideRingSize_Count] = {2, 3, 4};
+static const int GLIDE_RING_CORNER_RADIUS[GlideRingGenerator::eGlideRingSize_Count] = {0, 2, 3};
+static const int GLIDE_RING_EDGE_OFFSETS[3] = {-1, 0, 1};
+static const int GLIDE_RING_CORNER_OFFSETS[3] = {-2, -3, 2};
 
 static TextureAtlasSprite* GLIDE_RING_ICONS[GlideRingGenerator::eGlideRingSize_Count];
 

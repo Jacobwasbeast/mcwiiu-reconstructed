@@ -7,8 +7,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 
-class Blocks;
-
 const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState);
 
 RandomPatchesLayerTheme::RandomPatchesLayerTheme(unsigned int uSeed, double dNoiseScale)
@@ -69,7 +67,7 @@ void RandomPatchesLayerTheme::Apply(Random& random, BlockTransaction* pTransacti
                 Vec3i vPos(iX, iY, iZ);
                 Block* pBlock = Block::byId(pTransaction->getBlock(vPos));
                 const BlockState* pExistingState = pBlock->getBlockState(pTransaction->getData(vPos));
-                bool bIsAir = pBlock == Blocks::AIR;
+                bool bIsAir = pBlock == Block::byId(0);
 
                 const BlockState* pState = BlockAt(random, fNoise, iY - iSurfaceY, bIsAir);
                 if (pState != NULL)

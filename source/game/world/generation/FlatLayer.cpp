@@ -2,6 +2,11 @@
 
 #include "game/core/IntCache.hpp"
 
+FlatLayer::FlatLayer(int biome)
+    : Layer(0LL), biome(biome)
+{
+}
+
 FlatLayer::~FlatLayer()
 {
 }

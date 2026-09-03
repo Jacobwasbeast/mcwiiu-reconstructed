@@ -5,20 +5,18 @@
 
 #include "game/world/generation/RandomPatchesLayerTheme.hpp"
 
+class BlockState;
+
 class BasicPatchesLayerTheme : public RandomPatchesLayerTheme
 {
 public:
-    BasicPatchesLayerTheme(unsigned int uSeed,
-                           double dNoiseScale,
-                           int iPatchDepth,
-                           const std::vector<const BlockState*>& patchBlocks,
-                           float fPatchThreshold);
+    BasicPatchesLayerTheme(unsigned int seed, double noiseScale, int depth, const std::vector<const BlockState*>& blocks, float noiseThreshold);
+    virtual const BlockState* BlockAt(Random& random, float noise, int heightAboveSurface, bool isAir) const;
 
-    virtual const BlockState* BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const;
-
-    float m_fPatchThreshold;
-    int m_iPatchDepth;
-    std::vector<const BlockState*> m_apPatchBlocks;
+private:
+    float mNoiseThreshold;
+    int mDepth;
+    std::vector<const BlockState*> mBlocks;
 };
 
 #endif
