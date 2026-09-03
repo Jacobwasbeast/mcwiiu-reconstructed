@@ -4,7 +4,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/IdMapper.hpp"
-#include "game/world/block/Material.hpp"
 
 ChunkPrimer::ChunkPrimer(bool ownsElementIds, arrayWithLength<unsigned short> elementIds)
 {
@@ -46,7 +45,7 @@ void ChunkPrimer::setState(int index, const BlockState* state)
 
     if (state != NULL)
     {
-        elementId = Block::blockStateRegistry->getId(state);
+        elementId = (unsigned short)Block::blockStateRegistry->getId(state);
     }
 
     mElementIds.data[index] = elementId;
@@ -62,7 +61,7 @@ void ChunkPrimer::setState(int index, const BlockState* state)
 
         if (y + 1 > mEmissiveMaxHeight)
         {
-            mEmissiveMaxHeight = y + 1;
+            mEmissiveMaxHeight = (unsigned short)(y + 1);
         }
     }
 }
@@ -99,7 +98,7 @@ void ChunkPrimer::setBlockAndData(int index, int blockId, int blockData)
 
         if (y + 1 > mEmissiveMaxHeight)
         {
-            mEmissiveMaxHeight = y + 1;
+            mEmissiveMaxHeight = (unsigned short)(y + 1);
         }
     }
 }
@@ -121,11 +120,11 @@ unsigned short ChunkPrimer::getEmissiveMaxHeight()
 
 int ChunkPrimer::getHighestNonAirPos(int x, int z)
 {
-    int index = ((x << 11) | (z << 7)) + 127;
+    int columnTop = ((x << 11) | (z << 7)) + 127;
 
     for (int y = 127; y >= 0; y--)
     {
-        if (Block::byId(mElementIds.data[index + y] >> 4) != Blocks::AIR)
+        if (Block::byId(mElementIds.data[columnTop + y] >> 4) != Blocks::AIR)
         {
             return y;
         }
@@ -136,13 +135,14 @@ int ChunkPrimer::getHighestNonAirPos(int x, int z)
 
 int ChunkPrimer::getHighestSolidPos(int x, int z)
 {
-    int index = ((x << 11) | (z << 7)) + 127;
+    int columnTop = ((x << 11) | (z << 7)) + 127;
 
     for (int y = 127; y >= 0; y--)
     {
-        Material* material = Block::byId(mElementIds.data[index + y] >> 4)->getCraftingMaterial();
+        Block* block = Block::byId(mElementIds.data[columnTop + y] >> 4);
+        const BlockState* state = block->defaultBlockState();
 
-        if (material->blocksMotion() && material != Material::LEAVES)
+        if (state->isSolidRender() && block != Blocks::AIR)
         {
             return y;
         }

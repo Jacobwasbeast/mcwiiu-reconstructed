@@ -5,7 +5,7 @@
 #include "game/client/render/LevelRenderer.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"

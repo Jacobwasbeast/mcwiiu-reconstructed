@@ -6,7 +6,7 @@
 
 ActiveChunkBoundsChecker::ActiveChunkBoundsChecker()
 {
-    mCacheBitCount = CHUNK_CACHE_BITS;
+    mCacheBitCount = CHUNK_CACHE_BIT_COUNT;
     mCacheEvaluated = new unsigned char[CHUNK_CACHE_BYTES];
     mCacheResult = new unsigned char[mCacheBitCount / 8];
     memset(mCacheEvaluated, 0, mCacheBitCount / 8);
@@ -41,7 +41,7 @@ bool ActiveChunkBoundsChecker::IsChunkWithinActiveArea(int chunkX, int chunkZ, c
 {
     int cacheByte = 0;
     unsigned char cacheMask = 0;
-    bool withinBounds = false;
+    bool isWithinActiveArea = false;
 
     if (mCacheActive)
     {
@@ -71,9 +71,9 @@ bool ActiveChunkBoundsChecker::IsChunkWithinActiveArea(int chunkX, int chunkZ, c
         for (std::vector<AABB*>::const_iterator it = activeBounds.begin(); it != activeBounds.end(); ++it)
         {
             const AABB* bounds = *it;
-            withinBounds = bounds->mMinX <= chunkX && chunkX <= bounds->mMaxX &&
+            isWithinActiveArea = bounds->mMinX <= chunkX && chunkX <= bounds->mMaxX &&
                            bounds->mMinZ <= chunkZ && chunkZ <= bounds->mMaxZ;
-            if (withinBounds)
+            if (isWithinActiveArea)
             {
                 break;
             }
@@ -83,11 +83,11 @@ bool ActiveChunkBoundsChecker::IsChunkWithinActiveArea(int chunkX, int chunkZ, c
     if (mCacheActive)
     {
         mCacheEvaluated[cacheByte] |= cacheMask;
-        if (withinBounds)
+        if (isWithinActiveArea)
         {
             mCacheResult[cacheByte] |= cacheMask;
         }
     }
 
-    return withinBounds;
+    return isWithinActiveArea;
 }
