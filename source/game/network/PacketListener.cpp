@@ -1,5 +1,13 @@
 #include "game/network/PacketListener.hpp"
 
+template <typename T>
+static void dispatchUnhandled(PacketListener* listener, const boost::shared_ptr<T>& packet)
+{
+    boost::shared_ptr<void> holder(packet);
+    boost::shared_ptr<Packet> base(holder, static_cast<Packet*>(holder.get()));
+    listener->onUnhandledPacket(base);
+}
+
 PacketListener::~PacketListener()
 {
 }
@@ -7,6 +15,8 @@ PacketListener::~PacketListener()
 void PacketListener::onUnhandledPacket(boost::shared_ptr<Packet> packet)
 {
 }
+
+#define onUnhandledPacket(packet) dispatchUnhandled(this, packet)
 
 void PacketListener::onDisconnect(DisconnectPacket::eDisconnectReason reason, void* userData)
 {
@@ -644,3 +654,5 @@ bool PacketListener::isServerPacketListener()
 {
     return false;
 }
+
+#undef onUnhandledPacket

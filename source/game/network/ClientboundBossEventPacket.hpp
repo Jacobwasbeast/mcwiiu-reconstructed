@@ -1,6 +1,7 @@
 #ifndef GAME_NETWORK_CLIENTBOUNDBOSSEVENTPACKET_HPP
 #define GAME_NETWORK_CLIENTBOUNDBOSSEVENTPACKET_HPP
 
+#include <stdint.h>
 #include <string>
 
 #include <boost/enable_shared_from_this.hpp>

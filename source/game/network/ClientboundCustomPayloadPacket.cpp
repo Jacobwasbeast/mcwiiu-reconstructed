@@ -36,9 +36,8 @@ void ClientboundCustomPayloadPacket::read(DataInputStream* input)
     {
         delete[] data.data;
 
-        arrayWithLength<unsigned char> buffer(dataLength, true);
-        data = buffer;
-        input->readFully(buffer);
+        data = arrayWithLength<unsigned char>(dataLength, true);
+        input->readFully(data);
     }
 }
 

@@ -1,6 +1,5 @@
 #include "game/network/ClientGamePacketListener.hpp"
 
-#include "game/network/Packet.hpp"
 #include "game/network/BlockRegionUpdatePacket.hpp"
 #include "game/network/ClientboundAddEntityPacket.hpp"
 #include "game/network/ClientboundAddExperienceOrbPacket.hpp"
@@ -15,7 +14,6 @@
 #include "game/network/ClientboundBlockUpdatePacket.hpp"
 #include "game/network/ClientboundBossEventPacket.hpp"
 #include "game/network/ClientboundChangeDifficultyPacket.hpp"
-#include "game/network/ClientboundChatAutoCompletePacket.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/network/ClientboundChunkBlocksUpdatePacket.hpp"
 #include "game/network/ClientboundContainerAckPacket.hpp"

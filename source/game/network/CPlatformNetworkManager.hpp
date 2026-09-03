@@ -2,6 +2,7 @@
 #define GAME_NETWORK_CPLATFORMNETWORKMANAGER_HPP
 
 #include <string>
+#include "game/minigame/EMiniGameId.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,14 +12,7 @@
 class CGameNetworkManager;
 class ClientboundPreLoginPacket;
 class FriendSessionInfo;
-
-namespace nn
-{
-    namespace fp
-    {
-        struct FriendPresence;
-    }
-}
+struct FriendPresence;
 
 class CPlatformNetworkManager
 {
@@ -51,7 +45,7 @@ public:
     virtual bool ShouldMessageForFullSession() = 0;
     virtual INetworkPlayer* GetHostPlayer() = 0;
     virtual bool IsHost() = 0;
-    virtual bool JoinGameFromInviteInfo(int iUserIndex, int iUserIndexMask, const nn::fp::FriendPresence* pFriendPresence) = 0;
+    virtual bool JoinGameFromInviteInfo(int iUserIndex, int iUserIndexMask, const FriendPresence* pFriendPresence) = 0;
     virtual bool LeaveGame(bool bError) = 0;
     virtual bool IsInSession() = 0;
     virtual bool IsInGameplay() = 0;
@@ -98,7 +92,7 @@ public:
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* pSessionInfo, void (*pCallback)(bool, void*), void* pCallbackData) = 0;
     virtual void ForceFriendsSessionRefresh() = 0;
     virtual void ClearFriendsSessions() = 0;
-    virtual bool AlreadyInSession(const nn::fp::FriendPresence* pFriendPresence) = 0;
+    virtual bool AlreadyInSession(const FriendPresence* pFriendPresence) = 0;
     virtual bool GetAgeRestricted() = 0;
     virtual bool usingAdhocMode() = 0;
     virtual bool setAdhocMode(bool bAdhocMode) = 0;
@@ -111,7 +105,7 @@ public:
     virtual bool usingLanMode() = 0;
     virtual bool isLanConnected() = 0;
     virtual bool isLanModeChangeInProgress() = 0;
-    virtual bool checkValidInviteData(const nn::fp::FriendPresence* pFriendPresence) = 0;
+    virtual bool checkValidInviteData(const FriendPresence* pFriendPresence) = 0;
     virtual void SetExitAndJoinFromInviteInProgress(bool bInProgress) = 0;
     virtual void CancelDisconnectFromExitAndJoin() = 0;
     virtual void FakeLocalPlayerJoined();

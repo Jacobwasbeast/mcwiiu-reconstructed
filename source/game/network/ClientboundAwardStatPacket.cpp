@@ -2,7 +2,6 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
 ClientboundAwardStatPacket::ClientboundAwardStatPacket()
@@ -16,13 +15,16 @@ ClientboundAwardStatPacket::ClientboundAwardStatPacket(int statId, int count)
     *(int*)paramData.data = count;
 }
 
+ClientboundAwardStatPacket::ClientboundAwardStatPacket(int statId, arrayWithLength<unsigned char> paramData)
+{
+    this->statId = statId;
+    this->paramData = paramData;
+}
+
 ClientboundAwardStatPacket::~ClientboundAwardStatPacket()
 {
-    if (paramData.data != NULL)
-    {
-        delete[] paramData.data;
-        paramData.data = NULL;
-    }
+    delete[] paramData.data;
+    paramData.data = NULL;
 }
 
 int ClientboundAwardStatPacket::getPacketId()
@@ -33,9 +35,7 @@ int ClientboundAwardStatPacket::getPacketId()
 void ClientboundAwardStatPacket::read(DataInputStream* input)
 {
     statId = input->readInt();
-
-    int length = input->readInt();
-
+    unsigned int length = input->readInt();
     if (length > 0)
     {
         paramData = arrayWithLength<unsigned char>(length, true);
@@ -47,7 +47,6 @@ void ClientboundAwardStatPacket::write(DataOutputStream* output)
 {
     output->writeInt(statId);
     output->writeInt(paramData.length);
-
     if (paramData.length != 0)
     {
         output->writeBytes(paramData);
@@ -68,6 +67,11 @@ int ClientboundAwardStatPacket::getEstimatedSize()
 bool ClientboundAwardStatPacket::isAync()
 {
     return true;
+}
+
+int ClientboundAwardStatPacket::getCount()
+{
+    return *(int*)paramData.data;
 }
 
 arrayWithLength<unsigned char> ClientboundAwardStatPacket::getParamData()

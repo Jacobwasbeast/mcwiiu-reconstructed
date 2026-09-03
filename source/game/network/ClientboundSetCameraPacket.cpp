@@ -2,12 +2,17 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
 ClientboundSetCameraPacket::ClientboundSetCameraPacket()
+    : cameraId(0)
 {
-    cameraId = 0;
+}
+
+ClientboundSetCameraPacket::ClientboundSetCameraPacket(boost::shared_ptr<Entity> camera)
+    : cameraId(0)
+{
+    (void)camera;
 }
 
 ClientboundSetCameraPacket::~ClientboundSetCameraPacket()

@@ -2,7 +2,6 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/core/InteractionHand.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 

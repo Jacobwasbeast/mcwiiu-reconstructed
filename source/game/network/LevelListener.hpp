@@ -4,7 +4,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/audio/SoundSource.hpp"
-#include "game/client/render/ParticleType.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class BlockPos;
@@ -13,6 +12,7 @@ class Entity;
 class Level;
 class Player;
 class SoundEvent;
+enum ePARTICLE_TYPE : int;
 
 class LevelListener
 {

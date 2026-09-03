@@ -1,6 +1,5 @@
 #include "game/network/CPlatformNetworkManager.hpp"
-
-class CPlatformNetworkManagerNintendo;
+#include "platform/wiiu/CPlatformNetworkManagerNintendo.hpp"
 
 CPlatformNetworkManager* CPlatformNetworkManager::Create()
 {

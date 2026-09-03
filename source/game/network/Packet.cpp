@@ -5,10 +5,10 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
-#include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/DataInputStream.hpp"
 #include "game/core/System.hpp"
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/network/PacketListener.hpp"
 #include "game/network/BlockRegionUpdatePacket.hpp"
 #include "game/network/ChunkVisibilityAreaPacket.hpp"
@@ -334,7 +334,7 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
     if (!known)
     {
         protocolError = true;
-        theApp.SetAction(g_pApp->GetPrimaryUserIndex(), XUIACTION_DISCONNECT, NULL);
+        gApp.SetAction(gApp.GetPrimaryUserIndex(), (eXuiAction)0x10, NULL);
         return boost::shared_ptr<Packet>();
     }
 
@@ -360,7 +360,7 @@ void Packet::writeUtf(const std::wstring& text, DataOutputStream* output)
 
 std::wstring Packet::readUtf(DataInputStream* input, int maxLength)
 {
-    short length = input->readShort();
+    int length = input->readUnsignedShort();
     if (length > maxLength)
     {
         std::wstringstream message;
@@ -370,7 +370,7 @@ std::wstring Packet::readUtf(DataInputStream* input, int maxLength)
     std::wstring text = L"";
     for (int i = 0; i < length; ++i)
     {
-        text.insert(text.end(), input->readChar());
+        text.insert(text.end(), input->readUTFChar());
     }
 
     return text;

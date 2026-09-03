@@ -5,6 +5,7 @@
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
+
 ServerboundContainerAckPacket::ServerboundContainerAckPacket()
 {
 }
@@ -52,6 +53,11 @@ int ServerboundContainerAckPacket::getContainerId()
 int ServerboundContainerAckPacket::getUid()
 {
     return uid;
+}
+
+bool ServerboundContainerAckPacket::isAccepted()
+{
+    return accepted;
 }
 
 boost::shared_ptr<Packet> ServerboundContainerAckPacket::create()

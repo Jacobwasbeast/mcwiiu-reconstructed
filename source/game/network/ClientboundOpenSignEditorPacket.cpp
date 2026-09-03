@@ -1,10 +1,8 @@
 #include "game/network/ClientboundOpenSignEditorPacket.hpp"
-
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
-#include "game/world/block/BlockPos.hpp"
 
 ClientboundOpenSignEditorPacket::ClientboundOpenSignEditorPacket()
 {

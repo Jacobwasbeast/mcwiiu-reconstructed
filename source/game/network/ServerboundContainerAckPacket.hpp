@@ -6,6 +6,7 @@
 
 #include "game/network/Packet.hpp"
 
+
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;

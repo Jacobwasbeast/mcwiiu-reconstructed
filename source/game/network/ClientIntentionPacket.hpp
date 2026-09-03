@@ -27,8 +27,8 @@ public:
     int getPort();
 
 private:
-    int protocolVersion;
     std::wstring hostName;
+    int protocolVersion;
     int port;
     ConnectionProtocol* intention;
 };

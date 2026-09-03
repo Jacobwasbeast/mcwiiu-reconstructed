@@ -2,7 +2,6 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
 ServerboundSetCarriedItemPacket::ServerboundSetCarriedItemPacket()
@@ -30,7 +29,7 @@ void ServerboundSetCarriedItemPacket::read(DataInputStream* input)
 
 void ServerboundSetCarriedItemPacket::write(DataOutputStream* output)
 {
-    output->writeShort(slot);
+    output->writeShort(static_cast<short>(slot));
 }
 
 void ServerboundSetCarriedItemPacket::handle(PacketListener* listener)

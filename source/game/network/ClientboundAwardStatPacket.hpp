@@ -18,19 +18,15 @@ public:
     ClientboundAwardStatPacket(int statId, int count);
     ClientboundAwardStatPacket(int statId, arrayWithLength<unsigned char> paramData);
     virtual ~ClientboundAwardStatPacket();
-
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual bool isAync();
-
     int getCount();
     arrayWithLength<unsigned char> getParamData();
-
     static boost::shared_ptr<Packet> create();
-
 private:
     int statId;
     arrayWithLength<unsigned char> paramData;

@@ -17,16 +17,12 @@ public:
     ClientboundOpenSignEditorPacket();
     ClientboundOpenSignEditorPacket(const BlockPos& pos);
     virtual ~ClientboundOpenSignEditorPacket();
-
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-
     BlockPos getPos();
-
     static boost::shared_ptr<Packet> create();
-
 private:
     BlockPos pos;
 };

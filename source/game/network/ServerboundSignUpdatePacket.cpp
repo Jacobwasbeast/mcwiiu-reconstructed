@@ -42,7 +42,7 @@ void ServerboundSignUpdatePacket::read(DataInputStream* input)
 
     for (int i = 0; i < 4; ++i)
     {
-        lines[i] = readUtf(input, 32767);
+        lines[i] = Packet::readUtf(input, 32767);
     }
 }
 
@@ -53,7 +53,7 @@ void ServerboundSignUpdatePacket::write(DataOutputStream* output)
 
     for (int i = 0; i < 4; ++i)
     {
-        writeUtf(lines[i], output);
+        Packet::writeUtf(lines[i], output);
     }
 }
 

@@ -20,11 +20,6 @@ ServerboundSwingPacket::~ServerboundSwingPacket()
 {
 }
 
-int ServerboundSwingPacket::getPacketId()
-{
-    return 233;
-}
-
 void ServerboundSwingPacket::read(DataInputStream* input)
 {
     hand = (InteractionHand::EInteractionHand)input->read();
@@ -43,6 +38,11 @@ void ServerboundSwingPacket::handle(PacketListener* listener)
 InteractionHand::EInteractionHand ServerboundSwingPacket::getHand()
 {
     return hand;
+}
+
+int ServerboundSwingPacket::getPacketId()
+{
+    return 233;
 }
 
 boost::shared_ptr<Packet> ServerboundSwingPacket::create()

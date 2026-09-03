@@ -75,7 +75,7 @@ unsigned char ClientboundBossEventPacket::encodeProperties()
 void ClientboundBossEventPacket::read(DataInputStream* input)
 {
     id = input->readUTF();
-    operation = (Operation)input->readUnsignedByte();
+    operation = static_cast<Operation>(input->readUnsignedByte());
 
     switch (operation)
     {
@@ -83,8 +83,8 @@ void ClientboundBossEventPacket::read(DataInputStream* input)
         name = input->readUTF();
         nameId = input->readInt();
         percent = input->readFloat();
-        color = (BossEvent::BossBarColor)input->readUnsignedByte();
-        overlay = (BossEvent::BossBarOverlay)input->readUnsignedByte();
+        color = static_cast<BossEvent::BossBarColor>(input->readUnsignedByte());
+        overlay = static_cast<BossEvent::BossBarOverlay>(input->readUnsignedByte());
         decodeProperties(input->readUnsignedByte());
         break;
 
@@ -97,8 +97,8 @@ void ClientboundBossEventPacket::read(DataInputStream* input)
         break;
 
     case UPDATE_STYLE:
-        color = (BossEvent::BossBarColor)input->readUnsignedByte();
-        overlay = (BossEvent::BossBarOverlay)input->readUnsignedByte();
+        color = static_cast<BossEvent::BossBarColor>(input->readUnsignedByte());
+        overlay = static_cast<BossEvent::BossBarOverlay>(input->readUnsignedByte());
         break;
 
     case UPDATE_PROPERTIES:

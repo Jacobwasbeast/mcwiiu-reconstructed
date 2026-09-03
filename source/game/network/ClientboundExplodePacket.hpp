@@ -1,0 +1,57 @@
+#ifndef GAME_NETWORK_CLIENTBOUNDEXPLODEPACKET_HPP
+#define GAME_NETWORK_CLIENTBOUNDEXPLODEPACKET_HPP
+
+#include <memory>
+#include <vector>
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/Explosion.hpp"
+#include "game/network/Packet.hpp"
+#include "game/world/block/BlockPos.hpp"
+
+class DataInputStream;
+class DataOutputStream;
+class PacketListener;
+class Vec3;
+
+class ClientboundExplodePacket : public Packet, public boost::enable_shared_from_this<ClientboundExplodePacket>
+{
+public:
+    ClientboundExplodePacket();
+    ClientboundExplodePacket(double x, double y, double z, float power, Explosion::ToBlowSet* toBlow, Vec3* knockback, bool knockbackOnly);
+    virtual ~ClientboundExplodePacket();
+
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual void handle(PacketListener* listener);
+    virtual int getEstimatedSize();
+
+    double getX();
+    double getY();
+    double getZ();
+    float getPower();
+    std::vector<BlockPos, std::allocator<BlockPos> >* getToBlow();
+    float getKnockbackX();
+    float getKnockbackY();
+    float getKnockbackZ();
+
+    bool isKnockbackOnly() { return knockbackOnly; }
+
+    static boost::shared_ptr<Packet> create();
+
+private:
+    double x;
+    double y;
+    double z;
+    float power;
+    std::vector<BlockPos, std::allocator<BlockPos> > toBlow;
+    bool knockbackOnly;
+    float knockbackX;
+    float knockbackY;
+    float knockbackZ;
+};
+
+#endif
