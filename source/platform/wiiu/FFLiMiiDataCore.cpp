@@ -1,0 +1,25 @@
+#include "platform/wiiu/FFLiMiiDataCore.hpp"
+
+struct FFLiSwapEndianDesc
+{
+    unsigned int type;
+    unsigned int count;
+};
+
+void FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(void* data, const FFLiSwapEndianDesc* descriptions, unsigned int count);
+
+static const FFLiSwapEndianDesc g_miiDataCoreEndianDescriptions[7] =
+{
+    { 2, 1 },
+    { 0, 8 },
+    { 0, 10 },
+    { 0, 2 },
+    { 1, 11 },
+    { 0, 2 },
+    { 1, 12 }
+};
+
+void FFLiMiiDataCore::SwapEndian()
+{
+    FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(this, g_miiDataCoreEndianDescriptions, 7);
+}
