@@ -9,6 +9,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Difficulty.hpp"
+#include "game/core/DifficultyInstance.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/HitResult.hpp"
@@ -21,6 +22,7 @@
 #include "game/data/LevelStorage.hpp"
 #include "game/data/SavedData.hpp"
 #include "game/data/SavedDataStorage.hpp"
+#include "game/data/SavedData.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
 #include "game/entity/mob/MobCategory.hpp"
@@ -68,6 +70,10 @@ void PIXEndNamedEvent();
 
 static unsigned int sInstaTickTlsIndex = TlsAlloc();
 static unsigned int sLightingCacheTlsIndex = TlsAlloc();
+
+Level::RangeModifier::~RangeModifier()
+{
+}
 
 Level::Level(boost::shared_ptr<LevelStorage> levelStorage, LevelData* levelData, Dimension* dimension,
              bool isClientSide)
@@ -2875,4 +2881,454 @@ bool Level::isInsideWorldBorder(boost::shared_ptr<Entity> entity)
     }
 
     return entity->mX > minX && entity->mX < maxX && entity->mZ > minZ && entity->mZ < maxZ;
+}
+
+float Level::getTimeOfDay(float partialTick)
+{
+    long long dayTime = mLevelData->getDayTime();
+    float angle = (float)((dayTime % 24000) + partialTick) / 24000.0f - 0.25f;
+    if (angle < 0.0f)
+    {
+        angle += 1.0f;
+    }
+    if (angle > 1.0f)
+    {
+        angle -= 1.0f;
+    }
+    float cosine = (float)std::cos((double)angle * 3.14159265358979323846);
+    float adjusted = angle + (0.5f - cosine) / 3.0f;
+    return adjusted;
+}
+
+float Level::getRainLevel(float partialTick)
+{
+    return mOldRainLevel + (mRainLevel - mOldRainLevel) * partialTick;
+}
+
+float Level::getThunderLevel(float partialTick)
+{
+    return mOldThunderLevel + (mThunderLevel - mOldThunderLevel) * partialTick;
+}
+
+float Level::getOldSkyDarken(float partialTick)
+{
+    return (float)mSkyDarken;
+}
+
+float Level::getSkyDarken(float partialTick)
+{
+    return (float)mSkyDarken;
+}
+
+int Level::getMoonPhase()
+{
+    return (int)((mLevelData->getDayTime() / 24000) % 8);
+}
+
+float Level::getMoonBrightness()
+{
+    static const float brightness[8] = {1.0f, 0.75f, 0.5f, 0.25f, 0.0f, 0.25f, 0.5f, 0.75f};
+    return brightness[getMoonPhase()];
+}
+
+float Level::getSunAngle(float partialTick)
+{
+    return getTimeOfDay(partialTick) * 6.28318530717958647692f;
+}
+
+int Level::getCloudColor(float partialTick)
+{
+    return mCloudColour;
+}
+
+bool Level::biomeHasRain(const BlockPos& pos)
+{
+    return getBiome(pos)->hasRain();
+}
+
+bool Level::biomeHasSnow(const BlockPos& pos)
+{
+    return getBiome(pos)->getTemperature(pos) < 0.15f;
+}
+
+float Level::getStarBrightness(float partialTick)
+{
+    float sky = 1.0f - getSkyDarken(partialTick) / 15.0f;
+    return sky * sky * 0.5f;
+}
+
+const Difficulty* Level::getDifficulty()
+{
+    return mLevelData->getDifficulty();
+}
+
+DifficultyInstance Level::getCurrentDifficultyAt(const BlockPos& pos)
+{
+    long long inhabitedTime = 0;
+    if (hasChunkAt(pos))
+    {
+        inhabitedTime = getChunkAt(pos)->getInhabitedTime();
+    }
+    return DifficultyInstance(getDifficulty(), mLevelData->getDayTime(), inhabitedTime, getMoonBrightness());
+}
+
+int Level::getSkyDarken()
+{
+    return mSkyDarken;
+}
+
+void Level::setSkyDarken(int value)
+{
+    mSkyDarken = value;
+}
+
+int Level::getSkyFlashTime()
+{
+    return mSkyFlashTime;
+}
+
+void Level::setSkyFlashTime(int value)
+{
+    mSkyFlashTime = value;
+}
+
+bool Level::isFindingSpawn()
+{
+    return mFindingSpawn;
+}
+
+void Level::setFindingSpawn(bool value)
+{
+    mFindingSpawn = value;
+}
+
+GameRules* Level::getGameRules()
+{
+    return mLevelData->getGameRules();
+}
+
+int Level::getMaxBuildHeight()
+{
+    return 256;
+}
+
+int Level::getHeight()
+{
+    return getMaxBuildHeight();
+}
+
+WorldBorder* Level::getWorldBorder()
+{
+    return mWorldBorder;
+}
+
+int Level::getCloudHeight()
+{
+    return mLevelData->getCloudHeight();
+}
+
+int Level::getFogDistance()
+{
+    return mFogDistance;
+}
+
+void Level::setFogDistance(int value)
+{
+    mFogDistance = value;
+}
+
+bool Level::useNewSeaLevel()
+{
+    return mLevelData->useNewSeaLevel();
+}
+
+bool Level::isFlatLand()
+{
+    return mLevelData->getGeneratorType() == LevelType::FLAT;
+}
+
+bool Level::AllPlayersAreSleeping()
+{
+    if (mPlayers.empty())
+    {
+        return false;
+    }
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        if (!(*it)->isSleeping())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Level::isSpawnChunk(int chunkX, int chunkZ)
+{
+    int spawnX = mLevelData->getXSpawn() >> 4;
+    int spawnZ = mLevelData->getZSpawn() >> 4;
+    return chunkX >= spawnX - 1 && chunkX <= spawnX + 1 && chunkZ >= spawnZ - 1 && chunkZ <= spawnZ + 1;
+}
+
+bool Level::getHasBeenInCreative()
+{
+    return mLevelData->getHasBeenInCreative();
+}
+
+bool Level::isGenerateMapFeatures()
+{
+    return mLevelData->isGenerateMapFeatures();
+}
+
+BlockPos Level::getTopRainBlockPos(const BlockPos& pos)
+{
+    return getHeightmapPos(pos);
+}
+
+bool Level::isSnowTemperature(const BlockPos& pos)
+{
+    return getBiome(pos)->getTemperature(pos) < 0.15f;
+}
+
+bool Level::isRainingAt(const BlockPos& pos)
+{
+    if (!isRaining() || !canSeeSky(pos))
+    {
+        return false;
+    }
+    BlockPos top = getTopRainBlockPos(pos);
+    return top.y <= pos.y && !biomeHasSnow(pos) && !isSnowTemperature(pos) && biomeHasRain(pos);
+}
+
+bool Level::isSnowingAt(const BlockPos& pos)
+{
+    if (!isRaining() || !canSeeSky(pos))
+    {
+        return false;
+    }
+    return getTopRainBlockPos(pos).y <= pos.y && isSnowTemperature(pos);
+}
+
+void Level::setThunderLevel(float value)
+{
+    mOldThunderLevel = value;
+    mThunderLevel = value;
+}
+
+void Level::setRainLevel(float value)
+{
+    mOldRainLevel = value;
+    mRainLevel = value;
+}
+
+bool Level::isThundering()
+{
+    return getThunderLevel(1.0f) > 0.9f;
+}
+
+bool Level::isRaining()
+{
+    return getRainLevel(1.0f) > 0.2f;
+}
+
+void Level::setSavedDataStorage(SavedDataStorage* storage)
+{
+    mSavedDataStorage = storage;
+}
+
+SavedDataStorage* Level::getSavedDataStorage()
+{
+    return mSavedDataStorage;
+}
+
+void Level::setSavedData(const std::wstring& id, boost::shared_ptr<SavedData> data)
+{
+    if (mSavedDataStorage != NULL)
+    {
+        mSavedDataStorage->set(id, data);
+    }
+}
+
+boost::shared_ptr<SavedData> Level::getSavedData(const std::type_info& type, const std::wstring& id)
+{
+    if (mSavedDataStorage == NULL)
+    {
+        return boost::shared_ptr<SavedData>();
+    }
+    return mSavedDataStorage->get(type, id);
+}
+
+int Level::getFreeAuxValueFor(const std::wstring& id)
+{
+    return mSavedDataStorage == NULL ? -1 : mSavedDataStorage->getFreeAuxValueFor(id);
+}
+
+int Level::getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale)
+{
+    return mSavedDataStorage == NULL ? -1 : mSavedDataStorage->getAuxValueForMap(uid, dimension, x, z, scale);
+}
+
+void Level::globalLevelEvent(int type, const BlockPos& pos, int data)
+{
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    {
+        (*it)->globalLevelEvent(type, pos, data);
+    }
+}
+
+Random Level::getRandomFor(int x, int y, int z)
+{
+    return fjGetRandomFor(getSeed(), x, y, z);
+}
+
+Random Level::fjGetRandomFor(long long seed, int x, int y, int z)
+{
+    long long mixed = seed + (long long)x * 341873128712LL + (long long)y * 132897987541LL
+                      + (long long)z * 42317861LL;
+    return Random(mixed);
+}
+
+bool Level::isAllEmpty()
+{
+    return mEntities.empty() && mGlobalEntities.empty();
+}
+
+int Level::getHorizonHeight()
+{
+    return mLevelData->getYSpawn();
+}
+
+void Level::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
+{
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    {
+        (*it)->destroyBlockProgress(breakerId, pos, progress);
+    }
+}
+
+void Level::setSeaLevel(int value)
+{
+    mSeaLevel = value;
+}
+
+LevelType* Level::getGeneratorType()
+{
+    return mLevelData->getGeneratorType();
+}
+
+void Level::setSpawnSettings(bool spawnPeaceful, bool spawnHostile)
+{
+    mSpawnPeacefulMobs = spawnPeaceful;
+    mSpawnHostileMobs = spawnHostile;
+}
+
+int Level::getDirectSignal(const BlockPos& pos, const Direction* direction)
+{
+    const BlockState* state = getBlockState(pos);
+    return state->getBlock()->getDirectSignal(state, this, pos, direction);
+}
+
+int Level::getDirectSignalTo(const BlockPos& pos)
+{
+    int signal = 0;
+    static const Direction* directions[6] = {Direction::DOWN, Direction::UP, Direction::NORTH,
+                                             Direction::SOUTH, Direction::WEST, Direction::EAST};
+    for (int i = 0; i < 6; ++i)
+    {
+        int value = getDirectSignal(pos.relative(directions[i]), directions[i]);
+        if (value > signal)
+        {
+            signal = value;
+        }
+    }
+    return signal;
+}
+
+int Level::getSignal(const BlockPos& pos, const Direction* direction)
+{
+    const BlockState* state = getBlockState(pos);
+    return state->getBlock()->getSignal(state, this, pos, direction);
+}
+
+bool Level::hasSignal(const BlockPos& pos, const Direction* direction)
+{
+    return getSignal(pos, direction) > 0;
+}
+
+bool Level::hasNeighborSignal(const BlockPos& pos)
+{
+    return getBestNeighborSignal(pos) > 0;
+}
+
+int Level::getBestNeighborSignal(const BlockPos& pos)
+{
+    int signal = 0;
+    static const Direction* directions[6] = {Direction::DOWN, Direction::UP, Direction::NORTH,
+                                             Direction::SOUTH, Direction::WEST, Direction::EAST};
+    for (int i = 0; i < 6; ++i)
+    {
+        int value = getSignal(pos.relative(directions[i]), directions[i]);
+        if (value > signal)
+        {
+            signal = value;
+        }
+    }
+    return signal;
+}
+
+void Level::setGameTime(long long value)
+{
+    mLevelData->setGameTime(value);
+}
+
+long long Level::getGameTime()
+{
+    return mLevelData->getGameTime();
+}
+
+long long Level::getDayTime()
+{
+    return mLevelData->getDayTime();
+}
+
+void Level::setDayTime(long long value)
+{
+    mLevelData->setDayTime(value);
+}
+
+void Level::forceDayTime(long long value)
+{
+    mLevelData->setDayTime(value);
+    mForceTimeUpdate = true;
+}
+
+bool Level::ShouldForceTimeUpdate()
+{
+    bool force = mForceTimeUpdate;
+    mForceTimeUpdate = false;
+    return force;
+}
+
+BlockPos Level::getSharedSpawnPos()
+{
+    return BlockPos(mLevelData->getXSpawn(), mLevelData->getYSpawn(), mLevelData->getZSpawn());
+}
+
+ChunkSource* Level::getChunkSource()
+{
+    return mChunkSource;
+}
+
+boost::shared_ptr<LevelStorage> Level::getLevelStorage()
+{
+    return mLevelStorage;
+}
+
+unsigned char Level::getWeatherState()
+{
+    if (isThundering())
+    {
+        return 2;
+    }
+    return isRaining() ? 1 : 0;
 }
