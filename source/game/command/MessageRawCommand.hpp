@@ -6,10 +6,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/command/Command.hpp"
-#include "game/command/CommandSender.hpp"
 #include "game/command/EGameCommand.hpp"
-#include "game/network/GameCommandPacket.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+
+class CommandSender;
+class GameCommandPacket;
 
 class MessageRawCommand : public Command
 {

@@ -4,6 +4,7 @@
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/network/GameCommandPacket.hpp"
 
 MessageRawCommand::~MessageRawCommand()
 {
@@ -29,6 +30,10 @@ boost::shared_ptr<GameCommandPacket> MessageRawCommand::preparePacket(unsigned c
 {
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
-
     return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
+}
+
+bool MessageRawCommand::isValidWildcardPlayerArgument(std::wstring argument, int argumentIndex)
+{
+    return argumentIndex == 0;
 }
