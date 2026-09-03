@@ -45,7 +45,8 @@ enum EBlockType
     EBLOCK_TYPE_NONE = 0,
     EBLOCK_TYPE_RAIL = 2,
     EBLOCK_TYPE_FENCE = 5,
-    EBLOCK_TYPE_MOB_SPAWNER = 6
+    EBLOCK_TYPE_MOB_SPAWNER = 6,
+    EBLOCK_TYPE_SLAB = 8
 };
 
 enum EBlockRenderShape
@@ -267,12 +268,11 @@ public:
     int getFaceFlagsFast(LevelSource* levelSource, const BlockPos& pos);
     int getFaceFlags(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, bool forceAll);
     bool instanceof(EBlockType blockType);
-    Material* mMaterial;
     int mCachedElementId;
 
     Material* getCraftingMaterial() { return mMaterial; }
 
-protected:
+public:
     void _init(Material* material, const MaterialColor* materialColor);
 
     bool mUseSharedIcon;
@@ -301,6 +301,7 @@ protected:
     bool mDerivedInitDone;
     const SoundType* mSoundType;
     float mParticleGravity;
+    Material* mMaterial;
     const MaterialColor* mMaterialColor;
     float mFriction;
     BlockStateDefinition* mStateDefinition;

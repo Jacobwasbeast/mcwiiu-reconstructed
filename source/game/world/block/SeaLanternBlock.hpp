@@ -15,13 +15,12 @@ class SeaLanternBlock : public Block
 {
 public:
     SeaLanternBlock(Material* material);
-
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual ~SeaLanternBlock();
     virtual int getResourceCount(Random* random);
-    virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
-    virtual bool isSilkTouchable();
     virtual int getResourceCountForLootBonus(int lootBonus, Random* random);
+    virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual bool isSilkTouchable();
 };
 
 #endif

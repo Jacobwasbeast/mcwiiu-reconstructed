@@ -9,6 +9,7 @@
 #include "game/data/DataFixer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+
 std::wstring fjSafeGet(const boost::unordered_map<std::wstring, std::wstring>& map, const std::wstring& key);
 
 static boost::unordered_map<std::wstring, std::wstring> sOldBlockEntityIds;

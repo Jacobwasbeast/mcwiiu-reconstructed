@@ -1,10 +1,9 @@
 #include "game/world/block/PackedIceBlock.hpp"
 
 #include "game/util/Random.hpp"
-#include "game/world/block/Material.hpp"
 
 PackedIceBlock::PackedIceBlock()
-    : Block(Material::ICE_SOLID)
+    : Block(static_cast<Material*>(0))
 {
     DerivedInit();
     mFriction = 0.98f;

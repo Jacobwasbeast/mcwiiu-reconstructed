@@ -1,9 +1,30 @@
 #include "game/world/block/BlockStateMapper.hpp"
 
+#include "game/world/block/DefaultedMappedRegistry.hpp"
+
 #include "game/core/DefaultStateMapper.hpp"
 #include "game/core/StateMapper.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/Block.hpp"
+
+#include <cstdarg>
+
+void BlockStateMapper::add(Block* block, StateMapper* stateMapper)
+{
+    stateMappers[block] = stateMapper;
+}
+
+void BlockStateMapper::ignore(Block* block, ...)
+{
+    va_list args;
+    va_start(args, block);
+    while (block != NULL)
+    {
+        ignoredBlocks.insert(block);
+        block = va_arg(args, Block*);
+    }
+    va_end(args);
+}
 
 boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMapper::getMapping()
 {
@@ -14,7 +35,7 @@ boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMappe
 
     for (it = Block::blockRegistry->begin(); it != Block::blockRegistry->end(); ++it)
     {
-        Block* block = it->first;
+        Block* block = it->second;
 
         if (ignoredBlocks.find(block) != ignoredBlocks.end())
         {

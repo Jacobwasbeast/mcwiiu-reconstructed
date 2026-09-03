@@ -12,7 +12,7 @@ static Joiner COMMA_JOINER = Joiner::on(L',');
 std::wstring AbstractBlockState::PROPERTY_ENTRY_TO_STRING_FUNCTION(
     boost::unordered_map<const Property*, Boxed*>::const_iterator* entry)
 {
-    if (entry == NULL)
+    if (entry == 0)
     {
         return L"<NULL>";
     }

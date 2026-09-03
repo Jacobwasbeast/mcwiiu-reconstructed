@@ -1,0 +1,24 @@
+#include "game/world/block/DLCMaterialFile.hpp"
+
+#include "game/client/render/TexturePack.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
+#include "game/core/Minecraft.hpp"
+
+DLCMaterialFile::DLCMaterialFile(const std::wstring& path)
+    : DLCFile(DLCManager::eDLCType_Material, path)
+    , m_pMaterialTable(NULL)
+{
+}
+
+DLCMaterialFile::~DLCMaterialFile()
+{
+    delete m_pMaterialTable;
+}
+
+void DLCMaterialFile::addData(unsigned char* pData, unsigned int size)
+{
+    Minecraft::GetInstance();
+
+    MaterialTable* pDefaultMaterialTable = TexturePackRepository::defaultTexturePack->getMaterialTable();
+    m_pMaterialTable = new MaterialTable(*pDefaultMaterialTable, pData, size);
+}

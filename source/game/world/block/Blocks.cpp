@@ -1,5 +1,7 @@
 #include "game/world/block/Blocks.hpp"
 
+#include "game/world/block/DefaultedMappedRegistry.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 Block* Blocks::AIR = NULL;
@@ -307,8 +309,7 @@ Block* Blocks::bark_oak = NULL;
 
 Block* Blocks::get(const std::wstring& name)
 {
-    ResourceLocation location(name);
-    return Block::blockRegistry->get(ResourceLocation(location));
+    return Block::blockRegistry->get(ResourceLocation(name));
 }
 
 void Blocks::staticInit()
@@ -616,5 +617,4 @@ void Blocks::staticInit()
     bark_dark_oak = get(L"bark_dark_oak");
     bark_oak = get(L"bark_oak");
 
-    FireBlock::staticCtor();
 }

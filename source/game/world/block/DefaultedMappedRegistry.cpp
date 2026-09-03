@@ -1,6 +1,7 @@
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/IdMapper.hpp"
 
 DefaultedMappedRegistry<ResourceLocation, Block*>::DefaultedMappedRegistry(ResourceLocation defaultKey)
 {

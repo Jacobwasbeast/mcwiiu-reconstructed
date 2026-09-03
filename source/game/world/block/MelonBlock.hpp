@@ -3,18 +3,10 @@
 
 #include "game/world/block/Block.hpp"
 
-class BlockState;
-class Direction;
-class IconRegister;
-class Item;
-class Random;
-class TextureAtlasSprite;
-
 class MelonBlock : public Block
 {
 public:
     MelonBlock();
-
     virtual ~MelonBlock();
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

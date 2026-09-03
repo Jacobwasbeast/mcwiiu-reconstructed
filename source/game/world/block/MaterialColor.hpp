@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_MATERIALCOLOR_HPP
 #define GAME_WORLD_BLOCK_MATERIALCOLOR_HPP
 
+#include "game/core/ColourTable.hpp"
 #include "game/core/DyeColor.hpp"
 
 class MaterialColor
@@ -66,7 +67,7 @@ public:
 
     static const MaterialColor* getDyeMaterial(const DyeColor* dyeColor);
 
-    int calculateRGBColor(int brightness) const;
+    unsigned int calculateRGBColor(int brightness) const;
 
     eMinecraftColour col;
     int id;

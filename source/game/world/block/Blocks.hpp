@@ -1,9 +1,9 @@
 #ifndef GAME_WORLD_BLOCK_BLOCKS_HPP
 #define GAME_WORLD_BLOCK_BLOCKS_HPP
 
-#include "game/world/block/Block.hpp"
-
 #include <string>
+
+class Block;
 
 class Blocks {
 public:

@@ -3,8 +3,8 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-const DirectionProperty* HorizontalDirectionalBlock::FACING = NULL;
-const DirectionProperty* HorizontalDirectionalBlock::FACING_PROPERTY = NULL;
+DirectionProperty* HorizontalDirectionalBlock::FACING = NULL;
+DirectionProperty* HorizontalDirectionalBlock::FACING_PROPERTY = NULL;
 
 HorizontalDirectionalBlock::HorizontalDirectionalBlock(Material* material)
     : Block(material)

@@ -52,6 +52,12 @@ MaterialTable::MaterialTable()
     resetMaterials();
 }
 
+MaterialTable::MaterialTable(unsigned char* materialData, unsigned int materialDataLength)
+{
+    resetMaterials();
+    loadMaterialData(materialData, materialDataLength);
+}
+
 eMinecraftEntityMaterial MaterialTable::getMobMaterialFromName(const std::wstring& mobName)
 {
     MobNameToInstanceMap::const_iterator mob = sMobNameToInstanceMap.find(mobName);
@@ -71,7 +77,7 @@ void MaterialTable::loadMaterialData(unsigned char* materialData, unsigned int m
     buffer.length = materialDataLength;
 
     ByteArrayInputStream byteStream(buffer);
-    DataInputStream stream(&byteStream);
+    DataInputStream stream((InputStream*)&byteStream);
 
     stream.readInt();
 

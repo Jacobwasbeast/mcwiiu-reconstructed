@@ -2,7 +2,6 @@
 
 #include "game/core/Direction.hpp"
 #include "game/util/Vec3i.hpp"
-#include "game/world/block/BlockPos.hpp"
 
 MutableBlockPos::MutableBlockPos()
     : BlockPos(0, 0, 0)
@@ -66,4 +65,11 @@ MutableBlockPos* MutableBlockPos::move(const Direction* direction, int steps)
 MutableBlockPos* MutableBlockPos::move(const Direction* direction)
 {
     return move(direction, 1);
+}
+
+void MutableBlockPos::add(int dx, int dy, int dz)
+{
+    x += dx;
+    y += dy;
+    z += dz;
 }

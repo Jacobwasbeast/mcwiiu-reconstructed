@@ -4,3 +4,8 @@ void Property::updateCachedHashCode()
 {
     mCachedHashCode = hashCode();
 }
+
+int Property::getCachedHashCode() const
+{
+    return mCachedHashCode;
+}

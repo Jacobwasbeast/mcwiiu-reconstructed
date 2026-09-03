@@ -14,9 +14,8 @@
 #include "game/entity/mob/FireworksRocketEntity.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Item.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
-#include "game/util/AABB.hpp"
 #include "game/core/Stats.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -32,6 +31,12 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/StairBlock.hpp"
 #include "game/world/generation/Player.hpp"
+
+class AABB
+{
+public:
+    static const AABB* newPermanent(double x0, double y0, double z0, double x1, double y1, double z1);
+};
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);

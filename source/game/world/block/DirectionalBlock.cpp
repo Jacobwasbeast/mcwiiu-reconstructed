@@ -15,6 +15,11 @@ DirectionalBlock::DirectionalBlock(Material* material)
 {
 }
 
+DirectionalBlock::DirectionalBlock(Material* material, const MaterialColor* materialColor)
+    : Block(material, materialColor)
+{
+}
+
 DirectionalBlock::~DirectionalBlock()
 {
 }

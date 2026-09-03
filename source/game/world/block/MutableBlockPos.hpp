@@ -23,13 +23,14 @@ public:
 
     void set(const BlockPos& pos);
 
+    MutableBlockPos* move(const Direction* direction, int steps);
+    MutableBlockPos* move(const Direction* direction);
+
     void add(int dx, int dy, int dz);
     void addX(int dx);
     void addY(int dy);
     void addZ(int dz);
 
-    MutableBlockPos* move(const Direction* direction, int steps);
-    MutableBlockPos* move(const Direction* direction);
 };
 
 #endif

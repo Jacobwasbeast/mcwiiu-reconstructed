@@ -3,13 +3,12 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
 NetherBrickBlock::NetherBrickBlock()
-    : Block(Material::STONE)
+    : Block(0)
 {
-    DerivedInit();
+    Block::DerivedInit();
 }
 
 const MaterialColor* NetherBrickBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)

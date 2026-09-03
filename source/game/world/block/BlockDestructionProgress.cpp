@@ -10,6 +10,11 @@ BlockDestructionProgress::BlockDestructionProgress(int id, const BlockPos& pos)
     mPos = pos;
 }
 
+int BlockDestructionProgress::getId()
+{
+    return mId;
+}
+
 BlockPos BlockDestructionProgress::getPos()
 {
     return mPos;

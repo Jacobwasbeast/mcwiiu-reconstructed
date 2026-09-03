@@ -3,17 +3,10 @@
 
 #include "game/world/block/Block.hpp"
 
-class BlockState;
-class Direction;
-class Item;
-class Random;
-class TextureAtlasSprite;
-
 class BookshelfBlock : public Block
 {
 public:
     BookshelfBlock();
-
     virtual ~BookshelfBlock();
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

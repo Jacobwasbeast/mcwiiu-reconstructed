@@ -1,9 +1,5 @@
 #include "game/world/block/BlockEntityShulkerBoxColorFix.hpp"
 
-#include <string>
-
-#include "game/data/CompoundTag.hpp"
-
 BlockEntityShulkerBoxColorFix::~BlockEntityShulkerBoxColorFix()
 {
 }

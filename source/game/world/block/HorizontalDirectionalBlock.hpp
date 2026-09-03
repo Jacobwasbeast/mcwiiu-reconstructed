@@ -14,8 +14,8 @@ public:
 
     static void blockStaticCtor();
 
-    static const DirectionProperty* FACING;
-    static const DirectionProperty* FACING_PROPERTY;
+    static DirectionProperty* FACING;
+    static DirectionProperty* FACING_PROPERTY;
 };
 
 #endif

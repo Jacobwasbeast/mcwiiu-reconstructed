@@ -3,11 +3,12 @@
 #include "game/entity/mob/Entity.hpp"
 
 EntityPropertyOnFire::EntityPropertyOnFire(bool onFire)
-    : mOnFire(onFire)
+    : m_onFire(onFire)
 {
 }
 
 bool EntityPropertyOnFire::applies(Random* random, const boost::shared_ptr<Entity>& entity)
 {
-    return entity->isOnFire() == mOnFire;
+    (void)random;
+    return entity->isOnFire() == m_onFire;
 }

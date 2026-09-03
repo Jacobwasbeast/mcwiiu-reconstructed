@@ -5,6 +5,7 @@
 
 #include "game/core/DataWalker.hpp"
 
+
 class CompoundTag;
 class DataFixer;
 

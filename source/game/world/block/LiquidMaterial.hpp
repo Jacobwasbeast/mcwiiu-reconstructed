@@ -2,7 +2,8 @@
 #define GAME_WORLD_BLOCK_LIQUIDMATERIAL_HPP
 
 #include "game/world/block/Material.hpp"
-#include "game/world/block/MaterialColor.hpp"
+
+class MaterialColor;
 
 class LiquidMaterial : public Material
 {

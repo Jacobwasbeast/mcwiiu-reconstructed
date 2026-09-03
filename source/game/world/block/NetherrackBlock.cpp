@@ -3,8 +3,13 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+
+class Material
+{
+public:
+    static Material* STONE;
+};
 
 NetherrackBlock::NetherrackBlock()
     : Block(Material::STONE)

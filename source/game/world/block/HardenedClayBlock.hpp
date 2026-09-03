@@ -13,7 +13,7 @@ class HardenedClayBlock : public Block
 public:
     HardenedClayBlock();
 
-    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual const MaterialColor* getMapColor(const BlockState* blockState, LevelSource* levelSource, const BlockPos& pos);
     virtual ~HardenedClayBlock();
 };
 

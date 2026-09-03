@@ -11,6 +11,7 @@ public:
     PackedIceBlock();
 
     virtual ~PackedIceBlock();
+
     virtual int getResourceCount(Random* random);
 };
 

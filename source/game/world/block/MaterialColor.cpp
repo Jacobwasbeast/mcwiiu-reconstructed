@@ -146,7 +146,7 @@ void MaterialColor::staticCtorAfterDyeColor()
     DYE_MATERIALS[DyeColor::BLACK->getBlockData()] = COLOR_BLACK;
 }
 
-int MaterialColor::calculateRGBColor(int brightness) const
+unsigned int MaterialColor::calculateRGBColor(int brightness) const
 {
     int scale = 220;
 

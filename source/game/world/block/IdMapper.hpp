@@ -60,7 +60,7 @@ void IdMapper<T>::addMapping(T value, int id)
 }
 
 template <>
-class IdMapper<const BlockState*>
+class IdMapper<const BlockState*> : public IdMap<const BlockState*>
 {
 public:
     enum

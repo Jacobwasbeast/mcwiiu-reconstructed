@@ -1,9 +1,9 @@
 #ifndef GAME_WORLD_BLOCK_ENTITYPROPERTY_HPP
 #define GAME_WORLD_BLOCK_ENTITYPROPERTY_HPP
 
-#include <boost/shared_ptr.hpp>
-
 #include "game/util/Random.hpp"
+
+#include <boost/shared_ptr.hpp>
 
 class Entity;
 

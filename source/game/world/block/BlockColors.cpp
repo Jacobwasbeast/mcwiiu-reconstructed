@@ -14,7 +14,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MaterialColor.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
 #include "game/world/block/FlowerPotBlockEntity.hpp"

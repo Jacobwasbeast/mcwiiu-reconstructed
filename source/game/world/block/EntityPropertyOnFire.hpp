@@ -5,13 +5,12 @@
 
 class EntityPropertyOnFire : public EntityProperty
 {
+private:
+    bool m_onFire;
+
 public:
     EntityPropertyOnFire(bool onFire);
-
     virtual bool applies(Random* random, const boost::shared_ptr<Entity>& entity);
-
-private:
-    bool mOnFire;
 };
 
 #endif

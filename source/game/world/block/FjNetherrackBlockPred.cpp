@@ -2,7 +2,6 @@
 
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/biome/Biome.hpp"
 
 bool FjNetherrackBlockPred::apply(const Biome::BlockPair& blockPair) const
 {

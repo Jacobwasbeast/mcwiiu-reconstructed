@@ -1,5 +1,11 @@
 #include "game/world/block/BlockPos.hpp"
 
+#include "game/world/block/MutableBlockPosIterator.hpp"
+
+#include "game/world/block/BlockPosIterator.hpp"
+
+#include "game/core/Rotation.hpp"
+
 #include <algorithm>
 
 #include <boost/shared_ptr.hpp>
@@ -79,6 +85,26 @@ bool BlockPos::equals(const BlockPos* other) const
 int BlockPos::hashCode() const
 {
     return (y + z * 31) * 31 + x;
+}
+
+int BlockPos::compareTo(const BlockPos& other) const
+{
+    if (y != other.y)
+    {
+        return y < other.y ? -1 : 1;
+    }
+
+    if (z != other.z)
+    {
+        return z < other.z ? -1 : 1;
+    }
+
+    if (x != other.x)
+    {
+        return x < other.x ? -1 : 1;
+    }
+
+    return 0;
 }
 
 int BlockPos::randomSeed() const
@@ -195,6 +221,21 @@ BlockPos BlockPos::relative(const Direction* direction) const
     return relative(direction, 1);
 }
 
+BlockPos BlockPos::relative(Direction::Axis* axis, int steps) const
+{
+    if (axis == Direction::Axis::X)
+    {
+        return offset(steps, 0, 0);
+    }
+
+    if (axis == Direction::Axis::Y)
+    {
+        return offset(0, steps, 0);
+    }
+
+    return offset(0, 0, steps);
+}
+
 BlockPos BlockPos::rotate(Rotation* rotation) const
 {
     switch (rotation->getType())
@@ -225,6 +266,13 @@ int BlockPos::getRandomSeed() const
     int seed = Mth::fastFloor(x) * 3129871 ^ Mth::fastFloor(z) * 116129781 ^ Mth::fastFloor(y);
 
     return seed * seed * 42317861 + seed * 11;
+}
+
+BlockPos BlockPos::cross(const Vec3i& other) const
+{
+    return BlockPos(y * other.z - z * other.y,
+                    z * other.x - x * other.z,
+                    x * other.y - y * other.x);
 }
 
 BlockPos BlockPos::decompressBlockPos(long long packed)
@@ -259,6 +307,18 @@ Iterator<MutableBlockPos*>* BlockPos::mutablesBetween(const BlockPos& from, cons
 {
     return mutablesBetween(std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z),
                            std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
+}
+
+Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(const BlockPos& from, const BlockPos& to)
+{
+    return pooledMutablesBetween(std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z),
+                                 std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
+}
+
+Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(int minX, int minY, int minZ,
+                                                              int maxX, int maxY, int maxZ)
+{
+    return new MutableBlockPosIterator(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
 bool BlockPos::operator==(const BlockPos& other) const

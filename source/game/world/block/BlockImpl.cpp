@@ -6,13 +6,13 @@
 BlockImpl::BlockImpl(Material* material)
     : Block(material)
 {
-    DerivedInit();
+    Block::DerivedInit();
 }
 
 BlockImpl::BlockImpl(Material* material, const MaterialColor* materialColor)
     : Block(material, materialColor)
 {
-    DerivedInit();
+    Block::DerivedInit();
 }
 
 BlockImpl::~BlockImpl()

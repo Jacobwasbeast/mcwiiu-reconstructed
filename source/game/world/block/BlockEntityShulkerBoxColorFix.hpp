@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_BLOCKENTITYSHULKERBOXCOLORFIX_HPP
 
 #include "game/data/CompoundTag.hpp"
+
 #include "game/data/DataFix.hpp"
 
 class BlockEntityShulkerBoxColorFix : public DataFix

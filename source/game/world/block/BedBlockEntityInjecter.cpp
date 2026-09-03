@@ -24,20 +24,20 @@ CompoundTag* BedBlockEntityInjecter::fix(CompoundTag* tag)
     {
         CompoundTag* section = sections->getCompound(sectionIndex);
         unsigned char sectionY = section->getByte(L"Y");
-        arrayWithLength<unsigned char> blocks = section->getByteArray(L"Blocks");
+        arrayWithLength<unsigned char> blockData = section->getByteArray(L"Blocks");
 
-        for (unsigned int index = 0; index < blocks.length; index++)
+        for (unsigned int blockIndex = 0; blockIndex < blockData.length; blockIndex++)
         {
-            if (blocks.data[index] == 26)
+            if (blockData.data[blockIndex] == 26)
             {
-                CompoundTag* bedTag = new CompoundTag();
+                CompoundTag* bedEntity = new CompoundTag();
 
-                bedTag->putString(L"id", L"bed");
-                bedTag->putInt(L"x", (index & 0xF) + chunkX * 16);
-                bedTag->putInt(L"y", ((index >> 8) & 0xF) + sectionY * 16);
-                bedTag->putInt(L"z", ((index >> 4) & 0xF) + chunkZ * 16);
+                bedEntity->putString(L"id", L"bed");
+                bedEntity->putInt(L"x", (blockIndex & 0xF) + chunkX * 16);
+                bedEntity->putInt(L"y", ((blockIndex >> 8) & 0xF) + sectionY * 16);
+                bedEntity->putInt(L"z", ((blockIndex >> 4) & 0xF) + chunkZ * 16);
 
-                tileEntities->add(bedTag);
+                tileEntities->add(bedEntity);
             }
         }
     }
