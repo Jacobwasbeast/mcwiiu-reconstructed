@@ -1,8 +1,7 @@
 #include "game/world/LEVELDATA_DataWalker.hpp"
 
-#include <string>
-
 #include "game/data/CompoundTag.hpp"
+#include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixer.hpp"
 #include "game/data/ListTag.hpp"
 
@@ -12,20 +11,21 @@ LEVELDATA_DataWalker::~LEVELDATA_DataWalker()
 
 CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(std::wstring(L"Level"), 10))
+    if (tag->contains(L"Level", 10))
     {
-        CompoundTag* level = tag->getCompound(std::wstring(L"Level"));
+        CompoundTag* level = tag->getCompound(L"Level");
 
-        if (level->contains(std::wstring(L"Entities"), 9))
+        if (level->contains(L"Entities", 9))
         {
-            ListTag* entities = level->getList(std::wstring(L"Entities"), 10);
+            ListTag* entities = level->getList(L"Entities", 10);
 
             for (int i = 0; i < entities->size(); i++)
             {
-                if (((CompoundTag*)entities->get(i))->contains(std::wstring(L"Passengers"), 9))
+                CompoundTag* entity = (CompoundTag*)entities->get(i);
+
+                if (entity->contains(L"Passengers", 9))
                 {
-                    ListTag* passengers =
-                        ((CompoundTag*)entities->get(i))->getList(std::wstring(L"Passengers"), 10);
+                    ListTag* passengers = entity->getList(L"Passengers", 10);
 
                     for (int j = 0; j < passengers->size(); j++)
                     {
@@ -36,14 +36,13 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
                 }
 
                 entities->set(i,
-                    fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                        (CompoundTag*)entities->get(i), version));
+                    fixer->update(DataFixTypes::eDataFixTypes_Entity, entity, version));
             }
         }
 
-        if (level->contains(std::wstring(L"TileEntities"), 9))
+        if (level->contains(L"TileEntities", 9))
         {
-            ListTag* tileEntities = level->getList(std::wstring(L"TileEntities"), 10);
+            ListTag* tileEntities = level->getList(L"TileEntities", 10);
 
             for (int i = 0; i < tileEntities->size(); i++)
             {

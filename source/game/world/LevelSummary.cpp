@@ -1,5 +1,7 @@
 #include "game/world/LevelSummary.hpp"
 
+#include "game/world/LevelData.hpp"
+
 LevelSummary::LevelSummary(LevelData* levelData, const std::wstring& levelId, const std::wstring& levelName, long long sizeOnDisk, bool requiresConversion)
     : mLevelId(levelId)
     , mLevelName(levelName)
@@ -35,4 +37,36 @@ long long LevelSummary::getLastPlayed()
 bool LevelSummary::isRequiresConversion()
 {
     return mRequiresConversion;
+}
+
+const GameType* LevelSummary::getGameMode()
+{
+    return mGameMode;
+}
+
+bool LevelSummary::isHardcore()
+{
+    return mHardcore;
+}
+
+bool LevelSummary::hasCheats()
+{
+    return mCheats;
+}
+
+int LevelSummary::compareTo(LevelSummary* other)
+{
+    if (mHardcore && !other->mHardcore)
+        return -1;
+    if (!mHardcore && other->mHardcore)
+        return 1;
+    if (mCheats && !other->mCheats)
+        return -1;
+    if (!mCheats && other->mCheats)
+        return 1;
+    if (mLastPlayed < other->mLastPlayed)
+        return 1;
+    if (mLastPlayed > other->mLastPlayed)
+        return -1;
+    return mLevelId.compare(other->mLevelId);
 }

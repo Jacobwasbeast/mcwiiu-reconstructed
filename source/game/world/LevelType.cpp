@@ -6,7 +6,6 @@ LevelType* LevelType::LARGE_BIOMES;
 LevelType* LevelType::AMPLIFIED;
 LevelType* LevelType::CUSTOMIZED;
 LevelType* LevelType::DEFAULT_1_1;
-
 LevelType* LevelType::levelTypes[16];
 
 LevelType* LevelType::setHasReplacement()
@@ -18,21 +17,24 @@ LevelType* LevelType::setHasReplacement()
 void LevelType::_init(int id, const std::wstring& generatorName, int version)
 {
     mId = id;
-    mGeneratorName = generatorName;
+    mHasHelpText = false;
+    mGeneratorName.assign(generatorName);
     mVersion = version;
     mSelectableByUser = true;
-    mHasHelpText = false;
-
     levelTypes[id] = this;
 }
 
 LevelType::LevelType(int id, const std::wstring& generatorName, int version)
 {
+    mDefaultVersion = 7;
+    mValue = 0;
     _init(id, generatorName, version);
 }
 
 LevelType::LevelType(int id, const std::wstring& generatorName)
 {
+    mValue = 0;
+    mDefaultVersion = 7;
     _init(id, generatorName, 0);
 }
 
@@ -50,11 +52,11 @@ LevelType* LevelType::setSelectableByUser(bool selectableByUser)
 
 void LevelType::staticCtor()
 {
-    for (int i = 0; i < 16; ++i)
+    int i;
+    for (i = 0; i < 16; ++i)
     {
         levelTypes[i] = NULL;
     }
-
     DEFAULT = (new LevelType(0, L"default", 1))->setHasReplacement();
     FLAT = new LevelType(1, L"flat");
     LARGE_BIOMES = new LevelType(2, L"largeBiomes");
@@ -68,6 +70,11 @@ std::wstring LevelType::getGeneratorName()
     return mGeneratorName;
 }
 
+std::wstring LevelType::getDescriptionId()
+{
+    return std::wstring(L"generator.") + mGeneratorName;
+}
+
 int LevelType::getVersion()
 {
     return mVersion;
@@ -79,7 +86,6 @@ LevelType* LevelType::getReplacementForVersion(int version)
     {
         return DEFAULT_1_1;
     }
-
     return this;
 }
 
@@ -88,23 +94,35 @@ bool LevelType::hasReplacement()
     return mHasReplacement;
 }
 
+bool LevelType::isSelectable()
+{
+    return mSelectableByUser;
+}
+
+bool LevelType::hasHelpText()
+{
+    return mHasHelpText;
+}
+
+int LevelType::getId()
+{
+    return mId;
+}
+
 LevelType* LevelType::getLevelType(const std::wstring& generatorName)
 {
+    int i;
     if (generatorName.length() == 0)
     {
         return NULL;
     }
-
-    for (int i = 0; i < 16; ++i)
+    for (i = 0; i < 16; ++i)
     {
         LevelType* levelType = levelTypes[i];
-        std::wstring name = levelType->getGeneratorName();
-
-        if (levelType != NULL && name.compare(generatorName) == 0)
+        if (levelType != NULL && levelType->getGeneratorName().compare(generatorName) == 0)
         {
             return levelType;
         }
     }
-
     return NULL;
 }
