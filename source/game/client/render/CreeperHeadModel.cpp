@@ -1,0 +1,36 @@
+#include "game/client/render/CreeperHeadModel.hpp"
+
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPart.hpp"
+
+CreeperHeadModel::CreeperHeadModel(float delta, const ModelDefinition& modelDefinition)
+{
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mHead = new ModelPart(this, L"head", modelDefinition, NULL, 0.0f);
+    }
+    else
+    {
+        mHead = new ModelPart(this, 0, 0);
+        mHead->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, delta);
+        mHead->compile(0.0625f);
+    }
+}
+
+CreeperHeadModel::~CreeperHeadModel()
+{
+}
+
+void CreeperHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+{
+    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
+    mHead->mXRot = headPitch * 0.01745329238474369f;
+    mHead->render(scale, useDisplayList, false);
+
+    callSkinnedDrawlist();
+}
+
+std::wstring CreeperHeadModel::getName()
+{
+    return L"creeper_head";
+}

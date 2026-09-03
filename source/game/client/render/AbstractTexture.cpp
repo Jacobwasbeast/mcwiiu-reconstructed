@@ -2,6 +2,11 @@
 
 #include "game/client/render/TextureUtil.hpp"
 
+AbstractTexture::AbstractTexture()
+    : id(-1), blur(false), mipmap(false), oldBlur(false), oldMipmap(false)
+{
+}
+
 void AbstractTexture::setFilter(bool blur, bool mipmap)
 {
     this->blur = blur;

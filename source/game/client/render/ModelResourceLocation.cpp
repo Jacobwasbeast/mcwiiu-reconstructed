@@ -1,6 +1,7 @@
 #include "game/client/render/ModelResourceLocation.hpp"
 
 std::wstring toLower(const std::wstring& text);
+int javaStringHashCode(const std::wstring& text);
 
 static const std::wstring DEFAULT_VARIANT = L"normal";
 
@@ -59,8 +60,31 @@ ModelResourceLocation* ModelResourceLocation::Make(const ResourceLocation& locat
     return Make(location.toString(), variant);
 }
 
+ModelResourceLocation* ModelResourceLocation::Make(const std::wstring& nameSpace, const std::wstring& path, const std::wstring& variant) {
+    return Make(ResourceLocation(nameSpace, path), variant);
+}
+
+ModelResourceLocation* ModelResourceLocation::Make(const std::wstring& location) {
+    return Make(location, DEFAULT_VARIANT);
+}
+
+std::wstring ModelResourceLocation::getVariant() const {
+    return variant;
+}
+
 std::wstring ModelResourceLocation::toString() const {
     std::wstring text = ResourceLocation::toString() + L'#';
 
     return text + variant;
+}
+
+int ModelResourceLocation::hashCode() {
+    return ResourceLocation::hashCode() * 31 + javaStringHashCode(variant);
+}
+
+bool ModelResourceLocation::equals(ModelResourceLocation* other) {
+    if (this == other) {
+        return true;
+    }
+    return ResourceLocation::equals(other) && variant == other->variant;
 }

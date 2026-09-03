@@ -3,37 +3,28 @@
 
 #include "game/client/render/Particle.hpp"
 
-class Level;
-
 class SimpleAnimatedParticle : public Particle
 {
 public:
-    SimpleAnimatedParticle(Level* level,
-                           double x,
-                           double y,
-                           double z,
-                           int baseTex,
-                           int numTex,
-                           float baseGravity);
+    SimpleAnimatedParticle(Level* level, double x, double y, double z,
+                           int texture, int frameCount, float verticalSpeed);
     virtual ~SimpleAnimatedParticle();
-
-    virtual void tick();
-    virtual bool isTransparent();
-    virtual int getLightColor(float partialTicks);
-    virtual float getBrightness(float partialTicks);
-
     void setColor(int color);
     void setFadeColor(int color);
-    void setBaseAirFriction(float airFriction);
-
-    int baseTex;
-    int numTex;
-    float baseGravity;
+    virtual bool isTransparent();
+    virtual void tick();
+    virtual int getLightColor(float partialTicks);
+    virtual float getBrightness(float partialTicks);
+    void setBaseAirFriction(float friction);
+private:
+    int texture;
+    int frameCount;
+    float verticalSpeed;
     float baseAirFriction;
-    float fadeR;
-    float fadeG;
-    float fadeB;
-    bool hasFade;
+    float fadeRed;
+    float fadeGreen;
+    float fadeBlue;
+    bool fading;
 };
 
 #endif

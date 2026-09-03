@@ -7,6 +7,7 @@ class ArchiveFile;
 class BufferedImage;
 class ColourTable;
 class DLCPack;
+class InputStream;
 class MaterialTable;
 class ModelDefinition;
 class StructureManager;
@@ -30,7 +31,7 @@ public:
     virtual void loadData();
     virtual void unload(Textures* pTextures) = 0;
     virtual void load(Textures* pTextures) = 0;
-    virtual std::wstring getResource(const std::wstring& fileName, bool bCheckParentPack) = 0;
+    virtual InputStream* getResource(const std::wstring& fileName, bool bCheckParentPack) = 0;
     virtual std::wstring getResource(const std::wstring& fileName);
     virtual unsigned int getId() = 0;
     virtual std::wstring getName() = 0;

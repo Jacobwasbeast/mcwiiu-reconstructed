@@ -2,6 +2,19 @@
 
 #include "game/util/AABB.hpp"
 
+#include <cmath>
+
+ViewportCuller::Face::Face(double x, double y, double z, float yaw, float pitch)
+    : mX(x), mY(y), mZ(z), mNormalX(0.0), mNormalY(0.0), mNormalZ(0.0), mDistance(0.0)
+{
+    double yawRadians = (double)yaw * 0.017453292519943295;
+    double pitchRadians = (double)pitch * 0.017453292519943295;
+    mNormalX = std::cos(yawRadians) * std::cos(pitchRadians);
+    mNormalY = std::sin(pitchRadians);
+    mNormalZ = std::sin(yawRadians) * std::cos(pitchRadians);
+    mDistance = mNormalX * mX + mNormalY * mY + mNormalZ * mZ;
+}
+
 bool ViewportCuller::Face::inFront(double x, double y, double z, double radius)
 {
     return mNormalX * x + mNormalY * y + mNormalZ * z > mDistance - radius;
@@ -119,6 +132,18 @@ bool ViewportCuller::Face::fullyInFront(double x0, double y0, double z0, double 
 
 ViewportCuller::~ViewportCuller()
 {
+}
+
+ViewportCuller::ViewportCuller(boost::shared_ptr<LivingEntity> entity, double partialTicks, float fov)
+    : mXOff(0.0), mYOff(0.0), mZOff(0.0)
+{
+    double angle = (double)fov * 0.5;
+    mFaces[0] = Face(0.0, 0.0, 0.0, (float)-angle, 0.0f);
+    mFaces[1] = Face(0.0, 0.0, 0.0, (float)angle, 0.0f);
+    mFaces[2] = Face(0.0, 0.0, 0.0, 0.0f, (float)-angle);
+    mFaces[3] = Face(0.0, 0.0, 0.0, 0.0f, (float)angle);
+    mFaces[4] = Face(0.0, 0.0, 0.0, -90.0f, 0.0f);
+    mFaces[5] = Face(0.0, 0.0, 0.0, 90.0f, 0.0f);
 }
 
 bool ViewportCuller::isVisible(AABB* boundingBox)

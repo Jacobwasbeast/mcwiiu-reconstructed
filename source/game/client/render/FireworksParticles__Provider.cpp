@@ -1,6 +1,8 @@
 #include "game/client/render/FireworksParticles__Provider.hpp"
 
-class Minecraft;
+#include "game/client/render/Particle.hpp"
+
+#include "game/core/Minecraft.hpp"
 
 Particle* FireworksParticles::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {

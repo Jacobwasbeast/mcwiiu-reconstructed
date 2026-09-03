@@ -24,6 +24,21 @@ PlayerModelPart::PlayerModelPart(int part)
 {
 }
 
+int PlayerModelPart::getMask() const
+{
+    return INTERNALS[part].mask;
+}
+
+int PlayerModelPart::getBit() const
+{
+    return INTERNALS[part].bit;
+}
+
+std::wstring PlayerModelPart::getId() const
+{
+    return INTERNALS[part].id;
+}
+
 PlayerModelPart::Internal::Internal(int bit, const std::wstring& id)
     : bit(bit),
       mask(1 << bit),

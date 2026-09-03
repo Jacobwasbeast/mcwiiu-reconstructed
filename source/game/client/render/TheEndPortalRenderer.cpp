@@ -8,7 +8,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/System.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockEntity.hpp"

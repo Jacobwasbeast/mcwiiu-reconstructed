@@ -25,6 +25,8 @@ public:
 
     void setOverlayRenderState(unsigned char overlayRenderState);
 
+    static ResourceLocation BREAKING_LOCATIONS[10];
+
 protected:
     Font* getFont();
     Level* getLevel();

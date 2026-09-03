@@ -2694,6 +2694,11 @@ void Renderer::TextureSetTexture(int texture, _GX2Texture& source)
     mTextures[texture].mTexture = source;
 }
 
+void Renderer::TextureSetSampler(int texture, _GX2Sampler& source)
+{
+    mTextures[texture].mSampler = source;
+}
+
 void* Renderer::GetDynamicVertexMemory(C4JRender::eVertexType vertexType, int numVertices)
 {
     Context& context = getContext();
@@ -3344,6 +3349,10 @@ Renderer::CommandBuffer::~CommandBuffer()
     OSFastMutex_Lock(&sTotalAllocMutex);
     sTotalCommandBufferBytes -= mVerticesCapacity;
     OSFastMutex_Unlock(&sTotalAllocMutex);
+}
+
+void Renderer::CommandBuffer::StartRecording()
+{
 }
 
 void Renderer::CommandBuffer::EndRecording(unsigned int vertexStride)

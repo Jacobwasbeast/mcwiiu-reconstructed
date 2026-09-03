@@ -64,6 +64,11 @@ static unsigned short g_glyphUnicodes[460] =
     0x0000, 0x0000, 0x0000, 0x0000
 };
 
+ CFontData::CFontData()
+    : m_fontData(NULL), m_glyphWidths(NULL), m_glyphPixels(NULL), m_glyphAdvances(NULL)
+{
+}
+
 CFontData::CFontData(SFontData& fontData, int* imageData)
     : m_glyphIds(fontData.numGlyphs + 2)
 {
@@ -158,4 +163,47 @@ void CFontData::moveCursor(unsigned char*& cursor, unsigned int x, unsigned int 
 unsigned short CFontData::getWidth(unsigned short glyphId)
 {
     return m_glyphWidths[glyphId];
+}
+
+void CFontData::release()
+{
+    delete[] m_glyphWidths;
+    m_glyphWidths = NULL;
+    delete[] m_glyphPixels;
+    m_glyphPixels = NULL;
+    delete[] m_glyphAdvances;
+    m_glyphAdvances = NULL;
+}
+
+std::string CFontData::getFontName()
+{
+    return m_fontData->fontName;
+}
+
+unsigned int CFontData::getUnicode(unsigned short glyphId)
+{
+    return g_glyphUnicodes[glyphId];
+}
+
+unsigned char* CFontData::topLeftPixel(int row, int column)
+{
+    unsigned char* pixel = m_glyphPixels;
+    moveCursor(pixel, (unsigned int)column * m_fontData->glyphWidth,
+               (unsigned int)row * m_fontData->glyphHeight);
+    return pixel;
+}
+
+float CFontData::getAdvance(unsigned short glyphId)
+{
+    return m_glyphAdvances[glyphId];
+}
+
+bool CFontData::unicodeIsWhitespace(unsigned int unicode)
+{
+    return unicode == 0x20 || unicode == 0x0a;
+}
+
+bool CFontData::glyphIsWhitespace(unsigned short glyphId)
+{
+    return unicodeIsWhitespace(getUnicode(glyphId));
 }

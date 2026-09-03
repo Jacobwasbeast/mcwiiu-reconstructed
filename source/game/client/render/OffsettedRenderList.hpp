@@ -1,7 +1,7 @@
 #ifndef GAME_CLIENT_RENDER_OFFSETTEDRENDERLIST_HPP
 #define GAME_CLIENT_RENDER_OFFSETTEDRENDERLIST_HPP
 
-class IntBuffer;
+class Buffer;
 
 class OffsettedRenderList
 {
@@ -21,7 +21,7 @@ private:
     float cameraX;
     float cameraY;
     float cameraZ;
-    IntBuffer* glListBuffer;
+    Buffer* glListBuffer;
     bool valid;
     bool bufferUploaded;
 };

@@ -1,42 +1,14 @@
 #include "game/client/render/TextureUVCoordinateSet.hpp"
-
-TextureUVCoordinateSet::TextureUVCoordinateSet(float u0,
-                                               float v0,
-                                               float u1,
-                                               float v1,
-                                               unsigned short textureWidth,
-                                               unsigned short textureHeight,
-                                               float scale)
-    : scale(scale)
-    , u0(u0)
-    , v0(v0)
-    , u1(u1)
-    , v1(v1)
-    , textureWidth(textureWidth)
-    , textureHeight(textureHeight)
-{
-}
-
-TextureUVCoordinateSet::TextureUVCoordinateSet()
-    : scale(1.0f)
-    , u0(0.0f)
-    , v0(0.0f)
-    , u1(0.0f)
-    , v1(0.0f)
-    , textureWidth(1)
-    , textureHeight(1)
-{
-}
-
-TextureUVCoordinateSet TextureUVCoordinateSet::fromOldSystem(int index)
-{
-    float column = (float)(index % 16);
-    float row = (float)(index / 16);
-
-    return TextureUVCoordinateSet(column * 0.0625f,
-                                  row * 0.0625f,
-                                  (column + 1.0f) * 0.0625f,
-                                  (row + 1.0f) * 0.0625f,
-                                  16,
-                                  16);
-}
+TextureUVCoordinateSet::TextureUVCoordinateSet(float a,float b,float c,float d,unsigned short w,unsigned short h,float s):scale(s),u0(a),v0(b),u1(c),v1(d),textureWidth(w),textureHeight(h){}
+TextureUVCoordinateSet::TextureUVCoordinateSet():scale(1.0f),u0(0.0f),v0(0.0f),u1(0.0f),v1(0.0f),textureWidth(1),textureHeight(1){}
+TextureUVCoordinateSet TextureUVCoordinateSet::fromOldSystem(int i){float x=(float)(i&15),y=(float)(i<0?(i-15)/16:i/16);return TextureUVCoordinateSet(x*.0625f,y*.0625f,(x+1)*.0625f,(y+1)*.0625f,16,16);}
+float TextureUVCoordinateSet::width()const{return u1-u0;} float TextureUVCoordinateSet::height()const{return v1-v0;}
+float TextureUVCoordinateSet::offsetWidth(float a,float b)const{return u0+width()*a/b;} float TextureUVCoordinateSet::offsetHeight(float a,float b)const{return v0+height()*a/b;}
+float TextureUVCoordinateSet::asPixelU1()const{return u1*textureWidth;} float TextureUVCoordinateSet::asPixelU0()const{return u0*textureWidth;} float TextureUVCoordinateSet::pixelWidth()const{return width()*textureWidth;}
+float TextureUVCoordinateSet::offsetWidthPixel(float a,float b)const{return offsetWidth(a,b)*textureWidth;} float TextureUVCoordinateSet::asPixelV1()const{return v1*textureHeight;} float TextureUVCoordinateSet::asPixelV0()const{return v0*textureHeight;} float TextureUVCoordinateSet::pixelHeight()const{return height()*textureHeight;}
+float TextureUVCoordinateSet::offsetHeightPixel(float a,float b)const{return offsetHeight(a,b)*textureHeight;} float TextureUVCoordinateSet::inverseOffsetWidth(float a,float b)const{return (a-u0)*b/width();} float TextureUVCoordinateSet::inverseOffsetHeight(float a,float b)const{return (a-v0)*b/height();}
+TextureUVCoordinateSet TextureUVCoordinateSet::getFlippedHorizontal()const{return TextureUVCoordinateSet(u1,v0,u0,v1,textureWidth,textureHeight,scale);} TextureUVCoordinateSet TextureUVCoordinateSet::getFlippedVertically()const{return TextureUVCoordinateSet(u0,v1,u1,v0,textureWidth,textureHeight,scale);}
+TextureUVCoordinateSet TextureUVCoordinateSet::offset(float a)const{return TextureUVCoordinateSet(u0+a,v0+a,u1+a,v1+a,textureWidth,textureHeight,scale);} float TextureUVCoordinateSet::pixelSizeU()const{return 1.0f/textureWidth;} float TextureUVCoordinateSet::pixelSizeV()const{return 1.0f/textureHeight;}
+TextureUVCoordinateSet TextureUVCoordinateSet::subTexture(float x,float y,int w,int h)const{return TextureUVCoordinateSet(u0+x*pixelSizeU(),v0+y*pixelSizeV(),u0+(x+w)*pixelSizeU(),v0+(y+h)*pixelSizeV(),textureWidth,textureHeight,scale);} TextureUVCoordinateSet TextureUVCoordinateSet::topLeftPixel()const{return subTexture(0,0,1,1);}
+int TextureUVCoordinateSet::hashCode()const{union{float f;unsigned int u;}a,b,c,d,e;a.f=scale;b.f=u0;c.f=v0;d.f=u1;e.f=v1;int r=a.u;r=31*r+b.u;r=31*r+c.u;r=31*r+d.u;r=31*r+e.u;r=31*r+textureWidth;return 31*r+textureHeight;}
+bool TextureUVCoordinateSet::operator==(const TextureUVCoordinateSet& o)const{return scale==o.scale&&u0==o.u0&&v0==o.v0&&u1==o.u1&&v1==o.v1&&textureWidth==o.textureWidth&&textureHeight==o.textureHeight;}

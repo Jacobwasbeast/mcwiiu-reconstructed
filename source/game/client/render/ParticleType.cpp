@@ -134,6 +134,16 @@ ParticleType::ParticleType(const std::string& name, ePARTICLE_TYPE id, bool over
     this->id = id;
 }
 
+std::string ParticleType::getName() const
+{
+    return this->name;
+}
+
+bool ParticleType::isPartial() const
+{
+    return this->id >= ePARTICLE_BLOCK_CRACK;
+}
+
 int ParticleType::getParamCount() const
 {
     return this->paramCount;

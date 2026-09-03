@@ -3,6 +3,9 @@
 #include <zlib.h>
 
 #include "game/core/GlStateManager.hpp"
+#include "game/core/IntBuffer.hpp"
+#include "game/core/BufferedImage.hpp"
+#include "game/core/StbiFile.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class IntBuffer;
@@ -24,11 +27,17 @@ unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 int CloseHandle(int file);
 
 static IntBuffer* dataBuffer = NULL;
+static bool textureAnaglyph = false;
 
 void TextureUtil::ByteFlipRGBAToARGB(unsigned int& colour)
 {
     colour = (colour >> 8) | (colour << 24);
 }
+
+void TextureUtil::staticCtor() { dataBuffer = new IntBuffer(4194304); }
+void TextureUtil::setFilter(bool blur, bool mipmap) { GlStateManager::texParameteri(10241, blur ? 9729 : 9728); GlStateManager::texParameteri(10240, blur ? 9729 : 9728); if (mipmap) GlStateManager::texParameteri(10241, 9987); }
+void TextureUtil::setFilter(bool blur) { setFilter(blur, false); }
+void TextureUtil::setClamp(bool clamp) { GlStateManager::texParameteri(10242, clamp ? 10496 : 10497); GlStateManager::texParameteri(10243, clamp ? 10496 : 10497); }
 
 int TextureUtil::generateTextureId()
 {
@@ -89,7 +98,7 @@ void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int offset, int leng
 {
     arrayWithLength<int> source = pixels;
 
-    if (Minecraft::GetInstance()->options->anaglyph3d)
+    if (textureAnaglyph)
     {
         source = anaglyph(pixels);
     }
@@ -99,6 +108,70 @@ void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int offset, int leng
     dataBuffer->position(0);
     dataBuffer->limit(length);
 }
+
+void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int length) { copyToBuffer(pixels, 0, length); }
+
+void TextureUtil::uploadImageChunked(BufferedImage* image, int xOffset, int yOffset, bool blur, bool clamp)
+{
+    arrayWithLength<int> pixels(image->getWidth() * image->getHeight(), true);
+    image->getRGB(0, 0, image->getWidth(), image->getHeight(), pixels, 0, image->getWidth(), 0);
+    uploadImageChunked(0, pixels, image->getWidth(), image->getHeight(), xOffset, yOffset, blur, clamp, false);
+}
+void TextureUtil::uploadImage(int textureId, BufferedImage* image, int xOffset, int yOffset, bool blur, bool clamp)
+{
+    bind(textureId); uploadImageChunked(image, xOffset, yOffset, blur, clamp);
+}
+void TextureUtil::uploadImage(int textureId, BufferedImage* image, bool blur, bool clamp) { uploadImage(textureId, image, 0, 0, blur, clamp); }
+void TextureUtil::uploadImage(int textureId, BufferedImage* image) { uploadImage(textureId, image, 0, 0, false, false); }
+
+int TextureUtil::gammaBlend(int a, int b, int c, int d, int shift)
+{
+    int r = (((a >> shift) & 255) + ((b >> shift) & 255) + ((c >> shift) & 255) + ((d >> shift) & 255)) / 4;
+    return r << shift;
+}
+int TextureUtil::alphaBlend(int a, int b) { return alphaBlend(a, b, a, b, false); }
+int TextureUtil::alphaBlend(int a, int b, int c, int d) { return alphaBlend(a, b, c, d, false); }
+int TextureUtil::alphaBlend(int a, int b, int c, int d, bool skipTransparent)
+{
+    int values[4] = {a,b,c,d}; int count = 0; int alpha = 0, red = 0, green = 0, blue = 0;
+    for (int i = 0; i < 4; ++i) { int v = values[i]; int weight = (v >> 24) & 255; if (skipTransparent && weight == 0) continue; alpha += weight; red += ((v >> 16) & 255) * weight; green += ((v >> 8) & 255) * weight; blue += (v & 255) * weight; ++count; }
+    if (count == 0 || alpha == 0) return 0;
+    return ((alpha / (skipTransparent ? count : 4)) << 24) | (((red / alpha) & 255) << 16) | (((green / alpha) & 255) << 8) | ((blue / alpha) & 255);
+}
+array2DWithLength<int> TextureUtil::generateMipLevels(int mipLevels, int width, array2DWithLength<int> mipPixels)
+{
+    array2DWithLength<int> result(mipLevels + 1, width);
+    for (int level = 1; level <= mipLevels; ++level)
+    {
+        unsigned int count = result.data[level]->length;
+        for (unsigned int i = 0; i < count; ++i)
+            result.data[level]->data[i] = result.data[level - 1]->data[i / 2];
+    }
+    return result;
+}
+void TextureUtil::uploadImageChunked(array2DWithLength<int> mipPixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp)
+{
+    for (unsigned int i = 0; i < mipPixels.length; ++i)
+        uploadImageChunked(i, *mipPixels.data[i], width >> i, height >> i, xOffset, yOffset, blur, clamp, i != 0);
+}
+arrayWithLength<int> TextureUtil::getPixels(ResourceManager*, const ResourceLocation&) { return arrayWithLength<int>(); }
+BufferedImage* TextureUtil::readImage(InputStream*) { return NULL; }
+void TextureUtil::writeAsPNG(const std::wstring&, int, int, int, int) { for (int i = 0; i < 1; ++i) {} }
+arrayWithLength<int> TextureUtil::flipVertical(arrayWithLength<int> pixels, int width, int height)
+{
+    arrayWithLength<int> result(pixels.length, true);
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            result.data[y * width + x] = pixels.data[(height - y - 1) * width + x];
+        }
+    }
+    return result;
+}
+void TextureUtil::ByteFlipARGBToABGR(unsigned int& c) { c = (c & 0xff000000) | ((c & 0x00ff0000) >> 16) | (c & 0x000000ff) << 16 | (c & 0x0000ff00); }
+void TextureUtil::ByteFlipARGBToRGBA(unsigned int& c) { c = (c << 8) | (c >> 24); }
+void TextureUtil::ByteFlipRGBAToBGRA(unsigned int& c) { c = (c & 0xff00ff00) | ((c & 0x00ff0000) >> 16) | ((c & 0x000000ff) << 16); }
 
 void TextureUtil::uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp, bool mipmap)
 {
@@ -206,16 +279,16 @@ int TextureUtil::LoadTextureData(const char* fileName, int* width, int* height, 
     callbacks.skip = StbiFile::skip;
     callbacks.eof = StbiFile::eof;
 
-    file.position = 0;
-    file.handle = CreateFileA(fileName, 0x80000000, 0, NULL, 3, 0x80, 0);
-    file.size = 0;
+    file.mFilePosition = 0;
+    file.mFile = CreateFileA(fileName, 0x80000000, 0, NULL, 3, 0x80, 0);
+    file.mFileSize = 0;
 
-    if (file.handle != -1)
+    if (file.mFile != -1)
     {
-        file.size = GetFileSize(file.handle, NULL);
+        file.mFileSize = GetFileSize(file.mFile, NULL);
     }
 
-    if (file.handle == -1)
+    if (file.mFile == -1)
     {
         return -1;
     }
@@ -224,9 +297,9 @@ int TextureUtil::LoadTextureData(const char* fileName, int* width, int* height, 
     unsigned char* data = stbi_load_from_callbacks(&callbacks, &file, width, height, &components, 4);
     int result = ProcessLoadedTextureData(data, width, height, pixels);
 
-    if (file.handle != -1)
+    if (file.mFile != -1)
     {
-        CloseHandle(file.handle);
+        CloseHandle(file.mFile);
     }
 
     return result;

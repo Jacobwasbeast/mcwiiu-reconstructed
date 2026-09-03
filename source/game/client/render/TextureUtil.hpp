@@ -3,13 +3,13 @@
 
 #include <string>
 
-#include "game/util/ResourceLocation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"
 
 class BufferedImage;
 class InputStream;
 class ResourceManager;
+class ResourceLocation;
 
 class TextureUtil
 {

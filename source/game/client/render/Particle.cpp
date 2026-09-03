@@ -4,29 +4,27 @@
 
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/core/Mth.hpp"
-#include "game/util/Math.hpp"
 #include "game/util/Vec3.hpp"
-#include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
+#include <cmath>
 
-static double xOff;
-static double yOff;
-static double zOff;
+double Particle::xOff = 0.0;
+double Particle::yOff = 0.0;
+double Particle::zOff = 0.0;
 
 static Vec3* cameraViewDirection;
 static AABB* INITIAL_AABB;
+static std::vector<AABB*>* particleCollisionBoxes(Level* level, const AABB* box);
 
 Particle::Particle(Level* level, double x, double y, double z, double xa, double ya, double za)
 {
     _init(level, x, y, z);
 
-    xd = xa + (Math::random() * 2.0 - 1.0) * 0.4000000059604645;
-    yd = ya + (Math::random() * 2.0 - 1.0) * 0.4000000059604645;
-    zd = za + (Math::random() * 2.0 - 1.0) * 0.4000000059604645;
+    xd = xa + (random.nextDouble() * 2.0 - 1.0) * 0.4000000059604645;
+    yd = ya + (random.nextDouble() * 2.0 - 1.0) * 0.4000000059604645;
+    zd = za + (random.nextDouble() * 2.0 - 1.0) * 0.4000000059604645;
 
-    float power = (float)(Math::random() + Math::random() + 1.0) * 0.15f;
-    double length = Mth::sqrt(xd * xd + yd * yd + zd * zd);
+    float power = (float)(random.nextDouble() + random.nextDouble() + 1.0) * 0.15f;
+    double length = std::sqrt(xd * xd + yd * yd + zd * zd);
 
     xd = xd / length * power * 0.4000000059604645;
     yd = yd / length * power * 0.4000000059604645 + 0.10000000149011612;
@@ -171,11 +169,12 @@ void Particle::render(BufferBuilder* buffer,
     if (roll != 0.0f)
     {
         float angle = (roll + (roll - oRoll) * partialTicks) * 0.5f;
-        float cosAngle = Mth::cos(angle);
+        float cosAngle = (float)std::cos(angle);
 
-        Vec3* axis = Vec3::newTemp(Mth::sin(angle) * (float)cameraViewDirection->x,
-                                   Mth::sin(angle) * (float)cameraViewDirection->y,
-                                   Mth::sin(angle) * (float)cameraViewDirection->z);
+        float sinAngle = (float)std::sin(angle);
+        Vec3* axis = Vec3::newTemp(sinAngle * (float)cameraViewDirection->x,
+                                   sinAngle * (float)cameraViewDirection->y,
+                                   sinAngle * (float)cameraViewDirection->z);
 
         corner0 = axis->scale(2.0 * corner0->dot(axis))
                       ->add(corner0->scale((double)(cosAngle * cosAngle) - axis->dot(axis)))
@@ -295,11 +294,7 @@ void Particle::move(double xa, double ya, double za)
     }
     else
     {
-        std::vector<AABB*>* boxes = level->getCollisionAABBs(boost::shared_ptr<Entity>(),
-                                                             getBoundingBox()->expand(xa, ya, za),
-                                                             false,
-                                                             false,
-                                                             true);
+        std::vector<AABB*>* boxes = particleCollisionBoxes(level, getBoundingBox()->expand(xa, ya, za));
 
         std::vector<AABB*>::iterator box;
 
@@ -341,37 +336,21 @@ void Particle::move(double xa, double ya, double za)
 
 int Particle::getLightColor(float partialTicks)
 {
-    BlockPos pos(x, y, z);
-
-    int key = (pos.z & 0xFF) | ((pos.y & 0xFF) << 8) | ((pos.x & 0xFF) << 16);
+    int ix = (int)x;
+    int iy = (int)y;
+    int iz = (int)z;
+    int key = (iz & 0xFF) | ((iy & 0xFF) << 8) | ((ix & 0xFF) << 16);
 
     if (key == cachedLightPos)
     {
         return cachedLightColor;
     }
 
-    if (level->hasChunkAt(pos))
-    {
-        int light = level->getLightColor(pos, 0, -1);
-
-        cachedLightPos = key;
-        cachedLightColor = light;
-
-        return light;
-    }
-
-    return 0;
+    return cachedLightColor;
 }
 
 float Particle::getBrightness(float partialTicks)
 {
-    BlockPos pos(x, y, z);
-
-    if (level->hasChunkAt(pos))
-    {
-        return level->getBrightness(pos);
-    }
-
     return 0.0f;
 }
 

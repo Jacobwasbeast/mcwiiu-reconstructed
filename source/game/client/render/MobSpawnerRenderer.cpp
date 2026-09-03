@@ -4,7 +4,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/BaseMobSpawner.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"

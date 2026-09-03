@@ -3,17 +3,17 @@
 #include "game/core/DataInputStream.hpp"
 
 ModelPartCubeDefinition::ModelPartCubeDefinition()
-    : x(0.0f),
-      y(0.0f),
-      z(0.0f),
-      width(0),
-      height(0),
-      depth(0),
-      texU(0.0f),
-      texV(0.0f),
-      inflate(0.0f),
-      mirror(false)
 {
+    x = 0.0f;
+    y = 0.0f;
+    z = 0.0f;
+    width = 0;
+    height = 0;
+    depth = 0;
+    texU = 0.0f;
+    texV = 0.0f;
+    inflate = 0.0f;
+    mirror = false;
 }
 
 void ModelPartCubeDefinition::readModelPartCube(DataInputStream* input)

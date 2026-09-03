@@ -1,0 +1,56 @@
+#include "game/client/render/SkeletonHeadModel.hpp"
+
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPart.hpp"
+
+SkeletonHeadModel::SkeletonHeadModel(const ModelDefinition& modelDefinition) : Model()
+{
+    _init(0, 35, 64, 64, modelDefinition);
+}
+
+SkeletonHeadModel::SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition) : Model()
+{
+    _init(xTexOffs, yTexOffs, texWidth, texHeight, modelDefinition);
+}
+
+SkeletonHeadModel::~SkeletonHeadModel()
+{
+}
+
+void SkeletonHeadModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
+{
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mHead = new ModelPart(this, L"head", modelDefinition, NULL, 0.0f);
+    }
+    else
+    {
+        mTexWidth = texWidth;
+        mTexHeight = texHeight;
+
+        mHead = new ModelPart(this, xTexOffs, yTexOffs);
+        mHead->addHumanoidBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, 0.1f);
+        mHead->setPos(0.0f, 0.0f, 0.0f);
+        mHead->compile(0.0625f);
+    }
+}
+
+void SkeletonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+{
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+
+    mHead->render(scale, useDisplayList, false);
+}
+
+void SkeletonHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+{
+    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+
+    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
+    mHead->mXRot = headPitch * 0.01745329238474369f;
+}
+
+std::wstring SkeletonHeadModel::getName()
+{
+    return L"mob_head";
+}

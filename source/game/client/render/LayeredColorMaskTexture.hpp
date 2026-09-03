@@ -4,12 +4,13 @@
 #include <string>
 #include <vector>
 
+#include "game/client/render/AbstractTexture.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 class ResourceManager;
 
-class LayeredColorMaskTexture
+class LayeredColorMaskTexture : public AbstractTexture
 {
 public:
     LayeredColorMaskTexture(ResourceLocation* location,

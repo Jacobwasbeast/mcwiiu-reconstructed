@@ -9,6 +9,19 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+ResourceLocation BlockEntityRenderer::BREAKING_LOCATIONS[10] = {
+    ResourceLocation((_TEXTURE_NAME)136),
+    ResourceLocation((_TEXTURE_NAME)137),
+    ResourceLocation((_TEXTURE_NAME)138),
+    ResourceLocation((_TEXTURE_NAME)139),
+    ResourceLocation((_TEXTURE_NAME)140),
+    ResourceLocation((_TEXTURE_NAME)141),
+    ResourceLocation((_TEXTURE_NAME)142),
+    ResourceLocation((_TEXTURE_NAME)143),
+    ResourceLocation((_TEXTURE_NAME)144),
+    ResourceLocation((_TEXTURE_NAME)145)
+};
+
 BlockEntityRenderer::~BlockEntityRenderer()
 {
 }

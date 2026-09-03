@@ -1,24 +1,13 @@
 #include "game/client/render/SimpleAnimatedParticle.hpp"
 
-SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level,
-                                               double x,
-                                               double y,
-                                               double z,
-                                               int baseTex,
-                                               int numTex,
-                                               float baseGravity)
-    : Particle(level, x, y, z)
+SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level, double x, double y,
+                                               double z, int texture,
+                                               int frameCount, float verticalSpeed)
+    : Particle(level, x, y, z), texture(texture), frameCount(frameCount),
+      verticalSpeed(verticalSpeed), baseAirFriction(0.91f), fadeRed(0.0f),
+      fadeGreen(0.0f), fadeBlue(0.0f), fading(false)
 {
-    this->baseTex = baseTex;
-    this->numTex = numTex;
-    this->baseGravity = baseGravity;
-    this->baseAirFriction = 0.91f;
-    this->fadeR = 0.0f;
-    this->fadeG = 0.0f;
-    this->fadeB = 0.0f;
-    this->hasFade = false;
-
-    setMiscTex(baseTex);
+    setMiscTex(texture);
 }
 
 SimpleAnimatedParticle::~SimpleAnimatedParticle()
@@ -27,17 +16,17 @@ SimpleAnimatedParticle::~SimpleAnimatedParticle()
 
 void SimpleAnimatedParticle::setColor(int color)
 {
-    Particle::setColor((float)((color >> 16) & 0xFF) / 255.0f,
-                       (float)((color >> 8) & 0xFF) / 255.0f,
-                       (float)(color & 0xFF) / 255.0f);
+    Particle::setColor((float)((color >> 16) & 0xff) / 255.0f,
+             (float)((color >> 8) & 0xff) / 255.0f,
+             (float)(color & 0xff) / 255.0f);
 }
 
 void SimpleAnimatedParticle::setFadeColor(int color)
 {
-    fadeR = (float)((color >> 16) & 0xFF) / 255.0f;
-    fadeG = (float)((color >> 8) & 0xFF) / 255.0f;
-    fadeB = (float)(color & 0xFF) / 255.0f;
-    hasFade = true;
+    fadeRed = (float)((color >> 16) & 0xff) / 255.0f;
+    fadeGreen = (float)((color >> 8) & 0xff) / 255.0f;
+    fadeBlue = (float)(color & 0xff) / 255.0f;
+    fading = true;
 }
 
 bool SimpleAnimatedParticle::isTransparent()
@@ -47,47 +36,48 @@ bool SimpleAnimatedParticle::isTransparent()
 
 void SimpleAnimatedParticle::tick()
 {
+    int oldAge = age;
+    int oldLifetime = lifetime;
+    ++age;
     xo = x;
     yo = y;
     zo = z;
 
-    if (age++ >= lifetime)
+    if (oldLifetime <= oldAge)
     {
         remove();
+        oldLifetime = lifetime;
     }
 
-    if (age > lifetime / 2)
+    int fadeStart = oldLifetime / 2;
+    int currentAge = age;
+    if (fadeStart < currentAge)
     {
-        setAlpha(1.0f - ((float)age - (float)(lifetime / 2)) / (float)lifetime);
-
-        if (hasFade)
+        setAlpha(1.0f - (float)(currentAge - fadeStart) / (float)oldLifetime);
+        if (fading)
         {
-            rCol += (fadeR - rCol) * 0.2f;
-            gCol += (fadeG - gCol) * 0.2f;
-            bCol += (fadeB - bCol) * 0.2f;
+            rCol += (fadeRed - rCol) * 0.2f;
+            gCol += (fadeGreen - gCol) * 0.2f;
+            bCol += (fadeBlue - bCol) * 0.2f;
         }
     }
 
-    setMiscTex(baseTex + ((numTex - 1) - age * numTex / lifetime));
-
-    yd += (double)baseGravity;
-
+    setMiscTex(texture + (frameCount - 1 - age * frameCount / oldLifetime));
+    yd += (double)verticalSpeed;
     move(xd, yd, zd);
-
     xd *= (double)baseAirFriction;
     yd *= (double)baseAirFriction;
     zd *= (double)baseAirFriction;
-
     if (onGround)
     {
-        xd *= 0.7f;
-        zd *= 0.7f;
+        xd *= 0.699999988079071;
+        zd *= 0.699999988079071;
     }
 }
 
 int SimpleAnimatedParticle::getLightColor(float partialTicks)
 {
-    return 0xF000F0;
+    return 0xf000f0;
 }
 
 float SimpleAnimatedParticle::getBrightness(float partialTicks)
@@ -95,7 +85,7 @@ float SimpleAnimatedParticle::getBrightness(float partialTicks)
     return 1.0f;
 }
 
-void SimpleAnimatedParticle::setBaseAirFriction(float airFriction)
+void SimpleAnimatedParticle::setBaseAirFriction(float friction)
 {
-    baseAirFriction = airFriction;
+    baseAirFriction = friction;
 }

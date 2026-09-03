@@ -69,6 +69,10 @@ public:
     static void setZOffset(double offset);
     static void setCamerViewDirection(Vec3* direction);
 
+    static double xOff;
+    static double yOff;
+    static double zOff;
+
     boost::weak_ptr<Entity> attachedEntity;
     Level* level;
     double xo;
