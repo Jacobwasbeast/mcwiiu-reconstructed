@@ -35,3 +35,13 @@ bool SoundEvent::isSFX() const
 {
     return this->type == eType_SFX;
 }
+
+bool SoundEvent::isMusic() const
+{
+    return this->type == eType_Music;
+}
+
+int SoundEvent::getIndex() const
+{
+    return this->index;
+}

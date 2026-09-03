@@ -20,3 +20,8 @@ bool SoundInstance::isComplete()
 {
     return state == eSoundState_Complete;
 }
+
+bool SoundInstance::isPlaying()
+{
+    return state == eSoundState_Playing;
+}

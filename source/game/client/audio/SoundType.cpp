@@ -1,6 +1,5 @@
 #include "game/client/audio/SoundType.hpp"
 
-#include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 
 const SoundType* SoundType::WOOD = NULL;

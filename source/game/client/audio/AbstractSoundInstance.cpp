@@ -1,8 +1,8 @@
 #include "game/client/audio/AbstractSoundInstance.hpp"
 
-AbstractSoundInstance::AbstractSoundInstance(const SoundEvent* sound, SoundSource::ESoundSource source)
-    : source(source)
-    , sound(sound)
+AbstractSoundInstance::AbstractSoundInstance(const SoundEvent* soundEvent, SoundSource::ESoundSource soundSource)
+    : source(soundSource)
+    , sound(soundEvent)
     , volume(1.0f)
     , pitch(1.0f)
     , looping(false)

@@ -2,9 +2,6 @@
 #define GAME_CLIENT_AUDIO_ABSTRACTTICKABLESOUNDINSTANCE_HPP
 
 #include "game/client/audio/AbstractSoundInstance.hpp"
-#include "game/client/audio/SoundEvent.hpp"
-#include "game/client/audio/SoundInstance.hpp"
-#include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/TickableSoundInstance.hpp"
 
 class AbstractTickableSoundInstance : public AbstractSoundInstance, public TickableSoundInstance

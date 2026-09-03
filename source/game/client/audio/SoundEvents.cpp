@@ -2,6 +2,7 @@
 
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/block/IdMapper.hpp"
 #include "game/world/block/MappedRegistry.hpp"
 
 MappedRegistry<ResourceLocation, const SoundEvent*> SoundEvents::soundEventRegistry;
@@ -670,6 +671,11 @@ SoundEvent* SoundEvents::registerSound(SoundEvent* soundEvent)
 SoundEvent* SoundEvents::registerSound(const std::wstring& name)
 {
     return registerSound(new SoundEvent(name, 16.0f));
+}
+
+int SoundEvents::getCount()
+{
+    return nextSoundEventId;
 }
 
 void SoundEvents::staticCtor()

@@ -1,8 +1,9 @@
 #ifndef GAME_CLIENT_AUDIO_SOUNDINSTANCE_HPP
 #define GAME_CLIENT_AUDIO_SOUNDINSTANCE_HPP
 
-#include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundSource.hpp"
+
+class SoundEvent;
 
 class SoundInstance
 {

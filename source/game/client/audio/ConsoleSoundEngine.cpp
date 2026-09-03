@@ -165,6 +165,16 @@ void ConsoleSoundEngine::play(SoundInstance* sound)
     this->playInstance(sound->getDRCClone());
 }
 
+bool ConsoleSoundEngine::isPlaying(SoundInstance* sound)
+{
+    boost::unordered_map<SoundInstance*, SoundInstance*>::const_iterator it = this->playingSounds.find(sound);
+    return it != this->playingSounds.end();
+}
+
+void ConsoleSoundEngine::stop(SoundInstance* sound)
+{
+}
+
 void ConsoleSoundEngine::stopAll()
 {
     std::vector<TickableSoundInstance*>::iterator it;

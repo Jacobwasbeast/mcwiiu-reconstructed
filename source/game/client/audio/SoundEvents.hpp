@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/block/IdMapper.hpp"
 #include "game/world/block/MappedRegistry.hpp"
 
 class SoundEvent;
