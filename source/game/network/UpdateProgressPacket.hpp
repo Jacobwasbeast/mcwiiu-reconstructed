@@ -1,0 +1,33 @@
+#ifndef GAME_NETWORK_UPDATEPROGRESSPACKET_HPP
+#define GAME_NETWORK_UPDATEPROGRESSPACKET_HPP
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "game/network/Packet.hpp"
+
+class DataInputStream;
+class DataOutputStream;
+class PacketListener;
+
+class UpdateProgressPacket : public Packet,
+                             public boost::enable_shared_from_this<UpdateProgressPacket>
+{
+public:
+    UpdateProgressPacket();
+    UpdateProgressPacket(int progress);
+    virtual ~UpdateProgressPacket();
+
+    static boost::shared_ptr<Packet> create();
+
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual void handle(PacketListener* listener);
+    virtual int getEstimatedSize();
+    virtual int getPacketId();
+
+private:
+    int mProgress;
+};
+
+#endif

@@ -1,0 +1,76 @@
+#include "game/network/ClientboundUpdateAttributesPacket.hpp"
+
+#include "game/core/AttributeInstance.hpp"
+#include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/network/PacketListener.hpp"
+
+ClientboundUpdateAttributesPacket::AttributeSnapshot::AttributeSnapshot(
+    eATTRIBUTE_ID attributeId, double baseValue,
+    boost::unordered_set<AttributeModifier*>* sourceModifiers)
+    : id(attributeId), base(baseValue), modifiers() {
+    if (sourceModifiers != 0) modifiers = *sourceModifiers;
+}
+
+ClientboundUpdateAttributesPacket::AttributeSnapshot::~AttributeSnapshot() {
+}
+
+boost::unordered_set<AttributeModifier*>* ClientboundUpdateAttributesPacket::AttributeSnapshot::getModifiers() { return &modifiers; }
+eATTRIBUTE_ID ClientboundUpdateAttributesPacket::AttributeSnapshot::getId() { return id; }
+double ClientboundUpdateAttributesPacket::AttributeSnapshot::getBase() { return base; }
+
+ClientboundUpdateAttributesPacket::ClientboundUpdateAttributesPacket()
+    : entityId(0), entityType(0), values() {
+}
+
+ClientboundUpdateAttributesPacket::ClientboundUpdateAttributesPacket(
+    int idValue, int typeValue, boost::unordered_set<AttributeInstance*>* attributes)
+    : entityId(idValue), entityType(typeValue), values() {
+    if (attributes == 0) return;
+    for (boost::unordered_set<AttributeInstance*>::iterator it = attributes->begin(); it != attributes->end(); ++it) {
+        AttributeInstance* attribute = *it;
+        if (attribute != 0) {
+            boost::unordered_set<AttributeModifier*> modifiers;
+            attribute->getModifiers(modifiers);
+            values.insert(new AttributeSnapshot(attribute->getAttribute()->getId(), attribute->getBaseValue(), &modifiers));
+        }
+    }
+}
+
+ClientboundUpdateAttributesPacket::~ClientboundUpdateAttributesPacket() {
+    for (boost::unordered_set<AttributeSnapshot*>::iterator it = values.begin(); it != values.end(); ++it) delete *it;
+}
+
+void ClientboundUpdateAttributesPacket::read(DataInputStream* input) {
+    entityId = input->readVarInt();
+    int count = input->readVarInt();
+    for (int i = 0; i < count; ++i) {
+        eATTRIBUTE_ID id = static_cast<eATTRIBUTE_ID>(input->readVarInt());
+        double baseValue = input->readDouble();
+        values.insert(new AttributeSnapshot(id, baseValue, 0));
+    }
+}
+
+void ClientboundUpdateAttributesPacket::write(DataOutputStream* output) {
+    output->writeVarInt(entityId);
+    output->writeVarInt(static_cast<int>(values.size()));
+    for (boost::unordered_set<AttributeSnapshot*>::iterator it = values.begin(); it != values.end(); ++it) {
+        AttributeSnapshot* value = *it;
+        output->writeVarInt(static_cast<int>(value->getId()));
+        output->writeDouble(value->getBase());
+        output->writeVarInt(static_cast<int>(value->getModifiers()->size()));
+        for (boost::unordered_set<AttributeModifier*>::iterator modifier = value->getModifiers()->begin(); modifier != value->getModifiers()->end(); ++modifier) {
+            output->writeLong(static_cast<long long>((*modifier)->getId()));
+            output->writeDouble((*modifier)->getAmount());
+            output->writeByte(static_cast<unsigned char>((*modifier)->getOperation()));
+        }
+    }
+}
+
+void ClientboundUpdateAttributesPacket::handle(PacketListener* listener) { listener->handleUpdateAttributes(shared_from_this()); }
+int ClientboundUpdateAttributesPacket::getEstimatedSize() { return 44; }
+int ClientboundUpdateAttributesPacket::getEntityId() { return entityId; }
+int ClientboundUpdateAttributesPacket::getEntityType() { return entityType; }
+boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>* ClientboundUpdateAttributesPacket::getValues() { return &values; }
+int ClientboundUpdateAttributesPacket::getPacketId() { return 44; }
+boost::shared_ptr<Packet> ClientboundUpdateAttributesPacket::create() { return boost::shared_ptr<Packet>(new ClientboundUpdateAttributesPacket()); }

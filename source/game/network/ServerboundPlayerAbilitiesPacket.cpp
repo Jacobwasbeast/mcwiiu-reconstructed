@@ -110,6 +110,16 @@ bool ServerboundPlayerAbilitiesPacket::canInstabuild()
     return instabuild;
 }
 
+float ServerboundPlayerAbilitiesPacket::getFlyingSpeed()
+{
+    return flyingSpeed;
+}
+
+float ServerboundPlayerAbilitiesPacket::getWalkingSpeed()
+{
+    return walkingSpeed;
+}
+
 void ServerboundPlayerAbilitiesPacket::setInstabuild(bool instabuild)
 {
     this->instabuild = instabuild;

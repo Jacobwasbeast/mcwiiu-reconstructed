@@ -5,8 +5,8 @@
 #include "game/network/PacketListener.hpp"
 
 GameCommandPacket::GameCommandPacket()
+    : command(static_cast<EGameCommand>(0)), dataLength(0), data()
 {
-    this->dataLength = 0;
 }
 
 GameCommandPacket::GameCommandPacket(EGameCommand command, arrayWithLength<unsigned char> data)
@@ -70,7 +70,7 @@ void GameCommandPacket::handle(PacketListener* listener)
 
 int GameCommandPacket::getEstimatedSize()
 {
-    return this->dataLength + 4;
+    return this->dataLength + 6;
 }
 
 boost::shared_ptr<Packet> GameCommandPacket::create()

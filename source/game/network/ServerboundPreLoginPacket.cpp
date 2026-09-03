@@ -1,0 +1,51 @@
+#include "game/network/ServerboundPreLoginPacket.hpp"
+
+#include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/network/PacketListener.hpp"
+
+ServerboundPreLoginPacket::ServerboundPreLoginPacket()
+    : protocolVersion(0), name(L"")
+{
+}
+
+ServerboundPreLoginPacket::ServerboundPreLoginPacket(const std::wstring& name)
+    : protocolVersion(0), name(name)
+{
+}
+
+ServerboundPreLoginPacket::~ServerboundPreLoginPacket()
+{
+}
+
+int ServerboundPreLoginPacket::getPacketId()
+{
+    return 232;
+}
+
+void ServerboundPreLoginPacket::read(DataInputStream* input)
+{
+    protocolVersion = input->readShort();
+    name = Packet::readUtf(input, 32);
+}
+
+void ServerboundPreLoginPacket::write(DataOutputStream* output)
+{
+    output->writeShort(2177);
+    Packet::writeUtf(name, output);
+}
+
+void ServerboundPreLoginPacket::handle(PacketListener* listener)
+{
+    listener->handlePreLogin(shared_from_this());
+}
+
+int ServerboundPreLoginPacket::getEstimatedSize()
+{
+    return name.length() * 2 + 2;
+}
+
+boost::shared_ptr<Packet> ServerboundPreLoginPacket::create()
+{
+    return boost::shared_ptr<Packet>(new ServerboundPreLoginPacket());
+}
