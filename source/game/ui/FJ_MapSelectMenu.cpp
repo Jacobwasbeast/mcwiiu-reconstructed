@@ -1,0 +1,34 @@
+#include "game/ui/FJ_MapSelectMenu.hpp"
+
+#include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+
+FJ_MapSelectMenu::FJ_MapSelectMenu(fuiRenderNode* renderNode)
+    : FJ_Document(renderNode)
+{
+}
+
+FJ_MapSelectMenu::~FJ_MapSelectMenu()
+{
+}
+
+FJ_Document* FJ_MapSelectMenu::Create(fuiRenderNode* renderNode)
+{
+    return new FJ_MapSelectMenu(renderNode);
+}
+
+unsigned int FJ_MapSelectMenu::getType()
+{
+    return 48;
+}
+
+void FJ_MapSelectMenu::SetSafeZone(int top, int bottom, int left, int right)
+{
+    FJ_Document::SetSafeZone(top, bottom, left, right);
+
+    const double stageHeight = getStage()->getStageHeight();
+    if (stageHeight != 360.0 && stageHeight != 540.0)
+        return;
+
+    setX(-static_cast<float>(top) - 176.0f);
+}
