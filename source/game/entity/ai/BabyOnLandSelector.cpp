@@ -1,8 +1,10 @@
 #include "game/entity/ai/BabyOnLandSelector.hpp"
 
+#include "game/entity/mob/Entity.hpp"
+
 #include <boost/shared_ptr.hpp>
 
-class LivingEntity;
+#include "game/entity/mob/LivingEntity.hpp"
 
 bool BabyOnLandSelector::apply(boost::shared_ptr<Entity> entity) const
 {

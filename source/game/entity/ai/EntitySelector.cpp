@@ -17,6 +17,11 @@ Predicate<boost::shared_ptr<Entity> >* withinDistance(double x, double y, double
     return new WithinDistanceSelector(x, y, z, distance);
 }
 
+Predicate<boost::shared_ptr<Entity> >* riding(boost::shared_ptr<Entity> entity)
+{
+    return new RidingSelector(entity, true);
+}
+
 Predicate<boost::shared_ptr<Entity> >* notRiding(boost::shared_ptr<Entity> entity)
 {
     return new RidingSelector(entity, false);

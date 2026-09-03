@@ -1,0 +1,96 @@
+#include "game/entity/ai/RandomStrollGoal.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
+#include "game/util/Random.hpp"
+#include "game/util/RandomPos.hpp"
+#include "game/util/Vec3.hpp"
+
+RandomStrollGoal::RandomStrollGoal(PathfinderMob* mob, double speedModifier)
+{
+    _init(mob, speedModifier, 120);
+}
+
+RandomStrollGoal::RandomStrollGoal(PathfinderMob* mob, double speedModifier, int interval)
+{
+    _init(mob, speedModifier, interval);
+}
+
+RandomStrollGoal::~RandomStrollGoal()
+{
+}
+
+void RandomStrollGoal::_init(PathfinderMob* mob, double speedModifier, int interval)
+{
+    mMob = mob;
+    mWantedX = 0.0;
+    mWantedY = 0.0;
+    mWantedZ = 0.0;
+    mSpeedModifier = speedModifier;
+    mInterval = interval;
+    mForceTrigger = false;
+    setRequiredControlFlags(1);
+}
+
+bool RandomStrollGoal::canUse()
+{
+    if (mMob->followsLeader())
+    {
+        return false;
+    }
+    if (!mForceTrigger && !mMob->isExtraWanderingEnabled())
+    {
+        if (mMob->getNoActionTime() >= 100)
+        {
+            return false;
+        }
+        if (mMob->getRandom()->nextInt(mInterval) != 0)
+        {
+            return false;
+        }
+    }
+    Vec3* target = getPosition();
+    if (target == NULL)
+    {
+        return false;
+    }
+    mWantedX = target->x;
+    mWantedY = target->y;
+    mWantedZ = target->z;
+    mForceTrigger = false;
+    return true;
+}
+
+bool RandomStrollGoal::canContinueToUse()
+{
+    return !mMob->getNavigation()->isDone();
+}
+
+void RandomStrollGoal::start()
+{
+    mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
+}
+
+Vec3* RandomStrollGoal::getPosition()
+{
+    boost::shared_ptr<PathfinderMob> mob = boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
+    return RandomPos::getPos(mob, 10, 7, mMob->getWanderingQuadrant());
+}
+
+void RandomStrollGoal::trigger()
+{
+    mForceTrigger = true;
+}
+
+void RandomStrollGoal::setInterval(int interval)
+{
+    mInterval = interval;
+}
+
+std::wstring RandomStrollGoal::getName()
+{
+    return std::wstring(L"RandomStroll");
+}
