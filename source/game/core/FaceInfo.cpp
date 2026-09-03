@@ -72,3 +72,13 @@ void FaceInfo::staticCtor()
     BY_FACING[WEST_FACE] = WEST;
     BY_FACING[EAST_FACE] = EAST;
 }
+
+FaceInfo* FaceInfo::fromFacing(const Direction* facing)
+{
+    return BY_FACING[facing->get3DDataValue()];
+}
+
+FaceInfo::VertexInfo* FaceInfo::getVertexInfo(int index) const
+{
+    return vertexInfos[index];
+}

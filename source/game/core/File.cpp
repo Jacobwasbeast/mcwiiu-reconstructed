@@ -34,6 +34,7 @@ int FindFirstFileA(const char* fileName, _WIN32_FIND_DATAA* findData);
 int FindNextFileA(int findHandle, _WIN32_FIND_DATAA* findData);
 int CloseHandle(int handle);
 unsigned int GetLastError();
+int MoveFileA(const char* existingFileName, const char* newFileName);
 
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
@@ -57,6 +58,11 @@ File::File(const std::wstring& path)
     {
         mPath = path;
     }
+}
+
+File::File(const std::wstring& parent, const std::wstring& child)
+{
+    mPath = parent + L'\\' + child;
 }
 
 File::File(const File& parent, const std::wstring& child)
@@ -218,8 +224,7 @@ std::vector<File*>* File::listFiles(FileFilter* filter) const
 
             if (filter->accept(entry))
             {
-                File match = entry;
-                files->push_back(&match);
+                files->push_back(&entry);
             }
         }
         while (FindNextFileA(findHandle, &findData) != 0);
@@ -247,4 +252,70 @@ int File::hash_fnct(const File& file)
 bool File::eq_test(const File& first, const File& second)
 {
     return first.getPath() == second.getPath();
+}
+
+bool File::mkdirs() const
+{
+    if (exists())
+    {
+        return false;
+    }
+
+    File parent = const_cast<File*>(this)->parentDir();
+    if (!parent.getPath().empty() && !parent.exists() && !parent.mkdirs())
+    {
+        return false;
+    }
+
+    return mkdir();
+}
+
+bool File::renameTo(File destination)
+{
+    char sourceName[256];
+    char destinationName[256];
+    return MoveFileA(wstringtofilename(getPath(), sourceName), wstringtofilename(destination.getPath(), destinationName)) != 0;
+}
+
+long long File::lastModified()
+{
+    char filename[256];
+    char searchPath[256];
+    _WIN32_FIND_DATAA findData;
+    int findHandle;
+
+    wstringtofilename(getPath(), filename);
+    sprintf(searchPath, "%s", filename);
+    findHandle = FindFirstFileA(searchPath, &findData);
+    if (findHandle == INVALID_HANDLE_VALUE)
+    {
+        return 0;
+    }
+    CloseHandle(findHandle);
+    return (static_cast<long long>(findData.ftLastWriteTime.dwHighDateTime) << 32) | findData.ftLastWriteTime.dwLowDateTime;
+}
+
+std::wstring File::getBaseName() const
+{
+    std::wstring name = getName();
+    std::wstring::size_type dot = name.rfind(L'.');
+    if (dot == std::wstring::npos || dot == 0)
+    {
+        return name;
+    }
+    return name.substr(0, dot);
+}
+
+File File::parentDir()
+{
+    std::wstring::size_type separator = mPath.rfind(L'\\');
+    if (separator == std::wstring::npos)
+    {
+        separator = mPath.rfind(L'/');
+    }
+    if (separator == std::wstring::npos)
+    {
+        return File(L"");
+    }
+    return File(mPath.substr(0, separator));
 }

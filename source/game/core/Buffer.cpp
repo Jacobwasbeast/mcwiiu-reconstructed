@@ -38,6 +38,11 @@ void Buffer::position(unsigned int newPosition)
     mPosition = newPosition;
 }
 
+unsigned int Buffer::position()
+{
+    return mPosition;
+}
+
 int Buffer::remaining()
 {
     return mLimit - mPosition;

@@ -9,7 +9,7 @@ class DataFixer;
 class DataWalker
 {
 public:
-    virtual ~DataWalker() {}
+    virtual ~DataWalker();
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version) = 0;
 
     bool CheckID(CompoundTag* tag, const std::wstring& id);

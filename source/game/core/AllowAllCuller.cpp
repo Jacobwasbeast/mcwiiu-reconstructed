@@ -6,7 +6,7 @@ AllowAllCuller::~AllowAllCuller()
 {
 }
 
-bool AllowAllCuller::isVisible(AABB* boundingBox)
+bool AllowAllCuller::isVisible(AABB* box)
 {
     return true;
 }

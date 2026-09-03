@@ -1,11 +1,14 @@
 #include "game/core/AttributeModifier.hpp"
 
-#include <wchar.h>
+#include "game/world/generation/Player.hpp"
 
-class EnchantmentHelper;
-class L10N;
+#include <wchar.h>
+#include <sstream>
+
+#include "game/item/EnchantmentHelper.hpp"
+#include "game/core/L10N.hpp"
 class LivingEntity;
-class SharedMonsterAttributes;
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 
 void AttributeModifier::_init(eMODIFIER_ID id, std::wstring name, double amount, int operation)
 {
@@ -62,6 +65,11 @@ bool AttributeModifier::isSerializable()
     return serialize;
 }
 
+std::wstring AttributeModifier::getName()
+{
+    return name;
+}
+
 void AttributeModifier::setSerialize(bool serialize)
 {
     this->serialize = serialize;
@@ -75,6 +83,16 @@ bool AttributeModifier::equals(AttributeModifier* other)
     }
 
     return true;
+}
+
+std::wstring AttributeModifier::toString()
+{
+    std::wstringstream stream;
+    stream << L"AttributeModifier{amount=" << amount
+           << L", operation=" << operation
+           << L", name='" << name
+           << L"', id=" << id << L"}";
+    return stream.str();
 }
 
 HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player)

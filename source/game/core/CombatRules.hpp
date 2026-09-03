@@ -4,8 +4,8 @@
 class CombatRules
 {
 public:
-    static float getDamageAfterAbsorb(float damage, float armorValue, float armorToughness);
-    static float getDamageAfterMagicAbsorb(float damage, float enchantModifier);
+    static double getDamageAfterAbsorb(float damage, float armorValue, float armorToughness);
+    static double getDamageAfterMagicAbsorb(float damage, float enchantModifier);
 };
 
 #endif

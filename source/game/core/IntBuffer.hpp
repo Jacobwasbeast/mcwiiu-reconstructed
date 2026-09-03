@@ -13,12 +13,12 @@ public:
 
     virtual IntBuffer* flip();
 
+    unsigned int get(unsigned int index);
+    int* getBuffer();
+    IntBuffer* put(arrayWithLength<int>* values, unsigned int offset, unsigned int length);
+    IntBuffer* put(arrayWithLength<int> values);
     void put(int value);
     void put(int index, int value);
-    IntBuffer* put(arrayWithLength<int> values);
-    IntBuffer* put(arrayWithLength<int>* values, unsigned int offset, unsigned int length);
-    int get(unsigned int index);
-    int* getBuffer();
 
 protected:
     int* mBuffer;

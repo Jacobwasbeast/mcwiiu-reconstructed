@@ -3,9 +3,11 @@
 
 class Achievement;
 
-class Achievements
-{
+class Achievements {
 public:
+    static void staticCtor();
+    static void init();
+
     static Achievement* openInventory;
     static Achievement* mineWood;
     static Achievement* buildWorkBench;
@@ -104,9 +106,6 @@ public:
     static Achievement* castaway;
     static Achievement* sleepWithTheFishes;
     static Achievement* echolocation;
-
-    static void init();
-    static void staticCtor();
 };
 
 #endif

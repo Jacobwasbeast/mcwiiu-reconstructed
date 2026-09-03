@@ -7,7 +7,7 @@
 #include "game/core/IntBuffer.hpp"
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/VertexFormat.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/world/block/MaterialShaders.hpp"
 
 static bool convertQuadsToTriangles = false;
@@ -590,9 +590,150 @@ void BufferBuilder::setVertexFormat(const VertexFormat* vertexFormat)
 {
 }
 
-bool BufferBuilder::hasMaxVertices()
+uint32_t BufferBuilder::hasMaxVertices()
 {
     return false;
+}
+
+bool BufferBuilder::getCompactVertices()
+{
+    return mUseCompactVertices;
+}
+
+void BufferBuilder::color(unsigned char red, unsigned char green, unsigned char blue)
+{
+    color((int)red, (int)green, (int)blue);
+}
+
+void BufferBuilder::faceTex2(int brightness0, int brightness1, int brightness2, int brightness3)
+{
+    mPackedQuad[6] = brightness0;
+    mPackedQuad[13] = brightness1;
+    mPackedQuad[20] = brightness2;
+    mPackedQuad[27] = brightness3;
+    mHasBrightness = true;
+}
+
+void BufferBuilder::postProcessFacePosition(double x, double y, double z)
+{
+    vertex((float)x, (float)y, (float)z);
+}
+
+int BufferBuilder::getStartingColorIndex(int face)
+{
+    if (face < 0)
+    {
+        return 0;
+    }
+    return face * 4;
+}
+
+void BufferBuilder::faceTint(float red, float green, float blue, int face)
+{
+    fixupVertexColor(red, green, blue, getStartingColorIndex(face));
+}
+
+void BufferBuilder::putColor(int red, int green, int blue, int alpha)
+{
+    color(red, green, blue, alpha);
+    if (mRawBufferIndex >= 8)
+    {
+        mRawBuffer->data[mRawBufferIndex - 3] = mColor;
+    }
+}
+
+void BufferBuilder::fixupVertexColor(int colorValue, int index)
+{
+    if (index >= 0 && index < mBufferSize)
+    {
+        mRawBuffer->data[index] = colorValue;
+    }
+}
+
+void BufferBuilder::fixupVertexColor(float red, float green, float blue, int index)
+{
+    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) |
+                     ((int)(blue * 255.0f) << 8) | 255;
+    fixupVertexColor(colorValue, index);
+}
+
+void BufferBuilder::putBulkData(arrayWithLength<int> data)
+{
+    if (data.data == NULL || data.length <= 0)
+    {
+        return;
+    }
+    int count = data.length;
+    if (count > mBufferSize - mRawBufferIndex)
+    {
+        count = mBufferSize - mRawBufferIndex;
+    }
+    for (int i = 0; i < count; ++i)
+    {
+        mRawBuffer->data[mRawBufferIndex + i] = data.data[i];
+    }
+    mRawBufferIndex += count;
+}
+
+void BufferBuilder::postNormal(float x, float y, float z)
+{
+    normal(x, y, z);
+}
+
+void BufferBuilder::fixupQuadColor(int colorValue)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        fixupVertexColor(colorValue, getStartingColorIndex(i));
+    }
+}
+
+void BufferBuilder::fixupQuadColor(float red, float green, float blue)
+{
+    int colorValue = ((int)(red * 255.0f) << 24) | ((int)(green * 255.0f) << 16) |
+                     ((int)(blue * 255.0f) << 8) | 255;
+    fixupQuadColor(colorValue);
+}
+
+void BufferBuilder::packCompactQuad()
+{
+    if (mRawBuffer == NULL || mVertexCount < 4)
+    {
+        return;
+    }
+    int start = mRawBufferIndex - 32;
+    if (start < 0)
+    {
+        return;
+    }
+    int* source = mRawBuffer->data + start;
+    for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex)
+    {
+        int* destination = mRawBuffer->data + start + vertexIndex * 4;
+        float* sourceFloats = (float*)source + vertexIndex * 8;
+        short* compact = (short*)destination;
+        compact[0] = (short)(int)(sourceFloats[0] * 1024.0f);
+        compact[1] = (short)(int)(sourceFloats[1] * 1024.0f);
+        compact[2] = (short)(int)(sourceFloats[2] * 1024.0f);
+        compact[3] = (short)(int)(sourceFloats[3] * 8192.0f);
+        compact[4] = (short)(int)(sourceFloats[4] * 8192.0f);
+        compact[5] = (short)(int)(source[vertexIndex * 8 + 5]);
+        compact[6] = (short)(mPackedQuad[vertexIndex * 7 + 6]);
+        compact[7] = (short)(int)(-mBaseXOffset);
+    }
+}
+
+void BufferBuilder::blockParticleQuad(float x0, float y0, float z0, float u0, float v0,
+                                      float x1, float y1, float z1, float u1, float v1,
+                                      float x2, float y2, float z2, float u2, float v2,
+                                      float x3, float y3, float z3, float u3, float v3,
+                                      float red, float green, float blue, float alpha)
+{
+    color(red, green, blue, alpha);
+    vertexUV(x0, y0, z0, u0, v0);
+    vertexUV(x1, y1, z1, u1, v1);
+    vertexUV(x2, y2, z2, u2, v2);
+    vertexUV(x3, y3, z3, u3, v3);
 }
 
 void BufferBuilder::Bounds::addVert(float x, float y, float z)

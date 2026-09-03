@@ -1,5 +1,7 @@
 #include "game/core/FrustumData.hpp"
 
+#include "game/util/AABB.hpp"
+
 static float** s_frustum;
 
 FrustumData::FrustumData()
@@ -11,9 +13,12 @@ FrustumData::FrustumData()
         frustum[i] = new float[4];
     }
 
-    proj = arrayWithLength<float>(16, true);
-    modl = arrayWithLength<float>(16, true);
-    clip = arrayWithLength<float>(16, true);
+    proj.data = new float[16]();
+    proj.length = 16;
+    modl.data = new float[16]();
+    modl.length = 16;
+    clip.data = new float[16]();
+    clip.length = 16;
 }
 
 FrustumData::~FrustumData()
@@ -32,7 +37,7 @@ FrustumData::~FrustumData()
 
 double FrustumData::discriminant(float* plane, double x, double y, double z)
 {
-    return plane[0] * x + plane[1] * y + plane[2] * z + plane[3];
+    return (double)plane[2] * z + (double)plane[0] * x + (double)plane[1] * y + (double)plane[3];
 }
 
 bool FrustumData::cubeFullyInFrustum(double x0, double y0, double z0, double x1, double y1, double z1)
@@ -77,4 +82,34 @@ bool FrustumData::cubeInFrustum(double x0, double y0, double z0, double x1, doub
     }
 
     return true;
+}
+
+bool FrustumData::pointInFrustum(float x, float y, float z)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (discriminant(frustum[i], x, y, z) <= 0.0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool FrustumData::sphereInFrustum(float x, float y, float z, float radius)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (discriminant(frustum[i], x, y, z) <= (double)-radius)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool FrustumData::isVisible(AABB* boundingBox)
+{
+    return cubeInFrustum(boundingBox->mMinX, boundingBox->mMinY, boundingBox->mMinZ,
+        boundingBox->mMaxX, boundingBox->mMaxY, boundingBox->mMaxZ);
 }

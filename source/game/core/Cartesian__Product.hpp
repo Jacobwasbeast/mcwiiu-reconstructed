@@ -3,8 +3,9 @@
 
 #include <vector>
 
-#include "game/core/Boxed.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+
+class Boxed;
 
 namespace Cartesian
 {

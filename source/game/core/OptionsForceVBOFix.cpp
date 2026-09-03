@@ -1,9 +1,5 @@
 #include "game/core/OptionsForceVBOFix.hpp"
 
-#include <string>
-
-#include "game/data/CompoundTag.hpp"
-
 OptionsForceVBOFix::~OptionsForceVBOFix()
 {
 }
@@ -16,6 +12,5 @@ int OptionsForceVBOFix::getVersion()
 CompoundTag* OptionsForceVBOFix::fix(CompoundTag* tag)
 {
     tag->putString(L"useVbo", L"true");
-
     return tag;
 }

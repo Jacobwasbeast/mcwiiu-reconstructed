@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "game/core/Compression.hpp"
+#include "game/core/CriticalSection.hpp"
 
 void InitializeCriticalSection(OSFastMutex* pCriticalSection);
 void EnterCriticalSection(OSFastMutex* pCriticalSection);
@@ -92,4 +92,18 @@ void ShutdownManager::MainThreadHandleShutdown()
     RequestThreadToStop(eThreadId_ConnectionRead);
 
     WaitForSignalledToComplete();
+}
+
+void ShutdownManager::StartShutdown()
+{
+}
+
+bool ShutdownManager::IsShuttingDown()
+{
+    return false;
+}
+
+void ShutdownManager::StorageManagerCompleteFn()
+{
+    HasFinished(eThreadId_Storage);
 }

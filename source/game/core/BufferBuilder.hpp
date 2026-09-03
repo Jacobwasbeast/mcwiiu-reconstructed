@@ -1,6 +1,8 @@
 #ifndef GAME_CORE_BUFFERBUILDER_HPP
 #define GAME_CORE_BUFFERBUILDER_HPP
 
+#include <stdint.h>
+
 #include "game/client/render/C4JRender.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/MaterialTable.hpp"
@@ -83,7 +85,7 @@ public:
     void useDefaultShaders();
     void setVertexFormat(const VertexFormat* vertexFormat);
 
-    bool hasMaxVertices();
+    uint32_t hasMaxVertices();
 
     void postNormal(float x, float y, float z);
     void postProcessFacePosition(double x, double y, double z);

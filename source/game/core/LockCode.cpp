@@ -10,9 +10,18 @@ LockCode::LockCode(const std::wstring& key)
 {
 }
 
+LockCode::~LockCode()
+{
+}
+
 bool LockCode::isEmpty()
 {
-    return mKey.compare(L"") == 0 || mKey.empty();
+    if (mKey.compare(L"") != 0 && !mKey.empty())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 std::wstring LockCode::getKey()

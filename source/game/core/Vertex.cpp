@@ -9,11 +9,22 @@ Vertex::Vertex(float x, float y, float z, float u, float v)
     this->v = v;
 }
 
+Vertex::Vertex(Vec3* pos, float u, float v)
+{
+    this->pos = pos;
+    this->u = u;
+    this->v = v;
+}
+
 Vertex::Vertex(Vertex* vertex, float u, float v)
 {
     this->pos = vertex->pos;
     this->u = u;
     this->v = v;
+}
+
+Vertex::~Vertex()
+{
 }
 
 Vertex* Vertex::remap(float u, float v)

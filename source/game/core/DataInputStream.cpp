@@ -1,13 +1,16 @@
 #include "game/core/DataInputStream.hpp"
 
+#include <cstring>
+
 #include "game/core/Compression.hpp"
 #include "game/core/NbtIo.hpp"
 #include "game/item/Item.hpp"
+namespace DataInputStreamInteractionHand { enum EInteractionHand { MAIN_HAND, OFF_HAND }; }
+#define InteractionHand DataInputStreamInteractionHand
 #include "game/item/ItemInstance.hpp"
+#undef InteractionHand
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/PlayerUID.hpp"
-
-static boost::shared_ptr<ItemInstance> EMPTY_ITEM_INSTANCE;
 
 DataInputStream::DataInputStream(InputStream* stream)
 {
@@ -116,15 +119,17 @@ bool DataInputStream::readBytes(arrayWithLength<unsigned char> buffer)
 double DataInputStream::readDouble()
 {
     long long bits = readLong();
-
-    return *(double*)&bits;
+    double value;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
 }
 
 float DataInputStream::readFloat()
 {
     int bits = readInt();
-
-    return *(float*)&bits;
+    float value;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
 }
 
 int DataInputStream::readInt()
@@ -344,7 +349,7 @@ int DataInputStream::readVarInt()
 
 long long DataInputStream::readVarLong()
 {
-    int value = 0;
+    unsigned long long value = 0;
     int shift = 0;
     int byteCount = 0;
     unsigned char byteValue;
@@ -354,7 +359,7 @@ long long DataInputStream::readVarLong()
         byteValue = readByte();
         byteCount++;
 
-        value |= (byteValue & 0x7F) << shift;
+        value |= (unsigned long long)(byteValue & 0x7F) << shift;
         shift += 7;
 
         if (byteCount > 10)
@@ -440,9 +445,9 @@ CompoundTag* DataInputStream::readCompressedNbt()
     return tag;
 }
 
-boost::shared_ptr<ItemInstance> DataInputStream::readItem()
+not_null_ptr<ItemInstance> DataInputStream::readItem()
 {
-    boost::shared_ptr<ItemInstance> itemInstance = EMPTY_ITEM_INSTANCE;
+    not_null_ptr<ItemInstance> itemInstance;
 
     int id = readShort();
 
@@ -451,7 +456,7 @@ boost::shared_ptr<ItemInstance> DataInputStream::readItem()
         unsigned char count = readByte();
         int auxValue = readShort();
 
-        itemInstance = boost::shared_ptr<ItemInstance>(new ItemInstance(Item::byId(id), count, auxValue));
+        itemInstance = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(id), count, auxValue));
 
         itemInstance->setTag(readNbt());
     }

@@ -1,5 +1,7 @@
 #include "game/core/Achievement.hpp"
 
+#include "game/item/ItemInstance.hpp"
+
 #include "game/core/I18n.hpp"
 #include "game/item/Item.hpp"
 #include "game/world/block/Block.hpp"

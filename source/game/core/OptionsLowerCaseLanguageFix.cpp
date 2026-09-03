@@ -1,7 +1,5 @@
 #include "game/core/OptionsLowerCaseLanguageFix.hpp"
 
-#include "game/data/CompoundTag.hpp"
-
 OptionsLowerCaseLanguageFix::~OptionsLowerCaseLanguageFix()
 {
 }

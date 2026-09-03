@@ -1,7 +1,6 @@
 #include "game/core/Settings.hpp"
 
 Settings::Settings()
-    : mSettings(11)
 {
 }
 
@@ -62,4 +61,12 @@ void Settings::setBooleanAndSave(EServerSetting setting, bool value)
     newValue->mBooleanValue = value;
     newValue->mType = _SettingsValue::eSettingValueType_Boolean;
     mSettings[setting] = newValue;
+}
+
+void Settings::saveProperties()
+{
+}
+
+void Settings::generateNewProperties()
+{
 }

@@ -1,6 +1,6 @@
 #include "game/core/HtmlString.hpp"
 
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 
 #include <cwchar>
 #include <iomanip>
@@ -37,7 +37,7 @@ std::wstring HtmlString::ToString()
 
     if (mItalic)
     {
-        stream << "<i>";
+        stream << L"<i>";
     }
 
     eMinecraftColour colour = eMinecraftColour_HTMLColor_7;
@@ -54,12 +54,12 @@ std::wstring HtmlString::ToString()
 
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
                << theApp.GetHTMLColor(colour) << L"\" size=\"" << fontSize << L"\">" << mText
-               << "</font>";
+               << L"</font>";
     }
     else
     {
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << theApp.GetHTMLColor(colour) << L"\">" << mText << "</font>";
+               << theApp.GetHTMLColor(colour) << L"\">" << mText << L"</font>";
     }
 
     if (mItalic)

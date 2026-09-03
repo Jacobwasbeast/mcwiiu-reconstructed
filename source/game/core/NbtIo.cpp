@@ -101,7 +101,7 @@ void NbtIo::writeCompressed(CompoundTag* tag, OutputStream* stream)
 CompoundTag* NbtIo::decompress(arrayWithLength<unsigned char> data)
 {
     ByteArrayInputStream byteStream(data);
-    DataInputStream input(&byteStream);
+    DataInputStream input((InputStream*)&byteStream);
 
     CompoundTag* tag = read(&input);
 

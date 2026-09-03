@@ -1,5 +1,17 @@
 #include "game/core/Stats.hpp"
 
+#include "game/core/StatsCounter.hpp"
+
+#include "game/world/block/Block.hpp"
+
+#include "game/item/Item.hpp"
+
+#include "game/core/Achievements.hpp"
+
+#include "game/item/ItemStat.hpp"
+
+#include "game/core/GeneralStat.hpp"
+
 #include <string>
 
 template <class T>

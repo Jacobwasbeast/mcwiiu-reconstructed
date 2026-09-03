@@ -104,19 +104,34 @@ unsigned char MapDecoration::getImg() const
     return this->type->getIcon();
 }
 
-char MapDecoration::getX() const
+int MapDecoration::getX() const
 {
     return this->x;
 }
 
-char MapDecoration::getY() const
+int MapDecoration::getY() const
 {
     return this->y;
 }
 
-char MapDecoration::getRot() const
+int MapDecoration::getRot() const
 {
     return this->rot;
+}
+
+void MapDecoration::setX(char x)
+{
+    this->x = x;
+}
+
+void MapDecoration::setY(char y)
+{
+    this->y = y;
+}
+
+void MapDecoration::setRot(char rot)
+{
+    this->rot = rot;
 }
 
 bool MapDecoration::renderOnFrame() const
@@ -127,4 +142,9 @@ bool MapDecoration::renderOnFrame() const
 int MapDecoration::hashCode() const
 {
     return ((this->type->getIcon() * 31 + this->x) * 31 + this->y) * 31 + this->rot;
+}
+
+bool MapDecoration::equals(MapDecoration& other)
+{
+    return this->type == other.type && this->x == other.x && this->y == other.y && this->rot == other.rot;
 }

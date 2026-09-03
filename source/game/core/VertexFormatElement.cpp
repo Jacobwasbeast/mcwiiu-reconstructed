@@ -1,5 +1,7 @@
 #include "game/core/VertexFormatElement.hpp"
 
+#include <sstream>
+
 const VertexFormatElement::Usage* VertexFormatElement::Usage::POSITION =
     new VertexFormatElement::Usage(L"Position", VertexFormatElement::Usage::eUsage_Position);
 const VertexFormatElement::Usage* VertexFormatElement::Usage::NORMAL =
@@ -43,6 +45,21 @@ int VertexFormatElement::Type::getSize() const
     return size;
 }
 
+std::wstring VertexFormatElement::Type::getName() const
+{
+    return name;
+}
+
+int VertexFormatElement::Type::getGlType() const
+{
+    return glType;
+}
+
+VertexFormatElement::Type::EType VertexFormatElement::Type::getId() const
+{
+    return id;
+}
+
 VertexFormatElement::Usage::Usage(std::wstring name, EUsage id)
     : name(name),
       id(id)
@@ -52,6 +69,11 @@ VertexFormatElement::Usage::Usage(std::wstring name, EUsage id)
 VertexFormatElement::Usage::EUsage VertexFormatElement::Usage::getId() const
 {
     return id;
+}
+
+std::wstring VertexFormatElement::Usage::getName() const
+{
+    return name;
 }
 
 VertexFormatElement::VertexFormatElement(const VertexFormatElement& other)
@@ -75,6 +97,11 @@ VertexFormatElement::VertexFormatElement(int index, const Type* type, const Usag
     this->count = count;
 }
 
+const VertexFormatElement::Type* VertexFormatElement::getType() const
+{
+    return type;
+}
+
 const VertexFormatElement::Usage* VertexFormatElement::getUsage() const
 {
     return usage;
@@ -83,6 +110,11 @@ const VertexFormatElement::Usage* VertexFormatElement::getUsage() const
 int VertexFormatElement::getIndex() const
 {
     return index;
+}
+
+int VertexFormatElement::getCount() const
+{
+    return count;
 }
 
 int VertexFormatElement::getByteSize() const
@@ -98,4 +130,25 @@ bool VertexFormatElement::isPosition() const
 bool VertexFormatElement::supportsUsage(int index, const Usage* usage) const
 {
     return index == 0 || usage == Usage::UV;
+}
+
+bool VertexFormatElement::equals(VertexFormatElement* other) const
+{
+    if (this == other) {
+        return true;
+    }
+
+    return type == other->type && usage == other->usage && index == other->index && count == other->count;
+}
+
+std::wstring VertexFormatElement::toString() const
+{
+    std::wostringstream stream;
+    stream << L"VertexFormatElement{";
+    stream << L"usage=" << usage->getName();
+    stream << L", index=" << index;
+    stream << L", type=" << type->getName();
+    stream << L", count=" << count;
+    stream << L'}';
+    return stream.str();
 }

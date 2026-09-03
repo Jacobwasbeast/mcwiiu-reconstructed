@@ -7,6 +7,7 @@
 
 #include "game/core/DataInput.hpp"
 #include "game/core/InputStream.hpp"
+#include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class BlockPos;
@@ -56,7 +57,7 @@ public:
     CompoundTag* readNbt();
     CompoundTag* readCompressedNbt();
 
-    boost::shared_ptr<ItemInstance> readItem();
+    not_null_ptr<ItemInstance> readItem();
 
 private:
     InputStream* mChildStream;

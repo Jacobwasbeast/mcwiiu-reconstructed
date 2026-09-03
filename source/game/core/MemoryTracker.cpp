@@ -10,51 +10,51 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/IntBuffer.hpp"
 
-static boost::unordered_map<int, int> mapDisplayLists;
-static std::vector<int> mapTextureObjects;
+static boost::unordered_map<int, int> displayLists;
+static std::vector<int> textureObjects;
 
 int MemoryTracker::genLists(int count)
 {
     int list = GlStateManager::genLists(count);
-    mapDisplayLists.insert(std::make_pair(list, count));
+    displayLists.insert(std::make_pair(list, count));
     return list;
 }
 
 void MemoryTracker::releaseLists(int list)
 {
-    boost::unordered_map<int, int>::iterator entry = mapDisplayLists.find(list);
-    if (entry != mapDisplayLists.end())
+    boost::unordered_map<int, int>::iterator entry = displayLists.find(list);
+    if (entry != displayLists.end())
     {
         GlStateManager::deleteLists(list, entry->second);
-        mapDisplayLists.erase(entry);
+        displayLists.erase(entry);
     }
 }
 
 int MemoryTracker::genTextures()
 {
     int texture = GlStateManager::genTexture();
-    mapTextureObjects.push_back(texture);
+    textureObjects.push_back(texture);
     return texture;
 }
 
 void MemoryTracker::releaseTextures()
 {
-    for (unsigned int i = 0; i < mapTextureObjects.size(); ++i)
+    for (unsigned int i = 0; i < textureObjects.size(); ++i)
     {
-        GlStateManager::deleteTexture(mapTextureObjects.at(i));
+        GlStateManager::deleteTexture(textureObjects.at(i));
     }
 
-    mapTextureObjects.clear();
+    textureObjects.clear();
 }
 
 void MemoryTracker::release()
 {
-    for (boost::unordered_map<int, int>::iterator entry = mapDisplayLists.begin(); entry != mapDisplayLists.end(); ++entry)
+    for (boost::unordered_map<int, int>::iterator entry = displayLists.begin(); entry != displayLists.end(); ++entry)
     {
         GlStateManager::deleteLists(entry->first, entry->second);
     }
 
-    mapDisplayLists.clear();
+    displayLists.clear();
     releaseTextures();
 }
 

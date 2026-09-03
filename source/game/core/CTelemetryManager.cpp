@@ -1,0 +1,285 @@
+#include "game/core/CTelemetryManager.hpp"
+
+#include "game/core/GameSettings.hpp"
+#include "game/core/GameType.hpp"
+#include "game/item/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/world/Level.hpp"
+
+CTelemetryManager::~CTelemetryManager()
+{
+}
+
+unsigned int CTelemetryManager::Init()
+{
+    return 0;
+}
+
+unsigned int CTelemetryManager::Tick()
+{
+    return 0;
+}
+
+unsigned int CTelemetryManager::Flush()
+{
+    return 0;
+}
+
+unsigned int CTelemetryManager::RecordPlayerSessionStart(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordPlayerSessionExit(int playerId, int disconnectReason)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordHeartBeat(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordLevelStart(int playerId, ESen_FriendOrMatch friendOrMatch,
+                                                 ESen_CompeteOrCoop competeOrCoop,
+                                                 int difficultyLevel, int localPlayerCount,
+                                                 int onlinePlayerCount)
+{
+    if (playerId == CProfile::sInstance->GetPrimaryPad())
+        mLevelStarted = true;
+
+    ++mLevelInstanceId;
+    mLevelStartTime[playerId] = CMinecraftApp::sInstance.getAppTime();
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordLevelExit(int playerId, ESen_LevelExitStatus exitStatus)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordLevelSaveOrCheckpoint(int playerId, int saveSlot, int saveSize)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordLevelResume(int playerId, ESen_FriendOrMatch friendOrMatch,
+                                                  ESen_CompeteOrCoop competeOrCoop,
+                                                  int difficultyLevel, int localPlayerCount,
+                                                  int onlinePlayerCount, int secondsPlayed)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordPauseOrInactive(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordUnpauseOrActive(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordMenuShown(int playerId, EUIScene scene, int previousScene)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordAchievementUnlocked(int playerId, int achievementId,
+                                                          int gamerScore)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordMediaShareUpload(int playerId,
+                                                       ESen_MediaDestination destination,
+                                                       ESen_MediaType mediaType)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordUpsellPresented(int playerId, ESen_UpsellID upsellId,
+                                                      int upsellContext)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordUpsellResponded(int playerId, ESen_UpsellID upsellId,
+                                                      int upsellContext,
+                                                      ESen_UpsellOutcome outcome)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordPlayerDiedOrFailed(int playerId, int locationX, int locationY,
+                                                         int locationZ, int enemyTypeId,
+                                                         int playerWeaponId, int causeOfDeathId,
+                                                         ETelemetryChallenges challenges)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordEnemyKilledOrOvercome(int playerId, int locationX,
+                                                            int locationY, int locationZ,
+                                                            int enemyTypeId, int playerWeaponId,
+                                                            int causeOfDeathId,
+                                                            ETelemetryChallenges challenges)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordTexturePackLoaded(int playerId, int texturePackId,
+                                                        bool isDefault)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordSkinChanged(int playerId, int skinId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordBanLevel(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordUnBanLevel(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::PrepareMiniGameHostOptions(int playerId,
+                                                           const LaunchMoreOptionsMenuInitData* initData,
+                                                           TelemetryJoinMethod joinMethod)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordMiniGameHostOptions(int playerId, EMiniGameId miniGameId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordPlayerSettings(int playerId)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordBlockPlaced(boost::shared_ptr<LocalPlayer> player, int blockId,
+                                                  int blockData, unsigned long long position)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordBlockBroken(boost::shared_ptr<LocalPlayer> player, int blockId,
+                                                  int blockData, unsigned long long position)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordItemAcquired(boost::shared_ptr<LocalPlayer> player, int itemId,
+                                                   int itemData, int count,
+                                                   unsigned long long position, const Vec3* location)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordItemUsed(boost::shared_ptr<LocalPlayer> player, int itemId,
+                                               int itemData, unsigned long long position, int count,
+                                               const Vec3* location)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordGameModeRoundStart(const std::wstring& gameModeName,
+                                                         const std::wstring& roundName)
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordGameModeRoundFinished()
+{
+    return 1;
+}
+
+unsigned int CTelemetryManager::RecordSavesInformation(int playerId, const SAVE_DETAILS* saves,
+                                                       unsigned int saveCount)
+{
+    return 1;
+}
+
+int CTelemetryManager::GetMultiplayerInstanceID()
+{
+    return mMultiplayerInstanceId;
+}
+
+int CTelemetryManager::GenerateMultiplayerInstanceId()
+{
+    return 0;
+}
+
+void CTelemetryManager::SetMultiplayerInstanceId(int instanceId)
+{
+    mMultiplayerInstanceId = instanceId;
+}
+
+void CTelemetryManager::RecordTransitionToLobby()
+{
+}
+
+unsigned int CTelemetryManager::GetMode(unsigned int playerId)
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft == NULL)
+        return 0;
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return 4;
+
+    if (playerId >= 4)
+        return 0;
+
+    const boost::shared_ptr<LocalPlayer>& player = minecraft->localPlayers[playerId];
+    if (!player)
+        return 0;
+
+    const GameType* gameType = NULL;
+    if (player->mLevel != NULL && player->mLevel->getLevelData() != NULL)
+        gameType = player->mLevel->getLevelData()->getGameType();
+
+    if (gameType == NULL && CMinecraftApp::sInstance.GetGameHostOption((eGameHostOption)16))
+        gameType = player->GetGameType();
+
+    if (gameType == GameType::SURVIVAL)
+        return 1;
+    if (gameType == GameType::CREATIVE)
+        return 2;
+    if (gameType == GameType::ADVENTURE)
+        return 3;
+
+    return 0;
+}
+
+unsigned int CTelemetryManager::GetLicense()
+{
+    if (CProfile::sInstance->IsFullVersion())
+        return 2;
+
+    return 1;
+}
+
+unsigned int CTelemetryManager::GetAudioSettings(unsigned int playerId)
+{
+    if (playerId != (unsigned int)CProfile::sInstance->GetPrimaryPad())
+        return 0;
+
+    int volume = GameSettings::GetGameSettings(playerId, (eGameSetting)1);
+    if (volume == 0)
+        return 1;
+    if (volume == 100)
+        return 2;
+
+    return 3;
+}

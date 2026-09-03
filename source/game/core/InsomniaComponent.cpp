@@ -37,6 +37,16 @@ int InsomniaComponent::getTicksUntilInsomnia() const
     return mTicksUntilInsomnia;
 }
 
+bool InsomniaComponent::hasInsomnia() const
+{
+    return mInsomniaTimerTicks > 0;
+}
+
+void InsomniaComponent::setInsomnia(int timerTicks)
+{
+    mInsomniaTimerTicks = timerTicks;
+}
+
 void InsomniaComponent::addAdditionalSaveData(CompoundTag* tag)
 {
     tag->putInt(L"TimeSinceRest", mInsomniaTimerTicks);

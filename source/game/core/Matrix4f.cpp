@@ -49,16 +49,27 @@ void Matrix4f::setZYXRot(float z, float y, float x)
         cosX = Mth::cos(x);
     }
 
-    m[0] = cosZ * cosY;
-    m[1] = sinZ * cosY;
+    float cosZCosY = cosZ * cosY;
+    float sinZCosY = sinZ * cosY;
+    float cosZSinYSinX = cosZ * sinY * sinX;
+    float sinZCosX = sinZ * cosX;
+    float sinZSinYSinX = sinZ * sinY * sinX;
+    float cosZCosX = cosZ * cosX;
+    float cosZSinYCosX = cosZ * sinY * cosX;
+    float sinZSinX = sinZ * sinX;
+    float sinZSinYCosX = sinZ * sinY * cosX;
+    float cosZSinX = cosZ * sinX;
+
+    m[0] = cosZCosY;
+    m[1] = sinZCosY;
     m[2] = -sinY;
     m[3] = 0.0f;
-    m[4] = cosZ * sinY * sinX - sinZ * cosX;
-    m[5] = sinZ * sinY * sinX + cosZ * cosX;
+    m[4] = cosZSinYSinX - sinZCosX;
+    m[5] = sinZSinYSinX + cosZCosX;
     m[6] = cosY * sinX;
     m[7] = 0.0f;
-    m[8] = cosZ * sinY * cosX + sinZ * sinX;
-    m[9] = sinZ * sinY * cosX - cosZ * sinX;
+    m[8] = sinZSinX + cosZSinYCosX;
+    m[9] = sinZSinYCosX - cosZSinX;
     m[10] = cosY * cosX;
     m[11] = 0.0f;
 }

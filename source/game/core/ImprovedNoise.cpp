@@ -75,6 +75,11 @@ ImprovedNoise::ImprovedNoise(Random* random)
     init(random);
 }
 
+ImprovedNoise::ImprovedNoise()
+    : p(NULL), pLength(0), pMask(0), xo(0.0), yo(0.0), zo(0.0)
+{
+}
+
 ImprovedNoise::~ImprovedNoise()
 {
     delete[] p;
@@ -145,6 +150,11 @@ double ImprovedNoise::noise(double x, double y, double z)
 double ImprovedNoise::getValue(double x, double y)
 {
     return noise(x, y, 0.0);
+}
+
+double ImprovedNoise::getValue(double x, double y, double z)
+{
+    return noise(x, y, z);
 }
 
 void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, double z, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale, double noiseScale)

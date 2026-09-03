@@ -1,9 +1,10 @@
+#define private public
+#include "game/core/Node.hpp"
+#undef private
 #include "game/core/Path.hpp"
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/core/Node.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/util/Vec3.hpp"
 
 Path::Path(arrayWithLength<Node*> nodes)
@@ -223,9 +224,10 @@ Vec3* Path::getPos(boost::shared_ptr<Entity> entity, int index)
 {
     Node* node = nodes.data[index];
 
-    return Vec3::newTemp(node->x + (double)((int)(entity->mBbWidth + 1.0F)) * 0.5,
+    (void)entity;
+    return Vec3::newTemp(node->x + 0.5,
                          node->y,
-                         node->z + (double)((int)(entity->mBbWidth + 1.0F)) * 0.5);
+                         node->z + 0.5);
 }
 
 Vec3* Path::currentPos(boost::shared_ptr<Entity> entity)
@@ -250,6 +252,35 @@ bool Path::endsIn(Vec3* pos)
     }
 
     return node->x == (int)pos->x && node->y == (int)pos->y && node->z == (int)pos->z;
+}
+
+bool Path::endsInXZ(Vec3* pos)
+{
+    Node* node = last();
+
+    if (node == NULL)
+    {
+        return false;
+    }
+
+    return node->x == (int)pos->x && node->z == (int)pos->z;
+}
+
+void Path::setDebug(arrayWithLength<Node*> openSetValue, arrayWithLength<Node*> closedSetValue, Node* targetValue)
+{
+    openSet = openSetValue;
+    closedSet = closedSetValue;
+    target = targetValue;
+}
+
+arrayWithLength<Node*> Path::getOpenSet()
+{
+    return openSet;
+}
+
+arrayWithLength<Node*> Path::getClosedSet()
+{
+    return closedSet;
 }
 
 void Path::writeToStream(DataOutputStream* stream)

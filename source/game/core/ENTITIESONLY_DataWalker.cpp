@@ -16,24 +16,23 @@ CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, i
     {
         ListTag* entities = tag->getList(std::wstring(L"Entities"), 10);
 
-        for (int i = 0; i < entities->size(); i++)
+        for (int entityIndex = 0; entityIndex < entities->size(); entityIndex++)
         {
-            if (((CompoundTag*)entities->get(i))->contains(std::wstring(L"Passengers"), 9))
+            CompoundTag* entity = (CompoundTag*)entities->get(entityIndex);
+            if (entity->contains(std::wstring(L"Passengers"), 9))
             {
-                ListTag* passengers =
-                    ((CompoundTag*)entities->get(i))->getList(std::wstring(L"Passengers"), 10);
+                ListTag* passengers = entity->getList(std::wstring(L"Passengers"), 10);
 
-                for (int j = 0; j < passengers->size(); j++)
+                for (int passengerIndex = 0; passengerIndex < passengers->size(); passengerIndex++)
                 {
-                    passengers->set(j,
+                    passengers->set(passengerIndex,
                         fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                            passengers->getCompound(j), version));
+                            passengers->getCompound(passengerIndex), version));
                 }
             }
 
-            entities->set(i,
-                fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                    (CompoundTag*)entities->get(i), version));
+            entities->set(entityIndex,
+                fixer->update(DataFixTypes::eDataFixTypes_Entity, entity, version));
         }
     }
 
@@ -41,11 +40,11 @@ CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, i
     {
         ListTag* tileEntities = tag->getList(std::wstring(L"TileEntities"), 10);
 
-        for (int i = 0; i < tileEntities->size(); i++)
+        for (int tileEntityIndex = 0; tileEntityIndex < tileEntities->size(); tileEntityIndex++)
         {
-            tileEntities->set(i,
+            tileEntities->set(tileEntityIndex,
                 fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
-                    (CompoundTag*)tileEntities->get(i), version));
+                    (CompoundTag*)tileEntities->get(tileEntityIndex), version));
         }
     }
 

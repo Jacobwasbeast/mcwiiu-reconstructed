@@ -1,7 +1,12 @@
 #include "game/core/Boxed.hpp"
 
-Boxed::Boxed(const std::type_info* valueClass)
-    : mValueClass(valueClass)
+Boxed::Boxed()
+    : mValueClass(NULL)
+{
+}
+
+Boxed::Boxed(const std::type_info* type)
+    : mValueClass(type)
 {
 }
 
@@ -9,29 +14,27 @@ Boxed::~Boxed()
 {
 }
 
-bool Boxed::isA(const std::type_info* valueClass) const
+bool Boxed::isA(const std::type_info* type) const
 {
-    return *mValueClass == *valueClass;
+    return *mValueClass == *type;
 }
 
-bool Boxed::isA(const std::type_info& valueClass) const
+bool Boxed::isA(const std::type_info& type) const
 {
-    return *mValueClass == valueClass;
+    return *mValueClass == type;
 }
 
-bool Boxed::operator==(Boxed* other) const
+bool Boxed::operator!=(const Boxed* value) const
 {
-    const Boxed* boxed = other;
-    return *this == boxed;
+    return !(*this == value);
 }
 
-bool Boxed::operator!=(const Boxed* other) const
+bool Boxed::operator==(Boxed* value) const
 {
-    return !(*this == other);
+    return *this == static_cast<const Boxed*>(value);
 }
 
-bool Boxed::operator!=(Boxed* other) const
+bool Boxed::operator!=(Boxed* value) const
 {
-    const Boxed* boxed = other;
-    return !(*this == boxed);
+    return !(*this == static_cast<const Boxed*>(value));
 }

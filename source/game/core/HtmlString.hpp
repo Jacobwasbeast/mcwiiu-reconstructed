@@ -16,7 +16,7 @@ public:
 
     static std::wstring Compose(std::vector<HtmlString>* lines);
 
-private:
+public:
     std::wstring mText;
     eMinecraftColour mColour;
     bool mItalic;

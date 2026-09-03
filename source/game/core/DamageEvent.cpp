@@ -1,5 +1,9 @@
 #include "game/core/DamageEvent.hpp"
 
+#include "game/core/Scoreboard.hpp"
+
+#include "game/core/StatsUID.hpp"
+
 DamageEvent::DamageEvent(const DamageEvent& other)
     : mVictim(other.mVictim)
     , mAttacker(other.mAttacker)

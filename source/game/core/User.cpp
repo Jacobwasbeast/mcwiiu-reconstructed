@@ -1,5 +1,7 @@
 #include "game/core/User.hpp"
 
+#include "game/world/block/Blocks.hpp"
+
 std::vector<Block*> User::creativeBlocks;
 
 void User::staticCtor()

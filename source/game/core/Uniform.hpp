@@ -1,70 +1,24 @@
 #ifndef GAME_CORE_UNIFORM_HPP
 #define GAME_CORE_UNIFORM_HPP
-
+#include <stdint.h>
 #include <string>
-
 #include "game/core/FloatBuffer.hpp"
 #include "game/core/IntBuffer.hpp"
 #include "game/core/Matrix4f.hpp"
 #include "game/core/Vector3f.hpp"
+#include "game/item/Effect.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-
-class Effect;
-
-class Uniform
-{
+class Uniform {
 public:
-    Uniform(const std::wstring& name, int type, int count, Effect* effect);
-    virtual ~Uniform();
-
-    static int getTypeFromString(const std::wstring& name);
-
-    virtual void set(float x);
-    virtual void set(float x, float y);
-    virtual void set(float x, float y, float z);
-    virtual void set(const Vector3f& value);
-    virtual void set(float x, float y, float z, float w);
-    virtual void set(int x);
-    virtual void set(int x, int y);
-    virtual void set(int x, int y, int z);
-    virtual void set(int x, int y, int z, int w);
-    virtual void set(arrayWithLength<float> values);
-    virtual void set(Matrix4f* matrix);
-    virtual void setSafe(float x, float y, float z, float w);
-    virtual void setSafe(int x, int y, int z, int w);
-    virtual void setMat2x2(float m00, float m01, float m10, float m11);
-    virtual void setMat2x3(float m00, float m01, float m02, float m10, float m11, float m12);
-    virtual void setMat2x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13);
-    virtual void setMat3x2(float m00, float m01, float m10, float m11, float m20, float m21);
-    virtual void setMat3x3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22);
-    virtual void setMat3x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23);
-    virtual void setMat4x2(float m00, float m01, float m10, float m11, float m20, float m21, float m30, float m31);
-    virtual void setMat4x3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float m30, float m31, float m32);
-    virtual void setMat4x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33);
-
-    void set(int index, float value);
-    void setLocation(int location);
-    void markDirty();
-    void upload();
-    void uploadAsInteger();
-    void uploadAsFloat();
-    void uploadAsMatrix();
-    std::wstring getName();
-    int getLocation();
-    int getCount();
-    int getType();
-    IntBuffer* getIntBuffer();
-    FloatBuffer* getFloatBuffer();
-
-protected:
-    int mLocation;
-    int mCount;
-    int mType;
-    IntBuffer* mIntBuffer;
-    FloatBuffer* mFloatBuffer;
-    std::wstring mName;
-    bool mDirty;
-    Effect* mEffect;
+ Uniform(const std::wstring&,int,int,Effect*); virtual ~Uniform();
+ virtual void set(float); virtual void set(float,float); virtual void set(float,float,float); virtual void set(const Vector3f&); virtual void set(float,float,float,float);
+ virtual void set(int); virtual void set(int,int); virtual void set(int,int,int); virtual void set(int,int,int,int); virtual void set(arrayWithLength<float>); virtual void set(Matrix4f*);
+ virtual void setSafe(float,float,float,float); virtual void setSafe(int,int,int,int);
+ virtual void setMat2x2(float,float,float,float); virtual void setMat2x3(float,float,float,float,float,float); virtual void setMat2x4(float,float,float,float,float,float,float,float);
+ virtual void setMat3x2(float,float,float,float,float,float); virtual void setMat3x3(float,float,float,float,float,float,float,float,float); virtual void setMat3x4(float,float,float,float,float,float,float,float,float,float,float,float);
+ virtual void setMat4x2(float,float,float,float,float,float,float,float); virtual void setMat4x3(float,float,float,float,float,float,float,float,float,float,float,float); virtual void setMat4x4(float,float,float,float,float,float,float,float,float,float,float,float,float,float,float,float);
+ static int getTypeFromString(const std::wstring&); void setLocation(int); std::wstring getName(); void set(int,float); void uploadAsInteger(); void uploadAsFloat(); void uploadAsMatrix(); void upload(); int getLocation(); int getCount(); int getType(); IntBuffer* getIntBuffer(); FloatBuffer* getFloatBuffer(); void markDirty();
+private:
+ int mLocation; int mCount; int mType; IntBuffer* mIntBuffer; FloatBuffer* mFloatBuffer; std::wstring mName; Effect* mEffect; bool mDirty;
 };
-
 #endif

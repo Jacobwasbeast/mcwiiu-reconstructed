@@ -12,6 +12,11 @@ DifficultyInstance::~DifficultyInstance()
 {
 }
 
+const Difficulty* DifficultyInstance::getDifficulty() const
+{
+    return difficulty;
+}
+
 float DifficultyInstance::calculateDifficulty(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase) const
 {
     if (difficulty == Difficulty::PEACEFUL)
@@ -56,6 +61,11 @@ float DifficultyInstance::getSpecialMultiplier() const
     }
 
     return (effectiveDifficulty - 2.0f) * 0.5f;
+}
+
+bool DifficultyInstance::isHard()
+{
+    return difficulty == Difficulty::HARD;
 }
 
 bool DifficultyInstance::isHarderThan(float threshold)

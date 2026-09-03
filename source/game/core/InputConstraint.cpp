@@ -18,9 +18,9 @@ bool InputConstraint::isMappingConstrained(int playerId, int mapping)
         return true;
     }
 
-    unsigned int constrainedButtons =
-        g_pInput->GetGameJoypadMaps(playerId, (unsigned char)constrainedMapping);
-    unsigned int requestedButtons = g_pInput->GetGameJoypadMaps(playerId, (unsigned char)mapping);
+    bool constrainedButton =
+        g_pInput->ButtonDown(playerId, (unsigned char)constrainedMapping);
+    bool requestedButton = g_pInput->ButtonDown(playerId, (unsigned char)mapping);
 
-    return (constrainedButtons & requestedButtons) != 0;
+    return constrainedButton && requestedButton;
 }

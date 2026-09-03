@@ -1,7 +1,7 @@
 #include "game/core/FoliageColor.hpp"
 
 #include "game/core/ColourTable.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 
 arrayWithLength<int> FoliageColor::pixels;
 

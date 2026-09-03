@@ -72,6 +72,11 @@ Direction::Direction(int data3D, int oppositeIndex, int data2D, const std::wstri
     this->stepZ = normal->z;
 }
 
+Direction::~Direction()
+{
+    delete this->normal;
+}
+
 void Direction::staticCtor()
 {
     Axis::staticCtor();
@@ -181,9 +186,9 @@ const Direction* Direction::getRandomDirection(Random& random)
 const Direction* Direction::getDirectionFromLivingEntity(const BlockPos& pos,
                                                          const boost::shared_ptr<LivingEntity>& entity)
 {
-    if (::fabs(entity->x - ((float)pos.x + 0.5f)) < 2.0 && ::fabs(entity->z - ((float)pos.z + 0.5f)) < 2.0)
+    if (::fabs(entity->mX - ((float)pos.x + 0.5f)) < 2.0 && ::fabs(entity->mZ - ((float)pos.z + 0.5f)) < 2.0)
     {
-        double eyeY = entity->y + entity->getEyeHeight();
+        double eyeY = entity->mY + entity->getEyeHeight();
 
         if (eyeY - (double)pos.y > 2.0)
         {
@@ -274,6 +279,90 @@ const Direction* Direction::getCounterClockWise() const
     return NULL;
 }
 
+const Direction* Direction::getClockWiseX() const
+{
+    return axis == Axis::X ? this : getClockWise();
+}
+
+const Direction* Direction::getClockWiseZ() const
+{
+    return axis == Axis::Z ? this : getClockWise();
+}
+
+const Direction* Direction::getClockWise(Axis* requestedAxis) const
+{
+    if (requestedAxis == axis || requestedAxis == Axis::Y)
+    {
+        return this;
+    }
+    return getClockWise();
+}
+
+const Direction* Direction::getCounterClockWiseX() const
+{
+    return axis == Axis::X ? this : getCounterClockWise();
+}
+
+const Direction* Direction::getCounterClockWiseZ() const
+{
+    return axis == Axis::Z ? this : getCounterClockWise();
+}
+
+const Direction* Direction::getCounterClockWise(Axis* requestedAxis) const
+{
+    if (requestedAxis == axis || requestedAxis == Axis::Y)
+    {
+        return this;
+    }
+    return getCounterClockWise();
+}
+
+const Direction* Direction::getRelative(const Direction* direction) const
+{
+    if (direction == NULL)
+    {
+        return NULL;
+    }
+    return get(direction->axisDirection, axis);
+}
+
+const Direction* Direction::byName(const std::wstring& value)
+{
+    boost::unordered_map<std::wstring, const Direction*>::const_iterator it = BY_NAME.find(value);
+    if (it == BY_NAME.end())
+    {
+        return NULL;
+    }
+    return it->second;
+}
+
+const Direction* Direction::getNearest(float x, float y, float z)
+{
+    return getNearest((double)x, (double)y, (double)z);
+}
+
+const Direction* Direction::getNearest(float x, float z)
+{
+    return getNearest((double)x, 0.0, (double)z);
+}
+
+const Direction* Direction::getNearest(double x, double y, double z)
+{
+    double best = -1.0;
+    const Direction* result = NULL;
+    for (std::vector<const Direction*>::const_iterator it = VALUES.begin(); it != VALUES.end(); ++it)
+    {
+        const Direction* direction = *it;
+        double dot = x * direction->stepX + y * direction->stepY + z * direction->stepZ;
+        if (dot > best)
+        {
+            best = dot;
+            result = direction;
+        }
+    }
+    return result;
+}
+
 float Direction::toYRot() const
 {
     return (float)(data2D & 3) * 90.0f;
@@ -309,6 +398,16 @@ int Direction::AxisDirection::getStep()
 int Direction::AxisDirection::getOrdinal()
 {
     return ordinal;
+}
+
+std::string Direction::AxisDirection::getName()
+{
+    return name;
+}
+
+std::string Direction::AxisDirection::toString()
+{
+    return name;
 }
 
 Direction::Axis::Axis(const std::wstring& name, Plane* plane, EAxis id)
@@ -378,6 +477,16 @@ std::wstring Direction::Axis::getSerializedName() const
     return name;
 }
 
+Direction::Axis* Direction::Axis::byName(const std::wstring& value)
+{
+    boost::unordered_map<std::wstring, Axis*>::const_iterator it = BY_NAME.find(value);
+    if (it == BY_NAME.end())
+    {
+        return NULL;
+    }
+    return it->second;
+}
+
 Direction::Plane::~Plane()
 {
 }
@@ -414,11 +523,35 @@ arrayWithLength<const Direction*> Direction::Plane::iterator()
     return getFaces();
 }
 
+arrayWithLength<Direction::Axis*> Direction::Plane::getAxis()
+{
+    arrayWithLength<Axis*> axes;
+    if (this == HORIZONTAL)
+    {
+        static Axis* horizontalAxes[2] = { Axis::X, Axis::Z };
+        axes.data = horizontalAxes;
+        axes.length = 2;
+    }
+    else if (this == VERTICAL)
+    {
+        static Axis* verticalAxes[1] = { Axis::Y };
+        axes.data = verticalAxes;
+        axes.length = 1;
+    }
+    return axes;
+}
+
 const Direction* Direction::Plane::getRandomDirection(Random& random)
 {
     arrayWithLength<const Direction*> faces = getFaces();
 
     return faces.data[random.nextInt(faces.length)];
+}
+
+Direction::Axis* Direction::Plane::getRandomAxis(Random& random)
+{
+    arrayWithLength<Axis*> axes = getAxis();
+    return axes.data[random.nextInt(axes.length)];
 }
 
 bool Direction::Plane::apply(const Direction* direction) const

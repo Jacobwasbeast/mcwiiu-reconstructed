@@ -15,6 +15,19 @@ Mirror::Mirror(const std::wstring& name, eTYPE type)
 {
 }
 
+Mirror* Mirror::byName(std::wstring name)
+{
+    int i;
+    for (i = 0; i < 3; ++i)
+    {
+        if (VALUES[i]->name == name)
+        {
+            return VALUES[i];
+        }
+    }
+    return NULL;
+}
+
 int Mirror::mirror(int rotation, int rotationCount)
 {
     int half = rotationCount / 2;

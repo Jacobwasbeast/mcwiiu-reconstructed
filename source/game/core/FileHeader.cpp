@@ -5,10 +5,47 @@
 
 #include <algorithm>
 
-#include "game/core/System.hpp"
-
 wchar_t* wstringtochar16(const std::wstring& string);
 std::wstring char16towstring(wchar_t* string);
+
+static void reverseUnsignedInt(unsigned int* value)
+{
+    unsigned int v = *value;
+    *value = ((v & 0x000000ffU) << 24) |
+        ((v & 0x0000ff00U) << 8) |
+        ((v & 0x00ff0000U) >> 8) |
+        ((v & 0xff000000U) >> 24);
+}
+
+static void reverseShort(short* value)
+{
+    unsigned short v = (unsigned short)*value;
+    *value = (short)((v << 8) | (v >> 8));
+}
+
+static void reverseLongLong(long long* value)
+{
+    unsigned long long v = (unsigned long long)*value;
+    v = ((v & 0x00000000000000ffULL) << 56) |
+        ((v & 0x000000000000ff00ULL) << 40) |
+        ((v & 0x0000000000ff0000ULL) << 24) |
+        ((v & 0x00000000ff000000ULL) << 8) |
+        ((v & 0x000000ff00000000ULL) >> 8) |
+        ((v & 0x0000ff0000000000ULL) >> 24) |
+        ((v & 0x00ff000000000000ULL) >> 40) |
+        ((v & 0xff00000000000000ULL) >> 56);
+    *value = (long long)v;
+}
+
+static void reverseChar16Array(wchar_t* value, int count)
+{
+    int i;
+    for (i = 0; i < count; ++i)
+    {
+        unsigned short v = (unsigned short)value[i];
+        value[i] = (wchar_t)((v << 8) | (v >> 8));
+    }
+}
 
 static const unsigned int SAVE_HEADER_SIZE = 12;
 static const unsigned int FILE_ENTRY_DATA_SIZE = 144;
@@ -180,19 +217,19 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
 
     unsigned int indexOffset = pOffsets[0];
     if (m_saveEndian != eByteOrder_BigEndian)
-        System::ReverseULONG(&indexOffset);
+        reverseUnsignedInt(&indexOffset);
 
     unsigned int fileCount = pOffsets[1];
     if (m_saveEndian != eByteOrder_BigEndian)
-        System::ReverseULONG(&fileCount);
+        reverseUnsignedInt(&fileCount);
 
     m_originalSaveVersion = pVersions[0];
     if (m_saveEndian != eByteOrder_BigEndian)
-        System::ReverseSHORT(&m_originalSaveVersion);
+        reverseShort(&m_originalSaveVersion);
 
     m_saveVersion = pVersions[1];
     if (m_saveEndian != eByteOrder_BigEndian)
-        System::ReverseSHORT(&m_saveVersion);
+        reverseShort(&m_saveVersion);
 
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
 
@@ -227,10 +264,10 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
 
             if (m_saveEndian != eByteOrder_BigEndian)
             {
-                System::ReverseCHAR16A(pEntry->m_name, 64);
-                System::ReverseULONG(&pEntry->m_fileSize);
-                System::ReverseULONG(&pEntry->m_startOffset);
-                System::ReverseULONGLONG(&pEntry->m_timestamp);
+                reverseChar16Array(pEntry->m_name, 64);
+                reverseUnsignedInt(&pEntry->m_fileSize);
+                reverseUnsignedInt(&pEntry->m_startOffset);
+                reverseLongLong(&pEntry->m_timestamp);
             }
 
             pEntry->m_fileName = char16towstring(pEntry->m_name);

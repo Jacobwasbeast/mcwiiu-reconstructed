@@ -1,7 +1,5 @@
 #include "game/core/UniformSize.hpp"
 
-#include "game/util/Random.hpp"
-
 UniformSize::UniformSize(unsigned int size)
     : mSize(size)
 {

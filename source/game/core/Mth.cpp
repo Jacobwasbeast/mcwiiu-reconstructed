@@ -88,6 +88,11 @@ float Mth::cos(float radians)
     return sSinTable[(int)(radians * 10430.378f + 16384.0f) & 65535];
 }
 
+float Mth::atan(float value)
+{
+    return ::atanf(value);
+}
+
 float Mth::atan2(int y, int x)
 {
     if (abs(y) > ATAN_CACHE_SIZE || abs(x) > ATAN_CACHE_SIZE)
@@ -163,6 +168,11 @@ long long Mth::lfloor(double value)
 int Mth::fastFloor(double value)
 {
     return (int)(value + 1024.0) - 1024;
+}
+
+int Mth::absFloor(double value)
+{
+    return value < 0.0 ? (int)-value : (int)value;
 }
 
 float Mth::abs(float value)
@@ -260,6 +270,25 @@ double Mth::asbMax(double a, double b)
     return a > b ? a : b;
 }
 
+double Mth::average(const std::vector<long>& values)
+{
+    if (values.empty())
+    {
+        return 0.0;
+    }
+    long total = 0;
+    for (std::vector<long>::const_iterator it = values.begin(); it != values.end(); ++it)
+    {
+        total += *it;
+    }
+    return (double)total / (double)values.size();
+}
+
+char Mth::clamp(char value, char min, char max)
+{
+    return value < min ? min : (value > max ? max : value);
+}
+
 int Mth::intFloorDiv(int value, int divisor)
 {
     if (value < 0)
@@ -303,6 +332,12 @@ double Mth::nextDouble(Random* random, double min, double max)
 bool Mth::equal(float a, float b)
 {
     return abs(b - a) < 1.0E-5f;
+}
+
+int Mth::positiveModulo(int value, int divisor)
+{
+    int result = value % divisor;
+    return result < 0 ? result + divisor : result;
 }
 
 float Mth::positiveModulo(float value, float divisor)
@@ -445,6 +480,56 @@ std::wstring Mth::createInsecureUUID()
     return createInsecureUUID(&sRandom);
 }
 
+int Mth::getInt(const std::wstring& text, int defaultValue)
+{
+    if (text.empty()) return defaultValue;
+    wchar_t* end = NULL;
+    long result = wcstol(text.c_str(), &end, 10);
+    return end == text.c_str() ? defaultValue : (int)result;
+}
+
+int Mth::getInt(const std::wstring& text, int defaultValue, int min)
+{
+    int result = getInt(text, defaultValue);
+    return result < min ? min : result;
+}
+
+double Mth::getDouble(const std::wstring& text, double defaultValue)
+{
+    if (text.empty()) return defaultValue;
+    wchar_t* end = NULL;
+    double result = wcstod(text.c_str(), &end);
+    return end == text.c_str() ? defaultValue : result;
+}
+
+double Mth::getDouble(const std::wstring& text, double defaultValue, double min)
+{
+    double result = getDouble(text, defaultValue);
+    return result < min ? min : result;
+}
+
+int Mth::color(int red, int green, int blue)
+{
+    return clamp(red, 0, 255) << 16 | clamp(green, 0, 255) << 8 | clamp(blue, 0, 255);
+}
+
+int Mth::color(float red, float green, float blue)
+{
+    return color((int)(red * 255.0f), (int)(green * 255.0f), (int)(blue * 255.0f));
+}
+
+int Mth::colorMultiply(int colour, int other)
+{
+    return ((colour >> 16 & 255) * (other >> 16 & 255) / 255 << 16) |
+           ((colour >> 8 & 255) * (other >> 8 & 255) / 255 << 8) |
+           ((colour & 255) * (other & 255) / 255);
+}
+
+int Mth::colorMultiply(int colour, float red, float green, float blue)
+{
+    return colorMultiply(colour, color(red, green, blue));
+}
+
 double Mth::pct(double value, double min, double max)
 {
     return (value - min) / (max - min);
@@ -511,6 +596,71 @@ long long Mth::getSeed(int x, int y, int z)
     long long seed = (long long)(x * 3129871 ^ z * 116129781 ^ y);
 
     return seed * seed * 42317861LL + seed * 11LL;
+}
+
+long long Mth::getSeed(Vec3i pos)
+{
+    return getSeed(pos.x, pos.y, pos.z);
+}
+
+float Mth::frac(float value)
+{
+    return value - (float)lfloor(value);
+}
+
+Vec3 Mth::catmullRomSplinePos(Vec3 a, Vec3 b, Vec3 c, Vec3 d, double t)
+{
+    double t2 = t * t;
+    double t3 = t2 * t;
+    return Vec3(0.5 * ((2.0 * b.x) + (-a.x + c.x) * t + (2.0 * a.x - 5.0 * b.x + 4.0 * c.x - d.x) * t2 + (-a.x + 3.0 * b.x - 3.0 * c.x + d.x) * t3),
+                0.5 * ((2.0 * b.y) + (-a.y + c.y) * t + (2.0 * a.y - 5.0 * b.y + 4.0 * c.y - d.y) * t2 + (-a.y + 3.0 * b.y - 3.0 * c.y + d.y) * t3),
+                0.5 * ((2.0 * b.z) + (-a.z + c.z) * t + (2.0 * a.z - 5.0 * b.z + 4.0 * c.z - d.z) * t2 + (-a.z + 3.0 * b.z - 3.0 * c.z + d.z) * t3));
+}
+
+bool Mth::rayIntersectsAABB(Vec3 from, Vec3 to, AABB box)
+{
+    double tmin = 0.0;
+    double tmax = 1.0;
+    double origin[3] = {from.x, from.y, from.z};
+    double direction[3] = {to.x - from.x, to.y - from.y, to.z - from.z};
+    double minimum[3] = {box.mMinX, box.mMinY, box.mMinZ};
+    double maximum[3] = {box.mMaxX, box.mMaxY, box.mMaxZ};
+    for (int i = 0; i < 3; ++i)
+    {
+        if (direction[i] == 0.0)
+        {
+            if (origin[i] < minimum[i] || origin[i] > maximum[i]) return false;
+        }
+        else
+        {
+            double inv = 1.0 / direction[i];
+            double t1 = (minimum[i] - origin[i]) * inv;
+            double t2 = (maximum[i] - origin[i]) * inv;
+            if (t1 > t2) { double temp = t1; t1 = t2; t2 = temp; }
+            if (t1 > tmin) tmin = t1;
+            if (t2 < tmax) tmax = t2;
+            if (tmin > tmax) return false;
+        }
+    }
+    return true;
+}
+
+int Mth::murmurHash3Mixer(int value)
+{
+    value ^= (int)((unsigned int)value >> 16);
+    value *= (int)0x85EBCA6B;
+    value ^= (int)((unsigned int)value >> 13);
+    value *= (int)0xC2B2AE35;
+    return value ^ (int)((unsigned int)value >> 16);
+}
+
+long long Mth::murmurHash3Mixer(long long value)
+{
+    value ^= (long long)((unsigned long long)value >> 33);
+    value *= (long long)0xFF51AFD7ED558CCDULL;
+    value ^= (long long)((unsigned long long)value >> 33);
+    value *= (long long)0xC4CEB9FE1A85EC53ULL;
+    return value ^ (long long)((unsigned long long)value >> 33);
 }
 
 float Mth::ceil(double value, double step)

@@ -7,7 +7,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
-#include "game/util/Vec3i.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Predicate.hpp"
 
@@ -15,6 +14,7 @@ class BlockPos;
 class LivingEntity;
 class Random;
 class Vec3;
+class Vec3i;
 
 class Direction
 {
@@ -165,8 +165,10 @@ public:
     virtual std::wstring toString() const;
     virtual std::wstring getSerializedName() const;
 
-private:
+public:
     static std::vector<const Direction*> VALUES;
+
+private:
     static const Direction* BY_3D_DATA[6];
     static const Direction* BY_2D_DATA[4];
     static boost::unordered_map<std::wstring, const Direction*> BY_NAME;

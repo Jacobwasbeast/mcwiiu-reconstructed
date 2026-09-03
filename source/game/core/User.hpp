@@ -17,7 +17,7 @@ public:
 
     std::wstring name;
     std::wstring sessionId;
-    std::wstring mpPassParameter;
+    std::wstring playerId;
 };
 
 #endif

@@ -10,7 +10,6 @@ class ENTITIESONLY_DataWalker : public DataWalker
 {
 public:
     virtual ~ENTITIESONLY_DataWalker();
-
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version);
 };
 

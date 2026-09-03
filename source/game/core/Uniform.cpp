@@ -1,329 +1,64 @@
 #include "game/core/Uniform.hpp"
 
-#include "game/core/Buffer.hpp"
-#include "game/core/FloatBuffer.hpp"
-#include "game/core/IntBuffer.hpp"
-#include "game/core/Matrix4f.hpp"
-#include "game/item/Effect.hpp"
-
-Uniform::Uniform(const std::wstring& name, int type, int count, Effect* effect)
-    : mName(name)
+Uniform::Uniform(const std::wstring& n, int t, int c, Effect* e)
+    : mLocation(-1), mCount(c), mType(t), mIntBuffer(NULL), mFloatBuffer(NULL), mName(n), mEffect(e), mDirty(false)
 {
-    mEffect = effect;
-    mType = type;
-    mCount = count;
-
-    if (type < 4)
-    {
-        mIntBuffer = new IntBuffer(count);
-        mFloatBuffer = NULL;
-    }
-    else
-    {
-        mIntBuffer = NULL;
-        mFloatBuffer = new FloatBuffer(count);
-    }
-
-    mLocation = -1;
+    if (t < 4) mIntBuffer = new IntBuffer(c);
+    else mFloatBuffer = new FloatBuffer(c);
     markDirty();
 }
-
-Uniform::~Uniform()
-{
-}
-
-void Uniform::markDirty()
-{
-    mDirty = true;
-
-    if (mEffect != NULL)
-    {
-        mEffect->markDirty();
-    }
-}
-
-void Uniform::set(float x)
-{
+Uniform::~Uniform(){delete mIntBuffer;delete mFloatBuffer;}
+void Uniform::markDirty(){mDirty=true;if(mEffect)mEffect->markDirty();}
+void Uniform::set(float a){mFloatBuffer->position(0);mFloatBuffer->put(0,a);markDirty();}
+void Uniform::set(float a,float b){mFloatBuffer->position(0);mFloatBuffer->put(0,a);mFloatBuffer->put(1,b);markDirty();}
+void Uniform::set(float a,float b,float c){mFloatBuffer->position(0);mFloatBuffer->put(0,a);mFloatBuffer->put(1,b);mFloatBuffer->put(2,c);markDirty();}
+void Uniform::set(const Vector3f& v){set(v.x,v.y,v.z);}
+void Uniform::set(float a,float b,float c,float d){mFloatBuffer->position(0);mFloatBuffer->put(a);mFloatBuffer->put(b);mFloatBuffer->put(c);mFloatBuffer->put(d);mFloatBuffer->flip();markDirty();}
+void Uniform::setSafe(float a,float b,float c,float d){
     mFloatBuffer->position(0);
-    mFloatBuffer->put(0, x);
-    markDirty();
+    if(mCount>3)mFloatBuffer->put(0,a); if(mCount>4)mFloatBuffer->put(1,b);
+    if(mCount>5)mFloatBuffer->put(2,c); if(mCount>6)mFloatBuffer->put(3,d); markDirty();
 }
-
-void Uniform::set(float x, float y)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, x);
-    mFloatBuffer->put(1, y);
-    markDirty();
+void Uniform::setSafe(int a,int b,int c,int d){mIntBuffer->position(0);if(mCount>0)mIntBuffer->put(0,a);if(mCount>1)mIntBuffer->put(1,b);if(mCount>2)mIntBuffer->put(2,c);if(mCount>3)mIntBuffer->put(3,d);markDirty();}
+void Uniform::set(int a){mIntBuffer->position(0);mIntBuffer->put(0,a);markDirty();}
+void Uniform::set(int a,int b){mIntBuffer->position(0);mIntBuffer->put(0,a);mIntBuffer->put(1,b);markDirty();}
+void Uniform::set(int a,int b,int c){mIntBuffer->position(0);mIntBuffer->put(0,a);mIntBuffer->put(1,b);mIntBuffer->put(2,c);markDirty();}
+void Uniform::set(int a,int b,int c,int d){
+    mIntBuffer->position(0); mIntBuffer->put(0,a); mIntBuffer->put(1,b);
+    mIntBuffer->put(2,c); mIntBuffer->put(3,d); markDirty();
 }
-
-void Uniform::set(float x, float y, float z)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, x);
-    mFloatBuffer->put(1, y);
-    mFloatBuffer->put(2, z);
-    markDirty();
+void Uniform::set(arrayWithLength<float> v){if(mCount<=(int)v.length){mFloatBuffer->position(0);mFloatBuffer->put(v);mFloatBuffer->position(0);markDirty();}}
+void Uniform::setMat2x2(float a,float b,float c,float d){set(a,b,c,d);}
+void Uniform::setMat2x3(float a,float b,float c,float d,float e,float f){
+    mFloatBuffer->position(0); mFloatBuffer->put(0,a); mFloatBuffer->put(1,b);
+    mFloatBuffer->put(2,c); mFloatBuffer->put(3,d); mFloatBuffer->put(4,e);
+    mFloatBuffer->put(5,f); markDirty();
 }
-
-void Uniform::set(const Vector3f& value)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, value.x);
-    mFloatBuffer->put(1, value.y);
-    mFloatBuffer->put(2, value.z);
-    markDirty();
+void Uniform::setMat2x4(float a,float b,float c,float d,float e,float f,float g,float h){
+    mFloatBuffer->position(0); float v[8]={a,b,c,d,e,f,g,h};
+    for(int i=0;i<8;i++) mFloatBuffer->put(i,v[i]); markDirty();
 }
-
-void Uniform::set(float x, float y, float z, float w)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(x);
-    mFloatBuffer->put(y);
-    mFloatBuffer->put(z);
-    mFloatBuffer->put(w);
-    mFloatBuffer->flip();
-    markDirty();
+void Uniform::setMat3x2(float a,float b,float c,float d,float e,float f){setMat2x3(a,b,c,d,e,f);}
+void Uniform::setMat3x3(float a,float b,float c,float d,float e,float f,float g,float h,float i){mFloatBuffer->position(0);float v[9]={a,b,c,d,e,f,g,h,i};for(int j=0;j<9;j++)mFloatBuffer->put(j,v[j]);markDirty();}
+void Uniform::setMat3x4(float a,float b,float c,float d,float e,float f,float g,float h,float i,float j,float k,float l){
+    mFloatBuffer->position(0); float v[12]={a,b,c,d,e,f,g,h,i,j,k,l};
+    for(int n=0;n<12;n++) mFloatBuffer->put(n,v[n]); markDirty();
 }
-
-void Uniform::setSafe(float x, float y, float z, float w)
-{
-    mFloatBuffer->position(0);
-
-    if (mType >= 4)
-    {
-        mFloatBuffer->put(0, x);
-
-        if (mType >= 5)
-        {
-            mFloatBuffer->put(1, y);
-
-            if (mType >= 6)
-            {
-                mFloatBuffer->put(2, z);
-
-                if (mType >= 7)
-                {
-                    mFloatBuffer->put(3, w);
-                }
-            }
-        }
-    }
-
-    markDirty();
+void Uniform::setMat4x2(float a,float b,float c,float d,float e,float f,float g,float h){setMat2x4(a,b,c,d,e,f,g,h);}
+void Uniform::setMat4x3(float a,float b,float c,float d,float e,float f,float g,float h,float i,float j,float k,float l){setMat3x4(a,b,c,d,e,f,g,h,i,j,k,l);}
+void Uniform::setMat4x4(float a,float b,float c,float d,float e,float f,float g,float h,float i,float j,float k,float l,float m,float n,float o,float p){
+    mFloatBuffer->position(0); float v[16]={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p};
+    for(int q=0;q<16;q++) mFloatBuffer->put(q,v[q]); markDirty();
 }
-
-void Uniform::setSafe(int x, int y, int z, int w)
-{
-    mIntBuffer->position(0);
-
-    if (mType >= 0)
-    {
-        mIntBuffer->put(0, x);
-
-        if (mType >= 1)
-        {
-            mIntBuffer->put(1, y);
-
-            if (mType >= 2)
-            {
-                mIntBuffer->put(2, z);
-
-                if (mType >= 3)
-                {
-                    mIntBuffer->put(3, w);
-                }
-            }
-        }
-    }
-
-    markDirty();
-}
-
-void Uniform::set(int x)
-{
-    mIntBuffer->position(0);
-    mIntBuffer->put(0, x);
-    markDirty();
-}
-
-void Uniform::set(int x, int y)
-{
-    mIntBuffer->position(0);
-    mIntBuffer->put(0, x);
-    mIntBuffer->put(1, y);
-    markDirty();
-}
-
-void Uniform::set(int x, int y, int z)
-{
-    mIntBuffer->position(0);
-    mIntBuffer->put(0, x);
-    mIntBuffer->put(1, y);
-    mIntBuffer->put(2, z);
-    markDirty();
-}
-
-void Uniform::set(int x, int y, int z, int w)
-{
-    mIntBuffer->position(0);
-    mIntBuffer->put(0, x);
-    mIntBuffer->put(1, y);
-    mIntBuffer->put(2, z);
-    mIntBuffer->put(3, w);
-    markDirty();
-}
-
-void Uniform::set(arrayWithLength<float> values)
-{
-    if (mCount <= values.length)
-    {
-        mFloatBuffer->position(0);
-        mFloatBuffer->put(values);
-        mFloatBuffer->position(0);
-        markDirty();
-    }
-}
-
-void Uniform::setMat2x2(float m00, float m01, float m10, float m11)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m10);
-    mFloatBuffer->put(3, m11);
-    markDirty();
-}
-
-void Uniform::setMat2x3(float m00, float m01, float m02, float m10, float m11, float m12)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m10);
-    mFloatBuffer->put(4, m11);
-    mFloatBuffer->put(5, m12);
-    markDirty();
-}
-
-void Uniform::setMat2x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m03);
-    mFloatBuffer->put(4, m10);
-    mFloatBuffer->put(5, m11);
-    mFloatBuffer->put(6, m12);
-    mFloatBuffer->put(7, m13);
-    markDirty();
-}
-
-void Uniform::setMat3x2(float m00, float m01, float m10, float m11, float m20, float m21)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m10);
-    mFloatBuffer->put(3, m11);
-    mFloatBuffer->put(4, m20);
-    mFloatBuffer->put(5, m21);
-    markDirty();
-}
-
-void Uniform::setMat3x3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m10);
-    mFloatBuffer->put(4, m11);
-    mFloatBuffer->put(5, m12);
-    mFloatBuffer->put(6, m20);
-    mFloatBuffer->put(7, m21);
-    mFloatBuffer->put(8, m22);
-    markDirty();
-}
-
-void Uniform::setMat3x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m03);
-    mFloatBuffer->put(4, m10);
-    mFloatBuffer->put(5, m11);
-    mFloatBuffer->put(6, m12);
-    mFloatBuffer->put(7, m13);
-    mFloatBuffer->put(8, m20);
-    mFloatBuffer->put(9, m21);
-    mFloatBuffer->put(10, m22);
-    mFloatBuffer->put(11, m23);
-    markDirty();
-}
-
-void Uniform::setMat4x2(float m00, float m01, float m10, float m11, float m20, float m21, float m30, float m31)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m10);
-    mFloatBuffer->put(3, m11);
-    mFloatBuffer->put(4, m20);
-    mFloatBuffer->put(5, m21);
-    mFloatBuffer->put(6, m30);
-    mFloatBuffer->put(7, m31);
-    markDirty();
-}
-
-void Uniform::setMat4x3(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22, float m30, float m31, float m32)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m10);
-    mFloatBuffer->put(4, m11);
-    mFloatBuffer->put(5, m12);
-    mFloatBuffer->put(6, m20);
-    mFloatBuffer->put(7, m21);
-    mFloatBuffer->put(8, m22);
-    mFloatBuffer->put(9, m30);
-    mFloatBuffer->put(10, m31);
-    mFloatBuffer->put(11, m32);
-    markDirty();
-}
-
-void Uniform::setMat4x4(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33)
-{
-    mFloatBuffer->position(0);
-    mFloatBuffer->put(0, m00);
-    mFloatBuffer->put(1, m01);
-    mFloatBuffer->put(2, m02);
-    mFloatBuffer->put(3, m03);
-    mFloatBuffer->put(4, m10);
-    mFloatBuffer->put(5, m11);
-    mFloatBuffer->put(6, m12);
-    mFloatBuffer->put(7, m13);
-    mFloatBuffer->put(8, m20);
-    mFloatBuffer->put(9, m21);
-    mFloatBuffer->put(10, m22);
-    mFloatBuffer->put(11, m23);
-    mFloatBuffer->put(12, m30);
-    mFloatBuffer->put(13, m31);
-    mFloatBuffer->put(14, m32);
-    mFloatBuffer->put(15, m33);
-    markDirty();
-}
-
-void Uniform::set(Matrix4f* matrix)
-{
-    setMat4x4(matrix->m[0], matrix->m[1], matrix->m[2], matrix->m[3],
-              matrix->m[4], matrix->m[5], matrix->m[6], matrix->m[7],
-              matrix->m[8], matrix->m[9], matrix->m[10], matrix->m[11],
-              matrix->m[12], matrix->m[13], matrix->m[14], matrix->m[15]);
-}
+void Uniform::set(Matrix4f* m){setMat4x4(m->m[0],m->m[1],m->m[2],m->m[3],m->m[4],m->m[5],m->m[6],m->m[7],m->m[8],m->m[9],m->m[10],m->m[11],m->m[12],m->m[13],m->m[14],m->m[15]);}
+int Uniform::getTypeFromString(const std::wstring& n){if(n==L"int")return 0;if(n==L"float")return 4;return -1;}
+void Uniform::setLocation(int l){mLocation=l;} std::wstring Uniform::getName(){return mName;} void Uniform::set(int i,float v){mFloatBuffer->put(i,v);markDirty();}
+void Uniform::uploadAsInteger(){if(mEffect!=NULL)mEffect->apply();}
+void Uniform::uploadAsFloat(){if(mEffect!=NULL)mEffect->apply();}
+void Uniform::uploadAsMatrix(){if(mEffect!=NULL)mEffect->apply();}
+void Uniform::upload(){if(mType<4)uploadAsInteger();else if(mType<8)uploadAsFloat();else uploadAsMatrix();}
+int Uniform::getLocation(){return mLocation;}
+int Uniform::getCount(){return mCount;}
+int Uniform::getType(){return mType;}
+IntBuffer* Uniform::getIntBuffer(){return mIntBuffer;}
+FloatBuffer* Uniform::getFloatBuffer(){return mFloatBuffer;}

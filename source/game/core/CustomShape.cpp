@@ -5,6 +5,11 @@
 #include "game/core/Shape.hpp"
 #include "game/util/Random.hpp"
 
+CustomShape::CustomShape(unsigned short size, arrayWithLength<float> values)
+    : size(size), values(values)
+{
+}
+
 void CustomShape::GenerateShape(Random& random, Shape& shape) const
 {
     float sourceSize = (float)size;

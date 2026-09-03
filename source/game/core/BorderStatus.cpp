@@ -4,3 +4,12 @@ BorderStatus::BorderStatus(int color)
     : color(color)
 {
 }
+
+BorderStatus::~BorderStatus()
+{
+}
+
+int BorderStatus::getColor()
+{
+    return color;
+}

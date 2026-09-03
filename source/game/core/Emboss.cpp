@@ -1,5 +1,9 @@
 #include "game/core/Emboss.hpp"
 
+Emboss::Emboss(Synth* source) : mSource(source)
+{
+}
+
 Emboss::~Emboss()
 {
 }

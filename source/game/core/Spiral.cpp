@@ -1,5 +1,17 @@
 #include "game/core/Spiral.hpp"
 
+Spiral::Spiral(int size, int originX, int originY)
+    : mSize(size),
+      mOriginX(originX),
+      mOriginY(originY),
+      mCount(0),
+      mX(0),
+      mY(0),
+      mStepX(0),
+      mStepY(1)
+{
+}
+
 bool Spiral::Step(int& x, int& y)
 {
     if (mCount >= mSize * mSize)

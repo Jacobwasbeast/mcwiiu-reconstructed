@@ -72,6 +72,12 @@ RegionFile* RegionFileCache::_getRegionFile(ConsoleSaveFile* saveFile, const std
     return regionFile;
 }
 
+int RegionFileCache::_getSizeDelta(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z)
+{
+    RegionFile* regionFile = _getRegionFile(saveFile, folder, x, z);
+    return regionFile != NULL ? regionFile->getSizeDelta() : 0;
+}
+
 DataInputStream* RegionFileCache::_getChunkDataInputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z, bool* pbNewSaveFormat)
 {
     RegionFile* regionFile = _getRegionFile(saveFile, folder, x, z);

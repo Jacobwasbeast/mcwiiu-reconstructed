@@ -1,7 +1,7 @@
 #ifndef GAME_CORE_LAYERSIZE_HPP
 #define GAME_CORE_LAYERSIZE_HPP
 
-class Random;
+#include "game/util/Random.hpp"
 
 class LayerSize
 {

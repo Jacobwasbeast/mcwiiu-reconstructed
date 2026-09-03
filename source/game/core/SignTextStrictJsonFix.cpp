@@ -15,3 +15,7 @@ CompoundTag* SignTextStrictJsonFix::fix(CompoundTag* tag)
 {
     return tag;
 }
+
+void SignTextStrictJsonFix::updateLine(CompoundTag*, const std::wstring&)
+{
+}

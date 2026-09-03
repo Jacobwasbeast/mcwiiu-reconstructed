@@ -1,6 +1,7 @@
 #ifndef GAME_CORE_TEAM_HPP
 #define GAME_CORE_TEAM_HPP
 
+#include <functional>
 #include <string>
 
 #include <boost/unordered_set.hpp>
@@ -29,7 +30,7 @@ public:
     virtual Visibility getNameTagVisibility() = 0;
     virtual unsigned int getTeamIndex() = 0;
     virtual Visibility getDeathMessageVisibility() = 0;
-    virtual boost::unordered_set<PlayerUID>& getPlayers() = 0;
+    virtual boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* getPlayers() = 0;
 };
 
 #endif

@@ -7,6 +7,28 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+class NbtIo
+{
+public:
+    static arrayWithLength<unsigned char> compress(CompoundTag* tag);
+};
+
+class Item
+{
+public:
+    static int VALIDgetId(Item* item);
+};
+
+class ItemInstance
+{
+public:
+    bool isEmpty() const;
+    int getCount();
+    Item* getItem() const;
+    int getAuxValue() const;
+    CompoundTag* getTag();
+};
+
 DataOutputStream::DataOutputStream(OutputStream* out)
 {
     mOut = out;
@@ -26,7 +48,7 @@ void DataOutputStream::write(unsigned int value)
 
 void DataOutputStream::write(arrayWithLength<unsigned char> data)
 {
-    write(data, 0, data.length);
+    mOut->write(data);
 }
 
 void DataOutputStream::write(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
@@ -48,7 +70,7 @@ void DataOutputStream::flush()
 
 void DataOutputStream::writeBytes(arrayWithLength<unsigned char> data)
 {
-    write(data, 0, data.length);
+    mOut->write(data);
 }
 
 void DataOutputStream::writeByte(unsigned char value)

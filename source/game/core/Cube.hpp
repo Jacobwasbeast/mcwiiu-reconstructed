@@ -1,0 +1,47 @@
+#ifndef GAME_CORE_CUBE_HPP
+#define GAME_CORE_CUBE_HPP
+
+#include <string>
+
+#include "game/core/Vertex.hpp"
+
+class BufferBuilder;
+class ModelPart;
+class _Polygon;
+template <class T> class arrayWithLength;
+
+class Cube
+{
+public:
+    Cube(ModelPart* parent, int texU, int texV, float x, float y, float z,
+         int width, int height, int depth, float inflate, bool mirror,
+         int faceMask, bool flip, float xRot, float yRot, float zRot);
+
+    arrayWithLength<Vertex*> VertexArray4(Vertex* a, Vertex* b, Vertex* c, Vertex* d);
+    void _init(ModelPart* parent, int texU, int texV, float x, float y, float z,
+               int width, int height, int depth, float inflate, bool mirror,
+               int faceMask, bool flip);
+    void rotate_axis(float angle, double& x, double& y) const;
+    Cube* rotate(float x, float y, float z);
+    void render(BufferBuilder* buffer, float scale);
+    void renderSkinned(BufferBuilder* buffer, float scale, int boneIndex);
+    Cube* setId(const std::wstring& id);
+
+    float mX0;
+    float mY0;
+    float mZ0;
+    float mX1;
+    float mY1;
+    float mZ1;
+
+private:
+    Vertex** mVertices;
+    int mVertexCount;
+    _Polygon** mPolygons;
+    int mPolygonCount;
+    int mTexU;
+    int mTexV;
+    std::wstring mId;
+};
+
+#endif

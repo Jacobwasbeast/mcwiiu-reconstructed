@@ -2,6 +2,8 @@
 
 #include "game/network/INetworkPlayer.hpp"
 
+unsigned int hash_value(const PlayerUID& uid);
+
 StatsUID::StatsUID(const PlayerUID& uid)
     : PlayerUID(0)
 {
@@ -28,6 +30,11 @@ PlayerUID StatsUID::GetID() const
     return *this;
 }
 
+std::wstring StatsUID::toString() const
+{
+    return PlayerUID::toString();
+}
+
 bool StatsUID::operator==(const StatsUID& other) const
 {
     return PlayerUID::operator==(other);
@@ -36,4 +43,9 @@ bool StatsUID::operator==(const StatsUID& other) const
 bool StatsUID::operator!=(const StatsUID& other) const
 {
     return PlayerUID::operator!=(other);
+}
+
+unsigned int hash_value(const StatsUID& uid)
+{
+    return hash_value(uid.GetID());
 }

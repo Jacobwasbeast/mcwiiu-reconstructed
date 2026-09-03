@@ -1,9 +1,13 @@
 #include "game/core/ColourTable.hpp"
 
 #include <boost/unordered_map.hpp>
+#include <cwchar>
+#include <sstream>
 
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
 #include "game/core/Mth.hpp"
 #include "game/world/biome/Biome.hpp"
 
@@ -546,6 +550,85 @@ void ColourTable::setColour(const std::wstring& name, int colour)
     }
 }
 
+void ColourTable::setColour(const std::wstring& name, const std::wstring& colour)
+{
+    unsigned int value = 0;
+    if (swscanf(colour.c_str(), L"%x", &value) == 1)
+    {
+        setColour(name, (int)value);
+    }
+}
+
+void ColourTable::setColour(eMinecraftColour colour, int value)
+{
+    mColours[(int)colour] = value;
+}
+
+void ColourTable::loadColoursFromTextData(const std::wstring& text)
+{
+    std::wistringstream input(text);
+    std::wstring line;
+    while (std::getline(input, line))
+    {
+        std::wstring::size_type separator = line.find(L'=');
+        if (separator == std::wstring::npos)
+        {
+            separator = line.find(L' ');
+        }
+        if (separator != std::wstring::npos)
+        {
+            std::wstring name = line.substr(0, separator);
+            std::wstring value = line.substr(separator + 1);
+            if (!name.empty() && !value.empty())
+            {
+                setColour(name, value);
+            }
+        }
+    }
+}
+
+arrayWithLength<unsigned char> ColourTable::getBinaryData()
+{
+    ByteArrayOutputStream byteStream;
+    DataOutputStream stream(&byteStream);
+    stream.writeInt(1);
+    stream.writeInt(NUM_COLOURS);
+    for (int i = 0; i < NUM_COLOURS; ++i)
+    {
+        stream.writeUTF(COLOUR_NAMES[i]);
+        stream.writeInt(mColours[i]);
+    }
+    stream.writeInt((int)sBiomeColourInfo.size());
+    BiomeColourInfoMap::const_iterator entry = sBiomeColourInfo.begin();
+    for (; entry != sBiomeColourInfo.end(); ++entry)
+    {
+        std::wstringstream name;
+        if (entry->first == DEFAULT_BIOME_ID)
+        {
+            name << DEFAULT_BIOME_NAME;
+        }
+        else
+        {
+            name << entry->first;
+        }
+        stream.writeUTF(name.str());
+        stream.writeInt((int)entry->second.waterSurfaceColour);
+        stream.writeInt((int)entry->second.waterFogColour);
+        stream.writeInt((int)entry->second.waterFogDistance);
+    }
+    return byteStream.toByteArray();
+}
+
+std::wstring ColourTable::getTextData()
+{
+    std::wstringstream output;
+    for (int i = 0; i < NUM_COLOURS; ++i)
+    {
+        output << COLOUR_NAMES[i] << L"=" << std::hex << (unsigned int)mColours[i] << L"\n";
+    }
+    return output.str();
+}
+
 void ColourTable::loadColoursFromData(unsigned char* data, unsigned int length)
 {
     arrayWithLength<unsigned char> buffer;
@@ -696,4 +779,15 @@ unsigned int ColourTable::LinearBlend(int startColour, int middleColour, int end
         | (Mth::clamp((int)red, 0, 255) << 16)
         | (Mth::clamp((int)green, 0, 255) << 8)
         | Mth::clamp((int)blue, 0, 255);
+}
+
+unsigned int ColourTable::LinearBlend(int startColour, int endColour, float fraction)
+{
+    int red = (int)((float)((startColour >> 16) & 0xff) + fraction * (float)(((endColour >> 16) & 0xff) - ((startColour >> 16) & 0xff)));
+    int green = (int)((float)((startColour >> 8) & 0xff) + fraction * (float)(((endColour >> 8) & 0xff) - ((startColour >> 8) & 0xff)));
+    int blue = (int)((float)(startColour & 0xff) + fraction * (float)((endColour & 0xff) - (startColour & 0xff)));
+    return (Mth::clamp(255, 0, 255) << 24)
+        | (Mth::clamp(red, 0, 255) << 16)
+        | (Mth::clamp(green, 0, 255) << 8)
+        | Mth::clamp(blue, 0, 255);
 }

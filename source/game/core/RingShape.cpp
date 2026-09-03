@@ -3,7 +3,6 @@
 #include <math.h>
 
 #include "game/core/Shape.hpp"
-#include "game/util/Random.hpp"
 
 RingShape::RingShape(LayerShape* layer, float scale, float radius)
     : scale(scale)

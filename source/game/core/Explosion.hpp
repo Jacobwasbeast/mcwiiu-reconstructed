@@ -11,16 +11,32 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
+#include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/block/BlockPos.hpp"
 
-class BlockPos;
-class Entity;
 class Level;
 class LivingEntity;
 class Player;
 class Vec3;
-class _PlayerKeyEq;
-class _PlayerKeyHash;
+
+class _PlayerKeyHash
+{
+public:
+    std::size_t operator()(const boost::shared_ptr<Player>& player) const
+    {
+        return (std::size_t)player.get();
+    }
+};
+
+class _PlayerKeyEq
+{
+public:
+    bool operator()(const boost::shared_ptr<Player>& left, const boost::shared_ptr<Player>& right) const
+    {
+        return left.get() == right.get();
+    }
+};
 
 class Explosion
 {

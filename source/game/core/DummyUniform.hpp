@@ -27,7 +27,7 @@ public:
     virtual void set(int x, int y);
     virtual void set(int x, int y, int z);
     virtual void set(int x, int y, int z, int w);
-    virtual void set(arrayWithLength<float> values);
+    virtual void set(arrayWithLength<float> components);
     virtual void set(Matrix4f* matrix);
     virtual void setSafe(float x, float y, float z, float w);
     virtual void setSafe(int x, int y, int z, int w);

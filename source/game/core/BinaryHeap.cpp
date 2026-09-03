@@ -70,6 +70,11 @@ void BinaryHeap::clear()
     mSize = 0;
 }
 
+Node* BinaryHeap::peek()
+{
+    return mHeap.data[0];
+}
+
 void BinaryHeap::downHeap(int index)
 {
     Node** heap = mHeap.data;
@@ -150,6 +155,26 @@ Node* BinaryHeap::pop()
     return node;
 }
 
+void BinaryHeap::remove(Node* node)
+{
+    int index = node->heapIdx;
+    Node* replacement = mHeap.data[--mSize];
+
+    if (index != mSize)
+    {
+        mHeap.data[index] = replacement;
+
+        if (replacement->f < node->f)
+        {
+            upHeap(index);
+        }
+        else
+        {
+            downHeap(index);
+        }
+    }
+}
+
 void BinaryHeap::changeCost(Node* node, float cost)
 {
     float oldCost = node->f;
@@ -169,4 +194,14 @@ void BinaryHeap::changeCost(Node* node, float cost)
 bool BinaryHeap::isEmpty()
 {
     return mSize == 0;
+}
+
+int BinaryHeap::size()
+{
+    return mSize;
+}
+
+arrayWithLength<Node*> BinaryHeap::getHeap()
+{
+    return mHeap;
 }

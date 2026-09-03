@@ -2,13 +2,14 @@
 #define GAME_CORE_DAMAGEEVENT_HPP
 
 #include <boost/shared_ptr.hpp>
+#include "game/core/StatsUID.hpp"
+#include "game/core/Scoreboard.hpp"
 
 class Entity;
 
 class DamageEvent
 {
 public:
-    DamageEvent() {}
     DamageEvent(const DamageEvent& other);
 
     StatsUID mVictim;

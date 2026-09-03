@@ -5,10 +5,9 @@
 #include <vector>
 
 #include "game/util/Random.hpp"
-
-class AABB;
-class Vec3;
-class Vec3i;
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/util/Vec3i.hpp"
 
 class Mth
 {
@@ -70,16 +69,16 @@ public:
     static double getDouble(const std::wstring& text, double defaultValue);
     static double getDouble(const std::wstring& text, double defaultValue, double min);
 
+    static int color(int red, int green, int blue);
+    static int color(float red, float green, float blue);
+    static int colorMultiply(int colour, int other);
+    static int colorMultiply(int colour, float red, float green, float blue);
+
     static double pct(double value, double min, double max);
     static bool isPowerOfTwo(int value);
     static int ceillog2(int value);
     static int log2(int value);
     static int roundUp(int value, int multiple);
-
-    static int color(int red, int green, int blue);
-    static int color(float red, float green, float blue);
-    static int colorMultiply(int colour, int other);
-    static int colorMultiply(int colour, float red, float green, float blue);
 
     static float frac(float value);
     static double frac(double value);

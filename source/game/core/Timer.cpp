@@ -76,3 +76,23 @@ void Timer::advanceTime()
 
     renderPartialTicks = elapsedPartialTicks;
 }
+
+void Timer::advanceTimeQuickly()
+{
+    elapsedTicks = 1;
+    elapsedPartialTicks = 0.0f;
+    renderPartialTicks = 0.0f;
+}
+
+void Timer::skipTime()
+{
+    long long clock = System::processTimeInMilliSecs();
+    lastSyncSysClock = clock;
+    lastSyncHRClock = clock;
+    lastHRTime = (double)clock / 1000.0;
+    timeSyncCounter = 0;
+    timeSyncAdjustment = 1.0;
+    elapsedTicks = 0;
+    elapsedPartialTicks = 0.0f;
+    renderPartialTicks = 0.0f;
+}

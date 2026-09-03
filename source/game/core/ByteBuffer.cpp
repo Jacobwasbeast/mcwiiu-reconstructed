@@ -14,6 +14,14 @@ ByteBuffer::ByteBuffer(unsigned int capacity)
     mOrder = eByteOrder_BigEndian;
 }
 
+ByteBuffer::ByteBuffer(unsigned int capacity, unsigned char* bytes)
+    : Buffer(capacity)
+{
+    mIsWrapped = true;
+    mBuffer = bytes;
+    mOrder = eByteOrder_BigEndian;
+}
+
 ByteBuffer::~ByteBuffer()
 {
     if (!mIsWrapped)
@@ -37,6 +45,157 @@ ByteBuffer* ByteBuffer::allocate(unsigned int capacity)
 ByteBuffer* ByteBuffer::allocateDirect(int capacity)
 {
     return new ByteBuffer(capacity);
+}
+
+ByteBuffer* ByteBuffer::wrap(arrayWithLength<unsigned char>& bytes)
+{
+    return new ByteBuffer(bytes.length, bytes.data);
+}
+
+void ByteBuffer::order(ByteOrder byteOrder)
+{
+    mOrder = byteOrder;
+}
+
+unsigned int ByteBuffer::getSize()
+{
+    return mCapacity;
+}
+
+int ByteBuffer::getInt()
+{
+    int value = getInt(mPosition);
+    mPosition += 4;
+    return value;
+}
+
+unsigned char ByteBuffer::get(int index)
+{
+    return mBuffer[index];
+}
+
+short ByteBuffer::getShort()
+{
+    unsigned int index = mPosition;
+    short value;
+
+    if (mOrder == eByteOrder_BigEndian)
+    {
+        value = (short)((mBuffer[index] << 8) | mBuffer[index + 1]);
+    }
+    else if (mOrder == eByteOrder_LittleEndian)
+    {
+        value = (short)((mBuffer[index + 1] << 8) | mBuffer[index]);
+    }
+    else
+    {
+        value = 0;
+    }
+
+    mPosition += 2;
+    return value;
+}
+
+long long ByteBuffer::getLong()
+{
+    unsigned long long value = 0;
+    unsigned int i;
+
+    if (mOrder == eByteOrder_BigEndian)
+    {
+        for (i = 0; i < 8; ++i)
+        {
+            value = (value << 8) | mBuffer[mPosition + i];
+        }
+    }
+    else if (mOrder == eByteOrder_LittleEndian)
+    {
+        for (i = 0; i < 8; ++i)
+        {
+            value |= ((unsigned long long)mBuffer[mPosition + i]) << (i * 8);
+        }
+    }
+
+    mPosition += 8;
+    return (long long)value;
+}
+
+void ByteBuffer::getShortArray(arrayWithLength<short>& values)
+{
+    unsigned int i;
+    values.resize((mLimit - mPosition) >> 1);
+    for (i = 0; i < values.length; ++i)
+    {
+        values.data[i] = getShort();
+    }
+}
+
+ByteBuffer* ByteBuffer::put(int index, unsigned char value)
+{
+    mBuffer[index] = value;
+    return this;
+}
+
+ByteBuffer* ByteBuffer::putInt(int value)
+{
+    putInt(mPosition, value);
+    mPosition += 4;
+    return this;
+}
+
+ByteBuffer* ByteBuffer::putShort(short value)
+{
+    unsigned int index = mPosition;
+    if (mOrder == eByteOrder_BigEndian)
+    {
+        mBuffer[index] = (unsigned char)(value >> 8);
+        mBuffer[index + 1] = (unsigned char)value;
+    }
+    else if (mOrder == eByteOrder_LittleEndian)
+    {
+        mBuffer[index] = (unsigned char)value;
+        mBuffer[index + 1] = (unsigned char)(value >> 8);
+    }
+    mPosition += 2;
+    return this;
+}
+
+void ByteBuffer::putShortArray(arrayWithLength<short>& values)
+{
+    unsigned int i;
+    for (i = 0; i < values.length; ++i)
+    {
+        putShort(values.data[i]);
+    }
+}
+
+ByteBuffer* ByteBuffer::putLong(long long value)
+{
+    unsigned int i;
+    if (mOrder == eByteOrder_BigEndian)
+    {
+        for (i = 0; i < 8; ++i)
+        {
+            mBuffer[mPosition + i] = (unsigned char)(value >> ((7 - i) * 8));
+        }
+    }
+    else if (mOrder == eByteOrder_LittleEndian)
+    {
+        for (i = 0; i < 8; ++i)
+        {
+            mBuffer[mPosition + i] = (unsigned char)(value >> (i * 8));
+        }
+    }
+    mPosition += 8;
+    return this;
+}
+
+arrayWithLength<unsigned char> ByteBuffer::array()
+{
+    arrayWithLength<unsigned char> result;
+    result.data = mBuffer;
+    result.length = mCapacity;
+    return result;
 }
 
 unsigned char* ByteBuffer::getBuffer()

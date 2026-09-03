@@ -1,16 +1,29 @@
 #include "game/core/CombatRules.hpp"
 
-#include "game/core/Mth.hpp"
-
-float CombatRules::getDamageAfterAbsorb(float damage, float armorValue, float armorToughness)
+static float clampValue(float value, float minimum, float maximum)
 {
-    float toughnessScale = armorToughness / 4.0f + 2.0f;
-    float effectiveArmor = Mth::clamp(armorValue - damage / toughnessScale, armorValue * 0.2f, 20.0f);
-    return damage * (1.0f - effectiveArmor / 25.0f);
+    if (value < minimum)
+    {
+        return minimum;
+    }
+
+    if (value > maximum)
+    {
+        return maximum;
+    }
+
+    return value;
 }
 
-float CombatRules::getDamageAfterMagicAbsorb(float damage, float enchantModifier)
+double CombatRules::getDamageAfterAbsorb(float damage, float armorValue, float armorToughness)
 {
-    float effectiveModifier = Mth::clamp(enchantModifier, 0.0f, 20.0f);
-    return damage * (1.0f - effectiveModifier / 25.0f);
+    float toughnessScale = armorToughness / 4.0f + 2.0f;
+    float effectiveArmor = clampValue(armorValue - damage / toughnessScale, armorValue * 0.2f, 20.0f);
+    return (double)(float)(damage * (1.0f - effectiveArmor / 25.0f));
+}
+
+double CombatRules::getDamageAfterMagicAbsorb(float damage, float enchantModifier)
+{
+    float effectiveModifier = clampValue(enchantModifier, 0.0f, 20.0f);
+    return (double)(float)(damage * (1.0f - effectiveModifier / 25.0f));
 }

@@ -6,9 +6,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/item/not_null_ptr.hpp"
-#include "game/world/block/BlockPos.hpp"
 
 class ItemInstance;
+class BlockPos;
 class MerchantRecipe;
 class MerchantRecipeList;
 class Player;

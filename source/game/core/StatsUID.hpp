@@ -22,4 +22,6 @@ public:
     bool operator!=(const StatsUID& other) const;
 };
 
+unsigned int hash_value(const StatsUID& uid);
+
 #endif

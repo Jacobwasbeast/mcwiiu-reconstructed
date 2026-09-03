@@ -1,6 +1,5 @@
 #include "game/core/AbstractStateMapper.hpp"
 
-#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
@@ -11,11 +10,11 @@ AbstractStateMapper::~AbstractStateMapper()
 
 boost::unordered_map<const BlockState*, ModelResourceLocation*>* AbstractStateMapper::mapStates(Block* block)
 {
-    const arrayWithLength<const BlockState*>& states = block->getBlockStateDefinition()->getPossibleBlockStates();
+    const std::vector<const BlockState*>& states = block->getBlockStateDefinition()->getPossibleBlockStates();
 
-    for (unsigned int i = 0; i < states.length; i++)
+    for (unsigned int i = 0; i < states.size(); i++)
     {
-        mStateLocations[states.data[i]] = getLocation(states.data[i]);
+        mStateLocations[states[i]] = getLocation(states[i]);
     }
 
     return &mStateLocations;

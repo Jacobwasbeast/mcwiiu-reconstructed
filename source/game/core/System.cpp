@@ -8,44 +8,71 @@ struct OSSystemInfo
 long long OSGetTime();
 OSSystemInfo* OSGetSystemInfo();
 
-long long System::processTime(ETimeGranularity granularity)
+void System::arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, arrayWithLength<unsigned char>* dest, unsigned int destPos, unsigned int length)
+{
+    std::memcpy(dest->data + destPos, src.data + srcPos, length);
+}
+
+void System::arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest, unsigned int destPos, unsigned int length)
+{
+    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(Node*));
+}
+
+void System::arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest, unsigned int destPos, unsigned int length)
+{
+    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(Biome*));
+}
+
+void System::arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos, unsigned int length)
+{
+    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(int));
+}
+
+void System::arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos, arrayWithLength<unsigned short>* dest, unsigned int destPos, unsigned int length)
+{
+    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(unsigned short));
+}
+
+unsigned int System::processTime(ETimeGranularity granularity)
 {
     switch (granularity)
     {
     case eTimeGranularity_MilliSecs:
-        return (unsigned long long)OSGetTime() * 1000 / (OSGetSystemInfo()->busSpeed / 4);
-
+        return (unsigned int)((unsigned long long)OSGetTime() * 1000 / (OSGetSystemInfo()->busSpeed / 4));
     case eTimeGranularity_MicroSecs:
-        return (unsigned long long)OSGetTime() * 1000000 / (OSGetSystemInfo()->busSpeed / 4);
-
+        return (unsigned int)((unsigned long long)OSGetTime() * 1000000 / (OSGetSystemInfo()->busSpeed / 4));
     case eTimeGranularity_NanoSecs:
-        return (unsigned long long)OSGetTime() * 32000 / ((unsigned long long)(OSGetSystemInfo()->busSpeed / 4) / 31250);
+        return (unsigned int)((unsigned long long)OSGetTime() * 32000 / ((unsigned long long)(OSGetSystemInfo()->busSpeed / 4) / 31250));
     }
-
     return 0;
 }
 
-long long System::processTimeInSeconds()
+uint64_t System::processTimeInSeconds()
 {
     return processTime(eTimeGranularity_MilliSecs) / 1000;
 }
 
-long long System::processTimeInMilliSecs()
+unsigned int System::processTimeInMilliSecs()
 {
     return processTime(eTimeGranularity_MilliSecs);
 }
 
-long long System::processTimeInNanoSecs()
+unsigned int System::processTimeInMicroSecs()
+{
+    return processTime(eTimeGranularity_MicroSecs);
+}
+
+unsigned int System::processTimeInNanoSecs()
 {
     return processTime(eTimeGranularity_NanoSecs);
 }
 
-long long System::currentRealTimeMillis()
+uint64_t System::currentRealTimeMillis()
 {
     return (unsigned long long)OSGetTime() * 1000 / (OSGetSystemInfo()->busSpeed / 4);
 }
 
-long long System::currentUnixEpochTimeSeconds()
+uint64_t System::currentUnixEpochTimeSeconds()
 {
     return currentRealTimeMillis() / 1000;
 }
@@ -55,17 +82,15 @@ void System::ReverseUSHORT(unsigned short* value)
     unsigned short original = *value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
-
     destination[0] = source[1];
     destination[1] = source[0];
 }
 
 void System::ReverseSHORT(short* value)
 {
-    short original = *value;
+    unsigned short original = (unsigned short)*value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
-
     destination[0] = source[1];
     destination[1] = source[0];
 }
@@ -75,7 +100,17 @@ void System::ReverseULONG(unsigned int* value)
     unsigned int original = *value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
+    destination[0] = source[3];
+    destination[1] = source[2];
+    destination[2] = source[1];
+    destination[3] = source[0];
+}
 
+void System::ReverseULONG(unsigned long* value)
+{
+    unsigned long original = *value;
+    unsigned char* source = (unsigned char*)&original;
+    unsigned char* destination = (unsigned char*)value;
     destination[0] = source[3];
     destination[1] = source[2];
     destination[2] = source[1];
@@ -84,10 +119,9 @@ void System::ReverseULONG(unsigned int* value)
 
 void System::ReverseINT(int* value)
 {
-    int original = *value;
+    unsigned int original = (unsigned int)*value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
-
     destination[0] = source[3];
     destination[1] = source[2];
     destination[2] = source[1];
@@ -96,10 +130,9 @@ void System::ReverseINT(int* value)
 
 void System::ReverseULONGLONG(long long* value)
 {
-    long long original = *value;
+    unsigned long long original = (unsigned long long)*value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
-
     destination[0] = source[7];
     destination[1] = source[6];
     destination[2] = source[5];

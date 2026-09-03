@@ -11,29 +11,23 @@ class VertexFormat
 public:
     VertexFormat();
     VertexFormat(VertexFormat* other);
-
-    void clear();
-    VertexFormat* addElement(const VertexFormatElement* element);
-
-    std::vector<const VertexFormatElement*>& getElements();
     int getElementCount();
     const VertexFormatElement* getElement(int index);
-    int getOffset(int index);
-
     int getVertexSize();
-    int getIntegerSize();
-
-    bool hasPositionElement();
+    void clear();
     bool hasNormal();
     int getNormalOffset();
     bool hasColor();
     int getColorOffset();
     bool hasUv(int index);
     int getUvOffset(int index);
-
-    bool equals(VertexFormat* other);
     std::wstring toString();
-
+    int getIntegerSize();
+    std::vector<const VertexFormatElement*>& getElements();
+    int getOffset(int index);
+    bool equals(VertexFormat* other);
+    bool hasPositionElement();
+    VertexFormat* addElement(const VertexFormatElement* element);
 private:
     std::vector<const VertexFormatElement*> elements;
     std::vector<int> offsets;

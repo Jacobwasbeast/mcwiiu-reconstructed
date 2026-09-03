@@ -10,16 +10,12 @@ public:
     FloatBuffer(unsigned int capacity);
     FloatBuffer(unsigned int capacity, float* data);
     virtual ~FloatBuffer();
-
     virtual FloatBuffer* flip();
-
     void put(float value);
     void put(int index, float value);
     FloatBuffer* put(arrayWithLength<float> values);
-    float get(int index);
     void get(arrayWithLength<float>* values);
-    float* getBuffer() { return mBuffer; }
-
+    float get(int index);
 protected:
     float* mBuffer;
 };

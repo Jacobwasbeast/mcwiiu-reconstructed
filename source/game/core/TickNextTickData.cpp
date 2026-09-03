@@ -26,7 +26,7 @@ bool TickNextTickData::equals(const TickNextTickData* other) const
 
 int TickNextTickData::hashCode() const
 {
-    return pos.hashCode();
+    return this->pos.hashCode();
 }
 
 void TickNextTickData::delay(long long triggerTick)
@@ -91,5 +91,5 @@ bool TickNextTickData::eq_test(const TickNextTickData& first, const TickNextTick
 
 bool TickNextTickData::operator==(const TickNextTickData& other)
 {
-    return equals(&other);
+    return this->equals(&other);
 }

@@ -55,3 +55,12 @@ void Lighting::turnOff()
     GlStateManager::disableLight(9);
     GlStateManager::disableColorMaterial();
 }
+
+void Lighting::turnOnGui()
+{
+    GlStateManager::pushMatrix();
+    GlStateManager::rotatef(120.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(20.0f, 0.0f, 1.0f, 0.0f);
+    turnOn();
+    GlStateManager::popMatrix();
+}

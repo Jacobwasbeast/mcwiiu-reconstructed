@@ -2,6 +2,7 @@
 #define GAME_CORE_ABSTRACTSTATEMAPPER_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/unordered_map.hpp>
 

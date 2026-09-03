@@ -48,6 +48,11 @@ DyeColor::DyeColor(int blockData, int itemData, const std::wstring& serializedNa
     this->textureDiffuseColors.length = 3;
 }
 
+DyeColor::~DyeColor()
+{
+    delete[] textureDiffuseColors.data;
+}
+
 void DyeColor::staticCtor()
 {
     WHITE = new DyeColor(0, 15, L"white", 0xB6554A0A, 0xF31D46E2, 0xF9FFFE,
@@ -150,6 +155,16 @@ eMinecraftColour DyeColor::getShulkerColor() const
 eMinecraftColour DyeColor::getBedColor() const
 {
     return bedColor;
+}
+
+eMinecraftColour DyeColor::getFontColorFormat() const
+{
+    return fontColorFormat;
+}
+
+std::wstring DyeColor::getTexture() const
+{
+    return serializedName;
 }
 
 std::wstring DyeColor::toString() const

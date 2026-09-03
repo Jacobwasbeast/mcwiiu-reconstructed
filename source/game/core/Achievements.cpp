@@ -1,5 +1,9 @@
 #include "game/core/Achievements.hpp"
 
+#include "game/core/Achievement.hpp"
+#include "game/item/Items.hpp"
+#include "game/world/block/Blocks.hpp"
+
 #include <cstddef>
 
 Achievement* Achievements::openInventory = NULL;
@@ -101,10 +105,6 @@ Achievement* Achievements::castaway = NULL;
 Achievement* Achievements::sleepWithTheFishes = NULL;
 Achievement* Achievements::echolocation = NULL;
 
-void Achievements::init()
-{
-}
-
 void Achievements::staticCtor()
 {
     Achievement* achievement;
@@ -115,7 +115,7 @@ void Achievements::staticCtor()
 
     mineWood = (new Achievement(1, L"mineWood", 2, 1, Blocks::log, openInventory))->postConstruct(true);
 
-    buildWorkBench = (new Achievement(2, L"buildWorkBench", 4, -1, Blocks::craftingTable, mineWood))->postConstruct(true);
+    buildWorkBench = (new Achievement(2, L"buildWorkBench", 4, -1, Blocks::crafting_table, mineWood))->postConstruct(true);
 
     buildPickaxe = (new Achievement(3, L"buildPickaxe", 4, 2, Items::woodenPickaxe, buildWorkBench))->postConstruct(true);
 
@@ -197,11 +197,11 @@ void Achievements::staticCtor()
     achievement->setGolden();
     theEnd = achievement->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(33, L"theEnd2", 4, 13, Blocks::dragonEgg, theEnd2);
+    achievement = new Achievement(33, L"theEnd2", 4, 13, Blocks::dragon_egg, theEnd2);
     achievement->setGolden();
     theEnd2 = achievement->postConstruct(true)->setExtended();
 
-    enchantments = (new Achievement(34, L"enchantments", -4, 4, Blocks::enchantingTable, enchantments))->postConstruct(true)->setExtended();
+    enchantments = (new Achievement(34, L"enchantments", -4, 4, Blocks::enchanting_table, enchantments))->postConstruct(true)->setExtended();
 
     achievement = new Achievement(35, L"overkill", -4, 1, Items::diamondSword, enchantments);
     achievement->setGolden();
@@ -360,4 +360,8 @@ void Achievements::staticCtor()
     sleepWithTheFishes = (new Achievement(95, L"sleepWithTheFishes", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
     echolocation = (new Achievement(96, L"echolocation", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
+}
+
+void Achievements::init()
+{
 }

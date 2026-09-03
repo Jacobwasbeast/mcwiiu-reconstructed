@@ -1,7 +1,7 @@
 #include "game/core/LerpingBossEvent.hpp"
 
 #include "game/core/Mth.hpp"
-#include "game/item/Minecraft.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/network/ClientboundBossEventPacket.hpp"
 
 LerpingBossEvent::LerpingBossEvent(boost::shared_ptr<ClientboundBossEventPacket> packet)

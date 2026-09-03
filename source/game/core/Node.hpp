@@ -1,6 +1,7 @@
 #ifndef GAME_CORE_NODE_HPP
 #define GAME_CORE_NODE_HPP
 
+#include <vector>
 #include <string>
 
 class BlockPathTypes;
@@ -11,50 +12,49 @@ class DataOutputStream;
 class Node
 {
 public:
+    Node();
+    Node(int x, int y, int z);
+    Node(const Node& node);
+
+    static void ResetPool();
+    static unsigned int createHash(int x, int y, int z);
+    void _init();
+    static Node* GetNodeFromPool(int x, int y, int z);
+    Node* cloneMove(int x, int y, int z);
+    double distanceTo(Node* node);
+    double distanceToSqr(Node* node);
+    double distanceManhattan(Node* node);
+    double distanceManhattan(const BlockPos& pos);
+    bool equals(Node* node);
+    bool inOpenSet();
+    void writeToStream(DataOutputStream* stream);
+    static Node* createFromStream(DataInputStream* stream);
+    const BlockPathTypes* GetType();
+    int hashCode();
+    std::wstring toString();
+
+private:
     int x;
     int y;
     int z;
-    int hash;
+    unsigned int hash;
     int heapIdx;
     float g;
     float h;
     float f;
-    Node* cameFrom;
+    int field20;
     bool closed;
-    float walkedDistance;
-    float moveCost;
     float costMalus;
+    float field2c;
+    float field30;
     const BlockPathTypes* type;
-    bool reached;
-    int searchId;
+    bool inOpen;
+    int field3c;
 
-    Node();
-    Node(int x, int y, int z);
-    Node(const Node& other);
-
-    static void ResetPool();
-    static Node* GetNodeFromPool(int x, int y, int z);
-    static int createHash(int x, int y, int z);
-    static Node* createFromStream(DataInputStream* stream);
-
-    void _init();
-
-    int GetType();
-
-    Node* cloneMove(int x, int y, int z);
-
-    float distanceTo(Node* node);
-    float distanceToSqr(Node* node);
-    float distanceManhattan(Node* node);
-    float distanceManhattan(const BlockPos& pos);
-
-    bool equals(Node* node);
-    int hashCode();
-    bool inOpenSet();
-
-    std::wstring toString();
-
-    void writeToStream(DataOutputStream* stream);
+    static unsigned int poolSize;
+    static bool usePool;
+    static Node pool[1024];
+    static std::vector<Node*> allocated;
 };
 
 #endif

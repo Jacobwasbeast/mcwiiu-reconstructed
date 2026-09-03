@@ -31,9 +31,9 @@ public:
 
     const Type* getType() const;
     unsigned char getImg() const;
-    char getX() const;
-    char getY() const;
-    char getRot() const;
+    int getX() const;
+    int getY() const;
+    int getRot() const;
     void setX(char x);
     void setY(char y);
     void setRot(char rot);

@@ -10,9 +10,22 @@ Rotation* Rotation::COUNTERCLOCKWISE_90 = new Rotation(L"rotate_270", Rotation::
 Rotation* Rotation::VALUES[4] = { NONE, CLOCKWISE_90, CLOCKWISE_180, COUNTERCLOCKWISE_90 };
 
 Rotation::Rotation(const std::wstring& name, eTYPE type)
-    : name(name),
-      type(type)
 {
+    this->name = name;
+    this->type = type;
+}
+
+Rotation* Rotation::byName(std::wstring name)
+{
+    int i;
+    for (i = 0; i < 4; ++i)
+    {
+        if (VALUES[i]->name == name)
+        {
+            return VALUES[i];
+        }
+    }
+    return NULL;
 }
 
 Rotation* Rotation::byType(eTYPE type)

@@ -18,12 +18,12 @@ cProductInfo::cProductInfo()
 
 cProductInfo::~cProductInfo()
 {
-    delete m_pDescription;
-    delete m_pName;
-    delete m_pPriceString;
-    delete m_pProductIdString;
-    delete m_pSKUId;
-    delete m_pBanner;
+    delete[] m_pDescription;
+    delete[] m_pName;
+    delete[] m_pPriceString;
+    delete[] m_pProductIdString;
+    delete[] m_pSKUId;
+    delete[] m_pBanner;
 }
 
 void cProductInfo::Init(bool canPurchase, bool canDownload, unsigned int price, char* pName, char* pDescription, char* pPriceString, char* pProductIdString, char* pSKUId, char* pBanner, unsigned int packID, unsigned int sortIndex)
@@ -87,6 +87,21 @@ unsigned int cProductInfo::GetSortIndex()
     return m_SortIndex;
 }
 
+bool cProductInfo::CanDownload()
+{
+    return m_bCanDownload;
+}
+
+void cProductInfo::SetCanPurchase(bool canPurchase)
+{
+    m_bCanPurchase = canPurchase;
+}
+
+unsigned int cProductInfo::GetPrice()
+{
+    return m_Price;
+}
+
 char* cProductInfo::GetName()
 {
     return m_pName;
@@ -100,6 +115,21 @@ char* cProductInfo::GetDescription()
 char* cProductInfo::GetPriceString()
 {
     return m_pPriceString;
+}
+
+char* cProductInfo::GetProductIdString()
+{
+    return m_pProductIdString;
+}
+
+char* cProductInfo::GetProductId()
+{
+    return m_pProductIdString;
+}
+
+char* cProductInfo::GetSKUId()
+{
+    return m_pSKUId;
 }
 
 char* cProductInfo::GetBanner()

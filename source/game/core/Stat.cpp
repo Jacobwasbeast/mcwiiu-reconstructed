@@ -101,6 +101,11 @@ void Stat::setExtended()
     extended = true;
 }
 
+bool Stat::isExtended()
+{
+    return extended;
+}
+
 void Stat::setAwardLocallyOnly()
 {
     awardLocallyOnly = true;
@@ -109,6 +114,11 @@ void Stat::setAwardLocallyOnly()
 bool Stat::isAwardedFromServer() const
 {
     return !awardLocallyOnly;
+}
+
+std::wstring Stat::toString()
+{
+    return name;
 }
 
 std::wstring Stat::format(int value)

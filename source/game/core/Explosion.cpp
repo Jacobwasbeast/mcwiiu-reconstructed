@@ -2,22 +2,27 @@
 
 #include <cmath>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/PrimedTnt.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/ProtectionEnchantment.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/util/Vec3i.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-
-class AABB;
-class Block;
-class BlockState;
-class Blocks;
-class DamageSource;
-class Material;
-class Minecraft;
-class MiniGameDef;
-class ParticleType;
-class PrimedTnt;
-class ProtectionEnchantment;
-class SoundEvents;
-class SoundSource;
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -403,11 +408,11 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
         if (mRadius >= 2.0f && mBreaksBlocks
             && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureLessExplosionParticles())
         {
-            mLevel->addParticle(ParticleType::HUGE_EXPLOSION, mX, mY, mZ, 1.0, 0.0, 0.0, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_HUGE_EXPLOSION, mX, mY, mZ, 1.0, 0.0, 0.0, arrayWithLength<int>());
         }
         else
         {
-            mLevel->addParticle(ParticleType::LARGE_EXPLODE, mX, mY, mZ, 1.0, 0.0, 0.0, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_LARGE_EXPLODE, mX, mY, mZ, 1.0, 0.0, 0.0, arrayWithLength<int>());
         }
     }
 
@@ -465,12 +470,12 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
                 double motionY = toParticleY / toParticleLength * speed;
                 double motionZ = toParticleZ / toParticleLength * speed;
 
-                mLevel->addParticle(ParticleType::EXPLODE, (particleX + mX) * 0.5, (particleY + mY) * 0.5, (particleZ + mZ) * 0.5,
+                mLevel->addParticle(PARTICLE_EXPLODE, (particleX + mX) * 0.5, (particleY + mY) * 0.5, (particleZ + mZ) * 0.5,
                     motionX, motionY, motionZ, arrayWithLength<int>());
 
                 if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureLessExplosionParticles())
                 {
-                    mLevel->addParticle(ParticleType::SMOKE, particleX, particleY, particleZ,
+                    mLevel->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ,
                         motionX, motionY, motionZ, arrayWithLength<int>());
                 }
             }

@@ -1,9 +1,7 @@
 #ifndef GAME_CORE_TEMPLATESHAPE_HPP
 #define GAME_CORE_TEMPLATESHAPE_HPP
-#include "game/world/generation/LayerShape.hpp"
 
-class Random;
-class Shape;
+#include "game/world/generation/LayerShape.hpp"
 
 class TemplateShape : public LayerShape
 {

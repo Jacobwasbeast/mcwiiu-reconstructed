@@ -1,7 +1,6 @@
 #include "game/core/InputStreamReader.hpp"
 
 #include "game/core/DataInputStream.hpp"
-#include "game/core/InputStream.hpp"
 
 InputStreamReader::InputStreamReader(InputStream* stream)
 {

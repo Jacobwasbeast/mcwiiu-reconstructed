@@ -1,6 +1,10 @@
 #include "game/core/Language.hpp"
 
-static Language* sLanguage = new Language();
+static Language* sLanguage = 0;
+
+Language::Language()
+{
+}
 
 Language* Language::getInstance()
 {
@@ -8,6 +12,21 @@ Language* Language::getInstance()
 }
 
 std::wstring Language::getElement(const std::wstring& key, ...)
+{
+    return L"";
+}
+
+std::wstring Language::getElement(const std::wstring& key, va_list args)
+{
+    return L"";
+}
+
+std::wstring Language::getElementName(const std::wstring& key)
+{
+    return L"";
+}
+
+std::wstring Language::getElementDescription(const std::wstring& key)
 {
     return L"";
 }
