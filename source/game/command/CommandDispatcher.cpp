@@ -1,40 +1,43 @@
 #include "game/command/CommandDispatcher.hpp"
 
-#include "game/command/Command.hpp"
-#include "game/world/biome/arrayWithLength.hpp"
+#include "game/command/CommandSender.hpp"
 
 CommandDispatcher::CommandDispatcher()
+    : boost::unordered_map<EGameCommand, Command*>(), mCommands()
 {
 }
 
 CommandDispatcher::~CommandDispatcher()
 {
     boost::unordered_set<Command*>::iterator it;
-    for (it = ownedCommands.begin(); it != ownedCommands.end(); ++it)
+    for (it = mCommands.begin(); it != mCommands.end(); ++it)
     {
         delete *it;
     }
 }
 
-bool CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> sender, EGameCommand command, arrayWithLength<unsigned char> data)
+unsigned int CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> sender,
+                                               EGameCommand command,
+                                               arrayWithLength<unsigned char> data)
 {
-    boost::unordered_map<EGameCommand, Command*>::iterator it = find(command);
-    if (it != end())
+    iterator it = find(command);
+    if (it != end() && it->second != NULL)
     {
-        Command* handler = it->second;
-        if (handler->canExecute(sender))
+        Command* selected = it->second;
+        if (selected->canExecute(sender))
         {
-            handler->execute(sender, data);
+            selected->execute(sender, data);
         }
     }
-
-    return false;
+    return 0;
 }
 
 Command* CommandDispatcher::addCommand(Command* command)
 {
-    (*this)[command->getId()] = command;
-    ownedCommands.insert(command);
-
+    if (command != NULL)
+    {
+        (*this)[command->getId()] = command;
+        mCommands.insert(command);
+    }
     return command;
 }

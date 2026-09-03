@@ -17,3 +17,8 @@ int ExperienceCommand::getPermissionLevel()
 void ExperienceCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
 {
 }
+
+bool ExperienceCommand::isValidWildcardPlayerArgument(std::wstring argument, int argumentIndex)
+{
+    return argumentIndex == 0;
+}

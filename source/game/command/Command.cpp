@@ -75,6 +75,32 @@ std::wstring Command::convertToEntityName(boost::shared_ptr<CommandSender> sende
     return convertToPlayer(sender, entityName)->getName();
 }
 
+boost::shared_ptr<Entity> Command::convertToEntity(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
+{
+    if (sender.get() != NULL && entityName.empty())
+    {
+        return sender->getCommandSenderEntity();
+    }
+
+    return boost::shared_ptr<Entity>();
+}
+
+std::vector<boost::shared_ptr<Entity> > Command::convertToEntityList(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
+{
+    std::vector<boost::shared_ptr<Entity> > entities;
+
+    if (sender.get() != NULL || !entityName.empty())
+    {
+        boost::shared_ptr<Entity> entity = convertToEntity(sender, entityName);
+        if (entity.get() != NULL)
+        {
+            entities.push_back(entity);
+        }
+    }
+
+    return entities;
+}
+
 boost::shared_ptr<ServerPlayer> Command::getPlayer(PlayerUID uid)
 {
     boost::shared_ptr<ServerPlayer> player = gMinecraftServer->getPlayers()->getPlayer(uid);

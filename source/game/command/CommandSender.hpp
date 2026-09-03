@@ -5,15 +5,15 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/util/Vec3.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/command/EGameCommand.hpp"
 #include "game/command/CommandStats.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 
+class BlockPos;
 class Entity;
 class Level;
 class MinecraftServer;
+class Vec3;
 
 class CommandSender
 {
