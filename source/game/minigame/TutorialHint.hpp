@@ -1,0 +1,55 @@
+#ifndef GAME_MINIGAME_TUTORIALHINT_HPP
+#define GAME_MINIGAME_TUTORIALHINT_HPP
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/item/not_null_ptr.hpp"
+#include "game/minigame/Tutorial.hpp"
+
+class Block;
+class BlockPos;
+class BlockState;
+class Entity;
+class ItemInstance;
+class Level;
+
+class TutorialHint
+{
+public:
+    enum eHintType
+    {
+        HINT_NONE = 0
+    };
+
+    TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
+                 eHintType type, bool repeatMessage, bool allowFade,
+                 int minimumDisplayTime);
+    virtual ~TutorialHint();
+
+    virtual int startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state);
+    virtual unsigned int destroyBlock(Block* block);
+    virtual unsigned int attack(not_null_ptr<ItemInstance> item, boost::shared_ptr<Entity> entity);
+    virtual int createItemSelected(not_null_ptr<ItemInstance> item, bool selected);
+    virtual int itemDamaged(not_null_ptr<ItemInstance> item);
+    virtual unsigned int onTake(not_null_ptr<ItemInstance> item);
+    virtual unsigned int onLookAt(const BlockState* state);
+    virtual unsigned int onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state);
+    virtual unsigned int onLookAtEntity(boost::shared_ptr<Entity> entity);
+    virtual unsigned int onGameModeChange(eTutorial_GameMode gameMode);
+    virtual int tick();
+    virtual unsigned int getMinimumDisplayTime();
+    virtual unsigned char allowFade();
+
+protected:
+    eTutorial_Hint hint;
+    int descriptionId;
+    Tutorial* tutorial;
+    eHintType type;
+    int consecutiveTicks;
+    Block* lastBlock;
+    bool active;
+    bool fadeAllowed;
+    int minimumTime;
+};
+
+#endif

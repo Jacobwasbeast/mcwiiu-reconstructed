@@ -1,7 +1,5 @@
 #include "game/minigame/TutorialConstraint.hpp"
 
-#include "game/util/Vec3.hpp"
-
 TutorialConstraint::~TutorialConstraint()
 {
 }
@@ -30,9 +28,9 @@ bool TutorialConstraint::isXuiInputConstrained(int xuiInput)
     return false;
 }
 
-bool TutorialConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
+int TutorialConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
                                            double newY, double newZ, Vec3* clampedPosition,
                                            bool positionOnly)
 {
-    return false;
+    return 0;
 }

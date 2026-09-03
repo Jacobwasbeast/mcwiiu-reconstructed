@@ -19,7 +19,7 @@ public:
     virtual bool isConstraintRestrictive(int playerId);
     virtual bool isMappingConstrained(int playerId, int mapping);
     virtual bool isXuiInputConstrained(int xuiInput);
-    virtual bool canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
+    virtual int canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
                                    double newZ, Vec3* clampedPosition, bool positionOnly);
 
     int messageId;
