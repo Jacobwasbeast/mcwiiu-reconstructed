@@ -1,72 +1,57 @@
 #include "game/client/render/SquidModel.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
-#include "game/core/Mth.hpp"
 
-SquidModel::SquidModel(const ModelDefinition& modelDefinition)
+#include <cmath>
+
+SquidModel::SquidModel(const ModelDefinition& definition)
+    : Model(), mBody(0), mTentacle1(0), mTentacle2(0), mTentacle3(0), mTentacle4(0),
+      mTentacle5(0), mTentacle6(0), mTentacle7(0), mTentacle8(0)
 {
-    if (modelDefinition.DoesOverrideModel())
+    if (!definition.DoesOverrideModel())
     {
-        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
-        mBody->setYOffset(-16.0f);
+        mBody = new ModelPartSkin(this, 0, 0, &mSkinnedParts);
+        mBody->addBox(-6.0f, -8.0f, -6.0f, 12, 16, 12);
 
-        mTentacles[0] = new ModelPartSkin(this, L"tentacle1", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[1] = new ModelPartSkin(this, L"tentacle2", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[2] = new ModelPartSkin(this, L"tentacle3", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[3] = new ModelPartSkin(this, L"tentacle4", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[4] = new ModelPartSkin(this, L"tentacle5", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[5] = new ModelPartSkin(this, L"tentacle6", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[6] = new ModelPartSkin(this, L"tentacle7", modelDefinition, NULL, 0.0f, NULL);
-        mTentacles[7] = new ModelPartSkin(this, L"tentacle8", modelDefinition, NULL, 0.0f, NULL);
-
-        mTentacles[0]->setYOffset(-16.0f);
-        mTentacles[0]->mYRot = 1.5707964f;
-
-        mTentacles[1]->setYOffset(-16.0f);
-        mTentacles[1]->mYRot = 0.78539819f;
-
-        mTentacles[2]->setYOffset(-16.0f);
-        mTentacles[2]->mYRot = 0.0f;
-
-        mTentacles[3]->setYOffset(-16.0f);
-        mTentacles[3]->mYRot = -0.78539813f;
-
-        mTentacles[4]->setYOffset(-16.0f);
-        mTentacles[4]->mYRot = -1.5707964f;
-
-        mTentacles[5]->setYOffset(-16.0f);
-        mTentacles[5]->mYRot = -2.3561945f;
-
-        mTentacles[6]->setYOffset(-16.0f);
-        mTentacles[6]->mYRot = -3.1415925f;
-
-        mTentacles[7]->setYOffset(-16.0f);
-        mTentacles[7]->mYRot = -3.926991f;
-
+        ModelPartSkin** tentacles[8] = {
+            &mTentacle1, &mTentacle2, &mTentacle3, &mTentacle4,
+            &mTentacle5, &mTentacle6, &mTentacle7, &mTentacle8
+        };
+        int i;
+        for (i = 0; i < 8; ++i)
+        {
+            const float angle = (float)i * 0.785398163f;
+            ModelPartSkin* tentacle = new ModelPartSkin(this, 48, 0, &mSkinnedParts);
+            tentacle->setPos((float)std::cos(angle) * 5.0f, 15.0f,
+                             (float)std::sin(angle) * 5.0f);
+            tentacle->mYRot = -angle;
+            tentacle->addBox(-1.0f, 0.0f, -1.0f, 2, 18, 2);
+            *tentacles[i] = tentacle;
+        }
         compileSkinnedDrawlist();
     }
     else
     {
-        mBody = new ModelPartSkin(this, 0, 0, NULL);
-        mBody->addBox(-6.0f, -8.0f, -6.0f, 12, 16, 12);
-        mBody->mY += 8.0f;
-
-        for (int i = 0; i < 8; ++i)
-        {
-            mTentacles[i] = new ModelPartSkin(this, 48, 0, NULL);
-
-            float sweep = i * 3.1415927f;
-            double angle = sweep * 2.0 / 8.0;
-
-            mTentacles[i]->addBox(-1.0f, 0.0f, -1.0f, 2, 18, 2);
-            mTentacles[i]->mX = Mth::cos((float)angle) * 5.0f;
-            mTentacles[i]->mZ = Mth::sin((float)angle) * 5.0f;
-            mTentacles[i]->mY = 15.0f;
-            mTentacles[i]->mYRot = (float)(sweep * -2.0 / 8.0 + 3.1415927f / 2.0);
-        }
-
+        const float scale = 0.0f;
+        mBody = new ModelPartSkin(this, L"body", definition, 0, scale, &mSkinnedParts);
+        mTentacle1 = new ModelPartSkin(this, L"tentacle1", definition, 0, scale, &mSkinnedParts);
+        mTentacle2 = new ModelPartSkin(this, L"tentacle2", definition, 0, scale, &mSkinnedParts);
+        mTentacle3 = new ModelPartSkin(this, L"tentacle3", definition, 0, scale, &mSkinnedParts);
+        mTentacle4 = new ModelPartSkin(this, L"tentacle4", definition, 0, scale, &mSkinnedParts);
+        mTentacle5 = new ModelPartSkin(this, L"tentacle5", definition, 0, scale, &mSkinnedParts);
+        mTentacle6 = new ModelPartSkin(this, L"tentacle6", definition, 0, scale, &mSkinnedParts);
+        mTentacle7 = new ModelPartSkin(this, L"tentacle7", definition, 0, scale, &mSkinnedParts);
+        mTentacle8 = new ModelPartSkin(this, L"tentacle8", definition, 0, scale, &mSkinnedParts);
+        mBody->setYOffset(-16.0f);
+        mTentacle1->setYOffset(-16.0f);
+        mTentacle2->setYOffset(-16.0f);
+        mTentacle3->setYOffset(-16.0f);
+        mTentacle4->setYOffset(-16.0f);
+        mTentacle5->setYOffset(-16.0f);
+        mTentacle6->setYOffset(-16.0f);
+        mTentacle7->setYOffset(-16.0f);
+        mTentacle8->setYOffset(-16.0f);
         compileSkinnedDrawlist();
     }
 }
@@ -75,26 +60,32 @@ SquidModel::~SquidModel()
 {
 }
 
-void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void SquidModel::setupAnim(float, float, float ageInTicks, float, float, float,
+                           boost::shared_ptr<Entity>, _SkinAdjustments)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
-
-    mBody->render(scale, useDisplayList, false);
-
-    for (int i = 0; i < 8; ++i)
-    {
-        mTentacles[i]->render(scale, useDisplayList, false);
-    }
-
-    callSkinnedDrawlist();
+    ModelPartSkin* tentacles[8] = { mTentacle1, mTentacle2, mTentacle3, mTentacle4,
+                                    mTentacle5, mTentacle6, mTentacle7, mTentacle8 };
+    int i;
+    for (i = 0; i < 8; ++i)
+        tentacles[i]->mXRot = ageInTicks;
 }
 
-void SquidModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                        bool useDisplayList)
 {
-    for (int i = 0; i < 8; ++i)
-    {
-        mTentacles[i]->mXRot = ageInTicks;
-    }
+    _SkinAdjustments adjustments;
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, adjustments);
+    mBody->render(scale, useDisplayList, false);
+    mTentacle1->render(scale, useDisplayList, false);
+    mTentacle2->render(scale, useDisplayList, false);
+    mTentacle3->render(scale, useDisplayList, false);
+    mTentacle4->render(scale, useDisplayList, false);
+    mTentacle5->render(scale, useDisplayList, false);
+    mTentacle6->render(scale, useDisplayList, false);
+    mTentacle7->render(scale, useDisplayList, false);
+    mTentacle8->render(scale, useDisplayList, false);
+    callSkinnedDrawlist();
 }
 
 std::wstring SquidModel::getName()

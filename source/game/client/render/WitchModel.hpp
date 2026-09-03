@@ -1,0 +1,28 @@
+#ifndef GAME_CLIENT_RENDER_WITCHMODEL_HPP
+#define GAME_CLIENT_RENDER_WITCHMODEL_HPP
+
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include "game/client/render/VillagerModel.hpp"
+
+class Entity;
+class ModelDefinition;
+class ModelPart;
+
+class WitchModel : public VillagerModel
+{
+public:
+    WitchModel(float scale, const ModelDefinition& modelDefinition);
+    virtual ~WitchModel();
+    virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
+    virtual std::wstring getName();
+    int getModelVersion();
+
+    ModelPart* mHat;
+    ModelPart* mHat2;
+    ModelPart* mHat3;
+    ModelPart* mHat4;
+    ModelPart* mWitchNose;
+};
+
+#endif

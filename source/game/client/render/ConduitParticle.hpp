@@ -1,0 +1,44 @@
+#ifndef GAME_CLIENT_RENDER_CONDUITPARTICLE_HPP
+#define GAME_CLIENT_RENDER_CONDUITPARTICLE_HPP
+
+#include "game/client/render/Particle.hpp"
+#include "game/client/render/ParticleProvider.hpp"
+
+const long long PARTICLE_TYPE_CONDUIT = 0x0008022F00000000LL;
+
+class ConduitParticle : public Particle
+{
+public:
+    class Provider : public ParticleProvider
+    {
+    public:
+        virtual Particle* createParticle(ePARTICLE_TYPE type,
+                                         Level* level,
+                                         double x,
+                                         double y,
+                                         double z,
+                                         double xa,
+                                         double ya,
+                                         double za,
+                                         arrayWithLength<int> params);
+    };
+
+    ConduitParticle(Level* level,
+                    double x,
+                    double y,
+                    double z,
+                    double xa,
+                    double ya,
+                    double za,
+                    arrayWithLength<int> params);
+    virtual ~ConduitParticle();
+    virtual void tick();
+    virtual long long GetType();
+
+private:
+    double m_startX;
+    double m_startY;
+    double m_startZ;
+};
+
+#endif

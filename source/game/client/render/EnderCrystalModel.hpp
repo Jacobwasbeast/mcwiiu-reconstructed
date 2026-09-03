@@ -5,20 +5,22 @@
 
 #include "game/client/render/Model.hpp"
 
+class Entity;
 class ModelDefinition;
 class ModelPartSkin;
 
 class EnderCrystalModel : public Model
 {
 public:
-    EnderCrystalModel(float delta, bool showBase, const ModelDefinition& modelDefinition);
-
+    EnderCrystalModel(float scale, bool renderBase, const ModelDefinition& modelDefinition);
     virtual ~EnderCrystalModel();
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                        bool useDisplayList);
 
-    ModelPartSkin* mCube;
     ModelPartSkin* mGlass;
+    ModelPartSkin* mCube;
     ModelPartSkin* mBase;
 };
 
