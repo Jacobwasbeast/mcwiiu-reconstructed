@@ -1,0 +1,48 @@
+#include "game/ui/UIScene_Timer.hpp"
+#include "game/ui/fuiFile.hpp"
+
+UIScene_Timer::UIScene_Timer(int type, void* data, UILayer* layer)
+    : UIScene(type, layer)
+{
+    initialiseMovie();
+    if (data == 0)
+        m_control.setVisible(false);
+}
+
+UIScene_Timer::~UIScene_Timer()
+{
+}
+
+void UIScene_Timer::reloadMovie(bool)
+{
+}
+
+bool UIScene_Timer::needsReloaded()
+{
+    return false;
+}
+
+std::wstring UIScene_Timer::getMoviePath()
+{
+    return std::wstring(L"Timer");
+}
+
+unsigned int UIScene_Timer::mapElementsAndNames()
+{
+    UIScene::mapElementsAndNames();
+    fuiRenderNode* root = m_movie->getRootNode();
+    std::string name("Background");
+    m_control.setupControl(this, root, name);
+    m_controls.push_back(&m_control);
+    return 1;
+}
+
+int UIScene_Timer::getSceneType()
+{
+    return 76;
+}
+
+bool UIScene_Timer::hidesLowerScenes()
+{
+    return true;
+}

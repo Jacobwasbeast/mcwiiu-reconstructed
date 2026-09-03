@@ -1,0 +1,35 @@
+#include "game/ui/FJ_FurnaceMenu.hpp"
+
+#include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+
+FJ_FurnaceMenu::FJ_FurnaceMenu(fuiRenderNode* renderNode)
+    : FJ_AbstractContainerDocument(renderNode)
+{
+}
+
+FJ_FurnaceMenu::~FJ_FurnaceMenu()
+{
+}
+
+FJ_AbstractContainerDocument* FJ_FurnaceMenu::Create(fuiRenderNode* renderNode)
+{
+    return new FJ_FurnaceMenu(renderNode);
+}
+
+unsigned int FJ_FurnaceMenu::getType()
+{
+    return 34;
+}
+
+void FJ_FurnaceMenu::SetSafeZone(int top, int bottom, int left, int right)
+{
+    FJ_Document::SetSafeZone(top, bottom, left, right);
+
+    const double stageHeight = getStage()->getStageHeight();
+    if (stageHeight != 360.0 && stageHeight != 540.0)
+        return;
+
+    setX(-static_cast<float>(right) - 176.0f);
+    setY(-static_cast<float>(top) - 176.0f);
+}

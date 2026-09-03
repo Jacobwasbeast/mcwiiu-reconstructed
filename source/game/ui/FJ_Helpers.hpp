@@ -8,7 +8,7 @@ public:
 
     static FJ_Helpers* RetInstance();
 
-    float nextRandomNumber();
+    double nextRandomNumber();
     int nextInt(int maxValue);
     void SetRndSeed(int seed);
 

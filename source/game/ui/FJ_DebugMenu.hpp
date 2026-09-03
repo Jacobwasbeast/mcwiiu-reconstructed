@@ -1,0 +1,18 @@
+#ifndef GAME_UI_FJ_DEBUGMENU_HPP
+#define GAME_UI_FJ_DEBUGMENU_HPP
+
+#include "game/ui/FJ_Document.hpp"
+
+class fuiRenderNode;
+
+class FJ_DebugMenu : public FJ_Document
+{
+public:
+    FJ_DebugMenu(fuiRenderNode* renderNode);
+    virtual ~FJ_DebugMenu();
+
+    static FJ_Document* Create(fuiRenderNode* renderNode);
+    virtual unsigned int getType();
+};
+
+#endif

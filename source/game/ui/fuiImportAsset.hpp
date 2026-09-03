@@ -3,8 +3,6 @@
 
 struct fuiImportAsset
 {
-    char name[64];
-
     void EndianSwap();
     static void EndianSwap(void* pData);
 };

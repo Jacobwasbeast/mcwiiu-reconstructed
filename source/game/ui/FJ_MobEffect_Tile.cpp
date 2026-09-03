@@ -4,6 +4,11 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 
+FJ_MobEffect_Tile::FJ_MobEffect_Tile(fuiRenderNode* pRenderNode)
+    : FJ_FuiNode(pRenderNode)
+{
+}
+
 FJ_MobEffect_Tile::~FJ_MobEffect_Tile()
 {
 }

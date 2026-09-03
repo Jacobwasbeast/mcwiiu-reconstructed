@@ -1,0 +1,35 @@
+#include "game/ui/FJ_EnchantingMenu.hpp"
+
+#include "game/ui/FJ_FuiNodeStage.hpp"
+
+FJ_EnchantingMenu::FJ_EnchantingMenu(fuiRenderNode* renderNode)
+    : FJ_AbstractContainerDocument(renderNode)
+{
+}
+
+FJ_EnchantingMenu::~FJ_EnchantingMenu()
+{
+}
+
+FJ_AbstractContainerDocument* FJ_EnchantingMenu::Create(fuiRenderNode* renderNode)
+{
+    return new FJ_EnchantingMenu(renderNode);
+}
+
+unsigned int FJ_EnchantingMenu::getType()
+{
+    return 33;
+}
+
+void FJ_EnchantingMenu::SetSafeZone(int top, int bottom, int left, int right)
+{
+    FJ_Document::SetSafeZone(top, bottom, left, right);
+
+    FJ_FuiNodeStage* stage = getStage();
+    double height = stage->getStageHeight();
+    if (height == 360.0 || height == 540.0)
+    {
+        setX(-static_cast<float>(right) - 176.0f);
+        setY(-static_cast<float>(top) - 176.0f);
+    }
+}

@@ -18,17 +18,22 @@ FJ_Helpers* FJ_Helpers::RetInstance()
     return sHelpersInstance;
 }
 
-float FJ_Helpers::nextRandomNumber()
+double FJ_Helpers::nextRandomNumber()
 {
     mRndSeed = (mRndSeed * 9301 + 49297) % 233280;
-    return mRndSeed / 233280.0;
+    return (double)(float)(((double)mRndSeed) / 233280.0);
 }
 
 int FJ_Helpers::nextInt(int maxValue)
 {
     if (maxValue > 0)
     {
-        return (int)(nextRandomNumber() * maxValue);
+        return (int)(nextRandomNumber() * (double)(float)maxValue);
     }
     return (int)nextRandomNumber();
+}
+
+void FJ_Helpers::SetRndSeed(int seed)
+{
+    mRndSeed = seed;
 }

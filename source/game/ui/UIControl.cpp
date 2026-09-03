@@ -1,0 +1,160 @@
+#include "game/ui/UIControl.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+
+UIControl::UIControl()
+    : m_unknown0(0)
+    , m_unknown2(0)
+    , m_unknown3(0)
+    , m_unknown4(0)
+    , m_unknown8(0)
+    , m_name("buckets_")
+    , m_fuiRenderNode(0)
+    , m_scene(0)
+    , m_x(0.0f)
+    , m_y(0.0f)
+    , m_width(0.0f)
+    , m_height(0.0f)
+    , m_opacity(1.0f)
+    , m_visible(true)
+    , m_unknown49(false)
+{
+}
+
+UIControl::~UIControl()
+{
+}
+
+void UIControl::setVisible(bool visible)
+{
+    if (m_fuiRenderNode != 0) {
+        m_fuiRenderNode->setVisibility(visible);
+        m_visible = visible;
+    }
+}
+
+double UIControl::getWidth()
+{
+    return (double)m_width;
+}
+
+double UIControl::getHeight()
+{
+    return (double)m_height;
+}
+
+double UIControl::getXPos()
+{
+    return (double)m_x;
+}
+
+double UIControl::getYPos()
+{
+    return (double)m_y;
+}
+
+bool UIControl::getVisible()
+{
+    bool visible = false;
+    if (m_fuiRenderNode != 0) {
+        visible = m_fuiRenderNode->isVisible();
+    }
+    m_visible = visible;
+    return visible;
+}
+
+void UIControl::removeUINodeRef()
+{
+    m_fuiRenderNode = 0;
+}
+
+bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+{
+    m_scene = scene;
+    m_name.assign(name, 0, std::string::npos);
+    m_fuiRenderNode = node != 0 ? node->findNode(m_name.c_str()) : 0;
+    if (m_fuiRenderNode == 0) {
+        return false;
+    }
+    m_x = m_fuiRenderNode->getX();
+    m_y = m_fuiRenderNode->getY();
+    m_width = m_fuiRenderNode->getWidth();
+    m_height = m_fuiRenderNode->getHeight();
+    return true;
+}
+
+void UIControl::UpdateControl()
+{
+    if (m_fuiRenderNode != 0) {
+        m_x = m_fuiRenderNode->getX();
+        m_y = m_fuiRenderNode->getY();
+        m_width = m_fuiRenderNode->getWidth();
+        m_height = m_fuiRenderNode->getHeight();
+    }
+}
+
+fuiRenderNode* UIControl::getFuiRenderNode()
+{
+    return m_fuiRenderNode;
+}
+
+void UIControl::ReInit()
+{
+    if (m_fuiRenderNode != 0) {
+        m_fuiRenderNode->setAlpha(m_opacity);
+        m_fuiRenderNode->setVisibility(m_visible);
+    }
+}
+
+void UIControl::setWidth(float width)
+{
+    if (m_fuiRenderNode != 0) {
+        m_fuiRenderNode->setWidth(width);
+        m_width = width;
+    }
+}
+
+void UIControl::setOpacity(float opacity)
+{
+    if (opacity == m_opacity) {
+        return;
+    }
+    m_opacity = opacity;
+    if (m_fuiRenderNode != 0) {
+        m_fuiRenderNode->setAlpha(opacity);
+    }
+}
+
+void UIControl::tick()
+{
+}
+
+void UIControl::setFocus(bool)
+{
+}
+
+bool UIControl::hasFocus()
+{
+    return false;
+}
+
+UIControl& UIControl::operator=(const UIControl& other)
+{
+    if (this != &other) {
+        m_unknown0 = other.m_unknown0;
+        m_unknown2 = other.m_unknown2;
+        m_unknown3 = other.m_unknown3;
+        m_unknown4 = other.m_unknown4;
+        m_unknown8 = other.m_unknown8;
+        m_name = other.m_name;
+        m_fuiRenderNode = other.m_fuiRenderNode;
+        m_scene = other.m_scene;
+        m_x = other.m_x;
+        m_y = other.m_y;
+        m_width = other.m_width;
+        m_height = other.m_height;
+        m_opacity = other.m_opacity;
+        m_visible = other.m_visible;
+        m_unknown49 = other.m_unknown49;
+    }
+    return *this;
+}

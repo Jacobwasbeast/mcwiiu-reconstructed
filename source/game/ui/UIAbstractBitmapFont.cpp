@@ -5,3 +5,11 @@ UIAbstractBitmapFont::UIAbstractBitmapFont(const std::string& fontName)
     , m_bRegistered(false)
 {
 }
+
+UIAbstractBitmapFont::~UIAbstractBitmapFont()
+{
+}
+
+void UIAbstractBitmapFont::registerFont()
+{
+}

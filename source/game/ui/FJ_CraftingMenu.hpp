@@ -1,0 +1,53 @@
+#ifndef GAME_UI_FJ_CRAFTINGMENU_HPP
+#define GAME_UI_FJ_CRAFTINGMENU_HPP
+
+#include <string>
+
+#include "game/ui/FJ_Document.hpp"
+
+class FJ_Event;
+class FJ_FuiNode;
+class fuiRenderNode;
+
+class FJ_CraftingMenu : public FJ_Document {
+public:
+    FJ_CraftingMenu(fuiRenderNode* renderNode);
+    virtual ~FJ_CraftingMenu();
+
+    void handleSlideComplete(FJ_Event* event);
+    static void _handleSlideComplete(FJ_FuiNode* node, FJ_Event* event);
+    static FJ_Document* Create(fuiRenderNode* renderNode);
+    virtual unsigned int getType();
+    void showPanelDisplay(int panel);
+    void ShowDescriptionPanel(bool show);
+    void ShowSuperCraftingSlots(int count);
+    void MoveSelector(int horizontal, int vertical);
+    virtual void init(FJ_Event* event);
+    void InitCraftingMenu(int type);
+    void SetItemName(const std::wstring& name);
+    void SetItemDescription(int index, const std::wstring& description);
+    void EnableTab(int index, bool enabled);
+    FJ_FuiNode* SetupIggySlot(FJ_FuiNode* node);
+    void SetCraftingMenu(int category, int item, bool enabled);
+    void SetSafeZone(int top, int bottom, int left, int right);
+    void SelectVerticalItem(int index);
+    void UpdateTabs(FJ_Event* event);
+    void SetActiveTab(int tab, int subtab);
+    void ShowIngredient(int index, bool show);
+    static void _UpdateTabs(FJ_FuiNode* node, FJ_Event* event);
+
+private:
+    FJ_FuiNode* m_root;
+    FJ_FuiNode* m_panel;
+    FJ_FuiNode* m_description;
+    FJ_FuiNode* m_selector;
+    FJ_FuiNode* m_ingredientNodes[5];
+    int m_panelType;
+    int m_activeTab;
+    int m_activeSubtab;
+    int m_verticalItem;
+    int m_selectorStep;
+    bool m_ingredients[5];
+};
+
+#endif

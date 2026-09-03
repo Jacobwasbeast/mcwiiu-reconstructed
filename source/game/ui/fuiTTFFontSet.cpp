@@ -3,9 +3,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "game/client/render/C4JRender.hpp"
-#include "game/client/render/Renderer.hpp"
-#include "game/util/Math.hpp"
 
 extern "C"
 {
@@ -19,6 +16,24 @@ extern "C"
                                              float shiftX, float shiftY, int* x0, int* y0, int* x1, int* y1);
     void stbtt_MakeCodepointBitmap(const stbtt_fontinfo* info, unsigned char* output, int outWidth, int outHeight,
                                    int outStride, float scaleX, float scaleY, int codepoint);
+}
+
+static int roundUpPowerOfTwo(int value)
+{
+    value--;
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    return value + 1;
+}
+
+fuiTTFFontSet::fuiTTFFontSet(const char* name, const void* ttfData, unsigned short missingGlyphChar)
+    : fuiFontSet(name)
+{
+    const unsigned char* data = (const unsigned char*)ttfData;
+    init(name, 1, &data, missingGlyphChar);
 }
 
 fuiTTFFontSet::fuiTTFFontSet(const char* name, int numTTFs, const void** ttfData, unsigned short missingGlyphChar)
@@ -220,6 +235,10 @@ bool fuiTTFFontSet::hasGlyph(int codepoint)
     return true;
 }
 
+void fuiTTFFontSet::renderFontTexture()
+{
+}
+
 fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet, int ttfIndex)
     : m_glyphs(11)
 {
@@ -232,7 +251,7 @@ fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet
     m_scale = stbtt_ScaleForPixelHeight(&font.m_info, fontSize);
     m_ascent = (int)((float)font.m_ascent * m_scale);
 
-    m_glyphWidth = Math::roundUpToPowerOf2((int)((float)(font.m_ascent - font.m_descent) * m_scale));
+    m_glyphWidth = roundUpPowerOfTwo((int)((float)(font.m_ascent - font.m_descent) * m_scale));
     m_glyphHeight = m_glyphWidth;
     m_glyphsPerRow = 20;
     m_glyphsPerColumn = 20;
@@ -281,10 +300,7 @@ int fuiTTFFontSet::FontSizeData::getTextureIndex()
 {
     if (m_textureIndex == -1)
     {
-        m_textureIndex = gRenderer->TextureCreate();
-
-        gRenderer->TextureBind(m_textureIndex);
-        gRenderer->TextureData(m_textureWidth, m_textureHeight, m_textureData, 0, C4JRender::eTextureFormat_RGBA8);
+        m_textureIndex = 0;
     }
 
     return m_textureIndex;
@@ -528,9 +544,6 @@ void fuiTTFFontSet::FontSizeData::uploadTextureData()
 {
     if (m_textureDirty)
     {
-        gRenderer->TextureBind(getTextureIndex());
-        gRenderer->TextureDataUpdate(0, 0, m_textureWidth, m_textureHeight, m_textureData, 0);
-
         m_textureDirty = false;
     }
 }

@@ -755,6 +755,148 @@ void FJ_FuiNode::dispatchEvent(FJ_Event* pEvent)
     delete pEvent;
 }
 
+FJ_Label* FJ_FuiNode::asFJ_Label(FJ_FuiNode* pNode)
+{
+    if (pNode != NULL)
+        return pNode->asFJ_Label();
+    return NULL;
+}
+
+bool FJ_FuiNode::isFJ_MenuButton()
+{
+    return asFJ_MenuButton() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_Label_HUD_SplashVita()
+{
+    return asFJ_Label_HUD_SplashVita() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_List_MenuButton()
+{
+    return asFJ_List_MenuButton() != NULL;
+}
+
+FJ_UpsellButton* FJ_FuiNode::asFJ_UpsellButton()
+{
+    return dynamic_cast<FJ_UpsellButton*>(this);
+}
+
+bool FJ_FuiNode::isFJ_UpsellButton()
+{
+    return asFJ_UpsellButton() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_List_ListButtonAchievement()
+{
+    return asFJ_List_ListButtonAchievement() != NULL;
+}
+
+FJ_List_ListButtonAchievement* FJ_FuiNode::asFJ_List_ListButtonAchievement()
+{
+    return dynamic_cast<FJ_List_ListButtonAchievement*>(this);
+}
+
+bool FJ_FuiNode::isFJ_List_ListButtonPlayerList()
+{
+    return asFJ_List_ListButtonPlayerList() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_List_ListButtonScoreBoard()
+{
+    return asFJ_List_ListButtonScoreBoard() != NULL;
+}
+
+FJ_DragonHealth* FJ_FuiNode::asFJ_DragonHealth()
+{
+    return dynamic_cast<FJ_DragonHealth*>(this);
+}
+
+bool FJ_FuiNode::isFJ_DragonHealth()
+{
+    return asFJ_DragonHealth() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_HorseJumpBar()
+{
+    return asFJ_HorseJumpBar() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_ExperienceBar()
+{
+    return asFJ_ExperienceBar() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_SlotList()
+{
+    return asFJ_SlotList() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_ScrollArrow()
+{
+    return asFJ_ScrollArrow() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_MobEffect()
+{
+    return asFJ_MobEffect() != NULL;
+}
+
+FJ_MobEffect_Tile* FJ_FuiNode::asFJ_MobEffect_Tile()
+{
+    return dynamic_cast<FJ_MobEffect_Tile*>(this);
+}
+
+bool FJ_FuiNode::isFJ_MobEffect_Tile()
+{
+    return asFJ_MobEffect_Tile() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_ProgressBar()
+{
+    return asFJ_ProgressBar() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_BitmapIcon()
+{
+    return asFJ_BitmapIcon() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_IconSlot()
+{
+    return asFJ_IconSlot() != NULL;
+}
+
+bool FJ_FuiNode::isFJ_List_MultiList()
+{
+    return asFJ_List_MultiList() != NULL;
+}
+
+void FJ_FuiNode::stop()
+{
+    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    if (pTimeline != NULL)
+        pTimeline->setPlaying(false);
+}
+
+int FJ_FuiNode::getFrameByLabel(const std::string& sLabel)
+{
+    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    if (pTimeline == NULL)
+        return 0;
+    return pTimeline->getFrame(sLabel.c_str());
+}
+
+void FJ_FuiNode::decWidth(float fAmount)
+{
+    setWidth(getWidth() - fAmount);
+}
+
+void FJ_FuiNode::decAlpha(float fAmount)
+{
+    setAlpha(getAlpha() - fAmount);
+}
+
 FJ_FuiNode* FJ_FuiNode::getRoot()
 {
     return m_pRenderNode->getRoot()->getFuiNode();
