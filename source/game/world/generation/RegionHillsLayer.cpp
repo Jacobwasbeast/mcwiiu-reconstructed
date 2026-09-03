@@ -3,9 +3,6 @@
 #include "game/core/IntCache.hpp"
 #include "game/world/biome/Biome.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
 RegionHillsLayer::RegionHillsLayer(long long seed, boost::shared_ptr<Layer> parent, boost::shared_ptr<Layer> riverLayer)
     : Layer(seed)
 {
@@ -24,8 +21,6 @@ arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int heig
 
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
     arrayWithLength<int> riverArea = riverLayer->getArea(x - 1, z - 1, parentWidth, parentHeight);
-
-    PIXBeginNamedEvent(0.0f, "RegionHillsLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -201,8 +196,6 @@ arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int heig
             }
         }
     }
-
-    PIXEndNamedEvent();
 
     return area;
 }

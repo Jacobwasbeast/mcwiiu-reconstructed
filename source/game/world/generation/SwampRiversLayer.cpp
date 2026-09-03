@@ -3,9 +3,6 @@
 #include "game/core/IntCache.hpp"
 #include "game/world/biome/Biome.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
 SwampRiversLayer::SwampRiversLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
 {
@@ -22,8 +19,6 @@ arrayWithLength<int> SwampRiversLayer::getArea(int x, int z, int width, int heig
     int parentHeight = height + 2;
 
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
-
-    PIXBeginNamedEvent(0.0f, "SwampRiversLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -50,8 +45,6 @@ arrayWithLength<int> SwampRiversLayer::getArea(int x, int z, int width, int heig
             }
         }
     }
-
-    PIXEndNamedEvent();
 
     return area;
 }
