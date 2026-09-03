@@ -9,7 +9,7 @@ CombatEntry::CombatEntry(const DamageSource* source, int time, float healthBefor
 
     if (source != NULL)
     {
-        mSource = source->copy();
+        mSource = new DamageSource(*source);
     }
 
     mTime = time;
@@ -52,6 +52,16 @@ float CombatEntry::getDamage()
 float CombatEntry::getHealthAfterDamage()
 {
     return mHealthBeforeDamage - mDamage;
+}
+
+float CombatEntry::getHealthBeforeDamage()
+{
+    return mHealthBeforeDamage;
+}
+
+float CombatEntry::getFallDistance()
+{
+    return mFallDistance;
 }
 
 std::wstring CombatEntry::getAttackerName()

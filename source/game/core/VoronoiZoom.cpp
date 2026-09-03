@@ -1,10 +1,8 @@
 #include "game/core/VoronoiZoom.hpp"
 
 #include "game/core/IntCache.hpp"
-#include "game/core/System.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include <algorithm>
 
 VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
@@ -27,8 +25,6 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
     int parentHeight = (height >> 2) + 2;
 
     arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
-
-    PIXBeginNamedEvent(0.0f, "VoronoiZoom::getArea");
 
     int zoomedWidth = (parentWidth - 1) * 4;
 
@@ -118,10 +114,10 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 
     for (int i = 0; i < height; i++)
     {
-        System::arraycopy(zoomedArea, (i + (z & 3)) * zoomedWidth + (x & 3), &area, i * width, width);
+        std::copy(zoomedArea.data + (i + (z & 3)) * zoomedWidth + (x & 3),
+                  zoomedArea.data + (i + (z & 3)) * zoomedWidth + (x & 3) + width,
+                  area.data + i * width);
     }
-
-    PIXEndNamedEvent();
 
     return area;
 }

@@ -2,8 +2,9 @@
 #define GAME_CORE_BYTEARRAYINPUTSTREAM_HPP
 
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/InputStream.hpp"
 
-class ByteArrayInputStream
+class ByteArrayInputStream : public InputStream
 {
 public:
     ByteArrayInputStream(arrayWithLength<unsigned char> data);
