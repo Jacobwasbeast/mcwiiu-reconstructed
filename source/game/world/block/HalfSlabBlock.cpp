@@ -187,11 +187,6 @@ bool HalfSlabBlock::isHalfSlab(const BlockState* state)
     return isHalfSlab(state->getBlock());
 }
 
-bool HalfSlabBlock::isHalfOrFullSlab(Block* block)
-{
-    return isHalfSlab(block) || isFullSlab(block);
-}
-
 bool HalfSlabBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     if (isFullSize())

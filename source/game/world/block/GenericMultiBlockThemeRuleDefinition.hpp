@@ -5,9 +5,9 @@
 
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
-#include "game/world/generation/LayerTheme.hpp"
 
 class BlockState;
+class LayerTheme;
 
 class GenericMultiBlockThemeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerTheme*>
 {

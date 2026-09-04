@@ -3,11 +3,13 @@
 
 #include <vector>
 
+#include "game/world/generation/LayerTheme.hpp"
+
 class BlockState;
 class BlockTransaction;
 class Random;
 
-class BlockStackLayerTheme
+class BlockStackLayerTheme : public LayerTheme
 {
 public:
     std::vector<const BlockState*> mStates;

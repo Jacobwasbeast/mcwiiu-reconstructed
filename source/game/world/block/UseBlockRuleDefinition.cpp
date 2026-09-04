@@ -6,10 +6,10 @@
 UseBlockRuleDefinition::UseBlockRuleDefinition()
 {
     mBlockId = -1;
-    mY = 0;
-    mZ = 0;
     mUsePosition = false;
     mX = 0;
+    mY = 0;
+    mZ = 0;
 
     addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(12), &mBlockId);
     addBoolAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(13), &mUsePosition);

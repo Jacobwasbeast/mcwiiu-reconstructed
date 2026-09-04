@@ -33,7 +33,7 @@ public:
     virtual int getResourceCount(Random* random);
     virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
     virtual bool isSilkTouchable();
-    virtual std::wstring getAuxName(int auxValue) = 0;
+    virtual int getAuxName(int auxValue) = 0;
     virtual bool isFullSize() const = 0;
     virtual Property* getTypeProperty() = 0;
     virtual Boxed* getTypeForItem(not_null_ptr<ItemInstance> itemInstance) = 0;
