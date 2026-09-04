@@ -1,28 +1,28 @@
 #include "game/client/render/TextureTheme.hpp"
 
-#include <cstdlib>
-
 #include "game/core/BufferedImage.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockTransaction.hpp"
 #include "game/world/generation/RandomPatchesLayerTheme.hpp"
 
+template <class T>
+T _fromHEXString(const std::wstring& text);
+
 TextureTheme::BlockStack::BlockStack()
     : mOffset(0)
-    , mStates()
 {
 }
 
 TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count, int offset)
     : mOffset(offset)
-    , mStates()
 {
     for (unsigned int i = 0; i < count; ++i)
         mStates.push_back(state);
-    mStates.push_back(Block::byId(0)->defaultBlockState());
+    mStates.push_back(Blocks::AIR->defaultBlockState());
 }
 
 TextureTheme::BlockStack::BlockStack(std::vector<const BlockState*>& states, int offset)
@@ -38,22 +38,16 @@ TextureTheme::BlockStack::~BlockStack()
 const BlockState* TextureTheme::BlockStack::at(int index) const
 {
     index += mOffset;
-    if (index < 0)
-        return Block::byId(0)->defaultBlockState();
     if (mStates.empty())
         return NULL;
+    if (index < 0)
+        return Blocks::AIR->defaultBlockState();
     if (index >= (int)mStates.size() - 1)
         index = (int)mStates.size() - 1;
     return mStates.at(index);
 }
 
 TextureTheme::TextureTheme()
-    : mAssets()
-    , mStacks()
-{
-}
-
-TextureTheme::~TextureTheme()
 {
 }
 
@@ -74,8 +68,8 @@ const TextureTheme::BlockStack& TextureTheme::getStack(BufferedImage* image, int
 
 void TextureTheme::addStack(const std::wstring& key, const BlockStack& stack)
 {
-    int value = (int)std::wcstol(key.c_str(), NULL, 16);
-    mStacks[value] = stack;
+    int value = _fromHEXString<int>(key);
+    mStacks.emplace(std::make_pair(value, stack));
 }
 
 void TextureTheme::Apply(Random&, BlockTransaction* transaction, int& width, int& depth) const
@@ -90,9 +84,9 @@ void TextureTheme::Apply(Random&, BlockTransaction* transaction, int& width, int
         {
             const BlockStack& stack = getStack(image, x + xOffset, z + zOffset);
             int top = RandomPatchesLayerTheme::HighestSolidBlock(transaction, x, z);
-            if (top < 0)
+            if (top == -1)
                 continue;
-            for (int y = 1; y < top; ++y)
+            for (int y = 1; y < transaction->mSize.y; ++y)
             {
                 const BlockState* state = stack.at(top - y);
                 if (state != NULL)

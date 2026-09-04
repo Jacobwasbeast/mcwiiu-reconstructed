@@ -31,6 +31,10 @@ public:
 
     TextureTheme();
     virtual ~TextureTheme();
+    void addAsset(unsigned int minimumWidth, BufferedImage* image)
+    {
+        mAssets.addAsset(minimumWidth, image);
+    }
     const BlockStack& getStack(BufferedImage* image, int x, int y) const;
     void addStack(const std::wstring& key, const BlockStack& stack);
     virtual void Apply(Random& random, BlockTransaction* transaction, int& width, int& depth) const;

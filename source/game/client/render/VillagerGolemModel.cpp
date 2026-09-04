@@ -3,11 +3,9 @@
 #include <cmath>
 
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 
 VillagerGolemModel::VillagerGolemModel(float scale, float yOffset, const ModelDefinition& modelDefinition)
