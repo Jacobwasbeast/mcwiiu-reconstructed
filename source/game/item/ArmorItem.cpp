@@ -14,7 +14,6 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/EntitySelector.hpp"
 #include "game/entity/ai/MobCanWearArmourEntitySelector.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
@@ -48,7 +47,10 @@ static int GOLD_SLOT_PROTECTIONS[4] = { 1, 3, 5, 2 };
 static int DIAMOND_SLOT_PROTECTIONS[4] = { 3, 6, 8, 3 };
 static int TURTLE_SLOT_PROTECTIONS[4] = { 2, 5, 6, 2 };
 
-static std::wstring OVERLAY_ICON_NAME_PER_SLOT[4];
+static std::wstring OVERLAY_ICON_NAME_PER_SLOT[4] = { L"bootsCloth_overlay",
+                                                       L"leggingsCloth_overlay",
+                                                       L"chestplateCloth_overlay",
+                                                       L"helmetCloth_overlay" };
 
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::LEATHER;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::CHAIN;
@@ -115,6 +117,11 @@ Item* ArmorItem::ArmorMaterial::getTierItem() const
     }
 
     if (this == DIAMOND)
+    {
+        return Items::diamond;
+    }
+
+    if (this == TURTLE)
     {
         return Items::diamond;
     }

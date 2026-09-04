@@ -15,11 +15,9 @@ class EffectCommand : public Command
 {
 public:
     virtual ~EffectCommand();
-
     virtual EGameCommand getId();
     virtual int getPermissionLevel();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);
-
     std::wstring getUsage(CommandSender* sender);
     std::vector<std::wstring> getPlayerNames();
     bool isValidWildcardPlayerArgument(std::wstring playerName, int argumentIndex);
