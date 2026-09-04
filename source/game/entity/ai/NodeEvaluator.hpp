@@ -17,7 +17,7 @@ class NodeEvaluator
 {
 public:
     NodeEvaluator();
-    virtual ~NodeEvaluator();
+    ~NodeEvaluator();
 
     virtual void prepare(LevelSource* levelSource, Mob* mob);
     virtual void done();
@@ -26,7 +26,11 @@ public:
     virtual Node* getGoal(double x, double y, double z) = 0;
     virtual Node* getDirectGoal(const BlockPos& pos);
     virtual int getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost) = 0;
-    virtual int getBlockPathTypes(LevelSource* levelSource, int x, int y, int z, int sizeX, int sizeY, int sizeZ, bool canOpenDoors, bool canPassDoors, int& nodeType, const BlockPathTypes* pathTypes) = 0;
+    virtual const BlockPathTypes* getBlockPathType(LevelSource* levelSource, int x, int y, int z, Mob* mob,
+                                                    int sizeX, int sizeY, int sizeZ,
+                                                    bool canOpenDoors, bool canPassDoors) = 0;
+    virtual const BlockPathTypes* getBlockPathType(LevelSource* levelSource, int x, int y, int z) = 0;
+    virtual void blockChanged(const BlockPos& pos) = 0;
 
     void setCanPassDoors(bool value);
     void setCanOpenDoors(bool value);

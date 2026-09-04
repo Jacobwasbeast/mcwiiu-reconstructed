@@ -109,8 +109,3 @@ void NodeEvaluator::getBlockState(EntityTickCache& tickCache, LevelSource* level
 {
     levelSource->getBlockState(tickCache, pos);
 }
-
-unsigned int NodeEvaluator::getNodesCount()
-{
-    return static_cast<unsigned int>(mNodeMap.size());
-}
