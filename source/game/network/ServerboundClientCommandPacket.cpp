@@ -43,7 +43,7 @@ int ServerboundClientCommandPacket::getEstimatedSize()
     return 1;
 }
 
-int ServerboundClientCommandPacket::getAction()
+ServerboundClientCommandPacket::Action ServerboundClientCommandPacket::getAction()
 {
     return action;
 }

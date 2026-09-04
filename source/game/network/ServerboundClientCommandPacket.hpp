@@ -30,7 +30,7 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
 
-    int getAction();
+    Action getAction();
 
     static boost::shared_ptr<Packet> create();
 
