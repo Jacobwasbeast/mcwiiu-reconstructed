@@ -15,19 +15,6 @@ Rotation::Rotation(const std::wstring& name, eTYPE type)
     this->type = type;
 }
 
-Rotation* Rotation::byName(std::wstring name)
-{
-    int i;
-    for (i = 0; i < 4; ++i)
-    {
-        if (VALUES[i]->name == name)
-        {
-            return VALUES[i];
-        }
-    }
-    return NULL;
-}
-
 Rotation* Rotation::byType(eTYPE type)
 {
     switch (type)

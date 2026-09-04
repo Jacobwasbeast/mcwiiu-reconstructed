@@ -6,27 +6,21 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/entity/mob/Entity.hpp"
+#include "game/util/Vec3.hpp"
+
 class DataInputStream;
 class DataOutputStream;
 class Player;
-class Vec3;
 
 class CameraController
 {
 public:
-    class SplineNode
+    struct SplineNode
     {
-    public:
-        SplineNode(Vec3* pos, Vec3* rot, float time)
-            : mPos(pos)
-            , mRot(rot)
-            , mTime(time)
-        {
-        }
-
-        Vec3* mPos;
-        Vec3* mRot;
-        float mTime;
+        Vec3* position;
+        Vec3* rotation;
+        float time;
     };
 
     CameraController(int cameraMode);
@@ -34,45 +28,33 @@ public:
 
     void reset();
     void clear();
-
-    void attachToPlayer(boost::shared_ptr<Player> player, bool ownedByPlayer);
-
+    void attachToPlayer(boost::shared_ptr<Player> player, bool active);
     int getCameraMode();
-    int getCurveType();
-
-    std::vector<SplineNode> getNodesAndControls();
-    std::vector<SplineNode>& getNodes();
-
-    SplineNode* getPointForPos(Vec3* pos);
-    void deletePointByPos(Vec3* pos);
-    void addNodeAfter(Vec3* pos);
-    void addNodeBefore(Vec3* pos);
-
-    std::vector<Vec3*> GetDrawingPoints();
-
-    static Vec3* CalculateBezierPoint(float part, Vec3* start, Vec3* startControl, Vec3* endControl, Vec3* end);
-    static Vec3* CalculateBezierPointTangent(float part, Vec3* start, Vec3* startControl, Vec3* endControl, Vec3* end);
-
+    static Vec3* CalculateBezierPoint(float t, Vec3* p0, Vec3* p1, Vec3* p2, Vec3* p3);
     void CalculateCurveLengths();
-
-    std::vector<Vec3*> GetDrawingNormals();
-
-    static double MapTimeToCurveDistance(std::vector<double>& curveLengths, double part);
-
-    void LoadCameraPath(std::wstring fileName);
-    void SaveCameraPath(std::wstring fileName);
-
+    static double MapTimeToCurveDistance(std::vector<double>& curveLengths, double time);
     void insertNode(int index, double x, double y, double z, double xRot, double yRot, double zRot, float time);
     void addNode(double x, double y, double z, double xRot, double yRot, double zRot, float time);
-
     Vec3* getCurrentPos();
     Vec3* getCurrentRot();
+    void update(float delta);
+    void Deserialise(DataInputStream* stream);
+    void Serialise(DataOutputStream* stream);
 
-    void update(float deltaTime);
+    int getCurveType();
+    std::vector<SplineNode>* getNodesAndControls();
+    std::vector<SplineNode>* getNodes();
+    Vec3* getPointForPos(Vec3* position);
+    void deletePointByPos(Vec3* position);
+    void addNodeAfter(Vec3* position);
+    void addNodeBefore(Vec3* position);
+    std::vector<Vec3*> GetDrawingPoints();
+    static Vec3* CalculateBezierPointTangent(float t, Vec3* p0, Vec3* p1, Vec3* p2, Vec3* p3);
+    std::vector<Vec3*> GetDrawingNormals();
+    bool LoadCameraPath(std::wstring path);
+    bool SaveCameraPath(std::wstring path);
 
-    void Deserialise(DataInputStream* input);
-    void Serialise(DataOutputStream* output);
-
+private:
     Player* mPlayer;
     std::vector<SplineNode> mNodes;
     std::vector<std::vector<double> > mCurveLengths;
@@ -82,13 +64,13 @@ public:
     Vec3* mToRot;
     Vec3* mCurrentPos;
     Vec3* mCurrentRot;
-    float mCurrentTime;
-    float mNodeDuration;
+    float mTime;
+    float mDuration;
     int mCurveType;
     int mCameraMode;
-    int mSavedThirdPersonView;
+    int mPlayerCameraMode;
     int mCurrentNode;
-    int mCurrentCurve;
+    int mCurveIndex;
 };
 
 #endif

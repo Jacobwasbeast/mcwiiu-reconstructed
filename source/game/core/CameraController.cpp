@@ -1,38 +1,34 @@
 #include "game/core/CameraController.hpp"
 
+#include <algorithm>
+
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
 
 CameraController::CameraController(int cameraMode)
-    : mPlayer(NULL)
-    , mFromPos(NULL)
-    , mFromRot(NULL)
-    , mToPos(NULL)
-    , mToRot(NULL)
-    , mCurrentPos(Vec3::newPermanent(0.0, 0.0, 0.0))
-    , mCurrentRot(Vec3::newPermanent(0.0, 0.0, 0.0))
-    , mCurrentTime(0.0f)
-    , mNodeDuration(0.0f)
-    , mCurveType(cameraMode != 3)
-    , mCameraMode(cameraMode)
-    , mSavedThirdPersonView(0)
-    , mCurrentNode(-1)
-    , mCurrentCurve(0)
 {
+    mCameraMode = cameraMode;
+    mPlayerCameraMode = 0;
+    mPlayer = NULL;
+    mFromPos = NULL;
+    mFromRot = NULL;
+    mToPos = NULL;
+    mToRot = NULL;
+    mCurveType = cameraMode != 3;
+    mCurrentPos = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mCurrentRot = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mCurveIndex = 0;
+    mCurrentNode = -1;
+    mTime = 0.0f;
+    mDuration = 0.0f;
 }
 
 CameraController::~CameraController()
 {
     clear();
-
     delete mCurrentPos;
     delete mCurrentRot;
-
-    mCurrentNode = -1;
-    mCurrentCurve = 0;
 }
 
 void CameraController::reset()
@@ -41,36 +37,34 @@ void CameraController::reset()
     mFromRot = NULL;
     mToPos = NULL;
     mToRot = NULL;
-    mCurrentTime = 0.0f;
-    mNodeDuration = 0.0f;
     mCurrentNode = -1;
-    mCurrentCurve = 0;
+    mTime = 0.0f;
+    mDuration = 0.0f;
+    mCurveIndex = 0;
 }
 
 void CameraController::clear()
 {
-    for (std::vector<SplineNode>::iterator node = mNodes.begin(); node != mNodes.end(); ++node)
+    std::vector<SplineNode>::iterator it;
+    for (it = mNodes.begin(); it != mNodes.end(); ++it)
     {
-        delete node->mPos;
-        delete node->mRot;
+        delete it->position;
+        delete it->rotation;
     }
-
     mNodes.clear();
-
     reset();
 }
 
-void CameraController::attachToPlayer(boost::shared_ptr<Player> player, bool ownedByPlayer)
+void CameraController::attachToPlayer(boost::shared_ptr<Player> player, bool active)
 {
     if (mPlayer != NULL)
     {
-        mPlayer->SetThirdPersonView(mSavedThirdPersonView);
+        mPlayer->SetThirdPersonView(mPlayerCameraMode);
         mPlayer->SetCameraController(NULL, true);
     }
-
     mPlayer = player.get();
-    mSavedThirdPersonView = player->GetThirdPersonView(true);
-    player->SetCameraController(this, ownedByPlayer);
+    mPlayerCameraMode = player->GetThirdPersonView(true);
+    player->SetCameraController(this, active);
 }
 
 int CameraController::getCameraMode()
@@ -78,138 +72,105 @@ int CameraController::getCameraMode()
     return mCameraMode;
 }
 
-Vec3* CameraController::CalculateBezierPoint(float part, Vec3* start, Vec3* startControl, Vec3* endControl, Vec3* end)
+Vec3* CameraController::CalculateBezierPoint(float t, Vec3* p0, Vec3* p1, Vec3* p2, Vec3* p3)
 {
-    float remainder = 1.0f - part;
-
-    return Vec3::newTemp(start)->multiply(remainder * remainder * remainder)
-        ->add(Vec3::newTemp(startControl)->multiply(3.0f * remainder * remainder * part))
-        ->add(Vec3::newTemp(endControl)->multiply(3.0f * remainder * (part * part)))
-        ->add(Vec3::newTemp(end)->multiply(part * part * part));
+    float inverse = 1.0f - t;
+    Vec3* result = Vec3::newTemp(p0)->multiply(inverse * inverse * inverse);
+    result = result->add(Vec3::newTemp(p1)->multiply(3.0f * inverse * inverse * t));
+    result = result->add(Vec3::newTemp(p2)->multiply(3.0f * inverse * t * t));
+    result = result->add(Vec3::newTemp(p3)->multiply(t * t * t));
+    return result;
 }
 
 void CameraController::CalculateCurveLengths()
 {
     mCurveLengths.clear();
-
-    Vec3* last = NULL;
-
-    for (int node = 0; node < (int)mNodes.size() - 3; node += 3)
+    int count = (int)mNodes.size();
+    int segment;
+    for (segment = 0; segment + 3 < count; segment += 3)
     {
-        mCurveLengths.push_back(std::vector<double>());
-        mCurveLengths.back().push_back(0.0);
-
-        double length = 0.0;
-
-        Vec3* start = mNodes[node].mPos;
-        Vec3* startControl = mNodes[node + 1].mPos;
-        Vec3* endControl = mNodes[node + 2].mPos;
-        Vec3* end = mNodes[node + 3].mPos;
-
-        if (node == 0)
+        std::vector<double> lengths;
+        double total = 0.0;
+        Vec3* previous = CalculateBezierPoint(0.0f, mNodes[segment].position,
+                                               mNodes[segment + 1].position,
+                                               mNodes[segment + 2].position,
+                                               mNodes[segment + 3].position);
+        lengths.push_back(0.0);
+        int sample;
+        for (sample = 1; sample <= 100; ++sample)
         {
-            last = CalculateBezierPoint(0.0f, start, startControl, endControl, end);
+            float t = (float)sample / 100.0f;
+            Vec3* point = CalculateBezierPoint(t, mNodes[segment].position,
+                                                mNodes[segment + 1].position,
+                                                mNodes[segment + 2].position,
+                                                mNodes[segment + 3].position);
+            total += previous->vectorTo(point)->length();
+            lengths.push_back(total);
+            previous = point;
         }
-
-        for (int step = 1; step <= 100; ++step)
-        {
-            Vec3* point = CalculateBezierPoint((float)step / 100.0f, start, startControl, endControl, end);
-
-            length += last->vectorTo(point)->length();
-
-            mCurveLengths.back().push_back(length);
-
-            last = point;
-        }
+        mCurveLengths.push_back(lengths);
     }
 }
 
-double CameraController::MapTimeToCurveDistance(std::vector<double>& curveLengths, double part)
+double CameraController::MapTimeToCurveDistance(std::vector<double>& curveLengths, double time)
 {
-    double distance = part * curveLengths[100];
-
+    double target = time * curveLengths[100];
     int low = 0;
     int high = 100;
-    int step = 0;
-
+    int mid = 0;
     while (low < high)
     {
-        step = low + (high - low) / 2;
-
-        if (curveLengths[step] < distance)
-        {
-            low = step + 1;
-        }
+        mid = low + (high - low) / 2;
+        if (curveLengths[mid] < target)
+            low = mid + 1;
         else
-        {
-            high = step;
-        }
+            high = mid;
     }
-
-    if (distance < curveLengths[step])
-    {
-        --step;
-    }
-
-    double mapped;
-
-    if (curveLengths[step] == distance)
-    {
-        mapped = step;
-    }
-    else
-    {
-        mapped = step + (distance - curveLengths[step]) / (curveLengths[step + 1] - curveLengths[step]);
-    }
-
-    return mapped / 100.0;
+    if (target < curveLengths[mid])
+        --mid;
+    if (curveLengths[mid] == target)
+        return (double)mid / 100.0;
+    return ((double)mid + (target - curveLengths[mid]) /
+            (curveLengths[mid + 1] - curveLengths[mid])) / 100.0;
 }
 
 void CameraController::insertNode(int index, double x, double y, double z, double xRot, double yRot, double zRot, float time)
 {
-    Vec3* pos = Vec3::newPermanent(x, y, z);
-
+    Vec3* position = Vec3::newPermanent(x, y, z);
+    Vec3* rotation = Vec3::newPermanent(xRot, yRot, zRot);
     if (index == 0)
     {
-        mNodes.insert(mNodes.begin(), SplineNode(pos, Vec3::newPermanent(xRot, yRot, zRot), time));
-
-        Vec3* control = Vec3::newPermanent(pos->add(mPlayer->calculateViewVector((float)xRot, (float)yRot)->multiply(4.0f)));
-
-        mNodes.insert(mNodes.begin() + 1, SplineNode(control, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f));
-
+        SplineNode node = { position, rotation, time };
+        mNodes.insert(mNodes.begin(), node);
+        Vec3* control = position->add(mPlayer->calculateViewVector((float)xRot, (float)yRot)->multiply(4.0f));
+        SplineNode controlNode = { Vec3::newPermanent(control), Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f };
+        mNodes.insert(mNodes.begin() + 1, controlNode);
         if (mNodes.size() > 2)
         {
-            double length = mNodes[2].mPos->vectorTo(mNodes[0].mPos)->length() * 0.25;
-
-            if (length > 4.0)
-            {
-                length = 4.0;
-            }
-
-            Vec3* nextControl = Vec3::newPermanent(mNodes[2].mPos->add(mNodes[3].mPos->vectorTo(mNodes[2].mPos)->normalize()->multiply(length)));
-
-            mNodes.insert(mNodes.begin() + 2, SplineNode(nextControl, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f));
+            Vec3* nextPosition = mNodes[2].position;
+            double controlLength = nextPosition->vectorTo(mNodes[0].position)->length() * 0.2;
+            if (controlLength > 0.25)
+                controlLength = 0.25;
+            Vec3* nextControl = nextPosition->add(mNodes[3].position->vectorTo(nextPosition)->normalize()->multiply(controlLength));
+            SplineNode nextControlNode = { Vec3::newPermanent(nextControl), Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f };
+            mNodes.insert(mNodes.begin() + 2, nextControlNode);
         }
+        CalculateCurveLengths();
+        return;
     }
-    else
-    {
-        Vec3* direction = pos->vectorTo(mNodes[index - 2].mPos);
-
-        double length = direction->length() * 0.25;
-
-        if (length > 4.0)
-        {
-            length = 4.0;
-        }
-
-        Vec3* beforeControl = Vec3::newPermanent(pos->add(direction->normalize()->multiply(length)));
-        Vec3* afterControl = Vec3::newPermanent(pos->add(beforeControl->vectorTo(pos)->normalize()->multiply(length)));
-
-        mNodes.insert(mNodes.begin() + index, SplineNode(beforeControl, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f));
-        mNodes.insert(mNodes.begin() + index + 1, SplineNode(pos, Vec3::newPermanent(xRot, yRot, zRot), time));
-        mNodes.insert(mNodes.begin() + index + 2, SplineNode(afterControl, Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f));
-    }
-
+    Vec3* direction = position->vectorTo(mNodes[index - 2].position);
+    double controlLength = direction->length() * 0.2;
+    if (controlLength > 0.25)
+        controlLength = 0.25;
+    Vec3* firstControl = position->add(direction->normalize()->multiply(controlLength));
+    Vec3* secondDirection = firstControl->vectorTo(position)->normalize()->multiply(controlLength);
+    Vec3* secondControl = position->add(secondDirection);
+    SplineNode firstControlNode = { Vec3::newPermanent(firstControl), Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f };
+    SplineNode node = { position, rotation, time };
+    SplineNode secondControlNode = { Vec3::newPermanent(secondControl), Vec3::newPermanent(0.0, 0.0, 0.0), -1.0f };
+    mNodes.insert(mNodes.begin() + index, firstControlNode);
+    mNodes.insert(mNodes.begin() + index + 1, node);
+    mNodes.insert(mNodes.begin() + index + 2, secondControlNode);
     CalculateCurveLengths();
 }
 
@@ -217,7 +178,8 @@ void CameraController::addNode(double x, double y, double z, double xRot, double
 {
     if (mCurveType == 0)
     {
-        mNodes.push_back(SplineNode(Vec3::newPermanent(x, y, z), Vec3::newPermanent(xRot, yRot, zRot), time));
+        SplineNode node = { Vec3::newPermanent(x, y, z), Vec3::newPermanent(xRot, yRot, zRot), time };
+        mNodes.push_back(node);
     }
     else if (mCurveType == 1)
     {
@@ -235,149 +197,121 @@ Vec3* CameraController::getCurrentRot()
     return mCurrentRot;
 }
 
-void CameraController::update(float deltaTime)
+void CameraController::update(float delta)
 {
     if (mCurveType == 0)
     {
-        if (mNodes.size() > 1)
+        if (mNodes.size() <= 1)
+            return;
+        if (mCurrentNode == -1)
         {
-            if (mCurrentNode == -1)
-            {
-                mFromPos = mNodes[0].mPos;
-                mFromRot = mNodes[0].mRot;
-                mToPos = mNodes[1].mPos;
-                mToRot = mNodes[1].mRot;
-                mNodeDuration = mNodes[1].mTime;
-                mCurrentNode = 2;
-            }
-
-            float part = (mCurrentTime + deltaTime) / mNodeDuration;
-
-            part = part * part * (3.0f - (part + part));
-
-            if (1.0f - part < 0.0f)
-            {
-                part = 1.0f;
-            }
-
-            mCurrentTime += deltaTime;
-
-            *mCurrentPos = *mFromPos->interpolateTo(mToPos, part);
-            *mCurrentRot = *mFromRot->interpolateTo(mToRot, part);
-
-            if (mCurrentTime > mNodeDuration)
-            {
-                if (mCurrentNode < (int)mNodes.size())
-                {
-                    mFromPos = mToPos;
-                    mFromRot = mToRot;
-                    mToPos = mNodes[mCurrentNode].mPos;
-                    mToRot = mNodes[mCurrentNode].mRot;
-                    mNodeDuration = mNodes[mCurrentNode].mTime;
-                    mCurrentTime = 0.0f;
-                    ++mCurrentNode;
-                }
-                else
-                {
-                    reset();
-
-                    if (mPlayer != NULL)
-                    {
-                        mPlayer->SetThirdPersonView(mSavedThirdPersonView);
-                        mPlayer->SetCameraController(NULL, true);
-                    }
-                }
-            }
+            mFromPos = mNodes[0].position;
+            mFromRot = mNodes[0].rotation;
+            mToPos = mNodes[1].position;
+            mToRot = mNodes[1].rotation;
+            mDuration = mNodes[1].time;
+            mCurrentNode = 2;
+        }
+        mTime += delta;
+        float part = mTime / mDuration;
+        double blend = part * part * (3.0 - 2.0 * part);
+        if (blend > 1.0)
+            blend = 1.0;
+        mCurrentPos->set(mFromPos->interpolateTo(mToPos, blend));
+        mCurrentRot->set(mFromRot->interpolateTo(mToRot, blend));
+        if (mTime <= mDuration)
+            return;
+        if (mCurrentNode < (int)mNodes.size())
+        {
+            mFromPos = mToPos;
+            mFromRot = mToRot;
+            mDuration = mNodes[mCurrentNode].time;
+            mToPos = mNodes[mCurrentNode].position;
+            mToRot = mNodes[mCurrentNode].rotation;
+            mTime = 0.0f;
+            ++mCurrentNode;
+            return;
+        }
+        reset();
+        if (mPlayer != NULL)
+        {
+            mPlayer->SetThirdPersonView(mPlayerCameraMode);
+            mPlayer->SetCameraController(NULL, true);
         }
     }
-    else if (mCurveType == 1)
+    else if (mCurveType == 1 && mNodes.size() > 1 && !mCurveLengths.empty())
     {
-        if (mNodes.size() > 1)
+        if (mCurrentNode == -1)
+            mCurrentNode = 0;
+        mTime += delta;
+        double distance = (double)mTime * 0.2;
+        double curveLength = mCurveLengths[mCurveIndex][100];
+        while (curveLength < distance)
         {
-            if (mCurrentNode == -1)
-            {
-                mCurrentNode = 0;
-            }
-
-            float time = mCurrentTime + deltaTime;
-            double distance = time * 0.2;
-
-            while (mCurveLengths[mCurrentCurve][100] < distance
-                && mCurrentNode < (int)mNodes.size() - 4
-                && mCurrentCurve < mCurveLengths.size())
-            {
-                distance -= mCurveLengths[mCurrentCurve][100];
-
-                ++mCurrentCurve;
-                mCurrentNode += 3;
-
-                time = (float)(distance / 0.2);
-            }
-
-            mCurrentTime = time;
-
-            if (mCurrentNode < (int)mNodes.size() - 4)
-            {
-                double part = distance / mCurveLengths[mCurrentCurve][100];
-
-                mCurrentPos->set(CalculateBezierPoint((float)MapTimeToCurveDistance(mCurveLengths[mCurrentCurve], part),
-                    mNodes[mCurrentNode].mPos,
-                    mNodes[mCurrentNode + 1].mPos,
-                    mNodes[mCurrentNode + 2].mPos,
-                    mNodes[mCurrentNode + 3].mPos));
-
-                *mCurrentRot = *mNodes[mCurrentNode].mRot->interpolateTo(mNodes[mCurrentNode + 3].mRot, part);
-            }
-            else
-            {
-                reset();
-
-                if (mPlayer != NULL)
-                {
-                    mPlayer->SetThirdPersonView(mSavedThirdPersonView);
-                    mPlayer->SetCameraController(NULL, true);
-                }
-            }
+            if (mCurrentNode >= (int)mNodes.size() - 4 || mCurveIndex + 1 >= (int)mCurveLengths.size())
+                break;
+            distance -= curveLength;
+            ++mCurveIndex;
+            mCurrentNode += 3;
+            mTime = (float)(distance / 0.2);
+            curveLength = mCurveLengths[mCurveIndex][100];
+        }
+        if (mCurrentNode < (int)mNodes.size() - 4)
+        {
+            double part = distance / curveLength;
+            double curvePosition = MapTimeToCurveDistance(mCurveLengths[mCurveIndex], part);
+            mCurrentPos->set(CalculateBezierPoint((float)curvePosition,
+                mNodes[mCurrentNode].position,
+                mNodes[mCurrentNode + 1].position,
+                mNodes[mCurrentNode + 2].position,
+                mNodes[mCurrentNode + 3].position));
+            mCurrentRot->set(mNodes[mCurrentNode + 1].rotation->interpolateTo(
+                mNodes[mCurrentNode + 3].rotation, part));
+            return;
+        }
+        reset();
+        if (mPlayer != NULL)
+        {
+            mPlayer->SetThirdPersonView(mPlayerCameraMode);
+            mPlayer->SetCameraController(NULL, true);
         }
     }
 }
 
-void CameraController::Deserialise(DataInputStream* input)
+void CameraController::Deserialise(DataInputStream* stream)
 {
-    int version = input->readInt();
-
-    if (version < 1)
+    int count = stream->readInt();
+    if (count < 1)
     {
-        int count = input->readInt();
-
-        for (int node = 0; node < count; ++node)
+        count = stream->readInt();
+        int i;
+        for (i = 0; i < count; ++i)
         {
-            double x = input->readDouble();
-            double y = input->readDouble();
-            double z = input->readDouble();
-            double xRot = input->readDouble();
-            double yRot = input->readDouble();
-            double zRot = input->readDouble();
-
-            mNodes.push_back(SplineNode(Vec3::newPermanent(x, y, z), Vec3::newPermanent(xRot, yRot, zRot), -1.0f));
+            double x = stream->readDouble();
+            double y = stream->readDouble();
+            double z = stream->readDouble();
+            double xRot = stream->readDouble();
+            double yRot = stream->readDouble();
+            double zRot = stream->readDouble();
+            SplineNode node = { Vec3::newPermanent(x, y, z), Vec3::newPermanent(xRot, yRot, zRot), 0.5f };
+            mNodes.push_back(node);
         }
-
         CalculateCurveLengths();
     }
 }
 
-void CameraController::Serialise(DataOutputStream* output)
+void CameraController::Serialise(DataOutputStream* stream)
 {
-    output->writeInt(0);
-    output->writeInt((int)mNodes.size());
-
-    for (std::vector<SplineNode>::iterator node = mNodes.begin(); node != mNodes.end(); ++node)
+    stream->writeInt(0);
+    stream->writeInt((int)mNodes.size());
+    std::vector<SplineNode>::const_iterator it;
+    for (it = mNodes.begin(); it != mNodes.end(); ++it)
     {
-        output->writeDouble(node->mPos->x);
-        output->writeDouble(node->mPos->y);
-        output->writeDouble(node->mPos->z);
-        output->writeDouble(node->mRot->x);
-        output->writeDouble(node->mRot->y);
-        output->writeDouble(node->mRot->z);
+        stream->writeDouble(it->position->x);
+        stream->writeDouble(it->position->y);
+        stream->writeDouble(it->position->z);
+        stream->writeDouble(it->rotation->x);
+        stream->writeDouble(it->rotation->y);
+        stream->writeDouble(it->rotation->z);
     }
 }

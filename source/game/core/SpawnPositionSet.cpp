@@ -1,7 +1,5 @@
 #include "game/core/SpawnPositionSet.hpp"
 
-#include "game/minigame/GameRuleDefinition.hpp"
-
 SpawnPositionSet::SpawnPositionSet()
     : mType(0)
 {

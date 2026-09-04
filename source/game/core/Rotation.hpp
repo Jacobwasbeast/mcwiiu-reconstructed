@@ -23,6 +23,7 @@ public:
     static Rotation* CLOCKWISE_90;
     static Rotation* CLOCKWISE_180;
     static Rotation* COUNTERCLOCKWISE_90;
+    static Rotation* VALUES[4];
 
     Rotation(const std::wstring& name, eTYPE type);
 
@@ -39,8 +40,6 @@ public:
     Vec3i fjRotate(const Vec3i& pos) const;
 
 private:
-    static Rotation* VALUES[4];
-
     std::wstring name;
     eTYPE type;
 };

@@ -1,7 +1,7 @@
 #include "game/core/C_AOC.hpp"
 
 #include "game/core/cDLCInfo.hpp"
-#include "game/item/CConsoleMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
 #include <string>
 #include <stdlib.h>
@@ -181,14 +181,15 @@ void C_AOC::GetPurchasedContent()
                 {
                     for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                     {
-                        DLC_INFO* pDLCInfo = theApp.GetDLCInfoInstance()->GetDLCInfoByRomName(m_contentNames[iContent]);
+                        cDLCInfo* pDLCInfoInstance = (cDLCInfo*)(unsigned long)theApp->GetDLCInfoInstance();
+                        DLC_INFO* pDLCInfo = pDLCInfoInstance->GetDLCInfoByRomName(m_contentNames[iContent]);
 
                         if (m_pPurchased[iContent] > 0 && pDLCInfo != NULL)
                         {
-                            if (theApp.GetDLCInfoInstance()->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
+                            if (pDLCInfoInstance->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
                             {
                                 std::wstring packName = convStringToWstring(std::string(pDLCInfo->PackName));
-                                theApp.HandleDLCLicenseChange(packName);
+                                theApp->HandleDLCLicenseChange(packName);
                             }
                         }
                     }

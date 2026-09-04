@@ -9,6 +9,8 @@ public:
     KeyMapping(const std::wstring& name, int key);
 
 private:
+    friend class Options;
+
     std::wstring mName;
     int mKey;
 };

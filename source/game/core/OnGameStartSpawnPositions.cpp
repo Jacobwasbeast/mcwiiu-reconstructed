@@ -15,7 +15,7 @@ GameRuleDefinition* OnGameStartSpawnPositions::addChild(ConsoleGameRules::EGameR
 {
     GameRuleDefinition* pChild = NULL;
 
-    if (type == 31)
+    if (type == static_cast<ConsoleGameRules::EGameRuleType>(31))
     {
         pChild = new SpawnPositionSet();
         mChildren.push_back(pChild);

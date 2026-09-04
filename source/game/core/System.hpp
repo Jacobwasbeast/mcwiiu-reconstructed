@@ -27,9 +27,9 @@ public:
     static void arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos, unsigned int length);
     static void arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos, arrayWithLength<unsigned short>* dest, unsigned int destPos, unsigned int length);
 
-    static unsigned int processTime(ETimeGranularity granularity);
+    static uint64_t processTime(ETimeGranularity granularity);
     static uint64_t processTimeInSeconds();
-    static unsigned int processTimeInMilliSecs();
+    static uint64_t processTimeInMilliSecs();
     static unsigned int processTimeInMicroSecs();
     static unsigned int processTimeInNanoSecs();
     static uint64_t currentRealTimeMillis();

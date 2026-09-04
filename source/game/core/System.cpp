@@ -15,12 +15,12 @@ void System::arraycopy(arrayWithLength<unsigned char> src, unsigned int srcPos, 
 
 void System::arraycopy(arrayWithLength<Node*> src, unsigned int srcPos, arrayWithLength<Node*>* dest, unsigned int destPos, unsigned int length)
 {
-    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(Node*));
+    System::arraycopy<Node*>(src, srcPos, dest, destPos, length);
 }
 
 void System::arraycopy(arrayWithLength<Biome*> src, unsigned int srcPos, arrayWithLength<Biome*>* dest, unsigned int destPos, unsigned int length)
 {
-    std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(Biome*));
+    System::arraycopy<Biome*>(src, srcPos, dest, destPos, length);
 }
 
 void System::arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithLength<int>* dest, unsigned int destPos, unsigned int length)
@@ -33,16 +33,16 @@ void System::arraycopy(arrayWithLength<unsigned short> src, unsigned int srcPos,
     std::memcpy(dest->data + destPos, src.data + srcPos, length * sizeof(unsigned short));
 }
 
-unsigned int System::processTime(ETimeGranularity granularity)
+uint64_t System::processTime(ETimeGranularity granularity)
 {
     switch (granularity)
     {
     case eTimeGranularity_MilliSecs:
-        return (unsigned int)((unsigned long long)OSGetTime() * 1000 / (OSGetSystemInfo()->busSpeed / 4));
+        return (unsigned long long)OSGetTime() * 1000 / (OSGetSystemInfo()->busSpeed / 4);
     case eTimeGranularity_MicroSecs:
-        return (unsigned int)((unsigned long long)OSGetTime() * 1000000 / (OSGetSystemInfo()->busSpeed / 4));
+        return (unsigned long long)OSGetTime() * 1000000 / (OSGetSystemInfo()->busSpeed / 4);
     case eTimeGranularity_NanoSecs:
-        return (unsigned int)((unsigned long long)OSGetTime() * 32000 / ((unsigned long long)(OSGetSystemInfo()->busSpeed / 4) / 31250));
+        return (unsigned long long)OSGetTime() * 32000 / ((unsigned long long)(OSGetSystemInfo()->busSpeed / 4) / 31250);
     }
     return 0;
 }
@@ -52,14 +52,9 @@ uint64_t System::processTimeInSeconds()
     return processTime(eTimeGranularity_MilliSecs) / 1000;
 }
 
-unsigned int System::processTimeInMilliSecs()
+uint64_t System::processTimeInMilliSecs()
 {
     return processTime(eTimeGranularity_MilliSecs);
-}
-
-unsigned int System::processTimeInMicroSecs()
-{
-    return processTime(eTimeGranularity_MicroSecs);
 }
 
 unsigned int System::processTimeInNanoSecs()
@@ -98,17 +93,6 @@ void System::ReverseSHORT(short* value)
 void System::ReverseULONG(unsigned int* value)
 {
     unsigned int original = *value;
-    unsigned char* source = (unsigned char*)&original;
-    unsigned char* destination = (unsigned char*)value;
-    destination[0] = source[3];
-    destination[1] = source[2];
-    destination[2] = source[1];
-    destination[3] = source[0];
-}
-
-void System::ReverseULONG(unsigned long* value)
-{
-    unsigned long original = *value;
     unsigned char* source = (unsigned char*)&original;
     unsigned char* destination = (unsigned char*)value;
     destination[0] = source[3];

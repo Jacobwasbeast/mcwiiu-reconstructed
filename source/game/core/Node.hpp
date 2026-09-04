@@ -12,6 +12,10 @@ class DataOutputStream;
 class Node
 {
 public:
+    int x;
+    int y;
+    int z;
+
     Node();
     Node(int x, int y, int z);
     Node(const Node& node);
@@ -34,22 +38,23 @@ public:
     std::wstring toString();
 
 private:
-    int x;
-    int y;
-    int z;
     unsigned int hash;
     int heapIdx;
     float g;
     float h;
     float f;
-    int field20;
+    Node* cameFrom;
+
+public:
     bool closed;
+
+private:
+    float walkedDistance;
+    float cost;
     float costMalus;
-    float field2c;
-    float field30;
     const BlockPathTypes* type;
     bool inOpen;
-    int field3c;
+    int searchState;
 
     static unsigned int poolSize;
     static bool usePool;

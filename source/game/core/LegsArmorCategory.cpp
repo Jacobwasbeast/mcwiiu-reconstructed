@@ -2,7 +2,6 @@
 
 #include "game/core/EquipmentSlot.hpp"
 #include "game/item/ArmorItem.hpp"
-#include "game/item/Item.hpp"
 
 bool LegsArmorCategory::canEnchant(Item* item) const
 {
