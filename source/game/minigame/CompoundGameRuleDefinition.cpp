@@ -123,7 +123,8 @@ bool CompoundGameRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int
     {
         if (it->second.bIsGameRule)
         {
-            if (it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule, blockId, x, y, z) && !bTriggered)
+            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule, blockId, x, y, z);
+            if (childTriggered && !bTriggered)
             {
                 bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();
@@ -142,7 +143,8 @@ bool CompoundGameRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<
     {
         if (it->second.bIsGameRule)
         {
-            if (it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule, item) && !bTriggered)
+            bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule, item);
+            if (childTriggered && !bTriggered)
             {
                 bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();

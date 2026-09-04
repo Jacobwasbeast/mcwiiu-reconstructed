@@ -96,7 +96,6 @@ protected:
     GameRules_BlockAttribute* addBlockAttribute(ConsoleGameRules::EGameRuleAttr attribute, Block** value);
     GameRules_BlockStateAttribute* addBlockStateAttribute(ConsoleGameRules::EGameRuleAttr attribute, const BlockState** value);
 
-    GameRuleDefinition* mParent;
     std::wstring mDescriptionName;
     std::wstring mPromptName;
     int mDataTag;

@@ -1,6 +1,5 @@
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 
-#include "game/minigame/GameRuleDefinition.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"

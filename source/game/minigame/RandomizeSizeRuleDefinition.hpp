@@ -1,8 +1,9 @@
 #ifndef GAME_MINIGAME_RANDOMIZESIZERULEDEFINITION_HPP
 #define GAME_MINIGAME_RANDOMIZESIZERULEDEFINITION_HPP
 
-#include "game/core/LayerSize.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
+
+class LayerSize;
 
 class RandomizeSizeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerSize*>
 {

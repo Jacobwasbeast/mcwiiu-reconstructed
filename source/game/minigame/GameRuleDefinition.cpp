@@ -9,7 +9,6 @@
 #include "game/core/GameRules_StringAttribute.hpp"
 #include "game/core/GameRules_UnsignedCharAttribute.hpp"
 #include "game/core/IGameRuleAttribute.hpp"
-#include "game/util/AABB.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/block/GameRules_BlockAttribute.hpp"
 #include "game/world/block/GameRules_BlockStateAttribute.hpp"
@@ -104,8 +103,8 @@ static const wchar_t* sTagNames[] =
 static const int sGameRuleAttrCount = 91;
 
 GameRuleDefinition::GameRuleDefinition()
-    : mDescriptionName(L""),
-      mPromptName(L""),
+    : mDescriptionName(L"Complete"),
+      mPromptName(L"Complete"),
       mDataTag(0)
 {
     addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(0), &mDescriptionName);
