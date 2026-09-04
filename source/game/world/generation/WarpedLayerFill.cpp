@@ -29,8 +29,8 @@ void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec
             {
                 double noiseValue = noise.getValue((double)x / mNoiseScale,
                                                     (double)z / mNoiseScale);
-                int startY = (int)std::floor((float)(((double)mOffset) *
-                                                     (noiseValue + 1.0) * 0.5));
+                int startY = (int)std::floor((float)((mOffset - 176.0) *
+                                                     (float)((noiseValue + 1.0) * 0.5)));
                 int y = startY + 3;
                 for (int layer = 0; layer < mThickness; ++layer)
                 {

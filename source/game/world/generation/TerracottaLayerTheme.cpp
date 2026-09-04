@@ -2,9 +2,14 @@
 
 #include "game/util/Random.hpp"
 #include "game/util/Vec3i.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockTransaction.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
-unsigned int getColour(unsigned char colour);
+Block* getColour(unsigned char colour);
 
 TerracottaLayerTheme::TerracottaLayerTheme(const TerracottaLayerThemePattern& pattern,
                                            TerracottaLayerThemeFunction function)
@@ -40,7 +45,7 @@ unsigned char TerracottaLayerTheme::TARTAN(int x, int z)
 {
     static const unsigned char values[25] = {
         7, 1, 2, 1, 7,
-        1, 1, 1, 1, 1,
+        1, 1, 2, 1, 1,
         2, 2, 3, 2, 2,
         1, 1, 2, 1, 1,
         7, 1, 2, 1, 7
@@ -73,7 +78,7 @@ void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, 
         {
             int xIndex = x % mSize;
             int zIndex = z % mSize;
-            unsigned int data = mValues[xIndex * mSize + zIndex];
+            const Direction* direction = mValues[xIndex * mSize + zIndex];
             int ringX = x / mSize;
             int ringZ = z / mSize;
             if (ringX < 0 && (x / mSize) % 2 != 0)
@@ -86,14 +91,18 @@ void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, 
             }
             unsigned char colour = (unsigned char)(randomColour + mFunction(ringX - widthRings / 2,
                                                                               ringZ - heightRings / 2));
+            Block* block = getColour(colour);
+            TypedBoxed<const Direction*> directionValue(direction);
+            const BlockState* state = block->defaultBlockState()->setBoxedValue(
+                HorizontalDirectionalBlock::FACING_PROPERTY, &directionValue);
             Vec3i position(x, 0, z);
             int y;
             for (y = 0; y < transaction->mSize.y; ++y)
             {
                 position.y = y;
-                if (transaction->getBlock(position) == 0)
+                if (transaction->getBlock(position) != 0)
                 {
-                    transaction->setBlock(position, (int)getColour(colour), (int)data);
+                    transaction->setBlock(position, state);
                 }
             }
         }

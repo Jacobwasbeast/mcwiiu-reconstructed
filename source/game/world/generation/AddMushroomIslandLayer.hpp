@@ -3,7 +3,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/Layer.hpp"
 
 class AddMushroomIslandLayer : public Layer

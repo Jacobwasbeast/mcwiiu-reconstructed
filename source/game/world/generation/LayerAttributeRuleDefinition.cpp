@@ -1,7 +1,11 @@
 #include "game/world/generation/LayerAttributeRuleDefinition.hpp"
 
+#include "game/core/LayerSize.hpp"
 #include "game/world/generation/FilterRuleDefinition.hpp"
+#include "game/world/generation/FunctionLayerFill.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
+#include "game/world/generation/LayerShape.hpp"
+#include "game/world/generation/LayerTheme.hpp"
 
 template <class T>
 LayerAttributeRuleDefinition<T>::LayerAttributeRuleDefinition(ConsoleGameRules::EGameRuleType actionType, CreateChildFunc createChild)
@@ -75,3 +79,8 @@ void LayerAttributeRuleDefinition<T>::addAttribute(const std::wstring& name, con
         GameRuleDefinition::addAttribute(name, value);
     }
 }
+
+template class LayerAttributeRuleDefinition<LayerFill*>;
+template class LayerAttributeRuleDefinition<LayerShape*>;
+template class LayerAttributeRuleDefinition<LayerSize*>;
+template class LayerAttributeRuleDefinition<LayerTheme*>;

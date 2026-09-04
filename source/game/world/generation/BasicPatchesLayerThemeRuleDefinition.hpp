@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_GENERATION_BASICPATCHESLAYERTHEMERULEDEFINITION_HPP
 #define GAME_WORLD_GENERATION_BASICPATCHESLAYERTHEMERULEDEFINITION_HPP
 
+#include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/block/GenericMultiBlockThemeRuleDefinition.hpp"
 #include "game/world/generation/LayerTheme.hpp"
 

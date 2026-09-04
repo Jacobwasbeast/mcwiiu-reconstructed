@@ -6,7 +6,14 @@ class Shape;
 class Vec3i;
 class BlockTransaction;
 
-class FunctionLayerFill
+class LayerFill
+{
+public:
+    virtual void ExtrudeLayer(Random& random, const Shape& shape, const Vec3i& origin,
+                              BlockTransaction* transaction, int* minY, int* maxY) const = 0;
+};
+
+class FunctionLayerFill : public LayerFill
 {
 public:
     FunctionLayerFill(int (*function)(float));

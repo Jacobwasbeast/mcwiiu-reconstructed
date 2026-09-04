@@ -3,16 +3,18 @@
 
 #include <vector>
 
+#include "game/world/generation/LayerTheme.hpp"
+
 class BlockState;
 class BlockTransaction;
 class Random;
 
-class ShaftsLayerTheme
+class ShaftsLayerTheme : public LayerTheme
 {
 public:
     ShaftsLayerTheme(int heightOffset, const std::vector<const BlockState*>& states);
     bool hasShaft(int x, int z) const;
-    void Apply(Random& random, BlockTransaction* transaction, int& width, int& depth) const;
+    virtual void Apply(Random& random, BlockTransaction* transaction, int& width, int& depth) const;
 
 private:
     int mHeightOffset;

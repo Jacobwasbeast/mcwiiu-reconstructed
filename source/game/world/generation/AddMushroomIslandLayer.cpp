@@ -6,10 +6,10 @@
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
-AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parent)
+AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     : Layer(seed)
 {
-    this->parent = parent;
+    parent = parentLayer;
 }
 
 AddMushroomIslandLayer::~AddMushroomIslandLayer()
@@ -19,9 +19,7 @@ AddMushroomIslandLayer::~AddMushroomIslandLayer()
 arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;
-    int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, height + 2);
 
     PIXBeginNamedEvent(0.0f, "AddMushroomIslandLayer::getArea");
 
@@ -39,8 +37,9 @@ arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, in
 
             initRandom((long long)(x + j), (long long)(z + i));
 
-            if (isShallowOcean(centre) && isShallowOcean(northWest) && isShallowOcean(northEast)
-                && isShallowOcean(southWest) && isShallowOcean(southEast) && nextRandom(100) == 0)
+            if (isShallowOcean(centre) && isShallowOcean(northWest)
+                && isShallowOcean(northEast) && isShallowOcean(southWest)
+                && isShallowOcean(southEast) && nextRandom(100) == 0)
             {
                 area.data[j + i * width] = Biome::MUSHROOM_ISLAND->id;
             }

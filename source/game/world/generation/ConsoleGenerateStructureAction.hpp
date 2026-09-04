@@ -7,10 +7,6 @@ class ConsoleGenerateStructureAction : public GameRuleDefinition
 {
 public:
     virtual ~ConsoleGenerateStructureAction();
-
-    virtual int getEndX() = 0;
-    virtual int getEndY() = 0;
-    virtual int getEndZ() = 0;
 };
 
 #endif

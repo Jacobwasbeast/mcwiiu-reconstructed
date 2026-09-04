@@ -4,12 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "game/core/DataWalker.hpp"
-
 class CompoundTag;
 class DataFixer;
 
-class PlayerDataWalker : public DataWalker
+class PlayerDataWalker
 {
 public:
     PlayerDataWalker(std::vector<std::wstring>* itemFields);

@@ -3,15 +3,18 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "game/world/generation/LayerTheme.hpp"
+
 class Random;
 class BlockTransaction;
+class Direction;
 
 typedef unsigned char (*TerracottaLayerThemeFunction)(int, int);
 
 struct TerracottaLayerThemePattern
 {
     int size;
-    const unsigned int* values;
+    const Direction* const* values;
     unsigned int patternRows;
     unsigned int patternColumns;
     unsigned int patternLayers;
@@ -29,7 +32,7 @@ struct TerracottaLayerThemePattern
     unsigned int patternOrientation;
 };
 
-class TerracottaLayerTheme
+class TerracottaLayerTheme : public LayerTheme
 {
 public:
     TerracottaLayerTheme(const TerracottaLayerThemePattern& pattern, TerracottaLayerThemeFunction function);
@@ -45,7 +48,7 @@ public:
 
 private:
     int mSize;
-    const unsigned int* mValues;
+    const Direction* const* mValues;
     unsigned int mPatternRows;
     unsigned int mPatternColumns;
     unsigned int mPatternLayers;

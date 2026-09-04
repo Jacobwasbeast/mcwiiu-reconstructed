@@ -1,12 +1,14 @@
 #ifndef GAME_WORLD_GENERATION_BOWLLAYERFILL_HPP
 #define GAME_WORLD_GENERATION_BOWLLAYERFILL_HPP
 
+#include "game/world/generation/FunctionLayerFill.hpp"
+
 class Random;
 class Shape;
 class Vec3i;
 class BlockTransaction;
 
-class BowlLayerFill
+class BowlLayerFill : public LayerFill
 {
 public:
     BowlLayerFill(int offset, float (*curve)(float), int thickness);

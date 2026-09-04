@@ -19,12 +19,12 @@ ConsoleGameRules::EGameRuleType BasicLayerFillRuleDefinition::getActionType()
 
 LayerFill* BasicLayerFillRuleDefinition::Generate() const
 {
-    if (mType == L"ReverseCone")
+    if (mType.compare(L"ReverseCone") == 0)
     {
         return new FunctionLayerFill(FunctionLayerFill::ISLAND);
     }
 
-    if (mType == L"Uniform1")
+    if (mType.compare(L"Uniform1") == 0)
     {
         return new FunctionLayerFill(FunctionLayerFill::UNIFORM);
     }

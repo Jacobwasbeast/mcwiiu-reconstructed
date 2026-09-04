@@ -23,11 +23,11 @@ void ShaftsLayerTheme::Apply(Random&, BlockTransaction* transaction, int& width,
     }
 
     const int top = transaction->mSize.y;
-    for (int x = 0; x < width; ++x)
+    for (int x = 0; x < transaction->mSize.x; ++x)
     {
-        for (int z = 0; z < depth; ++z)
+        for (int z = 0; z < transaction->mSize.z; ++z)
         {
-            if (!hasShaft(x, z))
+            if (!hasShaft(x + transaction->mSize.x / 2, z + transaction->mSize.z / 2))
             {
                 continue;
             }

@@ -7,17 +7,17 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 
 template<typename T>
-std::wstring toString(T value);
+std::wstring _toString(T value);
 
 template<typename T>
-T fromString(const std::wstring& text);
+T _fromString(const std::wstring& text);
 
 StartFeature::StartFeature()
-    : mChunkX(0),
-      mChunkZ(0),
-      mOrientation(NULL),
-      mFeatureType(2)
 {
+    mChunkX = 0;
+    mChunkZ = 0;
+    mOrientation = NULL;
+    mFeatureType = 2;
 }
 
 StartFeature::~StartFeature()
@@ -33,36 +33,36 @@ void StartFeature::writeAttributes(GameRuleSaveInterface* saveInterface, unsigne
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 4);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(34), toString(mChunkX));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(35), toString(mChunkZ));
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(45), toString(mFeatureType));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(34), _toString(mChunkX));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(35), _toString(mChunkZ));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(45), _toString(mFeatureType));
     saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(41),
-                                 toString(mOrientation != NULL ? mOrientation : Direction::NORTH));
+                                 _toString(mOrientation != NULL ? mOrientation : Direction::NORTH));
 }
 
 void StartFeature::addAttribute(const std::wstring& name, const std::wstring& value)
 {
     if (name.compare(L"chunkX") == 0)
     {
-        mChunkX = fromString<int>(value);
+        mChunkX = _fromString<int>(value);
         return;
     }
 
     if (name.compare(L"chunkZ") == 0)
     {
-        mChunkZ = fromString<int>(value);
+        mChunkZ = _fromString<int>(value);
         return;
     }
 
     if (name.compare(L"orientation") == 0)
     {
-        mOrientation = Direction::from2DDataValue(fromString<int>(value));
+        mOrientation = Direction::from2DDataValue(_fromString<int>(value));
         return;
     }
 
     if (name.compare(L"feature") == 0)
     {
-        mFeatureType = fromString<int>(value);
+        mFeatureType = _fromString<int>(value);
         return;
     }
 
