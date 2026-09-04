@@ -6,5 +6,4 @@ ChunkGenerator::~ChunkGenerator()
 
 void ChunkGenerator::lightChunk(LevelChunk* chunk)
 {
-    (void)chunk;
 }
