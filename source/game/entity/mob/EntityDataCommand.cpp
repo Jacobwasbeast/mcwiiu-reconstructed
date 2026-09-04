@@ -25,6 +25,11 @@ void EntityDataCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
     DataInputStream stream(&byteStream);
 }
 
+bool EntityDataCommand::isValidWildcardPlayerArgument(std::wstring argument, int argumentIndex)
+{
+    return argumentIndex == 0;
+}
+
 boost::shared_ptr<GameCommandPacket> EntityDataCommand::preparePacket(unsigned char mode)
 {
     ByteArrayOutputStream byteStream;
