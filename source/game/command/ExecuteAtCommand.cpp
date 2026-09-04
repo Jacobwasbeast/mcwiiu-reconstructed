@@ -32,3 +32,8 @@ boost::shared_ptr<GameCommandPacket> ExecuteAtCommand::preparePacket(unsigned ch
 
     return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
 }
+
+bool ExecuteAtCommand::isValidWildcardPlayerArgument(std::wstring argument, int argumentIndex)
+{
+    return argumentIndex == 0;
+}

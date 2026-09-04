@@ -1,7 +1,9 @@
 #include "game/command/FillCommand.hpp"
 
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
 
 FillCommand::~FillCommand()
 {
@@ -21,4 +23,14 @@ void FillCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLeng
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+}
+
+boost::shared_ptr<GameCommandPacket> FillCommand::preparePacket(unsigned char mode)
+{
+    ByteArrayOutputStream byteStream;
+    DataOutputStream stream(&byteStream);
+
+    stream.writeByte(mode);
+
+    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_Fill, byteStream.toByteArray()));
 }

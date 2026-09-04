@@ -1,7 +1,9 @@
 #include "game/command/CloneCommand.hpp"
 
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
 
 CloneCommand::~CloneCommand()
 {
@@ -21,4 +23,14 @@ void CloneCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLen
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+}
+
+boost::shared_ptr<GameCommandPacket> CloneCommand::preparePacket(unsigned char mode)
+{
+    ByteArrayOutputStream byteStream;
+    DataOutputStream stream(&byteStream);
+
+    stream.writeByte(mode);
+
+    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_Clone, byteStream.toByteArray()));
 }

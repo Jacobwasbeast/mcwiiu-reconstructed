@@ -19,13 +19,13 @@ int StatsCommand::getPermissionLevel()
     return 2;
 }
 
-void StatsCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
+void StatsCommand::execute(boost::shared_ptr<CommandSender> commandSender, arrayWithLength<unsigned char> data)
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
 }
 
-boost::shared_ptr<GameCommandPacket> StatsCommand::preparePacket(unsigned char mode)
+boost::shared_ptr<GameCommandPacket> StatsCommand::preparePacket(unsigned char commandId)
 {
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);

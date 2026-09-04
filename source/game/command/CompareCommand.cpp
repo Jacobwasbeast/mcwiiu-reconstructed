@@ -1,7 +1,9 @@
 #include "game/command/CompareCommand.hpp"
 
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
 
 CompareCommand::~CompareCommand()
 {
@@ -21,4 +23,15 @@ void CompareCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+}
+
+boost::shared_ptr<GameCommandPacket> CompareCommand::preparePacket(unsigned char commandId)
+{
+    ByteArrayOutputStream byteStream;
+    DataOutputStream stream(&byteStream);
+
+    stream.writeByte(commandId);
+
+    return boost::shared_ptr<GameCommandPacket>(
+        new GameCommandPacket(eGameCommand_Compare, byteStream.toByteArray()));
 }
