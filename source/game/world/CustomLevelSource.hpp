@@ -1,0 +1,56 @@
+#ifndef GAME_WORLD_CUSTOMLEVELSOURCE_HPP
+#define GAME_WORLD_CUSTOMLEVELSOURCE_HPP
+
+#include <string>
+#include <vector>
+
+#include "game/world/GenericOverworldLevelSource.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/ChunkGenerator.hpp"
+
+class BlockPos;
+class ChunkPrimer;
+class Level;
+class LevelChunk;
+class MobCategory;
+class StructureFeature;
+
+class CustomLevelSource : public ChunkGenerator, public GenericOverworldLevelSource
+{
+public:
+    CustomLevelSource(Level* level, long long seed, bool generateStructures);
+    virtual ~CustomLevelSource();
+
+    virtual void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
+    virtual LevelChunk* createChunk(int chunkX, int chunkZ);
+    virtual void lightChunk(LevelChunk* chunk);
+    virtual void postProcess(int chunkX, int chunkZ);
+    virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool findUnexplored);
+    virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+
+    int getHeightFalloff(int x, int z, int* heights);
+    void buildSurfaces(int x, int z, ChunkPrimer* primer, arrayWithLength<Biome*> biomes);
+    void getHeights(int x, int y, int z, arrayWithLength<Biome*>& biomes, arrayWithLength<double>& heights);
+    int calcWaterDepths(int x, int z);
+    bool isWater(const BlockPos& pos);
+
+private:
+    Level* mLevel;
+    unsigned int mGeneratorData[8];
+    bool mGenerateStructures;
+    unsigned int mFeatureData[7];
+    StructureFeature* mStronghold;
+    StructureFeature* mShipwreck;
+    StructureFeature* mMonument;
+    StructureFeature* mMansion;
+    StructureFeature* mVillage;
+    StructureFeature* mMineshaft;
+    StructureFeature* mTemple;
+    StructureFeature* mOceanRuin;
+};
+
+#endif

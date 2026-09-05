@@ -1,0 +1,566 @@
+#include "game/world/LevelRuleset.hpp"
+
+#include <cstdio>
+
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/OnGameStartSpawnPositions.hpp"
+#include "game/data/StringTable.hpp"
+#include "game/item/RandomItemSetRuleDefinition.hpp"
+#include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/minigame/CollisionExceptionGameRuleDefinition.hpp"
+#include "game/minigame/DegradationSequenceRuleDefinition.hpp"
+#include "game/minigame/KillboxRuleDefinition.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/minigame/NamedAreaRuleDefinition.hpp"
+#include "game/minigame/ScoreRingRuleDefinition.hpp"
+#include "game/minigame/TargetAreaRuleDefinition.hpp"
+#include "game/minigame/ActiveViewAreaRuleDefinition.hpp"
+#include "game/world/OnInitialiseWorld.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/chunk/ActiveChunkAreaRuleDefinition.hpp"
+#include "game/world/generation/PlayerBoundsVolumeRuleDefinition.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/util/AABB.hpp"
+
+struct _OVERLAPPED;
+
+template<typename T> T _fromString(const std::wstring& value);
+std::string formatstr(const char* format, ...);
+char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
+int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
+                void* securityAttributes, unsigned int creationDisposition,
+                unsigned int flagsAndAttributes, int templateFile);
+int WriteFile(int file, const void* buffer, unsigned int bytesToWrite,
+              unsigned int* bytesWritten, _OVERLAPPED* overlapped);
+int CloseHandle(int handle);
+void __debugbreak();
+
+LevelRuleset::LevelRuleset()
+    : CompoundGameRuleDefinition(),
+      mGenerationOptions(NULL),
+      mRuleType(static_cast<ConsoleGameRules::EGameRuleType>(0)),
+      mStringTable(NULL)
+{
+}
+
+LevelRuleset::~LevelRuleset()
+{
+    std::vector<NamedAreaRuleDefinition*>::iterator namedArea;
+    for (namedArea = mNamedAreas.begin(); namedArea != mNamedAreas.end(); ++namedArea)
+    {
+        delete *namedArea;
+    }
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
+         it != mRandomItemSets.end(); ++it)
+    {
+        delete *it;
+    }
+    for (std::vector<CollisionExceptionGameRuleDefinition*>::iterator it = mCollisionExceptions.begin();
+         it != mCollisionExceptions.end(); ++it)
+    {
+        delete *it;
+    }
+    for (boost::unordered_map<ConsoleGameRules::EGameRuleType, GameRuleDefinition*>::iterator it = mRules.begin();
+         it != mRules.end(); ++it)
+    {
+        delete it->second;
+    }
+}
+
+RandomItemSetRuleDefinition* LevelRuleset::getRandomItemSet(const std::wstring& name)
+{
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    {
+        if ((*it)->getId() == name)
+        {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
+LevelGenerationOptions* LevelRuleset::getGenerationOptions()
+{
+    return mGenerationOptions;
+}
+
+ConsoleGameRules::EGameRuleType LevelRuleset::getRuleType()
+{
+    return mRuleType;
+}
+
+unsigned int LevelRuleset::getThemeId()
+{
+    if (mGenerationOptions != NULL)
+    {
+        return mGenerationOptions->getThemeId();
+    }
+    return 0xffffffff;
+}
+
+void LevelRuleset::getChildren(std::vector<GameRuleDefinition*>* children)
+{
+    CompoundGameRuleDefinition::getChildren(children);
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        children->push_back(*it);
+    }
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+    {
+        children->push_back(*it);
+    }
+}
+
+void LevelRuleset::addUniqueRule(ConsoleGameRules::EGameRuleType type, GameRuleDefinition* rule)
+{
+    mRules[type] = rule;
+}
+
+GameRuleDefinition* LevelRuleset::addChild(ConsoleGameRules::EGameRuleType type)
+{
+    switch (type)
+    {
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x11):
+        {
+            NamedAreaRuleDefinition* rule = new NamedAreaRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x12):
+        {
+            ActiveChunkAreaRuleDefinition* rule = new ActiveChunkAreaRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x4c):
+        {
+            ActiveViewAreaRuleDefinition* rule = new ActiveViewAreaRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x13):
+        {
+            TargetAreaRuleDefinition* rule = new TargetAreaRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x14):
+        {
+            ScoreRingRuleDefinition* rule = new ScoreRingRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x15):
+        {
+            ThermalAreaRuleDefinition* rule = new ThermalAreaRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x16):
+        {
+            PlayerBoundsVolumeRuleDefinition* rule = new PlayerBoundsVolumeRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x18):
+        {
+            BlockLayerRuleDefinition* rule = new BlockLayerRuleDefinition();
+            mNamedAreas.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x0d):
+        {
+            RandomItemSetRuleDefinition* rule = new RandomItemSetRuleDefinition();
+            mRandomItemSets.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x1d):
+        {
+            OnGameStartSpawnPositions* rule = new OnGameStartSpawnPositions();
+            addUniqueRule(type, rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x1e):
+        {
+            OnInitialiseWorld* rule = new OnInitialiseWorld();
+            addUniqueRule(type, rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x21):
+        {
+            DegradationSequenceRuleDefinition* rule = new DegradationSequenceRuleDefinition();
+            addUniqueRule(type, rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x24):
+        {
+            GrantPermissionsRuleDefinition* rule = new GrantPermissionsRuleDefinition();
+            addUniqueRule(type, rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x26):
+        {
+            LayerGenerationRuleDefinition* rule = new LayerGenerationRuleDefinition();
+            addUniqueRule(type, rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x48):
+        {
+            CollisionExceptionGameRuleDefinition* rule = new CollisionExceptionGameRuleDefinition();
+            mCollisionExceptions.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x4a):
+        {
+            CheckpointRuleDefinition* rule = new CheckpointRuleDefinition();
+            mCheckpoints.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x49):
+        {
+            PowerupRuleDefinition* rule = new PowerupRuleDefinition();
+            mPowerups.push_back(rule);
+            return rule;
+        }
+    case static_cast<ConsoleGameRules::EGameRuleType>(0x17):
+        {
+            KillboxRuleDefinition* rule = new KillboxRuleDefinition(NULL);
+            mKillboxes.push_back(rule);
+            return rule;
+        }
+    default:
+        return CompoundGameRuleDefinition::addChild(type);
+    }
+}
+
+void LevelRuleset::addAttribute(const std::wstring& name, const std::wstring& value)
+{
+    if (name == L"ruleType")
+    {
+        mRuleType = static_cast<ConsoleGameRules::EGameRuleType>(_fromString<int>(value));
+        return;
+    }
+    GameRuleDefinition::addAttribute(name, value);
+}
+
+void LevelRuleset::loadStringTable(StringTable* stringTable)
+{
+    mStringTable = stringTable;
+}
+
+wchar_t* LevelRuleset::getString(const std::wstring& key)
+{
+    if (mStringTable == NULL)
+    {
+        return const_cast<wchar_t*>(L"Active");
+    }
+    return mStringTable->getString(key);
+}
+
+NamedAreaRuleDefinition* LevelRuleset::getNamedAreaRule(const std::wstring& name)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getName() == name)
+        {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
+AABB* LevelRuleset::getNamedArea(const std::wstring& name)
+{
+    NamedAreaRuleDefinition* rule = getNamedAreaRule(name);
+    if (rule != NULL)
+    {
+        return rule->getArea();
+    }
+    return NULL;
+}
+
+void LevelRuleset::getNamedAreas(int areaType, std::vector<AABB*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((static_cast<int>((*it)->getActionType()) & areaType) == areaType)
+        {
+            areas->push_back((*it)->getArea());
+        }
+    }
+}
+
+void LevelRuleset::getNonSpecialisedNamedAreas(std::vector<AABB*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x11))
+        {
+            areas->push_back((*it)->getArea());
+        }
+    }
+}
+
+void LevelRuleset::getActiveChunkAreas(std::vector<AABB*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x12) || (*it)->getName() == L"ActiveArea")
+        {
+            areas->push_back((*it)->getArea());
+        }
+    }
+}
+
+void LevelRuleset::getActiveChunkAreas(std::vector<NamedAreaRuleDefinition*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x12) || (*it)->getName() == L"ActiveArea")
+        {
+            areas->push_back(*it);
+        }
+    }
+}
+
+void LevelRuleset::getActiveViewAreas(std::vector<AABB*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x4c))
+        {
+            areas->push_back((*it)->getArea());
+        }
+    }
+}
+
+void LevelRuleset::getActiveViewAreas(std::vector<ActiveViewAreaRuleDefinition*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x4c))
+        {
+            areas->push_back(static_cast<ActiveViewAreaRuleDefinition*>(*it));
+        }
+    }
+}
+
+void LevelRuleset::getTargetAreas(std::vector<TargetAreaRuleDefinition*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        ConsoleGameRules::EGameRuleType type = (*it)->getActionType();
+        if (type == static_cast<ConsoleGameRules::EGameRuleType>(0x13) || type == static_cast<ConsoleGameRules::EGameRuleType>(0x14))
+        {
+            areas->push_back(static_cast<TargetAreaRuleDefinition*>(*it));
+        }
+    }
+}
+
+void LevelRuleset::getRingsWithinArea(std::vector<TargetAreaRuleDefinition*>* rings, AABB* area)
+{
+    if (!Minecraft::GetInstance()->GetMiniGame()->ArePointsActive())
+    {
+        return;
+    }
+
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        TargetAreaRuleDefinition* rule = static_cast<TargetAreaRuleDefinition*>(*it);
+        ConsoleGameRules::EGameRuleType type = rule->getActionType();
+        if ((type == static_cast<ConsoleGameRules::EGameRuleType>(0x13) ||
+             type == static_cast<ConsoleGameRules::EGameRuleType>(0x14)) && !rule->mPrimary)
+        {
+            AABB* ringArea = rule->getArea()->grow(1.0, 1.0, 1.0);
+            if (area->intersects(ringArea->mMinX, ringArea->mMinY, ringArea->mMinZ,
+                                 ringArea->mMaxX, ringArea->mMaxY, ringArea->mMaxZ))
+            {
+                rings->push_back(rule);
+            }
+        }
+    }
+}
+
+void LevelRuleset::getThermalAreas(std::vector<ThermalAreaRuleDefinition*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x15))
+        {
+            areas->push_back(static_cast<ThermalAreaRuleDefinition*>(*it));
+        }
+    }
+}
+
+void LevelRuleset::getPowerups(std::vector<PowerupRuleDefinition*>* powerups)
+{
+    for (std::vector<PowerupRuleDefinition*>::iterator it = mPowerups.begin(); it != mPowerups.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x49))
+        {
+            powerups->push_back(*it);
+        }
+    }
+}
+
+void LevelRuleset::getPlayerBoundsVolumes(std::vector<NamedAreaRuleDefinition*>* areas)
+{
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x16) || (*it)->getName() == L"MaxPlayerBounds")
+        {
+            areas->push_back(*it);
+        }
+    }
+}
+
+void LevelRuleset::getKillboxes(std::vector<KillboxRuleDefinition*>* killboxes)
+{
+    for (std::vector<KillboxRuleDefinition*>::iterator it = mKillboxes.begin(); it != mKillboxes.end(); ++it)
+    {
+        if ((*it)->getActionType() == static_cast<ConsoleGameRules::EGameRuleType>(0x17))
+        {
+            killboxes->push_back(*it);
+        }
+    }
+}
+
+std::vector<CheckpointRuleDefinition*>* LevelRuleset::getCheckpoints()
+{
+    return &mCheckpoints;
+}
+
+CheckpointRuleDefinition* LevelRuleset::getCheckpointByID(int id)
+{
+    if (id < static_cast<int>(mCheckpoints.size()))
+    {
+        return mCheckpoints.at(id);
+    }
+    return NULL;
+}
+
+std::vector<CheckpointRuleDefinition*> LevelRuleset::getCheckpointsBySequenceID(int sequenceId)
+{
+    std::vector<CheckpointRuleDefinition*> checkpoints;
+    for (std::vector<CheckpointRuleDefinition*>::iterator it = mCheckpoints.begin(); it != mCheckpoints.end(); ++it)
+    {
+        if ((*it)->getSequenceID() == sequenceId)
+        {
+            checkpoints.push_back(*it);
+        }
+    }
+    return checkpoints;
+}
+
+GameRuleDefinition* LevelRuleset::getRuleByType(ConsoleGameRules::EGameRuleType type)
+{
+    boost::unordered_map<ConsoleGameRules::EGameRuleType, GameRuleDefinition*>::iterator it = mRules.find(type);
+    if (it != mRules.end())
+    {
+        return it->second;
+    }
+    return NULL;
+}
+void LevelRuleset::getChildren(std::vector<GameRuleDefinition*>* children, ConsoleGameRules::EGameRuleType type)
+{
+    CompoundGameRuleDefinition::getChildren(children, type);
+    GameRuleDefinition* rule = getRuleByType(type);
+    if (rule != NULL)
+    {
+        children->push_back(rule);
+    }
+    if ((type > static_cast<ConsoleGameRules::EGameRuleType>(0x10) &&
+         type < static_cast<ConsoleGameRules::EGameRuleType>(0x18)) ||
+        type == static_cast<ConsoleGameRules::EGameRuleType>(0x49) ||
+        type == static_cast<ConsoleGameRules::EGameRuleType>(0x4c))
+    {
+        for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+        {
+            children->push_back(*it);
+        }
+    }
+    if (type == static_cast<ConsoleGameRules::EGameRuleType>(0x0d))
+    {
+        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
+        {
+            children->push_back(*it);
+        }
+    }
+}
+
+StringTable* LevelRuleset::getStringTable()
+{
+    return mStringTable;
+}
+
+void LevelRuleset::setGenerationOptions(LevelGenerationOptions* options)
+{
+    mGenerationOptions = options;
+}
+
+bool LevelRuleset::ShouldCollideWith(Block* block)
+{
+    for (std::vector<CollisionExceptionGameRuleDefinition*>::iterator it = mCollisionExceptions.begin();
+         it != mCollisionExceptions.end(); ++it)
+    {
+        if (!(*it)->ShouldCollideWith(block))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void LevelRuleset::WriteRulesetXMLData()
+{
+    std::string xml = formatstr("<LevelRules ruleType=\"%d\">\n", static_cast<int>(mRuleType));
+
+    for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
+    {
+        (*it)->WriteXMLData(xml);
+    }
+    for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
+         it != mRandomItemSets.end(); ++it)
+    {
+        (*it)->WriteXMLData(xml);
+    }
+    for (std::vector<CollisionExceptionGameRuleDefinition*>::iterator it = mCollisionExceptions.begin();
+         it != mCollisionExceptions.end(); ++it)
+    {
+        (*it)->WriteXMLData(xml);
+    }
+    for (std::vector<CheckpointRuleDefinition*>::iterator it = mCheckpoints.begin(); it != mCheckpoints.end(); ++it)
+    {
+        (*it)->WriteXMLData(xml);
+    }
+    for (std::vector<PowerupRuleDefinition*>::iterator it = mPowerups.begin(); it != mPowerups.end(); ++it)
+    {
+        (*it)->WriteXMLData(xml);
+    }
+    for (boost::unordered_map<ConsoleGameRules::EGameRuleType, GameRuleDefinition*>::iterator it = mRules.begin();
+         it != mRules.end(); ++it)
+    {
+        it->second->WriteXMLData(xml);
+    }
+
+    xml += "</LevelRules>\n";
+
+    std::wstring path = CMinecraftApp::sInstance.GetDebugRootPath() + L"LevelRules.xml";
+    char fileName[256];
+    int file = CreateFileA(wstringtofilename(path, fileName), 0x40000000, 0, NULL, 2, 0x10000000, 0);
+    if (file == -1)
+    {
+        __debugbreak();
+        return;
+    }
+
+    unsigned int bytesWritten = 0;
+    WriteFile(file, xml.c_str(), static_cast<unsigned int>(xml.length()), &bytesWritten, NULL);
+    CloseHandle(file);
+}
+
+ConsoleGameRules::EGameRuleType LevelRuleset::getActionType()
+{
+    return static_cast<ConsoleGameRules::EGameRuleType>(0x10);
+}

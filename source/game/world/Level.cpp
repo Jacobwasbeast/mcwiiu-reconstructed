@@ -6,7 +6,6 @@
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/BoundingBox.hpp"
-#include "game/core/CMinecraftApp.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
@@ -14,7 +13,6 @@
 #include "game/core/GameRules.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/LootTables.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -22,7 +20,6 @@
 #include "game/data/LevelStorage.hpp"
 #include "game/data/SavedData.hpp"
 #include "game/data/SavedDataStorage.hpp"
-#include "game/data/SavedData.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
 #include "game/entity/mob/MobCategory.hpp"
@@ -35,7 +32,6 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/LevelData.hpp"
-#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelSettings.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/WorldBorder.hpp"
@@ -2883,6 +2879,57 @@ bool Level::isInsideWorldBorder(boost::shared_ptr<Entity> entity)
     return entity->mX > minX && entity->mX < maxX && entity->mZ > minZ && entity->mZ < maxZ;
 }
 
+bool Level::checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr<Entity> entity)
+{
+    int minX = (int)std::floor(box->mMinX);
+    int maxX = (int)std::ceil(box->mMaxX);
+    int minY = (int)std::floor(box->mMinY);
+    int maxY = (int)std::ceil(box->mMaxY);
+    int minZ = (int)std::floor(box->mMinZ);
+    int maxZ = (int)std::ceil(box->mMaxZ);
+
+    if (!hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, true))
+    {
+        return false;
+    }
+
+    bool found = false;
+    Vec3* flow = Vec3::newTemp(0.0, 0.0, 0.0);
+
+    for (int x = minX; x < maxX; ++x)
+    {
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int z = minZ; z < maxZ; ++z)
+            {
+                BlockPos pos(x, y, z);
+                const BlockState* state = getBlockState(entity->mTickCache, pos);
+                Block* block = state->getBlock();
+
+                if (state->getMaterial() == material)
+                {
+                    int data = block->convertBlockStateToLegacyData(state);
+                    double surface = (double)(y + 1) - LiquidBlock::getHeightFromData(data);
+
+                    if (surface <= (double)maxY)
+                    {
+                        found = true;
+                        flow = block->handleEntityInside(this, pos, entity, flow);
+                    }
+                }
+            }
+        }
+    }
+
+    if (flow->length() > 0.0 && entity->isPushedByWater())
+    {
+        flow = flow->normalize();
+        entity->push(flow->x * 0.014, flow->y * 0.014, flow->z * 0.014);
+    }
+
+    return found;
+}
+
 float Level::getTimeOfDay(float partialTick)
 {
     long long dayTime = mLevelData->getDayTime();
@@ -3276,6 +3323,98 @@ int Level::getBestNeighborSignal(const BlockPos& pos)
     return signal;
 }
 
+boost::shared_ptr<Player> Level::getNearestPlayer(boost::shared_ptr<Entity> entity, double distance,
+                                                   double maxYDistance)
+{
+    return getNearestPlayer(entity, distance, false, maxYDistance);
+}
+
+boost::shared_ptr<Player> Level::getNearestPlayer(boost::shared_ptr<Entity> entity, double distance,
+                                                   bool includeCreative, double maxYDistance)
+{
+    if (entity == NULL)
+    {
+        return boost::shared_ptr<Player>();
+    }
+
+    boost::shared_ptr<Player> nearest;
+    double nearestDistance = -1.0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        boost::shared_ptr<Player> player = *it;
+        if (player == NULL || (!includeCreative && player->isCreative()))
+        {
+            continue;
+        }
+
+        double currentDistance = entity->distanceToSqr(player);
+        if ((distance < 0.0 || currentDistance < distance * distance)
+            && (maxYDistance < 0.0 || std::fabs(entity->mY - player->mY) <= maxYDistance)
+            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
+        {
+            nearest = player;
+            nearestDistance = currentDistance;
+        }
+    }
+    return nearest;
+}
+
+boost::shared_ptr<Player> Level::getNearestPlayer(double x, double y, double z, double distance,
+                                                   bool includeCreative, double maxYDistance)
+{
+    boost::shared_ptr<Player> nearest;
+    double nearestDistance = -1.0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        boost::shared_ptr<Player> player = *it;
+        if (player == NULL || (!includeCreative && player->isCreative()))
+        {
+            continue;
+        }
+
+        double currentDistance = player->distanceToSqr(x, y, z);
+        if ((distance < 0.0 || currentDistance < distance * distance)
+            && (maxYDistance < 0.0 || std::fabs(player->mY - y) <= maxYDistance)
+            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
+        {
+            nearest = player;
+            nearestDistance = currentDistance;
+        }
+    }
+    return nearest;
+}
+
+boost::shared_ptr<Player> Level::getNearestPlayerNotCreative(boost::shared_ptr<Entity> entity, double distance,
+                                                              double maxYDistance)
+{
+    return getNearestPlayer(entity, distance, false, maxYDistance);
+}
+
+boost::shared_ptr<Player> Level::getNearestPlayerPredicate(double x, double y, double z, double distance,
+                                                            const Predicate<boost::shared_ptr<Entity> >* predicate)
+{
+    boost::shared_ptr<Player> nearest;
+    double nearestDistance = -1.0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        boost::shared_ptr<Player> player = *it;
+        if (player == NULL || (predicate != NULL
+            && !predicate->apply(boost::static_pointer_cast<Entity>(player))))
+        {
+            continue;
+        }
+
+        double currentDistance = player->distanceToSqr(x, y, z);
+        if ((distance < 0.0 || currentDistance < distance * distance)
+            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
+        {
+            nearest = player;
+            nearestDistance = currentDistance;
+        }
+    }
+    return nearest;
+}
+
 void Level::setGameTime(long long value)
 {
     mLevelData->setGameTime(value);
@@ -3331,4 +3470,109 @@ unsigned char Level::getWeatherState()
         return 2;
     }
     return isRaining() ? 1 : 0;
+}
+
+bool Level::newPrimedTntAllowed()
+{
+    return true;
+}
+
+bool Level::shouldFreeze(const BlockPos& pos)
+{
+    return shouldFreeze(pos, true);
+}
+
+void Level::tickPendingTicks(bool runAll)
+{
+    (void)runAll;
+}
+
+void Level::fetchTicksInChunk(LevelChunk* chunk, bool runAll)
+{
+    (void)chunk;
+    (void)runAll;
+}
+
+void Level::fetchTicksInArea(BoundingBox* box, bool runAll)
+{
+    (void)box;
+    (void)runAll;
+}
+
+void Level::updateSleepingPlayerList()
+{
+}
+
+void* Level::getLootTables()
+{
+    return mLootTables;
+}
+
+bool Level::newFallingBlockAllowed()
+{
+    return true;
+}
+
+bool Level::explodeNextEnderCrystal()
+{
+    return true;
+}
+
+void Level::disconnect(bool save)
+{
+    (void)save;
+}
+
+void Level::checkSession()
+{
+    if (mLevelStorage != NULL)
+    {
+        mLevelStorage->checkSession();
+    }
+}
+
+void Level::broadcastEntityEvent(boost::shared_ptr<Entity> entity, unsigned char event, int data)
+{
+    (void)entity;
+    (void)event;
+    (void)data;
+}
+
+void Level::sendPacketToServer(boost::shared_ptr<Packet> packet)
+{
+    (void)packet;
+}
+
+boost::shared_ptr<Village> Level::getVillages()
+{
+    return mVillages;
+}
+
+BlockPos* Level::findNearestMapFeature(const std::wstring& feature, const BlockPos& pos, bool findUnexplored)
+{
+    if (mChunkSource == NULL)
+    {
+        return NULL;
+    }
+    return mChunkSource->findNearestMapFeature(this, feature, pos, findUnexplored);
+}
+
+bool Level::isHumidAt(const BlockPos& pos)
+{
+    return getBiome(pos)->isHumid();
+}
+
+int Level::getAuxValueForMap(PlayerUID uid, int dimension, const BlockPos& pos, int scale)
+{
+    return getAuxValueForMap(uid, dimension, pos.x, pos.z, scale);
+}
+
+void Level::blockEntityAddedExtra(boost::shared_ptr<BlockEntity> entity)
+{
+    (void)entity;
+}
+
+void Level::blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> entity)
+{
+    (void)entity;
 }

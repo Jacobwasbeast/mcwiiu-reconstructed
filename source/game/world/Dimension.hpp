@@ -1,0 +1,78 @@
+#ifndef GAME_WORLD_DIMENSION_HPP
+#define GAME_WORLD_DIMENSION_HPP
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/File.hpp"
+#include "game/util/AABB.hpp"
+#include "game/world/block/BlockPos.hpp"
+
+class BiomeSource;
+class Level;
+class LevelSource;
+class LevelType;
+class OldChunkStorage;
+class ServerPlayer;
+class SuperflatConfig;
+class Vec3;
+class WorldBorder;
+
+class Dimension
+{
+public:
+    Dimension();
+    virtual void init(Level* level);
+    virtual void init();
+    virtual void updateLightRamp();
+    virtual ~Dimension();
+    virtual LevelSource* createRandomLevelGenerator() const;
+    virtual LevelSource* createFlatLevelSource() const;
+    virtual OldChunkStorage* createStorage(File file);
+    virtual bool isValidSpawn(int x, int z) const;
+    virtual double getTimeOfDay(long long time, float partialTick) const;
+    virtual int getMoonPhase(long long time) const;
+    virtual bool isNaturalDimension();
+    virtual float* getSunriseColor(float celestialAngle, float timeOfDay);
+    virtual Vec3* getFogColor(float celestialAngle, float timeOfDay);
+    virtual bool mayRespawn() const;
+    virtual double getCloudHeight();
+    virtual bool hasGround();
+    virtual BlockPos* getSpawnPos() const;
+    virtual int getSpawnYPosition();
+    virtual bool isFoggyAt(int x, int z);
+    virtual WorldBorder* createWorldBorder(Level* level);
+    virtual void saveData();
+    virtual void tick();
+    virtual bool canUnloadChunk(int x, int z);
+    virtual int getType() const = 0;
+    virtual int getXZSize();
+    virtual AABB* getPlayerConstraints(const BlockPos& pos);
+    virtual bool inPlayerConstraints(const BlockPos& pos);
+    virtual bool containsChunk(int x, int z);
+    virtual int getBlockLightColour();
+
+    double getClearColorScale();
+    BiomeSource* getBiomeSource();
+    unsigned char isUltraWarm();
+    unsigned char isHasCeiling();
+    unsigned char isHasSkyLight();
+    float* getBrightnessRamp();
+    void onPlayerJoin(const boost::shared_ptr<ServerPlayer>& player);
+    void onPlayerLeave(const boost::shared_ptr<ServerPlayer>& player);
+    int getSeaLevel();
+
+protected:
+    Level* mLevel;
+    LevelType* mLevelType;
+    SuperflatConfig* mSuperflatConfig;
+    BiomeSource* mBiomeSource;
+    unsigned char mUltraWarm;
+    unsigned char mHasCeiling;
+    unsigned char mHasSkyLight;
+    float* mBrightnessRamp;
+    float mSunriseColor[4];
+    int mSeaLevel;
+    int mXZSize;
+};
+
+#endif

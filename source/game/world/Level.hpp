@@ -7,9 +7,14 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
 
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/util/AABB.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockProperties.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/util/Random.hpp"
@@ -51,14 +56,12 @@ class LevelGenerationOptions;
 class LevelType;
 class LevelSource;
 class BiomeSource;
-struct CriticalSection;
-enum ePARTICLE_TYPE;
-namespace SoundSource { enum ESoundSource; }
-template<typename T> struct arrayWithLength;
+class Village;
 
 class Level : public LevelSource
 {
 public:
+    typedef int ESPAWN_TYPE;
     class RangeModifier
     {
     public:
@@ -108,6 +111,7 @@ public:
     bool reallyHasChunk(int chunkX, int chunkZ);
     bool reallyHasChunkAt(const BlockPos& pos);
     bool reallyHasChunksAt(const BlockPos& from, const BlockPos& to);
+    bool reallyHasChunksAt(const BlockPos& pos, int radius);
     bool hasChunksAt(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, bool allowEmpty);
     LevelChunk* getChunkAt(int x, int z);
     LevelChunk* getChunkLoadedOrUnloadedAt(int x, int z);
@@ -132,6 +136,7 @@ public:
     void observedNeighborChanged(const BlockPos& pos, Block* block, const BlockPos& fromPos);
     void updateObservingBlocksAt(const BlockPos& pos, Block* block);
     void updateNeighborsAt(const BlockPos& pos, Block* block, bool updateObservers);
+    void updateNeighborsOfNeighborsAt(const BlockPos& pos, Block* block);
     void blockUpdated(const BlockPos& pos, Block* block, bool updateObservers);
     bool internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockState* state, int flags, bool forceUpdate);
     bool setData(const BlockPos& pos, int data, int flags, bool forceUpdate);
@@ -142,7 +147,8 @@ public:
     void levelEvent(int type, const BlockPos& pos, int data);
     bool destroyBlock(const BlockPos& pos, bool dropResources);
     bool setBlockAndUpdate(const BlockPos& pos, const BlockState* state);
-    void sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags);
+    void sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate);
+    void playMusic(double x, double y, double z, const std::wstring& sound, float volume);
     void lightColumnChanged(int x, int z, int fromY, int toY);
     void updateNeighborsAtExceptFromFacing(const BlockPos& pos, Block* block, const Direction* skipSide);
     bool isBlockToBeTickedAt(const BlockPos& pos, Block* block);
@@ -204,6 +210,7 @@ public:
     void addListener(LevelListener* listener);
     void removeListener(LevelListener* listener);
     bool isInsideWorldBorder(boost::shared_ptr<Entity> entity);
+    bool checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr<Entity> entity);
     float getTimeOfDay(float partialTick);
     float getRainLevel(float partialTick);
     float getThunderLevel(float partialTick);
@@ -235,6 +242,126 @@ public:
     bool isFlatLand();
     bool AllPlayersAreSleeping();
     bool isSpawnChunk(int chunkX, int chunkZ);
+    void gatherStats();
+    boost::shared_ptr<Player> getNearestAttackablePlayer(boost::shared_ptr<Entity> entity, double distance, double angle);
+    bool isWithinSpawnChunks(const BlockPos& pos);
+    int getUnsavedChunkCount();
+    void incrementUnsavedChunkCount();
+    void decrementUnsavedChunkCount();
+    void tick(boost::shared_ptr<Entity> entity);
+    bool addBlockEntity(boost::shared_ptr<BlockEntity> entity);
+    void AddToBlockEntityList(boost::shared_ptr<BlockEntity> entity);
+    void tickEntities();
+    void tickServerPlayers();
+    void addAllPendingBlockEntities(std::vector<boost::shared_ptr<BlockEntity> >& entities);
+    void tick(boost::shared_ptr<Entity> entity, bool updateChunk);
+    bool isUnobstructed(const AABB* box, boost::shared_ptr<Entity> entity);
+    bool isUnobstructed(const AABB* box);
+    bool containsAnyBlocks(AABB* box);
+    bool containsAnyLiquid(AABB* box);
+    bool containsAnysolidBlocking(AABB* box);
+    bool containsAnyLiquid_NoLoad(AABB* box);
+    bool containsFireBlock(AABB* box);
+    bool containsFireBlock(Entity* entity, AABB* box);
+    bool containsMaterial(AABB* box, Material* material);
+    bool isInLava(Entity* entity, AABB* box);
+    bool containsLiquid(AABB* box, Material* material);
+    bool canProvideSupport(const BlockPos& pos, const Direction* direction, EBlockSupportType supportType);
+    bool isUnderWater(const BlockPos& pos, const BlockState* state);
+    bool isUnderWater(const BlockPos& pos, int x, int z);
+    bool isTouchingMaterial(const BlockPos& pos, const Material* material);
+    void explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
+                 bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damage);
+    float getSeenPercent(Vec3* source, AABB* box);
+    bool extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos, const Direction* direction);
+    void gatherChunkSourceStats();
+    boost::shared_ptr<BlockEntity> getPendingBlockEntityAt(const BlockPos& pos);
+    boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos);
+    void setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
+    void removeBlockEntity(const BlockPos& pos);
+    void markForRemoval(boost::shared_ptr<BlockEntity> entity);
+    bool isFullAABBBlock(const BlockPos& pos);
+    bool isSolidBlockingBlockInLoadedChunk(const BlockPos& pos, bool allowEmpty);
+    bool isSolidBlockingBlock(const BlockPos& pos);
+    bool isConsideredSolidBlock(int x, int y, int z);
+    bool isConsideredSolidBlock(const BlockPos& pos);
+    void updateSkyBrightness();
+    void tick();
+    void prepareWeather();
+    void tickWeather(bool blockEvents);
+    void buildAndPrepareChunksToPoll();
+    void tickClientSideBlocks(int x, int z, LevelChunk* chunk);
+    void tickBlocks();
+    void instaTick(const BlockPos& pos, const BlockState* state, Random& random);
+    bool shouldFreeze(const BlockPos& pos);
+    int calcSnowBlockDepth(const BlockPos& pos, int depth);
+    bool canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool allowExisting, int* depth);
+    bool tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool allowExisting);
+    void tickPendingTicks(bool runAll);
+    void fetchTicksInChunk(LevelChunk* chunk, bool runAll);
+    void fetchTicksInArea(BoundingBox* box, bool runAll);
+    std::vector<boost::shared_ptr<Player> >* getPlayers(unsigned long long flags,
+                                                        const Predicate<boost::shared_ptr<Player> >* predicate);
+    std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type,
+        const AABB* box, const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved);
+    std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type, const AABB* box);
+    bool hasEntitiesOfClass(const std::type_info& type, const AABB* box,
+                            const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved);
+    boost::shared_ptr<Entity> getClosestEntityOfClass(const std::type_info& type, const AABB* box,
+                                                      boost::shared_ptr<Entity> excluded);
+    boost::shared_ptr<Entity> getEntity(int id);
+    std::vector<boost::shared_ptr<Entity> >* getAllEntities();
+    void blockEntityChanged(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
+    int countInstanceOf(unsigned long long type, bool includeRemoved, unsigned int* count, unsigned int* result);
+    int countInstanceOfInRange(unsigned long long type, bool includeRemoved, int x, int y, int z, int range);
+    void addEntities(std::vector<boost::shared_ptr<Entity> >* entities);
+    void removeEntities(std::vector<boost::shared_ptr<Entity> >* entities);
+    bool mayPlace(Block* block, const BlockPos& pos, bool replaceable, const Direction* direction,
+                  boost::shared_ptr<Entity> entity);
+    boost::shared_ptr<Player> getNearestPlayerPredicate(boost::shared_ptr<Entity> entity, double distance,
+        const Predicate<boost::shared_ptr<Entity> >* predicate);
+    boost::shared_ptr<Player> getNearestPlayerPredicate(double x, double y, double z, double distance,
+        const Predicate<boost::shared_ptr<Entity> >* predicate);
+    boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z, double distance,
+                                               bool includeCreative, double maxYDistance);
+    boost::shared_ptr<Player> getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance);
+    bool hasNearPlayer(double x, double y, double z, double distance);
+    boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z);
+    boost::shared_ptr<Player> getNearestAttackablePlayer(double x, double y, double z, double distance,
+        double maxYDistance, const RangeModifier* modifier,
+        const Predicate<boost::shared_ptr<Entity> >* predicate);
+    boost::shared_ptr<Player> getNearestAttackablePlayer(const BlockPos& pos, double distance, double angle);
+    boost::shared_ptr<Player> getPlayerByName(const std::wstring& name);
+    boost::shared_ptr<Player> getPlayerByUUID(const std::wstring& uuid);
+    void disconnect(bool save);
+    void checkSession();
+    void ensureAdded(boost::shared_ptr<Entity> entity);
+    bool mayInteract(boost::shared_ptr<Player> player, const BlockPos& pos, Block* block);
+    void broadcastEntityEvent(boost::shared_ptr<Entity> entity, unsigned char event, int data);
+    void blockEvent(const BlockPos& pos, Block* block, int event, int data);
+    void updateSleepingPlayerList();
+    int getSaveVersion();
+    int getOriginalSaveVersion();
+    bool isHumidAt(const BlockPos& pos);
+    void createFireworks(double x, double y, double z, double vx, double vy, double vz, CompoundTag* tag);
+    void updateNeighbourForOutputSignal(const BlockPos& pos, Block* block);
+    boost::shared_ptr<Village> getVillages();
+    int getSpecialMultiplier(int type);
+    void sendPacketToServer(boost::shared_ptr<Packet> packet);
+    void* getLootTables();
+    BlockPos* findNearestMapFeature(const std::wstring& feature, const BlockPos& pos, bool findUnexplored);
+    int getAuxValueForMap(PlayerUID uid, int dimension, const BlockPos& pos, int scale);
+    LevelChunk* getCacheChunkDirect(int x, int z);
+    bool isChunkPostPostProcessed(int x, int z);
+    bool isChunkFinalised(int x, int z);
+    void refreshLevelInfoFromLevelGen();
+    void refreshFromLevelGen();
+    bool canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType);
+    void removeAllEntities(bool players, bool mobs, bool items, bool vehicles, int x, int y, int z, int radius);
+    void blockEntityAddedExtra(boost::shared_ptr<BlockEntity> entity);
+    void blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> entity);
+    virtual bool newFallingBlockAllowed();
+    virtual bool explodeNextEnderCrystal();
     bool getHasBeenInCreative();
     bool isGenerateMapFeatures();
     BlockPos getTopRainBlockPos(const BlockPos& pos);
@@ -266,6 +393,10 @@ public:
     bool hasSignal(const BlockPos& pos, const Direction* direction);
     bool hasNeighborSignal(const BlockPos& pos);
     int getBestNeighborSignal(const BlockPos& pos);
+    boost::shared_ptr<Player> getNearestPlayer(boost::shared_ptr<Entity> entity, double distance, bool includeCreative, double maxYDistance);
+    boost::shared_ptr<Player> getNearestPlayer(boost::shared_ptr<Entity> entity, double distance, double maxYDistance);
+    boost::shared_ptr<Player> getNearestPlayerNotCreative(boost::shared_ptr<Entity> entity, double distance,
+        double maxYDistance);
     void setGameTime(long long value);
     long long getGameTime();
     long long getDayTime();
@@ -274,21 +405,26 @@ public:
     bool ShouldForceTimeUpdate();
     BlockPos getSharedSpawnPos();
     ChunkSource* getChunkSource();
+    PathNavigationListener* getPathNavigationListener();
     boost::shared_ptr<LevelStorage> getLevelStorage();
     unsigned char getWeatherState();
+    virtual bool newPrimedTntAllowed();
 private:
     boost::shared_ptr<LevelStorage> mLevelStorage;
     LevelData* mLevelData;
     Dimension* mDimension;
     LevelChunk* mChunkSource;
+public:
     Random* mRandom;
+private:
     PathNavigationListener* mPathListener;
     WorldBorder* mWorldBorder;
     SavedDataStorage* mSavedDataStorage;
     unsigned int* mLightUpdateQueue;
-    CriticalSection mEntityMutex;
-    CriticalSection mBlockEntityMutex;
-    CriticalSection mLightMutex;
+    OSFastMutex mEntityMutex;
+    OSFastMutex mBlockEntityMutex;
+    OSFastMutex mLightMutex;
+    boost::shared_ptr<Village> mVillages;
     std::vector<boost::shared_ptr<Entity> > mEntities;
     std::vector<boost::shared_ptr<Entity> > mEntitiesToRemove;
     std::vector<boost::shared_ptr<Entity> > mGlobalEntities;
@@ -304,7 +440,9 @@ private:
     float mRainLevel;
     float mThunderLevel;
     float mOldThunderLevel;
+public:
     bool mIsClientSide;
+private:
     bool mScheduledUpdatesAreImmediate;
     bool mSpawnPeacefulMobs;
     bool mSpawnHostileMobs;

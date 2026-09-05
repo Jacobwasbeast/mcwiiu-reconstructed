@@ -1,0 +1,971 @@
+#include "game/world/LevelGenerationOptions.hpp"
+
+#include <climits>
+
+#include <boost/unordered_set.hpp>
+
+#include "game/core/BoundingBox.hpp"
+#include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/ConsoleSchematicFile.hpp"
+#include "game/core/DLCPack.hpp"
+#include "game/core/DataInputStream.hpp"
+#include "game/core/GameRulesSource.hpp"
+#include "game/core/L10N.hpp"
+#include "game/data/GameRuleSaveInterface.hpp"
+#include "game/data/StringTable.hpp"
+#include "game/minigame/ApplySchematicRuleDefinition.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/biome/BiomeOverride.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/generation/ConsoleGenerateStructure.hpp"
+
+template<typename T>
+std::wstring _toString(T value);
+
+template<typename T>
+T _fromString(const std::wstring& value);
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
+int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
+                void* securityAttributes, unsigned int creationDisposition,
+                unsigned int flagsAndAttributes, int templateFile);
+unsigned int GetFileSize(int file, unsigned int* highSize);
+int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, void* overlapped);
+int CloseHandle(int file);
+
+LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
+{
+    mPack = pack;
+    mBaseSaveData = NULL;
+    mBaseSaveDataSize = 0;
+    mBaseSaveRoot = L"buckets_";
+    mHasLevelSeed = false;
+    mLevelSeed = 0;
+    mUseFlatWorld = false;
+    mSpawnPos = NULL;
+    mLevelHasBeenInCreative = true;
+    mMapSize = -1;
+    mThemeId = -1;
+    mCloudHeight = 128;
+    mFogDistance = -1;
+    mDayTime = 6000;
+    mMinYCalculated = false;
+    mMinY = INT_MAX;
+    mRequiresGameRules = false;
+    mRequiredGameRules = NULL;
+    mStringTable = NULL;
+    mPackMountPending = false;
+    mCRCValid = false;
+}
+
+LevelGenerationOptions::~LevelGenerationOptions()
+{
+    clearSchematics();
+    delete mSpawnPos;
+
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        delete *it;
+    }
+
+    for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
+    {
+        delete *it;
+    }
+
+    for (std::vector<BiomeOverride*>::iterator it = mBiomeOverrides.begin(); it != mBiomeOverrides.end(); ++it)
+    {
+        delete *it;
+    }
+
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    {
+        delete *it;
+    }
+
+    if (mStringTable != NULL && !isTutorial())
+    {
+        delete mStringTable;
+    }
+
+    if (isFromSave() && mGameRulesSource != NULL)
+    {
+        delete mGameRulesSource;
+    }
+}
+
+unsigned int LevelGenerationOptions::getThemeId() const
+{
+    return mThemeId;
+}
+
+unsigned short LevelGenerationOptions::GetThemeFromUniqueId(int uniqueId)
+{
+    return uniqueId & 0xffff;
+}
+
+unsigned int LevelGenerationOptions::CreateUniqueId(int themeId, int mapSize)
+{
+    return mapSize << 16 | themeId & 0xffff;
+}
+
+unsigned int LevelGenerationOptions::getUniqueId()
+{
+    return CreateUniqueId(mThemeId, mMapSize);
+}
+
+GameRulesSource* LevelGenerationOptions::info()
+{
+    return mGameRulesSource;
+}
+
+void LevelGenerationOptions::setSrc(eSrc source)
+{
+    mSource = source;
+}
+
+LevelGenerationOptions::eSrc LevelGenerationOptions::getSrc()
+{
+    return mSource;
+}
+
+bool LevelGenerationOptions::isLocal()
+{
+    return getSrc() == eSrc_Local || getSrc() == eSrc_Tutorial;
+}
+
+bool LevelGenerationOptions::isTutorial()
+{
+    return getSrc() == eSrc_Tutorial;
+}
+
+bool LevelGenerationOptions::isFromSave()
+{
+    return getSrc() == eSrc_Save;
+}
+
+bool LevelGenerationOptions::isFromDLC()
+{
+    return getSrc() == eSrc_DLC;
+}
+
+bool LevelGenerationOptions::requiresTexturePack()
+{
+    return info()->requiresTexturePack();
+}
+
+unsigned int LevelGenerationOptions::getTexturePackId()
+{
+    return info()->getTexturePackId();
+}
+
+const wchar_t* LevelGenerationOptions::getString(const std::wstring& key)
+{
+    if (mStringTable == NULL)
+    {
+        return L"";
+    }
+
+    const wchar_t* value = mStringTable->getString(key);
+    if (key == L"IDS_DISPLAY_NAME" && value[0] == L'\0')
+    {
+        return mStringTable->getString(L"title");
+    }
+
+    return value;
+}
+
+std::wstring LevelGenerationOptions::getDefaultSaveName()
+{
+    switch (getSrc())
+    {
+    case eSrc_Save:
+    case eSrc_DLC:
+    case eSrc_Local:
+        return getString(info()->getDefaultSaveName());
+    case eSrc_Tutorial:
+        return L10N::GetString(0xe6c3646e);
+    default:
+        return L"";
+    }
+}
+
+const wchar_t* LevelGenerationOptions::getWorldName()
+{
+    switch (getSrc())
+    {
+    case eSrc_Save:
+    case eSrc_DLC:
+    case eSrc_Local:
+        return getString(info()->getWorldName());
+    case eSrc_Tutorial:
+        return L10N::GetString(0x4d3c7293);
+    default:
+        return L"";
+    }
+}
+
+std::wstring LevelGenerationOptions::getWorldNameKey()
+{
+    switch (getSrc())
+    {
+    case eSrc_Save:
+    case eSrc_DLC:
+    case eSrc_Local:
+        return info()->getWorldName();
+    default:
+        return L"";
+    }
+}
+
+const wchar_t* LevelGenerationOptions::getDisplayName()
+{
+    switch (getSrc())
+    {
+    case eSrc_Save:
+    case eSrc_DLC:
+    case eSrc_Local:
+        return getString(info()->getDisplayName());
+    default:
+        return L"";
+    }
+}
+
+const wchar_t* LevelGenerationOptions::getWorldDescription()
+{
+    return getString(mWorldDescription);
+}
+
+const wchar_t* LevelGenerationOptions::getWorldPreviewImage()
+{
+    return mWorldPreviewImage.c_str();
+}
+
+std::wstring LevelGenerationOptions::getGrfPath()
+{
+    return info()->getGrfPath();
+}
+
+bool LevelGenerationOptions::requiresBaseSave()
+{
+    return info()->requiresBaseSave();
+}
+
+void LevelGenerationOptions::setBaseSaveRoot(const std::wstring& root)
+{
+    mBaseSaveRoot = root;
+}
+
+std::wstring LevelGenerationOptions::getBaseSaveRoot()
+{
+    return mBaseSaveRoot;
+}
+
+std::wstring LevelGenerationOptions::getBaseSavePath()
+{
+    return info()->getBaseSavePath();
+}
+
+bool LevelGenerationOptions::isGameModeLobby()
+{
+    return info()->isGameModeLobby();
+}
+
+unsigned int LevelGenerationOptions::getMapSize() const
+{
+    return mMapSize;
+}
+
+void LevelGenerationOptions::setGrSource(GameRulesSource* source)
+{
+    mGameRulesSource = source;
+}
+
+void LevelGenerationOptions::setRequiresTexturePack(bool required)
+{
+    info()->setRequiresTexturePack(required);
+}
+
+void LevelGenerationOptions::setTexturePackId(unsigned int id)
+{
+    info()->setTexturePackId(id);
+}
+
+void LevelGenerationOptions::setDefaultSaveName(const std::wstring& name)
+{
+    info()->setDefaultSaveName(name);
+}
+
+void LevelGenerationOptions::setWorldName(const std::wstring& name)
+{
+    info()->setWorldName(name);
+}
+
+void LevelGenerationOptions::setDisplayName(const std::wstring& name)
+{
+    info()->setDisplayName(name);
+}
+
+void LevelGenerationOptions::setWorldDescription(const std::wstring& description)
+{
+    mWorldDescription = description;
+}
+
+void LevelGenerationOptions::setWorldPreviewImage(const std::wstring& image)
+{
+    mWorldPreviewImage = image.substr(0, image.length() - 4);
+}
+
+void LevelGenerationOptions::setGrfPath(const std::wstring& path)
+{
+    info()->setGrfPath(path);
+}
+
+void LevelGenerationOptions::setBaseSavePath(const std::wstring& path)
+{
+    info()->setBaseSavePath(path);
+}
+
+void LevelGenerationOptions::setIsGameModeLobby(bool lobby)
+{
+    info()->setIsGameModeLobby(lobby);
+}
+
+bool LevelGenerationOptions::ready()
+{
+    return info()->ready();
+}
+
+void LevelGenerationOptions::reset_finish()
+{
+    if (isFromDLC())
+    {
+        mLoadedData = false;
+    }
+}
+
+bool LevelGenerationOptions::requiresGameRules()
+{
+    return mRequiresGameRules;
+}
+
+LevelRuleset* LevelGenerationOptions::getRequiredGameRules()
+{
+    return mRequiredGameRules;
+}
+
+void LevelGenerationOptions::reset_start()
+{
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        (*it)->reset();
+    }
+}
+
+void LevelGenerationOptions::loadGameRulesHeaders(DLCPack* pack, StringTable* table, LevelGenerationOptions* options)
+{
+    if (pack == NULL || options == NULL)
+    {
+        return;
+    }
+
+    options->loadStringTable(table);
+}
+
+unsigned int LevelGenerationOptions::packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags)
+{
+    LevelGenerationOptions* options = static_cast<LevelGenerationOptions*>(data);
+    if (options == NULL)
+    {
+        return 0;
+    }
+
+    options->mPackMountPending = false;
+    if (mounted == 0)
+    {
+        options->loadGameRulesHeaders(options->mPack, options->mStringTable, options);
+        if (options->requiresBaseSave() && !options->hasBaseSaveData())
+        {
+            options->loadBaseSaveData();
+        }
+    }
+    options->setLoadedData();
+    return 0;
+}
+
+void LevelGenerationOptions::loadBaseSaveData()
+{
+    if (mPack == NULL)
+    {
+        loadGameRulesHeaders(NULL, mStringTable, this);
+    }
+    else if (mPack->GetDLCMountIndex() == static_cast<unsigned int>(-1))
+    {
+        loadGameRulesHeaders(mPack, mStringTable, this);
+    }
+
+    if (!requiresBaseSave())
+    {
+        setLoadedData();
+        return;
+    }
+
+    std::wstring path = getBaseSavePath();
+    if (!path.empty() && !hasBaseSaveData())
+    {
+        setBaseSaveData(File(path));
+    }
+    setLoadedData();
+}
+
+void LevelGenerationOptions::deleteBaseSaveData()
+{
+    delete[] mBaseSaveData;
+    mBaseSaveData = NULL;
+    mBaseSaveDataSize = 0;
+}
+
+void LevelGenerationOptions::setBaseSaveData(unsigned char* data, unsigned int size)
+{
+    if (mBaseSaveData != NULL)
+    {
+        deleteBaseSaveData();
+    }
+
+    mBaseSaveData = data;
+    mBaseSaveDataSize = size;
+}
+
+void LevelGenerationOptions::setBaseSaveData(File file)
+{
+    if (!file.exists())
+    {
+        return;
+    }
+
+    char fileName[256];
+    int handle = CreateFileA(wstringtofilename(file.getPath(), fileName), 0x80000000, 0, NULL, 3, 0x8000000, 0);
+    if (handle != -1)
+    {
+        unsigned int size = GetFileSize(handle, NULL);
+        unsigned char* data = new unsigned char[size];
+        unsigned int bytesRead;
+        if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
+        {
+            CMinecraftApp::sInstance.FatalLoadError(L"<LevelGenerationOptions@%d> Fail", __LINE__, fileName);
+        }
+        CloseHandle(handle);
+        setBaseSaveData(data, size);
+    }
+}
+
+unsigned char* LevelGenerationOptions::getBaseSaveData(unsigned int& size)
+{
+    size = mBaseSaveDataSize;
+    return mBaseSaveData;
+}
+
+bool LevelGenerationOptions::hasBaseSaveData()
+{
+    return mBaseSaveDataSize != 0 && mBaseSaveData != NULL;
+}
+
+bool LevelGenerationOptions::hasLoadedData()
+{
+    return mLoadedData;
+}
+
+void LevelGenerationOptions::setLoadedData()
+{
+    mLoadedData = true;
+}
+
+void LevelGenerationOptions::clearSchematics()
+{
+    for (SchematicFileMap::iterator it = mSchematicFiles.begin(); it != mSchematicFiles.end(); ++it)
+    {
+        delete it->second;
+    }
+
+    mSchematicFiles.clear();
+}
+
+unsigned int LevelGenerationOptions::getParentPackId()
+{
+    if (mPack != NULL)
+    {
+        return mPack->GetPackId();
+    }
+
+    return 0;
+}
+
+void LevelGenerationOptions::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
+{
+    unsigned int attributeCount = 5;
+    if (mSpawnPos != NULL)
+    {
+        attributeCount += 3;
+    }
+    if (mHasLevelSeed)
+    {
+        ++attributeCount;
+    }
+
+    GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + attributeCount);
+
+    if (mSpawnPos != NULL)
+    {
+        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(38), _toString(mSpawnPos->x));
+        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(39), _toString(mSpawnPos->y));
+        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(40), _toString(mSpawnPos->z));
+    }
+    if (mHasLevelSeed)
+    {
+        saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(14), _toString(mLevelSeed));
+    }
+
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(15), _toString(mUseFlatWorld));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(52), _toString(mLevelHasBeenInCreative));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(53), _toString(mCloudHeight));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(54), _toString(mFogDistance));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(55), _toString(mDayTime));
+}
+
+void LevelGenerationOptions::getChildren(std::vector<GameRuleDefinition*>* children)
+{
+    for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
+    {
+        children->push_back(*it);
+    }
+
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        if (!(*it)->isComplete())
+        {
+            children->push_back(*it);
+        }
+    }
+
+    for (std::vector<BiomeOverride*>::iterator it = mBiomeOverrides.begin(); it != mBiomeOverrides.end(); ++it)
+    {
+        children->push_back(*it);
+    }
+
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    {
+        children->push_back(*it);
+    }
+}
+
+GameRuleDefinition* LevelGenerationOptions::addChild(ConsoleGameRules::EGameRuleType type)
+{
+    GameRuleDefinition* child = NULL;
+
+    if (type == 2)
+    {
+        ApplySchematicRuleDefinition* rule = new ApplySchematicRuleDefinition(this);
+        mSchematicRules.push_back(rule);
+        child = rule;
+    }
+    else if (type == 3)
+    {
+        ConsoleGenerateStructure* structure = new ConsoleGenerateStructure();
+        mStructures.push_back(structure);
+        child = structure;
+    }
+    else if (type == 8)
+    {
+        BiomeOverride* biomeOverride = new BiomeOverride();
+        mBiomeOverrides.push_back(biomeOverride);
+        child = biomeOverride;
+    }
+    else if (type == 9)
+    {
+        StartFeature* feature = new StartFeature();
+        mFeatures.push_back(feature);
+        child = feature;
+    }
+
+    return child;
+}
+
+void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::wstring& value)
+{
+    if (name == L"seed")
+    {
+        mHasLevelSeed = true;
+        mLevelSeed = _fromString<long long>(value);
+        return;
+    }
+
+    if (name == L"spawnX" || name == L"spawnY" || name == L"spawnZ")
+    {
+        BlockPos spawn;
+        if (mSpawnPos != NULL)
+        {
+            spawn = *mSpawnPos;
+            delete mSpawnPos;
+        }
+
+        if (name == L"spawnX") spawn.x = _fromString<int>(value);
+        if (name == L"spawnY") spawn.y = _fromString<int>(value);
+        if (name == L"spawnZ") spawn.z = _fromString<int>(value);
+        mSpawnPos = new BlockPos(spawn);
+        return;
+    }
+
+    if (name == L"flatworld")
+    {
+        if (value == L"true") mUseFlatWorld = true;
+        return;
+    }
+    if (name == L"saveName")
+    {
+        setDefaultSaveName(value);
+        return;
+    }
+    if (name == L"worldName")
+    {
+        setWorldName(value);
+        return;
+    }
+    if (name == L"displayName")
+    {
+        setDisplayName(value);
+        return;
+    }
+    if (name == L"worldDescription")
+    {
+        setWorldDescription(value);
+        return;
+    }
+    if (name == L"worldPreviewImage")
+    {
+        setWorldPreviewImage(value);
+        return;
+    }
+    if (name == L"texturePackId")
+    {
+        setTexturePackId(_fromString<unsigned int>(value));
+        setRequiresTexturePack(true);
+        return;
+    }
+    if (name == L"texturePackRequired")
+    {
+        if (value == L"false") setRequiresTexturePack(false);
+        return;
+    }
+    if (name == L"isTutorial")
+    {
+        if (value == L"true") setSrc(eSrc_Tutorial);
+        return;
+    }
+    if (name == L"baseSaveName")
+    {
+        setBaseSavePath(value);
+        return;
+    }
+    if (name == L"hasBeenInCreative")
+    {
+        mLevelHasBeenInCreative = _fromString<bool>(value);
+        return;
+    }
+    if (name == L"mapSize")
+    {
+        mMapSize = _fromString<int>(value);
+        return;
+    }
+    if (name == L"themeId")
+    {
+        mThemeId = _fromString<int>(value);
+        return;
+    }
+    if (name == L"cloudHeight")
+    {
+        mCloudHeight = _fromString<int>(value);
+        return;
+    }
+    if (name == L"fogDistance")
+    {
+        mFogDistance = _fromString<int>(value);
+        return;
+    }
+    if (name == L"dayTime")
+    {
+        mDayTime = _fromString<int>(value);
+        return;
+    }
+
+    GameRuleDefinition::addAttribute(name, value);
+}
+
+bool LevelGenerationOptions::hasLevelSeed()
+{
+    return mHasLevelSeed;
+}
+
+long long LevelGenerationOptions::getLevelSeed()
+{
+    return mLevelSeed;
+}
+
+bool LevelGenerationOptions::getLevelHasBeenInCreative()
+{
+    return mLevelHasBeenInCreative;
+}
+
+BlockPos* LevelGenerationOptions::getSpawnPos()
+{
+    return mSpawnPos;
+}
+
+bool LevelGenerationOptions::getuseFlatWorld()
+{
+    return mUseFlatWorld;
+}
+
+int LevelGenerationOptions::getCloudHeight()
+{
+    return mCloudHeight;
+}
+
+int LevelGenerationOptions::getFogDistance()
+{
+    return mFogDistance;
+}
+
+int LevelGenerationOptions::getDayTime()
+{
+    return mDayTime;
+}
+
+unsigned int LevelGenerationOptions::GetMapSizeFromUniqueId(int uniqueId)
+{
+    return uniqueId >> 16;
+}
+
+ConsoleSchematicFile* LevelGenerationOptions::getSchematicFile(const std::wstring& name) const
+{
+    SchematicFileMap::const_iterator it = mSchematicFiles.find(name);
+    return it != mSchematicFiles.end() ? it->second : NULL;
+}
+
+void LevelGenerationOptions::processSchematics(LevelChunk* chunk)
+{
+    PIXBeginNamedEvent(0.0f, "Processing schematics for chunk (%d,%d)", chunk->x, chunk->z);
+
+    int minX = chunk->x * 16;
+    int minZ = chunk->z * 16;
+    AABB* chunkBox = AABB::newTemp(minX, 0.0, minZ, minX + 16, 256.0, minZ + 16);
+
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        (*it)->processSchematic(chunkBox, chunk);
+    }
+
+    for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
+    {
+        ConsoleGenerateStructure* structure = *it;
+        if (structure->getBoundingBox()->intersects(minX, minZ, minX + 15, minZ + 15))
+        {
+            Random random;
+            BoundingBox* box = new BoundingBox(minX, minZ, minX + 15, minZ + 15);
+            structure->postProcess(chunk->level, random, box);
+            delete box;
+        }
+    }
+
+    PIXEndNamedEvent();
+}
+
+void LevelGenerationOptions::processSchematicsLighting(LevelChunk* chunk)
+{
+    PIXBeginNamedEvent(0.0f, "Processing schematics (lighting) for chunk (%d,%d)", chunk->x, chunk->z);
+
+    int minX = chunk->x * 16;
+    int minZ = chunk->z * 16;
+    AABB* chunkBox = AABB::newTemp(minX, 0.0, minZ, minX + 16, 256.0, minZ + 16);
+
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        (*it)->processSchematicLighting(chunkBox, chunk);
+    }
+
+    PIXEndNamedEvent();
+}
+
+bool LevelGenerationOptions::checkIntersects(const BlockPos& min, const BlockPos& max)
+{
+    PIXBeginNamedEvent(0.0f, "Check Intersects");
+
+    if (!mMinYCalculated)
+    {
+        for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+        {
+            int minY = (*it)->getMinY();
+            if (minY < mMinY) mMinY = minY;
+        }
+        for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
+        {
+            int minY = (*it)->getMinY();
+            if (minY < mMinY) mMinY = minY;
+        }
+        mMinYCalculated = true;
+    }
+
+    if (mMinY > max.y)
+    {
+        return false;
+    }
+
+    bool intersects = false;
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end() && !intersects; ++it)
+    {
+        intersects = (*it)->checkIntersects(min, max);
+    }
+    for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end() && !intersects; ++it)
+    {
+        intersects = (*it)->checkIntersects(min, max);
+    }
+
+    PIXEndNamedEvent();
+    return intersects;
+}
+
+void LevelGenerationOptions::setCRCIsValid(bool valid)
+{
+    mCRCValid = valid;
+}
+
+bool LevelGenerationOptions::isCRCValid()
+{
+    return mCRCValid;
+}
+
+ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstring& name, unsigned char* data, unsigned int size)
+{
+    SchematicFileMap::iterator found = mSchematicFiles.find(name);
+    if (found != mSchematicFiles.end())
+    {
+        ++found->second->mRefCount;
+        return found->second;
+    }
+
+    ByteArrayInputStream byteStream(arrayWithLength<unsigned char>(data, size));
+    DataInputStream input(&byteStream);
+    ConsoleSchematicFile* schematic = new ConsoleSchematicFile();
+    schematic->load(&input);
+    mSchematicFiles[name] = schematic;
+    return schematic;
+}
+
+void LevelGenerationOptions::setRequiredGameRules(LevelRuleset* ruleset)
+{
+    mRequiredGameRules = ruleset;
+    mRequiresGameRules = true;
+}
+
+void LevelGenerationOptions::getBiomeOverride(int biome, Biome::BlockPair* top, Biome::BlockPair* filler)
+{
+    for (std::vector<BiomeOverride*>::iterator it = mBiomeOverrides.begin(); it != mBiomeOverrides.end(); ++it)
+    {
+        if ((*it)->isBiome(biome))
+        {
+            (*it)->getBlockValues(top, filler);
+            return;
+        }
+    }
+}
+
+bool LevelGenerationOptions::isFeatureChunk(int chunkX, int chunkZ, StructureFeature::EFeatureTypes type, const Direction** direction)
+{
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    {
+        if ((*it)->isFeatureChunk(chunkX, chunkZ, type, direction))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool LevelGenerationOptions::hasFeature(StructureFeature::EFeatureTypes type)
+{
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    {
+        if ((*it)->getFeatureType() == type)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+BlockPos LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos)
+{
+    int chunkX = pos.x >> 4;
+    int chunkZ = pos.z >> 4;
+    int closestX = 0;
+    int closestZ = 0;
+    int closestDistance = INT_MAX;
+
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    {
+        if ((*it)->getFeatureType() == type)
+        {
+            int xDistance = (*it)->getChunkX() - chunkX;
+            int zDistance = (*it)->getChunkZ() - chunkZ;
+            int distance = xDistance * xDistance + zDistance * zDistance;
+            if (distance < closestDistance)
+            {
+                closestX = (*it)->getChunkX();
+                closestZ = (*it)->getChunkZ();
+                closestDistance = distance;
+            }
+        }
+    }
+
+    return BlockPos(closestX * 16 + 8, 64, closestZ * 16 + 8);
+}
+
+void LevelGenerationOptions::loadStringTable(StringTable* table)
+{
+    mStringTable = table;
+}
+
+void LevelGenerationOptions::copyStringToTable(const std::wstring& value, StringTable* table)
+{
+    if (mStringTable != NULL)
+    {
+        mStringTable->copyStringToTable(value, table);
+    }
+}
+
+LevelGenerationOptions::SchematicFileMap* LevelGenerationOptions::getUnfinishedSchematicFiles()
+{
+    boost::unordered_set<std::wstring> names;
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
+    {
+        if (!(*it)->isComplete())
+        {
+            names.insert((*it)->getSchematicName());
+        }
+    }
+
+    SchematicFileMap* files = new SchematicFileMap();
+    for (boost::unordered_set<std::wstring>::iterator it = names.begin(); it != names.end(); ++it)
+    {
+        (*files)[*it] = getSchematicFile(*it);
+    }
+    return files;
+}
+
+ConsoleGameRules::EGameRuleType LevelGenerationOptions::getActionType()
+{
+    return static_cast<ConsoleGameRules::EGameRuleType>(1);
+}
