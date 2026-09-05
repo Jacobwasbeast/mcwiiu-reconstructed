@@ -1,6 +1,5 @@
 #include "game/network/ServerGamePacketListener.hpp"
 
-#include "game/network/Packet.hpp"
 #include "game/network/ServerboundChatAutoCompletePacket.hpp"
 #include "game/network/ServerboundChatPacket.hpp"
 #include "game/network/ServerboundClientCommandPacket.hpp"

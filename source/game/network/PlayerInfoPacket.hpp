@@ -1,0 +1,35 @@
+#ifndef GAME_NETWORK_PLAYERINFOPACKET_HPP
+#define GAME_NETWORK_PLAYERINFOPACKET_HPP
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "game/network/Packet.hpp"
+
+class DataInputStream;
+class DataOutputStream;
+class PacketListener;
+class ServerPlayer;
+
+class PlayerInfoPacket : public Packet, public boost::enable_shared_from_this<PlayerInfoPacket>
+{
+public:
+    PlayerInfoPacket();
+    PlayerInfoPacket(unsigned char playerId, short dimension, unsigned int privileges, unsigned char gameType);
+    PlayerInfoPacket(boost::shared_ptr<ServerPlayer> player);
+    virtual ~PlayerInfoPacket();
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual void handle(PacketListener* listener);
+    virtual int getEstimatedSize();
+    static boost::shared_ptr<Packet> create();
+private:
+    short mPlayerId;
+    short mDimension;
+    unsigned int mPrivileges;
+    int mEntityId;
+    unsigned char mGameType;
+};
+
+#endif

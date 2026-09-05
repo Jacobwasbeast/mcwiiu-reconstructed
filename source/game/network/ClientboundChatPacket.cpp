@@ -3,7 +3,7 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/network/FlexiblePacket.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
@@ -141,7 +141,7 @@ std::wstring ClientboundChatPacket::getMobCustomName(Level* level)
         entityData = ints[1];
     }
 
-    return CMinecraftApp::sInstance.getEntityName(ints[0], entityData);
+    return g_pApp->getEntityName(static_cast<uint64_t>(static_cast<long long>(ints[0])), entityData);
 }
 
 boost::shared_ptr<Packet> ClientboundChatPacket::create()
