@@ -9,8 +9,9 @@
 void MemSect(int section);
 
 FixedBiomeSource::FixedBiomeSource(Biome* biome, float rainfall)
+    : BiomeSource(),
+      mBiome(biome)
 {
-    mBiome = biome;
 }
 
 FixedBiomeSource::~FixedBiomeSource()
@@ -22,30 +23,23 @@ Biome* FixedBiomeSource::getBiome(const BlockPos& pos)
     return mBiome;
 }
 
-void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height) const
+void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes,
+                                     int x,
+                                     int z,
+                                     int width,
+                                     int height,
+                                     bool useCache) const
 {
     int count = width * height;
 
     MemSect(36);
-
     biomes.resize(count);
-
     MemSect(0);
 
-    std::fill(biomes.data, biomes.data + count, mBiome);
-}
-
-void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes, int x, int z, int width, int height, bool useCache) const
-{
-    int count = width * height;
-
-    MemSect(36);
-
-    biomes.resize(count);
-
-    MemSect(0);
-
-    std::fill(biomes.data, biomes.data + count, mBiome);
+    for (int i = 0; i < count; i++)
+    {
+        biomes.data[i] = mBiome;
+    }
 }
 
 void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeIndices,
@@ -58,20 +52,38 @@ void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeI
     int count = width * height;
 
     MemSect(36);
-
     biomeIndices.resize(count);
-
     MemSect(0);
 
-    std::fill(biomeIndices.data, biomeIndices.data + count, (unsigned char)mBiome->id);
+    for (int i = 0; i < count; i++)
+    {
+        biomeIndices.data[i] = (unsigned char)mBiome->id;
+    }
 }
 
-bool FixedBiomeSource::containsOnly(int x, int z, int radius, const std::vector<Biome*>& biomes)
+void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes,
+                                        int x,
+                                        int z,
+                                        int width,
+                                        int height) const
 {
-    return std::find(biomes.begin(), biomes.end(), mBiome) != biomes.end();
+    int count = width * height;
+
+    MemSect(36);
+    biomes.resize(count);
+    MemSect(0);
+
+    for (int i = 0; i < count; i++)
+    {
+        biomes.data[i] = mBiome;
+    }
 }
 
-BlockPos* FixedBiomeSource::findBiome(int x, int z, int radius, std::vector<Biome*> biomes, Random* random)
+BlockPos* FixedBiomeSource::findBiome(int x,
+                                      int z,
+                                      int radius,
+                                      std::vector<Biome*> biomes,
+                                      Random* random)
 {
     if (std::find(biomes.begin(), biomes.end(), mBiome) == biomes.end())
     {
@@ -82,6 +94,14 @@ BlockPos* FixedBiomeSource::findBiome(int x, int z, int radius, std::vector<Biom
     int offsetZ = random->nextInt(radius * 2 + 1);
 
     return new BlockPos((x - radius) + offsetX, 0, (z - radius) + offsetZ);
+}
+
+bool FixedBiomeSource::containsOnly(int x,
+                                    int z,
+                                    int radius,
+                                    const std::vector<Biome*>& biomes)
+{
+    return std::find(biomes.begin(), biomes.end(), mBiome) != biomes.end();
 }
 
 bool FixedBiomeSource::isFixedBiome()

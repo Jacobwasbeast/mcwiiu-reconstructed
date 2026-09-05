@@ -26,7 +26,7 @@ MushroomIslandBiome::MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mChickens.clear();
     mWolves.clear();
 
-    mMushroomCows.push_back(new MobSpawnerData(8, 0x2D6A0001ULL, 4, 8));
+    mMushroomCows.push_back(new MobSpawnerData(8, 0x2d6a0001ULL, 4, 8));
 }
 
 MushroomIslandBiome::~MushroomIslandBiome()
