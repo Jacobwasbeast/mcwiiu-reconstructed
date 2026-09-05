@@ -2,8 +2,11 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/GameType.hpp"
 #include "game/network/PacketListener.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 
 PlayerInfoPacket::PlayerInfoPacket()
     : mPlayerId(0), mDimension(-1), mPrivileges(0), mEntityId(-1), mGameType(0)

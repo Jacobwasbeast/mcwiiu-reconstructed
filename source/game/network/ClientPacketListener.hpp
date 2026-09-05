@@ -174,7 +174,7 @@ public:
     void handleSetExperience(boost::shared_ptr<ClientboundSetExperiencePacket> packet);
     virtual void handleRespawn(boost::shared_ptr<ClientboundRespawnPacket> packet);
     virtual void handleExplosion(boost::shared_ptr<ClientboundExplodePacket> packet);
-    virtual void handleContainerOpen(boost::shared_ptr<ClientboundContainerOpenPacket> packet, int type, int slots, int id);
+    virtual void handleContainerOpen(boost::shared_ptr<ClientboundContainerOpenPacket> packet);
     virtual void handleContainerSetSlot(boost::shared_ptr<ClientboundContainerSetSlotPacket> packet);
     virtual void handleContainerAck(boost::shared_ptr<ClientboundContainerAckPacket> packet);
     virtual void handleContainerContent(boost::shared_ptr<ClientboundContainerSetContentPacket> packet);

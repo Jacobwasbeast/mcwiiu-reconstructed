@@ -1,11 +1,9 @@
 #ifndef GAME_NETWORK_CLIENTBOUNDEXPLODEPACKET_HPP
 #define GAME_NETWORK_CLIENTBOUNDEXPLODEPACKET_HPP
 
-#include <memory>
-#include <vector>
-
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "game/core/Explosion.hpp"
 #include "game/network/Packet.hpp"
@@ -32,13 +30,11 @@ public:
     double getX();
     double getY();
     double getZ();
-    float getPower();
+    double getPower();
     std::vector<BlockPos, std::allocator<BlockPos> >* getToBlow();
-    float getKnockbackX();
-    float getKnockbackY();
-    float getKnockbackZ();
-
-    bool isKnockbackOnly() { return knockbackOnly; }
+    double getKnockbackX();
+    double getKnockbackY();
+    double getKnockbackZ();
 
     static boost::shared_ptr<Packet> create();
 

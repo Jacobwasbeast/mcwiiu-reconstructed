@@ -75,7 +75,7 @@ void FlexiblePacket::write(DataOutputStream* output)
             }
         }
 
-        output->writeBoolean(bits);
+        output->writeInt(bits);
     }
 
     for (unsigned int i = 0; i < floats.size(); ++i)

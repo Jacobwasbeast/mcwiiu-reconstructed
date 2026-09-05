@@ -25,6 +25,7 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ServerGamePacketListenerImpl;
     int id;
 };
 

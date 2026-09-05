@@ -9,6 +9,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ServerGamePacketListenerImpl;
 class ServerPlayer;
 
 class PlayerInfoPacket : public Packet, public boost::enable_shared_from_this<PlayerInfoPacket>
@@ -25,6 +26,8 @@ public:
     virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 private:
+    friend class ServerGamePacketListenerImpl;
+
     short mPlayerId;
     short mDimension;
     unsigned int mPrivileges;

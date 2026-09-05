@@ -6,13 +6,33 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/GameSessionData.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
 class CGameNetworkManager;
 class ClientboundPreLoginPacket;
-class FriendSessionInfo;
 struct FriendPresence;
+
+struct FriendSessionSearchResult
+{
+    unsigned int m_sessionId;
+    unsigned int m_ownerPrincipalId;
+    unsigned int m_ownerLocalFriendIndex;
+    char m_ownerName[17];
+    void* m_externalData;
+};
+
+struct FriendSessionInfo
+{
+    unsigned int m_sessionId;
+    FriendSessionSearchResult m_searchResult;
+    wchar_t* m_displayName;
+    unsigned char m_displayNameLength;
+    bool m_sessionFlag;
+    GameSessionData m_gameSessionData;
+    bool m_statusFlag;
+};
 
 class CPlatformNetworkManager
 {

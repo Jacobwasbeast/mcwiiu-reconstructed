@@ -101,7 +101,7 @@ TextureAndGeometryPacket::~TextureAndGeometryPacket()
 {
 }
 
-unsigned int TextureAndGeometryPacket::getPacketId()
+int TextureAndGeometryPacket::getPacketId()
 {
     return 160;
 }
@@ -205,7 +205,7 @@ void TextureAndGeometryPacket::write(DataOutputStream* output)
     }
 }
 
-unsigned int TextureAndGeometryPacket::getEstimatedSize()
+int TextureAndGeometryPacket::getEstimatedSize()
 {
     return 4228;
 }

@@ -27,7 +27,7 @@ public:
 
     static boost::shared_ptr<Packet> create();
 
-private:
+public:
     std::wstring textureName;
     unsigned char* data;
     unsigned int length;

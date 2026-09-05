@@ -1,6 +1,8 @@
 #ifndef GAME_NETWORK_SERVERGAMEPACKETLISTENER_HPP
 #define GAME_NETWORK_SERVERGAMEPACKETLISTENER_HPP
 
+#include <string>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/network/PacketListener.hpp"
@@ -29,7 +31,17 @@ class ServerboundSwingPacket;
 class ServerboundTeleportToEntityPacket;
 class ServerboundUseItemPacket;
 
-class ServerGamePacketListener : public PacketListener
+class ConsoleListener
+{
+public:
+    virtual ~ConsoleListener() {}
+
+    virtual void info(const std::wstring& message) = 0;
+    virtual void warn(const std::wstring& message) = 0;
+    virtual std::wstring getConsoleName() = 0;
+};
+
+class ServerGamePacketListener : public PacketListener, public ConsoleListener
 {
 public:
     virtual ~ServerGamePacketListener();

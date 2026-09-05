@@ -9,11 +9,6 @@ ServerboundKeepAlivePacket::ServerboundKeepAlivePacket()
 {
 }
 
-ServerboundKeepAlivePacket::ServerboundKeepAlivePacket(int id)
-    : id(id)
-{
-}
-
 ServerboundKeepAlivePacket::~ServerboundKeepAlivePacket()
 {
 }

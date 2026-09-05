@@ -9,6 +9,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ServerGamePacketListenerImpl;
 
 class KickPlayerPacket : public Packet, public boost::enable_shared_from_this<KickPlayerPacket>
 {
@@ -26,6 +27,8 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ServerGamePacketListenerImpl;
+
     unsigned char reason;
 };
 

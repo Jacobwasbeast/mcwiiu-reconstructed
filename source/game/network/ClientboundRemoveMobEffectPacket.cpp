@@ -1,0 +1,62 @@
+#include "game/network/ClientboundRemoveMobEffectPacket.hpp"
+
+#include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/entity/mob/MobEffect.hpp"
+#include "game/network/PacketListener.hpp"
+#include "game/world/Level.hpp"
+
+ClientboundRemoveMobEffectPacket::ClientboundRemoveMobEffectPacket()
+{
+}
+
+ClientboundRemoveMobEffectPacket::ClientboundRemoveMobEffectPacket(int entityId, MobEffect* effect)
+    : entityId(entityId), effect(effect)
+{
+}
+
+ClientboundRemoveMobEffectPacket::~ClientboundRemoveMobEffectPacket()
+{
+}
+
+void ClientboundRemoveMobEffectPacket::read(DataInputStream* input)
+{
+    entityId = input->readVarInt();
+    effect = MobEffect::byId(input->readByte());
+}
+
+void ClientboundRemoveMobEffectPacket::write(DataOutputStream* output)
+{
+    output->writeVarInt(entityId);
+    output->writeByte(MobEffect::getId(effect));
+}
+
+void ClientboundRemoveMobEffectPacket::handle(PacketListener* listener)
+{
+    listener->handleRemoveMobEffect(shared_from_this());
+}
+
+unsigned int ClientboundRemoveMobEffectPacket::getEstimatedSize()
+{
+    return 5;
+}
+
+void ClientboundRemoveMobEffectPacket::getEntity(Level* level)
+{
+    level->getEntity(entityId);
+}
+
+MobEffect* ClientboundRemoveMobEffectPacket::getEffect()
+{
+    return effect;
+}
+
+unsigned int ClientboundRemoveMobEffectPacket::getPacketId()
+{
+    return 42;
+}
+
+boost::shared_ptr<Packet> ClientboundRemoveMobEffectPacket::create()
+{
+    return boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket());
+}

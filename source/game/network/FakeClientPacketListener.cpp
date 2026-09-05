@@ -1,6 +1,7 @@
 #include "game/network/FakeClientPacketListener.hpp"
 #include "game/network/Connection.hpp"
 #include "game/network/ClientboundLoginPacket.hpp"
+#include "game/network/ClientboundPreLoginPacket.hpp"
 #include "game/network/ClientboundPlayerPositionPacket.hpp"
 #include "game/network/ServerboundAcceptTeleportationPacket.hpp"
 #include "game/core/GameSettings.hpp"
@@ -69,12 +70,9 @@ void FakeClientPacketListener::handleRemoveEntity(boost::shared_ptr<ClientboundR
 
 void FakeClientPacketListener::handleMovePlayer(boost::shared_ptr<ClientboundPlayerPositionPacket> packet)
 {
-    if (!packet)
-        return;
     boost::shared_ptr<Packet> accept(new ServerboundAcceptTeleportationPacket(packet->getId()));
-    if (m_connection != 0)
-        m_connection->send(accept);
-    m_started = true;
+    ClientPacketListener::getConnection()->send(accept);
+    m_hasPosition = true;
     m_x = packet->getX();
     m_y = packet->getY();
     m_z = packet->getZ();
@@ -130,7 +128,7 @@ void FakeClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLo
     PlayerUID playerUid2(0);
     std::wstring name(L"FakeName");
     ClientboundLoginPacket* login = new ClientboundLoginPacket(name, 316, playerUid, playerUid2, false,
-        0, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false);
+        packet->mSeed, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false);
     boost::shared_ptr<Packet> loginPacket(login);
     ClientPacketListener::send(loginPacket);
 }
@@ -175,7 +173,7 @@ void FakeClientPacketListener::handleExplosion(boost::shared_ptr<ClientboundExpl
 {
 }
 
-void FakeClientPacketListener::handleContainerOpen(boost::shared_ptr<ClientboundContainerOpenPacket> packet, int type, int slots, int id)
+void FakeClientPacketListener::handleContainerOpen(boost::shared_ptr<ClientboundContainerOpenPacket> packet)
 {
 }
 
@@ -299,7 +297,7 @@ void FakeClientPacketListener::handleCustomPayload(boost::shared_ptr<Clientbound
 
 Connection* FakeClientPacketListener::getConnection()
 {
-    return m_connection;
+    return ClientPacketListener::getConnection();
 }
 
 void FakeClientPacketListener::handleServerSettingsChanged(boost::shared_ptr<ServerSettingsChangedPacket> packet)

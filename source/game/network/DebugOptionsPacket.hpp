@@ -9,6 +9,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ServerGamePacketListenerImpl;
 
 class DebugOptionsPacket : public Packet, public boost::enable_shared_from_this<DebugOptionsPacket>
 {
@@ -23,6 +24,8 @@ public:
     virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 private:
+    friend class ServerGamePacketListenerImpl;
+
     unsigned int options;
 };
 

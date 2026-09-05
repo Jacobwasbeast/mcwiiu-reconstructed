@@ -5,13 +5,39 @@
 #include "game/world/LevelType.hpp"
 
 ClientboundLoginPacket::ClientboundLoginPacket()
-    : mEntityId(0), mLevelName(L""), mSeed(0), mGameMode(0), mPlayerUID(0), mPlayerUID2(0), mPlayerFlag(1),
-      mHardcore(false), mViewDistance(0), mChunkDistance(0), mReducedDebugInfo(0), mWorldHeight(0), mSeaLevel(0),
-      mAllowCommands(false), mIsFlat(false), mLevelType(NULL), mCurrentTick(0), mUnknownValue1(0x36),
-      mUnknownValue2(3), mMaxTick(0x80), mIsFlatWorld(true), mPlayerFlags(0), mSpawnProtection(0),
-      mSimulationDistance(0), mHasAchievements(false), mUnknownValue3(-1), mGameType(0), mDifficultyValue(0),
-      mMaxPlayers(0), mDimension(-1), mDifficulty(-1)
+    : mPlayerUID(0), mPlayerUID2(0)
 {
+    mLevelName = L"";
+    mEntityId = 0;
+    mSeed = 0;
+    mGameMode = 0;
+    mPlayerUID = PlayerUID(0);
+    mPlayerUID2 = PlayerUID(0);
+    mPlayerFlag = 1;
+    mHardcore = false;
+    mViewDistance = 0;
+    mChunkDistance = 0;
+    mReducedDebugInfo = 0;
+    mWorldHeight = 0;
+    mSeaLevel = 0;
+    mAllowCommands = false;
+    mIsFlat = false;
+    mLevelType = NULL;
+    mCurrentTick = 0;
+    mUnknownValue1 = 0x36;
+    mUnknownValue2 = 3;
+    mMaxTick = 0x80;
+    mIsFlatWorld = true;
+    mPlayerFlags = 0;
+    mSpawnProtection = 0;
+    mSimulationDistance = 0;
+    mHasAchievements = false;
+    mUnknownValue3 = -1;
+    mGameType = 0;
+    mDifficultyValue = 0;
+    mMaxPlayers = 0;
+    mDimension = -1;
+    mDifficulty = -1;
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, LevelType* levelType,
@@ -19,28 +45,77 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     unsigned char maxPlayers, char playerFlag, int chunkDistance, unsigned char reducedDebugInfo, bool isFlat,
     unsigned int currentTick, int unknownValue1, int unknownValue2, int maxTick, bool isFlatWorld,
     unsigned char playerFlags, int spawnProtection, int simulationDistance, int unknownValue3)
-    : mEntityId(entityId), mLevelName(levelName), mSeed(seed), mGameMode(gameMode), mPlayerUID(0), mPlayerUID2(0),
-      mPlayerFlag(playerFlag), mHardcore(false), mViewDistance(0), mChunkDistance(chunkDistance),
-      mReducedDebugInfo(reducedDebugInfo), mWorldHeight(0), mSeaLevel(0), mAllowCommands(false), mIsFlat(isFlat),
-      mLevelType(levelType), mCurrentTick(static_cast<int>(currentTick)), mUnknownValue1(unknownValue1),
-      mUnknownValue2(unknownValue2), mMaxTick(maxTick), mIsFlatWorld(isFlatWorld), mPlayerFlags(playerFlags),
-      mSpawnProtection(spawnProtection), mSimulationDistance(simulationDistance), mHasAchievements(false),
-      mUnknownValue3(unknownValue3), mGameType(gameType), mDifficultyValue(difficultyValue),
-      mMaxPlayers(maxPlayers), mDimension(dimension), mDifficulty(difficulty)
+    : mPlayerUID(0), mPlayerUID2(0)
 {
+    mLevelName = levelName;
+    mEntityId = entityId;
+    mSeed = seed;
+    mGameMode = gameMode;
+    mPlayerUID = PlayerUID(0);
+    mPlayerUID2 = PlayerUID(0);
+    mPlayerFlag = playerFlag;
+    mHardcore = false;
+    mViewDistance = 0;
+    mChunkDistance = chunkDistance;
+    mReducedDebugInfo = reducedDebugInfo;
+    mWorldHeight = 0;
+    mSeaLevel = 0;
+    mAllowCommands = false;
+    mIsFlat = isFlat;
+    mLevelType = levelType;
+    mCurrentTick = static_cast<int>(currentTick);
+    mUnknownValue1 = unknownValue1;
+    mUnknownValue2 = unknownValue2;
+    mMaxTick = maxTick;
+    mIsFlatWorld = isFlatWorld;
+    mPlayerFlags = playerFlags;
+    mSpawnProtection = spawnProtection;
+    mSimulationDistance = simulationDistance;
+    mHasAchievements = false;
+    mUnknownValue3 = unknownValue3;
+    mGameType = gameType;
+    mDifficultyValue = difficultyValue;
+    mMaxPlayers = maxPlayers;
+    mDimension = dimension;
+    mDifficulty = difficulty;
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, PlayerUID playerUID,
     PlayerUID playerUID2, bool hardcore, unsigned int viewDistance, unsigned int worldHeight, unsigned int seaLevel,
     bool allowCommands, bool hasAchievements)
-    : mEntityId(entityId), mLevelName(levelName), mSeed(0), mGameMode(0), mPlayerUID(playerUID),
-      mPlayerUID2(playerUID2), mPlayerFlag(1), mHardcore(hardcore), mViewDistance(static_cast<int>(viewDistance)),
-      mChunkDistance(0), mReducedDebugInfo(0), mWorldHeight(static_cast<int>(worldHeight)),
-      mSeaLevel(static_cast<int>(seaLevel)), mAllowCommands(allowCommands), mIsFlat(false), mLevelType(NULL),
-      mCurrentTick(0), mUnknownValue1(0x36), mUnknownValue2(3), mMaxTick(0x80), mIsFlatWorld(true),
-      mPlayerFlags(0), mSpawnProtection(0), mSimulationDistance(0), mHasAchievements(hasAchievements),
-      mUnknownValue3(-1), mGameType(0), mDifficultyValue(0), mMaxPlayers(0), mDimension(-1), mDifficulty(-1)
+    : mPlayerUID(0), mPlayerUID2(0)
 {
+    mLevelName = levelName;
+    mEntityId = entityId;
+    mSeed = 0;
+    mGameMode = 0;
+    mPlayerUID = playerUID;
+    mPlayerUID2 = playerUID2;
+    mPlayerFlag = 1;
+    mHardcore = hardcore;
+    mViewDistance = static_cast<int>(viewDistance);
+    mChunkDistance = 0;
+    mReducedDebugInfo = 0;
+    mWorldHeight = static_cast<int>(worldHeight);
+    mSeaLevel = static_cast<int>(seaLevel);
+    mAllowCommands = allowCommands;
+    mIsFlat = false;
+    mLevelType = NULL;
+    mCurrentTick = 0;
+    mUnknownValue1 = 0x36;
+    mUnknownValue2 = 3;
+    mMaxTick = 0x80;
+    mIsFlatWorld = true;
+    mPlayerFlags = 0;
+    mSpawnProtection = 0;
+    mSimulationDistance = 0;
+    mHasAchievements = hasAchievements;
+    mUnknownValue3 = -1;
+    mGameType = 0;
+    mDifficultyValue = 0;
+    mMaxPlayers = 0;
+    mDimension = -1;
+    mDifficulty = -1;
 }
 
 ClientboundLoginPacket::~ClientboundLoginPacket()

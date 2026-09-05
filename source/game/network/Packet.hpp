@@ -41,7 +41,6 @@ public:
 protected:
     long long creationTime;
     bool compressed;
-    std::vector<unsigned int> packetData;
 
 private:
     static void map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed, const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name);

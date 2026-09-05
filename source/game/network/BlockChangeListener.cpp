@@ -23,6 +23,11 @@ bool BlockChangeListener::HasChunk(long long key) const
     return mChunks->find(key) != mChunks->end();
 }
 
+const BlockChangeListener::Chunk& BlockChangeListener::GetChunk(long long key) const
+{
+    return mChunks->at(key);
+}
+
 int BlockChangeListener::GetChangesForChunk(int x, int z) const
 {
     long long key = GetChunkKey(x, z);

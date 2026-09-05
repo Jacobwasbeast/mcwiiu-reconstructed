@@ -26,11 +26,11 @@ public:
                              std::vector<SKIN_BOX*>* additionalBoxes, _SkinAdjustments skinAdjustments);
     virtual ~TextureAndGeometryPacket();
 
-    virtual unsigned int getPacketId();
+    virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-    virtual unsigned int getEstimatedSize();
+    virtual int getEstimatedSize();
 
     static boost::shared_ptr<Packet> create();
 

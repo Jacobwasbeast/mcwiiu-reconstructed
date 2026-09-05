@@ -1,29 +1,65 @@
 #include "game/network/Connection.hpp"
+#include "game/core/BufferedOutputStream.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/Compression.hpp"
+#include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/ShutdownManager.hpp"
+#include "game/core/Socket.hpp"
 #include "game/core/System.hpp"
+#include "game/network/Packet.hpp"
+#include "game/network/PacketListener.hpp"
+#include "platform/wiiu/C4JEventImpl.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
-Connection::Connection(Socket* socket, const std::wstring& address,
-                       PacketListener* listener)
-    : m_socket(socket), m_remoteAddress(0), m_input(0), m_output(0),
-      m_packetOutput(0), m_readThread(0), m_writeThread(0), m_running(true),
-      m_sendAndQuit(false), m_compressionError(false), m_readEvent(0),
-      m_writeEvent(0), m_closeEvent(0), m_sendEvent(0), m_packetsRead(0),
-      m_packetsWritten(0), m_closing(0), m_disconnectReason(0),
-      m_disconnectData(0), m_idleTicks(0), m_bytesWritten(0), m_bytesRead(0),
-      m_writeDelay(0), m_flushDelay(0), m_lastSendTime(0),
-      m_listener(listener)
+Connection::Connection(Socket* socket, const std::wstring& name, PacketListener* listener)
+    : m_socket(socket), m_remoteAddress(0), m_input(0), m_output(0), m_packetOutput(0), m_rawOutput(0), m_readThread(0), m_writeThread(0), m_running(true), m_unknown48(0), m_unknown88(0), m_delayedPackets(0), m_listener(listener), m_sendAndQuit(false), m_compressionError(false), m_readEvent(0), m_writeEvent(0), m_closeEvent(0), m_sendEvent(0), m_packetsRead(0), m_packetsWritten(0), m_closing(0), m_unknownD5(0), m_disconnectReason(0), m_disconnectData(0), m_idleTicks(0), m_bytesWritten(0), m_bytesRead(0), m_writeDelay(0), m_unknown11C(0), m_lastSendTime(0)
 {
     _init();
+    m_remoteAddress = socket->getRemoteSocketAddress();
+    socket->setSoTimeout(30000);
+    socket->setTrafficClass(24);
+    bool server = listener->canHandleAsyncPackets();
+    m_input = new DataInputStream(socket->getInputStream(server));
+    m_rawOutput = socket->getOutputStream(server);
+    m_output = new DataOutputStream(new BufferedOutputStream(m_rawOutput, 5120));
+    m_packetOutput = new DataOutputStream(new ByteArrayOutputStream(5120));
+    m_readEvent = new C4JEventImpl(C4JEvent::Mode0);
+    m_writeEvent = new C4JEventImpl(C4JEvent::Mode0);
+    m_readThread = new C4JThreadImpl((int (*)(void*))(void*)&Connection::runRead, this, "Connection read", 0);
+    m_writeThread = new C4JThreadImpl((int (*)(void*))(void*)&Connection::runWrite, this, "Connection write", 0);
+    static_cast<C4JThreadImpl*>(m_readThread)->Run();
+    static_cast<C4JThreadImpl*>(m_writeThread)->Run();
+}
+
+Connection::~Connection()
+{
+    m_running = false;
+    DeleteCriticalSection(&m_runningMutex);
+    if (m_input != 0) m_input->close();
+    if (m_output != 0) { m_output->deleteChildStream(); m_output->close(); }
+    if (m_packetOutput != 0) m_packetOutput->close();
+    delete m_input;
+    delete m_output;
+    delete m_packetOutput;
+    delete static_cast<C4JEventImpl*>(m_readEvent);
+    delete static_cast<C4JEventImpl*>(m_writeEvent);
+    delete static_cast<C4JEventImpl*>(m_closeEvent);
+    delete static_cast<C4JEventImpl*>(m_sendEvent);
+    delete static_cast<C4JThreadImpl*>(m_readThread);
+    delete static_cast<C4JThreadImpl*>(m_writeThread);
+    DeleteCriticalSection(&m_queueMutex);
+    DeleteCriticalSection(&m_threadMutex);
+    DeleteCriticalSection(&m_readMutex);
 }
 
 void Connection::_init()
 {
-    InitializeCriticalSection(&m_runningMutex);
-    InitializeCriticalSection(&m_readMutex);
+    InitializeCriticalSection(&m_queueMutex);
     InitializeCriticalSection(&m_threadMutex);
+    InitializeCriticalSection(&m_readMutex);
     m_running = true;
+    InitializeCriticalSection(&m_runningMutex);
     m_sendAndQuit = false;
     m_compressionError = false;
     m_closing = 0;
@@ -35,16 +71,7 @@ void Connection::_init()
     m_packetsRead = 0;
     m_packetsWritten = 0;
     m_delayedPackets = 0;
-    m_writeDelay = 0;
-    m_flushDelay = 50;
-}
-
-Connection::~Connection()
-{
-    m_running = false;
-    DeleteCriticalSection(&m_runningMutex);
-    DeleteCriticalSection(&m_readMutex);
-    DeleteCriticalSection(&m_threadMutex);
+    m_writeDelay = 50;
 }
 
 uint8_t Connection::getAndSetRunning(bool running)
@@ -59,19 +86,26 @@ uint8_t Connection::getAndSetRunning(bool running)
 uint32_t Connection::readTick()
 {
     if (m_input == 0 || m_compressionError) return 0;
-    ++m_packetsRead;
+    bool protocolError = false;
+    boost::shared_ptr<Packet> packet = Packet::readPacket(m_input, m_listener->canHandleAsyncPackets(), m_packetsRead, protocolError);
+    if (packet != 0) {
+        EnterCriticalSection(&m_readMutex);
+        if (!m_sendAndQuit) m_receivedPackets.push_back(packet);
+        LeaveCriticalSection(&m_readMutex);
+        return 1;
+    }
+    if (protocolError) m_compressionError = true;
     return 0;
 }
 
-uint32_t Connection::runRead(int32_t value)
+uint32_t Connection::runRead(int32_t argument)
 {
     ShutdownManager::HasStarted(ShutdownManager::eThreadId_ConnectionRead);
-    Connection* connection = (Connection*)value;
+    Connection* connection = (Connection*)(intptr_t)argument;
     if (connection != 0) {
         Compression::CreateNewThreadStorage();
-        while (connection->m_running && !connection->m_sendAndQuit &&
-               ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead)) {
-            if (connection->readTick() == 0) break;
+        while (connection->m_running && !connection->m_compressionError && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead)) {
+            if (connection->readTick() == 0) connection->m_readEvent->WaitForSignal(100);
         }
         Compression::ReleaseThreadStorage();
     }
@@ -81,28 +115,25 @@ uint32_t Connection::runRead(int32_t value)
 
 uint32_t Connection::writeTick()
 {
-    if (m_input == 0 || m_output == 0) return 0;
-    EnterCriticalSection(&m_threadMutex);
-    if (m_sendQueue.empty()) {
-        LeaveCriticalSection(&m_threadMutex);
-        return 0;
-    }
-    boost::shared_ptr<Packet> packet = m_sendQueue.front();
-    m_sendQueue.pop_front();
-    LeaveCriticalSection(&m_threadMutex);
-    if (packet) Packet::writePacket(packet, m_output, false, m_packetsWritten);
+    if (m_output == 0 || m_packetOutput == 0) return 0;
+    boost::shared_ptr<Packet> packet;
+    EnterCriticalSection(&m_queueMutex);
+    if (!m_sendQueue.empty()) { packet = m_sendQueue.front(); m_sendQueue.pop_front(); }
+    else if (!m_delayedQueue.empty()) { packet = m_delayedQueue.front(); m_delayedQueue.pop_front(); }
+    LeaveCriticalSection(&m_queueMutex);
+    if (packet == 0) return 0;
+    Packet::writePacket(packet, m_output, m_listener->canHandleAsyncPackets(), m_packetsWritten);
     return 1;
 }
 
-uint32_t Connection::runWrite(int32_t value)
+uint32_t Connection::runWrite(int32_t argument)
 {
     ShutdownManager::HasStarted(ShutdownManager::eThreadId_ConnectionWrite);
-    Connection* connection = (Connection*)value;
+    Connection* connection = (Connection*)(intptr_t)argument;
     if (connection != 0) {
         Compression::CreateNewThreadStorage();
-        while (connection->m_running && !connection->m_sendAndQuit &&
-               ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite)) {
-            if (connection->writeTick() == 0) break;
+        while (connection->m_running && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite)) {
+            if (connection->writeTick() == 0) connection->m_writeEvent->WaitForSignal(100);
         }
         Compression::ReleaseThreadStorage();
     }
@@ -116,26 +147,22 @@ void Connection::send(boost::shared_ptr<Packet> packet)
 {
     if (m_sendAndQuit) return;
     m_lastSendTime = System::processTimeInMilliSecs();
-    EnterCriticalSection(&m_threadMutex);
-    if (packet) {
+    EnterCriticalSection(&m_queueMutex);
+    if (packet != 0) {
         m_bytesWritten += packet->getEstimatedSize() + 1;
-        if (packet->isAync()) m_sendQueue.push_back(packet);
-        else m_receivedPackets.push_back(packet);
+        if (packet->isAync()) m_delayedQueue.push_back(packet); else m_sendQueue.push_back(packet);
     }
-    LeaveCriticalSection(&m_threadMutex);
+    LeaveCriticalSection(&m_queueMutex);
 }
 
 uint64_t Connection::queueSend(boost::shared_ptr<Packet> packet)
 {
     if (!m_sendAndQuit) {
-        EnterCriticalSection(&m_threadMutex);
-        if (packet) {
-            m_bytesWritten += packet->getEstimatedSize() + 1;
-            m_sendQueue.push_back(packet);
-        }
-        LeaveCriticalSection(&m_threadMutex);
+        EnterCriticalSection(&m_queueMutex);
+        if (packet != 0) { m_bytesWritten += packet->getEstimatedSize() + 1; m_delayedQueue.push_back(packet); }
+        LeaveCriticalSection(&m_queueMutex);
     }
-    return (uint64_t)this;
+    return (uint64_t)(uintptr_t)this;
 }
 
 void Connection::flush()
@@ -144,26 +171,28 @@ void Connection::flush()
     if (m_packetOutput != 0) m_packetOutput->flush();
 }
 
-void Connection::close(int reason)
+void Connection::close(DisconnectPacket::eDisconnectReason reason)
 {
-    if (getAndSetRunning(false) == 0) return;
+    if (!getAndSetRunning(false)) return;
     m_disconnectReason = reason;
     m_disconnectData = 0;
     m_closing = 1;
     if (m_input != 0) { m_input->close(); m_input = 0; }
-    if (m_output != 0) { m_output->close(); m_output = 0; }
+    if (m_output != 0) { m_output->close(); m_output->deleteChildStream(); m_output = 0; }
     if (m_packetOutput != 0) { m_packetOutput->close(); m_packetOutput = 0; }
-    m_socket = 0;
+    if (m_socket != 0) { m_socket->close(m_listener->canHandleAsyncPackets()); m_socket = 0; }
 }
 
 void Connection::tick()
 {
-    if (m_closing) return;
+    if (m_compressionError) close(DisconnectPacket::eDisconnectReason_BadPacket);
+    if (m_bytesWritten > 0x100000) close(DisconnectPacket::eDisconnectReason_SendQueueOverflow);
     EnterCriticalSection(&m_readMutex);
+    if (m_receivedPackets.empty()) ++m_idleTicks; else m_idleTicks = 0;
     while (!m_receivedPackets.empty()) {
         boost::shared_ptr<Packet> packet = m_receivedPackets.front();
         m_receivedPackets.pop_front();
-        if (packet != 0 && m_listener != 0) packet->handle(m_listener);
+        if (packet != 0) packet->handle(m_listener);
     }
     LeaveCriticalSection(&m_readMutex);
     flush();
@@ -171,26 +200,7 @@ void Connection::tick()
 
 void Connection::sendAndQuit()
 {
-    if (!m_sendAndQuit) {
-        flush();
-        m_sendAndQuit = true;
-        close(2);
-    }
+    if (!m_sendAndQuit) { flush(); m_sendAndQuit = true; close(DisconnectPacket::eDisconnectReason_ConnectionClosed); }
 }
 
 uint32_t Connection::countDelayedPackets() { return m_delayedPackets; }
-void* Connection::getRemoteAddress() { return m_remoteAddress; }
-
-uint32_t Connection::runClose(int32_t value)
-{
-    Connection* connection = (Connection*)value;
-    if (connection != 0) connection->close(2);
-    return 0;
-}
-
-uint32_t Connection::runSendAndQuit(int32_t value)
-{
-    Connection* connection = (Connection*)value;
-    if (connection != 0) connection->sendAndQuit();
-    return 0;
-}

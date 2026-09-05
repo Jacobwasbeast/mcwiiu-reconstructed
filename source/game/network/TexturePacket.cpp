@@ -5,21 +5,23 @@
 #include "game/network/PacketListener.hpp"
 
 TexturePacket::TexturePacket()
-    : textureName(L""), data(NULL), length(0)
 {
     compressed = true;
+    textureName = L"";
+    data = NULL;
+    length = 0;
 }
 
 TexturePacket::TexturePacket(const std::wstring& textureName, unsigned char* data, unsigned int length)
-    : textureName(textureName), data(data), length(length)
 {
     compressed = true;
+    this->textureName = textureName;
+    this->data = data;
+    this->length = length;
 }
 
 TexturePacket::~TexturePacket()
 {
-    delete[] data;
-    data = NULL;
 }
 
 int TexturePacket::getPacketId()
@@ -51,7 +53,7 @@ void TexturePacket::read(DataInputStream* input)
 void TexturePacket::write(DataOutputStream* output)
 {
     Packet::writeUtf(textureName, output);
-    output->writeInt(length);
+    output->writeShort(static_cast<short>(length));
     unsigned int index = 0;
     while (index < length)
     {
