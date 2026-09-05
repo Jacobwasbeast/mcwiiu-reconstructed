@@ -10,7 +10,6 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/ZombieModel.hpp"
-#include "game/core/BufferBuilder.hpp"
 #include "game/core/Drowned.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/InteractionHand.hpp"

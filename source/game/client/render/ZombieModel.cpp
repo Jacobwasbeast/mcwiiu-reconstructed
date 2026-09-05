@@ -1,13 +1,10 @@
 #include "game/client/render/ZombieModel.hpp"
 
-#include <string>
-
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Zombie.hpp"
 
 ZombieModel::ZombieModel(const ModelDefinition& definition)
@@ -38,17 +35,16 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     if ((entity->GetType() & ENTITY_TYPE_ZOMBIE) == ENTITY_TYPE_ZOMBIE)
     {
         boost::shared_ptr<Zombie> zombie = boost::dynamic_pointer_cast<Zombie>(entity);
-
         aggressive = zombie->isAggressive();
     }
 
-    float swing = Mth::sin(mAttackTime * 3.1415927410125732f);
-    float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
+    float attackSwing = Mth::sin(mAttackTime * 3.1415927410125732f);
+    float attackSwingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
 
     mRightArm->mZRot = 0.0f;
     mLeftArm->mZRot = 0.0f;
-    mRightArm->mYRot = -(0.1f - swing * 0.6f);
-    mLeftArm->mYRot = 0.1f - swing * 0.6f;
+    mRightArm->mYRot = -(0.1f - attackSwing * 0.6f);
+    mLeftArm->mYRot = 0.1f - attackSwing * 0.6f;
 
     float armXRot = -3.1415927410125732f / (aggressive ? 1.5f : 2.25f);
 
@@ -58,9 +54,8 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     }
 
     mLeftArm->mXRot = armXRot;
-
-    mRightArm->mXRot += swing * 1.2f - swingBack * 0.4f;
-    mLeftArm->mXRot += swing * 1.2f - swingBack * 0.4f;
+    mRightArm->mXRot += attackSwing * 1.2f - attackSwingBack * 0.4f;
+    mLeftArm->mXRot += attackSwing * 1.2f - attackSwingBack * 0.4f;
     mRightArm->mZRot += Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;
     mLeftArm->mZRot -= Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;
     mRightArm->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;

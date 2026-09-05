@@ -6,10 +6,10 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/core/HumanoidArm.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class HumanoidArm;
 class ModelDefinition;
 class ModelPart;
 

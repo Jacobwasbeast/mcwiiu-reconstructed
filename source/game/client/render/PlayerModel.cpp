@@ -62,7 +62,7 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
 
             mRightSleeve = new ModelPart(this, 40, 32);
             mRightSleeve->addBox(-2.0f, -2.0f, -2.0f, 3, 12, 4, scale + 0.25f);
-            mRightSleeve->setPos(-5.0f, 2.0f, 10.0f);
+            mRightSleeve->setPos(-5.0f, 2.0f, 0.0f);
         }
         else
         {
@@ -79,7 +79,7 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
 
             mRightSleeve = new ModelPart(this, 40, 32);
             mRightSleeve->addBox(-3.0f, -2.0f, -2.0f, 4, 12, 4, scale + 0.25f);
-            mRightSleeve->setPos(-5.0f, 2.0f, 10.0f);
+            mRightSleeve->setPos(-5.0f, 2.0f, 0.0f);
         }
 
         mLeftLeg = new ModelPart(this, 16, 48);

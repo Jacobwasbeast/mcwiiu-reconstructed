@@ -1,0 +1,63 @@
+#include "game/client/render/LlamaSpitRenderer.hpp"
+
+#include "game/client/render/LlamaSpitModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation LLAMA_SPIT_LOCATION;
+
+LlamaSpitRenderer::LlamaSpitRenderer(EntityRenderDispatcher* dispatcher)
+    : EntityRenderer(dispatcher)
+{
+    mModel = new LlamaSpitModel(ModelDefinition());
+}
+
+LlamaSpitRenderer::~LlamaSpitRenderer()
+{
+    if (mModel != NULL)
+        delete mModel;
+}
+
+void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
+                               float yaw, float partialTick)
+{
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)x, (float)y + 0.15F, (float)z);
+
+    GlStateManager::rotatef((entity->mYRot - entity->mYRotO) * partialTick + entity->mYRotO - 90.0F,
+                            0.0F, 1.0F, 0.0F);
+    GlStateManager::rotatef((entity->mXRot - entity->mXRotO) * partialTick + entity->mXRotO,
+                            0.0F, 0.0F, 1.0F);
+
+    bindTexture(entity);
+
+    if (mSolidRender)
+    {
+        GlStateManager::enableColorMaterial();
+        getTeamColor(entity);
+        GlStateManager::setupSolidRenderingTextureCombine(0);
+    }
+
+    mModel->render(entity, partialTick, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, false);
+
+    if (mSolidRender)
+    {
+        GlStateManager::tearDownSolidRenderingTextureCombine();
+        GlStateManager::disableColorMaterial();
+    }
+
+    GlStateManager::popMatrix();
+    EntityRenderer::render(entity, x, y, z, yaw, partialTick);
+}
+
+const ResourceLocation* LlamaSpitRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
+    return &LLAMA_SPIT_LOCATION;
+}
+
+Model* LlamaSpitRenderer::createModel(const ModelDefinition& definition)
+{
+    return new LlamaSpitModel(0.0F, definition);
+}

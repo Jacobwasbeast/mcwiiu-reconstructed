@@ -6,12 +6,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
-#include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/TwoPassModel.hpp"
 
 class Boat;
 class Entity;
 class ModelDefinition;
+class ModelPart;
+class ModelPartSkin;
 
 class BoatModel : public Model, public TwoPassModel
 {

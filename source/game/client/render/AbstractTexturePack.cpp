@@ -36,6 +36,7 @@ AbstractTexturePack::AbstractTexturePack(unsigned int id,
     , m_pMaterialTable(NULL)
     , m_pColourTable(NULL)
     , m_pStructureManager(NULL)
+    , m_pIconImage(NULL)
     , m_iconTextureId(-1)
 {
 }

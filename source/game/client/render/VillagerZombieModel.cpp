@@ -5,7 +5,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -36,26 +35,7 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
         delete mRightLeg;
         delete mLeftLeg;
 
-        if (armourModel)
-        {
-            mHead = new ModelPartSkin(this, 0, 0, NULL);
-            mHead->addBox(-4.0f, -10.0f, -4.0f, 8, 8, 8, scale);
-            mHead->setPos(0.0f, yOffset, 0.0f);
-
-            mBody = new ModelPartSkin(this, 16, 16, NULL);
-            mBody->setPos(0.0f, yOffset, 0.0f);
-            mBody->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.1f);
-
-            mRightLeg = new ModelPartSkin(this, 0, 16, NULL);
-            mRightLeg->setPos(-2.0f, yOffset + 12.0f, 0.0f);
-            mRightLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
-
-            mLeftLeg = new ModelPartSkin(this, 0, 16, NULL);
-            mLeftLeg->mMirror = true;
-            mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
-            mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
-        }
-        else
+        if (!armourModel)
         {
             delete mRightArm;
             delete mLeftArm;
@@ -88,6 +68,25 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
             mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
             mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
         }
+        else
+        {
+            mHead = new ModelPartSkin(this, 0, 0, NULL);
+            mHead->addBox(-4.0f, -10.0f, -4.0f, 8, 8, 8, scale);
+            mHead->setPos(0.0f, yOffset, 0.0f);
+
+            mBody = new ModelPartSkin(this, 16, 16, NULL);
+            mBody->setPos(0.0f, yOffset, 0.0f);
+            mBody->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.1f);
+
+            mRightLeg = new ModelPartSkin(this, 0, 16, NULL);
+            mRightLeg->setPos(-2.0f, yOffset + 12.0f, 0.0f);
+            mRightLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
+
+            mLeftLeg = new ModelPartSkin(this, 0, 16, NULL);
+            mLeftLeg->mMirror = true;
+            mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
+            mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
+        }
     }
 
     compileSkinnedDrawlist();
@@ -95,10 +94,10 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
 
 void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
+    _SkinAdjustments defaultSkinAdjustments;
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, defaultSkinAdjustments);
 
     boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(entity);
-
     float swing = Mth::sin(mAttackTime * 3.1415927410125732f);
     float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
 
@@ -108,10 +107,8 @@ void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, floa
     mLeftArm->mYRot = 0.1f - swing * 0.6f;
 
     float armXRot = -3.1415927410125732f / (zombie->isAggressive() ? 1.5f : 2.25f);
-
     mRightArm->mXRot = armXRot;
     mLeftArm->mXRot = armXRot;
-
     mRightArm->mXRot += swing * 1.2f - swingBack * 0.4f;
     mLeftArm->mXRot += swing * 1.2f - swingBack * 0.4f;
     mRightArm->mZRot += Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;

@@ -75,7 +75,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
             GlStateManager::blendFunc(4, 5);
         }
 
-        if (i >= 1)
+        else
         {
             bindTexture(&END_PORTAL_LOCATION);
             fogColorReset = true;

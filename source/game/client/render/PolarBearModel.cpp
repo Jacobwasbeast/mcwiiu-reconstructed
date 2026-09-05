@@ -1,0 +1,133 @@
+#include "game/client/render/PolarBearModel.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/PolarBear.hpp"
+#include "game/entity/mob/Entity.hpp"
+
+PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
+    : QuadrupedModel(12, 1.0f, modelDefinition)
+{
+    if (!modelDefinition.DoesOverrideModel())
+    {
+        mTexWidth = 128;
+        mTexHeight = 64;
+
+        mHead = new ModelPartSkin(this, 0, 0, NULL);
+        mHead->addBox(-3.5f, -3.0f, -3.0f, 7, 7, 7, 0.0f);
+        mHead->texOffs(0, 44)->addBox(-2.5f, 1.0f, -6.0f, 5, 3, 3, 0.0f);
+        mHead->texOffs(26, 0)->addBox(-4.0f, -4.0f, -1.0f, 2, 2, 1, 0.0f);
+        mHead->addBoxMapTex(2.5f, -4.0f, -1.0f, 2, 2, 1, 26, 0, true, 0.0f);
+        mHead->setPos(0.0f, 10.0f, -16.0f);
+
+        mBody = new ModelPartSkin(this);
+        mBody->texOffs(19, 0);
+        mBody->addBox(-5.0f, -13.0f, -7.0f, 14, 14, 11, 0.0f);
+        mBody->texOffs(39, 0);
+        mBody->addBox(-4.0f, -25.0f, -7.0f, 12, 12, 10, 0.0f);
+        mBody->setPos(-2.0f, 9.0f, -1.9f);
+
+        mLeg0 = new ModelPartSkin(this, 50, 22, NULL);
+        mLeg0->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 8, 0.0f);
+        mLeg0->setPos(-3.5f, 14.0f, 6.0f);
+
+        mLeg1 = new ModelPartSkin(this, 50, 22, NULL);
+        mLeg1->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 8, 0.0f);
+        mLeg1->setPos(3.5f, 14.0f, 6.0f);
+
+        mLeg2 = new ModelPartSkin(this, 50, 40, NULL);
+        mLeg2->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 6, 0.0f);
+        mLeg2->setPos(-2.5f, 14.0f, -7.0f);
+
+        mLeg3 = new ModelPartSkin(this, 50, 40, NULL);
+        mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, 10, 6, 0.0f);
+        mLeg3->setPos(2.5f, 14.0f, -7.0f);
+
+        mLeg2->mZ = mLeg2->mZ - 3.5f;
+        mLeg0->mZ = mLeg0->mZ + 3.5f;
+        mLeg1->mZ = mLeg1->mZ - 3.5f;
+        mLeg3->mZ = mLeg3->mZ + 3.5f;
+        mLeg1->mY = mLeg1->mY - 4.0f;
+        mLeg3->mY = mLeg3->mY - 4.0f;
+        mScale = mScale + 2.0f;
+    }
+
+    compileSkinnedDrawlist();
+}
+
+PolarBearModel::~PolarBearModel()
+{
+}
+
+void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                            float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                            bool useDisplayList)
+{
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+              entity, _SkinAdjustments());
+
+    if (!mYoung)
+    {
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
+    }
+    else
+    {
+        mScale = 16.0f;
+        mHeadYOffset = 4.0f;
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::translatef(0.0f, mScale * scale, mHeadYOffset * scale);
+        mHead->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
+    }
+}
+
+void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
+                               float netHeadYaw, float headPitch, float scale,
+                               boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+{
+    QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                              scale, entity, skinAdjustments);
+
+    boost::shared_ptr<PolarBear> polarBear = boost::static_pointer_cast<PolarBear>(entity);
+    float standingScale = polarBear->getStandingAnimationScale(ageInTicks - entity->mTickCount);
+    float standingScaleSquared = standingScale * standingScale;
+    float standingScaleComplement = 1.0f - standingScaleSquared;
+
+    mBody->mXRot = 1.5707963705062866f - 0.3f * standingScaleSquared;
+    mBody->mX = 9.0f * standingScaleComplement + 11.0f * standingScaleSquared;
+    mLeg2->mX = 14.0f * standingScaleComplement - 6.0f * standingScaleSquared;
+    mLeg2->mY = -8.0f * standingScaleComplement - 4.0f * standingScaleSquared;
+    mLeg2->mXRot = mLeg2->mXRot - 0.3f * 0.35f * standingScaleSquared;
+    mLeg3->mX = mLeg2->mX;
+    mLeg3->mY = mLeg2->mY;
+    mLeg3->mXRot = mLeg3->mXRot - 0.3f * 0.35f * standingScaleSquared;
+    mHead->mX = 10.0f * standingScaleComplement - 12.0f * standingScaleSquared;
+    mHead->mY = -16.0f * standingScaleComplement - 3.0f * standingScaleSquared;
+    mHead->mXRot = mHead->mXRot + 3.1415927410125732f * standingScaleSquared * 0.15f;
+}
+
+std::wstring PolarBearModel::getName()
+{
+    return L"polarbear";
+}

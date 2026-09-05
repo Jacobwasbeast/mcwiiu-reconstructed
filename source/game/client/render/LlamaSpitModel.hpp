@@ -15,7 +15,9 @@ public:
 
     virtual ~LlamaSpitModel();
 
-    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
+    virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                        bool useDisplayList);
 
     void _init(float delta, const ModelDefinition& modelDefinition);
 

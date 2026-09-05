@@ -1,0 +1,72 @@
+#include "game/client/render/WitherSkullRenderer.hpp"
+
+#include "game/entity/mob/Entity.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation WITHER_SKULL_LOCATION;
+static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION;
+
+WitherSkullRenderer::WitherSkullRenderer(EntityRenderDispatcher* dispatcher)
+    : EntityRenderer(dispatcher), mWitherSkullModel(new SkeletonHeadModel(ModelDefinition()))
+{
+}
+
+WitherSkullRenderer::~WitherSkullRenderer()
+{
+}
+
+double WitherSkullRenderer::rotlerp(float from, float to, float partialTick)
+{
+    float rotation = to - from;
+    while (rotation < -180.0F)
+        rotation += 360.0F;
+    while (rotation >= 180.0F)
+        rotation -= 360.0F;
+    return (double)(from + partialTick * rotation);
+}
+
+void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
+                                 float yaw, float partialTick)
+{
+    GlStateManager::pushMatrix();
+    GlStateManager::disableCull();
+
+    float interpolatedYaw = (float)rotlerp(entity->mYRotO, entity->mYRot, partialTick);
+    float interpolatedPitch = entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick;
+
+    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::enableRescaleNormal();
+    GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
+    GlStateManager::enableAlphaTest();
+
+    if (mSolidRender)
+    {
+        GlStateManager::enableColorMaterial();
+        getTeamColor(entity);
+        GlStateManager::setupSolidRenderingTextureCombine(1);
+    }
+
+    mWitherSkullModel->render(entity, 0.0F, 0.0F, 0.0F, interpolatedYaw,
+                              interpolatedPitch, 0.0625F, true);
+
+    if (mSolidRender)
+    {
+        GlStateManager::tearDownSolidRenderingTextureCombine();
+        GlStateManager::disableColorMaterial();
+    }
+
+    GlStateManager::popMatrix();
+    EntityRenderer::render(entity, x, y, z, yaw, partialTick);
+}
+
+const ResourceLocation* WitherSkullRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
+    return &WITHER_SKULL_LOCATION;
+}
+
+Model* WitherSkullRenderer::createModel(const ModelDefinition& definition)
+{
+    return new SkeletonHeadModel(definition);
+}

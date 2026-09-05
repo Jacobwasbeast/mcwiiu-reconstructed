@@ -1,6 +1,7 @@
 #ifndef GAME_CLIENT_RENDER_PARTICLE_HPP
 #define GAME_CLIENT_RENDER_PARTICLE_HPP
 
+#include <stdint.h>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -21,20 +22,13 @@ class Particle
 public:
     Particle(Level* level, double x, double y, double z, double xa, double ya, double za);
     Particle(Level* level, double x, double y, double z);
-
     virtual long long GetType() = 0;
     virtual ~Particle();
     virtual void setPower(float power);
     virtual Particle* scale(float factor);
     virtual void tick();
-    virtual void render(BufferBuilder* buffer,
-                        const boost::shared_ptr<Entity>& camera,
-                        float partialTicks,
-                        float xa,
-                        float ya,
-                        float za,
-                        float xa2,
-                        float za2);
+    virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
+                        float partialTicks, float xa, float ya, float za, float xa2, float za2);
     virtual int getParticleTexture();
     virtual void setSprite(TextureAtlasSprite* sprite);
     virtual void setMiscTex(int texture);
@@ -49,29 +43,22 @@ public:
     virtual void setLocationFromBoundingbox();
 
     Level* getLevel();
-    float getAlpha();
-    bool isAlive();
+    double getAlpha();
+    uint8_t isAlive();
     void remove();
-
     void setBoundingBox(const AABB* box);
     AABB* getBoundingBox();
-
     void setColor(float red, float green, float blue);
     void setAlpha(float alpha);
     void setLifetime(int lifetime);
-
-    float getRedCol();
-    float getGreenCol();
-    float getBlueCol();
+    double getRedCol();
+    double getGreenCol();
+    double getBlueCol();
 
     static void setXOffset(double offset);
     static void setYOffset(double offset);
     static void setZOffset(double offset);
     static void setCamerViewDirection(Vec3* direction);
-
-    static double xOff;
-    static double yOff;
-    static double zOff;
 
     boost::weak_ptr<Entity> attachedEntity;
     Level* level;

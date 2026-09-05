@@ -5,12 +5,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/client/render/ModelPart.hpp"
 #include "game/client/render/Tesselator.hpp"
-#include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/world/block/MaterialTable.hpp"
 
 #include "game/entity/mob/PigZombie.hpp"
 

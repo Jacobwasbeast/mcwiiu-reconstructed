@@ -1,0 +1,160 @@
+#include "game/client/render/TextureManager.hpp"
+
+#include <wchar.h>
+#include <utility>
+
+#include "game/core/BufferedImage.hpp"
+#include "game/core/File.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/client/render/Texture.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
+
+static TextureManager* g_textureManager = NULL;
+
+TextureManager::TextureManager()
+{
+    m_nextTextureId = 0;
+}
+
+void TextureManager::unregisterTexture(const std::wstring& name, Texture* texture)
+{
+    const unsigned int managerId = texture->getManagerId();
+    boost::unordered_map<int, Texture*>::iterator textureIt = m_textures.find(static_cast<int>(managerId));
+    if (textureIt != m_textures.end())
+    {
+        m_textures.erase(textureIt);
+    }
+
+    boost::unordered_map<std::wstring, int>::iterator nameIt = m_textureNames.find(name);
+    if (nameIt != m_textureNames.end())
+    {
+        m_textureNames.erase(nameIt);
+    }
+}
+
+TextureManager* TextureManager::getInstance()
+{
+    return g_textureManager;
+}
+
+void TextureManager::createInstance()
+{
+    g_textureManager = new TextureManager();
+}
+
+unsigned int TextureManager::createTextureID()
+{
+    ++m_nextTextureId;
+    return static_cast<unsigned int>(m_nextTextureId);
+}
+
+void TextureManager::registerName(const std::wstring& name, Texture* texture)
+{
+    const int managerId = static_cast<int>(texture->getManagerId());
+    m_textureNames.insert(std::make_pair(name, managerId));
+
+    if (m_textures.find(managerId) == m_textures.end())
+    {
+        m_textures.insert(std::make_pair(managerId, texture));
+    }
+}
+
+void TextureManager::registerTexture(Texture* texture)
+{
+    const int managerId = static_cast<int>(texture->getManagerId());
+    if (m_textures.empty())
+    {
+        m_textures.insert(std::make_pair(managerId, texture));
+        return;
+    }
+
+    boost::unordered_map<int, Texture*>::iterator it = m_textures.begin();
+    for (; it != m_textures.end(); ++it)
+    {
+        if (it->second == texture)
+        {
+            return;
+        }
+    }
+    m_textures.insert(std::make_pair(managerId, texture));
+}
+
+Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
+                                       int format, int filter, int wrap, int target, bool mipmap,
+                                       BufferedImage* image)
+{
+    Texture* texture = new Texture(name, type, width, height, format, filter, wrap, target, image, mipmap);
+    registerTexture(texture);
+    return texture;
+}
+
+std::wstring TextureManager::getTextureNameFromPath(const std::wstring& path)
+{
+    File file(path);
+    const std::wstring name = file.getName();
+    const std::wstring::size_type extension = name.rfind(L'.');
+    return name.substr(0, extension);
+}
+
+bool TextureManager::isAnimation(const std::wstring& name, TexturePack* texturePack)
+{
+    const std::wstring baseName = name.substr(0, name.rfind(L'.'));
+    const std::wstring animationName = L"/" + baseName + L"_txt";
+    const bool found = texturePack->hasFile(animationName, false);
+    TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+    return selected->hasFile(L"/" + name + L"_txt", !found);
+}
+
+std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, bool singleImage)
+{
+    std::vector<Texture*>* textures = new std::vector<Texture*>();
+    TexturePackRepository* repository = Minecraft::GetInstance()->mTexturePackRepository;
+    TexturePack* texturePack = repository->getSelected();
+    const std::wstring resourcePath = L"res/" + path;
+    if (!texturePack->hasFile(resourcePath, false))
+    {
+        texturePack = TexturePackRepository::defaultTexturePack;
+    }
+    const std::wstring packPath = texturePack->getPath(true, NULL);
+    BufferedImage* image = texturePack->getImageResource(path, false, true, packPath);
+
+    const unsigned int height = image->getHeight();
+    const unsigned int width = image->getWidth();
+    const std::wstring textureName = getTextureNameFromPath(path);
+    const bool animation = isAnimation(path, texturePack);
+
+    if (!animation && width == height)
+    {
+        bool mipmap = true;
+        if (!singleImage && image->getData(1) == NULL)
+        {
+            mipmap = false;
+        }
+        textures->push_back(createTexture(textureName, 2, width, height, 1, 0, 0, 0, mipmap, image));
+    }
+    else if (animation)
+    {
+        const unsigned int frameCount = height / width;
+        for (unsigned int frame = 0; frame < frameCount; ++frame)
+        {
+            BufferedImage* frameImage = image->getSubimage(0, frame * width, width, width);
+            bool mipmap = true;
+            if (!singleImage && image->getData(1) == NULL)
+            {
+                mipmap = false;
+            }
+            textures->push_back(createTexture(textureName, 2, width, width, 1, 0, 0, 0, mipmap, frameImage));
+            delete frameImage;
+        }
+    }
+
+    delete image;
+    return textures;
+}
+
+Texture* TextureManager::createTexture(const std::wstring& name, int type, int width, int height,
+                                       int format, bool mipmap)
+{
+    return createTexture(name, type, width, height, format, 0, 0, 0, mipmap, NULL);
+}

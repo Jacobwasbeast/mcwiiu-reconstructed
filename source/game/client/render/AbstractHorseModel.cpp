@@ -3,16 +3,13 @@
 #include <algorithm>
 
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
-#include "game/core/Donkey.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/core/Mule.hpp"
 #include "game/util/Math.hpp"
 
 static const float DEGREES_TO_RADIANS = 0.01745329238474369f;

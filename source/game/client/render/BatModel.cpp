@@ -8,7 +8,6 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/Bat.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/entity/mob/Entity.hpp"
 
 BatModel::BatModel(const ModelDefinition& modelDefinition)
 {

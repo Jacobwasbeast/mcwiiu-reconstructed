@@ -13,8 +13,6 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/ConduitBlockEntity.hpp"
 
-#include <boost/shared_ptr.hpp>
-
 static ResourceLocation SHELL_TEXTURE((_TEXTURE_NAME)233);
 static ResourceLocation ACTIVE_SHELL_TEXTURE((_TEXTURE_NAME)234);
 static ResourceLocation WIND_TEXTURE((_TEXTURE_NAME)235);
@@ -33,16 +31,16 @@ ConduitRenderer::~ConduitRenderer()
 {
 }
 
-void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
-    if (blockEntity->GetType() != BLOCK_ENTITY_TYPE_CONDUIT)
+    if (blockEntity->GetType() != 0x0120021200000000ULL)
     {
         return;
     }
 
     boost::shared_ptr<ConduitBlockEntity> conduit = boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
 
-    float rotation = conduit->mActiveRotation;
+    float rotation = conduit->mRotation;
 
     if (!conduit->mActive)
     {
@@ -81,10 +79,10 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
 
     GlStateManager::disableCull();
 
-    conduit->mActiveRotation = Mth::wrapDegrees(((float)conduit->mRotationTick + a) * -2.0F);
-    conduit->mRotationTick = conduit->mRotationTick + 1;
+    conduit->mRotation = Mth::wrapDegrees(((float)conduit->mTickCount + partialTicks) * -2.0F);
+    conduit->mTickCount = conduit->mTickCount + 1;
 
-    float bob = Mth::sin(((float)conduit->mTickCount + a) * 0.1F) * 0.5F + 0.5F;
+    float bob = Mth::sin(((float)conduit->mTickCount + partialTicks) * 0.1F) * 0.5F + 0.5F;
 
     GlStateManager::pushMatrix();
 
@@ -122,7 +120,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
 
     GlStateManager::pushMatrix();
 
-    if (conduit->mHunting)
+    if (conduit->mLarge)
     {
         bindTexture(&OPEN_EYE_TEXTURE);
     }
@@ -141,13 +139,13 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
     GlStateManager::disableCull();
 
     int windLevel = conduit->mWindLevel;
-    float windOffset = conduit->mAnimationValue;
+    float windOffset = conduit->mAnimation;
 
-    if ((conduit->mRotationTick & 7) == 0)
+    if ((conduit->mTickCount & 7) == 0)
     {
         conduit->incrementAnimationValue(0.045454547F);
 
-        if (conduit->mAnimationValue == 0.0F)
+        if (conduit->mAnimation == 0.0F)
         {
             conduit->incrementWindLevel();
         }

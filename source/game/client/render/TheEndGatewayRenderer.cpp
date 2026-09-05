@@ -35,7 +35,7 @@ void TheEndGatewayRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, d
 
         percent = Mth::sin(percent * 3.1415927F);
 
-        int beamHeight = Mth::absFloor(percent * beamLength);
+        int beamHeight = (int)Mth::lfloor(percent * beamLength);
 
         arrayWithLength<const float> colours = gateway->isSpawning()
             ? DyeColor::MAGENTA->getTextureDiffuseColors()

@@ -8,9 +8,7 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/AbstractIllager.hpp"
-#include "game/core/HumanoidArm.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
 

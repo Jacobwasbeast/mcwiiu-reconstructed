@@ -14,16 +14,16 @@ class FolderTexturePack : public AbstractTexturePack
 public:
     FolderTexturePack(unsigned int id,
                       const std::wstring& name,
-                      File* pFolder,
-                      TexturePack* pParentPack);
+                      File* folder,
+                      TexturePack* parentPack);
     virtual ~FolderTexturePack();
 
-    virtual bool isTerrainUpdateCompatible();
-    virtual std::wstring getPath(bool bTitleUpdate, const char* pFileName);
-    virtual void loadUI();
-    virtual void unloadUI();
     virtual InputStream* getResourceImplementation(const std::wstring& fileName);
     virtual bool hasFile(const std::wstring& fileName);
+    virtual bool isTerrainUpdateCompatible();
+    virtual std::wstring getPath(bool titleUpdate, const char* fileName);
+    virtual void loadUI();
+    virtual void unloadUI();
 };
 
 #endif

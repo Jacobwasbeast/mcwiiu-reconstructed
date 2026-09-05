@@ -35,7 +35,9 @@ void LlamaSpitModel::_init(float delta, const ModelDefinition& modelDefinition)
     mSpit->compile(0.0625f);
 }
 
-void LlamaSpitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
+void LlamaSpitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                            float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                            bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 

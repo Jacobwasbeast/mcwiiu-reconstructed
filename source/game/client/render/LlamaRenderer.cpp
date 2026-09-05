@@ -1,0 +1,32 @@
+#include "game/client/render/LlamaRenderer.hpp"
+
+#include "game/client/render/LlamaModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/core/Llama.hpp"
+#include "game/core/Mth.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/LlamaDecorLayer.hpp"
+
+static ResourceLocation LLAMA_TEXTURES[4];
+
+LlamaRenderer::LlamaRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new LlamaModel(3.0F, ModelDefinition()), 0.7F)
+{
+    addLayer(new LlamaDecorLayer(this));
+}
+
+LlamaRenderer::~LlamaRenderer()
+{
+}
+
+const ResourceLocation* LlamaRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
+    boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(entity);
+    int variant = Mth::clamp(llama->getVariant(), 0, 3);
+    return &LLAMA_TEXTURES[variant];
+}
+
+Model* LlamaRenderer::createModel(const ModelDefinition& definition)
+{
+    return new LlamaModel(3.0F, definition);
+}

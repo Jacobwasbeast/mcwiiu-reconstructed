@@ -276,7 +276,7 @@ void HumanoidModel::copyPropertiesFrom(Model* model)
     }
 }
 
-ModelPart* HumanoidModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int armourFlags)
+ModelPart* HumanoidModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int unusedArmourFlags)
 {
     ModelPart* parent = NULL;
 

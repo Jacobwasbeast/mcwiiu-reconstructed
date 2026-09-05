@@ -1,0 +1,32 @@
+#ifndef GAME_CLIENT_RENDER_PARROTRENDERER_HPP
+#define GAME_CLIENT_RENDER_PARROTRENDERER_HPP
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/client/render/MobRenderer.hpp"
+
+class Entity;
+class EntityRenderDispatcher;
+class LivingEntity;
+class Model;
+class ModelDefinition;
+class MultiplayerLocalPlayer;
+class Parrot;
+class Player;
+class ResourceLocation;
+
+class ParrotRenderer : public MobRenderer
+{
+public:
+    ParrotRenderer(EntityRenderDispatcher* dispatcher);
+    virtual ~ParrotRenderer();
+
+    const ResourceLocation* getSpectateTextureLocation(boost::shared_ptr<MultiplayerLocalPlayer> player);
+    virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
+    double getCustomBob(boost::shared_ptr<Parrot> parrot, float partialTicks);
+    double getCustomBob(boost::shared_ptr<Player> player, float partialTicks);
+    virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    virtual Model* createModel(const ModelDefinition& definition);
+};
+
+#endif

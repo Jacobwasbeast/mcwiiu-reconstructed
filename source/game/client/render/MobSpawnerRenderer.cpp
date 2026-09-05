@@ -6,7 +6,6 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
 
@@ -36,8 +35,8 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
         entity->setLevel(pSpawner->getLevel());
 
         float scale = 0.53125F;
-        float maxSize = std::max(entity->bbWidth, entity->bbHeight);
-        if (maxSize > 1.0)
+        float maxSize = std::max(entity->mBbWidth, entity->mBbHeight);
+        if (maxSize > 1.0F)
         {
             scale = 0.53125F / maxSize;
         }

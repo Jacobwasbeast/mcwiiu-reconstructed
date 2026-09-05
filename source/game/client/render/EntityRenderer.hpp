@@ -35,10 +35,10 @@ public:
     virtual bool bindTexture(const std::wstring& path, const std::wstring& alternate);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void renderFlame(boost::shared_ptr<Entity>& entity, double x, double y, double z, float partialTick);
-    virtual void renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float radius, float alpha);
+    virtual void renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha, float partialTick);
     virtual Level* getLevel();
-    virtual void renderBlockShadow(const BlockState* state, double x, double y, double z, const BlockPos& pos, float radius, float alpha, double ox, double oy, double oz);
-    virtual void postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick, bool renderName);
+    virtual void renderBlockShadow(const BlockState* state, double x, double y, double z, const BlockPos& pos, float alpha, float radius, double offsetX, double offsetY, double offsetZ);
+    virtual void postRender(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick, bool renderShadow);
     virtual Font* getFont();
     virtual void renderNameTag(boost::shared_ptr<Entity>& entity, const std::wstring& name, double x, double y, double z, int maxDistance, int color);
     virtual bool hasSecondPass();
@@ -60,7 +60,6 @@ protected:
     bool mSolidRender;
     Model* mModel;
     Model* mOriginalModel;
-    bool mItemFrame;
 };
 
 #endif
