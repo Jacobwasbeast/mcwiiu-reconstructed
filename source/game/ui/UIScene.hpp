@@ -1,21 +1,172 @@
 #ifndef GAME_UI_UISCENE_HPP
 #define GAME_UI_UISCENE_HPP
+
 #include <string>
 #include <vector>
+
 #include <boost/unordered_map.hpp>
+
+#include "game/client/render/C4JRender.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/fuiRect.hpp"
-class UILayer; class UIControl; class UIControl_Base; class fuiFile; class ItemInstance;
-enum EUIMessage { EUIMessage_Unknown = 0 };
-namespace C4JRender { enum eViewportType { eViewportType_FullScreen = 0, eViewportType_TopHalf, eViewportType_BottomHalf, eViewportType_LeftHalf, eViewportType_RightHalf, eViewportType_TopLeftQuarter, eViewportType_TopRightQuarter, eViewportType_BottomLeftQuarter, eViewportType_BottomRightQuarter }; }
-class UIScene {
-public:
- struct _TimerInfo { int duration; int elapsed; bool complete; _TimerInfo(); };
- struct _CachedSlotDrawData { int value; };
- UIScene(int, UILayer*); virtual ~UIScene();
- virtual void reloadMovie(bool); virtual bool needsReloaded(); virtual bool hasMovie(); virtual void updateSafeZone(); virtual void updateViewportTouchOffset(); virtual double getSafeZoneHalfHeight(); virtual double getSafeZoneHalfWidth(); virtual std::wstring getMoviePath()=0; virtual unsigned int mapElementsAndNames(); virtual int getSceneType()=0; virtual unsigned int getSubSceneType() const; virtual void tick(); virtual void SetFocusToElement(int); virtual void handleTimerComplete(int); virtual bool stealsFocus(); virtual bool hasFocus(int); virtual void updateTooltips(); virtual void updateComponents(); virtual void handleGainFocus(bool); virtual void handleLoseFocus(); virtual bool hidesLowerScenes(); virtual bool blocksInput(); virtual unsigned int GetMainPanel(); virtual void render(int,int,C4JRender::eViewportType); virtual void customDraw(const char*,fuiRect*); virtual bool allowRepeat(int); virtual void handleInput(int,int,bool,bool,bool,bool&); virtual void handleDestroy(); virtual void handlePreUnloadForReload(); virtual void handlePreReload(); virtual void handleReload(); virtual void handlePress(int,int); virtual void handleFocusChange(int,int); virtual void handleInitFocus(int,int); virtual void handleCheckboxToggled(int,bool); virtual void handleCheckboxElementToggled(int,int,bool); virtual void handleSliderMove(int,int); virtual void handleSliderElementMove(int,int,int); virtual void handleAnimationEnd(); virtual void handleSelectionChanged(int); virtual void handleRequestMoreData(int,bool); virtual void handleTouchBoxRebuild(); virtual void HandleDLCMountingComplete(); virtual void HandleDLCInstalled(); virtual void HandleDLCLicenseChange(); virtual void HandleTMSBanFileRetrieved(); virtual void HandleMessage(EUIMessage,void*); virtual void HandleSaveDeviceRemoved(int); virtual void handleUnlockFullVersion(); virtual void handleTouchInput(unsigned int,int,int,int,bool,bool,bool); virtual bool isReadyToDelete();
- static void customDrawFui(void*,const char*,fuiRect*); void tickTimers(); void navigateBack(); bool hasRegisteredSubstitutionTexture(const std::wstring&); void unregisterSubstitutionTexture(const std::wstring&,bool); void registerSubstitutionTexture(const std::wstring&,unsigned char*,unsigned int,bool); void loadMovie(); void initialiseMovie(); void addTimer(int,int); void killTimer(int); unsigned int convertGameActionToFuiKeycode(int); void sendInputToMovie(int,bool,bool,bool); unsigned long long GetCallbackUniqueId(); bool controlHasFocus(int); unsigned int getControlChildFocus(); void customDrawSlotControlFui(fuiRect*,int,not_null_ptr<ItemInstance>,float,bool,bool,bool); void destroyMovie(); void UpdateSceneControls(); void removeControl(UIControl_Base*,bool); void doHorizontalResizeCheck(); UIScene* getBackScene(); void gainFocus(); void loseFocus(); void setBackScene(UIScene*); void setSafeZone(double,double,double,double); void resetHorizontalResizeCheck(); void _handleFocusChange(int,int); void _handleInitFocus(int,int); void controlHasFocus(UIControl_Base*); unsigned int getControlFocus(); void setOpacity(float); void setVisible(bool); bool hasTimer(int); bool canCacheSWF(); unsigned long long slideLeft(); unsigned long long slideRight();
-protected:
- int m_sceneType; UILayer* m_layer; float m_safeZoneLeft,m_safeZoneTop,m_safeZoneRight,m_safeZoneBottom,m_viewportTouchOffset; fuiFile* m_movie; bool m_movieLoaded; void* m_itemRenderer; boost::unordered_map<std::wstring,bool> m_substitutionTextures; boost::unordered_map<int,_TimerInfo> m_timers; int m_controlFocus,m_controlChildFocus; float m_opacity; bool m_needsReload,m_visible,m_focusInitialized; UIScene* m_backScene; int m_resolution,m_stageWidth; bool m_hasInitialized,m_resizePending,m_touchBoxDirty; std::vector<UIControl*> m_controls; bool m_controlsUpdated; int m_mainPanel; bool m_sceneActive,m_sceneVisible,m_sceneReady; std::vector<_CachedSlotDrawData*> m_cachedSlotDrawData; bool m_cacheDirty,m_destroyed; int m_callbackId;
+
+class ConsoleUIController;
+class ItemInstance;
+class ItemRenderer;
+class UIControl;
+class UIControl_Base;
+class UILayer;
+class fuiFile;
+
+enum EUIMessage
+{
+    EUIMessage_Unknown = 0
 };
+
+class UIScene
+{
+    friend class ConsoleUIController;
+
+public:
+    struct _TimerInfo
+    {
+        int duration;
+        unsigned int triggerTime;
+        bool active;
+    };
+
+    struct _CachedSlotDrawData
+    {
+    };
+
+    UIScene(int sceneType, UILayer* layer);
+    virtual ~UIScene();
+
+    virtual void reloadMovie(bool force);
+    virtual bool needsReloaded();
+    virtual bool hasMovie();
+    virtual void updateSafeZone();
+    virtual void updateViewportTouchOffset();
+    virtual double getSafeZoneHalfHeight();
+    virtual double getSafeZoneHalfWidth();
+    virtual std::wstring getMoviePath() = 0;
+    virtual unsigned int mapElementsAndNames();
+    virtual int getSceneType() = 0;
+    virtual unsigned int getSubSceneType() const;
+    virtual void tick();
+    virtual void SetFocusToElement(int focus);
+    virtual void handleTimerComplete(int timerId);
+    virtual bool stealsFocus();
+    virtual bool hasFocus(int sceneType);
+    virtual void updateTooltips();
+    virtual void updateComponents();
+    virtual void handleGainFocus(bool hadFocus);
+    virtual void handleLoseFocus();
+    virtual bool hidesLowerScenes();
+    virtual bool blocksInput();
+    virtual unsigned int GetMainPanel();
+    virtual void render(int width, int height, C4JRender::eViewportType viewport);
+    virtual void customDraw(const char* name, fuiRect* rect);
+    virtual bool allowRepeat(int action);
+    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+                             bool& handled);
+    virtual void handleDestroy();
+    virtual void handlePreUnloadForReload();
+    virtual void handlePreReload();
+    virtual void handleReload();
+    virtual void handlePress(int first, int second);
+    virtual void handleFocusChange(int focus, int childFocus);
+    virtual void handleInitFocus(int focus, int childFocus);
+    virtual void handleCheckboxToggled(int id, bool checked);
+    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
+    virtual void handleSliderMove(int id, int value);
+    virtual void handleSliderElementMove(int first, int second, int value);
+    virtual void handleAnimationEnd();
+    virtual void handleSelectionChanged(int selection);
+    virtual void handleRequestMoreData(int id, bool forward);
+    virtual void handleTouchBoxRebuild();
+    virtual void HandleDLCMountingComplete();
+    virtual void HandleDLCInstalled();
+    virtual void HandleDLCLicenseChange();
+    virtual void HandleTMSBanFileRetrieved();
+    virtual void HandleMessage(EUIMessage message, void* data);
+    virtual void HandleSaveDeviceRemoved(int deviceIndex);
+    virtual void handleUnlockFullVersion();
+    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
+                                  bool released, bool pressed);
+    virtual bool isReadyToDelete();
+
+    static void customDrawFui(void* context, const char* name, fuiRect* rect);
+    void tickTimers();
+    void navigateBack();
+    bool hasRegisteredSubstitutionTexture(const std::wstring& name);
+    void unregisterSubstitutionTexture(const std::wstring& name, bool deleteData);
+    void registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
+                                     unsigned int size, bool deleteData);
+    void loadMovie();
+    void initialiseMovie();
+    void addTimer(int timerId, int duration);
+    void killTimer(int timerId);
+    unsigned int convertGameActionToFuiKeycode(int action);
+    void sendInputToMovie(int action, bool repeat, bool released, bool pressed);
+    unsigned int GetCallbackUniqueId();
+    bool controlHasFocus(int focus);
+    unsigned int getControlChildFocus();
+    void customDrawSlotControlFui(fuiRect* rect, int slot, not_null_ptr<ItemInstance> item,
+                                  float partialTick, bool flat, bool drawDecorations,
+                                  bool drawOverlay);
+    void destroyMovie();
+    void UpdateSceneControls();
+    void removeControl(UIControl_Base* control, bool destroy);
+    void doHorizontalResizeCheck();
+    UIScene* getBackScene();
+    void gainFocus();
+    void loseFocus();
+    void setBackScene(UIScene* scene);
+    void setSafeZone(double top, double bottom, double left, double right);
+    void resetHorizontalResizeCheck();
+    void _handleFocusChange(int focus, int childFocus);
+    void _handleInitFocus(int focus, int childFocus);
+    void controlHasFocus(UIControl_Base* control);
+    unsigned int getControlFocus();
+    void setOpacity(float opacity);
+    void setVisible(bool visible);
+    bool hasTimer(int timerId);
+    bool canCacheSWF();
+    void slideLeft();
+    void slideRight();
+
+protected:
+    std::wstring m_moviePath;
+    fuiFile* m_movie;
+    bool m_movieLoaded;
+    ItemRenderer* m_itemRenderer;
+    boost::unordered_map<std::wstring, bool> m_substitutionTextures;
+    boost::unordered_map<int, _TimerInfo> m_timers;
+    int m_controlFocus;
+    int m_controlChildFocus;
+    float m_opacity;
+    bool m_opacityInitialised;
+    bool m_visible;
+    bool m_tickedLastFrame;
+    UIScene* m_backScene;
+    unsigned int m_callbackId;
+    int m_resolution;
+    bool m_reloading;
+    bool m_hasGainedFocus;
+    int m_stageWidth;
+    int m_stageHeight;
+    int m_originalStageWidth;
+    int m_originalStageHeight;
+    std::vector<UIControl*> m_controls;
+    UILayer* m_layer;
+    bool m_hasFocus;
+    int m_sceneType;
+    bool m_hasTicked;
+    bool m_unknownA9;
+    bool m_updatePending;
+    int m_unknownAC;
+    std::vector<_CachedSlotDrawData*> m_cachedSlotDrawData;
+};
+
 #endif

@@ -1,0 +1,42 @@
+#ifndef GAME_UI_FJ_SLOTLIST_HPP
+#define GAME_UI_FJ_SLOTLIST_HPP
+
+#include <stdint.h>
+#include <vector>
+
+#include "game/ui/FJ_FuiNode.hpp"
+
+class FJ_SlotList_Slot;
+class fuiRenderNode;
+
+class FJ_SlotList : public FJ_FuiNode
+{
+private:
+    int m_slotSize;
+    bool m_slotVisible;
+    int m_rows;
+    int m_columns;
+    std::vector<FJ_SlotList_Slot*> m_slots;
+    bool m_loaded;
+
+public:
+    FJ_SlotList(fuiRenderNode* pRenderNode);
+    virtual ~FJ_SlotList();
+
+    static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
+    virtual unsigned int getType();
+    virtual float getWidth();
+    virtual float getHeight();
+    void Init();
+    void Clear();
+    void addSlot(int slot, bool highlighted, bool visible);
+    bool SetSlotRedBox(int slot, bool show);
+    bool SetSlotHighlight(int slot, bool highlighted);
+    virtual void setVisible(bool visible);
+    int getRows();
+    int getColumns();
+    bool getLoaded();
+    void ShowSlot(int slot, bool visible);
+};
+
+#endif

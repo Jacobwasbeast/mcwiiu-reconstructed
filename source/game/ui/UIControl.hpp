@@ -11,7 +11,7 @@ class UIControl
 public:
     UIControl();
     virtual ~UIControl();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void UpdateControl();
     virtual void tick();
     virtual void ReInit();
@@ -31,11 +31,10 @@ public:
     UIControl& operator=(const UIControl& other);
 
 protected:
-    unsigned int m_unknown0;
-    unsigned char m_unknown2;
-    unsigned char m_unknown3;
-    void* m_unknown4;
-    void* m_unknown8;
+    unsigned short m_controlType;
+    bool m_controlFlags;
+    void* m_controlData;
+    bool m_flag;
     std::string m_name;
     fuiRenderNode* m_fuiRenderNode;
     UIScene* m_scene;
@@ -45,7 +44,7 @@ protected:
     float m_height;
     float m_opacity;
     bool m_visible;
-    bool m_unknown49;
+    bool m_renderState;
 };
 
 #endif

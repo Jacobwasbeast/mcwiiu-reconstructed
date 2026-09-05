@@ -1,0 +1,94 @@
+#ifndef GAME_UI_UISCENE_ANVILMENU_HPP
+#define GAME_UI_UISCENE_ANVILMENU_HPP
+
+#include <string>
+#include <vector>
+#include <boost/shared_ptr.hpp>
+
+#include "game/ui/UIScene_AbstractContainerMenu.hpp"
+#include "game/ui/IUIScene_AbstractContainerMenu.hpp"
+#include "game/ui/UIControl_SlotList.hpp"
+#include "game/ui/UIControl_Label.hpp"
+#include "game/ui/UIControl_TextInput.hpp"
+#include "game/item/not_null_ptr.hpp"
+
+class AbstractContainerMenu;
+class AnvilMenu;
+class CensoredString;
+class Container;
+class ItemInstance;
+class UILayer;
+struct _UIVec2D
+{
+    float x;
+    float y;
+};
+
+class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu
+{
+public:
+    struct PendingNameInfo
+    {
+        std::wstring name;
+        std::wstring itemName;
+    };
+
+    UIScene_AnvilMenu(int type, void* data, UILayer* layer);
+    virtual ~UIScene_AnvilMenu();
+
+    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                       IUIScene_AbstractContainerMenu::ETapState state,
+                                                       int* x, int* y);
+    virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                      _UIVec2D* position);
+    virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
+                                    _UIVec2D* position, _UIVec2D* size);
+    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
+                                    int slot, bool pressed);
+    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                        int slot, int direction, bool wrap);
+
+    virtual std::wstring getMoviePath();
+    virtual unsigned int mapElementsAndNames();
+    virtual void handleReload();
+    virtual void tick();
+    virtual void handleDestroy();
+    virtual int getSceneType();
+    virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
+
+    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
+
+    void addPendingNameChange(const PendingNameInfo& info);
+    static int KeyboardCompleteCallback(void* data, bool accepted);
+    void handleEditNamePressed();
+    void refreshContainer(AbstractContainerMenu* menu,
+                          std::vector<not_null_ptr<ItemInstance> >* items);
+    void slotChanged(AbstractContainerMenu* menu, int slot, not_null_ptr<ItemInstance> item);
+    void setContainerData(AbstractContainerMenu* menu, int id, int value);
+    void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
+    void setCostLabel(const std::wstring& label, bool safe);
+    void showCross(bool show);
+    void handleTick();
+    void setEditNameValue(const std::wstring& value);
+    void updateItemName();
+    void setEditNameEditable(bool editable);
+
+private:
+    UIControl_SlotList m_ingredientSlot;
+    UIControl_SlotList m_ingredientSlot2;
+    UIControl_SlotList m_resultSlot;
+    UIControl_Label m_anvilLabel;
+    UIControl_TextInput m_editName;
+    IUIScene_AbstractContainerMenu* m_sceneInterface;
+    AnvilMenu* m_anvilMenu;
+    CensoredString* m_itemName;
+    PendingNameInfo* m_pendingName;
+    bool m_editingName;
+    bool m_crossVisible;
+};
+
+#endif

@@ -27,7 +27,7 @@ FJ_FuiNodeStage* FJ_FuiNode::getStage()
 
 FJ_FuiNode::~FJ_FuiNode()
 {
-    g_pFui->removeEventListenerForNode(this);
+    gFui->removeEventListenerForNode(this);
 
     if (m_pRenderNode != NULL)
     {
@@ -87,7 +87,7 @@ const std::string& FJ_FuiNode::getName()
 
 fuiRect FJ_FuiNode::getRect(FJ_FuiNode* pNode)
 {
-    return m_pRenderNode->getBounds();
+    return pNode->m_pRenderNode->getBounds();
 }
 
 int FJ_FuiNode::getTabIndex()
@@ -616,7 +616,7 @@ std::string FJ_FuiNode::currentLabel()
     if (pTimeline != NULL)
         return pTimeline->currentLabel();
 
-    return "";
+    return "FadeOut";
 }
 
 unsigned int FJ_FuiNode::currentFrame()
@@ -755,146 +755,59 @@ void FJ_FuiNode::dispatchEvent(FJ_Event* pEvent)
     delete pEvent;
 }
 
-FJ_Label* FJ_FuiNode::asFJ_Label(FJ_FuiNode* pNode)
+void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*), bool bCapture)
 {
-    if (pNode != NULL)
-        return pNode->asFJ_Label();
-    return NULL;
+    FJ_EventListener listener;
+    listener.m_eType = eType;
+    listener.m_bCapture = bCapture;
+    listener.m_pNode = pNode;
+    listener.m_pfnHandler = pfnHandler;
+
+    if (eType == eFJEventType_EnterFrame)
+    {
+        gFui->addDirectEventListener(listener);
+        return;
+    }
+
+    for (unsigned int i = 0; i < m_eventListeners.size(); ++i)
+    {
+        const FJ_EventListener& existing = m_eventListeners[i];
+        if (existing.m_eType == listener.m_eType &&
+            existing.m_bCapture == listener.m_bCapture &&
+            existing.m_pNode == listener.m_pNode &&
+            existing.m_pfnHandler == listener.m_pfnHandler)
+            return;
+    }
+
+    m_eventListeners.push_back(listener);
 }
 
-bool FJ_FuiNode::isFJ_MenuButton()
+void FJ_FuiNode::removeEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*))
 {
-    return asFJ_MenuButton() != NULL;
-}
+    FJ_EventListener listener;
+    listener.m_eType = eType;
+    listener.m_bCapture = false;
+    listener.m_pNode = pNode;
+    listener.m_pfnHandler = pfnHandler;
 
-bool FJ_FuiNode::isFJ_Label_HUD_SplashVita()
-{
-    return asFJ_Label_HUD_SplashVita() != NULL;
-}
+    if (eType == eFJEventType_EnterFrame)
+    {
+        gFui->removeDirectEventListener(listener);
+        return;
+    }
 
-bool FJ_FuiNode::isFJ_List_MenuButton()
-{
-    return asFJ_List_MenuButton() != NULL;
-}
-
-FJ_UpsellButton* FJ_FuiNode::asFJ_UpsellButton()
-{
-    return dynamic_cast<FJ_UpsellButton*>(this);
-}
-
-bool FJ_FuiNode::isFJ_UpsellButton()
-{
-    return asFJ_UpsellButton() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_List_ListButtonAchievement()
-{
-    return asFJ_List_ListButtonAchievement() != NULL;
-}
-
-FJ_List_ListButtonAchievement* FJ_FuiNode::asFJ_List_ListButtonAchievement()
-{
-    return dynamic_cast<FJ_List_ListButtonAchievement*>(this);
-}
-
-bool FJ_FuiNode::isFJ_List_ListButtonPlayerList()
-{
-    return asFJ_List_ListButtonPlayerList() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_List_ListButtonScoreBoard()
-{
-    return asFJ_List_ListButtonScoreBoard() != NULL;
-}
-
-FJ_DragonHealth* FJ_FuiNode::asFJ_DragonHealth()
-{
-    return dynamic_cast<FJ_DragonHealth*>(this);
-}
-
-bool FJ_FuiNode::isFJ_DragonHealth()
-{
-    return asFJ_DragonHealth() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_HorseJumpBar()
-{
-    return asFJ_HorseJumpBar() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_ExperienceBar()
-{
-    return asFJ_ExperienceBar() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_SlotList()
-{
-    return asFJ_SlotList() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_ScrollArrow()
-{
-    return asFJ_ScrollArrow() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_MobEffect()
-{
-    return asFJ_MobEffect() != NULL;
-}
-
-FJ_MobEffect_Tile* FJ_FuiNode::asFJ_MobEffect_Tile()
-{
-    return dynamic_cast<FJ_MobEffect_Tile*>(this);
-}
-
-bool FJ_FuiNode::isFJ_MobEffect_Tile()
-{
-    return asFJ_MobEffect_Tile() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_ProgressBar()
-{
-    return asFJ_ProgressBar() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_BitmapIcon()
-{
-    return asFJ_BitmapIcon() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_IconSlot()
-{
-    return asFJ_IconSlot() != NULL;
-}
-
-bool FJ_FuiNode::isFJ_List_MultiList()
-{
-    return asFJ_List_MultiList() != NULL;
-}
-
-void FJ_FuiNode::stop()
-{
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
-    if (pTimeline != NULL)
-        pTimeline->setPlaying(false);
-}
-
-int FJ_FuiNode::getFrameByLabel(const std::string& sLabel)
-{
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
-    if (pTimeline == NULL)
-        return 0;
-    return pTimeline->getFrame(sLabel.c_str());
-}
-
-void FJ_FuiNode::decWidth(float fAmount)
-{
-    setWidth(getWidth() - fAmount);
-}
-
-void FJ_FuiNode::decAlpha(float fAmount)
-{
-    setAlpha(getAlpha() - fAmount);
+    std::vector<FJ_EventListener>::iterator it = m_eventListeners.begin();
+    while (it != m_eventListeners.end())
+    {
+        if (it->m_eType == listener.m_eType &&
+            it->m_pNode == listener.m_pNode &&
+            it->m_pfnHandler == listener.m_pfnHandler)
+        {
+            m_eventListeners.erase(it);
+            return;
+        }
+        ++it;
+    }
 }
 
 FJ_FuiNode* FJ_FuiNode::getRoot()

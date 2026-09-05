@@ -1,168 +1,271 @@
 #include "game/ui/fuiFile.hpp"
-#include "game/ui/fuiBitmap.hpp"
-#include "game/ui/fuiRenderNode.hpp"
+
 #include <cstring>
-namespace fui
+
+#include "game/client/render/TextureUtil.hpp"
+#include "game/client/render/Renderer.hpp"
+#include "game/ui/fui.hpp"
+#include "game/ui/fuiBitmap.hpp"
+#include "game/ui/fuiEdittext.hpp"
+#include "game/ui/fuiFontName.hpp"
+#include "game/ui/fuiImportAsset.hpp"
+#include "game/ui/fuiReference.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeBitmap.hpp"
+#include "game/ui/fuiRenderNodeStage.hpp"
+#include "game/ui/fuiShape.hpp"
+#include "game/ui/fuiShapeComponent.hpp"
+#include "game/ui/fuiSymbol.hpp"
+#include "game/ui/fuiTimeline.hpp"
+#include "game/ui/fuiTimelineAction.hpp"
+#include "game/ui/fuiTimelineEvent.hpp"
+#include "game/ui/fuiTimelineEvent_version0.hpp"
+#include "game/ui/fuiTimelineEventName.hpp"
+#include "game/ui/fuiTimelineFrame.hpp"
+#include "game/ui/fuiVert.hpp"
+
+extern fui* g_fui;
+
+struct D3DXIMAGE_INFO
 {
-void manageTexture(fuiFile*, fuiBitmap*);
-void removeManagedTexture(fuiFile*, fuiBitmap*);
-}
-static void swapBytes(void*) {}
+    unsigned int Width;
+    unsigned int Height;
+    unsigned int Depth;
+    unsigned int MipLevels;
+    unsigned int Format;
+    unsigned int ResourceType;
+    unsigned int ImageFileFormat;
+};
+
 fuiFile::fuiFile()
-    : index(0), fileIndex(0), timelineData(0), timelineActionData(0), shapeData(0), shapeComponentData(0), vertexData(0), frameData(0), eventData(0), eventNameData(0), referenceData(0), editTextData(0), fontNameData(0), symbolData(0), importAssetData(0), data(NULL), bitmaps(NULL), bitmapCount(0), rootNode(NULL), customDrawCallback(NULL), customDrawContext(NULL), ownsData(0)
+    : index(0), stage(NULL), rootNode(NULL), customDrawCallback(NULL), data(NULL)
 {
 }
+
 fuiFile::~fuiFile()
 {
-    if (rootNode != NULL)
-        delete rootNode;
-    if (bitmaps != NULL)
+    if (stage != NULL)
+        delete stage;
+    unsigned int i;
+    for (i = 0; i < header.bitmapCount; ++i)
     {
-        unsigned int i;
-        for (i = 0; i < (unsigned int)bitmapCount; ++i)
+        if (bitmaps[i].textureId != 0)
         {
-            if (bitmaps[i].textureId < 0 || bitmaps[i].textureId > 0)
-                fui::removeManagedTexture(this, &bitmaps[i]);
+            if (bitmaps[i].textureId > 0)
+                gRenderer->TextureFree(bitmaps[i].textureId);
+            g_fui->removeManagedTexture(this, &bitmaps[i]);
         }
     }
     delete[] data;
 }
+
 int fuiFile::addDataRegion(unsigned int count, int stride, unsigned char** cursor, void (*swap)(void*))
 {
     int first = 0;
-    if (count != 0 && cursor != NULL && *cursor != NULL)
+    if (count != 0)
     {
-        first = (int)(*cursor);
-        while (count != 0)
+        first = (int)*cursor;
+        unsigned int i;
+        for (i = 0; i < count; ++i)
         {
-            if (swap != NULL)
-                swap(*cursor);
+            swap(*cursor);
             *cursor += stride;
-            --count;
         }
     }
     return first;
 }
+
 unsigned int fuiFile::load(arrayWithLength<unsigned char> bytes, int value)
 {
-    if (bytes.data == NULL || bytes.length < 0x98)
+    unsigned char* source = bytes.data;
+    std::memcpy(&header, source, sizeof(header));
+    header.EndianSwap();
+    unsigned char version = (unsigned char)header.signature;
+    if (bytes.length != header.dataLength + sizeof(header))
     {
         data = NULL;
         return 0;
     }
-    std::memcpy(header, bytes.data, 0x98);
-    fileIndex = value;
-    unsigned int length = header[2];
-    if (bytes.length != length + 0x98)
-    {
-        data = NULL;
-        return 0;
-    }
-    data = new unsigned char[length];
-    std::memcpy(data, bytes.data + 0x98, length);
+    data = new unsigned char[header.dataLength];
+    std::memcpy(data, source + sizeof(header), header.dataLength);
     unsigned char* cursor = data;
-    timelineData = addDataRegion(header[19], 0x1c, &cursor, swapBytes);
-    timelineActionData = addDataRegion(header[21], 0x84, &cursor, swapBytes);
-    shapeData = addDataRegion(header[22], 0x1c, &cursor, swapBytes);
-    shapeComponentData = addDataRegion(header[23], 0x2c, &cursor, swapBytes);
-    vertexData = addDataRegion(header[24], 8, &cursor, swapBytes);
-    frameData = addDataRegion(header[25], 0x48, &cursor, swapBytes);
-    eventData = addDataRegion(header[26], 0x48, &cursor, swapBytes);
-    eventNameData = addDataRegion(header[20], 0x40, &cursor, swapBytes);
-    referenceData = addDataRegion(header[27], 0x48, &cursor, swapBytes);
-    editTextData = addDataRegion(header[28], 0x138, &cursor, swapBytes);
-    fontNameData = addDataRegion(header[32], 0x104, &cursor, swapBytes);
-    symbolData = addDataRegion(header[29], 0x48, &cursor, swapBytes);
-    importAssetData = addDataRegion(header[33], 0x40, &cursor, swapBytes);
-    bitmaps = (fuiBitmap*)addDataRegion(header[30], 0x20, &cursor, swapBytes);
-    bitmapCount = header[30];
+    fileIndex = value;
+    timelineData = (fuiTimeline*)addDataRegion(header.timelineCount, 0x1c, &cursor, fuiTimeline::EndianSwap);
+    timelineActionData = (fuiTimelineAction*)addDataRegion(header.timelineActionCount, 0x84, &cursor, fuiTimelineAction::EndianSwap);
+    shapeData = (fuiShape*)addDataRegion(header.shapeCount, 0x1c, &cursor, fuiShape::EndianSwap);
+    shapeComponentData = (fuiShapeComponent*)addDataRegion(header.shapeComponentCount, 0x2c, &cursor, fuiShapeComponent::EndianSwap);
+    vertexData = (fuiVert*)addDataRegion(header.vertCount, 8, &cursor, fuiVert::EndianSwap);
+    frameData = (fuiTimelineFrame*)addDataRegion(header.timelineFrameCount, 0x48, &cursor, fuiTimelineFrame::EndianSwap);
+    if (version == 0)
+    {
+        eventData = (fuiTimelineEvent*)addDataRegion(header.timelineEventCount, 0x48, &cursor,
+            fuiTimelineEvent_version0::EndianSwap);
+        unsigned int i;
+        for (i = 0; i < header.timelineEventCount; ++i)
+        {
+            fuiTimelineEvent_version0 event = ((fuiTimelineEvent_version0*)eventData)[i];
+            eventData[i] = event;
+        }
+    }
+    else
+    {
+        eventData = (fuiTimelineEvent*)addDataRegion(header.timelineEventCount, 0x48, &cursor,
+            fuiTimelineEvent::EndianSwap);
+    }
+    eventNameData = (fuiTimelineEventName*)addDataRegion(header.timelineEventNameCount, 0x40, &cursor, fuiTimelineEventName::EndianSwap);
+    referenceData = (fuiReference*)addDataRegion(header.referenceCount, 0x48, &cursor, fuiReference::EndianSwap);
+    editTextData = (fuiEdittext*)addDataRegion(header.edittextCount, 0x138, &cursor, fuiEdittext::EndianSwap);
+    fontNameData = (fuiFontName*)addDataRegion(header.fontNameCount, 0x104, &cursor, fuiFontName::EndianSwap);
+    symbolData = (fuiSymbol*)addDataRegion(header.symbolCount, 0x48, &cursor, fuiSymbol::EndianSwap);
+    importAssetData = (fuiImportAsset*)addDataRegion(header.importAssetCount, 0x40, &cursor, fuiImportAsset::EndianSwap);
+    bitmaps = (fuiBitmap*)addDataRegion(header.bitmapCount, 0x20, &cursor, fuiBitmap::EndianSwap);
+    imageData = cursor;
     rootNode = NULL;
     return 1;
 }
+
 unsigned int fuiFile::resolveReferences(fuiFile* other)
 {
-    if (referenceData == 0)
+    if (referenceData == NULL)
         return 0;
-    if (other == NULL || other->fileIndex != fileIndex || other->rootNode != NULL)
+    if (other->fileIndex != fileIndex || other->stage != NULL)
         return 1;
-    return 0;
+    unsigned int unresolved = 0;
+    unsigned int i;
+    for (i = 0; i < header.referenceCount; ++i)
+    {
+        if (referenceData[i].symbolIndex == (unsigned int)-1)
+        {
+            unsigned int j;
+            for (j = 0; j < other->header.symbolCount; ++j)
+            {
+                if (std::strcmp(referenceData[i].name, other->symbolData[j].name) == 0)
+                {
+                    referenceData[i].symbolIndex = j;
+                    referenceData[i].index = other->index;
+                    break;
+                }
+            }
+            if (j == other->header.symbolCount)
+                unresolved = 1;
+        }
+    }
+    return unresolved;
 }
+
 void fuiFile::dumpUnresolvedReferences()
 {
-    if (referenceData == 0 || header[27] == 0)
+    if (referenceData == NULL || header.referenceCount == 0)
         return;
 }
+
 void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
 {
-    if (bitmap == NULL)
-        return;
-    if (bitmap->textureId == 0 || force)
-        fui::manageTexture(this, bitmap);
+    if (bitmap->textureId == 0)
+    {
+        int width;
+        int height;
+        int* textureData = NULL;
+        if (bitmap->type >= eFuiBitmapType_Jpeg && bitmap->type <= eFuiBitmapType_Jpeg3)
+        {
+            int length = bitmap->jpegDataSize != 0 ? bitmap->jpegDataSize : bitmap->imageDataSize;
+            textureData = (int*)TextureUtil::decodeJpeg(imageData + bitmap->imageDataOffset, length, &width, &height);
+            if (bitmap->type == eFuiBitmapType_Jpeg3)
+                TextureUtil::insertZlibAlphaChannelData(textureData, width, height,
+                    imageData + bitmap->imageDataOffset + bitmap->jpegDataSize,
+                    bitmap->imageDataSize - bitmap->jpegDataSize);
+        }
+        else
+        {
+            D3DXIMAGE_INFO imageInfo;
+            imageInfo.Width = bitmap->width;
+            imageInfo.Height = bitmap->height;
+            gRenderer->LoadTextureData(imageData + bitmap->imageDataOffset, bitmap->imageDataSize,
+                &imageInfo, &textureData);
+        }
+        if (textureData == NULL)
+        {
+            bitmap->textureId = -1;
+            g_fui->manageTexture(this, bitmap);
+            return;
+        }
+        fui::EndianSwapImageData(textureData, bitmap->width * bitmap->height);
+        bitmap->textureId = gRenderer->TextureCreate();
+        if (bitmap->textureId != -1)
+        {
+            gRenderer->TextureBind(bitmap->textureId);
+            gRenderer->TextureSetTextureLevels(1);
+            gRenderer->TextureData(bitmap->width, bitmap->height, textureData, 0,
+                C4JRender::eTextureFormat_RGBA8);
+            delete textureData;
+            textureData = NULL;
+            if (force)
+            {
+                gRenderer->TextureSetParam(3, 0);
+                gRenderer->TextureSetParam(4, 0);
+            }
+        }
+    }
+    g_fui->manageTexture(this, bitmap);
 }
+
 fuiRenderNode* fuiFile::getRootNode()
 {
     return rootNode;
 }
+
 int fuiFile::createNodeFromSymbol(const char* name, fuiRenderNode* parent, int value)
 {
-    if (name == NULL || value != fileIndex || symbolData == 0)
+    if (fileIndex != value)
         return 0;
-    return parent != NULL ? 1 : 0;
+    unsigned int i;
+    for (i = 0; i < header.symbolCount; ++i)
+    {
+        if (std::strcmp(symbolData[i].name, name) == 0)
+        {
+            if (symbolData[i].objectType == eFuiObjectType_Timeline)
+            {
+                fuiRenderNode* node = new fuiRenderNodeTimeline(parent->getStage(), NULL,
+                    &timelineData[symbolData[i].objectIndex], 0, 0, NULL, 0, false, this);
+                node->disableCtor();
+                node->gather(false);
+                return (int)node;
+            }
+            if (symbolData[i].objectType == eFuiObjectType_Bitmap)
+                return (int)new fuiRenderNodeBitmap(parent->getStage(), NULL,
+                    &bitmaps[symbolData[i].objectIndex], 0, 0, NULL, 0, false, this);
+        }
+    }
+    return 0;
 }
+
 fuiRenderNode* fuiFile::findNode(const char* name)
 {
-    if (rootNode == NULL)
-        return NULL;
     return rootNode->findNode(name);
 }
+
 void fuiFile::setVisible(const char* name, bool visible)
 {
-    fuiRenderNode* node = findNode(name);
-    if (node != NULL)
-        node->setVisibility(visible);
+    findNode(name)->setVisibility(visible);
 }
+
 void fuiFile::setCustomDrawCallback(void (*callback)(void*, const char*, fuiRect*), void* context)
 {
-    customDrawCallback = (void*)callback;
+    customDrawCallback = callback;
     customDrawContext = context;
 }
+
 double fuiFile::getStageWidth()
 {
-    return (double)(*(float*)&header[35] - *(float*)&header[34]);
+    return (double)(header.stageRect.xMax - header.stageRect.xMin);
 }
+
 double fuiFile::getStageHeight()
 {
-    return (double)(*(float*)&header[37] - *(float*)&header[36]);
+    return (double)(header.stageRect.yMax - header.stageRect.yMin);
 }
+
 void fuiFile::setIndex(int value)
 {
     index = value;
-}
-void fuiFile::play(const char* name)
-{
-    fuiRenderNode* node = findNode(name);
-    if (node != NULL)
-        node->asTimeline();
-}
-void fuiFile::stop(const char* name)
-{
-    fuiRenderNode* node = findNode(name);
-    if (node != NULL)
-        node->asTimeline();
-}
-void fuiFile::gotoFrame(const char* name, int frame)
-{
-    fuiRenderNode* node = findNode(name);
-    if (node != NULL)
-        node->setX((float)frame);
-}
-void fuiFile::gotoFrameAndPlay(const char* name, int frame)
-{
-    gotoFrame(name, frame);
-    play(name);
-}
-void fuiFile::gotoFrameAndStop(const char* name, int frame)
-{
-    gotoFrame(name, frame);
-    stop(name);
 }

@@ -1,0 +1,17 @@
+#ifndef GAME_UI_FJ_CURSOR_SMALL_HPP
+#define GAME_UI_FJ_CURSOR_SMALL_HPP
+
+#include "game/ui/FJ_Cursor.hpp"
+
+class fuiRenderNode;
+
+class FJ_Cursor_Small : public FJ_Cursor
+{
+public:
+    FJ_Cursor_Small(fuiRenderNode* pRenderNode);
+    virtual ~FJ_Cursor_Small();
+    static FJ_Cursor* Create(fuiRenderNode* pRenderNode);
+    virtual unsigned int getType();
+};
+
+#endif

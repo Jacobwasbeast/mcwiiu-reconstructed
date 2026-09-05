@@ -1,0 +1,40 @@
+#ifndef GAME_UI_UICONTROL_SLIDER_HPP
+#define GAME_UI_UICONTROL_SLIDER_HPP
+
+#include <string>
+#include <vector>
+
+#include "game/ui/UIControl_Base.hpp"
+
+class UIScene;
+class fuiRenderNode;
+
+class UIControl_Slider : public UIControl_Base
+{
+public:
+    UIControl_Slider();
+    virtual ~UIControl_Slider();
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void ReInit();
+    virtual void setFocus(bool focus);
+    virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256]);
+    void init(UIString label, int controlId, int minimum, int maximum, int value, bool enabled, int step, int unknown);
+    void handleSliderMove(int value);
+    void SetSliderTouchPos(float position);
+    void SetSliderValue(int value);
+    void MoveSliderValue(int amount);
+    unsigned int getCurrentValue() const;
+    int GetRealWidth();
+
+protected:
+    int m_minimum;
+    int m_maximum;
+    unsigned int m_value;
+    bool m_focus;
+    unsigned char m_unknown69;
+    int m_step;
+    int m_unknown70;
+    std::vector<std::wstring> m_possibleLabels;
+};
+
+#endif

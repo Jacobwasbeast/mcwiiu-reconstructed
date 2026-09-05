@@ -1,27 +1,90 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/fui.hpp"
+#include "game/ui/fuiRenderNodeStage.hpp"
+#include "game/client/render/Renderer.hpp"
 
 #include <cmath>
 #include <cstring>
 
-fuiRenderNode::fuiRenderNode(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex, eFuiObjectType type, unsigned char colorTransform, fuiRGBA* color, unsigned char visible, bool useDefault, fuiFile* file)
-    : m_flags(0), m_symbolIndex(symbolIndex), m_type(type), m_colorTransform(colorTransform), m_visible(visible ? 1 : 0), m_localScaleX(1.0f), m_localSkewX(0.0f), m_localSkewY(0.0f), m_localScaleY(1.0f), m_localX(0.0f), m_localY(0.0f), m_globalScaleX(1.0f), m_globalSkewX(0.0f), m_globalSkewY(0.0f), m_globalScaleY(1.0f), m_globalX(0.0f), m_globalY(0.0f), m_alpha(1.0f), m_frame(0), m_depth(0), m_clipDepth(0), m_filterFlags(0), m_boundsXMin(0.0f), m_boundsXMax(0.0f), m_boundsYMin(0.0f), m_boundsYMax(0.0f), m_width(0), m_hasScrollRect(0), m_stage(0), m_parent(parent), m_node(0), m_file(0)
+static unsigned int g_fuiOldScissor[4] = {0, 0, 0, 0};
+
+static void progogateBoundsFromChild(fuiRenderNode* timeline)
+{
+    timeline->generateGlobalMatrix();
+}
+
+static void setRendererMatrix(float* result, const fuiMatrix& matrix)
+{
+    result[0] = matrix.scaleX;
+    result[1] = matrix.rotateSkew0;
+    result[2] = 0.0f;
+    result[3] = 0.0f;
+    result[4] = matrix.rotateSkew1;
+    result[5] = matrix.scaleY;
+    result[6] = 0.0f;
+    result[7] = 0.0f;
+    result[8] = 0.0f;
+    result[9] = 0.0f;
+    result[10] = 1.0f;
+    result[11] = 0.0f;
+    result[12] = matrix.translateX;
+    result[13] = matrix.translateY;
+    result[14] = 0.0f;
+    result[15] = 1.0f;
+}
+
+fuiRenderNode::fuiRenderNode(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex, eFuiObjectType type, unsigned char renderFlags, fuiRGBA* color, unsigned char visible, bool ctorEnabled, fuiFile* file)
 {
     m_stage = (fuiRenderNodeStage*)stage;
     m_file = file;
-    m_node = (FJ_FuiNode*)object;
-    if (color != 0) m_colorTransform = color->rgba;
-    if (useDefault) m_flags |= 0x100;
+    m_type = type;
+    m_symbolIndex = symbolIndex;
+    m_frame = 0;
+    m_object = object;
+    m_parent = parent;
+    m_localMatrix.scaleX = 1.0f;
+    m_localMatrix.rotateSkew0 = 0.0f;
+    m_localMatrix.rotateSkew1 = 0.0f;
+    m_localMatrix.scaleY = 1.0f;
+    m_localMatrix.translateX = 0.0f;
+    m_localMatrix.translateY = 0.0f;
+    m_redAdd = 0.0f;
+    m_greenAdd = 0.0f;
+    m_blueAdd = 0.0f;
+    m_alphaAdd = 0.0f;
+    m_redMultiply = 1.0f;
+    m_greenMultiply = 1.0f;
+    m_blueMultiply = 1.0f;
+    m_alpha = 1.0f;
+    m_color = color == 0 ? 0 : color->rgba;
+    m_visible = visible == 0 ? 1 : visible;
+    m_renderFlags = renderFlags & 3;
+    m_filterFlags = renderFlags & 0xf0;
+    m_node = 0;
+    m_flags = ctorEnabled ? 0x14b : 0x4b;
     generateGlobalMatrix();
+    m_bounds.xMin = 0.0f;
+    m_bounds.xMax = 0.0f;
+    m_bounds.yMin = 0.0f;
+    m_bounds.yMax = 0.0f;
+    m_name[0] = 0;
+    m_scrollRect.xMin = 0.0f;
+    m_scrollRect.xMax = 0.0f;
+    m_scrollRect.yMin = 0.0f;
+    m_scrollRect.yMax = 0.0f;
 }
 
 fuiRenderNode::~fuiRenderNode()
 {
+    delete m_node;
     m_node = 0;
 }
 
-void fuiRenderNode::shutdown() {}
+void fuiRenderNode::shutdown()
+{
+}
 
 void fuiRenderNode::handleAddedToStage()
 {
@@ -34,77 +97,250 @@ void fuiRenderNode::handleAddedToStage()
 
 fuiRenderNode* fuiRenderNode::findNode(const char* name)
 {
-    if (name == 0 || name[0] == 0) return this;
-    return 0;
+    return std::strlen(name) == 0 ? this : 0;
 }
 
 fuiRenderNode* fuiRenderNode::getNodeFromPath(const char* path)
 {
-    if (m_node != 0 && path != 0)
-    {
-        if (m_node->getName() == path || std::strcmp(path, "?") == 0)
-        {
-            return this;
-        }
-    }
+    if (std::strcmp(m_name, path) == 0)
+        return this;
+    if (std::strcmp(path, "?") == 0)
+        return this;
     return 0;
 }
 
 void fuiRenderNode::generateGlobalMatrix()
 {
-    if (m_parent != 0) {
-        fuiMatrix local = { m_localScaleX, m_localSkewX, m_localSkewY, m_localScaleY, m_localX, m_localY };
-        fuiMatrix parent = { m_parent->m_globalScaleX, m_parent->m_globalSkewX, m_parent->m_globalSkewY, m_parent->m_globalScaleY, m_parent->m_globalX, m_parent->m_globalY };
-        fuiMatrix result;
-        fuiMatrix::mul(local, parent, result);
-        m_globalScaleX = result.scaleX; m_globalSkewX = result.rotateSkew0; m_globalSkewY = result.rotateSkew1; m_globalScaleY = result.scaleY; m_globalX = result.translateX; m_globalY = result.translateY;
-    } else {
-        m_globalScaleX = m_localScaleX; m_globalSkewX = m_localSkewX; m_globalSkewY = m_localSkewY; m_globalScaleY = m_localScaleY; m_globalX = m_localX; m_globalY = m_localY;
+    if (m_parent != 0)
+        fuiMatrix::mul(m_localMatrix, m_parent->m_globalMatrix, m_globalMatrix);
+    else
+        m_globalMatrix = m_localMatrix;
+}
+
+void fuiRenderNode::disableCtor()
+{
+    m_flags &= ~1u;
+}
+
+void fuiRenderNode::pushMatrix(fuiMatrix& matrix)
+{
+    ++gFui->m_matrixDepth;
+    fuiMatrix::mul(matrix, gFui->m_matrixStack[gFui->m_matrixDepth - 1], gFui->m_matrixStack[gFui->m_matrixDepth]);
+    float rendererMatrix[16];
+    setRendererMatrix(rendererMatrix, matrix);
+    gRenderer->MatrixMult(rendererMatrix);
+    gRenderer->Set_matrixDirty();
+}
+
+void fuiRenderNode::setScrollRectViewport()
+{
+    if (m_scrollRect.xMax - m_scrollRect.xMin == 0.0f)
+        return;
+
+    gRenderer->StateGetScissorRect(g_fuiOldScissor[0], g_fuiOldScissor[1], g_fuiOldScissor[2], g_fuiOldScissor[3]);
+
+    int left = (int)(gFui->m_originX + m_globalMatrix.translateX);
+    int top = (int)(gFui->m_originY + m_globalMatrix.translateY);
+    int right = (int)((m_scrollRect.xMax - m_scrollRect.xMin) * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
+    int bottom = (int)((m_scrollRect.yMax - m_scrollRect.yMin) * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
+    gRenderer->StateSetScissorRect(left, top, right, bottom);
+
+    fuiMatrix translation = {1.0f, 0.0f, 0.0f, 1.0f, -m_scrollRect.xMin, -m_scrollRect.yMin};
+    pushMatrix(translation);
+}
+
+void fuiRenderNode::popMatrix()
+{
+    --gFui->m_matrixDepth;
+    gRenderer->MatrixPop();
+}
+
+void fuiRenderNode::clearScrollRectViewport()
+{
+    if (m_scrollRect.xMax - m_scrollRect.xMin != 0.0f)
+    {
+        gRenderer->StateSetScissorRect(g_fuiOldScissor[0], g_fuiOldScissor[1], g_fuiOldScissor[2], g_fuiOldScissor[3]);
+        g_fuiOldScissor[0] = 0;
+        g_fuiOldScissor[2] = 0;
+        popMatrix();
     }
 }
 
-void fuiRenderNode::disableCtor() { m_flags &= ~1u; }
-void fuiRenderNode::pushMatrix(fuiMatrix& matrix) { fuiMatrix::mul(matrix, matrix, matrix); }
-void fuiRenderNode::setScrollRectViewport() { if (m_boundsXMax != m_boundsXMin || m_boundsYMax != m_boundsYMin) pushMatrix(); }
-void fuiRenderNode::popMatrix() {}
-void fuiRenderNode::clearScrollRectViewport() { if (m_boundsXMax != m_boundsXMin || m_boundsYMax != m_boundsYMin) popMatrix(); }
-void fuiRenderNode::setVisibility(bool visible) { if (visible) m_flags |= 8u; else m_flags &= ~8u; }
-bool fuiRenderNode::isVisible() { return (m_flags & 8u) != 0; }
-void fuiRenderNode::setAlpha(float alpha) { m_alpha = alpha; }
-float fuiRenderNode::getAlpha() { return m_alpha; }
-fuiRenderNode* fuiRenderNode::asTimeline() { return m_type == eFuiObjectType_Timeline ? this : 0; }
-void fuiRenderNode::progogateBounds() { generateGlobalMatrix(); }
-void fuiRenderNode::setX(float x) { m_localX = x; progogateBounds(); }
-void fuiRenderNode::setY(float y) { m_localY = y; progogateBounds(); }
-float fuiRenderNode::getX() { return m_localX; }
-float fuiRenderNode::getY() { return m_localY; }
-float fuiRenderNode::getScaleX() { return std::sqrt(m_localScaleX * m_localScaleX + m_localSkewX * m_localSkewX); }
-void fuiRenderNode::setScaleX(float scale) { float old = getScaleX(); if (old != 0.0f) { m_localScaleX *= scale / old; m_localSkewX *= scale / old; } progogateBounds(); }
-float fuiRenderNode::getScaleY() { return std::sqrt(m_localScaleY * m_localScaleY + m_localSkewY * m_localSkewY); }
-void fuiRenderNode::setScaleY(float scale) { float old = getScaleY(); if (old != 0.0f) { m_localScaleY *= scale / old; m_localSkewY *= scale / old; } progogateBounds(); }
-void fuiRenderNode::setWidth(float width) { if (width > 0.0f) setScaleX(getScaleX() * width / (m_boundsXMax - m_boundsXMin)); }
-void fuiRenderNode::setHeight(float height) { if (height > 0.0f) setScaleY(getScaleY() * height / (m_boundsYMax - m_boundsYMin)); }
-float fuiRenderNode::getWidth() { return m_boundsXMax - m_boundsXMin; }
-float fuiRenderNode::getHeight() { return m_boundsYMax - m_boundsYMin; }
-void fuiRenderNode::getParentSpaceBounds(fuiRect* rect)
+void fuiRenderNode::setVisibility(bool visible)
 {
-    if (rect != 0)
+    if (visible)
+        m_flags |= 8;
+    else
+        m_flags &= ~8u;
+}
+
+bool fuiRenderNode::isVisible()
+{
+    return (m_flags >> 3 & 1) != 0;
+}
+
+void fuiRenderNode::setAlpha(float alpha)
+{
+    m_alpha = alpha;
+}
+
+float fuiRenderNode::getAlpha()
+{
+    return m_alpha;
+}
+
+fuiRenderNode* fuiRenderNode::asTimeline()
+{
+    return m_type == eFuiObjectType_Timeline ? this : 0;
+}
+
+void fuiRenderNode::progogateBounds()
+{
+    if (m_parent != 0)
     {
-        rect->xMin = m_globalX + m_boundsXMin * m_globalScaleX;
-        rect->xMax = m_globalX + m_boundsXMax * m_globalScaleX;
-        rect->yMin = m_globalY + m_boundsYMin * m_globalScaleY;
-        rect->yMax = m_globalY + m_boundsYMax * m_globalScaleY;
+        fuiRenderNode* timeline = m_parent->asTimeline();
+        if (timeline != 0)
+            progogateBoundsFromChild(timeline);
     }
 }
-fuiRenderNodeStage* fuiRenderNode::getStage() { return m_stage; }
-FJ_FuiNode* fuiRenderNode::getRoot() { return m_node; }
-void fuiRenderNode::pushMatrix() {}
-void fuiRenderNode::pushColor() {}
-void fuiRenderNode::popColor() {}
-void fuiRenderNode::pushFilterFlags() { ++m_filterFlags; }
-void fuiRenderNode::popFilterFlags() { if (m_filterFlags != 0) --m_filterFlags; }
-fuiRenderNode* fuiRenderNode::asEditText() { return m_type == eFuiObjectType_EditText ? this : 0; }
-fuiRect fuiRenderNode::getGlobalBounds() const { fuiRect rect = { m_globalX + m_boundsXMin, m_globalX + m_boundsXMax, m_globalY + m_boundsYMin, m_globalY + m_boundsYMax }; return rect; }
-void fuiRenderNode::setGlobalBounds(const fuiRect& rect) { m_boundsXMin = rect.xMin; m_boundsXMax = rect.xMax; m_boundsYMin = rect.yMin; m_boundsYMax = rect.yMax; }
-fuiRenderNode* fuiRenderNode::asShape() { return m_type == eFuiObjectType_Shape ? this : 0; }
-fuiRenderNode* fuiRenderNode::asBitmap() { return m_type == eFuiObjectType_Bitmap ? this : 0; }
+
+void fuiRenderNode::setX(float x)
+{
+    m_localMatrix.translateX = x;
+    generateGlobalMatrix();
+    progogateBounds();
+}
+
+void fuiRenderNode::setY(float y)
+{
+    m_localMatrix.translateY = y;
+    generateGlobalMatrix();
+    progogateBounds();
+}
+
+float fuiRenderNode::getX()
+{
+    return m_localMatrix.translateX;
+}
+
+float fuiRenderNode::getY()
+{
+    return m_localMatrix.translateY;
+}
+
+float fuiRenderNode::getScaleX()
+{
+    return std::sqrt(m_localMatrix.scaleX * m_localMatrix.scaleX + m_localMatrix.rotateSkew1 * m_localMatrix.rotateSkew1);
+}
+
+void fuiRenderNode::setScaleX(float scale)
+{
+    float oldScale = getScaleX();
+    m_localMatrix.scaleX *= scale / oldScale;
+    m_localMatrix.rotateSkew1 *= scale / oldScale;
+    generateGlobalMatrix();
+    progogateBounds();
+}
+
+void fuiRenderNode::setWidth(float width)
+{
+    float oldWidth = getWidth();
+    float oldScale = getScaleX();
+    if (width > 0.0f)
+        setScaleX(oldScale * (width / oldWidth));
+    if (getWidth() != width)
+        getWidth();
+}
+
+float fuiRenderNode::getScaleY()
+{
+    return std::sqrt(m_localMatrix.rotateSkew0 * m_localMatrix.rotateSkew0 + m_localMatrix.scaleY * m_localMatrix.scaleY);
+}
+
+void fuiRenderNode::setScaleY(float scale)
+{
+    float oldScale = getScaleY();
+    m_localMatrix.rotateSkew0 *= scale / oldScale;
+    m_localMatrix.scaleY *= scale / oldScale;
+    generateGlobalMatrix();
+    progogateBounds();
+}
+
+void fuiRenderNode::setHeight(float height)
+{
+    float oldHeight = getHeight();
+    if (height > 0.0f)
+        setScaleY(getScaleY() * (height / oldHeight));
+}
+
+float fuiRenderNode::getWidth()
+{
+    fuiRect bounds;
+    getParentSpaceBounds(&bounds);
+    return bounds.xMax - bounds.xMin;
+}
+
+float fuiRenderNode::getHeight()
+{
+    fuiRect bounds;
+    getParentSpaceBounds(&bounds);
+    return bounds.yMax - bounds.yMin;
+}
+
+void fuiRenderNode::getParentSpaceBounds(fuiRect* bounds)
+{
+    bounds->xMin = m_bounds.xMin * m_localMatrix.scaleX + m_localMatrix.translateX;
+    bounds->xMax = m_bounds.xMax * m_localMatrix.scaleX + m_localMatrix.translateX;
+    bounds->yMin = m_bounds.yMin * m_localMatrix.scaleY + m_localMatrix.translateY;
+    bounds->yMax = m_bounds.yMax * m_localMatrix.scaleY + m_localMatrix.translateY;
+}
+
+fuiRenderNodeStage* fuiRenderNode::getStage()
+{
+    return m_stage;
+}
+
+fuiRenderNode* fuiRenderNode::getRoot()
+{
+    return m_stage->getChild();
+}
+
+void fuiRenderNode::pushMatrix()
+{
+    pushMatrix(m_localMatrix);
+}
+
+void fuiRenderNode::pushColor()
+{
+    int current = ++gFui->m_colorDepth;
+    gFui->m_colorStack[current] = gFui->m_colorStack[current - 1];
+    gFui->m_colorStack[current].redAdd += m_redAdd;
+    gFui->m_colorStack[current].greenAdd += m_greenAdd;
+    gFui->m_colorStack[current].blueAdd += m_blueAdd;
+    gFui->m_colorStack[current].alphaAdd += m_alphaAdd;
+    gFui->m_colorStack[current].redMultiply *= m_redMultiply;
+    gFui->m_colorStack[current].greenMultiply *= m_greenMultiply;
+    gFui->m_colorStack[current].blueMultiply *= m_blueMultiply;
+    gFui->m_colorStack[current].alphaMultiply *= m_alpha;
+}
+
+void fuiRenderNode::popColor()
+{
+    --gFui->m_colorDepth;
+}
+
+void fuiRenderNode::pushFilterFlags()
+{
+    int current = ++gFui->m_filterDepth;
+    gFui->m_filterStack[current] = gFui->m_filterStack[current - 1] | m_renderFlags;
+}
+
+void fuiRenderNode::popFilterFlags()
+{
+    --gFui->m_filterDepth;
+}
+
+fuiRenderNode* fuiRenderNode::asEditText()
+{
+    return m_type == eFuiObjectType_EditText ? this : 0;
+}

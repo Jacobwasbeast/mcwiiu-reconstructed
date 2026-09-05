@@ -1,0 +1,234 @@
+#include "game/ui/UIControl_PlayerSkinPreview.hpp"
+
+#include <cmath>
+
+#include "game/client/render/EntityRenderer.hpp"
+#include "game/client/render/PlayerModel.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/Lighting.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/ui/ScreenSizeCalculator.hpp"
+#include "game/ui/fuiRect.hpp"
+#include "game/world/generation/Player.hpp"
+
+UIControl_PlayerSkinPreview::UIControl_PlayerSkinPreview()
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
+    mUnknown50 = 0;
+    mUnknown54 = 0.0f;
+    mUnknown58 = 0.0f;
+    mTexturePath = L"default";
+    mTextureName = 0;
+    mCapePath = L"default";
+    mAdditionalModelParts = NULL;
+    mWidth = 0.0f;
+    mHeight = 0.0f;
+    mWidthScale = 0.0f;
+    mHeightScale = 0.0f;
+    mRotation = 0;
+    mPitch = 0;
+    mInitialRotation = 0;
+    mFacingRotation = 0;
+    mPreviousRotation = 0.0f;
+    mCurrentRotation = 0.0f;
+    mTargetRotation = 0.0f;
+    mAnimationRotation = 0.0f;
+    mCapeVisible = false;
+    mFacingLeft = false;
+    mAnimating = false;
+    mAnimationTicks = 0;
+    mAnimatingFacing = false;
+    mAnimationAngle = 0.0f;
+    mAnimation = 0;
+    mModelParts = NULL;
+    mRotating = false;
+    mRotateBack = false;
+    mRotateForward = false;
+    mHasModelParts = false;
+    mWidth = (float)minecraft->mWidth;
+    mHeight = (float)minecraft->mHeight;
+    mWidthScale = (float)calculator.getWidth();
+    mHeightScale = (float)calculator.getHeight();
+}
+
+UIControl_PlayerSkinPreview::~UIControl_PlayerSkinPreview()
+{
+}
+
+void UIControl_PlayerSkinPreview::tick()
+{
+    if (mAnimating)
+    {
+        ++mAnimationTicks;
+        mRotation = mInitialRotation + mAnimationTicks * ((mFacingRotation - mInitialRotation) / 15);
+        return;
+    }
+    if (mRotating)
+    {
+        mPitch += 2;
+        if (mPitch > 22)
+        {
+            mPitch = 22;
+        }
+        if (mRotateBack)
+        {
+            mPitch -= 2;
+            if (mPitch < -22)
+            {
+                mPitch = -22;
+            }
+        }
+    }
+    else if (mRotateBack)
+    {
+        mPitch -= 2;
+        if (mPitch < -22)
+        {
+            mPitch = -22;
+        }
+    }
+    if (mRotateForward)
+    {
+        mRotation -= 4;
+        if (mRotation < -179) mRotation = 180;
+    }
+    if (mCapeVisible)
+    {
+        ++mAnimationAngle;
+        if ((int)mAnimationAngle % 4 == 0)
+        {
+            if (mRotation < 45) mFacingLeft = true;
+            else if (mRotation >= 45) mFacingLeft = false;
+            mRotation += mFacingLeft ? 4 : -4;
+        }
+    }
+}
+
+unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, int texture)
+{
+    Textures* textures = Minecraft::GetInstance()->getTextureManager();
+    int loaded = textures->loadMemTexture(name, texture);
+    if (loaded >= 0)
+    {
+        textures->bind(loaded);
+        return 1;
+    }
+    return 0;
+}
+
+unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, const std::wstring& path)
+{
+    Textures* textures = Minecraft::GetInstance()->getTextureManager();
+    int loaded = textures->loadMemTexture(name, path);
+    if (loaded >= 0)
+    {
+        textures->bind(loaded);
+        return 1;
+    }
+    return 0;
+}
+
+void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, double y, double z, float yaw, float partialTick)
+{
+    if (renderer == NULL)
+    {
+        return;
+    }
+    GlStateManager::pushMatrix();
+    GlStateManager::disableCull();
+    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::rotatef(180.0f - (float)mRotation, 0.0f, 1.0f, 0.0f);
+    GlStateManager::enableRescaleNormal();
+    GlStateManager::scalef(-1.0f, 0.9375f, 0.9375f);
+    bindTexture(mTexturePath, mTextureName);
+    PlayerModel* model = static_cast<PlayerModel*>(renderer->getModel());
+    if (model != NULL)
+    {
+        model->setAllVisible(true);
+        model->SetSkinAdjustments(mSkinAdjustments);
+        model->renderCloak(0.0625f);
+    }
+    GlStateManager::disableRescaleNormal();
+    GlStateManager::enableCull();
+    GlStateManager::popMatrix();
+}
+
+void UIControl_PlayerSkinPreview::render(fuiRect* rect)
+{
+    if (rect == NULL)
+    {
+        return;
+    }
+    GlStateManager::enableRescaleNormal();
+    GlStateManager::enableColorMaterial();
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 50.0f);
+    Lighting::turnOn();
+    render(NULL, 0.0, 0.0, 0.0, 0.0f, 0.0f);
+    Lighting::turnOff();
+    GlStateManager::popMatrix();
+    GlStateManager::disableRescaleNormal();
+}
+
+void UIControl_PlayerSkinPreview::SetTexture(const std::wstring& texture, _TEXTURE_NAME textureName)
+{
+    mTexturePath = texture;
+    mTextureName = (int)textureName;
+    unsigned int skinId = CMinecraftApp::getSkinIdFromPath(mTexturePath);
+    mSkinAdjustments = Player::getSkinAdjustmentsById(skinId);
+    if (GameSettings::GetGameSettings((eGameSetting)0x19) == 0 &&
+        (mSkinAdjustments.mGameFlags & 0x1f1f810) == 0)
+    {
+        mSkinAdjustments.mAnimFlags = 0;
+    }
+    mAdditionalModelParts = NULL;
+    if (g_pApp != NULL)
+    {
+        mAdditionalModelParts = (std::vector<PlayerModel*>*)g_pApp->GetAdditionalModelParts(skinId);
+    }
+}
+
+void UIControl_PlayerSkinPreview::SetFacing(ESkinPreviewFacing facing, bool animate)
+{
+    if (facing == eFacingFront)
+    {
+        mFacingRotation = 0;
+        mFacingLeft = true;
+    }
+    else if (facing == eFacingRight)
+    {
+        mFacingRotation = 45;
+        mFacingLeft = false;
+    }
+    else if (facing == eFacingLeft)
+    {
+        mFacingRotation = -45;
+        mFacingLeft = true;
+    }
+    if (!animate)
+    {
+        mAnimating = false;
+        mRotation = mFacingRotation;
+        return;
+    }
+    mAnimating = true;
+    mAnimationTicks = 0;
+    mInitialRotation = mRotation;
+}
+
+void UIControl_PlayerSkinPreview::CycleNextAnimation()
+{
+    ++mAnimation;
+    if (mAnimation > 2) mAnimation = 0;
+    mAnimationAngle = 0.0f;
+}
+
+void UIControl_PlayerSkinPreview::CyclePreviousAnimation()
+{
+    --mAnimation;
+    if (mAnimation < 0) mAnimation = 2;
+    mAnimationAngle = 0.0f;
+}

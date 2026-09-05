@@ -1,34 +1,53 @@
 #ifndef GAME_UI_FUIFILE_HPP
 #define GAME_UI_FUIFILE_HPP
+
+#include "game/ui/fuiFileHeader.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+
 class fuiBitmap;
+class fuiEdittext;
+class fuiFontName;
+class fuiImportAsset;
+class fuiReference;
 class fuiRenderNode;
-class fuiRect;
+class fuiRenderNodeStage;
+class fuiShape;
+class fuiShapeComponent;
+class fuiSymbol;
+class fuiTimeline;
+class fuiTimelineAction;
+class fuiTimelineEvent;
+class fuiTimelineEventName;
+class fuiTimelineFrame;
+class fuiVert;
+struct fuiRect;
+
 struct fuiFile
 {
-    unsigned int header[38];
+    fuiFileHeader header;
     int index;
     int fileIndex;
-    int timelineData;
-    int timelineActionData;
-    int shapeData;
-    int shapeComponentData;
-    int vertexData;
-    int frameData;
-    int eventData;
-    int eventNameData;
-    int referenceData;
-    int editTextData;
-    int fontNameData;
-    int symbolData;
-    int importAssetData;
-    unsigned char* data;
+    fuiTimeline* timelineData;
+    fuiTimelineAction* timelineActionData;
+    fuiShape* shapeData;
+    fuiShapeComponent* shapeComponentData;
+    fuiVert* vertexData;
+    fuiTimelineFrame* frameData;
+    fuiTimelineEvent* eventData;
+    fuiTimelineEventName* eventNameData;
+    fuiReference* referenceData;
+    fuiEdittext* editTextData;
+    fuiSymbol* symbolData;
     fuiBitmap* bitmaps;
-    int bitmapCount;
+    unsigned char* imageData;
+    fuiFontName* fontNameData;
+    fuiImportAsset* importAssetData;
+    fuiRenderNodeStage* stage;
     fuiRenderNode* rootNode;
-    void* customDrawCallback;
+    void (*customDrawCallback)(void*, const char*, fuiRect*);
     void* customDrawContext;
-    int ownsData;
+    unsigned char* data;
+
     fuiFile();
     ~fuiFile();
     int addDataRegion(unsigned int count, int stride, unsigned char** cursor, void (*swap)(void*));
@@ -50,4 +69,5 @@ struct fuiFile
     void gotoFrameAndPlay(const char* name, int frame);
     void gotoFrameAndStop(const char* name, int frame);
 };
+
 #endif

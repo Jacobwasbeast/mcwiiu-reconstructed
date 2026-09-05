@@ -1,0 +1,72 @@
+#include "game/ui/FJ_LeaderboardMenu.hpp"
+
+#include <string>
+
+#include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_LeaderboardList.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+
+class FJ_Label
+{
+public:
+    virtual void SetLabel(const std::wstring& label);
+};
+
+FJ_LeaderboardMenu::FJ_LeaderboardMenu(fuiRenderNode* renderNode)
+    : FJ_Document(renderNode)
+{
+}
+
+FJ_LeaderboardMenu::~FJ_LeaderboardMenu()
+{
+}
+
+FJ_Document* FJ_LeaderboardMenu::Create(fuiRenderNode* renderNode)
+{
+    return new FJ_LeaderboardMenu(renderNode);
+}
+
+unsigned int FJ_LeaderboardMenu::getType()
+{
+    return 0x19;
+}
+
+void FJ_LeaderboardMenu::ASConstructor()
+{
+    FJ_FuiNode* infoNode = getChildByName("Info");
+    FJ_Label* infoLabel = infoNode->asFJ_Label();
+    infoLabel->SetLabel(L"");
+
+    FJ_FuiNode* gamersNode = getChildByName("Gamers");
+    FJ_LeaderboardList* leaderboardList = gamersNode->asFJ_LeaderboardList();
+    leaderboardList->SetupPleaseWait(infoLabel);
+}
+
+void FJ_LeaderboardMenu::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
+{
+    node->asFJ_Document()->keyDownHandler(event);
+}
+
+void FJ_LeaderboardMenu::keyDownHandler(FJ_Event* event)
+{
+    FJ_FuiNode* gamersNode = getChildByName("Gamers");
+    FJ_LeaderboardList* leaderboardList = gamersNode->asFJ_LeaderboardList();
+
+    if (event->m_eType == eFJEventType_FocusOut)
+    {
+        leaderboardList->NavigateLeaderboard(true, false);
+    }
+    else if (event->m_eType == eFJEventType_FocusChangeInit)
+    {
+        leaderboardList->NavigateLeaderboard(false, false);
+    }
+    else if (event->m_eType == eFJEventType_KeyDown)
+    {
+        leaderboardList->NavigateLeaderboard(true, true);
+    }
+    else if (event->m_eType == eFJEventType_FocusIn)
+    {
+        leaderboardList->NavigateLeaderboard(false, true);
+    }
+}
