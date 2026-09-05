@@ -8,7 +8,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/GameType.hpp"
-#include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/GameCommandPacket.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/Level.hpp"
 

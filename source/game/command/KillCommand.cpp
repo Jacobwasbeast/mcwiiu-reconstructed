@@ -1,7 +1,10 @@
 #include "game/command/KillCommand.hpp"
 
+#include <string>
+
 #include <boost/pointer_cast.hpp>
 
+#include "game/command/CommandSender.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 

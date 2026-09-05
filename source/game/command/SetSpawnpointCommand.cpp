@@ -11,7 +11,6 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
 
 SetSpawnpointCommand::~SetSpawnpointCommand()
 {
