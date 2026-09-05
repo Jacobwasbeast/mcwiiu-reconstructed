@@ -2,9 +2,8 @@
 
 #include <math.h>
 
-#include "game/core/Mth.hpp"
-#include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
@@ -12,7 +11,25 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
-#include "game/entity/mob/PathfinderMob.hpp"
+
+class Mth
+{
+public:
+    static float atan2(int y, int x);
+    static float sqrt(double value);
+};
+
+class PathfinderMob
+{
+public:
+    PathNavigation* getNavigation();
+    Random* getRandom();
+    bool hasRestriction();
+    BlockPos getRestrictCenter();
+    float getRestrictRadius();
+    bool isWithinRestriction(const BlockPos& pos);
+    float getWalkTargetValue(const BlockPos& pos);
+};
 
 static const float PI = 3.1415927f;
 static const float HALF_PI = 1.5707964f;
@@ -47,14 +64,16 @@ BlockPos* RandomPos::getRandomDelta(Random* random, int xz, int y, const Vec3* d
 
 BlockPos RandomPos::moveAboveSolid(const BlockPos& pos, const boost::shared_ptr<PathfinderMob>& mob)
 {
-    if (!mob->mLevel->getBlockState(pos)->getMaterial()->isSolid())
+    Level* level = ((Entity*)mob.get())->mLevel;
+
+    if (!level->getBlockState(pos)->getMaterial()->isSolid())
     {
         return pos;
     }
 
     BlockPos above = pos.above();
 
-    while (above.y < mob->mLevel->getHeight() && mob->mLevel->getBlockState(above)->getMaterial()->isSolid())
+    while (above.y < level->getHeight() && level->getBlockState(above)->getMaterial()->isSolid())
     {
         above = above.above();
     }
@@ -64,7 +83,8 @@ BlockPos RandomPos::moveAboveSolid(const BlockPos& pos, const boost::shared_ptr<
 
 bool RandomPos::isWaterDestination(const BlockPos& pos, const boost::shared_ptr<PathfinderMob>& mob)
 {
-    return mob->mLevel->getBlockState(pos)->getMaterial()->isUnderWater();
+    Level* level = ((Entity*)mob.get())->mLevel;
+    return level->getBlockState(pos)->getMaterial()->isUnderWater();
 }
 
 Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, const Vec3* direction, bool allowWater, double maxAngleDelta, int wanderingQuadrant)
@@ -73,10 +93,12 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
     Random* random = mob->getRandom();
     bool checkRestriction;
 
+    Entity* entity = (Entity*)mob.get();
+
     if (mob->hasRestriction())
     {
         BlockPos restrictCenter = mob->getRestrictCenter();
-        double distanceSqr = restrictCenter.distSqr(BlockPos(mob->mX, mob->mY, mob->mZ)) + 4.0;
+        double distanceSqr = restrictCenter.distSqr(entity->mX, entity->mY, entity->mZ) + 4.0;
         float range = mob->getRestrictRadius() + (float)xz;
 
         checkRestriction = distanceSqr < (double)range * (double)range;
@@ -123,7 +145,7 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
         {
             BlockPos restrictCenter = mob->getRestrictCenter();
 
-            if (mob->mX > (double)restrictCenter.x)
+            if (entity->mX > (double)restrictCenter.x)
             {
                 dx -= random->nextInt(xz / 2);
             }
@@ -132,7 +154,7 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
                 dx += random->nextInt(xz / 2);
             }
 
-            if (mob->mZ > (double)restrictCenter.z)
+            if (entity->mZ > (double)restrictCenter.z)
             {
                 dz -= random->nextInt(xz / 2);
             }
@@ -142,7 +164,7 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
             }
         }
 
-        pos.set((int)((double)dx + mob->mX), (int)((double)dy + mob->mY), (int)((double)dz + mob->mZ));
+        pos.set((int)((double)dx + entity->mX), (int)((double)dy + entity->mY), (int)((double)dz + entity->mZ));
 
         if (checkRestriction && !mob->isWithinRestriction(pos))
         {
@@ -178,7 +200,7 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
 
     if (found)
     {
-        return Vec3::newTemp((double)bestX + mob->mX, (double)bestY + mob->mY, (double)bestZ + mob->mZ);
+        return Vec3::newTemp((double)bestX + entity->mX, (double)bestY + entity->mY, (double)bestZ + entity->mZ);
     }
 
     return NULL;
@@ -201,15 +223,18 @@ Vec3* RandomPos::getLandPos(const boost::shared_ptr<PathfinderMob>& mob, int xz,
 
 Vec3* RandomPos::getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target)
 {
-    return generateRandomPos(mob, xz, y, target->subtract(mob->mX, mob->mY, mob->mZ), -1);
+    Entity* entity = (Entity*)mob.get();
+    return generateRandomPos(mob, xz, y, target->subtract(entity->mX, entity->mY, entity->mZ), -1);
 }
 
 Vec3* RandomPos::getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target, double maxAngleDelta)
 {
-    return generateRandomPos(mob, xz, y, target->subtract(mob->mX, mob->mY, mob->mZ), true, maxAngleDelta, -1);
+    Entity* entity = (Entity*)mob.get();
+    return generateRandomPos(mob, xz, y, target->subtract(entity->mX, entity->mY, entity->mZ), true, maxAngleDelta, -1);
 }
 
 Vec3* RandomPos::getPosAvoid(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* avoid)
 {
-    return generateRandomPos(mob, xz, y, Vec3::newTemp(mob->mX, mob->mY, mob->mZ)->subtract(avoid), -1);
+    Entity* entity = (Entity*)mob.get();
+    return generateRandomPos(mob, xz, y, Vec3::newTemp(entity->mX, entity->mY, entity->mZ)->subtract(avoid), -1);
 }
