@@ -1,0 +1,67 @@
+#ifndef GAME_WORLD_BLOCK_HUGEMUSHROOMBLOCK_HPP
+#define GAME_WORLD_BLOCK_HUGEMUSHROOMBLOCK_HPP
+
+#include <string>
+
+#include "game/world/block/Block.hpp"
+#include "game/core/Direction.hpp"
+
+class BlockState;
+class BlockStateDefinition;
+class Direction;
+class IconRegister;
+class Level;
+class LevelSource;
+class Material;
+class MaterialColor;
+class Mirror;
+class Random;
+class Rotation;
+class TextureAtlasSprite;
+
+class HugeMushroomBlock : public Block
+{
+public:
+    class Variant : public StringRepresentable
+    {
+    public:
+        Variant(int data, const std::wstring& name);
+        int getData();
+        static Variant* byData(int data);
+        virtual std::wstring toString() const;
+        virtual std::wstring getSerializedName() const;
+        std::wstring getName();
+
+    private:
+        int mData;
+        std::wstring mName;
+    };
+
+    HugeMushroomBlock(Material* material, const MaterialColor* materialColor, Block* otherBlock);
+    virtual ~HugeMushroomBlock();
+
+    static void blockStaticCtor();
+
+    virtual int getResourceCount(Random* random);
+    virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);
+    virtual const BlockState* getBlockState(int data);
+    virtual int convertBlockStateToLegacyData(const BlockState* state);
+    virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
+    virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
+    virtual not_null_ptr<ItemInstance> getSilkTouchItemInstance(const BlockState* state);
+    virtual BlockStateDefinition* createBlockStateDefinition();
+    virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
+    virtual void registerIcons(IconRegister* iconRegister);
+
+private:
+    Block* mOtherBlock;
+    int mIsOtherBlock;
+    TextureAtlasSprite* mTextures[2];
+    TextureAtlasSprite* mStemTexture;
+    TextureAtlasSprite* mInsideTexture;
+};
+
+#endif

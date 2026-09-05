@@ -7,8 +7,8 @@
 #include "game/world/block/BlockPos.hpp"
 
 class BlockState;
-class Level;
 class ChunkPos;
+class Level;
 
 class BlockTransaction
 {

@@ -1,6 +1,5 @@
 #include "game/world/block/DLCMaterialFile.hpp"
 
-#include "game/client/render/TexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/Minecraft.hpp"
 

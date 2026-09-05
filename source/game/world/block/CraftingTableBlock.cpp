@@ -1,0 +1,109 @@
+#include "game/world/block/CraftingTableBlock.hpp"
+
+#include "game/core/Direction.hpp"
+#include "game/core/IconRegister.hpp"
+#include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/ui/CraftingMenu.hpp"
+#include "game/world/block/Blocks.hpp"
+
+CraftingTableBlock::CraftingTableBlock()
+    : Block(0)
+    , mTopTexture(0)
+    , mFrontTexture(0)
+{
+    DerivedInit();
+}
+
+CraftingTableBlock::~CraftingTableBlock()
+{
+}
+
+bool CraftingTableBlock::TestUse()
+{
+    return true;
+}
+
+bool CraftingTableBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
+                             boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
+                             const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
+{
+    if (clientSide)
+    {
+        return false;
+    }
+
+    CraftingTable table(level, pos);
+    player->openMenu(&table);
+    return true;
+}
+
+TextureAtlasSprite* CraftingTableBlock::getTexture(const Direction* direction, const BlockState* state)
+{
+    if (direction == Direction::UP)
+    {
+        return mTopTexture;
+    }
+    if (direction == Direction::DOWN)
+    {
+        return Blocks::planks->getTexture(direction, state);
+    }
+    if (direction == Direction::NORTH || direction == Direction::SOUTH)
+    {
+        return mFrontTexture;
+    }
+    return mIcon;
+}
+
+void CraftingTableBlock::registerIcons(IconRegister* iconRegister)
+{
+    mIcon = iconRegister->registerIcon(L"workbench_side");
+    mTopTexture = iconRegister->registerIcon(L"workbench_top");
+    mFrontTexture = iconRegister->registerIcon(L"workbench_front");
+}
+
+unsigned int CraftingTableBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    {
+        return 0xea4e897e;
+    }
+    return Block::GetInteractTooltip(tooltipData);
+}
+
+CraftingTableBlock::CraftingTable::CraftingTable(Level* level, const BlockPos& pos)
+    : InteractionObject()
+    , mLevel(level)
+    , mBlockPos(pos)
+{
+}
+
+AbstractContainerMenu* CraftingTableBlock::CraftingTable::createMenu(boost::shared_ptr<Inventory> inventory,
+                                                                      boost::shared_ptr<Player> player)
+{
+    return new CraftingMenu(inventory, mLevel, mBlockPos);
+}
+
+int CraftingTableBlock::CraftingTable::getTypeId(bool large)
+{
+    return 1;
+}
+
+std::wstring CraftingTableBlock::CraftingTable::getName()
+{
+    return L"crafting_table";
+}
+
+std::wstring CraftingTableBlock::CraftingTable::getCustomName()
+{
+    return L"";
+}
+
+bool CraftingTableBlock::CraftingTable::hasCustomName()
+{
+    return false;
+}
+
+std::wstring CraftingTableBlock::CraftingTable::getDisplayName()
+{
+    return L"";
+}

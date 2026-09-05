@@ -16,7 +16,7 @@
 #include "game/world/generation/Player.hpp"
 
 BlockPlanterItem::BlockPlanterItem(Block* block)
-    : mBlock(block)
+    : Item(), mBlock(block)
 {
 }
 

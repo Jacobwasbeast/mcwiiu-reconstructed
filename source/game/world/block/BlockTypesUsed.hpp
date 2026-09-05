@@ -1,0 +1,15 @@
+#ifndef GAME_WORLD_BLOCK_BLOCKTYPESUSED_HPP
+#define GAME_WORLD_BLOCK_BLOCKTYPESUSED_HPP
+
+#include "game/minigame/GameMedal.hpp"
+#include "game/world/generation/PlayerStats.hpp"
+
+class BlockTypesUsed : public GameMedal
+{
+public:
+    BlockTypesUsed(int name, float target, unsigned int weight, GameMedal::EOperator op);
+    virtual ~BlockTypesUsed();
+    virtual double GetScore(PlayerStats* playerStats) const;
+};
+
+#endif

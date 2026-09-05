@@ -1,7 +1,6 @@
 #ifndef GAME_WORLD_BLOCK_MUSHROOMBLOCKTHEMERULEDEFINITION_HPP
 #define GAME_WORLD_BLOCK_MUSHROOMBLOCKTHEMERULEDEFINITION_HPP
 
-#include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
 #include "game/world/generation/LayerTheme.hpp"
 
@@ -13,7 +12,6 @@ public:
     virtual ~MushroomBlockThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
-
     virtual LayerTheme* Generate() const;
 
 private:

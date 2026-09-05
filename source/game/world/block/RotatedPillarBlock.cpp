@@ -1,0 +1,142 @@
+#include "game/world/block/RotatedPillarBlock.hpp"
+
+#include <typeinfo>
+#include <boost/unordered_set.hpp>
+
+#include "game/core/Boxed.hpp"
+#include "game/core/Direction.hpp"
+#include "game/core/Rotation.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/world/block/Property.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+static EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty = NULL;
+
+void RotatedPillarBlock::blockStaticCtor()
+{
+    boost::unordered_set<Direction::Axis*> values;
+    values.insert(Direction::Axis::X);
+    values.insert(Direction::Axis::Y);
+    values.insert(Direction::Axis::Z);
+    gRotatedPillarBlockAxisProperty = EnumProperty<Direction::Axis*>::create(
+        L"axis", typeid(Direction::Axis*), values, Predicates<Direction::Axis*>::alwaysTrue);
+}
+
+RotatedPillarBlock::RotatedPillarBlock(Material* material)
+    : Block(material)
+{
+}
+
+RotatedPillarBlock::RotatedPillarBlock(Material* material, const MaterialColor* materialColor)
+    : Block(material, materialColor)
+{
+}
+
+RotatedPillarBlock::~RotatedPillarBlock()
+{
+}
+
+const BlockState* RotatedPillarBlock::rotate(const BlockState* state, Rotation* rotation)
+{
+    if (rotation->getType() == Rotation::eTYPE_Clockwise90 ||
+        rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    {
+        Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
+        if (axis == Direction::Axis::X)
+        {
+            TypedBoxed<Direction::Axis*> value(Direction::Axis::Z);
+            return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+        }
+        if (axis == Direction::Axis::Z)
+        {
+            TypedBoxed<Direction::Axis*> value(Direction::Axis::X);
+            return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+        }
+    }
+
+    return state;
+}
+
+const BlockState* RotatedPillarBlock::getBlockState(int data)
+{
+    Direction::Axis* axis = Direction::Axis::Y;
+    if ((data & 0xC) == 4)
+    {
+        axis = Direction::Axis::X;
+    }
+    else if ((data & 0xC) == 8)
+    {
+        axis = Direction::Axis::Z;
+    }
+
+    TypedBoxed<Direction::Axis*> value(axis);
+    return defaultBlockState()->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+}
+
+int RotatedPillarBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
+    if (axis == Direction::Axis::X)
+    {
+        return 4;
+    }
+    if (axis == Direction::Axis::Z)
+    {
+        return 8;
+    }
+    return 0;
+}
+
+BlockStateDefinition* RotatedPillarBlock::createBlockStateDefinition()
+{
+    static const Property* properties[1] = { NULL };
+    if (properties[0] == NULL)
+    {
+        properties[0] = gRotatedPillarBlockAxisProperty;
+    }
+    return new BlockStateDefinition(this, properties, 1);
+}
+
+not_null_ptr<ItemInstance> RotatedPillarBlock::getSilkTouchItemInstance(const BlockState* state)
+{
+    return Block::getSilkTouchItemInstance(state);
+}
+
+const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
+{
+    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
+    TypedBoxed<Direction::Axis*> value(direction->getAxis());
+    return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+}
+
+TextureAtlasSprite* RotatedPillarBlock::getTexture(const Direction* direction, const BlockState* state)
+{
+    Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
+    if (axis == direction->getAxis())
+    {
+        return getTopTexture(state);
+    }
+    return getTypeTexture(state);
+}
+
+TextureAtlasSprite* RotatedPillarBlock::getTypeTexture(const BlockState*)
+{
+    return mIcon;
+}
+
+TextureAtlasSprite* RotatedPillarBlock::getTopTexture(const BlockState*)
+{
+    return mTopTexture;
+}
+
+EBlockRenderShape RotatedPillarBlock::getRenderShape(const BlockState*)
+{
+    return (EBlockRenderShape)31;
+}

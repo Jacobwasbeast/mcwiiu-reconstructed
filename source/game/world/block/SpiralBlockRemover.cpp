@@ -1,6 +1,5 @@
 #include "game/world/block/SpiralBlockRemover.hpp"
 
-#include "game/core/Direction.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -26,14 +25,7 @@ bool SpiralBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
 {
     Area& area = mAreas[areaIndex];
     Spiral& spiral = mSpirals[areaIndex];
-
-    const Direction* facing = Direction::NORTH;
-
-    if (area.mBounds->mMaxX - area.mBounds->mMinX == 1.0)
-    {
-        facing = Direction::EAST;
-    }
-
+    bool alongZ = area.mBounds->mMaxX - area.mBounds->mMinX == 1.0;
     int removed = 0;
     int x;
     int y;
@@ -41,7 +33,7 @@ bool SpiralBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
 
     while (removed < maxBlocks && spiral.GetNext(x, y))
     {
-        if (facing == Direction::EAST)
+        if (alongZ)
         {
             pos = BlockPos((int)area.mBounds->mMinX, y, x);
         }
@@ -56,7 +48,6 @@ bool SpiralBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
         }
 
         mLevel->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
-
         ++removed;
     }
 
@@ -65,5 +56,5 @@ bool SpiralBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
         CreateParticles(pos, 0);
     }
 
-    return removed >= maxBlocks;
+    return maxBlocks <= removed;
 }

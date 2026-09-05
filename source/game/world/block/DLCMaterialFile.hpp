@@ -6,15 +6,17 @@
 #include "game/core/DLCFile.hpp"
 #include "game/world/block/MaterialTable.hpp"
 
+class DLCTexturePack;
+
 class DLCMaterialFile : public DLCFile
 {
+    friend class DLCTexturePack;
+
 public:
     DLCMaterialFile(const std::wstring& path);
     virtual ~DLCMaterialFile();
 
     virtual void addData(unsigned char* pData, unsigned int size);
-
-    MaterialTable* getMaterialTable() { return m_pMaterialTable; }
 
 protected:
     MaterialTable* m_pMaterialTable;
