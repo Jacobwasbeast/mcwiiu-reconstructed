@@ -1,0 +1,84 @@
+#include "game/entity/projectile/TippedArrowItem.hpp"
+
+#include "game/core/IconRegister.hpp"
+#include "game/entity/projectile/TippableArrow.hpp"
+#include "game/item/Potion.hpp"
+#include "game/item/Potions.hpp"
+#include "game/item/PotionUtils.hpp"
+#include "game/minigame/EMiniGameId.hpp"
+
+class Minecraft
+{
+public:
+    static bool InMiniGame(EMiniGameId miniGameId, bool includeNextGameMode);
+};
+
+TippedArrowItem::~TippedArrowItem()
+{
+}
+
+boost::shared_ptr<ItemInstance> TippedArrowItem::getDefaultInstance()
+{
+    boost::shared_ptr<ItemInstance> itemInstance = Item::getDefaultInstance();
+    PotionUtils::setPotion(itemInstance, Potions::EMPTY);
+    return itemInstance;
+}
+
+boost::shared_ptr<Arrow> TippedArrowItem::createArrow(Level* level,
+                                                      not_null_ptr<ItemInstance> itemInstance,
+                                                      boost::shared_ptr<LivingEntity> entity)
+{
+    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(level, entity));
+    arrow->setEffectsFromItem(itemInstance);
+    return arrow;
+}
+
+void TippedArrowItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
+                                      boost::shared_ptr<Player> player,
+                                      std::vector<HtmlString>* lines,
+                                      bool)
+{
+    if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
+    {
+        PotionUtils::addPotionTooltip(itemInstance, lines, 0.125f, player);
+    }
+    else
+    {
+        PotionUtils::addPotionTooltip(itemInstance, lines, 0.33333334f, player);
+    }
+}
+
+std::wstring TippedArrowItem::getName(not_null_ptr<ItemInstance> itemInstance)
+{
+    Potion* potion = PotionUtils::getPotion(itemInstance);
+    return potion->getName(Potion::SPLASH);
+}
+
+int TippedArrowItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance)
+{
+    Potion* potion = PotionUtils::getPotion(itemInstance);
+    return potion->getUseDescriptionId(Potion::SPLASH);
+}
+
+bool TippedArrowItem::hasMultipleSpriteLayers()
+{
+    return true;
+}
+
+TextureAtlasSprite* TippedArrowItem::getLayerIcon(int auxValue,
+                                                  int layer,
+                                                  not_null_ptr<ItemInstance> itemInstance)
+{
+    if (layer != 0)
+    {
+        return Item::getLayerIcon(auxValue, layer, itemInstance);
+    }
+
+    return mArrowHeadIcon;
+}
+
+void TippedArrowItem::registerIcons(IconRegister* iconRegister)
+{
+    Item::registerIcons(iconRegister);
+    mArrowHeadIcon = iconRegister->registerIcon(L"tipped_arrow_head");
+}

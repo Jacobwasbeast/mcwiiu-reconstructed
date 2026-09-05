@@ -37,8 +37,8 @@ HitResult* ProjectileUtil::forwardsRaycast(const boost::shared_ptr<Entity>& enti
         boost::shared_ptr<Entity> hitEntity;
         double nearestDistance = 0.0;
 
-        std::vector<boost::shared_ptr<Entity> >* candidates =
-            level->getEntities(entity, entity->mBoundingBox->expand(xd, yd, zd)->grow(1.0), NULL);
+        AABB* searchBox = entity->mBoundingBox->expand(xd, yd, zd)->grow(1.0);
+        std::vector<boost::shared_ptr<Entity> >* candidates = level->getEntities(entity, searchBox, NULL);
 
         for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = candidates->begin();
              it != candidates->end();
