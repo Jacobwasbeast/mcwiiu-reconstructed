@@ -6,7 +6,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/data/SavedData.hpp"
 #include "game/data/SavedDataStorage.hpp"
 
 class SavedDataMemoryStorage : public SavedDataStorage

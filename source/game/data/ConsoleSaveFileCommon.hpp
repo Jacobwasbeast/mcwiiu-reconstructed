@@ -7,16 +7,16 @@
 #include "game/core/CriticalSection.hpp"
 #include "game/core/FileEntry.hpp"
 #include "game/core/FileHeader.hpp"
+#include "game/data/ConsoleSaveFile.hpp"
 #include "game/data/ConsoleSavePath.hpp"
 
 class File;
 
-class ConsoleSaveFileCommon
+class ConsoleSaveFileCommon : public ConsoleSaveFile
 {
 public:
     ConsoleSaveFileCommon();
     virtual ~ConsoleSaveFileCommon();
-
     virtual FileEntry* createFile(const ConsoleSavePath& path) = 0;
     virtual void deleteFile(FileEntry* entry) = 0;
     virtual void setFilePointer(FileEntry* entry, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod) = 0;
@@ -43,14 +43,11 @@ public:
     virtual ByteOrder getSaveEndian();
     virtual ByteOrder getLocalEndian();
     virtual void setEndian(ByteOrder endian);
-    virtual void ConvertRegionFile(File regionFile) = 0;
-    virtual void ConvertToLocalPlatform() = 0;
-    virtual unsigned char* getWritePointer(FileEntry* entry) = 0;
-    virtual void refreshFromLevelgen() = 0;
+    virtual void ConvertRegionFile(File regionFile);
+    virtual void ConvertToLocalPlatform();
     virtual void AllocInitialQuota(unsigned int size) = 0;
     virtual void ReAlloc(unsigned int size) = 0;
     virtual bool isLocalEndianDifferent(ESavePlatform platform);
-
     void _initSaveFromData(const std::wstring& filename, unsigned int dataSize, void* data, ESavePlatform platform);
     void _deleteFile(FileEntry* entry);
     void MoveDataBeyond(FileEntry* entry, unsigned int size);
@@ -60,14 +57,12 @@ public:
     bool _readFile(FileEntry* entry, void* buffer, unsigned int size, unsigned int* read);
     unsigned int fjGetSaveThumbnailData(unsigned char* data, unsigned int size);
     int fjCountSavedChunks(int dimension);
-    bool fjHasRegionFile(const File& file);
-
+    virtual bool fjHasRegionFile(const File& file);
 protected:
     FileHeader mFileHeader;
     std::wstring mFilename;
     OSFastMutex mSaveAccessMutex;
     void* mData;
-    unsigned int mDataSize;
 };
 
 #endif

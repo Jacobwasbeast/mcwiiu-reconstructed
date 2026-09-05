@@ -17,7 +17,6 @@ class SavedDataStorage
 {
 public:
     SavedDataStorage(LevelStorage* levelStorage);
-
     virtual ~SavedDataStorage();
 
     virtual boost::shared_ptr<SavedData> get(const std::type_info& type, const std::wstring& id);
