@@ -1,0 +1,266 @@
+#ifndef GAME_WORLD_CHUNK_LEVELCHUNK_HPP
+#define GAME_WORLD_CHUNK_LEVELCHUNK_HPP
+
+#include <vector>
+#include <deque>
+#include <typeinfo>
+#include <utility>
+#include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/functional/hash.hpp>
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/LevelSource.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/block/Predicate.hpp"
+#include "game/data/ElementStorage.hpp"
+#include "game/data/SparseLightStorage.hpp"
+
+class AABB;
+class BiomeSource;
+class Biome;
+class Block;
+class BlockEntity;
+class BlockState;
+class ChunkGenerator;
+class ChunkPos;
+class ChunkPrimer;
+class ChunkSource;
+class DataInputStream;
+class DataOutputStream;
+class ElementStorage;
+class Entity;
+class Level;
+class SparseLightStorage;
+class Direction;
+
+class LevelChunk
+{
+public:
+    typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
+    enum EntityCreationType { IMMEDIATE, QUEUED };
+    class BlockChange
+    {
+    public:
+        int GetPackedPos() const;
+        unsigned int GetElement() const;
+        BlockPos GetPos() const;
+        const BlockState* GetState() const;
+        const BlockState* GetExtraState() const;
+    private:
+        short mPackedPos;
+        short mReserved;
+        int mElement;
+    };
+    class ThreadStorage
+    {
+    public:
+        ThreadStorage();
+        unsigned short* elementStorage;
+        unsigned short* extraElementStorage;
+        unsigned char* tempLightingStorage;
+    };
+
+    LevelChunk(Level* level, int x, int z);
+    LevelChunk(Level* level, ChunkPrimer* primer, int x, int z);
+    LevelChunk(Level* level, int x, int z, LevelChunk* source);
+    bool isReady();
+    int getBlockId(int x, int y, int z);
+    unsigned int getLowestHeightmap();
+    unsigned short getElement(int x, int y, int z);
+    bool sectionContainsBlockId(int x, int y, int z, int blockId);
+    int getExtraBlockId(int x, int y, int z);
+    void getBlockAndExtraId(int x, int y, int z, int* blockId, int* extraBlockId);
+    unsigned int getData(int x, int y, int z);
+    unsigned int getExtraBlockData(int x, int y, int z);
+    unsigned short getElement(int x, int y, int z, bool* present);
+    int getHighestSectionPosition();
+    BlockPos getTopRainBlock(const BlockPos& pos);
+    void updateBiomeFlags(int x, int z);
+    bool biomeHasRain(int x, int z);
+    bool biomeHasSnow(int x, int z);
+    long long getInhabitedTime();
+    bool isTerrainPopulated();
+    bool isRenderChunkEmpty(int section);
+    virtual void getBlockData(arrayWithLength<unsigned char> data);
+    virtual void setAllElements(arrayWithLength<unsigned char> elements, arrayWithLength<unsigned char> data);
+    virtual void setAllElements(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data);
+    virtual void getAllElements(arrayWithLength<unsigned char> elements, arrayWithLength<unsigned char> data);
+    virtual void getElementRange(arrayWithLength<unsigned short> elements, int start, int end);
+    virtual void getElementRange(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> data, int start, int end);
+    static int getRawDataMaxBytes();
+    virtual arrayWithLength<unsigned char> getRawData();
+    virtual void setFromRawData(arrayWithLength<unsigned char> data);
+    virtual void getDataData(arrayWithLength<unsigned char> data);
+    virtual void getSkyLightData(arrayWithLength<unsigned char> data);
+    virtual void getBlockLightData(arrayWithLength<unsigned char> data);
+    virtual void setSkyLightData(arrayWithLength<unsigned char> data);
+    virtual void setBlockLightData(arrayWithLength<unsigned char> data);
+    void setSkyLightDataAllBright();
+    bool isLowerBlockLightStorageCompressed();
+    void writeCompressedElements(DataOutputStream* stream);
+    void readCompressedElements(DataInputStream* stream);
+    void readCompressedElementsFromBlockAndData(DataInputStream* stream);
+    void writeCompressedSkyLightData(DataOutputStream* stream);
+    void writeCompressedBlockLightData(DataOutputStream* stream);
+    unsigned char* GetTempLightingStorage();
+    void readCompressedSkyLightData(DataInputStream* stream);
+    void readCompressedBlockLightData(DataInputStream* stream);
+    unsigned int getSparseBlockAndDataMemoryAllocated();
+    bool getHasGapsToCheck();
+    bool getBiomePresentFlag();
+    virtual void reSyncLighting();
+    virtual bool reSyncLightingNearby();
+    virtual void dropLighting();
+    void SetInvalid(bool invalid);
+    bool hasLightingBeenDropped();
+    virtual void init(Level* level, int x, int z);
+    virtual ~LevelChunk();
+    virtual bool isAt(int x, int z);
+    int getHeightmap(const BlockPos& pos);
+    virtual unsigned char getHeightmap(int x, int z);
+    virtual void recalcBlockLights();
+    int getHighestNonEmptyY();
+    unsigned short* GetElementStorage();
+    unsigned short* GetExtraElementStorage();
+    void setUnsaved(bool unsaved);
+    virtual void recalcHeightmapOnly();
+    void lightGaps(int x, int z);
+    virtual void recalcHeightmap();
+    Block* getChunkBlock(int x, int y, int z);
+    virtual void lightLava();
+    void lightGap(int x, int y, int z, int value);
+    bool lightGap(int x, int y, int z);
+    void recheckGaps(bool onlyOne);
+    void recalcHeight(int x, int y, int z);
+    virtual int getBlockLightBlock(const BlockPos& pos);
+    int getChunkBlockLightBlock(int x, int y, int z);
+    virtual Block* getBlock(const BlockPos& pos);
+    virtual Block* getExtraBlock(const BlockPos& pos);
+    const BlockState* getBlockState(int x, int y, int z);
+    virtual const BlockState* getBlockState(const BlockPos& pos);
+    virtual const BlockState* getExtraBlockState(const BlockPos& pos);
+    void getBlockAndExtraId_NoLock(int x, int y, int z, int* blockId, int* extraBlockId);
+    void getElementReadLock();
+    void releaseElementReadLock();
+    unsigned int getElementFrameLastUpdated();
+    unsigned short setElement(int x, int y, int z, unsigned short element);
+    unsigned short getChunkBlockData(int x, int y, int z);
+    virtual int getData(const BlockPos& pos);
+    virtual bool setData(int x, int y, int z, int data, int flags, bool* changed);
+    virtual void setBlock(const BlockPos& pos, const BlockState* state);
+    virtual void setExtraBlock(const BlockPos& pos, const BlockState* state);
+    virtual bool internalSetBlock(bool extra, const BlockPos& pos, const BlockState* state);
+    virtual bool setBlockAndData(int x, int y, int z, int blockId, int data, bool update, bool extra);
+    virtual void setExtraElement(int x, int y, int z, unsigned short element);
+    virtual unsigned short getExtraElement(int x, int y, int z);
+    virtual void getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement);
+    virtual int getBrightness(LightLayer::variety layer, const BlockPos& pos);
+    virtual void getNeighbourBrightnesses(int* brightnesses, LightLayer::variety layer, int x, int y, int z);
+    virtual bool setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness);
+    virtual int getRawBrightness(const BlockPos& pos, int skyDarken);
+    virtual void addEntity(boost::shared_ptr<Entity> entity);
+    virtual void removeEntity(boost::shared_ptr<Entity> entity);
+    virtual void removeEntity(boost::shared_ptr<Entity> entity, int section);
+    virtual bool isSkyLit(const BlockPos& pos);
+    boost::shared_ptr<BlockEntity> createBlockEntity(const BlockPos& pos);
+    virtual boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos, EntityCreationType type);
+    virtual void addBlockEntity(boost::shared_ptr<BlockEntity> entity);
+    virtual void setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
+    virtual void removeBlockEntity(const BlockPos& pos);
+    virtual bool load(bool full);
+    virtual bool unload(bool save, bool keepLoaded);
+    virtual bool containsPlayer();
+    virtual bool isUnloaded();
+    virtual void markUnsaved();
+    virtual void getEntities(boost::shared_ptr<Entity> except, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate);
+    virtual void getEntitiesOfClass(const std::type_info& type, const AABB* box, std::vector<boost::shared_ptr<Entity> >& entities, const Predicate<boost::shared_ptr<Entity> >* predicate, bool exact);
+    virtual int countEntities();
+    virtual bool shouldSave(bool force);
+    virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
+    static void blockUpdatedCallback(int x, int y, int z, void* data, int value);
+    virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
+    virtual Random getRandom(long long seed);
+    virtual bool isEmpty();
+    static void staticCtor();
+    void postProcess();
+    void flagPostProcessComplete(short value);
+    void doPostProcess(ChunkSource* source, ChunkGenerator* generator);
+    bool checkPostProcess(ChunkSource* source, ChunkGenerator* generator);
+    bool checkChests(ChunkSource* source, int x, int z);
+    void tick(bool update);
+    ChunkPos getPos();
+    bool isYSpaceEmpty(int y0, int y1);
+    bool reloadBiomes();
+    virtual Biome* getBiome(const BlockPos& pos, BiomeSource* source);
+    arrayWithLength<unsigned char> getBiomes();
+    void updateBiomePresentFlags();
+    void setBiomes(arrayWithLength<unsigned char> biomes);
+    void setCheckAllLight();
+    bool postProcessAt(int x, int z);
+    Level* getLevel();
+    arrayWithLength<unsigned char> getHeightmap();
+    void recalcMinAndMaxHeights();
+    BlockEntityMap* getBlockEntities();
+    void setLastSaveHadEntities(bool value);
+    void setLastSaveTime(long long value);
+    void setInhabitedTime(long long value);
+    virtual void compressLighting();
+    virtual void compressBlocks();
+    virtual void compressData();
+    void setChunkVersion(int version);
+    void swapEntities(LevelChunk* chunk);
+    static int PackBlockPos(const BlockPos& pos);
+    static BlockPos UnpackBlockPos(short packed);
+    static void CreateNewThreadStorage();
+    static void ReleaseThreadStorage();
+    int getBlocksAllocatedSize(int*, int*, int*, int*, int*);
+    void setWillBeSaved(bool);
+    bool getWillBeSaved();
+    Block* getBlockLocal(int, int, int);
+    int getDataLocal(int, int, int);
+    int getExtraBlockData(const BlockPos&);
+    bool isTicked();
+    void checkNextLight();
+    void postProcessEdge(const Direction*);
+    bool isLoaded();
+    void setLoaded(bool);
+    void setHeightmap(arrayWithLength<int>);
+    void setTerrainPopulated(short);
+    bool isLightPopulated();
+    void setLightPopulated(bool);
+    int getChunkVersion();
+
+public:
+    Level* level;
+    int x;
+    int z;
+private:
+    ElementStorage* mElements;
+    SparseLightStorage* mSkyLight;
+    SparseLightStorage* mSkyLightUpper;
+    SparseLightStorage* mBlockLight;
+    SparseLightStorage* mBlockLightUpper;
+    unsigned char mHeightmap[256];
+    bool mUnsaved;
+    bool mLoaded;
+    bool mUnloaded;
+    bool mTerrainPopulated;
+    long long mInhabitedTime;
+    long long mLastSaveTime;
+    unsigned int mLowestHeightmap;
+    unsigned char mBiomeFlags[128];
+    unsigned char mBiomePresent;
+    unsigned char mPostProcess;
+    unsigned char mLightPopulated;
+    unsigned char mLastSaveHadEntities;
+    int mChunkVersion;
+    unsigned char mMinHeight;
+    unsigned char mMaxHeight;
+    unsigned char mTempLightingStorage[0x4080];
+    arrayWithLength<unsigned char> mBiomes;
+    BlockEntityMap mBlockEntityMap;
+    std::vector<boost::shared_ptr<Entity> > mEntities;
+};
+
+#endif

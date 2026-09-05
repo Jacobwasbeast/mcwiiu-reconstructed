@@ -1,0 +1,67 @@
+#ifndef GAME_WORLD_CHUNK_PLAYERCHUNKCONTAINER_HPP
+#define GAME_WORLD_CHUNK_PLAYERCHUNKCONTAINER_HPP
+
+#include <vector>
+#include <boost/shared_ptr.hpp>
+
+#include "game/world/chunk/ChunkPos.hpp"
+
+class BlockEntity;
+class LevelChunk;
+class Packet;
+class PlayerChunkMap;
+class ServerPlayer;
+
+class PlayerChunkContainer
+{
+public:
+    PlayerChunkContainer(PlayerChunkMap* map, int x, int z);
+    ~PlayerChunkContainer();
+
+    void sendToPlayer(boost::shared_ptr<ServerPlayer> player);
+    void add(boost::shared_ptr<ServerPlayer> player, bool send);
+    bool hasPlayer(boost::shared_ptr<ServerPlayer> player);
+    void updateInhabitedTime();
+    void remove(boost::shared_ptr<ServerPlayer> player, bool send);
+    void broadcast(boost::shared_ptr<Packet> packet);
+    void broadcast(boost::shared_ptr<BlockEntity> blockEntity);
+    void broadcastChanges(bool force);
+    void blockChanged(int x, int y, int z);
+    void prioritiseBlockChanges();
+    ChunkPos getPos();
+    double getDistanceSqrToClosestPlayer();
+    bool updatePlayerReference(boost::shared_ptr<ServerPlayer> player);
+    static void removeAllPlayers(PlayerChunkContainer* container, bool send);
+    bool IsGoingToSendBRUP();
+    bool hasSentToPlayers();
+    LevelChunk* getChunk();
+
+private:
+    PlayerChunkMap* mMap;
+    std::vector<boost::shared_ptr<ServerPlayer> > mPlayers;
+    int mUnknown0;
+    ChunkPos mPos;
+    unsigned short* mBlockChanges;
+    int mBlockChangesCapacity;
+    LevelChunk* mChunk;
+    int mBlockChangesCount;
+    int mMinX;
+    int mMaxX;
+    int mMinY;
+    int mMaxY;
+    int mMinZ;
+    int mMaxZ;
+    int mUpdateCounter;
+    bool mPrioritiseBlockChanges;
+    unsigned char mHasSentToPlayers;
+    unsigned char mGoingToSendBRUP;
+    unsigned char mReserved;
+    unsigned char mReserved2;
+    unsigned char mReserved3;
+    unsigned char mReserved4;
+    long long mLastUpdate;
+    int mUnknown1;
+    int mUnknown2;
+};
+
+#endif
