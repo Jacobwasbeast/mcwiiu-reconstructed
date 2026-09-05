@@ -7,6 +7,7 @@
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/network/Packet.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 
 TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int updateInterval, int maxRange, bool sendVelocityUpdates)
@@ -97,7 +98,7 @@ void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
     {
         if (*it)
         {
-            (*it)->send(packet);
+            (*it)->mConnection->send(packet);
         }
     }
 }
@@ -149,7 +150,8 @@ void TrackedEntity::broadcastRemoved()
     {
         if (*it)
         {
-            (*it)->sendRemoveEntity(mEntity);
+            boost::shared_ptr<Entity> entity = mEntity;
+            (*it)->sendRemoveEntity(&entity);
         }
     }
     mTrackedPlayers.clear();
@@ -163,7 +165,8 @@ void TrackedEntity::removePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         mTrackedPlayers.erase(it);
         if (player)
         {
-            player->sendRemoveEntity(mEntity);
+            boost::shared_ptr<Entity> entity = mEntity;
+            player->sendRemoveEntity(&entity);
         }
     }
 }

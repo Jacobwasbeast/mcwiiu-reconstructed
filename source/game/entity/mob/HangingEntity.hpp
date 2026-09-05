@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/block/Predicate.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 class CompoundTag;
@@ -20,7 +21,13 @@ template <class T> class not_null_ptr;
 class HangingEntity : public Entity
 {
 public:
-    class HangingEntitySelector;
+    class HangingEntitySelector : public Predicate<boost::shared_ptr<Entity> >
+    {
+    public:
+        virtual bool apply(boost::shared_ptr<Entity> entity) const;
+        virtual ~HangingEntitySelector();
+    };
+
     HangingEntity(Level* level);
     HangingEntity(Level* level, const BlockPos& pos);
     virtual ~HangingEntity();
@@ -59,13 +66,6 @@ protected:
     int mTickCounter;
     BlockPos mPos;
     const Direction* mDirection;
-};
-
-class HangingEntity::HangingEntitySelector : public Predicate<boost::shared_ptr<Entity> >
-{
-public:
-    virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~HangingEntitySelector();
 };
 
 #endif

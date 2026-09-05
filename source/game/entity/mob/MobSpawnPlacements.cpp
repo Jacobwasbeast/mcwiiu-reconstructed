@@ -4,7 +4,7 @@
 
 static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> spawnPlacements;
 
-Mob::SpawnPlacementType MobSpawnPlacements::getPlacementType(unsigned long long enumBaseClass)
+Mob::SpawnPlacementType MobSpawnPlacements::getPlacementType(unsigned long long entityType)
 {
-    return spawnPlacements[enumBaseClass];
+    return spawnPlacements[entityType];
 }

@@ -207,7 +207,7 @@ public:
     virtual void removePassenger(boost::shared_ptr<Entity> passenger);
     virtual bool canAddPassenger(boost::shared_ptr<Entity> passenger);
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
-    virtual float getPickRadius();
+    virtual double getPickRadius();
     virtual Vec3* getLookAngle();
     virtual phys::Vec2* getRotationVector();
     virtual Vec3* getForward();
@@ -247,7 +247,7 @@ public:
     virtual bool ShouldRenderShadow();
     virtual bool canFly();
     virtual Vec3* getAttachPos(EEntityLocation location, float partialTicks);
-    virtual int getMaxAirSupply();
+    virtual unsigned int getMaxAirSupply();
     virtual void setAirSupply(int airSupply);
     virtual void thunderHit(const LightningBolt* lightningBolt);
     virtual void onAboveBubbleCol(bool down);
@@ -298,7 +298,7 @@ public:
     virtual bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player);
     virtual AABB* getBoundingBoxForCulling();
     virtual void setBoundingBox(AABB* boundingBox);
-    virtual float getEyeHeight();
+    virtual double getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance);
     virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
     virtual bool hasPermission(EGameCommand command);

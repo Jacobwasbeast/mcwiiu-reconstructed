@@ -2527,7 +2527,7 @@ int Entity::getAirSupply()
     return mEntityData->get(DATA_AIR_SUPPLY_ID);
 }
 
-int Entity::getMaxAirSupply()
+unsigned int Entity::getMaxAirSupply()
 {
     return 300;
 }
@@ -2875,7 +2875,7 @@ bool Entity::isInWall()
     mInWallCacheXRot = mXRot;
 
     float width = mBbWidth * 0.8f;
-    float eyeHeight = getEyeHeight();
+    double eyeHeight = getEyeHeight();
 
     BlockPos lastPos((int)0x80000000, (int)0x80000000, (int)0x80000000);
 
@@ -3219,9 +3219,9 @@ void Entity::lerpTo(double x, double y, double z, float yRot, float xRot, int st
     setRot(yRot, xRot);
 }
 
-float Entity::getPickRadius()
+double Entity::getPickRadius()
 {
-    return 0.0f;
+    return 0.0;
 }
 
 Vec3* Entity::getLookAngle()
@@ -4089,9 +4089,9 @@ void Entity::setBoundingBox(AABB* boundingBox)
     mBoundingBox->set(boundingBox);
 }
 
-float Entity::getEyeHeight()
+double Entity::getEyeHeight()
 {
-    return mBbHeight * 0.8500000238418579f;
+    return (double)(mBbHeight * 0.8500000238418579f);
 }
 
 void Entity::setOutsideWorldBorder(bool outsideWorldBorder)
@@ -4610,118 +4610,4 @@ void Entity::restoreLeashFromSave()
 
     delete mLeashInfoTag;
     mLeashInfoTag = NULL;
-}
-
-std::set<std::wstring>* Entity::getTags()
-{
-    return &mTags;
-}
-
-bool Entity::addTag(const std::wstring& tag)
-{
-    if (tag.empty() || mTags.size() >= 1024)
-    {
-        return false;
-    }
-    return mTags.insert(tag).second;
-}
-
-bool Entity::removeTag(const std::wstring& tag)
-{
-    return mTags.erase(tag) != 0;
-}
-
-bool Entity::isFree(float x, float y, float z, float size)
-{
-    if (mBoundingBox == NULL)
-    {
-        return false;
-    }
-    AABB* box = mBoundingBox->grow(size, 0.0, size)->move(x, y, z);
-    return isFree(box);
-}
-
-bool Entity::intersects(double x0, double y0, double z0, double x1, double y1, double z1)
-{
-    return mBoundingBox != NULL
-        && mBoundingBox->intersects(x0, y0, z0, x1, y1, z1);
-}
-
-HitResult* Entity::pick(Vec3* from, double distance, float partialTicks,
-                        bool liquids, bool ignoreEntities)
-{
-    Vec3* direction = getViewVector(partialTicks);
-    Vec3* to = Vec3::newTemp(from->x, from->y, from->z)
-                   ->add(direction->x * distance, direction->y * distance,
-                         direction->z * distance);
-    return mLevel->clip(from, to, liquids, false, true, ignoreEntities, NULL, false);
-}
-
-HitResult* Entity::pickBlockInDirection(Vec3* direction, double distance,
-                                        float partialTicks)
-{
-    Vec3* from = getEyePosition(partialTicks);
-    Vec3* to = Vec3::newTemp(from->x, from->y, from->z)
-                   ->add(direction->x * distance, direction->y * distance,
-                         direction->z * distance);
-    return mLevel->clip(from, to, false, false, true, false, NULL, false);
-}
-
-float Entity::getCurrentSwimAmount() const
-{
-    return mSwimAmount;
-}
-
-void Entity::printSmallIds() const
-{
-}
-
-unsigned int Entity::countFlagsForPIX()
-{
-    unsigned int count = 0;
-    int i;
-    for (i = 0; i < 64; ++i)
-    {
-        unsigned int value = sSmallIdsInUse[i];
-        while (value != 0)
-        {
-            count += value & 1U;
-            value >>= 1;
-        }
-    }
-    return count;
-}
-
-void Entity::resetSmallId()
-{
-    if (mId >= 0 && mId < 2048)
-    {
-        freeSmallId(mId);
-        mId = -1;
-    }
-}
-
-void Entity::createHoverEvent()
-{
-}
-
-CommandStats* Entity::getCommandStats()
-{
-    return mCommandStats;
-}
-
-void Entity::cloneStatsFrom(boost::shared_ptr<Entity> entity)
-{
-    if (entity && mCommandStats != NULL && entity->mCommandStats != NULL)
-    {
-        mCommandStats->cloneFrom(entity->mCommandStats);
-    }
-}
-
-void Entity::handleEntityTag(CompoundTag* tag)
-{
-    if (tag != NULL)
-    {
-        readAdditionalSaveData(tag);
-    }
 }

@@ -1,0 +1,564 @@
+#include "game/entity/mob/Mob.hpp"
+
+#include "game/core/DamageSource.hpp"
+#include "game/core/DifficultyInstance.hpp"
+#include "game/core/EquipmentSlot.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/data/DataFixerUpper.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/entity/mob/MobGroupData.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/core/Sensing.hpp"
+#include "game/item/ArmorItem.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/ItemListDataWalker.hpp"
+#include "game/item/Items.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPathTypes.hpp"
+#include "game/world/block/Blocks.hpp"
+
+Mob::Mob(Level* level)
+    : LivingEntity(level),
+      mGoalSelector(),
+      mTargetSelector(),
+      mPathfindingMalus(),
+      mNavigation(NULL),
+      mSensing(NULL),
+      mTarget(),
+      mNoAi(false),
+      mLeftHanded(false),
+      mCanPickUpLoot(false),
+      mPersistenceRequired(false),
+      mFollowsLeader(false),
+      mLeader(false)
+{
+    _init();
+    registerAttributes();
+}
+
+Mob::~Mob()
+{
+    delete mNavigation;
+    delete mSensing;
+}
+
+unsigned long long Mob::GetType()
+{
+    return 0x0d00000000000000ULL;
+}
+
+void Mob::staticCtor()
+{
+}
+
+void Mob::_init()
+{
+    mNoAi = false;
+    mLeftHanded = false;
+    mCanPickUpLoot = false;
+    mPersistenceRequired = false;
+    mFollowsLeader = false;
+    mLeader = false;
+}
+
+void Mob::registerAttributes()
+{
+    LivingEntity::registerAttributes();
+}
+
+void Mob::fjDerivedCtorCalls()
+{
+    LivingEntity::fjDerivedCtorCalls();
+    createBodyControl();
+}
+
+void Mob::defineSynchedData()
+{
+    LivingEntity::defineSynchedData();
+}
+
+void Mob::registerGoals()
+{
+}
+
+void Mob::createNavigation(Level*)
+{
+}
+
+float Mob::getPathfindingMalus(const BlockPathTypes* type)
+{
+    boost::unordered_map<const BlockPathTypes*, float>::const_iterator it = mPathfindingMalus.find(type);
+    if (it != mPathfindingMalus.end())
+        return it->second;
+    return type == NULL ? 0.0f : type->getMalus();
+}
+
+void Mob::setPathfindingMalus(const BlockPathTypes* type, float malus)
+{
+    mPathfindingMalus[type] = malus;
+}
+
+void Mob::createBodyControl()
+{
+}
+
+void* Mob::getLookControl()
+{
+    return NULL;
+}
+
+void* Mob::getMoveControl()
+{
+    return NULL;
+}
+
+void* Mob::getJumpControl()
+{
+    return NULL;
+}
+
+PathNavigation* Mob::getNavigation()
+{
+    return mNavigation;
+}
+
+Sensing* Mob::getSensing()
+{
+    return mSensing;
+}
+
+boost::shared_ptr<LivingEntity> Mob::getTarget()
+{
+    return mTarget;
+}
+
+void Mob::setTarget(boost::shared_ptr<LivingEntity> target)
+{
+    mTarget = target;
+}
+
+void Mob::setLevel(Level* level)
+{
+    Entity::setLevel(level);
+}
+
+bool Mob::canAttackType(unsigned long long)
+{
+    return true;
+}
+
+void Mob::ate()
+{
+}
+
+unsigned int Mob::getAmbientSoundInterval()
+{
+    return 80;
+}
+
+void Mob::playAmbientSound()
+{
+}
+
+void Mob::baseTick()
+{
+    LivingEntity::baseTick();
+}
+
+void Mob::playHurtSound(const DamageSource*)
+{
+    resetAmbientSoundTime();
+}
+
+void Mob::resetAmbientSoundTime()
+{
+}
+
+int Mob::getExperienceReward(boost::shared_ptr<Player>)
+{
+    return 0;
+}
+
+void Mob::spawnAnim()
+{
+}
+
+void Mob::handleEntityEvent(unsigned char event, int data)
+{
+    LivingEntity::handleEntityEvent(event, data);
+}
+
+void Mob::setLeader(bool leader)
+{
+    mLeader = leader;
+}
+
+void Mob::tick()
+{
+    LivingEntity::tick();
+}
+
+float Mob::tickHeadTurn(float, float)
+{
+    return 0.0f;
+}
+
+const SoundEvent* Mob::getAmbientSound()
+{
+    return NULL;
+}
+
+const SoundEvent* Mob::getDeathLoot()
+{
+    return NULL;
+}
+
+void Mob::dropDeathLoot(bool, int)
+{
+}
+
+void Mob::dropEquipment(bool, int)
+{
+}
+
+void Mob::addDataWalkers(DataFixerUpper* fixer)
+{
+    LivingEntity::addDataWalkers(fixer);
+}
+
+void Mob::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
+{
+    std::vector<std::wstring> itemNames;
+    itemNames.push_back(L"ArmorItems");
+    itemNames.push_back(L"HandItems");
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
+                     (DataWalker*)new ItemListDataWalker(entityType, itemNames));
+}
+
+bool Mob::isLeftHanded()
+{
+    return mLeftHanded;
+}
+
+void Mob::addAdditonalSaveData(CompoundTag* tag)
+{
+    LivingEntity::addAdditonalSaveData(tag);
+}
+
+void Mob::setPersistenceRequired(bool required)
+{
+    mPersistenceRequired = required;
+}
+
+bool Mob::isPersistenceRequired()
+{
+    return mPersistenceRequired;
+}
+
+void Mob::readAdditionalSaveData(CompoundTag* tag)
+{
+    LivingEntity::readAdditionalSaveData(tag);
+}
+
+const void* Mob::getDefaultLootTable()
+{
+    return NULL;
+}
+
+const void* Mob::getDefaultGearTable()
+{
+    return NULL;
+}
+
+void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSource* source)
+{
+    LivingEntity::dropAllDeathLoot(hitByPlayer, lootingLevel, source);
+}
+
+void Mob::setZza(float)
+{
+}
+
+void Mob::setYya(float)
+{
+}
+
+void Mob::setXxa(float)
+{
+}
+
+void Mob::setSpeed(float speed)
+{
+    LivingEntity::setSpeed(speed);
+}
+
+void Mob::aiStep()
+{
+}
+
+const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> item)
+{
+    Item* heldItem = item->getItem();
+    if (Block::byItem(heldItem) == Blocks::pumpkin || heldItem == Items::skull)
+        return EquipmentSlot::HEAD;
+
+    ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
+    if (armorItem != NULL)
+        return armorItem->getSlot();
+
+    if (heldItem == Items::elytra)
+        return EquipmentSlot::CHEST;
+
+    return EquipmentSlot::MAINHAND;
+}
+
+void Mob::pickUpItem(boost::shared_ptr<ItemEntity>)
+{
+}
+
+bool Mob::canHoldItem(not_null_ptr<ItemInstance>)
+{
+    return false;
+}
+
+bool Mob::removeWhenFarAway()
+{
+    return false;
+}
+
+void Mob::checkDespawn()
+{
+}
+
+void Mob::serverAiStep()
+{
+}
+
+void Mob::customServerAiStep()
+{
+}
+
+int Mob::getMaxHeadXRot()
+{
+    return 40;
+}
+
+int Mob::getMaxHeadYRot()
+{
+    return 75;
+}
+
+float Mob::rotlerp(float from, float to, float max)
+{
+    float delta = to - from;
+    if (delta > max)
+        delta = max;
+    if (delta < -max)
+        delta = -max;
+    return from + delta;
+}
+
+void Mob::lookAt(boost::shared_ptr<Entity>, float, float)
+{
+}
+
+bool Mob::checkSpawnRules()
+{
+    return true;
+}
+
+bool Mob::checkSpawnObstruction()
+{
+    return true;
+}
+
+float Mob::getSizeScale()
+{
+    return 1.0f;
+}
+
+float Mob::getHeadSizeScale()
+{
+    return 1.0f;
+}
+
+int Mob::getMaxSpawnClusterSize()
+{
+    return 4;
+}
+
+int Mob::getMaxFallDistance()
+{
+    return 3;
+}
+
+std::vector<boost::shared_ptr<ItemInstance> >* Mob::getHandSlots()
+{
+    return NULL;
+}
+
+std::vector<boost::shared_ptr<ItemInstance> >* Mob::getArmorSlots()
+{
+    return NULL;
+}
+
+void Mob::setItemSlot(const EquipmentSlot*, not_null_ptr<ItemInstance>)
+{
+}
+
+not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot*)
+{
+    return not_null_ptr<ItemInstance>();
+}
+
+not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot*, int)
+{
+    return not_null_ptr<ItemInstance>();
+}
+
+void Mob::populateDefaultEquipmentSlots(const DifficultyInstance&)
+{
+}
+
+void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance&)
+{
+}
+
+MobGroupData* Mob::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)
+{
+    return data;
+}
+
+void Mob::finalizeSpawnEggSpawn(int)
+{
+}
+
+bool Mob::canBeControlledByRider()
+{
+    return false;
+}
+
+void Mob::setDropChance(const EquipmentSlot*, float)
+{
+}
+
+bool Mob::canPickUpLoot()
+{
+    return mCanPickUpLoot;
+}
+
+void Mob::setCanPickUpLoot(bool canPickUp)
+{
+    mCanPickUpLoot = canPickUp;
+}
+
+bool Mob::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
+{
+    return mobInteract(player, hand);
+}
+
+bool Mob::mobInteract(const boost::shared_ptr<Player>&, InteractionHand::EInteractionHand)
+{
+    return false;
+}
+
+void Mob::underwaterEjectRider()
+{
+    if (breathesWater())
+        return;
+    ejectPassengers();
+}
+
+bool Mob::canBeLeashed(const boost::shared_ptr<Player>&)
+{
+    return !isLeashed();
+}
+
+bool Mob::startRiding(boost::shared_ptr<Entity> entity, bool force)
+{
+    return Entity::startRiding(entity, force);
+}
+
+unsigned int Mob::GetInteractTooltip(const EntityTooltipDataHolder& holder)
+{
+    return Entity::GetInteractTooltip(holder);
+}
+
+bool Mob::shouldRender(double distance)
+{
+    return Entity::shouldRenderAtSqrDistance(distance * distance);
+}
+
+bool Mob::isValidSlotForItem(const EquipmentSlot*, not_null_ptr<ItemInstance>)
+{
+    return true;
+}
+
+bool Mob::setSlot(int, const not_null_ptr<ItemInstance>&)
+{
+    return true;
+}
+
+bool Mob::isControlledByLocalInstance()
+{
+    return true;
+}
+
+bool Mob::isEffectiveAi()
+{
+    return !isNoAi();
+}
+
+void Mob::setNoAi(bool noAi)
+{
+    mNoAi = noAi;
+}
+
+void Mob::setLeftHanded(bool leftHanded)
+{
+    mLeftHanded = leftHanded;
+}
+
+bool Mob::isNoAi()
+{
+    return mNoAi;
+}
+
+const HumanoidArm* Mob::getMainArm()
+{
+    return NULL;
+}
+
+std::wstring Mob::getName()
+{
+    return LivingEntity::getName();
+}
+
+unsigned int Mob::maxFlockSize()
+{
+    return 4;
+}
+
+unsigned int Mob::shouldFollow()
+{
+    return mFollowsLeader;
+}
+
+void Mob::setFollowsLeader(bool follows)
+{
+    mFollowsLeader = follows;
+}
+
+bool Mob::followsLeader()
+{
+    return mFollowsLeader;
+}
+
+bool Mob::isLeader()
+{
+    return mLeader;
+}

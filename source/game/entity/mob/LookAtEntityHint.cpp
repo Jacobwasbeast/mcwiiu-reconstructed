@@ -34,7 +34,7 @@ boost::shared_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_
     }
     else if (type == 0x8000008ULL)
     {
-        item = static_cast<Boat*>(boost::static_pointer_cast<Boat>(entity).get())->getDropItem();
+        item = boost::static_pointer_cast<Boat>(entity)->getDropItem();
     }
     else if (type == 0xa800004ULL)
     {

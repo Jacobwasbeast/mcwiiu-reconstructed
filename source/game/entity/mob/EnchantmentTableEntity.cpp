@@ -6,6 +6,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/ui/EnchantmentMenu.hpp"
 #include "game/core/Mth.hpp"
+#include "game/world/Level.hpp"
 
 EnchantmentTableEntity::EnchantmentTableEntity()
     : BlockEntity(), InteractionObject(), mRandom(new Random()),

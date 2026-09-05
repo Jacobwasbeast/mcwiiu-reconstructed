@@ -10,6 +10,7 @@
 
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/ColourTable.hpp"
+#include "game/world/block/IdMapper.hpp"
 #include "game/world/block/MappedRegistry.hpp"
 #include "game/util/ResourceLocation.hpp"
 

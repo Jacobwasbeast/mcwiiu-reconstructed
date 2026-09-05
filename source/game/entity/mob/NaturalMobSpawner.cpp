@@ -13,7 +13,6 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BaseRailBlock.hpp"
@@ -61,10 +60,9 @@ void NaturalMobSpawner::addEdgeChunkPos(int chunkX, int chunkZ)
 
 BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chunkZ)
 {
-    LevelChunk* chunk = level->getChunk(chunkX, chunkZ);
     int x = (chunkX << 4) + level->mRandom->nextInt(16);
     int z = (chunkZ << 4) + level->mRandom->nextInt(16);
-    int height = Mth::roundUp(chunk->getHeightmap(BlockPos(x, 0, z)) + 1, 16);
+    int height = Mth::roundUp(level->getHeightmap(x, z) + 1, 16);
     if (height < 1)
         height = 256;
     return BlockPos(x, level->mRandom->nextInt(height), z);

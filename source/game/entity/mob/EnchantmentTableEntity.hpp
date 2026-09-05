@@ -12,6 +12,7 @@
 class AbstractContainerMenu;
 class CompoundTag;
 class EnchantmentMenu;
+class EnchantTableRenderer;
 class Inventory;
 class Level;
 class Player;
@@ -40,6 +41,8 @@ public:
     virtual unsigned long long GetType();
 
 private:
+    friend class EnchantTableRenderer;
+
     int mTickCount;
     float mBookRotation;
     float mBookRotationOld;

@@ -30,6 +30,7 @@
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/HitResult.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/Stat.hpp"
@@ -37,7 +38,9 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/ai/PushableBySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobEffect.hpp"
@@ -58,6 +61,11 @@
 #include "game/item/PotionUtils.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/ThermalAreaRuleDefinition.hpp"
+#include "game/network/ClientboundAnimatePacket.hpp"
+#include "game/network/ClientboundSetEquippedItemPacket.hpp"
+#include "game/network/ClientboundSoundPacket.hpp"
+#include "game/network/ClientboundTakeItemEntityPacket.hpp"
+#include "game/network/Packet.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/AABB.hpp"
@@ -65,44 +73,27 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/EntityDataSerializer.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/TrapDoorBlock.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/Player.hpp"
 
-class ClientboundAnimatePacket;
-class ClientboundSetEquippedItemPacket;
-class ClientboundSoundPacket;
-class ClientboundTakeItemEntityPacket;
 class EntityDamageSource;
-class EntityDataSerializers
-{
-public:
-    static EntityDataSerializer<unsigned char>* BYTE;
-    static EntityDataSerializer<float>* FLOAT;
-    static EntityDataSerializer<int>* INT;
-    static EntityDataSerializer<bool>* BOOLEAN;
-};
-class LevelChunk;
 class ParticleTypes;
-class TrapDoorBlock;
 class Wolf;
 
 class CGameNetworkManager;
 class ClientMasterGameMode;
-class HitResult;
-class LevelGenerationOptions;
 class LevelRuleset;
-class LiquidBlock;
-class Packet;
-class PushableBySelector;
 
 void MemSect(int section);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
