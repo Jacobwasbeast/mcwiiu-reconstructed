@@ -1,7 +1,8 @@
 #include "game/util/GameModeUtilities.hpp"
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+
 #include "game/core/Mth.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/WeighedTreasure.hpp"
@@ -18,6 +19,18 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
+
+namespace
+{
+struct ChestItemsInfoLess
+{
+    bool operator()(const MiniGameDef::ChestItemsInfo& left,
+                    const MiniGameDef::ChestItemsInfo& right) const
+    {
+        return left.mKpScore < right.mKpScore;
+    }
+};
+}
 
 GameModeUtilities::Position::Position() : x(0.0), z(0.0), y(0.0) {}
 
@@ -102,8 +115,26 @@ bool GameModeUtilities::DistributeItemsSpread(const std::vector<boost::shared_pt
 {
     if (containers == NULL || items == NULL || containers->empty() || items->empty()) return false;
     Random random;
-    for (unsigned int i = 0; i < items->size(); ++i)
-        AddItemRuleDefinition::addItemToContainer(containers->at(i % containers->size()), items->at(i), -1, true);
+    std::vector<not_null_ptr<ItemInstance> > remaining(*items);
+    unsigned int baseCount = (unsigned int)remaining.size() / (unsigned int)containers->size();
+    unsigned int remainder = (unsigned int)remaining.size() % (unsigned int)containers->size();
+    std::vector<unsigned int> counts(containers->size(), baseCount);
+    for (unsigned int i = 0; i < remainder; ++i)
+    {
+        unsigned int index = (unsigned int)random.nextInt((int)containers->size());
+        while (counts[index] != baseCount)
+            index = (unsigned int)random.nextInt((int)containers->size());
+        ++counts[index];
+    }
+    for (unsigned int i = 0; i < containers->size(); ++i)
+    {
+        for (unsigned int j = 0; j < counts[i]; ++j)
+        {
+            unsigned int index = (unsigned int)random.nextInt((int)remaining.size());
+            AddItemRuleDefinition::addItemToContainer(containers->at(i), remaining.at(index), -1, true);
+            remaining.erase(remaining.begin() + index);
+        }
+    }
     return true;
 }
 
@@ -111,15 +142,27 @@ int GameModeUtilities::SelectRandomKit(const std::vector<MiniGameDef::ChestKitIn
                                        unsigned int* weights, Random* random)
 {
     if (kits == NULL || kits->empty()) return -1;
+    std::vector<unsigned int> localWeights;
+    if (weights == NULL)
+    {
+        localWeights.resize(kits->size());
+        for (unsigned int i = 0; i < kits->size(); ++i)
+            localWeights[i] = (unsigned int)kits->at(i).mWeight;
+        weights = &localWeights[0];
+    }
     unsigned int total = 0;
-    for (unsigned int i = 0; i < kits->size(); ++i) total += kits->at(i).mWeight;
+    for (unsigned int i = 0; i < kits->size(); ++i)
+        total += weights[i];
     if (total == 0) return 0;
     unsigned int value = (unsigned int)random->nextInt((int)total);
     for (unsigned int i = 0; i < kits->size(); ++i)
     {
-        if (weights != NULL) weights[i] = total;
-        if (value < (unsigned int)kits->at(i).mWeight) return (int)i;
-        value -= kits->at(i).mWeight;
+        if (value < weights[i])
+        {
+            weights[i] >>= 1;
+            return (int)i;
+        }
+        value -= weights[i];
     }
     return (int)kits->size() - 1;
 }
@@ -129,14 +172,22 @@ void GameModeUtilities::GenerateContainerContentsGreedy(std::vector<not_null_ptr
                                                         Random* random, unsigned int playerCount, unsigned int score)
 {
     if (output == NULL || items == NULL) return;
-    for (unsigned int i = 0; i < items->size(); ++i)
+    std::vector<MiniGameDef::ChestItemsInfo> sorted(*items);
+    std::sort(sorted.begin(), sorted.end(), ChestItemsInfoLess());
+    unsigned int currentScore = score;
+    unsigned int index = 0;
+    while (index < sorted.size())
     {
-        const MiniGameDef::ChestItemsInfo& item = items->at(i);
-        if (playerCount < (unsigned int)item.mMinPlayers || playerCount > (unsigned int)item.mMaxPlayers) continue;
-        if (item.mChance < 100 && !random->rollPercentageChance(item.mChance)) continue;
-        int count = random->nextInt(item.mMinCount, item.mMaxCount + 1);
-        while (count-- > 0) output->push_back(item.mItem->copy());
-        (void)score;
+        while (index < sorted.size() &&
+               (unsigned int)sorted[index].mKpScore + currentScore > playerCount)
+            ++index;
+        if (index == sorted.size()) break;
+        unsigned int end = index + 1;
+        while (end < sorted.size() && sorted[end].mKpScore == sorted[index].mKpScore)
+            ++end;
+        unsigned int selected = index + (unsigned int)random->nextInt((int)(end - index));
+        output->push_back(sorted[selected].mItem->copy());
+        currentScore += (unsigned int)sorted[selected].mKpScore;
     }
 }
 
@@ -221,13 +272,12 @@ std::vector<GameModeUtilities::Position*>* GameModeUtilities::createInitialPosit
 
 int GameModeUtilities::getNumberOfTeams(std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
-    return players == NULL ? 0 : (int)players->size();
+    return 0;
 }
 
 bool GameModeUtilities::spreadPositions(double distance, Level* level, Random* random, const AABB* area,
                                         std::vector<Position*>* positions, bool teams)
 {
-    (void)teams;
     if (positions == NULL || area == NULL) return false;
     for (unsigned int i = 0; i < positions->size(); ++i)
     {
@@ -241,7 +291,7 @@ bool GameModeUtilities::spreadPositions(double distance, Level* level, Random* r
 }
 
 double GameModeUtilities::setPlayerPositions(std::vector<boost::shared_ptr<ServerPlayer> >* players, Level* level,
-                                              std::vector<Position*>* positions, bool teams, TumbleGenerator*)
+                                              std::vector<Position*>* positions, bool, TumbleGenerator*)
 {
     if (players == NULL || positions == NULL || level == NULL) return 0.0;
     double minimum = 1.7976931348623157e+308;
@@ -253,17 +303,20 @@ double GameModeUtilities::setPlayerPositions(std::vector<boost::shared_ptr<Serve
             if (distance < minimum) minimum = distance;
         }
     }
-    (void)teams;
     return minimum;
 }
 
 void GameModeUtilities::SpreadPlayers(std::vector<boost::shared_ptr<ServerPlayer> >* players, const AABB* area,
-                                      double distance, Level* level, bool teams, TumbleGenerator*)
+                                      double distance, Level* level, bool teams, TumbleGenerator* generator)
 {
+    if (players == NULL || area == NULL) return;
     Random random;
-    unsigned int count = players == NULL ? 0 : (unsigned int)players->size();
+    unsigned int count = teams ? (unsigned int)getNumberOfTeams(players) : (unsigned int)players->size();
     std::vector<Position*>* positions = createInitialPositions(&random, (int)count, area->mMinX, area->mMinZ, area->mMaxX, area->mMaxZ);
     spreadPositions(distance, level, &random, area, positions, teams);
+    setPlayerPositions(players, level, positions, teams, generator);
+    for (unsigned int i = 0; i < positions->size(); ++i)
+        delete positions->at(i);
     delete positions;
 }
 
@@ -274,5 +327,9 @@ void GameModeUtilities::DistributePlayersInTeams(std::vector<boost::shared_ptr<S
     std::vector<PlayerTeam*>* teams = scoreboard->getPlayerTeams();
     if (teams == NULL || teams->empty()) return;
     for (unsigned int i = 0; i < players->size(); ++i)
-        (void)teams->at(i % teams->size());
+    {
+        PlayerTeam* team = teams->at(i % teams->size());
+        if (team != NULL)
+            team->getPlayerCount();
+    }
 }
