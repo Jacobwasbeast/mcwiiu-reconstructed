@@ -8,8 +8,6 @@
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/Block.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 
 DiggerItem::DiggerItem(float attackDamage, float attackSpeed, const Item::Tier* tier, arrayWithLength<Block*> blocks)

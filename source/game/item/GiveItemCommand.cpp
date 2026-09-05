@@ -4,7 +4,6 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
-#include "game/command/CommandStats.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/DataInputStream.hpp"
@@ -14,7 +13,6 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
-#include "game/network/ClientboundChatPacket.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/util/Random.hpp"

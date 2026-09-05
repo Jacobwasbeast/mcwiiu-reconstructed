@@ -48,7 +48,7 @@ public:
     Item* getItem() const;
     void _init(Item* item, int count, int auxValue);
     static void addDataWalkers(DataFixerUpper* fixer);
-    ItemInstance copy() const;
+    not_null_ptr<ItemInstance> copy() const;
     void grow(int amount);
     void shrink(int amount);
     ItemInstance split(int amount);
@@ -75,7 +75,7 @@ public:
     void mineBlock(Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<Player> player);
     bool canDestroySpecial(const BlockState* state);
     bool interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand);
-    not_null_ptr<ItemInstance> copy_not_shared() const;
+    ItemInstance* copy_not_shared() const;
     static bool tagMatches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
     bool matches(const not_null_ptr<ItemInstance>& other, bool compareTags);
     static bool matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second, bool compareTags);

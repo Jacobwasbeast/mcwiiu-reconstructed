@@ -1,10 +1,43 @@
 #include "game/item/PickaxeItem.hpp"
 
 #include "game/world/biome/arrayWithLength.hpp"
-#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+
+class Blocks
+{
+public:
+    static Block* activator_rail;
+    static Block* coal_ore;
+    static Block* cobblestone;
+    static Block* detector_rail;
+    static Block* diamond_block;
+    static Block* diamond_ore;
+    static Block* double_stone_slab;
+    static Block* golden_rail;
+    static Block* gold_block;
+    static Block* gold_ore;
+    static Block* ice;
+    static Block* iron_block;
+    static Block* iron_ore;
+    static Block* lapis_block;
+    static Block* lapis_ore;
+    static Block* lit_redstone_ore;
+    static Block* mossy_cobblestone;
+    static Block* netherrack;
+    static Block* packed_ice;
+    static Block* rail;
+    static Block* redstone_ore;
+    static Block* sandstone;
+    static Block* stone;
+    static Block* stone_slab;
+    static Block* stone_button;
+    static Block* stone_pressure_plate;
+    static Block* red_sandstone;
+    static Block* obsidian;
+    static Block* emerald_ore;
+    static Block* emerald_block;
+};
 
 static arrayWithLength<Block*> BLOCKS(26, false);
 
@@ -57,47 +90,31 @@ bool PickaxeItem::canDestroySpecial(const BlockState* state)
         return mTier->getLevel() == 3;
     }
 
-    if (block != Blocks::diamond_block && block != Blocks::diamond_ore)
+    if (block == Blocks::diamond_block || block == Blocks::diamond_ore ||
+        block == Blocks::emerald_ore || block == Blocks::emerald_block ||
+        block == Blocks::gold_block || block == Blocks::gold_ore ||
+        block == Blocks::redstone_ore || block == Blocks::lit_redstone_ore)
     {
-        if (block != Blocks::emerald_ore && block != Blocks::emerald_block)
-        {
-            if (block != Blocks::gold_block && block != Blocks::gold_ore)
-            {
-                if (block != Blocks::iron_block && block != Blocks::iron_ore)
-                {
-                    if (block != Blocks::lapis_block && block != Blocks::lapis_ore)
-                    {
-                        if (block != Blocks::redstone_ore && block != Blocks::lit_redstone_ore)
-                        {
-                            Material* material = state->getMaterial();
-
-                            return material == Material::STONE || material == Material::METAL
-                                   || material == Material::HEAVY_METAL;
-                        }
-
-                        return mTier->getLevel() >= 2;
-                    }
-
-                    return mTier->getLevel() >= 1;
-                }
-
-                return mTier->getLevel() >= 1;
-            }
-
-            return mTier->getLevel() >= 2;
-        }
-
         return mTier->getLevel() >= 2;
     }
 
-    return mTier->getLevel() >= 2;
+    if (block == Blocks::iron_block || block == Blocks::iron_ore ||
+        block == Blocks::lapis_block || block == Blocks::lapis_ore)
+    {
+        return mTier->getLevel() >= 1;
+    }
+
+    Material* material = state->getMaterial();
+    return material == Material::STONE || material == Material::METAL ||
+           material == Material::HEAVY_METAL;
 }
 
 float PickaxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
     Material* material = state->getMaterial();
 
-    if (material != Material::METAL && material != Material::HEAVY_METAL && material != Material::STONE)
+    if (material != Material::METAL && material != Material::HEAVY_METAL &&
+        material != Material::STONE)
     {
         return DiggerItem::getDestroySpeed(itemInstance, state);
     }

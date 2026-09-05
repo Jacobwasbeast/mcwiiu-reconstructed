@@ -61,12 +61,6 @@ ItemInstance::ItemInstance(CompoundTag* tag)
       mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
 {
 }
-ItemInstance::ItemInstance(MapItem* item, int count)
-    : mItemId(0), mCount(count), mAuxValue(0), mPopTime(0), mItem((Item*)item), mTag(0),
-      mEmptyCache(0), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
-{
-}
 ItemInstance::ItemInstance(const ItemInstance& other)
     : mItemId(other.mItemId), mCount(other.mCount), mAuxValue(other.mAuxValue),
       mPopTime(other.mPopTime), mItem(other.mItem), mTag(other.mTag),
@@ -126,8 +120,10 @@ fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, 0);
 fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, 0);
 }
 }
-ItemInstance ItemInstance::copy() const {
-return ItemInstance(*this);
+not_null_ptr<ItemInstance> ItemInstance::copy() const {
+ItemInstance* result = new ItemInstance(mItem, mCount, mAuxValue);
+if (mTag != 0) result->mTag = mTag->copy();
+return not_null_ptr<ItemInstance>(result);
 }
 void ItemInstance::grow(int amount) {
 mCount += amount;
@@ -233,8 +229,10 @@ return mItem != 0 && mItem->canDestroySpecial(state);
 bool ItemInstance::interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand) {
 return false;
 }
-not_null_ptr<ItemInstance> ItemInstance::copy_not_shared() const {
-return not_null_ptr<ItemInstance>(new ItemInstance(*this));
+ItemInstance* ItemInstance::copy_not_shared() const {
+ItemInstance* result = new ItemInstance(mItem, mCount, mAuxValue);
+if (mTag != 0) result->mTag = mTag->copy();
+return result;
 }
 bool ItemInstance::tagMatches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second) {
 return first->hasTag() == second->hasTag();
@@ -276,9 +274,6 @@ const wchar_t* description = mItem->getDescription();
 if (description != 0) return std::wstring(description);
 }
 return std::wstring();
-}
-void ItemInstance::setDescriptionId(int descriptionId) {
-mDescriptionId=descriptionId;
 }
 std::wstring ItemInstance::toString() {
 std::wstring value(L"ItemInstance{");
@@ -465,36 +460,4 @@ return mItem != 0 && mAuxValue != 0;
 }
 int ItemInstance::GetPotionStrength() {
 return (mAuxValue >> 5) & 3;
-}
-bool ItemInstance::equals(not_null_ptr<ItemInstance> other) {
-return other && sameItem_not_shared(other.get());
-}
-void ItemInstance::removeTagElement(const std::wstring& name) {
-if (mTag != 0) mTag->remove(name);
-}
-void ItemInstance::addAttributeModifier(const std::wstring& name, AttributeModifier* modifier, const EquipmentSlot* slot) {
-    if (modifier == 0) {
-        return;
-    }
-    ListTag* modifiers;
-    if (mTag != 0 && mTag->contains(L"AttributeModifiers", 9)) {
-        modifiers = mTag->getList(L"AttributeModifiers", 10);
-    } else {
-        modifiers = new ListTag(10);
-        if (mTag == 0) {
-            mTag = new CompoundTag();
-        }
-        mTag->put(L"AttributeModifiers", modifiers);
-    }
-    CompoundTag* entry = new CompoundTag();
-    entry->putString(L"AttributeName", name);
-    entry->putString(L"Name", name);
-    if (slot != 0) {
-        entry->putString(L"Slot", slot->getName());
-    }
-    modifiers->add(entry);
-}
-std::wstring ItemInstance::getDisplayName() {
-if (mDescriptionId != 0) return getDescriptionId(mAuxValue);
-return getHoverNameUnfiltered();
 }

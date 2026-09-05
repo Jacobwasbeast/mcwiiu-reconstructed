@@ -8,7 +8,6 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DispenserBlock.hpp"
@@ -68,15 +67,15 @@ void DefaultDispenseItemBehavior::spawnItem(Level* level, not_null_ptr<ItemInsta
 
     double speed = level->mRandom->nextDouble() * 0.1 + 0.2;
 
-    itemEntity->mXd = (double)direction->getStepX() * speed;
+    itemEntity->mXd = (double)direction->stepX * speed;
     itemEntity->mYd = 0.20000000298023224;
-    itemEntity->mZd = (double)direction->getStepZ() * speed;
+    itemEntity->mZd = (double)direction->stepZ * speed;
 
     itemEntity->mXd += level->mRandom->nextGaussian() * 0.007499999832361937 * (double)power;
     itemEntity->mYd += level->mRandom->nextGaussian() * 0.007499999832361937 * (double)power;
     itemEntity->mZd += level->mRandom->nextGaussian() * 0.007499999832361937 * (double)power;
 
-    level->addFreshEntity(itemEntity);
+    level->addEntity(itemEntity);
 }
 
 void DefaultDispenseItemBehavior::playSound(BlockSource* blockSource, eOUTCOME outcome)
@@ -102,5 +101,5 @@ void DefaultDispenseItemBehavior::playAnimation(BlockSource* blockSource, const 
 
 int DefaultDispenseItemBehavior::getLevelEventDataFrom(const Direction* direction)
 {
-    return direction->getStepX() + direction->getStepZ() * 3 + 4;
+    return direction->stepX + direction->stepZ * 3 + 4;
 }

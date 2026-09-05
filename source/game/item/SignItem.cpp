@@ -17,7 +17,7 @@
 #include "game/world/block/StandingSignBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/WallSignBlock.hpp"
-#include "game/world/generation/Player.hpp"
+#include "game/entity/mob/Player.hpp"
 
 SignItem::SignItem()
 {

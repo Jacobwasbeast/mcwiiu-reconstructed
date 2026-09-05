@@ -1,0 +1,208 @@
+#include "game/item/CompoundContainer.hpp"
+
+#include "game/core/L10N.hpp"
+#include "game/core/LockCode.hpp"
+#include "game/ui/ChestMenu.hpp"
+
+CompoundContainer::CompoundContainer(int id, boost::shared_ptr<LockableContainer> first,
+    boost::shared_ptr<LockableContainer> second)
+    : mId(id), mFirst(first), mSecond(second)
+{
+    if (mFirst->isLocked())
+    {
+        mSecond->setLocked(mFirst->getLockKeyCode());
+    }
+    else if (mSecond->isLocked())
+    {
+        mFirst->setLocked(mSecond->getLockKeyCode());
+    }
+}
+
+CompoundContainer::~CompoundContainer()
+{
+}
+
+std::wstring CompoundContainer::getName()
+{
+    if (mFirst->hasCustomName())
+    {
+        return mFirst->getCustomName();
+    }
+    if (mSecond->hasCustomName())
+    {
+        return mSecond->getCustomName();
+    }
+    return std::wstring(L10N::GetString(mId));
+}
+
+std::wstring CompoundContainer::getCustomName()
+{
+    if (mFirst->hasCustomName())
+    {
+        return mFirst->getCustomName();
+    }
+    if (mSecond->hasCustomName())
+    {
+        return mSecond->getCustomName();
+    }
+    return std::wstring(L"container");
+}
+
+bool CompoundContainer::hasCustomName()
+{
+    return mFirst->hasCustomName() || mSecond->hasCustomName();
+}
+
+std::wstring CompoundContainer::getDisplayName()
+{
+    if (hasCustomName())
+    {
+        return getCustomName();
+    }
+    return getName();
+}
+
+unsigned int CompoundContainer::getContainerSize()
+{
+    return mFirst->getContainerSize() + mSecond->getContainerSize();
+}
+
+bool CompoundContainer::isEmpty()
+{
+    return mFirst->isEmpty() && mSecond->isEmpty();
+}
+
+not_null_ptr<ItemInstance> CompoundContainer::getItem(unsigned int slot)
+{
+    unsigned int firstSize = mFirst->getContainerSize();
+    if (slot < firstSize)
+    {
+        return mFirst->getItem(slot);
+    }
+    return mSecond->getItem(slot - firstSize);
+}
+
+not_null_ptr<ItemInstance> CompoundContainer::removeItem(unsigned int slot, int count)
+{
+    unsigned int firstSize = mFirst->getContainerSize();
+    if (slot < firstSize)
+    {
+        return mFirst->removeItem(slot, count);
+    }
+    return mSecond->removeItem(slot - firstSize, count);
+}
+
+not_null_ptr<ItemInstance> CompoundContainer::removeItemNoUpdate(int slot)
+{
+    unsigned int firstSize = mFirst->getContainerSize();
+    if (slot < (int)firstSize)
+    {
+        return mFirst->removeItemNoUpdate(slot);
+    }
+    return mSecond->removeItemNoUpdate(slot - (int)firstSize);
+}
+
+void CompoundContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
+{
+    unsigned int firstSize = mFirst->getContainerSize();
+    if (slot < firstSize)
+    {
+        mFirst->setItem(slot, item);
+    }
+    else
+    {
+        mSecond->setItem(slot - firstSize, item);
+    }
+}
+
+int CompoundContainer::getMaxStackSize()
+{
+    return mFirst->getMaxStackSize();
+}
+
+void CompoundContainer::setChanged()
+{
+    mFirst->setChanged();
+    mSecond->setChanged();
+}
+
+bool CompoundContainer::stillValid(boost::shared_ptr<Player> player)
+{
+    return mFirst->stillValid(player) && mSecond->stillValid(player);
+}
+
+void CompoundContainer::startOpen(boost::shared_ptr<Player> player)
+{
+    mFirst->startOpen(player);
+    mSecond->startOpen(player);
+}
+
+void CompoundContainer::stopOpen(boost::shared_ptr<Player> player)
+{
+    mFirst->stopOpen(player);
+    mSecond->stopOpen(player);
+}
+
+bool CompoundContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
+{
+    return true;
+}
+
+int CompoundContainer::getContainerData(int id)
+{
+    return 0;
+}
+
+void CompoundContainer::setContainerData(int id, int value)
+{
+}
+
+int CompoundContainer::getContainerDataCount()
+{
+    return 0;
+}
+
+void CompoundContainer::clearContent()
+{
+    mFirst->clearContent();
+    mSecond->clearContent();
+}
+
+bool CompoundContainer::contains(boost::shared_ptr<Container> container)
+{
+    return mFirst.get() == container.get() || mSecond.get() == container.get();
+}
+
+bool CompoundContainer::isLocked()
+{
+    return mFirst->isLocked() || mSecond->isLocked();
+}
+
+void CompoundContainer::setLocked(LockCode* lockCode)
+{
+    mFirst->setLocked(lockCode);
+    mSecond->setLocked(lockCode);
+}
+
+LockCode* CompoundContainer::getLockKeyCode()
+{
+    return mFirst->getLockKeyCode();
+}
+
+void CompoundContainer::unlock()
+{
+    mFirst->unlock();
+    mSecond->unlock();
+}
+
+int CompoundContainer::getTypeId(bool large)
+{
+    return mFirst->getTypeId(true);
+}
+
+AbstractContainerMenu* CompoundContainer::createMenu(boost::shared_ptr<Inventory> inventory,
+    boost::shared_ptr<Player> player)
+{
+    return new ChestMenu(boost::shared_ptr<Container>(mFirst),
+        boost::shared_ptr<Container>(mSecond), player);
+}

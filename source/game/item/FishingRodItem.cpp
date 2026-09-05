@@ -6,12 +6,9 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
-#include "game/core/InteractionResult.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/projectile/FishingHook.hpp"
 #include "game/item/EnchantmentHelper.hpp"
-#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -31,7 +28,7 @@ FishingRodItem::~FishingRodItem()
 
 unsigned int FishingRodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return 0xea4e897eu;
+    return 0xea4e897eU;
 }
 
 InteractionResultHolder FishingRodItem::use(Level* level,
@@ -39,11 +36,9 @@ InteractionResultHolder FishingRodItem::use(Level* level,
                                             InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-
     if (player->mFishing)
     {
-        int damage = player->mFishing->retrieve();
-        itemInstance->hurtAndBreak(damage, player);
+        itemInstance->hurtAndBreak(player->mFishing->retrieve(), player);
         player->swing(hand);
         level->playSound(boost::shared_ptr<Player>(),
                          player->mX,
@@ -66,32 +61,26 @@ InteractionResultHolder FishingRodItem::use(Level* level,
                          0.5f,
                          0.4f / (random->nextFloat() * 0.4f + 0.8f),
                          16.0f);
-
         if (!level->mIsClientSide)
         {
             boost::shared_ptr<FishingHook> hook(new FishingHook(level, player));
-
             int lureSpeed = EnchantmentHelper::getFishingSpeedBonus(itemInstance);
             if (lureSpeed > 0)
             {
                 hook->setLureSpeed(lureSpeed);
             }
-
             int luck = EnchantmentHelper::getFishingLuckBonus(itemInstance);
             if (luck > 0)
             {
                 hook->setLuck(luck);
             }
-
             player->mFishing = hook;
             level->addEntity(hook);
         }
-
         player->swing(hand);
         player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                           GenericStats::param_itemsUsed(player, itemInstance));
     }
-
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
@@ -121,29 +110,39 @@ TextureAtlasSprite* FishingRodItem::getEmptyIcon()
     return mEmptyIcon;
 }
 
-float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
-                                                                Level* level,
-                                                                boost::shared_ptr<LivingEntity> entity)
+double FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
+    not_null_ptr<ItemInstance> itemInstance,
+    Level* level,
+    boost::shared_ptr<LivingEntity> entity)
 {
+    double result = 0.0;
     if (entity)
     {
-        bool inMainHand = entity->getMainHandItem() == itemInstance;
-        bool inOffhand = entity->getOffhandItem() == itemInstance;
-
-        if (dynamic_cast<FishingRodItem*>(entity->getMainHandItem()->getItem()) != NULL)
+        not_null_ptr<ItemInstance> mainHandItem = entity->getMainHandItem();
+        not_null_ptr<ItemInstance> offhandItem = entity->getOffhandItem();
+        bool inMainHand = mainHandItem == itemInstance;
+        bool inOffhand = offhandItem == itemInstance;
+        if (dynamic_cast<FishingRodItem*>(mainHandItem->getItem()) != NULL)
         {
             inOffhand = false;
         }
-
-        if ((inMainHand || inOffhand) && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        if ((inMainHand || inOffhand)
+            && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mFishing)
             {
-                return 1.0f;
+                result = 1.0;
             }
         }
     }
+    return result;
+}
 
-    return 0.0f;
+float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
+    not_null_ptr<ItemInstance> itemInstance,
+    Level* level,
+    boost::shared_ptr<LivingEntity> entity) const
+{
+    return static_cast<float>(const_cast<FishingRodItem_ItemPropertyFunction*>(this)->call(itemInstance, level, entity));
 }

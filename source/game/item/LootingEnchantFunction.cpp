@@ -2,10 +2,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/network/ClientboundChatPacket.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -22,7 +22,7 @@ LootingEnchantFunction::LootingEnchantFunction(std::vector<LootItemCondition*>* 
 
 not_null_ptr<ItemInstance> LootingEnchantFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
 {
-    const DamageSource* damageSource = context.getDamageSource();
+    const DamageSource* damageSource = context.mDamageSource;
 
     if (damageSource != NULL)
     {

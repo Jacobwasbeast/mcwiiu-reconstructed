@@ -1,0 +1,66 @@
+#include "game/item/DiggerItemHint.hpp"
+
+#include "game/entity/mob/Entity.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/world/block/BlockState.hpp"
+
+DiggerItemHint::DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
+                               Item** items, unsigned int itemCount)
+    : TutorialHint(hint, tutorial, descriptionId, (eHintType)0, true, true, -1),
+      mItems(new Item*[itemCount]), mItemCount(itemCount)
+{
+    for (unsigned int i = 0; i < mItemCount; ++i)
+    {
+        mItems[i] = items[i];
+    }
+
+    tutorial->addMessage(descriptionId, true, 3);
+}
+
+DiggerItemHint::~DiggerItemHint()
+{
+    delete[] mItems;
+}
+
+int DiggerItemHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
+{
+    if (!item->isEmpty())
+    {
+        for (unsigned int i = 0; i < mItemCount; ++i)
+        {
+            if (item->getItem() == mItems[i])
+            {
+                if (item->getDestroySpeed(state) != 1.0f)
+                {
+                    return -1;
+                }
+                return descriptionId;
+            }
+        }
+    }
+
+    return -1;
+}
+
+unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item,
+                                    boost::shared_ptr<Entity> entity)
+{
+    if (!item->isEmpty())
+    {
+        for (unsigned int i = 0; i < mItemCount; ++i)
+        {
+            if (item->getItem() == mItems[i])
+            {
+                if ((entity->GetType() & 0x0d000000ULL) != 0x0d000000ULL)
+                {
+                    return 0xffffffffU;
+                }
+                return 0xe729d451U;
+            }
+        }
+    }
+
+    return 0xffffffffU;
+}

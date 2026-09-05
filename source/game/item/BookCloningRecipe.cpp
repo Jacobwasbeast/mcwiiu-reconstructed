@@ -1,0 +1,148 @@
+#include "game/item/BookCloningRecipe.hpp"
+
+#include "game/data/CompoundTag.hpp"
+#include "game/item/CraftingContainer.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+
+BookCloningRecipe::BookCloningRecipe()
+    : Recipe()
+{
+}
+
+BookCloningRecipe::~BookCloningRecipe()
+{
+}
+
+bool BookCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
+{
+    unsigned int i;
+    int writableBooks = 0;
+    not_null_ptr<ItemInstance> writtenBook = ItemInstance::EMPTY;
+
+    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    {
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+        if (item->isEmpty())
+        {
+            continue;
+        }
+        if (item->getItem() == Items::writtenBook)
+        {
+            if (!writtenBook->isEmpty())
+            {
+                return false;
+            }
+            writtenBook = item;
+        }
+        else if (item->getItem() == Items::writableBook)
+        {
+            ++writableBooks;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return !writtenBook->isEmpty() && writtenBook->hasTag() && writableBooks > 0;
+}
+
+not_null_ptr<ItemInstance> BookCloningRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
+{
+    unsigned int i;
+    int writableBooks = 0;
+    not_null_ptr<ItemInstance> writtenBook = ItemInstance::EMPTY;
+
+    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    {
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+        if (item->isEmpty())
+        {
+            continue;
+        }
+        if (item->getItem() == Items::writtenBook)
+        {
+            if (!writtenBook->isEmpty())
+            {
+                return ItemInstance::EMPTY;
+            }
+            writtenBook = item;
+        }
+        else if (item->getItem() == Items::writableBook)
+        {
+            ++writableBooks;
+        }
+        else
+        {
+            return ItemInstance::EMPTY;
+        }
+    }
+
+    if (writtenBook->isEmpty() || !writtenBook->hasTag())
+    {
+        return ItemInstance::EMPTY;
+    }
+
+    not_null_ptr<ItemInstance> result(new ItemInstance(Items::writtenBook, writableBooks));
+    result->setTag(writtenBook->getTag()->copy());
+    result->getTag()->putInt(L"generation", writtenBook->getTag()->getInt(L"generation") + 1);
+    if (writtenBook->hasCustomHoverName())
+    {
+        result->setHoverName(writtenBook->getHoverName());
+        result->setCensorshipInfo(writtenBook->getOwnerUUID(), writtenBook->wasCreatedByRestrictedPlayer());
+    }
+    return result;
+}
+
+int BookCloningRecipe::size()
+{
+    return 9;
+}
+
+ItemInstance* BookCloningRecipe::getResultItem()
+{
+    return ItemInstance::EMPTY.get();
+}
+
+ItemInstance* BookCloningRecipe::getIngredientItem(int column, int row)
+{
+    return ItemInstance::EMPTY.get();
+}
+
+NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
+{
+    unsigned int i;
+    NonNullList<not_null_ptr<ItemInstance> > result =
+        NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
+    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    {
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+        if (!item->isEmpty() && item->getItem() == Items::writtenBook)
+        {
+            not_null_ptr<ItemInstance> copy = item->copy();
+            copy->setCount(1);
+            result[i] = copy;
+        }
+    }
+    return result;
+}
+
+Recipe::_eGroupType BookCloningRecipe::getGroup()
+{
+    return Recipe::eGroupType_None;
+}
+
+bool BookCloningRecipe::recipeRequires(int itemId)
+{
+    return false;
+}
+
+void BookCloningRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
+{
+}
+
+boost::shared_ptr<CraftingContainer> BookCloningRecipe::generateExpectedCraftSlots()
+{
+    return boost::shared_ptr<CraftingContainer>();
+}

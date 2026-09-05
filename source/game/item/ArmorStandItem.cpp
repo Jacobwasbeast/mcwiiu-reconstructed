@@ -10,7 +10,6 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/SpawnEggItem.hpp"
-#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"

@@ -63,7 +63,6 @@ public:
     virtual bool displayInSimpleCrafting();
 
 protected:
-    int mRecipeId;
     int mBaseItemType;
     int mAchievementId;
     bool mDisplayInSimpleCrafting;

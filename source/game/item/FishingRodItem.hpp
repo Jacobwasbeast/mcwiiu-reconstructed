@@ -3,8 +3,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/core/InteractionHand.hpp"
-#include "game/core/InteractionResultHolder.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/ItemPropertyFunction.hpp"
@@ -14,7 +12,6 @@ class ItemInstance;
 class ItemTooltipDataHolder;
 class Level;
 class LivingEntity;
-class Player;
 class TextureAtlasSprite;
 
 class FishingRodItem : public Item
@@ -23,15 +20,17 @@ public:
     class FishingRodItem_ItemPropertyFunction : public ItemPropertyFunction
     {
     public:
+        double call(not_null_ptr<ItemInstance> itemInstance,
+                    Level* level,
+                    boost::shared_ptr<LivingEntity> entity);
         virtual float call(not_null_ptr<ItemInstance> itemInstance,
                            Level* level,
-                           boost::shared_ptr<LivingEntity> entity);
+                           boost::shared_ptr<LivingEntity> entity) const;
     };
 
     FishingRodItem();
-
-    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~FishingRodItem();
+    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
