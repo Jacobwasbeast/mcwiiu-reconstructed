@@ -8,6 +8,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/FixedBiomeSource.hpp"
 
@@ -80,9 +81,9 @@ WorldBorder* NetherDimension::createWorldBorder(Level* level)
     return new NetherDimensionWorldBorder(level);
 }
 
-int NetherDimension::getType() const
+const DimensionType* NetherDimension::getType() const
 {
-    return -1;
+    return DimensionType::NETHER;
 }
 
 int NetherDimension::getXZSize()

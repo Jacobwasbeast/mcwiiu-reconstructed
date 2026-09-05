@@ -18,7 +18,7 @@ public:
     virtual bool mayRespawn() const;
     virtual bool isFoggyAt(int x, int z);
     virtual WorldBorder* createWorldBorder(Level* level);
-    virtual int getType() const;
+    virtual const DimensionType* getType() const;
     virtual int getXZSize();
     virtual AABB* getPlayerConstraints(const BlockPos& pos);
     virtual int getBlockLightColour();

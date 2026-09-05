@@ -6,12 +6,18 @@
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/HellFireFeature.hpp"
 #include "game/world/generation/LightGemFeature.hpp"
+
+void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
+void XPhysicalFree(void* address);
+void XMemSet128(void* destination, int value, unsigned int count);
 
 NetherFlatLevelSource::NetherFlatLevelSource(Level* level, bool generateStructures, long long seed)
     : mLevelHeight(static_cast<int>(std::ceil((static_cast<float>(level->getHeight()) - 176.0f) /
@@ -35,14 +41,14 @@ void NetherFlatLevelSource::prepareHeights(int, int, ChunkPrimer* primer)
     {
         for (int z = 0; z < 16; ++z)
         {
-            for (int y = 0; y < 24; ++y)
+            for (int y = 0; y < 16; ++y)
             {
-                const BlockState* state = Blocks::netherrack->defaultBlockState();
-                if (y < 4)
+                const BlockState* state = Blocks::AIR->defaultBlockState();
+                if (y < 7)
                 {
-                    state = Blocks::bedrock->defaultBlockState();
+                    state = Blocks::netherrack->defaultBlockState();
                 }
-                primer->setState(x, y, z, state);
+                primer->setState((x << 11) | (z << 7) | y, state);
             }
         }
     }
@@ -50,92 +56,84 @@ void NetherFlatLevelSource::prepareHeights(int, int, ChunkPrimer* primer)
 
 void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    int xOffset = 0;
-    int zOffset = 0;
-    for (int x = 0; x < 16; ++x)
+    for (int z = 0; z < 16; ++z)
     {
-        for (int z = 0; z < 16; ++z)
+        for (int x = 0; x < 16; ++x)
         {
-            int y = 127;
-            for (int index = 0; index < 128; ++index)
+            int blockIndex = (x << 11) | (z << 7) | 127;
+            for (int y = 127; y >= 0; --y, --blockIndex)
             {
                 const int depth = mLevelHeight / 2;
-                bool changed = false;
-                int surface = -depth;
-                if (chunkX <= surface)
+                bool placed = false;
+
+                if (chunkX <= -depth)
                 {
-                    int random = mRandom->nextInt(4);
-                    if (x - random > 0)
+                    if (x - mRandom->nextInt(4) <= 0 || chunkX < -depth)
                     {
-                        surface = -depth;
-                        if (surface <= chunkX)
+                        primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
+                        placed = true;
+                    }
+                }
+
+                if (chunkZ <= -depth)
+                {
+                    if (z - mRandom->nextInt(4) <= 0 || chunkZ < -depth)
+                    {
+                        primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
+                        placed = true;
+                    }
+                }
+
+                if (depth - 1 <= chunkX)
+                {
+                    if (x + mRandom->nextInt(4) >= 15 || depth < chunkX)
+                    {
+                        primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
+                        placed = true;
+                    }
+                }
+
+                if (chunkZ < depth - 1)
+                {
+                    if (!placed)
+                    {
+                        const int topDepth = mRandom->nextInt(5);
+                        if (y >= 127 - topDepth || y <= mRandom->nextInt(5))
                         {
-                            goto next_surface;
+                            primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         }
                     }
-                    primer->setState(x, y, z, Blocks::AIR->defaultBlockState());
-                    changed = true;
                 }
-            next_surface:
-                if (chunkZ <= surface)
+                else if (z + mRandom->nextInt(4) >= 15 || depth < chunkZ)
                 {
-                    int random = mRandom->nextInt(4);
-                    if (z - random > 0)
-                    {
-                        surface = -depth;
-                        if (surface <= chunkZ)
-                        {
-                            goto finish_surface;
-                        }
-                    }
-                    primer->setState(x, y, z, Blocks::AIR->defaultBlockState());
-                    changed = true;
+                    primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                 }
-            finish_surface:
-                if (surface - 1 <= chunkX)
+                else if (!placed)
                 {
-                    int random = mRandom->nextInt(4);
-                    if (x + random < 15 && depth < chunkX)
+                    const int topDepth = mRandom->nextInt(5);
+                    if (y >= 127 - topDepth || y <= mRandom->nextInt(5))
                     {
-                        goto place_surface;
+                        primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                     }
-                    primer->setState(x, y, z, Blocks::AIR->defaultBlockState());
-                    changed = true;
                 }
-                if (chunkZ < surface - 1)
-                {
-                    if (!changed)
-                    {
-                        int random = mRandom->nextInt(5);
-                        if (y < 127 - random)
-                        {
-                            random = mRandom->nextInt(5);
-                            if (random < y)
-                            {
-                                goto next_surface;
-                            }
-                        }
-                    }
-                    primer->setState(x, y, z, Blocks::AIR->defaultBlockState());
-                }
-            place_surface:
-                --y;
             }
-            zOffset += 128;
         }
-        xOffset += 2048;
     }
 }
 
 LevelChunk* NetherFlatLevelSource::createChunk(int chunkX, int chunkZ)
 {
     mRandom->setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
-    arrayWithLength<unsigned short> elements(65536, true);
+    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(65536, 0xFFFFFFFF, 0x1000, 4));
+    XMemSet128(elementIds, 0, 65536);
+    arrayWithLength<unsigned short> elements;
+    elements.data = elementIds;
+    elements.length = 32768;
     ChunkPrimer primer(false, elements);
     prepareHeights(chunkX, chunkZ, &primer);
     buildSurfaces(chunkX, chunkZ, &primer);
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
-    chunk->recalcHeightmap();
+    XPhysicalFree(elementIds);
     return chunk;
 }
 
@@ -154,21 +152,18 @@ void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
     const long long zSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
     mPopulationRandom->setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^ seed);
 
-    if (mGenerateStructures)
+    int count = mPopulationRandom->nextInt(10);
+    count = mPopulationRandom->nextInt(count + 1) + 1;
+    for (int i = 0; i < count; ++i)
     {
-        int count = mPopulationRandom->nextInt(10);
-        count = mPopulationRandom->nextInt(count + 1);
-        for (int i = 0; i < count; ++i)
-        {
-            BlockPos pos(originX + mPopulationRandom->nextInt(16) + 8,
-                         mPopulationRandom->nextInt(120) + 4,
-                         originZ + mPopulationRandom->nextInt(16) + 8);
-            HellFireFeature feature;
-            feature.place(mLevel, *mPopulationRandom, pos);
-        }
+        BlockPos pos(originX + mPopulationRandom->nextInt(16) + 8,
+                     mPopulationRandom->nextInt(120) + 4,
+                     originZ + mPopulationRandom->nextInt(16) + 8);
+        HellFireFeature feature;
+        feature.place(mLevel, *mPopulationRandom, pos);
     }
 
-    int count = mPopulationRandom->nextInt(10);
+    count = mPopulationRandom->nextInt(10);
     count = mPopulationRandom->nextInt(count + 1);
     for (int i = 0; i < count; ++i)
     {
@@ -179,7 +174,7 @@ void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
         feature.place(mLevel, *mPopulationRandom, pos);
     }
 
-    CMinecraftApp::sInstance.processSchematics(mLevel->getChunk(chunkX, chunkZ));
+    g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
 void NetherFlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)

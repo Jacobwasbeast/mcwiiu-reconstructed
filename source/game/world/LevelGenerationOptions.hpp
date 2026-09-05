@@ -6,6 +6,7 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "game/core/ColourTable.hpp"
 #include "game/core/File.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/biome/Biome.hpp"
@@ -120,7 +121,7 @@ public:
     void getBiomeOverride(int biome, Biome::BlockPair* top, Biome::BlockPair* filler);
     bool isFeatureChunk(int chunkX, int chunkZ, StructureFeature::EFeatureTypes type, const Direction** direction);
     bool hasFeature(StructureFeature::EFeatureTypes type);
-    BlockPos getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos);
+    BlockPos* getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos);
     void loadStringTable(StringTable* table);
     void copyStringToTable(const std::wstring& value, StringTable* table);
     SchematicFileMap* getUnfinishedSchematicFiles();

@@ -8,6 +8,7 @@
 #include "game/world/block/BlockPos.hpp"
 
 class BiomeSource;
+class DimensionType;
 class Level;
 class LevelSource;
 class LevelType;
@@ -44,7 +45,7 @@ public:
     virtual void saveData();
     virtual void tick();
     virtual bool canUnloadChunk(int x, int z);
-    virtual int getType() const = 0;
+    virtual const DimensionType* getType() const = 0;
     virtual int getXZSize();
     virtual AABB* getPlayerConstraints(const BlockPos& pos);
     virtual bool inPlayerConstraints(const BlockPos& pos);

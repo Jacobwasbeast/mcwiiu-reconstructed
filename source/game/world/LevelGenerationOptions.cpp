@@ -6,6 +6,7 @@
 
 #include "game/core/BoundingBox.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleSchematicFile.hpp"
 #include "game/core/DLCPack.hpp"
@@ -456,7 +457,7 @@ void LevelGenerationOptions::setBaseSaveData(File file)
         unsigned int bytesRead;
         if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
         {
-            CMinecraftApp::sInstance.FatalLoadError(L"<LevelGenerationOptions@%d> Fail", __LINE__, fileName);
+            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Fail", __LINE__, fileName);
         }
         CloseHandle(handle);
         setBaseSaveData(data, size);
@@ -856,7 +857,10 @@ ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstri
         return found->second;
     }
 
-    ByteArrayInputStream byteStream(arrayWithLength<unsigned char>(data, size));
+    arrayWithLength<unsigned char> bytes;
+    bytes.data = data;
+    bytes.length = size;
+    ByteArrayInputStream byteStream(bytes);
     DataInputStream input(&byteStream);
     ConsoleSchematicFile* schematic = new ConsoleSchematicFile();
     schematic->load(&input);
@@ -906,7 +910,7 @@ bool LevelGenerationOptions::hasFeature(StructureFeature::EFeatureTypes type)
     return false;
 }
 
-BlockPos LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos)
+BlockPos* LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos)
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;
@@ -930,7 +934,7 @@ BlockPos LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTyp
         }
     }
 
-    return BlockPos(closestX * 16 + 8, 64, closestZ * 16 + 8);
+    return new BlockPos(closestX * 16 + 8, 64, closestZ * 16 + 8);
 }
 
 void LevelGenerationOptions::loadStringTable(StringTable* table)

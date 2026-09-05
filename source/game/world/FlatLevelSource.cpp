@@ -30,7 +30,6 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
       mLevel(level),
       mRandom(seed),
       mPopulationRandom(seed),
-      mStructureFeatures(11),
       mCaves(NULL),
       mCanyons(NULL),
       mDecorations(false),
