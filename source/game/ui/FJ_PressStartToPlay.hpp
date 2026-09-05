@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/ui/FJ_Document.hpp"
+#include "game/ui/FJ_FuiNode.hpp"
 
 class FJ_PressStartToPlay : public FJ_Document
 {

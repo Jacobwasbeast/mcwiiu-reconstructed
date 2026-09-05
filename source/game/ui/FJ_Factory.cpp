@@ -1,9 +1,9 @@
 #include "game/ui/FJ_Factory.hpp"
 
+#include <boost/unordered_map.hpp>
 #include <cstdio>
 #include <cstring>
 #include <string>
-#include <boost/unordered_map.hpp>
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fui.hpp"
@@ -17,7 +17,8 @@ static unsigned int g_factoryNodeId;
 
 void FJ_Factory::initialise()
 {
-    g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FuiNode"), &FJ_FuiNode::Create));
+    g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_FuiNode"),
+        &FJ_FuiNode::Create));
 }
 
 FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNode,
@@ -47,7 +48,7 @@ FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNo
         return factory->second(renderNode);
     }
 
-    fuiRenderNode* nodeRender = g_pFui->createNodeFromSymbol(symbol, renderNode);
+    fuiRenderNode* nodeRender = (fuiRenderNode*)gFui->createNodeFromSymbol(symbol, renderNode);
     FJ_FuiNode* node;
     if (factory == g_fuiNodeFactories.end())
         node = new FJ_FuiNode(nodeRender);

@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_HtmlText* FJ_HtmlText_Normal::Create(fuiRenderNode* pRenderNode)
@@ -14,7 +13,8 @@ void FJ_HtmlText_Normal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0);
-    m_textField = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
+    fuiRenderNode* textField = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
+    m_textField = textField;
     addChild(m_textField);
     removeChild(textContainer, true);
 }

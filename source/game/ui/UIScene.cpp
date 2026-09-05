@@ -1,14 +1,12 @@
 #include "game/ui/UIScene.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
-#include "game/client/render/ItemRenderer.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
 #include "game/item/Item.hpp"
-#include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_Document.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_HowToPlay.hpp"
@@ -20,7 +18,6 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
-#include "game/ui/fuiRenderNode.hpp"
 
 template <typename T>
 std::wstring _toString(T value);

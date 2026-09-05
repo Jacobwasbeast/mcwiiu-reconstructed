@@ -31,11 +31,11 @@ void FJ_HtmlTextPanelLarge::SetLabel(const std::wstring& label)
     m_textField->setHTMLText(label);
     if (!m_fixedWidthEnabled)
     {
-        m_textField->setAutoSize(1);
+        m_textField->setAutoSize(TextFieldAutoSizeLeft);
     }
     else
     {
-        m_textField->setAutoSize(2);
+        m_textField->setAutoSize(TextFieldAutoSizeCenter);
         m_textField->setWidth((float)m_fixedWidth);
         m_textField->setHeight(m_textField->getHeight() + 5.0f);
     }

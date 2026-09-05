@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/core/GameSettings.hpp"
+#include "game/core/IUIController.hpp"
 #include "game/core/InteractionResult.hpp"
 
 class HitResult;

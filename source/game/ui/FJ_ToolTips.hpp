@@ -35,6 +35,7 @@ private:
     std::vector<FJ_FuiNode*> m_touchNodes;
     unsigned char m_useTouchControls;
     std::wstring m_toolTipSuffix;
+    int m_toolTipIndex;
     bool m_touchControlsAvailable;
 };
 

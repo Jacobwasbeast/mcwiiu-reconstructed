@@ -9,7 +9,7 @@
 #include "game/util/Math.hpp"
 
 FJ_HtmlTextPanel::FJ_HtmlTextPanel(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_textField(0), m_pointerTextPanel(0), m_fixedWidthEnabled(false), m_fixedWidth(0)
+    : FJ_FuiNode(pRenderNode)
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"))->asMovieClip();
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0)->asMovieClip();
@@ -19,6 +19,8 @@ FJ_HtmlTextPanel::FJ_HtmlTextPanel(fuiRenderNode* pRenderNode)
     removeChild(textContainer, true);
 
     m_pointerTextPanel = getChildByName(std::string("PointerTextPanel"))->asMovieClip();
+    m_fixedWidthEnabled = false;
+    m_fixedWidth = 0;
     SetLabel(std::wstring(L""));
 }
 
@@ -31,11 +33,11 @@ void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
     m_textField->setHTMLText(label);
     if (!m_fixedWidthEnabled)
     {
-        m_textField->setAutoSize(1);
+        m_textField->setAutoSize(TextFieldAutoSizeLeft);
     }
     else
     {
-        m_textField->setAutoSize(2);
+        m_textField->setAutoSize(TextFieldAutoSizeCenter);
         m_textField->setWidth((float)m_fixedWidth);
         m_textField->setHeight(m_textField->getHeight() + 5.0f);
     }

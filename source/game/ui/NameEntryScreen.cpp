@@ -21,7 +21,7 @@ void NameEntryScreen::init()
     mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 144,
                                   std::wstring(L"Cancel")));
 
-    mButtons[0]->active = trimString(mName).size() > 1;
+    mButtons[0]->mActive = trimString(mName).size() > 1;
 }
 
 void NameEntryScreen::removed()
@@ -35,7 +35,7 @@ void NameEntryScreen::tick()
 
 void NameEntryScreen::buttonClicked(Button* button)
 {
-    if (button->active)
+    if (button->mActive)
     {
         if (button->mId == 0)
         {
@@ -65,7 +65,7 @@ void NameEntryScreen::keyPressed(wchar_t key, int action)
         mName += key;
     }
 
-    mButtons[0]->active = trimString(mName).size() > 1;
+    mButtons[0]->mActive = trimString(mName).size() > 1;
 }
 
 void NameEntryScreen::render(int x, int y, float partialTick)

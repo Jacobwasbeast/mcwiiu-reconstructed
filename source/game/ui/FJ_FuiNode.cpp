@@ -2,6 +2,48 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_BitmapIcon.hpp"
+#include "game/ui/FJ_Button.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
+#include "game/ui/FJ_Cursor.hpp"
+#include "game/ui/FJ_Document.hpp"
+#include "game/ui/FJ_DynamicHtmlText.hpp"
+#include "game/ui/FJ_ExperienceBar.hpp"
+#include "game/ui/FJ_HorseJumpBar.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
+#include "game/ui/FJ_HtmlTextPanel.hpp"
+#include "game/ui/FJ_HtmlTextPanelLarge.hpp"
+#include "game/ui/FJ_HtmlText_WithPanel.hpp"
+#include "game/ui/FJ_Hud.hpp"
+#include "game/ui/FJ_IconSlot.hpp"
+#include "game/ui/FJ_Label.hpp"
+#include "game/ui/FJ_LabelOutline.hpp"
+#include "game/ui/FJ_Label_Blink.hpp"
+#include "game/ui/FJ_Label_Book.hpp"
+#include "game/ui/FJ_Label_HUD_Splash.hpp"
+#include "game/ui/FJ_Label_HUD_SplashBig.hpp"
+#include "game/ui/FJ_Label_HUD_SplashVita.hpp"
+#include "game/ui/FJ_LeaderboardList.hpp"
+#include "game/ui/FJ_List.hpp"
+#include "game/ui/FJ_List2D.hpp"
+#include "game/ui/FJ_ListButton.hpp"
+#include "game/ui/FJ_ListButtonAchievement.hpp"
+#include "game/ui/FJ_ListButtonController.hpp"
+#include "game/ui/FJ_List_ListButton.hpp"
+#include "game/ui/FJ_List_ListButtonPlayerList.hpp"
+#include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
+#include "game/ui/FJ_List_MenuButton.hpp"
+#include "game/ui/FJ_List_MultiList.hpp"
+#include "game/ui/FJ_MenuButton.hpp"
+#include "game/ui/FJ_MobEffect.hpp"
+#include "game/ui/FJ_ProgressBar.hpp"
+#include "game/ui/FJ_ScrollArrow.hpp"
+#include "game/ui/FJ_SignInput.hpp"
+#include "game/ui/FJ_Slider.hpp"
+#include "game/ui/FJ_SlotList.hpp"
+#include "game/ui/FJ_TextInput.hpp"
+#include "game/ui/FJ_UpsellButton.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -80,7 +122,7 @@ float FJ_FuiNode::getScaleY()
     return m_pRenderNode->getScaleY();
 }
 
-const std::string& FJ_FuiNode::getName()
+const char* FJ_FuiNode::getName()
 {
     return m_pRenderNode->getName();
 }
@@ -105,7 +147,7 @@ int FJ_FuiNode::getNumChildren()
     if (m_pRenderNode == NULL)
         return 0;
 
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline == NULL)
         return 0;
 
@@ -114,7 +156,7 @@ int FJ_FuiNode::getNumChildren()
 
 FJ_FuiNode* FJ_FuiNode::getChildByName(const std::string& name)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         fuiRenderNode* pChild = pTimeline->findNode(name.c_str());
@@ -127,7 +169,7 @@ FJ_FuiNode* FJ_FuiNode::getChildByName(const std::string& name)
 
 fuiRenderNode* FJ_FuiNode::getRenderNodeChildByName(const std::string& name)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         fuiRenderNode* pChild = pTimeline->findNode(name.c_str());
@@ -140,7 +182,7 @@ fuiRenderNode* FJ_FuiNode::getRenderNodeChildByName(const std::string& name)
 
 fuiRenderNode* FJ_FuiNode::getRenderNodeChildAt(int iIndex)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline == NULL)
         return NULL;
 
@@ -154,7 +196,7 @@ fuiRenderNode* FJ_FuiNode::getRenderNodeParent()
 
 FJ_FuiNode* FJ_FuiNode::getChildAt(int iIndex)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline == NULL)
         return NULL;
 
@@ -171,47 +213,47 @@ FJ_FuiNode* FJ_FuiNode::getParent()
 
 void FJ_FuiNode::removeChild(FJ_FuiNode* pNode, bool bDestroy)
 {
-    m_pRenderNode->asTimeline()->removeChild(pNode->m_pRenderNode, bDestroy);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->removeChild(pNode->m_pRenderNode, bDestroy);
 }
 
 void FJ_FuiNode::removeChild(fuiRenderNode* pRenderNode, bool bDestroy)
 {
-    m_pRenderNode->asTimeline()->removeChild(pRenderNode, bDestroy);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->removeChild(pRenderNode, bDestroy);
 }
 
 void FJ_FuiNode::removeChildAt(int iIndex, bool bDestroy)
 {
-    m_pRenderNode->asTimeline()->removeChildAt(iIndex, bDestroy);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->removeChildAt(iIndex, bDestroy);
 }
 
 void FJ_FuiNode::addMask(FJ_FuiNode* pNode)
 {
-    m_pRenderNode->asTimeline()->addMask(pNode->m_pRenderNode);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->addMask(pNode->m_pRenderNode);
 }
 
 void FJ_FuiNode::addChild(FJ_FuiNode* pNode)
 {
-    m_pRenderNode->asTimeline()->addChild(pNode->m_pRenderNode);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->addChild(pNode->m_pRenderNode);
 }
 
 void FJ_FuiNode::addChildAt(FJ_FuiNode* pNode, int iIndex)
 {
-    m_pRenderNode->asTimeline()->addChildAt(pNode->m_pRenderNode, iIndex);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->addChildAt(pNode->m_pRenderNode, iIndex);
 }
 
 void FJ_FuiNode::addChild(fuiRenderNode* pRenderNode)
 {
-    m_pRenderNode->asTimeline()->addChild(pRenderNode);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->addChild(pRenderNode);
 }
 
 void FJ_FuiNode::addChildAt(fuiRenderNode* pRenderNode, int iIndex)
 {
-    m_pRenderNode->asTimeline()->addChildAt(pRenderNode, iIndex);
+    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->addChildAt(pRenderNode, iIndex);
 }
 
 int FJ_FuiNode::getChildIndex(FJ_FuiNode* pNode)
 {
-    return m_pRenderNode->asTimeline()->getChildIndex(pNode->m_pRenderNode);
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->getChildIndex(pNode->m_pRenderNode);
 }
 
 FJ_FuiNode* FJ_FuiNode::asMovieClip()
@@ -572,7 +614,7 @@ bool FJ_FuiNode::isFJ_Hud()
 
 void FJ_FuiNode::gotoAndPlay(int iFrame)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         pTimeline->setFrame(iFrame);
@@ -582,7 +624,7 @@ void FJ_FuiNode::gotoAndPlay(int iFrame)
 
 void FJ_FuiNode::gotoAndPlay(const std::string& sLabel)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         pTimeline->setFrame(sLabel.c_str());
@@ -592,7 +634,7 @@ void FJ_FuiNode::gotoAndPlay(const std::string& sLabel)
 
 void FJ_FuiNode::gotoAndStop(int iFrame)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         pTimeline->setFrame(iFrame);
@@ -602,7 +644,7 @@ void FJ_FuiNode::gotoAndStop(int iFrame)
 
 void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
     {
         pTimeline->setFrame(sLabel.c_str());
@@ -612,7 +654,7 @@ void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
 
 std::string FJ_FuiNode::currentLabel()
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline != NULL)
         return pTimeline->currentLabel();
 
@@ -621,7 +663,7 @@ std::string FJ_FuiNode::currentLabel()
 
 unsigned int FJ_FuiNode::currentFrame()
 {
-    fuiRenderNodeTimeline* pTimeline = m_pRenderNode->asTimeline();
+    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
     if (pTimeline == NULL)
         return 1;
 

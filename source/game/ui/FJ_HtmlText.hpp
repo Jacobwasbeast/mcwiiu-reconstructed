@@ -1,6 +1,7 @@
 #ifndef GAME_UI_FJ_HTMLTEXT_HPP
 #define GAME_UI_FJ_HTMLTEXT_HPP
 
+#include <stdint.h>
 #include <string>
 
 #include "game/ui/FJ_Base.hpp"
@@ -22,7 +23,7 @@ public:
     float m_fWidth;
     float m_fScrollTop;
     float m_fScrollBottom;
-    FJ_ScrollArrow* m_pUpArrow;
+    FJ_FuiNode* m_pUpArrow;
     FJ_ScrollArrow* m_pDownArrow;
     unsigned char m_scrollDirection;
     bool m_bScrollingUp;
@@ -31,8 +32,8 @@ public:
     int m_iCharacterHeight;
     int m_iScrollDelay;
     int m_iFlickDelay;
-    bool m_bScrollingEnabled;
-    bool m_bInitialized;
+    unsigned char m_bScrollingEnabled;
+    unsigned char m_bInitialized;
     int m_iRealWidth;
     int m_iRealHeight;
     void (*m_pScrollingCompleteDelegate)();
@@ -49,9 +50,9 @@ public:
     void HandleScrollListArrows(bool positionArrows);
     void UpdateScrolling(FJ_Event* event);
     static void _UpdateScrolling(FJ_FuiNode* node, FJ_Event* event);
-    void keyDownHandler(FJ_Event* event);
+    uint64_t keyDownHandler(FJ_Event* event);
     static void _keyDownHandler(FJ_FuiNode* node, FJ_Event* event);
-    void GetScrollTarget(bool up);
+    uint64_t GetScrollTarget(bool up);
     void keyUpHandler(FJ_Event* event);
     static void _keyUpHandler(FJ_FuiNode* node, FJ_Event* event);
     int getTextHeight();
@@ -62,9 +63,9 @@ public:
     virtual void setY(float y);
     virtual void setHeight(float height);
     void Init(const std::wstring& label);
-    void GetScrollDistance();
+    uint64_t GetScrollDistance();
     virtual void SetLabel(const std::wstring& label);
-    int GetNumberOfLines();
+    uint64_t GetNumberOfLines();
     unsigned int GetOptimalHeight(int lines);
     double GetRealWidth();
     double GetRealHeight();

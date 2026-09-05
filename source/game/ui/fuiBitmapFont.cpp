@@ -3,6 +3,7 @@
 #include <string>
 
 #include "game/client/render/C4JRender.hpp"
+#include "game/client/render/CFontData.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/core/BufferedImage.hpp"
 #include "game/client/render/SFontData.hpp"

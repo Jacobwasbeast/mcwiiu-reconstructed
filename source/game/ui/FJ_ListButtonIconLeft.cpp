@@ -3,15 +3,18 @@
 #include <cstdio>
 
 #include "game/ui/FJ_FuiNode.hpp"
-#include "game/ui/fui.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
-class FJ_FuiNodeStage
+class fui
 {
 public:
-    fuiRenderNode* m_pRenderNode;
+    unsigned int getCustomTexture(const std::wstring& textureName,
+        unsigned int* width, unsigned int* height, bool* hasAlpha);
 };
+
+extern fui* gFui;
 
 FJ_ListButtonIconLeft::FJ_ListButtonIconLeft(fuiRenderNode* renderNode)
     : FJ_Button(renderNode), m_pIconPlaceholder(NULL), m_pIconPlaceholder1(NULL)
@@ -24,14 +27,14 @@ FJ_ListButtonIconLeft::~FJ_ListButtonIconLeft()
 
 void FJ_ListButtonIconLeft::Init(const std::wstring& name, int id)
 {
-    FJ_Base::SetLabelAlignment(4);
+    SetLabelAlignment(4);
     m_isLabel = true;
     FJ_Button::Init(name, id);
 }
 
 void FJ_ListButtonIconLeft::SetSlotID(int slotId, bool hasSlot)
 {
-    FJ_FuiNode* slotControl = FJ_FuiNode::getChildByName("SlotControl")->asMovieClip();
+    FJ_FuiNode* slotControl = getChildByName("SlotControl")->asMovieClip();
     if (slotControl == NULL)
         return;
 
@@ -57,21 +60,21 @@ void FJ_ListButtonIconLeft::SetSlotID(int slotId, bool hasSlot)
 }
 
 void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
-                                           const std::wstring& textureName1)
+                                            const std::wstring& textureName1)
 {
     if (!textureName.empty())
     {
         if (m_pIconPlaceholder == NULL)
         {
-            FJ_FuiNode* placeholder = getChildByName("IconPlaceholder")->asMovieClip();
-            placeholder->setScaleX(placeholder->getScaleX() / getScaleX());
-            placeholder->setScaleY(placeholder->getScaleY() / getScaleY());
+            FJ_FuiNode* iconControl = getChildByName("IconPlaceholder")->asMovieClip();
+            iconControl->setScaleX(iconControl->getScaleX() / getScaleX());
+            iconControl->setScaleY(iconControl->getScaleY() / getScaleY());
 
             fuiRect rect;
             rect.xMin = 0.0f;
             rect.yMin = 0.0f;
-            rect.xMax = placeholder->getWidth() / placeholder->getScaleX();
-            rect.yMax = placeholder->getHeight() / placeholder->getScaleY();
+            rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
+            rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
 
             unsigned int width = 0;
             unsigned int height = 0;
@@ -82,7 +85,7 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
                 getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
                 texture, true, hasAlpha);
             m_pIconPlaceholder = new FJ_FuiNode(renderNode);
-            placeholder->addChild(m_pIconPlaceholder);
+            iconControl->addChild(m_pIconPlaceholder);
         }
         else
         {
@@ -100,15 +103,15 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
     {
         if (m_pIconPlaceholder1 == NULL)
         {
-            FJ_FuiNode* placeholder = getChildByName("IconPlaceholder1")->asMovieClip();
-            placeholder->setScaleX(placeholder->getScaleX() / getScaleX());
-            placeholder->setScaleY(placeholder->getScaleY() / getScaleY());
+            FJ_FuiNode* iconControl = getChildByName("IconPlaceholder1")->asMovieClip();
+            iconControl->setScaleX(iconControl->getScaleX() / getScaleX());
+            iconControl->setScaleY(iconControl->getScaleY() / getScaleY());
 
             fuiRect rect;
             rect.xMin = 0.0f;
             rect.yMin = 0.0f;
-            rect.xMax = placeholder->getWidth() / placeholder->getScaleX();
-            rect.yMax = placeholder->getHeight() / placeholder->getScaleY();
+            rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
+            rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
 
             unsigned int width = 0;
             unsigned int height = 0;
@@ -119,7 +122,7 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
                 getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
                 texture, true, hasAlpha);
             m_pIconPlaceholder1 = new FJ_FuiNode(renderNode);
-            placeholder->addChild(m_pIconPlaceholder1);
+            iconControl->addChild(m_pIconPlaceholder1);
         }
         else
         {

@@ -1,15 +1,13 @@
 #ifndef GAME_UI_DEATHSCREEN_HPP
 #define GAME_UI_DEATHSCREEN_HPP
 
-#include <vector>
-
-#include "game/core/GuiComponent.hpp"
+#include "game/ui/Screen.hpp"
 
 class Button;
 class Font;
 class Minecraft;
 
-class DeathScreen : public GuiComponent
+class DeathScreen : public Screen
 {
 public:
     virtual ~DeathScreen();
@@ -20,12 +18,6 @@ public:
     virtual void render(int x, int y, float partialTick);
     virtual bool isPauseScreen();
 
-private:
-    Minecraft* mMinecraft;
-    int mWidth;
-    int mHeight;
-    std::vector<Button*> mButtons;
-    Font* mFont;
 };
 
 #endif

@@ -3,12 +3,12 @@
 
 #include <vector>
 
+#include "game/item/Recipe.hpp"
 #include "game/minigame/TutorialTask.hpp"
 
-class Recipe;
+class Item;
 class Tutorial;
 class TutorialConstraint;
-class Item;
 
 class UICraftingTask : public TutorialTask
 {

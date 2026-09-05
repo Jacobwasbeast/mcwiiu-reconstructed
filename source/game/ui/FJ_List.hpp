@@ -66,8 +66,10 @@ public:
     int GetVerticalSpacing();
     void MoveItem(int index, bool down);
 
-private:
+protected:
     bool m_checkboxTick;
+
+private:
     unsigned char m_padding0[3];
     int m_verticalSpacing;
     std::string m_action;

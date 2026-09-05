@@ -4,9 +4,15 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
-#include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
+
+class fui
+{
+public:
+    unsigned int getCustomTexture(const std::wstring& textureName,
+        unsigned int* width, unsigned int* height, bool* hasTexture);
+};
 
 extern fui* gFui;
 

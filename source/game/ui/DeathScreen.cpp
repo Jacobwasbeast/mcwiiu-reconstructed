@@ -5,13 +5,11 @@
 #include "game/core/Button.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
-
-class Player;
-class Screen;
-class TitleScreen;
+#include "game/ui/Screen.hpp"
+#include "game/ui/TitleScreen.hpp"
+#include "game/world/generation/Player.hpp"
 
 std::wstring _toString(int value);
-Screen* createTitleScreen();
 
 static int gDeathScreenRenderTicks = 0;
 
@@ -30,7 +28,7 @@ void DeathScreen::init()
 
     if (mMinecraft->mLevel == NULL)
     {
-        mButtons[0]->active = false;
+        mButtons[0]->mActive = false;
     }
 }
 
@@ -52,7 +50,7 @@ void DeathScreen::buttonClicked(Button* button)
     if (button->mId == 2)
     {
         mMinecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
-        mMinecraft->setScreen(createTitleScreen());
+        mMinecraft->setScreen(new TitleScreen());
     }
 }
 
@@ -69,12 +67,11 @@ void DeathScreen::render(int x, int y, float partialTick)
 
     Screen::render(x, y, partialTick);
 
-    if (gDeathScreenRenderTicks == 100)
+    if (gDeathScreenRenderTicks++ == 100)
     {
         gDeathScreenRenderTicks = 0;
         buttonClicked(mButtons[0]);
     }
-    ++gDeathScreenRenderTicks;
 }
 
 bool DeathScreen::isPauseScreen()

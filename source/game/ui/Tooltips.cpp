@@ -43,12 +43,11 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                                    MultiPlayerLevel* level, const HitResult* hitResult,
                                    InteractionResult::EInteractionResult interactionResult)
 {
-    int playerId;
+    int playerId = 0;
 
     if (!player)
         return;
 
-    playerId = 0;
     ResetTooltip(playerId, (EControllerActions)0x20);
     ResetTooltip(playerId, (EControllerActions)0x21);
     ResetTooltip(playerId, (EControllerActions)0x22);

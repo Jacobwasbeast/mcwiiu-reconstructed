@@ -8,8 +8,11 @@
 #include "game/item/not_null_ptr.hpp"
 
 class AbstractContainerMenu;
+class Container;
+class HtmlString;
 class ItemInstance;
 class Slot;
+struct _UIVec2D;
 
 class IUIScene_AbstractContainerMenu
 {
@@ -41,11 +44,10 @@ public:
         EToolTipItem_None = -1
     };
 
-    Slot* m_menuSlots;
+    AbstractContainerMenu* m_menu;
     unsigned char m_initialized;
     unsigned char m_takeAllEnabled;
     unsigned char m_quickCraftDisabled;
-    unsigned char m_reserved;
     int m_containerId;
     float m_touchX;
     float m_touchY;
@@ -74,7 +76,6 @@ public:
     int m_pointerFlags;
     int m_lastInput;
     unsigned char m_inventorySmall;
-    unsigned char m_reserved2[3];
     int m_dragSection;
     int m_dragSlot;
     int m_dragButton;
@@ -84,22 +85,46 @@ public:
     int m_hoverX;
     int m_hoverY;
     int m_hoverFlags;
-    unsigned int m_virtualMethods;
 
     IUIScene_AbstractContainerMenu();
-    virtual ~IUIScene_AbstractContainerMenu();
-
-    bool IsSectionSlotList(ESceneSection section);
-    unsigned int CanHaveFocus(ESceneSection section) const;
-    unsigned int IsVisible(ESceneSection section) const;
+    virtual bool IsSectionSlotList(ESceneSection section);
+    virtual unsigned int CanHaveFocus(ESceneSection section);
+    virtual unsigned int IsVisible(ESceneSection section);
     virtual unsigned int getSectionColumns(ESceneSection section) = 0;
     virtual unsigned int getSectionRows(ESceneSection section) = 0;
     virtual unsigned int GetSectionAndSlotInDirection(ESceneSection section, ETapState state,
                                                         int* x, int* y) = 0;
-    virtual void GetPositionOfSection(ESceneSection section, int* x) = 0;
-    virtual void GetItemScreenData(ESceneSection section, int slot, int* x, int* y) = 0;
+    virtual void GetPositionOfSection(ESceneSection section, _UIVec2D* position) = 0;
+    virtual void GetItemScreenData(ESceneSection section, int slot, _UIVec2D* position,
+                                   _UIVec2D* size) = 0;
+    virtual void PlatformInitialize(bool enabled, int playerIndex, int slotIndex) = 0;
+    virtual void InitDataAssociations(int playerIndex, AbstractContainerMenu* menu, int slotIndex) = 0;
+    virtual unsigned int handleValidKeyPress(int key, int value, int player);
+    virtual void handleOutsideClicked(int x, int y, int button);
+    virtual void handleOtherClicked(int button, ESceneSection section, int slot, bool pressed);
+    virtual void handleAdditionalKeyPress(int key);
+    virtual void handleSlotListClicked(ESceneSection section, int slot, int button);
+    virtual void handleTakeAll(int button);
+    virtual void handleSectionClick(ESceneSection section) = 0;
     virtual int getSectionStartOffset(ESceneSection section) = 0;
+    virtual bool doesSectionTreeHaveFocus(ESceneSection section) = 0;
+    virtual void setSectionFocus(ESceneSection section, int direction) = 0;
     virtual void setSectionSelectedSlot(ESceneSection section, int slot, int direction, bool wrap) = 0;
+    virtual void setFocusToPointer(int pointer) = 0;
+    virtual void SetPointerText(std::vector<HtmlString>* text, bool visible) = 0;
+    virtual int GetSectionHoverText(ESceneSection section);
+    virtual not_null_ptr<ItemInstance> getSlotItem(ESceneSection section, int slot) = 0;
+    virtual Slot* getSlot(ESceneSection section, int slot) = 0;
+    virtual bool isSlotEmpty(ESceneSection section, int slot) = 0;
+    virtual void adjustPointerForSafeZone() = 0;
+    virtual unsigned int overrideTooltips(ESceneSection section, not_null_ptr<ItemInstance> item,
+                                          bool itemValid, bool canTake, bool canPlace, int count,
+                                          EToolTipItem& first, EToolTipItem& second,
+                                          EToolTipItem& third, EToolTipItem& fourth,
+                                          EToolTipItem& fifth, EToolTipItem& sixth,
+                                          EToolTipItem& seventh);
+    virtual ~IUIScene_AbstractContainerMenu();
+    virtual int getPad() = 0;
 
     unsigned int canTakeAll() const;
     unsigned int canQuickCraft() const;
@@ -112,7 +137,7 @@ public:
     void Initialize(bool takeAll, int containerId, AbstractContainerMenu* menu,
                     bool smallInventory, int slotIndex, ESceneSection firstSection,
                     ESceneSection lastSection, bool touchEnabled);
-    int GetItemDescription(Slot* slot);
+    std::vector<HtmlString>* GetItemDescription(Slot* slot);
     unsigned int IsSameItemAs(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
     int GetEmptyStackSpace(Slot* slot);
     void recalculateQuickCraftRemaining();
@@ -121,19 +146,7 @@ public:
     void slotClicked(int slot, int button, ClickType::eClickType clickType);
     void handleQuickCraft();
     unsigned int handleKeyDown(int key, int value, bool repeat);
-    virtual unsigned int handleValidKeyPress(int key, int value, int player);
-    virtual void handleOutsideClicked(int x, int y, int button);
-    virtual void handleOtherClicked(int button, ESceneSection section, int slot, bool pressed);
-    virtual void handleAdditionalKeyPress(int key);
-    virtual unsigned long long handleSlotListClicked(ESceneSection section, int slot, int button);
-    virtual unsigned long long handleTakeAll(int button);
-    virtual int GetSectionHoverText(ESceneSection section);
-    virtual int GetInventoryRows();
-    virtual unsigned int overrideTooltips(ESceneSection section, not_null_ptr<ItemInstance> item,
-                                          bool a, bool b, bool c, int d,
-                                          EToolTipItem& e, EToolTipItem& f, EToolTipItem& g,
-                                          EToolTipItem& h, EToolTipItem& i, EToolTipItem& j,
-                                          EToolTipItem& k);
+    int GetInventoryRows();
 };
 
 #endif

@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "game/ui/FJ_Event.hpp"
-#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -151,7 +150,7 @@ void fuiRenderNodeTimeline::handleConstruction()
     if (m_node != 0 || m_file == 0 || m_object == 0)
         return;
     fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
-    m_node = FJ_Factory::createObject("", this, false, 0);
+    m_node = FJ_FuiNode::Create(this);
     if (timeline->timelineActionCount != 0)
     {
         for (unsigned int i = 0; i < timeline->timelineActionCount; ++i)

@@ -2,8 +2,12 @@
 
 #include <string>
 
+#include "game/ui/FJ_BitmapIcon.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Label.hpp"
+#include "game/ui/FJ_ListButtonAchievement.hpp"
+#include "game/util/Math.hpp"
 
 FJ_PressStartToPlay::FJ_PressStartToPlay(fuiRenderNode* renderNode)
     : FJ_Document(renderNode),
@@ -42,7 +46,15 @@ FJ_PressStartToPlay::FJ_PressStartToPlay(fuiRenderNode* renderNode)
         if (pressStart != 0)
         {
             m_panelWidth = static_cast<int>(pressStart->getWidth());
+            pressStart->asFJ_Label()->setUseHtmlText(true);
+            pressStart->asFJ_Label()->SetLabel(L"");
             pressStart->setVisible(true);
+        }
+
+        FJ_FuiNode* wordWrap = m_mainPanel->getChildByName(std::string("WordWrapLabel"));
+        if (wordWrap != 0)
+        {
+            wordWrap->asFJ_Label()->SetLabel(L"");
         }
 
         FJ_FuiNode* background = m_mainPanel->getChildByName(std::string("BackgroundPanel"));
@@ -109,13 +121,25 @@ unsigned int FJ_PressStartToPlay::getType()
 
 void FJ_PressStartToPlay::ShowAchievementToast(const std::wstring& title, const std::wstring& description, const std::wstring& gamerPic, const std::wstring& achievementIcon)
 {
-    (void)title;
-    (void)description;
-    (void)gamerPic;
-    (void)achievementIcon;
     if (m_achievementToast != 0)
     {
-        m_achievementToast->setVisible(true);
+        FJ_Label* pressButton = m_achievementToast->getChildByName(std::string("Achievement_PressButton"))->asFJ_Label();
+        pressButton->setUseHtmlText(true);
+        FJ_Label* unlocked = m_achievementToast->getChildByName(std::string("Achievement_Unlocked"))->asFJ_Label();
+        unlocked->SetLabel(title);
+        pressButton->SetLabel(description);
+        FJ_BitmapIcon* gamerPicture = m_achievementToast->getChildByName(std::string("GamerPic"))->asFJ_BitmapIcon();
+        gamerPicture->SetTextureName(gamerPic);
+        FJ_ListButtonAchievement* icon = m_achievementToast->getChildByName(std::string("AchievementIcon"))->asFJ_ListButtonAchievement();
+        icon->SetTextureName(achievementIcon);
+        const float widest = pressButton->getWidth() > unlocked->getWidth() ? pressButton->getWidth() : unlocked->getWidth();
+        const float panelWidth = widest + static_cast<float>(m_achievementToastX * 2) - 176.0f - (gamerPicture->getWidth() - icon->getWidth());
+        FJ_FuiNode* panel = m_achievementToast->getChildByName(std::string("AchievementPanel"));
+        panel->getChildAt(0)->setWidth(panelWidth);
+        icon->setX(widest + static_cast<float>(m_achievementToastX * 2) - 176.0f - gamerPicture->getX() - gamerPicture->getWidth());
+        unlocked->setX((panelWidth - unlocked->getWidth()) * 0.5f);
+        pressButton->setX((panelWidth - pressButton->getWidth()) * 0.5f);
+        panel->setX((getStage()->getStageWidth() - panel->getWidth()) * 0.5f);
         gotoAndPlay(std::string("ShowToast"));
     }
 }
@@ -145,12 +169,13 @@ void FJ_PressStartToPlay::ResizePanel(bool multiLine)
                 panel->setY(static_cast<float>(m_panelHeight));
                 if (wordWrap->getHeight() > static_cast<float>(m_panelHeight))
                 {
-                    panel->incWidth(width - static_cast<float>(m_panelWidth));
-                    panel->decY((wordWrap->getHeight() - static_cast<float>(m_panelHeight)) * 0.5f);
+                    panel->setY(static_cast<float>(m_panelHeight) + 10.0f);
+                    panel->decY(static_cast<float>(Math::round((wordWrap->getHeight() + 10.0f - static_cast<float>(m_panelHeight)) * 0.5f)));
                 }
                 if (width != static_cast<float>(m_panelWidth))
                 {
                     panel->incWidth(width - static_cast<float>(m_panelWidth));
+                    m_mainPanel->setX(static_cast<float>(Math::round(static_cast<float>(getStage()->getStageWidth()) - width - pressStart->getX())));
                     m_panelWidth = static_cast<int>(width);
                 }
             }
@@ -160,25 +185,30 @@ void FJ_PressStartToPlay::ResizePanel(bool multiLine)
 
 void FJ_PressStartToPlay::SetText(const std::wstring& text)
 {
-    (void)text;
-    ResizePanel(false);
+    if (m_mainPanel != 0)
+    {
+        m_mainPanel->getChildByName(std::string("PressStartLabel"))->asFJ_Label()->SetLabel(text);
+        m_mainPanel->getChildByName(std::string("WordWrapLabel"))->asFJ_Label()->SetLabel(L"");
+        ResizePanel(false);
+    }
 }
 
 void FJ_PressStartToPlay::SetMultiLineText(const std::wstring& text)
 {
-    (void)text;
-    ResizePanel(true);
+    if (m_mainPanel != 0)
+    {
+        m_mainPanel->getChildByName(std::string("PressStartLabel"))->asFJ_Label()->SetLabel(L"");
+        m_mainPanel->getChildByName(std::string("WordWrapLabel"))->asFJ_Label()->SetLabel(text);
+        ResizePanel(true);
+    }
 }
 
 void FJ_PressStartToPlay::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
     FJ_FuiNode* saveIcon = getChildByName(std::string("SaveIcon"));
-    if (saveIcon != 0)
-    {
-        saveIcon->setX(getStage()->getStageWidth() - saveIcon->getWidth() - static_cast<float>(right) - 15.0f);
-        saveIcon->setY(static_cast<float>(top + 15));
-    }
+    saveIcon->setX(getStage()->getStageWidth() - saveIcon->getWidth() - static_cast<float>(right) - 15.0f);
+    saveIcon->setY(static_cast<float>(top + 15));
     FJ_FuiNode* playerName = getChildByName(std::string("PlayerName"));
     if (playerName != 0)
     {
@@ -205,10 +235,20 @@ void FJ_PressStartToPlay::ShowController(int controller, bool show)
                     FJ_FuiNode* node = group->getChildByName(std::string(names[i]));
                     if (node != 0)
                     {
-                        node->setVisible(i == controller && show);
+                        node->setVisible(false);
                     }
                 }
             }
+        }
+        FJ_FuiNode* selectedGroup = m_mainPanel->getChildByName(std::string("ControllerQuadrant"))->getChildAt(0);
+        FJ_FuiNode* selected = selectedGroup->getChildByName(std::string(names[controller < 0 || controller > 2 ? 3 : controller]));
+        if (show)
+        {
+            selected->gotoAndPlay(std::string("Play"));
+        }
+        else
+        {
+            selected->gotoAndStop(std::string("Stop"));
         }
         FJ_FuiNode* label = m_mainPanel->getChildByName(std::string("PressStartLabel"));
         FJ_FuiNode* background = m_mainPanel->getChildByName(std::string("BackgroundPanel"));
@@ -217,7 +257,7 @@ void FJ_PressStartToPlay::ShowController(int controller, bool show)
             FJ_FuiNode* panel = background->getChildAt(0);
             if (panel != 0)
             {
-                panel->setY((label->getHeight() - background->getHeight()) * 0.5f);
+                panel->setY(static_cast<float>(Math::round((label->getHeight() - background->getHeight()) * 0.5f)));
             }
         }
     }

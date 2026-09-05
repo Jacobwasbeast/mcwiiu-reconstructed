@@ -7,12 +7,14 @@
 #include "game/core/I18n.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/ui/OptionsScreen.hpp"
+#include "game/ui/TitleScreen.hpp"
 
-class OptionsScreen;
-class TitleScreen;
-
-extern OptionsScreen* createOptionsScreen(PauseScreen* parent, void* options);
-extern TitleScreen* createTitleScreen();
+class MultiPlayerGameMode
+{
+public:
+    void disconnect();
+};
 
 PauseScreen::~PauseScreen()
 {
@@ -40,24 +42,24 @@ void PauseScreen::init()
                                   98, 20, I18n::get(L"gui.stats")));
 }
 
-void PauseScreen::buttonClicked(Button button)
+void PauseScreen::buttonClicked(Button* button)
 {
-    if (button.mId == 0)
+    if (button->mId == 0)
     {
-        mMinecraft->setScreen(createOptionsScreen(this, mMinecraft->mOptions));
+        mMinecraft->setScreen(new OptionsScreen(this, mMinecraft->mOptions));
     }
 
-    if (button.mId == 1)
+    if (button->mId == 1)
     {
         if (mMinecraft->isClientSide())
         {
             mMinecraft->mGameMode->disconnect();
         }
         mMinecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
-        mMinecraft->setScreen(createTitleScreen());
+        mMinecraft->setScreen(new TitleScreen());
     }
 
-    if (button.mId == 4)
+    if (button->mId == 4)
     {
         mMinecraft->setScreen(NULL);
     }
@@ -73,10 +75,11 @@ void PauseScreen::render(int x, int y, float partialTick)
     if (mTickCount < 20)
     {
         float phase = (static_cast<float>(mTickCount % 10) - 176.0f + partialTick) / 10.0f * 3.1415927f;
-        int color = static_cast<int>(255.0f * (std::sin(phase * 2.0f) * 0.2f + 0.8f));
-        GuiComponent::drawString(mFont, std::wstring(L"Saving level..."), 8, mHeight - 16,
-                                  (color << 16) | (color << 8) | color);
+        int color = static_cast<int>(255.0f * (Mth::sin(phase * 2.0f) * 0.2f + 0.8f));
+        drawString(mFont, std::wstring(L"Saving level..."), 8, mHeight - 16,
+                   (color << 16) | (color << 8) | color);
     }
 
-    GuiComponent::drawCenteredString(mFont, std::wstring(L"Game menu"), mWidth / 2, 40, 0xffffff);
+    drawCenteredString(mFont, std::wstring(L"Game menu"), mWidth / 2, 40, 0xffffff);
+    Screen::render(x, y, partialTick);
 }

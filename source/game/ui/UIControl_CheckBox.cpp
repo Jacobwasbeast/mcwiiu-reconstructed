@@ -29,7 +29,7 @@ unsigned char UIControl_CheckBox::IsEnabled()
 void UIControl_CheckBox::setChecked(bool checked)
 {
     if (m_fuiRenderNode != 0)
-        m_fuiRenderNode->getRoot()->asFJ_CheckBox()->SetCheckBox(checked);
+        m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->SetCheckBox(checked);
     m_checked = checked;
 }
 
@@ -37,23 +37,22 @@ unsigned int UIControl_CheckBox::IsChecked()
 {
     if (m_fuiRenderNode == 0)
         return 0;
-    return m_fuiRenderNode->getRoot()->asFJ_CheckBox()->getChecked();
+    return m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->getChecked();
 }
 
-bool UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_unknown0 = 2;
-    bool result = UIControl_Base::setupControl(scene, node, name);
+    m_controlType = 2;
+    UIControl_Base::setupControl(scene, node, name);
     m_enabled = true;
-    return result;
 }
 
 void UIControl_CheckBox::init(UIString label, int id, bool checked)
 {
     m_label = label;
-    m_unknown0 = (unsigned int)id;
+    m_controlType = (unsigned short)id;
     m_checked = checked;
-    m_fuiRenderNode->getRoot()->asFJ_CheckBox()->Init((const wchar_t*)(long)label.getString(), id, checked);
+    m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->Init((const wchar_t*)(long)label.getString(), id, checked);
 
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
@@ -70,7 +69,7 @@ void UIControl_CheckBox::SetEnable(bool enable)
     m_enabled = enable;
     if (m_fuiRenderNode == 0)
         return;
-    m_fuiRenderNode->getRoot()->asFJ_CheckBox()->EnableCheckBox(enable);
+    m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->EnableCheckBox(enable);
 }
 
 void UIControl_CheckBox::updateCheckedStatus(bool checked)
@@ -82,5 +81,5 @@ void UIControl_CheckBox::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, (int)m_unknown0, m_checked);
+    init(label, (int)m_controlType, m_checked);
 }

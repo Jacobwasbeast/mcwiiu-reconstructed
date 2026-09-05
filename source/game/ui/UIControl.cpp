@@ -4,8 +4,7 @@
 
 UIControl::UIControl()
     : m_controlType(0),
-      m_controlFlags(false),
-      m_controlData(0),
+      m_controlId(0),
       m_flag(false),
       m_name("buckets_"),
       m_fuiRenderNode(0),
@@ -143,8 +142,7 @@ bool UIControl::hasFocus()
 UIControl& UIControl::operator=(const UIControl& other)
 {
     m_controlType = other.m_controlType;
-    m_controlFlags = other.m_controlFlags;
-    m_controlData = other.m_controlData;
+    m_controlId = other.m_controlId;
     m_flag = other.m_flag;
     m_name = other.m_name;
     m_fuiRenderNode = other.m_fuiRenderNode;

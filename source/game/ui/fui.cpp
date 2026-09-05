@@ -20,9 +20,6 @@
 fui* gFui = new fui();
 
 fui::fui()
-    : m_matrixDepth(0), m_colorDepth(0), m_filterDepth(0), m_originX(0.0f), m_originY(0.0f), m_stencilMask(1),
-      m_frameCount(0), m_enterFrameDispatch(false), m_lastTime(System::processTimeInMilliSecs()),
-      m_customTextureFunction(NULL), m_releaseCustomTextureFunction(NULL), m_textureManager(new fuiTextureManager()), m_resolution(0)
 {
     m_matrixStack[0].scaleX = 1.0f;
     m_matrixStack[0].rotateSkew0 = 0.0f;
@@ -38,9 +35,22 @@ fui::fui()
     m_colorStack[0].greenMultiply = 1.0f;
     m_colorStack[0].blueMultiply = 1.0f;
     m_colorStack[0].alphaMultiply = 1.0f;
+    m_matrixDepth = 0;
+    m_colorDepth = 0;
     m_filterStack[0] = 0;
+    m_filterDepth = 0;
+    m_originX = 0.0f;
+    m_originY = 0.0f;
+    m_stencilMask = 1;
     for (int i = 0; i < 64; ++i)
         m_permanentFileIndices[i] = -1;
+    m_frameCount = 0;
+    m_enterFrameDispatch = false;
+    m_lastTime = System::processTimeInMilliSecs();
+    m_customTextureFunction = NULL;
+    m_releaseCustomTextureFunction = NULL;
+    m_resolution = 0;
+    m_textureManager = new fuiTextureManager();
     InitializeCriticalSection(&m_mutex);
 }
 
@@ -215,11 +225,12 @@ void fui::preRender(fuiFile* file)
 
 void fui::render(fuiFile* file, float x, float y, float width, float height, float scaleX, float scaleY)
 {
-    std::memset(m_renderMatrix, 0, sizeof(m_renderMatrix));
-    m_renderMatrix[0] = 1.0f;
-    m_renderMatrix[5] = 1.0f;
-    m_renderMatrix[10] = 1.0f;
-    m_renderMatrix[15] = 1.0f;
+    float renderMatrix[16];
+    std::memset(renderMatrix, 0, sizeof(renderMatrix));
+    renderMatrix[0] = 1.0f;
+    renderMatrix[5] = 1.0f;
+    renderMatrix[10] = 1.0f;
+    renderMatrix[15] = 1.0f;
 
     gRenderer->TEMP_PatchStateFromIggy();
     gRenderer->StateSetAlphaTestEnable(false);

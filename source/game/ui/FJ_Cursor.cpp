@@ -12,12 +12,6 @@
 FJ_Cursor::FJ_Cursor(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode)
 {
-    m_textField = 0;
-    m_textPanel = 0;
-    m_pointerTextPanel = 0;
-    m_cursorImage = 0;
-    m_panelAlignment = 0;
-    m_topAlignment = 0;
 }
 
 FJ_Cursor::~FJ_Cursor()
@@ -42,7 +36,7 @@ void FJ_Cursor::AlignPanel(bool bRight)
 
     if (bRight)
     {
-        m_textPanel->setX((float)Math::round(m_textPanel->getWidth() * scale));
+        m_textPanel->setX((float)Math::round(m_textPanel->getWidth() * scale * 0.8f));
         m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
         m_textField->setX((float)Math::round(textWidth * cursorScale + m_textPanel->getX()));
         m_textField->setY((float)Math::round(textWidth * scale + m_textPanel->getY()));
@@ -59,12 +53,11 @@ void FJ_Cursor::UpdatePanelAlignment()
 {
     if (!m_textField->getText().empty())
     {
-        float right = getX() + getWidth() + (float)m_topAlignment;
+        float right = getX() + getWidth() + (float)m_panelAlignment;
         float stageWidth = (float)getStage()->getStageWidth();
-        FJ_FuiNode* parent = getParent();
-        FJ_Document* document = parent != 0 ? parent->asFJ_Document() : 0;
+        FJ_Document* document = getParent()->asFJ_Document();
         int safeRight = document->getISafeZoneRight();
-        if (parent != 0)
+        if (getParent() != 0)
         {
             TopAlignPanel();
             AlignPanel(right <= (int)(stageWidth - (float)safeRight));
@@ -75,7 +68,7 @@ void FJ_Cursor::UpdatePanelAlignment()
 void FJ_Cursor::SetLabel(const std::wstring& label)
 {
     m_textField->setHTMLText(label);
-    m_textField->setAutoSize(1);
+    m_textField->setAutoSize(TextFieldAutoSizeLeft);
     m_textPanel->setVisible(!label.empty());
     if (m_textPanel->isVisible())
     {

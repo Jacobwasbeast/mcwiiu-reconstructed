@@ -87,7 +87,7 @@ public:
     float getScaleX();
     float getScaleY();
 
-    const std::string& getName();
+    const char* getName();
 
     fuiRect getRect(FJ_FuiNode* pNode);
 

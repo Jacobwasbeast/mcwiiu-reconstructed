@@ -3,20 +3,22 @@
 #include <cmath>
 
 #include "game/core/Minecraft.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/core/Slot.hpp"
+#include "game/core/HtmlString.hpp"
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
-    : m_menuSlots(0), m_initialized(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
-      m_reserved(0), m_containerId(0), m_touchX(0.0f), m_touchY(0.0f), m_sectionStart(0),
+    : m_menu(0), m_initialized(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
+      m_containerId(0), m_touchX(0.0f), m_touchY(0.0f), m_sectionStart(0),
       m_sectionSize(0), m_sectionRows(0), m_sectionColumns(0), m_selectedSlot(0),
       m_activeTooltip(0), m_slotIndex(0), m_slotCount(0), m_currentIndex(0), m_dragStart(0),
       m_dragEnd(0), m_quickCraftRemaining(0), m_quickCraftSlots(0), m_pointerX(0),
       m_pointerY(0), m_pointerSection(0), m_pointerSlot(0), m_pointerButton(0),
       m_pointerItem(0), m_pointerFlags(0), m_lastInput(0), m_inventorySmall(0),
       m_dragSection(0), m_dragSlot(0), m_dragButton(0), m_dragCount(0),
-      m_hoverSection(0), m_hoverSlot(0), m_hoverX(0), m_hoverY(0), m_hoverFlags(0),
-      m_virtualMethods(0)
+      m_hoverSection(0), m_hoverSlot(0), m_hoverX(0), m_hoverY(0), m_hoverFlags(0)
 {
     m_tooltipButtons[0] = 0;
     m_tooltipButtons[1] = 0;
@@ -34,9 +36,6 @@ IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
     m_inputState[5] = 0;
     m_inputState[6] = 0;
     m_inputState[7] = 0;
-    m_reserved2[0] = 0;
-    m_reserved2[1] = 0;
-    m_reserved2[2] = 0;
 }
 
 IUIScene_AbstractContainerMenu::~IUIScene_AbstractContainerMenu()
@@ -45,7 +44,10 @@ IUIScene_AbstractContainerMenu::~IUIScene_AbstractContainerMenu()
 
 unsigned int IUIScene_AbstractContainerMenu::canTakeAll() const
 {
-    return m_takeAllEnabled != 0 && m_initialized != 0 && !Minecraft::InMiniGame((EMiniGameId)15, true);
+    if (m_takeAllEnabled == 0 || !Minecraft::InMiniGame((EMiniGameId)15, true)) return 0;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame == 0 || !miniGame->IsTakeEverythingEnabled()) return 0;
+    return 1;
 }
 
 unsigned int IUIScene_AbstractContainerMenu::canQuickCraft() const
@@ -55,8 +57,12 @@ unsigned int IUIScene_AbstractContainerMenu::canQuickCraft() const
 
 int IUIScene_AbstractContainerMenu::GetSectionDimensions(ESceneSection section, int* columns, int* rows)
 {
-    if (columns == 0 || rows == 0)
+    if (!IsSectionSlotList(section))
+    {
+        *rows = 0;
+        *columns = 0;
         return 0;
+    }
     *rows = (int)getSectionRows(section);
     *columns = (int)getSectionColumns(section);
     return *rows * *columns;
@@ -69,9 +75,7 @@ void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection from, ESce
     int columns;
     int rows;
     GetSectionDimensions(to, &columns, &rows);
-    if (columns <= 0 || rows <= 0 || x == 0 || y == 0)
-        return;
-    if (from == to)
+    if (to == from)
     {
         *x -= dx;
         if (*x < 0) *x = 0;
@@ -83,8 +87,10 @@ void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection from, ESce
     else if (state == ETapState_Down)
         *y = -dy;
     else
+    {
         *y -= dy;
-    if (*y < 0) *y = 0;
+        if (*y < 0) *y = 0;
+    }
     if (*y >= rows) *y = rows - 1;
     *x -= dx;
     if (*x < 0) *x = 0;
@@ -95,26 +101,34 @@ unsigned int IUIScene_AbstractContainerMenu::GetTapInputType(float x, float y)
 {
     if (std::fabs(x) < 0.3f && std::fabs(y) < 0.3f) return 0;
     if (x < -0.3f && std::fabs(y) < 0.3f) return 3;
-    if (x > 0.3f && std::fabs(y) < 0.3f) return 4;
+    if (0.3f < x && std::fabs(y) < 0.3f) return 4;
     if (y < -0.3f && std::fabs(x) < 0.3f) return 2;
-    if (y > 0.3f && std::fabs(x) < 0.3f) return 1;
+    if (0.3f < y && std::fabs(x) < 0.3f) return 1;
     return 6;
 }
 
 void IUIScene_AbstractContainerMenu::UpdateTooltips()
 {
+    unsigned int playerId = getPad();
     for (int i = 0; i < 4; ++i)
-        m_activeTooltip = m_tooltipItems[i];
+    {
+        int tooltip = m_tooltipItems[i];
+        if (tooltip == -1)
+            gConsoleUIController.ShowTooltip(playerId, i, false);
+        else
+        {
+            gConsoleUIController.SetTooltipText(playerId, i, tooltip);
+            gConsoleUIController.ShowTooltip(playerId, i, true);
+        }
+    }
 }
 
 void IUIScene_AbstractContainerMenu::SetToolTip(EToolTipButton button, EToolTipItem item)
 {
     if ((int)button < 0 || (int)button >= 4) return;
-    if (m_tooltipItems[(int)button] != (unsigned char)item)
-    {
-        m_tooltipItems[(int)button] = (unsigned char)item;
-        UpdateTooltips();
-    }
+    if (m_tooltipItems[(int)button] == (unsigned char)item) return;
+    m_tooltipItems[(int)button] = (unsigned char)item;
+    UpdateTooltips();
 }
 
 void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, AbstractContainerMenu* menu,
@@ -124,7 +138,7 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
 {
     m_takeAllEnabled = takeAll ? 1 : 0;
     m_containerId = containerId;
-    m_menuSlots = 0;
+    m_menu = menu;
     m_inventorySmall = smallInventory ? 1 : 0;
     m_slotIndex = slotIndex;
     m_sectionStart = (int)firstSection;
@@ -132,17 +146,28 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
     m_initialized = touchEnabled ? 1 : 0;
 }
 
-int IUIScene_AbstractContainerMenu::GetItemDescription(Slot* slot)
+std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot* slot)
 {
-    if (slot == 0 || !slot->hasItem()) return -1;
+    if (slot == 0) return 0;
     not_null_ptr<ItemInstance> item = slot->getItem();
-    return item->getRarity();
+    std::vector<HtmlString>* description = item->getTooltipLines(
+        Minecraft::GetInstance()->GetPlayerByPlayerIndex(getPad()), false);
+    if (description != 0 && !description->empty())
+    {
+        description->at(0).mColour = static_cast<eMinecraftColour>(item->getRarity());
+        if (item->hasCustomHoverName())
+            description->at(0).mColour = static_cast<eMinecraftColour>(0x1b9);
+    }
+    return description;
 }
 
 unsigned int IUIScene_AbstractContainerMenu::IsSameItemAs(not_null_ptr<ItemInstance> first,
                                                           not_null_ptr<ItemInstance> second)
 {
-    return ItemInstance::isSame(first, second);
+    if (first->isEmpty() || second->isEmpty()) return 0;
+    if (first->getItem() != second->getItem()) return 0;
+    if (second->isStackedByData() && second->getAuxValue() != first->getAuxValue()) return 0;
+    return ItemInstance::tagMatches(second, first);
 }
 
 int IUIScene_AbstractContainerMenu::GetEmptyStackSpace(Slot* slot)
@@ -210,36 +235,27 @@ unsigned int IUIScene_AbstractContainerMenu::handleValidKeyPress(int key, int va
 
 void IUIScene_AbstractContainerMenu::handleOutsideClicked(int x, int y, int button)
 {
-    m_pointerX = x;
-    m_pointerY = y;
-    m_pointerButton = button;
+    slotClicked(-999, y, static_cast<ClickType::eClickType>(button != 0));
 }
 
 void IUIScene_AbstractContainerMenu::handleOtherClicked(int button, ESceneSection section, int slot, bool pressed)
 {
-    m_pointerButton = button;
-    m_pointerSection = (int)section;
-    m_pointerSlot = slot;
-    m_pointerFlags = pressed ? 1 : 0;
 }
 
 void IUIScene_AbstractContainerMenu::handleAdditionalKeyPress(int key)
 {
-    m_lastInput = key;
 }
 
-unsigned long long IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section, int slot, int button)
+void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section, int slot, int button)
 {
     int index = getCurrentIndex(section);
-    slotClicked(index, slot, (ClickType::eClickType)button);
-    return (unsigned long long)(unsigned int)index;
+    slotClicked(index, slot, static_cast<ClickType::eClickType>(button != 0));
+    handleSectionClick(section);
 }
 
-unsigned long long IUIScene_AbstractContainerMenu::handleTakeAll(int button)
+void IUIScene_AbstractContainerMenu::handleTakeAll(int button)
 {
-    m_pointerButton = button;
-    m_quickCraftRemaining = 0;
-    return (unsigned long long)(unsigned int)getCurrentIndex((ESceneSection)2);
+    handleSectionClick(static_cast<ESceneSection>(2));
 }
 
 int IUIScene_AbstractContainerMenu::GetSectionHoverText(ESceneSection section)
@@ -257,23 +273,27 @@ bool IUIScene_AbstractContainerMenu::IsSectionSlotList(ESceneSection section)
     return (int)section != -1;
 }
 
-unsigned int IUIScene_AbstractContainerMenu::CanHaveFocus(ESceneSection section) const
+unsigned int IUIScene_AbstractContainerMenu::CanHaveFocus(ESceneSection section)
 {
     return 1;
 }
 
-unsigned int IUIScene_AbstractContainerMenu::IsVisible(ESceneSection section) const
+unsigned int IUIScene_AbstractContainerMenu::IsVisible(ESceneSection section)
 {
     return 1;
 }
 
 unsigned int IUIScene_AbstractContainerMenu::overrideTooltips(ESceneSection section,
                                                                not_null_ptr<ItemInstance> item,
-                                                               bool a, bool b, bool c, int d,
-                                                               EToolTipItem& e, EToolTipItem& f,
-                                                               EToolTipItem& g, EToolTipItem& h,
-                                                               EToolTipItem& i, EToolTipItem& j,
-                                                               EToolTipItem& k)
+                                                               bool itemValid, bool canTake,
+                                                               bool canPlace, int count,
+                                                               EToolTipItem& first,
+                                                               EToolTipItem& second,
+                                                               EToolTipItem& third,
+                                                               EToolTipItem& fourth,
+                                                               EToolTipItem& fifth,
+                                                               EToolTipItem& sixth,
+                                                               EToolTipItem& seventh)
 {
     return 0;
 }

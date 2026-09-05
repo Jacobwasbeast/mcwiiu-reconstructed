@@ -9,6 +9,11 @@ class fuiRenderNode;
 class UIControl
 {
 public:
+    enum eUIControlType
+    {
+        eUIControlType_Unknown = 0
+    };
+
     UIControl();
     virtual ~UIControl();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
@@ -31,9 +36,8 @@ public:
     UIControl& operator=(const UIControl& other);
 
 protected:
-    unsigned short m_controlType;
-    bool m_controlFlags;
-    void* m_controlData;
+    int m_controlType;
+    int m_controlId;
     bool m_flag;
     std::string m_name;
     fuiRenderNode* m_fuiRenderNode;

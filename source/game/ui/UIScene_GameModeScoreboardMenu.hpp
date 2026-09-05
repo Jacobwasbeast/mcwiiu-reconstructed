@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <string>
-
+#include <boost/shared_ptr.hpp>
 #include "game/world/generation/IUIScene_PlayerList.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/ui/UIScene.hpp"
@@ -12,9 +12,10 @@
 #include "game/ui/UIControl_Progress.hpp"
 #include "game/ui/UIControl_ScoreboardButtonList.hpp"
 #include "game/core/IScoreboardLayout.hpp"
+#include "game/core/ClientScoreboard.hpp"
 
-class ClientScoreboard;
 class INetworkPlayer;
+class MultiplayerLocalPlayer;
 class StatsUID;
 class UILayer;
 class fuiRect;
@@ -24,10 +25,9 @@ class UIScene_GameModeScoreboardMenu : public IUIScene_PlayerList, public UIScen
 public:
     UIScene_GameModeScoreboardMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_GameModeScoreboardMenu();
-
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
-    virtual PlayerInfo* GetPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> GetPlayer();
     ClientScoreboard* GetScoreboard();
     void registerTexture(int index);
     void UpdateStats(const StatsUID& uid);
@@ -41,8 +41,7 @@ public:
     virtual void handleGainFocus(bool hadFocus);
     virtual unsigned int GetMainPanel();
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
-                             bool& handled);
+    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
     virtual void handleDestroy();
     void setScoreboardType(int type);
     void initNumColumns(int columns);
@@ -66,35 +65,34 @@ public:
 
 private:
     PlayerUID m_playerUid;
-    unsigned char m_hasStats;
-    unsigned char m_unknown109;
-    unsigned char m_unknown10a;
-    unsigned char m_unknown10b;
-    unsigned char m_state[21];
-    unsigned char m_hasPlayerBeenKilled;
-    unsigned char m_scoreboardReady;
-    unsigned char m_unknown127;
+    unsigned char m_playerAvailable;
+    unsigned char m_canKickPlayers;
+    unsigned char m_kickVoteEnabled;
+    unsigned char m_playerStatsValid;
+    unsigned char m_scoreboardInitialised;
+    unsigned char m_playerSelectionState;
+    unsigned char m_playerSelectionPadding;
     IScoreboardLayout* m_scoreboardLayout;
-    unsigned char m_scoreboardType;
-    unsigned char m_state12d[55];
+    unsigned char m_scoreboardMode;
+    unsigned char m_registeredTextures[55];
     int m_killBarValue;
-    unsigned char m_state168[16];
+    unsigned char m_unusedState[16];
     unsigned char m_hasFocusSelection;
-    unsigned char m_state179[15];
+    unsigned char m_unusedFocusState[15];
     int m_numPlayers;
     int m_selectedPlayer;
     int m_numColumns;
-    unsigned char m_state194[16];
+    unsigned char m_unusedColumnState[16];
     int m_columnCount;
     UIControl m_awardPanel;
     UIControl m_mainPanel;
     UIControl_Progress m_killBar;
+    UIControl_Label m_playerTitleLabel;
     UIControl_Label m_stat1Label;
     UIControl_Label m_stat2Label;
     UIControl_Label m_stat3Label;
     UIControl_Label m_stat4Label;
     UIControl_Label m_stat5Label;
-    UIControl_Label m_playerTitleLabel;
     UIControl_Label m_killedByLabel;
     UIControl_Label m_gamertagLabel;
     UIControl_ScoreboardButtonList m_playerList;

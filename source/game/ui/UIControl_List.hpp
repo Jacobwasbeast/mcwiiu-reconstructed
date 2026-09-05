@@ -14,56 +14,51 @@ public:
     class GenericPendingUpdate
     {
     public:
-        GenericPendingUpdate(int type) : m_type(type) {}
+        GenericPendingUpdate(int item) : m_item(item) {}
         virtual ~GenericPendingUpdate();
         virtual unsigned int OnTick() = 0;
     protected:
-        int m_type;
+        int m_item;
     };
 
     template <class T>
     class PendingUpdate : public GenericPendingUpdate
     {
     public:
-        PendingUpdate(int type) : GenericPendingUpdate(type) {}
+        PendingUpdate(T* list, int item) : GenericPendingUpdate(item), m_list(list) {}
         virtual ~PendingUpdate();
+    protected:
+        T* m_list;
     };
 
     class PendingRemoveItem : public PendingUpdate<UIControl_List>
     {
     public:
         PendingRemoveItem(UIControl_List* list, int item)
-            : PendingUpdate<UIControl_List>(0), m_list(list), m_item(item) {}
+            : PendingUpdate<UIControl_List>(list, item) {}
         virtual ~PendingRemoveItem();
         virtual unsigned int OnTick();
-    private:
-        UIControl_List* m_list;
-        int m_item;
     };
 
     class PendingSetCurrentSelection : public PendingUpdate<UIControl_List>
     {
     public:
-        PendingSetCurrentSelection(UIControl_List* list, int selection, bool immediate)
-            : PendingUpdate<UIControl_List>(0), m_list(list), m_selection(selection), m_immediate(immediate) {}
+        PendingSetCurrentSelection(UIControl_List* list, int item, bool update)
+            : PendingUpdate<UIControl_List>(list, item), m_update(update) {}
         virtual ~PendingSetCurrentSelection();
         virtual unsigned int OnTick();
     private:
-        UIControl_List* m_list;
-        int m_selection;
-        bool m_immediate;
+        bool m_update;
     };
 
     class PendingSetEnable : public PendingUpdate<UIControl_List>
     {
     public:
         PendingSetEnable(UIControl_List* list, int item, bool enabled)
-            : PendingUpdate<UIControl_List>(0), m_list(list), m_item(item), m_enabled(enabled) {}
+            : PendingUpdate<UIControl_List>(list, item), m_enabled(enabled) {}
         virtual ~PendingSetEnable();
         virtual unsigned int OnTick();
     private:
-        UIControl_List* m_list;
-        int m_item;
         bool m_enabled;
     };
 
@@ -71,21 +66,21 @@ public:
     {
     public:
         PendingSetLabel(UIControl_List* list, int item, UIString label)
-            : PendingUpdate<UIControl_List>(0), m_list(list), m_item(item), m_label(label) {}
+            : PendingUpdate<UIControl_List>(list, item), m_label(label) {}
         virtual ~PendingSetLabel();
         virtual unsigned int OnTick();
     private:
-        UIControl_List* m_list;
-        int m_item;
         UIString m_label;
     };
 
     UIControl_List();
     virtual ~UIControl_List();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void UpdateControl();
     virtual void tick();
     virtual void ReInit();
-    virtual void UpdateControl();
+    virtual void clearList();
+    virtual void removeItem(int item, bool immediate);
     void addElement(UIControl::eUIControlType type, int index);
     void GetTopItem();
     void setCurrentSelection(int selection, bool update, bool immediate);
@@ -97,10 +92,8 @@ public:
     void EnableItem(int item, bool enabled, bool immediate);
     bool istype(UIControl::eUIControlType type, int index);
     void clearElements();
-    void clearList();
     void SetItemLabel(int item, UIString label, bool immediate);
     void remElement(int index);
-    void removeItem(int item, bool immediate);
     unsigned char IsEnabled(int index);
     bool CheckElementExists(int index);
     void GetActiveItem();

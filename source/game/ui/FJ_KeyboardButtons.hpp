@@ -19,7 +19,7 @@ public:
     bool getUseHtmlText();
     void setUseHtmlText(bool useHtmlText);
 
-private:
+protected:
     int m_keyboardOffset;
     bool m_remotePressButton;
     int m_keyboardWidth;

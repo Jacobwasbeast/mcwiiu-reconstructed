@@ -7,6 +7,9 @@ class fuiRenderNode;
 
 class FJ_HtmlText_Normal : public FJ_HtmlText
 {
+private:
+    fuiRenderNode* m_textField;
+
 public:
     FJ_HtmlText_Normal(fuiRenderNode* pRenderNode)
         : FJ_HtmlText(pRenderNode)

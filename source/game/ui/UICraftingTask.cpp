@@ -1,6 +1,7 @@
 #include "game/ui/UICraftingTask.hpp"
 
 #include "game/item/Item.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/ui/IUIScene_CraftingMenu.hpp"
 
 UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId,
@@ -10,8 +11,8 @@ UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId,
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
                    showMinimumTime, allowFade, repeatMessage)
 {
-    taskType = 0;
     this->group = group;
+    taskType = 0;
 }
 
 UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item,
@@ -21,8 +22,8 @@ UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, constraints,
                    showMinimumTime, allowFade, repeatMessage)
 {
-    taskType = 1;
     this->item = item;
+    taskType = 1;
 }
 
 UICraftingTask::~UICraftingTask()

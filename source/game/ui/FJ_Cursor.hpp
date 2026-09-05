@@ -15,8 +15,8 @@ private:
     FJ_FuiNode* m_textPanel;
     FJ_FuiNode* m_pointerTextPanel;
     FJ_FuiNode* m_cursorImage;
-    int m_panelAlignment;
     int m_topAlignment;
+    int m_panelAlignment;
 
 public:
     FJ_Cursor(fuiRenderNode* pRenderNode);

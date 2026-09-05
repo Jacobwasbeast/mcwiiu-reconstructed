@@ -8,6 +8,17 @@ class fuiRenderNode;
 
 class FJ_LoadCreateJoinMenu : public FJ_Document
 {
+public:
+    FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode);
+    virtual ~FJ_LoadCreateJoinMenu();
+    void SetActiveTab(int tab);
+    static FJ_LoadCreateJoinMenu* Create(fuiRenderNode* renderNode);
+    virtual unsigned int getType();
+    virtual void handlePress(FJ_Event* event);
+    void SetMatchesAvailable(bool available);
+    void ShowSaveSizeBar(bool show);
+    void HideLoadTab();
+
 private:
     int m_activeTab;
     int m_currentTab;
@@ -22,17 +33,6 @@ private:
     int m_joinTabOffset;
     int m_loadTabOffset;
     int m_newTabWidth;
-
-public:
-    FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_LoadCreateJoinMenu();
-    void SetActiveTab(int tab);
-    static FJ_LoadCreateJoinMenu* Create(fuiRenderNode* renderNode);
-    virtual unsigned int getType();
-    virtual void handlePress(FJ_Event* event);
-    void SetMatchesAvailable(bool available);
-    void ShowSaveSizeBar(bool show);
-    void HideLoadTab();
 };
 
 #endif

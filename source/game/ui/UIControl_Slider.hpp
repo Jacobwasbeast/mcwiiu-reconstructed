@@ -14,7 +14,7 @@ class UIControl_Slider : public UIControl_Base
 public:
     UIControl_Slider();
     virtual ~UIControl_Slider();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     virtual void setFocus(bool focus);
     virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256]);
@@ -26,14 +26,14 @@ public:
     unsigned int getCurrentValue() const;
     int GetRealWidth();
 
-protected:
+private:
     int m_minimum;
     int m_maximum;
     unsigned int m_value;
     bool m_focus;
-    unsigned char m_unknown69;
+    bool m_enabled;
     int m_step;
-    int m_unknown70;
+    int m_unknown;
     std::vector<std::wstring> m_possibleLabels;
 };
 

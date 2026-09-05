@@ -29,7 +29,7 @@ unsigned int FJ_ToolTips::getType()
 
 void FJ_ToolTips::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    node->keyDownHandler(event);
+    node->asFJ_Document()->keyDownHandler(event);
 }
 
 void FJ_ToolTips::init(FJ_Event*)
@@ -46,28 +46,22 @@ void FJ_ToolTips::init(FJ_Event*)
     {
         FJ_FuiNode* first = getChildByName(std::string(names[i]));
         m_toolTipNodes.push_back(first);
-        if (first != 0)
-        {
-            static_cast<FJ_ToolTip*>(first)->Init(std::wstring(), i, false, -1, -1);
-        }
+        static_cast<FJ_ToolTip*>(first)->Init(std::wstring(), i, false, -1, -1);
         FJ_FuiNode* second = getChildByName(std::string(names[i + 1]));
         m_toolTipNodes.push_back(second);
-        if (second != 0)
-        {
-            static_cast<FJ_ToolTip*>(second)->Init(std::wstring(), i + 1, false, -1, -1);
-        }
+        static_cast<FJ_ToolTip*>(second)->Init(std::wstring(), i + 1, false, -1, -1);
     }
     getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
     m_touchControlsAvailable = false;
     m_touchNodes.clear();
-    for (int i = 0; i < 16; ++i)
+    FJ_FuiNode* firstTouchNode = getChildByName(std::string(names[0]));
+    if (firstTouchNode != 0)
     {
-        FJ_FuiNode* node = getChildByName(std::string(names[i]));
-        if (node != 0)
+        for (int i = 0; i < 16; ++i)
         {
-            m_touchNodes.push_back(node);
-            m_touchControlsAvailable = true;
+            m_touchNodes.push_back(getChildByName(std::string(names[i])));
         }
+        m_touchControlsAvailable = true;
     }
     m_useTouchControls = 1;
 }
@@ -102,6 +96,7 @@ void FJ_ToolTips::SetToolTip(int index, int type, int subtype, const std::wstrin
         toolTip->SetType(type, subtype);
         toolTip->SetLabel(text + m_toolTipSuffix);
     }
+    m_toolTipIndex = index;
 }
 
 void FJ_ToolTips::UpdateLayout()
@@ -116,15 +111,34 @@ void FJ_ToolTips::UpdateLayout()
     {
         left = 2;
     }
+    const float stageHeight = static_cast<float>(getStage()->getStageHeight());
     for (int i = 0; i < 16; ++i)
     {
         FJ_FuiNode* node = m_toolTipNodes[i];
         if (node == 0 || !node->isVisible())
         {
+            if (m_touchControlsAvailable)
+            {
+                FJ_FuiNode* touchNode = m_touchNodes[i];
+                touchNode->setX(-1.0f);
+                touchNode->setY(-1.0f);
+                touchNode->setWidth(1.0f);
+                touchNode->setHeight(1.0f);
+            }
             continue;
         }
         node->setX(static_cast<float>(left));
-        node->setY(getStage()->getStageHeight() - node->getHeight() - static_cast<float>(bottom));
+        node->setY(stageHeight - node->getHeight() - static_cast<float>(bottom));
+        if (m_touchControlsAvailable)
+        {
+            FJ_FuiNode* touchNode = m_touchNodes[i];
+            touchNode->setVisible(true);
+            touchNode->setX(static_cast<float>(left));
+            touchNode->setY(node->getY() - touchNode->getHeight());
+            touchNode->setWidth(node->getWidth());
+            fuiRect rect = node->getRect(touchNode);
+            touchNode->setHeight(node->getHeight() * 2.0f + rect.yMax);
+        }
         left += static_cast<int>(node->getWidth());
     }
 }

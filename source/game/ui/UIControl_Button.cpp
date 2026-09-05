@@ -1,15 +1,8 @@
 #include "game/ui/UIControl_Button.hpp"
+#include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Button
-{
-public:
-    void Init(const std::wstring& label, int id);
-    void EnableButton(bool enable);
-    void ChangeState(int state);
-};
 
 class ConsoleUIController
 {
@@ -31,16 +24,17 @@ UIControl_Button::~UIControl_Button()
 {
 }
 
-bool UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_unknown0 = 1;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = 1;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Button::init(UIString label, int id)
 {
     m_label = label;
-    FJ_FuiNode* node = m_fuiRenderNode->getRoot();
+    m_controlId = id;
+    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node->isFJ_Button()) {
         node->asFJ_Button()->Init((const wchar_t*)(long)label.getString(), id);
     }
@@ -54,7 +48,7 @@ void UIControl_Button::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, (int)m_unknown0);
+    init(label, m_controlId);
 }
 
 void UIControl_Button::setEnable(bool enable, bool immediate)
@@ -67,7 +61,7 @@ void UIControl_Button::setEnable(bool enable, bool immediate)
         m_enablePending = true;
         return;
     }
-    m_fuiRenderNode->getRoot()->asFJ_Button()->EnableButton(enable);
+    m_fuiRenderNode->getFuiNode()->asFJ_Button()->EnableButton(enable);
 }
 
 void UIControl_Button::tick()
@@ -84,5 +78,5 @@ void UIControl_Button::setFocus(bool focus)
         return;
     }
     m_focus = focus;
-    m_fuiRenderNode->getRoot()->asFJ_Button()->ChangeState(focus ? 1 : 2);
+    m_fuiRenderNode->getFuiNode()->asFJ_Button()->ChangeState(focus ? 1 : 2);
 }

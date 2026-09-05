@@ -8,25 +8,23 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_IconSlot.hpp"
 #include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
-#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
-class FJ_Base
+class UIScene
 {
 public:
-    unsigned int getId();
+    virtual void handlePress(int first, int second);
 };
 
 class FJ_Button : public FJ_Base
 {
 public:
-    FJ_Base* getObjListParent();
     void setButtonPressed(bool pressed);
 };
 
 FJ_GameModeScoreboard::FJ_GameModeScoreboard(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_killedByLabelY(0), m_killedByLabelHeight(0)
+    : FJ_Document(renderNode)
 {
     const char* names[5] = {
         "PanelAward.Stat1Icon", "PanelAward.Stat2Icon", "PanelAward.Stat3Icon",
@@ -107,8 +105,8 @@ void FJ_GameModeScoreboard::handlePress(FJ_Event* event)
     FJ_Button* button = event->m_pTarget->asFJ_Button();
     if (button != 0)
     {
-        FJ_Base* parent = button->getObjListParent();
-        m_pCallbackScene->handlePress(parent->getId(), button->getId());
+        FJ_FuiNode* parent = button->getObjListParent();
+        m_pCallbackScene->handlePress(parent->asFJ_Base()->getId(), button->getId());
         button->setButtonPressed(false);
     }
 }
@@ -167,7 +165,7 @@ void FJ_GameModeScoreboard::SetHasPlayerBeenKilled(bool killed)
     FJ_FuiNode* label = award->getChildByName(std::string("Stat5Label"));
     if (!killed)
     {
-        killedBy->setY(block->getY() + block->getHeight() * 0.5f - static_cast<float>(m_killedByLabelHeight * 0.5));
+        killedBy->setY(block->getY() + block->getHeight() * 0.5f - static_cast<float>(m_killedByLabelHeight / 2));
         gamertag->setVisible(false);
         icon->setVisible(false);
         label->setVisible(false);

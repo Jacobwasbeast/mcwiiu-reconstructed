@@ -50,7 +50,6 @@ private:
         float alphaMultiply;
     };
 
-    float m_renderMatrix[16];
     fuiMatrix m_matrixStack[10];
     int m_matrixDepth;
     ColorState m_colorStack[10];

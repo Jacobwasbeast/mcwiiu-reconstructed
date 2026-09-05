@@ -7,6 +7,7 @@
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/fuiSymbol.hpp"
 class FJ_FuiNode;
+class FJ_Factory;
 class fui;
 class fuiFile;
 class fuiRenderNodeStage;
@@ -14,15 +15,16 @@ class fuiRenderNodeStage;
 class fuiRenderNode
 {
 	friend class fui;
+	friend class FJ_Factory;
 
 protected:
     unsigned int m_flags;
     unsigned char m_renderFlags;
     unsigned char m_filterFlags;
-    eFuiObjectType m_type;
-    unsigned int m_symbolIndex;
-    unsigned int m_frame;
     fuiObject* m_object;
+    unsigned int m_frame;
+    unsigned int m_symbolIndex;
+    eFuiObjectType m_type;
     fuiMatrix m_localMatrix;
     fuiMatrix m_globalMatrix;
     fuiFile* m_file;
@@ -72,6 +74,9 @@ public:
     float getAlpha();
     fuiRenderNode* asTimeline();
     void progogateBounds();
+    const char* getName() { return m_name; }
+    fuiRect getBounds() const { return m_bounds; }
+    void setScrollRect(const fuiRect& rect) { m_scrollRect = rect; }
     float getX();
     float getY();
     float getScaleX();

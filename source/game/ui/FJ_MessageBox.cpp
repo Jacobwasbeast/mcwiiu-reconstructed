@@ -4,6 +4,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Base.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
@@ -54,6 +55,7 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
         }
         if (buttonCount == 1)
         {
+            button3->asFJ_Base()->SetLabel(std::wstring());
             getStage()->setFocus(button3);
             return;
         }
@@ -62,6 +64,7 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     FJ_FuiNode* focus = NULL;
     if (buttonCount == 2)
     {
+        button2->asFJ_Base()->SetLabel(std::wstring(button3->getName().begin(), button3->getName().end()));
         if (focusIndex == 0)
         {
             focus = button2;
@@ -73,6 +76,7 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     }
     else if (buttonCount == 3)
     {
+        button1->asFJ_Base()->SetLabel(std::wstring(button3->getName().begin(), button3->getName().end()));
         if (focusIndex == 0)
         {
             focus = button1;
@@ -117,8 +121,8 @@ void FJ_MessageBox::AutoResize()
     FJ_FuiNode* button1 = getChildByName(std::string("Button1"));
     FJ_FuiNode* button2 = getChildByName(std::string("Button2"));
     FJ_FuiNode* button3 = getChildByName(std::string("Button3"));
-    FJ_FuiNode* content = getChildByName(std::string("Content"));
-    FJ_FuiNode* title = getChildByName(std::string("Title"));
+    FJ_Base* content = getChildByName(std::string("Content"))->asFJ_Base();
+    FJ_Base* title = getChildByName(std::string("Title"))->asFJ_Base();
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
 
     const int oldBackgroundWidth = static_cast<int>(background->getWidth());
@@ -127,8 +131,8 @@ void FJ_MessageBox::AutoResize()
     if (oldBackgroundWidth < backgroundWidth)
     {
         const int widthDelta = backgroundWidth - oldBackgroundWidth;
-        title->setWidth(static_cast<float>(static_cast<int>(title->getWidth() + widthDelta)));
-        content->setWidth(static_cast<float>(static_cast<int>(content->getWidth() + widthDelta)));
+        title->SetNewObjectWidth(static_cast<int>(title->getWidth()) + widthDelta);
+        content->SetNewObjectWidth(static_cast<int>(content->getWidth()) + widthDelta);
     }
 
     const float titleHeight = title->getHeight();

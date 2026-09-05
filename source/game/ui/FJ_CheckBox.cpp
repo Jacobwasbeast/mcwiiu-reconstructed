@@ -4,26 +4,40 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
-#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+
+class UIScene
+{
+public:
+    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
+};
 
 class fuiRenderNodeEditText : public fuiRenderNode
 {
+public:
+    virtual float getWidth();
 };
 
 static bool s_checkBoxKeyDown = false;
 
-static std::string checkBoxStateLabel(bool enabled, int state)
+static std::string s_checkBoxStates[4] =
 {
-    if (enabled)
-        return state == 0 ? std::string("Unchecked") : std::string("Checked");
-    return state == 0 ? std::string("DisabledUnchecked") : std::string("DisabledChecked");
+    std::string("Unchecked"),
+    std::string("DisabledUnchecked"),
+    std::string("Checked"),
+    std::string("DisabledChecked")
+};
+
+static const std::string& checkBoxStateLabel(bool enabled, int state)
+{
+    return s_checkBoxStates[state * 2 + (enabled ? 0 : 1)];
 }
 
 FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_checked(true), m_enabled(true), m_currentState(0),
-      m_labelWidth(0), m_oldWidth(0)
+    : FJ_Base(renderNode)
 {
+    m_checked = true;
+    m_enabled = true;
     s_checkBoxKeyDown = false;
     ChangeState(1);
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
@@ -56,12 +70,12 @@ void FJ_CheckBox::SetCheckBox(bool checked)
     }
     else if (parent->isFJ_List())
     {
-        UIScene* scene = static_cast<UIScene*>(getRoot()->m_pCallbackScene);
+        UIScene* scene = getRoot()->m_pCallbackScene;
         scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(parent)->getId(), getId(), m_checked);
     }
     else if (parent->isFJ_List2D())
     {
-        UIScene* scene = static_cast<UIScene*>(getRoot()->m_pCallbackScene);
+        UIScene* scene = getRoot()->m_pCallbackScene;
         scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(parent)->getId(), getId(), m_checked);
     }
     UpdateCheckBox();

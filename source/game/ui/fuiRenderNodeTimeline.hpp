@@ -74,6 +74,8 @@ public:
     virtual void handleAddedToStage();
     virtual fuiRenderNode* findNode(const char* name);
     virtual fuiRenderNode* getNodeFromPath(const char* path);
+    int getNumChildren() { return static_cast<int>(m_children.size()); }
+    fuiRenderNode* getChildAt(int index) { return m_children[index]; }
     std::string currentLabel();
     int currentFrame();
     void removeChild(fuiRenderNode* child, bool destroy);

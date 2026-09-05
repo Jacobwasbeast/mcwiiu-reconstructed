@@ -4,39 +4,37 @@
 #include <utility>
 
 #include "game/ui/FJ_Event.hpp"
-#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
+class FJ_Factory
+{
+public:
+    static FJ_FuiNode* createObject(const char*, fuiRenderNode*, bool, const char*);
+};
+
 FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)
 {
     m_pText = NULL;
-    m_bUseScrollRect = true;
-    m_bScrollingEnabled = true;
+    m_bScrollingEnabled = 1;
     m_bScrollingDown = false;
     m_bTouchScrolling = false;
     m_scrollDirection = 0;
     m_iFocusDirection = 0;
     m_bNoBackground = false;
     m_bScrollingUp = false;
-    m_iTargetScroll = 0;
-    m_bInitialized = true;
     m_pScrollingCompleteDelegate = NULL;
+    m_bInitialized = 1;
     m_iTouchStart = 0;
     m_iTouchPosition = 0;
     m_iTouchScroll = 0;
     m_iTouchTarget = 0;
-    m_iWidth = 0;
-    m_iRealWidth = 0;
-    m_iRealHeight = 0;
-    m_fScrollSpeed = 1.0f;
-    m_fWidth = 0.0f;
-    m_fScrollTop = 0.0f;
-    m_fScrollBottom = 0.0f;
+    m_bUseScrollRect = true;
+    m_iTargetScroll = 0;
     m_pUpArrow = FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL);
     m_pDownArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     FJ_FuiNodeStage* stage = getStage();
@@ -44,7 +42,7 @@ FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
         stage->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
         stage->addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
     }
-    if (stage != NULL && stage->getStageHeight() == 540.0f)
+    if (stage != NULL && (stage->getStageHeight() == 1080.0f || stage->getStageHeight() == 540.0f))
         m_fScrollSpeed = 1.5f;
 }
 
@@ -164,32 +162,48 @@ void FJ_HtmlText::_UpdateScrolling(FJ_FuiNode* node, FJ_Event* event)
     if (text != NULL) text->UpdateScrolling(event);
 }
 
-void FJ_HtmlText::keyDownHandler(FJ_Event* event)
+uint64_t FJ_HtmlText::keyDownHandler(FJ_Event* event)
 {
-    if (!m_bScrollingEnabled) return;
+    if (!m_bScrollingEnabled) return 0;
     FJ_FuiNodeStage* stage = getStage();
     bool focusChange = stage != NULL && stage->getFocus() != this;
     m_iFocusDirection = focusChange ? 1 : 0;
     int type = event->m_eType;
-    bool pageDown = type == eFJEventType_KeyDown || type == 2;
-    if (type == eFJEventType_KeyUp) {
+    bool directional = focusChange ? (type == 0x11 || type == 0x12) : (type == 3 || type == 4);
+    bool pageDown = type == 2;
+    if (type == eFJEventType_KeyDown) {
+        bool wasScrollingUp = m_bScrollingUp;
         m_bScrollingDown = false;
         m_scrollDirection = 0;
-    } else if (pageDown) {
-        m_bScrollingUp = false;
-        m_scrollDirection = 0;
-    } else if (type == 3 || type == 0x11) {
-        if (!CanScroll(false)) return;
-        m_bScrollingDown = true;
-        m_bScrollingUp = false;
+        if (!wasScrollingUp && CanScroll(true)) {
+            m_bScrollingUp = true;
+            m_iScrollDelay = pageDown ? 0 : 30;
+            m_iFlickDelay = pageDown ? 0 : 30;
+            if (stage != NULL) stage->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
+            if (isVisible()) {
+                static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(2);
+                m_pDownArrow->ChangeState(3);
+            }
+        }
     } else {
-        if (!CanScroll(true)) return;
-        m_bScrollingUp = true;
-        m_bScrollingDown = false;
+        if (pageDown) directional = true;
+        if (!directional) return 0;
+        m_bScrollingUp = false;
+        m_scrollDirection = 0;
+        if (!m_scrollDirection && CanScroll(false)) {
+            m_bScrollingDown = true;
+            m_iScrollDelay = pageDown ? 0 : 30;
+            m_iFlickDelay = pageDown ? 0 : 30;
+            m_scrollDirection = 1;
+            if (stage != NULL) stage->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
+            if (isVisible()) {
+                m_pDownArrow->ChangeState(5);
+                static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
+            }
+        }
     }
-    FJ_FuiNodeStage* currentStage = getStage();
-    if (currentStage != NULL) currentStage->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
     HandleScrollListArrows(false);
+    return 0;
 }
 
 void FJ_HtmlText::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -198,13 +212,13 @@ void FJ_HtmlText::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
     if (text != NULL) text->keyDownHandler(event);
 }
 
-void FJ_HtmlText::GetScrollTarget(bool up)
+uint64_t FJ_HtmlText::GetScrollTarget(bool up)
 {
     int textHeight = getTextHeight();
     int current = Math::round(m_fScrollTop);
     int target = 0;
     if (!m_bScrollingUp) {
-        if (!m_scrollDirection) return;
+        if (!m_scrollDirection) return 0;
         if (up) current += Math::round(m_fScrollBottom - m_fScrollTop - m_iCharacterHeight * 3.0f);
         do { target += m_iCharacterHeight; } while (target < current);
         if (textHeight < target + m_iCharacterHeight) target = textHeight;
@@ -212,9 +226,10 @@ void FJ_HtmlText::GetScrollTarget(bool up)
         if (up) current -= Math::round(m_fScrollBottom - m_fScrollTop - m_iCharacterHeight * 3.0f);
         do { textHeight -= m_iCharacterHeight; } while (current < textHeight);
         target = textHeight;
-        if (textHeight - m_iCharacterHeight < 0) { m_iTargetScroll = 0; return; }
+        if (textHeight - m_iCharacterHeight < 0) { m_iTargetScroll = 0; return 0; }
     }
     m_iTargetScroll = target;
+    return 0;
 }
 
 void FJ_HtmlText::keyUpHandler(FJ_Event* event)
@@ -308,7 +323,7 @@ void FJ_HtmlText::Init(const std::wstring& label)
     m_pText->setY(getY());
     m_pText->setWidth(width);
     m_pText->setHeight(height - static_cast<float>(m_bNoBackground ? 0 : static_cast<int>(m_pUpArrow->getHeight())));
-    static_cast<fuiRenderNodeEditText*>(m_pText->asEditText())->setAutoSize(1);
+    static_cast<fuiRenderNodeEditText*>(m_pText->asEditText())->setAutoSize(static_cast<TextFieldAutoSize>(1));
     m_scrollDirection = m_bUseScrollRect ? 1 : 0;
     m_iWidth = 0;
     m_fWidth = width;
@@ -318,7 +333,7 @@ void FJ_HtmlText::Init(const std::wstring& label)
     HandleScrollListArrows(true);
 }
 
-void FJ_HtmlText::GetScrollDistance()
+uint64_t FJ_HtmlText::GetScrollDistance()
 {
     m_iCharacterHeight = 0;
     fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(m_pText->asEditText());
@@ -332,6 +347,7 @@ void FJ_HtmlText::GetScrollDistance()
         m_iCharacterHeight = total;
     }
     m_iCharacterHeight = total / samples;
+    return 0;
 }
 
 void FJ_HtmlText::SetLabel(const std::wstring& label)
@@ -357,9 +373,9 @@ void FJ_HtmlText::SetLabel(const std::wstring& label)
     }
 }
 
-int FJ_HtmlText::GetNumberOfLines()
+uint64_t FJ_HtmlText::GetNumberOfLines()
 {
-    return Math::round((m_fScrollBottom - m_fScrollTop) / static_cast<float>(m_iCharacterHeight));
+    return static_cast<uint64_t>(Math::round((m_fScrollBottom - m_fScrollTop) / static_cast<float>(m_iCharacterHeight)));
 }
 
 unsigned int FJ_HtmlText::GetOptimalHeight(int lines)
@@ -420,7 +436,7 @@ void FJ_HtmlText::TouchScroll(int position, bool active)
             FJ_FuiNodeStage* stage = getStage();
             if (stage != NULL) stage->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
             m_pDownArrow->ChangeState(5);
-            m_pUpArrow->ChangeState(0);
+            static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
             HandleScrollListArrows(false);
         } else {
             m_iTouchTarget = m_iTouchScroll - movement;
@@ -440,7 +456,7 @@ void FJ_HtmlText::TouchScroll(int position, bool active)
             m_iTouchTarget = static_cast<int>(m_fScrollTop) - movement;
             FJ_FuiNodeStage* stage = getStage();
             if (stage != NULL) stage->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
-            m_pUpArrow->ChangeState(2);
+            static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(2);
             m_pDownArrow->ChangeState(3);
             HandleScrollListArrows(false);
         } else {

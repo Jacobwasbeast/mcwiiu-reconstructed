@@ -188,7 +188,7 @@ void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoS
     }
     field->setScaleX(1.0f / getScaleX());
     field->setScaleY(1.0f / getScaleY());
-    field->setAutoSize(autoSize ? 3 : 1);
+    field->setAutoSize(autoSize ? TextFieldAutoSizeRight : TextFieldAutoSizeLeft);
     if (movieClip != 0)
         movieClip->setX((m_objectWidth - m_secondaryWidth) / getScaleX() - m_secondaryX);
 }

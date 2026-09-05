@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 

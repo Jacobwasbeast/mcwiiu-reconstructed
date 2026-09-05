@@ -3,6 +3,7 @@
 #include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_BookAndQuillMenu::FJ_BookAndQuillMenu(fuiRenderNode* renderNode)
@@ -70,9 +71,10 @@ void FJ_BookAndQuillMenu::ChangePage(int page, int pageCount)
 int FJ_BookAndQuillMenu::GetCaretOffset(int position)
 {
     int offset = 0;
-    if (m_label == NULL || m_label->GetLabel().empty())
+    std::wstring* labelText = m_label == NULL ? NULL : (std::wstring*)m_label->GetLabel();
+    if (labelText == NULL || labelText->empty())
         return offset;
-    const std::wstring& label = m_label->GetLabel();
+    const std::wstring& label = *labelText;
     for (int i = 0; i < position && i < static_cast<int>(label.size()); ++i) {
         if (label[i] == L'\n')
             ++offset;
@@ -88,7 +90,7 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
     if (!m_caretVisible) {
         m_caret->SetTextOnly(L"");
     } else {
-        const std::wstring& label = m_label->GetLabel();
+        const std::wstring& label = *(std::wstring*)m_label->GetLabel();
         int index = position + (force ? 0 : GetCaretOffset(position));
         if (index >= static_cast<int>(label.size()))
             index = static_cast<int>(label.size()) - 1;

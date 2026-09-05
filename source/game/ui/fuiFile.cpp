@@ -13,6 +13,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeBitmap.hpp"
 #include "game/ui/fuiRenderNodeStage.hpp"
+#include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/ui/fuiShape.hpp"
 #include "game/ui/fuiShapeComponent.hpp"
 #include "game/ui/fuiSymbol.hpp"
@@ -24,7 +25,7 @@
 #include "game/ui/fuiTimelineFrame.hpp"
 #include "game/ui/fuiVert.hpp"
 
-extern fui* g_fui;
+extern fui* gFui;
 
 struct D3DXIMAGE_INFO
 {
@@ -53,7 +54,7 @@ fuiFile::~fuiFile()
         {
             if (bitmaps[i].textureId > 0)
                 gRenderer->TextureFree(bitmaps[i].textureId);
-            g_fui->removeManagedTexture(this, &bitmaps[i]);
+            gFui->removeManagedTexture(this, &bitmaps[i]);
         }
     }
     delete[] data;
@@ -186,7 +187,7 @@ void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
         if (textureData == NULL)
         {
             bitmap->textureId = -1;
-            g_fui->manageTexture(this, bitmap);
+            gFui->manageTexture(this, bitmap);
             return;
         }
         fui::EndianSwapImageData(textureData, bitmap->width * bitmap->height);
@@ -206,7 +207,7 @@ void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
             }
         }
     }
-    g_fui->manageTexture(this, bitmap);
+    gFui->manageTexture(this, bitmap);
 }
 
 fuiRenderNode* fuiFile::getRootNode()

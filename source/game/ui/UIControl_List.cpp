@@ -67,12 +67,12 @@ unsigned int UIControl_List::getCurrentSelection() const
 
 void UIControl_List::init(int controlId)
 {
-    m_controlType = (unsigned short)controlId;
+    m_controlType = controlId;
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
-        g_ConsoleUIController.TouchBoxAdd(this, m_scene);
+        gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
 int UIControl_List::getListIndex(int index)
@@ -129,8 +129,10 @@ void UIControl_List::SetItemLabel(int item, UIString label, bool immediate)
         m_pendingUpdates.push_back(new PendingSetLabel(this, item, label));
         return;
     }
-    const std::wstring& value = *(const std::wstring*)(long)label.getString();
-    list->SetItemLabel(getListIndex(item), value);
+    if (m_scene->hasMovie()) {
+        const std::wstring& value = *(const std::wstring*)(long)label.getString();
+        list->SetItemLabel(getListIndex(item), value);
+    }
 }
 
 void UIControl_List::remElement(int index)
@@ -244,7 +246,7 @@ UIControl_List::PendingSetCurrentSelection::~PendingSetCurrentSelection()
 
 unsigned int UIControl_List::PendingSetCurrentSelection::OnTick()
 {
-    m_list->setCurrentSelection(m_selection, m_immediate, true);
+    m_list->setCurrentSelection(m_item, m_update, true);
     return 1;
 }
 

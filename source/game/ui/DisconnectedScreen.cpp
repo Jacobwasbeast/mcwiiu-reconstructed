@@ -20,8 +20,6 @@ void DisconnectedScreen::keyPressed(char key, int action)
 
 void DisconnectedScreen::init()
 {
-    mButtons.clear();
-
     std::wstring key(L"gui_toMenu");
     std::wstring label = Language::getInstance()->getElement(key);
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, label));
@@ -37,6 +35,7 @@ void DisconnectedScreen::buttonClicked(Button* button)
 
 void DisconnectedScreen::render(int x, int y, float partialTick)
 {
-    GuiComponent::drawCenteredString(mFont, mTitle, mWidth / 2, mHeight / 2 - 50, 0xffffff);
-    GuiComponent::drawCenteredString(mFont, mMessage, mWidth / 2, mHeight / 2 - 10, 0xffffff);
+    drawCenteredString(mFont, mTitle, mWidth / 2, mHeight / 2 - 50, 0xffffff);
+    drawCenteredString(mFont, mMessage, mWidth / 2, mHeight / 2 - 10, 0xffffff);
+    Screen::render(x, y, partialTick);
 }
