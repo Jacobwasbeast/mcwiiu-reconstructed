@@ -21,29 +21,21 @@ public:
 
     GameModeConstraints(int playerId);
     ~GameModeConstraints();
-
     void tick();
-
     void SetCurrentState(int state);
-
     bool HasFailedConstraint(int state);
     TutorialConstraint* GetFailedConstraint(int state);
     bool DidCurrentFailedConstraintChange();
-
     void MoveDelayedConstraints(int oldState, int newState);
-
     void AddGlobalConstraint(TutorialConstraint* constraint);
     void AddConstraint(TutorialConstraint* constraint, bool takeOwnership);
     void RemoveConstraint(TutorialConstraint* constraint, bool delayed);
     void ClearAllAreaConstraints();
-
     bool InConstraintArea(Vec3* pos, int state);
     bool NotInConstraintArea(int playerId, int state);
     bool HasGlobalConstraint(int state);
-
     bool canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
                            double newZ, Vec3* clampedPosition);
-
     bool CanUsePortal();
     bool isInputAllowed(int mapping);
 

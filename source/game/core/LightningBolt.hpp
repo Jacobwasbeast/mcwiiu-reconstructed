@@ -9,8 +9,6 @@
 class CompoundTag;
 class Level;
 
-const unsigned long long ENTITY_TYPE_LIGHTNING_BOLT = 0x000000000B000001ULL;
-
 class LightningBolt : public Entity
 {
 public:

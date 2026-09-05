@@ -5,22 +5,50 @@
 #include <stdint.h>
 #include "vendor/_SkinAdjustments.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-typedef int PlayerUID;
-struct TIPSTRUCT;
+#include "game/world/generation/PlayerUID.hpp"
+#include "game/minigame/EMiniGameId.hpp"
+#include "game/core/DLCManager.hpp"
+#include "game/core/GameRuleManager.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/C4JStorage.hpp"
+class LevelGenerationOptions;
+class LevelChunk;
+class CConsoleMinecraftApp;
+class LevelGenerators;
+class LevelRules;
+class LevelRuleset;
+class Block;
+struct TIPSTRUCT
+{
+    unsigned int sortValue;
+    unsigned int tipId;
+};
 class CMinecraftApp {
 public:
-    class PngTagData { public: unsigned char data[72]; PngTagData(); };
+    class PngTagData
+    {
+    public:
+        unsigned int flags;
+        unsigned int imageType;
+        unsigned int width;
+        unsigned int height;
+        unsigned int values[13];
+        unsigned int dataSize;
+
+        PngTagData();
+    };
     class _TipData {
-        TIPSTRUCT* m_tips;
         unsigned int m_index;
         unsigned int m_count;
+        TIPSTRUCT* m_tips;
     public:
         _TipData();
-        _TipData(TIPSTRUCT* data, unsigned int index);
+        _TipData(TIPSTRUCT* tips, unsigned int count);
         unsigned int getNextTip();
     };
     CMinecraftApp();
     ~CMinecraftApp();
+    int GetPrimaryUserIndex() { return gProfile->GetPrimaryPad(); }
     void SetGameHostOption(int* firstArgument, uint32_t secondArgument, uint32_t thirdArgument);
     void SetGameHostOption(uint32_t firstArgument, uint32_t secondArgument);
     void SetXuiServerAction(int32_t firstArgument, uint32_t secondArgument, uint32_t thirdArgument);
@@ -44,65 +72,64 @@ public:
     uint8_t GetLiveLinkRequired();
     static uint64_t SignInChangeCallback(int32_t firstArgument, bool secondArgument, uint32_t thirdArgument);
     static void ProfileReadErrorCallback(uint32_t firstArgument);
-    static uint32_t DefaultOptionsCallback(uint32_t firstArgument, uint32_t secondArgument, int32_t thirdArgument);
-    static uint32_t OptionsDataCallback(int32_t firstArgument, int32_t secondArgument, uint16_t thirdArgument, uint32_t fourthArgument);
+    static uint32_t DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile);
+    static uint32_t OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status);
     void EnterSaveNotificationSection();
     void LeaveSaveNotificationSection();
     uint8_t GetGameStarted();
     void SetDefaultHostOptions();
     void InitGameSettings();
     static uint64_t UpsellReturnedCallback(uint32_t firstArgument, uint32_t secondArgument, uint32_t thirdArgument, int32_t fourthArgument);
-    static int32_t TipsSortFunction(uint32_t firstArgument, uint32_t secondArgument);
+    static int TipsSortFunction(const void* firstTip, const void* secondTip);
     void InitialiseTips();
     void SetAppPaused(bool firstArgument);
     uint8_t GetReallyChangingSessionType();
     uint32_t GetGlobalXuiAction();
     uint32_t GetTMSAction(int32_t firstArgument);
-    static uint32_t EthernetDisconnectReturned(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument);
-    static uint32_t BannedLevelDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t EthernetDisconnectReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     void SetGlobalXuiAction(uint32_t firstArgument);
     uint8_t GetChangingSessionType();
-    static uint32_t UnlockFullSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
     void SetAutosaveTimerTime();
     void SetGameStarted(bool firstArgument);
     uint32_t GetXuiServerAction(int32_t firstArgument);
-    static uint32_t UnlockFullExitReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t UnlockFullExitReturned(void* context, int button, C4JStorage::EMessageResult result);
     void SetChangingSessionType(bool firstArgument);
     uint32_t GetDisconnectReason();
     void SetReallyChangingSessionType(bool firstArgument);
     static uint32_t SignoutExitWorldThreadProc(int32_t firstArgument);
-    static uint32_t TrialOverReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
-    static uint32_t UnlockFullInviteReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
-    static uint32_t ExitAndJoinFromInvite(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
-    static uint32_t ExitAndJoinFromInviteAndSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
-    static uint32_t ExitAndJoinFromInviteDeclineSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
-    static uint32_t ExitAndJoinFromInviteSaveDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static uint32_t ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     uint64_t SetExtraGameData(int* firstArgument, uint32_t secondArgument, uint32_t thirdArgument);
     void SetExtraGameData(uint32_t firstArgument, uint32_t secondArgument);
     void SetTutorialMode(bool firstArgument, int* secondArgument);
     uint32_t GetXuiAction(int32_t firstArgument);
     static uint32_t RemoteSaveThreadProc(uint32_t firstArgument);
-    static uint32_t ExitGameFromRemoteSaveDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint64_t ExitGameFromRemoteSave(uint32_t firstArgument);
-    static uint32_t TexturePackDialogReturned(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument);
+    static uint32_t TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     static void SetupMiniGameMusic();
     static uint32_t GameModeTransitionThreadProc(uint32_t firstArgument);
     static uint64_t GameModeTransitionComplete(int32_t firstArgument);
     void SetTMSAction(int32_t firstArgument, uint32_t secondArgument);
-    void Handlints();
     uint8_t IsAppPaused();
     void UpdateTrialPausedTimer();
-    void setLevelGenerationOptions(int* firstArgument);
+    void setLevelGenerationOptions(LevelGenerationOptions* firstArgument);
     uint8_t DLCInstallProcessCompleted();
     std::wstring getDLCFolderName(uint32_t firstArgument);
     void getRootPath(uint32_t firstArgument, uint32_t secondArgument, int32_t thirdArgument, int32_t fourthArgument, uint32_t fifthArgument);
-    std::wstring getFilePath(uint32_t firstArgument, int* secondArgument, bool thirdArgument, int* fourthArgument);
+    std::wstring getFilePath(unsigned int firstArgument, std::wstring secondArgument, bool thirdArgument, std::wstring fourthArgument);
     uint64_t HandleDLC(int* firstArgument);
     static uint32_t DLCMountedCallback(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument, uint32_t fourthArgument);
     void MountNextDLC(int32_t firstArgument);
     static uint32_t DLCInstalledCallback(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
     uint32_t StartInstallDLCProcess(int32_t firstArgument);
-    void getLevelGenerators();
+    LevelGenerators* getLevelGenerators();
     void ClearTerrainFeaturePosition();
     void LocaleAndLanguageInit();
     void HandleButtonPresses();
@@ -155,9 +182,9 @@ public:
     void StoreLaunchData();
     void ExitGame();
     bool isXuidNotch(int* firstArgument);
-    uint32_t isXuidDeadmau5(int* firstArgument);
+    uint32_t isXuidDeadmau5(PlayerUID firstArgument);
     void AddMemoryTextureFile(int* firstArgument, int* secondArgument, uint32_t thirdArgument);
-    void GetMemFileDetails(int* firstArgument, int** secondArgument, int* thirdArgument);
+    void GetMemFileDetails(const std::wstring& firstArgument, unsigned char** secondArgument, unsigned int* thirdArgument);
     bool IsFileInMemoryTextures(int* firstArgument);
     void GetTPD(int32_t firstArgument, int** secondArgument, int* thirdArgument);
     bool DefaultCapeExists();
@@ -166,9 +193,9 @@ public:
     uint64_t getArchiveFileSize(int* firstArgument);
     void SetTrialTimerStart();
     double getTrialTimer();
-    static uint32_t WarningTrialTexturePackReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
+    static uint32_t WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t tipFiltered(int32_t firstArgument);
-    uint32_t GetNextTip(bool firstArgument, int32_t secondArgument);
+    uint32_t GetNextTip(bool firstArgument, EMiniGameId secondArgument);
     uint64_t GetHTMLColour(uint32_t firstArgument);
     void GetHTMLColor(uint32_t firstArgument);
     std::wstring GetSingleActionReplacement(int32_t firstArgument, uint32_t secondArgument);
@@ -179,7 +206,7 @@ public:
     double getAppTime();
     void AddTerrainFeaturePosition(int32_t firstArgument, int32_t secondArgument, int32_t thirdArgument);
     uint32_t GetTerrainFeaturePosition(int32_t firstArgument, int* secondArgument, int* thirdArgument);
-    uint32_t GetMojangDataForXuid(int* firstArgument);
+    uint32_t GetMojangDataForXuid(PlayerUID firstArgument);
     uint8_t GetBanListCheck(int32_t firstArgument);
     bool AutosaveDue();
     uint32_t SecondsToAutosave();
@@ -196,14 +223,14 @@ public:
     void ParseImageTextData(int* firstArgument, uint32_t secondArgument, int* thirdArgument);
     uint64_t GetImageTextData(int* firstArgument, uint32_t secondArgument, int* thirdArgument);
     uint32_t CreateImageTextData(int* firstArgument, int* secondArgument);
-    void processSchematics(int* firstArgument);
-    void processSchematicsLighting(int* firstArgument);
+    void processSchematics(LevelChunk* firstArgument);
+    void processSchematicsLighting(LevelChunk* firstArgument);
     void loadDefaultGameRules();
-    uint32_t getLevelRules();
-    void getGameRuleDefinitions();
-    void getLevelGenerationOptions();
-    void GetGameRulesString(int* firstArgument);
-    uint32_t ShouldCollideWith(int* firstArgument);
+    LevelRules* getLevelRules();
+    LevelRuleset* getGameRuleDefinitions();
+    LevelGenerationOptions* getLevelGenerationOptions();
+    const wchar_t* GetGameRulesString(const std::wstring& firstArgument);
+    bool ShouldCollideWith(Block* firstArgument);
     void UpdatePlayerInfo(uint8_t firstArgument, int16_t secondArgument, uint32_t thirdArgument, uint8_t fourthArgument);
     uint32_t GetPlayerColour(uint8_t firstArgument);
     uint32_t GetPlayerPrivileges(uint8_t firstArgument);
@@ -215,10 +242,8 @@ public:
     uint8_t GetCorruptSaveDeleted();
     void SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument, int32_t fourthArgument);
     int32_t SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, int* thirdArgument);
-    uint32_t GetAdditionalints(uint32_t firstArgument);
+    uint32_t GetAdditionalModelParts(unsigned int firstArgument);
     uint32_t GetAdditionalSkinBoxes(uint32_t firstArgument);
-    void Setint(uint32_t firstArgument, int* secondArgument);
-    uint64_t Getint(int32_t firstArgument, uint32_t secondArgument);
     static uint32_t getSkinIdFromPath(int* firstArgument);
     static uint64_t getSkinPathFromId(int32_t firstArgument, uint32_t secondArgument);
     uint32_t GetTMSGlobalFileListRead();
@@ -242,7 +267,7 @@ public:
     void HandleButtonPresses(int value);
     bool IntroRunning();
     void SetIntroRunning(bool value);
-    static void DisplaySavingMessage(int p1, int p2, int p3);
+    static void DisplaySavingMessage(void* context, C4JStorage::ESavingMessage message, int value);
     uint32_t LoadCommandBlockMenu(int p1, int p2);
     uint32_t GetGameMode();
     uint32_t GetGlobalXuiServerAction();
@@ -259,12 +284,11 @@ public:
     void SetMobsDontTickEnabled(bool value);
     bool GetFreezePlayers();
     void SetFreezePlayers(bool value);
-    std::wstring toStringOptionsStatus(int value);
-    void SetOptionsCallbackStatus(int p1, int p2);
+    std::wstring toStringOptionsStatus(const C4JStorage::eOptionsCallback& status);
+    void SetOptionsCallbackStatus(int profile, C4JStorage::eOptionsCallback status);
     uint32_t GetAdditionalModelParts(int value);
-    uint32_t GetAdditionalModelParts(unsigned int value);
-    static void PrimaryPlayerSignedOutReturned(int p1, int p2, int p3);
-    static void MarketplaceCountsCallback(int p1, int p2, int p3);
+    static void PrimaryPlayerSignedOutReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static void MarketplaceCountsCallback(void* context, C4JStorage::DLC_TMS_DETAILS* details, int count);
     void ClearNewDLCAvailable();
     bool GetNewDLCAvailable();
     void DisplayNewDLCTipAgain();
@@ -299,7 +323,7 @@ public:
     void TickTMSPPFilesRetrieved();
     void ClearTMSPPFilesRetrieved();
     void AddTMSPPFileTypeRequest(int p1, bool p2);
-    static void TMSPPFileReturned(int p1, int p2, int p3, int p4, const char* p5);
+    static void TMSPPFileReturned(void* context, int result, int index, C4JStorage::TMSPP_FILEDATA* data, const char* name);
     bool GetBanListRead(int value);
     void SetBanListRead(int p1, bool p2);
     void ClearBanList(int value);
@@ -309,5 +333,19 @@ public:
     uint32_t get_xcLang(wchar_t* value);
     void SetTickTMSDLCFiles(bool value);
     void SetFakePadValue(int p1, unsigned char p2);
+
+private:
+    std::vector<std::wstring> m_dlcSkinNames;
+public:
+    DLCManager mDLCManager;
+private:
+    long long mLastPerformanceCounter;
+    long long mAccumulatedPerformanceCounter;
+    float mAppTime;
+    float mFrameTime;
+    float mPerformanceCounterScale;
+    GameRuleManager mGameRuleManager;
 };
+extern CConsoleMinecraftApp gApp;
+extern CMinecraftApp* g_pApp;
 #endif

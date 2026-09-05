@@ -5,6 +5,8 @@
 
 #include "game/world/generation/PlayerUID.hpp"
 
+class CProfile;
+
 class CAchievements
 {
 public:
@@ -26,8 +28,10 @@ public:
     bool StartWrite();
 
 private:
+    friend class CProfile;
+
     bool mIsSystemPlayer;
-    bool mUnused;
+    bool mHasAchievementsFile;
     unsigned char mSlotId;
     PlayerUID mPlayerUID;
     bool mDirty;

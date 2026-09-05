@@ -14,7 +14,7 @@ struct DLC_INFO
     bool Purchased;
     void* pImageData;
     unsigned int ImageSize;
-    char RomName[64];
+    char RomName[8];
 };
 
 class cDLCInfo

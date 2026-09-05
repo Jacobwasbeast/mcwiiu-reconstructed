@@ -1,6 +1,7 @@
 #ifndef GAME_CORE_SCOREBOARD_HPP
 #define GAME_CORE_SCOREBOARD_HPP
 
+#include <stdint.h>
 #include <functional>
 #include <string>
 #include <vector>
@@ -127,9 +128,9 @@ public:
         Weapon(int itemId);
         Weapon(int itemId, Potion* pPotion);
 
-        int GetKey() const;
+        uint32_t GetKey() const;
         bool HasItem() const;
-        Item* GetItem() const;
+        void GetItem() const;
         not_null_ptr<ItemInstance> GetItemInstance() const;
 
         int mItemId;
@@ -170,8 +171,8 @@ public:
             int mArrowsHit;
             int mBlocksPlaced;
             int mLastCheckpointId;
-            int mLastCheckpointSequenceId;
             int mLapsCompleted;
+            int mLastCheckpointSequenceId;
             int mEndZoneEntered;
             double mDistanceTravelled;
             double mLongestShot;

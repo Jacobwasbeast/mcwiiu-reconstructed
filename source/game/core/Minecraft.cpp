@@ -25,8 +25,8 @@
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BossHealthOverlay.hpp"
-#include "game/core/CInput.hpp"
-#include "game/core/CProfile.hpp"
+#include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ClientScoreboard.hpp"
 #include "game/core/ColourTable.hpp"
@@ -44,7 +44,6 @@
 #include "game/core/GrassColor.hpp"
 #include "game/core/Gui.hpp"
 #include "game/core/HitResult.hpp"
-#include "game/core/HtmlString.hpp"
 #include "game/core/Input.hpp"
 #include "game/core/InfoBarManager.hpp"
 #include "game/core/InteractionResult.hpp"
@@ -57,7 +56,7 @@
 #include "game/core/Timer.hpp"
 #include "game/core/TrialMode.hpp"
 #include "game/core/User.hpp"
-#include "game/data/CStorage.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/McRegionLevelStorageSource.hpp"
@@ -120,6 +119,7 @@ static OSFastMutex sTextureRequestLock;
 
 Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet, int width, int height,
                      bool fullscreen)
+    : mFrameTimer(new FrameTimer())
 {
     mFixerUpper = DataFixers::createFixerUpper();
     mHasCrashed = false;
@@ -171,7 +171,6 @@ Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet,
     mLastRenderTime = -1;
     mRunning = true;
     mFrameNumber = 0;
-
     Stats::init();
 
     mMouseGrabTicks = 0;
@@ -261,7 +260,7 @@ ItemColors* Minecraft::getItemColors()
     return mItemColors;
 }
 
-float Minecraft::getFrameTime()
+double Minecraft::getFrameTime()
 {
     return mTimer->renderPartialTicks;
 }
@@ -863,11 +862,11 @@ ClientMasterGameMode* Minecraft::GetClientMasterGameMode()
 
 bool Minecraft::InMiniGame(EMiniGameId miniGameId, bool includeNextGameMode)
 {
-    if (miniGameId == eMiniGameId_Tutorial)
+    if (miniGameId == (EMiniGameId)15)
         return gApp.GetGameHostOption((eGameHostOption)0x1f) != 0;
 
     const MiniGameDef* miniGame = GetInstance()->GetMiniGame();
-    if (includeNextGameMode && miniGameId != eMiniGameId_None && miniGame->GetId() == eMiniGameId_None)
+    if (includeNextGameMode && miniGameId != (EMiniGameId)0 && miniGame->GetId() == (EMiniGameId)0)
         return GetInstance()->GetClientMasterGameMode()->GetNextGameMode() == miniGameId;
 
     return miniGame->GetId() == miniGameId;
@@ -2581,117 +2580,4 @@ void Minecraft::SetJoiningFromFriendsTabOrInvite(bool joining)
 bool Minecraft::IsJoiningFromFriendsTabOrInvite() const
 {
     return mJoiningFromFriendsTabOrInvite;
-}
-
-void Minecraft::checkGlError(const std::wstring& stage)
-{
-    if (!stage.empty())
-        mLastTextureRequestTick = mTicks;
-}
-
-void Minecraft::levelTickThreadInitFunc()
-{
-    if (sInstance != NULL)
-        sInstance->tickAllConnections();
-}
-
-void Minecraft::connectTo(const std::wstring& server, int port)
-{
-    mServer = server;
-    mServerPort = port;
-    mConnectionFailed[0] = false;
-}
-
-void Minecraft::renderLoadingScreen()
-{
-    if (mProgressRenderer != NULL)
-        mProgressRenderer->setProgress(0);
-}
-
-void Minecraft::blit(int x, int y, int width, int height, int u, int v, int uWidth, int vHeight,
-                     int textureWidth, int textureHeight)
-{
-    if (mTextures != NULL)
-        mTextures->bindTexture(L"/gui/gui.png");
-}
-
-void Minecraft::run_end()
-{
-    stop();
-}
-
-void Minecraft::renderFpsMeter(long long frameStartTime)
-{
-    mLastRenderTime = frameStartTime;
-    ++mFrameNumber;
-}
-
-void Minecraft::pauseGame()
-{
-    mPaused = true;
-}
-
-void Minecraft::resize(int width, int height)
-{
-    mWidth = width;
-    mHeight = height;
-}
-
-void Minecraft::verify()
-{
-    if (mWidth < 0)
-        mWidth = 0;
-    if (mHeight < 0)
-        mHeight = 0;
-}
-
-void Minecraft::selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId,
-                            const std::wstring& levelName, LevelSettings* settings)
-{
-    mLevelName = levelName;
-    mLevelDirName = levelId;
-}
-
-void Minecraft::saveSlot(int slot, const std::wstring& levelName)
-{
-    mLevelId = slot;
-    mLevelName = levelName;
-}
-
-void Minecraft::loadSlot(const std::wstring& levelName, int slot)
-{
-    mLevelName = levelName;
-    mLevelId = slot;
-}
-
-void Minecraft::handleClientSideCommand(const std::wstring& command)
-{
-    if (command == L"pause")
-        pauseGame();
-}
-
-int Minecraft::maxSupportedTextureSize()
-{
-    return 4096;
-}
-
-Textures* Minecraft::getTextureManager()
-{
-    return mTextures;
-}
-
-FrameTimer* Minecraft::getFrameTimer()
-{
-    return mFrameTimer;
-}
-
-Screen* Minecraft::getScreen()
-{
-    return mScreen;
-}
-
-void Minecraft::delayTextureReload()
-{
-    mReloadTextures = true;
-    mSoundReloadDelay = 1;
 }

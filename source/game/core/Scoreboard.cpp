@@ -289,7 +289,7 @@ Scoreboard::Weapon::Weapon(int itemId, Potion* pPotion)
     mPotionId = Potion::getId(pPotion);
 }
 
-int Scoreboard::Weapon::GetKey() const
+uint32_t Scoreboard::Weapon::GetKey() const
 {
     return (mPotionId << 16) | mItemId;
 }
@@ -299,9 +299,9 @@ bool Scoreboard::Weapon::HasItem() const
     return mItemId != -1;
 }
 
-Item* Scoreboard::Weapon::GetItem() const
+void Scoreboard::Weapon::GetItem() const
 {
-    return Item::byId(mItemId);
+    Item::byId(mItemId);
 }
 
 not_null_ptr<ItemInstance> Scoreboard::Weapon::GetItemInstance() const

@@ -9,6 +9,8 @@ class DLCPack;
 
 class DLCFile
 {
+    friend class DLCPack;
+
 public:
     DLCFile(DLCManager::EDLCType type, const std::wstring& path);
     virtual ~DLCFile();

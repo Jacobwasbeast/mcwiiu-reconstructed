@@ -1,18 +1,57 @@
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
+#include <algorithm>
+#include <cstdlib>
 #include <map>
-static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
-CMinecraftApp::PngTagData::PngTagData() : data() {}
-CMinecraftApp::_TipData::_TipData() : m_tips(0), m_index(0), m_count(0) {}
-CMinecraftApp::_TipData::_TipData(TIPSTRUCT* data, unsigned int index) : m_tips(data), m_index(0), m_count(index)
+
+struct _LARGE_INTEGER
 {
+    long long QuadPart;
+};
+
+void QueryPerformanceCounter(_LARGE_INTEGER* value);
+void QueryPerformanceFrequency(_LARGE_INTEGER* value);
+
+static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
+CConsoleMinecraftApp gApp;
+CMinecraftApp* g_pApp = &gApp;
+static Random sTipRandom;
+CMinecraftApp::PngTagData::PngTagData()
+    : flags(0), imageType(0), width(0), height(0), dataSize(0)
+{
+    std::fill(values, values + 13, 0);
+}
+CMinecraftApp::_TipData::_TipData() : m_index(0), m_count(0), m_tips(0) {}
+CMinecraftApp::_TipData::_TipData(TIPSTRUCT* tips, unsigned int count)
+    : m_index(0), m_count(count), m_tips(tips)
+{
+    unsigned int first = tips == 0 ? 1 : 0;
+    for (unsigned int index = first; index < count; ++index)
+        tips[index].sortValue = sTipRandom.nextInt();
+    if (count > 1)
+        std::qsort(tips + 1, count - 1, sizeof(TIPSTRUCT), CMinecraftApp::TipsSortFunction);
 }
 unsigned int CMinecraftApp::_TipData::getNextTip()
 {
-    if (m_tips == 0 || m_index >= m_count)
-        return 0;
-    return m_index++;
+    unsigned int tip;
+    do
+    {
+        if (m_index >= m_count)
+            m_index = 0;
+        tip = m_tips[m_index++].tipId;
+    }
+    while (CMinecraftApp::tipFiltered(tip));
+    return tip;
 }
-CMinecraftApp::CMinecraftApp() {}
+CMinecraftApp::CMinecraftApp()
+    : mLastPerformanceCounter(0), mAccumulatedPerformanceCounter(0), mAppTime(0.0f),
+      mFrameTime(0.0f), mPerformanceCounterScale(0.0f)
+{
+}
 CMinecraftApp::~CMinecraftApp() {}
 void CMinecraftApp::SetGameHostOption(int* firstArgument, uint32_t secondArgument, uint32_t thirdArgument)
 {
@@ -37,6 +76,13 @@ uint32_t CMinecraftApp::GetOptionsCallbackStatus(int32_t firstArgument)
 }
 void CMinecraftApp::UpdateTime()
 {
+    _LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    long long elapsed = counter.QuadPart - mLastPerformanceCounter;
+    mAccumulatedPerformanceCounter += elapsed;
+    mLastPerformanceCounter = counter.QuadPart;
+    mFrameTime = mPerformanceCounterScale * elapsed;
+    mAppTime = mPerformanceCounterScale * mAccumulatedPerformanceCounter;
 }
 uint8_t CMinecraftApp::GetLocalPlayerCount()
 {
@@ -55,6 +101,15 @@ bool CMinecraftApp::hasArchiveFile(const std::wstring& firstArgument, bool secon
 }
 void CMinecraftApp::InitTime()
 {
+    _LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
+    mPerformanceCounterScale = 1.0f / frequency.QuadPart;
+    _LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    mLastPerformanceCounter = counter.QuadPart;
+    mAccumulatedPerformanceCounter = 0;
+    mFrameTime = 0.0f;
+    mAppTime = 0.0f;
 }
 uint32_t CMinecraftApp::IsActionPending(int32_t firstArgument, int32_t secondArgument)
 {
@@ -93,11 +148,11 @@ uint64_t CMinecraftApp::SignInChangeCallback(int32_t firstArgument, bool secondA
 void CMinecraftApp::ProfileReadErrorCallback(uint32_t firstArgument)
 {
 }
-uint32_t CMinecraftApp::DefaultOptionsCallback(uint32_t firstArgument, uint32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile)
 {
     return 0;
 }
-uint32_t CMinecraftApp::OptionsDataCallback(int32_t firstArgument, int32_t secondArgument, uint16_t thirdArgument, uint32_t fourthArgument)
+uint32_t CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
 {
     return 0;
 }
@@ -121,9 +176,11 @@ uint64_t CMinecraftApp::UpsellReturnedCallback(uint32_t firstArgument, uint32_t 
 {
     return 0;
 }
-int32_t CMinecraftApp::TipsSortFunction(uint32_t firstArgument, uint32_t secondArgument)
+int CMinecraftApp::TipsSortFunction(const void* firstTip, const void* secondTip)
 {
-    return 0;
+    const TIPSTRUCT* first = static_cast<const TIPSTRUCT*>(firstTip);
+    const TIPSTRUCT* second = static_cast<const TIPSTRUCT*>(secondTip);
+    return first->sortValue - second->sortValue;
 }
 void CMinecraftApp::InitialiseTips()
 {
@@ -143,11 +200,11 @@ uint32_t CMinecraftApp::GetTMSAction(int32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::EthernetDisconnectReturned(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument)
+uint32_t CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::BannedLevelDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -158,7 +215,7 @@ uint8_t CMinecraftApp::GetChangingSessionType()
 {
     return 0;
 }
-uint32_t CMinecraftApp::UnlockFullSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -172,7 +229,7 @@ uint32_t CMinecraftApp::GetXuiServerAction(int32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::UnlockFullExitReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -190,27 +247,27 @@ uint32_t CMinecraftApp::SignoutExitWorldThreadProc(int32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::TrialOverReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::UnlockFullInviteReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInvite(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -232,7 +289,7 @@ uint32_t CMinecraftApp::RemoteSaveThreadProc(uint32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -240,7 +297,7 @@ uint64_t CMinecraftApp::ExitGameFromRemoteSave(uint32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::TexturePackDialogReturned(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument)
+uint32_t CMinecraftApp::TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -258,9 +315,6 @@ uint64_t CMinecraftApp::GameModeTransitionComplete(int32_t firstArgument)
 void CMinecraftApp::SetTMSAction(int32_t firstArgument, uint32_t secondArgument)
 {
 }
-void CMinecraftApp::Handlints()
-{
-}
 uint8_t CMinecraftApp::IsAppPaused()
 {
     return 0;
@@ -268,8 +322,9 @@ uint8_t CMinecraftApp::IsAppPaused()
 void CMinecraftApp::UpdateTrialPausedTimer()
 {
 }
-void CMinecraftApp::setLevelGenerationOptions(int* firstArgument)
+void CMinecraftApp::setLevelGenerationOptions(LevelGenerationOptions* firstArgument)
 {
+    mGameRuleManager.setLevelGenerationOptions(firstArgument);
 }
 uint8_t CMinecraftApp::DLCInstallProcessCompleted()
 {
@@ -282,7 +337,7 @@ std::wstring CMinecraftApp::getDLCFolderName(uint32_t firstArgument)
 void CMinecraftApp::getRootPath(uint32_t firstArgument, uint32_t secondArgument, int32_t thirdArgument, int32_t fourthArgument, uint32_t fifthArgument)
 {
 }
-std::wstring CMinecraftApp::getFilePath(uint32_t firstArgument, int* secondArgument, bool thirdArgument, int* fourthArgument)
+std::wstring CMinecraftApp::getFilePath(unsigned int firstArgument, std::wstring secondArgument, bool thirdArgument, std::wstring fourthArgument)
 {
     return 0;
 }
@@ -305,8 +360,9 @@ uint32_t CMinecraftApp::StartInstallDLCProcess(int32_t firstArgument)
 {
     return 0;
 }
-void CMinecraftApp::getLevelGenerators()
+LevelGenerators* CMinecraftApp::getLevelGenerators()
 {
+    return mGameRuleManager.getLevelGenerators();
 }
 void CMinecraftApp::ClearTerrainFeaturePosition()
 {
@@ -502,14 +558,14 @@ bool CMinecraftApp::isXuidNotch(int* firstArgument)
 {
     return false;
 }
-uint32_t CMinecraftApp::isXuidDeadmau5(int* firstArgument)
+uint32_t CMinecraftApp::isXuidDeadmau5(PlayerUID firstArgument)
 {
     return 0;
 }
 void CMinecraftApp::AddMemoryTextureFile(int* firstArgument, int* secondArgument, uint32_t thirdArgument)
 {
 }
-void CMinecraftApp::GetMemFileDetails(int* firstArgument, int** secondArgument, int* thirdArgument)
+void CMinecraftApp::GetMemFileDetails(const std::wstring& firstArgument, unsigned char** secondArgument, unsigned int* thirdArgument)
 {
 }
 bool CMinecraftApp::IsFileInMemoryTextures(int* firstArgument)
@@ -541,7 +597,7 @@ double CMinecraftApp::getTrialTimer()
 {
     return 0;
 }
-uint32_t CMinecraftApp::WarningTrialTexturePackReturned(uint32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
+uint32_t CMinecraftApp::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     return 0;
 }
@@ -549,7 +605,7 @@ uint32_t CMinecraftApp::tipFiltered(int32_t firstArgument)
 {
     return 0;
 }
-uint32_t CMinecraftApp::GetNextTip(bool firstArgument, int32_t secondArgument)
+uint32_t CMinecraftApp::GetNextTip(bool firstArgument, EMiniGameId secondArgument)
 {
     return 0;
 }
@@ -581,7 +637,7 @@ void CMinecraftApp::FormatHTMLString(int32_t firstArgument, int* secondArgument,
 }
 double CMinecraftApp::getAppTime()
 {
-    return 0;
+    return mAppTime;
 }
 void CMinecraftApp::AddTerrainFeaturePosition(int32_t firstArgument, int32_t secondArgument, int32_t thirdArgument)
 {
@@ -590,7 +646,7 @@ uint32_t CMinecraftApp::GetTerrainFeaturePosition(int32_t firstArgument, int* se
 {
     return 0;
 }
-uint32_t CMinecraftApp::GetMojangDataForXuid(int* firstArgument)
+uint32_t CMinecraftApp::GetMojangDataForXuid(PlayerUID firstArgument)
 {
     return 0;
 }
@@ -653,31 +709,40 @@ uint32_t CMinecraftApp::CreateImageTextData(int* firstArgument, int* secondArgum
 {
     return 0;
 }
-void CMinecraftApp::processSchematics(int* firstArgument)
+void CMinecraftApp::processSchematics(LevelChunk* firstArgument)
 {
+    mGameRuleManager.processSchematics(firstArgument);
 }
-void CMinecraftApp::processSchematicsLighting(int* firstArgument)
+void CMinecraftApp::processSchematicsLighting(LevelChunk* firstArgument)
 {
+    mGameRuleManager.processSchematicsLighting(firstArgument);
 }
 void CMinecraftApp::loadDefaultGameRules()
 {
+    mGameRuleManager.loadDefaultGameRules();
 }
-uint32_t CMinecraftApp::getLevelRules()
+LevelRules* CMinecraftApp::getLevelRules()
 {
-    return 0;
+    return mGameRuleManager.mLevelRules;
 }
-void CMinecraftApp::getGameRuleDefinitions()
+LevelRuleset* CMinecraftApp::getGameRuleDefinitions()
 {
+    return mGameRuleManager.getGameRuleDefinitions();
 }
-void CMinecraftApp::getLevelGenerationOptions()
+LevelGenerationOptions* CMinecraftApp::getLevelGenerationOptions()
 {
+    return mGameRuleManager.getLevelGenerationOptions();
 }
-void CMinecraftApp::GetGameRulesString(int* firstArgument)
+const wchar_t* CMinecraftApp::GetGameRulesString(const std::wstring& firstArgument)
 {
+    return mGameRuleManager.GetGameRulesString(firstArgument);
 }
-uint32_t CMinecraftApp::ShouldCollideWith(int* firstArgument)
+bool CMinecraftApp::ShouldCollideWith(Block* firstArgument)
 {
-    return 0;
+    LevelGenerationOptions* options = getLevelGenerationOptions();
+    if (options == NULL)
+        return true;
+    return options->getRequiredGameRules()->ShouldCollideWith(firstArgument);
 }
 void CMinecraftApp::UpdatePlayerInfo(uint8_t firstArgument, int16_t secondArgument, uint32_t thirdArgument, uint8_t fourthArgument)
 {
@@ -720,18 +785,11 @@ int32_t CMinecraftApp::SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t se
 {
     return 0;
 }
-uint32_t CMinecraftApp::GetAdditionalints(uint32_t firstArgument)
+uint32_t CMinecraftApp::GetAdditionalModelParts(unsigned int firstArgument)
 {
     return 0;
 }
 uint32_t CMinecraftApp::GetAdditionalSkinBoxes(uint32_t firstArgument)
-{
-    return 0;
-}
-void CMinecraftApp::Setint(uint32_t firstArgument, int* secondArgument)
-{
-}
-uint64_t CMinecraftApp::Getint(int32_t firstArgument, uint32_t secondArgument)
 {
     return 0;
 }
@@ -815,391 +873,4 @@ _SkinAdjustments CMinecraftApp::GetSkinAdjustments(uint32_t id)
     if (found != g_skinAdjustments.end())
         return found->second;
     return _SkinAdjustments();
-}
-void CMinecraftApp::ClearSignInChangeUsersMask()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::HandleButtonPresses(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::IntroRunning()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetIntroRunning(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::DisplaySavingMessage(int p1, int p2, int p3)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-uint32_t CMinecraftApp::LoadCommandBlockMenu(int p1, int p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-uint32_t CMinecraftApp::GetGameMode()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-uint32_t CMinecraftApp::GetGlobalXuiServerAction()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-void CMinecraftApp::SetGlobalXuiServerAction(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::SetActionConfirmed(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::SetLoadSavesFromFolderEnabled(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetWriteSavesToFolderEnabled()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetWriteSavesToFolderEnabled(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetMobsDontAttackEnabled()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetMobsDontAttackEnabled(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetUseDPadForDebug()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetUseDPadForDebug(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetMobsDontTickEnabled()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetMobsDontTickEnabled(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetFreezePlayers()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetFreezePlayers(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-std::wstring CMinecraftApp::toStringOptionsStatus(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return std::wstring();
-}
-void CMinecraftApp::SetOptionsCallbackStatus(int p1, int p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-uint32_t CMinecraftApp::GetAdditionalModelParts(int value)
-{
-    return GetAdditionalModelParts(static_cast<unsigned int>(value));
-}
-uint32_t CMinecraftApp::GetAdditionalModelParts(unsigned int value)
-{
-    static std::map<unsigned int, uint32_t> modelParts;
-    std::map<unsigned int, uint32_t>::const_iterator found = modelParts.find(value);
-    if (found != modelParts.end())
-        return found->second;
-    return 0;
-}
-void CMinecraftApp::PrimaryPlayerSignedOutReturned(int p1, int p2, int p3)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::MarketplaceCountsCallback(int p1, int p2, int p3)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::ClearNewDLCAvailable()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetNewDLCAvailable()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::DisplayNewDLCTipAgain()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::DisplayNewDLCTip()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::RemoveMemoryTextureFile(const std::wstring& value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::AddMemoryTPDFile(int p1, unsigned char* p2, unsigned int p3)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::RemoveMemoryTPDFile(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::IsFileInTPD(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-uint32_t CMinecraftApp::GetTPDSize()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-uint32_t CMinecraftApp::GetTPConfigVal(wchar_t* value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-void CMinecraftApp::AddLevelToBannedLevelList(int p1, PlayerUID p2, char* p3, bool p4)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::IsInBannedLevelList(int p1, PlayerUID p2, char* p3)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-std::wstring CMinecraftApp::GetUniqueMapName()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return std::wstring();
-}
-bool CMinecraftApp::GetResourcesLoaded()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetResourcesLoaded(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-uint32_t CMinecraftApp::GetNotifications()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-uint32_t CMinecraftApp::GetHTMLFontSize(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-bool CMinecraftApp::IsTerrainFeature(int p1, int p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::RegisterMojangData(wchar_t* p1, PlayerUID p2, wchar_t* p3, wchar_t* p4)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::RegisterConfigValues(wchar_t* p1, int p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::RegisterDLCData(char* p1, unsigned int p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-uint32_t CMinecraftApp::getDebugGameRuleDefinitions()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-void CMinecraftApp::setDebugGameRuleDefinitions(int* value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::AddDLCRequest(int p1, bool p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::CheckTMSDLCCanStop()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-int CMinecraftApp::GetDLCContentType(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<int>(operationState);
-}
-int CMinecraftApp::Find_eDLCContentType(unsigned int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<int>(operationState);
-}
-uint32_t CMinecraftApp::GetDLCOffersCount()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-void CMinecraftApp::DLCContentRetrieved(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::TickDLCOffersRetrieved()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::RetrieveNextTMSPPContent()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::TickTMSPPFilesRetrieved()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::ClearTMSPPFilesRetrieved()
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::AddTMSPPFileTypeRequest(int p1, bool p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::TMSPPFileReturned(int p1, int p2, int p3, int p4, const char* p5)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-bool CMinecraftApp::GetBanListRead(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-void CMinecraftApp::SetBanListRead(int p1, bool p2)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::ClearBanList(int value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-uint32_t CMinecraftApp::GetRequiredTexturePackID()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-bool CMinecraftApp::IsLocaleKorea()
-{
-    static int operationState = 0;
-    operationState += 1;
-    return operationState != 0;
-}
-uint32_t CMinecraftApp::get_eMCLang(wchar_t* value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-uint32_t CMinecraftApp::get_xcLang(wchar_t* value)
-{
-    static int operationState = 0;
-    operationState += 1;
-    return static_cast<uint32_t>(operationState);
-}
-void CMinecraftApp::SetTickTMSDLCFiles(bool value)
-{
-    static int operationState = 0;
-    operationState += 1;
-}
-void CMinecraftApp::SetFakePadValue(int p1, unsigned char p2)
-{
-    static int operationState = 0;
-    operationState += 1;
 }

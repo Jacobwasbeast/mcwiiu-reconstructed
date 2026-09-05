@@ -1,7 +1,6 @@
 #include "game/core/Bush.hpp"
 
 #include "game/core/Direction.hpp"
-#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -11,7 +10,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-static const AABB* BUSH_SHAPE;
+static const AABB* BUSH_SHAPE = NULL;
 
 Bush::Bush()
     : Block(Material::PLANT)
@@ -31,61 +30,13 @@ Bush::Bush(Material* material, const MaterialColor* materialColor)
     _init();
 }
 
-void Bush::_init()
-{
-    setTicking(true);
-}
-
 Bush::~Bush()
 {
 }
 
-bool Bush::isCubeShaped(const BlockState* state)
+void Bush::_init()
 {
-    return false;
-}
-
-EBlockRenderShape Bush::getRenderShape(const BlockState* state)
-{
-    return BLOCK_RENDER_ENTITY;
-}
-
-const AABB* Bush::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
-{
-    return BUSH_SHAPE;
-}
-
-EBlockFaceShape Bush::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
-{
-    return BLOCK_FACE_UNDEFINED;
-}
-
-const AABB* Bush::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
-{
-    return NULL;
-}
-
-bool Bush::isSolidRender(const BlockState* state) const
-{
-    return false;
-}
-
-void Bush::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
-{
-    checkAlive(level, pos, state);
-}
-
-void Bush::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
-{
-    if (!canSurvive(level, pos, state))
-    {
-        level->addToTickNextTick(pos, state->getBlock(), 1);
-    }
-}
-
-int Bush::getRenderLayer()
-{
-    return 0;
+    setTicking(true);
 }
 
 bool Bush::mayPlace(Level* level, const BlockPos& pos)
@@ -94,6 +45,7 @@ bool Bush::mayPlace(Level* level, const BlockPos& pos)
     {
         return false;
     }
+
     return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
@@ -104,14 +56,17 @@ bool Bush::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state
         || state->getBlock() == Blocks::farmland;
 }
 
-bool Bush::waterSpreadCausesSpawn()
+void Bush::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
-    return true;
+    if (!canSurvive(level, pos, state))
+    {
+        level->addToTickNextTick(pos, state->getBlock(), 1);
+    }
 }
 
-bool Bush::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
+void Bush::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
+    checkAlive(level, pos, state);
 }
 
 void Bush::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -123,7 +78,53 @@ void Bush::checkAlive(Level* level, const BlockPos& pos, const BlockState* state
         {
             level->levelEvent(2001, pos, Block::getIdWithData(state));
         }
+
         spawnResources(level, pos, state, 0);
         level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
     }
+}
+
+bool Bush::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
+{
+    return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
+}
+
+const AABB* Bush::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+{
+    return BUSH_SHAPE;
+}
+
+const AABB* Bush::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+{
+    return NULL;
+}
+
+bool Bush::waterSpreadCausesSpawn()
+{
+    return true;
+}
+
+bool Bush::isSolidRender(const BlockState* state) const
+{
+    return false;
+}
+
+bool Bush::isCubeShaped(const BlockState* state)
+{
+    return false;
+}
+
+int Bush::getRenderLayer()
+{
+    return 0;
+}
+
+EBlockFaceShape Bush::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
+{
+    return BLOCK_FACE_UNDEFINED;
+}
+
+EBlockRenderShape Bush::getRenderShape(const BlockState* state)
+{
+    return BLOCK_RENDER_ENTITY;
 }

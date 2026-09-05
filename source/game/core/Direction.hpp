@@ -16,9 +16,26 @@ class Random;
 class Vec3;
 class Vec3i;
 
-class Direction
+class StringRepresentable
 {
 public:
+    virtual std::wstring toString() const = 0;
+    virtual std::wstring getSerializedName() const = 0;
+};
+
+class Direction : public StringRepresentable
+{
+public:
+    enum EDirection
+    {
+        eDirection_Down = 0,
+        eDirection_Up = 1,
+        eDirection_North = 2,
+        eDirection_South = 3,
+        eDirection_West = 4,
+        eDirection_East = 5
+    };
+
     class Axis;
     class AxisDirection;
     class Plane;
@@ -43,7 +60,7 @@ public:
         int ordinal;
     };
 
-    class Axis : public Predicate<const Direction*>
+    class Axis : public Predicate<const Direction*>, public StringRepresentable
     {
     public:
         enum EAxis
@@ -144,23 +161,8 @@ public:
     const Direction* getCounterClockWise(Axis* axis) const;
     const Direction* getRelative(const Direction* direction) const;
 
-    float toYRot() const;
+    double toYRot() const;
     Vec3i getNormal() const;
-
-    int getStepX() const
-    {
-        return stepX;
-    }
-
-    int getStepY() const
-    {
-        return stepY;
-    }
-
-    int getStepZ() const
-    {
-        return stepZ;
-    }
 
     virtual std::wstring toString() const;
     virtual std::wstring getSerializedName() const;

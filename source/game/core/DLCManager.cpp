@@ -6,11 +6,17 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCFile.hpp"
 #include "game/core/DLCPack.hpp"
+#include "game/core/GameRuleManager.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
 
-class GameRuleManager;
-class Minecraft;
-class TexturePackRepository;
+class CMinecraftApp;
+
+extern ConsoleUIController g_ConsoleUIController;
+extern GameRuleManager g_GameRuleManager;
+extern CMinecraftApp* g_pApp;
+extern std::vector<std::wstring> g_dlcSkinNames;
 
 struct _OVERLAPPED
 {
@@ -458,7 +464,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
                 {
                     unsigned int packID = pTexturePack->GetPackId();
 
-                    Minecraft::GetInstance()->m_pTexturePackRepository->addTexturePackFromDLC(pTexturePack, packID);
+                    Minecraft::GetInstance()->mTexturePackRepository->addTexturePackFromDLC(pTexturePack, packID);
                 }
 
                 numItemsAdded++;

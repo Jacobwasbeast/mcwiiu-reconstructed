@@ -31,7 +31,7 @@ public:
     void SetIsCorrupt(bool corrupt);
     void SetDataPointer(unsigned char* data, bool ownsData);
     unsigned int getLicenseMask();
-    void addFile(DLCManager::EDLCType type, const std::wstring& name);
+    DLCFile* addFile(DLCManager::EDLCType type, const std::wstring& name);
     void SetPackId(unsigned int id);
     void SetPackVersion(unsigned int version);
     void addParameter(DLCManager::EDLCParameterType type, const std::wstring& value);
@@ -54,13 +54,13 @@ public:
     int getFileIndexAt(DLCManager::EDLCType type, const std::wstring& name, bool& found);
     int getSkinCount();
     int getSkinIndexAt(const std::wstring& name, bool& found);
-    void getSkinFile(unsigned int index);
+    DLCFile* getSkinFile(unsigned int index);
     std::wstring getLocalisedDisplayName();
 
 private:
     std::vector<DLCFile*> m_files[DLCManager::eDLCType_NumTypes];
-    DLCPack* m_parentPack;
     std::vector<DLCPack*> m_childPacks;
+    DLCPack* m_parentPack;
     std::vector<std::wstring> m_creditIds;
     std::vector<std::wstring> m_creditStrings;
     boost::unordered_map<int, std::wstring> m_parameters;
@@ -69,12 +69,12 @@ private:
     unsigned int m_licenseMask;
     unsigned int m_dlcMountIndex;
     int m_dlcDeviceId;
+    unsigned int m_purchaseOfferId;
+    bool m_isCorrupt;
     unsigned int m_packId;
     unsigned int m_packVersion;
-    bool m_isCorrupt;
     unsigned char* m_data;
     bool m_ownsData;
-    unsigned int m_purchaseOfferId;
 };
 
 #endif

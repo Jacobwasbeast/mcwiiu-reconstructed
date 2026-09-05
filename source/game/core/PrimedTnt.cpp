@@ -1,0 +1,184 @@
+#include "game/core/PrimedTnt.hpp"
+
+#include <cmath>
+#include <string>
+
+#include "game/core/Minecraft.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/util/Math.hpp"
+#include "game/world/Level.hpp"
+
+class MiniGameDef
+{
+public:
+    bool canTntDestroyBlocks() const;
+};
+
+class EntityDataSerializers
+{
+public:
+    static EntityDataSerializer<int>* INT;
+};
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+
+const EntityDataAccessor<int>* PrimedTnt::DATA_FUSE_ID = NULL;
+
+PrimedTnt::PrimedTnt(Level* level) : Entity(level, true), mOwner(), mLife(0)
+{
+    _init();
+}
+
+PrimedTnt::PrimedTnt(Level* level, double x, double y, double z, boost::shared_ptr<LivingEntity> owner)
+    : Entity(level, true), mOwner(), mLife(0)
+{
+    _init();
+    setPos(x, y, z);
+    const double angle = Math::random() * 6.2831854820251465;
+    mXd = -std::sin(angle) * 0.02;
+    mYd = 0.2;
+    mZd = -std::cos(angle) * 0.02;
+    setFuse(80);
+    mOwner = owner;
+}
+
+PrimedTnt::~PrimedTnt()
+{
+}
+
+void PrimedTnt::create(Level* level)
+{
+    new PrimedTnt(level);
+}
+
+void PrimedTnt::staticCtor()
+{
+    DATA_FUSE_ID = SynchedEntityData::defineId(ENTITY_TYPE_PRIMED_TNT, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+}
+
+void PrimedTnt::_init()
+{
+    fjDerivedCtorCalls();
+    mLife = 80;
+    mFirstTick = true;
+    mBlocksBuilding = true;
+    setSize(0.98f, 0.98f);
+}
+
+void PrimedTnt::setFuse(int fuse)
+{
+    getEntityData()->set(DATA_FUSE_ID, fuse, true);
+    mLife = fuse;
+}
+
+void PrimedTnt::defineSynchedData()
+{
+    getEntityData()->createDateItem(DATA_FUSE_ID, 80);
+}
+
+bool PrimedTnt::makeStepSound()
+{
+    return false;
+}
+
+bool PrimedTnt::isPickable()
+{
+    return !mRemoved;
+}
+
+void PrimedTnt::explode()
+{
+    bool restricted = Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true);
+    if (restricted && Minecraft::GetInstance()->GetMiniGame() != NULL
+        && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
+    {
+        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
+                        4.0f, false, false, true, false, false, -1.0f);
+        return;
+    }
+
+    mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
+                    4.0f, false, true, false, false, false, -1.0f);
+}
+
+void PrimedTnt::tick()
+{
+    PIXBeginNamedEvent(0.0f, "Primed tnt tick");
+    mXo = mX;
+    mYo = mY;
+    mZo = mZ;
+    updateInWaterState();
+    if (!mNoPhysics)
+    {
+        mYd -= 0.04;
+    }
+    move(eMoverType_Self, mXd, mYd, mZd, false);
+    mXd *= 0.98;
+    mYd *= 0.98;
+    mZd *= 0.98;
+    if (mOnGround)
+    {
+        mXd *= 0.7;
+        mYd *= -0.5;
+        mZd *= 0.7;
+    }
+    --mLife;
+    if (mLife <= 0)
+    {
+        remove();
+        if (mLevel != NULL && !mLevel->mIsClientSide)
+        {
+            explode();
+        }
+    }
+    else
+    {
+        mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY + 0.5, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    }
+    PIXEndNamedEvent();
+}
+
+int PrimedTnt::getLife()
+{
+    return mLife;
+}
+
+void PrimedTnt::addAdditonalSaveData(CompoundTag* tag)
+{
+    tag->putShort(L"Fuse", static_cast<short>(getLife()));
+}
+
+void PrimedTnt::readAdditionalSaveData(CompoundTag* tag)
+{
+    setFuse(tag->getShort(L"Fuse"));
+}
+
+boost::shared_ptr<LivingEntity> PrimedTnt::getOwner()
+{
+    return mOwner.lock();
+}
+
+float PrimedTnt::getEyeHeight()
+{
+    return 1.0;
+}
+
+int PrimedTnt::getFuse()
+{
+    return getEntityData()->get(DATA_FUSE_ID);
+}
+
+void PrimedTnt::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
+{
+    if (accessor != NULL && DATA_FUSE_ID != NULL && accessor->getId() == DATA_FUSE_ID->getId())
+    {
+        mLife = getFuse();
+    }
+}
+
+unsigned long long PrimedTnt::GetType()
+{
+    return ENTITY_TYPE_PRIMED_TNT;
+}

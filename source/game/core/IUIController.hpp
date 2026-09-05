@@ -3,15 +3,15 @@
 
 #include <string>
 
-#include "game/client/audio/SoundEvent.hpp"
-#include "game/ui/Tooltips.hpp"
 #include "game/ui/UIGroup.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIScene.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 
+class SoundEvent;
 class Tutorial;
 struct _TutorialPopupInfo;
+enum EControllerActions : int;
 
 class IUIController
 {

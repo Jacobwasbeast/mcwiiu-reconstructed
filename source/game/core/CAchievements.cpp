@@ -4,26 +4,27 @@
 #include <cstring>
 #include <string>
 
-#include "game/core/CProfile.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 int getSlotId(int iQuad);
-void getPlayerUID(PlayerUID* playerUID, int iQuad, bool includeOffline);
+PlayerUID getPlayerUID(int iQuad, bool includeOffline);
 
 CAchievements::CAchievements(int iQuad)
     : mPlayerUID(0)
 {
     mIsSystemPlayer = getSlotId(iQuad) != 0;
     mSlotId = (unsigned char)getSlotId(iQuad);
-    getPlayerUID(&mPlayerUID, iQuad, false);
+    mPlayerUID = getPlayerUID(iQuad, false);
     mDirty = false;
     std::memset(mAwarded, 0, sizeof(mAwarded));
     mState = 0;
     std::memset(mFilename, 0, sizeof(mFilename));
-    mUnused = false;
+    mHasAchievementsFile = false;
 
     if (!mIsSystemPlayer)
     {
-        const char* guest = gProfile->IsGuest(iQuad) ? "True" : "False";
+        PlayerUID playerUID = getPlayerUID(iQuad, false);
+        const char* guest = playerUID.hasPrincipalId ? "True" : "False";
         gProfile->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n",
                               iQuad, guest);
     }

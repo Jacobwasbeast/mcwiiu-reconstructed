@@ -2,9 +2,17 @@
 
 #include "game/core/GameSettings.hpp"
 #include "game/core/GameType.hpp"
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
+
+class MultiplayerLocalPlayer : public Entity
+{
+public:
+    const GameType* GetGameType();
+};
 
 CTelemetryManager::~CTelemetryManager()
 {
@@ -45,11 +53,11 @@ unsigned int CTelemetryManager::RecordLevelStart(int playerId, ESen_FriendOrMatc
                                                  int difficultyLevel, int localPlayerCount,
                                                  int onlinePlayerCount)
 {
-    if (playerId == CProfile::sInstance->GetPrimaryPad())
+    if (playerId == gProfile->GetPrimaryPad())
         mLevelStarted = true;
 
     ++mLevelInstanceId;
-    mLevelStartTime[playerId] = CMinecraftApp::sInstance.getAppTime();
+    mLevelStartTime[playerId] = g_pApp->getAppTime();
     return 1;
 }
 
@@ -241,7 +249,7 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (playerId >= 4)
         return 0;
 
-    const boost::shared_ptr<LocalPlayer>& player = minecraft->localPlayers[playerId];
+    const boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[playerId];
     if (!player)
         return 0;
 
@@ -249,7 +257,7 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (player->mLevel != NULL && player->mLevel->getLevelData() != NULL)
         gameType = player->mLevel->getLevelData()->getGameType();
 
-    if (gameType == NULL && CMinecraftApp::sInstance.GetGameHostOption((eGameHostOption)16))
+    if (gameType == NULL && g_pApp->GetGameHostOption(16))
         gameType = player->GetGameType();
 
     if (gameType == GameType::SURVIVAL)
@@ -264,7 +272,7 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
 
 unsigned int CTelemetryManager::GetLicense()
 {
-    if (CProfile::sInstance->IsFullVersion())
+    if (gProfile->IsFullVersion())
         return 2;
 
     return 1;
@@ -272,7 +280,7 @@ unsigned int CTelemetryManager::GetLicense()
 
 unsigned int CTelemetryManager::GetAudioSettings(unsigned int playerId)
 {
-    if (playerId != (unsigned int)CProfile::sInstance->GetPrimaryPad())
+    if (playerId != (unsigned int)gProfile->GetPrimaryPad())
         return 0;
 
     int volume = GameSettings::GetGameSettings(playerId, (eGameSetting)1);

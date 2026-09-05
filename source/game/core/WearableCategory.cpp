@@ -4,7 +4,6 @@
 #include "game/item/ElytraItem.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/SkullItem.hpp"
-#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/PumpkinBlock.hpp"
 

@@ -8,7 +8,6 @@
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/data/CompoundTag.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -28,7 +27,6 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
     , mVisualOnly(visualOnly)
 {
     fjDerivedCtorCalls();
-
     moveTo(x, y, z, 0.0f, 0.0f);
 
     mLife = 2;
@@ -73,7 +71,7 @@ LightningBolt::~LightningBolt()
 
 unsigned long long LightningBolt::GetType()
 {
-    return ENTITY_TYPE_LIGHTNING_BOLT;
+    return 0x000000000B000001ULL;
 }
 
 void LightningBolt::defineSynchedData()
@@ -86,25 +84,14 @@ void LightningBolt::tick()
 
     if (mLife == 2)
     {
-        mLevel->playSound(boost::shared_ptr<Player>(),
-                          mX,
-                          mY,
-                          mZ,
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
                           SoundEvents::LIGHTNING_THUNDER,
                           SoundSource::eSoundSource_Weather,
-                          10000.0f,
-                          0.8f + mRandom->nextFloat() * 0.2f,
-                          16.0f);
-
-        mLevel->playSound(boost::shared_ptr<Player>(),
-                          mX,
-                          mY,
-                          mZ,
+                          10000.0f, 0.8f + mRandom->nextFloat() * 0.2f, 16.0f);
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
                           SoundEvents::LIGHTNING_IMPACT,
                           SoundSource::eSoundSource_Weather,
-                          2.0f,
-                          0.5f + mRandom->nextFloat() * 0.2f,
-                          16.0f);
+                          2.0f, 0.5f + mRandom->nextFloat() * 0.2f, 16.0f);
     }
 
     --mLife;
@@ -123,7 +110,6 @@ void LightningBolt::tick()
             if (!mVisualOnly && !mLevel->mIsClientSide)
             {
                 mSeed = mRandom->nextLong();
-
                 BlockPos pos(shared_from_this());
 
                 if (mLevel->getGameRules()->getBoolean(0)
@@ -156,13 +142,9 @@ void LightningBolt::tick()
 
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntities(shared_from_this(),
-                            AABB::newTemp(mX - 3.0,
-                                          mY - 3.0,
-                                          mZ - 3.0,
-                                          mX + 3.0,
-                                          mY + 9.0,
-                                          mZ + 3.0),
-                            NULL);
+                             AABB::newTemp(mX - 3.0, mY - 3.0, mZ - 3.0,
+                                           mX + 3.0, mY + 9.0, mZ + 3.0),
+                             NULL);
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end();
@@ -174,7 +156,6 @@ void LightningBolt::tick()
             == mHitEntities.end())
         {
             entity->thunderHit(this);
-
             mHitEntities.push_back(entity->getId());
         }
     }

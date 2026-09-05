@@ -1,0 +1,46 @@
+#include "game/core/PostChain.hpp"
+
+#include "game/client/render/RenderTarget.hpp"
+#include "game/core/Matrix4.hpp"
+#include "game/core/Matrix4f.hpp"
+#include "game/core/PostPass.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceManager,
+                     RenderTarget* screenTarget, ResourceLocation* name)
+    : mScreenTarget(screenTarget), mResourceManager(resourceManager),
+      mWidth(screenTarget->width), mHeight(screenTarget->height),
+      mTime(0.0f), mLastStamp(1.034999966621399f)
+{
+    (void)textureManager;
+    mName = name->toString();
+    updateOrthoMatrix();
+}
+
+void PostChain::updateOrthoMatrix()
+{
+    mOrthoMatrix = new Matrix4f();
+    mOrthoMatrix->setIdentity();
+    mOrthoMatrix->m[0] = 2.0f / static_cast<float>(mWidth);
+    mOrthoMatrix->m[5] = 2.0f / static_cast<float>(-mHeight);
+    mOrthoMatrix->m[10] = -0.0020001998636871576f;
+    mOrthoMatrix->m[15] = 1.0f;
+    mOrthoMatrix->m[3] = -1.0f;
+    mOrthoMatrix->m[7] = 1.0f;
+    mOrthoMatrix->m[11] = -1.0001999139785767f;
+}
+
+void PostChain::destroy()
+{
+    std::map<std::wstring, RenderTarget*>::const_iterator target = mCustomRenderTargets.begin();
+    while (target != mCustomRenderTargets.end())
+        ++target;
+
+    std::vector<PostPass*>::iterator pass = mPostPasses.begin();
+    while (pass != mPostPasses.end())
+    {
+        (*pass)->destroy();
+        ++pass;
+    }
+    mPostPasses.clear();
+}

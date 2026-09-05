@@ -1,0 +1,192 @@
+#include "game/core/Region.hpp"
+
+#include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/entity/mob/EntityTickCache.hpp"
+
+namespace
+{
+    const BlockState* emptyState()
+    {
+        return Block::byId(0)->defaultBlockState();
+    }
+}
+
+Region::Region(Level* level, const BlockPos& from, const BlockPos& to, int expansion)
+    : mMinChunkX((from.x - expansion) >> 4),
+      mMinChunkZ((from.z - expansion) >> 4),
+      mChunks(new array2DWithLength<LevelChunk*>(((to.x + expansion) >> 4) - mMinChunkX + 1,
+                                                   ((to.z + expansion) >> 4) - mMinChunkZ + 1)),
+      mLevel(level),
+      mAllEmpty(true),
+      mCachedX(-1),
+      mCachedY(0),
+      mCachedZ(-1),
+      mCachedStates(NULL)
+{
+    int maxX = (to.x + expansion) >> 4;
+    int maxZ = (to.z + expansion) >> 4;
+    int x;
+    for (x = mMinChunkX; x <= maxX; ++x)
+    {
+        int z;
+        for (z = mMinChunkZ; z <= maxZ; ++z)
+            mChunks->data[x - mMinChunkX]->data[z - mMinChunkZ] = level->getChunk(x, z);
+    }
+    for (x = from.x >> 4; x <= to.x >> 4; ++x)
+    {
+        int z;
+        for (z = from.z >> 4; z <= to.z >> 4; ++z)
+        {
+            LevelChunk* chunk = getChunk(x, z);
+            if (chunk != NULL && !chunk->isYSpaceEmpty(from.y, to.y))
+                mAllEmpty = false;
+        }
+    }
+    mCachedX = -1;
+    mCachedStates = NULL;
+    mCachedZ = -1;
+}
+
+Region::~Region()
+{
+    if (mChunks != NULL)
+    {
+        unsigned int i;
+        for (i = 0; i < mChunks->length; ++i)
+        {
+            delete[] mChunks->data[i]->data;
+            delete mChunks->data[i];
+        }
+        delete[] mChunks->data;
+        delete mChunks;
+    }
+}
+
+LevelChunk* Region::getChunk(int x, int z) const
+{
+    int ix = x - mMinChunkX;
+    int iz = z - mMinChunkZ;
+    if (ix < 0 || iz < 0 || mChunks == NULL || (unsigned int)ix >= mChunks->length)
+        return NULL;
+    if ((unsigned int)iz >= mChunks->data[ix]->length)
+        return NULL;
+    return mChunks->data[ix]->data[iz];
+}
+
+boost::shared_ptr<BlockEntity> Region::getBlockEntity(const BlockPos& pos)
+{
+    LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+    return chunk == NULL ? boost::shared_ptr<BlockEntity>() : chunk->getBlockEntity(pos, LevelChunk::IMMEDIATE);
+}
+
+boost::shared_ptr<BlockEntity> Region::getBlockEntity(const BlockPos& pos, LevelChunk::EntityCreationType type)
+{
+    LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+    return chunk == NULL ? boost::shared_ptr<BlockEntity>() : chunk->getBlockEntity(pos, type);
+}
+
+int Region::getRawBrightness(const BlockPos& pos, bool useNeighbourBrightness)
+{
+    if (!mLevel->isWithinLevelBounds(pos.x, pos.z))
+        return 15;
+    if (useNeighbourBrightness && getBlock(pos)->getLightColor(getBlockState(pos), this, pos, 0) != 0)
+    {
+        int brightest = 0;
+        const Direction* directions[6] = { Direction::DOWN, Direction::UP, Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
+        int i;
+        for (i = 0; i < 6; ++i)
+        {
+            int value = getRawBrightness(pos.relative(directions[i]), false);
+            if (value > brightest) brightest = value;
+            if (brightest > 14) return brightest;
+        }
+        return brightest;
+    }
+    if (pos.y < 0) return 0;
+    if (pos.y < 256)
+    {
+        LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+        return chunk == NULL ? 0 : chunk->getRawBrightness(pos, mLevel->getSkyDarken());
+    }
+    int value = 15 - mLevel->getSkyDarken();
+    return value < 0 ? 0 : value;
+}
+
+int Region::getRawBrightness(const BlockPos& pos) { return getRawBrightness(pos, true); }
+float Region::getBrightness(const BlockPos& pos, int lightValue)
+{
+    int value = getRawBrightness(pos);
+    if (value < lightValue) value = lightValue;
+    return mLevel->getBrightness(pos, value);
+}
+
+int Region::getBrightnessPropagate(LightLayer::variety layer, const BlockPos& pos, int lightValue)
+{
+    return getBrightness(layer, pos);
+}
+
+int Region::getLightColor(const BlockPos& pos, int lightValue, int cacheIndex)
+{
+    int sky = getBrightnessPropagate(LightLayer::SKY, pos, cacheIndex);
+    int block = getBrightnessPropagate(LightLayer::BLOCK, pos, cacheIndex);
+    if (block < lightValue) block = lightValue;
+    return (sky << 20) | (block << 4);
+}
+
+float Region::getBrightness(const BlockPos& pos) { return mLevel->getBrightness(pos); }
+
+const BlockState* Region::getBlockState(const BlockPos& pos)
+{
+    if (pos.y < 0 || pos.y >= 256) return emptyState();
+    if (mCachedStates != NULL && pos.x >> 4 == mCachedX && pos.z >> 4 == mCachedZ && pos.y >= (mCachedY * 16 - 1) && pos.y < mCachedY * 16 + 17)
+        return mCachedStates[((pos.y - (mCachedY * 16 - 1)) << 8) | ((pos.z & 15) << 4) | (pos.x & 15)];
+    LevelChunk* chunk = getChunk(pos.x >> 4, pos.z >> 4);
+    return chunk == NULL ? emptyState() : chunk->getBlockState(pos);
+}
+
+const BlockState* Region::getBlockState(EntityTickCache& tickCache, const BlockPos& pos)
+{
+    if (pos.y < 0 || pos.y >= 256) return emptyState();
+    const BlockState* state = tickCache.getBlockState(pos.x, pos.y, pos.z);
+    return state == NULL ? getBlockState(pos) : state;
+}
+
+const BlockState* Region::getBlockState(LevelChunk* chunk, EntityTickCache&, const BlockPos& pos)
+{
+    return chunk == NULL ? getBlockState(pos) : chunk->getBlockState(pos);
+}
+
+int Region::getBlockId(int x, int y, int z) { return getChunk(x >> 4, z >> 4) == NULL ? 0 : getChunk(x >> 4, z >> 4)->getBlockId(x & 15, y, z & 15); }
+int Region::getBlockId(EntityTickCache& cache, int x, int y, int z) { unsigned short e = getElement(cache, x, y, z); return e == 0xffff ? getBlockId(x, y, z) : e >> 4; }
+void Region::getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId) { *blockId = getBlockId(x, y, z); *extraBlockId = getExtraBlockId(x, y, z); }
+unsigned short Region::getElement(EntityTickCache& cache, int x, int y, int z) { unsigned short e = cache.getElement(x, y, z); return e == 0xffff ? getElement(x, y, z) : e; }
+unsigned short Region::getElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getElement(x & 15, y, z & 15); }
+int Region::getBlockData(int x, int y, int z) { return getElement(x, y, z) & 15; }
+unsigned short Region::getExtraElement(int x, int y, int z) { LevelChunk* c = getChunk(x >> 4, z >> 4); return y < 0 || y >= 256 || c == NULL ? 0 : c->getExtraElement(x & 15, y, z & 15); }
+void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement) { *element = getElement(x, y, z); *extraElement = getExtraElement(x, y, z); }
+Block* Region::getBlock(const BlockPos& pos) { return Block::byId(getBlockId(pos.x, pos.y, pos.z)); }
+void Region::getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock) { *block = getBlock(pos); *extraBlock = getExtraBlock(pos); }
+bool Region::isSolidRender(const BlockPos& pos) { return getBlock(pos)->isSolidRender(getBlockState(pos)); }
+Biome* Region::getBiome(const BlockPos& pos) { LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? NULL : c->getBiome(pos, getBiomeSource()); }
+BiomeSource* Region::getBiomeSource() { return mLevel->getBiomeSource(); }
+int Region::getMaxBuildHeight() { return 256; }
+bool Region::isAllEmpty() { return mAllEmpty; }
+int Region::getDirectSignal(const BlockPos& pos, const Direction* direction) { return getBlock(pos)->getDirectSignal(getBlockState(pos), this, pos, direction); }
+LevelType* Region::getGeneratorType() { return mLevel->getGeneratorType(); }
+int Region::getExtraBlockId(int x, int y, int z) { return getExtraElement(x, y, z) >> 4; }
+int Region::getExtraBlockData(int x, int y, int z) { return getExtraElement(x, y, z) & 15; }
+Block* Region::getExtraBlock(const BlockPos& pos) { return Block::byId(getExtraBlockId(pos.x, pos.y, pos.z)); }
+Block* Region::getLiquidBlock(const BlockPos& pos) { Block* block = getBlock(pos); return block->isLiquidBlock() ? block : getExtraBlock(pos); }
+const BlockState* Region::getLiquidBlockState(const BlockPos& pos) { return getLiquidBlock(pos)->defaultBlockState(); }
+const BlockState* Region::getExtraBlockState(const BlockPos& pos) { return getExtraBlock(pos)->defaultBlockState(); }
+bool Region::isEmptyBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 0; }
+bool Region::isEmptyWaterBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 9; }
+int Region::getBrightness(LightLayer::variety layer, const BlockPos& pos) { if (pos.y < 0 || pos.y >= 256) return layer; LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? layer : c->getBrightness(layer, pos); }
+void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states) { mCachedX = x; mCachedY = y; mCachedZ = z; mCachedStates = states; }
+unsigned int Region::elementToBlockId(unsigned short element) { return element >> 4; }
+unsigned int Region::elementToData(unsigned short element) { return element & 15; }

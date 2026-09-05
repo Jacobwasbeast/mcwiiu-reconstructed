@@ -130,7 +130,7 @@ void Explosion::explode()
 
             for (step = 0; step < pushSteps; step++)
             {
-                pos.subtract(Vec3i(push->x, push->y, push->z));
+                pos = pos.subtract(Vec3i(push->x, push->y, push->z));
 
                 mX = (double)pos.x;
                 mY = (double)pos.y;
@@ -196,7 +196,7 @@ void Explosion::explode()
 
                 for (; power > 0.0f; power -= 0.3f * 0.75f)
                 {
-                    if (!mBreaksBlocksUnderwater && mLevel->getExtraBlockState(pos)->getMaterial() == Material::WATER)
+                    if (!mBreaksBlocksUnderwater && mLevel->getLiquidBlockState(rayBlockPos)->getMaterial() == Material::WATER)
                     {
                         power = 0.0f;
                     }

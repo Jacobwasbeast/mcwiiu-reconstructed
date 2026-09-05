@@ -112,7 +112,7 @@ int Slot::getMaxStackSize(not_null_ptr<ItemInstance> itemInstance)
 
 std::wstring Slot::getNoItemIcon()
 {
-    return NULL;
+    return std::wstring();
 }
 
 not_null_ptr<ItemInstance> Slot::remove(int count)

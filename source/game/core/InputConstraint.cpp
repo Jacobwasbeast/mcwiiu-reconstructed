@@ -1,6 +1,6 @@
 #include "game/core/InputConstraint.hpp"
 
-#include "game/core/CInput.hpp"
+#include "platform/wiiu/CInput.hpp"
 
 InputConstraint::~InputConstraint()
 {

@@ -1,0 +1,24 @@
+#include "game/core/WinnerCondition.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/GameStats.hpp"
+#include "game/core/StatsUID.hpp"
+#include "game/world/generation/Player.hpp"
+
+class ServerPlayer;
+
+WinnerCondition::WinnerCondition()
+    : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false)
+{
+}
+
+WinnerCondition::~WinnerCondition()
+{
+}
+
+bool WinnerCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
+{
+    boost::shared_ptr<ServerPlayer> firstPlace = gameStats->GetFirstPlace();
+    return firstPlace->getSUID() == uid;
+}

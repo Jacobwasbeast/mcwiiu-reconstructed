@@ -4,18 +4,13 @@
 
 #include <boost/weak_ptr.hpp>
 
-#include "game/core/Mth.hpp"
 #include "game/core/WitherBoss.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
 
-const unsigned long long ENTITY_TYPE_WITHER_BOSS = 0x000000005D540047ULL;
-
-const float MIN_MOVEMENT_DISTANCE_SQR = 2.5000003e-07f;
-const float MAX_Y_ROT_FROM_BODY = 75.0f;
-const float MAX_Y_ROT_FROM_BODY_WITHER = 360.0f;
-const float MAX_STABLE_HEAD_ROT_DIFFERENCE = 15.0f;
-const int HEAD_STABLE_TIME_LIMIT = 10;
+class Mth
+{
+public:
+    static float wrapDegrees(float degrees);
+};
 
 BodyControl::BodyControl(LivingEntity* mob)
     : mMob(mob)
@@ -54,63 +49,67 @@ void BodyControl::clientTick()
         return;
     }
 
-    double xd = mMob->mX - mMob->mXo;
-    double zd = mMob->mZ - mMob->mZo;
-    float maxYRotFromBody = MAX_Y_ROT_FROM_BODY;
+    double zDelta = mMob->mZ - mMob->mZo;
+    double xDelta = mMob->mX - mMob->mXo;
+    float maxYRotFromBody = 75.0f;
 
-    if (xd * xd + zd * zd > MIN_MOVEMENT_DISTANCE_SQR)
+    if (xDelta * xDelta + zDelta * zDelta <= 2.5000003e-07f)
     {
-        mMob->mYBodyRot = mMob->mYRot;
+        std::vector<boost::weak_ptr<Entity> >* passengers = mMob->getPassengers();
 
-        if (mMob->GetType() != ENTITY_TYPE_WITHER_BOSS)
+        if (passengers->empty() || mMob->controllingPassengerIsA(ENTITY_TYPE_MOB))
         {
-            mMob->mYHeadRot = clamp(mMob->mYBodyRot, mMob->mYHeadRot, maxYRotFromBody);
-        }
-
-        mHeadStableTime = 0;
-        mLastStableYHeadRot = mMob->mYHeadRot;
-        return;
-    }
-
-    std::vector<boost::weak_ptr<Entity> >* passengers = mMob->getPassengers();
-
-    if (passengers->empty() || mMob->controllingPassengerIsA(ENTITY_TYPE_MOB))
-    {
-        if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
-        {
-            maxYRotFromBody = MAX_Y_ROT_FROM_BODY_WITHER;
-        }
-
-        float yHeadRot = mMob->mYHeadRot;
-
-        if (Mth::abs(yHeadRot - mLastStableYHeadRot) > MAX_STABLE_HEAD_ROT_DIFFERENCE)
-        {
-            mLastStableYHeadRot = yHeadRot;
-            mHeadStableTime = 0;
-        }
-        else
-        {
-            ++mHeadStableTime;
-
-            if (mHeadStableTime > HEAD_STABLE_TIME_LIMIT)
+            if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
             {
-                float stableScale = 1.0f
-                    - (float)(mHeadStableTime - HEAD_STABLE_TIME_LIMIT) / 10.0f;
+                maxYRotFromBody = 360.0f;
+            }
 
-                if (stableScale < 0.0f)
+            float yHeadRot = mMob->mYHeadRot;
+            float headDifference = yHeadRot - mLastStableYHeadRot;
+            if (headDifference < 0.0f)
+            {
+                headDifference = -headDifference;
+            }
+
+            if (headDifference > 15.0f)
+            {
+                mLastStableYHeadRot = yHeadRot;
+                mHeadStableTime = 0;
+            }
+            else
+            {
+                ++mHeadStableTime;
+
+                if (mHeadStableTime > 10)
                 {
-                    stableScale = 0.0f;
-                }
+                    float stableScale = 1.0f
+                        - (float)(mHeadStableTime - 10) / 10.0f;
 
-                maxYRotFromBody = maxYRotFromBody * stableScale;
+                    if (stableScale < 0.0f)
+                    {
+                        stableScale = 0.0f;
+                    }
+
+                    maxYRotFromBody = maxYRotFromBody * stableScale;
+                }
+            }
+
+            mMob->mYBodyRot = clamp(yHeadRot, mMob->mYBodyRot, maxYRotFromBody);
+
+            if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
+            {
+                mMob->mYRot = mMob->mYBodyRot;
             }
         }
 
-        mMob->mYBodyRot = clamp(yHeadRot, mMob->mYBodyRot, maxYRotFromBody);
-
-        if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
-        {
-            mMob->mYRot = mMob->mYBodyRot;
-        }
+        return;
     }
+
+    mMob->mYBodyRot = mMob->mYRot;
+    if (mMob->GetType() != ENTITY_TYPE_WITHER_BOSS)
+    {
+        mMob->mYHeadRot = clamp(mMob->mYBodyRot, mMob->mYHeadRot, maxYRotFromBody);
+    }
+    mHeadStableTime = 0;
+    mLastStableYHeadRot = mMob->mYHeadRot;
 }

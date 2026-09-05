@@ -37,7 +37,7 @@ std::wstring HtmlString::ToString()
 
     if (mItalic)
     {
-        stream << L"<i>";
+        stream << "<i>";
     }
 
     eMinecraftColour colour = eMinecraftColour_HTMLColor_7;
@@ -54,12 +54,12 @@ std::wstring HtmlString::ToString()
 
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
                << theApp.GetHTMLColor(colour) << L"\" size=\"" << fontSize << L"\">" << mText
-               << L"</font>";
+               << "</font>";
     }
     else
     {
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << theApp.GetHTMLColor(colour) << L"\">" << mText << L"</font>";
+               << theApp.GetHTMLColor(colour) << L"\">" << mText << "</font>";
     }
 
     if (mItalic)

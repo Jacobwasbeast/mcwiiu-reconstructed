@@ -3,9 +3,9 @@
 
 #include <boost/unordered_map.hpp>
 
-#include "game/core/File.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+class File;
 class LootTable;
 
 class LootTables

@@ -1,0 +1,53 @@
+#include "game/core/DelayedRelease.hpp"
+
+#include "game/data/CompoundTag.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/world/Level.hpp"
+
+DelayedRelease::DelayedRelease(Level* level, boost::shared_ptr<Entity> entity, int delay)
+    : Entity(level, true)
+{
+    moveTo(entity->mX, entity->mY, entity->mZ, 0.25f, 0.25f);
+    mEntity = entity;
+    mDelay = delay;
+}
+
+DelayedRelease::~DelayedRelease()
+{
+}
+
+bool DelayedRelease::makeStepSound()
+{
+    return false;
+}
+
+void DelayedRelease::tick()
+{
+    if (mDelay-- < 1)
+    {
+        mLevel->removeEntity(mEntity);
+        remove();
+    }
+}
+
+bool DelayedRelease::hurt(const DamageSource*, float)
+{
+    return false;
+}
+
+void DelayedRelease::defineSynchedData()
+{
+}
+
+void DelayedRelease::readAdditionalSaveData(CompoundTag*)
+{
+}
+
+void DelayedRelease::addAdditonalSaveData(CompoundTag*)
+{
+}
+
+unsigned long long DelayedRelease::GetType()
+{
+    return 0x0800000700000000ULL;
+}

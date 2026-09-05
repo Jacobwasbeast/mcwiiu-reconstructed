@@ -5,8 +5,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/core/IUIController.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/util/Vec3.hpp"
 
 class LaunchMoreOptionsMenuInitData;

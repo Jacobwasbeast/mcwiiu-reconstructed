@@ -1,8 +1,6 @@
 #include "game/core/LootTables.hpp"
 
 #include "game/core/BuiltInLootTables.hpp"
-#include "game/core/LootTable.hpp"
-#include "game/util/ResourceLocation.hpp"
 
 LootTables::LootTables()
 {
@@ -17,5 +15,5 @@ LootTable* LootTables::get(ResourceLocation* location)
         return found->second;
     }
 
-    return LootTable::EMPTY;
+    return NULL;
 }
