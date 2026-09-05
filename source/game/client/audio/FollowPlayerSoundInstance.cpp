@@ -1,0 +1,40 @@
+#include "game/client/audio/FollowPlayerSoundInstance.hpp"
+
+FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch, bool looping)
+    : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players)
+    , player(player)
+{
+    this->volume = volume;
+    this->pitch = pitch;
+    this->looping = looping;
+}
+
+FollowPlayerSoundInstance::FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other)
+    : AbstractTickableSoundInstance(other)
+    , player(other.player)
+{
+}
+
+FollowPlayerSoundInstance::~FollowPlayerSoundInstance()
+{
+}
+
+SoundInstance* FollowPlayerSoundInstance::getDRCClone() const
+{
+    FollowPlayerSoundInstance* clone = new FollowPlayerSoundInstance(*this);
+    clone->drcClone = true;
+    return clone;
+}
+
+void FollowPlayerSoundInstance::tick()
+{
+    if (this->player->mRemoved)
+    {
+        this->stopped = true;
+        return;
+    }
+
+    this->x = static_cast<float>(this->player->mX);
+    this->y = static_cast<float>(this->player->mY);
+    this->z = static_cast<float>(this->player->mZ);
+}
