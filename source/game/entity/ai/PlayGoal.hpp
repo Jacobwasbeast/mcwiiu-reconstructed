@@ -1,0 +1,33 @@
+#ifndef GAME_ENTITY_AI_PLAYGOAL_HPP
+#define GAME_ENTITY_AI_PLAYGOAL_HPP
+
+#include <boost/shared_ptr.hpp>
+#include <string>
+
+#include "game/entity/ai/Goal.hpp"
+#include "game/util/Vec3.hpp"
+
+class Villager;
+
+class PlayGoal : public Goal
+{
+public:
+    PlayGoal(Villager* villager, double speedModifier);
+    virtual ~PlayGoal();
+    virtual bool canUse();
+    virtual bool canContinueToUse();
+    virtual void start();
+    virtual void stop();
+    virtual void tick();
+    virtual std::wstring getName();
+
+private:
+    Villager* mVillager;
+    boost::shared_ptr<Villager> mTarget;
+    double mSpeedModifier;
+    Vec3 mPlayPosition;
+    int mPlayTime;
+    void* mUnknown;
+};
+
+#endif

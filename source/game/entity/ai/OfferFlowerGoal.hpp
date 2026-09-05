@@ -1,0 +1,31 @@
+#ifndef GAME_ENTITY_AI_OFFERFLOWERGOAL_HPP
+#define GAME_ENTITY_AI_OFFERFLOWERGOAL_HPP
+
+#include <boost/shared_ptr.hpp>
+#include <string>
+
+#include "game/entity/ai/Goal.hpp"
+
+class LivingEntity;
+class VillagerGolem;
+
+class OfferFlowerGoal : public Goal
+{
+public:
+    explicit OfferFlowerGoal(VillagerGolem* golem);
+    virtual ~OfferFlowerGoal();
+
+    virtual bool canUse();
+    virtual bool canContinueToUse();
+    virtual void start();
+    virtual void stop();
+    virtual void tick();
+    virtual std::wstring getName();
+
+private:
+    VillagerGolem* mGolem;
+    boost::shared_ptr<LivingEntity> mTarget;
+    int mTicks;
+};
+
+#endif

@@ -16,15 +16,18 @@ bool PushableBySelector::apply(boost::shared_ptr<Entity> entity) const
         return false;
     }
 
-    if (pusher->mLevel->mIsClientSide
-        && !((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
-            && boost::static_pointer_cast<Player>(entity)->isLocalPlayer()))
+    if (!pusher->mLevel->mIsClientSide)
+    {
+        return true;
+    }
+
+    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
+        || !boost::static_pointer_cast<Player>(entity)->isLocalPlayer())
     {
         return false;
     }
 
-    if (pusher->mLevel->mIsClientSide
-        && pusher->GetType() == ENTITY_TYPE_LOCAL_PLAYER
+    if (pusher->GetType() == ENTITY_TYPE_LOCAL_PLAYER
         && entity->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
     {
         return false;

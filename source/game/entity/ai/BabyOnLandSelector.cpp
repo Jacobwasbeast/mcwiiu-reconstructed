@@ -13,9 +13,9 @@ bool BabyOnLandSelector::apply(boost::shared_ptr<Entity> entity) const
         return false;
     }
 
-    boost::shared_ptr<LivingEntity> mob = boost::static_pointer_cast<LivingEntity>(entity);
+    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 
-    return mob->isBaby() && !entity->isInWater();
+    return livingEntity->isBaby() && !entity->isInWater();
 }
 
 BabyOnLandSelector::~BabyOnLandSelector()

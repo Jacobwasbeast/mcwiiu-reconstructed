@@ -1,0 +1,29 @@
+#ifndef GAME_ENTITY_AI_LEAPATTARGETGOAL_HPP
+#define GAME_ENTITY_AI_LEAPATTARGETGOAL_HPP
+
+#include <string>
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/entity/ai/Goal.hpp"
+
+class LivingEntity;
+class Mob;
+
+class LeapAtTargetGoal : public Goal
+{
+public:
+    LeapAtTargetGoal(Mob* mob, float yd);
+    virtual ~LeapAtTargetGoal();
+    virtual bool canUse();
+    virtual bool canContinueToUse();
+    virtual void start();
+    virtual std::wstring getName();
+
+private:
+    Mob* mMob;
+    boost::shared_ptr<LivingEntity> mTarget;
+    float mYd;
+};
+
+#endif

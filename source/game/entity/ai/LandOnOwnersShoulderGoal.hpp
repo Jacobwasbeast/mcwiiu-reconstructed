@@ -1,0 +1,30 @@
+#ifndef GAME_ENTITY_AI_LANDONOWNERSSHOULDERGOAL_HPP
+#define GAME_ENTITY_AI_LANDONOWNERSSHOULDERGOAL_HPP
+
+#include <boost/shared_ptr.hpp>
+#include <string>
+
+#include "game/entity/ai/Goal.hpp"
+
+class Player;
+class ShoulderRidingEntity;
+
+class LandOnOwnersShoulderGoal : public Goal
+{
+public:
+    LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner);
+    virtual ~LandOnOwnersShoulderGoal();
+
+    virtual bool canUse();
+    virtual bool canInterrupt();
+    virtual void start();
+    virtual void tick();
+    virtual std::wstring getName();
+
+private:
+    ShoulderRidingEntity* mOwner;
+    boost::shared_ptr<Player> mPlayer;
+    bool mShoulderRiding;
+};
+
+#endif
