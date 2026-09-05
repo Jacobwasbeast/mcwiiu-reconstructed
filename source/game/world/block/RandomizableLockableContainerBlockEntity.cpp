@@ -4,9 +4,11 @@
 
 #include "game/data/CompoundTag.hpp"
 #include "game/core/LootTable.hpp"
+#include "game/core/LootTableContext.hpp"
 #include "game/core/LootTables.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
 
 class ServerLevel;
 

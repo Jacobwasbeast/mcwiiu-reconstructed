@@ -9,7 +9,7 @@ public:
     YellowFlowerBlock();
 
     virtual ~YellowFlowerBlock();
-    virtual FlowerCategory* getFlowerCategory();
+    virtual FlowerBlock::FlowerCategory* getFlowerCategory();
 };
 
 #endif

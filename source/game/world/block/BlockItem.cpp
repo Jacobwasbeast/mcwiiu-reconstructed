@@ -4,6 +4,7 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
+#include "game/core/Stats.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
@@ -175,7 +176,7 @@ void BlockItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     mBlock->appendHoverText(itemInstance, player, lines, advanced);
 }
 
-bool BlockItem::getIconType()
+int BlockItem::getIconType()
 {
     return !mBlock->getTileItemIconName().empty();
 }

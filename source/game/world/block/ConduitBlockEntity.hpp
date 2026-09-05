@@ -33,18 +33,18 @@ public:
     void incrementWindLevel();
     virtual unsigned long long GetType();
 
-private:
+public:
     bool mActive;
-    bool mLarge;
+    bool mHunting;
     int mCheckTime;
-    int mNextTargetCheck;
-    int mTargetId;
+    long long mNextTargetCheck;
     int mTickCount;
-    float mAnimation;
-    float mRotation;
-    int mEffectRange;
+    float mAnimationValue;
+    float mActiveRotation;
+    int mRotationTick;
     int mWindLevel;
-    int mTargetCooldown;
+    int mEffectRange;
+    int mTargetId;
     std::vector<BlockPos> mBlocks;
 };
 

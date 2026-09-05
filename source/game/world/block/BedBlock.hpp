@@ -61,7 +61,7 @@ public:
     virtual bool hasCustomBreakingProgress(const BlockState* state);
     static bool BlockIsDoor(const Block* block);
     static bool hasSolidGroundAndTwoBlocksSpaceAt(Level* level, const BlockPos& pos);
-    static void findStandUpPosition(Level* level, const BlockPos& pos, int data);
+    static BlockPos* findStandUpPosition(Level* level, const BlockPos& pos, int data);
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
     virtual int getRenderLayer();

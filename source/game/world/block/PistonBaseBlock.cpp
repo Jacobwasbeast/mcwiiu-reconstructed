@@ -7,7 +7,6 @@
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
-#include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"

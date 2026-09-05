@@ -5,7 +5,6 @@
 
 #include <boost/unordered_set.hpp>
 
-#include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -17,7 +16,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
@@ -114,12 +112,7 @@ FlowerBlock::Flower* FlowerBlock::Flower::byData(const FlowerCategory* category,
 
 Block* FlowerBlock::FlowerCategory::getBlock()
 {
-    if (this == YELLOW)
-    {
-        return Blocks::yellow_flower;
-    }
-
-    return Blocks::red_flower;
+    return Block::byId(this == YELLOW ? 37 : 38);
 }
 
 FlowerBlock::FlowerCategoryPredicate::FlowerCategoryPredicate(FlowerBlock* block)
@@ -244,9 +237,10 @@ void FlowerBlock::registerIcons(IconRegister* iconRegister)
 
 unsigned int FlowerBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.mItemInstance->getItem()) == 351 && tooltipData.mInteractionState != 2)
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        if (DyeColor::byItemData(tooltipData.mItemInstance->getAuxValue())->getBlockData() == 0)
+        if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
         {
             return 0x9F5FDC40u;
         }
@@ -287,7 +281,9 @@ bool FlowerBlock::performBonemeal(bool checkOnly, Level* level, Random* random, 
         }
 
         bool keepCategory = levelRandom->nextInt(8) != 0;
-        Block* flowerBlock = (this == Blocks::red_flower) == keepCategory ? Blocks::red_flower : Blocks::yellow_flower;
+        Block* redFlower = FlowerCategory::RED->getBlock();
+        Block* yellowFlower = FlowerCategory::YELLOW->getBlock();
+        Block* flowerBlock = (this == redFlower) == keepCategory ? redFlower : yellowFlower;
 
         if (flowerBlock != NULL && flowerBlock->canSurvive(level, flowerPos, state))
         {

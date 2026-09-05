@@ -10,6 +10,7 @@
 #include "game/core/Rotation.hpp"
 #include "game/core/FlippedIcon.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -41,9 +42,8 @@ std::wstring DoorBlock::HingeSide::toString() const { return mName; }
 std::wstring DoorBlock::HingeSide::getSerializedName() const { return mName; }
 
 DoorBlock::DoorBlock(Material* material)
-    : Block(material), mDoorData(0), mUpperIcon(NULL), mFlippedUpperIcon(NULL), mLowerIcon(NULL), mFlippedLowerIcon(NULL)
+    : Block(material), mUpperIcon(NULL), mFlippedUpperIcon(NULL), mLowerIcon(NULL), mFlippedLowerIcon(NULL)
 {
-    mDoorData = 1;
     DerivedInit();
     TypedBoxed<DoorHalf*> half(LOWER);
     TypedBoxed<bool> open(false);
@@ -208,28 +208,38 @@ int DoorBlock::getRenderLayer() { return 2; }
 const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource*, const BlockPos&) { return state; }
 const BlockState* DoorBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(getFacingFromData(data));
-    TypedBoxed<bool> open((data & 4) != 0);
-    TypedBoxed<bool> powered((data & 8) != 0);
-    TypedBoxed<DoorHalf*> half(isUpperFromData(data) ? UPPER : LOWER);
-    TypedBoxed<HingeSide*> hinge((data & 2) != 0 ? RIGHT : LEFT);
     const BlockState* state = defaultBlockState();
-    if (FACING) state = state->setBoxedValue(FACING, &facing);
-    if (OPEN) state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(OPEN), &open);
-    if (POWERED) state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(POWERED), &powered);
-    if (HALF) state = state->setBoxedValue(HALF, &half);
-    if (HINGE) state = state->setBoxedValue(HINGE, &hinge);
+    if (!isUpperFromData(data))
+    {
+        TypedBoxed<DoorHalf*> half(LOWER);
+        TypedBoxed<const Direction*> facing(getFacingFromData(data));
+        TypedBoxed<bool> open((data & 4) != 0);
+        state = state->setBoxedValue(HALF, &half);
+        state = state->setBoxedValue(FACING, &facing);
+        state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(OPEN), &open);
+    }
+    else
+    {
+        TypedBoxed<DoorHalf*> half(UPPER);
+        TypedBoxed<HingeSide*> hinge((data & 1) != 0 ? RIGHT : LEFT);
+        TypedBoxed<bool> powered((data & 2) != 0);
+        state = state->setBoxedValue(HALF, &half);
+        state = state->setBoxedValue(HINGE, &hinge);
+        state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(POWERED), &powered);
+    }
     return state;
 }
 int DoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = 0;
-    if (state == NULL) return data;
-    if (OPEN != NULL && state->getValue(static_cast<AbstractProperty<bool>*>(OPEN))) data |= 4;
-    if (POWERED != NULL && state->getValue(static_cast<AbstractProperty<bool>*>(POWERED))) data |= 8;
-    if (HALF != NULL && state->getValue(HALF) == UPPER) data |= 8;
-    if (HINGE != NULL && state->getValue(HINGE) == RIGHT) data |= 2;
-    if (FACING != NULL) data |= state->getValue(FACING)->getClockWise()->get2DDataValue();
+    if (state->getValue(HALF) == UPPER)
+    {
+        int data = 8;
+        if (state->getValue(HINGE) == RIGHT) data |= 1;
+        if (state->getValue(static_cast<AbstractProperty<bool>*>(POWERED))) data |= 2;
+        return data;
+    }
+    int data = state->getValue(FACING)->getClockWise()->get2DDataValue();
+    if (state->getValue(static_cast<AbstractProperty<bool>*>(OPEN))) data |= 4;
     return data;
 }
 unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData) { return Block::GetInteractTooltip(tooltipData); }
@@ -253,7 +263,27 @@ bool DoorBlock::isDoor(Block* block)
     return block == Blocks::wooden_door || block == Blocks::spruce_door || block == Blocks::birch_door || block == Blocks::jungle_door || block == Blocks::acacia_door || block == Blocks::dark_oak_door;
 }
 TextureAtlasSprite* DoorBlock::getTexture(const Direction*, const BlockState*) { return mLowerIcon; }
-TextureAtlasSprite* DoorBlock::getTexture(LevelSource*, const BlockPos&, const Direction*, const BlockState*) { return mLowerIcon; }
+TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction, const BlockState*)
+{
+    if (direction == Direction::UP || direction == Direction::DOWN) return mLowerIcon;
+    const BlockState* state = levelSource->getBlockState(pos);
+    const Direction* facing = state->getValue(FACING)->getClockWise();
+    bool open = state->getValue(static_cast<AbstractProperty<bool>*>(OPEN));
+    bool flip = false;
+    if (!open)
+    {
+        flip = (facing == Direction::NORTH && direction == Direction::EAST) ||
+               (facing == Direction::SOUTH && direction == Direction::WEST) ||
+               (facing == Direction::WEST && direction == Direction::NORTH) ||
+               (facing == Direction::EAST && direction == Direction::SOUTH);
+        if (state->getValue(HINGE) == RIGHT) flip = !flip;
+    }
+    if (state->getValue(HALF) == UPPER)
+    {
+        return flip ? mFlippedUpperIcon : mUpperIcon;
+    }
+    return flip ? mFlippedLowerIcon : mLowerIcon;
+}
 void DoorBlock::registerIcons(IconRegister* iconRegister)
 {
     mUpperIcon = iconRegister->registerIcon(getIconName() + L"_upper");

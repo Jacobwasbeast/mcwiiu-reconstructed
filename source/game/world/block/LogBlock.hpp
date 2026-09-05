@@ -18,9 +18,19 @@ class LivingEntity;
 class Rotation;
 class TextureAtlasSprite;
 
+template <typename T>
+class EnumProperty;
+
 class LogBlock : public RotatedPillarBlock
 {
 public:
+    class LogAxis;
+    static LogAxis* X;
+    static LogAxis* Y;
+    static LogAxis* Z;
+    static LogAxis* NONE;
+    static EnumProperty<LogAxis*>* AXIS;
+
     class LogAxis : public StringRepresentable
     {
     public:

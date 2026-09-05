@@ -7,8 +7,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/Level.hpp"
 
 BedBlock::Part::Part(int index, const std::wstring& name)
     : mName(name), mIndex(index)
@@ -118,12 +120,35 @@ bool BedBlock::hasSolidGroundAndTwoBlocksSpaceAt(Level* level, const BlockPos& p
     return false;
 }
 
-void BedBlock::findStandUpPosition(Level* level, const BlockPos& pos, int data)
+BlockPos* BedBlock::findStandUpPosition(Level* level, const BlockPos& pos, int data)
 {
-    if (level != NULL && data >= 0)
+    const Direction* facing = level->getBlockState(pos)->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    Vec3i normal = facing->getNormal();
+
+    for (int offset = 0; offset < 2; ++offset)
     {
-        hasSolidGroundAndTwoBlocksSpaceAt(level, pos);
+        int centerX = pos.x - normal.x * offset;
+        int centerZ = pos.z - normal.z * offset;
+
+        for (int x = centerX - 1; x <= centerX + 1; ++x)
+        {
+            for (int z = centerZ - 1; z <= centerZ + 1; ++z)
+            {
+                BlockPos standUpPos(x, pos.y, z);
+                if (hasSolidGroundAndTwoBlocksSpaceAt(level, standUpPos))
+                {
+                    if (data < 1)
+                    {
+                        return new BlockPos(standUpPos);
+                    }
+
+                    --data;
+                }
+            }
+        }
     }
+
+    return new BlockPos(pos.above());
 }
 
 void BedBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)

@@ -6,7 +6,7 @@ BlocksDestroyedFromBelowMedal::~BlocksDestroyedFromBelowMedal()
 {
 }
 
-float BlocksDestroyedFromBelowMedal::GetScore(PlayerStats* playerStats) const
+double BlocksDestroyedFromBelowMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<float>(playerStats->getTotalBlocksDestroyed());
 }

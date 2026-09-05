@@ -15,7 +15,7 @@ public:
 
     virtual ~BlocksDestroyedFromBelowMedal();
 
-    virtual float GetScore(PlayerStats* playerStats) const;
+    virtual double GetScore(PlayerStats* playerStats) const;
 };
 
 #endif

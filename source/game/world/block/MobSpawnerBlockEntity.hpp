@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/SpawnData.hpp"
 #include "game/entity/mob/BaseMobSpawner.hpp"
 #include "game/world/block/BlockEntity.hpp"
 

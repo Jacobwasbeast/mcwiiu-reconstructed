@@ -4,6 +4,7 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Blocks.hpp"
 

@@ -3,6 +3,7 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/BubbleColumnSegment.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"

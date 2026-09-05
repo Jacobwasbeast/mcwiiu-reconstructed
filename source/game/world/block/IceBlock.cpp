@@ -2,8 +2,8 @@
 
 #include "game/core/FoodConstants.hpp"
 #include "game/core/GenericStats.hpp"
-#include "game/core/Stats.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/Enchantments.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Dimension.hpp"
@@ -14,7 +14,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-#include "game/world/generation/Player.hpp"
 
 IceBlock::IceBlock(bool isClientSide)
     : HalfTransparentBlock(L"ice", Material::ICE, false)
@@ -40,10 +39,10 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
                              const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                              not_null_ptr<ItemInstance> tool)
 {
-    player->awardStat(Stats::blockMinedStats.data[Block::getId(this)], GenericStats::param_blocksMined(state, 1));
+    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
     player->causeFoodExhaustion((float)FoodConstants::ExhaustionMine());
 
-    if (!isSilkTouchable() || EnchantmentHelper::getItemEnchantmentLevel(EnchantmentHelper::SILK_TOUCH, tool) < 1)
+    if (!isSilkTouchable() || EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) < 1)
     {
         if (level->mDimension->isUltraWarm())
         {
@@ -52,7 +51,7 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
         }
 
         spawnResources(level, pos, state,
-                       EnchantmentHelper::getItemEnchantmentLevel(EnchantmentHelper::BLOCK_FORTUNE, tool));
+                       EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool));
         BlockPos below = pos.below();
         const BlockState* belowState = level->getBlockState(below);
         if (belowState->getMaterial()->isSolid() || belowState->getMaterial()->isLiquid())

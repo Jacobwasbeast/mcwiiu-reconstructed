@@ -3,7 +3,10 @@
 #include "game/core/Direction.hpp"
 #include "game/core/FoodConstants.hpp"
 #include "game/core/Nameable.hpp"
+#include "game/item/EnchantmentHelper.hpp"
+#include "game/item/Enchantments.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -36,9 +39,9 @@ bool BaseEntityBlock::isCactus(Level* level, const BlockPos& pos, const Directio
 bool BaseEntityBlock::touchesCactus(Level* level, const BlockPos& pos)
 {
     return isCactus(level, pos, Direction::NORTH)
-        || isCactus(level, pos, Direction::EAST)
         || isCactus(level, pos, Direction::SOUTH)
-        || isCactus(level, pos, Direction::WEST);
+        || isCactus(level, pos, Direction::WEST)
+        || isCactus(level, pos, Direction::EAST);
 }
 
 EBlockRenderShape BaseEntityBlock::getRenderShape(const BlockState*)
@@ -65,18 +68,23 @@ void BaseEntityBlock::playerDestroy(Level* level, boost::shared_ptr<Player> play
     }
 
     player->causeFoodExhaustion(FoodConstants::ExhaustionMine());
-    Item* resource = getResource(state, NULL, 0);
-    if (resource != NULL)
+    if (!level->mIsClientSide)
     {
-        not_null_ptr<ItemInstance> item(new ItemInstance(resource, 1));
-        item->setHoverName(nameable->getCustomName());
-        popResource(level, pos, item);
+        int fortune = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool);
+        Item* resource = getResource(state, level->mRandom, fortune);
+        if (resource != Items::air)
+        {
+            not_null_ptr<ItemInstance> item(new ItemInstance(resource, getResourceCount(level->mRandom)));
+            item->setHoverName(nameable->getName());
+            popResource(level, pos, item);
+        }
     }
 }
 
-bool BaseEntityBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& pos,
+bool BaseEntityBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos,
                                    int eventId, int eventParam)
 {
+    Block::triggerEvent(state, level, pos, eventId, eventParam);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity.get() == NULL)
     {

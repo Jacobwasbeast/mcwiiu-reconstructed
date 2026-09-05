@@ -26,7 +26,7 @@ public:
     public:
         Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                 const MaterialColor* materialColor, const std::wstring& texture,
-                const std::wstring& sideTexture, const std::wstring& topTexture);
+                const std::wstring& topTexture, const std::wstring& sideTexture);
 
         const MaterialColor* getMaterialColor();
         int getData();
@@ -46,8 +46,8 @@ public:
         int mDescriptionId;
         const MaterialColor* mMaterialColor;
         std::wstring mTexture;
-        std::wstring mSideTexture;
         std::wstring mTopTexture;
+        std::wstring mSideTexture;
         TextureAtlasSprite* mIcon;
         TextureAtlasSprite* mSideIcon;
         TextureAtlasSprite* mTopIcon;

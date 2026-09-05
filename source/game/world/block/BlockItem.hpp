@@ -49,7 +49,7 @@ public:
                                  boost::shared_ptr<Player> player,
                                  std::vector<HtmlString>* lines,
                                  bool advanced);
-    virtual bool getIconType();
+    virtual int getIconType();
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);
     static boost::shared_ptr<Player> fjGetCurrentlyPlacingBlockPlayer();

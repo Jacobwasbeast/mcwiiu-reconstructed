@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_LEAFBLOCK_HPP
 #define GAME_WORLD_BLOCK_LEAFBLOCK_HPP
 
+#include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TransparentBlock.hpp"
 
 class BlockPos;
@@ -45,6 +46,8 @@ public:
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual bool canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType);
+    virtual PlanksBlock::Variant* getWoodVariantForData(int data) = 0;
+    virtual int getWoodType(const BlockState* state) = 0;
 
 private:
     bool mFancy;

@@ -1,4 +1,59 @@
 #include "game/world/block/Block.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/LeadItem.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/core/ExperienceOrb.hpp"
+#include "game/world/block/BlockImpl.hpp"
+#include "game/world/block/AirBlock.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/ThinFenceBlock.hpp"
+#include "game/world/block/HalfTransparentBlock.hpp"
+#include "game/world/block/LeafBlock.hpp"
+#include "game/world/block/SnowBlock.hpp"
+#include "game/world/block/StaticLiquidBlock.hpp"
+#include "game/world/block/OreBlock.hpp"
+#include "game/world/block/BedBlock.hpp"
+#include "game/world/block/ButtonBlock.hpp"
+#include "game/world/block/PistonBaseBlock.hpp"
+#include "game/world/block/PistonHeadBlock.hpp"
+#include "game/world/block/NewLeafBlock.hpp"
+#include "game/world/block/NewLogBlock.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
+#include "game/world/block/PoweredRailBlock.hpp"
+#include "game/world/block/PrismarineBlock.hpp"
+#include "game/world/block/PrismarineSlabBlock.hpp"
+#include "game/world/block/QuartzBlock.hpp"
+#include "game/world/block/RailBlock.hpp"
+#include "game/world/block/RedSandStoneBlock.hpp"
+#include "game/world/block/RedStoneWireBlock.hpp"
+#include "game/world/block/RotatedPillarBlock.hpp"
+#include "game/world/block/SandStoneBlock.hpp"
+#include "game/world/block/StainedGlassBlock.hpp"
+#include "game/world/block/StainedGlassPaneBlock.hpp"
+#include "game/world/block/StoneBlock.hpp"
+#include "game/world/block/StoneBrickBlock.hpp"
+#include "game/world/block/StoneSlabBlock.hpp"
+#include "game/world/block/TorchBlock.hpp"
+#include "game/world/block/TrapDoorBlock.hpp"
+#include "game/world/block/TripWireHookBlock.hpp"
+#include "game/world/block/WallBlock.hpp"
+#include "game/world/block/WoodSlabBlock.hpp"
+#include "game/world/block/WoolCarpetBlock.hpp"
+#include "game/world/block/PurpurSlabBlockFull.hpp"
+#include "game/world/block/PurpurSlabBlockHalf.hpp"
+#include "game/world/block/StainedHardenedClayBlock.hpp"
+#include "game/world/block/StrippedLogBlock.hpp"
+#include "game/world/block/RotatedPillarBlockImpl.hpp"
+#include "game/world/block/PrismarineSlabBlockFull.hpp"
+#include "game/world/block/PrismarineSlabBlockHalf.hpp"
+#include "game/world/block/TurtleEggBlock.hpp"
+#include "game/world/block/GlazedTerracottaBlock.hpp"
+#include "game/world/block/ColoredBlock.hpp"
+#include "game/world/block/DriedKelpBlock.hpp"
+#include "game/world/block/KelpBlock.hpp"
+#include "game/world/block/CoralBlock.hpp"
 
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
@@ -31,12 +86,12 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/StairBlock.hpp"
 #include "game/world/generation/Player.hpp"
-
-class AABB
-{
-public:
-    static const AABB* newPermanent(double x0, double y0, double z0, double x1, double y1, double z1);
-};
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/core/HitResult.hpp"
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -177,7 +232,7 @@ Block* Block::byId(int id)
         return NULL;
     }
 
-    return blockRegistry->mById[id];
+    return blockRegistry->byId(id);
 }
 
 bool Block::existsWithId(int id)
@@ -216,7 +271,7 @@ Block* Block::byString(const std::wstring& name)
         return blockRegistry->get(ResourceLocation(location));
     }
 
-    return blockRegistry->byId(Integer::parseInt(name, 10));
+    return blockRegistry->byId((int)wcstol(name.c_str(), NULL, 10));
 }
 
 Block* Block::setBaseItemTypeAndMaterial(int baseItemType, int baseItemMaterial)
@@ -356,7 +411,7 @@ bool Block::canProvideSupport(const BlockState* state, const Direction* directio
         TypedBoxed<const HalfSlabBlock::Half*>* half =
             (TypedBoxed<const HalfSlabBlock::Half*>*)state->getBoxedValue(HalfSlabBlock::TYPE);
 
-        if (half != NULL && half->mValue == HalfSlabBlock::TOP)
+        if (half != NULL && half->getValue() == HalfSlabBlock::TOP)
         {
             return true;
         }
@@ -367,7 +422,7 @@ bool Block::canProvideSupport(const BlockState* state, const Direction* directio
         TypedBoxed<const StairBlock::Half*>* half =
             (TypedBoxed<const StairBlock::Half*>*)state->getBoxedValue(StairBlock::HALF);
 
-        if (half != NULL && half->mValue == StairBlock::TOP)
+        if (half != NULL && half->getValue() != NULL && half->getValue()->getSerializedName() == L"top")
         {
             return true;
         }
@@ -378,9 +433,7 @@ bool Block::canProvideSupport(const BlockState* state, const Direction* directio
         return false;
     }
 
-    TypedBoxed<int>* layers = (TypedBoxed<int>*)state->getBoxedValue(SnowLayerBlock::LAYERS);
-
-    return layers != NULL && layers->mValue == 7;
+    return state->getBlock()->convertBlockStateToLegacyData(state) == 7;
 }
 
 bool Block::isValidSpawn(const BlockState* state, boost::shared_ptr<Entity> entity)
@@ -410,9 +463,9 @@ bool Block::isLiquidBlock()
 
 unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!Item::isItemABlock(Item::getId(tooltipData.mItemInstance->getItem())))
+    if (!Item::isItemABlock(Item::getId(tooltipData.m_pItemInstance->getItem())))
     {
-        int blockId = Item::getBlockId(tooltipData.mItemInstance->getItem());
+        int blockId = Item::getBlockId(tooltipData.m_pItemInstance->getItem());
 
         switch (blockId)
         {
@@ -438,7 +491,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         case 175:
         case 270:
         case 271:
-            if (tooltipData.mInteractionState != 2 && tooltipData.mCanInteract)
+            if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
             {
                 return 0x512092D2u;
             }
@@ -449,7 +502,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
             break;
         }
 
-        if (tooltipData.mInteractionState != 0 || !tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0xFFFFFFFFu;
         }
@@ -457,13 +510,13 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         return 0x4C36CD96u;
     }
 
-    unsigned int itemId = Item::getId(tooltipData.mItemInstance->getItem());
+    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
 
     switch (itemId)
     {
     case 0x103:
     case 0x181:
-        if (tooltipData.mInteractionState == 2 || !tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0xFFFFFFFFu;
         }
@@ -477,7 +530,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
     case 0x174:
     case 0x187:
     case 0x188:
-        if (tooltipData.mInteractionState != 2 && tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0x512092D2u;
         }
@@ -486,7 +539,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 
     case 0x141:
     case 0x185:
-        if (tooltipData.mInteractionState != 0)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
         {
             return 0xFFFFFFFFu;
         }
@@ -499,7 +552,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
     case 0x1CC:
     case 0x1CD:
     case 0x1CE:
-        if (tooltipData.mInteractionState != 0 || !tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0xFFFFFFFFu;
         }
@@ -507,12 +560,12 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         return 0xE80CCF48u;
 
     case 0x15F:
-        if (tooltipData.mInteractionState == 2)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
         {
             return 0xFFFFFFFFu;
         }
 
-        if (DyeColor::byItemData(tooltipData.mItemInstance->getAuxValue())->getBlockData() == 12)
+        if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 12)
         {
             return 0x512092D2u;
         }
@@ -520,7 +573,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         return 0xFFFFFFFFu;
 
     case 0x191:
-        if (tooltipData.mInteractionState == 2 || !tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || !(tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0xFFFFFFFFu;
         }
@@ -528,9 +581,9 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
         return 0x568A07BEu;
 
     case 0x1A4:
-        if (tooltipData.mInteractionState == 0 && tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
-            if (LeadItem::bindPlayerMobsTest(tooltipData.mPlayer, tooltipData.mLevel, BlockPos(tooltipData.mPlayer)))
+            if (LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, tooltipData.m_pLevel, BlockPos(tooltipData.m_pPlayer)))
             {
                 return 0x7B938F36u;
             }
@@ -540,7 +593,7 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 
     case 0x1B3:
     case 0x1C9:
-        if (tooltipData.mInteractionState != 2 && tooltipData.mCanInteract)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && (tooltipData.m_bUseItem || tooltipData.m_bCanPlace))
         {
             return 0x512092D2u;
         }
@@ -556,19 +609,19 @@ unsigned int Block::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData
 
 unsigned int Block::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.mCanHit)
+    if (!tooltipData.m_bCanDestroy)
     {
         return 0xFFFFFFFFu;
     }
 
-    if (getId(tooltipData.mBlockState->getBlock()) == 7)
+    if (getId(tooltipData.m_pBlockState->getBlock()) == 7)
     {
-        if (!tooltipData.mPlayer->getGameMode()->isCreative())
+        if (!tooltipData.m_pPlayer->isCreative())
         {
             return 0xFFFFFFFFu;
         }
 
-        if (!tooltipData.mLevel->getLevelData()->isSuperFlatBedrockRemovable(tooltipData.mBlockPos))
+        if (!tooltipData.m_pLevel->getLevelData()->isSuperFlatBedrockRemovable(tooltipData.m_blockPos))
         {
             return 0xFFFFFFFFu;
         }
@@ -1090,7 +1143,7 @@ void Block::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
         return;
     }
 
-    if (!Minecraft::InMiniGame(EMiniGameId_GLIDE, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
         return;
     }
@@ -1115,7 +1168,7 @@ void Block::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
     if (source != NULL && (source->GetType() & 0xC800000) == 0xC800000)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(source);
-        player->getGameMode()->onBlockDestroyedByExplosion(pos, getId(this));
+        player->isCreative();
     }
 }
 

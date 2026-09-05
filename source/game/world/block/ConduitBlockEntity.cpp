@@ -15,16 +15,16 @@
 ConduitBlockEntity::ConduitBlockEntity()
     : BlockEntity(),
       mActive(false),
-      mLarge(false),
+      mHunting(false),
       mCheckTime(0),
-      mNextTargetCheck(0),
-      mTargetId(-1),
+      mNextTargetCheck(0LL),
       mTickCount(0),
-      mAnimation(0.0f),
-      mRotation(0.0f),
-      mEffectRange(0),
+      mAnimationValue(0.0f),
+      mActiveRotation(0.0f),
+      mRotationTick(0),
       mWindLevel(0),
-      mTargetCooldown(0),
+      mEffectRange(0),
+      mTargetId(-1),
       mBlocks()
 {
     mBlocks.reserve(42);
@@ -112,7 +112,7 @@ void ConduitBlockEntity::_checkShape()
 
     setEffectRange((count / 7) * 16);
     mActive = count > 16;
-    mLarge = count > 41;
+    mHunting = count > 41;
     if (oldActive != mActive || oldRange != mEffectRange)
     {
         setChanged();
@@ -144,7 +144,7 @@ void ConduitBlockEntity::_updateTarget()
     }
 
     mTargetId = -1;
-    if (!mLarge)
+    if (!mHunting)
     {
         setChanged();
         return;
@@ -197,7 +197,7 @@ void ConduitBlockEntity::load(CompoundTag* tag)
     BlockEntity::load(tag);
     mTargetId = tag->getInt(L"Target");
     mActive = tag->getBoolean(L"Active");
-    mRotation = tag->getFloat(L"Rotation");
+    mActiveRotation = tag->getFloat(L"Rotation");
 }
 
 void ConduitBlockEntity::save(CompoundTag* tag)
@@ -205,7 +205,7 @@ void ConduitBlockEntity::save(CompoundTag* tag)
     BlockEntity::save(tag);
     tag->putInt(L"Target", mTargetId);
     tag->putBoolean(L"Active", mActive);
-    tag->putFloat(L"Rotation", mRotation);
+    tag->putFloat(L"Rotation", mActiveRotation);
 }
 
 boost::shared_ptr<Packet> ConduitBlockEntity::getUpdatePacket()
@@ -222,10 +222,10 @@ CompoundTag* ConduitBlockEntity::getUpdateTag()
 
 void ConduitBlockEntity::incrementAnimationValue(float amount)
 {
-    mAnimation += amount;
-    if (mAnimation >= 1.0f)
+    mAnimationValue += amount;
+    if (mAnimationValue >= 1.0f)
     {
-        mAnimation = 0.0f;
+        mAnimationValue = 0.0f;
     }
 }
 

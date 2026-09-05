@@ -169,7 +169,7 @@ void RedstoneTorchBlock::animateTick(const BlockState* state, Level* level, cons
 
 not_null_ptr<ItemInstance> RedstoneTorchBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::redstone_torch)));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::redstone_torch));
 }
 
 bool RedstoneTorchBlock::isMatching(Block* block)

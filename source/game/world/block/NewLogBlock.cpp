@@ -14,40 +14,38 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* NewLogBlock::VARIANT = NULL;
 
-class NewLogVariantPredicate : public Predicate<PlanksBlock::Variant*>
+bool newleaf_predicate(PlanksBlock::Variant* value)
 {
-public:
-    virtual bool apply(PlanksBlock::Variant* value) const
-    {
-        return value != NULL && value->getData() >= 4;
-    }
-};
+    return value->getData() > 3;
+}
 
 void NewLogBlock::blockStaticCtor()
 {
     boost::unordered_set<PlanksBlock::Variant*> values;
+    values.insert(PlanksBlock::Variant::byData(0));
+    values.insert(PlanksBlock::Variant::byData(1));
+    values.insert(PlanksBlock::Variant::byData(2));
+    values.insert(PlanksBlock::Variant::byData(3));
     values.insert(PlanksBlock::Variant::byData(4));
     values.insert(PlanksBlock::Variant::byData(5));
-    NewLogVariantPredicate predicate;
     VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values, &predicate);
+        L"variant", typeid(PlanksBlock::Variant*), values,
+        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(newleaf_predicate));
 }
 
 NewLogBlock::NewLogBlock()
     : LogBlock()
 {
     DerivedInit();
-    BlockStateDefinition* axisDefinition = LogBlock::createBlockStateDefinition();
-    const Property* axisProperty = axisDefinition->getProperties()[0];
     TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(4));
-    TypedBoxed<LogBlock::LogAxis*> axis(LogBlock::LogAxis::fromAxis(Direction::Axis::Y));
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(axisProperty, &axis);
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
-    delete axisDefinition;
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
+    TypedBoxed<LogAxis*> axis(Y);
+    registerDefaultState(state->setBoxedValue(AXIS, &axis));
 }
 
 NewLogBlock::~NewLogBlock()
@@ -57,31 +55,61 @@ NewLogBlock::~NewLogBlock()
 const MaterialColor* NewLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
     PlanksBlock::Variant* variant = state->getValue(VARIANT);
+    if (state->getValue(AXIS)->getId() == 1)
+    {
+        return variant->getMaterialColor();
+    }
     if (variant->getData() == 5)
     {
         return variant->getMaterialColor();
     }
-    return MaterialColor::NONE;
+    return MaterialColor::STONE;
 }
 
 const BlockState* NewLogBlock::getBlockState(int data)
 {
     TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData((data & 3) + 4));
-    return defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    LogAxis* axis = Y;
+    if ((data & 0xC) == 4)
+    {
+        axis = X;
+    }
+    else if ((data & 0xC) == 8)
+    {
+        axis = Z;
+    }
+    else if ((data & 0xC) == 12)
+    {
+        axis = NONE;
+    }
+    TypedBoxed<LogAxis*> axisValue(axis);
+    return state->setBoxedValue(AXIS, &axisValue);
 }
 
 int NewLogBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(VARIANT)->getData() - 4;
+    int data = state->getValue(VARIANT)->getData() - 4;
+    unsigned int axis = state->getValue(AXIS)->getId();
+    if (axis == 0)
+    {
+        data |= 4;
+    }
+    else if (axis == 2)
+    {
+        data |= 8;
+    }
+    else if (axis == 3)
+    {
+        data |= 12;
+    }
+    return data;
 }
 
 BlockStateDefinition* NewLogBlock::createBlockStateDefinition()
 {
-    BlockStateDefinition* axisDefinition = LogBlock::createBlockStateDefinition();
-    const Property* properties[] = { axisDefinition->getProperties()[0], VARIANT };
-    BlockStateDefinition* definition = new BlockStateDefinition(this, properties, 2);
-    delete axisDefinition;
-    return definition;
+    static const Property* properties[] = { VARIANT, AXIS };
+    return new BlockStateDefinition(this, properties, 2);
 }
 
 not_null_ptr<ItemInstance> NewLogBlock::getSilkTouchItemInstance(const BlockState* state)
@@ -108,11 +136,35 @@ bool NewLogBlock::isStrippable()
 const BlockState* NewLogBlock::getStrippedBlock(const BlockState* state)
 {
     int woodType = getWoodType(state);
-    Block* stripped = woodType == 4 ? Blocks::stripped_log_acacia :
-        woodType == 5 ? Blocks::stripped_log_dark_oak : NULL;
-    if (stripped == NULL)
+    const BlockState* strippedState;
+    if (woodType == 4)
+    {
+        strippedState = Blocks::stripped_log_acacia->defaultBlockState();
+    }
+    else if (woodType == 5)
+    {
+        strippedState = Blocks::stripped_log_dark_oak->defaultBlockState();
+    }
+    else
     {
         return state;
     }
-    return stripped->defaultBlockState();
+    if (strippedState == NULL)
+    {
+        return state;
+    }
+    BlockStateDefinition* axisDefinition = RotatedPillarBlock::createBlockStateDefinition();
+    const Property* axisProperty = axisDefinition->getProperties()[0];
+    unsigned int axisId = state->getValue(AXIS)->getId();
+    if (axisId == 3)
+    {
+        delete axisDefinition;
+        return strippedState;
+    }
+    Direction::Axis* directionAxis = axisId == 0 ? Direction::Axis::X :
+        axisId == 1 ? Direction::Axis::Y : Direction::Axis::Z;
+    TypedBoxed<Direction::Axis*> axis(directionAxis);
+    const BlockState* result = strippedState->setBoxedValue(axisProperty, &axis);
+    delete axisDefinition;
+    return result;
 }

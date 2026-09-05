@@ -20,11 +20,11 @@
 
 extern Item* ItemInstance_getItem(const ItemInstance* itemInstance) __asm__("getItem__12ItemInstanceCFv");
 
-static LogBlock::LogAxis* gLogAxisOak = NULL;
-static LogBlock::LogAxis* gLogAxisSpruce = NULL;
-static LogBlock::LogAxis* gLogAxisBirch = NULL;
-static LogBlock::LogAxis* gLogAxisJungle = NULL;
-static EnumProperty<LogBlock::LogAxis*>* gLogBlockAxisProperty = NULL;
+LogBlock::LogAxis* LogBlock::X = NULL;
+LogBlock::LogAxis* LogBlock::Y = NULL;
+LogBlock::LogAxis* LogBlock::Z = NULL;
+LogBlock::LogAxis* LogBlock::NONE = NULL;
+EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
 static const int gLogDescriptionIds[4] = { 0x0B851C01, (int)0x7D86FA86, (int)0xBB86EB26, 0x635D7533 };
 
 LogBlock::LogAxis::LogAxis(const std::wstring& name)
@@ -34,9 +34,9 @@ LogBlock::LogAxis::LogAxis(const std::wstring& name)
 
 unsigned int LogBlock::LogAxis::getId() const
 {
-    if (this == gLogAxisOak) return 0;
-    if (this == gLogAxisSpruce) return 1;
-    if (this == gLogAxisBirch) return 2;
+    if (this == LogBlock::X) return 0;
+    if (this == LogBlock::Y) return 1;
+    if (this == LogBlock::Z) return 2;
     return 3;
 }
 
@@ -62,25 +62,25 @@ std::wstring LogBlock::LogAxis::getSerializedName() const
 LogBlock::LogAxis* LogBlock::LogAxis::fromAxis(Direction::Axis* axis)
 {
     Direction::Axis::EAxis id = axis->getId();
-    if (id == Direction::Axis::eAxis_X) return gLogAxisOak;
-    if (id == Direction::Axis::eAxis_Y) return gLogAxisSpruce;
-    if (id == Direction::Axis::eAxis_Z) return gLogAxisBirch;
-    return gLogAxisJungle;
+    if (id == Direction::Axis::eAxis_X) return LogBlock::X;
+    if (id == Direction::Axis::eAxis_Y) return LogBlock::Y;
+    if (id == Direction::Axis::eAxis_Z) return LogBlock::Z;
+    return LogBlock::NONE;
 }
 
 void LogBlock::blockStaticCtor()
 {
-    gLogAxisOak = new LogAxis(L"x");
-    gLogAxisSpruce = new LogAxis(L"y");
-    gLogAxisBirch = new LogAxis(L"z");
-    gLogAxisJungle = new LogAxis(L"none");
+    X = new LogAxis(L"x");
+    Y = new LogAxis(L"y");
+    Z = new LogAxis(L"z");
+    NONE = new LogAxis(L"none");
 
     boost::unordered_set<LogAxis*> values;
-    values.insert(gLogAxisOak);
-    values.insert(gLogAxisSpruce);
-    values.insert(gLogAxisBirch);
-    values.insert(gLogAxisJungle);
-    gLogBlockAxisProperty = EnumProperty<LogAxis*>::create(L"axis", typeid(LogAxis*), values, Predicates<LogAxis*>::alwaysTrue);
+    values.insert(X);
+    values.insert(Y);
+    values.insert(Z);
+    values.insert(NONE);
+    AXIS = EnumProperty<LogAxis*>::create(L"axis", typeid(LogAxis*), values, Predicates<LogAxis*>::alwaysTrue);
 }
 
 LogBlock::LogBlock()
@@ -119,23 +119,23 @@ const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& p
 {
     const BlockState* result = getBlockState(auxValue);
     TypedBoxed<LogAxis*> axis(LogAxis::fromAxis(direction->getAxis()));
-    return result->setBoxedValue(gLogBlockAxisProperty, &axis);
+    return result->setBoxedValue(AXIS, &axis);
 }
 
 const BlockState* LogBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     if (rotation->getType() == Rotation::eTYPE_Clockwise90 || rotation->getType() == Rotation::eTYPE_CounterClockwise90)
     {
-        LogAxis* axis = state->getValue(gLogBlockAxisProperty);
+        LogAxis* axis = state->getValue(AXIS);
         if (axis->getId() == 0)
         {
-            TypedBoxed<LogAxis*> value(gLogAxisBirch);
-            return state->setBoxedValue(gLogBlockAxisProperty, &value);
+            TypedBoxed<LogAxis*> value(Z);
+            return state->setBoxedValue(AXIS, &value);
         }
         if (axis->getId() == 2)
         {
-            TypedBoxed<LogAxis*> value(gLogAxisOak);
-            return state->setBoxedValue(gLogBlockAxisProperty, &value);
+            TypedBoxed<LogAxis*> value(X);
+            return state->setBoxedValue(AXIS, &value);
         }
     }
     return state;
@@ -157,8 +157,8 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
     unsigned int id = convertBlockStateToLegacyData(state);
     Block* stripped = id == 0 ? Blocks::stripped_log_oak : id == 1 ? Blocks::stripped_log_spruce : id == 2 ? Blocks::stripped_log_birch : Blocks::stripped_log_jungle;
     if (stripped == NULL) return state;
-    TypedBoxed<LogAxis*> axis(state->getValue(gLogBlockAxisProperty));
-    return stripped->defaultBlockState()->setBoxedValue(gLogBlockAxisProperty, &axis);
+    TypedBoxed<LogAxis*> axis(state->getValue(AXIS));
+    return stripped->defaultBlockState()->setBoxedValue(AXIS, &axis);
 }
 
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -170,12 +170,12 @@ unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipD
 
 TextureAtlasSprite* LogBlock::getTypeTexture(const BlockState* state)
 {
-    return mTypeTextures[state->getValue(gLogBlockAxisProperty)->getId()];
+    return mTypeTextures[state->getValue(AXIS)->getId()];
 }
 
 TextureAtlasSprite* LogBlock::getTopTexture(const BlockState* state)
 {
-    return mTopTextures[state->getValue(gLogBlockAxisProperty)->getId()];
+    return mTopTextures[state->getValue(AXIS)->getId()];
 }
 
 void LogBlock::registerIcons(IconRegister* iconRegister)
@@ -191,5 +191,5 @@ void LogBlock::registerIcons(IconRegister* iconRegister)
 
 Direction::Axis* LogBlock::getAxis(const BlockState* state)
 {
-    return state->getValue(gLogBlockAxisProperty)->getAxis();
+    return state->getValue(AXIS)->getAxis();
 }

@@ -1,4 +1,5 @@
 #include "game/world/block/LeafBlock.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/FoliageColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -12,6 +13,14 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+
+void* TlsGetValue(unsigned int index);
+extern unsigned int THREAD_STORAGE_INDEX;
+
+static const std::wstring LEAF_TEXTURES[12] = {
+    L"leaves", L"leaves_spruce", L"leaves_birch", L"leaves_jungle", L"leaves_acacia", L"leaves_big_oak",
+    L"leaves_opaque", L"leaves_spruce_opaque", L"leaves_birch_fast", L"leaves_jungle_opaque", L"leaves_acacia_fast", L"leaves_big_oak_fast"
+};
 
 LeafBlock::LeafBlock()
     : TransparentBlock(Material::LEAVES, false)
@@ -33,10 +42,10 @@ void LeafBlock::DerivedInit()
     Block::DerivedInit();
     mFancy = false;
     mLeafDistance = NULL;
-    setLightBlock(1);
-    setLightEmission(0.2f);
     setTicking(true);
-    setSoundType(NULL);
+    setLightEmission(0.2f);
+    setLightBlock(1);
+    setSoundType(SoundType::PLANT);
 }
 
 int LeafBlock::getColor() const
@@ -91,7 +100,7 @@ void LeafBlock::die(Level* level, const BlockPos& pos)
 {
     const BlockState* state = level->getBlockState(pos);
     Block::spawnResources(level, pos, state, 0);
-    level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+    level->removeBlock(pos);
 }
 
 void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
@@ -243,7 +252,7 @@ bool LeafBlock::isSolidRender(const BlockState* state) const
 void LeafBlock::setFancy(bool fancy)
 {
     mFancy = fancy;
-    Block::ThreadStorage* storage = Block::getThreadStorage();
+    Block::ThreadStorage* storage = static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX));
     storage->mFastGraphics = !fancy;
 }
 
@@ -277,24 +286,20 @@ int LeafBlock::getDescriptionId(int auxValue)
         static_cast<int>(0x81F6464F), 0x2F02AC98, static_cast<int>(0xA3CFE26E)
     };
     const BlockState* state = auxValue == -1 ? defaultBlockState() : getBlockState(auxValue);
-    return descriptions[convertBlockStateToLegacyData(state)];
+    return descriptions[getWoodType(state)];
 }
 
 TextureAtlasSprite* LeafBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    Block::ThreadStorage* storage = Block::getThreadStorage();
-    return mIcons[(storage->mFastGraphics ? 6 : 0) + convertBlockStateToLegacyData(state)];
+    Block::ThreadStorage* storage = static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX));
+    return mIcons[(storage->mFastGraphics ? 6 : 0) + getWoodType(state)];
 }
 
 void LeafBlock::registerIcons(IconRegister* iconRegister)
 {
-    static const wchar_t* names[12] = {
-        L"leaves_oak", L"leaves_spruce", L"leaves_birch", L"leaves_jungle", L"leaves_acacia", L"leaves_big_oak",
-        L"leaves_oak_opaque", L"leaves_spruce_opaque", L"leaves_birch_opaque", L"leaves_jungle_opaque", L"leaves_acacia_opaque", L"leaves_big_oak_opaque"
-    };
     int i;
     for (i = 0; i < 12; ++i)
-        mIcons[i] = iconRegister->registerIcon(names[i]);
+        mIcons[i] = iconRegister->registerIcon(LEAF_TEXTURES[i]);
 }
 
 bool LeafBlock::canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType)

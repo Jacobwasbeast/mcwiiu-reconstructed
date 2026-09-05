@@ -1,18 +1,14 @@
 #include "game/world/block/RedStoneDustItem.hpp"
 
 #include "game/core/GenericStats.hpp"
+#include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-
-class Stats
-{
-public:
-    static arrayWithLength<Stat*> blockPlacedStats;
-};
+#include "game/world/generation/Player.hpp"
 
 RedStoneDustItem::RedStoneDustItem()
     : Item()

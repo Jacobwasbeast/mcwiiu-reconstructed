@@ -4,6 +4,8 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/DefaultedMappedRegistry.hpp"
+#include "game/world/block/IdMapper.hpp"
 
 #include <string>
 #include <vector>
@@ -62,9 +64,6 @@ enum EBlockOffsetType
     BLOCK_OFFSET_XZ = 1,
     BLOCK_OFFSET_XYZ = 2
 };
-
-template <class K, class V> class DefaultedMappedRegistry;
-template <class T> class IdMapper;
 
 class Block
 {
@@ -270,7 +269,7 @@ public:
     bool instanceof(EBlockType blockType);
     int mCachedElementId;
 
-    Material* getCraftingMaterial() { return mMaterial; }
+    Material* getCraftingMaterial();
 
 public:
     void _init(Material* material, const MaterialColor* materialColor);
