@@ -171,8 +171,8 @@ public:
         void SetDurationS(int value);
         unsigned int TotalDurationS() const;
         int TotalDurationMs() const;
-        unsigned int AnnounceEveryS(bool final) const;
-        int AnnounceEveryMs(bool final) const;
+        unsigned int AnnounceEveryS(bool isFinal) const;
+        int AnnounceEveryMs(bool isFinal) const;
         int ChangeAnnounceAfterS() const;
         int ChangeAnnounceAfterMs() const;
         void SetChangeAnnounceAfterS(int value);

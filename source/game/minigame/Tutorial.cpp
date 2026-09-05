@@ -6,9 +6,9 @@
 #include "game/minigame/TutorialTask.hpp"
 
 Tutorial::PopupMessageDetails::PopupMessageDetails()
-    : titleId(-1), messageId(-1), promptId(-1), title(), message(), prompt(),
-      displayTime(0), fadeTime(0), priority(0), soundId(0), unknownId(-1),
-      repeat(false), allowFade(true), force(false), displayed(false), state(-1)
+    : titleId(-1), messageId(-1), promptId(-1), title(), message(), itemDescription(),
+      itemInstance(), displayTime(-1), priority(0), repeat(true), unknown(false),
+      displayed(false), allowFade(false), isItem(false), force(false), state(-1)
 {
 }
 
@@ -20,7 +20,7 @@ unsigned int Tutorial::PopupMessageDetails::isSameContent(PopupMessageDetails* d
     }
     return (titleId == details->titleId && messageId == details->messageId &&
             promptId == details->promptId && title == details->title &&
-            message == details->message && prompt == details->prompt) ? 1U : 0U;
+            message == details->message && itemDescription == details->itemDescription) ? 1U : 0U;
 }
 
 Tutorial::Tutorial(int playerIdValue, GameModeConstraints* constraints, bool enabledValue,

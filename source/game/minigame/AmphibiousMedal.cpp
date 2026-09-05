@@ -7,7 +7,7 @@ AmphibiousMedal::~AmphibiousMedal()
 {
 }
 
-float AmphibiousMedal::GetScore(PlayerStats* playerStats) const
+double AmphibiousMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<float>(playerStats->mAmphibiousKills->getValue());
+    return static_cast<double>(static_cast<float>(playerStats->mAmphibiousKills->getValue()));
 }

@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cwchar>
 #include <sstream>
-#include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
@@ -94,14 +93,14 @@ MiniGameDef::SoundSpec::SoundSpec() : mEnabled(false), mSound(0), mForLast(false
 
 MiniGameDef::SoundSpec::SoundSpec(const XmlObject& object) : mEnabled(false), mSound(0), mForLast(false), mVolume(0.0f)
 {
-    maybe<int> forLast = object[L"forLast"].maybeInt();
-    if (forLast.isSet()) { mEnabled = true; mForLast = forLast.get() != 0; }
+    maybe<int> sound = object[L"forLast"].maybeInt();
+    if (sound.isSet()) { mEnabled = true; mSound = sound.get(); }
     maybe<float> volume = object[L"volume"].maybeFloat();
-    if (volume.isSet()) mVolume = volume.get();
+    if (volume.isSet()) { mForLast = true; mVolume = volume.get(); }
 }
 
 unsigned int MiniGameDef::SoundSpec::ForLast() const { return mEnabled ? (unsigned int)mSound : 0x7fffffffU; }
-double MiniGameDef::SoundSpec::Volume() const { return mEnabled ? mVolume : 1.0; }
+double MiniGameDef::SoundSpec::Volume() const { return mForLast ? mVolume : 1.0; }
 
 MiniGameDef::TimerSpec::TimerSpec()
     : mEnabled(false), mDuration(0), mAnnounce(false), mAnnounceEvery(0), mChangeAnnounce(false)
@@ -132,15 +131,15 @@ int MiniGameDef::TimerSpec::TotalDurationMs() const
     int seconds = (int)TotalDurationS();
     return seconds < 0 ? -1 : seconds * 1000;
 }
-unsigned int MiniGameDef::TimerSpec::AnnounceEveryS(bool final) const
+unsigned int MiniGameDef::TimerSpec::AnnounceEveryS(bool isFinal) const
 {
-    if (final)
+    if (isFinal)
         return mFinalAnnounce ? (unsigned int)mFinalAnnounceAfter : 0xffffffffU;
     return mAnnounce ? (unsigned int)mAnnounceEvery : 0xffffffffU;
 }
-int MiniGameDef::TimerSpec::AnnounceEveryMs(bool final) const
+int MiniGameDef::TimerSpec::AnnounceEveryMs(bool isFinal) const
 {
-    int seconds = (int)AnnounceEveryS(final);
+    int seconds = (int)AnnounceEveryS(isFinal);
     return seconds < 0 ? -1 : seconds * 1000;
 }
 int MiniGameDef::TimerSpec::ChangeAnnounceAfterS() const
@@ -236,10 +235,10 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     mAllowPvP = object[L"allowPvP"].asBool(false);
     mTutorialsEnabled = object[L"tutorialsEnabled"].asBool(false);
     mDamageIndicatorDelay = object[L"damageIndicatorDelay"].asFloat(0.0f);
-    mChestRefill.mCentralLootGroup = object[L"centralLootGroup"].asString(L"");
-    mChestRefill.mOuterLootGroup = object[L"outerLootGroup"].asString(L"");
-    mChestRefill.mHighValueLootGroup = object[L"highValueLootGroup"].asString(L"");
-    mTextureName = object[L"texture"].asString(L"");
+    mChestRefill.mCentralLootGroup = object[L"centralLootGroup"].asString();
+    mChestRefill.mOuterLootGroup = object[L"outerLootGroup"].asString();
+    mChestRefill.mHighValueLootGroup = object[L"highValueLootGroup"].asString();
+    mTextureName = object[L"texture"].asString();
     mCanCraft = object[L"canCraft"].asBool(false);
     mAllowsUGC = object[L"AllowsUGC"].asBool(false);
     parsePermissions(object);

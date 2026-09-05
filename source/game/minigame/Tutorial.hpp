@@ -14,6 +14,7 @@ class BlockPos;
 class BlockState;
 class Entity;
 class GameModeConstraints;
+class ItemInstance;
 class Level;
 class MobEffect;
 class Player;
@@ -53,19 +54,31 @@ public:
 
         int titleId;
         int messageId;
-        int promptId;
+        union
+        {
+            int promptId;
+            int itemDescriptionId;
+        };
         std::wstring title;
         std::wstring message;
-        std::wstring prompt;
-        int displayTime;
-        int fadeTime;
-        int priority;
-        int soundId;
-        int unknownId;
+        std::wstring itemDescription;
+        boost::shared_ptr<ItemInstance> itemInstance;
+        union
+        {
+            int displayTime;
+            int itemId;
+        };
+        union
+        {
+            int priority;
+            int itemAuxValue;
+        };
         bool repeat;
-        bool allowFade;
-        bool force;
+        bool unknown;
         bool displayed;
+        bool allowFade;
+        bool isItem;
+        bool force;
         int state;
     };
 

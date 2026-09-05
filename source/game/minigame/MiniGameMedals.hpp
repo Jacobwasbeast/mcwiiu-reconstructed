@@ -7,6 +7,7 @@ class MiniGameMedals
 {
 public:
     static void staticCtor();
+
     static const GameMedal* getMedalById(int medalId);
 };
 
