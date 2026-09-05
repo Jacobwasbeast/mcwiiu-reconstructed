@@ -32,6 +32,10 @@ public:
     BlockPos getBlockAt(int x, int y, int z);
     std::wstring toString();
     BlockPos getWorldPosition() const;
+    bool operator==(const ChunkPos& other) const
+    {
+        return x == other.x && z == other.z;
+    }
     static bool eq_test(const ChunkPos& lhs, const ChunkPos& rhs);
 };
 

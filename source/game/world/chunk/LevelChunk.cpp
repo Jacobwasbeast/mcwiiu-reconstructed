@@ -13,6 +13,9 @@ bool TlsSetValue(unsigned int, void*);
 void* TlsGetValue(unsigned int);
 
 static unsigned int sLevelChunkThreadStorage = TlsAlloc();
+static OSFastMutex sLevelChunkLightingMutex;
+static OSFastMutex sLevelChunkEntityMutex;
+static OSFastMutex sLevelChunkPostProcessMutex;
 
 LevelChunk::LevelChunk(Level* level, int x, int z) : level(level), x(x), z(z), mElements(new ElementStorage(false)), mSkyLight(NULL), mSkyLightUpper(new SparseLightStorage(true, true)), mBlockLight(NULL), mBlockLightUpper(new SparseLightStorage(false, true)), mUnsaved(false), mLoaded(false), mUnloaded(false), mTerrainPopulated(false), mInhabitedTime(0), mLastSaveTime(0), mLowestHeightmap(0), mBiomePresent(0), mPostProcess(0), mLightPopulated(0), mLastSaveHadEntities(0), mChunkVersion(0), mMinHeight(0), mMaxHeight(0) {}
 LevelChunk::LevelChunk(Level* level, ChunkPrimer* primer, int x, int z) : level(level), x(x), z(z), mElements(primer->getElementIds().data == NULL ? new ElementStorage(level->mIsClientSide) : new ElementStorage(level->mIsClientSide, primer->getElementIds(), 4)), mSkyLight(primer->getElementIds().data == NULL ? NULL : new SparseLightStorage(true)), mSkyLightUpper(new SparseLightStorage(true, true)), mBlockLight(primer->getElementIds().data == NULL ? NULL : new SparseLightStorage(false)), mBlockLightUpper(new SparseLightStorage(false, true)), mUnsaved(false), mLoaded(false), mUnloaded(false), mTerrainPopulated(false), mInhabitedTime(0), mLastSaveTime(0), mLowestHeightmap(0), mBiomePresent(0), mPostProcess(0), mLightPopulated(0), mLastSaveHadEntities(0), mChunkVersion(0), mMinHeight(0), mMaxHeight(0) {}
@@ -142,7 +145,7 @@ void LevelChunk::blockUpdatedCallback(int x, int y, int z, void* data, int value
 int LevelChunk::setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height, int depth, int flags, bool extra) { return 0; }
 Random LevelChunk::getRandom(long long seed) { long long chunkSeed = level->getSeed() + x * x * 0x4c1906LL + x * 0x5ac0dbLL + z * z * 0x4307a7LL + z * 0x5f24fLL; return Random(chunkSeed ^ seed); }
 bool LevelChunk::isEmpty() { for (int section = 0; section < 16; ++section) { int highest = 0; if (!mElements->isRenderChunkEmpty(section * 16, &highest)) return false; } return true; }
-void LevelChunk::staticCtor() {}
+void LevelChunk::staticCtor() { InitializeCriticalSection(&sLevelChunkLightingMutex); InitializeCriticalSection(&sLevelChunkEntityMutex); InitializeCriticalSection(&sLevelChunkPostProcessMutex); }
 void LevelChunk::postProcess() { mPostProcess = 1; }
 void LevelChunk::flagPostProcessComplete(short value) { mPostProcess = value != 0; }
 void LevelChunk::doPostProcess(ChunkSource* source, ChunkGenerator* generator) {}

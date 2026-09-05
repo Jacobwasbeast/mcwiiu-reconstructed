@@ -77,18 +77,6 @@ BlockPos ChunkPos::getMiddleBlockPosition(int y)
     return BlockPos(getMiddleBlockX(), y, getMiddleBlockZ());
 }
 
-BlockPos ChunkPos::getBlockAt(int x, int y, int z)
-{
-    return BlockPos((this->x << 4) + x, y, (this->z << 4) + z);
-}
-
-std::wstring ChunkPos::toString()
-{
-    std::wostringstream stream;
-    stream << L"[" << x << L", " << z << L"]";
-    return stream.str();
-}
-
 BlockPos ChunkPos::getWorldPosition() const
 {
     return BlockPos(x << 4, 0, z << 4);
