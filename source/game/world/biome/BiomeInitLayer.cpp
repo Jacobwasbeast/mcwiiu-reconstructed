@@ -83,23 +83,23 @@ arrayWithLength<int> BiomeInitLayer::getArea(int x, int z, int width, int height
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    for (int i = 0; i < height; i++)
+    for (int row = 0; row < height; row++)
     {
-        for (int j = 0; j < width; j++)
+        for (int column = 0; column < width; column++)
         {
-            initRandom((long long)(x + j), (long long)(z + i));
+            initRandom((long long)(x + column), (long long)(z + row));
 
-            int parentValue = parentArea.data[j + i * width];
-            int special = (parentValue & 0xF00) >> 8;
-            int biomeId = parentValue & ~0xF00;
+            int parentValue = parentArea.data[column + row * width];
+            int special = (parentValue >> 8) & 0xf;
+            int biomeId = parentValue & 0xfffff0ff;
 
             if (settings != NULL && settings->fixedBiome >= 0)
             {
-                area.data[j + i * width] = settings->fixedBiome;
+                area.data[column + row * width] = settings->fixedBiome;
             }
             else if (isOcean(biomeId) || biomeId == Biome::MUSHROOM_ISLAND->id)
             {
-                area.data[j + i * width] = biomeId;
+                area.data[column + row * width] = biomeId;
             }
             else if (biomeId == 1)
             {
@@ -107,47 +107,47 @@ arrayWithLength<int> BiomeInitLayer::getArea(int x, int z, int width, int height
                 {
                     if (nextRandom(3) == 0)
                     {
-                        area.data[j + i * width] = Biome::MESA_CLEAR_ROCK->id;
+                        area.data[column + row * width] = Biome::MESA_CLEAR_ROCK->id;
                     }
                     else
                     {
-                        area.data[j + i * width] = Biome::MESA_ROCK->id;
+                        area.data[column + row * width] = Biome::MESA_ROCK->id;
                     }
                 }
                 else
                 {
-                    area.data[j + i * width] = warmBiomes.data[nextRandom(warmBiomes.length)]->id;
+                    area.data[column + row * width] = warmBiomes.data[nextRandom(warmBiomes.length)]->id;
                 }
             }
             else if (biomeId == 2)
             {
                 if (special > 0)
                 {
-                    area.data[j + i * width] = Biome::JUNGLE->id;
+                    area.data[column + row * width] = Biome::JUNGLE->id;
                 }
                 else
                 {
-                    area.data[j + i * width] = mediumBiomes.data[nextRandom(mediumBiomes.length)]->id;
+                    area.data[column + row * width] = mediumBiomes.data[nextRandom(mediumBiomes.length)]->id;
                 }
             }
             else if (biomeId == 3)
             {
                 if (special > 0)
                 {
-                    area.data[j + i * width] = Biome::MEGA_TAIGA->id;
+                    area.data[column + row * width] = Biome::MEGA_TAIGA->id;
                 }
                 else
                 {
-                    area.data[j + i * width] = coldBiomes.data[nextRandom(coldBiomes.length)]->id;
+                    area.data[column + row * width] = coldBiomes.data[nextRandom(coldBiomes.length)]->id;
                 }
             }
             else if (biomeId == 4)
             {
-                area.data[j + i * width] = iceBiomes.data[nextRandom(iceBiomes.length)]->id;
+                area.data[column + row * width] = iceBiomes.data[nextRandom(iceBiomes.length)]->id;
             }
             else
             {
-                area.data[j + i * width] = Biome::MUSHROOM_ISLAND->id;
+                area.data[column + row * width] = Biome::MUSHROOM_ISLAND->id;
             }
         }
     }

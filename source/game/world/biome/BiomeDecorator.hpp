@@ -2,10 +2,26 @@
 #define GAME_WORLD_BIOME_BIOMEDECORATOR_HPP
 
 #include "game/world/block/BlockPos.hpp"
-#include "game/world/generation/Feature.hpp"
+#include "game/world/generation/KelpFeature.hpp"
 
 class Biome;
+class BlueIceFeature;
+class BushFeature;
+class CactusFeature;
+class ClayFeature;
+class CoralCrustFeature;
+class CoralFeature;
+class CoralHangFeature;
 class FlowerFeature;
+class HugeMushroomFeature;
+class IcebergFeature;
+class OreFeature;
+class ReedsFeature;
+class SandFeature;
+class SeaAnemoneFeature;
+class SeaPickleFeature;
+class SeagrassFeature;
+class WaterlilyFeature;
 class Level;
 class Random;
 class CustomizableSourceSettings;
@@ -15,42 +31,46 @@ class BiomeDecorator
 public:
     BiomeDecorator();
     virtual ~BiomeDecorator();
-    void decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin);
-    void decorate(Biome* biome, Level* level, Random* random);
+    virtual void decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin);
+    virtual void decorate(Biome* biome, Level* level, Random* random);
+    virtual void decorateOres(Level* level, Random* random);
+
     void decorateDepthSpan(Level* level, Random* random, int count, Feature* feature, int minY, int maxY);
     void decorateDepthAverage(Level* level, Random* random, int count, Feature* feature, int centreY, int radius);
-    void decorateOres(Level* level, Random* random);
 
-    bool generateLakes;
+    bool decorating;
     BlockPos position;
     CustomizableSourceSettings* settings;
-    Feature* dirtGen;
-    Feature* gravelGen;
-    Feature* graniteGen;
-    Feature* dioriteGen;
-    Feature* andesiteGen;
-    Feature* coalGen;
-    Feature* ironGen;
-    Feature* goldGen;
-    Feature* redstoneGen;
-    Feature* diamondGen;
-    Feature* lapisGen;
+    ClayFeature* clayGen;
+    SandFeature* sandGen;
+    SandFeature* gravelAsSandGen;
+    OreFeature* dirtGen;
+    OreFeature* gravelGen;
+    OreFeature* graniteGen;
+    OreFeature* dioriteGen;
+    OreFeature* andesiteGen;
+    OreFeature* coalGen;
+    OreFeature* ironGen;
+    OreFeature* goldGen;
+    OreFeature* redstoneGen;
+    OreFeature* diamondGen;
+    OreFeature* lapisGen;
     FlowerFeature* flowerGen;
-    int sandPerChunk;
-    int clayPerChunk;
-    int gravelPerChunk;
-    int decorationParameter1;
-    int decorationParameter2;
-    int decorationParameter3;
-    int decorationParameter4;
-    int decorationParameter5;
-    int decorationParameter6;
-    int decorationParameter7;
-    int decorationParameter8;
-    int decorationParameter9;
-    int decorationParameter10;
-    int decorationParameter11;
-    int decorationParameter12;
+    BushFeature* brownMushroomGen;
+    BushFeature* redMushroomGen;
+    HugeMushroomFeature* bigMushroomGen;
+    ReedsFeature* reedGen;
+    CactusFeature* cactusGen;
+    WaterlilyFeature* waterlilyGen;
+    KelpFeature* kelpGen;
+    CoralCrustFeature* coralCrustGen;
+    CoralFeature* coralGen;
+    CoralHangFeature* coralHangGen;
+    SeaAnemoneFeature* seaAnemoneGen;
+    SeagrassFeature* seagrassGen;
+    SeaPickleFeature* seaPickleGen;
+    IcebergFeature* icebergGen;
+    BlueIceFeature* blueIceGen;
     int waterlilyPerChunk;
     int treesPerChunk;
     float extraTreeChance;
@@ -60,14 +80,14 @@ public:
     int mushroomsPerChunk;
     int reedsPerChunk;
     int cactiPerChunk;
-    int decorationParameter13;
+    int sandPerChunk;
     int sandPerChunk2;
-    int clayPerChunk2;
+    int clayPerChunk;
     int bigMushroomsPerChunk;
-    int icebergsPerChunk;
-    int decorationParameter14;
-    int decorationParameter15;
-    bool generateLava;
+    int kelpPerChunk;
+    int seaGrassPerChunk;
+    int seagrassPerChunk;
+    bool generateLakes;
 };
 
 #endif

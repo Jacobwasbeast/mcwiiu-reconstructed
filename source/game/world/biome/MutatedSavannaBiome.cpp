@@ -2,6 +2,8 @@
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
@@ -28,7 +30,9 @@ void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrim
     {
         if (noise > -0.5)
         {
-            mFillerBlock.blockData = 1;
+            Block* dirt = Block::byId(3);
+            mTopBlock.blockId = 3;
+            mTopBlock.blockData = dirt->convertBlockStateToLegacyData(dirt->getBlockState(1));
         }
     }
     else

@@ -114,7 +114,7 @@ BiomeCache::Area::Area(int x, int z, BiomeCache* biomeCache)
 {
     mBiomeIndices.data = new unsigned char[256];
     mBiomeIndices.length = 256;
-    biomeCache->mBiomeSource->getRawBiomeBlock(mBiomeIndices, x << 4, z << 4, 16, 16);
+    biomeCache->mBiomeSource->getBiomeIndexBlock(mBiomeIndices, x << 4, z << 4, 16, 16, false);
 }
 
 BiomeCache::Area::~Area()

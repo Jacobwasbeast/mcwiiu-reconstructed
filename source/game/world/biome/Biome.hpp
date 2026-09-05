@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "game/core/ColourTable.hpp"
 #include "game/item/WeighedRandomItem.hpp"
 #include "game/world/block/FlowerBlock.hpp"
 #include "game/world/generation/OceanRuinFeature.hpp"

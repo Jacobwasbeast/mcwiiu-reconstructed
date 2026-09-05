@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BIOME_BIOMEOVERRIDE_HPP
 #define GAME_WORLD_BIOME_BIOMEOVERRIDE_HPP
 
+#include "game/core/ColourTable.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/biome/Biome.hpp"
 

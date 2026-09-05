@@ -1,63 +1,107 @@
 #include "game/world/biome/BiomeDecorator.hpp"
 
-#include "game/world/biome/Biome.hpp"
-#include "game/world/Level.hpp"
-#include "game/world/LevelData.hpp"
+#include "game/core/Bush.hpp"
+#include "game/core/CustomizableSourceSettings.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/FlowerBlock.hpp"
+#include "game/world/generation/AbstractTreeFeature.hpp"
+#include "game/world/generation/BlueIceFeature.hpp"
+#include "game/world/generation/BushFeature.hpp"
+#include "game/world/generation/CactusFeature.hpp"
 #include "game/world/generation/ClayFeature.hpp"
+#include "game/world/generation/CoralCrustFeature.hpp"
+#include "game/world/generation/CoralFeature.hpp"
+#include "game/world/generation/CoralHangFeature.hpp"
 #include "game/world/generation/DeadBushFeature.hpp"
 #include "game/world/generation/FlowerFeature.hpp"
 #include "game/world/generation/HugeMushroomFeature.hpp"
 #include "game/world/generation/IcebergFeature.hpp"
 #include "game/world/generation/OreFeature.hpp"
+#include "game/world/generation/PumpkinFeature.hpp"
+#include "game/world/generation/ReedsFeature.hpp"
 #include "game/world/generation/SandFeature.hpp"
+#include "game/world/generation/SeaAnemoneFeature.hpp"
 #include "game/world/generation/SeagrassFeature.hpp"
+#include "game/world/generation/SeaPickleFeature.hpp"
 #include "game/world/generation/SpringFeature.hpp"
-#include "game/world/generation/AbstractTreeFeature.hpp"
+#include "game/world/generation/WaterlilyFeature.hpp"
 
-class CustomizableSourceSettings
-{
-public:
-    class Builder
-    {
-    public:
-        static Builder* fromString(SuperflatConfig* config);
-        CustomizableSourceSettings* build();
-    };
-    int values[73];
-};
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+void MemSect(int section);
 
-static void placeFeature(Feature* feature, Level* level, Random* random, const BlockPos& position)
+static void placeFeature(Feature* feature, Level* level, Random* random, const BlockPos& pos)
 {
-    if (feature != NULL)
-        feature->place(level, *random, position);
+    feature->place(level, *random, pos);
 }
 
 BiomeDecorator::BiomeDecorator()
-    : generateLakes(false), position(), settings(NULL), dirtGen(NULL), gravelGen(NULL), graniteGen(NULL),
-      dioriteGen(NULL), andesiteGen(NULL), coalGen(NULL), ironGen(NULL), goldGen(NULL), redstoneGen(NULL),
-      diamondGen(NULL), lapisGen(NULL), flowerGen(NULL),
-      sandPerChunk(3), clayPerChunk(1), gravelPerChunk(1),
-      decorationParameter1(0), decorationParameter2(0), decorationParameter3(0), decorationParameter4(0),
-      decorationParameter5(0), decorationParameter6(0), decorationParameter7(0), decorationParameter8(0),
-      decorationParameter9(0), decorationParameter10(0), decorationParameter11(0), decorationParameter12(0),
-      waterlilyPerChunk(0), treesPerChunk(0), extraTreeChance(0.1f), flowersPerChunk(2), grassPerChunk(1), deadBushPerChunk(0),
-      mushroomsPerChunk(0), reedsPerChunk(0), cactiPerChunk(0), decorationParameter13(1), sandPerChunk2(3),
-      clayPerChunk2(1), bigMushroomsPerChunk(0), icebergsPerChunk(0), decorationParameter14(0),
-      decorationParameter15(0), generateLava(true)
 {
-    dirtGen = new ClayFeature(4);
-    gravelGen = new SandFeature(Blocks::sand, 7);
-    graniteGen = new SandFeature(Blocks::sand, 6);
-    flowerGen = new FlowerFeature(NULL, NULL);
+    clayGen = new ClayFeature(4);
+    sandGen = new SandFeature(Blocks::sand, 7);
+    gravelAsSandGen = new SandFeature(Blocks::gravel, 6);
+    dirtGen = NULL;
+    gravelGen = NULL;
+    graniteGen = NULL;
+    dioriteGen = NULL;
+    andesiteGen = NULL;
+    coalGen = NULL;
+    ironGen = NULL;
+    goldGen = NULL;
+    redstoneGen = NULL;
+    diamondGen = NULL;
+    lapisGen = NULL;
+    flowerGen = new FlowerFeature(static_cast<FlowerBlock*>(Blocks::yellow_flower),
+                                   FlowerBlock::Flower::DANDELION);
+    brownMushroomGen = new BushFeature(static_cast<Bush*>(Blocks::brown_mushroom));
+    redMushroomGen = new BushFeature(static_cast<Bush*>(Blocks::red_mushroom));
+    bigMushroomGen = new HugeMushroomFeature();
+    reedGen = new ReedsFeature();
+    cactusGen = new CactusFeature();
+    waterlilyGen = new WaterlilyFeature();
+    kelpGen = new KelpFeature();
+    seagrassGen = new SeagrassFeature();
+    coralGen = new CoralFeature();
+    seaPickleGen = new SeaPickleFeature();
+    icebergGen = new IcebergFeature();
+    blueIceGen = new BlueIceFeature();
+    coralCrustGen = new CoralCrustFeature();
+    coralHangGen = new CoralHangFeature();
+    settings = NULL;
+    bigMushroomsPerChunk = 0;
+    sandPerChunk2 = 3;
+    decorating = false;
+    extraTreeChance = 0.1f;
+    mushroomsPerChunk = 0;
+    treesPerChunk = 0;
+    cactiPerChunk = 0;
+    deadBushPerChunk = 0;
+    kelpPerChunk = 0;
+    sandPerChunk = 1;
+    seagrassPerChunk = 0;
+    grassPerChunk = 1;
+    clayPerChunk = 1;
+    seaAnemoneGen = new SeaAnemoneFeature();
+    reedsPerChunk = 0;
+    flowersPerChunk = 2;
+    waterlilyPerChunk = 0;
+    seaGrassPerChunk = 0;
+    generateLakes = true;
 }
 
 BiomeDecorator::~BiomeDecorator()
 {
-    delete settings;
+    delete clayGen;
+    delete sandGen;
+    delete gravelAsSandGen;
     delete dirtGen;
     delete gravelGen;
     delete graniteGen;
@@ -70,13 +114,35 @@ BiomeDecorator::~BiomeDecorator()
     delete diamondGen;
     delete lapisGen;
     delete flowerGen;
+    delete brownMushroomGen;
+    delete redMushroomGen;
+    delete bigMushroomGen;
+    delete reedGen;
+    delete cactusGen;
+    delete waterlilyGen;
+    delete settings;
+    delete kelpGen;
+    delete seagrassGen;
+    delete coralGen;
+    delete coralCrustGen;
+    delete coralHangGen;
+    delete seaAnemoneGen;
+    delete seaPickleGen;
+    delete icebergGen;
+    delete blueIceGen;
 }
 
 void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin)
 {
     delete settings;
-    settings = CustomizableSourceSettings::Builder::fromString(level->getLevelData()->getGeneratorOptions())->build();
+    CustomizableSourceSettings::Builder* builder =
+        CustomizableSourceSettings::Builder::fromString(level->getLevelData()->getGeneratorOptions());
+    settings = builder->build();
     position = origin;
+
+    delete dirtGen;
+    delete gravelGen;
+    delete graniteGen;
     delete dioriteGen;
     delete andesiteGen;
     delete coalGen;
@@ -85,114 +151,306 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
     delete redstoneGen;
     delete diamondGen;
     delete lapisGen;
-    dioriteGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[30]);
-    andesiteGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[34]);
-    coalGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[42]);
-    ironGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[38]);
-    goldGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[46]);
-    redstoneGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[50]);
-    diamondGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[54]);
-    lapisGen = new OreFeature(Blocks::stone->defaultBlockState(), settings->values[58]);
+
+    dirtGen = new OreFeature(Blocks::dirt->defaultBlockState(), settings->setting78);
+    gravelGen = new OreFeature(Blocks::gravel->defaultBlockState(), settings->setting88);
+    graniteGen = new OreFeature(Blocks::stone->getBlockState(1), settings->setting98);
+    dioriteGen = new OreFeature(Blocks::stone->getBlockState(3), settings->graniteCount);
+    andesiteGen = new OreFeature(Blocks::stone->getBlockState(5), settings->andesiteCount);
+    coalGen = new OreFeature(Blocks::coal_ore->defaultBlockState(), settings->coalCount);
+    ironGen = new OreFeature(Blocks::iron_ore->defaultBlockState(), settings->ironCount);
+    goldGen = new OreFeature(Blocks::gold_ore->defaultBlockState(), settings->goldCount);
+    redstoneGen = new OreFeature(Blocks::redstone_ore->defaultBlockState(), settings->redstoneCount);
+    diamondGen = new OreFeature(Blocks::diamond_ore->defaultBlockState(), settings->diamondCount);
+    lapisGen = new OreFeature(Blocks::lapis_ore->defaultBlockState(), settings->lapisCount);
+
     decorate(biome, level, random);
+    decorating = false;
+    delete builder;
 }
 
-void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, Feature* feature, int minY, int maxY)
+void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, Feature* feature,
+                                       int minY, int maxY)
 {
     if (maxY <= minY)
     {
         if (maxY < minY)
         {
-            int value = minY;
+            int swap = minY;
             minY = maxY;
-            maxY = value;
+            maxY = swap;
         }
         else if (minY < 255)
         {
-            maxY = minY;
-            ++minY;
+            maxY = minY + 1;
         }
         else
+        {
             --minY;
+        }
     }
+
     for (int i = 0; i < count; ++i)
     {
-        BlockPos origin = position.offset(random->nextInt(16), minY + random->nextInt(maxY - minY), random->nextInt(16));
-        placeFeature(feature, level, random, origin);
+        BlockPos pos(position.x + random->nextInt(16), minY + random->nextInt(maxY - minY),
+                     position.z + random->nextInt(16));
+        placeFeature(feature, level, random, pos);
     }
 }
 
-void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int count, Feature* feature, int centreY, int radius)
+void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int count, Feature* feature,
+                                          int centreY, int radius)
 {
     for (int i = 0; i < count; ++i)
     {
-        BlockPos origin = position.offset(random->nextInt(16), random->nextInt(radius) + random->nextInt(radius) + centreY - radius, random->nextInt(16));
-        placeFeature(feature, level, random, origin);
+        BlockPos pos(position.x + random->nextInt(16),
+                     random->nextInt(radius) + random->nextInt(radius) + centreY - radius,
+                     position.z + random->nextInt(16));
+        placeFeature(feature, level, random, pos);
     }
 }
 
 void BiomeDecorator::decorateOres(Level* level, Random* random)
 {
     Level::setInstaTick(true);
-    decorateDepthSpan(level, random, settings->values[30], dirtGen, settings->values[31], settings->values[32]);
-    decorateDepthSpan(level, random, settings->values[34], gravelGen, settings->values[35], settings->values[36]);
-    decorateDepthSpan(level, random, settings->values[42], dioriteGen, settings->values[43], settings->values[44]);
-    decorateDepthSpan(level, random, settings->values[38], graniteGen, settings->values[39], settings->values[40]);
-    decorateDepthSpan(level, random, settings->values[46], andesiteGen, settings->values[47], settings->values[48]);
-    decorateDepthSpan(level, random, settings->values[50], coalGen, settings->values[51], settings->values[52]);
-    decorateDepthSpan(level, random, settings->values[54], ironGen, settings->values[55], settings->values[56]);
-    decorateDepthSpan(level, random, settings->values[58], goldGen, settings->values[59], settings->values[60]);
-    decorateDepthSpan(level, random, settings->values[62], redstoneGen, settings->values[63], settings->values[64]);
-    decorateDepthSpan(level, random, settings->values[66], diamondGen, settings->values[67], settings->values[68]);
-    decorateDepthAverage(level, random, settings->values[70], lapisGen, settings->values[71], settings->values[72]);
+    decorateDepthSpan(level, random, settings->setting7c, dirtGen, settings->setting80, settings->setting84);
+    decorateDepthSpan(level, random, settings->setting8c, gravelGen, settings->setting90, settings->setting94);
+    decorateDepthSpan(level, random, settings->graniteSize, dioriteGen, settings->graniteMinHeight, settings->graniteMaxHeight);
+    decorateDepthSpan(level, random, settings->setting9c, graniteGen, settings->settinga0, settings->settinga4);
+    decorateDepthSpan(level, random, settings->andesiteSize, andesiteGen, settings->andesiteMinHeight, settings->andesiteMaxHeight);
+    decorateDepthSpan(level, random, settings->coalSize, coalGen, settings->coalMinHeight, settings->coalMaxHeight);
+    decorateDepthSpan(level, random, settings->ironSize, ironGen, settings->ironMinHeight, settings->ironMaxHeight);
+    decorateDepthSpan(level, random, settings->goldSize, goldGen, settings->goldMinHeight, settings->goldMaxHeight);
+    decorateDepthSpan(level, random, settings->redstoneSize, redstoneGen, settings->redstoneMinHeight, settings->redstoneMaxHeight);
+    decorateDepthSpan(level, random, settings->diamondSize, diamondGen, settings->diamondMinHeight, settings->diamondMaxHeight);
+    decorateDepthAverage(level, random, settings->lapisSize, lapisGen, settings->lapisMinHeight, settings->lapisMaxHeight);
     Level::setInstaTick(false);
 }
 
 void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
 {
+    PIXBeginNamedEvent(0.0f, "Decorate ores");
     decorateOres(level, random);
-    for (int i = 0; i < sandPerChunk; ++i)
-        placeFeature(gravelGen, level, random, level->getTopSolidBlockPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8)));
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Decorate sand clay gravel");
+    for (int i = 0; i < sandPerChunk2; ++i)
+    {
+        BlockPos pos = level->getTopSolidBlockPos(
+            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        placeFeature(sandGen, level, random, pos);
+    }
     for (int i = 0; i < clayPerChunk; ++i)
-        placeFeature(dirtGen, level, random, level->getTopSolidBlockPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8)));
-    int treeCount = treesPerChunk + (random->nextFloat() < extraTreeChance ? 1 : 0);
+    {
+        BlockPos pos = level->getTopSolidBlockPos(
+            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        placeFeature(clayGen, level, random, pos);
+    }
+    for (int i = 0; i < sandPerChunk; ++i)
+    {
+        BlockPos pos = level->getTopSolidBlockPos(
+            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        placeFeature(gravelAsSandGen, level, random, pos);
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Decorate forests");
+    int treeCount = treesPerChunk;
+    if (random->nextFloat() < extraTreeChance)
+        ++treeCount;
     for (int i = 0; i < treeCount; ++i)
     {
         AbstractTreeFeature* tree = biome->getTreeFeature(*random);
         tree->init();
-        BlockPos origin = level->getHeightmapPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
-        if (tree->place(level, *random, origin))
-            tree->placeFallenTrunk(level, origin, *random, 3);
+        BlockPos pos = level->getHeightmapPos(
+            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        if (tree->place(level, *random, pos))
+            tree->postPlaceTree(level, *random, pos);
         delete tree;
     }
-    for (int i = 0; i < mushroomsPerChunk; ++i)
-        placeFeature(NULL, level, random, level->getHeightmapPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8)));
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Decorate mushrooms flowers grass");
+    for (int i = 0; i < bigMushroomsPerChunk; ++i)
+    {
+        BlockPos pos = level->getHeightmapPos(
+            position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+        placeFeature(bigMushroomGen, level, random, pos);
+    }
     for (int i = 0; i < flowersPerChunk; ++i)
     {
-        BlockPos origin = level->getHeightmapPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
-        if (origin.getY() + 32 > 0)
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y + 32 > 0)
         {
-            FlowerBlock::Flower* flower = biome->getRandomFlower(*random, origin);
-            flowerGen->setNextFlower(flower->getCategory()->getBlock(), flower);
-            placeFeature(flowerGen, level, random, position.offset(random->nextInt(16) + 8, random->nextInt(), random->nextInt(16) + 8));
+            BlockPos pos = position.offset(x + 8, random->nextInt(top.y + 32), z + 8);
+            FlowerBlock::Flower* flower = biome->getRandomFlower(*random, pos);
+            Block* block = flower->getCategory()->getBlock();
+            if (block->defaultBlockState()->getMaterial() != Material::AIR)
+            {
+                flowerGen->setNextFlower(static_cast<FlowerBlock*>(block), flower);
+                placeFeature(flowerGen, level, random, pos);
+            }
         }
     }
     for (int i = 0; i < grassPerChunk; ++i)
     {
-        BlockPos origin = level->getHeightmapPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
-        if (origin.getY() * 2 > 0)
-            placeFeature(biome->getGrassFeature(*random), level, random, position.offset(random->nextInt(16) + 8, random->nextInt(), random->nextInt(16) + 8));
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+        {
+            BlockPos pos = position.offset(x + 8, random->nextInt(top.y * 2), z + 8);
+            MemSect(50);
+            Feature* grass = biome->getGrassFeature(*random);
+            MemSect(0);
+            placeFeature(grass, level, random, pos);
+            delete grass;
+        }
+    }
+    for (int i = 0; i < seagrassPerChunk; ++i)
+    {
+        BlockPos pos = position.offset(random->nextInt(16), 54, random->nextInt(16));
+        placeFeature(seagrassGen, level, random, pos);
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Decorate bush waterlily mushroom");
+    DeadBushFeature* deadBush = NULL;
+    if (deadBushPerChunk > 0)
+        deadBush = new DeadBushFeature(Blocks::deadbush);
+    for (int i = 0; i < deadBushPerChunk; ++i)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(deadBush, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+    }
+    delete deadBush;
+
+    for (int i = 0; i < waterlilyPerChunk; ++i)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+        {
+            BlockPos pos = position.offset(x + 8, random->nextInt(top.y * 2), z + 8);
+            while (pos.y > 0 && level->isEmptyBlock(pos.below()))
+                pos = pos.below();
+            placeFeature(waterlilyGen, level, random, pos);
+        }
+    }
+
+    for (int i = 0; i < mushroomsPerChunk; ++i)
+    {
+        if (random->nextInt(4) == 0)
+        {
+            BlockPos pos = level->getHeightmapPos(
+                position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8));
+            placeFeature(brownMushroomGen, level, random, pos);
+        }
+        if (random->nextInt(8) == 0)
+        {
+            int x = random->nextInt(16);
+            int z = random->nextInt(16);
+            BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+            if (top.y * 2 > 0)
+                placeFeature(redMushroomGen, level, random,
+                             position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+        }
+    }
+    if (random->nextInt(4) == 0)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(brownMushroomGen, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+    }
+    if (random->nextInt(8) == 0)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(redMushroomGen, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+    }
+    if (random->nextInt(18) == 0)
+    {
+        for (int i = 0; i < kelpPerChunk; ++i)
+        {
+            BlockPos pos = position.offset(random->nextInt(35), 43, random->nextInt(35));
+            placeFeature(kelpGen, level, random, pos);
+        }
     }
     for (int i = 0; i < reedsPerChunk; ++i)
-        placeFeature(NULL, level, random, position);
-    for (int i = 0; i < cactiPerChunk; ++i)
-        placeFeature(dirtGen, level, random, level->getHeightmapPos(position.offset(random->nextInt(16) + 8, 0, random->nextInt(16) + 8)));
-    if (generateLava)
     {
-        SpringFeature spring(Blocks::WATER);
-        for (int i = 0; i < 50; ++i)
-            placeFeature(&spring, level, random, position.offset(random->nextInt(16) + 8, random->nextInt(120) + 8, random->nextInt(16) + 8));
-        SpringFeature lowerSpring(Blocks::FLOWING_WATER);
-        for (int i = 0; i < 20; ++i)
-            placeFeature(&lowerSpring, level, random, position.offset(random->nextInt(16) + 8, random->nextInt(112) + 8, random->nextInt(16) + 8));
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(reedGen, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
     }
+    for (int i = 0; i < 10; ++i)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(reedGen, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+    }
+    if (random->nextInt(32) == 0)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+        {
+            Feature* pumpkin = new PumpkinFeature();
+            placeFeature(pumpkin, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+            delete pumpkin;
+        }
+    }
+    for (int i = 0; i < cactiPerChunk; ++i)
+    {
+        int x = random->nextInt(16);
+        int z = random->nextInt(16);
+        BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+        if (top.y * 2 > 0)
+            placeFeature(cactusGen, level, random,
+                         position.offset(x + 8, random->nextInt(top.y * 2), z + 8));
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Decorate liquids");
+    if (generateLakes)
+    {
+        SpringFeature waterSpring(Blocks::FLOWING_WATER);
+        for (int i = 0; i < 50; ++i)
+        {
+            int y = random->nextInt(120) + 8;
+            placeFeature(&waterSpring, level, random,
+                         position.offset(random->nextInt(16) + 8, random->nextInt(y),
+                                         random->nextInt(16) + 8));
+        }
+
+        SpringFeature lavaSpring(Blocks::flowing_lava);
+        for (int i = 0; i < 20; ++i)
+        {
+            int y = random->nextInt(random->nextInt(112) + 8) + 8;
+            placeFeature(&lavaSpring, level, random,
+                         position.offset(random->nextInt(16) + 8, random->nextInt(y),
+                                         random->nextInt(16) + 8));
+        }
+    }
+    PIXEndNamedEvent();
 }

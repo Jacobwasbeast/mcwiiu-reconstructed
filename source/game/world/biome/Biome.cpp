@@ -862,23 +862,6 @@ Biome* Biome::byId(int biomeId)
     return sBiomes[biomeId];
 }
 
-Biome* Biome::getMutatedVariant(Biome* biome)
-{
-    if (biome == NULL)
-    {
-        return NULL;
-    }
-    int id = getId(biome);
-    for (int mutatedId = 128; mutatedId <= MAX_BIOME_ID; ++mutatedId)
-    {
-        if (sBiomes[mutatedId] != NULL && sBiomes[mutatedId]->mBaseBiomeId == id)
-        {
-            return sBiomes[mutatedId];
-        }
-    }
-    return NULL;
-}
-
 Biome* Biome::byNameId(std::wstring name)
 {
     return sBiomesByName[name];
@@ -964,13 +947,6 @@ Biome* Biome::setSnowAccumulation(float minAccumulation, float maxAccumulation)
     return this;
 }
 
-Biome* Biome::setSnowCovered()
-{
-    mSnowEnabled = true;
-    mRainEnabled = false;
-    return this;
-}
-
 Biome::BiomeType Biome::getBiomeType() const
 {
     return mBiomeType;
@@ -995,11 +971,6 @@ int Biome::getMinSnowLayers() const
 int Biome::getMaxSnowLayers() const
 {
     return (int)(mMaxSnowAccumulation * 8.0F);
-}
-
-int Biome::getSnowAccumulationLayers() const
-{
-    return (int)(mSnowAccumulation * 8.0F);
 }
 
 std::vector<Biome::MobSpawnerData*>* Biome::getMobs(MobCategory* category)
@@ -1057,11 +1028,6 @@ bool Biome::isSnowCovered()
     return mSnowEnabled || mSnowAccumulation > 0.0F;
 }
 
-bool Biome::isMutated()
-{
-    return mBaseBiomeId >= 0;
-}
-
 float Biome::getDownfall()
 {
     return mDownfall;
@@ -1107,15 +1073,6 @@ std::wstring Biome::getDescription()
     }
 
     return description;
-}
-
-std::wstring Biome::getIdName()
-{
-    if (mBiomeName.empty())
-    {
-        return L"";
-    }
-    return mBiomeName;
 }
 
 OceanRuinConfiguration Biome::getOceanRuinConfig() const

@@ -8,8 +8,7 @@
 #include "game/world/generation/Feature.hpp"
 #include "game/world/generation/IcePatchFeature.hpp"
 #include "game/world/generation/IceSpikeFeature.hpp"
-
-class SpruceFeature;
+#include "game/world/generation/SpruceFeature.hpp"
 
 IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ice, properties),
@@ -19,9 +18,29 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
 {
     if (hasIceSpikes)
     {
-        mTopBlock.blockId = Block::getId(Blocks::snow);
+        mTopBlock.blockId = 80;
         mTopBlock.blockData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
     }
+
+    mCreatures.clear();
+    mCreatures.push_back(new MobSpawnerData(10, 0x2D680005ULL, 2, 3));
+    mCreatures.push_back(new MobSpawnerData(1, 0x2D680006ULL, 1, 2));
+
+    std::vector<MobSpawnerData*>::iterator monster = mMonsters.begin();
+    while (monster != mMonsters.end())
+    {
+        if ((*monster)->mEntityBaseClass == 0x5D540441ULL)
+        {
+            monster = mMonsters.erase(monster);
+        }
+        else
+        {
+            ++monster;
+        }
+    }
+
+    mMonsters.push_back(new MobSpawnerData(20, 0x5D540441ULL, 4, 4));
+    mMonsters.push_back(new MobSpawnerData(80, 0x5D540443ULL, 4, 4));
 }
 
 IceBiome::~IceBiome()
@@ -63,7 +82,7 @@ void IceBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 
 AbstractTreeFeature* IceBiome::getTreeFeature(Random& random)
 {
-    return Biome::getTreeFeature(random);
+    return new SpruceFeature(false);
 }
 
 Biome::EBiomeBaseClass IceBiome::getBaseClass()

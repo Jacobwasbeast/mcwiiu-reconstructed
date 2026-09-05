@@ -2,31 +2,43 @@
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/BigTreeFeature.hpp"
+#include "game/world/generation/GroundBushFeature.hpp"
 #include "game/world/generation/MegaJungleTreeFeature.hpp"
 #include "game/world/generation/MelonFeature.hpp"
 #include "game/world/generation/TallgrassFeature.hpp"
+#include "game/world/generation/TreeFeature.hpp"
 #include "game/world/generation/VinesFeature.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
+extern TallGrassBlock::Variant* gTallGrass;
+extern TallGrassBlock::Variant* gFern;
+
 static const BlockState* sJungleTrunkState;
 static const BlockState* sJungleLeafState;
-static const BlockState* sJungleLeafStateAlt;
+static const BlockState* sOakLeafState;
 
 JungleBiome::JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Jungle, properties),
       mIsEdge(isEdge)
 {
     mDecorator->treesPerChunk = isEdge ? 2 : 50;
-    mDecorator->grassPerChunk = 4;
-    mDecorator->flowersPerChunk = 25;
+    mDecorator->flowersPerChunk = 4;
+    mDecorator->grassPerChunk = 25;
 
     if (!isEdge)
     {
-        mCreatures.push_back(new MobSpawnerData(2, 0x2D6C0001ULL, 1, 1));
+        mMonsters.push_back(new MobSpawnerData(2, 0x2D6C0001ULL, 1, 1));
     }
     mCreatures.push_back(new MobSpawnerData(40, 0x2D6C0003ULL, 1, 2));
     mCreatures.push_back(new MobSpawnerData(10, 0x0D680004ULL, 4, 4));
@@ -38,40 +50,52 @@ JungleBiome::~JungleBiome()
 
 void JungleBiome::staticCtor()
 {
-    sJungleTrunkState = Blocks::log2->defaultBlockState();
-    sJungleLeafState = Blocks::leaves2->defaultBlockState();
-    sJungleLeafStateAlt = Blocks::leaves2->defaultBlockState();
+    TypedBoxed<PlanksBlock::Variant*> jungleVariant(PlanksBlock::Variant::byData(3));
+    sJungleTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(
+        OldLogBlock_VARIANT, &jungleVariant);
+
+    sJungleLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
+        OldLeafBlock_VARIANT, &jungleVariant);
+    TypedBoxed<bool> decayable(false);
+    sJungleLeafState = sJungleLeafState->setBoxedValue(
+        OldLeafBlock_DECAYABLE, &decayable);
+
+    TypedBoxed<PlanksBlock::Variant*> oakVariant(PlanksBlock::Variant::byData(0));
+    sOakLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
+        OldLeafBlock_VARIANT, &oakVariant);
+    sOakLeafState = sOakLeafState->setBoxedValue(
+        OldLeafBlock_DECAYABLE, &decayable);
 }
 
 AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
 {
     if (random.nextInt(10) == 0)
     {
-        return Biome::getTreeFeature(random);
+        return new BigTreeFeature(false);
     }
 
     if (random.nextInt(2) == 0)
     {
-        return Biome::getTreeFeature(random);
+        return new GroundBushFeature(sJungleTrunkState, sOakLeafState);
     }
 
     if (!mIsEdge && random.nextInt(3) == 0)
     {
-        return new MegaJungleTreeFeature(false, 0, 10, sJungleTrunkState, sJungleLeafStateAlt);
+        return new MegaJungleTreeFeature(false, 10, 20, sJungleTrunkState, sJungleLeafState);
     }
 
-    random.nextInt(7);
-    return Biome::getTreeFeature(random);
+    const int height = random.nextInt(7);
+    return new TreeFeature(false, height + 4, sJungleTrunkState, sJungleLeafState, true);
 }
 
 Feature* JungleBiome::getGrassFeature(Random& random)
 {
     if (random.nextInt(4) == 0)
     {
-        return Biome::getGrassFeature(random);
+        return new TallgrassFeature(gFern);
     }
 
-    return Biome::getGrassFeature(random);
+    return new TallgrassFeature(gTallGrass);
 }
 
 void JungleBiome::decorate(Level* level, Random& random, const BlockPos& pos)

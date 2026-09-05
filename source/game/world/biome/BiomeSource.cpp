@@ -9,7 +9,7 @@
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/network/ProgressListener.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/LevelType.hpp"
@@ -258,7 +258,7 @@ long long BiomeSource::findSeed(LevelType* levelType)
     long long bestSeed = 0;
     float bestScore = 0.0f;
 
-    ProgressListener* progressListener = Minecraft::GetInstance()->m_pProgressListener;
+    ProgressRenderer* progressListener = Minecraft::GetInstance()->mProgressRenderer;
     progressListener->progressStage(0x6C457A87);
 
     Random random(System::processTimeInNanoSecs());
@@ -1678,48 +1678,4 @@ void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned i
 
         pixelZ += scale;
     }
-}
-
-arrayWithLength<Biome*> BiomeSource::getBlockAt(int x, int z)
-{
-    arrayWithLength<Biome*> biomes(1, true);
-    getBiomeBlock(biomes, x, z, 1, 1, true);
-    return biomes;
-}
-
-void BiomeSource::LayerOverrideSettings::SetZoomLevel(unsigned char zoomLevel)
-{
-    if (zoomLevel > 2)
-    {
-        zoomLevel = 2;
-    }
-
-    mZoomLevel = zoomLevel;
-
-    if (mZoomLevel == 0)
-    {
-        mZoomedCentreX = 0;
-        mZoomedCentreZ = 0;
-    }
-    else
-    {
-        SetZoomedDisplay(GetZoomedCentreX(), GetZoomedCentreZ());
-    }
-}
-
-arrayWithLength<unsigned char> BiomeSource::LayerOverrideSettings::GetBiomeMapPixels(
-    bool& missingBiomes, bool wholeMap)
-{
-    arrayWithLength<unsigned char> pixels(mImageWidth * mImageWidth * 4, true);
-    missingBiomes = false;
-
-    if (mImageWidth > 0)
-    {
-        UpdateBiomeMapPixelsInRegion(pixels.data, 0, 0,
-                                     static_cast<unsigned int>(mImageWidth),
-                                     static_cast<unsigned int>(mImageWidth),
-                                     missingBiomes, wholeMap);
-    }
-
-    return pixels;
 }
