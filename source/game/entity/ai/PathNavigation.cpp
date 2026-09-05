@@ -7,6 +7,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockState.hpp"
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
@@ -36,7 +37,6 @@ void PathNavigation::stop()
 }
 
 PathFinder* PathNavigation::getPathFinder() { return mPathFinder; }
-void PathNavigation::setPathFinder(PathFinder* pathFinder) { mPathFinder = pathFinder; }
 void PathNavigation::setSpeedModifier(double speed) { mSpeedModifier = speed; }
 double PathNavigation::getMaxDist() { return mMob->mBbWidth; }
 bool PathNavigation::hasDelayedRecomputation() { return mHasDelayedRecomputation; }
@@ -140,7 +140,7 @@ void PathNavigation::doStuckDetection(Vec3* pos)
         {
             mLastTargetPos->set(current);
             double distance = pos->distanceTo(mLastTargetPos);
-            double speed = mMob->getMovementSpeed();
+            double speed = mMob->getSpeed();
             mTimeoutLimit = speed <= 0.0 ? 0.0 : distance / speed * 1000.0;
         }
         else if (System::processTimeInMilliSecs() - mLastStuckCheckTime > (unsigned int)mTimeoutLimit * 3) stop();
@@ -183,7 +183,7 @@ void PathNavigation::trimPath()
         }
     }
 }
-bool PathNavigation::isStableDestination(const BlockPos& pos) { return mLevel->getBlock(pos.below()).isSolid(); }
+bool PathNavigation::isStableDestination(const BlockPos& pos) { return mLevel->getBlockState(pos.below())->isSolid(); }
 void PathNavigation::setLevel(Level* level) { mLevel = level; }
 bool PathNavigation::isRiverFollowing() { return mIsRiverFollowing; }
 void PathNavigation::setIsRiverFollowing(bool value) { mIsRiverFollowing = value; }

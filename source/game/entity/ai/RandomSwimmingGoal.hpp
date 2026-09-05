@@ -15,11 +15,12 @@ public:
     RandomSwimmingGoal(PathfinderMob* mob, double speedModifier, int interval, int xz, int y);
     virtual ~RandomSwimmingGoal();
 
-    void getWaterHeights(MutableBlockPos pos, int& topY, float& waterY, float& minY, float& maxY);
-    virtual Vec3* getPosition();
-    virtual bool canContinueToUse();
     virtual bool canUse();
+    virtual bool canContinueToUse();
     virtual std::wstring getName();
+    virtual Vec3* getPosition();
+
+    void getWaterHeights(MutableBlockPos pos, int& topY, float& waterY, float& minY, float& maxY);
 
 private:
     int mXz;

@@ -2,26 +2,12 @@
 
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
+#include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Mob.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
-
-class GroundPathNavigation : public PathNavigation
-{
-public:
-    bool canOpenDoors();
-};
-
-class DoorBlock
-{
-public:
-    class DoorHalf;
-    static AbstractProperty<DoorHalf*>* HALF;
-    static DoorHalf* LOWER;
-    static bool isDoor(Block* block);
-};
+#include "game/world/block/DoorBlock.hpp"
 
 DoorInteractGoal::DoorInteractGoal(Mob* mob)
     : Goal(),

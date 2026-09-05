@@ -5,6 +5,7 @@
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/LightningBolt.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -14,6 +15,13 @@
 #include "game/item/Items.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+
+class Skeleton : public AbstractSkeleton
+{
+public:
+    Skeleton(Level* level);
+    virtual ~Skeleton();
+};
 
 SkeletonTrapGoal::SkeletonTrapGoal(SkeletonHorse* horse)
     : mHorse(horse)
@@ -36,7 +44,7 @@ boost::shared_ptr<Skeleton> SkeletonTrapGoal::createSkeleton(
     skeleton->finalizeMobSpawn(difficulty, NULL, std::wstring());
     skeleton->setPos(horse->mX, horse->mY, horse->mZ);
     skeleton->mNoActionTime = 60;
-    skeleton->setPersistenceRequired();
+    skeleton->setPersistenceRequired(true);
 
     not_null_ptr<ItemInstance> item = skeleton->getItemSlot(EquipmentSlot::MAINHAND);
     if (item->isEmpty())
@@ -81,14 +89,14 @@ void SkeletonTrapGoal::tick()
 
     boost::shared_ptr<AbstractHorse> horse = createHorse(difficulty);
     boost::shared_ptr<Skeleton> skeleton = createSkeleton(difficulty, horse);
-    skeleton->startRiding(horse);
+    static_cast<Entity*>(skeleton.get())->startRiding(horse);
 
     int count = 3;
     while (count-- != 0)
     {
         horse = createHorse(difficulty);
         skeleton = createSkeleton(difficulty, horse);
-        skeleton->startRiding(horse);
+        static_cast<Entity*>(skeleton.get())->startRiding(horse);
         horse->setPos(mHorse->mX + mHorse->getRandom()->nextGaussian() * 0.5,
                       mHorse->mY + 1.75,
                       mHorse->mZ + mHorse->getRandom()->nextGaussian() * 0.5);

@@ -7,8 +7,11 @@
 #include "game/core/Dolphin.hpp"
 #include "game/core/Mth.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/Direction.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/Level.hpp"
 
 JumpGoal::JumpGoal(Dolphin* mob, int interval)
     : Goal(), mInterval(interval), mMob(mob), mCanJump(false)
@@ -22,25 +25,26 @@ JumpGoal::~JumpGoal()
 bool JumpGoal::isObstacle()
 {
     const Direction* direction = mMob->getDirection();
+    const Vec3i normal = direction->getNormal();
     BlockPos position(mMob);
     Level* level = mMob->mLevel;
-    if (!level->getBlockState(position.offset(direction->stepX * 2, 0, direction->stepZ * 2))->isSolidRender())
+    if (!level->getBlockState(position.offset(normal.x * 2, 0, normal.z * 2))->isSolidRender())
     {
         return false;
     }
-    if (level->getBlockState(position.offset(direction->stepX, 0, direction->stepZ))->getMaterial() != Material::WATER)
+    if (level->getBlockState(position.offset(normal.x, 0, normal.z))->getMaterial() != Material::WATER)
     {
         return false;
     }
-    if (level->getBlockState(position.offset(direction->stepX, 1, direction->stepZ))->getMaterial() != Material::AIR)
+    if (level->getBlockState(position.offset(normal.x, 1, normal.z))->getMaterial() != Material::AIR)
     {
         return false;
     }
-    if (level->getBlockState(position.offset(direction->stepX, 2, direction->stepZ))->getMaterial() != Material::AIR)
+    if (level->getBlockState(position.offset(normal.x, 2, normal.z))->getMaterial() != Material::AIR)
     {
         return false;
     }
-    return level->getBlockState(position.offset(direction->stepX * 4, 0, direction->stepZ * 4))->getMaterial() == Material::WATER;
+    return level->getBlockState(position.offset(normal.x * 4, 0, normal.z * 4))->getMaterial() == Material::WATER;
 }
 
 bool JumpGoal::canUse()
@@ -85,9 +89,10 @@ bool JumpGoal::canInterrupt()
 void JumpGoal::start()
 {
     const Direction* direction = mMob->getDirection();
-    mMob->mXd += static_cast<double>(direction->stepX) * 0.6;
+    const Vec3i normal = direction->getNormal();
+    mMob->mXd += static_cast<double>(normal.x) * 0.6;
     mMob->mYd += 0.7;
-    mMob->mZd += static_cast<double>(direction->stepZ) * 0.6;
+    mMob->mZd += static_cast<double>(normal.z) * 0.6;
     mMob->getNavigation()->stop();
 }
 

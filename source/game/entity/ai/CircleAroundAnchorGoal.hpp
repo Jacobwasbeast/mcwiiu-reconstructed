@@ -16,15 +16,16 @@ public:
                            Goal::FloatRange verticalRange, int verticalInterval,
                            float minDistance);
     virtual ~CircleAroundAnchorGoal();
+    virtual bool canUse();
+    virtual void start();
+    virtual void stop();
+    virtual void tick();
+    virtual std::wstring getName();
+
     double calculateHeightOffset() const;
     void setAnchorAboveTarget();
     void selectNext();
-    virtual void start();
-    virtual void stop();
-    virtual bool canUse();
     bool touchingTarget() const;
-    virtual void tick();
-    virtual std::wstring getName();
 
 private:
     Mob* mMob;

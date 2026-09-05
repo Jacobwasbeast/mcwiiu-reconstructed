@@ -10,6 +10,7 @@
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/util/Vec3i.hpp"
 
 SwimNodeEvaluator::SwimNodeEvaluator(bool allowBreaching)
     : NodeEvaluator(),
@@ -46,8 +47,8 @@ const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, b
                 {
                     const Direction* direction = *it;
                     if (direction != Direction::DOWN && direction != Direction::UP &&
-                        getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(),
-                                         z + direction->getStepZ(), false) == BlockPathTypes::BLOCKED)
+                        getPathTypeAtPos(x + direction->getNormal().x, y + direction->getNormal().y,
+                                         z + direction->getNormal().z, false) == BlockPathTypes::BLOCKED)
                         return BlockPathTypes::WATER_BORDER;
                 }
             }
@@ -145,9 +146,9 @@ int SwimNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
          it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
-        Node* node = getWaterNode(current->x + direction->getStepX(),
-                                  current->y + direction->getStepY(),
-                                  current->z + direction->getStepZ());
+        Node* node = getWaterNode(current->x + direction->getNormal().x,
+                                  current->y + direction->getNormal().y,
+                                  current->z + direction->getNormal().z);
         if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
         {
             neighbors->data[count++] = node;

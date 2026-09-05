@@ -10,6 +10,7 @@ class Entity;
 class Level;
 class Mob;
 class NodeEvaluator;
+class Path;
 class PathFinder;
 class Vec3;
 

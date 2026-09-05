@@ -23,7 +23,7 @@ public:
     virtual bool canContinueToUse();
     virtual std::wstring getName();
 
-private:
+protected:
     PathfinderMob* mMob;
     double mSpeedModifier;
     double mWantedX;

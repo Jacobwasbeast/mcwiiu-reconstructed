@@ -26,7 +26,7 @@ public:
     virtual void setLevel(Level* level);
     virtual std::wstring getName();
 
-private:
+protected:
     Animal* mAnimal;
     boost::shared_ptr<Animal> mPartner;
     Level* mLevel;

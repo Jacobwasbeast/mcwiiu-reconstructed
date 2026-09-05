@@ -52,7 +52,7 @@ void OcelotAttackGoal::stop()
 void OcelotAttackGoal::tick()
 {
     boost::shared_ptr<Entity> target = mTarget;
-    mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
+    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(target, 30.0f, 30.0f);
 
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     double speed = 1.33;

@@ -6,8 +6,10 @@
 #include "game/core/GenericStats.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/Turtle.hpp"
+#include "game/entity/mob/Animal.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 TurtleBreedGoal::TurtleBreedGoal(Turtle* turtle, double speedModifier)
     : BreedGoal(turtle, speedModifier),
@@ -26,23 +28,16 @@ bool TurtleBreedGoal::canUse()
 
 void TurtleBreedGoal::breed()
 {
-    boost::shared_ptr<Player> cause = mAnimal->getLoveCause();
-    boost::shared_ptr<Player> partnerCause;
-    if (cause.empty())
+    boost::shared_ptr<Player> player = mAnimal->getLoveCause();
+    if (!player)
     {
-        partnerCause = mPartner->getLoveCause();
+        player = mPartner->getLoveCause();
     }
 
-    if (!cause.empty())
+    if (player)
     {
-        cause->awardStat(gStats->get_breedEntity(mTurtle->GetType()),
-                         GenericStats::param_breedEntity(mTurtle->GetType()));
-    }
-
-    if (!partnerCause.empty())
-    {
-        partnerCause->awardStat(gStats->get_breedEntity(mTurtle->GetType()),
-                                GenericStats::param_breedEntity(mTurtle->GetType()));
+        player->awardStat(gStats->get_breedEntity(mTurtle->GetType()),
+                          GenericStats::param_breedEntity(mTurtle->GetType()));
     }
 
     mTurtle->setHasEgg(true);
@@ -53,7 +48,7 @@ void TurtleBreedGoal::breed()
     {
         boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
             mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ,
-            mAnimal->mRandom->nextInt(7) + 1));
+            mAnimal->getRandom()->nextInt(7) + 1));
         mLevel->addEntity(orb);
     }
 }

@@ -47,7 +47,7 @@ void FloatGoal::tick()
     mMob->getNavigation()->tick();
     if (mMob->getRandom()->nextFloat() < 0.8f)
     {
-        mMob->getJumpControl()->jump();
+        static_cast<JumpControl*>(mMob->getJumpControl())->jump();
     }
 }
 

@@ -4,6 +4,7 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"

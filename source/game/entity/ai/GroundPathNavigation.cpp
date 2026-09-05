@@ -68,8 +68,8 @@ int GroundPathNavigation::getSurfaceY()
         MutableBlockPos pos(static_cast<int>(std::floor(mMob->mX)), y,
                              static_cast<int>(std::floor(mMob->mZ)));
         int checks = 0;
-        while (mNodeEvaluator.getBlockPathType(mMob, pos) == BlockPathTypes::WATER ||
-               mNodeEvaluator.getBlockPathType(mMob, pos) == BlockPathTypes::WATER_BORDER)
+        while (mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), pos) == BlockPathTypes::WATER ||
+               mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), pos) == BlockPathTypes::WATER_BORDER)
         {
             ++y;
             pos.setY(y);
@@ -92,22 +92,23 @@ Vec3* GroundPathNavigation::getTempMobPos()
 Path* GroundPathNavigation::createPath(const BlockPos& pos)
 {
     BlockPos target(pos);
-    const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(mMob, target);
+    const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target);
     if (type == BlockPathTypes::WATER && !mMob->isInWater() && !canSinkInWaterWalk())
     {
-        while (target.getY() > 0 && mNodeEvaluator.getBlockPathType(mMob, target) == type)
+        while (target.y > 0 && mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target) == type)
         {
             target = target.below();
         }
-        if (target.getY() > 0)
+        if (target.y > 0)
         {
             return PathNavigation::createPath(target.above());
         }
     }
-    if (type == BlockPathTypes::LAVA && mMob->getPathfindingMalus(type) >= 0.0F)
+    if (type == BlockPathTypes::LAVA && static_cast<Mob*>(mMob)->getPathfindingMalus(type) >= 0.0F)
     {
-        while (target.getY() < mLevel->getMaxBuildHeight() &&
-               mMob->getPathfindingMalus(mNodeEvaluator.getBlockPathType(mMob, target.above())) >= 0.0F)
+        while (target.y < mLevel->getMaxBuildHeight() &&
+               static_cast<Mob*>(mMob)->getPathfindingMalus(
+                   mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target.above())) >= 0.0F)
         {
             target = target.above();
         }
@@ -115,11 +116,11 @@ Path* GroundPathNavigation::createPath(const BlockPos& pos)
     }
     if (type == BlockPathTypes::WATER && canSinkInWaterWalk())
     {
-        while (target.getY() > 0 && mNodeEvaluator.getBlockPathType(mMob, target) == type)
+        while (target.y > 0 && mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), target) == type)
         {
             target = target.below();
         }
-        if (target.getY() > 0)
+        if (target.y > 0)
         {
             return PathNavigation::createPath(target.above());
         }
@@ -180,7 +181,8 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
             {
                 blockPos.setZ(iz);
                 if ((xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z)) >= 0.52 &&
-                    mMob->getPathfindingMalus(mNodeEvaluator.getBlockPathType(mMob, blockPos)) < 0.0F)
+                    static_cast<Mob*>(mMob)->getPathfindingMalus(
+                        mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), blockPos)) < 0.0F)
                 {
                     return false;
                 }

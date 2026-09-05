@@ -8,6 +8,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/generation/Player.hpp"
 
 RunAroundLikeCrazyGoal::RunAroundLikeCrazyGoal(AbstractHorse* horse, double speedModifier)
     : mHorse(horse), mSpeedModifier(speedModifier), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0)

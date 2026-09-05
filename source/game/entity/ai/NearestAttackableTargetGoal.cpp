@@ -9,8 +9,10 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/AABB.hpp"
+#include "game/world/generation/Player.hpp"
 
 NearestAttackableTargetGoal::DistComp::DistComp(Entity* entity)
     : mEntity(entity)
@@ -51,11 +53,12 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
     PathfinderMob* mob, const std::type_info& targetType, bool mustSee,
     bool mustReach, bool includeRemoved)
     : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mRandomInterval(10),
-      mSorter(mob), mTargetSelector(new SubselectEntitySelector(this, NULL, false)), mTarget(),
-      mIncludeRemoved(includeRemoved),
-      mRangeModifier(new DisguisedRangeModifier(mob))
+      mSorter(mob)
 {
     setRequiredControlFlags(1);
+    mTargetSelector = new SubselectEntitySelector(this, NULL, false);
+    mIncludeRemoved = includeRemoved;
+    mRangeModifier = new DisguisedRangeModifier(mob);
 }
 
 NearestAttackableTargetGoal::NearestAttackableTargetGoal(
@@ -63,12 +66,12 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
     bool mustSee, bool mustReach, const Predicate<boost::shared_ptr<Entity> >* selector,
     bool includeRemoved, bool ownsSelector)
     : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType),
-      mRandomInterval(randomInterval), mSorter(mob),
-      mTargetSelector(new SubselectEntitySelector(this, selector, ownsSelector)), mTarget(),
-      mIncludeRemoved(includeRemoved),
-      mRangeModifier(new DisguisedRangeModifier(mob))
+      mRandomInterval(randomInterval), mSorter(mob)
 {
     setRequiredControlFlags(1);
+    mTargetSelector = new SubselectEntitySelector(this, selector, ownsSelector);
+    mIncludeRemoved = includeRemoved;
+    mRangeModifier = new DisguisedRangeModifier(mob);
 }
 
 NearestAttackableTargetGoal::~NearestAttackableTargetGoal()
@@ -132,5 +135,5 @@ std::wstring NearestAttackableTargetGoal::getName()
 
 AABB* NearestAttackableTargetGoal::getTargetSearchArea(double distance)
 {
-    return mMob->getBoundingBox()->grow(distance, 4.0, distance);
+    return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }

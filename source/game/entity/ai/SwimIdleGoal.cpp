@@ -1,11 +1,14 @@
 #include "game/entity/ai/SwimIdleGoal.hpp"
 
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 #include "game/core/Mth.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/WaterAnimal.hpp"
 
 SwimIdleGoal::SwimIdleGoal(Mob* mob)
     : Goal(), mMob(mob), mTicks(0), mStartPos(NULL)
@@ -50,7 +53,7 @@ bool SwimIdleGoal::canContinueToUse()
 void SwimIdleGoal::start()
 {
     mTicks = 0;
-    mStartPos = mMob->getPos(1.0f);
+    mStartPos = mMob->getPos(2.0f);
     Goal::start();
 }
 
@@ -65,12 +68,14 @@ void SwimIdleGoal::tick()
 
     const unsigned long long type = mMob->GetType();
     if ((type & 0x0D502000ULL) != 0x0D502000ULL
-        && (type & 0x0D602000ULL) != 0x0D602000ULL)
+        && (mMob->GetType() & 0x0D602000ULL) != 0x0D602000ULL)
     {
         return;
     }
 
-    if (mMob->mSpeed <= 1.0f)
+    boost::shared_ptr<WaterAnimal> waterAnimal =
+        boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
+    if (waterAnimal->mSpeed <= 2.0f)
     {
         return;
     }
@@ -78,7 +83,7 @@ void SwimIdleGoal::tick()
     const int id = mMob->getId();
     const float phase = static_cast<float>(id % 100);
     const float angle = (static_cast<float>(mMob->mTickCount) + phase) * mMob->mMovementSpeedScale;
-    const float swim = Mth::sin(angle) * mMob->mSpeed;
+    const float swim = Mth::sin(angle) * waterAnimal->mSpeed;
     const float yaw = mMob->mYRot * 0.01745329238474369f;
     const float cosYaw = Mth::cos(yaw);
     const float sinYaw = Mth::sin(yaw);
@@ -86,7 +91,9 @@ void SwimIdleGoal::tick()
     mMob->mXd += static_cast<double>(swim * cosYaw);
     mMob->mZd += static_cast<double>(swim * sinYaw);
 
-    const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + phase) * 0.75f);
+    const int bobId = mMob->getId();
+    const float bobPhase = static_cast<float>(bobId % 100);
+    const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + bobPhase) * 0.75f);
     mMob->mYd += static_cast<double>(bob * 0.05f * (sinYaw + cosYaw) * 0.5f);
 }
 

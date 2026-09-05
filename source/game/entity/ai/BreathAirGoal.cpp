@@ -7,6 +7,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/Level.hpp"
 
 BreathAirGoal::BreathAirGoal(Dolphin* dolphin)
     : Goal(),
@@ -70,7 +71,7 @@ void BreathAirGoal::tick()
     }
 
     mDolphin->moveRelative(mDolphin->mXxa, mDolphin->mYya, mDolphin->mZza, 0.02f);
-    mDolphin->getLookControl()->setLookAt(mDolphin->mX, mDolphin->mY, mDolphin->mZ, 0.0f, 0.0f);
+    static_cast<LookControl*>(mDolphin->getLookControl())->setLookAt(mDolphin->mX, mDolphin->mY, mDolphin->mZ, 0.0f, 0.0f);
 }
 
 bool BreathAirGoal::canUse()

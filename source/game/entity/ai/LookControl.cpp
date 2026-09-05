@@ -4,7 +4,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/Mth.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 
 LookControl::LookControl(Mob* mob)
@@ -137,14 +140,4 @@ double LookControl::getWantedY()
 double LookControl::getWantedZ()
 {
     return mWantedZ;
-}
-
-float LookControl::getYMax()
-{
-    return mYMax;
-}
-
-float LookControl::getXMax()
-{
-    return mXMax;
 }

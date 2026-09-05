@@ -1,0 +1,49 @@
+#include "game/entity/ai/TurtlePanicGoal.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/entity/mob/Entity.hpp"
+#include "game/world/block/BlockPos.hpp"
+
+class LivingEntity;
+
+class PathfinderMob : public Entity
+{
+public:
+    virtual boost::shared_ptr<LivingEntity> getLastHurtByMob();
+    bool isOnFire();
+};
+
+TurtlePanicGoal::TurtlePanicGoal(Turtle* turtle, double speedModifier)
+    : PanicGoal((PathfinderMob*)turtle, speedModifier)
+{
+}
+
+TurtlePanicGoal::~TurtlePanicGoal()
+{
+}
+
+bool TurtlePanicGoal::canUse()
+{
+    boost::shared_ptr<LivingEntity> lastHurtByMob = mMob->getLastHurtByMob();
+    if (lastHurtByMob.get() == NULL && !mMob->isOnFire())
+    {
+        return false;
+    }
+
+    BlockPos* water = lookForWater(mMob->mLevel, mMob, 7, 4);
+    if (water != NULL)
+    {
+        mWantedX = static_cast<double>(water->x);
+        mWantedY = static_cast<double>(water->y);
+        mWantedZ = static_cast<double>(water->z);
+        return true;
+    }
+
+    return findRandomPosition();
+}
+
+std::wstring TurtlePanicGoal::getName()
+{
+    return std::wstring(L"Turtle_Panic");
+}

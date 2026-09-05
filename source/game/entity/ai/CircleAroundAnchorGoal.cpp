@@ -6,9 +6,11 @@
 #include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
-#include "game/world/block/Block.hpp"
+#include "game/util/phys__Vec2.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 CircleAroundAnchorGoal::CircleAroundAnchorGoal(Mob* mob, float speedModifier,
@@ -46,17 +48,17 @@ CircleAroundAnchorGoal::~CircleAroundAnchorGoal()
 
 double CircleAroundAnchorGoal::calculateHeightOffset() const
 {
-    double height = mVerticalMin;
+    float height = mVerticalMin;
     if (mVerticalMax - height > 0.0f)
     {
-        height += mMob->mRandom->nextFloat(mVerticalMax - height);
+        height += mMob->mLevel->mRandom->nextFloat(mVerticalMax - height);
     }
     return height;
 }
 
 void CircleAroundAnchorGoal::setAnchorAboveTarget()
 {
-    boost::shared_ptr<Entity> target = mMob->getTarget();
+    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
     if (!target)
     {
         return;
@@ -65,11 +67,14 @@ void CircleAroundAnchorGoal::setAnchorAboveTarget()
     Vec3* position = target->getPos(0.0f)->add(0.0, (double)mHeightMin, 0.0);
     if (mHeightMax - mHeightMin > 0.0f)
     {
-        position = position->add(0.0, (double)mMob->mRandom->nextFloat(mHeightMax - mHeightMin), 0.0);
+        position = position->add(0.0,
+                                 (double)mMob->mLevel->mRandom->nextFloat(mHeightMax - mHeightMin),
+                                 0.0);
     }
-    if (position->y <= 0.0)
+    int seaLevel = mMob->mLevel->getSeaLevel();
+    if (position->y <= (double)seaLevel)
     {
-        position->y = (double)mMob->mRandom->nextInt(256) + 1.0;
+        position->y = (double)(seaLevel + 1);
     }
     delete mAnchor;
     mAnchor = Vec3::newPermanent(position);
@@ -81,23 +86,13 @@ void CircleAroundAnchorGoal::selectNext()
     {
         mAnchor = Vec3::newPermanent(mMob->getPos(0.0f));
         mAnchor->y += 20.0;
-        if (mAnchor->y < 256.0)
-        {
-            mAngle += mDirection * 30.0f * 0.01745329238474369f;
-            mAnchor = mAnchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
-                                   (double)mCurrentHeight,
-                                   (double)(mCurrentDistance * Mth::sin(mAngle)));
-        }
-        else
+        if (mAnchor->y >= 256.0)
         {
             mAnchor->y = 236.0;
         }
     }
-    else
-    {
-        mAngle += mDirection * 30.0f * 0.01745329238474369f;
-    }
 
+    mAngle += mDirection * 30.0f * 0.01745329238474369f;
     Vec3* wanted = mAnchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
                                 (double)mCurrentHeight,
                                 (double)(mCurrentDistance * Mth::sin(mAngle)));
@@ -114,8 +109,8 @@ void CircleAroundAnchorGoal::selectNext()
 
 void CircleAroundAnchorGoal::start()
 {
-    Random* random = mMob->mRandom;
-    mCurrentDistance = random->nextFloat(mDistanceMin, mDistanceMax);
+    Random* random = mMob->mLevel->mRandom;
+    mCurrentDistance = random->nextFloat() * (mDistanceMax - mDistanceMin) + mDistanceMin;
     mCurrentHeight = (float)calculateHeightOffset();
     mDirection = random->nextBoolean() ? 1.0f : -1.0f;
     if (mMob->getTarget())
@@ -157,7 +152,7 @@ bool CircleAroundAnchorGoal::touchingTarget() const
 
 void CircleAroundAnchorGoal::tick()
 {
-    Random* random = mMob->mRandom;
+    Random* random = mMob->mLevel->mRandom;
     if (mMob->getTarget())
     {
         setAnchorAboveTarget();
@@ -169,14 +164,36 @@ void CircleAroundAnchorGoal::tick()
         mCurrentHeight = (float)calculateHeightOffset();
     }
 
-    if (mDistanceMax <= mDistanceMin
-        || (mDistanceInterval != 0 && random->nextInt(mDistanceInterval) != 0))
-    {
-        selectNext();
-    }
-    else
+    if (mDistanceMin < mDistanceMax
+        && (mDistanceInterval == 0 || random->nextInt(mDistanceInterval) == 0))
     {
         mCurrentDistance += 1.0f;
+        if (mCurrentDistance > mDistanceMax)
+        {
+            mCurrentDistance = mDistanceMin;
+            mDirection = -mDirection;
+        }
+    }
+
+    Vec3* position = mMob->getPos(0.0f);
+    phys::Vec2* current = phys::Vec2::newTemp((float)position->x, (float)position->z);
+    phys::Vec2* wanted = phys::Vec2::newTemp((float)mMob->getMoveControl()->getWantedX(),
+                                             (float)mMob->getMoveControl()->getWantedZ());
+    double distanceToWanted = wanted->distanceToSqr(current);
+
+    if (distanceToWanted < (double)mMinDistanceSquared
+        && mMob->getMoveControl()->getWantedY() < mMob->getPos(0.0f)->y
+        && !mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).below(1)))
+    {
+        mCurrentHeight = mCurrentHeight > 1.0f ? mCurrentHeight : 1.0f;
+        selectNext();
+    }
+
+    if (distanceToWanted < (double)mMinDistanceSquared
+        && mMob->getMoveControl()->getWantedY() > mMob->getPos(0.0f)->y
+        && !mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).above(1)))
+    {
+        mCurrentHeight = mCurrentHeight > -1.0f ? -1.0f : mCurrentHeight;
         selectNext();
     }
 

@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/Level.hpp"
@@ -42,7 +43,7 @@ void MoveToWaterGoal::stop()
     if (mMob->getNavigation()->isDone())
         mMob->getNavigation()->stop();
     else
-        mMob->getMoveControl()->wait();
+        static_cast<MoveControl*>(mMob->getMoveControl())->wait();
 }
 
 bool MoveToWaterGoal::isValidTarget(Level*, const BlockPos& pos)

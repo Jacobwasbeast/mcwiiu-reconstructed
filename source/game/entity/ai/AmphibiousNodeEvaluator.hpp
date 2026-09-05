@@ -1,7 +1,10 @@
 #ifndef GAME_ENTITY_AI_AMPHIBIOUSNODEEVALUATOR_HPP
 #define GAME_ENTITY_AI_AMPHIBIOUSNODEEVALUATOR_HPP
+
 #include "game/entity/ai/WalkNodeEvaluator.hpp"
+
 class BlockPos;
+
 class AmphibiousNodeEvaluator : public WalkNodeEvaluator
 {
 public:
@@ -19,4 +22,5 @@ private:
     float mOldWaterCost;
     float mOldWaterBorderCost;
 };
+
 #endif

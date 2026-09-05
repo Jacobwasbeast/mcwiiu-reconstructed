@@ -1,7 +1,5 @@
 #include "game/entity/ai/ZombieAttackGoal.hpp"
 
-#include <string>
-
 #include "game/entity/mob/Zombie.hpp"
 
 ZombieAttackGoal::~ZombieAttackGoal()

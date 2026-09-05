@@ -6,11 +6,14 @@
 #include "game/core/Path.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/core/Sensing.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 MeleeAttackGoal::MeleeAttackGoal(PathfinderMob* mob, double speedModifier, bool followingTargetEvenIfNotSeen)
     : mAttackInterval(20)
@@ -106,7 +109,7 @@ void MeleeAttackGoal::stop()
 void MeleeAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
+    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(target, 30.0f, 30.0f);
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     bool canSeeTarget = true;
     --mTicksUntilNextPathRecalculation;

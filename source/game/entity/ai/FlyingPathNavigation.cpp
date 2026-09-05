@@ -4,6 +4,7 @@
 
 #include "game/core/Path.hpp"
 #include "game/core/PathFinder.hpp"
+#include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/Level.hpp"
@@ -43,7 +44,7 @@ Vec3* FlyingPathNavigation::getTempMobPos()
 Path* FlyingPathNavigation::createPath(boost::shared_ptr<Entity> entity)
 {
     BlockPos pos(entity);
-    return createPath(pos);
+    return PathNavigation::createPath(pos);
 }
 
 void FlyingPathNavigation::tick()
@@ -79,16 +80,13 @@ void FlyingPathNavigation::tick()
     {
         boost::shared_ptr<Entity> entity = mMob->shared_from_this();
         Vec3* current = mPath->currentPos(entity);
-        mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z, mSpeedModifier);
+        static_cast<MoveControl*>(static_cast<Mob*>(mMob)->getMoveControl())->setWantedPosition(
+            current->x, current->y, current->z, mSpeedModifier);
     }
 }
 
-bool FlyingPathNavigation::canMoveDirectly(Vec3* a, Vec3* b, int x, int y, int z)
+bool FlyingPathNavigation::canMoveDirectly(Vec3* a, Vec3* b, int, int, int)
 {
-    (void)x;
-    (void)y;
-    (void)z;
-
     const double dx = b->x - a->x;
     const double dy = b->y - a->y;
     const double dz = b->z - a->z;

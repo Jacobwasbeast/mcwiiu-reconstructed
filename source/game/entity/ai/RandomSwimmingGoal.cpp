@@ -7,6 +7,7 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -18,12 +19,6 @@ class PathfinderMob : public Entity
 {
 public:
     PathNavigation* getNavigation();
-};
-
-class RandomPos
-{
-public:
-    static Vec3* getPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, int wanderingQuadrant);
 };
 
 RandomSwimmingGoal::RandomSwimmingGoal(PathfinderMob* mob, double speedModifier, int interval, int xz, int y)

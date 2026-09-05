@@ -13,8 +13,8 @@ public:
     TurtleBreedGoal(Turtle* turtle, double speedModifier);
     virtual ~TurtleBreedGoal();
     virtual bool canUse();
-    virtual void breed();
     virtual std::wstring getName();
+    virtual void breed();
 
 private:
     Turtle* mTurtle;

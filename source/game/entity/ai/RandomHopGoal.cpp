@@ -6,6 +6,7 @@
 
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
+#include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 

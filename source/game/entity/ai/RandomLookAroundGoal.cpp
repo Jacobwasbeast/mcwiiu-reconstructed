@@ -37,7 +37,7 @@ void RandomLookAroundGoal::start()
 void RandomLookAroundGoal::tick()
 {
     --mLookTime;
-    mMob->getLookControl()->setLookAt(
+    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(
         mMob->mX + mLookAtX,
         mMob->mY + mMob->getEyeHeight(),
         mMob->mZ + mLookAtZ,

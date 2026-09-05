@@ -16,7 +16,7 @@ class PathNavigation
 {
 public:
     Path* mPath;
-    Entity* mMob;
+    Mob* mMob;
     Level* mLevel;
     int mTick;
     double mSpeedModifier;

@@ -3,6 +3,7 @@
 #include <string>
 #include <typeinfo>
 #include <vector>
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
@@ -34,12 +35,12 @@ void BreedGoal::getFreePartner()
         return;
     }
 
-    AABB area = mAnimal->mBoundingBox->grow(8.0);
-    std::vector<boost::shared_ptr<Entity> > entities =
-        mLevel->getEntitiesOfClass(*mPartnerType, &area);
+    AABB* area = mAnimal->mBoundingBox->grow(8.0);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(*mPartnerType, area);
     double nearest = 1.7976931348623157e+308;
     std::vector<boost::shared_ptr<Entity> >::const_iterator it;
-    for (it = entities.begin(); it != entities.end(); ++it) {
+    for (it = entities->begin(); it != entities->end(); ++it) {
         boost::shared_ptr<Animal> animal = boost::dynamic_pointer_cast<Animal>(*it);
         if (animal && mAnimal->canMate(animal)) {
             double distance = mAnimal->distanceToSqr(*it);
@@ -49,6 +50,7 @@ void BreedGoal::getFreePartner()
             }
         }
     }
+    delete entities;
 }
 
 bool BreedGoal::canUse()
@@ -57,12 +59,12 @@ bool BreedGoal::canUse()
         return false;
     }
     getFreePartner();
-    return !mPartner.empty();
+    return mPartner.get() != NULL;
 }
 
 bool BreedGoal::canContinueToUse()
 {
-    return !mPartner.empty() && mPartner->isAlive() && mPartner->isInLove() && mTicks < 60;
+    return mPartner && mPartner->isAlive() && mPartner->isInLove() && mTicks < 60;
 }
 
 void BreedGoal::stop()
@@ -74,10 +76,10 @@ void BreedGoal::stop()
 void BreedGoal::tick()
 {
     ++mTicks;
-    if (mAnimal == 0 || mPartner.empty()) {
+    if (mAnimal == 0 || !mPartner) {
         return;
     }
-    mAnimal->getLookControl()->setLookAt(mPartner, 10.0F, 10.0F);
+    static_cast<LookControl*>(mAnimal->getLookControl())->setLookAt(mPartner, 10.0F, 10.0F);
     if (mTicks >= 60 && mAnimal->distanceToSqr(mPartner) < 9.0) {
         breed();
     }
@@ -85,7 +87,7 @@ void BreedGoal::tick()
 
 void BreedGoal::breed()
 {
-    if (mAnimal == 0 || mPartner.empty() || mLevel == 0) {
+    if (mAnimal == 0 || !mPartner || mLevel == 0) {
         return;
     }
     if (!mAnimal->canMate(mPartner) || !mPartner->isInLove()) {
