@@ -8,6 +8,8 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -43,7 +45,8 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
     mElytraModel->copyPropertiesFrom(mRenderer->getModel());
     mElytraModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
                             boost::static_pointer_cast<Entity>(entity), _SkinAdjustments());
-    mElytraModel->render(boost::static_pointer_cast<Entity>(entity), limbSwing, limbSwingAmount,
+    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount,
                          ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 
     if (item->isEnchanted())

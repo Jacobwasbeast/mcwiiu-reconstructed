@@ -6,6 +6,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/SpinAttackModel.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation SPIN_ATTACK_LOCATION;

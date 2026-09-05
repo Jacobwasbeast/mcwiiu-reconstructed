@@ -4,6 +4,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 BushFeature::BushFeature(Bush* bush)

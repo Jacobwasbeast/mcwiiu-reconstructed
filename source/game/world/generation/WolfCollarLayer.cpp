@@ -6,11 +6,11 @@
 #include "game/client/render/WolfRenderer.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-
-class Wolf;
 
 static ResourceLocation WOLF_COLLAR_LOCATION;
 

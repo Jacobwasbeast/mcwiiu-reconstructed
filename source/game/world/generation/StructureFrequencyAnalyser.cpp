@@ -7,7 +7,7 @@
 #include "game/world/generation/WoodlandMansionFeature.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int, int),
+int countFeaturesInArea(bool (*isFeatureChunk)(BiomeSource*, long long, int, int, int),
                         BiomeSource* biomeSource,
                         long long seed,
                         int sizeInChunks);

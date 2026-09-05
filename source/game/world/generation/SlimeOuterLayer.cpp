@@ -9,6 +9,7 @@
 #include "game/client/render/SlimeRenderer.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 
 SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
 {

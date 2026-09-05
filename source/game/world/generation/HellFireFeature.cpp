@@ -13,15 +13,28 @@ HellFireFeature::~HellFireFeature()
 
 bool HellFireFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    for (int i = 0; i < 64; ++i)
+    for (int i = 0; i < 32; ++i)
     {
-        const BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                                 random.nextInt(4) - random.nextInt(4),
-                                                 random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(position)
-            && level->getBlockState(position.below())->getBlock() == Blocks::netherrack)
+        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
+                                           random.nextInt(4) - random.nextInt(4),
+                                           random.nextInt(8) - random.nextInt(8));
+        if (level->isEmptyBlock(position))
         {
-            level->setBlock(position, Blocks::FIRE->defaultBlockState(), 2, false);
+            if (level->getBlockState(position.below())->getBlock() == Blocks::netherrack)
+            {
+                level->setBlock(position, Blocks::FIRE->defaultBlockState(), 2, false);
+            }
+        }
+
+        position = origin.offset(random.nextInt(8) - random.nextInt(8),
+                                 random.nextInt(4) - random.nextInt(4),
+                                 random.nextInt(8) - random.nextInt(8));
+        if (level->isEmptyBlock(position))
+        {
+            if (level->getBlockState(position.below())->getBlock() == Blocks::netherrack)
+            {
+                level->setBlock(position, Blocks::FIRE->defaultBlockState(), 2, false);
+            }
         }
     }
 

@@ -1,10 +1,12 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/SuperflatConfig.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
 
-FlatGeneratorInfo::FlatGeneratorInfo() : mOwnsConfig(false), mConfig(0), mOwnedConfig() {}
+std::wstring formatwstr(const wchar_t* format, ...);
 
 FlatGeneratorInfo::FlatGeneratorInfo(SuperflatConfig* config) : mOwnsConfig(false), mConfig(config), mOwnedConfig() {}
 
@@ -44,7 +46,6 @@ RandomScatteredLargeFeature* FlatGeneratorInfo::getBiomeSpecific() { if (!hasBio
 MineShaftFeature* FlatGeneratorInfo::getMineshaft() { if (!hasMineshaft()) return 0; return 0; }
 StrongholdFeature* FlatGeneratorInfo::getStronghold() { if (!hasStronghold()) return 0; return 0; }
 OceanMonumentFeature* FlatGeneratorInfo::getOceanMonument() { if (!hasOceanMonument()) return 0; return 0; }
-WoodlandMansionFeature* FlatGeneratorInfo::getWoodlandMansion(OverworldLevelSource*) { if (!hasWoodlandMansion()) return 0; return 0; }
 ShipwreckFeature* FlatGeneratorInfo::getShipwreck(GenericOverworldLevelSource*, OceanMonumentFeature*) { if (!hasShipwrecks()) return 0; return 0; }
 LakeFeature* FlatGeneratorInfo::getLakes() { if (!hasLakes()) return 0; return 0; }
 LakeFeature* FlatGeneratorInfo::getLavaLakes() { if (!hasLavaLakes()) return 0; return 0; }
@@ -62,12 +63,13 @@ FlatLayerInfo FlatGeneratorInfo::getLayer(int index) const { return core()->laye
 
 void FlatGeneratorInfo::getLayers(const BlockState* (&states)[256]) const
 {
-    int height = 0;
-    for (std::vector<FlatLayerInfo>::const_iterator it = core()->layers.begin(); it != core()->layers.end(); ++it)
+    for (int height = 0; height < 256; height += 4)
     {
-        for (int i = 0; i < (int)it->getHeight() && height + i < 256; ++i)
-            states[height + i] = it->getBlockState();
-        height += it->getHeight();
+        for (int offset = 0; offset < 4 && height + offset < 256; ++offset)
+        {
+            int index = getLayerIndexAtHeight(height + offset);
+            states[height + offset] = index < 0 ? Blocks::AIR->defaultBlockState() : getLayer(index).getBlockState();
+        }
     }
 }
 
@@ -109,7 +111,24 @@ void FlatGeneratorInfo::remLayer(int index) { core()->layers.erase(core()->layer
 
 void FlatGeneratorInfo::getLayers(int* ids, int* data) const
 {
-    for (int i = 0; i < numLayers(); ++i) { ids[i] = core()->layers[i].getId(); data[i] = core()->layers[i].getData(); }
+    for (int height = 0; height < 256; height += 4)
+    {
+        for (int offset = 0; offset < 4 && height + offset < 256; ++offset)
+        {
+            int index = getLayerIndexAtHeight(height + offset);
+            if (index < 0)
+            {
+                ids[height + offset] = 0;
+                data[height + offset] = 0;
+            }
+            else
+            {
+                FlatLayerInfo layer = getLayer(index);
+                ids[height + offset] = layer.getId();
+                data[height + offset] = layer.getData();
+            }
+        }
+    }
 }
 
 int FlatGeneratorInfo::getHeight() const { int height = 0; for (std::vector<FlatLayerInfo>::const_iterator it = core()->layers.begin(); it != core()->layers.end(); ++it) height += it->getHeight(); return height; }
@@ -122,7 +141,13 @@ int FlatGeneratorInfo::findTopNonAirLayer() const
     return layer;
 }
 
-int FlatGeneratorInfo::findTopSolidLayer() const { return findTopNonAirLayer(); }
+int FlatGeneratorInfo::findTopSolidLayer() const
+{
+    int layer = findTopNonAirLayer();
+    while (layer >= 0 && !getLayer(layer).getBlockState()->isSolid())
+        layer -= getLayer(layer).getHeight();
+    return layer;
+}
 int FlatGeneratorInfo::getBiome() { return core()->maybeOption(0x10, 0, 0); }
 int FlatGeneratorInfo::getVillageSize() { return core()->maybeOption(0x20, 0, 1); }
 int FlatGeneratorInfo::getVillageDistance() { return core()->maybeOption(0x20, 1, 0x20); }
@@ -139,15 +164,25 @@ int FlatGeneratorInfo::getWoodlandMansionSeparation() { return core()->maybeOpti
 
 std::wstring FlatGeneratorInfo::generateDescription()
 {
-    std::wstring description = getDisplayname();
-    description += L"\n";
-    for (std::vector<FlatLayerInfo>::const_iterator it = core()->layers.begin(); it != core()->layers.end(); ++it)
+    std::wstring description = formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(0xfc5c5250), core()->getDisplayname().c_str());
+    description += formatwstr(L"%ls:<br />", L10N::GetString(0x7eda4f74));
+    for (int i = numLayers() - 1; i >= 0; --i)
     {
-        description += it->getHeightText();
-        description += L" ";
-        description += it->getNameText();
-        description += L"\n";
+        FlatLayerInfo layer = getLayer(i);
+        description += formatwstr(L"- %ls %ls<br />", layer.getHeightText().c_str(), layer.getNameText().c_str());
     }
+    if (hasVillage()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x1a0175a8));
+    if (hasCaves()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x7d539616));
+    if (hasCanyons()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x6339594b));
+    if (hasMineshaft()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xb502a2bb));
+    if (hasStronghold()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x98925ce0));
+    if (hasBiomeSpecific()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x92176858));
+    if (hasDungeons()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x58eda210));
+    if (hasDecorations()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xf5ded1b6));
+    if (hasLakes()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xedaa5ce4));
+    if (hasLavaLakes()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xae1b1941));
+    if (hasOceanMonument()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xff686d36));
+    if (hasWoodlandMansion()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x9a333426));
     return description;
 }
 
@@ -165,22 +200,4 @@ void FlatGeneratorInfo::reduceLayers()
     }
     while (numLayers() > 1 && core()->layers.back().getId() == 0) core()->layers.pop_back();
     core()->updateLayers();
-}
-
-FlatGeneratorInfo FlatGeneratorInfo::getDefault() { return FlatGeneratorInfo((new SuperflatConfig())->makeDefaults(), true); }
-void FlatGeneratorInfo::setEqualTo(const FlatGeneratorInfo& info) { *core() = *info.core(); }
-std::wstring FlatGeneratorInfo::getDisplayname() { return core()->getDisplayname(); }
-bool FlatGeneratorInfo::hasLayer(int index) const { return index >= 0 && index < numLayers(); }
-FlatLayerInfo FlatGeneratorInfo::getLayerAtHeight(int height) const { return getLayer(getLayerIndexAtHeight(height)); }
-void FlatGeneratorInfo::getSingleLayers(std::vector<FlatLayerInfo>& layers) const { layers = core()->layers; }
-bool FlatGeneratorInfo::operator==(const FlatGeneratorInfo& info) const
-{
-    if (mOwnsConfig != info.mOwnsConfig || mConfig != info.mConfig || mOwnedConfig.get() != info.mOwnedConfig.get())
-        return false;
-    if (core()->layers.size() != info.core()->layers.size())
-        return false;
-    for (int i = 0; i < (int)core()->layers.size(); ++i)
-        if (core()->layers[i].getHeight() != info.core()->layers[i].getHeight() || core()->layers[i].getId() != info.core()->layers[i].getId() || core()->layers[i].getData() != info.core()->layers[i].getData())
-            return false;
-    return true;
 }

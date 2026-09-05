@@ -22,19 +22,19 @@ unsigned int LargeCaveFeature::canReplaceBlock(int blockId, int data)
     return 0;
 }
 
-void LargeCaveFeature::setCaveBlocks(Level* level, int x, int y, int z, int minX, int maxX, int minY, int maxY, int minZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
+void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int chunkX, int chunkZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
 {
     bool found = false;
     for (int localX = minX; localX < maxX; ++localX)
     {
-        const double xd = (localX + x * 16 + 0.5 - centerX) / radiusX;
+        const double xd = (localX + chunkX * 16 + 0.5 - centerX) / radiusX;
         if (xd * xd >= 1.0) continue;
         for (int localZ = minZ; localZ < maxZ; ++localZ)
         {
-            const double zd = (localZ + z * 16 + 0.5 - centerZ) / radiusX;
+            const double zd = (localZ + chunkZ * 16 + 0.5 - centerZ) / radiusX;
             if (xd * xd + zd * zd >= 1.0) continue;
             bool snow = false;
-            Biome* biome = level->getBiome(BlockPos(localX + x * 16, 0, localZ + z * 16));
+            Biome* biome = level->getBiome(BlockPos(localX + chunkX * 16, 0, localZ + chunkZ * 16));
             if (biome->getDepth() < -0.7 && biome->isSnowCovered()) snow = true;
             if (hasWater && !snow) continue;
             int index = (localX << 11) | (localZ << 7) | (maxY - 1);
@@ -62,7 +62,7 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int x, int y, int z, int minX
                         primer->setBlockAndData(index, 0, 0);
                     if (liquid && primer->getBlockId(index - 1) == 3)
                     {
-                        Biome* replacementBiome = level->getBiome(BlockPos(localX + x * 16, 0, localZ + z * 16));
+                        Biome* replacementBiome = level->getBiome(BlockPos(localX + chunkX * 16, 0, localZ + chunkZ * 16));
                         const int replacementId = replacementBiome->mTopBlock.blockId;
                         Block* replacement = Block::byId(replacementId);
                         if (replacement != NULL)
@@ -130,7 +130,7 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
             const int minZ = (int)(z - radius) - chunkZ * 16 - 1;
             const int maxZ = (int)(z + radius) - chunkZ * 16 + 1;
             if (level->getBiome(BlockPos((int)originX, (int)y, (int)originZ))->getBiomeType() != Biome::eBiomeType_Ocean)
-                setCaveBlocks(level, chunkX, (int)y, chunkZ, minX, maxX, minY, maxY, minZ, x, y, z, false, radius, verticalRadius, primer);
+                setCaveBlocks(level, minX, maxX, minY, maxY, minZ, maxZ, chunkX, chunkZ, x, y, z, false, radius, verticalRadius, primer);
         }
     }
 }

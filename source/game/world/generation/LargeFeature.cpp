@@ -16,22 +16,18 @@ void LargeFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* prim
 {
     this->level = level;
 
-    const int range = this->range;
+    const int featureRange = range;
 
     random.setSeed(level->getSeed());
 
     const long long xSeedFactor = random.nextLong();
     const long long zSeedFactor = random.nextLong();
 
-    for (int x = chunkX - range; x <= chunkX + range; ++x)
+    for (int x = chunkX - featureRange; x <= chunkX + featureRange; ++x)
     {
-        for (int z = chunkZ - range; z <= chunkZ + range; ++z)
+        for (int z = chunkZ - featureRange; z <= chunkZ + featureRange; ++z)
         {
-            const long long xSeed = xSeedFactor * x;
-            const long long zSeed = zSeedFactor * z;
-
-            random.setSeed(xSeed ^ zSeed ^ level->getSeed());
-
+            random.setSeed(xSeedFactor * x ^ zSeedFactor * z ^ level->getSeed());
             addFeature(level, x, z, chunkX, chunkZ, primer);
         }
     }

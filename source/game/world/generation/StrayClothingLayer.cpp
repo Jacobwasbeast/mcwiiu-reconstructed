@@ -6,6 +6,7 @@
 
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"

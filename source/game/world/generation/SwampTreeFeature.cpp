@@ -10,7 +10,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-#include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -22,6 +21,7 @@ public:
 };
 
 extern CMinecraftApp* g_pApp;
+extern Property* OldLogBlock_VARIANT;
 extern Property* OldLeafBlock_VARIANT;
 extern Property* OldLeafBlock_DECAYABLE;
 

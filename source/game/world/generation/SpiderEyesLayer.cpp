@@ -6,6 +6,7 @@
 #include "game/client/render/SpiderRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation SPIDER_EYES_LOCATION;

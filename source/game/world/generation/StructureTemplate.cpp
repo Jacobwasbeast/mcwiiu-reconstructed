@@ -6,29 +6,29 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/BoundingBox.hpp"
+#include "game/core/AnonymousDataWalker.hpp"
+#include "game/core/DataWalker.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/data/DoubleTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/item/Container.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/util/NbtUtils.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockRotProcessor.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureProcessor.hpp"
-
-class AnonymousDataWalker;
-class Block;
-class BlockEntity;
-class BlockRotProcessor;
-class Blocks;
-class Container;
-class DoubleTag;
-class Entity;
-class EntityIO;
-class LevelChunk;
-class NbtUtils;
 
 static const std::wstring PALETTE_TAG = L"palette";
 static const std::wstring ENTITIES_TAG = L"entities";
@@ -70,16 +70,6 @@ StructureTemplate::~StructureTemplate()
     {
         delete *entity;
     }
-}
-
-void StructureTemplate::setAuthor(const std::wstring& author)
-{
-    mAuthor = author;
-}
-
-std::wstring StructureTemplate::getAuthor()
-{
-    return mAuthor;
 }
 
 BlockPos StructureTemplate::getSize() const
@@ -124,23 +114,6 @@ BlockPos StructureTemplate::transform(const BlockPos& pos, Mirror* mirror, Rotat
     default:
         return mirrored ? BlockPos(x, y, z) : pos;
     }
-}
-
-BlockPos StructureTemplate::transform(const BlockPos& pos, const Direction* direction)
-{
-    if (direction == Direction::NORTH)
-    {
-        return pos;
-    }
-    if (direction == Direction::SOUTH)
-    {
-        return BlockPos(-pos.x, pos.y, -pos.z);
-    }
-    if (direction == Direction::WEST)
-    {
-        return BlockPos(pos.z, pos.y, -pos.x);
-    }
-    return BlockPos(-pos.z, pos.y, pos.x);
 }
 
 BlockPos StructureTemplate::calculateRelativePosition(const StructurePlaceSettings* settings, const BlockPos& pos)
@@ -335,7 +308,7 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
             if (blockEntity)
             {
-                if ((blockEntity->GetType() & BLOCK_ENTITY_TYPE_CONTAINER) == BLOCK_ENTITY_TYPE_CONTAINER)
+                if ((blockEntity->GetType() & 0x1800200ULL) == 0x1800200ULL)
                 {
                     boost::dynamic_pointer_cast<Container>(blockEntity)->clearContent();
                 }
@@ -471,7 +444,7 @@ BlockPos StructureTemplate::getZeroPositionWithTransform(const BlockPos& pos, Mi
 
 void StructureTemplate::addWalkers(DataFixerUpper* fixerUpper)
 {
-    fixerUpper->addWalker(DataFixTypes::eDataFixTypes_Structure, new AnonymousDataWalker());
+    fixerUpper->addWalker(DataFixTypes::eDataFixTypes_Structure, (DataWalker*)new AnonymousDataWalker());
 }
 
 void StructureTemplate::load(CompoundTag* tag)

@@ -14,7 +14,6 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-#include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -35,6 +34,7 @@ public:
 };
 
 extern CMinecraftApp* g_pApp;
+extern Property* OldLogBlock_VARIANT;
 extern Property* OldLeafBlock_VARIANT;
 extern Property* OldLeafBlock_DECAYABLE;
 

@@ -9,7 +9,7 @@ class Random;
 class Feature
 {
 public:
-    Feature(bool doBlockNotify);
+    Feature(bool doBlockNotify = false);
     virtual ~Feature();
 
     virtual bool place(Level* level, Random& random, const BlockPos& origin) = 0;

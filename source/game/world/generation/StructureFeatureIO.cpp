@@ -17,6 +17,7 @@
 #include "game/world/generation/ScatteredFeaturePieces.hpp"
 #include "game/world/generation/ShipwreckFeature.hpp"
 #include "game/world/generation/StrongholdFeature.hpp"
+#include "game/world/generation/StructureStart.hpp"
 #include "game/world/generation/VillageFeature.hpp"
 #include "game/world/generation/VillagePieces.hpp"
 #include "game/world/generation/WoodlandMansionFeature.hpp"

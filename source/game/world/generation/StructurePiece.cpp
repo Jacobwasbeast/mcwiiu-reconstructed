@@ -22,13 +22,11 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/ChestBlock.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/block/DispenserBlockEntity.hpp"
 #include "game/world/block/DoorBlock.hpp"
-#include "game/world/block/Material.hpp"
 #include "game/world/block/RandomizableLockableContainerBlockEntity.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
@@ -187,12 +185,12 @@ bool StructurePiece::edgesLiquid(Level* level, BoundingBox* box)
     {
         for (int z = z0; z <= z1; ++z)
         {
-            if (level->getBlockState(BlockPos(x, y0, z))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x, y0, z))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
 
-            if (level->getBlockState(BlockPos(x, y1, z))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x, y1, z))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
@@ -203,12 +201,12 @@ bool StructurePiece::edgesLiquid(Level* level, BoundingBox* box)
     {
         for (int y = y0; y <= y1; ++y)
         {
-            if (level->getBlockState(BlockPos(x, y, z0))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x, y, z0))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
 
-            if (level->getBlockState(BlockPos(x, y, z1))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x, y, z1))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
@@ -219,12 +217,12 @@ bool StructurePiece::edgesLiquid(Level* level, BoundingBox* box)
     {
         for (int y = y0; y <= y1; ++y)
         {
-            if (level->getBlockState(BlockPos(x0, y, z))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x0, y, z))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
 
-            if (level->getBlockState(BlockPos(x1, y, z))->getBlock()->getCraftingMaterial()->isLiquid())
+            if (level->getBlockState(BlockPos(x1, y, z))->getBlock()->isLiquidBlock())
             {
                 return true;
             }
@@ -325,7 +323,7 @@ const BlockState* StructurePiece::getBlock(Level* level, int x, int y, int z, Bo
     BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (!box->isInside(pos))
     {
-        return Blocks::AIR->defaultBlockState();
+        return Block::byId(0)->defaultBlockState();
     }
 
     return level->getBlockState(pos);
@@ -355,7 +353,7 @@ void StructurePiece::generateAirBox(Level* level, BoundingBox* box, int x0, int 
         {
             for (int z = z0; z <= z1; ++z)
             {
-                placeBlock(level, Blocks::AIR->defaultBlockState(), x, y, z, box);
+                placeBlock(level, Block::byId(0)->defaultBlockState(), x, y, z, box);
             }
         }
     }
@@ -371,7 +369,7 @@ void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0,
             for (int z = z0; z <= z1; ++z)
             {
                 if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->getCraftingMaterial() == Material::AIR)
+                    && getBlock(level, x, y, z, box)->getBlock() == Block::byId(0))
                 {
                     continue;
                 }
@@ -406,7 +404,7 @@ void StructurePiece::generateBox(Level* level, BoundingBox* box, int x0, int y0,
             for (int z = z0; z <= z1; ++z)
             {
                 if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->getCraftingMaterial() == Material::AIR)
+                    && getBlock(level, x, y, z, box)->getBlock() == Block::byId(0))
                 {
                     continue;
                 }
@@ -442,7 +440,7 @@ void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& ra
                 }
 
                 if (existingOnly
-                    && getBlock(level, x, y, z, box)->getBlock()->getCraftingMaterial() == Material::AIR)
+                    && getBlock(level, x, y, z, box)->getBlock() == Block::byId(0))
                 {
                     continue;
                 }
@@ -496,7 +494,7 @@ void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int
                 float dz = ((float)z - zCentre) / (zSpan / 2.0f);
 
                 if (excludeAir
-                    && getBlock(level, x, y, z, box)->getBlock()->getCraftingMaterial() == Material::AIR)
+                    && getBlock(level, x, y, z, box)->getBlock() == Block::byId(0))
                 {
                     continue;
                 }
@@ -553,7 +551,7 @@ void StructurePiece::generateAirColumnUp(Level* level, int x, int y, int z, Boun
 
     while (!level->isEmptyBlock(pos) && pos.y < 255)
     {
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+        level->setBlock(pos, Block::byId(0)->defaultBlockState(), 2, false);
         pos = pos.above();
     }
 }
@@ -582,7 +580,7 @@ void StructurePiece::fillColumnDown(Level* level, const BlockState* state, int x
 
     while ((level->isEmptyBlock(BlockPos(worldX, worldY, worldZ))
                || level->getBlockState(BlockPos(worldX, worldY, worldZ))->getBlock()
-                      ->getCraftingMaterial()->isLiquid())
+                      ->isLiquidBlock())
         && worldY > 1)
     {
         level->setBlock(BlockPos(worldX, worldY, worldZ), state, 2, false);
@@ -612,14 +610,14 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, const BlockPos& pos,
     ResourceLocation* lootTable, const BlockState* state)
 {
-    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Blocks::chest)
+    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Block::byId(54))
     {
         return false;
     }
 
     if (state == NULL)
     {
-        state = static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState());
+        state = static_cast<ChestBlock*>(Block::byId(54))->reorient(level, pos, Block::byId(54)->defaultBlockState());
     }
 
     level->setBlock(pos, state, 2, false);
@@ -638,14 +636,14 @@ bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& ran
     const Direction* facing, ResourceLocation* lootTable)
 {
     BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
-    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Blocks::dispenser)
+    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Block::byId(23))
     {
         return false;
     }
 
     TypedBoxed<const Direction*> facingValue(facing);
     placeBlock(level,
-        Blocks::dispenser->defaultBlockState()->setBoxedValue(DispenserBlock::FACING, &facingValue),
+        Block::byId(23)->defaultBlockState()->setBoxedValue(DispenserBlock::FACING, &facingValue),
         x, y, z, box);
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
@@ -798,7 +796,7 @@ bool StructurePiece::isDirty()
 }
 
 StructurePiece::BlockSelector::BlockSelector()
-    : mNext(Blocks::AIR->defaultBlockState())
+    : mNext(Block::byId(0)->defaultBlockState())
 {
 }
 

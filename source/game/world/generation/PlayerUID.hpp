@@ -6,33 +6,15 @@
 #include "game/util/ACTUuid.hpp"
 
 struct FFLCreateID;
-class CAchievements;
 
-class PlayerUID
+struct PlayerUID
 {
-public:
-    PlayerUID(int uid);
-    PlayerUID(ACTUuid uuid, bool isOnlineAccount, bool isDRCController);
-    PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool isDRCController);
-    PlayerUID(std::wstring uidString);
-
-    std::wstring UuidString() const;
-    std::wstring toString() const;
-
-    bool operator==(const PlayerUID& other) const;
-    bool operator!=(const PlayerUID& other) const;
-
-private:
-    friend class CAchievements;
-
     union
     {
         ACTUuid uuid;
-
         struct
         {
             unsigned char createId[10];
-
             union
             {
                 unsigned int principalId;
@@ -40,12 +22,17 @@ private:
             };
         } mii;
     };
+    unsigned int flags;
 
-    unsigned int isUuid : 1;
-    unsigned int isOnlineAccount : 1;
-    unsigned int hasPrincipalId : 1;
-    unsigned int isDRCController : 1;
-    unsigned int reserved : 28;
+    PlayerUID(int uid);
+    PlayerUID(ACTUuid uuid, bool onlineAccount, bool drcController);
+    PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool drcController);
+    PlayerUID(std::wstring uidString);
+
+    std::wstring UuidString() const;
+    std::wstring toString() const;
+    bool operator==(const PlayerUID& other) const;
+    bool operator!=(const PlayerUID& other) const;
 };
 
 #endif

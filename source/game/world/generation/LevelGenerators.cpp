@@ -34,17 +34,27 @@ std::vector<LevelGenerationOptions*>* LevelGenerators::getLevelGenerators()
 
 bool LevelGenerators::SortLevelGenerators(const LevelGenerationOptions* first, const LevelGenerationOptions* second)
 {
-    const unsigned int firstPackId = first->m_pPack->GetPackId();
-    const unsigned int secondPackId = second->m_pPack->GetPackId();
-    if (firstPackId == 4 && (first->getThemeId() == 0 || first->getThemeId() == -1))
+    const unsigned int firstPackId = const_cast<LevelGenerationOptions*>(first)->getParentPackId();
+    const unsigned int secondPackId = const_cast<LevelGenerationOptions*>(second)->getParentPackId();
+    if (firstPackId == 4)
     {
-        return true;
+        const unsigned int themeId = first->getThemeId();
+        if (themeId == 0 || themeId == static_cast<unsigned int>(-1))
+        {
+            return true;
+        }
     }
-    if (secondPackId != 4 || (second->getThemeId() != 0 && second->getThemeId() != -1))
+    bool compareSortIndex = secondPackId != 4;
+    if (!compareSortIndex)
     {
-        cDLCInfo* dlcInfo = (cDLCInfo*)(unsigned long)theApp->GetDLCInfoInstance();
+        const unsigned int themeId = second->getThemeId();
+        compareSortIndex = themeId != 0 && themeId != static_cast<unsigned int>(-1);
+    }
+    if (compareSortIndex)
+    {
+        cDLCInfo* dlcInfo = (cDLCInfo*)(unsigned long)theApp.GetDLCInfoInstance();
         DLC_INFO* firstInfo = dlcInfo->GetDLCInfoForPackID(firstPackId);
-        dlcInfo = (cDLCInfo*)(unsigned long)theApp->GetDLCInfoInstance();
+        dlcInfo = (cDLCInfo*)(unsigned long)theApp.GetDLCInfoInstance();
         DLC_INFO* secondInfo = dlcInfo->GetDLCInfoForPackID(secondPackId);
         if (firstInfo != NULL && secondInfo != NULL)
         {

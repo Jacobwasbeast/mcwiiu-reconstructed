@@ -6,21 +6,14 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/Block.hpp"
 
-class Minecraft
-{
-public:
-    static Minecraft* GetInstance();
-    ItemRenderer* getItemRenderer();
-};
-
 DolphinCarryingItemLayer::DolphinCarryingItemLayer(LivingEntityRenderer* renderer)
-    : mLivingEntityRenderer(renderer), mItemRenderer(NULL)
+    : mLivingEntityRenderer(renderer), mItemRenderer(Minecraft::GetInstance()->getItemRenderer())
 {
-    mItemRenderer = Minecraft::GetInstance()->getItemRenderer();
 }
 
 DolphinCarryingItemLayer::~DolphinCarryingItemLayer()
@@ -30,7 +23,7 @@ DolphinCarryingItemLayer::~DolphinCarryingItemLayer()
 void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEntity>& entity,
                                                 const not_null_ptr<ItemInstance>& item)
 {
-    if (item->isEmpty())
+    if (item->isEmpty() || item->isEmpty())
         return;
 
     Block* block = Block::byItem(item->getItem());
@@ -46,7 +39,7 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
     else
         GlStateManager::translatef(0.0f, 1.0f - rotation * 0.5f, rotation * 0.5f - 1.0f);
 
-    mItemRenderer->renderStatic(item, entity, 7, 0.0f, false, NULL);
+    mItemRenderer->renderStatic(item, entity, ItemTransforms::GROUND, 0.0f, false, NULL);
 
     if (depthMask)
         GlStateManager::depthMask(true);
@@ -56,24 +49,24 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
 void DolphinCarryingItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float,
                                       float, float, bool)
 {
-    not_null_ptr<ItemInstance> firstItem;
-    not_null_ptr<ItemInstance> secondItem;
+    not_null_ptr<ItemInstance> leftHandItem;
+    not_null_ptr<ItemInstance> rightHandItem;
 
     if (entity->getMainArm() == HumanoidArm::RIGHT)
     {
-        firstItem = entity->getOffhandItem();
-        secondItem = entity->getMainHandItem();
+        leftHandItem = entity->getOffhandItem();
+        rightHandItem = entity->getMainHandItem();
     }
     else
     {
-        firstItem = entity->getMainHandItem();
-        secondItem = entity->getOffhandItem();
+        leftHandItem = entity->getMainHandItem();
+        rightHandItem = entity->getOffhandItem();
     }
 
-    if (firstItem->isEmpty() && secondItem->isEmpty())
+    if (leftHandItem->isEmpty() && rightHandItem->isEmpty())
         return;
 
-    renderItemOnNose(entity, secondItem);
+    renderItemOnNose(entity, rightHandItem);
 }
 
 bool DolphinCarryingItemLayer::colorsOnDamage()

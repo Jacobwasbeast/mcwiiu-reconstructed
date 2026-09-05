@@ -10,7 +10,9 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ArmorItem.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static std::map<std::wstring, ResourceLocation> sArmorLocations;

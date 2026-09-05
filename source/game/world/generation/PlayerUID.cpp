@@ -9,106 +9,78 @@ struct FFLCreateID
 };
 
 template<typename T> T _fromHEXString(const std::wstring& text);
-template <> int _fromHEXString<int>(const std::wstring& text);
+template<> int _fromHEXString<int>(const std::wstring& text);
 
 PlayerUID::PlayerUID(int uid)
 {
-    memset(this, 0, sizeof(PlayerUID));
+    (void)uid;
+    std::memset(this, 0, sizeof(PlayerUID));
 }
 
-PlayerUID::PlayerUID(ACTUuid uuid, bool isOnlineAccount, bool isDRCController)
+PlayerUID::PlayerUID(ACTUuid uuid, bool onlineAccount, bool drcController)
 {
     this->uuid = uuid;
-
-    this->isUuid = true;
-    this->isOnlineAccount = isOnlineAccount;
-    this->hasPrincipalId = false;
-    this->isDRCController = isDRCController;
+    flags = (0x80000000u | (onlineAccount ? 0x40000000u : 0) |
+             (drcController ? 0x10000000u : 0)) | (flags & 0x0fffffffu);
 }
 
-PlayerUID::PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool isDRCController)
+PlayerUID::PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool drcController)
 {
-    memcpy(mii.createId, &createId, sizeof(FFLCreateID));
+    std::memcpy(mii.createId, createId.data, sizeof(createId.data));
     mii.principalId = hasPrincipalId ? principalId : 0;
-
-    this->isUuid = false;
-    this->isOnlineAccount = false;
-    this->hasPrincipalId = hasPrincipalId;
-    this->isDRCController = isDRCController;
+    flags = ((((hasPrincipalId ? 1u : 0u) << 1) |
+              (drcController ? 1u : 0u)) << 28) | (flags & 0x0fffffffu);
 }
 
 PlayerUID::PlayerUID(std::wstring uidString)
 {
-    if (uidString.length() > 28)
+    if (uidString.length() < 0x1d)
     {
-        for (int i = 0; i < 16; ++i)
+        if (uidString.length() < 0x15)
         {
-            uuid.data[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
-        }
-
-        isUuid = true;
-        hasPrincipalId = false;
-    }
-    else if (uidString.length() > 20)
-    {
-        for (int i = 0; i < 10; ++i)
-        {
-            mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
-        }
-
-        for (int i = 0; i < 4; ++i)
-        {
+            for (int i = 0; i < 10; ++i)
+                mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
             mii.principalId = 0;
-            mii.principalIdBytes[i] = (unsigned char)_fromHEXString<int>(uidString.substr(20 + i * 2, 2));
+            flags &= 0x5fffffffu;
         }
-
-        isUuid = false;
-        hasPrincipalId = true;
+        else
+        {
+            for (int i = 0; i < 10; ++i)
+                mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
+            for (int i = 0; i < 4; ++i)
+                mii.principalIdBytes[i] = (unsigned char)_fromHEXString<int>(uidString.substr(20 + i * 2, 2));
+            flags = (flags & 0x5fffffffu) | 0x20000000u;
+        }
     }
     else
     {
-        for (int i = 0; i < 10; ++i)
-        {
-            mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
-        }
-
-        mii.principalId = 0;
-
-        isUuid = false;
-        hasPrincipalId = false;
+        for (int i = 0; i < 16; ++i)
+            uuid.data[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
+        flags = (flags & 0xdfffffffu) | 0x80000000u;
     }
 }
 
 std::wstring PlayerUID::UuidString() const
 {
     wchar_t text[40];
-
-    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+    swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x",
              uuid.data[0], uuid.data[1], uuid.data[2], uuid.data[3],
-             uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7],
-             uuid.data[8], uuid.data[9], uuid.data[10], uuid.data[11],
-             uuid.data[12], uuid.data[13], uuid.data[14], uuid.data[15]);
-
+             uuid.data[4], uuid.data[5], uuid.data[6], uuid.data[7]);
     return std::wstring(text);
 }
 
 std::wstring PlayerUID::toString() const
 {
-    if (isUuid)
-    {
-        return UuidString();
-    }
-
     wchar_t text[40];
-
-    if (hasPrincipalId)
+    if ((flags & 0x80000000u) != 0)
+        return UuidString();
+    if ((flags & 0x20000000u) != 0)
     {
         swprintf(text, 40, L"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
                  mii.createId[0], mii.createId[1], mii.createId[2], mii.createId[3],
                  mii.createId[4], mii.createId[5], mii.createId[6], mii.createId[7],
-                 mii.createId[8], mii.createId[9],
-                 mii.principalIdBytes[0], mii.principalIdBytes[1],
-                 mii.principalIdBytes[2], mii.principalIdBytes[3]);
+                 mii.createId[8], mii.createId[9], mii.principalIdBytes[0],
+                 mii.principalIdBytes[1], mii.principalIdBytes[2], mii.principalIdBytes[3]);
     }
     else
     {
@@ -117,24 +89,18 @@ std::wstring PlayerUID::toString() const
                  mii.createId[4], mii.createId[5], mii.createId[6], mii.createId[7],
                  mii.createId[8], mii.createId[9]);
     }
-
     return std::wstring(text);
 }
 
 bool PlayerUID::operator==(const PlayerUID& other) const
 {
-    if (isUuid != other.isUuid)
-    {
+    unsigned int uuidType = flags >> 31;
+    if (uuidType != (other.flags >> 31))
         return false;
-    }
-
-    if (isUuid)
-    {
+    if (uuidType != 0)
         return uuid == other.uuid;
-    }
-
     return mii.principalId == other.mii.principalId &&
-           memcmp(mii.createId, other.mii.createId, sizeof(mii.createId)) == 0;
+           std::memcmp(this, &other, 10) == 0;
 }
 
 bool PlayerUID::operator!=(const PlayerUID& other) const

@@ -1,0 +1,204 @@
+#include "game/world/generation/OceanRuinFeature.hpp"
+
+#include "game/core/BoundingBox.hpp"
+#include "game/core/ColourTable.hpp"
+#include "game/core/Direction.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/SuperflatConfig.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/world/biome/BiomeSource.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/FlatGeneratorInfo.hpp"
+#include "game/world/generation/StructurePiece.hpp"
+
+OceanRuinFeature::OceanRuinFeature()
+    : StructureFeature(), mSpacing(8), mSeparation(2)
+{
+}
+
+OceanRuinFeature::OceanRuinFeature(SuperflatConfig* config)
+    : StructureFeature()
+{
+    FlatGeneratorInfo info(config);
+    mSeparation = info.getShipwreckSeparation();
+    mSpacing = info.getShipwreckSpacing();
+}
+
+OceanRuinFeature::~OceanRuinFeature()
+{
+}
+
+bool OceanRuinFeature::IsValidSpawnArea(Level* level, int x, int z, int radius)
+{
+    std::vector<Biome*> biomes(10);
+    biomes.push_back(Biome::OCEAN);
+    biomes.push_back(Biome::DEEP_OCEAN);
+    biomes.push_back(Biome::COLD_OCEAN);
+    biomes.push_back(Biome::DEEP_COLD_OCEAN);
+    biomes.push_back(Biome::FROZEN_OCEAN);
+    biomes.push_back(Biome::DEEP_FROZEN_OCEAN);
+    biomes.push_back(Biome::LUKEWARM_OCEAN);
+    biomes.push_back(Biome::DEEP_LUKEWARM_OCEAN);
+    biomes.push_back(Biome::WARM_OCEAN);
+    biomes.push_back(Biome::DEEP_WARM_OCEAN);
+    return level->getBiomeSource()->containsOnly(x, z, radius, biomes);
+}
+
+std::wstring OceanRuinFeature::getFeatureName()
+{
+    return L"Ocean_Ruin";
+}
+
+BlockPos* OceanRuinFeature::getNearestGeneratedFeature(Level* sourceLevel, const BlockPos& pos,
+                                                        bool skipExistingChunks)
+{
+    level = sourceLevel;
+    return StructureFeature::findNearestFeaturePositionBySpacing(
+        sourceLevel, this, pos, mSpacing, mSeparation, 0xdb1471, false, 100,
+        skipExistingChunks);
+}
+
+StructureStart* OceanRuinFeature::createStructureStart(int chunkX, int chunkZ)
+{
+    BlockPos pos(chunkX << 4, 64, chunkZ << 4);
+    OceanRuinConfiguration configuration = level->getBiome(pos)->getOceanRuinConfig();
+    return new OceanRuinStart(level, random, chunkX, chunkZ, configuration);
+}
+
+bool OceanRuinFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
+{
+    int regionX = chunkX;
+    int regionZ = chunkZ;
+    if (chunkX < 0)
+    {
+        regionX += 1 - mSpacing;
+    }
+    if (chunkZ < 0)
+    {
+        regionZ += 1 - mSpacing;
+    }
+
+    regionX /= mSpacing;
+    regionZ /= mSpacing;
+    Random chunkRandom = level->getRandomFor(regionX, regionZ, 0xdb1471);
+    int featureX = regionX * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
+    int featureZ = regionZ * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
+    bool featureChunk = chunkX == featureX && chunkZ == featureZ;
+
+    if (!canPlaceFeatureInChunk(featureChunk, eFeatureType_OceanRuin, chunkX, chunkZ))
+    {
+        return false;
+    }
+    return IsValidSpawnArea(level, chunkX * 16 + 8, chunkZ * 16 + 8, 8);
+}
+
+OceanRuinFeature::OceanRuinStart::OceanRuinStart(
+    Level* level, Random& random, int chunkX, int chunkZ,
+    const OceanRuinConfiguration& configuration)
+    : StructureStart(chunkX, chunkZ), mLevel(level)
+{
+    create(random, chunkX, chunkZ, configuration);
+}
+
+OceanRuinFeature::OceanRuinStart::~OceanRuinStart()
+{
+}
+
+std::vector<BlockPos>* OceanRuinFeature::OceanRuinStart::allPositions(
+    Random& random, int x, int z)
+{
+    std::vector<BlockPos>* positions = new std::vector<BlockPos>();
+    int west = x - 16;
+    int east = x + 16;
+    int north = z - 16;
+    int south = z + 16;
+
+    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
+                                  south + Mth::nextInt(&random, 1, 7)));
+    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
+                                  z + Mth::nextInt(&random, 1, 7)));
+    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
+                                  north + Mth::nextInt(&random, 4, 8)));
+    positions->push_back(BlockPos(x + Mth::nextInt(&random, 1, 7), 0,
+                                  south + Mth::nextInt(&random, 1, 7)));
+    positions->push_back(BlockPos(x + Mth::nextInt(&random, 1, 7), 0,
+                                  north + Mth::nextInt(&random, 4, 6)));
+    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
+                                  south + Mth::nextInt(&random, 3, 8)));
+    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
+                                  z + Mth::nextInt(&random, 1, 7)));
+    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
+                                  north + Mth::nextInt(&random, 4, 8)));
+    return positions;
+}
+
+void OceanRuinFeature::OceanRuinStart::addClusterRuins(
+    Random& random, const Direction* direction, int x, int z, bool warm,
+    std::vector<StructurePiece*>& pieces)
+{
+    BoundingBox* structureBox = pieces[0]->getBoundingBox();
+    int startX = structureBox->x0 < structureBox->x1 ? structureBox->x0 : structureBox->x1;
+    int startZ = structureBox->z0 < structureBox->z1 ? structureBox->z0 : structureBox->z1;
+    std::vector<BlockPos>* positions = allPositions(random, startX, startZ);
+    int count = Mth::nextInt(&random, 4, 8);
+
+    for (int i = 0; i < count; ++i)
+    {
+        int index = random.nextInt((int)positions->size());
+        BlockPos position = positions->at(index);
+        positions->at(index) = positions->back();
+        positions->pop_back();
+
+        BoundingBox* candidate = BoundingBox::createProper(
+            position.x, structureBox->y0, position.z,
+            position.x + 6, structureBox->y0 + 6, position.z + 6);
+        int xSpan = candidate->getXSpan();
+        int zSpan = candidate->getZSpan();
+        int radius = xSpan < zSpan ? zSpan : xSpan;
+        bool valid = !candidate->intersects(structureBox)
+            && IsValidSpawnArea(mLevel, position.x + xSpan / 2,
+                                position.z + zSpan / 2, radius);
+        delete candidate;
+
+        if (valid)
+        {
+            pieces.push_back(new OceanRuin(mLevel, random, position.x, position.z,
+                                           7, 7, 7, warm, false));
+        }
+    }
+
+    delete positions;
+}
+
+void OceanRuinFeature::OceanRuinStart::create(
+    Random& random, int chunkX, int chunkZ,
+    const OceanRuinConfiguration& configuration)
+{
+    int x = chunkX << 4;
+    int z = chunkZ << 4;
+    bool warm = configuration.biomeType == OceanRuin::eRuinType_Warm;
+    bool small = random.nextFloat() <= configuration.smallProbability;
+
+    if (small)
+    {
+        push_back(new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false));
+        if (random.nextFloat() <= configuration.clusterProbability)
+        {
+            addClusterRuins(random, Direction::Plane::HORIZONTAL->getRandomDirection(random),
+                            x, z, warm, *this);
+        }
+    }
+    else
+    {
+        push_back(new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true));
+    }
+
+    calculateBoundingBox();
+}
+
+EStructureStart OceanRuinFeature::OceanRuinStart::GetType()
+{
+    return eStructureStart_OceanRuin;
+}

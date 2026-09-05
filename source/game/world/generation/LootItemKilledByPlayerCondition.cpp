@@ -10,6 +10,6 @@ LootItemKilledByPlayerCondition::LootItemKilledByPlayerCondition(bool playerKill
 
 bool LootItemKilledByPlayerCondition::applies(Random* random, LootTableContext& context)
 {
-    boost::shared_ptr<Player> player = context.mKillerPlayer.lock();
+    boost::shared_ptr<Player> player = context.mKillerEntity.lock();
     return (player != 0) != playerKilled;
 }

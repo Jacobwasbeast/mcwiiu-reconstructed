@@ -6,6 +6,10 @@
 #include "game/world/generation/StructurePiece.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
+class StructureStart;
+
+#include "game/world/generation/StructureFeatureIO.hpp"
+
 class BoundingBox;
 class ChunkPos;
 class DataInputStream;
@@ -13,13 +17,12 @@ class DataOutputStream;
 class Level;
 class Random;
 
-class StructureStart
+class StructureStart : public std::vector<StructurePiece*>
 {
 public:
     StructureStart();
     StructureStart(int chunkX, int chunkZ);
     virtual ~StructureStart();
-
     BoundingBox* getBoundingBox();
     bool isDirty();
     unsigned int getChunkX();
@@ -27,7 +30,6 @@ public:
     void getPieces();
     void clearDirty();
     void setDirty();
-
     virtual void postProcess(Level* level, Random& random, BoundingBox* box);
     void calculateBoundingBox();
     virtual arrayWithLength<unsigned char> createTag(int chunkX, int chunkZ);
@@ -39,9 +41,9 @@ public:
     virtual bool isValid();
     virtual bool isValidForPostProcess(ChunkPos* chunkPos);
     virtual void notifyPostProcessAt(ChunkPos* chunkPos);
+    virtual EStructureStart GetType() = 0;
 
 private:
-    std::vector<StructurePiece*> mPieces;
     BoundingBox* mBoundingBox;
     int mChunkX;
     int mChunkZ;

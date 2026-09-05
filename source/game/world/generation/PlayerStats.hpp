@@ -166,9 +166,9 @@ private:
     std::vector<const GameMedal*> mMedals;
     int mWinningMedal;
     int mLastMedal;
-    int mRoundState;
 
 public:
+    int mSnowballDirectHits;
     int mHitsFromProjectile;
     StatTracker<float>* mDamageDealt;
     StatTracker<float>* mDamageReceived;

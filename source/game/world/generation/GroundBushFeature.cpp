@@ -1,0 +1,71 @@
+#include "game/world/generation/GroundBushFeature.hpp"
+
+#include <cstdlib>
+
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+
+GroundBushFeature::GroundBushFeature(const BlockState* trunkState,
+                                     const BlockState* leafState)
+    : TreeFeature(false),
+      mLeafState(leafState),
+      mTrunkState(trunkState)
+{
+}
+
+GroundBushFeature::~GroundBushFeature()
+{
+}
+
+bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& origin)
+{
+    PIXBeginNamedEvent(0.0f, "Placing GroundBushFeature");
+
+    BlockPos position = origin;
+    while ((level->getBlockState(position)->getMaterial() == Material::AIR ||
+            level->getBlockState(position)->getMaterial() == Material::PLANT) &&
+           position.y > 0)
+    {
+        position = position.below();
+    }
+
+    Block* ground = level->getBlockState(position)->getBlock();
+    if (ground == Blocks::grass || ground == Blocks::dirt)
+    {
+        position = position.above();
+        setBlock(level, position, mTrunkState, 0);
+
+        for (int y = position.y; y <= position.y + 2; ++y)
+        {
+            const int radius = 2 - (y - position.y);
+            for (int x = position.x - radius; x <= position.x + radius; ++x)
+            {
+                for (int z = position.z - radius; z <= position.z + radius; ++z)
+                {
+                    if (std::abs(x - position.x) != radius ||
+                        std::abs(z - position.z) != radius ||
+                        random.nextInt(2) != 0)
+                    {
+                        BlockPos leafPos(x, y, z);
+                        const Material* material = level->getBlockState(leafPos)->getMaterial();
+                        if (material == Material::AIR || material == Material::PLANT)
+                        {
+                            setBlock(level, leafPos, mLeafState, 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    PIXEndNamedEvent();
+    return true;
+}

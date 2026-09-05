@@ -5,13 +5,28 @@
 
 #include <boost/unordered_map.hpp>
 
+enum EStructureStart
+{
+    eStructureStart_MineShaft = 0,
+    eStructureStart_Village = 1,
+    eStructureStart_NetherBridge = 2,
+    eStructureStart_Stronghold = 3,
+    eStructureStart_ScatteredFeature = 4,
+    eStructureStart_OceanMonument = 5,
+    eStructureStart_EndCity = 6,
+    eStructureStart_WoodlandMansion = 7,
+    eStructureStart_BuriedTreasure = 8,
+    eStructureStart_Shipwreck = 9,
+    eStructureStart_OceanRuin = 10
+};
+
 #include "game/world/generation/StructurePiece.hpp"
-#include "game/world/generation/StructureStart.hpp"
 
 class ByteArrayTag;
 class CompoundTag;
 class DataInputStream;
 class Level;
+class StructureStart;
 
 class StructureFeatureIO
 {
