@@ -38,7 +38,7 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
     if (player)
     {
-        player->setGameMode(GameType::byId(gameMode));
+        player->setGameMode(const_cast<GameType*>(GameType::byId(gameMode)));
         player->mFallDistance = 0.0f;
 
         if (sender->getCommandSenderWorld()->getGameRules()->getBoolean(9))

@@ -35,7 +35,7 @@ void SetSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sender, arra
 
     boost::shared_ptr<ServerPlayer> player = getPlayer(uid);
 
-    if (sender->getCommandSenderWorld()->dimension->getType() == DimensionType::OVERWORLD)
+    if (sender->getCommandSenderWorld()->mDimension->getType() == DimensionType::OVERWORLD)
     {
         if (player.get() != NULL && player->mLevel != NULL)
         {

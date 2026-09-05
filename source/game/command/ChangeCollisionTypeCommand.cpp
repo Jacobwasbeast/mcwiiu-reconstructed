@@ -6,6 +6,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/server/ServerPlayer.hpp"
 
 ChangeCollisionTypeCommand::~ChangeCollisionTypeCommand()
 {
