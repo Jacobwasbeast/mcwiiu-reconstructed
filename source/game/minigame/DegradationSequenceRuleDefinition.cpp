@@ -15,8 +15,6 @@ DegradationSequenceRuleDefinition::~DegradationSequenceRuleDefinition()
         delete *it;
         *it = NULL;
     }
-
-    mDegradationRules.clear();
 }
 
 ConsoleGameRules::EGameRuleType DegradationSequenceRuleDefinition::getActionType()

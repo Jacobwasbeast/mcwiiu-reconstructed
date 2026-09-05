@@ -7,7 +7,7 @@ MostKillsMedal::~MostKillsMedal()
 {
 }
 
-float MostKillsMedal::GetScore(PlayerStats* playerStats) const
+double MostKillsMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<float>(playerStats->mTotalKills->getValue());
+    return static_cast<double>(static_cast<float>(playerStats->mTotalKills->getValue()));
 }

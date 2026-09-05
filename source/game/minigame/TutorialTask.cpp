@@ -1,34 +1,23 @@
 #include "game/minigame/TutorialTask.hpp"
 
-#include <cstddef>
-
 #include "game/core/GameModeConstraints.hpp"
-#include "game/minigame/Tutorial.hpp"
-#include "game/minigame/TutorialConstraint.hpp"
 
 TutorialTask::TutorialTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
                            std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
                            bool allowFade, bool repeatMessage)
-    : descriptionId(descriptionId),
-      promptId(-1),
-      tutorial(tutorial),
-      preCompletionEnabled(preCompletionEnabled),
-      activated(false),
-      allowFade(allowFade),
-      repeatMessage(repeatMessage),
-      showMinimumTime(showMinimumTime),
-      completed(false),
-      shownForMinimumTime(false),
-      constraintsEnabled(false)
+    : descriptionId(descriptionId), promptId(-1), tutorial(tutorial),
+      preCompletionEnabled(preCompletionEnabled), activated(false), allowFade(allowFade),
+      repeatMessage(repeatMessage), showMinimumTime(showMinimumTime), completed(false),
+      shownForMinimumTime(false), constraintsEnabled(false)
 {
     if (constraints != NULL)
     {
-        for (std::vector<TutorialConstraint*>::iterator constraint = constraints->begin();
-             constraint < constraints->end(); ++constraint)
+        std::vector<TutorialConstraint*>::iterator constraint = constraints->begin();
+        while (constraint != constraints->end())
         {
             this->constraints.push_back(*constraint);
+            ++constraint;
         }
-
         delete constraints;
     }
 
@@ -39,20 +28,60 @@ TutorialTask::~TutorialTask()
 {
     enableConstraints(false, false);
 
-    for (std::vector<TutorialConstraint*>::iterator it = constraints.begin();
-         it < constraints.end(); ++it)
+    std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
+    while (constraint != constraints.end())
     {
-        TutorialConstraint* constraint = *it;
-
-        if (!constraint->removalPending)
+        TutorialConstraint* currentConstraint = *constraint;
+        if (!currentConstraint->removalPending)
         {
-            delete constraint;
+            delete currentConstraint;
         }
         else
         {
-            constraint->deleteWhenRemoved = true;
+            currentConstraint->deleteWhenRemoved = true;
+        }
+        ++constraint;
+    }
+}
+
+void TutorialTask::enableConstraints(bool enable, bool delayed)
+{
+    if (!enable)
+    {
+        if (constraintsEnabled || !delayed)
+        {
+            std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
+            while (constraint != constraints.end())
+            {
+                tutorial->gameModeConstraints->RemoveConstraint(*constraint, delayed);
+                ++constraint;
+            }
+            constraintsEnabled = false;
         }
     }
+    else if (!constraintsEnabled)
+    {
+        std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
+        while (constraint != constraints.end())
+        {
+            tutorial->gameModeConstraints->AddConstraint(*constraint, false);
+            ++constraint;
+        }
+        constraintsEnabled = true;
+    }
+}
+
+void TutorialTask::taskCompleted()
+{
+    if (constraintsEnabled)
+    {
+        enableConstraints(false, false);
+    }
+}
+
+void TutorialTask::setAsCurrentTask(bool currentTask)
+{
+    activated = currentTask;
 }
 
 int TutorialTask::getDescriptionId()
@@ -75,48 +104,6 @@ bool TutorialTask::isPreCompletionEnabled()
     return preCompletionEnabled;
 }
 
-void TutorialTask::taskCompleted()
-{
-    if (!constraintsEnabled)
-    {
-        return;
-    }
-
-    enableConstraints(false, false);
-}
-
-void TutorialTask::enableConstraints(bool enable, bool delayed)
-{
-    if (enable)
-    {
-        if (!constraintsEnabled)
-        {
-            for (std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
-                 constraint != constraints.end(); ++constraint)
-            {
-                tutorial->gameModeConstraints->AddConstraint(*constraint, false);
-            }
-
-            constraintsEnabled = true;
-        }
-    }
-    else if (constraintsEnabled || !delayed)
-    {
-        for (std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
-             constraint != constraints.end(); ++constraint)
-        {
-            tutorial->gameModeConstraints->RemoveConstraint(*constraint, delayed);
-        }
-
-        constraintsEnabled = false;
-    }
-}
-
-void TutorialTask::setAsCurrentTask(bool currentTask)
-{
-    activated = currentTask;
-}
-
 void TutorialTask::setShownForMinimumTime()
 {
     shownForMinimumTime = true;
@@ -137,52 +124,50 @@ bool TutorialTask::ShowMinimumTime()
     return showMinimumTime;
 }
 
-void TutorialTask::useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos,
-                             bool cancelled)
+void TutorialTask::useItemOn(Level*, not_null_ptr<ItemInstance>, const BlockPos&, bool)
 {
 }
 
-void TutorialTask::useItem(not_null_ptr<ItemInstance> item, bool cancelled)
+void TutorialTask::useItem(not_null_ptr<ItemInstance>, bool)
 {
 }
 
-void TutorialTask::completeUsingItem(not_null_ptr<ItemInstance> item)
+void TutorialTask::completeUsingItem(not_null_ptr<ItemInstance>)
 {
 }
 
-void TutorialTask::handleUIInput(int input)
+void TutorialTask::handleUIInput(int)
 {
 }
 
-void TutorialTask::onCrafted(not_null_ptr<ItemInstance> item)
+void TutorialTask::onCrafted(not_null_ptr<ItemInstance>)
 {
 }
 
-void TutorialTask::onEquip(not_null_ptr<ItemInstance> item)
+void TutorialTask::onEquip(not_null_ptr<ItemInstance>)
 {
 }
 
-void TutorialTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                          unsigned int exactCount)
+void TutorialTask::onTake(not_null_ptr<ItemInstance>, unsigned int, unsigned int)
 {
 }
 
-void TutorialTask::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
+void TutorialTask::onTakeFromAnvil(not_null_ptr<ItemInstance>)
 {
 }
 
-void TutorialTask::onStateChange(eTutorial_State state)
+void TutorialTask::onStateChange(eTutorial_State)
 {
 }
 
-void TutorialTask::onEffectChanged(MobEffect* effect, bool added)
+void TutorialTask::onEffectChanged(MobEffect*, bool)
 {
 }
 
-void TutorialTask::onLookAtEntity(boost::shared_ptr<Entity> entity)
+void TutorialTask::onLookAtEntity(boost::shared_ptr<Entity>)
 {
 }
 
-void TutorialTask::onRideEntity(boost::shared_ptr<Entity> entity)
+void TutorialTask::onRideEntity(boost::shared_ptr<Entity>)
 {
 }

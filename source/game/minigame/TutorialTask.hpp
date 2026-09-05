@@ -2,9 +2,7 @@
 #define GAME_MINIGAME_TUTORIALTASK_HPP
 
 #include <vector>
-
 #include <boost/shared_ptr.hpp>
-
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/Tutorial.hpp"
 
@@ -19,11 +17,9 @@ class TutorialTask
 {
 public:
     TutorialTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                 std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
-                 bool repeatMessage);
-
+                 std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
+                 bool allowFade, bool repeatMessage);
     virtual ~TutorialTask();
-
     virtual int getDescriptionId();
     virtual int getPromptId();
     virtual bool isCompleted() = 0;

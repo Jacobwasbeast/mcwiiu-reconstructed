@@ -1,8 +1,6 @@
 #ifndef GAME_MINIGAME_COMBINATIONDEFINITIONRULEDEFINITION_HPP
 #define GAME_MINIGAME_COMBINATIONDEFINITIONRULEDEFINITION_HPP
 
-#include "game/data/GameRuleSaveInterface.hpp"
-
 #include <string>
 #include "game/minigame/AnyCombinationOfRuleDefinition.hpp"
 
@@ -19,9 +17,6 @@ public:
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
     const std::wstring& GetName() const;
-
-private:
-    std::wstring mName;
 };
 
 #endif

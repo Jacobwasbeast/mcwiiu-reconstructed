@@ -67,9 +67,9 @@ int GameMedal::GetName() const
     return mName;
 }
 
-float GameMedal::GetScore(PlayerStats* playerStats) const
+double GameMedal::GetScore(PlayerStats* playerStats) const
 {
-    return 0.0f;
+    return 0.0;
 }
 
 int GameMedal::FindBest(const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const
@@ -129,10 +129,9 @@ unsigned int GameMedal::GetWeight() const
     return mWeight;
 }
 
-GameMedal* GameMedal::SetCanMultiAward(bool canMultiAward)
+void GameMedal::SetCanMultiAward(bool canMultiAward)
 {
     mCanMultiAward = canMultiAward;
-    return this;
 }
 
 bool GameMedal::CanMultiAward() const
@@ -155,7 +154,7 @@ GameStats* GameMedal::getGameStats() const
     return &gMinecraftServer->mMasterGameMode->mGameStats;
 }
 
-float GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&))
+double GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&))
 {
     int total = 0;
 
@@ -164,7 +163,7 @@ float GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)
         total += getRoundValue(playerStats->getRoundStats(round));
     }
 
-    return (float)total;
+    return (double)total;
 }
 
 GameMedal::Condition::Condition(float target, EOperator op, bool bestOnly)
@@ -181,7 +180,7 @@ GameMedal::Condition::~Condition()
 int GameMedal::Condition::findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const
 {
     int best = -1;
-    float bestScore = 0.0f;
+    double bestScore = 0.0;
 
     for (unsigned int i = 0; i < players->size(); i++)
     {
@@ -193,7 +192,7 @@ int GameMedal::Condition::findBest(const GameMedal* medal, const std::vector<boo
             continue;
         }
 
-        float score = getScore(medal, playerStats);
+        double score = getScore(medal, playerStats);
 
         bool better = false;
         switch (mOperator)
@@ -228,7 +227,7 @@ bool GameMedal::Condition::canAward(const GameMedal* medal, const StatsUID& uid,
     return medal->CanAward(uid, gameStats);
 }
 
-float GameMedal::Condition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+double GameMedal::Condition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     return medal->GetScore(playerStats);
 }

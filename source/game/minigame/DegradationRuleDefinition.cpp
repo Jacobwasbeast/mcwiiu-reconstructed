@@ -4,7 +4,7 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 
 template<typename T>
-std::wstring toString(T value);
+std::wstring _toString(T value);
 
 DegradationRuleDefinition::DegradationRuleDefinition()
     : mTargetLayer(L"_UNINTIALISED_"),
@@ -21,7 +21,7 @@ void DegradationRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInter
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 1);
 
-    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(57), toString(mSpeed));
+    saveInterface->saveAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(57), _toString(mSpeed));
 }
 
 void DegradationRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
