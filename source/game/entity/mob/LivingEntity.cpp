@@ -29,6 +29,7 @@
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/Stat.hpp"
@@ -45,7 +46,6 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ArmorItem.hpp"
-#include "game/core/CMinecraftApp.hpp"
 #include "game/item/ElytraItem.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Enchantments.hpp"
@@ -71,6 +71,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EntityDataSerializer.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -81,7 +82,14 @@ class ClientboundSetEquippedItemPacket;
 class ClientboundSoundPacket;
 class ClientboundTakeItemEntityPacket;
 class EntityDamageSource;
-class EntityDataSerializers;
+class EntityDataSerializers
+{
+public:
+    static EntityDataSerializer<unsigned char>* BYTE;
+    static EntityDataSerializer<float>* FLOAT;
+    static EntityDataSerializer<int>* INT;
+    static EntityDataSerializer<bool>* BOOLEAN;
+};
 class LevelChunk;
 class ParticleTypes;
 class TrapDoorBlock;

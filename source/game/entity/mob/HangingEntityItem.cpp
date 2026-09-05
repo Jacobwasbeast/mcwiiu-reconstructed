@@ -1,0 +1,93 @@
+#include "game/entity/mob/HangingEntityItem.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/GenericStats.hpp"
+#include "game/core/Painting.hpp"
+#include "game/core/Stats.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/ItemFrame.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/DiodeBlock.hpp"
+#include "game/world/generation/Player.hpp"
+
+HangingEntityItem::HangingEntityItem(unsigned long long entityType)
+    : Item(), mEntityType(entityType)
+{
+}
+
+HangingEntityItem::~HangingEntityItem()
+{
+}
+
+void HangingEntityItem::createEntity(Level* level, const BlockPos& pos, const Direction* direction,
+                                     int auxValue)
+{
+    if (mEntityType == 0x000000000A080001ULL)
+    {
+        boost::shared_ptr<Painting> painting(new Painting(level, pos, direction));
+        painting->PaintingPostConstructor(direction, -1);
+        level->addEntity(boost::static_pointer_cast<Entity>(painting));
+    }
+    else if (mEntityType == 0x000000000A080002ULL)
+    {
+        boost::shared_ptr<ItemFrame> itemFrame(new ItemFrame(level, pos, direction));
+        level->updateObservingBlocksAt(pos, NULL);
+        level->addEntity(boost::static_pointer_cast<Entity>(itemFrame));
+    }
+}
+
+InteractionResult::EInteractionResult HangingEntityItem::useOn(
+    boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
+    InteractionHand::EInteractionHand hand, const Direction* direction,
+    float hitX, float hitY, float hitZ, bool simulate)
+{
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    BlockPos placePos = pos.relative(direction);
+
+    if (direction == Direction::UP || direction == Direction::DOWN)
+        return InteractionResult::eInteractionResult_Fail;
+
+    if (!player->mayUseItemAt(placePos, direction, itemInstance))
+        return InteractionResult::eInteractionResult_Fail;
+
+    const BlockState* state = level->getBlockState(pos);
+    if (simulate)
+    {
+        if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
+            return InteractionResult::eInteractionResult_Fail;
+        return InteractionResult::eInteractionResult_Success;
+    }
+
+    if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
+        return InteractionResult::eInteractionResult_Fail;
+
+    createEntity(level, placePos, direction, itemInstance->getAuxValue());
+
+    if (!level->mIsClientSide)
+    {
+        Block* block = NULL;
+        if (mEntityType == 0x000000000A080001ULL)
+            block = Block::byItem(Item::byId(321));
+        else if (mEntityType == 0x000000000A080002ULL)
+            block = Block::byItem(Item::byId(389));
+        if (block != NULL)
+        {
+            player->awardStat(Stats::blockPlacedStats.data[Block::getId(block)],
+                              GenericStats::param_blocksPlaced(
+                                  block->getBlockState(itemInstance->getAuxValue()), 1));
+        }
+    }
+    itemInstance->shrink(1);
+    return InteractionResult::eInteractionResult_Success;
+}
+
+void HangingEntityItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
+                                        boost::shared_ptr<Player> player,
+                                        std::vector<HtmlString>* lines, bool advanced)
+{
+}

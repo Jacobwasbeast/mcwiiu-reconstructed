@@ -28,6 +28,7 @@ EntityTickCache::EntityTickCache()
     mBlockStates = NULL;
     mLastFrameUpdated = 0;
     mCacheChanged = true;
+    mLevel = NULL;
 }
 
 EntityTickCache::~EntityTickCache()
