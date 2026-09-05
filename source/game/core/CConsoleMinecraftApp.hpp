@@ -11,9 +11,6 @@ class ConsoleUIController;
 class cNintendoDLCInfo;
 class cCommerceNintendoWiiU;
 struct MiiDataEntry;
-enum eFileExtensionType { eFileExtensionType_Default = 0 };
-enum eTMSFileType { eTMSFileType_Default = 0 };
-enum eTMSAction { eTMSAction_Default = 0 };
 
 class CConsoleMinecraftApp : public CMinecraftApp
 {

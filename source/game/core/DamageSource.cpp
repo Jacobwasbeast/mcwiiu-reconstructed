@@ -1,9 +1,20 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/FoodConstants.hpp"
+#include "game/core/Explosion.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/mob/IndirectEntityDamageSource.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/ClientboundDamageIndicatorPacket.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/generation/Player.hpp"
+
+const DamageSource* DamageSource::ON_FIRE =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x36)))->bypassArmor()->setIsFire();
+const DamageSource* DamageSource::DROWN =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x13), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x38)))->bypassArmor();
+const DamageSource* DamageSource::FALL =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x16), static_cast<ClientboundChatPacket::EChatPacketMessage>(0)))->bypassArmor();
 
 DamageSource::DamageSource(ClientboundChatPacket::EChatPacketMessage messageValue, ClientboundChatPacket::EChatPacketMessage deathMessageValue)
     : message(messageValue), deathMessage(deathMessageValue), bypassArmorFlag(false), bypassInvulFlag(false), bypassGraceInvulFlag(false), bypassMagicFlag(false), foodExhaustion(FoodConstants::ExhaustionAttack()), fire(false), projectile(false), scalesDifficulty(false), magic(false), explosion(false), fireProjectile(false)
@@ -55,7 +66,7 @@ boost::shared_ptr<DamageSource> DamageSource::CreateTrident(boost::shared_ptr<Th
     return result;
 }
 
-void DamageSource::setIsFire() { fire = true; }
+DamageSource* DamageSource::setIsFire() { fire = true; return this; }
 
 boost::shared_ptr<DamageSource> DamageSource::CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner)
 {
@@ -77,7 +88,7 @@ boost::shared_ptr<DamageSource> DamageSource::CreateThrown(boost::shared_ptr<Ent
 }
 
 void DamageSource::setMagic() { magic = true; }
-void DamageSource::bypassArmor() { bypassArmorFlag = true; foodExhaustion = 0.0f; }
+DamageSource* DamageSource::bypassArmor() { bypassArmorFlag = true; foodExhaustion = 0.0f; return this; }
 
 boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource)
 {
@@ -100,7 +111,25 @@ void DamageSource::setScalesWithDifficulty() { scalesDifficulty = true; }
 
 boost::shared_ptr<EntityDamageSource> DamageSource::CreateExplosion(Explosion* explosionValue)
 {
-    boost::shared_ptr<EntityDamageSource> result(new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1b), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1b), boost::shared_ptr<Entity>()));
+    if (explosionValue == 0 || !explosionValue->getSourceMob())
+    {
+        boost::shared_ptr<EntityDamageSource> result(new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1b), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1b), boost::shared_ptr<Entity>()));
+        result->setExplosion();
+        result->setScalesWithDifficulty();
+        return result;
+    }
+
+    boost::shared_ptr<LivingEntity> sourceMob = explosionValue->getSourceMob();
+    boost::shared_ptr<Entity> directSource = explosionValue->getDirectSource();
+    if (directSource && directSource != sourceMob)
+    {
+        boost::shared_ptr<EntityDamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3a), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3a), directSource, sourceMob, 0));
+        result->setExplosion();
+        result->setScalesWithDifficulty();
+        return result;
+    }
+
+    boost::shared_ptr<EntityDamageSource> result(new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3a), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3a), sourceMob));
     result->setExplosion();
     result->setScalesWithDifficulty();
     return result;
@@ -135,13 +164,29 @@ void DamageSource::sendDamageIndicatorUpdate(boost::shared_ptr<ServerPlayer> pla
 
 boost::shared_ptr<ClientboundChatPacket> DamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> entity) const
 {
-    return boost::shared_ptr<ClientboundChatPacket>();
+    boost::shared_ptr<LivingEntity> killer = entity->getKillCredit();
+    if (killer)
+    {
+        std::wstring entityName = entity->getDisplayName();
+        std::wstring killerName = killer->getDisplayName();
+        ClientboundChatPacket::EChatPacketMessage packetMessage = deathMessage;
+        if (packetMessage == static_cast<ClientboundChatPacket::EChatPacketMessage>(0))
+            packetMessage = message;
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(entityName, packetMessage, killer, killerName));
+    }
+
+    std::wstring entityName = entity->getDisplayName();
+    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(entityName, message, -1));
 }
 
 bool DamageSource::isFire() const { return fire; }
 ClientboundChatPacket::EChatPacketMessage DamageSource::getMsgId() const { return message; }
-bool DamageSource::isCreativePlayer() const { return false; }
-boost::shared_ptr<Vec3> DamageSource::getSourcePosition() const { return boost::shared_ptr<Vec3>(); }
+bool DamageSource::isCreativePlayer() const
+{
+    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(getEntity());
+    return player && player->mAbilities.mInstabuild;
+}
+Vec3* DamageSource::getSourcePosition() const { return 0; }
 const DamageSource* DamageSource::GetBaseDamageSource() const { return 0; }
 boost::shared_ptr<DamageSource> DamageSource::copy() const { return boost::shared_ptr<DamageSource>(new DamageSource(*this)); }
 void DamageSource::bypassInvul() { bypassInvulFlag = true; }

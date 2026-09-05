@@ -3,8 +3,10 @@
 #include "game/core/StatsCounter.hpp"
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 
 #include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 
 #include "game/core/Achievements.hpp"
 
@@ -142,76 +144,76 @@ void Stats::buildBlockStats()
 
     blockMinedStats = arrayWithLength<Stat*>(256, true);
 
-    stat = new ItemStat(0x01000000, L"mineBlock.dirt", Item::getId(Item::byBlock(Block::dirt)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::dirt))] = stat;
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::grass))] = stat;
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::farmland))] = stat;
+    stat = new ItemStat(0x01000000, L"mineBlock.dirt", Item::getId(Item::byBlock(Blocks::dirt)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::dirt))] = stat;
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::grass))] = stat;
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::farmland))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000001, L"mineBlock.stone", Item::getId(Item::byBlock(Block::stone)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::stone))] = stat;
+    stat = new ItemStat(0x01000001, L"mineBlock.stone", Item::getId(Item::byBlock(Blocks::stone)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::stone))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000002, L"mineBlock.sand", Item::getId(Item::byBlock(Block::sand)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::sand))] = stat;
+    stat = new ItemStat(0x01000002, L"mineBlock.sand", Item::getId(Item::byBlock(Blocks::sand)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::sand))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000003, L"mineBlock.cobblestone", Item::getId(Item::byBlock(Block::cobblestone)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::cobblestone))] = stat;
+    stat = new ItemStat(0x01000003, L"mineBlock.cobblestone", Item::getId(Item::byBlock(Blocks::cobblestone)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::cobblestone))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000004, L"mineBlock.gravel", Item::getId(Item::byBlock(Block::gravel)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::gravel))] = stat;
+    stat = new ItemStat(0x01000004, L"mineBlock.gravel", Item::getId(Item::byBlock(Blocks::gravel)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::gravel))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000005, L"mineBlock.clay", Item::getId(Item::byBlock(Block::clay)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::clay))] = stat;
+    stat = new ItemStat(0x01000005, L"mineBlock.clay", Item::getId(Item::byBlock(Blocks::clay)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::clay))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000006, L"mineBlock.obsidian", Item::getId(Item::byBlock(Block::obsidian)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::obsidian))] = stat;
+    stat = new ItemStat(0x01000006, L"mineBlock.obsidian", Item::getId(Item::byBlock(Blocks::obsidian)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::obsidian))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000007, L"mineBlock.coal", Item::getId(Item::byBlock(Block::coalOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::coalOre))] = stat;
+    stat = new ItemStat(0x01000007, L"mineBlock.coal", Item::getId(Item::byBlock(Blocks::coal_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::coal_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000008, L"mineBlock.iron", Item::getId(Item::byBlock(Block::ironOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::ironOre))] = stat;
+    stat = new ItemStat(0x01000008, L"mineBlock.iron", Item::getId(Item::byBlock(Blocks::iron_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::iron_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000009, L"mineBlock.gold", Item::getId(Item::byBlock(Block::goldOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::goldOre))] = stat;
+    stat = new ItemStat(0x01000009, L"mineBlock.gold", Item::getId(Item::byBlock(Blocks::gold_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::gold_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000A, L"mineBlock.diamond", Item::getId(Item::byBlock(Block::diamondOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::diamondOre))] = stat;
+    stat = new ItemStat(0x0100000A, L"mineBlock.diamond", Item::getId(Item::byBlock(Blocks::diamond_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::diamond_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000B, L"mineBlock.redstone", Item::getId(Item::byBlock(Block::redstoneOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::redstoneOre))] = stat;
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::litRedstoneOre))] = stat;
+    stat = new ItemStat(0x0100000B, L"mineBlock.redstone", Item::getId(Item::byBlock(Blocks::redstone_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::redstone_ore))] = stat;
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::lit_redstone_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000C, L"mineBlock.lapisLazuli", Item::getId(Item::byBlock(Block::lapisOre)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::lapisOre))] = stat;
+    stat = new ItemStat(0x0100000C, L"mineBlock.lapisLazuli", Item::getId(Item::byBlock(Blocks::lapis_ore)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::lapis_ore))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000D, L"mineBlock.netherrack", Item::getId(Item::byBlock(Block::netherrack)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::netherrack))] = stat;
+    stat = new ItemStat(0x0100000D, L"mineBlock.netherrack", Item::getId(Item::byBlock(Blocks::netherrack)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::netherrack))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000E, L"mineBlock.soulSand", Item::getId(Item::byBlock(Block::soulSand)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::soulSand))] = stat;
+    stat = new ItemStat(0x0100000E, L"mineBlock.soulSand", Item::getId(Item::byBlock(Blocks::soul_sand)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::soul_sand))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0100000F, L"mineBlock.glowstone", Item::getId(Item::byBlock(Block::glowstone)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::glowstone))] = stat;
+    stat = new ItemStat(0x0100000F, L"mineBlock.glowstone", Item::getId(Item::byBlock(Blocks::glowstone)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::glowstone))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000010, L"mineBlock.wood", Item::getId(Item::byBlock(Block::log)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::log))] = stat;
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::log2))] = stat;
+    stat = new ItemStat(0x01000010, L"mineBlock.wood", Item::getId(Item::byBlock(Blocks::log)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::log))] = stat;
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::log2))] = stat;
     stat->postConstruct(true);
 
     blockStatsBuilt = true;
@@ -237,155 +239,155 @@ void Stats::buildCraftableStats()
 
     itemCollectedStats = arrayWithLength<Stat*>(32000, true);
 
-    stat = new ItemStat(0x01010000, L"collectItem.egg", Item::getId(Item::egg));
-    itemCollectedStats.data[Item::getId(Item::egg)] = stat;
+    stat = new ItemStat(0x01010000, L"collectItem.egg", Item::getId(Items::egg));
+    itemCollectedStats.data[Item::getId(Items::egg)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000012, L"mineBlock.wheat", Item::getId(Item::byBlock(Block::wheat)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::wheat))] = stat;
+    stat = new ItemStat(0x01000012, L"mineBlock.wheat", Item::getId(Item::byBlock(Blocks::wheat)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::wheat))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000013, L"mineBlock.mushroom1", Item::getId(Item::byBlock(Block::brownMushroom)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::brownMushroom))] = stat;
+    stat = new ItemStat(0x01000013, L"mineBlock.mushroom1", Item::getId(Item::byBlock(Blocks::brown_mushroom)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::brown_mushroom))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000011, L"mineBlock.sugar", Item::getId(Item::byBlock(Block::reeds)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Block::reeds))] = stat;
+    stat = new ItemStat(0x01000011, L"mineBlock.sugar", Item::getId(Item::byBlock(Blocks::reeds)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::reeds))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01010004, L"collectItem.pumpkin", Item::getId(Item::byBlock(Block::pumpkin)));
-    itemCollectedStats.data[Item::getId(Item::byBlock(Block::pumpkin))] = stat;
-    itemCollectedStats.data[Item::getId(Item::byBlock(Block::litPumpkin))] = stat;
+    stat = new ItemStat(0x01010004, L"collectItem.pumpkin", Item::getId(Item::byBlock(Blocks::pumpkin)));
+    itemCollectedStats.data[Item::getId(Item::byBlock(Blocks::pumpkin))] = stat;
+    itemCollectedStats.data[Item::getId(Item::byBlock(Blocks::lit_pumpkin))] = stat;
     stat->postConstruct(true);
 
     itemCraftedStats = arrayWithLength<Stat*>(16000, true);
 
-    stat = new ItemStat(0x01020000, L"craftItem.plank", Item::getId(Item::byBlock(Block::planks)));
-    itemCraftedStats.data[Item::getId(Item::byBlock(Block::planks))] = stat;
+    stat = new ItemStat(0x01020000, L"craftItem.plank", Item::getId(Item::byBlock(Blocks::planks)));
+    itemCraftedStats.data[Item::getId(Item::byBlock(Blocks::planks))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020001, L"craftItem.workbench", Item::getId(Item::byBlock(Block::craftingTable)));
-    itemCraftedStats.data[Item::getId(Item::byBlock(Block::craftingTable))] = stat;
+    stat = new ItemStat(0x01020001, L"craftItem.workbench", Item::getId(Item::byBlock(Blocks::crafting_table)));
+    itemCraftedStats.data[Item::getId(Item::byBlock(Blocks::crafting_table))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020002, L"craftItem.stick", Item::getId(Item::stick));
-    itemCraftedStats.data[Item::getId(Item::stick)] = stat;
+    stat = new ItemStat(0x01020002, L"craftItem.stick", Item::getId(Items::stick));
+    itemCraftedStats.data[Item::getId(Items::stick)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020003, L"craftItem.woodenShovel", Item::getId(Item::woodenShovel));
-    itemCraftedStats.data[Item::getId(Item::woodenShovel)] = stat;
+    stat = new ItemStat(0x01020003, L"craftItem.woodenShovel", Item::getId(Items::woodenShovel));
+    itemCraftedStats.data[Item::getId(Items::woodenShovel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020004, L"craftItem.woodenPickAxe", Item::getId(Item::woodenPickAxe));
-    itemCraftedStats.data[Item::getId(Item::woodenPickAxe)] = stat;
+    stat = new ItemStat(0x01020004, L"craftItem.woodenPickAxe", Item::getId(Items::woodenPickaxe));
+    itemCraftedStats.data[Item::getId(Items::woodenPickaxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020005, L"craftItem.stonePickAxe", Item::getId(Item::stonePickAxe));
-    itemCraftedStats.data[Item::getId(Item::stonePickAxe)] = stat;
+    stat = new ItemStat(0x01020005, L"craftItem.stonePickAxe", Item::getId(Items::stonePickaxe));
+    itemCraftedStats.data[Item::getId(Items::stonePickaxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020006, L"craftItem.ironPickAxe", Item::getId(Item::ironPickAxe));
-    itemCraftedStats.data[Item::getId(Item::ironPickAxe)] = stat;
+    stat = new ItemStat(0x01020006, L"craftItem.ironPickAxe", Item::getId(Items::ironPickaxe));
+    itemCraftedStats.data[Item::getId(Items::ironPickaxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020007, L"craftItem.diamondPickAxe", Item::getId(Item::diamondPickAxe));
-    itemCraftedStats.data[Item::getId(Item::diamondPickAxe)] = stat;
+    stat = new ItemStat(0x01020007, L"craftItem.diamondPickAxe", Item::getId(Items::diamondPickaxe));
+    itemCraftedStats.data[Item::getId(Items::diamondPickaxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020008, L"craftItem.goldPickAxe", Item::getId(Item::goldPickAxe));
-    itemCraftedStats.data[Item::getId(Item::goldPickAxe)] = stat;
+    stat = new ItemStat(0x01020008, L"craftItem.goldPickAxe", Item::getId(Items::goldenPickaxe));
+    itemCraftedStats.data[Item::getId(Items::goldenPickaxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020009, L"craftItem.stoneShovel", Item::getId(Item::stoneShovel));
-    itemCraftedStats.data[Item::getId(Item::stoneShovel)] = stat;
+    stat = new ItemStat(0x01020009, L"craftItem.stoneShovel", Item::getId(Items::stoneShovel));
+    itemCraftedStats.data[Item::getId(Items::stoneShovel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000A, L"craftItem.ironShovel", Item::getId(Item::ironShovel));
-    itemCraftedStats.data[Item::getId(Item::ironShovel)] = stat;
+    stat = new ItemStat(0x0102000A, L"craftItem.ironShovel", Item::getId(Items::ironShovel));
+    itemCraftedStats.data[Item::getId(Items::ironShovel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000B, L"craftItem.diamondShovel", Item::getId(Item::diamondShovel));
-    itemCraftedStats.data[Item::getId(Item::diamondShovel)] = stat;
+    stat = new ItemStat(0x0102000B, L"craftItem.diamondShovel", Item::getId(Items::diamondShovel));
+    itemCraftedStats.data[Item::getId(Items::diamondShovel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000C, L"craftItem.goldShovel", Item::getId(Item::goldShovel));
-    itemCraftedStats.data[Item::getId(Item::goldShovel)] = stat;
+    stat = new ItemStat(0x0102000C, L"craftItem.goldShovel", Item::getId(Items::goldenShovel));
+    itemCraftedStats.data[Item::getId(Items::goldenShovel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000D, L"craftItem.woodenAxe", Item::getId(Item::woodenAxe));
-    itemCraftedStats.data[Item::getId(Item::woodenAxe)] = stat;
+    stat = new ItemStat(0x0102000D, L"craftItem.woodenAxe", Item::getId(Items::woodenAxe));
+    itemCraftedStats.data[Item::getId(Items::woodenAxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000E, L"craftItem.stoneAxe", Item::getId(Item::stoneAxe));
-    itemCraftedStats.data[Item::getId(Item::stoneAxe)] = stat;
+    stat = new ItemStat(0x0102000E, L"craftItem.stoneAxe", Item::getId(Items::stoneAxe));
+    itemCraftedStats.data[Item::getId(Items::stoneAxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102000F, L"craftItem.ironAxe", Item::getId(Item::ironAxe));
-    itemCraftedStats.data[Item::getId(Item::ironAxe)] = stat;
+    stat = new ItemStat(0x0102000F, L"craftItem.ironAxe", Item::getId(Items::ironAxe));
+    itemCraftedStats.data[Item::getId(Items::ironAxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020010, L"craftItem.diamondAxe", Item::getId(Item::diamondAxe));
-    itemCraftedStats.data[Item::getId(Item::diamondAxe)] = stat;
+    stat = new ItemStat(0x01020010, L"craftItem.diamondAxe", Item::getId(Items::diamondAxe));
+    itemCraftedStats.data[Item::getId(Items::diamondAxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020011, L"craftItem.goldAxe", Item::getId(Item::goldAxe));
-    itemCraftedStats.data[Item::getId(Item::goldAxe)] = stat;
+    stat = new ItemStat(0x01020011, L"craftItem.goldAxe", Item::getId(Items::goldenAxe));
+    itemCraftedStats.data[Item::getId(Items::goldenAxe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020012, L"craftItem.woodenHoe", Item::getId(Item::woodenHoe));
-    itemCraftedStats.data[Item::getId(Item::woodenHoe)] = stat;
+    stat = new ItemStat(0x01020012, L"craftItem.woodenHoe", Item::getId(Items::woodenHoe));
+    itemCraftedStats.data[Item::getId(Items::woodenHoe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020013, L"craftItem.stoneHoe", Item::getId(Item::stoneHoe));
-    itemCraftedStats.data[Item::getId(Item::stoneHoe)] = stat;
+    stat = new ItemStat(0x01020013, L"craftItem.stoneHoe", Item::getId(Items::stoneHoe));
+    itemCraftedStats.data[Item::getId(Items::stoneHoe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020014, L"craftItem.ironHoe", Item::getId(Item::ironHoe));
-    itemCraftedStats.data[Item::getId(Item::ironHoe)] = stat;
+    stat = new ItemStat(0x01020014, L"craftItem.ironHoe", Item::getId(Items::ironHoe));
+    itemCraftedStats.data[Item::getId(Items::ironHoe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020015, L"craftItem.diamondHoe", Item::getId(Item::diamondHoe));
-    itemCraftedStats.data[Item::getId(Item::diamondHoe)] = stat;
+    stat = new ItemStat(0x01020015, L"craftItem.diamondHoe", Item::getId(Items::diamondHoe));
+    itemCraftedStats.data[Item::getId(Items::diamondHoe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020016, L"craftItem.goldHoe", Item::getId(Item::goldHoe));
-    itemCraftedStats.data[Item::getId(Item::goldHoe)] = stat;
+    stat = new ItemStat(0x01020016, L"craftItem.goldHoe", Item::getId(Items::goldenHoe));
+    itemCraftedStats.data[Item::getId(Items::goldenHoe)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020017, L"craftItem.glowstone", Item::getId(Item::byBlock(Block::glowstone)));
-    itemCraftedStats.data[Item::getId(Item::byBlock(Block::glowstone))] = stat;
+    stat = new ItemStat(0x01020017, L"craftItem.glowstone", Item::getId(Item::byBlock(Blocks::glowstone)));
+    itemCraftedStats.data[Item::getId(Item::byBlock(Blocks::glowstone))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020018, L"craftItem.tnt", Item::getId(Item::byBlock(Block::tnt)));
-    itemCraftedStats.data[Item::getId(Item::byBlock(Block::tnt))] = stat;
+    stat = new ItemStat(0x01020018, L"craftItem.tnt", Item::getId(Item::byBlock(Blocks::tnt)));
+    itemCraftedStats.data[Item::getId(Item::byBlock(Blocks::tnt))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01020019, L"craftItem.bowl", Item::getId(Item::bowl));
-    itemCraftedStats.data[Item::getId(Item::bowl)] = stat;
+    stat = new ItemStat(0x01020019, L"craftItem.bowl", Item::getId(Items::bowl));
+    itemCraftedStats.data[Item::getId(Items::bowl)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001A, L"craftItem.bucket", Item::getId(Item::bucket));
-    itemCraftedStats.data[Item::getId(Item::bucket)] = stat;
+    stat = new ItemStat(0x0102001A, L"craftItem.bucket", Item::getId(Items::bucket));
+    itemCraftedStats.data[Item::getId(Items::bucket)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001B, L"craftItem.flintAndSteel", Item::getId(Item::flintAndSteel));
-    itemCraftedStats.data[Item::getId(Item::flintAndSteel)] = stat;
+    stat = new ItemStat(0x0102001B, L"craftItem.flintAndSteel", Item::getId(Items::flintAndSteel));
+    itemCraftedStats.data[Item::getId(Items::flintAndSteel)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001C, L"craftItem.fishingRod", Item::getId(Item::fishingRod));
-    itemCraftedStats.data[Item::getId(Item::fishingRod)] = stat;
+    stat = new ItemStat(0x0102001C, L"craftItem.fishingRod", Item::getId(Items::fishingRod));
+    itemCraftedStats.data[Item::getId(Items::fishingRod)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001D, L"craftItem.clock", Item::getId(Item::clock));
-    itemCraftedStats.data[Item::getId(Item::clock)] = stat;
+    stat = new ItemStat(0x0102001D, L"craftItem.clock", Item::getId(Items::clock));
+    itemCraftedStats.data[Item::getId(Items::clock)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001E, L"craftItem.compass", Item::getId(Item::compass));
-    itemCraftedStats.data[Item::getId(Item::compass)] = stat;
+    stat = new ItemStat(0x0102001E, L"craftItem.compass", Item::getId(Items::compass));
+    itemCraftedStats.data[Item::getId(Items::compass)] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x0102001F, L"craftItem.map", Item::getId(Item::map));
-    itemCraftedStats.data[Item::getId(Item::map)] = stat;
+    stat = new ItemStat(0x0102001F, L"craftItem.map", Item::getId(Items::map));
+    itemCraftedStats.data[Item::getId(Items::map)] = stat;
     stat->postConstruct(true);
 
     StatsCounter::setupStatBoards();
@@ -400,33 +402,33 @@ void Stats::buildAdditionalStats()
     killsEnderdragon = (new GeneralStat(statId++, L"stat.killsEnderdragon"))->postConstruct(true);
     completeTheEnd = (new GeneralStat(statId++, L"stat.completeTheEnd"))->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"craftItem.flowerPot", Item::getId(Item::flowerPot)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"craftItem.flowerPot", Item::getId(Items::flowerPot)))->setExtended();
     itemCraftedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"craftItem.sign", Item::getId(Item::sign)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"craftItem.sign", Item::getId(Items::sign)))->setExtended();
     itemCraftedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"mineBlock.emerald", Item::getId(Item::byBlock(Block::emeraldOre))))->setExtended();
+    itemStat = (new ItemStat(statId++, L"mineBlock.emerald", Item::getId(Item::byBlock(Blocks::emerald_ore))))->setExtended();
     blockMinedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"itemsBought.emerald", Item::getId(Item::emerald)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"itemsBought.emerald", Item::getId(Items::emerald)))->setExtended();
     itemCollectedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
     blockPlacedStats = arrayWithLength<Stat*>(1000, true);
 
-    itemStat = (new ItemStat(statId++, L"blockPlaced.flowerPot", Block::getId(Block::flowerPot)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"blockPlaced.flowerPot", Block::getId(Blocks::flower_pot)))->setExtended();
     blockPlacedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"blockPlaced.sign", Block::getId(Block::standingSign)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"blockPlaced.sign", Block::getId(Blocks::standing_sign)))->setExtended();
     blockPlacedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"blockPlaced.wallsign", Block::getId(Block::wallSign)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"blockPlaced.wallsign", Block::getId(Blocks::wall_sign)))->setExtended();
     blockPlacedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
@@ -452,11 +454,11 @@ void Stats::buildAdditionalStats()
         stat->postConstruct(true);
     }
 
-    itemStat = (new ItemStat(statId++, L"itemCrafted.porkchop", Item::getId(Item::porkchop)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"itemCrafted.porkchop", Item::getId(Items::porkchop)))->setExtended();
     itemCraftedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 
-    itemStat = (new ItemStat(statId++, L"itemEaten.porkchop", Item::getId(Item::porkchop)))->setExtended();
+    itemStat = (new ItemStat(statId++, L"itemEaten.porkchop", Item::getId(Items::porkchop)))->setExtended();
     blockPlacedStats.data[itemStat->getItemId()] = itemStat;
     itemStat->postConstruct(true);
 

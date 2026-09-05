@@ -4,11 +4,10 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/item/Recipe.hpp"
+#include "game/world/Level.hpp"
 
 class CraftingContainer;
 class ItemInstance;
-class Level;
-
 class ShulkerBoxColoring : public Recipe
 {
 public:
@@ -20,7 +19,7 @@ public:
     virtual ItemInstance* getResultItem();
     virtual ItemInstance* getIngredientItem(int column, int row);
     virtual NonNullList<not_null_ptr<ItemInstance> > getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer);
-    virtual _eGroupType getGroup();
+    virtual Recipe::_eGroupType getGroup();
     virtual bool recipeRequires(int itemId);
     virtual void recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired);
     virtual boost::shared_ptr<CraftingContainer> generateExpectedCraftSlots();

@@ -20,7 +20,7 @@ public:
     virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
                                              Random* random, LootTableContext& context);
     const MapDecoration::Type* getType(const std::wstring& destination);
-    int getTranslatableName(const std::wstring& destination);
+    unsigned int getTranslatableName(const std::wstring& destination);
 
 private:
     std::wstring destination;

@@ -1,7 +1,7 @@
 #include "game/core/MinecartFurnace.hpp"
 
-#include <cmath>
-
+#include "game/core/DamageSource.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -115,7 +115,7 @@ void MinecartFurnace::moveAlongTrack(const BlockPos& pos, const BlockState* stat
     const double pushLength = mPushX * mPushX + mPushZ * mPushZ;
     if (pushLength > 0.0001 && mXd * mXd + mZd * mZd > 0.001)
     {
-        const double length = std::sqrt(pushLength);
+        const double length = Mth::sqrt(pushLength);
         mPushX /= length;
         mPushZ /= length;
         if (mPushX * mXd + mPushZ * mZd < 0.25)
@@ -143,7 +143,7 @@ void MinecartFurnace::applyNaturalSlowdown()
     }
     else
     {
-        const double length = std::sqrt(pushLength);
+        const double length = Mth::sqrt(pushLength);
         mPushX /= length;
         mPushZ /= length;
         mYd *= 0.25;
@@ -158,7 +158,7 @@ bool MinecartFurnace::interact(const boost::shared_ptr<Player>& player, Interact
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
     if (player->isAllowedToInteract(shared_from_this()))
     {
-        if (item->getItem() == Items::coal && mFuel + 3600 < 32000)
+        if (item->getItem() == Items::coal && mFuel + 3600 < 32001)
         {
             if (!mHasImpulse)
             {

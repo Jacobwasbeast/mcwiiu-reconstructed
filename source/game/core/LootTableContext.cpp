@@ -1,14 +1,18 @@
 #include "game/core/LootTableContext.hpp"
 
-#include "game/network/ClientboundChatPacket.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/world/generation/Player.hpp"
 
 LootTableContext::LootTableContext(float luck, ServerLevel* level, LootTables* lootTables,
                                    boost::shared_ptr<Entity> thisEntity,
                                    boost::shared_ptr<Player> killerEntity,
                                    const DamageSource* damageSource)
-    : mLuck(luck), mLevel(level), mLootTables(lootTables), mThisEntity(thisEntity),
-      mKillerEntity(killerEntity), mDamageSource(damageSource)
+    : mLuck(luck)
+    , mLevel(level)
+    , mLootTables(lootTables)
+    , mThisEntity(thisEntity)
+    , mKillerEntity(killerEntity)
+    , mDamageSource(damageSource)
 {
 }
 
@@ -46,7 +50,7 @@ boost::shared_ptr<Entity> LootTableContext::getEntity(EntityTarget target)
 {
     if (target == THIS)
     {
-        return mThisEntity;
+        return mThisEntity.lock();
     }
 
     if (target == DIRECT_KILLER)
@@ -56,7 +60,7 @@ boost::shared_ptr<Entity> LootTableContext::getEntity(EntityTarget target)
 
     if (target == KILLER)
     {
-        return mKillerEntity;
+        return mKillerEntity.lock();
     }
 
     return boost::shared_ptr<Entity>();

@@ -6,6 +6,8 @@
 
 #include "game/core/WitherBoss.hpp"
 
+static const unsigned long long ENTITY_TYPE_WITHER_BOSS = 0x000000005D540047ULL;
+
 class Mth
 {
 public:

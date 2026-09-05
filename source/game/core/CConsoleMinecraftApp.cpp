@@ -2,6 +2,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCPack.hpp"
 #include "platform/wiiu/C4JThread.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/cCommerceNintendoWiiU.hpp"
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
@@ -11,8 +12,9 @@
 extern void altMain();
 extern void Sleep(unsigned int);
 extern void ShutdownAndExit();
-extern void GetLastFileErrorCodeForViewer();
+extern unsigned int GetLastFileErrorCodeForViewer();
 extern unsigned char g_fatalLoadErrorRequested;
+extern unsigned char g_fatalLoadErrorReady;
 extern unsigned char g_fatalLoadErrorActive;
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern int ReadFile(int, void*, unsigned int, unsigned int*, void*);
@@ -43,14 +45,15 @@ uint8_t CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
 void CConsoleMinecraftApp::SetDRCOuputEnabled(bool value) { m_drcOutputEnabled = value; }
 uint8_t CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled; }
 uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcCheckPlayerCountEnabled; }
-void CConsoleMinecraftApp::FatalLoadError(const wchar_t*, ...)
+void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
-    GetLastFileErrorCodeForViewer();
+    gRenderer->BeginConditionalSurvey((int)message);
+    g_pInput->RequestErrorViewer(1, GetLastFileErrorCodeForViewer(), NULL, NULL);
     altMain();
     for (;;)
     {
         if (g_fatalLoadErrorRequested != 0)
-            g_fatalLoadErrorActive = 1;
+            g_fatalLoadErrorReady = 1;
         Sleep(10);
         if (g_fatalLoadErrorActive != 0 && C4JThread::isMainThread())
             ShutdownAndExit();

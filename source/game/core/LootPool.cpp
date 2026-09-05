@@ -27,16 +27,12 @@ void LootPool::addTier(std::vector<not_null_ptr<ItemInstance> >* items,
                        LootTableContext& context,
                        int tier)
 {
-    if (tier < 0 || mEntries == NULL || tier >= (int)mEntries->size())
+    if (tier < 0 || tier >= (int)mEntries->size())
     {
         return;
     }
 
-    LootPoolEntry* entry = (*mEntries)[tier];
-    if (entry != NULL && entry->isValid())
-    {
-        entry->createItem(items, random, context);
-    }
+    (*mEntries)[tier]->createItem(items, random, context);
 }
 
 void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
@@ -46,11 +42,6 @@ void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
     std::list<LootPoolEntry*> eligibleEntries;
     int totalWeight = 0;
 
-    if (mEntries == NULL)
-    {
-        return;
-    }
-
     for (std::vector<LootPoolEntry*>::iterator it = mEntries->begin();
          it != mEntries->end();
          ++it)
@@ -58,7 +49,7 @@ void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
         LootPoolEntry* entry = *it;
         if (LootItemConditions::allApply(entry->mConditions, random, context))
         {
-            int weight = entry->getWeight(context.luck);
+            int weight = entry->getWeight(context.mLuck);
             if (weight > 0)
             {
                 eligibleEntries.push_back(entry);
@@ -77,7 +68,7 @@ void LootPool::addRandomItem(std::vector<not_null_ptr<ItemInstance> >* items,
          it != eligibleEntries.end();
          ++it)
     {
-        selectedWeight -= (*it)->getWeight(context.luck);
+        selectedWeight -= (*it)->getWeight(context.mLuck);
         if (selectedWeight < 0)
         {
             (*it)->createItem(items, random, context);
@@ -110,7 +101,7 @@ void LootPool::addRandomItems(std::vector<not_null_ptr<ItemInstance> >* items,
     }
 
     int count = Mth::nextInt(random, Mth::floor(mRolls.min), Mth::floor(mRolls.max));
-    count += Mth::floor(Mth::nextFloat(random, mBonusRolls.min, mBonusRolls.max) * context.luck);
+    count += Mth::floor(Mth::nextFloat(random, mBonusRolls.min, mBonusRolls.max) * context.mLuck);
     for (int i = 0; i < count; ++i)
     {
         addRandomItem(items, random, context);

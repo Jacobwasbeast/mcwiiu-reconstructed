@@ -49,15 +49,15 @@ void ScrolledSelectionList::capYPosition()
 
 void ScrolledSelectionList::buttonClicked(Button* button)
 {
-    if (button->active)
+    if (button->mActive)
     {
-        if (button->id == scrollUpButtonId)
+        if (button->mId == scrollUpButtonId)
         {
             amountScrolled -= (float)((slotHeight * 2) / 3);
             initialClickY = -2.0f;
             capYPosition();
         }
-        else if (button->id == scrollDownButtonId)
+        else if (button->mId == scrollDownButtonId)
         {
             amountScrolled += (float)((slotHeight * 2) / 3);
             initialClickY = -2.0f;

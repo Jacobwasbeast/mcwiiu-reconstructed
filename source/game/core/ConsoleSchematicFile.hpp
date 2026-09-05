@@ -59,7 +59,7 @@ public:
         PasteData();
     };
 
-    int mValid;
+    int mRefCount;
     BlockPos mOrigin;
     int mWidth;
     int mHeight;

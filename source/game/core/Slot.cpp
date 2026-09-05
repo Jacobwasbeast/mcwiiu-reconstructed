@@ -1,32 +1,32 @@
 #include "game/core/Slot.hpp"
 
-#include "game/item/ArmorDyeRecipe.hpp"
-#include "game/item/ArmorItem.hpp"
-#include "game/item/Container.hpp"
-#include "game/item/CraftingContainer.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
-#include "game/item/Recipes.hpp"
 
-Slot::Slot(boost::shared_ptr<Container> container, int slot, int x, int y)
-    : slot(slot)
-    , container(container)
-    , x(x)
-    , y(y)
+Slot::Slot(boost::shared_ptr<Container> container, int index, int x, int y)
+    : mSlot(index),
+      mContainer(container),
+      mRemoveCount(0),
+      mX(x),
+      mY(y)
 {
-    index = 0;
 }
 
-void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItemInstance, not_null_ptr<ItemInstance> newItemInstance)
+Slot::~Slot()
 {
-    int count = newItemInstance->getCount() - oldItemInstance->getCount();
-    if (count > 0)
+}
+
+void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItem, not_null_ptr<ItemInstance> newItem)
+{
+    int oldCount = oldItem->getCount();
+    int newCount = newItem->getCount();
+    if (newCount - oldCount > 0)
     {
-        onQuickCraft(newItemInstance, count);
+        onQuickCraft(newItem, newCount - oldCount);
     }
 }
 
-void Slot::onQuickCraft(not_null_ptr<ItemInstance> itemInstance, int count)
+void Slot::onQuickCraft(not_null_ptr<ItemInstance> item, int count)
 {
 }
 
@@ -34,54 +34,23 @@ void Slot::onSwapCraft(int count)
 {
 }
 
-void Slot::checkTakeAchievements(not_null_ptr<ItemInstance> itemInstance)
+void Slot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
 {
 }
 
-void Slot::swap(Slot* other)
-{
-    not_null_ptr<ItemInstance> itemInstance = container->getItem(slot);
-    not_null_ptr<ItemInstance> otherItemInstance = other->container->getItem(other->slot);
-
-    if (!itemInstance->isEmpty() && itemInstance->getCount() > other->getMaxStackSize(itemInstance))
-    {
-        if (!otherItemInstance->isEmpty())
-        {
-            return;
-        }
-
-        otherItemInstance = itemInstance->split(itemInstance->getCount() - other->getMaxStackSize(itemInstance));
-    }
-
-    if (!otherItemInstance->isEmpty() && otherItemInstance->getCount() > getMaxStackSize(otherItemInstance))
-    {
-        if (!itemInstance->isEmpty())
-        {
-            return;
-        }
-
-        itemInstance = otherItemInstance->split(otherItemInstance->getCount() - getMaxStackSize(otherItemInstance));
-    }
-
-    other->container->setItem(other->slot, itemInstance);
-    container->setItem(slot, otherItemInstance);
-    setChanged();
-}
-
-not_null_ptr<ItemInstance> Slot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance)
+void Slot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
 {
     setChanged();
-    return itemInstance;
 }
 
-bool Slot::mayPlace(not_null_ptr<ItemInstance> itemInstance)
+bool Slot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     return true;
 }
 
 not_null_ptr<ItemInstance> Slot::getItem()
 {
-    return container->getItem(slot);
+    return mContainer->getItem(mSlot);
 }
 
 bool Slot::hasItem()
@@ -89,23 +58,23 @@ bool Slot::hasItem()
     return !getItem()->isEmpty();
 }
 
-void Slot::set(not_null_ptr<ItemInstance> itemInstance)
+void Slot::set(not_null_ptr<ItemInstance> item)
 {
-    container->setItem(slot, itemInstance);
+    mContainer->setItem(mSlot, item);
     setChanged();
 }
 
 void Slot::setChanged()
 {
-    container->setChanged();
+    mContainer->setChanged();
 }
 
 int Slot::getMaxStackSize()
 {
-    return container->getMaxStackSize();
+    return mContainer->getMaxStackSize();
 }
 
-int Slot::getMaxStackSize(not_null_ptr<ItemInstance> itemInstance)
+int Slot::getMaxStackSize(not_null_ptr<ItemInstance> item)
 {
     return getMaxStackSize();
 }
@@ -117,12 +86,12 @@ std::wstring Slot::getNoItemIcon()
 
 not_null_ptr<ItemInstance> Slot::remove(int count)
 {
-    return container->removeItem(slot, count);
+    return mContainer->removeItem(mSlot, count);
 }
 
-bool Slot::isAt(boost::shared_ptr<Container> container, int slot)
+bool Slot::isAt(boost::shared_ptr<Container> container, int index)
 {
-    return container == this->container && slot == this->slot;
+    return container.get() == mContainer.get() && index == mSlot;
 }
 
 bool Slot::mayPickup(boost::shared_ptr<Player> player)
@@ -135,51 +104,69 @@ bool Slot::isActive()
     return true;
 }
 
-bool Slot::mayCombine(not_null_ptr<ItemInstance> itemInstance)
+bool Slot::mayCombine(not_null_ptr<ItemInstance> item)
 {
-    not_null_ptr<ItemInstance> currentItemInstance = getItem();
-
-    if (!currentItemInstance->isEmpty() && !itemInstance->isEmpty())
+    not_null_ptr<ItemInstance> current = getItem();
+    if (current->isEmpty() || item->isEmpty())
     {
-        if (!currentItemInstance->isEmpty() && !itemInstance->isEmpty()
-            && Item::getId(currentItemInstance->getItem()) == Item::getId(itemInstance->getItem())
-            && currentItemInstance->getCount() == 1 && itemInstance->getCount() == 1
-            && currentItemInstance->getItem()->canBeDepleted()
-            && (currentItemInstance->isDamaged() || itemInstance->isDamaged()))
+        return false;
+    }
+    if (Item::getId(current->getItem()) != Item::getId(item->getItem()))
+    {
+        return false;
+    }
+    if (current->getCount() == 1 && item->getCount() == 1 &&
+        current->getItem()->canBeDepleted())
+    {
+        return current->isDamaged() == item->isDamaged();
+    }
+    return !current->isEnchanted() && !item->isEnchanted();
+}
+
+not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> item)
+{
+    return getItem();
+}
+
+void Slot::swap(Slot* other)
+{
+    not_null_ptr<ItemInstance> current = getItem();
+    not_null_ptr<ItemInstance> incoming = other->getItem();
+    if (current->isEmpty())
+    {
+        if (!incoming->isEmpty())
         {
-            return !currentItemInstance->isEnchanted() && !itemInstance->isEnchanted();
+            set(incoming);
+            other->set(current);
+        }
+        return;
+    }
+    if (incoming->isEmpty())
+    {
+        other->set(current);
+        set(incoming);
+        return;
+    }
+    if (mayCombine(incoming) && other->mayCombine(current))
+    {
+        int capacity = other->getMaxStackSize(current) - incoming->getCount();
+        if (capacity > 0)
+        {
+            int amount = current->getCount() < capacity ? current->getCount() : capacity;
+            current->split(amount);
+            incoming->grow(amount);
+            other->set(incoming);
+            if (current->isEmpty())
+            {
+                set(current);
+            }
+            else
+            {
+                set(current);
+            }
+            return;
         }
     }
-
-    return false;
-}
-
-not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> itemInstance)
-{
-    not_null_ptr<ItemInstance> currentItemInstance = getItem();
-    boost::shared_ptr<CraftingContainer> craftingContainer(new CraftingContainer(NULL, 2, 2));
-
-    craftingContainer->setItem(0, itemInstance);
-    craftingContainer->setItem(1, currentItemInstance);
-
-    not_null_ptr<ItemInstance> resultItemInstance = ItemInstance::EMPTY;
-
-    if (dynamic_cast<ArmorItem*>(currentItemInstance->getItem()) != NULL)
-    {
-        resultItemInstance = ArmorDyeRecipe::assembleDyedArmor(craftingContainer);
-    }
-    else
-    {
-        resultItemInstance = Recipes::getInstance()->getItemFor(craftingContainer, NULL, NULL,
-                                                               (Recipes::ERecipeCategory)0);
-    }
-
-    craftingContainer->setItem(0, ItemInstance::EMPTY);
-    craftingContainer->setItem(1, ItemInstance::EMPTY);
-
-    return resultItemInstance;
-}
-
-Slot::~Slot()
-{
+    set(incoming);
+    other->set(current);
 }

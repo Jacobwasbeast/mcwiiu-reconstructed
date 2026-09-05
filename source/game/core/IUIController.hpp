@@ -115,10 +115,10 @@ public:
                                      unsigned int parameterCount, unsigned int userIndex,
                                      int (*pCallback)(void*, int, C4JStorage::EMessageResult),
                                      void* pCallbackData, wchar_t* pOverrideText, bool bBlocking) = 0;
-    virtual void RequestErrorMessage(int titleId, int messageId, int* pMessageParameters,
-                                     unsigned int parameterCount, unsigned int userIndex,
-                                     int (*pCallback)(void*, int, C4JStorage::EMessageResult),
-                                     void* pCallbackData, wchar_t* pOverrideText, bool bBlocking) = 0;
+    virtual int RequestErrorMessage(int titleId, int messageId, int* pMessageParameters,
+                                    unsigned int parameterCount, unsigned int userIndex,
+                                    int (*pCallback)(void*, int, C4JStorage::EMessageResult),
+                                    void* pCallbackData, wchar_t* pOverrideText, bool bBlocking) = 0;
     virtual int RequestMessageBox(int titleId, int messageId, int* pMessageParameters, unsigned int parameterCount,
                                   unsigned int userIndex, int (*pCallback)(void*, int, C4JStorage::EMessageResult),
                                   void* pCallbackData, wchar_t* pOverrideText, unsigned int buttonFlags,

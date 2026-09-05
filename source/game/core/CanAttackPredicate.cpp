@@ -3,6 +3,8 @@
 #include "game/entity/ai/MobNearestMobTargetGoal.hpp"
 #include "game/entity/ai/TargetGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 
 CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal)
     : mGoal(goal)

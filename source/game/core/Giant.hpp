@@ -1,0 +1,25 @@
+#ifndef GAME_CORE_GIANT_HPP
+#define GAME_CORE_GIANT_HPP
+
+#include "game/entity/mob/Monster.hpp"
+
+class BlockPos;
+class DataFixerUpper;
+class Level;
+
+class Giant : public Monster
+{
+public:
+    Giant(Level* level);
+    virtual ~Giant();
+
+    static void create(Level* level);
+    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual double getEyeHeight();
+    virtual void registerAttributes();
+    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual const void* getDefaultLootTable();
+    virtual unsigned long long GetType();
+};
+
+#endif

@@ -11,12 +11,12 @@
 #include "game/core/StatsUID.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/PlayerStats.hpp"
 
 class ClientboundChatPacket;
 class CombatEntry;
 class Entity;
 class ItemInstance;
-class PlayerStats;
 class ServerPlayer;
 
 namespace GlideRingGenerator
@@ -29,11 +29,6 @@ namespace GlideRingGenerator
     };
 }
 
-enum eTimeSpentCategory
-{
-    eTimeSpentCategory_Unknown
-};
-
 class GameStats
 {
     typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > StatsMap;
@@ -44,7 +39,7 @@ public:
     PlayerStats* GetPlayerStats(const StatsUID& uid);
     boost::shared_ptr<ServerPlayer> GetFirstPlace();
     unsigned int GetShortestLifespan(unsigned int round) const;
-    int GetPlayerStats();
+    StatsMap* GetPlayerStats();
     unsigned int GetDeathCount(const StatsUID& uid);
     void RecordBlockPresent(const StatsUID& uid, const BlockPos& pos, int state);
     unsigned int GetRoundTime();

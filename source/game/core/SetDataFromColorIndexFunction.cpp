@@ -4,6 +4,7 @@
 
 #include "game/core/LootTableContext.hpp"
 #include "game/core/Sheep.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -17,9 +18,10 @@ not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_p
 {
     if (!itemInstance->isDamageableItem())
     {
-        if (context.mThisEntity->GetType() == ENTITY_TYPE_SHEEP)
+        boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
+        if (entity->GetType() == ENTITY_TYPE_SHEEP)
         {
-            boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(context.mThisEntity);
+            boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(entity);
 
             itemInstance->setAuxValue(sheep->getColor()->getBlockData());
 

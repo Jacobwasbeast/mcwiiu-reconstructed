@@ -6,7 +6,6 @@
 #include "game/core/L10N.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/client/render/Tesselator.hpp"
-#include "game/client/render/ItemRenderer.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/Random.hpp"
 
@@ -30,7 +29,7 @@ Gui::Gui(Minecraft* minecraft)
         mSingleMessageTime[i] = 0;
         mBossOverlays[i] = new BossHealthOverlay(minecraft);
     }
-    for (i = 0; i < 12; ++i) {
+    for (i = 0; i < 4; ++i) {
         mCharacterDisplayTime[i] = 0;
     }
     if (minecraft != 0) {
@@ -54,8 +53,6 @@ void Gui::renderVignette(float partialTick, int width, int height)
         }
         mVignetteBrightness += (target - mVignetteBrightness) * 0.01f;
     }
-    (void)width;
-    (void)height;
 }
 
 void Gui::renderPumpkin(int width, int height)
@@ -68,8 +65,6 @@ void Gui::renderPumpkin(int width, int height)
     GlStateManager::depthMask(true);
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
-    (void)width;
-    (void)height;
 }
 
 void Gui::renderPortalOverlay(float portalTime, int width, int height)
@@ -86,8 +81,6 @@ void Gui::renderPortalOverlay(float portalTime, int width, int height)
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    (void)width;
-    (void)height;
 }
 
 void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int width, int height,
@@ -105,9 +98,6 @@ void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    (void)width;
-    (void)height;
-    (void)partialTick;
 }
 
 void Gui::render(float partialTick, bool hideGui, int width, int height)
@@ -116,7 +106,6 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
         return;
     }
     renderVignette(partialTick, width, height);
-    (void)partialTick;
 }
 
 void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
@@ -124,9 +113,6 @@ void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
     if (mItemRenderer == 0 || playerIndex < 0 || playerIndex >= 4) {
         return;
     }
-    (void)x;
-    (void)y;
-    (void)partialTick;
 }
 
 void Gui::tick()
@@ -218,9 +204,11 @@ uint64_t Gui::setSingleMessage(const std::wstring& message, int playerIndex, int
 uint64_t Gui::setNowPlaying(const std::wstring& message)
 {
     int i;
+    const wchar_t* prefix = L10N::GetString(0x91249e7e);
+    std::wstring text = prefix == 0 ? std::wstring() : std::wstring(prefix);
+    text += message;
     for (i = 0; i < 4; i += 2) {
-        mNowPlaying[i] = L"";
-        mNowPlaying[i] += message;
+        mNowPlaying[i] = text;
         mNowPlaying[i + 1] = mNowPlaying[i];
         mSingleMessageTime[i] = 0x3c;
         mSingleMessageTime[i + 1] = 0x3c;

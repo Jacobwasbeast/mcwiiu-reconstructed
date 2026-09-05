@@ -114,25 +114,21 @@ bool LlamaSpit::onHit(const HitResult* result)
 
 void LlamaSpit::restoreOwnerFromSave()
 {
-    if (mOwnerTag == NULL)
+    if (mOwnerTag == NULL || !mOwnerTag->contains(L"OwnerUUID"))
     {
+        mOwnerTag = NULL;
         return;
     }
+
+    mOwnerTag = NULL;
 }
 
 boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
 {
     AABB* box = mBoundingBox->expand(to->x - from->x, to->y - from->y, to->z - from->z)->grow(1.0);
     std::vector<boost::shared_ptr<Entity> > entities;
-    if (Entity::mLevel != NULL)
-    {
-        std::vector<boost::shared_ptr<Entity> >* found =
-            Entity::mLevel->getEntitiesOfClass(typeid(Entity), box);
-        if (found != NULL)
-        {
-            entities = *found;
-        }
-    }
+    boost::shared_ptr<Entity> self = shared_from_this();
+    Entity::mLevel->getEntities(self, box, &entities);
     double bestDistance = 1.0;
     boost::shared_ptr<Entity> hit;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
@@ -159,7 +155,7 @@ boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
 
 void LlamaSpit::tick()
 {
-    baseTick();
+    Entity::tick();
     Vec3* from = Vec3::newTemp(mX, mY, mZ);
     Vec3* to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
     HitResult* hit = Entity::mLevel->clip(from, to);

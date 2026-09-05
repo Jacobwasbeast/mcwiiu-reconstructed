@@ -10,15 +10,21 @@
 #include "game/network/GameModePacket.hpp"
 class AABB;
 class CheckpointRuleDefinition;
+class Level;
 class LevelGenerationOptions;
 class MapGenerator;
 class MiniGameDef;
 class Player;
 class PowerupRuleDefinition;
+class Scoreboard;
+class ServerGamePacketListenerImpl;
+class StatsUID;
 class TargetAreaRuleDefinition;
 class Team;
+class Voteables;
 class CommonMasterGameMode
 {
+    friend class ServerGamePacketListenerImpl;
 public:
     CommonMasterGameMode();
     virtual ~CommonMasterGameMode();
@@ -29,16 +35,32 @@ public:
     static const MiniGameDef* GetMiniGame();
     void SetupMiniGameInstance(const MiniGameDef& definition, int variant);
     virtual void OnExitedGame();
-    virtual unsigned int GetNextGameMode() const;
-    virtual AABB* GetTeamArea(Team* team) const;
-    virtual Team* GetTeamAtPosition(double x, double y, double z, double radius) const;
+    virtual void RestartMapGenerator();
+    virtual unsigned int GetGameModeState() const = 0;
+    virtual Level* GeneratorTargetLevel() const = 0;
+    virtual void setChosenThemeWordId(int id);
+    virtual bool IsRoundPlaying() const = 0;
+    virtual Scoreboard* getScoreboard() = 0;
+    virtual void ResetMapDistances();
+    virtual void CacheMapDistance();
+    virtual AABB* GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player) = 0;
+    virtual unsigned int GetLastCheckpointID(const StatsUID& uid) = 0;
+    virtual void OnProgressMade(const boost::shared_ptr<Player>& player, double progress);
+    virtual void OnLapCompleted(const boost::shared_ptr<Player>& player);
+    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule);
+    virtual void OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target, TargetAreaRuleDefinition* rule);
+    virtual void OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
+    virtual void OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
+    virtual void OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule);
+    unsigned int GetNextGameMode() const;
+    AABB* GetTeamArea(Team* team) const;
+    Team* GetTeamAtPosition(double x, double y, double z, double radius) const;
     bool HasFallenOffLayer(const double& x, const double& z);
     bool IsOnGeneratedLayer(const int& layer, const double& y);
     int GetLayer(const double& y);
     unsigned int GetLayerCount();
     AABB* GetLayerAABB(const int& layer);
     void UpdateGeneratorSeed(long long seed, float scale);
-    virtual void RestartMapGenerator();
     void RemoveMapGenerator();
     void CleanUpMapGenerator();
     const std::wstring& getChosenThemeWord();
@@ -51,35 +73,34 @@ public:
     void setCheckpoints(const std::vector<CheckpointRuleDefinition*>& checkpoints);
     double getTotalDistance();
     std::vector<double>* getCheckpointDistances();
-    virtual void ResetMapDistances();
-    virtual void CacheMapDistance();
     void CheckProgress(boost::shared_ptr<Player> player, const std::vector<CheckpointRuleDefinition*>* rules, const std::vector<AABB*>* areas);
     void CheckProgress(const std::vector<boost::shared_ptr<Player> >& players);
-    virtual void OnLapCompleted(const boost::shared_ptr<Player>& player);
     void CheckCheckpoints(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckTargets(const std::vector<boost::shared_ptr<Player> >& players);
     void CheckPowerups(const std::vector<boost::shared_ptr<Player> >& players);
-    virtual void OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule);
-    virtual void OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target, TargetAreaRuleDefinition* rule);
-    virtual void OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
-    virtual void OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule);
-    virtual void OnProgressMade(const boost::shared_ptr<Player>& player, double progress);
-    virtual void setChosenThemeWordId(int id);
     template<class Rule> void CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >& players, const std::vector<Rule*>& rules, unsigned int callback);
-private:
+protected:
     LevelGenerationOptions* mCurrentLevelGenOptions;
+private:
+    LevelGenerationOptions* mNextLevelGenOptions;
     StringTable* mLocalizedStringTable;
     StringTable* mEnglishStringTable;
+protected:
     RoundInfo mRoundInfo;
+private:
     unsigned int mState;
     unsigned int mNextState;
-    unsigned int mChosenThemeWordId;
-    unsigned int mLayerCount;
     float mGeneratorSeedScale;
     MapGenerator* mMapGenerator;
     OSFastMutex mGeneratorMutex;
+protected:
     std::vector<AABB*> mTeamAreas;
+private:
     std::vector<int> mLayerIds;
+    unsigned int mChosenThemeWordId;
+protected:
+    Voteables* mVoteables;
+private:
     std::vector<double> mCheckpointDistances;
     std::vector<double> mLayerDistances;
     std::vector<AABB*> mLayerAreas;

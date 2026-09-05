@@ -250,10 +250,10 @@ public:
                                      unsigned int parameterCount, unsigned int userIndex,
                                      int (*callback)(void*, int, C4JStorage::EMessageResult),
                                      void* callbackData, wchar_t* overrideText, bool blocking);
-    virtual void RequestErrorMessage(int titleId, int messageId, int* messageParameters,
-                                     unsigned int parameterCount, unsigned int userIndex,
-                                     int (*callback)(void*, int, C4JStorage::EMessageResult),
-                                     void* callbackData, wchar_t* overrideText, bool blocking);
+    virtual int RequestErrorMessage(int titleId, int messageId, int* messageParameters,
+                                    unsigned int parameterCount, unsigned int userIndex,
+                                    int (*callback)(void*, int, C4JStorage::EMessageResult),
+                                    void* callbackData, wchar_t* overrideText, bool blocking);
     virtual int RequestMessageBox(int titleId, int messageId, int* messageParameters,
                                   unsigned int parameterCount, unsigned int userIndex,
                                   int (*callback)(void*, int, C4JStorage::EMessageResult),

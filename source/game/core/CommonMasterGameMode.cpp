@@ -6,6 +6,8 @@
 #include "game/minigame/PowerupRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Voteable.hpp"
+#include "game/core/Voteables.hpp"
 
 CommonMasterGameMode* CommonMasterGameMode::GetMasterOrClient()
 {
@@ -13,7 +15,7 @@ CommonMasterGameMode* CommonMasterGameMode::GetMasterOrClient()
     return NULL;
 }
 CommonMasterGameMode::CommonMasterGameMode()
-    : mCurrentLevelGenOptions(NULL), mLocalizedStringTable(new StringTable()), mEnglishStringTable(new StringTable()), mRoundInfo(), mState(0), mNextState(0), mChosenThemeWordId(0xffffffffU), mLayerCount(0), mGeneratorSeedScale(1.0f), mMapGenerator(NULL), mCheckpointCount(0), mCurrentCheckpoint(0), mDistancesCached(false), mPrimaryTargetActive(false), mUsingTrialContent(false), mBuildOffVotes(false)
+    : mCurrentLevelGenOptions(NULL), mNextLevelGenOptions(NULL), mLocalizedStringTable(new StringTable()), mEnglishStringTable(new StringTable()), mRoundInfo(), mState(0), mNextState(0), mGeneratorSeedScale(1.0f), mMapGenerator(NULL), mChosenThemeWordId(0xffffffffU), mCheckpointCount(0), mCurrentCheckpoint(0), mDistancesCached(false), mPrimaryTargetActive(false), mUsingTrialContent(false), mBuildOffVotes(false)
 {
     InitializeCriticalSection(&mGeneratorMutex);
 }
@@ -77,7 +79,14 @@ void CommonMasterGameMode::UpdateGeneratorSeed(long long, float scale) { mGenera
 void CommonMasterGameMode::RestartMapGenerator() { RemoveMapGenerator(); }
 void CommonMasterGameMode::RemoveMapGenerator() { delete mMapGenerator; mMapGenerator = NULL; }
 void CommonMasterGameMode::CleanUpMapGenerator() { RemoveMapGenerator(); }
-void CommonMasterGameMode::clearBuildOffVotes() { mBuildOffVotes = false; }
+void CommonMasterGameMode::clearBuildOffVotes()
+{
+    if (Minecraft::InMiniGame(eMiniGameId_Build, true))
+    {
+        mVoteables->getVoteable(2)->clearVotes();
+        mVoteables->getVoteable(3)->clearVotes();
+    }
+}
 std::wstring CommonMasterGameMode::getThemeWordEnglish(int id)
 {
     const wchar_t* value = mEnglishStringTable == NULL ? NULL : mEnglishStringTable->getString(id);
@@ -132,6 +141,10 @@ void CommonMasterGameMode::CheckTargets(const std::vector<boost::shared_ptr<Play
 void CommonMasterGameMode::CheckPowerups(const std::vector<boost::shared_ptr<Player> >&) { mBuildOffVotes = false; }
 void CommonMasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>&, unsigned int checkpoint, CheckpointRuleDefinition*) { mCurrentCheckpoint = checkpoint; }
 void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>&, unsigned int, TargetAreaRuleDefinition*) { mPrimaryTargetActive = true; }
+void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int, PowerupRuleDefinition* rule)
+{
+    rule->GiveRandomPowerup(player);
+}
 void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { mPrimaryTargetActive = true; }
 void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { mPrimaryTargetActive = false; }
 void CommonMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>&, double progress) { mTotalDistance = progress; }

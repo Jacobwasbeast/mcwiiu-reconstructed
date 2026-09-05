@@ -8,6 +8,7 @@
 class INetworkPlayer;
 class ServerConnection;
 class Socket {
+    friend class ServerGamePacketListenerImpl;
 public:
  class SocketInputStreamLocal:public InputStream { public: explicit SocketInputStreamLocal(int); virtual ~SocketInputStreamLocal(); virtual int read(); virtual int read(arrayWithLength<unsigned char>); virtual int read(arrayWithLength<unsigned char>,unsigned int,unsigned int); virtual void close(); virtual long long skip(long long); virtual void flush(); private: int mIndex; bool mOpen; };
  class SocketInputStreamNetwork:public InputStream { public: SocketInputStreamNetwork(Socket*,int); virtual ~SocketInputStreamNetwork(); virtual int read(); virtual int read(arrayWithLength<unsigned char>); virtual int read(arrayWithLength<unsigned char>,unsigned int,unsigned int); virtual void close(); virtual long long skip(long long); virtual void flush(); private: int mIndex; bool mOpen; Socket* mSocket; };

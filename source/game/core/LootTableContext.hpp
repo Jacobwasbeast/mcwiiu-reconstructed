@@ -4,6 +4,7 @@
 #include <list>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 class DamageSource;
 class Entity;
@@ -34,8 +35,8 @@ public:
     float mLuck;
     ServerLevel* mLevel;
     LootTables* mLootTables;
-    boost::shared_ptr<Entity> mThisEntity;
-    boost::shared_ptr<Player> mKillerEntity;
+    boost::weak_ptr<Entity> mThisEntity;
+    boost::weak_ptr<Player> mKillerEntity;
     const DamageSource* mDamageSource;
     std::list<LootTable*> mVisitedTables;
 };

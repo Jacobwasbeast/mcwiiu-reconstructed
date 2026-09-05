@@ -8,7 +8,6 @@
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/entity/mob/Player.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Enchantments.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -18,6 +17,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 
 ExperienceOrb::ExperienceOrb(Level* level, double x, double y, double z, int value)
     : Entity(level, true)
@@ -216,7 +216,7 @@ bool ExperienceOrb::updateInWaterState()
 
 void ExperienceOrb::burn(int damage)
 {
-    hurt(DamageSource::IN_FIRE, (float)damage);
+    hurt(DamageSource::ON_FIRE, (float)damage);
 }
 
 bool ExperienceOrb::hurt(const DamageSource* source, float damage)

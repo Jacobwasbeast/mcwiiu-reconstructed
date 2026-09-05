@@ -1,0 +1,78 @@
+#ifndef GAME_CORE_SQUID_HPP
+#define GAME_CORE_SQUID_HPP
+
+#include <string>
+
+#include "game/entity/ai/Goal.hpp"
+#include "game/entity/mob/WaterAnimal.hpp"
+
+class Block;
+class BlockPos;
+class DamageSource;
+class DataFixerUpper;
+class EntityTooltipDataHolder;
+class Level;
+class SoundEvent;
+class Vec3;
+
+class Squid : public WaterAnimal
+{
+public:
+    class SquidRandomMovementGoal : public Goal
+    {
+    public:
+        SquidRandomMovementGoal(Squid* squid);
+        virtual ~SquidRandomMovementGoal();
+        virtual bool canUse();
+        virtual void tick();
+        virtual std::wstring getName();
+
+    private:
+        Squid* mSquid;
+    };
+
+    Squid(Level* level);
+    virtual ~Squid();
+    static void create(Level* level);
+    static void addDataWalkers(DataFixerUpper* fixer);
+    void _init();
+    void registerGoals();
+    void registerAttributes();
+    virtual double getEyeHeight();
+    virtual const SoundEvent* getAmbientSound();
+    virtual const SoundEvent* getHurtSound(const DamageSource* source);
+    virtual const SoundEvent* getDeathSound();
+    virtual float getSoundVolume();
+    virtual bool makeStepSound();
+    virtual void playStepSound(const BlockPos& pos, Block* block);
+    virtual const void* getDefaultLootTable();
+    virtual void aiStep();
+    virtual void travel(float xa, float ya, float za);
+    virtual bool checkSpawnRules();
+    Vec3* randomInkDir();
+    void spawnInkParticles();
+    virtual void handleEntityEvent(unsigned char event, int data);
+    void setMovementVector(float x, float y, float z);
+    bool hasMovementVector();
+    virtual bool hurt(const DamageSource* source, float damage);
+    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
+    virtual unsigned long long GetType();
+
+private:
+    int mBodyRotation;
+    int mBodyRotationOld;
+    int mTentacleMovement;
+    int mTentacleMovementOld;
+    int mTentacleAngle;
+    int mTentacleAngleOld;
+    int mRotationVelocity;
+    int mMovementDuration;
+    int mMovementTicks;
+    float mTentacleAngleScale;
+    int mMovementDelay;
+    float mMovementX;
+    float mMovementY;
+    float mMovementZ;
+};
+
+#endif

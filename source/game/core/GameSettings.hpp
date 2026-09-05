@@ -24,7 +24,10 @@ class GameSettings
     unsigned short mReserved3;
     unsigned int mGameModeOptions;
     unsigned char mHostOptionVersion, mReserved4[3];
-    unsigned int mBattleMiniGameMap, mUnknownA0, mUnknownA4, mUnknownA8, mUnknownAC, mUnknownB0, mUnknownB4, mUnknownB8, mUnknownBC, mGlideMiniGameMap;
+    unsigned int mBattleMiniGameMap, mUnknownA0;
+    unsigned char mActionMappings[25];
+    unsigned char mUnknownBD, mUnknownBE, mUnknownBF;
+    unsigned int mGlideMiniGameMap;
 public:
     static uint32_t GetGameSettings(int, eGameSetting);
     static uint8_t GetActionMapping(int, int);

@@ -1,5 +1,6 @@
 #include "game/core/FastestTimeAndHightestScoreInARoundCondition.hpp"
 
+#include <boost/functional/hash.hpp>
 #include <boost/unordered_map.hpp>
 
 #include "game/core/GameStats.hpp"
@@ -25,7 +26,7 @@ bool FastestTimeAndHightestScoreInARoundCondition::canAward(const GameMedal* med
         return false;
     }
 
-    typedef boost::unordered_map<StatsUID, PlayerStats*> PlayerStatsMap;
+    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > PlayerStatsMap;
     PlayerStatsMap* allPlayerStats = gameStats->GetPlayerStats();
     const unsigned int roundCount = static_cast<unsigned int>(playerStats->getTotalRounds());
 

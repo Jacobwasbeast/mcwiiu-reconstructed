@@ -1,7 +1,6 @@
 #include "game/core/ShulkerBoxSlot.hpp"
 
 #include "game/item/ItemInstance.hpp"
-#include "game/world/block/Block.hpp"
 #include "game/world/block/ShulkerBoxBlock.hpp"
 
 ShulkerBoxSlot::ShulkerBoxSlot(boost::shared_ptr<Container> container, int index, int x, int y)

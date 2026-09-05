@@ -4,9 +4,8 @@
 
 #include "game/core/GameStats.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/Player.hpp"
-
-class ServerPlayer;
 
 WinnerCondition::WinnerCondition()
     : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false)

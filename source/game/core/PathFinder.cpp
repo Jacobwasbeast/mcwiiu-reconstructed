@@ -1,4 +1,6 @@
+#define private public
 #include "game/core/PathFinder.hpp"
+#undef private
 
 #include <cmath>
 
@@ -17,6 +19,7 @@ PathFinder::PathFinder(NodeEvaluator* nodeEvaluator)
 
 PathFinder::~PathFinder()
 {
+    delete[] mNeighbors->data;
     delete mNeighbors;
 }
 
@@ -31,7 +34,7 @@ Path* PathFinder::reconstruct_path(Node* start, Node* end)
     }
 
     arrayWithLength<Node*> nodes;
-    nodes.data = new Node*[length];
+    nodes.data = new Node*[length]();
     nodes.length = length;
     nodes.data[length - 1] = end;
     node = end;
@@ -56,7 +59,7 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
 
     Node* best = start;
     int iterations = 0;
-    while (!isEmpty() && iterations++ < 200)
+    while (!isEmpty() && ++iterations < 200)
     {
         Node* current = pop();
         if (current->equals(end))
@@ -117,7 +120,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
         int mobZ = (int)floor(entity->mZ + 0.5);
         if ((double)mobX == floor(entity->mX)) --mobX;
         if ((double)mobZ == floor(entity->mZ)) --mobZ;
-        Node* adjusted = mNodeEvaluator->getNode(mobX, (int)start->y, mobZ);
+        Node* adjusted = mNodeEvaluator->getNode(mobX, start->y, mobZ);
         if (adjusted != NULL)
         {
             start = adjusted;
@@ -136,27 +139,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, const BlockPos& p
 
 Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, Entity* entity, float maxDistance)
 {
-    clear();
-    mNodeEvaluator->prepare(levelSource, mob);
-    Node* start = mNodeEvaluator->getStart();
-    BlockPos entityPos(entity->mX, entity->mY, entity->mZ);
-    Block* block = levelSource->getBlock(entityPos);
-    if (block->instanceof(EBLOCK_TYPE_RAIL))
-    {
-        int entityX = (int)floor(entity->mX + 0.5);
-        int entityZ = (int)floor(entity->mZ + 0.5);
-        if ((double)entityX == floor(entity->mX)) --entityX;
-        if ((double)entityZ == floor(entity->mZ)) --entityZ;
-        Node* adjusted = mNodeEvaluator->getNode(entityX, (int)start->y, entityZ);
-        if (adjusted != NULL)
-        {
-            start = adjusted;
-        }
-    }
-    Node* goal = mNodeEvaluator->getGoal(entity->mX, entity->mY, entity->mZ);
-    Path* path = findPath(start, goal, maxDistance);
-    mNodeEvaluator->done();
-    return path;
+    return findPath(levelSource, mob, entity->mX, entity->mBoundingBox->mMinY, entity->mZ, maxDistance);
 }
 
 Path* PathFinder::findDirectPath(LevelSource* levelSource, Mob* mob, const BlockPos& pos, float maxDistance)

@@ -1,6 +1,7 @@
 #include "game/core/Options.hpp"
 
 #include "game/client/audio/SoundEngine.hpp"
+#include "game/client/render/LevelRenderer.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferedReader.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -255,7 +256,11 @@ void Options::toggle(const Option* option, int amount)
     if (option == Option::getItem(16)) mParticles = (mParticles + amount) % 3;
     if (option == Option::getItem(5)) mViewBobbing = amount != 0;
     if (option == Option::getItem(15)) mClouds = !mClouds;
-    if (option == Option::getItem(7)) mAdvancedOpengl = !mAdvancedOpengl;
+    if (option == Option::getItem(7))
+    {
+        mAdvancedOpengl = !mAdvancedOpengl;
+        mMinecraft->mLevelRenderer->allChanged();
+    }
     if (option == Option::getItem(6))
     {
         mAnaglyph3d = !mAnaglyph3d;
@@ -263,8 +268,16 @@ void Options::toggle(const Option* option, int amount)
     }
     if (option == Option::getItem(8)) mFpsLimit = (mFpsLimit + amount + 3) % 3;
     if (option == Option::getItem(9)) mDifficulty = amount & 3;
-    if (option == Option::getItem(10)) mFancyGraphics = !mFancyGraphics;
-    if (option == Option::getItem(11)) mAmbientOcclusion = !mAmbientOcclusion;
+    if (option == Option::getItem(10))
+    {
+        mFancyGraphics = !mFancyGraphics;
+        mMinecraft->mLevelRenderer->allChanged();
+    }
+    if (option == Option::getItem(11))
+    {
+        mAmbientOcclusion = !mAmbientOcclusion;
+        mMinecraft->mLevelRenderer->allChanged();
+    }
     if (option == Option::getItem(17)) mAutoJump = !mAutoJump;
 }
 

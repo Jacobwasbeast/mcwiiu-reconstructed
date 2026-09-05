@@ -51,7 +51,11 @@ private:
     float mSoundVolume;
     float mSensitivity;
     bool mInvertYMouse;
+
+public:
     int mViewDistance;
+
+private:
     bool mViewBobbing;
     bool mAnaglyph3d;
     bool mAdvancedOpengl;

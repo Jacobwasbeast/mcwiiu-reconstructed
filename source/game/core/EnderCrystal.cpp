@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "game/core/CMinecraftApp.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
@@ -15,12 +15,15 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-class EntityDataSerializers
+class CConsoleMinecraftApp
 {
 public:
-    static EntityDataSerializer<BlockPos*>* OPTIONAL_BLOCK_POS;
-    static EntityDataSerializer<bool>* BOOLEAN;
+    uint32_t GetGameHostOption(uint32_t option);
 };
+
+extern CConsoleMinecraftApp gApp;
+
+static const unsigned long long ENTITY_TYPE_ENDER_CRYSTAL = 0x000000000800000EULL;
 
 const EntityDataAccessor<BlockPos*>* EnderCrystal::DATA_BEAM_TARGET = NULL;
 const EntityDataAccessor<bool>* EnderCrystal::DATA_SHOW_BOTTOM = NULL;
@@ -42,10 +45,10 @@ EnderCrystal::~EnderCrystal()
 
 void EnderCrystal::staticCtor()
 {
-    DATA_BEAM_TARGET = SynchedEntityData::defineId(0x000000000800000EULL,
+    DATA_BEAM_TARGET = SynchedEntityData::defineId(ENTITY_TYPE_ENDER_CRYSTAL,
                                                     ENTITY_TYPE_ENTITY,
                                                     EntityDataSerializers::OPTIONAL_BLOCK_POS);
-    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(0x000000000800000EULL,
+    DATA_SHOW_BOTTOM = SynchedEntityData::defineId(ENTITY_TYPE_ENDER_CRYSTAL,
                                                    ENTITY_TYPE_ENTITY,
                                                    EntityDataSerializers::BOOLEAN);
 }
@@ -56,6 +59,11 @@ void EnderCrystal::_init(Level* level)
     mBlocksBuilding = true;
     setSize(2.0f, 2.0f);
     mTime = mRandom->nextInt(100000);
+}
+
+bool EnderCrystal::makeStepSound()
+{
+    return false;
 }
 
 void EnderCrystal::defineSynchedData()

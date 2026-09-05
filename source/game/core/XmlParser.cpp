@@ -1,6 +1,7 @@
 #include "game/core/XmlParser.hpp"
 
 #include <cstring>
+#include <vector>
 
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XmlChild.hpp"
@@ -14,27 +15,25 @@ unsigned int XmlParser::compare(char* first, char* second, unsigned int length)
 {
     unsigned int index;
     for (index = 0; index < length; ++index)
-    {
         if (first[index] != second[index])
             return 0;
-    }
     return 1;
 }
 
 unsigned int XmlParser::detectFileFormat(void* data)
 {
     static char utf8Marker[] = { (char)0xef, (char)0xbb, (char)0xbf };
-    static char utf16LittleEndianMarker[] = { (char)0xff, (char)0xfe };
-    static char utf16BigEndianMarker[] = { (char)0xfe, (char)0xff };
+    static char littleEndianMarker[] = { (char)0xff, (char)0xfe };
+    static char bigEndianMarker[] = { (char)0xfe, (char)0xff };
     char* bytes = (char*)data;
     if (compare(bytes, utf8Marker, 3) == 0)
     {
-        if (compare(bytes, utf16LittleEndianMarker, 2) != 0)
-            return eFileFormatUtf16LittleEndian;
-        if (compare(bytes, utf16BigEndianMarker, 2) != 0)
-            return eFileFormatUtf16BigEndian;
+        if (compare(bytes, littleEndianMarker, 2) != 0)
+            return 3;
+        if (compare(bytes, bigEndianMarker, 2) != 0)
+            return 4;
     }
-    return eFileFormatUtf8;
+    return 2;
 }
 
 void XmlParser::_set_file_format(eFileFormat format)
@@ -48,6 +47,8 @@ void XmlParser::_parse()
     if (m_fileFormat == eFileFormatAnsi || m_fileFormat == eFileFormatUtf8)
     {
         char* source = (char*)m_xmlSrc;
+        m_document.remove_all_nodes();
+        m_document.remove_all_attributes();
         if (source[0] == (char)0xef && source[1] == (char)0xbb && source[2] == (char)0xbf)
             source += 3;
         m_document.parse<0>(source);
@@ -55,6 +56,8 @@ void XmlParser::_parse()
     else if (m_fileFormat == eFileFormatUtf16LittleEndian || m_fileFormat == eFileFormatUtf16BigEndian)
     {
         wchar_t* source = (wchar_t*)(m_xmlSrc + 2);
+        m_wideDocument.remove_all_nodes();
+        m_wideDocument.remove_all_attributes();
         if (source[0] == (wchar_t)0xfeff)
             ++source;
         m_wideDocument.parse<16>(source);
@@ -63,10 +66,9 @@ void XmlParser::_parse()
 
 XmlParser::XmlParser(unsigned char* data, unsigned int length)
     : m_sourceName(L"[FROM BYTEARRAY]")
-    , m_fileFormat(eFileFormatAuto)
-    , m_xmlSrc(new unsigned char[length + 2]())
-    , m_xmlSrcLength(length + 2)
 {
+    m_xmlSrcLength = length + 2;
+    m_xmlSrc = new unsigned char[m_xmlSrcLength]();
     std::memcpy(m_xmlSrc, data, length);
     _set_file_format(eFileFormatAuto);
     _parse();
@@ -85,7 +87,7 @@ std::wstring XmlParser::cnv2Wstr(const char* text)
         return convStringToWstring(std::string(text));
     if (m_fileFormat == eFileFormatUtf8)
         return convUtf8ToWstring(text);
-    return L"__ROOT__";
+    return std::wstring(L"__ROOT__");
 }
 
 XmlChild XmlParser::_getXml(rapidxml::xml_node<char>* node)
@@ -133,10 +135,13 @@ XmlChild XmlParser::_getXml(rapidxml::xml_node<wchar_t>* node)
 XmlObject* XmlParser::getXml()
 {
     XmlObject* object = new XmlObject(L"__ROOT__");
-    if (m_fileFormat == eFileFormatAnsi || m_fileFormat == eFileFormatUtf8)
-        object->addChildRaw(_getXml(m_document.first_node()));
-    else if (m_fileFormat == eFileFormatUtf16LittleEndian || m_fileFormat == eFileFormatUtf16BigEndian)
-        object->addChildRaw(_getXml(m_wideDocument.first_node()));
+    if (m_fileFormat != eFileFormatAuto)
+    {
+        if (m_fileFormat < eFileFormatUtf16LittleEndian)
+            object->addChildRaw(_getXml(m_document.first_node()));
+        else if (m_fileFormat < 5)
+            object->addChildRaw(_getXml(m_wideDocument.first_node()));
+    }
     return object;
 }
 
@@ -157,7 +162,6 @@ void XmlParser::writeXml(DataOutputStream* stream, XmlObject* object, bool forma
     output.length = length;
     stream->write(output);
     delete[] data;
-
     const std::vector<XmlChild>& children = object->getChildrenRaw();
     std::vector<XmlChild>::const_iterator child;
     for (child = children.begin(); child != children.end(); ++child)

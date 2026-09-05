@@ -1142,14 +1142,14 @@ void ConsoleUIController::RequestAlertMessage(
                       callback, callbackData, overrideText, 0, true, blocking);
 }
 
-void ConsoleUIController::RequestErrorMessage(
+int ConsoleUIController::RequestErrorMessage(
     int titleId, int messageId, int* messageParameters, unsigned int parameterCount,
     unsigned int userIndex, int (*callback)(void*, int, C4JStorage::EMessageResult),
     void* callbackData, wchar_t* overrideText, bool blocking)
 {
     theApp.setIgnoreMainMenuInputDuringInvite(false);
-    RequestMessageBox(titleId, messageId, messageParameters, parameterCount, userIndex,
-                      callback, callbackData, overrideText, 0, false, blocking);
+    return RequestMessageBox(titleId, messageId, messageParameters, parameterCount, userIndex,
+                             callback, callbackData, overrideText, 0, false, blocking);
 }
 
 int ConsoleUIController::RequestMessageBox(
@@ -1361,8 +1361,6 @@ void ConsoleUIController::TouchBoxAdd(UIControl* control, EUIGroup groupId, EUIL
     UIScene* target = m_groups[(int)groupId]->FindScene(scene);
     if (target != 0)
         TouchBoxAdd(control, target);
-    (void)layer;
-    (void)parent;
 }
 
 void ConsoleUIController::PlayUISFX(const SoundEvent* soundEvent)

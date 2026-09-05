@@ -4,14 +4,13 @@
 #include <wchar.h>
 
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/DLCFile.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/GameRuleManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
-
-class CMinecraftApp;
 
 extern ConsoleUIController g_ConsoleUIController;
 extern GameRuleManager g_GameRuleManager;

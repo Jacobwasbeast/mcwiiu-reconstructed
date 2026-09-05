@@ -1,0 +1,56 @@
+#include "game/core/Giant.hpp"
+
+#include "game/core/AttributeInstance.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/data/DataFixerUpper.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+
+Giant::Giant(Level* level)
+    : Monster(level)
+{
+    fjDerivedCtorCalls();
+    setSize(mBbWidth * 6.0f, mBbHeight * 4.0f);
+}
+
+Giant::~Giant()
+{
+}
+
+void Giant::create(Level* level)
+{
+    new Giant(level);
+}
+
+void Giant::addDataWalkers(DataFixerUpper* fixer)
+{
+    Mob::addDataWalkers(fixer);
+}
+
+double Giant::getEyeHeight()
+{
+    return (double)(1.62f * 6.0f);
+}
+
+void Giant::registerAttributes()
+{
+    Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(100.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(50.0);
+}
+
+double Giant::getWalkTargetValue(const BlockPos& pos)
+{
+    return (double)((float)mLevel->getBrightness(pos) - 0.5f);
+}
+
+const void* Giant::getDefaultLootTable()
+{
+    return NULL;
+}
+
+unsigned long long Giant::GetType()
+{
+    return 0x5D54004200000000ULL;
+}

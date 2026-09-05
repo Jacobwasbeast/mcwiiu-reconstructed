@@ -30,9 +30,9 @@ unsigned int GameStats::GetShortestLifespan(unsigned int) const
     return 0x7fffffffU;
 }
 
-int GameStats::GetPlayerStats()
+GameStats::StatsMap* GameStats::GetPlayerStats()
 {
-    return static_cast<int>(mPlayerStats.size());
+    return &mPlayerStats;
 }
 
 unsigned int GameStats::GetDeathCount(const StatsUID&)

@@ -15,12 +15,12 @@ NotFastestTimeButWonAnywayCondition::~NotFastestTimeButWonAnywayCondition()
 bool NotFastestTimeButWonAnywayCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    if (playerStats == NULL || gameStats->mCurrentRound == 0)
+    if (playerStats == NULL || gameStats->mRound == 0)
     {
         return false;
     }
 
-    for (unsigned int round = 0; round < gameStats->mCurrentRound; round++)
+    for (unsigned int round = 0; round < gameStats->mRound; round++)
     {
         if (playerStats->getRoundWon(round) != 0 && gameStats->GetShortestLifespan(round) < playerStats->getLifeSpan(round))
         {

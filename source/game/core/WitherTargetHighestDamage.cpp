@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/WitherBoss.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/Vec3.hpp"
 
@@ -28,10 +29,12 @@ boost::shared_ptr<LivingEntity> WitherTargetHighestDamage::getHighestDamageTarge
     std::map<boost::shared_ptr<ServerPlayer>, int>::const_iterator it;
     for (it = playerParty->begin(); it != playerParty->end(); ++it)
     {
-        if (it->second > highestDamage && canAttack(it->first, false))
+        boost::shared_ptr<LivingEntity> player =
+            boost::static_pointer_cast<LivingEntity>(it->first);
+        if (it->second > highestDamage && canAttack(player, false))
         {
             highestDamage = it->second;
-            target = it->first;
+            target = player;
         }
     }
 

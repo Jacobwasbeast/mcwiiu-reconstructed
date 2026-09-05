@@ -3,6 +3,7 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/core/Painting.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -20,7 +21,7 @@ ConsoleSchematicFile::PasteData::PasteData()
 }
 
 ConsoleSchematicFile::ConsoleSchematicFile()
-    : mValid(1), mOrigin(0, 0, 0), mWidth(0), mHeight(0), mDepth(0), mIncludeAir(false), mIncludeMobs(false), mCopyArea(0), mUndoArea(0), mCopyMinX(0), mCopyMinZ(0), mCopyMaxX(0), mUndoWidth(0), mUndoHeight(0), mUndoDepth(0), mStoredCopyArea(0), mStoredUndoArea(0), mUndoReady(false), mPasteTicks(0), mPasteState(0), mHasCopy(false), mHasPaste(false), mMobs(false), mReserved(false)
+    : mRefCount(1), mOrigin(0, 0, 0), mWidth(0), mHeight(0), mDepth(0), mIncludeAir(false), mIncludeMobs(false), mCopyArea(0), mUndoArea(0), mCopyMinX(0), mCopyMinZ(0), mCopyMaxX(0), mUndoWidth(0), mUndoHeight(0), mUndoDepth(0), mStoredCopyArea(0), mStoredUndoArea(0), mUndoReady(false), mPasteTicks(0), mPasteState(0), mHasCopy(false), mHasPaste(false), mMobs(false), mReserved(false)
 {
     mPasteData.mLevel = 0;
     mPasteData.mArea = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -212,7 +213,6 @@ void ConsoleSchematicFile::load(DataInputStream* input)
         }
         delete tags;
     }
-    mValid = version != 0;
 }
 
 void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arrayWithLength<unsigned short> in, ESchematicRotation rotation, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial)
@@ -386,8 +386,29 @@ int ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB*, ESchema
     return 1;
 }
 
-void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting>, ESchematicRotation, ESchematicMirror)
+void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting> painting, ESchematicRotation rotation, ESchematicMirror mirror)
 {
+    const Direction* direction = HandleRotation(painting->getDirection(), mirror, rotation);
+    painting->setDirection(direction);
+
+    if ((mirror == eSchematicMirror_LeftRight || mirror == eSchematicMirror_Both) && painting->getWidth() > 16)
+    {
+        switch (direction->get3DDataValue())
+        {
+        case Direction::eDirection_North:
+            painting->mX += 1.0;
+            break;
+        case Direction::eDirection_South:
+            painting->mX -= 1.0;
+            break;
+        case Direction::eDirection_West:
+            painting->mZ -= 1.0;
+            break;
+        case Direction::eDirection_East:
+            painting->mZ += 1.0;
+            break;
+        }
+    }
 }
 void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchematicRotation rotation, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData, std::vector<std::pair<BlockPos*, CompoundTag*> >& blockEntities, std::vector<std::pair<Vec3*, CompoundTag*> >& entities, std::vector<DevSaveDataManager::NamedPositionOrVolume>& namedPositions, int width, int height, int depth, bool includeAir, bool includeSpecial, bool rotate)
 {

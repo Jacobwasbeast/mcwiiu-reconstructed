@@ -1,0 +1,338 @@
+#ifndef GAME_CORE_STRONGHOLDPIECES_HPP
+#define GAME_CORE_STRONGHOLDPIECES_HPP
+
+#include <vector>
+
+#include "game/core/BoundingBox.hpp"
+#include "game/core/DataInputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/core/Direction.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/generation/StructureManager.hpp"
+#include "game/world/generation/StructurePiece.hpp"
+
+class StrongholdPieces
+{
+public:
+    enum EPieceClass
+    {
+        ePieceClass_StairsDown = 0,
+        ePieceClass_Straight,
+        ePieceClass_ChestCorridor,
+        ePieceClass_StraightStairsDown,
+        ePieceClass_LeftTurn,
+        ePieceClass_RightTurn,
+        ePieceClass_RoomCrossing,
+        ePieceClass_PrisonHall,
+        ePieceClass_Library,
+        ePieceClass_FiveCrossing,
+        ePieceClass_PortalRoom
+    };
+
+    class PieceWeight
+    {
+    public:
+        PieceWeight(EPieceClass pieceClass, int maxCount, int frequency);
+        virtual ~PieceWeight();
+        virtual bool isValid();
+        virtual bool doPlace(int depth);
+        EPieceClass pieceClass;
+        int maxCount;
+        int count;
+        int frequency;
+    };
+
+    class PieceWeight_Library : public PieceWeight
+    {
+    public:
+        virtual ~PieceWeight_Library();
+        virtual bool doPlace(int depth);
+    };
+
+    class PieceWeight_PortalRoom : public PieceWeight
+    {
+    public:
+        virtual ~PieceWeight_PortalRoom();
+        virtual bool doPlace(int depth);
+    };
+
+    class StartPiece;
+
+    class StrongholdPiece : public StructurePiece
+    {
+    public:
+        enum SmallDoorType
+        {
+            OPENING = 0,
+            WOOD_DOOR,
+            GRATES,
+            IRON_DOOR
+        };
+
+        StrongholdPiece(int depth);
+        StrongholdPiece();
+        virtual ~StrongholdPiece();
+        static bool isOkBox(BoundingBox* box, StartPiece* start);
+        unsigned char randomSmallDoor(Random& random);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        void generateSmallDoor(Level* level, Random& random, BoundingBox* box,
+                               SmallDoorType type, int x, int y, int z);
+        int generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                          Random& random, int x, int z);
+        int generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                       Random& random, int x, int z);
+        int generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                        Random& random, int x, int z);
+    protected:
+        int mSmallDoor;
+    };
+
+    class ChestCorridor : public StrongholdPiece
+    {
+    public:
+        ChestCorridor();
+        ChestCorridor(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~ChestCorridor();
+        static ChestCorridor* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                          int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class FillerCorridor : public StrongholdPiece
+    {
+    public:
+        FillerCorridor();
+        FillerCorridor(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~FillerCorridor();
+        static BoundingBox* findPieceBox(std::vector<StructurePiece*>* pieces, Random& random,
+                                         int x, int y, int z, const Direction* direction);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class FiveCrossing : public StrongholdPiece
+    {
+    public:
+        FiveCrossing();
+        FiveCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~FiveCrossing();
+        static FiveCrossing* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                         int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class LeftTurn : public StrongholdPiece
+    {
+    public:
+        LeftTurn();
+        LeftTurn(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~LeftTurn();
+        static LeftTurn* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                     int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class Library : public StrongholdPiece
+    {
+    public:
+        Library();
+        Library(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~Library();
+        static Library* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                    int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class PortalRoom : public StrongholdPiece
+    {
+    public:
+        PortalRoom();
+        PortalRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~PortalRoom();
+        static PortalRoom* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                       int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class PrisonHall : public StrongholdPiece
+    {
+    public:
+        PrisonHall();
+        PrisonHall(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~PrisonHall();
+        static PrisonHall* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                       int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class RoomCrossing : public StrongholdPiece
+    {
+    public:
+        RoomCrossing();
+        RoomCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~RoomCrossing();
+        static RoomCrossing* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                         int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class Straight : public StrongholdPiece
+    {
+    public:
+        Straight();
+        Straight(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~Straight();
+        static Straight* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                     int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class StraightStairsDown : public StrongholdPiece
+    {
+    public:
+        StraightStairsDown();
+        StraightStairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~StraightStairsDown();
+        static StraightStairsDown* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                               int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class StairsDown : public StrongholdPiece
+    {
+    public:
+        StairsDown(int depth, Random& random, int x, int z);
+        StairsDown();
+        StairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~StairsDown();
+        static StairsDown* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
+                                       int x, int y, int z, const Direction* direction, int depth);
+        virtual void addAdditionalSaveData(DataOutputStream* output);
+        virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+        bool mFlag;
+        int mData;
+    };
+
+    class RightTurn : public LeftTurn
+    {
+    public:
+        RightTurn();
+        RightTurn(int depth, Random& random, BoundingBox* box, const Direction* direction);
+        virtual ~RightTurn();
+        virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
+        virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+        static StructurePiece* Create();
+        virtual EStructurePiece GetType();
+    };
+
+    class StartPiece : public StairsDown
+    {
+    public:
+        StartPiece(int depth, Random& random, int x, int z, Level* level);
+        StartPiece();
+        virtual ~StartPiece();
+        virtual BlockPos getLocatorPosition();
+        virtual EStructurePiece GetType();
+        Level* mLevel;
+        std::vector<StructurePiece*> mPendingChildren;
+    };
+
+    class SmoothStoneSelector : public StructurePiece::BlockSelector
+    {
+    public:
+        virtual ~SmoothStoneSelector();
+        virtual void next(Random& random, int x, int y, int z, bool edge);
+    };
+
+    static void resetPieces();
+    static unsigned long long staticCtor();
+    static unsigned long long loadStatic();
+    static unsigned int updatePieceWeight();
+    static StructurePiece* findAndCreatePieceFactory(EPieceClass pieceClass,
+                                                      std::vector<StructurePiece*>* pieces,
+                                                      Random& random, int x, int y, int z,
+                                                      const Direction* direction, int depth);
+    static int generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                          Random& random, int x, int y, int z,
+                                          const Direction* direction, int depth);
+    static int generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces,
+                                   Random& random, int x, int y, int z,
+                                   const Direction* direction, int depth);
+};
+
+#endif

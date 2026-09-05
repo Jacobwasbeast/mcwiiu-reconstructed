@@ -13,8 +13,8 @@ ShulkerBoxColoring::~ShulkerBoxColoring()
 
 bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    unsigned int shulkerBoxes = 0;
-    unsigned int dyes = 0;
+    unsigned int shulkerBoxCount = 0;
+    unsigned int dyeCount = 0;
     unsigned int slot;
 
     for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
@@ -27,24 +27,24 @@ bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingCo
 
         if (Block::byItem(item->getItem()) != NULL)
         {
-            ++shulkerBoxes;
+            ++shulkerBoxCount;
         }
         else if (item->getItem() == Items::dye)
         {
-            ++dyes;
+            ++dyeCount;
         }
         else
         {
             return false;
         }
 
-        if (shulkerBoxes > 1 || dyes > 1)
+        if (shulkerBoxCount > 1 || dyeCount > 1)
         {
             return false;
         }
     }
 
-    return shulkerBoxes == 1 && dyes == 1;
+    return shulkerBoxCount == 1 && dyeCount == 1;
 }
 
 not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)

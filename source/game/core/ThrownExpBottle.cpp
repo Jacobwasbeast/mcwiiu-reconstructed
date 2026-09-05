@@ -2,7 +2,6 @@
 
 #include "game/core/ExperienceOrb.hpp"
 #include "game/core/HitResult.hpp"
-#include "game/entity/projectile/Projectile.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/item/Potions.hpp"
 #include "game/util/Random.hpp"
@@ -38,8 +37,7 @@ void ThrownExpBottle::create(Level* level)
 
 bool ThrownExpBottle::onHit(const HitResult* result)
 {
-    Projectile* projectile = (Projectile*)this;
-    projectile->onHit(result);
+    Projectile::onHit(result);
     if (!mLevel->mIsClientSide)
     {
         BlockPos pos(this);

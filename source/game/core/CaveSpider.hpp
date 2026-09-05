@@ -1,0 +1,32 @@
+#ifndef GAME_CORE_CAVESPIDER_HPP
+#define GAME_CORE_CAVESPIDER_HPP
+
+#include <string>
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/Spider.hpp"
+
+class DataFixerUpper;
+class DifficultyInstance;
+class Entity;
+class Level;
+class MobGroupData;
+
+class CaveSpider : public Spider
+{
+public:
+    CaveSpider(Level* level);
+    virtual ~CaveSpider();
+
+    static void create(Level* level);
+    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual void registerAttributes();
+    virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
+                                           const std::wstring& name);
+    virtual double getEyeHeight();
+    virtual const void* getDefaultLootTable();
+    virtual unsigned long long GetType();
+};
+
+#endif

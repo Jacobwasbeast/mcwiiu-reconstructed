@@ -8,6 +8,7 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/PrimedTnt.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/ProtectionEnchantment.hpp"
@@ -196,12 +197,12 @@ void Explosion::explode()
 
                 for (; power > 0.0f; power -= 0.3f * 0.75f)
                 {
+                    BlockPos rayBlockPos(rayPosX, rayPosY, rayPosZ);
+
                     if (!mBreaksBlocksUnderwater && mLevel->getLiquidBlockState(rayBlockPos)->getMaterial() == Material::WATER)
                     {
                         power = 0.0f;
                     }
-
-                    BlockPos rayBlockPos(rayPosX, rayPosY, rayPosZ);
 
                     Block* block = mLevel->getBlock(rayBlockPos);
 
@@ -342,7 +343,7 @@ void Explosion::explode()
 
         if (inBlast)
         {
-            const DamageSource* damageSource = DamageSource::CreateExplosion(this);
+            boost::shared_ptr<EntityDamageSource> damageSource = DamageSource::CreateExplosion(this);
 
             float damage = (float)((falloff * falloff + falloff) * 0.5 * 7.0 * (double)mDamageRadius + 1.0);
 
@@ -351,9 +352,7 @@ void Explosion::explode()
                 damage = 0.0f;
             }
 
-            entity->hurt(damageSource, damage);
-
-            delete damageSource;
+            entity->hurt(damageSource.get(), damage);
         }
 
         double knockback = falloff;
