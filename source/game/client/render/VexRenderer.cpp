@@ -20,7 +20,7 @@ VexRenderer::~VexRenderer()
 
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (Minecraft::InMiniGame(15, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
         if (vex->isCharging())

@@ -11,7 +11,6 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/block/BannerBlockEntity.hpp"
 
 static ResourceLocation BANNER_LOCATION((_TEXTURE_NAME)59);
@@ -130,7 +129,6 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
         GlStateManager::popMatrix();
     }
 
-    GlStateManager::disableRescaleNormal();
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     GlStateManager::popMatrix();
 }

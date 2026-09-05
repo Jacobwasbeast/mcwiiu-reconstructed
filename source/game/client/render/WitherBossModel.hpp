@@ -6,14 +6,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
-#include "game/client/render/ModelPartSkin.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class LivingEntity;
 class ModelDefinition;
+class ModelPartSkin;
 
-class WitherBossModel : public ModelPartSkin
+class WitherBossModel : public Model
 {
 public:
     WitherBossModel(float scale, const ModelDefinition& modelDefinition);

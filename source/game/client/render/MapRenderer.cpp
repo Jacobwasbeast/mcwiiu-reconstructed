@@ -20,6 +20,62 @@
 static unsigned int gMapColours[208];
 static bool gMapColoursLoaded = true;
 
+static const eMinecraftColour gMapColourSources[52] =
+{
+    eMinecraftColour_Material_None,
+    eMinecraftColour_Material_Grass,
+    eMinecraftColour_Material_Sand,
+    eMinecraftColour_Material_Cloth,
+    eMinecraftColour_Material_Fire,
+    eMinecraftColour_Material_Ice,
+    eMinecraftColour_Material_Metal,
+    eMinecraftColour_Material_Plant,
+    eMinecraftColour_Material_Snow,
+    eMinecraftColour_Material_Clay,
+    eMinecraftColour_Material_Dirt,
+    eMinecraftColour_Material_Stone,
+    eMinecraftColour_Material_Water,
+    eMinecraftColour_Material_Wood,
+    eMinecraftColour_Material_Emerald,
+    eMinecraftColour_Material_Quartz,
+    eMinecraftColour_Material_Gold,
+    eMinecraftColour_Material_Diamond,
+    eMinecraftColour_Material_Lapis,
+    eMinecraftColour_Material_Podzol,
+    eMinecraftColour_Material_Nether,
+    eMinecraftColour_Material_Color_Orange,
+    eMinecraftColour_Material_Color_Magenta,
+    eMinecraftColour_Material_Color_Light_Blue,
+    eMinecraftColour_Material_Color_Yellow,
+    eMinecraftColour_Material_Color_Light_Green,
+    eMinecraftColour_Material_Color_Pink,
+    eMinecraftColour_Material_Color_Grey,
+    eMinecraftColour_Material_Color_Silver,
+    eMinecraftColour_Material_Color_Cyan,
+    eMinecraftColour_Material_Color_Purple,
+    eMinecraftColour_Material_Color_Blue,
+    eMinecraftColour_Material_Color_Brown,
+    eMinecraftColour_Material_Color_Green,
+    eMinecraftColour_Material_Color_Red,
+    eMinecraftColour_Material_Color_Black,
+    eMinecraftColour_Material_Terracotta_White,
+    eMinecraftColour_Material_Terracotta_Orange,
+    eMinecraftColour_Material_Terracotta_Magenta,
+    eMinecraftColour_Material_Terracotta_Light_Blue,
+    eMinecraftColour_Material_Terracotta_Yellow,
+    eMinecraftColour_Material_Terracotta_Light_Green,
+    eMinecraftColour_Material_Terracotta_Pink,
+    eMinecraftColour_Material_Terracotta_Grey,
+    eMinecraftColour_Material_Terracotta_Silver,
+    eMinecraftColour_Material_Terracotta_Cyan,
+    eMinecraftColour_Material_Terracotta_Purple,
+    eMinecraftColour_Material_Terracotta_Blue,
+    eMinecraftColour_Material_Terracotta_Brown,
+    eMinecraftColour_Material_Terracotta_Green,
+    eMinecraftColour_Material_Terracotta_Red,
+    eMinecraftColour_Material_Terracotta_Black
+};
+
 bool sortByTexture(const MapDecoration& left, const MapDecoration& right)
 {
     return left.getImg() < right.getImg();
@@ -39,11 +95,19 @@ void MapRenderer::reloadColours()
     int i;
     for (i = 0; i < 208; ++i)
     {
-        unsigned int colour = colours->getColour((eMinecraftColour)i);
+        if (i < 4)
+        {
+            gMapColours[i] = 16 + ((i * 8) & 8);
+            continue;
+        }
+        unsigned int colour = colours->getColour(gMapColourSources[i / 4]);
         unsigned int red = (colour >> 16) & 255;
         unsigned int green = (colour >> 8) & 255;
         unsigned int blue = colour & 255;
-        gMapColours[i] = (red << 24) | (green << 16) | (blue << 8) | 255;
+        unsigned int brightness = i % 4 == 2 ? 255 : (i % 4 == 0 ? 180 : 220);
+        gMapColours[i] = (((red * brightness) / 255) << 24) |
+                         (((green * brightness) / 255) << 16) |
+                         (((blue * brightness) / 255) << 8) | 255;
     }
     gMapColoursLoaded = false;
 }
@@ -121,7 +185,6 @@ void MapRenderer::MapInstance::fjUpdateWithRenderContext()
     if (mTextureDirty)
     {
         mRenderer->mTextures->replaceTextureDirect(mPixels, 128, 128, mTexture);
-        mTextureDirty = false;
     }
 }
 
@@ -135,29 +198,29 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
     GlStateManager::blendFunc(1, 5);
     GlStateManager::disableAlphaTest();
     builder->begin();
-    builder->vertexUV(0.0f, 128.0f, 0.0f, 0.0f, 1.0f);
-    builder->vertexUV(128.0f, 128.0f, 0.0f, 1.0f, 1.0f);
-    builder->vertexUV(128.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-    builder->vertexUV(0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    builder->vertexUV(0.0f, 128.0f, -0.02f, 0.0f, 1.0f);
+    builder->vertexUV(128.0f, 128.0f, -0.02f, 1.0f, 1.0f);
+    builder->vertexUV(128.0f, 0.0f, -0.02f, 1.0f, 0.0f);
+    builder->vertexUV(0.0f, 0.0f, -0.02f, 0.0f, 0.0f);
     tesselator->end();
     GlStateManager::enableAlphaTest();
     GlStateManager::disableBlend();
 
     std::vector<MapDecoration> decorations = mData->fjGetAllDecorations();
     std::sort(decorations.begin(), decorations.end(), sortByTexture);
-    GlStateManager::pushMatrix();
-    GlStateManager::translatef(64.0f, 64.0f, -0.02f);
-    GlStateManager::scalef(1.0f, 1.0f, 1.0f);
     int index = 0;
     int texture = -1;
+    float depth = -0.04f;
     boost::unordered_map<int, int> counts;
     std::vector<MapDecoration>::const_iterator it;
     for (it = decorations.begin(); it != decorations.end(); ++it)
     {
-        if ((!player || it->renderOnFrame()) && it->visible)
+        if ((player || it->renderOnFrame()) && it->visible &&
+            (!player || it->getType() != &MapDecoration::Type::TYPES[7]))
         {
             int image = it->getImg() < 16 ? 14 : 120;
-            if (counts.find(it->hashCode()) == counts.end() || counts[it->hashCode()] < 3)
+            int hash = it->hashCode();
+            if (counts.find(hash) == counts.end() || counts.at(hash) < 3)
             {
                 if (texture != image)
                 {
@@ -166,31 +229,38 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
                 }
                 GlStateManager::pushMatrix();
                 GlStateManager::translatef((float)it->getX() / 2.0f + 64.0f,
-                                            (float)it->getY() / 2.0f + 64.0f, -0.03f);
+                                            (float)it->getY() / 2.0f + 64.0f, depth);
                 GlStateManager::rotatef((float)it->getRot() * 360.0f / 16.0f, 0.0f, 0.0f, 1.0f);
                 GlStateManager::scalef(4.0f, 4.0f, 3.0f);
+                GlStateManager::translatef(-0.125f, 0.125f, 0.0f);
+                float minU = (float)(it->getImg() & 3) / 4.0f;
+                float maxU = (float)((it->getImg() & 3) + 1) / 4.0f;
+                float minV = (float)((it->getImg() & 15) / 4) / 4.0f;
+                float maxV = (float)(((it->getImg() & 15) / 4) + 1) / 4.0f;
+                float iconDepth = (float)index * -0.001f;
                 builder->begin();
-                builder->vertexUV(-1.0f, 1.0f, 0.0f, 0.0f, 0.0f);
-                builder->vertexUV(1.0f, 1.0f, 0.0f, 1.0f, 0.0f);
-                builder->vertexUV(1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
-                builder->vertexUV(-1.0f, -1.0f, 0.0f, 0.0f, 1.0f);
+                builder->vertexUV(-1.0f, 1.0f, iconDepth, minU, minV);
+                builder->vertexUV(1.0f, 1.0f, iconDepth, maxU, minV);
+                builder->vertexUV(1.0f, -1.0f, iconDepth, maxU, maxV);
+                builder->vertexUV(-1.0f, -1.0f, iconDepth, minU, maxV);
                 tesselator->end();
                 GlStateManager::popMatrix();
                 ++index;
-                ++counts[it->hashCode()];
+                ++counts[hash];
+                depth -= 0.01f;
             }
         }
     }
-    GlStateManager::popMatrix();
 
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(0.0f, 0.0f, -0.04f);
+    GlStateManager::translatef(0.0f, 0.0f, -0.06f);
     GlStateManager::scalef(0.5f, 0.5f, 0.5f);
     if (player)
     {
         Entity* entity = (Entity*)player.get();
         std::wstring text = formatwstr(L"X: %d, Y: %d, Z: %d", (int)std::floor(entity->mX),
-                                       (int)std::floor(entity->mY), (int)std::floor(entity->mZ));
+                                       (int)std::floor(entity->mY + entity->getEyeHeight()),
+                                       (int)std::floor(entity->mZ));
         mRenderer->mFont->draw(text, 0, 0,
             (int)Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Map_Text));
     }
@@ -199,5 +269,8 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
 
 void MapRenderer::MapInstance::updateTexture()
 {
+    unsigned int i;
+    for (i = 0; i < mData->mColors.length; ++i)
+        mPixels.data[i] = gMapColours[mData->mColors.data[i]];
     mTextureDirty = true;
 }

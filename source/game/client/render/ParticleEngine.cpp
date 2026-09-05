@@ -1,6 +1,7 @@
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/TerrainParticle.hpp"
+#include "game/core/TrackingEmitter.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -89,7 +90,7 @@ void ParticleEngine::add(Particle* particle)
     int textureType = 0;
     if (level != NULL)
     {
-        textureType = level->getParticleTextureType();
+        textureType = 0;
     }
     bool lit = particle->getAlpha() == 1.0;
     int limit = texture == 0x80221 ? 2000 : (texture == 0x8021e ? 1000 : 0x4000);
@@ -236,7 +237,7 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
     int type = 0;
     for (int i = 0; i < particles[type * 10 + layer * 2].size(); ++i)
     {
-        particles[type * 10 + layer * 2].at(i)->render(NULL, entity, partialTick, 0, 0, 0, 0, 0, 0);
+        particles[type * 10 + layer * 2].at(i)->render(NULL, entity, partialTick, 0, 0, 0, 0, 0);
     }
 }
 
@@ -247,7 +248,7 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
 
 void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)
 {
-    if (level == NULL || state == NULL || !state->isAir())
+    if (level == NULL || state == NULL)
     {
         return;
     }
@@ -278,7 +279,7 @@ void ParticleEngine::crack(const BlockPos& pos, const Direction* direction)
     TerrainParticle* particle = new TerrainParticle(level, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
         0, 0, 0, state);
     particle->init(pos);
-    particle->setParticleSpeed(0.2f, 0.6f);
+    particle->setPower(0.2f);
     add(particle);
 }
 

@@ -19,6 +19,8 @@ VexModel::VexModel(const ModelDefinition& modelDefinition)
 
 VexModel::~VexModel()
 {
+    delete mLeftWing;
+    delete mRightWing;
 }
 
 void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
@@ -29,12 +31,12 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
         mHead->addBox(-1.0f, -2.0f, -1.0f, 2, 6, 2, 0.4f);
         mHead->setPos(-1.2f, 12.0f, 0.0f);
 
-        mRightWing = new ModelPartSkin(this, 0, 32, NULL);
-        mRightWing->addBox(-20.0f, 0.0f, 0.0f, 20, 12, 1);
-
         mLeftWing = new ModelPartSkin(this, 0, 32, NULL);
         mLeftWing->mMirror = true;
         mLeftWing->addBox(0.0f, 0.0f, 0.0f, 20, 12, 1);
+
+        mRightWing = new ModelPartSkin(this, 0, 32, NULL);
+        mRightWing->addBox(-20.0f, 0.0f, 0.0f, 20, 12, 1);
 
         compileSkinnedDrawlist();
     }
@@ -42,8 +44,8 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
     {
         mHat = new ModelPartSkin(this, L"hat", modelDefinition, NULL, 0.0f, NULL);
         mHead = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
-        mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
         mLeftWing = new ModelPartSkin(this, L"leftwing", modelDefinition, NULL, 0.0f, NULL);
+        mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
 
         compileSkinnedDrawlist();
     }
@@ -51,7 +53,6 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
 
 void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
     mRightWing->render(scale, useDisplayList, false);
     mLeftWing->render(scale, useDisplayList, false);
@@ -62,33 +63,35 @@ void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    if (Minecraft::InMiniGame(15, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
         if (vex && vex->isCharging())
         {
             if (vex->getMainArm() == HumanoidArm::RIGHT)
             {
-                mRightWing->mXRot = 3.7699115f;
+                mRightArm->mXRot = 3.7699115f;
             }
             else
             {
-                mLeftWing->mXRot = 3.7699115f;
+                mLeftArm->mXRot = 3.7699115f;
             }
         }
     }
 
     mHead->mXRot += 0.62831855f;
     mRightWing->mY = 1.0f;
+    mRightWing->mZ = 2.0f;
     mLeftWing->mY = 1.0f;
+    mLeftWing->mZ = 2.0f;
 
     float wingAngle = cosf(ageInTicks * 0.8f) * 3.1415927f * 0.05f + 0.47123894f;
     mRightWing->mYRot = wingAngle;
     mLeftWing->mYRot = -wingAngle;
-    mRightWing->mXRot = 0.47123894f;
     mLeftWing->mXRot = 0.47123894f;
-    mRightWing->mZRot = -0.47123894f;
+    mRightWing->mXRot = 0.47123894f;
     mLeftWing->mZRot = -0.47123894f;
+    mRightWing->mZRot = 0.47123894f;
 }
 
 unsigned int VexModel::getModelVersion()

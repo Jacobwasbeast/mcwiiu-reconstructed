@@ -3,12 +3,17 @@
 #include <cmath>
 
 #include "game/client/render/EnderCrystalModel.hpp"
-#include "game/client/render/EnderDragonRenderer.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockPos.hpp"
+
+class EnderDragonRenderer
+{
+public:
+    static void renderCrystalBeams(double, double, double, float, double, double, double, int, double, double, double);
+};
 
 static ResourceLocation ENDER_CRYSTAL_LOCATION;
 

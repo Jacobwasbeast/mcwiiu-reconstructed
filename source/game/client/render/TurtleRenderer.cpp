@@ -4,13 +4,19 @@
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/TurtleModel.hpp"
-#include "game/core/Turtle.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
+
+class Turtle : public LivingEntity
+{
+public:
+    virtual bool isLayingEgg();
+};
 
 static ResourceLocation TURTLE_LOCATION;
 
 TurtleRenderer::TurtleRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new TurtleModel(0.0f, ModelDefinition()), 0.3f)
+    : MobRenderer(dispatcher, new TurtleModel(0.0f, ModelDefinition()), 0.35f)
 {
 }
 

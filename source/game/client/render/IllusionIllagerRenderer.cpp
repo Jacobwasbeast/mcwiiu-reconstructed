@@ -1,24 +1,31 @@
 #include "game/client/render/IllusionIllagerRenderer.hpp"
 
-#include <vector>
-
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/IllagerModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
-class IllusionIllager : public LivingEntity
+class SpellcasterIllager : public LivingEntity
 {
 public:
-    virtual bool isCastingSpell();
-    std::vector<Vec3*> getIllusionOffsets(float partialTick);
+    bool isCastingSpell();
 };
+
+class IllusionIllager : public SpellcasterIllager
+{
+public:
+    arrayWithLength<Vec3*> getIllusionOffsets(float partialTick);
+};
+
+static ResourceLocation illusionIllagerLocation;
 
 IllusionIllagerRenderer::IllusionIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
@@ -32,8 +39,7 @@ IllusionIllagerRenderer::~IllusionIllagerRenderer()
 
 const ResourceLocation* IllusionIllagerRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
-    return &location;
+    return &illusionIllagerLocation;
 }
 
 void IllusionIllagerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
@@ -51,12 +57,20 @@ void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x
     }
 
     boost::shared_ptr<IllusionIllager> illusion = boost::static_pointer_cast<IllusionIllager>(entity);
-    std::vector<Vec3*> offsets = illusion->getIllusionOffsets(partialTick);
-    for (std::vector<Vec3*>::iterator it = offsets.begin(); it != offsets.end(); ++it)
+    arrayWithLength<Vec3*> offsets = illusion->getIllusionOffsets(partialTick);
+    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
+    double bob = getBob(livingEntity, partialTick);
+    for (unsigned int index = 0; index < offsets.length; ++index)
     {
-        Vec3* offset = *it;
-        MobRenderer::render(entity, x + offset->x, y + offset->y, z + offset->z, yaw, partialTick);
+        Vec3* offset = offsets.data[index];
+        float phase = (float)index;
+        MobRenderer::render(entity,
+                            Mth::cos(phase + (float)(bob * 0.5f)) * 0.025 + x + offset->x,
+                            Mth::cos(phase + (float)(bob * 0.75f)) * 0.0125 + y + offset->y,
+                            Mth::cos(phase + (float)(bob * 0.7f)) * 0.025 + z + offset->z,
+                            yaw, partialTick);
     }
+    delete[] offsets.data;
 }
 
 void IllusionIllagerRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
@@ -88,20 +102,14 @@ void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::render(
     boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks,
     float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
 {
-    boost::shared_ptr<IllusionIllager> illusion = boost::static_pointer_cast<IllusionIllager>(entity);
-    bool renderItems = illusion->isCastingSpell();
-    if (!renderItems)
-    {
-        renderItems = entity->isInvisible();
-    }
-    if (renderItems)
-    {
+    if (boost::static_pointer_cast<IllusionIllager>(entity)->isCastingSpell() ||
+        boost::static_pointer_cast<IllusionIllager>(entity)->isInvisible())
         ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
                                 headPitch, scale, bUseDisplayList);
-    }
 }
 
 void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::translateToHand(const HumanoidArm* arm)
 {
-    ItemInHandLayer::translateToHand(arm);
+    IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
+    model->getArm(arm)->translateTo(0.0625f);
 }

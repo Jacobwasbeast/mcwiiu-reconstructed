@@ -6,16 +6,15 @@
 #include "game/client/render/WitherBossModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
+#include "game/core/WitherBoss.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/WitherArmorLayer.hpp"
-#include "game/core/WitherBoss.hpp"
 
 static ResourceLocation WITHER_LOCATION;
 static ResourceLocation WITHER_INVULNERABLE_LOCATION;
 
 WitherBossRenderer::WitherBossRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitherBossModel(256.0f, ModelDefinition()), 1.0f)
+    : MobRenderer(dispatcher, new WitherBossModel(0.5F, ModelDefinition()), 1.0F)
 {
     addLayer(new WitherArmorLayer(this));
 }
@@ -28,10 +27,10 @@ const ResourceLocation* WitherBossRenderer::getTextureLocation(boost::shared_ptr
 {
     boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
     int invulnerableTicks = wither->getInvulnerableTicks();
+
     if (invulnerableTicks > 0 && (invulnerableTicks > 80 || (invulnerableTicks / 5) % 2 != 1))
-    {
         return &WITHER_INVULNERABLE_LOCATION;
-    }
+
     return &WITHER_LOCATION;
 }
 
@@ -50,19 +49,26 @@ void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float pa
                            (1.0F + swelling * 0.4F) * scale);
 }
 
-unsigned int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v)
+unsigned int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
+                                                 float u, float v)
 {
     boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
-    if (wither->getInvulnerableTicks() < 1)
-    {
-        return LivingEntityRenderer::getOverlayColor(entity, u, v);
-    }
+    int invulnerableTicks = wither->getInvulnerableTicks();
 
-    float alpha = Mth::clamp(wither->getOverlayAlpha(), 0.0F, 1.0F);
-    return ((unsigned int)(alpha * 255.0F) << 24) | 0x00FFFFFF;
+    if (invulnerableTicks < 1)
+        return LivingEntityRenderer::getOverlayColor(entity, u, v);
+
+    float alpha = wither->getOverlayAlpha();
+    if (alpha < 0.0F)
+        alpha = 0.0F;
+    else if (alpha > 1.0F)
+        alpha = 1.0F;
+
+    int overlay = (int)(alpha * 255.0F);
+    return (unsigned int)(overlay << 24) | 0x00FFFFFF;
 }
 
 Model* WitherBossRenderer::createModel(const ModelDefinition& definition)
 {
-    return new WitherBossModel(256.0f, definition);
+    return new WitherBossModel(0.5F, definition);
 }

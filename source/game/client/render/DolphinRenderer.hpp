@@ -19,7 +19,7 @@ public:
     virtual ~DolphinRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual Model* createModel(const ModelDefinition& definition);
 };
 

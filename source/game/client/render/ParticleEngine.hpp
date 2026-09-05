@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
+#include "game/client/render/ParticleProvider.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -16,7 +17,6 @@ class Direction;
 class Entity;
 class Level;
 class Particle;
-class ParticleProvider;
 class Textures;
 class TrackingEmitter;
 

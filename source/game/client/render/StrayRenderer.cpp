@@ -9,10 +9,6 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/SkeletonModel.hpp"
 #include "game/client/render/RenderLayer.hpp"
-#include "game/core/Minecraft.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
-#include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/StrayClothingLayer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -44,12 +40,6 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
                                  bool overlay)
 {
     bool invisibleToPlayer = false;
-    if (!mModel->hasOverriddenParts())
-    {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
-        if (player != NULL)
-            invisibleToPlayer = entity->isInvisibleTo(player);
-    }
 
     std::vector<RenderLayer*>::iterator it = mLayers.begin();
     while (it != mLayers.end())
@@ -58,12 +48,6 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
         if ((mModel->hasOverriddenParts() && !invisibleToPlayer) || layer != mStrayClothingLayer)
         {
             bool skipLayer = false;
-            if (entity->isInvisible())
-            {
-                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-                if (player != NULL && player->SpectateAsFloatingHead() && dynamic_cast<CustomHeadLayer*>(layer) == NULL)
-                    skipLayer = true;
-            }
 
             if (!skipLayer)
             {

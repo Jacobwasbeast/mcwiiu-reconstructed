@@ -2,10 +2,9 @@
 #define GAME_CLIENT_RENDER_ITEMINHANDRENDERER_HPP
 
 #include <boost/shared_ptr.hpp>
-
-#include "game/item/not_null_ptr.hpp"
-#include "game/item/ItemTransforms.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/item/ItemTransforms.hpp"
+#include "game/item/not_null_ptr.hpp"
 
 class Minecraft;
 class Tesselator;
@@ -16,13 +15,14 @@ class LivingEntity;
 class AbstractClientPlayer;
 class LocalPlayer;
 class ItemInstance;
+class EntityRenderDispatcher;
+class ItemRenderer;
 
 class ItemInHandRenderer
 {
 public:
     enum eItemRenderMode { ITEM_RENDER_MODE_NONE, ITEM_RENDER_MODE_GUI, ITEM_RENDER_MODE_3D };
-
-    ItemInHandRenderer(Minecraft* minecraft);
+    ItemInHandRenderer(Minecraft*);
     unsigned long long renderItem3D(Tesselator*, float, float, float, float, int, int, float, eItemRenderMode);
     void Reset();
     void renderItem(boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>, ItemTransforms::TransformType, bool, int, bool);
@@ -50,17 +50,16 @@ public:
     void CalculateNewHandHeights(bool);
     void tick();
     void itemUsed(InteractionHand::EInteractionHand);
-
 private:
     Minecraft* mMinecraft;
-    boost::shared_ptr<ItemInstance> mMainHandItem;
-    boost::shared_ptr<ItemInstance> mOffHandItem;
+    not_null_ptr<ItemInstance> mMainHandItem;
+    not_null_ptr<ItemInstance> mOffHandItem;
     float mMainHandHeight;
     float mOffHandHeight;
     float mMainHandHeightOld;
     float mOffHandHeightOld;
-    float mEquipProgress;
-    void* mEntityRenderDispatcher;
+    EntityRenderDispatcher* mEntityRenderDispatcher;
+    ItemRenderer* mItemRenderer;
     int mListId;
 };
 

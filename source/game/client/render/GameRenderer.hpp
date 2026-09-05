@@ -33,6 +33,13 @@ class SparseDataStorage;
 class GameRenderer
 {
 public:
+    struct PositionStruct
+    {
+        float x;
+        float y;
+        float z;
+    };
+
     GameRenderer(Minecraft* minecraft, ResourceManager* resourceManager);
     ~GameRenderer();
 

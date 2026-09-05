@@ -27,8 +27,8 @@ public:
     void _init(float scale, const ModelDefinition& modelDefinition);
     unsigned int getModelVersion();
 
-    ModelPart* mRightWing;
     ModelPart* mLeftWing;
+    ModelPart* mRightWing;
 };
 
 #endif

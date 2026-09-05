@@ -1,5 +1,7 @@
 #include "game/client/render/DrownedRenderer.hpp"
 
+#include <boost/shared_ptr.hpp>
+
 #include "game/client/render/DrownedModel.hpp"
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/ModelDefinition.hpp"

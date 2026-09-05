@@ -3,14 +3,12 @@
 #include <cmath>
 
 #include "game/client/render/BlockRenderDispatcher.hpp"
-#include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"

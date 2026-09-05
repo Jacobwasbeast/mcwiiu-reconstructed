@@ -132,13 +132,13 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     {
         boost::shared_ptr<AbstractClientPlayer> player = boost::dynamic_pointer_cast<AbstractClientPlayer>(entity);
 
-        player->mRotateElytraX += (xRot - player->mRotateElytraX) * 0.10000000149011612f;
-        player->mRotateElytraY += (yRot - player->mRotateElytraY) * 0.10000000149011612f;
-        player->mRotateElytraZ += (zRot - player->mRotateElytraZ) * 0.10000000149011612f;
+        player->mElytraRotX += (xRot - player->mElytraRotX) * 0.10000000149011612f;
+        player->mElytraRotY += (yRot - player->mElytraRotY) * 0.10000000149011612f;
+        player->mElytraRotZ += (zRot - player->mElytraRotZ) * 0.10000000149011612f;
 
-        mLeftWing->mXRot = player->mRotateElytraX;
-        mLeftWing->mYRot = player->mRotateElytraY;
-        mLeftWing->mZRot = player->mRotateElytraZ;
+        mLeftWing->mXRot = player->mElytraRotX;
+        mLeftWing->mYRot = player->mElytraRotY;
+        mLeftWing->mZRot = player->mElytraRotZ;
     }
     else
     {

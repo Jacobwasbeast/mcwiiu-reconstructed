@@ -1,7 +1,5 @@
 #include "game/client/render/WitchRenderer.hpp"
 
-#include <boost/shared_ptr.hpp>
-
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/WitchModel.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -22,7 +20,7 @@ public:
 static ResourceLocation WITCH_LOCATION;
 
 WitchRenderer::WitchRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitchModel(0.0f, ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new WitchModel(0.0F, ModelDefinition()), 0.5F)
 {
     addLayer(new WitchItemLayer(this));
 }
@@ -35,8 +33,8 @@ void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
                            float yaw, float partialTick)
 {
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    not_null_ptr<ItemInstance> item = mob->getMainHandItem();
-    mob->setAggressive(!item->isEmpty());
+    not_null_ptr<ItemInstance> itemInstance = mob->getMainHandItem();
+    mob->setAggressive(!itemInstance->isEmpty());
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
@@ -47,15 +45,15 @@ const ResourceLocation* WitchRenderer::getTextureLocation(boost::shared_ptr<Enti
 
 void WitchRenderer::translateWeaponItem()
 {
-    GlStateManager::translatef(0.0f, 0.1875f, 0.0f);
+    GlStateManager::translatef(0.0F, 0.1875F, 0.0F);
 }
 
 void WitchRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    GlStateManager::scalef(0.9375f, 0.9375f, 0.9375f);
+    GlStateManager::scalef(0.9375F, 0.9375F, 0.9375F);
 }
 
 Model* WitchRenderer::createModel(const ModelDefinition& definition)
 {
-    return new WitchModel(0.0f, definition);
+    return new WitchModel(0.0F, definition);
 }

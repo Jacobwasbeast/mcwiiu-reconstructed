@@ -153,7 +153,7 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
     {
         GlStateManager::rotatef(itemFrameDisplayRotation(itemFrame->getRotation()), 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-        mItemRenderer->renderStatic(item, boost::shared_ptr<LivingEntity>(), 8, 0.0f, false, NULL);
+        mItemRenderer->renderStatic(item, boost::shared_ptr<LivingEntity>(), static_cast<ItemTransforms::TransformType>(8), 0.0f, false, NULL);
     }
     GlStateManager::enableLighting();
     GlStateManager::popMatrix();

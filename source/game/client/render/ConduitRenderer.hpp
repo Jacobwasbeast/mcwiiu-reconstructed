@@ -16,7 +16,9 @@ public:
     ConduitRenderer();
     virtual ~ConduitRenderer();
 
-    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList);
+    virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
+                        float partialTicks, int breakProgress, bool bTranslucent, float alpha,
+                        bool bUseDisplayList);
 
     void _tessellateHeart() const;
 

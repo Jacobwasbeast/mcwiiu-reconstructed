@@ -12,6 +12,7 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     xd = xa;
     yd = ya;
     zd = za;
+    size *= 0.75f;
     setAlpha(0.9900000095367432f);
     lifetime = random.nextInt(12) + 48;
 }
@@ -36,9 +37,9 @@ void FireworksParticles::FireworksSparkParticle::render(
 {
     if (!flicker || age < lifetime / 3 || ((age + lifetime) / 3 & 1) == 0)
     {
-        float px = (float)((x - xo) * partialTicks + xo - xOff);
-        float py = (float)((y - yo) * partialTicks + yo - yOff);
-        float pz = (float)((z - zo) * partialTicks + zo - zOff);
+        float px = (float)((x - xo) * partialTicks + xo);
+        float py = (float)((y - yo) * partialTicks + yo);
+        float pz = (float)((z - zo) * partialTicks + zo);
 
         if (2.0f <= px * px + py * py + pz * pz)
         {
@@ -63,7 +64,7 @@ void FireworksParticles::FireworksSparkParticle::tick()
     }
 }
 
-uint64_t FireworksParticles::FireworksSparkParticle::GetType()
+long long FireworksParticles::FireworksSparkParticle::GetType()
 {
-    return 0x8022100000000ULL;
+    return 0x8022100000000LL;
 }

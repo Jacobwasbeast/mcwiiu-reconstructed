@@ -1,8 +1,6 @@
 #ifndef GAME_CLIENT_RENDER_EVOCATIONILLAGERRENDERER_HPP
 #define GAME_CLIENT_RENDER_EVOCATIONILLAGERRENDERER_HPP
 
-#include <string>
-
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/MobRenderer.hpp"
@@ -14,11 +12,10 @@
 class Entity;
 class EntityRenderDispatcher;
 class HumanoidArm;
-class IllagerModel;
-class LivingEntity;
 class Model;
 class ModelDefinition;
 class ResourceLocation;
+class LivingEntity;
 
 class EvocationIllagerRenderer : public MobRenderer
 {

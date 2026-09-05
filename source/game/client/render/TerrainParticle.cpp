@@ -119,9 +119,9 @@ void TerrainParticle::render(BufferBuilder* buffer,
 {
     float scale = 0.1f * size;
 
-    float px = (float)(xo + (x - xo) * partialTicks - Particle::xOff);
-    float py = (float)(yo + (y - yo) * partialTicks - Particle::yOff);
-    float pz = (float)(zo + (z - zo) * partialTicks - Particle::zOff);
+    float px = (float)(xo + (x - xo) * partialTicks);
+    float py = (float)(yo + (y - yo) * partialTicks);
+    float pz = (float)(zo + (z - zo) * partialTicks);
 
     int light = getLightColor(partialTicks);
 

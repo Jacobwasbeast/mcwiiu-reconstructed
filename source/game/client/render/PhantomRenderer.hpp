@@ -19,13 +19,13 @@ public:
     virtual ~PhantomRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
-    virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
-                                float rotationYaw, float partialTicks);
     virtual Model* createModel(const ModelDefinition& definition);
     virtual void renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                              float limbSwingAmount, float ageInTicks, float netHeadYaw,
                              float headPitch, float scale);
+    virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
+                                float rotationYaw, float partialTicks);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
 };
 
 #endif

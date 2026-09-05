@@ -77,7 +77,7 @@ void SheepFurModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
                               boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, skinAdjustments);
+                              scale, entity, _SkinAdjustments());
     mHead->mXRot = mHeadEatAngleScale;
 }
 

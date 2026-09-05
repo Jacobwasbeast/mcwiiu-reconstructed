@@ -4,7 +4,7 @@
 #include "game/client/render/PhantomModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation PHANTOM_LOCATION;
@@ -18,8 +18,9 @@ PhantomRenderer::~PhantomRenderer()
 {
 }
 
-const ResourceLocation* PhantomRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
+const ResourceLocation* PhantomRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
+    (void)entity;
     return &PHANTOM_LOCATION;
 }
 
@@ -27,14 +28,14 @@ void PhantomRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float parti
 {
     LivingEntityRenderer::scale(entity, partialTick);
     GlStateManager::scalef(0.75F, 0.75F, 0.75F);
-    GlStateManager::translatef(0.0F, 1.035F, 0.0F);
+    GlStateManager::translatef(0.0F, 1.3125F, 0.0F);
 }
 
 void PhantomRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
                                      float rotationYaw, float partialTicks)
 {
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
-    GlStateManager::rotatef(entity->mYRot, 1.0F, 0.0F, 0.0F);
+    GlStateManager::rotatef(entity->mXRot, 1.0F, 0.0F, 0.0F);
 }
 
 Model* PhantomRenderer::createModel(const ModelDefinition& definition)
@@ -50,15 +51,20 @@ void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float
     if (!isVisible(entity))
     {
         boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
-        if (entity->isInvisibleTo(player))
-            return;
-        translucent = true;
-        GlStateManager::setProfile();
+        if (!entity->isInvisibleTo(player))
+            translucent = true;
     }
 
+    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    if (!bindTexture(renderEntity))
+        return;
+
+    if (translucent)
+        GlStateManager::setProfile();
+
     Model* model = getModel(entity);
-    model->render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                  translucent);
+    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+                  true);
 
     if (translucent)
         GlStateManager::unsetProfile();

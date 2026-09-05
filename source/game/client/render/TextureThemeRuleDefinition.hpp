@@ -7,16 +7,18 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/client/render/TextureTheme.hpp"
 #include "game/world/block/GenericMultiBlockThemeRuleDefinition.hpp"
+#include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
+#include "game/world/generation/LayerTheme.hpp"
 #include "game/world/generation/ShaftsLayerThemeRuleDefinition.hpp"
 
-class TextureThemeRuleDefinition : public GameRuleDefinition
+class TextureThemeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerTheme*>
 {
 public:
     class BlockStackGetter
     {
     public:
-        virtual ~BlockStackGetter();
         virtual void getStack(TextureTheme::BlockStack& stack) = 0;
+        virtual ~BlockStackGetter();
         std::vector<std::wstring> getColours() const;
 
     protected:
@@ -27,6 +29,10 @@ public:
                             public BlockStackGetter
     {
     public:
+        IndexedBlockDef()
+        {
+            addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(77), &mColours);
+        }
         virtual ~IndexedBlockDef();
         virtual void getStack(TextureTheme::BlockStack& stack);
     };
@@ -45,11 +51,12 @@ public:
                                              public BlockStackGetter
     {
     public:
+        MaskedShaftsThemeRuleDefinition()
+        {
+            addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(77), &mColours);
+        }
         virtual ~MaskedShaftsThemeRuleDefinition();
         virtual void getStack(TextureTheme::BlockStack& stack);
-
-    private:
-        int mMask;
     };
 
     TextureThemeRuleDefinition();

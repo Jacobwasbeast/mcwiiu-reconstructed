@@ -7,6 +7,7 @@
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferedImage.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -186,7 +187,7 @@ std::wstring AbstractTexturePack::getAnimationString(const std::wstring& fileNam
 
 void AbstractTexturePack::loadDefaultUI()
 {
-    g_ConsoleUIController.ReloadSkin();
+    gConsoleUIController.ReloadSkin();
 }
 
 void AbstractTexturePack::loadDefaultColourTable()
@@ -195,7 +196,7 @@ void AbstractTexturePack::loadDefaultColourTable()
 
     if (!file.exists())
     {
-        theApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", __LINE__);
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", __LINE__);
     }
     else
     {
@@ -215,9 +216,9 @@ void AbstractTexturePack::loadDefaultColourTable()
 
 void AbstractTexturePack::loadDefaultHTMLColourTable()
 {
-    if (theApp.hasArchiveFile(L"HTMLColours.col", false))
+    if (gApp.hasArchiveFile(L"HTMLColours.col", false))
     {
-        arrayWithLength<unsigned char> colourData = theApp.getArchiveFile(L"HTMLColours.col", false);
+        arrayWithLength<unsigned char> colourData = gApp.getArchiveFile(L"HTMLColours.col", false);
 
         m_pColourTable->loadColoursFromData(colourData.data, colourData.length);
 

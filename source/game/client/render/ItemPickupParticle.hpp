@@ -10,8 +10,6 @@ class Entity;
 class EntityRenderDispatcher;
 class Level;
 
-const long long PARTICLE_TYPE_ITEM_PICKUP = 0x0000000000080225LL;
-
 class ItemPickupParticle : public Particle
 {
 public:

@@ -6,10 +6,10 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/GlStateManager.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
+#include "game/core/HumanoidArm.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-class SpellcasterIllager : public LivingEntity
+class SpellcasterIllager
 {
 public:
     virtual bool isCastingSpell();
@@ -61,7 +61,7 @@ void EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::render(
     boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks,
     float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
 {
-    boost::shared_ptr<SpellcasterIllager> illager = boost::static_pointer_cast<SpellcasterIllager>(entity);
+    SpellcasterIllager* illager = (SpellcasterIllager*)entity.get();
     if (illager->isCastingSpell())
     {
         ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,

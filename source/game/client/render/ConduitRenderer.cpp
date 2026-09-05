@@ -31,7 +31,9 @@ ConduitRenderer::~ConduitRenderer()
 {
 }
 
-void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float partialTicks, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
+void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
+                             float partialTicks, int breakProgress, bool bTranslucent, float alpha,
+                             bool bUseDisplayList)
 {
     if (blockEntity->GetType() != 0x0120021200000000ULL)
     {
@@ -40,7 +42,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
 
     boost::shared_ptr<ConduitBlockEntity> conduit = boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
 
-    float rotation = conduit->mRotation;
+    float rotation = conduit->mActiveRotation;
 
     if (!conduit->mActive)
     {
@@ -79,8 +81,8 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
 
     GlStateManager::disableCull();
 
-    conduit->mRotation = Mth::wrapDegrees(((float)conduit->mTickCount + partialTicks) * -2.0F);
-    conduit->mTickCount = conduit->mTickCount + 1;
+    conduit->mActiveRotation = Mth::wrapDegrees(((float)conduit->mRotationTick + partialTicks) * -2.0F);
+    ++conduit->mRotationTick;
 
     float bob = Mth::sin(((float)conduit->mTickCount + partialTicks) * 0.1F) * 0.5F + 0.5F;
 
@@ -120,7 +122,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
 
     GlStateManager::pushMatrix();
 
-    if (conduit->mLarge)
+    if (conduit->mHunting)
     {
         bindTexture(&OPEN_EYE_TEXTURE);
     }
@@ -139,13 +141,13 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
     GlStateManager::disableCull();
 
     int windLevel = conduit->mWindLevel;
-    float windOffset = conduit->mAnimation;
+    float windOffset = conduit->mAnimationValue;
 
-    if ((conduit->mTickCount & 7) == 0)
+    if ((conduit->mRotationTick & 7) == 0)
     {
         conduit->incrementAnimationValue(0.045454547F);
 
-        if (conduit->mAnimation == 0.0F)
+        if (conduit->mAnimationValue == 0.0F)
         {
             conduit->incrementWindLevel();
         }

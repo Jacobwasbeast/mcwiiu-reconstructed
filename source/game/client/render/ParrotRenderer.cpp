@@ -4,9 +4,32 @@
 #include "game/client/render/ParrotModel.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
-#include "game/core/Parrot.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
+
+class Parrot : public LivingEntity
+{
+public:
+    int getVariant();
+    float mFlapTime;
+    float mOFlapSpeed;
+    float mFlapSpeed;
+    float mOFlap;
+};
+
+class Player : public LivingEntity
+{
+public:
+    float mFlap;
+    float mOFlap;
+    float mFlapSpeed;
+    float mOFlapSpeed;
+};
+
+class MultiplayerLocalPlayer : public Entity
+{
+};
 
 static ResourceLocation PARROT_LOCATIONS[5];
 

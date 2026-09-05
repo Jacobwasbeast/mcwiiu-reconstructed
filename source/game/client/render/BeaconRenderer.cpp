@@ -6,7 +6,6 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
 #include "game/util/ResourceLocation.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/block/BeaconBlockEntity.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -41,14 +40,15 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     double time = gameTime + partialTicks;
-    double offset = Mth::frac(-time * 0.2 - (double)Mth::floor(-time * 0.1));
+    double signedTime = endY < 0 ? time : -time;
+    double offset = Mth::frac(signedTime * 0.2 - (double)Mth::floor(signedTime * 0.1)) - 1.0;
     double angle = time * 0.025 * -1.5;
     double corner0 = angle + 2.35619455575943;
     double corner1 = angle + 0.7853981852531433;
     double corner2 = angle + 3.9269909262657166;
     double corner3 = angle + 5.497787296772003;
     double u0 = offset + 2.5;
-    double u1 = offset + beamHeight * 2.5;
+    double u1 = offset + (double)endY * beamHeight * 2.5;
     float red = colors.data[0];
     float green = colors.data[1];
     float blue = colors.data[2];
@@ -93,22 +93,23 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     double glow1 = x + 0.5 + outerRadius;
     double glowZ0 = z + 0.5 - outerRadius;
     double glowZ1 = z + 0.5 + outerRadius;
-    builder->vertexUV((float)glow0, (float)y1, (float)glowZ0, 0.0F, (float)(u1 + offset));
+    double glowV1 = (double)endY * beamHeight + offset;
+    builder->vertexUV((float)glow0, (float)y1, (float)glowZ0, 0.0F, (float)glowV1);
     builder->vertexUV((float)glow0, (float)y0, (float)glowZ0, 0.0F, (float)offset);
     builder->vertexUV((float)glow1, (float)y0, (float)glowZ0, 1.0F, (float)offset);
-    builder->vertexUV((float)glow1, (float)y1, (float)glowZ0, 1.0F, (float)(u1 + offset));
-    builder->vertexUV((float)glow1, (float)y1, (float)glowZ1, 0.0F, (float)(u1 + offset));
+    builder->vertexUV((float)glow1, (float)y1, (float)glowZ0, 1.0F, (float)glowV1);
+    builder->vertexUV((float)glow1, (float)y1, (float)glowZ1, 0.0F, (float)glowV1);
     builder->vertexUV((float)glow1, (float)y0, (float)glowZ1, 0.0F, (float)offset);
     builder->vertexUV((float)glow0, (float)y0, (float)glowZ1, 1.0F, (float)offset);
-    builder->vertexUV((float)glow0, (float)y1, (float)glowZ1, 1.0F, (float)(u1 + offset));
-    builder->vertexUV((float)glow1, (float)y1, (float)glowZ0, 0.0F, (float)(u1 + offset));
+    builder->vertexUV((float)glow0, (float)y1, (float)glowZ1, 1.0F, (float)glowV1);
+    builder->vertexUV((float)glow1, (float)y1, (float)glowZ0, 0.0F, (float)glowV1);
     builder->vertexUV((float)glow1, (float)y0, (float)glowZ0, 0.0F, (float)offset);
     builder->vertexUV((float)glow1, (float)y0, (float)glowZ1, 1.0F, (float)offset);
-    builder->vertexUV((float)glow1, (float)y1, (float)glowZ1, 1.0F, (float)(u1 + offset));
-    builder->vertexUV((float)glow0, (float)y1, (float)glowZ1, 0.0F, (float)(u1 + offset));
+    builder->vertexUV((float)glow1, (float)y1, (float)glowZ1, 1.0F, (float)glowV1);
+    builder->vertexUV((float)glow0, (float)y1, (float)glowZ1, 0.0F, (float)glowV1);
     builder->vertexUV((float)glow0, (float)y0, (float)glowZ1, 0.0F, (float)offset);
     builder->vertexUV((float)glow0, (float)y0, (float)glowZ0, 1.0F, (float)offset);
-    builder->vertexUV((float)glow0, (float)y1, (float)glowZ0, 1.0F, (float)(u1 + offset));
+    builder->vertexUV((float)glow0, (float)y1, (float)glowZ0, 1.0F, (float)glowV1);
     builder->end();
     GlStateManager::enableLighting();
     GlStateManager::enableTexture();

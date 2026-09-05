@@ -2,20 +2,13 @@
 
 #include <cmath>
 
-#include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/ItemRenderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
-#include "game/item/Item.hpp"
-#include "game/item/ItemColors.hpp"
-#include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
-#include "game/world/block/Block.hpp"
-#include "game/world/block/BlockState.hpp"
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher), mItemRenderer(itemRenderer), mRandom(), mItemFrame(false), mIsGui3d(true)
@@ -64,34 +57,29 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
 }
 
 void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                                float yaw, float partialTick)
+                                float, float partialTick)
 {
     boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(entity);
     not_null_ptr<ItemInstance> item = itemEntity->getItem();
-    Item* itemType = item->getItem();
-    if (itemType == NULL)
+    if (mItemRenderer == NULL)
         return;
 
     mRandom.setSeed(187L);
-    int count = 1;
-    if (item->getCount() > 1)
-        count = 2;
-    if (item->getCount() > 5)
-        count = 3;
-    if (item->getCount() > 20)
-        count = 4;
-    if (item->getCount() > 40)
-        count = 5;
-
-    TextureAtlasSprite* sprite = itemType->getIcon(item);
-    if (sprite == NULL)
-        return;
+    int count = (int)getRenderAmount(item);
+    float bob = std::sin(((float)itemEntity->getAge() + partialTick) / 10.0F) * 0.1F + 0.1F;
 
     GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::translatef((float)x, (float)y + bob, (float)z);
     GlStateManager::enableRescaleNormal();
-    GlStateManager::scalef(0.5F, 0.5F, 0.5F);
     bindTexture(entity);
+
+    bool gui3d = mItemRenderer->isGui3d(item);
+    if (gui3d)
+        GlStateManager::rotatef((((float)itemEntity->getAge() + partialTick) / 20.0F + itemEntity->mYRot) * 57.295776F,
+                                0.0F, 1.0F, 0.0F);
+    else
+        GlStateManager::rotatef(180.0F - itemEntity->mYRot, 0.0F, 1.0F, 0.0F);
+
     if (mItemFrame)
     {
         GlStateManager::scalef(1.25F, 1.25F, 1.25F);
@@ -99,54 +87,32 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
         GlStateManager::disableLighting();
     }
 
-    Block* block = Block::byItem(itemType);
-    const BlockState* blockState = block == NULL ? NULL : block->defaultBlockState();
-    bool renderBlock = blockState != NULL && blockState->getRenderShape() != BLOCK_RENDER_INVISIBLE;
-    bool render3d = itemType->getIconType() != 0;
-
-    if (renderBlock && mIsGui3d)
+    for (int layer = 0; layer < count; ++layer)
     {
-        float scale = 1.0F;
-        if (blockState->getRenderShape() == BLOCK_RENDER_ENTITY)
-            scale = 0.5F;
-        GlStateManager::scalef(scale, scale, scale);
-        for (int layer = 0; layer < count; ++layer)
+        GlStateManager::pushMatrix();
+        if (layer > 0)
         {
-            GlStateManager::pushMatrix();
-            if (layer > 0)
+            if (gui3d)
                 GlStateManager::translatef((mRandom.nextFloat() * 2.0F - 1.0F) * 0.2F,
                                            (mRandom.nextFloat() * 2.0F - 1.0F) * 0.2F,
                                            (mRandom.nextFloat() * 2.0F - 1.0F) * 0.2F);
-            Minecraft::GetInstance()->getBlockRenderer()->renderSingleBlock(blockState, 1.0F, 1.0F, true);
-            GlStateManager::popMatrix();
+            else
+                GlStateManager::translatef(0.0F, 0.0F, 0.084375F);
         }
-    }
-    else
-    {
-        if (render3d)
-        {
-            int color = Minecraft::GetInstance()->getItemColors()->getColor(item, 0);
-            GlStateManager::color4f(((color >> 16) & 255) / 255.0F,
-                                    ((color >> 8) & 255) / 255.0F,
-                                    (color & 255) / 255.0F, 1.0F);
-        }
-        renderItemBillboard(itemEntity, sprite, count, 1.0F, 1.0F, 1.0F, 1.0F);
+        mItemRenderer->renderStatic(item, boost::shared_ptr<LivingEntity>(), ItemTransforms::GROUND,
+                                    partialTick, false, NULL);
+        GlStateManager::popMatrix();
     }
 
-    if (item->hasFoil() && mItemRenderer != NULL)
-        mItemRenderer->renderFoilLayer(Tesselator::getInstance());
     if (mItemFrame)
         GlStateManager::enableLighting();
     GlStateManager::disableRescaleNormal();
     GlStateManager::popMatrix();
-    (void)yaw;
-    (void)partialTick;
 }
 
-const ResourceLocation* ItemEntityRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* ItemEntityRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     static ResourceLocation location;
-    (void)entity;
     return &location;
 }
 

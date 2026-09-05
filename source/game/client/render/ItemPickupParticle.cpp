@@ -11,12 +11,12 @@ ItemPickupParticle::ItemPickupParticle(Level* level,
                                        boost::shared_ptr<Entity> target,
                                        float yOffs)
     : Particle(level,
+               itemEntity->mXo,
+               itemEntity->mYo,
+               itemEntity->mZo,
                itemEntity->mX,
                itemEntity->mY,
-               itemEntity->mZ,
-               itemEntity->mXd,
-               itemEntity->mYd,
-               itemEntity->mZd)
+               itemEntity->mZ)
 {
     this->entityRenderDispatcher = Minecraft::GetInstance()->getEntityRenderDispatcher();
     this->itemEntity = itemEntity;
@@ -30,7 +30,7 @@ ItemPickupParticle::~ItemPickupParticle()
 
 long long ItemPickupParticle::GetType()
 {
-    return PARTICLE_TYPE_ITEM_PICKUP;
+    return 0x0008022500000000LL;
 }
 
 void ItemPickupParticle::tick()
@@ -60,13 +60,13 @@ void ItemPickupParticle::render(BufferBuilder* buffer,
     float t = ((float)age + partialTicks) / (float)lifetime;
     t *= t;
 
-    double fromX = itemEntity->mX;
-    double fromY = itemEntity->mY;
-    double fromZ = itemEntity->mZ;
+    double fromX = itemEntity->mXo;
+    double fromY = itemEntity->mYo;
+    double fromZ = itemEntity->mZo;
 
-    double toX = target->mXOld + (target->mX - target->mXOld) * partialTicks;
-    double toY = target->mYOld + (target->mY - target->mYOld) * partialTicks + (double)yOffs;
-    double toZ = target->mZOld + (target->mZ - target->mZOld) * partialTicks;
+    double toX = target->mXOld + (target->mXo - target->mXOld) * partialTicks;
+    double toY = target->mYOld + (target->mYo - target->mYOld) * partialTicks + (double)yOffs;
+    double toZ = target->mZOld + (target->mZo - target->mZOld) * partialTicks;
 
     double px = fromX + (toX - fromX) * t;
     double py = fromY + (toY - fromY) * t;
@@ -86,7 +86,7 @@ void ItemPickupParticle::render(BufferBuilder* buffer,
                                    (float)px,
                                    (float)py,
                                    (float)pz,
-                                   itemEntity->mYRot,
+                                   itemEntity->mBbHeight,
                                    partialTicks,
                                    false,
                                    false,

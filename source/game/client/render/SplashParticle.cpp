@@ -1,0 +1,41 @@
+#include "game/client/render/SplashParticle.hpp"
+
+#include "game/core/Mth.hpp"
+
+SplashParticle::SplashParticle(Level* level, double x, double y, double z,
+                               double xa, double ya, double za)
+    : WaterDropParticle(level, x, y, z)
+{
+    setMiscTex(16);
+
+    if (Mth::almostEquals(ya, 0.0, 2.2204460492503131e-16) &&
+        (!Mth::almostEquals(xa, 0.0, 2.2204460492503131e-16) ||
+         !Mth::almostEquals(za, 0.0, 2.2204460492503131e-16)))
+    {
+        zd = za;
+        xd = xa;
+        yd = ya + 0.1;
+    }
+}
+
+SplashParticle::~SplashParticle()
+{
+}
+
+long long SplashParticle::GetType()
+{
+    return 0x0008020e00000000LL;
+}
+
+Particle* SplashParticle::Provider::createParticle(ePARTICLE_TYPE type,
+                                                    Level* level,
+                                                    double x,
+                                                    double y,
+                                                    double z,
+                                                    double xa,
+                                                    double ya,
+                                                    double za,
+                                                    arrayWithLength<int> params)
+{
+    return new SplashParticle(level, x, y, z, xa, ya, za);
+}

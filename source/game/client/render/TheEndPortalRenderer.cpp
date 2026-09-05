@@ -79,7 +79,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
         {
             bindTexture(&END_PORTAL_LOCATION);
             fogColorReset = true;
-            Minecraft::GetInstance()->gameRenderer->resetFogColor(true);
+            Minecraft::GetInstance()->mGameRenderer->resetFogColor(true);
 
             if (i == 1)
             {
@@ -203,7 +203,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
     if (fogColorReset)
     {
-        Minecraft::GetInstance()->gameRenderer->resetFogColor(false);
+        Minecraft::GetInstance()->mGameRenderer->resetFogColor(false);
     }
 }
 
