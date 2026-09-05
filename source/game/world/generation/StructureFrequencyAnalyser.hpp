@@ -18,9 +18,7 @@ public:
     ~StructureFrequencyAnalyser();
 
     void run(unsigned int seedCount);
-
     void print() const;
-
     static void runTests();
 
 private:

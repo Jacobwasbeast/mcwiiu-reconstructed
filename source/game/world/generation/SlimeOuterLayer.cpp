@@ -1,0 +1,91 @@
+#include "game/world/generation/SlimeOuterLayer.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/GlStateManager.hpp"
+#include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/SlimeModel.hpp"
+#include "game/client/render/SlimeRenderer.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/entity/mob/Entity.hpp"
+
+SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
+{
+    mRenderer = renderer;
+    ModelDefinition modelDefinition;
+    mModel = new SlimeModel(0, modelDefinition);
+    mDefaultModel = NULL;
+}
+
+SlimeOuterLayer::~SlimeOuterLayer()
+{
+}
+
+void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                             float limbSwingAmount, float partialTicks, float ageInTicks,
+                             float netHeadYaw, float headPitch, float scale,
+                             bool bUseDisplayList)
+{
+    if (entity->isInvisible())
+    {
+        return;
+    }
+
+    bool cull = mModel->hasOverriddenParts();
+    if (cull)
+    {
+        GlStateManager::enableCull();
+        GlStateManager::cullFace(1);
+    }
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableNormalize();
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
+
+    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    mModel->copyPropertiesFrom(mRenderer->getModel(entity));
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                   headPitch, scale, bUseDisplayList);
+
+    GlStateManager::disableBlend();
+    GlStateManager::disableNormalize();
+    if (cull)
+    {
+        GlStateManager::disableCull();
+    }
+}
+
+bool SlimeOuterLayer::colorsOnDamage()
+{
+    return true;
+}
+
+void SlimeOuterLayer::setupForTexturePack(TexturePack* pTexturePack)
+{
+    Model* model = mModel;
+    if (mDefaultModel == NULL)
+    {
+        mDefaultModel = model;
+    }
+
+    if (model != mDefaultModel)
+    {
+        if (model != NULL)
+        {
+            delete model;
+        }
+        mModel = NULL;
+    }
+
+    const std::wstring modelName = L"slime_armor";
+    if (!pTexturePack->HasCustomModel(modelName))
+    {
+        mModel = mDefaultModel;
+    }
+    else
+    {
+        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(modelName));
+    }
+}

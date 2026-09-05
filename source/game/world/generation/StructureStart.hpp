@@ -13,7 +13,7 @@ class DataOutputStream;
 class Level;
 class Random;
 
-class StructureStart : public std::vector<StructurePiece*>
+class StructureStart
 {
 public:
     StructureStart();
@@ -24,7 +24,7 @@ public:
     bool isDirty();
     unsigned int getChunkX();
     unsigned int getChunkZ();
-    std::vector<StructurePiece*>* getPieces();
+    void getPieces();
     void clearDirty();
     void setDirty();
 
@@ -41,6 +41,7 @@ public:
     virtual void notifyPostProcessAt(ChunkPos* chunkPos);
 
 private:
+    std::vector<StructurePiece*> mPieces;
     BoundingBox* mBoundingBox;
     int mChunkX;
     int mChunkZ;

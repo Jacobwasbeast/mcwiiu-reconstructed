@@ -1,0 +1,101 @@
+#include "game/world/generation/BonusChestFeature.hpp"
+
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+
+BonusChestFeature::~BonusChestFeature()
+{
+}
+
+bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& origin)
+{
+    return place(level, random, origin, false);
+}
+
+bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& origin, bool useOrigin)
+{
+    BlockPos position = origin;
+
+    if (!useOrigin)
+    {
+        const BlockState* state = level->getBlockState(position);
+        while (state->getMaterial() == Material::AIR || state->getMaterial() == Material::WATER)
+        {
+            if (position.y < 2)
+            {
+                break;
+            }
+
+            position = position.below();
+            state = level->getBlockState(position);
+        }
+
+        if (position.y < 1)
+        {
+            return false;
+        }
+
+        position = position.above();
+    }
+
+    for (int attempt = 0; attempt < 4; ++attempt)
+    {
+        BlockPos candidate(0, 0, 0);
+        if (!useOrigin)
+        {
+            candidate = position.offset(random.nextInt(4) - random.nextInt(4),
+                                        random.nextInt(3) - random.nextInt(3),
+                                        random.nextInt(4) - random.nextInt(4));
+        }
+        else
+        {
+            candidate = position.offset(0, 0, -1);
+        }
+
+        if (!level->isEmptyBlock(candidate))
+        {
+            continue;
+        }
+
+        if (!level->getBlockState(candidate.below())->isSolid())
+        {
+            continue;
+        }
+
+        level->setBlock(candidate, Blocks::chest->defaultBlockState(), 2, false);
+
+        const BlockPos east = candidate.east();
+        const BlockPos west = candidate.west();
+        const BlockPos north = candidate.north();
+        const BlockPos south = candidate.south();
+
+        if (level->isEmptyBlock(west) && level->getBlockState(west.below())->isSolid())
+        {
+            level->setBlock(west, Blocks::torch->defaultBlockState(), 2, false);
+        }
+
+        if (level->isEmptyBlock(east) && level->getBlockState(east.below())->isSolid())
+        {
+            level->setBlock(east, Blocks::torch->defaultBlockState(), 2, false);
+        }
+
+        if (level->isEmptyBlock(north) && level->getBlockState(north.below())->isSolid())
+        {
+            level->setBlock(north, Blocks::torch->defaultBlockState(), 2, false);
+        }
+
+        if (level->isEmptyBlock(south) && level->getBlockState(south.below())->isSolid())
+        {
+            level->setBlock(south, Blocks::torch->defaultBlockState(), 2, false);
+        }
+
+        return true;
+    }
+
+    return false;
+}

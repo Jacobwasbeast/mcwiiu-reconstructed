@@ -6,6 +6,7 @@
 #include "game/util/ACTUuid.hpp"
 
 struct FFLCreateID;
+class CAchievements;
 
 class PlayerUID
 {
@@ -22,6 +23,8 @@ public:
     bool operator!=(const PlayerUID& other) const;
 
 private:
+    friend class CAchievements;
+
     union
     {
         ACTUuid uuid;

@@ -1,32 +1,188 @@
 #ifndef GAME_WORLD_GENERATION_PLAYERSTATS_HPP
 #define GAME_WORLD_GENERATION_PLAYERSTATS_HPP
-#include <vector>
+
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
+
 #include <boost/unordered_map.hpp>
+
+#include "game/core/Scoreboard.hpp"
+#include "game/core/StatTracker.hpp"
 #include "game/core/StatsUID.hpp"
-#include "game/core/UntypedStatTracker.hpp"
-class DamageEvent;
-class Item;
+
+class CheckpointRuleDefinition;
 class ContainerInfo;
+class DamageEvent;
+class GameMedal;
+class Item;
+
 typedef int eTimeSpentCategory;
-namespace Scoreboard { class Weapon { public: Weapon(); int mItemId; int mPotionId; }; }
+
 class PlayerStats
 {
 public:
- class RoundStats
- {
- public:
-  class BlockInteractionInfo { public: BlockInteractionInfo(); int mCount; std::map<int,int> placed; std::map<int,int> mined; std::map<int,int> used; };
-  struct PerLifeStats { std::vector<UntypedStatTracker*> trackers; int values[5]; PerLifeStats(); };
-  RoundStats(const StatsUID&); ~RoundStats();
-  std::vector<UntypedStatTracker*> trackers; bool won; bool reachedEnd; int round; int deaths; int kills; int points; int jumpCount; int distance[2]; int mDistance[6]; UntypedStatTracker* mDamageDealt; std::vector<ContainerInfo*> containers; std::vector<Item*> itemsUsedList; Scoreboard::Weapon weapon; int itemsUsed; int potions; std::vector<unsigned int> checkpointTimes; int splashPotions; bool reachedEndFlag; int thermals; bool secondaryTargetsFlag; int secondaryTargets; int lastPointsAdded; int mTimeSpent[2]; double topSpeed; std::vector<std::wstring> medals; std::vector<std::wstring> medalNames; double mBestTime; double mCurrentTime; double mTotalTime; boost::unordered_map<int,int> itemCounts; BlockInteractionInfo blocksDestroyed; BlockInteractionInfo blocksPlaced; BlockInteractionInfo blocksUsed; int mReserved[4]; std::vector<PerLifeStats> lifeStats;
-  PerLifeStats* getLifeStats(int); int getNumberLifeStats() const; void MedalTimestamp(eTimeSpentCategory,bool,long long);
- };
- PlayerStats(const StatsUID&); ~PlayerStats();
- RoundStats* getRoundStats(unsigned int); void updateTrackedStats(int,const DamageEvent*); int getTotalRounds(); double getDamageDealt(int); double getDamageTaken(int); int getTotalDistanceMoved(unsigned int); double getAllDamageTaken(); int getTotalJumpCount(); int getTotalDeaths(); int getDeaths(unsigned int); int getDeathsInAnyRound(int); int getTotalKills(); void getAllItems(std::map<int,int>&) const; int getTotalWalkDistance(); int getTotalSprintDistance(); int getTotalSneakDistance(); int getTotalSwimDistance(); int getTotalUnderwaterDistance(); int getTotalClimbDistance(); void getAllItemsUsed(std::vector<Item*>&) const; int getTotalRoundsWon(); unsigned char getRoundWon(unsigned int); int getTotalBlocksDestroyed(); int getTotalSplashPotionsUsed(); int getTotalPotionsUsed(); int getTotalLifeSpan(); int getLifeSpan(unsigned int); int getBestLifeSpan(bool,bool); int getTotalPoints(); int getPoints(unsigned int); int getBestPoints(bool,bool); unsigned char getReachedEnd(unsigned int); int getTotalThermalsEntered(); bool hasSpawnedAtCheckpoint(int,unsigned int); bool hasSpawnedAtAllCheckpointsInOneRound(); double getTopSpeed(); int getImprovement(); bool hasRoundStats(unsigned int) const; int getTotalSecondaryTargets(); void getAllContainers(std::vector<ContainerInfo*>&) const; int GetLastPointsAdded(unsigned int); int getTotalRoundsReachedEnd(); bool hasSpawnedAtCheckpoint(int); bool hasSpawnedAtAllCheckpoints();
+    class RoundStats
+    {
+    public:
+        class BlockInteractionInfo
+        {
+        public:
+            BlockInteractionInfo();
+
+            int mCount;
+            std::map<int, int> mItems;
+            std::map<int, int> mPlayers;
+            std::map<int, int> mRounds;
+        };
+
+        typedef std::wstring PerLifeStats;
+
+        RoundStats(const StatsUID& statsUID);
+        ~RoundStats();
+
+        PerLifeStats* getLifeStats(int life);
+        int getNumberLifeStats() const;
+        void MedalTimestamp(eTimeSpentCategory category, bool start, long long timestamp);
+
+        std::vector<UntypedStatTracker*> mTrackers;
+        bool mWon;
+        bool mActive;
+        StatTracker<float>* mDamageDealt;
+        StatTracker<float>* mDamageReceived;
+        UntypedStatTracker* mLastPlayerDamage;
+        UntypedStatTracker* mLastPlayerFatalDamage;
+        UntypedStatTracker* mKillsWithBow;
+        UntypedStatTracker* mMaxSnowballHits;
+        int mJumpCount;
+        int mKills;
+        std::map<int, int> mItems;
+        std::vector<ContainerInfo*> mContainers;
+        int mWalkDistance;
+        int mSprintDistance;
+        int mSneakDistance;
+        int mSwimDistance;
+        int mUnderwaterDistance;
+        int mClimbDistance;
+        std::vector<Item*> mItemsUsed;
+        int mSplashPotionsUsed;
+        int mPotionsUsed;
+        int mSecondaryTargets;
+        int mLifeSpan;
+        Scoreboard::Weapon mWeapon;
+        int mBlocksPlaced;
+        int mItemsCollected;
+        int mLayer;
+        int mLastCheckpointId;
+        std::vector<unsigned int> mCheckpointTimes;
+        int mLastCheckpointSequenceId;
+        bool mFinished;
+        int mLives;
+        bool mReachedEnd;
+        int mDeaths;
+        int mLastPointsAdded;
+        int mPoints;
+        int mBonusPoints;
+        int mRoundTime;
+        int mTotalTime;
+        double mTopSpeed;
+        std::vector<std::wstring> mMedals;
+        std::vector<std::wstring> mMedalNames;
+        int mDistanceStats[3];
+        int mProgressStats[3];
+        int mRoundStats[4];
+        double mBestTime;
+        double mCurrentTime;
+        double mPreviousTime;
+        boost::unordered_map<int, int> mThermalsEntered;
+        int mTimeSpent[6];
+        int mTimeSpentPadding;
+        long long mTimestamp[6];
+        std::set<int> mSpawnedCheckpoints;
+        int mCheckpointPadding[8];
+        BlockInteractionInfo mBlocksPlacedInfo;
+        BlockInteractionInfo mBlocksDestroyed;
+        BlockInteractionInfo mBlocksUsed;
+        unsigned short mDeathsByType[4];
+        unsigned short mKillsByType[4];
+        std::wstring mWinningTheme;
+        std::vector<PerLifeStats> mLifeStats;
+    };
+
+    PlayerStats(const StatsUID& statsUID);
+    ~PlayerStats();
+
+    RoundStats* getRoundStats(unsigned int round);
+    void updateTrackedStats(int round, const DamageEvent* damageEvent);
+    int getTotalRounds();
+    double getDamageDealt(int round);
+    double getDamageTaken(int round);
+    int getTotalDistanceMoved(unsigned int round);
+    double getAllDamageTaken();
+    int getTotalJumpCount();
+    int getTotalDeaths();
+    int getDeaths(unsigned int round);
+    int getDeathsInAnyRound(int deaths);
+    int getTotalKills();
+    void getAllItems(std::map<int, int>& items);
+    int getTotalWalkDistance();
+    int getTotalSprintDistance();
+    int getTotalSneakDistance();
+    int getTotalSwimDistance();
+    int getTotalUnderwaterDistance();
+    int getTotalClimbDistance();
+    void getAllItemsUsed(std::vector<Item*>& items);
+    int getTotalRoundsWon();
+    unsigned char getRoundWon(unsigned int round);
+    int getTotalBlocksDestroyed();
+    int getTotalSplashPotionsUsed();
+    int getTotalPotionsUsed();
+    int getTotalLifeSpan();
+    int getLifeSpan(unsigned int round);
+    int getBestLifeSpan(bool highest, bool reachedEndOnly);
+    int getTotalPoints();
+    int getPoints(unsigned int round);
+    int getBestPoints(bool highest, bool reachedEndOnly);
+    unsigned char getReachedEnd(unsigned int round);
+    int getTotalThermalsEntered();
+    bool hasSpawnedAtCheckpoint(int checkpoint, unsigned int round);
+    bool hasSpawnedAtAllCheckpointsInOneRound();
+    double getTopSpeed();
+    int getImprovement();
+    bool hasRoundStats(unsigned int round) const;
+
+    int getTotalSecondaryTargets();
+    void getAllContainers(std::vector<ContainerInfo*>& containers);
+    int GetLastPointsAdded(unsigned int round);
+    int getTotalRoundsReachedEnd();
+    bool hasSpawnedAtCheckpoint(int checkpoint);
+    bool hasSpawnedAtAllCheckpoints();
+
 private:
- StatsUID mStatsUID; std::vector<const void*> mMedals; std::vector<UntypedStatTracker*> mTrackers; std::map<int,int> mItems; boost::unordered_map<int,RoundStats*> mRoundStats;
+    StatsUID mStatsUID;
+    std::wstring mName;
+    int mCurrentRound;
+    std::vector<const GameMedal*> mMedals;
+    int mWinningMedal;
+    int mLastMedal;
+    int mRoundState;
+
+public:
+    int mHitsFromProjectile;
+    StatTracker<float>* mDamageDealt;
+    StatTracker<float>* mDamageReceived;
+    StatTracker<int>* mFallKills;
+    StatTracker<int>* mAmphibiousKills;
+    StatTracker<int>* mTotalKills;
+    StatTracker<int>* mSniper;
+
+private:
+    UntypedStatTracker* mDamageTakenBySource[15];
+    UntypedStatTracker* mWeaponDamage[2];
+    UntypedStatTracker* mDeadshot;
+    std::vector<UntypedStatTracker*> mTrackers;
+    boost::unordered_map<int, RoundStats*> mRoundStats;
 };
+
 #endif

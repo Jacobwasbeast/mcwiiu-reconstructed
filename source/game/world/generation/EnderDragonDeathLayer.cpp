@@ -6,7 +6,6 @@
 #include "game/core/Lighting.hpp"
 #include "game/entity/mob/EnderDragon.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/util/Random.hpp"
 
 EnderDragonDeathLayer::~EnderDragonDeathLayer()
 {

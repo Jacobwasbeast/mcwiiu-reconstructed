@@ -2,18 +2,23 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/client/render/ModelPart.hpp"
+#include "game/client/render/SkullBlockRenderer.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ItemTransforms.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/world/generation/Player.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 CustomHeadLayer::CustomHeadLayer(ModelPart* head)

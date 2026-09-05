@@ -1,0 +1,98 @@
+#include "game/world/generation/CreeperPowerLayer.hpp"
+
+#include <string>
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/client/render/CreeperModel.hpp"
+#include "game/client/render/CreeperRenderer.hpp"
+#include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation CREEPER_ARMOR_LOCATION;
+
+CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer)
+    : mRenderer(renderer), mModel(NULL), mOriginalModel(NULL)
+{
+    ModelDefinition modelDefinition;
+    mModel = new CreeperModel(2.0f, modelDefinition);
+}
+
+CreeperPowerLayer::~CreeperPowerLayer()
+{
+}
+
+void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                               float limbSwingAmount, float partialTicks, float ageInTicks,
+                               float netHeadYaw, float headPitch, float scale,
+                               bool bUseDisplayList)
+{
+    boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(entity);
+
+    if (!creeper->isPowered())
+    {
+        return;
+    }
+
+    GlStateManager::depthMask(!creeper->isInvisible());
+    mRenderer->bindTexture(&CREEPER_ARMOR_LOCATION);
+    GlStateManager::matrixMode(5890);
+    GlStateManager::loadIdentity();
+
+    float textureOffset = ((float)creeper->mTickCount + partialTicks) * 0.01f;
+    GlStateManager::translatef(textureOffset, textureOffset, 0.0f);
+
+    GlStateManager::matrixMode(5888);
+    GlStateManager::enableBlend();
+    GlStateManager::color4f(0.5f, 0.5f, 0.5f, 1.0f);
+    GlStateManager::disableLighting();
+    GlStateManager::blendFunc(1, 1);
+
+    mModel->copyPropertiesFrom(mRenderer->getModel());
+    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                   headPitch, scale, bUseDisplayList);
+
+    GlStateManager::matrixMode(5890);
+    GlStateManager::loadIdentity();
+    GlStateManager::matrixMode(5888);
+    GlStateManager::enableLighting();
+    GlStateManager::disableBlend();
+    GlStateManager::depthMask(true);
+}
+
+bool CreeperPowerLayer::colorsOnDamage()
+{
+    return false;
+}
+
+void CreeperPowerLayer::setupForTexturePack(TexturePack* pTexturePack)
+{
+    if (mOriginalModel == NULL)
+    {
+        mOriginalModel = mModel;
+    }
+
+    if (mModel != mOriginalModel)
+    {
+        if (mModel != NULL)
+        {
+            delete mModel;
+        }
+        mModel = NULL;
+    }
+
+    std::wstring modelName = L"creeper";
+    if (!pTexturePack->HasCustomModel(modelName))
+    {
+        mModel = mOriginalModel;
+    }
+    else
+    {
+        mModel = new CreeperModel(2.0f, *pTexturePack->GetCustomModel(modelName));
+    }
+}

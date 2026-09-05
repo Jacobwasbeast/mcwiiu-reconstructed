@@ -9,6 +9,7 @@ struct FFLCreateID
 };
 
 template<typename T> T _fromHEXString(const std::wstring& text);
+template <> int _fromHEXString<int>(const std::wstring& text);
 
 PlayerUID::PlayerUID(int uid)
 {

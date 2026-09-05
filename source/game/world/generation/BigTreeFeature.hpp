@@ -1,0 +1,66 @@
+#ifndef GAME_WORLD_GENERATION_BIGTREEFEATURE_HPP
+#define GAME_WORLD_GENERATION_BIGTREEFEATURE_HPP
+
+#include <vector>
+
+#include "game/world/generation/AbstractTreeFeature.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/util/Random.hpp"
+
+class Block;
+class BlockState;
+class Level;
+class Random;
+
+class BigTreeFeature : public AbstractTreeFeature
+{
+public:
+    class FoliageCoords : public BlockPos
+    {
+    public:
+        FoliageCoords(const BlockPos& pos, int branchBase);
+        int getBranchBase();
+
+    private:
+        int mBranchBase;
+    };
+
+    BigTreeFeature(bool doBlockNotify);
+    virtual ~BigTreeFeature();
+    virtual bool place(Level* level, Random& random, const BlockPos& origin);
+    virtual void init();
+    double treeShape(int height);
+    int getSteps(const BlockPos& pos);
+    int checkLine(const BlockPos& from, const BlockPos& to);
+    void prepare();
+    void crossection(const BlockPos& pos, float radius, const BlockState* state);
+    double foliageShape(int layer);
+    void foliageCluster(const BlockPos& pos);
+    int getLogAxis(const BlockPos& from, const BlockPos& to);
+    void limb(const BlockPos& from, const BlockPos& to, Block* block);
+    void makeFoliage();
+    bool trimBranches(int branchBase);
+    void makeTrunk();
+    void makeBranches();
+    bool checkLocation();
+    int getPrimaryDirection(const BlockPos& pos);
+
+private:
+    Random mRandom;
+    Level* mLevel;
+    BlockPos mBasePos;
+    int mOriginY;
+    int mOriginZ;
+    int mHeightLimit;
+    int mHeight;
+    double mScaleWidth;
+    double mBranchSlope;
+    double mBranchDensity;
+    double mLeafDensity;
+    int mTrunkWidth;
+    int mLeafDistanceLimit;
+    int mFoliageHeight;
+    std::vector<FoliageCoords> mFoliageCoords;
+};
+
+#endif

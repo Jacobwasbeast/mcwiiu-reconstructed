@@ -1,0 +1,86 @@
+#include "game/world/generation/LayerGenerator.hpp"
+
+#include <vector>
+
+#include "game/core/Shape.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
+#include "game/util/Vec3i.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockTransaction.hpp"
+#include "game/world/generation/LayerShape.hpp"
+#include "game/world/generation/LayerTheme.hpp"
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+
+LayerGenerator::LayerGenerator(AABB* area, const LayerShape* shape, const LayerFill* fill,
+                               const std::vector<const LayerTheme*>& themes)
+    : mShape(shape)
+    , mFill(fill)
+    , mThemes(themes)
+    , mArea(area)
+    , mCoreWorldMinY(1000)
+    , mCoreWorldMaxY(0)
+{
+}
+
+LayerGenerator::~LayerGenerator()
+{
+    delete mArea;
+}
+
+unsigned int LayerGenerator::getArea() const
+{
+    return (unsigned int)mArea;
+}
+
+int LayerGenerator::getCoreWorldMinY() const
+{
+    return mCoreWorldMinY + static_cast<int>(mArea->mMinY);
+}
+
+unsigned int LayerGenerator::Generate(Random& random, Level*)
+{
+    PIXBeginNamedEvent(0.0f, "LayerGenerator::Setup");
+    BlockPos min(static_cast<double>(mArea->mMinX), static_cast<double>(mArea->mMinY),
+                 static_cast<double>(mArea->mMinZ));
+    BlockPos max(static_cast<double>(mArea->mMaxX), static_cast<double>(mArea->mMaxY),
+                 static_cast<double>(mArea->mMaxZ));
+    BlockTransaction* transaction = BlockTransaction::CreateTransaction(min, max);
+    Shape shape(transaction->mSize.x, transaction->mSize.z);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "LayerGenerator::GenShape");
+    mShape->GenerateShape(random, shape);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "LayerGenerator::ApplyFill");
+    mFill->ExtrudeLayer(random, shape, transaction->mSize, transaction,
+                        &mCoreWorldMinY, &mCoreWorldMaxY);
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "LayerGenerator::ApplyThemes");
+    std::vector<const LayerTheme*>::const_iterator it;
+    for (it = mThemes.begin(); it != mThemes.end(); ++it)
+    {
+        (*it)->Apply(random, transaction, mCoreWorldMinY, mCoreWorldMaxY);
+    }
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "LayerGenerator::reduceMinMax");
+    transaction->reduceMinMax();
+    PIXEndNamedEvent();
+    return (unsigned int)transaction;
+}
+
+void LayerGenerator::updateArea(AABB* area)
+{
+    delete mArea;
+    mArea = area;
+}
+
+int LayerGenerator::getCoreWorldMaxY() const
+{
+    return mCoreWorldMaxY + static_cast<int>(mArea->mMinY);
+}

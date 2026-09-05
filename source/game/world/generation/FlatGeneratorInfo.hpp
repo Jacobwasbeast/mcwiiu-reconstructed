@@ -1,15 +1,124 @@
 #ifndef GAME_WORLD_GENERATION_FLATGENERATORINFO_HPP
 #define GAME_WORLD_GENERATION_FLATGENERATORINFO_HPP
+
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-class BlockState; class SuperflatConfig; class FlatLayerInfo; class GenericOverworldLevelSource; class OceanMonumentFeature; class OverworldLevelSource; class CaveFeature; class CanyonFeature; class VillageFeature; class RandomScatteredLargeFeature; class MineShaftFeature; class StrongholdFeature; class LakeFeature; class ShipwreckFeature; class WoodlandMansionFeature;
-class FlatGeneratorInfo {
-    bool ownsConfig; SuperflatConfig* config; boost::shared_ptr<SuperflatConfig> ownedConfig; std::vector<FlatLayerInfo> layers;
+
+class BlockState;
+class CaveFeature;
+class CanyonFeature;
+class GenericOverworldLevelSource;
+class LakeFeature;
+class MineShaftFeature;
+class OceanMonumentFeature;
+class OverworldLevelSource;
+class RandomScatteredLargeFeature;
+class ShipwreckFeature;
+class StrongholdFeature;
+class SuperflatConfig;
+class VillageFeature;
+class WoodlandMansionFeature;
+class FlatLayerInfo;
+
+class FlatGeneratorInfo
+{
 public:
-    FlatGeneratorInfo(); FlatGeneratorInfo(SuperflatConfig*); FlatGeneratorInfo(SuperflatConfig*, bool); ~FlatGeneratorInfo(); SuperflatConfig* core() const;
-    bool hasCaves(); CaveFeature* getCaves(); bool hasCanyons(); CanyonFeature* getCanyons(); bool hasVillage(); VillageFeature* getVillage(int); bool hasBiomeSpecific(); RandomScatteredLargeFeature* getBiomeSpecific(); bool hasMineshaft(); MineShaftFeature* getMineshaft(); bool hasStronghold(); StrongholdFeature* getStronghold(); bool hasOceanMonument(); OceanMonumentFeature* getOceanMonument(); bool hasWoodlandMansion(); WoodlandMansionFeature* getWoodlandMansion(OverworldLevelSource*); bool hasShipwrecks(); ShipwreckFeature* getShipwreck(GenericOverworldLevelSource*, OceanMonumentFeature*); bool hasDecorations(); bool hasDungeons(); bool hasLakes(); LakeFeature* getLakes(); bool hasLavaLakes(); LakeFeature* getLavaLakes();
-    int getLayerIndexAtHeight(int) const; FlatLayerInfo getLayer(int) const; void getLayers(const BlockState* (&)[256]) const; void getLayers(std::vector<FlatLayerInfo>&) const; void setDisplayname(int); void setBiome(int); void setVillage(bool); void insertLayer(int,const FlatLayerInfo&); void addLayer(const FlatLayerInfo&); void setDungeons(bool); void setDecorations(bool); void setStronghold(bool); void setMineshaft(bool); void setLakes(bool); void setLavaLakes(bool); void setBiomeSpecific(bool); void setDisplayname(const std::wstring&); void setWoodlandMansion(bool); void setWoodlandMansion(int,int); void setOceanMonument(bool); void setOceanMonument(int,int); void setShipwrecks(bool); void setBiome(); void setVillage(int,int); void setBiomeSpecific(int); void setEqualTo(SuperflatConfig*);
-    int numLayers() const; void setLayer(int,const FlatLayerInfo&); void setLayers(const std::vector<FlatLayerInfo>&); void remLayer(int); void getLayers(int*,int*) const; int getHeight() const; int getTopLayer() const; int findTopNonAirLayer() const; int findTopSolidLayer() const; void setCaves(bool); void setCanyons(bool); void setMineshaft(int); void setStronghold(int,int); void setShipwrecks(int,int); int getBiome(); int getVillageSize(); int getVillageDistance(); int getMineshaftChance(); int getStrongholdCount(); int getStrongholdDistance(); int getBiomeSpecificSpacing(); int getOceanMonumentSpacing(); int getOceanMonuemntSeparation(); int getShipwreckSpacing(); int getShipwreckSeparation(); int getWoodlandMansionSpacing(); int getWoodlandMansionSeparation(); std::wstring generateDescription(); void reduceLayers(); static FlatGeneratorInfo getDefault(); void setEqualTo(const FlatGeneratorInfo&); std::wstring getDisplayname(); bool hasLayer(int) const; FlatLayerInfo getLayerAtHeight(int) const; void getSingleLayers(std::vector<FlatLayerInfo>&) const; bool operator==(const FlatGeneratorInfo&) const;
+    FlatGeneratorInfo();
+    FlatGeneratorInfo(SuperflatConfig* config);
+    FlatGeneratorInfo(SuperflatConfig* config, bool copy);
+    ~FlatGeneratorInfo();
+    SuperflatConfig* core() const;
+    bool hasCaves();
+    CaveFeature* getCaves();
+    bool hasCanyons();
+    CanyonFeature* getCanyons();
+    bool hasVillage();
+    VillageFeature* getVillage(int size);
+    bool hasBiomeSpecific();
+    RandomScatteredLargeFeature* getBiomeSpecific();
+    bool hasMineshaft();
+    MineShaftFeature* getMineshaft();
+    bool hasStronghold();
+    StrongholdFeature* getStronghold();
+    bool hasOceanMonument();
+    OceanMonumentFeature* getOceanMonument();
+    bool hasWoodlandMansion();
+    WoodlandMansionFeature* getWoodlandMansion(OverworldLevelSource* source);
+    bool hasShipwrecks();
+    ShipwreckFeature* getShipwreck(GenericOverworldLevelSource* source, OceanMonumentFeature* monument);
+    bool hasDecorations();
+    bool hasDungeons();
+    bool hasLakes();
+    LakeFeature* getLakes();
+    bool hasLavaLakes();
+    LakeFeature* getLavaLakes();
+    int getLayerIndexAtHeight(int height) const;
+    FlatLayerInfo getLayer(int index) const;
+    void getLayers(const BlockState* (&states)[256]) const;
+    void getLayers(std::vector<FlatLayerInfo>& layers) const;
+    void setDisplayname(int displayname);
+    void setBiome(int biome);
+    void setVillage(bool enabled);
+    void insertLayer(int index, const FlatLayerInfo& layer);
+    void addLayer(const FlatLayerInfo& layer);
+    void setDungeons(bool enabled);
+    void setDecorations(bool enabled);
+    void setStronghold(bool enabled);
+    void setMineshaft(bool enabled);
+    void setLakes(bool enabled);
+    void setLavaLakes(bool enabled);
+    void setBiomeSpecific(bool enabled);
+    void setDisplayname(const std::wstring& displayname);
+    void setWoodlandMansion(bool enabled);
+    void setWoodlandMansion(int spacing, int separation);
+    void setOceanMonument(bool enabled);
+    void setOceanMonument(int spacing, int separation);
+    void setShipwrecks(bool enabled);
+    void setBiome();
+    void setVillage(int size, int distance);
+    void setBiomeSpecific(int spacing);
+    void setEqualTo(SuperflatConfig* config);
+    int numLayers() const;
+    void setLayer(int index, const FlatLayerInfo& layer);
+    void setLayers(const std::vector<FlatLayerInfo>& layers);
+    void remLayer(int index);
+    void getLayers(int* ids, int* data) const;
+    int getHeight() const;
+    int getTopLayer() const;
+    int findTopNonAirLayer() const;
+    int findTopSolidLayer() const;
+    void setCaves(bool enabled);
+    void setCanyons(bool enabled);
+    void setMineshaft(int chance);
+    void setStronghold(int count, int distance);
+    void setShipwrecks(int spacing, int separation);
+    int getBiome();
+    int getVillageSize();
+    int getVillageDistance();
+    int getMineshaftChance();
+    int getStrongholdCount();
+    int getStrongholdDistance();
+    int getBiomeSpecificSpacing();
+    int getOceanMonumentSpacing();
+    int getOceanMonuemntSeparation();
+    int getShipwreckSpacing();
+    int getShipwreckSeparation();
+    int getWoodlandMansionSpacing();
+    int getWoodlandMansionSeparation();
+    std::wstring generateDescription();
+    void reduceLayers();
+    static FlatGeneratorInfo getDefault();
+    void setEqualTo(const FlatGeneratorInfo& info);
+    std::wstring getDisplayname();
+    bool hasLayer(int index) const;
+    FlatLayerInfo getLayerAtHeight(int height) const;
+    void getSingleLayers(std::vector<FlatLayerInfo>& layers) const;
+    bool operator==(const FlatGeneratorInfo& info) const;
+private:
+    bool mOwnsConfig;
+    SuperflatConfig* mConfig;
+    boost::shared_ptr<SuperflatConfig> mOwnedConfig;
 };
+
 #endif
