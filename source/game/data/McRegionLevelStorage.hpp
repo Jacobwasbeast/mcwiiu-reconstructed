@@ -7,13 +7,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/data/DirectoryLevelStorage.hpp"
+#include "game/world/chunk/McRegionChunkStorage.hpp"
 
 class ConsoleSaveFile;
 class DataFixerUpper;
 class Dimension;
 class File;
 class LevelData;
-class McRegionChunkStorage;
 class Player;
 
 class McRegionLevelStorage : public DirectoryLevelStorage

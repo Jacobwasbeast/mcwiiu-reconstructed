@@ -6,6 +6,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/LevelData.hpp"
+#include "game/world/NetherDimension.hpp"
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 
 void MemSect(int section);
@@ -39,15 +40,15 @@ McRegionLevelStorage::~McRegionLevelStorage()
 
 McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimension)
 {
-    if (dimension != NULL && dimension->getType() == -1)
+    if (dimension != NULL && dynamic_cast<NetherDimension*>(dimension) != NULL)
     {
         if (g_pApp->GetResetNether() == 0)
-            return new McRegionChunkStorage(getSaveFile(), L"", mFixer);
+            return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
 
-        clearFiles(getSaveFile(), L"");
+        clearFiles(getSaveFile(), L"DIM-1");
         clearFiles(getSaveFile(), L"data/Fortress");
         resetNetherPlayerPositions();
-        return new McRegionChunkStorage(getSaveFile(), L"", mFixer);
+        return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
     }
 
     if (dimension != NULL && dimension->getType() == 1)
@@ -61,7 +62,7 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
         return new McRegionChunkStorage(getSaveFile(), L"DIM1", mFixer);
     }
 
-    return new McRegionChunkStorage(getSaveFile(), L"data/", mFixer);
+    return new McRegionChunkStorage(getSaveFile(), L"", mFixer);
 }
 
 void McRegionLevelStorage::saveLevelData(LevelData* levelData,
