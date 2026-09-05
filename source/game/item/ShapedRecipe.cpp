@@ -145,13 +145,49 @@ int ShapedRecipe::size()
 
 bool ShapedRecipe::recipeRequires(int itemId)
 {
-    int column;
-    int row;
-    for (column = 0; column < mWidth; ++column)
+    if (mWidth > 0)
     {
-        for (row = 0; row < mHeight; ++row)
+        if (mHeight > 0)
         {
-            mIngredients[column + row * mWidth]->isEmpty();
+            mIngredients[0]->isEmpty();
+        }
+        if (mHeight > 1)
+        {
+            mIngredients[mWidth]->isEmpty();
+        }
+        if (mHeight > 2)
+        {
+            mIngredients[mWidth * 2]->isEmpty();
+        }
+    }
+    if (mWidth > 1)
+    {
+        if (mHeight > 0)
+        {
+            mIngredients[1]->isEmpty();
+        }
+        if (mHeight > 1)
+        {
+            mIngredients[mWidth + 1]->isEmpty();
+        }
+        if (mHeight > 2)
+        {
+            mIngredients[mWidth * 2 + 1]->isEmpty();
+        }
+    }
+    if (mWidth > 2)
+    {
+        if (mHeight > 0)
+        {
+            mIngredients[2]->isEmpty();
+        }
+        if (mHeight > 1)
+        {
+            mIngredients[mWidth + 2]->isEmpty();
+        }
+        if (mHeight > 2)
+        {
+            mIngredients[mWidth * 2 + 2]->isEmpty();
         }
     }
     return false;

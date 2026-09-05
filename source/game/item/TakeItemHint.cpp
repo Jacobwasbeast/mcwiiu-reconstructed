@@ -6,26 +6,26 @@
 
 TakeItemHint::~TakeItemHint()
 {
-    delete[] itemIds;
-    itemIds = 0;
+    delete[] mItemIds;
+    mItemIds = 0;
 }
 
 unsigned int TakeItemHint::onTake(not_null_ptr<ItemInstance> item)
 {
-    if (!item->isEmpty() && itemCount != 0)
+    if (!item->isEmpty() && mItemCount != 0)
     {
-        for (unsigned int i = 0; i < itemCount; ++i)
+        for (unsigned int i = 0; i < mItemCount; ++i)
         {
-            if (Item::VALIDgetId(item->getItem()) == itemIds[i])
+            if (Item::VALIDgetId(item->getItem()) == mItemIds[i])
             {
                 Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
                 if (descriptionId == -1)
                 {
-                    details->messageId = item->getUseDescriptionId();
+                    details->titleId = item->getUseDescriptionId();
                 }
                 else
                 {
-                    details->messageId = descriptionId;
+                    details->titleId = descriptionId;
                 }
                 details->itemDescriptionId = item->getDescriptionId(-1);
                 details->itemId = Item::VALIDgetId(item->getItem());

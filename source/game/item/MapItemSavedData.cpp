@@ -8,7 +8,7 @@
 
 MapItemSavedData::MapItemSavedData(const std::wstring& id)
     : SavedData(id), mXCenter(0), mZCenter(0), mDimension(0), mTrackingPosition(true),
-      mUnlimitedTracking(0), mLocked(false), mScale(0), mColors(0x4000, true)
+      mUnlimitedTracking(0), mScale(0), mColors(0x4000, true)
 {
 }
 
@@ -73,8 +73,6 @@ void MapItemSavedData::addDecoration(const MapDecoration::Type* type, Level*, in
 void MapItemSavedData::tickCarriedBy(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance>)
 {
     getHoldingPlayer(player)->markDirty(0, 0);
-    ++mLocked;
-    if (mLocked > 4) mLocked = 0;
 }
 
 void MapItemSavedData::mergeInMapData(boost::shared_ptr<MapItemSavedData> data)

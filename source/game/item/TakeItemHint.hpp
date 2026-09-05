@@ -16,8 +16,8 @@ public:
     virtual unsigned int onTake(not_null_ptr<ItemInstance> item);
 
 private:
-    int* itemIds;
-    unsigned int itemCount;
+    int* mItemIds;
+    unsigned int mItemCount;
 };
 
 #endif

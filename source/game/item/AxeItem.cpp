@@ -1,10 +1,8 @@
 #include "game/item/AxeItem.hpp"
 
 #include "game/core/Minecraft.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/EMiniGameId.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -56,19 +54,12 @@ float AxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const Bl
     {
         return DiggerItem::getDestroySpeed(itemInstance, state);
     }
-
     return mSpeed;
 }
 
-InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> player,
-                                                      Level* level,
-                                                      const BlockPos& pos,
-                                                      InteractionHand::EInteractionHand hand,
-                                                      const Direction* direction,
-                                                      float hitX,
-                                                      float hitY,
-                                                      float hitZ,
-                                                      bool simulate)
+InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> player, Level* level,
+    const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,
+    float hitX, float hitY, float hitZ, bool simulate)
 {
     LivingEntity* livingPlayer = (LivingEntity*)(void*)player.get();
     not_null_ptr<ItemInstance> itemInstance = livingPlayer->getItemInHand(hand);
@@ -80,7 +71,6 @@ InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> p
     {
         return InteractionResult::eInteractionResult_Fail;
     }
-
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         if (!simulate)
@@ -95,6 +85,5 @@ InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> p
         }
         return InteractionResult::eInteractionResult_Success;
     }
-
     return InteractionResult::eInteractionResult_Pass;
 }

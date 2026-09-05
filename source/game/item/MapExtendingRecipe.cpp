@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <boost/unordered_map.hpp>
+
 #include "game/data/CompoundTag.hpp"
 #include "game/core/MapDecoration.hpp"
 #include "game/item/CraftingContainer.hpp"
@@ -25,7 +27,7 @@ void MapExtendingRecipe::StaticCtor()
     gMapExtendingIngredients[1] = new ItemInstance(Items::paper);
     gMapExtendingIngredients[2] = new ItemInstance(Items::paper);
     gMapExtendingIngredients[3] = new ItemInstance(Items::paper);
-    gMapExtendingIngredients[4] = new ItemInstance(Items::filledMap, 1, -1);
+    gMapExtendingIngredients[4] = new ItemInstance(Items::map, 0, -1);
     gMapExtendingIngredients[5] = new ItemInstance(Items::paper);
     gMapExtendingIngredients[6] = new ItemInstance(Items::paper);
     gMapExtendingIngredients[7] = new ItemInstance(Items::paper);
@@ -39,11 +41,10 @@ bool MapExtendingRecipe::isExplorationMap(const boost::shared_ptr<MapItemSavedDa
         return false;
     }
 
-    std::vector<MapDecoration> decorations = data->fjGetAllDecorations();
-    std::vector<MapDecoration>::const_iterator it;
-    for (it = decorations.begin(); it != decorations.end(); ++it)
+    boost::unordered_map<int, MapDecoration>::const_iterator it;
+    for (it = data->mDecorations.begin(); it != data->mDecorations.end(); ++it)
     {
-        const MapDecoration::Type* type = it->getType();
+        const MapDecoration::Type* type = it->second.getType();
         if (type == &MapDecoration::Type::TYPES[5] ||
             type == &MapDecoration::Type::TYPES[6] ||
             type == &MapDecoration::Type::TYPES[7])
@@ -91,9 +92,7 @@ bool MapExtendingRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCo
     {
         return false;
     }
-    CompoundTag scaleData;
-    data->save(&scaleData);
-    return scaleData.getByte(L"scale") < 4;
+    return data->mScale < 4;
 }
 
 not_null_ptr<ItemInstance> MapExtendingRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
@@ -111,7 +110,7 @@ not_null_ptr<ItemInstance> MapExtendingRecipe::assemble(boost::shared_ptr<Crafti
     }
 
     result->setCount(1);
-    if (!result->hasTag())
+    if (result->getTag() == NULL)
     {
         result->setTag(new CompoundTag());
     }

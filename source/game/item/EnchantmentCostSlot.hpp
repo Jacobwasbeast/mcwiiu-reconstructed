@@ -4,8 +4,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Slot.hpp"
-#include "game/item/Container.hpp"
-#include "game/item/not_null_ptr.hpp"
 
 class ItemInstance;
 

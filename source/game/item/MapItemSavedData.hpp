@@ -8,15 +8,19 @@
 #include "game/core/MapDecoration.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/network/ClientboundMapItemDataPacket.hpp"
 class BlockPos;
 class CompoundTag;
 class ItemInstance;
 class Level;
+class MapExtendingRecipe;
 class Player;
 class ClientboundMapItemDataPacket;
 class MapItemSavedData : public SavedData
 {
 public:
+    using SavedData::setDirty;
+
     class HoldingPlayer
     {
     public:
@@ -62,14 +66,18 @@ public:
     bool fjIsCompletelyExplored() const;
     void fjRemoveDecorationByEntityId(int id);
 private:
+    friend class MapItem;
+    friend class MapExtendingRecipe;
+
     int mXCenter;
     int mZCenter;
     unsigned char mDimension;
     bool mTrackingPosition;
     unsigned char mUnlimitedTracking;
-    bool mLocked;
     unsigned char mScale;
+public:
     arrayWithLength<unsigned char> mColors;
+private:
     std::vector<boost::shared_ptr<HoldingPlayer> > mHoldingPlayers;
     boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, PlayerKeyHash, PlayerKeyEq> mCarriedBy;
     boost::unordered_map<int, MapDecoration> mDecorations;

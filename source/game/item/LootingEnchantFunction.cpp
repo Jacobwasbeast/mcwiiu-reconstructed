@@ -2,7 +2,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/network/ClientboundChatPacket.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/Mth.hpp"

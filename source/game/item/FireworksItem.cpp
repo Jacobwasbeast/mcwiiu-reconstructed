@@ -16,6 +16,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 std::wstring _toString(int value);
 
@@ -44,7 +45,7 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
         return InteractionResult::eInteractionResult_Success;
     }
 
-    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+    if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
         boost::shared_ptr<FireworksRocketEntity> rocket(
             new FireworksRocketEntity(level,
@@ -90,6 +91,25 @@ InteractionResultHolder FireworksItem::use(Level* level,
         else if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureOverrideHandSwing())
         {
             player->swing(hand);
+        }
+    }
+    else
+    {
+        if (!player->isUsingItem())
+        {
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
+        }
+
+        if (!level->mIsClientSide)
+        {
+            boost::shared_ptr<FireworksRocketEntity> rocket(
+                new FireworksRocketEntity(level, itemInstance, player));
+            level->addEntity(rocket);
+            player->getCooldowns()->addCooldown(this, 10);
+            if (!player->mAbilities.mInstabuild)
+            {
+                itemInstance->shrink(1);
+            }
         }
     }
 

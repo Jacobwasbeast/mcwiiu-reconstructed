@@ -5,6 +5,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include "game/item/not_null_ptr.hpp"
+#include "game/util/ResourceLocation.hpp"
 
 class CompoundTag;
 class HtmlString;
@@ -13,11 +14,11 @@ class MobEffect;
 class MobEffectInstance;
 class Player;
 class Potion;
-class ResourceLocation;
 
 class PotionUtils
 {
 public:
+    static const std::wstring TAG_POTION;
     static not_null_ptr<ItemInstance> setPotion(not_null_ptr<ItemInstance> item, Potion* potion);
     static Potion* getPotion(CompoundTag* tag);
     static void getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects);

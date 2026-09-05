@@ -1,8 +1,6 @@
 #include "game/item/ShovelItem.hpp"
 
-#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
-#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"

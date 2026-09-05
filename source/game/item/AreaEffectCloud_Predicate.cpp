@@ -2,8 +2,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/AreaEffectCloud.hpp"
-class LivingEntity;
 
 AreaEffectCloud_Predicate::~AreaEffectCloud_Predicate()
 {

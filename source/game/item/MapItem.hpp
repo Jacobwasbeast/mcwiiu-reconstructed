@@ -22,8 +22,9 @@ public:
     MapItem();
     virtual ~MapItem();
 
-    static void setupNewMap(PlayerUID uid, Level* level, int dimension, double x, double z,
-                            unsigned char scale, bool trackingPosition, bool unlimitedTracking);
+    static not_null_ptr<ItemInstance> setupNewMap(PlayerUID uid, Level* level, int dimension,
+                                                  double x, double z, unsigned char scale,
+                                                  bool trackingPosition, bool unlimitedTracking);
     static boost::shared_ptr<MapItemSavedData> getSavedDataIfExists(int mapId, Level* level);
     boost::shared_ptr<MapItemSavedData> getSavedData(int mapId, Level* level);
     boost::shared_ptr<MapItemSavedData> getSavedData(not_null_ptr<ItemInstance> itemInstance, Level* level);

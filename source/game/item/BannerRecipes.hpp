@@ -1,11 +1,13 @@
 #ifndef GAME_ITEM_BANNERRECIPES_HPP
 #define GAME_ITEM_BANNERRECIPES_HPP
 
+#include <string>
 #include <boost/shared_ptr.hpp>
 
 #include "game/item/Recipe.hpp"
 
 class CraftingContainer;
+class BannerPattern;
 class Level;
 class ItemInstance;
 class Recipes;
@@ -23,7 +25,7 @@ public:
     {
     public:
         virtual ~BannerAddPatternRecipe();
-        unsigned long long matchPatterns(boost::shared_ptr<CraftingContainer> craftingContainer);
+        const BannerPattern* matchPatterns(boost::shared_ptr<CraftingContainer> craftingContainer);
         virtual bool matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level);
         virtual not_null_ptr<ItemInstance> assemble(boost::shared_ptr<CraftingContainer> craftingContainer);
         virtual int size();

@@ -17,6 +17,7 @@
 #include "game/world/generation/Player.hpp"
 
 ArmorStandItem::ArmorStandItem()
+    : Item()
 {
 }
 
@@ -84,7 +85,7 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(0x000000000C000001ULL, Level::SPAWN_TYPE_SPAWN_EGG))
+        if (!level->canCreateMore(0x000000000C000001ULL, 0))
         {
             player->displayClientMessage(0x8ECD701E, true);
             return InteractionResult::eInteractionResult_Fail;

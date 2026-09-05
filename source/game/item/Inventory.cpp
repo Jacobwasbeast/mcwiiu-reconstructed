@@ -15,6 +15,8 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/core/GameMode.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -316,9 +318,10 @@ int Inventory::addResource(int slot, not_null_ptr<ItemInstance> item)
 
 int Inventory::addResource(not_null_ptr<ItemInstance> item)
 {
-    if (m_player->GetGameMode() != NULL)
+    GameMode* gameMode = (GameMode*)m_player->GetGameMode();
+    if (gameMode != NULL)
     {
-        m_player->GetGameMode()->RecordItem(item);
+        gameMode->RecordItem(item);
     }
     int slot = getSlotWithRemainingSpace(item);
     if (slot == -1)

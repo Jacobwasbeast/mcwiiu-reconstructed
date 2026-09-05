@@ -4,8 +4,12 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include "game/core/Attribute.hpp"
+#include "game/core/HtmlString.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/core/CensoredString.hpp"
 
 class Block;
 class BlockPos;
@@ -55,7 +59,7 @@ public:
     int useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     float getDestroySpeed(const BlockState* state);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    ItemInstance use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
+    void use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     void finishUsingItem(Level* level, boost::shared_ptr<Player> player);
     CompoundTag* save(CompoundTag* tag);
     int getMaxStackSize();
@@ -85,8 +89,8 @@ public:
     static bool isSameIgnoreDurability(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
     bool sameItemWithTags(const not_null_ptr<ItemInstance>& other, std::vector<std::wstring>* tags);
     bool sameItem_not_shared(ItemInstance* other);
-    std::wstring getUseDescriptionId();
-    std::wstring getDescriptionId(int auxValue);
+    int getUseDescriptionId();
+    int getDescriptionId(int auxValue);
     void setDescriptionId(int descriptionId);
     std::wstring toString();
     void inventoryTick(Level* level, boost::shared_ptr<Entity> entity, int slot, bool selected);
@@ -109,9 +113,9 @@ public:
     bool wasCreatedOnHost();
     void resetHoverName();
     bool hasCustomHoverName();
-    std::vector<std::wstring> getAttributeModifiers(const EquipmentSlot* slot);
-    std::vector<std::wstring> getTooltipLines(boost::shared_ptr<Player> player, bool advanced);
-    std::vector<std::wstring>* getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced);
+    boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* getAttributeModifiers(const EquipmentSlot* slot);
+    std::vector<HtmlString>* getTooltipLines(boost::shared_ptr<Player> player, bool advanced);
+    std::vector<HtmlString>* getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced);
     bool hasFoil();
     int getRarity();
     bool isEnchanted();
@@ -137,22 +141,20 @@ public:
     std::wstring getDisplayName();
     static not_null_ptr<ItemInstance> EMPTY;
 private:
-    int mItemId;
+    boost::shared_ptr<ItemInstance> mSelf;
     int mCount;
-    int mAuxValue;
     int mPopTime;
     Item* mItem;
     CompoundTag* mTag;
     unsigned char mEmptyCache;
-    int mDescriptionId;
-    int mRepairCost;
+    int mAuxValue;
+    unsigned char mUnknown;
     boost::shared_ptr<ItemFrame> mFrame;
-    int mFrameData;
+    boost::shared_ptr<CensoredString> mCensorshipInfo;
     Block* mBreakBlock;
     unsigned char mCanBreak;
     Block* mPlaceBlock;
     unsigned char mCanPlace;
-    int m4JData;
 };
 
 #endif

@@ -3,8 +3,7 @@
 
 class Recipes;
 
-class ClothDyeRecipes
-{
+class ClothDyeRecipes {
 public:
     void addRecipes(Recipes* recipes);
 };

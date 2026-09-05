@@ -16,11 +16,12 @@ LootItemRandomChanceWithLootingCondition::LootItemRandomChanceWithLootingConditi
 bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTableContext& context)
 {
     int lootingLevel = 0;
-    boost::shared_ptr<Entity> entity = context.getEntity(LootTableContext::KILLER);
 
-    if (entity && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if (context.getEntity(LootTableContext::DIRECT_KILLER)
+        && (context.getEntity(LootTableContext::DIRECT_KILLER)->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
     {
-        lootingLevel = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(entity));
+        lootingLevel = EnchantmentHelper::getMobLooting(
+            boost::dynamic_pointer_cast<LivingEntity>(context.getEntity(LootTableContext::DIRECT_KILLER)));
     }
 
     return random->nextFloat() < chance + static_cast<float>(lootingLevel) * lootingMultiplier;

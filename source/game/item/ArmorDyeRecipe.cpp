@@ -1,11 +1,14 @@
+#include <algorithm>
+#include <vector>
+
 #include "game/item/ArmorDyeRecipe.hpp"
 
 #include "game/core/DyeColor.hpp"
 #include "game/entity/mob/HorseArmorItem.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/CraftingContainer.hpp"
-#include "game/item/DyeItem.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 
 ArmorDyeRecipe::~ArmorDyeRecipe()
 {
@@ -14,8 +17,8 @@ ArmorDyeRecipe::~ArmorDyeRecipe()
 bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level*)
 {
     unsigned int i;
-    unsigned int dyeCount = 0;
     not_null_ptr<ItemInstance> armor = ItemInstance::EMPTY;
+    std::vector<not_null_ptr<ItemInstance> > dyes;
 
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
@@ -44,30 +47,30 @@ bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContai
             }
             armor = item;
         }
-        else if (dynamic_cast<DyeItem*>(itemType) == NULL)
+        else if (itemType != Items::dye)
         {
             return false;
         }
         else
         {
-            ++dyeCount;
+            dyes.push_back(item);
         }
     }
 
-    return !armor->isEmpty() && dyeCount > 0;
+    return !armor->isEmpty() && !dyes.empty();
 }
 
 not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     unsigned int i;
-    unsigned int dyeCount = 0;
     not_null_ptr<ItemInstance> armor = ItemInstance::EMPTY;
     ArmorItem* armorItem = NULL;
     HorseArmorItem* horseArmorItem = NULL;
     int red = 0;
     int green = 0;
     int blue = 0;
-    int maxColor = 0;
+    int totalBrightness = 0;
+    int colorCount = 0;
 
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
@@ -78,41 +81,45 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
         }
 
         Item* itemType = item->getItem();
-        armorItem = dynamic_cast<ArmorItem*>(itemType);
-        horseArmorItem = dynamic_cast<HorseArmorItem*>(itemType);
-        if (armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER)
+        ArmorItem* currentArmorItem = dynamic_cast<ArmorItem*>(itemType);
+        HorseArmorItem* currentHorseArmorItem = dynamic_cast<HorseArmorItem*>(itemType);
+        if ((currentArmorItem != NULL && currentArmorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER) ||
+            (currentHorseArmorItem != NULL && currentHorseArmorItem->isDyeable()))
         {
-            if (armor->isEmpty())
+            if (!armor->isEmpty())
             {
-                armor = item->copy();
-                armor->setCount(1);
+                return ItemInstance::EMPTY;
             }
-            if (armorItem->hasCustomColor(item))
+
+            armorItem = currentArmorItem;
+            horseArmorItem = currentHorseArmorItem;
+            armor = item->copy();
+            armor->setCount(1);
+
+            bool hasCustomColor;
+            if (armorItem != NULL)
             {
-                int color = armorItem->getColor(item, 0);
-                red += (color >> 16) & 255;
-                green += (color >> 8) & 255;
-                blue += color & 255;
-                maxColor += 1;
+                hasCustomColor = armorItem->hasCustomColor(item);
+            }
+            else
+            {
+                hasCustomColor = horseArmorItem->hasCustomColor(item);
+            }
+
+            if (hasCustomColor)
+            {
+                int color = itemType->getColor(armor, 0);
+                float colorRed = (float)((color >> 16) & 255) / 255.0f;
+                float colorGreen = (float)((color >> 8) & 255) / 255.0f;
+                float colorBlue = (float)(color & 255) / 255.0f;
+                red += (int)(colorRed * 255.0f);
+                green += (int)(colorGreen * 255.0f);
+                blue += (int)(colorBlue * 255.0f);
+                totalBrightness += (int)(std::max(colorRed, std::max(colorGreen, colorBlue)) * 255.0f);
+                ++colorCount;
             }
         }
-        else if (horseArmorItem != NULL && horseArmorItem->isDyeable())
-        {
-            if (armor->isEmpty())
-            {
-                armor = item->copy();
-                armor->setCount(1);
-            }
-            if (horseArmorItem->hasCustomColor(item))
-            {
-                int color = horseArmorItem->getColor(item, 0);
-                red += (color >> 16) & 255;
-                green += (color >> 8) & 255;
-                blue += color & 255;
-                maxColor += 1;
-            }
-        }
-        else if (dynamic_cast<DyeItem*>(itemType) != NULL)
+        else if (itemType == Items::dye)
         {
             arrayWithLength<const float> colors = DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
             int colorRed = (int)(colors.data[0] * 255.0f);
@@ -130,47 +137,36 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
             red += colorRed;
             green += colorGreen;
             blue += colorBlue;
-            maxColor += brightest;
-            ++dyeCount;
+            totalBrightness += brightest;
+            ++colorCount;
+        }
+        else
+        {
+            return ItemInstance::EMPTY;
         }
     }
 
-    if (armor->isEmpty() || dyeCount == 0)
+    if (armorItem == NULL && horseArmorItem == NULL)
     {
         return ItemInstance::EMPTY;
     }
 
-    if (armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER)
+    red /= colorCount;
+    green /= colorCount;
+    blue /= colorCount;
+    float averageBrightness = (float)totalBrightness / (float)colorCount;
+    float brightest = (float)std::max(red, std::max(green, blue));
+    red = (int)((float)red * averageBrightness / brightest);
+    green = (int)((float)green * averageBrightness / brightest);
+    blue = (int)((float)blue * averageBrightness / brightest);
+    int color = (red << 16) | (green << 8) | blue;
+
+    if (armorItem != NULL)
     {
-        if (maxColor == 0)
-        {
-            return armor;
-        }
-        red /= dyeCount;
-        green /= dyeCount;
-        blue /= dyeCount;
-        int brightest = red;
-        if (green > brightest)
-        {
-            brightest = green;
-        }
-        if (blue > brightest)
-        {
-            brightest = blue;
-        }
-        int scale = maxColor / dyeCount;
-        if (brightest < scale)
-        {
-            scale = brightest;
-        }
-        red = (int)(red * scale / (brightest == 0 ? 1 : brightest));
-        green = (int)(green * scale / (brightest == 0 ? 1 : brightest));
-        blue = (int)(blue * scale / (brightest == 0 ? 1 : brightest));
-        armorItem->setColor(armor, (red << 16) | (green << 8) | blue);
+        armorItem->setColor(armor, color);
     }
-    else if (horseArmorItem != NULL && horseArmorItem->isDyeable())
+    else
     {
-        int color = ((red / dyeCount) << 16) | ((green / dyeCount) << 8) | (blue / dyeCount);
         horseArmorItem->setColor(armor, color);
     }
 
@@ -206,7 +202,7 @@ NonNullList<not_null_ptr<ItemInstance> > ArmorDyeRecipe::getRemainingItems(boost
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
+        if (item->getItem()->hasCraftingRemainingItem())
         {
             result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
         }
@@ -238,10 +234,6 @@ void ArmorDyeRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
     ingredientsRequired->available[2] = false;
     ingredientsRequired->available[3] = false;
     ingredientsRequired->craftingGrid = new int[9]();
-    ingredientsRequired->missingSlotMask[0] = 0;
-    ingredientsRequired->missingSlotMask[1] = 0;
-    ingredientsRequired->missingSlotMask[2] = 0;
-    ingredientsRequired->missingSlotMask[3] = 0;
 }
 
 boost::shared_ptr<CraftingContainer> ArmorDyeRecipe::generateExpectedCraftSlots()

@@ -28,7 +28,9 @@ uint32_t PotionItem::getPotionType() const
 boost::shared_ptr<ItemInstance> PotionItem::getDefaultInstance()
 {
     boost::shared_ptr<ItemInstance> itemInstance = Item::getDefaultInstance();
-    PotionUtils::setPotion(itemInstance, Potion::byId(0));
+    not_null_ptr<ItemInstance> potionItem;
+    static_cast<boost::shared_ptr<ItemInstance>&>(potionItem) = itemInstance;
+    PotionUtils::setPotion(potionItem, Potion::byId(0));
     return itemInstance;
 }
 
@@ -41,7 +43,7 @@ not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (player.get() != NULL)
         {
-            player->awardStat(GenericStats::itemsUsed(itemInstance),
+            player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
                               GenericStats::param_itemsUsed(player, itemInstance));
         }
     }

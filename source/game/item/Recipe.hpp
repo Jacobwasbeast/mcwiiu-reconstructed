@@ -6,13 +6,18 @@
 #include "game/item/NonNullList.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+class BannerRecipes;
 class CompoundTag;
 class CraftingContainer;
 class ItemInstance;
 class Level;
+class Recipes;
 
 class Recipe
 {
+    friend class BannerRecipes;
+    friend class Recipes;
+
 public:
     enum _eGroupType
     {
@@ -49,7 +54,6 @@ public:
     }
 
     virtual ~Recipe();
-
     virtual bool matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level) = 0;
     virtual not_null_ptr<ItemInstance> assemble(boost::shared_ptr<CraftingContainer> craftingContainer) = 0;
     virtual int size() = 0;

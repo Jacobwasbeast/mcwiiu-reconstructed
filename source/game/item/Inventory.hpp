@@ -15,6 +15,7 @@ class ItemInstance;
 class Level;
 class ListTag;
 class Player;
+class ServerGamePacketListenerImpl;
 
 class Inventory : public Container
 {
@@ -97,6 +98,8 @@ public:
     int countMatches(Item* item);
 
 private:
+    friend class ServerGamePacketListenerImpl;
+
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;
     NonNullList<not_null_ptr<ItemInstance> > m_offhand;

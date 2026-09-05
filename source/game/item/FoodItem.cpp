@@ -1,11 +1,18 @@
 #include "game/item/FoodItem.hpp"
 
+#include "game/core/FoodData.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 FoodItem::FoodItem(int nutrition, float saturationModifier, bool isMeat)
     : Item(), mNutrition(nutrition), mSaturationModifier(saturationModifier), mIsMeat(isMeat)
@@ -90,7 +97,8 @@ bool FoodItem::canEat(boost::shared_ptr<Player> player)
 
 unsigned int FoodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return canEat(tooltipData.m_pPlayer) ? 0xD26C6DB5u : 0xFFFFFFFFu;
+    return canEat(boost::static_pointer_cast<Player>(tooltipData.m_pPlayer))
+        ? 0xD26C6DB5u : 0xFFFFFFFFu;
 }
 
 int FoodItem::getNutrition(not_null_ptr<ItemInstance> itemInstance)

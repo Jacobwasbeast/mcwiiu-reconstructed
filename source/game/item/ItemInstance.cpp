@@ -6,97 +6,89 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/item/Enchantment.hpp"
+#include "game/core/L10N.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include <cwchar>
 not_null_ptr<ItemInstance> ItemInstance::EMPTY;
-ItemInstance::ItemInstance()
-    : mItemId(0), mCount(0), mAuxValue(0), mPopTime(0), mItem(0), mTag(0),
-      mEmptyCache(1), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
-{
-}
 ItemInstance::ItemInstance(Block* block)
-    : mItemId(0), mCount(0), mAuxValue(0), mPopTime(0), mItem(0), mTag(0),
-      mEmptyCache(1), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), 1, 0);
 }
 ItemInstance::ItemInstance(Block* block, int count)
-    : mItemId(0), mCount(0), mAuxValue(0), mPopTime(0), mItem(0), mTag(0),
-      mEmptyCache(1), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), count, 0);
 }
 ItemInstance::ItemInstance(Block* block, int count, int auxValue)
-    : mItemId(0), mCount(0), mAuxValue(0), mPopTime(0), mItem(0), mTag(0),
-      mEmptyCache(1), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), count, auxValue);
 }
 ItemInstance::ItemInstance(Item* item)
-    : mItemId(0), mCount(1), mAuxValue(0), mPopTime(0), mItem(item), mTag(0),
-      mEmptyCache(0), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(1), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(Item* item, int count)
-    : mItemId(0), mCount(count), mAuxValue(0), mPopTime(0), mItem(item), mTag(0),
-      mEmptyCache(0), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(Item* item, int count, int auxValue)
-    : mItemId(0), mCount(count), mAuxValue(auxValue), mPopTime(0), mItem(item), mTag(0),
-      mEmptyCache(0), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+      mAuxValue(auxValue), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(CompoundTag* tag)
-    : mItemId(0), mCount(0), mAuxValue(0), mPopTime(0), mItem(0), mTag(tag),
-      mEmptyCache(0), mDescriptionId(0), mRepairCost(0), mFrame(), mFrameData(0),
-      mBreakBlock(0), mCanBreak(0), mPlaceBlock(0), mCanPlace(0), m4JData(0)
+    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(tag), mEmptyCache(0),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(const ItemInstance& other)
-    : mItemId(other.mItemId), mCount(other.mCount), mAuxValue(other.mAuxValue),
-      mPopTime(other.mPopTime), mItem(other.mItem), mTag(other.mTag),
-      mEmptyCache(other.mEmptyCache), mDescriptionId(other.mDescriptionId),
-      mRepairCost(other.mRepairCost), mFrame(other.mFrame), mFrameData(other.mFrameData),
-      mBreakBlock(other.mBreakBlock), mCanBreak(other.mCanBreak),
-      mPlaceBlock(other.mPlaceBlock), mCanPlace(other.mCanPlace), m4JData(other.m4JData) {
+    : mSelf(), mCount(other.mCount), mPopTime(other.mPopTime), mItem(other.mItem), mTag(other.mTag),
+      mEmptyCache(other.mEmptyCache), mAuxValue(other.mAuxValue), mUnknown(other.mUnknown),
+      mFrame(other.mFrame), mCensorshipInfo(other.mCensorshipInfo), mBreakBlock(other.mBreakBlock),
+      mCanBreak(other.mCanBreak), mPlaceBlock(other.mPlaceBlock), mCanPlace(other.mCanPlace) {
 }
 ItemInstance::~ItemInstance() {
+delete mTag;
 }
 ItemInstance& ItemInstance::operator=(const ItemInstance& other) {
 if (this != &other) {
-mItemId=other.mItemId;
 mCount=other.mCount;
-mAuxValue=other.mAuxValue;
 mPopTime=other.mPopTime;
 mItem=other.mItem;
 mTag=other.mTag;
 mEmptyCache=other.mEmptyCache;
-mDescriptionId=other.mDescriptionId;
-mRepairCost=other.mRepairCost;
+mAuxValue=other.mAuxValue;
+mUnknown=other.mUnknown;
 mFrame=other.mFrame;
-mFrameData=other.mFrameData;
+mCensorshipInfo=other.mCensorshipInfo;
 mBreakBlock=other.mBreakBlock;
 mCanBreak=other.mCanBreak;
 mPlaceBlock=other.mPlaceBlock;
 mCanPlace=other.mCanPlace;
-m4JData=other.m4JData;
 }
 return *this;
 }
 bool ItemInstance::isEmpty() const {
-return mItem == 0 || mCount <= 0;
+ return this == EMPTY.get() || mItem == 0 || mCount <= 0;
 }
 int ItemInstance::getCount() {
-return mCount;
+ return mEmptyCache != 0 ? 0 : mCount;
 }
 void ItemInstance::updateEmptyCacheFlag() {
 mEmptyCache = isEmpty() ? 1 : 0;
@@ -106,12 +98,18 @@ mCount = count;
 updateEmptyCacheFlag();
 }
 Item* ItemInstance::getItem() const {
-return mItem;
+ return mEmptyCache != 0 ? 0 : mItem;
 }
 void ItemInstance::_init(Item* item, int count, int auxValue) {
 mItem=item;
 mCount=count;
+mPopTime=0;
 mAuxValue=auxValue;
+mTag=0;
+mUnknown=0;
+mBreakBlock=0;
+mCanBreak=0;
+mCensorshipInfo.reset(new CensoredString(0xAD36B773, 0x62950B66));
 updateEmptyCacheFlag();
 }
 void ItemInstance::addDataWalkers(DataFixerUpper* fixer) {
@@ -159,9 +157,10 @@ return mItem != 0 ? mItem->getDestroySpeed(not_null_ptr<ItemInstance>(const_cast
 bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand) {
 return mItem != 0 && mItem->TestUse(level, player, hand);
 }
-ItemInstance ItemInstance::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand) {
-TestUse(level, player, hand);
-return *this;
+void ItemInstance::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand) {
+ if (mItem != 0) {
+  mItem->use(level, player, hand);
+ }
 }
 void ItemInstance::finishUsingItem(Level* level, boost::shared_ptr<Player> player) {
 if (mItem != 0 && mCount > 0) {
@@ -171,6 +170,8 @@ updateEmptyCacheFlag();
 }
 CompoundTag* ItemInstance::save(CompoundTag* tag) {
 if (tag == 0) tag = new CompoundTag();
+ResourceLocation location = Item::itemRegistry.getKey(mItem);
+tag->putString(L"id", location.toString());
 tag->putByte(L"Count", (unsigned char)mCount);
 tag->putShort(L"Damage", (short)mAuxValue);
 if (mTag != 0) tag->put(L"tag", mTag->copy());
@@ -261,23 +262,18 @@ return matches(other, true);
 bool ItemInstance::sameItem_not_shared(ItemInstance* other) {
 return other != 0 && mItem == other->mItem && mAuxValue == other->mAuxValue;
 }
-std::wstring ItemInstance::getUseDescriptionId() {
-if (mItem != 0) {
-const wchar_t* description = mItem->getDescription();
-if (description != 0) return std::wstring(description);
+int ItemInstance::getUseDescriptionId() {
+return mItem != 0 ? mItem->getUseDescriptionId(not_null_ptr<ItemInstance>(this)) : 0;
 }
-return std::wstring();
-}
-std::wstring ItemInstance::getDescriptionId(int auxValue) {
-if (mItem != 0) {
-const wchar_t* description = mItem->getDescription();
-if (description != 0) return std::wstring(description);
-}
-return std::wstring();
+int ItemInstance::getDescriptionId(int auxValue) {
+return mItem != 0 ? mItem->getDescriptionId(auxValue) : 0;
 }
 std::wstring ItemInstance::toString() {
 std::wstring value(L"ItemInstance{");
-value += getDescriptionId(mAuxValue);
+const int descriptionId = getDescriptionId(mAuxValue);
+wchar_t description[32];
+std::swprintf(description, 32, L"%d", descriptionId);
+value += description;
 value += L",Count=";
 wchar_t digits[16];
 std::swprintf(digits, 16, L"%d", mCount);
@@ -335,13 +331,14 @@ bool ItemInstance::wasCreatedByRestrictedPlayer() {
 return false;
 }
 std::wstring ItemInstance::getHoverNameUnfiltered() {
-return getDescriptionId(mAuxValue);
+ return mItem != 0 ? mItem->getName(not_null_ptr<ItemInstance>(this)) : std::wstring();
 }
 std::wstring ItemInstance::getHoverName() {
 return getHoverNameUnfiltered();
 }
 void ItemInstance::setTranslatableName(int name) {
-mDescriptionId=name;
+CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(L"display"));
+display->putInt(L"LocName", name);
 }
 void ItemInstance::setHoverName(const std::wstring& name) {
 CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(L"display"));
@@ -373,21 +370,17 @@ return false;
 CompoundTag* display = mTag->getCompound(L"display");
 return display != 0 && display->contains(L"Name");
 }
-std::vector<std::wstring> ItemInstance::getAttributeModifiers(const EquipmentSlot* slot) {
-return std::vector<std::wstring>();
+boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ItemInstance::getAttributeModifiers(const EquipmentSlot* slot) {
+return mItem != 0 ? mItem->getDefaultAttributeModifiers(slot) : 0;
 }
-std::vector<std::wstring> ItemInstance::getTooltipLines(boost::shared_ptr<Player> player, bool advanced) {
-std::vector<std::wstring> lines;
-lines.push_back(getHoverName());
-if (advanced && mCount > 1) {
-wchar_t digits[16];
-std::swprintf(digits, 16, L"%d", mCount);
-lines.push_back(std::wstring(L"Count: ") + digits);
-}
+std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player> player, bool advanced) {
+std::vector<HtmlString>* lines = new std::vector<HtmlString>();
+lines->push_back(HtmlString(getHoverName(), eMinecraftColour_HTMLColor_White, false, false, 0));
+if (mItem != 0) mItem->appendHoverText(not_null_ptr<ItemInstance>(this), player, lines, advanced);
 return lines;
 }
-std::vector<std::wstring>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced) {
-return new std::vector<std::wstring>(getTooltipLines(player, advanced));
+std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced) {
+return getTooltipLines(player, advanced);
 }
 bool ItemInstance::hasFoil() {
 return mItem != 0 && mItem->isFoil(not_null_ptr<ItemInstance>(this));
@@ -424,10 +417,11 @@ boost::shared_ptr<ItemFrame> ItemInstance::getFrame() {
 return mFrame;
 }
 int ItemInstance::getBaseRepairCost() {
-return mRepairCost;
+return mTag != 0 && mTag->contains(L"RepairCost", 3) ? mTag->getInt(L"RepairCost") : 0;
 }
 void ItemInstance::setRepairCost(int cost) {
-mRepairCost=cost;
+if (mTag == 0) mTag = new CompoundTag();
+mTag->putInt(L"RepairCost", cost);
 }
 bool ItemInstance::hasAdventureModeBreakTagForBlock(Block* block) {
 if (block != mBreakBlock) {
@@ -450,10 +444,14 @@ void ItemInstance::setPopTime(int time) {
 mPopTime=time;
 }
 void ItemInstance::set4JData(int data) {
-m4JData=data;
+if (mTag == 0) {
+ if (data == 0) return;
+ mTag = new CompoundTag();
+}
+mTag->putInt(L"4jdata", data);
 }
 int ItemInstance::get4JData() {
-return m4JData;
+return mTag != 0 && mTag->contains(L"4jdata") ? mTag->getInt(L"4jdata") : 0;
 }
 bool ItemInstance::hasPotionStrengthBar() {
 return mItem != 0 && mAuxValue != 0;

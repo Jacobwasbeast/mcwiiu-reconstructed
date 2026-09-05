@@ -38,7 +38,7 @@ void BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
 
     if (!itemInstance->isEmpty())
     {
-        if (!player->mInventory->add(result))
+        if (!player->mField0x5f0->add(result))
         {
             player->drop(result, false);
         }
@@ -107,7 +107,8 @@ bool BottleItem::TestUse(Level* level,
 
 unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer,
+    if (TestUse((Level*)tooltipData.m_pLevel,
+                (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
                 InteractionHand::eInteractionHand_MainHand))
     {
         return 0x4c4246b3u;

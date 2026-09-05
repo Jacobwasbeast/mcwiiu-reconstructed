@@ -1,10 +1,13 @@
 #include "game/item/AreaEffectCloud.hpp"
 
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
 
 const EntityDataAccessor<float>* AreaEffectCloud::DATA_RADIUS = NULL;
@@ -15,12 +18,12 @@ const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_PARAM_1 = NULL;
 const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_PARAM_2 = NULL;
 const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_RATE = NULL;
 
-AreaEffectCloud::AreaEffectCloud(Level* level) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(0), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
+AreaEffectCloud::AreaEffectCloud(Level* level) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(20), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
 {
     _init();
 }
 
-AreaEffectCloud::AreaEffectCloud(Level* level, double x, double y, double z) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(0), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
+AreaEffectCloud::AreaEffectCloud(Level* level, double x, double y, double z) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(20), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
 {
     setPos(x, y, z);
     _init();
@@ -47,7 +50,7 @@ void AreaEffectCloud::_init()
 {
     fjDerivedCtorCalls();
     mFixedColor = false;
-    mReapplicationDelay = 0;
+    mReapplicationDelay = 20;
     mDurationOnUse = 0;
     mRadiusOnUse = 0;
     mRadiusPerTick = 0.0f;
@@ -143,7 +146,7 @@ void AreaEffectCloud::defineSynchedData()
     if (DATA_COLOR != NULL) data->createDateItem(DATA_COLOR, 0);
     if (DATA_RADIUS != NULL) data->createDateItem(DATA_RADIUS, 3.0f);
     if (DATA_WAITING != NULL) data->createDateItem(DATA_WAITING, false);
-    if (DATA_PARTICLE != NULL) data->createDateItem(DATA_PARTICLE, ePARTICLE_DRAGON_BREATH);
+    if (DATA_PARTICLE != NULL) data->createDateItem(DATA_PARTICLE, static_cast<int>(ePARTICLE_DRAGON_BREATH));
     if (DATA_PARTICLE_PARAM_1 != NULL) data->createDateItem(DATA_PARTICLE_PARAM_1, 0);
     if (DATA_PARTICLE_PARAM_2 != NULL) data->createDateItem(DATA_PARTICLE_PARAM_2, 0);
     if (DATA_PARTICLE_RATE != NULL) data->createDateItem(DATA_PARTICLE_RATE, 0);
@@ -169,7 +172,7 @@ void AreaEffectCloud::setFixedColor(int color)
 
 void AreaEffectCloud::setParticle(const ParticleType* particle)
 {
-    if (DATA_PARTICLE != NULL && particle != NULL) getEntityData()->set(DATA_PARTICLE, particle->getId(), true);
+    if (DATA_PARTICLE != NULL && particle != NULL) getEntityData()->set(DATA_PARTICLE, static_cast<int>(particle->getId()), true);
 }
 
 void AreaEffectCloud::setParticleParam1(int value)
@@ -205,20 +208,41 @@ void AreaEffectCloud::setDuration(int duration)
 void AreaEffectCloud::tick()
 {
     Entity::tick();
-    if (mDuration <= 0)
+    bool waiting = isWaiting();
+    double radius = getRadius();
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
+    {
+        suckInNearbyPlayers();
+    }
+    if (mLevel->mIsClientSide)
+    {
+        generateParticles();
+        return;
+    }
+    if (mWaitTime + mDuration <= mTickCount)
     {
         remove();
         return;
     }
-    if (mTickCount < mWaitTime) setWaiting(true);
-    else
+    bool shouldWait = mTickCount < mWaitTime;
+    if (waiting != shouldWait) setWaiting(shouldWait);
+    if (!shouldWait)
     {
-        setWaiting(false);
-        generateParticles();
-        applyMobEffects();
+        if (mRadiusPerTick != 0.0f)
+        {
+            radius += mRadiusPerTick;
+            if (radius < 0.5)
+            {
+                remove();
+                return;
+            }
+            setRadius(radius);
+        }
+        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
+        {
+            applyMobEffects();
+        }
     }
-    if (mTickCount++ >= mWaitTime) setRadius(getRadius() + mRadiusPerTick);
-    --mDuration;
 }
 
 void AreaEffectCloud::setRadiusOnUse(float radius)

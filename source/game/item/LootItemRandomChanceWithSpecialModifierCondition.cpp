@@ -14,9 +14,9 @@ LootItemRandomChanceWithSpecialModifierCondition::LootItemRandomChanceWithSpecia
 
 bool LootItemRandomChanceWithSpecialModifierCondition::applies(Random* random, LootTableContext& context)
 {
-    boost::shared_ptr<Entity> entity = context.mKillerEntity;
-    int specialModifier = entity->mSpecialMultiplier;
-    double multiplier = static_cast<double>(context.level->getSpecialMultiplier(specialModifier));
+    boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
+    int dimension = entity->mDimension;
+    double multiplier = ((Level*)context.mLevel)->getSpecialMultiplier(dimension);
 
     return static_cast<double>(random->nextFloat()) < static_cast<double>(chance) * multiplier;
 }

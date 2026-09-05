@@ -2,6 +2,7 @@
 #include "game/core/Difficulty.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
 
 LootItemRandomDifficultyChanceCondition::LootItemRandomDifficultyChanceCondition(float peacefulChance,
                                                                                  float easyChance,
@@ -16,5 +17,5 @@ LootItemRandomDifficultyChanceCondition::LootItemRandomDifficultyChanceCondition
 
 bool LootItemRandomDifficultyChanceCondition::applies(Random* random, LootTableContext& context)
 {
-    return random->nextFloat() < chances[context.level->getDifficulty()->getId()];
+    return random->nextFloat() < chances[((Level*)context.mLevel)->getDifficulty()->getId()];
 }

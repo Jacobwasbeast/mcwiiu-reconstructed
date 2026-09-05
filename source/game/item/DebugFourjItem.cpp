@@ -1,6 +1,7 @@
 #include "game/item/DebugFourjItem.hpp"
 
 #include "game/entity/mob/Mob.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 
 DebugFourjItem::DebugFourjItem()

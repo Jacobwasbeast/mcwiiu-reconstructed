@@ -7,7 +7,10 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/MapItemSavedData.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
 std::wstring _toString(int value);
@@ -24,22 +27,26 @@ MapItem::~MapItem()
 
 static std::wstring mapName(int mapId)
 {
-    return std::wstring(L"map") + _toString(mapId);
+    return std::wstring(L"map_") + _toString(mapId);
 }
 
-void MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension, double x, double z,
-                          unsigned char scale, bool trackingPosition, bool unlimitedTracking)
+not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension,
+                                                double x, double z, unsigned char scale,
+                                                bool trackingPosition, bool unlimitedTracking)
 {
     BlockPos pos((int)x, 0, (int)z);
     int mapId = level->getAuxValueForMap(uid, dimension, pos, (int)scale);
+    not_null_ptr<ItemInstance> itemInstance(new ItemInstance(Items::filledMap, 1, mapId));
     std::wstring name = mapName(mapId);
     boost::shared_ptr<MapItemSavedData> data(new MapItemSavedData(name));
-    data->setOrigin(x, z, dimension);
     data->mScale = scale;
+    data->setOrigin(x, z, data->mScale);
+    data->mDimension = level->mDimension->getType()->getId();
     data->mTrackingPosition = trackingPosition;
     data->mUnlimitedTracking = unlimitedTracking;
     data->setDirty();
     level->setSavedData(name, boost::static_pointer_cast<SavedData>(data));
+    return itemInstance;
 }
 
 boost::shared_ptr<MapItemSavedData> MapItem::getSavedDataIfExists(int mapId, Level* level)
@@ -78,7 +85,8 @@ void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shar
 
 void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstance>& itemInstance)
 {
-    boost::shared_ptr<MapItemSavedData> data = getSavedData(itemInstance, level);
+    boost::shared_ptr<MapItemSavedData> data =
+        static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     if (data)
     {
         data->setDirty();
@@ -108,7 +116,8 @@ boost::shared_ptr<Packet> MapItem::getUpdatePacket(not_null_ptr<ItemInstance> it
 
 void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, int scale)
 {
-    boost::shared_ptr<MapItemSavedData> oldData = getSavedData(itemInstance, level);
+    boost::shared_ptr<MapItemSavedData> oldData =
+        static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     if (oldData)
     {
         std::wstring name = mapName(level->getFreeAuxValueFor(L"map"));
@@ -123,7 +132,8 @@ void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, in
 
 void MapItem::enableMapTracking(not_null_ptr<ItemInstance> itemInstance, Level* level)
 {
-    boost::shared_ptr<MapItemSavedData> data = getSavedData(itemInstance, level);
+    boost::shared_ptr<MapItemSavedData> data =
+        static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     if (data)
     {
         data->mTrackingPosition = true;
@@ -153,7 +163,7 @@ void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level,
 
 int MapItem::getColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    CompoundTag* display = itemInstance->getTagElement(L"display");
+    CompoundTag* display = static_cast<CompoundTag*>(itemInstance->getTagElement(L"display"));
     if (!display || !display->contains(L"MapColor", 99))
     {
         return 0xff46402e;

@@ -14,23 +14,89 @@
 #include "game/util/Random.hpp"
 #include "game/util/WeighedRandom.hpp"
 
-EnchantmentHelper::EnchantmentIterationMethod::~EnchantmentIterationMethod() {}
+EnchantmentHelper::EnchantmentIterationMethod::~EnchantmentIterationMethod()
+{
+}
 
-EnchantmentHelper::GetDamageProtectionIteration::GetDamageProtectionIteration(int* protection, const DamageSource* source) : mProtection(protection), mSource(source) {}
-EnchantmentHelper::GetDamageProtectionIteration::~GetDamageProtectionIteration() {}
-void EnchantmentHelper::GetDamageProtectionIteration::doEnchantment(Enchantment* enchantment, int level) { *mProtection += enchantment->getDamageProtection(level, mSource); }
+EnchantmentHelper::GetDamageProtectionIteration::GetDamageProtectionIteration(
+    int* protection,
+    const DamageSource* source)
+    : mProtection(protection),
+      mSource(source)
+{
+}
 
-EnchantmentHelper::GetDamageBonusIteration::GetDamageBonusIteration(float* bonus, const boost::shared_ptr<LivingEntity>& target) : mBonus(bonus), mTarget(target) {}
-EnchantmentHelper::GetDamageBonusIteration::~GetDamageBonusIteration() {}
-void EnchantmentHelper::GetDamageBonusIteration::doEnchantment(Enchantment* enchantment, int level) { *mBonus += enchantment->getDamageBonus(level, mTarget); }
+EnchantmentHelper::GetDamageProtectionIteration::~GetDamageProtectionIteration()
+{
+}
 
-EnchantmentHelper::DoPostHurtIteration::DoPostHurtIteration(const boost::shared_ptr<LivingEntity>& target, const boost::shared_ptr<Entity>& attacker, int level) : mTarget(target), mAttacker(attacker), mLevel(level) {}
-EnchantmentHelper::DoPostHurtIteration::~DoPostHurtIteration() {}
-void EnchantmentHelper::DoPostHurtIteration::doEnchantment(Enchantment* enchantment, int level) { enchantment->doPostHurt(mTarget, mAttacker, level); }
+void EnchantmentHelper::GetDamageProtectionIteration::doEnchantment(
+    Enchantment* enchantment,
+    int level)
+{
+    *mProtection += enchantment->getDamageProtection(level, mSource);
+}
 
-EnchantmentHelper::DoPostDamageIteration::DoPostDamageIteration(const boost::shared_ptr<LivingEntity>& attacker, const boost::shared_ptr<Entity>& target, int level) : mAttacker(attacker), mTarget(target), mLevel(level) {}
-EnchantmentHelper::DoPostDamageIteration::~DoPostDamageIteration() {}
-void EnchantmentHelper::DoPostDamageIteration::doEnchantment(Enchantment* enchantment, int level) { enchantment->doPostAttack(mAttacker, mTarget, level); }
+EnchantmentHelper::GetDamageBonusIteration::GetDamageBonusIteration(
+    float* bonus,
+    const boost::shared_ptr<LivingEntity>& target)
+    : mBonus(bonus),
+      mTarget(target)
+{
+}
+
+EnchantmentHelper::GetDamageBonusIteration::~GetDamageBonusIteration()
+{
+}
+
+void EnchantmentHelper::GetDamageBonusIteration::doEnchantment(
+    Enchantment* enchantment,
+    int level)
+{
+    *mBonus += enchantment->getDamageBonus(level, mTarget);
+}
+
+EnchantmentHelper::DoPostHurtIteration::DoPostHurtIteration(
+    const boost::shared_ptr<LivingEntity>& target,
+    const boost::shared_ptr<Entity>& attacker,
+    int level)
+    : mTarget(target),
+      mAttacker(attacker),
+      mLevel(level)
+{
+}
+
+EnchantmentHelper::DoPostHurtIteration::~DoPostHurtIteration()
+{
+}
+
+void EnchantmentHelper::DoPostHurtIteration::doEnchantment(
+    Enchantment* enchantment,
+    int level)
+{
+    enchantment->doPostHurt(mTarget, mAttacker, level);
+}
+
+EnchantmentHelper::DoPostDamageIteration::DoPostDamageIteration(
+    const boost::shared_ptr<LivingEntity>& attacker,
+    const boost::shared_ptr<Entity>& target,
+    int level)
+    : mAttacker(attacker),
+      mTarget(target),
+      mLevel(level)
+{
+}
+
+EnchantmentHelper::DoPostDamageIteration::~DoPostDamageIteration()
+{
+}
+
+void EnchantmentHelper::DoPostDamageIteration::doEnchantment(
+    Enchantment* enchantment,
+    int level)
+{
+    enchantment->doPostAttack(mAttacker, mTarget, level);
+}
 
 int EnchantmentHelper::getItemEnchantmentLevel(const Enchantment* enchantment, const not_null_ptr<ItemInstance>& item)
 {
@@ -156,7 +222,28 @@ int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment, const boost
 }
 
 int EnchantmentHelper::getEnchantmentCost(Random* random, int slot, int level, const not_null_ptr<ItemInstance>& item)
-{ if (item->getItem()->getMaxStackSize() < 1) return 0; if (level > 15) level = 15; int value = random->nextInt(8) + 1 + (level >> 1) + random->nextInt(level + 1); if (slot == 0) return Math::_max(value / 3, 1); if (slot == 1) return value * 2 / 3 + 1; return Math::_max(level * 2, value); }
+{
+    if (item->getItem()->getMaxStackSize() < 1)
+    {
+        return 0;
+    }
+
+    if (level > 15)
+    {
+        level = 15;
+    }
+
+    int value = random->nextInt(8) + 1 + (level >> 1) + random->nextInt(level + 1);
+    if (slot == 0)
+    {
+        return Math::_max(value / 3, 1);
+    }
+    if (slot == 1)
+    {
+        return value * 2 / 3 + 1;
+    }
+    return Math::_max(level * 2, value);
+}
 
 std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentResults(int cost, const not_null_ptr<ItemInstance>& item, bool treasure)
 {
@@ -170,6 +257,52 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentRes
     }
     return result;
 }
-void EnchantmentHelper::filterCompatibleEnchantments(std::vector<EnchantmentInstance*>* enchantments, const EnchantmentInstance* selected) { std::vector<EnchantmentInstance*>::iterator it = enchantments->begin(); while (it != enchantments->end()) { if (!(*it)->enchantment->isCompatibleWith(selected->enchantment)) { delete *it; it = enchantments->erase(it); } else ++it; } }
-std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(Random* random, const not_null_ptr<ItemInstance>& item, int level, bool treasure) { return getAvailableEnchantmentResults(level, item, treasure); }
-void EnchantmentHelper::enchantItem(Random* random, not_null_ptr<ItemInstance> item, int level, bool treasure) { std::vector<EnchantmentInstance*>* list = selectEnchantment(random, item, level, treasure); if (list != NULL) { for (std::vector<EnchantmentInstance*>::iterator it = list->begin(); it != list->end(); ++it) { if (item->getItem() != NULL) item->enchant((*it)->enchantment, (*it)->level); delete *it; } delete list; } }
+void EnchantmentHelper::filterCompatibleEnchantments(
+    std::vector<EnchantmentInstance*>* enchantments,
+    const EnchantmentInstance* selected)
+{
+    std::vector<EnchantmentInstance*>::iterator it = enchantments->begin();
+    while (it != enchantments->end())
+    {
+        if (!(*it)->enchantment->isCompatibleWith(selected->enchantment))
+        {
+            delete *it;
+            it = enchantments->erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(
+    Random* random,
+    const not_null_ptr<ItemInstance>& item,
+    int level,
+    bool treasure)
+{
+    return getAvailableEnchantmentResults(level, item, treasure);
+}
+
+void EnchantmentHelper::enchantItem(
+    Random* random,
+    not_null_ptr<ItemInstance> item,
+    int level,
+    bool treasure)
+{
+    std::vector<EnchantmentInstance*>* list = selectEnchantment(random, item, level, treasure);
+    if (list != NULL)
+    {
+        for (std::vector<EnchantmentInstance*>::iterator it = list->begin();
+             it != list->end(); ++it)
+        {
+            if (item->getItem() != NULL)
+            {
+                item->enchant((*it)->enchantment, (*it)->level);
+            }
+            delete *it;
+        }
+        delete list;
+    }
+}

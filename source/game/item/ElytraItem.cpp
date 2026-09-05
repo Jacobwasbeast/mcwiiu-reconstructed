@@ -6,7 +6,9 @@
 #include "game/item/ArmorDispenseItemBehavior.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/block/ElytraItem_ItemPropertyFunction.hpp"
 
 class DispenserBlock
@@ -15,12 +17,23 @@ public:
     static BehaviorRegistry DISPENSER_REGISTRY;
 };
 
+class ElytraItemPropertyFunction : public ElytraItem_ItemPropertyFunction
+{
+public:
+    virtual float call(not_null_ptr<ItemInstance> itemInstance,
+                       Level*,
+                       boost::shared_ptr<LivingEntity>) const
+    {
+        return ElytraItem::isFlyEnabled(itemInstance) ? 0.25f : 1.0f;
+    }
+};
+
 ElytraItem::ElytraItem()
     : Item()
 {
     mMaxStackSize = 1;
     setMaxDamage(0x1B0);
-    addProperty(ResourceLocation(L"broken"), new ElytraItem_ItemPropertyFunction());
+    addProperty(ResourceLocation(L"broken"), new ElytraItemPropertyFunction());
     DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
 }
 
@@ -83,7 +96,7 @@ void ElytraItem::registerIcons(IconRegister* iconRegister)
     mBrokenIcon = iconRegister->registerIcon(L"broken_elytra");
 }
 
-TextureAtlasSprite* ElytraItem::getLayerIcon(int auxValue, int, not_null_ptr<ItemInstance>)
+TextureAtlasSprite* ElytraItem::getLayerIcon(int auxValue, not_null_ptr<ItemInstance>)
 {
     if (auxValue < getMaxDamage() - 1)
     {

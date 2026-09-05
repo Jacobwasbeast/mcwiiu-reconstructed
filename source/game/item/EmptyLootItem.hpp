@@ -4,15 +4,23 @@
 #include <stdint.h>
 #include <vector>
 
+#include "game/core/LootPoolEntry.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 class ItemInstance;
+class LootItemCondition;
 class LootTableContext;
+class LootTableEntry;
 class Random;
 
-class EmptyLootItem
+class EmptyLootItem : public LootPoolEntry
 {
 public:
+    EmptyLootItem(int weight,
+                  int quality,
+                  std::vector<LootItemCondition*>* conditions,
+                  LootTableEntry* entry);
+
     virtual uint32_t _createItem(std::vector<not_null_ptr<ItemInstance> >* items,
                                  Random* random,
                                  LootTableContext& context);

@@ -2,13 +2,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
 #include "game/item/Container.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class ItemEntity;
 
 static Random random;
 

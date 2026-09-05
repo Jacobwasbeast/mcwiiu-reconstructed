@@ -10,16 +10,44 @@
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Rarity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/projectile/ArrowDamageEnchantment.hpp"
+#include "game/entity/projectile/ArrowFireEnchantment.hpp"
+#include "game/entity/projectile/ArrowInfiniteEnchantment.hpp"
+#include "game/entity/projectile/ArrowKnockbackEnchantment.hpp"
+#include "game/item/BindingCurseEnchantment.hpp"
+#include "game/item/DamageEnchantment.hpp"
+#include "game/item/DigDurabilityEnchantment.hpp"
+#include "game/item/DiggingEnchantment.hpp"
 #include "game/item/EnchantmentCategory.hpp"
+#include "game/item/FireAspectEnchantment.hpp"
+#include "game/item/FishingSpeedEnchantment.hpp"
+#include "game/item/FrostWalkerEnchantment.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/KnockbackEnchantment.hpp"
+#include "game/item/LootBonusEnchantment.hpp"
+#include "game/item/MendingEnchantment.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/item/OxygenEnchantment.hpp"
+#include "game/item/ProtectionEnchantment.hpp"
+#include "game/item/ThornsEnchantment.hpp"
+#include "game/item/TridentChannelingEnchantment.hpp"
+#include "game/item/TridentImpalerEnchantment.hpp"
+#include "game/item/TridentLoyaltyEnchantment.hpp"
+#include "game/item/TridentRiptideEnchantment.hpp"
+#include "game/item/UntouchingEnchantment.hpp"
+#include "game/item/VanishingCurseEnchantment.hpp"
+#include "game/item/WaterWalkerEnchantment.hpp"
+#include "game/item/WaterWorkerEnchantment.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/IdMapper.hpp"
+#include "game/world/block/MappedRegistry.hpp"
 
 std::wstring formatwstr(const wchar_t* format, ...);
 
-MappedRegistry<ResourceLocation, Enchantment*>* Enchantment::enchantmentRegistry =
-    new MappedRegistry<ResourceLocation, Enchantment*>();
+MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >* Enchantment::enchantmentRegistry =
+    new MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >();
 
 Enchantment::Enchantment(const Rarity* rarity, const EnchantmentCategory* category, arrayWithLength<const EquipmentSlot*> slots)
     : mCategory(category), mRarity(rarity)

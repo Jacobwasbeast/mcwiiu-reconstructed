@@ -53,7 +53,7 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
     {
         not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(itemId), count, auxValue));
 
-        bool added = player->mInventory->add(item);
+        bool added = player->mField0x5f0->add(item);
 
         int intParams[1];
         intParams[0] = itemId;
@@ -70,7 +70,6 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
                                       ((player->getRandom()->nextFloat() - player->getRandom()->nextFloat()) * 0.7f + 1.0f) * 2.0f,
                                       16.0f);
 
-            player->mInventoryMenu->broadcastChanges();
         }
 
         if (added && item->getCount() <= 0)
@@ -118,7 +117,7 @@ boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::share
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writePlayerUID(player->getPlayerUID());
+    stream.writePlayerUID(player->m_0x784);
     stream.writeInt(itemId);
     stream.writeInt(count);
     stream.writeInt(data);

@@ -12,7 +12,7 @@ MapCloningRecipe::~MapCloningRecipe()
 
 bool MapCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    int filledMaps = 0;
+    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
     int emptyMaps = 0;
     unsigned int i;
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
@@ -24,7 +24,11 @@ bool MapCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
         }
         if (item->getItem() == Items::filledMap)
         {
-            ++filledMaps;
+            if (!filledMap->isEmpty())
+            {
+                return false;
+            }
+            filledMap = item;
         }
         else if (item->getItem() == Items::map)
         {
@@ -35,12 +39,12 @@ bool MapCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
             return false;
         }
     }
-    return filledMaps == 1 && emptyMaps > 0;
+    return !filledMap->isEmpty() && emptyMaps > 0;
 }
 
 not_null_ptr<ItemInstance> MapCloningRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    not_null_ptr<ItemInstance> result;
+    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
     int emptyMaps = 0;
     unsigned int i;
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
@@ -52,18 +56,31 @@ not_null_ptr<ItemInstance> MapCloningRecipe::assemble(boost::shared_ptr<Crafting
         }
         if (item->getItem() == Items::filledMap)
         {
-            result = not_null_ptr<ItemInstance>(new ItemInstance(Items::filledMap,
-                                                                  emptyMaps + 1,
-                                                                  item->getAuxValue()));
-            if (item->hasTag())
+            if (!filledMap->isEmpty())
             {
-                result->setTag(item->getTag()->copy());
+                return ItemInstance::EMPTY;
             }
+            filledMap = item;
         }
         else if (item->getItem() == Items::map)
         {
             ++emptyMaps;
         }
+        else
+        {
+            return ItemInstance::EMPTY;
+        }
+    }
+    if (filledMap->isEmpty() || emptyMaps < 1)
+    {
+        return ItemInstance::EMPTY;
+    }
+    not_null_ptr<ItemInstance> result(new ItemInstance(Items::filledMap,
+                                                        emptyMaps + 1,
+                                                        filledMap->getAuxValue()));
+    if (filledMap->hasTag())
+    {
+        result->setTag(filledMap->getTag()->copy());
     }
     return result;
 }
