@@ -1,17 +1,10 @@
 #include "platform/wiiu/FFLiManager.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
+#include "platform/wiiu/FFLiCompressor.hpp"
 #include "platform/wiiu/FFLiFsCommand.hpp"
 #include "vendor/__N_15_FFLiManager_cpp_28866420.hpp"
 
 #include <new>
-
-class FFLiCompressor
-{
-public:
-    static int GetBufferSize(const void* shaderData);
-    bool SetupCPU(const void* shaderData);
-    void SetupGPU();
-};
 
 static FFLiManager* s_fflManager = 0;
 
@@ -25,16 +18,19 @@ static unsigned int AllocateOptional(FFLiBufferAllocator* allocator)
 }
 
 FFLiManager::FFLiManager(const FFLInitDesc* initDesc, FFLiBufferAllocator* allocator)
-    : FFLiAllocator(), m_systemContext(), m_fsClient(),
-      m_resourceManager((FFLiResourceMultiHeader*)allocator->Allocate(0x9400, 0x40), &m_fsClient),
-      m_databaseManager((FFLiDatabaseFile*)allocator->Allocate(0x4e440, 0x40),
-                        (FFLiFileWriteBuffer*)(uintptr_t)AllocateOptional(allocator),
+    : FFLiAllocator(), m_systemContext(),
+      m_resourceHeader((FFLiResourceMultiHeader*)allocator->Allocate(0x9400, 0x40)),
+      m_databaseFile((FFLiDatabaseFile*)allocator->Allocate(0x4e440, 0x40)),
+      m_fileWriteBuffer((FFLiFileWriteBuffer*)(uintptr_t)AllocateOptional(allocator)),
+      m_fsClient(),
+      m_resourceManager(m_resourceHeader, &m_fsClient),
+      m_databaseManager(m_databaseFile, m_fileWriteBuffer,
                         &m_systemContext, &m_fsClient, this),
       m_shaderCallback(),
       m_charModelCreateParam(&m_databaseManager, &m_resourceManager, &m_shaderCallback,
                              initDesc->resource != 0),
       m_compressor(__N_15_FFLiManager_cpp_28866420::CreateCompressor(initDesc->resource, allocator)),
-      m_copySurface(allocator), m_gpuReady(false), m_hasCompressor(false)
+      m_copySurface(allocator), m_gpuReady(false), m_unknownFlag(false)
 {
     unsigned int i;
     const uint32_t* values = (const uint32_t*)initDesc;
@@ -43,7 +39,6 @@ FFLiManager::FFLiManager(const FFLInitDesc* initDesc, FFLiBufferAllocator* alloc
     {
         copiedInitDesc[i] = values[i];
     }
-    m_hasCompressor = m_compressor != 0;
     unsigned int restSize = allocator->GetRestSize();
     Init((void*)(uintptr_t)allocator->Allocate(restSize, 1), restSize);
 }
@@ -94,8 +89,14 @@ int32_t FFLiManager::AfterConstruct(const FFLInitDesc* initDesc, const FFLResour
             {
                 if (resourceDesc->data[i] != 0)
                 {
-                    m_resourceManager.AttachCache(resourceDesc->data[i], resourceDesc->size[i],
-                                                  (FFLResourceType)i);
+                    result = (int32_t)m_resourceManager.AttachCache(resourceDesc->data[i],
+                                                                    resourceDesc->size[i],
+                                                                    (FFLResourceType)i);
+                    if (result != 0)
+                    {
+                        m_fsClient.Shutdown(0);
+                        return result;
+                    }
                 }
             }
         }
@@ -123,9 +124,8 @@ FFLiManager* FFLiManager::GetInstance()
 
 int32_t FFLiManager::BeforeDestruct()
 {
-    int32_t result = 0;
-    m_databaseManager.BeforeDestruct();
-    if (m_fsClient.ShutdownIfValid(0) != 0)
+    int32_t result = (int32_t)m_databaseManager.BeforeDestruct();
+    if (m_fsClient.ShutdownIfValid(0) != 0 && (result == 0 || result == 10))
     {
         result = 0x12;
     }

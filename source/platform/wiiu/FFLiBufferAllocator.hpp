@@ -6,7 +6,7 @@ class FFLiBufferAllocator
 public:
     void Init(void* buffer, unsigned int size);
     unsigned int Allocate(unsigned int size, unsigned int alignment);
-    void Allocate(unsigned int size);
+    unsigned int Allocate(unsigned int size);
     unsigned int GetRestSize() const;
     bool CanAllocate(unsigned int size, unsigned int alignment) const;
 

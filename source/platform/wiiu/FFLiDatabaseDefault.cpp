@@ -1,11 +1,10 @@
 #include "platform/wiiu/FFLiDatabaseDefault.hpp"
-
-#include <string.h>
+#include "vendor/__N_23_FFLiDatabaseDefault_cpp_862bbafa.hpp"
 
 void FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination, const FFLiMiiDataCoreRFL& source, bool replaceName);
 void FFLiClearCreatorNameFromOfficial(FFLiMiiDataOfficial* data);
 void FFLiMiiDataOfficial2CharInfo(FFLiCharInfo* charInfo, const FFLiMiiDataOfficial& data);
-bool FFLiIsSameMiiID(const unsigned char* first, const unsigned char* second);
+bool FFLiIsSameMiiID(const FFLCreateID* first, const FFLCreateID* second);
 
 static const FFLiMiiDataCoreRFL g_defaultElements[6] =
 {
@@ -17,19 +16,10 @@ static const FFLiMiiDataCoreRFL g_defaultElements[6] =
     { { 0x400E, 0x006E, 0x006F, 0x0020, 0x006E, 0x0061, 0x006D, 0x0065, 0x0000, 0x0000, 0x0000, 0x4040, 0x0000, 0x0000, 0x0000, 0x0000, 0x0004, 0x1840, 0x0180, 0x28A2, 0x106C, 0x0858, 0x144A, 0xB88D, 0x008A, 0x008A, 0x2504 } }
 };
 
-static const unsigned char g_defaultCreateID[10] = { 0xD0, 0x00, 0x00, 0x00, 0xEC, 0xFF, 0x82, 0xD2, 0x00, 0x00 };
-
-static void GetDefaultCreateID(FFLCreateID* createId, unsigned int index)
-{
-    memcpy(createId->data, g_defaultCreateID, sizeof(g_defaultCreateID));
-    createId->data[3] = (unsigned char)index;
-}
-
 void FFLiDatabaseDefault::InitElement(FFLiMiiDataOfficial* element, const FFLiMiiDataCoreRFL* source, unsigned int index)
 {
     FFLiMiiDataCoreRFL2MiiDataCore(element, *source, true);
-    memcpy(element->createId, g_defaultCreateID, sizeof(g_defaultCreateID));
-    element->createId[3] = (unsigned char)index;
+    __N_23_FFLiDatabaseDefault_cpp_862bbafa::GetDefaultCreateID(&element->createId, index);
     FFLiClearCreatorNameFromOfficial(element);
     element->header[0] = (unsigned char)((element->header[0] & 0x8F) | 0x40);
     element->header[1] = (unsigned char)(element->header[1] | 0x01);
@@ -52,24 +42,4 @@ bool FFLiDatabaseDefault::Get(FFLiCharInfo* charInfo, unsigned int index) const
         return false;
     FFLiMiiDataOfficial2CharInfo(charInfo, m_elements[index]);
     return true;
-}
-
-bool FFLiDatabaseDefault::Search(unsigned short* index, const FFLCreateID* createId) const
-{
-    unsigned int i;
-    for (i = 0; i < 6; ++i)
-    {
-        if (FFLiIsSameMiiID(createId->data, m_elements[i].createId))
-        {
-            if (index != NULL)
-                *index = (unsigned short)i;
-            return true;
-        }
-    }
-    return false;
-}
-
-unsigned short FFLiDatabaseDefault::Num() const
-{
-    return 6;
 }

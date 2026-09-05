@@ -6,6 +6,61 @@
 class C4JStorage
 {
 public:
+    enum PROFILESETTING
+    {
+        PROFILESETTING_YAXIS_INVERSION = 0,
+        PROFILESETTING_CONTROLLER_SENSITIVITY = 1,
+        PROFILESETTING_VIBRATION = 2,
+        PROFILESETTING_SWAP_STICKS = 3
+    };
+
+    struct PROFILESETTINGS
+    {
+        unsigned int values[3];
+        unsigned char flags;
+    };
+
+    enum EMessageResult
+    {
+        EMessageResult_0 = 0,
+        EMessageResult_1 = 1,
+        EMessageResult_2 = 2,
+        EMessageResult_3 = 3,
+        EMessageResult_4 = 4,
+        EMessageResult_5 = 5,
+        EMessageResult_6 = 6
+    };
+
+    struct DLC_TMS_DETAILS;
+    struct TMSPP_FILEDATA;
+
+    enum eGlobalStorage { eGlobalStorageValue = 0 };
+    enum eTMS_FileType { eTMS_FileTypeValue = 0 };
+    enum ESavingMessage
+    {
+        ESavingMessage_0 = 0,
+        ESavingMessage_2 = 2
+    };
+    enum ESaveIncompleteType
+    {
+        ESaveIncompleteType_0 = 0,
+        ESaveIncompleteType_1 = 1,
+        ESaveIncompleteType_2 = 2
+    };
+    enum ESaveGameState { ESaveGameStateValue = 0 };
+    enum eOptionsCallback
+    {
+        eOptionsCallback_0 = 0,
+        eOptionsCallback_1 = 1,
+        eOptionsCallback_2 = 2,
+        eOptionsCallback_3 = 3,
+        eOptionsCallback_4 = 4,
+        eOptionsCallback_5 = 5,
+        eOptionsCallback_7 = 7,
+        eOptionsCallback_9 = 9
+    };
+    enum eGeneralData_Callback_Status { eGeneralData_Callback_StatusValue = 0 };
+
     void SetSaveDeviceSelected(uint32_t device, bool selected);
 };
 

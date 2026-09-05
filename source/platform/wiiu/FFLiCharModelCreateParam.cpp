@@ -5,7 +5,7 @@
 
 struct FFLCharModelDesc
 {
-    uint32_t resolution;
+    FFLResolution resolution;
     uint32_t mask;
     uint32_t reserved;
     uint32_t resourceType;
@@ -39,14 +39,14 @@ FFLiCharModelCreateParam::~FFLiCharModelCreateParam()
 {
 }
 
-uint32_t FFLiCharModelCreateParam::GetResolution(uint32_t resolution)
+uint32_t FFLiCharModelCreateParam::GetResolution(FFLResolution resolution)
 {
-    return resolution & 0x3fffffffU;
+    return static_cast<uint32_t>(resolution) & 0x3fffffffU;
 }
 
-uint32_t FFLiCharModelCreateParam::IsEnabledMipMap(uint32_t resolution)
+uint32_t FFLiCharModelCreateParam::IsEnabledMipMap(FFLResolution resolution)
 {
-    return (resolution >> 30) & 1U;
+    return (static_cast<uint32_t>(resolution) >> 30) & 1U;
 }
 
 uint32_t FFLiCharModelCreateParam::CheckModelDesc(const FFLCharModelDesc* description, bool specialMii)
@@ -80,7 +80,7 @@ int32_t FFLiCharModelCreateParam::GetBufferSize(const FFLCharModelDesc* descript
     return size;
 }
 
-uint32_t FFLiCharModelCreateParam::GetCompressBufferSize(const FFLCharModelDesc* description) const
+uint64_t FFLiCharModelCreateParam::GetCompressBufferSize(const FFLCharModelDesc* description) const
 {
     if (!description->useMipmap)
         return 0;
@@ -105,14 +105,4 @@ int32_t FFLiCharModelCreateParam::GetTempBufferSize(const FFLCharModelDesc* desc
                                                                    m_resourceManager, resourceType);
     return maskSize + 0x220 + facelineSize + static_cast<int>(GetCompressBufferSize(description)) +
            FFLiResourceUncompressBuffer::GetBufferSize(m_resourceManager, resourceType);
-}
-
-void FFLiCharModelCreateParam::SetCoordinate(FFLCoordinateType source, FFLCoordinateType destination)
-{
-    m_coordinate.Set(source, destination);
-}
-
-void FFLiCharModelCreateParam::SetScale(float scale)
-{
-    m_coordinate.SetScale(scale);
 }

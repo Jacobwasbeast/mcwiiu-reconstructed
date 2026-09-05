@@ -1,17 +1,8 @@
 #ifndef PLATFORM_WIIU_FFLIDATABASEDEFAULT_HPP
 #define PLATFORM_WIIU_FFLIDATABASEDEFAULT_HPP
 
+#include "platform/wiiu/FFLiTypes.hpp"
 #include "platform/wiiu/FFLiMiiDataOfficial.hpp"
-
-struct FFLCreateID
-{
-    unsigned char data[10];
-};
-
-struct FFLiCharInfo
-{
-    unsigned char data[288];
-};
 
 struct FFLiMiiDataCoreRFL
 {

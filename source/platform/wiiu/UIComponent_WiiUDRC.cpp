@@ -1,7 +1,7 @@
 #include "platform/wiiu/UIComponent_WiiUDRC.hpp"
 #include "platform/wiiu/FJ_WiiUDRC.hpp"
 #include "game/ui/fuiFile.hpp"
-#include "game/core/CInput.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 

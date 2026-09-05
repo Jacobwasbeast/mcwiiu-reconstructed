@@ -12,10 +12,12 @@ public:
     static int GetBufferSize(const void* shaderData);
     bool SetupCPU(const void* shaderData);
     void SetupGPU();
-    void UseUB() const;
+    bool UseUB() const;
     void Setup(const void* shaderData);
 
 private:
+    friend class FFLiCharModelCreator;
+
     FFLiCompressorImpl<FFLiCompressorDescBC3> mCompressorBC3;
 };
 

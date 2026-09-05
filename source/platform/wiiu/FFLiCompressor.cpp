@@ -6,10 +6,6 @@ FFLiCompressor::FFLiCompressor(FFLiBufferAllocator* allocator, const void* shade
 {
 }
 
-FFLiCompressor::~FFLiCompressor()
-{
-}
-
 int FFLiCompressor::GetBufferSize(const void* shaderData)
 {
     const int bc1Size = FFLiCompressorImpl<FFLiCompressorDescBC1>::GetBufferSize(shaderData, 0);
@@ -33,13 +29,7 @@ void FFLiCompressor::SetupGPU()
     mCompressorBC3.SetupGPU();
 }
 
-void FFLiCompressor::UseUB() const
+bool FFLiCompressor::UseUB() const
 {
-    FFLiCompressorImpl<FFLiCompressorDescBC1>::UseUB();
-}
-
-void FFLiCompressor::Setup(const void* shaderData)
-{
-    if (SetupCPU(shaderData))
-        SetupGPU();
+    return FFLiCompressorImpl<FFLiCompressorDescBC1>::UseUB();
 }

@@ -42,7 +42,7 @@ public:
     const char* GetPath(FFLResourceType type) const;
     int32_t LoadResourceHeaderImpl(FFLiFsCommand* command);
     uint32_t LoadResourceHeader(FFLiFsCommandBuffer* buffer);
-    void AttachCache(const void* header, unsigned int size, FFLResourceType type);
+    int32_t AttachCache(const void* header, unsigned int size, FFLResourceType type);
     bool IsCached() const;
     const FFLiResourceHeader* HeaderFromCache(FFLResourceType type) const;
     const FFLiResourceHeader* HeaderFromFile(FFLResourceType type) const;

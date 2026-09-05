@@ -1,28 +1,8 @@
 #ifndef PLATFORM_WIIU_FFLIDATABASEFILEOFFICIAL_HPP
 #define PLATFORM_WIIU_FFLIDATABASEFILEOFFICIAL_HPP
 
-struct FFLCreateID
-{
-    unsigned char data[10];
-};
-
-struct FFLiAuthorID
-{
-    unsigned char data[10];
-};
-
-struct FFLiCharInfo
-{
-    unsigned char data[288];
-};
-
-struct FFLiMiiDataOfficial
-{
-    unsigned char header[12];
-    FFLCreateID createId;
-    FFLiAuthorID authorId;
-    unsigned char data[60];
-};
+#include "platform/wiiu/FFLiTypes.hpp"
+#include "platform/wiiu/FFLiMiiDataOfficial.hpp"
 
 class FFLiDatabaseFileOfficial
 {

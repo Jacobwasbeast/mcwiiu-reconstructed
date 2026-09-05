@@ -101,9 +101,9 @@ uint32_t FFLiResourceManager::LoadResourceHeader(FFLiFsCommandBuffer* buffer)
     return result;
 }
 
-void FFLiResourceManager::AttachCache(const void* header, unsigned int size, FFLResourceType type)
+int32_t FFLiResourceManager::AttachCache(const void* header, unsigned int size, FFLResourceType type)
 {
-    m_cache.Attach(header, size, type);
+    return m_cache.Attach(header, size, type);
 }
 
 bool FFLiResourceManager::IsCached() const
@@ -159,9 +159,4 @@ bool FFLiResourceManager::IsExpand(FFLResourceType type) const
 uint32_t FFLiResourceManager::GetUncompressBufferSize(FFLResourceType type) const
 {
     return FFLiRoundUp(Header(type)->uncompressBufferSize + 64, 64);
-}
-
-void FFLiResourceManager::DetachCache(FFLResourceType type)
-{
-    m_cache.Detach(type);
 }

@@ -29,12 +29,18 @@ struct FFLResourceDesc
 
 class FFLiBufferAllocator;
 class FFLiCompressor;
+class FFLiCharModelCreator;
+struct FFLiResourceMultiHeader;
+struct FFLiFileWriteBuffer;
 
 class FFLiManager : public FFLiAllocator
 {
 private:
+    uint32_t m_unknownWord;
     FFLiSystemContext m_systemContext;
-    unsigned char m_fsPadding[3];
+    FFLiResourceMultiHeader* m_resourceHeader;
+    FFLiDatabaseFile* m_databaseFile;
+    FFLiFileWriteBuffer* m_fileWriteBuffer;
     FFLiFsClient m_fsClient;
     FFLiResourceManager m_resourceManager;
     FFLiDatabaseManager m_databaseManager;
@@ -44,7 +50,9 @@ private:
     FFLiCompressor* m_compressor;
     FFLiCopySurface m_copySurface;
     bool m_gpuReady;
-    bool m_hasCompressor;
+    bool m_unknownFlag;
+
+    friend class FFLiCharModelCreator;
 
 public:
     FFLiManager(const FFLInitDesc* initDesc, FFLiBufferAllocator* allocator);

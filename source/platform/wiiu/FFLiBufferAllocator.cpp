@@ -17,9 +17,9 @@ unsigned int FFLiBufferAllocator::Allocate(unsigned int size, unsigned int align
     return aligned;
 }
 
-void FFLiBufferAllocator::Allocate(unsigned int size)
+unsigned int FFLiBufferAllocator::Allocate(unsigned int size)
 {
-    Allocate(size, 1U);
+    return Allocate(size, 1U);
 }
 
 unsigned int FFLiBufferAllocator::GetRestSize() const

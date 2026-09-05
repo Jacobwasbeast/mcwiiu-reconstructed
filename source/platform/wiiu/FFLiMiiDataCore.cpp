@@ -8,7 +8,7 @@ struct FFLiSwapEndianDesc
 
 void FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(void* data, const FFLiSwapEndianDesc* descriptions, unsigned int count);
 
-static const FFLiSwapEndianDesc g_miiDataCoreEndianDescriptions[7] =
+static const FFLiSwapEndianDesc g_miiDataCoreSwapEndianDescriptions[7] =
 {
     { 2, 1 },
     { 0, 8 },
@@ -21,5 +21,5 @@ static const FFLiSwapEndianDesc g_miiDataCoreEndianDescriptions[7] =
 
 void FFLiMiiDataCore::SwapEndian()
 {
-    FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(this, g_miiDataCoreEndianDescriptions, 7);
+    FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(this, g_miiDataCoreSwapEndianDescriptions, 7);
 }

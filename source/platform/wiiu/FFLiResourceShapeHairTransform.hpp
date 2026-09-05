@@ -1,0 +1,9 @@
+#ifndef PLATFORM_WIIU_FFLIRESOURCESHAPEHAIRTRANSFORM_HPP
+#define PLATFORM_WIIU_FFLIRESOURCESHAPEHAIRTRANSFORM_HPP
+
+struct FFLiResourceShapeHairTransform
+{
+    void SwapEndian();
+};
+
+#endif
