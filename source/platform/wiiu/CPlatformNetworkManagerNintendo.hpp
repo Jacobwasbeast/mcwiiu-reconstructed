@@ -4,25 +4,17 @@
 #include <string>
 #include <vector>
 
+#include "game/core/GameSessionData.hpp"
 #include "game/network/CPlatformNetworkManager.hpp"
 #include "game/network/INQRNetworkManagerListener.hpp"
-#include "game/core/GameSessionData.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
 
 class CGameNetworkManager;
-class FriendSessionInfo;
-class NQRNetworkManager_Lan_WiiU;
 class NQRNetworkManager_WiiU;
 class NQRNetworkPlayer;
 
-namespace nn
-{
-namespace fp
-{
-struct FriendPresence;
-}
-}
+namespace nn { namespace fp { struct FriendPresence; } }
 
 class CPlatformNetworkManagerNintendo : public CPlatformNetworkManager, public INQRNetworkManagerListener
 {
@@ -30,21 +22,26 @@ public:
     class PlayerFlags
     {
     public:
-        PlayerFlags(INetworkPlayer* player, unsigned int flags);
+        PlayerFlags(INetworkPlayer* player, unsigned int flagCount);
         ~PlayerFlags();
-
         INetworkPlayer* m_player;
-        unsigned int m_flags;
-        unsigned int m_reserved;
+        unsigned char* m_flags;
+        unsigned int m_flagCount;
     };
 
     CPlatformNetworkManagerNintendo();
     virtual ~CPlatformNetworkManagerNintendo();
 
     static INetworkPlayer* getNetworkPlayer(NQRNetworkPlayer* player);
-    unsigned int addNetworkPlayer(NQRNetworkPlayer* player);
-    void removeNetworkPlayer(NQRNetworkPlayer* player);
+    INetworkPlayer* addNetworkPlayer(NQRNetworkPlayer* player);
     bool isSystemPrimaryPlayer(NQRNetworkPlayer* player);
+    void SystemFlagRemovePlayer(INetworkPlayer* player);
+    void removeNetworkPlayer(NQRNetworkPlayer* player);
+    void UpdateMatchMakingData();
+    void TickSearch();
+    void SystemFlagReset();
+    static int RemovePlayerOnSocketClosedThreadProc(void* data);
+
     virtual void HandleDataReceived(NQRNetworkPlayer* from, NQRNetworkPlayer* to, unsigned char* data, unsigned int size);
     virtual void HandlePlayerJoined(NQRNetworkPlayer* player);
     virtual void HandlePlayerLeaving(NQRNetworkPlayer* player);
@@ -53,30 +50,26 @@ public:
     virtual void HandleAddLocalPlayerFailed(int userIndex);
     virtual void HandleDisconnect(bool error);
     virtual void HandleInviteReceived(int userIndex, nn::fp::FriendPresence* presence);
-    void UpdateMatchMakingData();
 
-    virtual void Initialise(CGameNetworkManager* manager, int maxChunkPackets);
+    virtual void Initialise(CGameNetworkManager* manager, int maxSystemFlags);
     virtual void Terminate();
     virtual int GetJoiningReadyPercentage();
     virtual int CorrectErrorIDS(int errorIds);
-    virtual void TickSearch();
     virtual void DoWork();
     virtual int GetPlayerCount();
     virtual int GetOnlinePlayerCount();
     virtual int GetLocalPlayerMask(int userIndex);
     virtual bool AddLocalPlayerByUserIndex(int userIndex);
-    static void RemovePlayerOnSocketClosedThreadProc(void* data);
     virtual bool RemoveLocalPlayerByUserIndex(int userIndex);
     virtual bool AddLocalPlayerByPlayerUID(PlayerUID uid);
     virtual INetworkPlayer* GetLocalPlayerByUserIndex(int userIndex);
     virtual INetworkPlayer* GetPlayerByIndex(int index);
     virtual INetworkPlayer* GetPlayerByXuid(PlayerUID uid);
     virtual INetworkPlayer* GetPlayerBySmallId(unsigned char smallId);
-    virtual std::wstring GetDisplayNameByGamertag(std::wstring gamertag);
     virtual bool ShouldMessageForFullSession();
     virtual INetworkPlayer* GetHostPlayer();
     virtual bool IsHost();
-    virtual bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const nn::fp::FriendPresence* presence);
+    virtual bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const FriendPresence* presence);
     virtual bool LeaveGame(bool error);
     virtual bool IsInSession();
     virtual bool IsInGameplay();
@@ -88,7 +81,6 @@ public:
     virtual bool SessionHasMii(int userIndex);
     virtual void SendInviteGUI(int userIndex);
     virtual bool IsAddingPlayer();
-    virtual void SystemFlagReset();
     virtual void HostGame(int userIndexMask, bool onlineGame, bool privateGame, unsigned char gameMode, EMiniGameId miniGameId, unsigned int worldId, unsigned int* attributes);
     virtual int JoinGame(FriendSessionInfo* sessionInfo, int userIndex, int userIndexMask, bool matchmaking);
     virtual bool FindAndJoinGame(int userIndexMask, int searchFlags, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributeValues, unsigned int* attributeIds);
@@ -108,7 +100,6 @@ public:
     virtual void UpdateAndSetGameSessionData(INetworkPlayer* player);
     virtual bool RemoveLocalPlayer(INetworkPlayer* player);
     virtual void SystemFlagAddPlayer(INetworkPlayer* player);
-    void SystemFlagRemovePlayer(INetworkPlayer* player);
     virtual void SystemFlagSet(INetworkPlayer* player, int flag);
     virtual bool SystemFlagGet(INetworkPlayer* player, int flag);
     virtual void SystemFlagClearAll(INetworkPlayer* player);
@@ -124,7 +115,7 @@ public:
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* info, void (*callback)(bool, void*), void* callbackData);
     virtual void ForceFriendsSessionRefresh();
     virtual void ClearFriendsSessions();
-    virtual bool AlreadyInSession(const nn::fp::FriendPresence* presence);
+    virtual bool AlreadyInSession(const FriendPresence* presence);
     virtual bool GetAgeRestricted();
     virtual bool usingAdhocMode();
     virtual bool setAdhocMode(bool mode);
@@ -137,10 +128,10 @@ public:
     virtual bool usingLanMode();
     virtual bool isLanConnected();
     virtual bool isLanModeChangeInProgress();
-    virtual bool checkValidInviteData(const nn::fp::FriendPresence* presence);
+    virtual bool checkValidInviteData(const FriendPresence* presence);
     virtual void SetExitAndJoinFromInviteInProgress(bool inProgress);
     virtual void CancelDisconnectFromExitAndJoin();
-    virtual void FakeLocalPlayerJoined();
+    virtual std::wstring GetDisplayNameByGamertag(std::wstring gamertag);
     virtual int GetOutstandingAckCount(INetworkPlayer* player);
     virtual void TryToConnectOnline(int (*callback)(void*, bool, int), void* callbackData, bool showProgress);
     virtual void AttemptPSNSignIn(int (*callback)(void*, bool, int), void* callbackData, bool showProgress, int userIndex);
@@ -149,26 +140,46 @@ public:
     virtual void CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount);
 
 private:
+    bool m_adhocMode;
+    bool m_enteringAdhocMode;
+    bool m_leavingAdhocMode;
+    bool m_lanMode;
+    bool m_enteringLanMode;
+    bool m_leavingLanMode;
+    bool m_worldSession;
+    bool m_reservedMode;
+    NQRNetworkManager_WiiU* m_onlineNetworkManager;
     NQRNetworkManager* m_networkManager;
-    NQRNetworkPlayer* m_hostPlayer;
-    std::vector<NQRNetworkPlayer*> m_players;
-    GameSessionData m_sessionData;
-    std::vector<PlayerFlags*> m_playerFlags;
-    std::vector<FriendSessionInfo*> m_friendSessions;
-    std::vector<INetworkPlayer*> m_localPlayers;
-    CGameNetworkManager* m_gameNetworkManager;
+    NQRNetworkPlayer* m_pendingPlayer;
+    std::vector<NQRNetworkPlayer*> m_systemPrimaryPlayers;
+    bool m_leavingGame;
+    bool m_leavePending;
+    bool m_leaveError;
+    bool m_suppressConnections;
+    bool m_endSession;
     bool m_localGame;
     bool m_privateGame;
-    bool m_leavingGame;
-    bool m_adhocMode;
-    bool m_lanMode;
-    bool m_exitAndJoin;
-    bool m_addingPlayer;
-    int m_maxChunkPackets;
-    void (*m_playerChangedCallback)(void*, INetworkPlayer*, bool);
-    void* m_playerChangedCallbackData;
-    void (*m_sessionsUpdatedCallback)(void*);
+    bool m_reservedSession;
+    unsigned int m_maxSystemFlags;
+    bool m_matchmakingSession;
+    GameSessionData m_sessionData;
+    unsigned int m_matchMakingData[5];
+    unsigned char m_sessionMode;
+    CGameNetworkManager* m_gameNetworkManager;
+    void (*m_playerChangedCallbacks[4])(void*, INetworkPlayer*, bool);
+    void* m_playerChangedCallbackData[4];
+    std::vector<PlayerFlags*> m_playerFlags;
+    float m_lastPlayerChangeTime;
+    std::vector<FriendSessionInfo*> m_friendSessions;
+    unsigned int m_lastFriendSearchTime;
+    int m_friendSearchCount;
+    NQRNetworkManager::SessionSearchResult* m_friendSearchResults;
+    unsigned int m_friendSearchState;
+    bool m_friendSearchInProgress;
     void* m_sessionsUpdatedCallbackData;
+    void (*m_sessionsUpdatedCallback)(void*);
+    unsigned int m_sessionListState;
+    std::vector<INetworkPlayer*> m_networkPlayers;
 };
 
 #endif
