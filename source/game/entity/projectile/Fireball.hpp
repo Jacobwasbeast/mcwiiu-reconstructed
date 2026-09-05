@@ -33,7 +33,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool isPickable();
-    virtual float getPickRadius();
+    virtual double getPickRadius();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual float getBrightness();
     virtual int getLightColor();

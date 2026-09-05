@@ -4,14 +4,16 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/projectile/Projectile.hpp"
 
 class CompoundTag;
 class DataFixerUpper;
 class Level;
 class LivingEntity;
+class Block;
 class Vec3;
 
-class ThrowableProjectile : public Entity
+class ThrowableProjectile : public Entity, public Projectile
 {
 public:
     ThrowableProjectile(Level* level);
@@ -34,17 +36,16 @@ public:
     Vec3* fjGetParticleSpawnPos() const;
     virtual bool shouldTick();
 protected:
-    boost::shared_ptr<LivingEntity> mOwner;
-    Level* mProjectileLevel;
+    using Entity::mLevel;
     int mXTile;
     int mYTile;
     int mZTile;
-    int mInTile;
-    unsigned char mShake;
-    int mInGround;
+    Block* mInTile;
+    bool mInGround;
+    int mShake;
     std::wstring mOwnerName;
-    int mOwnerId;
-    int mOwnerData;
+    int mLife;
+    int mFlightTime;
     Vec3* mParticleSpawnPos;
 };
 

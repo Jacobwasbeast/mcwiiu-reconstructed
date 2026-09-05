@@ -6,6 +6,11 @@
 class ProjectileDirectHitMedal : public GameMedal
 {
 public:
+    ProjectileDirectHitMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
+        : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
+    {
+    }
+
     virtual ~ProjectileDirectHitMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;

@@ -10,6 +10,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockSource.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 
 class DispenserBlock
@@ -29,7 +30,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
 {
     Level* level = blockSource->getWorld();
 
-    if (level->countInstanceOf(0, false, NULL, NULL) < 300)
+    if (level->countInstanceOf(0ULL, false, NULL, NULL) < 300)
     {
         Position* position = DispenserBlock::getDispensePosition(blockSource);
         const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
@@ -39,7 +40,8 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
 
         projectile->shoot((double)normal.x, (double)normal.y + 0.1, (double)normal.z,
                           (float)getPower(), (float)getUncertainty());
-        level->addEntity(boost::dynamic_pointer_cast<Entity>(projectile));
+        boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(projectile);
+        level->addEntity(entity);
 
         delete position;
     }

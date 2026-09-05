@@ -1,26 +1,42 @@
 #include "game/entity/projectile/ThrowableProjectile.hpp"
 #include <cmath>
+#include <vector>
+#include <boost/unordered_set.hpp>
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/HitResult.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/DefaultedMappedRegistry.hpp"
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
 
 ThrowableProjectile::ThrowableProjectile(Level* level)
-    : Entity(level, true), mOwner(), mProjectileLevel(level), mXTile(0), mYTile(0), mZTile(0), mInTile(0), mShake(0), mInGround(0), mOwnerName(), mOwnerId(0), mOwnerData(7), mParticleSpawnPos(NULL)
+    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _throwableInit();
 }
 
 ThrowableProjectile::ThrowableProjectile(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : Entity(level, true), mOwner(owner), mProjectileLevel(level), mXTile(0), mYTile(0), mZTile(0), mInTile(0), mShake(0), mInGround(0), mOwnerName(), mOwnerId(0), mOwnerData(7), mParticleSpawnPos(NULL)
+    : Entity(level, true), Projectile(level, owner)
 {
     _throwableInit();
+    setPos(owner->mX, owner->mY + owner->getEyeHeight(), owner->mZ);
 }
 
 ThrowableProjectile::ThrowableProjectile(Level* level, double x, double y, double z)
-    : Entity(level, true), mOwner(), mProjectileLevel(level), mXTile(0), mYTile(0), mZTile(0), mInTile(0), mShake(0), mInGround(0), mOwnerName(), mOwnerId(0), mOwnerData(7), mParticleSpawnPos(NULL)
+    : Entity(level, true), Projectile(level, boost::shared_ptr<LivingEntity>())
 {
     _throwableInit();
     setPos(x, y, z);
@@ -46,7 +62,7 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
     mYRotO = mYRot;
     mXRot = (float)(std::atan2(y, horizontal) * 57.2957763671875);
     mXRotO = mXRot;
-    mOwnerId = 0;
+    mLife = 0;
 }
 
 void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset, float velocity, float inaccuracy)
@@ -74,16 +90,19 @@ void ThrowableProjectile::addDataWalkers(DataFixerUpper*, unsigned long long)
 
 void ThrowableProjectile::_throwableInit()
 {
-    mXTile = -1;
-    mYTile = -1;
     mZTile = -1;
-    mInTile = 0;
+    mInTile = Blocks::AIR;
+    mInGround = false;
+    mYTile = -1;
+    mXTile = -1;
+    mLife = 0;
+    mFlightTime = 0;
     mShake = 0;
-    mInGround = 0;
-    mOwnerName = std::wstring(L"");
-    mOwnerId = 0;
-    mOwnerData = 0;
+    mOwnerName = L"";
+    setSize(0.25f, 0.25f);
     mParticleSpawnPos = NULL;
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureThrownProjectilesAreFireImmune())
+        mFireImmune = true;
 }
 
 void ThrowableProjectile::defineSynchedData()
@@ -113,25 +132,151 @@ void ThrowableProjectile::lerpMotion(double xd, double yd, double zd)
 
 void ThrowableProjectile::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Throwable projectile tick");
     mXOld = mX;
     mYOld = mY;
     mZOld = mZ;
-    baseTick();
+    Entity::tick();
     if (mShake > 0)
         --mShake;
-    if (!mInGround)
+
+    HitResult* hitResult = NULL;
+    if (mInGround)
     {
-        ++mTickCount;
-        mX += mXd;
-        mY += mYd;
-        mZ += mZd;
-        float inertia = isInWater() ? 0.8f : 0.99f;
-        mXd *= inertia;
-        mYd *= inertia;
-        mZd *= inertia;
-        mYd -= getGravity();
-        setPos(mX, mY, mZ);
+        Block* block = mLevel->getBlock(BlockPos(mXTile, mYTile, mZTile));
+        if (block == mInTile)
+        {
+            ++mLife;
+            if (mLife == 1200)
+                remove();
+            PIXEndNamedEvent();
+            return;
+        }
+
+        mInGround = false;
+        mXd *= mRandom->nextFloat() * 0.2f;
+        mYd *= mRandom->nextFloat() * 0.2f;
+        mZd *= mRandom->nextFloat() * 0.2f;
+        mLife = 0;
+        mFlightTime = 0;
     }
+    else
+    {
+        ++mFlightTime;
+    }
+    Vec3* from = Vec3::newTemp(mX, mY, mZ);
+    Vec3* to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        typedef boost::unordered_set<Block*, boost::hash<Block*>, std::equal_to<Block*>,
+            std::allocator<Block*> > BlockSet;
+        BlockSet* alwaysClipBlocks = NULL;
+        if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
+        {
+            alwaysClipBlocks = new BlockSet();
+            alwaysClipBlocks->insert(Blocks::web);
+            alwaysClipBlocks->insert(Blocks::vine);
+        }
+        hitResult = mLevel->clip(from, to, false, true, false, false, alwaysClipBlocks, false);
+        delete alwaysClipBlocks;
+    }
+    else
+    {
+        hitResult = mLevel->clip(from, to);
+    }
+
+    from = Vec3::newTemp(mX, mY, mZ);
+    to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
+    if (hitResult != NULL)
+        to = Vec3::newTemp(hitResult->mLocation);
+
+    if (!mLevel->mIsClientSide
+        && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureGhostThroughProjectiles())
+    {
+        boost::shared_ptr<Entity> hitEntity;
+        double nearestDistance = 0.0;
+        boost::shared_ptr<LivingEntity> owner = getOwner();
+        bool shorterHitbox = Minecraft::GetInstance()->GetMiniGame()->HasFeatureShorterHitbox();
+        std::vector<boost::shared_ptr<Entity> > entities;
+        mLevel->getEntities(shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), &entities);
+
+        for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = entities.begin();
+             it != entities.end(); ++it)
+        {
+            boost::shared_ptr<Entity> entity = *it;
+            if (!entity->isPickable())
+                continue;
+            if (owner && (entity == owner || entity == owner->getRootVehicle()) && mFlightTime < 5)
+                continue;
+
+            AABB* hitbox = shorterHitbox
+                ? entity->mBoundingBox->scaleAndShift(1.0, 0.8, 1.0)
+                : entity->mBoundingBox->grow(0.30000001192092896);
+            HitResult* entityHit = hitbox->clip(from, to);
+            if (entityHit != NULL)
+            {
+                double distance = from->distanceToSqr(entityHit->mLocation);
+                delete entityHit;
+                if (distance < nearestDistance || nearestDistance == 0.0)
+                {
+                    hitEntity = entity;
+                    nearestDistance = distance;
+                }
+            }
+        }
+
+        if (hitEntity)
+        {
+            delete hitResult;
+            hitResult = new HitResult(hitEntity);
+        }
+    }
+
+    if (hitResult != NULL)
+    {
+        if (hitResult->mType == HitResult::BLOCK
+            && mLevel->getBlock(hitResult->getBlockPos()) == Blocks::portal)
+            handleInsidePortal(hitResult->getBlockPos());
+        else
+            onHit(hitResult);
+        delete hitResult;
+    }
+
+    mX += mXd;
+    mY += mYd;
+    mZ += mZd;
+    double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
+    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
+    mXRot = (float)(std::atan2(mYd, horizontal) * 57.2957763671875);
+
+    while (mXRot - mXRotO < -180.0f)
+        mXRotO -= 360.0f;
+    while (mXRot - mXRotO >= 180.0f)
+        mXRotO += 360.0f;
+    while (mYRot - mYRotO < -180.0f)
+        mYRotO -= 360.0f;
+    while (mYRot - mYRotO >= 180.0f)
+        mYRotO += 360.0f;
+
+    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
+    double gravity = getGravity();
+    float inertia = 0.99f;
+    if (isInWater())
+    {
+        for (int i = 0; i < 4; ++i)
+            mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25,
+                mZ - mZd * 0.25, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        inertia = 0.8f;
+    }
+    mXd *= inertia;
+    mYd *= inertia;
+    mZd *= inertia;
+    if (!isNoGravity())
+        mYd -= gravity;
+    setPos(mX, mY, mZ);
+    PIXEndNamedEvent();
 }
 
 double ThrowableProjectile::getGravity()
@@ -144,10 +289,14 @@ void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)
     tag->putInt(L"xTile", mXTile);
     tag->putInt(L"yTile", mYTile);
     tag->putInt(L"zTile", mZTile);
-    tag->putInt(L"inTile", mInTile);
-    tag->putByte(L"shake", mShake);
+    ResourceLocation inTileName = Block::blockRegistry->getKey(mInTile);
+    tag->putString(L"inTile", inTileName.toString());
+    tag->putByte(L"shake", (unsigned char)mShake);
     tag->putByte(L"inGround", (unsigned char)mInGround);
-    tag->putString(L"ownerName", mOwnerName);
+    if (mOwnerName.empty() && mOwner
+        && (mOwner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        mOwnerName = mOwner->getDisplayName();
+    tag->putString(L"ownerName", mOwnerName.empty() ? L"" : mOwnerName);
 }
 
 void ThrowableProjectile::readAdditionalSaveData(CompoundTag* tag)
@@ -155,14 +304,23 @@ void ThrowableProjectile::readAdditionalSaveData(CompoundTag* tag)
     mXTile = tag->getInt(L"xTile");
     mYTile = tag->getInt(L"yTile");
     mZTile = tag->getInt(L"zTile");
-    mInTile = tag->getInt(L"inTile");
+    if (tag->contains(L"inTile", 8))
+        mInTile = Block::byString(tag->getString(L"inTile"));
+    else
+        mInTile = Block::byId(tag->getByte(L"inTile"));
     mShake = tag->getByte(L"shake");
-    mInGround = tag->getByte(L"inGround");
+    mInGround = tag->getByte(L"inGround") == 1;
+    mOwner.reset();
     mOwnerName = tag->getString(L"ownerName");
+    if (mOwnerName.empty())
+        mOwnerName = L"";
+    mOwner = getOwner();
 }
 
 boost::shared_ptr<LivingEntity> ThrowableProjectile::getOwner()
 {
+    if (!mOwner && !mOwnerName.empty())
+        mOwner = mLevel->getPlayerByName(mOwnerName);
     return mOwner;
 }
 

@@ -217,9 +217,9 @@ bool Fireball::isPickable()
     return true;
 }
 
-float Fireball::getPickRadius()
+double Fireball::getPickRadius()
 {
-    return 1.0f;
+    return 1.0;
 }
 
 bool Fireball::hurt(const DamageSource* source, float)

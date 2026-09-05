@@ -19,54 +19,53 @@ TippedArrowRecipe::~TippedArrowRecipe()
 
 void TippedArrowRecipe::addRecipes(Recipes* recipes)
 {
-    unsigned int i;
     mPotions = new std::vector<Potion*>();
     mPotions->push_back(Potions::WATER);
-    mPotions->push_back(Potions::MUNDANE);
-    mPotions->push_back(Potions::THICK);
-    mPotions->push_back(Potions::AWKWARD);
     mPotions->push_back(Potions::NIGHT_VISION);
-    mPotions->push_back(Potions::LONG_NIGHT_VISION);
     mPotions->push_back(Potions::INVISIBILITY);
-    mPotions->push_back(Potions::LONG_INVISIBILITY);
     mPotions->push_back(Potions::LEAPING);
-    mPotions->push_back(Potions::LONG_LEAPING);
-    mPotions->push_back(Potions::STRONG_LEAPING);
     mPotions->push_back(Potions::FIRE_RESISTANCE);
-    mPotions->push_back(Potions::LONG_FIRE_RESISTANCE);
     mPotions->push_back(Potions::SWIFTNESS);
-    mPotions->push_back(Potions::LONG_SWIFTNESS);
-    mPotions->push_back(Potions::STRONG_SWIFTNESS);
     mPotions->push_back(Potions::SLOWNESS);
-    mPotions->push_back(Potions::LONG_SLOWNESS);
     mPotions->push_back(Potions::WATER_BREATHING);
-    mPotions->push_back(Potions::LONG_WATER_BREATHING);
     mPotions->push_back(Potions::HEALING);
-    mPotions->push_back(Potions::STRONG_HEALING);
     mPotions->push_back(Potions::HARMING);
-    mPotions->push_back(Potions::STRONG_HARMING);
     mPotions->push_back(Potions::POISON);
-    mPotions->push_back(Potions::LONG_POISON);
-    mPotions->push_back(Potions::STRONG_POISON);
     mPotions->push_back(Potions::REGENERATION);
-    mPotions->push_back(Potions::LONG_REGENERATION);
-    mPotions->push_back(Potions::STRONG_REGENERATION);
     mPotions->push_back(Potions::STRENGTH);
-    mPotions->push_back(Potions::LONG_STRENGTH);
-    mPotions->push_back(Potions::STRONG_STRENGTH);
     mPotions->push_back(Potions::WEAKNESS);
-    mPotions->push_back(Potions::LONG_WEAKNESS);
     mPotions->push_back(Potions::LUCK);
     mPotions->push_back(Potions::TURTLE_MASTER);
+    mPotions->push_back(Potions::SLOW_FALLING);
+    mPotions->push_back(Potions::LONG_NIGHT_VISION);
+    mPotions->push_back(Potions::LONG_INVISIBILITY);
+    mPotions->push_back(Potions::LONG_LEAPING);
+    mPotions->push_back(Potions::LONG_FIRE_RESISTANCE);
+    mPotions->push_back(Potions::LONG_SWIFTNESS);
+    mPotions->push_back(Potions::LONG_SLOWNESS);
+    mPotions->push_back(Potions::LONG_WATER_BREATHING);
+    mPotions->push_back(Potions::LONG_POISON);
+    mPotions->push_back(Potions::LONG_REGENERATION);
+    mPotions->push_back(Potions::LONG_STRENGTH);
+    mPotions->push_back(Potions::LONG_WEAKNESS);
     mPotions->push_back(Potions::LONG_TURTLE_MASTER);
+    mPotions->push_back(Potions::WITHER);
+    mPotions->push_back(Potions::LONG_SLOW_FALLING);
+    mPotions->push_back(Potions::STRONG_LEAPING);
+    mPotions->push_back(Potions::STRONG_SWIFTNESS);
+    mPotions->push_back(Potions::STRONG_HEALING);
+    mPotions->push_back(Potions::STRONG_HARMING);
+    mPotions->push_back(Potions::STRONG_POISON);
+    mPotions->push_back(Potions::STRONG_REGENERATION);
+    mPotions->push_back(Potions::STRONG_STRENGTH);
     mPotions->push_back(Potions::STRONG_TURTLE_MASTER);
-    for (i = 0; i < mPotions->size(); ++i)
+    std::vector<Potion*>::iterator potion;
+    for (potion = mPotions->begin(); potion != mPotions->end(); ++potion)
     {
-        not_null_ptr<ItemInstance> result(new ItemInstance(Items::tippedArrow, 8));
-        PotionUtils::setPotion(result, mPotions->at(i));
-
-        not_null_ptr<ItemInstance> ingredient(new ItemInstance(Items::lingeringPotion));
-        PotionUtils::setPotion(ingredient, mPotions->at(i));
+        not_null_ptr<ItemInstance> result = PotionUtils::setPotion(
+            not_null_ptr<ItemInstance>(new ItemInstance(Items::tippedArrow, 8)), *potion);
+        not_null_ptr<ItemInstance> ingredient = PotionUtils::setPotion(
+            not_null_ptr<ItemInstance>(new ItemInstance(Items::lingeringPotion)), *potion);
 
         recipes->addShapedRecipe(result->copy_not_shared(), L"|||", L"|o|", L"|||",
             L'|', Items::arrow, L'o', ingredient->copy_not_shared(), 0x54);
