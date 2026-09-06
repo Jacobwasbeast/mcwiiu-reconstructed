@@ -6,6 +6,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/Level.hpp"
 
 TimeCommand::~TimeCommand()
