@@ -5,6 +5,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/block/BlockBlobFeature.hpp"
 #include "game/world/generation/DoublePlantFeature.hpp"
