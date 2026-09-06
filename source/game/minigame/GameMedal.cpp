@@ -160,7 +160,7 @@ double GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue
 
     for (unsigned int round = 0; round < playerStats->getTotalRounds(); round++)
     {
-        total += getRoundValue(playerStats->getRoundStats(round));
+        total += getRoundValue(*playerStats->getRoundStats(round));
     }
 
     return (double)total;

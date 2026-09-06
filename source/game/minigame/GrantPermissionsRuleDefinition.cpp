@@ -2,10 +2,11 @@
 
 #include "game/minigame/AllowInRuleDefinition.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
+#include "game/core/Team.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelRuleset.hpp"
-#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 GrantPermissionsRuleDefinition::GrantPermissionsRuleDefinition()
 {
@@ -21,10 +22,7 @@ GrantPermissionsRuleDefinition::~GrantPermissionsRuleDefinition()
 
 void GrantPermissionsRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<const AllowInRuleDefinition*>::const_iterator it = mChildren.begin(); it != mChildren.end(); ++it)
-    {
-        children->push_back(const_cast<GameRuleDefinition*>(static_cast<const GameRuleDefinition*>(*it)));
-    }
+    children->insert(children->end(), mAllowInRules.begin(), mAllowInRules.end());
 }
 
 GameRuleDefinition* GrantPermissionsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
@@ -36,7 +34,7 @@ GameRuleDefinition* GrantPermissionsRuleDefinition::addChild(ConsoleGameRules::E
 
     AllowInRuleDefinition* child = new AllowInRuleDefinition();
     mAllowInRules.push_back(child);
-    mChildren.push_back(child);
+    mUnsortedRules.push_back(child);
     return child;
 }
 
@@ -62,31 +60,33 @@ void GrantPermissionsRuleDefinition::sortChild(const AllowInRuleDefinition* chil
     const std::vector<std::wstring>& permissions = child->getPermissions();
     for (std::vector<std::wstring>::const_iterator it = permissions.begin(); it != permissions.end(); ++it)
     {
-        std::vector<const AllowInRuleDefinition*>* rules = getLayers(*it);
-        if (rules != NULL)
-        {
-            rules->push_back(child);
-        }
+        getLayers(*it)->push_back(child);
     }
 }
 
 bool GrantPermissionsRuleDefinition::anyRulePermitsAction(const std::vector<const AllowInRuleDefinition*>& rules, const boost::shared_ptr<Player>& player, Level* level, LevelRuleset* ruleset, const BlockPos& pos)
 {
-    while (!mChildren.empty())
+    while (mUnsortedRules.size() > 0)
     {
-        sortChild(mChildren.back());
-        mChildren.pop_back();
+        sortChild(mUnsortedRules.back());
+        mUnsortedRules.pop_back();
     }
+
+    int teamMask = player->getTeam() == NULL ? 0 : 1 << player->getTeam()->getTeamIndex();
 
     for (std::vector<const AllowInRuleDefinition*>::const_iterator it = rules.begin(); it != rules.end(); ++it)
     {
-        const std::vector<std::wstring>& targetLayers = (*it)->getTargetLayers();
-        for (std::vector<std::wstring>::const_iterator layer = targetLayers.begin(); layer != targetLayers.end(); ++layer)
+        const AllowInRuleDefinition* rule = *it;
+        if (rule->mDataTag == 0 || (rule->mDataTag & teamMask) > 0)
         {
-            NamedAreaRuleDefinition* area = ruleset->getNamedAreaRule(*layer);
-            if (area != NULL && area->containsBlock(Block::getId(level->getBlock(pos)), pos))
+            const std::vector<std::wstring>& targetLayers = rule->getTargetLayers();
+            for (std::vector<std::wstring>::const_iterator layer = targetLayers.begin(); layer != targetLayers.end(); ++layer)
             {
-                return true;
+                NamedAreaRuleDefinition* area = ruleset->getNamedAreaRule(*layer);
+                if (area != NULL && area->containsBlock(Block::getId(level->getBlock(pos)), pos))
+                {
+                    return true;
+                }
             }
         }
     }

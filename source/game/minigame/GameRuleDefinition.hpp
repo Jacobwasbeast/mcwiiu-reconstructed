@@ -27,6 +27,7 @@ class GameRules_HexAttribute;
 class GameRules_IntAttribute;
 class GameRules_StringAttribute;
 class GameRules_UnsignedCharAttribute;
+class GrantPermissionsRuleDefinition;
 class IGameRuleAttribute;
 class ItemInstance;
 class Level;
@@ -86,6 +87,8 @@ public:
     static std::wstring generateDescriptionString(ConsoleGameRules::EGameRuleType type, const std::wstring& description, void* data, int count);
 
 protected:
+    friend class GrantPermissionsRuleDefinition;
+
     GameRules_StringAttribute* addStringAttribute(ConsoleGameRules::EGameRuleAttr attribute, std::wstring* value);
     GameRules_IntAttribute* addIntAttribute(ConsoleGameRules::EGameRuleAttr attribute, int* value);
     GameRules_HexAttribute* addHexAttribute(ConsoleGameRules::EGameRuleAttr attribute, int* value);

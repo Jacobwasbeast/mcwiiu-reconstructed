@@ -31,7 +31,7 @@ public:
 
 private:
     std::vector<AllowInRuleDefinition*> mAllowInRules;
-    std::vector<const AllowInRuleDefinition*> mChildren;
+    std::vector<const AllowInRuleDefinition*> mUnsortedRules;
     std::vector<const AllowInRuleDefinition*> mDestroyRules;
     std::vector<const AllowInRuleDefinition*> mPlaceRules;
     std::vector<const AllowInRuleDefinition*> mUseRules;
