@@ -21,23 +21,19 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mFillerBlock.blockId = 12;
     mFillerBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
 
-    mDecorator->grassPerChunk = 2;
-    mDecorator->cactiPerChunk = 2;
-    mDecorator->sandPerChunk2 = 50;
-    mDecorator->clayPerChunk2 = 10;
+    mDecorator->treesPerChunk = -999;
+    mDecorator->deadBushPerChunk = 2;
+    mDecorator->reedsPerChunk = 50;
+    mDecorator->cactiPerChunk = 10;
 
-    std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin();
-    while (iterator != mMonsters.end())
+    for (std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin();
+         iterator != mMonsters.end(); ++iterator)
     {
         MobSpawnerData* data = *iterator;
         if (data->mEntityBaseClass == 0x5D550040ULL || data->mEntityBaseClass == 0x5D550042ULL)
         {
             iterator = mMonsters.erase(iterator);
             delete data;
-        }
-        else
-        {
-            ++iterator;
         }
     }
 
@@ -56,7 +52,9 @@ void DesertBiome::decorate(Level* level, Random& random, const BlockPos& origin)
 
     if (random.nextInt(1000) == 0)
     {
-        const BlockPos position = origin.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
+        const int x = random.nextInt(16) + 8;
+        const int z = random.nextInt(16) + 8;
+        const BlockPos position = origin.offset(x, 0, z);
         const BlockPos heightmapPosition = level->getHeightmapPos(position);
         const BlockPos wellPosition = heightmapPosition.above();
         DesertWellFeature well;

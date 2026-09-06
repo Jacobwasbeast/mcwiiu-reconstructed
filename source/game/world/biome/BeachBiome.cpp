@@ -11,6 +11,9 @@ static const float TURTLE_MIN_TEMPERATURE = 0.5F;
 BeachBiome::BeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Beach, properties)
 {
+    mCreatures.clear();
+    mChickens.clear();
+
     mTopBlock.blockId = SAND_BLOCK_ID;
     mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
     mFillerBlock.blockId = SAND_BLOCK_ID;

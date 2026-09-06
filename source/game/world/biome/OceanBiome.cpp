@@ -1,5 +1,7 @@
 #include "game/world/biome/OceanBiome.hpp"
 
+#include "game/world/biome/BiomeDecorator.hpp"
+
 OceanBiome::OceanBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ocean, properties),
       mDeep(deep)
@@ -12,6 +14,13 @@ OceanBiome::OceanBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties
     mCreatures.push_back(new MobSpawnerData(7, 0x0D602001ULL, 3, 5));
     mMonsters.push_back(new MobSpawnerData(10, 0x5D550044ULL, 2, 4));
 
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
+    mOceanRuinConfig.smallProbability = mDeep ? 0.5F : 0.3F;
+    mOceanRuinConfig.clusterProbability = mDeep ? 0.95F : 0.9F;
+    mOceanRuinConfig.enabled = true;
+
+    mDecorator->kelpPerChunk = 20;
+    mDecorator->seagrassPerChunk = 12;
 }
 
 OceanBiome::~OceanBiome()

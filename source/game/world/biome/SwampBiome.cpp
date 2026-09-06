@@ -5,9 +5,12 @@
 #include "game/core/PerlinSimplexNoise.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/FossilFeature.hpp"
 #include "game/world/generation/SwampTreeFeature.hpp"
@@ -16,20 +19,23 @@ void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
 static PerlinSimplexNoise* sTemperatureNoise = new PerlinSimplexNoise(new Random(1234LL), 1);
+static const Biome::BlockPair WATER_BLOCK(9, 0);
+static const Biome::BlockPair WATERLILY_BLOCK(111, 0);
 
 SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Swamp, properties)
 {
     mDecorator->waterlilyPerChunk = 4;
     mDecorator->treesPerChunk = 2;
-    mDecorator->flowersPerChunk = 5;
+    mDecorator->flowersPerChunk = 1;
+    mDecorator->grassPerChunk = 5;
     mDecorator->deadBushPerChunk = 1;
     mDecorator->mushroomsPerChunk = 8;
     mDecorator->reedsPerChunk = 10;
-    mDecorator->cactiPerChunk = 0;
+    mDecorator->sandPerChunk = 0;
     mDecorator->sandPerChunk2 = 0;
-    mDecorator->bigMushroomsPerChunk = 1;
-    mDecorator->clayPerChunk = 10;
+    mDecorator->clayPerChunk = 1;
+    mDecorator->seagrassPerChunk = 10;
     mSlimes.push_back(new MobSpawnerData(1, 0x5D108000ULL, 1, 1));
     mMonsters.push_back(new MobSpawnerData(5, 0x5D550044ULL, 2, 4));
 }
@@ -40,7 +46,6 @@ SwampBiome::~SwampBiome()
 
 AbstractTreeFeature* SwampBiome::getTreeFeature(Random& random)
 {
-    (void)random;
     return new SwampTreeFeature();
 }
 
@@ -54,15 +59,12 @@ unsigned int SwampBiome::getGrassColor(const BlockPos& pos)
 
 unsigned int SwampBiome::getFoliageColor(const BlockPos& pos)
 {
-    (void)pos;
     return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Foliage_Swampland);
 }
 
 FlowerBlock::Flower* SwampBiome::getRandomFlower(Random& random, const BlockPos& pos)
 {
-    (void)random;
-    (void)pos;
-    return NULL;
+    return FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_BLUE_ORCHID];
 }
 
 void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
@@ -71,46 +73,26 @@ void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
     double value = sTemperatureNoise->getValue((double)x * 0.25, (double)z * 0.25);
     if (value > 0.0)
     {
-        int y = 127;
-        int attempts = 32;
         const int localX = x & 15;
         const int localZ = z & 15;
-        const int column = (localX << 11) | (localZ << 7);
-        const bool water = value < 0.12;
-        while (attempts != 0)
+        const int column = (localX << 7) | (localZ << 11);
+        for (int y = 127; y >= 0; --y)
         {
-            int index = column | y;
-            const BlockState* state = primer->getState(localX, y, localZ);
-            Block* block = state == NULL ? NULL : state->getBlock();
-            if (block == NULL || Block::getId(block) != 1)
+            const BlockState* state = primer->getState(localZ, y, localX);
+            Block* block = state->getBlock();
+            if (block->mMaterial != Material::AIR)
             {
-                if (y == 62 && block != NULL && Block::getId(block) != 0)
+                if (y == 62 && block != Blocks::WATER)
                 {
-                    primer->setBlockAndData(index, 8, 0);
-                    if (water)
+                    int index = column | y;
+                    primer->setBlockAndData(index, WATER_BLOCK.blockId, WATER_BLOCK.blockData);
+                    if (value < 0.12)
                     {
-                        primer->setBlockAndData(index + 1, 9, 0);
-                        Biome::buildSurfaceAtDefault(level, random, primer, x, z, noise);
-                        PIXEndNamedEvent();
-                        return;
+                        primer->setBlockAndData(index + 1, WATERLILY_BLOCK.blockId, WATERLILY_BLOCK.blockData);
                     }
                 }
                 break;
             }
-            --y;
-            state = primer->getState(localX, y, localZ);
-            block = state == NULL ? NULL : state->getBlock();
-            if (block == NULL || Block::getId(block) != 1) continue;
-            --y;
-            state = primer->getState(localX, y, localZ);
-            block = state == NULL ? NULL : state->getBlock();
-            if (block == NULL || Block::getId(block) != 1) continue;
-            --y;
-            state = primer->getState(localX, y, localZ);
-            block = state == NULL ? NULL : state->getBlock();
-            if (block == NULL || Block::getId(block) != 1) continue;
-            --attempts;
-            y -= 4;
         }
     }
     Biome::buildSurfaceAtDefault(level, random, primer, x, z, noise);

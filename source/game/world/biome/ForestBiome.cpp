@@ -7,6 +7,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/generation/BigTreeFeature.hpp"
 #include "game/world/generation/BirchFeature.hpp"
 #include "game/world/generation/DoublePlantFeature.hpp"
