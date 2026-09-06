@@ -31,6 +31,8 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ServerGamePacketListenerImpl;
+
     std::vector<std::pair<int, int> > mStackedItems;
     std::vector<int> mItemIds;
     short mContainerId;

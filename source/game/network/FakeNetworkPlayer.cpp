@@ -177,37 +177,3 @@ IQNetPlayer* FakeNetworkPlayer::GetQNetPlayer()
 {
     return NULL;
 }
-
-PlayerUID FakeNetworkPlayer::GetSUID()
-{
-    return mSUID;
-}
-
-void FakeNetworkPlayer::SetName(std::wstring name)
-{
-    mName = name;
-}
-
-void FakeNetworkPlayer::SetSmallId(unsigned char smallId)
-{
-    mSmallId = smallId;
-}
-
-void FakeNetworkPlayer::SetSessionIndex(int sessionIndex)
-{
-    mSessionIndex = sessionIndex;
-}
-
-void FakeNetworkPlayer::SetUserIndex(int userIndex)
-{
-    mUserIndex = userIndex;
-}
-
-void FakeNetworkPlayer::SentBRUP(unsigned int size)
-{
-    if (mBRUPQueue.empty())
-    {
-        mLastBRUPTime = System::processTimeInMilliSecs();
-    }
-    mBRUPQueue.push_back(size);
-}

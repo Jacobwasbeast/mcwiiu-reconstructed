@@ -6,23 +6,17 @@
 #include "game/network/PacketListener.hpp"
 
 TextureChangePacket::TextureChangePacket()
-    : mEntity(),
-      mEntityId(-1),
+    : mEntityId(-1),
       mChangeType(eTextureChangeType_None),
-      mTextureName(L""),
-      mTextureLength(0),
-      mProtocolState(7)
+      mTextureName(L"")
 {
 }
 
 TextureChangePacket::TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type,
                                          const std::wstring& textureName)
-    : mEntity(entity),
-      mEntityId(-1),
+    : mEntityId(-1),
       mChangeType(type),
-      mTextureName(textureName),
-      mTextureLength(0),
-      mProtocolState(7)
+      mTextureName(textureName)
 {
     mEntityId = entity->getId();
 }
@@ -57,7 +51,7 @@ void TextureChangePacket::handle(PacketListener* listener)
 
 int TextureChangePacket::getEstimatedSize()
 {
-    return mTextureLength + 5;
+    return static_cast<int>(mTextureName.size()) + 5;
 }
 
 int TextureChangePacket::getPacketId()

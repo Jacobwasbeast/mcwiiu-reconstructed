@@ -28,7 +28,7 @@ public:
 
     static boost::shared_ptr<Packet> create();
 
-private:
+public:
     int entityId;
     std::wstring geometryName;
     unsigned int geometryId;

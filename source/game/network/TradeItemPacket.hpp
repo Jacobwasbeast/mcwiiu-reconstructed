@@ -23,7 +23,7 @@ public:
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
 
-private:
+public:
     int containerId;
     int itemIndex;
 };

@@ -34,7 +34,7 @@ public:
 
     static boost::shared_ptr<Packet> create();
 
-private:
+public:
     std::wstring textureName;
     unsigned int geometryId;
     unsigned char* data;

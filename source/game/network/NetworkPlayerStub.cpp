@@ -7,11 +7,6 @@
 
 #include "game/core/System.hpp"
 
-NetworkPlayerStub::NetworkPlayerStub(IQNetPlayer* qNetPlayer, CPlatformNetworkManager* platformNetworkManager)
-    : m_qNetPlayer(qNetPlayer), m_socket(NULL), m_acksOutstanding(0), m_lastChunkPacketTime(0)
-{
-}
-
 NetworkPlayerStub::~NetworkPlayerStub()
 {
 }

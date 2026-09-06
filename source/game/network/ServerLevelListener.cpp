@@ -6,7 +6,12 @@
 #include "game/network/ClientboundLevelEventPacket.hpp"
 #include "game/network/ClientboundSoundPacket.hpp"
 #include "game/server/MinecraftServer.hpp"
+#define ePARTICLE_TYPE ServerLevelParticleType
 #include "game/server/ServerLevel.hpp"
+#undef ePARTICLE_TYPE
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/chunk/PlayerChunkMap.hpp"
+#include "game/world/generation/PlayerList.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"

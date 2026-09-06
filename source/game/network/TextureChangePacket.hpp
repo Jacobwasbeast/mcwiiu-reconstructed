@@ -12,10 +12,13 @@ class DataInputStream;
 class DataOutputStream;
 class Entity;
 class PacketListener;
+class ServerGamePacketListenerImpl;
 
 class TextureChangePacket : public Packet,
                             public boost::enable_shared_from_this<TextureChangePacket>
 {
+    friend class ServerGamePacketListenerImpl;
+
 public:
     enum ETextureChangeType
     {
@@ -36,12 +39,9 @@ public:
     virtual int getPacketId();
 
 private:
-    boost::shared_ptr<Entity> mEntity;
     int mEntityId;
     ETextureChangeType mChangeType;
     std::wstring mTextureName;
-    int mTextureLength;
-    int mProtocolState;
 };
 
 #endif

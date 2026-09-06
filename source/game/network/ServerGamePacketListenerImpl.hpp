@@ -2,6 +2,7 @@
 #define GAME_NETWORK_SERVERGAMEPACKETLISTENERIMPL_HPP
 
 #include <map>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -110,7 +111,7 @@ public:
     virtual void handleSetCreativeModeSlot(boost::shared_ptr<ServerboundSetCreativeModeSlotPacket> packet);
     virtual void handleContainerAck(boost::shared_ptr<ServerboundContainerAckPacket> packet);
     virtual void handleSignUpdate(boost::shared_ptr<ServerboundSignUpdatePacket> packet);
-    void getMilliseconds();
+    uint64_t getMilliseconds();
     virtual void handleKeepAlive(boost::shared_ptr<ServerboundKeepAlivePacket> packet);
     virtual void handlePlayerInfo(boost::shared_ptr<PlayerInfoPacket> packet);
     virtual void handlePlayerAbilities(boost::shared_ptr<ServerboundPlayerAbilitiesPacket> packet);
@@ -145,6 +146,8 @@ private:
     Connection* mConnection;
     boost::shared_ptr<ServerPlayer> mPlayer;
     bool mDisconnected;
+    uint64_t mKeepAliveTime;
+    int mKeepAliveId;
     int mTeleportId;
     Vec3* mPendingTeleportPosition;
     double mLastX;
