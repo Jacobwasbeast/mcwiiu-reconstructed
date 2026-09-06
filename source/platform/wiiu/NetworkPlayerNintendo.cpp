@@ -65,7 +65,7 @@ bool NetworkPlayerNintendo::IsHost()
 bool NetworkPlayerNintendo::IsGuest()
 {
     PlayerUID uid = m_player->GetUID();
-    return uid == PlayerUID(0);
+    return (uid.flags >> 29) & 1;
 }
 
 bool NetworkPlayerNintendo::IsLocal()
@@ -128,11 +128,6 @@ std::wstring NetworkPlayerNintendo::GetDisplayName()
     if (IsGuest())
         return GetMiiName();
     return std::wstring(GetOnlineName());
-}
-
-const char* NetworkPlayerNintendo::GetNetworkName()
-{
-    return m_player->GetNetworkName();
 }
 
 PlayerUID NetworkPlayerNintendo::GetUID()
