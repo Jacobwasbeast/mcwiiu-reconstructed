@@ -16,6 +16,7 @@
 #include "game/client/render/TextureAtlas.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 
 static int sIndexedTextures[256];
@@ -256,10 +257,8 @@ ResourceLocation* Textures::getTextureLocation(int textureName)
 ResourceLocation* Textures::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<ItemEntity> item = boost::dynamic_pointer_cast<ItemEntity>(entity);
-    if (item.get() == NULL) return NULL;
-    ItemInstance* instance = item->getItem();
-    if (instance == NULL) return NULL;
-    return getTextureLocation(instance->getItem());
+    not_null_ptr<ItemInstance> instance = item->getItem();
+    return getTextureLocation(instance->getItem()->getIconType());
 }
 
 void Textures::clearLastBoundId()
@@ -354,7 +353,7 @@ int Textures::addMemTexture(const std::wstring& name, MemTextureProcessor* proce
     }
     unsigned char* data = NULL;
     unsigned int size = 0;
-    CMinecraftApp::sInstance.GetMemFileDetails(name, &data, &size);
+    g_pApp->GetMemFileDetails(name, &data, &size);
     if (size == 0)
     {
         mMemTextures[name] = NULL;

@@ -1,6 +1,7 @@
 #include "game/client/render/EnderChestRenderer.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPart.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockEntity.hpp"
@@ -76,8 +77,8 @@ void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     GlStateManager::rotatef(yRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
 
-    float openness = enderChest->mOOpenness +
-        (enderChest->mOpenness - enderChest->mOOpenness) * a;
+    float openness = enderChest->mOpenOld +
+        (enderChest->mOpen - enderChest->mOpenOld) * a;
     openness = 1.0F - openness;
     openness = 1.0F - openness * openness * openness;
 
