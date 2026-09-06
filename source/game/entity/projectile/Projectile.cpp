@@ -6,6 +6,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TntBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"

@@ -5,16 +5,21 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/MoverType.hpp"
+#include "game/entity/projectile/Projectile.hpp"
+#include "game/item/not_null_ptr.hpp"
 
+class Block;
 class CompoundTag;
+template <class T> class EntityDataAccessor;
 class HitResult;
+class ItemInstance;
 class Level;
 class LivingEntity;
 class Player;
-class Random;
+class SoundEvent;
 class Vec3;
 
-class AbstractRotatedItemProjectile : public Entity
+class AbstractRotatedItemProjectile : public Entity, public Projectile
 {
 public:
     AbstractRotatedItemProjectile(Level* level);
@@ -22,52 +27,61 @@ public:
     AbstractRotatedItemProjectile(Level* level, boost::shared_ptr<LivingEntity> owner);
     virtual ~AbstractRotatedItemProjectile();
 
-    virtual unsigned long long GetType() = 0;
-    void shoot(double x, double y, double z, float velocity, float inaccuracy);
-    void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset, float velocity, float inaccuracy);
-    void setFlag(int flag, bool value);
-    void setCritArrow(bool critical);
-    bool onHit(const HitResult* result);
     static void staticCtor();
-    void _init();
+
     virtual void defineSynchedData();
-    unsigned int getOnHitSound() const;
-    virtual void doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity);
-    boost::shared_ptr<Entity> findHitEntity(Vec3* from, Vec3* to);
-    virtual void checkDespawn();
-    virtual bool makeStepSound();
-    virtual double getWaterInertia();
-    virtual bool canChangeDimensions();
-    virtual bool shouldRenderAtSqrDistance(double distanceSqr);
-    bool isNoPhysics();
-    bool isCritArrow();
     virtual void tick();
+    virtual void move(MoverType type, double x, double y, double z, bool pushedByPiston);
+    virtual void playerTouch(boost::shared_ptr<Player> player);
+    virtual bool makeStepSound();
+    virtual bool shouldRenderAtSqrDistance(double distanceSqr);
+    virtual bool shouldTick();
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
     virtual void lerpMotion(double xd, double yd, double zd);
-    virtual void move(MoverType type, double x, double y, double z, bool pushedByPiston);
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual void playerTouch(boost::shared_ptr<Player> player);
     virtual bool isAttackable();
-    virtual float getEyeHeight();
+    virtual double getEyeHeight();
+    virtual bool canChangeDimensions();
+
+    virtual bool onHit(const HitResult* result);
+    virtual const SoundEvent* getOnHitSound() const;
+    virtual void onHitEntity(const HitResult* result) = 0;
+    virtual void doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity);
+    virtual boost::shared_ptr<Entity> findHitEntity(Vec3* from, Vec3* to);
+    virtual not_null_ptr<ItemInstance> getPickupItem() = 0;
+    virtual void checkDespawn();
+    virtual double getWaterInertia();
+    virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
+        float offset, float velocity, float inaccuracy);
+    virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);
+
+    void setFlag(int flag, bool value);
+    void setCritArrow(bool critical);
+    bool isNoPhysics();
+    bool isCritArrow();
     void setNoPhysics(bool noPhysics);
-    virtual bool shouldTick();
 
 protected:
+    using Entity::mLevel;
+
+    void _init();
+
+    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
+
     int mXTile;
     int mYTile;
     int mZTile;
-    int mInTile;
-    short mLife;
-    unsigned char mInData;
-    unsigned char mShakeTime;
+    Block* mInTile;
+    int mInData;
+    int mLife;
     bool mInGround;
-    unsigned char mPickup;
-    bool mCrit;
-    int mOwnerId;
-    bool mNoPhysicsFlag;
-    int mSoundDelay;
-    int mOwner;
+    int mInGroundTime;
+    int mFlightTime;
+    bool mClampedToLevel;
+    int mPickup;
+    int mShake;
+    boost::shared_ptr<LivingEntity> mOwner;
 };
 
 #endif

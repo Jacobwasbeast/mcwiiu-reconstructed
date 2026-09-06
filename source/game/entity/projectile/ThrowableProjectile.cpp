@@ -5,6 +5,7 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -18,6 +19,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
+#include "game/world/generation/Player.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -57,7 +59,7 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
     mXd = x;
     mYd = y;
     mZd = z;
-    double horizontal = std::sqrt(x * x + z * z);
+    float horizontal = (float)std::sqrt(x * x + z * z);
     mYRot = (float)(std::atan2(x, z) * 57.2957763671875);
     mYRotO = mYRot;
     mXRot = (float)(std::atan2(y, horizontal) * 57.2957763671875);
@@ -67,10 +69,18 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
 
 void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot, float offset, float velocity, float inaccuracy)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        unsigned long long type = GetType();
+        velocity = (float)miniGame->getThrowPower(type, velocity);
+        offset = (float)miniGame->getThrowAngle(type, offset);
+    }
+
     const float radians = 0.01745329238474369f;
-    double x = -std::sin(yRot * radians) * std::cos(xRot * radians);
-    double y = -std::sin((xRot + offset) * radians);
-    double z = std::cos(yRot * radians) * std::cos(xRot * radians);
+    double x = -Mth::sin(yRot * radians) * Mth::cos(xRot * radians);
+    double y = -Mth::sin((xRot + offset) * radians);
+    double z = Mth::cos(yRot * radians) * Mth::cos(xRot * radians);
     shoot(x, y, z, velocity, inaccuracy);
     mXd += entity->mXd;
     mZd += entity->mZd;
@@ -198,13 +208,12 @@ void ThrowableProjectile::tick()
         double nearestDistance = 0.0;
         boost::shared_ptr<LivingEntity> owner = getOwner();
         bool shorterHitbox = Minecraft::GetInstance()->GetMiniGame()->HasFeatureShorterHitbox();
-        std::vector<boost::shared_ptr<Entity> > entities;
-        mLevel->getEntities(shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), &entities);
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+            shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
 
-        for (std::vector<boost::shared_ptr<Entity> >::const_iterator it = entities.begin();
-             it != entities.end(); ++it)
+        for (unsigned int i = 0; i < entities->size(); ++i)
         {
-            boost::shared_ptr<Entity> entity = *it;
+            boost::shared_ptr<Entity> entity = entities->at(i);
             if (!entity->isPickable())
                 continue;
             if (owner && (entity == owner || entity == owner->getRootVehicle()) && mFlightTime < 5)
@@ -326,7 +335,9 @@ boost::shared_ptr<LivingEntity> ThrowableProjectile::getOwner()
 
 Vec3* ThrowableProjectile::fjGetParticleSpawnPos() const
 {
-    return mParticleSpawnPos;
+    if (mParticleSpawnPos != NULL)
+        return mParticleSpawnPos;
+    return Vec3::newTemp(mX, mY, mZ);
 }
 
 bool ThrowableProjectile::shouldTick()
