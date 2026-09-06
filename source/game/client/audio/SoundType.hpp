@@ -8,8 +8,8 @@ class SoundType
 public:
 
     static const SoundType* WOOD;
-    static const SoundType* GROUND;
-    static const SoundType* PLANT;
+    static const SoundType* GRAVEL;
+    static const SoundType* GRASS;
     static const SoundType* STONE;
     static const SoundType* METAL;
     static const SoundType* GLASS;

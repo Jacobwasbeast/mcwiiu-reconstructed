@@ -3,8 +3,8 @@
 #include "game/client/audio/SoundEvents.hpp"
 
 const SoundType* SoundType::WOOD = NULL;
-const SoundType* SoundType::GROUND = NULL;
-const SoundType* SoundType::PLANT = NULL;
+const SoundType* SoundType::GRAVEL = NULL;
+const SoundType* SoundType::GRASS = NULL;
 const SoundType* SoundType::STONE = NULL;
 const SoundType* SoundType::METAL = NULL;
 const SoundType* SoundType::GLASS = NULL;
@@ -31,9 +31,9 @@ void SoundType::StaticCtor()
 {
     WOOD = new SoundType(1.0f, 1.0f, SoundEvents::WOOD_BREAK, SoundEvents::WOOD_STEP,
                          SoundEvents::WOOD_PLACE, SoundEvents::WOOD_HIT, SoundEvents::WOOD_FALL);
-    GROUND = new SoundType(1.0f, 1.0f, SoundEvents::GRAVEL_BREAK, SoundEvents::GRAVEL_STEP,
+    GRAVEL = new SoundType(1.0f, 1.0f, SoundEvents::GRAVEL_BREAK, SoundEvents::GRAVEL_STEP,
                            SoundEvents::GRAVEL_PLACE, SoundEvents::GRAVEL_HIT, SoundEvents::GRAVEL_FALL);
-    PLANT = new SoundType(1.0f, 1.0f, SoundEvents::GRASS_BREAK, SoundEvents::GRASS_STEP,
+    GRASS = new SoundType(1.0f, 1.0f, SoundEvents::GRASS_BREAK, SoundEvents::GRASS_STEP,
                           SoundEvents::GRASS_PLACE, SoundEvents::GRASS_HIT, SoundEvents::GRASS_FALL);
     STONE = new SoundType(1.0f, 1.0f, SoundEvents::STONE_BREAK, SoundEvents::STONE_STEP,
                           SoundEvents::STONE_PLACE, SoundEvents::STONE_HIT, SoundEvents::STONE_FALL);
