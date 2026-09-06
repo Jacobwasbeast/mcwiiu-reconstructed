@@ -34,15 +34,19 @@ class Entity;
 class Level;
 class SparseLightStorage;
 class Direction;
+class OldChunkStorage;
 
 class LevelChunk
 {
 public:
+    friend class OldChunkStorage;
+
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED };
     class BlockChange
     {
     public:
+        BlockChange(short packedPos, unsigned int element) : mPackedPos(packedPos), mElement(element) {}
         int GetPackedPos() const;
         unsigned int GetElement() const;
         BlockPos GetPos() const;

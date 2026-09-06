@@ -10,7 +10,10 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/FileInputStream.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/core/CriticalSection.hpp"
+#include "game/core/TickNextTickData.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/EntityIO.hpp"
@@ -28,6 +31,7 @@ extern void* TlsGetValue(unsigned int key);
 
 static unsigned int gOldChunkStorageTlsKey = 0;
 static OldChunkStorage::ThreadStorage* gOldChunkStorageDefault = NULL;
+static OSFastMutex gOldChunkStorageEntityMutex;
 
 OldChunkStorage::ThreadStorage::ThreadStorage()
     : blockData(NULL), blockDataSize(0), data(NULL), dataSize(0),
@@ -104,7 +108,7 @@ File OldChunkStorage::getFile(int x, int z)
 
 void OldChunkStorage::swapBlockID(LevelChunk* chunk, int x, int y, int z, int oldId, int newId)
 {
-    unsigned short element = static_cast<unsigned short>((chunk->getBlockId(x, y, z) << 4) | (chunk->getData(x, y, z) & 0xf));
+    unsigned short element = chunk->getElement(x, y, z);
     int id = static_cast<int>(element) >> 4;
     if (id == oldId || id == newId)
     {
@@ -138,6 +142,7 @@ boost::shared_ptr<Entity> OldChunkStorage::loadAndAddEntity(CompoundTag* tag, Le
     boost::shared_ptr<Entity> entity = loadStaticEntity(tag, level);
     if (entity)
     {
+        chunk->addEntity(entity);
         if (tag->contains(L"Passengers", 9))
         {
             ListTag* passengers = tag->getList(L"Passengers", 10);
@@ -145,10 +150,13 @@ boost::shared_ptr<Entity> OldChunkStorage::loadAndAddEntity(CompoundTag* tag, Le
             {
                 int i;
                 for (i = 0; i < passengers->size(); ++i)
-                    loadAndAddEntity(passengers->getCompound(i), level, chunk);
+                {
+                    boost::shared_ptr<Entity> passenger = loadAndAddEntity(passengers->getCompound(i), level, chunk);
+                    if (passenger)
+                        passenger->startRiding(entity, true);
+                }
             }
         }
-        chunk->addEntity(entity);
     }
     return entity;
 }
@@ -162,8 +170,10 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
         {
             int i;
             for (i = 0; i < entities->size(); ++i)
+            {
                 loadAndAddEntity(entities->getCompound(i), level, chunk);
-            chunk->setLastSaveHadEntities(true);
+                chunk->setLastSaveHadEntities(true);
+            }
         }
     }
     if (tag->contains(L"TileEntities"))
@@ -184,30 +194,58 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
 
 LevelChunk* OldChunkStorage::load(Level* level, CompoundTag* tag, LevelChunk* chunk)
 {
-    CompoundTag* levelTag = tag->getCompound(L"Level");
-    if (levelTag == NULL)
-        return NULL;
-    int x = levelTag->getInt(L"xPos");
-    int z = levelTag->getInt(L"zPos");
+    int version = 9;
+    if (tag->contains(L"version", 2))
+        version = tag->getShort(L"version");
+    int x = tag->getInt(L"xPos");
+    int z = tag->getInt(L"zPos");
     if (chunk == NULL)
         chunk = new LevelChunk(level, x, z);
-    if (levelTag->contains(L"InhabitedTime"))
-        chunk->setInhabitedTime(levelTag->getLong(L"InhabitedTime"));
-    if (levelTag->contains(L"TerrainPopulated"))
-        chunk->setTerrainPopulated(levelTag->getByte(L"TerrainPopulated"));
-    if (levelTag->contains(L"Biomes"))
-        chunk->setBiomes(levelTag->getByteArray(L"Biomes"));
-    if (levelTag->contains(L"Sections"))
-    {
-        ListTag* sections = levelTag->getList(L"Sections", 10);
-        (void)sections;
-    }
-    if (levelTag->contains(L"V"))
-        chunk->setChunkVersion(levelTag->getInt(L"V"));
+    chunk->setChunkVersion(version);
+    if (version < 10)
+        fixBlockIDs(chunk);
+    delete chunk->mElements;
+    chunk->mElements = new ElementStorage(false, tag->getByteArray(L"Blocks"), tag->getByteArray(L"Data"), 0);
+    chunk->setSkyLightData(tag->getByteArray(L"SkyLight"));
+    chunk->setBlockLightData(tag->getByteArray(L"BlockLight"));
+    arrayWithLength<unsigned char> heightmap = tag->getByteArray(L"HeightMap");
+    delete[] chunk->mHeightmap.data;
+    chunk->mHeightmap = arrayWithLength<unsigned char>(heightmap.length, false);
+    if (heightmap.length != 0)
+        std::memcpy(chunk->mHeightmap.data, heightmap.data, heightmap.length);
     chunk->recalcMinAndMaxHeights();
-    loadEntities(chunk, level, levelTag);
-    fixBlockIDs(chunk);
-    fixCauldronData(chunk);
+    if (tag->get(L"TerrainPopulated") == NULL)
+    {
+        chunk->mChunkFlags = static_cast<unsigned short>(tag->getShort(L"TerrainPopulatedFlags"));
+        if ((chunk->mChunkFlags & 0x3fe) == 0x3fe)
+            chunk->mChunkFlags |= 0x400;
+    }
+    else
+    {
+        chunk->mChunkFlags = static_cast<unsigned short>(tag->getByte(L"TerrainPopulated"));
+        if (static_cast<short>(chunk->mChunkFlags) > 0)
+            chunk->mChunkFlags = 0x7fe;
+    }
+    if (tag->contains(L"Biomes"))
+    {
+        arrayWithLength<unsigned char> biomes = tag->getByteArray(L"Biomes");
+        arrayWithLength<unsigned char> copiedBiomes(biomes.length, false);
+        if (biomes.length != 0)
+            std::memcpy(copiedBiomes.data, biomes.data, biomes.length);
+        chunk->setBiomes(copiedBiomes);
+    }
+    loadEntities(chunk, level, tag);
+    if (tag->contains(L"TileTicks"))
+    {
+        ListTag* ticks = tag->getList(L"TileTicks", 10);
+        int i;
+        for (i = 0; ticks != NULL && i < ticks->size(); ++i)
+        {
+            CompoundTag* tick = ticks->getCompound(i);
+            level->addToTickNextTick(BlockPos(tick->getInt(L"x"), tick->getInt(L"y"), tick->getInt(L"z")),
+                                     Block::byId(tick->getInt(L"i")), tick->getInt(L"t"), tick->getInt(L"p"));
+        }
+    }
     return chunk;
 }
 
@@ -218,59 +256,99 @@ LevelChunk* OldChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
         return NULL;
     FileInputStream input(file);
     CompoundTag* root = NbtIo::readCompressed(&input);
-    if (root == NULL)
+    if (root == NULL || !root->contains(L"Level", 10))
         return NULL;
-    LevelChunk* result = load(level, root, chunk);
+    CompoundTag* levelTag = root->getCompound(L"Level");
+    if (!levelTag->contains(L"Blocks"))
+        return NULL;
+    LevelChunk* result = load(level, levelTag, chunk);
+    if (!result->isAt(x, z))
+    {
+        levelTag->putInt(L"xPos", x);
+        levelTag->putInt(L"zPos", z);
+        result = load(level, levelTag, result);
+    }
     delete root;
     return result;
 }
 
 void OldChunkStorage::save(Level* level, LevelChunk* chunk)
 {
-    (void)level;
-    (void)chunk;
 }
 
 bool OldChunkStorage::saveEntities(LevelChunk* chunk, Level* level, CompoundTag* tag)
 {
-    (void)level;
-    ListTag* entitiesTag = new ListTag(10);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    chunk->getEntities(boost::shared_ptr<Entity>(), NULL, entities, NULL);
-    std::vector<boost::shared_ptr<Entity> >::iterator entity;
-    for (entity = entities.begin(); entity != entities.end(); ++entity)
+    if (!chunk->mLastSaveHadEntities)
+        return false;
+    chunk->mLastSaveHadEntities = false;
+    ListTag* entitiesTag = new ListTag(0);
+    EnterCriticalSection(&gOldChunkStorageEntityMutex);
+    int section;
+    for (section = 0; section < chunk->mEntitySectionCount; ++section)
     {
-        CompoundTag* entityTag = new CompoundTag();
-        if ((*entity)->save(entityTag))
-            entitiesTag->add(entityTag);
-        else
-            delete entityTag;
+        std::vector<boost::shared_ptr<Entity> >* entities = chunk->mEntitySections[section];
+        std::vector<boost::shared_ptr<Entity> >::iterator entity;
+        for (entity = entities->begin(); entity != entities->end(); ++entity)
+        {
+            chunk->mLastSaveHadEntities = true;
+            CompoundTag* entityTag = new CompoundTag();
+            if ((*entity)->save(entityTag))
+                entitiesTag->add(entityTag);
+            else
+                delete entityTag;
+        }
     }
+    LeaveCriticalSection(&gOldChunkStorageEntityMutex);
     tag->put(L"Entities", entitiesTag);
-
-    ListTag* blockEntitiesTag = new ListTag(10);
-    LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
-    LevelChunk::BlockEntityMap::iterator blockEntity;
-    for (blockEntity = blockEntities->begin(); blockEntity != blockEntities->end(); ++blockEntity)
-    {
-        CompoundTag* blockEntityTag = new CompoundTag();
-        blockEntity->second->save(blockEntityTag);
-        blockEntitiesTag->add(blockEntityTag);
-    }
-    tag->put(L"TileEntities", blockEntitiesTag);
-    return true;
+    return chunk->mLastSaveHadEntities;
 }
 
 void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* stream)
 {
-    CompoundTag tag;
-    CompoundTag* levelTag = new CompoundTag();
-    levelTag->putInt(L"xPos", chunk->getPos().x);
-    levelTag->putInt(L"zPos", chunk->getPos().z);
-    levelTag->putLong(L"InhabitedTime", chunk->getInhabitedTime());
-    saveEntities(chunk, level, levelTag);
-    tag.put(L"Level", levelTag);
-    NbtIo::write(&tag, stream);
+    stream->writeByte(12);
+    stream->writeInt(chunk->x);
+    stream->writeInt(chunk->z);
+    stream->writeLong(level->getGameTime());
+    stream->writeLong(chunk->getInhabitedTime());
+    chunk->writeCompressedElements(stream);
+    chunk->writeCompressedSkyLightData(stream);
+    chunk->writeCompressedBlockLightData(stream);
+    stream->writeBytes(chunk->getHeightmap());
+    stream->writeUnsignedShort(chunk->mChunkFlags);
+    stream->writeBytes(chunk->getBiomes());
+    CompoundTag* tag = new CompoundTag();
+    saveEntities(chunk, level, tag);
+    ListTag* blockEntities = new ListTag(0);
+    LevelChunk::BlockEntityMap::iterator blockEntity;
+    for (blockEntity = chunk->mBlockEntityMap.begin(); blockEntity != chunk->mBlockEntityMap.end(); ++blockEntity)
+    {
+        CompoundTag* blockEntityTag = new CompoundTag();
+        blockEntity->second->save(blockEntityTag);
+        blockEntities->add(blockEntityTag);
+    }
+    tag->put(L"TileEntities", blockEntities);
+    std::vector<TickNextTickData>* ticks = level->fetchTicksInChunk(chunk, false);
+    if (ticks != NULL)
+    {
+        long long gameTime = level->getGameTime();
+        ListTag* tickTags = new ListTag(0);
+        unsigned int i;
+        for (i = 0; i < ticks->size(); ++i)
+        {
+            TickNextTickData tick = ticks->at(i);
+            CompoundTag* tickTag = new CompoundTag();
+            tickTag->putInt(L"i", Block::getId(tick.getBlock()));
+            tickTag->putInt(L"x", tick.pos.x);
+            tickTag->putInt(L"y", tick.pos.y);
+            tickTag->putInt(L"z", tick.pos.z);
+            tickTag->putInt(L"t", static_cast<int>(tick.triggerTick - gameTime));
+            tickTags->add(tickTag);
+        }
+        tag->put(L"TileTicks", tickTags);
+        delete ticks;
+    }
+    NbtIo::write(tag, stream);
+    delete tag;
 }
 
 boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* level, double x, double y, double z, bool addToWorld)
@@ -296,36 +374,79 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
     return loadEntity(tag, level, 0.0, 0.0, 0.0, addToWorld);
 }
 
+static void fixCauldronBlock(LevelChunk* chunk, int x, int y, int z)
+{
+    const BlockState* state = chunk->getBlockState(x, y, z);
+    if (Block::getId(state->getBlock()) == 0x76)
+    {
+        bool* changed = new bool(false);
+        chunk->setData(x, y, z, Mth::clamp(chunk->getData(x, y, z) << 1, 0, 6), 0, changed);
+        delete changed;
+    }
+}
+
 void OldChunkStorage::fixCauldronData(LevelChunk* chunk)
 {
     int x;
     int y;
     int z;
     for (x = 0; x < 16; ++x)
-        for (z = 0; z < 16; ++z)
-            for (y = 0; y < 256; ++y)
+        for (z = 0; z < 16; z += 2)
+            for (y = 0; y < 256; y += 2)
             {
-                const BlockState* state = chunk->getBlockState(x, y, z);
-                if (state != NULL && Block::getElementId(state->getBlock()) == 0x76)
-                {
-                    int data = chunk->getData(x, y, z) * 2;
-                    if (data < 0) data = 0;
-                    if (data > 6) data = 6;
-                    chunk->setBlockAndData(x, y, z, 0x76, data, false, false);
-                }
+                fixCauldronBlock(chunk, x, y, z);
+                fixCauldronBlock(chunk, x, y + 1, z);
+                fixCauldronBlock(chunk, x, y, z + 1);
+                fixCauldronBlock(chunk, x, y + 1, z + 1);
             }
 }
 
 LevelChunk* OldChunkStorage::load(Level* level, DataInputStream* stream, DataFixerUpper* fixer, LevelChunk* chunk)
 {
-    CompoundTag* tag = NbtIo::read(stream);
-    if (tag == NULL)
-        return NULL;
-    if (fixer != NULL)
-        tag = fixer->updateData(DataFixTypes::eDataFixTypes_Chunk, tag);
-    LevelChunk* result = load(level, tag, chunk);
+    int version = stream->readUnsignedByte();
+    int x = stream->readInt();
+    int z = stream->readInt();
+    stream->readLong();
+    if (chunk == NULL)
+        chunk = new LevelChunk(level, x, z);
+    if (version > 8)
+        chunk->setInhabitedTime(stream->readLong());
+    chunk->setChunkVersion(version);
+    if (version < 12)
+        chunk->readCompressedElementsFromBlockAndData(stream);
+    else
+        chunk->readCompressedElements(stream);
+    chunk->readCompressedSkyLightData(stream);
+    chunk->readCompressedBlockLightData(stream);
+    if (version < 10)
+    {
+        fixBlockIDs(chunk);
+        fixCauldronData(chunk);
+    }
+    else if (version < 11)
+        fixCauldronData(chunk);
+    stream->readBytes(chunk->mHeightmap);
+    chunk->recalcMinAndMaxHeights();
+    chunk->mChunkFlags = static_cast<unsigned short>(stream->readUnsignedShort());
+    if ((chunk->mChunkFlags & 0x3fe) == 0x3fe)
+        chunk->mChunkFlags |= 0x400;
+    stream->readBytes(chunk->mBiomes);
+    chunk->updateBiomePresentFlags();
+    CompoundTag* tag = fixer->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(stream));
+    loadEntities(chunk, level, tag);
+    if (tag->contains(L"TileTicks"))
+    {
+        ListTag* ticks = tag->getList(L"TileTicks", 10);
+        int i;
+        for (i = 0; ticks != NULL && i < ticks->size(); ++i)
+        {
+            CompoundTag* tick = ticks->getCompound(i);
+            level->addToTickNextTick(BlockPos(tick->getInt(L"x"), tick->getInt(L"y"), tick->getInt(L"z")),
+                                     Block::byId(tick->getInt(L"i")), tick->getInt(L"t"), tick->getInt(L"p"));
+        }
+    }
     delete tag;
-    return result;
+    return chunk;
 }
 
 void OldChunkStorage::tick()
@@ -338,6 +459,4 @@ void OldChunkStorage::flush()
 
 void OldChunkStorage::saveEntities(Level* level, LevelChunk* chunk)
 {
-    (void)level;
-    (void)chunk;
 }

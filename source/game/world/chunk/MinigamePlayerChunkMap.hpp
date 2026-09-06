@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_CHUNK_MINIGAMEPLAYERCHUNKMAP_HPP
 #define GAME_WORLD_CHUNK_MINIGAMEPLAYERCHUNKMAP_HPP
 
+#include <stdint.h>
 #include <boost/shared_ptr.hpp>
 
 #include "game/world/chunk/PlayerChunkMap.hpp"
@@ -23,7 +24,7 @@ public:
     virtual void reloadAllPlayers(int minX, int minZ, int maxX, int maxZ);
     virtual void onPlayerJoin(boost::shared_ptr<ServerPlayer> player);
     virtual void onPlayerLeave(boost::shared_ptr<ServerPlayer> player);
-    bool containsPlayer(boost::shared_ptr<ServerPlayer> player);
+    uint32_t containsPlayer(boost::shared_ptr<ServerPlayer> player);
 };
 
 #endif

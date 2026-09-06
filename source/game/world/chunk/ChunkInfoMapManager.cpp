@@ -35,7 +35,7 @@ void ChunkInfoMapManager::Render(float width, float height)
 
 void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float width, float height)
 {
-    int xzSize = sLevel->dimension->getXZSize();
+    int xzSize = sLevel->mDimension->getXZSize();
     int halfXZSize = xzSize / 2;
 
     PlayerList* players = NULL;
@@ -49,10 +49,10 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     int centreChunkZ;
     if (players->getPlayerCount() < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
     {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->player;
-        centreChunkX = Mth::clamp(player->xChunk, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
+        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
+        centreChunkX = Mth::clamp(player->mChunkX, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
                                   halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
-        centreChunkZ = Mth::clamp(player->zChunk, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
+        centreChunkZ = Mth::clamp(player->mChunkZ, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
                                   halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
         size = CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE;
     }
@@ -112,7 +112,7 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
 
 void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float width, float height)
 {
-    int xzSize = sLevel->dimension->getXZSize();
+    int xzSize = sLevel->mDimension->getXZSize();
     int halfXZSize = xzSize / 2;
 
     int maxMemoryAllocated = 0;

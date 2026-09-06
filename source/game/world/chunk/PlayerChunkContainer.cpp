@@ -6,23 +6,66 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/network/ChunkVisibilityPacket.hpp"
+#include "game/network/Packet.hpp"
 #include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-#include "game/world/chunk/PlayerChunkMap.hpp"
 
-class ClientboundBlockUpdatePacket;
-class ClientboundChunkBlocksUpdatePacket;
-class BlockRegionUpdatePacket;
+#define private public
+#include "game/world/chunk/PlayerChunkMap.hpp"
+#undef private
+
+class ClientboundBlockUpdatePacket : public Packet
+{
+public:
+    ClientboundBlockUpdatePacket(Level* level, const BlockPos& pos);
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+};
+
+class BlockRegionUpdatePacket : public Packet
+{
+public:
+    BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
+                            Level* level, bool hasBlockChanges,
+                            const std::vector<short>& blockChanges);
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+};
+
+class ClientboundChunkBlocksUpdatePacket : public Packet
+{
+public:
+    ClientboundChunkBlocksUpdatePacket(int x, int z, arrayWithLength<short> changes,
+                                       unsigned char count, Level* level);
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+};
+
+class ServerGamePacketListenerImpl
+{
+public:
+    void send(boost::shared_ptr<Packet> packet);
+};
+
+class EntityTracker
+{
+public:
+    void playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, LevelChunk* chunk);
+};
 
 PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z)
-    : mMap(map), mPlayers(), mUnknown0(0), mPos(x, z), mBlockChanges(new unsigned short[64]()),
+    : mMap(map), mPlayers(), mPos(x, z), mBlockChanges(new unsigned short[64]()),
       mBlockChangesCapacity(64), mChunk(NULL), mBlockChangesCount(0),
       mMinX(0), mMaxX(0), mMinY(0), mMaxY(0), mMinZ(0), mMaxZ(0),
       mUpdateCounter(0), mPrioritiseBlockChanges(false),
-      mHasSentToPlayers(0), mGoingToSendBRUP(0), mReserved(0), mReserved2(0),
-      mReserved3(0), mReserved4(0), mLastUpdate(0), mUnknown1(0), mUnknown2(0)
+      mLastUpdate(0), mHasSentToPlayers(false)
 {
     mChunk = mMap->getLevel()->getChunkSource()->getChunk(x, z);
 }
@@ -34,7 +77,8 @@ PlayerChunkContainer::~PlayerChunkContainer()
 
 void PlayerChunkContainer::sendToPlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    mMap->getLevel()->getTracker()->playerLoadedChunk(player, mChunk);
+    ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
+    level->getTracker()->playerLoadedChunk(player, mChunk);
 }
 
 void PlayerChunkContainer::add(boost::shared_ptr<ServerPlayer> player, bool send)
@@ -42,13 +86,19 @@ void PlayerChunkContainer::add(boost::shared_ptr<ServerPlayer> player, bool send
     if (!player || hasPlayer(player))
         return;
 
-    mPlayers.push_back(player);
-    if (mPlayers.size() == 1)
+    if (send && player->mConnection != NULL)
+        player->mConnection->send(boost::shared_ptr<Packet>(
+            new ChunkVisibilityPacket(mPos.x, mPos.z, true, false)));
+
+    if (mPlayers.empty())
         mLastUpdate = mMap->getLevel()->getGameTime();
 
-    if (send)
-        sendToPlayer(player);
-    mMap->getLevel()->getChunkSource()->dontDrop(mPos.x, mPos.z);
+    mPlayers.push_back(player);
+    sendToPlayer(player);
+    player->mTrackedChunks.insert(mPos);
+
+    ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
+    ((ServerChunkCache*)level->chunkSource)->dontDrop(mPos.x, mPos.z);
 }
 
 bool PlayerChunkContainer::hasPlayer(boost::shared_ptr<ServerPlayer> player)
@@ -80,13 +130,15 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
         return;
 
     mPlayers.erase(it);
+    player->mTrackedChunks.erase(mPos);
     if (mPlayers.empty())
     {
         updateInhabitedTime();
-        mMap->getLevel()->getChunkSource()->drop(mPos.x, mPos.z);
+        ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
+        ((ServerChunkCache*)level->chunkSource)->drop(mPos.x, mPos.z);
     }
-    if (send && player && player->connection != NULL)
-        player->connection->send(boost::shared_ptr<Packet>(new ChunkVisibilityPacket(mPos.x, mPos.z, false, false)));
+    if (send && player && player->mConnection != NULL)
+        player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityPacket(mPos.x, mPos.z, false, false)));
 }
 
 void PlayerChunkContainer::broadcast(boost::shared_ptr<Packet> packet)
@@ -94,8 +146,8 @@ void PlayerChunkContainer::broadcast(boost::shared_ptr<Packet> packet)
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
     while (it != mPlayers.end())
     {
-        if (*it && (*it)->connection != NULL)
-            (*it)->connection->send(packet);
+        if (*it && (*it)->mConnection != NULL)
+            (*it)->mConnection->send(packet);
         ++it;
     }
 }
@@ -114,9 +166,10 @@ void PlayerChunkContainer::broadcastChanges(bool force)
 {
     if (mUpdateCounter > 0)
         --mUpdateCounter;
+
     if (mBlockChangesCount == 0)
     {
-        mGoingToSendBRUP = 0;
+        mPrioritiseBlockChanges = false;
         return;
     }
 
@@ -126,6 +179,45 @@ void PlayerChunkContainer::broadcastChanges(bool force)
         BlockPos pos(mPos.x * 16 + mMinX, mMinY, mPos.z * 16 + mMinZ);
         boost::shared_ptr<Packet> packet(new ClientboundBlockUpdatePacket(level, pos));
         broadcast(packet);
+        broadcast(level->getBlockEntity(pos));
+    }
+    else if (mBlockChangesCount > mBlockChangesCapacity)
+    {
+        if (!mPrioritiseBlockChanges && (!force || mUpdateCounter > 0))
+            return;
+
+        int minY = (mMinY / 2) * 2;
+        int maxY = (mMaxY / 2) * 2 + 2;
+        int width = mMaxX - mMinX + 1;
+        int height = maxY - minY + 2;
+        int depth = mMaxZ - mMinZ + 1;
+        if (height > 256)
+            height = 256;
+
+        std::vector<short> positions;
+        boost::shared_ptr<Packet> packet(new BlockRegionUpdatePacket(
+            mPos.x * 16 + mMinX, minY, mPos.z * 16 + mMinZ,
+            width, height, depth, level, false, positions));
+        broadcast(packet);
+
+        ServerLevel* serverLevel = static_cast<ServerLevel*>(level);
+        std::vector<boost::shared_ptr<BlockEntity> >* blockEntities =
+            serverLevel->getBlockEntitiesInRegion(mPos.x * 16 + mMinX, minY,
+                                                  mPos.z * 16 + mMinZ,
+                                                  mPos.x * 16 + mMinX + width,
+                                                  minY + height,
+                                                  mPos.z * 16 + mMinZ + depth);
+        std::vector<boost::shared_ptr<BlockEntity> >::iterator entity = blockEntities->begin();
+        while (entity != blockEntities->end())
+        {
+            broadcast(*entity);
+            ++entity;
+        }
+
+        mBlockChangesCount = 0;
+        mPrioritiseBlockChanges = false;
+        mUpdateCounter = 1;
+        return;
     }
     else
     {
@@ -133,14 +225,23 @@ void PlayerChunkContainer::broadcastChanges(bool force)
         int i;
         for (i = 0; i < mBlockChangesCount; ++i)
             positions.push_back(static_cast<short>(mBlockChanges[i]));
-        boost::shared_ptr<Packet> packet(new BlockRegionUpdatePacket(
-            mPos.x * 16 + mMinX, mMinY, mPos.z * 16 + mMinZ,
-            mMaxX - mMinX, mMaxY - mMinY, mMaxZ - mMinZ, level, force, &positions));
+
+        arrayWithLength<short> changes(positions);
+        boost::shared_ptr<Packet> packet(new ClientboundChunkBlocksUpdatePacket(
+            mPos.x, mPos.z, changes, static_cast<unsigned char>(mBlockChangesCount), level));
         broadcast(packet);
+
+        for (i = 0; i < mBlockChangesCount; ++i)
+        {
+            unsigned short packed = mBlockChanges[i];
+            BlockPos pos((mPos.x << 4) | ((packed >> 12) & 15), packed & 255,
+                         (mPos.z << 4) | ((packed >> 8) & 15));
+            broadcast(level->getBlockEntity(pos));
+        }
     }
 
     mBlockChangesCount = 0;
-    mGoingToSendBRUP = 0;
+    mPrioritiseBlockChanges = false;
 }
 
 void PlayerChunkContainer::blockChanged(int x, int y, int z)
@@ -169,8 +270,9 @@ void PlayerChunkContainer::blockChanged(int x, int y, int z)
         for (i = 0; i < mBlockChangesCount; ++i)
             if (mBlockChanges[i] == packed)
                 return;
-        mBlockChanges[mBlockChangesCount++] = packed;
+        mBlockChanges[mBlockChangesCount] = packed;
     }
+    ++mBlockChangesCount;
 }
 
 void PlayerChunkContainer::prioritiseBlockChanges()
@@ -205,7 +307,7 @@ bool PlayerChunkContainer::updatePlayerReference(boost::shared_ptr<ServerPlayer>
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
     while (it != mPlayers.end())
     {
-        if (*it && player && (*it)->mPlayerUID == player->mPlayerUID)
+        if (*it && player && (*it)->getSUID() == player->getSUID())
         {
             *it = player;
             return true;

@@ -30,7 +30,6 @@ static OSFastMutex sSaveMutex;
 static std::deque<DataOutputStream*> sSaveQueue;
 static unsigned int sActiveSaves = 0;
 static C4JThreadImpl* sSaveThreads[3] = { NULL, NULL, NULL };
-static RegionFileCache sRegionFileCache;
 
 McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
     const std::wstring& directory, DataFixerUpper* fixer)
@@ -108,7 +107,7 @@ void McRegionChunkStorage::staticCtor()
 LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
 {
     bool newSaveFormat = false;
-    DataInputStream* stream = sRegionFileCache._getChunkDataInputStream(
+    DataInputStream* stream = gRegionFileCache._getChunkDataInputStream(
         mSaveFile, mDirectory, x, z, &newSaveFormat);
     if (mSaveFile->getOriginalSaveVersion() > 7 || newSaveFormat)
     {
@@ -153,7 +152,7 @@ void McRegionChunkStorage::save(Level* level, LevelChunk* chunk)
     level->checkSession();
     MemSect(0x1e);
     PIXBeginNamedEvent(0.0f, "Getting output stream");
-    DataOutputStream* stream = sRegionFileCache._getChunkDataOutputStream(
+    DataOutputStream* stream = gRegionFileCache._getChunkDataOutputStream(
         mSaveFile, mDirectory, chunk->x, chunk->z, true);
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Writing chunk data");

@@ -10,7 +10,7 @@
 class AABB;
 class BlockEntity;
 class Culler;
-class ClipChunk;
+class Chunk;
 class Entity;
 class Level;
 
@@ -25,6 +25,23 @@ struct IntKeyEq
 };
 
 typedef boost::unordered_map<int, std::vector<boost::shared_ptr<BlockEntity> >, IntKeyHash, IntKeyEq> ChunkBlockEntityMap;
+
+class ClipChunk
+{
+public:
+    Chunk* mChunk;
+    int mGlobalIndex;
+    bool mVisible;
+    float mMinX;
+    float mMinY;
+    float mMinZ;
+    float mMaxX;
+    float mMaxY;
+    float mMaxZ;
+    int mX;
+    int mY;
+    int mZ;
+};
 
 class Chunk
 {

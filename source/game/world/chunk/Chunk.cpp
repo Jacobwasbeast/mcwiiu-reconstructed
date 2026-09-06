@@ -30,6 +30,8 @@ Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mute
       mBoundingBox(NULL), mOwnsBoundingBox(false), mClipChunk(clipChunk), mUnknown(0),
       mBlockEntities(&blockEntities), mMutex(&mutex), mNonStack(false)
 {
+    mClipChunk->mVisible = false;
+    mClipChunk->mChunk = this;
     setPos(x, z, dimension);
     mNonStack = true;
 }
@@ -67,7 +69,7 @@ void Chunk::reset()
         }
         LeaveCriticalSection(mMutex);
     }
-    mDirty = 0;
+    mClipChunk->mVisible = false;
 }
 
 void Chunk::setPos(int x, int z, int dimension)
@@ -84,11 +86,21 @@ void Chunk::setPos(int x, int z, int dimension)
         mMaxX = x + 8;
         mMaxZ = z + 8;
         mMaxDimension = dimension + 8;
+        mClipChunk->mX = x + 8;
+        mClipChunk->mY = z + 8;
+        mClipChunk->mZ = dimension + 8;
+        mClipChunk->mGlobalIndex = (int)LevelRenderer::getGlobalIndexForChunk(x, z, dimension, mLevel);
         if (mBoundingBox == NULL)
         {
             mBoundingBox = AABB::newPermanent(-6.0, -6.0, -6.0, 22.0, 22.0, 22.0);
             mOwnsBoundingBox = true;
         }
+        mClipChunk->mMinX = (float)(mBoundingBox->mMinX + x);
+        mClipChunk->mMinY = (float)(mBoundingBox->mMinY + z);
+        mClipChunk->mMinZ = (float)(mBoundingBox->mMinZ + dimension);
+        mClipChunk->mMaxX = (float)(mBoundingBox->mMaxX + x);
+        mClipChunk->mMaxY = (float)(mBoundingBox->mMaxY + z);
+        mClipChunk->mMaxZ = (float)(mBoundingBox->mMaxZ + dimension);
         mNonStack = true;
         LevelRenderer* renderer = chunkLevelRenderer();
         if (renderer != NULL && mMutex != NULL)
@@ -170,8 +182,7 @@ void Chunk::_delete()
 
 unsigned long long Chunk::cull(Culler* culler)
 {
-    if (culler != NULL)
-        culler->isVisible(mBoundingBox);
+    mClipChunk->mVisible = culler->isVisible(mBoundingBox);
     return (unsigned long long)(unsigned long)this;
 }
 

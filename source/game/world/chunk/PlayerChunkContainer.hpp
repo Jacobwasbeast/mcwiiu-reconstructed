@@ -39,7 +39,6 @@ public:
 private:
     PlayerChunkMap* mMap;
     std::vector<boost::shared_ptr<ServerPlayer> > mPlayers;
-    int mUnknown0;
     ChunkPos mPos;
     unsigned short* mBlockChanges;
     int mBlockChangesCapacity;
@@ -53,15 +52,8 @@ private:
     int mMaxZ;
     int mUpdateCounter;
     bool mPrioritiseBlockChanges;
-    unsigned char mHasSentToPlayers;
-    unsigned char mGoingToSendBRUP;
-    unsigned char mReserved;
-    unsigned char mReserved2;
-    unsigned char mReserved3;
-    unsigned char mReserved4;
     long long mLastUpdate;
-    int mUnknown1;
-    int mUnknown2;
+    bool mHasSentToPlayers;
 };
 
 #endif
