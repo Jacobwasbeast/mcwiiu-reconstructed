@@ -109,7 +109,7 @@ struct ServerPlayer : Player {
     uint64_t flagEntitiesToBeRemoved(uint32_t* parameterOne, bool* parameterTwo);   
     static int32_t getFlagIndexForChunk(ChunkPos* parameterOne, int32_t parameterTwo);   
     void disconnect();   
-    Level* getLevel();   
+    ServerLevel* getLevel();
     void doTickA();   
     uint64_t broadcast(boost::shared_ptr<BlockEntity>* parameterOne, bool parameterTwo);   
     void doChunkSendingTick(bool parameterOne, bool parameterTwo);   

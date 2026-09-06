@@ -6,14 +6,19 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/ConsoleSchematicFile.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameType.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 class ChunkGenerator;
 class ChunkSource;
 class CommandDispatcher;
+class C4JEventImpl;
+class FillTool;
 class Level;
 class LevelStorageSource;
 class LevelType;
@@ -110,27 +115,60 @@ public:
     std::wstring getFile(const std::wstring& name);
     bool IsSuspending();
 
-    MasterGameMode* mMasterGameMode;
+    ServerConnection* mConnection;
+    Settings* mSettings;
+    arrayWithLength<ServerLevel*> mLevels;
+    PlayerList* mPlayers;
 
 private:
-    ConsoleSchematicFile schematicFile;
-    ServerConnection* connection;
-    Settings* settings;
-    std::vector<ServerLevel*> levels;
-    PlayerList* players;
-    std::vector<ConsoleInputSource*> consoleInputs;
-    std::vector<postProcessRequest> postProcessRequests;
+    ConsoleSchematicFile* schematicFiles[8];
+    FillTool* fillTools[8];
+    Random random;
+    int tickCount;
+    bool running;
+    bool levelLoaded;
+    bool postProcessing;
+    bool saving;
+    int networkTick;
+    std::wstring progressName;
+    int progressNameLength;
+    int progressNameCapacity;
+    int progressValue;
     CommandDispatcher* commandDispatcher;
-    const GameType* defaultGameType;
-    int maxBuildHeight;
+    std::vector<ConsoleInputSource*> consoleInputs;
+    int consoleInputIndex;
+    unsigned short consoleInputCount;
     bool animals;
     bool npcsEnabled;
     bool pvpAllowed;
     bool flightAllowed;
+    unsigned short serverFlags;
+    std::wstring statusMessage;
+    int statusMessageLength;
+    int statusMessageCapacity;
+    int maxBuildHeight;
+    const Difficulty* difficulty;
+    LevelType* levelType;
+    const GameType* defaultGameType;
+    int gameModeId;
+    int playerIdleTimeout;
+    ProgressRenderer* progressRenderer;
+    LevelStorageSource* levelStorage;
+    std::vector<postProcessRequest> postProcessRequests;
+    int postProcessState;
+    OSFastMutex postProcessLock;
+    C4JEventImpl* postProcessEvent;
     bool serverPaused;
     bool forceGameType;
     bool suspending;
-    bool running;
+    bool stopping;
+    long long lastServerTime;
+    bool shuttingDown;
+    bool suspended;
+    unsigned short shutdownFlags;
+
+public:
+    MasterGameMode* mMasterGameMode;
 };
 
 extern MinecraftServer* gMinecraftServer;

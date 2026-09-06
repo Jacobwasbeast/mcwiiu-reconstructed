@@ -5,6 +5,7 @@
 #include "game/command/GameDifficultyCommand.hpp"
 #include "game/command/KillCommand.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
 #include <vector>

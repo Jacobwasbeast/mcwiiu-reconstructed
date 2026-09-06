@@ -1,5 +1,6 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/core/GameMode.hpp"
+#include "game/server/ServerLevel.hpp"
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
     : Player((Level*)level, name), mConnection(NULL), mPlayerId(0), mServer(server), mGameMode(gameMode),
@@ -63,9 +64,9 @@ void ServerPlayer::disconnect()
 {
 }
 
-Level* ServerPlayer::getLevel()
+ServerLevel* ServerPlayer::getLevel()
 {
-    return 0;
+    return static_cast<ServerLevel*>(mLevel);
 }
 
 void ServerPlayer::doTickA()
