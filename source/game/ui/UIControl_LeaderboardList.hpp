@@ -16,10 +16,13 @@ public:
     void initLeaderboard(int firstValue, int spacing, int offset);
     void setColumnIcon(int column, int icon);
     void addDataSet(bool loading, int rank, int value, const std::wstring& gamertag,
-                    bool complete, const std::wstring& value0, const std::wstring& value1,
-                    const std::wstring& value2, const std::wstring& value3,
-                    const std::wstring& value4, const std::wstring& value5,
-                    const std::wstring& value6);
+                    bool complete, const std::wstring& firstColumnText,
+                    const std::wstring& secondColumnText,
+                    const std::wstring& thirdColumnText,
+                    const std::wstring& fourthColumnText,
+                    const std::wstring& fifthColumnText,
+                    const std::wstring& sixthColumnText,
+                    const std::wstring& seventhColumnText);
     void SetTouchFocus(int x, int y, bool focus);
 
 private:

@@ -2,24 +2,14 @@
 
 #include <string>
 
+#include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_Event.hpp"
-#include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
 #include "game/ui/FJ_List.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class UIScene
-{
-public:
-    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-};
-
-class FJ_HtmlText
-{
-public:
-    void setText(const std::wstring& text);
-};
 
 static FJ_FuiNode* child(FJ_FuiNode* node, const char* name)
 {
@@ -28,19 +18,27 @@ static FJ_FuiNode* child(FJ_FuiNode* node, const char* name)
 
 static void clearText(FJ_FuiNode* node)
 {
-    static_cast<FJ_HtmlText*>(node->asFJ_HtmlText())->setText(L"");
+    node->asFJ_HtmlText()->SetLabel(L"");
 }
 
-static void setListPosition(FJ_FuiNode* list, FJ_FuiNode* parent, int height)
+static void setListPosition(FJ_FuiNode* list, FJ_FuiNode* background)
 {
-    FJ_FuiNode* item = list->getChildAt(0);
-    item->setY(static_cast<float>(height) + (list->getY() - parent->getY()) * 2.0f);
+    background->getChildAt(0)->setY(static_cast<float>(list->asFJ_List()->GetListHeight())
+                                   + (list->getY() - background->getY()) * 2.0f);
 }
 
-static void setPanelPosition(FJ_FuiNode* panel, FJ_FuiNode* list, FJ_FuiNode* description)
+static void setDescriptionPosition(FJ_FuiNode* description, FJ_FuiNode* background)
 {
-    FJ_FuiNode* item = panel->getChildAt(0);
-    item->setY(panel->getHeight() + (list->getY() - description->getY()) * 2.0f);
+    description->setY(background->getChildAt(0)->getHeight()
+                      + (background->getY() - description->getY()) * 2.0f);
+}
+
+static void setTextPanelPosition(FJ_FuiNode* textPanel, FJ_FuiNode* options,
+                                 FJ_FuiNode* background)
+{
+    textPanel->getChildAt(0)->setY(background->getChildAt(0)->getHeight()
+                                  + (options->getY() + background->getY()
+                                     - textPanel->getY()) * 2.0f);
 }
 
 FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode)
@@ -62,9 +60,9 @@ FJ_LaunchMoreOptionsMenu::~FJ_LaunchMoreOptionsMenu()
 
 void FJ_LaunchMoreOptionsMenu::handleCheckboxToggled(FJ_Event* event)
 {
-    FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
-    if (checkBox != NULL)
+    if (event->m_pTarget->asFJ_CheckBox() != NULL)
     {
+        FJ_Base* checkBox = static_cast<FJ_Base*>(event->m_pTarget);
         FJ_Base* listItem = static_cast<FJ_Base*>(checkBox->getObjListParent());
         m_pCallbackScene->handleCheckboxElementToggled(listItem->getId(), checkBox->getId(), checkBox->getId());
     }
@@ -145,29 +143,36 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
 
     if (resize)
     {
-        setListPosition(worldList, worldBackground, worldList->asFJ_List()->GetListHeight());
-        setPanelPosition(worldBackground, worldList, worldDescription);
-        setListPosition(gameList, gameBackground, gameList->asFJ_List()->GetListHeight());
-        setPanelPosition(gameBackground, gameList, gameDescription);
+        m_root = worldOptions;
+        setListPosition(worldList, worldBackground);
+        setDescriptionPosition(worldDescription, worldBackground);
+        setListPosition(gameList, gameBackground);
+        setDescriptionPosition(gameDescription, gameBackground);
         UpdateDescription();
         m_descriptionUpdated = true;
     }
 
+    m_root = world ? worldOptions : gameOptions;
     if (world)
     {
-        m_activeTab = world ? 1 : 0;
-        SetFocus(m_worldOptionsFocus);
-        if (m_worldOptionsFocus >= 0)
-            setVisible(true);
+        if (tab == 1)
+        {
+            SetFocus(m_worldOptionsFocus);
+            if (m_worldOptionsFocus >= 0)
+                setVisible(true);
+            setTextPanelPosition(textPanel, worldOptions, worldBackground);
+            m_activeTab = 1;
+            m_previousTab = 1;
+            return;
+        }
     }
-    else
-    {
-        m_activeTab = 0;
-        SetFocus(m_gameOptionsFocus);
-        if (m_gameOptionsFocus >= 0)
-            setVisible(true);
-    }
-    m_previousTab = m_activeTab;
+
+    SetFocus(m_gameOptionsFocus);
+    if (m_gameOptionsFocus >= 0)
+        setVisible(true);
+    setTextPanelPosition(textPanel, gameOptions, gameBackground);
+    m_activeTab = tab;
+    m_previousTab = tab;
 }
 
 void FJ_LaunchMoreOptionsMenu::ChangeTab()
@@ -191,6 +196,7 @@ void FJ_LaunchMoreOptionsMenu::HideWorldTab()
     FJ_FuiNode* gameOptions = child(this, "GameOptions");
     FJ_FuiNode* worldOptions = child(this, "WorldOptions");
     FJ_FuiNode* worldList = child(worldOptions, "WorldOptionsList");
+    FJ_FuiNode* worldBackground = child(worldOptions, "BackgroundPanel");
     FJ_FuiNode* gameLabel = child(this, "LabelGame");
     FJ_FuiNode* worldLabel = child(this, "LabelWorld");
     FJ_FuiNode* backTabs = child(this, "BackTabs");
@@ -204,12 +210,13 @@ void FJ_LaunchMoreOptionsMenu::HideWorldTab()
     gotoAndStop("WorldOptions");
     clearText(gameLabel);
     clearText(worldLabel);
+    m_worldTabHidden = true;
     gameLabel->setVisible(false);
     gameBack->setVisible(false);
     worldBack->setVisible(false);
-    gameOptions->setVisible(true);
+    worldOptions->setVisible(true);
+    worldBackground->setVisible(false);
     worldList->setVisible(false);
     gameDescription->setVisible(false);
     worldDescription->setVisible(false);
-    m_worldTabHidden = true;
 }

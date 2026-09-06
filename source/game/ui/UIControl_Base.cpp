@@ -50,7 +50,7 @@ void UIControl_Base::setLabel(UIString label, bool update, bool force)
 
     std::wstring text;
     if (label.isCharString() == 0)
-        text.assign((const wchar_t*)label.getString());
+        text.assign(m_label.getString());
     else
         text = convStringToWstring(std::string((const char*)label.getCharString()));
 
@@ -104,5 +104,5 @@ void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCoun
 
 bool UIControl_Base::hasFocus()
 {
-    m_scene->controlHasFocus(this);
+    return m_scene->controlHasFocus(this);
 }

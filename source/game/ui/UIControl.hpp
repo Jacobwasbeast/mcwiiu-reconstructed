@@ -8,6 +8,8 @@ class fuiRenderNode;
 
 class UIControl
 {
+    friend class UIScene;
+
 public:
     enum eUIControlType
     {

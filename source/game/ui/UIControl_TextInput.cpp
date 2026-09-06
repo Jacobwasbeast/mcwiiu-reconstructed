@@ -1,11 +1,11 @@
 #include "game/ui/UIControl_TextInput.hpp"
 
+#include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_SignInput.hpp"
 #include "game/ui/FJ_TextInput.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-void ConsoleUIController_TouchBoxAdd(UIControl* control, UIScene* scene);
 
 UIControl_TextInput::UIControl_TextInput()
     : UIControl_Base()
@@ -27,18 +27,17 @@ void UIControl_TextInput::SetCharLimit(int limit)
 void UIControl_TextInput::init(UIString label, int id)
 {
     m_label = label;
-    m_controlType = (unsigned short)id;
+    m_controlId = id;
 
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    std::wstring text((const wchar_t*)(long)label.getString());
     if (node->isFJ_TextInput())
-        node->asFJ_TextInput()->Init(text, id);
+        node->asFJ_TextInput()->Init(label.getString(), id);
     else if (node->isFJ_SignInput())
-        node->asFJ_SignInput()->Init(text, id);
+        node->asFJ_SignInput()->Init(label.getString(), id);
 
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
-        ConsoleUIController_TouchBoxAdd(this, m_scene);
+        gConsoleUIController.TouchBoxAdd(this, m_scene);
 
     SetCharLimit(101);
 }
@@ -54,7 +53,7 @@ void UIControl_TextInput::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, m_controlType);
+    init(label, m_controlId);
 }
 
 void UIControl_TextInput::setFocus(bool focus)
@@ -71,6 +70,6 @@ void UIControl_TextInput::setFocus(bool focus)
 bool UIControl_TextInput::hasFocus()
 {
     if (!m_focus)
-        return m_scene->controlHasFocus(m_controlType);
+        return m_scene->controlHasFocus(this);
     return true;
 }

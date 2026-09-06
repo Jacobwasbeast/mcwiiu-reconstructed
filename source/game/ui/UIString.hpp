@@ -17,7 +17,7 @@ public:
         unsigned int update(bool force);
         unsigned int needsUpdating();
         void setUpdated();
-        int getString();
+        std::wstring& getString();
         int getCharString();
         unsigned char isCharString();
         unsigned int length();
@@ -46,10 +46,10 @@ public:
     bool compare(const UIString& value);
     unsigned int needsUpdating();
     void setUpdated();
-    unsigned int getString();
+    std::wstring& getString();
     unsigned int getCharString();
     unsigned char isCharString();
-    int c_str();
+    const wchar_t* c_str();
     unsigned int length();
 private:
     UIStringCore* mCore;

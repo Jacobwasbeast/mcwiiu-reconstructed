@@ -127,7 +127,7 @@ public:
     void resetHorizontalResizeCheck();
     void _handleFocusChange(int focus, int childFocus);
     void _handleInitFocus(int focus, int childFocus);
-    void controlHasFocus(UIControl_Base* control);
+    bool controlHasFocus(UIControl_Base* control);
     unsigned int getControlFocus();
     void setOpacity(float opacity);
     void setVisible(bool visible);

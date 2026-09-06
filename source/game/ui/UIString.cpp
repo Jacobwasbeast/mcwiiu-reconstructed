@@ -60,11 +60,11 @@ void UIString::UIStringCore::setUpdated()
     mUpdatedLocale = mLocale;
 }
 
-int UIString::UIStringCore::getString()
+std::wstring& UIString::UIStringCore::getString()
 {
     if (hasNewString())
         update(true);
-    return (int)(long)&mString;
+    return mString;
 }
 
 int UIString::UIStringCore::getCharString()
@@ -77,11 +77,6 @@ int UIString::UIStringCore::getCharString()
 unsigned char UIString::UIStringCore::isCharString()
 {
     return mIsCharString ? 1 : 0;
-}
-
-unsigned int UIString::UIStringCore::length()
-{
-    return mIsCharString ? static_cast<unsigned int>(mCharString.size()) : static_cast<unsigned int>(mString.size());
 }
 
 UIString::UIString() : mCore(0), mReferences(0)
@@ -159,9 +154,10 @@ void UIString::setUpdated()
         mCore->setUpdated();
 }
 
-unsigned int UIString::getString()
+std::wstring& UIString::getString()
 {
-    return mCore ? static_cast<unsigned int>(mCore->getString()) : 0;
+    static std::wstring emptyString;
+    return mCore ? mCore->getString() : emptyString;
 }
 
 unsigned int UIString::getCharString()
@@ -174,12 +170,7 @@ unsigned char UIString::isCharString()
     return mCore ? mCore->isCharString() : 0;
 }
 
-int UIString::c_str()
+const wchar_t* UIString::c_str()
 {
-    return static_cast<int>(getString());
-}
-
-unsigned int UIString::length()
-{
-    return mCore ? mCore->length() : 0;
+    return getString().c_str();
 }

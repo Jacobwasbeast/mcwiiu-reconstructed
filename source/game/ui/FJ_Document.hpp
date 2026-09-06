@@ -45,7 +45,7 @@ public:
     void SliderClosed();
     void SliderOpen();
 
-private:
+protected:
     int m_safeZoneTop;
     int m_safeZoneBottom;
     int m_safeZoneLeft;

@@ -18,7 +18,8 @@ public:
     virtual void ReInit();
     virtual void setFocus(bool focus);
     virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256]);
-    void init(UIString label, int controlId, int minimum, int maximum, int value, bool enabled, int step, int unknown);
+    void init(UIString label, int controlId, int minimum, int maximum, int value,
+              bool repeat, int repeatDelay, int repeatStep);
     void handleSliderMove(int value);
     void SetSliderTouchPos(float position);
     void SetSliderValue(int value);
@@ -31,9 +32,9 @@ private:
     int m_maximum;
     unsigned int m_value;
     bool m_focus;
-    bool m_enabled;
-    int m_step;
-    int m_unknown;
+    bool m_repeat;
+    int m_repeatDelay;
+    int m_repeatStep;
     std::vector<std::wstring> m_possibleLabels;
 };
 

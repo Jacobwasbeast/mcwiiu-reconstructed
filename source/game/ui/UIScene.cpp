@@ -1,12 +1,15 @@
 #include "game/ui/UIScene.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ItemRenderer.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_Document.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_HowToPlay.hpp"
@@ -18,6 +21,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 
 template <typename T>
 std::wstring _toString(T value);
@@ -27,13 +31,13 @@ void PIXEndNamedEvent();
 
 UIScene::UIScene(int sceneType, UILayer* layer)
     : m_moviePath(L""), m_movie(0), m_movieLoaded(false), m_itemRenderer(0),
-      m_substitutionTextures(11), m_timers(11), m_controlFocus(-1), m_controlChildFocus(0),
+      m_controlFocus(-1), m_controlChildFocus(0),
       m_opacity(1.0f), m_opacityInitialised(false), m_visible(true), m_tickedLastFrame(false),
       m_backScene(0), m_callbackId(0), m_resolution(0), m_reloading(false),
       m_hasGainedFocus(false), m_stageWidth(0), m_stageHeight(0), m_originalStageWidth(0),
-      m_originalStageHeight(0), m_controls(), m_layer(layer), m_hasFocus(false),
+      m_originalStageHeight(0), m_layer(layer), m_hasFocus(false),
       m_sceneType(sceneType), m_hasTicked(false), m_unknownA9(false), m_updatePending(true),
-      m_unknownAC(0), m_cachedSlotDrawData()
+      m_unknownAC(0)
 {
 }
 
@@ -283,8 +287,15 @@ void UIScene::handleInitFocus(int, int)
 {
 }
 
-void UIScene::handleCheckboxToggled(int, bool)
+void UIScene::handleCheckboxToggled(int id, bool checked)
 {
+    for (std::vector<UIControl*>::iterator it = m_controls.begin(); it != m_controls.end(); ++it) {
+        UIControl* control = *it;
+        if (control->m_controlType == 2 && control->m_controlId == id) {
+            static_cast<UIControl_CheckBox*>(control)->updateCheckedStatus(checked);
+            return;
+        }
+    }
 }
 
 void UIScene::handleCheckboxElementToggled(int, int, bool)
@@ -409,6 +420,7 @@ void UIScene::registerSubstitutionTexture(const std::wstring& name, unsigned cha
 
 void UIScene::loadMovie()
 {
+    EnterCriticalSection(&g_uiCriticalSection);
     std::wstring path = getMoviePath();
     if (gFui->getResolution() == 0) {
         path.append(L"480.fui");
@@ -426,6 +438,7 @@ void UIScene::loadMovie()
     m_stageHeight = static_cast<int>(m_movie->getStageHeight());
     m_originalStageWidth = m_stageWidth;
     m_originalStageHeight = m_stageHeight;
+    LeaveCriticalSection(&g_uiCriticalSection);
 }
 
 void UIScene::initialiseMovie()
@@ -499,7 +512,7 @@ unsigned int UIScene::getControlChildFocus()
 }
 
 void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInstance> item,
-                                       float partialTick, bool, bool drawDecorations,
+                                       float partialTick, bool flat, bool drawDecorations,
                                        bool drawOverlay)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -532,6 +545,10 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
                                           minecraft->getItemColors());
     }
 
+    gRenderer->StateSetBlendEnable(true);
+    gRenderer->StateSetBlendFunc(4, 5);
+    gRenderer->StateSetBlendFactor(0xFFFFFFFF);
+
     std::wstring countText;
     int countColour = -1;
     TextureAtlasSprite* countIcon = 0;
@@ -544,7 +561,7 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
         countIcon = renderedItem->GetOverrideCountIcon(item);
     }
 
-    m_itemRenderer->renderAndDecorateItem(item, x, y, scaleX, scaleY, partialTick, true, true,
+    m_itemRenderer->renderAndDecorateItem(item, x, y, scaleX, scaleY, partialTick, flat, true,
                                           !drawOverlay, countIcon);
     PIXEndNamedEvent();
 
@@ -555,6 +572,9 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
         if (scaleX != 1.0f || scaleY != 1.0f) {
             GlStateManager::pushMatrix();
             GlStateManager::scalef(scaleX, scaleY, 1.0f);
+            gRenderer->StateSetBlendEnable(true);
+            gRenderer->StateSetBlendFunc(4, 5);
+            gRenderer->StateSetBlendFactor(0xFFFFFFFF);
             m_itemRenderer->renderGuiItemDecorations(
                 minecraft->mFont, item, static_cast<int>(x / scaleX + 0.5f),
                 static_cast<int>(y / scaleY + 0.5f), countText, countColour, partialTick);
@@ -587,12 +607,12 @@ void UIScene::UpdateSceneControls()
 
 void UIScene::removeControl(UIControl_Base* control, bool destroy)
 {
-    FJ_FuiNode* node = control->getFuiRenderNode()->getFuiNode();
-    std::string name = node->getName();
+    std::string name = control->m_name;
     m_movie->getRootNode()->getFuiNode()->asFJ_Document()->RemoveObject(name, destroy);
     control->removeUINodeRef();
     UpdateSceneControls();
-    gConsoleUIController.TouchBoxRebuild(this);
+    control->m_flag = true;
+    gConsoleUIController.TouchBoxRebuild(control->m_scene);
 }
 
 void UIScene::doHorizontalResizeCheck()
@@ -688,12 +708,12 @@ void UIScene::_handleInitFocus(int focus, int childFocus)
 {
     m_controlChildFocus = childFocus;
     m_controlFocus = focus;
-    handleFocusChange(focus, childFocus);
+    handleInitFocus(focus, childFocus);
 }
 
-void UIScene::controlHasFocus(UIControl_Base* control)
+bool UIScene::controlHasFocus(UIControl_Base* control)
 {
-    (void)control;
+    return controlHasFocus(control->m_controlId);
 }
 
 unsigned int UIScene::getControlFocus()

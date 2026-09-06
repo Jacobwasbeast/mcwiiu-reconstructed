@@ -19,10 +19,10 @@ extern ConsoleUIController g_ConsoleUIController;
 
 void __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
     FJ_LeaderboardList* list, bool loading, int rank, int value,
-    const std::wstring& gamertag, bool complete, const std::wstring* value0,
-    const std::wstring* value1, const std::wstring* value2,
-    const std::wstring* value3, const std::wstring* value4,
-    const std::wstring* value5, const std::wstring* value6);
+    const std::wstring& gamertag, bool complete, const std::wstring* firstColumn,
+    const std::wstring* secondColumn, const std::wstring* thirdColumn,
+    const std::wstring* fourthColumn, const std::wstring* fifthColumn,
+    const std::wstring* sixthColumn, const std::wstring* seventhColumn);
 
 UIControl_LeaderboardList::UIControl_LeaderboardList()
     : UIControl_Base()
@@ -85,24 +85,25 @@ void UIControl_LeaderboardList::setColumnIcon(int column, int icon)
 
 void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
                                             const std::wstring& gamertag, bool complete,
-                                            const std::wstring& value0,
-                                            const std::wstring& value1,
-                                            const std::wstring& value2,
-                                            const std::wstring& value3,
-                                            const std::wstring& value4,
-                                            const std::wstring& value5,
-                                            const std::wstring& value6)
+                                            const std::wstring& firstColumnText,
+                                            const std::wstring& secondColumnText,
+                                            const std::wstring& thirdColumnText,
+                                            const std::wstring& fourthColumnText,
+                                            const std::wstring& fifthColumnText,
+                                            const std::wstring& sixthColumnText,
+                                            const std::wstring& seventhColumnText)
 {
-    const std::wstring* p0 = value0.empty() ? 0 : &value0;
-    const std::wstring* p1 = value1.empty() ? 0 : &value1;
-    const std::wstring* p2 = value2.empty() ? 0 : &value2;
-    const std::wstring* p3 = value3.empty() ? 0 : &value3;
-    const std::wstring* p4 = value4.empty() ? 0 : &value4;
-    const std::wstring* p5 = value5.empty() ? 0 : &value5;
-    const std::wstring* p6 = value6.empty() ? 0 : &value6;
+    const std::wstring* firstColumn = firstColumnText.empty() ? 0 : &firstColumnText;
+    const std::wstring* secondColumn = secondColumnText.empty() ? 0 : &secondColumnText;
+    const std::wstring* thirdColumn = thirdColumnText.empty() ? 0 : &thirdColumnText;
+    const std::wstring* fourthColumn = fourthColumnText.empty() ? 0 : &fourthColumnText;
+    const std::wstring* fifthColumn = fifthColumnText.empty() ? 0 : &fifthColumnText;
+    const std::wstring* sixthColumn = sixthColumnText.empty() ? 0 : &sixthColumnText;
+    const std::wstring* seventhColumn = seventhColumnText.empty() ? 0 : &seventhColumnText;
     __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
         m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList(), loading, rank, value, gamertag,
-        complete, p0, p1, p2, p3, p4, p5, p6);
+        complete, firstColumn, secondColumn, thirdColumn, fourthColumn, fifthColumn,
+        sixthColumn, seventhColumn);
 }
 
 void UIControl_LeaderboardList::SetTouchFocus(int x, int y, bool focus)

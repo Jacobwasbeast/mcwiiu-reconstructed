@@ -148,18 +148,3 @@ void FJ_Document::SlideRight()
 {
     m_horizontalOffset += 1;
 }
-
-int FJ_Document::getFrameByLabel(const std::string& label)
-{
-    return FJ_FuiNode::getFrameByLabel(label);
-}
-
-void FJ_Document::SliderClosed()
-{
-    m_horizontalResize = 0;
-}
-
-void FJ_Document::SliderOpen()
-{
-    m_horizontalResize = 1;
-}

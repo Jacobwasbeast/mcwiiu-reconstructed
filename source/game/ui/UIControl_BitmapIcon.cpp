@@ -28,7 +28,7 @@ void UIControl_BitmapIcon::setTextureName(const std::wstring& textureName, bool 
     } else {
         m_textureNamePending = false;
         if (m_fuiRenderNode != 0) {
-            FJ_BitmapIcon* bitmapIcon = static_cast<FJ_BitmapIcon*>(m_fuiRenderNode->getRoot());
+            FJ_BitmapIcon* bitmapIcon = m_fuiRenderNode->getFuiNode()->asFJ_BitmapIcon();
             bitmapIcon->SetTextureName(textureName);
         }
     }
@@ -41,10 +41,10 @@ void UIControl_BitmapIcon::tick()
     }
 }
 
-bool UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_unknown0 = 19;
-    return UIControl::setupControl(scene, node, name);
+    m_controlType = 19;
+    UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_BitmapIcon::ReInit()

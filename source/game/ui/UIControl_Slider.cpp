@@ -11,12 +11,12 @@ UIControl_Slider::UIControl_Slider()
     : UIControl_Base()
 {
     m_value = 0;
-    m_step = 10;
+    m_repeatDelay = 10;
     m_maximum = 100;
-    m_unknown = 1;
+    m_repeatStep = 1;
     m_focus = false;
-    m_enabled = false;
-    m_controlType = 0;
+    m_repeat = false;
+    m_controlId = 0;
     m_minimum = 0;
 }
 
@@ -25,20 +25,20 @@ UIControl_Slider::~UIControl_Slider()
 }
 
 void UIControl_Slider::init(UIString label, int controlId, int minimum, int maximum, int value,
-                            bool enabled, int step, int unknown)
+                            bool repeat, int repeatDelay, int repeatStep)
 {
     m_label = label;
-    m_controlType = (unsigned short)controlId;
+    m_controlId = controlId;
     m_minimum = minimum;
     m_maximum = maximum;
     m_value = (unsigned int)value;
-    m_unknown = unknown;
-    m_step = step;
-    m_enabled = enabled;
+    m_repeatStep = repeatStep;
+    m_repeatDelay = repeatDelay;
+    m_repeat = repeat;
 
     FJ_Slider* slider = m_fuiRenderNode->getFuiNode()->asFJ_Slider();
-    slider->Init(std::wstring((const wchar_t*)(long)label.getString()), controlId, minimum, maximum, value,
-                 enabled, step, unknown);
+    slider->Init(label.getString(), controlId, minimum, maximum, value,
+                 repeat, repeatDelay, repeatStep);
 
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
@@ -56,7 +56,7 @@ void UIControl_Slider::setFocus(bool focus)
     if (m_focus == focus)
         return;
     m_focus = focus;
-    m_fuiRenderNode->getFuiNode()->asFJ_Slider()->ChangeState(focus ^ 1);
+    m_fuiRenderNode->getFuiNode()->asFJ_Slider()->ChangeState(!focus);
 }
 
 void UIControl_Slider::handleSliderMove(int value)
@@ -96,19 +96,8 @@ void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCo
 {
     m_possibleLabels.clear();
 
-    unsigned int groupCount = labelCount / 4;
-    unsigned int remainder = labelCount & 3;
-    unsigned int i;
-    for (i = 0; i < groupCount; ++i)
-    {
-        wchar_t* group = labels[i * 4 + 1];
-        m_possibleLabels.push_back(std::wstring(group - 256));
-        m_possibleLabels.push_back(std::wstring(group));
-        m_possibleLabels.push_back(std::wstring(group + 256));
-        m_possibleLabels.push_back(std::wstring(group + 512));
-    }
-    for (i = 0; i < remainder; ++i)
-        m_possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
+    for (unsigned int i = 0; i < labelCount; ++i)
+        m_possibleLabels.push_back(std::wstring(labels[i]));
 
     UIControl_Base::setAllPossibleLabels(firstLabel, labelCount, labels);
 }
@@ -127,5 +116,6 @@ void UIControl_Slider::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, (int)m_controlType, m_minimum, m_maximum, (int)m_value, m_enabled, m_step, m_unknown);
+    init(label, m_controlId, m_minimum, m_maximum, (int)m_value,
+         m_repeat, m_repeatDelay, m_repeatStep);
 }
