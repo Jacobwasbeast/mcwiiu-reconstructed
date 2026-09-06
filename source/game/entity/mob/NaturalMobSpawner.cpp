@@ -10,6 +10,7 @@
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -80,7 +81,7 @@ bool NaturalMobSpawner::isValidEmptySpawnBlock(const BlockState* state)
         && !BaseRailBlock::isRail(state);
 }
 
-bool NaturalMobSpawner::isSpawnPositionOk(int placementType, Level* level, const BlockPos& pos,
+bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType, Level* level, const BlockPos& pos,
                                           int xSize, int zSize)
 {
     if (!level->hasChunkAt(pos) || !level->getWorldBorder()->isWithinBounds(pos))
@@ -128,7 +129,7 @@ bool NaturalMobSpawner::isSpawnPositionOk(int placementType, Level* level, const
         && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
 }
 
-int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies,
+unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies,
                             bool spawnPersistent)
 {
     if (!spawnFriendlies && !spawnEnemies && !spawnPersistent)
@@ -213,7 +214,7 @@ int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, bool spawn
                         continue;
                     if (candidate.distSqr(sharedSpawn) < 576.0)
                         continue;
-                    int placementType = 0;
+                    Mob::SpawnPlacementType placementType = Mob::SPAWN_PLACEMENT_TYPE_DEFAULT;
                     if (!isSpawnPositionOk(placementType, level, candidate, group, attempt))
                         continue;
                     boost::shared_ptr<Mob> mob = mMobCache.getTestMob(level, type);
@@ -221,7 +222,7 @@ int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, bool spawn
                         continue;
                     DifficultyInstance difficulty = level->getCurrentDifficultyAt(candidate);
                     mob->finalizeMobSpawn(difficulty, NULL, std::wstring());
-                    if (!mob->isPersistent())
+                    if (!mob->isPersistenceRequired())
                         level->addEntity(boost::static_pointer_cast<Entity>(mob));
                     ++instanceCount;
                     ++spawned;

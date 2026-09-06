@@ -3,9 +3,15 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/core/BodyControl.hpp"
+#include "game/core/CensoredString.hpp"
+#include "game/core/JumpControl.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/entity/ai/LookControl.hpp"
+#include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -16,34 +22,61 @@
 #include "game/item/Items.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/Blocks.hpp"
 
+const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
+
 Mob::Mob(Level* level)
     : LivingEntity(level),
+      mAmbientSoundTime(0),
+      mExperienceReward(0),
+      mLookControl(NULL),
+      mMoveControl(NULL),
+      mJumpControl(NULL),
+      mBodyControl(NULL),
+      mNavigation(NULL),
       mGoalSelector(),
       mTargetSelector(),
-      mPathfindingMalus(),
-      mNavigation(NULL),
-      mSensing(NULL),
       mTarget(),
-      mNoAi(false),
-      mLeftHanded(false),
+      mSensing(NULL),
+      mHandItems(),
+      mArmorItems(),
+      mAdditionalItems(),
+      mAdditionalDropChances(NULL),
+      mAdditionalItemCount(0),
       mCanPickUpLoot(false),
       mPersistenceRequired(false),
+      mPathfindingMalus(),
+      mCustomName(),
+      mMoveSpeed(0.0f),
+      mLootTable(NULL),
+      mLootTableSeed(0),
+      mLeader(false),
       mFollowsLeader(false),
-      mLeader(false)
+      mMaxFlockSize(1),
+      mFlockSize(0)
 {
     _init();
     registerAttributes();
+    mLookControl = new LookControl(this);
+    mMoveControl = new MoveControl(this);
+    mJumpControl = new JumpControl(this);
+    mSensing = new Sensing(this);
 }
 
 Mob::~Mob()
 {
+    delete mLookControl;
+    delete mMoveControl;
+    delete mJumpControl;
+    delete mBodyControl;
     delete mNavigation;
     delete mSensing;
+    delete[] mAdditionalDropChances;
 }
 
 unsigned long long Mob::GetType()
@@ -53,16 +86,36 @@ unsigned long long Mob::GetType()
 
 void Mob::staticCtor()
 {
+    DATA_MOB_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_MOB, ENTITY_TYPE_LIVING_ENTITY,
+                                                     EntityDataSerializers::BYTE);
 }
 
 void Mob::_init()
 {
-    mNoAi = false;
-    mLeftHanded = false;
+    mAmbientSoundTime = 0;
+    mExperienceReward = 0;
+    mTarget.reset();
+    mMoveSpeed = 0.0f;
+    mHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
+    mArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
+    mAdditionalItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY);
+    mAdditionalItemCount = 5;
+    mAdditionalDropChances = new float[mAdditionalItemCount];
+    for (unsigned int i = 0; i < mAdditionalItemCount; ++i)
+        mAdditionalDropChances[i] = 0.0f;
+    mHandDropChances[0] = 0.085f;
+    mHandDropChances[1] = 0.085f;
+    for (unsigned int i = 0; i < 4; ++i)
+        mArmorDropChances[i] = 0.085f;
     mCanPickUpLoot = false;
     mPersistenceRequired = false;
-    mFollowsLeader = false;
+    mCustomName.reset(new CensoredString());
+    mLootTable = NULL;
+    mLootTableSeed = 0;
     mLeader = false;
+    mFollowsLeader = false;
+    mMaxFlockSize = 1;
+    mFlockSize = 0;
 }
 
 void Mob::registerAttributes()
@@ -79,6 +132,7 @@ void Mob::fjDerivedCtorCalls()
 void Mob::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
+    getEntityData()->createDateItem(DATA_MOB_FLAGS_ID, (unsigned char)0);
 }
 
 void Mob::registerGoals()
@@ -133,7 +187,7 @@ Sensing* Mob::getSensing()
 
 boost::shared_ptr<LivingEntity> Mob::getTarget()
 {
-    return mTarget;
+    return mTarget.lock();
 }
 
 void Mob::setTarget(boost::shared_ptr<LivingEntity> target)
@@ -241,7 +295,7 @@ void Mob::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
 
 bool Mob::isLeftHanded()
 {
-    return mLeftHanded;
+    return (getEntityData()->get(DATA_MOB_FLAGS_ID) & 2) != 0;
 }
 
 void Mob::addAdditonalSaveData(CompoundTag* tag)
@@ -515,17 +569,23 @@ bool Mob::isEffectiveAi()
 
 void Mob::setNoAi(bool noAi)
 {
-    mNoAi = noAi;
+    unsigned char flags = getEntityData()->get(DATA_MOB_FLAGS_ID);
+    getEntityData()->set(DATA_MOB_FLAGS_ID,
+                         noAi ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe),
+                         true);
 }
 
 void Mob::setLeftHanded(bool leftHanded)
 {
-    mLeftHanded = leftHanded;
+    unsigned char flags = getEntityData()->get(DATA_MOB_FLAGS_ID);
+    getEntityData()->set(DATA_MOB_FLAGS_ID,
+                         leftHanded ? (unsigned char)(flags | 2) : (unsigned char)(flags & 0xfd),
+                         true);
 }
 
 bool Mob::isNoAi()
 {
-    return mNoAi;
+    return (getEntityData()->get(DATA_MOB_FLAGS_ID) & 1) != 0;
 }
 
 const HumanoidArm* Mob::getMainArm()
@@ -540,12 +600,12 @@ std::wstring Mob::getName()
 
 unsigned int Mob::maxFlockSize()
 {
-    return 4;
+    return mMaxFlockSize;
 }
 
 unsigned int Mob::shouldFollow()
 {
-    return mFollowsLeader;
+    return mLeader && mFlockSize < maxFlockSize();
 }
 
 void Mob::setFollowsLeader(bool follows)

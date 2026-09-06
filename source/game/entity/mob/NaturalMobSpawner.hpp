@@ -3,6 +3,7 @@
 
 #include <boost/unordered_map.hpp>
 
+#include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobCache.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
@@ -25,10 +26,10 @@ public:
     static BlockPos getRandomPosWithin(Level* level, int chunkX, int chunkZ);
     static bool isValidEmptyUnderWaterSpawnBlock(const BlockState* state);
     static bool isValidEmptySpawnBlock(const BlockState* state);
-    static bool isSpawnPositionOk(int placementType, Level* level, const BlockPos& pos,
+    static bool isSpawnPositionOk(Mob::SpawnPlacementType placementType, Level* level, const BlockPos& pos,
                                   int xSize, int zSize);
 
-    int tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies, bool spawnPersistent);
+    unsigned int tick(ServerLevel* level, bool spawnFriendlies, bool spawnEnemies, bool spawnPersistent);
 
     static void spawnMobsForChunkGeneration(Level* level, Biome* biome, int x, int y,
                                             int z, int count, Random* random);

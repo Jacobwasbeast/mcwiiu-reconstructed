@@ -4,12 +4,15 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
+#include "game/core/EnderCrystal.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/biome/TheEndBiomeDecorator.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/generation/SpikeFeature.hpp"
 
 class DragonRespawnAnimation;
 extern DragonRespawnAnimation* g_summoningDragon;
@@ -21,17 +24,18 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
 {
     if (tick % 40 == 0 || tick % 40 == 39)
     {
-        std::vector<SpikeFeature::EndSpike> spikes =
+        std::vector<SpikeFeature::EndSpike>* spikes =
             TheEndBiomeDecorator::getSpikesForLevel(level);
 
-        if (tick / 40 < static_cast<int>(spikes.size()))
+        if (tick / 40 < static_cast<int>(spikes->size()))
         {
-            SpikeFeature::EndSpike& spike = spikes[tick / 40];
+            SpikeFeature::EndSpike& spike = (*spikes)[tick / 40];
 
             if (tick % 40 == 0)
             {
-                BlockPos beamTarget(spike.getCenterX(), spike.getHeight() + 1,
-                    spike.getCenterZ());
+                BlockPos beamTarget(static_cast<int>(spike.getCenterX()),
+                    static_cast<int>(spike.getHeight()) + 1,
+                    static_cast<int>(spike.getCenterZ()));
 
                 std::vector<boost::shared_ptr<EnderCrystal> >::iterator it =
                     crystals->begin();
@@ -43,10 +47,12 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
             }
             else
             {
-                BlockPos from(spike.getCenterX() - 10,
-                    spike.getHeight() - 10, spike.getCenterZ() - 10);
-                BlockPos to(spike.getCenterX() + 10,
-                    spike.getHeight() + 10, spike.getCenterZ() + 10);
+                BlockPos from(static_cast<int>(spike.getCenterX()) - 10,
+                    static_cast<int>(spike.getHeight()) - 10,
+                    static_cast<int>(spike.getCenterZ()) - 10);
+                BlockPos to(static_cast<int>(spike.getCenterX()) + 10,
+                    static_cast<int>(spike.getHeight()) + 10,
+                    static_cast<int>(spike.getCenterZ()) + 10);
                 AABB* box = AABB::newTemp(from, to);
 
                 std::vector<boost::shared_ptr<Entity> >* entities =
@@ -77,8 +83,8 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
                 feature.setCrystalBeamTarget(crystalBeamTarget);
 
                 Random random;
-                BlockPos placement(spike.getCenterX(), 45,
-                    spike.getCenterZ());
+                BlockPos placement(static_cast<int>(spike.getCenterX()), 45,
+                    static_cast<int>(spike.getCenterZ()));
                 feature.place(level, random, placement);
             }
         }
@@ -86,5 +92,6 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
         {
             dragonFight->setRespawnStage(g_summoningDragon);
         }
+        delete spikes;
     }
 }

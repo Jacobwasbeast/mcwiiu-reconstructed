@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
@@ -11,6 +12,8 @@
 #include "game/item/not_null_ptr.hpp"
 
 class BlockPathTypes;
+class BodyControl;
+class CensoredString;
 class CompoundTag;
 class DamageSource;
 class DataFixerUpper;
@@ -24,6 +27,12 @@ class Sensing;
 class SoundEvent;
 class HumanoidArm;
 class ItemEntity;
+class JumpControl;
+class LookControl;
+class MoveControl;
+class ResourceLocation;
+
+template <class T> class EntityDataAccessor;
 
 class Mob : public LivingEntity
 {
@@ -144,20 +153,38 @@ public:
     virtual std::wstring getName();
 
 protected:
+    int mAmbientSoundTime;
+    int mExperienceReward;
+    LookControl* mLookControl;
+    MoveControl* mMoveControl;
+    JumpControl* mJumpControl;
+    BodyControl* mBodyControl;
+    PathNavigation* mNavigation;
     GoalSelector mGoalSelector;
     GoalSelector mTargetSelector;
-
-private:
-    boost::unordered_map<const BlockPathTypes*, float> mPathfindingMalus;
-    PathNavigation* mNavigation;
+    boost::weak_ptr<LivingEntity> mTarget;
     Sensing* mSensing;
-    boost::shared_ptr<LivingEntity> mTarget;
-    bool mNoAi;
-    bool mLeftHanded;
+    NonNullList<not_null_ptr<ItemInstance> > mHandItems;
+    float mHandDropChances[2];
+    NonNullList<not_null_ptr<ItemInstance> > mArmorItems;
+    float mArmorDropChances[4];
+    NonNullList<not_null_ptr<ItemInstance> > mAdditionalItems;
+    float* mAdditionalDropChances;
+    unsigned int mAdditionalItemCount;
     bool mCanPickUpLoot;
     bool mPersistenceRequired;
-    bool mFollowsLeader;
+    boost::unordered_map<const BlockPathTypes*, float> mPathfindingMalus;
+    boost::shared_ptr<CensoredString> mCustomName;
+    float mMoveSpeed;
+    ResourceLocation* mLootTable;
+    long long mLootTableSeed;
     bool mLeader;
+    bool mFollowsLeader;
+    unsigned int mMaxFlockSize;
+    unsigned int mFlockSize;
+
+private:
+    static const EntityDataAccessor<unsigned char>* DATA_MOB_FLAGS_ID;
 };
 
 #endif
