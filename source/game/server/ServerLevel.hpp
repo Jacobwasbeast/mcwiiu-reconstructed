@@ -10,7 +10,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/biome/Biome.hpp"
-class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard;
+class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard;
 
 #ifndef GAME_SERVER_SERVERLEVEL_HPP
 #define GAME_SERVER_SERVERLEVEL_HPP
@@ -60,7 +60,7 @@ public:
  int32_t villageSiegeTick;
  int32_t enderCrystalCount;
  bool saving;
- int32_t tickCount;
+ ServerScoreboard* serverScoreboard;
  int32_t weatherTick;
  std::vector<TickNextTickData> scheduledTicks;
 
@@ -90,7 +90,7 @@ public:
  bool canMobSpawnAt(MobCategory* first, Biome::MobSpawnerData* second, BlockPos* third); 
  void updateSleepingPlayerList(); 
  void validateSpawn(); 
- uint64_t hasChunk(int32_t first, int32_t second, bool third); 
+ bool hasChunk(int32_t first, int32_t second, bool third); 
  uint64_t getChunkIfHasChunk(int32_t first, int32_t second, bool third); 
  void findLightingTargetAround(BlockPos* first); 
  uint64_t tickBlocks(); 
@@ -103,7 +103,7 @@ public:
  void tickEntities(); 
  uint64_t tickServerPlayers(); 
  bool tickPendingTicks(bool first); 
- uint64_t fetchTicksInChunk(LevelChunk* first, bool second); 
+ std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* first, bool second); 
  std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* first, bool second); 
  void isAnimalsAllowed();
  void isNpcsAllowed();
@@ -151,7 +151,7 @@ public:
  bool explodeNextEnderCrystal(); 
  void flagEntitiesToBeRemoved(uint32_t* first, bool* second); 
  Scoreboard* GetScoreboard();
- Scoreboard* GetServerScoreboard();
+ ServerScoreboard* GetServerScoreboard();
  uint64_t invalidateChunksOutsideArea(int32_t first, int32_t second, int32_t third, int32_t fourth); 
  void blockEntityAddedExtra(boost::shared_ptr<BlockEntity> first); 
  void blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> first); 
@@ -160,7 +160,4 @@ public:
 };
 
 #endif
-
-
-
 

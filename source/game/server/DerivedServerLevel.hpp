@@ -4,7 +4,6 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/network/BorderChangeListener.hpp"
 
-class Level;
 class WorldBorder;
 
 class DerivedServerLevel : public ServerLevel
@@ -25,7 +24,7 @@ public:
         virtual void onBorderSetDamageSafeZOne(WorldBorder* border, double damageSafeZone);
 
     private:
-        Level* mLevel;
+        DerivedServerLevel* mLevel;
     };
 
     DerivedServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, int dimension,
@@ -34,10 +33,10 @@ public:
 
     virtual void saveLevelData();
     virtual DerivedServerLevel* postConstruct();
-    virtual void saveDimensionData();
+    void saveDimensionData();
 
 private:
-    Level* mLevel;
+    ServerLevel* mLevel;
     DerivedLevelBorderChangeListener* mBorderListener;
 };
 

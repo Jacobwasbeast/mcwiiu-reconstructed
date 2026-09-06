@@ -3,7 +3,7 @@
 #include "game/world/generation/PlayerList.hpp"
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), saving(false), tickCount(0), weatherTick(0)
+    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), saving(false), serverScoreboard(0), weatherTick(0)
 {
 }
 
@@ -119,7 +119,7 @@ void ServerLevel::validateSpawn()
 {
 }
 
-uint64_t ServerLevel::hasChunk(int32_t first, int32_t second, bool third)
+bool ServerLevel::hasChunk(int32_t first, int32_t second, bool third)
 {
     return 0;
 }
@@ -179,7 +179,7 @@ bool ServerLevel::tickPendingTicks(bool first)
     return false;
 }
 
-uint64_t ServerLevel::fetchTicksInChunk(LevelChunk* first, bool second)
+std::vector<TickNextTickData>* ServerLevel::fetchTicksInChunk(LevelChunk* first, bool second)
 {
     return 0;
 }
@@ -404,9 +404,9 @@ Scoreboard* ServerLevel::GetScoreboard()
     return 0;
 }
 
-Scoreboard* ServerLevel::GetServerScoreboard()
+ServerScoreboard* ServerLevel::GetServerScoreboard()
 {
-    return 0;
+    return serverScoreboard;
 }
 
 uint64_t ServerLevel::invalidateChunksOutsideArea(int32_t first, int32_t second, int32_t third, int32_t fourth)
@@ -421,7 +421,4 @@ void ServerLevel::blockEntityAddedExtra(boost::shared_ptr<BlockEntity> first)
 void ServerLevel::blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> first)
 {
 }
-
-
-
 

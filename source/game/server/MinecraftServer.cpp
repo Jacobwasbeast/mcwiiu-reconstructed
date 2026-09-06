@@ -7,8 +7,12 @@
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/network/ServerConnection.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayerList.hpp"
 
 MinecraftServer* gMinecraftServer = 0;
 
@@ -50,8 +54,20 @@ bool MinecraftServer::getSpawnMonsters() { return true; }
 
 void MinecraftServer::setLevelDifficulty(ServerLevel* level, const Difficulty* difficulty)
 {
-    if (level != 0 && difficulty != 0)
-        level->setDifficulty(difficulty);
+    if (level == 0)
+        return;
+
+    LevelData* levelData = level->getLevelData();
+    if (levelData->isHardcore())
+    {
+        levelData->setDifficulty(Difficulty::HARD);
+        level->setSpawnSettings(true, true);
+    }
+    else
+    {
+        levelData->setDifficulty(difficulty);
+        level->setSpawnSettings(getSpawnMonsters(), animals);
+    }
 }
 
 void MinecraftServer::setDifficulty(const Difficulty* difficulty)
@@ -100,11 +116,12 @@ bool MinecraftServer::isUnderSpawnProtection(Level* level, const BlockPos& pos, 
 {
     if (level == 0 || mPlayers == 0 || player.get() == 0)
         return false;
-    if (mPlayers->isOp(player))
+    boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(player);
+    if (mPlayers->isOp(serverPlayer))
         return false;
     BlockPos spawn = level->getSharedSpawnPos();
-    int dx = Mth::abs(pos.getX() - spawn.getX());
-    int dz = Mth::abs(pos.getZ() - spawn.getZ());
+    int dx = Mth::abs(pos.x - spawn.x);
+    int dz = Mth::abs(pos.z - spawn.z);
     return (dx > dz ? dx : dz) <= getSpawnProtectionRadius();
 }
 
@@ -134,12 +151,12 @@ void MinecraftServer::setLevel(int dimension, ServerLevel* level)
 
 bool MinecraftServer::flagEntitiesToBeRemoved(unsigned int* id)
 {
-    bool result = false;
+    bool removed = false;
     unsigned int i;
     for (i = 0; i < mLevels.length; ++i)
         if (mLevels.data[i] != 0)
-            result = mLevels.data[i]->flagEntitiesToBeRemoved(id) || result;
-    return result;
+            mLevels.data[i]->flagEntitiesToBeRemoved(id, &removed);
+    return removed;
 }
 
 void MinecraftServer::addPostProcessRequest(ChunkSource* source, ChunkGenerator* generator, int x, int z)

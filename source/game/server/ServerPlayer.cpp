@@ -1,14 +1,22 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/core/GameMode.hpp"
+#include "game/core/ResultSlot.hpp"
+#include "game/core/Stat.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/network/ClientboundAwardStatPacket.hpp"
+#include "game/network/ClientboundContainerSetContentPacket.hpp"
+#include "game/network/ClientboundContainerSetSlotPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
-    : Player((Level*)level, name), mConnection(NULL), mPlayerId(0), mServer(server), mGameMode(gameMode),
-      mSentEntityIds(), mTrackedChunks(), mViewDistance(0.0f), mChunkX(0), mChunkZ(0), mChunkRadius(0),
+    : Player((Level*)level, name), mConnection(), mServer(server), mGameMode(gameMode),
+      mLoadedChunks(), mSentEntityIds(), mTrackedChunks(), mViewDistance(0.0f), mChunkX(0), mChunkZ(0), mChunkRadius(0),
       mChunkIndex(0), mChunkFlags(0), mLastActionTime(0.0f), mDimensionChangeDelay(0), mSpectatorState(0), mExperienceLevel(0),
       mExperienceTotal(0), mLastTick(0), mRemoveEntityCount(0), mRespawnDimension(0), mEntitiesToRemove(0), mChangingDimension(0),
-      mSpawnInvulnerableTime(0), mPvpState(0), mViewDistanceModifier(0), mCameraState(0), latency(0), mFallFlying(0),
-      mUsingItem(0), mChangedDimension(0), mTeleportPending(0), mCameraEntity(0), mType(0)
+      mSpawnInvulnerableTime(0), mPvpState(0), mViewDistanceModifier(0), mIsChangingQuantityOnly(false), latency(0), mFallFlying(0),
+      mRespawnState(false), mChangedDimension(0), mTeleportPending(0), mCameraEntity(0), mType(0)
 {
 }
 
@@ -30,14 +38,19 @@ BlockPos ServerPlayer::getCommandSenderBlockPosition()
     return BlockPos();
 }
 
-uint64_t ServerPlayer::refreshContainer(AbstractContainerMenu* parameterOne, std::vector<not_null_ptr<ItemInstance> >* parameterTwo)
+void ServerPlayer::refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items)
 {
-    return 0;
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetContentPacket(menu->m_containerId, items)));
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
 }
 
-uint64_t ServerPlayer::slotChanged(AbstractContainerMenu* parameterOne, int32_t parameterTwo, not_null_ptr_ItemInstance* parameterThree)
+void ServerPlayer::slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item)
 {
-    return 0;
+    if (dynamic_cast<ResultSlot*>(menu->getSlot(slot)) != NULL || mIsChangingQuantityOnly)
+    {
+        return;
+    }
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(menu->m_containerId, slot, item)));
 }
 
 uint64_t ServerPlayer::setContainerData(AbstractContainerMenu* parameterOne, int32_t parameterTwo, int32_t parameterThree)
@@ -195,7 +208,7 @@ int32_t ServerPlayer::canHarmPlayer(std::wstring* parameterOne)
     return 0;
 }
 
-void ServerPlayer::addEffect(MobEffectInstance* parameterOne, boost::shared_ptr<Entity>* parameterTwo)
+void ServerPlayer::addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo)
 {
 }
 
@@ -260,7 +273,7 @@ void ServerPlayer::nextContainerCounter()
 {
 }
 
-void ServerPlayer::openTextEdit(uint32_t parameterOne)
+void ServerPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne)
 {
 }
 
@@ -309,8 +322,17 @@ void ServerPlayer::setPlayerInput(float parameterOne, float parameterTwo, bool p
 {
 }
 
-void ServerPlayer::awardStat(Stat* parameterOne, arrayWithLength<unsigned char>* parameterTwo)
+void ServerPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> parameters)
 {
+    if (stat != NULL && stat->isAwardedFromServer() && CanRecordStats(stat, parameters))
+    {
+        int value = *(int*)parameters.data;
+        delete[] parameters.data;
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundAwardStatPacket(stat->id, value)));
+        return;
+    }
+
+    delete[] parameters.data;
 }
 
 void ServerPlayer::resetStat(Stat* parameterOne)
@@ -406,12 +428,12 @@ void ServerPlayer::processDimensionDelay()
 {
 }
 
-uint64_t ServerPlayer::attack(boost::shared_ptr<Entity>* parameterOne)
+uint64_t ServerPlayer::attack(boost::shared_ptr<Entity> parameterOne)
 {
     return 0;
 }
 
-uint32_t ServerPlayer::swing(uint32_t parameterOne)
+bool ServerPlayer::swing(InteractionHand::EInteractionHand parameterOne)
 {
     return 0;
 }
@@ -437,9 +459,13 @@ void ServerPlayer::handleCollectItem(not_null_ptr_ItemInstance* parameterOne)
 {
 }
 
-uint64_t ServerPlayer::SetCamera(boost::shared_ptr<Entity>* parameterOne)
+void ServerPlayer::SetCamera(boost::shared_ptr<Entity> parameterOne)
 {
-    return 0;
+    Player::SetCamera(parameterOne);
+    if (isSpectator() && IsSpectatingOtherPlayer() && mCamera)
+    {
+        teleportTo(mCamera->mX, mCamera->mY, mCamera->mZ, mCamera->mXRot, mCamera->mYRot);
+    }
 }
 
 const GameType* ServerPlayer::GetGameType()

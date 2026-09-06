@@ -8,6 +8,7 @@
 #include "game/core/Mth.hpp"
 #include "game/network/ClientboundBossEventPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 
 ServerBossEvent::ServerBossEvent(int nameId, const std::wstring& name,
                                  BossBarColor color, BossBarOverlay overlay)
@@ -31,9 +32,9 @@ void ServerBossEvent::broadcast(ClientboundBossEventPacket::Operation operation)
     std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
     for (it = players.begin(); it != players.end(); ++it)
     {
-        if (it->first->connection != 0)
+        if (it->first->mConnection != 0)
         {
-            it->first->connection->send(packet);
+            it->first->mConnection->send(packet);
         }
     }
 }
@@ -109,11 +110,11 @@ void ServerBossEvent::addPlayer(boost::shared_ptr<ServerPlayer> player, int part
     {
         result.first->second = party;
     }
-    else if (visible && player->connection != 0)
+    else if (visible && player->mConnection != 0)
     {
         boost::shared_ptr<Packet> packet(
             new ClientboundBossEventPacket(ClientboundBossEventPacket::ADD, this));
-        player->connection->send(packet);
+        player->mConnection->send(packet);
     }
 }
 
@@ -123,11 +124,11 @@ void ServerBossEvent::removePlayer(boost::shared_ptr<ServerPlayer> player)
     if (it != players.end())
     {
         players.erase(it);
-        if (visible && player->connection != 0)
+        if (visible && player->mConnection != 0)
         {
             boost::shared_ptr<Packet> packet(
                 new ClientboundBossEventPacket(ClientboundBossEventPacket::REMOVE, this));
-            player->connection->send(packet);
+            player->mConnection->send(packet);
         }
     }
 }
@@ -150,11 +151,11 @@ void ServerBossEvent::setVisible(bool visible)
             visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE;
         for (it = players.begin(); it != players.end(); ++it)
         {
-            if (it->first->connection != 0)
+            if (it->first->mConnection != 0)
             {
                 boost::shared_ptr<Packet> packet(
                     new ClientboundBossEventPacket(operation, this));
-                it->first->connection->send(packet);
+                it->first->mConnection->send(packet);
             }
         }
     }

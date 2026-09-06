@@ -4,6 +4,7 @@
 
 #include "game/world/generation/Player.hpp"
 #include <cstdint>
+#include <list>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -49,16 +50,13 @@ struct Stat;
 struct ServerPlayer : Player {
     
        
-    ServerGamePacketListenerImpl* mConnection;
-    uint32_t mPlayerId;   
+    boost::shared_ptr<ServerGamePacketListenerImpl> mConnection;
     MinecraftServer* mServer;
     ServerPlayerGameMode* mGameMode;
     uint8_t mPadding1[4];
     double mLastSentX;
     double mLastSentZ;
-    uint8_t mPadding2[4];
-    uint32_t mContainer;   
-    int32_t mContainerCounter;
+    std::list<ChunkPos> mLoadedChunks;
     std::vector<int32_t> mSentEntityIds;
     boost::unordered_set<ChunkPos, ChunkPosKeyHash, ChunkPosKeyEq> mTrackedChunks;   
     float mViewDistance;
@@ -83,11 +81,11 @@ struct ServerPlayer : Player {
     uint8_t mPvpState;
     uint8_t mPadding5[4];
     int32_t mViewDistanceModifier;
-    uint8_t mCameraState;
+    bool mIsChangingQuantityOnly;
     uint8_t mPadding6[4];
     int32_t latency;
     uint8_t mFallFlying;
-    uint8_t mUsingItem;
+    bool mRespawnState;
     uint8_t mChangedDimension;
     uint8_t mPadding7[4];
     int32_t mTeleportPending;
@@ -102,8 +100,8 @@ struct ServerPlayer : Player {
     void sendMessage(uint32_t parameterOne, int32_t* parameterTwo, uint32_t parameterThree, std::wstring* parameterFour, uint32_t parameterFive);   
     uint32_t hasPermission(uint32_t parameterOne);   
     BlockPos getCommandSenderBlockPosition();   
-    uint64_t refreshContainer(AbstractContainerMenu* parameterOne, std::vector<not_null_ptr<ItemInstance> >* parameterTwo);   
-    uint64_t slotChanged(AbstractContainerMenu* parameterOne, int32_t parameterTwo, not_null_ptr_ItemInstance* parameterThree);   
+    void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);   
+    void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);   
     uint64_t setContainerData(AbstractContainerMenu* parameterOne, int32_t parameterTwo, int32_t parameterThree);   
     uint64_t setAllContainerData(AbstractContainerMenu* parameterOne, boost::shared_ptr<Container>* parameterTwo);   
     uint64_t flagEntitiesToBeRemoved(uint32_t* parameterOne, bool* parameterTwo);   
@@ -139,7 +137,7 @@ struct ServerPlayer : Player {
     void isPvpAllowed();
     uint32_t canHarmPlayer(boost::shared_ptr<Player>* parameterOne);   
     int32_t canHarmPlayer(std::wstring* parameterOne);   
-    void addEffect(MobEffectInstance* parameterOne, boost::shared_ptr<Entity>* parameterTwo);   
+    virtual void addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo);   
     uint64_t changeDimension(uint32_t parameterOne, int32_t parameterTwo);   
     uint32_t broadcastToPlayer(boost::shared_ptr<ServerPlayer>* parameterOne);   
     uint64_t take(boost::shared_ptr<Entity>* parameterOne, int32_t parameterTwo);   
@@ -153,7 +151,7 @@ struct ServerPlayer : Player {
     void checkFallDamage(double parameterOne, bool parameterTwo, Block* parameterThree, BlockPos* parameterFour);   
     uint64_t doCheckFallDamage(double parameterOne, bool parameterTwo);   
     void nextContainerCounter();   
-    void openTextEdit(uint32_t parameterOne);   
+    void openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne);
     uint32_t startBlockInteraction(InteractionObject* parameterOne);   
     uint32_t openFireworks(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree);   
     uint32_t openContainer(boost::shared_ptr<Container>* parameterOne);   
@@ -164,7 +162,7 @@ struct ServerPlayer : Player {
     void closeContainer();   
     void broadcastCarriedItem();   
     void setPlayerInput(float parameterOne, float parameterTwo, bool parameterThree, bool parameterFour);   
-    void awardStat(Stat* parameterOne, arrayWithLength<unsigned char>* parameterTwo);   
+    void awardStat(Stat* stat, arrayWithLength<unsigned char> parameters);   
     void resetStat(Stat* parameterOne);   
     uint8_t hasDisconnected();   
     uint64_t displayClientMessage(int32_t parameterOne, bool parameterTwo);   
@@ -186,14 +184,14 @@ struct ServerPlayer : Player {
     uint64_t cancelRemoveEntity(boost::shared_ptr<Entity>* parameterOne);   
     void updateInvisibilityStatus();   
     void processDimensionDelay();   
-    uint64_t attack(boost::shared_ptr<Entity>* parameterOne);   
-    uint32_t swing(uint32_t parameterOne);   
+    uint64_t attack(boost::shared_ptr<Entity> parameterOne);
+    virtual bool swing(InteractionHand::EInteractionHand parameterOne);   
     void hasChangedDimension();   
     void startFallFlying();
     void stopFallFlying();
     uint32_t getPlayerViewDistanceModifier();   
     void handleCollectItem(not_null_ptr_ItemInstance* parameterOne);   
-    uint64_t SetCamera(boost::shared_ptr<Entity>* parameterOne);   
+    void SetCamera(boost::shared_ptr<Entity> parameterOne);   
     const GameType* GetGameType();
     ServerPlayerGameMode* GetGameMode();   
     uint64_t OnEquipArmor(not_null_ptr_ItemInstance* parameterOne);   
