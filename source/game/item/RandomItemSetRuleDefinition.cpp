@@ -49,6 +49,10 @@ void RandomItemSetRuleDefinition::populateContainer(boost::shared_ptr<Container>
     }
 
     WeighedTreasure::addChestItems(&random, treasures, container, mDataTag, false);
+    for (unsigned int i = 0; i < treasures.length; ++i)
+    {
+        delete treasures.data[i];
+    }
     delete[] treasures.data;
 }
 

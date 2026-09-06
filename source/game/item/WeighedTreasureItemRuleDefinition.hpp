@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "game/core/WeighedTreasure.hpp"
+
 #define private protected
 #include "game/item/AddItemRuleDefinition.hpp"
 #undef private
@@ -13,7 +15,7 @@ public:
     WeighedTreasureItemRuleDefinition();
     virtual ~WeighedTreasureItemRuleDefinition();
 
-    not_null_ptr<ItemInstance> getItem();
+    WeighedTreasure* getItem();
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
 private:

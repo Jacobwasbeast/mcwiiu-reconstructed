@@ -20,10 +20,10 @@ WeighedTreasureItemRuleDefinition::~WeighedTreasureItemRuleDefinition()
 {
 }
 
-not_null_ptr<ItemInstance> WeighedTreasureItemRuleDefinition::getItem()
+WeighedTreasure* WeighedTreasureItemRuleDefinition::getItem()
 {
-    WeighedTreasure treasure(Item::byId(mItemId), mData, mMinCount, mMaxCount, mWeight);
-    not_null_ptr<ItemInstance> item = treasure.getItem();
+    WeighedTreasure* treasure = new WeighedTreasure(Item::byId(mItemId), mData, mMinCount, mMaxCount, mWeight);
+    not_null_ptr<ItemInstance> item = treasure->getItem();
     item->set4JData(m4JData);
 
     for (std::vector<AddEnchantmentRuleDefinition*>::iterator it = mEnchantments.begin();
@@ -32,7 +32,7 @@ not_null_ptr<ItemInstance> WeighedTreasureItemRuleDefinition::getItem()
         (*it)->enchantItem(item);
     }
 
-    return item;
+    return treasure;
 }
 
 ConsoleGameRules::EGameRuleType WeighedTreasureItemRuleDefinition::getActionType()

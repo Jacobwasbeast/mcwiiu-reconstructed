@@ -26,45 +26,45 @@ public:
     MinecartContainer(Level* level);
     virtual ~MinecartContainer();
 
+    virtual void remove();
+    virtual void setDropContainerContent(bool dropContents);
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
+    virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
+    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual std::wstring getName();
+    virtual boost::shared_ptr<Entity> changeDimension(int dimension);
+    virtual std::wstring getDisplayName();
     virtual std::wstring getCustomName();
     virtual bool hasCustomName();
-    virtual std::wstring getDisplayName();
+    virtual void destroy(const DamageSource* source);
+    virtual void applyNaturalSlowdown();
     virtual bool isEmpty();
-    void unpackLootTable(const boost::shared_ptr<Player>& player);
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
     virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
-    virtual int getMaxStackSize();
     virtual void setChanged();
     virtual bool stillValid(boost::shared_ptr<Player> player);
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
+    virtual int getMaxStackSize();
     virtual int getContainerData(int id);
     virtual void setContainerData(int id, int value);
     virtual int getContainerDataCount();
-    virtual void clearContent();
     virtual bool isLocked();
     virtual void setLocked(LockCode* lockCode);
     virtual LockCode* getLockKeyCode();
     virtual void unlock();
+    virtual void clearContent();
     virtual ResourceLocation* getLootTable();
     virtual long long getLootTableSeed();
 
+    void unpackLootTable(const boost::shared_ptr<Player>& player);
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long gameTime);
-    virtual void destroy(const DamageSource* source);
-    virtual void changeDimension(int dimension);
-    virtual void remove();
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-    virtual void applyNaturalSlowdown();
-    void setDropContainerContent(bool dropContents);
     void setLootTable(ResourceLocation* lootTable, long long seed);
-    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
 
 protected:
     NonNullList<not_null_ptr<ItemInstance> > mItems;

@@ -1,23 +1,32 @@
 #include "game/item/MinecartContainer.hpp"
 
+#include <boost/pointer_cast.hpp>
+
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/LootTable.hpp"
+#include "game/core/LootTableContext.hpp"
 #include "game/data/DataFixTypes.hpp"
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/Containers.hpp"
 #include "game/item/ItemListDataWalker.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
 
 MinecartContainer::MinecartContainer(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z), LockableContainer(), mItems(), mDropContentsWhenDead(true),
-      mLootTable(NULL), mLootTableSeed(0)
+    : Minecart(level, x, y, z), LockableContainer(), mItems()
 {
     _init();
 }
 
 MinecartContainer::MinecartContainer(Level* level)
-    : Minecart(level), LockableContainer(), mItems(), mDropContentsWhenDead(true),
-      mLootTable(NULL), mLootTableSeed(0)
+    : Minecart(level), LockableContainer(), mItems()
 {
     _init();
 }
@@ -60,6 +69,27 @@ std::wstring MinecartContainer::getDisplayName()
 
 void MinecartContainer::unpackLootTable(const boost::shared_ptr<Player>& player)
 {
+    if (mLootTable == NULL)
+    {
+        return;
+    }
+
+    LootTable* lootTable = BuiltInLootTables::getLootTable(mLootTable);
+    if (lootTable == NULL)
+    {
+        return;
+    }
+
+    mLootTable = NULL;
+    Random* random = mLootTableSeed == 0 ? new Random() : new Random(mLootTableSeed);
+    boost::shared_ptr<Entity> entity = shared_from_this();
+    LootTableContext context(player ? (float)player->getLuck() : 0.0f,
+                             (ServerLevel*)mLevel,
+                             (LootTables*)mLevel->getLootTables(),
+                             entity,
+                             player,
+                             NULL);
+    lootTable->fill(static_cast<Container*>(this), random, context);
 }
 
 bool MinecartContainer::isEmpty()
@@ -76,46 +106,40 @@ bool MinecartContainer::isEmpty()
 
 not_null_ptr<ItemInstance> MinecartContainer::getItem(unsigned int slot)
 {
-    if (slot >= mItems.size())
-    {
-        return ItemInstance::EMPTY;
-    }
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
     return mItems[slot];
 }
 
 not_null_ptr<ItemInstance> MinecartContainer::removeItem(unsigned int slot, int count)
 {
-    not_null_ptr<ItemInstance> result = ContainerHelper::removeItem(mItems, slot, (unsigned int)count);
-    if (!result->isEmpty())
-    {
-        setChanged();
-    }
-    return result;
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
+    return ContainerHelper::removeItem(mItems, slot, count);
 }
 
 not_null_ptr<ItemInstance> MinecartContainer::removeItemNoUpdate(int slot)
 {
-    if (slot < 0 || slot >= (int)mItems.size())
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
+    not_null_ptr<ItemInstance> item = mItems[slot];
+    if (item->isEmpty())
     {
         return ItemInstance::EMPTY;
     }
-    not_null_ptr<ItemInstance> result = mItems[(unsigned int)slot];
-    mItems[(unsigned int)slot] = ItemInstance::EMPTY;
-    return result;
+    mItems[slot] = ItemInstance::EMPTY;
+    return item;
 }
 
 void MinecartContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot >= mItems.size())
-    {
-        return;
-    }
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
     mItems[slot] = item;
     if (!item->isEmpty() && item->getCount() > getMaxStackSize())
     {
         item->setCount(getMaxStackSize());
     }
-    setChanged();
 }
 
 int MinecartContainer::getMaxStackSize()
@@ -129,7 +153,12 @@ void MinecartContainer::setChanged()
 
 bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
 {
-    return !mRemoved;
+    if (mRemoved)
+    {
+        return false;
+    }
+    BlockPos position(mX, mY, mZ);
+    return player->distanceAsIfHitscanned(position, *player->mBoundingBox) <= 30.25;
 }
 
 void MinecartContainer::startOpen(boost::shared_ptr<Player> player)
@@ -161,6 +190,8 @@ int MinecartContainer::getContainerDataCount()
 
 void MinecartContainer::clearContent()
 {
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         mItems[i] = ItemInstance::EMPTY;
@@ -203,23 +234,27 @@ void MinecartContainer::addDataWalkers(DataFixerUpper* fixer, unsigned long long
 void MinecartContainer::destroy(const DamageSource* source)
 {
     Minecart::destroy(source);
-    if (mDropContentsWhenDead)
+    if (mLevel->getGameRules()->getBoolean(6))
     {
-        clearContent();
+        boost::shared_ptr<Entity> entity = shared_from_this();
+        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(entity);
+        Containers::dropContents(mLevel, entity, boost::static_pointer_cast<Container>(minecart));
     }
 }
 
-void MinecartContainer::changeDimension(int dimension)
+boost::shared_ptr<Entity> MinecartContainer::changeDimension(int dimension)
 {
     mDropContentsWhenDead = false;
-    Entity::changeDimension(dimension);
+    return Entity::changeDimension(dimension);
 }
 
 void MinecartContainer::remove()
 {
     if (mDropContentsWhenDead)
     {
-        clearContent();
+        boost::shared_ptr<Entity> entity = shared_from_this();
+        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(entity);
+        Containers::dropContents(mLevel, entity, boost::static_pointer_cast<Container>(minecart));
     }
     Entity::remove();
 }
@@ -244,7 +279,7 @@ void MinecartContainer::addAdditonalSaveData(CompoundTag* tag)
 void MinecartContainer::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
-    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(mItems.size(), ItemInstance::EMPTY);
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (tag->contains(L"LootTable", 8) && StructureFeatureIO::getVersion() > 1)
     {
         mLootTable = new ResourceLocation(tag->getString(L"LootTable"));
@@ -258,16 +293,32 @@ void MinecartContainer::readAdditionalSaveData(CompoundTag* tag)
 
 bool MinecartContainer::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    if (mRemoved)
+    if (!player->isAllowedToInteract(shared_from_this()))
     {
-        return true;
+        return false;
+    }
+
+    if (!mLevel->mIsClientSide)
+    {
+        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
+        player->openContainer(boost::static_pointer_cast<Container>(minecart));
     }
     return true;
 }
 
 void MinecartContainer::applyNaturalSlowdown()
 {
-    Minecart::applyNaturalSlowdown();
+    float slowdown = 0.98f;
+    if (mLootTable == NULL)
+    {
+        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
+        int signal = AbstractContainerMenu::getRedstoneSignalFromContainer(
+            boost::static_pointer_cast<Container>(minecart));
+        slowdown += (15 - signal) * 0.001f;
+    }
+    mXd *= slowdown;
+    mYd *= 0.0;
+    mZd *= slowdown;
 }
 
 void MinecartContainer::setDropContainerContent(bool dropContents)
