@@ -26,6 +26,7 @@ class ChunkGenerator;
 class ChunkPos;
 class ChunkPrimer;
 class ChunkSource;
+class CompoundTag;
 class DataInputStream;
 class DataOutputStream;
 class ElementStorage;
@@ -108,7 +109,7 @@ public:
     void readCompressedBlockLightData(DataInputStream* stream);
     unsigned int getSparseBlockAndDataMemoryAllocated();
     bool getHasGapsToCheck();
-    bool getBiomePresentFlag();
+    unsigned int getBiomePresentFlag();
     virtual void reSyncLighting();
     virtual bool reSyncLightingNearby();
     virtual void dropLighting();
@@ -130,7 +131,7 @@ public:
     Block* getChunkBlock(int x, int y, int z);
     virtual void lightLava();
     void lightGap(int x, int y, int z, int value);
-    bool lightGap(int x, int y, int z);
+    void lightGap(int x, int y, int z);
     void recheckGaps(bool onlyOne);
     void recalcHeight(int x, int y, int z);
     virtual int getBlockLightBlock(const BlockPos& pos);
@@ -186,12 +187,12 @@ public:
     void postProcess();
     void flagPostProcessComplete(short value);
     void doPostProcess(ChunkSource* source, ChunkGenerator* generator);
-    bool checkPostProcess(ChunkSource* source, ChunkGenerator* generator);
-    bool checkChests(ChunkSource* source, int x, int z);
+    void checkPostProcess(ChunkSource* source, ChunkGenerator* generator);
+    void checkChests(ChunkSource* source, int x, int z);
     void tick(bool update);
     ChunkPos getPos();
     bool isYSpaceEmpty(int y0, int y1);
-    bool reloadBiomes();
+    void reloadBiomes();
     virtual Biome* getBiome(const BlockPos& pos, BiomeSource* source);
     arrayWithLength<unsigned char> getBiomes();
     void updateBiomePresentFlags();
@@ -231,36 +232,56 @@ public:
     void setLightPopulated(bool);
     int getChunkVersion();
 
+private:
+    arrayWithLength<unsigned char> mBiomes;
+    int mEntitySectionCount;
+    ElementStorage* mElements;
+    unsigned char mPrecipitationHeightmap[256];
+    unsigned char mBiomeFlags[128];
+    int mPrecipitationHeightmapMinimum;
 public:
     Level* level;
-    int x;
-    int z;
 private:
-    ElementStorage* mElements;
     SparseLightStorage* mSkyLight;
     SparseLightStorage* mSkyLightUpper;
     SparseLightStorage* mBlockLight;
     SparseLightStorage* mBlockLightUpper;
-    unsigned char mHeightmap[256];
+    arrayWithLength<unsigned char> mHeightmap;
+    int mMinHeight;
+    int mMaxHeight;
+public:
+    int x;
+    int z;
+private:
+    bool mHasGapsToCheck;
+    unsigned int mBiomePresent;
+    BlockEntityMap mBlockEntityMap;
+    std::vector<boost::shared_ptr<Entity> >** mEntitySections;
+    unsigned short mChunkFlags;
+    unsigned short mChunkFlagsPadding;
+    unsigned int mPostProcessIndex;
+    bool mPostProcess;
+    bool mLightPopulated;
     bool mUnsaved;
-    bool mLoaded;
     bool mUnloaded;
-    bool mTerrainPopulated;
-    long long mInhabitedTime;
+    bool mLastSaveHadEntities;
+    bool mLoaded;
+    unsigned short mEmissiveMaxHeight;
+    int mEntityCount;
+    int mLightCheckIndex;
+    int mQueuedLightChecks;
     long long mLastSaveTime;
     unsigned int mLowestHeightmap;
-    unsigned char mBiomeFlags[128];
-    unsigned char mBiomePresent;
-    unsigned char mPostProcess;
-    unsigned char mLightPopulated;
-    unsigned char mLastSaveHadEntities;
+    long long mInhabitedTime;
+    bool mInvalid;
+    CompoundTag* mPendingBlockEntityTag;
+    bool mWillBeSaved;
+    int mCheckAllLight;
     int mChunkVersion;
-    unsigned char mMinHeight;
-    unsigned char mMaxHeight;
-    unsigned char mTempLightingStorage[0x4080];
-    arrayWithLength<unsigned char> mBiomes;
-    BlockEntityMap mBlockEntityMap;
-    std::vector<boost::shared_ptr<Entity> > mEntities;
+    std::deque<BlockPos> mPendingBlockEntities;
+    unsigned char mPostProcessFlags;
+    bool mPendingBlockEntitiesChanged;
+    bool mOwnsBiomes;
 };
 
 #endif
