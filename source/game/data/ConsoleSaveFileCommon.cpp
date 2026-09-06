@@ -2,7 +2,6 @@
 
 #include <cstring>
 
-#include "game/core/Compression.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/File.hpp"
@@ -74,25 +73,9 @@ void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
     ReAlloc(fileSize + size);
     unsigned int source = entry->m_startOffset + entry->m_fileSize;
     unsigned int end = mFileHeader.GetStartOfNextData();
-    if ((size & 0xfff) == 0)
-    {
-        unsigned int destination = source + size;
-        while (source < end)
-        {
-            unsigned int count = end - source;
-            if (count > 0x1000)
-                count = 0x1000;
-            std::memmove(static_cast<unsigned char*>(mData) + destination,
-                         static_cast<unsigned char*>(mData) + source, count);
-            source += count;
-            destination += count;
-        }
-    }
-    else
-    {
+    if (source < end)
         std::memmove(static_cast<unsigned char*>(mData) + source + size,
                      static_cast<unsigned char*>(mData) + source, end - source);
-    }
     mFileHeader.AdjustStartOffsets(entry, size, false);
 }
 
