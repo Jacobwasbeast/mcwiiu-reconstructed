@@ -1,0 +1,149 @@
+#include "game/world/block/MushroomBlock.hpp"
+
+#include "game/core/DyeColor.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Iterator.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/generation/HugeMushroomFeature.hpp"
+
+MushroomBlock::MushroomBlock()
+    : Bush()
+{
+    DerivedInit();
+    setTicking(true);
+}
+
+MushroomBlock::~MushroomBlock()
+{
+}
+
+bool MushroomBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
+{
+    return true;
+}
+
+bool MushroomBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*)
+{
+    return true;
+}
+
+bool MushroomBlock::growMushroom(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
+{
+    level->setBlock(pos, state, 3, false);
+    HugeMushroomFeature* feature = NULL;
+    if (this == Blocks::brown_mushroom)
+        feature = new HugeMushroomFeature(Blocks::brown_mushroom_block);
+    else if (this == Blocks::red_mushroom)
+        feature = new HugeMushroomFeature(Blocks::red_mushroom_block);
+
+    if (feature != NULL && feature->place(level, *random, pos))
+    {
+        delete feature;
+        return true;
+    }
+
+    level->setBlock(pos, state, 3, false);
+    delete feature;
+    return false;
+}
+
+void MushroomBlock::performBonemeal(Level* level, Random* random, const BlockPos& pos,
+                                    const BlockState* state)
+{
+    growMushroom(level, pos, state, random);
+}
+
+const AABB* MushroomBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
+{
+    return NULL;
+}
+
+void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
+{
+    Bush::tick(level, pos, state, random);
+    if (random->nextInt(25) != 0)
+        return;
+
+    int count = 5;
+    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(pos.offset(-4, -1, -4),
+                                                                       pos.offset(4, 1, 4));
+    while (positions->hasNext())
+    {
+        MutableBlockPos* current = positions->next();
+        if (level->getBlockState(*current)->getBlock() == this)
+        {
+            --count;
+            if (count < 1)
+            {
+                delete positions;
+                return;
+            }
+        }
+    }
+    delete positions;
+
+    BlockPos currentPos = pos;
+    for (int attempt = 0; attempt < 5; ++attempt)
+    {
+        BlockPos target = currentPos.offset(random->nextInt(3) - 1,
+                                     random->nextInt(2) - random->nextInt(2),
+                                     random->nextInt(3) - 1);
+        const BlockState* targetState = defaultBlockState();
+        if (level->isEmptyBlock(target) && canSurvive(level, target, targetState))
+        {
+            currentPos = target;
+            if (attempt == 4)
+                level->setBlock(currentPos, defaultBlockState(), 2, false);
+        }
+    }
+}
+
+bool MushroomBlock::mayPlace(Level* level, const BlockPos& pos)
+{
+    return Bush::mayPlace(level, pos) && canSurvive(level, pos, defaultBlockState());
+}
+
+bool MushroomBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
+{
+    return state->getBlock()->isSolidBlockingCube(state);
+}
+
+bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
+{
+    if (pos.y >= 255)
+        return false;
+
+    const BlockPos below = pos.below();
+    const BlockState* belowState = level->getBlockState(below);
+    Block* belowBlock = belowState->getBlock();
+    if (belowBlock == Blocks::mycelium)
+        return true;
+
+    if (belowBlock == Blocks::dirt && belowState == Blocks::dirt->getBlockState(2))
+        return true;
+
+    return level->getDaytimeRawBrightness(pos) < 13
+        && mayPlaceOn(level, below, belowState);
+}
+
+unsigned int MushroomBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    if (tooltipData.m_pItemInstance->getItem() == Items::dye
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
+        return 0x9f5fdc40u;
+    return Block::GetInteractTooltip(tooltipData);
+}
+
+bool MushroomBlock::canContainLiquid(const BlockState*) const
+{
+    return false;
+}

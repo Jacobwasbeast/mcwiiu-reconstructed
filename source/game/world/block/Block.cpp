@@ -54,11 +54,83 @@
 #include "game/world/block/DriedKelpBlock.hpp"
 #include "game/world/block/KelpBlock.hpp"
 #include "game/world/block/CoralBlock.hpp"
+#include "game/world/block/BarrierBlock.hpp"
+#include "game/world/block/BlueIceBlock.hpp"
+#include "game/world/block/BoneBlock.hpp"
+#include "game/world/block/BookshelfBlock.hpp"
+#include "game/world/block/CactusBlock.hpp"
+#include "game/world/block/CakeBlock.hpp"
+#include "game/world/block/ChorusFlowerBlock.hpp"
+#include "game/world/block/ChorusPlantBlock.hpp"
+#include "game/world/block/ClayBlock.hpp"
+#include "game/world/block/CocoaBlock.hpp"
+#include "game/world/block/CraftingTableBlock.hpp"
+#include "game/world/block/DetectorRailBlock.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/DragonEggBlock.hpp"
+#include "game/world/block/DynamicLiquidBlock.hpp"
+#include "game/world/block/EndPortalFrameBlock.hpp"
+#include "game/world/block/EndRodBlock.hpp"
+#include "game/world/block/FarmBlock.hpp"
+#include "game/world/block/FenceBlock.hpp"
+#include "game/world/block/FenceGateBlock.hpp"
+#include "game/world/block/FireBlock.hpp"
+#include "game/world/block/FullNewStoneSlabBlock.hpp"
+#include "game/world/block/FullStoneSlabBlock.hpp"
+#include "game/world/block/FullWoodSlabBlock.hpp"
+#include "game/world/block/GlassBlock.hpp"
+#include "game/world/block/Glowstoneblock.hpp"
+#include "game/world/block/GrassBlock.hpp"
+#include "game/world/block/GrassPathBlock.hpp"
+#include "game/world/block/HalfNewStoneSlabBlock.hpp"
+#include "game/world/block/HalfStoneSlabBlock.hpp"
+#include "game/world/block/HalfWoodSlabBlock.hpp"
+#include "game/world/block/HardenedClayBlock.hpp"
+#include "game/world/block/HayBlock.hpp"
+#include "game/world/block/HugeMushroomBlock.hpp"
+#include "game/world/block/IceBlock.hpp"
+#include "game/world/block/LadderBlock.hpp"
+#include "game/world/block/LeverBlock.hpp"
+#include "game/world/block/LogBlock.hpp"
+#include "game/world/block/MagmaBlock.hpp"
+#include "game/world/block/MelonBlock.hpp"
+#include "game/world/block/MonsterEggBlock.hpp"
+#include "game/world/block/MyceliumBlock.hpp"
+#include "game/world/block/NetherBrickBlock.hpp"
+#include "game/world/block/NetherrackBlock.hpp"
+#include "game/world/block/NewStoneSlabBlock.hpp"
+#include "game/world/block/ObsidianBlock.hpp"
+#include "game/world/block/PackedIceBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/PortalBlock.hpp"
+#include "game/world/block/PoweredBlock.hpp"
+#include "game/world/block/PumpkinBlock.hpp"
+#include "game/world/block/PurpurSlabBlock.hpp"
+#include "game/world/block/RedFlowerBlock.hpp"
+#include "game/world/block/RedstoneLampBlock.hpp"
+#include "game/world/block/RedStoneOreBlock.hpp"
+#include "game/world/block/RedstoneTorchBlock.hpp"
+#include "game/world/block/ReedsBlock.hpp"
+#include "game/world/block/SeaLanternBlock.hpp"
+#include "game/world/block/SlimeBlock.hpp"
+#include "game/world/block/SoulSandBlock.hpp"
+#include "game/world/block/SpongeBlock.hpp"
+#include "game/world/block/StructureBlock.hpp"
+#include "game/world/block/StructureVoidBlock.hpp"
+#include "game/world/block/TntBlock.hpp"
+#include "game/world/block/TripWireBlock.hpp"
+#include "game/world/block/VineBlock.hpp"
+#include "game/world/block/WebBlock.hpp"
+#include "game/world/block/YellowFlowerBlock.hpp"
+#include "game/core/BubbleColumnSegment.hpp"
+#include "game/server/ObserverBlock.hpp"
 
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/Explosion.hpp"
 #include "game/core/FoodConstants.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/HtmlString.hpp"
@@ -68,6 +140,7 @@
 #include "game/core/Rotation.hpp"
 #include "game/entity/mob/FireworksRocketEntity.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/Enchantments.hpp"
 #include "game/item/Item.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
@@ -77,6 +150,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
@@ -616,12 +690,12 @@ unsigned int Block::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 
     if (getId(tooltipData.m_pBlockState->getBlock()) == 7)
     {
-        if (!tooltipData.m_pPlayer->isCreative())
+        if (!tooltipData.m_pPlayer->GetGameMode()->isCreative())
         {
             return 0xFFFFFFFFu;
         }
 
-        if (!tooltipData.m_pLevel->getLevelData()->isSuperFlatBedrockRemovable(tooltipData.m_blockPos))
+        if (!tooltipData.m_pLevel->mDimension->inPlayerConstraints(tooltipData.m_blockPos))
         {
             return 0xFFFFFFFFu;
         }
@@ -1168,7 +1242,7 @@ void Block::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
     if (source != NULL && (source->GetType() & 0xC800000) == 0xC800000)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(source);
-        player->isCreative();
+        player->GetGameMode()->RecordBlockDestroyed(pos, getId(this));
     }
 }
 
@@ -1300,13 +1374,13 @@ void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const 
     }
 
     if (isSilkTouchable()
-        && EnchantmentHelper::getItemEnchantmentLevel(EnchantmentHelper::SILK_TOUCH, tool) > 0)
+        && EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) > 0)
     {
         popResource(level, pos, getSilkTouchItemInstance(state));
         return;
     }
 
-    spawnResources(level, pos, state, EnchantmentHelper::getItemEnchantmentLevel(EnchantmentHelper::BLOCK_FORTUNE, tool));
+    spawnResources(level, pos, state, EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool));
 }
 
 bool Block::isSilkTouchable()
@@ -2652,7 +2726,7 @@ void Block::staticCtor()
 
     for (it = blockRegistry->begin(); it != blockRegistry->end(); ++it)
     {
-        Block* block = it->second;
+        Block* block = it->first;
 
         if (dynamic_cast<StairBlock*>(block) != NULL || dynamic_cast<HalfSlabBlock*>(block) != NULL)
         {
@@ -2667,7 +2741,7 @@ void Block::staticCtor()
 
     for (it = blockRegistry->begin(); it != blockRegistry->end(); ++it)
     {
-        Block* block = it->second;
+        Block* block = it->first;
         const std::vector<const BlockState*>& states = block->getBlockStateDefinition()->getPossibleBlockStates();
 
         for (std::vector<const BlockState*>::const_iterator state = states.begin(); state != states.end(); ++state)

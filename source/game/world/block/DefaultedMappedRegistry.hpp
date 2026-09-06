@@ -3,6 +3,8 @@
 
 #include <boost/unordered_map.hpp>
 
+#include <utility>
+
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/MappedRegistry.hpp"
@@ -113,10 +115,62 @@ public:
         BLOCK_COUNT = 319
     };
 
-    typedef boost::unordered_map<ResourceLocation,
-                                 Block*,
-                                 boost::hash<ResourceLocation>,
-                                 std::equal_to<ResourceLocation> >::const_iterator iterator;
+    class iterator
+    {
+    private:
+        typedef boost::unordered_map<ResourceLocation,
+                                     Block*,
+                                     boost::hash<ResourceLocation>,
+                                     std::equal_to<ResourceLocation> >::const_iterator base_iterator;
+
+        base_iterator mIterator;
+        mutable std::pair<Block*, ResourceLocation> mValue;
+
+        iterator(base_iterator value)
+            : mIterator(value)
+        {
+        }
+
+        void update() const
+        {
+            mValue = std::make_pair(mIterator->second, mIterator->first);
+        }
+
+        friend class DefaultedMappedRegistry<ResourceLocation, Block*>;
+
+    public:
+        iterator()
+        {
+        }
+
+        iterator& operator++()
+        {
+            ++mIterator;
+            return *this;
+        }
+
+        bool operator!=(const iterator& other) const
+        {
+            return mIterator != other.mIterator;
+        }
+
+        bool operator==(const iterator& other) const
+        {
+            return mIterator == other.mIterator;
+        }
+
+        std::pair<Block*, ResourceLocation>& operator*() const
+        {
+            update();
+            return mValue;
+        }
+
+        std::pair<Block*, ResourceLocation>* operator->() const
+        {
+            update();
+            return &mValue;
+        }
+    };
 
     DefaultedMappedRegistry(ResourceLocation defaultKey);
 
@@ -128,12 +182,12 @@ public:
 
     iterator begin()
     {
-        return this->keySet().begin();
+        return iterator(this->keySet().begin());
     }
 
     iterator end()
     {
-        return this->keySet().end();
+        return iterator(this->keySet().end());
     }
 
 private:

@@ -5,6 +5,8 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Blocks.hpp"
 
@@ -54,7 +56,8 @@ void MobSpawnerBlockEntity::tick()
 
 boost::shared_ptr<Packet> MobSpawnerBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 1, 0, getUpdateTag()));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(
+        getBlockPos(), 1, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* MobSpawnerBlockEntity::getUpdateTag()

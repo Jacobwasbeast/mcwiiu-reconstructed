@@ -9,6 +9,7 @@
 #include "game/world/block/BlockEntity.hpp"
 
 class Player;
+class EnderChestRenderer;
 
 class EnderChestBlockEntity : public BlockEntity
 {
@@ -32,6 +33,8 @@ public:
     std::wstring getCustomName();
 
 private:
+    friend class EnderChestRenderer;
+
     float mOpen;
     float mOpenOld;
     int mOpenCount;

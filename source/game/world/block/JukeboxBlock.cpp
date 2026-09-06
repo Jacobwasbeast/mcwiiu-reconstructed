@@ -1,0 +1,110 @@
+#include "game/world/block/JukeboxBlock.hpp"
+#include "game/world/block/BooleanProperty.hpp"
+#include "game/core/IconRegister.hpp"
+#include "game/data/DataFixerUpper.hpp"
+#include "game/data/DataFixTypes.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/core/DataWalker.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemDataWalker.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/util/Random.hpp"
+#include "game/ui/BlockTooltipDataHolder.hpp"
+static AbstractProperty<bool>* gJukeboxHasRecord = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_record"));
+JukeboxBlock::JukeboxBlock() : BaseEntityBlock(Material::WOOD), mTopIcon(NULL) { DerivedInit(); TypedBoxed<bool> value(false); registerDefaultState(mStateDefinition->any()->setBoxedValue(gJukeboxHasRecord, &value)); }
+JukeboxBlock::~JukeboxBlock() {}
+boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int data) { boost::shared_ptr<Entity> result(new Entity()); result->setLevelForLoading(level); result->setData(data); return result; }
+void JukeboxBlock::addDataWalkers(DataFixerUpper* fixer) { fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity, (DataWalker*)new ItemDataWalker(0x01000204ULL, L"RecordItem")); }
+bool JukeboxBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>) { return state->getValue(gJukeboxHasRecord); }
+void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockState*)
+{
+    if (level->mIsClientSide) return;
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(blockEntity);
+    if (entity.get() == NULL) return;
+    not_null_ptr<ItemInstance> record = entity->getRecord();
+    if (record.get() == NULL || record->isEmpty()) return;
+    level->levelEvent(1010, pos, 0);
+    Random* random = level->mRandom;
+    boost::shared_ptr<ItemEntity> item(new ItemEntity(level, pos.x + random->nextFloat() * 0.7 + 0.15, pos.y + random->nextFloat() * 0.7 + 0.66, pos.z + random->nextFloat() * 0.7 + 0.15, record->copy()));
+    item->setDefaultPickUpDelay(); level->addEntity(item);
+}
+bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+{
+    if (!clientSide && TestUse(level, pos, state, player)) { dropRecording(level, pos, state); TypedBoxed<bool> value(false); level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), 2, false); return true; } return false;
+}
+void JukeboxBlock::setRecord(Level* level, const BlockPos& pos, const BlockState* state, not_null_ptr<ItemInstance> record)
+{
+    boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(level->getBlockEntity(pos)); if (entity.get() == NULL) return;
+    not_null_ptr<ItemInstance> stored(new ItemInstance(record->getItem(), 1, record->getAuxValue())); if (record->hasTag()) stored->setTag(record->getTag()->copy()); entity->setRecord(stored); level->levelEvent(1010, pos, 1); TypedBoxed<bool> value(true); level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), 2, false);
+}
+void JukeboxBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state) { dropRecording(level, pos, state); BaseEntityBlock::onRemove(level, pos, state); }
+void JukeboxBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus) { if (!level->mIsClientSide) Block::spawnResources(level, pos, state, chance, lootBonus); }
+bool JukeboxBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
+int JukeboxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
+{
+    boost::shared_ptr<Entity> entity =
+        boost::dynamic_pointer_cast<Entity>(level->getBlockEntity(pos));
+    if (entity.get() == NULL)
+        return 0;
+
+    not_null_ptr<ItemInstance> record = entity->getRecord();
+    if (record.get() == NULL || record->isEmpty())
+        return 0;
+
+    return Item::getId(record->getItem()) + 1 - Item::getId(Items::air);
+}
+EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_MODEL; }
+const BlockState* JukeboxBlock::getBlockState(int data) { TypedBoxed<bool> value((data & 1) != 0); return defaultBlockState()->setBoxedValue(gJukeboxHasRecord, &value); }
+int JukeboxBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(gJukeboxHasRecord) ? 1 : 0; }
+unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success &&
+        tooltipData.m_pItemInstance.get() != NULL &&
+        !tooltipData.m_pItemInstance->isEmpty())
+    {
+        int id = Item::VALIDgetId(tooltipData.m_pItemInstance->getItem());
+        if (id >= 2256 && id < 2268 && tooltipData.m_bCanPlace && tooltipData.m_bIsInside)
+            return 0x293a30d9;
+    }
+
+    if (tooltipData.m_pBlockState != NULL &&
+        tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bIsInside)
+        return 0x3f9c7cf0;
+
+    return Block::GetInteractTooltip(tooltipData);
+}
+BlockStateDefinition* JukeboxBlock::createBlockStateDefinition() { const Property* properties[] = { gJukeboxHasRecord }; return new BlockStateDefinition(this, properties, 1); }
+TextureAtlasSprite* JukeboxBlock::getTexture(const Direction* direction, const BlockState*) { return direction == Direction::UP ? mTopIcon : mIcon; }
+void JukeboxBlock::registerIcons(IconRegister* iconRegister) { mIcon = iconRegister->registerIcon(getIconName() + L"_side"); mTopIcon = iconRegister->registerIcon(getIconName() + L"_top"); }
+JukeboxBlock::Entity::Entity() : BlockEntity(), mRecord() {}
+JukeboxBlock::Entity::~Entity() {}
+BlockEntity* JukeboxBlock::Entity::create() { return new Entity(); }
+void JukeboxBlock::Entity::load(CompoundTag* tag)
+{
+    BlockEntity::load(tag);
+    if (tag->contains(L"RecordItem", 10))
+    {
+        mRecord = not_null_ptr<ItemInstance>(
+            new ItemInstance(tag->getCompound(L"RecordItem")));
+    }
+    else if (tag->getInt(L"Record") > 0)
+    {
+        mRecord = not_null_ptr<ItemInstance>(
+            new ItemInstance(Item::byId(tag->getInt(L"Record")), 1, 0));
+    }
+}
+void JukeboxBlock::Entity::save(CompoundTag* tag) { BlockEntity::save(tag); if (mRecord.get() != NULL && !mRecord->isEmpty()) tag->put(L"RecordItem", mRecord->save(new CompoundTag())); }
+not_null_ptr<ItemInstance> JukeboxBlock::Entity::getRecord() { return mRecord; }
+void JukeboxBlock::Entity::setRecord(not_null_ptr<ItemInstance> record) { mRecord = record; setChanged(); }
+boost::shared_ptr<BlockEntity> JukeboxBlock::Entity::clone() { boost::shared_ptr<Entity> result(new Entity()); BlockEntity::clone(result); result->mRecord = mRecord; return result; }
+unsigned long long JukeboxBlock::Entity::GetType() { return 0x0100020400000000ULL; }

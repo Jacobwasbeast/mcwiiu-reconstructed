@@ -1,0 +1,202 @@
+#include "game/world/block/CommandBlock.hpp"
+
+#include <typeinfo>
+
+#include "game/core/IconRegister.hpp"
+#include "game/core/Mirror.hpp"
+#include "game/core/Rotation.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/CommandBlockEntity.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+static AbstractProperty<const Direction*>* gCommandBlockFacing = NULL;
+static AbstractProperty<bool>* gCommandBlockConditional = NULL;
+
+void CommandBlock::blockStaticCtor()
+{
+    gCommandBlockFacing = DirectionalBlock::FACING_PROPERTY;
+    if (gCommandBlockConditional == NULL)
+    {
+        gCommandBlockConditional = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"conditional"));
+    }
+}
+
+CommandBlock::CommandBlock(const MaterialColor* materialColor, Mode mode)
+    : BaseEntityBlock(Material::STONE, materialColor),
+      mFrontIcon(NULL),
+      mBackIcon(NULL),
+      mConditionalIcon(NULL),
+      mMode(mode)
+{
+    DerivedInit();
+    TypedBoxed<const Direction*> facing(Direction::NORTH);
+    TypedBoxed<bool> conditional(false);
+    const BlockState* state = mStateDefinition->any();
+    if (gCommandBlockFacing != NULL)
+    {
+        state = state->setBoxedValue(gCommandBlockFacing, &facing);
+    }
+    if (gCommandBlockConditional != NULL)
+    {
+        state = state->setBoxedValue(gCommandBlockConditional, &conditional);
+    }
+    registerDefaultState(state);
+}
+
+CommandBlock::~CommandBlock()
+{
+}
+
+unsigned int CommandBlock::getMode()
+{
+    return static_cast<unsigned int>(mMode);
+}
+
+boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level*, int)
+{
+    return boost::shared_ptr<BlockEntity>(new CommandBlockEntity(mMode));
+}
+
+void CommandBlock::neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&)
+{
+}
+
+void CommandBlock::tick(Level*, const BlockPos&, const BlockState*, Random*)
+{
+}
+
+int CommandBlock::getTickDelay(Level*)
+{
+    return 1;
+}
+
+bool CommandBlock::use(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<Player>, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
+{
+    return false;
+}
+
+bool CommandBlock::hasAnalogOutputSignal(const BlockState*)
+{
+    return true;
+}
+
+int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
+{
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
+    if (commandBlockEntity.get() == NULL)
+    {
+        return 0;
+    }
+    return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
+}
+
+void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
+{
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
+    if (commandBlockEntity.get() == NULL)
+    {
+        return;
+    }
+    if (itemInstance->hasCustomHoverName())
+    {
+        commandBlockEntity->getCommandBlock()->setName(itemInstance->getHoverName(), true);
+    }
+}
+
+int CommandBlock::getResourceCount(Random*)
+{
+    return 0;
+}
+
+EBlockRenderShape CommandBlock::getRenderShape(const BlockState*)
+{
+    return BLOCK_RENDER_MODEL;
+}
+
+const BlockState* CommandBlock::getBlockState(int data)
+{
+    TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data & 7));
+    TypedBoxed<bool> conditional((data & 8) != 0);
+    const BlockState* state = defaultBlockState();
+    state = state->setBoxedValue(gCommandBlockFacing, &facing);
+    return state->setBoxedValue(gCommandBlockConditional, &conditional);
+}
+
+int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    int data = state->getValue(gCommandBlockFacing)->get3DDataValue();
+    if (state->getValue(gCommandBlockConditional))
+    {
+        data |= 8;
+    }
+    return data;
+}
+
+const BlockState* CommandBlock::rotate(const BlockState* state, Rotation* rotation)
+{
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(gCommandBlockFacing)));
+    return state->setBoxedValue(gCommandBlockFacing, &facing);
+}
+
+const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
+{
+    return rotate(state, mirror->getRotation(state->getValue(gCommandBlockFacing)));
+}
+
+BlockStateDefinition* CommandBlock::createBlockStateDefinition()
+{
+    const Property* properties[] = { gCommandBlockFacing, gCommandBlockConditional };
+    return new BlockStateDefinition(this, properties, 2);
+}
+
+const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
+{
+    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer)->getOpposite();
+    TypedBoxed<const Direction*> boxedFacing(facing);
+    TypedBoxed<bool> conditional(false);
+    const BlockState* state = defaultBlockState();
+    state = state->setBoxedValue(gCommandBlockFacing, &boxedFacing);
+    return state->setBoxedValue(gCommandBlockConditional, &conditional);
+}
+
+bool CommandBlock::isCommandBlock(Block* block)
+{
+    return block == Blocks::command_block || block == Blocks::repeating_command_block || block == Blocks::chain_command_block;
+}
+
+TextureAtlasSprite* CommandBlock::getTexture(const Direction* direction, const BlockState* state)
+{
+    if (direction == state->getValue(gCommandBlockFacing))
+    {
+        return mBackIcon;
+    }
+    if (direction == state->getValue(gCommandBlockFacing)->getOpposite())
+    {
+        return mFrontIcon;
+    }
+    if (state->getValue(gCommandBlockConditional))
+    {
+        return mConditionalIcon;
+    }
+    return mIcon;
+}
+
+void CommandBlock::registerIcons(IconRegister* iconRegister)
+{
+    mIcon = iconRegister->registerIcon(getIconName() + L"_side");
+    mFrontIcon = iconRegister->registerIcon(getIconName() + L"_front");
+    mBackIcon = iconRegister->registerIcon(getIconName() + L"_back");
+    mConditionalIcon = iconRegister->registerIcon(getIconName() + L"_conditional");
+}

@@ -11,6 +11,7 @@ class Direction;
 class IconRegister;
 class LevelSource;
 class TextureAtlasSprite;
+template <class T> class EnumProperty;
 
 class StoneBrickBlock : public Block
 {
@@ -18,6 +19,8 @@ public:
     class Variant
     {
     public:
+        static Variant* DEFAULT;
+
         Variant(int data, const std::wstring& name, int translationKey);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
@@ -31,6 +34,8 @@ public:
         std::wstring mName;
         int mTranslationKey;
     };
+
+    static EnumProperty<Variant*>* VARIANT;
 
     StoneBrickBlock();
     virtual ~StoneBrickBlock();

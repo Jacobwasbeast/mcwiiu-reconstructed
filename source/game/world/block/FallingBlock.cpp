@@ -6,8 +6,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/FallingBlockEntity.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+
+bool FallingBlock::fallInstantly;
 
 FallingBlock::FallingBlock()
     : Block(Material::SAND)
@@ -49,7 +52,7 @@ void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
         return;
     }
 
-    if (level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
+    if (!fallInstantly && level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
     {
         if (!level->mIsClientSide)
         {
@@ -58,6 +61,12 @@ void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
                 level->addToTickNextTick(pos, this, getTickDelay(level), 0);
                 return;
             }
+
+            boost::shared_ptr<FallingBlockEntity> entity(new FallingBlockEntity(
+                level, (double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5,
+                level->getBlockState(pos)));
+            falling(entity);
+            level->addEntity(entity);
         }
         return;
     }
@@ -116,6 +125,7 @@ void FallingBlock::animateTick(const BlockState* state, Level* level, const Bloc
                            (double)pos.y - 0.05,
                            (double)pos.z + (double)random->nextFloat(),
                            0.0, 0.0, 0.0, params);
+        delete[] params.data;
     }
 }
 

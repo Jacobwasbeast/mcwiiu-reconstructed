@@ -1,10 +1,10 @@
 #include "game/world/block/BlockPattern.hpp"
 
-#include <string>
 #include <vector>
 
 #include "game/core/Direction.hpp"
 #include "game/util/Vec3i.hpp"
+#include "game/world/block/BlockInWorld.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 
@@ -149,9 +149,7 @@ BlockPattern::BlockLoadingCache::BlockLoadingCache(Level* level, bool loadChunks
 
 BlockPattern::BlockLoadingCache::~BlockLoadingCache()
 {
-    for (boost::unordered_map<BlockPos, BlockInWorld*, boost::hash<BlockPos>,
-                              std::equal_to<BlockPos>,
-                              std::allocator<std::pair<const BlockPos, BlockInWorld*> > >::iterator it = mCache.begin();
+    for (BlockCache::iterator it = mCache.begin();
          it != mCache.end(); ++it)
     {
         delete it->second;
@@ -160,9 +158,7 @@ BlockPattern::BlockLoadingCache::~BlockLoadingCache()
 
 BlockInWorld* BlockPattern::BlockLoadingCache::getUnchecked(const BlockPos& pos)
 {
-    boost::unordered_map<BlockPos, BlockInWorld*, boost::hash<BlockPos>,
-                         std::equal_to<BlockPos>,
-                         std::allocator<std::pair<const BlockPos, BlockInWorld*> > >::iterator it = mCache.find(pos);
+    BlockCache::iterator it = mCache.find(pos);
     if (it == mCache.end())
     {
         BlockInWorld* block = new BlockInWorld(mLevel, pos, mLoadChunks);

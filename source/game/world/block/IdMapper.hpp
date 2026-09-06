@@ -73,7 +73,7 @@ public:
     virtual int getId(const BlockState* state);
     virtual const BlockState* byId(int id);
 
-    void addMapping(BlockState* state, int id);
+    void addMapping(const BlockState* state, int id);
     bool contains(int id);
 
 private:

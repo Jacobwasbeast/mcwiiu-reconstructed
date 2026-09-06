@@ -2,8 +2,8 @@
 
 #include "game/world/Level.hpp"
 
-BlockInWorld::BlockInWorld(Level* level, const BlockPos& pos, bool useWithoutUpdates)
-    : mLevel(level), mPos(pos), mUseWithoutUpdates(useWithoutUpdates), mState(NULL), mEntity(), mEntityCached(false)
+BlockInWorld::BlockInWorld(Level* level, const BlockPos& pos, bool loadChunks)
+    : mLevel(level), mPos(pos), mLoadChunks(loadChunks), mState(NULL), mEntity(), mEntityCached(false)
 {
 }
 
@@ -11,7 +11,7 @@ const BlockState* BlockInWorld::getState()
 {
     if (mState == NULL)
     {
-        if (!mUseWithoutUpdates && !mLevel->hasChunkAt(mPos))
+        if (!mLoadChunks && !mLevel->hasChunkAt(mPos))
         {
             return mState;
         }

@@ -14,6 +14,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/generation/Player.hpp"
 
 BaseEntityBlock::BaseEntityBlock(Material* material)
     : Block(material)

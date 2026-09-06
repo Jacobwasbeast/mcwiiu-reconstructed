@@ -1,0 +1,43 @@
+#include "game/world/block/DaylightDetectorBlockEntity.hpp"
+
+#include "game/world/Level.hpp"
+#include "game/world/block/DaylightDetectorBlock.hpp"
+
+DaylightDetectorBlockEntity::DaylightDetectorBlockEntity()
+    : BlockEntity()
+{
+}
+
+DaylightDetectorBlockEntity::~DaylightDetectorBlockEntity()
+{
+}
+
+BlockEntity* DaylightDetectorBlockEntity::create()
+{
+    return new DaylightDetectorBlockEntity();
+}
+
+boost::shared_ptr<BlockEntity> DaylightDetectorBlockEntity::clone()
+{
+    boost::shared_ptr<BlockEntity> result(new DaylightDetectorBlockEntity());
+    BlockEntity::clone(result);
+    return result;
+}
+
+void DaylightDetectorBlockEntity::tick()
+{
+    if (mLevel != NULL && !mLevel->mIsClientSide && mLevel->getGameTime() % 20LL == 0LL)
+    {
+        Block* block = getBlock();
+        DaylightDetectorBlock* daylightDetector = dynamic_cast<DaylightDetectorBlock*>(block);
+        if (daylightDetector != NULL)
+        {
+            daylightDetector->updateSignalStrength(mLevel, mPos);
+        }
+    }
+}
+
+unsigned long long DaylightDetectorBlockEntity::GetType()
+{
+    return 0x0120020B00000000ULL;
+}

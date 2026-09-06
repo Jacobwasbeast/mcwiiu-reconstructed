@@ -21,16 +21,17 @@ public:
     public:
         explicit BlockEntityMobSpawner(MobSpawnerBlockEntity* blockEntity);
         virtual ~BlockEntityMobSpawner();
+        virtual void setNextSpawnData(SpawnData* data);
         virtual void broadcastEvent(int event);
         virtual Level* getLevel();
         virtual BlockPos getPos();
-        virtual void setNextSpawnData(SpawnData* data);
     private:
         MobSpawnerBlockEntity* mBlockEntity;
     };
 
     MobSpawnerBlockEntity();
     virtual ~MobSpawnerBlockEntity();
+    virtual unsigned long long GetType();
     static BlockEntity* create();
     BlockEntityMobSpawner* getSpawner();
     static void addDataWalkers(DataFixerUpper* fixer);
@@ -41,9 +42,8 @@ public:
     virtual CompoundTag* getUpdateTag();
     virtual bool triggerEvent(int id, int param);
     virtual bool onlyOpCanSetNbt();
-    virtual boost::shared_ptr<BlockEntity> clone();
     void setEntityId(const std::wstring& entityId);
-    virtual unsigned long long GetType();
+    virtual boost::shared_ptr<BlockEntity> clone();
 private:
     BlockEntityMobSpawner* mSpawner;
 };

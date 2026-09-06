@@ -7,6 +7,8 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 #include <string>
 

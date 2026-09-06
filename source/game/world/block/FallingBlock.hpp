@@ -10,6 +10,8 @@ class FallingBlockEntity;
 class FallingBlock : public Block
 {
 public:
+    static bool fallInstantly;
+
     FallingBlock();
     FallingBlock(Material* material);
     virtual ~FallingBlock();

@@ -24,7 +24,7 @@ public:
         const Predicate<const BlockState*>* mPredicate;
     };
 
-    BlockInWorld(Level* level, const BlockPos& pos, bool useWithoutUpdates);
+    BlockInWorld(Level* level, const BlockPos& pos, bool loadChunks);
 
     const BlockState* getState();
     boost::shared_ptr<BlockEntity> getEntity();
@@ -37,7 +37,7 @@ public:
 private:
     Level* mLevel;
     BlockPos mPos;
-    bool mUseWithoutUpdates;
+    bool mLoadChunks;
     const BlockState* mState;
     boost::shared_ptr<BlockEntity> mEntity;
     bool mEntityCached;

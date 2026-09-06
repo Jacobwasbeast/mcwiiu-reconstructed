@@ -24,12 +24,6 @@ public:
     explicit BlockItem(Block* block);
     virtual ~BlockItem();
 
-    Block* getBlock();
-    BlockItem* setDescriptionId(unsigned int descriptionId);
-    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
-                                        InteractionHand::EInteractionHand hand);
-    static bool updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Player> player,
-                                           const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,
@@ -39,19 +33,26 @@ public:
                                                         float hitY,
                                                         float hitZ,
                                                         bool simulate);
-    virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
+    virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
+                                        InteractionHand::EInteractionHand hand);
     virtual int getDescriptionId(int auxValue);
-    virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
+    virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId();
-    virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction,
-                          boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance);
+    virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                  boost::shared_ptr<Player> player,
                                  std::vector<HtmlString>* lines,
                                  bool advanced);
+    virtual void registerIcons(IconRegister* iconRegister);
     virtual int getIconType();
     virtual TextureAtlasSprite* getIcon(int auxValue);
-    virtual void registerIcons(IconRegister* iconRegister);
+    virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction,
+                          boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance);
+
+    Block* getBlock();
+    BlockItem* setDescriptionId(unsigned int descriptionId);
+    static bool updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Player> player,
+                                           const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance);
     static boost::shared_ptr<Player> fjGetCurrentlyPlacingBlockPlayer();
 
 private:

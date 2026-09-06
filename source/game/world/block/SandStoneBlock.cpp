@@ -1,5 +1,9 @@
 #include "game/world/block/SandStoneBlock.hpp"
 
+#include <typeinfo>
+
+#include <boost/unordered_set.hpp>
+
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -15,7 +19,10 @@ static SandStoneBlock::Variant gSandStoneVariant2(2, L"smooth_sandstone", 2);
 static SandStoneBlock::Variant* gSandStoneVariants[3] = {
     &gSandStoneVariant0, &gSandStoneVariant1, &gSandStoneVariant2
 };
-static EnumProperty<SandStoneBlock::Variant*>* gSandStoneVariantProperty = NULL;
+AbstractProperty<SandStoneBlock::Variant*>* SandStoneBlock::TYPE = NULL;
+SandStoneBlock::Variant* SandStoneBlock::SANDSTONE = &gSandStoneVariant0;
+SandStoneBlock::Variant* SandStoneBlock::CHISELED = &gSandStoneVariant1;
+SandStoneBlock::Variant* SandStoneBlock::SMOOTH = &gSandStoneVariant2;
 static const MaterialColor* gSandStoneMapColor = NULL;
 
 SandStoneBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
@@ -52,18 +59,13 @@ int SandStoneBlock::Variant::getTranslationKey()
     return mTranslationKey;
 }
 
-std::wstring SandStoneBlock::Variant::getName()
-{
-    return mName;
-}
-
 void SandStoneBlock::blockStaticCtor()
 {
     boost::unordered_set<Variant*> values;
     values.insert(gSandStoneVariants[0]);
     values.insert(gSandStoneVariants[1]);
     values.insert(gSandStoneVariants[2]);
-    gSandStoneVariantProperty = EnumProperty<Variant*>::create(
+    TYPE = EnumProperty<Variant*>::create(
         L"type", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
@@ -71,8 +73,8 @@ SandStoneBlock::SandStoneBlock()
     : Block(Material::SAND)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(gSandStoneVariants[0]);
-    registerDefaultState(defaultBlockState()->setBoxedValue(gSandStoneVariantProperty, &value));
+    TypedBoxed<Variant*> value(SANDSTONE);
+    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &value));
     for (int i = 0; i < 5; ++i)
     {
         mTextures[i] = NULL;
@@ -85,7 +87,7 @@ SandStoneBlock::~SandStoneBlock()
 
 int SandStoneBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gSandStoneVariantProperty)->getData();
+    return state->getValue(TYPE)->getData();
 }
 
 const MaterialColor* SandStoneBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -96,24 +98,24 @@ const MaterialColor* SandStoneBlock::getMapColor(const BlockState* state, LevelS
 const BlockState* SandStoneBlock::getBlockState(int data)
 {
     TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(gSandStoneVariantProperty, &value);
+    return defaultBlockState()->setBoxedValue(TYPE, &value);
 }
 
 int SandStoneBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gSandStoneVariantProperty)->getData();
+    return state->getValue(TYPE)->getData();
 }
 
 BlockStateDefinition* SandStoneBlock::createBlockStateDefinition()
 {
     const Property* properties[1];
-    properties[0] = gSandStoneVariantProperty;
+    properties[0] = TYPE;
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* SandStoneBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    Variant* variant = state->getValue(gSandStoneVariantProperty);
+    Variant* variant = state->getValue(TYPE);
     if (direction != Direction::UP && direction == Direction::DOWN &&
         variant != gSandStoneVariants[1] && variant != gSandStoneVariants[2])
     {

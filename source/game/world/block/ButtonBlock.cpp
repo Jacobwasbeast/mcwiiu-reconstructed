@@ -12,10 +12,14 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+class Arrow;
+class ThrownTrident;
 
 DirectionProperty* ButtonBlock::FACING = NULL;
 AbstractProperty<bool>* ButtonBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
@@ -73,15 +77,16 @@ bool ButtonBlock::isCubeShaped(const BlockState*) { return false; }
 bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction* direction)
 {
     BlockPos supportPos = pos.relative(direction->getOpposite());
-    Block* support = level->getBlockState(supportPos)->getBlock();
-    bool supported = level->getBlockState(supportPos)->canProvideSupport(direction, BLOCK_SUPPORT_CENTER);
-    if (direction == Direction::DOWN)
+    const BlockState* supportState = level->getBlockState(supportPos);
+    bool solidFace = supportState->getBlock()->isSolidFace(level, supportPos, direction);
+    Block* support = supportState->getBlock();
+    if (direction == Direction::UP)
     {
-        if (support != NULL && (Block::isExceptionBlockForAttaching(support) || supported) &&
+        if (support != Blocks::AIR && (Block::isExceptionBlockForAttaching(support) || solidFace) &&
             !Block::isExceptionForPistonAttaching(support) && !support->mHasTintedFace) return false;
         return true;
     }
-    if ((Block::isExceptionBlockForAttaching(support) || supported) && !Block::isExceptionForPistonAttaching(support)) return false;
+    if ((Block::isExceptionBlockForAttaching(support) || solidFace) && !Block::isExceptionForPistonAttaching(support)) return false;
     return true;
 }
 
@@ -185,11 +190,36 @@ void ButtonBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*
 
 void ButtonBlock::checkPressed(const BlockState* state, Level* level, const BlockPos& pos)
 {
-    if (!state->getValue(POWERED)) return;
-    TypedBoxed<bool> powered(false);
-    level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &powered));
-    updateNeighbours(level, pos, state->getValue(FACING));
-    level->setBlocksDirty(pos, pos);
+    const AABB* shape = state->getShape(level, pos);
+    std::vector<boost::shared_ptr<Entity> >* arrows =
+        level->getEntitiesOfClass(typeid(Arrow), shape->move(pos));
+    std::vector<boost::shared_ptr<Entity> >* tridents =
+        level->getEntitiesOfClass(typeid(ThrownTrident), shape->move(pos));
+    bool pressed = !arrows->empty() || !tridents->empty();
+    bool powered = state->getValue(POWERED);
+    delete arrows;
+    delete tridents;
+
+    if (pressed)
+    {
+        if (!powered)
+        {
+            TypedBoxed<bool> poweredValue(true);
+            level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &poweredValue));
+            updateNeighbours(level, pos, state->getValue(FACING));
+            level->setBlocksDirty(pos, pos);
+            playOnSound(boost::shared_ptr<Player>(), level, pos);
+        }
+        level->addToTickNextTick(pos, this, getTickDelay(level));
+    }
+    else if (powered)
+    {
+        TypedBoxed<bool> poweredValue(false);
+        level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &poweredValue));
+        updateNeighbours(level, pos, state->getValue(FACING));
+        level->setBlocksDirty(pos, pos);
+        playOffSound(level, pos);
+    }
 }
 
 void ButtonBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
@@ -241,7 +271,7 @@ int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy) return 0xea4e897e;
+    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside) return 0xea4e897e;
     return Block::GetInteractTooltip(tooltipData);
 }
 

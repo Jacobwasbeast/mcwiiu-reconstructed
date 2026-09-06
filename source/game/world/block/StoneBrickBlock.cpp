@@ -18,7 +18,8 @@ static StoneBrickBlock::Variant gStoneBrickVariant3(3, L"chiseled_stonebrick", 3
 static StoneBrickBlock::Variant* gStoneBrickVariants[4] = {
     &gStoneBrickVariant0, &gStoneBrickVariant1, &gStoneBrickVariant2, &gStoneBrickVariant3
 };
-static EnumProperty<StoneBrickBlock::Variant*>* gStoneBrickVariantProperty = NULL;
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::DEFAULT = &gStoneBrickVariant0;
+EnumProperty<StoneBrickBlock::Variant*>* StoneBrickBlock::VARIANT = NULL;
 
 StoneBrickBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
     : mData(data), mName(name), mTranslationKey(translationKey)
@@ -54,21 +55,16 @@ std::wstring StoneBrickBlock::Variant::getSerializedName() const
     return mName;
 }
 
-std::wstring StoneBrickBlock::Variant::getName()
-{
-    return mName;
-}
-
 void StoneBrickBlock::blockStaticCtor()
 {
-    if (gStoneBrickVariantProperty == NULL)
+    if (VARIANT == NULL)
     {
         boost::unordered_set<Variant*> values;
         values.insert(gStoneBrickVariants[0]);
         values.insert(gStoneBrickVariants[1]);
         values.insert(gStoneBrickVariants[2]);
         values.insert(gStoneBrickVariants[3]);
-        gStoneBrickVariantProperty = EnumProperty<Variant*>::create(
+    VARIANT = EnumProperty<Variant*>::create(
             L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
     }
 }
@@ -77,8 +73,8 @@ StoneBrickBlock::StoneBrickBlock()
     : Block(NULL)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(gStoneBrickVariants[0]);
-    registerDefaultState(defaultBlockState()->setBoxedValue(gStoneBrickVariantProperty, &value));
+    TypedBoxed<Variant*> value(Variant::DEFAULT);
+    registerDefaultState(defaultBlockState()->setBoxedValue(VARIANT, &value));
     for (int i = 0; i < 4; ++i)
     {
         mTextures[i] = NULL;
@@ -91,29 +87,29 @@ StoneBrickBlock::~StoneBrickBlock()
 
 int StoneBrickBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gStoneBrickVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 const BlockState* StoneBrickBlock::getBlockState(int data)
 {
     TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(gStoneBrickVariantProperty, &value);
+    return defaultBlockState()->setBoxedValue(VARIANT, &value);
 }
 
 int StoneBrickBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gStoneBrickVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 BlockStateDefinition* StoneBrickBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gStoneBrickVariantProperty };
+    const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* StoneBrickBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    return mTextures[state->getValue(gStoneBrickVariantProperty)->getData()];
+    return mTextures[state->getValue(VARIANT)->getData()];
 }
 
 void StoneBrickBlock::registerIcons(IconRegister* iconRegister)

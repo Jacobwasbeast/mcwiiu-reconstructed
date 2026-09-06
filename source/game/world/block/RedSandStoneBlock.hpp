@@ -10,6 +10,7 @@ class BlockStateDefinition;
 class Direction;
 class IconRegister;
 class TextureAtlasSprite;
+template <class T> class EnumProperty;
 
 class RedSandStoneBlock : public Block
 {
@@ -17,6 +18,10 @@ public:
     class Variant
     {
     public:
+        static Variant* DEFAULT;
+        static Variant* CHISELED;
+        static Variant* SMOOTH;
+
         Variant(int data, const std::wstring& name, int translationKey);
         int getData();
         static Variant* byData(int data);
@@ -30,6 +35,9 @@ public:
         std::wstring mName;
         int mTranslationKey;
     };
+
+    typedef Variant Type;
+    static EnumProperty<Variant*>* TYPE;
 
     RedSandStoneBlock();
     virtual ~RedSandStoneBlock();

@@ -4,8 +4,9 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 
-#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BaseCommandBlock.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/CommandBlock.hpp"
 
 class CompoundTag;
 class DataOutputStream;
@@ -32,7 +33,7 @@ public:
     };
 
     CommandBlockEntity();
-    explicit CommandBlockEntity(int mode);
+    explicit CommandBlockEntity(CommandBlock::Mode mode);
     virtual ~CommandBlockEntity();
 
     static BlockEntity* create();

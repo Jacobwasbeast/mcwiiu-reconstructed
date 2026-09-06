@@ -24,9 +24,9 @@ const BlockState* IdMapper<const BlockState*>::byId(int id)
     return state;
 }
 
-void IdMapper<const BlockState*>::addMapping(BlockState* state, int id)
+void IdMapper<const BlockState*>::addMapping(const BlockState* state, int id)
 {
-    state->mElementId = id;
+    const_cast<BlockState*>(state)->mElementId = id;
     mBlockStates[id] = state;
 }
 

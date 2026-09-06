@@ -1,6 +1,5 @@
 #include "game/world/block/BlockPatternBuilder.hpp"
 
-#include "game/core/Direction.hpp"
 #include "game/world/block/BlockPattern.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"

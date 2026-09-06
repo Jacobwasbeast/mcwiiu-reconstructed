@@ -64,7 +64,7 @@ int DiodeBlock::getDirectSignal(const BlockState*, LevelSource* levelSource, con
 
 int DiodeBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    if (isOn(state) && direction == state->getValue(HorizontalDirectionalBlock::FACING))
+    if (isOn(state) && direction == state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY))
         return getOutputSignal(levelSource, pos, state);
     return 0;
 }
@@ -101,7 +101,7 @@ bool DiodeBlock::shouldTurnOn(Level* level, const BlockPos& pos, const BlockStat
 
 int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING);
+    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     BlockPos inputPos = pos.relative(direction);
     int signal = level->getSignal(inputPos, direction);
     if (signal < 15)
@@ -123,7 +123,7 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
 
 int DiodeBlock::getAlternateSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING);
+    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     int first = getAlternateSignalAt(levelSource, pos.relative(direction->getClockWise()), direction->getClockWise());
     int second = getAlternateSignalAt(levelSource, pos.relative(direction->getCounterClockWise()), direction->getCounterClockWise());
     return first > second ? first : second;
@@ -148,7 +148,7 @@ const BlockState* DiodeBlock::getStateForPlacement(Level*, const BlockPos& pos, 
 {
     const Direction* direction = Direction::getDirectionFromLivingEntity(pos, placer);
     TypedBoxed<const Direction*> facing(direction->getOpposite());
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 void DiodeBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
@@ -163,7 +163,7 @@ void DiodeBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* st
 
 void DiodeBlock::updateNeighborsInFront(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING);
+    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     BlockPos front = pos.relative(direction->getOpposite());
     level->neighborChanged(front, this, pos);
     level->updateNeighborsAtExceptFromFacing(front, this, direction);
@@ -198,9 +198,9 @@ bool DiodeBlock::isSameDiode(const BlockState* state)
 
 bool DiodeBlock::shouldPrioritize(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING)->getOpposite();
+    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getOpposite();
     const BlockState* neighbor = level->getBlockState(pos.relative(direction));
-    return isDiode(neighbor) && neighbor->getValue(HorizontalDirectionalBlock::FACING) != direction;
+    return isDiode(neighbor) && neighbor->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) != direction;
 }
 
 int DiodeBlock::getTurnOffDelay(const BlockState* state) { return getTurnOnDelay(state); }

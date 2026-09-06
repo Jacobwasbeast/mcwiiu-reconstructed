@@ -4,6 +4,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mth.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"

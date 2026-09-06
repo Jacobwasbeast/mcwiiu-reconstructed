@@ -3,6 +3,7 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
 
 EnderChestBlockEntity::EnderChestBlockEntity()
     : BlockEntity(), mOpen(0.0F), mOpenOld(0.0F), mOpenCount(0), mTickCount(0),

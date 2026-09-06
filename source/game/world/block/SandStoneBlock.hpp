@@ -33,6 +33,12 @@ public:
         int mTranslationKey;
     };
 
+    typedef Variant Type;
+    static AbstractProperty<Variant*>* TYPE;
+    static Variant* SANDSTONE;
+    static Variant* CHISELED;
+    static Variant* SMOOTH;
+
     SandStoneBlock();
     virtual ~SandStoneBlock();
     static void blockStaticCtor();

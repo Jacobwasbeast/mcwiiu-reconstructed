@@ -22,6 +22,9 @@ static const std::wstring LEAF_TEXTURES[12] = {
     L"leaves_opaque", L"leaves_spruce_opaque", L"leaves_birch_fast", L"leaves_jungle_opaque", L"leaves_acacia_fast", L"leaves_big_oak_fast"
 };
 
+LeafBlock* LeafBlock::mOldLeaves = NULL;
+LeafBlock* LeafBlock::mNewLeaves = NULL;
+
 LeafBlock::LeafBlock()
     : TransparentBlock(Material::LEAVES, false)
 {
@@ -45,7 +48,7 @@ void LeafBlock::DerivedInit()
     setTicking(true);
     setLightEmission(0.2f);
     setLightBlock(1);
-    setSoundType(SoundType::PLANT);
+    setSoundType(SoundType::GRASS);
 }
 
 int LeafBlock::getColor() const

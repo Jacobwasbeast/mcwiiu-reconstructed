@@ -8,7 +8,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/FenceBlock.hpp"
 
 static const AABB* PRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.03125, 0.9375);
 static const AABB* UNPRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.0625, 0.9375);
@@ -77,7 +77,7 @@ bool BasePressurePlateBlock::canPlaceOn(Level* level, const BlockPos& pos)
     const BlockState* state = level->getBlockState(pos);
     if (state->isSolidBlockingBlock())
         return true;
-    return dynamic_cast<HalfSlabBlock*>(state->getBlock()) != NULL;
+    return dynamic_cast<FenceBlock*>(state->getBlock()) != NULL;
 }
 
 bool BasePressurePlateBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -130,7 +130,7 @@ void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, con
     {
         if (!wasPressed)
             playOnSound(level, pos);
-        level->blockUpdated(pos, this, level->getSignal(pos, Direction::UP) > 0);
+        level->addToTickNextTick(pos, this, getTickDelay(level));
     }
     else if (wasPressed)
     {

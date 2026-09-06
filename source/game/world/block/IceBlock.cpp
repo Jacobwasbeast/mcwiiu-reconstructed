@@ -14,6 +14,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 
 IceBlock::IceBlock(bool isClientSide)
     : HalfTransparentBlock(L"ice", Material::ICE, false)

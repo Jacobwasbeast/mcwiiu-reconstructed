@@ -4,7 +4,7 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
-#include "game/core/Stats.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
@@ -12,14 +12,10 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/ConduitBlockEntity.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/IconRegister.hpp"
-
-class Stats
-{
-public:
-    static arrayWithLength<Stat*> blockPlacedStats;
-};
 
 static boost::shared_ptr<Player> currentlyPlacingBlockPlayer;
 
@@ -52,7 +48,7 @@ InteractionResultHolder BlockItem::use(Level* level, boost::shared_ptr<Player> p
 bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Player> player,
                                             const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (level->getBlockEntity(pos).get() == NULL)
+    if (level->getServer() == NULL)
     {
         return false;
     }
@@ -64,20 +60,29 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
     }
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity->onlyOpCanSetNbt() && (player.get() == NULL || !player->canUseCommandBlocks()))
+    if (blockEntity.get() != NULL && !level->mIsClientSide && blockEntity->onlyOpCanSetNbt()
+        && (player.get() == NULL || !player->canUseCommandBlocks()))
     {
         return false;
     }
 
-    CompoundTag* entityTag = new CompoundTag();
+    if (blockEntity.get() == NULL)
+    {
+        return true;
+    }
+
+    CompoundTag* entityTag = new CompoundTag;
     blockEntity->save(entityTag);
+    CompoundTag* originalTag = entityTag->copy();
     entityTag->merge(tag);
     entityTag->putInt(L"x", pos.x);
     entityTag->putInt(L"y", pos.y);
     entityTag->putInt(L"z", pos.z);
-    blockEntity->load(entityTag);
-    blockEntity->setChanged();
-    delete entityTag;
+    if (!entityTag->equals(originalTag))
+    {
+        blockEntity->load(entityTag);
+        blockEntity->setChanged();
+    }
     return true;
 }
 
@@ -93,45 +98,82 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
-    if (!state->getBlock()->mayReplaceWithPlace(level, placePos))
+    Block* block = state->getBlock();
+    const Direction* placeDirection = direction;
+    if (block == Blocks::AIR || block == Blocks::tallgrass || block == Blocks::sea_grass)
+    {
+        placeDirection = Direction::UP;
+    }
+    else if (!block->mayReplaceWithPlace(level, placePos))
     {
         placePos = placePos.relative(direction);
     }
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->isEmpty() || !player->mayUseItemAt(placePos, direction, itemInstance)
-        || !level->mayPlace(mBlock, placePos, false, direction, boost::shared_ptr<Entity>()))
+    if (itemInstance->isEmpty() || !player->mayUseItemAt(placePos, placeDirection, itemInstance)
+        || !level->mayPlace(mBlock, placePos, false, placeDirection, boost::shared_ptr<Entity>()))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!simulate)
+    boost::shared_ptr<Player> soundPlayer = player;
+    if (mBlock == Blocks::beacon)
     {
-        currentlyPlacingBlockPlayer = player;
-        const BlockState* placedState =
-            mBlock->getStateForPlacement(level, placePos, direction, hitX, hitY, hitZ,
-                                         itemInstance->getAuxValue(), player);
-        if (!level->setBlock(placePos, placedState, 11, false))
+        soundPlayer.reset();
+        if (level->mIsClientSide)
         {
-            return InteractionResult::eInteractionResult_Fail;
+            return InteractionResult::eInteractionResult_Success;
         }
-
-        const BlockState* actualState = level->getBlockState(placePos);
-        if (actualState->getBlock() == mBlock)
-        {
-            updateCustomBlockEntityTag(level, player, placePos, itemInstance);
-            actualState->getBlock()->setPlacedBy(level, placePos, actualState, player, itemInstance);
-        }
-
-        player->awardStat(Stats::blockPlacedStats.data[Block::getId(mBlock)],
-                          GenericStats::param_blocksPlaced(actualState, 1));
-        const SoundType* soundType = mBlock->getSoundType();
-        level->playSound(player, placePos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f,
-                         soundType->getPitch() * 0.8f, 16.0f);
-        itemInstance->shrink(1);
     }
 
+    if (!simulate)
+    {
+        int auxValue = getLevelDataForAuxValue(itemInstance->getAuxValue());
+        const BlockState* placedState =
+            mBlock->getStateForPlacement(level, placePos, placeDirection, hitX, hitY, hitZ,
+                                         auxValue, player);
+        currentlyPlacingBlockPlayer = player;
+        if (!level->setBlock(placePos, placedState, 11, false))
+        {
+            if (mBlock == Blocks::beacon)
+            {
+                player->displayClientMessage((int)0xef12cc40, true);
+                currentlyPlacingBlockPlayer.reset();
+                return InteractionResult::eInteractionResult_Fail;
+            }
+        }
+        else
+        {
+            player->awardStat(gStats->get_blocksPlaced(Block::getId(mBlock)),
+                              GenericStats::param_blocksPlaced(placedState, 1));
+            player->swing(hand);
+
+            const BlockState* actualState = level->getBlockState(placePos);
+            if (actualState->getBlock() == mBlock)
+            {
+                updateCustomBlockEntityTag(level, player, placePos, itemInstance);
+                mBlock->setPlacedBy(level, placePos, actualState, player, itemInstance);
+            }
+
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
+            if (blockEntity.get() != NULL && blockEntity->GetType() == 0x0120021200000000ULL)
+            {
+                boost::shared_ptr<ConduitBlockEntity> conduit =
+                    boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
+                int rotation = Mth::absFloor((double)(player->mYRot * 16.0f / 360.0f) + 0.5) & 15;
+                conduit->mActiveRotation = (float)rotation * 360.0f / 16.0f;
+            }
+
+            const SoundType* soundType = mBlock->getSoundType();
+            level->playSound(soundPlayer, placePos, soundType->getPlaceSound(),
+                             SoundSource::eSoundSource_Blocks,
+                             (soundType->getVolume() + 1.0f) * 0.5f,
+                             soundType->getPitch() * 0.8f, 16.0f);
+            itemInstance->shrink(1);
+        }
+    }
+
+    currentlyPlacingBlockPlayer.reset();
     return InteractionResult::eInteractionResult_Success;
 }
 
@@ -160,11 +202,17 @@ bool BlockItem::mayPlace(Level* level, const BlockPos& pos, const Direction* dir
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
-    if (!state->getBlock()->mayReplaceWithPlace(level, placePos))
+    Block* block = state->getBlock();
+    const Direction* placeDirection = direction;
+    if (block == Blocks::AIR || block == Blocks::tallgrass)
+    {
+        placeDirection = Direction::UP;
+    }
+    else if (!block->mayReplaceWithPlace(level, placePos))
     {
         placePos = placePos.relative(direction);
     }
-    return level->mayPlace(mBlock, placePos, false, direction, boost::shared_ptr<Entity>());
+    return level->mayPlace(mBlock, placePos, false, placeDirection, boost::shared_ptr<Entity>());
 }
 
 void BlockItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -187,7 +235,7 @@ TextureAtlasSprite* BlockItem::getIcon(int auxValue)
     {
         return mIcon;
     }
-    return mBlock->getIconTexture(NULL, mBlock->getBlockState(auxValue));
+    return mBlock->getIconTexture(Direction::UP, mBlock->getBlockState(auxValue));
 }
 
 void BlockItem::registerIcons(IconRegister* iconRegister)

@@ -4,6 +4,12 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/CommandBlock.hpp"
 
 CommandBlockEntity::AnonymousCommandBlock::AnonymousCommandBlock(CommandBlockEntity* entity)
     : BaseCommandBlock(), mEntity(entity)
@@ -38,7 +44,9 @@ void CommandBlockEntity::AnonymousCommandBlock::setCommand(const std::wstring& c
 
 void CommandBlockEntity::AnonymousCommandBlock::onUpdated()
 {
-    mEntity->setChanged();
+    const BlockPos& position = mEntity->mPos;
+    const BlockState* state = mEntity->mLevel->getBlockState(position);
+    mEntity->getLevel()->sendBlockUpdated(position, state, state, 3, true);
 }
 
 unsigned int CommandBlockEntity::AnonymousCommandBlock::getType()
@@ -55,12 +63,20 @@ void CommandBlockEntity::AnonymousCommandBlock::writeCoordinates(DataOutputStrea
 }
 
 CommandBlockEntity::CommandBlockEntity()
-    : BlockEntity(), mPowered(0), mAutomatic(false), mConditionMet(0), mCommandBlock(new AnonymousCommandBlock(this))
+    : BlockEntity(),
+      mPowered(0),
+      mAutomatic(false),
+      mConditionMet(0),
+      mCommandBlock(new AnonymousCommandBlock(this))
 {
 }
 
-CommandBlockEntity::CommandBlockEntity(int mode)
-    : BlockEntity(), mPowered(0), mAutomatic(mode == 2), mConditionMet(0), mCommandBlock(new AnonymousCommandBlock(this))
+CommandBlockEntity::CommandBlockEntity(CommandBlock::Mode mode)
+    : BlockEntity(),
+      mPowered(0),
+      mAutomatic(mode == CommandBlock::CHAIN),
+      mConditionMet(0),
+      mCommandBlock(new AnonymousCommandBlock(this))
 {
 }
 
@@ -121,7 +137,8 @@ boost::shared_ptr<Packet> CommandBlockEntity::getUpdatePacket()
 {
     CompoundTag* tag = new CompoundTag();
     save(tag);
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 2, 0, tag));
+    int dimension = mLevel->mDimension->getType()->getId();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 2, dimension, tag));
 }
 
 bool CommandBlockEntity::onlyOpCanSetNbt()
@@ -131,12 +148,27 @@ bool CommandBlockEntity::onlyOpCanSetNbt()
 
 unsigned int CommandBlockEntity::getMode()
 {
+    Block* block = getBlock();
+    if (block == Blocks::repeating_command_block)
+    {
+        return CommandBlock::REPEAT;
+    }
+    if (block == Blocks::command_block)
+    {
+        return CommandBlock::IMPULSE;
+    }
     return 2;
 }
 
 unsigned char CommandBlockEntity::isConditional()
 {
-    return false;
+    const BlockState* state = mLevel->getBlockState(mPos);
+    Block* block = state->getBlock();
+    if (CommandBlock::isCommandBlock(block))
+    {
+        return (block->convertBlockStateToLegacyData(state) & 8) != 0;
+    }
+    return 0;
 }
 
 void CommandBlockEntity::clearRemoved()
@@ -174,7 +206,7 @@ void CommandBlockEntity::updateNamedPosition(const std::wstring& name, const std
     mCommandBlock->setCommand(command);
     if (changed)
     {
-    static_cast<AnonymousCommandBlock*>(mCommandBlock)->onUpdated();
+        static_cast<AnonymousCommandBlock*>(mCommandBlock)->onUpdated();
     }
 }
 

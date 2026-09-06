@@ -13,6 +13,7 @@ class IconRegister;
 class LevelSource;
 class MaterialColor;
 class TextureAtlasSprite;
+template <class T> class EnumProperty;
 
 class PlanksBlock : public Block
 {
@@ -28,6 +29,13 @@ public:
         int getTranslationKey();
         const MaterialColor* getMaterialColor();
         static Variant* byData(int data);
+
+        static Variant* OAK;
+        static Variant* SPRUCE;
+        static Variant* BIRCH;
+        static Variant* JUNGLE;
+        static Variant* ACACIA;
+        static Variant* DARK_OAK;
 
         int mData;
         std::wstring mName;
@@ -46,6 +54,8 @@ public:
     virtual int getDescriptionId(int auxValue);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
+
+    static EnumProperty<Variant*>* VARIANT;
 
     TextureAtlasSprite* mIcons[6];
 };
