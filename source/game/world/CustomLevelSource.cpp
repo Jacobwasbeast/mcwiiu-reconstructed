@@ -27,8 +27,9 @@ void CustomLevelSource::postProcess(int, int)
 {
 }
 
-void CustomLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
+bool CustomLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 {
+    return false;
 }
 
 std::vector<Biome::MobSpawnerData*> CustomLevelSource::getMobsAt(MobCategory*, const BlockPos&)

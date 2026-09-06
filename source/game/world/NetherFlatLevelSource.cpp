@@ -177,8 +177,9 @@ void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
     g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
-void NetherFlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
+bool NetherFlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 {
+	return false;
 }
 
 std::vector<Biome::MobSpawnerData*> NetherFlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)

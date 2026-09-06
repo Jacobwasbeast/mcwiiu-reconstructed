@@ -23,7 +23,7 @@ public:
     void buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer);
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void postProcess(int chunkX, int chunkZ);
-    virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);

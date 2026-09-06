@@ -26,7 +26,7 @@ public:
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void lightChunk(LevelChunk* chunk);
     virtual void postProcess(int chunkX, int chunkZ);
-    virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool findUnexplored);

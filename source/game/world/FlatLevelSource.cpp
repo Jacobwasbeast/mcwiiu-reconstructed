@@ -14,12 +14,21 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/Feature.hpp"
+#include "game/world/generation/CanyonFeature.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/world/generation/LakeFeature.hpp"
 #include "game/world/generation/LargeFeature.hpp"
+#include "game/world/generation/MineShaftFeature.hpp"
 #include "game/world/generation/MonsterRoomFeature.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
+#include "game/world/generation/OceanRuinFeature.hpp"
+#include "game/world/generation/RandomScatteredLargeFeature.hpp"
+#include "game/world/generation/ShipwreckFeature.hpp"
+#include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/StructureFeature.hpp"
+#include "game/world/generation/VillageFeature.hpp"
+#include "game/world/generation/WoodlandMansionFeature.hpp"
 
 void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
 void XPhysicalFree(void* address);
@@ -44,7 +53,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
 
     if (generateStructures)
     {
-        mCaves = generatorInfo.getCaves();
+        mCaves = static_cast<LargeFeature*>(static_cast<void*>(generatorInfo.getCaves()));
         mCanyons = generatorInfo.getCanyons();
 
         if (generatorInfo.hasVillage())
@@ -71,7 +80,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
         }
         if (generatorInfo.hasWoodlandMansion())
         {
-            mStructureFeatures[L"Mansion"] = generatorInfo.getWoodlandMansion(this);
+            mStructureFeatures[L"Mansion"] = new WoodlandMansionFeature(this, config);
         }
         if (generatorInfo.hasShipwrecks())
         {
@@ -264,7 +273,7 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
         biome->decorate(mLevel, mPopulationRandom, origin);
     }
 
-    CMinecraftApp::sInstance.processSchematics(mLevel->getChunk(chunkX, chunkZ));
+    g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
 void FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
@@ -282,49 +291,49 @@ std::vector<Biome::MobSpawnerData*> FlatLevelSource::getMobsAt(MobCategory* cate
     return *biome->getMobs(category);
 }
 
-BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool takeBlock)
+BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool findUnexplored)
 {
     StructureMap::iterator feature;
 
     if (featureName == L"Stronghold" && (feature = mStructureFeatures.find(featureName)) != mStructureFeatures.end())
     {
-        return feature->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return feature->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Stronghold" && mStructureFeatures.find(L"Stronghold") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Stronghold")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Stronghold")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Shipwreck" && mStructureFeatures.find(L"Shipwreck") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Shipwreck")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Shipwreck")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Mansion" && mStructureFeatures.find(L"Mansion") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Mansion")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Mansion")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Monument" && mStructureFeatures.find(L"Monument") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Monument")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Monument")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Village" && mStructureFeatures.find(L"Village") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Village")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Village")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Mineshaft" && mStructureFeatures.find(L"Mineshaft") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Mineshaft")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Mineshaft")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Temple" && mStructureFeatures.find(L"Temple") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Temple")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Temple")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Buried_Treasure" && mStructureFeatures.find(L"Buried_Treasure") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Buried_Treasure")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Buried_Treasure")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     if (featureName == L"Ocean_Ruin" && mStructureFeatures.find(L"Ocean_Ruin") != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Ocean_Ruin")->second->getNearestGeneratedFeature(level, pos, takeBlock);
+        return mStructureFeatures.find(L"Ocean_Ruin")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     return NULL;
 }

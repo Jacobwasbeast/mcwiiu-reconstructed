@@ -35,7 +35,7 @@ public:
     virtual void postProcess(int chunkX, int chunkZ);
     virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
-    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock);
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool findUnexplored);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
     virtual void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
