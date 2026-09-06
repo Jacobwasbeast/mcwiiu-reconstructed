@@ -438,9 +438,9 @@ void Player::SetLiftForceModifier(double modifier)
     mField0x818 = modifier;
 }
 
-uint32_t Player::GetGameMode()
+GameMode* Player::GetGameMode()
 {
-    return 0;
+    return NULL;
 }
 
 bool Player::isPickable()
@@ -880,15 +880,15 @@ ItemCooldowns* Player::getCooldowns()
 
 void Player::hurtArmor(float damage)
 {
-    if (mField0x5f0 != NULL) mField0x5f0->hurtArmor(damage);
+    if (mInventory) mInventory->hurtArmor(damage);
 }
 
 double Player::getArmorCoverPercentage()
 {
-    if (mField0x5f0 == NULL) return 0.0;
+    if (!mInventory) return 0.0;
     int worn = 0;
     for (int slot = 0; slot < 4; ++slot) {
-        if (!mField0x5f0->getArmor(slot)->isEmpty()) ++worn;
+        if (!mInventory->getArmor(slot)->isEmpty()) ++worn;
     }
     return static_cast<double>(worn) / 4.0;
 }
@@ -900,32 +900,32 @@ uint8_t Player::canUseCommandBlocks()
 
 not_null_ptr<ItemInstance> Player::getItemSlot(const EquipmentSlot* slot)
 {
-    if (mField0x5f0 == NULL || slot == NULL) return ItemInstance::EMPTY;
+    if (!mInventory || slot == NULL) return ItemInstance::EMPTY;
     switch (slot->getEIndex()) {
     case EquipmentSlot::eIndex_MainHand:
-        return mField0x5f0->getSelected();
+        return mInventory->getSelected();
     case EquipmentSlot::eIndex_OffHand:
-        return mField0x5f0->getItem(40);
+        return mInventory->getItem(40);
     case EquipmentSlot::eIndex_Feet:
     case EquipmentSlot::eIndex_Legs:
     case EquipmentSlot::eIndex_Chest:
     case EquipmentSlot::eIndex_Head:
-        return mField0x5f0->getArmor(slot->getIndex());
+        return mInventory->getArmor(slot->getIndex());
     }
     return ItemInstance::EMPTY;
 }
 
 void Player::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
-    if (mField0x5f0 == NULL || slot == NULL) return;
+    if (!mInventory || slot == NULL) return;
     int index = slot->getEIndex() == EquipmentSlot::eIndex_OffHand ? 40 : slot->getIndex();
     if (slot->getType() == EquipmentSlot::ARMOR) index += 36;
-    mField0x5f0->setItem(index, item);
+    mInventory->setItem(index, item);
 }
 
 uint32_t Player::addItem(not_null_ptr<ItemInstance> item)
 {
-    return mField0x5f0 != NULL && mField0x5f0->add(item);
+    return mInventory && mInventory->add(item);
 }
 
 double Player::getCurrentItemAttackStrengthDelay()
@@ -1093,14 +1093,14 @@ void Player::push(boost::shared_ptr<Entity> entity)
     if (!isSleeping()) Entity::push(entity);
 }
 
-bool Player::canDestroy(BlockState* state)
+bool Player::canDestroy(const BlockState* state)
 {
-    return mField0x5f0->canDestroy(state);
+    return mInventory->canDestroy(state);
 }
 
-float Player::getDestroySpeed(BlockState* state)
+float Player::getDestroySpeed(const BlockState* state)
 {
-    float speed = mField0x5f0->getDestroySpeed(state);
+    float speed = mInventory->getDestroySpeed(state);
     if (isInWater() && !EnchantmentHelper::hasAquaAffinity(
             boost::static_pointer_cast<LivingEntity>(shared_from_this()))) speed /= 5.0f;
     if (!mOnGround) speed /= 5.0f;
@@ -1387,10 +1387,10 @@ std::vector<boost::shared_ptr<ItemInstance> >* Player::getHandSlots()
 std::vector<boost::shared_ptr<ItemInstance> >* Player::getArmorSlots()
 {
     std::vector<boost::shared_ptr<ItemInstance> >* items = new std::vector<boost::shared_ptr<ItemInstance> >();
-    items->push_back(mField0x5f0->getArmor(0));
-    items->push_back(mField0x5f0->getArmor(1));
-    items->push_back(mField0x5f0->getArmor(2));
-    items->push_back(mField0x5f0->getArmor(3));
+    items->push_back(mInventory->getArmor(0));
+    items->push_back(mInventory->getArmor(1));
+    items->push_back(mInventory->getArmor(2));
+    items->push_back(mInventory->getArmor(3));
     return items;
 }
 
@@ -1406,8 +1406,8 @@ double Player::getEyeHeight()
 
 bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
-    if (slot >= 0 && slot < static_cast<int>(mField0x5f0->getContainerSize())) {
-        mField0x5f0->setItem(slot, item);
+    if (slot >= 0 && slot < static_cast<int>(mInventory->getContainerSize())) {
+        mInventory->setItem(slot, item);
         return 1;
     }
     if (slot == 98) {
@@ -1480,6 +1480,7 @@ void Player::tickArmor()
 
 void Player::updateFrameTick()
 {
+    if (mTakeXpDelay > 0) --mTakeXpDelay;
     if (isSleeping()) {
         if (mField0x6c8 < 100) ++mField0x6c8;
         if (!mLevel->mIsClientSide && (!checkBedExists() || mLevel->isDay()))
@@ -1514,10 +1515,11 @@ void Player::prepareCustomTextures()
 
 void Player::_init()
 {
-    mField0x5f0 = new Inventory(this);
+    mInventory = boost::shared_ptr<Inventory>(new Inventory(this));
     mEnderChestInventory.reset(new PlayerEnderChestContainer());
     mInventoryMenu = NULL;
     mContainerMenu = NULL;
+    mTakeXpDelay = 0;
     mField0x6c0 = 0;
     mField0x6c4 = NULL;
     mField0x6c8 = 0;
@@ -1542,7 +1544,7 @@ void Player::tick()
     tickArmor();
     if (mField0x738 != NULL) mField0x738->tick();
     LivingEntity::tick();
-    if (mField0x5f0 != NULL) mField0x5f0->tick();
+    if (mInventory) mInventory->tick();
     tickCamera();
     calculateFlapping();
     CheckTimerAchievements();
@@ -1569,11 +1571,11 @@ void Player::touch(boost::shared_ptr<Entity> entity)
 
 void Player::destroyVanishingCursedItems()
 {
-    if (mField0x5f0 == NULL) return;
-    for (unsigned int i = 0; i < mField0x5f0->getContainerSize(); ++i) {
-        not_null_ptr<ItemInstance> item = mField0x5f0->getItem(i);
+    if (!mInventory) return;
+    for (unsigned int i = 0; i < mInventory->getContainerSize(); ++i) {
+        not_null_ptr<ItemInstance> item = mInventory->getItem(i);
         if (!item->isEmpty() && EnchantmentHelper::hasVanishingCurse(item))
-            mField0x5f0->setItem(i, ItemInstance::EMPTY);
+            mInventory->setItem(i, ItemInstance::EMPTY);
     }
 }
 
@@ -1622,11 +1624,11 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
 
 boost::shared_ptr<ItemEntity> Player::drop(bool dropAll)
 {
-    not_null_ptr<ItemInstance> selected = mField0x5f0->getSelected();
+    not_null_ptr<ItemInstance> selected = mInventory->getSelected();
     if (selected->isEmpty()) return boost::shared_ptr<ItemEntity>();
     int count = dropAll ? selected->getCount() : 1;
     not_null_ptr<ItemInstance> dropped(new ItemInstance(selected->split(count)));
-    if (selected->getCount() == 0) mField0x5f0->removeItem(selected);
+    if (selected->getCount() == 0) mInventory->removeItem(selected);
     return drop(dropped, false, true);
 }
 
@@ -1642,7 +1644,7 @@ void Player::die(const DamageSource* source)
     setPos(mX, mY + 0.10000000149011612, mZ);
     if (!isSpectator() && !mLevel->getGameRules()->getBoolean(2)) {
         destroyVanishingCursedItems();
-        mField0x5f0->dropAll();
+        mInventory->dropAll();
     }
 }
 

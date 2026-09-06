@@ -33,9 +33,9 @@ public:
     static void staticCtor();
     void _init();
     virtual std::wstring getFeatureName();
-    virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
                                                  bool skipExistingChunks);
+    virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
     bool isSwamphut(const BlockPos& pos);
     std::vector<Biome::MobSpawnerData*>* getSwamphutEnemies();
@@ -44,7 +44,6 @@ private:
     std::vector<Biome::MobSpawnerData*> mSwamphutEnemies;
     int mSpacing;
     int mSeparation;
-    bool mFlatWorld;
 };
 
 #endif

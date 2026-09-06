@@ -48,6 +48,7 @@ private:
     int mChunkX;
     int mChunkZ;
     bool mDirty;
+    unsigned int : 32;
 };
 
 #endif

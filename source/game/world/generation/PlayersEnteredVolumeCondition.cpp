@@ -4,24 +4,26 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/GameStats.hpp"
+#define private public
+#include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/MasterGameMode.hpp"
+#undef private
 #include "game/core/XmlConstruct.hpp"
+#include "game/core/XmlObject.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 
-class ServerPlayer;
-
 PlayersEnteredVolumeCondition::PlayersEnteredVolumeCondition(const XmlObject& object)
     : IntegerCondition(object)
-    , m_volumeName(object[L"volumeName"].maybeString())
-    , m_useTargetAreas(object[L"useTargetAreas"].maybeBool())
-    , m_useRatio(object[L"useRatio"].maybeBool())
+    , m_volumeName(object[std::wstring(L"volumeName")].maybeString())
+    , m_useTargetAreas(object[std::wstring(L"useTargetAreas")].maybeBool())
+    , m_useRatio(object[std::wstring(L"useRatio")].maybeBool())
 {
 }
 
@@ -52,7 +54,7 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
             LevelGenerationOptions* options = CommonMasterGameMode::GetMasterOrClient()->getCurrentLevelGenOptions();
             const std::wstring volumeName = m_volumeName.isSet() ? m_volumeName.get() : std::wstring();
             AABB* area = options->getRequiredGameRules()->getNamedArea(volumeName);
-            if (area != NULL && (*it)->getBoundingBox()->intersects(area->mMinX, area->mMinY, area->mMinZ,
+            if (area != NULL && (*it)->getBoundingBoxForCulling()->intersects(area->mMinX, area->mMinY, area->mMinZ,
                                                                      area->mMaxX, area->mMaxY, area->mMaxZ))
                 ++entered;
         }
@@ -66,7 +68,7 @@ int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
                 if (!(*area)->mPrimary || gameMode->mGameStats.GetLapsCompleted(uid) < static_cast<unsigned int>((*area)->getSize()))
                     continue;
                 AABB* volume = (*area)->getArea();
-                if (volume != NULL && (*it)->getBoundingBox()->intersects(volume->mMinX, volume->mMinY, volume->mMinZ,
+                if (volume != NULL && (*it)->getBoundingBoxForCulling()->intersects(volume->mMinX, volume->mMinY, volume->mMinZ,
                                                                            volume->mMaxX, volume->mMaxY, volume->mMaxZ) &&
                     gameMode->mGameStats.GetLastCheckpointSequenceID(uid) == gameMode->mCurrentCheckpoint)
                 {

@@ -21,6 +21,7 @@ class AbstractContainerMenu;
 class Container;
 class SoundEvent;
 class FoodData;
+class GameMode;
 class Inventory;
 class PlayerEnderChestContainer;
 class ItemEntity;
@@ -95,12 +96,14 @@ struct Player : LivingEntity {
     };
 
 
-    Inventory* mField0x5f0;
-    uint32_t mField0x5f4;
+    boost::shared_ptr<Inventory> mInventory;
     boost::shared_ptr<PlayerEnderChestContainer> mEnderChestInventory;
     AbstractContainerMenu* mInventoryMenu;
     AbstractContainerMenu* mContainerMenu;
     FoodData mFoodData;
+    uint8_t mPadding0x61c[12];
+    int32_t mTakeXpDelay;
+    uint8_t mPadding0x62c[28];
     int32_t mField0x648;
     uint8_t mPadding0x64c[4];
     int16_t mField0x650;
@@ -290,8 +293,8 @@ struct Player : LivingEntity {
     boost::shared_ptr<ItemEntity> drop(not_null_ptr<ItemInstance> , bool );
     boost::shared_ptr<ItemEntity> drop(bool );
     boost::shared_ptr<ItemEntity> reallyDrop(boost::shared_ptr<ItemEntity> );
-    float getDestroySpeed(BlockState* );
-    bool canDestroy(BlockState* );
+    float getDestroySpeed(const BlockState* );
+    bool canDestroy(const BlockState* );
     static void addWalkers(DataFixerUpper* );
     void readAdditionalSaveData(CompoundTag* );
     void addAdditonalSaveData(CompoundTag* );
@@ -476,7 +479,7 @@ struct Player : LivingEntity {
     void SetGlideCollisionDamage(bool );
     double GetLiftForceModifier();
     void SetLiftForceModifier(double );
-    uint32_t GetGameMode();
+    GameMode* GetGameMode();
     bool isPickable();
     void OnEquipArmor(not_null_ptr<ItemInstance> );
     void OnTakeFromAnvil(not_null_ptr<ItemInstance> );

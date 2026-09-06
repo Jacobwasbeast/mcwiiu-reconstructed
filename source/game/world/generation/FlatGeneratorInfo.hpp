@@ -6,10 +6,10 @@
 #include <boost/shared_ptr.hpp>
 
 class BlockState;
-class CaveFeature;
 class CanyonFeature;
 class GenericOverworldLevelSource;
 class LakeFeature;
+class LargeCaveFeature;
 class MineShaftFeature;
 class OceanMonumentFeature;
 class OverworldLevelSource;
@@ -30,7 +30,7 @@ public:
     ~FlatGeneratorInfo();
     SuperflatConfig* core() const;
     bool hasCaves();
-    CaveFeature* getCaves();
+    LargeCaveFeature* getCaves();
     bool hasCanyons();
     CanyonFeature* getCanyons();
     bool hasVillage();

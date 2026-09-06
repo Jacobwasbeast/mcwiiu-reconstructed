@@ -5,6 +5,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/world/generation/LargeCaveFeature.hpp"
 
 std::wstring formatwstr(const wchar_t* format, ...);
 
@@ -39,7 +40,7 @@ bool FlatGeneratorInfo::hasDungeons() { return core()->hasParam(0x31); }
 bool FlatGeneratorInfo::hasLakes() { return core()->hasParam(0x32); }
 bool FlatGeneratorInfo::hasLavaLakes() { return core()->hasParam(0x33); }
 
-CaveFeature* FlatGeneratorInfo::getCaves() { if (!hasCaves()) return 0; return 0; }
+LargeCaveFeature* FlatGeneratorInfo::getCaves() { return hasCaves() ? new LargeCaveFeature() : 0; }
 CanyonFeature* FlatGeneratorInfo::getCanyons() { if (!hasCanyons()) return 0; return 0; }
 VillageFeature* FlatGeneratorInfo::getVillage(int) { if (!hasVillage()) return 0; return 0; }
 RandomScatteredLargeFeature* FlatGeneratorInfo::getBiomeSpecific() { if (!hasBiomeSpecific()) return 0; return 0; }

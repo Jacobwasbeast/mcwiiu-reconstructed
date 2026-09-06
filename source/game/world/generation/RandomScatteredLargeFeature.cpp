@@ -1,7 +1,5 @@
 #include "game/world/generation/RandomScatteredLargeFeature.hpp"
 
-#include <cwchar>
-
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/util/Random.hpp"
@@ -9,15 +7,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class StructurePiece;
-class ScatteredFeaturePiecesSwamplandHut;
-
-StructurePiece* CreateJunglePyramidPiece(Level* level, Random& random, int x, int z);
-StructurePiece* CreateSwamplandHut(Level* level, Random& random, int x, int z);
-StructurePiece* CreateDesertPyramidPiece(Level* level, Random& random, int x, int z);
-StructurePiece* CreateIgloo(Level* level, Random& random, int x, int z);
-bool IsSwamplandHut(StructurePiece* piece);
+#include "game/world/generation/ScatteredFeaturePieces.hpp"
 
 static std::vector<Biome*> gRandomScatteredLargeFeatureBiomes;
 
@@ -31,7 +21,7 @@ RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config
     : StructureFeature()
 {
     _init();
-    int spacing = (int)config->maybeOption(0x21, 0, (unsigned char)mFlatWorld);
+    int spacing = (int)config->maybeOption(0x21, 0, (unsigned char)mSpacing);
     mSpacing = spacing > mSeparation + 1 ? spacing : mSeparation + 1;
 }
 
@@ -46,15 +36,14 @@ void RandomScatteredLargeFeature::staticCtor()
     gRandomScatteredLargeFeatureBiomes.push_back(Biome::JUNGLE);
     gRandomScatteredLargeFeatureBiomes.push_back(Biome::JUNGLE_HILLS);
     gRandomScatteredLargeFeatureBiomes.push_back(Biome::SWAMPLAND);
-    gRandomScatteredLargeFeatureBiomes.push_back(Biome::TAIGA);
     gRandomScatteredLargeFeatureBiomes.push_back(Biome::ICE_PLAINS);
+    gRandomScatteredLargeFeatureBiomes.push_back(Biome::COLD_TAIGA);
 }
 
 void RandomScatteredLargeFeature::_init()
 {
     mSpacing = 0x20;
     mSeparation = 8;
-    mFlatWorld = false;
     mSwamphutEnemies.push_back(new Biome::MobSpawnerData(1, 0x5D540046ULL, 1, 1));
 }
 
@@ -65,10 +54,15 @@ std::wstring RandomScatteredLargeFeature::getFeatureName()
 
 bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
-    int spacing = flatWorld ? 0x10 : mSpacing;
-    if (flatWorld)
+    int spacing;
+    if (!flatWorld)
     {
-        mSpacing = spacing;
+        mSpacing = 0x10;
+        spacing = 0x10;
+    }
+    else
+    {
+        spacing = mSpacing;
     }
     int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
     int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
@@ -118,7 +112,7 @@ bool RandomScatteredLargeFeature::isSwamphut(const BlockPos& pos)
     {
         return false;
     }
-    return IsSwamplandHut((*scattered)[0]);
+    return dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>((*scattered)[0]) != NULL;
 }
 
 std::vector<Biome::MobSpawnerData*>* RandomScatteredLargeFeature::getSwamphutEnemies()
@@ -138,19 +132,19 @@ RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level*
     int z = chunkZ * 16;
     if (biome == Biome::JUNGLE || biome == Biome::JUNGLE_HILLS)
     {
-        push_back(CreateJunglePyramidPiece(levelIn, randomIn, x, z));
+        push_back(new ScatteredFeaturePieces::JunglePyramidPiece(levelIn, randomIn, x, z));
     }
     else if (biome == Biome::SWAMPLAND)
     {
-        push_back(CreateSwamplandHut(levelIn, randomIn, x, z));
+        push_back(new ScatteredFeaturePieces::SwamplandHut(levelIn, randomIn, x, z));
     }
     else if (biome == Biome::DESERT || biome == Biome::DESERT_HILLS)
     {
-        push_back(CreateDesertPyramidPiece(levelIn, randomIn, x, z));
+        push_back(new ScatteredFeaturePieces::DesertPyramidPiece(levelIn, randomIn, x, z));
     }
-    else if (biome == Biome::ICE_PLAINS || biome == Biome::ICE_MOUNTAINS)
+    else if (biome == Biome::ICE_PLAINS || biome == Biome::COLD_TAIGA)
     {
-        push_back(CreateIgloo(levelIn, randomIn, x, z));
+        push_back(new ScatteredFeaturePieces::Igloo(levelIn, randomIn, x, z));
     }
     calculateBoundingBox();
 }
