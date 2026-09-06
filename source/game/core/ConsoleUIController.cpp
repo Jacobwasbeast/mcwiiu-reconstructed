@@ -43,7 +43,10 @@ unsigned int XGetLanguage();
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
+OSFastMutex g_uiCriticalSection;
 ConsoleUIController gConsoleUIController;
+
+static bool s_uiCriticalSectionInitialized = false;
 
 ConsoleUIController::ConsoleUIController()
     : m_debugConsole(0), m_unknown08(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
@@ -72,6 +75,10 @@ ConsoleUIController::ConsoleUIController()
     InitializeCriticalSection(&m_fontMutex);
     InitializeCriticalSection(&m_skinThreadMutex);
     InitializeCriticalSection(&m_callbackMutex);
+    if (!s_uiCriticalSectionInitialized) {
+        InitializeCriticalSection(&g_uiCriticalSection);
+        s_uiCriticalSectionInitialized = true;
+    }
 }
 
 ConsoleUIController::~ConsoleUIController()
@@ -612,7 +619,7 @@ void ConsoleUIController::CloseUIScenes(int playerId, bool immediate)
 {
     UIGroup* playerGroup = !theApp.GetGameStarted() && !immediate
                                ? m_groups[1] : m_groups[GetGroup(playerId)];
-    EnterCriticalSection(&m_skinMutex);
+    EnterCriticalSection(&g_uiCriticalSection);
     playerGroup->closeAllScenes();
     playerGroup->ClearTooltips();
     theApp.ForceTooltipReload(playerId);
@@ -621,12 +628,12 @@ void ConsoleUIController::CloseUIScenes(int playerId, bool immediate)
     SetMenuDisplayed(playerId, false);
     if (playerGroup == m_groups[1])
         setFullscreenMenuDisplayed(false);
-    LeaveCriticalSection(&m_skinMutex);
+    LeaveCriticalSection(&g_uiCriticalSection);
 }
 
 void ConsoleUIController::CloseAllPlayersScenes(bool immediate)
 {
-    EnterCriticalSection(&m_skinMutex);
+    EnterCriticalSection(&g_uiCriticalSection);
     for (int i = 0; i < 6; ++i) {
         m_groups[i]->closeAllScenes();
         m_groups[i]->ClearTooltips();
@@ -636,7 +643,7 @@ void ConsoleUIController::CloseAllPlayersScenes(bool immediate)
         SetMenuDisplayed(player, false);
     }
     setFullscreenMenuDisplayed(false);
-    LeaveCriticalSection(&m_skinMutex);
+    LeaveCriticalSection(&g_uiCriticalSection);
 }
 
 bool ConsoleUIController::IsSceneInStack(int playerId, EUIScene scene)
@@ -1239,10 +1246,22 @@ bool ConsoleUIController::requestResolutionChange(int resolution)
 {
     if (m_resolutionDisableFlags != 0)
         return false;
-    if (gFui == 0)
+    if (!TryEnterCriticalSection(&g_uiCriticalSection))
         return false;
-    m_resolution = resolution;
     gFui->setResolution(resolution);
+    if (resolution == 0) {
+        m_screenWidth = 1280.0f;
+        m_screenHeight = 720.0f;
+    } else {
+        m_screenWidth = 1920.0f;
+        m_screenHeight = 1080.0f;
+    }
+    m_groups[2]->ReloadAllLayers();
+    m_groups[3]->ReloadAllLayers();
+    m_groups[4]->ReloadAllLayers();
+    m_groups[5]->ReloadAllLayers();
+    m_groups[1]->ReloadAllLayers();
+    LeaveCriticalSection(&g_uiCriticalSection);
     return true;
 }
 
@@ -1259,7 +1278,16 @@ void ConsoleUIController::clearResolutionChangeDisableFlag(eRESOLUTION_DISABLE_F
 unsigned int ConsoleUIController::reloadSkinThreadProc(void* context)
 {
     ConsoleUIController* controller = static_cast<ConsoleUIController*>(context);
-    controller->ReloadSkin();
+    EnterCriticalSection(&g_uiCriticalSection);
+    controller->loadSkins();
+    controller->m_groups[2]->ReloadAll();
+    controller->m_groups[3]->ReloadAll();
+    controller->m_groups[4]->ReloadAll();
+    controller->m_groups[5]->ReloadAll();
+    controller->m_groups[1]->ReloadAll();
+    controller->m_groups[0]->ReloadAll();
+    controller->SetEnableTooltips(0, false);
+    LeaveCriticalSection(&g_uiCriticalSection);
     return 0;
 }
 

@@ -5,7 +5,7 @@
 #include "platform/wiiu/C4JStorage.hpp"
 #include "game/core/GameModeOptions.hpp"
 enum eGameSetting { eGameSetting_YAxis = 0, eGameSetting_SkinAdjustments = 0x2d };
-enum EControllerActions { EControllerActions_First = 0 };
+enum EControllerActions : int { EControllerActions_First = 0 };
 enum eDebugSetting { eDebugSetting_First = 0 };
 class GameSettings
 {

@@ -14,6 +14,11 @@ Stat* GenericStats::openInventory()
     return gStats->get_achievement((eAward)0);
 }
 
+Stat* GenericStats::mineBlock()
+{
+    return gStats->get_totalBlocksMined();
+}
+
 Stat* GenericStats::mineWood()
 {
     return gStats->get_achievement((eAward)1);

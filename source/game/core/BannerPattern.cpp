@@ -36,9 +36,9 @@ void BannerPattern::_init(unsigned int id, const std::wstring& name, int* names,
     bannerPatterns.push_back(this);
 }
 
-const wchar_t* BannerPattern::getDisplayName(int index) const
+int BannerPattern::getDisplayName(int index) const
 {
-    return (const wchar_t*)displayName[index];
+    return displayName[index];
 }
 
 BannerPattern* BannerPattern::byHash(const std::wstring& name)

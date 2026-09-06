@@ -6,11 +6,11 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/PrimedTnt.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/item/ProtectionEnchantment.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
@@ -302,7 +302,7 @@ void Explosion::explode()
 
         bool inBlast = false;
 
-        if (mToBlow.size() != 0)
+        if (!mToBlow.empty())
         {
             for (ToBlowSet::const_iterator blown = mToBlow.begin(); blown != mToBlow.end(); ++blown)
             {

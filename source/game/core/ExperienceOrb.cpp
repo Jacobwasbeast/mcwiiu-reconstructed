@@ -216,7 +216,7 @@ bool ExperienceOrb::updateInWaterState()
 
 void ExperienceOrb::burn(int damage)
 {
-    hurt(DamageSource::ON_FIRE, (float)damage);
+    hurt(DamageSource::IN_FIRE, (float)damage);
 }
 
 bool ExperienceOrb::hurt(const DamageSource* source, float damage)

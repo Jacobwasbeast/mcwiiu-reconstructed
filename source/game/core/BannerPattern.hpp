@@ -16,7 +16,7 @@ public:
     BannerPattern(unsigned int id, const std::wstring& hashname, ItemInstance* patternItem,
                   int* displayName, wchar_t craftingMenuTab);
 
-    const wchar_t* getDisplayName(int index) const;
+    int getDisplayName(int index) const;
     static BannerPattern* byHash(const std::wstring& hashname);
     std::wstring getHashname() const;
     void _init(unsigned int id, const std::wstring& hashname, int* displayName, wchar_t craftingMenuTab);

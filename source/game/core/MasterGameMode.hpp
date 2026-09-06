@@ -16,6 +16,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/LevelRules.hpp"
 #include "game/world/chunk/ActiveChunkBoundsChecker.hpp"
 
 class AABB;
@@ -38,11 +39,6 @@ class Settings;
 class StatsUID;
 class TargetAreaRuleDefinition;
 class Vec3;
-
-namespace LevelRules
-{
-    class LevelRulesetGroup;
-}
 
 class MasterGameMode : public CommonMasterGameMode
 {
@@ -281,6 +277,8 @@ public:
     bool IsPlayerReady(unsigned int playerIndex);
 
 private:
+    friend class GameMedal;
+
     unsigned long long mRoundStartTime;
     int mRoundTimeOffset;
     int mPausedRoundTime;

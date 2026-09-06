@@ -146,6 +146,9 @@ public:
     int get3DDataValue() const;
     int get2DDataValue() const;
     unsigned char getOrdinal() const;
+    int getStepX() const { return stepX; }
+    int getStepY() const { return stepY; }
+    int getStepZ() const { return stepZ; }
     Axis* getAxis() const;
     AxisDirection* getAxisDirection() const;
     std::wstring getName() const;

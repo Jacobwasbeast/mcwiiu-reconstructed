@@ -354,6 +354,7 @@ private:
     int m_customDrawBottom;
 };
 
+extern OSFastMutex g_uiCriticalSection;
 extern ConsoleUIController gConsoleUIController;
 
 #endif

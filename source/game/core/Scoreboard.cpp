@@ -187,12 +187,13 @@ Scoreboard::EDamageSource Scoreboard::GetDamageSource(const DamageSource* pSourc
         return DAMAGE_SOURCE_EXPLOSION;
     }
 
-    if (pSource->equals(DamageSource::IN_FIRE) || pSource->equals(DamageSource::ON_FIRE))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0e)
+        || pSource->equals(DamageSource::ON_FIRE))
     {
         return DAMAGE_SOURCE_FIRE;
     }
 
-    if (pSource->equals(DamageSource::LAVA))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x10))
     {
         return DAMAGE_SOURCE_LAVA;
     }
@@ -202,48 +203,49 @@ Scoreboard::EDamageSource Scoreboard::GetDamageSource(const DamageSource* pSourc
         return DAMAGE_SOURCE_DROWN;
     }
 
-    if (pSource->equals(DamageSource::STARVE))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x14))
     {
         return DAMAGE_SOURCE_STARVE;
     }
 
-    if (pSource->equals(DamageSource::CACTUS))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x15))
     {
         return DAMAGE_SOURCE_CACTUS;
     }
 
-    if (pSource->equals(DamageSource::FALL) || pSource->equals(DamageSource::OUT_OF_WORLD)
-        || pSource->equals(DamageSource::KILL))
+    if (pSource->equals(DamageSource::FALL)
+        || pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x18)
+        || pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x19))
     {
         return DAMAGE_SOURCE_FALL;
     }
 
-    if (pSource->equals(DamageSource::THORNS))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x20))
     {
         return DAMAGE_SOURCE_THORNS;
     }
 
-    if (pSource == DamageSource::POISON)
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x21))
     {
         return DAMAGE_SOURCE_POISON;
     }
 
-    if (pSource == DamageSource::HARM)
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x22))
     {
         return DAMAGE_SOURCE_HARM;
     }
 
-    if (pSource->equals(DamageSource::MAGIC))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1a))
     {
         return DAMAGE_SOURCE_MAGIC;
     }
 
-    if (pSource->equals(DamageSource::ARROW))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1e))
     {
         return DAMAGE_SOURCE_ARROW;
     }
 
-    if (pSource->equals(DamageSource::FLY_INTO_WALL))
+    if (pSource->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(0x17))
     {
         return DAMAGE_SOURCE_FLY_INTO_WALL;
     }

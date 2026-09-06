@@ -2,7 +2,6 @@
 #define GAME_CORE_EXPLOSION_HPP
 
 #include <functional>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -11,10 +10,10 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
-#include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+class Entity;
 class Level;
 class LivingEntity;
 class Player;

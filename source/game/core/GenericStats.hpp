@@ -29,6 +29,7 @@ public:
     virtual void __pure_virtual_called() = 0;
 
     static Stat* openInventory();
+    static Stat* mineBlock();
     static Stat* mineWood();
     static Stat* buildWorkbench();
     static Stat* buildPickaxe();

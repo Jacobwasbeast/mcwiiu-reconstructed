@@ -42,7 +42,7 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
             || level->getDifficulty() == Difficulty::HARD)
         && level->hasChunksAt(pos, 10))
     {
-        if (MinecraftServer::sInstance->getPlayers()->isTrackingBlock(pos, level->mDimension)
+        if (gMinecraftServer->getPlayers()->isTrackingBlock(pos, level->mDimension)
             && level->getBlockState(pos)->getMaterial() == Material::AIR
             && Blocks::FIRE->mayPlace(level, pos))
         {
@@ -55,7 +55,7 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
                                           mRandom->nextInt(3) - 1,
                                           mRandom->nextInt(3) - 1);
 
-            if (MinecraftServer::sInstance->getPlayers()->isTrackingBlock(pos, level->mDimension)
+            if (gMinecraftServer->getPlayers()->isTrackingBlock(pos, level->mDimension)
                 && level->getBlockState(firePos)->getMaterial() == Material::AIR
                 && Blocks::FIRE->mayPlace(level, pos))
             {
@@ -114,7 +114,7 @@ void LightningBolt::tick()
 
                 if (mLevel->getGameRules()->getBoolean(0)
                     && mLevel->hasChunksAt(pos, 10)
-                    && MinecraftServer::sInstance->getPlayers()->isTrackingBlock(pos, mLevel->mDimension)
+                    && gMinecraftServer->getPlayers()->isTrackingBlock(pos, mLevel->mDimension)
                     && mLevel->getBlockState(pos)->getBlock()->mMaterial == Material::AIR
                     && Blocks::FIRE->mayPlace(mLevel, pos))
                 {

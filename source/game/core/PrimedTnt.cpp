@@ -5,21 +5,11 @@
 
 #include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
-
-class MiniGameDef
-{
-public:
-    bool canTntDestroyBlocks() const;
-};
-
-class EntityDataSerializers
-{
-public:
-    static EntityDataSerializer<int>* INT;
-};
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -160,7 +150,7 @@ boost::shared_ptr<LivingEntity> PrimedTnt::getOwner()
     return mOwner.lock();
 }
 
-float PrimedTnt::getEyeHeight()
+double PrimedTnt::getEyeHeight()
 {
     return 1.0;
 }

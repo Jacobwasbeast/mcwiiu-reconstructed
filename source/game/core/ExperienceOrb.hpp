@@ -14,28 +14,28 @@ class ExperienceOrb : public Entity
 public:
     ExperienceOrb(Level* level, double x, double y, double z, int value);
     ExperienceOrb(Level* level);
+    virtual unsigned long long GetType();
     virtual ~ExperienceOrb();
+    virtual void defineSynchedData();
+    virtual void tick();
+    virtual bool makeStepSound();
+    virtual void burn(int damage);
+    virtual bool updateInWaterState();
+    virtual int getLightColor();
+    virtual void playerTouch(boost::shared_ptr<Player> player);
+    virtual bool hurt(const DamageSource* source, float damage);
+    virtual bool shouldRender(double distanceSqr);
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
+    virtual bool isAttackable();
 
     static int getExperienceValue(int value);
     void _init();
-    virtual bool makeStepSound();
-    virtual void defineSynchedData();
-    virtual int getLightColor();
-    virtual void tick();
-    virtual bool updateInWaterState();
-    virtual void burn(int damage);
-    virtual bool hurt(const DamageSource* source, float damage);
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
     int xpToDurability(int value);
     int durabilityToXp(int value);
-    virtual void playerTouch(boost::shared_ptr<Player> player);
     int getValue();
     unsigned char getIcon();
-    virtual bool isAttackable();
-    virtual bool shouldRender(double distanceSqr);
     static void create(Level* level);
-    virtual unsigned long long GetType();
 
 private:
     int mCount;

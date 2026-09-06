@@ -4,11 +4,15 @@
 #include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/IndirectEntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/projectile/Fireball.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/ClientboundDamageIndicatorPacket.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
 
+const DamageSource* DamageSource::IN_FIRE =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0d), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x34)))->setIsFire();
 const DamageSource* DamageSource::ON_FIRE =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x36)))->bypassArmor()->setIsFire();
 const DamageSource* DamageSource::DROWN =
@@ -35,7 +39,7 @@ boost::shared_ptr<EntityDamageSource> DamageSource::CreateMobAttack(boost::share
     return boost::shared_ptr<EntityDamageSource>(new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1d), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1d), entity));
 }
 
-void DamageSource::setProjectile() { projectile = true; }
+DamageSource* DamageSource::setProjectile() { projectile = true; return this; }
 
 boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectileValue)
 {
@@ -53,7 +57,8 @@ void DamageSource::setIsFireProjectile() { fireProjectile = true; }
 
 boost::shared_ptr<DamageSource> DamageSource::CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fireValue)
 {
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3d), arrow, owner, 0));
+    boost::shared_ptr<Entity> arrowEntity(arrow, (Entity*)arrow.get());
+    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3d), arrowEntity, owner, 0));
     result->setProjectile();
     if (fireValue) result->setIsFireProjectile();
     return result;
@@ -61,7 +66,8 @@ boost::shared_ptr<DamageSource> DamageSource::CreateArrow(boost::shared_ptr<Arro
 
 boost::shared_ptr<DamageSource> DamageSource::CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner)
 {
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x2a), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x42), trident, owner, 0));
+    boost::shared_ptr<Entity> tridentEntity(trident, (Entity*)trident.get());
+    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x2a), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x42), tridentEntity, owner, 0));
     result->setProjectile();
     return result;
 }
@@ -159,7 +165,7 @@ bool DamageSource::scalesWithDifficulty() const { return scalesDifficulty; }
 void DamageSource::sendDamageIndicatorUpdate(boost::shared_ptr<ServerPlayer> player) const
 {
     boost::shared_ptr<ClientboundDamageIndicatorPacket> packet(new ClientboundDamageIndicatorPacket());
-    player->connection->send(packet);
+    player->mConnection->send(packet);
 }
 
 boost::shared_ptr<ClientboundChatPacket> DamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> entity) const

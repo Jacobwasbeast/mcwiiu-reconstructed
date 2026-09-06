@@ -1,4 +1,5 @@
 #include "game/core/Socket.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/network/ServerConnection.hpp"
 ServerConnection* Socket::sConnection = NULL;
@@ -73,7 +74,7 @@ void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned 
 void Socket::SocketOutputStreamNetwork::close(){mOpen=false;}
 void Socket::SocketOutputStreamNetwork::flush(){}
 Socket::Socket(bool b)
-    : mLocal(true),mNetwork(true),mIndex(b?1:0),mPlayerId(0),mPlayer(NULL),mEvent(NULL),mOpen(true)
+    : mLocal(true),mNetwork(true),mIndex(b?1:0),mPlayerId(0),mEvent(NULL),mOpen(true)
 {
     mInputStreams[0]=mInputStreams[1]=NULL;
     mOutputStreams[0]=mOutputStreams[1]=NULL;
@@ -81,7 +82,7 @@ Socket::Socket(bool b)
     mOutputClosed[0]=mOutputClosed[1]=false;
 }
 Socket::Socket(INetworkPlayer* p,bool a,bool b)
-    : mLocal(false),mNetwork(b),mIndex(a?1:0),mPlayerId(0),mPlayer(p),mEvent(NULL),mOpen(true)
+    : mLocal(false),mNetwork(b),mIndex(a?1:0),mPlayerId(0),mEvent(NULL),mOpen(true)
 {
     mInputStreams[0]=new SocketInputStreamNetwork(this,0);
     mInputStreams[1]=new SocketInputStreamNetwork(this,1);
@@ -89,8 +90,8 @@ Socket::Socket(INetworkPlayer* p,bool a,bool b)
     mOutputStreams[1]=new SocketOutputStreamNetwork(this,1);
     if (p) mPlayerId=p->GetSmallId();
 }
-INetworkPlayer* Socket::getPlayer(){return mPlayer;}
-void Socket::setPlayer(INetworkPlayer* p){mPlayer=p;mPlayerId=p?p->GetSmallId():0;}
+INetworkPlayer* Socket::getPlayer(){return CGameNetworkManager::sInstance.GetPlayerBySmallId(mPlayerId);}
+void Socket::setPlayer(INetworkPlayer* p){mPlayerId=p?p->GetSmallId():0;}
 void Socket::Initialise(ServerConnection* c){sConnection=c;}
 unsigned int Socket::getRemoteSocketAddress(){return 0;}
 void Socket::pushDataToQueue(const unsigned char* d,unsigned int n,bool b)

@@ -10,6 +10,7 @@
 #include "game/core/GenericStats.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/core/InteractionResult.hpp"
 #include "game/item/Recipe.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -35,15 +36,18 @@ public:
     GameMode();
     virtual ~GameMode();
 
-    virtual void startDestroyBlock(const BlockPos& pos, const Direction* direction) = 0;
+    virtual bool startDestroyBlock(const BlockPos& pos, const Direction* direction) = 0;
     virtual void tick() = 0;
-    virtual bool useItem(boost::shared_ptr<Player> player, Level* level,
-                         InteractionHand::EInteractionHand hand, bool simulate) = 0;
+    virtual InteractionResult::EInteractionResult useItem(boost::shared_ptr<Player> player,
+                                                          Level* level,
+                                                          InteractionHand::EInteractionHand hand,
+                                                          bool simulate) = 0;
     virtual void SetGameType(const GameType* gameType) = 0;
     virtual const GameType* GetGameType() = 0;
 
     virtual bool CanRecordStatsAndAchievements();
     virtual bool MayDestroy(const BlockPos& pos);
+    bool MayPlace(const BlockPos& pos, Block* block);
     virtual bool MayPlace(const BlockPos& pos, BlockItem* item);
     virtual bool MayUse(const BlockPos& pos, Item* item);
     virtual const MiniGameDef* GetMiniGame() = 0;
@@ -78,6 +82,14 @@ public:
     virtual void RecordLanding(const BlockPos& pos);
     virtual void OnMouseDown();
 
+    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int category, int recipe,
+                                                            boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
+        std::vector<std::pair<int, int> >& recipes, int category,
+        boost::shared_ptr<Player> player);
+    virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(
+        std::vector<int>& recipes, boost::shared_ptr<Player> player);
+
     bool isSurvival();
     bool isCreative();
     bool isAdventure();
@@ -95,17 +107,12 @@ public:
                                                bool removeResult);
     void UpdateCraftAchievements(boost::shared_ptr<Player> player,
                                  not_null_ptr<ItemInstance> item, eAward award);
-    void handleCraftItem(int category, int recipe, boost::shared_ptr<Player> player);
-    boost::shared_ptr<ItemInstance> handleStackedCraftItem(
-        std::vector<std::pair<int, int> >& recipes, int category,
-        boost::shared_ptr<Player> player);
     static void RemoveCustomRecipeItemsFromInventory(int recipe, Inventory* inventory);
     static void RemoveCustomRecipeItemsFromInventory(int recipe, boost::shared_ptr<Inventory> inventory);
-    void handleCustomCraftItem(std::vector<int>& recipes, boost::shared_ptr<Player> player);
 
 protected:
-    Minecraft* mMinecraft;
     const GameType* mGameType;
+    Minecraft* mMinecraft;
 };
 
 #endif

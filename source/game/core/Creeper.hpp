@@ -16,45 +16,42 @@ class Creeper : public Monster
 {
 public:
     Creeper(Level* level);
+    virtual unsigned long long GetType();
     virtual ~Creeper();
-
-    static void staticCtor();
-    void _init();
-    void registerGoals();
-    virtual void registerAttributes();
-    virtual int getMaxFallDistance();
-    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual void defineSynchedData();
-    static void addDataWalkers(DataFixerUpper* fixer);
-    bool isIgnited();
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    void ignite();
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    int getSwellDir();
-    void setSwellDir(int swellDir);
-    bool spawnLingeringCloud();
-    void explodeCreeper();
     virtual void tick();
+    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
+    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
+    virtual void thunderHit(const LightningBolt* lightning);
+    virtual int getMaxFallDistance();
+    virtual void registerAttributes();
+    virtual void die(const DamageSource* source);
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    bool canDropMobsSkull();
-    void increaseDroppedSkulls();
-    virtual void die(const DamageSource* source);
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
-    bool isPowered();
-    double getSwelling(float partialTicks);
+    virtual void registerGoals();
     virtual const void* getDefaultLootTable();
-    virtual void thunderHit(const LightningBolt* lightning);
-    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-    virtual unsigned long long GetType();
+    virtual bool isPowered();
+
+    static void staticCtor();
+    static void addDataWalkers(DataFixerUpper* fixer);
     static void create(Level* level);
 
-private:
-    static const EntityDataAccessor<int>* DATA_SWELL_DIR;
-    static const EntityDataAccessor<bool>* DATA_IS_POWERED;
-    static const EntityDataAccessor<bool>* DATA_IS_IGNITED;
+    void _init();
+    bool isIgnited();
+    void ignite();
+    int getSwellDir();
+    void setSwellDir(int swellDir);
+    void spawnLingeringCloud();
+    void explodeCreeper();
+    bool canDropMobsSkull();
+    void increaseDroppedSkulls();
+    double getSwelling(float partialTicks);
 
+private:
     int mOldSwell;
     int mSwell;
     int mMaxSwell;

@@ -19,6 +19,7 @@ class Vec3;
 class DamageSource
 {
 public:
+    static const DamageSource* IN_FIRE;
     static const DamageSource* ON_FIRE;
     static const DamageSource* DROWN;
     static const DamageSource* FALL;
@@ -28,7 +29,7 @@ public:
     virtual ~DamageSource();
     bool equals(const DamageSource* source) const;
     static boost::shared_ptr<EntityDamageSource> CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
-    void setProjectile();
+    DamageSource* setProjectile();
     static boost::shared_ptr<DamageSource> CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static boost::shared_ptr<EntityDamageSource> CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
