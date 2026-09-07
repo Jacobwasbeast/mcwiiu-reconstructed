@@ -7,6 +7,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 BegGoal::BegGoal(Wolf* wolf, float distance)
     : mWolf(wolf), mLevel(wolf->mLevel), mDistance(distance), mTime(0)

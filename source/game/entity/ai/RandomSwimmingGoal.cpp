@@ -6,6 +6,7 @@
 #include "game/util/Math.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
@@ -14,12 +15,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-
-class PathfinderMob : public Entity
-{
-public:
-    PathNavigation* getNavigation();
-};
 
 RandomSwimmingGoal::RandomSwimmingGoal(PathfinderMob* mob, double speedModifier, int interval, int xz, int y)
     : RandomStrollGoal(mob, speedModifier, interval), mXz(xz), mY(y)

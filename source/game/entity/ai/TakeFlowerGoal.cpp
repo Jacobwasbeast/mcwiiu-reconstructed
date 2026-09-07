@@ -51,7 +51,7 @@ bool TakeFlowerGoal::canUse()
 
 bool TakeFlowerGoal::canContinueToUse()
 {
-    return !mGolem.empty() && mGolem->getOfferFlowerTick() > 0;
+    return mGolem && mGolem->getOfferFlowerTick() > 0;
 }
 
 void TakeFlowerGoal::start()

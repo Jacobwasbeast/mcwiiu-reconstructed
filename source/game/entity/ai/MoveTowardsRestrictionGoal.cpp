@@ -4,18 +4,10 @@
 
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class PathfinderMob : public Entity
-{
-public:
-    bool isWithinRestriction();
-    BlockPos getRestrictCenter();
-    boost::shared_ptr<Entity> shared_from_this();
-    PathNavigation* getNavigation();
-};
 
 MoveTowardsRestrictionGoal::MoveTowardsRestrictionGoal(PathfinderMob* mob, double speedModifier)
     : mMob(mob),

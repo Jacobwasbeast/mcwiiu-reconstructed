@@ -3,21 +3,12 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class PathfinderMob
-{
-public:
-    PathNavigation* getNavigation();
-    Random* getRandom();
-    bool isSunBurnTick();
-    float getWalkTargetValue(const BlockPos& pos);
-    not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
-};
 
 FleeSunGoal::FleeSunGoal(PathfinderMob* mob, double speedModifier)
     : Goal(),
@@ -61,7 +52,7 @@ Vec3* FleeSunGoal::getHidePos()
 bool FleeSunGoal::canUse()
 {
     Entity* entity = (Entity*)mMob;
-    if (!mLevel->isDay() || !mMob->isSunBurnTick() || entity->isInWaterOrRain())
+    if (!mLevel->isDay() || !mMob->couldWander() || entity->isInWaterOrRain())
         return false;
 
     BlockPos pos(entity->mX, entity->mY, entity->mZ);

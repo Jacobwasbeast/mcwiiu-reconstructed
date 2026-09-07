@@ -10,9 +10,8 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Villager.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
-
-class Villager;
 
 OfferFlowerGoal::OfferFlowerGoal(VillagerGolem* golem)
     : mGolem(golem), mTarget(), mTicks(0)
@@ -36,12 +35,12 @@ bool OfferFlowerGoal::canUse()
     boost::shared_ptr<Entity> entity =
         mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), area, golem);
     mTarget = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    return !mTarget.empty();
+    return !!mTarget;
 }
 
 bool OfferFlowerGoal::canContinueToUse()
 {
-    return mTicks > 0 && !mTarget.empty();
+    return mTicks > 0 && !!mTarget;
 }
 
 void OfferFlowerGoal::start()

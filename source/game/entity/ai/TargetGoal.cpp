@@ -6,6 +6,8 @@
 #include "game/core/Difficulty.hpp"
 #include "game/core/Path.hpp"
 #include "game/core/Sensing.hpp"
+#include "game/core/WitherBoss.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
@@ -53,7 +55,8 @@ bool TargetGoal::canContinueToUse()
     if ((mMob->GetType() & 0x000000005D540442ULL) == 0x000000005D540442ULL)
     {
         WitherSkeleton* wither = static_cast<WitherSkeleton*>(mMob);
-        boost::shared_ptr<LivingEntity> parent = wither->getWitherParent();
+        boost::shared_ptr<LivingEntity> parent =
+            boost::static_pointer_cast<LivingEntity>(wither->getWitherParent());
         if (parent && parent->getId() == target->getId())
             return false;
     }

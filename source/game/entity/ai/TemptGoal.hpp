@@ -11,7 +11,7 @@
 
 class Item;
 class ItemInstance;
-class LivingEntity;
+class Player;
 class PathfinderMob;
 
 class TemptGoal : public Goal
@@ -38,7 +38,7 @@ private:
     double mTargetZ;
     double mTargetXRot;
     double mTargetYRot;
-    boost::shared_ptr<LivingEntity> mPlayer;
+    boost::shared_ptr<Player> mPlayer;
     arrayWithLength<Item*> mItems;
     arrayWithLength<int> mItemAuxValues;
     bool mCanScare;

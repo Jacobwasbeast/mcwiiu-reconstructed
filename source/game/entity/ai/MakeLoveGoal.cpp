@@ -10,6 +10,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 #include "game/world/generation/Villager.hpp"
 #include "game/world/block/BlockPos.hpp"

@@ -8,11 +8,10 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/Monster.hpp"
 #include "game/entity/mob/RangedAttackMob.hpp"
+#include "game/item/BowItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-
-extern int BowItem_GetMaxBowDuration() __asm("GetMaxBowDuration__7BowItemSFv");
-extern float BowItem_getPowerForTime(int charge) __asm("getPowerForTime__7BowItemSFi");
+#include "game/util/AABB.hpp"
 
 RangedBowAttackGoal::RangedBowAttackGoal(Monster* mob, double speedModifier, int attackInterval,
                                          float attackRadius)
@@ -74,7 +73,7 @@ void RangedBowAttackGoal::tick()
     if (!target)
         return;
 
-    double distance = target->distanceToSqr(mMob->mX, mMob->mY, mMob->mZ);
+    double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     bool canSee = mMob->getSensing()->canSee(target);
     if (canSee)
         ++mSeeTime;
@@ -105,8 +104,15 @@ void RangedBowAttackGoal::tick()
         ++mStrafingTime;
         if (mStrafingTime < 20)
         {
-            if (distance < static_cast<double>(mAttackRadiusSqr * 0.25f))
-                mStrafingBackwards = true;
+            if (distance <= static_cast<double>(mAttackRadiusSqr * 0.75f))
+            {
+                if (distance < static_cast<double>(mAttackRadiusSqr * 0.25f))
+                    mStrafingBackwards = true;
+            }
+            else
+            {
+                mStrafingBackwards = false;
+            }
             float forwards = mStrafingBackwards ? -0.5f : 0.5f;
             float sideways = mStrafingClockwise ? 0.5f : -0.5f;
             mMob->getMoveControl()->strafe(forwards, sideways);
@@ -114,9 +120,9 @@ void RangedBowAttackGoal::tick()
         else
         {
             mStrafingTime = 0;
-            if (mMob->mRandom->nextFloat() < 0.3f)
+            if (mMob->getRandom()->nextFloat() < 0.3f)
                 mStrafingClockwise = !mStrafingClockwise;
-            if (mMob->mRandom->nextFloat() < 0.3f)
+            if (mMob->getRandom()->nextFloat() < 0.3f)
                 mStrafingBackwards = !mStrafingBackwards;
         }
     }
@@ -124,14 +130,14 @@ void RangedBowAttackGoal::tick()
     --mAttackTime;
     if (!mMob->isUsingItem())
     {
-        if (canSee && distance <= static_cast<double>(mAttackRadiusSqr))
+        if (mAttackTime < 1 && mSeeTime > -60)
             mMob->startUsingItem(InteractionHand::eInteractionHand_MainHand);
     }
-    else if (mMob->getTicksUsingItem() >= BowItem_GetMaxBowDuration())
+    else if (mMob->getTicksUsingItem() >= BowItem::GetMaxBowDuration())
     {
         mMob->stopUsingItem();
         RangedAttackMob* rangedAttackMob = dynamic_cast<RangedAttackMob*>(mMob);
-        rangedAttackMob->performRangedAttack(target, BowItem_getPowerForTime(mMob->getTicksUsingItem()));
+        rangedAttackMob->performRangedAttack(target, BowItem::getPowerForTime(mMob->getTicksUsingItem()));
         mAttackTime = mAttackInterval;
     }
 }

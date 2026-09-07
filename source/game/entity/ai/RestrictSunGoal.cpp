@@ -5,14 +5,7 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
-
-class PathfinderMob
-{
-public:
-    Level* mLevel;
-    not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
-    PathNavigation* getNavigation();
-};
+#include "game/entity/mob/PathfinderMob.hpp"
 
 RestrictSunGoal::RestrictSunGoal(PathfinderMob* mob)
     : Goal(),

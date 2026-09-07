@@ -5,6 +5,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/ShoulderRidingEntity.hpp"
 #include "game/util/AABB.hpp"
+#include "game/world/generation/Player.hpp"
 
 LandOnOwnersShoulderGoal::LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner)
     : mOwner(owner)

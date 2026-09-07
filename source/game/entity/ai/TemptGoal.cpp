@@ -8,13 +8,8 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
-
-class Level
-{
-public:
-    boost::shared_ptr<LivingEntity> getNearestPlayer(boost::shared_ptr<Entity> entity,
-                                                     double distance, double maxYDistance);
-};
+#include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
                      arrayWithLength<Item*> items, bool canScare,

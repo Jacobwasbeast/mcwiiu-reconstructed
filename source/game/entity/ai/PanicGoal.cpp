@@ -8,16 +8,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class LivingEntity;
-
-class PathfinderMob : public Entity
-{
-public:
-    boost::shared_ptr<LivingEntity> getLastHurtByMob();
-    bool isOnFire();
-    PathNavigation* getNavigation();
-};
+#include "game/entity/mob/PathfinderMob.hpp"
 
 PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
     : mMob(mob), mSpeedModifier(speedModifier), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0)
