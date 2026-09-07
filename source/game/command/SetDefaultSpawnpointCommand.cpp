@@ -3,18 +3,13 @@
 #include "game/command/CommandSender.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/network/ClientboundSetSpawnPositionPacket.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/PlayerList.hpp"
-
-class MinecraftServer
-{
-public:
-    PlayerList* getPlayers();
-};
-
-extern MinecraftServer* gMinecraftServer;
 
 SetDefaultSpawnpointCommand::~SetDefaultSpawnpointCommand()
 {
@@ -34,9 +29,9 @@ void SetDefaultSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sende
 {
     Level* level = sender->getCommandSenderWorld();
 
-    if (level->mDimension->getType() == 0)
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
     {
-        BlockPos pos = sender->getCommandSenderBlockPosition();
+        BlockPos pos = convertSourceToPlayer(sender)->getCommandSenderBlockPosition();
 
         level->setSpawnPos(pos);
 

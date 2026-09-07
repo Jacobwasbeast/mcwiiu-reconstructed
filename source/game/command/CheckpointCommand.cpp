@@ -10,7 +10,7 @@
 #include "game/core/GameStats.hpp"
 #include "game/core/MasterGameMode.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/item/CMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/GameModePacket.hpp"
@@ -53,7 +53,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
     int checkpoint = stream.readInt();
 
     std::vector<CheckpointRuleDefinition*>* checkpoints =
-        CMinecraftApp::sInstance.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
+        g_pApp->getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
 
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
     unsigned int round = gameMode->mGameStats.mCurrentRound;
@@ -111,15 +111,15 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
                 if (*it && (*it)->GetCamera() == player)
                 {
                     (*it)->mLoadedChunks.clear();
-                    (*it)->mManagedPosX = (double)spawnX;
-                    (*it)->mManagedPosZ = (double)spawnZ;
+                    (*it)->mLastSentX = (double)spawnX;
+                    (*it)->mLastSentZ = (double)spawnZ;
 
                     (*it)->mConnection->teleport((double)spawnX, (double)spawnY, (double)spawnZ,
                                                  spawnPoint->getYRot(), spawnPoint->getXRot(), true, true);
 
                     if (checkpoint == 0)
                     {
-                        (*it)->mConnection->send(GameModePacket::Create(GameModePacket::eMessage_UpdateStartTime,
+                        (*it)->mConnection->send(GameModePacket::Create(GameModePacket::UpdateStartTime,
                                                                         GameModePacket::UpdateStartTimeData(0)));
                     }
                 }

@@ -7,6 +7,11 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/GameCommandPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
 extern MinecraftServer* gMinecraftServer;
@@ -33,7 +38,7 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
     {
         PlayerUID targetUid = stream.readPlayerUID();
         boost::shared_ptr<ServerPlayer> target = playerList != NULL ? playerList->getPlayer(targetUid) : boost::shared_ptr<ServerPlayer>();
-        if (source && target && source->getLevel()->getDimension() == target->getLevel()->getDimension()
+        if (source && target && source->getLevel()->mDimension->getType()->getId() == target->getLevel()->mDimension->getType()->getId()
             && source->isAlive() && target->isAlive())
         {
             if (source->isSleeping())

@@ -7,9 +7,9 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/GameType.hpp"
 #include "game/network/CGameNetworkManager.hpp"
-#include "game/network/ClientboundChatPacket.hpp"
 #include "game/network/PlayerInfoPacket.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
 extern MinecraftServer* gMinecraftServer;
@@ -37,13 +37,12 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
         for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
              it != players->end(); ++it)
         {
-            (*it)->setGameMode(gameType);
+            (*it)->setGameMode(const_cast<GameType*>(gameType));
 
             boost::shared_ptr<Packet> info(new PlayerInfoPacket(*it));
             gMinecraftServer->getPlayers()->broadcastAll(info);
 
-            (*it)->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged,
-                               NULL, 0, NULL, 0);
+            (*it)->sendMessage(111, NULL, 0, NULL, 0);
         }
     }
 }
@@ -56,7 +55,7 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     unsigned char gameType = stream.readByte();
     doSetGameType(GameType::byId(gameType));
-    CMinecraftApp::sInstance.SetGameHostOption(6, gameType);
+    g_pApp->SetGameHostOption(static_cast<eGameHostOption>(6), gameType);
 
     int intParams[1] = { gameType };
     logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)101,

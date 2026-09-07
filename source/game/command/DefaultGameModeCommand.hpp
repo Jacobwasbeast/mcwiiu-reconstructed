@@ -3,13 +3,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/command/Command.hpp"
+#include "game/command/GameModeCommand.hpp"
 #include "game/network/GameCommandPacket.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class GameType;
 
-class DefaultGameModeCommand : public Command
+class DefaultGameModeCommand : public GameModeCommand
 {
 public:
     virtual ~DefaultGameModeCommand();
