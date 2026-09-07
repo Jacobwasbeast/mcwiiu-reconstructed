@@ -52,6 +52,16 @@ transport (`transport`, `RendezVous`, `chat`, `crypto`), and small
 SDK-facing structures. They are kept apart so that game code is never
 mistaken for library code.
 
+## `source/nex.h` and `source/nn/pia.h` - SDK interface headers
+
+The platform backend and the vendor internals call into Nintendo's NEX and
+Pia online libraries through `#include <nex.h>` and `#include <nn/pia.h>`.
+Those SDK headers are not redistributable, so the tree carries its own
+declarations of the classes and functions the title actually uses, written
+from the symbols the build exposes. They live at the `source/` root so the
+original include spellings resolve unchanged. They declare interfaces only;
+no SDK implementation is reconstructed there.
+
 ## The seam rule
 
 A function belongs below the seam if, and only if, its call graph reaches
