@@ -232,7 +232,7 @@ bool UIScene::blocksInput()
     return false;
 }
 
-unsigned int UIScene::GetMainPanel()
+UIControl* UIScene::GetMainPanel()
 {
     return 0;
 }

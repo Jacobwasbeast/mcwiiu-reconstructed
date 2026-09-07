@@ -8,6 +8,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/ui/UIString.hpp"
@@ -162,9 +163,14 @@ void UIScene_DeathMenu::handlePress(int first, int)
     }
     else if (first == 1)
     {
+        telemetryManagerInstance->RecordLevelExit(
+            m_resolution, static_cast<ESen_LevelExitStatus>(3));
         unsigned int callbackId = GetCallbackUniqueId();
-        static_cast<UIScene_PauseMenu*>(m_layer)->OpenExitGameDialog(
-            callbackId, (void*)0x02f78ca8, (void*)0x02f79218, 0);
+        UIScene_PauseMenu::OpenExitGameDialog(
+            m_resolution, reinterpret_cast<void*>(callbackId),
+            UIScene_PauseMenu::ExitGameDialogReturned,
+            UIScene_PauseMenu::ExitGameSaveDialogReturned,
+            static_cast<UIScene_PauseMenu::EOpenExitGameDialog>(0));
     }
 }
 

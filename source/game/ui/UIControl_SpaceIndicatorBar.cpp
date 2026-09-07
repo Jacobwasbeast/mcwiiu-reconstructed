@@ -18,10 +18,10 @@ UIControl_SpaceIndicatorBar::~UIControl_SpaceIndicatorBar()
 {
 }
 
-void UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 13;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_SpaceIndicatorBar::setSaveSize(long long size)
@@ -80,7 +80,7 @@ void UIControl_SpaceIndicatorBar::init(UIString label, int controlId, long long 
     m_controlType = (unsigned short)controlId;
     m_startOffset = startOffset;
     m_endOffset = totalOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->Init(std::wstring((const wchar_t*)(long)label.getString()));
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->Init(label.getString());
 }
 
 void UIControl_SpaceIndicatorBar::ReInit()

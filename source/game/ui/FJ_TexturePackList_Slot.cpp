@@ -1,32 +1,9 @@
 #include "game/ui/FJ_TexturePackList_Slot.hpp"
 
+#include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class fuiRenderNodeCodeGenRect : public fuiRenderNode
-{
-public:
-    fuiRenderNodeCodeGenRect(fuiRenderNode* pRenderNode, fuiRect* rect,
-        const char* textureName, unsigned int width, unsigned int height,
-        int texture, bool tiled, bool filtered);
-    virtual void gather(bool) {}
-    virtual void preRender() {}
-    virtual void render(fuiRect*, fuiMatrix*) {}
-};
-
-class fui
-{
-public:
-    unsigned int getCustomTexture(const std::wstring& textureName,
-        unsigned int* width, unsigned int* height, bool* hasTexture);
-};
-
-extern fui* g_fui;
-
-class FJ_FuiNodeStage
-{
-public:
-    fuiRenderNode* m_pRenderNode;
-};
+#include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_TexturePackList_Slot::FJ_TexturePackList_Slot(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_pSlotOutline(NULL), m_iSlotId(0)
@@ -60,7 +37,7 @@ void FJ_TexturePackList_Slot::SetTextureName(const std::wstring& textureName)
     unsigned int width = 0;
     unsigned int height = 0;
     bool hasTexture = false;
-    unsigned int texture = g_fui->getCustomTexture(textureName, &width, &height, &hasTexture);
+    unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
         texture, true, hasTexture);

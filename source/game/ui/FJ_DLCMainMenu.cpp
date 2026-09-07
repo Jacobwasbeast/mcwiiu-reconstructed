@@ -1,7 +1,9 @@
 #include "game/ui/FJ_DLCMainMenu.hpp"
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/UIScene.hpp"
 
 FJ_DLCMainMenu::FJ_DLCMainMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
@@ -24,9 +26,11 @@ unsigned int FJ_DLCMainMenu::getType()
 
 void FJ_DLCMainMenu::handlePress(FJ_Event* event)
 {
-    if (event == NULL || event->m_pTarget == NULL)
+    FJ_Button* button = event->m_pTarget->asFJ_Button();
+    if (button != NULL)
     {
-        return;
+        FJ_FuiNode* parent = button->getObjListParent();
+        m_pCallbackScene->handlePress(parent->asFJ_Base()->getId(), button->getId());
+        button->setButtonPressed(false);
     }
-    FJ_Document::handlePress(event);
 }

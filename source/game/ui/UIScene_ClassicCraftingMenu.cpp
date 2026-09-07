@@ -154,12 +154,12 @@ void UIScene_ClassicCraftingMenu::handleReload()
     m_craftingSlots.addSlots(1, 9);
 }
 
-int UIScene_ClassicCraftingMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_ClassicCraftingMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4e)) return 0x128;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4f)) return 0x188;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x50)) return 0x35c;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x51)) return 0x3bc;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4e)) return &m_hotbarList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4f)) return &m_inventoryList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x50)) return &m_resultSlot;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x51)) return &m_craftingSlots;
     return 0;
 }
 

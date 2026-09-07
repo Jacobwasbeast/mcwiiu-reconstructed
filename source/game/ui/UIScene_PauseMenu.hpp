@@ -11,21 +11,30 @@ public:
     UIScene_PauseMenu(int sceneType, void* data, UILayer* layer);
     virtual ~UIScene_PauseMenu();
     static unsigned int SaveWorldThreadProc(void* context);
-    static unsigned int NetworkErrorHandledDuringInvite(void* context, int userIndex, C4JStorage::EMessageResult result);
+    static int NetworkErrorHandledDuringInvite(void* context, int userIndex, C4JStorage::EMessageResult result);
     static void _ExitWorld(void* context);
     static unsigned int ExitWorldThreadProc(void* context);
-    void OpenExitGameDialog(int player, void* callback, void* saveCallback, int action);
-    static unsigned int WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int ExitGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int ExitGameSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int SaveGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int EnableAutosaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static unsigned int DisableAutosaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    enum EOpenExitGameDialog
+    {
+        EOpenExitGameDialog_0 = 0,
+        EOpenExitGameDialog_1 = 1
+    };
+    static void OpenExitGameDialog(
+        int player, void* callbackData,
+        int (*callback)(void*, int, C4JStorage::EMessageResult),
+        int (*saveCallback)(void*, int, C4JStorage::EMessageResult),
+        EOpenExitGameDialog action);
+    static int WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int SaveGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int EnableAutosaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int DisableAutosaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     virtual void HandleDLCMountingComplete();
     virtual void HandleDLCInstalled();
-    static unsigned int UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
     void PerformActionSaveGame();
     static unsigned int SaveGame_SignInReturned(void* context, bool signedIn, int userIndex, int playerIndex);
     void Init();

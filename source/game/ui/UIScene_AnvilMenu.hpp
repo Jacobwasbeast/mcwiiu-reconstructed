@@ -60,7 +60,7 @@ public:
 
     virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual int getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
 
     void addPendingNameChange(const PendingNameInfo& info);
     static int KeyboardCompleteCallback(void* data, bool accepted);

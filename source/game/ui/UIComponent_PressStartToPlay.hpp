@@ -22,6 +22,11 @@ public:
         std::wstring gamerPic;
         std::wstring achievementIcon;
 
+        Toast()
+            : title(), description(), gamerPic(), achievementIcon()
+        {
+        }
+
         Toast(const Toast& other);
     };
 

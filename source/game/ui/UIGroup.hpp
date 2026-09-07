@@ -8,6 +8,8 @@ enum EUILayer { EUILayer_Unknown = 0 };
 
 class UIGroup
 {
+    friend class ConsoleUIController;
+
 public:
     UIGroup(EUIGroup group, int player);
     void getRenderDimensions(int& width, int& height);
@@ -32,7 +34,7 @@ public:
     void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
     UIScene* getCurrentScene(int player);
     void showComponent(int player, EUIScene scene, EUILayer layer, bool show);
-    void addComponent(int player, EUIScene scene, EUILayer layer);
+    UIScene* addComponent(int player, EUIScene scene, EUILayer layer);
     void removeComponent(EUIScene scene, EUILayer layer);
     void ReloadAllLayers();
     void SetViewportType(C4JRender::eViewportType viewport);
@@ -58,10 +60,10 @@ private:
     int m_group;
     int m_player;
     unsigned char m_menuDisplayed;
-    unsigned char m_stackState1;
-    unsigned char m_stackState2;
-    unsigned char m_stackState3;
-    unsigned char m_stackState4;
+    bool m_pauseMenuDisplayed;
+    bool m_containerMenuDisplayed;
+    bool m_ignoreAutosaveMenuDisplayed;
+    bool m_ignorePlayerJoinMenuDisplayed;
     unsigned char m_stackState5;
     unsigned char m_unknown45[3];
     int m_focusTimer;

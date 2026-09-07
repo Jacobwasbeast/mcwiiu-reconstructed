@@ -286,7 +286,7 @@ void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int, int, int x, int 
     if (pressed && getComponentByLocation(point) == 0) { m_layer.setBlockState(m_layer.getBlockState()); updateLayerButtons(); }
 }
 
-unsigned int UIScene_SuperFlatEditLayer::GetMainPanel() { return (unsigned int)&m_mainPanel; }
+UIControl* UIScene_SuperFlatEditLayer::GetMainPanel() { return &m_mainPanel; }
 void UIScene_SuperFlatEditLayer::SetFocusToElement(int focus) { setNewPointerPos(focus == 1 ? static_cast<UIControl*>(&m_heightSlider) : static_cast<UIControl*>(&m_confirmButton)); }
 std::wstring UIScene_SuperFlatEditLayer::getMoviePath() { return L"SuperFlatEditLayerMenu"; }
 int UIScene_SuperFlatEditLayer::getSceneType() { return 58; }

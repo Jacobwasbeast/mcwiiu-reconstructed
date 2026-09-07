@@ -14,6 +14,7 @@ public:
     LaunchMoreOptionsMenuInitData();
 
     friend class MiniGameDef;
+    friend class UIScene_LoadMenu;
     friend class UIScene_InGameSettingsListMenu;
 
 private:

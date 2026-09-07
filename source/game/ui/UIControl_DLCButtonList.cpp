@@ -8,10 +8,10 @@ UIControl_DLCButtonList::~UIControl_DLCButtonList()
 {
 }
 
-void UIControl_DLCButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_DLCButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 0x16;
-    UIControl_List::setupControl(scene, node, name);
+    return UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_DLCButtonList::addItem(const std::string& label, bool enabled, int index)

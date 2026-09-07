@@ -53,7 +53,7 @@ public:
 
     UIControl_GridList();
     virtual ~UIControl_GridList();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void tick();
     virtual void ReInit();
     virtual void clearList();

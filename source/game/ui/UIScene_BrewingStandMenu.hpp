@@ -45,7 +45,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual void handleReload();
     virtual void tick();
-    virtual int getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSceneType();
 
 private:

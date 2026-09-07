@@ -83,7 +83,7 @@ public:
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
                                   bool released, bool pressed);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void SetFocusToElement(int focus);
     virtual std::wstring getMoviePath();
     virtual int getSceneType();

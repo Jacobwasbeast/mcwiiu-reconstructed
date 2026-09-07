@@ -41,10 +41,10 @@ void UIControl_BitmapIcon::tick()
     }
 }
 
-void UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 19;
-    UIControl::setupControl(scene, node, name);
+    return UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_BitmapIcon::ReInit()

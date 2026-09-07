@@ -7,6 +7,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/ui/Screen.hpp"
 #include "game/ui/TitleScreen.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 std::wstring _toString(int value);

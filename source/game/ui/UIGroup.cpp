@@ -5,8 +5,9 @@
 UIGroup::UIGroup(EUIGroup group, int player)
     : m_component(0), m_componentSecondary(0), m_componentTertiary(0),
       m_componentQuaternary(0), m_unknown30(0), m_viewportType(0),
-      m_group((int)group), m_player(player), m_menuDisplayed(0), m_stackState1(0),
-      m_stackState2(0), m_stackState3(0), m_stackState4(0), m_stackState5(0),
+      m_group((int)group), m_player(player), m_menuDisplayed(0), m_pauseMenuDisplayed(false),
+      m_containerMenuDisplayed(false), m_ignoreAutosaveMenuDisplayed(false),
+      m_ignorePlayerJoinMenuDisplayed(false), m_stackState5(0),
       m_focusTimer(0), m_displayList(0)
 {
     int i;
@@ -86,10 +87,10 @@ void UIGroup::updateStackStates()
     }
 
     m_menuDisplayed = state[0];
-    m_stackState1 = state[1];
-    m_stackState2 = state[2];
-    m_stackState3 = state[3];
-    m_stackState4 = state[4];
+    m_pauseMenuDisplayed = state[1];
+    m_containerMenuDisplayed = state[2];
+    m_ignoreAutosaveMenuDisplayed = state[3];
+    m_ignorePlayerJoinMenuDisplayed = state[4];
 }
 bool UIGroup::NavigateToScene(int player,EUIScene scene,void* data,EUILayer layer){bool result=m_layers[(int)layer]->NavigateToScene(player,scene,data);updateStackStates();return result;}
 int UIGroup::NavigateBack(int player,EUIScene scene,EUILayer layer){int i,result=0;for(i=0;i<8;++i)if((int)layer>=8||i==(int)layer)result=m_layers[i]->NavigateBack(player,scene)||result;updateStackStates();return result;}
@@ -100,7 +101,7 @@ unsigned char UIGroup::GetMenuDisplayed(){return m_menuDisplayed;}
 void UIGroup::handleInput(int player,int action,bool repeat,bool released,bool pressed,bool& handled){int i;if(m_player<0)for(i=0;i<8&&!handled;++i)m_layers[i]->handleInput(player,action,repeat,released,pressed,handled);}
 UIScene* UIGroup::getCurrentScene(int player){int i;UIScene* scene;for(i=0;i<8;++i){scene=m_layers[i]->getCurrentScene(player);if(scene)return scene;}return 0;}
 void UIGroup::showComponent(int player,EUIScene scene,EUILayer layer,bool show){m_layers[(int)layer]->showComponent(player,scene,show);}
-void UIGroup::addComponent(int player,EUIScene scene,EUILayer layer){m_layers[(int)layer]->addComponent(player,scene,0);}
+UIScene* UIGroup::addComponent(int player,EUIScene scene,EUILayer layer){return m_layers[(int)layer]->addComponent(player,scene,0);}
 void UIGroup::removeComponent(EUIScene scene,EUILayer layer){m_layers[(int)layer]->removeComponent(scene);}
 void UIGroup::ReloadAllLayers(){int i;for(i=0;i<8;++i)m_layers[i]->ReloadAll(true);}
 void UIGroup::SetViewportType(C4JRender::eViewportType viewport){if(m_viewportType!=(int)viewport){m_viewportType=(int)viewport;ReloadAllLayers();}}

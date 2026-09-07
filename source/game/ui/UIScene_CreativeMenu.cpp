@@ -269,9 +269,9 @@ void UIScene_CreativeMenu::handleTouchInput(unsigned int playerId, int action, i
     UIScene::handleTouchInput(playerId, action, x, y, repeat, released, pressed);
 }
 
-unsigned int UIScene_CreativeMenu::GetMainPanel()
+UIControl* UIScene_CreativeMenu::GetMainPanel()
 {
-    return 0;
+    return &m_mainPanel;
 }
 
 void UIScene_CreativeMenu::handleTouchBoxRebuild()

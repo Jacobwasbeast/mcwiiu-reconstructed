@@ -11,6 +11,8 @@
 
 class UILayer;
 class _TutorialPopupInfo;
+class Tutorial;
+class ConsoleUIController;
 
 class UIComponent_TutorialPopup : public UIScene
 {
@@ -50,14 +52,18 @@ public:
     virtual bool hidesLowerScenes();
 
 private:
+    friend class ConsoleUIController;
+
     UIScene* m_interactScene;
     UIScene* m_previousInteractScene;
     bool m_interactScenePosition;
     bool m_showTitleTimer;
     bool m_showExitScreenshot;
     std::wstring m_description;
+    Tutorial* m_tutorial;
     not_null_ptr<ItemInstance> m_icon;
     bool m_showIcon;
+    bool m_containerMenuDisplayed;
     bool m_hasDescription;
     bool m_splitScreen;
     std::wstring m_title;

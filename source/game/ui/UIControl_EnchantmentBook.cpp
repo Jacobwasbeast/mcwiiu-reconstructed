@@ -11,6 +11,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/ui/EnchantmentMenu.hpp"
 #include "game/ui/UIScene_EnchantingMenu.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/client/render/Textures.hpp"

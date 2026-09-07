@@ -39,7 +39,6 @@ extern ConsoleUIController gConsoleUIController;
 void replaceAll(std::wstring& result, const std::wstring& source,
                 const std::wstring& search, const std::wstring& replacement);
 void stripWhitespaceForHtml(std::wstring& text, bool collapse);
-void LoadHowToPlayPage(FJ_HowToPlay* node, int page, std::vector<std::wstring>& pages);
 
 namespace
 {
@@ -349,7 +348,6 @@ const UIScene_HowToPlay::sCustomItems* SlotListChestLarge__Fv()
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
     };
     slots[0] = makeBlock(Blocks::chest, 12, 0);
@@ -395,7 +393,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListCreative__Fv()
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
         makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0),
-        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
+        makeItem(NULL, 0, 0), makeItem(NULL, 0, 0)
     };
     slots[0] = makeBlock(Blocks::stone, 1, 0);
     slots[1] = makeBlock(Blocks::grass, 1, 0);

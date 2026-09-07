@@ -311,9 +311,9 @@ void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
 }
 
-unsigned int UIScene_BiomePreviewMenu::GetMainPanel()
+UIControl* UIScene_BiomePreviewMenu::GetMainPanel()
 {
-    return (unsigned int)(uintptr_t)&mMainPanel;
+    return &mMainPanel;
 }
 
 int UIScene_BiomePreviewMenu::getSceneType()

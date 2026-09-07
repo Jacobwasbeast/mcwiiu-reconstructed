@@ -158,9 +158,11 @@ void UIScene_SuperFlatMenu::handleTouchInput(unsigned int playerId, int action, 
     UIScene::handleTouchInput(playerId, action, x, y, repeat, released, pressed);
 }
 
-unsigned int UIScene_SuperFlatMenu::GetMainPanel()
+UIControl* UIScene_SuperFlatMenu::GetMainPanel()
 {
-    return m_currentPanel;
+    if (m_currentPanel == eTabBiomes) return &m_biomesPanel;
+    if (m_currentPanel != eTabProperties) return &m_layersPanel;
+    return &m_propertiesPanel;
 }
 
 void UIScene_SuperFlatMenu::updateTooltips()

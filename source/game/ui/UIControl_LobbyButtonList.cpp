@@ -2,16 +2,16 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-void UIControl_ButtonList_setupControl(void* control, UIScene* scene, fuiRenderNode* node, const std::string& name);
+bool UIControl_ButtonList_setupControl(void* control, UIScene* scene, fuiRenderNode* node, const std::string& name);
 
 UIControl_LobbyButtonList::~UIControl_LobbyButtonList()
 {
 }
 
-void UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 0x1b;
-    UIControl_ButtonList_setupControl(this, scene, node, name);
+    return UIControl_ButtonList_setupControl(this, scene, node, name);
 }
 
 void UIControl_LobbyButtonList::addItem(const std::wstring& label, bool host, int playerIcon, int voipIcon)

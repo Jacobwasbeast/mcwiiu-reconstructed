@@ -30,7 +30,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     virtual void handleReload();
-    virtual int getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSceneType();
 
 private:

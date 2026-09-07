@@ -130,7 +130,7 @@ public:
                              bool& handled);
     virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
                                   bool released, bool pressed);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void handleTouchBoxRebuild();
     virtual void handleTimerComplete(int timerId);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);

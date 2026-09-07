@@ -31,8 +31,9 @@ static void replaceTutorialToken(std::wstring& text, const wchar_t* token)
 UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer)
     : UIScene(sceneType, layer), m_interactScene(0), m_previousInteractScene(0),
       m_interactScenePosition(false), m_showTitleTimer(false),
-      m_showExitScreenshot(false), m_description(), m_icon(), m_showIcon(false),
-      m_hasDescription(false), m_splitScreen(false), m_title(), m_iconHolder(EIcons_None),
+      m_showExitScreenshot(false), m_description(), m_tutorial(0), m_icon(),
+      m_showIcon(false), m_containerMenuDisplayed(false), m_hasDescription(false),
+      m_splitScreen(false), m_title(), m_iconHolder(EIcons_None),
       m_descriptionLabel(), m_titleLabel(), m_iconHolderControl(), m_exitScreenshotControl()
 {
     m_itemRenderer = static_cast<ItemRenderer*>(callback);

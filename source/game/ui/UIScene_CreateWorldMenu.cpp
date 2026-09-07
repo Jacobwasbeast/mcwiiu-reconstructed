@@ -81,9 +81,9 @@ void UIScene_CreateWorldMenu::tick()
     IUIScene_StartGame::tick();
 }
 
-unsigned int UIScene_CreateWorldMenu::GetMainPanel()
+UIControl* UIScene_CreateWorldMenu::GetMainPanel()
 {
-    return (unsigned int)&m_playButton;
+    return &m_startButton;
 }
 
 std::wstring UIScene_CreateWorldMenu::getMoviePath()

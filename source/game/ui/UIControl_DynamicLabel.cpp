@@ -31,11 +31,11 @@ int UIControl_DynamicLabel::GetRealHeight()
     return (int)static_cast<FJ_DynamicHtmlText*>(m_fuiRenderNode->getFuiNode())->GetRealHeight();
 }
 
-void UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
                                           const std::string& name)
 {
     m_controlType = 4;
-    UIControl::setupControl(scene, node, name);
+    return UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_DynamicLabel::addText(const std::wstring& text, bool setup)

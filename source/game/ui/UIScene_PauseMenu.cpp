@@ -22,6 +22,8 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/core/Compression.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 
 extern void Sleep(unsigned int milliseconds);
 extern CMinecraftApp* g_pApp;
@@ -142,7 +144,10 @@ void UIScene_PauseMenu::handlePress(int, int item)
     else if (index == 2) gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x16), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     else if (index == 4) gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x51), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     else if (index == 5) PerformActionSaveGame();
-    else if (index == 6) OpenExitGameDialog(m_resolution, (void*)ExitGameDialogReturned, (void*)ExitGameSaveDialogReturned, 0);
+    else if (index == 6)
+        OpenExitGameDialog(m_resolution, reinterpret_cast<void*>(GetCallbackUniqueId()),
+                           ExitGameDialogReturned, ExitGameSaveDialogReturned,
+                           EOpenExitGameDialog_0);
     else if (index == 7) gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x14), NULL, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     else if (index == 8) gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x3e), (void*)!gGameNetworkManager.IsInPublicJoinableGame(), static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
@@ -233,7 +238,7 @@ unsigned int UIScene_PauseMenu::SaveWorldThreadProc(void* context)
     return g_pApp->GetChangingSessionType() ? 0x4c7 : 0;
 }
 
-unsigned int UIScene_PauseMenu::NetworkErrorHandledDuringInvite(void*, int, C4JStorage::EMessageResult)
+int UIScene_PauseMenu::NetworkErrorHandledDuringInvite(void*, int, C4JStorage::EMessageResult)
 {
     gGameNetworkManager.WiiU_ClearIsHandlingBootInvite();
     return 0;
@@ -255,28 +260,55 @@ unsigned int UIScene_PauseMenu::ExitWorldThreadProc(void* context)
     return 0;
 }
 
-void UIScene_PauseMenu::OpenExitGameDialog(int player, void* callback, void* saveCallback, int action)
+void UIScene_PauseMenu::OpenExitGameDialog(
+    int player, void* callbackData,
+    int (*callback)(void*, int, C4JStorage::EMessageResult),
+    int (*saveCallback)(void*, int, C4JStorage::EMessageResult),
+    EOpenExitGameDialog action)
 {
-    if (action != 1 && player != g_pApp->GetPrimaryUserIndex())
+    if (action != EOpenExitGameDialog_1 && player != g_pApp->GetPrimaryUserIndex())
     {
         g_pApp->SetAction(player, static_cast<eXuiAction>(0xb), NULL);
         return;
     }
     int parameters[3] = { static_cast<int>(0x4fcbc7e7U), static_cast<int>(0xb9a1bf4dU), 0x4940e70d };
     int message = 0xd5e33637;
-    int buttons = 2;
-    if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+    unsigned int parameterCount = 2;
+    int (*selectedCallback)(void*, int, C4JStorage::EMessageResult) = callback;
+    if (!gProfile->IsFullVersion())
+    {
         gConsoleUIController.ReduceTrialTimerValue();
-    else if (gGameNetworkManager.IsHost() && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0 &&
-             gGameNetworkManager.GetPlayerCount() > 1)
-        message = 0x54b9ccf4;
-    gConsoleUIController.RequestAlertMessage(0x2686c8e5, action == 1 ? 0xae8aae0d : message,
-                                              parameters, buttons, player,
-                                              (int (*)(void*, int, C4JStorage::EMessageResult))callback,
-                                              saveCallback, NULL, true);
+        message = 0x59c349d9;
+    }
+    else if (gGameNetworkManager.IsHost())
+    {
+        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
+        {
+            if (gStorage->GetSaveDisabled() || theApp.HasNoSpaceForSaveQuota())
+            {
+                message = 0x59c349d9;
+            }
+            else
+            {
+                message = gGameNetworkManager.GetPlayerCount() > 1 ? 0x54b9ccf4 : 0xc85a78c0;
+                parameters[1] = 0x7bf1723b;
+                parameterCount = 3;
+                selectedCallback = saveCallback;
+            }
+        }
+        else if (gGameNetworkManager.GetPlayerCount() > 1)
+        {
+            message = 0x094d2642;
+        }
+    }
+    if (action == EOpenExitGameDialog_1)
+        message = 0xae8aae0d;
+    gConsoleUIController.RequestAlertMessage(0x2686c8e5, message, parameters,
+                                              parameterCount, player, selectedCallback,
+                                              callbackData, NULL, true);
 }
 
-unsigned int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(4) && context != NULL)
         gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &button, 1,
@@ -284,7 +316,7 @@ unsigned int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, i
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
     if (result == static_cast<C4JStorage::EMessageResult>(5) && scene != NULL && scene->getSceneType() == 5)
@@ -292,7 +324,7 @@ unsigned int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int button
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
     if (result == static_cast<C4JStorage::EMessageResult>(5) && scene != NULL)
@@ -300,7 +332,7 @@ unsigned int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int butto
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -311,7 +343,7 @@ unsigned int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int b
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -322,21 +354,21 @@ unsigned int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int bu
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::SaveGameDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::SaveGameDialogReturned(void*, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
         g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::EnableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::EnableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
 {
     g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0x16), result != static_cast<C4JStorage::EMessageResult>(5));
     g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
     return 0;
 }
 
-unsigned int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -349,7 +381,7 @@ unsigned int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button,
 void UIScene_PauseMenu::HandleDLCMountingComplete() {}
 void UIScene_PauseMenu::HandleDLCInstalled() { g_pApp->StartInstallDLCProcess(m_resolution); }
 
-unsigned int UIScene_PauseMenu::UnlockFullSaveReturned(void*, int button, C4JStorage::EMessageResult result)
+int UIScene_PauseMenu::UnlockFullSaveReturned(void*, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(4))
         g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);

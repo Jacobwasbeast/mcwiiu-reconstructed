@@ -24,10 +24,10 @@ UIControl_Button::~UIControl_Button()
 {
 }
 
-void UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 1;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Button::init(UIString label, int id)
@@ -36,7 +36,7 @@ void UIControl_Button::init(UIString label, int id)
     m_controlId = id;
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node->isFJ_Button()) {
-        node->asFJ_Button()->Init((const wchar_t*)(long)label.getString(), id);
+        node->asFJ_Button()->Init(label.getString(), id);
     }
     int sceneType = m_scene->getSceneType();
     if (sceneType == 2 || sceneType == 4 || sceneType == 6 || sceneType == 7) {

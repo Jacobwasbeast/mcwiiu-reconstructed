@@ -197,15 +197,15 @@ void UIScene_ContainerMenu::handleReload()
     m_containerList.addSlots(0, count - 36);
 }
 
-int UIScene_ContainerMenu::getSection(
+UIControl* UIScene_ContainerMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0))
-        return 0x128;
+        return &m_hotbarList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(1))
-        return 0x188;
+        return &m_inventoryList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(2))
-        return 0x35c;
+        return &m_containerList;
     return 0;
 }
 

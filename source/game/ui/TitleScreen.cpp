@@ -5,10 +5,10 @@
 #include "game/core/Button.hpp"
 #include "game/core/Language.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/ui/JoinMultiplayerScreen.hpp"
 
 extern Screen* createOptionsScreen(TitleScreen* parent, void* options);
 extern Screen* createSelectWorldScreen(TitleScreen* parent);
-extern Screen* createJoinMultiplayerScreen(TitleScreen* parent);
 
 TitleScreen::TitleScreen()
     : mLogoWidth(256.0f), mTitle(), mMultiplayerButton(NULL)
@@ -80,7 +80,7 @@ void TitleScreen::buttonClicked(Button* button)
 
     if (button->mId == 2)
     {
-        mMinecraft->setScreen(createJoinMultiplayerScreen(this));
+        mMinecraft->setScreen(new JoinMultiplayerScreen(this));
     }
 
     if (button->mId == 4)

@@ -71,7 +71,7 @@ void UIControl::removeUINodeRef()
     m_fuiRenderNode = 0;
 }
 
-void UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_scene = scene;
     m_name.assign(name, 0, std::string::npos);
@@ -82,6 +82,7 @@ void UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::str
         m_width = m_fuiRenderNode->getWidth();
         m_height = m_fuiRenderNode->getHeight();
     }
+    return m_fuiRenderNode != 0;
 }
 
 void UIControl::UpdateControl()

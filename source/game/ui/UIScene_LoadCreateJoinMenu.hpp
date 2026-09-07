@@ -34,7 +34,7 @@ public:
     virtual void updateComponents();
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleLoseFocus();
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
     virtual void handleDestroy();

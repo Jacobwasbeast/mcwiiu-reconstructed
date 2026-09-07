@@ -180,9 +180,9 @@ void UIScene_AchievementsMenu::handleFocusChange(int focus, int childFocus)
     m_updateDetails = true;
 }
 
-unsigned int UIScene_AchievementsMenu::GetMainPanel()
+UIControl* UIScene_AchievementsMenu::GetMainPanel()
 {
-    return (unsigned int)(uintptr_t)&m_mainPanel;
+    return &m_mainPanel;
 }
 
 void UIScene_AchievementsMenu::handleReload()

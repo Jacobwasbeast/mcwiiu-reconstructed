@@ -70,7 +70,7 @@ public:
     void LoadPreset(SuperflatConfig* config);
     void SetActiveTab(eTabs tab);
     virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat, bool released, bool pressed);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual void tick();

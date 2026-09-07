@@ -8,10 +8,10 @@
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/DLCFile.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/core/DLCFile.hpp"
 #include "game/core/cDLCInfo.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/DLCPack.hpp"
@@ -69,15 +69,11 @@ void UIScene_MapSelectMenu::_init()
     m_mapListTitle.init(UIString(0x88c46bf1));
     m_mapTitle.init(UIString(L" "));
     m_mapDescription.init(UIString(L" "));
-    if (m_levelRuleGroups.empty())
-        return;
     bool anyPurchased = false;
     unsigned int i;
     for (i = 0; i < m_levelRuleGroups.size(); ++i)
     {
         LevelRules::LevelRulesetGroup* group = m_levelRuleGroups[i];
-        if (group == NULL || group->rulesets.empty())
-            continue;
         LevelRuleset* ruleset = group->rulesets.at(0);
         LevelGenerationOptions* options = ruleset->getGenerationOptions();
         bool purchased = checkHasPurchased((int)i, false) != 0;
@@ -99,6 +95,7 @@ void UIScene_MapSelectMenu::_init()
         m_mapList.SetCheckbox((int)count - 2, true);
         m_mapList.SetCheckbox((int)count - 1, true);
     }
+    gConsoleUIController.TouchBoxRebuild(this);
     m_mapInfoPending = 1;
 }
 
@@ -122,16 +119,35 @@ void UIScene_MapSelectMenu::updateComponents()
 
 void UIScene_MapSelectMenu::UpdateMapInfo()
 {
-    if (m_mapList.getItemCount() == 0 || m_levelRuleGroups.empty())
-        return;
     unsigned int index = m_mapList.getCurrentSelection();
     LevelRules::LevelRulesetGroup* group = m_levelRuleGroups.at(index);
-    if (group == NULL || group->rulesets.empty())
-        return;
     m_generationOptions = group->rulesets.at(0)->getGenerationOptions();
     m_mapTitle.setLabel(UIString(m_generationOptions->getWorldName()), false, false);
     m_mapDescription.setLabel(UIString(m_generationOptions->getWorldDescription()), false, false);
-    m_mapIcon.setTextureName(std::wstring(L"MapSelect"), true);
+
+    const wchar_t* previewImage = m_generationOptions->getWorldPreviewImage();
+    DLCPack* pack = m_generationOptions->getPack();
+    DLCFile* file = pack->getFile(DLCManager::eDLCType_Texture, std::wstring(previewImage), true, true);
+
+    if (file == NULL)
+    {
+        m_mapIcon.setTextureName(std::wstring(L"MapSelect"), true);
+        return;
+    }
+
+    unsigned int imageSize = 0;
+    unsigned char* imageData = file->getData(imageSize);
+    if (imageData == NULL || imageSize == 0)
+    {
+        m_mapIcon.setTextureName(std::wstring(L"MapSelect"), true);
+        return;
+    }
+
+    wchar_t textureName[64];
+    std::swprintf(textureName, 64, L"mapSelect%08x", m_generationOptions->getUniqueId());
+    std::wstring name(textureName);
+    registerSubstitutionTexture(name, imageData, imageSize, false);
+    m_mapIcon.setTextureName(name, true);
 }
 
 void UIScene_MapSelectMenu::tick()
@@ -155,14 +171,17 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
     LevelRules::LevelRulesetGroup* group = m_levelRuleGroups.at(index);
     LevelRuleset* ruleset = group->rulesets.at(0);
     LevelGenerationOptions* options = ruleset->getGenerationOptions();
-    DLCPack* pack = NULL;
-    bool purchased = pack == NULL || pack->hasPurchasedPack();
+    DLCPack* pack = options->getPack();
+    bool purchased = pack->hasPurchasedPack();
     if (!purchased && theApp.mDLCManager.IsMiniGameTemporarilyFree((int)ruleset->getRuleType()))
         purchased = true;
     if (!purchased && tryPurchase)
     {
         bool handled = false;
-        tryPurchaseDlc(m_sceneType, handled, (eDLCContentType)0);
+        cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)theApp.GetDLCInfoInstance());
+        DLC_INFO* info = dlcInfo->GetDLCInfoForPackID(pack->GetPackId());
+        int contentType = info == NULL ? 0 : info->ContentType;
+        tryPurchaseDlc(m_sceneType, handled, (eDLCContentType)contentType);
     }
     return purchased ? 1 : 0;
 }
@@ -214,10 +233,8 @@ void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)
     m_mapList.updateChildFocus(childFocus);
     m_mapInfoPending = 1;
     unsigned int selection = m_mapList.getCurrentSelection();
-    if (!m_levelRuleGroups.empty() && selection < m_levelRuleGroups.size())
-        m_generationOptions = m_levelRuleGroups.at(selection)->rulesets.at(0)->getGenerationOptions();
-    if (m_generationOptions != NULL)
-        m_texturePackSelection = m_generationOptions->getUniqueId();
+    m_generationOptions = m_levelRuleGroups.at(selection)->rulesets.at(0)->getGenerationOptions();
+    m_texturePackSelection = m_generationOptions->getUniqueId();
 }
 
 void UIScene_MapSelectMenu::handlePress(int, int)

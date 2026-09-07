@@ -66,20 +66,20 @@ void FJ_LeaderboardHeader::SetupHeaders(std::wstring rank, std::wstring gamertag
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();
     fuiRenderNodeEditText* rankText = static_cast<fuiRenderNodeEditText*>(rankContainer->getRenderNodeChildAt(0)->asEditText());
     if (m_rankTextWidth == 0.0f)
-        m_rankTextWidth = rankText->getTextWidth();
-    rankText->setAutoSize(1);
+        m_rankTextWidth = rankText->getWidth();
+    rankText->setAutoSize(TextFieldAutoSizeLeft);
     rankText->setText(rank);
     rankText->setScaleX(1.0f / getScaleX());
     rankText->setScaleY(1.0f / getScaleY());
-    rankText->setX((m_rankTextWidth - rankText->getTextWidth()) * 0.5f);
+    rankText->setX((m_rankTextWidth - rankText->getWidth()) * 0.5f);
     fuiRenderNodeEditText* gamertagText = static_cast<fuiRenderNodeEditText*>(gamertagContainer->getRenderNodeChildAt(0)->asEditText());
     if (m_gamertagTextWidth == 0.0f)
-        m_gamertagTextWidth = gamertagText->getTextWidth();
-    gamertagText->setAutoSize(1);
+        m_gamertagTextWidth = gamertagText->getWidth();
+    gamertagText->setAutoSize(TextFieldAutoSizeLeft);
     gamertagText->setText(gamertag);
     gamertagText->setScaleX(1.0f / getScaleX());
     gamertagText->setScaleY(1.0f / getScaleY());
-    gamertagText->setX((m_gamertagTextWidth - gamertagText->getTextWidth()) * 0.5f);
+    gamertagText->setX((m_gamertagTextWidth - gamertagText->getWidth()) * 0.5f);
 }
 
 fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)

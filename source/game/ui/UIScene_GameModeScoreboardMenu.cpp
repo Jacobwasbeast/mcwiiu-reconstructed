@@ -394,9 +394,9 @@ void UIScene_GameModeScoreboardMenu::handleGainFocus(bool hadFocus)
             m_resolution, IUIScene_PlayerList::OnPlayerChanged, this);
 }
 
-unsigned int UIScene_GameModeScoreboardMenu::GetMainPanel()
+UIControl* UIScene_GameModeScoreboardMenu::GetMainPanel()
 {
-    return (unsigned int)(uintptr_t)&m_mainPanel;
+    return &m_mainPanel;
 }
 
 void UIScene_GameModeScoreboardMenu::customDraw(const char* name, fuiRect* rect)

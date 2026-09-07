@@ -9,8 +9,6 @@
 #include "game/client/render/SFontData.hpp"
 #include "game/ui/fui.hpp"
 
-extern fui* g_fui;
-
 fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphChar)
     : fuiFontSet(fontData.fontName.c_str()), UIBitmapFont(fontData),
       m_textureIndex(0), m_registered(false), m_missingGlyphChar(missingGlyphChar)
@@ -137,11 +135,11 @@ void fuiBitmapFont::registerFont()
 {
     if (!m_registered)
     {
-        g_fui->installBitmapFont(this);
+        gFui->installBitmapFont(this);
         m_registered = true;
     }
 
-    g_fui->setFontIndirection(m_name.c_str(), m_name.c_str());
+    gFui->setFontIndirection(m_name.c_str(), m_name.c_str());
 }
 
 int fuiBitmapFont::getFallbackFontTexture(float fontSize)

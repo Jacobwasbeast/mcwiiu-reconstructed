@@ -9,7 +9,7 @@ class UIControl_Base : public UIControl
 public:
     UIControl_Base();
     virtual ~UIControl_Base();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void tick();
     virtual bool hasFocus();
     virtual void setLabel(UIString label, bool update, bool force);

@@ -8,8 +8,8 @@
 #include "game/ui/FJ_AnvilMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 
-UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void*, UILayer*)
-    : UIScene_AbstractContainerMenu(type, 3, 7), m_sceneInterface(0), m_anvilMenu(0),
+UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void*, UILayer* layer)
+    : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_anvilMenu(0),
       m_itemName(0), m_pendingName(0), m_editingName(false), m_crossVisible(false)
 {
 }
@@ -213,14 +213,14 @@ void UIScene_AnvilMenu::tick()
     handleTick();
 }
 
-int UIScene_AnvilMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_AnvilMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x31)) return 0x128;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x32)) return 0x188;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x33)) return 0x388;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x34)) return 0x3e8;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x35)) return 0x448;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x36)) return 0x508;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x31)) return &m_hotbarList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x32)) return &m_inventoryList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x33)) return &m_ingredientSlot;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x34)) return &m_ingredientSlot2;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x35)) return &m_resultSlot;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x36)) return &m_editName;
     return 0;
 }
 

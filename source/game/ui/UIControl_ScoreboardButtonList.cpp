@@ -1,6 +1,4 @@
-#define private public
 #include "game/ui/UIControl_ScoreboardButtonList.hpp"
-#undef private
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
@@ -56,11 +54,11 @@ UIControl_ScoreboardButtonList::~UIControl_ScoreboardButtonList()
 {
 }
 
-void UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                   const std::string& name)
 {
     m_controlType = 30;
-    UIControl_ButtonList::setupControl(scene, node, name);
+    return UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int playerIcon,

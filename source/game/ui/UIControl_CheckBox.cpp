@@ -40,11 +40,12 @@ unsigned int UIControl_CheckBox::IsChecked()
     return m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->getChecked();
 }
 
-void UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 2;
     UIControl_Base::setupControl(scene, node, name);
     m_enabled = true;
+    return true;
 }
 
 void UIControl_CheckBox::init(UIString label, int id, bool checked)
@@ -52,7 +53,7 @@ void UIControl_CheckBox::init(UIString label, int id, bool checked)
     m_label = label;
     m_controlType = (unsigned short)id;
     m_checked = checked;
-    m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->Init((const wchar_t*)(long)label.getString(), id, checked);
+    m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->Init(label.getString(), id, checked);
 
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))

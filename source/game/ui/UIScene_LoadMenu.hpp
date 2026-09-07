@@ -49,7 +49,7 @@ public:
     static uint32_t CheckUpdateTheEndReturned(void* context, int userIndex,
                                               C4JStorage::EMessageResult result);
     virtual void checkStateAndStartGame();
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     void SetEnablePlayGameButton(bool enabled);
     virtual void HandleSaveDeviceRemoved(int deviceIndex);
     virtual int getSceneType();

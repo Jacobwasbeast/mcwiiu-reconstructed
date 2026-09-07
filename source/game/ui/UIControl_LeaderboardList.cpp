@@ -7,8 +7,6 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-class FJ_LeaderboardList;
-
 class ConsoleUIController
 {
 public:
@@ -16,13 +14,6 @@ public:
 };
 
 extern ConsoleUIController g_ConsoleUIController;
-
-void __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
-    FJ_LeaderboardList* list, bool loading, int rank, int value,
-    const std::wstring& gamertag, bool complete, const std::wstring* firstColumn,
-    const std::wstring* secondColumn, const std::wstring* thirdColumn,
-    const std::wstring* fourthColumn, const std::wstring* fifthColumn,
-    const std::wstring* sixthColumn, const std::wstring* seventhColumn);
 
 UIControl_LeaderboardList::UIControl_LeaderboardList()
     : UIControl_Base()
@@ -38,12 +29,13 @@ void UIControl_LeaderboardList::clearList()
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->ResetLeaderboard();
 }
 
-void UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
                                              const std::string& name)
 {
     m_controlType = 9;
-    UIControl_Base::setupControl(scene, node, name);
+    bool result = UIControl_Base::setupControl(scene, node, name);
     m_touchBoxAdded = false;
+    return result;
 }
 
 void UIControl_LeaderboardList::init(int controlId)

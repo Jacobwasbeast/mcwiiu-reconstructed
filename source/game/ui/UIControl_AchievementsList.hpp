@@ -10,7 +10,7 @@ class UIControl_AchievementsList : public UIControl_GridList
 public:
     UIControl_AchievementsList();
     virtual ~UIControl_AchievementsList();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void AddNewItem(int id, const std::wstring& textureName);
 };
 

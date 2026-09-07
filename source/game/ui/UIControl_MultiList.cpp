@@ -1,13 +1,12 @@
-#define private public
 #include "game/ui/UIControl_MultiList.hpp"
-#undef private
 
 #include "game/ui/FJ_FuiNode.hpp"
-#define private public
 #include "game/ui/FJ_List_MultiList.hpp"
-#undef private
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+
+void __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
+    FJ_List_MultiList* list, int index, std::vector<std::wstring> labels);
 
 UIControl_MultiList::UIControl_MultiList()
 {
@@ -87,10 +86,10 @@ uint64_t UIControl_MultiList::GetSliderValue(int id)
         getListIndex(id)) << 32;
 }
 
-void UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = 28;
-    UIControl_List::setupControl(scene, node, name);
+    return UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labelCount,
@@ -111,9 +110,8 @@ void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labe
         possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
 
     FJ_List_MultiList* list = m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList();
-    if (list->m_labelLists.size() <= (unsigned int)firstLabel)
-        list->m_labelLists.resize((unsigned int)firstLabel + 1);
-    list->m_labelLists[(unsigned int)firstLabel] = possibleLabels;
+    __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
+        list, firstLabel, possibleLabels);
 }
 
 void UIControl_MultiList::AddNewMenuButton(const std::wstring& label, int id)

@@ -261,10 +261,9 @@ void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int, int action, i
     (void)repeat;
 }
 
-unsigned int UIScene_LaunchMoreOptionsMenu::GetMainPanel()
+UIControl* UIScene_LaunchMoreOptionsMenu::GetMainPanel()
 {
-    return m_menuType == 1 ? static_cast<unsigned int>(m_worldOptions.getVisible())
-                           : static_cast<unsigned int>(m_gameOptions.getVisible());
+    return m_menuType == 1 ? &m_worldBackground : &m_gameBackground;
 }
 
 int UIScene_LaunchMoreOptionsMenu::getSceneType()

@@ -1,11 +1,14 @@
 #include "game/ui/UIScene_CraftingMenu.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_CraftingMenu.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRect.hpp"
 
-UIScene_CraftingMenu::_SlotInfo::_SlotInfo() : slot(0), itemId(0), count(0), visible(false)
+UIScene_CraftingMenu::_SlotInfo::_SlotInfo() : item(), displayValue(0x1f), visible(true)
 {
 }
 
@@ -13,9 +16,13 @@ UIScene_CraftingMenu::_SlotInfo::~_SlotInfo()
 {
 }
 
-UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void*, UILayer* layer)
-    : UIScene(type, layer), m_sceneInterface(), m_pad(0)
+UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
+    : UIScene(type, layer), IUIScene_CraftingMenu(), m_touchDragging(false),
+      m_inventoryUpdatesDeferred(true)
 {
+    IUIScene_CraftingMenu::Init(static_cast<_CraftingPanelScreenInput*>(data));
+    initialiseMovie();
+    addTimer(1, 100);
 }
 
 UIScene_CraftingMenu::~UIScene_CraftingMenu()
@@ -40,9 +47,9 @@ int UIScene_CraftingMenu::getSceneType()
     return 7;
 }
 
-unsigned int UIScene_CraftingMenu::getPad()
+int UIScene_CraftingMenu::getPad()
 {
-    return static_cast<unsigned int>(m_pad);
+    return m_sceneType;
 }
 
 void UIScene_CraftingMenu::hideAllHSlots()
@@ -69,25 +76,32 @@ void UIScene_CraftingMenu::SetItemDescription(int index, const wchar_t* text)
         m_itemText[index].setLabel(UIString(text), false, false);
 }
 
-void UIScene_CraftingMenu::setCraftHSlotItem(int index, not_null_ptr<ItemInstance>)
+void UIScene_CraftingMenu::setCraftHSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
 {
-    if (index >= 0 && index < 6)
-        m_horizontalSlots.setSlotHighlighted(index, false);
+    m_horizontalSlotItems[index].item = item;
+    m_horizontalSlotItems[index].visible = true;
+    m_horizontalSlotItems[index].displayValue = displayValue;
 }
 
-void UIScene_CraftingMenu::setSpecialSlotItem(int index, not_null_ptr<ItemInstance> item)
+void UIScene_CraftingMenu::setSpecialSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
 {
-    setCraftHSlotItem(index, item);
+    m_horizontalSlotItems[index].item = item;
+    m_horizontalSlotItems[index].visible = true;
+    m_horizontalSlotItems[index].displayValue = displayValue;
 }
 
-void UIScene_CraftingMenu::setCraftVSlotItem(int index, not_null_ptr<ItemInstance> item)
+void UIScene_CraftingMenu::setCraftVSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
 {
-    setPreviewSlotItem(index, item);
+    m_verticalSlotItems[index].item = item;
+    m_verticalSlotItems[index].visible = true;
+    m_verticalSlotItems[index].displayValue = displayValue;
 }
 
-void UIScene_CraftingMenu::setCraftingOutputSlotItem(int index, not_null_ptr<ItemInstance> item)
+void UIScene_CraftingMenu::setCraftingOutputSlotItem(int, not_null_ptr<ItemInstance> item)
 {
-    setPreviewSlotItem(index, item);
+    m_outputSlotItem.item = item;
+    m_outputSlotItem.displayValue = 0x1f;
+    m_outputSlotItem.visible = !item->isEmpty();
 }
 
 void UIScene_CraftingMenu::setCraftingOutputSlotRedBox(bool show)
@@ -95,10 +109,11 @@ void UIScene_CraftingMenu::setCraftingOutputSlotRedBox(bool show)
     m_outputSlots.showSlotRedBox(0, show);
 }
 
-void UIScene_CraftingMenu::setIngredientSlotItem(int index, not_null_ptr<ItemInstance>)
+void UIScene_CraftingMenu::setIngredientSlotItem(int, int index, not_null_ptr<ItemInstance> item)
 {
-    if (index >= 0 && index < 2)
-        m_ingredientSlots[index].setVisible(true);
+    m_ingredientSlotItems[index].item = item;
+    m_ingredientSlotItems[index].displayValue = 0x1f;
+    m_ingredientSlotItems[index].visible = !item->isEmpty();
 }
 
 void UIScene_CraftingMenu::setIngredientSlotRedBox(int index, bool show)
@@ -117,9 +132,13 @@ void UIScene_CraftingMenu::setInventorySlotHighlighted(int index)
     m_inventorySlots[0].setHighlightSlot(index);
 }
 
-void UIScene_CraftingMenu::setIngredientDescriptionItem(int index, not_null_ptr<ItemInstance> item)
+void UIScene_CraftingMenu::setIngredientDescriptionItem(int, int index, not_null_ptr<ItemInstance> item)
 {
-    setIngredientSlotItem(index, item);
+    m_ingredientDescriptionItems[index].item = item;
+    m_ingredientDescriptionItems[index].displayValue = 0x1f;
+    m_ingredientDescriptionItems[index].visible = !item->isEmpty();
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->ShowIngredient(
+        index, m_ingredientDescriptionItems[index].visible);
 }
 
 void UIScene_CraftingMenu::setIngredientDescriptionRedBox(int index, bool show)
@@ -132,10 +151,11 @@ void UIScene_CraftingMenu::setIngredientDescriptionText(int index, const wchar_t
     SetItemDescription(index, text);
 }
 
-void UIScene_CraftingMenu::setPreviewSlotItem(int index, not_null_ptr<ItemInstance>)
+void UIScene_CraftingMenu::setPreviewSlotItem(int, not_null_ptr<ItemInstance> item)
 {
-    if (index >= 0 && index < 6)
-        m_previewSlots.setSlotHighlighted(index, false);
+    m_previewSlotItem.item = item;
+    m_previewSlotItem.displayValue = 0x1f;
+    m_previewSlotItem.visible = !item->isEmpty();
 }
 
 void UIScene_CraftingMenu::setShowCraftHSlot(int index, bool show)
@@ -195,7 +215,15 @@ void UIScene_CraftingMenu::scrollDescriptionDown()
 
 void UIScene_CraftingMenu::updateHighlightAndScrollPositions()
 {
-    updateTooltips();
+    int vertical = 0;
+    if (IUIScene_CraftingMenu::getCurrentVSlotCount() == 2)
+        vertical = 1;
+    else if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
+        vertical = 2;
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
+        m_horizontalSlot, vertical);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
+        m_verticalColumn);
 }
 
 void UIScene_CraftingMenu::updateVSlotPositions(int first, int second)
@@ -228,7 +256,7 @@ void UIScene_CraftingMenu::SetCraftingMenu(int category, int item, bool enabled)
 
 void UIScene_CraftingMenu::SetHTabItem(int index, not_null_ptr<ItemInstance> item)
 {
-    setCraftHSlotItem(index, item);
+    m_tabItems[index] = item;
 }
 
 void UIScene_CraftingMenu::handleDestroy()
@@ -242,14 +270,25 @@ void UIScene_CraftingMenu::handleReload()
     m_previewSlots.addSlots(0, 6);
 }
 
-void UIScene_CraftingMenu::handleTimerComplete(int)
+void UIScene_CraftingMenu::handleTimerComplete(int timerId)
 {
-    updateTooltips();
+    if (timerId == 0)
+    {
+        GetMainPanel()->UpdateControl();
+        gConsoleUIController.TouchBoxRebuild(this);
+        killTimer(0);
+        return;
+    }
+    if (timerId == 1)
+    {
+        killTimer(1);
+        m_inventoryUpdatesDeferred = false;
+    }
 }
 
-unsigned int UIScene_CraftingMenu::GetMainPanel()
+UIControl* UIScene_CraftingMenu::GetMainPanel()
 {
-    return 0;
+    return &m_horizontalTab[0];
 }
 
 void UIScene_CraftingMenu::customDraw(const char*, fuiRect*)
@@ -265,26 +304,36 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int, int, int, bool, b
 {
 }
 
-void UIScene_CraftingMenu::handleInput(int, int, bool, bool, bool, bool& handled)
+void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    handled = false;
+    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    if (action == 14 || action == 15)
+    {
+        sendInputToMovie(action, repeat, released, pressed);
+        return;
+    }
+    if (released)
+        handled = IUIScene_CraftingMenu::handleKeyDown(m_sceneType, action, repeat);
 }
 
 bool UIScene_CraftingMenu::allowRepeat(int action)
 {
-    return action != 0;
+    return action != 2;
 }
 
 void UIScene_CraftingMenu::handleInventoryUpdated(void*)
 {
-    updateHighlightAndScrollPositions();
+    if (!m_inventoryUpdatesDeferred)
+        IUIScene_CraftingMenu::HandleInventoryUpdated();
 }
 
 void UIScene_CraftingMenu::HandleMessage(EUIMessage message, void* data)
 {
-    UIScene::HandleMessage(message, data);
+    if (message == 0)
+        handleInventoryUpdated(data);
 }
 
 void UIScene_CraftingMenu::updateTooltips()
 {
+    IUIScene_CraftingMenu::UpdateTooltips();
 }

@@ -2,15 +2,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
-
-class fui
-{
-public:
-    unsigned int getCustomTexture(const std::wstring& textureName,
-        unsigned int* width, unsigned int* height, bool* hasTexture);
-};
-
-extern fui* g_fui;
+#include "game/ui/fui.hpp"
 
 FJ_BitmapIcon::FJ_BitmapIcon(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_pBitmapNode(NULL)
@@ -48,7 +40,7 @@ void FJ_BitmapIcon::SetTextureName(const std::wstring& textureName)
         unsigned int width = 0;
         unsigned int height = 0;
         bool hasTexture = false;
-        unsigned int texture = g_fui->getCustomTexture(textureName, &width, &height, &hasTexture);
+        unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
         static_cast<fuiRenderNodeCodeGenRect*>(m_pBitmapNode->m_pRenderNode)->setTexture(
             width, height, texture, hasTexture);
         return;
@@ -62,7 +54,7 @@ void FJ_BitmapIcon::SetTextureName(const std::wstring& textureName)
     unsigned int width = 0;
     unsigned int height = 0;
     bool hasTexture = false;
-    unsigned int texture = g_fui->getCustomTexture(textureName, &width, &height, &hasTexture);
+    unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
     m_pBitmapNode = new FJ_FuiNode(renderNode);

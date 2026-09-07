@@ -32,9 +32,9 @@ UIControl_Base::~UIControl_Base()
 {
 }
 
-void UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    UIControl::setupControl(scene, node, name);
+    return UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_Base::setLabel(UIString label, bool update, bool force)

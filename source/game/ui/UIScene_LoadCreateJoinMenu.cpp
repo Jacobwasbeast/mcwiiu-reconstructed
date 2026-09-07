@@ -103,13 +103,13 @@ void UIScene_LoadCreateJoinMenu::handleLoseFocus()
     m_scene.killTimer(0);
 }
 
-unsigned int UIScene_LoadCreateJoinMenu::GetMainPanel()
+UIControl* UIScene_LoadCreateJoinMenu::GetMainPanel()
 {
     if (m_activeTab == 1)
-        return (unsigned int)&m_createTab;
+        return &m_createTab;
     if (m_activeTab == 2)
-        return (unsigned int)&m_joinTab;
-    return (unsigned int)&m_loadTab;
+        return &m_joinTab;
+    return &m_loadTab;
 }
 
 void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repeat, bool released,

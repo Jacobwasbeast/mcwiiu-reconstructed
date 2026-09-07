@@ -177,11 +177,11 @@ void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int, int, int, int y, b
     }
 }
 
-unsigned int UIScene_AvatarSelectMenu::GetMainPanel()
+UIControl* UIScene_AvatarSelectMenu::GetMainPanel()
 {
-    if (m_activeTab == 1) return (unsigned int)&m_favouriteControls;
-    if (m_activeTab == 2) return (unsigned int)&m_guestControls;
-    return (unsigned int)&m_userControls;
+    if (m_activeTab == 1) return &m_favouriteControls;
+    if (m_activeTab == 2) return &m_guestControls;
+    return &m_userControls;
 }
 
 void UIScene_AvatarSelectMenu::tick()

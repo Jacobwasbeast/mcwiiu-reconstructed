@@ -29,7 +29,7 @@ public:
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleFocusChange(int focus, int childFocus);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void handleReload();
     virtual void tick();
 private:

@@ -172,15 +172,15 @@ void UIScene_HopperMenu::handleReload()
     m_hopperSlot.addSlots(0, 9);
 }
 
-int UIScene_HopperMenu::getSection(
+UIControl* UIScene_HopperMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x44))
-        return 0x128;
+        return &m_hotbarList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x45))
-        return 0x188;
+        return &m_inventoryList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x46))
-        return 0x35c;
+        return &m_hopperSlot;
     return 0;
 }
 

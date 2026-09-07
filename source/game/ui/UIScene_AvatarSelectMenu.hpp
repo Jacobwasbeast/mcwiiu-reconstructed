@@ -38,7 +38,7 @@ public:
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleInitFocus(int focus, int childFocus);
     virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat, bool released, bool pressed);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void tick();
     void SelectTab(int tab);
     virtual std::wstring getMoviePath();

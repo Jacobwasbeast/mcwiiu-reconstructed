@@ -24,7 +24,7 @@ public:
     virtual void updateComponents();
     virtual void handleDestroy();
     virtual void tick();
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual std::wstring getMoviePath();
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,

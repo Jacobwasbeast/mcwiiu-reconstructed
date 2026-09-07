@@ -31,9 +31,9 @@ void UIControl_List::addElement(UIControl::eUIControlType type, int index)
     m_elements.push_back(index);
 }
 
-void UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_List::GetTopItem()

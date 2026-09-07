@@ -189,14 +189,14 @@ void UIScene_DispenserMenu::handleReload()
     m_dispenserSlot.addSlots(0, 9);
 }
 
-int UIScene_DispenserMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
+UIControl* UIScene_DispenserMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x11))
-        return 0x128;
+        return &m_hotbarList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x12))
-        return 0x188;
+        return &m_inventoryList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x13))
-        return 0x35c;
+        return &m_dispenserSlot;
     return 0;
 }
 

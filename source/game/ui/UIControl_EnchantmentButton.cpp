@@ -68,12 +68,12 @@ UIControl_EnchantmentButton::~UIControl_EnchantmentButton()
 {
 }
 
-void UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
     m_controlType = 6;
     m_controlId = 1;
-    UIControl_Button::setupControl(scene, node, name);
+    return UIControl_Button::setupControl(scene, node, name);
 }
 
 void UIControl_EnchantmentButton::updateState()
@@ -146,7 +146,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     UIScene_EnchantingMenu* scene = static_cast<UIScene_EnchantingMenu*>(m_scene);
     EnchantmentMenu* menu = scene->getMenu();
     float scale;
-    if (scene->m_resolution == 0)
+    if (scene->getPad() == 0)
     {
         scale = g_MinecraftApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
     }
@@ -180,7 +180,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
         }
         Minecraft::GetInstance()->mFont->drawWordWrap(
             m_name, 0, 0, (int)(m_width / scale),
-            colour, (int)(m_height / scale));
+            colour);
         GlStateManager::disableAlphaTest();
     }
     GlStateManager::disableRescaleNormal();

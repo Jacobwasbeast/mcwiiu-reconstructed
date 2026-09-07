@@ -12,7 +12,7 @@ void UIControl_DynamicButtonList::tick()
     int index = 0;
     while (label != m_labels.end()) {
         if (label->needsUpdating() != 0) {
-            const std::wstring& value = *(const std::wstring*)(long)label->getString();
+            const std::wstring& value = label->getString();
             setButtonLabel(index, value);
             label->setUpdated();
         }
@@ -27,7 +27,7 @@ void UIControl_DynamicButtonList::addItem(UIString label, int index)
         index = (int)getItemCount();
     }
     m_labels.push_back(label);
-    const std::wstring& value = *(const std::wstring*)(long)label.getString();
+    const std::wstring& value = label.getString();
     UIControl_ButtonList::addItem(value, index);
 }
 

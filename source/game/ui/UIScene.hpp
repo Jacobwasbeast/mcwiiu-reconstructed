@@ -64,7 +64,7 @@ public:
     virtual void handleLoseFocus();
     virtual bool hidesLowerScenes();
     virtual bool blocksInput();
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual bool allowRepeat(int action);

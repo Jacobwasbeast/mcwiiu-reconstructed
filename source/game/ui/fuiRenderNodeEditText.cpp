@@ -426,9 +426,15 @@ void fuiRenderNodeEditText::setHTMLText(const std::wstring& text)
 
 void fuiRenderNodeEditText::setAutoSize(TextFieldAutoSize autoSize)
 {
-    m_autoSize = autoSize;
-    m_dirty = true;
-    autoSizeBounds();
+    if (m_autoSize != autoSize)
+    {
+        if (m_html)
+        {
+            autoSizeBounds();
+            m_dirty = true;
+        }
+        m_autoSize = autoSize;
+    }
 }
 
 std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)

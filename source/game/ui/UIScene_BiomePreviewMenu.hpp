@@ -69,7 +69,7 @@ public:
     void handleNavigate(ENavDir direction);
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                              bool& handled);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual int getSceneType();
     void SetMapNavigator(int x, int z, int scale);
 

@@ -4,6 +4,8 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/DLCManager.hpp"
+#include "game/core/DLCPack.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
@@ -11,10 +13,26 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/FJ_LoadMenu.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/UIControl_CheckBox.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
+extern DLCManager g_DLCManager;
+
+static LaunchMoreOptionsMenuInitData* getLoadMenuInitData(UIScene_LoadMenu* scene)
+{
+    return reinterpret_cast<LaunchMoreOptionsMenuInitData*>(
+        reinterpret_cast<unsigned char*>(scene) + 0x494);
+}
+
+static UIControl_CheckBox* getLoadMenuOnlineCheckbox(UIScene_LoadMenu* scene)
+{
+    return reinterpret_cast<UIControl_CheckBox*>(
+        reinterpret_cast<unsigned char*>(scene) + 0x434);
+}
 
 UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
     : IUIScene_StartGame(sceneType, data, layer, true), m_seedLogic(), m_sizeLogic(),
@@ -108,17 +126,16 @@ uint32_t UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned
 
 unsigned int UIScene_LoadMenu::mapElementsAndNames()
 {
+    IUIScene_StartGame::mapElementsAndNames();
     if (m_movie == NULL)
         return 0;
     fuiRenderNode* root = m_movie->getRootNode();
     m_mainPanel.setupControl(this, root, std::string("MainPanel"));
     m_gameName.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("GameName"));
     m_createdMode.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("CreatedMode"));
-    m_description.setupControl(this, m_mainPanel.getFuiRenderNode(),
-                               std::string("TexturePackDescription"));
-    m_texturePackButton.setupControl(this, m_mainPanel.getFuiRenderNode(),
-                                     std::string("TexturePackSelector"));
-    m_playButton.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("Play"));
+    m_description.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("Seed"));
+    m_texturePackButton.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("TexturePackSelector"));
+    m_playButton.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("MoreOptions"));
     m_levelIcon.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("LevelIcon"));
     m_list.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("MultiList"));
     m_controls.push_back(&m_mainPanel);
@@ -159,7 +176,26 @@ void UIScene_LoadMenu::tick()
 {
     IUIScene_StartGame::tick();
     if (m_customGame || m_battleGame)
+    {
         UpdateIfPublicGamesAllowed();
+        MiniGameDef* game = MiniGameDef::GetCustomGameModeById(
+            static_cast<EMiniGameId>(m_gameMode), true);
+        if (game != NULL && game->HasGameVariants())
+        {
+            int value = static_cast<int>(m_list.GetSliderValue(0x10));
+            if (value != m_sizeValue)
+            {
+                m_list.SetSliderValue(0x10, m_sizeValue, true);
+                m_gameModeLogic.Update(m_list, m_sizeValue);
+            }
+        }
+    }
+    if (m_loadRequested)
+    {
+        m_loadRequested = false;
+        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x4c), NULL,
+                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    }
 }
 
 std::wstring UIScene_LoadMenu::getMoviePath()
@@ -200,18 +236,103 @@ void UIScene_LoadMenu::handlePress(int first, int second)
     gConsoleUIController.PlayUISFX(NULL);
     if (m_customGame || m_battleGame)
         first = second;
+    LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
     if (first == 3)
     {
-        StartSharedLaunchFlow();
+        if (!m_customGame)
+        {
+            bool checked = getLoadMenuOnlineCheckbox(this)->TouchIsChecked();
+            if (initData->mFlag0 != checked)
+            {
+                initData->mFlag0 = checked;
+                if (!checked)
+                {
+                    initData->mFlag1 = false;
+                    initData->mFlag2 = false;
+                }
+            }
+        }
+        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x2b), initData,
+                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
     if (first == 4)
     {
+        gConsoleUIController.PlayUISFX(NULL);
         UpdateCurrentTexturePack(second);
         return;
     }
     if (first == 0xd)
-        navigateBack();
+    {
+        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x3f), initData,
+                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+        return;
+    }
+    if (first < 6 || (first > 6 && first < 0x11) || first > 0x14)
+        return;
+
+    if (m_customGame || m_battleGame)
+    {
+        if (!MiniGameDef::IsCustomGame(static_cast<EMiniGameId>(m_gameMode),
+                                       initData->mPlayerSettings))
+            MasterGameMode::SetDefaults(*initData);
+
+        if (m_customGame && m_gameMode == 1 &&
+            GameSettings::GetBattleMiniGameMapSelection(m_sceneType) != 0)
+        {
+            std::vector<LevelRules::LevelRulesetGroup*>& groups = initData->mLevelRulesetGroups;
+            std::vector<LevelRules::LevelRulesetGroup*>::iterator group = groups.begin();
+            while (group != groups.end())
+            {
+                LevelRules::LevelRulesetGroup* current = *group;
+                LevelRuleset* ruleset = current->rulesets.front();
+                LevelGenerationOptions* options = ruleset->getGenerationOptions();
+                bool available = options != NULL && options->getPack() != NULL &&
+                                 options->getPack()->hasPurchasedPack();
+                if (!available &&
+                    !g_DLCManager.IsMiniGameTemporarilyFree(static_cast<int>(ruleset->getRuleType())))
+                    group = groups.erase(group);
+                else
+                    ++group;
+            }
+            if (groups.empty())
+            {
+                int messageParameter = static_cast<int>(0xb9a1bf4d);
+                gConsoleUIController.RequestAlertMessage(
+                    static_cast<int>(0xac598f61), static_cast<int>(0xb9bf8844),
+                    &messageParameter, 1, static_cast<unsigned int>(m_sceneType), 0, NULL, NULL,
+                    true);
+                return;
+            }
+        }
+    }
+
+    bool launchOnline = initData->mFlag0;
+    if (!launchOnline)
+    {
+        initData->mFlag1 = false;
+        m_onlineGame = false;
+        initData->mFlag2 = false;
+    }
+    else if (m_onlineGame)
+    {
+        initData->mFlag1 = false;
+        initData->mFlag2 = false;
+    }
+    if (!m_customGame)
+    {
+        bool checked = getLoadMenuOnlineCheckbox(this)->TouchIsChecked();
+        if (initData->mFlag0 != checked)
+        {
+            initData->mFlag0 = checked;
+            if (!checked)
+            {
+                initData->mFlag1 = false;
+                initData->mFlag2 = false;
+            }
+        }
+    }
+    StartSharedLaunchFlow();
 }
 
 void UIScene_LoadMenu::handleCheckboxToggled(int id, bool checked)
@@ -329,9 +450,9 @@ void UIScene_LoadMenu::checkStateAndStartGame()
     LaunchGame();
 }
 
-unsigned int UIScene_LoadMenu::GetMainPanel()
+UIControl* UIScene_LoadMenu::GetMainPanel()
 {
-    return (unsigned int)&m_mainPanel;
+    return &m_mainPanel;
 }
 
 void UIScene_LoadMenu::SetEnablePlayGameButton(bool enabled)

@@ -14,7 +14,7 @@ class UIControl_CheckboxButtonList : public UIControl_List
 public:
     UIControl_CheckboxButtonList();
     virtual ~UIControl_CheckboxButtonList();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void UseIggyIcons();
     void AddNewItem(const std::wstring& label, int id, bool checked,
                     const std::wstring& textureName);

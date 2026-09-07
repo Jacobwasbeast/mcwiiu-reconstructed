@@ -5,7 +5,6 @@
 
 UIComponent_Logo::UIComponent_Logo(int sceneType, void* callback, UILayer* layer) : UIScene(sceneType, layer)
 {
-    m_itemRenderer = callback;
     initialiseMovie();
     setLogoLanguage(0);
     m_visible = true;

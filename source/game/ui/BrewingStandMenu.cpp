@@ -33,10 +33,11 @@ int BrewingStandMenu::PotionSlot::getMaxStackSize()
     return 1;
 }
 
-void BrewingStandMenu::PotionSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> BrewingStandMenu::PotionSlot::onTake(boost::shared_ptr<Player> player,
+                                                                 not_null_ptr<ItemInstance> item)
 {
     item->onCraftedBy(NULL, player, 1);
-    Slot::onTake(player, item);
+    return Slot::onTake(player, item);
 }
 
 bool BrewingStandMenu::PotionSlot::mayCombine(not_null_ptr<ItemInstance> item)

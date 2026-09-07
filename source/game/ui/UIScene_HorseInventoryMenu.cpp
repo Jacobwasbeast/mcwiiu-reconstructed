@@ -285,14 +285,21 @@ void UIScene_HorseInventoryMenu::handleReload()
     setUp(true);
 }
 
-int UIScene_HorseInventoryMenu::getSection(
+UIControl* UIScene_HorseInventoryMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x48)) return 0x128;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x49)) return 0x188;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4a)) return 0x430;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4b)) return 0x3d0;
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4c)) return 0x370;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x48))
+        return &m_hotbarList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x49))
+        return &this->UIScene_AbstractContainerMenu::m_inventoryList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4a))
+        return (m_horse->GetType() & 0x0d69800000000000ULL) == 0x0d69800000000000ULL &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest()
+            ? &m_inventoryList : 0;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4b))
+        return m_horse->wearsArmor() ? &m_armorSlot : 0;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4c))
+        return m_horse->canBeSaddled() ? &m_saddleSlot : 0;
     return 0;
 }
 

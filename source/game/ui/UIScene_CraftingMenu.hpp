@@ -15,7 +15,7 @@ class ItemInstance;
 class UILayer;
 struct fuiRect;
 
-class UIScene_CraftingMenu : public UIScene
+class UIScene_CraftingMenu : public UIScene, public IUIScene_CraftingMenu
 {
 public:
     class _SlotInfo
@@ -23,9 +23,8 @@ public:
     public:
         _SlotInfo();
         ~_SlotInfo();
-        int slot;
-        int itemId;
-        int count;
+        not_null_ptr<ItemInstance> item;
+        unsigned int displayValue;
         bool visible;
     };
 
@@ -36,7 +35,7 @@ public:
     virtual int getSceneType();
     virtual void handleTimerComplete(int timerId);
     virtual void updateTooltips();
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual bool allowRepeat(int action);
     virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
@@ -45,21 +44,21 @@ public:
     virtual void handleTouchBoxRebuild();
     virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat, bool released, bool pressed);
 
-    unsigned int getPad();
+    virtual int getPad();
     void hideAllHSlots();
     void hideAllVSlots();
     void SetItemDescription(int index, const wchar_t* text);
     void hideAllIngredientsSlots();
-    void setCraftHSlotItem(int index, not_null_ptr<ItemInstance> item);
-    void setSpecialSlotItem(int index, not_null_ptr<ItemInstance> item);
-    void setCraftVSlotItem(int index, not_null_ptr<ItemInstance> item);
+    virtual void setCraftHSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue);
+    virtual void setSpecialSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue);
+    virtual void setCraftVSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue);
     void setCraftingOutputSlotItem(int index, not_null_ptr<ItemInstance> item);
     void setCraftingOutputSlotRedBox(bool show);
-    void setIngredientSlotItem(int index, not_null_ptr<ItemInstance> item);
+    virtual void setIngredientSlotItem(int, int index, not_null_ptr<ItemInstance> item);
     void setIngredientSlotRedBox(int index, bool show);
     void setIngredientSlotHighlighted(int index);
     void setInventorySlotHighlighted(int index);
-    void setIngredientDescriptionItem(int index, not_null_ptr<ItemInstance> item);
+    virtual void setIngredientDescriptionItem(int, int index, not_null_ptr<ItemInstance> item);
     void setIngredientDescriptionRedBox(int index, bool show);
     void setIngredientDescriptionText(int index, const wchar_t* text);
     void setPreviewSlotItem(int index, not_null_ptr<ItemInstance> item);
@@ -85,7 +84,16 @@ public:
     void HandleMessage(EUIMessage message, void* data);
 
 private:
-    IUIScene_CraftingMenu m_sceneInterface;
+    _SlotInfo m_horizontalSlotItems[12];
+    _SlotInfo m_verticalSlotItems[3];
+    _SlotInfo m_ingredientSlotItems[9];
+    _SlotInfo m_outputSlotItem;
+    _SlotInfo m_ingredientDescriptionItems[5];
+    _SlotInfo m_previewSlotItem;
+    not_null_ptr<ItemInstance> m_tabItems[7];
+    AbstractContainerMenu* m_openMenu;
+    bool m_touchDragging;
+    bool m_inventoryUpdatesDeferred;
     UIControl m_horizontalTab[5];
     UIControl_SlotList m_horizontalSlots;
     UIControl_SlotList m_verticalSlots[6];
@@ -99,7 +107,6 @@ private:
     UIControl_Label m_groupText;
     UIControl_Label m_itemName;
     UIControl_Label m_itemText[4];
-    int m_pad;
 };
 
 #endif

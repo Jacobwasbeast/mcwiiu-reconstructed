@@ -264,15 +264,15 @@ void UIScene_FurnaceMenu::tick()
     UIScene_AbstractContainerMenu::tick();
 }
 
-int UIScene_FurnaceMenu::getSection(
+UIControl* UIScene_FurnaceMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     const int value = static_cast<int>(section);
-    if (value == 4) return 0x128;
-    if (value == 5) return 0x188;
-    if (value == 6) return 0x3c0;
-    if (value == 7) return 0x360;
-    if (value == 8) return 0x420;
+    if (value == 4) return &m_hotbarList;
+    if (value == 5) return &m_inventoryList;
+    if (value == 6) return &m_ingredientSlot;
+    if (value == 7) return &m_fuelSlot;
+    if (value == 8) return &m_resultSlot;
     return 0;
 }
 

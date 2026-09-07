@@ -263,16 +263,20 @@ void UIScene_BrewingStandMenu::tick()
     UIScene_AbstractContainerMenu::tick();
 }
 
-int UIScene_BrewingStandMenu::getSection(
+UIControl* UIScene_BrewingStandMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == 0x29) return 0x128;
-    if (section == 0x2a) return 0x188;
-    if (section == 0x2b) return 0x360;
-    if (section == 0x2c) return 0x3c0;
-    if (section == 0x2d) return 0x420;
-    if (section == 0x2e) return 0x480;
-    if (section == 0x2f) return 0x4e0;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29))
+        return &m_hotbarList;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a))
+        return &m_inventoryList;
+    if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b) &&
+        section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2d))
+        return &m_bottleSlots[static_cast<int>(section) - 0x2b];
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e))
+        return &m_ingredientSlot;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f))
+        return &m_brewingPlate;
     return 0;
 }
 

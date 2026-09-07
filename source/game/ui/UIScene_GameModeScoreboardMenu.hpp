@@ -39,7 +39,7 @@ public:
     bool CanKickPlayer(INetworkPlayer* player);
     virtual void updateTooltips();
     virtual void handleGainFocus(bool hadFocus);
-    virtual unsigned int GetMainPanel();
+    virtual UIControl* GetMainPanel();
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled);
     virtual void handleDestroy();

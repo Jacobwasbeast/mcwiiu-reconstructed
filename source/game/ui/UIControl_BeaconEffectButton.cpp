@@ -18,9 +18,9 @@ UIControl_BeaconEffectButton::~UIControl_BeaconEffectButton()
 {
 }
 
-void UIControl_BeaconEffectButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_BeaconEffectButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    UIControl::setupControl(scene, node, name);
+    return UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_BeaconEffectButton::SetIcon(int icon)

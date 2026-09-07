@@ -25,7 +25,7 @@ public:
 
     UIControl_EnchantmentButton();
     virtual ~UIControl_EnchantmentButton();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void updateState();
     virtual void tick();
     void init(int index);
