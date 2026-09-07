@@ -2,8 +2,10 @@
 
 #include <math.h>
 
+#include "game/core/Mth.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
@@ -11,25 +13,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
-
-class Mth
-{
-public:
-    static float atan2(int y, int x);
-    static float sqrt(double value);
-};
-
-class PathfinderMob
-{
-public:
-    PathNavigation* getNavigation();
-    Random* getRandom();
-    bool hasRestriction();
-    BlockPos getRestrictCenter();
-    float getRestrictRadius();
-    bool isWithinRestriction(const BlockPos& pos);
-    float getWalkTargetValue(const BlockPos& pos);
-};
 
 static const float PI = 3.1415927f;
 static const float HALF_PI = 1.5707964f;

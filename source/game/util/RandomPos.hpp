@@ -14,7 +14,8 @@ public:
     static Vec3* getPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, int wanderingQuadrant);
     static Vec3* getLandPos(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, int wanderingQuadrant);
     static Vec3* getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target);
-    static Vec3* getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target, double maxAngleDelta);
+    static Vec3* getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target, double maxAngleDelta)
+        __asm__("getPosTowards__9RandomPosSFRCQ2_5boost34shared_ptr__tm__16_13PathfinderMobiT2P4Vec3d");
     static Vec3* getPosAvoid(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* avoid);
 
 private:
