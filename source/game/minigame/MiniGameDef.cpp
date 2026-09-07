@@ -5,6 +5,7 @@
 #include <sstream>
 #include "game/core/L10N.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
@@ -75,17 +76,10 @@ std::pair<bool, int> parseBuildMode(std::wstring value)
 
 void getVersionNumber(const XmlObject& object, unsigned short* major, unsigned short* minor)
 {
-    std::wstring version = object[L"version"].asString(L"1.0");
+    const std::wstring version = object[L"version"].XmlConstruct::asString(L"1.0");
     const std::wstring::size_type separator = version.find(L'.');
-    std::wistringstream majorStream(version.substr(0, separator));
-    majorStream >> *major;
-    if (separator == std::wstring::npos)
-    {
-        *minor = 0;
-        return;
-    }
-    std::wistringstream minorStream(version.substr(separator + 1));
-    minorStream >> *minor;
+    *major = _fromString<unsigned short>(version.substr(0, separator));
+    *minor = _fromString<unsigned short>(version.substr(separator + 1));
 }
 
 Block** getBlackList()
@@ -189,12 +183,14 @@ MiniGameDef::ChestRefill::ChestRefill()
 
 MiniGameDef::FoodBalance::FoodBalance()
     : mMaxFoodEnabled(false), mMaxFood(0), mMaxSaturationEnabled(false), mMaxSaturation(0.0f)
-    , mStartSaturationEnabled(false), mStartSaturation(0.0f), mExhaustionDropEnabled(false), mExhaustionDrop(0.0f)
+    , mStartSaturationEnabled(false), mStartSaturation(0.0f), mSaturationFloorEnabled(false), mSaturationFloor(0.0f)
+    , mExhaustionDropEnabled(false), mExhaustionDrop(0.0f)
     , mHealthTickEnabled(false), mHealthTickCount(0), mHealthTickSaturatedEnabled(false), mHealthTickCountSaturated(0)
     , mHealLevelEnabled(false), mHealLevel(0), mStarveLevelEnabled(false), mStarveLevel(0)
     , mSprintLevelEnabled(false), mSprintLevel(0), mExhaustionHealEnabled(false), mExhaustionHeal(0.0f)
     , mExhaustionJumpEnabled(false), mExhaustionJump(0.0f), mExhaustionSprintJumpEnabled(false), mExhaustionSprintJump(0.0f)
     , mExhaustionMineEnabled(false), mExhaustionMine(0.0f), mExhaustionAttackEnabled(false), mExhaustionAttack(0.0f)
+    , mExhaustionDamageEnabled(false), mExhaustionDamage(0.0f)
     , mExhaustionSneakEnabled(false), mExhaustionSneak(0.0f), mExhaustionWalkEnabled(false), mExhaustionWalk(0.0f)
     , mExhaustionSprintEnabled(false), mExhaustionSprint(0.0f), mExhaustionSwimEnabled(false), mExhaustionSwim(0.0f)
     , mExhaustionIdleEnabled(false), mExhaustionIdle(0.0f)
@@ -205,6 +201,7 @@ MiniGameDef::FoodBalance::FoodBalance(const FoodBalance& other)
     : mMaxFoodEnabled(other.mMaxFoodEnabled), mMaxFood(other.mMaxFood)
     , mMaxSaturationEnabled(other.mMaxSaturationEnabled), mMaxSaturation(other.mMaxSaturation)
     , mStartSaturationEnabled(other.mStartSaturationEnabled), mStartSaturation(other.mStartSaturation)
+    , mSaturationFloorEnabled(other.mSaturationFloorEnabled), mSaturationFloor(other.mSaturationFloor)
     , mExhaustionDropEnabled(other.mExhaustionDropEnabled), mExhaustionDrop(other.mExhaustionDrop)
     , mHealthTickEnabled(other.mHealthTickEnabled), mHealthTickCount(other.mHealthTickCount)
     , mHealthTickSaturatedEnabled(other.mHealthTickSaturatedEnabled), mHealthTickCountSaturated(other.mHealthTickCountSaturated)
@@ -216,6 +213,7 @@ MiniGameDef::FoodBalance::FoodBalance(const FoodBalance& other)
     , mExhaustionSprintJumpEnabled(other.mExhaustionSprintJumpEnabled), mExhaustionSprintJump(other.mExhaustionSprintJump)
     , mExhaustionMineEnabled(other.mExhaustionMineEnabled), mExhaustionMine(other.mExhaustionMine)
     , mExhaustionAttackEnabled(other.mExhaustionAttackEnabled), mExhaustionAttack(other.mExhaustionAttack)
+    , mExhaustionDamageEnabled(other.mExhaustionDamageEnabled), mExhaustionDamage(other.mExhaustionDamage)
     , mExhaustionSneakEnabled(other.mExhaustionSneakEnabled), mExhaustionSneak(other.mExhaustionSneak)
     , mExhaustionWalkEnabled(other.mExhaustionWalkEnabled), mExhaustionWalk(other.mExhaustionWalk)
     , mExhaustionSprintEnabled(other.mExhaustionSprintEnabled), mExhaustionSprint(other.mExhaustionSprint)
@@ -438,6 +436,8 @@ void MiniGameDef::parseFoodBalance(const XmlObject& object, FoodBalance* balance
     if (floatValue.isSet()) { balance->mMaxSaturationEnabled = true; balance->mMaxSaturation = floatValue.get(); }
     floatValue = object[L"startSaturation"].maybeFloat();
     if (floatValue.isSet()) { balance->mStartSaturationEnabled = true; balance->mStartSaturation = floatValue.get(); }
+    floatValue = object[L"saturationFloor"].maybeFloat();
+    if (floatValue.isSet()) { balance->mSaturationFloorEnabled = true; balance->mSaturationFloor = floatValue.get(); }
     floatValue = object[L"exhaustionDrop"].maybeFloat();
     if (floatValue.isSet()) { balance->mExhaustionDropEnabled = true; balance->mExhaustionDrop = floatValue.get(); }
     intValue = object[L"healthTickCount"].maybeInt();
@@ -460,6 +460,8 @@ void MiniGameDef::parseFoodBalance(const XmlObject& object, FoodBalance* balance
     if (floatValue.isSet()) { balance->mExhaustionMineEnabled = true; balance->mExhaustionMine = floatValue.get(); }
     floatValue = object[L"exhaustionAttack"].maybeFloat();
     if (floatValue.isSet()) { balance->mExhaustionAttackEnabled = true; balance->mExhaustionAttack = floatValue.get(); }
+    floatValue = object[L"exhaustionDamage"].maybeFloat();
+    if (floatValue.isSet()) { balance->mExhaustionDamageEnabled = true; balance->mExhaustionDamage = floatValue.get(); }
     floatValue = object[L"exhaustionSneak"].maybeFloat();
     if (floatValue.isSet()) { balance->mExhaustionSneakEnabled = true; balance->mExhaustionSneak = floatValue.get(); }
     floatValue = object[L"exhaustionWalk"].maybeFloat();
@@ -893,7 +895,17 @@ unsigned int MiniGameDef::HostOption_Category(eCustomGameModeHostOption option, 
 
 unsigned int MiniGameDef::HostOption_Category(eCustomGameModeHostOption option) const { return HostOption_Category(option, GetHostOption(option)); }
 int MiniGameDef::GetSpectateMode() const { return mSpectateMode != -1 ? mSpectateMode : HostOption_Category(eCustomGameModeHostOption_SpectateMode); }
-maybe<long long> MiniGameDef::GetSpectateEntity() const { return mSpectateEntitySet ? maybe<long long>(mSpectateEntity) : maybe<long long>(); }
+unsigned long long MiniGameDef::GetSpectateEntity() const
+{
+    unsigned int spectateMode = GetSpectateMode();
+    if (spectateMode == 1)
+        return 0x1D000101ULL;
+    if (spectateMode == 2)
+        return 0x2D6C0003ULL;
+    if (spectateMode == 3)
+        return 0x5D540048ULL;
+    return 0x0C80000000000000ULL;
+}
 maybe<int> MiniGameDef::getDifficulty() const { return mDifficultySet ? maybe<int>(mDifficulty) : maybe<int>(); }
 maybe<int> MiniGameDef::getPlayerGameType() const { return mPlayerGameTypeSet ? maybe<int>(mPlayerGameType) : maybe<int>(); }
 Abilities MiniGameDef::getPlayerAbilities() const { return mPlayerAbilitiesSet ? mPlayerAbilities : mPlayerSettings.mPlayerAbilities; }

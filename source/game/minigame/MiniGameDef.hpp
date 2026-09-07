@@ -108,6 +108,8 @@ public:
         float mMaxSaturation;
         bool mStartSaturationEnabled;
         float mStartSaturation;
+        bool mSaturationFloorEnabled;
+        float mSaturationFloor;
         bool mExhaustionDropEnabled;
         float mExhaustionDrop;
         bool mHealthTickEnabled;
@@ -130,6 +132,8 @@ public:
         float mExhaustionMine;
         bool mExhaustionAttackEnabled;
         float mExhaustionAttack;
+        bool mExhaustionDamageEnabled;
+        float mExhaustionDamage;
         bool mExhaustionSneakEnabled;
         float mExhaustionSneak;
         bool mExhaustionWalkEnabled;
@@ -321,7 +325,7 @@ public:
     unsigned int HostOption_Category(eCustomGameModeHostOption option, unsigned int index) const;
     unsigned int HostOption_Category(eCustomGameModeHostOption option) const;
     int GetSpectateMode() const;
-    maybe<long long> GetSpectateEntity() const;
+    unsigned long long GetSpectateEntity() const;
     maybe<int> getDifficulty() const;
     maybe<int> getPlayerGameType() const;
     Abilities getPlayerAbilities() const;

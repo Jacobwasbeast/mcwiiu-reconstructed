@@ -1,6 +1,4 @@
-#define private public
 #include "game/minigame/DamageSourceMedal.hpp"
-#undef private
 
 #include "game/core/StatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"
@@ -32,8 +30,9 @@ double DamageSourceMedal::GetScore(PlayerStats* playerStats) const
     for (std::vector<Scoreboard::EDamageSource>::const_iterator source = mSources->begin();
          source != mSources->end(); ++source)
     {
-        score += static_cast<double>(static_cast<StatTracker<float>*>(
-            playerStats->mDamageTakenBySource[*source])->getValue());
+        score = static_cast<double>(static_cast<float>(
+            score + static_cast<double>(static_cast<StatTracker<float>*>(
+                playerStats->mDamageTakenBySource[*source])->getValue())));
     }
 
     return score;
