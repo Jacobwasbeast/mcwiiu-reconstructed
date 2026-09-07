@@ -27,12 +27,20 @@ public:
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
 
-private:
+protected:
     int mItemId;
+
+private:
     int mCount;
+
+protected:
     int mData;
     int m4JData;
+
+private:
     int mSlot;
+
+protected:
     std::vector<AddEnchantmentRuleDefinition*> mEnchantments;
 };
 

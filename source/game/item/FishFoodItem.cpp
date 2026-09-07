@@ -9,7 +9,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 
-extern FishFoodItem::Type* gFishFoodTypes[4];
+FishFoodItem::Type* gFishFoodTypes[4] = { 0, 0, 0, 0 };
 extern FishFoodItem::Type* gPufferfishFoodType;
 
 FishFoodItem::FishFoodItem(bool cooked)

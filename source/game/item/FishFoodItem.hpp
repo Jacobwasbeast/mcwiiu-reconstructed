@@ -68,4 +68,6 @@ private:
     bool mCooked;
 };
 
+extern FishFoodItem::Type* gFishFoodTypes[4];
+
 #endif

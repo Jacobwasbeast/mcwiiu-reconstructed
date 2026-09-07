@@ -10,6 +10,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -67,9 +68,9 @@ void DefaultDispenseItemBehavior::spawnItem(Level* level, not_null_ptr<ItemInsta
 
     double speed = level->mRandom->nextDouble() * 0.1 + 0.2;
 
-    itemEntity->mXd = (double)direction->stepX * speed;
+    itemEntity->mXd = (double)direction->getStepX() * speed;
     itemEntity->mYd = 0.20000000298023224;
-    itemEntity->mZd = (double)direction->stepZ * speed;
+    itemEntity->mZd = (double)direction->getStepZ() * speed;
 
     itemEntity->mXd += level->mRandom->nextGaussian() * 0.007499999832361937 * (double)power;
     itemEntity->mYd += level->mRandom->nextGaussian() * 0.007499999832361937 * (double)power;
@@ -101,5 +102,5 @@ void DefaultDispenseItemBehavior::playAnimation(BlockSource* blockSource, const 
 
 int DefaultDispenseItemBehavior::getLevelEventDataFrom(const Direction* direction)
 {
-    return direction->stepX + direction->stepZ * 3 + 4;
+    return direction->getStepX() + direction->getStepZ() * 3 + 4;
 }

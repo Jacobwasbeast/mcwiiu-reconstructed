@@ -39,6 +39,8 @@ public:
         MapItemSavedData* mMapData;
     };
 private:
+    friend class ClientboundMapItemDataPacket;
+
     struct PlayerKeyHash
     {
         std::size_t operator()(const boost::shared_ptr<Player>& player) const { return (std::size_t)player.get(); }

@@ -441,7 +441,7 @@ void Inventory::placeItemBackInInventory(Level* level, not_null_ptr<ItemInstance
         int room = current->isEmpty() ? item->getMaxStackSize()
                                       : current->getMaxStackSize() - currentCount;
         room = std::min(room, getMaxStackSize() - currentCount);
-        not_null_ptr<ItemInstance> part(new ItemInstance(item->split(std::min(room, item->getCount()))));
+        not_null_ptr<ItemInstance> part = item->split(std::min(room, item->getCount()));
         if (!add(slot, part))
         {
             m_player->drop(item, false);

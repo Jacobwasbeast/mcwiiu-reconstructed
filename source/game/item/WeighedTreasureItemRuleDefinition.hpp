@@ -4,10 +4,10 @@
 #include <vector>
 
 #include "game/core/WeighedTreasure.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/minigame/GameRuleDefinition.hpp"
 
-#define private protected
 #include "game/item/AddItemRuleDefinition.hpp"
-#undef private
 
 class WeighedTreasureItemRuleDefinition : public AddItemRuleDefinition
 {

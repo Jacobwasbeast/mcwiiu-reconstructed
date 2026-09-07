@@ -28,9 +28,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 static const int HEALTH_PER_SLOT[4] = { 13, 15, 16, 11 };

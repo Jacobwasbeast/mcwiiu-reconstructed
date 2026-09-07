@@ -91,16 +91,21 @@
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockPlanterItem.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/CoralFanBlockItem.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/block/DirtBlock.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
 #include "game/world/block/FlowerBlock.hpp"
+#include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/HalfNewStoneSlabBlock.hpp"
+#include "game/world/block/HalfWoodSlabBlock.hpp"
 #include "game/world/block/ItemPropertyFunction_Cooldown.hpp"
 #include "game/world/block/ItemPropertyFunction_Damage.hpp"
 #include "game/world/block/ItemPropertyFunction_Damaged.hpp"
 #include "game/world/block/ItemPropertyFunction_LeftHanded.hpp"
 #include "game/world/block/LeafBlockItem.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MonsterEggBlock.hpp"
 #include "game/world/block/MultiBlockItem.hpp"
@@ -789,10 +794,10 @@ const wchar_t* Item::getDescription(not_null_ptr<ItemInstance> itemInstance)
 
 HitResult* Item::getPlayerPOVHitResult(Level* level, boost::shared_ptr<Player> player, bool useLiquids)
 {
-    float xRot = player->xRot;
-    float yRot = player->yRot;
+    float xRot = player->mXRot;
+    float yRot = player->mYRot;
 
-    Vec3* from = Vec3::newTemp(player->x, player->y + player->getEyeHeight(), player->z);
+    Vec3* from = Vec3::newTemp(player->mX, player->mY + player->getEyeHeight(), player->mZ);
 
     float yaw = -yRot * 0.017453292f - 3.1415927f;
     float cosYaw = cosf(yaw);
@@ -1103,13 +1108,19 @@ void Item::staticCtor()
     registerBlock(Blocks::cake);
     registerBlock(Blocks::wheat);
     registerBlock(Blocks::double_wooden_slab,
-        (new SlabBlockItem(Blocks::double_wooden_slab, Blocks::wooden_slab, Blocks::double_wooden_slab))->setDescriptionId(Blocks::double_wooden_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::double_wooden_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::wooden_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::double_wooden_slab)))->setDescriptionId(Blocks::double_wooden_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::double_stone_slab,
-        (new SlabBlockItem(Blocks::double_stone_slab, Blocks::stone_slab, Blocks::double_stone_slab))->setDescriptionId(Blocks::double_stone_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::double_stone_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::stone_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::double_stone_slab)))->setDescriptionId(Blocks::double_stone_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::double_stone_slab2,
-        (new SlabBlockItem(Blocks::double_stone_slab2, Blocks::stone_slab2, Blocks::double_stone_slab2))->setDescriptionId(Blocks::double_stone_slab2->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::double_stone_slab2,
+                           static_cast<HalfSlabBlock*>(Blocks::stone_slab2),
+                           static_cast<HalfSlabBlock*>(Blocks::double_stone_slab2)))->setDescriptionId(Blocks::double_stone_slab2->getDescriptionId(-1)));
 
     registerBlock(Blocks::bed);
     registerBlock(Blocks::piston_head);
@@ -1163,10 +1174,10 @@ void Item::staticCtor()
         (new MultiBlockItem(Blocks::log2, Blocks::log2, Log2BlockNameResolver, NULL))->setDescriptionId(Blocks::log2->getDescriptionId(-1)));
 
     registerBlock(Blocks::leaves,
-        (new LeafBlockItem(Blocks::leaves))->setDescriptionId(Blocks::leaves->getDescriptionId(-1)));
+        (new LeafBlockItem(static_cast<LeafBlock*>(Blocks::leaves)))->setDescriptionId(Blocks::leaves->getDescriptionId(-1)));
 
     registerBlock(Blocks::leaves2,
-        (new LeafBlockItem(Blocks::leaves2))->setDescriptionId(Blocks::leaves2->getDescriptionId(-1)));
+        (new LeafBlockItem(static_cast<LeafBlock*>(Blocks::leaves2)))->setDescriptionId(Blocks::leaves2->getDescriptionId(-1)));
 
     registerBlock(Blocks::sponge,
         (new MultiBlockItem(Blocks::sponge, Blocks::sponge, SpongeBlockNameResolver, SpongeBlockDescResolver))->setDescriptionId(Blocks::sponge->getDescriptionId(-1)));
@@ -1215,7 +1226,9 @@ void Item::staticCtor()
     registerBlock(Blocks::gold_block);
     registerBlock(Blocks::iron_block);
     registerBlock(Blocks::stone_slab,
-        (new SlabBlockItem(Blocks::stone_slab, Blocks::stone_slab, Blocks::double_stone_slab))->setDescriptionId(Blocks::stone_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::stone_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::stone_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::double_stone_slab)))->setDescriptionId(Blocks::stone_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::brick_block);
     registerBlock(Blocks::tnt);
@@ -1306,7 +1319,9 @@ void Item::staticCtor()
     registerBlock(Blocks::dragon_egg);
     registerBlock(Blocks::redstone_lamp);
     registerBlock(Blocks::wooden_slab,
-        (new SlabBlockItem(Blocks::wooden_slab, Blocks::wooden_slab, Blocks::double_wooden_slab))->setDescriptionId(Blocks::wooden_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::wooden_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::wooden_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::double_wooden_slab)))->setDescriptionId(Blocks::wooden_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::sandstone_stairs);
     registerBlock(Blocks::emerald_ore);
@@ -1371,7 +1386,9 @@ void Item::staticCtor()
 
     registerBlock(Blocks::red_sandstone_stairs);
     registerBlock(Blocks::stone_slab2,
-        (new SlabBlockItem(Blocks::stone_slab2, Blocks::stone_slab2, Blocks::double_stone_slab2))->setDescriptionId(Blocks::stone_slab2->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::stone_slab2,
+                           static_cast<HalfSlabBlock*>(Blocks::stone_slab2),
+                           static_cast<HalfSlabBlock*>(Blocks::double_stone_slab2)))->setDescriptionId(Blocks::stone_slab2->getDescriptionId(-1)));
 
     registerBlock(Blocks::repeating_command_block);
     registerBlock(Blocks::chain_command_block);
@@ -1390,7 +1407,9 @@ void Item::staticCtor()
     registerBlock(Blocks::purpur_pillar);
     registerBlock(Blocks::purpur_stairs);
     registerBlock(Blocks::purpur_slab,
-        (new SlabBlockItem(Blocks::purpur_slab, Blocks::purpur_slab, Blocks::purpur_double_slab))->setDescriptionId(Blocks::purpur_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::purpur_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::purpur_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::purpur_double_slab)))->setDescriptionId(Blocks::purpur_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::observer);
     registerBlock(Blocks::white_shulker_box,
@@ -1488,10 +1507,14 @@ void Item::staticCtor()
     registerBlock(Blocks::prismarine_bricks_stairs);
     registerBlock(Blocks::dark_prismarine_stairs);
     registerBlock(Blocks::prismarine_double_slab,
-        (new SlabBlockItem(Blocks::prismarine_double_slab, Blocks::prismarine_slab, Blocks::prismarine_double_slab))->setDescriptionId(Blocks::prismarine_double_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::prismarine_double_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::prismarine_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::prismarine_double_slab)))->setDescriptionId(Blocks::prismarine_double_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::prismarine_slab,
-        (new SlabBlockItem(Blocks::prismarine_slab, Blocks::prismarine_slab, Blocks::prismarine_double_slab))->setDescriptionId(Blocks::prismarine_slab->getDescriptionId(-1)));
+        (new SlabBlockItem(Blocks::prismarine_slab,
+                           static_cast<HalfSlabBlock*>(Blocks::prismarine_slab),
+                           static_cast<HalfSlabBlock*>(Blocks::prismarine_double_slab)))->setDescriptionId(Blocks::prismarine_slab->getDescriptionId(-1)));
 
     registerBlock(Blocks::stripped_log_spruce);
     registerBlock(Blocks::stripped_log_birch);
@@ -1713,8 +1736,10 @@ void Item::staticCtor()
     registerItem(321, L"painting",
         (new HangingEntityItem(168296449))->setIconName(L"painting")->setBaseItemTypeAndMaterial(34, 6)->setDescriptionId(-463947452, -491034602));
 
+    GoldenAppleItem* goldenApple = new GoldenAppleItem(4, 1.2f, false);
+    goldenApple->setCanAlwaysEat();
     registerItem(322, L"golden_apple",
-        (new GoldenAppleItem(4, 1.2f, false))->setCanAlwaysEat()->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(734880521));
+        goldenApple->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(734880521));
 
     registerItem(323, L"sign",
         (new SignItem())->setIconName(L"sign")->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(1796751397, -1238865095));
@@ -1733,7 +1758,7 @@ void Item::staticCtor()
         (new BucketItem(BucketItem::LAVA))->setIconName(L"bucketLava")->setDescriptionId(1347532861, -961045919)->setCraftingRemainingItem(bucket));
 
     registerItem(328, L"minecart",
-        (new MinecartItem(Minecart::Type::RIDEABLE))->setIconName(L"minecart")->setDescriptionId(355424797, -553182335));
+        (new MinecartItem(new Minecart::Type(0)))->setIconName(L"minecart")->setDescriptionId(355424797, -553182335));
 
     registerItem(329, L"saddle",
         (new SaddleItem())->setIconName(L"saddle")->setDescriptionId(-193278267, -1237232279));
@@ -1775,10 +1800,10 @@ void Item::staticCtor()
         (new Item())->setBaseItemTypeAndMaterial(31, 57)->setIconName(L"slimeball")->setDescriptionId(-481976557, 98267391));
 
     registerItem(342, L"chest_minecart",
-        (new MinecartItem(Minecart::Type::CHEST))->setIconName(L"minecart_chest")->setDescriptionId(-938611253, 1054022074));
+        (new MinecartItem(new Minecart::Type(1)))->setIconName(L"minecart_chest")->setDescriptionId(-938611253, 1054022074));
 
     registerItem(343, L"furnace_minecart",
-        (new MinecartItem(Minecart::Type::FURNACE))->setIconName(L"minecart_furnace")->setDescriptionId(1601064106, -1151498037));
+        (new MinecartItem(new Minecart::Type(2)))->setIconName(L"minecart_furnace")->setDescriptionId(1601064106, -1151498037));
 
     registerItem(344, L"egg",
         (new EggItem())->setIconName(L"egg")->setDescriptionId(1042617547, 2114636071));
@@ -1971,10 +1996,10 @@ void Item::staticCtor()
         (new Item())->setIconName(L"netherquartz")->setDescriptionId(1628555888, 672971852));
 
     registerItem(407, L"tnt_minecart",
-        (new MinecartItem(Minecart::Type::TNT))->setIconName(L"minecart_tnt")->setDescriptionId(536518348, -582255728));
+        (new MinecartItem(new Minecart::Type(3)))->setIconName(L"minecart_tnt")->setDescriptionId(536518348, -582255728));
 
     registerItem(408, L"hopper_minecart",
-        (new MinecartItem(Minecart::Type::HOPPER))->setIconName(L"minecart_hopper")->setDescriptionId(407956570, 1720142774)->setBaseItemTypeAndMaterial(51, 2));
+        (new MinecartItem(new Minecart::Type(5)))->setIconName(L"minecart_hopper")->setDescriptionId(407956570, 1720142774)->setBaseItemTypeAndMaterial(51, 2));
 
     registerItem(409, L"prismarine_shard",
         (new Item())->setIconName(L"prismarine_shard")->setDescriptionId(-1734485527, -139328763)->setBaseItemTypeAndMaterial(13, 0));
@@ -2016,7 +2041,7 @@ void Item::staticCtor()
         (new NameTagItem())->setIconName(L"name_tag")->setDescriptionId(1571167052, -1157170768));
 
     registerItem(422, L"command_block_minecart",
-        (new MinecartItem(Minecart::Type::COMMAND_BLOCK))->setIconName(L"minecart_command_block")->setDescriptionId(1240614701));
+        (new MinecartItem(new Minecart::Type(6)))->setIconName(L"minecart_command_block")->setDescriptionId(1240614701));
 
     registerItem(423, L"mutton",
         (new FoodItem(2, 0.3f, true))->setIconName(L"mutton_raw")->setDescriptionId(293143052, 1126897824));
@@ -2045,8 +2070,10 @@ void Item::staticCtor()
     registerItem(431, L"dark_oak_door",
         (new DoorItem(Blocks::dark_oak_door))->setIconName(L"door_dark_oak")->setBaseItemTypeAndMaterial(6, 43)->setDescriptionId(2079745405, 716140400));
 
+    ChorusFruitItem* chorusFruit = new ChorusFruitItem(4, 0.3f);
+    chorusFruit->setCanAlwaysEat();
     registerItem(432, L"chorus_fruit",
-        (new ChorusFruitItem(4, 0.3f))->setCanAlwaysEat()->setIconName(L"chorus_fruit")->setDescriptionId(1382809597, 1974603715));
+        chorusFruit->setIconName(L"chorus_fruit")->setDescriptionId(1382809597, 1974603715));
 
     registerItem(433, L"chorus_fruit_popped",
         (new Item())->setIconName(L"chorus_fruit_popped")->setDescriptionId(-1703038476, -49110038));
@@ -2121,8 +2148,10 @@ void Item::staticCtor()
     registerItem(457, L"kelp",
         (new BlockPlanterItem(Blocks::kelp))->setIconName(L"kelp")->setDescriptionId(-1994572636, -339922518));
 
+    FoodItem* driedKelp = new FoodItem(1, 0.1f, false);
+    driedKelp->setIsFastFood();
     registerItem(458, L"dried_kelp",
-        (new FoodItem(1, 0.1f, false))->setIsFastFood()->setIconName(L"dried_kelp")->setBaseItemTypeAndMaterial(31, 73)->setDescriptionId(1804500885, 604979483));
+        driedKelp->setIconName(L"dried_kelp")->setBaseItemTypeAndMaterial(31, 73)->setDescriptionId(1804500885, 604979483));
 
     registerItem(459, L"fish_bucket",
         (new BucketItem(BucketItem::FISH))->setIconName(L"bucketFish")->setDescriptionId(1660035055, -2029668429)->setCraftingRemainingItem(bucket));

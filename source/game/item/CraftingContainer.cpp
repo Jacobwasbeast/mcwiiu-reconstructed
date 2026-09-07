@@ -79,7 +79,7 @@ not_null_ptr<ItemInstance> CraftingContainer::removeItem(unsigned int slot, int 
     {
         return ItemInstance::EMPTY;
     }
-    not_null_ptr<ItemInstance> result = item->split(count).copy_not_shared();
+    not_null_ptr<ItemInstance> result = item->split(count);
     setChanged();
     return result;
 }

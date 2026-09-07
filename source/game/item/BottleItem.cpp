@@ -38,7 +38,7 @@ void BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
 
     if (!itemInstance->isEmpty())
     {
-        if (!player->mField0x5f0->add(result))
+        if (!player->mInventory->add(result))
         {
             player->drop(result, false);
         }

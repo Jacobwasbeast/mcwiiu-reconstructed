@@ -12,6 +12,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/SkullBlock.hpp"
 #include "game/world/block/SkullBlockEntity.hpp"

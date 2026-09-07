@@ -1,6 +1,6 @@
 #include "game/item/ItemInstanceClonerBuilder.hpp"
 
-ItemInstance ItemInstanceClonerBuilder::build() const
+not_null_ptr<ItemInstance> ItemInstanceClonerBuilder::build() const
 {
     return itemInstance.copy();
 }

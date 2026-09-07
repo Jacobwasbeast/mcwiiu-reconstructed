@@ -4,7 +4,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/ClockItem_ItemPropertyFunction.hpp"
-#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 ClockItem::ClockItem()
     : Item()

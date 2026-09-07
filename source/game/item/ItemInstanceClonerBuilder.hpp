@@ -6,7 +6,7 @@
 class ItemInstanceClonerBuilder
 {
 public:
-    virtual ItemInstance build() const;
+    virtual not_null_ptr<ItemInstance> build() const;
 
 private:
     ItemInstance itemInstance;

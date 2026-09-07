@@ -21,8 +21,8 @@ not_null_ptr<ItemInstance> ContainerHelper::removeItem(NonNullList<not_null_ptr<
     {
         return ItemInstance::EMPTY;
     }
-    ItemInstance split = items[slot]->split((int)count);
-    return not_null_ptr<ItemInstance>(new ItemInstance(split));
+    not_null_ptr<ItemInstance> split = items[slot]->split((int)count);
+    return split;
 }
 
 CompoundTag* ContainerHelper::saveAllItems(CompoundTag* tag, NonNullList<not_null_ptr<ItemInstance> > items, bool saveEmpty)

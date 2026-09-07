@@ -14,6 +14,7 @@ class Item;
 class ItemInstance;
 class Level;
 class ListTag;
+class Minecraft;
 class Player;
 class ServerGamePacketListenerImpl;
 
@@ -98,6 +99,7 @@ public:
     int countMatches(Item* item);
 
 private:
+    friend class Minecraft;
     friend class ServerGamePacketListenerImpl;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;

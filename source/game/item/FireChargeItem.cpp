@@ -2,8 +2,11 @@
 
 #include <string>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -43,7 +46,14 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
     {
         if (state->getBlock() == Blocks::AIR)
         {
-            level->setBlock(target, Blocks::FIRE->defaultBlockState(), 4, false);
+            level->playSound(boost::shared_ptr<Player>(),
+                             target,
+                             SoundEvents::FLINTANDSTEEL_USE,
+                             SoundSource::eSoundSource_Blocks,
+                             1.0f,
+                             (random->nextFloat() - random->nextFloat()) * 0.2f + 1.0f,
+                             16.0f);
+            level->setBlockAndUpdate(target, Blocks::FIRE->defaultBlockState());
         }
         if (!player->mAbilities.mInstabuild)
         {

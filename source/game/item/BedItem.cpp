@@ -71,10 +71,16 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
     if (!level->mIsClientSide && !simulate)
     {
         TypedBoxed<const Direction*> facingValue(facing);
-        const BlockState* state = Blocks::bed->defaultBlockState()->setBoxedValue(
+        TypedBoxed<bool> occupiedValue(false);
+        TypedBoxed<const BedBlock::Part*> footValue(BedBlock::PART->getUnboxedValue(L"foot"));
+        TypedBoxed<const BedBlock::Part*> headValue(BedBlock::PART->getUnboxedValue(L"head"));
+        const BlockState* footState = Blocks::bed->defaultBlockState()->setBoxedValue(
             HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
-        level->setBlock(footPos, state, 3, false);
-        level->setBlock(headPos, state, 3, false);
+        footState = footState->setBoxedValue(BedBlock::OCCUPIED, &occupiedValue);
+        footState = footState->setBoxedValue(BedBlock::PART, &footValue);
+        const BlockState* headState = footState->setBoxedValue(BedBlock::PART, &headValue);
+        level->setBlock(footPos, footState, 11, false);
+        level->setBlock(headPos, headState, 11, false);
 
         const SoundType* soundType = Blocks::bed->getSoundType();
         player->awardStat(Stats::blockPlacedStats.data[Block::getId(Blocks::bed)],

@@ -23,7 +23,7 @@
 
 int BucketItem::getSchoolName(int a, int b, int c, int d)
 {
-    static const int values[11][10] = {
+    static const unsigned int values[11][10] = {
         { 1, 7, 1, 1, 0x32c4c9ab, 7, 7, 1, 0, 0xd50701c3 },
         { 7, 3, 0, 1, 0xcd035b9e, 0, 7, 0, 4, 0x47b1b097 },
         { 11, 7, 0, 1, 0x6ccc17a8, 1, 0, 0, 0, 0x9adcd29d },
@@ -41,11 +41,11 @@ int BucketItem::getSchoolName(int a, int b, int c, int d)
     {
         if (values[i][0] == a && values[i][1] == b && values[i][2] == c && values[i][3] == d)
         {
-            return values[i][4];
+            return static_cast<int>(values[i][4]);
         }
         if (values[i][5] == a && values[i][6] == b && values[i][7] == c && values[i][8] == d)
         {
-            return values[i][9];
+            return static_cast<int>(values[i][9]);
         }
     }
     return -1;
@@ -184,8 +184,8 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
 
 bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted, bool host)
 {
-    bool censored = !CMinecraftApp::sInstance.IsUUIDLocal(owner) &&
-                    (CMinecraftApp::sInstance.IsConsoleChatCensored() || restricted);
+    bool censored = !g_pApp->IsUUIDLocal(owner) &&
+                    (g_pApp->IsConsoleChatCensored() || restricted);
     bool hidden = !host && censored;
     return (!CGameNetworkManager::sInstance.IsHost() || !hidden) &&
            (CGameNetworkManager::sInstance.IsHost() || !censored);
@@ -194,7 +194,7 @@ bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::w
 bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance)
 {
     std::wstring key(L"FishBucket");
-    CompoundTag* tag = itemInstance->getTagElement(key);
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(key));
     if (tag == NULL || !entity)
     {
         return false;
