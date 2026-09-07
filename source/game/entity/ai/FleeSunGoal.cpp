@@ -52,7 +52,7 @@ Vec3* FleeSunGoal::getHidePos()
 bool FleeSunGoal::canUse()
 {
     Entity* entity = (Entity*)mMob;
-    if (!mLevel->isDay() || !mMob->couldWander() || entity->isInWaterOrRain())
+    if (!mLevel->isDay() || !mMob->isSunBurnTick() || entity->isInWaterOrRain())
         return false;
 
     BlockPos pos(entity->mX, entity->mY, entity->mZ);
