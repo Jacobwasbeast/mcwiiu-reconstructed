@@ -5,9 +5,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/entity/mob/Entity.hpp"
 #include "game/command/Command.hpp"
 #include "game/command/EGameCommand.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/network/GameCommandPacket.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
@@ -22,10 +22,9 @@ public:
     virtual int getPermissionLevel();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);
 
-    static boost::shared_ptr<GameCommandPacket> preparePacket();
-
-private:
     bool isValidWildcardPlayerArgument(std::wstring playerName, int argumentIndex);
+
+    static boost::shared_ptr<GameCommandPacket> preparePacket();
 };
 
 #endif
