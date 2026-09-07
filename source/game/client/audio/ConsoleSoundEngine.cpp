@@ -200,10 +200,6 @@ bool ConsoleSoundEngine::isPlaying(SoundInstance* sound)
     return it != this->playingSounds.end();
 }
 
-void ConsoleSoundEngine::stop(SoundInstance* sound)
-{
-}
-
 void ConsoleSoundEngine::stopAll()
 {
     std::vector<TickableSoundInstance*>::iterator it;

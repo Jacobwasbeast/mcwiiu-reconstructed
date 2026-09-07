@@ -8,6 +8,7 @@
 #include "game/world/block/MappedRegistry.hpp"
 
 class SoundEvent;
+class ClientboundSoundPacket;
 
 class SoundEvents
 {
@@ -666,6 +667,8 @@ public:
     static SoundEvent* BUBBLE_COLUMN_WHIRLPOOL_INSIDE;
 
 private:
+    friend class ClientboundSoundPacket;
+
     static SoundEvent* registerSound(SoundEvent* soundEvent);
     static SoundEvent* registerSound(const std::wstring& name);
 

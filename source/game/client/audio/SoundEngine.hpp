@@ -3,7 +3,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/client/audio/ConsoleSoundEngine.hpp"
-class File; class Options; class Random; class SoundEvent; class SoundInstance; class Mob; class AudioInfo;
+class File; class Options; class Random; class SoundEvent; class SoundInstance; class MultiplayerLocalPlayer; class AudioInfo;
 class SoundEngine : public ConsoleSoundEngine {
 public:
  enum eMusicType { eMusicType_Overworld, eMusicType_Nether, eMusicType_End, eMusicType_Menu };
@@ -20,7 +20,7 @@ public:
  static void UpdateSound(void*,void*,bool*,int,float*,float*,float* ,float*);
  static void ConfigureSound(void*,void*,bool*,float*,float*,float*,float*,float*,float*);
  void playMusicUpdate(); virtual void playMusicTick(); virtual void init(Options*);
- static bool RouteToDRC(void*,void*); void updateMiles(); virtual void tick(boost::shared_ptr<Mob>*,float);
+ static bool RouteToDRC(void*,void*); void updateMiles(); virtual void tick(boost::shared_ptr<MultiplayerLocalPlayer>*,float);
  virtual void add(const std::wstring&,File*); virtual void addMusic(const std::wstring&,File*); virtual void addStreaming(const std::wstring&,File*);
  virtual char* ConvertSoundPathToName(const std::wstring&,bool); void FlagMusicEventStart(); void updateSoundEffectVolume(float); bool isStreamingWavebankReady();
 private:

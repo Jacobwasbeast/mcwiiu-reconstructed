@@ -160,7 +160,7 @@ void SoundEngine::updateMiles()
     updateSystemMusicPlaying(GetMusicToPlay());
 }
 
-void SoundEngine::tick(boost::shared_ptr<Mob>*, float)
+void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>*, float)
 {
     ConsoleSoundEngine::tick();
     updateMiles();

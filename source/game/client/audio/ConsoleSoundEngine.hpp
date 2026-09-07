@@ -15,7 +15,7 @@
 #include "game/core/CriticalSection.hpp"
 
 class File;
-class Mob;
+class MultiplayerLocalPlayer;
 class Options;
 
 class ConsoleSoundEngine
@@ -36,7 +36,7 @@ public:
 
     virtual ~ConsoleSoundEngine();
 
-    virtual void tick(boost::shared_ptr<Mob>* listener, float partialTicks) = 0;
+    virtual void tick(boost::shared_ptr<MultiplayerLocalPlayer>* listener, float partialTicks) = 0;
     virtual void destroy() = 0;
     virtual void shutdown() = 0;
     virtual void play(const SoundEvent* sound, float x, float y, float z, float volume, float pitch,
