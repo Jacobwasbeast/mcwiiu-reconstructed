@@ -111,6 +111,14 @@ bool LevelChunk::isReady()
 {
     return mLightPopulated && (mChunkFlags & 0x400) != 0 && mPostProcess;
 }
+bool LevelChunk::isLoaded()
+{
+    return mLoaded;
+}
+bool LevelChunk::isLightPopulated()
+{
+    return mLightPopulated;
+}
 int LevelChunk::getBlockId(int x, int y, int z)
 {
     return (int)(mElements->get(x, y, z, NULL) >> 4);

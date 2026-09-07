@@ -11,6 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
@@ -49,7 +50,8 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     int centreChunkZ;
     if (players->getPlayerCount() < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
     {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
+        boost::shared_ptr<Player> player =
+            boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
         centreChunkX = Mth::clamp(player->mChunkX, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
                                   halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
         centreChunkZ = Mth::clamp(player->mChunkZ, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,

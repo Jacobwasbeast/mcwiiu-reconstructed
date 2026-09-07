@@ -36,6 +36,8 @@ class SparseLightStorage;
 class Direction;
 class OldChunkStorage;
 
+unsigned int hash_value(const BlockPos& pos);
+
 class LevelChunk
 {
 public:
