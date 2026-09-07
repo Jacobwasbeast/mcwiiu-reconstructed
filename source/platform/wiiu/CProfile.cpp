@@ -14,6 +14,7 @@ namespace nn
     {
         unsigned int Initialize();
         unsigned int GetUuid(ACTUuid*);
+        int GetSlotNoEx(const ACTUuid&);
         bool IsNetworkAccount();
         unsigned int GetAccountId(char*);
         unsigned int GetPrincipalId();
@@ -36,6 +37,9 @@ int getSlotId(int);
 int SCIGetParentalEnable(unsigned char*);
 int SCIGetParentalAccountEShopPurchase(unsigned char*, unsigned char);
 int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
+int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
+int VerifyCountryRange(unsigned int*);
+int SCIGetISOResource(char*, unsigned int, const char*);
 void OSFastMutex_Init(OSFastMutex*, const char*);
 void OSFastMutex_Lock(OSFastMutex*);
 void OSFastMutex_Unlock(OSFastMutex*);
@@ -59,6 +63,99 @@ int FSCloseFile(FSClient*, void*, int, unsigned int);
 int FSGetStatFile(FSClient*, void*, int, void*, unsigned int);
 
 CProfile* gProfile;
+
+static char sCountryCodeData[0x300];
+
+void getPlayerUID(PlayerUID* uid, int quadrant, bool includeOffline)
+{
+    *uid = PlayerUID(0);
+    if (gProfile->IsValidPlayer(quadrant))
+        gProfile->GetXUID(quadrant, uid, includeOffline);
+}
+
+int getSlotId(int quadrant)
+{
+    PlayerUID uid(0);
+    getPlayerUID(&uid, quadrant, false);
+    if ((uid.flags & 0x80000000u) != 0)
+        return nn::act::GetSlotNoEx(uid.uuid);
+    return 0;
+}
+
+void* allocAligned()
+{
+    void* data = MEMAllocFromDefaultHeapEx(0x40, 0x40);
+    std::memset(data, 0, 0x40);
+    return data;
+}
+
+int SCIGetCafeCountry(unsigned int* country)
+{
+    int result = _SCIReadSysConfig("cafe.cntry_reg", 3, 4, country);
+    VerifyCountryRange(country);
+    return result;
+}
+
+const char* SCIGetCountryCodeA2(unsigned int country)
+{
+    if (country < 0x100 && SCIGetISOResource(sCountryCodeData, sizeof(sCountryCodeData), "country.txt") == 1)
+    {
+        const char* end = sCountryCodeData + country * 3 + 2;
+        while (*++end != '\0')
+        {
+        }
+        if (end != sCountryCodeData + country * 3)
+            return sCountryCodeData + country * 3;
+    }
+    return NULL;
+}
+
+int SCIGetParentalEnable(unsigned char* enabled)
+{
+    int result = _SCIReadSysConfig("parent.enable", 1, 1, enabled);
+    if (*enabled >= 2)
+        *enabled = 1;
+    else if (static_cast<signed char>(*enabled) < 0)
+        *enabled = 0;
+    return result;
+}
+
+int SCIGetUCParentalAccountSlotNum(unsigned char accountSlot)
+{
+    return accountSlot;
+}
+
+int SCIGetParentalAccountEShopPurchase(unsigned char* blocked, unsigned char accountSlot)
+{
+    int slot = SCIGetUCParentalAccountSlotNum(accountSlot);
+    if (slot == 0)
+        return -5;
+
+    char key[0x40];
+    std::snprintf(key, sizeof(key), "p.acct.%d.eshop.purchase", slot);
+    int result = _SCIReadSysConfig(key, 1, 1, blocked);
+    if (*blocked >= 2)
+        *blocked = 1;
+    else if (static_cast<signed char>(*blocked) < 0)
+        *blocked = 0;
+    return result;
+}
+
+int SCIGetParentalAccountNetCommunicationOnGame(unsigned char* blocked, unsigned char accountSlot)
+{
+    int slot = SCIGetUCParentalAccountSlotNum(accountSlot);
+    if (slot == 0)
+        return -5;
+
+    char key[0x40];
+    std::snprintf(key, sizeof(key), "p.acct.%d.net.communication.on.game", slot);
+    int result = _SCIReadSysConfig(key, 1, 1, blocked);
+    if (*blocked >= 2)
+        *blocked = 1;
+    else if (static_cast<signed char>(*blocked) < 0)
+        *blocked = 0;
+    return result;
+}
 
 static unsigned long long getSystemMilliseconds()
 {

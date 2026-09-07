@@ -1,12 +1,21 @@
 #include "platform/wiiu/CStorage.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
 
 extern CProfile* g_profile;
+
+class CConsoleMinecraftApp
+{
+public:
+    static void RequestToBackground();
+    static unsigned char ReadyToBackground();
+};
 
 void* MEMAllocFromDefaultHeapEx(unsigned int, int);
 void MEMFreeToDefaultHeap(void*);
@@ -41,8 +50,10 @@ void OSTicksToCalendarTime(unsigned long long, OSCalendarTime*);
 
 int FSInitCmdBlock(void*);
 int FSAddClient(FSClient*, unsigned int);
+void FSDelClient(FSClient*);
 int FSSetStateChangeNotification(FSClient*, void*);
-void stateChangeCallback(FSClient*, int, void*);
+void stateChangeCallback(FSClient*, FSVolumeState, void*);
+int FSOpenDir(FSClient*, void*, const char*, int*, unsigned int);
 int SAVEInit();
 int SAVEInitSaveDir(unsigned char);
 int SAVEOpenFile(FSClient*, void*, unsigned char, const char*, const char*, int*, unsigned int);
@@ -57,6 +68,14 @@ int FSReadFile(FSClient*, void*, void*, unsigned int, unsigned int, int, unsigne
 int FSCloseFile(FSClient*, void*, int, unsigned int);
 int FSGetStatFile(FSClient*, void*, int, void*, unsigned int);
 int SAVERemove(FSClient*, void*, unsigned char, const char*, unsigned int);
+int MCP_Open();
+int MCP_GetSysProdSettings(int, void*);
+void MCP_Close(int);
+extern "C" void OSReport(const char*, ...);
+extern "C" unsigned int FSGetLastErrorCodeForViewer(void*);
+extern "C" void OSSavesDone_ReadyToRelease();
+extern void altMain();
+extern void altMainStop();
 
 namespace nn
 {
@@ -68,6 +87,186 @@ namespace nn
 
 static CStorage* s_storage;
 static char s_wideStringBuffer[1024];
+static FSClient s_sciClient;
+static unsigned char s_sciCommandBlock[0xa80];
+static char s_sciBuffer[0x800];
+static char s_sciPath[1024];
+
+void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
+{
+    if (state != static_cast<FSVolumeState>(1))
+    {
+        gRenderer->BeginConditionalSurvey(0);
+        g_pInput->RequestErrorViewer(1, FSGetLastErrorCodeForViewer(client), NULL, NULL);
+        altMain();
+        return;
+    }
+    gRenderer->EndConditionalSurvey();
+    altMainStop();
+}
+
+int SaveCallback(void*)
+{
+    CConsoleMinecraftApp::RequestToBackground();
+    int ready = CConsoleMinecraftApp::ReadyToBackground();
+    while (ready == 0)
+    {
+        Sleep(10);
+        ready = CConsoleMinecraftApp::ReadyToBackground();
+    }
+    OSSavesDone_ReadyToRelease();
+    return 0;
+}
+
+int SCIGetContentPath(char* path, const char* content)
+{
+    int directory;
+    std::sprintf(path, "%s/%s", "vol/storage_mlc01", content);
+    int result = FSOpenDir(&s_sciClient, s_sciCommandBlock, path, &directory, 0xffffffffU);
+    if (result != 0)
+    {
+        std::sprintf(path, "%s/%s", "vol/storage_hfiomlc01", content);
+        int fallback = FSOpenDir(&s_sciClient, s_sciCommandBlock, path, &directory, 0xffffffffU);
+        if (fallback != 0)
+        {
+            OSReport("SCI ERROR %s(%d): FSOpenDir(%s) failed: %d\n", "SCIGetContentPath", 0x137, path, result);
+            return -3;
+        }
+    }
+    FSCloseDir(&s_sciClient, s_sciCommandBlock, directory, 0);
+    return 1;
+}
+
+int SCIGetISOResource(char* destination, unsigned int destinationSize, const char* resource)
+{
+    unsigned int length = 0;
+    bool inComment = false;
+    bool inValue = false;
+    char* cursor = destination + 2;
+    do
+    {
+        ++cursor;
+    } while (*cursor != '\0');
+    if (cursor != destination + 3)
+        return 1;
+
+    FSInitCmdBlock(s_sciCommandBlock);
+    FSAddClient(&s_sciClient, 0);
+    FSStateChangeParams notification = {stateChangeCallback, NULL, 0, 0};
+    FSSetStateChangeNotification(&s_sciClient, &notification);
+
+    int result = SCIGetContentPath(s_sciPath, "sys_title_0005001b_1005c000_cont");
+    if (result != 1)
+    {
+        FSDelClient(&s_sciClient);
+        return result;
+    }
+    std::sprintf(s_sciPath, "%s/%s", s_sciPath, resource);
+
+    int file;
+    result = FSOpenFile(&s_sciClient, s_sciCommandBlock, s_sciPath, "r", &file, 0xffffffffU);
+    if (result < 0)
+    {
+        OSReport("SCI ERROR %s(%d): FSReadFile(%s) failed\n", "SCIGetISOResource", 0x5a7, s_sciPath);
+        FSDelClient(&s_sciClient);
+        return -3;
+    }
+    int bytesRead = FSReadFile(&s_sciClient, s_sciCommandBlock, s_sciBuffer, 1, 0x800, file, 0, 0);
+    if (bytesRead < 0)
+    {
+        OSReport("SCI ERROR %s(%d): FSReadFile(%s) failed\n", "SCIGetISOResource", 0x5b4, s_sciPath);
+        FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
+        FSDelClient(&s_sciClient);
+        return -1;
+    }
+    if (bytesRead == 0)
+    {
+        FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
+        FSDelClient(&s_sciClient);
+        return 1;
+    }
+
+    unsigned int offset = 0;
+    while (offset < bytesRead)
+    {
+        char value = s_sciBuffer[offset];
+        if (value == '\r' || value == '\n')
+        {
+            inComment = false;
+            ++offset;
+            continue;
+        }
+        if (!inComment)
+        {
+            if (value == '/' && offset + 1 < bytesRead && s_sciBuffer[offset + 1] == '/')
+            {
+                inComment = true;
+                offset += 2;
+                continue;
+            }
+            if (value == '"' && offset + 3 < bytesRead && s_sciBuffer[offset + 3] == '"')
+            {
+                unsigned int index = length * 3;
+                int remaining = 2;
+                do
+                {
+                    char copied = s_sciBuffer[++offset];
+                    destination[index++] = copied;
+                    if (copied == '\0')
+                        break;
+                    --remaining;
+                } while (remaining != 0);
+                while (remaining-- > 0)
+                    destination[index++] = '\0';
+                destination[length * 3 + 2] = '\0';
+                inValue = true;
+                offset += 2;
+                continue;
+            }
+            if (value == ',')
+            {
+                if (!inValue)
+                    destination[length * 3] = '\0';
+                ++length;
+                inValue = false;
+                if (destinationSize / 3 <= length)
+                    break;
+            }
+        }
+        ++offset;
+    }
+    FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
+    FSDelClient(&s_sciClient);
+    return 1;
+}
+
+int SCIGetSystemSettings(void* settings)
+{
+    unsigned char buffer[0x80] = {};
+    int handle = MCP_Open();
+    if (handle < 0)
+    {
+        OSReport("SCI ERROR %s(%d): Couldn't get mcp handle %d\n", "SCIGetSystemSettings", 0x83, handle);
+        MCP_Close(handle);
+        return 0;
+    }
+    if (MCP_GetSysProdSettings(handle, buffer) != 0)
+    {
+        OSReport("SCI ERROR %s(%d): MCP Error loading system settings\n", "SCIGetSystemSettings", 0x8c);
+        MCP_Close(handle);
+        return -1;
+    }
+    MCP_Close(handle);
+    std::memcpy(settings, buffer, 0x46);
+    return 1;
+}
+
+void SCIGetSystemProdArea(unsigned int* area)
+{
+    unsigned char settings[0x46] = {};
+    SCIGetSystemSettings(settings);
+    *area = settings[3];
+}
 
 CStorage::DriveMapping::DriveMapping()
 {
@@ -1356,7 +1555,7 @@ int CStorage::MountInstalledDLC_threadEntry(int, void* storage)
     OSExitThread(0);
     return 0;
 }
-int CStorage::MountInstalledDLC(int, unsigned int index, DLCMountCallback callback, unsigned int, void* context,
+int CStorage::MountInstalledDLC(int, unsigned int index, DLCMountCallback callback, void* context,
                                 const char* mountName)
 {
     if (m_dlcMountState != 0)

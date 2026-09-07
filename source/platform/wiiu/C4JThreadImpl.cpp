@@ -21,8 +21,12 @@ static OSFastMutex s_threadMutex;
 static OSFastMutex s_createMutex;
 static bool s_createMutexInitialized = false;
 static OSThread* s_mainThread = NULL;
+static __thread uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
 static const unsigned int s_processorAffinity[3] = { 0x01020400u, 0x1211100Fu, 0x0E000000u };
 static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
+
+typedef std::vector<C4JThreadImpl*> C4JThreadVector;
+typedef C4JThreadVector::iterator C4JThreadVectorIterator;
 
 uint32_t C4JThreadImpl::getCurrentThread()
 {
@@ -188,4 +192,27 @@ void C4JThreadImpl::SetMainThreadID()
 void C4JThreadImpl::Sleep(int milliseconds)
 {
     ::Sleep((unsigned int)milliseconds);
+}
+
+void SetSpecialThreadIDForFS_MilesStreamThread__Fv()
+{
+    s_specialThreadIDForFS_MilesStreamThread = 0x40000000u;
+}
+
+void __CPR229___Insert_n__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ36JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyQ4_3stdJ139JJ166J9size_typeRCZ1Z_v(
+    C4JThreadVector& vector, C4JThreadVectorIterator position, size_t count, C4JThreadImpl* const& value)
+{
+    vector.insert(position, count, value);
+}
+
+C4JThreadVectorIterator __CPR252__insert__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ33JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyRCZ1Z_Q2_3stdJ99J(
+    C4JThreadVector& vector, C4JThreadVectorIterator position, C4JThreadImpl* const& value)
+{
+    return vector.insert(position, value);
+}
+
+C4JThreadVectorIterator __CPR246__erase__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ32JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_Alty_Q2_3stdJ98J(
+    C4JThreadVector& vector, C4JThreadVectorIterator position)
+{
+    return vector.erase(position);
 }

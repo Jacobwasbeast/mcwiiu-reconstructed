@@ -2,6 +2,11 @@
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "game/core/System.hpp"
 
+INetworkPlayer* NetworkPlayerNintendo_Create__FP16NQRNetworkPlayer(NQRNetworkPlayer* player)
+{
+    return new NetworkPlayerNintendo(player);
+}
+
 NetworkPlayerNintendo::NetworkPlayerNintendo(NQRNetworkPlayer* player)
     : m_player(player), m_socket(0), m_lastChunkPacketTime(0)
 {

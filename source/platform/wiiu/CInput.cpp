@@ -19,6 +19,109 @@ extern "C" int SCIGetCafeLanguage(unsigned int* language);
 extern "C" int SCIGetPlatformRegion(unsigned int* region);
 extern "C" int OSResumeThread(OSThread* thread);
 
+int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value);
+int SCIGetSystemSettings(void* settings);
+
+double multiBreak(double first, double second, double third)
+{
+    if (first < second)
+    {
+        return second;
+    }
+    if (static_cast<float>(first - third) < 0.0f)
+    {
+        third = first;
+    }
+    return third;
+}
+
+int VerifyLanguageRange(int* language)
+{
+    if (*language < 12 && static_cast<signed char>(*language) >= 0)
+    {
+        return 1;
+    }
+    *language = 0xff;
+    return 0;
+}
+
+int VerifyCountryRange(unsigned int* country)
+{
+    int result = 1;
+    if (*country < 0x100)
+    {
+        if (static_cast<int>(*country) < 0)
+        {
+            result = 0;
+            *country = 0;
+        }
+    }
+    else
+    {
+        result = 0;
+        *country = 0xff;
+    }
+    return result;
+}
+
+extern "C" int SCIGetCafeLanguageCode(unsigned int* language)
+{
+    return _SCIReadSysConfig("cafe.language", 3, 4, language);
+}
+
+extern "C" int SCIGetCafeLanguage(unsigned int* language)
+{
+    int result = SCIGetCafeLanguageCode(language);
+    VerifyLanguageRange(reinterpret_cast<int*>(language));
+    if (result == 1)
+    {
+        if (*language == 0xff)
+        {
+            unsigned int platformRegion;
+            result = SCIGetPlatformRegion(&platformRegion);
+            if (result != 1)
+            {
+                *language = 1;
+                return result;
+            }
+            if (platformRegion == 1)
+            {
+                *language = 0;
+            }
+            else if (platformRegion == 0x10)
+            {
+                *language = 6;
+            }
+            else if (platformRegion == 0x20)
+            {
+                *language = 7;
+            }
+            else if (platformRegion == 0x40)
+            {
+                *language = 0xb;
+            }
+            else
+            {
+                *language = 1;
+            }
+        }
+        if (result == 1)
+        {
+            return 1;
+        }
+    }
+    *language = 1;
+    return result;
+}
+
+extern "C" int SCIGetPlatformRegion(unsigned int* region)
+{
+    unsigned char settings[0x48] = {};
+    int result = SCIGetSystemSettings(settings);
+    *region = settings[3];
+    return result;
+}
+
 static KPADError s_connectionResults[4];
 static VPADReadError s_vpadReadError;
 static VPADStatus s_vpadStatus[16];

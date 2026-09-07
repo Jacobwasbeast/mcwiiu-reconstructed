@@ -6,6 +6,8 @@
 class FJ_Event;
 class fuiRenderNode;
 
+void HandleDRCStatusChanges();
+
 class FJ_WiiUDRC : public FJ_FuiNode
 {
 private:

@@ -2,11 +2,6 @@
 
 #include <string.h>
 
-struct FFLCreateID
-{
-    unsigned char data[10];
-};
-
 void FFLiPutCRC16(unsigned short seed, void* data, unsigned int size);
 bool FFLiIsValidCRC16(const void* data, unsigned int size);
 
@@ -175,8 +170,8 @@ bool FFLiDatabaseFileHidden::Add(const FFLiMiiDataCore& data, bool temporary)
     if (!FindBlankIndex(&index)) return false;
     memset(&m_miis[index], 0, sizeof(m_miis[index]));
     memcpy(m_miis[index].header, data.header, sizeof(data.header));
-    memcpy(m_miis[index].createId, data.createId, sizeof(data.createId));
-    memcpy(m_miis[index].authorId, data.authorId, sizeof(data.authorId));
+    memcpy(m_miis[index].createId, data.createId.data, sizeof(data.createId.data));
+    memcpy(m_miis[index].authorId, data.authorId.data, sizeof(data.authorId.data));
     memcpy(m_miis[index].data, data.data, sizeof(data.data));
     m_miis[index].data[51] = temporary ? 1 : 0;
     AppendOrderToTail(index);

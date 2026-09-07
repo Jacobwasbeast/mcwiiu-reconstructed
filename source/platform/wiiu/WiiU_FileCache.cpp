@@ -1,22 +1,118 @@
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
 #include <cstring>
+#include <cstdlib>
 #include <map>
 
 #include "game/core/CriticalSection.hpp"
 
+struct FSDirEntry;
+
 extern "C" void *MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
 extern "C" void MEMFreeToDefaultHeap(void *block);
-extern "C" void *GetCommandBlock();
+extern "C" void FSInitCmdBlock(void *commandBlock);
 extern "C" int FSSetPosFile(void *client, void *commandBlock, int file, unsigned int position, unsigned int error);
 extern "C" int FSReadFile(void *client, void *commandBlock, void *buffer, unsigned int count, unsigned int size, int file, unsigned int flags, unsigned int error);
 extern "C" int FSCloseFile(void *client, void *commandBlock, int file, unsigned int error);
-extern "C" unsigned int GetFileSize(int file, unsigned int *fileSizeHigh);
+extern "C" int FSGetStatFile(void *client, void *commandBlock, int file, void *stat, unsigned int error);
+extern "C" int FSReadDir(void *client, void *commandBlock, int file, void *entry, unsigned int error);
+extern "C" int FSGetStat(void *client, void *commandBlock, const char *path, void *stat, unsigned int error);
+
+extern void setAltMainOKToRun();
+extern void waitForAltMainThreadToComplete();
+extern void getFinalFilePath(char (&path)[256], const char *fileName);
 
 static std::map<int, WiiU_FileCache *> s_fileCaches;
 static OSFastMutex s_fileCacheMutex;
 static bool s_fileCacheMutexInitialized = false;
 static void *s_fileSystemClient = 0;
+static OSFastMutex s_commandBlockMutex;
+static std::map<int, void *> s_commandBlocks;
+static int s_nextCommandBlockId = 1;
+static __thread int s_commandBlockId;
+
+void *GetCommandBlock()
+{
+    EnterCriticalSection(&s_commandBlockMutex);
+    if (s_commandBlockId == 0)
+    {
+        s_commandBlockId = s_nextCommandBlockId++;
+    }
+
+    std::map<int, void *>::iterator it = s_commandBlocks.find(s_commandBlockId);
+    if (it == s_commandBlocks.end())
+    {
+        void *commandBlock = std::malloc(0xa80);
+        FSInitCmdBlock(commandBlock);
+        s_commandBlocks[s_commandBlockId] = commandBlock;
+        LeaveCriticalSection(&s_commandBlockMutex);
+        return commandBlock;
+    }
+
+    void *commandBlock = it->second;
+    LeaveCriticalSection(&s_commandBlockMutex);
+    return commandBlock;
+}
+
+unsigned int GetFileSize(int file, unsigned int *fileSizeHigh)
+{
+    (void)fileSizeHigh;
+    unsigned int stat[25];
+    setAltMainOKToRun();
+    void *commandBlock = GetCommandBlock();
+    FSGetStatFile(s_fileSystemClient, commandBlock, file, stat, 0);
+    waitForAltMainThreadToComplete();
+    return stat[4];
+}
+
+unsigned int ReadFile(int file, void *buffer, unsigned int bytesToRead,
+                      unsigned int *bytesRead, void *overlapped)
+{
+    (void)overlapped;
+    setAltMainOKToRun();
+    WiiU_FileCache *cache = WiiU_FileCache::GetFileCache(file);
+    unsigned int result = 0;
+    if (cache != 0)
+    {
+        result = cache->Read(buffer, bytesToRead);
+        if (bytesRead != 0)
+        {
+            *bytesRead = result;
+        }
+    }
+    waitForAltMainThreadToComplete();
+    return (result >> 31) ^ 1;
+}
+
+bool ReadDir(int *file, FSDirEntry *entry)
+{
+    setAltMainOKToRun();
+    void *commandBlock = GetCommandBlock();
+    int result = FSReadDir(s_fileSystemClient, commandBlock, *file, entry, 0);
+    waitForAltMainThreadToComplete();
+    return result == 0;
+}
+
+unsigned int GetFileAttributesA(const char *fileName)
+{
+    char path[256];
+    unsigned int stat[25];
+    setAltMainOKToRun();
+    getFinalFilePath(path, fileName);
+    void *commandBlock = GetCommandBlock();
+    int result = FSGetStat(s_fileSystemClient, commandBlock, path, stat, 8);
+    waitForAltMainThreadToComplete();
+    if (result == -6)
+    {
+        return 0xffffffffu;
+    }
+    return (stat[0] & 0x80000000u) != 0 ? 0x10 : 0x80;
+}
+
+double RadianToDegree(float radians)
+{
+    return static_cast<double>(radians * 180.0f / 3.141590118408203125f);
+}
 
 WiiU_FileCache::WiiU_FileCache(int file)
     : m_cache(0), m_file(file), m_fileSize(0), m_filePos(0), m_cacheLength(0), m_cachePos(0)

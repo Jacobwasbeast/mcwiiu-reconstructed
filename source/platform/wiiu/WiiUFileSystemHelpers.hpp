@@ -1,0 +1,6 @@
+#ifndef SOURCE_PLATFORM_WIIU_WIIUFILESYSTEMHELPERS_HPP
+#define SOURCE_PLATFORM_WIIU_WIIUFILESYSTEMHELPERS_HPP
+
+bool OpenDir(const char* path, int* directory);
+
+#endif

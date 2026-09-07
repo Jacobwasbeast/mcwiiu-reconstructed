@@ -3,6 +3,31 @@
 #include <cmath>
 #include <string>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "platform/wiiu/CInput.hpp"
+
+extern CConsoleMinecraftApp gApp;
+
+static unsigned char s_drcConnected = 1;
+
+void HandleDRCStatusChanges()
+{
+    unsigned char drcConnected = g_pInput->IsDRCConnected();
+    if (drcConnected == s_drcConnected)
+        return;
+
+    if (drcConnected == 0)
+    {
+        gApp.SetDRCOuputEnabled(false);
+    }
+    else if (gApp.GetDRCIconEnabled() != 0)
+    {
+        gApp.SetDRCOuputEnabled(true);
+    }
+
+    s_drcConnected = drcConnected;
+}
+
 static int FJ_WiiUDRC_Round(float value)
 {
     return (int)std::floor(value + 0.5f);

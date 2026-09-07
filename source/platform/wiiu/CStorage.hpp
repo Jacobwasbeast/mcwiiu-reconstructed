@@ -169,7 +169,7 @@ public:
     virtual int GetInstalledDLC(int, InstalledDLCCallback, void*);
     virtual int GetDLC(unsigned int);
     virtual int GetAvailableDLCCount(int);
-    virtual int MountInstalledDLC(int, unsigned int, DLCMountCallback, unsigned int, void*, const char*);
+    virtual int MountInstalledDLC(int, unsigned int, DLCMountCallback, void*, const char*);
     virtual int UnmountInstalledDLC(const char*);
     virtual int GetMountedDLCFileList(const char*, std::vector<std::string>&);
     virtual int GetMountedDLCIndex();

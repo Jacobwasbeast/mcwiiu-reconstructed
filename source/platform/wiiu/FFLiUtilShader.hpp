@@ -1,10 +1,16 @@
 #ifndef PLATFORM_WIIU_FFLIUTILSHADER_HPP
 #define PLATFORM_WIIU_FFLIUTILSHADER_HPP
+#include <stdint.h>
 struct _GX2ShaderUniformVar { const char* name; unsigned int offset; unsigned int type; int location; unsigned int count; };
 struct _GX2ShaderUniformBlock { const char* name; unsigned int location; unsigned int size; };
 struct _GX2ShaderSampler { const char* name; int location; unsigned int type; };
 struct _GX2PixelShader { unsigned int words[41]; unsigned int cacheSize; unsigned int cachePtr; unsigned int wordsAfterCache; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int wordsAfterVars[4]; unsigned int samplerCount; _GX2ShaderSampler* samplers; };
 struct _GX2VertexShader { unsigned int words[52]; unsigned int cacheSize; unsigned int cachePtr; unsigned int wordsAfterCache; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int wordsAfterVars[4]; unsigned int samplerCount; _GX2ShaderSampler* samplers; };
+struct _Mat44 { float value[4][4]; };
+struct _Mat34 { float value[3][4]; };
+struct FFLColor { float value[4]; };
+typedef unsigned int FFLModulateMode;
+struct FFLModulateParam { FFLModulateMode mode; unsigned int type; FFLColor color[3]; const void* texture; };
 class FFLiUtilShaderAllocator;
 class FFLiUtilShader
 {
@@ -36,4 +42,40 @@ public:
     static bool CheckUniformBlock(const _GX2PixelShader*, unsigned int, const CheckUniformBlockDesc*, unsigned int);
     static bool CheckUniformBlock(const _GX2VertexShader*, unsigned int, const CheckUniformBlockDesc*, unsigned int);
 };
+struct PlainShader {
+    unsigned int self;
+    unsigned int contextState;
+    unsigned int setMatrix;
+    unsigned int setContextState;
+    _GX2VertexShader* vertexShader;
+    _GX2PixelShader* pixelShader;
+    FFLiUtilShader::FetchShader fetchShader;
+    unsigned int reserved[17];
+    unsigned int vertexMatrix;
+    unsigned int pixelMode;
+    unsigned int pixelColor1;
+    unsigned int pixelColor2;
+    unsigned int pixelColor3;
+    unsigned int pixelSampler;
+};
+
+unsigned int setRGBAOrder__FUi(unsigned int);
+int InitDefaultShader__Fv();
+void InitExtShader__Fv();
+void InitFetchShader__FP11FetchShaderPC16_GX2VertexShader(FFLiUtilShader::FetchShader*, const _GX2VertexShader*);
+void InitPixelShader__FPP15_GX2PixelShaderPCv(_GX2PixelShader**, const void*);
+void InitShader__FP11PlainShaderPCv(PlainShader*, const void*);
+void InitVertexShader__FPP16_GX2VertexShaderPCv(_GX2VertexShader**, const void*);
+int InitPlainShader__FP11PlainShaderPCv(PlainShader*, const void*);
+void SetupIconShaderForCreateModel__Fv();
+void SetupIconShaderForDrawTexture__FUsT1(unsigned short, unsigned short);
+void SetupDefaultShaderForCreateModel__Fv();
+void SetupDefaultShaderForDrawTexture__FUsT1(unsigned short, unsigned short);
+void SetupExtShaderForCreateModel__Fv();
+void SetupExtShaderForDrawTexture__FUsT1(unsigned short, unsigned short);
+void SetConstColor__FUiPC8FFLColor(unsigned int, const FFLColor*);
+void SetModulateMode__FP11PlainShader15FFLModulateMode(PlainShader*, FFLModulateMode);
+void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLModulateParam*);
+void SetMatrix__FPvPC6_Mat44(void*, const _Mat44*);
+void SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(const PlainShader*, const _Mat44*);
 #endif
