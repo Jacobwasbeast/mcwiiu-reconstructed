@@ -10,7 +10,7 @@ public:
     TotemParticle(Level* level, double x, double y, double z,
                   double xa, double ya, double za);
     virtual ~TotemParticle();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

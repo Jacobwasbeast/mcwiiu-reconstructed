@@ -20,7 +20,7 @@ public:
                  double xa, double ya, double za);
     virtual ~WakeParticle();
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 };
 
 #endif

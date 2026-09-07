@@ -8,6 +8,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/SpiderEyesLayer.hpp"
 
 static ResourceLocation SPIDER_LOCATION;
@@ -60,7 +61,7 @@ void SpiderRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float 
     bool translucent = false;
     if (!isVisible(entity))
     {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
         if (entity->isInvisibleTo(player))
             return;
         translucent = true;

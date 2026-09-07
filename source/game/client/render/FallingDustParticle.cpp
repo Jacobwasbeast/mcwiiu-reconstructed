@@ -75,7 +75,7 @@ void FallingDustParticle::tick()
         yd = -0.14;
 }
 
-long long FallingDustParticle::GetType()
+uint64_t FallingDustParticle::GetType()
 {
     return PARTICLE_TYPE_FALLING_DUST;
 }

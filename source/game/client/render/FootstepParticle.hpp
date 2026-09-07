@@ -22,7 +22,7 @@ public:
                         float xa2,
                         float za2);
     virtual int getParticleTexture();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

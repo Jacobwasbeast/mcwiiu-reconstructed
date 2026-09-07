@@ -16,14 +16,20 @@
 #include "game/core/Culler.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Options.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Animal.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/FireBlock.hpp"
 #include "game/world/block/Iterator.hpp"
+#include "game/world/generation/Player.hpp"
 
 static ResourceLocation sShadowTexture(L"textures/misc/shadow.png");
 
@@ -306,7 +312,7 @@ void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, dou
 {
     if (mDispatcher->mOptions != NULL)
     {
-        if (!mDispatcher->mRenderHitBoxes && renderShadowFlag && mDispatcher->mOptions->mFancyGraphics
+        if (!mDispatcher->mRenderHitBoxes && renderShadowFlag && Minecraft::useFancyGraphics()
             && mShadowRadius > 0.0F && !entity->isInvisible() && mDispatcher->shouldRenderShadow())
         {
             double distance = mDispatcher->distanceToSqr(entity->mX, entity->mY, entity->mZ);
@@ -347,13 +353,13 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        if (CMinecraftApp::sInstance.isXuidDeadmau5(player->mPlayerUID))
+        if (g_pApp->isXuidDeadmau5(player->m_0x784))
             nameOffset = -10;
         displayName = name;
     }
 
     int fadeDistance = 256;
-    if (!gRenderer->IsHiDef() || CMinecraftApp::sInstance.GetLocalPlayerCount() > 2)
+    if (!gRenderer->IsHiDef() || g_pApp->GetLocalPlayerCount() > 2)
         fadeDistance = 64;
     float alpha = 1.0F;
     if (distance >= (double)fadeDistance)
@@ -375,7 +381,8 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     bool renderSneaking = sneaking && !Minecraft::InMiniGame(eMiniGameId_Any, true);
     GameRenderer::renderNameTagInWorld(getFont(), displayName, (float)x, (float)y + yOffset, (float)z,
                                        nameOffset, mDispatcher->mCameraYRot, mDispatcher->mCameraXRot,
-                                       mDispatcher->mOptions->mThirdPersonView == 2, renderSneaking, color, alpha);
+                                       boost::static_pointer_cast<Player>(mDispatcher->mPlayer)->GetThirdPersonView(false) == 2,
+                                       renderSneaking, color, alpha);
 }
 
 bool EntityRenderer::hasSecondPass()

@@ -30,7 +30,7 @@ TotemParticle::~TotemParticle()
 {
 }
 
-long long TotemParticle::GetType()
+uint64_t TotemParticle::GetType()
 {
     return 0x0008022b00000000ULL;
 }

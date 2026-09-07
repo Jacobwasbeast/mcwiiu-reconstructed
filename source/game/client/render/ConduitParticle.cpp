@@ -53,7 +53,7 @@ void ConduitParticle::tick()
         remove();
 }
 
-long long ConduitParticle::GetType()
+uint64_t ConduitParticle::GetType()
 {
     return PARTICLE_TYPE_CONDUIT;
 }

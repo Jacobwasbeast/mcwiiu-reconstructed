@@ -82,7 +82,7 @@ void NoteParticle::init(Level* level, double x, double y, double z,
     size = scale = size * factor;
 }
 
-long long NoteParticle::GetType()
+uint64_t NoteParticle::GetType()
 {
     return 0x0008020900000000LL;
 }

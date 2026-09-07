@@ -72,7 +72,7 @@ void SnowShovelParticle::init(Level* level, double x, double y, double z,
     lifetime = (int)((double)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
 }
 
-long long SnowShovelParticle::GetType()
+uint64_t SnowShovelParticle::GetType()
 {
     return 0x0008020d00000000LL;
 }

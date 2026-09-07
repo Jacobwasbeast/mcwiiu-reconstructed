@@ -109,7 +109,7 @@ float DragonBreathParticle::getBrightness(float partialTicks)
     return 0.5f / value + 0.5f;
 }
 
-long long DragonBreathParticle::GetType()
+uint64_t DragonBreathParticle::GetType()
 {
     return 0x0008021e00000000LL;
 }

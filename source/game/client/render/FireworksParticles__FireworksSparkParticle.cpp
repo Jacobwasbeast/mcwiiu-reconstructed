@@ -64,7 +64,7 @@ void FireworksParticles::FireworksSparkParticle::tick()
     }
 }
 
-long long FireworksParticles::FireworksSparkParticle::GetType()
+uint64_t FireworksParticles::FireworksSparkParticle::GetType()
 {
     return 0x8022100000000LL;
 }

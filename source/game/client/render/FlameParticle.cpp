@@ -78,7 +78,7 @@ void FlameParticle::tick()
     zd *= 0.7;
 }
 
-long long FlameParticle::GetType()
+uint64_t FlameParticle::GetType()
 {
     return 0x0008020500000000LL;
 }

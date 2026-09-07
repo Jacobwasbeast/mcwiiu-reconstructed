@@ -31,7 +31,7 @@ public:
                    double ya,
                    double za,
                    arrayWithLength<int> params);
-    virtual long long GetType();
+    virtual uint64_t GetType();
     virtual ~BubbleParticle();
     virtual void tick();
     virtual int getLightColor(float partialTicks);

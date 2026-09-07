@@ -159,6 +159,8 @@ public:
     static unsigned int getGlobalChunkCountForOverworld();
 
 private:
+    friend class Minecraft;
+
     ChunkBlockEntityMap mBlockEntities;
     OSFastMutex mBlockEntityMutex;
     Level* mLevels[4];

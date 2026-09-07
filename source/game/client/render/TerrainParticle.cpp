@@ -62,7 +62,7 @@ TerrainParticle::~TerrainParticle()
     pos = NULL;
 }
 
-long long TerrainParticle::GetType()
+uint64_t TerrainParticle::GetType()
 {
     return PARTICLE_TYPE_TERRAIN;
 }

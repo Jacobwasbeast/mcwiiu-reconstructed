@@ -13,6 +13,7 @@
 #include "game/util/AABB.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Vec3.hpp"
 
 static ResourceLocation SHULKER_LOCATION;
@@ -116,7 +117,7 @@ void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, floa
 
 void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
-    if (!isVisible(entity) && entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer))
+    if (!isVisible(entity) && entity->isInvisibleTo(boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer)))
     {
         boost::shared_ptr<Entity> renderEntity = entity;
         if (!bindTexture(renderEntity))

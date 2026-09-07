@@ -23,7 +23,7 @@ public:
     virtual void tick();
     virtual float getBrightness(float partialTicks);
     virtual int getLightColor(float partialTicks);
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
 private:
     int getRawBr();

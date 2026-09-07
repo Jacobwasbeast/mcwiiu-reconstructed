@@ -9,7 +9,7 @@ class SplashParticle : public WaterDropParticle
 public:
     SplashParticle(Level* level, double x, double y, double z,
                    double xa, double ya, double za);
-    virtual long long GetType();
+    virtual uint64_t GetType();
     virtual ~SplashParticle();
 
     class Provider : public ParticleProvider

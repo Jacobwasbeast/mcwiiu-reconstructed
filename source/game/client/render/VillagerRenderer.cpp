@@ -60,7 +60,7 @@ void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
     Minecraft* minecraft = Minecraft::GetInstance();
     EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-    dispatcher->bindTexture(&sItemTexture);
+    bindTexture(&sItemTexture);
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x,

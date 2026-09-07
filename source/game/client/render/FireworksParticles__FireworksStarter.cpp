@@ -19,7 +19,7 @@ public:
         lifetime = random.nextInt(12) + 48;
     }
 
-    virtual long long GetType()
+    virtual uint64_t GetType()
     {
         return 0x8022100000000LL;
     }
@@ -233,7 +233,7 @@ int FireworksParticles::FireworksStarter::getParticleTexture()
     return 0;
 }
 
-long long FireworksParticles::FireworksStarter::GetType()
+uint64_t FireworksParticles::FireworksStarter::GetType()
 {
     return 0x8022000000000LL;
 }

@@ -11,7 +11,7 @@ public:
                       double xa, double ya, double za);
     virtual ~SuspendedParticle();
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

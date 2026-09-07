@@ -77,7 +77,7 @@ void EnchantmentTableParticle::tick()
         remove();
 }
 
-long long EnchantmentTableParticle::GetType()
+uint64_t EnchantmentTableParticle::GetType()
 {
     return 0x0008021c00000000LL;
 }

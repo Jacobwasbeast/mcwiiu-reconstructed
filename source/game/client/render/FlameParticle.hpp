@@ -16,7 +16,7 @@ public:
     virtual int getLightColor(float partialTicks);
     virtual float getBrightness(float partialTicks);
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

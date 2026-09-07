@@ -62,7 +62,7 @@ void WaterDropParticle::tick()
     }
 }
 
-long long WaterDropParticle::GetType()
+uint64_t WaterDropParticle::GetType()
 {
     return 0x0008021200000000LL;
 }

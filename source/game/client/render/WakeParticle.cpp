@@ -39,7 +39,7 @@ void WakeParticle::tick()
     }
 }
 
-long long WakeParticle::GetType()
+uint64_t WakeParticle::GetType()
 {
     return 0x0008021300000000LL;
 }

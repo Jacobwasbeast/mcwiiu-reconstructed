@@ -3,13 +3,13 @@
 #include <cmath>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ZombieModel.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Zombie.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-class Zombie;
-class ZombieArmorLayer;
+#include "game/world/generation/ZombieArmorLayer.hpp"
 
 static ResourceLocation sZombieLocation;
 

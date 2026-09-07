@@ -10,7 +10,7 @@ LargeSmokeParticle::~LargeSmokeParticle()
 {
 }
 
-long long LargeSmokeParticle::GetType()
+uint64_t LargeSmokeParticle::GetType()
 {
     return 0x0008022600000000LL;
 }

@@ -37,7 +37,7 @@ public:
                              bool trail, bool flicker);
     virtual void tick();
     virtual int getParticleTexture();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
 private:
     int life;

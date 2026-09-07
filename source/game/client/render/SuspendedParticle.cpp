@@ -42,7 +42,7 @@ void SuspendedParticle::tick()
         remove();
 }
 
-long long SuspendedParticle::GetType()
+uint64_t SuspendedParticle::GetType()
 {
     return 0x0008021900000000LL;
 }

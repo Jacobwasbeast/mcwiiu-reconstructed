@@ -58,7 +58,7 @@ void BarrierParticle::render(BufferBuilder* buffer,
     buffer->vertexUV(px + x1 - x2, py - y1, pz + z1 - z2, u0, v1);
 }
 
-long long BarrierParticle::GetType()
+uint64_t BarrierParticle::GetType()
 {
     return 0x0008022300000000LL;
 }

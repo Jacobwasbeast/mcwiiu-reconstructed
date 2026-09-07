@@ -81,7 +81,7 @@ void RedDustParticle::tick()
     zd = zMotion;
 }
 
-long long RedDustParticle::GetType()
+uint64_t RedDustParticle::GetType()
 {
     return 0x0008020B00000000LL;
 }

@@ -4,6 +4,11 @@
 class RenderTarget
 {
 public:
+    int renderWidth;
+    int renderHeight;
+    int width;
+    int height;
+
     void resize(int width, int height);
     RenderTarget(int width, int height, bool useDepth);
     void setClearColor(float red, float green, float blue, float alpha);

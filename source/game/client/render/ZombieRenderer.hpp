@@ -3,10 +3,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/client/render/HumanoidMobRenderer.hpp"
 
 class Entity;
-class HumanoidMobRenderer;
 class LivingEntity;
 class Model;
 class ModelDefinition;

@@ -59,7 +59,7 @@ void EnderParticle::move(double xa, double ya, double za)
     setBoundingBox(box->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
-long long EnderParticle::GetType() { return 0x0008021f00000000LL; }
+uint64_t EnderParticle::GetType() { return 0x0008021f00000000LL; }
 Particle* EnderParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new EnderParticle(level, x, y, z, xa, ya, za);

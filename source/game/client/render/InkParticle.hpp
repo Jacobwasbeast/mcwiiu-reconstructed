@@ -16,7 +16,7 @@ public:
                         float partialTicks, float xa, float ya, float za,
                         float xa2, float za2);
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

@@ -73,7 +73,7 @@ void InkParticle::tick()
         remove();
 }
 
-long long InkParticle::GetType()
+uint64_t InkParticle::GetType()
 {
     return 0x0008020300000000LL;
 }

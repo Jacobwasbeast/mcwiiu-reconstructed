@@ -320,7 +320,7 @@ int user_write_data_bytes_written()
     return (int)(sUserWriteDataCurrent - sUserWriteDataStart);
 }
 
-int InitIconShader(IconShaderType shaderType)
+int InitIconShader__F14IconShaderType(IconShaderType shaderType)
 {
     sIconShaderType = shaderType;
     if (shaderType == ICON_SHADER_TYPE_DEFAULT)
@@ -382,7 +382,7 @@ void FinalizeExtShader()
     DestroyShader__FP11PlainShader(&sIconExtShader);
 }
 
-void FinalizeIconShader()
+void FinalizeIconShader__Fv()
 {
     if (sIconShaderType == ICON_SHADER_TYPE_DEFAULT)
     {

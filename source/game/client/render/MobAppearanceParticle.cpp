@@ -112,7 +112,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
     GlStateManager::enableDepthTest();
 }
 
-long long MobAppearanceParticle::GetType()
+uint64_t MobAppearanceParticle::GetType()
 {
     return 0x0008022700000000LL;
 }

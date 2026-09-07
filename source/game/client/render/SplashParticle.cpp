@@ -22,7 +22,7 @@ SplashParticle::~SplashParticle()
 {
 }
 
-long long SplashParticle::GetType()
+uint64_t SplashParticle::GetType()
 {
     return 0x0008020e00000000LL;
 }

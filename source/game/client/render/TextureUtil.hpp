@@ -59,7 +59,7 @@ public:
     static void insertZlibAlphaChannelData(void* pixels, int width, int height, void* compressedData, int compressedLength);
 
     static int LoadTextureData(const char* fileName, int* width, int* height, int** pixels);
-    static int LoadTextureData(unsigned char* data, unsigned int length, int* width, int* height, int** pixels);
+    static void LoadTextureData(unsigned char* data, unsigned int length, int* width, int* height, int** pixels);
 
     static void ByteFlipRGBAToARGB(unsigned int& colour);
     static void ByteFlipRGBAToBGRA(unsigned int& colour);

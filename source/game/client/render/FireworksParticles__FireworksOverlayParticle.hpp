@@ -23,7 +23,7 @@ public:
                         float za,
                         float xa2,
                         float za2);
-    virtual long long GetType();
+    virtual uint64_t GetType();
 };
 }
 

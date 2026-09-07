@@ -23,7 +23,7 @@ std::wstring HuskRenderer::getModelName()
 void HuskRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTick)
 {
     GlStateManager::scalef(1.0625F, 1.0625F, 1.0625F);
-    LivingEntityRenderer::scale(entity, partialTick);
+    this->LivingEntityRenderer::scale(entity, partialTick);
 }
 
 const ResourceLocation* HuskRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

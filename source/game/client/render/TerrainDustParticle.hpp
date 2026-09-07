@@ -17,7 +17,7 @@ public:
                         double za,
                         const BlockState* state);
     virtual ~TerrainDustParticle();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

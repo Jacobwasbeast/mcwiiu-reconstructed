@@ -73,7 +73,7 @@ void SmokeParticle::tick()
     }
 }
 
-long long SmokeParticle::GetType()
+uint64_t SmokeParticle::GetType()
 {
     return 0x0008020c00000000LL;
 }

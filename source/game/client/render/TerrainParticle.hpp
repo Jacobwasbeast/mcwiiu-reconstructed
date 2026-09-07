@@ -40,7 +40,7 @@ public:
                     double za,
                     const BlockState* state);
 
-    virtual long long GetType();
+    virtual uint64_t GetType();
     virtual ~TerrainParticle();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,

@@ -22,7 +22,7 @@ TerrainDustParticle::~TerrainDustParticle()
 {
 }
 
-long long TerrainDustParticle::GetType()
+uint64_t TerrainDustParticle::GetType()
 {
     return 0x0008021100000000LL;
 }

@@ -28,7 +28,7 @@ ItemPickupParticle::~ItemPickupParticle()
 {
 }
 
-long long ItemPickupParticle::GetType()
+uint64_t ItemPickupParticle::GetType()
 {
     return 0x0008022500000000LL;
 }

@@ -18,7 +18,7 @@ public:
                        boost::shared_ptr<Entity> target,
                        float yOffs);
 
-    virtual long long GetType();
+    virtual uint64_t GetType();
     virtual ~ItemPickupParticle();
     virtual void tick();
     virtual void render(BufferBuilder* buffer,

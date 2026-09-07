@@ -10,7 +10,7 @@ public:
     LargeSmokeParticle(Level* level, double x, double y, double z,
                        double xa, double ya, double za);
     virtual ~LargeSmokeParticle();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
     class Provider : public ParticleProvider
     {

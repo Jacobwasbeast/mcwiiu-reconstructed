@@ -86,7 +86,7 @@ int FootstepParticle::getParticleTexture()
     return 3;
 }
 
-long long FootstepParticle::GetType()
+uint64_t FootstepParticle::GetType()
 {
     return 0x0008020600000000LL;
 }

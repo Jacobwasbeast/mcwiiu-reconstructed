@@ -33,7 +33,7 @@ public:
                     arrayWithLength<int> params);
     virtual ~ConduitParticle();
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 
 private:
     double m_startX;

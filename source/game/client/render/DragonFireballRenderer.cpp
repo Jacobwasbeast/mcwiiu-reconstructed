@@ -6,6 +6,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Options.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation DRAGON_FIREBALL_LOCATION;
@@ -32,9 +33,9 @@ void DragonFireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     BufferBuilder* builder = tesselator->getBuilder();
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
     if (mDispatcher->mOptions->mThirdPersonView == 2)
-        GlStateManager::rotatef(mDispatcher->mCameraXRot, 0.0F, 0.0F, 1.0F);
+        GlStateManager::rotatef(mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
     else
-        GlStateManager::rotatef(-mDispatcher->mCameraXRot, 0.0F, 0.0F, 1.0F);
+        GlStateManager::rotatef(-mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
 
     if (mSolidRender)
     {

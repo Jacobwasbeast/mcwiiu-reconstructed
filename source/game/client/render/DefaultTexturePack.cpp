@@ -30,9 +30,9 @@ void DefaultTexturePack::loadIcon()
 {
     std::wstring fileName = L"Graphics\\TexturePackIcon.png";
 
-    if (CMinecraftApp::sInstance.hasArchiveFile(fileName, false))
+    if (gApp.hasArchiveFile(fileName, false))
     {
-        arrayWithLength<unsigned char> iconData = CMinecraftApp::sInstance.getArchiveFile(fileName, false);
+        arrayWithLength<unsigned char> iconData = gApp.getArchiveFile(fileName, false);
         m_pIconData = iconData.data;
         m_iconSize = iconData.length;
     }
@@ -56,7 +56,7 @@ void DefaultTexturePack::loadCustomModels()
 
     if (!file.exists())
     {
-        theApp->FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
+        theApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
     }
     else
     {

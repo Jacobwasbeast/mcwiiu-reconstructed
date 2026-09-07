@@ -34,7 +34,7 @@ public:
                       double za);
     virtual ~BubblePopParticle();
     virtual void tick();
-    virtual long long GetType();
+    virtual uint64_t GetType();
 };
 
 #endif

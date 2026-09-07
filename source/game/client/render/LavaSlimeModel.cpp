@@ -78,7 +78,7 @@ void LavaSlimeModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, fl
 {
     boost::shared_ptr<MagmaCube> magmaCube = boost::static_pointer_cast<MagmaCube>(entity);
 
-    float squish = (magmaCube->mSquish - magmaCube->mOSquish) * partialTicks + magmaCube->mOSquish;
+    float squish = (magmaCube->mSquish - magmaCube->mSquishO) * partialTicks + magmaCube->mSquishO;
 
     if (squish < 0.0f)
     {

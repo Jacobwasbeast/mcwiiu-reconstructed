@@ -66,12 +66,9 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mHead->mXRot = 0.0f;
     mHead->mYRot = 0.0f;
     mHead->mZRot = 0.0f;
-    if (entity)
-    {
-        float phase = ((float)(entity->getId() % 10) + (float)entity->mTickCount - 176.0f) * 0.01f;
-        mHead->mXRot = std::sin(phase) * 4.5f * 0.01745329238474369f;
-        mHead->mYRot = std::cos(phase) * 2.5f * 0.01745329238474369f;
-    }
+    float phase = ((float)(entity->getId() % 10) + (float)entity->mTickCount - 176.0f) * 0.01f;
+    mHead->mXRot = std::sin(phase) * 4.5f * 0.01745329238474369f;
+    mHead->mYRot = std::cos(phase) * 2.5f * 0.01745329238474369f;
     if (mHoldingItem)
     {
         mHead->mXRot = -0.9f;

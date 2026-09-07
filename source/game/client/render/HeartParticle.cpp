@@ -69,7 +69,7 @@ void HeartParticle::init(Level* level, double x, double y, double z,
     size = this->scale = size * 0.75f * scale;
 }
 
-long long HeartParticle::GetType()
+uint64_t HeartParticle::GetType()
 {
     return 0x0008020700000000LL;
 }

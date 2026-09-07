@@ -88,6 +88,13 @@ LevelRenderer::DestroyedBlockManager::DestroyedBlockManager()
     InitializeCriticalSection(&lock);
 }
 
+LevelRenderer::DestroyedBlockManager::~DestroyedBlockManager()
+{
+    for (std::vector<RecentBlock*>::iterator block = blocks.begin(); block != blocks.end(); ++block)
+        delete *block;
+    DeleteCriticalSection(&lock);
+}
+
 void LevelRenderer::DestroyedBlockManager::tick()
 {
     EnterCriticalSection(&lock);

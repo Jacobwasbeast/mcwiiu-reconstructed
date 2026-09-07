@@ -111,7 +111,7 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     else if (mAnimationState == 3)
     {
         boost::shared_ptr<Parrot> parrot = boost::static_pointer_cast<Parrot>(entity);
-        float phase = (float)parrot->mFlapTime * radians - 176.0f;
+        float phase = static_cast<float>(parrot->mTickCount) - 176.0f;
         float sine = Mth::sin(phase);
         float cosine = Mth::cos(phase);
         mHead->mXRot = cosine;

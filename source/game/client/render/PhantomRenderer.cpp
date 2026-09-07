@@ -6,6 +6,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 static ResourceLocation PHANTOM_LOCATION;
 
@@ -50,7 +51,8 @@ void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float
     bool translucent = false;
     if (!isVisible(entity))
     {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
+        boost::shared_ptr<Player> player =
+            boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
         if (!entity->isInvisibleTo(player))
             translucent = true;
     }
