@@ -72,7 +72,7 @@ public:
  void getChunkSource();
  std::vector<boost::shared_ptr<BlockEntity> >* getBlockEntitiesInRegion(int32_t first, int32_t second, int32_t third, int32_t fourth, int32_t fifth, int32_t sixth); 
  PlayerChunkMap* getChunkMap(); 
- void getDimensionSpecificSpawn(); 
+ BlockPos* getDimensionSpecificSpawn();
  PortalForcer* getPortalForcer(); 
  static uint32_t runUpdate(uint32_t first); 
  static uint64_t staticCtor(); 

@@ -17,7 +17,7 @@
 MinecraftServer* gMinecraftServer = 0;
 
 MinecraftServer::MinecraftServer()
-    : mConnection(0), mSettings(0), mPlayers(0), tickCount(0), running(true), levelLoaded(false), postProcessing(false), saving(false), networkTick(0), progressNameLength(0), progressNameCapacity(0), progressValue(0), commandDispatcher(0), consoleInputIndex(0), consoleInputCount(0), animals(true), npcsEnabled(true), pvpAllowed(true), flightAllowed(false), serverFlags(0), statusMessageLength(0), statusMessageCapacity(0), maxBuildHeight(256), difficulty(0), levelType(0), defaultGameType(GameType::SURVIVAL), gameModeId(0), playerIdleTimeout(0), progressRenderer(0), levelStorage(0), postProcessState(0), postProcessEvent(0), serverPaused(false), forceGameType(false), suspending(false), stopping(false), lastServerTime(0), shuttingDown(false), suspended(false), shutdownFlags(0), mMasterGameMode(0)
+    : mConnection(0), mSettings(0), mPlayers(0), tickCount(0), running(true), levelLoaded(false), shuttingDown(false), saving(false), networkTick(0), progressNameLength(0), progressNameCapacity(0), progressValue(0), commandDispatcher(0), consoleInputIndex(0), consoleInputCount(0), animals(true), npcsEnabled(true), pvpAllowed(true), flightAllowed(false), serverFlags(0), statusMessageLength(0), statusMessageCapacity(0), maxBuildHeight(256), difficulty(0), levelType(0), defaultGameType(GameType::SURVIVAL), gameModeId(0), playerIdleTimeout(0), progressRenderer(0), levelStorage(0), postProcessState(0), postProcessEvent(0), serverPaused(false), forceGameType(false), suspending(false), stopping(false), lastServerTime(0), postProcessing(false), suspended(false), shutdownFlags(0), mMasterGameMode(0)
 {
     unsigned int i;
     for (i = 0; i < 8; ++i)

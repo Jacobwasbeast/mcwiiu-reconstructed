@@ -1,5 +1,6 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
@@ -35,8 +36,9 @@ PlayerChunkMap* ServerLevel::getChunkMap()
     return chunkMap;
 }
 
-void ServerLevel::getDimensionSpecificSpawn()
+BlockPos* ServerLevel::getDimensionSpecificSpawn()
 {
+    return mDimension->getSpawnPos();
 }
 
 PortalForcer* ServerLevel::getPortalForcer()
@@ -421,4 +423,3 @@ void ServerLevel::blockEntityAddedExtra(boost::shared_ptr<BlockEntity> first)
 void ServerLevel::blockEntityRemovedExtra(boost::shared_ptr<BlockEntity> first)
 {
 }
-

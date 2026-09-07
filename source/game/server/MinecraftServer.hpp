@@ -127,7 +127,9 @@ private:
     int tickCount;
     bool running;
     bool levelLoaded;
-    bool postProcessing;
+public:
+    bool shuttingDown;
+private:
     bool saving;
     int networkTick;
     std::wstring progressName;
@@ -163,7 +165,7 @@ private:
     bool suspending;
     bool stopping;
     long long lastServerTime;
-    bool shuttingDown;
+    bool postProcessing;
     bool suspended;
     unsigned short shutdownFlags;
 
