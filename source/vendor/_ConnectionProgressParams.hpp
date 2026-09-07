@@ -9,6 +9,8 @@ public:
     _ConnectionProgressParams();
 
 private:
+    friend class Minecraft;
+
     int32_t m_connectionId;
     int32_t m_userIndex;
     bool m_isLocal;

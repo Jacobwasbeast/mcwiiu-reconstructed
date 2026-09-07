@@ -2,7 +2,9 @@
 #define SOURCE_VENDOR___N_21_FFLIDEFAULTSHADER_CPP_D69DBBF4_HPP
 
 #include "platform/wiiu/FFLiUtilShader.hpp"
+#include "game/client/render/Renderer.hpp"
 #include <stdint.h>
+#include <stddef.h>
 
 typedef uint32_t _GX2FrontFaceMode;
 typedef uint32_t _GX2Boolean;
@@ -11,7 +13,7 @@ typedef uint32_t FFLModulateMode;
 typedef uint32_t FFLDrawType;
 typedef uint32_t FFLSpecularMode;
 
-struct FFLDrawParam
+struct FFLiDefaultShaderDrawParam
 {
     uint32_t value[32];
 };
@@ -32,14 +34,14 @@ class __N_21_FFLiDefaultShader_cpp_d69dbbf4
 {
 public:
     static void SetCullingModeWraper(_GX2FrontFaceMode mode, _GX2Boolean cullFront, _GX2Boolean cullBack);
-    static void SetupCulling(FFLCullMode mode, const FFLModulateParam& param, int enabled);
-    static void BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param);
+    static void SetupCulling(FFLCullMode mode, const FFLiShaderModulateParam& param, int enabled);
+    static void BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param);
     static void SetupConstColor(unsigned int location, const FFLColor& color);
     static uint8_t ModulateModeToValue(FFLModulateMode mode);
     static void SetupModulateMode(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, FFLModulateMode mode);
-    static void SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param);
-    static void SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLDrawParam& param);
-    static void ShaderCallbackDraw(void* shader, const FFLDrawParam* param);
+    static void SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param);
+    static void SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiDefaultShaderDrawParam& param);
+    static void ShaderCallbackDraw(void* shader, const FFLiDefaultShaderDrawParam* param);
     static void ShaderCallbackSetMatrix(void* shader, const _Mat44* matrix);
     static void Identity(float (*matrix)[4]);
     static void InitLightParam(FFLiDefaultShaderLight* param);
@@ -54,40 +56,52 @@ public:
     static FFLiDefaultShaderLight* GetLightParam(FFLiDefaultShaderParam* param);
     static FFLiDefaultShaderMaterial* GetMaterialParam(FFLiDefaultShaderParam* param, FFLDrawType type);
 
-    uint32_t m_prefix[21];
+    uint32_t m_prefix[4];
+    _GX2VertexShader* m_vertexShader;
+    _GX2PixelShader* m_pixelShader;
+    FFLiUtilShader::FetchShader m_fetchShader;
+    _GX2Sampler m_sampler;
+    _GX2Sampler m_samplerAlt;
     uint8_t m_enabled;
     uint8_t m_alignment[3];
-    uint32_t m_shaderValue[5];
-    __N_21_FFLiDefaultShader_cpp_d69dbbf4* m_textureShader;
-    __N_21_FFLiDefaultShader_cpp_d69dbbf4* m_textureShaderAlt;
-    __N_21_FFLiDefaultShader_cpp_d69dbbf4* m_textureShaderThird;
-    uint32_t m_uniformMode;
-    uint32_t m_uniformLight;
-    uint32_t m_uniformMatrix;
-    uint32_t m_uniformNormal;
-    uint32_t m_uniformColor;
-    uint32_t m_uniformSampler;
-    uint32_t m_uniformTexture;
-    uint32_t m_uniformModeValue;
-    uint32_t m_uniformRim;
-    uint32_t m_uniformRimPower;
-    uint32_t m_uniformRimColor;
-    uint32_t m_uniformAlpha;
-    uint32_t m_uniformFlags;
-    uint32_t m_uniformExtra;
-    uint32_t m_reservedA[44];
-    uint32_t m_lightEnabled;
-    uint32_t m_lightDiffuse;
+    uint32_t m_vertexUniformMatrix;
+    uint32_t m_vertexUniformView;
+    uint32_t m_vertexUniformNormal;
+    uint32_t m_pixelSamplerLocation;
+    uint32_t m_mode;
+    uint32_t m_pixelConst1;
+    uint32_t m_pixelConst2;
+    uint32_t m_pixelConst3;
+    uint32_t m_lightEnable;
+    uint32_t m_lightDirection;
     uint32_t m_lightAmbient;
+    uint32_t m_lightDiffuse;
     uint32_t m_lightSpecular;
-    uint32_t m_reservedB[20];
-    uint32_t m_lightDirection[6];
-    uint32_t m_reservedC[70];
-    uint32_t m_materialValue[6];
-    uint32_t m_reservedD[40];
+    uint32_t m_materialAmbient;
+    uint32_t m_materialDiffuse;
+    uint32_t m_materialSpecular;
+    uint32_t m_materialSpecularPower;
+    uint32_t m_materialSpecularMode;
+    uint32_t m_rimColor;
     uint32_t m_rimPower;
-    uint32_t m_modulateParam;
+    uint32_t m_parameterStorage[0xC0];
 };
+
+#if UINTPTR_MAX == 0xffffffffU
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_vertexShader) == 0x10, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelShader) == 0x14, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_fetchShader) == 0x18, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_sampler) == 0x3c, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_samplerAlt) == 0x48, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_vertexUniformMatrix) == 0x58, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelSamplerLocation) == 0x64, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_mode) == 0x68, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelConst1) == 0x6c, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelConst2) == 0x70, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelConst3) == 0x74, "layout");
+static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_parameterStorage) == 0xa8, "layout");
+static_assert(sizeof(__N_21_FFLiDefaultShader_cpp_d69dbbf4) == 0x3a8, "layout");
+#endif
 
 typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;
 

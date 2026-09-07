@@ -92,12 +92,12 @@ void __N_20_FFLiRawMaskParts_cpp_7c9651f3::InitAttributes(FFLAttributeBufferPara
     static const uint8_t defaults[60] = { 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x10 };
     std::memcpy(attributes, defaults, sizeof(defaults));
     uint32_t positionSize = FFLiBugCanSwapSize(64U);
-    attributes->buffers[0].buffer = (void*)Allocate(allocator, positionSize, 64U);
+    attributes->attributes[0].buffer = (void*)Allocate(allocator, positionSize, 64U);
     uint32_t texCoordSize = FFLiBugCanSwapSize(32U);
-    attributes->buffers[1].buffer = (void*)Allocate(allocator, texCoordSize, 64U);
-    CalcAttribute((FFLVec4*)attributes->buffers[0].buffer, (FFLVec2*)attributes->buffers[1].buffer, origin, matrix);
-    EndianSwap(attributes->buffers[0].buffer, 64U);
-    EndianSwap(attributes->buffers[1].buffer, 32U);
+    attributes->attributes[1].buffer = (void*)Allocate(allocator, texCoordSize, 64U);
+    CalcAttribute((FFLVec4*)attributes->attributes[0].buffer, (FFLVec2*)attributes->attributes[1].buffer, origin, matrix);
+    EndianSwap(attributes->attributes[0].buffer, 64U);
+    EndianSwap(attributes->attributes[1].buffer, 32U);
 }
 
 void __N_20_FFLiRawMaskParts_cpp_7c9651f3::InvalidatePrimitive(FFLPrimitiveParam* primitive)
@@ -109,8 +109,8 @@ void __N_20_FFLiRawMaskParts_cpp_7c9651f3::InvalidateAttributes(FFLAttributeBuff
 {
     for (unsigned int index = 0; index < 5; ++index)
     {
-        if (attributes->buffers[index].buffer != 0)
-            FFLiInvalidate(65U, attributes->buffers[index].buffer, attributes->buffers[index].size);
+        if (attributes->attributes[index].buffer != 0)
+            FFLiInvalidate(65U, attributes->attributes[index].buffer, attributes->attributes[index].size);
     }
 }
 
@@ -120,7 +120,7 @@ void __N_20_FFLiRawMaskParts_cpp_7c9651f3::InitAttributesForFill(FFLAttributeBuf
     static const uint8_t fill[64] = { 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0xbf };
     std::memcpy(attributes, defaults, sizeof(defaults));
     uint32_t size = FFLiBugCanSwapSize(64U);
-    attributes->buffers[0].buffer = (void*)Allocate(allocator, size, 64U);
-    std::memcpy(attributes->buffers[0].buffer, fill, sizeof(fill));
-    EndianSwap(attributes->buffers[0].buffer, sizeof(fill));
+    attributes->attributes[0].buffer = (void*)Allocate(allocator, size, 64U);
+    std::memcpy(attributes->attributes[0].buffer, fill, sizeof(fill));
+    EndianSwap(attributes->attributes[0].buffer, sizeof(fill));
 }

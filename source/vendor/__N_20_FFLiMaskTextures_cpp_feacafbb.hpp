@@ -2,15 +2,12 @@
 #define VENDOR___N_20_FFLIMASKTEXTURES_CPP_FEACAFBB_HPP
 
 #include <stdint.h>
+#include "platform/wiiu/FFLiTypes.hpp"
+#include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
 
 class FFLiBufferAllocator;
 struct FFLiMaskTexturesTempObject;
 struct FFLiCharInfo;
-
-enum FFLExpression
-{
-    FFL_EXPRESSION_NONE = 0
-};
 
 class __N_20_FFLiMaskTextures_cpp_feacafbb
 {

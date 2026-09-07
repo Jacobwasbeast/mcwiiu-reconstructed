@@ -4,29 +4,13 @@
 #include <stdint.h>
 
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
-
-struct _Mat34
-{
-    float value[3][4];
-};
-
-struct _Mat44
-{
-    float value[4][4];
-};
+#include "platform/wiiu/FFLiUtilShader.hpp"
+#include "platform/wiiu/FFLiCharModelCreator.hpp"
 
 struct FFLVec2
 {
     float x;
     float y;
-};
-
-struct FFLVec4
-{
-    float x;
-    float y;
-    float z;
-    float w;
 };
 
 struct FFLiRawMaskPartsDesc
@@ -43,24 +27,6 @@ enum FFLiOriginPosition
     FFLiOriginPositionTopLeft = 0,
     FFLiOriginPositionTopRight = 1,
     FFLiOriginPositionBottomLeft = 2
-};
-
-struct FFLPrimitiveParam
-{
-    uint32_t primitiveType;
-    uint32_t vertexCount;
-    uint32_t indexCount;
-    void* indexBuffer;
-};
-
-struct FFLAttributeBufferParam
-{
-    struct Buffer
-    {
-        uint32_t size;
-        uint32_t stride;
-        void* buffer;
-    } buffers[5];
 };
 
 class __N_20_FFLiRawMaskParts_cpp_7c9651f3
