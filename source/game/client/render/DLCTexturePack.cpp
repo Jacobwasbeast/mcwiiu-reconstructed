@@ -3,50 +3,53 @@
 #include <string>
 
 #include "game/client/render/DLCModelsFile.hpp"
+#include "game/client/audio/DLCAudioFile.hpp"
+#include "game/client/audio/SoundEngine.hpp"
 #include "game/core/ArchiveFile.hpp"
 #include "game/core/BufferedImage.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCBehavioursFile.hpp"
+#include "game/core/DLCColourTableFile.hpp"
 #include "game/core/DLCLocalisationFile.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/File.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/RiderPositionOverrides.hpp"
 #include "game/data/StringTable.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/DLCMaterialFile.hpp"
 #include "game/world/block/MaterialTable.hpp"
 #include "game/world/generation/StructureManager.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 
-extern ConsoleUIController g_ConsoleUIController;
 extern DLCManager g_DLCManager;
+extern CStorage* gStorage;
 
-class DLCMaterialFileAccess : public DLCMaterialFile
-{
-public:
-    DLCMaterialFileAccess(const std::wstring& path) : DLCMaterialFile(path) {}
-    MaterialTable* getMaterialTable() { return m_pMaterialTable; }
-};
+void Sleep(unsigned int milliseconds);
 
 DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* parentPack)
     : AbstractTexturePack(id, NULL, pack->getName(), parentPack)
     , m_dlcPack(pack)
     , m_loadedPack(NULL)
     , m_stringTable(NULL)
-    , m_uiLoaded(0)
-    , m_loadingData(0)
-    , m_hasData(0)
-    , m_hasValidData(0)
-    , m_materialTableLoaded(1)
-    , m_colourTableLoaded(1)
-    , m_padding(0)
+    , m_uiLoaded(false)
+    , m_loadingData(false)
+    , m_hasData(false)
+    , m_hasValidData(false)
+    , m_colourTableLoaded(true)
+    , m_materialTableLoaded(true)
     , m_archiveFile(NULL)
 {
-    if (CMinecraftApp::sInstance.getLevelGenerationOptions() != NULL)
-        CMinecraftApp::sInstance.getLevelGenerationOptions()->setLoadedData();
+    if (gApp.getLevelGenerationOptions() != NULL)
+        gApp.getLevelGenerationOptions()->setLoadedData();
 
     if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
         m_stringTable = static_cast<DLCLocalisationFile*>(pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))->getStringTable();
@@ -59,12 +62,11 @@ DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* pare
 DLCTexturePack::~DLCTexturePack()
 {
     delete m_archiveFile;
-    m_archiveFile = NULL;
 }
 
 void DLCTexturePack::loadIcon()
 {
-    if (m_dlcPack != NULL && m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Texture, L"icon", true, true))
+    if (m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Texture, L"icon", true, true))
     {
         DLCFile* file = m_dlcPack->getFile(DLCManager::eDLCType_Texture, L"icon", true, true);
         m_pIconData = file->getData(m_iconSize);
@@ -81,7 +83,7 @@ void DLCTexturePack::loadName()
         if ((m_dlcPack->GetPackId() & 0x400) != 0)
             m_worldName = m_stringTable->getString(L"IDS_WORLD_NAME");
         name = m_stringTable->getString(L"IDS_DISPLAY_NAME");
-        if (name.empty())
+        if (name == L"")
             name = m_stringTable->getString(L"title");
     }
     m_name = name;
@@ -93,7 +95,7 @@ void DLCTexturePack::loadDescription()
     if (m_stringTable != NULL)
     {
         description = m_stringTable->getString(L"IDS_TP_DESCRIPTION");
-        if (description.empty())
+        if (description == L"")
             description = m_stringTable->getString(L"description");
     }
     m_desc1 = description;
@@ -112,7 +114,7 @@ DLCPack* DLCTexturePack::getDLCPack()
 std::wstring DLCTexturePack::getDesc1()
 {
     std::wstring description = m_stringTable->getString(L"IDS_TP_DESCRIPTION");
-    if (description.empty())
+    if (description == L"")
         description = m_stringTable->getString(L"description");
     return description;
 }
@@ -120,7 +122,7 @@ std::wstring DLCTexturePack::getDesc1()
 std::wstring DLCTexturePack::getName()
 {
     std::wstring name = m_stringTable->getString(L"IDS_DISPLAY_NAME");
-    if (name.empty())
+    if (name == L"")
         name = m_stringTable->getString(L"title");
     return name;
 }
@@ -132,7 +134,7 @@ std::wstring DLCTexturePack::getWorldName()
 
 void DLCTexturePack::loadComparison()
 {
-    if (m_dlcPack != NULL && m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Texture, L"comparison", true, true))
+    if (m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Texture, L"comparison", true, true))
     {
         DLCFile* file = m_dlcPack->getFile(DLCManager::eDLCType_Texture, L"comparison", true, true);
         m_pComparisonData = file->getData(m_comparisonSize);
@@ -163,42 +165,37 @@ std::wstring DLCTexturePack::getAnimationString(const std::wstring& fileName,
                                                 const std::wstring& animationName,
                                                 const std::wstring& defaultString)
 {
-    std::wstring path = L"res/" + fileName;
-    path += L"/";
-    path += animationName;
-    if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Texture, path, true, true))
+    std::wstring result = L"";
+    std::wstring path = L"res/" + defaultString + fileName;
+    if (hasFile(path))
     {
         DLCFile* file = m_loadedPack->getFile(DLCManager::eDLCType_Texture, path, true, true);
-        unsigned int size = 0;
-        unsigned char* data = file->getData(size);
-        std::wstring result((wchar_t*)data, (wchar_t*)data + size / sizeof(wchar_t));
-        delete[] data;
-        return result;
+        result = file->getParameterAsString(DLCManager::eDLCParameterType_Anim, animationName);
     }
-    return L"";
+    return result;
 }
 
 BufferedImage* DLCTexturePack::getImageResource(const std::wstring& fileName, bool bSingleImage, bool bTitleUpdate, const std::wstring& path)
 {
     if (m_loadedPack != NULL)
         return new BufferedImage(m_loadedPack, L"/" + fileName, bSingleImage);
-    return AbstractTexturePack::getImageResource(fileName, bSingleImage, bTitleUpdate, path);
+    return m_pParentPack->getImageResource(fileName, bSingleImage, bTitleUpdate, path);
 }
 
 void DLCTexturePack::loadMaterialTable()
 {
     if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Material, L"entityMaterials_bin", true, true))
     {
-        DLCFile* file = m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials_bin", true, true);
-        m_pMaterialTable = static_cast<DLCMaterialFileAccess*>(file)->getMaterialTable();
-        m_materialTableLoaded = 0;
+        DLCMaterialFile* file = static_cast<DLCMaterialFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Material, L"entityMaterials_bin", true, true));
+        m_pMaterialTable = file->m_pMaterialTable;
+        m_materialTableLoaded = false;
     }
     else
     {
-        if (m_materialTableLoaded == 0)
+        if (!m_materialTableLoaded)
             m_pMaterialTable = NULL;
         AbstractTexturePack::loadMaterialTable();
-        m_materialTableLoaded = 1;
+        m_materialTableLoaded = true;
     }
 }
 
@@ -206,23 +203,18 @@ void DLCTexturePack::loadColourTable()
 {
     if (m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true))
     {
-        DLCFile* file = m_loadedPack->getFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true);
-        unsigned int size = 0;
-        unsigned char* data = file->getData(size);
-        if (m_pColourTable == NULL)
-            m_pColourTable = new ColourTable(data, size);
-        else
-            m_pColourTable->loadColoursFromData(data, size);
-        m_colourTableLoaded = 0;
-        delete[] data;
+        DLCColourTableFile* file = static_cast<DLCColourTableFile*>(m_loadedPack->getFile(DLCManager::eDLCType_ColourTable, L"colours.col", true, true));
+        m_pColourTable = file->m_pColourTable;
+        m_colourTableLoaded = false;
     }
     else
     {
-        if (m_colourTableLoaded == 0)
+        if (!m_colourTableLoaded)
             m_pColourTable = NULL;
-        AbstractTexturePack::loadColourTable();
-        m_colourTableLoaded = 1;
+        AbstractTexturePack::loadDefaultColourTable();
+        m_colourTableLoaded = true;
     }
+    AbstractTexturePack::loadDefaultHTMLColourTable();
 }
 
 void DLCTexturePack::loadStructureManager()
@@ -233,17 +225,17 @@ void DLCTexturePack::loadStructureManager()
 
 bool DLCTexturePack::hasData()
 {
-    return m_hasData != 0;
+    return m_hasData;
 }
 
 bool DLCTexturePack::hasValidData()
 {
-    return m_hasValidData != 0;
+    return m_hasValidData;
 }
 
 bool DLCTexturePack::isLoadingData()
 {
-    return m_loadingData != 0;
+    return m_loadingData;
 }
 
 void DLCTexturePack::loadCustomModels()
@@ -252,7 +244,8 @@ void DLCTexturePack::loadCustomModels()
         return;
     m_customModels.clear();
     DLCModelsFile* file = static_cast<DLCModelsFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Models, L"models_bin", true, true));
-    DataInputStream stream(new ByteArrayInputStream(file->getData()));
+    ByteArrayInputStream byteStream(file->getData());
+    DataInputStream stream(&byteStream);
     int version = stream.readInt();
     int count = stream.readInt();
     for (int i = 0; i < count; ++i)
@@ -262,81 +255,211 @@ void DLCTexturePack::loadCustomModels()
     }
 }
 
-unsigned long long DLCTexturePack::loadBehaviours()
+void DLCTexturePack::loadBehaviours()
 {
     if (m_loadedPack == NULL || !m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Behaviours, L"behaviours_bin", true, true))
-        return 0;
+        return;
     DLCBehavioursFile* file = static_cast<DLCBehavioursFile*>(m_loadedPack->getFile(DLCManager::eDLCType_Behaviours, L"behaviours_bin", true, true));
-    DataInputStream stream(new ByteArrayInputStream(file->getData()));
+    ByteArrayInputStream byteStream(file->getData());
+    DataInputStream stream(&byteStream);
     stream.readInt();
     int count = stream.readInt();
     for (int i = 0; i < count; ++i)
         RiderPositionOverrides::ReadOverrides(&stream);
-    return 0;
 }
 
-unsigned int DLCTexturePack::packMounted(void* data, int result, unsigned int mountIndex, unsigned int deviceId)
+int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, unsigned int licenseMask)
 {
     DLCTexturePack* pack = static_cast<DLCTexturePack*>(data);
-    if (pack == NULL)
-        return 0;
-    pack->m_loadingData = 0;
+    pack->m_loadingData = false;
     if (result == 0)
     {
-        pack->m_loadedPack = new DLCPack(pack->m_dlcPack->getName(), 0);
-        pack->m_loadedPack->SetDLCMountIndex(mountIndex);
-        pack->m_loadedPack->SetDLCDeviceID((int)deviceId);
-        pack->m_hasValidData = 1;
-        pack->m_hasData = 1;
-        pack->loadUI();
-        pack->loadMaterialTable();
-        pack->loadColourTable();
-        pack->loadCustomModels();
+        pack->m_loadedPack = new DLCPack(pack->m_dlcPack->getName(), licenseMask);
+        pack->setHasAudio(false);
+        pack->m_hasValidData = true;
+
+        unsigned int numItemsAdded = 0;
+        std::wstring dataPath = pack->m_dlcPack->getFullDataPath();
+        if (dataPath.empty())
+        {
+            pack->hasAudio();
+        }
+        else
+        {
+            std::wstring fullDataPath = gApp.getFilePath(
+                pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK\\");
+            bool loaded = g_DLCManager.readDLCDataFile(numItemsAdded, fullDataPath,
+                                                       pack->m_loadedPack,
+                                                       pack->m_dlcPack->GetPackId(), false);
+            if (loaded)
+            {
+                if (pack->m_loadedPack != NULL)
+                {
+                    File mediaArchive(gApp.getFilePath(
+                        pack->m_dlcPack->GetPackId(), L"media.arc", true, L"TPACK\\"));
+                    if (mediaArchive.exists())
+                    {
+                        delete pack->m_archiveFile;
+                        pack->m_archiveFile = new ArchiveFile(mediaArchive);
+                    }
+
+                    DLCPack* parentPack = pack->m_dlcPack->GetParentPack();
+                    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+                    if (options != NULL &&
+                        options->getParentPackId() == pack->m_dlcPack->GetPackId() &&
+                        !options->hasLoadedData())
+                    {
+                        LevelGenerationOptions::loadGameRulesHeaders(parentPack,
+                                                                     pack->m_stringTable,
+                                                                     options);
+                        if (options->requiresBaseSave() && !options->getBaseSavePath().empty())
+                        {
+                            File baseSave(gApp.getFilePath(
+                                pack->m_dlcPack->GetPackId(), options->getBaseSavePath(),
+                                true, L"TPACK\\"));
+                            options->setBaseSaveData(baseSave);
+                        }
+                    }
+
+                    if (parentPack->getDLCItemsCount(DLCManager::eDLCType_Audio) != 0)
+                    {
+                        DLCAudioFile* audioFile = static_cast<DLCAudioFile*>(
+                            parentPack->getFile(DLCManager::eDLCType_Audio, 0, true, true));
+                        pack->setHasAudio(true);
+
+                        int count[DLCAudioFile::eAudioType_NumTypes];
+                        int first[DLCAudioFile::eAudioType_NumTypes];
+                        int last[DLCAudioFile::eAudioType_NumTypes];
+                        int total = 0;
+                        int i;
+                        for (i = 0; i < DLCAudioFile::eAudioType_NumTypes; ++i)
+                            count[i] = audioFile->GetCountofType((DLCAudioFile::EAudioType)i);
+
+                        for (i = 0; i < 3; ++i)
+                        {
+                            first[i] = total;
+                            total += count[i];
+                            last[i] = total - 1;
+                        }
+                        for (i = 3; i < 8; ++i)
+                        {
+                            if (count[i] != 0)
+                            {
+                                first[i] = total;
+                                total += count[i];
+                            }
+                            else
+                            {
+                                first[i] = 0;
+                            }
+                            last[i] = first[i] + count[i] - 1;
+                        }
+                        if (count[8] != 0)
+                        {
+                            first[8] = total;
+                            total += count[8];
+                            last[8] = total - 1;
+                        }
+                        else
+                        {
+                            first[8] = first[3];
+                            last[8] = last[3];
+                        }
+
+                        Minecraft::GetInstance()->mSoundEngine->SetStreamingSounds(
+                            first[0], last[0], first[1], last[1], first[2], last[2],
+                            first[3], last[3], first[4], last[4], first[5], last[5],
+                            first[6], last[6], first[7], last[7], first[8], last[8], total);
+                    }
+                }
+            }
+            else
+            {
+                delete pack->m_loadedPack;
+                pack->m_loadedPack = NULL;
+            }
+
+            pack->loadColourTable();
+            pack->loadMaterialTable();
+            pack->loadCustomModels();
+            pack->loadBehaviours();
+            pack->hasAudio();
+        }
     }
     else
-        pack->m_hasValidData = 0;
-    return (unsigned int)result;
+    {
+        pack->loadColourTable();
+        pack->loadMaterialTable();
+        for (int attempts = 200; gMinecraftServer == NULL && attempts > 0; --attempts)
+            Sleep(10);
+
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        if (options != NULL)
+            options->setLoadedData();
+    }
+
+    pack->m_hasData = true;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options != NULL && options->getParentPackId() == pack->m_dlcPack->GetPackId())
+        options->setLoadedData();
+    gApp.StartReloadingTexturePack();
+    return 0;
 }
 
 void DLCTexturePack::loadData()
 {
-    if (m_dlcPack == NULL)
-        return;
-    m_loadingData = 1;
-    if ((int)m_dlcPack->GetDLCMountIndex() < 0)
+    int mountIndex = (int)m_dlcPack->GetDLCMountIndex();
+    if (mountIndex < 0)
     {
-        m_loadingData = 0;
-        m_hasData = 1;
-        m_hasValidData = 1;
-        loadUI();
-        return;
+        loadColourTable();
+        loadMaterialTable();
+        m_hasData = true;
+        if (gApp.getLevelGenerationOptions() != NULL)
+            gApp.getLevelGenerationOptions()->setLoadedData();
+        gApp.StartReloadingTexturePack();
     }
-    packMounted(this, 0, m_dlcPack->GetDLCMountIndex(), (unsigned int)m_dlcPack->GetDLCDeviceID());
+    else
+    {
+        int result = gStorage->MountInstalledDLC(gProfile->GetPrimaryPad(),
+                                                 (unsigned int)mountIndex,
+                                                 packMounted, this, "TPACK");
+        if (result == 0x3e5)
+        {
+            m_loadingData = true;
+            return;
+        }
+
+        loadColourTable();
+        loadMaterialTable();
+        m_hasData = true;
+        if (gApp.getLevelGenerationOptions() != NULL)
+            gApp.getLevelGenerationOptions()->setLoadedData();
+    }
 }
 
 void DLCTexturePack::loadUI()
 {
     if (m_archiveFile != NULL && m_archiveFile->hasFile(L"skin_swf"))
-        g_ConsoleUIController.ReloadSkin();
+        gConsoleUIController.ReloadSkin();
     else
         AbstractTexturePack::loadDefaultUI();
-    m_uiLoaded = 1;
+    m_uiLoaded = true;
     AbstractTexturePack::loadUI();
     if (!hasAudio())
-        g_ConsoleUIController.IsReloadingSkin();
+        gConsoleUIController.IsReloadingSkin();
 }
 
 void DLCTexturePack::unloadUI()
 {
-    if (m_uiLoaded != 0)
+    if (m_uiLoaded)
         setHasAudio(false);
     AbstractTexturePack::unloadUI();
     g_DLCManager.removePack(m_loadedPack);
     m_loadedPack = NULL;
     delete m_archiveFile;
     m_archiveFile = NULL;
-    m_uiLoaded = 0;
-    m_hasData = 0;
+    m_uiLoaded = false;
+    m_hasData = false;
 }
 
 void DLCTexturePack::unloadAudio()

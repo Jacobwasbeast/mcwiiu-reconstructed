@@ -62,14 +62,16 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
 
             const float x0 = px - xa * scale;
             const float x1 = px + xa * scale;
-            const float z0 = pz - za * scale;
-            const float z1 = pz + za * scale;
             const float y0 = py - ya * scale;
             const float y1 = py + ya * scale;
-            buffer->vertexUV(x0, y0, z0, u0, v0);
-            buffer->vertexUV(x1, y1, z0, u0, v1);
-            buffer->vertexUV(x1, y1, z1, u1, v1);
-            buffer->vertexUV(x0, y0, z1, u1, v0);
+            const float z0 = pz - za * scale;
+            const float z1 = pz + za * scale;
+            const float xOffset = xa2 * scale;
+            const float zOffset = za2 * scale;
+            buffer->vertexUV(x0 - xOffset, y0, z0 - zOffset, u0, v0);
+            buffer->vertexUV(x0 + xOffset, y1, z0 + zOffset, u0, v1);
+            buffer->vertexUV(x1 + xOffset, y1, z1 + zOffset, u1, v1);
+            buffer->vertexUV(x1 - xOffset, y0, z1 - zOffset, u1, v0);
 
             Tesselator::getInstance()->end();
             GlStateManager::enableLighting();
@@ -77,7 +79,7 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
     }
 }
 
-uint32_t HugeExplosionParticle::getLightColor(float partialTicks)
+int HugeExplosionParticle::getLightColor(float partialTicks)
 {
     return 0xf0f0;
 }
@@ -99,7 +101,7 @@ int HugeExplosionParticle::getParticleTexture()
     return 3;
 }
 
-long long HugeExplosionParticle::GetType()
+uint64_t HugeExplosionParticle::GetType()
 {
     return 0x0000000000080216LL;
 }

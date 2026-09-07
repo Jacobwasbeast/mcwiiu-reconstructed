@@ -3,8 +3,9 @@
 #include <cmath>
 
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 PlayerCloudParticle::PlayerCloudParticle(Level* level,
                                          double x,
@@ -21,8 +22,9 @@ PlayerCloudParticle::PlayerCloudParticle(Level* level,
     rCol = 1.0f - random.nextFloat() * 0.3f;
     gCol = rCol;
     bCol = rCol;
-    alpha *= 6.0f;
-    size = alpha;
+    size *= 0.75f;
+    size *= 2.5f;
+    baseSize = size;
     lifetime = (int)std::floor(8.0 / (random.nextDouble() * 0.8 + 0.3) * 2.5);
 }
 
@@ -40,7 +42,7 @@ void PlayerCloudParticle::render(BufferBuilder* buffer,
                                  float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    alpha = size * Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
+    size = baseSize * Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -49,9 +51,7 @@ void PlayerCloudParticle::tick()
     xo = x;
     yo = y;
     zo = z;
-    ++age;
-
-    if (age >= lifetime)
+    if (age++ >= lifetime)
     {
         remove();
     }
@@ -59,32 +59,32 @@ void PlayerCloudParticle::tick()
     setMiscTex(7 - (age << 3) / lifetime);
     move(xd, yd, zd);
 
-    xd *= 0.96;
-    yd *= 0.96;
-    zd *= 0.96;
+    xd *= 0.96f;
+    yd *= 0.96f;
+    zd *= 0.96f;
 
-    boost::shared_ptr<Entity> nearestPlayer = level->getNearestPlayer(x, y, z, 2.0, false, 2.0);
+    boost::shared_ptr<Player> nearestPlayer = level->getNearestPlayer(x, y, z, 2.0, false, -1.0);
     if (nearestPlayer)
     {
         double playerY = nearestPlayer->mBoundingBox->mMinY;
         if (playerY < y)
         {
-            y = (playerY - y) * 0.5 + y;
-            yd = (nearestPlayer->mY - yd) * 0.5 + yd;
+            y = (playerY - y) * 0.2 + y;
+            yd = (nearestPlayer->mY - yd) * 0.2 + yd;
             setPos(x, y, z);
         }
     }
 
     if (onGround)
     {
-        xd *= 0.7;
-        zd *= 0.7;
+        xd *= 0.7f;
+        zd *= 0.7f;
     }
 }
 
-long long PlayerCloudParticle::GetType()
+uint64_t PlayerCloudParticle::GetType()
 {
-    return 0x0008021800000000LL;
+    return 0x0008021800000000ULL;
 }
 
 Particle* PlayerCloudParticle::Provider::createParticle(ePARTICLE_TYPE type,

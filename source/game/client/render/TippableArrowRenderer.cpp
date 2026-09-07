@@ -1,0 +1,24 @@
+#include "game/client/render/TippableArrowRenderer.hpp"
+
+#include "game/entity/projectile/TippableArrow.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation TIPPABLE_ARROW_LOCATION;
+static ResourceLocation TIPPED_ARROW_LOCATION;
+
+TippableArrowRenderer::TippableArrowRenderer(EntityRenderDispatcher* dispatcher)
+    : ArrowRenderer(dispatcher)
+{
+}
+
+TippableArrowRenderer::~TippableArrowRenderer()
+{
+}
+
+const ResourceLocation* TippableArrowRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
+    boost::shared_ptr<TippableArrow> arrow = boost::static_pointer_cast<TippableArrow>(entity);
+    if (arrow->getColor() > 0)
+        return &TIPPED_ARROW_LOCATION;
+    return &TIPPABLE_ARROW_LOCATION;
+}

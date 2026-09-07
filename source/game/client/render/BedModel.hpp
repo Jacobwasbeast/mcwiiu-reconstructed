@@ -1,6 +1,7 @@
 #ifndef GAME_CLIENT_RENDER_BEDMODEL_HPP
 #define GAME_CLIENT_RENDER_BEDMODEL_HPP
 
+#include <stdint.h>
 #include <string>
 
 #include "game/client/render/Model.hpp"
@@ -17,7 +18,7 @@ public:
 
     virtual std::wstring getName();
 
-    int modelVersion();
+    uint32_t modelVersion();
 
     void render(bool useDisplayList);
 

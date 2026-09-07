@@ -4,10 +4,12 @@
 
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 
 DripParticle::DripParticle(Level* level, double x, double y, double z, Material* material)
@@ -16,7 +18,8 @@ DripParticle::DripParticle(Level* level, double x, double y, double z, Material*
     , delay(40)
 {
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-        material == Material::WATER ? (eMinecraftColour)244 : (eMinecraftColour)245);
+        material == Material::WATER ? eMinecraftColour_Particle_DripWater
+                                    : eMinecraftColour_Particle_DripLavaStart);
     rCol = (float)((double)((colour >> 16) & 255) / 255.0);
     gCol = (float)((double)((colour >> 8) & 255) / 255.0);
     bCol = (float)((double)(colour & 255) / 255.0);
@@ -55,15 +58,18 @@ void DripParticle::tick()
 
     if (material == Material::WATER)
     {
-        unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)244);
+        unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+            eMinecraftColour_Particle_DripWater);
         rCol = (float)((double)((colour >> 16) & 255) / 255.0);
         gCol = (float)((double)((colour >> 8) & 255) / 255.0);
         bCol = (float)((double)(colour & 255) / 255.0);
     }
     else
     {
-        unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)245);
-        unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)246);
+        unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour(
+            eMinecraftColour_Particle_DripLavaStart);
+        unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(
+            eMinecraftColour_Particle_DripLavaEnd);
         float fraction = (float)(40 - delay) / 40.0f;
         rCol = (float)(((double)((start >> 16) & 255) -
                         ((double)((start >> 16) & 255) - (double)((end >> 16) & 255)) * fraction) / 255.0);
@@ -73,12 +79,10 @@ void DripParticle::tick()
                         ((double)(start & 255) - (double)(end & 255)) * fraction) / 255.0);
     }
 
-    --delay;
-    if (delay < 1)
+    int currentDelay = delay--;
+    yd -= gravity;
+    if (currentDelay < 1)
     {
-        yd -= gravity;
-        if (delay < 0)
-            remove();
         setMiscTex(112);
         move(xd, yd, zd);
         xd *= 0.98;
@@ -97,16 +101,16 @@ void DripParticle::tick()
         zd *= 0.98;
     }
 
-    --lifetime;
-    if (lifetime < 1)
+    int currentLifetime = lifetime--;
+    if (currentLifetime < 1)
         remove();
 
     if (onGround)
     {
-        remove();
         if (material == Material::WATER)
         {
-            level->addParticle(ePARTICLE_SPLASH, false, x, y, z, 0.0, 0.0, 0.0,
+            remove();
+            level->addParticle(PARTICLE_SPLASH, x, y, z, 0.0, 0.0, 0.0,
                                arrayWithLength<int>());
             xd *= 0.7;
             zd *= 0.7;
@@ -121,18 +125,21 @@ void DripParticle::tick()
 
     BlockPos position(x, y, z);
     const BlockState* state = level->getBlockState(position);
-    if ((state->getMaterial()->isLiquid() || state->getMaterial()->isSolid()) &&
-        state->getBlock()->isLiquidBlock())
+    if (state->getMaterial()->isLiquid() || state->getMaterial()->isSolid())
     {
-        int data = state->getBlock()->convertBlockStateToLegacyData(state);
-        float height = data >= 8 ? 0.0f : (float)(data + 1) / 9.0f;
-        double surface = std::floor(y) + 1.0 - (double)height;
+        double height = 0.0;
+        if (state->getBlock()->isLiquidBlock())
+        {
+            int data = state->getValue(LiquidBlock::LEVEL);
+            height = LiquidBlock::getHeightFromData(data);
+        }
+        double surface = std::floor(y) + 1.0 - height;
         if (y < surface)
             remove();
     }
 }
 
-long long DripParticle::GetType()
+uint64_t DripParticle::GetType()
 {
     return 0x0008021b00000000LL;
 }

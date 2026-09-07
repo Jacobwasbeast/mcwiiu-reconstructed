@@ -5,7 +5,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/PigZombieModel.hpp"
+#include "game/client/render/HumanoidMobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -13,7 +13,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class PigZombieRenderer : public PigZombieModel
+class PigZombieRenderer : public HumanoidMobRenderer
 {
 public:
     PigZombieRenderer(EntityRenderDispatcher* dispatcher);

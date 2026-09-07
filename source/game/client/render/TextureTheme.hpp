@@ -7,13 +7,14 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/AssetTheme.hpp"
+#include "game/world/generation/LayerTheme.hpp"
 
 class BlockState;
 class BlockTransaction;
 class BufferedImage;
 class Random;
 
-class TextureTheme
+class TextureTheme : public LayerTheme
 {
 public:
     class BlockStack

@@ -231,9 +231,9 @@ void Font::drawWordWrapInternal(const std::wstring& text, int x, int y, int wrap
     }
 }
 
-void Font::drawNoBeginEndBuilder(const std::wstring& text, int x, int y, int color)
+unsigned int Font::drawNoBeginEndBuilder(const std::wstring& text, int x, int y, int color)
 {
-    draw(text, x, y, color, false, false);
+    return draw(text, x, y, color, false, false);
 }
 
 void Font::bindTexture()

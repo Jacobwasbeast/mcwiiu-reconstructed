@@ -2,8 +2,9 @@
 
 #include "game/client/render/FishModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
-#include "game/util/ResourceLocation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation FISH_TEXTURE;
 static ResourceLocation PUFFERFISH_TEXTURE;
@@ -27,10 +28,11 @@ Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 
 const ResourceLocation* FishRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    unsigned long long type = entity->GetType();
-    if (type == 0x000000000D502003ULL)
+    if (entity->GetType() == 0x000000000D502002ULL)
+        return &FISH_TEXTURE;
+    if (entity->GetType() == 0x000000000D502003ULL)
         return &PUFFERFISH_TEXTURE;
-    if (type == 0x000000000D502004ULL)
+    if (entity->GetType() == 0x000000000D502004ULL)
         return &SALMON_TEXTURE;
     return &FISH_TEXTURE;
 }

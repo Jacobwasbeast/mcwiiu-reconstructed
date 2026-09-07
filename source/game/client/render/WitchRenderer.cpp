@@ -4,18 +4,11 @@
 #include "game/client/render/WitchModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/WitchItemLayer.hpp"
-
-class Mob : public LivingEntity
-{
-public:
-    virtual not_null_ptr<ItemInstance> getMainHandItem();
-    virtual void setAggressive(bool aggressive);
-};
 
 static ResourceLocation WITCH_LOCATION;
 
@@ -34,7 +27,7 @@ void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
 {
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
     not_null_ptr<ItemInstance> itemInstance = mob->getMainHandItem();
-    mob->setAggressive(!itemInstance->isEmpty());
+    static_cast<WitchModel*>(mModel)->mHoldingItem = !itemInstance->isEmpty();
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 

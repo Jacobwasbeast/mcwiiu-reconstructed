@@ -2,7 +2,7 @@
 
 EndRodParticle::EndRodParticle(Level* level, double x, double y, double z,
                                double xa, double ya, double za)
-    : SimpleAnimatedParticle(level, x, y, z, 176, 8, 0.00048828125f)
+    : SimpleAnimatedParticle(level, x, y, z, 176, 8, -0.0005f)
 {
     size *= 0.75f;
     xd = xa;

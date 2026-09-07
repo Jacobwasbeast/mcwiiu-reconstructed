@@ -15,12 +15,12 @@ public:
     HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z,
                           double xa, double ya, double za);
     virtual ~HugeExplosionParticle();
-    virtual long long GetType();
+    virtual uint64_t GetType();
     virtual void tick();
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                         float partialTicks, float xa, float ya, float za, float xa2, float za2);
     virtual int getParticleTexture();
-    virtual uint32_t getLightColor(float partialTicks);
+    virtual int getLightColor(float partialTicks);
 
     class Provider : public ParticleProvider
     {

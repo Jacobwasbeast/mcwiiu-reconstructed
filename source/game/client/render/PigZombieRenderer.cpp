@@ -3,13 +3,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/PigZombieModel.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/ZombieArmorLayer.hpp"
 
 static ResourceLocation PIG_ZOMBIE_LOCATION;
 
-PigZombieRenderer::PigZombieRenderer(EntityRenderDispatcher*)
-    : PigZombieModel(ModelDefinition())
+PigZombieRenderer::PigZombieRenderer(EntityRenderDispatcher* dispatcher)
+    : HumanoidMobRenderer(dispatcher, new PigZombieModel(ModelDefinition()), 0.5F)
 {
+    addLayer(new ZombieArmorLayer(this, ENTITY_TYPE_PIG_ZOMBIE));
 }
 
 PigZombieRenderer::~PigZombieRenderer()

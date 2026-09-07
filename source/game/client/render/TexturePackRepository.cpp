@@ -3,6 +3,7 @@
 #include <boost/unordered_map.hpp>
 #include <new>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCPack.hpp"
@@ -10,13 +11,11 @@
 #include "game/client/render/DLCTexturePack.hpp"
 #include "game/client/render/MapRenderer.hpp"
 
-extern ConsoleUIController g_ConsoleUIController;
-
 DefaultTexturePack* TexturePackRepository::defaultTexturePack = NULL;
 
 TexturePackRepository::TexturePackRepository(File file, Minecraft* minecraft)
     : m_unknown0(0)
-    , m_unknown1(0)
+    , m_unknown1(NULL)
     , m_minecraft(minecraft)
     , m_allTexturePacks(NULL)
     , m_selected(NULL)
@@ -32,8 +31,8 @@ TexturePackRepository::TexturePackRepository(File file, Minecraft* minecraft)
     m_allTexturePacks->push_back(defaultTexturePack);
     m_texturePacksById[defaultTexturePack->getId()] = defaultTexturePack;
     m_selected = defaultTexturePack;
-    m_selected->loadUI();
-    m_selected->loadCustomModels();
+    m_selected->loadColourTable();
+    m_selected->loadStructureManager();
 }
 
 TexturePack* TexturePackRepository::getSelected()
@@ -97,13 +96,13 @@ TexturePackRepository::TexturePackIdNames* TexturePackRepository::getTexturePack
 
 bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forceReload)
 {
-    CMinecraftApp::sInstance.SetRequiredTexturePackID(packId);
+    theApp.SetRequiredTexturePackID(packId);
     boost::unordered_map<unsigned int, TexturePack*>::iterator iterator = m_texturePacksById.find(packId);
     if (iterator == m_texturePacksById.end())
     {
         if (selectSkin(defaultTexturePack))
         {
-            CMinecraftApp::sInstance.StartReloadingTexturePack();
+            theApp.StartReloadingTexturePack();
         }
         return false;
     }
@@ -114,7 +113,7 @@ bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forc
         selectSkin(texturePack);
         if (texturePack->hasData())
         {
-            CMinecraftApp::sInstance.StartReloadingTexturePack();
+            theApp.StartReloadingTexturePack();
             return true;
         }
         texturePack->loadData();
@@ -152,7 +151,7 @@ void TexturePackRepository::updateUI()
         m_previousSelected->unloadUI();
         m_selected->loadUI();
         MapRenderer::reloadColours();
-        g_ConsoleUIController.StartReloadSkinThread();
+        gConsoleUIController.StartReloadSkinThread();
         m_previousSelected = NULL;
     }
 }

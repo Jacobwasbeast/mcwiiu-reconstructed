@@ -28,7 +28,7 @@ ExplodeParticle::~ExplodeParticle()
 {
 }
 
-long long ExplodeParticle::GetType()
+uint64_t ExplodeParticle::GetType()
 {
     return 0x0008020400000000LL;
 }

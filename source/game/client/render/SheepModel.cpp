@@ -4,25 +4,24 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
-
-class Sheep;
+#include "game/core/Sheep.hpp"
 
 SheepModel::SheepModel(const ModelDefinition& modelDefinition)
-    : QuadrupedModel(12, 0.0f, modelDefinition)
+    : QuadrupedModel(12, 0.0f, modelDefinition), mHeadEatAngleScale(0.0f)
 {
-    mHeadEatAngleScale = 0.0f;
-
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
     if (!modelDefinition.DoesOverrideModel())
     {
+        delete mHead;
+        delete mBody;
+
         mHead = new ModelPartSkin(this, 0, 0, NULL);
         mHead->addBox(-3.0f, -4.0f, -6.0f, 6, 6, 8, 0.0f);
         mHead->setPos(0.0f, 6.0f, -8.0f);
 
         mBody = new ModelPartSkin(this, 28, 8, NULL);
-        mBody->addBox(-4.0f, -10.0f, 1.75f, 8, 16, 6, 0.0f);
+        mBody->addBox(-4.0f, -10.0f, -7.0f, 8, 16, 6, 0.0f);
         mBody->setPos(0.0f, 5.0f, 2.0f);
 
         compileSkinnedDrawlist();

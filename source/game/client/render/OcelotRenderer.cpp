@@ -1,0 +1,48 @@
+#include "game/client/render/OcelotRenderer.hpp"
+
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/OcelotModel.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/Ocelot.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation sBlackOcelotTexture;
+static ResourceLocation sOcelotTexture;
+static ResourceLocation sRedOcelotTexture;
+static ResourceLocation sSiameseOcelotTexture;
+
+OcelotRenderer::OcelotRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new OcelotModel(), 0.4F)
+{
+}
+
+OcelotRenderer::~OcelotRenderer()
+{
+}
+
+const ResourceLocation* OcelotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+{
+    boost::shared_ptr<Ocelot> ocelot = boost::static_pointer_cast<Ocelot>(entity);
+    int catType = ocelot->getCatType();
+    if (catType == 1)
+        return &sBlackOcelotTexture;
+    if (catType == 2)
+        return &sRedOcelotTexture;
+    if (catType == 3)
+        return &sSiameseOcelotTexture;
+    return &sOcelotTexture;
+}
+
+void OcelotRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+{
+    LivingEntityRenderer::scale(entity, partialTicks);
+    boost::shared_ptr<Ocelot> ocelot = boost::static_pointer_cast<Ocelot>(entity);
+    if (ocelot->isBaby())
+        GlStateManager::scalef(0.8F, 0.8F, 0.8F);
+}
+
+Model* OcelotRenderer::createModel(const ModelDefinition& definition)
+{
+    return new OcelotModel(definition);
+}

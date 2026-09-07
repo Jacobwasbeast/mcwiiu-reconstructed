@@ -7,6 +7,11 @@
 #include "game/client/render/TexturePack.hpp"
 #include "game/core/GlStateManager.hpp"
 
+double lerp(double from, double to, double amount)
+{
+    return (to - from) * amount + from;
+}
+
 LivingEntityRenderer::LivingEntityRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : EntityRenderer(dispatcher), mLayers(), mItemFrame(false)
 {

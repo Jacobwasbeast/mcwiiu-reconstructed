@@ -1,5 +1,6 @@
 #include "game/client/render/ThrownItemRenderer.hpp"
 #include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/client/render/ItemRenderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/core/BufferBuilder.hpp"

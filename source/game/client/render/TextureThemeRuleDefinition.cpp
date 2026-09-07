@@ -18,8 +18,6 @@ static const std::wstring gColourReplacements[4][8] =
 };
 
 TextureThemeRuleDefinition::TextureThemeRuleDefinition()
-    : mLayerTextures()
-    , mBlockStackGetters()
 {
 }
 
@@ -123,8 +121,7 @@ void TextureThemeRuleDefinition::IndexedBlockDef::getStack(TextureTheme::BlockSt
 }
 
 TextureThemeRuleDefinition::LayerTexture::LayerTexture()
-    : mFilename()
-    , mMinimumWidth(0)
+    : mMinimumWidth(0)
 {
     addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(9), &mFilename);
     GameRules_IntAttribute* width = addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(64), &mMinimumWidth);

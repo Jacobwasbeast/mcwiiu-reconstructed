@@ -78,7 +78,15 @@ static const eMinecraftColour gMapColourSources[52] =
 
 bool sortByTexture(const MapDecoration& left, const MapDecoration& right)
 {
-    return left.getImg() < right.getImg();
+    if (!left.getType()->isPlayer())
+    {
+        if (!right.getType()->isPlayer())
+            return left.getImg() < right.getImg();
+    }
+
+    if (!left.getType()->isPlayer() && right.getType()->isPlayer())
+        return true;
+    return false;
 }
 
 std::wstring formatwstr(const wchar_t* format, ...);

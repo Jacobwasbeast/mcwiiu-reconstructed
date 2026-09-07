@@ -30,7 +30,9 @@ public:
                         double xa,
                         double ya,
                         double za);
+    virtual uint64_t GetType();
     virtual ~PlayerCloudParticle();
+    virtual void tick();
     virtual void render(BufferBuilder* buffer,
                          const boost::shared_ptr<Entity>& camera,
                          float partialTicks,
@@ -39,8 +41,9 @@ public:
                          float za,
                          float xa2,
                          float za2);
-    virtual void tick();
-    virtual long long GetType();
+
+private:
+    float baseSize;
 };
 
 #endif

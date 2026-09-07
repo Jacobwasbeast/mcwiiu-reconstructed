@@ -1,5 +1,9 @@
 #include "game/client/render/Renderer.hpp"
 
+#include "platform/wiiu/FFLiManager.hpp"
+#include "platform/wiiu/FFLiUtilShader.hpp"
+#include "platform/wiiu/WiiU_GX2.hpp"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,12 +38,6 @@ struct D3DXIMAGE_INFO
     unsigned int Format;
     unsigned int ResourceType;
     unsigned int ImageFileFormat;
-};
-
-struct FFLResourceDesc
-{
-    void* pData[2];
-    unsigned int size[2];
 };
 
 struct _Vec3
@@ -200,6 +198,20 @@ int png_image_write_to_stdio(png_image* image, void* file, int bConvertTo8Bit, c
 void user_write_data_init(void* buffer, int size);
 void user_write_data(png_struct_def* png, unsigned char* data, unsigned int size);
 void user_flush_data(png_struct_def* png);
+
+extern int FFLGetBufferSizeDefaultShader(const char* name);
+extern int FFLInitDefaultShader(void* shader, void* buffer, const char* name);
+extern void FFLSetDefaultShader(void* shader);
+extern void FFLDestroyDefaultShader(void* shader);
+extern void InitShader__FP11PlainShaderPCv(PlainShader* shader, const void* data);
+extern void DestroyShader__FP11PlainShader(PlainShader* shader);
+extern int GetVertexUniformLocation__FPC16_GX2VertexShaderPCc(const _GX2VertexShader* shader,
+                                                              const char* name);
+extern int GetPixelUniformLocation__FPC15_GX2PixelShaderPCc(const _GX2PixelShader* shader,
+                                                            const char* name);
+extern unsigned int GetPixelSamplerLocation__FPC15_GX2PixelShaderPCc(const _GX2PixelShader* shader,
+                                                                      const char* name);
+extern const unsigned char gFFLIconShaderData[];
 int user_write_data_bytes_written();
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
@@ -276,6 +288,114 @@ static unsigned long long sLastSubmitTimeStamp = 0;
 static void* sFFLWorkMemory = NULL;
 static FFLResourceDesc sFFLResourceDesc;
 static _GX2Sampler sMiiIconSampler;
+static unsigned char* sUserWriteDataStart;
+static unsigned char* sUserWriteDataCurrent;
+static unsigned char* sUserWriteDataEnd;
+static unsigned int sIconShaderType;
+static void* sIconDefaultShaderBuffer;
+static PlainShader sIconDefaultShader;
+static PlainShader sIconExtShader;
+
+void user_write_data_init(void* buffer, int size)
+{
+    sUserWriteDataStart = (unsigned char*)buffer;
+    sUserWriteDataCurrent = (unsigned char*)buffer;
+    sUserWriteDataEnd = (unsigned char*)buffer + size;
+}
+
+void user_write_data(png_struct_def*, unsigned char* data, unsigned int size)
+{
+    unsigned int available = (unsigned int)(sUserWriteDataEnd - sUserWriteDataCurrent);
+    unsigned int count = size < available ? size : available;
+    memcpy(sUserWriteDataCurrent, data, count);
+    sUserWriteDataCurrent += count;
+}
+
+void user_flush_data(png_struct_def*)
+{
+}
+
+int user_write_data_bytes_written()
+{
+    return (int)(sUserWriteDataCurrent - sUserWriteDataStart);
+}
+
+int InitIconShader(IconShaderType shaderType)
+{
+    sIconShaderType = shaderType;
+    if (shaderType == ICON_SHADER_TYPE_DEFAULT)
+    {
+        if (sIconDefaultShaderBuffer == NULL)
+        {
+            sIconDefaultShaderBuffer = malloc((size_t)FFLGetBufferSizeDefaultShader("Gfx2") + 0x100);
+            if (sIconDefaultShaderBuffer == NULL)
+            {
+                OSPanic(__FILE__, 0x54, "Invalid pointer");
+            }
+        }
+
+        unsigned char* aligned = (unsigned char*)(((uintptr_t)sIconDefaultShaderBuffer + 0xffu) & ~0xffu);
+        if (aligned == NULL)
+        {
+            OSPanic(__FILE__, 0x5a, "Invalid pointer");
+        }
+        int result = FFLInitDefaultShader(&sIconDefaultShader, aligned, "Gfx2");
+        if (result != 0)
+        {
+            OSPanic(__FILE__, 0x5d, "A default shader cannot be set up");
+        }
+        FFLSetDefaultShader(&sIconDefaultShader);
+        return result;
+    }
+
+    if (shaderType != ICON_SHADER_TYPE_PLAIN)
+    {
+        return shaderType;
+    }
+
+    FFLiManager* manager = FFLiManager::GetInstance();
+    void* contextState = manager->Allocate(0xa100, 0x100);
+    GX2SetupContextStateEx((_GX2ContextState*)contextState, 1);
+    GX2SetContextState((_GX2ContextState*)contextState);
+    InitShader__FP11PlainShaderPCv(&sIconExtShader, gFFLIconShaderData);
+    GX2InitSampler((_GX2Sampler*)&sIconExtShader.pixelSampler, 1, 1);
+    sIconExtShader.vertexMatrix = (unsigned int)GetVertexUniformLocation__FPC16_GX2VertexShaderPCc(
+        sIconExtShader.vertexShader, "u_mvp");
+    sIconExtShader.pixelMode = (unsigned int)GetPixelUniformLocation__FPC15_GX2PixelShaderPCc(
+        sIconExtShader.pixelShader, "u_mode");
+    sIconExtShader.pixelColor1 = (unsigned int)GetPixelUniformLocation__FPC15_GX2PixelShaderPCc(
+        sIconExtShader.pixelShader, "u_const1");
+    sIconExtShader.pixelColor2 = (unsigned int)GetPixelUniformLocation__FPC15_GX2PixelShaderPCc(
+        sIconExtShader.pixelShader, "u_const2");
+    sIconExtShader.pixelColor3 = (unsigned int)GetPixelUniformLocation__FPC15_GX2PixelShaderPCc(
+        sIconExtShader.pixelShader, "u_const3");
+    return (int)GetPixelSamplerLocation__FPC15_GX2PixelShaderPCc(sIconExtShader.pixelShader, "s_texture");
+}
+
+void FinalizeDefaultShader()
+{
+    FFLDestroyDefaultShader(&sIconDefaultShader);
+}
+
+void FinalizeExtShader()
+{
+    DestroyShader__FP11PlainShader(&sIconExtShader);
+}
+
+void FinalizeIconShader()
+{
+    if (sIconShaderType == ICON_SHADER_TYPE_DEFAULT)
+    {
+        FinalizeDefaultShader();
+        return;
+    }
+    if (sIconShaderType != ICON_SHADER_TYPE_PLAIN)
+    {
+        OSPanic(__FILE__, 0x73, "Invalid Condition");
+        return;
+    }
+    FinalizeExtShader();
+}
 
 static Renderer sRenderer;
 

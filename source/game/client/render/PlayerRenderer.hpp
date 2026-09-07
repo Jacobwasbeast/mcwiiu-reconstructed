@@ -5,13 +5,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/LivingEntityRenderer.hpp"
+#include "game/client/render/PlayerModel.hpp"
 
 class ElytraLayer;
 class EntityRenderDispatcher;
 class Entity;
 class LivingEntity;
 class Player;
-class PlayerModel;
 class ModelPart;
 class ResourceLocation;
 class ElytraModel;
@@ -19,12 +19,14 @@ class ElytraModel;
 class PlayerRenderer : public LivingEntityRenderer
 {
 public:
+    using EntityRenderer::bindTexture;
+
     PlayerRenderer(EntityRenderDispatcher* dispatcher, bool slimArms, bool is64x64);
     virtual ~PlayerRenderer();
 
     void _init();
     static unsigned int getNametagColour(int colour);
-    virtual Model* getModel();
+    virtual PlayerModel* getModel();
     ElytraModel* getElytraModel();
     void setModelProperties(boost::shared_ptr<Player> player, float partialTicks);
     void hideAdditionalModelParts(boost::shared_ptr<Player> player);

@@ -10,9 +10,9 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static double xOff = 0.0;
-static double yOff = 0.0;
-static double zOff = 0.0;
+double Particle::xOff = 0.0;
+double Particle::yOff = 0.0;
+double Particle::zOff = 0.0;
 
 static Vec3* cameraViewDirection = Vec3::newPermanent(0.0, 0.0, 0.0);
 static AABB* INITIAL_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);

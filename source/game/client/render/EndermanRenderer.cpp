@@ -4,32 +4,14 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/RenderLayer.hpp"
+#include "game/core/EnderMan.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/block/CarriedBlockLayer.hpp"
 #include "game/world/generation/EnderEyesLayer.hpp"
-
-class CarriedBlockLayer : public RenderLayer
-{
-public:
-    CarriedBlockLayer(EndermanRenderer* renderer);
-    virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
-                        float limbSwingAmount, float partialTicks, float ageInTicks,
-                        float netHeadYaw, float headPitch, float scale,
-                        bool bUseDisplayList);
-    virtual bool colorsOnDamage();
-    EndermanRenderer* mEndermanRenderer;
-};
-
-class BlockState;
-class EnderMan : public Entity
-{
-public:
-    virtual BlockState* getCarryingBlock();
-    virtual bool isCreepy();
-};
 
 static ResourceLocation ENDERMAN_LOCATION;
 

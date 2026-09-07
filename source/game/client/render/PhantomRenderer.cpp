@@ -27,7 +27,7 @@ const ResourceLocation* PhantomRenderer::getTextureLocation(boost::shared_ptr<En
 void PhantomRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTick)
 {
     LivingEntityRenderer::scale(entity, partialTick);
-    GlStateManager::scalef(0.75F, 0.75F, 0.75F);
+    GlStateManager::scalef(1.0F, 1.0F, 1.0F);
     GlStateManager::translatef(0.0F, 1.3125F, 0.0F);
 }
 

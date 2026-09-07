@@ -1,141 +1,247 @@
 #include "game/client/render/SignRenderer.hpp"
 
-#include <wchar.h>
-#include "game/client/render/SignModel.hpp"
-#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/Font.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/core/GlStateManager.hpp"
 #include "game/core/CMinecraftApp.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/core/ColourTable.hpp"
+#include "game/core/GlStateManager.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 
-extern unsigned int XGetLanguage();
+unsigned int XGetLanguage();
 
-SignRenderer::SignRenderer() : mTextCacheCount(0), mModel(NULL), mCensor(false), mLanguage(0)
+static ResourceLocation SIGN_LOCATION((_TEXTURE_NAME)12);
+
+SignRenderer::SignRenderer()
+    : mTextCacheCount(0), mCensorText(false)
 {
-    ModelDefinition definition;
-    mModel = new SignModel(definition);
-    int i, j;
-    for (i = 0; i < 20; ++i)
-        for (j = 0; j < 10; ++j)
-        {
-            mTextCache[i].ids[j] = -1;
-            mTextCache[i].ages[j] = 0;
-        }
+    mModel = new SignModel(ModelDefinition());
+    mTextDisplayLists = gRenderer->CBuffCreate(200);
+    for (int i = 0; i < 200; ++i)
+        mTextCache[i].uniqueId = -1;
     mLanguage = XGetLanguage();
 }
 
 SignRenderer::~SignRenderer()
 {
-    delete mModel;
 }
 
-uint64_t SignRenderer::CensorString(std::wstring& text)
+void SignRenderer::CensorString(std::wstring& text)
 {
-    const wchar_t* blank = L" ";
-    if (text.compare(0, text.size(), blank, wcslen(blank)) != 0)
+    if (text.compare(0, text.size(), L" ", 1) != 0)
     {
         unsigned int language = XGetLanguage();
-        if (language == 2 || (language > 6 && (language < 9 || language == 0x11)))
-        {
-            const wchar_t* censored = L"Censored";
-            text.assign(censored, wcslen(censored));
-        }
+        if (language == 2 || language == 7 || language == 8 || language == 17)
+            text = L"Censored";
         else
-        {
-            const wchar_t* censored = L10N::GetString(0x62950b66);
-            text.assign(censored, wcslen(censored));
-        }
+            text = L10N::GetString(0x62950b66);
     }
-    return 0;
 }
 
 void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                          float a, int breakProgress, bool bTranslucent, float alpha,
-                          bool bUseDisplayList)
+                          float partialTicks, int breakProgress, bool translucent, float alpha,
+                          bool useDisplayList)
 {
     boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);
-    int orientation = sign->getData();
-    const float half = 0.5f;
+    Block* block = sign->getBlock();
+
     GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)x + half, (float)y + half, (float)z + half);
-    if (orientation == 0)
-        GlStateManager::rotatef(-(float)sign->getData() * 2.0454545f, 0.0f, 1.0f, 0.0f);
+    if (block == Blocks::standing_sign)
+    {
+        GlStateManager::translatef((float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f);
+        GlStateManager::rotatef(-(float)(sign->getData() * 360) * 0.0625f, 0.0f, 1.0f, 0.0f);
+        mModel->mSignStick->mShow = true;
+    }
     else
     {
-        float angle = orientation == 2 ? 180.0f : orientation == 4 ? 90.0f : orientation == 5 ? -90.0f : 0.0f;
-        GlStateManager::rotatef(-angle, 0.0f, 1.0f, 0.0f);
+        int data = sign->getData();
+        float rotation = 0.0f;
+        if (data == 2)
+            rotation = 180.0f;
+        else if (data == 4)
+            rotation = 90.0f;
+        else if (data == 5)
+            rotation = -90.0f;
+        GlStateManager::translatef((float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f);
+        GlStateManager::rotatef(-rotation, 0.0f, 1.0f, 0.0f);
         GlStateManager::translatef(0.0f, -0.3125f, -0.4375f);
+        mModel->mSignStick->mShow = false;
     }
-    if (breakProgress >= 0)
+
+    if (breakProgress < 0)
+    {
+        bindTexture(&SIGN_LOCATION);
+    }
+    else
+    {
         bindTexture(&BREAKING_LOCATIONS[breakProgress]);
+        GlStateManager::matrixMode(2);
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(4.0f, 2.0f, 1.0f);
+        GlStateManager::translatef(0.0625f, 0.0625f, 0.0625f);
+        GlStateManager::matrixMode(0);
+    }
+
     GlStateManager::pushMatrix();
     GlStateManager::scalef(0.6666667f, -0.6666667f, -0.6666667f);
     mModel->render(true);
     GlStateManager::popMatrix();
+
     Font* font = getFont();
     GlStateManager::translatef(0.0f, 0.33333334f, 0.046666667f);
     GlStateManager::scalef(0.010416667f, -0.010416667f, 0.010416667f);
-    GlStateManager::normal3f(0.0f, 0.0f, 1.0f);
+    GlStateManager::normal3f(0.0f, 0.0f, -0.010416667f);
     GlStateManager::depthMask(false);
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sign_Text) | 0xff000000;
+
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sign_Text);
+    colour |= 0xff000000;
+    int cacheIndex = -1;
+
     if (breakProgress < 0)
     {
         GlStateManager::disableLighting();
-        Tesselator* tesselator = Tesselator::getInstance();
-        BufferBuilder* builder = tesselator->getBuilder();
-        builder->begin();
-        builder->color((int)colour);
-        int line;
-        for (line = 0; line < 4; ++line)
+        int uniqueId = sign->getUniqueId();
+        cacheIndex = sign->getTextCacheIndex();
+        if (mTextCache[cacheIndex].uniqueId == uniqueId)
         {
-            std::wstring text = sign->getCreatedPlayerUUID();
-            if (!mCensor && sign->wasCreatedByRestrictedPlayer())
-            {
-                if (!sign->IsVerified())
-                    text = L"Awaiting Approval";
-                else if (!sign->IsCensored())
-                    CensorString(text);
-            }
-            font->drawNoBeginEndBuilder(text, -font->width(text) / 2, line * 10, (int)colour);
+            font->bindTexture();
         }
-        tesselator->end();
-        sign->setTextCacheIndex(0);
-        mTextCache[0].ids[0] = sign->getUniqueId();
+        else
+        {
+            cacheIndex = -1;
+            if (sign->getTextCacheEnabled() && mTextCacheCount < 200)
+            {
+                for (int i = 0; i < 200; ++i)
+                {
+                    if (mTextCache[i].uniqueId == -1)
+                    {
+                        cacheIndex = i;
+                        gRenderer->CBuffStart(mTextDisplayLists + cacheIndex, false);
+                        break;
+                    }
+                }
+            }
+
+            BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+            builder->begin();
+            builder->color((int)colour);
+
+            bool localCreator = false;
+            std::wstring creator = sign->getCreatedPlayerUUID();
+            if (creator != L"")
+            {
+                Minecraft* minecraft = Minecraft::GetInstance();
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (minecraft->mLocalPlayers[i] && minecraft->mLocalPlayers[i]->getStringUUID() == creator)
+                    {
+                        localCreator = true;
+                        break;
+                    }
+                }
+            }
+
+            bool rendered = true;
+            for (int line = 0; line < 4; ++line)
+            {
+                std::wstring text = sign->mMessages[line];
+                bool trusted = !mCensorText && !sign->wasCreatedByRestrictedPlayer();
+                if (!trusted && localCreator && CGameNetworkManager::sInstance.IsHost() &&
+                    sign->wasCreatedByHostPlayer())
+                    trusted = true;
+
+                if (trusted)
+                {
+                    if (!sign->IsVerified())
+                    {
+                        if (mLanguage == 2 || mLanguage == 7 || mLanguage == 8 || mLanguage == 17)
+                            text = L"Awaiting Approval";
+                        else
+                            text = L10N::GetString(0xad36b773);
+                    }
+                    else if (sign->IsCensored())
+                    {
+                        CensorString(text);
+                    }
+                }
+                else
+                {
+                    CensorString(text);
+                }
+
+                if (line == sign->mUnknown)
+                    text = L"> " + text + L" <";
+
+                rendered &= font->drawNoBeginEndBuilder(text, -font->width(text) / 2,
+                                                        line * 10 - 20, (int)colour);
+            }
+            builder->end();
+
+            if (cacheIndex != -1)
+            {
+                gRenderer->CBuffEnd();
+                if (!rendered)
+                {
+                    sign->disableTextCache();
+                }
+                else
+                {
+                    mTextCache[cacheIndex].uniqueId = sign->getUniqueId();
+                    ++mTextCacheCount;
+                    sign->setTextCacheIndex(cacheIndex);
+                }
+            }
+        }
+
+        GlStateManager::color3f(1.0f, 1.0f, 1.0f);
+        if (cacheIndex != -1)
+        {
+            gRenderer->CBuffCall(mTextDisplayLists + cacheIndex, true, 0xff);
+            mTextCache[cacheIndex].age = 0;
+        }
+        GlStateManager::enableLighting();
     }
-    GlStateManager::enableLighting();
+
     GlStateManager::depthMask(true);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::popMatrix();
+    if (breakProgress >= 0)
+    {
+        GlStateManager::matrixMode(2);
+        GlStateManager::popMatrix();
+        GlStateManager::matrixMode(0);
+    }
 }
 
 void SignRenderer::tick()
 {
-    bool censor = g_pApp->IsConsoleChatCensored();
+    bool censorText = g_pApp->IsConsoleChatCensored();
     int language = XGetLanguage();
-    int i, j;
-    if (censor == mCensor && language == mLanguage)
+    if (censorText == mCensorText && language == mLanguage)
     {
-        for (i = 0; i < 20; ++i)
-            for (j = 0; j < 10; ++j)
-                if (mTextCache[i].ids[j] != -1 && ++mTextCache[i].ages[j] > 20)
-                {
-                    mTextCache[i].ids[j] = -1;
-                    --mTextCacheCount;
-                }
+        for (int i = 0; i < 200; ++i)
+        {
+            if (mTextCache[i].uniqueId != -1 && ++mTextCache[i].age > 20)
+            {
+                mTextCache[i].uniqueId = -1;
+                --mTextCacheCount;
+            }
+        }
         return;
     }
-    mCensor = censor;
+
     mLanguage = language;
-    for (i = 0; i < 20; ++i)
-        for (j = 0; j < 10; ++j)
-        {
-            mTextCache[i].ids[j] = -1;
-            mTextCache[i].ages[j] = 0;
-        }
+    mCensorText = censorText;
+    for (int i = 0; i < 200; ++i)
+        mTextCache[i].uniqueId = -1;
     mTextCacheCount = 0;
 }

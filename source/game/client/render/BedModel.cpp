@@ -52,7 +52,7 @@ std::wstring BedModel::getName()
     return L"bed";
 }
 
-int BedModel::modelVersion()
+uint32_t BedModel::modelVersion()
 {
     return 51;
 }

@@ -4,32 +4,12 @@
 #include "game/client/render/ParrotModel.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Parrot.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-class Parrot : public LivingEntity
-{
-public:
-    int getVariant();
-    float mFlapTime;
-    float mOFlapSpeed;
-    float mFlapSpeed;
-    float mOFlap;
-};
-
-class Player : public LivingEntity
-{
-public:
-    float mFlap;
-    float mOFlap;
-    float mFlapSpeed;
-    float mOFlapSpeed;
-};
-
-class MultiplayerLocalPlayer : public Entity
-{
-};
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 static ResourceLocation PARROT_LOCATIONS[5];
 
@@ -63,8 +43,8 @@ const ResourceLocation* ParrotRenderer::getTextureLocation(boost::shared_ptr<Ent
 
 double ParrotRenderer::getCustomBob(boost::shared_ptr<Parrot> parrot, float partialTicks)
 {
-    float flap = (parrot->mFlapTime - parrot->mOFlapSpeed) * partialTicks + parrot->mOFlapSpeed;
-    float flapSpeed = (parrot->mFlapSpeed - parrot->mOFlap) * partialTicks + parrot->mOFlap;
+    float flap = (parrot->mFlap - parrot->mOFlap) * partialTicks + parrot->mOFlap;
+    float flapSpeed = (parrot->mFlapSpeed - parrot->mOFlapSpeed) * partialTicks + parrot->mOFlapSpeed;
     return (Mth::sin(flap) + 1.0F) * flapSpeed;
 }
 
@@ -88,7 +68,7 @@ double ParrotRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float par
         return getCustomBob(boost::static_pointer_cast<Player>(entity), partialTicks);
     }
 
-    return 0.0;
+    return 0.0F;
 }
 
 Model* ParrotRenderer::createModel(const ModelDefinition& definition)

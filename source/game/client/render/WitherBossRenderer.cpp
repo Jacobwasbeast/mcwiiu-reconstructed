@@ -14,7 +14,7 @@ static ResourceLocation WITHER_LOCATION;
 static ResourceLocation WITHER_INVULNERABLE_LOCATION;
 
 WitherBossRenderer::WitherBossRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitherBossModel(0.5F, ModelDefinition()), 1.0F)
+    : MobRenderer(dispatcher, new WitherBossModel(0.0F, ModelDefinition()), 1.0F)
 {
     addLayer(new WitherArmorLayer(this));
 }
@@ -44,31 +44,28 @@ void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float pa
     swelling *= swelling;
     swelling *= swelling;
 
-    GlStateManager::scalef((1.0F + swelling * 0.4F) * scale,
-                           (1.0F + swelling * 0.1F) / scale,
-                           (1.0F + swelling * 0.4F) * scale);
+    float horizontalScale = (1.0F + swelling * 0.4F) * scale;
+    float verticalScale = (1.0F + swelling * 0.1F) / scale;
+    GlStateManager::scalef(horizontalScale * 2.0F, verticalScale * 2.0F,
+                           horizontalScale * 2.0F);
 }
 
-unsigned int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
-                                                 float u, float v)
+int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v)
 {
-    boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
-    int invulnerableTicks = wither->getInvulnerableTicks();
-
-    if (invulnerableTicks < 1)
+    if (boost::static_pointer_cast<WitherBoss>(entity)->getInvulnerableTicks() < 1)
         return LivingEntityRenderer::getOverlayColor(entity, u, v);
 
-    float alpha = wither->getOverlayAlpha();
-    if (alpha < 0.0F)
-        alpha = 0.0F;
-    else if (alpha > 1.0F)
-        alpha = 1.0F;
+    double alpha = boost::static_pointer_cast<WitherBoss>(entity)->getOverlayAlpha();
+    if (alpha < 0.0)
+        alpha = 0.0;
+    else if (alpha > 1.0)
+        alpha = 1.0;
 
     int overlay = (int)(alpha * 255.0F);
-    return (unsigned int)(overlay << 24) | 0x00FFFFFF;
+    return overlay << 24 | 0x00FFFFFF;
 }
 
 Model* WitherBossRenderer::createModel(const ModelDefinition& definition)
 {
-    return new WitherBossModel(0.5F, definition);
+    return new WitherBossModel(0.0F, definition);
 }

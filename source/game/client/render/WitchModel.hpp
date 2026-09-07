@@ -18,6 +18,7 @@ public:
     virtual std::wstring getName();
     int getModelVersion();
 
+    bool mHoldingItem;
     ModelPart* mHat;
     ModelPart* mHat2;
     ModelPart* mHat3;

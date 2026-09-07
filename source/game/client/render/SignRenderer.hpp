@@ -1,38 +1,41 @@
 #ifndef GAME_CLIENT_RENDER_SIGNRENDERER_HPP
 #define GAME_CLIENT_RENDER_SIGNRENDERER_HPP
 
-#include <stdint.h>
 #include <string>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/BlockEntityRenderer.hpp"
+#include "game/client/render/SignModel.hpp"
 
 class BlockEntity;
-class SignModel;
 
 class SignRenderer : public BlockEntityRenderer
 {
-private:
-    struct TextCacheEntry
-    {
-        int ids[10];
-        int ages[10];
-    };
-    TextCacheEntry mTextCache[20];
-    int mTextCacheCount;
-    SignModel* mModel;
-    bool mCensor;
-    unsigned char mPadding[3];
-    int mLanguage;
-
 public:
     SignRenderer();
     virtual ~SignRenderer();
-    uint64_t CensorString(std::wstring& text);
+
     virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
-                        float a, int breakProgress, bool bTranslucent, float alpha,
-                        bool bUseDisplayList);
-    virtual void tick();
+                        float partialTicks, int breakProgress, bool translucent, float alpha,
+                        bool useDisplayList);
+
+    void CensorString(std::wstring& text);
+    void tick();
+
+private:
+    struct TextCacheEntry
+    {
+        int uniqueId;
+        int age;
+    };
+
+    TextCacheEntry mTextCache[200];
+    int mTextDisplayLists;
+    int mTextCacheCount;
+    SignModel* mModel;
+    bool mCensorText;
+    int mLanguage;
 };
 
 #endif

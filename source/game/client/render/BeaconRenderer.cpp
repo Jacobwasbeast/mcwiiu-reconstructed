@@ -6,6 +6,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BeaconBlockEntity.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -23,7 +24,7 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
                                       arrayWithLength<const float> colors)
 {
     renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, startY, endY, colors,
-                     0.15, 0.175);
+                     0.2, 0.25);
 }
 
 void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double partialTicks,
@@ -53,16 +54,16 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     float green = colors.data[1];
     float blue = colors.data[2];
 
-    double x0 = x + std::cos(corner0) * innerRadius + 0.5;
-    double z0 = z + std::sin(corner0) * innerRadius + 0.5;
-    double x1 = x + std::cos(corner1) * innerRadius + 0.5;
-    double z1 = z + std::sin(corner1) * innerRadius + 0.5;
-    double x2 = x + std::cos(corner2) * innerRadius + 0.5;
-    double z2 = z + std::sin(corner2) * innerRadius + 0.5;
-    double x3 = x + std::cos(corner3) * innerRadius + 0.5;
-    double z3 = z + std::sin(corner3) * innerRadius + 0.5;
+    double x0 = x + std::cos(corner0) * 0.2 + 0.5;
+    double z0 = z + std::sin(corner0) * 0.2 + 0.5;
+    double x1 = x + std::cos(corner1) * 0.2 + 0.5;
+    double z1 = z + std::sin(corner1) * 0.2 + 0.5;
+    double x2 = x + std::cos(corner2) * 0.2 + 0.5;
+    double z2 = z + std::sin(corner2) * 0.2 + 0.5;
+    double x3 = x + std::cos(corner3) * 0.2 + 0.5;
+    double z3 = z + std::sin(corner3) * 0.2 + 0.5;
     double y0 = y + (double)startY;
-    double y1 = y + (double)endY;
+    double y1 = y + (double)(startY + endY);
 
     builder->begin();
     builder->color(red, green, blue, 0.8F);
@@ -89,10 +90,10 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     GlStateManager::depthMask(false);
     builder->begin();
     builder->color(red, green, blue, 0.8F);
-    double glow0 = x + 0.5 - outerRadius;
-    double glow1 = x + 0.5 + outerRadius;
-    double glowZ0 = z + 0.5 - outerRadius;
-    double glowZ1 = z + 0.5 + outerRadius;
+    double glow0 = x + 0.2;
+    double glow1 = x + 0.8;
+    double glowZ0 = z + 0.2;
+    double glowZ1 = z + 0.8;
     double glowV1 = (double)endY * beamHeight + offset;
     builder->vertexUV((float)glow0, (float)y1, (float)glowZ0, 0.0F, (float)glowV1);
     builder->vertexUV((float)glow0, (float)y0, (float)glowZ0, 0.0F, (float)offset);
@@ -132,12 +133,11 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
         {
             BeaconBlockEntity::BeaconBeamSection& section = sections->at(index);
             arrayWithLength<const float> colors;
-            colors.data = &section.mRed;
+            colors.data = section.getColor();
             colors.length = 3;
-            int sectionHeight = section.getHeight();
             renderBeaconBeam(x, y, z, partialTicks, beamHeight, gameTime, height,
-                             sectionHeight, colors, 0.15, 0.175);
-            height += sectionHeight;
+                             section.getHeight(), colors);
+            height += section.getHeight();
             ++index;
         }
         GlStateManager::enableFog();
@@ -162,48 +162,54 @@ void BeaconRenderer::renderSpecialBeamDirection(boost::shared_ptr<BlockEntity> b
                                                 bool bUseDisplayList)
 {
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::static_pointer_cast<BeaconBlockEntity>(blockEntity);
+    BlockPos position = beacon->getBlockPos();
     int direction = beacon->getBeamDirection();
-    if (direction < 3)
+    if (direction >= 3 && direction <= 6)
     {
-        render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha, bUseDisplayList);
+        if (direction == 3)
+        {
+            GlStateManager::pushMatrix();
+            GlStateManager::translatef((float)(x + yOffset - position.y + 0.5),
+                                        (float)(y + position.x - xOffset + 1.0),
+                                        (float)(z + zOffset - position.z));
+            GlStateManager::rotatef(-90.0F, 0.0F, 0.0F, 1.0F);
+        }
+        else if (direction == 4)
+        {
+            GlStateManager::pushMatrix();
+            GlStateManager::translatef((float)(x + position.y - yOffset + 0.5),
+                                        (float)(y + xOffset - position.x),
+                                        (float)(z + zOffset - position.z));
+            GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
+        }
+        else if (direction == 5)
+        {
+            GlStateManager::pushMatrix();
+            GlStateManager::translatef((float)(x + xOffset - position.x),
+                                        (float)(y + position.z - zOffset + 1.0),
+                                        (float)(z + yOffset - position.y + 0.5));
+            GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+        }
+        else
+        {
+            GlStateManager::pushMatrix();
+            GlStateManager::translatef((float)(x + xOffset - position.x),
+                                        (float)(y + zOffset - position.z),
+                                        (float)(z + position.y - yOffset + 0.5));
+            GlStateManager::rotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+        }
+        double scale = beacon->getAndUpdateClientSideScale();
+        std::vector<BeaconBlockEntity::BeaconBeamSection>* sections = beacon->getBeamSections();
+        renderBeaconBeam(x, y, z, a, scale, sections,
+                         (double)beacon->getLevel()->getGameTime());
+        GlStateManager::popMatrix();
         return;
     }
 
-    BlockPos position = beacon->getBlockPos();
-    GlStateManager::pushMatrix();
-    if (direction == 3)
-    {
-        GlStateManager::translatef((float)(x + yOffset - position.x + 0.5),
-                                    (float)(y + position.y - xOffset + 1.0),
-                                    (float)(z + zOffset - position.z));
-        GlStateManager::rotatef(-90.0F, 0.0F, 0.0F, 1.0F);
-    }
-    else if (direction < 5)
-    {
-        GlStateManager::translatef((float)(x + position.x - yOffset + 0.5),
-                                    (float)(y + xOffset - position.y),
-                                    (float)(z + zOffset - position.z));
-        GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
-    }
-    else if (direction == 5)
-    {
-        GlStateManager::translatef((float)(x + xOffset - position.y),
-                                    (float)(y + position.z - zOffset + 1.0),
-                                    (float)(z + yOffset - position.x + 0.5));
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-    }
-    else
-    {
-        GlStateManager::translatef((float)(x + xOffset - position.y),
-                                    (float)(y + zOffset - position.z),
-                                    (float)(z + position.x - yOffset + 0.5));
-        GlStateManager::rotatef(-90.0F, 1.0F, 0.0F, 0.0F);
-    }
     double scale = beacon->getAndUpdateClientSideScale();
     std::vector<BeaconBlockEntity::BeaconBeamSection>* sections = beacon->getBeamSections();
     renderBeaconBeam(x, y, z, a, scale, sections,
                      (double)beacon->getLevel()->getGameTime());
-    GlStateManager::popMatrix();
 }
 
 bool BeaconRenderer::shouldRenderOffScreen(boost::shared_ptr<BlockEntity> blockEntity)

@@ -1,12 +1,14 @@
 #ifndef GAME_CLIENT_RENDER_LEVELRENDERER_HPP
 #define GAME_CLIENT_RENDER_LEVELRENDERER_HPP
 
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 
+#include "game/client/render/ParticleType.hpp"
 #include "game/network/LevelListener.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/util/AABB.hpp"
@@ -16,6 +18,9 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/client/render/GameRenderer.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/Chunk.hpp"
+#include "game/world/block/BlockDestructionProgress.hpp"
 
 class BlockEntity;
 class BlockState;
@@ -30,8 +35,9 @@ class ParticleType;
 class Textures;
 class Entity;
 class Tesselator;
-enum ePARTICLE_TYPE;
-template <class T> class arrayWithLength;
+class EntityRenderDispatcher;
+class BlockEntityRenderDispatcher;
+class Font;
 
 class LevelRenderer : public LevelListener
 {
@@ -122,6 +128,7 @@ public:
     void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     int calculateParticleLevel(Level* level, bool overrideLimiter);
     void addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
+    void addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void addParticle(Level* level, const ParticleType* particle, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     void entityAdded(boost::shared_ptr<Entity> entity);
@@ -151,6 +158,41 @@ public:
     void skyColorChanged();
     static unsigned int getGlobalChunkCountForOverworld();
 
+private:
+    ChunkBlockEntityMap mBlockEntities;
+    OSFastMutex mBlockEntityMutex;
+    Level* mLevels[4];
+    Textures* mTextures;
+    arrayWithLength<ClipChunk> mClipChunks[8];
+    int mLastViewDistance;
+    bool mSkyColorChanged;
+    int mDisplayList;
+    int mStarList;
+    int mSkyList;
+    Minecraft* mMinecraft;
+    EntityRenderDispatcher* mEntityRenderDispatcher;
+    BlockEntityRenderDispatcher* mBlockEntityRenderDispatcher;
+    Font* mFont;
+    int mChunkGridWidth;
+    int mChunkGridHeight;
+    int mChunkGridDepth;
+    std::vector<Chunk*> mChunks;
+    OSFastMutex mChunkMutex;
+    boost::unordered_set<boost::shared_ptr<BlockEntity> > mRenderableBlockEntities;
+    double mCameraX;
+    double mCameraY;
+    double mCameraZ;
+    double mLastCameraX;
+    double mLastCameraY;
+    double mLastCameraZ;
+    int mRenderTick;
+    boost::unordered_map<int, BlockDestructionProgress*> mDestroyingBlocks;
+    std::vector<AABB*> mTempAABBs;
+    OSFastMutex mDirtyMutex;
+    DestroyedBlockManager* mDestroyedBlocks;
+    float mCloudOffset;
+    unsigned char* mGlobalChunkFlags;
+    OSFastMutex mGlobalChunkFlagsMutex;
 };
 
 #endif

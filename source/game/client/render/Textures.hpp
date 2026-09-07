@@ -19,6 +19,7 @@ class MemTexture;
 class MemTextureProcessor;
 class Options;
 class TextureAtlas;
+class TextureAtlasSprite;
 class TexturePackRepository;
 
 class Textures : public boost::unordered_map<std::wstring, int>
@@ -59,7 +60,7 @@ public:
     void freeStitch();
     void stitch();
     void reloadAll();
-    void getMissingIcon(int atlas);
+    TextureAtlasSprite* getMissingIcon(int atlas);
 
     int loadHttpTexture(const std::wstring& name, const std::wstring& path);
     int loadHttpTexture(const std::wstring& name, int texture);

@@ -14,15 +14,21 @@ NetherPortalParticle::NetherPortalParticle(Level* level,
                                            double ya,
                                            double za)
     : Particle(level, x, y, z, xa, ya, za),
-      scale(random.nextFloat() * 0.2f + 0.5f),
       originX(x),
       originY(y),
       originZ(z)
 {
-    alpha = scale;
+    xd = xa;
+    yd = ya;
+    zd = za;
+    this->x = x;
+    this->y = y;
+    this->z = z;
+
+    float colourScale = random.nextFloat() * 0.6f + 0.4f;
+    alpha = scale = random.nextFloat() * 0.2f + 0.5f;
 
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_NetherPortal);
-    float colourScale = random.nextFloat() * 0.6f + 0.4f;
     rCol = (float)((colour >> 16) & 255) / 255.0f * colourScale;
     gCol = (float)((colour >> 8) & 255) / 255.0f * colourScale;
     bCol = (float)(colour & 255) / 255.0f * colourScale;
@@ -44,27 +50,30 @@ void NetherPortalParticle::render(BufferBuilder* buffer,
                                   float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    alpha = scale * -(progress * progress - 1.0f);
+    float inverseProgress = 1.0f - progress;
+    alpha = scale * -(inverseProgress * inverseProgress - 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
-uint32_t NetherPortalParticle::getLightColor(float partialTicks)
+int NetherPortalParticle::getLightColor(float partialTicks)
 {
-    unsigned int light = (unsigned int)Particle::getLightColor(partialTicks);
+    int light = Particle::getLightColor(partialTicks);
     float progress = (float)age / (float)lifetime;
-    int block = (int)((light >> 16) & 255);
-    block += (int)(progress * progress * progress * progress * 15.0f * 16.0f);
+    progress *= progress;
+    int block = (light >> 16) & 255;
+    block += (int)(progress * progress * 15.0f * 16.0f);
     if (block > 240)
         block = 240;
-    return (light & 255) | ((unsigned int)block << 16);
+    return (light & 255) | (block << 16);
 }
 
-double NetherPortalParticle::getBrightness(float partialTicks)
+float NetherPortalParticle::getBrightness(float partialTicks)
 {
+    float brightness = Particle::getBrightness(partialTicks);
     float progress = (float)age / (float)lifetime;
     float value = progress * progress;
     value *= value;
-    return (double)((float)(Particle::getBrightness(partialTicks) * (1.0f - value) + value));
+    return brightness * (1.0f - value) + value;
 }
 
 void NetherPortalParticle::tick()
@@ -74,15 +83,13 @@ void NetherPortalParticle::tick()
     xo = x;
     yo = y;
     zo = z;
-    ++age;
-
     float curve = 1.0f - ((progress * progress + progress * progress) - progress);
     float vertical = 1.0f - progress;
     x = xd * curve + originX;
     y = yd * curve + originY + (double)vertical;
     z = zd * curve + originZ;
 
-    if (age >= lifetime)
+    if (age++ >= lifetime)
         remove();
 }
 

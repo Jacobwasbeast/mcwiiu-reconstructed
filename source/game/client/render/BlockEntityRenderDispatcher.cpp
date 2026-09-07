@@ -3,32 +3,61 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/client/render/BannerRenderer.hpp"
+#include "game/client/render/BeaconRenderer.hpp"
+#include "game/client/render/BedRenderer.hpp"
 #include "game/client/render/ChestRenderer.hpp"
 #include "game/client/render/ConduitRenderer.hpp"
+#include "game/client/render/EnderChestRenderer.hpp"
 #include "game/client/render/EnchantTableRenderer.hpp"
+#include "game/client/render/Font.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/MobSpawnerRenderer.hpp"
+#include "game/client/render/PistonHeadRenderer.hpp"
+#include "game/client/render/ShulkerBoxRenderer.hpp"
+#include "game/client/render/ShulkerModel.hpp"
+#include "game/client/render/SignRenderer.hpp"
 #include "game/client/render/SkullBlockRenderer.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/client/render/Textures.hpp"
+#include "game/client/render/TheEndGatewayRenderer.hpp"
 #include "game/client/render/TheEndPortalRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Lighting.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BlockEntity.hpp"
 
-static BlockEntityRenderDispatcher* gBlockEntityRenderDispatcher = NULL;
+BlockEntityRenderDispatcher* BlockEntityRenderDispatcher::instance = NULL;
+double BlockEntityRenderDispatcher::xOff = 0.0;
+double BlockEntityRenderDispatcher::yOff = 0.0;
+double BlockEntityRenderDispatcher::zOff = 0.0;
 
 BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     : boost::unordered_map<unsigned long long, BlockEntityRenderer*>(),
-      mFont(NULL), mTextures(NULL), mLevel(NULL), mCamera(), mCameraYRot(90.0f),
-      mCameraXRot(90.0f), mCameraHitResult(NULL), mX(1.0), mY(1.0), mZ(1.0)
+      mFont(NULL), mTextures(NULL), mLevel(NULL), mCamera(), mCameraYRot(0.0f),
+      mCameraXRot(0.0f), mCameraHitResult(NULL), mX(0.0), mY(0.0), mZ(0.0)
 {
     GlStateManager::enableLighting();
 
+    (*this)[0x0100020200000000ULL] = new SignRenderer();
+    (*this)[0x0120020100000000ULL] = new MobSpawnerRenderer();
+    (*this)[0x0120020500000000ULL] = new PistonHeadRenderer();
     (*this)[0x01E0020100000000ULL] = new ChestRenderer();
+    (*this)[0x0120020800000000ULL] = new EnderChestRenderer();
     (*this)[0x0120020600000000ULL] = new EnchantTableRenderer();
     (*this)[0x0130020000000000ULL] = new TheEndPortalRenderer();
-    (*this)[0x0130020100000000ULL] = new TheEndPortalRenderer();
+    (*this)[0x0130020100000000ULL] = new TheEndGatewayRenderer();
     (*this)[0x0120020700000000ULL] = new SkullBlockRenderer();
+    (*this)[0x01E0020200000000ULL] = NULL;
+    (*this)[0x01E0020400000000ULL] = new BeaconRenderer();
     (*this)[0x0100020C00000000ULL] = new BannerRenderer();
+    ModelDefinition shulkerModelDefinition;
+    (*this)[0x0120020F00000000ULL] =
+        new ShulkerBoxRenderer(new ShulkerModel(shulkerModelDefinition));
+    (*this)[0x0100021000000000ULL] = new BedRenderer();
     (*this)[0x0120021200000000ULL] = new ConduitRenderer();
 
     GlStateManager::disableLighting();
@@ -48,7 +77,7 @@ Font* BlockEntityRenderDispatcher::getFont()
 
 void BlockEntityRenderDispatcher::staticCtor()
 {
-    gBlockEntityRenderDispatcher = new BlockEntityRenderDispatcher();
+    instance = new BlockEntityRenderDispatcher();
 }
 
 BlockEntityRenderer* BlockEntityRenderDispatcher::getRenderer(unsigned long long type)
@@ -109,6 +138,7 @@ void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font
     mX = (camera->mX - camera->mXOld) * partialTicks + camera->mXOld;
     mY = (camera->mY - camera->mYOld) * partialTicks + camera->mYOld;
     mZ = (camera->mZ - camera->mZOld) * partialTicks + camera->mZOld;
+    static_cast<SignRenderer*>((*this)[0x0100020200000000ULL])->tick();
 }
 
 void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
@@ -118,8 +148,18 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     BlockEntityRenderer* renderer = getRenderer(blockEntity);
     if (renderer != NULL)
     {
-        renderer->render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha,
-                         bUseDisplayList);
+        if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureCustomBeacons()
+            && blockEntity->GetType() == 0x01E0020400000000ULL)
+        {
+            static_cast<BeaconRenderer*>(renderer)->renderSpecialBeamDirection(
+                blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha,
+                bUseDisplayList);
+        }
+        else
+        {
+            renderer->render(blockEntity, x, y, z, a, breakProgress, bTranslucent, alpha,
+                             bUseDisplayList);
+        }
     }
 }
 
@@ -132,13 +172,21 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     {
         return;
     }
-    if (blockEntity->distanceToSqr(mX, mY, mZ) < blockEntity->getViewDistance()
-        || renderer->shouldRenderOffScreen(blockEntity))
+    if (blockEntity->distanceToSqr(mX, mY, mZ) < blockEntity->getViewDistance())
     {
         Lighting::turnOn();
         BlockPos position = blockEntity->getBlockPos();
-        render(blockEntity, (double)position.x - mX, (double)position.y - mY,
-               (double)position.z - mZ, partialTicks, breakProgress, bTranslucent, 1.0f, true);
+        int lightColor = mLevel->getLightColor(position, 0, -1);
+        GlStateManager::multiTexCoord2f((float)(lightColor % 65536),
+                                        (float)(lightColor / 65536));
+        if (bTranslucent)
+        {
+            GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+        position = blockEntity->getBlockPos();
+        render(blockEntity, (double)position.x - xOff, (double)position.y - yOff,
+               (double)position.z - zOff, partialTicks, breakProgress, bTranslucent, 1.0f,
+               true);
     }
 }
 

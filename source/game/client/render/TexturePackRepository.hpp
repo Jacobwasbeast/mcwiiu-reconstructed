@@ -54,7 +54,7 @@ public:
 
 private:
     unsigned int m_unknown0;
-    unsigned int m_unknown1;
+    void* m_unknown1;
     Minecraft* m_minecraft;
     File m_workDir;
     File m_texturePackDir;

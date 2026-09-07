@@ -5,6 +5,8 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 
 BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, double z,
                                            Item* item, int meta)
@@ -28,7 +30,7 @@ BreakingItemParticle::~BreakingItemParticle()
 {
 }
 
-uint32_t BreakingItemParticle::getParticleTexture()
+int BreakingItemParticle::getParticleTexture()
 {
     return item->getIconType() != 0 ? 2 : 1;
 }
@@ -38,7 +40,16 @@ void BreakingItemParticle::render(BufferBuilder* buffer,
                                   float partialTicks, float xa, float ya, float za,
                                   float xa2, float za2)
 {
-    float scale = alpha * 0.10000000149011612f;
+    float scale = size * 0.1f;
+
+    if (sprite != NULL)
+    {
+        uvs.u0 = sprite->getU(uo * 0.25f * 16.0f);
+        uvs.u1 = sprite->getU((uo + 1.0f) * 0.25f * 16.0f);
+        uvs.v0 = sprite->getV(vo * 0.25f * 16.0f);
+        uvs.v1 = sprite->getV((vo + 1.0f) * 0.25f * 16.0f);
+    }
+
     float px = (float)(xo + (x - xo) * partialTicks - Particle::xOff);
     float py = (float)(yo + (y - yo) * partialTicks - Particle::yOff);
     float pz = (float)(zo + (z - zo) * partialTicks - Particle::zOff);
@@ -47,37 +58,34 @@ void BreakingItemParticle::render(BufferBuilder* buffer,
     float z1 = za * scale;
     float x2 = xa2 * scale;
     float z2 = za2 * scale;
-    float u0 = (float)sprite->getU(size * 0.25f * 0.0625f);
-    float u1 = (float)sprite->getU((size + 1.0f) * 0.25f * 0.0625f);
-    float v0 = (float)sprite->getV(size * 0.25f * 0.0625f);
-    float v1 = (float)sprite->getV((size + 1.0f) * 0.25f * 0.0625f);
     int light = getLightColor(partialTicks);
 
     buffer->color(rCol, gCol, bCol, alpha);
     buffer->tex2(light);
-    buffer->vertexUV(px - x1 - x2, py - y1, pz - z1 - z2, u1, v1);
-    buffer->vertexUV(px - x1 + x2, py + y1, pz - z1 + z2, u1, v0);
-    buffer->vertexUV(px + x1 + x2, py + y1, pz + z1 + z2, u0, v0);
-    buffer->vertexUV(px + x1 - x2, py - y1, pz + z1 - z2, u0, v1);
+    buffer->vertexUV(px - x1 - x2, py - y1, pz - z1 - z2, uvs.u0, uvs.v1);
+    buffer->vertexUV(px - x1 + x2, py + y1, pz - z1 + z2, uvs.u0, uvs.v0);
+    buffer->vertexUV(px + x1 + x2, py + y1, pz + z1 + z2, uvs.u1, uvs.v0);
+    buffer->vertexUV(px + x1 - x2, py - y1, pz + z1 - z2, uvs.u1, uvs.v1);
 }
 
 void BreakingItemParticle::_init(Item* item, int meta)
 {
     this->item = item;
     setSprite(item->getIcon(meta));
-    rCol = 1.0f;
-    gCol = 1.0f;
-    bCol = 1.0f;
-    alpha *= 0.5f;
-    lifetime = 4;
-    uvs = TextureUVCoordinateSet(size * 0.25f * 0.0625f,
-                                 textureIndex * 0.25f * 0.0625f,
-                                 size * 0.25f * 0.0625f + 0.015609375f,
-                                 textureIndex * 0.25f * 0.0625f + 0.015609375f,
+    rCol = gCol = bCol = 1.0f;
+    size *= 0.5f;
+    gravity = Blocks::snow->mParticleGravity;
+
+    float u = uo * 0.25f * 0.0625f;
+    float v = vo * 0.25f * 0.0625f;
+    uvs = TextureUVCoordinateSet(u,
+                                 v,
+                                 u + 0.015609375f,
+                                 v + 0.015609375f,
                                  1, 1);
 }
 
-long long BreakingItemParticle::GetType()
+uint64_t BreakingItemParticle::GetType()
 {
     return 0x0008020200000000LL;
 }

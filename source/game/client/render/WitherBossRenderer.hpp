@@ -19,9 +19,9 @@ public:
     virtual ~WitherBossRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
-    virtual unsigned int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);
     virtual Model* createModel(const ModelDefinition& definition);
+    virtual int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 };
 
 #endif

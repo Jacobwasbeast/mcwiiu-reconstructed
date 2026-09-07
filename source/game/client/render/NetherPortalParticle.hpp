@@ -11,7 +11,9 @@ class NetherPortalParticle : public Particle
 public:
     NetherPortalParticle(Level* level, double x, double y, double z,
                          double xa, double ya, double za);
+    virtual uint64_t GetType();
     virtual ~NetherPortalParticle();
+    virtual void tick();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,
                         float partialTicks,
@@ -20,11 +22,9 @@ public:
                         float za,
                         float xa2,
                         float za2);
-    virtual uint32_t getLightColor(float partialTicks);
-    virtual double getBrightness(float partialTicks);
-    virtual void tick();
     virtual void move(double xa, double ya, double za);
-    virtual uint64_t GetType();
+    virtual int getLightColor(float partialTicks);
+    virtual float getBrightness(float partialTicks);
 
     class Provider : public ParticleProvider
     {

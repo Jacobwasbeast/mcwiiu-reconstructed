@@ -1,0 +1,165 @@
+#include "game/client/render/OcelotModel.hpp"
+
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPart.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
+#include "game/client/render/Tesselator.hpp"
+#include "game/core/BufferBuilder.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/Ocelot.hpp"
+
+OcelotModel::OcelotModel()
+    : mBackLegL(NULL), mBackLegR(NULL), mFrontLegL(NULL), mFrontLegR(NULL),
+      mTail1(NULL), mTail2(NULL), mHead(NULL), mBody(NULL), mPose(0)
+{
+    ModelDefinition modelDefinition;
+    LoadOcelotModelDefinition(modelDefinition);
+}
+
+OcelotModel::OcelotModel(const ModelDefinition& modelDefinition)
+    : mBackLegL(NULL), mBackLegR(NULL), mFrontLegL(NULL), mFrontLegR(NULL),
+      mTail1(NULL), mTail2(NULL), mHead(NULL), mBody(NULL), mPose(0)
+{
+    LoadOcelotModelDefinition(modelDefinition);
+}
+
+OcelotModel::~OcelotModel()
+{
+}
+
+void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefinition)
+{
+    mPose = 1;
+    Tesselator::getInstance()->getBuilder();
+
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mBackLegL = new ModelPartSkin(this, L"backLegL", modelDefinition, NULL, 0.0f, NULL);
+        mBackLegR = new ModelPartSkin(this, L"backLegR", modelDefinition, NULL, 0.0f, NULL);
+        mFrontLegL = new ModelPartSkin(this, L"frontLegL", modelDefinition, NULL, 0.0f, NULL);
+        mFrontLegR = new ModelPartSkin(this, L"frontLegR", modelDefinition, NULL, 0.0f, NULL);
+        mTail1 = new ModelPartSkin(this, L"tail1", modelDefinition, NULL, 0.0f, NULL);
+        mTail2 = new ModelPartSkin(this, L"tail2", modelDefinition, NULL, 0.0f, NULL);
+        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
+        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
+    }
+
+    compileSkinnedDrawlist();
+    Tesselator::getInstance()->getBuilder()->useDefaultShaders();
+}
+
+void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                         bool useDisplayList)
+{
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
+              entity, _SkinAdjustments());
+
+    if (!mHasOverriddenParts)
+    {
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mTail1->render(scale, useDisplayList, false);
+        mTail2->render(scale, useDisplayList, false);
+        mBackLegL->render(scale, useDisplayList, false);
+        mBackLegR->render(scale, useDisplayList, false);
+        mFrontLegL->render(scale, useDisplayList, false);
+        mFrontLegR->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
+        return;
+    }
+
+    GlStateManager::pushMatrix();
+    GlStateManager::scalef(0.75f, 0.75f, 0.75f);
+    GlStateManager::translatef(0.0f, 0.25f * scale, 0.0f);
+    mHead->render(scale, useDisplayList, false);
+    GlStateManager::popMatrix();
+    GlStateManager::pushMatrix();
+    GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+    GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+    mBody->render(scale, useDisplayList, false);
+    mTail1->render(scale, useDisplayList, false);
+    mBackLegR->render(scale, useDisplayList, false);
+    mFrontLegL->render(scale, useDisplayList, false);
+    mFrontLegR->render(scale, useDisplayList, false);
+    mTail2->render(scale, useDisplayList, false);
+    GlStateManager::popMatrix();
+    callSkinnedDrawlist();
+}
+
+void OcelotModel::render(OcelotModel* model, float scale, bool useDisplayList)
+{
+    Model::copyModelPart(model->mHead, mHead);
+    Model::copyModelPart(model->mBody, mBody);
+    Model::copyModelPart(model->mTail1, mTail1);
+    Model::copyModelPart(model->mTail2, mTail2);
+    Model::copyModelPart(model->mBackLegL, mBackLegL);
+    Model::copyModelPart(model->mBackLegR, mBackLegR);
+    Model::copyModelPart(model->mFrontLegL, mFrontLegL);
+    Model::copyModelPart(model->mFrontLegR, mFrontLegR);
+    mTail1->render(scale, useDisplayList, false);
+    mTail2->render(scale, useDisplayList, false);
+    mBackLegL->render(scale, useDisplayList, false);
+    mBackLegR->render(scale, useDisplayList, false);
+    mFrontLegL->render(scale, useDisplayList, false);
+    mFrontLegR->render(scale, useDisplayList, false);
+    mHead->render(scale, useDisplayList, false);
+    mBody->render(scale, useDisplayList, false);
+}
+
+void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
+                            float netHeadYaw, float headPitch, float scale,
+                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
+{
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
+
+    if (mPose != 3)
+    {
+        mBackLegL->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.0f * limbSwingAmount;
+        if (mPose == 2)
+        {
+            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 0.3f) * limbSwingAmount;
+            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
+            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
+            mTail2->mXRot = 0.31415927f * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
+        }
+        else
+        {
+            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
+            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
+            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f) * limbSwingAmount;
+            mTail2->mXRot = (mPose == 1 ? 0.47123894f : 2.0f) * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
+        }
+    }
+}
+
+void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                  float limbSwingAmount, float partialTicks)
+{
+    boost::shared_ptr<Ocelot> ocelot = boost::dynamic_pointer_cast<Ocelot>(entity);
+
+    mHead->setPos(0.0f, 0.0f, 0.0f);
+    mBody->setPos(0.0f, 0.0f, 0.0f);
+    mTail1->setPos(0.0f, 0.0f, 0.0f);
+    mTail2->setPos(0.0f, 0.0f, 0.0f);
+
+    if (ocelot && ocelot->isSitting())
+    {
+        mPose = 0;
+    }
+    else if (ocelot && ocelot->isSittingOnBlock())
+    {
+        mPose = 2;
+    }
+    else
+    {
+        mPose = 1;
+    }
+}
+
+std::wstring OcelotModel::getName()
+{
+    return L"ocelot";
+}

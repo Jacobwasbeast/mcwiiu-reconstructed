@@ -42,15 +42,15 @@ public:
     virtual bool hasValidData();
     virtual bool isLoadingData();
     virtual void loadCustomModels();
-    unsigned long long loadBehaviours();
-    static unsigned int packMounted(void* data, int result, unsigned int mountIndex, unsigned int deviceId);
+    void loadBehaviours();
+    static int packMounted(void* data, int userIndex, unsigned int result, unsigned int licenseMask);
     virtual void loadData();
     virtual void loadUI();
     virtual void unloadUI();
     virtual void unloadAudio();
     virtual ArchiveFile* getArchiveFile();
     virtual unsigned int getDLCParentPackId();
-    void getDLCInfoParentPack();
+    virtual void getDLCInfoParentPack();
     virtual unsigned int getDLCSubPackId();
     int GetDLCDeviceID();
 
@@ -58,13 +58,12 @@ private:
     DLCPack* m_dlcPack;
     DLCPack* m_loadedPack;
     StringTable* m_stringTable;
-    unsigned char m_uiLoaded;
-    unsigned char m_loadingData;
-    unsigned char m_hasData;
-    unsigned char m_hasValidData;
-    unsigned char m_materialTableLoaded;
-    unsigned char m_colourTableLoaded;
-    unsigned short m_padding;
+    bool m_uiLoaded;
+    bool m_loadingData;
+    bool m_hasData;
+    bool m_hasValidData;
+    bool m_colourTableLoaded;
+    bool m_materialTableLoaded;
     ArchiveFile* m_archiveFile;
 };
 

@@ -1,9 +1,9 @@
 #ifndef GAME_CLIENT_RENDER_CREEPERRENDERER_HPP
-#define GAME_CLIENT_RENDER_CREEPERRENDER_HPP
+#define GAME_CLIENT_RENDER_CREEPERRENDERER_HPP
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/CreeperModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -12,16 +12,16 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class CreeperRenderer : public CreeperModel
+class CreeperRenderer : public MobRenderer
 {
 public:
     CreeperRenderer(EntityRenderDispatcher* dispatcher);
     virtual ~CreeperRenderer();
 
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
-    virtual unsigned int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
+    virtual int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 };
 
 #endif

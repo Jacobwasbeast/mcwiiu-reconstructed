@@ -58,7 +58,7 @@ void ChestRefillParticle::_init(Level* level, double x, double y, double z,
     setMiscTex(65);
 }
 
-long long ChestRefillParticle::GetType()
+uint64_t ChestRefillParticle::GetType()
 {
     return 0x0008020100000000LL;
 }
@@ -74,9 +74,10 @@ Particle* ChestRefillParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                          arrayWithLength<int> params)
 {
     ChestRefillParticle* particle = new ChestRefillParticle(level, x, y, z, xa, ya, za);
-    unsigned int colour = g_pApp->GetHTMLColour((eMinecraftColour)415);
+    particle->tick();
+    int colour = (int)g_pApp->GetHTMLColor(eMinecraftColour_HTMLColor_e);
     particle->setColor((float)(colour >> 4),
-                       (float)((colour >> 2) | 0xffU),
-                       (float)(colour | 0xffU));
+                       (float)((colour >> 2) | 0xff),
+                       (float)(colour | 0xff));
     return particle;
 }

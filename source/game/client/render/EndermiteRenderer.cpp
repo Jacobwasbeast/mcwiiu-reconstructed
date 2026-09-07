@@ -1,0 +1,31 @@
+#include "game/client/render/EndermiteRenderer.hpp"
+
+#include "game/client/render/EndermiteModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
+#include "game/util/ResourceLocation.hpp"
+
+static ResourceLocation ENDERMITE_LOCATION;
+
+EndermiteRenderer::EndermiteRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new EndermiteModel(ModelDefinition()), 0.3F)
+{
+}
+
+EndermiteRenderer::~EndermiteRenderer()
+{
+}
+
+double EndermiteRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
+{
+    return 180.0;
+}
+
+const ResourceLocation* EndermiteRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
+{
+    return &ENDERMITE_LOCATION;
+}
+
+Model* EndermiteRenderer::createModel(const ModelDefinition& definition)
+{
+    return new EndermiteModel(definition);
+}

@@ -62,7 +62,7 @@ public:
     int wordWrapHeight(const std::wstring& text, int width);
     void drawWordWrapInternal(const std::wstring& text, int x, int y, int width, int color, int height);
     void drawWordWrapInternal(const std::wstring& text, int x, int y, int width, int color, bool unicode, int height);
-    void drawNoBeginEndBuilder(const std::wstring& text, int x, int y, int color);
+    unsigned int drawNoBeginEndBuilder(const std::wstring& text, int x, int y, int color);
     void bindTexture();
     void drawWordWrap(const std::wstring& text, int x, int y, int width, int color);
 

@@ -1347,3 +1347,550 @@ void BlockRenderer::renderCube(const BlockState* state, float alpha)
     builder->end();
     GlStateManager::translatef(0.5f, 0.5f, 0.5f);
 }
+
+void BlockRenderer::tesselateRowTexture(const BlockState* state, float x, float y, float z)
+{
+    tesselateCrossTexture(state, x, y, z, 1.0f);
+}
+
+void BlockRenderer::tesselateTorch(const BlockState* state, float x, float y, float z, float xTilt, float zTilt)
+{
+    tesselateCrossTexture(state, x + xTilt, y, z + zTilt, 0.5f);
+    setShape(0.4375f + xTilt, 0.0f, 0.4375f + zTilt, 0.5625f + xTilt, 0.625f, 0.5625f + zTilt);
+    renderFaceUp(state, x, y, z, getTexture(state, Direction::UP));
+}
+
+bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPos& pos)
+{
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    int faces = state->getBlock()->getFaceFlags(state, mLevelSource, pos, mRenderAllFaces);
+    if (mUseAmbientOcclusion && Minecraft::useAmbientOcclusion() && !hasLightOverride())
+        return tesselateBlockInWorldWithAmbienceOcclusionTexLighting(state, pos, red, green, blue, faces, mShapeOutside);
+    return tesselateBlockInWorld(state, pos, red, green, blue);
+}
+
+bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPos& pos, int faces)
+{
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    if (mUseAmbientOcclusion && Minecraft::useAmbientOcclusion() && !hasLightOverride())
+        return tesselateBlockInWorldWithAmbienceOcclusionTexLighting(state, pos, red, green, blue, faces, mShapeOutside);
+    return tesselateBlockInWorld(state, pos, red, green, blue);
+}
+
+void BlockRenderer::tesselateAnvilPiece(const BlockState* state, const BlockPos& pos, int part, float x0, float y0, float x1, float y1, bool rotate, bool flip)
+{
+    int rotation = mFaceRotation1;
+    bool flipped = mFlipTexture;
+    mFaceRotation1 = rotate ? part : 0;
+    mFlipTexture = flip;
+    setShape(x0, y0, x0, x1, y1, x1);
+    tesselateBlockInWorld(state, pos, 0x3f);
+    mFaceRotation1 = rotation;
+    mFlipTexture = flipped;
+}
+
+bool BlockRenderer::tesselateAnvilInWorld(const BlockState* state, const BlockPos& pos, bool inventory)
+{
+    bool allFaces = mRenderAllFaces;
+    mRenderAllFaces = inventory || allFaces;
+    tesselateAnvilPiece(state, pos, 0, 0.125f, 0.0f, 0.875f, 0.25f, false, false);
+    tesselateAnvilPiece(state, pos, 1, 0.1875f, 0.25f, 0.8125f, 0.75f, false, false);
+    tesselateAnvilPiece(state, pos, 2, 0.0f, 0.75f, 1.0f, 1.0f, true, false);
+    mRenderAllFaces = allFaces;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateHopperInWorld(const BlockState* state, const BlockPos& pos, bool inventory)
+{
+    bool allFaces = mRenderAllFaces;
+    mRenderAllFaces = inventory || allFaces;
+    setShape(0.0f, 0.625f, 0.0f, 1.0f, 1.0f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.25f, 0.25f, 0.25f, 0.75f, 0.625f, 0.75f);
+    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    setShape(0.375f, 0.0f, 0.375f, 0.625f, 0.25f, 0.625f);
+    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    mRenderAllFaces = allFaces;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+void BlockRenderer::tesselateEndRodCenter(const BlockState* state, float x, float y, float z)
+{
+    setShape(0.4375f, 0.0f, 0.4375f, 0.5625f, 1.0f, 0.5625f);
+    renderAllFaces(state);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void BlockRenderer::tesselateEndRodBase(const BlockState* state, float x, float y, float z)
+{
+    setShape(0.375f, 0.0f, 0.375f, 0.625f, 0.0625f, 0.625f);
+    renderAllFaces(state);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void BlockRenderer::renderBlock(const BlockState* state, float brightness, float alpha, bool tint, bool inventory)
+{
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    bool oldTint = mUseInventoryTint;
+    bool oldFaces = mRenderAllFaces;
+    mUseInventoryTint = tint;
+    mRenderAllFaces = inventory;
+    builder->color(brightness, brightness, brightness, alpha);
+    renderAllFaces(state);
+    mRenderAllFaces = oldFaces;
+    mUseInventoryTint = oldTint;
+}
+
+bool BlockRenderer::tesselateTrapDoorInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(state->getShape(mLevelSource, pos));
+    bool rendered = tesselateBlockInWorld(state, pos);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateTreeInWorld(const BlockState* state, const BlockPos& pos)
+{
+    mFaceRotation0 = mFaceRotation1 = mFaceRotation2 = mFaceRotation3 = 1;
+    bool rendered = tesselateBlockInWorld(state, pos);
+    mFaceRotation0 = mFaceRotation1 = mFaceRotation2 = mFaceRotation3 = 0;
+    return rendered;
+}
+
+bool BlockRenderer::tesselateQuartzInWorld(const BlockState* state, const BlockPos& pos)
+{
+    mFaceRotation0 = mFaceRotation1 = 1;
+    bool rendered = tesselateBlockInWorld(state, pos);
+    mFaceRotation0 = mFaceRotation1 = 0;
+    return rendered;
+}
+
+bool BlockRenderer::tesselateHorizontalDirectionalInWorld(const BlockState* state, const BlockPos& pos)
+{
+    mFaceRotation2 = 2;
+    mFaceRotation3 = 1;
+    mFaceRotation4 = mFaceRotation5 = 3;
+    bool rendered = tesselateBlockInWorld(state, pos);
+    mFaceRotation2 = mFaceRotation3 = mFaceRotation4 = mFaceRotation5 = 0;
+    return rendered;
+}
+
+float BlockRenderer::getWaterHeight(const BlockPos& pos, Material* material)
+{
+    float total = 0.0f;
+    for (int x = 0; x < 2; ++x)
+        for (int z = 0; z < 2; ++z)
+        {
+            if (mLevelSource->getBlockState(pos.offset(x, 1, z))->getMaterial() == material)
+                return 1.0f;
+            const BlockState* state = mLevelSource->getBlockState(pos.offset(x, 0, z));
+            total += state->getMaterial() == material ? 0.875f : 1.0f;
+        }
+    return 1.0f - total * 0.25f;
+}
+
+bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPos& pos)
+{
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    builder->color((float)(color >> 16 & 255) / 255.0f, (float)(color >> 8 & 255) / 255.0f, (float)(color & 255) / 255.0f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, getWaterHeight(pos, state->getMaterial()), 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateCactusInWorld(const BlockState* state, const BlockPos& pos, float red, float green, float blue)
+{
+    setShape(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0f, 0.9375f);
+    bool rendered = tesselateBlockInWorld(state, pos, red, green, blue);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+void BlockRenderer::tesselateSunflowerCrossTexture(const BlockState* state, float x, float y, float z)
+{
+    tesselateCrossTexture(state, x, y, z, 1.0f);
+}
+
+void BlockRenderer::tesselateSunflowerDirTexture(const BlockState* state, float x, float y, float z)
+{
+    tesselateStemDirTexture(state, Direction::NORTH, x, y, z, 1.0f);
+}
+
+bool BlockRenderer::tesselateDoublePlantInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateSunflowerCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z);
+    tesselateSunflowerDirTexture(state, (float)pos.x, (float)pos.y, (float)pos.z);
+    return true;
+}
+
+bool BlockRenderer::tesselateKelpInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tessellateCoralFanInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 0.75f);
+    return true;
+}
+
+bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateStemDirTexture(state, Direction::DOWN, (float)pos.x, (float)pos.y, (float)pos.z, 0.75f);
+    return true;
+}
+
+void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direction* direction, float x, float y, float z, float scale)
+{
+    int rotation = mFaceRotation0;
+    mFaceRotation0 = direction->get3DDataValue();
+    tesselateCrossTexture(state, x, y, z, scale);
+    mFaceRotation0 = rotation;
+}
+
+bool BlockRenderer::tesselateStemInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateStemTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateLilypadInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.015625f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateTorchInWorld(const BlockState* state, const BlockPos& pos)
+{
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    builder->color(1.0f, 1.0f, 1.0f);
+    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y, (float)pos.z + 0.5f, 0.0f, 0.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateFireInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y + 0.5f, (float)pos.z, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateDustInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.03125f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateLadderInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.9375f, 1.0f, 1.0f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos& pos)
+{
+    return tesselateTrapDoorInWorld(state, pos);
+}
+
+bool BlockRenderer::tesselateRailInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.0625f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateStairsInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(state->getShape(mLevelSource, pos));
+    bool rendered = tesselateBlockInWorld(state, pos);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateEggInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.125f, 0.0f, 0.125f, 0.875f, 0.875f, 0.875f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateFenceInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.375f, 0.0f, 0.375f, 0.625f, 1.0f, 0.625f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateWallInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.25f, 0.0f, 0.25f, 0.75f, 1.0f, 0.75f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.3125f, 0.0f, 0.3125f, 0.6875f, 0.25f, 0.6875f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y + 0.25f, (float)pos.z + 0.5f, 0.0f, 0.0f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateTripwireSourceInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.25f, 0.0f, 0.25f, 0.75f, 0.625f, 0.75f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateTripwireInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0625f, 0.0f, 1.0f, 0.09375f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateBedInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.5625f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+void BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos, const Direction* direction)
+{
+    int rotation = mFaceRotation1;
+    mFaceRotation1 = direction->get3DDataValue();
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.125f, 1.0f);
+    tesselateBlockInWorld(state, pos, 0x3f);
+    mFaceRotation1 = rotation;
+}
+
+bool BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateDiodeInWorld(state, pos, Direction::NORTH);
+    return true;
+}
+
+bool BlockRenderer::tesselateRepeaterInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateDiodeInWorld(state, pos, Direction::NORTH);
+    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y + 0.125f, (float)pos.z + 0.25f, 0.0f, 0.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateComparatorInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateDiodeInWorld(state, pos, Direction::NORTH);
+    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y + 0.125f, (float)pos.z + 0.5f, 0.0f, 0.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselatePistonBaseInWorld(const BlockState* state, const BlockPos& pos, bool extended, const BlockState* actualState)
+{
+    const BlockState* renderState = actualState == NULL ? state : actualState;
+    if (extended)
+        setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.75f, 1.0f);
+    bool rendered = tesselateBlockInWorld(renderState, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+void BlockRenderer::renderPistonArmUpDown(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
+{
+    setShape(x0, y0, z0, x1, 1.0f, z1);
+}
+
+void BlockRenderer::renderPistonArmNorthSouth(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
+{
+    setShape(x0, y0, z0, x1, z1, 1.0f);
+}
+
+void BlockRenderer::renderPistonArmEastWest(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
+{
+    setShape(x0, y0, z0, 1.0f, x1, z1);
+}
+
+bool BlockRenderer::tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool shortHead, const BlockState* actualState)
+{
+    const BlockState* renderState = actualState == NULL ? state : actualState;
+    float length = shortHead ? 0.5f : 0.75f;
+    setShape(0.0f, length, 0.0f, 1.0f, 1.0f, 1.0f);
+    bool rendered = tesselateBlockInWorld(renderState, pos, 0x3f);
+    setShape(0.375f, 0.0f, 0.375f, 0.625f, length, 0.625f);
+    rendered = tesselateBlockInWorld(renderState, pos, 0x3f) || rendered;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateThinFenceInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.4375f, 0.0f, 0.4375f, 0.5625f, 1.0f, 0.5625f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateVineInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tesselateFenceGateInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(state->getShape(mLevelSource, pos));
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateCauldronInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.3125f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.125f, 0.3125f, 0.125f, 0.875f, 1.0f, 0.875f);
+    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateFlowerPotInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.3125f, 0.0f, 0.3125f, 0.6875f, 0.375f, 0.6875f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateAnvilInWorld(const BlockState* state, const BlockPos& pos)
+{
+    return tesselateAnvilInWorld(state, pos, false);
+}
+
+bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.125f, 0.0f, 0.125f, 0.875f, 0.125f, 0.875f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.4375f, 0.125f, 0.4375f, 0.5625f, 0.875f, 0.5625f);
+    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateAirPortalFrameInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.8125f, 1.0f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.3125f, 0.8125f, 0.3125f, 0.6875f, 1.0f, 0.6875f);
+    rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateCocoaInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.25f, 0.25f, 0.25f, 0.75f, 0.75f, 0.75f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateBeaconInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(0.1875f, 0.1875f, 0.1875f, 0.8125f, 0.8125f, 0.8125f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateHopperInWorld(const BlockState* state, const BlockPos& pos)
+{
+    return tesselateHopperInWorld(state, pos, false);
+}
+
+bool BlockRenderer::tesselateChorusFlowerInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(state->getShape(mLevelSource, pos));
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const BlockPos& pos)
+{
+    setShape(state->getShape(mLevelSource, pos));
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tesselateObserverInWorld(const BlockState* state, const BlockPos& pos)
+{
+    return tesselateHorizontalDirectionalInWorld(state, pos);
+}
+
+void BlockRenderer::tesselateTurtleEgg(const BlockState* state, const BlockPos& pos, float red, float green, float blue)
+{
+    Tesselator::getInstance()->getBuilder()->color(red, green, blue);
+    setShape(0.1875f, 0.0f, 0.1875f, 0.8125f, 0.75f, 0.8125f);
+    tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+}
+
+bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const BlockPos& pos)
+{
+    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    return true;
+}
+
+bool BlockRenderer::tessellateIndividualSeaPickleInWorld(const BlockState* state, const BlockPos& pos, double height, const Vec3* offset)
+{
+    float x = (float)offset->x;
+    float z = (float)offset->z;
+    setShape(x - 0.125f, 0.0f, z - 0.125f, x + 0.125f, (float)height, z + 0.125f);
+    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+    return rendered;
+}
+
+bool BlockRenderer::tessellateSeaPickleInWorld(const BlockState* state, const BlockPos& pos)
+{
+    Vec3 offset(0.5, 0.0, 0.5);
+    return tessellateIndividualSeaPickleInWorld(state, pos, 0.375, &offset);
+}
+
+bool BlockRenderer::tesselateCommandBlockInWorld(const BlockState* state, const BlockPos& pos)
+{
+    mFaceRotation0 = mFaceRotation1 = 1;
+    bool rendered = tesselateBlockInWorld(state, pos);
+    mFaceRotation0 = mFaceRotation1 = 0;
+    return rendered;
+}

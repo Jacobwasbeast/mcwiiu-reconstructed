@@ -66,6 +66,7 @@ public:
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
 
 private:
+    std::wstring mValue;
     std::vector<LayerTexture*> mLayerTextures;
     std::vector<BlockStackGetter*> mBlockStackGetters;
 };

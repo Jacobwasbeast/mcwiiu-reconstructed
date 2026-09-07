@@ -21,10 +21,32 @@ struct stbi_io_callbacks
 
 unsigned char* stbi_load_from_memory(const unsigned char* buffer, int length, int* width, int* height, int* components, int requestedComponents);
 unsigned char* stbi_load_from_callbacks(const stbi_io_callbacks* callbacks, void* user, int* width, int* height, int* components, int requestedComponents);
+void stbi_image_free(void* retvalFromStbiLoad);
 int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 int CloseHandle(int file);
+
+int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels)
+{
+    if (data == NULL)
+    {
+        return -1;
+    }
+
+    int pixelCount = *width * *height;
+    unsigned int* convertedPixels = (unsigned int*)malloc(pixelCount * sizeof(unsigned int));
+    *pixels = (int*)convertedPixels;
+    memcpy(convertedPixels, data, pixelCount * sizeof(unsigned int));
+    stbi_image_free(data);
+
+    for (int i = 0; i < pixelCount; ++i)
+    {
+        TextureUtil::ByteFlipRGBAToARGB(convertedPixels[i]);
+    }
+
+    return 0;
+}
 
 static IntBuffer* dataBuffer = NULL;
 static bool textureAnaglyph = false;

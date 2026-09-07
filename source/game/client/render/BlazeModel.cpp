@@ -12,7 +12,7 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     , mNumUpperBodyParts(0)
 {
     mNumUpperBodyParts = 12;
-    mUpperBodyParts = new ModelPart*[12]();
+    mUpperBodyParts = new ModelPartSkin*[12]();
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 

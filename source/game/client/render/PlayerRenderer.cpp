@@ -10,10 +10,15 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/ElytraLayer.hpp"
+#include "game/world/generation/ArrowLayer.hpp"
+#include "game/world/generation/CapeLayer.hpp"
+#include "game/world/generation/CustomHeadLayer.hpp"
+#include "game/world/generation/Deadmau5EarsLayer.hpp"
 #include "game/world/generation/EntityRidingShoulderLayer.hpp"
 #include "game/world/generation/HumanoidArmorLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
@@ -52,9 +57,9 @@ unsigned int PlayerRenderer::getNametagColour(int colour)
     return colour < 8 ? colours[colour] : 0xff000000;
 }
 
-Model* PlayerRenderer::getModel()
+PlayerModel* PlayerRenderer::getModel()
 {
-    return LivingEntityRenderer::getModel();
+    return static_cast<PlayerModel*>(LivingEntityRenderer::getModel());
 }
 
 ElytraModel* PlayerRenderer::getElytraModel()
@@ -70,8 +75,8 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
     {
         model->mLeftSleeve->mShow = player->isModelPartShown(PlayerModelPart::LEFT_SLEEVE);
         model->mRightSleeve->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_SLEEVE);
-        model->mLeftPants->mShow = player->isModelPartShown(PlayerModelPart::LEFT_PANTS);
-        model->mRightPants->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_PANTS);
+        model->mLeftPants->mShow = player->isModelPartShown(PlayerModelPart::LEFT_PANTS_LEG);
+        model->mRightPants->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_PANTS_LEG);
         model->mJacket->mShow = player->isModelPartShown(PlayerModelPart::JACKET);
     }
     model->mSlimArms = mSlimArms;
@@ -99,11 +104,15 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
 
 void PlayerRenderer::hideAdditionalModelParts(boost::shared_ptr<Player> player)
 {
-    const std::vector<ModelPart*>& parts = player->GetAdditionalModelParts();
-    std::vector<ModelPart*>::const_iterator it;
-    for (it = parts.begin(); it != parts.end(); ++it)
+    std::vector<ModelPart*>* parts = player->GetAdditionalModelParts();
+    if (parts == NULL)
     {
-        (*it)->mShow = false;
+        return;
+    }
+    std::vector<ModelPart*>::iterator part;
+    for (part = parts->begin(); part != parts->end(); ++part)
+    {
+        (*part)->mShow = false;
     }
 }
 
@@ -127,11 +136,15 @@ void PlayerRenderer::updatePartVisibility(ModelPart* part, boost::shared_ptr<Pla
 
 void PlayerRenderer::showAdditionalModelParts(boost::shared_ptr<Player> player)
 {
-    const std::vector<ModelPart*>& parts = player->GetAdditionalModelParts();
-    std::vector<ModelPart*>::const_iterator it;
-    for (it = parts.begin(); it != parts.end(); ++it)
+    std::vector<ModelPart*>* parts = player->GetAdditionalModelParts();
+    if (parts == NULL)
     {
-        updatePartVisibility(*it, player, true);
+        return;
+    }
+    std::vector<ModelPart*>::iterator part;
+    for (part = parts->begin(); part != parts->end(); ++part)
+    {
+        updatePartVisibility(*part, player, true);
     }
 }
 
@@ -148,7 +161,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
 const ResourceLocation* PlayerRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    return player->getTextureLocation();
+    return new ResourceLocation(static_cast<_TEXTURE_NAME>(player->getTexture()));
 }
 
 void PlayerRenderer::translateWeaponItem()

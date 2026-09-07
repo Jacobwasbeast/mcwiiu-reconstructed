@@ -422,11 +422,12 @@ void Textures::reloadAll()
     if (mTexturePackRepository != NULL) mTexturePackRepository->clearInvalidTexturePacks();
 }
 
-void Textures::getMissingIcon(int atlas)
+TextureAtlasSprite* Textures::getMissingIcon(int atlas)
 {
     if (atlas != 0)
     {
-        if (mItems != NULL) mItems->getMissingIcon();
+        if (mItems != NULL) return mItems->getMissingIcon();
     }
-    else if (mBlocks != NULL) mBlocks->getMissingIcon();
+    else if (mBlocks != NULL) return mBlocks->getMissingIcon();
+    return NULL;
 }

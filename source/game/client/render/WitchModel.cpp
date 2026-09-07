@@ -72,7 +72,7 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
         mHead->mXRot = std::sin(phase) * 4.5f * 0.01745329238474369f;
         mHead->mYRot = std::cos(phase) * 2.5f * 0.01745329238474369f;
     }
-    if (mHasCustomModel)
+    if (mHoldingItem)
     {
         mHead->mXRot = -0.9f;
         mHead->mZRot = -0.09375f;
@@ -83,9 +83,4 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
 std::wstring WitchModel::getName()
 {
     return L"villager_witch";
-}
-
-int WitchModel::getModelVersion()
-{
-    return 0x17;
 }

@@ -4,9 +4,7 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
-
-class Sheep;
+#include "game/core/Sheep.hpp"
 
 SheepFurModel::SheepFurModel(const ModelDefinition& modelDefinition)
     : QuadrupedModel(12, 0.0f, modelDefinition), mHeadEatAngleScale(0.0f)

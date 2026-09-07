@@ -6,11 +6,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class ModelDefinition;
-class ModelPart;
 
 class BlazeModel : public Model
 {
@@ -23,9 +23,9 @@ public:
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName();
 
-    ModelPart** mUpperBodyParts;
+    ModelPartSkin** mUpperBodyParts;
     unsigned int mNumUpperBodyParts;
-    ModelPart* mHead;
+    ModelPartSkin* mHead;
 };
 
 #endif

@@ -22,7 +22,7 @@ class Particle
 public:
     Particle(Level* level, double x, double y, double z, double xa, double ya, double za);
     Particle(Level* level, double x, double y, double z);
-    virtual long long GetType() = 0;
+    virtual uint64_t GetType() = 0;
     virtual ~Particle();
     virtual void setPower(float power);
     virtual Particle* scale(float factor);
@@ -59,6 +59,10 @@ public:
     static void setYOffset(double offset);
     static void setZOffset(double offset);
     static void setCamerViewDirection(Vec3* direction);
+
+    static double xOff;
+    static double yOff;
+    static double zOff;
 
     boost::weak_ptr<Entity> attachedEntity;
     Level* level;

@@ -4,9 +4,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
-#include "game/client/render/BlockEntityRenderer.hpp"
-
 class BlockEntity;
+class BlockEntityRenderer;
 class Font;
 class HitResult;
 class Level;
@@ -17,6 +16,11 @@ class Entity;
 class BlockEntityRenderDispatcher : public boost::unordered_map<unsigned long long, BlockEntityRenderer*>
 {
 public:
+    static BlockEntityRenderDispatcher* instance;
+    static double xOff;
+    static double yOff;
+    static double zOff;
+
     BlockEntityRenderDispatcher();
 
     Font* getFont();

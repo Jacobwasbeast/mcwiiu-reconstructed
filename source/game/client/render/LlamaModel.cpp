@@ -9,18 +9,16 @@
 LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
     : QuadrupedModel(15, scale, modelDefinition)
 {
-    mTexWidth = 128;
-    mTexHeight = 64;
-
     if (modelDefinition.DoesOverrideModel())
     {
-        mHasOverriddenParts = true;
-
         mChest1 = new ModelPartSkin(this, L"chest1", modelDefinition, NULL, 0.0f, NULL);
         mChest2 = new ModelPartSkin(this, L"chest2", modelDefinition, NULL, 0.0f, NULL);
     }
     else
     {
+        mTexWidth = 128;
+        mTexHeight = 64;
+
         delete mHead;
         delete mBody;
 
@@ -45,12 +43,12 @@ LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
         mChest2->setPos(5.5f, 3.0f, 3.0f);
         mChest2->mXRot = 1.5707964f;
 
-        mLeg0->mY += 14.0f;
-        mLeg1->mY -= 14.0f;
-        mLeg2->mY += 14.0f;
-        mLeg3->mY -= 14.0f;
-        mLeg2->mZ += 14.0f;
-        mLeg3->mZ += 14.0f;
+        mLeg0->mY -= 1.0f;
+        mLeg1->mY += 1.0f;
+        mLeg2->mY -= 1.0f;
+        mLeg3->mY += 1.0f;
+        mLeg2->mZ -= 1.0f;
+        mLeg3->mZ -= 1.0f;
         mHeadYOffset += 2.0f;
     }
 
