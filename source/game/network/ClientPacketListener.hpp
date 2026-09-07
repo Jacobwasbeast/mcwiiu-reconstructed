@@ -123,7 +123,7 @@ public:
     uint32_t getSocket();
     uint8_t getAndSetClosed();
     void tick();
-    uint32_t getNetworkPlayer();
+    INetworkPlayer* getNetworkPlayer();
     bool IsPrimaryPlayer();
     void displayPrivilegeChanges(boost::shared_ptr<MultiplayerLocalPlayer> player, uint32_t changes);
     virtual void handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
@@ -233,13 +233,17 @@ private:
     bool m_closed;
     OSFastMutex m_mutex;
     Connection* m_connection;
+
+public:
+    std::wstring mRemoteAddress;
+
+private:
+    bool m_socketOpen;
     Minecraft* m_minecraft;
     Level* m_level;
     bool m_started;
-    bool m_socketOpen;
     int m_playerId;
     Random m_random;
-    std::wstring m_name;
     void* m_savedDataStorage;
     std::vector<DeferredEntityLinkPacket> m_deferredLinks;
 };

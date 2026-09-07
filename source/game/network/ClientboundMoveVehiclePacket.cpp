@@ -3,7 +3,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
 
 ClientboundMoveVehiclePacket::ClientboundMoveVehiclePacket()
@@ -66,12 +65,12 @@ double ClientboundMoveVehiclePacket::getZ()
     return z;
 }
 
-float ClientboundMoveVehiclePacket::getYRot()
+double ClientboundMoveVehiclePacket::getYRot()
 {
     return yRot;
 }
 
-float ClientboundMoveVehiclePacket::getXRot()
+double ClientboundMoveVehiclePacket::getXRot()
 {
     return xRot;
 }

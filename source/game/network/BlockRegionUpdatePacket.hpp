@@ -19,14 +19,14 @@ public:
     BlockRegionUpdatePacket();
     BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
                             Level* level, bool hasBlockChanges,
-                            const std::vector<short>& blockChanges);
+                            const std::vector<short>* blockChanges);
     virtual ~BlockRegionUpdatePacket();
 
+    virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-    virtual unsigned int getEstimatedSize();
-    virtual unsigned int getPacketId();
+    virtual int getEstimatedSize();
 
     void SetChanges(std::vector<LevelChunk::BlockChange>* changes);
     std::vector<LevelChunk::BlockChange>* GetChanges() const;
@@ -40,13 +40,12 @@ private:
     int mWidth;
     int mHeight;
     int mDepth;
-    unsigned char* mData;
-    unsigned int mDataSize;
-    unsigned int mCompressionType;
+    arrayWithLength<unsigned char> mData;
+    int mDimension;
     bool mFullChunk;
     bool mHasBlockChanges;
     std::vector<LevelChunk::BlockChange>* mChanges;
-    unsigned int mEstimatedSize;
+    int mSize;
 };
 
 #endif

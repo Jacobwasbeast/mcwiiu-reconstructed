@@ -27,6 +27,7 @@ public:
     void tick();
     std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >& getPlayers();
     void handleServerSettingsChanged(boost::shared_ptr<ServerSettingsChangedPacket> packet);
+
 private:
     int mConnectionCount;
     OSFastMutex mCriticalSection;

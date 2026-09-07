@@ -8,6 +8,7 @@
 
 class DataInputStream;
 class DataOutputStream;
+class Entity;
 class Level;
 class MobEffect;
 class PacketListener;
@@ -19,13 +20,13 @@ public:
     ClientboundRemoveMobEffectPacket(int entityId, MobEffect* effect);
     virtual ~ClientboundRemoveMobEffectPacket();
 
-    virtual unsigned int getPacketId();
+    virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-    virtual unsigned int getEstimatedSize();
+    virtual int getEstimatedSize();
 
-    void getEntity(Level* level);
+    boost::shared_ptr<Entity> getEntity(Level* level);
     MobEffect* getEffect();
 
     static boost::shared_ptr<Packet> create();

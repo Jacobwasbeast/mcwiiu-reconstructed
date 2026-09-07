@@ -7,7 +7,7 @@
 #include "game/network/Packet.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-class Block;
+class BlockState;
 class DataInputStream;
 class DataOutputStream;
 class Level;
@@ -20,23 +20,23 @@ public:
     ClientboundBlockUpdatePacket(Level* level, const BlockPos& pos);
     virtual ~ClientboundBlockUpdatePacket();
 
-    virtual unsigned int getPacketId();
+    virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
-    virtual unsigned int getEstimatedSize();
+    virtual int getEstimatedSize();
 
     BlockPos getPos();
-    Block* getBlock();
-    Block* getExtraBlock();
+    const BlockState* getBlock();
+    const BlockState* getExtraBlock();
     unsigned int getLevelIdx();
 
     static boost::shared_ptr<Packet> create();
 
 private:
     BlockPos pos;
-    Block* block;
-    Block* extraBlock;
+    const BlockState* block;
+    const BlockState* extraBlock;
     unsigned int levelIdx;
 };
 

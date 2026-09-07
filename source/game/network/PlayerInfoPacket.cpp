@@ -9,23 +9,31 @@
 #include "game/server/ServerPlayer.hpp"
 
 PlayerInfoPacket::PlayerInfoPacket()
-    : mPlayerId(0), mDimension(-1), mPrivileges(0), mEntityId(-1), mGameType(0)
 {
+    mPlayerId = 0;
+    mPrivileges = 0;
+    mPlayerIndex = -1;
+    mEntityId = -1;
+    mGameType = 0;
 }
 
-PlayerInfoPacket::PlayerInfoPacket(unsigned char playerId, short dimension, unsigned int privileges,
+PlayerInfoPacket::PlayerInfoPacket(unsigned char playerId, short playerIndex, unsigned int privileges,
                                    unsigned char gameType)
-    : mPlayerId(playerId), mDimension(dimension), mPrivileges(privileges), mEntityId(-1), mGameType(gameType)
 {
+    mGameType = gameType;
+    mPlayerId = playerId;
+    mPlayerIndex = playerIndex;
+    mPrivileges = privileges;
+    mEntityId = -1;
 }
 
 PlayerInfoPacket::PlayerInfoPacket(boost::shared_ptr<ServerPlayer> player)
-    : mPlayerId(0), mDimension(0), mPrivileges(0), mEntityId(-1), mGameType(0)
 {
+    mPlayerId = 0;
     if (player->mConnection != NULL && player->mConnection->getNetworkPlayer() != NULL)
         mPlayerId = player->mConnection->getNetworkPlayer()->GetSmallId();
-    mDimension = static_cast<short>(player->mDimension);
-    mPrivileges = player->getPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21);
+    mPlayerIndex = static_cast<short>(player->mPlayerIndex);
+    mPrivileges = player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
     mEntityId = player->getId();
     mGameType = static_cast<unsigned char>(player->GetGameType()->getId());
 }
@@ -37,7 +45,7 @@ PlayerInfoPacket::~PlayerInfoPacket()
 void PlayerInfoPacket::read(DataInputStream* input)
 {
     mPlayerId = input->readByte();
-    mDimension = input->readShort();
+    mPlayerIndex = input->readShort();
     mPrivileges = static_cast<unsigned int>(input->readInt());
     mEntityId = input->readInt();
     mGameType = input->readByte();
@@ -46,7 +54,7 @@ void PlayerInfoPacket::read(DataInputStream* input)
 void PlayerInfoPacket::write(DataOutputStream* output)
 {
     output->writeByte(static_cast<unsigned char>(mPlayerId));
-    output->writeShort(mDimension);
+    output->writeShort(mPlayerIndex);
     output->writeInt(static_cast<int>(mPrivileges));
     output->writeInt(mEntityId);
     output->writeByte(mGameType);

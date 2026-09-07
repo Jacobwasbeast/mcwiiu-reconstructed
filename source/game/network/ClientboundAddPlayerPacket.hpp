@@ -25,11 +25,11 @@ public:
                                int x, int y, int z, int yRot, int xRot, int yHeadRot);
     virtual ~ClientboundAddPlayerPacket();
 
-    unsigned int getPacketId();
-    void read(DataInputStream* input);
-    void write(DataOutputStream* output);
-    void handle(PacketListener* listener);
-    unsigned int getEstimatedSize();
+    virtual int getPacketId();
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual void handle(PacketListener* listener);
+    virtual int getEstimatedSize();
 
     unsigned int getEntityId();
     PlayerUID getPlayerId();
@@ -53,10 +53,11 @@ private:
     unsigned char myRot;
     unsigned char mxRot;
     PlayerUID mProfileId;
-    unsigned char myHeadRot;
-    int mPlayerValue1;
-    int mPlayerValue2;
+    unsigned char mPlayerIndex;
+    int mSkinId;
+    int mCapeId;
     int mPlayerPrivilege;
+    unsigned char myHeadRot;
     const GameType* mGameType;
     boost::shared_ptr<SynchedEntityData> mEntityData;
     std::vector<DataItem*>* mUnpackedData;

@@ -14,6 +14,5 @@ void ServerboundPlayerCommandPacket::handle(PacketListener* listener) { listener
 int ServerboundPlayerCommandPacket::getEstimatedSize() { return 9; }
 ServerboundPlayerCommandPacket::Action ServerboundPlayerCommandPacket::getAction() { return action; }
 int ServerboundPlayerCommandPacket::getData() { return data; }
-int ServerboundPlayerCommandPacket::getId() { return id; }
 int ServerboundPlayerCommandPacket::getPacketId() { return 19; }
 boost::shared_ptr<Packet> ServerboundPlayerCommandPacket::create() { return boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket()); }

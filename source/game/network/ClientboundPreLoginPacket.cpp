@@ -1,6 +1,7 @@
 #include "game/network/ClientboundPreLoginPacket.hpp"
 
 #include <memory>
+#include <new>
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
@@ -9,6 +10,14 @@
 #include "game/world/generation/PlayerUID.hpp"
 
 extern CMinecraftApp* g_pApp;
+
+namespace
+{
+    static void constructPlayerUID(PlayerUID* destination)
+    {
+        new (destination) PlayerUID(0);
+    }
+}
 
 ClientboundPreLoginPacket::ClientboundPreLoginPacket()
     : mPlayers(0), mPlayerCount(0), mGameMode(0), mSeed(0),
@@ -66,10 +75,9 @@ void ClientboundPreLoginPacket::read(DataInputStream* input)
     if (mPlayerCount != 0)
     {
         std::allocator<PlayerUID> allocator;
-        PlayerUID emptyPlayer(0);
         mPlayers = allocator.allocate(mPlayerCount);
         for (index = 0; index < mPlayerCount; ++index)
-            allocator.construct(mPlayers + index, emptyPlayer);
+            constructPlayerUID(mPlayers + index);
         for (index = 0; index < mPlayerCount; ++index)
             mPlayers[index] = input->readPlayerUID();
     }

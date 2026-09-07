@@ -26,7 +26,8 @@ class GameModePacket : public FlexiblePacket,
 public:
     enum EMessage
     {
-        MessageUnknown = 0
+        MessageUnknown = 0,
+        UpdateStartTime = 0x1C
     };
 
     class Data

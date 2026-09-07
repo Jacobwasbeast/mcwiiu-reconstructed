@@ -16,7 +16,7 @@ class PlayerInfoPacket : public Packet, public boost::enable_shared_from_this<Pl
 {
 public:
     PlayerInfoPacket();
-    PlayerInfoPacket(unsigned char playerId, short dimension, unsigned int privileges, unsigned char gameType);
+    PlayerInfoPacket(unsigned char playerId, short playerIndex, unsigned int privileges, unsigned char gameType);
     PlayerInfoPacket(boost::shared_ptr<ServerPlayer> player);
     virtual ~PlayerInfoPacket();
     virtual int getPacketId();
@@ -29,7 +29,7 @@ private:
     friend class ServerGamePacketListenerImpl;
 
     short mPlayerId;
-    short mDimension;
+    short mPlayerIndex;
     unsigned int mPrivileges;
     int mEntityId;
     unsigned char mGameType;

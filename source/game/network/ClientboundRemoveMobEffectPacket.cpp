@@ -36,14 +36,14 @@ void ClientboundRemoveMobEffectPacket::handle(PacketListener* listener)
     listener->handleRemoveMobEffect(shared_from_this());
 }
 
-unsigned int ClientboundRemoveMobEffectPacket::getEstimatedSize()
+int ClientboundRemoveMobEffectPacket::getEstimatedSize()
 {
     return 5;
 }
 
-void ClientboundRemoveMobEffectPacket::getEntity(Level* level)
+boost::shared_ptr<Entity> ClientboundRemoveMobEffectPacket::getEntity(Level* level)
 {
-    level->getEntity(entityId);
+    return level->getEntity(entityId);
 }
 
 MobEffect* ClientboundRemoveMobEffectPacket::getEffect()
@@ -51,7 +51,7 @@ MobEffect* ClientboundRemoveMobEffectPacket::getEffect()
     return effect;
 }
 
-unsigned int ClientboundRemoveMobEffectPacket::getPacketId()
+int ClientboundRemoveMobEffectPacket::getPacketId()
 {
     return 42;
 }

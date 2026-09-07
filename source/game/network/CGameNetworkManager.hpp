@@ -17,8 +17,6 @@ class FriendSessionInfo;
 class GameSessionData;
 class Minecraft;
 
-namespace nn { namespace fp { struct FriendPresence; } }
-
 class CGameNetworkManager
 {
 public:
@@ -34,12 +32,12 @@ public:
     void Terminate();
     static int GetLocalPlayerMask(int userIndex);
     bool IsInSession();
-    bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const nn::fp::FriendPresence* presence);
+    bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const FriendPresence* presence);
     bool SetLocalGame(bool localGame);
     static int JoinFromInvite_SignInReturned(void* data, bool result, int error);
-    bool HandleInviteWhenInMenus(int userIndex, const nn::fp::FriendPresence* presence);
-    void ProcessInvite(unsigned int userIndex, unsigned int flags, nn::fp::FriendPresence* presence);
-    void GameInviteReceived(int userIndex, nn::fp::FriendPresence* presence);
+    bool HandleInviteWhenInMenus(int userIndex, const FriendPresence* presence);
+    void ProcessInvite(unsigned int userIndex, unsigned int flags, FriendPresence* presence);
+    void GameInviteReceived(int userIndex, FriendPresence* presence);
     bool TickInvitePending();
     void DoWork();
     bool IsHost();
@@ -83,14 +81,14 @@ public:
     void GetFullFriendSessionInfo(FriendSessionInfo* info, void (*callback)(bool, void*), void* data);
     void ForceFriendsSessionRefresh();
     void ClearFriendsSessions();
-    bool JoinGame(FriendSessionInfo* info, int userIndex, bool matchmaking);
+    int JoinGame(FriendSessionInfo* info, int userIndex, bool matchmaking);
     bool FindAndJoinGame(int userIndex, EMiniGameId miniGameId, unsigned int attributeCount, unsigned int* attributes, unsigned int* ids);
     static void CancelJoinGame(void* data);
     bool LeaveGame(bool error);
     void UpdateAndSetGameSessionData(INetworkPlayer* player);
     void SendInviteGUI(int userIndex);
     void ResetLeavingGame();
-    bool AlreadyInSession(const nn::fp::FriendPresence* presence);
+    bool AlreadyInSession(const FriendPresence* presence);
     bool IsNetworkThreadRunning();
     static void* RunNetworkGameThreadProc(void* data);
     static void* ExitAndJoinFromInviteThreadProc(void* data);
@@ -162,7 +160,7 @@ private:
     CPlatformNetworkManager* m_platform;
     int m_pendingInviteUserIndex;
     unsigned int m_pendingInviteUserMask;
-    nn::fp::FriendPresence* m_pendingInvitePresence;
+    FriendPresence* m_pendingInvitePresence;
     std::vector<ClientPacketListener*> m_connections;
     OSFastMutex m_connectionsMutex;
     bool m_initialised;

@@ -132,6 +132,8 @@
 #include "game/network/VotePacket.hpp"
 #include "game/network/XZPacket.hpp"
 
+int32_t getMaskInt__FUiT1(uint32_t offset, uint32_t width);
+
 typedef boost::shared_ptr<Packet> (*PacketFactory)();
 
 static boost::unordered_map<int, PacketFactory> sPacketFactories;
@@ -403,4 +405,23 @@ bool Packet::isAync()
 bool Packet::tryReplaceDuplicatePacket(std::deque<boost::shared_ptr<Packet>, std::allocator<boost::shared_ptr<Packet> > >* queuedPackets)
 {
     return false;
+}
+
+uint32_t packInt__FiUiT2(int32_t value, uint32_t offset, uint32_t width)
+{
+    uint32_t mask = static_cast<uint32_t>(getMaskInt__FUiT1(offset, width));
+    return (static_cast<uint32_t>(value) << (offset & 0x3f)) & mask;
+}
+
+int32_t unpackSigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width)
+{
+    uint32_t rightShift = (0x20U - width) & 0x3f;
+    uint32_t leftShift = (rightShift - offset) & 0x3f;
+    return static_cast<int32_t>(value << leftShift) >> rightShift;
+}
+
+uint32_t unpackUnsigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width)
+{
+    uint32_t mask = static_cast<uint32_t>(getMaskInt__FUiT1(offset, width));
+    return (value >> (offset & 0x3f)) & mask;
 }

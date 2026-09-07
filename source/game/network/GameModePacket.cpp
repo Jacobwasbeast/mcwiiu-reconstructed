@@ -254,12 +254,6 @@ void GameModePacket::ChestRefill::WritePacket(boost::shared_ptr<GameModePacket> 
     }
 }
 
-GameModePacket::PlayerData::PlayerData()
-    : playerName()
-{
-    playerName.clear();
-}
-
 GameModePacket::PlayerData::PlayerData(std::wstring playerName)
     : playerName(playerName)
 {
@@ -301,11 +295,6 @@ void GameModePacket::SetCameraData::WritePacket(boost::shared_ptr<GameModePacket
 
 GameModePacket::SyncTeamInviteData::SyncTeamInviteData()
     : invite(0)
-{
-}
-
-GameModePacket::SyncTeamInviteData::SyncTeamInviteData(TeamInvite* invite)
-    : invite(invite)
 {
 }
 
@@ -428,11 +417,6 @@ void GameModePacket::StateChangeData::WritePacket(boost::shared_ptr<GameModePack
 
 GameModePacket::TutorialGameModeData::TutorialGameModeData()
     : tutorial(0)
-{
-}
-
-GameModePacket::TutorialGameModeData::TutorialGameModeData(int tutorial)
-    : tutorial(tutorial)
 {
 }
 

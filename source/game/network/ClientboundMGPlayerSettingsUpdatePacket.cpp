@@ -2,6 +2,12 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
+
+maybe<float> readMaybeFloat(DataInputStream* input)
+{
+    return input->readBoolean() ? maybe<float>(input->readFloat()) : maybe<float>();
+}
+
 ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket() : mSettings() {}
 ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings) : mSettings(settings) {}
 ClientboundMGPlayerSettingsUpdatePacket::~ClientboundMGPlayerSettingsUpdatePacket() {}
@@ -14,7 +20,7 @@ void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
  mSettings.mShowNametags=input->readBoolean(); mSettings.mTakeEverythingEnabled=input->readBoolean(); mSettings.mChestRefillEnabled=input->readBoolean();
  unsigned char tntFlags=input->readUnsignedByte(); mSettings.mCanTntDestroyBlocks=(tntFlags & 1) ? maybe<bool>((tntFlags & 2) != 0) : maybe<bool>();
  bool hasMap=input->readBoolean(); mSettings.mMapSizeOverride=hasMap ? maybe<int>(input->readVarInt()) : maybe<int>();
- mSettings.mRandomMapSize=input->readBoolean(); bool hasArena=input->readBoolean(); mSettings.mArenaSizeMultiplier=hasArena ? maybe<float>(input->readFloat()) : maybe<float>();
+ mSettings.mRandomMapSize=input->readBoolean(); mSettings.mArenaSizeMultiplier=readMaybeFloat(input);
  bool hasLayers=input->readBoolean(); mSettings.mLayerCount=hasLayers ? maybe<unsigned int>(input->readVarInt()) : maybe<unsigned int>();
  mSettings.mRoundCount=input->readInt(); mSettings.mSmallInventoryEnabled=input->readBoolean(); mSettings.mNaturalRegeneration=input->readBoolean();
  mSettings.mFoodBalance=input->readInt(); mSettings.mSmallSkinsEnabled=input->readBoolean(); mSettings.mRoundLength=input->readInt(); mSettings.mMaxPlayers=input->readInt();

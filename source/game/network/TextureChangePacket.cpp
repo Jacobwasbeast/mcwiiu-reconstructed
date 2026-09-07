@@ -7,7 +7,7 @@
 
 TextureChangePacket::TextureChangePacket()
     : mEntityId(-1),
-      mChangeType(eTextureChangeType_None),
+      mChangeType(eTextureChangeType_Skin),
       mTextureName(L"")
 {
 }

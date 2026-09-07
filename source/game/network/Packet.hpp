@@ -2,6 +2,7 @@
 #define GAME_NETWORK_PACKET_HPP
 
 #include <deque>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <typeinfo>
@@ -46,5 +47,9 @@ private:
     static void map(int packetId, bool clientbound, bool serverbound, bool sendToAnyClient, bool canBeDelayed, const std::type_info& type, boost::shared_ptr<Packet> (*create)(), std::wstring name);
     static boost::shared_ptr<Packet> getPacket(int packetId);
 };
+
+uint32_t packInt__FiUiT2(int32_t value, uint32_t offset, uint32_t width);
+int32_t unpackSigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width);
+uint32_t unpackUnsigned__FUiN21(uint32_t value, uint32_t offset, uint32_t width);
 
 #endif

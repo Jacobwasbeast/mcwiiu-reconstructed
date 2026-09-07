@@ -22,7 +22,8 @@ class TextureChangePacket : public Packet,
 public:
     enum ETextureChangeType
     {
-        eTextureChangeType_None = 0
+        eTextureChangeType_Skin = 0,
+        eTextureChangeType_Cape = 1
     };
 
     TextureChangePacket();

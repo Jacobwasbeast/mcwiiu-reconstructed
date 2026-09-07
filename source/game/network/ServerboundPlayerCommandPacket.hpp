@@ -13,7 +13,7 @@ class PacketListener;
 class ServerboundPlayerCommandPacket : public Packet, public boost::enable_shared_from_this<ServerboundPlayerCommandPacket>
 {
 public:
-    enum Action { PRESS_SHIFT_KEY = 0, RELEASE_SHIFT_KEY = 1, STOP_SLEEPING = 2, START_SPRINTING = 3, STOP_SPRINTING = 4, RIDING_JUMP = 5, OPEN_INVENTORY = 6 };
+    enum Action { PRESS_SHIFT_KEY = 0, RELEASE_SHIFT_KEY = 1, STOP_SLEEPING = 2, START_SPRINTING = 3, STOP_SPRINTING = 4, RIDING_JUMP = 5, STOP_RIDING_JUMP = 6, OPEN_INVENTORY = 7, ACTION_8 = 8, ACTION_9 = 9, ACTION_10 = 10, ACTION_11 = 11, ACTION_12 = 12 };
     ServerboundPlayerCommandPacket();
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action);
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action, int data);

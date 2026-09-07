@@ -84,9 +84,9 @@ public:
     void resetPosition();
     void teleport(double x, double y, double z, float yRot, float xRot,
                   const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgument*>& relativeArguments,
-                  bool dismount, bool retainPassenger);
+                  bool sendPacket, bool includeRotation);
     void teleport(double x, double y, double z, float yRot, float xRot,
-                  bool dismount, bool retainPassenger);
+                  bool sendPacket, bool includeRotation);
     void tick();
     virtual void handlePlayerInput(boost::shared_ptr<ServerboundPlayerInputPacket> packet);
     bool containsInvalidValues(boost::shared_ptr<ServerboundMoveVehiclePacket> packet);
@@ -160,5 +160,7 @@ private:
     boost::unordered_map<int, short, IntKeyHash, IntKeyEq> mContainerType;
     std::vector<std::wstring> mNames;
 };
+
+INetworkPlayer* getNetworkPlayerFromIndex(int index);
 
 #endif

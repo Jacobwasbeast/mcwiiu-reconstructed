@@ -2,8 +2,9 @@
 #include "game/network/Connection.hpp"
 
 ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket, int playerId)
-    : m_closed(false), m_connection(0), m_minecraft(minecraft), m_level(0), m_started(false),
-      m_socketOpen(false), m_playerId(playerId), m_random(), m_name(L""), m_savedDataStorage(0)
+    : m_closed(false), m_connection(0), mRemoteAddress(L""), m_socketOpen(false),
+      m_minecraft(minecraft), m_level(0), m_started(false), m_playerId(playerId), m_random(),
+      m_savedDataStorage(0)
 {
     InitializeCriticalSection(&m_mutex);
     if (socket != 0)
@@ -45,8 +46,14 @@ void ClientPacketListener::tick()
         m_connection->flush();
 }
 
-uint32_t ClientPacketListener::getNetworkPlayer()
+INetworkPlayer* ClientPacketListener::getNetworkPlayer()
 {
+    if (m_connection != 0)
+    {
+        Socket* socket = (Socket*)getSocket();
+        if (socket != 0)
+            return socket->getPlayer();
+    }
     return 0;
 }
 
@@ -195,7 +202,7 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
 void ClientPacketListener::close()
 {
     if (m_connection != 0)
-        m_connection->close(0);
+        m_connection->close(DisconnectPacket::eDisconnectReason_None);
     m_closed = true;
 }
 

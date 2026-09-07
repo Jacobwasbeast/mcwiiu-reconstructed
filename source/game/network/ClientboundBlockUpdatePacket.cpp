@@ -3,6 +3,8 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 
@@ -16,9 +18,21 @@ ClientboundBlockUpdatePacket::ClientboundBlockUpdatePacket(Level* level, const B
 {
     compressed = true;
     this->pos = pos;
-    block = level->getBlock(pos);
-    extraBlock = level->getExtraBlock(pos);
-    levelIdx = 0;
+    block = level->getBlockState(pos);
+    extraBlock = level->getExtraBlockState(pos);
+
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
+    {
+        levelIdx = 0;
+    }
+    else if (level->mDimension->getType() == DimensionType::NETHER)
+    {
+        levelIdx = 1;
+    }
+    else
+    {
+        levelIdx = 2;
+    }
 }
 
 ClientboundBlockUpdatePacket::~ClientboundBlockUpdatePacket()
@@ -30,9 +44,9 @@ void ClientboundBlockUpdatePacket::read(DataInputStream* input)
     unsigned int packedPos = input->readInt();
     pos = BlockPos(static_cast<int>(packedPos) >> 22,
                    (packedPos >> 14) & 0xFF,
-                   static_cast<int>((packedPos << 18) | (packedPos >> 14)) >> 22);
-    block = Block::byId(input->readShort() & 0xFFF);
-    extraBlock = Block::byId(input->readShort() & 0xFFF);
+                   static_cast<int>(packedPos << 18) >> 22);
+    block = Block::blockStateRegistry->byId(input->readShort());
+    extraBlock = Block::blockStateRegistry->byId(input->readShort());
     levelIdx = packedPos & 0xF;
 }
 
@@ -43,8 +57,8 @@ void ClientboundBlockUpdatePacket::write(DataOutputStream* output)
         | ((static_cast<unsigned int>(pos.y) & 0xFF) << 14)
         | (static_cast<unsigned int>(pos.x) << 22);
     output->writeInt(packedPos);
-    output->writeShort(static_cast<short>(Block::getId(block)));
-    output->writeShort(static_cast<short>(Block::getId(extraBlock)));
+    output->writeShort(static_cast<short>(Block::blockStateRegistry->getId(block)));
+    output->writeShort(static_cast<short>(Block::blockStateRegistry->getId(extraBlock)));
 }
 
 void ClientboundBlockUpdatePacket::handle(PacketListener* listener)
@@ -52,7 +66,7 @@ void ClientboundBlockUpdatePacket::handle(PacketListener* listener)
     listener->handleBlockUpdate(shared_from_this());
 }
 
-unsigned int ClientboundBlockUpdatePacket::getEstimatedSize()
+int ClientboundBlockUpdatePacket::getEstimatedSize()
 {
     return 8;
 }
@@ -62,12 +76,12 @@ BlockPos ClientboundBlockUpdatePacket::getPos()
     return pos;
 }
 
-Block* ClientboundBlockUpdatePacket::getBlock()
+const BlockState* ClientboundBlockUpdatePacket::getBlock()
 {
     return block;
 }
 
-Block* ClientboundBlockUpdatePacket::getExtraBlock()
+const BlockState* ClientboundBlockUpdatePacket::getExtraBlock()
 {
     return extraBlock;
 }
@@ -77,7 +91,7 @@ unsigned int ClientboundBlockUpdatePacket::getLevelIdx()
     return levelIdx;
 }
 
-unsigned int ClientboundBlockUpdatePacket::getPacketId()
+int ClientboundBlockUpdatePacket::getPacketId()
 {
     return 53;
 }

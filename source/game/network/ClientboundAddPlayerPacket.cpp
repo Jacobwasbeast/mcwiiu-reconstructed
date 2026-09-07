@@ -8,8 +8,8 @@
 
 ClientboundAddPlayerPacket::ClientboundAddPlayerPacket()
     : mEntityId(0xffffffff), mPlayerId(0), mName(L""), mX(0), mY(0), mZ(0), myRot(0), mxRot(0),
-      mProfileId(0), myHeadRot(0), mPlayerValue1(0), mPlayerValue2(0), mPlayerPrivilege(0),
-      mGameType(NULL), mEntityData(), mUnpackedData(NULL)
+      mProfileId(0), mPlayerIndex(0), mSkinId(0), mCapeId(0), mPlayerPrivilege(0),
+      mGameType(GameType::NOT_SET), mEntityData(), mUnpackedData(NULL)
 {
 }
 
@@ -18,13 +18,12 @@ ClientboundAddPlayerPacket::ClientboundAddPlayerPacket(boost::shared_ptr<Player>
                                                        int yRot, int xRot, int yHeadRot)
     : mEntityId(player->getId()), mPlayerId(playerId), mName(player->getName()), mX(x), mY(y), mZ(z),
       myRot((unsigned char)yRot), mxRot((unsigned char)xRot), mProfileId(profileId),
-      myHeadRot((unsigned char)yHeadRot), mPlayerValue1(0), mPlayerValue2(0),
-      mPlayerPrivilege(player->getPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21)),
-      mGameType(player->GetGameType()), mEntityData(player->getEntityData()), mUnpackedData(NULL)
+      mPlayerIndex((unsigned char)player->mField0x7e4), mSkinId(player->mField0x7dc),
+      mCapeId(player->mField0x7e0),
+      mPlayerPrivilege(player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All)),
+      myHeadRot((unsigned char)yHeadRot), mGameType(player->GetGameType()),
+      mEntityData(player->getEntityData()), mUnpackedData(NULL)
 {
-    mPlayerValue1 = player->mXRot;
-    mPlayerValue2 = player->mYRot;
-    myHeadRot = (unsigned char)yHeadRot;
 }
 
 ClientboundAddPlayerPacket::~ClientboundAddPlayerPacket()
@@ -91,8 +90,9 @@ void ClientboundAddPlayerPacket::read(DataInputStream* input)
     myHeadRot = input->readByte();
     mPlayerId = input->readPlayerUID();
     mProfileId = input->readPlayerUID();
-    mPlayerValue1 = input->readInt();
-    mPlayerValue2 = input->readInt();
+    mPlayerIndex = input->readByte();
+    mSkinId = input->readInt();
+    mCapeId = input->readInt();
     mPlayerPrivilege = input->readInt();
     mGameType = GameType::byId(input->readInt());
     MemSect(1);
@@ -112,8 +112,9 @@ void ClientboundAddPlayerPacket::write(DataOutputStream* output)
     output->writeByte(myHeadRot);
     output->writePlayerUID(mPlayerId);
     output->writePlayerUID(mProfileId);
-    output->writeInt(mPlayerValue1);
-    output->writeInt(mPlayerValue2);
+    output->writeByte(mPlayerIndex);
+    output->writeInt(mSkinId);
+    output->writeInt(mCapeId);
     output->writeInt(mPlayerPrivilege);
     output->writeInt(mGameType->getId());
     mEntityData->packAll(output);
@@ -124,7 +125,7 @@ void ClientboundAddPlayerPacket::handle(PacketListener* listener)
     listener->handleAddPlayer(shared_from_this());
 }
 
-unsigned int ClientboundAddPlayerPacket::getEstimatedSize()
+int ClientboundAddPlayerPacket::getEstimatedSize()
 {
     if (mEntityData == NULL)
     {
@@ -143,7 +144,7 @@ std::vector<DataItem*>* ClientboundAddPlayerPacket::getUnpackedData()
     return mUnpackedData;
 }
 
-unsigned int ClientboundAddPlayerPacket::getPacketId()
+int ClientboundAddPlayerPacket::getPacketId()
 {
     return 20;
 }
