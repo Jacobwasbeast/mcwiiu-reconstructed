@@ -9,6 +9,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
@@ -46,6 +47,7 @@ InteractionResultHolder EggItem::use(Level* level,
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<ThrownEgg> egg(new ThrownEgg(level, player));
+        egg->shootFromRotation(player, player->mXRot, player->mYRot, 0.0f, 1.5f, 1.0f);
         level->addEntity(egg);
     }
 

@@ -1,8 +1,26 @@
 #include "game/item/ArmorRecipes.hpp"
 
+#include <string>
+
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Recipes.hpp"
+
+namespace
+{
+    std::wstring gArmorRecipeStrings[16];
+
+    void destroyArmorRecipeStrings(std::wstring* strings, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            strings[i].~basic_string();
+    }
+}
+
+void __T6()
+{
+    destroyArmorRecipeStrings(gArmorRecipeStrings, 16);
+}
 
 void ArmorRecipes::_init()
 {

@@ -12,6 +12,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/block/StandingSignBlock.hpp"
@@ -99,7 +101,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(signPos);
 
-        if (blockEntity && blockEntity->GetType() == BLOCK_ENTITY_TYPE_SIGN)
+        if (blockEntity && blockEntity->GetType() == 0x0100020200000000ULL)
         {
             if (BlockItem::updateCustomBlockEntityTag(level, player, signPos, itemInstance))
             {

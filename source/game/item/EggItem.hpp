@@ -15,11 +15,11 @@ class EggItem : public Item
 {
 public:
     EggItem();
+    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~EggItem();
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
 };
 
 #endif

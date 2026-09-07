@@ -7,8 +7,8 @@
 
 #include "game/core/InteractionHand.hpp"
 #include "game/core/InteractionResultHolder.hpp"
-#include "game/item/Item.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/item/PotionItem.hpp"
 
 class HtmlString;
 class ItemInstance;
@@ -16,20 +16,20 @@ class ItemTooltipDataHolder;
 class Level;
 class Player;
 
-class LingeringPotionItem : public Item
+class LingeringPotionItem : public PotionItem
 {
 public:
+    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~LingeringPotionItem();
-    virtual unsigned int getPotionType() const;
-    virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
-    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
-                                  boost::shared_ptr<Player> player,
-                                  std::vector<HtmlString>* lines,
-                                  bool advanced);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
+    virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
+                                 boost::shared_ptr<Player> player,
+                                 std::vector<HtmlString>* lines,
+                                 bool advanced);
+    virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
+    virtual unsigned int getPotionType() const;
     virtual std::wstring getBottleTextureName();
 };
 

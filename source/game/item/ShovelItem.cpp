@@ -1,12 +1,16 @@
 #include "game/item/ShovelItem.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/Direction.hpp"
 
 static arrayWithLength<Block*> BLOCKS(12, false);
@@ -52,27 +56,32 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
                                                           float hitZ,
                                                           bool simulate)
 {
-    not_null_ptr<ItemInstance> itemInstance = ((LivingEntity*)(void*)player.get())->getItemInHand(hand);
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     BlockPos targetPos = pos.relative(direction);
-    const BlockState* targetState = level->getBlockState(targetPos);
-    bool blockUsed =
-        targetState->getBlock()->use(level, targetPos, targetState, player, hand, direction,
-                                     hitX, hitY, hitZ, simulate);
-    if (!blockUsed)
+
+    if (!player->mayUseItemAt(targetPos, direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
+    Block* block = level->getBlockState(pos)->getBlock();
     if (direction != Direction::DOWN &&
         level->getBlockState(pos.above())->getMaterial() == Material::AIR &&
-        level->getBlockState(pos)->getBlock() == Blocks::grass_path)
+        block == Blocks::grass_path)
     {
         if (!simulate)
         {
-            level->setBlock(pos, Blocks::dirt->defaultBlockState(), 11, false);
+            level->playSound(player,
+                             pos,
+                             SoundEvents::SHOVEL_FLATTEN,
+                             SoundSource::eSoundSource_Blocks,
+                             1.0f,
+                             1.0f,
+                             16.0f);
             if (!level->mIsClientSide)
             {
-                itemInstance->hurtAndBreak(1, boost::shared_ptr<LivingEntity>(player, (LivingEntity*)(void*)player.get()));
+                level->setBlock(pos, Blocks::dirt->defaultBlockState(), 11, false);
+                itemInstance->hurtAndBreak(1, player);
             }
         }
         return InteractionResult::eInteractionResult_Success;

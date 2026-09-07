@@ -1,6 +1,8 @@
 #ifndef GAME_ITEM_GOLDENAPPLEITEM_HPP
 #define GAME_ITEM_GOLDENAPPLEITEM_HPP
 
+#include <boost/shared_ptr.hpp>
+
 #include "game/item/FoodItem.hpp"
 #include "game/item/not_null_ptr.hpp"
 

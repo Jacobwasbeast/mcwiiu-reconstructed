@@ -6,6 +6,7 @@
 #include "game/core/ThrownEnderpearl.hpp"
 #include "game/item/ItemCooldowns.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"

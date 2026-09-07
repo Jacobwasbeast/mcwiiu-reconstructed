@@ -2,6 +2,7 @@
 
 #include "game/item/BannerItem.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/block/Blocks.hpp"
 
 ShieldItem::~ShieldItem()

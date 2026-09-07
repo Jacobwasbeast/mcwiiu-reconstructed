@@ -5,11 +5,13 @@
 #include "game/core/Mth.hpp"
 #include "game/core/PrimedTnt.hpp"
 #include "game/core/Abilities.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundPowerupPacket.hpp"
 #include "game/network/Packet.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
@@ -41,6 +43,7 @@ void PowerupItems::DoDropTNT(boost::shared_ptr<Player> player)
 
     boost::shared_ptr<PrimedTnt> tnt(new PrimedTnt(player->mLevel, player->mX, player->mY,
                                                    player->mZ, player));
+    tnt->shouldTick();
     tnt->setFuse(10);
     player->mLevel->addEntity(tnt);
     player->mLevel->explode(tnt, player->mX, player->mY, player->mZ,
@@ -49,7 +52,7 @@ void PowerupItems::DoDropTNT(boost::shared_ptr<Player> player)
 
 void PowerupItems::DoGainPoint(boost::shared_ptr<Player> player)
 {
-    player->increaseScore(1);
+    player->GetGameMode()->RecordGainPoints(1);
 }
 
 bool PowerupItems::IsDebuff(eGlide_Timed_Powerup_ID powerupId)
@@ -63,7 +66,7 @@ void PowerupItems::BroadcastTimedPowerup(boost::shared_ptr<Player> player,
 {
     if (!player->mLevel->mIsClientSide)
     {
-        PlayerList* players = player->getServer()->getPlayers();
+        PlayerList* players = gMinecraftServer->getPlayers();
         boost::shared_ptr<Packet> packet(new ClientboundPowerupPacket(powerupId, time));
         players->broadcastToAllExceptTeam(player, packet);
     }
@@ -102,7 +105,7 @@ void PowerupItems::DoSetInvulnerable(boost::shared_ptr<Player> player, int time)
     if (!player->mLevel->mIsClientSide)
     {
         player->mAbilities.mInvulnerable = true;
-        PlayerList* players = player->getServer()->getPlayers();
+        PlayerList* players = gMinecraftServer->getPlayers();
         boost::shared_ptr<Packet> packet(new ClientboundPlayerAbilitiesPacket(&player->mAbilities,
                                                                                 player->getId()));
         players->broadcastAll(packet);

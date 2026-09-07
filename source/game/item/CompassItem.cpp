@@ -1,6 +1,7 @@
 #include "game/item/CompassItem.hpp"
 
 #include <cmath>
+#include <string>
 
 #include <boost/shared_ptr.hpp>
 
@@ -14,6 +15,20 @@
 #include "game/util/Math.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
+
+namespace
+{
+    std::wstring gCompassIconNames[4] =
+    {
+        L"compass_0", L"compass_1", L"compass_2", L"compass_3"
+    };
+}
+
+void __T10()
+{
+    for (int i = 0; i < 4; ++i)
+        gCompassIconNames[i].~basic_string();
+}
 
 CompassItem::CompassItem()
     : Item()
@@ -40,10 +55,10 @@ TextureAtlasSprite* CompassItem::getIcon(int auxValue)
 void CompassItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(L"compass_0");
-    mIcons[1] = iconRegister->registerIcon(L"compass_1");
-    mIcons[2] = iconRegister->registerIcon(L"compass_2");
-    mIcons[3] = iconRegister->registerIcon(L"compass_3");
+    mIcons[0] = iconRegister->registerIcon(gCompassIconNames[0]);
+    mIcons[1] = iconRegister->registerIcon(gCompassIconNames[1]);
+    mIcons[2] = iconRegister->registerIcon(gCompassIconNames[2]);
+    mIcons[3] = iconRegister->registerIcon(gCompassIconNames[3]);
 }
 
 double CompassItem::CompassItem_ItemPropertyFunction::getFrameRotation(boost::shared_ptr<ItemFrame> frame)

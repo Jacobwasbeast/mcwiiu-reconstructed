@@ -21,9 +21,7 @@ GoldenAppleItem::~GoldenAppleItem()
 
 bool GoldenAppleItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (Item::isFoil(itemInstance))
-        return true;
-    return itemInstance->getAuxValue() > 0;
+    return Item::isFoil(itemInstance) || itemInstance->getAuxValue() > 0;
 }
 
 const Rarity* GoldenAppleItem::getRarity(not_null_ptr<ItemInstance> itemInstance)
@@ -54,15 +52,21 @@ void GoldenAppleItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance,
 
     if (itemInstance->getAuxValue() < 1)
     {
-        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1), player);
-        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0), player);
+        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1),
+                          boost::shared_ptr<Entity>());
+        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0),
+                          boost::shared_ptr<Entity>());
     }
     else
     {
         player->awardStat(GenericStats::overpowered(), GenericStats::param_overpowered());
-        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4), player);
-        player->addEffect(new MobEffectInstance(MobEffects::DAMAGE_RESISTANCE, 6000, 0), player);
-        player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0), player);
-        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3), player);
+        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4),
+                          boost::shared_ptr<Entity>());
+        player->addEffect(new MobEffectInstance(MobEffects::DAMAGE_RESISTANCE, 6000, 0),
+                          boost::shared_ptr<Entity>());
+        player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0),
+                          boost::shared_ptr<Entity>());
+        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3),
+                          boost::shared_ptr<Entity>());
     }
 }

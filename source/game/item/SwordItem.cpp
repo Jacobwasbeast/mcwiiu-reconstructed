@@ -2,6 +2,7 @@
 
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/core/InteractionResult.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -49,7 +50,7 @@ float SwordItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const 
     if (material == Material::PLANT || material == Material::REPLACEABLE_PLANT || material == Material::BAMBOO
         || material == Material::CORAL || material == Material::LEAVES || material == Material::VEGETABLE)
     {
-        if (Minecraft::GetInstance()->mGameMode->isAdventure()
+        if (((GameMode*)Minecraft::GetInstance()->mGameMode)->isAdventure()
             && (state->getBlock() == Blocks::chorus_flower || state->getBlock() == Blocks::chorus_plant))
         {
             return 1.0f;

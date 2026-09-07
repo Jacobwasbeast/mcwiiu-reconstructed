@@ -37,8 +37,8 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
 
-    uint32_t getPotionType() const;
-    std::wstring getBottleTextureName();
+    virtual uint32_t getPotionType() const;
+    virtual std::wstring getBottleTextureName();
     virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
 

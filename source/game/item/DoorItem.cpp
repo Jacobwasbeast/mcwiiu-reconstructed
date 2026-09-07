@@ -7,6 +7,7 @@
 #include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -14,9 +15,15 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
-DoorItem::DoorItem(Block* block) : Item(), mBlock(block) {}
+DoorItem::DoorItem(Block* block)
+    : Item(),
+      mBlock(block)
+{
+}
 
-DoorItem::~DoorItem() {}
+DoorItem::~DoorItem()
+{
+}
 
 void DoorItem::place(Level* level, const BlockPos& pos, const Direction* direction, Block* block, bool hingeRight)
 {
@@ -40,27 +47,25 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
     {
         hingeRight = true;
     }
-    else
+    else if ((clockwiseDoor && !counterClockwiseDoor) || clockwiseSupport < counterClockwiseSupport)
     {
-        if ((clockwiseDoor && !counterClockwiseDoor) || clockwiseSupport < counterClockwiseSupport)
-        {
-            hingeRight = false;
-        }
+        hingeRight = false;
     }
+
     bool powered = level->hasNeighborSignal(pos) || level->hasNeighborSignal(pos.above());
     const BlockState* state = block->defaultBlockState();
-    TypedBoxed<Direction*> facing(const_cast<Direction*>(direction));
+    TypedBoxed<const Direction*> facing(direction);
     TypedBoxed<DoorBlock::HingeSide*> hinge(hingeRight ? DoorBlock::RIGHT : DoorBlock::LEFT);
     TypedBoxed<bool> open(powered);
     TypedBoxed<DoorBlock::DoorHalf*> half(DoorBlock::LOWER);
     state = state->setBoxedValue(DoorBlock::FACING, &facing);
     state = state->setBoxedValue(DoorBlock::HINGE, &hinge);
-    state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(DoorBlock::OPEN), &open);
-    state = state->setBoxedValue(static_cast<AbstractProperty<bool>*>(DoorBlock::POWERED), &open);
+    state = state->setBoxedValue(DoorBlock::OPEN, &open);
+    state = state->setBoxedValue(DoorBlock::POWERED, &open);
     state = state->setBoxedValue(DoorBlock::HALF, &half);
     level->setBlock(pos, state, 3, false);
-    half = DoorBlock::UPPER;
-    state = state->setBoxedValue(DoorBlock::HALF, &half);
+    TypedBoxed<DoorBlock::DoorHalf*> upper(DoorBlock::UPPER);
+    state = state->setBoxedValue(DoorBlock::HALF, &upper);
     level->setBlock(pos.above(), state, 3, false);
     level->updateNeighborsAt(pos, block, false);
     level->updateNeighborsAt(pos.above(), block, false);
@@ -73,20 +78,34 @@ InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> 
 {
     BlockPos placePos = pos;
     const BlockState* state = level->getBlockState(placePos);
-    if (!state->getBlock()->mayReplaceWithPlace(level, placePos)) placePos = placePos.relative(direction);
+    if (!state->getBlock()->mayReplaceWithPlace(level, placePos))
+    {
+        placePos = placePos.relative(direction);
+    }
+
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->isEmpty() || !player->mayUseItemAt(placePos, direction, itemInstance)
+    if (!player->mayUseItemAt(placePos, direction, itemInstance)
         || !level->mayPlace(mBlock, placePos, false, direction, boost::shared_ptr<Entity>()))
+    {
         return InteractionResult::eInteractionResult_Fail;
+    }
+
     if (!simulate)
     {
         const Direction* facing = Direction::fromYRot((double)player->mYRot);
         bool hingeRight = false;
-        if (facing->getAxis()->getStep() < 1)
+        int step = facing->getAxisDirection()->getStep();
+        if (step < 1)
         {
-            if (facing->getAxis()->getStep() >= -1 && hitY <= 0.5f) hingeRight = true;
+            if (step >= -1 && hitY <= 0.5f)
+            {
+                hingeRight = true;
+            }
         }
-        else if (hitY > 0.5f) hingeRight = true;
+        else if (hitY > 0.5f)
+        {
+            hingeRight = true;
+        }
         place(level, placePos, facing, mBlock, hingeRight);
         const SoundType* soundType = mBlock->getSoundType();
         player->awardStat(Stats::blockPlacedStats.data[Block::getId(mBlock)],

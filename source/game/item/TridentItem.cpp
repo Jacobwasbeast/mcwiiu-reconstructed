@@ -27,6 +27,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TridentItem_Throwing_ItemPropertyFunction.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 TridentItem::TridentItem()
@@ -88,7 +89,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
             if (player->mAbilities.mInstabuild)
             {
-                trident->mPickup = AbstractRotatedItemProjectile::ePickup_CreativeOnly;
+                trident->setPickup(AbstractRotatedItemProjectile::ePickup_CreativeOnly);
             }
 
             EnchantmentHelper::getEnchantmentLevel(Enchantments::LOYALTY, entity);
@@ -132,7 +133,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
         if (player->mOnGround)
         {
-            player->move(MoverType::SELF, 0.0, -1.0, 0.0, false);
+            player->move(eMoverType_Self, 0.0, -1.0, 0.0, false);
         }
 
         entity->push((double)(dirX * speed), (double)(dirY * speed), (double)(dirZ * speed));
@@ -169,7 +170,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
         }
     }
 
-    player->awardStat(GenericStats::itemsUsed(Item::VALIDgetId(this)),
+    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
 }
 

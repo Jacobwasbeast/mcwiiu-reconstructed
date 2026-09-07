@@ -13,52 +13,52 @@
 #include <cwchar>
 not_null_ptr<ItemInstance> ItemInstance::EMPTY;
 ItemInstance::ItemInstance(Block* block)
-    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+    : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), 1, 0);
 }
 ItemInstance::ItemInstance(Block* block, int count)
-    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+    : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), count, 0);
 }
 ItemInstance::ItemInstance(Block* block, int count, int auxValue)
-    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+    : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 _init(Item::byBlock(block), count, auxValue);
 }
 ItemInstance::ItemInstance(Item* item)
-    : mSelf(), mCount(1), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+    : mCount(1), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(Item* item, int count)
-    : mSelf(), mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+    : mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(Item* item, int count, int auxValue)
-    : mSelf(), mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
+    : mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
       mAuxValue(auxValue), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(CompoundTag* tag)
-    : mSelf(), mCount(0), mPopTime(0), mItem(0), mTag(tag), mEmptyCache(0),
+    : mCount(0), mPopTime(0), mItem(0), mTag(tag), mEmptyCache(0),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
       mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
 {
 }
 ItemInstance::ItemInstance(const ItemInstance& other)
-    : mSelf(), mCount(other.mCount), mPopTime(other.mPopTime), mItem(other.mItem), mTag(other.mTag),
+    : mCount(other.mCount), mPopTime(other.mPopTime), mItem(other.mItem), mTag(other.mTag),
       mEmptyCache(other.mEmptyCache), mAuxValue(other.mAuxValue), mUnknown(other.mUnknown),
       mFrame(other.mFrame), mCensorshipInfo(other.mCensorshipInfo), mBreakBlock(other.mBreakBlock),
       mCanBreak(other.mCanBreak), mPlaceBlock(other.mPlaceBlock), mCanPlace(other.mCanPlace) {
@@ -132,12 +132,12 @@ mCount -= amount;
 if (mCount < 0) mCount=0;
 updateEmptyCacheFlag();
 }
-ItemInstance ItemInstance::split(int amount) {
-int n = amount < mCount ? amount : mCount;
-ItemInstance result(*this);
-result.mCount=n;
-mCount-=n;
-updateEmptyCacheFlag();
+not_null_ptr<ItemInstance> ItemInstance::split(int amount) {
+if (mCount < amount) amount = mCount;
+not_null_ptr<ItemInstance> result = copy();
+result->setCount(amount);
+shrink(amount);
+if (mCount < 1) mCount = 0;
 return result;
 }
 int ItemInstance::useOn(boost::shared_ptr<Player> player,
@@ -152,7 +152,9 @@ int ItemInstance::useOn(boost::shared_ptr<Player> player,
 return mItem != 0 ? mItem->useOn(player, level, pos, hand, direction, x, y, z, flag) == InteractionResult::eInteractionResult_Success : false;
 }
 float ItemInstance::getDestroySpeed(const BlockState* state) {
-return mItem != 0 ? mItem->getDestroySpeed(not_null_ptr<ItemInstance>(const_cast<ItemInstance*>(this)), state) : 0.0f;
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 ? mItem->getDestroySpeed(self, state) : 0.0f;
 }
 bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand) {
 return mItem != 0 && mItem->TestUse(level, player, hand);
@@ -239,7 +241,9 @@ bool ItemInstance::tagMatches(const not_null_ptr<ItemInstance>& first, const not
 return first->hasTag() == second->hasTag();
 }
 bool ItemInstance::matches(const not_null_ptr<ItemInstance>& other, bool compareTags) {
-return isSameIgnoreDurability(not_null_ptr<ItemInstance>(this), other) && (!compareTags || tagMatches(not_null_ptr<ItemInstance>(this), other));
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return isSameIgnoreDurability(self, other) && (!compareTags || tagMatches(self, other));
 }
 bool ItemInstance::matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second, bool compareTags) {
 return first->matches(second, compareTags);
@@ -263,7 +267,9 @@ bool ItemInstance::sameItem_not_shared(ItemInstance* other) {
 return other != 0 && mItem == other->mItem && mAuxValue == other->mAuxValue;
 }
 int ItemInstance::getUseDescriptionId() {
-return mItem != 0 ? mItem->getUseDescriptionId(not_null_ptr<ItemInstance>(this)) : 0;
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 ? mItem->getUseDescriptionId(self) : 0;
 }
 int ItemInstance::getDescriptionId(int auxValue) {
 return mItem != 0 ? mItem->getDescriptionId(auxValue) : 0;
@@ -289,23 +295,33 @@ if (mPopTime > 0) {
 --mPopTime;
 }
 if (mItem != 0) {
-mItem->inventoryTick(not_null_ptr<ItemInstance>(this), level, entity, slot, selected);
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+mItem->inventoryTick(self, level, entity, slot, selected);
 }
 }
 void ItemInstance::onCraftedBy(Level* level, boost::shared_ptr<Player> player, int amount) {
 if (mItem != 0) {
-mItem->onCraftedBy(not_null_ptr<ItemInstance>(this), level, player);
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+mItem->onCraftedBy(self, level, player);
 }
 }
 int ItemInstance::getUseDuration() {
-return mItem != 0 ? mItem->getUseDuration(not_null_ptr<ItemInstance>(this)) : 0;
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 ? mItem->getUseDuration(self) : 0;
 }
 int ItemInstance::getUseAnimation() const {
-return mItem != 0 ? mItem->getUseAnimation(not_null_ptr<const ItemInstance>(const_cast<ItemInstance*>(this))) : 0;
+not_null_ptr<const ItemInstance> self;
+static_cast<boost::shared_ptr<const ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 ? mItem->getUseAnimation(self) : 0;
 }
 void ItemInstance::releaseUsing(Level* level, boost::shared_ptr<LivingEntity> entity, int duration) {
 if (mItem != 0) {
-mItem->releaseUsing(not_null_ptr<ItemInstance>(this), level, entity, duration);
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+mItem->releaseUsing(self, level, entity, duration);
 }
 }
 void ItemInstance::setTag(CompoundTag* tag) {
@@ -331,7 +347,9 @@ bool ItemInstance::wasCreatedByRestrictedPlayer() {
 return false;
 }
 std::wstring ItemInstance::getHoverNameUnfiltered() {
- return mItem != 0 ? mItem->getName(not_null_ptr<ItemInstance>(this)) : std::wstring();
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 ? mItem->getName(self) : std::wstring();
 }
 std::wstring ItemInstance::getHoverName() {
 return getHoverNameUnfiltered();
@@ -376,23 +394,33 @@ return mItem != 0 ? mItem->getDefaultAttributeModifiers(slot) : 0;
 std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player> player, bool advanced) {
 std::vector<HtmlString>* lines = new std::vector<HtmlString>();
 lines->push_back(HtmlString(getHoverName(), eMinecraftColour_HTMLColor_White, false, false, 0));
-if (mItem != 0) mItem->appendHoverText(not_null_ptr<ItemInstance>(this), player, lines, advanced);
+if (mItem != 0) {
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+mItem->appendHoverText(self, player, lines, advanced);
+}
 return lines;
 }
 std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced) {
 return getTooltipLines(player, advanced);
 }
 bool ItemInstance::hasFoil() {
-return mItem != 0 && mItem->isFoil(not_null_ptr<ItemInstance>(this));
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 && mItem->isFoil(self);
 }
 int ItemInstance::getRarity() {
-return mItem != 0 && mItem->getRarity(not_null_ptr<ItemInstance>(this)) != 0 ? 1 : 0;
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 && mItem->getRarity(self) != 0 ? 1 : 0;
 }
 bool ItemInstance::isEnchanted() {
 return getEnchantmentTags() != 0;
 }
 bool ItemInstance::isEnchantable() {
-return mItem != 0 && mItem->isEnchantable(not_null_ptr<ItemInstance>(this));
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem != 0 && mItem->isEnchantable(self);
 }
 void ItemInstance::enchant(Enchantment* enchantment, int level) {
 if (enchantment == 0) {

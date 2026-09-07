@@ -19,16 +19,16 @@ class MilkBucketItem : public Item
 public:
     MilkBucketItem();
 
+    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~MilkBucketItem();
-    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
-                                                       Level* level,
-                                                       boost::shared_ptr<LivingEntity> entity);
-    virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
-    virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
+    virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
+                                                       Level* level,
+                                                       boost::shared_ptr<LivingEntity> entity);
+    virtual int getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const;
+    virtual int getUseDuration(not_null_ptr<ItemInstance> itemInstance);
 };
 
 #endif

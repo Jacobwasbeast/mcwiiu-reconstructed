@@ -21,8 +21,8 @@ not_null_ptr<ItemInstance> EnchantRandomEquipmentFunction::apply(const not_null_
                                                                  Random* random,
                                                                  LootTableContext& context)
 {
-    boost::shared_ptr<Entity> entity = context.getEntity(LootTableContext::THIS);
-    float specialMultiplier = (float)context.mLevel->getSpecialMultiplier(entity->mSpecialMultiplier);
+    boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
+    float specialMultiplier = (float)((Level*)context.mLevel)->getSpecialMultiplier(entity->mDimension);
 
     if (random->nextFloat() < chance * specialMultiplier)
     {

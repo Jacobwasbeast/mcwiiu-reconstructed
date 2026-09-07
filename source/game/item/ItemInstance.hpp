@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include "game/core/Attribute.hpp"
@@ -30,7 +31,7 @@ class ItemFrame;
 class MapItem;
 class AttributeModifier;
 
-class ItemInstance
+class ItemInstance : public boost::enable_shared_from_this<ItemInstance>
 {
 public:
     ItemInstance();
@@ -55,7 +56,7 @@ public:
     not_null_ptr<ItemInstance> copy() const;
     void grow(int amount);
     void shrink(int amount);
-    ItemInstance split(int amount);
+    not_null_ptr<ItemInstance> split(int amount);
     int useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     float getDestroySpeed(const BlockState* state);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
@@ -141,7 +142,6 @@ public:
     std::wstring getDisplayName();
     static not_null_ptr<ItemInstance> EMPTY;
 private:
-    boost::shared_ptr<ItemInstance> mSelf;
     int mCount;
     int mPopTime;
     Item* mItem;

@@ -6,6 +6,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockItem.hpp"
 
 class BannerPattern;

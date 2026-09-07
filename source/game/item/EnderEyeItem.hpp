@@ -17,6 +17,8 @@ class EnderEyeItem : public Item
 {
 public:
     EnderEyeItem();
+    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
+    virtual ~EnderEyeItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
                                                         const BlockPos& pos, InteractionHand::EInteractionHand hand,
                                                         const Direction* direction, float hitX, float hitY, float hitZ,
@@ -24,8 +26,6 @@ public:
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);
-    virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~EnderEyeItem();
 };
 
 #endif

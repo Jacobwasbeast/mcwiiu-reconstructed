@@ -1,7 +1,6 @@
 #include "game/item/RepairContainer.hpp"
 
 #include <string>
-#include <boost/shared_ptr.hpp>
 
 #include "game/ui/AnvilMenu.hpp"
 
@@ -18,6 +17,5 @@ RepairContainer::~RepairContainer()
 void RepairContainer::setChanged()
 {
     SimpleContainer::setChanged();
-    boost::shared_ptr<Container> container = shared_from_this();
-    mMenu->slotsChanged(container);
+    mMenu->slotsChanged(shared_from_this());
 }

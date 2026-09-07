@@ -3,11 +3,13 @@
 #include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/Player.hpp"
 
 static arrayWithLength<Block*> BLOCKS(22, false);
 
@@ -61,26 +63,22 @@ InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> p
     const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,
     float hitX, float hitY, float hitZ, bool simulate)
 {
-    LivingEntity* livingPlayer = (LivingEntity*)(void*)player.get();
-    not_null_ptr<ItemInstance> itemInstance = livingPlayer->getItemInHand(hand);
-    BlockPos targetPos = pos.relative(direction);
-    const BlockState* targetState = level->getBlockState(targetPos);
-    bool blockUsed = targetState->getBlock()->use(level, targetPos, targetState, player, hand, direction,
-                                                   hitX, hitY, hitZ, simulate);
-    if (!blockUsed)
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
+    if (block->isStrippable() && !Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
         if (!simulate)
         {
-            livingPlayer->swing(hand);
-            level->levelEvent(player, 11, pos, 0);
+            level->setBlock(pos, block->getStrippedBlock(state), 11, false);
             if (!level->mIsClientSide)
             {
-                boost::shared_ptr<LivingEntity> entity(player, livingPlayer);
-                itemInstance->hurtAndBreak(1, entity);
+                itemInstance->hurtAndBreak(1, player);
             }
         }
         return InteractionResult::eInteractionResult_Success;

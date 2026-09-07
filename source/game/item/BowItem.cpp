@@ -26,6 +26,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BowItem_Pull_ItemPropertyFunction.hpp"
 #include "game/world/block/BowItem_Pulling_ItemPropertyFunction.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 static const std::wstring BOW_PULL_ICON_NAMES[3] =
@@ -191,7 +192,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
                 && (projectile->getItem() == Items::spectralArrow
                     || projectile->getItem() == Items::tippedArrow)))
         {
-            arrow->mPickup = AbstractRotatedItemProjectile::ePickup_CreativeOnly;
+            arrow->setPickup(AbstractRotatedItemProjectile::ePickup_CreativeOnly);
         }
 
         level->entityAdded(arrow);
@@ -217,7 +218,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
         }
     }
 
-    player->awardStat(GenericStats::itemsUsed(Item::VALIDgetId(this)),
+    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
 }
 
@@ -326,14 +327,14 @@ TextureAtlasSprite* BowItem::GetOverrideCountIcon(not_null_ptr<ItemInstance> ite
 
 unsigned int BowItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.mPlayer->mAbilities.mInstabuild
-        && !tooltipData.mPlayer->mInventory->hasResource(Items::arrow)
-        && !tooltipData.mPlayer->mInventory->hasResource(Items::tippedArrow))
+    if (!tooltipData.m_pPlayer->mAbilities.mInstabuild
+        && !tooltipData.m_pPlayer->mInventory->hasResource(Items::arrow)
+        && !tooltipData.m_pPlayer->mInventory->hasResource(Items::tippedArrow))
     {
         return 0xFFFFFFFF;
     }
 
-    if (tooltipData.mPlayer->isUsingItem())
+    if (tooltipData.m_pPlayer->isUsingItem())
     {
         return 0xEC754EE9;
     }

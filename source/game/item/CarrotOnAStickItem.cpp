@@ -7,6 +7,7 @@
 #include "game/core/Pig.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 
 CarrotOnAStickItem::CarrotOnAStickItem()

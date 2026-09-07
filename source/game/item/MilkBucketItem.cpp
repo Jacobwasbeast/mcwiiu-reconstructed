@@ -9,6 +9,7 @@
 #include "game/item/Items.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 MilkBucketItem::~MilkBucketItem()
 {

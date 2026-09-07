@@ -52,6 +52,20 @@ static std::wstring OVERLAY_ICON_NAME_PER_SLOT[4] = { L"bootsCloth_overlay",
                                                        L"chestplateCloth_overlay",
                                                        L"helmetCloth_overlay" };
 
+namespace
+{
+    void destroyOverlayIconNames(std::wstring* names, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            names[i].~basic_string();
+    }
+}
+
+void __T5()
+{
+    destroyOverlayIconNames(OVERLAY_ICON_NAME_PER_SLOT, 4);
+}
+
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::LEATHER;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::CHAIN;
 const ArmorItem::ArmorMaterial* ArmorItem::ArmorMaterial::IRON;

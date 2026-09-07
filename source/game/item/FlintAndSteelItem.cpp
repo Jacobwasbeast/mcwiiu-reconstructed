@@ -1,5 +1,7 @@
 #include "game/item/FlintAndSteelItem.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
@@ -34,6 +36,12 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
 {
     BlockPos firePos = pos.relative(direction);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+
+    if (!player->mayUseItemAt(firePos, direction, itemInstance))
+    {
+        return InteractionResult::eInteractionResult_Fail;
+    }
+
     const BlockState* state = level->getBlockState(firePos);
 
     if (!simulate)
@@ -44,6 +52,13 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
             {
                 player->awardStat(GenericStats::InToTheNether(), GenericStats::param_InToTheNether());
             }
+            level->playSound(player,
+                             firePos,
+                             SoundEvents::FLINTANDSTEEL_USE,
+                             SoundSource::eSoundSource_Blocks,
+                             1.0f,
+                             random->nextFloat() * 0.4f + 0.8f,
+                             16.0f);
             level->setBlock(firePos, Blocks::FIRE->defaultBlockState(), 0x0B, false);
         }
         itemInstance->hurtAndBreak(1, player);

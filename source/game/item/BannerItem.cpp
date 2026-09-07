@@ -18,6 +18,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/StandingBannerBlock.hpp"
+#include "game/world/block/WallBannerBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
 BannerItem::BannerItem()
@@ -45,7 +47,7 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
                                                         float hitX,
                                                         float hitY,
                                                         float hitZ,
-                                                        bool)
+                                                        bool simulate)
 {
     BlockPos placePos = pos;
     const BlockState* clickedState = level->getBlockState(placePos);
@@ -84,12 +86,14 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         if (direction == Direction::UP)
         {
             int rotation = Mth::absFloor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
-            level->setBlock(placePos, Blocks::standing_banner->getBlockState(rotation), 3, false);
+            StandingBannerBlock* banner = static_cast<StandingBannerBlock*>(Blocks::standing_banner);
+            level->setBlock(placePos, banner->getBlockState(rotation), 3, false);
         }
         else
         {
+            WallBannerBlock* banner = static_cast<WallBannerBlock*>(Blocks::wall_banner);
             level->setBlock(placePos,
-                            Blocks::wall_banner->getBlockState(direction->get3DDataValue()),
+                            banner->getBlockState(direction->get3DDataValue()),
                             3,
                             false);
         }
