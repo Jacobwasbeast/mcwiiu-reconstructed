@@ -56,6 +56,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/EnderDragon.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityArmorStandSilentFix.hpp"
 #include "game/entity/mob/EntityElderGuardianSplitFix.hpp"
 #include "game/entity/mob/EntityEquipmentToArmorAndHandFix.hpp"
@@ -122,21 +123,10 @@
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 #include "game/world/generation/EntityZombieVillagerTypeFix.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/StructureTemplate.hpp"
 #include "game/world/generation/Villager.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 #include "game/world/generation/ZombieVillager.hpp"
-
-class Entity
-{
-public:
-    static void addDataWalkers(DataFixerUpper* fixerUpper);
-};
-
-class StructureTemplate
-{
-public:
-    static void addWalkers(DataFixerUpper* fixerUpper);
-};
 
 DataFixerUpper* DataFixers::createFixerUpper()
 {

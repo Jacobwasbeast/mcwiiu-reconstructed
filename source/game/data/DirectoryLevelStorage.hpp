@@ -13,6 +13,8 @@
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
 
+unsigned int hash_value(const PlayerUID& uid);
+
 class ByteArrayOutputStream;
 class CompoundTag;
 class ConsoleSaveFile;
