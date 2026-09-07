@@ -2,9 +2,7 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
-#define private public
 #include "game/item/MapItemSavedData.hpp"
-#undef private
 #include "game/network/PacketListener.hpp"
 
 ClientboundMapItemDataPacket::ClientboundMapItemDataPacket()

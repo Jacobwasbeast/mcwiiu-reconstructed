@@ -1,9 +1,7 @@
 #include "game/network/ClientboundSoundPacket.hpp"
 
 #include "game/client/audio/SoundEvent.hpp"
-#define private public
 #include "game/client/audio/SoundEvents.hpp"
-#undef private
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"

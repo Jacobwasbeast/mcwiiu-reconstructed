@@ -21,7 +21,7 @@ ClientboundContainerSetContentPacket::ClientboundContainerSetContentPacket(
     {
         not_null_ptr<ItemInstance> item = itemList->at(i);
         if (!item->isEmpty())
-            items[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->copy()));
+            items[i] = item->copy();
     }
 }
 

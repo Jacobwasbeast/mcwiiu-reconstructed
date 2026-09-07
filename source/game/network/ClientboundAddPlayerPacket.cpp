@@ -18,7 +18,7 @@ ClientboundAddPlayerPacket::ClientboundAddPlayerPacket(boost::shared_ptr<Player>
                                                        int yRot, int xRot, int yHeadRot)
     : mEntityId(player->getId()), mPlayerId(playerId), mName(player->getName()), mX(x), mY(y), mZ(z),
       myRot((unsigned char)yRot), mxRot((unsigned char)xRot), mProfileId(profileId),
-      mPlayerIndex((unsigned char)player->mField0x7e4), mSkinId(player->mField0x7dc),
+      mPlayerIndex((unsigned char)player->mPlayerIndex), mSkinId(player->mField0x7dc),
       mCapeId(player->mField0x7e0),
       mPlayerPrivilege(player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All)),
       myHeadRot((unsigned char)yHeadRot), mGameType(player->GetGameType()),

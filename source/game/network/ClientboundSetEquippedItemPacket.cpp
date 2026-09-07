@@ -15,7 +15,7 @@ ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket(int entity, c
     : m_entity(entity), m_item(item), m_slot(slot)
 {
     if (!m_item->isEmpty())
-        m_item = not_null_ptr<ItemInstance>(new ItemInstance(m_item->copy()));
+        m_item = m_item->copy();
 }
 
 ClientboundSetEquippedItemPacket::~ClientboundSetEquippedItemPacket()

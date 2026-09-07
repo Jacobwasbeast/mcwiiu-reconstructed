@@ -14,6 +14,7 @@
 #include "game/network/ClientboundBlockUpdatePacket.hpp"
 #include "game/network/ClientboundBossEventPacket.hpp"
 #include "game/network/ClientboundChangeDifficultyPacket.hpp"
+#include "game/network/ClientboundChatAutoCompletePacket.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/network/ClientboundChunkBlocksUpdatePacket.hpp"
 #include "game/network/ClientboundContainerAckPacket.hpp"

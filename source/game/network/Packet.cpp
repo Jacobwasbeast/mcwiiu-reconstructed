@@ -9,6 +9,7 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/System.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/network/PacketListener.hpp"
 #include "game/network/BlockRegionUpdatePacket.hpp"
 #include "game/network/ChunkVisibilityAreaPacket.hpp"
