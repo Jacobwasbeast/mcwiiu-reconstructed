@@ -35,11 +35,11 @@ not_null_ptr<ItemInstance> FurnaceResultSlot::remove(int count)
     return Slot::remove(count);
 }
 
-void FurnaceResultSlot::onTake(boost::shared_ptr<Player> player,
-                               not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> FurnaceResultSlot::onTake(boost::shared_ptr<Player> player,
+                                                     not_null_ptr<ItemInstance> item)
 {
     set(item);
-    Slot::onTake(player, item);
+    return Slot::onTake(player, item);
 }
 
 bool FurnaceResultSlot::mayCombine(not_null_ptr<ItemInstance> item)

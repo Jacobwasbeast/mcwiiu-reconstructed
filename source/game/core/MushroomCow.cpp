@@ -49,7 +49,7 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
         if (!itemInstance->isEmpty())
         {
             not_null_ptr<ItemInstance> stew(new ItemInstance(Items::mushroomStew));
-            if (!player->mField0x5f0->add(stew))
+            if (!player->mInventory->add(stew))
                 player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew, 1, 0)), false);
         }
         else

@@ -14,5 +14,5 @@ DLCCapeFile::~DLCCapeFile()
 void DLCCapeFile::addData(unsigned char* data, unsigned int size)
 {
     CMinecraftApp* app = (CMinecraftApp*)0x10528dc0u;
-    app->AddMemoryTextureFile((int*)&m_path, (int*)data, size);
+    app->AddMemoryTextureFile(m_path, data, size);
 }

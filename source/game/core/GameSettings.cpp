@@ -2,9 +2,9 @@
 #include "platform/wiiu/CInput.hpp"
 
 extern GameSettings gGameSettings[4];
-extern unsigned char gDefaultActionMappings[4][25];
+unsigned char gDefaultActionMappings[4][25];
 extern unsigned char gSecondaryActionMappings[4][25];
-extern bool gTumbleMapFlags[3];
+bool gTumbleMapFlags[3];
 extern CInput* g_pInput;
 
 void DefineActions()

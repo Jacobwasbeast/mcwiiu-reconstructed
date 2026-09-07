@@ -54,7 +54,7 @@ int TrackingEmitter::getParticleTexture()
     return 3;
 }
 
-long long TrackingEmitter::GetType()
+uint64_t TrackingEmitter::GetType()
 {
     return 0x0008022400000000LL;
 }

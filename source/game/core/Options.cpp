@@ -163,16 +163,16 @@ void Options::init()
 
     mMinecraft = 0;
     mDifficulty = 2;
-    mUnknownFlag1 = false;
-    mUnknownValue1 = 0;
-    mUnknownValue2 = 0;
-    mUnknownFlag2 = false;
-    mUnknownValue3 = 0;
+    mHideGui = false;
+    mThirdPersonView = 0;
+    mRenderDebug = 0;
+    mShowInfoBars = false;
+    mShowChunkInfoMap = 0;
     mLastServer = L"";
-    mUnknownFlag3 = false;
+    mScrollHotbar = false;
     mUnknownFlag4 = false;
     mUnknownFlag5 = false;
-    mUnknownScale1 = 1.0f;
+    mHotbarScroll = 1.0f;
     mUnknownScale2 = 1.0f;
     mGuiScale = 0;
     mParticles = 0;

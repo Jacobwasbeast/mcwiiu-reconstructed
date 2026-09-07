@@ -45,7 +45,12 @@ bool NetherBridgePieces::NetherBridgePiece::isOkBox(BoundingBox* b, StartPiece*)
 void NetherBridgePieces::NetherBridgePiece::readAdditionalSaveData(DataInputStream*, StructureManager*) {}
 void NetherBridgePieces::NetherBridgePiece::addAdditionalSaveData(DataOutputStream*) {}
 void NetherBridgePieces::NetherBridgePiece::updatePieceWeight(std::list<PieceWeight*>*) {}
-StructurePiece* NetherBridgePieces::NetherBridgePiece::generatePiece(StartPiece*, std::list<PieceWeight*>*, std::vector<StructurePiece*>*, Random&, int,int,int,const Direction*,int) { return NULL; }
+StructurePiece* NetherBridgePieces::NetherBridgePiece::generatePiece(
+    StartPiece*, std::list<PieceWeight*>*, std::vector<StructurePiece*>*, Random&,
+    int, int, int, const Direction*, int)
+{
+    return NULL;
+}
 StructurePiece* NetherBridgePieces::NetherBridgePiece::generateAndAddPiece(StartPiece*,std::vector<StructurePiece*>*,Random&,int,int,int,const Direction*,int,bool) { return NULL; }
 StructurePiece* NetherBridgePieces::NetherBridgePiece::generateChildForward(StartPiece*,std::vector<StructurePiece*>*,Random&,int,int,bool) { return NULL; }
 StructurePiece* NetherBridgePieces::NetherBridgePiece::generateChildLeft(StartPiece*,std::vector<StructurePiece*>*,Random&,int,int,bool) { return NULL; }
@@ -130,7 +135,13 @@ StructurePiece* NetherBridgePieces::CastleCorridorStairsPiece::Create(){return n
 EStructurePiece NetherBridgePieces::CastleCorridorStairsPiece::GetType(){return eStructurePiece_CastleCorridorStairsPiece;}
 
 NetherBridgePieces::CastleCorridorTBalconyPiece::CastleCorridorTBalconyPiece():NetherBridgePiece() {}
-NetherBridgePieces::CastleCorridorTBalconyPiece::CastleCorridorTBalconyPiece(int d,Random&,BoundingBox* b,const Direction* o):NetherBridgePiece(d){setBoundingBox(b);setOrientation(o);}
+NetherBridgePieces::CastleCorridorTBalconyPiece::CastleCorridorTBalconyPiece(
+    int d, Random&, BoundingBox* b, const Direction* o)
+    : NetherBridgePiece(d)
+{
+    setBoundingBox(b);
+    setOrientation(o);
+}
 StructurePiece* NetherBridgePieces::CastleCorridorTBalconyPiece::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
@@ -166,7 +177,13 @@ StructurePiece* NetherBridgePieces::CastleEntrance::Create(){return new CastleEn
 EStructurePiece NetherBridgePieces::CastleEntrance::GetType(){return eStructurePiece_CastleEntrance;}
 
 NetherBridgePieces::CastleSmallCorridorCrossingPiece::CastleSmallCorridorCrossingPiece():NetherBridgePiece() {}
-NetherBridgePieces::CastleSmallCorridorCrossingPiece::CastleSmallCorridorCrossingPiece(int d,Random&,BoundingBox* b,const Direction* o):NetherBridgePiece(d){setBoundingBox(b);setOrientation(o);}
+NetherBridgePieces::CastleSmallCorridorCrossingPiece::CastleSmallCorridorCrossingPiece(
+    int d, Random&, BoundingBox* b, const Direction* o)
+    : NetherBridgePiece(d)
+{
+    setBoundingBox(b);
+    setOrientation(o);
+}
 StructurePiece* NetherBridgePieces::CastleSmallCorridorCrossingPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {
@@ -256,7 +273,13 @@ StructurePiece* NetherBridgePieces::StairsRoom::Create(){return new StairsRoom()
 EStructurePiece NetherBridgePieces::StairsRoom::GetType(){return eStructurePiece_StairsRoom;}
 
 NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::CastleSmallCorridorLeftTurnPiece():NetherBridgePiece() {}
-NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::CastleSmallCorridorLeftTurnPiece(int d,Random&,BoundingBox* b,const Direction* o):NetherBridgePiece(d){setBoundingBox(b);setOrientation(o);}
+NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::CastleSmallCorridorLeftTurnPiece(
+    int d, Random&, BoundingBox* b, const Direction* o)
+    : NetherBridgePiece(d)
+{
+    setBoundingBox(b);
+    setOrientation(o);
+}
 StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {
@@ -274,7 +297,13 @@ StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::Create(){r
 EStructurePiece NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::GetType(){return eStructurePiece_CastleSmallCorridorLeftTurnPiece;}
 
 NetherBridgePieces::CastleSmallCorridorRightTurnPiece::CastleSmallCorridorRightTurnPiece():NetherBridgePiece() {}
-NetherBridgePieces::CastleSmallCorridorRightTurnPiece::CastleSmallCorridorRightTurnPiece(int d,Random&,BoundingBox* b,const Direction* o):NetherBridgePiece(d){setBoundingBox(b);setOrientation(o);}
+NetherBridgePieces::CastleSmallCorridorRightTurnPiece::CastleSmallCorridorRightTurnPiece(
+    int d, Random&, BoundingBox* b, const Direction* o)
+    : NetherBridgePiece(d)
+{
+    setBoundingBox(b);
+    setOrientation(o);
+}
 StructurePiece* NetherBridgePieces::CastleSmallCorridorRightTurnPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {

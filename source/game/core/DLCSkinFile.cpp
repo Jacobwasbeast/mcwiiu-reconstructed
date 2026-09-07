@@ -32,7 +32,7 @@ bool DLCSkinFile::isFiltered()
 
 void DLCSkinFile::addData(unsigned char* data, unsigned int size)
 {
-    g_MinecraftApp.AddMemoryTextureFile((int*)&m_path, (int*)data, size);
+    g_MinecraftApp.AddMemoryTextureFile(m_path, data, size);
 }
 
 void DLCSkinFile::addParameter(DLCManager::EDLCParameterType parameter, const std::wstring& value)

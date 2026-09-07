@@ -1,5 +1,6 @@
 #include "game/core/NS_SystemChecker_CPP__SystemCheckFunctor.hpp"
 
+#include <cstddef>
 #include <nex.h>
 
 namespace NS_SystemChecker_CPP

@@ -33,6 +33,8 @@ public:
     static const DamageSource* CRAMMING;
     static const DamageSource* DROWN;
     static const DamageSource* FALL;
+    static const DamageSource* LIGHTNING_BOLT;
+    static const DamageSource* CREATIVE_PLAYER;
 
     DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage);
     DamageSource(const DamageSource& source);

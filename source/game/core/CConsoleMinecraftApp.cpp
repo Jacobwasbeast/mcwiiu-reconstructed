@@ -21,7 +21,6 @@ extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned 
 extern int ReadFile(int, void*, unsigned int, unsigned int*, void*);
 extern int GetFileSize(int, unsigned int*);
 extern int CloseHandle(int);
-extern void SYSLaunchMenu();
 extern ConsoleUIController g_ConsoleUIController;
 extern CStorage* gStorage;
 
@@ -37,7 +36,7 @@ void setAltMainOKToRun()
     s_altMainOKToRun = 1;
 }
 
-void RegisterAwardsWithProfileManager()
+extern "C" void RegisterAwardsWithProfileManager()
 {
     struct AchievementInfo
     {
@@ -75,7 +74,7 @@ void RegisterAwardsWithProfileManager()
         gProfile->RichPresenceRegisterContextString(0, activity, activityStrings[activity]);
 }
 
-void ShutdownAndExit()
+extern "C" void ShutdownAndExit()
 {
     ShutdownManager::MainThreadHandleShutdown();
     g_pApp->ExitGame();
@@ -258,7 +257,6 @@ void CConsoleMinecraftApp::ReleaseSaveThumbnail()
         m_saveThumbnail.mData = NULL;
     }
 }
-void CConsoleMinecraftApp::ExitGame() { SYSLaunchMenu(); }
 void CConsoleMinecraftApp::StoreLaunchData() { }
 void CConsoleMinecraftApp::CaptureSaveThumbnail() { gRenderer->CaptureThumbnail(&m_saveThumbnail); }
 void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* size)

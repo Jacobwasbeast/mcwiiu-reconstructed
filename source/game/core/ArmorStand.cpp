@@ -345,7 +345,8 @@ bool ArmorStand::test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
     }
     else
     {
-        int slotIndex = Mob::getEquipmentSlotForItem(item);
+        const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(item);
+        int slotIndex = equipmentSlot->getEIndex();
         if (slotIndex < EquipmentSlot::eIndex_MainHand || slotIndex > EquipmentSlot::eIndex_Head)
         {
             slot = EquipmentSlot::MAINHAND;

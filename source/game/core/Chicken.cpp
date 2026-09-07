@@ -24,6 +24,7 @@
 #include "game/item/Items.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"

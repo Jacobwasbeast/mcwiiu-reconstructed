@@ -2,7 +2,7 @@
 
 #include "game/core/Minecraft.hpp"
 #include "game/util/AABB.hpp"
-#include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 AreaHint::AreaHint(eTutorial_Hint hint, Tutorial* tutorial, eTutorial_State state,
                    eTutorial_State completionState, int descriptionId,

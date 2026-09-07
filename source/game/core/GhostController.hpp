@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include "game/util/Vec3.hpp"
+#include "platform/wiiu/C4JStorage.hpp"
 class DataInputStream; class DataOutputStream; class Player; class GhostPlayer;
-namespace C4JStorage { typedef int eGeneralData_Callback_Status; typedef int EMessageResult; }
 class GhostController {
 public:
  struct GhostRecordSample {

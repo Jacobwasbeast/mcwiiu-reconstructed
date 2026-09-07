@@ -25,6 +25,8 @@ static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
 extern DLCManager g_DLCManager;
 
+GameRuleManager g_GameRuleManager;
+
 static const wchar_t* gGameRuleTypeNames[77] = {
     L"", L"MapOptions", L"ApplySchematic", L"GenerateStructure", L"GenerateBox", L"PlaceBlock", L"PlaceContainer", L"PlaceSpawner",
     L"BiomeOverride", L"StartFeature", L"AddItem", L"AddEnchantment", L"WeighedTreasureItem", L"RandomItemSet", L"DistributeItems",

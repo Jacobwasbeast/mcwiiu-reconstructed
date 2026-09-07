@@ -26,7 +26,7 @@ class GenericStats
 {
 public:
     virtual ~GenericStats();
-    virtual void __pure_virtual_called() = 0;
+    virtual Stat* get_stat(int id) = 0;
 
     static Stat* openInventory();
     static Stat* mineBlock()

@@ -11,10 +11,6 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
 
-const DamageSource* DamageSource::IN_FIRE =
-    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0d), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x34)))->setIsFire();
-const DamageSource* DamageSource::ON_FIRE =
-    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x36)))->bypassArmor()->setIsFire();
 static const DamageSource* CreateOutOfWorldDamageSource()
 {
     DamageSource* source = new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x18), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
@@ -31,28 +27,49 @@ static const DamageSource* CreateMagicDamageSource()
     return source;
 }
 
-const DamageSource* DamageSource::OUT_OF_WORLD = CreateOutOfWorldDamageSource();
-const DamageSource* DamageSource::IN_WALL =
-    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x11), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+static const DamageSource* CreateLightningBoltDamageSource()
+{
+    DamageSource* source = new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(14), static_cast<ClientboundChatPacket::EChatPacketMessage>(53));
+    source->bypassGraceInvul();
+    return source;
+}
+
+static const DamageSource* CreateCreativePlayerDamageSource()
+{
+    DamageSource* source = new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(25), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+    source->bypassArmor();
+    source->bypassInvul();
+    return source;
+}
+
+const DamageSource* DamageSource::IN_FIRE =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0d), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x34)))->setIsFire();
+const DamageSource* DamageSource::LIGHTNING_BOLT = CreateLightningBoltDamageSource();
+const DamageSource* DamageSource::ON_FIRE =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x36)))->bypassArmor()->setIsFire();
 const DamageSource* DamageSource::LAVA =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x10), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x37)))->setIsFire();
 const DamageSource* DamageSource::HOT_FLOOR =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x40), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x41)))->setIsFire();
-const DamageSource* DamageSource::ANVIL =
-    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x23), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x44)))->bypassArmor();
-const DamageSource* DamageSource::FALLING_BLOCK =
-    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x24), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x45)))->bypassArmor();
-const DamageSource* DamageSource::KILL =
-    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3b), static_cast<ClientboundChatPacket::EChatPacketMessage>(0)))->bypassArmor();
-const DamageSource* DamageSource::GENERIC =
-    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x19), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
-const DamageSource* DamageSource::MAGIC = CreateMagicDamageSource();
+const DamageSource* DamageSource::IN_WALL =
+    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x11), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
 const DamageSource* DamageSource::CRAMMING =
     new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x12), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
 const DamageSource* DamageSource::DROWN =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x13), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x38)))->bypassArmor();
 const DamageSource* DamageSource::FALL =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x16), static_cast<ClientboundChatPacket::EChatPacketMessage>(0)))->bypassArmor();
+const DamageSource* DamageSource::OUT_OF_WORLD = CreateOutOfWorldDamageSource();
+const DamageSource* DamageSource::CREATIVE_PLAYER = CreateCreativePlayerDamageSource();
+const DamageSource* DamageSource::GENERIC =
+    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x19), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+const DamageSource* DamageSource::MAGIC = CreateMagicDamageSource();
+const DamageSource* DamageSource::ANVIL =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x23), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x44)))->bypassArmor();
+const DamageSource* DamageSource::KILL =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3b), static_cast<ClientboundChatPacket::EChatPacketMessage>(0)))->bypassArmor();
+const DamageSource* DamageSource::FALLING_BLOCK =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x24), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x45)))->bypassArmor();
 
 DamageSource::DamageSource(ClientboundChatPacket::EChatPacketMessage messageValue, ClientboundChatPacket::EChatPacketMessage deathMessageValue)
     : message(messageValue), deathMessage(deathMessageValue), bypassArmorFlag(false), bypassInvulFlag(false), bypassGraceInvulFlag(false), bypassMagicFlag(false), foodExhaustion(FoodConstants::ExhaustionAttack()), fire(false), projectile(false), scalesDifficulty(false), magic(false), explosion(false), fireProjectile(false)

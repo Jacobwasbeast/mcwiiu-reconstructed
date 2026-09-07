@@ -103,6 +103,8 @@ public:
     unsigned int retrievePackIDFromDLCDataFile(const std::string& fileName);
 
 private:
+    friend class Minecraft;
+
     std::vector<DLCPack*> m_packs;
     bool m_bCorruptDLCFound;
     int m_numCorruptPacks;

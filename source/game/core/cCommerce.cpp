@@ -11,6 +11,10 @@ extern unsigned char g_bDLCCatalogListRetrieved;
 extern unsigned char g_bDLCCatalogListInfoRetrieved;
 extern cCommerce::eDLCCatalogState g_eDLCCatalogState;
 
+unsigned char g_bDLCCatalogListRetrieved = 0;
+unsigned char g_bDLCCatalogListInfoRetrieved = 0;
+cCommerce::eDLCCatalogState g_eDLCCatalogState = cCommerce::eDLCCatalogState_Unknown;
+
 cCommerce::cCommerce()
 {
 }

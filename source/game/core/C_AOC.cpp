@@ -7,31 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct FSStat
-{
-    unsigned int uiFlags;
-    unsigned int uiMode;
-    unsigned int uiOwner;
-    unsigned int uiGroup;
-    unsigned int uiSize;
-    unsigned int uiAllocSize;
-    unsigned int uiQuotaSizeHigh;
-    unsigned int uiQuotaSizeLow;
-    unsigned int uiEntryId;
-    unsigned int uiCreatedTimeHigh;
-    unsigned int uiCreatedTimeLow;
-    unsigned int uiModifiedTimeHigh;
-    unsigned int uiModifiedTimeLow;
-    unsigned char aAttributes[48];
-};
-
-struct FSDirEntry
-{
-    FSStat stat;
-    char szName[256];
-};
-
-static const unsigned int FS_STAT_DIRECTORY = 0x80000000;
+typedef FSDirectoryEntry FSDirEntry;
 static const unsigned int AOC_THREAD_STACK_SIZE = 0x10000;
 static const int AOC_THREAD_PRIORITY = 16;
 static const unsigned short AOC_THREAD_ATTRIBUTES = 12;
@@ -43,8 +19,6 @@ std::wstring convStringToWstring(const std::string& string);
 
 void* MEMAllocFromDefaultHeap(unsigned int uiSize);
 void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
-void OSResumeThread(OSThread* pThread);
-
 int AOC_Initialize();
 int AOC_Finalize();
 unsigned int AOC_CalculateWorkBufferSize(unsigned int uiMaxTitles);
@@ -148,10 +122,10 @@ void C_AOC::GetPurchasedContent()
 
                 FSDirEntry dirEntry;
 
-                while (ReadDir(&iDirHandle, &dirEntry) && (dirEntry.stat.uiFlags & FS_STAT_DIRECTORY) != 0)
+                while (ReadDir(&iDirHandle, &dirEntry) && (dirEntry.info.flags & FS_STAT_DIRECTORY) != 0)
                 {
-                    char* pContentName = new char[strlen(dirEntry.szName)];
-                    strcpy(pContentName, dirEntry.szName);
+                    char* pContentName = new char[strlen(dirEntry.name)];
+                    strcpy(pContentName, dirEntry.name);
 
                     m_contentNames.push_back(pContentName);
                     m_iNumContentNames++;
@@ -181,7 +155,7 @@ void C_AOC::GetPurchasedContent()
                 {
                     for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                     {
-                        cDLCInfo* pDLCInfoInstance = (cDLCInfo*)(unsigned long)theApp->GetDLCInfoInstance();
+                        cDLCInfo* pDLCInfoInstance = (cDLCInfo*)(unsigned long)theApp.GetDLCInfoInstance();
                         DLC_INFO* pDLCInfo = pDLCInfoInstance->GetDLCInfoByRomName(m_contentNames[iContent]);
 
                         if (m_pPurchased[iContent] > 0 && pDLCInfo != NULL)
@@ -189,7 +163,7 @@ void C_AOC::GetPurchasedContent()
                             if (pDLCInfoInstance->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
                             {
                                 std::wstring packName = convStringToWstring(std::string(pDLCInfo->PackName));
-                                theApp->HandleDLCLicenseChange(packName);
+                                theApp.HandleDLCLicenseChange(packName);
                             }
                         }
                     }

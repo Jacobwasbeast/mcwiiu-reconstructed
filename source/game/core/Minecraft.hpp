@@ -207,7 +207,7 @@ public:
     int mPendingLevelChange;
     MultiPlayerLevel* mLevel;
     LevelRenderer* mLevelRenderer;
-    boost::shared_ptr<Player> mPlayer;
+    boost::shared_ptr<MultiplayerLocalPlayer> mPlayer;
     MultiPlayerLevel** mLevels;
     int mLevelCount;
     boost::shared_ptr<MultiplayerLocalPlayer> mLocalPlayers[4];

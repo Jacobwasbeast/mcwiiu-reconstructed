@@ -24,7 +24,7 @@ CAchievements::CAchievements(int iQuad)
     if (!mIsSystemPlayer)
     {
         PlayerUID playerUID = getPlayerUID(iQuad, false);
-        const char* guest = playerUID.hasPrincipalId ? "True" : "False";
+        const char* guest = (playerUID.flags & 0x20000000u) != 0 ? "True" : "False";
         gProfile->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n",
                               iQuad, guest);
     }

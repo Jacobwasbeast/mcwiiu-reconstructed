@@ -55,7 +55,8 @@ void ResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
     mRemoveCount = 0;
 }
 
-void ResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> ResultSlot::onTake(boost::shared_ptr<Player> player,
+                                               not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
     Slot::onTake(player, item);
@@ -85,12 +86,14 @@ void ResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInsta
                 remainder->grow(current->getCount());
                 mCraftSlots->setItem(index, remainder);
             }
-            else if (!mPlayer->mField0x5f0->add(remainder))
+            else if (!mPlayer->mInventory->add(remainder))
             {
                 mPlayer->drop(remainder, false);
             }
         }
     }
+
+    return item;
 }
 
 bool ResultSlot::mayCombine(not_null_ptr<ItemInstance>)

@@ -11,6 +11,8 @@ class Minecraft;
 class Options
 {
 public:
+    friend class Minecraft;
+
     class Option
     {
     public:
@@ -83,16 +85,20 @@ private:
     Minecraft* mMinecraft;
     File mOptionsFile;
     int mDifficulty;
-    bool mUnknownFlag1;
-    int mUnknownValue1;
-    int mUnknownValue2;
-    bool mUnknownFlag2;
-    int mUnknownValue3;
+    bool mHideGui;
+
+public:
+    int mThirdPersonView;
+
+private:
+    int mRenderDebug;
+    bool mShowInfoBars;
+    int mShowChunkInfoMap;
     std::wstring mLastServer;
-    bool mUnknownFlag3;
+    bool mScrollHotbar;
     bool mUnknownFlag4;
     bool mUnknownFlag5;
-    float mUnknownScale1;
+    float mHotbarScroll;
     float mUnknownScale2;
     int mGuiScale;
     int mParticles;

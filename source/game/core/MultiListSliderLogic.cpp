@@ -7,7 +7,7 @@
 #include "game/ui/UIString.hpp"
 
 MultiListSliderLogic::MultiListSliderLogic()
-    : mLabelId(0), mDescriptionId(0), mOption(0), mMiniGameId(eMiniGameId_Lobby)
+    : mLabelId(0), mDescriptionId(0), mOption(static_cast<eCustomGameModeHostOption>(0)), mMiniGameId(eMiniGameId_Lobby)
 {
 }
 
@@ -27,7 +27,7 @@ void MultiListSliderLogic::AddTo(UIControl_MultiList& list, int itemIndex) const
 void MultiListSliderLogic::Update(UIControl_MultiList& list, int itemIndex) const
 {
     UIString label(GetLabel(itemIndex));
-    list.SetItemLabel(itemIndex, label, false);
+    list.SetItemLabel(mLabelId, label, false);
 }
 
 std::wstring MultiListSliderLogic::GetLabel(int value) const

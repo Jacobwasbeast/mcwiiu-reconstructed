@@ -9,6 +9,7 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/TheEndDimension.hpp"
 #include "game/world/block/Block.hpp"
@@ -79,14 +80,13 @@ void EnderCrystal::tick()
     mYo = mY;
     mZo = mZ;
 
-    if (dynamic_cast<TheEndDimension*>(mLevel->mDimension) != NULL)
+    if (!mLevel->mIsClientSide)
     {
         BlockPos pos(this);
-        if (mLevel->getBlockState(pos)->getBlock() == Blocks::END_GATEWAY)
+        if (mLevel->mDimension->getType() == DimensionType::THE_END &&
+            mLevel->getBlockState(pos)->getBlock() != Blocks::FIRE)
         {
-            const BlockState* state = mLevel->getBlockState(pos);
-            if (state->getBlock() != Blocks::AIR)
-                mLevel->setBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+            mLevel->setBlockAndUpdate(pos, Blocks::FIRE->defaultBlockState());
         }
     }
 }

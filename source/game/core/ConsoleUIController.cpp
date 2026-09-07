@@ -1,6 +1,7 @@
 #include "game/core/ConsoleUIController.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <cwchar>
 
@@ -17,6 +18,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/PerformanceTimer.hpp"
 #include "game/core/System.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/ui/FJ_PressStartToPlay.hpp"
 #include "game/ui/Tooltips.hpp"
@@ -36,10 +38,12 @@
 #include "game/ui/fuiBitmapFont.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "platform/wiiu/C4JThread.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/UIComponent_WiiUDRC.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
 unsigned int XGetLanguage();
+unsigned int GetTickCount();
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
@@ -235,7 +239,6 @@ void ConsoleUIController::SetupFont()
     } else {
         UITTFFont* replacement = createFont(wanted);
         if (replacement != 0) {
-            replacement->registerFont();
             m_oldFont = m_font;
             m_font = replacement;
         }
@@ -391,7 +394,7 @@ void ConsoleUIController::updateViewportTouchOffset(int x, int y)
 void ConsoleUIController::SetTutorialVisible(int playerId, bool visible)
 {
     UIComponent_TutorialPopup* popup = static_cast<UIComponent_TutorialPopup*>(
-        groupForPlayer(playerId, false)->FindScene((EUIScene)0x19));
+        groupForPlayer(playerId, false)->m_componentSecondary);
     if (popup != 0)
         popup->SetVisible(visible);
 }
@@ -399,14 +402,14 @@ void ConsoleUIController::SetTutorialVisible(int playerId, bool visible)
 void ConsoleUIController::SetTutorial(int playerId, Tutorial* tutorial)
 {
     UIComponent_TutorialPopup* popup = static_cast<UIComponent_TutorialPopup*>(
-        groupForPlayer(playerId, false)->FindScene((EUIScene)0x19));
+        groupForPlayer(playerId, false)->m_componentSecondary);
     if (popup != 0)
-        popup->SetTutorial(tutorial);
+        popup->m_tutorial = tutorial;
 }
 
 bool ConsoleUIController::IsPauseMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->IsPauseMenuDisplayed();
+    return groupForPlayer(playerId, false)->m_pauseMenuDisplayed;
 }
 
 bool ConsoleUIController::GetMenuDisplayed(int playerId)
@@ -418,9 +421,9 @@ void ConsoleUIController::SetTutorialDescription(int playerId, _TutorialPopupInf
 {
     UIGroup* playerGroup = groupForPlayer(playerId, false);
     UIComponent_TutorialPopup* popup = static_cast<UIComponent_TutorialPopup*>(
-        playerGroup->FindScene((EUIScene)0x19));
+        playerGroup->m_componentSecondary);
     if (popup != 0) {
-        popup->SetContainerMenuDisplayed(playerGroup->IsContainerMenuDisplayed());
+        popup->m_containerMenuDisplayed = playerGroup->m_containerMenuDisplayed;
         popup->SetTutorialDescription(popupInfo);
     }
 }
@@ -428,7 +431,7 @@ void ConsoleUIController::SetTutorialDescription(int playerId, _TutorialPopupInf
 void ConsoleUIController::RemoveInteractSceneReference(int playerId, UIScene* scene)
 {
     UIComponent_TutorialPopup* popup = static_cast<UIComponent_TutorialPopup*>(
-        groupForPlayer(playerId, false)->FindScene((EUIScene)0x19));
+        groupForPlayer(playerId, false)->m_componentSecondary);
     if (popup != 0)
         popup->RemoveInteractSceneReference(scene);
 }
@@ -563,7 +566,7 @@ bool ConsoleUIController::NavigateBack(int playerId, bool closeCurrent, EUIScene
         UIGroup* playerGroup = m_groups[GetGroup(playerId)];
         navigated = playerGroup->NavigateBack(playerId, scene, layer);
         if (!playerGroup->GetMenuDisplayed()) {
-            theApp.ForceTooltipReload(playerId);
+            Tooltips::ForceTooltipReload(playerId);
             SetMenuDisplayed(playerId, false);
         }
     } else if (!m_groups[1]->GetMenuDisplayed()) {
@@ -628,7 +631,7 @@ void ConsoleUIController::CloseUIScenes(int playerId, bool immediate)
     EnterCriticalSection(&g_uiCriticalSection);
     playerGroup->closeAllScenes();
     playerGroup->ClearTooltips();
-    theApp.ForceTooltipReload(playerId);
+    Tooltips::ForceTooltipReload(playerId);
     _TutorialPopupInfo popupInfo;
     SetTutorialDescription(playerId, &popupInfo);
     SetMenuDisplayed(playerId, false);
@@ -645,7 +648,7 @@ void ConsoleUIController::CloseAllPlayersScenes(bool immediate)
         m_groups[i]->ClearTooltips();
     }
     for (int player = 0; player < 4; ++player) {
-        theApp.ForceTooltipReload(player);
+        Tooltips::ForceTooltipReload(player);
         SetMenuDisplayed(player, false);
     }
     setFullscreenMenuDisplayed(false);
@@ -659,19 +662,19 @@ bool ConsoleUIController::IsSceneInStack(int playerId, EUIScene scene)
 
 bool ConsoleUIController::IsContainerMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->IsContainerMenuDisplayed();
+    return groupForPlayer(playerId, false)->m_containerMenuDisplayed;
 }
 
 bool ConsoleUIController::IsIgnorePlayerJoinMenuDisplayed(int playerId)
 {
-    return groupForPlayer(playerId, false)->IsIgnorePlayerJoinMenuDisplayed();
+    return groupForPlayer(playerId, false)->m_ignorePlayerJoinMenuDisplayed;
 }
 
 bool ConsoleUIController::IsIgnoreAutosaveMenuDisplayed(int playerId)
 {
     UIGroup* playerGroup = groupForPlayer(playerId, false);
-    return m_groups[1]->IsIgnoreAutosaveMenuDisplayed() ||
-           (playerGroup != m_groups[1] && playerGroup->IsIgnoreAutosaveMenuDisplayed());
+    return m_groups[1]->m_ignoreAutosaveMenuDisplayed ||
+           (playerGroup != m_groups[1] && playerGroup->m_ignoreAutosaveMenuDisplayed);
 }
 
 void ConsoleUIController::SetIgnoreAutosaveMenuDisplayed(int playerId, bool ignore)
@@ -689,7 +692,7 @@ void ConsoleUIController::CheckMenuDisplayed()
         }
         m_menuDisplayPending[player] = false;
         m_menuDisplayed[player] = false;
-        Minecraft::GetInstance()->setMenuDisplayed(player, false);
+        g_pInput->SetMenuDisplayed(player, false);
     }
 }
 
@@ -790,7 +793,7 @@ void ConsoleUIController::RefreshTooltips(unsigned int playerId)
 void ConsoleUIController::DisplayGamertag(unsigned int playerId, bool show)
 {
     UIScene_HUD* hud = static_cast<UIScene_HUD*>(
-        groupForPlayer((int)playerId, false)->FindScene((EUIScene)0x31));
+        groupForPlayer((int)playerId, false)->m_componentQuaternary);
     if (hud != 0)
         hud->ShowDisplayName(show);
 }
@@ -818,47 +821,46 @@ void ConsoleUIController::UpdateSelectedItemPos(unsigned int playerId)
 {
 }
 
-static UIScene_HUD* GetPlayerHUD(ConsoleUIController* controller, unsigned int playerId)
+static UIScene_HUD* GetPlayerHUD(UIScene* component)
 {
-    UIGroup* playerGroup = controller->groupForPlayer((int)playerId, false);
-    return static_cast<UIScene_HUD*>(playerGroup->FindScene((EUIScene)0x31));
+    return static_cast<UIScene_HUD*>(component);
 }
 
 int ConsoleUIController::GetHotBarX(unsigned int playerId)
 {
-    UIScene_HUD* hud = GetPlayerHUD(this, playerId);
+    UIScene_HUD* hud = GetPlayerHUD(groupForPlayer((int)playerId, false)->m_componentQuaternary);
     return hud == 0 ? 0 : hud->GetHotBarX();
 }
 
 int ConsoleUIController::GetHotBarY(unsigned int playerId)
 {
-    UIScene_HUD* hud = GetPlayerHUD(this, playerId);
+    UIScene_HUD* hud = GetPlayerHUD(groupForPlayer((int)playerId, false)->m_componentQuaternary);
     return hud == 0 ? 0 : hud->GetHotBarY();
 }
 
 int ConsoleUIController::GetHotBarWidth(unsigned int playerId)
 {
-    UIScene_HUD* hud = GetPlayerHUD(this, playerId);
+    UIScene_HUD* hud = GetPlayerHUD(groupForPlayer((int)playerId, false)->m_componentQuaternary);
     return hud == 0 ? 0 : hud->GetHotBarWidth();
 }
 
 int ConsoleUIController::GetHotBarHeight(unsigned int playerId)
 {
-    UIScene_HUD* hud = GetPlayerHUD(this, playerId);
+    UIScene_HUD* hud = GetPlayerHUD(groupForPlayer((int)playerId, false)->m_componentQuaternary);
     return hud == 0 ? 0 : hud->GetHotBarHeight();
 }
 
 bool ConsoleUIController::GetQuickSelectVisible(unsigned int playerId)
 {
-    UIScene_HUD* hud = GetPlayerHUD(this, playerId);
+    UIScene_HUD* hud = GetPlayerHUD(groupForPlayer((int)playerId, false)->m_componentQuaternary);
     return hud != 0 && hud->GetQuickSelectVisible();
 }
 
 bool ConsoleUIController::GetDRCEnabled()
 {
-    UIComponent_WiiUDRC* drc = static_cast<UIComponent_WiiUDRC*>(
-        m_groups[0]->FindScene((EUIScene)0x41));
-    return drc != 0 && drc->GetDRCEnabled();
+    UIComponent_WiiUDRC* drc = reinterpret_cast<UIComponent_WiiUDRC*>(
+        static_cast<uintptr_t>(m_groups[0]->m_unknown30));
+    return drc != 0 && drc->m_drcOutputEnabled;
 }
 
 static UIComponent_PressStartToPlay* GetPressStart(UIGroup* group)
@@ -904,7 +906,7 @@ void ConsoleUIController::HandleGameTick()
     tickInput();
     if (!IsReloadingSkin()) {
         for (int i = 0; i < 6; ++i) {
-            UIScene_HUD* hud = static_cast<UIScene_HUD*>(m_groups[i]->FindScene((EUIScene)0x31));
+            UIScene_HUD* hud = static_cast<UIScene_HUD*>(m_groups[i]->m_componentQuaternary);
             if (hud != 0)
                 hud->handleGameTick();
         }
@@ -919,7 +921,7 @@ void ConsoleUIController::HandleSaveDeviceRemoved(int deviceIndex)
 bool ConsoleUIController::IsTutorialVisible(int playerId)
 {
     UIComponent_TutorialPopup* popup = static_cast<UIComponent_TutorialPopup*>(
-        groupForPlayer(playerId, false)->FindScene((EUIScene)0x19));
+        groupForPlayer(playerId, false)->m_componentSecondary);
     return popup != 0 && popup->IsVisible();
 }
 
@@ -927,7 +929,10 @@ void ConsoleUIController::UpdatePlayerBasePositions()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     for (int player = 0; player < 4; ++player) {
-        C4JRender::eViewportType viewport = minecraft->GetPlayerViewportType(player);
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[player];
+        C4JRender::eViewportType viewport = localPlayer != 0
+                                                 ? static_cast<C4JRender::eViewportType>(localPlayer->mViewport)
+                                                 : static_cast<C4JRender::eViewportType>(0);
         m_groups[player + 2]->SetViewportType(viewport);
         SetMenuDisplayed(player, viewport != (C4JRender::eViewportType)0);
     }
@@ -1028,9 +1033,9 @@ void ConsoleUIController::ShowChestRefillAnimation(bool show)
     UIComponent_PressStartToPlay* component = GetPressStart(m_groups[1]);
     if (component != 0) {
         int yOffset = 0;
-        UIScene_HUD* hud = static_cast<UIScene_HUD*>(m_groups[2]->FindScene((EUIScene)0x31));
+        UIScene_HUD* hud = static_cast<UIScene_HUD*>(m_groups[2]->m_componentQuaternary);
         if (!show && hud != 0)
-            yOffset = hud->GetStatusEffectsYOffset(0, 0);
+            yOffset = hud->GetStatusEffectsYOffset();
         component->ShowChestRefillAnimation(show, yOffset);
     }
 }
@@ -1046,7 +1051,7 @@ void ConsoleUIController::ShowTimedSplash(unsigned int playerId, const std::wstr
                                           unsigned int durationMs)
 {
     UIScene_HUD* hud = static_cast<UIScene_HUD*>(
-        m_groups[GetGroup((int)playerId)]->FindScene((EUIScene)0x31));
+        m_groups[GetGroup((int)playerId)]->m_componentQuaternary);
     if (hud != 0)
         hud->showTimedSplash(text, durationMs, 1);
 }

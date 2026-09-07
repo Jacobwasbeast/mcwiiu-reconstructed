@@ -76,7 +76,11 @@ public:
 
 private:
     UIControl_TexturePackList m_texturePackList;
+
+protected:
     UIControl m_startButton;
+
+private:
     UIControl_Label m_texturePackName;
     UIControl_HTMLLabel m_texturePackDescription;
     UIControl_BitmapIcon m_texturePackIcon;

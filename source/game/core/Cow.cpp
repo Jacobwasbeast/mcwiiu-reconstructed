@@ -102,7 +102,7 @@ bool Cow::mobInteract(const boost::shared_ptr<Player>& player,
     if (!itemInstance->isEmpty())
     {
         not_null_ptr<ItemInstance> milkBucket(new ItemInstance(Items::milkBucket));
-        if (!player->mField0x5f0->add(milkBucket))
+        if (!player->mInventory->add(milkBucket))
             player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket, 1, 0)), false);
     }
     else

@@ -257,7 +257,7 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (player->mLevel != NULL && player->mLevel->getLevelData() != NULL)
         gameType = player->mLevel->getLevelData()->getGameType();
 
-    if (gameType == NULL && g_pApp->GetGameHostOption(16))
+    if (gameType == NULL && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x10)))
         gameType = player->GetGameType();
 
     if (gameType == GameType::SURVIVAL)

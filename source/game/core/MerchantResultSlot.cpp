@@ -80,14 +80,15 @@ bool MerchantResultSlot::removePaymentItemsIfMatching(MerchantRecipe* recipe,
     return true;
 }
 
-void MerchantResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> MerchantResultSlot::onTake(boost::shared_ptr<Player> player,
+                                                      not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
 
     MerchantRecipe* recipe = mMerchantContainer->getActiveRecipe();
     if (recipe == NULL)
     {
-        return;
+        return item;
     }
 
     not_null_ptr<ItemInstance> first = mMerchantContainer->getItem(0);
@@ -103,6 +104,8 @@ void MerchantResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<I
         mMerchantContainer->setItem(0, first);
         mMerchantContainer->setItem(1, second);
     }
+
+    return item;
 }
 
 bool MerchantResultSlot::mayCombine(not_null_ptr<ItemInstance> item)

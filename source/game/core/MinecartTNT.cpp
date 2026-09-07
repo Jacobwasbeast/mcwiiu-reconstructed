@@ -101,7 +101,7 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
 
 void MinecartTNT::destroy(const DamageSource* source)
 {
-    if (g_pApp->GetGameHostOption(0xd) != 0 &&
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0 &&
         (source->isFire() || source->isExplosion() || mXd * mXd + mZd * mZd >= 0.01))
     {
         if (mFuse < 0)
@@ -113,7 +113,7 @@ void MinecartTNT::destroy(const DamageSource* source)
     }
 
     Minecart::destroy(source);
-    if (g_pApp->GetGameHostOption(0xd) != 0 && !source->isExplosion() &&
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0 && !source->isExplosion() &&
         mLevel->getGameRules()->getBoolean(6))
     {
         spawnAtLocation(Item::byBlock(Blocks::tnt), 1);
@@ -124,7 +124,7 @@ void MinecartTNT::explode(double power)
 {
     if (!mLevel->mIsClientSide)
     {
-        if (g_pApp->GetGameHostOption(0xd) != 0)
+        if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
         {
             double radius = std::sqrt(power);
             if (radius > 5.0)
@@ -166,7 +166,7 @@ void MinecartTNT::handleEntityEvent(unsigned char event, int data)
 
 void MinecartTNT::primeFuse()
 {
-    if (g_pApp->GetGameHostOption(0xd) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
     {
         mFuse = 80;
         if (!mLevel->mIsClientSide)
@@ -203,7 +203,7 @@ float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* leve
 
 bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius)
 {
-    if (g_pApp->GetGameHostOption(0xd) != 0)
+    if (g_pApp->GetGameHostOption(eGameHostOption_13) != 0)
     {
         const BlockState* state = level->getBlockState(pos);
         if (BaseRailBlock::isRail(state) || BaseRailBlock::isRail(level, pos.above()))

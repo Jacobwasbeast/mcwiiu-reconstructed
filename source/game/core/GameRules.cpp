@@ -14,29 +14,29 @@ bool GameRules::getBoolean(int rule)
     switch (rule)
     {
     case 0:
-        return g_pApp->GetGameHostOption(0xe) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xe)) != 0;
     case 1:
-        return g_pApp->GetGameHostOption(0x18) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x18)) != 0;
     case 2:
-        return g_pApp->GetGameHostOption(0x19) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x19)) != 0;
     case 3:
-        return g_pApp->GetGameHostOption(0x1a) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1a)) != 0;
     case 4:
-        return g_pApp->GetGameHostOption(0x1b) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1b)) != 0;
     case 5:
     case 6:
-        return g_pApp->GetGameHostOption(0x1c) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1c)) != 0;
     case 7:
-        return g_pApp->GetGameHostOption(0x1d) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1d)) != 0;
     case 8:
-        return g_pApp->GetGameHostOption(0x1e) != 0
-            && g_pApp->GetGameHostOption(0x1f) == 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1e)) != 0
+            && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0;
     case 9:
         return true;
     case 0xb:
         return true;
     case 0x12:
-        return g_pApp->GetGameHostOption(0x15) != 0;
+        return g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x15)) != 0;
     default:
         return false;
     }

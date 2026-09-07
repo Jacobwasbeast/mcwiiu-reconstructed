@@ -56,11 +56,16 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
     int* pixels = NULL;
     int width = 0;
     int height = 0;
-    if (TextureUtil::LoadTextureData(data, length, &width, &height, &pixels) == 0)
+    TextureUtil::LoadTextureData(data, length, &width, &height, &pixels);
+    if (pixels != NULL)
     {
         m_data[0] = pixels;
         m_width = (unsigned int)width;
         m_height = (unsigned int)height;
+    }
+    else
+    {
+        FatalLoadError(L"<BufferedImage@%d> Failed to load", 0x137);
     }
 }
 

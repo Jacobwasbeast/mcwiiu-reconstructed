@@ -185,7 +185,8 @@ void ThrownTrident::onHitEntity(const HitResult* result)
             {
                 EnchantmentHelper::doPostHurtEffects(target,
                     boost::static_pointer_cast<Entity>(mOwner));
-                EnchantmentHelper::doPostDamageEffects(mOwner, result->mEntity);
+                EnchantmentHelper::doPostDamageEffects(
+                    boost::static_pointer_cast<LivingEntity>(mOwner), result->mEntity);
             }
             doPostHurtEffects(target);
         }

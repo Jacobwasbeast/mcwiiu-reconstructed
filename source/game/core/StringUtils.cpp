@@ -31,6 +31,17 @@ std::wstring trimString(const std::wstring& text)
     return text.substr(first, last - first + 1);
 }
 
+void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement)
+{
+    result = source;
+    std::wstring::size_type position = 0;
+    while ((position = result.find(search, position)) != std::wstring::npos)
+    {
+        result.replace(position, search.length(), replacement);
+        ++position;
+    }
+}
+
 std::wstring replaceAll(const std::wstring& text, const std::wstring& search, const std::wstring& replacement)
 {
     std::wstring result(text);

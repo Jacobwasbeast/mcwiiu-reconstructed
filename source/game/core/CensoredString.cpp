@@ -126,7 +126,7 @@ void CensoredString::set(const std::wstring& value, const std::wstring& uuid, bo
 uint32_t CensoredString::checkParentalFilter()
 {
     bool censored = false;
-    if (g_pApp != NULL && !g_pApp->IsUUIDLocal((int*)&m_uuid) &&
+    if (g_pApp != NULL && !g_pApp->IsUUIDLocal(m_uuid) &&
         (g_pApp->IsConsoleChatCensored() || m_chatCensored))
         censored = true;
     bool blocked = !m_uuidLocal && censored;

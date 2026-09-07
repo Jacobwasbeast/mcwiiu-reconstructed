@@ -1,4 +1,5 @@
 #include "game/core/Minecraft.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
 #include <wchar.h>
 
@@ -36,6 +37,7 @@
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Chicken.hpp"
 #include "game/core/CommonStats.hpp"
+#include "game/core/CameraController.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/EquipmentSlot.hpp"
@@ -44,6 +46,7 @@
 #include "game/core/EnderCrystal.hpp"
 #include "game/core/EnderMan.hpp"
 #include "game/core/FaceInfo.hpp"
+#include "game/core/FontCharacterWidths.hpp"
 #include "game/core/Ghast.hpp"
 #include "game/core/Guardian.hpp"
 #include "game/core/Llama.hpp"
@@ -75,6 +78,7 @@
 #include "game/core/ColourTable.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "vendor/_ConnectionProgressParams.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/FoliageColor.hpp"
@@ -91,6 +95,7 @@
 #include "game/core/InfoBarManager.hpp"
 #include "game/core/InteractionResult.hpp"
 #include "game/core/MemoryTracker.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/Options.hpp"
 #include "game/core/Stats.hpp"
 #include "game/core/StatsCounter.hpp"
@@ -99,8 +104,12 @@
 #include "game/core/Timer.hpp"
 #include "game/core/TrialMode.hpp"
 #include "game/core/User.hpp"
+#include "game/core/UnityClient13.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/DataFixers.hpp"
+#include "game/command/CheckpointCommand.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/McRegionLevelStorageSource.hpp"
 #include "game/data/SparseDataStorage.hpp"
@@ -109,7 +118,9 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemColors.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/minigame/CheckpointRuleDefinition.hpp"
 #include "game/minigame/MiniGameMedals.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -129,6 +140,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockColors.hpp"
 #include "game/world/block/CompressedBlockStorage.hpp"
 #include "game/world/generation/AbstractClientPlayer.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
@@ -184,6 +196,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/chunk/ChunkInfoMapManager.hpp"
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/generation/BirchFeature.hpp"
@@ -246,6 +259,7 @@ static bool sStaticsInitialised = false;
 static long long sFrameStartTime = 0;
 static int sPressStartHoldOffFrames = 0;
 static bool sCheckForNewLocalPlayers = true;
+bool gFancyGraphics = true;
 static std::wstring sWorkingDirectory;
 static OSFastMutex sTextureRequestLock;
 
@@ -440,14 +454,14 @@ void Minecraft::setScreen(Screen* screen)
     {
         screen = new TitleScreen();
     }
-    else if (mPlayer && !g_ConsoleUIController.GetMenuDisplayed(mPlayer->mUserIndex))
+    else if (mPlayer && !gConsoleUIController.GetMenuDisplayed(mPlayer->mUserIndex))
     {
         if (mPlayer->getHealth() <= 0.0f)
         {
             if (mLastClickTick == 0)
                 mPlayer->respawn();
             else
-                g_ConsoleUIController.NavigateToScene(mPlayer->mUserIndex, (EUIScene)0x18, NULL, (EUILayer)6,
+                gConsoleUIController.NavigateToScene(mPlayer->mUserIndex, (EUIScene)0x18, NULL, (EUILayer)6,
                                                       (EUIGroup)7);
         }
     }
@@ -476,13 +490,13 @@ void Minecraft::init()
     mTexturePackRepository->addDebugPacks();
     mTextures = new Textures(mTexturePackRepository, mOptions);
 
-    mFont = new Font(mOptions, L"font/Default", mTextures, false, &Font::defaultFontLocation, 0x17, 0x1c, 0x10,
-                     0x10, Font::defaultCharacterWidths);
+    mFont = new Font(mOptions, L"font/Default", mTextures, false, &UnityClient13TextureLocation_0x7A, 0x17, 0x1c, 0x10,
+                     0x10, fontCharacterWidthTable);
     mAlternateFont =
-        new Font(mOptions, L"font/alternate", mTextures, false, &Font::alternateFontLocation, 0x10, 0x10, 8, 8, NULL);
+        new Font(mOptions, L"font/alternate", mTextures, false, &UnityClient13TextureLocation_0x7B, 0x10, 0x10, 8, 8, NULL);
 
-    GrassColor::init(mTextures->loadTexturePixels(TEXTURE_NAME_GRASS_COLOR, L"misc/grasscolor.png"));
-    FoliageColor::init(mTextures->loadTexturePixels(TEXTURE_NAME_FOLIAGE_COLOR, L"misc/foliagecolor.png"));
+    GrassColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(0), L"misc/grasscolor.png"));
+    FoliageColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(1), L"misc/foliagecolor.png"));
     Biome::generateColoursDebugOutput();
 
     mTerrainAtlas = new TextureAtlas(0, L"terrain", L"textures/blocks/", NULL, true);
@@ -620,8 +634,8 @@ void Minecraft::prepareLevel(int dimension)
 {
     if (mProgressRenderer != NULL)
     {
-        mProgressRenderer->progressStartNoAbort();
-        mProgressRenderer->progressStage(-1);
+        mProgressRenderer->progressStart(dimension);
+        mProgressRenderer->progressStage(-1590511448);
     }
 
     int radius = mGameMode->isCutScene() ? 0x40 : 0x80;
@@ -633,13 +647,15 @@ void Minecraft::prepareLevel(int dimension)
         for (int z = -radius; z <= radius; z += 16)
         {
             if (mProgressRenderer != NULL)
+            {
                 mProgressRenderer->progressStagePercentage((done * 100) / total);
-            ++done;
+                ++done;
+            }
         }
     }
 
-    if (mProgressRenderer != NULL)
-        mProgressRenderer->progressStart(L"");
+    if (!mGameMode->isCutScene() && mProgressRenderer != NULL)
+        mProgressRenderer->progressStage(-262824192);
 }
 
 void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_ptr<Player> player, bool disconnect,
@@ -700,10 +716,10 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
         for (int i = 0; i < 4; ++i)
         {
             boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[i];
-            if (localPlayer && localPlayer->mConnection != NULL)
+            if (localPlayer && localPlayer->mPacketListener != NULL)
             {
-                delete localPlayer->mConnection;
-                localPlayer->mConnection = NULL;
+                delete localPlayer->mPacketListener;
+                localPlayer->mPacketListener = NULL;
             }
             if (mGameModes[i] != NULL)
             {
@@ -721,15 +737,15 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
         mPlayer.reset();
         mGameMode = NULL;
         mCameraEntity.reset();
-        mEntityRenderDispatcher->mCameraEntity.reset();
-        BlockEntityRenderDispatcher::instance->mCameraEntity.reset();
+        mEntityRenderDispatcher->mCamera.reset();
+        BlockEntityRenderDispatcher::instance->mCamera.reset();
     }
 
     mLevel = level;
 
     if (level == NULL)
     {
-        mLevelSource->close();
+        mLevelSource->requiresConversion(NULL, std::wstring());
         mPlayer.reset();
 
         for (int i = 0; i < 4; ++i)
@@ -745,12 +761,13 @@ void Minecraft::setLevel(MultiPlayerLevel* level, int dimension, boost::shared_p
         return;
     }
 
-    boost::shared_ptr<Player> newPlayer = player;
+    boost::shared_ptr<MultiplayerLocalPlayer> newPlayer =
+        boost::static_pointer_cast<MultiplayerLocalPlayer>(player);
     const DimensionType* type = level->mDimension->getType();
     if (type != DimensionType::NETHER && type != DimensionType::THE_END && !newPlayer)
     {
         int userIndex = gProfile->GetPrimaryPad();
-        mGameMode->createPlayer(&newPlayer, level);
+        newPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(mGameMode->createPlayer(level));
         mPlayer = newPlayer;
 
         PlayerUID xuid(0);
@@ -944,7 +961,7 @@ void Minecraft::updatePlayerViewportAssignments()
     checkViewportAssignment(playerCount);
 
     if (gApp.GetGameStarted())
-        g_ConsoleUIController.UpdatePlayerBasePositions();
+        gConsoleUIController.UpdatePlayerBasePositions();
 }
 
 bool Minecraft::addLocalPlayer(int playerIdx)
@@ -969,11 +986,11 @@ bool Minecraft::addLocalPlayer(int playerIdx)
     updatePlayerViewportAssignments();
 
     _ConnectionProgressParams* params = new _ConnectionProgressParams();
-    params->mPlayerIdx = playerIdx;
-    params->mMessageId = 0xC52FB168;
-    params->mShowSpinner = true;
-    params->mTimeout = 500;
-    g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x1f, params, (EUILayer)6, (EUIGroup)7);
+    params->m_connectionId = playerIdx;
+    params->m_userIndex = -0x3AD04E98;
+    params->m_isJoining = true;
+    params->m_progress = 500;
+    gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x1f, params, (EUILayer)6, (EUIGroup)7);
     return true;
 }
 
@@ -1006,9 +1023,9 @@ bool Minecraft::InMiniGame(EMiniGameId miniGameId, bool includeNextGameMode)
 
 EMiniGameId Minecraft::GetMiniGameId()
 {
-    EMiniGameId id = GetInstance()->GetMiniGame()->GetId();
-    if (id == eMiniGameId_None)
-        return GetInstance()->GetClientMasterGameMode()->GetNextGameMode();
+    EMiniGameId id = static_cast<EMiniGameId>(GetInstance()->GetMiniGame()->GetId());
+    if (id == eMiniGameId_Lobby)
+        return static_cast<EMiniGameId>(GetInstance()->GetClientMasterGameMode()->GetNextGameMode());
     return id;
 }
 
@@ -1046,9 +1063,9 @@ void Minecraft::playerLeftTutorial(int playerIdx)
     {
         if (!mLocalPlayers[i])
             continue;
-        gTelemetryManager.RecordLevelStart(i, eSen_FriendOrMatch_Friend, eSen_CompeteOrCoop_Both,
-                                           mLevel->getDifficulty()->getId(), gApp.GetLocalPlayerCount(),
-                                           CGameNetworkManager::sInstance.GetOnlinePlayerCount());
+        telemetryManagerInstance->RecordLevelStart(i, eSen_FriendOrMatch_Friend, eSen_CompeteOrCoop_Both,
+                                                   mLevel->getDifficulty()->getId(), gApp.GetLocalPlayerCount(),
+                                                   CGameNetworkManager::sInstance.GetOnlinePlayerCount());
     }
 }
 
@@ -1093,7 +1110,7 @@ boost::shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int 
     if (level == NULL)
     {
         mLevel = getLevel(dimension);
-        getLevel(dimension)->mListeners.push_back(connection);
+        getLevel(dimension)->mConnections.push_back(connection);
     }
     else
     {
@@ -1104,18 +1121,21 @@ boost::shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int 
     if (tutorialMode && !tutorialForUid)
     {
         mGameModes[playerIdx] = new MultiPlayerGameMode(playerIdx, connection, userIndex, true, false);
-        mGameModes[playerIdx]->createPlayer(&localPlayer, mLevel);
+        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
+            mGameModes[playerIdx]->createPlayer(mLevel));
     }
     else if (!gProfile->IsFullVersion())
     {
         mGameModes[playerIdx] = new TrialMode(playerIdx, connection, userIndex);
-        mGameModes[playerIdx]->createPlayer(&localPlayer, mLevel);
+        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
+            mGameModes[playerIdx]->createPlayer(mLevel));
     }
     else
     {
         mGameModes[playerIdx] =
             new MultiPlayerGameMode(playerIdx, connection, userIndex, false, GameType::byId(gameTypeId) == GameType::CREATIVE);
-        mGameModes[playerIdx]->createPlayer(&localPlayer, mLevel);
+        localPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
+            mGameModes[playerIdx]->createPlayer(mLevel));
     }
 
     mLocalPlayers[playerIdx] = localPlayer;
@@ -1152,12 +1172,12 @@ boost::shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int 
     if (tutorialMode && !tutorialForUid)
     {
         if (mGameModes[playerIdx]->getGameModeConstraints()->canMoveToPosition(
-                localPlayer->x, localPlayer->y, localPlayer->z, localPlayer->x, localPlayer->y, localPlayer->z,
+                localPlayer->mX, localPlayer->mY, localPlayer->mZ, localPlayer->mX, localPlayer->mY, localPlayer->mZ,
                 NULL))
         {
             boost::shared_ptr<MultiplayerLocalPlayer> primary =
                 GetInstance()->mLocalPlayers[gProfile->GetPrimaryPad()];
-            localPlayer->teleportTo(primary->x, primary->y, primary->z);
+            localPlayer->teleportTo(primary->mX, primary->mY, primary->mZ);
         }
     }
 
@@ -1183,7 +1203,7 @@ bool Minecraft::setLocalPlayerIdx(int playerIdx)
     mGameMode = mGameModes[playerIdx];
     mPlayer = mLocalPlayers[playerIdx];
     mCameraEntity = mLocalPlayers[playerIdx]->GetCamera();
-    mGameRenderer->mItemInHandRenderer = mLocalItemInHandRenderers[playerIdx];
+    mItemInHandRenderer = mLocalItemInHandRenderers[playerIdx];
     mLevel = getLevel(mLocalPlayers[playerIdx]->mDimension);
     mParticleEngine->setLevel(mLevel);
     return true;
@@ -1218,10 +1238,10 @@ void Minecraft::removeLocalPlayerIdx(int playerIdx)
         MultiPlayerLevel* level = getLevel(localPlayer->mDimension);
         if (level->mIsClientSide)
         {
-            getLevel(localPlayer->mDimension)->removeClientPacketListener(localPlayer->mConnection, true);
-            CGameNetworkManager::sInstance.RemoveCreatedConnection(localPlayer->mConnection);
-            delete localPlayer->mConnection;
-            localPlayer->mConnection = NULL;
+            getLevel(localPlayer->mDimension)->removeClientPacketListener(localPlayer->mPacketListener, true);
+            CGameNetworkManager::sInstance.RemoveCreatedConnection(localPlayer->mPacketListener);
+            delete localPlayer->mPacketListener;
+            localPlayer->mPacketListener = NULL;
             CGameNetworkManager::sInstance.RemoveLocalPlayerByUserIndex(playerIdx);
         }
 
@@ -1238,7 +1258,7 @@ void Minecraft::removeLocalPlayerIdx(int playerIdx)
         mGameRenderer->DisableUpdateThread(5);
         mLevelRenderer->setLevel(playerIdx, NULL);
         mGameRenderer->EnableUpdateThread(5);
-        g_ConsoleUIController.CloseUIScenes(playerIdx, true);
+        gConsoleUIController.CloseUIScenes(playerIdx, true);
         updatePlayerViewportAssignments();
         mGui->getBossOverlay(playerIdx)->reset();
     }
@@ -1314,7 +1334,7 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
         return 0;
     }
 
-    if (g_ConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()))
+    if (gConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()))
     {
         gApp.SetDRCCheckPlayerCountEnabled(true);
         return 0;
@@ -1327,7 +1347,7 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
     {
         int messageParameters[1];
         messageParameters[0] = 0xB9A1BF4D;
-        g_ConsoleUIController.RequestErrorMessage(0x1AFA54B5, 0xF18FCCD0, messageParameters, 1, 0xff, NULL, NULL,
+        gConsoleUIController.RequestErrorMessage(0x1AFA54B5, 0xF18FCCD0, messageParameters, 1, 0xff, NULL, NULL,
                                                   NULL, true);
         gProfile->SignOutUser(playerIdx);
         gApp.SetDRCCheckPlayerCountEnabled(true);
@@ -1338,7 +1358,7 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
     {
         int messageParameters[1];
         messageParameters[0] = 0xB9A1BF4D;
-        g_ConsoleUIController.RequestErrorMessage(0x624AEAD3, 0x3103BE06, messageParameters, 1, 0xff, NULL, NULL,
+        gConsoleUIController.RequestErrorMessage(0x624AEAD3, 0x3103BE06, messageParameters, 1, 0xff, NULL, NULL,
                                                   NULL, true);
         gProfile->SignOutUser(playerIdx);
         gApp.SetDRCCheckPlayerCountEnabled(true);
@@ -1346,16 +1366,16 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
     }
 
     if (!CGameNetworkManager::sInstance.IsLocalGame() &&
-        (!gProfile->IsSignedInLive(playerIdx) || !gProfile->HasMultiplayerPrivilege(playerIdx)))
+        (!gProfile->IsSignedInLive(playerIdx) || !gProfile->AllowedToPlayMultiplayer(playerIdx)))
     {
         if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
             return 0;
-        if (gProfile->HasMultiplayerPrivilege(playerIdx))
+        if (gProfile->AllowedToPlayMultiplayer(playerIdx))
             return 0;
 
         int messageParameters[1];
         messageParameters[0] = 0xB9A1BF4D;
-        g_ConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F, messageParameters, 1, playerIdx, NULL,
+        gConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F, messageParameters, 1, playerIdx, NULL,
                                                   NULL, NULL, true);
         gProfile->SignOutUser(playerIdx);
         gApp.SetDRCCheckPlayerCountEnabled(true);
@@ -1377,9 +1397,10 @@ int Minecraft::InGame_SignInReturned(void* userData, bool signedIn, int userInde
 boost::shared_ptr<ItemInstance> Minecraft::addCustomNbtData(boost::shared_ptr<ItemInstance> item,
                                                             boost::shared_ptr<BlockEntity> blockEntity)
 {
-    CompoundTag* data = blockEntity->save(new CompoundTag());
+    CompoundTag* data = new CompoundTag();
+    blockEntity->save(data);
 
-    if (item->getItem() == Item::skull && data->contains(L"Owner"))
+    if (item->getItem() == Items::skull && data->contains(L"Owner"))
     {
         CompoundTag* owner = data->getCompound(L"Owner");
         CompoundTag* tag = new CompoundTag();
@@ -1405,10 +1426,10 @@ void Minecraft::tickAllConnections()
     for (int i = 0; i < 4; ++i)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[i];
-        if (localPlayer && localPlayer->mConnection != NULL)
+        if (localPlayer && localPlayer->mPacketListener != NULL)
         {
             setLocalPlayerIdx(i);
-            localPlayer->mConnection->tick();
+            localPlayer->mPacketListener->tick();
         }
     }
 
@@ -1423,7 +1444,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
     gApp.TickOpacityTimer(playerIdx);
 
     if (handleInput)
-        mLevelRenderer->mDestroyedBlockManager->tick();
+        mLevelRenderer->mDestroyedBlocks->tick();
 
     for (std::list<GhostController*>::iterator it = mFinishedGhostControllers.begin();
          it != mFinishedGhostControllers.end();)
@@ -1439,7 +1460,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         }
     }
 
-    if (InMiniGame(eMiniGameId_GlideRace, true) && mGhostController != NULL)
+    if (InMiniGame(eMiniGameId_Glide, true) && mGhostController != NULL)
         mGhostController->tick();
 
     mGui->tick();
@@ -1449,8 +1470,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         mGameMode->tick();
 
     MemSect(0x1f);
-    mTextures->loadTexture(0xf1);
-    GlStateManager::bindTexture(mTextures->getBoundTexture());
+    GlStateManager::bindTexture(mTextures->loadTexture(0xf1));
     MemSect(0);
 
     if (handleInput)
@@ -1474,7 +1494,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             setScreen(NULL);
     }
 
-    if (mScreen == NULL && !g_ConsoleUIController.GetMenuDisplayed(playerIdx) && !gApp.DebugUIFocussed())
+    if (mScreen == NULL && !gConsoleUIController.GetMenuDisplayed(playerIdx) && !gApp.DebugUIFocussed())
     {
         if ((mPlayer->mButtonsDown & 0x200) != 0 &&
             mGameMode->isInputAllowed((EControllerActions)0x29) && mPlayer->CanChangeThirdPersonView())
@@ -1489,31 +1509,31 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 mPlayer->handleMouseClick(0);
                 mPlayer->mLastAttackTick = mTicks;
             }
-            else if (gInput->ButtonDown(playerIdx, 0x22) &&
+            else if (g_pInput->ButtonDown(playerIdx, 0x22) &&
                      (float)(mTicks - mPlayer->mLastAttackTick) >= mTimer->ticksPerSecond * 0.25f)
             {
                 mPlayer->handleMouseClick(0);
                 mPlayer->mLastAttackTick = mTicks;
             }
 
-            mPlayer->handleMouseDown(0, gInput->ButtonDown(playerIdx, 0x22));
+            mPlayer->handleMouseDown(0, g_pInput->ButtonDown(playerIdx, 0x22));
         }
 
         if ((mPlayer->mButtonsPressed & 0x400000) != 0)
         {
-            g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
-            g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)5, NULL, (EUILayer)6, (EUIGroup)7);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+            gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)5, NULL, (EUILayer)6, (EUIGroup)7);
         }
 
         bool waitingForScoreboard = mPlayer->IsWaitingForScoreboard();
         bool showScoreboard = false;
 
-        if ((!mPlayer->mHasOpenedInventory || g_ConsoleUIController.getCleanupOnReload()) &&
+        if ((!mPlayer->mHasOpenedInventory || gConsoleUIController.getCleanupOnReload()) &&
             (mClientMasterGameMode == NULL ||
              (!mClientMasterGameMode->IsInScoringState() && !mClientMasterGameMode->IsWaitingToStart() &&
               !mClientMasterGameMode->IsRoundStarting())))
         {
-            if (!g_ConsoleUIController.IsSceneInStack(0xff, (EUIScene)4))
+            if (!gConsoleUIController.IsSceneInStack(0xff, (EUIScene)4))
             {
                 if (waitingForScoreboard)
                     showScoreboard = true;
@@ -1526,36 +1546,35 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         if (showScoreboard)
         {
             mPlayer->SetWaitingForScoreboard(false);
-            if (!InMiniGame(eMiniGameId_Tutorial, true))
+            if (!InMiniGame(eMiniGameId_Any, true))
             {
-                g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x1e, NULL, (EUILayer)6, (EUIGroup)7);
+                gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x1e, NULL, (EUILayer)6, (EUIGroup)7);
             }
-            else if (!g_ConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x3c))
+            else if (!gConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x3c))
             {
                 int* sceneData = new int[2];
                 sceneData[0] = 0;
                 sceneData[1] = (mPlayer->GetGameType() == GameType::CREATIVE) ? 1 : 0;
-                g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3c, sceneData, (EUILayer)6,
+                gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3c, sceneData, (EUILayer)6,
                                                       (EUIGroup)7);
 
                 if (mGameModes[playerIdx]->getTutorial() != NULL)
                     mGameModes[playerIdx]->getTutorial()->onGameModeChange((eTutorial_GameMode)9);
 
-                if (InMiniGame(eMiniGameId_GlideRace, true))
+                if (InMiniGame(eMiniGameId_Glide, true))
                 {
-                    std::wstring winner;
-                    mLevel->GetScoreboard()->GetWinnerName(winner, -1);
+                    std::wstring winner = mLevel->GetClientScoreboard()->GetWinnerName(-1);
                     if (winner.compare(0, winner.size(), mPlayer->getDisplayName().c_str(),
                                        mPlayer->getDisplayName().size()) == 0 && waitingForScoreboard)
                     {
-                        mSoundEngine->playUI(SoundEvents::MINIGAME_WIN, 1.0f, 1.0f);
+                        mSoundEngine->playUI(SoundEvents::MG03_WINNER_ANNOUNCE, 1.0f, 1.0f);
                     }
                 }
-                g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
             }
             else
             {
-                g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
             }
         }
 
@@ -1571,18 +1590,18 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             else
             {
                 int activePlayers =
-                    GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Tutorial);
+                    GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Any);
                 if (!GetClientMasterGameMode()->IsRoundEnding() && activePlayers > 1)
                 {
                     Tooltips::OverwriteTooltip(playerIdx, (EControllerActions)0x30, 0x2ECE48BA);
                     Tooltips::OverwriteTooltip(playerIdx, (EControllerActions)0x31, 0x600DA5D4);
 
-                    if (gInput->GetValue(playerIdx, 0x30, true) &&
+                    if (g_pInput->GetValue(playerIdx, 0x30, true) &&
                         mGameMode->isInputAllowed((EControllerActions)0x30))
                     {
                         mPlayer->SpectatePlayerPrev();
                     }
-                    else if (gInput->GetValue(playerIdx, 0x31, true) &&
+                    else if (g_pInput->GetValue(playerIdx, 0x31, true) &&
                              mGameMode->isInputAllowed((EControllerActions)0x31))
                     {
                         mPlayer->SpectatePlayerNext();
@@ -1599,7 +1618,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     Tooltips::OverwriteTooltip(playerIdx, (EControllerActions)0x33, 0x4F6BCF5E);
                     Tooltips::ResetTooltip(playerIdx, (EControllerActions)0x22);
                     Tooltips::ResetTooltip(playerIdx, (EControllerActions)0x32);
-                    if (gInput->GetValue(playerIdx, 0x33, true) &&
+                    if (g_pInput->GetValue(playerIdx, 0x33, true) &&
                         mGameMode->isInputAllowed((EControllerActions)0x33))
                     {
                         mGui->clearSingleMessages(playerIdx);
@@ -1613,7 +1632,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
 
                     if (GetInstance()->GetMiniGame()->HasSpectatorParticipation() && mHitResult != NULL &&
                         mHitResult->mType == 1 &&
-                        GetInstance()->mGameModes[playerIdx]->canDestroy(mHitResult->getBlockPos()) &&
+                        GetInstance()->mGameModes[playerIdx]->MayDestroy(mHitResult->getBlockPos()) &&
                         mPlayer->isAllowedToMine())
                     {
                         Tooltips::OverwriteTooltip(playerIdx, (EControllerActions)0x22, 0x5FB7A25A);
@@ -1633,7 +1652,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                             Tooltips::ResetTooltip(playerIdx, (EControllerActions)0x32);
 
                         if (GetInstance()->mGameModes[playerIdx]->CanMakeSpectateSound() &&
-                            gInput->GetValue(playerIdx, 0x32, true) &&
+                            g_pInput->GetValue(playerIdx, 0x32, true) &&
                             mGameMode->isInputAllowed((EControllerActions)0x32))
                         {
                             GetInstance()->mGameModes[playerIdx]->MakeSpectateSound();
@@ -1659,7 +1678,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             InteractionResult::EInteractionResult interaction = InteractionResult::eInteractionResult_Pass;
             if (mHitResult == NULL || mHitResult->mType == 0)
             {
-                interaction = mGameMode->useItem(mPlayer, mLevel, NULL, true);
+                interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
             }
             else if (mHitResult->mType == 1)
             {
@@ -1667,7 +1686,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 const BlockState* blockState = mLevel->getBlockState(blockPos);
                 interaction = mGameMode->useItemOn(mPlayer, mLevel, blockPos, mHitResult->mDirection,
                                                    mHitResult->mLocation,
-                                                   InteractionHand::eInteractionHand_Main, true, NULL);
+                                                   InteractionHand::eInteractionHand_MainHand, true, NULL);
 
                 if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
                 {
@@ -1681,15 +1700,15 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             {
                 if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
                     mGameMode->getTutorial()->onLookAtEntity(mHitResult->mEntity);
-                interaction = mGameMode->useItem(mPlayer, mLevel, NULL, true);
+                interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
             }
 
             Tooltips::SetInteractTooltips(mLocalPlayers[playerIdx], mLevel, mHitResult, interaction);
 
             int hotbarScroll = 0;
-            if (gInput->GetValue(playerIdx, 0x23, true) && mGameMode->isInputAllowed((EControllerActions)0x23))
+            if (g_pInput->GetValue(playerIdx, 0x23, true) && mGameMode->isInputAllowed((EControllerActions)0x23))
                 hotbarScroll = 1;
-            else if (gInput->GetValue(playerIdx, 0x24, true) &&
+            else if (g_pInput->GetValue(playerIdx, 0x24, true) &&
                      mGameMode->isInputAllowed((EControllerActions)0x24))
                 hotbarScroll = -1;
 
@@ -1706,17 +1725,17 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     mOptions->mHotbarScroll += (float)hotbarScroll * 0.25f;
             }
 
-            if (gInput->ButtonDown(playerIdx, 0x2f))
+            if (g_pInput->ButtonDown(playerIdx, 0x2f))
                 mPlayer->handleMouseClick(2);
 
             if (!mPlayer->isUsingItem())
             {
                 if (mGameMode->isInputAllowed((EControllerActions)0x21) &&
-                    !gInput->ButtonDown(playerIdx, 0x22))
+                    !g_pInput->ButtonDown(playerIdx, 0x22))
                 {
-                    if (!mPlayer->mIsCreativeBuilding)
+                    if (!mPlayer->mAbilities.mInstabuild)
                     {
-                        bool repeat = gInput->ButtonDown(playerIdx, 0x21);
+                        bool repeat = g_pInput->ButtonDown(playerIdx, 0x21);
                         if (!repeat)
                         {
                             mPlayer->mLastUseTick = 0;
@@ -1735,8 +1754,8 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     }
                     else
                     {
-                        bool used = mPlayer->creativeModeHandleMouseClick(1, gInput->ButtonDown(playerIdx, 0x21));
-                        if (mPlayer->mGameModeState == 4 && !used && gInput->ButtonDown(playerIdx, 0x21) &&
+                        bool used = mPlayer->creativeModeHandleMouseClick(1, g_pInput->ButtonDown(playerIdx, 0x21));
+                        if (mPlayer->mCreativeRepeatState == 4 && !used && g_pInput->ButtonDown(playerIdx, 0x21) &&
                             (float)(mTicks - mPlayer->mLastUseTick) >= mTimer->ticksPerSecond * 0.25f)
                         {
                             mPlayer->handleMouseClick(1);
@@ -1745,7 +1764,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     }
                 }
             }
-            else if (!gInput->ButtonDown(playerIdx, 0x21))
+            else if (!g_pInput->ButtonDown(playerIdx, 0x21))
             {
                 mGameMode->releaseUsingItem(mPlayer);
             }
@@ -1756,20 +1775,20 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             bool openInventory = false;
             if ((mPlayer->mButtonsDown & 0x20) == 0)
             {
-                openInventory = g_ConsoleUIController.GetHoldActionCancelled(playerIdx);
+                openInventory = gConsoleUIController.GetHoldActionCancelled(playerIdx);
             }
-            else if (!g_ConsoleUIController.GetHoldToShowAchievementsActive(true) &&
-                     !g_ConsoleUIController.GetAchievementToastShowing(playerIdx))
+            else if (!gConsoleUIController.GetHoldToShowAchievementsActive(true) &&
+                     !gConsoleUIController.GetAchievementToastShowing(playerIdx))
             {
-                openInventory = !g_ConsoleUIController.GetHoldActionCancelled(playerIdx);
+                openInventory = !gConsoleUIController.GetHoldActionCancelled(playerIdx);
             }
 
             if (openInventory && !(mGameMode->isInputAllowed((EControllerActions)0x21) &&
-                                   gInput->ButtonDown(playerIdx, 0x21)))
+                                   g_pInput->ButtonDown(playerIdx, 0x21)))
             {
                 if (mPlayer->mHasOpenedInventory && mGameMode->isInputAllowed((EControllerActions)0x25))
                 {
-                    g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
                     if (mGameMode->isServerControlledInventory())
                         gApp.LoadInventoryMenu(playerIdx, mPlayer, false);
                     else
@@ -1777,27 +1796,27 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 }
             }
 
-            bool canCraft = InMiniGame(eMiniGameId_Tutorial, true) ||
+            bool canCraft = InMiniGame(eMiniGameId_Any, true) ||
                             GetInstance()->GetMiniGame()->CanCraft();
             if (canCraft && (mPlayer->mButtonsDown & 0x100) != 0 &&
                 mGameMode->isInputAllowed((EControllerActions)0x28))
             {
                 if (mGameMode->hasInfiniteItems())
                 {
-                    g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
                     gApp.LoadCreativeMenu(playerIdx, mPlayer, false);
                 }
                 else if (mHitResult != NULL && mHitResult->mType == 1 &&
-                         mLevel->getBlockState(mHitResult->getBlockPos())->getBlock() == Blocks::craftingTable)
+                         mLevel->getBlockState(mHitResult->getBlockPos())->getBlock() == Blocks::crafting_table)
                 {
                     bool cancelled = false;
                     mGameMode->useItemOn(mPlayer, mLevel, mHitResult->getBlockPos(), Direction::UP,
-                                         mHitResult->mLocation, InteractionHand::eInteractionHand_Main, false,
+                                         mHitResult->mLocation, InteractionHand::eInteractionHand_MainHand, false,
                                          &cancelled);
                 }
                 else
                 {
-                    g_ConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
                     gApp.LoadCrafting2x2Menu(playerIdx, mPlayer);
                 }
             }
@@ -1806,11 +1825,12 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 mGameMode->isInputAllowed((EControllerActions)0x34) &&
                 mPlayer->GetGameType() == GameType::ADVENTURE)
             {
-                mPlayer->mConnection->send(boost::shared_ptr<Packet>(
-                    new PlayerReadyPacket(mPlayer->mPlayerIndex, !GetClientMasterGameMode()->IsPlayerReady())));
+                mPlayer->mPacketListener->send(boost::shared_ptr<Packet>(
+                    new PlayerReadyPacket(mPlayer->mPlayerIndex,
+                                          !GetClientMasterGameMode()->IsPlayerReady(mPlayer->mPlayerIndex))));
             }
 
-            if (!g_ConsoleUIController.GetMenuDisplayed(playerIdx) &&
+            if (!gConsoleUIController.GetMenuDisplayed(playerIdx) &&
                 !GetInstance()->GetClientMasterGameMode()->IsInScoringState() &&
                 (mPlayer->mButtonsDown & 0x200000) != 0 &&
                 mGameMode->isInputAllowed((EControllerActions)0x35))
@@ -1820,7 +1840,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
 
                 bool canVote = mPlayer->GetGameType() == GameType::ADVENTURE;
                 if (canVote && (playlist.empty() || playlist.size() < 2))
-                    canVote = !InMiniGame(eMiniGameId_BattleMode, true) && GetMiniGame()->HasMultipleVariants();
+                    canVote = !InMiniGame(eMiniGameId_Battle, true) && GetMiniGame()->HasMultipleVariants();
 
                 if (canVote)
                 {
@@ -1831,20 +1851,20 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                             GetInstance()->mLocalPlayers[playerIdx]->GetGameType() == GameType::ADVENTURE &&
                             GetMiniGame()->HostOption_Bool((eCustomGameModeHostOption)7))
                         {
-                            g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3e, (void*)1,
+                            gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3e, (void*)1,
                                                                   (EUILayer)6, (EUIGroup)7);
                         }
                     }
                     else if (GetMiniGame()->HostOption_Bool((eCustomGameModeHostOption)7))
                     {
-                        g_ConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3e, NULL, (EUILayer)6,
+                        gConsoleUIController.NavigateToScene(playerIdx, (EUIScene)0x3e, NULL, (EUILayer)6,
                                                               (EUIGroup)7);
                     }
                 }
             }
 
             if ((mPlayer->mButtonsDown & 0x40) != 0 && mGameMode->isInputAllowed((EControllerActions)0x26) &&
-                !g_ConsoleUIController.GetMenuDisplayed(playerIdx))
+                !gConsoleUIController.GetMenuDisplayed(playerIdx))
             {
                 mPlayer->drop();
             }
@@ -1852,29 +1872,28 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
             int touchX = 0;
             int touchY = 0;
             bool touching = false;
-            unsigned short* touchData = gInput->GetTouchPadData(playerIdx, (C_4JInput::ETouchType)0, true);
+            unsigned short* touchData = g_pInput->GetTouchPadData(playerIdx, (C_4JInput::ETouchType)0, true);
             if (touchData != NULL && touchData[2] == 1 && touchData[3] == 0)
             {
-                touching = g_ConsoleUIController.GetDRCEnabled();
+                touching = gConsoleUIController.GetDRCEnabled();
                 touchX = touchData[0];
                 touchY = touchData[1];
             }
 
-            bool quickSelect = InMiniGame(eMiniGameId_BattleMode, true) &&
-                               g_ConsoleUIController.GetQuickSelectVisible(playerIdx);
-            if (touching && !quickSelect)
+            InMiniGame(eMiniGameId_Tumble, true);
+            if (touching && gConsoleUIController.GetQuickSelectVisible(playerIdx))
             {
-                int hotBarX = g_ConsoleUIController.GetHotBarX(playerIdx);
-                int hotBarY = g_ConsoleUIController.GetHotBarY(playerIdx);
-                int hotBarWidth = g_ConsoleUIController.GetHotBarWidth(playerIdx);
-                int hotBarHeight = g_ConsoleUIController.GetHotBarHeight(playerIdx);
+                int hotBarX = gConsoleUIController.GetHotBarX(playerIdx);
+                int hotBarY = gConsoleUIController.GetHotBarY(playerIdx);
+                int hotBarWidth = gConsoleUIController.GetHotBarWidth(playerIdx);
+                int hotBarHeight = gConsoleUIController.GetHotBarHeight(playerIdx);
                 if (touchX > hotBarX && touchX < hotBarX + hotBarWidth && touchY > hotBarY &&
                     touchY < hotBarY + hotBarHeight)
                 {
                     int slot = (touchX - hotBarX) / (hotBarWidth / 9);
                     if (slot > 8)
                         slot = 8;
-                    mPlayer->mInventory->mSelected = slot;
+                    mPlayer->mInventory->m_selected = slot;
                 }
             }
 
@@ -1888,7 +1907,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
                 if (!tooltipLines->empty())
                 {
-                    tooltipLines->at(0).mColour = mainHandItem->getRarity();
+                    tooltipLines->at(0).mColour = static_cast<eMinecraftColour>(mainHandItem->getRarity());
                     if (mainHandItem->hasCustomHoverName())
                         tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
                 }
@@ -1904,12 +1923,12 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 if (tooltipLines->size() > 4)
                     tooltipLines->push_back(HtmlString(L"...", eMinecraftColour_NOTSET, false, false, 0));
 
-                g_ConsoleUIController.SetSelectedItem(playerIdx, itemName, HtmlString::Compose(tooltipLines));
+                gConsoleUIController.SetSelectedItem(playerIdx, itemName, HtmlString::Compose(tooltipLines));
                 delete tooltipLines;
             }
             else
             {
-                g_ConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
+                gConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
             }
         }
     }
@@ -1966,11 +1985,42 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
     if (mAppPaused)
         tickAllConnections();
 
-    if (mPlayer)
+    if (mPlayer && InMiniGame(eMiniGameId_Glide, false))
     {
-        CheckpointCommand::preparePacket(mPlayer->getSUID(), mPlayer->mUserIndex);
-        mPlayer->ResetPercentageTraversed();
-        mPlayer->ResetThermalVariables();
+        MultiPlayerLevel* level = mLocalPlayers[playerIdx]->GetLevel();
+        ClientScoreboard* scoreboard = level->GetClientScoreboard();
+        int checkpointPlayers = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (mLocalPlayers[i] &&
+                (mLocalPlayers[i]->GetScoreboard() == NULL ||
+                 scoreboard->GetLastCheckpointID(mLocalPlayers[i]->getSUID(), -1) != 0))
+            {
+                ++checkpointPlayers;
+            }
+        }
+
+        if (checkpointPlayers == 1 && GetMiniGame()->GetHostOption((eCustomGameModeHostOption)0xe) != 0 &&
+            GetClientMasterGameMode()->getScoreboard() != NULL &&
+            scoreboard->GetLastCheckpointID(mPlayer->getSUID(), -1) == 0)
+        {
+            bool resetTraversal = false;
+            if ((mPlayer->mButtonsPressed & 0x400000) != 0)
+            {
+                mPlayer->mPacketListener->send(CheckpointCommand::preparePacket(mPlayer->getSUID(), -1));
+                resetTraversal = true;
+            }
+            if ((mPlayer->mButtonsPressed & 0x800000) != 0)
+            {
+                mPlayer->mPacketListener->send(CheckpointCommand::preparePacket(mPlayer->getSUID(), 0));
+                resetTraversal = true;
+            }
+            if (resetTraversal)
+            {
+                mPlayer->ResetPercentageTraversed();
+                mPlayer->ResetThermalVariables();
+            }
+        }
     }
 
     ++mTicks;
@@ -2009,14 +2059,14 @@ void Minecraft::run_middle()
     Vec3::resetPool();
 
     if (mLevel != NULL && gProfile->IsFullVersion() && CGameNetworkManager::sInstance.IsHost() &&
-        !InMiniGame(eMiniGameId_Tutorial, true) && !gStorage->GetSaveDisabled())
+        !InMiniGame(eMiniGameId_Any, true) && !gStorage->GetSaveDisabled())
     {
         int primary = gProfile->GetPrimaryPad();
-        if (gApp.GetXuiAction(primary) == 0 && !g_ConsoleUIController.IsPauseMenuDisplayed(primary))
+        if (gApp.GetXuiAction(primary) == 0 && !gConsoleUIController.IsPauseMenuDisplayed(primary))
         {
-            if (g_ConsoleUIController.IsIgnoreAutosaveMenuDisplayed(primary))
+            if (gConsoleUIController.IsIgnoreAutosaveMenuDisplayed(primary))
             {
-                g_ConsoleUIController.ShowAutosaveCountdownTimer(false);
+                gConsoleUIController.ShowAutosaveCountdownTimer(false);
             }
             else
             {
@@ -2037,13 +2087,13 @@ void Minecraft::run_middle()
                         unsigned int seconds = gApp.SecondsToAutosave();
                         if (seconds <= 5)
                         {
-                            g_ConsoleUIController.ShowAutosaveCountdownTimer(true);
-                            g_ConsoleUIController.UpdateAutosaveCountdownTimer(seconds);
+                            gConsoleUIController.ShowAutosaveCountdownTimer(true);
+                            gConsoleUIController.UpdateAutosaveCountdownTimer(seconds);
                         }
                     }
                     else
                     {
-                        g_ConsoleUIController.ShowAutosaveCountdownTimer(false);
+                        gConsoleUIController.ShowAutosaveCountdownTimer(false);
                         gApp.SetAction(primary, (eXuiAction)0x1e, NULL);
                     }
                 }
@@ -2054,14 +2104,14 @@ void Minecraft::run_middle()
     for (int i = 0; i < 4; ++i)
     {
         if (mLocalPlayers[i] && !gApp.GetBanListCheck(i) && !GetInstance()->isTutorial() &&
-            gProfile->IsSignedInLive(i) && !gProfile->IsGuest(i) && !gProfile->IsSystemUIShowing())
+            gProfile->IsSignedInLive(i) && !gProfile->IsGuest(i) && !gProfile->IsSystemUIDisplayed())
         {
             gApp.SetBanListCheck(i, true);
         }
     }
 
-    if (!gProfile->IsSystemUIShowing() && gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending() &&
-        gApp.mDLCCorruptCheckPending)
+    if (!gProfile->IsSystemUIDisplayed() && gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending() &&
+        gApp.mDLCManager.m_bCorruptDLCFound)
     {
         gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
     }
@@ -2081,10 +2131,10 @@ void Minecraft::run_middle()
                 {
                     for (int i = 0; i < 4; ++i)
                     {
-                        if (!mLocalPlayers[i] && gInput->JoypadConnected(i) &&
-                            !g_ConsoleUIController.PressStartPlaying(i))
+                        if (!mLocalPlayers[i] && g_pInput->IsPadConnected(i) &&
+                            !gConsoleUIController.PressStartPlaying(i))
                         {
-                            g_ConsoleUIController.ShowPressStart(i);
+                            gConsoleUIController.ShowPressStart(i);
                         }
                     }
                 }
@@ -2097,35 +2147,36 @@ void Minecraft::run_middle()
         if (!mLocalPlayers[i])
         {
             if (!mAppPaused &&
-                !g_ConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()) &&
+                !gConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()) &&
                 CGameNetworkManager::sInstance.SessionHasSpace(1) && gRenderer->IsHiDef() &&
-                gInput->GetValue(i, 0xff, false) && gRenderer->IsWidescreen())
+                g_pInput->GetValue(i, 0xff, false) && gRenderer->IsWidescreen())
             {
-                if (!g_ConsoleUIController.PressStartPlaying(i))
+                if (!gConsoleUIController.PressStartPlaying(i))
                 {
-                    g_ConsoleUIController.ShowPressStart(i);
+                    gConsoleUIController.ShowPressStart(i);
                 }
-                else if (gInput->GetValue(i, 0x16, false) && !gApp.IsDrcPreventingSplitscreen())
+                else if (g_pInput->GetValue(i, 0x16, false) && !gApp.IsDrcPreventingSplitscreen())
                 {
                     if (gProfile->IsSignedIn(i))
                     {
                         if (!CGameNetworkManager::sInstance.IsLocalGame() &&
-                            (!gProfile->IsSignedInLive(i) || !gProfile->HasMultiplayerPrivilege(i)))
+                            (!gProfile->IsSignedInLive(i) || !gProfile->AllowedToPlayMultiplayer(i)))
                         {
                             if (gProfile->IsSignedInLive(gProfile->GetPrimaryPad()) &&
-                                !gProfile->HasMultiplayerPrivilege(i))
+                                !gProfile->AllowedToPlayMultiplayer(i))
                             {
-                                gProfile->ShowSignInUI(InGame_SignInReturned, this, i);
-                                g_ConsoleUIController.HidePressStart();
+                                gProfile->RequestSignInUI(false, false, false, false, false,
+                                                        InGame_SignInReturned, this, i);
+                                gConsoleUIController.HidePressStart();
                                 int messageParameters[1];
                                 messageParameters[0] = 0xB9A1BF4D;
-                                g_ConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F,
+                                gConsoleUIController.RequestErrorMessage(0x252AB13F, 0xCC5A590F,
                                                                           messageParameters, 1, i, NULL, NULL,
                                                                           NULL, true);
                             }
                             gApp.SetDRCIconEnabled(false);
                             gApp.SetDRCCheckPlayerCountEnabled(false);
-                            gProfile->ShowSignInUIEx(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
+                            gProfile->RequestSignInUI(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
                                                      InGame_SignInReturned, this, i);
                         }
                         else
@@ -2139,7 +2190,7 @@ void Minecraft::run_middle()
                             }
                             else if (!addLocalPlayer(i))
                             {
-                                gProfile->ShowSignInUIEx(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0,
+                                gProfile->RequestSignInUI(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0,
                                                          1, InGame_SignInReturned, this, i);
                             }
                         }
@@ -2148,7 +2199,7 @@ void Minecraft::run_middle()
                     {
                         gApp.SetDRCIconEnabled(false);
                         gApp.SetDRCCheckPlayerCountEnabled(false);
-                        gProfile->ShowSignInUIEx(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
+                        gProfile->RequestSignInUI(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
                                                  InGame_SignInReturned, this, i);
                     }
                 }
@@ -2159,55 +2210,86 @@ void Minecraft::run_middle()
         gApp.ProcessFakePadValueA();
 
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[i];
-        if (gInput->GetValue(i, 0x20, GameSettings::GetInputButton(i, true, (EControllerActions)0x20)))
+        if (g_pInput->GetValue(i, 0x20, GameSettings::GetInputButton(i, true, (EControllerActions)0x20)))
             localPlayer->mButtonsDown |= 1;
-        if (gInput->GetValue(i, 0x21, GameSettings::GetInputButton(i, true, (EControllerActions)0x21)))
+        if (g_pInput->GetValue(i, 0x21, GameSettings::GetInputButton(i, true, (EControllerActions)0x21)))
             localPlayer->mButtonsDown |= 2;
-        if (gInput->GetValue(i, 0x25, GameSettings::GetInputButton(i, true, (EControllerActions)0x25)))
+        if (g_pInput->GetValue(i, 0x25, GameSettings::GetInputButton(i, true, (EControllerActions)0x25)))
             localPlayer->mButtonsDown |= 0x20;
-        if (gInput->GetValue(i, 0x22, GameSettings::GetInputButton(i, true, (EControllerActions)0x22)))
+        if (g_pInput->GetValue(i, 0x22, GameSettings::GetInputButton(i, true, (EControllerActions)0x22)))
             localPlayer->mButtonsDown |= 4;
-        if (gInput->GetValue(i, 0x28, GameSettings::GetInputButton(i, true, (EControllerActions)0x28)))
+        if (g_pInput->GetValue(i, 0x28, GameSettings::GetInputButton(i, true, (EControllerActions)0x28)))
             localPlayer->mButtonsDown |= 0x100;
-        if (gInput->GetValue(i, 0x16, false))
+        if (g_pInput->GetValue(i, 0x16, false))
             localPlayer->mButtonsPressed |= 0x400000;
+        if (g_pInput->GetValue(i, 0x26, GameSettings::GetInputButton(i, true, (EControllerActions)0x26)))
+            localPlayer->mButtonsDown |= 0x40;
+        if ((!localPlayer->mAbilities.mFlying &&
+             (!localPlayer->headInWater() || localPlayer->mOnGround))
+                ? g_pInput->GetValue(i, 0x27,
+                                     GameSettings::GetInputButton(i, true, (EControllerActions)0x27))
+                : g_pInput->ButtonDown(i, 0x27))
+        {
+            localPlayer->mButtonsDown |= 0x80;
+        }
+        if (g_pInput->GetValue(i, 0x29, GameSettings::GetInputButton(i, true, (EControllerActions)0x29)))
+            localPlayer->mButtonsDown |= 0x200;
+        if (g_pInput->GetValue(i, 0x17, false))
+            localPlayer->mButtonsPressed |= 0x800000;
+        if (g_pInput->GetValue(i, 0x34, GameSettings::GetInputButton(i, true, (EControllerActions)0x34)))
+            localPlayer->mButtonsDown |= 0x100000;
+        if (g_pInput->GetValue(i, 0x35, GameSettings::GetInputButton(i, true, (EControllerActions)0x35)))
+            localPlayer->mButtonsDown |= 0x200000;
+        if (g_pInput->GetValue(i, 0x36, GameSettings::GetInputButton(i, true, (EControllerActions)0x36)))
+            localPlayer->mButtonsDown |= 0x400000;
+        if (g_pInput->GetValue(i, 0x37, GameSettings::GetInputButton(i, true, (EControllerActions)0x37)))
+            localPlayer->mButtonsDown |= 0x800000;
 
-        localPlayer->mDRCTouching = gInput->ButtonDown(i, 0x38);
+        if (GetMiniGame()->HasFeatureLookBack() && localPlayer->mThirdPersonView != 2)
+            localPlayer->mDRCTouching = g_pInput->ButtonDown(i, 0x38);
 
         int moveButtons = 0;
-        localPlayer->mMoveInputX = 0;
-        localPlayer->mMoveInputY = 0;
-        if (gInput->ButtonDown(i, 0x2a))
+        localPlayer->mLookInputX = 0;
+        localPlayer->mLookInputY = 0;
+        if (g_pInput->ButtonDown(i, 0x2a))
         {
             ++moveButtons;
-            localPlayer->mMoveInputX |= 0x400;
+            localPlayer->mLookInputX |= 0x400;
         }
-        if (gInput->ButtonDown(i, 0x2b))
+        if (g_pInput->ButtonDown(i, 0x2b))
         {
             ++moveButtons;
-            localPlayer->mMoveInputX |= 0x800;
+            localPlayer->mLookInputX |= 0x800;
         }
-        if (gInput->ButtonDown(i, 0x2c))
+        if (g_pInput->ButtonDown(i, 0x2c))
         {
             ++moveButtons;
-            localPlayer->mMoveInputX |= 0x1000;
+            localPlayer->mLookInputX |= 0x1000;
         }
-        if (gInput->ButtonDown(i, 0x2d))
+        if (g_pInput->ButtonDown(i, 0x2d))
         {
             ++moveButtons;
-            localPlayer->mMoveInputX |= 0x2000;
+            localPlayer->mLookInputX |= 0x2000;
         }
 
         if (moveButtons < 2)
         {
-            localPlayer->mLookInputX = localPlayer->mMoveInputX;
-            localPlayer->mLookInputY = localPlayer->mMoveInputY;
+            localPlayer->mMoveInputX = localPlayer->mLookInputX;
+            localPlayer->mMoveInputY = localPlayer->mLookInputY;
+            localPlayer->mReserved0x928 = localPlayer->mLookInputX;
+            localPlayer->mReserved0x92c = localPlayer->mLookInputY;
+        }
+        else
+        {
+            localPlayer->mReserved0x928 = localPlayer->mMoveInputX;
+            localPlayer->mReserved0x92c = localPlayer->mMoveInputY;
         }
 
-        gApp.SetOpacityTimer(i);
+        if (g_pInput->GetValue(i, 0x23, false) || g_pInput->GetValue(i, 0x24, false))
+            gApp.SetOpacityTimer(i);
     }
 
-    if (!mAppPaused && !g_ConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()) &&
+    if (!mAppPaused && !gConsoleUIController.IsIgnorePlayerJoinMenuDisplayed(gProfile->GetPrimaryPad()) &&
         CGameNetworkManager::sInstance.SessionHasSpace(1) && gRenderer->IsHiDef())
     {
         int freeSlot = 0;
@@ -2223,18 +2305,18 @@ void Minecraft::run_middle()
 
         for (int pad = 4; pad < 9; ++pad)
         {
-            if (!gInput->JoypadInUse(pad) && gInput->JoypadConnected(pad) &&
-                gInput->GetValue(pad, 0xff, false))
+            if (!g_pInput->IsPadLocked(pad) && g_pInput->IsPadConnected(pad) &&
+                g_pInput->GetValue(pad, 0xff, false))
             {
-                if (!g_ConsoleUIController.PressStartPlaying(freeSlot))
+                if (!gConsoleUIController.PressStartPlaying(freeSlot))
                 {
-                    g_ConsoleUIController.ShowPressStart(freeSlot);
+                    gConsoleUIController.ShowPressStart(freeSlot);
                 }
-                else if (!gApp.IsDrcPreventingSplitscreen() && gInput->GetValue(pad, 0x16, false))
+                else if (!gApp.IsDrcPreventingSplitscreen() && g_pInput->GetValue(pad, 0x16, false))
                 {
                     gApp.SetDRCIconEnabled(false);
                     gApp.SetDRCCheckPlayerCountEnabled(false);
-                    gProfile->ShowSignInUIEx(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
+                    gProfile->RequestSignInUI(0, CGameNetworkManager::sInstance.IsLocalGame(), 1, 0, 1,
                                              InGame_SignInReturned, this, pad);
                     break;
                 }
@@ -2259,7 +2341,7 @@ void Minecraft::run_middle()
     {
         if (step != 0)
         {
-            gInput->Update();
+            g_pInput->Tick();
             gApp.HandleButtonPresses();
         }
 
@@ -2275,8 +2357,8 @@ void Minecraft::run_middle()
             {
                 boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[i];
                 if (localPlayer->mButtonsDown == 0 && localPlayer->mButtonsPressed == 0 &&
-                    gInput->GetAnalogueValue(i, 0) == 0.0f && gInput->GetAnalogueValue(i, 1) == 0.0f &&
-                    gInput->GetAnalogueValue(i, 2) == 0.0f && gInput->GetAnalogueValue(i, 3) == 0.0f)
+                    g_pInput->GetJoypadStick_LX(i, false) == 0.0f && g_pInput->GetJoypadStick_LY(i, false) == 0.0f &&
+                    g_pInput->GetJoypadStick_RX(i, false) == 0.0f && g_pInput->GetJoypadStick_RY(i, false) == 0.0f)
                 {
                     if (localPlayer->mIdleTicks < 0xff)
                         ++localPlayer->mIdleTicks;
@@ -2291,7 +2373,7 @@ void Minecraft::run_middle()
                     if (localPlayer->isIdle())
                         localPlayer->setIsIdle(false);
                 }
-                else if (!localPlayer->isIdle() && localPlayer->mIsMoving)
+                else if (!localPlayer->isIdle() && localPlayer->mOnGround)
                 {
                     localPlayer->setIsIdle(true);
                 }
@@ -2307,7 +2389,7 @@ void Minecraft::run_middle()
             }
         }
 
-        g_ConsoleUIController.HandleGameTick();
+        gConsoleUIController.HandleGameTick();
         setLocalPlayerIdx(gProfile->GetPrimaryPad());
 
         for (int i = 0; i < mLevelCount; ++i)
@@ -2370,7 +2452,7 @@ void Minecraft::run_middle()
             gRenderer->StateSetViewport((C4JRender::eViewportType)(mEmptyViewport + 5));
             GlStateManager::clearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GlStateManager::clear(2);
-            g_ConsoleUIController.SetEmptyQuadrantLogo(mEmptyViewport + 5);
+            gConsoleUIController.SetEmptyQuadrantLogo(mEmptyViewport + 5);
         }
 
         setLocalPlayerIdx(primary);
@@ -2415,7 +2497,8 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
 
     boost::shared_ptr<MultiplayerLocalPlayer> oldPlayer = mLocalPlayers[playerIdx];
     boost::shared_ptr<MultiplayerLocalPlayer> newPlayer;
-    mGameModes[playerIdx]->createPlayer(&newPlayer, getLevel(dimension));
+    newPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
+        mGameModes[playerIdx]->createPlayer(mLevel));
 
     newPlayer->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
     if (oldPlayer)
@@ -2434,10 +2517,11 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
 
     if (oldPlayer)
     {
-        newPlayer->setPlayerDefaultSkin(oldPlayer->getPlayerDefaultSkin());
+        newPlayer->setCustomSkin(oldPlayer->mField0x7dc);
+        newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
+        newPlayer->setCustomCape(oldPlayer->mField0x7e0);
         newPlayer->setPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21,
                                           oldPlayer->getPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21));
-        newPlayer->setSkinAdjustments(Player::getSkinAdjustmentsById(oldPlayer->getSkinId()));
     }
 
     mLocalPlayers[playerIdx] = newPlayer;
@@ -2453,17 +2537,23 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
         storeExtraLocalPlayer(playerIdx);
     }
 
-    if (CommonMasterGameMode::GetMiniGame()->IsCheckpointBasedSpawn())
+    if (InMiniGame(eMiniGameId_Glide, true) && CommonMasterGameMode::GetMiniGame()->IsCheckpointBasedSpawn())
     {
         MultiPlayerLevel* level = newPlayer->GetLevel();
         if (level != NULL && level->GetClientScoreboard() != NULL)
         {
-            newPlayer->getSUID();
-            LevelRuleset* ruleset = gApp.getLevelGenerationOptions()->getRequiredGameRules();
-            if (ruleset != NULL && ruleset->getCheckpoints() != NULL &&
-                ruleset->getCheckpoints()->getElytraBoost() != 0.0)
+            int checkpoint = level->GetClientScoreboard()->GetLastCheckpointID(newPlayer->getSUID(), -1);
+            LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions();
+            if (generationOptions != NULL)
             {
-                newPlayer->activateElytraSpeedBoost(ruleset->getCheckpoints()->getElytraBoost());
+                LevelRuleset* ruleset = generationOptions->getRequiredGameRules();
+                const std::vector<CheckpointRuleDefinition*> checkpoints = *ruleset->getCheckpoints();
+                if (checkpoint >= 0 && static_cast<unsigned int>(checkpoint) < checkpoints.size())
+                {
+                    double speedBoost = ruleset->getCheckpoints()->at(checkpoint)->getElytraBoost();
+                    if (speedBoost > 0.0)
+                        newPlayer->activateElytraSpeedBoost(speedBoost);
+                }
             }
         }
     }
@@ -2475,14 +2565,14 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
     if (!alive)
         prepareLevel(dimension);
 
-    if (g_ConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x30))
+    if (gConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x30))
     {
-        g_ConsoleUIController.NavigateBack(playerIdx, false, (EUIScene)0x30, (EUILayer)8);
+        gConsoleUIController.NavigateBack(playerIdx, false, (EUIScene)0x30, (EUILayer)8);
     }
     else
     {
-        g_ConsoleUIController.CloseUIScenes(playerIdx, false);
-        g_ConsoleUIController.UpdatePlayerBasePositions();
+        gConsoleUIController.CloseUIScenes(playerIdx, false);
+        gConsoleUIController.UpdatePlayerBasePositions();
     }
 
     newPlayer->SetWaitingForScoreboard(oldPlayer && oldPlayer->IsWaitingForScoreboard());
@@ -2680,7 +2770,7 @@ void MinecraftWorld_RunStaticCtors()
 
 ClientPacketListener* Minecraft::getConnection(int playerIdx)
 {
-    return mLocalPlayers[playerIdx]->mConnection;
+    return mLocalPlayers[playerIdx]->mPacketListener;
 }
 
 void Minecraft::main()
@@ -2711,7 +2801,7 @@ void Minecraft::main()
     CMinecraftApp::StaticCtor();
     MiniGameDef::StaticCtor();
 
-    GetInstance()->mMiniGame = MiniGameDef::GetCustomGameModeById(eMiniGameId_Tutorial, true);
+    GetInstance()->mMiniGame = MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true);
     ClientPacketListener::staticCtor();
 }
 
@@ -2787,8 +2877,8 @@ void Minecraft::fjReloadTexturePack()
     {
         const MiniGameDef* miniGame = GetMiniGame();
         ClientMasterGameMode* masterGameMode = GetInstance()->GetClientMasterGameMode();
-        EMiniGameId miniGameId = miniGame->GetId();
-        if (miniGameId != eMiniGameId_None && miniGameId < 4)
+        EMiniGameId miniGameId = static_cast<EMiniGameId>(miniGame->GetId());
+        if (miniGameId != eMiniGameId_Lobby && miniGameId < 4)
         {
             mSoundEngine->playStreaming(NULL, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, false,
                                         masterGameMode->IsWaitingForMusicStartEvent(),
@@ -2836,17 +2926,17 @@ boost::shared_ptr<Player> Minecraft::GetPlayerByPlayerIndex(int playerIndex)
 
 int Minecraft::GetSpectateMode()
 {
-    if (InMiniGame(eMiniGameId_Tutorial, true))
+    if (InMiniGame(eMiniGameId_Any, true))
         return GetMiniGame()->GetSpectateMode();
     return 0;
 }
 
 unsigned long long Minecraft::GetSpectateEntity()
 {
-    if (InMiniGame(eMiniGameId_Tutorial, true))
+    if (InMiniGame(eMiniGameId_Any, true))
         return GetMiniGame()->GetSpectateEntity();
 
-    MiniGameDef defaultMiniGame(eMiniGameId_None);
+    MiniGameDef defaultMiniGame(eMiniGameId_Lobby);
     return defaultMiniGame.GetSpectateEntity();
 }
 

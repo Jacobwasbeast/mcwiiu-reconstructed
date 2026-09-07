@@ -21,7 +21,7 @@ void SliderLogic::AddTo(UIControl_MultiList& list, int value) const
 
 void SliderLogic::Update(UIControl_MultiList& list, int value) const
 {
-    list.SetItemLabel(value, mId, UIString(GetLabel(value)), false);
+    list.SetItemLabel(mId, UIString(GetLabel(value)), false);
 }
 
 std::wstring SliderLogic::GetLabel(int value) const
