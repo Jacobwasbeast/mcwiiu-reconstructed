@@ -152,9 +152,9 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
     delete diamondGen;
     delete lapisGen;
 
-    dirtGen = new OreFeature(Blocks::dirt->defaultBlockState(), settings->setting78);
-    gravelGen = new OreFeature(Blocks::gravel->defaultBlockState(), settings->setting88);
-    graniteGen = new OreFeature(Blocks::stone->getBlockState(1), settings->setting98);
+    dirtGen = new OreFeature(Blocks::dirt->defaultBlockState(), settings->dirtCount);
+    gravelGen = new OreFeature(Blocks::gravel->defaultBlockState(), settings->gravelCount);
+    graniteGen = new OreFeature(Blocks::stone->getBlockState(1), settings->dioriteCount);
     dioriteGen = new OreFeature(Blocks::stone->getBlockState(3), settings->graniteCount);
     andesiteGen = new OreFeature(Blocks::stone->getBlockState(5), settings->andesiteCount);
     coalGen = new OreFeature(Blocks::coal_ore->defaultBlockState(), settings->coalCount);
@@ -213,10 +213,10 @@ void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int coun
 void BiomeDecorator::decorateOres(Level* level, Random* random)
 {
     Level::setInstaTick(true);
-    decorateDepthSpan(level, random, settings->setting7c, dirtGen, settings->setting80, settings->setting84);
-    decorateDepthSpan(level, random, settings->setting8c, gravelGen, settings->setting90, settings->setting94);
+    decorateDepthSpan(level, random, settings->dirtSize, dirtGen, settings->dirtMinHeight, settings->dirtMaxHeight);
+    decorateDepthSpan(level, random, settings->gravelSize, gravelGen, settings->gravelMinHeight, settings->gravelMaxHeight);
     decorateDepthSpan(level, random, settings->graniteSize, dioriteGen, settings->graniteMinHeight, settings->graniteMaxHeight);
-    decorateDepthSpan(level, random, settings->setting9c, graniteGen, settings->settinga0, settings->settinga4);
+    decorateDepthSpan(level, random, settings->dioriteSize, graniteGen, settings->dioriteMinHeight, settings->dioriteMaxHeight);
     decorateDepthSpan(level, random, settings->andesiteSize, andesiteGen, settings->andesiteMinHeight, settings->andesiteMaxHeight);
     decorateDepthSpan(level, random, settings->coalSize, coalGen, settings->coalMinHeight, settings->coalMaxHeight);
     decorateDepthSpan(level, random, settings->ironSize, ironGen, settings->ironMinHeight, settings->ironMaxHeight);

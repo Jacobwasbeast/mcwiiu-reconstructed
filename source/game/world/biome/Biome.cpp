@@ -6,7 +6,7 @@
 #include "game/core/Mth.hpp"
 #include "game/core/PerlinSimplexNoise.hpp"
 #include "game/entity/mob/MobCategory.hpp"
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
@@ -37,7 +37,9 @@
 #include "game/world/biome/VoidBiome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/FlowerBlock.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/SandBlock.hpp"
 #include "game/world/block/TallGrassBlock.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
@@ -619,7 +621,7 @@ void Biome::staticCtor()
 
     MEGA_TAIGA = new TaigaBiome(
         eBiomeIDs_MegaTaiga,
-        TaigaBiome::eType_Mega,
+        TaigaBiome::eType_MegaTaiga,
         (new BiomeProperties(L"mega_taiga"))->setTemperatureAndDownfall(0.3F, 0.8F)->depth(0.2F)->scale(0.2F));
     MEGA_TAIGA->setPreviewColor(eMinecraftColour_Preview_MegaTaiga)
         ->setNameAndDescription(1300645842, -1326201740)
@@ -627,7 +629,7 @@ void Biome::staticCtor()
 
     MEGA_TAIGA_HILLS = new TaigaBiome(
         eBiomeIDs_MegaTaigaHills,
-        TaigaBiome::eType_Mega,
+        TaigaBiome::eType_MegaTaiga,
         (new BiomeProperties(L"mega_taiga_hills"))->depth(0.45F)->scale(0.3F)->setTemperatureAndDownfall(0.3F, 0.8F));
     MEGA_TAIGA_HILLS->setPreviewColor(eMinecraftColour_Preview_MegaTaigaHills)
         ->setNameAndDescription(1300645842, -1326201740)
@@ -786,7 +788,7 @@ void Biome::staticCtor()
 
     MEGA_SPRUCE_TAIGA = new TaigaBiome(
         eBiomeIDs_MegaSpruceTaiga,
-        TaigaBiome::eType_MegaSpruce,
+        TaigaBiome::eType_Mutated,
         (new BiomeProperties(L"mega_spruce_taiga"))->mutated(eBiomeIDs_MegaTaiga)->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(0.25F, 0.8F));
     MEGA_SPRUCE_TAIGA->setPreviewColor(eMinecraftColour_Preview_MegaTaiga_Mutated)
         ->setNameAndDescription(1300645842, -1326201740)
@@ -794,7 +796,7 @@ void Biome::staticCtor()
 
     REDWOOD_TAIGA_HILLS_MUTATED = new TaigaBiome(
         eBiomeIDs_RedwoodTaigaHillsMutated,
-        TaigaBiome::eType_MegaSpruce,
+        TaigaBiome::eType_Mutated,
         (new BiomeProperties(L"redwood_taiga_hills_mutated"))->mutated(eBiomeIDs_MegaTaigaHills)->depth(0.2F)->scale(0.2F)->setTemperatureAndDownfall(0.25F, 0.8F));
     REDWOOD_TAIGA_HILLS_MUTATED->setPreviewColor(eMinecraftColour_Preview_MegaTaigaHills_Mutated)
         ->setNameAndDescription(1300645842, -1326201740)
@@ -1203,7 +1205,7 @@ void Biome::buildSurfaceAtDefault(Level* level, Random& random, ChunkPrimer* pri
     BlockPair filler = mFillerBlock;
     BlockPair top = mTopBlock;
 
-    LevelGenerationOptions* options = CMinecraftApp::sInstance.getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
 
     if (options != NULL)
     {

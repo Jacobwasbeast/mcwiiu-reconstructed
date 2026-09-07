@@ -9,6 +9,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
+#include "game/world/generation/OreFeature.hpp"
 #include <cmath>
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
@@ -31,7 +32,7 @@ MesaBiome::MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomePrope
     mDecorator = new MesaDecorator();
     mDecorator->cactiPerChunk = 20;
     mDecorator->sandPerChunk2 = 3;
-    mDecorator->clayPerChunk2 = 5;
+    mDecorator->clayPerChunk = 5;
     mDecorator->mushroomsPerChunk = 0;
     mDecorator->grassPerChunk = hasForest ? 5 : -999;
 }
