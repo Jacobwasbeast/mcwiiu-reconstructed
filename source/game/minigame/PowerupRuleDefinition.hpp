@@ -8,7 +8,6 @@
 #include "game/util/Random.hpp"
 
 class AddItemRuleDefinition;
-class Container;
 class Player;
 
 class PowerupRuleDefinition : public NamedAreaRuleDefinition

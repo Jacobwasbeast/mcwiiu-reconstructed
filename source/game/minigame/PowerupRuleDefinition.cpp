@@ -1,6 +1,8 @@
 #include "game/minigame/PowerupRuleDefinition.hpp"
 
 #include "game/item/AddItemRuleDefinition.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/world/generation/Player.hpp"
 
 PowerupRuleDefinition::PowerupRuleDefinition()
 {
@@ -32,8 +34,7 @@ GameRuleDefinition* PowerupRuleDefinition::addChild(ConsoleGameRules::EGameRuleT
 void PowerupRuleDefinition::GiveRandomPowerup(boost::shared_ptr<Player> player)
 {
     int powerupCount = static_cast<int>(mPowerups.size());
-    boost::shared_ptr<Container> container = player->mInventory;
-    mPowerups.at(static_cast<unsigned int>(mRandom.nextInt(powerupCount)))->addItemToContainer(container, -1);
+    mPowerups.at(static_cast<unsigned int>(mRandom.nextInt(powerupCount)))->addItemToContainer(player->mInventory, -1);
 }
 
 ConsoleGameRules::EGameRuleType PowerupRuleDefinition::getActionType()

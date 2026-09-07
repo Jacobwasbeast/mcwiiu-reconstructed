@@ -3,6 +3,7 @@
 #include "game/minigame/CombinationVariationsRuleDefinition.hpp"
 #include "game/world/generation/LayerGenerationRuleDefinition.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
+#include "game/world/generation/LayerThemeRuleDefinition.hpp"
 #include "game/util/Random.hpp"
 
 AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent)

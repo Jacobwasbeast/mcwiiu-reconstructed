@@ -3,6 +3,7 @@
 #include "game/minigame/CustomBeaconRuleDefinition.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
 
 std::string formatstr(const char* format, ...);
@@ -161,9 +162,6 @@ void CheckpointRuleDefinition::setPlayerPosition(boost::shared_ptr<ServerPlayer>
                                   static_cast<double>(mSpawnPoint->getY()),
                                   static_cast<double>(mSpawnPoint->getZ()),
                                   mSpawnPoint->getYRot(), mSpawnPoint->getXRot(), true, true);
-    player->mManagedPosX = static_cast<double>(mSpawnPoint->getX());
-    player->mManagedPosY = static_cast<double>(mSpawnPoint->getY());
-    player->mManagedPosZ = static_cast<double>(mSpawnPoint->getZ());
 }
 
 double CheckpointRuleDefinition::getElytraBoost()

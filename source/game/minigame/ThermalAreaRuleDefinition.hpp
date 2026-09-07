@@ -27,6 +27,7 @@ public:
     unsigned int getBoostDirection();
 
     bool isEnabled() const { return mEnabled; }
+    double getLiftForceModifier() const { return mLiftForceModifier; }
     double getLiftSpeed() const { return mStaticLift; }
     double getMaxHeight() const { return mTargetHeight; }
     double getElytraSpeedBoost() const { return mSpeedBoost; }

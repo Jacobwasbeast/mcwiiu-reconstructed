@@ -5,6 +5,7 @@
 #include "game/core/Team.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 

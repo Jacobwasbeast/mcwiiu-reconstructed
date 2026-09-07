@@ -1,10 +1,42 @@
 #include "game/minigame/AllowInRuleDefinition.hpp"
 
+#include <sstream>
+
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 
-std::wstring join(wchar_t separator, const std::vector<std::wstring>& values);
-void split(wchar_t separator, const std::wstring& value, std::vector<std::wstring>& values);
+std::wstring join(wchar_t separator, const std::vector<std::wstring>& values)
+{
+    std::wstring result;
+
+    for (std::vector<std::wstring>::const_iterator it = values.begin(); it != values.end(); ++it)
+    {
+        if (it + 1 == values.end())
+        {
+            std::wstring value = *it;
+            value += separator;
+            result += value;
+        }
+        else
+        {
+            result += *it;
+        }
+    }
+
+    return result;
+}
+
+void split(wchar_t separator, const std::wstring& value, std::vector<std::wstring>& values)
+{
+    values.clear();
+
+    std::wistringstream stream(value);
+    std::wstring part;
+    while (std::getline(stream, part, separator))
+    {
+        values.push_back(part);
+    }
+}
 
 AllowInRuleDefinition::AllowInRuleDefinition()
 {

@@ -88,6 +88,7 @@ public:
 
 protected:
     friend class GrantPermissionsRuleDefinition;
+    friend class LevelRuleset;
 
     GameRules_StringAttribute* addStringAttribute(ConsoleGameRules::EGameRuleAttr attribute, std::wstring* value);
     GameRules_IntAttribute* addIntAttribute(ConsoleGameRules::EGameRuleAttr attribute, int* value);

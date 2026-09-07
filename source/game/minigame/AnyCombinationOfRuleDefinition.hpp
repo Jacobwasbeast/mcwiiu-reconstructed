@@ -9,14 +9,15 @@
 #include "game/world/generation/LayerFillRuleDefinition.hpp"
 #include "game/world/generation/LayerShapeRuleDefinition.hpp"
 #include "game/world/generation/LayerSizeRuleDefinition.hpp"
-#include "game/world/generation/LayerThemeRuleDefinition.hpp"
 
 class CombinationVariationsRuleDefinition;
 class LayerGenerationRuleDefinition;
 class LayerMetadata;
+class LayerTheme;
+class LayerThemeRuleDefinition;
 class Random;
 
-class AnyCombinationOfRuleDefinition : public LayerFillRuleDefinition
+class AnyCombinationOfRuleDefinition : public GameRuleDefinition
 {
 public:
     AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent);

@@ -4,6 +4,7 @@
 #include <cwchar>
 #include <sstream>
 #include "game/core/L10N.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
@@ -13,10 +14,144 @@
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/util/GameModeUtilities.hpp"
 
+class Block;
+
 static MiniGamePlayerSettings sPlayerSettings;
 static MiniGameDef* sMiniGameDefs[eMiniGameId_Count];
 static MiniGameDef* sDefaultMiniGameDef;
 static unsigned int sCrcTable[256];
+
+static Block* sBlackList[] = { NULL };
+static Block* sWhiteList[] = { NULL };
+static Block* sPlacementRestrictedList[] = { NULL };
+
+static bool sBlackListInitialised;
+static bool sWhiteListInitialised;
+static bool sPlacementRestrictedListInitialised;
+
+static std::pair<bool, int> parseNamedValue(const std::wstring& value,
+                                             const wchar_t* const* names,
+                                             const int* values,
+                                             int count)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        if (value == names[i])
+        {
+            return std::make_pair(true, values[i]);
+        }
+    }
+    return std::make_pair(false, 0);
+}
+
+std::pair<bool, int> parseDifficulty(std::wstring value)
+{
+    static const wchar_t* const names[] = { L"Peaceful", L"Easy", L"Normal", L"Hard" };
+    static const int values[] = { 0, 1, 2, 3 };
+    return parseNamedValue(value, names, values, 4);
+}
+
+std::pair<bool, int> parseGameType(std::wstring value)
+{
+    static const wchar_t* const names[] =
+        { L"NotSet", L"Survival", L"Creative", L"Adventure", L"Spectator", L"Lobby" };
+    static const int values[] = { -1, 0, 1, 2, 3, 4 };
+    return parseNamedValue(value, names, values, 6);
+}
+
+std::pair<bool, int> parseSpectateMode(std::wstring value)
+{
+    static const wchar_t* const names[] = { L"$SpectateMode", L"Invisible", L"Bat", L"Vex", L"Parrot" };
+    static const int values[] = { -1, 0, 1, 2, 3 };
+    return parseNamedValue(value, names, values, 5);
+}
+
+std::pair<bool, int> parseBuildMode(std::wstring value)
+{
+    static const wchar_t* const names[] = { L"NoRestrictions", L"WhiteList", L"BlackList" };
+    static const int values[] = { 0, 1, 2 };
+    return parseNamedValue(value, names, values, 3);
+}
+
+void getVersionNumber(const XmlObject& object, unsigned short* major, unsigned short* minor)
+{
+    std::wstring version = object[L"version"].asString(L"1.0");
+    const std::wstring::size_type separator = version.find(L'.');
+    std::wistringstream majorStream(version.substr(0, separator));
+    majorStream >> *major;
+    if (separator == std::wstring::npos)
+    {
+        *minor = 0;
+        return;
+    }
+    std::wistringstream minorStream(version.substr(separator + 1));
+    minorStream >> *minor;
+}
+
+Block** getBlackList()
+{
+    if (!sBlackListInitialised)
+    {
+        sBlackListInitialised = true;
+    }
+    return sBlackList;
+}
+
+Block** getWhiteList()
+{
+    if (!sWhiteListInitialised)
+    {
+        sWhiteListInitialised = true;
+    }
+    return sWhiteList;
+}
+
+Block** getPlacementRestrictedList()
+{
+    if (!sPlacementRestrictedListInitialised)
+    {
+        sPlacementRestrictedListInitialised = true;
+    }
+    return sPlacementRestrictedList;
+}
+
+template <typename T>
+static void setGameSettingsHelper(int profile, unsigned int setting, unsigned char value,
+                                  T* settings, unsigned int mask, unsigned int shift)
+{
+    const T shifted = static_cast<T>(static_cast<unsigned int>(value) << (shift & 0x3f));
+    const T oldValue = *settings;
+    if ((static_cast<unsigned int>(oldValue) ^ static_cast<unsigned int>(shifted)) & mask)
+    {
+        *settings = static_cast<T>((oldValue & static_cast<T>(~mask)) | shifted);
+        if (setting > 3)
+        {
+            GameSettings::ActionGameSettings(profile, static_cast<eGameSetting>(setting));
+        }
+        GameSettings::SetSettingsChanged(profile);
+    }
+}
+
+void setGameSettingsHelper__tm__3_Uc__Fi12eGameSettingUcPZ1ZZ1ZUi_v(
+    int profile, unsigned int setting, unsigned char value, unsigned char* settings,
+    unsigned int mask, unsigned int shift)
+{
+    setGameSettingsHelper(profile, setting, value, settings, mask, shift);
+}
+
+void setGameSettingsHelper__tm__3_Us__Fi12eGameSettingUcPZ1ZZ1ZUi_v(
+    int profile, unsigned int setting, unsigned char value, unsigned short* settings,
+    unsigned int mask, unsigned int shift)
+{
+    setGameSettingsHelper(profile, setting, value, settings, mask, shift);
+}
+
+void setGameSettingsHelper__tm__3_Ui__Fi12eGameSettingUcPZ1ZZ1ZUi_v(
+    int profile, unsigned int setting, unsigned char value, unsigned int* settings,
+    unsigned int mask, unsigned int shift)
+{
+    setGameSettingsHelper(profile, setting, value, settings, mask, shift);
+}
 
 MiniGameDef::BlockData::BlockData()
     : mPlaceMode(EBuildMode_Default), mMayPlace(), mDestroyMode(EBuildMode_Default), mMayDestroy()
