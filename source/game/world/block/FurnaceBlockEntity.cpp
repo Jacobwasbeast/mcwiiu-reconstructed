@@ -161,7 +161,7 @@ void FurnaceBlockEntity::clearContent()
 
 AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    return new FurnaceMenu(inventory, shared_from_this());
+    return new FurnaceMenu(inventory, boost::static_pointer_cast<FurnaceBlockEntity>(shared_from_this()));
 }
 
 int FurnaceBlockEntity::getTypeId(bool large)
@@ -216,7 +216,8 @@ void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstr
 
 void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
-    fixer->addWalker(3, new ItemListDataWalker(0x1e00202ULL, L"Items"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
+                     (DataWalker*)new ItemListDataWalker(0x1e00202ULL, L"Items"));
 }
 
 void FurnaceBlockEntity::load(CompoundTag* tag)

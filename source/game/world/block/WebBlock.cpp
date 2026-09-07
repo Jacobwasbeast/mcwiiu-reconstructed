@@ -5,12 +5,9 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Material.hpp"
-
-class MiniGameDef;
-extern "C" bool WebBlockHasFeatureDirectionalFireworks(const MiniGameDef*)
-    __asm__("HasFeatureDirectionalFireworks__11MiniGameDefCFv");
 
 WebBlock::WebBlock()
     : Block(Material::WEB)
@@ -27,7 +24,7 @@ void WebBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
     entity->makeStuckInWeb();
 
     if (entity->GetType() == 0x88000005ULL
-        && WebBlockHasFeatureDirectionalFireworks(Minecraft::GetInstance()->GetMiniGame()))
+        && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
         entity->mIsInWeb = true;
     }

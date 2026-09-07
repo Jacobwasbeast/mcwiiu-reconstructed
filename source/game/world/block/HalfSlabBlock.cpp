@@ -16,15 +16,15 @@
 
 class AABB;
 extern Block* gHalfSlabStone;
-extern Block* gHalfSlabWood;
+Block* gHalfSlabWood = NULL;
 extern Block* gHalfSlabStone2;
-extern Block* gHalfSlabPurpur;
-extern Block* gHalfSlabPrismarine;
+Block* gHalfSlabPurpur = NULL;
+Block* gHalfSlabPrismarine = NULL;
 extern Block* gDoubleSlabPurpur;
 extern Block* gDoubleSlabWood;
-extern Block* gDoubleSlabStone2;
+Block* gDoubleSlabStone2 = NULL;
 extern Block* gDoubleSlabStone;
-extern Block* gDoubleSlabPrismarine;
+Block* gDoubleSlabPrismarine = NULL;
 
 static const AABB* FULL_BLOCK_SHAPE = NULL;
 static const AABB* BOTTOM_AABB = NULL;

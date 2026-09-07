@@ -7,10 +7,23 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/world/block/Property.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/Level.hpp"
+
+#include <typeinfo>
+
+static BedBlock::Part gBedFoot(0, L"foot");
+static BedBlock::Part gBedHead(1, L"head");
+
+AbstractProperty<const BedBlock::Part*>* BedBlock::PART = NULL;
+AbstractProperty<bool>* BedBlock::OCCUPIED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"occupied"));
 
 BedBlock::Part::Part(int index, const std::wstring& name)
     : mName(name), mIndex(index)
@@ -32,7 +45,12 @@ BedBlock::BedBlock()
 {
     mBlockEntity = true;
     DerivedInit();
-    registerDefaultState(mStateDefinition->any());
+    const BlockState* state = mStateDefinition->any();
+    TypedBoxed<const Part*> part(&gBedFoot);
+    state = state->setBoxedValue(PART, &part);
+    TypedBoxed<bool> occupied(false);
+    state = state->setBoxedValue(OCCUPIED, &occupied);
+    registerDefaultState(state);
 }
 
 BedBlock::~BedBlock()
@@ -46,8 +64,11 @@ boost::shared_ptr<BlockEntity> BedBlock::newBlockEntity(Level* level, int data)
 
 void BedBlock::blockStaticCtor()
 {
-    Part first(0, L"foot");
-    Part second(1, L"head");
+    boost::unordered_set<const Part*> parts;
+    parts.insert(&gBedFoot);
+    parts.insert(&gBedHead);
+    PART = EnumProperty<const Part*>::create(L"part", typeid(const Part*), parts,
+                                             Predicates<const Part*>::alwaysTrue);
 }
 
 const MaterialColor* BedBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -228,7 +249,8 @@ const BlockState* BedBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* BedBlock::createBlockStateDefinition()
 {
-    return new BlockStateDefinition(this);
+    const Property* properties[] = { FACING_PROPERTY, PART, OCCUPIED };
+    return new BlockStateDefinition(this, properties, 3);
 }
 
 bool BedBlock::isHeadPiece(int data)

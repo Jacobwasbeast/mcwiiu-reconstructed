@@ -37,7 +37,7 @@ CropBlock::CropBlock(bool derivedInit)
         DerivedInit();
     }
     setDestroyTime(0.0f);
-    setSoundType(SoundType::PLANT);
+    setSoundType(SoundType::GRASS);
     setNotCollectStatistics();
     sendBlockData(15);
 }

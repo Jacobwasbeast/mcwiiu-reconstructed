@@ -6,6 +6,7 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/EntityBlock.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
 
@@ -42,6 +43,9 @@ public:
         std::wstring mName;
         int mIndex;
     };
+
+    static AbstractProperty<const Part*>* PART;
+    static AbstractProperty<bool>* OCCUPIED;
 
     BedBlock();
     virtual ~BedBlock();

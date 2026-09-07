@@ -10,6 +10,9 @@ class Entity;
 class MutableBlockPos;
 class Rotation;
 class Vec3;
+class BlockPos;
+
+unsigned int hash_value(const BlockPos& pos);
 
 template <class T> class Iterator;
 

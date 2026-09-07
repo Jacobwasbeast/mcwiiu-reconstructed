@@ -9,7 +9,12 @@
 #include "game/core/Boxed.hpp"
 
 template <class T> std::wstring _toString(T value);
-template <class T> std::wstring _toString(T* value);
+
+template <class T>
+std::wstring _toString(T* value)
+{
+    return value->toString();
+}
 
 template <class T>
 class TypedBoxed : public Boxed

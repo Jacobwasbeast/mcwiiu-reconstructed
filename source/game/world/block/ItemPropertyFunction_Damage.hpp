@@ -15,7 +15,7 @@ class ItemPropertyFunction_Damage : public ItemPropertyFunction
 public:
     virtual float call(not_null_ptr<ItemInstance> itemInstance,
                        Level* level,
-                       boost::shared_ptr<LivingEntity> entity);
+                       boost::shared_ptr<LivingEntity> entity) const;
 };
 
 #endif

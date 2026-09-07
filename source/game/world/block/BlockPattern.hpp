@@ -18,6 +18,8 @@ class BlockInWorld;
 class Direction;
 class Level;
 
+unsigned int hash_value(const BlockPos& pos);
+
 class BlockPattern
 {
 public:

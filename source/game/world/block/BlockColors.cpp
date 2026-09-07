@@ -51,12 +51,14 @@ BlockColors* BlockColors::createDefault()
             DoublePlantBlock::Variant* variant = state->getValue(DoublePlantBlock::VARIANT);
 
             if (levelSource == NULL || pos == NULL
-                || (variant != DoublePlantBlock::GRASS && variant != DoublePlantBlock::FERN))
+                || (variant != DoublePlantBlock::Variant::byData(2)
+                    && variant != DoublePlantBlock::Variant::byData(3)))
             {
                 return -1;
             }
 
-            BlockPos plantPos = state->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::UPPER
+            BlockPos plantPos = state->getValue(DoublePlantBlock::HALF)
+                                        == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
                                     ? pos->below()
                                     : *pos;
 
@@ -131,12 +133,12 @@ BlockColors* BlockColors::createDefault()
         {
             PlanksBlock::Variant* variant = state->getValue(OldLeafBlock::VARIANT);
 
-            if (variant == PlanksBlock::SPRUCE)
+            if (variant == PlanksBlock::Variant::SPRUCE)
             {
                 return FoliageColor::getEvergreenColor();
             }
 
-            if (variant == PlanksBlock::BIRCH)
+            if (variant == PlanksBlock::Variant::BIRCH)
             {
                 return FoliageColor::getBirchColor();
             }
@@ -251,7 +253,7 @@ BlockColors* BlockColors::createDefault()
                 return BiomeColors::getAverageGrassColor(levelSource, *pos);
             }
 
-            if (state->getValue(TallGrassBlock::VARIANT) == TallGrassBlock::DEAD_BUSH)
+            if (state->getValue(TallGrassBlock::VARIANT) == TallGrassBlock::Variant::DEAD_BUSH)
             {
                 return 0xFFFFFF;
             }

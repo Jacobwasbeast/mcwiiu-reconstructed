@@ -6,6 +6,31 @@
 #include "game/core/Mth.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/BlockPattern.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+#include <boost/unordered_set.hpp>
+#include <typeinfo>
+
+AbstractProperty<int>* RedStoneWireBlock::POWER =
+    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
+
+static RedStoneWireBlock::ConnectingSide* gRedStoneWireUp =
+    new RedStoneWireBlock::ConnectingSide(L"up");
+static RedStoneWireBlock::ConnectingSide* gRedStoneWireSide =
+    new RedStoneWireBlock::ConnectingSide(L"side");
+static RedStoneWireBlock::ConnectingSide* gRedStoneWireNone =
+    new RedStoneWireBlock::ConnectingSide(L"none");
+static RedStoneWireBlock::ConnectingSide* gRedStoneWireConnectingSides[] =
+    { gRedStoneWireUp, gRedStoneWireSide, gRedStoneWireNone };
+
+static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gNorthProperty = NULL;
+static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gEastProperty = NULL;
+static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gSouthProperty = NULL;
+static EnumProperty<RedStoneWireBlock::ConnectingSide*>* gWestProperty = NULL;
 
 RedStoneWireBlock::ConnectingSide::ConnectingSide(const std::wstring& name)
     : mName(name), mValue(0)
@@ -25,7 +50,14 @@ std::wstring RedStoneWireBlock::ConnectingSide::getSerializedName() const
 RedStoneWireBlock::RedStoneWireBlock()
     : Block(NULL), mNorthIcon(NULL), mEastIcon(NULL), mSouthIcon(NULL), mWestIcon(NULL), mSignalSource(true)
 {
-    mUpdatedPositions.clear();
+    DerivedInit();
+    TypedBoxed<ConnectingSide*> none(gRedStoneWireNone);
+    TypedBoxed<int> power(0);
+    const BlockState* state = mStateDefinition->any()->setBoxedValue(gNorthProperty, &none);
+    state = state->setBoxedValue(gEastProperty, &none);
+    state = state->setBoxedValue(gSouthProperty, &none);
+    state = state->setBoxedValue(gWestProperty, &none);
+    registerDefaultState(state->setBoxedValue(POWER, &power));
 }
 
 RedStoneWireBlock::~RedStoneWireBlock()
@@ -34,14 +66,18 @@ RedStoneWireBlock::~RedStoneWireBlock()
 
 void RedStoneWireBlock::blockStaticCtor()
 {
-    static ConnectingSide north(L"north");
-    static ConnectingSide east(L"east");
-    static ConnectingSide south(L"south");
-    static ConnectingSide west(L"west");
-    north.mValue = 0;
-    east.mValue = 1;
-    south.mValue = 2;
-    west.mValue = 3;
+    boost::unordered_set<ConnectingSide*> values;
+    values.insert(gRedStoneWireConnectingSides[0]);
+    values.insert(gRedStoneWireConnectingSides[1]);
+    values.insert(gRedStoneWireConnectingSides[2]);
+    gNorthProperty = EnumProperty<ConnectingSide*>::create(
+        L"north", typeid(ConnectingSide), values, Predicates<ConnectingSide*>::alwaysTrue);
+    gEastProperty = EnumProperty<ConnectingSide*>::create(
+        L"east", typeid(ConnectingSide), values, Predicates<ConnectingSide*>::alwaysTrue);
+    gSouthProperty = EnumProperty<ConnectingSide*>::create(
+        L"south", typeid(ConnectingSide), values, Predicates<ConnectingSide*>::alwaysTrue);
+    gWestProperty = EnumProperty<ConnectingSide*>::create(
+        L"west", typeid(ConnectingSide), values, Predicates<ConnectingSide*>::alwaysTrue);
 }
 
 int RedStoneWireBlock::getAABBIndex(const BlockState* state)
@@ -234,7 +270,8 @@ const BlockState* RedStoneWireBlock::mirror(const BlockState* state, Mirror* mir
 
 BlockStateDefinition* RedStoneWireBlock::createBlockStateDefinition()
 {
-    return new BlockStateDefinition(this);
+    static const Property* properties[] = { gNorthProperty, gEastProperty, gSouthProperty, gWestProperty, POWER };
+    return new BlockStateDefinition(this, properties, 5);
 }
 
 EBlockFaceShape RedStoneWireBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)

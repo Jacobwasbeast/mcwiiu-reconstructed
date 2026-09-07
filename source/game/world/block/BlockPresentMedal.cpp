@@ -13,7 +13,7 @@ BlockPresentMedal::~BlockPresentMedal()
 {
 }
 
-float BlockPresentMedal::GetScore(PlayerStats* playerStats) const
+double BlockPresentMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, getBlocksPresent);
 }

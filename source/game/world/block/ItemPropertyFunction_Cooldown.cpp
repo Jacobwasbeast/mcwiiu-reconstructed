@@ -6,7 +6,7 @@
 
 float ItemPropertyFunction_Cooldown::call(not_null_ptr<ItemInstance> itemInstance,
                                           Level*,
-                                          boost::shared_ptr<LivingEntity> entity)
+                                          boost::shared_ptr<LivingEntity> entity) const
 {
     if (entity && entity->GetType() == ENTITY_TYPE_PLAYER)
     {

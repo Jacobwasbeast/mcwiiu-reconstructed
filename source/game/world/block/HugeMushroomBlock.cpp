@@ -75,6 +75,8 @@ std::wstring HugeMushroomBlock::Variant::getSerializedName() const
     return mName;
 }
 
+template std::wstring _toString<HugeMushroomBlock::Variant>(HugeMushroomBlock::Variant*);
+
 void HugeMushroomBlock::blockStaticCtor()
 {
     for (int i = 0; i < 13; ++i)

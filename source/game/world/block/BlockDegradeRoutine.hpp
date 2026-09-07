@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_BLOCKDEGRADEROUTINE_HPP
 #define GAME_WORLD_BLOCK_BLOCKDEGRADEROUTINE_HPP
 
+#include <cstddef>
 #include <deque>
 #include <string>
 

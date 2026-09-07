@@ -10,8 +10,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-
-class ChestBlockEntity;
+#include "game/world/block/ChestBlockEntity.hpp"
 
 OcelotSitOnBlockGoal::OcelotSitOnBlockGoal(Ocelot* ocelot, double speedModifier)
     : MoveToBlockGoal(ocelot, speedModifier, 8, 1, 0.5),

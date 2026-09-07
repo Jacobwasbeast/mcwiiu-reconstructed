@@ -24,6 +24,8 @@ class TextureAtlasSprite;
 class RedStoneWireBlock : public Block
 {
 public:
+    static AbstractProperty<int>* POWER;
+
     class ConnectingSide : public StringRepresentable
     {
     public:

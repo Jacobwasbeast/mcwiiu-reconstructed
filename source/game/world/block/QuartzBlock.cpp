@@ -45,6 +45,8 @@ QuartzBlock::Variant* QuartzBlock::Variant::byData(int data)
 std::wstring QuartzBlock::Variant::toString() const { return mName; }
 std::wstring QuartzBlock::Variant::getSerializedName() const { return mSerializedName; }
 
+template std::wstring _toString<QuartzBlock::Variant>(QuartzBlock::Variant*);
+
 void QuartzBlock::blockStaticCtor()
 {
     boost::unordered_set<Variant*> values;

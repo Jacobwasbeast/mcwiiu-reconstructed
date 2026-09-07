@@ -35,7 +35,7 @@ boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMappe
 
     for (it = Block::blockRegistry->begin(); it != Block::blockRegistry->end(); ++it)
     {
-        Block* block = it->second;
+        Block* block = it->first;
 
         if (ignoredBlocks.find(block) != ignoredBlocks.end())
         {

@@ -237,11 +237,17 @@ DefaultedMappedRegistry<ResourceLocation, Block*>* Block::blockRegistry =
 IdMapper<const BlockState*>* Block::blockStateRegistry = new IdMapper<const BlockState*>();
 static const AABB* FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 static const float INDESTRUCTIBLE = -1.0f;
-static const unsigned int THREAD_STORAGE_INDEX = TlsAlloc();
+unsigned int THREAD_STORAGE_INDEX = TlsAlloc();
 
 void createItem__FP5Block(not_null_ptr<ItemInstance>* item, Block* block)
 {
     createItem__FPC10BlockState(item, block->defaultBlockState());
+}
+
+void createItem__FPC10BlockState(not_null_ptr<ItemInstance>* item, const BlockState* state)
+{
+    Block* block = state->getBlock();
+    *item = not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(state)));
 }
 
 Block::ThreadStorage::ThreadStorage()
