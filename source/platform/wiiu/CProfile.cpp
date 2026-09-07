@@ -32,7 +32,7 @@ namespace nn
 }
 
 unsigned int GetTickCount();
-void getPlayerUID(PlayerUID*, int, bool);
+PlayerUID getPlayerUID(int, bool);
 int getSlotId(int);
 int SCIGetParentalEnable(unsigned char*);
 int SCIGetParentalAccountEShopPurchase(unsigned char*, unsigned char);
@@ -40,20 +40,22 @@ int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
 int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
 int VerifyCountryRange(unsigned int*);
 int SCIGetISOResource(char*, unsigned int, const char*);
+extern "C"
+{
 void OSFastMutex_Init(OSFastMutex*, const char*);
 void OSFastMutex_Lock(OSFastMutex*);
 void OSFastMutex_Unlock(OSFastMutex*);
-unsigned long long OSGetTime();
 void OSSleepTicks(unsigned long long);
-void OSResumeThread(OSThread*);
-unsigned int* OSGetSystemInfo();
 void* MEMAllocFromDefaultHeapEx(unsigned int, int);
 void MEMFreeToDefaultHeap(void*);
 void* allocAligned();
 int FSInitCmdBlock(void*);
 int FSAddClient(FSClient*, unsigned int);
 int FSSetStateChangeNotification(FSClient*, void*);
+}
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
+extern "C"
+{
 int SAVEInitSaveDir(unsigned char);
 int SAVEOpenFile(FSClient*, void*, unsigned char, const char*, const char*, int*, unsigned int);
 int SAVEFlushQuota(FSClient*, void*, unsigned char, unsigned int);
@@ -61,22 +63,23 @@ int FSWriteFile(FSClient*, void*, const void*, unsigned int, unsigned int, int, 
 int FSReadFile(FSClient*, void*, void*, unsigned int, unsigned int, int, unsigned int, unsigned int);
 int FSCloseFile(FSClient*, void*, int, unsigned int);
 int FSGetStatFile(FSClient*, void*, int, void*, unsigned int);
+}
 
 CProfile* gProfile;
 
 static char sCountryCodeData[0x300];
 
-void getPlayerUID(PlayerUID* uid, int quadrant, bool includeOffline)
+PlayerUID getPlayerUID(int quadrant, bool includeOffline)
 {
-    *uid = PlayerUID(0);
+    PlayerUID uid(0);
     if (gProfile->IsValidPlayer(quadrant))
-        gProfile->GetXUID(quadrant, uid, includeOffline);
+        gProfile->GetXUID(quadrant, &uid, includeOffline);
+    return uid;
 }
 
 int getSlotId(int quadrant)
 {
-    PlayerUID uid(0);
-    getPlayerUID(&uid, quadrant, false);
+    PlayerUID uid = getPlayerUID(quadrant, false);
     if ((uid.flags & 0x80000000u) != 0)
         return nn::act::GetSlotNoEx(uid.uuid);
     return 0;
@@ -159,7 +162,7 @@ int SCIGetParentalAccountNetCommunicationOnGame(unsigned char* blocked, unsigned
 
 static unsigned long long getSystemMilliseconds()
 {
-    return OSGetTime() * 1000 / (*OSGetSystemInfo() >> 2);
+    return OSGetTime() * 1000 / (OSGetSystemInfo()->busClockSpeed >> 2);
 }
 
 CProfile::PROFILE_DETAILS::PROFILE_DETAILS()
@@ -563,17 +566,17 @@ void CProfile::SetFatalTrophyErrorID(int stringId)
     mFatalTrophyErrorId = stringId;
 }
 
-const wchar_t* CProfile::GetMiiName(int quadrant)
+wchar_t* CProfile::GetMiiName(int quadrant)
 {
-    static const wchar_t empty[] = L"";
-    return IsSignedIn(quadrant) ? (const wchar_t*)mProfiles[quadrant].mii->mName : empty;
+    static wchar_t empty[] = L"";
+    return IsSignedIn(quadrant) ? (wchar_t*)mProfiles[quadrant].mii->mName : empty;
 }
 
-const wchar_t* CProfile::GetGamertag(int quadrant)
+wchar_t* CProfile::GetGamertag(int quadrant)
 {
     if (!IsSignedInLive(quadrant))
         return GetMiiName(quadrant);
-    return (const wchar_t*)mProfiles[quadrant].gamertag;
+    return (wchar_t*)mProfiles[quadrant].gamertag;
 }
 
 std::wstring CProfile::GetDisplayName(int quadrant)
@@ -1211,8 +1214,7 @@ void CProfile::OnSignin(int quadrant)
     if (quadrant < 0 || quadrant >= 4 || !IsValidPlayer(quadrant))
         return;
 
-    PlayerUID uid(0);
-    getPlayerUID(&uid, quadrant, false);
+    PlayerUID uid = getPlayerUID(quadrant, false);
     CAchievements*& achievements = mAchievementsByPad[quadrant];
     if (achievements == NULL)
     {
@@ -1258,11 +1260,15 @@ bool CProfile::callAwardManagerCallback(int quadrant, int achievementId) const
 
 void CProfile::Award(int quadrant, int achievementId, bool)
 {
-    PlayerUID uid(0);
-    getPlayerUID(&uid, quadrant, false);
+    PlayerUID uid = getPlayerUID(quadrant, false);
     CAchievements* achievements = getAchievements(quadrant);
     if (achievementId < 0 || achievementId >= 128 || achievements == NULL)
+    {
+        std::wstring uidString = uid.toString();
+        DebugPrintf("<CProfile::IsAwardsFlagSet> Cannot award trophy.Player '%ls', iQuad=%i, iAward=%i, pAch=%p.",
+                    uidString.c_str(), quadrant, achievementId, achievements);
         return;
+    }
     if (!achievements->IsIdle())
     {
         achievements->addPendingAward(achievementId);
@@ -1274,8 +1280,7 @@ void CProfile::Award(int quadrant, int achievementId, bool)
 
 bool CProfile::IsAwardsFlagSet(int quadrant, int achievementId)
 {
-    PlayerUID uid(0);
-    getPlayerUID(&uid, quadrant, false);
+    PlayerUID uid = getPlayerUID(quadrant, false);
     CAchievements* achievements = getAchievements(quadrant);
     return achievements != NULL && achievementId >= 0 && achievementId < 128 && achievements->GetAwardedBit(achievementId);
 }
@@ -1400,6 +1405,12 @@ void CProfile::AwardManagerThreadProc(int, void* argument)
     }
 }
 
+static int AwardManagerThreadEntry(int value, void* context)
+{
+    CProfile::AwardManagerThreadProc(value, context);
+    return 0;
+}
+
 void CProfile::AwardManagerOnCreate()
 {
     mAwardHandler = NULL;
@@ -1407,11 +1418,11 @@ void CProfile::AwardManagerOnCreate()
     OSFastMutex_Init(&mAwardMutex, "AwardManager");
     FSInitCmdBlock(mFileSystemCommand);
     FSAddClient(&mFileSystemClient, 0xffffffffU);
-    FSStateChangeParams notification = { stateChangeCallback, NULL, 0, 0 };
+    FSStateChangeParams notification = { stateChangeCallback, NULL, 0 };
     FSSetStateChangeNotification(&mFileSystemClient, &notification);
     mAwardThreadStack = MEMAllocFromDefaultHeapEx(60000, 16);
     mAwardThreadStackTop = (unsigned char*)mAwardThreadStack + 60000;
-    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, (int (*)(int, void*))AwardManagerThreadProc, 0, this, mAwardThreadStackTop, 60000, 16, 7) != 0)
+    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, AwardManagerThreadEntry, 0, this, mAwardThreadStackTop, 60000, 16, 7) != 0)
         OSResumeThread(&mAwardThread);
     std::memset(mAwardRegistrations, 0xff, sizeof(mAwardRegistrations));
 }

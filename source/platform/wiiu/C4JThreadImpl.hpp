@@ -5,17 +5,12 @@
 
 #include "platform/wiiu/C4JEventImpl.hpp"
 
-struct OSThread
-{
-    unsigned char data[0x6a0];
-};
-
 class C4JThreadImpl
 {
 public:
     C4JThreadImpl(int (*entry)(void*), void* argument, const char* name, int stackSize);
     C4JThreadImpl(const char* name);
-    ~C4JThreadImpl();
+    virtual ~C4JThreadImpl();
 
     static uint32_t getCurrentThread();
     static bool isMainThread();
@@ -25,16 +20,16 @@ public:
     static int entryPoint(int argumentCount, void* argument);
     static void Sleep(int milliseconds);
 
-    void Run();
-    uint8_t isRunning();
-    uint8_t hasStarted();
-    void SetProcessor(int processor);
-    uint32_t GetProcessor();
-    void SetPriority(int priority);
-    uint32_t WaitForCompletion(int milliseconds);
-    uint32_t GetExitCode();
-    const char* getName();
-    void SetDeleteOnExit(bool deleteOnExit);
+    virtual void Run();
+    virtual uint8_t isRunning();
+    virtual uint8_t hasStarted();
+    virtual void SetProcessor(int processor);
+    virtual uint32_t GetProcessor();
+    virtual void SetPriority(int priority);
+    virtual uint32_t WaitForCompletion(int milliseconds);
+    virtual uint32_t GetExitCode();
+    virtual const char* getName();
+    virtual void SetDeleteOnExit(bool deleteOnExit);
     static void SetMainThreadID();
 
 private:

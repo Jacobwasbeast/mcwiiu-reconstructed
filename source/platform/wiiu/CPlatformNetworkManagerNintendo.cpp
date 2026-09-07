@@ -5,6 +5,8 @@
 #include <string.h>
 #include <wchar.h>
 
+#include <nn/result.h>
+
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/L10N.hpp"
@@ -25,8 +27,10 @@ namespace nn
 {
 namespace fp
 {
-unsigned int GetFriendList(unsigned int* friendIds, unsigned int* count, unsigned int offset, unsigned int maxCount);
-unsigned int GetFriendAccountId(char (*accountIds)[17], const unsigned int* friendIds, unsigned int count);
+nn::Result GetFriendAccountId(char* accountIds, unsigned int* friendIds, unsigned int count)
+    asm("GetFriendAccountId__Q2_2nn2fpFPA17_cPCUiUi");
+nn::Result GetFriendList(unsigned int* friendIds, unsigned int* count, unsigned int offset, unsigned int maxCount)
+    asm("GetFriendList__Q2_2nn2fpFPUiT1UiT3");
 }
 }
 
@@ -314,7 +318,7 @@ void CPlatformNetworkManagerNintendo::HandleDisconnect(bool error)
 
 void CPlatformNetworkManagerNintendo::HandleInviteReceived(int userIndex, nn::fp::FriendPresence* presence)
 {
-    m_gameNetworkManager->GameInviteReceived(userIndex, presence);
+    m_gameNetworkManager->GameInviteReceived(userIndex, static_cast<FriendPresence*>(static_cast<void*>(presence)));
 }
 
 void CPlatformNetworkManagerNintendo::Initialise(CGameNetworkManager* manager, int maxSystemFlags)
@@ -825,9 +829,9 @@ void CPlatformNetworkManagerNintendo::CheckFriendsCanPlay(int userIndex, int& fr
         unsigned int friendIds[100];
         unsigned int count = 0;
         char accountIds[100][17];
-        unsigned int result = nn::fp::GetFriendList(friendIds, &count, 0, 100);
-        if ((result & 0x80000000) == 0)
-            nn::fp::GetFriendAccountId(accountIds, friendIds, count);
+        nn::Result result = nn::fp::GetFriendList(friendIds, &count, 0, 100);
+        if (result.IsSuccess())
+            nn::fp::GetFriendAccountId(&accountIds[0][0], friendIds, count);
 
         char accountId[32];
         wcstombs(accountId, packet->mName.c_str(), sizeof(accountId));

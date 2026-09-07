@@ -18,6 +18,12 @@
 extern "C" int SCIGetCafeLanguage(unsigned int* language);
 extern "C" int SCIGetPlatformRegion(unsigned int* region);
 extern "C" int OSResumeThread(OSThread* thread);
+extern "C" void KPADReset(void);
+
+static void ConnectCallbackAdapter(WPADChan channel, WPADError result)
+{
+    CInput::ConnectCallback(static_cast<int>(channel), static_cast<int>(result));
+}
 
 int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value);
 int SCIGetSystemSettings(void* settings);
@@ -212,7 +218,7 @@ void CInput::InitTime()
         idleStartTimes[pad].high = 0;
         idleStartTimes[pad].low = 0;
     }
-    timeScale = 1.0f / static_cast<float>(OSGetSystemInfo()->busSpeed >> 2);
+    timeScale = 1.0f / static_cast<float>(OSGetSystemInfo()->busClockSpeed >> 2);
 }
 void CInput::ConnectCallback(int channel, int result)
 {
@@ -226,7 +232,7 @@ void CInput::ConnectCallback(int channel, int result)
     }
     else
     {
-        WPADControlDpd(channel, 0, 0);
+        WPADControlDpd(static_cast<WPADChan>(channel), WPAD_DPD_FMT_NONE, 0);
     }
 }
 void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alternateMapCount)
@@ -238,7 +244,7 @@ void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alt
     std::memset(joypads, 0, sizeof(joypads));
     for (int channel = 0; channel < 4; ++channel)
     {
-        KPADSetConnectCallback(static_cast<KPADChan>(channel), ConnectCallback);
+        KPADSetConnectCallback(static_cast<KPADChan>(channel), ConnectCallbackAdapter);
         s_connectionResults[channel] = static_cast<KPADError>(0xFD);
     }
 
@@ -1069,7 +1075,7 @@ unsigned char CInput::GetJoypadRTrigger(int pad, bool raw)
     }
     return 0;
 }
-int CInput::GetTouchPadData(int pad, C_4JInput::ETouchType type, bool previous)
+unsigned short* CInput::GetTouchPadData(int pad, C_4JInput::ETouchType type, bool previous)
 {
     if (!RemapIpad(pad) || pad != 0 || !joypads[pad].connected || (previous && joypads[pad].sampleIndex))
     {
@@ -1077,15 +1083,15 @@ int CInput::GetTouchPadData(int pad, C_4JInput::ETouchType type, bool previous)
     }
     if (type == C_4JInput::ETouchType_0)
     {
-        return (int)&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpNormal;
+        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpNormal);
     }
     if (type == C_4JInput::ETouchType_1)
     {
-        return (int)&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered1;
+        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered1);
     }
     if (type == C_4JInput::ETouchType_2)
     {
-        return (int)&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered2;
+        return reinterpret_cast<unsigned short*>(&static_cast<VPADStatus*>(joypads[pad].statusStorage.vpad.statuses)[joypads[pad].statusIndex].tpFiltered2);
     }
     return 0;
 }
@@ -1319,15 +1325,28 @@ void CInput::ProcPredict(int value, void* context)
         nn::swkbd::CalcSubThreadPredict();
     }
 }
+
+static int ProcFontThreadEntry(int value, void* context)
+{
+    CInput::ProcFont(value, context);
+    return 0;
+}
+
+static int ProcPredictThreadEntry(int value, void* context)
+{
+    CInput::ProcPredict(value, context);
+    return 0;
+}
+
 void CInput::KeyboardOnCreate()
 {
     keyboardState = eKeyboardProcessState_0;
     destroyKeyboardRequested = 0;
     OSInitMessageQueue(&s_fontQueue, &s_fontMessage, 1);
     OSInitMessageQueue(&s_predictQueue, &s_predictMessage, 1);
-    C4JThreadImpl::OSCreateThread4J(&s_fontThread, (int (*)(int, void*))ProcFont, 0, 0, s_fontStack + sizeof(s_fontStack), sizeof(s_fontStack), 0x11, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_fontThread, ProcFontThreadEntry, 0, 0, s_fontStack + sizeof(s_fontStack), sizeof(s_fontStack), 0x11, 0);
     OSResumeThread(&s_fontThread);
-    C4JThreadImpl::OSCreateThread4J(&s_predictThread, (int (*)(int, void*))ProcPredict, 0, 0, s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_predictThread, ProcPredictThreadEntry, 0, 0, s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
     OSResumeThread(&s_predictThread);
 }
 unsigned int CInput::GetKeyboardControllerType()
@@ -1402,7 +1421,7 @@ void CInput::TickKeyboard()
         appearArg.keyboardArg.configArg.accessFlags = keyboardControllerType;
         appearArg.keyboardArg.configArg.languageType = static_cast<nn::swkbd::LanguageType>(GetLanguageType());
         appearArg.inputFormArg.type = static_cast<nn::swkbd::InputFormType>(1);
-        appearArg.inputFormArg.initialText = keyboardText;
+        appearArg.inputFormArg.initialText = reinterpret_cast<const char16_t*>(keyboardText);
         appearArg.inputFormArg.unk_0x04 = -1;
         appearArg.inputFormArg.hintText = 0;
         appearArg.inputFormArg.maxTextLength = keyboardMaximumLength;
@@ -1579,8 +1598,8 @@ void CInput::TickErrorViewer()
         else
         {
             appearArg.errorArg.errorType = static_cast<nn::erreula::ErrorType>(2);
-            appearArg.errorArg.errorTitle = errorViewerTitle;
-            appearArg.errorArg.errorMessage = errorViewerMessage;
+            appearArg.errorArg.errorTitle = reinterpret_cast<const char16_t*>(errorViewerTitle);
+            appearArg.errorArg.errorMessage = reinterpret_cast<const char16_t*>(errorViewerMessage);
         }
         nn::erreula::AppearErrorViewer(appearArg);
         SetErrorViewerMode(ERROR_VIEWER_ACTIVE);

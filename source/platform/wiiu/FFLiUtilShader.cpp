@@ -4,8 +4,8 @@
 #include <cstring>
 #include <cstdlib>
 extern unsigned int FFLiRoundUp(unsigned int,unsigned int);
-extern unsigned int GX2CalcFetchShaderSizeEx(unsigned int,unsigned int,unsigned int);
-extern void GX2InitFetchShaderEx(FFLiUtilShader::FetchShader*,unsigned int,unsigned int,void*,unsigned int,unsigned int);
+extern "C" unsigned int GX2CalcFetchShaderSizeEx(unsigned int,unsigned int,unsigned int);
+extern "C" void GX2InitFetchShaderEx(FFLiUtilShader::FetchShader*,unsigned int,unsigned int,void*,unsigned int,unsigned int);
 extern unsigned int GFDGetPixelShaderCount(const void*); extern unsigned int GFDGetPixelShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetPixelShaderProgramSize(unsigned int,const void*); extern int GFDGetPixelShader(_GX2PixelShader*,void*,unsigned int,const void*);
 extern unsigned int GFDGetVertexShaderCount(const void*); extern unsigned int GFDGetVertexShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetVertexShaderProgramSize(unsigned int,const void*); extern int GFDGetVertexShader(_GX2VertexShader*,void*,unsigned int,const void*);
 extern void FFLiBugEndianSwap(void*,unsigned int); extern void FFLiInvalidateShader(void*,unsigned int);
@@ -22,17 +22,17 @@ extern void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44*, _Mat34*, unsigned shor
 extern void ASM_MTX34To44(const _Mat34*, _Mat44*);
 extern void ASM_MTX44Concat(const _Mat44*, const _Mat44*, _Mat44*);
 extern void ASM_MTX44Transpose(const _Mat44*, _Mat44*);
-extern void GX2SetContextState();
-extern void GX2SetFetchShader(const FFLiUtilShader::FetchShader*);
-extern void GX2SetVertexShader(const _GX2VertexShader*);
-extern void GX2SetPixelShader(const _GX2PixelShader*);
-extern void GX2SetupContextStateEx(void*, unsigned int);
-extern void GX2InitSampler(void*, unsigned int, unsigned int);
-extern void GX2SetPixelSampler(const void*, unsigned int);
-extern void GX2SetVertexSampler(const void*, unsigned int);
-extern void GX2SetPixelUniformReg(unsigned int, unsigned int, const void*);
-extern void GX2SetVertexUniformReg(unsigned int, unsigned int, const void*);
-extern void OSPanic(const char*, unsigned int, const char*, ...);
+extern "C" void GX2SetContextState();
+extern "C" void GX2SetFetchShader(const FFLiUtilShader::FetchShader*);
+extern "C" void GX2SetVertexShader(const _GX2VertexShader*);
+extern "C" void GX2SetPixelShader(const _GX2PixelShader*);
+extern "C" void GX2SetupContextStateEx(void*, unsigned int);
+extern "C" void GX2InitSampler(void*, unsigned int, unsigned int);
+extern "C" void GX2SetPixelSampler(const void*, unsigned int);
+extern "C" void GX2SetVertexSampler(const void*, unsigned int);
+extern "C" void GX2SetPixelUniformReg(unsigned int, unsigned int, const void*);
+extern "C" void GX2SetVertexUniformReg(unsigned int, unsigned int, const void*);
+extern "C" void OSPanic(const char*, unsigned int, const char*, ...);
 extern unsigned char ModulateModeToValue(FFLModulateMode);
 static PlainShader gDefaultShader;
 static PlainShader gExtShader;
@@ -149,7 +149,7 @@ void SetModulateMode__FP11PlainShader15FFLModulateMode(PlainShader* shader, FFLM
     GX2SetPixelUniformReg(shader->pixelMode, 4, value);
 }
 
-void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader* shader, const FFLModulateParam* param)
+void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader* shader, const FFLiShaderModulateParam* param)
 {
     if (shader == 0 || param == 0) OSPanic("FFLiUtilShader.cpp", 0x117, "Invalid pointer: %x", 0);
     if (param->texture != 0) {

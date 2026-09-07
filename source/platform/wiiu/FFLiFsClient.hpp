@@ -2,24 +2,7 @@
 #define SOURCE_PLATFORM_WIIU_FFLIFSCLIENT_HPP
 
 #include <stdint.h>
-
-struct FSClient
-{
-    uint8_t storage[5888];
-};
-
-enum FSVolumeState
-{
-    FS_VOLUME_STATE_UNKNOWN = 0
-};
-
-struct FSStateChangeParams
-{
-    void (*callback)(FSClient *, FSVolumeState, void *);
-    void *context;
-    uint32_t queue;
-    uint32_t reserved;
-};
+#include <coreinit/filesystem.h>
 
 class FFLiFsClient
 {

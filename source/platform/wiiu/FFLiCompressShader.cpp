@@ -7,15 +7,15 @@
 #include <cstring>
 
 struct _GX2Sampler;
-extern void GX2SetFetchShader(const FFLiUtilShader::FetchShader* fetchShader);
-extern void GX2SetVertexShader(const _GX2VertexShader* shader);
-extern void GX2SetPixelShader(const _GX2PixelShader* shader);
-extern void GX2SetPixelSampler(const _GX2Sampler* sampler, unsigned int unit);
-extern void GX2SetPixelTexture(const _GX2Texture* texture, unsigned int unit);
-extern void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count, const void* values);
-extern void GX2SetPixelUniformBlock(unsigned int offset, unsigned int count, const void* values);
-extern void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
-extern void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetFetchShader(const FFLiUtilShader::FetchShader* fetchShader);
+extern "C" void GX2SetVertexShader(const _GX2VertexShader* shader);
+extern "C" void GX2SetPixelShader(const _GX2PixelShader* shader);
+extern "C" void GX2SetPixelSampler(const _GX2Sampler* sampler, unsigned int unit);
+extern "C" void GX2SetPixelTexture(const _GX2Texture* texture, unsigned int unit);
+extern "C" void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetPixelUniformBlock(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
 extern void FFLiInvalidateShader(void* buffer, unsigned int size);
 
 FFLiCompressShader::FFLiCompressShader()

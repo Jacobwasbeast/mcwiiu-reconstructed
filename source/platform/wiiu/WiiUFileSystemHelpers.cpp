@@ -9,11 +9,11 @@ extern "C" int FSOpenDir(void* client, void* commandBlock, const char* path, int
 
 static void* s_fileSystemClient = 0;
 
-bool OpenDir(const char* path, int* directory)
+int OpenDir(const char* path, int* directory)
 {
     setAltMainOKToRun();
     void* commandBlock = GetCommandBlock();
     int result = FSOpenDir(s_fileSystemClient, commandBlock, path, directory, 0);
     waitForAltMainThreadToComplete();
-    return result == 0;
+    return result;
 }

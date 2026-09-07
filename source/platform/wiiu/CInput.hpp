@@ -231,7 +231,7 @@ public:
     virtual double GetJoypadStick_RY(int pad, bool raw);
     virtual unsigned char GetJoypadLTrigger(int pad, bool raw);
     virtual unsigned char GetJoypadRTrigger(int pad, bool raw);
-    virtual int GetTouchPadData(int pad, C_4JInput::ETouchType touchType, bool previous);
+    virtual unsigned short* GetTouchPadData(int pad, C_4JInput::ETouchType touchType, bool previous);
     virtual void SetMenuDisplayed(int pad, bool displayed);
     virtual unsigned int RequestKeyboard(const wchar_t* title, const wchar_t* initialText, unsigned int pad, unsigned int maximumLength, KeyboardCallback callback, void* context, C_4JInput::EKeyboardMode mode);
     virtual void RequestErrorViewer(unsigned int value, unsigned int type, ErrorViewerCallback callback, void* context);

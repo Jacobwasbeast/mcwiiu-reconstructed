@@ -1,25 +1,14 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
-#include "game/core/CriticalSection.hpp"
 #include "game/core/System.hpp"
+#include <coreinit/memdefaultheap.h>
+#include <coreinit/mutex.h>
+#include <coreinit/thread.h>
 #include <stdio.h>
 #include <vector>
 
-extern "C" uint32_t OSGetCurrentThread();
-extern "C" void OSSetThreadName(OSThread*, const char*);
-extern "C" uint32_t OSCreateThread(OSThread*, int (*)(int, void*), int, void*, void*, unsigned int, unsigned int, unsigned short);
-extern "C" void OSSetThreadDeallocator(OSThread*, void (*)(void*, void*));
-extern "C" void OSSetThreadRunQuantum(OSThread*, unsigned int);
-extern "C" int OSResumeThread(OSThread*);
-extern "C" void OSSetThreadAffinity(OSThread*, unsigned int);
-extern "C" void OSSetThreadPriority(OSThread*, unsigned int);
-extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int, int);
-extern "C" void MEMFreeToDefaultHeap(void*);
-extern "C" void Sleep(unsigned int);
-
 static std::vector<C4JThreadImpl*> s_threads;
-static OSFastMutex s_threadMutex;
-static OSFastMutex s_createMutex;
-static bool s_createMutexInitialized = false;
+static OSMutex s_threadMutex;
+static OSMutex s_createMutex;
 static OSThread* s_mainThread = NULL;
 static __thread uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
 static const unsigned int s_processorAffinity[3] = { 0x01020400u, 0x1211100Fu, 0x0E000000u };
@@ -28,27 +17,48 @@ static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
 typedef std::vector<C4JThreadImpl*> C4JThreadVector;
 typedef C4JThreadVector::iterator C4JThreadVectorIterator;
 
+struct ThreadMutexInitializer
+{
+    ThreadMutexInitializer()
+    {
+        OSInitMutex(&s_threadMutex);
+        OSInitMutex(&s_createMutex);
+    }
+};
+
+static void InitializeThreadMutexes()
+{
+    static ThreadMutexInitializer initializer;
+    (void)initializer;
+}
+
 uint32_t C4JThreadImpl::getCurrentThread()
 {
-    uint32_t currentThread = OSGetCurrentThread();
-    EnterCriticalSection(&s_threadMutex);
+    OSThread* currentThread = OSGetCurrentThread();
+    InitializeThreadMutexes();
+    OSLockMutex(&s_threadMutex);
     std::vector<C4JThreadImpl*>::iterator it;
     for (it = s_threads.begin(); it != s_threads.end(); ++it)
     {
-        if ((uint32_t)(*it)->m_thread == currentThread)
+        if ((*it)->m_thread == currentThread)
         {
             C4JThreadImpl* thread = *it;
-            LeaveCriticalSection(&s_threadMutex);
+            OSUnlockMutex(&s_threadMutex);
             return (uint32_t)thread;
         }
     }
-    LeaveCriticalSection(&s_threadMutex);
+    OSUnlockMutex(&s_threadMutex);
     return 0;
 }
 
 bool C4JThreadImpl::isMainThread()
 {
-    return (OSThread*)getCurrentThread() == s_mainThread;
+    OSThread* currentThread = OSGetCurrentThread();
+    InitializeThreadMutexes();
+    OSLockMutex(&s_threadMutex);
+    bool result = currentThread == s_mainThread;
+    OSUnlockMutex(&s_threadMutex);
+    return result;
 }
 
 const char* C4JThreadImpl::getCurrentThreadName()
@@ -61,17 +71,32 @@ void C4JThreadImpl::threadDeallocator(void*, void* stack)
     MEMFreeToDefaultHeap(stack);
 }
 
+static void ThreadDeallocatorAdapter(OSThread* thread, void* stack)
+{
+    C4JThreadImpl::threadDeallocator(thread, stack);
+}
+
+extern "C" BOOL OSCreateThreadEvidence(OSThread*, int (*)(int, const char**), int, char*, void*, uint32_t, int32_t, OSThreadAttributes) __asm__("OSCreateThread");
+extern "C" OSThreadDeallocatorFn OSSetThreadDeallocatorEvidence(OSThread*, void (*)(OSThread*, void*)) __asm__("OSSetThreadDeallocator");
+
 uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, unsigned int priority, unsigned short attributes)
 {
-    if (!s_createMutexInitialized)
+    union
     {
-        InitializeCriticalSection(&s_createMutex);
-        s_createMutexInitialized = true;
-    }
-    EnterCriticalSection(&s_createMutex);
-    uint32_t result = OSCreateThread(thread, entry, argumentCount, argument, stack, stackSize, priority, attributes);
-    OSSetThreadDeallocator(thread, threadDeallocator);
-    LeaveCriticalSection(&s_createMutex);
+        int (*source)(int, void*);
+        int (*evidence)(int, const char**);
+    } evidenceEntry = { entry };
+    union
+    {
+        void* pointer;
+        char* argv;
+    } evidenceArgument = { argument };
+
+    InitializeThreadMutexes();
+    OSLockMutex(&s_createMutex);
+    uint32_t result = OSCreateThreadEvidence(thread, evidenceEntry.evidence, argumentCount, evidenceArgument.argv, stack, stackSize, priority, attributes);
+    OSSetThreadDeallocatorEvidence(thread, ThreadDeallocatorAdapter);
+    OSUnlockMutex(&s_createMutex);
     return result;
 }
 
@@ -83,13 +108,14 @@ int C4JThreadImpl::entryPoint(int, void* argument)
     thread->m_exitCode = (uint32_t)result;
     if (!thread->m_deleteOnExit)
     {
-        delete thread->m_completionEvent;
+        C4JEventImpl* completionEvent = thread->m_completionEvent;
+        completionEvent->Clear();
         thread->m_completionEvent = NULL;
         thread->m_running = 0;
-        delete thread;
+        delete completionEvent;
     }
     else
-        thread->m_running = 0;
+        delete thread;
     return result;
 }
 
@@ -103,11 +129,17 @@ C4JThreadImpl::C4JThreadImpl(int (*entry)(void*), void* argument, const char* na
     sprintf(m_name, "(4J) %s", name);
     m_stack = MEMAllocFromDefaultHeapEx((unsigned int)m_stackSize, 8);
     m_thread = (OSThread*)MEMAllocFromDefaultHeapEx(0x6a0, 8);
-    OSCreateThread4J(m_thread, entryPoint, 0, this, (char*)m_stack + m_stackSize, (unsigned int)m_stackSize, 16, 15);
+    union
+    {
+        int (*evidence)(int, const char**);
+        int (*source)(int, void*);
+    } bridgeEntry;
+    bridgeEntry.source = entryPoint;
+    OSCreateThread4J(m_thread, bridgeEntry.source, 0, this, (char*)m_stack + m_stackSize, (unsigned int)m_stackSize, 16, 15);
     OSSetThreadRunQuantum(m_thread, 8000);
-    EnterCriticalSection(&s_threadMutex);
+    OSLockMutex(&s_threadMutex);
     s_threads.push_back(this);
-    LeaveCriticalSection(&s_threadMutex);
+    OSUnlockMutex(&s_threadMutex);
     m_deleteOnExit = false;
 }
 
@@ -115,17 +147,18 @@ C4JThreadImpl::C4JThreadImpl(const char* name)
     : m_argument(NULL), m_entry(NULL), m_stackSize(0), m_processor(1), m_stack(NULL), m_running(1), m_started(1), m_exitCode(1), m_startTime(System::processTimeInMilliSecs()), m_deleteOnExit(false), m_completionEvent(NULL), m_priority(0), m_thread((OSThread*)OSGetCurrentThread())
 {
     sprintf(m_name, "(4J) %s", name);
-    InitializeCriticalSection(&s_threadMutex);
-    EnterCriticalSection(&s_threadMutex);
+    InitializeThreadMutexes();
+    OSLockMutex(&s_threadMutex);
     s_threads.push_back(this);
-    LeaveCriticalSection(&s_threadMutex);
+    OSUnlockMutex(&s_threadMutex);
 }
 
 C4JThreadImpl::~C4JThreadImpl()
 {
     delete m_completionEvent;
     m_completionEvent = NULL;
-    EnterCriticalSection(&s_threadMutex);
+    InitializeThreadMutexes();
+    OSLockMutex(&s_threadMutex);
     std::vector<C4JThreadImpl*>::iterator it;
     for (it = s_threads.begin(); it != s_threads.end(); ++it)
     {
@@ -135,7 +168,7 @@ C4JThreadImpl::~C4JThreadImpl()
             break;
         }
     }
-    LeaveCriticalSection(&s_threadMutex);
+    OSUnlockMutex(&s_threadMutex);
 }
 
 void C4JThreadImpl::Run()
@@ -185,13 +218,16 @@ void C4JThreadImpl::SetDeleteOnExit(bool deleteOnExit) { m_deleteOnExit = delete
 
 void C4JThreadImpl::SetMainThreadID()
 {
-    s_mainThread = (OSThread*)OSGetCurrentThread();
+    InitializeThreadMutexes();
+    OSLockMutex(&s_threadMutex);
+    s_mainThread = OSGetCurrentThread();
     OSSetThreadRunQuantum(s_mainThread, 8000);
+    OSUnlockMutex(&s_threadMutex);
 }
 
 void C4JThreadImpl::Sleep(int milliseconds)
 {
-    ::Sleep((unsigned int)milliseconds);
+    OSSleepTicks(OSMillisecondsToTicks(milliseconds));
 }
 
 void SetSpecialThreadIDForFS_MilesStreamThread__Fv()

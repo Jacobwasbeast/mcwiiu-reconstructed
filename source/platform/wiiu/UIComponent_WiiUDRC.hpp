@@ -3,9 +3,11 @@
 #include <string>
 #include "game/ui/UIScene.hpp"
 class UILayer;
+class ConsoleUIController;
 class UIComponent_WiiUDRC : public UIScene
 {
 private:
+    friend class ConsoleUIController;
     int m_iconX;
     int m_iconY;
     int m_iconWidth;

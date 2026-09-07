@@ -1,10 +1,11 @@
 #include "platform/wiiu/FFLiFsClient.hpp"
+#include "vendor/__N_16_FFLiFsClient_cpp_c2849364.hpp"
 
-extern "C" int FSAddClient(FSClient *client, unsigned int error);
-extern "C" void FSDelClient(FSClient *client);
-extern "C" void FSSetStateChangeNotification(FSClient *client, FSStateChangeParams *params);
-extern "C" FSVolumeState FSGetVolumeState(FSClient *client);
-extern FSStateChangeParams g_ffliFsClientStateChangeParams;
+FSStateChangeParams g_ffliFsClientStateChangeParams = {
+    __N_16_FFLiFsClient_cpp_c2849364::StateChangeCallback,
+    0,
+    0
+};
 
 FFLiFsClient::FFLiFsClient()
 {
@@ -22,7 +23,7 @@ void FFLiFsClient::SetStateChangeNotification(FSStateChangeParams *params)
 
 int32_t FFLiFsClient::Init(const FSStateChangeParams *params, unsigned int error)
 {
-    int32_t result = FSAddClient(&m_fsClient, error);
+    int32_t result = FSAddClient(&m_fsClient, static_cast<FSErrorFlag>(error));
     if (result == 0)
     {
         if (params == 0)
@@ -47,7 +48,7 @@ FSVolumeState FFLiFsClient::GetVolumeState()
 
 void FFLiFsClient::Shutdown(unsigned int error)
 {
-    FSDelClient(&m_fsClient);
+    FSDelClient(&m_fsClient, static_cast<FSErrorFlag>(error));
     m_valid = 0;
 }
 

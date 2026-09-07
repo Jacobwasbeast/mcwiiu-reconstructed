@@ -1,8 +1,9 @@
 #ifndef PLATFORM_WIIU_SNDMICDEVICE_HPP
 #define PLATFORM_WIIU_SNDMICDEVICE_HPP
 
+#include <coreinit/event.h>
+
 struct AXVPB;
-struct OSThread;
 struct _AX_FINAL_MIX_CB_STRUCT;
 
 namespace nn
@@ -15,24 +16,6 @@ namespace nn
         }
     }
 }
-
-struct OSThreadQueue
-{
-    OSThread* pHead;
-    OSThread* pTail;
-    void* pParent;
-    unsigned int uiReserved;
-};
-
-struct OSEvent
-{
-    unsigned int uiTag;
-    const char* pName;
-    unsigned int uiReserved;
-    OSThreadQueue waitQueue;
-    unsigned int uiValue;
-    int iMode;
-};
 
 enum eSndRateMode
 {

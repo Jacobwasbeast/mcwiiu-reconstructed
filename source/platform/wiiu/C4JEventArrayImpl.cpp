@@ -1,19 +1,12 @@
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 
-void OSInitEvent(OSEvent* pEvent, unsigned int initialValue, int mode);
-void OSSignalEvent(OSEvent* pEvent);
-void OSResetEvent(OSEvent* pEvent);
-void OSWaitEvent(OSEvent* pEvent);
-int OSWaitEventWithTimeout(OSEvent* pEvent, unsigned long long timeout);
-unsigned long long OSGetTick();
-
 C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode)
     : m_count(count), m_mode(mode), m_events(0)
 {
     m_events = new OSEvent[static_cast<unsigned int>(count)];
     for (int index = 0; index < count; ++index)
     {
-        OSInitEvent(&m_events[index], 0, m_mode != C4JEventArray::Mode1);
+        OSInitEvent(&m_events[index], 0, static_cast<OSEventMode>(m_mode != C4JEventArray::Mode1));
     }
 }
 

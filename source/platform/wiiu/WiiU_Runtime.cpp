@@ -1,33 +1,13 @@
 #include <cstdlib>
 #include <new>
 
+#include <coreinit/filesystem.h>
+#include <coreinit/systeminfo.h>
+#include <coreinit/time.h>
+
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
-struct OSSystemInfo
-{
-    unsigned int busSpeed;
-};
-
-struct OSCalendarTime
-{
-    int microseconds;
-    int milliseconds;
-    int seconds;
-    int minutes;
-    int hours;
-    int day;
-    int month;
-    int year;
-    int weekday;
-    int yearday;
-};
-
-unsigned long long OSGetTime();
-OSSystemInfo* OSGetSystemInfo();
-void OSTicksToCalendarTime(unsigned long long ticks, OSCalendarTime* calendar);
-int FSGetLastErrorCodeForViewer(void* client);
-
-static void* sFileSystemClient;
+static FSClient* sFileSystemClient;
 
 unsigned int GetLastFileErrorCodeForViewer()
 {
@@ -49,7 +29,7 @@ void GlobalMemoryStatus(MEMORYSTATUS* status)
 unsigned int GetTickCount()
 {
     const unsigned long long microseconds = OSGetTime() * 1000000ULL;
-    const unsigned long long ticksPerMicrosecond = OSGetSystemInfo()->busSpeed >> 2;
+    const unsigned long long ticksPerMicrosecond = OSGetSystemInfo()->busClockSpeed >> 2;
     return static_cast<unsigned int>(microseconds / ticksPerMicrosecond / 1000ULL);
 }
 
@@ -57,14 +37,14 @@ void GetSystemTime(SYSTEMTIME* systemTime)
 {
     OSCalendarTime calendar;
     OSTicksToCalendarTime(OSGetTime(), &calendar);
-    systemTime->year = static_cast<unsigned short>(calendar.year);
-    systemTime->month = static_cast<unsigned short>(calendar.month + 1);
-    systemTime->dayOfWeek = static_cast<unsigned short>(calendar.weekday);
-    systemTime->day = static_cast<unsigned short>(calendar.day);
-    systemTime->hour = static_cast<unsigned short>(calendar.hours);
-    systemTime->minute = static_cast<unsigned short>(calendar.minutes);
-    systemTime->second = static_cast<unsigned short>(calendar.seconds);
-    systemTime->milliseconds = static_cast<unsigned short>(calendar.milliseconds);
+    systemTime->year = static_cast<unsigned short>(calendar.tm_year);
+    systemTime->month = static_cast<unsigned short>(calendar.tm_mon + 1);
+    systemTime->dayOfWeek = static_cast<unsigned short>(calendar.tm_wday);
+    systemTime->day = static_cast<unsigned short>(calendar.tm_mday);
+    systemTime->hour = static_cast<unsigned short>(calendar.tm_hour);
+    systemTime->minute = static_cast<unsigned short>(calendar.tm_min);
+    systemTime->second = static_cast<unsigned short>(calendar.tm_sec);
+    systemTime->milliseconds = static_cast<unsigned short>(calendar.tm_msec);
 }
 
 void GetLocalTime(SYSTEMTIME* systemTime)

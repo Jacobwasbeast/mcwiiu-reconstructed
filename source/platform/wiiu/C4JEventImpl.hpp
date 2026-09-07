@@ -1,25 +1,7 @@
 #ifndef SOURCE_PLATFORM_WIIU_C4JEVENTIMPL_HPP
 #define SOURCE_PLATFORM_WIIU_C4JEVENTIMPL_HPP
 
-struct OSThread;
-
-struct OSThreadQueue
-{
-    OSThread* pHead;
-    OSThread* pTail;
-    void* pParent;
-    unsigned int uiReserved;
-};
-
-struct OSEvent
-{
-    unsigned int uiTag;
-    const char* pName;
-    unsigned int uiReserved;
-    OSThreadQueue waitQueue;
-    unsigned int uiValue;
-    int iMode;
-};
+#include <coreinit/event.h>
 
 class C4JEvent
 {

@@ -3,10 +3,10 @@
 
 struct PlainShader;
 
-extern void OSPanic(const char*, unsigned int, const char*, ...);
-extern void GX2SetCullOnlyControl(unsigned int, int, int);
-extern void GX2SetAttribBuffer(unsigned int, unsigned int, unsigned int, const void*);
-extern void GX2DrawIndexedEx(unsigned int, unsigned int, unsigned int, const void*, unsigned int, unsigned int);
+extern "C" void OSPanic(const char*, unsigned int, const char*, ...);
+extern "C" void GX2SetCullOnlyControl(unsigned int, int, int);
+extern "C" void GX2SetAttribBuffer(unsigned int, unsigned int, unsigned int, const void*);
+extern "C" void GX2DrawIndexedEx(unsigned int, unsigned int, unsigned int, const void*, unsigned int, unsigned int);
 extern void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLModulateParam*);
 
 struct _GX2ContextState;

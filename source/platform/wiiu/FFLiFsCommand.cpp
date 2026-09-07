@@ -1,7 +1,6 @@
 #include "platform/wiiu/FFLiFsCommand.hpp"
 #include <new>
 
-extern "C" void FSInitCmdBlock(FFLiFsCommandBuffer *commandBlock);
 extern "C" void FSCancel(FFLiFsClient *client, FFLiFsCommandBuffer *commandBlock);
 extern "C" void FSSetUserData(FFLiFsCommandBuffer *commandBlock, void *userData);
 extern "C" void *FSGetUserData(FFLiFsCommandBuffer *commandBlock);

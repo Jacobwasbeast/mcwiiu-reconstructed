@@ -56,6 +56,11 @@ void LeaveCriticalSection(OSFastMutex* mutex)
     OSFastMutex_Unlock(mutex);
 }
 
+void LeaveCriticalSection(void* mutex)
+{
+    OSFastMutex_Unlock(static_cast<OSFastMutex*>(mutex));
+}
+
 void Local_FinalizeLocalCommunication()
 {
     if (s_localCommunicationInitialised)

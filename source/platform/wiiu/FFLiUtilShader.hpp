@@ -8,9 +8,16 @@ struct _GX2PixelShader { unsigned int words[41]; unsigned int cacheSize; unsigne
 struct _GX2VertexShader { unsigned int words[52]; unsigned int cacheSize; unsigned int cachePtr; unsigned int wordsAfterCache; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int wordsAfterVars[4]; unsigned int samplerCount; _GX2ShaderSampler* samplers; };
 struct _Mat44 { float value[4][4]; };
 struct _Mat34 { float value[3][4]; };
-struct FFLColor { float value[4]; };
+struct FFLColor
+{
+    union
+    {
+        struct { float r, g, b, a; };
+        float value[4];
+    };
+};
 typedef unsigned int FFLModulateMode;
-struct FFLModulateParam { FFLModulateMode mode; unsigned int type; FFLColor color[3]; const void* texture; };
+struct FFLiShaderModulateParam { FFLModulateMode mode; unsigned int type; FFLColor color[3]; const void* texture; };
 class FFLiUtilShaderAllocator;
 class FFLiUtilShader
 {
@@ -75,7 +82,7 @@ void SetupExtShaderForCreateModel__Fv();
 void SetupExtShaderForDrawTexture__FUsT1(unsigned short, unsigned short);
 void SetConstColor__FUiPC8FFLColor(unsigned int, const FFLColor*);
 void SetModulateMode__FP11PlainShader15FFLModulateMode(PlainShader*, FFLModulateMode);
-void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLModulateParam*);
+void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLiShaderModulateParam*);
 void SetMatrix__FPvPC6_Mat44(void*, const _Mat44*);
 void SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(const PlainShader*, const _Mat44*);
 #endif

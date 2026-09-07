@@ -2,31 +2,14 @@
 #define SOURCE_PLATFORM_WIIU_FFLIFSFILE_HPP
 
 #include <stdint.h>
+#include <coreinit/filesystem.h>
 #include "platform/wiiu/FFLiFsCommand.hpp"
-
-struct FSStat
-{
-    unsigned int uiFlags;
-    unsigned int uiMode;
-    unsigned int uiOwner;
-    unsigned int uiGroup;
-    unsigned int uiSize;
-    unsigned int uiAllocSize;
-    unsigned int uiQuotaSizeHigh;
-    unsigned int uiQuotaSizeLow;
-    unsigned int uiEntryId;
-    unsigned int uiCreatedTimeHigh;
-    unsigned int uiCreatedTimeLow;
-    unsigned int uiModifiedTimeHigh;
-    unsigned int uiModifiedTimeLow;
-    unsigned char aAttributes[48];
-};
 
 class FFLiFsFile
 {
 private:
     FFLiFsCommand *m_command;
-    int m_handle;
+    FSFileHandle m_handle;
 
 public:
     FFLiFsFile(FFLiFsCommand *command);

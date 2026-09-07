@@ -17,62 +17,31 @@ public:
     static unsigned char ReadyToBackground();
 };
 
+extern "C"
+{
 void* MEMAllocFromDefaultHeapEx(unsigned int, int);
 void MEMFreeToDefaultHeap(void*);
 void OSFastMutex_Init(OSFastMutex*, const char*);
 void OSFastMutex_Lock(OSFastMutex*);
 void OSFastMutex_Unlock(OSFastMutex*);
-void OSResumeThread(OSThread*);
-void OSJoinThread(OSThread*, int*);
-void OSExitThread(int);
 void Sleep(unsigned int);
 unsigned int GetTickCount();
-unsigned long long OSGetTime();
-
-struct OSCalendarTime
-{
-    int microseconds;
-    int milliseconds;
-    int seconds;
-    int minutes;
-    int hours;
-    int day;
-    int month;
-    int year;
-    int weekday;
-    int yearday;
-};
 
 int strcasecmp(const char*, const char*);
 void* memalign(unsigned int, unsigned int);
 
-void OSTicksToCalendarTime(unsigned long long, OSCalendarTime*);
+extern "C" int SAVEGetStatEvidence(FSClient*, FSCmdBlock*, unsigned char, const char*, FSStat*, FSErrorFlag)
+    __asm__("SAVEGetStat");
 
-int FSInitCmdBlock(void*);
-int FSAddClient(FSClient*, unsigned int);
-void FSDelClient(FSClient*);
-int FSSetStateChangeNotification(FSClient*, void*);
+}
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
-int FSOpenDir(FSClient*, void*, const char*, int*, unsigned int);
-int SAVEInit();
-int SAVEInitSaveDir(unsigned char);
-int SAVEOpenFile(FSClient*, void*, unsigned char, const char*, const char*, int*, unsigned int);
-int SAVEOpenDir(FSClient*, void*, unsigned char, const char*, int*, unsigned int);
-int FSReadDir(FSClient*, void*, int, FSDirEntry*, unsigned int);
-int FSCloseDir(FSClient*, void*, int, unsigned int);
-int SAVEGetStat(FSClient*, void*, unsigned char, const char*, FSStat*, unsigned int);
-int SAVEFlushQuota(FSClient*, void*, unsigned char, unsigned int);
-int SAVERollbackQuota(FSClient*, void*, unsigned char, unsigned int);
-int FSWriteFile(FSClient*, void*, const void*, unsigned int, unsigned int, int, unsigned int, unsigned int);
-int FSReadFile(FSClient*, void*, void*, unsigned int, unsigned int, int, unsigned int, unsigned int);
-int FSCloseFile(FSClient*, void*, int, unsigned int);
-int FSGetStatFile(FSClient*, void*, int, void*, unsigned int);
-int SAVERemove(FSClient*, void*, unsigned char, const char*, unsigned int);
+extern "C"
+{
 int MCP_Open();
 int MCP_GetSysProdSettings(int, void*);
+}
 void MCP_Close(int);
 extern "C" void OSReport(const char*, ...);
-extern "C" unsigned int FSGetLastErrorCodeForViewer(void*);
 extern "C" void OSSavesDone_ReadyToRelease();
 extern void altMain();
 extern void altMainStop();
@@ -88,8 +57,8 @@ namespace nn
 static CStorage* s_storage;
 static char s_wideStringBuffer[1024];
 static FSClient s_sciClient;
-static unsigned char s_sciCommandBlock[0xa80];
-static char s_sciBuffer[0x800];
+static FSCmdBlock s_sciCommandBlock;
+static unsigned char s_sciBuffer[0x800];
 static char s_sciPath[1024];
 
 void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
@@ -97,7 +66,7 @@ void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     if (state != static_cast<FSVolumeState>(1))
     {
         gRenderer->BeginConditionalSurvey(0);
-        g_pInput->RequestErrorViewer(1, FSGetLastErrorCodeForViewer(client), NULL, NULL);
+        g_pInput->RequestErrorViewer(1, static_cast<unsigned int>(FSGetLastErrorCodeForViewer(client)), NULL, NULL);
         altMain();
         return;
     }
@@ -105,7 +74,7 @@ void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     altMainStop();
 }
 
-int SaveCallback(void*)
+extern "C" int SaveCallback(void*)
 {
     CConsoleMinecraftApp::RequestToBackground();
     int ready = CConsoleMinecraftApp::ReadyToBackground();
@@ -120,20 +89,20 @@ int SaveCallback(void*)
 
 int SCIGetContentPath(char* path, const char* content)
 {
-    int directory;
+    FSDirectoryHandle directory;
     std::sprintf(path, "%s/%s", "vol/storage_mlc01", content);
-    int result = FSOpenDir(&s_sciClient, s_sciCommandBlock, path, &directory, 0xffffffffU);
+    int result = FSOpenDir(&s_sciClient, &s_sciCommandBlock, path, &directory, FS_ERROR_FLAG_ALL);
     if (result != 0)
     {
         std::sprintf(path, "%s/%s", "vol/storage_hfiomlc01", content);
-        int fallback = FSOpenDir(&s_sciClient, s_sciCommandBlock, path, &directory, 0xffffffffU);
+        int fallback = FSOpenDir(&s_sciClient, &s_sciCommandBlock, path, &directory, FS_ERROR_FLAG_ALL);
         if (fallback != 0)
         {
             OSReport("SCI ERROR %s(%d): FSOpenDir(%s) failed: %d\n", "SCIGetContentPath", 0x137, path, result);
             return -3;
         }
     }
-    FSCloseDir(&s_sciClient, s_sciCommandBlock, directory, 0);
+    FSCloseDir(&s_sciClient, &s_sciCommandBlock, directory, FS_ERROR_FLAG_NONE);
     return 1;
 }
 
@@ -150,39 +119,39 @@ int SCIGetISOResource(char* destination, unsigned int destinationSize, const cha
     if (cursor != destination + 3)
         return 1;
 
-    FSInitCmdBlock(s_sciCommandBlock);
-    FSAddClient(&s_sciClient, 0);
-    FSStateChangeParams notification = {stateChangeCallback, NULL, 0, 0};
+    FSInitCmdBlock(&s_sciCommandBlock);
+    FSAddClient(&s_sciClient, FS_ERROR_FLAG_NONE);
+    FSStateChangeParams notification = {stateChangeCallback, NULL, NULL};
     FSSetStateChangeNotification(&s_sciClient, &notification);
 
     int result = SCIGetContentPath(s_sciPath, "sys_title_0005001b_1005c000_cont");
     if (result != 1)
     {
-        FSDelClient(&s_sciClient);
+        FSDelClient(&s_sciClient, FS_ERROR_FLAG_ALL);
         return result;
     }
     std::sprintf(s_sciPath, "%s/%s", s_sciPath, resource);
 
-    int file;
-    result = FSOpenFile(&s_sciClient, s_sciCommandBlock, s_sciPath, "r", &file, 0xffffffffU);
+    FSFileHandle file;
+    result = FSOpenFile(&s_sciClient, &s_sciCommandBlock, s_sciPath, "r", &file, FS_ERROR_FLAG_ALL);
     if (result < 0)
     {
         OSReport("SCI ERROR %s(%d): FSReadFile(%s) failed\n", "SCIGetISOResource", 0x5a7, s_sciPath);
-        FSDelClient(&s_sciClient);
+        FSDelClient(&s_sciClient, FS_ERROR_FLAG_ALL);
         return -3;
     }
-    int bytesRead = FSReadFile(&s_sciClient, s_sciCommandBlock, s_sciBuffer, 1, 0x800, file, 0, 0);
+    int bytesRead = FSReadFile(&s_sciClient, &s_sciCommandBlock, s_sciBuffer, 1, 0x800, file, 0, FS_ERROR_FLAG_NONE);
     if (bytesRead < 0)
     {
         OSReport("SCI ERROR %s(%d): FSReadFile(%s) failed\n", "SCIGetISOResource", 0x5b4, s_sciPath);
-        FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
-        FSDelClient(&s_sciClient);
+        FSCloseFile(&s_sciClient, &s_sciCommandBlock, file, FS_ERROR_FLAG_NONE);
+        FSDelClient(&s_sciClient, FS_ERROR_FLAG_ALL);
         return -1;
     }
     if (bytesRead == 0)
     {
-        FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
-        FSDelClient(&s_sciClient);
+        FSCloseFile(&s_sciClient, &s_sciCommandBlock, file, FS_ERROR_FLAG_NONE);
+        FSDelClient(&s_sciClient, FS_ERROR_FLAG_ALL);
         return 1;
     }
 
@@ -235,8 +204,8 @@ int SCIGetISOResource(char* destination, unsigned int destinationSize, const cha
         }
         ++offset;
     }
-    FSCloseFile(&s_sciClient, s_sciCommandBlock, file, 0);
-    FSDelClient(&s_sciClient);
+    FSCloseFile(&s_sciClient, &s_sciCommandBlock, file, FS_ERROR_FLAG_NONE);
+    FSDelClient(&s_sciClient, FS_ERROR_FLAG_ALL);
     return 1;
 }
 
@@ -359,7 +328,7 @@ unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned char* data, int leng
         crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
     return crc;
 }
-unsigned int CStorage::CRC(unsigned char* data, int length) { return ~UpdateCRC(0xffffffffU, data, length); }
+unsigned int CStorage::CRC(unsigned char* data, int length) { return ~UpdateCRC(FS_ERROR_FLAG_ALL, data, length); }
 void CStorage::DebugPrintf(const char*, ...) {}
 void CStorage::SetSaveDeviceSelected(unsigned int, bool) {}
 int CStorage::GetSaveDeviceSelected(unsigned int) { return 1; }
@@ -398,9 +367,9 @@ unsigned long long CStorage::InitialiseProfileData(unsigned short version, unsig
     *gameDataSizes = 0;
     m_gameProfileSizes = gameDataSizes;
 
-    FSInitCmdBlock(m_profileCommandBlock);
-    FSAddClient(&m_profileClient, 0xffffffffU);
-    StateChangeNotification notification = {stateChangeCallback, NULL, 0};
+    FSInitCmdBlock(&m_profileCommandBlock);
+    FSAddClient(&m_profileClient, FS_ERROR_FLAG_ALL);
+    StateChangeNotification notification = {stateChangeCallback, NULL, NULL};
     FSSetStateChangeNotification(&m_profileClient, &notification);
 
     m_profileInitialised = false;
@@ -506,23 +475,23 @@ unsigned int CStorage::SaveOptionsThreadProc(int profile)
         return 0;
     }
     g_profile->EnterInitSaveDirCS();
-    int handle;
+    FSFileHandle handle;
     unsigned char slot = nn::act::GetSlotNo();
-    int result = SAVEOpenFile(&m_profileClient, m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "w",
-                              &handle, 0xffffffffU);
+    int result = SAVEOpenFile(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "w",
+                              &handle, FS_ERROR_FLAG_ALL);
     if (result == 0) {
         unsigned int size = m_gameProfileStride + 2;
-        result = FSWriteFile(&m_profileClient, m_profileCommandBlock, m_profileBuffers[profile], 1, size, handle, 0,
-                             0xffffffffU);
-        FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
-        if (result == (int)size && SAVEFlushQuota(&m_profileClient, m_profileCommandBlock, slot, 0xffffffffU) == 0)
+        result = FSWriteFile(&m_profileClient, &m_profileCommandBlock, m_profileBuffers[profile], 1, size, handle, 0,
+                             FS_ERROR_FLAG_ALL);
+        FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
+        if (result == (int)size && SAVEFlushQuota(&m_profileClient, &m_profileCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0)
             m_profileWriteState[profile].state = 3;
         else {
-            SAVERollbackQuota(&m_profileClient, m_profileCommandBlock, slot, 0xffffffffU);
+            SAVERollbackQuota(&m_profileClient, &m_profileCommandBlock, slot, FS_ERROR_FLAG_ALL);
             m_profileWriteState[profile].state = 4;
         }
     } else {
-        SAVERollbackQuota(&m_profileClient, m_profileCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_profileClient, &m_profileCommandBlock, slot, FS_ERROR_FLAG_ALL);
         m_profileWriteState[profile].state = 4;
     }
     g_profile->LeaveInitSaveDirCS();
@@ -539,34 +508,34 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
         return 0;
     }
     g_profile->EnterInitSaveDirCS();
-    int handle;
+    FSFileHandle handle;
     unsigned char slot = nn::act::GetSlotNo();
-    int result = SAVEOpenFile(&m_profileClient, m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "r",
-                              &handle, 0xffffffffU);
+    int result = SAVEOpenFile(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "r",
+                              &handle, FS_ERROR_FLAG_ALL);
     if (result == 0) {
         FSStat stat;
-        if (FSGetStatFile(&m_profileClient, m_profileCommandBlock, handle, &stat, 0xffffffffU) == 0) {
+        if (FSGetStatFile(&m_profileClient, &m_profileCommandBlock, handle, &stat, FS_ERROR_FLAG_ALL) == 0) {
             unsigned char* buffer =
                 (unsigned char*)MEMAllocFromDefaultHeapEx((m_gameProfileStride + 0x3fU) & ~0x3fU, 64);
             m_profileReadBuffers[profile] = buffer;
-            FSReadFile(&m_profileClient, m_profileCommandBlock, buffer, 1, 2, handle, 0, 0xffffffffU);
+            FSReadFile(&m_profileClient, &m_profileCommandBlock, buffer, 1, 2, handle, 0, FS_ERROR_FLAG_ALL);
             unsigned short storedVersion = *(unsigned short*)buffer;
             if (storedVersion == m_profileVersion) {
-                if (FSReadFile(&m_profileClient, m_profileCommandBlock, buffer, 1, m_gameProfileStride, handle, 0,
-                               0xffffffffU) == (int)m_gameProfileStride) {
+                if (FSReadFile(&m_profileClient, &m_profileCommandBlock, buffer, 1, m_gameProfileStride, handle, 0,
+                               FS_ERROR_FLAG_ALL) == (int)m_gameProfileStride) {
                     m_profileReadState[profile].state = 7;
-                    FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
+                    FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
                     g_profile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
                 m_profileUpdateRequired = true;
-                FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
+                FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
             } else if (m_oldProfileVersionCallback != NULL) {
                 std::memset(buffer, 0, m_gameProfileStride);
-                int bytesRead = FSReadFile(&m_profileClient, m_profileCommandBlock, buffer, 1, m_gameProfileStride,
-                                           handle, 0, 0xffffffffU);
-                FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
+                int bytesRead = FSReadFile(&m_profileClient, &m_profileCommandBlock, buffer, 1, m_gameProfileStride,
+                                           handle, 0, FS_ERROR_FLAG_ALL);
+                FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
                 if (bytesRead <= (int)m_gameProfileStride) {
                     m_oldProfileVersionCallback(m_oldProfileVersionContext, buffer, storedVersion, profile);
                     m_profileReadState[profile].state = 7;
@@ -575,7 +544,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                     return 0;
                 }
             } else {
-                FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
+                FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
                 MEMFreeToDefaultHeap(buffer);
                 m_profileReadBuffers[profile] = NULL;
                 m_profileReadState[profile].state = 8;
@@ -584,7 +553,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                 return 0;
             }
         } else
-            FSCloseFile(&m_profileClient, m_profileCommandBlock, handle, 0xffffffffU);
+            FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
     } else if (result != -6)
         m_profileUpdateRequired = true;
     m_profileReadState[profile].state = 8;
@@ -685,7 +654,7 @@ unsigned int CStorage::DeleteOptionsThreadProc(int profile)
     if (g_profile->IsSignedIn(profile) && !g_profile->IsGuest(profile)) {
         unsigned char slot = nn::act::GetSlotNo();
         int result =
-            SAVERemove(&m_profileClient, m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), 0xffffffffU);
+            SAVERemove(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), FS_ERROR_FLAG_ALL);
         if (result == 0 && m_optionsDataCallback != NULL)
             m_optionsDataCallback(m_optionsDataContext, profile, 0, (C4JStorage::eOptionsCallback)9);
     }
@@ -736,8 +705,8 @@ unsigned int CStorage::GetSavesInfoThreadProc()
         Sleep(10);
 
     unsigned char slot = nn::act::GetSlotNo();
-    int directory;
-    int result = SAVEOpenDir(&m_saveClient, m_saveDirectoryCommandBlock, slot, "", &directory, 0xffffffffU);
+    FSDirectoryHandle directory;
+    int result = SAVEOpenDir(&m_saveClient, &m_saveDirectoryCommandBlock, slot, "", &directory, FS_ERROR_FLAG_ALL);
 
     if (m_savesInfo != NULL) {
         for (int index = 0; index < m_savesInfo->count; ++index)
@@ -753,39 +722,39 @@ unsigned int CStorage::GetSavesInfoThreadProc()
 
     if (result == 0) {
         FSDirEntry entry;
-        while (FSReadDir(&m_saveClient, m_saveDirectoryCommandBlock, directory, &entry, 0xffffffffU) == 0) {
+        while (FSReadDir(&m_saveClient, &m_saveDirectoryCommandBlock, directory, &entry, FS_ERROR_FLAG_ALL) == 0) {
             unsigned int length = std::strlen(entry.name);
-            if (length > 4 && m_savesInfo->count < 100 && (entry.stat.flags & 0x80000000U) == 0 &&
+            if (length > 4 && m_savesInfo->count < 100 && (entry.info.flags & 0x80000000U) == 0 &&
                 std::strcmp(entry.name + length - 4, ".ext") == 0) {
-                int file;
-                if (SAVEOpenFile(&m_saveClient, m_saveDirectoryCommandBlock, slot, entry.name, "r", &file,
-                                 0xffffffffU) == 0) {
-                    unsigned int bytes = entry.stat.size;
-                    void* contents = MEMAllocFromDefaultHeapEx((bytes + 0x3fU) & ~0x3fU, 64);
-                    int read = FSReadFile(&m_saveClient, m_saveDirectoryCommandBlock, contents, 1, bytes, file, 0,
-                                          0xffffffffU);
-                    FSCloseFile(&m_saveClient, m_saveDirectoryCommandBlock, file, 0xffffffffU);
+                FSFileHandle file;
+                if (SAVEOpenFile(&m_saveClient, &m_saveDirectoryCommandBlock, slot, entry.name, "r", &file,
+                                 FS_ERROR_FLAG_ALL) == 0) {
+                    unsigned int bytes = entry.info.size;
+                    unsigned char* contents = (unsigned char*)MEMAllocFromDefaultHeapEx((bytes + 0x3fU) & ~0x3fU, 64);
+                    int read = FSReadFile(&m_saveClient, &m_saveDirectoryCommandBlock, contents, 1, bytes, file, 0,
+                                          FS_ERROR_FLAG_ALL);
+                    FSCloseFile(&m_saveClient, &m_saveDirectoryCommandBlock, file, FS_ERROR_FLAG_ALL);
                     if (read == (int)bytes) {
                         SAVE_INFO& info = m_savesInfo->saves[m_savesInfo->count++];
                         std::strncpy(info.filename, entry.name, sizeof(info.filename));
                         info.filename[length - 4] = 0;
                         std::memcpy(info.title, contents, 0x100);
-                        info.timeHigh = entry.stat.modifiedTimeHigh;
-                        info.timeLow = entry.stat.modifiedTimeLow;
+                        info.timeHigh = static_cast<unsigned int>(entry.info.modified >> 32);
+                        info.timeLow = static_cast<unsigned int>(entry.info.modified);
                         info.thumbnailSize = bytes - 0x100;
                         info.thumbnail = new unsigned char[info.thumbnailSize];
                         std::memcpy(info.thumbnail, (unsigned char*)contents + 0x100, info.thumbnailSize);
                         MEMFreeToDefaultHeap(contents);
 
                         info.nandSize = GetFileNANDSize(bytes);
-                        int saveFile;
-                        if (SAVEOpenFile(&m_saveClient, m_saveDirectoryCommandBlock, slot, info.filename, "r",
-                                         &saveFile, 0xffffffffU) == 0) {
+                        FSFileHandle saveFile;
+                        if (SAVEOpenFile(&m_saveClient, &m_saveDirectoryCommandBlock, slot, info.filename, "r",
+                                         &saveFile, FS_ERROR_FLAG_ALL) == 0) {
                             FSStat saveStat;
-                            if (FSGetStatFile(&m_saveClient, m_saveDirectoryCommandBlock, saveFile, &saveStat,
-                                              0xffffffffU) == 0)
+                            if (FSGetStatFile(&m_saveClient, &m_saveDirectoryCommandBlock, saveFile, &saveStat,
+                                              FS_ERROR_FLAG_ALL) == 0)
                                 info.nandSize += GetFileNANDSize(saveStat.size);
-                            FSCloseFile(&m_saveClient, m_saveDirectoryCommandBlock, saveFile, 0xffffffffU);
+                            FSCloseFile(&m_saveClient, &m_saveDirectoryCommandBlock, saveFile, FS_ERROR_FLAG_ALL);
                         }
                         m_savesInfo->nandSize += info.nandSize;
                     }
@@ -795,7 +764,7 @@ unsigned int CStorage::GetSavesInfoThreadProc()
         std::qsort(m_savesInfo->saves, m_savesInfo->count, sizeof(SAVE_INFO), saveInfoSortfn);
         m_savesInfoState = 2;
         DebugPrintf("GetSavesInfoThreadProc - complete\n");
-        FSCloseDir(&m_saveClient, m_saveDirectoryCommandBlock, directory, 0xffffffffU);
+        FSCloseDir(&m_saveClient, &m_saveDirectoryCommandBlock, directory, FS_ERROR_FLAG_ALL);
     } else {
         m_savesInfoState = 0;
         DebugPrintf("GetSavesInfoThreadProc - ret != FS_STATUS_OK (%d)\n", result);
@@ -845,15 +814,15 @@ unsigned int CStorage::LoadGameThreadProc()
 {
     g_profile->EnterInitSaveDirCS();
     unsigned char slot = nn::act::GetSlotNo();
-    int file;
+    FSFileHandle file;
     FSStat stat;
-    if (SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, m_saveUniqueFilename, "r", &file, 0xffffffffU) == 0 &&
-        FSGetStatFile(&m_saveClient, m_saveCommandBlock, file, &stat, 0xffffffffU) == 0) {
+    if (SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, "r", &file, FS_ERROR_FLAG_ALL) == 0 &&
+        FSGetStatFile(&m_saveClient, &m_saveCommandBlock, file, &stat, FS_ERROR_FLAG_ALL) == 0) {
         MEMFreeToDefaultHeap(m_saveData);
         m_saveData = (unsigned char*)MEMAllocFromDefaultHeapEx((stat.size + 0x3fU) & ~0x3fU, 64);
-        m_saveSize = FSReadFile(&m_saveClient, m_saveCommandBlock, m_saveData, 1, stat.size, file, 0, 0xffffffffU);
+        m_saveSize = FSReadFile(&m_saveClient, &m_saveCommandBlock, m_saveData, 1, stat.size, file, 0, FS_ERROR_FLAG_ALL);
         if (m_saveSize == stat.size) {
-            FSCloseFile(&m_saveClient, m_saveCommandBlock, file, 0xffffffffU);
+            FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
             m_saveState = 8;
             g_profile->LeaveInitSaveDirCS();
             return 0;
@@ -906,8 +875,8 @@ void CStorage::CreateSaveUniqueName()
     OSCalendarTime calendar;
     char suffix[20];
     OSTicksToCalendarTime(OSGetTime(), &calendar);
-    std::sprintf(suffix, "%2d%02d%02d%02d%02d%02d", calendar.year % 100, calendar.month, calendar.day, calendar.hours,
-                 calendar.minutes, calendar.seconds);
+    std::sprintf(suffix, "%2d%02d%02d%02d%02d%02d", calendar.tm_year % 100, calendar.tm_mon, calendar.tm_mday, calendar.tm_hour,
+                 calendar.tm_min, calendar.tm_sec);
     std::strcpy(m_saveUniqueFilename, m_gameSaveFolderPrefix);
     std::strcat(m_saveUniqueFilename, suffix);
 }
@@ -990,10 +959,10 @@ unsigned int CStorage::SaveGameThreadProc()
     unsigned char slot = nn::act::GetSlotNo();
     FSStat stat;
     unsigned int replacedSize = 0;
-    bool hadSave = SAVEGetStat(&m_saveClient, m_saveCommandBlock, slot, m_saveUniqueFilename, &stat, 0xffffffffU) == 0;
+    bool hadSave = SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, &stat, FS_ERROR_FLAG_ALL) == 0;
     if (hadSave)
         replacedSize += GetFileNANDSize(stat.size);
-    bool hadMetadata = SAVEGetStat(&m_saveClient, m_saveCommandBlock, slot, metadataName, &stat, 0xffffffffU) == 0;
+    bool hadMetadata = SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, metadataName, &stat, FS_ERROR_FLAG_ALL) == 0;
     if (hadMetadata)
         replacedSize += GetFileNANDSize(stat.size);
     unsigned int saveNandSize = GetFileNANDSize(m_saveSize);
@@ -1006,27 +975,27 @@ unsigned int CStorage::SaveGameThreadProc()
     OSFastMutex_Lock(&m_storageMutex);
     g_profile->EnterInitSaveDirCS();
     if (hadSave)
-        SAVERemove(&m_saveClient, m_saveCommandBlock, slot, m_saveUniqueFilename, 0xffffffffU);
+        SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, FS_ERROR_FLAG_ALL);
     if (hadMetadata)
-        SAVERemove(&m_saveClient, m_saveCommandBlock, slot, metadataName, 0xffffffffU);
-    int file;
-    int result = SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, m_saveUniqueFilename, "w", &file, 0xffffffffU);
+        SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, metadataName, FS_ERROR_FLAG_ALL);
+    FSFileHandle file;
+    int result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, "w", &file, FS_ERROR_FLAG_ALL);
     if (result == 0) {
-        result = FSWriteFile(&m_saveClient, m_saveCommandBlock, m_saveData, 1, m_saveSize, file, 0, 0xffffffffU);
+        result = FSWriteFile(&m_saveClient, &m_saveCommandBlock, m_saveData, 1, m_saveSize, file, 0, FS_ERROR_FLAG_ALL);
         if (result == (int)m_saveSize) {
-            FSCloseFile(&m_saveClient, m_saveCommandBlock, file, 0xffffffffU);
+            FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
             unsigned int metadataSize = m_saveImageSize + 0x100;
             unsigned char* metadata = (unsigned char*)MEMAllocFromDefaultHeapEx((metadataSize + 0x3fU) & ~0x3fU, 64);
             std::memcpy(metadata, m_saveTitle, 0x100);
             std::memcpy(metadata + 0x100, m_saveImage, m_saveImageSize);
-            result = SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, metadataName, "w", &file, 0xffffffffU);
+            result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "w", &file, FS_ERROR_FLAG_ALL);
             if (result == 0) {
                 result =
-                    FSWriteFile(&m_saveClient, m_saveCommandBlock, metadata, 1, metadataSize, file, 0, 0xffffffffU);
+                    FSWriteFile(&m_saveClient, &m_saveCommandBlock, metadata, 1, metadataSize, file, 0, FS_ERROR_FLAG_ALL);
                 std::free(metadata);
-                FSCloseFile(&m_saveClient, m_saveCommandBlock, file, 0xffffffffU);
+                FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
                 if (result == (int)metadataSize &&
-                    SAVEFlushQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU) == 0) {
+                    SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
                     g_profile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     if (m_savesInfo != NULL)
@@ -1037,14 +1006,14 @@ unsigned int CStorage::SaveGameThreadProc()
             } else
                 std::free(metadata);
         } else
-            FSCloseFile(&m_saveClient, m_saveCommandBlock, file, 0xffffffffU);
+            FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
     }
     if (result == -12) {
         m_saveState = 5;
         m_incompleteReason = 1;
     } else
         m_saveState = 3;
-    SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+    SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     g_profile->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
@@ -1082,11 +1051,11 @@ unsigned int CStorage::DeleteGameThreadProc()
     std::snprintf(metadataName, 128, "%s.ext", m_selectedSave->filename);
     OSFastMutex_Lock(&m_storageMutex);
     unsigned char slot = nn::act::GetSlotNo();
-    int result = SAVERemove(&m_saveClient, m_saveCommandBlock, slot, m_selectedSave->filename, 0xffffffffU);
+    int result = SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, m_selectedSave->filename, FS_ERROR_FLAG_ALL);
     if (result == 0)
-        result = SAVERemove(&m_saveClient, m_saveCommandBlock, slot, metadataName, 0xffffffffU);
+        result = SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, metadataName, FS_ERROR_FLAG_ALL);
     if (result == 0)
-        result = SAVEFlushQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        result = SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     if (result == 0) {
         OSFastMutex_Unlock(&m_storageMutex);
         m_savesInfo->nandSize -= m_selectedSave->nandSize;
@@ -1094,7 +1063,7 @@ unsigned int CStorage::DeleteGameThreadProc()
         m_saveState = 11;
     } else {
         m_saveState = 12;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
     }
     return 0;
@@ -1124,97 +1093,97 @@ unsigned int CStorage::CopyGameThreadProc()
     unsigned char slot = nn::act::GetSlotNo();
     OSFastMutex_Lock(&m_storageMutex);
 
-    int sourceFile;
+    FSFileHandle sourceFile;
     FSStat sourceStat;
     int result =
-        SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, m_selectedSave->filename, "r", &sourceFile, 0xffffffffU);
-    if (result != 0 || FSGetStatFile(&m_saveClient, m_saveCommandBlock, sourceFile, &sourceStat, 0xffffffffU) != 0) {
+        SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_selectedSave->filename, "r", &sourceFile, FS_ERROR_FLAG_ALL);
+    if (result != 0 || FSGetStatFile(&m_saveClient, &m_saveCommandBlock, sourceFile, &sourceStat, FS_ERROR_FLAG_ALL) != 0) {
         m_saveState = 18;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
 
     unsigned char* save = (unsigned char*)MEMAllocFromDefaultHeapEx((sourceStat.size + 0x3fU) & ~0x3fU, 64);
-    int saveSize = FSReadFile(&m_saveClient, m_saveCommandBlock, save, 1, sourceStat.size, sourceFile, 0, 0xffffffffU);
+    int saveSize = FSReadFile(&m_saveClient, &m_saveCommandBlock, save, 1, sourceStat.size, sourceFile, 0, FS_ERROR_FLAG_ALL);
     if (saveSize != (int)sourceStat.size) {
         MEMFreeToDefaultHeap(save);
         m_saveState = 18;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
-    FSCloseFile(&m_saveClient, m_saveCommandBlock, sourceFile, 0xffffffffU);
+    FSCloseFile(&m_saveClient, &m_saveCommandBlock, sourceFile, FS_ERROR_FLAG_ALL);
 
     char metadataName[128];
     std::snprintf(metadataName, sizeof(metadataName), "%s.ext", m_selectedSave->filename);
-    int metadataFile;
+    FSFileHandle metadataFile;
     FSStat metadataStat;
-    result = SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, metadataName, "r", &metadataFile, 0xffffffffU);
+    result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "r", &metadataFile, FS_ERROR_FLAG_ALL);
     if (result != 0 ||
-        FSGetStatFile(&m_saveClient, m_saveCommandBlock, metadataFile, &metadataStat, 0xffffffffU) != 0) {
+        FSGetStatFile(&m_saveClient, &m_saveCommandBlock, metadataFile, &metadataStat, FS_ERROR_FLAG_ALL) != 0) {
         m_saveState = 18;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
 
     unsigned char* metadata = (unsigned char*)MEMAllocFromDefaultHeapEx((metadataStat.size + 0x3fU) & ~0x3fU, 64);
     int metadataSize =
-        FSReadFile(&m_saveClient, m_saveCommandBlock, metadata, 1, metadataStat.size, metadataFile, 0, 0xffffffffU);
+        FSReadFile(&m_saveClient, &m_saveCommandBlock, metadata, 1, metadataStat.size, metadataFile, 0, FS_ERROR_FLAG_ALL);
     if (metadataSize != (int)metadataStat.size) {
         MEMFreeToDefaultHeap(save);
         MEMFreeToDefaultHeap(metadata);
-        FSCloseFile(&m_saveClient, m_saveCommandBlock, metadataFile, 0xffffffffU);
+        FSCloseFile(&m_saveClient, &m_saveCommandBlock, metadataFile, FS_ERROR_FLAG_ALL);
         m_saveState = 18;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
-    FSCloseFile(&m_saveClient, m_saveCommandBlock, metadataFile, 0xffffffffU);
+    FSCloseFile(&m_saveClient, &m_saveCommandBlock, metadataFile, FS_ERROR_FLAG_ALL);
 
     if (m_savesInfo->nandSize + GetFileNANDSize(saveSize) + GetFileNANDSize(metadataSize) > 0x1e000000U) {
         MEMFreeToDefaultHeap(save);
         MEMFreeToDefaultHeap(metadata);
         m_saveState = 19;
-        SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
 
     CreateSaveUniqueName();
-    int destinationFile;
+    FSFileHandle destinationFile;
     result =
-        SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, m_saveUniqueFilename, "w", &destinationFile, 0xffffffffU);
+        SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, "w", &destinationFile, FS_ERROR_FLAG_ALL);
     if (result == 0) {
-        result = FSWriteFile(&m_saveClient, m_saveCommandBlock, save, 1, saveSize, destinationFile, 0, 0xffffffffU);
+        result = FSWriteFile(&m_saveClient, &m_saveCommandBlock, save, 1, saveSize, destinationFile, 0, FS_ERROR_FLAG_ALL);
         if (result != saveSize) {
             MEMFreeToDefaultHeap(save);
             MEMFreeToDefaultHeap(metadata);
-            FSCloseFile(&m_saveClient, m_saveCommandBlock, destinationFile, 0xffffffffU);
+            FSCloseFile(&m_saveClient, &m_saveCommandBlock, destinationFile, FS_ERROR_FLAG_ALL);
             m_saveState = result == -12 ? 19 : 18;
-            SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+            SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
             OSFastMutex_Unlock(&m_storageMutex);
             return 0;
         }
 
-        FSCloseFile(&m_saveClient, m_saveCommandBlock, destinationFile, 0xffffffffU);
+        FSCloseFile(&m_saveClient, &m_saveCommandBlock, destinationFile, FS_ERROR_FLAG_ALL);
         std::snprintf(metadataName, sizeof(metadataName), "%s.ext", m_saveUniqueFilename);
         result =
-            SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, metadataName, "w", &destinationFile, 0xffffffffU);
+            SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "w", &destinationFile, FS_ERROR_FLAG_ALL);
         if (result == 0) {
-            result = FSWriteFile(&m_saveClient, m_saveCommandBlock, metadata, 1, metadataSize, destinationFile, 0,
-                                 0xffffffffU);
+            result = FSWriteFile(&m_saveClient, &m_saveCommandBlock, metadata, 1, metadataSize, destinationFile, 0,
+                                 FS_ERROR_FLAG_ALL);
             MEMFreeToDefaultHeap(save);
             MEMFreeToDefaultHeap(metadata);
-            FSCloseFile(&m_saveClient, m_saveCommandBlock, destinationFile, 0xffffffffU);
+            FSCloseFile(&m_saveClient, &m_saveCommandBlock, destinationFile, FS_ERROR_FLAG_ALL);
             if (result == metadataSize) {
-                if (SAVEFlushQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU) == 0) {
+                if (SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
                     OSFastMutex_Unlock(&m_storageMutex);
                     m_saveState = 17;
                     return 0;
                 }
-                SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+                SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
                 OSFastMutex_Unlock(&m_storageMutex);
                 m_saveState = 18;
                 return 0;
@@ -1229,7 +1198,7 @@ unsigned int CStorage::CopyGameThreadProc()
     }
 
     m_saveState = result == -12 ? 19 : 18;
-    SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+    SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
@@ -1261,15 +1230,15 @@ unsigned int CStorage::RenameGameThreadProc()
     std::snprintf(metadataName, sizeof(metadataName), "%s.ext", m_savesInfo->saves[m_renameSaveIndex].filename);
     OSFastMutex_Lock(&m_storageMutex);
     unsigned char slot = nn::act::GetSlotNo();
-    int file;
-    int result = SAVEOpenFile(&m_saveClient, m_saveCommandBlock, slot, metadataName, "r+", &file, 0xffffffffU);
+    FSFileHandle file;
+    int result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "r+", &file, FS_ERROR_FLAG_ALL);
     if (result == 0) {
-        void* title = MEMAllocFromDefaultHeapEx(0x100, 64);
+        unsigned char* title = (unsigned char*)MEMAllocFromDefaultHeapEx(0x100, 64);
         std::memcpy(title, m_renameTitle, 0x100);
-        result = FSWriteFile(&m_saveClient, m_saveCommandBlock, title, 1, 0x100, file, 0, 0xffffffffU);
-        FSCloseFile(&m_saveClient, m_saveCommandBlock, file, 0xffffffffU);
+        result = FSWriteFile(&m_saveClient, &m_saveCommandBlock, title, 1, 0x100, file, 0, FS_ERROR_FLAG_ALL);
+        FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
         MEMFreeToDefaultHeap(title);
-        if (result == 0x100 && SAVEFlushQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU) == 0) {
+        if (result == 0x100 && SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
             OSFastMutex_Unlock(&m_storageMutex);
             std::memcpy(m_savesInfo->saves[m_renameSaveIndex].title, m_renameTitle, 0x100);
             m_saveState = 14;
@@ -1277,7 +1246,7 @@ unsigned int CStorage::RenameGameThreadProc()
         }
     }
     m_saveState = 15;
-    SAVERollbackQuota(&m_saveClient, m_saveCommandBlock, slot, 0xffffffffU);
+    SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
@@ -1341,11 +1310,11 @@ void CStorage::InitSaveGame(unsigned int, const wchar_t*, const char*, int, bool
     m_incompleteSaveContext = NULL;
     m_renameCallbackContext = NULL;
 
-    FSInitCmdBlock(m_saveCommandBlock);
-    FSInitCmdBlock(m_saveDirectoryCommandBlock);
-    FSAddClient(&m_saveClient, 0xffffffffU);
+    FSInitCmdBlock(&m_saveCommandBlock);
+    FSInitCmdBlock(&m_saveDirectoryCommandBlock);
+    FSAddClient(&m_saveClient, FS_ERROR_FLAG_ALL);
 
-    StateChangeNotification notification = {stateChangeCallback, NULL, 0};
+    StateChangeNotification notification = {stateChangeCallback, NULL, NULL};
     FSSetStateChangeNotification(&m_saveClient, &notification);
 
     unsigned char slot = nn::act::GetSlotNo();
@@ -1488,7 +1457,7 @@ unsigned int CStorage::EnumerateLocalDLCPackages()
     }
 
     while (m_readDir(&m_dlcDirectory, &m_dlcDirectoryEntry)) {
-        if ((m_dlcDirectoryEntry.stat.flags & 0x80000000U) != 0 && std::strcmp(m_dlcDirectoryEntry.name, ".") != 0 &&
+        if ((m_dlcDirectoryEntry.info.flags & 0x80000000U) != 0 && std::strcmp(m_dlcDirectoryEntry.name, ".") != 0 &&
             std::strcmp(m_dlcDirectoryEntry.name, "..") != 0) {
             CONTENT_DATA content;
             content.state = 0;
@@ -1511,7 +1480,7 @@ unsigned int CStorage::EnumerateLocalDLCPackages()
     }
 
     while (m_readDir(&m_dlcDirectory, &m_dlcDirectoryEntry)) {
-        if ((m_dlcDirectoryEntry.stat.flags & 0x80000000U) != 0 && std::strcmp(m_dlcDirectoryEntry.name, ".") != 0 &&
+        if ((m_dlcDirectoryEntry.info.flags & 0x80000000U) != 0 && std::strcmp(m_dlcDirectoryEntry.name, ".") != 0 &&
             std::strcmp(m_dlcDirectoryEntry.name, "..") != 0) {
             CONTENT_DATA content;
             content.state = 0;
@@ -1593,7 +1562,7 @@ int CStorage::GetMountedDLCFileList(const char*, std::vector<std::string>& files
         return 0;
     }
     while (m_readDir(&m_dlcDirectory, &m_dlcDirectoryEntry))
-        if ((m_dlcDirectoryEntry.stat.flags & 0x80000000U) == 0 &&
+        if ((m_dlcDirectoryEntry.info.flags & 0x80000000U) == 0 &&
             strcasecmp(m_dlcDirectoryEntry.name, "ProductID.txt") != 0) {
             std::string path = std::string(content.path) + "/" + m_dlcDirectoryEntry.name;
             DebugPrintf("In %s found %s\n", content.path, m_dlcDirectoryEntry.name);
@@ -1654,8 +1623,8 @@ unsigned long long CStorage::InitialiseGenericData()
     m_genericWriteData = NULL;
     m_genericCallback = NULL;
     m_genericDataSize = 0;
-    FSInitCmdBlock(m_genericCommandBlock);
-    FSAddClient(&m_genericClient, 0xffffffffU);
+    FSInitCmdBlock(&m_genericCommandBlock);
+    FSAddClient(&m_genericClient, FS_ERROR_FLAG_ALL);
     return 0;
 }
 int CStorage::ReadFromGenericData(int slot, const std::wstring& name, void** data, unsigned int* size,
@@ -1704,17 +1673,17 @@ unsigned int CStorage::LoadGenericDataThreadProc(int slot)
         g_profile->EnterInitSaveDirCS();
         unsigned char quadrant;
         if (g_profile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
-            int handle;
-            int result = SAVEOpenFile(&m_genericClient, m_genericCommandBlock, quadrant,
-                                      wstringtochararray(m_genericFilename), "r", &handle, 0xffffffffU);
+            FSFileHandle handle;
+            int result = SAVEOpenFile(&m_genericClient, &m_genericCommandBlock, quadrant,
+                                      wstringtochararray(m_genericFilename), "r", &handle, FS_ERROR_FLAG_ALL);
             FSStat stat;
             if (result == 0 &&
-                FSGetStatFile(&m_genericClient, m_genericCommandBlock, handle, &stat, 0xffffffffU) == 0) {
+                FSGetStatFile(&m_genericClient, &m_genericCommandBlock, handle, &stat, FS_ERROR_FLAG_ALL) == 0) {
                 m_genericLoadedSize = stat.size;
-                m_genericLoadedData = memalign(64, (m_genericLoadedSize + 0x3fU) & ~0x3fU);
-                if (FSReadFile(&m_genericClient, m_genericCommandBlock, m_genericLoadedData, 1, m_genericLoadedSize,
-                               handle, 0, 0xffffffffU) == (int)m_genericLoadedSize) {
-                    FSCloseFile(&m_genericClient, m_genericCommandBlock, handle, 0xffffffffU);
+                m_genericLoadedData = (unsigned char*)memalign(64, (m_genericLoadedSize + 0x3fU) & ~0x3fU);
+                if (FSReadFile(&m_genericClient, &m_genericCommandBlock, m_genericLoadedData, 1, m_genericLoadedSize,
+                               handle, 0, FS_ERROR_FLAG_ALL) == (int)m_genericLoadedSize) {
+                    FSCloseFile(&m_genericClient, &m_genericCommandBlock, handle, FS_ERROR_FLAG_ALL);
                     m_genericState = 9;
                     g_profile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
@@ -1742,33 +1711,33 @@ unsigned int CStorage::SaveGenericDataThreadProc(int slot)
         g_profile->EnterInitSaveDirCS();
         unsigned char quadrant;
         if (g_profile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
-            int handle;
-            int result = SAVEOpenFile(&m_genericClient, m_genericCommandBlock, quadrant,
-                                      wstringtochararray(m_genericFilename), "w", &handle, 0xffffffffU);
+            FSFileHandle handle;
+            int result = SAVEOpenFile(&m_genericClient, &m_genericCommandBlock, quadrant,
+                                      wstringtochararray(m_genericFilename), "w", &handle, FS_ERROR_FLAG_ALL);
             if (result != 0) {
-                SAVERollbackQuota(&m_genericClient, m_genericCommandBlock, quadrant, 0xffffffffU);
+                SAVERollbackQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL);
                 g_profile->LeaveInitSaveDirCS();
                 m_genericState = result == -12 ? 6 : 4;
                 OSFastMutex_Unlock(&m_storageMutex);
                 return 0;
             }
-            void* alignedData = memalign(64, (m_genericDataSize + 0x3fU) & ~0x3fU);
+            unsigned char* alignedData = (unsigned char*)memalign(64, (m_genericDataSize + 0x3fU) & ~0x3fU);
             std::memcpy(alignedData, m_genericWriteData, m_genericDataSize);
-            result = FSWriteFile(&m_genericClient, m_genericCommandBlock, alignedData, 1, m_genericDataSize, handle, 0,
-                                 0xffffffffU);
+            result = FSWriteFile(&m_genericClient, &m_genericCommandBlock, alignedData, 1, m_genericDataSize, handle, 0,
+                                 FS_ERROR_FLAG_ALL);
             std::free(alignedData);
-            FSCloseFile(&m_genericClient, m_genericCommandBlock, handle, 0xffffffffU);
+            FSCloseFile(&m_genericClient, &m_genericCommandBlock, handle, FS_ERROR_FLAG_ALL);
             if (result == (int)m_genericDataSize) {
-                if (SAVEFlushQuota(&m_genericClient, m_genericCommandBlock, quadrant, 0xffffffffU) == 0) {
+                if (SAVEFlushQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL) == 0) {
                     m_genericState = 3;
                     g_profile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
-                SAVERollbackQuota(&m_genericClient, m_genericCommandBlock, quadrant, 0xffffffffU);
+                SAVERollbackQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL);
                 m_genericState = 4;
             } else {
-                SAVERollbackQuota(&m_genericClient, m_genericCommandBlock, quadrant, 0xffffffffU);
+                SAVERollbackQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL);
                 m_genericState = result == -12 ? 6 : 4;
             }
             g_profile->LeaveInitSaveDirCS();

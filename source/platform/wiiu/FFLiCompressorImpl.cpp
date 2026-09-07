@@ -10,18 +10,18 @@ extern void FFLiInvalidateTexture(_GX2Texture* texture);
 extern void FFLiSetupColorBufferForBC1(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
 extern void FFLiSetupColorBufferForBC3(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
 extern unsigned int FFLiCalculateUnitTextureResolution(unsigned int resolution, unsigned int level);
-extern void GX2SetTargetChannelMasks(unsigned int, unsigned int, unsigned int, unsigned int,
+extern "C" void GX2SetTargetChannelMasks(unsigned int, unsigned int, unsigned int, unsigned int,
                                      unsigned int, unsigned int, unsigned int, unsigned int);
-extern void GX2SetAlphaTest(int, unsigned int, float);
-extern void GX2SetColorControl(unsigned int, unsigned char, int, int);
-extern void GX2SetDepthOnlyControl(int, int, unsigned int);
-extern void GX2SetCullOnlyControl(unsigned int, int, int);
-extern void GX2SetBlendControl(unsigned int, unsigned int, unsigned int, unsigned int, int,
+extern "C" void GX2SetAlphaTest(int, unsigned int, float);
+extern "C" void GX2SetColorControl(unsigned int, unsigned char, int, int);
+extern "C" void GX2SetDepthOnlyControl(int, int, unsigned int);
+extern "C" void GX2SetCullOnlyControl(unsigned int, int, int);
+extern "C" void GX2SetBlendControl(unsigned int, unsigned int, unsigned int, unsigned int, int,
                                unsigned int, unsigned int, unsigned int);
-extern void GX2SetViewport(float, float, float, float, float, float);
-extern void GX2SetScissor(unsigned int, unsigned int, unsigned int, unsigned int);
-extern void GX2SetColorBuffer(_GX2ColorBuffer*, unsigned int);
-extern void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
+extern "C" void GX2SetViewport(float, float, float, float, float, float);
+extern "C" void GX2SetScissor(unsigned int, unsigned int, unsigned int, unsigned int);
+extern "C" void GX2SetColorBuffer(_GX2ColorBuffer*, unsigned int);
+extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
 extern void GX2InitTextureRegs(_GX2Texture*);
 extern void instructionSynchronize();
 

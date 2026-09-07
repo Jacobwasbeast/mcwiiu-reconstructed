@@ -2,9 +2,12 @@
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 #include <cstring>
 
+extern "C"
+{
 void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
 void GX2SetAttribBuffer(unsigned int index, unsigned int size, unsigned int stride, const void* buffer);
 void GX2DrawEx(unsigned int mode, unsigned int count, unsigned int offset, unsigned int numInstances);
+}
 
 FFLiCompressDrawer::FFLiCompressDrawer()
 {

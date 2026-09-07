@@ -10,7 +10,7 @@ NQRNetworkPlayer::NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayer
     unsigned long long stationId, int localPlayerIndex, PlayerUID* uid,
     const char* networkName, const wchar_t* miiName)
     : m_type(type), m_local(local), m_connectionFlags(0), m_localPlayerIndex(localPlayerIndex),
-      m_stationId(stationId), m_manager(manager), m_customData(0), m_totalSendQueueMessages(0),
+      m_stationId(stationId), m_uid(0), m_manager(manager), m_customData(0), m_totalSendQueueMessages(0),
       m_totalSendQueueBytes(0), m_outstandingAckCount(0), m_sessionIndex(0), m_talkingTicks(0)
 {
     std::memset(m_miiName, 0, sizeof(m_miiName));
@@ -21,8 +21,6 @@ NQRNetworkPlayer::NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayer
     std::mbstowcs(m_networkNameW, networkName, 21);
     if (uid != NULL)
         m_uid = *uid;
-    else
-        m_uid = PlayerUID(0);
     InitializeCriticalSection(&m_voiceMutex);
     InitializeCriticalSection(&m_sendMutex);
 }
@@ -46,7 +44,7 @@ void NQRNetworkPlayer::SetCustomDataValue(unsigned int value) { m_customData = v
 
 unsigned int NQRNetworkPlayer::HasVoice()
 {
-    if (CMinecraftApp::sInstance.IsVoiceChatEnabled())
+    if (g_pApp->IsVoiceChatEnabled())
         return m_smallId != 0;
     return 0;
 }

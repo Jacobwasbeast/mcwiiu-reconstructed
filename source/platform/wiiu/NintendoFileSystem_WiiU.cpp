@@ -69,13 +69,13 @@ bool CreateDirectoryA(const char* pathName, void* securityAttributes)
     return result == 0;
 }
 
-bool CloseDir(int* directory)
+int CloseDir(int* directory)
 {
     setAltMainOKToRun();
     void* commandBlock = GetCommandBlock();
     int result = FSCloseDir(s_fileSystemClient, commandBlock, *directory, 0);
     waitForAltMainThreadToComplete();
-    return result == 0;
+    return result;
 }
 
 void CloseHandle(int file)

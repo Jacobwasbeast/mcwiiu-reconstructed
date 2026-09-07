@@ -9,6 +9,8 @@
 #include <new>
 #include <vector>
 
+extern "C"
+{
 void OSInitMutex(void*);
 void OSLockMutex(void*);
 void OSUnlockMutex(void*);
@@ -29,6 +31,7 @@ bool OSSetThreadPriority(OSThread*, int);
 bool OSSetThreadAffinity(OSThread*, unsigned int);
 void OSJoinThread(OSThread*, int*);
 void OSResumeThread(OSThread*);
+}
 
 namespace pead
 {

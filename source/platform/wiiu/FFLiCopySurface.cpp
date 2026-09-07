@@ -5,16 +5,16 @@
 #include <cstring>
 
 extern void FFLiTempSetContextState(const _GX2ContextState* state);
-extern void GX2SetDefaultState();
-extern void GX2SetDepthOnlyControl(int enable, int func, unsigned int write);
-extern void GX2SetTargetChannelMasks(unsigned int, unsigned int, unsigned int, unsigned int,
+extern "C" void GX2SetDefaultState();
+extern "C" void GX2SetDepthOnlyControl(int enable, int func, unsigned int write);
+extern "C" void GX2SetTargetChannelMasks(unsigned int, unsigned int, unsigned int, unsigned int,
                                      unsigned int, unsigned int, unsigned int, unsigned int);
-extern void GX2CalcSurfaceSizeAndAlignment(_GX2Surface* surface);
-extern void GX2InitTextureRegs(_GX2Texture* texture);
-extern void GX2InitColorBufferRegs(_GX2ColorBuffer* buffer);
-extern void GX2SetColorBuffer(_GX2ColorBuffer* buffer, unsigned int target);
-extern void GX2SetViewport(float x, float y, float width, float height, float nearZ, float farZ);
-extern void GX2SetScissor(unsigned int x, unsigned int y, unsigned int width, unsigned int height);
+extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface* surface);
+extern "C" void GX2InitTextureRegs(_GX2Texture* texture);
+extern "C" void GX2InitColorBufferRegs(_GX2ColorBuffer* buffer);
+extern "C" void GX2SetColorBuffer(_GX2ColorBuffer* buffer, unsigned int target);
+extern "C" void GX2SetViewport(float x, float y, float width, float height, float nearZ, float farZ);
+extern "C" void GX2SetScissor(unsigned int x, unsigned int y, unsigned int width, unsigned int height);
 extern unsigned int FFLiGetMipMapLevelSize(unsigned int value, unsigned int level);
 extern void FFLiInvalidateSurface(_GX2Surface* surface, unsigned int type);
 extern void instructionSynchronize();

@@ -14,6 +14,8 @@
 class C4JEventImpl;
 class C4JThreadImpl;
 
+void LeaveCriticalSection(void* pCriticalSection);
+
 namespace nn
 {
     namespace fp

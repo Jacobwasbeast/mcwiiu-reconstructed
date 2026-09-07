@@ -12,11 +12,6 @@
 
 #include <cstring>
 
-struct _Mat44
-{
-    float value[4][4];
-};
-
 int FFLiLoadShape(FFLDrawParam*, FFLBoundingBox*, FFLiCharModel*, FFLiShapePartsType, unsigned short, FFLiResourceLoader*, FFLiBufferAllocator*);
 void FFLiAdjustShape(FFLDrawParam*, FFLBoundingBox*, float, float, const FFLVec3*, bool, const FFLiCoordinate*, FFLiShapePartsType, bool);
 int FFLiCanDrawShape(const FFLDrawParam*);

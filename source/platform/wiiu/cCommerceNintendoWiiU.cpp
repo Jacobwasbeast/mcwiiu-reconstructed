@@ -3,17 +3,15 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <nn/act.h>
+#include <nsysnet/nssl.h>
+
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/C_AOC.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/cDLCInfo.hpp"
 #include "game/core/cProductInfo.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
-
-bool NSSLInit();
-void curl_global_init(unsigned int flags);
-void OSResumeThread(OSThread* thread);
-unsigned int GetErrorCode(const nn::Result& result);
 
 cCommerceNintendoWiiU::cCommerceNintendoWiiU()
     : m_catalogData(NULL), m_balance(NULL, NULL, NULL), m_errorCode(0), m_errorOccurred(false)
@@ -31,7 +29,7 @@ void cCommerceNintendoWiiU::GetBalance()
 
 unsigned int cCommerceNintendoWiiU::LogIn()
 {
-    if (nn::ec::IsNetworkAccount())
+    if (nn::act::IsNetworkAccount())
     {
         uint32_t result = nn::ec::Connect();
         if (result & 0x80000000U)
@@ -210,7 +208,8 @@ void cCommerceNintendoWiiU::tick()
     {
         m_errorOccurred = false;
         nn::Result result;
-        result.value = m_errorCode;
+        NNResult rawResult = {static_cast<int32_t>(m_errorCode)};
+        result = rawResult;
         gConsoleUIController.RequestErrorMessage(0, 0, NULL, 0, 0, NULL, NULL, NULL, false);
         nn::ec::GetErrorCode(result);
     }

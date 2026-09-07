@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-bool CloseDir(int* directory);
+int CloseDir(int* directory);
 void CloseHandle(int file);
 bool CreateDirectoryA(const char* pathName, void* securityAttributes);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,

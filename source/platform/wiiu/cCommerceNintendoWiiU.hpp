@@ -5,13 +5,10 @@
 
 #include "platform/wiiu/cCommerceNintendo.hpp"
 
+#include <nn/result.h>
+
 namespace nn
 {
-    struct Result
-    {
-        uint32_t value;
-    };
-
     namespace ec
     {
         class Money
@@ -27,7 +24,6 @@ namespace nn
         {
         public:
             ShoppingCatalog();
-            uint32_t RetrieveAocs(const void*, uint32_t, uint32_t);
             uint32_t GetTotal() const;
             void* GetItem(uint32_t);
         private:
@@ -39,7 +35,6 @@ namespace nn
         public:
             Query();
             ~Query();
-            void SetSalesStatusFilter(int);
         };
 
         class DateTime
@@ -49,14 +44,12 @@ namespace nn
             long long operator-(const DateTime&) const;
         };
 
-        bool IsNetworkAccount();
         uint32_t Connect();
-        uint32_t Login();
         uint32_t SynchronizeAocRights();
         uint32_t Initialize(uint32_t);
         void GetBalance(Money*);
         void GetServerTime(DateTime*);
-        uint32_t GetErrorCode(const Result&);
+        uint32_t GetErrorCode(const nn::Result&);
         void GetLastServerErrorMessage(wchar_t*, wchar_t*);
         namespace applet
         {
@@ -65,10 +58,6 @@ namespace nn
         }
     }
 
-    namespace act
-    {
-        uint32_t Initialize();
-    }
 }
 
 struct DLC_INFO;

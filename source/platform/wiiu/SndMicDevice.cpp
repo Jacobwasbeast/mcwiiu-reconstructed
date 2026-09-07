@@ -1,5 +1,6 @@
 #include "platform/wiiu/SndMicDevice.hpp"
 
+#include <coreinit/time.h>
 #include <string.h>
 
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
@@ -32,8 +33,6 @@ public:
 }
 }
 }
-
-typedef long long OSTime;
 
 struct MICStatus
 {
@@ -108,12 +107,6 @@ enum eAXVoiceState
     AX_VOICE_STATE_RUNNING = 1
 };
 
-enum eOSEventMode
-{
-    OS_EVENT_MODE_MANUAL = 0,
-    OS_EVENT_MODE_AUTO = 1
-};
-
 enum eMICError
 {
     MIC_ERROR_NONE = 0,
@@ -126,14 +119,12 @@ enum eAXDevice
     AX_DEVICE_DRC = 1
 };
 
+extern "C"
+{
 void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
 void MEMFreeToDefaultHeap(void* pMemory);
 
-OSTime OSMillisecondsToTicks(unsigned int uiMilliseconds);
 void OSSleepTicks(OSTime ticks);
-void OSInitEvent(OSEvent* pEvent, unsigned int uiInitialValue, int iMode);
-void OSWaitEvent(OSEvent* pEvent);
-void OSSignalEvent(OSEvent* pEvent);
 int OSGetCoreCount();
 int OSGetCoreId();
 int OSGetMainCoreId();
@@ -181,6 +172,7 @@ void MIXSetSoundMode(unsigned int uiMode);
 void MIXInitChannel(AXVPB* pVoice, unsigned int uiDevice, unsigned int uiBus, int iVolume, int iAuxAVolume, int iAuxBVolume, unsigned int uiPan, unsigned int uiSpan, unsigned int uiFader);
 void MIXDRCInitChannel(AXVPB* pVoice, unsigned int uiDevice, unsigned int uiBus, unsigned int uiPan, unsigned int uiSpan);
 void MIXUpdateSettings();
+}
 
 int MicSndFrameThread(int iArgc, void* pArgv);
 nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol();

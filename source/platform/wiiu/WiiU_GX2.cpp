@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 extern void _GX2InitColorBuffer(_GX2ColorBuffer*, unsigned int, unsigned int, unsigned int, unsigned int);
-extern void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
-extern void GX2InitDepthBufferRegs(_GX2DepthBuffer*);
+extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
+extern "C" void GX2InitDepthBufferRegs(_GX2DepthBuffer*);
 extern void GX2InitTextureRegs(_GX2Texture*);
-extern void OSPanic(const char*, int, const char*);
+extern "C" void OSPanic(const char*, int, const char*);
 extern void C_MTXPerspective(float (*)[4], float, float, float, float);
 extern void C_MTXLookAt(_Mat34*, const float*, const float*, const float*);
 extern void instructionSynchronize();

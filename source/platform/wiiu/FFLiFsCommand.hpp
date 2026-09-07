@@ -4,10 +4,7 @@
 #include <stdint.h>
 #include "platform/wiiu/FFLiFsClient.hpp"
 
-struct FFLiFsCommandBuffer
-{
-    uint8_t commandData[2688];
-};
+typedef FSCmdBlock FFLiFsCommandBuffer;
 
 class FFLiFsFile;
 

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+struct FSDirEntry;
+
 class WiiU_FileCache
 {
 private:

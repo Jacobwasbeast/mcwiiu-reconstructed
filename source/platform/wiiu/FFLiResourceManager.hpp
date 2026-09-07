@@ -3,12 +3,11 @@
 
 #include <stdint.h>
 
+#include "platform/wiiu/FFLiFsCommand.hpp"
 #include "platform/wiiu/FFLiResourceCache.hpp"
 #include "platform/wiiu/FFLiResourceHeader.hpp"
 
 class FFLiFsClient;
-class FFLiFsCommand;
-struct FFLiFsCommandBuffer;
 
 struct FFLiResourceMultiHeader
 {

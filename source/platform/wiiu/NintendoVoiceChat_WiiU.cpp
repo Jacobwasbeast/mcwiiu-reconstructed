@@ -4,6 +4,8 @@
 #include <new>
 #include <vector>
 
+#include <proc_ui/procui.h>
+
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -56,7 +58,6 @@ int Finalize();
 
 extern nn::pia::transport::ProtocolManager* g_piaProtocolManager;
 nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol();
-void ProcUIDrawDoneRelease();
 void Assert(const char* expression, const char* file, unsigned int line, const char* function, ...);
 
 void checkPiaCoreToUse()
@@ -346,7 +347,7 @@ void NintendoVoiceChat_WiiU::Tick()
             s_foregroundState = 1;
         if (s_foregroundState == 0)
         {
-            SetVoiceChatEnabled(CMinecraftApp::sInstance.IsVoiceChatEnabled() != 0);
+            SetVoiceChatEnabled(g_pApp->IsVoiceChatEnabled() != 0);
             FlushMessageQueue();
             return;
         }

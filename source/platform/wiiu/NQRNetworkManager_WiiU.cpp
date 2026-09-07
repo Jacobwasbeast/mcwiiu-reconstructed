@@ -10,6 +10,7 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+#include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
 
 static NQRNetworkManager_WiiU* s_networkManager;
 static int (*s_connectCallback)(void*, bool, int);
@@ -85,7 +86,6 @@ class Session;
 }
 
 extern void checkPiaCoreToUse();
-extern void InitializeRuntimeMemory(unsigned int runtimeSize, unsigned int reservedSize);
 extern void FinalizeRuntimeMemory();
 extern nn::nex::NgsFacade* Nex_GetNgsFacadeInstanceNative();
 extern void* Nex_GetDataStoreClientNative();
@@ -182,7 +182,7 @@ unsigned int Nex_InitializeMatchmake__Fv()
 unsigned int Nex_InitializeNex__FUiT1Q4_2nn3nex4Core10ThreadMode(unsigned int runtimeSize, unsigned int reservedSize, unsigned int)
 {
     checkPiaCoreToUse();
-    InitializeRuntimeMemory(runtimeSize, reservedSize);
+    __N_20_Shared_Nex_Setup_cpp_392f2b82::InitializeRuntimeMemory(runtimeSize, reservedSize);
     nn::nex::GlobalVariables::AcquireInstance();
     Nex_InitializeErrorHandling__Fv();
     s_ngsFacade = Nex_GetNgsFacadeInstanceNative();

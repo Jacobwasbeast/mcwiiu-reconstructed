@@ -155,8 +155,8 @@ public:
     virtual int GetPrimaryPad();
     virtual void SetPrimaryPad(int);
     virtual void ClearGameUsers();
-    virtual const wchar_t* GetMiiName(int);
-    virtual const wchar_t* GetGamertag(int);
+    virtual wchar_t* GetMiiName(int);
+    virtual wchar_t* GetGamertag(int);
     virtual std::wstring GetDisplayName(int);
     virtual char* GetNetworkAccountID();
     virtual bool IsFullVersion();

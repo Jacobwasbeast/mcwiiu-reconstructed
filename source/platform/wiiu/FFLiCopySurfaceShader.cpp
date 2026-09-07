@@ -4,13 +4,13 @@
 #include <cstring>
 
 struct _GX2Sampler;
-extern void GX2SetFetchShader(const FFLiUtilShader::FetchShader* fetchShader);
-extern void GX2SetVertexShader(const _GX2VertexShader* shader);
-extern void GX2SetPixelShader(const _GX2PixelShader* shader);
-extern void GX2InitSampler(_GX2Sampler* sampler, unsigned int clampMode, unsigned int minMagFilter);
-extern void GX2InitSamplerLOD(_GX2Sampler* sampler, float minLod, float maxLod, float lodBias);
-extern void GX2SetPixelSampler(const _GX2Sampler* sampler, unsigned int unit);
-extern void GX2SetPixelTexture(const _GX2Texture* texture, unsigned int unit);
+extern "C" void GX2SetFetchShader(const FFLiUtilShader::FetchShader* fetchShader);
+extern "C" void GX2SetVertexShader(const _GX2VertexShader* shader);
+extern "C" void GX2SetPixelShader(const _GX2PixelShader* shader);
+extern "C" void GX2InitSampler(_GX2Sampler* sampler, unsigned int clampMode, unsigned int minMagFilter);
+extern "C" void GX2InitSamplerLOD(_GX2Sampler* sampler, float minLod, float maxLod, float lodBias);
+extern "C" void GX2SetPixelSampler(const _GX2Sampler* sampler, unsigned int unit);
+extern "C" void GX2SetPixelTexture(const _GX2Texture* texture, unsigned int unit);
 extern void FFLiInvalidateShader(void* buffer, unsigned int size);
 
 FFLiCopySurfaceShader::FFLiCopySurfaceShader()

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <coreinit/filesystem.h>
+#include <nn/save/save.h>
 
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
@@ -40,29 +42,7 @@ struct SAVE_DETAILS
     SAVE_INFO* saves;
     int reserved;
 };
-struct FSStat
-{
-    unsigned int flags;
-    unsigned int mode;
-    unsigned int owner;
-    unsigned int group;
-    unsigned int size;
-    unsigned int allocatedSize;
-    unsigned int quotaSizeHigh;
-    unsigned int quotaSizeLow;
-    unsigned int entryId;
-    unsigned int createdTimeHigh;
-    unsigned int createdTimeLow;
-    unsigned int modifiedTimeHigh;
-    unsigned int modifiedTimeLow;
-    unsigned char attributes[48];
-};
-
-struct FSDirEntry
-{
-    FSStat stat;
-    char name[256];
-};
+typedef FSDirectoryEntry FSDirEntry;
 
 class CStorage
 {
@@ -243,12 +223,7 @@ public:
     static unsigned int _DeleteGenericDataThreadProc(int, void*);
 
 private:
-    struct StateChangeNotification
-    {
-        void (*callback)(FSClient*, int, void*);
-        void* context;
-        unsigned int reserved;
-    };
+    typedef FSStateChangeParams StateChangeNotification;
 
     unsigned int m_crcTable[256];
     bool m_crcReady;
@@ -256,8 +231,8 @@ private:
     void* m_savingMessageContext;
     StateChangeNotification m_saveStateChangeNotification;
     FSClient m_saveClient;
-    unsigned char m_saveCommandBlock[0xa80];
-    unsigned char m_saveDirectoryCommandBlock[0xa80];
+    FSCmdBlock m_saveCommandBlock;
+    FSCmdBlock m_saveDirectoryCommandBlock;
     OSFastMutex m_storageMutex;
     OSThread m_saveThreads[6];
     unsigned int m_saveState;
@@ -345,12 +320,12 @@ private:
     OldProfileVersionCallback m_oldProfileVersionCallback;
     void* m_oldProfileVersionContext;
     FSClient m_profileClient;
-    unsigned char m_profileCommandBlock[0xa80];
+    FSCmdBlock m_profileCommandBlock;
     int m_genericState;
     int m_genericSlot;
     unsigned int m_genericDataSize;
     void* m_genericWriteData;
-    void* m_genericLoadedData;
+    unsigned char* m_genericLoadedData;
     unsigned int m_genericLoadedSize;
     unsigned int* m_genericReadSize;
     void** m_genericReadData;
@@ -358,7 +333,7 @@ private:
     unsigned int m_genericThreadReserved[2];
     OSThread m_genericThread;
     FSClient m_genericClient;
-    unsigned char m_genericCommandBlock[0xa80];
+    FSCmdBlock m_genericCommandBlock;
     GenericDataCallback m_genericCallback;
     void* m_genericContext;
     int m_dlcResult;
