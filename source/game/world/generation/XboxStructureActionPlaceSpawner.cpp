@@ -11,6 +11,7 @@
 
 XboxStructureActionPlaceSpawner::XboxStructureActionPlaceSpawner()
 {
+    mBlock = Blocks::mob_spawner;
     mEntityId.assign(L"Pig");
     addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(20), &mEntityId);
 }
@@ -29,17 +30,15 @@ uint32_t XboxStructureActionPlaceSpawner::placeSpawnerInLevel(StructurePiece* st
         return 0;
     }
 
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity)
+    if (level->getBlockEntity(pos))
     {
         level->removeBlockEntity(pos);
         level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
     }
 
     level->setBlock(pos, mBlock->defaultBlockState(), 3, false);
-    boost::shared_ptr<BlockEntity> newBlockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<MobSpawnerBlockEntity> spawner =
-        boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(newBlockEntity);
+        boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(level->getBlockEntity(pos));
     if (spawner)
     {
         spawner->setEntityId(mEntityId);

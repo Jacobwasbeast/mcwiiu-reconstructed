@@ -21,6 +21,8 @@ class VillageFeature;
 class WoodlandMansionFeature;
 class FlatLayerInfo;
 
+long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum);
+
 class FlatGeneratorInfo
 {
 public:
@@ -91,7 +93,7 @@ public:
     void setCaves(bool enabled);
     void setCanyons(bool enabled);
     void setMineshaft(int chance);
-    void setStronghold(int count, int distance);
+    void setStronghold(int distance, int count);
     void setShipwrecks(int spacing, int separation);
     int getBiome();
     int getVillageSize();

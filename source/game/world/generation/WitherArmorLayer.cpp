@@ -11,6 +11,7 @@
 #include "game/client/render/WitherBossRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/WitherBoss.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -56,7 +57,7 @@ void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     GlStateManager::blendFunc(1, 1);
 
     boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    mModel->copyPropertiesFrom(mRenderer->getModel(entity));
+    mModel->copyPropertiesFrom(mRenderer->getModel());
     mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
                    headPitch, scale, bUseDisplayList);
 

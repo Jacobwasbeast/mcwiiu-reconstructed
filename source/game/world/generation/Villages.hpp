@@ -31,7 +31,7 @@ public:
     bool isDoor(const BlockPos& pos);
     boost::shared_ptr<DoorInfo> getDoorInfo(const BlockPos& pos);
     int skyVisibleBlockCount(const BlockPos& pos, const Direction* direction, int count);
-    boost::shared_ptr<DoorInfo> createDoorInfo(const BlockPos& pos);
+    void createDoorInfo(const BlockPos& pos);
     void addDoorInfos(const BlockPos& pos);
     void processNextQuery();
     boost::shared_ptr<Village> getClosestVillage(const BlockPos& pos, int distance);

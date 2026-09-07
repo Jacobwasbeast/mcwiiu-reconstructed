@@ -7,8 +7,10 @@
 #include "game/client/render/ShulkerRenderer.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Shulker.hpp"
+#include "game/util/ResourceLocation.hpp"
 
-class Shulker;
+static ResourceLocation SHULKER_LOCATION;
 
 ShulkerHeadLayer::ShulkerHeadLayer(ShulkerRenderer* renderer)
     : mRenderer(renderer)
@@ -24,9 +26,8 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
                               float scale, bool bUseDisplayList)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
-    const Direction* direction = shulker->getAttachFace();
-
     GlStateManager::pushMatrix();
+    const Direction* direction = shulker->getAttachFace();
 
     switch (direction->get3DDataValue())
     {
@@ -62,7 +63,7 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     ShulkerModel* model = static_cast<ShulkerModel*>(mRenderer->getModel());
     model->mHead->mYRot = netHeadYaw * 0.01745329238474369f;
     model->mHead->mXRot = headPitch * 0.01745329238474369f;
-    model->mHead->translateTo(scale);
+    mRenderer->bindTexture(&SHULKER_LOCATION);
     model->mHead->render(scale, bUseDisplayList, false);
 
     GlStateManager::popMatrix();

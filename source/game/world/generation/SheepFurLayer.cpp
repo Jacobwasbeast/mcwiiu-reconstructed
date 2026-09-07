@@ -5,8 +5,8 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/SheepFurModel.hpp"
 #include "game/client/render/SheepRenderer.hpp"
+#include "game/core/Sheep.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 static ResourceLocation SHEEP_FUR_LOCATION;

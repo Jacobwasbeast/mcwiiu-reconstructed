@@ -14,17 +14,12 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DoorBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/Villager.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 #include "game/world/generation/Player.hpp"
-
-class DoorBlock
-{
-public:
-    static bool isDoor(Block* block);
-};
 
 Village::Village()
 {

@@ -12,7 +12,7 @@ public:
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;
 
-private:
+protected:
     int mHeightOffset;
 };
 

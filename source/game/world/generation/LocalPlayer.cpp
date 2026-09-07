@@ -27,13 +27,12 @@
 
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex)
     : AbstractClientPlayer(level, user != 0 ? user->name : std::wstring()),
-      mPacketListener(0), mMinecraft(minecraft),
-      mPlayerIndex(playerIndex), mHandsBusy(false), mWaitingForScoreboard(false),
-      mDamageNearbyMobs(false), mAutoJumpEnabled(false), mAutoJumpTime(0), mPermissionLevel(0),
-      mThirdPersonView(0), mPercentageTraversed(0.0), mDamageTaken(0.0f),
-      mSprinting(false),
-      mSessionTimer(0.0), mGameMode(0), mViewBob(), mViewBobPrev(),
-      mViewBobAmount(), mAdditionalModelParts()
+      mPacketListener(0), mPermissionLevel(0), mMinecraft(minecraft), mSprinting(false),
+      mHandsBusy(false), mAutoJumpEnabled(true), mAutoJumpTime(0), mButtonsDown(0),
+      mThirdPersonView(0), mGameMode(0), mUserIndex(-1), mViewBob(), mViewBobPrev(),
+      mViewBobAmount(), mDamageTaken(0.0f), mWaitingForScoreboard(false),
+      mSessionTimer(0.0), mAdditionalModelParts(), mPercentageTraversed(0.0),
+      mDamageNearbyMobs(false)
 {
 }
 
@@ -133,7 +132,7 @@ void LocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
 
 void LocalPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> sign)
 {
-    if (g_pApp->LoadSignEntryMenu(mPlayerIndex, sign) != 0)
+    if (g_pApp->LoadSignEntryMenu(mUserIndex, sign) != 0)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
     }
@@ -266,7 +265,7 @@ const GameType* LocalPlayer::GetGameType()
 void LocalPlayer::SetGameType(const GameType* gameType)
 {
     mGameMode = gameType == 0 ? 0 : gameType->getId();
-    Tooltips::ResetAllTooltips(mPlayerIndex);
+    Tooltips::ResetAllTooltips(mUserIndex);
 }
 
 unsigned long long LocalPlayer::GetType()
@@ -603,14 +602,14 @@ bool LocalPlayer::isSolidBlock(int x, int y, int z)
 
 not_null_ptr<ItemInstance> LocalPlayer::getCarriedItem()
 {
-    return mField0x5f0->getSelected();
+    return mInventory->getSelected();
 }
 
 MultiPlayerGameMode* LocalPlayer::GetLocalGameMode()
 {
-    if ((unsigned int)mPlayerIndex < 4)
+    if ((unsigned int)mUserIndex < 4)
     {
-        return mMinecraft->mGameModes[mPlayerIndex];
+        return mMinecraft->mGameModes[mUserIndex];
     }
 
     for (int index = 0; index < 4; ++index)
@@ -637,13 +636,13 @@ void LocalPlayer::StartSpectating()
 void LocalPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    MultiPlayerGameMode* gameMode = minecraft->mGameModes[mPlayerIndex];
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[mUserIndex];
     if (gameMode != 0 && gameMode->getTutorial() != 0)
     {
         gameMode->getTutorial()->onEquip(item);
     }
 
-    minecraft->mGui->ShowCharacterDisplay(mPlayerIndex);
+    minecraft->mGui->ShowCharacterDisplay(mUserIndex);
 
     Item* ironArmor[4] = {
         Items::ironBoots,
@@ -653,7 +652,7 @@ void LocalPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
     };
     for (int slot = 0; slot < 4; ++slot)
     {
-        not_null_ptr<ItemInstance> armor = mField0x5f0->getArmor(slot);
+        not_null_ptr<ItemInstance> armor = mInventory->getArmor(slot);
         if (armor->isEmpty() || armor->getItem() != ironArmor[slot])
         {
             return;
@@ -666,7 +665,7 @@ void LocalPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
 void LocalPlayer::OnTakeFromAnvil(not_null_ptr<ItemInstance> item)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    MultiPlayerGameMode* gameMode = minecraft->mGameModes[mPlayerIndex];
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[mUserIndex];
     if (gameMode != 0 && gameMode->getTutorial() != 0)
     {
         gameMode->getTutorial()->onTakeFromAnvil(item);

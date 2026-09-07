@@ -18,9 +18,9 @@ public:
                    const std::vector<const LayerTheme*>& themes);
     ~LayerGenerator();
 
-    unsigned int getArea() const;
+    AABB* getArea() const;
     int getCoreWorldMinY() const;
-    unsigned int Generate(Random& random, Level* level);
+    BlockTransaction* Generate(Random& random, Level* level);
     void updateArea(AABB* area);
     int getCoreWorldMaxY() const;
 

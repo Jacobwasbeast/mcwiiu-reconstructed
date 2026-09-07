@@ -61,7 +61,7 @@ bool MoveThroughVillageGoal::hasVisited(boost::shared_ptr<DoorInfo> door)
             continue;
         }
 
-        if (visited->getPos().equals(door->getPos()))
+        if (door->getPos().equals(visited->getPos()))
             return true;
         ++it;
     }
@@ -97,7 +97,7 @@ bool MoveThroughVillageGoal::canUse()
     boost::shared_ptr<Villages> villages = mMob->mLevel->getVillages();
     boost::shared_ptr<Entity> entity = mMob->shared_from_this();
     BlockPos mobPos(entity);
-    boost::shared_ptr<Village> village = villages->getClosestVillage(mobPos, 32);
+    boost::shared_ptr<Village> village = villages->getClosestVillage(mobPos, 0);
     if (!village)
         return false;
 
@@ -117,8 +117,9 @@ bool MoveThroughVillageGoal::canUse()
 
     boost::shared_ptr<PathfinderMob> mob =
         boost::static_pointer_cast<PathfinderMob>(entity);
-    BlockPos doorPos = mDoorInfo->getPos();
-    Vec3* target = Vec3::newTemp((double)doorPos.x, (double)doorPos.y, (double)doorPos.z);
+    Vec3* target = Vec3::newTemp((double)mDoorInfo->getPos().x,
+                                 (double)mDoorInfo->getPos().y,
+                                 (double)mDoorInfo->getPos().z);
     Vec3* position = RandomPos::getPosTowards(mob, 10, 7, target);
     if (position == NULL)
         return false;

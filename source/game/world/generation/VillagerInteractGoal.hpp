@@ -15,7 +15,7 @@ public:
     virtual std::wstring getName();
 
 private:
-    int mTime;
+    int mInteractionDelay;
     Villager* mVillager;
 };
 

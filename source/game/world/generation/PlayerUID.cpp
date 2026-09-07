@@ -107,3 +107,27 @@ bool PlayerUID::operator!=(const PlayerUID& other) const
 {
     return !(*this == other);
 }
+
+unsigned int hash_value(const PlayerUID& uid)
+{
+    unsigned int seed = 0;
+    if ((uid.flags & 0x80000000u) == 0)
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            seed ^= static_cast<unsigned int>(uid.mii.createId[i]) +
+                    seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+        }
+        seed ^= uid.mii.principalId +
+                seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+    }
+    else
+    {
+        for (int i = 0; i < 16; ++i)
+        {
+            seed ^= static_cast<unsigned int>(uid.uuid.data[i]) +
+                    seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+        }
+    }
+    return seed;
+}

@@ -11,6 +11,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/item/ItemCooldowns.hpp"
+#include "game/item/PowerupItems.hpp"
 #include "game/world/block/Predicate.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 #include "game/core/Abilities.hpp"
@@ -19,11 +20,14 @@
 class ItemInstance;
 class AbstractContainerMenu;
 class Container;
+class FishingHook;
+class ModelPart;
 class SoundEvent;
 class FoodData;
 class GameMode;
 class Inventory;
 class PlayerEnderChestContainer;
+class SignBlockEntity;
 class ItemEntity;
 class MultiPlayerGameMode;
 
@@ -63,6 +67,22 @@ struct Player : LivingEntity {
     friend class ServerGamePacketListenerImpl;
 
     enum EPlayerGamePrivileges {
+        ePlayerGamePrivilege_0 = 0,
+        ePlayerGamePrivilege_1 = 1,
+        ePlayerGamePrivilege_3 = 3,
+        ePlayerGamePrivilege_4 = 4,
+        ePlayerGamePrivilege_5 = 5,
+        ePlayerGamePrivilege_6 = 6,
+        ePlayerGamePrivilege_7 = 7,
+        ePlayerGamePrivilege_8 = 8,
+        ePlayerGamePrivilege_9 = 9,
+        ePlayerGamePrivilege_10 = 10,
+        ePlayerGamePrivilege_11 = 11,
+        ePlayerGamePrivilege_12 = 12,
+        ePlayerGamePrivilege_13 = 13,
+        ePlayerGamePrivilege_14 = 14,
+        ePlayerGamePrivilege_15 = 15,
+        ePlayerGamePrivilege_16 = 16,
         ePlayerGamePrivilege_All = 0x21,
         ePlayerGamePrivilege_Moderator = 0x22
     };
@@ -101,23 +121,21 @@ struct Player : LivingEntity {
     AbstractContainerMenu* mInventoryMenu;
     AbstractContainerMenu* mContainerMenu;
     FoodData mFoodData;
-    uint8_t mPadding0x61c[12];
+    uint8_t mPadding0x61c[4];
+    float mPrevCameraYaw;
+    float mCameraYaw;
     int32_t mTakeXpDelay;
     uint8_t mPadding0x62c[28];
     int32_t mField0x648;
-    uint8_t mPadding0x64c[4];
-    int16_t mField0x650;
-    uint8_t mPadding0x652[14];
-    int32_t mField0x660;
-    int32_t mField0x664;
+    std::wstring mCapeLocation;
     int32_t mField0x668;
     int32_t mField0x66c;
-    double mField0x670;
-    double mField0x678;
-    double mField0x680;
-    double mField0x688;
-    double mField0x690;
-    double mField0x698;
+    double mPrevChasingPosX;
+    double mPrevChasingPosY;
+    double mPrevChasingPosZ;
+    double mChasingPosX;
+    double mChasingPosY;
+    double mChasingPosZ;
     uint8_t mPadding0x6a0[4];
     int16_t mField0x6a4;
     uint8_t mPadding0x6a6[10];
@@ -150,7 +168,7 @@ struct Player : LivingEntity {
     int32_t mExperienceLevel;
     int32_t mTotalExperience;
     float mExperienceProgress;
-    uint8_t mPadding0x728[8];
+    boost::shared_ptr<FishingHook> mFishing;
     int32_t mEnchantmentSeed;
     uint8_t mPadding0x734[4];
     ItemCooldowns* mField0x738;
@@ -178,7 +196,7 @@ struct Player : LivingEntity {
     uint32_t mField0x7d8;
     int32_t mField0x7dc;
     int32_t mField0x7e0;
-    int32_t mField0x7e4;
+    int32_t mPlayerIndex;
     unsigned int mDebugOptions;
     uint8_t mField0x7ec;
     uint8_t mPadding0x7ed[3];
@@ -187,7 +205,7 @@ struct Player : LivingEntity {
     uint8_t mField0x7f8;
     uint8_t mPadding0x7f9[3];
     uint32_t mField0x7fc;
-    uint32_t mField0x800;
+    std::vector<ModelPart*>* mAdditionalModelParts;
     uint8_t mField0x804;
     uint8_t mField0x805;
     uint8_t mPadding0x806[2];
@@ -207,10 +225,10 @@ struct Player : LivingEntity {
     uint8_t mPadding0x83b[1];
     uint8_t mField0x83c;
     uint8_t mPadding0x83d[3];
-    float mField0x840;
-    float mField0x844;
-    float mField0x848;
-    int32_t mField0x84c;
+    float mFlap;
+    float mFlapSpeed;
+    float mOFlapSpeed;
+    float mOFlap;
     float mField0x850;
     float mField0x854;
     float mField0x858;
@@ -313,7 +331,7 @@ struct Player : LivingEntity {
     uint32_t isAllowedToIgnoreExhaustion();
     void causeFoodExhaustion(float );
     void actuallyHurt(const DamageSource* , float );
-    void openTextEdit(uint32_t );
+    void openTextEdit(boost::shared_ptr<SignBlockEntity> );
     void openMinecartCommandBlock(uint32_t );
     void openCommandBlock(uint32_t );
     uint32_t openTrading(uint32_t , std::wstring* , int32_t );
@@ -379,6 +397,7 @@ struct Player : LivingEntity {
     bool makeStepSound();
     void onUpdateAbilities();
     void setGameMode(GameType* );
+    virtual const GameType* GetGameType() = 0;
     std::wstring getName();
     std::wstring getNetworkName();
     boost::shared_ptr<PlayerEnderChestContainer> getEnderChestInventory();
@@ -398,7 +417,7 @@ struct Player : LivingEntity {
     void setAbsorptionAmount(float );
     float getAbsorptionAmount();
     bool canUnlock(LockCode* );
-    uint32_t isModelPartShown(PlayerModelPart* );
+    uint32_t isModelPartShown(const PlayerModelPart* );
     bool setSlot(int32_t , const not_null_ptr<ItemInstance>& );
     uint8_t isReducedDebugInfo();
     const HumanoidArm* getMainArm();
@@ -418,7 +437,7 @@ struct Player : LivingEntity {
     uint8_t getTexture();
     void setPlayerDefaultSkin(uint32_t );
     static _SkinAdjustments getSkinAdjustmentsById(uint32_t );
-    void SetAdditionalModelParts(uint32_t );
+    void SetAdditionalModelParts(std::vector<ModelPart*>* );
     void setCustomSkin(uint32_t );
     static std::wstring getCapePathFromId(uint32_t );
     uint64_t setCustomCape(uint32_t );
@@ -437,7 +456,7 @@ struct Player : LivingEntity {
     static void enableAllPlayerPrivileges(uint32_t& , bool );
     void enableAllPlayerPrivileges(bool );
     bool canCreateParticles();
-    int32_t GetAdditionalModelParts();
+    std::vector<ModelPart*>* GetAdditionalModelParts();
     void UpdateSize();
     void SetSmallSize();
     void SetNoCollisionSize();
@@ -451,7 +470,7 @@ struct Player : LivingEntity {
     Vec3* getAttachPos(Entity::EEntityLocation , float );
     uint32_t IsSpectatingOtherPlayer();
     int32_t AutoEquip(not_null_ptr<ItemInstance>& , not_null_ptr<ItemInstance>& , bool& );
-    uint32_t CheckPowerup(int32_t );
+    uint32_t CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID );
     uint32_t CanRecordStats(Stat* , arrayWithLength<unsigned char> );
     double getUnderwaterLightLevel();
     void setUnderwaterLightLevel(float );

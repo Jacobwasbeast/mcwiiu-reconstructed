@@ -1,25 +1,13 @@
 #include "game/world/generation/FlowerFeature.hpp"
 
+#include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
-
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& min, const BlockPos& max);
-};
-
-extern CMinecraftApp* g_pApp;
 
 FlowerFeature::FlowerFeature(FlowerBlock* block, FlowerBlock::Flower* flower)
     : Feature(false)

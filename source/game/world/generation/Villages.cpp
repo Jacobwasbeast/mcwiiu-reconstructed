@@ -8,6 +8,7 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Village.hpp"
 
 class DoorBlock
@@ -23,7 +24,7 @@ Villages::Villages(const std::wstring& id)
 }
 
 Villages::Villages(Level* level)
-    : SavedData(L"Villages"), mLevel(level), mTick(0)
+    : SavedData(L"villages"), mLevel(level), mTick(0)
 {
 }
 
@@ -72,7 +73,7 @@ void Villages::removeVillages()
 bool Villages::isDoor(const BlockPos& pos)
 {
     const BlockState* state = mLevel->getBlockState(pos);
-    return DoorBlock::isDoor(state->getBlock());
+    return DoorBlock::isDoor(state->getBlock()) && state->getMaterial() == Material::WOOD;
 }
 
 boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
@@ -84,6 +85,15 @@ boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
         if (doorPos.x == pos.x && doorPos.z == pos.z && std::abs(doorPos.y - pos.y) < 2)
             return *it;
     }
+
+    std::vector<boost::shared_ptr<Village> >::iterator village;
+    for (village = mVillages.begin(); village != mVillages.end(); ++village)
+    {
+        boost::shared_ptr<DoorInfo> info = (*village)->getDoorInfo(pos);
+        if (info)
+            return info;
+    }
+
     return boost::shared_ptr<DoorInfo>();
 }
 
@@ -92,15 +102,12 @@ int Villages::skyVisibleBlockCount(const BlockPos& pos, const Direction* directi
     int visible = 0;
     int i;
     for (i = 1; i <= 4 && visible < count; ++i)
-    {
-        if (!mLevel->canSeeSky(pos.relative(direction, i)))
-            break;
-        ++visible;
-    }
+        if (mLevel->canSeeSky(pos.relative(direction, i)))
+            ++visible;
     return visible;
 }
 
-boost::shared_ptr<DoorInfo> Villages::createDoorInfo(const BlockPos& pos)
+void Villages::createDoorInfo(const BlockPos& pos)
 {
     const Direction* facing = DoorBlock::getFacing(mLevel, pos);
     const Direction* opposite = facing->getOpposite();
@@ -113,7 +120,6 @@ boost::shared_ptr<DoorInfo> Villages::createDoorInfo(const BlockPos& pos)
         info.reset(new DoorInfo(pos, facing, mTick));
     if (info)
         mDoorInfos.push_back(info);
-    return info;
 }
 
 void Villages::addDoorInfos(const BlockPos& pos)
@@ -225,7 +231,7 @@ void Villages::load(CompoundTag* tag)
 CompoundTag* Villages::save(CompoundTag* tag)
 {
     tag->putInt(L"Tick", mTick);
-    ListTag* list = new ListTag(10);
+    ListTag* list = new ListTag();
     std::vector<boost::shared_ptr<Village> >::iterator it;
     for (it = mVillages.begin(); it != mVillages.end(); ++it)
     {
@@ -239,6 +245,5 @@ CompoundTag* Villages::save(CompoundTag* tag)
 
 std::wstring Villages::getFileId(Dimension* dimension)
 {
-    const DimensionType* type = DimensionType::getById(dimension->getType());
-    return std::wstring(L"villages") + type->getFileSuffix();
+    return std::wstring(L"villages") + dimension->getType()->getFileSuffix();
 }

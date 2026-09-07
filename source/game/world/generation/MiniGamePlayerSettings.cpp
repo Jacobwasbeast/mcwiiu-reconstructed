@@ -1,5 +1,18 @@
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 
+class MiniGameDef
+{
+public:
+    static void GetPlayerSettings(MiniGamePlayerSettings& settings);
+};
+
+static MiniGamePlayerSettings getMiniGamePlayerSettings()
+{
+    MiniGamePlayerSettings settings;
+    MiniGameDef::GetPlayerSettings(settings);
+    return settings;
+}
+
 MiniGamePlayerSettings::MiniGamePlayerSettings()
     : mPlayerAbilities()
     , mLivesPerRound(1)
@@ -67,4 +80,94 @@ bool MiniGamePlayerSettings::operator==(const MiniGamePlayerSettings& other) con
         && mFriendlyFire == other.mFriendlyFire
         && mTeamGame == other.mTeamGame
         && mSpectatorParticipation == other.mSpectatorParticipation;
+}
+
+GameModeOptions GetSetting__tm__67_15GameModeOptionsXCM22MiniGamePlayerSettings15GameModeOptionsL_1_1__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings();
+}
+
+unsigned int GetSetting__tm__38_UiXCM22MiniGamePlayerSettingsUiL_2_25__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mLootSetId;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_43__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mShowNametags;
+}
+
+unsigned int GetSetting__tm__38_UiXCM22MiniGamePlayerSettingsUiL_2_21__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mLivesPerRound;
+}
+
+unsigned int GetSetting__tm__38_UiXCM22MiniGamePlayerSettingsUiL_2_33__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mTeamCount;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_41__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mTeamBasedSpawn;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_42__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mCheckpointBasedSpawn;
+}
+
+unsigned char GetSetting__tm__37_bXCM22MiniGamePlayerSettingsbL_3_103__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mSpectatorParticipation;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_81__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mSmallInventoryEnabled;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_44__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mTakeEverythingEnabled;
+}
+
+unsigned char GetSetting__tm__36_bXCM22MiniGamePlayerSettingsbL_2_45__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mChestRefillEnabled;
+}
+
+Abilities GetSetting__tm__53_9AbilitiesXCM22MiniGamePlayerSettings9AbilitiesL_1_5__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mPlayerAbilities;
+}
+
+maybe<bool> GetSetting__tm__66_14maybe__tm__2_bXCM22MiniGamePlayerSettings14maybe__tm__2_bL_2_46__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mCanTntDestroyBlocks;
+}
+
+int GetSetting__tm__36_iXCM22MiniGamePlayerSettingsiL_2_85__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mRoundCount;
+}
+
+int GetSetting__tm__36_iXCM22MiniGamePlayerSettingsiL_2_77__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mFoodBalance;
+}
+
+maybe<unsigned int> GetSetting__tm__68_15maybe__tm__3_UiXCM22MiniGamePlayerSettings15maybe__tm__3_UiL_2_69__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mLayerCount;
+}
+
+maybe<float> GetSetting__tm__66_14maybe__tm__2_fXCM22MiniGamePlayerSettings14maybe__tm__2_fL_2_61__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mArenaSizeMultiplier;
+}
+
+maybe<int> GetSetting__tm__66_14maybe__tm__2_iXCM22MiniGamePlayerSettings14maybe__tm__2_iL_2_49__Fv_Z1Z()
+{
+    return getMiniGamePlayerSettings().mMapSizeOverride;
 }

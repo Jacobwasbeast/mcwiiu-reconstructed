@@ -141,20 +141,20 @@ bool Player::checkBedExists()
 
 void Player::moveCloak()
 {
-    double cloakX = mX - mField0x688;
-    double cloakY = mY - mField0x690;
-    double cloakZ = mZ - mField0x698;
+    double cloakX = mX - mChasingPosX;
+    double cloakY = mY - mChasingPosY;
+    double cloakZ = mZ - mChasingPosZ;
 
-    if (cloakX > 10.0 || cloakX < -10.0) mField0x688 = mX;
-    if (cloakY > 10.0 || cloakY < -10.0) mField0x690 = mY;
-    if (cloakZ > 10.0 || cloakZ < -10.0) mField0x698 = mZ;
+    if (cloakX > 10.0 || cloakX < -10.0) mChasingPosX = mX;
+    if (cloakY > 10.0 || cloakY < -10.0) mChasingPosY = mY;
+    if (cloakZ > 10.0 || cloakZ < -10.0) mChasingPosZ = mZ;
 
-    mField0x670 = mField0x688;
-    mField0x678 = mField0x690;
-    mField0x680 = mField0x698;
-    mField0x688 += cloakX * 0.25;
-    mField0x690 += cloakY * 0.25;
-    mField0x698 += cloakZ * 0.25;
+    mPrevChasingPosX = mChasingPosX;
+    mPrevChasingPosY = mChasingPosY;
+    mPrevChasingPosZ = mChasingPosZ;
+    mChasingPosX += cloakX * 0.25;
+    mChasingPosY += cloakY * 0.25;
+    mChasingPosZ += cloakZ * 0.25;
 }
 
 void Player::SetNormalSize()
@@ -453,9 +453,9 @@ void Player::setPlayerDefaultSkin(uint32_t skin)
     mField0x7d8 = skin;
 }
 
-void Player::SetAdditionalModelParts(uint32_t parts)
+void Player::SetAdditionalModelParts(std::vector<ModelPart*>* parts)
 {
-    mField0x800 = parts;
+    mAdditionalModelParts = parts;
 }
 
 void Player::Follow(bool follow)
@@ -659,7 +659,7 @@ uint8_t Player::isRespawnForced()
     return mField0x6e4 != 0;
 }
 
-uint32_t Player::isModelPartShown(PlayerModelPart*)
+uint32_t Player::isModelPartShown(const PlayerModelPart*)
 {
     return 1;
 }
@@ -729,7 +729,7 @@ void Player::magicCrit(boost::shared_ptr<Entity>)
 {
 }
 
-void Player::openTextEdit(uint32_t)
+void Player::openTextEdit(boost::shared_ptr<SignBlockEntity>)
 {
 }
 
@@ -1120,15 +1120,15 @@ void Player::awardStat(Stat*, arrayWithLength<unsigned char>)
 
 void Player::calculateFlapping()
 {
-    mField0x84c = mField0x840;
-    mField0x848 = mField0x844;
-    mField0x844 = Mth::clamp(mField0x844 + (mOnGround ? -0.3f : 1.2f), 0.0f, 1.0f);
+    mOFlap = mFlap;
+    mOFlapSpeed = mFlapSpeed;
+    mFlapSpeed = Mth::clamp(mFlapSpeed + (mOnGround ? -0.3f : 1.2f), 0.0f, 1.0f);
     if (!mOnGround && mField0x850 < 1.0f) mField0x850 = 1.0f;
     mField0x850 *= 0.9f;
-    mField0x840 += mField0x850 * 2.0f;
+    mFlap += mField0x850 * 2.0f;
 }
 
-uint32_t Player::CheckPowerup(int32_t powerup)
+uint32_t Player::CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup)
 {
     int32_t& ticks = (&mField0x830)[powerup];
     if (ticks <= 0) return 0;
@@ -1445,12 +1445,12 @@ void Player::setCustomSkin(uint32_t skin)
     setInvisible(false);
     setSkinAdjustments(getSkinAdjustmentsById(skin));
     uint32_t defaultSkin = ((skin & 0x7fffffe0) == 0 && (skin & 0x1f) != 0)
-        ? skin & 0x1f : static_cast<uint32_t>(mField0x7e4 + 1);
+        ? skin & 0x1f : static_cast<uint32_t>(mPlayerIndex + 1);
     setPlayerDefaultSkin(defaultSkin);
     mField0x7dc = skin;
     mField0x804 = 0;
     mField0x805 = 0;
-    SetAdditionalModelParts(0);
+    SetAdditionalModelParts(NULL);
 }
 
 uint64_t Player::setCustomCape(uint32_t cape)
@@ -1459,14 +1459,14 @@ uint64_t Player::setCustomCape(uint32_t cape)
     return cape;
 }
 
-int32_t Player::GetAdditionalModelParts()
+std::vector<ModelPart*>* Player::GetAdditionalModelParts()
 {
-    if (mField0x800 != 0) return mField0x800;
-    if (mField0x804 != 0) return 0;
-    mField0x800 = g_pApp->GetAdditionalModelParts(static_cast<unsigned int>(mField0x7dc));
+    if (mAdditionalModelParts != NULL) return mAdditionalModelParts;
+    if (mField0x804 != 0) return NULL;
+    mAdditionalModelParts = g_pApp->GetAdditionalModelParts(static_cast<unsigned int>(mField0x7dc));
     mField0x804 = 1;
-    if (mField0x800 != 0) setSkinAdjustments(getSkinAdjustmentsById(mField0x7dc));
-    return mField0x800;
+    if (mAdditionalModelParts != NULL) setSkinAdjustments(getSkinAdjustmentsById(mField0x7dc));
+    return mAdditionalModelParts;
 }
 
 void Player::tickArmor()
@@ -1519,7 +1519,15 @@ void Player::_init()
     mEnderChestInventory.reset(new PlayerEnderChestContainer());
     mInventoryMenu = NULL;
     mContainerMenu = NULL;
+    mPrevCameraYaw = 0.0f;
+    mCameraYaw = 0.0f;
     mTakeXpDelay = 0;
+    mPrevChasingPosX = 0.0;
+    mPrevChasingPosY = 0.0;
+    mPrevChasingPosZ = 0.0;
+    mChasingPosX = 0.0;
+    mChasingPosY = 0.0;
+    mChasingPosZ = 0.0;
     mField0x6c0 = 0;
     mField0x6c4 = NULL;
     mField0x6c8 = 0;
@@ -1527,12 +1535,16 @@ void Player::_init()
     mExperienceLevel = 0;
     mTotalExperience = 0;
     mExperienceProgress = 0.0f;
+    mFishing.reset();
     mEnchantmentSeed = mRandom->nextInt();
     mField0x738 = NULL;
     mField0x77c = NULL;
     mField0x780 = false;
     mDebugOptions = 0;
     mField0x7fc = 0;
+    mAdditionalModelParts = NULL;
+    mField0x804 = 0;
+    mField0x805 = 0;
     mField0x808 = -1;
     mField0x818 = 1.0;
     mField0x820 = mY;
@@ -1553,6 +1565,8 @@ void Player::tick()
 void Player::rideTick()
 {
     LivingEntity::rideTick();
+    mPrevCameraYaw = mCameraYaw;
+    mCameraYaw = 0.0f;
     checkRidingStatistiscs(mX - mXOld, mY - mYOld, mZ - mZOld);
 }
 
@@ -1627,7 +1641,7 @@ boost::shared_ptr<ItemEntity> Player::drop(bool dropAll)
     not_null_ptr<ItemInstance> selected = mInventory->getSelected();
     if (selected->isEmpty()) return boost::shared_ptr<ItemEntity>();
     int count = dropAll ? selected->getCount() : 1;
-    not_null_ptr<ItemInstance> dropped(new ItemInstance(selected->split(count)));
+    not_null_ptr<ItemInstance> dropped = selected->split(count);
     if (selected->getCount() == 0) mInventory->removeItem(selected);
     return drop(dropped, false, true);
 }

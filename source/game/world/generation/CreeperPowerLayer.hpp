@@ -7,7 +7,6 @@
 
 class CreeperRenderer;
 class CreeperModel;
-class Creeper;
 class LivingEntity;
 class TexturePack;
 

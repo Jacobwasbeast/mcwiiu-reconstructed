@@ -14,7 +14,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
 
-static ResourceLocation FLOWER_LOCATION;
+static ResourceLocation FLOWER_LOCATION((_TEXTURE_NAME)241);
 
 VillagerGolemFlowerLayer::VillagerGolemFlowerLayer(VillagerGolemRenderer* renderer)
     : mRenderer(renderer)
@@ -39,15 +39,15 @@ void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, f
     GlStateManager::pushMatrix();
 
     VillagerGolemModel* model = static_cast<VillagerGolemModel*>(mRenderer->getModel());
-    GlStateManager::rotatef(180.0f * model->mHead->mWorldZ / 3.1415927f + 5.0f,
+    GlStateManager::rotatef(180.0f * model->mArm1->mXRot / 3.1415927f + 5.0f,
                             1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(-0.6875f, 1.25f, -0.9375f);
     GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::scalef(0.8f, -0.8f, -0.2f);
 
-    unsigned int lightColor = golem->getLightColor();
-    GlStateManager::multiTexCoord2f(static_cast<float>(lightColor & 0xffff),
-                                     static_cast<float>(lightColor >> 16));
+    int lightColor = golem->getLightColor();
+    GlStateManager::multiTexCoord2f(static_cast<float>(lightColor % 65536),
+                                     static_cast<float>(lightColor / 65536));
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     mRenderer->bindTexture(&FLOWER_LOCATION);
 
@@ -60,5 +60,5 @@ void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, f
 
 bool VillagerGolemFlowerLayer::colorsOnDamage()
 {
-    return 0;
+    return false;
 }

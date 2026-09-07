@@ -10,6 +10,7 @@
 #include "game/core/LayerSize.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
+#include "game/world/generation/LayerGenerator.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
 #include "game/world/generation/LayerShape.hpp"
 #include "game/world/generation/LayerTheme.hpp"
@@ -17,9 +18,8 @@
 #include "game/util/AABB.hpp"
 
 template <class T>
-LayerAttributeChildRuleDefinition<T>* randomUsableElement(Random& random,
-    std::vector<LayerAttributeChildRuleDefinition<T>*> &definitions,
-    const LayerMetadata& metadata);
+T* randomUsableElement(Random& random, std::vector<T*>& definitions,
+                       const LayerMetadata& metadata);
 
 LayerGenerationRuleDefinition::LayerGenerationRuleDefinition()
 {
@@ -39,7 +39,7 @@ void LayerGenerationRuleDefinition::getChildren(std::vector<GameRuleDefinition*>
         children->push_back(mDefinition);
     }
 
-    children->insert(children->begin(), mCombinationDefinitions.begin(), mCombinationDefinitions.end());
+    children->insert(children->end(), mCombinationDefinitions.begin(), mCombinationDefinitions.end());
 }
 
 GameRuleDefinition* LayerGenerationRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
@@ -81,10 +81,11 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
         metadata.m_iLayerIndex = static_cast<int>(index);
         metadata.m_iBottomLayerIndex = static_cast<int>(layerCount - 1);
 
+        Random wholeLevelRandom(layerRandom);
         double blend = layerCount > 1 ? 1.0 - static_cast<double>(index) /
             static_cast<double>(layerCount - 1) : 0.0;
         AnyCombinationOfRuleDefinition* definition =
-            mDefinition->GetRandomLeafChild(metadata, layerRandom, random);
+            mDefinition->GetRandomLeafChild(metadata, wholeLevelRandom, random);
 
         std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*> sizes;
         definition->GetPossibleLayerSizes(sizes);

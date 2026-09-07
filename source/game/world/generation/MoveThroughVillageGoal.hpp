@@ -12,6 +12,7 @@
 class DoorInfo;
 class PathfinderMob;
 class Path;
+class Village;
 
 class MoveThroughVillageGoal : public Goal
 {
@@ -21,7 +22,7 @@ public:
 
     void updateVisited();
     bool hasVisited(boost::shared_ptr<DoorInfo> door);
-    boost::shared_ptr<DoorInfo> getNextDoorInfo(boost::shared_ptr<class Village> village);
+    boost::shared_ptr<DoorInfo> getNextDoorInfo(boost::shared_ptr<Village> village);
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

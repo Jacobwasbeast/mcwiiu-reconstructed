@@ -7,11 +7,11 @@
 
 #include "game/core/AttributeInstance.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 MobNearestPlayerTargetGoal::MobNearestPlayerTargetGoal(Mob* mob)
     : Goal(), mMob(mob), mTargetSelector(this), mSorter(mob), mTarget()
@@ -32,10 +32,10 @@ double MobNearestPlayerTargetGoal::getFollowDistance()
 
 bool MobNearestPlayerTargetGoal::canUse()
 {
-    AABB* searchArea = mMob->getBoundingBox()->grow(getFollowDistance(), 4.0,
-                                                     getFollowDistance());
+    double followDistance = getFollowDistance();
+    AABB* searchArea = mMob->mBoundingBox->grow(followDistance, 4.0, followDistance);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(Entity), searchArea,
+        mMob->mLevel->getEntitiesOfClass(typeid(Player), searchArea,
                                          &mTargetSelector, false);
     if (entities == NULL || entities->empty())
     {
@@ -55,7 +55,8 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
     if (!target || !target->isAlive())
         return false;
 
-    if (target != mTarget)
+    boost::shared_ptr<LivingEntity> lastHurtByMob = mMob->getLastHurtByMob();
+    if (!lastHurtByMob || target->getLastHurtByMob() != lastHurtByMob)
     {
         double distance = getFollowDistance();
         if (mMob->distanceToSqr(target) > distance * distance)
@@ -63,8 +64,10 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
 
         if (target->GetType() == 0x000000000C800001ULL && target->isCreative())
             return false;
+
+        return true;
     }
-    return true;
+    return false;
 }
 
 void MobNearestPlayerTargetGoal::start()

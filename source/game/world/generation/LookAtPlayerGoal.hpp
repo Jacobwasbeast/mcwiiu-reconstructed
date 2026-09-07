@@ -33,7 +33,11 @@ public:
 
 private:
     Mob* mMob;
+
+protected:
     boost::shared_ptr<Entity> mLookAt;
+
+private:
     float mLookDistance;
     int mLookTime;
     float mProbability;

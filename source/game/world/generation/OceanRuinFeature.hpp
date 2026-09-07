@@ -20,6 +20,7 @@ struct OceanRuinConfiguration
     OceanRuin::ERuinType biomeType;
     float smallProbability;
     float clusterProbability;
+    bool enabled;
 };
 
 class OceanRuinFeature : public StructureFeature

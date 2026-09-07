@@ -6,8 +6,51 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockTransaction.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/StoneSlabBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
-const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState);
+const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState)
+{
+    Block* block = pState->getBlock();
+    int blockId = Block::getId(block);
+
+    if (blockId == 44)
+    {
+        StoneSlabBlock* slab = static_cast<StoneSlabBlock*>(block);
+        TypedBoxed<StoneSlabBlock::Variant*>* boxed =
+            static_cast<TypedBoxed<StoneSlabBlock::Variant*>*>(pState->getBoxedValue(slab->getTypeProperty()));
+
+        switch (boxed->getValue()->getData())
+        {
+        case 0:
+            return Blocks::stone->defaultBlockState();
+        case 1:
+            return Blocks::sandstone->defaultBlockState();
+        case 2:
+            return Blocks::planks->defaultBlockState();
+        case 3:
+            return Blocks::cobblestone->defaultBlockState();
+        case 4:
+            return Blocks::brick_block->defaultBlockState();
+        case 5:
+            return Blocks::stonebrick->defaultBlockState();
+        case 6:
+            return Blocks::nether_brick->defaultBlockState();
+        case 7:
+            return Blocks::quartz_block->defaultBlockState();
+        default:
+            return Blocks::stone->defaultBlockState();
+        }
+    }
+
+    if (blockId == 128)
+    {
+        return Blocks::sandstone->defaultBlockState();
+    }
+
+    return pState;
+}
 
 RandomPatchesLayerTheme::RandomPatchesLayerTheme(unsigned int uSeed, double dNoiseScale)
     : m_uSeed(uSeed)

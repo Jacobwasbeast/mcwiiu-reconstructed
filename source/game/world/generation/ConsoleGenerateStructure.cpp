@@ -8,7 +8,6 @@
 #include "game/core/Direction.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/item/PlaceContainerRuleDefinition.hpp"
-#include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -29,7 +28,8 @@ ConsoleGenerateStructure::ConsoleGenerateStructure()
     mX = 0;
     mY = 0;
     mZ = 0;
-    setOrientation(NULL);
+    mBoundingBox = NULL;
+    setOrientation(Direction::NORTH);
     mDimension = 0;
 }
 
@@ -66,11 +66,26 @@ GameRuleDefinition* ConsoleGenerateStructure::addChild(ConsoleGameRules::EGameRu
 {
     GameRuleDefinition* action = NULL;
     int value = static_cast<int>(type);
-    if (value == 4) action = new XboxStructureActionGenerateBox();
-    else if (value == 5) action = new XboxStructureActionPlaceBlock();
-    else if (value == 6) action = new PlaceContainerRuleDefinition();
-    else if (value == 7) action = new XboxStructureActionPlaceSpawner();
-    if (action != NULL) mActions.push_back(action);
+    if (value == 4)
+    {
+        action = new XboxStructureActionGenerateBox();
+        mActions.push_back(action);
+    }
+    else if (value == 5)
+    {
+        action = new XboxStructureActionPlaceBlock();
+        mActions.push_back(action);
+    }
+    else if (value == 6)
+    {
+        action = new PlaceContainerRuleDefinition();
+        mActions.push_back(action);
+    }
+    else if (value == 7)
+    {
+        action = new XboxStructureActionPlaceSpawner();
+        mActions.push_back(action);
+    }
     return action;
 }
 
@@ -157,9 +172,9 @@ BoundingBox* ConsoleGenerateStructure::getBoundingBox()
             if (maxY < endY) maxY = endY;
             if (maxZ < endZ) maxZ = endZ;
         }
-        setBoundingBox(new BoundingBox(0, 0, 0, maxX, maxY, maxZ));
+        mBoundingBox = new BoundingBox(mX, mY, mZ, mX + maxX, mY + maxY, mZ + maxZ);
     }
-    return StructurePiece::getBoundingBox();
+    return mBoundingBox;
 }
 
 EStructurePiece ConsoleGenerateStructure::GetType()

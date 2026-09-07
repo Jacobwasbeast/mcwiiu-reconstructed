@@ -1,13 +1,36 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/SuperflatConfig.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/CanyonFeature.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/world/generation/LakeFeature.hpp"
 #include "game/world/generation/LargeCaveFeature.hpp"
+#include "game/world/generation/MineShaftFeature.hpp"
+#include "game/world/generation/OceanMonumentFeature.hpp"
+#include "game/world/generation/RandomScatteredLargeFeature.hpp"
+#include "game/world/generation/ShipwreckFeature.hpp"
+#include "game/world/generation/StrongholdFeature.hpp"
+#include "game/world/generation/VillageFeature.hpp"
 
 std::wstring formatwstr(const wchar_t* format, ...);
+
+long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum)
+{
+    int adjustedPercentage = percentage < 100 ? percentage : 100;
+    if (adjustedPercentage < 16)
+        adjustedPercentage = 16;
+
+    int separation = (spacing * 5) / 100;
+    if (separation < maximum)
+        separation = maximum;
+
+    return (static_cast<long long>(adjustedPercentage) << 32) |
+           static_cast<unsigned int>(separation);
+}
 
 FlatGeneratorInfo::FlatGeneratorInfo(SuperflatConfig* config) : mOwnsConfig(false), mConfig(config), mOwnedConfig() {}
 
@@ -41,15 +64,15 @@ bool FlatGeneratorInfo::hasLakes() { return core()->hasParam(0x32); }
 bool FlatGeneratorInfo::hasLavaLakes() { return core()->hasParam(0x33); }
 
 LargeCaveFeature* FlatGeneratorInfo::getCaves() { return hasCaves() ? new LargeCaveFeature() : 0; }
-CanyonFeature* FlatGeneratorInfo::getCanyons() { if (!hasCanyons()) return 0; return 0; }
-VillageFeature* FlatGeneratorInfo::getVillage(int) { if (!hasVillage()) return 0; return 0; }
-RandomScatteredLargeFeature* FlatGeneratorInfo::getBiomeSpecific() { if (!hasBiomeSpecific()) return 0; return 0; }
-MineShaftFeature* FlatGeneratorInfo::getMineshaft() { if (!hasMineshaft()) return 0; return 0; }
-StrongholdFeature* FlatGeneratorInfo::getStronghold() { if (!hasStronghold()) return 0; return 0; }
-OceanMonumentFeature* FlatGeneratorInfo::getOceanMonument() { if (!hasOceanMonument()) return 0; return 0; }
-ShipwreckFeature* FlatGeneratorInfo::getShipwreck(GenericOverworldLevelSource*, OceanMonumentFeature*) { if (!hasShipwrecks()) return 0; return 0; }
-LakeFeature* FlatGeneratorInfo::getLakes() { if (!hasLakes()) return 0; return 0; }
-LakeFeature* FlatGeneratorInfo::getLavaLakes() { if (!hasLavaLakes()) return 0; return 0; }
+CanyonFeature* FlatGeneratorInfo::getCanyons() { return hasCanyons() ? new CanyonFeature() : 0; }
+VillageFeature* FlatGeneratorInfo::getVillage(int size) { return hasVillage() ? new VillageFeature(core(), size) : 0; }
+RandomScatteredLargeFeature* FlatGeneratorInfo::getBiomeSpecific() { return hasBiomeSpecific() ? new RandomScatteredLargeFeature(core()) : 0; }
+MineShaftFeature* FlatGeneratorInfo::getMineshaft() { return hasMineshaft() ? new MineShaftFeature(core()) : 0; }
+StrongholdFeature* FlatGeneratorInfo::getStronghold() { return hasStronghold() ? new StrongholdFeature(core()) : 0; }
+OceanMonumentFeature* FlatGeneratorInfo::getOceanMonument() { return hasOceanMonument() ? new OceanMonumentFeature(core()) : 0; }
+ShipwreckFeature* FlatGeneratorInfo::getShipwreck(GenericOverworldLevelSource* source, OceanMonumentFeature* monument) { return hasShipwrecks() ? new ShipwreckFeature(source, monument, core()) : 0; }
+LakeFeature* FlatGeneratorInfo::getLakes() { return hasLakes() ? new LakeFeature(Blocks::WATER) : 0; }
+LakeFeature* FlatGeneratorInfo::getLavaLakes() { return hasLavaLakes() ? new LakeFeature(Blocks::lava) : 0; }
 
 int FlatGeneratorInfo::getLayerIndexAtHeight(int height) const
 {
@@ -75,22 +98,22 @@ void FlatGeneratorInfo::getLayers(const BlockState* (&states)[256]) const
 }
 
 void FlatGeneratorInfo::getLayers(std::vector<FlatLayerInfo>& layers) const { layers = core()->layers; }
-void FlatGeneratorInfo::setDisplayname(int displayname) { core()->setOption(0x10, 0, displayname); }
+void FlatGeneratorInfo::setDisplayname(int displayname) { core()->setDisplayname(std::wstring(L10N::GetString(displayname))); }
 void FlatGeneratorInfo::setBiome(int biome) { core()->setOption(0x10, 0, biome); }
 
 void FlatGeneratorInfo::setVillage(bool enabled) { core()->removeParam(0x20); if (enabled) core()->addParam(0x20); }
-void FlatGeneratorInfo::setDungeons(bool enabled) { core()->removeParam(0x31); if (enabled) core()->addParam(0x31); }
-void FlatGeneratorInfo::setDecorations(bool enabled) { core()->removeParam(0x30); if (enabled) core()->addParam(0x30); }
+void FlatGeneratorInfo::setDungeons(bool enabled) { if (enabled) core()->addParam(0x31); else core()->removeParam(0x31); }
+void FlatGeneratorInfo::setDecorations(bool enabled) { if (enabled) core()->addParam(0x30); else core()->removeParam(0x30); }
 void FlatGeneratorInfo::setStronghold(bool enabled) { core()->removeParam(0x22); if (enabled) core()->addParam(0x22); }
 void FlatGeneratorInfo::setMineshaft(bool enabled) { core()->removeParam(0x23); if (enabled) core()->addParam(0x23); }
-void FlatGeneratorInfo::setLakes(bool enabled) { core()->removeParam(0x32); if (enabled) core()->addParam(0x32); }
-void FlatGeneratorInfo::setLavaLakes(bool enabled) { core()->removeParam(0x33); if (enabled) core()->addParam(0x33); }
+void FlatGeneratorInfo::setLakes(bool enabled) { if (enabled) core()->addParam(0x32); else core()->removeParam(0x32); }
+void FlatGeneratorInfo::setLavaLakes(bool enabled) { if (enabled) core()->addParam(0x33); else core()->removeParam(0x33); }
 void FlatGeneratorInfo::setBiomeSpecific(bool enabled) { core()->removeParam(0x21); if (enabled) core()->addParam(0x21); }
 void FlatGeneratorInfo::setWoodlandMansion(bool enabled) { core()->removeParam(0x27); if (enabled) core()->addParam(0x27); }
 void FlatGeneratorInfo::setOceanMonument(bool enabled) { core()->removeParam(0x24); if (enabled) core()->addParam(0x24); }
 void FlatGeneratorInfo::setShipwrecks(bool enabled) { core()->removeParam(0x28); if (enabled) core()->addParam(0x28); }
-void FlatGeneratorInfo::setCaves(bool enabled) { core()->removeParam(0x25); if (enabled) core()->addParam(0x25); }
-void FlatGeneratorInfo::setCanyons(bool enabled) { core()->removeParam(0x26); if (enabled) core()->addParam(0x26); }
+void FlatGeneratorInfo::setCaves(bool enabled) { if (enabled) core()->addParam(0x25); else core()->removeParam(0x25); }
+void FlatGeneratorInfo::setCanyons(bool enabled) { if (enabled) core()->addParam(0x26); else core()->removeParam(0x26); }
 
 void FlatGeneratorInfo::insertLayer(int index, const FlatLayerInfo& layer) { core()->layers.insert(core()->layers.begin() + index, layer); core()->updateLayers(); }
 void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { core()->layers.push_back(layer); core()->updateLayers(); }
@@ -98,11 +121,11 @@ void FlatGeneratorInfo::setDisplayname(const std::wstring& displayname) { core()
 void FlatGeneratorInfo::setWoodlandMansion(int spacing, int separation) { setWoodlandMansion(true); core()->setOption(0x27, 0, spacing); core()->setOption(0x27, 1, separation); }
 void FlatGeneratorInfo::setOceanMonument(int spacing, int separation) { setOceanMonument(true); core()->setOption(0x24, 0, spacing); core()->setOption(0x24, 1, separation); }
 void FlatGeneratorInfo::setShipwrecks(int spacing, int separation) { setShipwrecks(true); core()->setOption(0x28, 0, spacing); core()->setOption(0x28, 1, separation); }
-void FlatGeneratorInfo::setBiome() { core()->setOption(0x10, 0, getBiome()); }
+void FlatGeneratorInfo::setBiome() { setBiome(Biome::DEFAULT->id); }
 void FlatGeneratorInfo::setVillage(int size, int distance) { setVillage(true); core()->setOption(0x20, 0, size); core()->setOption(0x20, 1, distance); }
 void FlatGeneratorInfo::setBiomeSpecific(int spacing) { setBiomeSpecific(true); core()->setOption(0x21, 0, spacing); }
 void FlatGeneratorInfo::setMineshaft(int chance) { setMineshaft(true); core()->setOption(0x23, 0, chance); }
-void FlatGeneratorInfo::setStronghold(int count, int distance) { setStronghold(true); core()->setOption(0x22, 0, distance); core()->setOption(0x22, 1, count); }
+void FlatGeneratorInfo::setStronghold(int distance, int count) { setStronghold(true); core()->setOption(0x22, 0, distance); core()->setOption(0x22, 1, count); }
 
 void FlatGeneratorInfo::setEqualTo(SuperflatConfig* config) { *core() = *config; }
 int FlatGeneratorInfo::numLayers() const { return (int)core()->layers.size(); }
@@ -149,7 +172,7 @@ int FlatGeneratorInfo::findTopSolidLayer() const
         layer -= getLayer(layer).getHeight();
     return layer;
 }
-int FlatGeneratorInfo::getBiome() { return core()->maybeOption(0x10, 0, 0); }
+int FlatGeneratorInfo::getBiome() { return core()->maybeOption(0x10, 0, Biome::DEFAULT->id); }
 int FlatGeneratorInfo::getVillageSize() { return core()->maybeOption(0x20, 0, 1); }
 int FlatGeneratorInfo::getVillageDistance() { return core()->maybeOption(0x20, 1, 0x20); }
 int FlatGeneratorInfo::getMineshaftChance() { return core()->maybeOption(0x23, 0, 1); }
@@ -165,25 +188,32 @@ int FlatGeneratorInfo::getWoodlandMansionSeparation() { return core()->maybeOpti
 
 std::wstring FlatGeneratorInfo::generateDescription()
 {
-    std::wstring description = formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(0xfc5c5250), core()->getDisplayname().c_str());
+    std::wstring biomeName = Biome::getBiomes()[getBiome()]->getName(false);
+    std::wstring description = formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(0xfc5c5250), biomeName.c_str());
     description += formatwstr(L"%ls:<br />", L10N::GetString(0x7eda4f74));
     for (int i = numLayers() - 1; i >= 0; --i)
     {
         FlatLayerInfo layer = getLayer(i);
         description += formatwstr(L"- %ls %ls<br />", layer.getHeightText().c_str(), layer.getNameText().c_str());
     }
-    if (hasVillage()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x1a0175a8));
-    if (hasCaves()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x7d539616));
-    if (hasCanyons()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x6339594b));
-    if (hasMineshaft()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xb502a2bb));
-    if (hasStronghold()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x98925ce0));
-    if (hasBiomeSpecific()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x92176858));
-    if (hasDungeons()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x58eda210));
-    if (hasDecorations()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xf5ded1b6));
-    if (hasLakes()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xedaa5ce4));
-    if (hasLavaLakes()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xae1b1941));
-    if (hasOceanMonument()) description += formatwstr(L"- %ls<br />", L10N::GetString(0xff686d36));
-    if (hasWoodlandMansion()) description += formatwstr(L"- %ls<br />", L10N::GetString(0x9a333426));
+    std::wstring features;
+    if (hasVillage()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x1a0175a8));
+    if (hasCaves()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x7d539616));
+    if (hasCanyons()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x6339594b));
+    if (hasMineshaft()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xb502a2bb));
+    if (hasStronghold()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x98925ce0));
+    if (hasBiomeSpecific()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x92176858));
+    if (hasDungeons()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x58eda210));
+    if (hasDecorations()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xf5ded1b6));
+    if (hasLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xedaa5ce4));
+    if (hasLavaLakes()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xae1b1941));
+    if (hasOceanMonument()) features += formatwstr(L"- %ls<br />", L10N::GetString(0xff686d36));
+    if (hasWoodlandMansion()) features += formatwstr(L"- %ls<br />", L10N::GetString(0x9a333426));
+    if (!features.empty())
+    {
+        description += formatwstr(L"<br />%ls:<br />", L10N::GetString(0x7914b2cb));
+        description += features;
+    }
     return description;
 }
 

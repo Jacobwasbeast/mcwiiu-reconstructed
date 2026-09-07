@@ -7,9 +7,34 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
+
+static const eMinecraftStructureTemplate FOSSILS[8] =
+{
+    static_cast<eMinecraftStructureTemplate>(3),
+    static_cast<eMinecraftStructureTemplate>(4),
+    static_cast<eMinecraftStructureTemplate>(5),
+    static_cast<eMinecraftStructureTemplate>(6),
+    static_cast<eMinecraftStructureTemplate>(11),
+    static_cast<eMinecraftStructureTemplate>(12),
+    static_cast<eMinecraftStructureTemplate>(13),
+    static_cast<eMinecraftStructureTemplate>(14)
+};
+
+static const eMinecraftStructureTemplate FOSSILS_COAL[8] =
+{
+    static_cast<eMinecraftStructureTemplate>(7),
+    static_cast<eMinecraftStructureTemplate>(8),
+    static_cast<eMinecraftStructureTemplate>(9),
+    static_cast<eMinecraftStructureTemplate>(10),
+    static_cast<eMinecraftStructureTemplate>(15),
+    static_cast<eMinecraftStructureTemplate>(16),
+    static_cast<eMinecraftStructureTemplate>(17),
+    static_cast<eMinecraftStructureTemplate>(18)
+};
 
 FossilFeature::~FossilFeature()
 {
@@ -17,25 +42,24 @@ FossilFeature::~FossilFeature()
 
 bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    Random placementRandom = level->getRandomFor(0, 0, 0x3ad8025f);
-    Rotation* rotation = Rotation::getRandom(placementRandom);
+    Random placementRandom = level->getChunkAt(origin)->getRandom(0x3ad8025fLL);
+    Rotation* rotation = Rotation::VALUES[placementRandom.nextInt(4)];
+    const int fossilIndex = placementRandom.nextInt(8);
 
     Minecraft* minecraft = Minecraft::GetInstance();
     StructureManager* structureManager = minecraft->getStructureManager();
-    const StructureTemplate* skull = structureManager->get(
-        static_cast<eMinecraftStructureTemplate>(placementRandom.nextInt(8) + 3));
-    const StructureTemplate* spine = structureManager->get(
-        static_cast<eMinecraftStructureTemplate>(placementRandom.nextInt(8) + 7));
+    const StructureTemplate* fossil = structureManager->get(FOSSILS[fossilIndex]);
+    const StructureTemplate* fossilCoal = structureManager->get(FOSSILS_COAL[fossilIndex]);
 
     ChunkPos chunkPos(origin);
-    BoundingBox boundingBox(chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ(),
-                            chunkPos.getMaxBlockX(), 256, chunkPos.getMaxBlockZ());
-    StructurePlaceSettings settings;
-    settings.setRotation(rotation);
-    settings.setBoundingBox(&boundingBox);
-    settings.setRandom(&placementRandom);
+    BoundingBox* boundingBox = new BoundingBox(chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ(),
+                                               chunkPos.getMaxBlockX(), 256, chunkPos.getMaxBlockZ());
+    StructurePlaceSettings* settings = new StructurePlaceSettings();
+    settings->setRotation(rotation);
+    settings->setBoundingBox(boundingBox);
+    settings->setRandom(&placementRandom);
 
-    const BlockPos size = skull->getSize(rotation);
+    const BlockPos size = fossil->getSize(rotation);
     const int xOffset = placementRandom.nextInt(16 - size.x);
     const int zOffset = placementRandom.nextInt(16 - size.z);
     int height = 256;
@@ -59,12 +83,14 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     const BlockPos position = origin.offset(xOffset, yOffset, zOffset);
-    const BlockPos transformed = skull->getZeroPositionWithTransform(position, Mirror::NONE, rotation);
+    const BlockPos transformed = fossil->getZeroPositionWithTransform(position, Mirror::NONE, rotation);
 
-    settings.setIntegrity(0.9f);
-    skull->placeInWorld(level, transformed, &settings, 20);
-    settings.setIntegrity(0.1f);
-    spine->placeInWorld(level, transformed, &settings, 20);
+    settings->setIntegrity(0.9f);
+    fossil->placeInWorld(level, transformed, settings, 20);
+    settings->setIntegrity(0.1f);
+    fossilCoal->placeInWorld(level, transformed, settings, 20);
+
+    delete settings;
 
     return true;
 }

@@ -6,6 +6,7 @@
 #include "game/core/Lighting.hpp"
 #include "game/entity/mob/EnderDragon.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/util/Random.hpp"
 
 EnderDragonDeathLayer::~EnderDragonDeathLayer()
 {
@@ -15,13 +16,13 @@ void EnderDragonDeathLayer::render(boost::shared_ptr<LivingEntity>& entity, floa
 {
     boost::shared_ptr<EnderDragon> pDragon = boost::dynamic_pointer_cast<EnderDragon>(entity);
 
-    if (pDragon->deathTicks > 0)
+    if (pDragon->mDeathTime > 0)
     {
         BufferBuilder* pBuilder = Tesselator::getInstance()->getBuilder();
 
         Lighting::turnOff();
 
-        float deathProgress = ((float)pDragon->deathTicks + partialTicks) / 200.0f;
+        float deathProgress = ((float)pDragon->mDeathTime + partialTicks) / 200.0f;
         float fadeProgress = 0.0f;
 
         if (deathProgress > 0.8f)

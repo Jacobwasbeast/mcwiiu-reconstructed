@@ -19,10 +19,10 @@ public:
     LayerGenerationRuleDefinition();
     virtual ~LayerGenerationRuleDefinition();
 
+    virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
     std::vector<LayerGenerator*>* CreateLayers(Random& random, const AABB* area, unsigned int layerCount, float scale) const;
-    virtual ConsoleGameRules::EGameRuleType getActionType();
 
 private:
     AnyCombinationOfRuleDefinition* mDefinition;

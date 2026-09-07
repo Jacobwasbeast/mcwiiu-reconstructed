@@ -12,8 +12,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-
-class Player;
+#include "game/world/generation/Player.hpp"
 
 CapeLayer::CapeLayer(PlayerRenderer* renderer)
     : mRenderer(renderer)
@@ -74,16 +73,22 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
         forward = 0.0f;
     }
 
-    float walk = player->mPrevDistanceWalked + (player->mDistanceWalked - player->mPrevDistanceWalked) * partialTicks;
-    float walkTime = player->mPrevCameraYaw + (player->mCameraYaw - player->mPrevCameraYaw) * partialTicks;
-    vertical += Mth::sin(walkTime * 6.0f) * 32.0f * walk;
+    float cameraYaw = player->mPrevCameraYaw + (player->mCameraYaw - player->mPrevCameraYaw) * partialTicks;
+    float walkDist = player->mWalkDistO + (player->mWalkDist - player->mWalkDistO) * partialTicks;
+    vertical += Mth::sin(walkDist * 6.0f) * 32.0f * cameraYaw;
 
     if (player->isSneaking())
     {
         vertical += 25.0f;
     }
 
-    float capeRotation = Mth::clamp(vertical + 6.0f + forward * 0.5f, -6.0f, 64.0f);
+    float capeRotation = vertical + 6.0f + forward * 0.5f;
+
+    if (capeRotation > 64.0f)
+    {
+        capeRotation = 64.0f;
+    }
+
     GlStateManager::rotatef(capeRotation, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(horizontal * 0.5f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(-horizontal * 0.5f, 0.0f, 0.0f, 1.0f);

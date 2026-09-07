@@ -1,11 +1,16 @@
 #include "game/world/generation/FunctionPatchesLayerTheme.hpp"
 
+#include "game/core/DyeColor.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Property.hpp"
-#include "game/core/Boxed.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/SnowLayerBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/WoolCarpetBlock.hpp"
 
 FunctionPatchesLayerTheme::FunctionPatchesLayerTheme(unsigned int seed, double noiseScale, BlockFunction blockFunction)
     : RandomPatchesLayerTheme(seed, noiseScale)
@@ -22,17 +27,21 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
 
     if (heightAboveSurface == ABOVE_SURFACE(1) || heightAboveSurface == ABOVE_SURFACE(2))
     {
+        TypedBoxed<DoublePlantBlock::Variant*> variant(DoublePlantBlock::VARIANTS[2]);
+        DoublePlantBlock::Half* plantHalf = heightAboveSurface == ABOVE_SURFACE(2)
+            ? DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
+            : DoublePlantBlock::HALVES[DoublePlantBlock::Half::LOWER];
+        TypedBoxed<DoublePlantBlock::Half*> half(plantHalf);
         const BlockState* state = Blocks::double_plant->defaultBlockState();
-        const std::vector<const Property*>& properties = state->getProperties();
-        state = state->setBoxedValue(properties[0], properties[0]->getValueAtIndex(2));
-        return state->setBoxedValue(properties[1], properties[1]->getValueAtIndex(heightAboveSurface == ABOVE_SURFACE(2) ? 1 : 0));
+        state = state->setBoxedValue(DoublePlantBlock::VARIANT, &variant);
+        return state->setBoxedValue(DoublePlantBlock::HALF, &half);
     }
 
     if (heightAboveSurface == 0)
     {
         const BlockState* state = Blocks::dirt->defaultBlockState();
-        const std::vector<const Property*>& properties = state->getProperties();
-        return state->setBoxedValue(properties[0], properties[0]->getValueAtIndex(2));
+        TypedBoxed<DirtBlock::Variant*> variant(gVariants[2]);
+        return state->setBoxedValue(gVariantProperty, &variant);
     }
 
     return NULL;
@@ -62,9 +71,8 @@ const BlockState* FunctionPatchesLayerTheme::SNOWLAYER_PATCHES(Random&, float no
     {
         int layers = static_cast<int>((5.0 * (static_cast<double>(noise) - 0.4)) / 0.6) + 1;
         const BlockState* state = Blocks::snow_layer->defaultBlockState();
-        const std::vector<const Property*>& properties = state->getProperties();
         TypedBoxed<int> value(layers);
-        return state->setBoxedValue(properties[0], &value);
+        return state->setBoxedValue(SnowLayerBlock::LAYERS, &value);
     }
 
     return NULL;
@@ -105,7 +113,9 @@ const BlockState* FunctionPatchesLayerTheme::CARPET_TRAP(Random&, float noise, i
     {
         if (heightAboveSurface == ABOVE_SURFACE(1))
         {
-            return Blocks::carpet->getBlockState(14);
+            const BlockState* state = Blocks::carpet->defaultBlockState();
+            TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(14));
+            return state->setBoxedValue(gWoolCarpetColorProperty, &color);
         }
 
         if (noise < -0.43f && heightAboveSurface < 1)

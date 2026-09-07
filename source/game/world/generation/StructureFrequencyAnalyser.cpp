@@ -12,6 +12,26 @@ int countFeaturesInArea(bool (*isFeatureChunk)(BiomeSource*, long long, int, int
                         long long seed,
                         int sizeInChunks);
 
+int countFeaturesInArea(bool (*isFeatureChunk)(BiomeSource*, long long, int, int, int),
+                        BiomeSource* biomeSource,
+                        long long seed,
+                        int sizeInChunks)
+{
+    int halfSizeInChunks = sizeInChunks / 2;
+    int featureCount = 0;
+
+    for (int chunkX = -halfSizeInChunks; chunkX <= halfSizeInChunks; ++chunkX)
+    {
+        for (int chunkZ = -halfSizeInChunks; chunkZ <= halfSizeInChunks; ++chunkZ)
+        {
+            if (isFeatureChunk(biomeSource, seed, sizeInChunks, chunkX, chunkZ))
+                ++featureCount;
+        }
+    }
+
+    return featureCount;
+}
+
 static int _standardTests(void*)
 {
     IntCache::CreateNewThreadStorage();

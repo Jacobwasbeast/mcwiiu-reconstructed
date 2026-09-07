@@ -8,6 +8,7 @@
 #include "game/util/Vec3i.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockTransaction.hpp"
+#include "game/world/generation/FunctionLayerFill.hpp"
 #include "game/world/generation/LayerShape.hpp"
 #include "game/world/generation/LayerTheme.hpp"
 
@@ -30,9 +31,9 @@ LayerGenerator::~LayerGenerator()
     delete mArea;
 }
 
-unsigned int LayerGenerator::getArea() const
+AABB* LayerGenerator::getArea() const
 {
-    return (unsigned int)mArea;
+    return mArea;
 }
 
 int LayerGenerator::getCoreWorldMinY() const
@@ -40,7 +41,7 @@ int LayerGenerator::getCoreWorldMinY() const
     return mCoreWorldMinY + static_cast<int>(mArea->mMinY);
 }
 
-unsigned int LayerGenerator::Generate(Random& random, Level*)
+BlockTransaction* LayerGenerator::Generate(Random& random, Level*)
 {
     PIXBeginNamedEvent(0.0f, "LayerGenerator::Setup");
     BlockPos min(static_cast<double>(mArea->mMinX), static_cast<double>(mArea->mMinY),
@@ -71,7 +72,7 @@ unsigned int LayerGenerator::Generate(Random& random, Level*)
     PIXBeginNamedEvent(0.0f, "LayerGenerator::reduceMinMax");
     transaction->reduceMinMax();
     PIXEndNamedEvent();
-    return (unsigned int)transaction;
+    return transaction;
 }
 
 void LayerGenerator::updateArea(AABB* area)

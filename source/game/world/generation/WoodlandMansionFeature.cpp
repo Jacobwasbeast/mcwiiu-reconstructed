@@ -7,6 +7,7 @@
 #include "game/core/Rotation.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/data/LevelStorage.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/GenericOverworldLevelSource.hpp"
 #include "game/world/Level.hpp"
@@ -25,7 +26,24 @@
 #include "game/world/generation/WoodlandMansionPieces.hpp"
 
 Rotation* fjGetSuitableRandomRotation(Random& random, LevelData* levelData, int chunkX,
-                                      int chunkZ);
+                                      int chunkZ)
+{
+    const int halfSize = levelData->getXZSize() / 2;
+    AABB* bounds = AABB::newTemp(BlockPos(-halfSize, 0, -halfSize),
+                                 BlockPos(halfSize, 2, halfSize));
+    const int start = random.nextInt(4);
+    for (int offset = 0; offset < 4; ++offset)
+    {
+        Rotation* rotation = Rotation::VALUES[(start + offset) % 4];
+        BlockPos origin(chunkX, 0, chunkZ);
+        if (bounds->contains(origin.offset(rotation->fjRotate(BlockPos(-7, 1, -3))))
+            && bounds->contains(origin.offset(rotation->fjRotate(BlockPos(-7, 1, 3))))
+            && bounds->contains(origin.offset(rotation->fjRotate(BlockPos(0, 1, -3))))
+            && bounds->contains(origin.offset(rotation->fjRotate(BlockPos(0, 1, 3)))))
+            return rotation;
+    }
+    return Rotation::VALUES[start];
+}
 
 static std::vector<Biome*> gWoodlandMansionSpawnBiomes;
 static std::vector<Biome*> gWoodlandMansionAllowedBiomes;

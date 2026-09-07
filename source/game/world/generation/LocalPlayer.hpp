@@ -159,26 +159,49 @@ public:
     int getTicksInWater();
 
 private:
+    unsigned char mReserved0x850[0x28];
     ClientPacketListener* mPacketListener;
-    Minecraft* mMinecraft;
-    int mPlayerIndex;
-    bool mHandsBusy;
-    bool mWaitingForScoreboard;
-    bool mDamageNearbyMobs;
-    bool mAutoJumpEnabled;
-    int mAutoJumpTime;
     int mPermissionLevel;
+    unsigned char mReserved0x880[0x30];
+    unsigned int mReserved0x8b0;
+    Minecraft* mMinecraft;
+    unsigned char mReserved0x8b8[0x10];
+    int mSprinting;
+    unsigned char mReserved0x8cc[0x34];
+    bool mHandsBusy;
+    bool mAutoJumpEnabled;
+    unsigned char mReserved0x902[2];
+    int mAutoJumpTime;
+    unsigned char mReserved0x908[8];
+
+public:
+    int mButtonsDown;
+
+private:
+    unsigned char mReserved0x914[0x2c];
     int mThirdPersonView;
-    double mPercentageTraversed;
-    float mDamageTaken;
-    bool mSprinting;
-    double mSessionTimer;
     int mGameMode;
-    unsigned char mReserved[0xA10 - 0x878 - 4 * 4 - 5 * 4 - 8 - 4 - 8 - 4];
+    unsigned char mReserved0x948[0x18];
+
+public:
+    int mUserIndex;
+
+private:
+    unsigned char mReserved0x964[4];
     SmoothFloat mViewBob;
     SmoothFloat mViewBobPrev;
     SmoothFloat mViewBobAmount;
+    unsigned char mReserved0x98c[0x2c];
+    float mDamageTaken;
+    unsigned char mReserved0x9bc;
+    bool mWaitingForScoreboard;
+    unsigned char mReserved0x9be[2];
+    double mSessionTimer;
     std::vector<ModelPart*> mAdditionalModelParts;
+    unsigned char mReserved0x9d4[0x2c];
+    double mPercentageTraversed;
+    bool mDamageNearbyMobs;
+    unsigned char mReserved0xa09[7];
 };
 
 #endif

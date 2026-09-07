@@ -7,8 +7,7 @@
 #include "game/client/render/PlayerRenderer.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-
-class Player;
+#include "game/world/generation/Player.hpp"
 
 Deadmau5EarsLayer::Deadmau5EarsLayer(PlayerRenderer* renderer)
     : mRenderer(renderer)
@@ -25,7 +24,7 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 
-    if (!CMinecraftApp::sInstance.isXuidDeadmau5(player->mPlayerUID) || player->isInvisible())
+    if (!g_pApp->isXuidDeadmau5(player->m_0x784) || player->isInvisible())
         return;
 
     PlayerModel* model = mRenderer->getModel();

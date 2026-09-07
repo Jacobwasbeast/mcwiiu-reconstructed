@@ -25,13 +25,13 @@ public:
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
     virtual void addAttribute(const std::wstring& name, const std::wstring& value);
-    virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
     virtual BoundingBox* getBoundingBox();
+    virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
+    virtual int getMinY();
     virtual EStructurePiece GetType();
     virtual void addAdditionalSaveData(DataOutputStream* output);
     virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
     bool checkIntersects(const BlockPos& min, const BlockPos& max);
-    int getMinY();
 
 private:
     int mX;

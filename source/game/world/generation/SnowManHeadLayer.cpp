@@ -2,16 +2,16 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/SnowManRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/SnowMan.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/Blocks.hpp"
-
-class SnowMan;
 
 SnowManHeadLayer::SnowManHeadLayer(SnowManRenderer* renderer)
     : mRenderer(renderer)
@@ -32,7 +32,7 @@ void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     }
 
     GlStateManager::pushMatrix();
-    mRenderer->getModel()->mHead->translateTo(0.0625f);
+    static_cast<SnowManModel*>(mRenderer->getModel())->mHead->translateTo(0.0625f);
     GlStateManager::translatef(0.0f, -0.34375f, 0.0f);
     GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::scalef(0.625f, -0.625f, -0.625f);

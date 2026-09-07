@@ -1,10 +1,13 @@
 #include "game/world/generation/PlayerStats.hpp"
 #include <algorithm>
 #include <climits>
+#include <cmath>
 
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/System.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/world/block/BlockPos.hpp"
 
 class MiniGameDef
 {
@@ -763,4 +766,40 @@ void PlayerStats::RoundStats::MedalTimestamp(
         mTimeSpent[category] += static_cast<int>(timestamp - mTimestamp[category]);
         mTimestamp[category] = 0;
     }
+}
+
+int getBlocksPlaced(const PlayerStats::RoundStats& roundStats)
+{
+    return roundStats.mBlocksPlacedInfo.mCount;
+}
+
+int getBlocksDestroyed(const PlayerStats::RoundStats& roundStats)
+{
+    return roundStats.mBlocksDestroyed.mCount;
+}
+
+int getBlocksPresent(const PlayerStats::RoundStats& roundStats)
+{
+    return roundStats.mBlocksUsed.mCount;
+}
+
+int wasWinnerWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats)
+{
+    return roundStats.mWon && roundStats.mBlocksDestroyed.mCount == 0;
+}
+
+void writeBlockInteractionData(PlayerStats::RoundStats& roundStats,
+                               PlayerStats::RoundStats::BlockInteractionInfo& info,
+                               const long long& timestamp,
+                               const BlockPos& pos,
+                               int itemId)
+{
+    ++info.mCount;
+    ++info.mItems[itemId];
+    ++info.mPlayers[pos.y - roundStats.mLayer];
+
+    const double elapsed = std::floor(
+        static_cast<double>(System::processTimeInMilliSecs() - timestamp));
+    const double timeBucket = elapsed / 10000.0;
+    ++info.mRounds[static_cast<int>(timeBucket)];
 }

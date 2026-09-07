@@ -3,11 +3,15 @@
 #include <string>
 
 #include "game/core/FoodData.hpp"
+#include "game/core/GameRules_FloatAttribute.hpp"
+#include "game/core/GameRules_IntAttribute.hpp"
 #include "game/core/IGameRuleAttribute.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/AddItemRuleDefinition.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -63,7 +67,7 @@ UpdatePlayerRuleDefinition::~UpdatePlayerRuleDefinition()
 double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
                                                   boost::shared_ptr<Player> player) const
 {
-    Level* level = MinecraftServer::sInstance->getLevel(0);
+    ServerLevel* level = gMinecraftServer->getLevel(0);
     double halfHeight = static_cast<double>(player->mBbHeight) * 0.5;
     double testY = y;
     const BlockState* state = level->getBlockState(BlockPos(x, y + halfHeight, z));
