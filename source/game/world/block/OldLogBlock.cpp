@@ -13,7 +13,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 static EnumProperty<PlanksBlock::Variant*>* gOldLogVariantProperty = NULL;
-static bool oldlog_filter(PlanksBlock::Variant* value)
+bool oldlog_filter__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value)
 {
     return value != NULL && value->getData() < 4;
 }
@@ -23,7 +23,7 @@ class OldLogVariantPredicate : public Predicate<PlanksBlock::Variant*>
 public:
     virtual bool apply(PlanksBlock::Variant* value) const
     {
-        return oldlog_filter(value);
+        return oldlog_filter__FPQ2_11PlanksBlock7Variant(value);
     }
 };
 

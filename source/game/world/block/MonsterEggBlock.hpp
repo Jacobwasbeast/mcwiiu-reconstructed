@@ -12,6 +12,7 @@ class IconRegister;
 class Level;
 class Random;
 class TextureAtlasSprite;
+template <class T> class EnumProperty;
 
 class MonsterEggBlock : public Block
 {
@@ -34,6 +35,8 @@ public:
         std::wstring mName;
         int mTranslationKey;
     };
+
+    static EnumProperty<Variant*>* VARIANT;
 
     MonsterEggBlock();
     virtual ~MonsterEggBlock();

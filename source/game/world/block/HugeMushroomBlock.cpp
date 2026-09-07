@@ -12,6 +12,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
@@ -36,6 +37,14 @@ static HugeMushroomBlock::Variant gHugeMushroomVariants[13] = {
 
 static HugeMushroomBlock::Variant* gHugeMushroomVariantPointers[13];
 static EnumProperty<HugeMushroomBlock::Variant*>* gHugeMushroomVariantProperty = NULL;
+
+int getMushroomDataValue(HugeMushroomBlock::Variant* variant)
+{
+    TypedBoxed<HugeMushroomBlock::Variant*> value(variant);
+    Block* block = Blocks::red_mushroom_block;
+    return block->convertBlockStateToLegacyData(
+        block->defaultBlockState()->setBoxedValue(gHugeMushroomVariantProperty, &value));
+}
 
 HugeMushroomBlock::Variant::Variant(int data, const std::wstring& name)
     : mData(data), mName(name)

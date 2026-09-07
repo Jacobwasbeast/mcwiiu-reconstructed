@@ -44,7 +44,7 @@ public:
     virtual std::wstring getName();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual std::wstring getAuxName(int auxValue);
+    virtual int getAuxName(int auxValue);
     virtual Property* getTypeProperty();
     virtual Boxed* getTypeForItem(not_null_ptr<ItemInstance> itemInstance);
     virtual const BlockState* getBlockState(int data);

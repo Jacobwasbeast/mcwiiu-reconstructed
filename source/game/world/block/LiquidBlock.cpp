@@ -8,13 +8,18 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/Dimension.hpp"
 
 #include <cmath>
+
+AbstractProperty<int>* LiquidBlock::LEVEL =
+    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"level", 0, 15));
 
 LiquidBlock::LiquidBlock(Material* material) : Block(material)
 {
@@ -51,7 +56,10 @@ void LiquidBlock::DerivedInit()
     Block::DerivedInit();
     BlockStateDefinition* definition = mStateDefinition;
     if (definition != NULL)
-        registerDefaultState(definition->any());
+    {
+        TypedBoxed<int> level(0);
+        registerDefaultState(definition->any()->setBoxedValue(LEVEL, &level));
+    }
 }
 
 const AABB* LiquidBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
@@ -91,7 +99,7 @@ int LiquidBlock::getDepth(LevelSource* levelSource, const BlockPos& pos)
     const BlockState* state = Block::getStateByElementId((unsigned short)getLiquidElement(levelSource, pos));
     if (state == NULL || state->getMaterial() != mMaterial)
         return -1;
-    return convertBlockStateToLegacyData(state);
+    return state->getValue(LEVEL);
 }
 
 int LiquidBlock::getRenderedDepth(LevelSource* levelSource, const BlockPos& pos)
@@ -112,7 +120,7 @@ bool LiquidBlock::isSolidRender(const BlockState*) const
 
 bool LiquidBlock::mayPick(const BlockState* state, bool includeLiquid)
 {
-    return includeLiquid && convertBlockStateToLegacyData(state) == 0;
+    return includeLiquid && state->getValue(LEVEL) == 0;
 }
 
 bool LiquidBlock::isSolidFace(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -293,22 +301,19 @@ void LiquidBlock::fizz(Level* level, const BlockPos& pos)
 
 const BlockState* LiquidBlock::getBlockState(int data)
 {
-    if (mStateDefinition == NULL || mStateDefinition->getProperties().empty())
-        return defaultBlockState();
-    const Property* property = mStateDefinition->getProperties()[0];
-    return defaultBlockState()->setBoxedValue(property, mStateDefinition->getPropertyValue(property, (unsigned short)data));
+    TypedBoxed<int> level(data);
+    return defaultBlockState()->setBoxedValue(LEVEL, &level);
 }
 
 int LiquidBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    if (state == NULL || mStateDefinition == NULL || mStateDefinition->getProperties().empty())
-        return 0;
-    return state->getValue(static_cast<const AbstractProperty<int>*>(mStateDefinition->getProperties()[0]));
+    return state->getValue(LEVEL);
 }
 
 BlockStateDefinition* LiquidBlock::createBlockStateDefinition()
 {
-    return new BlockStateDefinition(this);
+    const Property* properties[] = { LEVEL };
+    return new BlockStateDefinition(this, properties, 1);
 }
 
 unsigned int LiquidBlock::getDynamicLiquidElementId(unsigned short elementId)
@@ -348,7 +353,7 @@ TextureAtlasSprite* LiquidBlock::getTexture(const Direction* direction, const Bl
 
 double LiquidBlock::getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    int data = state == NULL ? 0 : state->mElementId & 7;
+    int data = state->getValue(LEVEL);
     if (data == 0 && levelSource->getBlockState(pos.above())->getMaterial() == Material::WATER)
         return 1.0;
     return 1.0 - getHeightFromData(data);

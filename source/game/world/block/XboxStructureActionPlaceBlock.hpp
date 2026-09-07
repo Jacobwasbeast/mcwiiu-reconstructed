@@ -22,7 +22,7 @@ public:
     virtual uint32_t getEndY();
     virtual uint32_t getEndZ();
 
-private:
+protected:
     int mEndX;
     int mEndY;
     int mEndZ;

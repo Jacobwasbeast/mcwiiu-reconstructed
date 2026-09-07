@@ -17,9 +17,13 @@ class Random;
 class TextureAtlasSprite;
 class Vec3;
 
+template <typename T> class AbstractProperty;
+
 class LiquidBlock : public Block
 {
 public:
+    static AbstractProperty<int>* LEVEL;
+
     LiquidBlock(Material* material);
     virtual ~LiquidBlock();
 

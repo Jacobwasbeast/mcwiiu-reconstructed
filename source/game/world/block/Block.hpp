@@ -55,7 +55,8 @@ enum EBlockRenderShape
 {
     BLOCK_RENDER_MODEL = 0,
     BLOCK_RENDER_ENTITY = 1,
-    BLOCK_RENDER_INVISIBLE = 2
+    BLOCK_RENDER_INVISIBLE = 2,
+    BLOCK_RENDER_DOOR = 7
 };
 
 enum EBlockOffsetType
@@ -311,5 +312,7 @@ public:
     int mRenderLayer;
     EBlockType mBlockType;
 };
+
+void createItem__FP5Block(not_null_ptr<ItemInstance>* item, Block* block);
 
 #endif

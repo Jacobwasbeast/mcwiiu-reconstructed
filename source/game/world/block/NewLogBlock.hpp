@@ -12,6 +12,8 @@ class ItemInstance;
 class LevelSource;
 class MaterialColor;
 
+bool newleaf_predicate__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value);
+
 class NewLogBlock : public LogBlock
 {
 public:

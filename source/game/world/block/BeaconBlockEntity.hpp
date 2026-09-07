@@ -22,11 +22,22 @@ class MobEffect;
 class BeaconBlockEntity : public LockableContainerBlockEntity, public WorldlyContainer, public InteractionObject
 {
 public:
+    enum eBEAM_DIRECTION
+    {
+        eBEAM_DIRECTION_NONE = 0,
+        eBEAM_DIRECTION_POSITIVE_Y = 1,
+        eBEAM_DIRECTION_NEGATIVE_Y = 2,
+        eBEAM_DIRECTION_POSITIVE_X = 3,
+        eBEAM_DIRECTION_NEGATIVE_X = 4,
+        eBEAM_DIRECTION_POSITIVE_Z = 5,
+        eBEAM_DIRECTION_NEGATIVE_Z = 6
+    };
+
     class BeaconBeamSection
     {
     public:
         BeaconBeamSection(arrayWithLength<float> color);
-        void getColor();
+        float* getColor();
         void setHeight(int height);
         void increaseHeight();
         unsigned int getHeight();
@@ -87,7 +98,7 @@ public:
     virtual void load(CompoundTag* tag);
     virtual void save(CompoundTag* tag);
     virtual bool triggerEvent(int id, int param);
-    void setBeamDirection(unsigned int direction);
+    void setBeamDirection(eBEAM_DIRECTION direction);
     void setBeamLength(int length);
     virtual std::wstring getDisplayName();
     static BlockEntity* create();

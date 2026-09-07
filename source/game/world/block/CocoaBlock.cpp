@@ -1,5 +1,7 @@
 #include "game/world/block/CocoaBlock.hpp"
 
+#include <string>
+
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -22,6 +24,20 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+namespace
+{
+    std::wstring gCocoaIconNames[3] =
+    {
+        L"cocoa_stage_0", L"cocoa_stage_1", L"cocoa_stage_2"
+    };
+}
+
+void __T7()
+{
+    for (int i = 0; i < 3; ++i)
+        gCocoaIconNames[i].~basic_string();
+}
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 2));
 static const AABB* SHAPES[3][4];
@@ -222,9 +238,8 @@ TextureAtlasSprite* CocoaBlock::getTextureForAge(int age)
 
 void CocoaBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(L"cocoa_stage_0");
-    mIcons[1] = iconRegister->registerIcon(L"cocoa_stage_1");
-    mIcons[2] = iconRegister->registerIcon(L"cocoa_stage_2");
+    for (int i = 0; i < 3; ++i)
+        mIcons[i] = iconRegister->registerIcon(gCocoaIconNames[i]);
 }
 
 EBlockRenderShape CocoaBlock::getRenderShape(const BlockState*)

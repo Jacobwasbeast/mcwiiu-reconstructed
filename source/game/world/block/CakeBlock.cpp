@@ -4,6 +4,7 @@
 #include "game/core/Direction.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -13,6 +14,7 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 static AbstractProperty<int>* BITES = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"bites", 0, 6));

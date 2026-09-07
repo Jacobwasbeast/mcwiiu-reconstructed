@@ -224,26 +224,37 @@ bool HopperBlockEntity::tryMoveInItem(Container* container, not_null_ptr<ItemIns
     return true;
 }
 
-bool HopperBlockEntity::addItem(Container* container, not_null_ptr<ItemInstance> item, const Direction*)
+not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Container* destination,
+                                                       not_null_ptr<ItemInstance> item, const Direction* direction)
 {
-    for (unsigned int i = 0; i < container->getContainerSize(); ++i)
+    if (destination == NULL)
+        return item;
+    for (unsigned int i = 0; i < destination->getContainerSize(); ++i)
     {
-        not_null_ptr<ItemInstance> existing = container->getItem(i);
+        if (!canPlaceItemInContainer(destination, item, i, direction))
+            continue;
+        not_null_ptr<ItemInstance> existing = destination->getItem(i);
         if (existing->isEmpty())
         {
-            container->setItem(i, item);
-            return true;
+            destination->setItem(i, item);
+            destination->setChanged();
+            if (source != NULL)
+                source->setChanged();
+            return ItemInstance::EMPTY;
         }
         if (canMergeItems(existing, item))
         {
             int amount = std::min(item->getCount(), existing->getMaxStackSize() - existing->getCount());
             existing->grow(amount);
             item->shrink(amount);
+            destination->setChanged();
+            if (source != NULL)
+                source->setChanged();
             if (item->isEmpty())
-                return true;
+                return ItemInstance::EMPTY;
         }
     }
-    return item->isEmpty();
+    return item;
 }
 
 bool HopperBlockEntity::tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction)
@@ -279,25 +290,9 @@ bool HopperBlockEntity::addItem(Container*, Container* destination, const boost:
 {
     if (entity.get() == NULL)
         return false;
-    not_null_ptr<ItemInstance> item = entity->getItem();
-    for (unsigned int i = 0; i < destination->getContainerSize(); ++i)
-    {
-        not_null_ptr<ItemInstance> existing = destination->getItem(i);
-        if (existing->isEmpty())
-        {
-            destination->setItem(i, item);
-            return true;
-        }
-        if (canMergeItems(existing, item))
-        {
-            int amount = std::min(item->getCount(), existing->getMaxStackSize() - existing->getCount());
-            existing->grow(amount);
-            item->shrink(amount);
-            if (item->isEmpty())
-                return true;
-        }
-    }
-    return item->isEmpty();
+    not_null_ptr<ItemInstance> remaining = addItem(NULL, destination, entity->getItem(), NULL);
+    entity->setItem(remaining);
+    return remaining->isEmpty();
 }
 
 bool HopperBlockEntity::suckInItems(Hopper* hopper)
@@ -332,12 +327,14 @@ bool HopperBlockEntity::ejectItems()
         not_null_ptr<ItemInstance> item = mItems[i];
         if (item->isEmpty())
             continue;
-        if (addItem(destination.get(), item, NULL))
+        not_null_ptr<ItemInstance> remaining = addItem(this, destination.get(), item, NULL);
+        if (remaining->isEmpty())
         {
-            mItems[i] = item;
+            mItems[i] = remaining;
             setChanged();
             return true;
         }
+        mItems[i] = remaining;
     }
     return false;
 }

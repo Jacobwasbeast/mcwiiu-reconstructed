@@ -83,8 +83,10 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
                 return;
             level->setBlock(target, state, 2, false);
             level->removeBlock(pos);
-            level->levelEvent(0x232a, target, (pos.z - target.z) * 0x10000 |
-                              ((pos.y - target.y) & 0xff) << 8 | ((pos.x - target.x) & 0xff));
+            level->levelEvent(0x232a, target,
+                              ((pos.z - target.z) & 0xff) << 16 |
+                              ((pos.y - target.y) & 0xff) << 8 |
+                              (pos.x - target.x) & 0xff);
             return;
         }
     }

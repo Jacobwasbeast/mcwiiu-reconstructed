@@ -8,11 +8,14 @@ class BlockPos;
 class BlockState;
 class BlockStateDefinition;
 class Direction;
+class DyeColor;
 class IconRegister;
 class Level;
 class LevelSource;
 class MaterialColor;
 class TextureAtlasSprite;
+
+template <class T> class EnumProperty;
 
 class WoolCarpetBlock : public Block
 {
@@ -48,5 +51,7 @@ public:
     virtual bool hasInHandRenderOffset();
     virtual bool waterSpreadCausesSpawn();
 };
+
+extern EnumProperty<const DyeColor*>* gWoolCarpetColorProperty;
 
 #endif

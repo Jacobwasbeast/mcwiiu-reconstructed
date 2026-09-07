@@ -5,6 +5,7 @@
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/ui/CraftingMenu.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/Player.hpp"
 
 CraftingTableBlock::CraftingTableBlock()
     : Block(0)
@@ -33,7 +34,7 @@ bool CraftingTableBlock::use(Level* level, const BlockPos& pos, const BlockState
     }
 
     CraftingTable table(level, pos);
-    player->openMenu(&table);
+    player->startBlockInteraction(&table);
     return true;
 }
 

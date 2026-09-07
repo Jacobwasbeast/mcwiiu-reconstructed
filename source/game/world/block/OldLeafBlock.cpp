@@ -20,12 +20,17 @@ static EnumProperty<PlanksBlock::Variant*>* gOldLeafVariantProperty = NULL;
 static Property* gOldLeafDecayableProperty = NULL;
 static Property* gOldLeafCheckDecayProperty = NULL;
 
+static bool oldleaf_filter(PlanksBlock::Variant* value)
+{
+    return value != NULL && value->getData() < 4;
+}
+
 class OldLeafVariantPredicate : public Predicate<PlanksBlock::Variant*>
 {
 public:
     virtual bool apply(PlanksBlock::Variant* value) const
     {
-        return value != NULL && value->getData() < 4;
+        return oldleaf_filter(value);
     }
 };
 

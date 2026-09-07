@@ -14,6 +14,7 @@
 
 class Block;
 class Boxed;
+class ItemInstance;
 class Property;
 
 template <typename T>
@@ -43,6 +44,8 @@ public:
 
     int mElementId;
 };
+
+boost::shared_ptr<ItemInstance> createItem(const BlockState* state);
 
 template <typename T>
 T BlockState::getValue(const AbstractProperty<T>* property) const

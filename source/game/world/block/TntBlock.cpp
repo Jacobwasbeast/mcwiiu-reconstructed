@@ -2,7 +2,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/Explosion.hpp"
 #include "game/core/IconRegister.hpp"
@@ -11,6 +11,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/projectile/Arrow.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/EMiniGameId.hpp"
@@ -23,8 +24,6 @@
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-extern CMinecraftApp gApp;
 
 AbstractProperty<bool>* TntBlock::EXPLODE = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"explode"));
 
@@ -43,7 +42,7 @@ TntBlock::~TntBlock()
 void TntBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block::onPlace(level, pos, state);
-    if (level->hasNeighborSignal(pos) && gApp.GetGameHostOption(0xd))
+    if (level->hasNeighborSignal(pos) && gApp.GetGameHostOption(eGameHostOption_13))
     {
         TypedBoxed<bool> explode(true);
         destroy(level, pos, state->setBoxedValue(EXPLODE, &explode));
@@ -53,7 +52,7 @@ void TntBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* stat
 
 void TntBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (level->hasNeighborSignal(pos) && gApp.GetGameHostOption(0xd))
+    if (level->hasNeighborSignal(pos) && gApp.GetGameHostOption(eGameHostOption_13))
     {
         TypedBoxed<bool> explode(true);
         destroy(level, pos, state->setBoxedValue(EXPLODE, &explode));
@@ -63,7 +62,7 @@ void TntBlock::neighborChanged(const BlockState* state, Level* level, const Bloc
 
 void TntBlock::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
 {
-    if (level->mIsClientSide || !level->newPrimedTntAllowed() || !gApp.GetGameHostOption(0xd))
+    if (level->mIsClientSide || !level->newPrimedTntAllowed() || !gApp.GetGameHostOption(eGameHostOption_13))
         return;
 
     boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5, pos.y, pos.z + 0.5,
@@ -84,7 +83,7 @@ void TntBlock::destroy(Level* level, const BlockPos& pos, const BlockState* stat
         return;
 
     if ((state->getValue(EXPLODE) || Minecraft::InMiniGame(eMiniGameId_Tumble, true))
-        && level->newPrimedTntAllowed() && gApp.GetGameHostOption(0xd))
+        && level->newPrimedTntAllowed() && gApp.GetGameHostOption(eGameHostOption_13))
     {
         boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5, pos.y, pos.z + 0.5,
             entity));
@@ -120,7 +119,7 @@ bool TntBlock::use(Level* level, const BlockPos& pos, const BlockState* state, b
 
 void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
 {
-    if (!Minecraft::InMiniGame((EMiniGameId)1, true) && !level->mIsClientSide && entity != NULL)
+    if (!Minecraft::InMiniGame(eMiniGameId_Battle, true) && !level->mIsClientSide && entity != NULL)
     {
         if ((entity->GetType() & 0x8A020000ULL) == 0x8A020000ULL && entity->isOnFire())
         {
@@ -145,7 +144,7 @@ bool TntBlock::dropFromExplosion(Explosion*)
 void TntBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
 {
     Block::setPlacedBy(level, pos, state, placer, itemInstance);
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && gApp.GetGameHostOption(0xd))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && gApp.GetGameHostOption(eGameHostOption_13))
     {
         TypedBoxed<bool> explode(true);
         destroy(level, pos, state->setBoxedValue(EXPLODE, &explode), placer);

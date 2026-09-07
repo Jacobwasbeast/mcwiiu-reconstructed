@@ -37,7 +37,6 @@ public:
     DispenserBlock();
     virtual ~DispenserBlock();
 
-    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static Position* getDispensePosition(BlockSource* blockSource);
     static void blockStaticCtor();
     virtual int getTickDelay(Level* level);
@@ -47,8 +46,9 @@ public:
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    void dispenseFrom(Level* level, const BlockPos& pos);
-    DispenseItemBehavior* getDispenseMethod(not_null_ptr<ItemInstance> itemInstance);
+    virtual void dispenseFrom(Level* level, const BlockPos& pos);
+    virtual DispenseItemBehavior* getDispenseMethod(not_null_ptr<ItemInstance> itemInstance);
+    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                  Block* block, const BlockPos& fromPos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
@@ -74,6 +74,8 @@ public:
 
 private:
     Random mRandom;
+
+protected:
     TextureAtlasSprite* mTopIcon;
     TextureAtlasSprite* mFrontIcon;
     TextureAtlasSprite* mFrontVerticalIcon;

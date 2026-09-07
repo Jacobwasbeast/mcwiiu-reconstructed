@@ -12,6 +12,17 @@
 
 std::wstring fjSafeGet(const boost::unordered_map<std::wstring, std::wstring>& map, const std::wstring& key);
 
+std::wstring fjSafeGet(const boost::unordered_map<std::wstring, std::wstring>& map, const std::wstring& key)
+{
+    boost::unordered_map<std::wstring, std::wstring>::const_iterator it = map.find(key);
+    if (it != map.end())
+    {
+        return it->second;
+    }
+
+    return std::wstring();
+}
+
 static boost::unordered_map<std::wstring, std::wstring> sOldBlockEntityIds;
 static boost::unordered_map<std::wstring, std::wstring> sNewBlockEntityIds;
 

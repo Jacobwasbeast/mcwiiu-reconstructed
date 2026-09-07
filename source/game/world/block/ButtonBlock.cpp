@@ -3,6 +3,8 @@
 #include "game/core/Direction.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/core/ThrownTrident.hpp"
+#include "game/entity/projectile/Arrow.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -17,9 +19,6 @@
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class Arrow;
-class ThrownTrident;
 
 DirectionProperty* ButtonBlock::FACING = NULL;
 AbstractProperty<bool>* ButtonBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
@@ -78,15 +77,15 @@ bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
 {
     BlockPos supportPos = pos.relative(direction->getOpposite());
     const BlockState* supportState = level->getBlockState(supportPos);
-    bool solidFace = supportState->getBlock()->isSolidFace(level, supportPos, direction);
+    EBlockFaceShape faceShape = supportState->getBlockFaceShape(level, supportPos, direction);
     Block* support = supportState->getBlock();
     if (direction == Direction::UP)
     {
-        if (support != Blocks::AIR && (Block::isExceptionBlockForAttaching(support) || solidFace) &&
+        if (support != Blocks::AIR && (Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) &&
             !Block::isExceptionForPistonAttaching(support) && !support->mHasTintedFace) return false;
         return true;
     }
-    if ((Block::isExceptionBlockForAttaching(support) || solidFace) && !Block::isExceptionForPistonAttaching(support)) return false;
+    if ((Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) && !Block::isExceptionForPistonAttaching(support)) return false;
     return true;
 }
 

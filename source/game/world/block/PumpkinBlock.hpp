@@ -49,10 +49,10 @@ public:
 private:
     TextureAtlasSprite* mTopIcon;
     TextureAtlasSprite* mFaceIcon;
-    BlockPattern* mSnowGolemFullPattern;
     BlockPattern* mSnowGolemBasePattern;
-    BlockPattern* mIronGolemFullPattern;
+    BlockPattern* mSnowGolemFullPattern;
     BlockPattern* mIronGolemBasePattern;
+    BlockPattern* mIronGolemFullPattern;
 };
 
 #endif

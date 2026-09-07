@@ -4,6 +4,7 @@
 #include "game/world/block/Block.hpp"
 
 class AABB;
+class BlockPattern;
 class BooleanProperty;
 class DirectionProperty;
 
@@ -35,7 +36,7 @@ public:
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual bool isCubeShaped(const BlockState* state);
-    static int getOrCreatePortalShape();
+    static BlockPattern* getOrCreatePortalShape();
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
                                               const BlockPos& pos, const Direction* direction);
     TextureAtlasSprite* getEye();

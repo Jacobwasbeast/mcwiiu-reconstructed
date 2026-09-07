@@ -4,6 +4,11 @@
 
 int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats);
 
+int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats)
+{
+    return roundStats.mReachedEnd && roundStats.mBlocksDestroyed.mCount == 0;
+}
+
 FirstDeathWithoutBlockDestructionMedal::~FirstDeathWithoutBlockDestructionMedal()
 {
 }

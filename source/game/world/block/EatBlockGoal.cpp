@@ -14,6 +14,8 @@
 #include "game/world/block/BlockStatePredicate.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Predicates.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 class Property;
 
@@ -21,6 +23,14 @@ extern bool tallGrassPredicate(Boxed* value);
 extern Property* TallGrassBlock_VARIANT;
 
 static Predicate<const BlockState*>* sTallGrassPredicate;
+
+bool tallGrassPredicate(Boxed* value)
+{
+    const TypedBoxed<TallGrassBlock::Variant*>* boxed = value != NULL &&
+        value->isA(typeid(TallGrassBlock::Variant*))
+        ? static_cast<const TypedBoxed<TallGrassBlock::Variant*>*>(value) : NULL;
+    return boxed != NULL && boxed->getValue() == gTallGrass;
+}
 
 EatBlockGoal::EatBlockGoal(Mob* mob)
     : Goal(), mMob(mob), mLevel(mob->mLevel), mEatAnimationTick(0)

@@ -6,9 +6,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-#include "game/world/block/MobSpawnerBlockEntity.hpp"
+
+class MobSpawnerBlockEntity
+{
+public:
+    static BlockEntity* create();
+};
 
 MobSpawnerBlock::MobSpawnerBlock()
     : BaseEntityBlock(NULL)
@@ -22,7 +28,7 @@ MobSpawnerBlock::~MobSpawnerBlock()
 
 boost::shared_ptr<BlockEntity> MobSpawnerBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> blockEntity(new MobSpawnerBlockEntity());
+    boost::shared_ptr<BlockEntity> blockEntity(MobSpawnerBlockEntity::create());
     blockEntity->setLevelForLoading(level);
     return blockEntity;
 }

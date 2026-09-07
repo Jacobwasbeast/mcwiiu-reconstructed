@@ -10,7 +10,29 @@ public:
     int GetRoundTime();
 };
 
-double countEmpty(const std::map<int, int>& blocksPlaced, int firstRound, int lastRound);
+double countEmpty(const std::map<int, int>& blocksPlaced, int firstRound, int lastRound)
+{
+    double score = 176.0;
+    int direction = lastRound < firstRound ? -1 : 1;
+
+    if (firstRound != lastRound)
+    {
+        do
+        {
+            std::map<int, int>::const_iterator found = blocksPlaced.find(firstRound);
+            if (found != blocksPlaced.end() && found->second != 0)
+            {
+                break;
+            }
+
+            firstRound += direction;
+            score = (double)(float)(score + 10.0);
+        }
+        while (firstRound != lastRound);
+    }
+
+    return score;
+}
 
 BlockPlacedOverTime::BlockPlacedOverTime(
     int name,

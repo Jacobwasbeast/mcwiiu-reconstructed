@@ -18,6 +18,8 @@ class MaterialColor;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class EnumProperty;
+
 class DirtBlock : public Block, public BonemealableBlock
 {
 public:
@@ -77,5 +79,8 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     virtual ~DirtBlock();
 };
+
+extern DirtBlock::Variant* gVariants[3];
+extern EnumProperty<DirtBlock::Variant*>* gVariantProperty;
 
 #endif

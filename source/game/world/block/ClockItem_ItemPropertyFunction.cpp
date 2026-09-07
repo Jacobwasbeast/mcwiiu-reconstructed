@@ -41,3 +41,10 @@ float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstan
 
     return (float)Mth::positiveModulo((float)wobble(level, value), 1.0f);
 }
+
+float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
+                                           Level* level,
+                                           boost::shared_ptr<LivingEntity> entity) const
+{
+    return const_cast<ClockItem_ItemPropertyFunction*>(this)->call(itemInstance, level, entity);
+}

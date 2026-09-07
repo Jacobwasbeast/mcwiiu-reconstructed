@@ -1,0 +1,105 @@
+#include "game/world/block/DropperBlock.hpp"
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/core/Direction.hpp"
+#include "game/core/IconRegister.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/DefaultDispenseItemBehavior.hpp"
+#include "game/item/DispenseItemBehavior.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockSourceImpl.hpp"
+#include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/DispenserBlockEntity.hpp"
+#include "game/world/block/DropperBlockEntity.hpp"
+#include "game/world/block/HopperBlockEntity.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+DropperBlock::DropperBlock()
+    : DispenserBlock(), mDropperBehavior(new DefaultDispenseItemBehavior())
+{
+    Block::ClearDerivedInit();
+    Block::DerivedInit();
+    TypedBoxed<bool> triggered(false);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(TRIGGERED, &triggered));
+}
+
+DropperBlock::~DropperBlock()
+{
+}
+
+boost::shared_ptr<BlockEntity> DropperBlock::newBlockEntity(Level*, int data)
+{
+    boost::shared_ptr<DropperBlockEntity> entity(new DropperBlockEntity());
+    entity->setData(data);
+    return boost::static_pointer_cast<BlockEntity>(entity);
+}
+
+DispenseItemBehavior* DropperBlock::getDispenseMethod(not_null_ptr<ItemInstance>)
+{
+    return mDropperBehavior;
+}
+
+void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
+{
+    BlockSourceImpl source(level, pos);
+    boost::shared_ptr<DispenserBlockEntity> dispenser =
+        boost::dynamic_pointer_cast<DispenserBlockEntity>(source.getEntity());
+    if (!dispenser)
+    {
+        level->levelEvent(1001, pos, 0);
+        return;
+    }
+
+    int slot = dispenser->getRandomSlot();
+    if (slot < 0)
+    {
+        level->levelEvent(1001, pos, 0);
+        return;
+    }
+
+    not_null_ptr<ItemInstance> item = dispenser->getItem(static_cast<unsigned int>(slot));
+    if (item->isEmpty())
+        return;
+
+    const Direction* direction = source.getBlockState()->getValue(FACING);
+    BlockPos destinationPos = pos.relative(direction);
+    boost::shared_ptr<Container> container = HopperBlockEntity::getContainerAt(
+        level, static_cast<double>(destinationPos.x), static_cast<double>(destinationPos.y),
+        static_cast<double>(destinationPos.z));
+
+    if (!container)
+    {
+        not_null_ptr<ItemInstance> result = getDispenseMethod(item)->dispense(&source, item);
+        dispenser->setItem(static_cast<unsigned int>(slot), result);
+        return;
+    }
+
+    not_null_ptr<ItemInstance> remainder = HopperBlockEntity::addItem(
+        NULL, container.get(), item->copy()->split(1), direction->getOpposite());
+    not_null_ptr<ItemInstance> result = item->copy();
+    if (remainder->isEmpty())
+        result->shrink(1);
+    dispenser->setItem(static_cast<unsigned int>(slot), result);
+}
+
+void DropperBlock::registerIcons(IconRegister* iconRegister)
+{
+    mIcon = iconRegister->registerIcon(L"furnace_side");
+    mTopIcon = iconRegister->registerIcon(L"furnace_top");
+    mFrontIcon = iconRegister->registerIcon(getIconName() + L"_front_horizontal");
+    mFrontVerticalIcon = iconRegister->registerIcon(getIconName() + L"_front_vertical");
+}
+
+unsigned int DropperBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
+        return 0x41590ad1U;
+    return Block::GetInteractTooltip(tooltipData);
+}

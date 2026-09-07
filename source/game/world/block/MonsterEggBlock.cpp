@@ -3,12 +3,14 @@
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
+#include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Predicates.hpp"
+#include "game/world/block/StoneBrickBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static MonsterEggBlock::Variant gMonsterEggVariant0(0, L"stone", 0);
@@ -21,7 +23,7 @@ static MonsterEggBlock::Variant* gMonsterEggVariants[6] = {
     &gMonsterEggVariant0, &gMonsterEggVariant1, &gMonsterEggVariant2,
     &gMonsterEggVariant3, &gMonsterEggVariant4, &gMonsterEggVariant5
 };
-static EnumProperty<MonsterEggBlock::Variant*>* gMonsterEggVariantProperty = NULL;
+EnumProperty<MonsterEggBlock::Variant*>* MonsterEggBlock::VARIANT = NULL;
 
 MonsterEggBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
     : mData(data), mName(name), mTranslationKey(translationKey)
@@ -84,14 +86,14 @@ MonsterEggBlock::Variant* MonsterEggBlock::Variant::byHostBlock(const BlockState
 
 void MonsterEggBlock::blockStaticCtor()
 {
-    if (gMonsterEggVariantProperty == NULL)
+    if (VARIANT == NULL)
     {
         boost::unordered_set<Variant*> values;
         for (int i = 0; i < 6; ++i)
         {
             values.insert(gMonsterEggVariants[i]);
         }
-        gMonsterEggVariantProperty = EnumProperty<Variant*>::create(
+        VARIANT = EnumProperty<Variant*>::create(
             L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
     }
 }
@@ -121,12 +123,21 @@ bool MonsterEggBlock::isCompatibleHostBlock(const BlockState* state)
 
 not_null_ptr<ItemInstance> MonsterEggBlock::getSilkTouchItemInstance(const BlockState* state)
 {
-    Variant* variant = state->getValue(gMonsterEggVariantProperty);
-    if (variant->getData() > 2)
+    int data = state->getValue(VARIANT)->getData();
+    if (data > 2)
     {
-        return Block::getSilkTouchItemInstance(state);
+        return not_null_ptr<ItemInstance>(new ItemInstance(
+            Blocks::stonebrick, 1, StoneBrickBlock::Variant::byData(data - 2)->getData()));
     }
-    return not_null_ptr<ItemInstance>();
+    if (data == 1)
+    {
+        return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::cobblestone));
+    }
+    if (data == 2)
+    {
+        return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stonebrick));
+    }
+    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone));
 }
 
 void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
@@ -140,29 +151,30 @@ void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const Bl
 
 not_null_ptr<ItemInstance> MonsterEggBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return Block::getCloneItemInstance(level, pos, state);
+    return not_null_ptr<ItemInstance>(new ItemInstance(
+        this, 1, state->getBlock()->getSpawnResourcesAuxValue(state)));
 }
 
 const BlockState* MonsterEggBlock::getBlockState(int data)
 {
     TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(gMonsterEggVariantProperty, &value);
+    return defaultBlockState()->setBoxedValue(VARIANT, &value);
 }
 
 int MonsterEggBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gMonsterEggVariantProperty)->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 BlockStateDefinition* MonsterEggBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gMonsterEggVariantProperty };
+    const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* MonsterEggBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    Variant* variant = state->getValue(gMonsterEggVariantProperty);
+    Variant* variant = state->getValue(VARIANT);
     if (variant == &gMonsterEggVariant0)
     {
         return Blocks::stone->getTexture(direction);

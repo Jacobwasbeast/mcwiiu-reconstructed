@@ -57,8 +57,12 @@ private:
     bool mCensored;
     bool mCreatedByRestrictedPlayer;
     bool mCreatedByHostPlayer;
+
+public:
     int mUnknown;
     std::wstring mMessages[4];
+
+private:
     int mUniqueId;
     int mTextCacheIndex;
     bool mTextCacheEnabled;

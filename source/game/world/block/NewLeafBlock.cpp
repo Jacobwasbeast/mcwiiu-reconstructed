@@ -25,6 +25,11 @@ AbstractProperty<bool>* NewLeafBlock::CHECK_DECAY = NULL;
 
 bool leaf_variant_predicate(PlanksBlock::Variant* value);
 
+bool leaf_variant_predicate(PlanksBlock::Variant* value)
+{
+    return value->getData() > 3;
+}
+
 void NewLeafBlock::blockStaticCtor()
 {
     boost::unordered_set<PlanksBlock::Variant*> values;

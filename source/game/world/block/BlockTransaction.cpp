@@ -86,7 +86,7 @@ void BlockTransaction::setElement(const Vec3i& position, unsigned short element)
 void BlockTransaction::setBlock(const Vec3i& position, const BlockState* state)
 {
     Block* block = state->getBlock();
-    setBlock(position, Block::getId(block), block->convertBlockStateToLegacyData(state));
+    setBlock(position, Block::getId(block), block->convertBlockStateToLegacyData(state) & 0xf);
 }
 
 int BlockTransaction::getBlock(const Vec3i& position) const
@@ -106,12 +106,14 @@ bool BlockTransaction::isEmpty(const Vec3i& position) const
 
 void BlockTransaction::reduceMinMax()
 {
+    Vec3i min = mMin;
+    Vec3i max = mMax;
     mMin = mMax;
-    for (int x = 0; x < mSize.x; ++x)
+    for (int x = min.x; x < max.x; ++x)
     {
-        for (int y = 0; y < mSize.y; ++y)
+        for (int y = min.y; y < max.y; ++y)
         {
-            for (int z = 0; z < mSize.z; ++z)
+            for (int z = min.z; z < max.z; ++z)
             {
                 Vec3i position(x, y, z);
                 if (!isEmpty(position)) updateMinMax(position);

@@ -50,7 +50,7 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    virtual std::wstring getAuxName(int auxValue);
+    virtual int getAuxName(int auxValue);
     virtual Property* getTypeProperty();
     virtual Boxed* getTypeForItem(not_null_ptr<ItemInstance> itemInstance);
 

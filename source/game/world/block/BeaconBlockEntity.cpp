@@ -11,8 +11,9 @@ BeaconBlockEntity::BeaconBeamSection::BeaconBeamSection(arrayWithLength<float> c
 {
 }
 
-void BeaconBlockEntity::BeaconBeamSection::getColor()
+float* BeaconBlockEntity::BeaconBeamSection::getColor()
 {
+    return &mRed;
 }
 
 void BeaconBlockEntity::BeaconBeamSection::setHeight(int height)
@@ -82,7 +83,7 @@ not_null_ptr<ItemInstance> BeaconBlockEntity::removeItem(unsigned int slot, int 
     {
         return ItemInstance::EMPTY;
     }
-    not_null_ptr<ItemInstance> result(new ItemInstance(mItem->split(count)));
+    not_null_ptr<ItemInstance> result = mItem->split(count);
     if (mItem->isEmpty())
     {
         mItem = ItemInstance::EMPTY;
@@ -329,7 +330,7 @@ bool BeaconBlockEntity::triggerEvent(int id, int param)
     return BlockEntity::triggerEvent(id, param);
 }
 
-void BeaconBlockEntity::setBeamDirection(unsigned int direction)
+void BeaconBlockEntity::setBeamDirection(eBEAM_DIRECTION direction)
 {
     mBeamDirection = direction;
 }

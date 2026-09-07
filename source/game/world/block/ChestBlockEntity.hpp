@@ -3,6 +3,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/core/Direction.hpp"
 #include "game/core/InteractionObject.hpp"
@@ -13,14 +14,10 @@
 #include "game/item/NonNullList.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/ChestBlock.hpp"
 #include "game/world/block/RandomizableLockableContainerBlockEntity.hpp"
 
 class AbstractContainerMenu;
-class ChestBlock
-{
-public:
-    enum Type { TYPE_SINGLE, TYPE_LEFT, TYPE_RIGHT };
-};
 class Inventory;
 class Player;
 
@@ -53,13 +50,13 @@ public:
     boost::shared_ptr<ChestBlockEntity> getNeighbour();
     void removeNeighbour();
     bool isSameChest(const BlockPos& position);
-    void findAndGreetChestEntity(const Direction* direction);
+    boost::shared_ptr<ChestBlockEntity> findAndGreetChestEntity(const Direction* direction);
     virtual void checkNeighbors();
     void tickRefilledAnimation();
     virtual void tick();
     virtual bool triggerEvent(int id, int param);
     virtual void setRemoved();
-    int getType();
+    virtual int getType();
     NonNullList<not_null_ptr<ItemInstance> > getItems();
     void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     virtual boost::shared_ptr<BlockEntity> clone();
@@ -69,16 +66,23 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    ChestBlock::Type mType;
     bool mLarge;
-    int mOpenersCounter;
-    int mOpen;
-    int mOpenOld;
-    int mTickCount;
-    boost::shared_ptr<ChestBlockEntity> mNeighbour;
-    bool mNeighborsChecked;
     int mRefilledAnimationTicks;
+    bool mNeighborsChecked;
+    boost::weak_ptr<ChestBlockEntity> mNorthNeighbour;
+    boost::weak_ptr<ChestBlockEntity> mEastNeighbour;
+    boost::weak_ptr<ChestBlockEntity> mWestNeighbour;
+    boost::weak_ptr<ChestBlockEntity> mSouthNeighbour;
+
+public:
+    float mOpen;
+    float mOpenOld;
+    int mOpenCount;
+
+private:
+    int mTickCount;
     int mCachedType;
+    bool mNeighbourRemoved;
 };
 
 #endif

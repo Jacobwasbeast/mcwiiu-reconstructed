@@ -18,7 +18,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<const DyeColor*>* gWoolCarpetColorProperty = NULL;
+EnumProperty<const DyeColor*>* gWoolCarpetColorProperty = NULL;
 static const AABB* WOOL_CARPET_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0625, 1.0);
 
 void WoolCarpetBlock::blockStaticCtor()

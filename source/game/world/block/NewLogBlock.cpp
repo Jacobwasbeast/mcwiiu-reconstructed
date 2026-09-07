@@ -19,7 +19,7 @@
 
 EnumProperty<PlanksBlock::Variant*>* NewLogBlock::VARIANT = NULL;
 
-bool newleaf_predicate(PlanksBlock::Variant* value)
+bool newleaf_predicate__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value)
 {
     return value->getData() > 3;
 }
@@ -35,7 +35,8 @@ void NewLogBlock::blockStaticCtor()
     values.insert(PlanksBlock::Variant::byData(5));
     VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
         L"variant", typeid(PlanksBlock::Variant*), values,
-        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(newleaf_predicate));
+        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(
+            newleaf_predicate__FPQ2_11PlanksBlock7Variant));
 }
 
 NewLogBlock::NewLogBlock()

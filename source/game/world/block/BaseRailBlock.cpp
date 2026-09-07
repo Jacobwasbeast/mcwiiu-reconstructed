@@ -11,6 +11,16 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+bool railfilter__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape)
+{
+    return shape == NULL || shape->getData() < 6;
+}
+
+bool railpredicate__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape)
+{
+    return shape == NULL || shape->getData() < 6;
+}
+
 static BaseRailBlock::RailShape* gRailShapes[10] =
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 static const AABB* gRailClipAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);

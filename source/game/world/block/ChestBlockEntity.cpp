@@ -7,39 +7,45 @@
 
 ChestBlockEntity::ChestBlockEntity(bool large)
     : RandomizableLockableContainerBlockEntity(),
-      mType(ChestBlock::TYPE_SINGLE),
       mLarge(large),
-      mOpenersCounter(0),
-      mOpen(0),
-      mOpenOld(0),
-      mTickCount(0),
-      mNeighbour(),
+      mRefilledAnimationTicks(-1),
       mNeighborsChecked(false),
-      mRefilledAnimationTicks(0),
-      mCachedType(-1)
+      mNorthNeighbour(),
+      mEastNeighbour(),
+      mWestNeighbour(),
+      mSouthNeighbour(),
+      mOpen(0.0F),
+      mOpenOld(0.0F),
+      mOpenCount(0),
+      mTickCount(0),
+      mCachedType(-1),
+      mNeighbourRemoved(false)
 {
     _init(large);
 }
 
 ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool large)
     : RandomizableLockableContainerBlockEntity(),
-      mType(type),
       mLarge(large),
-      mOpenersCounter(0),
-      mOpen(0),
-      mOpenOld(0),
-      mTickCount(0),
-      mNeighbour(),
+      mRefilledAnimationTicks(-1),
       mNeighborsChecked(false),
-      mRefilledAnimationTicks(0),
-      mCachedType(-1)
+      mNorthNeighbour(),
+      mEastNeighbour(),
+      mWestNeighbour(),
+      mSouthNeighbour(),
+      mOpen(0.0F),
+      mOpenOld(0.0F),
+      mOpenCount(0),
+      mTickCount(0),
+      mCachedType(type),
+      mNeighbourRemoved(false)
 {
     _init(large);
+    mCachedType = type;
 }
 
 ChestBlockEntity::~ChestBlockEntity()
 {
-    removeNeighbour();
 }
 
 BlockEntity* ChestBlockEntity::create()
@@ -51,13 +57,14 @@ void ChestBlockEntity::_init(bool large)
 {
     mLarge = large;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, not_null_ptr<ItemInstance>());
-    mOpenersCounter = 0;
-    mOpen = 0;
-    mOpenOld = 0;
+    mRefilledAnimationTicks = -1;
+    mOpen = 0.0F;
+    mOpenOld = 0.0F;
+    mOpenCount = 0;
     mTickCount = 0;
     mNeighborsChecked = false;
-    mRefilledAnimationTicks = 0;
     mCachedType = -1;
+    mNeighbourRemoved = false;
 }
 
 std::wstring ChestBlockEntity::getName()
@@ -121,15 +128,15 @@ void ChestBlockEntity::startOpen(boost::shared_ptr<Player> player)
     {
         return;
     }
-    ++mOpenersCounter;
+    ++mOpenCount;
     RandomizableLockableContainerBlockEntity::startOpen(player);
 }
 
 void ChestBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 {
-    if (mOpenersCounter > 0)
+    if (mOpenCount > 0)
     {
-        --mOpenersCounter;
+        --mOpenCount;
     }
     RandomizableLockableContainerBlockEntity::stopOpen(player);
 }
@@ -186,41 +193,118 @@ void ChestBlockEntity::clearCache()
 
 void ChestBlockEntity::heyImYourNeighbor(boost::shared_ptr<ChestBlockEntity> neighbour, const Direction* direction)
 {
-    if (neighbour && direction)
+    if (!neighbour || !direction)
     {
-        mNeighbour = neighbour;
-        mNeighborsChecked = true;
+        mNeighborsChecked = false;
+        return;
+    }
+
+    boost::shared_ptr<ChestBlockEntity> current;
+    switch (direction->get3DDataValue())
+    {
+    case Direction::eDirection_North:
+        current = mNorthNeighbour.lock();
+        mNorthNeighbour = neighbour;
+        break;
+    case Direction::eDirection_South:
+        current = mSouthNeighbour.lock();
+        mSouthNeighbour = neighbour;
+        break;
+    case Direction::eDirection_West:
+        current = mWestNeighbour.lock();
+        mWestNeighbour = neighbour;
+        break;
+    case Direction::eDirection_East:
+        current = mEastNeighbour.lock();
+        mEastNeighbour = neighbour;
+        break;
+    default:
+        return;
+    }
+    if (current != neighbour)
+    {
+        mNeighborsChecked = false;
+    }
+    if (mLevel)
+    {
+        mLevel->updateNeighborsAtExceptFromFacing(mPos, getBlock(), direction);
     }
 }
 
 boost::shared_ptr<ChestBlockEntity> ChestBlockEntity::getNeighbour()
 {
-    return mNeighbour;
+    boost::shared_ptr<ChestBlockEntity> neighbour = mWestNeighbour.lock();
+    if (!neighbour)
+    {
+        neighbour = mEastNeighbour.lock();
+    }
+    if (!neighbour)
+    {
+        neighbour = mNorthNeighbour.lock();
+    }
+    if (!neighbour)
+    {
+        neighbour = mSouthNeighbour.lock();
+    }
+    return neighbour;
 }
 
 void ChestBlockEntity::removeNeighbour()
 {
-    mNeighbour.reset();
+    mNeighbourRemoved = true;
 }
 
 bool ChestBlockEntity::isSameChest(const BlockPos& position)
 {
-    return getBlockPos() == position;
+    if (!mLevel)
+    {
+        return false;
+    }
+    boost::shared_ptr<ChestBlockEntity> chest =
+        boost::dynamic_pointer_cast<ChestBlockEntity>(mLevel->getBlockEntity(position));
+    return chest && chest->getType() == getType();
 }
 
-void ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
+boost::shared_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
 {
-    if (direction)
+    if (!mLevel || !direction)
     {
-        mNeighborsChecked = true;
+        return boost::shared_ptr<ChestBlockEntity>();
     }
+    BlockPos position = mPos.relative(direction);
+    if (!isSameChest(position))
+    {
+        return boost::shared_ptr<ChestBlockEntity>();
+    }
+    boost::shared_ptr<ChestBlockEntity> neighbour =
+        boost::static_pointer_cast<ChestBlockEntity>(mLevel->getBlockEntity(position));
+    if (neighbour)
+    {
+        neighbour->heyImYourNeighbor(boost::static_pointer_cast<ChestBlockEntity>(shared_from_this()),
+                                     direction->getOpposite());
+    }
+    return neighbour;
 }
 
 void ChestBlockEntity::checkNeighbors()
 {
-    if (!mNeighborsChecked)
+    if (!mNeighborsChecked && mWestNeighbour.expired() && mEastNeighbour.expired() &&
+        mNorthNeighbour.expired() && mSouthNeighbour.expired())
     {
-        findAndGreetChestEntity(Direction::NORTH);
+        mNeighborsChecked = true;
+        mWestNeighbour = findAndGreetChestEntity(Direction::WEST);
+        if (mWestNeighbour.expired())
+        {
+            mEastNeighbour = findAndGreetChestEntity(Direction::EAST);
+            if (mEastNeighbour.expired())
+            {
+                mNorthNeighbour = findAndGreetChestEntity(Direction::NORTH);
+                if (mNorthNeighbour.expired())
+                {
+                    mSouthNeighbour = findAndGreetChestEntity(Direction::SOUTH);
+                }
+            }
+        }
     }
 }
 
@@ -238,13 +322,21 @@ void ChestBlockEntity::tick()
     tickRefilledAnimation();
     checkNeighbors();
     mOpenOld = mOpen;
-    if (mOpenersCounter > 0 && mOpen < 1)
+    if (mOpenCount > 0 && mOpen < 1.0F)
     {
-        ++mOpen;
+        mOpen += 0.1F;
+        if (mOpen > 1.0F)
+        {
+            mOpen = 1.0F;
+        }
     }
-    else if (mOpenersCounter == 0 && mOpen > 0)
+    else if (mOpenCount == 0 && mOpen > 0.0F)
     {
-        --mOpen;
+        mOpen -= 0.1F;
+        if (mOpen < 0.0F)
+        {
+            mOpen = 0.0F;
+        }
     }
 }
 
@@ -252,7 +344,7 @@ bool ChestBlockEntity::triggerEvent(int id, int param)
 {
     if (id == 1)
     {
-        mOpenersCounter = param;
+        mOpenCount = param;
         return true;
     }
     return BlockEntity::triggerEvent(id, param);
@@ -260,13 +352,27 @@ bool ChestBlockEntity::triggerEvent(int id, int param)
 
 void ChestBlockEntity::setRemoved()
 {
-    removeNeighbour();
     BlockEntity::setRemoved();
+    checkNeighbors();
+    boost::shared_ptr<ChestBlockEntity> neighbour = getNeighbour();
+    if (neighbour)
+    {
+        neighbour->removeNeighbour();
+    }
 }
 
 int ChestBlockEntity::getType()
 {
-    return mCachedType == -1 ? static_cast<int>(mType) : mCachedType;
+    if (mCachedType == -1)
+    {
+        ChestBlock* chestBlock = dynamic_cast<ChestBlock*>(getBlock());
+        if (!mLevel || !chestBlock)
+        {
+            return 0;
+        }
+        mCachedType = 0;
+    }
+    return mCachedType;
 }
 
 NonNullList<not_null_ptr<ItemInstance> > ChestBlockEntity::getItems()
@@ -281,9 +387,9 @@ void ChestBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 
 boost::shared_ptr<BlockEntity> ChestBlockEntity::clone()
 {
-    boost::shared_ptr<ChestBlockEntity> result(new ChestBlockEntity(mType, mLarge));
+    boost::shared_ptr<ChestBlockEntity> result(new ChestBlockEntity((ChestBlock::Type)getType(), mLarge));
     result->setItems(mItems);
-    result->mOpenersCounter = mOpenersCounter;
+    result->mOpenCount = mOpenCount;
     result->mOpen = mOpen;
     result->mOpenOld = mOpenOld;
     result->mTickCount = mTickCount;

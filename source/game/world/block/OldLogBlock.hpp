@@ -34,4 +34,6 @@ public:
 
 extern Property* OldLogBlock_VARIANT;
 
+bool oldlog_filter__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value);
+
 #endif

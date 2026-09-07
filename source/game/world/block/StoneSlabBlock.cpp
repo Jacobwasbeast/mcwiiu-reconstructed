@@ -4,7 +4,6 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/core/IconRegister.hpp"
-#include "game/core/L10N.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -102,9 +101,9 @@ not_null_ptr<ItemInstance> StoneSlabBlock::getCloneItemInstance(Level*, const Bl
     return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone_slab, 1, data));
 }
 
-std::wstring StoneSlabBlock::getAuxName(int auxValue)
+int StoneSlabBlock::getAuxName(int auxValue)
 {
-    return L10N::GetString(Variant::byData(auxValue)->getTranslationKey());
+    return Variant::byData(auxValue)->getTranslationKey();
 }
 
 Property* StoneSlabBlock::getTypeProperty()

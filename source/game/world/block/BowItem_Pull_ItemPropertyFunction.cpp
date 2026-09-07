@@ -7,7 +7,7 @@
 
 float BowItem_Pull_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
                                                Level*,
-                                               boost::shared_ptr<LivingEntity> entity)
+                                               boost::shared_ptr<LivingEntity> entity) const
 {
     if (entity != NULL && entity->getUseItem()->getItem() == Items::bow)
     {

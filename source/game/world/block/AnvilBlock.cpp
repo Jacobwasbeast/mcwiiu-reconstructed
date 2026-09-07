@@ -1,5 +1,7 @@
 #include "game/world/block/AnvilBlock.hpp"
 
+#include <string>
+
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
@@ -30,6 +32,20 @@ AbstractProperty<int>* AnvilBlock::DAMAGE =
 static const AABB* ANVIL_X_SHAPE = AABB::newPermanent(0.0, 0.0, 0.125, 1.0, 0.75, 0.875);
 static const AABB* ANVIL_Z_SHAPE = AABB::newPermanent(0.125, 0.0, 0.0, 0.875, 0.75, 1.0);
 
+namespace
+{
+    std::wstring gAnvilTopIconNames[3] =
+    {
+        L"anvil_top", L"anvil_top_damaged", L"anvil_top_damaged_2"
+    };
+}
+
+void __T4()
+{
+    for (int i = 0; i < 3; ++i)
+        gAnvilTopIconNames[i].~basic_string();
+}
+
 AnvilBlock::AnvilBlock()
     : FallingBlock(Material::HEAVY_METAL), mTextureType(0), mTopIcons()
 {
@@ -58,7 +74,7 @@ bool AnvilBlock::isCubeShaped(const BlockState*)
 
 EBlockFaceShape AnvilBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
-    return static_cast<EBlockFaceShape>(8);
+    return BLOCK_FACE_UNDEFINED;
 }
 
 bool AnvilBlock::isSolidRender(const BlockState*) const
@@ -66,20 +82,22 @@ bool AnvilBlock::isSolidRender(const BlockState*) const
     return false;
 }
 
-const BlockState* AnvilBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float,
-                                                    float, int, boost::shared_ptr<LivingEntity> placer)
+const BlockState* AnvilBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction,
+                                                    float hitX, float hitY, float hitZ, int auxValue,
+                                                    boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer)->getClockWise();
+    const Direction* facing = placer->getDirection()->getClockWise();
     TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<int> damage(0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
+    TypedBoxed<int> damage(auxValue >> 2);
+    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
+    state = state->setBoxedValue(FACING, &boxedFacing);
     return state->setBoxedValue(DAMAGE, &damage);
 }
 
 bool AnvilBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
-                     InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+                     InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
-    if (!clientSide)
+    if (!level->mIsClientSide)
     {
         Anvil anvil(level, pos);
         player->startBlockInteraction(&anvil);
@@ -145,13 +163,17 @@ unsigned int AnvilBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 const BlockState* AnvilBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    if (state->getBlock() == this)
+    {
+        TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
+        state = state->setBoxedValue(FACING, &facing);
+    }
+    return state;
 }
 
 BlockStateDefinition* AnvilBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, DAMAGE };
+    static const Property* properties[] = { FACING, DAMAGE };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -165,9 +187,9 @@ TextureAtlasSprite* AnvilBlock::getTexture(const Direction* direction, const Blo
 void AnvilBlock::registerIcons(IconRegister* iconRegister)
 {
     mIcon = iconRegister->registerIcon(L"anvil_base");
-    mTopIcons[0] = iconRegister->registerIcon(L"anvil_top");
-    mTopIcons[1] = iconRegister->registerIcon(L"anvil_top_damaged");
-    mTopIcons[2] = iconRegister->registerIcon(L"anvil_top_damaged_2");
+    mTopIcons[0] = iconRegister->registerIcon(gAnvilTopIconNames[0]);
+    mTopIcons[1] = iconRegister->registerIcon(gAnvilTopIconNames[1]);
+    mTopIcons[2] = iconRegister->registerIcon(gAnvilTopIconNames[2]);
 }
 
 EBlockRenderShape AnvilBlock::getRenderShape(const BlockState*)

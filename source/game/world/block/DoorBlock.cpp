@@ -406,4 +406,4 @@ void DoorBlock::registerIcons(IconRegister* iconRegister)
     delete mFlippedLowerIcon;
     mFlippedLowerIcon = new FlippedIcon(mLowerIcon, true, false);
 }
-EBlockRenderShape DoorBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(7); }
+EBlockRenderShape DoorBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_DOOR; }

@@ -87,4 +87,7 @@ public:
     bool mIsPowered;
 };
 
+bool railfilter__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape);
+bool railpredicate__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape);
+
 #endif

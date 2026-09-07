@@ -28,8 +28,8 @@ public:
                                  const BlockPos& pos, const BlockState* state);
 };
 
-static DirtBlock::Variant* gVariants[3] = { NULL, NULL, NULL };
-static EnumProperty<DirtBlock::Variant*>* gVariantProperty = NULL;
+DirtBlock::Variant* gVariants[3] = { NULL, NULL, NULL };
+EnumProperty<DirtBlock::Variant*>* gVariantProperty = NULL;
 static AbstractProperty<bool>* gSnowyProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 

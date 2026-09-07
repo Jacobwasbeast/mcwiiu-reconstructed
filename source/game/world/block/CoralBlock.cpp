@@ -1,6 +1,7 @@
 #include "game/world/block/CoralBlock.hpp"
 
 #include <cwchar>
+#include <string>
 
 #include "game/core/IconRegister.hpp"
 #include "game/util/Math.hpp"
@@ -21,6 +22,26 @@ static AbstractProperty<int>* CORAL_TYPE = NULL;
 static AbstractProperty<bool>* CORAL_DEAD = NULL;
 Property* CoralBlock_PROPERTY_1 = NULL;
 Property* CoralBlock_PROPERTY_2 = NULL;
+
+namespace
+{
+    std::wstring gCoralBlockIconNames[10] =
+    {
+        L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple",
+        L"dead_coral_red", L"dead_coral_orange", L"dead_coral_yellow", L"dead_coral_blue", L"dead_coral_purple"
+    };
+
+    void destroyCoralBlockIconNames(std::wstring* names, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            names[i].~basic_string();
+    }
+}
+
+void __T13()
+{
+    destroyCoralBlockIconNames(gCoralBlockIconNames, 10);
+}
 
 static const unsigned int CORAL_DESCRIPTION_IDS[8] =
 {
@@ -93,15 +114,9 @@ TextureAtlasSprite* CoralBlock::getTexture(const Direction*, const BlockState* s
 
 void CoralBlock::registerIcons(IconRegister* iconRegister)
 {
-    static const wchar_t* names[10] =
-    {
-        L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple",
-        L"dead_coral_red", L"dead_coral_orange", L"dead_coral_yellow", L"dead_coral_blue", L"dead_coral_purple"
-    };
-
     for (int i = 0; i < 10; ++i)
     {
-        mIcons[i] = iconRegister->registerIcon(names[i]);
+        mIcons[i] = iconRegister->registerIcon(gCoralBlockIconNames[i]);
     }
 }
 

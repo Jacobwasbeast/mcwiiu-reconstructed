@@ -4,7 +4,6 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include "game/core/SpawnData.hpp"
 #include "game/entity/mob/BaseMobSpawner.hpp"
 #include "game/world/block/BlockEntity.hpp"
 
@@ -12,6 +11,7 @@ class CompoundTag;
 class DataFixerUpper;
 class Level;
 class Packet;
+class SpawnData;
 
 class MobSpawnerBlockEntity : public BlockEntity
 {
@@ -25,6 +25,7 @@ public:
         virtual void broadcastEvent(int event);
         virtual Level* getLevel();
         virtual BlockPos getPos();
+
     private:
         MobSpawnerBlockEntity* mBlockEntity;
     };
@@ -44,6 +45,7 @@ public:
     virtual bool onlyOpCanSetNbt();
     void setEntityId(const std::wstring& entityId);
     virtual boost::shared_ptr<BlockEntity> clone();
+
 private:
     BlockEntityMobSpawner* mSpawner;
 };

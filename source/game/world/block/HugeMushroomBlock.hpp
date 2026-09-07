@@ -64,4 +64,6 @@ private:
     TextureAtlasSprite* mInsideTexture;
 };
 
+int getMushroomDataValue(HugeMushroomBlock::Variant* variant);
+
 #endif

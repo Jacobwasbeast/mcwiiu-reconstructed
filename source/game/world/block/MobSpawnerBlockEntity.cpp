@@ -20,6 +20,11 @@ MobSpawnerBlockEntity::~MobSpawnerBlockEntity()
     delete mSpawner;
 }
 
+unsigned long long MobSpawnerBlockEntity::GetType()
+{
+    return 0x0120020100000000ULL;
+}
+
 BlockEntity* MobSpawnerBlockEntity::create()
 {
     return new MobSpawnerBlockEntity();
@@ -33,7 +38,7 @@ MobSpawnerBlockEntity::BlockEntityMobSpawner* MobSpawnerBlockEntity::getSpawner(
 void MobSpawnerBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new UniqueTypeWalker(BlockEntity::getKey(0x01200201ULL)));
+                     new UniqueTypeWalker(BlockEntity::getKey(0x01200201ULL)));
 }
 
 void MobSpawnerBlockEntity::load(CompoundTag* tag)
@@ -93,11 +98,6 @@ void MobSpawnerBlockEntity::setEntityId(const std::wstring& entityId)
 {
     ResourceLocation location(entityId);
     mSpawner->setEntityId(location);
-}
-
-unsigned long long MobSpawnerBlockEntity::GetType()
-{
-    return 0x0120020100000000ULL;
 }
 
 MobSpawnerBlockEntity::BlockEntityMobSpawner::BlockEntityMobSpawner(MobSpawnerBlockEntity* blockEntity)

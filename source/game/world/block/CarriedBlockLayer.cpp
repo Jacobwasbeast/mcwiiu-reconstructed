@@ -2,14 +2,13 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/EndermanRenderer.hpp"
+#include "game/core/EnderMan.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockState.hpp"
-
-class EnderMan;
 
 static ResourceLocation BLOCKS_LOCATION((_TEXTURE_NAME)241);
 

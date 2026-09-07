@@ -9,14 +9,20 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockInWorld.hpp"
+#include "game/world/block/BlockPattern.hpp"
+#include "game/world/block/BlockPatternBuilder.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/BlockStatePredicate.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/item/Item.hpp"
 #include "game/world/block/Property.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 DirectionProperty* EndPortalFrameBlock::FACING = NULL;
@@ -24,6 +30,19 @@ BooleanProperty* EndPortalFrameBlock::EYE = NULL;
 
 static const AABB* END_PORTAL_FRAME_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.8125, 1.0);
 static const AABB* END_PORTAL_FRAME_EYE_SHAPE = AABB::newPermanent(0.25, 0.8125, 0.25, 0.75, 1.0, 0.75);
+static BlockPattern* END_PORTAL_SHAPE = NULL;
+
+static Predicate<BlockInWorld*>* portalFramePredicate(const Direction* facing)
+{
+    BlockStatePredicate* statePredicate = static_cast<BlockStatePredicate*>(
+        BlockStatePredicate::forBlock(Blocks::end_portal_frame));
+    statePredicate->where(EndPortalFrameBlock::EYE,
+                          new BlockStatePredicate::PredicateConversion<bool>(EndPortalFrameBlock::EYE, true));
+    statePredicate->where(EndPortalFrameBlock::FACING,
+                          new BlockStatePredicate::PredicateConversion<const Direction*>(
+                              EndPortalFrameBlock::FACING, facing));
+    return BlockInWorld::hasState(statePredicate);
+}
 
 EndPortalFrameBlock::EndPortalFrameBlock()
     : Block(Material::STONE, MaterialColor::STONE),
@@ -130,9 +149,20 @@ bool EndPortalFrameBlock::isCubeShaped(const BlockState* state)
     return false;
 }
 
-int EndPortalFrameBlock::getOrCreatePortalShape()
+BlockPattern* EndPortalFrameBlock::getOrCreatePortalShape()
 {
-    return 0;
+    if (END_PORTAL_SHAPE == NULL)
+    {
+        std::wstring rows[5] = { L"?vvv?", L">???<", L">???<", L">???<", L"?^^^?" };
+        END_PORTAL_SHAPE = BlockPatternBuilder::start()->aisle(rows)
+            ->where(L'?', Predicates<BlockInWorld*>::alwaysTrue)
+            ->where(L'^', portalFramePredicate(Direction::SOUTH))
+            ->where(L'>', portalFramePredicate(Direction::WEST))
+            ->where(L'v', portalFramePredicate(Direction::NORTH))
+            ->where(L'<', portalFramePredicate(Direction::EAST))
+            ->build(Direction::SOUTH, Direction::DOWN);
+    }
+    return END_PORTAL_SHAPE;
 }
 
 EBlockFaceShape EndPortalFrameBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
