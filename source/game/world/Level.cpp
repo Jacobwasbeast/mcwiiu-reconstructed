@@ -3901,15 +3901,23 @@ void Level::removeEntities(std::vector<boost::shared_ptr<Entity> >* entities)
 
 void Level::ensureAdded(boost::shared_ptr<Entity> entity)
 {
-    if (entity == NULL)
+    int chunkX = Mth::fastFloor(entity->mX * 0.0625);
+    int chunkZ = Mth::fastFloor(entity->mZ * 0.0625);
+
+    for (int x = chunkX - 2; x <= chunkX + 2; ++x)
     {
-        return;
+        for (int z = chunkZ - 2; z <= chunkZ + 2; ++z)
+        {
+            getChunk(x, z);
+        }
     }
+
+    EnterCriticalSection(&mEntityMutex);
     if (std::find(mEntities.begin(), mEntities.end(), entity) == mEntities.end())
     {
         mEntities.push_back(entity);
-        entityAdded(entity);
     }
+    LeaveCriticalSection(&mEntityMutex);
 }
 
 bool Level::mayInteract(boost::shared_ptr<Player>, const BlockPos&, Block*)

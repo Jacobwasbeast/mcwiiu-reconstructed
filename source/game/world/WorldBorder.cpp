@@ -79,7 +79,7 @@ void WorldBorder::setCenter(double x, double z)
         if (*it != NULL) (*it)->onBorderCenterSet(this, x, z);
 }
 
-long long WorldBorder::getLerpRemainingTime() { return getStatus() == 0 ? 0 : std::max(0LL, m_lerpEnd - System::processTimeInMilliSecs()); }
+long long WorldBorder::getLerpRemainingTime() { return getStatus() == 0 ? 0 : m_lerpEnd - static_cast<long long>(System::processTimeInMilliSecs()); }
 double WorldBorder::getLerpTarget() { return m_lerpTarget; }
 
 void WorldBorder::lerpSizeBetween(double oldSize, double newSize, long long timeMs)

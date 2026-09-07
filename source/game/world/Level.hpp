@@ -464,8 +464,12 @@ private:
     std::vector<boost::shared_ptr<BlockEntity> > mPendingBlockEntities;
     std::vector<boost::shared_ptr<BlockEntity> > mBlockEntitiesToRemove;
     std::vector<boost::shared_ptr<BlockEntity> > mTickingBlockEntities;
+
+public:
     std::vector<boost::shared_ptr<Player> > mPlayers;
     std::vector<LevelListener*> mListeners;
+
+private:
     std::vector<AABB*> mCollisionBoxes;
     LevelChunk** mChunkCache;
     int mChunkCacheSize;

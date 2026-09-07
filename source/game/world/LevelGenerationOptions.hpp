@@ -100,6 +100,7 @@ public:
     bool hasLoadedData();
     void setLoadedData();
     void clearSchematics();
+    DLCPack* getPack() const { return mPack; }
     unsigned int getParentPackId();
     bool hasLevelSeed();
     long long getLevelSeed();
