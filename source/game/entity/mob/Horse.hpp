@@ -2,13 +2,13 @@
 #define GAME_ENTITY_MOB_HORSE_HPP
 
 #include <string>
-#include <vector>
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class CompoundTag;
 class Container;
@@ -46,7 +46,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     void rebuildLayeredTextureInfo();
     std::wstring getLayeredTextureHashName();
-    int getLayeredTextureLayers();
+    arrayWithLength<int> getLayeredTextureLayers();
     bool isWearingDyedArmor();
     int getDyedArmorColor();
     int getDyedArmorLayer();
@@ -77,7 +77,7 @@ private:
     int mVariant;
     HorseArmorItem* mArmorType;
     std::wstring mLayeredTextureHashName;
-    std::vector<int> mLayeredTextureLayers;
+    arrayWithLength<int> mLayeredTextureLayers;
     bool mWearingDyedArmor;
     int mDyedArmorColor;
     int mDyedArmorLayer;

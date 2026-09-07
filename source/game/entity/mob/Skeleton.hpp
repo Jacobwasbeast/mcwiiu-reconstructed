@@ -1,0 +1,34 @@
+#ifndef GAME_ENTITY_MOB_SKELETON_HPP
+#define GAME_ENTITY_MOB_SKELETON_HPP
+
+#include <boost/shared_ptr.hpp>
+
+#include "game/entity/mob/AbstractSkeleton.hpp"
+
+class DamageSource;
+class DataFixerUpper;
+class Level;
+class SoundEvent;
+class TippableArrow;
+
+class Skeleton : public AbstractSkeleton
+{
+public:
+    Skeleton(Level* level);
+    virtual ~Skeleton();
+
+    static void create(Level* level);
+    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual void registerGoals();
+    virtual const void* getDefaultLootTable();
+    virtual const void* getDefaultGearTable();
+    virtual const SoundEvent* getAmbientSound();
+    virtual const SoundEvent* getHurtSound(const DamageSource* source);
+    virtual const SoundEvent* getDeathSound();
+    virtual const SoundEvent* getStepSound();
+    virtual void die(const DamageSource* source);
+    virtual boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
+    virtual unsigned long long GetType();
+};
+
+#endif

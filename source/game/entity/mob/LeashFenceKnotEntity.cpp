@@ -10,6 +10,7 @@
 #include "game/core/Boat.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/LeadItem.hpp"
@@ -19,6 +20,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/FenceBlock.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 LeashFenceKnotEntity::LeashFenceKnotEntity(Level* level)
     : HangingEntity(level)
@@ -124,7 +127,7 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
     AABB* bounds = AABB::newTemp(mX - 7.0, mY - 7.0, mZ - 7.0,
                                  mX + 7.0, mY + 7.0, mZ + 7.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(Entity), bounds);
+        mLevel->getEntitiesOfClass(typeid(Mob), bounds);
     std::vector<boost::shared_ptr<Entity> >* boats =
         mLevel->getEntitiesOfClass(typeid(Boat), bounds);
     entities->insert(entities->end(), boats->begin(), boats->end());
@@ -143,7 +146,7 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
     if (!changed && player->isAllowedToMine())
     {
         remove();
-        if (player->mIsCreativeBuilding)
+        if (player->mAbilities.mInstabuild)
         {
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
                  it != entities->end(); ++it)
@@ -200,7 +203,7 @@ unsigned int LeashFenceKnotEntity::GetInteractTooltip(const EntityTooltipDataHol
     bool bound = false;
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x1a4)
     {
-        boost::shared_ptr<Player> player = (boost::shared_ptr<Player>&)tooltipData.m_pPlayer;
+        boost::shared_ptr<Player> player = tooltipData.m_pPlayer;
         bound = LeadItem::bindPlayerMobsTest(player, mLevel, BlockPos(shared_from_this()));
     }
     return bound ? 0x7b938f36u : 0x551269b5u;

@@ -82,8 +82,8 @@ public:
     float getPathfindingMalus(const BlockPathTypes* type);
     void setPathfindingMalus(const BlockPathTypes* type, float malus);
     void createBodyControl();
-    void* getLookControl();
-    void* getMoveControl();
+    virtual LookControl* getLookControl();
+    virtual MoveControl* getMoveControl();
     void* getJumpControl();
     PathNavigation* getNavigation();
     Sensing* getSensing();
@@ -119,7 +119,7 @@ public:
     bool canHoldItem(not_null_ptr<ItemInstance> item);
     bool removeWhenFarAway();
     void checkDespawn();
-    void customServerAiStep();
+    virtual void customServerAiStep();
     int getMaxHeadXRot();
     int getMaxHeadYRot();
     float rotlerp(float from, float to, float max);

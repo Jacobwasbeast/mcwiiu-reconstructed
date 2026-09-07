@@ -1,5 +1,7 @@
 #include "game/entity/mob/EndDragonFight.hpp"
 
+#include "game/server/ServerPlayer.hpp"
+
 #include <cmath>
 
 #include "game/util/AABB.hpp"
@@ -89,8 +91,8 @@ void EndDragonFight::resetSpikeCrystals()
     std::vector<SpikeFeature::EndSpike>::iterator spike;
     for (spike = spikes->begin(); spike != spikes->end(); ++spike)
     {
-        AABB box = spike->getTopBoundingBox();
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), &box);
+        AABB* box = spike->getTopBoundingBox();
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
         std::vector<boost::shared_ptr<Entity> >::iterator entity;
         for (entity = entities->begin(); entity != entities->end(); ++entity)
         {
@@ -133,8 +135,8 @@ void EndDragonFight::updateCrystalCount()
     std::vector<SpikeFeature::EndSpike>::iterator spike;
     for (spike = spikes->begin(); spike != spikes->end(); ++spike)
     {
-        AABB box = spike->getTopBoundingBox();
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), &box);
+        AABB* box = spike->getTopBoundingBox();
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
         crystalsAlive += static_cast<int>(entities->size());
         delete entities;
     }
@@ -266,7 +268,7 @@ void EndDragonFight::createNewDragon()
     if (dragon)
     {
         dragon->AddParts();
-        level->addFreshEntity(dragon);
+        level->addEntity(dragon);
         updateDragon(dragon);
     }
 }
@@ -331,7 +333,7 @@ void EndDragonFight::updateDragon(boost::shared_ptr<EnderDragon> dragon)
         return;
     }
     dragonEvent->setPercent(dragon->getHealth() / dragon->getMaxHealth());
-    if (dragon->isDeadOrDying())
+    if (!dragon->isAlive())
     {
         setDragonKilled(dragon);
     }

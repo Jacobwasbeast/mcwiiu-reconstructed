@@ -23,7 +23,7 @@ public:
     virtual bool isCompleted();
     virtual void onRideEntity(boost::shared_ptr<Entity> entity);
 
-    int entityType;
+    int mEntityType;
 };
 
 #endif

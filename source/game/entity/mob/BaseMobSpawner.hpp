@@ -27,9 +27,9 @@ public:
     virtual boost::shared_ptr<Entity> getOrCreateDisplayEntity(Level* level);
     virtual int onEventTriggered(int event);
     virtual void setNextSpawnData(SpawnData* data);
+    virtual void broadcastEvent(int event) = 0;
     virtual Level* getLevel() = 0;
     virtual BlockPos getPos() = 0;
-    virtual void broadcastEvent(int event) = 0;
     bool hasMob();
     double getSpin();
     double getoSpin();

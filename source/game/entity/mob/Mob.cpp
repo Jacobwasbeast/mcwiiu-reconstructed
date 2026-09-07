@@ -24,7 +24,6 @@
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/Blocks.hpp"
 
@@ -160,14 +159,14 @@ void Mob::createBodyControl()
 {
 }
 
-void* Mob::getLookControl()
+LookControl* Mob::getLookControl()
 {
-    return NULL;
+    return mLookControl;
 }
 
-void* Mob::getMoveControl()
+MoveControl* Mob::getMoveControl()
 {
-    return NULL;
+    return mMoveControl;
 }
 
 void* Mob::getJumpControl()
@@ -357,7 +356,7 @@ void Mob::aiStep()
 const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> item)
 {
     Item* heldItem = item->getItem();
-    if (Block::byItem(heldItem) == Blocks::pumpkin || heldItem == Items::skull)
+    if (heldItem == Item::byBlock(Blocks::pumpkin) || heldItem == Items::skull)
         return EquipmentSlot::HEAD;
 
     ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);

@@ -6,8 +6,10 @@
 
 #include "game/entity/mob/TrackedEntity.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/PlayerList.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 
 EntityTracker::EntityTracker(ServerLevel* level)

@@ -9,7 +9,9 @@
 
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundType.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/Abilities.hpp"
 #include "game/core/Attribute.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -30,16 +32,20 @@
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/BubbleColumnSegment.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/Stat.hpp"
 #include "game/core/Team.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/ai/PushableBySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -61,6 +67,8 @@
 #include "game/item/PotionUtils.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/ThermalAreaRuleDefinition.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientboundAnimatePacket.hpp"
 #include "game/network/ClientboundSetEquippedItemPacket.hpp"
 #include "game/network/ClientboundSoundPacket.hpp"
@@ -68,32 +76,31 @@
 #include "game/network/Packet.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/LadderBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TrapDoorBlock.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/Player.hpp"
-
-class EntityDamageSource;
-class ParticleTypes;
-class Wolf;
-
-class CGameNetworkManager;
-class ClientMasterGameMode;
-class LevelRuleset;
+#include "game/world/generation/PlayerList.hpp"
+#include "game/world/generation/PlayerTeam.hpp"
 
 void MemSect(int section);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
@@ -339,15 +346,15 @@ void LivingEntity::checkFallDamage(double y, bool onGround, Block* block, const 
         const BlockState* state = mLevel->getBlockState(mTickCache, pos);
         float excess = ceilf(mFallDistance - 3.0f);
 
-        if (block->getMaterial() != Material::AIR)
+        if (block->mMaterial != Material::AIR)
         {
             int count = (int)(150.0 * (double)Mth::clamp(excess / 15.0f + 0.20000000298023224f, 0.0f, 2.5f));
             arrayWithLength<int> particleData(1, false);
             particleData.data[0] = Block::getIdWithData(state);
 
-            static_cast<ServerLevel*>(mLevel)->sendParticles(ParticleTypes::BLOCK, mX, mY, mZ,
+            static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_BLOCK_DUST, mX, mY, mZ,
                                                              count, 0.0, 0.0, 0.0, 0.15000000596046448,
-                                                             particleData);
+                                                             particleData, 0.0, 0.0, 0.0);
         }
     }
 
@@ -424,7 +431,7 @@ bool LivingEntity::canBreathe()
         return breathesAir();
     }
 
-    if (block == Blocks::BUBBLE_COLUMN)
+    if (block == Blocks::bubble_column_segment)
     {
         return breathesAir();
     }
@@ -461,7 +468,7 @@ bool LivingEntity::generatesBubbles()
 
 void LivingEntity::baseTick()
 {
-    if (CMinecraftApp::sInstance.IsAppPaused())
+    if (g_pApp->IsAppPaused())
     {
         return;
     }
@@ -535,7 +542,8 @@ void LivingEntity::baseTick()
             if (isUnderLiquid(Material::WATER) && generatesBubbles() && canCreateParticles())
             {
                 Vec3* eyePos = getAttachPos(ENTITY_LOCATION_EYES, 0.0f);
-                mLevel->addParticle(ParticleTypes::BUBBLE, eyePos->x, eyePos->y, eyePos->z, mXd, mYd, mZd);
+                mLevel->addParticle(PARTICLE_BUBBLE, eyePos->x, eyePos->y, eyePos->z, mXd, mYd, mZd,
+                                    arrayWithLength<int>());
             }
 
             if (!mLevel->mIsClientSide || isPlayer)
@@ -549,11 +557,11 @@ void LivingEntity::baseTick()
                 {
                     for (int i = 0; i < 8; ++i)
                     {
-                        mLevel->addParticle(ParticleTypes::BUBBLE,
+                        mLevel->addParticle(PARTICLE_BUBBLE,
                                             mX + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
                                             mY + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
                                             mZ + (double)(mRandom->nextFloat() - mRandom->nextFloat()),
-                                            mXd, mYd, mZd);
+                                            mXd, mYd, mZd, arrayWithLength<int>());
                     }
                 }
 
@@ -567,11 +575,11 @@ void LivingEntity::baseTick()
                 for (int i = 0; i < 8; ++i)
                 {
                     Vec3* eyePos = getAttachPos(ENTITY_LOCATION_EYES, 0.0f);
-                    mLevel->addParticle(ParticleTypes::BUBBLE,
+                    mLevel->addParticle(PARTICLE_BUBBLE,
                                         (double)(float)(eyePos->x + mRandom->nextGaussianFloat()),
                                         (double)(float)(eyePos->y + mRandom->nextGaussianFloat()),
                                         (double)(float)(eyePos->z + mRandom->nextGaussianFloat()),
-                                        mXd, mYd, mZd);
+                                        mXd, mYd, mZd, arrayWithLength<int>());
                 }
             }
 
@@ -584,7 +592,7 @@ void LivingEntity::baseTick()
             }
         }
 
-        if (Minecraft::InMiniGame(MINI_GAME_BATTLE, false) && isInvulnerable())
+        if (Minecraft::InMiniGame(eMiniGameId_Battle, false) && isInvulnerable())
         {
             airSupply = 300;
         }
@@ -681,7 +689,7 @@ void LivingEntity::tickDeath()
         if (!mLevel->mIsClientSide
             && (mLastHurtByPlayerTime > 0 || isAlwaysExperienceDropper())
             && shouldDropExperience()
-            && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
+            && mLevel->getGameRules()->getBoolean(4))
         {
             int reward = getExperienceReward(mLastHurtByPlayer);
 
@@ -689,7 +697,7 @@ void LivingEntity::tickDeath()
             {
                 int value = ExperienceOrb::getExperienceValue(reward);
                 reward -= value;
-                mLevel->addFreshEntity(boost::shared_ptr<Entity>(new ExperienceOrb(mLevel, mX, mY, mZ, value)));
+                mLevel->addEntity(boost::shared_ptr<Entity>(new ExperienceOrb(mLevel, mX, mY, mZ, value)));
             }
         }
 
@@ -701,11 +709,11 @@ void LivingEntity::tickDeath()
             double yd = mRandom->nextGaussian() * 0.014;
             double zd = mRandom->nextGaussian() * 0.014;
 
-            mLevel->addParticle(ParticleTypes::POOF,
+            mLevel->addParticle(PARTICLE_EXPLODE,
                                 mX + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth,
                                 mY + (double)(mRandom->nextFloat() * mBbHeight),
                                 mZ + (double)(mRandom->nextFloat() * mBbWidth * 2.0f) - (double)mBbWidth,
-                                xd, yd, zd);
+                                xd, yd, zd, arrayWithLength<int>());
         }
     }
 }
@@ -825,7 +833,7 @@ void LivingEntity::playEquipSound(not_null_ptr<ItemInstance> itemInstance)
 
         const SoundEvent* sound = SoundEvents::ARMOR_EQUIP_GENERIC;
 
-        if (item == Items::ELYTRA)
+        if (item == Items::elytra)
         {
             sound = SoundEvents::ARMOR_EQUIP_ELYTRA;
         }
@@ -834,7 +842,7 @@ void LivingEntity::playEquipSound(not_null_ptr<ItemInstance> itemInstance)
         return;
     }
 
-    if (itemInstance->getItem() == Items::ELYTRA)
+    if (itemInstance->getItem() == Items::elytra)
     {
         playSound(SoundEvents::ARMOR_EQUIP_ELYTRA, 1.0f, 1.0f);
     }
@@ -932,8 +940,8 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
         std::wstring teamName = tag->getString(std::wstring(L"Team"));
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-        mLevel->getScoreboard()->addPlayerToTeam(player->mPlayerUID,
-                                                 mLevel->getScoreboard()->getPlayerTeam(teamName));
+        mLevel->GetScoreboard()->addPlayerToTeam(player->m_0x784,
+                                                 mLevel->GetScoreboard()->getPlayerTeam(teamName));
     }
 
     if (tag->getBoolean(std::wstring(L"FallFlying")))
@@ -1016,11 +1024,11 @@ void LivingEntity::tickEffects()
             double green = (double)((colour >> 8) & 255) / 255.0;
             double blue = (double)(colour & 255) / 255.0;
 
-            mLevel->addParticle(ambient ? ParticleTypes::AMBIENT_ENTITY_EFFECT : ParticleTypes::ENTITY_EFFECT,
+            mLevel->addParticle(ambient ? PARTICLE_MOB_SPELL_AMBIENT : PARTICLE_MOB_SPELL,
                                 mX + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
                                 mY + mRandom->nextDouble() * (double)mBbHeight,
                                 mZ + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
-                                red, green, blue);
+                                red, green, blue, arrayWithLength<int>());
         }
     }
 }
@@ -1272,7 +1280,7 @@ void LivingEntity::setHealth(float health)
 bool LivingEntity::hurt(const DamageSource* source, float damage)
 {
     if ((isInvulnerable() && !source->isBypassInvul())
-        || CMinecraftApp::sInstance.IsAppPaused()
+        || g_pApp->IsAppPaused()
         || (mLevel->mIsClientSide && dynamic_cast<const EntityDamageSource*>(source) == NULL))
     {
         return false;
@@ -1531,7 +1539,7 @@ bool LivingEntity::checkTotemDeathProtection(const DamageSource* source)
     {
         not_null_ptr<ItemInstance> held = getItemInHand((InteractionHand::EInteractionHand)hand);
 
-        if (held->getItem() == Items::TOTEM_OF_UNDYING)
+        if (held->getItem() == Items::totemOfUndying)
         {
             totem = held->copy();
             held->shrink(1);
@@ -1580,7 +1588,7 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
         arrayWithLength<int> particleData(1, false);
         particleData.data[0] = Item::VALIDgetId(itemInstance->getItem());
 
-        mLevel->addParticle(ParticleTypes::ITEM, offset->x, offset->y, offset->z,
+        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
                             velocity->x, velocity->y + 0.05, velocity->z, particleData);
     }
 }
@@ -1619,14 +1627,14 @@ void LivingEntity::die(const DamageSource* source)
             looting = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(player));
         }
 
-        if (shouldDropExperience() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
+        if (shouldDropExperience() && mLevel->getGameRules()->getBoolean(4))
         {
             dropAllDeathLoot(mLastHurtByPlayerTime > 0, looting, source);
         }
 
         if (player)
         {
-            player->awardStat(GenericStats::mobKill(),
+            player->awardStat(gStats->get_killMob(),
                               GenericStats::param_mobKill(player,
                                                           boost::dynamic_pointer_cast<Mob>(shared_from_this()),
                                                           source));
@@ -1714,7 +1722,7 @@ bool LivingEntity::trapdoorUsableAsLadder(const BlockPos& pos, const BlockState*
 
     const BlockState* below = mLevel->getBlockState(mTickCache, pos.below());
 
-    if (below->getBlock() != Blocks::LADDER)
+    if (below->getBlock() != Blocks::ladder)
     {
         return false;
     }
@@ -1738,7 +1746,7 @@ bool LivingEntity::onLadder()
     const BlockState* state = mLevel->getBlockState(mTickCache, pos);
     Block* block = state->getBlock();
 
-    if (block == Blocks::LADDER || block == Blocks::VINE)
+    if (block == Blocks::ladder || block == Blocks::vine)
     {
         return true;
     }
@@ -1777,7 +1785,7 @@ void LivingEntity::causeFallDamage(float fallDistance, float damageMultiplier)
         damage = (int)ceilf((fallDistance - 3.0f - 0.0f) * damageMultiplier);
     }
 
-    if (Minecraft::InMiniGame(MINI_GAME_GLIDE, true) && !TakeGlideCollisionDamage())
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && !TakeGlideCollisionDamage())
     {
         return;
     }
@@ -1856,7 +1864,7 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
         return 0.0f;
     }
 
-    int protection = EnchantmentHelper::getDamageProtection(getArmorSlots(), source);
+    int protection = EnchantmentHelper::getDamageProtection(mArmorItems, source);
 
     if (protection > 0)
     {
@@ -1911,7 +1919,7 @@ void LivingEntity::spawnEatParticles(const ItemInstance& itemInstance, int count
         arrayWithLength<int> particleData(1, false);
         particleData.data[0] = Item::getId(itemInstance.getItem());
 
-        mLevel->addParticle(ParticleTypes::ITEM, offset->x, offset->y, offset->z,
+        mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
                             velocity->x, velocity->y, velocity->z, particleData);
     }
 }
@@ -2215,7 +2223,7 @@ int LivingEntity::getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int
 {
     Item* item = itemInstance->getItem();
 
-    return item->getItemInHandIcon(itemInstance->getAuxValue(), frame, itemInstance);
+    return (int)item->getLayerIcon(itemInstance->getAuxValue(), frame, itemInstance);
 }
 
 float LivingEntity::getSoundVolume()
@@ -2405,8 +2413,8 @@ float LivingEntity::getFrictionForTravel()
     Block* block = mLevel->getBlockState(mTickCache, pos)->getBlock();
 
     if (IsCreativeFlying()
-        && (block == Blocks::ICE || block == Blocks::PACKED_ICE || block == Blocks::FROSTED_ICE
-            || block == Blocks::BLUE_ICE || block == Blocks::SLIME_BLOCK))
+        && (block == Blocks::ice || block == Blocks::packed_ice || block == Blocks::frosted_ice
+            || block == Blocks::blue_ice || block == Blocks::slime))
     {
         return Blocks::AIR->mFriction * friction;
     }
@@ -2436,7 +2444,7 @@ void LivingEntity::CheckThermalAreas()
 {
     SetLiftForceModifier(1.0);
 
-    LevelGenerationOptions* options = CMinecraftApp::sInstance.getLevelGenerationOptions();
+    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
 
     if (options == NULL)
     {
@@ -2445,7 +2453,7 @@ void LivingEntity::CheckThermalAreas()
 
     LevelRuleset* ruleset = options->getRequiredGameRules();
 
-    if (CMinecraftApp::sInstance.GetFirstMiniGameType() != MINI_GAME_GLIDE || ruleset == NULL)
+    if (g_pApp->GetFirstMiniGameType() != eMiniGameId_Glide || ruleset == NULL)
     {
         return;
     }
@@ -2471,7 +2479,9 @@ void LivingEntity::CheckThermalAreas()
             continue;
         }
 
-        if (!getBoundingBoxForCulling()->intersects((*it)->getArea()))
+        AABB* areaBounds = (*it)->getArea();
+        if (!getBoundingBoxForCulling()->intersects(areaBounds->mMinX, areaBounds->mMinY, areaBounds->mMinZ,
+                                                     areaBounds->mMaxX, areaBounds->mMaxY, areaBounds->mMaxZ))
         {
             continue;
         }
@@ -2493,17 +2503,17 @@ void LivingEntity::CheckThermalAreas()
                 {
                     if (GetType() == ENTITY_TYPE_LOCAL_PLAYER)
                     {
-                        Minecraft::GetInstance()->getSoundManager()->play(SoundEvents::THERMAL_ENTER, 1.0f, 1.0f);
+                        Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f);
                     }
                 }
                 else if (GetType() == ENTITY_TYPE_PLAYER)
                 {
-                    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(SoundEvents::THERMAL_ENTER,
-                                                                                getSoundSource(), 1.0f, 1.0f,
-                                                                                false, getId()));
+                    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
+                        ClientboundSoundPacket::eSoundInstances_Default, SoundEvents::MG03_THERMAL_BOOST,
+                        1.0f, 1.0f, false, getId()));
 
-                    Minecraft::GetInstance()->getPlayerList()->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()),
-                                                                        mX, mY, mZ, 30.0, mDimension, packet);
+                    gMinecraftServer->getPlayers()->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()),
+                                                              mX, mY, mZ, 30.0, mDimension, packet);
                 }
             }
         }
@@ -2529,14 +2539,6 @@ void LivingEntity::CheckThermalAreas()
             {
                 activateElytraSpeedBoost(area->getElytraSpeedBoost());
                 area->setBoostMods(boostMod, boostDirection);
-            }
-        }
-
-        if (mThermalArea != area)
-        {
-            if (GetType() == ENTITY_TYPE_SERVER_PLAYER)
-            {
-                boost::static_pointer_cast<ServerPlayer>(shared_from_this())->getServer()->getPlayerList()->sendThermalAreaUpdate();
             }
         }
 
@@ -2718,7 +2720,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         mXd = 0.0;
         mZd = 0.0;
 
-        if (Minecraft::InMiniGame(MINI_GAME_TUMBLE, false) || Minecraft::InMiniGame(MINI_GAME_GLIDE, false))
+        if (Minecraft::InMiniGame(eMiniGameId_Tumble, false) || Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
             mYd = 0.0;
         }
@@ -2735,7 +2737,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         return;
     }
 
-    if (isFallFlying() && !PositionLocked() && !CMinecraftApp::sInstance.IsAppPaused())
+    if (isFallFlying() && !PositionLocked() && !g_pApp->IsAppPaused())
     {
         return;
     }
@@ -2819,8 +2821,8 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     }
 
     bool lockVertical = PositionLocked()
-                        && (Minecraft::InMiniGame(MINI_GAME_TUMBLE, false)
-                            || Minecraft::InMiniGame(MINI_GAME_GLIDE, false));
+                        && (Minecraft::InMiniGame(eMiniGameId_Tumble, false)
+                            || Minecraft::InMiniGame(eMiniGameId_Glide, false));
 
     if ((!levitating && !loadedChunk) || lockVertical)
     {
@@ -2904,7 +2906,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
         double speed = sqrt(xd * xd + zd * zd);
         double damage = (horizontalSpeed - speed) * 10.0 - 3.0;
 
-        if (Minecraft::InMiniGame(MINI_GAME_GLIDE, true) && TakeGlideCollisionDamage())
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && TakeGlideCollisionDamage())
         {
             damage = 1.0;
         }
@@ -2914,7 +2916,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
             playSound(getFallDamageSound((int)damage), 1.0f, 1.0f);
         }
     }
-    else if (mVerticalCollision && Minecraft::InMiniGame(MINI_GAME_GLIDE, true)
+    else if (mVerticalCollision && Minecraft::InMiniGame(eMiniGameId_Glide, true)
              && TakeGlideCollisionDamage() && hurt(DamageSource::FALL, 1.0f))
     {
         playSound(getFallDamageSound(1), 1.0f, 1.0f);
@@ -2922,7 +2924,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
 
     if (mOnGround)
     {
-        if (Minecraft::InMiniGame(MINI_GAME_GLIDE, true) && TakeGlideCollisionDamage())
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && TakeGlideCollisionDamage())
         {
             float health = getHealth();
 
@@ -3233,13 +3235,15 @@ void LivingEntity::tick()
     {
         if (!mSwimSoundPlayed)
         {
-            if (state->getValue(LiquidBlock::DRAG))
+            if (BubbleColumnSegment::getFlowDownward(state))
             {
-                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_UPWARDS_INSIDE, 1.0f, 16.0f, false);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_UPWARDS_INSIDE,
+                                       getSoundSource(), 1.0f, 1.0f, false, 16.0f);
             }
             else
             {
-                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 1.0f, 16.0f, false);
+                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_INSIDE,
+                                       getSoundSource(), 1.0f, 1.0f, false, 16.0f);
             }
         }
 
@@ -3390,7 +3394,7 @@ void LivingEntity::updateFallFlying()
 
     bool blocked = false;
 
-    if (isInWater() && CMinecraftApp::sInstance.GetFirstMiniGameType() != MINI_GAME_GLIDE)
+    if (isInWater() && g_pApp->GetFirstMiniGameType() != eMiniGameId_Glide)
     {
         blocked = true;
     }
@@ -3405,7 +3409,7 @@ void LivingEntity::updateFallFlying()
 
         flying = false;
 
-        if (chest->getItem() == Items::ELYTRA && ElytraItem::isFlyEnabled(chest))
+        if (chest->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chest))
         {
             flying = true;
 
@@ -3519,14 +3523,14 @@ void LivingEntity::aiStep()
     travel(mXxa, mYya, mZza);
     PIXEndNamedEvent();
 
-    if (!CMinecraftApp::sInstance.IsAppPaused())
+    if (!g_pApp->IsAppPaused())
     {
         updateFallFlying();
     }
 
     PIXBeginNamedEvent(0.0f, "push entities");
 
-    if (!Minecraft::InMiniGame(MINI_GAME_GLIDE, false))
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, false))
     {
         pushEntities();
     }
@@ -3540,16 +3544,17 @@ void LivingEntity::serverAiStep()
 
 void LivingEntity::pushEntities()
 {
+    PushableBySelector selector(shared_from_this());
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.20000000298023224, 0.0, 0.20000000298023224),
-                            PushableBySelector(shared_from_this()));
+                            &selector, NULL);
 
     if (entities == NULL || entities->empty())
     {
         return;
     }
 
-    int maxCramming = mLevel->getGameRules()->getInt(GameRules::RULE_MAXENTITYCRAMMING);
+    int maxCramming = mLevel->getGameRules()->getInt(17);
 
     if (maxCramming > 0 && entities->size() >= (unsigned int)maxCramming && mRandom->nextInt(4) == 0)
     {
@@ -3861,7 +3866,7 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
             particleData.data[0] = Item::getId(itemInstance->getItem());
             particleData.data[1] = itemInstance->getAuxValue();
 
-            mLevel->addParticle(ParticleTypes::ITEM, offset->x, offset->y, offset->z,
+            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
                                 velocity->x, velocity->y + 0.05, velocity->z, particleData);
         }
         else
@@ -3869,7 +3874,7 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
             arrayWithLength<int> particleData(1, false);
             particleData.data[0] = Item::getId(itemInstance->getItem());
 
-            mLevel->addParticle(ParticleTypes::ITEM, offset->x, offset->y, offset->z,
+            mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
                                 velocity->x, velocity->y + 0.05, velocity->z, particleData);
         }
     }
@@ -3938,7 +3943,7 @@ bool LivingEntity::isBlocking()
         return false;
     }
 
-    return mUseItem->getItem()->getUseAnimation(mUseItem) == 3;
+    return mUseItem->getUseAnimation() == 3;
 }
 
 bool LivingEntity::isFallFlying()
@@ -3981,13 +3986,13 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
 
     bool teleported = false;
 
-    if (mLevel->hasChunkAt(pos) && pos.getY() > 0)
+    if (mLevel->hasChunkAt(pos) && pos.y > 0)
     {
         while (!mLevel->getBlockState(mTickCache, pos.below())->getMaterial()->blocksMotion())
         {
             mY = mY - 1.0;
 
-            if (pos.getY() < 1)
+            if (pos.y < 1)
             {
                 break;
             }
@@ -4023,7 +4028,8 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
         double py = oldY + (mY - oldY) * progress + random->nextDouble() * (double)mBbHeight;
         double pz = oldZ + (mZ - oldZ) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
 
-        mLevel->addParticle(ParticleTypes::PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd);
+        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd,
+                            arrayWithLength<int>());
     }
 
     return true;
@@ -4048,7 +4054,7 @@ Team* LivingEntity::getTeam()
     if (GetType() == ENTITY_TYPE_PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
-        return mLevel->getScoreboard()->getPlayersTeam(player->mPlayerUID);
+        return mLevel->GetScoreboard()->getPlayersTeam(player->m_0x784);
     }
 
     return NULL;

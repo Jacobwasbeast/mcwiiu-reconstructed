@@ -103,6 +103,43 @@ int Entity::sWanderingCount;
 int Entity::sWanderingTick;
 int Entity::sWanderingIds[3];
 
+bool eTYPE_DERIVED_FROM__FULT1(unsigned int typeHigh, unsigned int typeLow,
+                               unsigned int entityTypeHigh,
+                               unsigned int entityTypeLow)
+{
+    if ((typeLow & 0x3F) != 0)
+    {
+        return typeHigh == entityTypeHigh && typeLow == entityTypeLow;
+    }
+
+    return (typeHigh & entityTypeHigh) == typeHigh
+        && (typeLow & entityTypeLow) == typeLow;
+}
+
+int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
+            const boost::shared_ptr<Entity>& entity)
+{
+    for (unsigned int i = 0; i < entities.size(); ++i)
+    {
+        if (entities.at(i).lock() == entity)
+        {
+            return (int)i;
+        }
+    }
+
+    return -1;
+}
+
+bool isPickable_apply(const boost::shared_ptr<Entity>& entity)
+{
+    if (entity->isPickable())
+    {
+        return true;
+    }
+
+    return entity->GetType() == 0x000000000800000AULL;
+}
+
 void Entity::staticCtor()
 {
     DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(ENTITY_TYPE_ENTITY, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);

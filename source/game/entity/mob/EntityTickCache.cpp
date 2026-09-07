@@ -6,6 +6,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 
 EntityTickCache::EntityTickCache()
 {

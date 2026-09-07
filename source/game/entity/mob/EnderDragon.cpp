@@ -14,10 +14,10 @@
 
 EnderDragon::EnderDragon(Level* level)
     : Mob(level), mOpenSet(NULL), mPath(NULL), mDragonFight(NULL), mRandom(new Random()),
-      mDragonPhase(0), mTicksSinceDeath(0), mDeathTime(0), mTarget(0), mNearbyCrystal(0),
+      mDragonPhase(0), mTicksSinceDeath(0), mTarget(0), mNearbyCrystal(0),
       mDragonKilled(false), mPreviouslyKilled(false), mHasTarget(false), mWasHurt(false),
       mHealth(200), mTargetX(0.0), mTargetY(0.0), mTargetZ(0.0),
-      mFlapTime(0.0f), mOldFlapTime(0.0f), mBeamTarget(0)
+      mFlapTime(0.0f), mOldFlapTime(0.0f), mDeathTime(0), mBeamTarget()
 {
     _init();
 }
@@ -83,6 +83,8 @@ void EnderDragon::_init()
             mPosHistory[i][j] = 0.0;
     for (k = 0; k < 8; ++k)
         mDragonPhase = 0;
+    mDeathTime = 0;
+    mBeamTarget.reset();
 }
 
 void EnderDragon::addDataWalkers(DataFixerUpper*) {}

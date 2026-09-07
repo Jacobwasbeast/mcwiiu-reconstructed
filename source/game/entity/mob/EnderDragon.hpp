@@ -100,8 +100,8 @@ public:
 
     float mFlapTime;
     float mOldFlapTime;
-    int mBeamTarget;
     int mDeathTime;
+    boost::shared_ptr<EnderCrystal> mBeamTarget;
 
 private:
     double mPosHistory[64][3];

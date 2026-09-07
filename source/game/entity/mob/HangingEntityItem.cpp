@@ -6,14 +6,14 @@
 #include "game/core/Painting.hpp"
 #include "game/core/Stats.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/item/ItemInstance.hpp"
 #include "game/item/ItemFrame.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DiodeBlock.hpp"
-#include "game/world/generation/Player.hpp"
 
 HangingEntityItem::HangingEntityItem(unsigned long long entityType)
     : Item(), mEntityType(entityType)
@@ -55,16 +55,13 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
     if (!player->mayUseItemAt(placePos, direction, itemInstance))
         return InteractionResult::eInteractionResult_Fail;
 
-    const BlockState* state = level->getBlockState(pos);
     if (simulate)
     {
+        const BlockState* state = level->getBlockState(pos);
         if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
             return InteractionResult::eInteractionResult_Fail;
         return InteractionResult::eInteractionResult_Success;
     }
-
-    if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
-        return InteractionResult::eInteractionResult_Fail;
 
     createEntity(level, placePos, direction, itemInstance->getAuxValue());
 
@@ -75,6 +72,7 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
             block = Block::byItem(Item::byId(321));
         else if (mEntityType == 0x000000000A080002ULL)
             block = Block::byItem(Item::byId(389));
+
         if (block != NULL)
         {
             player->awardStat(Stats::blockPlacedStats.data[Block::getId(block)],
@@ -82,6 +80,7 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
                                   block->getBlockState(itemInstance->getAuxValue()), 1));
         }
     }
+
     itemInstance->shrink(1);
     return InteractionResult::eInteractionResult_Success;
 }

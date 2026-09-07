@@ -5,13 +5,11 @@
 #include <vector>
 
 #include "game/core/Direction.hpp"
-#include "game/core/HtmlString.hpp"
-#include "game/core/InteractionHand.hpp"
-#include "game/core/InteractionResult.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 class BlockPos;
+class HtmlString;
 class Level;
 class Player;
 

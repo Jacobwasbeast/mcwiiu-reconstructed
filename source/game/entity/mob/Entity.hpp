@@ -88,6 +88,15 @@ const unsigned long long ENTITY_TYPE_DONKEY = 0x000000002D698001ULL;
 const unsigned long long ENTITY_TYPE_MULE = 0x000000002D698002ULL;
 const unsigned long long ENTITY_TYPE_SHULKER = 0x000000004D580043ULL;
 
+class Entity;
+
+bool eTYPE_DERIVED_FROM__FULT1(unsigned int typeHigh, unsigned int typeLow,
+                               unsigned int entityTypeHigh,
+                               unsigned int entityTypeLow);
+int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
+            const boost::shared_ptr<Entity>& entity);
+bool isPickable_apply(const boost::shared_ptr<Entity>& entity);
+
 class Entity : public boost::enable_shared_from_this<Entity>, public CommandSender
 {
 public:

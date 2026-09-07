@@ -13,10 +13,15 @@ Horse::HorseGroupData::~HorseGroupData() { }
 
 Horse::Horse(Level* level)
     : AbstractHorse(level), mVariant(0), mArmorType(NULL), mLayeredTextureHashName(L""),
-      mLayeredTextureLayers(), mWearingDyedArmor(false), mDyedArmorColor(0),
+      mLayeredTextureLayers(4, true), mWearingDyedArmor(false), mDyedArmorColor(0),
       mDyedArmorLayer(-1), mArmorItem()
 {
     fjDerivedCtorCalls();
+    unsigned int layer;
+    for (layer = 0; layer < mLayeredTextureLayers.length; ++layer)
+    {
+        mLayeredTextureLayers.data[layer] = -1;
+    }
 }
 
 Horse::~Horse() { }
@@ -57,7 +62,6 @@ void Horse::addAdditonalSaveData(CompoundTag* tag)
 void Horse::clearLayeredTextureInfo()
 {
     mLayeredTextureHashName.clear();
-    mLayeredTextureLayers.clear();
 }
 
 void Horse::setVariant(int variant)
@@ -78,15 +82,20 @@ void Horse::readAdditionalSaveData(CompoundTag* tag)
 void Horse::rebuildLayeredTextureInfo()
 {
     mLayeredTextureHashName = L"horse_";
-    mLayeredTextureLayers.clear();
-    mLayeredTextureLayers.push_back(mVariant & 7);
-    mLayeredTextureLayers.push_back((mVariant >> 8) % 5);
+    unsigned int layer;
+    for (layer = 0; layer < mLayeredTextureLayers.length; ++layer)
+    {
+        mLayeredTextureLayers.data[layer] = -1;
+    }
+    layer = 0;
+    mLayeredTextureLayers.data[layer++] = mVariant & 7;
+    mLayeredTextureLayers.data[layer++] = (mVariant >> 8) % 5;
     if (mArmorType != NULL)
     {
         int i;
-        for (i = 0; i < mArmorType->getTextureCount(); ++i)
+        for (i = 0; i < mArmorType->getTextureCount() && layer < mLayeredTextureLayers.length; ++i)
         {
-            mLayeredTextureLayers.push_back(mArmorType->getTexture(i));
+            mLayeredTextureLayers.data[layer++] = mArmorType->getTexture(i);
         }
     }
 }
@@ -97,10 +106,10 @@ std::wstring Horse::getLayeredTextureHashName()
     return mLayeredTextureHashName;
 }
 
-int Horse::getLayeredTextureLayers()
+arrayWithLength<int> Horse::getLayeredTextureLayers()
 {
     if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
-    return static_cast<int>(mLayeredTextureLayers.size());
+    return mLayeredTextureLayers;
 }
 
 bool Horse::isWearingDyedArmor() { return mWearingDyedArmor; }

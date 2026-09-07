@@ -6,15 +6,20 @@
 #include "game/core/BaseAttributeMap.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/Difficulty.hpp"
+#include "game/core/EServerSetting.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Settings.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -22,8 +27,8 @@ void PIXEndNamedEvent();
 Monster::Monster(Level* level)
     : PathfinderMob(level)
 {
-    mAttackStrengthTicker = 5;
-    mDeathScore |= 4;
+    mExperienceReward = 5;
+    mCategories |= 4;
 }
 
 Monster::~Monster()
@@ -44,7 +49,7 @@ void Monster::aiStep()
 {
     updateSwingTime();
     if (getBrightness() > 0.5f)
-        mDeathScore += 2;
+        mNoActionTime += 2;
     Mob::aiStep();
 }
 
@@ -52,11 +57,12 @@ void Monster::tick()
 {
     PIXBeginNamedEvent(4.5f, "Monster tick");
     Mob::tick();
-    if (!mLevel->mIsClientSide && mLevel->getDifficulty() != Difficulty::PEACEFUL)
+    if (!mLevel->mIsClientSide)
     {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        if (minecraft == NULL || !minecraft->isTutorial())
-            checkDespawn();
+        if (mLevel->getDifficulty() == Difficulty::PEACEFUL ||
+            Minecraft::GetInstance()->isTutorial() ||
+            !gMinecraftServer->mSettings->getBoolean(eServerSetting_SpawnMonsters, true))
+            remove();
     }
     PIXEndNamedEvent();
 }
@@ -80,12 +86,12 @@ bool Monster::hurt(const DamageSource* source, float damage)
 
 const SoundEvent* Monster::getHurtSound(const DamageSource*)
 {
-    return SoundEvents::GENERIC_HURT;
+    return SoundEvents::HOSTILE_HURT;
 }
 
 const SoundEvent* Monster::getDeathSound()
 {
-    return SoundEvents::GENERIC_DEATH;
+    return SoundEvents::HOSTILE_DEATH;
 }
 
 const SoundEvent* Monster::getFallDamageSound(int distance)
@@ -95,15 +101,16 @@ const SoundEvent* Monster::getFallDamageSound(int distance)
 
 bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
+    boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+    boost::shared_ptr<LivingEntity> livingTarget;
     float damage = (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
     int knockback = 0;
-    if (livingTarget)
+    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
     {
+        livingTarget = boost::static_pointer_cast<LivingEntity>(target);
         damage += (float)EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
-        knockback = EnchantmentHelper::getKnockbackBonus(boost::static_pointer_cast<LivingEntity>(shared_from_this()), livingTarget);
+        knockback = EnchantmentHelper::getKnockbackBonus(attacker, livingTarget);
     }
-    boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
     bool hurtTarget = target->hurt(static_cast<const DamageSource*>(DamageSource::CreateMobAttack(attacker).get()), damage);
     if (!hurtTarget)
         return false;
@@ -118,6 +125,12 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     int fireAspect = EnchantmentHelper::getFireAspect(attacker);
     if (fireAspect > 0)
         target->setSecondsOnFire(fireAspect * 4);
+    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+        not_null_ptr<ItemInstance> mainHandItem = getMainHandItem();
+        not_null_ptr<ItemInstance> useItem = player->isUsingItem() ? player->getUseItem() : ItemInstance::EMPTY;
+    }
     doEnchantDamageEffects(attacker, target);
     return true;
 }
@@ -129,11 +142,11 @@ double Monster::getWalkTargetValue(const BlockPos& pos)
 
 bool Monster::isDarkEnoughToSpawn()
 {
-    int y = (int)mY;
-    if (mY < (double)y)
+    int y = (int)mBoundingBox->mMinY;
+    if (mBoundingBox->mMinY < (double)y)
         --y;
     BlockPos pos(mX, (double)y, mZ);
-    if (mRandom->nextInt(32) < mLevel->getBrightness((LightLayer::variety)15, pos))
+    if (mRandom->nextInt(32) < mLevel->getBrightness(LightLayer::SKY, pos))
         return false;
     int brightness = mLevel->getRawBrightness(pos);
     if (mLevel->isThundering())
