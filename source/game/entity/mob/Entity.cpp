@@ -24,6 +24,11 @@
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/EntityPos.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/EntityDataWalker.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/entity/mob/LeashFenceKnotEntity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/TrackedEntity.hpp"
@@ -34,6 +39,20 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/PortalForcer.hpp"
+#include "game/data/DataFixTypes.hpp"
+#include "game/data/DoubleTag.hpp"
+#include "game/data/StringTag.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundEvent.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/network/ClientboundSetPassengersPacket.hpp"
+#include "game/network/ClientboundSetEntityLinkPacket.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/world/WorldBorder.hpp"
 #include "game/item/ProtectionEnchantment.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -52,27 +71,16 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/FenceBlock.hpp"
+#include "game/world/block/FenceGateBlock.hpp"
+#include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/PortalBlock.hpp"
+#include "game/world/block/WallBlock.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayerTeam.hpp"
 
-class ClientboundSetEntityLinkPacket;
-class ClientboundSetPassengersPacket;
-class DoubleTag;
-class FenceBlock;
-class FenceGateBlock;
-class ItemEntity;
-class LeashFenceKnotEntity;
-class LiquidBlock;
-class LivingEntity;
-class LocalPlayer;
-class MiniGameDef;
-class ParticleTypes;
-class Player;
-class PortalBlock;
-class PortalForcer;
 class ServerPlayer;
-class SoundEvents;
-class StringTag;
-class WallBlock;
-class WorldBorder;
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -187,9 +195,9 @@ int Entity::getSmallId()
 {
     bool skipRemoved = false;
 
-    if (TlsGetValue(gSmallIdTlsIndex) != NULL && MinecraftServer::sInstance != NULL)
+    if (TlsGetValue(gSmallIdTlsIndex) != NULL && gMinecraftServer != NULL)
     {
-        skipRemoved = MinecraftServer::sInstance->flagEntitiesToBeRemoved(sSmallIdsToRemove);
+        skipRemoved = gMinecraftServer->flagEntitiesToBeRemoved(sSmallIdsToRemove);
     }
 
     for (int word = 0, id = 0; word < 64; word++, id += 32)
@@ -221,12 +229,12 @@ int Entity::getSmallId()
 
 void Entity::freeSmallId(int smallId)
 {
-    if (TlsGetValue(gSmallIdTlsIndex) == NULL || smallId >= 2048 || MinecraftServer::sInstance == NULL)
+    if (TlsGetValue(gSmallIdTlsIndex) == NULL || smallId >= 2048 || gMinecraftServer == NULL)
     {
         return;
     }
 
-    if (!MinecraftServer::sInstance->mShuttingDown && mLevel != NULL && mLevel->mIsClientSide)
+    if (!gMinecraftServer->shuttingDown && mLevel != NULL && mLevel->mIsClientSide)
     {
         return;
     }
@@ -335,7 +343,7 @@ Entity::Entity(Level* level, bool createEntityData)
 
     if (level != NULL)
     {
-        mDimension = level->getDimension()->getType()->getId();
+        mDimension = level->mDimension->getType()->getId();
     }
 
     if (createEntityData)
@@ -343,7 +351,7 @@ Entity::Entity(Level* level, bool createEntityData)
         mEntityData = boost::shared_ptr<SynchedEntityData>(new SynchedEntityData(this));
 
         mEntityData->createDateItem(DATA_SHARED_FLAGS_ID, 0);
-        mEntityData->createDateItem(DATA_AIR_SUPPLY_ID, getMaxAirSupply());
+        mEntityData->createDateItem<int>(DATA_AIR_SUPPLY_ID, getMaxAirSupply());
         mEntityData->createDateItem(DATA_CUSTOM_NAME_VISIBLE, false);
         mEntityData->createDateItem(DATA_CUSTOM_NAME, std::wstring(L""));
         mEntityData->createDateItem(DATA_SILENT, false);
@@ -680,7 +688,7 @@ void Entity::setSize(float width, float height)
 
     if (oldWidth < mBbWidth && !mFirstTick && !mLevel->mIsClientSide)
     {
-        move(MoverType::SELF, (double)(oldWidth - mBbWidth), 0.0, (double)(oldWidth - mBbWidth), false);
+        move(eMoverType_Self, (double)(oldWidth - mBbWidth), 0.0, (double)(oldWidth - mBbWidth), false);
     }
 }
 
@@ -907,7 +915,7 @@ void Entity::baseTick()
 
                             int dimension = -1;
 
-                            if (mLevel->getDimension()->getType()->getId() == DimensionType::NETHER)
+                            if (mLevel->mDimension->getType() == DimensionType::NETHER)
                             {
                                 dimension = 0;
                             }
@@ -1136,7 +1144,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         return;
     }
 
-    if (type == MoverType::PISTON)
+    if (type == eMoverType_Piston)
     {
         long long gameTime = mLevel->getGameTime();
 
@@ -1217,7 +1225,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     double wantedY = y;
     double wantedZ = z;
 
-    if ((type == MoverType::SELF || type == MoverType::PLAYER) && mOnGround && isSneaking()
+    if ((type == eMoverType_Self || type == eMoverType_Player) && mOnGround && isSneaking()
         && (GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
         while (x != 0.0
@@ -1528,7 +1536,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     mCollision = mHorizontalCollision || mVerticalCollision;
 
     if ((GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY && mCollision
-        && !CMinecraftApp::sInstance.IsAppPaused())
+        && !g_pApp->IsAppPaused())
     {
         boost::shared_ptr<LivingEntity> living =
             boost::static_pointer_cast<LivingEntity>(shared_from_this());
@@ -1688,7 +1696,7 @@ void Entity::checkInsideBlocks()
                 BlockPos pos(x, y, z);
                 const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
-                if (inMiniGame && !CMinecraftApp::sInstance.ShouldCollideWith(state->getBlock()))
+                if (inMiniGame && !g_pApp->ShouldCollideWith(state->getBlock()))
                 {
                     continue;
                 }
@@ -1801,7 +1809,7 @@ void Entity::playSound(const SoundEvent* sound, float volume, float pitch)
         return;
     }
 
-    mLevel->playSound(mX, mY, mZ, sound, boost::shared_ptr<Player>(), getSoundSource(), volume,
+    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, sound, getSoundSource(), volume,
                       pitch, 16.0f);
 }
 
@@ -2037,20 +2045,21 @@ void Entity::doWaterSplashEffect()
 
     for (int i = 0; (float)i < mBbWidth * 20.0f + 1.0f; i++)
     {
-        mLevel->addParticle(ParticleTypes::BUBBLE,
+        mLevel->addParticle(PARTICLE_BUBBLE,
                             mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
                             (double)(surfaceY + 1.0f),
                             mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            mXd, mYd - (double)(mRandom->nextFloat() * volume), mZd);
+                            mXd, mYd - (double)(mRandom->nextFloat() * volume), mZd,
+                            arrayWithLength<int>());
     }
 
     for (int i = 0; (float)i < mBbWidth * 20.0f + 1.0f; i++)
     {
-        mLevel->addParticle(ParticleTypes::SPLASH,
+        mLevel->addParticle(PARTICLE_SPLASH,
                             mX + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
                             (double)(surfaceY + 1.0f),
                             mZ + (double)((mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth),
-                            mXd, mYd, mZd);
+                            mXd, mYd, mZd, arrayWithLength<int>());
     }
 }
 
@@ -2074,11 +2083,13 @@ void Entity::doSprintParticleEffect()
 
     int stateId = Block::getIdWithData(state);
 
-    mLevel->addParticle(ParticleTypes::BLOCK,
+    arrayWithLength<int> particleData(1, false);
+    particleData.data[0] = stateId;
+    mLevel->addParticle(PARTICLE_BLOCK_DUST,
                         mX + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
                         mBoundingBox->mMinY + 0.1,
                         mZ + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
-                        -(mXd * 4.0), 1.5, -(mZd * 4.0), stateId);
+                        -(mXd * 4.0), 1.5, -(mZd * 4.0), particleData);
 }
 
 bool Entity::isUnderLiquid(Material* material)
@@ -2200,7 +2211,7 @@ int Entity::GetLightColor(Entity* entity)
 
     pos.setY(Mth::absFloor(entity->mY + (double)entity->getEyeHeight()));
 
-    return entity->mLevel->getLightColor(pos);
+    return entity->mLevel->getLightColor(pos, 0, -1);
 }
 
 int Entity::getLightColor()
@@ -2882,7 +2893,7 @@ boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(not_null_ptr<ItemInstance>
 
     itemEntity->setDefaultPickUpDelay();
 
-    mLevel->addFreshEntity(itemEntity);
+    mLevel->addEntity(itemEntity);
 
     return itemEntity;
 }
@@ -2937,7 +2948,7 @@ bool Entity::isInWall()
         Block* block = mLevel->getBlockState(mTickCache, pos)->getBlock();
 
         if (block->isViewBlocking(mLevel->getBlockState(mTickCache, pos))
-            && (!inMiniGame || CMinecraftApp::sInstance.ShouldCollideWith(block)))
+            && (!inMiniGame || g_pApp->ShouldCollideWith(block)))
         {
             mInWallCacheResult = true;
             return true;
@@ -3292,15 +3303,15 @@ void Entity::handleInsidePortal(const BlockPos& pos)
                 PortalBlock::getPortalShape(mLevel, mPortalEntrancePos);
 
             double axis = portal->getForwards()->getAxis() == Direction::Axis::X
-                              ? (double)portal->getFrontTopLeft()->z
-                              : (double)portal->getFrontTopLeft()->x;
+                              ? (double)portal->getFrontTopLeft().z
+                              : (double)portal->getFrontTopLeft().x;
 
             double across = portal->getForwards()->getAxisDirection() == Direction::AxisDirection::NEGATIVE
                                 ? Mth::pct(mZ, axis, axis - (double)portal->getWidth())
                                 : Mth::pct(mX, axis, axis - (double)portal->getWidth());
 
-            double up = Mth::pct(mY, (double)portal->getFrontTopLeft()->y,
-                                 (double)(portal->getFrontTopLeft()->y - portal->getHeight()));
+            double up = Mth::pct(mY, (double)portal->getFrontTopLeft().y,
+                                 (double)(portal->getFrontTopLeft().y - portal->getHeight()));
 
             mPortalEntranceOffset = Vec3::newPermanent(across, up, 0.0);
             mPortalEntranceForwards = portal->getForwards();
@@ -3523,7 +3534,7 @@ Team* Entity::getTeam()
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-    return mLevel->getScoreboard()->getPlayersTeam(player->getPlayerUID());
+    return mLevel->GetScoreboard()->getPlayersTeam(player->m_0x784);
 }
 
 bool Entity::isAlliedTo(boost::shared_ptr<Entity> entity)
@@ -3842,14 +3853,14 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
     }
 
     if ((GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER
-        && !mLevel->canCreateMore(mType, Level::SPAWN_TYPE_DIMENSION_CHANGE))
+        && !mLevel->canCreateMore(mType, 2))
     {
         return boost::shared_ptr<Entity>();
     }
 
     ServerLevel* toLevel = dynamic_cast<ServerLevel*>(mLevel->getServer()->getLevel(dimension));
 
-    mDimension = toLevel->getDimension()->getType()->getId();
+    mDimension = toLevel->mDimension->getType()->getId();
 
     stopRidingBeforeTeleport();
 
@@ -3861,7 +3872,16 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
     {
         if (dropsLeash)
         {
-            spawnPos = toLevel->getDimensionSpecificSpawn();
+            BlockPos* dimensionSpawn = toLevel->getDimensionSpecificSpawn();
+
+            if (dimensionSpawn != NULL)
+            {
+                spawnPos = *dimensionSpawn;
+            }
+            else
+            {
+                spawnPos = toLevel->getSharedSpawnPos();
+            }
         }
         else
         {
@@ -3870,13 +3890,16 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
     }
     else
     {
-        double scale = (double)toLevel->getDimension()->getType()->getMoveFactor();
+        double scale = (double)toLevel->getLevelData()->getHellScale();
 
-        double x = mX * scale;
-        double z = mZ * scale;
+        double x = mX;
+        double z = mZ;
 
         if (dimension == -1)
         {
+            x /= scale;
+            z /= scale;
+
             x = Mth::clamp(x, toLevel->getWorldBorder()->getMinX() + 16.0,
                            toLevel->getWorldBorder()->getMaxX() - 16.0);
             z = Mth::clamp(z, toLevel->getWorldBorder()->getMinZ() + 16.0,
@@ -3884,6 +3907,9 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         }
         else if (dimension == 0)
         {
+            x *= scale;
+            z *= scale;
+
             x = Mth::clamp(x, toLevel->getWorldBorder()->getMinX() + 16.0,
                            toLevel->getWorldBorder()->getMaxX() - 16.0);
             z = Mth::clamp(z, toLevel->getWorldBorder()->getMinZ() + 16.0,
@@ -3899,7 +3925,7 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         spawnPos = BlockPos(this);
     }
 
-    fromLevel->removeEntity(shared_from_this(), false);
+    fromLevel->removeEntity(shared_from_this());
 
     boost::shared_ptr<Entity> copy = EntityIO::newEntity(mType, toLevel);
 
@@ -3920,10 +3946,10 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         bool forced = copy->mForcedLoading;
 
         copy->mForcedLoading = true;
-        toLevel->addFreshEntity(copy);
+        toLevel->addEntity(copy);
         copy->mForcedLoading = forced;
 
-        toLevel->tickEntity(copy, false);
+        toLevel->tick(copy, false);
     }
 
     mRemoved = true;
@@ -3964,7 +3990,7 @@ Vec3* Entity::getPortalEntranceOffset()
     return mPortalEntranceOffset;
 }
 
-Direction* Entity::getPortalEntranceForwards()
+const Direction* Entity::getPortalEntranceForwards()
 {
     return mPortalEntranceForwards;
 }
@@ -4023,7 +4049,10 @@ std::wstring Entity::getNetworkName()
 void Entity::setCustomName(const std::wstring& customName, const std::wstring& ownerUUID,
                            bool namedByRestrictedPlayer)
 {
-    mEntityData->set(DATA_CREATED_ON_HOST, CMinecraftApp::sInstance.IsUUIDLocal(ownerUUID), true);
+    bool createdOnHost = CGameNetworkManager::sInstance.IsHost()
+        && g_pApp->IsUUIDLocal(ownerUUID) != 0;
+
+    mEntityData->set(DATA_CREATED_ON_HOST, createdOnHost, true);
     mEntityData->set(DATA_NAMED_BY_RESTRICTED_PLAYER, namedByRestrictedPlayer, true);
     mEntityData->set(DATA_CUSTOM_NAME, customName, true);
     mEntityData->set(DATA_OWNER_UUID, ownerUUID, true);
@@ -4056,8 +4085,8 @@ bool Entity::hasCustomName()
         return false;
     }
 
-    bool ownerIsLocal = CMinecraftApp::sInstance.IsUUIDLocal(getOwnerUUID());
-    bool censored = CMinecraftApp::sInstance.IsConsoleChatCensored();
+    bool ownerIsLocal = g_pApp->IsUUIDLocal(getOwnerUUID());
+    bool censored = g_pApp->IsConsoleChatCensored();
 
     if (!ownerIsLocal && mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER) && censored)
     {
@@ -4089,7 +4118,7 @@ void Entity::teleportTo(double x, double y, double z)
 
     setPos(x, y, z);
 
-    mLevel->updateChunkPos(shared_from_this(), false);
+    mLevel->ensureAdded(shared_from_this());
 }
 
 bool Entity::shouldShowName()
@@ -4158,7 +4187,8 @@ void Entity::doEnchantDamageEffects(boost::shared_ptr<LivingEntity> attacker,
     if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
     {
         EnchantmentHelper::doPostHurtEffects(
-            boost::dynamic_pointer_cast<LivingEntity>(target), attacker);
+            boost::dynamic_pointer_cast<LivingEntity>(target),
+            boost::static_pointer_cast<Entity>(attacker));
     }
 
     EnchantmentHelper::doPostDamageEffects(attacker, target);

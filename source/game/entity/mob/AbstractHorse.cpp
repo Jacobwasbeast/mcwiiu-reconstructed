@@ -111,4 +111,4 @@ bool AbstractHorse::setSlot(int, const not_null_ptr<ItemInstance>&) { return fal
 boost::shared_ptr<Entity> AbstractHorse::getControllingPassenger() { return boost::shared_ptr<Entity>(); }
 MobGroupData* AbstractHorse::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&) { return data; }
 bool AbstractHorse::removeWhenFarAway() { return false; }
-unsigned long long AbstractHorse::GetType() { return 0; }
+unsigned long long AbstractHorse::GetType() { return 0x0D69000000000000ULL; }

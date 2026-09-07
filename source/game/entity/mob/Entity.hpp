@@ -283,7 +283,7 @@ public:
     virtual int getMaxFallDistance();
     virtual BlockPos getPortalEntranceBlock();
     virtual Vec3* getPortalEntranceOffset();
-    virtual Direction* getPortalEntranceForwards();
+    virtual const Direction* getPortalEntranceForwards();
     virtual bool isIgnoringBlockTriggers();
     virtual bool displayFireAnimation();
     virtual void setUUID(const std::wstring& uuid);
@@ -583,7 +583,7 @@ public:
     int mDimension;
     BlockPos mPortalEntrancePos;
     Vec3* mPortalEntranceOffset;
-    Direction* mPortalEntranceForwards;
+    const Direction* mPortalEntranceForwards;
     std::wstring mUUID;
     std::wstring mStringUUID;
     CommandStats* mCommandStats;
