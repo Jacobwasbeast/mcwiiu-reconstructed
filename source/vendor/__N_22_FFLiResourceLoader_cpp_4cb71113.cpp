@@ -9,9 +9,9 @@ bool __N_22_FFLiResourceLoader_cpp_4cb71113::Uncompress(
     void* destination, const void* source, FFLiResourceUncompressBuffer* buffer,
     const FFLiResourcePartsInfo& parts)
 {
-    FFLiBufferAllocatorForZlib allocator(buffer->TempBuffer(), buffer->TempBufferSize());
+    FFLiBufferAllocatorForZlib allocator((void*)buffer->TempBuffer(), buffer->TempBufferSize());
     FFLiZlibInflator inflator(allocator,
-        FFLiResourceWindowBitsToZlibWindowBits(parts.ZlibWindowBits()));
+        FFLiResourceWindowBitsToZlibWindowBits(static_cast<FFLiResourceWindowBits>(parts.windowBits)));
     void* output = destination;
     const void* input = source;
     unsigned int outputSize = parts.uncompressedSize;

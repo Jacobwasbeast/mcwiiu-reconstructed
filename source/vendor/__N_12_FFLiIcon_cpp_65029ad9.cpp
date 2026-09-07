@@ -1,4 +1,41 @@
 #include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
+#include "game/client/render/Renderer.hpp"
+
+#include <cstdlib>
+
+extern void OSPanic(const char* file, unsigned int line, const char* message, ...);
+extern void GX2SetContextState(_GX2ContextState* state);
+extern int InitIconShader__F14IconShaderType(IconShaderType shaderType);
+extern void* CreateModel__FP12FFLCharModel13FFLDataSourceP12FFLStoreDatai(
+    void* model, FFLDataSource dataSource, FFLStoreData* storeData, int index);
+extern unsigned int CreateIconTexture__FP11_GX2TexturePC12FFLCharModel(
+    _GX2Texture* texture, const void* model);
+extern void FFLDeleteCharModel(void* model);
+extern void FinalizeIconShader__Fv();
+
+int MakeIcon(_GX2Texture* texture, IconShaderType shaderType, FFLDataSource dataSource,
+             FFLStoreData* storeData, int index)
+{
+    if (texture == 0)
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0x93,
+                "Invalid Pointer: %x", 0);
+
+    if (shaderType >= ICON_SHADER_TYPE_END)
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0x94,
+                "Assertion Failed: %s", "ICON_SHADER_TYPE_BEGIN <= type && type < ICON_SHADER_TYPE_END");
+
+    InitIconShader__F14IconShaderType(shaderType);
+    unsigned char model[2016];
+    void* modelBuffer = CreateModel__FP12FFLCharModel13FFLDataSourceP12FFLStoreDatai(
+        model, dataSource, storeData, index);
+    GX2SetContextState(0);
+    unsigned int result = CreateIconTexture__FP11_GX2TexturePC12FFLCharModel(texture, model);
+    FFLDeleteCharModel(model);
+    std::free(modelBuffer);
+    FinalizeIconShader__Fv();
+    return static_cast<int>(result);
+}
+
 struct FFLColor
 {
     float red;

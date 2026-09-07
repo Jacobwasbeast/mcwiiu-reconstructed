@@ -1,6 +1,55 @@
 #include "vendor/__N_21_FFLiDefaultShader_cpp_d69dbbf4.hpp"
 #include "platform/wiiu/FFLiDefaultParams.hpp"
 
+#include <cstdlib>
+
+extern void OSPanic(const char* file, unsigned int line, const char* message, ...);
+extern "C" void MEMFreeToDefaultHeap(void* block);
+
+void DestroyShader__FP11PlainShader(PlainShader* shader)
+{
+    if (shader == 0)
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0xbb,
+                "Invalid Pointer: %x", 0);
+
+    if (shader->vertexShader != 0)
+    {
+        if (shader->vertexShader->cachePtr != 0)
+            MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->vertexShader->cachePtr)));
+        MEMFreeToDefaultHeap(shader->vertexShader);
+    }
+    if (shader->pixelShader != 0)
+    {
+        if (shader->pixelShader->cachePtr != 0)
+            MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->pixelShader->cachePtr)));
+        MEMFreeToDefaultHeap(shader->pixelShader);
+    }
+    if (shader->fetchShader.program != 0)
+        MEMFreeToDefaultHeap(shader->fetchShader.program);
+    if (shader->contextState != 0)
+        MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->contextState)));
+}
+
+unsigned char ModulateModeToValue__F15FFLModulateMode(FFLModulateMode mode)
+{
+    static const unsigned char values[6] = { 0, 1, 2, 3, 4, 5 };
+    if (mode > 5)
+    {
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0xe9,
+                "Invalid Condition: %d", mode);
+        return 0;
+    }
+    return values[mode];
+}
+
+void DestroyPlainShader__FP11PlainShader(PlainShader* shader)
+{
+    if (shader == 0)
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0x18c,
+                "Invalid Pointer: %x", 0);
+    DestroyShader__FP11PlainShader(shader);
+}
+
 void GX2SetCullOnlyControl(unsigned int frontFace, int cullFront, int cullBack);
 void GX2SetPixelSampler(const void* sampler, unsigned int unit);
 void GX2SetVertexSampler(const void* sampler, unsigned int unit);

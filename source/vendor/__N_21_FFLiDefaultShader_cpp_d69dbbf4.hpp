@@ -1,6 +1,7 @@
 #ifndef SOURCE_VENDOR___N_21_FFLIDEFAULTSHADER_CPP_D69DBBF4_HPP
 #define SOURCE_VENDOR___N_21_FFLIDEFAULTSHADER_CPP_D69DBBF4_HPP
 
+#include "platform/wiiu/FFLiUtilShader.hpp"
 #include <stdint.h>
 
 typedef uint32_t _GX2FrontFaceMode;
@@ -10,16 +11,6 @@ typedef uint32_t FFLModulateMode;
 typedef uint32_t FFLDrawType;
 typedef uint32_t FFLSpecularMode;
 
-struct FFLColor { float value[4]; };
-struct _Mat44 { float value[4][4]; };
-struct _Mat34 { float value[3][4]; };
-struct FFLModulateParam
-{
-    FFLModulateMode mode;
-    uint32_t type;
-    FFLColor color[3];
-    const void* texture;
-};
 struct FFLDrawParam
 {
     uint32_t value[32];
@@ -99,5 +90,9 @@ public:
 };
 
 typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;
+
+void DestroyShader__FP11PlainShader(PlainShader* shader);
+unsigned char ModulateModeToValue__F15FFLModulateMode(FFLModulateMode mode);
+void DestroyPlainShader__FP11PlainShader(PlainShader* shader);
 
 #endif
