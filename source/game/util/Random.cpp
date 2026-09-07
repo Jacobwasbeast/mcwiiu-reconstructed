@@ -137,3 +137,13 @@ void Random::nextBytes(unsigned char* bytes, unsigned int length) {
         }
     }
 }
+
+int randomBetween(Random& random, int min, int max) {
+    int upperBound = max;
+    if (max < min) {
+        upperBound = min;
+        min = max;
+    }
+
+    return random.nextInt(upperBound - min) + min;
+}

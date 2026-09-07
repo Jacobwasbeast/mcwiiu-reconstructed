@@ -1,5 +1,6 @@
 #include "game/util/AABB.hpp"
 
+#include "game/core/Direction.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/core/HitResult.hpp"
@@ -596,6 +597,101 @@ bool AABB::hasNaN() const
 {
     return mMinX != mMinX || mMinY != mMinY || mMinZ != mMinZ ||
         mMaxX != mMaxX || mMaxY != mMaxY || mMaxZ != mMaxZ;
+}
+
+bool clip(AABB* box, float* plane)
+{
+    for (int i = 0; i < 6; ++i)
+    {
+        double xMin = (double)plane[0] * box->mMinX;
+        double yMin = (double)plane[1] * box->mMinY;
+        double zMin = (double)plane[2] * box->mMinZ;
+        double offset = (double)plane[3];
+
+        if (xMin + yMin + zMin + offset <= 0.0)
+        {
+            double xMax = (double)plane[0] * box->mMaxX;
+            double yMax = (double)plane[1] * box->mMaxY;
+            double zMax = (double)plane[2] * box->mMaxZ;
+
+            if (xMax + yMin + zMin + offset <= 0.0 &&
+                xMin + yMax + zMin + offset <= 0.0 &&
+                xMax + yMax + zMin + offset <= 0.0 &&
+                xMin + yMin + zMax + offset <= 0.0 &&
+                xMax + yMin + zMax + offset <= 0.0 &&
+                xMin + yMax + zMax + offset <= 0.0 &&
+                xMax + yMax + zMax + offset <= 0.0)
+            {
+                return false;
+            }
+        }
+
+        plane += 4;
+    }
+
+    return true;
+}
+
+bool clip(float* matrix, float* plane)
+{
+    for (int i = 0; i < 6; ++i)
+    {
+        float xMin = plane[0] * matrix[0];
+        float yMin = plane[1] * matrix[1];
+        float zMin = plane[2] * matrix[2];
+        float offset = plane[3];
+
+        if (xMin + yMin + zMin + offset <= 0.0f)
+        {
+            float xMax = plane[0] * matrix[3];
+            float yMax = plane[1] * matrix[4];
+            float zMax = plane[2] * matrix[5];
+
+            if (xMax + yMin + zMin + offset <= 0.0f &&
+                xMin + yMax + zMin + offset <= 0.0f &&
+                xMax + yMax + zMin + offset <= 0.0f &&
+                xMin + yMin + zMax + offset <= 0.0f &&
+                xMax + yMin + zMax + offset <= 0.0f &&
+                xMin + yMax + zMax + offset <= 0.0f &&
+                xMax + yMax + zMax + offset <= 0.0f)
+            {
+                return false;
+            }
+        }
+
+        plane += 4;
+    }
+
+    return true;
+}
+
+AABB* getOuterWall(const AABB* box, Direction::EDirection direction)
+{
+    AABB* wall = box->grow(10.0);
+
+    switch (direction)
+    {
+    case Direction::eDirection_Down:
+        wall->mMaxY = box->mMinY;
+        break;
+    case Direction::eDirection_Up:
+        wall->mMinY = box->mMaxY;
+        break;
+    case Direction::eDirection_North:
+        wall->mMaxZ = box->mMinZ + 1.0;
+        break;
+    case Direction::eDirection_South:
+        wall->mMinZ = box->mMaxZ;
+        break;
+    case Direction::eDirection_West:
+        wall->mMaxX = box->mMinX + 1.0;
+        break;
+    case Direction::eDirection_East:
+        wall->mMinX = box->mMaxX;
+        break;
+    }
+
+    return wall;
 }
 
 Vec3* AABB::getCenter() const

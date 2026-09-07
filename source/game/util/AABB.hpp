@@ -3,8 +3,9 @@
 
 #include <string>
 
+#include "game/core/Direction.hpp"
+
 class BlockPos;
-class Direction;
 class HitResult;
 class Vec3;
 
@@ -129,5 +130,10 @@ public:
     double mMaxY;
     double mMaxZ;
 };
+
+bool clip(AABB* box, float* plane);
+bool clip(float* matrix, float* plane);
+
+AABB* getOuterWall(const AABB* box, Direction::EDirection direction);
 
 #endif
