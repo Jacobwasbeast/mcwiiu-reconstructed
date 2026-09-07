@@ -57,7 +57,7 @@ public:
     virtual void flushSaveFile(bool force);
     virtual LevelData* prepareLevel();
     virtual void checkSession();
-    virtual OldChunkStorage* createChunkStorage(Dimension* dimension);
+    virtual ChunkStorage* createChunkStorage(Dimension* dimension);
     virtual void saveLevelData(LevelData* levelData, std::vector<boost::shared_ptr<Player> >* players);
     virtual void saveLevelData(LevelData* levelData);
     virtual PlayerIO* getPlayerIO();
@@ -69,8 +69,8 @@ public:
     virtual ConsoleSaveFile* getSaveFile();
     virtual int getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale);
     void resetPlayerPositionsInDimension(int dimension);
-    void resetNetherPlayerPositions();
-    void resetEndPlayerPositions();
+    virtual void resetNetherPlayerPositions();
+    virtual void resetEndPlayerPositions();
 
 private:
     ConsoleSaveFile* mSaveFile;
@@ -80,7 +80,11 @@ private:
     std::wstring mDataPrefix;
     bool mCreateIfMissing;
     long long mSessionLock;
+
+protected:
     DataFixerUpper* mFixer;
+
+private:
     StructureManager* mStructureManager;
     boost::unordered_map<PlayerUID, PlayerMappings, boost::hash<PlayerUID>, std::equal_to<PlayerUID> > mPlayerMappings;
     boost::unordered_map<std::wstring, ByteArrayOutputStream*> mCachedData;

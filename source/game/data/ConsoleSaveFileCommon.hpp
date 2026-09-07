@@ -25,7 +25,6 @@ public:
     virtual bool readFile(FileEntry* entry, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead) = 0;
     virtual bool closeHandle(FileEntry* entry);
     virtual void finalizeWrite();
-    virtual void tick() = 0;
     virtual bool doesFileExist(ConsoleSavePath path);
     virtual void Flush(bool bForce, bool bBlocking) = 0;
     virtual unsigned int getSizeOnDisk();

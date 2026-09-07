@@ -2,14 +2,19 @@
 
 #include <cstring>
 
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Compression.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/File.hpp"
 #include "game/core/RegionFile.hpp"
+#include "game/core/RegionFileCache.hpp"
 #include "game/core/System.hpp"
+#include "platform/wiiu/CStorage.hpp"
 
 void PIXBeginNamedEvent(float color, const char* format, ...);
 void PIXEndNamedEvent();
+void* XMemCpy(void* destination, const void* source, unsigned int size);
 
 ConsoleSaveFileCommon::ConsoleSaveFileCommon()
     : mFileHeader(), mFilename(L"Growing file")
@@ -25,22 +30,62 @@ ConsoleSaveFileCommon::~ConsoleSaveFileCommon()
 void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsigned int dataSize, void* data, ESavePlatform platform)
 {
     mFilename = filename;
-    setPlatform(platform);
+    AllocInitialQuota(dataSize);
     if (dataSize == 0)
     {
         mFileHeader.WriteHeader(mData);
         return;
     }
-    if (mData == NULL)
-        mData = new unsigned char[dataSize];
+
+    void* saveData = data;
     if (data == NULL)
-        std::memset(mData, 0, dataSize);
+    {
+        gStorage->GetSaveData(mData, &dataSize);
+        saveData = mData;
+    }
     else
         std::memcpy(mData, data, dataSize);
-    if (data == NULL)
-        mFileHeader.WriteHeader(mData);
-    else
-        mFileHeader.ReadHeader(mData, platform);
+
+    unsigned int* compressedHeader = static_cast<unsigned int*>(saveData);
+    if (compressedHeader[0] == 0)
+    {
+        unsigned int uncompressedSize = compressedHeader[1];
+        if (isLocalEndianDifferent(platform))
+            System::ReverseULONG(&uncompressedSize);
+
+        if (uncompressedSize == 0)
+        {
+            std::memset(saveData, 0, dataSize);
+            mFileHeader.WriteHeader(saveData);
+            mFileHeader.ReadHeader(mData, platform);
+            return;
+        }
+
+        ReAlloc(uncompressedSize);
+        unsigned char* uncompressedData = new unsigned char[uncompressedSize];
+        if (platform == eSavePlatform_PSV)
+        {
+            Compression::VitaVirtualDecompress(uncompressedData, &uncompressedSize, compressedHeader + 2, dataSize - 8);
+            std::memcpy(mData, uncompressedData, uncompressedSize);
+        }
+        else
+        {
+            Compression* compression = Compression::getCompression();
+            compression->SetDecompressionType(platform);
+            int result = compression->Decompress(uncompressedData, &uncompressedSize, compressedHeader + 2, dataSize - 8);
+            compression->SetDecompressionType(eSavePlatform_WIIU);
+            if (result == 0)
+                std::memcpy(mData, uncompressedData, uncompressedSize);
+            else
+            {
+                std::memset(mData, 0, dataSize);
+                mFileHeader.WriteHeader(mData);
+            }
+        }
+        delete[] uncompressedData;
+    }
+
+    mFileHeader.ReadHeader(mData, platform);
 }
 
 void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
@@ -71,11 +116,44 @@ void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
 {
     unsigned int fileSize = mFileHeader.GetFileSize();
     ReAlloc(fileSize + size);
-    unsigned int source = entry->m_startOffset + entry->m_fileSize;
-    unsigned int end = mFileHeader.GetStartOfNextData();
-    if (source < end)
-        std::memmove(static_cast<unsigned char*>(mData) + source + size,
-                     static_cast<unsigned char*>(mData) + source, end - source);
+    unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_startOffset + entry->m_fileSize;
+    unsigned char* source = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
+
+    if ((size & 0xfff) == 0)
+    {
+        if (size != 0)
+        {
+            while (dataStart < source)
+            {
+                unsigned int count = static_cast<unsigned int>(source - dataStart);
+                if (count > 0x1000)
+                    count = 0x1000;
+                source -= count;
+                XMemCpy(source + size, source, count);
+            }
+        }
+    }
+    else
+    {
+        static unsigned char moveBuffer[0x1000];
+        static unsigned char previousBuffer[0x1000];
+        unsigned char* destination = source + size;
+        unsigned int previousCount = 0;
+        unsigned int count;
+        do
+        {
+            std::memcpy(previousBuffer, moveBuffer, previousCount);
+            count = static_cast<unsigned int>(source - dataStart);
+            if (count > 0x1000)
+                count = 0x1000;
+            source -= count;
+            std::memcpy(moveBuffer, source, count);
+            destination -= previousCount;
+            std::memcpy(destination, previousBuffer, previousCount);
+            previousCount = count;
+        }
+        while (count != 0);
+    }
     mFileHeader.AdjustStartOffsets(entry, size, false);
 }
 
@@ -172,7 +250,7 @@ void ConsoleSaveFileCommon::setPlatform(ESavePlatform platform) { mFileHeader.m_
 ByteOrder ConsoleSaveFileCommon::getSaveEndian() { return mFileHeader.m_saveEndian; }
 ByteOrder ConsoleSaveFileCommon::getLocalEndian() { return eByteOrder_BigEndian; }
 void ConsoleSaveFileCommon::setEndian(ByteOrder endian) { mFileHeader.m_saveEndian = endian; }
-bool ConsoleSaveFileCommon::isLocalEndianDifferent(ESavePlatform platform) { return FileHeader::getEndian(platform) != getLocalEndian(); }
+bool ConsoleSaveFileCommon::isLocalEndianDifferent(ESavePlatform platform) { return getLocalEndian() != FileHeader::getEndian(platform); }
 
 void ConsoleSaveFileCommon::ConvertRegionFile(File regionFile)
 {
@@ -182,26 +260,22 @@ void ConsoleSaveFileCommon::ConvertRegionFile(File regionFile)
     for (x = 0; x < 32; ++x)
     {
         int z;
-        for (z = 0; z < 32; z += 2)
+        for (z = 0; z < 32; ++z)
         {
-            int index;
-            for (index = z; index <= z + 1; ++index)
+            DataInputStream* input = region.getChunkDataInputStream(x, z, &compressed);
+            if (input != NULL)
             {
-                DataInputStream* input = region.getChunkDataInputStream(x, index, &compressed);
-                if (input != NULL)
-                {
-                    arrayWithLength<unsigned char> data(0x100000, true);
-                    int length = input->read(data);
-                    input->close();
-                    input->deleteChildStream();
-                    delete input;
-                    DataOutputStream* output = region.getChunkDataOutputStream(x, index, compressed);
-                    output->write(data, 0, length);
-                    output->close();
-                    output->deleteChildStream();
-                    delete output;
-                    delete[] data.data;
-                }
+                arrayWithLength<unsigned char> data(0x100000, true);
+                int length = input->read(data);
+                input->close();
+                input->deleteChildStream();
+                delete input;
+                DataOutputStream* output = region.getChunkDataOutputStream(x, z, compressed);
+                output->write(data, 0, length);
+                output->close();
+                output->deleteChildStream();
+                delete output;
+                delete[] data.data;
             }
         }
     }
@@ -232,8 +306,44 @@ void ConsoleSaveFileCommon::ConvertToLocalPlatform()
 unsigned int ConsoleSaveFileCommon::fjGetSaveThumbnailData(unsigned char* data, unsigned int size)
 {
     std::memset(data, 0, size);
-    return 0;
+    CMinecraftApp::PngTagData imageData;
+    g_pApp->CurrentImageTextData(&imageData);
+    if ((imageData.flags & 0x02000000) == 0)
+    {
+        imageData.dataSize = 0;
+        imageData.flags |= 0x02000000;
+    }
+    imageData.flags |= 0x08000000;
+    g_pApp->SetExtraGameData(imageData.values[7], static_cast<eGameExtraData>(4), 0x881);
+    g_pApp->SetExtraGameData(imageData.values[7], static_cast<eGameExtraData>(5), 0xb);
+
+    unsigned int imageDataSize = g_pApp->CreateImageTextData(data, &imageData);
+
+    CMinecraftApp::PngTagData parsedData;
+    g_pApp->ParseImageTextData(data, imageDataSize, &parsedData);
+    return imageDataSize;
 }
 
-int ConsoleSaveFileCommon::fjCountSavedChunks(int) { return 0; }
+int ConsoleSaveFileCommon::fjCountSavedChunks(int dimension)
+{
+    const std::wstring dimensions[] = {L"", L"DIM-1", L"DIM1"};
+    const std::wstring& folder = dimensions[dimension];
+    int savedChunks = 0;
+    int regionX;
+    for (regionX = -4; regionX < 4; ++regionX)
+    {
+        int regionZ;
+        for (regionZ = -128; regionZ < 128; regionZ += 32)
+        {
+            File regionPath = RegionFileCache::fjGetFilepath(this, folder, regionX << 5, regionZ);
+            if (fjHasRegionFile(regionPath))
+            {
+                RegionFile* regionFile = gRegionFileCache._getRegionFile(this, folder, regionX << 5, regionZ);
+                if (regionFile != NULL)
+                    savedChunks += regionFile->fjCountSavedChunks();
+            }
+        }
+    }
+    return savedChunks;
+}
 bool ConsoleSaveFileCommon::fjHasRegionFile(const File& file) { return mFileHeader.fileExists(file.getPath()); }

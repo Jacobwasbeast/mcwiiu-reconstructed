@@ -141,7 +141,7 @@ void DirectoryLevelStorage::checkSession()
 {
 }
 
-OldChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
+ChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
 {
     return dimension == 0 ? 0 : dimension->createStorage(mFolder);
 }

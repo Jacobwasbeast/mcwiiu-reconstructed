@@ -1,5 +1,6 @@
 #include "game/data/McRegionLevelStorage.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/RegionFileCache.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
@@ -7,11 +8,10 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/NetherDimension.hpp"
+#include "game/world/TheEndDimension.hpp"
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 
 void MemSect(int section);
-
-static RegionFileCache sRegionFileCache;
 
 static void clearFiles(ConsoleSaveFile* saveFile, const std::wstring& prefix)
 {
@@ -30,19 +30,19 @@ McRegionLevelStorage::McRegionLevelStorage(ConsoleSaveFile* saveFile, File folde
                                            DataFixerUpper* fixer)
     : DirectoryLevelStorage(saveFile, folder, levelId, createIfMissing, fixer)
 {
-    sRegionFileCache._clear();
+    gRegionFileCache._clear();
 }
 
 McRegionLevelStorage::~McRegionLevelStorage()
 {
-    sRegionFileCache._clear();
+    gRegionFileCache._clear();
 }
 
 McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimension)
 {
     if (dimension != NULL && dynamic_cast<NetherDimension*>(dimension) != NULL)
     {
-        if (g_pApp->GetResetNether() == 0)
+        if (gApp.GetResetNether() == 0)
             return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
 
         clearFiles(getSaveFile(), L"DIM-1");
@@ -51,11 +51,14 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
         return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
     }
 
-    if (dimension != NULL && dimension->getType() == 1)
+    if (dimension != NULL && dynamic_cast<TheEndDimension*>(dimension) != NULL)
     {
-        if (g_pApp->GetResetEnd() == 0
-            && (getSaveFile()->getSaveVersion() == 0 || getSaveFile()->getSaveVersion() > 3))
-            return new McRegionChunkStorage(getSaveFile(), L"DIM1", mFixer);
+        if (gApp.GetResetEnd() == 0)
+        {
+            short saveVersion = getSaveFile()->getSaveVersion();
+            if (saveVersion == 0 || saveVersion > 3)
+                return new McRegionChunkStorage(getSaveFile(), L"DIM1", mFixer);
+        }
 
         clearFiles(getSaveFile(), L"DIM1");
         resetEndPlayerPositions();
@@ -76,5 +79,5 @@ void McRegionLevelStorage::saveLevelData(LevelData* levelData,
 
 void McRegionLevelStorage::closeAll()
 {
-    sRegionFileCache._clear();
+    gRegionFileCache._clear();
 }
