@@ -5,8 +5,8 @@
 #include "game/core/Mth.hpp"
 #include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/util/phys__Vec2.hpp"
@@ -122,9 +122,10 @@ void CircleAroundAnchorGoal::start()
 
 void CircleAroundAnchorGoal::stop()
 {
-    if (mMob->getNavigation() != NULL)
+    PathNavigation* navigation = mMob->getNavigation();
+    if (navigation != NULL)
     {
-        mMob->getNavigation()->stop();
+        navigation->stop();
     }
     else
     {
@@ -139,15 +140,16 @@ bool CircleAroundAnchorGoal::canUse()
 
 bool CircleAroundAnchorGoal::touchingTarget() const
 {
-    if (mMob->getNavigation() != NULL)
+    PathNavigation* navigation = mMob->getNavigation();
+    if (navigation != NULL)
     {
-        return mMob->getNavigation()->isDone();
+        return navigation->isDone();
     }
 
     MoveControl* moveControl = mMob->getMoveControl();
     Vec3* wanted = Vec3::newTemp(moveControl->getWantedX(), moveControl->getWantedY(),
                                  moveControl->getWantedZ());
-    return mMob->getPos(0.0f)->distanceToSqr(wanted) < (double)mMinDistanceSquared;
+    return wanted->distanceToSqr(mMob->getPos(0.0f)) < (double)mMinDistanceSquared;
 }
 
 void CircleAroundAnchorGoal::tick()

@@ -1,6 +1,6 @@
 #include "game/entity/ai/FlyNodeEvaluator.hpp"
 
-#include <boost/unordered_set.hpp>
+#include <unordered_set>
 
 #include "game/core/Node.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -19,6 +19,22 @@ static int addFlyNeighbor(FlyNodeEvaluator* evaluator, arrayWithLength<Node*>* n
     return count;
 }
 
+struct FlyBlockPosHash
+{
+    std::size_t operator()(const BlockPos& pos) const
+    {
+        return static_cast<std::size_t>(pos.hashCode());
+    }
+};
+
+struct FlyBlockPosEqual
+{
+    bool operator()(const BlockPos& left, const BlockPos& right) const
+    {
+        return left.equals(right);
+    }
+};
+
 FlyNodeEvaluator::FlyNodeEvaluator(Entity* entity)
     : WalkNodeEvaluator(entity)
 {
@@ -31,7 +47,6 @@ void FlyNodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
 
 void FlyNodeEvaluator::done()
 {
-    mMob->setPathfindingMalus(BlockPathTypes::WATER, mOldWaterCost);
     WalkNodeEvaluator::done();
 }
 
@@ -71,13 +86,13 @@ Node* FlyNodeEvaluator::getStart()
         return NodeEvaluator::getNode(x, y, z);
 
     const int offsets[3] = { -1, 0, 1 };
-    boost::unordered_set<BlockPos> positions;
-    positions.insert(BlockPos(mMob->mX, y, mMob->mZ));
-    positions.insert(BlockPos(mMob->mX, y, mMob->mBoundingBox->mMaxZ));
-    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, y, mMob->mZ));
-    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, y, mMob->mBoundingBox->mMaxZ));
+    std::unordered_set<BlockPos, FlyBlockPosHash, FlyBlockPosEqual> positions;
+    positions.insert(BlockPos(mMob->mX, static_cast<double>(y), mMob->mZ));
+    positions.insert(BlockPos(mMob->mX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
+    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mZ));
+    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
 
-    for (boost::unordered_set<BlockPos>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+    for (std::unordered_set<BlockPos, FlyBlockPosHash, FlyBlockPosEqual>::const_iterator it = positions.begin(); it != positions.end(); ++it)
     {
         const BlockPathTypes* type = getBlockPathType(mMob, *it);
         if (mMob->getPathfindingMalus(type) >= 0.0)

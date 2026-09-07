@@ -6,6 +6,10 @@
 #include "game/world/block/Predicate.hpp"
 
 class Entity;
+class Player;
+
+bool validPlayerPredicate(boost::shared_ptr<Player> player);
+bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity);
 
 namespace EntitySelector
 {

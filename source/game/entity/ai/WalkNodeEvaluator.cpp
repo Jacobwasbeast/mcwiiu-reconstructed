@@ -1,7 +1,5 @@
 #include "game/entity/ai/WalkNodeEvaluator.hpp"
 
-#include <cmath>
-
 #include "game/core/Direction.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -69,7 +67,9 @@ Node* WalkNodeEvaluator::getGoal(double x, double y, double z)
 int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
 {
     int count = 0;
-    const Direction* directions[4] = { Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
+    const Direction* directions[4] = {
+        Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST
+    };
     int i;
     for (i = 0; i < 4; ++i)
     {

@@ -4,6 +4,8 @@
 
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
@@ -11,14 +13,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
-
-class PathfinderMob : public Entity
-{
-public:
-    boost::shared_ptr<Entity> shared_from_this();
-    PathNavigation* getNavigation();
-    Random* getRandom();
-};
 
 MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
     : Goal(),

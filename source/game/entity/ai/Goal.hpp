@@ -8,6 +8,12 @@ class Level;
 class Goal
 {
 public:
+    struct FloatRange
+    {
+        float min;
+        float max;
+    };
+
     Goal();
     virtual ~Goal();
 

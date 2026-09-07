@@ -25,7 +25,8 @@ public:
 
     const BlockPathTypes* getBlockPathType(Mob* mob, int x, int y, int z);
     const BlockPathTypes* getBlockPathType(Mob* mob, const BlockPos& pos);
-    Node* getLandNode(int x, int y, int z, int verticalRange, double maxFallDistance, const Direction* direction);
+    Node* getLandNode(int x, int y, int z, int verticalRange,
+                      double maxFallDistance, const Direction* direction);
     const BlockPathTypes* getBlockPathTypes(LevelSource* levelSource, int x, int y, int z,
                                              int sizeX, int sizeY, int sizeZ,
                                              bool canOpenDoors, bool canPassDoors,

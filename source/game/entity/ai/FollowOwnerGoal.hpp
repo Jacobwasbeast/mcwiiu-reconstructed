@@ -1,13 +1,13 @@
 #ifndef GAME_ENTITY_AI_FOLLOWOWNERGOAL_HPP
 #define GAME_ENTITY_AI_FOLLOWOWNERGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
 
-class Entity;
 class Level;
+class LivingEntity;
 class PathNavigation;
 class TamableAnimal;
 
@@ -21,20 +21,24 @@ public:
     virtual void start();
     virtual void stop();
     virtual void tick();
-    virtual bool isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz);
     virtual void setLevel(Level* level);
     virtual std::wstring getName();
+    virtual bool isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz);
 
 private:
     TamableAnimal* mTamable;
-    boost::shared_ptr<Entity> mOwner;
+    boost::weak_ptr<LivingEntity> mOwner;
+
+protected:
     Level* mLevel;
+
+private:
     double mSpeedModifier;
     PathNavigation* mNavigation;
     int mTimeToRecalcPath;
-    float mStartDistance;
     float mStopDistance;
-    float mSpeed;
+    float mStartDistance;
+    float mOldWaterCost;
 };
 
 #endif

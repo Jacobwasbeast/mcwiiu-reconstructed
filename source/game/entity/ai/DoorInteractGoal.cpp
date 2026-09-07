@@ -5,6 +5,8 @@
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DoorBlock.hpp"

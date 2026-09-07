@@ -7,10 +7,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/server/ServerPlayerGameMode.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 
@@ -39,21 +42,16 @@ bool MobNearestMobTargetGoal::canUse()
     AABB* searchBox = mMob->mBoundingBox->grow(followDistance, 4.0, followDistance);
     std::vector<boost::shared_ptr<Entity> >* entities =
         mMob->mLevel->getEntitiesOfClass(*mTargetType, searchBox, &mCanAttack, true);
-    if (entities == NULL || entities->empty())
+    std::sort(entities->begin(), entities->end(), mSorter);
+    if (!entities->empty())
     {
+        mTarget = boost::static_pointer_cast<LivingEntity>(entities->at(0));
         delete entities;
-        return false;
+        return true;
     }
 
-    std::sort(entities->begin(), entities->end(), mSorter);
-    boost::shared_ptr<LivingEntity> target =
-        boost::static_pointer_cast<LivingEntity>((*entities)[0]);
-    if (mMob->distanceToSqr((*entities)[0]) <= followDistance * followDistance)
-        mTarget = target;
-    else
-        mTarget.reset();
     delete entities;
-    return !!mTarget;
+    return false;
 }
 
 bool MobNearestMobTargetGoal::canContinueToUse()
@@ -66,8 +64,13 @@ bool MobNearestMobTargetGoal::canContinueToUse()
     if (mMob->distanceToSqr(target) > followDistance * followDistance)
         return false;
 
-    if (target->GetType() == 0x000000000C800001ULL && target->isCreative())
-        return false;
+    if (target->GetType() == 0x000000000C800001ULL)
+    {
+        boost::shared_ptr<ServerPlayer> player =
+            boost::dynamic_pointer_cast<ServerPlayer>(target);
+        if (player->mGameMode->isCreative())
+            return false;
+    }
 
     return true;
 }
