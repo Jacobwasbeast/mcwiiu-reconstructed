@@ -7,7 +7,6 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
-#include "game/world/LevelSource.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/biome/Biome.hpp"
@@ -44,12 +43,12 @@ void NetherDimension::updateLightRamp()
     }
 }
 
-LevelSource* NetherDimension::createRandomLevelGenerator() const
+ChunkGenerator* NetherDimension::createRandomLevelGenerator() const
 {
     LevelData* levelData = mLevel->getLevelData();
     if (mLevelType == LevelType::FLAT)
-        return (LevelSource*)new NetherFlatLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
-    return (LevelSource*)new NetherLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
+        return new NetherFlatLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
+    return new NetherLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
 }
 
 bool NetherDimension::isNaturalDimension()

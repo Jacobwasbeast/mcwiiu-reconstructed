@@ -4,22 +4,22 @@
 #include <string>
 #include <vector>
 
-#include <boost/unordered_map.hpp>
-
 #include "game/util/Random.hpp"
 #include "game/world/GenericOverworldLevelSource.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 
-class Block;
 class BlockPos;
 class BlockState;
+class BuriedTreasureFeature;
+class CanyonFeature;
 class ChunkPrimer;
 class CustomizableSourceSettings;
+class LargeCaveFeature;
 class Level;
 class LevelChunk;
-class LargeFeature;
+class LevelType;
 class MineShaftFeature;
 class MobCategory;
 class OceanMonumentFeature;
@@ -27,8 +27,13 @@ class OceanRuinFeature;
 class PerlinNoise;
 class PerlinSimplexNoise;
 class RandomScatteredLargeFeature;
-class StructureFeature;
+class ShipwreckFeature;
+class StrongholdFeature;
 class SuperflatConfig;
+class UnderwaterCanyonFeature;
+class UnderwaterLargeCaveFeature;
+class VillageFeature;
+class WoodlandMansionFeature;
 
 class OverworldLevelSource : public ChunkGenerator, public GenericOverworldLevelSource
 {
@@ -36,16 +41,16 @@ public:
     OverworldLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config);
     virtual ~OverworldLevelSource();
 
-    double getHeightFalloff(int x, int z, int* heights);
+    double getHeightFalloff(int x, int z, int* distance);
     void getHeights(int x, int y, int z, arrayWithLength<Biome*>& biomes, arrayWithLength<double>& heights);
     virtual void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
     void buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer, arrayWithLength<Biome*> biomes);
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void lightChunk(LevelChunk* chunk);
     bool isWater(const BlockPos& pos);
-    int calcWaterDepths(int x, int z);
+    void calcWaterDepths(int chunkX, int chunkZ);
     virtual void postProcess(int chunkX, int chunkZ);
-    virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
     virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock);
@@ -56,57 +61,34 @@ private:
     int mLevelSize;
     Random mRandom;
     Random mPopulationRandom;
-    PerlinNoise* mDepthNoise;
+    PerlinNoise* mMinLimitNoise;
+    PerlinNoise* mMaxLimitNoise;
     PerlinNoise* mMainNoise;
+    PerlinSimplexNoise* mSurfaceNoise;
     PerlinNoise* mScaleNoise;
-    PerlinSimplexNoise* mTemperatureNoise;
+    PerlinNoise* mDepthNoise;
+    PerlinNoise* mUnusedNoiseA;
+    PerlinNoise* mUnusedNoiseB;
     PerlinNoise* mForestNoise;
-    PerlinNoise* mDetailNoise;
     Level* mLevel;
     bool mGenerateStructures;
-    unsigned char mUnused6a[3];
-    int mSeaLevel;
-    float mNoiseData[40];
-    float mDepthData[3];
-    float mScaleData[3];
-    float mTemperatureData[3];
-    float mForestData[3];
-    float mDetailData[3];
-    int mUnused7c;
-    int mUnused80;
-    int mUnused84;
-    int mUnused88;
-    int mUnused8c;
-    int mUnused90;
-    int mUnused94;
-    int mUnused98;
-    int mUnused9c;
-    int mUnuseda0;
-    int mUnuseda4;
-    int mUnuseda8;
-    int mUnusedac;
-    int mUnusedb0;
-    int mUnusedb4;
-    int mUnusedb8;
-    int mUnusedbc;
-    int mUnusedc0;
-    int mUnusedc4;
-    int mUnusedc8;
-    int mUnusedcc;
-    int mUnusedd0;
+    LevelType* mGeneratorType;
+    float mBiomeWeights[25];
     CustomizableSourceSettings* mSettings;
-    const BlockState* mDefaultBlock;
-    LargeFeature* mCaves;
-    StructureFeature* mStronghold;
-    StructureFeature* mVillage;
+    const BlockState* mOceanBlock;
+    arrayWithLength<double> mSurfaceDepths;
+    LargeCaveFeature* mCaves;
+    StrongholdFeature* mStronghold;
+    VillageFeature* mVillage;
     MineShaftFeature* mMineshaft;
     RandomScatteredLargeFeature* mTemple;
-    LargeFeature* mRavines;
-    LargeFeature* mCanyons;
+    CanyonFeature* mRavines;
+    UnderwaterLargeCaveFeature* mUnderwaterCaves;
+    UnderwaterCanyonFeature* mUnderwaterRavines;
     OceanMonumentFeature* mMonument;
-    StructureFeature* mMansion;
-    StructureFeature* mBuriedTreasure;
-    StructureFeature* mShipwreck;
+    WoodlandMansionFeature* mMansion;
+    BuriedTreasureFeature* mBuriedTreasure;
+    ShipwreckFeature* mShipwreck;
     OceanRuinFeature* mOceanRuin;
 };
 

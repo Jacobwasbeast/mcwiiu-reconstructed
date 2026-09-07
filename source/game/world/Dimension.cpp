@@ -5,13 +5,7 @@
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
-#include "game/client/audio/SoundEvent.hpp"
-#include "game/core/CriticalSection.hpp"
-
-namespace SoundSource { enum ESoundSource { eSoundSource_Master }; }
-struct CriticalSection { unsigned char data[64]; };
-
-#include "game/client/render/ParticleType.hpp"
+#include "game/core/SuperflatConfig.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/FlatLevelSource.hpp"
@@ -83,7 +77,7 @@ void Dimension::init()
     }
 }
 
-LevelSource* Dimension::createRandomLevelGenerator() const
+ChunkGenerator* Dimension::createRandomLevelGenerator() const
 {
     LevelData* levelData = mLevel->getLevelData();
     if (mLevelType == LevelType::FLAT)
@@ -93,7 +87,7 @@ LevelSource* Dimension::createRandomLevelGenerator() const
     return new OverworldLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(), mSuperflatConfig);
 }
 
-LevelSource* Dimension::createFlatLevelSource() const
+ChunkGenerator* Dimension::createFlatLevelSource() const
 {
     LevelData* levelData = mLevel->getLevelData();
     return new FlatLevelSource(mLevel, mLevel->getSeed(), levelData->isGenerateMapFeatures(), mSuperflatConfig);

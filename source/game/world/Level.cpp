@@ -49,6 +49,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
@@ -58,6 +59,7 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/PlayerUID.hpp"
+#include "game/world/generation/Player.hpp"
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
@@ -67,6 +69,7 @@ void XPhysicalFree(void* memory);
 void XMemSet128(void* destination, int value, unsigned int size);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
+void MemSect(int section);
 
 static unsigned int sInstaTickTlsIndex = TlsAlloc();
 static unsigned int sLightingCacheTlsIndex = TlsAlloc();
@@ -163,6 +166,8 @@ void Level::_init()
     mVillages.reset();
     mScheduledUpdatesAreImmediate = false;
     mChunkSource = NULL;
+    mChunkCache = NULL;
+    mChunkCacheSize = 0;
     mDimension = NULL;
 
     mLevelData = NULL;
@@ -1370,7 +1375,7 @@ void Level::observedNeighborChanged(const BlockPos& pos, Block* block, const Blo
 
     if (state->getBlock() == Blocks::observer)
     {
-        ObserverBlock::observedNeighborChanged(state, this, pos, block, fromPos);
+        static_cast<ObserverBlock*>(state->getBlock())->observedNeighborChanged(state, this, pos, block, fromPos);
     }
 }
 
@@ -1423,18 +1428,8 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         oldBlocking = oldExtraBlocking;
     }
 
-    const BlockState* oldState;
-
-    if (!extraBlock)
-    {
-        oldState = chunk->setBlock(pos, state);
-    }
-    else
-    {
-        oldState = chunk->setExtraBlock(pos, state);
-    }
-
-    if (oldState == NULL)
+    const BlockState* oldState = extraBlock ? chunk->getExtraBlockState(pos) : chunk->getBlockState(pos);
+    if (!chunk->internalSetBlock(extraBlock, pos, state))
     {
         return false;
     }
@@ -3573,8 +3568,9 @@ void Level::tickPendingTicks(bool runAll)
 {
 }
 
-void Level::fetchTicksInChunk(LevelChunk* chunk, bool runAll)
+std::vector<TickNextTickData>* Level::fetchTicksInChunk(LevelChunk* chunk, bool runAll)
 {
+    return NULL;
 }
 
 void Level::fetchTicksInArea(BoundingBox* box, bool runAll)
@@ -3621,7 +3617,7 @@ void Level::sendPacketToServer(boost::shared_ptr<Packet>)
     return;
 }
 
-boost::shared_ptr<Village> Level::getVillages()
+boost::shared_ptr<Villages> Level::getVillages()
 {
     return mVillages;
 }

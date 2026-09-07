@@ -8,9 +8,9 @@
 #include "game/world/block/BlockPos.hpp"
 
 class BiomeSource;
+class ChunkGenerator;
 class DimensionType;
 class Level;
-class LevelSource;
 class LevelType;
 class OldChunkStorage;
 class ServerPlayer;
@@ -26,8 +26,8 @@ public:
     virtual void init();
     virtual void updateLightRamp();
     virtual ~Dimension();
-    virtual LevelSource* createRandomLevelGenerator() const;
-    virtual LevelSource* createFlatLevelSource() const;
+    virtual ChunkGenerator* createRandomLevelGenerator() const;
+    virtual ChunkGenerator* createFlatLevelSource() const;
     virtual OldChunkStorage* createStorage(File file);
     virtual bool isValidSpawn(int x, int z) const;
     virtual double getTimeOfDay(long long time, float partialTick) const;

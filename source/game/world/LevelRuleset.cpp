@@ -10,15 +10,20 @@
 #include "game/minigame/CheckpointRuleDefinition.hpp"
 #include "game/minigame/CollisionExceptionGameRuleDefinition.hpp"
 #include "game/minigame/DegradationSequenceRuleDefinition.hpp"
+#include "game/minigame/GrantPermissionsRuleDefinition.hpp"
 #include "game/minigame/KillboxRuleDefinition.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
+#include "game/minigame/PowerupRuleDefinition.hpp"
 #include "game/minigame/ScoreRingRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/minigame/ActiveViewAreaRuleDefinition.hpp"
+#include "game/minigame/ThermalAreaRuleDefinition.hpp"
 #include "game/world/OnInitialiseWorld.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockLayerRuleDefinition.hpp"
 #include "game/world/chunk/ActiveChunkAreaRuleDefinition.hpp"
+#include "game/world/generation/LayerGenerationRuleDefinition.hpp"
 #include "game/world/generation/PlayerBoundsVolumeRuleDefinition.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/util/AABB.hpp"
@@ -284,7 +289,7 @@ void LevelRuleset::getNamedAreas(int areaType, std::vector<AABB*>* areas)
 {
     for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
     {
-        if ((static_cast<int>((*it)->getActionType()) & areaType) == areaType)
+        if (((*it)->mDataTag & areaType) == areaType)
         {
             areas->push_back((*it)->getArea());
         }
@@ -546,7 +551,7 @@ void LevelRuleset::WriteRulesetXMLData()
 
     xml += "</LevelRules>\n";
 
-    std::wstring path = CMinecraftApp::sInstance.GetDebugRootPath() + L"LevelRules.xml";
+    std::wstring path = g_pApp->GetDebugRootPath() + L"LevelRules.xml";
     char fileName[256];
     int file = CreateFileA(wstringtofilename(path, fileName), 0x40000000, 0, NULL, 2, 0x10000000, 0);
     if (file == -1)

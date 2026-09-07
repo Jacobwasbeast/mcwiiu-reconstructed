@@ -56,9 +56,10 @@ class LevelGenerationOptions;
 class LevelType;
 class LevelSource;
 class BiomeSource;
-class Village;
+class Villages;
 class Explosion;
 class Scoreboard;
+class TickNextTickData;
 
 class Level : public LevelSource
 {
@@ -115,6 +116,7 @@ public:
     bool reallyHasChunksAt(const BlockPos& from, const BlockPos& to);
     bool reallyHasChunksAt(const BlockPos& pos, int radius);
     bool hasChunksAt(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, bool allowEmpty);
+    virtual bool hasChunk(int chunkX, int chunkZ, bool allowEmpty) = 0;
     LevelChunk* getChunkAt(int x, int z);
     LevelChunk* getChunkLoadedOrUnloadedAt(int x, int z);
     bool isChunkGeneratedAt(int chunkX, int chunkZ);
@@ -129,7 +131,8 @@ public:
     int getBlockingCached(unsigned int* cache, LightLayer::variety layer, Block* block, Block* extraBlock, const BlockPos& pos);
     void initCachePartial(unsigned int* cache, int x, int y, int z);
     void initCacheComplete(unsigned int* cache, int x, int y, int z);
-    void setBrightnessCached(unsigned int* cache, unsigned long long* dirty, LightLayer::variety layer, const BlockPos& pos, int brightness);
+    void setBrightnessCached(unsigned int* cache, unsigned long long* dirty, LightLayer::variety layer,
+                             int x, int y, int z, int brightness);
     void setBlocksDirty(const BlockPos& from, const BlockPos& to);
     void flushCache(unsigned int* cache, unsigned long long dirty, LightLayer::variety layer);
     bool checkLight(LightLayer::variety layer, const BlockPos& pos, bool onlyLoadedChunks, bool skipCentre);
@@ -312,7 +315,7 @@ public:
     bool canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool allowExisting, int* depth);
     bool tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool allowExisting);
     void tickPendingTicks(bool runAll);
-    void fetchTicksInChunk(LevelChunk* chunk, bool runAll);
+    virtual std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* chunk, bool runAll);
     void fetchTicksInArea(BoundingBox* box, bool runAll);
     std::vector<boost::shared_ptr<Player> >* getPlayers(unsigned long long flags,
                                                         const Predicate<boost::shared_ptr<Player> >* predicate);
@@ -365,7 +368,7 @@ public:
     void createFireworks(double x, double y, double z, double vx, double vy, double vz, CompoundTag* tag);
     virtual Scoreboard* GetScoreboard() = 0;
     void updateNeighbourForOutputSignal(const BlockPos& pos, Block* block);
-    boost::shared_ptr<Village> getVillages();
+    boost::shared_ptr<Villages> getVillages();
     double getSpecialMultiplier(int type);
     void sendPacketToServer(boost::shared_ptr<Packet> packet);
     void* getLootTables();
@@ -442,7 +445,7 @@ private:
 public:
     Dimension* mDimension;
 private:
-    LevelChunk* mChunkSource;
+    ChunkSource* mChunkSource;
 public:
     Random* mRandom;
 private:
@@ -453,7 +456,7 @@ private:
     OSFastMutex mEntityMutex;
     OSFastMutex mBlockEntityMutex;
     OSFastMutex mLightMutex;
-    boost::shared_ptr<Village> mVillages;
+    boost::shared_ptr<Villages> mVillages;
     std::vector<boost::shared_ptr<Entity> > mEntities;
     std::vector<boost::shared_ptr<Entity> > mEntitiesToRemove;
     std::vector<boost::shared_ptr<Entity> > mGlobalEntities;
@@ -464,6 +467,8 @@ private:
     std::vector<boost::shared_ptr<Player> > mPlayers;
     std::vector<LevelListener*> mListeners;
     std::vector<AABB*> mCollisionBoxes;
+    LevelChunk** mChunkCache;
+    int mChunkCacheSize;
     int mSeaLevel;
     int mCloudColour;
     int mSkyDarken;

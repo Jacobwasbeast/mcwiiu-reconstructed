@@ -18,12 +18,12 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
 #include "game/world/generation/LakeFeature.hpp"
+#include "game/world/generation/LargeCaveFeature.hpp"
 #include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/MineShaftFeature.hpp"
 #include "game/world/generation/MonsterRoomFeature.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
 #include "game/world/generation/OceanRuinFeature.hpp"
-#include "game/world/generation/RandomScatteredLargeFeature.hpp"
 #include "game/world/generation/ShipwreckFeature.hpp"
 #include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/StructureFeature.hpp"
@@ -53,7 +53,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
 
     if (generateStructures)
     {
-        mCaves = static_cast<LargeFeature*>(static_cast<void*>(generatorInfo.getCaves()));
+        mCaves = generatorInfo.getCaves();
         mCanyons = generatorInfo.getCanyons();
 
         if (generatorInfo.hasVillage())
@@ -62,7 +62,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
         }
         if (generatorInfo.hasBiomeSpecific())
         {
-            mStructureFeatures[L"Temple"] = generatorInfo.getBiomeSpecific();
+            mStructureFeatures[L"Temple"] = static_cast<StructureFeature*>(static_cast<void*>(generatorInfo.getBiomeSpecific()));
             mStructureFeatures[L"Ocean_Ruin"] = new OceanRuinFeature(config);
         }
         if (generatorInfo.hasMineshaft())
@@ -276,8 +276,9 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
     g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
-void FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
+bool FlatLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
 {
+    return false;
 }
 
 std::vector<Biome::MobSpawnerData*> FlatLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)

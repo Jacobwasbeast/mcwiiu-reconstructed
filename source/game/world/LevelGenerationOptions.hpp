@@ -132,6 +132,7 @@ public:
 
 private:
     friend class LevelRules;
+    friend class TextureThemeRuleDefinition;
 
     eSrc mSource;
     GameRulesSource* mGameRulesSource;

@@ -11,7 +11,7 @@ public:
     virtual void init();
     virtual Vec3* getFogColor(float celestialAngle, float timeOfDay);
     virtual void updateLightRamp();
-    virtual LevelSource* createRandomLevelGenerator() const;
+    virtual ChunkGenerator* createRandomLevelGenerator() const;
     virtual bool isNaturalDimension();
     virtual bool isValidSpawn(int x, int z) const;
     virtual double getTimeOfDay(long long time, float partialTick) const;

@@ -7,13 +7,14 @@
 #include "game/core/PerlinNoise.hpp"
 #include "game/core/SimplexNoise.hpp"
 #include "game/util/Random.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
-#include "game/world/generation/Feature.hpp"
 
 class Biome;
 class ChunkPrimer;
+class EndCityFeature;
+class EndIslandFeature;
 class Level;
 class LevelChunk;
 class MobCategory;
@@ -27,16 +28,20 @@ public:
     double fjIslandProximity(int x, int z);
     bool fjIslandCheck(int x, int z);
     double getIslandHeightValue(int x, int z, int xOffset, int zOffset);
-    arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z, int xSize, int ySize, int zSize);
-    virtual void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
+    arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z,
+                                       int xSize, int ySize, int zSize);
+    void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
     void buildSurfaces(ChunkPrimer* primer);
     virtual LevelChunk* createChunk(int chunkX, int chunkZ);
     virtual void postProcess(int chunkX, int chunkZ);
-    virtual void postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
-    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
-    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool findUnexplored);
-    virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
+    virtual bool postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category,
+                                                           const BlockPos& pos);
+    virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature,
+                                             const BlockPos& pos, bool findUnexplored);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ);
+    virtual bool isPosInFeature(Level* level, const std::wstring& feature,
+                                const BlockPos& pos);
     bool isIslandChunk(int x, int z);
 
 private:
@@ -51,10 +56,10 @@ private:
     Level* mLevel;
     bool mGenerateStructures;
     BlockPos mOrigin;
-    void* mEndCityFeature;
+    EndCityFeature* mEndCityFeature;
     SimplexNoise* mIslandNoise;
-    arrayWithLength<double> mNoiseField;
     arrayWithLength<Biome*> mBiomes;
+    EndIslandFeature* mEndIslandFeature;
 };
 
 #endif
