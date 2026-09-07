@@ -34,7 +34,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
     {
         Position* position = DispenserBlock::getDispensePosition(blockSource);
         const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
-        not_null_ptr<ItemInstance> projectileItem(new ItemInstance(itemInstance->split(1)));
+        not_null_ptr<ItemInstance> projectileItem = itemInstance->split(1);
         boost::shared_ptr<Projectile> projectile = getProjectile(level, position, projectileItem);
         const Vec3i normal = direction->getNormal();
 

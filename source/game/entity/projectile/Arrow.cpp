@@ -135,7 +135,8 @@ void Arrow::onHitEntity(const HitResult* result)
         {
             EnchantmentHelper::doPostHurtEffects(
                 boost::static_pointer_cast<LivingEntity>(result->mEntity), mOwner);
-            EnchantmentHelper::doPostDamageEffects(mOwner, result->mEntity);
+            EnchantmentHelper::doPostDamageEffects(
+                boost::static_pointer_cast<LivingEntity>(mOwner), result->mEntity);
         }
     }
 
