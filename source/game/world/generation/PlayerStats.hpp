@@ -15,6 +15,7 @@
 class CheckpointRuleDefinition;
 class ContainerInfo;
 class DamageEvent;
+class DamageSourceMedal;
 class GameMedal;
 class Item;
 
@@ -178,6 +179,8 @@ public:
     StatTracker<int>* mSniper;
 
 private:
+    friend class DamageSourceMedal;
+
     UntypedStatTracker* mDamageTakenBySource[15];
     UntypedStatTracker* mWeaponDamage[2];
     UntypedStatTracker* mDeadshot;

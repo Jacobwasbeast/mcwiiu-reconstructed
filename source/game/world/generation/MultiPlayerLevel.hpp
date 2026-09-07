@@ -106,6 +106,8 @@ public:
     void tickAllConnections();
 
 private:
+    friend class Minecraft;
+
     typedef boost::unordered_map<int, boost::shared_ptr<Entity> > EntityMap;
     typedef boost::unordered_set<boost::shared_ptr<Entity> > EntitySet;
 

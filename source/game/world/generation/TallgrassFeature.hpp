@@ -2,15 +2,7 @@
 #define GAME_WORLD_GENERATION_TALLGRASSFEATURE_HPP
 
 #include "game/world/generation/Feature.hpp"
-
-template <class T> class EnumProperty;
-
-class TallGrassBlock
-{
-public:
-    class Variant;
-    static EnumProperty<Variant*>* VARIANT;
-};
+#include "game/world/block/TallGrassBlock.hpp"
 
 class BlockState;
 

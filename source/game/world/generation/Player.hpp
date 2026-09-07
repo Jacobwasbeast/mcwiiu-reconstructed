@@ -136,13 +136,8 @@ struct Player : LivingEntity {
     double mChasingPosX;
     double mChasingPosY;
     double mChasingPosZ;
-    uint8_t mPadding0x6a0[4];
-    int16_t mField0x6a4;
-    uint8_t mPadding0x6a6[10];
-    int32_t mField0x6b0;
-    int32_t mField0x6b4;
-    int32_t mField0x6b8;
-    int32_t mField0x6bc;
+    std::wstring mDisplayName;
+    uint8_t mPadding0x6bc[4];
     uint8_t mField0x6c0;
     uint8_t mPadding0x6c1[3];
     BlockPos* mField0x6c4;
@@ -192,7 +187,8 @@ struct Player : LivingEntity {
     StatsUID mSuid;
     uint8_t mPadding0x7c0[4];
     bool mShowOnMaps;
-    uint8_t mPadding0x7c5[19];
+    bool mIsGuest;
+    uint8_t mPadding0x7c6[18];
     uint32_t mField0x7d8;
     int32_t mField0x7dc;
     int32_t mField0x7e0;

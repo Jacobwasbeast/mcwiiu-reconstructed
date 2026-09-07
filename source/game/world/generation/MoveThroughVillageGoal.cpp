@@ -7,24 +7,13 @@
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class Level
-{
-public:
-    bool isDay();
-    boost::shared_ptr<Villages> getVillages();
-};
-
-class PathfinderMob : public Entity
-{
-public:
-    PathNavigation* getNavigation();
-};
 
 MoveThroughVillageGoal::MoveThroughVillageGoal(PathfinderMob* mob, double speedModifier, bool onlyAtNight)
     : Goal(),

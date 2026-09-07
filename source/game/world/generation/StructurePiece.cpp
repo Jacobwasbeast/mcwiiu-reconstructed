@@ -14,6 +14,7 @@
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/LevelStorage.hpp"
 #include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -24,9 +25,11 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/ChestBlock.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 #include "game/world/block/DispenserBlockEntity.hpp"
 #include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/RandomizableLockableContainerBlockEntity.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
@@ -623,7 +626,7 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
     level->setBlock(pos, state, 2, false);
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity && blockEntity->GetType() == BLOCK_ENTITY_TYPE_CHEST)
+    if (blockEntity && blockEntity->GetType() == 0x01E00201ULL)
     {
         boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
         chest->setLootTable(lootTable, random.nextLong());
@@ -643,11 +646,12 @@ bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& ran
 
     TypedBoxed<const Direction*> facingValue(facing);
     placeBlock(level,
-        Block::byId(23)->defaultBlockState()->setBoxedValue(DispenserBlock::FACING, &facingValue),
+        Block::byId(23)->defaultBlockState()->setBoxedValue(
+            static_cast<const Property*>(DispenserBlock::FACING), &facingValue),
         x, y, z, box);
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if ((blockEntity->GetType() & BLOCK_ENTITY_TYPE_DISPENSER) == BLOCK_ENTITY_TYPE_DISPENSER)
+    if ((blockEntity->GetType() & 0x03C00200ULL) == 0x03C00200ULL)
     {
         boost::shared_ptr<DispenserBlockEntity> dispenser =
             boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
@@ -749,14 +753,16 @@ void StructurePiece::createDoor(Level* level, BoundingBox* box, Random& random, 
     const Direction* facing, DoorBlock* door)
 {
     TypedBoxed<const Direction*> lowerFacingValue(facing);
-    placeBlock(level, door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &lowerFacingValue),
+    placeBlock(level, door->defaultBlockState()->setBoxedValue(
+        static_cast<const Property*>(DoorBlock::FACING), &lowerFacingValue),
         x, y, z, box);
 
     TypedBoxed<const Direction*> upperFacingValue(facing);
-    TypedBoxed<DoorBlock::DoorHalf*> upperHalfValue(DoorBlock::DoorHalf::UPPER);
+    TypedBoxed<DoorBlock::DoorHalf*> upperHalfValue(DoorBlock::UPPER);
     placeBlock(level,
-        door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &upperFacingValue)
-            ->setBoxedValue(DoorBlock::HALF, &upperHalfValue),
+        door->defaultBlockState()->setBoxedValue(
+            static_cast<const Property*>(DoorBlock::FACING), &upperFacingValue)
+            ->setBoxedValue(static_cast<const Property*>(DoorBlock::HALF), &upperHalfValue),
         x, y + 1, z, box);
 }
 

@@ -27,10 +27,14 @@
 
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex)
     : AbstractClientPlayer(level, user != 0 ? user->name : std::wstring()),
-      mPacketListener(0), mPermissionLevel(0), mMinecraft(minecraft), mSprinting(false),
-      mHandsBusy(false), mAutoJumpEnabled(true), mAutoJumpTime(0), mButtonsDown(0),
-      mThirdPersonView(0), mGameMode(0), mUserIndex(-1), mViewBob(), mViewBobPrev(),
-      mViewBobAmount(), mDamageTaken(0.0f), mWaitingForScoreboard(false),
+      mPacketListener(0), mPermissionLevel(0), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
+      mSprinting(false),
+      mHandsBusy(false), mAutoJumpEnabled(true), mAutoJumpTime(0), mViewport(0), mButtonsDown(0),
+      mButtonsPressed(0), mMoveInputX(0), mMoveInputY(0), mLookInputX(0), mLookInputY(0),
+      mReserved0x928(0), mReserved0x92c(0), mDestroyTicks(0), mLastAttackTick(0),
+      mLastUseTick(0), mThirdPersonView(0), mGameMode(0), mDRCTouching(false), mUserIndex(-1),
+      mViewBob(), mViewBobPrev(), mViewBobAmount(), mCreativeRepeatState(0), mDamageTaken(0.0f),
+      mHasOpenedInventory(true), mWaitingForScoreboard(false),
       mSessionTimer(0.0), mAdditionalModelParts(), mPercentageTraversed(0.0),
       mDamageNearbyMobs(false)
 {

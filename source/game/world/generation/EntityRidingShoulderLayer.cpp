@@ -10,6 +10,9 @@
 #include "game/client/render/TexturePack.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
 
 EntityRidingShoulderLayer::DataContainer::DataContainer(std::wstring nameValue,
                                                          LivingEntityRenderer* rendererValue,

@@ -3,10 +3,13 @@
 #include <string>
 #include <vector>
 
+#include "game/core/LayerSize.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
+#include "game/world/generation/LayerShape.hpp"
+#include "game/world/generation/LayerTheme.hpp"
 
 template <typename T>
 std::wstring toString(T value);
@@ -106,3 +109,10 @@ bool FilterRuleDefinition<T>::CanUse(const LayerMetadata& metadata) const
 
     return canUse;
 }
+
+template FilterRuleDefinition<LayerShape*>::FilterRuleDefinition(
+    FilterRuleDefinition<LayerShape*>::CreateChildFunc);
+template FilterRuleDefinition<LayerSize*>::FilterRuleDefinition(
+    FilterRuleDefinition<LayerSize*>::CreateChildFunc);
+template FilterRuleDefinition<LayerTheme*>::FilterRuleDefinition(
+    FilterRuleDefinition<LayerTheme*>::CreateChildFunc);

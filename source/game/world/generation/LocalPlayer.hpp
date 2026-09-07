@@ -16,6 +16,7 @@
 class Minecraft;
 class Level;
 class User;
+class Input;
 class DamageSource;
 class GameType;
 class InteractionObject;
@@ -159,29 +160,48 @@ public:
     int getTicksInWater();
 
 private:
+    friend class Minecraft;
+
     unsigned char mReserved0x850[0x28];
     ClientPacketListener* mPacketListener;
     int mPermissionLevel;
     unsigned char mReserved0x880[0x30];
-    unsigned int mReserved0x8b0;
+    Input* mInput;
     Minecraft* mMinecraft;
-    unsigned char mReserved0x8b8[0x10];
+    unsigned char mReserved0x8b8[0xc];
+    unsigned int mIdleTicks;
+    unsigned char mReserved0x8c8[4];
     int mSprinting;
     unsigned char mReserved0x8cc[0x34];
     bool mHandsBusy;
     bool mAutoJumpEnabled;
     unsigned char mReserved0x902[2];
     int mAutoJumpTime;
-    unsigned char mReserved0x908[8];
+public:
+    int mViewport;
+
+private:
+    unsigned char mReserved0x90c[4];
 
 public:
     int mButtonsDown;
 
 private:
-    unsigned char mReserved0x914[0x2c];
+    unsigned int mButtonsPressed;
+    unsigned int mMoveInputX;
+    unsigned int mMoveInputY;
+    unsigned int mLookInputX;
+    unsigned int mLookInputY;
+    unsigned int mReserved0x928;
+    unsigned int mReserved0x92c;
+    int mDestroyTicks;
+    int mLastAttackTick;
+    int mLastUseTick;
+    unsigned char mReserved0x93c[4];
     int mThirdPersonView;
     int mGameMode;
-    unsigned char mReserved0x948[0x18];
+    bool mDRCTouching;
+    unsigned char mReserved0x949[0x17];
 
 public:
     int mUserIndex;
@@ -191,9 +211,11 @@ private:
     SmoothFloat mViewBob;
     SmoothFloat mViewBobPrev;
     SmoothFloat mViewBobAmount;
-    unsigned char mReserved0x98c[0x2c];
+    unsigned char mReserved0x98c[0x1c];
+    int mCreativeRepeatState;
+    unsigned char mReserved0x9ac[0xc];
     float mDamageTaken;
-    unsigned char mReserved0x9bc;
+    bool mHasOpenedInventory;
     bool mWaitingForScoreboard;
     unsigned char mReserved0x9be[2];
     double mSessionTimer;

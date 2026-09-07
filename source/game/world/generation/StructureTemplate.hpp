@@ -24,6 +24,8 @@ class StructurePlaceSettings;
 class StructureProcessor;
 class Vec3;
 
+unsigned int hash_value(const BlockPos& pos);
+
 class StructureTemplate
 {
 public:

@@ -138,7 +138,7 @@ void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originC
     const float yaw = random.nextFloat() * 6.2831855F;
     const float pitch = (random.nextFloat() - 0.5F) * 0.25F;
     addTunnel(level, random.nextLong(), chunkX, chunkZ, primer, x, y, z, width, yaw, pitch, originChunkX, originChunkZ, 1.0);
-    g_pApp->AddTerrainFeaturePosition(4, (int)(x * 0.0625), (int)(y * 0.0625));
+    g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)4, (int)(x * 0.0625), (int)(y * 0.0625));
 }
 
 CanyonFeature::~CanyonFeature()

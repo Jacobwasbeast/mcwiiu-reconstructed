@@ -22,9 +22,9 @@ MultiplayerLocalPlayer::~MultiplayerLocalPlayer()
     m_bounceHeight = 0;
 }
 
-Level* MultiplayerLocalPlayer::GetLevel()
+MultiPlayerLevel* MultiplayerLocalPlayer::GetLevel()
 {
-    return mLevel;
+    return dynamic_cast<MultiPlayerLevel*>(mLevel);
 }
 
 bool MultiplayerLocalPlayer::hurt(const DamageSource* source, float damage)

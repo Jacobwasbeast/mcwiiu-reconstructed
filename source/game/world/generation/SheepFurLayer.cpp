@@ -31,7 +31,7 @@ void SheepFurLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSw
     {
         mRenderer->bindTexture(&SHEEP_FUR_LOCATION);
         mRenderer->setColourState(sheep, partialTicks);
-        mRenderer->mFurModel->copyPropertiesFrom(mRenderer->getModel());
+        mRenderer->mFurModel->copyPropertiesFrom(mRenderer->getModel(entity));
 
         boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
         mRenderer->mFurModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,

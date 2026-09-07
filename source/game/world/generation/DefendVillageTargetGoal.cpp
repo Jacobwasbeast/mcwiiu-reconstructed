@@ -4,9 +4,8 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/generation/Village.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
-
-class Village;
 
 DefendVillageTargetGoal::DefendVillageTargetGoal(VillagerGolem* golem)
     : TargetGoal(golem, false, true)

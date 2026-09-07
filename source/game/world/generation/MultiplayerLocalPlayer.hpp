@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
 class ClientPacketListener;
@@ -19,7 +20,7 @@ public:
     MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener);
     virtual ~MultiplayerLocalPlayer();
 
-    virtual Level* GetLevel();
+    virtual MultiPlayerLevel* GetLevel();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual void heal(float amount);
     virtual void tick();

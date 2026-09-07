@@ -15,6 +15,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Villager.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<bool>* ZombieVillager::DATA_CONVERTING_ID = NULL;
 const EntityDataAccessor<int>* ZombieVillager::DATA_PROFESSION_ID = NULL;
@@ -190,7 +191,7 @@ void ZombieVillager::finishConversion()
     villager->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(villager)), NULL, false, std::wstring(L""));
     villager->setRewardPlayersInVillage();
     if (isBaby())
-        villager->setBaby(true);
+        villager->setAge(-24000);
     villager->setNoAi(isNoAi());
     if (hasCustomName())
     {
@@ -200,7 +201,7 @@ void ZombieVillager::finishConversion()
     mLevel->addEntity(villager);
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mConversionPlayer);
     if (player && player->GetType() == 0x0C800001ULL)
-        player->awardStat(GenericStats::zombieDoctor());
+        player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
     villager->addEffect(new MobEffectInstance(MobEffects::CONFUSION, 200, 0), boost::shared_ptr<Entity>());
     mLevel->levelEvent(boost::shared_ptr<Player>(), 0x403, BlockPos(mX, mY, mZ), 0);
 }

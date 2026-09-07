@@ -78,6 +78,7 @@ bool Player::PreventsMeFromSleeping::apply(boost::shared_ptr<Entity> entity) con
 Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities(), mField0x738(NULL), m_0x784(0), m_0x798(0), mSuid(StatsUID::EMPTY_SUID())
 {
     mName = name;
+    mIsGuest = false;
 }
 
 StatsUID Player::getSUID()
@@ -1192,7 +1193,7 @@ void Player::giveExperienceLevels(int32_t levels)
 void Player::setXuid(PlayerUID xuid)
 {
     m_0x784 = xuid;
-    if ((xuid.flags & 0x20000000) != 0 || mPadding0x7c5[0] != 0) setName(xuid.toString());
+    if ((xuid.flags & 0x20000000) != 0 || mIsGuest) setName(xuid.toString());
 }
 
 Scoreboard* Player::GetScoreboard()

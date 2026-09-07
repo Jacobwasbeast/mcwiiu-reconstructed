@@ -126,12 +126,12 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
     push_back(startPiece);
     startPiece->addChildren(startPiece, this, random);
 
-    while (!startPiece->mPendingPieces.empty())
+    while (!startPiece->mPendingChildren.empty())
     {
-        std::vector<StructurePiece*>::iterator it = startPiece->mPendingPieces.begin();
-        std::advance(it, random.nextInt((int)startPiece->mPendingPieces.size()));
+        std::vector<StructurePiece*>::iterator it = startPiece->mPendingChildren.begin();
+        std::advance(it, random.nextInt((int)startPiece->mPendingChildren.size()));
         StructurePiece* piece = *it;
-        startPiece->mPendingPieces.erase(it);
+        startPiece->mPendingChildren.erase(it);
         piece->addChildren(piece, this, random);
     }
 

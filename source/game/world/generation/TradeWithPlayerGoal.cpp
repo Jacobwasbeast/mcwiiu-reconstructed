@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/generation/Villager.hpp"
 
 class Player;
@@ -38,7 +39,7 @@ bool TradeWithPlayerGoal::canUse()
     {
         return false;
     }
-    if (mVillager->distanceToSqr(tradingPlayer) > 16.0)
+    if (mVillager->distanceToSqr(boost::static_pointer_cast<Entity>(tradingPlayer)) > 16.0)
     {
         return false;
     }
