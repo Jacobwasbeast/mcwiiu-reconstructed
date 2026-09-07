@@ -13,9 +13,12 @@ class ItemRenderer;
 class Minecraft;
 class Random;
 class ThermalAreaRuleDefinition;
+class UIComponent_Chat;
 
 class Gui : public GuiComponent
 {
+    friend class UIComponent_Chat;
+
 public:
     explicit Gui(Minecraft* minecraft);
 

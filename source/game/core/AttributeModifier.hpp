@@ -43,7 +43,7 @@ public:
     int getOperation();
     double getAmount();
     bool isSerializable();
-    void setSerialize(bool serialize);
+    AttributeModifier* setSerialize(bool serialize);
 
     bool equals(AttributeModifier* other);
     std::wstring toString();

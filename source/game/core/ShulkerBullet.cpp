@@ -81,11 +81,6 @@ void ShulkerBullet::setMoveDirection(const Direction* direction)
     mMoveDirection = direction;
 }
 
-const Direction* ShulkerBullet::getMoveDirection()
-{
-    return mMoveDirection;
-}
-
 void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
 {
     BlockPos current(this);

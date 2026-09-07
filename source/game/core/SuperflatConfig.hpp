@@ -3,46 +3,45 @@
 
 #include <string>
 #include <vector>
-#include <map>
+
+#include <boost/unordered_map.hpp>
 
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
 #include "game/core/DefaultPresets.hpp"
 
 class ByteArrayTag;
-class DataFixerUpper;
+
 class SuperflatConfig
 {
 public:
     SuperflatConfig();
     ~SuperflatConfig();
-    bool hasParam(unsigned char parameter) const;
+    bool hasParam(unsigned char parameter);
     SuperflatConfig* setDisplayname(const std::wstring& name);
-    bool hasOption(unsigned char parameter, unsigned char option) const;
+    bool hasOption(unsigned char parameter, unsigned char option);
     void addParam(unsigned char parameter);
     void setOption(unsigned char parameter, unsigned char option, unsigned char value);
     void removeParam(unsigned char parameter);
     void updateLayers();
     void clear();
-    std::wstring getDisplayname() const;
+    std::wstring getDisplayname();
     void setVersion(unsigned char version);
-    unsigned char getOption(unsigned char parameter, unsigned char option) const;
-    unsigned int maybeOption(unsigned char parameter, unsigned char option, unsigned char fallback) const;
-    arrayWithLength<unsigned char> toBlob() const;
+    unsigned char getOption(unsigned char parameter, unsigned char option);
+    unsigned int maybeOption(unsigned char parameter, unsigned char option, unsigned char fallback);
+    arrayWithLength<unsigned char> toBlob();
     void fromBlob(arrayWithLength<unsigned char> data);
-    ByteArrayTag* toTag() const;
+    ByteArrayTag* toTag();
     void fromTag(ByteArrayTag* tag);
     SuperflatConfig* makeDefaults();
     SuperflatConfig* makePreset(DefaultPresets::Preset preset);
-    unsigned char getVersion() const;
+    unsigned char getVersion();
     SuperflatConfig* makeDebug();
 
-    std::vector<FlatLayerInfo> layers;
-
-private:
-    unsigned char mVersion;
     std::wstring mDisplayname;
-    std::map<unsigned char, std::map<unsigned char, unsigned char> > mOptions;
+    unsigned char mVersion;
+    std::vector<FlatLayerInfo> layers;
+    boost::unordered_map<unsigned char, boost::unordered_map<unsigned char, unsigned char> > mOptions;
 };
 
 #endif

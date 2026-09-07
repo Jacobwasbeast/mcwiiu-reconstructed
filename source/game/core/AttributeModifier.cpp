@@ -3,7 +3,6 @@
 #include "game/world/generation/Player.hpp"
 
 #include <wchar.h>
-#include <sstream>
 
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/core/L10N.hpp"
@@ -65,14 +64,10 @@ bool AttributeModifier::isSerializable()
     return serialize;
 }
 
-std::wstring AttributeModifier::getName()
-{
-    return name;
-}
-
-void AttributeModifier::setSerialize(bool serialize)
+AttributeModifier* AttributeModifier::setSerialize(bool serialize)
 {
     this->serialize = serialize;
+    return this;
 }
 
 bool AttributeModifier::equals(AttributeModifier* other)
@@ -83,16 +78,6 @@ bool AttributeModifier::equals(AttributeModifier* other)
     }
 
     return true;
-}
-
-std::wstring AttributeModifier::toString()
-{
-    std::wstringstream stream;
-    stream << L"AttributeModifier{amount=" << amount
-           << L", operation=" << operation
-           << L", name='" << name
-           << L"', id=" << id << L"}";
-    return stream.str();
 }
 
 HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player)

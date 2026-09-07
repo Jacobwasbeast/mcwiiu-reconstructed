@@ -9,7 +9,9 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/Mth.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/generation/TerracottaLayerTheme.hpp"
 
 void* XMemCpy(void* destination, const void* source, unsigned int size);
 
@@ -531,6 +533,64 @@ static const wchar_t* const COLOUR_NAMES[ColourTable::NUM_COLOURS] =
 static ColourNameMap sColourIndicesByName;
 static BiomeColourInfoMap sBiomeColourInfo;
 static const std::wstring DEFAULT_BIOME_NAME = L"default";
+
+Block* getColour(unsigned char colour)
+{
+    static Block* colours[16];
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        colours[0] = Blocks::white_glazed_terracotta;
+        colours[1] = Blocks::orange_glazed_terracotta;
+        colours[2] = Blocks::magenta_glazed_terracotta;
+        colours[3] = Blocks::light_blue_glazed_terracotta;
+        colours[4] = Blocks::yellow_glazed_terracotta;
+        colours[5] = Blocks::lime_glazed_terracotta;
+        colours[6] = Blocks::pink_glazed_terracotta;
+        colours[7] = Blocks::gray_glazed_terracotta;
+        colours[8] = Blocks::silver_glazed_terracotta;
+        colours[9] = Blocks::cyan_glazed_terracotta;
+        colours[10] = Blocks::purple_glazed_terracotta;
+        colours[11] = Blocks::blue_glazed_terracotta;
+        colours[12] = Blocks::brown_glazed_terracotta;
+        colours[13] = Blocks::green_glazed_terracotta;
+        colours[14] = Blocks::red_glazed_terracotta;
+        colours[15] = Blocks::black_glazed_terracotta;
+        initialized = true;
+    }
+
+    return colours[colour & 0xf];
+}
+
+TerracottaLayerThemeFunction getColourFunc(const std::wstring& function)
+{
+    if (function.compare(0, function.size(), L"CONCENTRIC_RINGS", wcslen(L"CONCENTRIC_RINGS")) == 0)
+    {
+        return reinterpret_cast<TerracottaLayerThemeFunction>(&TerracottaLayerTheme::CONCENTRIC_RINGS);
+    }
+    if (function.compare(0, function.size(), L"OFFSET_RINGS", wcslen(L"OFFSET_RINGS")) == 0)
+    {
+        return reinterpret_cast<TerracottaLayerThemeFunction>(&TerracottaLayerTheme::OFFSET_RINGS);
+    }
+    if (function.compare(0, function.size(), L"HASHED", wcslen(L"HASHED")) == 0)
+    {
+        return reinterpret_cast<TerracottaLayerThemeFunction>(&TerracottaLayerTheme::HASHED);
+    }
+    if (function.compare(0, function.size(), L"TARTAN", wcslen(L"TARTAN")) == 0)
+    {
+        return &TerracottaLayerTheme::TARTAN;
+    }
+    if (function.compare(0, function.size(), L"UNIFORM", wcslen(L"UNIFORM")) == 0)
+    {
+        return reinterpret_cast<TerracottaLayerThemeFunction>(&TerracottaLayerTheme::UNIFORM);
+    }
+    if (function.compare(0, function.size(), L"STRIPES", wcslen(L"STRIPES")) == 0)
+    {
+        return reinterpret_cast<TerracottaLayerThemeFunction>(&TerracottaLayerTheme::STRIPES);
+    }
+    return 0;
+}
 
 void ColourTable::staticCtor()
 {

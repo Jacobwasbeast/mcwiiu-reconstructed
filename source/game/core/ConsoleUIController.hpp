@@ -357,4 +357,6 @@ private:
 extern OSFastMutex g_uiCriticalSection;
 extern ConsoleUIController gConsoleUIController;
 
+void PopupToast(void* context, int playerId, int achievementId, int imageId, int value);
+
 #endif

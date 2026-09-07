@@ -1,7 +1,16 @@
 #include "game/core/RoundInfo.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
-void CreateRoundGuid(std::wstring& guid);
+#include <sstream>
+
+void CreateRoundGuid(std::wstring& guid)
+{
+    Random random;
+    std::wostringstream stream;
+    stream << random.nextInt();
+    guid = stream.str();
+}
 
 RoundInfo::RoundInfo()
 {

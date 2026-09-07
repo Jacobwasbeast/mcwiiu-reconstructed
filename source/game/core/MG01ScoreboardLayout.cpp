@@ -42,9 +42,9 @@ unsigned int MG01ScoreboardLayout::getNumberOfColumns()
     return 3;
 }
 
-unsigned long long MG01ScoreboardLayout::getItemForSlot(int, int, const unsigned int&, const EScoreboardType&)
+boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int, int, const unsigned int&, const EScoreboardType&)
 {
-    return 0;
+    return boost::shared_ptr<ItemInstance>();
 }
 
 std::wstring MG01ScoreboardLayout::getLabel2(const StatsUID&)
@@ -160,7 +160,7 @@ unsigned char MG01ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
     return info == 0 ? 1 : static_cast<unsigned char>(info->smallId ^ 1);
 }
 
-unsigned int MG01ScoreboardLayout::showLifeSpanProgress()
+bool MG01ScoreboardLayout::showLifeSpanProgress()
 {
     return 1;
 }

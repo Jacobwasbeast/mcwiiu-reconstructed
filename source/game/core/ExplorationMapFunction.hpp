@@ -23,7 +23,7 @@ public:
     unsigned int getTranslatableName(const std::wstring& destination);
 
 private:
-    std::wstring destination;
+    std::wstring mDestination;
 };
 
 #endif

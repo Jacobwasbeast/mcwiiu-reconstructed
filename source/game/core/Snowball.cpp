@@ -56,8 +56,9 @@ bool Snowball::onHit(const HitResult* result)
         }
 
         boost::shared_ptr<Entity> projectile = shared_from_this();
-        boost::shared_ptr<DamageSource> source = DamageSource::CreateThrown(projectile, result->mEntity);
-        result->mEntity->hurt(source.get(), damage);
+        DamageSource* source = DamageSource::CreateThrown(projectile, result->mEntity);
+        result->mEntity->hurt(source, damage);
+        delete source;
     }
 
     if (!mLevel->mIsClientSide)

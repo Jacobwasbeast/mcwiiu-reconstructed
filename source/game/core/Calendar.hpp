@@ -8,4 +8,7 @@ public:
     static int GetMonth();
 };
 
+int GetYearDays(int year, int month);
+int GetLeapDays(int year);
+
 #endif

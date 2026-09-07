@@ -12,6 +12,7 @@ class BlockPos;
 class BlockState;
 class DamageSource;
 class DataFixerUpper;
+class Direction;
 class Level;
 
 class Silverfish : public Monster
@@ -28,7 +29,7 @@ public:
         virtual std::wstring getName();
 
     private:
-        int mDirection;
+        const Direction* mDirection;
         bool mShouldMerge;
     };
 

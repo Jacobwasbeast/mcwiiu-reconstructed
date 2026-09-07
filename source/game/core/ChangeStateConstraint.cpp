@@ -88,12 +88,12 @@ void ChangeStateConstraint::tick(int playerId)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];
+                    ClientPacketListener* connection = minecraft->getConnection(playerId);
 
-                    if (player && player->mConnection != NULL &&
-                        player->mConnection->getNetworkPlayer() != NULL)
+                    if (player && connection != NULL && connection->getNetworkPlayer() != NULL)
                     {
-                        player->mConnection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
-                            player->mConnection->getNetworkPlayer()->GetSmallId(), -1, privileges,
+                        connection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
+                            connection->getNetworkPlayer()->GetSmallId(), -1, privileges,
                             player->GetGameType()->getId())));
                     }
                 }
@@ -104,7 +104,7 @@ void ChangeStateConstraint::tick(int playerId)
     {
         if (area->contains(minecraft->mLocalPlayers[playerId]->getPos(1.0f)) == insideArea)
         {
-            previousState = tutorial->currentState;
+            previousState = (eTutorial_State)tutorial->currentState;
             stateChanged = true;
             tutorial->changeTutorialState(targetState, NULL);
 
@@ -130,12 +130,12 @@ void ChangeStateConstraint::tick(int playerId)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];
+                    ClientPacketListener* connection = minecraft->getConnection(playerId);
 
-                    if (player && player->mConnection != NULL &&
-                        player->mConnection->getNetworkPlayer() != NULL)
+                    if (player && connection != NULL && connection->getNetworkPlayer() != NULL)
                     {
-                        player->mConnection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
-                            player->mConnection->getNetworkPlayer()->GetSmallId(), -1, privileges,
+                        connection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
+                            connection->getNetworkPlayer()->GetSmallId(), -1, privileges,
                             player->GetGameType()->getId())));
                     }
                 }

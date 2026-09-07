@@ -19,6 +19,7 @@ class LevelGenerationOptions;
 class LevelChunk;
 class Level;
 class CConsoleMinecraftApp;
+class CStorage;
 class LevelGenerators;
 class LevelRules;
 class LevelRuleset;
@@ -35,9 +36,26 @@ class ItemInstance;
 class CommandBlockEntity;
 class Stat;
 class DLCPack;
+class ModelPart;
 struct SKIN_BOX;
 struct MOJJANG_DATA;
-enum eGameHostOption { eGameHostOption_0 = 0 };
+enum eGameHostOption
+{
+    eGameHostOption_0 = 0,
+    eGameHostOption_12 = 0x0c,
+    eGameHostOption_13 = 0x0d,
+    eGameHostOption_14 = 0x0e,
+    eGameHostOption_15 = 0x0f,
+    eGameHostOption_21 = 0x15,
+    eGameHostOption_24 = 0x18,
+    eGameHostOption_25 = 0x19,
+    eGameHostOption_26 = 0x1a,
+    eGameHostOption_27 = 0x1b,
+    eGameHostOption_28 = 0x1c,
+    eGameHostOption_29 = 0x1d,
+    eGameHostOption_30 = 0x1e,
+    eGameHostOption_32 = 0x20
+};
 enum eXuiServerAction { eXuiServerAction_0 = 0 };
 enum eXuiAction { eXuiAction_0 = 0 };
 enum eGameExtraData { eGameExtraData_0 = 0 };
@@ -250,7 +268,7 @@ public:
     std::wstring GetActionReplacement(int32_t firstArgument, uint8_t secondArgument);
     std::wstring GetVKReplacement(int32_t firstArgument, uint32_t secondArgument, bool thirdArgument);
     std::wstring GetIconReplacement(uint32_t firstArgument);
-    void FormatHTMLString(int player, const std::wstring& value, int flags);
+    std::wstring FormatHTMLString(int player, const std::wstring& value, int flags);
     double getAppTime();
     void AddTerrainFeaturePosition(_eTerrainFeatureType type, int x, int z);
     uint32_t GetTerrainFeaturePosition(_eTerrainFeatureType type, int* x, int* z);
@@ -270,7 +288,7 @@ public:
     void CurrentImageTextData(PngTagData* data);
     void ParseImageTextData(const unsigned char* image, unsigned int size, PngTagData* data);
     void GetImageTextData(const unsigned char* image, unsigned int size, PngTagData* data);
-    char* CreateImageTextData(unsigned char* image, const PngTagData* data);
+    unsigned int CreateImageTextData(unsigned char* image, const PngTagData* data);
     void processSchematics(LevelChunk* firstArgument);
     void processSchematicsLighting(LevelChunk* firstArgument);
     void loadDefaultGameRules();
@@ -288,10 +306,10 @@ public:
     uint32_t RetrieveNextDLCContent();
     void SetCorruptSaveDeleted(bool firstArgument);
     uint8_t GetCorruptSaveDeleted();
-    void SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument, int32_t fourthArgument);
-    int32_t SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, int* thirdArgument);
-    uint32_t GetAdditionalModelParts(unsigned int firstArgument);
-    uint32_t GetAdditionalSkinBoxes(uint32_t firstArgument);
+    void SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes, unsigned int count, _SkinAdjustments adjustments);
+    std::vector<ModelPart*>* SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes, _SkinAdjustments adjustments);
+    std::vector<ModelPart*>* GetAdditionalModelParts(unsigned int firstArgument);
+    std::vector<SKIN_BOX*>* GetAdditionalSkinBoxes(unsigned int skinId);
     static unsigned int getSkinIdFromPath(const std::wstring& path);
     static std::wstring getSkinPathFromId(unsigned int id);
     void SetRequiredTexturePackID(uint32_t firstArgument);
@@ -426,4 +444,7 @@ private:
 };
 extern CConsoleMinecraftApp gApp;
 extern CMinecraftApp* g_pApp;
+extern CStorage* gStorage;
+
+uint32_t DeviceFullErrorReturn__FPv(void* context);
 #endif

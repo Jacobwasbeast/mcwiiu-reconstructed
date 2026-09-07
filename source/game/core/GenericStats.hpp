@@ -29,7 +29,10 @@ public:
     virtual void __pure_virtual_called() = 0;
 
     static Stat* openInventory();
-    static Stat* mineBlock();
+    static Stat* mineBlock()
+    {
+        return gStats->get_totalBlocksMined();
+    }
     static Stat* mineWood();
     static Stat* buildWorkbench();
     static Stat* buildPickaxe();

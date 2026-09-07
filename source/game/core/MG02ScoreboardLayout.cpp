@@ -3,6 +3,8 @@
 #include <algorithm>
 
 #include "game/core/StatsUID.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/network/INetworkPlayer.hpp"
 
 MG02ScoreboardLayout::MG02ScoreboardLayout()
@@ -71,23 +73,36 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID&, const E
     return std::wstring(L"---");
 }
 
-uint64_t MG02ScoreboardLayout::getItemForSlot(int column, int row, int slot, const unsigned int& value, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int row, int, const unsigned int& value, const EScoreboardType& type)
 {
-    if (slot < 0)
-        return static_cast<uint64_t>(value);
-    if (type == EScoreboardType_Unknown && slot == 1)
-        return static_cast<uint64_t>(column + row + 3);
-    if (slot == 2)
-        return static_cast<uint64_t>(column + row + 3);
-    return static_cast<uint64_t>(value);
+    return getItemForSlot(column, row, value, type);
 }
 
-uint64_t MG02ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& value, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)
 {
-    return getItemForSlot(column, row, -1, value, type);
+    if (column != -1)
+    {
+        if (type == EScoreboardType_Unknown)
+        {
+            int auxValue = 3;
+            if (column == 1)
+            {
+                if (getNumberOfColumns() > 2)
+                    auxValue = 0;
+            }
+            else if (column != 2)
+            {
+                return ItemInstance::EMPTY;
+            }
+            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, auxValue));
+        }
+        if (getNumberOfColumns() > 2 && column == 1)
+            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
+    }
+    return ItemInstance::EMPTY;
 }
 
-uint32_t MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
     return info == 0 ? 0x6e : (uint32_t)(info->voiceStatus ^ 1);
 }

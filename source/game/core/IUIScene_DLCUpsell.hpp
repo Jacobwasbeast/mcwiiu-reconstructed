@@ -6,8 +6,8 @@
 class IUIScene_DLCUpsell
 {
 public:
-    static uint32_t NotOnlineDialogCallback(void* context, int userIndex,
-                                            C4JStorage::EMessageResult result);
+    static int NotOnlineDialogCallback(void* context, int userIndex,
+                                       C4JStorage::EMessageResult result);
     void ShowNotOnlineDialog(int userIndex);
 };
 

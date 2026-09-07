@@ -40,7 +40,7 @@ public:
     static void DEATH_LOOT();
 
 private:
-    bool mUsingItem;
+    int mUsingTime;
 };
 
 #endif

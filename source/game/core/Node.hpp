@@ -39,23 +39,22 @@ public:
 
 private:
     unsigned int hash;
+
+public:
     int heapIdx;
     float g;
     float h;
     float f;
     Node* cameFrom;
-
-public:
     bool closed;
-
-private:
     float walkedDistance;
     float cost;
     float costMalus;
     const BlockPathTypes* type;
+
+private:
     bool inOpen;
     int searchState;
-
     static unsigned int poolSize;
     static bool usePool;
     static Node pool[1024];

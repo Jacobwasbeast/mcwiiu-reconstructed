@@ -21,7 +21,7 @@ void IScoreboardLayout::ClearPlayersInfo()
     m_players.clear();
 }
 
-uint64_t IScoreboardLayout::getItemForSlot(const wchar_t* value, const unsigned int& slot, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> IScoreboardLayout::getItemForSlot(const wchar_t* value, const unsigned int& slot, const EScoreboardType& type)
 {
     int header = -1;
     int stat = -1;
@@ -30,7 +30,7 @@ uint64_t IScoreboardLayout::getItemForSlot(const wchar_t* value, const unsigned 
         swscanf(value, L"slot_header_%d", &header);
         swscanf(value, L"slot_stat_%d", &stat);
     }
-    return getItemForSlot(header, -1, -1, slot, type);
+    return getItemForSlot(header, stat, slot, type);
 }
 
 const wchar_t* IScoreboardLayout::getIcon(int index)
@@ -139,9 +139,4 @@ uint32_t IScoreboardLayout::getNumberOfColumns()
 std::wstring IScoreboardLayout::GetCustomProgressDetails(const StatsUID&, int&)
 {
     return std::wstring();
-}
-
-PlayerInfo* IScoreboardLayout::getPlayersAt(const unsigned int& index)
-{
-    return GetPlayer(static_cast<int>(index));
 }

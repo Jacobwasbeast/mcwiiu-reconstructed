@@ -4,9 +4,18 @@
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/network/ClientboundGameEventPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayerSelector.hpp"
 
 ElderGuardian::ElderGuardian(Level* level)
     : Guardian(level, false)
@@ -14,6 +23,10 @@ ElderGuardian::ElderGuardian(Level* level)
     fjDerivedCtorCalls();
     setSize(mBbWidth * 2.35f, mBbHeight * 2.35f);
     setPersistenceRequired(true);
+    if (mRandomStrollGoal != NULL)
+    {
+        mRandomStrollGoal->setInterval(400);
+    }
 }
 
 ElderGuardian::~ElderGuardian()
@@ -23,14 +36,14 @@ ElderGuardian::~ElderGuardian()
 void ElderGuardian::registerAttributes()
 {
     Guardian::registerAttributes();
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3F);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(8.0);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(80.0);
 }
 
 void ElderGuardian::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5D54400100000000ULL);
+    Mob::addDataWalkers(fixer, 0x5D544001ULL);
 }
 
 const void* ElderGuardian::getDefaultLootTable()
@@ -45,6 +58,8 @@ unsigned int ElderGuardian::getAttackDuration()
 
 void ElderGuardian::setGhost()
 {
+    mSpikesAnimation = 1.0f;
+    mSpikesAnimationOld = 1.0f;
 }
 
 const SoundEvent* ElderGuardian::getAmbientSound()
@@ -73,6 +88,35 @@ const SoundEvent* ElderGuardian::getFlopSound()
 void ElderGuardian::customServerAiStep()
 {
     Mob::customServerAiStep();
+
+    if ((mTickCount + getId()) % 1200 == 0)
+    {
+        PlayerSelector selector(this);
+        std::vector<boost::shared_ptr<Player> >* players =
+            mLevel->getPlayers(0x0C800001ULL, &selector);
+        for (std::vector<boost::shared_ptr<Player> >::iterator playerIt = players->begin();
+             playerIt != players->end(); ++playerIt)
+        {
+            boost::shared_ptr<ServerPlayer> player =
+                boost::static_pointer_cast<ServerPlayer>(*playerIt);
+            MobEffect* effect = MobEffects::DIG_SLOWDOWN;
+            if (!player->hasEffect(effect) ||
+                player->getEffect(effect)->getAmplifier() < 2 ||
+                player->getEffect(effect)->getDuration() < 1200)
+            {
+                player->mConnection->send(boost::shared_ptr<Packet>(
+                    new ClientboundGameEventPacket(10, 0.25f)));
+                player->addEffect(new MobEffectInstance(effect, 6000, 2),
+                                  boost::shared_ptr<Entity>());
+            }
+        }
+        delete players;
+    }
+
+    if (!hasRestriction())
+    {
+        restrictTo(BlockPos(this), 16);
+    }
 }
 
 void ElderGuardian::create(Level* level)
@@ -82,5 +126,5 @@ void ElderGuardian::create(Level* level)
 
 unsigned long long ElderGuardian::GetType()
 {
-    return 0x5D54400100000000ULL;
+    return 0x5D544001ULL;
 }

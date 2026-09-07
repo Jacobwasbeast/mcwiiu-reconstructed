@@ -18,7 +18,7 @@ public:
     static void create(Level* level);
 
     virtual void registerAttributes();
-    unsigned int getAttackDuration();
+    virtual unsigned int getAttackDuration();
     void setGhost();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);

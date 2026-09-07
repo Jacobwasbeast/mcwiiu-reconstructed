@@ -11,6 +11,7 @@
 #include "game/core/StatsUID.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/GlideRingGenerator.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
 class ClientboundChatPacket;
@@ -19,18 +20,10 @@ class Entity;
 class ItemInstance;
 class ServerPlayer;
 
-namespace GlideRingGenerator
-{
-    enum eGlideRingSize
-    {
-        eGlideRingSize_Small,
-        eGlideRingSize_Medium,
-        eGlideRingSize_Large
-    };
-}
-
 class GameStats
 {
+    friend class CheckpointCommand;
+    friend class NotFastestTimeButWonAnywayCondition;
     typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > StatsMap;
 public:
     GameStats();
@@ -132,8 +125,12 @@ public:
 
 private:
     unsigned int mPlayerCount;
-    unsigned int mRound;
     unsigned int mRoundStartTime;
+    union
+    {
+        unsigned int mRound;
+        unsigned int mCurrentRound;
+    };
     unsigned int mRoundEndTime;
     unsigned int mRoundTime;
     StatsMap mPlayerStats;

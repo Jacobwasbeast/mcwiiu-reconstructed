@@ -1,6 +1,8 @@
 #ifndef GAME_CORE_SENDMULTIPARAMETER_HPP
 #define GAME_CORE_SENDMULTIPARAMETER_HPP
 
+#include <nex.h>
+
 struct sockaddr_in
 {
     unsigned short sin_family;
@@ -8,15 +10,6 @@ struct sockaddr_in
     unsigned int sin_addr;
     unsigned char sin_zero[8];
 };
-
-namespace nn
-{
-    namespace nex
-    {
-        class RootObject;
-        class ForcedCriticalSection;
-    }
-}
 
 class SendMultiParameter : public nn::nex::RootObject
 {

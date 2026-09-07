@@ -267,8 +267,9 @@ void WitherBoss::stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player)
         mBossEvent->removePlayer(player);
 }
 
-void WitherBoss::getPlayerParty()
+std::map<boost::shared_ptr<ServerPlayer>, int>& WitherBoss::getPlayerParty()
 {
+    return mBossEvent->getPartyPlayers();
 }
 
 int WitherBoss::getArmorValue()

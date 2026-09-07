@@ -24,9 +24,9 @@ public:
     virtual uint32_t getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
     virtual uint32_t getNumberOfColumns();
-    virtual uint64_t getItemForSlot(int row, int column, int slot, const unsigned int& value, const EScoreboardType& type);
-    uint64_t getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
-    virtual uint32_t GetEndBarIcon(PlayerInfo* info);
+    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, int slot, const unsigned int& value, const EScoreboardType& type);
+    boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
+    virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual std::wstring GetCustomProgressDetails(const StatsUID& uid, int& value);
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);
     virtual PlayerInfo* CreatePlayerInfo();

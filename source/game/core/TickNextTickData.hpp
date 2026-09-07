@@ -25,9 +25,13 @@ public:
 
 private:
     Block* block;
+
+public:
     BlockPos pos;
     long long triggerTick;
     int priorityTilt;
+
+private:
     long long tickEntryId;
 };
 

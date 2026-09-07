@@ -1,10 +1,14 @@
 #include "game/core/Input.hpp"
 
 #include "platform/wiiu/CInput.hpp"
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/item/PowerupItems.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/util/phys__Vec2.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 Input::Input()
     : mMoveStrafe(0.0f),
@@ -122,8 +126,8 @@ void Input::tick(LocalPlayer* player)
         turnY = -turnY;
     }
 
-    if (gApp.GetFirstMiniGameType() == 3 &&
-        player->CheckPowerup((PowerupItems::eGlide_Timed_Powerup_ID)1))
+    if (gApp.GetFirstMiniGameType() == eMiniGameId_Glide &&
+        player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_1))
     {
         turnX = -turnX;
         turnY = -turnY;
@@ -144,7 +148,6 @@ void Input::tick(LocalPlayer* player)
 
     mJumping = g_pInput->GetValue(playerIndex, 0x20, false) != 0 &&
                gameMode->isInputAllowed(0x20);
-
 }
 
 void Input::getMoveVector()

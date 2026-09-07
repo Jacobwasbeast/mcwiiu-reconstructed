@@ -33,17 +33,17 @@ static const int TROPICAL_FISH_MARK_TEXTURES[2][6] = { { 0xD7,0xD8,0xD9,0xDA,0xD
 
 TropicalFish::TropicalFish(Level* level)
     : Fish(level, true), mLayeredTextureHashName(L"fish_"),
-      mLayeredTextureLayers(new int[2]), mLayeredTextureLayerCount(2)
+      mLayeredTextureLayers(2, true)
 {
-    mLayeredTextureLayers[0] = -1;
-    mLayeredTextureLayers[1] = -1;
+    mLayeredTextureLayers.data[0] = -1;
+    mLayeredTextureLayers.data[1] = -1;
     fjDerivedCtorCalls();
     mWaterValueA = 0.02f;
     mWaterValueB = 0.01f;
     setSize(0.4f, 0.4f);
 }
 
-TropicalFish::~TropicalFish() { delete[] mLayeredTextureLayers; }
+TropicalFish::~TropicalFish() {}
 
 void TropicalFish::create(Level* level) { new TropicalFish(level); }
 
@@ -90,8 +90,8 @@ void TropicalFish::rebuildLayeredTextureInfo()
     int baseVariant = getBaseVariant();
     int markVariant = getMarkVariant();
     mLayeredTextureHashName = L"fish_";
-    mLayeredTextureLayers[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant][0];
-    mLayeredTextureLayers[1] = baseVariant == 0 ? TROPICAL_FISH_MARK_TEXTURES[0][markVariant] : TROPICAL_FISH_MARK_TEXTURES[1][markVariant];
+    mLayeredTextureLayers.data[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant][0];
+    mLayeredTextureLayers.data[1] = baseVariant == 0 ? TROPICAL_FISH_MARK_TEXTURES[0][markVariant] : TROPICAL_FISH_MARK_TEXTURES[1][markVariant];
     mLayeredTextureHashName += baseVariant == 0 ? L"0" : L"1";
     mLayeredTextureHashName += L"_";
     static const wchar_t* markNames[6] = { L"0", L"1", L"2", L"3", L"4", L"5" };
@@ -104,11 +104,10 @@ std::wstring TropicalFish::getLayeredTextureHashName()
     return mLayeredTextureHashName;
 }
 
-unsigned long long TropicalFish::getLayeredTextureLayers()
+arrayWithLength<int> TropicalFish::getLayeredTextureLayers()
 {
     if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
-    return (static_cast<unsigned long long>(mLayeredTextureLayerCount) << 32) |
-           static_cast<unsigned int>((unsigned long)mLayeredTextureLayers);
+    return mLayeredTextureLayers;
 }
 
 void TropicalFish::registerGoals()

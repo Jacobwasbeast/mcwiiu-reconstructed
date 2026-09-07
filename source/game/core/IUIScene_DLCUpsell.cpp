@@ -5,7 +5,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-uint32_t IUIScene_DLCUpsell::NotOnlineDialogCallback(
+int IUIScene_DLCUpsell::NotOnlineDialogCallback(
     void*, int userIndex, C4JStorage::EMessageResult result)
 {
     if (result == C4JStorage::EMessageResult_4)

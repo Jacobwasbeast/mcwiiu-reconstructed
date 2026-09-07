@@ -1,0 +1,15 @@
+#ifndef GAME_CORE_STRINGUTILS_HPP
+#define GAME_CORE_STRINGUTILS_HPP
+
+#include <string>
+
+#include <boost/unordered_map.hpp>
+
+bool BothAreSpaces(wchar_t first, wchar_t second);
+std::wstring toLower(const std::wstring& text);
+std::wstring trimString(const std::wstring& text);
+std::wstring replaceAll(const std::wstring& text, const std::wstring& search, const std::wstring& replacement);
+void makeReplacements(const boost::unordered_map<std::wstring, std::wstring>& replacements, std::wstring& text);
+void toUtf8(const std::wstring& text, char** output, unsigned int& length);
+
+#endif

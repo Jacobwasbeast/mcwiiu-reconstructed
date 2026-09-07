@@ -28,8 +28,8 @@ public:
 
     private:
         Blaze* mBlaze;
-        int mAttackTime;
         int mAttackStep;
+        int mAttackTime;
     };
 
     Blaze(Level* level);
@@ -51,18 +51,16 @@ public:
     virtual bool isCharged();
     virtual bool isOnFire();
     virtual void dropDeathLoot(bool hitByPlayer, int lootingLevel);
-    unsigned long long setCharged(bool charged);
+    void setCharged(bool charged);
     virtual bool isDarkEnoughToSpawn();
     virtual double getFollowDistance();
     virtual unsigned long long GetType();
     static void create(Level* level);
 
-    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
-
 private:
     float mHeightOffset;
     int mHeightOffsetUpdateTime;
-    int mFlameTime;
+    int mUnused;
 };
 
 #endif

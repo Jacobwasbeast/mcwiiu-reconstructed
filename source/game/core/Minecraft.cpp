@@ -5,6 +5,8 @@
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/EntityBlockRenderer.hpp"
@@ -25,6 +27,47 @@
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BossHealthOverlay.hpp"
+#include "game/core/AbstractIllager.hpp"
+#include "game/core/ArmorStand.hpp"
+#include "game/core/BannerPattern.hpp"
+#include "game/core/Bat.hpp"
+#include "game/core/Blaze.hpp"
+#include "game/core/Boat.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/core/Chicken.hpp"
+#include "game/core/CommonStats.hpp"
+#include "game/core/Direction.hpp"
+#include "game/core/DyeColor.hpp"
+#include "game/core/EquipmentSlot.hpp"
+#include "game/core/DefaultVertexFormat.hpp"
+#include "game/core/DispenserBootstrap.hpp"
+#include "game/core/EnderCrystal.hpp"
+#include "game/core/EnderMan.hpp"
+#include "game/core/FaceInfo.hpp"
+#include "game/core/Ghast.hpp"
+#include "game/core/Guardian.hpp"
+#include "game/core/Llama.hpp"
+#include "game/core/Minecart.hpp"
+#include "game/core/Parrot.hpp"
+#include "game/core/Pig.hpp"
+#include "game/core/PolarBear.hpp"
+#include "game/core/PrimedTnt.hpp"
+#include "game/core/Salmon.hpp"
+#include "game/core/SharedConstants.hpp"
+#include "game/core/Sheep.hpp"
+#include "game/core/Shulker.hpp"
+#include "game/core/Slime.hpp"
+#include "game/core/SnowMan.hpp"
+#include "game/core/SpellcasterIllager.hpp"
+#include "game/core/Spider.hpp"
+#include "game/core/ThrownTrident.hpp"
+#include "game/core/TropicalFish.hpp"
+#include "game/core/Turtle.hpp"
+#include "game/core/Vex.hpp"
+#include "game/core/Witch.hpp"
+#include "game/core/WitherBoss.hpp"
+#include "game/core/WitherSkull.hpp"
+#include "game/core/Wolf.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
@@ -95,6 +138,95 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/world/generation/StructureManager.hpp"
+#include "game/entity/mob/AbstractChestedHorse.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/entity/mob/AgableMob.hpp"
+#include "game/entity/mob/Animal.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/FireworksRocketEntity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/MobCategory.hpp"
+#include "game/entity/mob/MobEffect.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/TamableAnimal.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/entity/mob/Zombie.hpp"
+#include "game/network/Packet.hpp"
+#include "game/entity/projectile/AbstractRotatedItemProjectile.hpp"
+#include "game/entity/projectile/FishingHook.hpp"
+#include "game/entity/projectile/TippableArrow.hpp"
+#include "game/item/ArmorItem.hpp"
+#include "game/item/AxeItem.hpp"
+#include "game/item/PickaxeItem.hpp"
+#include "game/item/ShovelItem.hpp"
+#include "game/item/Enchantment.hpp"
+#include "game/item/Enchantments.hpp"
+#include "game/item/FurnaceRecipes.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemIdFix.hpp"
+#include "game/item/ItemPotionFix.hpp"
+#include "game/item/MapExtendingRecipe.hpp"
+#include "game/item/Potion.hpp"
+#include "game/item/PotionBrewing.hpp"
+#include "game/item/Potions.hpp"
+#include "game/item/Recipes.hpp"
+#include "game/item/ThrownPotion.hpp"
+#include "game/ui/InventoryMenu.hpp"
+#include "game/world/biome/Biome.hpp"
+#include "game/world/biome/JungleBiome.hpp"
+#include "game/world/biome/MesaBiome.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/chunk/McRegionChunkStorage.hpp"
+#include "game/world/LevelType.hpp"
+#include "game/world/generation/BirchFeature.hpp"
+#include "game/world/generation/BuriedTreasureFeature.hpp"
+#include "game/world/generation/DesertWellFeature.hpp"
+#include "game/world/generation/MegaPineTreeFeature.hpp"
+#include "game/world/generation/OceanMonumentFeature.hpp"
+#include "game/core/OceanMonumentPieces.hpp"
+#include "game/world/generation/PineFeature.hpp"
+#include "game/world/generation/RandomScatteredLargeFeature.hpp"
+#include "game/world/generation/RoofTreeFeature.hpp"
+#include "game/world/generation/SavannaTreeFeature.hpp"
+#include "game/world/generation/ScatteredFeaturePieces.hpp"
+#include "game/world/generation/SpruceFeature.hpp"
+#include "game/world/generation/StructureFeatureIO.hpp"
+#include "game/world/generation/SwampTreeFeature.hpp"
+#include "game/world/generation/TreeFeature.hpp"
+#include "game/world/generation/VillageFeature.hpp"
+#include "game/world/generation/VillagePieces.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
+#include "game/world/generation/WoodlandMansionFeature.hpp"
+#include "game/world/generation/ZombieVillager.hpp"
+#include "game/core/Creeper.hpp"
+#include "game/core/Ocelot.hpp"
+#include "game/core/StrongholdPieces.hpp"
+#include "game/entity/mob/EnderDragon.hpp"
+#include "game/core/MinecartFurnace.hpp"
+#include "game/item/AreaEffectCloud.hpp"
+#include "game/util/Rabbit.hpp"
+#include "game/entity/mob/Horse.hpp"
+#include "game/world/block/BeaconBlockEntity.hpp"
+#include "game/world/block/BlockEntityIdFix.hpp"
+#include "game/world/block/EatBlockGoal.hpp"
+#include "game/world/block/FallingBlockEntity.hpp"
+#include "game/item/ItemFrame.hpp"
+#include "game/world/block/ItemInstanceBlockEntityTagWalker.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/MinecartCommandBlock.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/CompressedBlockStorage.hpp"
+#include "game/server/ServerLevel.hpp"
 
 void MemSect(int section);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
@@ -2383,6 +2515,167 @@ void Minecraft::startAndConnectTo(const std::wstring& userName, const std::wstri
 void Minecraft::start(const std::wstring& userName, const std::wstring& sessionId)
 {
     startAndConnectTo(userName, sessionId, L"");
+}
+
+void MinecraftWorld_RunStaticCtors()
+{
+    Direction::staticCtor();
+    Packet::staticCtor();
+    SoundEvents::staticCtor();
+    SoundType::StaticCtor();
+    MaterialColor::staticCtor();
+    DyeColor::staticCtor();
+    MaterialColor::staticCtorAfterDyeColor();
+    Material::staticCtor();
+    Block::staticCtor();
+    Blocks::staticInit();
+    AxeItem::staticCtor();
+    PickaxeItem::staticCtor();
+    ShovelItem::staticCtor();
+    JungleBiome::staticCtor();
+    MesaBiome::staticCtor();
+    Biome::staticCtor();
+    MobEffect::staticCtor();
+    MobEffects::staticCtor();
+    EquipmentSlot::staticCtor();
+    InventoryMenu::staticCtor();
+    ArmorItem::staticCtor();
+    Item::staticCtor();
+    FurnaceRecipes::staticCtor();
+    MapExtendingRecipe::StaticCtor();
+    BannerPattern::staticCtor();
+    Potion::StaticCtor();
+    Potions::StaticCtor();
+    Recipes::staticCtor();
+    gStats = new CommonStats();
+    Stats::staticCtor();
+    BlockEntity::staticCtor();
+    EntityIO::bootStrap();
+    MobCategory::staticCtor();
+    BlockEntityIdFix::staticCtor();
+    ItemPotionFix::staticCtor();
+    Item::staticInit();
+    LevelChunk::staticCtor();
+    LevelType::staticCtor();
+    StructureFeatureIO::staticCtor();
+    VillagePieces::Smithy::staticCtor();
+    VillageFeature::staticCtor();
+    OceanMonumentFeature::staticCtor();
+    RandomScatteredLargeFeature::staticCtor();
+    OceanMonumentPieces::OceanMonumentPiece::staticCtor();
+    DesertWellFeature::staticCtor();
+    ScatteredFeaturePieces::JunglePyramidPiece::staticCtor();
+    SwampTreeFeature::staticCtor();
+    StrongholdPieces::staticCtor();
+    WoodlandMansionFeature::staticCtor();
+    BuriedTreasureFeature::staticCtor();
+    Entity::staticCtor();
+    LivingEntity::staticCtor();
+    ArmorStand::staticCtor();
+    Mob::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000000D400000ULL, 0x000000000D000000ULL, NULL);
+    AgableMob::staticCtor();
+    Animal::staticCtor();
+    Villager::staticCtor();
+    TamableAnimal::staticCtor();
+    Ocelot::staticCtor();
+    Wolf::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000000D690000ULL, 0x000000000D680000ULL, NULL);
+    AbstractHorse::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000000D698000ULL, 0x000000000D690000ULL, NULL);
+    AbstractChestedHorse::staticCtor();
+    Horse::staticCtor();
+    Llama::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000000D6C0000ULL, 0x000000000D680000ULL, NULL);
+    Parrot::staticCtor();
+    Sheep::staticCtor();
+    Pig::staticCtor();
+    Chicken::staticCtor();
+    Rabbit::staticCtor();
+    PolarBear::staticCtor();
+    Turtle::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000000D580000ULL, 0x000000000D400000ULL, NULL);
+    SnowMan::staticCtor();
+    VillagerGolem::staticCtor();
+    Shulker::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000004D540000ULL, 0x000000000D400000ULL, NULL);
+    Spider::staticCtor();
+    Zombie::staticCtor();
+    ZombieVillager::staticCtor();
+    Creeper::staticCtor();
+    AbstractSkeleton::staticCtor();
+    EnderMan::staticCtor();
+    Blaze::staticCtor();
+    Witch::staticCtor();
+    WitherBoss::staticCtor();
+    Guardian::staticCtor();
+    Vex::staticCtor();
+
+    SynchedEntityData::defineId<int>(0x000000004D541040ULL, 0x000000004D540000ULL, NULL);
+    AbstractIllager::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000004D541840ULL, 0x000000004D541040ULL, NULL);
+    SpellcasterIllager::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000000D502000ULL, 0x000000000D000000ULL, NULL);
+    TropicalFish::staticCtor();
+    Salmon::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000000D000100ULL, 0x000000000D000000ULL, NULL);
+    Bat::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000000D000080ULL, 0x000000000D000000ULL, NULL);
+    Ghast::staticCtor();
+    Slime::staticCtor();
+    EnderDragon::staticCtor();
+    Player::staticCtor();
+    Minecart::staticCtor();
+    MinecartCommandBlock::staticCtor();
+    MinecartFurnace::staticCtor();
+    AbstractRotatedItemProjectile::staticCtor();
+    TippableArrow::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000008A400000ULL, 0x0000000008000000ULL, NULL);
+    WitherSkull::staticCtor();
+    SynchedEntityData::defineId<int>(0x000000008A200000ULL, 0x0000000008000000ULL, NULL);
+    ThrownPotion::staticCtor();
+    SynchedEntityData::defineId<int>(0x00000000A0800000ULL, 0x0000000008000000ULL, NULL);
+    ItemFrame::staticCtor();
+    PrimedTnt::staticCtor();
+    FireworksRocketEntity::staticCtor();
+    EnderCrystal::staticCtor();
+    FishingHook::staticCtor();
+    FallingBlockEntity::staticCtor();
+    ItemEntity::staticCtor();
+    Boat::staticCtor();
+    AreaEffectCloud::staticCtor();
+    ThrownTrident::staticCtor();
+    PotionBrewing::StaticCtor();
+    Enchantment::staticCtor();
+    SharedConstants::staticCtor();
+    ServerLevel::staticCtor();
+    SparseLightStorage::staticCtor();
+    CompressedBlockStorage::staticCtor();
+    SparseDataStorage::staticCtor();
+    McRegionChunkStorage::staticCtor();
+    GameType::staticCtor();
+    BeaconBlockEntity::staticCtor();
+    DefaultVertexFormat::staticCtor();
+    FaceInfo::staticCtor();
+    EatBlockGoal::staticCtor();
+    BirchFeature::staticCtor();
+    MegaPineTreeFeature::staticCtor();
+    PineFeature::staticCtor();
+    RoofTreeFeature::staticCtor();
+    SavannaTreeFeature::staticCtor();
+    SpruceFeature::staticCtor();
+    SwampTreeFeature::staticCtor();
+    TreeFeature::staticCtor();
+    BuiltInLootTables::staticCtor();
+    Enchantments::staticCtor();
+    DispenserBootstrap::StaticCtor();
+    ItemIdFix::staticCtor();
+    ItemInstanceBlockEntityTagWalker::staticCtor();
 }
 
 ClientPacketListener* Minecraft::getConnection(int playerIdx)

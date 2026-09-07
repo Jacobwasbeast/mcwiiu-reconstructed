@@ -22,13 +22,13 @@ public:
     uint32_t getStatIcon5(const EScoreboardType& type);
     uint32_t getTitleIcon(int column, const EScoreboardType& type);
     std::wstring GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type);
-    uint64_t getItemForSlot(int row, int column, int item, const unsigned int& slot, const EScoreboardType& type);
-    uint32_t GetEndBarIcon(PlayerInfo* info);
+    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);
+    virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);
     PlayerInfo* CreatePlayerInfo();
     void AddPlayer(unsigned char smallId);
     void UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo, bool changed);
-    uint32_t showLifeSpanProgress();
+    virtual bool showLifeSpanProgress();
     uint32_t getNumberOfColumns();
 };
 

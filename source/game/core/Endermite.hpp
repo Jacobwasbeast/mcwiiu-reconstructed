@@ -15,30 +15,31 @@ class Endermite : public Monster
 {
 public:
     Endermite(Level* level);
-    virtual ~Endermite();
     virtual unsigned long long GetType();
-    virtual double getEyeHeight();
-    virtual void registerGoals();
-    virtual void registerAttributes();
-    virtual bool makeStepSound();
-    virtual const SoundEvent* getAmbientSound();
-    virtual const SoundEvent* getHurtSound(const DamageSource* source);
-    virtual const SoundEvent* getDeathSound();
+    virtual ~Endermite();
+    virtual void tick();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const void* getDefaultLootTable();
-    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual bool makeStepSound();
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void tick();
-    virtual void setYBodyRot(float yBodyRot);
     virtual double getRidingHeight();
+    virtual void setYBodyRot(float yBodyRot);
+    virtual double getEyeHeight();
+    virtual void registerAttributes();
+    virtual const SoundEvent* getHurtSound(const DamageSource* source);
+    virtual const SoundEvent* getDeathSound();
+    virtual EMobType getMobType();
+    virtual void aiStep();
+    virtual void registerGoals();
+    virtual const SoundEvent* getAmbientSound();
+    virtual const void* getDefaultLootTable();
+    virtual bool checkSpawnRules();
+    virtual bool isDarkEnoughToSpawn();
+
+    static void addDataWalkers(DataFixerUpper* fixer);
+    static void create(Level* level);
     bool isPlayerSpawned();
     void setPlayerSpawned(bool playerSpawned);
-    virtual void aiStep();
-    virtual bool isDarkEnoughToSpawn();
-    virtual bool checkSpawnRules();
-    virtual EMobType getMobType();
-    static void create(Level* level);
 
 private:
     int mLifetime;

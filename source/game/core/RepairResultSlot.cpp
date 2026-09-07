@@ -1,7 +1,15 @@
 #include "game/core/RepairResultSlot.hpp"
 
-#include "game/ui/AnvilMenu.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/RepairContainer.hpp"
+#include "game/ui/AnvilMenu.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/AnvilBlock.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/Player.hpp"
 
 RepairResultSlot::RepairResultSlot(AnvilMenu* menu, const BlockPos& position,
                                    boost::shared_ptr<Container> container, int index, int x, int y)
@@ -15,7 +23,7 @@ RepairResultSlot::~RepairResultSlot()
 {
 }
 
-bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance> item)
+bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 {
     return false;
 }
@@ -31,40 +39,66 @@ bool RepairResultSlot::mayPickup(boost::shared_ptr<Player> player)
     return mMenu->mRepairCost > 0 && hasItem();
 }
 
-void RepairResultSlot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> player,
+                                                    not_null_ptr<ItemInstance> item)
 {
     if (!player->mAbilities.mInstabuild)
     {
         player->giveExperienceLevels(-mMenu->mRepairCost);
+        if (!item->isEmpty())
+        {
+            player->OnTakeFromAnvil(item);
+        }
     }
 
+    mMenu->mInputSlots->setItem(0, ItemInstance::EMPTY);
     if (mMenu->mMaterialCost < 1)
     {
-        mMenu->mInputSlots->removeItem(0, 1);
+        mMenu->mInputSlots->setItem(1, ItemInstance::EMPTY);
     }
     else
     {
         not_null_ptr<ItemInstance> material = mMenu->mInputSlots->getItem(1);
-        if (!material->isEmpty())
+        if (!material->isEmpty() && material->getCount() > mMenu->mMaterialCost)
         {
-            if (material->getCount() <= mMenu->mMaterialCost)
-            {
-                mMenu->mInputSlots->removeItem(1, material->getCount());
-            }
-            else
-            {
-                material->shrink(mMenu->mMaterialCost);
-                mMenu->mInputSlots->setItem(1, material);
-            }
+            material->shrink(mMenu->mMaterialCost);
+            mMenu->mInputSlots->setItem(1, material);
+        }
+        else
+        {
+            mMenu->mInputSlots->setItem(1, ItemInstance::EMPTY);
         }
     }
 
     mMenu->mRepairCost = 0;
-    mMenu->createResult();
-    player->OnTakeFromAnvil(item);
+
+    const BlockState* state = mMenu->mLevel->getBlockState(mPosition);
+    if (!player->mAbilities.mInstabuild && !mMenu->mLevel->mIsClientSide &&
+        state->getBlock() == Blocks::anvil && player->mRandom->nextFloat() < 0.12f)
+    {
+        int damage = state->getValue(AnvilBlock::DAMAGE) + 1;
+        if (damage > 2)
+        {
+            mMenu->mLevel->removeBlock(mPosition);
+            mMenu->mLevel->levelEvent(1029, mPosition, 0);
+        }
+        else
+        {
+            TypedBoxed<int> damageValue(damage);
+            const BlockState* damagedState = state->setBoxedValue(AnvilBlock::DAMAGE, &damageValue);
+            mMenu->mLevel->setBlock(mPosition, damagedState, 2, false);
+            mMenu->mLevel->levelEvent(1030, mPosition, 0);
+        }
+    }
+    else if (!mMenu->mLevel->mIsClientSide)
+    {
+        mMenu->mLevel->levelEvent(1030, mPosition, 0);
+    }
+
+    return item;
 }
 
-bool RepairResultSlot::mayCombine(not_null_ptr<ItemInstance> item)
+bool RepairResultSlot::mayCombine(not_null_ptr<ItemInstance>)
 {
     return false;
 }

@@ -1,32 +1,33 @@
 #include "game/core/ThrownEnderpearl.hpp"
 
-#include <cmath>
-
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/Endermite.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/TheEndGatewayEntity.hpp"
-#include "game/entity/projectile/Projectile.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/WorldBorder.hpp"
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level)
-    : ThrowableProjectile(level), mUnknown()
+    : ThrowableProjectile(level), mThrower()
 {
     _init();
 }
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level, boost::shared_ptr<LivingEntity> owner)
-    : ThrowableProjectile(level, owner), mUnknown()
+    : ThrowableProjectile(level, owner), mThrower(owner)
 {
     _init();
 }
 
 ThrownEnderpearl::ThrownEnderpearl(Level* level, double x, double y, double z)
-    : ThrowableProjectile(level, x, y, z), mUnknown()
+    : ThrowableProjectile(level, x, y, z), mThrower()
 {
     _init();
 }
@@ -43,25 +44,23 @@ void ThrownEnderpearl::create(Level* level)
 void ThrownEnderpearl::PlayTeleportSound()
 {
     if (mLevel != NULL)
-        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERMEN_TELEPORT,
-            SoundSource::eSoundSource_Neutral, 1.0f, 1.0f, false, 16.0f);
+        mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
+            SoundEvents::ENDERMEN_TELEPORT, getSoundSource(), 1.0f, 1.0f, 16.0f);
 }
 
 bool ThrownEnderpearl::onHit(const HitResult* result)
 {
+    Projectile::onHit(result);
     boost::shared_ptr<LivingEntity> owner = getOwner();
 
-    if (result->mType == HitResult::ENTITY && result->mEntity && owner
-        && result->mEntity.get() == static_cast<Entity*>(owner.get()))
+    if (result->mEntity)
     {
-        return false;
-    }
+        if (result->mEntity == mThrower)
+            return false;
 
-    if (owner)
-    {
-        boost::shared_ptr<DamageSource> damage = DamageSource::CreateThrown(
+        DamageSource* damage = DamageSource::CreateThrown(
             shared_from_this(), boost::static_pointer_cast<Entity>(owner));
-        owner->hurt(damage.get(), 0.0f);
+        result->mEntity->hurt(damage, 0.0f);
     }
 
     if (result->mType == HitResult::BLOCK && mLevel != NULL)
@@ -72,8 +71,15 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
             ? dynamic_cast<TheEndGatewayEntity*>(blockEntity.get()) : NULL;
         if (gateway != NULL)
         {
-            gateway->teleportEntity(shared_from_this());
-            remove();
+            if (owner)
+            {
+                gateway->teleportEntity(boost::static_pointer_cast<Entity>(owner));
+                remove();
+            }
+            else
+            {
+                gateway->teleportEntity(shared_from_this());
+            }
             return true;
         }
     }
@@ -83,22 +89,65 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
         for (int i = 0; i < 32; ++i)
         {
             mLevel->addParticle(PARTICLE_PORTAL,
-                mX + mRandom->nextDouble() * 2.0 - 1.0, mY,
-                mZ + mRandom->nextDouble() * 2.0 - 1.0,
+                mX, mY + mRandom->nextDouble() * 2.0, mZ,
                 mRandom->nextGaussian(), 0.0, mRandom->nextGaussian(),
                 arrayWithLength<int>());
         }
     }
 
-    if (owner)
+    if (mLevel != NULL && !mLevel->mIsClientSide)
     {
-        owner->teleportTo(mX, mY, mZ);
-        PlayTeleportSound();
-        owner->mFallDistance = 0.0f;
-        mLevel->levelEvent(2003, BlockPos(boost::static_pointer_cast<Entity>(owner)), 0);
-        GenericStats::beamMeUp();
+        if (!mLevel->getWorldBorder()->isWithinBounds(BlockPos(this)))
+        {
+            remove();
+            return true;
+        }
+
+        if (owner)
+        {
+            if (owner->GetType() == 0x0c800001ULL)
+            {
+                boost::shared_ptr<ServerPlayer> player =
+                    boost::static_pointer_cast<ServerPlayer>(owner);
+                if (!player->mRemoved && !player->hasDisconnected()
+                    && player->mLevel == mLevel && !player->isSleeping())
+                {
+                    double distance = player->distanceTo(mX, mY, mZ);
+                    if (distance > 100.0)
+                    {
+                        boost::shared_ptr<Player> statPlayer =
+                            boost::static_pointer_cast<Player>(owner);
+                        statPlayer->awardStat(GenericStats::beamMeUp(),
+                            GenericStats::param_beamMeUp((int)distance));
+                    }
+
+                    if (mRandom->nextFloat() < 0.05f
+                        && mLevel->getGameRules()->getBoolean(3))
+                    {
+                        boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
+                        endermite->setPlayerSpawned(true);
+                        endermite->moveTo(player->mX, player->mY, player->mZ,
+                            player->mYRot, player->mXRot);
+                        mLevel->addEntity(endermite);
+                    }
+
+                    if (owner->isPassenger())
+                        owner->stopRiding();
+                    owner->teleportTo(mX, mY, mZ);
+                    PlayTeleportSound();
+                    owner->mFallDistance = 0.0f;
+                    owner->hurt(DamageSource::FALL, 5.0f);
+                }
+            }
+            else
+            {
+                owner->teleportTo(mX, mY, mZ);
+                PlayTeleportSound();
+                owner->mFallDistance = 0.0f;
+            }
+        }
+        remove();
     }
-    remove();
     return true;
 }
 
@@ -109,14 +158,14 @@ void ThrownEnderpearl::addDataWalkers(DataFixerUpper*)
 void ThrownEnderpearl::_init()
 {
     fjDerivedCtorCalls();
-    mUnknown.reset();
+    mThrower.reset();
 }
 
 void ThrownEnderpearl::tick()
 {
     boost::shared_ptr<LivingEntity> owner = getOwner();
     if (owner && (owner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
-        && owner->mRemoved)
+        && !owner->isAlive())
     {
         remove();
         return;

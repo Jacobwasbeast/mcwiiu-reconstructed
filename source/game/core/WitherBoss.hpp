@@ -1,6 +1,7 @@
 #ifndef GAME_CORE_WITHERBOSS_HPP
 #define GAME_CORE_WITHERBOSS_HPP
 
+#include <map>
 #include <string>
 #include <boost/shared_ptr.hpp>
 
@@ -69,7 +70,7 @@ public:
     virtual void makeStuckInWeb();
     void startSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
     void stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
-    void getPlayerParty();
+    std::map<boost::shared_ptr<ServerPlayer>, int>& getPlayerParty();
     virtual int getArmorValue();
     void changePhase();
     virtual bool hurt(const DamageSource* source, float damage);

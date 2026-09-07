@@ -3,6 +3,8 @@
 #include <sstream>
 
 #include "game/core/StatsUID.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/network/INetworkPlayer.hpp"
 
 MG04ScoreboardLayout::MG04ScoreboardLayout() : IScoreboardLayout()
@@ -116,18 +118,39 @@ std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID&, cons
     return std::wstring(L"---");
 }
 
-uint64_t MG04ScoreboardLayout::getItemForSlot(int row, int column, int item, const unsigned int& slot, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&, const EScoreboardType& type)
 {
-    if (item >= 0)
-        return static_cast<uint64_t>((static_cast<uint64_t>(item) << 32) | slot);
     if (type == EScoreboardType_Unknown)
-        return static_cast<uint64_t>((static_cast<uint64_t>(row + column + 1) << 32) | slot);
-    return static_cast<uint64_t>((static_cast<uint64_t>(column + 1) << 32) | slot);
+    {
+        if (row == 3)
+        {
+            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        }
+        return boost::shared_ptr<ItemInstance>();
+    }
+
+    if (row == 0)
+    {
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
+    }
+    if (row == 1)
+    {
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
+    }
+    if (row == 2)
+    {
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::diamond));
+    }
+    if (row == 3)
+    {
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+    }
+    return boost::shared_ptr<ItemInstance>();
 }
 
-uint32_t MG04ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG04ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
-    return info == 0 ? 0x6e : 0;
+    return static_cast<unsigned char>(info == 0 ? 0x6e : 0);
 }
 
 void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
@@ -165,9 +188,9 @@ void MG04ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newI
     info->name = newInfo->name;
 }
 
-uint32_t MG04ScoreboardLayout::showLifeSpanProgress()
+bool MG04ScoreboardLayout::showLifeSpanProgress()
 {
-    return 1;
+    return true;
 }
 
 uint32_t MG04ScoreboardLayout::getNumberOfColumns()

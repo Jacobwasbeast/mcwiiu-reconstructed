@@ -16,6 +16,16 @@
 #include "game/world/generation/Player.hpp"
 #include <algorithm>
 
+void Sleep(unsigned int milliseconds);
+
+unsigned int WaitForNextState(void* context)
+{
+    ClientMasterGameMode* gameMode = static_cast<ClientMasterGameMode*>(context);
+    while (gameMode->IsRoundRestarting())
+        Sleep(5);
+    return 0;
+}
+
 ClientMasterGameMode::MapSelectInfo::MapSelectInfo()
     : uniqueId(0), name(), mapSize(0)
 {

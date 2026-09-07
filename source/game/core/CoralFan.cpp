@@ -1,5 +1,7 @@
 #include "game/core/CoralFan.hpp"
 
+#include <string>
+
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -15,6 +17,34 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+namespace
+{
+    std::wstring gDeadCoralFanIconNames[5] =
+    {
+        L"dead_coral_fan_red", L"dead_coral_fan_orange", L"dead_coral_fan_yellow", L"dead_coral_fan_blue", L"dead_coral_fan_purple"
+    };
+    std::wstring gCoralFanIconNames[5] =
+    {
+        L"coral_fan_red", L"coral_fan_orange", L"coral_fan_yellow", L"coral_fan_blue", L"coral_fan_purple"
+    };
+
+    void destroyCoralFanIconNames(std::wstring* names, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            names[i].~basic_string();
+    }
+}
+
+void __T14()
+{
+    destroyCoralFanIconNames(gCoralFanIconNames, 5);
+}
+
+void __T15()
+{
+    destroyCoralFanIconNames(gDeadCoralFanIconNames, 5);
+}
 
 static AbstractProperty<int>* CORAL_FAN_TYPE = NULL;
 static AbstractProperty<bool>* CORAL_FAN_DEAD = NULL;
@@ -86,13 +116,11 @@ TextureAtlasSprite* CoralFan::getTexture(const Direction*, const BlockState* sta
 
 void CoralFan::registerIcons(IconRegister* iconRegister)
 {
-    static const wchar_t* names[10] =
+    for (int i = 0; i < 5; ++i)
     {
-        L"coral_fan_red", L"coral_fan_orange", L"coral_fan_yellow", L"coral_fan_blue", L"coral_fan_purple",
-        L"dead_coral_fan_red", L"dead_coral_fan_orange", L"dead_coral_fan_yellow", L"dead_coral_fan_blue", L"dead_coral_fan_purple"
-    };
-    for (int i = 0; i < 10; ++i)
-        mIcons[i] = iconRegister->registerIcon(names[i]);
+        mIcons[i] = iconRegister->registerIcon(gCoralFanIconNames[i]);
+        mIcons[i + 5] = iconRegister->registerIcon(gDeadCoralFanIconNames[i]);
+    }
 }
 
 int CoralFan::convertBlockStateToLegacyData(const BlockState* state)

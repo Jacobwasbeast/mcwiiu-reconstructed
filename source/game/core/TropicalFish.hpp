@@ -5,6 +5,7 @@
 
 #include "game/core/Fish.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class CompoundTag;
 class DataFixerUpper;
@@ -56,15 +57,14 @@ public:
     void clearLayeredTextureInfo();
     void rebuildLayeredTextureInfo();
     std::wstring getLayeredTextureHashName();
-    unsigned long long getLayeredTextureLayers();
+    arrayWithLength<int> getLayeredTextureLayers();
 
 private:
     static const EntityDataAccessor<int>* DATA_VARIANT;
     static const EntityDataAccessor<int>* DATA_COLOR;
 
     std::wstring mLayeredTextureHashName;
-    int* mLayeredTextureLayers;
-    int mLayeredTextureLayerCount;
+    arrayWithLength<int> mLayeredTextureLayers;
 };
 
 #endif

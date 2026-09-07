@@ -27,7 +27,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool isPickable();
     virtual bool isDangerous();
-    void setDangerous(bool dangerous);
+    virtual void setDangerous(bool dangerous);
     virtual double getInertia();
     virtual void onHit(const HitResult* result);
     virtual void defineSynchedData();

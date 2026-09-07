@@ -23,9 +23,20 @@
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 void TlsSetValue(unsigned int index, void* value);
+void* TlsGetValue(unsigned int index);
 bool pathCmp(DLCFile* file);
 extern unsigned int g_pathCompareTlsIndex;
 extern DLCManager g_DLCManager;
+
+bool DLCPack::compareFilePath(DLCFile* file)
+{
+    return file->m_path == *static_cast<std::wstring*>(TlsGetValue(g_pathCompareTlsIndex));
+}
+
+bool pathCmp(DLCFile* file)
+{
+    return DLCPack::compareFilePath(file);
+}
 
 DLCPack::DLCPack(const std::wstring& name, unsigned int licenseMask)
 {

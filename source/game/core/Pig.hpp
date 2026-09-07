@@ -23,39 +23,40 @@ class Pig : public Animal
 {
 public:
     Pig(Level* level);
-    virtual ~Pig();
-
     static void create(Level* level);
     static void staticCtor();
-    virtual void registerGoals();
+    static void addDataWalkers(DataFixerUpper* fixer);
+
+    virtual unsigned long long GetType();
+    virtual ~Pig();
+    virtual void defineSynchedData();
+    virtual void playStepSound(const BlockPos& pos, Block* block);
+    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
+    virtual void thunderHit(const LightningBolt* lightning);
+    virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual boost::shared_ptr<Entity> getControllingPassenger();
     virtual void registerAttributes();
-    virtual bool canBeControlledByRider();
-    virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
-    virtual void defineSynchedData();
-    static void addDataWalkers(DataFixerUpper* fixer);
-    bool hasSaddle();
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    void setSaddle(bool saddled);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual const SoundEvent* getAmbientSound();
+    virtual void die(const DamageSource* source);
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    virtual void playStepSound(const BlockPos& pos, Block* block);
+    virtual void travel(float xxa, float yya, float zza);
+    virtual void registerGoals();
+    virtual const SoundEvent* getAmbientSound();
+    virtual const void* getDefaultLootTable();
+    virtual bool removeWhenFarAway();
+    virtual bool canBeControlledByRider();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,
                              InteractionHand::EInteractionHand hand);
-    virtual void die(const DamageSource* source);
-    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
-    virtual const void* getDefaultLootTable();
-    virtual void thunderHit(const LightningBolt* lightning);
-    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
-    virtual void travel(float xxa, float yya, float zza);
-    bool boost();
-    bool testboost();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);
-    virtual bool removeWhenFarAway();
-    virtual unsigned long long GetType();
+
+    bool hasSaddle();
+    void setSaddle(bool saddled);
+    bool boost();
+    bool testboost();
 
 private:
     static const EntityDataAccessor<bool>* DATA_SADDLE;

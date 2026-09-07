@@ -1,7 +1,45 @@
 #include "game/core/XmlObject.hpp"
 
-bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
-std::wstring escapeXML(const std::wstring& text);
+std::wstring toLower(const std::wstring& text);
+
+bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second)
+{
+    return toLower(first) == toLower(second);
+}
+
+std::wstring escapeXML(const std::wstring& text)
+{
+    std::wstring result = text;
+    const wchar_t* search[3] = { L"&", L"<", L">" };
+    const wchar_t* replacement[3] = { L"&amp;", L"&lt;", L"&gt;" };
+    for (int i = 0; i < 3; ++i)
+    {
+        std::wstring::size_type position = 0;
+        while ((position = result.find(search[i], position)) != std::wstring::npos)
+        {
+            result.replace(position, 1, replacement[i]);
+            position += 1;
+        }
+    }
+    return result;
+}
+
+std::wstring escape(const std::wstring& text)
+{
+    std::wstring result = text;
+    const wchar_t* search[3] = { L"&", L"<", L">" };
+    const wchar_t* replacement[3] = { L"&amp;", L"&lt;", L"&gt;" };
+    for (int i = 0; i < 3; ++i)
+    {
+        std::wstring::size_type position = 0;
+        while ((position = result.find(search[i], position)) != std::wstring::npos)
+        {
+            result.replace(position, 1, replacement[i]);
+            position += 1;
+        }
+    }
+    return result;
+}
 
 XmlObject::XmlObject(const std::wstring& name)
     : mName(name), mChildren(), mAttrs()
@@ -121,7 +159,7 @@ std::wstring XmlObject::toString(int indentation, bool formatted) const
         }
         else
         {
-            result += escapeXML(childIterator->txt());
+            result += escape(childIterator->txt());
         }
     }
 

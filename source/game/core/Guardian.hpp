@@ -19,6 +19,7 @@ class Goal;
 class Level;
 class MobGroupData;
 class PathNavigation;
+class RandomStrollGoal;
 class SoundEvent;
 
 class Guardian : public Monster
@@ -80,7 +81,7 @@ public:
     virtual void registerAttributes();
     virtual void createNavigation(Level* level);
     virtual void defineSynchedData();
-    unsigned int getAttackDuration();
+    virtual unsigned int getAttackDuration();
     void setActiveAttackTarget(int targetId);
     bool hasActiveAttackTarget();
     boost::shared_ptr<Entity> getActiveAttackTarget();
@@ -112,17 +113,19 @@ public:
 private:
     float mTailAnimation;
     float mTailAnimationOld;
+    float mTailAnimationSpeed;
+
+protected:
     float mSpikesAnimation;
     float mSpikesAnimationOld;
-    float mSpikesAnimationTarget;
-    boost::shared_ptr<Entity> mTargetReference;
-    boost::shared_ptr<Entity> mBeamTarget;
+
+private:
+    boost::shared_ptr<LivingEntity> mCachedAttackTarget;
     int mAttackTime;
-    bool mElder;
-    char mUnused0;
-    char mUnused1;
-    char mUnused2;
-    Goal* mRandomStrollGoal;
+    bool mTouchedGround;
+
+protected:
+    RandomStrollGoal* mRandomStrollGoal;
 };
 
 #endif

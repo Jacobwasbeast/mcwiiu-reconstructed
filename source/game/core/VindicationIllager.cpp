@@ -10,17 +10,22 @@
 #include "game/entity/ai/MeleeAttackGoal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
-#include "game/core/Golem.hpp"
+#include "game/core/SnowMan.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 
 VindicationIllager::VindicationIllager(Level* level)
     : AbstractIllager(level), mJohnny(false)
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
+    mCategories |= 0xc;
 }
 
 VindicationIllager::~VindicationIllager()
@@ -34,23 +39,25 @@ void VindicationIllager::create(Level* level)
 
 void VindicationIllager::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer, 0x5d54104100000000ULL);
+    Mob::addDataWalkers(fixer, 0x5d541041ULL);
 }
 
 void VindicationIllager::registerGoals()
 {
     Mob::registerGoals();
     mGoalSelector.addGoal(0, new FloatGoal(this), true);
-    mGoalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0, true), true);
+    mGoalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0, false), true);
     mGoalSelector.addGoal(8, new RandomStrollGoal(this, 0.6), true);
-    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 8.0f, 1.0f), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
 
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
-        arrayWithLength<unsigned long long>(1, true)), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Mob), true, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Mob), true, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Golem), true, false, false), true);
+    arrayWithLength<unsigned long long> entityTypes(1, true);
+    entityTypes.data[0] = 0x5d541041ULL;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Villager), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(SnowMan), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), true, false, false), true);
     mTargetSelector.addGoal(4, new VindicatorJohnnyAttackGoal(this), true);
 }
 
@@ -58,14 +65,15 @@ void VindicationIllager::registerAttributes()
 {
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.35);
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(12.0);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(24.0);
-    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(5.0);
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(5.0);
 }
 
 void VindicationIllager::defineSynchedData()
 {
-    AbstractIllager::defineSynchedData();
+    Mob::defineSynchedData();
+    getEntityData()->createDateItem(DATA_ILLAGER_FLAGS, (unsigned char)0);
 }
 
 EMobType VindicationIllager::getMobType()
@@ -102,7 +110,7 @@ void VindicationIllager::addAdditonalSaveData(CompoundTag* tag)
 
 int VindicationIllager::getArmPose()
 {
-    return isAgressive() ? ILLAGER_ARM_POSE_ATTACKING : ILLAGER_ARM_POSE_CROSSED;
+    return isAgressive();
 }
 
 void VindicationIllager::readAdditionalSaveData(CompoundTag* tag)
@@ -114,9 +122,9 @@ void VindicationIllager::readAdditionalSaveData(CompoundTag* tag)
 
 MobGroupData* VindicationIllager::finalizeMobSpawn(const DifficultyInstance& difficulty,
                                                     MobGroupData* data,
-                                                    const std::wstring& dataString)
+                                                    const std::wstring&)
 {
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, dataString);
+    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
     return result;
@@ -133,8 +141,11 @@ bool VindicationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
     if (Entity::isAlliedTo(entity))
         return true;
 
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    if (!living || living->getMobType() != MOB_TYPE_ILLAGER)
+    if (!entity || (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+        return false;
+
+    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+    if (living->getMobType() != MOB_TYPE_ILLAGER)
         return false;
 
     Team* team = getTeam();
@@ -166,7 +177,7 @@ const SoundEvent* VindicationIllager::getHurtSound(const DamageSource*)
 
 unsigned long long VindicationIllager::GetType()
 {
-    return 0x5d54104100000000ULL;
+    return 0x5d541041ULL;
 }
 
 VindicationIllager::LIVING_ENTITY_SELECTOR::~LIVING_ENTITY_SELECTOR()
@@ -175,12 +186,14 @@ VindicationIllager::LIVING_ENTITY_SELECTOR::~LIVING_ENTITY_SELECTOR()
 
 bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity> entity) const
 {
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    return living && living->isAlive();
+    if (!entity || (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+        return false;
+    return boost::static_pointer_cast<LivingEntity>(entity)->isAlive();
 }
 
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* illager)
-    : NearestAttackableTargetGoal(illager, typeid(LivingEntity), true, false, false)
+    : NearestAttackableTargetGoal(illager, typeid(LivingEntity), 0, true, true,
+                                  new VindicationIllager::LIVING_ENTITY_SELECTOR(), false, true)
 {
 }
 
@@ -190,5 +203,6 @@ VindicationIllager::VindicatorJohnnyAttackGoal::~VindicatorJohnnyAttackGoal()
 
 bool VindicationIllager::VindicatorJohnnyAttackGoal::canUse()
 {
-    return mMob->getCustomName() == L"Johnny" && NearestAttackableTargetGoal::canUse();
+    return static_cast<VindicationIllager*>(mMob)->mJohnny
+        && NearestAttackableTargetGoal::canUse();
 }

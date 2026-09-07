@@ -38,9 +38,11 @@ void Slot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
 {
 }
 
-void Slot::onTake(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item)
+not_null_ptr<ItemInstance> Slot::onTake(boost::shared_ptr<Player> player,
+                                        not_null_ptr<ItemInstance> item)
 {
     setChanged();
+    return item;
 }
 
 bool Slot::mayPlace(not_null_ptr<ItemInstance> item)

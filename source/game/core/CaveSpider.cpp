@@ -3,13 +3,18 @@
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
+#include "game/core/Stray.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/Skeleton.hpp"
+#include "game/entity/mob/WitherSkeleton.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 static const unsigned long long ENTITY_TYPE_CAVE_SPIDER = 0x5D560041ULL;
@@ -47,8 +52,7 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
         return false;
     }
 
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(target);
-    if (living)
+    if ((target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
     {
         int duration = 0;
         const Difficulty* difficulty = mLevel->getDifficulty();
@@ -63,6 +67,7 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
 
         if (duration > 0)
         {
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
             living->addEffect(new MobEffectInstance(MobEffects::POISON, duration * 20, 0),
                                boost::shared_ptr<Entity>());
         }
@@ -72,21 +77,49 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
 }
 
 MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
-                                           const std::wstring& name)
+                                           const std::wstring&)
 {
-    if (mRandom->nextInt(100) != 0)
+    if (mLevel->mRandom->nextInt(100) != 0)
     {
         return data;
     }
 
-    BlockPos pos((int)mX, (int)mY, (int)mZ);
-    if (mLevel->canSeeSky(pos) && !mLevel->isDay())
+    BlockPos pos(mX, mY, mZ);
+    Biome* biome = NULL;
+    boost::shared_ptr<AbstractSkeleton> rider;
+
+    if (mLevel->canSeeSky(pos) && !mLevel->isDay() &&
+        !mLevel->mRandom->rollPercentageChance(80))
     {
-        mRandom->rollPercentageChance(80);
+        biome = mLevel->getBiome(pos);
+        if (biome == Biome::ICE_PLAINS || biome == Biome::ICE_MOUNTAINS ||
+            biome == Biome::ICE_PLAINS_SPIKES || biome == Biome::FROZEN_RIVER ||
+            biome == Biome::COLD_BEACH || biome == Biome::FROZEN_OCEAN ||
+            biome == Biome::DEEP_FROZEN_OCEAN)
+        {
+            rider.reset(new Stray(mLevel));
+        }
     }
 
-    (void)difficulty;
-    (void)name;
+    if (!rider)
+    {
+        if (mLevel->mRandom->rollPercentageChance(80) &&
+            mLevel->getBiome(pos) == Biome::HELL)
+        {
+            rider.reset(new WitherSkeleton(mLevel));
+        }
+        else
+        {
+            rider.reset(new Skeleton(mLevel));
+        }
+    }
+
+    rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
+    rider->finalizeMobSpawn(difficulty, NULL, std::wstring());
+    mLevel->addEntity(rider);
+    Entity* riderEntity = rider.get();
+    riderEntity->startRiding(shared_from_this());
+
     return data;
 }
 

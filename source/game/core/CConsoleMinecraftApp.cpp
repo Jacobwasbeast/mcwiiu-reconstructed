@@ -1,6 +1,8 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCPack.hpp"
+#include "game/core/ShutdownManager.hpp"
+#include "game/ui/UIScene_AchievementsMenu.hpp"
 #include "platform/wiiu/C4JThread.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CStorage.hpp"
@@ -11,7 +13,6 @@
 
 extern void altMain();
 extern void Sleep(unsigned int);
-extern void ShutdownAndExit();
 extern unsigned int GetLastFileErrorCodeForViewer();
 extern unsigned char g_fatalLoadErrorRequested;
 extern unsigned char g_fatalLoadErrorReady;
@@ -26,6 +27,60 @@ extern CStorage* gStorage;
 
 static unsigned char s_requestBackground = 0;
 static unsigned char s_signInRequested = 0;
+
+static unsigned char s_altMainOKToRun = 0;
+
+extern wchar_t* GetRichPresenceStringFromId(int);
+
+void setAltMainOKToRun()
+{
+    s_altMainOKToRun = 1;
+}
+
+void RegisterAwardsWithProfileManager()
+{
+    struct AchievementInfo
+    {
+        int id;
+        const wchar_t* icon;
+        int registrationId;
+        int callbackValue;
+        int callbackContext;
+    };
+
+    for (int achievement = 0; achievement < 31; ++achievement)
+    {
+        AchievementInfo* info = reinterpret_cast<AchievementInfo*>(
+            static_cast<uintptr_t>(static_cast<unsigned int>(UIScene_AchievementsMenu::GetInfo(achievement))));
+        gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->callbackValue,
+                                info->callbackContext);
+    }
+
+    gProfile->RichPresenceInit(-1, -1);
+    gProfile->SetRichPresenceGetStringCallback(GetRichPresenceStringFromId);
+    gProfile->RichPresenceRegisterPresenceString(0, 0x0d21c173);
+
+    const unsigned int contextStrings[] = {
+        0xd371d4e, 0xb0e2d942, 0xeb1a4a80, 0x7703ee79, 0x32d9dd56, 0x28b67b1f
+    };
+    for (int context = 0; context < 6; ++context)
+        gProfile->RichPresenceRegisterContext(context, contextStrings[context]);
+
+    const unsigned int activityStrings[] = {
+        0x2292bf7f, 0x01e201d3, 0x05c4c95e, 0xb231c7f5, 0xc5036f69, 0x074e6d4f,
+        0x711f8b99, 0x3a2982d5, 0xa6dd54da, 0xbe2f93d1, 0x559d1b96, 0x123e6b5f,
+        0x59c6e2b1, 0xddd337be
+    };
+    for (int activity = 0; activity < 14; ++activity)
+        gProfile->RichPresenceRegisterContextString(0, activity, activityStrings[activity]);
+}
+
+void ShutdownAndExit()
+{
+    ShutdownManager::MainThreadHandleShutdown();
+    g_pApp->ExitGame();
+    _Exit(0);
+}
 
 CConsoleMinecraftApp::CConsoleMinecraftApp() : CMinecraftApp()
 {

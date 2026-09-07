@@ -277,6 +277,7 @@ public:
     bool IsPlayerReady(unsigned int playerIndex);
 
 private:
+    friend class CheckpointCommand;
     friend class GameMedal;
 
     unsigned long long mRoundStartTime;

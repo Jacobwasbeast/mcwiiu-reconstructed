@@ -7,95 +7,93 @@ CustomizableSourceSettings::Builder::Builder()
 
 void CustomizableSourceSettings::Builder::setDefaults()
 {
-    biomeSize = 684.4119873046875f;
-    riverSize = 512;
-    dirtCount = 200;
-    dirtSize = 200;
-    unused10 = 0;
+    coordinateScale = 684.411987f;
+    heightScale = 684.411987f;
+    lowerLimitScale = 512.0f;
+    upperLimitScale = 512.0f;
+    depthNoiseScaleX = 200.0f;
+    depthNoiseScaleZ = 200.0f;
+    depthNoiseScaleExponent = 0.5f;
+    mainNoiseScaleX = 80.0f;
+    mainNoiseScaleY = 8.5f;
+    mainNoiseScaleZ = 80.0f;
+    baseSize = 1.5f;
+    stretchY = 0.0f;
+    biomeDepthWeight = 1.0f;
+    biomeDepthOffset = 0.0f;
+    biomeScaleWeight = 1.0f;
+    biomeScaleOffset = 0.0f;
+    seaLevel = 63;
     useCaves = true;
-    unused12 = 0;
     useDungeons = true;
+    dungeonChance = 8;
     useStrongholds = true;
     useVillages = true;
-    unused16 = 0;
     useMineShafts = true;
-    unused18 = 0;
     useTemples = true;
-    unused1a = 0;
-    unused1b = 0;
-    dirtMinHeight = 80;
-    dirtMaxHeight = 80;
-    gravelCount = 0;
-    gravelSize = 0;
-    gravelMinHeight = 12;
-    gravelMaxHeight = 1;
-    dioriteCount = 1;
-    dioriteSize = 0;
-    dioriteMinHeight = 1;
-    dioriteMaxHeight = 0;
+    useOceanRuins = true;
     useMonuments = true;
-    monumentSpacing = 8;
+    useMansions = true;
+    useShipwrecks = true;
     useRavines = true;
     useWaterLakes = true;
-    useLavaLakes = true;
     waterLakeChance = 4;
-    useLavaOceans = true;
+    useLavaLakes = true;
     lavaLakeChance = 80;
-    unused64 = true;
+    useLavaOceans = false;
+    useBuriedTreasure = true;
     fixedBiome = -1;
-    biomeSizeValue = 4;
-    riverSizeValue = 4;
-    setting70 = 33;
-    setting74 = 10;
-    setting78 = 0;
-    setting7c = 128;
-    setting80 = 33;
-    setting84 = 8;
-    setting88 = 0;
-    setting8c = 128;
-    setting90 = 33;
-    setting94 = 8;
-    setting98 = 0;
-    setting9c = 128;
-    settinga0 = 33;
-    settinga4 = 10;
-    graniteCount = 4;
-    graniteSize = 4;
-    graniteMinHeight = 33;
-    graniteMaxHeight = 10;
-    andesiteCount = 0;
-    andesiteSize = 128;
-    andesiteMinHeight = 33;
-    andesiteMaxHeight = 8;
-    coalCount = 0;
-    coalSize = 128;
-    coalMinHeight = 33;
-    coalMaxHeight = 8;
-    ironCount = 0;
-    ironSize = 128;
-    ironMinHeight = 33;
-    ironMaxHeight = 10;
-    goldCount = 0;
-    goldSize = 128;
-    goldMinHeight = 33;
-    goldMaxHeight = 10;
+    biomeSize = 4;
+    riverSize = 8;
+    dirtCount = 33;
+    dirtSize = 10;
+    dirtMinHeight = 0;
+    dirtMaxHeight = 128;
+    gravelCount = 33;
+    gravelSize = 8;
+    gravelMinHeight = 0;
+    gravelMaxHeight = 128;
+    dioriteCount = 33;
+    dioriteSize = 8;
+    dioriteMinHeight = 0;
+    dioriteMaxHeight = 128;
+    graniteCount = 33;
+    graniteSize = 10;
+    graniteMinHeight = 0;
+    graniteMaxHeight = 128;
+    andesiteCount = 33;
+    andesiteSize = 10;
+    andesiteMinHeight = 0;
+    andesiteMaxHeight = 128;
+    coalCount = 17;
+    coalSize = 9;
+    coalMinHeight = 0;
+    coalMaxHeight = 128;
+    ironCount = 10;
+    ironSize = 0;
+    ironMinHeight = 0;
+    ironMaxHeight = 8;
+    goldCount = 2;
+    goldSize = 0;
+    goldMinHeight = 0;
+    goldMaxHeight = 32;
     redstoneCount = 0;
-    redstoneSize = 128;
-    redstoneMinHeight = 33;
-    redstoneMaxHeight = 10;
+    redstoneSize = 8;
+    redstoneMinHeight = 0;
+    redstoneMaxHeight = 16;
     diamondCount = 0;
-    diamondSize = 128;
-    diamondMinHeight = 17;
-    diamondMaxHeight = 20;
-    lapisCount = 0;
-    lapisSize = 64;
-    lapisMinHeight = 9;
-    lapisMaxHeight = 20;
+    diamondSize = 16;
+    diamondMinHeight = 0;
+    diamondMaxHeight = 16;
+    lapisCount = 7;
+    lapisSize = 1;
+    lapisMinHeight = 16;
+    lapisMaxHeight = 16;
 }
 
 CustomizableSourceSettings::Builder* CustomizableSourceSettings::Builder::fromString(SuperflatConfig*)
 {
-    return new CustomizableSourceSettings::Builder();
+    return new Builder();
 }
 
 CustomizableSourceSettings* CustomizableSourceSettings::Builder::build()
@@ -103,94 +101,23 @@ CustomizableSourceSettings* CustomizableSourceSettings::Builder::build()
     return new CustomizableSourceSettings(this);
 }
 
-#define COPY_SETTING(name) name = builder->name
-
 CustomizableSourceSettings::CustomizableSourceSettings(Builder* builder)
+    : coordinateScale(builder->coordinateScale), heightScale(builder->heightScale), lowerLimitScale(builder->lowerLimitScale), upperLimitScale(builder->upperLimitScale),
+      depthNoiseScaleX(builder->depthNoiseScaleX), depthNoiseScaleZ(builder->depthNoiseScaleZ), depthNoiseScaleExponent(builder->depthNoiseScaleExponent),
+      mainNoiseScaleX(builder->mainNoiseScaleX), mainNoiseScaleY(builder->mainNoiseScaleY), mainNoiseScaleZ(builder->mainNoiseScaleZ), baseSize(builder->baseSize), stretchY(builder->stretchY),
+      biomeDepthWeight(builder->biomeDepthWeight), biomeDepthOffset(builder->biomeDepthOffset), biomeScaleWeight(builder->biomeScaleWeight), biomeScaleOffset(builder->biomeScaleOffset),
+      seaLevel(builder->seaLevel), useCaves(builder->useCaves), useDungeons(builder->useDungeons), dungeonChance(builder->dungeonChance), useStrongholds(builder->useStrongholds),
+      useVillages(builder->useVillages), useMineShafts(builder->useMineShafts), useTemples(builder->useTemples), useOceanRuins(builder->useOceanRuins), useMonuments(builder->useMonuments),
+      useMansions(builder->useMansions), useShipwrecks(builder->useShipwrecks), useRavines(builder->useRavines), useWaterLakes(builder->useWaterLakes), waterLakeChance(builder->waterLakeChance),
+      useLavaLakes(builder->useLavaLakes), lavaLakeChance(builder->lavaLakeChance), useLavaOceans(builder->useLavaOceans), useBuriedTreasure(builder->useBuriedTreasure),
+      fixedBiome(builder->fixedBiome), biomeSize(builder->biomeSize), riverSize(builder->riverSize),
+      dirtCount(builder->dirtCount), dirtSize(builder->dirtSize), dirtMinHeight(builder->dirtMinHeight), dirtMaxHeight(builder->dirtMaxHeight), gravelCount(builder->gravelCount), gravelSize(builder->gravelSize),
+      gravelMinHeight(builder->gravelMinHeight), gravelMaxHeight(builder->gravelMaxHeight), dioriteCount(builder->dioriteCount), dioriteSize(builder->dioriteSize), dioriteMinHeight(builder->dioriteMinHeight),
+      dioriteMaxHeight(builder->dioriteMaxHeight), graniteCount(builder->graniteCount), graniteSize(builder->graniteSize), graniteMinHeight(builder->graniteMinHeight), graniteMaxHeight(builder->graniteMaxHeight),
+      andesiteCount(builder->andesiteCount), andesiteSize(builder->andesiteSize), andesiteMinHeight(builder->andesiteMinHeight), andesiteMaxHeight(builder->andesiteMaxHeight), coalCount(builder->coalCount),
+      coalSize(builder->coalSize), coalMinHeight(builder->coalMinHeight), coalMaxHeight(builder->coalMaxHeight), ironCount(builder->ironCount), ironSize(builder->ironSize), ironMinHeight(builder->ironMinHeight),
+      ironMaxHeight(builder->ironMaxHeight), goldCount(builder->goldCount), goldSize(builder->goldSize), goldMinHeight(builder->goldMinHeight), goldMaxHeight(builder->goldMaxHeight), redstoneCount(builder->redstoneCount),
+      redstoneSize(builder->redstoneSize), redstoneMinHeight(builder->redstoneMinHeight), redstoneMaxHeight(builder->redstoneMaxHeight), diamondCount(builder->diamondCount), diamondSize(builder->diamondSize),
+      diamondMinHeight(builder->diamondMinHeight), diamondMaxHeight(builder->diamondMaxHeight), lapisCount(builder->lapisCount), lapisSize(builder->lapisSize), lapisMinHeight(builder->lapisMinHeight), lapisMaxHeight(builder->lapisMaxHeight)
 {
-    COPY_SETTING(biomeSize);
-    COPY_SETTING(riverSize);
-    COPY_SETTING(dirtCount);
-    COPY_SETTING(dirtSize);
-    COPY_SETTING(unused10);
-    COPY_SETTING(useCaves);
-    COPY_SETTING(unused12);
-    COPY_SETTING(useDungeons);
-    COPY_SETTING(useStrongholds);
-    COPY_SETTING(useVillages);
-    COPY_SETTING(unused16);
-    COPY_SETTING(useMineShafts);
-    COPY_SETTING(unused18);
-    COPY_SETTING(useTemples);
-    COPY_SETTING(unused1a);
-    COPY_SETTING(unused1b);
-    COPY_SETTING(dirtMinHeight);
-    COPY_SETTING(dirtMaxHeight);
-    COPY_SETTING(gravelCount);
-    COPY_SETTING(gravelSize);
-    COPY_SETTING(gravelMinHeight);
-    COPY_SETTING(gravelMaxHeight);
-    COPY_SETTING(dioriteCount);
-    COPY_SETTING(dioriteSize);
-    COPY_SETTING(dioriteMinHeight);
-    COPY_SETTING(dioriteMaxHeight);
-    COPY_SETTING(useMonuments);
-    COPY_SETTING(monumentSpacing);
-    COPY_SETTING(useRavines);
-    COPY_SETTING(useWaterLakes);
-    COPY_SETTING(useLavaLakes);
-    COPY_SETTING(waterLakeChance);
-    COPY_SETTING(useLavaOceans);
-    COPY_SETTING(lavaLakeChance);
-    COPY_SETTING(unused64);
-    COPY_SETTING(fixedBiome);
-    COPY_SETTING(biomeSizeValue);
-    COPY_SETTING(riverSizeValue);
-    COPY_SETTING(setting70);
-    COPY_SETTING(setting74);
-    COPY_SETTING(setting78);
-    COPY_SETTING(setting7c);
-    COPY_SETTING(setting80);
-    COPY_SETTING(setting84);
-    COPY_SETTING(setting88);
-    COPY_SETTING(setting8c);
-    COPY_SETTING(setting90);
-    COPY_SETTING(setting94);
-    COPY_SETTING(setting98);
-    COPY_SETTING(setting9c);
-    COPY_SETTING(settinga0);
-    COPY_SETTING(settinga4);
-    COPY_SETTING(graniteCount);
-    COPY_SETTING(graniteSize);
-    COPY_SETTING(graniteMinHeight);
-    COPY_SETTING(graniteMaxHeight);
-    COPY_SETTING(andesiteCount);
-    COPY_SETTING(andesiteSize);
-    COPY_SETTING(andesiteMinHeight);
-    COPY_SETTING(andesiteMaxHeight);
-    COPY_SETTING(coalCount);
-    COPY_SETTING(coalSize);
-    COPY_SETTING(coalMinHeight);
-    COPY_SETTING(coalMaxHeight);
-    COPY_SETTING(ironCount);
-    COPY_SETTING(ironSize);
-    COPY_SETTING(ironMinHeight);
-    COPY_SETTING(ironMaxHeight);
-    COPY_SETTING(goldCount);
-    COPY_SETTING(goldSize);
-    COPY_SETTING(goldMinHeight);
-    COPY_SETTING(goldMaxHeight);
-    COPY_SETTING(redstoneCount);
-    COPY_SETTING(redstoneSize);
-    COPY_SETTING(redstoneMinHeight);
-    COPY_SETTING(redstoneMaxHeight);
-    COPY_SETTING(diamondCount);
-    COPY_SETTING(diamondSize);
-    COPY_SETTING(diamondMinHeight);
-    COPY_SETTING(diamondMaxHeight);
-    COPY_SETTING(lapisCount);
-    COPY_SETTING(lapisSize);
-    COPY_SETTING(lapisMinHeight);
-    COPY_SETTING(lapisMaxHeight);
 }
-
-#undef COPY_SETTING

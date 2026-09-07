@@ -108,7 +108,8 @@ public:
     void UpdateCraftAchievements(boost::shared_ptr<Player> player,
                                  not_null_ptr<ItemInstance> item, eAward award);
     static void RemoveCustomRecipeItemsFromInventory(int recipe, Inventory* inventory);
-    static void RemoveCustomRecipeItemsFromInventory(int recipe, boost::shared_ptr<Inventory> inventory);
+    static void RemoveCustomRecipeItemsFromInventory(
+        int recipe, boost::shared_ptr<Inventory> inventory);
 
 protected:
     const GameType* mGameType;

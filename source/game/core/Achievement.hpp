@@ -7,7 +7,11 @@
 #include "game/item/not_null_ptr.hpp"
 
 class Block;
-class DescFormatter;
+class DescFormatter
+{
+public:
+    virtual std::wstring format(const std::wstring& description) = 0;
+};
 class Item;
 class ItemInstance;
 

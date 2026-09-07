@@ -58,4 +58,6 @@ private:
     RegionFileMap mRegionFiles;
 };
 
+extern RegionFileCache gRegionFileCache;
+
 #endif

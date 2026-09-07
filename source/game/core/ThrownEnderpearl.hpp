@@ -15,18 +15,18 @@ public:
     ThrownEnderpearl(Level* level);
     ThrownEnderpearl(Level* level, boost::shared_ptr<LivingEntity> owner);
     ThrownEnderpearl(Level* level, double x, double y, double z);
+    virtual unsigned long long GetType();
     virtual ~ThrownEnderpearl();
+    virtual void tick();
+    virtual bool onHit(const HitResult* result);
 
     static void create(Level* level);
     void PlayTeleportSound();
-    virtual bool onHit(const HitResult* result);
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();
-    virtual void tick();
-    virtual unsigned long long GetType();
 
 private:
-    boost::shared_ptr<Entity> mUnknown;
+    boost::shared_ptr<Entity> mThrower;
 };
 
 #endif

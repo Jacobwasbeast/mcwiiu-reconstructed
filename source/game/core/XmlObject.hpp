@@ -40,8 +40,9 @@ public:
     const std::vector<XmlChild>& getChildrenRaw() const;
     std::vector<std::pair<std::wstring, std::wstring> >& getAttrs();
 
-private:
     std::wstring mName;
+
+private:
     std::vector<XmlChild> mChildren;
     std::vector<std::pair<std::wstring, std::wstring> > mAttrs;
 };

@@ -49,7 +49,7 @@ public:
     void explodeCreeper();
     bool canDropMobsSkull();
     void increaseDroppedSkulls();
-    double getSwelling(float partialTicks);
+    float getSwelling(float partialTicks);
 
 private:
     int mOldSwell;

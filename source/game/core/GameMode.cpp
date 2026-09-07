@@ -89,8 +89,9 @@ bool GameMode::MayDestroy(const BlockPos& pos)
         LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
         if (ruleset != NULL)
         {
-            GrantPermissionsRuleDefinition* permissions = dynamic_cast<GrantPermissionsRuleDefinition*>(
-                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+            GrantPermissionsRuleDefinition* permissions =
+                dynamic_cast<GrantPermissionsRuleDefinition*>(
+                    ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
             if (permissions != NULL && permissions->canDestroy(player, level, ruleset, pos))
                 return !miniGame->EditActionsDisabled();
         }
@@ -130,8 +131,9 @@ bool GameMode::MayPlace(const BlockPos& pos, BlockItem* item)
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
     if (ruleset != NULL)
     {
-        GrantPermissionsRuleDefinition* permissions = dynamic_cast<GrantPermissionsRuleDefinition*>(
-            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+        GrantPermissionsRuleDefinition* permissions =
+            dynamic_cast<GrantPermissionsRuleDefinition*>(
+                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
         if (permissions != NULL && permissions->canPlace(GetPlayer(), GetLevel(), ruleset, pos))
             return true;
     }
@@ -149,8 +151,9 @@ bool GameMode::MayUse(const BlockPos& pos, Item* item)
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
     if (ruleset != NULL)
     {
-        GrantPermissionsRuleDefinition* permissions = dynamic_cast<GrantPermissionsRuleDefinition*>(
-            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+        GrantPermissionsRuleDefinition* permissions =
+            dynamic_cast<GrantPermissionsRuleDefinition*>(
+                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
         if (permissions != NULL && permissions->canUse(GetPlayer(), GetLevel(), ruleset, pos))
             return true;
     }

@@ -2,10 +2,16 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/DamageSource.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/WitherBoss.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -87,7 +93,7 @@ void WitherSkull::setDangerous(bool dangerous)
 
 double WitherSkull::getInertia()
 {
-    return isDangerous() ? 0.75 : Fireball::getInertia();
+    return isDangerous() ? 0.73f : Fireball::getInertia();
 }
 
 void WitherSkull::onHit(const HitResult* result)
@@ -97,15 +103,38 @@ void WitherSkull::onHit(const HitResult* result)
 
     if (result->mEntity)
     {
-        bool hurt = result->mEntity->hurt(NULL, 5.0f);
-        if (hurt && mOwner)
+        if (mOwner)
         {
-            doEnchantDamageEffects(mOwner, result->mEntity);
+            boost::shared_ptr<EntityDamageSource> source = DamageSource::CreateMobAttack(mOwner);
+            if (result->mEntity->hurt(source.get(), 8.0f) && result->mEntity->isAlive())
+                doEnchantDamageEffects(mOwner, result->mEntity);
+        }
+        else
+        {
+            result->mEntity->hurt(DamageSource::MAGIC, 5.0f);
+        }
+
+        if ((result->mEntity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        {
+            int duration = 0;
+            if (mLevel->getDifficulty() == Difficulty::NORMAL)
+                duration = 10;
+            else if (mLevel->getDifficulty() == Difficulty::HARD)
+                duration = 40;
+
+            if (duration > 0)
+            {
+                boost::shared_ptr<LivingEntity> living =
+                    boost::dynamic_pointer_cast<LivingEntity>(result->mEntity);
+                living->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1),
+                                  boost::shared_ptr<Entity>());
+            }
         }
     }
-    bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
-    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false, true,
-                    mobGriefing, true, true, 0.0f);
+
+    const bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
+    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false,
+                    mobGriefing, false, false, false, -1.0f);
     remove();
 }
 

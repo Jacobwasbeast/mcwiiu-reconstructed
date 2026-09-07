@@ -26,7 +26,7 @@ public:
     virtual EMobType getMobType();
     virtual int getArmPose();
 
-private:
+protected:
     static const EntityDataAccessor<unsigned char>* DATA_ILLAGER_FLAGS;
 };
 

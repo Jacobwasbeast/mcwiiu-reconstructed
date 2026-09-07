@@ -48,6 +48,12 @@ ConsoleUIController gConsoleUIController;
 
 static bool s_uiCriticalSectionInitialized = false;
 
+void PopupToast(void* context, int playerId, int achievementId, int imageId, int value)
+{
+    (void)context;
+    gConsoleUIController.SetAchievementUnlocked(playerId, achievementId, imageId, value);
+}
+
 ConsoleUIController::ConsoleUIController()
     : m_debugConsole(0), m_unknown08(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
       m_initialized(false), m_renderOffsetX(0), m_renderOffsetY(0), m_currentFont(0),

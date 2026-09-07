@@ -6,14 +6,18 @@
 #include "game/core/Mth.hpp"
 #include "game/core/Direction.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPattern.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/PortalBlock.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/server/ServerLevel.hpp"
 
@@ -55,11 +59,7 @@ bool PortalForcer::HasCachedPortal(const ChunkPos& chunkPos, BlockPos& portalPos
         return true;
     }
 
-    std::vector<ChunkPos>::iterator position = std::find(portalPositions.begin(), portalPositions.end(), chunkPos);
-    if (position != portalPositions.end())
-    {
-        portalPositions.erase(position);
-    }
+    portalPositions.erase(std::find(portalPositions.begin(), portalPositions.end(), chunkPos));
     delete cached;
     portalCache.erase(it);
     return false;
@@ -98,7 +98,7 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
     double bestDistance = -1.0;
     if (!HasCachedPortal(chunkPos, portalPos))
     {
-        int radius = world->mDimension->getType() == -1 ? 48 : 128;
+        int radius = world->mDimension->getType() == DimensionType::NETHER ? 48 : 128;
         int originX = Mth::floor(entity->mX);
         int originY = Mth::floor(entity->mY);
         int originZ = Mth::floor(entity->mZ);
@@ -150,6 +150,75 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
         portalPositions.push_back(chunkPos);
     }
 
+    BlockPattern::BlockPatternMatch* portal = PortalBlock::getPortalShape(world, portalPos);
+    const Direction* forwards = portal->getForwards();
+    bool negative = forwards->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE;
+    BlockPos frontTopLeft = portal->getFrontTopLeft();
+    Vec3* entranceOffset = entity->getPortalEntranceOffset();
+    const Direction* entranceForwards = entity->getPortalEntranceForwards();
+    double x = (double)portalPos.x + 0.5;
+    double z = (double)portalPos.z + 0.5;
+    double horizontal = forwards->getAxis() == Direction::Axis::X
+                            ? (double)frontTopLeft.z
+                            : (double)frontTopLeft.x;
+    double y = (double)(frontTopLeft.y + 1) - entranceOffset->y * (double)portal->getHeight();
+    if (negative)
+    {
+        horizontal += 1.0;
+    }
+    if (forwards->getAxis() == Direction::Axis::X)
+    {
+        z = (0.5 - entranceOffset->x) * (double)portal->getWidth() *
+                (double)forwards->getClockWise()->getAxisDirection()->getStep() +
+            horizontal;
+    }
+    else
+    {
+        x = (0.5 - entranceOffset->x) * (double)portal->getWidth() *
+                (double)forwards->getClockWise()->getAxisDirection()->getStep() +
+            horizontal;
+    }
+
+    double diagonal = 1.0;
+    double xFromZ = 0.0;
+    double zFromX = 0.0;
+    const Direction* destinationBack = forwards->getOpposite();
+    if (destinationBack != entranceForwards)
+    {
+        if (destinationBack == entranceForwards->getOpposite())
+        {
+            diagonal = -1.0;
+        }
+        else if (destinationBack == entranceForwards->getClockWise())
+        {
+            diagonal = 0.0;
+            xFromZ = -1.0;
+            zFromX = 1.0;
+        }
+        else
+        {
+            diagonal = 0.0;
+            xFromZ = 1.0;
+            zFromX = -1.0;
+        }
+    }
+
+    double oldXd = entity->mXd;
+    double oldZd = entity->mZd;
+    entity->mXd = oldXd * diagonal + oldZd * xFromZ;
+    entity->mZd = oldXd * zFromX + oldZd * diagonal;
+    entity->mYRot = rotation - (float)(entranceForwards->getOpposite()->get2DDataValue() * 90) +
+                    (float)(forwards->get2DDataValue() * 90);
+
+    if (entity->GetType() == 0x000000000C800001ULL)
+    {
+        boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(entity);
+        player->mConnection->teleport(x, y, z, entity->mYRot, entity->mXRot, true, true);
+    }
+    else
+    {
+        entity->moveTo(x, y, z, entity->mYRot, entity->mXRot);
+    }
     return true;
 }
 
@@ -350,7 +419,9 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
         }
     }
 
-    const BlockState* portalState = Blocks::portal->getBlockState(xDirection == 0 ? 2 : 1);
+    Direction::Axis* portalAxis = xDirection == 0 ? Direction::Axis::Z : Direction::Axis::X;
+    const BlockState* portalState =
+        Blocks::portal->getBlockState(PortalBlock::getDataForAxis(portalAxis));
     for (int pass = 0; pass < 4; ++pass)
     {
         for (int width = 0; width < 4; ++width)
@@ -381,7 +452,7 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
 void PortalForcer::force(boost::shared_ptr<Entity> entity, float rotation, int chunkX, int chunkZ)
 {
     Level* world = static_cast<Level*>(level);
-    if (world->mDimension->getType() == 1)
+    if (world->mDimension->getType() == DimensionType::THE_END)
     {
         int centerX = Mth::floor(entity->mX);
         int centerY = Mth::floor(entity->mY);

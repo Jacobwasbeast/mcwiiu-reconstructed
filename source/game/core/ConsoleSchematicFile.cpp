@@ -1,4 +1,5 @@
 #include "game/core/ConsoleSchematicFile.hpp"
+#include <cmath>
 #include <cstring>
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -291,11 +292,11 @@ void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z
     if(level==0 || elements==0) return; for(int dx=0;dx<width;++dx) for(int dy=0;dy<height;++dy) for(int dz=0;dz<depth;++dz) { unsigned int i=(unsigned int)((dx*height+dy)*depth+dz); if(i<elements->length) elements->data[i]=level->getElement(x+dx,y+dy,z+dz); }
 }
 
-void ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* data)
+long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* data)
 {
     if (chunk == 0 || data == 0)
     {
-        return;
+        return 0;
     }
 
     int chunkMinX = chunk->x << 4;
@@ -304,11 +305,12 @@ void ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* data
     int z0 = (int)data->mArea->mMinZ > chunkMinZ ? (int)data->mArea->mMinZ : chunkMinZ;
     int x1 = (int)data->mArea->mMaxX < chunkMinX + 16 ? (int)data->mArea->mMaxX : chunkMinX + 16;
     int z1 = (int)data->mArea->mMaxZ < chunkMinZ + 16 ? (int)data->mArea->mMaxZ : chunkMinZ + 16;
-    writeSchematicIntoArrays(chunkMinX, 0, chunkMinZ, x0, (int)data->mArea->mMinY, z0, x1, (int)data->mArea->mMaxY, z1, data, data->mElements, data->mExtraElements, data->mData, data->mExtraData);
+    long long blocksApplied = writeSchematicIntoArrays(chunkMinX, 0, chunkMinZ, x0, (int)data->mArea->mMinY, z0, x1, (int)data->mArea->mMaxY, z1, data, data->mElements, data->mExtraElements, data->mData, data->mExtraData);
     chunk->setAllElements(data->mElements, data->mExtraElements);
+    return blocksApplied;
 }
 
-void ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box, ESchematicRotation rotation, ESchematicMirror mirror)
+long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box, ESchematicRotation rotation, ESchematicMirror mirror)
 {
     PasteData data;
     data.mArea = box;
@@ -323,7 +325,7 @@ void ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, AABB* box, ESch
     data.mNamedPositions = mNamedPositions;
     data.mIncludeAir = true;
     data.mIncludeSpecial = false;
-    applyBlocksAndData(chunk, &data);
+    return applyBlocksAndData(chunk, &data);
 }
 void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea, PasteData* paste, Level* level)
 {
@@ -374,16 +376,32 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
     applyBlockEntities(chunk, chunkArea, &paste, level);
 }
 
-int ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB*, ESchematicRotation)
+long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* area, ESchematicRotation)
 {
-    if (chunk == 0)
+    if (chunk == 0 || area == 0)
     {
         return 0;
     }
+
+    int chunkMinX = chunk->x << 4;
+    int chunkMinZ = chunk->z << 4;
+    int minX = (int)std::floor(area->mMinX);
+    int maxX = (int)std::floor(area->mMaxX);
+    int minY = (int)std::floor(area->mMinY);
+    int maxY = (int)std::floor(area->mMaxY);
+    int minZ = (int)std::floor(area->mMinZ);
+    int maxZ = (int)std::floor(area->mMaxZ);
+
+    if (minX < chunkMinX) minX = chunkMinX;
+    if (maxX > chunkMinX + 16) maxX = chunkMinX + 16;
+    if (minZ < chunkMinZ) minZ = chunkMinZ;
+    if (maxZ > chunkMinZ + 16) maxZ = chunkMinZ + 16;
+
+    int volume = (maxX - minX) * (maxY - minY) * (maxZ - minZ);
     chunk->recalcHeightmapOnly();
     chunk->recalcBlockLights();
     chunk->setUnsaved(true);
-    return 1;
+    return volume;
 }
 
 void ConsoleSchematicFile::offsetPainting(Level*, boost::shared_ptr<Painting> painting, ESchematicRotation rotation, ESchematicMirror mirror)
@@ -446,7 +464,7 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
     mIncludeAir = false;
     return true;
 }
-int ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0, int x1, int y1, int z1, PasteData* paste, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData)
+long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0, int x1, int y1, int z1, PasteData* paste, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData)
 {
     int volume = (x1 - x0) * (y1 - y0) * (z1 - z0);
     int halfHeight = (paste->mHeight + 1) / 2;
@@ -471,7 +489,7 @@ int ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int c
             setData(extraData, paste->mExtraData, paste->mMirror, localX, y0, localZ, localX + 1, y1, localZ + 1, destinationDataIndex, paste->mIncludeAir, paste->mIncludeSpecial, paste->mExtraElements, sourceDataIndex);
         }
     }
-    return volume >> 31;
+    return volume;
 }
 void ConsoleSchematicFile::tick()
 {

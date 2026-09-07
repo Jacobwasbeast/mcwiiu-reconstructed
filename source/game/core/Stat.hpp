@@ -72,10 +72,11 @@ public:
     std::wstring format(int value);
     std::wstring toString();
 
+    int id;
+
 protected:
     void _init();
 
-    int id;
     std::wstring name;
     StatFormatter* formatter;
     bool armourStat;

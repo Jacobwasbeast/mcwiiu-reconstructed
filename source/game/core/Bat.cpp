@@ -12,17 +12,18 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/BlockStateDefinition.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 extern bool gTumbleMapFlags[3];
 
-static const unsigned long long ENTITY_TYPE_BAT = 0x1d00010100000000ULL;
+static const unsigned long long ENTITY_TYPE_AMBIENT_CREATURE = 0x0d000100ULL;
+static const unsigned long long ENTITY_TYPE_BAT = 0x1d000101ULL;
 
 const EntityDataAccessor<unsigned char>* Bat::DATA_ID_FLAGS = NULL;
 
@@ -32,7 +33,7 @@ Bat::Bat(Level* level)
     fjDerivedCtorCalls();
     setSize(0.5f, 0.9f);
     setResting(true);
-    mBlocksBuilding = true;
+    mCategories |= 0x800;
 }
 
 Bat::~Bat()
@@ -42,7 +43,7 @@ Bat::~Bat()
 
 void Bat::staticCtor()
 {
-    DATA_ID_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_BAT, ENTITY_TYPE_MOB,
+    DATA_ID_FLAGS = SynchedEntityData::defineId(ENTITY_TYPE_BAT, ENTITY_TYPE_AMBIENT_CREATURE,
                                                  EntityDataSerializers::BYTE);
 }
 
@@ -62,7 +63,7 @@ void Bat::defineSynchedData()
 
 float Bat::getSoundVolume()
 {
-    return 0.1;
+    return 0.1f;
 }
 
 float Bat::getVoicePitch()
@@ -122,8 +123,8 @@ void Bat::tick()
     else
     {
         int y = (int)mY;
-        mYd = 0.0;
         mXd = 0.0;
+        mYd = 0.0;
         mZd = 0.0;
         if (mY < (double)y)
             --y;
@@ -136,23 +137,25 @@ void Bat::customServerAiStep()
 {
     Mob::customServerAiStep();
 
-    BlockPos above(BlockPos(shared_from_this()).above());
+    BlockPos pos(shared_from_this());
+    BlockPos above(pos.above());
     if (isResting())
     {
         const BlockState* state = mLevel->getBlockState(above);
         if (!state->getBlock()->isSolidBlockingCubeAndNotSignalSource(state))
         {
             setResting(false);
-            mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, above, 0);
+            mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, pos, 0);
         }
-        else if (mRandom->nextInt(200) == 0)
+        else
         {
-            mYRot = (float)mRandom->nextInt(360);
+            if (mRandom->nextInt(200) == 0)
+                mYRot = (float)mRandom->nextInt(360);
             boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 4.0, -1.0);
             if (player)
             {
                 setResting(false);
-                mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, above, 0);
+                mLevel->levelEvent(boost::shared_ptr<Player>(), 0x401, pos, 0);
             }
         }
         return;
@@ -164,7 +167,7 @@ void Bat::customServerAiStep()
         if (mLevel->isEmptyBlock(*mTargetPosition) && mTargetPosition->y >= 1)
         {
             if (mRandom->nextInt(30) != 0 &&
-                mTargetPosition->distSqr(mX, mY, mZ) >= 4.0)
+                mTargetPosition->distSqr((int)mX, (int)mY, (int)mZ) >= 4.0)
                 chooseTarget = false;
             else
                 chooseTarget = true;
@@ -186,9 +189,9 @@ void Bat::customServerAiStep()
     float xDirection = xDelta > 0.0 ? 1.0f : (xDelta < 0.0 ? -1.0f : 0.0f);
     float yDirection = yDelta > 0.0 ? 1.0f : (yDelta < 0.0 ? -1.0f : 0.0f);
     float zDirection = zDelta > 0.0 ? 1.0f : (zDelta < 0.0 ? -1.0f : 0.0f);
-    mXd = (xDirection * 0.5 - mXd) * 0.1 + mXd;
-    mYd = (yDirection * 0.7 - mYd) * 0.1;
-    mZd = (zDirection * 0.5 - mZd) * 0.1 + mZd;
+    mXd = (xDirection * 0.5f - mXd) * 0.1f + mXd;
+    mYd = (yDirection * 0.7f - mYd) * 0.1f + mYd;
+    mZd = (zDirection * 0.5f - mZd) * 0.1f + mZd;
     mYRot += Mth::wrapDegrees((float)(std::atan2(mZd, mXd) * 57.2957763671875 - 90.0f - mYRot));
     mFlyingSpeed = 0.5f;
     if (mRandom->nextInt(100) == 0 &&
@@ -226,13 +229,13 @@ bool Bat::hurt(const DamageSource* source, float damage)
 
 void Bat::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, ENTITY_TYPE_BAT);
 }
 
 void Bat::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    setResting(tag->getByte(L"BatFlags") & 1);
+    getEntityData()->set(DATA_ID_FLAGS, tag->getByte(L"BatFlags"), true);
 }
 
 void Bat::addAdditonalSaveData(CompoundTag* tag)
@@ -243,10 +246,7 @@ void Bat::addAdditonalSaveData(CompoundTag* tag)
 
 bool Bat::checkSpawnRules()
 {
-    int y = (int)mY;
-    if (mY < (double)y)
-        --y;
-    BlockPos pos((int)mX, y, (int)mZ);
+    BlockPos pos(mX, mBoundingBox->mMinY, mZ);
     if (pos.y < mLevel->getSeaLevel())
     {
         int brightness = mLevel->getRawBrightness(pos);

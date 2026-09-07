@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 class INetworkPlayer;
+class ItemInstance;
 class StatsUID;
 
 enum EScoreboardType
@@ -27,30 +29,33 @@ public:
     IScoreboardLayout();
     virtual ~IScoreboardLayout();
 
-    virtual uint32_t getStatIcon1(const EScoreboardType&) = 0;
-    virtual uint32_t getStatIcon2(const EScoreboardType&) = 0;
-    virtual uint32_t getStatIcon3(const EScoreboardType&) = 0;
-    virtual uint32_t getStatIcon4(const EScoreboardType&) = 0;
-    virtual uint32_t getStatIcon5(const EScoreboardType&) = 0;
+    virtual void Init(int) = 0;
+    virtual bool showLifeSpanProgress() = 0;
     virtual std::wstring getLabel2(const StatsUID&) = 0;
     virtual std::wstring getLabel3(const StatsUID&) = 0;
     virtual std::wstring getLabel4(const StatsUID&) = 0;
     virtual std::wstring getLabel5(const StatsUID&) = 0;
     virtual std::wstring getLabel6(const StatsUID&) = 0;
     virtual std::wstring getLabel7(const StatsUID&) = 0;
-    virtual uint32_t getEndBarIcon(PlayerInfo*) = 0;
+    virtual uint32_t getStatIcon2(const EScoreboardType&) = 0;
+    virtual uint32_t getStatIcon3(const EScoreboardType&) = 0;
+    virtual uint32_t getStatIcon4(const EScoreboardType&) = 0;
+    virtual uint32_t getStatIcon5(const EScoreboardType&) = 0;
 
     virtual uint32_t getTitleIcon(int, const EScoreboardType&);
     virtual std::wstring GetRowLabel(int, const StatsUID&, const EScoreboardType&);
     virtual uint32_t getNumberOfColumns();
-    virtual uint64_t getItemForSlot(int, int, int, const unsigned int&, const EScoreboardType&) = 0;
+    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int, int, const unsigned int&, const EScoreboardType&) = 0;
+    virtual boost::shared_ptr<ItemInstance> getItemForSlot(const wchar_t*, const unsigned int&, const EScoreboardType&);
+    virtual unsigned char GetEndBarIcon(PlayerInfo*) = 0;
     virtual std::wstring GetCustomProgressDetails(const StatsUID&, int&);
     virtual int GetPlayerCount();
     virtual PlayerInfo* GetPlayer(int);
     virtual bool RemovePlayer(int);
     virtual void BuildPlayerInfo(INetworkPlayer*, PlayerInfo*);
-
-    uint64_t getItemForSlot(const wchar_t*, const unsigned int&, const EScoreboardType&);
+    virtual PlayerInfo* CreatePlayerInfo() = 0;
+    virtual void AddPlayer(unsigned char) = 0;
+    virtual void UpdatePlayer(int, PlayerInfo*, PlayerInfo*, bool) = 0;
 
     void ClearPlayersInfo();
     static const wchar_t* getIcon(int);

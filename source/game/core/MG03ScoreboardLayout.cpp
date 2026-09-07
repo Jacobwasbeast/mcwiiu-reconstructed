@@ -120,17 +120,17 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return std::wstring(L"---");
 }
 
-uint64_t MG03ScoreboardLayout::getItemForSlot(int, int, int, const unsigned int&, const EScoreboardType&)
+boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int, int, int, const unsigned int&, const EScoreboardType&)
 {
-    return 0;
+    return boost::shared_ptr<ItemInstance>();
 }
 
-uint64_t MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
 {
     return getItemForSlot(row, column, -1, value, type);
 }
 
-uint32_t MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
     return info != 0 && info->voiceStatus != 0 ? 2 : 0;
 }

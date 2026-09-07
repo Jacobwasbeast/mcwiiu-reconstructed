@@ -19,178 +19,32 @@ public:
         int hashCode();
         CustomizableSourceSettings* build();
 
-        int biomeSize;
-        int riverSize;
-        int dirtCount;
-        int dirtSize;
-        unsigned char unused10;
-        bool useCaves;
-        unsigned char unused12;
-        bool useDungeons;
-        bool useStrongholds;
-        bool useVillages;
-        unsigned char unused16;
-        bool useMineShafts;
-        unsigned char unused18;
-        bool useTemples;
-        unsigned char unused1a;
-        unsigned char unused1b;
-        int dirtMinHeight;
-        int dirtMaxHeight;
-        int gravelCount;
-        int gravelSize;
-        int gravelMinHeight;
-        int gravelMaxHeight;
-        int dioriteCount;
-        int dioriteSize;
-        int dioriteMinHeight;
-        int dioriteMaxHeight;
-        bool useMonuments;
-        int monumentSpacing;
-        bool useRavines;
-        bool useWaterLakes;
-        bool useLavaLakes;
-        int waterLakeChance;
-        bool useLavaOceans;
-        int lavaLakeChance;
-        bool unused64;
-        int fixedBiome;
-        int biomeSizeValue;
-        int riverSizeValue;
-        int setting70;
-        int setting74;
-        int setting78;
-        int setting7c;
-        int setting80;
-        int setting84;
-        int setting88;
-        int setting8c;
-        int setting90;
-        int setting94;
-        int setting98;
-        int setting9c;
-        int settinga0;
-        int settinga4;
-        int graniteCount;
-        int graniteSize;
-        int graniteMinHeight;
-        int graniteMaxHeight;
-        int andesiteCount;
-        int andesiteSize;
-        int andesiteMinHeight;
-        int andesiteMaxHeight;
-        int coalCount;
-        int coalSize;
-        int coalMinHeight;
-        int coalMaxHeight;
-        int ironCount;
-        int ironSize;
-        int ironMinHeight;
-        int ironMaxHeight;
-        int goldCount;
-        int goldSize;
-        int goldMinHeight;
-        int goldMaxHeight;
-        int redstoneCount;
-        int redstoneSize;
-        int redstoneMinHeight;
-        int redstoneMaxHeight;
-        int diamondCount;
-        int diamondSize;
-        int diamondMinHeight;
-        int diamondMaxHeight;
-        int lapisCount;
-        int lapisSize;
-        int lapisMinHeight;
-        int lapisMaxHeight;
+#define CUSTOMIZABLE_SOURCE_SETTINGS_FIELDS \
+        float coordinateScale; float heightScale; float lowerLimitScale; float upperLimitScale; \
+        float depthNoiseScaleX; float depthNoiseScaleZ; float depthNoiseScaleExponent; \
+        float mainNoiseScaleX; float mainNoiseScaleY; float mainNoiseScaleZ; float baseSize; float stretchY; \
+        float biomeDepthWeight; float biomeDepthOffset; float biomeScaleWeight; float biomeScaleOffset; \
+        int seaLevel; bool useCaves; bool useDungeons; int dungeonChance; bool useStrongholds; \
+        bool useVillages; bool useMineShafts; bool useTemples; bool useOceanRuins; bool useMonuments; \
+        bool useMansions; bool useShipwrecks; bool useRavines; bool useWaterLakes; int waterLakeChance; \
+        bool useLavaLakes; int lavaLakeChance; bool useLavaOceans; bool useBuriedTreasure; \
+        int fixedBiome; int biomeSize; int riverSize; \
+        int dirtCount; int dirtSize; int dirtMinHeight; int dirtMaxHeight; int gravelCount; int gravelSize; \
+        int gravelMinHeight; int gravelMaxHeight; int dioriteCount; int dioriteSize; int dioriteMinHeight; \
+        int dioriteMaxHeight; int graniteCount; int graniteSize; int graniteMinHeight; int graniteMaxHeight; \
+        int andesiteCount; int andesiteSize; int andesiteMinHeight; int andesiteMaxHeight; int coalCount; \
+        int coalSize; int coalMinHeight; int coalMaxHeight; int ironCount; int ironSize; int ironMinHeight; \
+        int ironMaxHeight; int goldCount; int goldSize; int goldMinHeight; int goldMaxHeight; int redstoneCount; \
+        int redstoneSize; int redstoneMinHeight; int redstoneMaxHeight; int diamondCount; int diamondSize; \
+        int diamondMinHeight; int diamondMaxHeight; int lapisCount; int lapisSize; int lapisMinHeight; int lapisMaxHeight;
+
+        CUSTOMIZABLE_SOURCE_SETTINGS_FIELDS
     };
 
     CustomizableSourceSettings(Builder* builder);
-
-    int biomeSize;
-    int riverSize;
-    int dirtCount;
-    int dirtSize;
-    unsigned char unused10;
-    bool useCaves;
-    unsigned char unused12;
-    bool useDungeons;
-    bool useStrongholds;
-    bool useVillages;
-    unsigned char unused16;
-    bool useMineShafts;
-    unsigned char unused18;
-    bool useTemples;
-    unsigned char unused1a;
-    unsigned char unused1b;
-    int dirtMinHeight;
-    int dirtMaxHeight;
-    int gravelCount;
-    int gravelSize;
-    int gravelMinHeight;
-    int gravelMaxHeight;
-    int dioriteCount;
-    int dioriteSize;
-    int dioriteMinHeight;
-    int dioriteMaxHeight;
-    bool useMonuments;
-    int monumentSpacing;
-    bool useRavines;
-    bool useWaterLakes;
-    bool useLavaLakes;
-    int waterLakeChance;
-    bool useLavaOceans;
-    int lavaLakeChance;
-        bool unused64;
-        int fixedBiome;
-        int biomeSizeValue;
-        int riverSizeValue;
-        int setting70;
-        int setting74;
-        int setting78;
-        int setting7c;
-        int setting80;
-        int setting84;
-        int setting88;
-        int setting8c;
-        int setting90;
-        int setting94;
-        int setting98;
-        int setting9c;
-        int settinga0;
-        int settinga4;
-        int graniteCount;
-    int graniteSize;
-    int graniteMinHeight;
-    int graniteMaxHeight;
-    int andesiteCount;
-    int andesiteSize;
-    int andesiteMinHeight;
-    int andesiteMaxHeight;
-    int coalCount;
-    int coalSize;
-    int coalMinHeight;
-    int coalMaxHeight;
-    int ironCount;
-    int ironSize;
-    int ironMinHeight;
-    int ironMaxHeight;
-    int goldCount;
-    int goldSize;
-    int goldMinHeight;
-    int goldMaxHeight;
-    int redstoneCount;
-    int redstoneSize;
-    int redstoneMinHeight;
-    int redstoneMaxHeight;
-    int diamondCount;
-    int diamondSize;
-    int diamondMinHeight;
-    int diamondMaxHeight;
-    int lapisCount;
-    int lapisSize;
-    int lapisMinHeight;
-    int lapisMaxHeight;
+    CUSTOMIZABLE_SOURCE_SETTINGS_FIELDS
 };
+
+#undef CUSTOMIZABLE_SOURCE_SETTINGS_FIELDS
 
 #endif

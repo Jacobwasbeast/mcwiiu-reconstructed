@@ -5,22 +5,46 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/GameRules.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/Snowball.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/RangedAttackGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/core/Snowball.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
+
+bool enemySelectorFunc(boost::shared_ptr<Entity> entity);
+
+bool enemySelectorFunc(boost::shared_ptr<Entity> entity)
+{
+    return entity->isAlive();
+}
+
+static Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR =
+    new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(enemySelectorFunc);
 
 const EntityDataAccessor<unsigned char>* SnowMan::DATA_PUMPKIN = NULL;
 
@@ -41,16 +65,17 @@ void SnowMan::create(Level* level)
 
 void SnowMan::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
 {
-    if (target == NULL || mLevel == NULL)
-        return;
-    boost::shared_ptr<Snowball> snowball(new Snowball(mLevel, target));
+    boost::shared_ptr<LivingEntity> owner =
+        boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
+    boost::shared_ptr<Snowball> snowball(new Snowball(mLevel, owner));
     double dx = target->mX - mX;
     double dz = target->mZ - mZ;
-    double distance = std::sqrt(dx * dx + dz * dz);
-    double dy = target->mY + target->getEyeHeight() - 1.1 - snowball->mY;
-    snowball->shoot(dx, dy + distance * 0.2, dz, 1.6f, 12.0f);
-    mLevel->addEntity(boost::static_pointer_cast<Entity>(snowball));
-    playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f, 1.0f);
+    double targetY = target->mY + target->getEyeHeight() - 1.1;
+    double distance = Mth::sqrt(dx * dx + dz * dz);
+    snowball->shoot(dx, targetY - snowball->mY + distance * 0.2, dz, 1.6f, 12.0f);
+    playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f,
+              1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
+    mLevel->addEntity(snowball);
 }
 
 bool SnowMan::isAggressive()
@@ -75,38 +100,40 @@ void SnowMan::addDataWalkers(DataFixerUpper* fixer)
 void SnowMan::registerGoals()
 {
     mGoalSelector.addGoal(1, new RangedAttackGoal(this, this, 1.25, 20, 10.0f), true);
+    mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0, 0.001f / 100.0f), true);
+    mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
+    mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Mob), 10,
+                                                               true, false, ENEMY_SELECTOR,
+                                                               true, false), true);
 }
 
 void SnowMan::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(4.0);
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
-    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(0.7);
 }
 
 void SnowMan::defineSynchedData()
 {
     Mob::defineSynchedData();
-    if (DATA_PUMPKIN != NULL)
-        getEntityData()->createDateItem(DATA_PUMPKIN, static_cast<unsigned char>(16));
+    getEntityData()->createDateItem(DATA_PUMPKIN, static_cast<unsigned char>(16));
 }
 
 bool SnowMan::hasPumpkin()
 {
-    return DATA_PUMPKIN != NULL && (getEntityData()->get(DATA_PUMPKIN) & 16) != 0;
+    return (getEntityData()->get(DATA_PUMPKIN) & 16) != 0;
 }
 
 void SnowMan::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
-    if (tag != NULL)
-        tag->putBoolean(L"Pumpkin", hasPumpkin());
+    tag->putBoolean(L"Pumpkin", hasPumpkin());
 }
 
 void SnowMan::setPumpkin(bool pumpkin)
 {
-    if (DATA_PUMPKIN == NULL)
-        return;
     unsigned char flags = getEntityData()->get(DATA_PUMPKIN);
     getEntityData()->set(DATA_PUMPKIN, pumpkin ? static_cast<unsigned char>(flags | 16) : static_cast<unsigned char>(flags & 239), true);
 }
@@ -114,27 +141,38 @@ void SnowMan::setPumpkin(bool pumpkin)
 void SnowMan::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    if (tag != NULL && tag->contains(L"Pumpkin"))
+    if (tag->contains(L"Pumpkin"))
         setPumpkin(tag->getBoolean(L"Pumpkin"));
 }
 
 void SnowMan::aiStep()
 {
     Mob::aiStep();
-    if (mLevel == NULL || mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
         return;
-    BlockPos pos((int)mX, (int)mY, (int)mZ);
+
+    int x = static_cast<int>(std::floor(mX));
+    int y = static_cast<int>(std::floor(mY));
+    int z = static_cast<int>(std::floor(mZ));
+
     if (isInWaterRainOrBubble())
-        setSecondsOnFire(1);
+        hurt(DamageSource::DROWN, 1.0f);
+
+    if (mLevel->getBiome(BlockPos(x, 0, z))->getTemperature(BlockPos(x, y, z)) > 1.0f)
+        hurt(DamageSource::ON_FIRE, 1.0f);
+
     if (mLevel->getGameRules()->getBoolean(1))
     {
         for (int i = 0; i < 4; ++i)
         {
-            int x = (int)mX + (i & 1 ? 1 : -1);
-            int z = (int)mZ + (i & 2 ? 1 : -1);
-            BlockPos snowPos(x, (int)mY, z);
-            if (mLevel->getBlock(snowPos) == Blocks::AIR && Blocks::snow_layer->mayPlace(mLevel, snowPos))
-                mLevel->setBlock(snowPos, Blocks::snow_layer->defaultBlockState(), 2, false);
+            int snowX = static_cast<int>(std::floor(mX + ((i % 2) * 2 - 1) * 0.25));
+            int snowY = static_cast<int>(std::floor(mY));
+            int snowZ = static_cast<int>(std::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25));
+            BlockPos snowPos(snowX, snowY, snowZ);
+            if (mLevel->getBlockState(snowPos)->getBlock() == Blocks::AIR &&
+                mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f &&
+                Blocks::snow_layer->mayPlace(mLevel, snowPos))
+                mLevel->setBlockAndUpdate(snowPos, Blocks::snow_layer->defaultBlockState());
         }
     }
 }
@@ -146,34 +184,48 @@ const void* SnowMan::getDefaultLootTable()
 
 double SnowMan::getEyeHeight()
 {
-    return 1.7;
+    return 1.7f;
 }
 
 bool SnowMan::hurt(const DamageSource* source, float damage)
 {
+    boost::shared_ptr<Entity> entity = source->getEntity();
+    if (entity && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+        if (!player->isAllowedToAttackPlayers())
+            return false;
+    }
     return LivingEntity::hurt(source, damage);
 }
 
 unsigned int SnowMan::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    Item* item = tooltipData.m_pItemInstance->getItem();
-    if (item == Items::shears && hasPumpkin())
+    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+    if (itemId == 359 && hasPumpkin())
         return 0xbe5aab60U;
+    if (itemId == 420)
+    {
+        if (!isLeashed())
+            return 0xa1b34a96U;
+        if (getLeashHolder().get() == tooltipData.m_pPlayer.get())
+            return 0x551269b5U;
+    }
     return 0xffffffffU;
 }
 
 unsigned int SnowMan::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return tooltipData.m_pPlayer != NULL ? 0xfdef7118U : 0xffffffffU;
+    return tooltipData.m_pPlayer->isAllowedToAttackPlayers() ? 0xfdef7118U : 0xffffffffU;
 }
 
 bool SnowMan::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> item = getItemInHand(hand);
-    if (item != NULL && item->getItem() == Items::shears && hasPumpkin() && mLevel != NULL && !mLevel->mIsClientSide)
+    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+    if (item->getItem() == Items::shears && hasPumpkin() && !mLevel->mIsClientSide)
     {
         setPumpkin(false);
-        item->hurtAndBreak(1, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+        item->hurtAndBreak(1, player);
     }
     return Mob::mobInteract(player, hand);
 }

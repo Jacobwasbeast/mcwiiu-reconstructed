@@ -6,16 +6,13 @@
 
 class ConsoleSchematicFile;
 
-class SchematicTheme : public LayerTheme
+class SchematicTheme : public LayerTheme, public AssetTheme<ConsoleSchematicFile*>
 {
 public:
     SchematicTheme();
     ~SchematicTheme();
 
     virtual void Apply(Random&, BlockTransaction*, int&, int&) const;
-
-private:
-    AssetTheme<ConsoleSchematicFile*> mAssets;
 };
 
 #endif

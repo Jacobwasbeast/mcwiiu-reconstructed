@@ -10,6 +10,8 @@
 #include "game/core/Scoreboard.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 
+class GameMedal;
+
 class ClientScoreboard : public Scoreboard
 {
 public:
@@ -29,7 +31,7 @@ public:
     virtual void ResetPlayerScores();
     int GetActivePlayerCount(EMiniGameId miniGameId);
     std::wstring GetDisplayName(const StatsUID& suid);
-    int GetMedal(const StatsUID& suid);
+    GameMedal* GetMedal(const StatsUID& suid);
     bool IsWinner(const StatsUID& suid, int round);
     bool GetSurvived(const StatsUID& suid, int round);
     int GetKills(const StatsUID& suid, int round);

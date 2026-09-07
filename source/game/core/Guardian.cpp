@@ -16,15 +16,15 @@
 #include "game/world/block/BlockPos.hpp"
 
 Guardian::Guardian(Level* level, bool createEntityData)
-    : Monster(level), mTargetReference(), mBeamTarget()
+    : Monster(level), mCachedAttackTarget()
 {
     mTailAnimation = 0.0f;
-    mSpikesAnimation = 0;
     mTailAnimationOld = 0.0f;
+    mTailAnimationSpeed = 0.0f;
+    mSpikesAnimation = 0.0f;
     mSpikesAnimationOld = 0.0f;
-    mSpikesAnimationTarget = 0.0f;
     mAttackTime = 0;
-    mElder = false;
+    mTouchedGround = false;
     mRandomStrollGoal = NULL;
     setSize(0.85f, 0.85f);
     if (createEntityData)
@@ -81,13 +81,13 @@ void Guardian::setActiveAttackTarget(int targetId)
 {
     if (targetId == 0)
     {
-        mBeamTarget.reset();
+        mCachedAttackTarget.reset();
     }
 }
 
 bool Guardian::hasActiveAttackTarget()
 {
-    return mBeamTarget != NULL;
+    return mCachedAttackTarget != NULL;
 }
 
 boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
@@ -96,7 +96,7 @@ boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
     {
         return boost::shared_ptr<Entity>();
     }
-    return mBeamTarget;
+    return mCachedAttackTarget;
 }
 
 void Guardian::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -152,10 +152,6 @@ double Guardian::getAttackAnimationScale(float partialTicks)
 void Guardian::aiStep()
 {
     mTailAnimationOld = mTailAnimation;
-    if (mElder)
-    {
-        mSpikesAnimation = 1;
-    }
     mTailAnimation += (mRandom->nextFloat() - 0.5f) * 0.1f;
     Monster::aiStep();
 }

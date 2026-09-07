@@ -17,35 +17,35 @@ class Bat : public AmbientCreature
 {
 public:
     Bat(Level* level);
+    virtual unsigned long long GetType();
     virtual ~Bat();
-
-    static void staticCtor();
-    virtual void setResting(bool resting);
     virtual void defineSynchedData();
-    virtual float getSoundVolume();
-    virtual float getVoicePitch();
-    virtual const SoundEvent* getAmbientSound();
-    virtual const SoundEvent* getHurtSound(const DamageSource* source);
-    virtual const SoundEvent* getDeathSound();
-    virtual bool isPushable(boost::shared_ptr<Entity> entity);
-    virtual void doPush(boost::shared_ptr<Entity> entity);
-    virtual void pushEntities();
-    virtual void registerAttributes();
-    virtual bool isResting();
     virtual void tick();
-    virtual void customServerAiStep();
     virtual bool makeStepSound();
-    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos);
-    virtual bool isIgnoringBlockTriggers();
+    virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual bool hurt(const DamageSource* source, float damage);
-    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual bool isPushable(boost::shared_ptr<Entity> entity);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual bool checkSpawnRules();
+    virtual bool isIgnoringBlockTriggers();
     virtual double getEyeHeight();
+    virtual void registerAttributes();
+    virtual const SoundEvent* getHurtSound(const DamageSource* source);
+    virtual const SoundEvent* getDeathSound();
+    virtual float getSoundVolume();
+    virtual float getVoicePitch();
+    virtual void pushEntities();
+    virtual void doPush(boost::shared_ptr<Entity> entity);
+    virtual const SoundEvent* getAmbientSound();
     virtual const void* getDefaultLootTable();
-    virtual unsigned long long GetType();
+    virtual void customServerAiStep();
+    virtual bool checkSpawnRules();
+    virtual bool isResting();
+    virtual void setResting(bool resting);
+
+    static void staticCtor();
+    static void addDataWalkers(DataFixerUpper* fixer);
     static void create(Level* level);
 
 private:

@@ -8,6 +8,7 @@
 class Block;
 class BlockPos;
 class CompoundTag;
+class ChickenRenderer;
 class DamageSource;
 class DataFixerUpper;
 class Entity;
@@ -46,6 +47,8 @@ public:
     static void create(Level* level);
 
 private:
+    friend class ChickenRenderer;
+
     float mFlapTime;
     float mFlapSpeed;
     float mOFlapSpeed;

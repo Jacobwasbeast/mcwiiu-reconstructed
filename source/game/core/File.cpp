@@ -1,4 +1,5 @@
 #include "game/core/File.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <stdio.h>
 
@@ -24,6 +25,22 @@ struct _WIN32_FIND_DATAA
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 std::wstring filenametowstring(const char* filename);
+
+char* wstringtofilename(const std::wstring& path, char (&filename)[256])
+{
+    for (std::wstring::size_type i = 0; i < path.length(); ++i)
+    {
+        char character = static_cast<char>(path[i]);
+        filename[i] = character == '\\' ? '/' : character;
+    }
+    filename[path.length()] = '\0';
+    return filename;
+}
+
+std::wstring filenametowstring(const char* filename)
+{
+    return convStringToWstring(std::string(filename));
+}
 
 unsigned int GetFileAttributesA(const char* fileName);
 int DeleteFileA(const char* fileName);

@@ -5,7 +5,7 @@
 #include "game/util/Math.hpp"
 
 GameStats::GameStats()
-    : mPlayerCount(0), mRound(0), mRoundStartTime(0), mRoundEndTime(0), mRoundTime(0), mFarthestCheckpointReached(0)
+    : mPlayerCount(0), mRoundStartTime(0), mCurrentRound(0), mRoundEndTime(0), mRoundTime(0), mFarthestCheckpointReached(0)
 {
 }
 
@@ -140,6 +140,6 @@ unsigned int GameStats::GetRoundsWon(const StatsUID&) { return 0; }
 unsigned int GameStats::GetMostBlocksDestroyed() { return 0; }
 unsigned int GameStats::GetSecondMostBlocksDestroyed() { return 0; }
 unsigned int GameStats::GetThirdMostBlocksDestroyed() { return 0; }
-unsigned int GameStats::GetFastestPlayerTime() { return GetShortestLifespan(mRound); }
+unsigned int GameStats::GetFastestPlayerTime() { return GetShortestLifespan(mCurrentRound); }
 unsigned int GameStats::GetHighestScoringPlayerScore() { return 0; }
 unsigned int GameStats::GetFarthestCheckpointReached() { return mFarthestCheckpointReached; }

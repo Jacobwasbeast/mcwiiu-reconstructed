@@ -5,8 +5,8 @@
 #include "game/entity/mob/IndirectEntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/projectile/Fireball.hpp"
-#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/ClientboundDamageIndicatorPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
@@ -15,6 +15,40 @@ const DamageSource* DamageSource::IN_FIRE =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0d), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x34)))->setIsFire();
 const DamageSource* DamageSource::ON_FIRE =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x0f), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x36)))->bypassArmor()->setIsFire();
+static const DamageSource* CreateOutOfWorldDamageSource()
+{
+    DamageSource* source = new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x18), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+    source->bypassArmor();
+    source->bypassInvul();
+    return source;
+}
+
+static const DamageSource* CreateMagicDamageSource()
+{
+    DamageSource* source = new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x1c), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+    source->bypassArmor();
+    source->setMagic();
+    return source;
+}
+
+const DamageSource* DamageSource::OUT_OF_WORLD = CreateOutOfWorldDamageSource();
+const DamageSource* DamageSource::IN_WALL =
+    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x11), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+const DamageSource* DamageSource::LAVA =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x10), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x37)))->setIsFire();
+const DamageSource* DamageSource::HOT_FLOOR =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x40), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x41)))->setIsFire();
+const DamageSource* DamageSource::ANVIL =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x23), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x44)))->bypassArmor();
+const DamageSource* DamageSource::FALLING_BLOCK =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x24), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x45)))->bypassArmor();
+const DamageSource* DamageSource::KILL =
+    (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3b), static_cast<ClientboundChatPacket::EChatPacketMessage>(0)))->bypassArmor();
+const DamageSource* DamageSource::GENERIC =
+    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x19), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
+const DamageSource* DamageSource::MAGIC = CreateMagicDamageSource();
+const DamageSource* DamageSource::CRAMMING =
+    new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x12), static_cast<ClientboundChatPacket::EChatPacketMessage>(0));
 const DamageSource* DamageSource::DROWN =
     (new DamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x13), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x38)))->bypassArmor();
 const DamageSource* DamageSource::FALL =
@@ -86,9 +120,9 @@ boost::shared_ptr<DamageSource> DamageSource::CreateFireball(boost::shared_ptr<F
     return result;
 }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateThrown(boost::shared_ptr<Entity> projectileEntity, boost::shared_ptr<Entity> owner)
+DamageSource* DamageSource::CreateThrown(boost::shared_ptr<Entity> projectileEntity, boost::shared_ptr<Entity> owner)
 {
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x21), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3f), projectileEntity, owner, 0));
+    DamageSource* result = new IndirectEntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(0x21), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3f), projectileEntity, owner, 0);
     result->setProjectile();
     return result;
 }
@@ -164,7 +198,18 @@ bool DamageSource::scalesWithDifficulty() const { return scalesDifficulty; }
 
 void DamageSource::sendDamageIndicatorUpdate(boost::shared_ptr<ServerPlayer> player) const
 {
-    boost::shared_ptr<ClientboundDamageIndicatorPacket> packet(new ClientboundDamageIndicatorPacket());
+    boost::shared_ptr<Entity> source = getEntity();
+    boost::shared_ptr<ClientboundDamageIndicatorPacket> packet;
+    if (source)
+    {
+        Vec3* direction = Vec3::newTemp(player->mX - source->mX, 0.0, player->mZ - source->mZ);
+        direction->normalize();
+        packet.reset(new ClientboundDamageIndicatorPacket((float)direction->x, (float)direction->z));
+    }
+    else
+    {
+        packet.reset(new ClientboundDamageIndicatorPacket());
+    }
     player->mConnection->send(packet);
 }
 

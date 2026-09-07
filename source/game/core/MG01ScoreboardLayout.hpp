@@ -11,7 +11,7 @@ public:
     static unsigned int SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
     unsigned int getNumberOfColumns();
-    unsigned long long getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);
+    boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);
     std::wstring getLabel2(const StatsUID& uid);
     std::wstring getLabel3(const StatsUID& uid);
     std::wstring getLabel4(const StatsUID& uid);
@@ -29,7 +29,7 @@ public:
     void AddPlayer(unsigned char smallId);
     void UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo, bool flag);
     unsigned char GetEndBarIcon(PlayerInfo* info);
-    unsigned int showLifeSpanProgress();
+    bool showLifeSpanProgress();
 
 private:
     EScoreboardType m_scoreboardType;

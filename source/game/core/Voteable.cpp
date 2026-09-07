@@ -9,9 +9,11 @@
 #include "game/network/VotePacket.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-class MinecraftServer;
 extern MinecraftServer* gMinecraftServer;
 
 Voteable::Voteable(int id, bool broadcast, bool singleVote)
@@ -146,7 +148,7 @@ void Voteable::setVoteAndSync(int playerId, int voteableId, char vote)
     if (mBroadcast)
         gMinecraftServer->getPlayers()->broadcastAll(packet);
     else
-        Minecraft::GetInstance()->mPlayer->mConnection->send(packet);
+        Minecraft::GetInstance()->getConnection(Minecraft::GetInstance()->getLocalPlayerIdx())->send(packet);
 }
 
 void Voteable::setIncludedVotesAndSync(int playerId, char vote)
@@ -179,15 +181,15 @@ void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
 
 void Voteable::syncAllVotesToPlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    if (!mBroadcast || player == 0 || player->connection == 0)
+    if (!mBroadcast || player == 0 || player->mConnection == 0)
         return;
     boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it;
     for (it = mVotes.begin(); it != mVotes.end(); ++it)
     {
         boost::shared_ptr<Packet> packet(
             new VotePacket(mId, it->second, it->first.first, it->first.second));
-        player->connection->send(packet);
-    }
+        player->mConnection->send(packet);
+}
 }
 
 void Voteable::clearVotes()

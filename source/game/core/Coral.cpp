@@ -1,5 +1,7 @@
 #include "game/core/Coral.hpp"
 
+#include <string>
+
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
@@ -13,6 +15,25 @@
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+namespace
+{
+    std::wstring gCoralIconNames[5] =
+    {
+        L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple"
+    };
+
+    void destroyCoralIconNames(std::wstring* names, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            names[i].~basic_string();
+    }
+}
+
+void __T12()
+{
+    destroyCoralIconNames(gCoralIconNames, 5);
+}
 
 extern Property* Coral_VARIANT;
 
@@ -88,11 +109,8 @@ TextureAtlasSprite* Coral::getTexture(const Direction*, const BlockState* state)
 
 void Coral::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(L"coral_red");
-    mIcons[1] = iconRegister->registerIcon(L"coral_orange");
-    mIcons[2] = iconRegister->registerIcon(L"coral_yellow");
-    mIcons[3] = iconRegister->registerIcon(L"coral_blue");
-    mIcons[4] = iconRegister->registerIcon(L"coral_purple");
+    for (int i = 0; i < 5; ++i)
+        mIcons[i] = iconRegister->registerIcon(gCoralIconNames[i]);
 }
 
 int Coral::convertBlockStateToLegacyData(const BlockState* state)

@@ -1,5 +1,6 @@
 #include "game/core/Endermite.hpp"
 
+#include <string>
 #include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
@@ -12,11 +13,14 @@
 #include "game/entity/ai/MeleeAttackGoal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/core/EnderMan.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
@@ -26,11 +30,12 @@ void PIXEndNamedEvent();
 Endermite::Endermite(Level* level)
     : Monster(level)
 {
+    fjDerivedCtorCalls();
     mLifetime = 0;
     mPlayerSpawned = false;
-    mDeathScore = 3;
+    mExperienceReward = 3;
     setSize(0.4f, 0.3f);
-    mDeathScore |= 0x2000;
+    mCategories |= 0x2000;
 }
 
 Endermite::~Endermite()
@@ -39,24 +44,25 @@ Endermite::~Endermite()
 
 unsigned long long Endermite::GetType()
 {
-    return 0x4D54004B00000000ULL;
+    return 0x4D54004BULL;
 }
 
 double Endermite::getEyeHeight()
 {
-    return 0.1;
+    return 0.1f;
 }
 
 void Endermite::registerGoals()
 {
     mGoalSelector.addGoal(1, new FloatGoal(this), true);
     mGoalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false), true);
+    mGoalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     arrayWithLength<unsigned long long> entityTypes;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Enderman), true, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(EnderMan), true, false, false), true);
 }
 
 void Endermite::registerAttributes()
@@ -99,7 +105,7 @@ const void* Endermite::getDefaultLootTable()
 
 void Endermite::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x4D54004BULL);
 }
 
 void Endermite::readAdditionalSaveData(CompoundTag* tag)
@@ -119,25 +125,20 @@ void Endermite::addAdditonalSaveData(CompoundTag* tag)
 void Endermite::tick()
 {
     PIXBeginNamedEvent(0.0f, "Endermite tick");
-    mAnimStep = mYRot;
+    mYBodyRot = mYRot;
     Monster::tick();
     PIXEndNamedEvent();
 }
 
 void Endermite::setYBodyRot(float yBodyRot)
 {
-    mYBodyRot = yBodyRot;
+    mYRot = yBodyRot;
     LivingEntity::setYBodyRot(yBodyRot);
 }
 
 double Endermite::getRidingHeight()
 {
     return 0.1;
-}
-
-bool Endermite::isPlayerSpawned()
-{
-    return mPlayerSpawned;
 }
 
 void Endermite::setPlayerSpawned(bool playerSpawned)
@@ -164,7 +165,7 @@ void Endermite::aiStep()
     }
     else
     {
-        if (getTarget().get() == NULL)
+        if (!isPersistenceRequired())
             ++mLifetime;
         if (mLifetime > 2399)
             remove();
@@ -180,7 +181,7 @@ bool Endermite::checkSpawnRules()
 {
     if (!Monster::checkSpawnRules())
         return false;
-    return mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0).get() == NULL;
+    return !mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
 }
 
 EMobType Endermite::getMobType()

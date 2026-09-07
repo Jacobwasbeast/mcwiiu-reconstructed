@@ -8,6 +8,11 @@
 wchar_t* wstringtochar16(const std::wstring& string);
 std::wstring char16towstring(wchar_t* string);
 
+wchar_t* wstringtochar16(const std::wstring& string)
+{
+    return const_cast<wchar_t*>(string.c_str());
+}
+
 static void reverseUnsignedInt(unsigned int* value)
 {
     unsigned int v = *value;

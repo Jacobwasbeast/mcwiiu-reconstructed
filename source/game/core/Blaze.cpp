@@ -1,34 +1,49 @@
 #include "game/core/Blaze.hpp"
 
 #include <cmath>
+#include <typeinfo>
 
-#include "game/core/DamageSource.hpp"
 #include "game/core/BuiltInLootTables.hpp"
-#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/core/AttributeInstance.hpp"
-#include "game/entity/ai/LookControl.hpp"
-#include "game/entity/ai/PathNavigation.hpp"
-#include "game/entity/mob/Entity.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
-#include "game/entity/mob/SynchedEntityData.hpp"
-#include "game/entity/mob/EntityDataSerializers.hpp"
-#include "game/world/Level.hpp"
-#include "game/world/block/BlockPos.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/ParticleType.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/LookControl.hpp"
+#include "game/entity/ai/MoveControl.hpp"
+#include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/world/Level.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/projectile/SmallFireball.hpp"
+#include "game/item/Items.hpp"
+#include "game/util/Random.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockPathTypes.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
 
-const EntityDataAccessor<unsigned char>* Blaze::DATA_FLAGS;
+static const unsigned long long ENTITY_TYPE_BLAZE = 0x5D540045ULL;
+static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
 
 Blaze::Blaze(Level* level)
     : Monster(level)
     , mHeightOffset(0.5f)
     , mHeightOffsetUpdateTime(0)
-    , mFlameTime(0)
+    , mUnused(0)
 {
     fjDerivedCtorCalls();
-    setPathfindingMalus(NULL, 0.0f);
-    mHeightOffset = 0.5f;
-    mFlameTime = 0;
-    mHeightOffsetUpdateTime = 0;
+    setPathfindingMalus(BlockPathTypes::WATER, -1.0f);
+    setPathfindingMalus(BlockPathTypes::LAVA, 8.0f);
+    setPathfindingMalus(BlockPathTypes::DANGER_FIRE, 0.0f);
+    setPathfindingMalus(BlockPathTypes::DAMAGE_FIRE, 0.0f);
+    mExperienceReward = 10;
+    mFireImmune = true;
 }
 
 Blaze::~Blaze()
@@ -37,24 +52,32 @@ Blaze::~Blaze()
 
 void Blaze::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(0x5D540045ULL,
-                                                              ENTITY_TYPE_MONSTER,
-                                                              EntityDataSerializers::BYTE);
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_BLAZE, ENTITY_TYPE_MONSTER,
+                                                            EntityDataSerializers::BYTE);
 }
 
 void Blaze::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, ENTITY_TYPE_BLAZE);
 }
 
 void Blaze::registerGoals()
 {
-    Mob::registerGoals();
+    mGoalSelector.addGoal(4, new BlazeAttackGoal(this), true);
+    mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
+    mGoalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0, 0.0f), true);
+    mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
 }
 
 void Blaze::registerAttributes()
 {
     Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(48.0);
 }
 
 void Blaze::defineSynchedData()
@@ -95,8 +118,19 @@ void Blaze::aiStep()
         mYd *= 0.6;
     }
 
-    if (mLevel != NULL && mRandom->nextInt(24) == 0 && !isSilent())
+    if (mLevel->mIsClientSide)
     {
+        if (mRandom->nextInt(24) == 0 && !isSilent())
+        {
+            mLevel->playLocalSound(mX + 0.5, mY + 0.5, mZ + 0.5, SoundEvents::BLAZE_BURN,
+                                   getSoundSource(), 1.0f + mRandom->nextFloat(),
+                                   0.3f + mRandom->nextFloat() * 0.7f, false, 16.0f);
+        }
+
+        mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                            mY + mRandom->nextDouble() * mBbHeight,
+                            mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                            0.0, 0.0, 0.0, arrayWithLength<int>());
         mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
                             mY + mRandom->nextDouble() * mBbHeight,
                             mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
@@ -110,13 +144,20 @@ void Blaze::customServerAiStep()
 {
     if (isInWaterRainOrBubble())
     {
-        setSecondsOnFire(1);
+        hurt(DamageSource::DROWN, 1.0f);
     }
 
     if (--mHeightOffsetUpdateTime <= 0)
     {
         mHeightOffsetUpdateTime = 100;
         mHeightOffset = static_cast<float>(mRandom->nextGaussian() * 3.0 + 0.5);
+    }
+
+    boost::shared_ptr<LivingEntity> target = getTarget();
+    if (target && target->mY + target->getEyeHeight() > mY + getEyeHeight() + mHeightOffset)
+    {
+        mYd += (0.3 - mYd) * 0.3;
+        mHasImpulse = true;
     }
 
     Mob::customServerAiStep();
@@ -151,22 +192,21 @@ void Blaze::dropDeathLoot(bool hitByPlayer, int lootingLevel)
     int rods = mRandom->nextInt(lootingLevel + 2);
     for (int i = 0; i < rods; ++i)
     {
-        spawnAtLocation(NULL, 1);
+        spawnAtLocation(Items::blazeRod, 1);
     }
 
-    int xp = mRandom->nextInt(lootingLevel + 3);
-    for (int i = 0; i < xp; ++i)
+    int dust = mRandom->nextInt(lootingLevel + 3);
+    for (int i = 0; i < dust; ++i)
     {
-        spawnAtLocation(NULL, 1);
+        spawnAtLocation(Items::glowstoneDust, 1);
     }
 }
 
-unsigned long long Blaze::setCharged(bool charged)
+void Blaze::setCharged(bool charged)
 {
     unsigned char flags = mEntityData->get(DATA_FLAGS);
     flags = charged ? static_cast<unsigned char>(flags | 1) : static_cast<unsigned char>(flags & 0xFE);
     mEntityData->set(DATA_FLAGS, flags, true);
-    return 0;
 }
 
 bool Blaze::isDarkEnoughToSpawn()
@@ -176,13 +216,13 @@ bool Blaze::isDarkEnoughToSpawn()
 
 double Blaze::getFollowDistance()
 {
-    AttributeInstance* attribute = getAttribute(NULL);
+    AttributeInstance* attribute = getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     return attribute == NULL ? 16.0 : attribute->getValue();
 }
 
 unsigned long long Blaze::GetType()
 {
-    return 0x5D540045ULL;
+    return ENTITY_TYPE_BLAZE;
 }
 
 void Blaze::create(Level* level)
@@ -194,7 +234,6 @@ Blaze::BlazeAttackGoal::BlazeAttackGoal(Blaze* blaze)
     : Goal()
     , mBlaze(blaze)
     , mAttackTime(0)
-    , mAttackStep(0)
 {
     setRequiredControlFlags(3);
 }
@@ -211,7 +250,7 @@ bool Blaze::BlazeAttackGoal::canUse()
 
 void Blaze::BlazeAttackGoal::start()
 {
-    mAttackTime = 0;
+    mAttackStep = 0;
 }
 
 void Blaze::BlazeAttackGoal::stop()
@@ -221,34 +260,65 @@ void Blaze::BlazeAttackGoal::stop()
 
 void Blaze::BlazeAttackGoal::tick()
 {
+    --mAttackTime;
     boost::shared_ptr<LivingEntity> target = mBlaze->getTarget();
-    if (target == NULL)
-    {
-        return;
-    }
-
     double distance = mBlaze->distanceToSqr(target);
     double followDistance = mBlaze->getFollowDistance();
-    mBlaze->getNavigation()->moveTo(target, 1.0);
-    static_cast<LookControl*>(mBlaze->getLookControl())->setLookAt(target, 10.0f, 10.0f);
-
-    if (distance < 4.0 * followDistance * followDistance)
+    if (distance < followDistance * followDistance)
     {
-        if (--mAttackTime <= 0)
+        mBlaze->getLookControl()->setLookAt(target, 10.0f, 10.0f);
+    }
+
+    if (distance < 4.0)
+    {
+        if (mAttackTime <= 0)
         {
             mAttackTime = 20;
+            mBlaze->doHurtTarget(target);
+        }
+        mBlaze->getMoveControl()->setWantedPosition(target->mX, target->mY, target->mZ, 1.0);
+    }
+    else if (distance < 256.0)
+    {
+        double xd = target->mX - mBlaze->mX;
+        double yd = target->mY + target->getEyeHeight() * 0.5
+                  - (mBlaze->mY + mBlaze->getEyeHeight() * 0.5);
+        double zd = target->mZ - mBlaze->mZ;
+
+        if (mAttackTime <= 0)
+        {
             ++mAttackStep;
             if (mAttackStep == 1)
             {
+                mAttackTime = 60;
                 mBlaze->setCharged(true);
             }
-            else if (mAttackStep >= 5)
+            else if (mAttackStep < 5)
             {
-                mAttackStep = 0;
+                mAttackTime = 6;
+            }
+            else
+            {
                 mAttackTime = 100;
+                mAttackStep = 0;
                 mBlaze->setCharged(false);
             }
+
+            if (mAttackStep > 1)
+            {
+                double spread = std::sqrt(std::sqrt(distance)) * 0.5;
+                mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), 1018,
+                                           BlockPos(mBlaze->mX, mBlaze->mY, mBlaze->mZ), 0);
+                boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
+                    mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),
+                    xd + mBlaze->mRandom->nextGaussian() * spread, yd,
+                    zd + mBlaze->mRandom->nextGaussian() * spread));
+                fireball->mY = mBlaze->mY + mBlaze->getEyeHeight() * 0.5 + 0.5;
+                mBlaze->mLevel->addEntity(fireball);
+            }
         }
+
+        mBlaze->getLookControl()->setLookAt(target, 10.0f, 10.0f);
     }
 }
 

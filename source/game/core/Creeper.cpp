@@ -10,7 +10,9 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/GenericStats.hpp"
+#include "game/core/Ocelot.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/AvoidEntityGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/entity/ai/MeleeAttackGoal.hpp"
@@ -74,6 +76,7 @@ void Creeper::registerGoals()
 {
     mGoalSelector.addGoal(1, new FloatGoal(this), true);
     mGoalSelector.addGoal(2, new SwellGoal(this), true);
+    mGoalSelector.addGoal(3, new AvoidEntityGoal(this, typeid(Ocelot), 6.0f, 1.0, 1.2), true);
     mGoalSelector.addGoal(4, new MeleeAttackGoal(this, 1.0, false), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(6, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
@@ -259,9 +262,9 @@ bool Creeper::isPowered()
     return getEntityData()->get(DATA_IS_POWERED);
 }
 
-double Creeper::getSwelling(float partialTicks)
+float Creeper::getSwelling(float partialTicks)
 {
-    return ((double)mOldSwell + (double)(mSwell - mOldSwell) * partialTicks) / (double)(mMaxSwell - 2);
+    return ((float)mOldSwell + (float)(mSwell - mOldSwell) * partialTicks) / (float)(mMaxSwell - 2);
 }
 
 const void* Creeper::getDefaultLootTable() { return &BuiltInLootTables::CREEPER; }

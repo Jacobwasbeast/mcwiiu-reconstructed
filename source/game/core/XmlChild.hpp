@@ -9,8 +9,10 @@ class XmlObject;
 
 class XmlChild : public XmlConstruct
 {
-private:
+public:
     int m_type;
+
+private:
     void* m_value;
 
 public:

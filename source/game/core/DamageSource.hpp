@@ -21,6 +21,16 @@ class DamageSource
 public:
     static const DamageSource* IN_FIRE;
     static const DamageSource* ON_FIRE;
+    static const DamageSource* OUT_OF_WORLD;
+    static const DamageSource* IN_WALL;
+    static const DamageSource* LAVA;
+    static const DamageSource* HOT_FLOOR;
+    static const DamageSource* ANVIL;
+    static const DamageSource* FALLING_BLOCK;
+    static const DamageSource* KILL;
+    static const DamageSource* GENERIC;
+    static const DamageSource* MAGIC;
+    static const DamageSource* CRAMMING;
     static const DamageSource* DROWN;
     static const DamageSource* FALL;
 
@@ -37,7 +47,7 @@ public:
     static boost::shared_ptr<DamageSource> CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner);
     DamageSource* setIsFire();
     static boost::shared_ptr<DamageSource> CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner);
-    static boost::shared_ptr<DamageSource> CreateThrown(boost::shared_ptr<Entity> projectile, boost::shared_ptr<Entity> owner);
+    static DamageSource* CreateThrown(boost::shared_ptr<Entity> projectile, boost::shared_ptr<Entity> owner);
     void setMagic();
     DamageSource* bypassArmor();
     static boost::shared_ptr<DamageSource> CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);

@@ -113,10 +113,10 @@ std::wstring ClientScoreboard::GetDisplayName(const StatsUID& suid)
     return stats == NULL ? L"" : stats->mName;
 }
 
-int ClientScoreboard::GetMedal(const StatsUID& suid)
+GameMedal* ClientScoreboard::GetMedal(const StatsUID& suid)
 {
     PlayerStats* stats = GetPlayerStats(suid);
-    return stats == NULL || stats->mMedal == NULL ? 0 : stats->mMedal->GetId();
+    return stats == NULL ? NULL : const_cast<GameMedal*>(stats->mMedal);
 }
 
 bool ClientScoreboard::IsWinner(const StatsUID& suid, int round)

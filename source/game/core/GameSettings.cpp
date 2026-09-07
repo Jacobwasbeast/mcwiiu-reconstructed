@@ -1,9 +1,104 @@
 #include "game/core/GameSettings.hpp"
+#include "platform/wiiu/CInput.hpp"
 
 extern GameSettings gGameSettings[4];
 extern unsigned char gDefaultActionMappings[4][25];
 extern unsigned char gSecondaryActionMappings[4][25];
 extern bool gTumbleMapFlags[3];
+extern CInput* g_pInput;
+
+void DefineActions()
+{
+    static const unsigned char defaultMappings[3][25] =
+    {
+        { 2, 0xc, 0xb, 10, 9, 4, 1, 0xd, 3, 0xe, 5, 6, 7, 8, 0, 0, 10, 9, 0xb, 1, 3, 1, 3, 1, 4 },
+        { 9, 0xb, 0xc, 5, 6, 4, 1, 0xe, 3, 10, 5, 6, 7, 8, 0, 0, 6, 6, 0xc, 1, 3, 1, 3, 1, 4 },
+        { 0xc, 0xb, 2, 5, 6, 4, 1, 10, 3, 0xe, 5, 6, 7, 8, 0, 0, 5, 6, 2, 1, 3, 1, 3, 1, 4 }
+    };
+    static const unsigned char secondaryMappings[3][25] =
+    {
+        { 2, 0xc, 0xb, 10, 9, 4, 1, 8, 3, 7, 0, 0, 0, 0, 0, 0, 10, 9, 0xb, 1, 3, 1, 3, 1, 4 },
+        { 9, 0xb, 0xc, 5, 6, 4, 1, 8, 3, 10, 0, 0, 0, 0, 0, 0, 6, 6, 0xc, 1, 3, 1, 3, 1, 4 },
+        { 0xc, 0xb, 2, 5, 6, 4, 1, 10, 3, 7, 0, 0, 0, 0, 0, 0, 5, 6, 2, 1, 3, 1, 3, 1, 4 }
+    };
+
+    int controller;
+    int action;
+    for (controller = 0; controller < 3; ++controller)
+    {
+        for (action = 0; action < 25; ++action)
+        {
+            GameSettings::SetDefaultActionMapping((unsigned char)controller, action, defaultMappings[controller][action]);
+            GameSettings::SetSecondaryActionMapping((unsigned char)controller, action, secondaryMappings[controller][action]);
+        }
+    }
+
+    static const unsigned char movementMasks[2][4] =
+    {
+        { 2, 2, 1, 1 },
+        { 1, 1, 2, 2 }
+    };
+    static const unsigned char actionIndices[4] = { 0, 0x14, 1, 0x15 };
+    static const unsigned int actionMasks[32] =
+    {
+        2, 8, 0x200400, 0x100800, 0x9000, 0x6000, 0x800000, 0x400000,
+        0x40, 0x80, 0x10, 0x20, 0x20000, 0x10000, 0x80000, 0x40000,
+        2, 0x200000, 0x100000, 0x8000, 0x4000, 0x80000, 0x40000, 0x20000,
+        0x10000, 0x800000, 0x400000, 0x40, 0x80, 8, 0x10, 1
+    };
+    static const unsigned char actionMapIndices[32] =
+    {
+        2, 3, 4, 5, 6, 7, 8, 9, 10, 0xb, 0x12, 0x13, 0xe, 0xf, 0x10, 0x11,
+        0x20, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x21, 0x22,
+        0x24, 0x23, 0x25, 0x16, 0x26
+    };
+
+    for (controller = 0; controller < 2; ++controller)
+    {
+        if (g_pInput->IsPadDRCController(controller) == 0)
+        {
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[0], movementMasks[0][0]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[1], movementMasks[0][0]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[2], movementMasks[0][1]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[3], movementMasks[0][1]);
+        }
+        else
+        {
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[0], movementMasks[1][0]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[1], movementMasks[1][0]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[2], movementMasks[1][1]);
+            g_pInput->SetGameJoypadMaps(controller, actionIndices[3], movementMasks[1][1]);
+        }
+        for (action = 0; action < 32; ++action)
+        {
+            g_pInput->SetGameJoypadMaps(controller, actionMapIndices[action], actionMasks[action]);
+        }
+        if (controller == 0)
+        {
+            g_pInput->SetGameJoypadMaps(0, 0x27, 0x100);
+            g_pInput->SetGameJoypadMaps(0, 0x29, 0x200);
+            g_pInput->SetGameJoypadMaps(0, 0xc, 0x200);
+            g_pInput->SetGameJoypadMaps(0, 0xd, 0x100);
+        }
+        else
+        {
+            g_pInput->SetGameJoypadMaps(controller, 0x27, 0x800);
+            g_pInput->SetGameJoypadMaps(controller, 0x29, 0x400);
+            g_pInput->SetGameJoypadMaps(controller, 0xc, 0x200);
+            g_pInput->SetGameJoypadMaps(controller, 0xd, 0x100);
+        }
+        g_pInput->SetGameJoypadMaps(controller, 0x28, 4);
+        g_pInput->SetGameJoypadMaps(controller, 0x17, 0x20);
+        g_pInput->SetGameJoypadMaps(controller, 0x2a, 0x1000);
+        g_pInput->SetGameJoypadMaps(controller, 0x2b, 0x2000);
+        g_pInput->SetGameJoypadMaps(controller, 0x2c, 0x400);
+        g_pInput->SetGameJoypadMaps(controller, 0x2d, 0x800);
+        g_pInput->SetGameJoypadMaps(controller, 0x39, 0x1000);
+        g_pInput->SetGameJoypadMaps(controller, 0x3a, 0x2000);
+        g_pInput->SetGameJoypadMaps(controller, 0x3b, 0x400);
+        g_pInput->SetGameJoypadMaps(controller, 0x3c, 0x800);
+    }
+}
 
 static GameSettings* settings(int profile)
 {

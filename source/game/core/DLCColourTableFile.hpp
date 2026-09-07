@@ -6,9 +6,12 @@
 #include "game/core/DLCFile.hpp"
 
 class ColourTable;
+class DLCTexturePack;
 
 class DLCColourTableFile : public DLCFile
 {
+    friend class DLCTexturePack;
+
 public:
     DLCColourTableFile(const std::wstring& path);
     virtual ~DLCColourTableFile();

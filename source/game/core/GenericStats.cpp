@@ -14,11 +14,6 @@ Stat* GenericStats::openInventory()
     return gStats->get_achievement((eAward)0);
 }
 
-Stat* GenericStats::mineBlock()
-{
-    return gStats->get_totalBlocksMined();
-}
-
 Stat* GenericStats::mineWood()
 {
     return gStats->get_achievement((eAward)1);
@@ -551,14 +546,12 @@ arrayWithLength<unsigned char> GenericStats::param_cowsMilked()
 
 arrayWithLength<unsigned char> GenericStats::param_blocksPlaced(const BlockState* state, int count)
 {
-    Block* block = state->getBlock();
-    return gStats->getParam_blocksPlaced(Block::getId(block), block->convertBlockStateToLegacyData(state), count);
+    return gStats->getParam_blocksPlaced(Block::getId(state->getBlock()), state->getBlock()->convertBlockStateToLegacyData(state), count);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_blocksMined(const BlockState* state, int count)
 {
-    Block* block = state->getBlock();
-    return gStats->getParam_blocksMined(Block::getId(block), block->convertBlockStateToLegacyData(state), count);
+    return gStats->getParam_blocksMined(Block::getId(state->getBlock()), state->getBlock()->convertBlockStateToLegacyData(state), count);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_itemsCollected(Item* item, int auxValue, int count)

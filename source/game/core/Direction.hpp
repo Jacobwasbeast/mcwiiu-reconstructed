@@ -191,4 +191,6 @@ private:
     int stepZ;
 };
 
+bool notUpFunction__FPC9Direction(const Direction* direction);
+
 #endif

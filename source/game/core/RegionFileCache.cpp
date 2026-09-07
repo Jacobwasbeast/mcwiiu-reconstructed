@@ -6,7 +6,7 @@
 void MemSect(int section);
 template<typename T> std::wstring _toString(T value);
 
-static RegionFileCache gRegionFileCache;
+RegionFileCache gRegionFileCache;
 
 void RegionFileCache::_clear()
 {
@@ -70,12 +70,6 @@ RegionFile* RegionFileCache::_getRegionFile(ConsoleSaveFile* saveFile, const std
     mRegionFiles[filepath] = regionFile;
 
     return regionFile;
-}
-
-int RegionFileCache::_getSizeDelta(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z)
-{
-    RegionFile* regionFile = _getRegionFile(saveFile, folder, x, z);
-    return regionFile != NULL ? regionFile->getSizeDelta() : 0;
 }
 
 DataInputStream* RegionFileCache::_getChunkDataInputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z, bool* pbNewSaveFormat)

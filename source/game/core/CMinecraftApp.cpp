@@ -1,5 +1,6 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/Random.hpp"
@@ -7,6 +8,8 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 #include <cwchar>
 #include <cstdlib>
 #include <map>
@@ -25,6 +28,25 @@ static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
 CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
+
+uint32_t DeviceFullErrorReturn__FPv(void* context)
+{
+    (void)context;
+    uint32_t optionsCallbackStatus = g_pApp->GetOptionsCallbackStatus(0);
+    if ((optionsCallbackStatus == 4 || optionsCallbackStatus == 6) &&
+        GameSettings::GetGameSettings(0, static_cast<eGameSetting>(0x1e)) != 0)
+    {
+        gConsoleUIController.NavigateToScene(0, static_cast<EUIScene>(2), NULL,
+                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    }
+    else
+    {
+        gConsoleUIController.NavigateToScene(0, static_cast<EUIScene>(0x4d), NULL,
+                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    }
+    return 0;
+}
+
 CMinecraftApp::PngTagData::PngTagData()
     : flags(0), imageType(0), width(0), height(0), dataSize(0)
 {
@@ -675,8 +697,9 @@ std::wstring CMinecraftApp::GetIconReplacement(uint32_t firstArgument)
 {
     return 0;
 }
-void CMinecraftApp::FormatHTMLString(int player, const std::wstring& value, int flags)
+std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& value, int flags)
 {
+    return value;
 }
 double CMinecraftApp::getAppTime()
 {
@@ -757,9 +780,64 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
 void CMinecraftApp::GetImageTextData(const unsigned char* image, unsigned int size, PngTagData* data)
 {
 }
-char* CMinecraftApp::CreateImageTextData(unsigned char* image, const PngTagData* data)
+unsigned int CMinecraftApp::CreateImageTextData(unsigned char* image, const PngTagData* data)
 {
-    return static_cast<char*>(static_cast<void*>(image));
+    char* output = static_cast<char*>(static_cast<void*>(image));
+    unsigned int length = 0;
+
+    if ((data->flags & 0x80000000) != 0)
+    {
+        std::strcpy(output + length, "4J_SEED");
+        length += 8;
+        const long long seed = static_cast<long long>(
+            (static_cast<unsigned long long>(data->width) << 32) | data->height);
+        std::sprintf(output + length, "%lld", seed);
+        length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+    }
+
+    std::strcpy(output + length, "4J_HOSTOPTIONS");
+    length += 15;
+    std::sprintf(output + length, "%x", data->values[5]);
+    length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+
+    std::strcpy(output + length, "4J_TEXTUREPACK");
+    length += 15;
+    std::sprintf(output + length, "%x", data->values[6]);
+    length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+
+    std::strcpy(output + length, "4J_EXTRADATA");
+    length += 13;
+    std::sprintf(output + length, "%x", data->values[7]);
+    length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+
+    if ((data->flags & 0x04000000) != 0)
+    {
+        std::strcpy(output + length, "4J_EXPLOREDCHUNKS");
+        length += 18;
+        std::sprintf(output + length, "%08x%08x%08x%08x%08x",
+                     data->values[8], data->values[9], data->values[10],
+                     data->values[11], data->values[12]);
+        length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+    }
+
+    if ((data->flags & 0x40000000) != 0)
+    {
+        std::strcpy(output + length, "4J_BASESAVENAME");
+        length += 16;
+        const char* baseSaveName = static_cast<const char*>(static_cast<const void*>(data->values));
+        std::strcpy(output + length, baseSaveName);
+        length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+    }
+
+    if ((data->flags & 0x02000000) != 0)
+    {
+        std::strcpy(output + length, "4J_#LOADS");
+        length += 10;
+        std::sprintf(output + length, "%x", data->dataSize);
+        length += static_cast<unsigned int>(std::strlen(output + length)) + 1;
+    }
+
+    return length - 1;
 }
 void CMinecraftApp::processSchematics(LevelChunk* firstArgument)
 {
@@ -831,18 +909,18 @@ uint8_t CMinecraftApp::GetCorruptSaveDeleted()
 {
     return mCorruptSaveDeleted;
 }
-void CMinecraftApp::SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, uint32_t thirdArgument, int32_t fourthArgument)
+void CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes, unsigned int count, _SkinAdjustments adjustments)
 {
 }
-int32_t CMinecraftApp::SetAdditionalSkinBoxes(uint32_t firstArgument, int32_t secondArgument, int* thirdArgument)
-{
-    return 0;
-}
-uint32_t CMinecraftApp::GetAdditionalModelParts(unsigned int firstArgument)
+std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes, _SkinAdjustments adjustments)
 {
     return 0;
 }
-uint32_t CMinecraftApp::GetAdditionalSkinBoxes(uint32_t firstArgument)
+std::vector<ModelPart*>* CMinecraftApp::GetAdditionalModelParts(unsigned int firstArgument)
+{
+    return 0;
+}
+std::vector<SKIN_BOX*>* CMinecraftApp::GetAdditionalSkinBoxes(unsigned int skinId)
 {
     return 0;
 }
