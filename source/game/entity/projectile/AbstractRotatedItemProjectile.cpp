@@ -27,6 +27,17 @@
 
 void fjSanitisePosAndVel(Entity* entity);
 
+void fjSanitisePosAndVel(Entity* entity)
+{
+    entity->mX = std::floor(entity->mX * 32.0) * 0.03125;
+    entity->mY = std::floor(entity->mY * 32.0) * 0.03125;
+    entity->mZ = std::floor(entity->mZ * 32.0) * 0.03125;
+
+    entity->mXd = static_cast<int>(Mth::clamp(entity->mXd, -3.9, 3.9) * 8000.0) / 8000.0;
+    entity->mYd = static_cast<int>(Mth::clamp(entity->mYd, -3.9, 3.9) * 8000.0) / 8000.0;
+    entity->mZd = static_cast<int>(Mth::clamp(entity->mZd, -3.9, 3.9) * 8000.0) / 8000.0;
+}
+
 const EntityDataAccessor<unsigned char>* AbstractRotatedItemProjectile::DATA_FLAGS = NULL;
 
 AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level)
@@ -50,7 +61,7 @@ AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
     setPos(owner->mX, owner->mY + owner->getEyeHeight() - 0.10000000149011612, owner->mZ);
     mOwner = owner;
     if ((owner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
-        mPickup = 1;
+        mPickup = ePickup_Allowed;
 }
 
 AbstractRotatedItemProjectile::~AbstractRotatedItemProjectile()
@@ -73,7 +84,7 @@ void AbstractRotatedItemProjectile::_init()
     mYTile = -1;
     mInGround = false;
     mShake = 0;
-    mPickup = 0;
+    mPickup = ePickup_Disallowed;
     mLife = 0;
     mXTile = -1;
     mInGroundTime = 0;
@@ -456,9 +467,9 @@ void AbstractRotatedItemProjectile::readAdditionalSaveData(CompoundTag* tag)
     mShake = tag->getByte(L"shake");
     mInGround = tag->getByte(L"inGround") == 1;
     if (tag->contains(L"pickup", 99))
-        mPickup = tag->getByte(L"pickup");
+        mPickup = static_cast<ePickup>(tag->getByte(L"pickup"));
     else if (tag->contains(L"player", 99))
-        mPickup = tag->getBoolean(L"player");
+        mPickup = tag->getBoolean(L"player") ? ePickup_Allowed : ePickup_Disallowed;
     setCritArrow(tag->getBoolean(L"crit"));
 }
 
@@ -466,11 +477,11 @@ void AbstractRotatedItemProjectile::playerTouch(boost::shared_ptr<Player> player
 {
     if (!mLevel->mIsClientSide && (mInGround || isNoPhysics()) && mShake < 1)
     {
-        int pickup = mPickup;
+        ePickup pickup = mPickup;
         bool canPickup = true;
-        if (pickup != 1 && pickup != 2)
+        if (pickup != ePickup_Allowed && pickup != ePickup_CreativeOnly)
             canPickup = isNoPhysics() && mOwner.get() == player.get();
-        if (pickup == 1)
+        if (pickup == ePickup_Allowed)
         {
             not_null_ptr<ItemInstance> item = getPickupItem();
             if (!player->mInventory->add(item))

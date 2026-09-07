@@ -1,6 +1,6 @@
 #include "game/entity/projectile/SpectralArrowItem.hpp"
 
-class SpectralArrow;
+#include "game/entity/projectile/SpectralArrow.hpp"
 
 SpectralArrowItem::SpectralArrowItem()
     : ArrowItem()

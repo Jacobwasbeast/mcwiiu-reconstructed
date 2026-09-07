@@ -8,6 +8,7 @@
 #include "game/entity/projectile/Projectile.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+class ArrowRenderer;
 class Block;
 class CompoundTag;
 template <class T> class EntityDataAccessor;
@@ -17,11 +18,19 @@ class Level;
 class LivingEntity;
 class Player;
 class SoundEvent;
+class TntBlock;
 class Vec3;
 
 class AbstractRotatedItemProjectile : public Entity, public Projectile
 {
 public:
+    enum ePickup
+    {
+        ePickup_Disallowed = 0,
+        ePickup_Allowed = 1,
+        ePickup_CreativeOnly = 2
+    };
+
     AbstractRotatedItemProjectile(Level* level);
     AbstractRotatedItemProjectile(Level* level, double x, double y, double z);
     AbstractRotatedItemProjectile(Level* level, boost::shared_ptr<LivingEntity> owner);
@@ -61,8 +70,13 @@ public:
     bool isNoPhysics();
     bool isCritArrow();
     void setNoPhysics(bool noPhysics);
+    void setPickup(ePickup pickup) { mPickup = pickup; }
+    ePickup getPickup() const { return mPickup; }
 
 protected:
+    friend class ArrowRenderer;
+    friend class TntBlock;
+
     using Entity::mLevel;
 
     void _init();
@@ -79,9 +93,9 @@ protected:
     int mInGroundTime;
     int mFlightTime;
     bool mClampedToLevel;
-    int mPickup;
+    ePickup mPickup;
     int mShake;
-    boost::shared_ptr<LivingEntity> mOwner;
+    boost::shared_ptr<Entity> mOwner;
 };
 
 #endif
