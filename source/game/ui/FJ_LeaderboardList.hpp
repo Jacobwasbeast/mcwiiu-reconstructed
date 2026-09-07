@@ -47,6 +47,12 @@ public:
     uint64_t SetTouchFocus(int x, int y, bool down);
     uint64_t FocusOnFirstEntry();
 
+    friend uint64_t __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
+        FJ_LeaderboardList*, bool, int, int, const std::wstring&, bool,
+        const std::wstring*, const std::wstring*, const std::wstring*,
+        const std::wstring*, const std::wstring*, const std::wstring*,
+        const std::wstring*);
+
 private:
     bool m_small;
     int m_entrySpacing;

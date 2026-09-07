@@ -10,7 +10,7 @@
 UIControl_Slider::UIControl_Slider()
     : UIControl_Base()
 {
-    m_value = 0;
+    m_currentValue = 0;
     m_repeatDelay = 10;
     m_maximum = 100;
     m_repeatStep = 1;
@@ -31,7 +31,7 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
     m_controlId = controlId;
     m_minimum = minimum;
     m_maximum = maximum;
-    m_value = (unsigned int)value;
+    m_currentValue = (unsigned int)value;
     m_repeatStep = repeatStep;
     m_repeatDelay = repeatDelay;
     m_repeat = repeat;
@@ -61,11 +61,11 @@ void UIControl_Slider::setFocus(bool focus)
 
 void UIControl_Slider::handleSliderMove(int value)
 {
-    if (m_value != (unsigned int)value)
+    if (m_currentValue != (unsigned int)value)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
-        m_value = (unsigned int)value;
-        if (!m_possibleLabels.empty() && (unsigned int)value < m_possibleLabels.size())
+        m_currentValue = (unsigned int)value;
+        if ((unsigned int)value < m_possibleLabels.size())
             setLabel(UIString(m_possibleLabels[value]), false, false);
     }
 }
@@ -82,7 +82,7 @@ void UIControl_Slider::SetSliderValue(int value)
 
 void UIControl_Slider::MoveSliderValue(int amount)
 {
-    int value = (int)m_value + amount;
+    int value = (int)m_currentValue + amount;
     if (value > m_maximum)
         value = m_maximum;
     if (value < m_minimum)
@@ -104,7 +104,7 @@ void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCo
 
 unsigned int UIControl_Slider::getCurrentValue() const
 {
-    return m_value;
+    return m_currentValue;
 }
 
 int UIControl_Slider::GetRealWidth()
@@ -116,6 +116,6 @@ void UIControl_Slider::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, m_controlId, m_minimum, m_maximum, (int)m_value,
+    init(label, m_controlId, m_minimum, m_maximum, (int)m_currentValue,
          m_repeat, m_repeatDelay, m_repeatStep);
 }

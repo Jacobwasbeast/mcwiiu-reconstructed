@@ -123,6 +123,13 @@ void FJ_Base::CheckLabelWidth(const std::wstring& label)
     }
 }
 
+uint64_t __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(FJ_Base* node, std::vector<std::wstring>& labels)
+{
+    for (std::vector<std::wstring>::const_iterator it = labels.begin(); it != labels.end(); ++it)
+        node->CheckLabelWidth(*it);
+    return (uint64_t)(uintptr_t)node << 32;
+}
+
 void FJ_Base::SetLabelAlignment(int alignment) { m_labelAlignment = alignment; }
 
 uint64_t FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)

@@ -16,6 +16,14 @@
 
 uint64_t __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(FJ_Base* node, std::vector<std::wstring>& labels);
 
+void __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
+    FJ_List_MultiList* list, int index, std::vector<std::wstring> labels)
+{
+    if (list->m_labelLists.size() <= static_cast<unsigned int>(index))
+        list->m_labelLists.resize(static_cast<unsigned int>(index) + 1);
+    list->m_labelLists[static_cast<unsigned int>(index)] = labels;
+}
+
 FJ_List_MultiList::FJ_List_MultiList(fuiRenderNode* renderNode)
     : FJ_List(renderNode)
 {
@@ -129,7 +137,7 @@ void FJ_List_MultiList::addNewItem_TextInput(const std::wstring& label, int id, 
 
 void FJ_List_MultiList::HandleCharInput(unsigned int character)
 {
-    FJ_FuiNode* item = GetActiveItem();
+    FJ_FuiNode* item = ReturnItem(GetActiveItem());
     if (item != NULL && item->asFJ_TextInput() != NULL)
         item->asFJ_TextInput()->HandleDirectInput(character);
 }

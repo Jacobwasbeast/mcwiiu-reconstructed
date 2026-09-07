@@ -112,7 +112,7 @@ public:
     virtual void setSectionSelectedSlot(ESceneSection section, int slot, int direction, bool wrap) = 0;
     virtual void setFocusToPointer(int pointer) = 0;
     virtual void SetPointerText(std::vector<HtmlString>* text, bool visible) = 0;
-    virtual int GetSectionHoverText(ESceneSection section);
+    virtual std::vector<HtmlString>* GetSectionHoverText(ESceneSection section);
     virtual not_null_ptr<ItemInstance> getSlotItem(ESceneSection section, int slot) = 0;
     virtual Slot* getSlot(ESceneSection section, int slot) = 0;
     virtual bool isSlotEmpty(ESceneSection section, int slot) = 0;

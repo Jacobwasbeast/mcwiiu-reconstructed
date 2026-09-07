@@ -49,32 +49,38 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
     FJ_FuiNode* guestTab = getChildByName("GuestTab");
     FJ_FuiNode* guestList = guestTab->getChildByName("GuestList");
     FJ_FuiNode* activeTab = userTab;
-    FJ_FuiNode* activeList = userList;
-    int focusId = m_userTabFocus;
 
     if (tab == 0)
     {
         userTab->setVisible(true);
         favouriteTab->setVisible(false);
         guestTab->setVisible(false);
+        userList->setVisible(userTab->isVisible());
+        favouriteList->setVisible(favouriteTab->isVisible());
+        guestList->setVisible(guestTab->isVisible());
+        gotoAndStop("UserTab");
     }
     else if (tab == 1)
     {
         activeTab = favouriteTab;
-        activeList = favouriteList;
-        focusId = m_favouriteTabFocus;
         userTab->setVisible(false);
         favouriteTab->setVisible(true);
         guestTab->setVisible(false);
+        userList->setVisible(userTab->isVisible());
+        favouriteList->setVisible(favouriteTab->isVisible());
+        guestList->setVisible(guestTab->isVisible());
+        gotoAndStop("FavouriteTab");
     }
     else if (tab == 2)
     {
         activeTab = guestTab;
-        activeList = guestList;
-        focusId = m_guestTabFocus;
         userTab->setVisible(false);
         favouriteTab->setVisible(false);
         guestTab->setVisible(true);
+        userList->setVisible(userTab->isVisible());
+        favouriteList->setVisible(favouriteTab->isVisible());
+        guestList->setVisible(guestTab->isVisible());
+        gotoAndStop("GuestTab");
     }
     else
     {
@@ -83,14 +89,8 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
         return;
     }
 
-    userList->setVisible(userTab->isVisible());
-    favouriteList->setVisible(favouriteTab->isVisible());
-    guestList->setVisible(guestTab->isVisible());
-    gotoAndStop(tab == 0 ? "UserTab" : (tab == 1 ? "FavouriteTab" : "GuestTab"));
-
-    FJ_FuiNodeStage* stage = getStage();
-    FJ_FuiNode* focus = stage == NULL ? NULL : stage->getFocus();
-    if (focus != NULL && focus->isFJ_Base())
+    FJ_FuiNode* focus = getStage()->getFocus();
+    if (focus->isFJ_Base() && m_currentTab != tab)
     {
         int focusId = focus->asFJ_Base()->getId();
         if (m_currentTab == 0)
@@ -101,8 +101,11 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
             m_guestTabFocus = focusId;
     }
 
-    removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
-    activeTab->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+    m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+    m_root = activeTab;
+    m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+    int focusId = tab == 0 ? m_userTabFocus :
+                  (tab == 1 ? m_favouriteTabFocus : m_guestTabFocus);
     SetFocus(focusId);
     if (focusId >= 0)
         setVisible(true);

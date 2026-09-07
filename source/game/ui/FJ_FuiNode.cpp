@@ -799,6 +799,7 @@ void FJ_FuiNode::dispatchEvent(FJ_Event* pEvent)
 
 void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*), bool bCapture)
 {
+    bool found = false;
     FJ_EventListener listener;
     listener.m_eType = eType;
     listener.m_bCapture = bCapture;
@@ -818,10 +819,11 @@ void FJ_FuiNode::addEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*
             existing.m_bCapture == listener.m_bCapture &&
             existing.m_pNode == listener.m_pNode &&
             existing.m_pfnHandler == listener.m_pfnHandler)
-            return;
+            found = true;
     }
 
-    m_eventListeners.push_back(listener);
+    if (!found)
+        m_eventListeners.push_back(listener);
 }
 
 void FJ_FuiNode::removeEventListener(eFJEventType eType, FJ_FuiNode* pNode, void (*pfnHandler)(FJ_FuiNode*, FJ_Event*))

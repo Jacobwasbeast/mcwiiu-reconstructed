@@ -1,26 +1,10 @@
 #include "game/ui/FJ_LeaderboardHeader.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeCodeGenRect.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 #include <cstdio>
-
-namespace fui
-{
-    fuiRenderNode* createNodeFromSymbol(const char*, fuiRenderNode* parent = NULL);
-}
-
-class fuiRenderNodeEditText : public fuiRenderNode
-{
-public:
-    void setAutoSize(int);
-    void setText(const std::wstring&);
-    float getTextWidth();
-};
-
-class fuiRenderNodeCodeGenRect : public fuiRenderNode
-{
-public:
-    fuiRenderNodeCodeGenRect(fuiRenderNode*, fuiRect*, const char*);
-};
 
 FJ_LeaderboardHeader::FJ_LeaderboardHeader(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_firstEntryPos(0), m_entrySpacing(0),
@@ -104,7 +88,7 @@ fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)
     static const char* small[] = { "", "", "LeaderBoard_Icon_Fallen_Small", "LeaderBoard_Icon_Walked_Small", "LeaderBoard_Icon_Swam_Small", "LeaderBoard_Icon_Zombie_Small", "LeaderBoard_Icon_Killed_Small", "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Skeleton_Small", "LeaderBoard_Icon_Spider_Small", "LeaderBoard_Icon_SpiderJockey_Sm", "LeaderBoard_Icon_Slime_Small", "LeaderBoard_Icon_Portal_Small", "LeaderBoard_Icon_Score_Small", "LeaderBoard_Icon_Time_Small", "LeaderBoard_Icon_TotalRings_Smal", "LeaderBoard_Icon_Climbed_Small" };
     if (type < 0 || type > 17)
         type = 17;
-    return fui::createNodeFromSymbol(m_small ? small[type] : normal[type], m_pRenderNode);
+    return (fuiRenderNode*)gFui->createNodeFromSymbol(m_small ? small[type] : normal[type], m_pRenderNode);
 }
 
 void FJ_LeaderboardHeader::SetupSlot(int slot, int type)

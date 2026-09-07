@@ -5,6 +5,22 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
+typedef std::vector<FJ_SlotList_Slot*> FJSlotListVector;
+typedef FJSlotListVector::iterator FJSlotListIterator;
+
+void __CPR235___Insert_n__Q2_3std80vector__tm__66_P16FJJ_SlotList_SlotQ2_3std37allocator__tm__20_PJ36JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyQ4_3stdJ145JJ172J9size_typeRCZ1Z_v(
+    FJSlotListVector& vector, FJSlotListIterator position, FJSlotListVector::size_type count,
+    FJ_SlotList_Slot* const& value)
+{
+    vector.insert(position, count, value);
+}
+
+FJSlotListIterator __CPR258__insert__Q2_3std80vector__tm__66_P16FJJ_SlotList_SlotQ2_3std37allocator__tm__20_PJ33JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyRCZ1Z_Q2_3stdJ105J(
+    FJSlotListVector& vector, FJSlotListIterator position, FJ_SlotList_Slot* const& value)
+{
+    return vector.insert(position, value);
+}
+
 FJ_SlotList::FJ_SlotList(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_slotSize(50), m_slotVisible(false),
       m_rows(0), m_columns(0), m_loaded(false)

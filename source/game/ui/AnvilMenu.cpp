@@ -1,18 +1,29 @@
 #include "game/ui/AnvilMenu.hpp"
 
 #include "game/core/RepairResultSlot.hpp"
+#include "game/data/ListTag.hpp"
+#include "game/item/EnchantedBookItem.hpp"
+#include "game/item/Enchantment.hpp"
+#include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/RepairContainer.hpp"
 #include "game/item/ResultContainer.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/generation/Player.hpp"
+
+bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
 
 AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
                      const BlockPos& position, boost::shared_ptr<Player> player)
     : AbstractContainerMenu(), mResultSlots(), mInputSlots(), mLevel(NULL),
       mPosition(), mRepairCost(0), mMaterialCost(0), mItemName(),
-      mItemNameCensored(false), mPlayer(NULL), mPlayerOwner()
+      mItemNameCensored(false), mPlayer()
 {
     _init(inventory, level, position, player);
 }
@@ -21,7 +32,7 @@ AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
                      boost::shared_ptr<Player> player)
     : AbstractContainerMenu(), mResultSlots(), mInputSlots(), mLevel(NULL),
       mPosition(), mRepairCost(0), mMaterialCost(0), mItemName(),
-      mItemNameCensored(false), mPlayer(NULL), mPlayerOwner()
+      mItemNameCensored(false), mPlayer()
 {
     _init(inventory, level, BlockPos::ZERO, player);
 }
@@ -41,8 +52,7 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
     mMaterialCost = 0;
     mItemName.clear();
     mItemNameCensored = false;
-    mPlayer = player.get();
-    mPlayerOwner = player;
+    mPlayer = player;
 
     boost::shared_ptr<Container> input = mInputSlots;
     boost::shared_ptr<Container> result = mResultSlots;
@@ -70,59 +80,181 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
 void AnvilMenu::createResult()
 {
     not_null_ptr<ItemInstance> first = mInputSlots->getItem(0);
-    not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
-    mRepairCost = 0;
-    mMaterialCost = 0;
+    int operationCost = 0;
+    int renameCost = 0;
+    mRepairCost = 1;
     if (first->isEmpty())
     {
         mResultSlots->setItem(0, ItemInstance::EMPTY);
+        mRepairCost = 0;
         return;
     }
 
     not_null_ptr<ItemInstance> result = first->copy();
+    not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
+    boost::unordered_map<Enchantment*, int>* enchantments =
+        EnchantmentHelper::getEnchantments(result);
+    int baseCost = first->getBaseRepairCost();
+    if (!second->isEmpty()) baseCost += second->getBaseRepairCost();
+    mMaterialCost = 0;
+
     if (!second->isEmpty())
     {
-        if (first->isDamageableItem() && first->getItem() == second->getItem())
+        bool enchantedBook = second->getItem() == Items::enchantedBook &&
+                             EnchantedBookItem::getEnchantments(second)->size() > 0;
+        if (result->isDamageableItem() &&
+            result->getItem()->isValidRepairItem(first, second))
         {
-            int remainingFirst = first->getMaxDamage() - first->getDamageValue();
-            int remainingSecond = second->getMaxDamage() - second->getDamageValue();
-            int repaired = remainingFirst + remainingSecond + first->getMaxDamage() * 12 / 100;
-            int damage = first->getMaxDamage() - repaired;
-            if (damage < 0) damage = 0;
-            if (damage < result->getAuxValue())
+            int repairAmount = result->getDamageValue();
+            int quarterDurability = result->getMaxDamage() / 4;
+            if (quarterDurability < repairAmount) repairAmount = quarterDurability;
+            if (repairAmount < 1)
             {
-                result->setAuxValue(damage);
-                mMaterialCost = 1;
+                mResultSlots->setItem(0, ItemInstance::EMPTY);
+                mRepairCost = 0;
+                return;
+            }
+
+            int used = 0;
+            while (repairAmount > 0 && used < second->getCount())
+            {
+                result->setAuxValue(result->getDamageValue() - repairAmount);
+                ++operationCost;
+                ++used;
+                repairAmount = result->getDamageValue();
+                quarterDurability = result->getMaxDamage() / 4;
+                if (quarterDurability < repairAmount) repairAmount = quarterDurability;
+            }
+            mMaterialCost = used;
+        }
+        else
+        {
+            if (!enchantedBook &&
+                (result->getItem() != second->getItem() || !result->isDamageableItem()))
+            {
+                mResultSlots->setItem(0, ItemInstance::EMPTY);
+                mRepairCost = 0;
+                return;
+            }
+
+            if (result->isDamageableItem() && !enchantedBook)
+            {
+                int remainingFirst = first->getMaxDamage() - first->getDamageValue();
+                int remainingSecond = second->getMaxDamage() - second->getDamageValue();
+                int damage = result->getMaxDamage() -
+                             (remainingFirst + remainingSecond + result->getMaxDamage() * 12 / 100);
+                if (damage < 0) damage = 0;
+                if (damage < result->getAuxValue())
+                {
+                    result->setAuxValue(damage);
+                    operationCost = 2;
+                }
+            }
+
+            boost::unordered_map<Enchantment*, int>* addedEnchantments =
+                EnchantmentHelper::getEnchantments(second);
+            bool appliedEnchantment = false;
+            bool hadEnchantment = false;
+            boost::unordered_map<Enchantment*, int>::iterator added;
+            for (added = addedEnchantments->begin(); added != addedEnchantments->end(); ++added)
+            {
+                hadEnchantment = true;
+                Enchantment* enchantment = added->first;
+                int oldLevel = 0;
+                boost::unordered_map<Enchantment*, int>::iterator current =
+                    enchantments->find(enchantment);
+                if (current != enchantments->end()) oldLevel = current->second;
+                int level = oldLevel == added->second ? added->second + 1 : added->second;
+                if (level < oldLevel) level = oldLevel;
+
+                bool canApply = enchantment->canEnchant(result);
+                if (mPlayer->mAbilities.mInstabuild || first->getItem() == Items::enchantedBook)
+                    canApply = true;
+
+                boost::unordered_map<Enchantment*, int>::iterator existing;
+                for (existing = enchantments->begin(); existing != enchantments->end(); ++existing)
+                {
+                    if (existing->first != enchantment &&
+                        !enchantment->isCompatibleWith(existing->first))
+                    {
+                        ++operationCost;
+                        canApply = false;
+                    }
+                }
+
+                if (canApply)
+                {
+                    appliedEnchantment = true;
+                    int maxLevel = enchantment->getMaxLevel();
+                    if (maxLevel < level) level = maxLevel;
+                    (*enchantments)[enchantment] = level;
+
+                    int rarityCost = 0;
+                    unsigned int weight = enchantment->getRarity()->getWeight();
+                    if (weight == Rarity::COMMON->getWeight()) rarityCost = 1;
+                    else if (weight == Rarity::UNCOMMON->getWeight()) rarityCost = 2;
+                    else if (weight == Rarity::RARE->getWeight()) rarityCost = 4;
+                    else if (weight == Rarity::EPIC->getWeight()) rarityCost = 8;
+                    if (enchantedBook)
+                    {
+                        rarityCost /= 2;
+                        if (rarityCost < 1) rarityCost = 1;
+                    }
+                    operationCost += rarityCost * level;
+                    if (first->getCount() > 1) operationCost = 40;
+                }
+            }
+            delete addedEnchantments;
+
+            if (hadEnchantment && !appliedEnchantment)
+            {
+                mResultSlots->setItem(0, ItemInstance::EMPTY);
+                mRepairCost = 0;
+                return;
             }
         }
     }
+
     if (mItemName.empty())
     {
         if (first->hasCustomHoverName())
         {
+            renameCost = 1;
+            ++operationCost;
             result->resetHoverName();
-            ++mRepairCost;
         }
     }
-    else if (mItemName != first->getHoverNameUnfiltered())
+    else if (!equalsIgnoreCase(mItemName, first->getHoverNameUnfiltered()))
     {
+        renameCost = 1;
+        ++operationCost;
         result->setHoverName(mItemName);
-        result->setCensorshipInfo(mItemName, mItemNameCensored);
-        ++mRepairCost;
+        result->setCensorshipInfo(mPlayer->getUUID(), mItemNameCensored);
     }
-    if (mRepairCost > 39 && mRepairCost != 1)
+
+    mRepairCost = baseCost + operationCost;
+    if (operationCost < 1) result = ItemInstance::EMPTY;
+    if (mRepairCost > 39)
     {
-        mResultSlots->setItem(0, ItemInstance::EMPTY);
-        return;
+        if (renameCost == operationCost && renameCost != 0)
+            mRepairCost = 39;
+        else if (!mPlayer->mAbilities.mInstabuild)
+            result = ItemInstance::EMPTY;
     }
-    if (mRepairCost > 0 || mMaterialCost > 0)
+
+    if (!result->isEmpty())
     {
-        mResultSlots->setItem(0, result);
+        int repairCost = result->getBaseRepairCost();
+        if (!second->isEmpty() && repairCost < second->getBaseRepairCost())
+            repairCost = second->getBaseRepairCost();
+        if (renameCost != operationCost || renameCost == 0)
+            repairCost = repairCost * 2 + 1;
+        result->setRepairCost(repairCost);
+        EnchantmentHelper::setEnchantments(enchantments, result);
     }
-    else
-    {
-        mResultSlots->setItem(0, ItemInstance::EMPTY);
-    }
+
+    mResultSlots->setItem(0, result);
+    broadcastChanges();
 }
 
 void AnvilMenu::slotsChanged(boost::shared_ptr<Container> container)
@@ -152,28 +284,37 @@ void AnvilMenu::removed(boost::shared_ptr<Player> player)
     }
 }
 
-bool AnvilMenu::stillValid(boost::shared_ptr<Player>)
+bool AnvilMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    return mLevel != NULL;
+    return mLevel->getBlockState(mPosition)->getBlock() == Blocks::anvil &&
+           player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f;
 }
 
 not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    Slot* slot = getSlot(index);
+    Slot* slot = m_slots.at(index);
     if (slot == NULL || !slot->hasItem()) return ItemInstance::EMPTY;
     not_null_ptr<ItemInstance> item = slot->getItem();
     not_null_ptr<ItemInstance> copy = item->copy();
     bool moved;
     if (index == 2)
+    {
         moved = moveItemStackTo(item, 3, (int)m_slots.size(), true, true, true) != 0;
+        if (moved)
+        {
+            player->OnTakeFromAnvil(copy);
+            slot->onQuickCraft(item, copy);
+        }
+    }
     else if (index < 3)
-        moved = moveItemStackTo(item, 3, (int)m_slots.size(), true, true, true) != 0;
+        moved = moveItemStackTo(item, 3, (int)m_slots.size(), false, true, true) != 0;
     else
-        moved = moveItemStackTo(item, 0, 3, false, false, true) != 0;
+        moved = moveItemStackTo(item, 0, 2, false, true, true) != 0;
     if (!moved) return ItemInstance::EMPTY;
     if (item->isEmpty()) slot->set(ItemInstance::EMPTY);
     else slot->setChanged();
-    slot->onQuickCraft(item, copy);
+    if (item->getCount() == copy->getCount()) return ItemInstance::EMPTY;
+    slot->onTake(player, item);
     return copy;
 }
 
@@ -181,14 +322,15 @@ void AnvilMenu::setItemName(const std::wstring& name, bool censored)
 {
     mItemName = name;
     mItemNameCensored = censored;
-    not_null_ptr<ItemInstance> result = mResultSlots->getItem(0);
-    if (!result->isEmpty())
+    Slot* resultSlot = getSlot(2);
+    if (resultSlot->hasItem())
     {
+        not_null_ptr<ItemInstance> result = resultSlot->getItem();
         if (mItemName.empty()) result->resetHoverName();
         else
         {
             result->setHoverName(mItemName);
-            result->setCensorshipInfo(mItemName, censored);
+            result->setCensorshipInfo(mPlayer->getUUID(), censored);
         }
     }
     createResult();

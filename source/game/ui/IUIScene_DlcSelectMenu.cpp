@@ -21,8 +21,8 @@ void IUIScene_DlcSelectMenu::tick()
 {
 }
 
-uint32_t IUIScene_DlcSelectMenu::MustSignInReturned(void*, int userIndex,
-                                                    C4JStorage::EMessageResult result)
+int IUIScene_DlcSelectMenu::MustSignInReturned(void*, int userIndex,
+                                               C4JStorage::EMessageResult result)
 {
     if (result == C4JStorage::EMessageResult_4)
         CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex, NULL, NULL);
@@ -36,8 +36,8 @@ void IUIScene_DlcSelectMenu::showNotOnlineDialog(int userIndex)
                                              userIndex, MustSignInReturned, this, NULL, true);
 }
 
-uint32_t IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
-                                                    C4JStorage::EMessageResult result)
+int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
+                                               C4JStorage::EMessageResult result)
 {
     IUIScene_DlcSelectMenu* menu = static_cast<IUIScene_DlcSelectMenu*>(context);
     if (result == C4JStorage::EMessageResult_4 &&

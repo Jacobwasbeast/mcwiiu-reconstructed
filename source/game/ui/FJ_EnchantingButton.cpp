@@ -43,7 +43,7 @@ void FJ_EnchantingButton::SetupIggySlot()
     rect.yMin = 0.0f;
     rect.yMax = icon->getHeight() / icon->getScaleY();
     char name[64];
-    std::sprintf(name, "iggy_slot_%s", getName().c_str());
+    std::sprintf(name, "iggy_slot_%s", getName());
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);

@@ -8,6 +8,17 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
+static std::wstring toWideLabel(const char* name)
+{
+    std::wstring label;
+    while (*name != '\0')
+    {
+        label.push_back(static_cast<unsigned char>(*name));
+        ++name;
+    }
+    return label;
+}
+
 FJ_MessageBox::FJ_MessageBox(fuiRenderNode* renderNode)
     : FJ_Document(renderNode), m_buttonCount(0), m_titleHeight(0), m_contentY(0)
 {
@@ -64,7 +75,7 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     FJ_FuiNode* focus = NULL;
     if (buttonCount == 2)
     {
-        button2->asFJ_Base()->SetLabel(std::wstring(button3->getName().begin(), button3->getName().end()));
+        button2->asFJ_Base()->SetLabel(toWideLabel(button3->getName()));
         if (focusIndex == 0)
         {
             focus = button2;
@@ -76,7 +87,7 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     }
     else if (buttonCount == 3)
     {
-        button1->asFJ_Base()->SetLabel(std::wstring(button3->getName().begin(), button3->getName().end()));
+        button1->asFJ_Base()->SetLabel(toWideLabel(button3->getName()));
         if (focusIndex == 0)
         {
             focus = button1;

@@ -29,10 +29,10 @@ private:
     int m_loadListRecessHeight;
     int m_loadTimerY;
     bool m_touchEnabled;
-    int m_newTabOffset;
-    int m_joinTabOffset;
-    int m_loadTabOffset;
-    int m_newTabWidth;
+    int m_loadTabTitleY;
+    int m_joinTabTitleY;
+    int m_newTabX;
+    int m_joinTabX;
 };
 
 #endif

@@ -30,7 +30,7 @@ public:
 private:
     int m_minimum;
     int m_maximum;
-    unsigned int m_value;
+    unsigned int m_currentValue;
     bool m_focus;
     bool m_repeat;
     int m_repeatDelay;

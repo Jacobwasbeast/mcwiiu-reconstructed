@@ -4,7 +4,30 @@
 
 namespace
 {
-    const char* gLogoLanguageLabels[3] = {"English", "Japanese", "Chinese"};
+    std::string gLogoLanguageLabels[3] = {"English", "Japanese", "Chinese"};
+    std::string gComponentLogoStrings0[7];
+    std::string gComponentLogoStrings1[5];
+
+    void destroyStrings(std::string* strings, int count)
+    {
+        for (int i = 0; i < count; ++i)
+            strings[i].~basic_string();
+    }
+}
+
+void __T0()
+{
+    destroyStrings(gLogoLanguageLabels, 3);
+}
+
+void __T1()
+{
+    destroyStrings(gComponentLogoStrings0, 7);
+}
+
+void __T2()
+{
+    destroyStrings(gComponentLogoStrings1, 5);
 }
 
 FJ_ComponentLogo::FJ_ComponentLogo(fuiRenderNode* renderNode)
@@ -23,7 +46,7 @@ void FJ_ComponentLogo::SetLogoLanguage(int language)
     {
         FJ_FuiNode* logoObject = getChildByName(std::string("LogoObject"));
         FJ_FuiNode* logo = logoObject->getChildAt(0);
-        logo->gotoAndStop(std::string(gLogoLanguageLabels[language]));
+        logo->gotoAndStop(gLogoLanguageLabels[language]);
         m_logoLanguage = language;
     }
 }

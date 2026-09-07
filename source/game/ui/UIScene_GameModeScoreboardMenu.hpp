@@ -65,24 +65,12 @@ public:
 
 private:
     PlayerUID m_playerUid;
-    unsigned char m_playerAvailable;
+    unsigned char m_localPlayerCanModerate;
     unsigned char m_canKickPlayers;
-    unsigned char m_kickVoteEnabled;
-    unsigned char m_playerStatsValid;
-    unsigned char m_scoreboardInitialised;
-    unsigned char m_playerSelectionState;
-    unsigned char m_playerSelectionPadding;
+    unsigned char m_canVoteToKick;
     IScoreboardLayout* m_scoreboardLayout;
-    unsigned char m_scoreboardMode;
-    unsigned char m_registeredTextures[55];
-    int m_killBarValue;
-    unsigned char m_unusedState[16];
-    unsigned char m_hasFocusSelection;
-    unsigned char m_unusedFocusState[15];
-    int m_numPlayers;
-    int m_selectedPlayer;
-    int m_numColumns;
-    unsigned char m_unusedColumnState[16];
+    unsigned char m_initialisePending;
+    unsigned char m_registeredTextures[119];
     int m_columnCount;
     UIControl m_awardPanel;
     UIControl m_mainPanel;

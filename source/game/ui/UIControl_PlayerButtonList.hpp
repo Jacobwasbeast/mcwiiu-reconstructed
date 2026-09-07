@@ -1,8 +1,14 @@
 #ifndef GAME_UI_UICONTROL_PLAYERBUTTONLIST_HPP
 #define GAME_UI_UICONTROL_PLAYERBUTTONLIST_HPP
 
-#include "game/ui/UIControl_List.hpp"
 #include <string>
+
+#define private protected
+#include "game/ui/UIControl_List.hpp"
+#undef private
+
+class UIScene;
+class fuiRenderNode;
 
 class UIControl_PlayerButtonList : public UIControl_List
 {
@@ -10,7 +16,8 @@ public:
     class PendingAddItem : public UIControl_List::GenericPendingUpdate
     {
     public:
-        PendingAddItem(UIControl_PlayerButtonList* list, int type, std::wstring label, int playerIcon, int voipIcon);
+        PendingAddItem(UIControl_PlayerButtonList* list, int type, std::wstring label,
+                       int playerIcon, int voipIcon);
         virtual ~PendingAddItem();
         virtual unsigned int OnTick();
 

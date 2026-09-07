@@ -9,8 +9,12 @@
 class FJ_Event;
 class fuiRenderNode;
 
+bool LoadHowToPlayPage(class FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>& pages);
+
 class FJ_HowToPlay : public FJ_FuiNode
 {
+    friend bool LoadHowToPlayPage(FJ_HowToPlay* pNode, int iPage, std::vector<std::wstring>& pages);
+
     int m_page;
     std::string m_dynamicHtmlTextName;
     std::vector<std::wstring> m_pages;

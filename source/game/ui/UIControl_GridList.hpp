@@ -13,18 +13,18 @@ public:
     class GenericPendingUpdate
     {
     public:
-        GenericPendingUpdate(int type) : m_type(type) {}
+        GenericPendingUpdate(int value) : m_value(value) {}
         virtual ~GenericPendingUpdate();
         virtual unsigned int OnTick() = 0;
     protected:
-        int m_type;
+        int m_value;
     };
 
     template <class T>
     class PendingUpdate : public GenericPendingUpdate
     {
     public:
-        PendingUpdate(int type) : GenericPendingUpdate(type) {}
+        PendingUpdate(int value) : GenericPendingUpdate(value) {}
         virtual ~PendingUpdate();
     };
 
@@ -32,48 +32,47 @@ public:
     {
     public:
         PendingSetCurrentSelection(UIControl_GridList* list, int selection)
-            : PendingUpdate<UIControl_GridList>(0), m_list(list), m_selection(selection) {}
+            : PendingUpdate<UIControl_GridList>(selection), m_list(list) {}
         virtual ~PendingSetCurrentSelection();
         virtual unsigned int OnTick();
     private:
         UIControl_GridList* m_list;
-        int m_selection;
     };
 
     class PendingSetEnable : public PendingUpdate<UIControl_GridList>
     {
     public:
         PendingSetEnable(UIControl_GridList* list, int item, bool enabled)
-            : PendingUpdate<UIControl_GridList>(0), m_list(list), m_item(item), m_enabled(enabled) {}
+            : PendingUpdate<UIControl_GridList>(item), m_list(list), m_enabled(enabled) {}
         virtual ~PendingSetEnable();
         virtual unsigned int OnTick();
     private:
         UIControl_GridList* m_list;
-        int m_item;
         bool m_enabled;
     };
 
     UIControl_GridList();
     virtual ~UIControl_GridList();
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void tick();
+    virtual void ReInit();
+    virtual void clearList();
+
     bool CanTouchFocus(int x, int y);
     void SetTouchFocus(int x, int y, bool focus);
     bool CanTouchTrigger(int x, int y);
     void addElement(UIControl::eUIControlType type, int index);
     void clearElements();
     int getListIndex(int index);
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
-    void clearList();
     void init(int controlId);
-    virtual void ReInit();
-    virtual void tick();
     void setCurrentSelection(int selection, bool immediate);
     void EnableItem(int item, bool enabled, bool immediate);
     void remElement(int index);
     bool istype(UIControl::eUIControlType type, int index);
-    int getCurrentSelection() const;
-    int getItemCount();
+    unsigned int getCurrentSelection() const;
+    unsigned int getItemCount();
     void updateChildFocus(int index);
-    bool IsEnabled(int index);
+    unsigned char IsEnabled(int index);
 
 private:
     std::vector<GenericPendingUpdate*> m_pendingUpdates;

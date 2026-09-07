@@ -33,6 +33,8 @@ public:
     void ToggleButtonOutline(int index, bool show);
 
 private:
+    friend void __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
+        FJ_List_MultiList*, int, std::vector<std::wstring>);
     std::vector<std::vector<std::wstring> > m_labelLists;
 };
 

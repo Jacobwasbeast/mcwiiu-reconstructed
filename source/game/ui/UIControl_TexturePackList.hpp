@@ -17,11 +17,11 @@ public:
 
     UIControl_TexturePackList();
     virtual ~UIControl_TexturePackList();
-    void init(const std::wstring& label, int id);
-    virtual void setEnabled(bool enabled);
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
-    void addPack(int id, const std::wstring& name, bool alreadyAdded);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
+    virtual void setEnabled(bool enabled);
+    void init(const std::wstring& label, int id);
+    void addPack(int id, const std::wstring& name, bool alreadyAdded);
     void selectSlot(int slot);
     void clearSlots();
     void SetTouchFocus(int x, int y, bool focus);

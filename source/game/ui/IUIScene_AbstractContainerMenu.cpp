@@ -258,7 +258,7 @@ void IUIScene_AbstractContainerMenu::handleTakeAll(int button)
     handleSectionClick(static_cast<ESceneSection>(2));
 }
 
-int IUIScene_AbstractContainerMenu::GetSectionHoverText(ESceneSection section)
+std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetSectionHoverText(ESceneSection section)
 {
     return 0;
 }

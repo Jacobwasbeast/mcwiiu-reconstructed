@@ -1,13 +1,15 @@
 #include "game/ui/UIControl_GridList.hpp"
 
+#include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_List2D.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl_GridList::UIControl_GridList()
-    : UIControl_Base(), m_pendingUpdates(), m_elements(), m_currentSelection(0), m_itemIndex(0),
-      m_elementTypes(), m_elementEnabled()
 {
+    m_currentSelection = 0;
+    m_itemIndex = 0;
 }
 
 UIControl_GridList::~UIControl_GridList()
@@ -63,9 +65,13 @@ void UIControl_GridList::clearElements()
 
 int UIControl_GridList::getListIndex(int index)
 {
-    for (unsigned int i = 0; i < m_elements.size(); ++i) {
-        if (m_elements[i] == index)
-            return (int)i;
+    std::vector<int>::iterator element = m_elements.begin();
+    int listIndex = 0;
+    while (element != m_elements.end()) {
+        if (*element == index)
+            return listIndex;
+        ++element;
+        ++listIndex;
     }
     return -1;
 }
@@ -83,9 +89,12 @@ void UIControl_GridList::clearList()
 
 void UIControl_GridList::init(int controlId)
 {
-    m_controlType = (unsigned short)controlId;
+    m_controlType = controlId;
     FJ_List2D* list = m_fuiRenderNode->getFuiNode()->asFJ_List2D();
     list->Init(controlId);
+    int sceneType = m_scene->getSceneType();
+    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
+        gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
 void UIControl_GridList::ReInit()
@@ -105,7 +114,7 @@ void UIControl_GridList::tick()
         delete *update;
         ++update;
     }
-    m_pendingUpdates.clear();
+    m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
 }
 
 void UIControl_GridList::setCurrentSelection(int selection, bool immediate)
@@ -136,7 +145,7 @@ UIControl_GridList::PendingSetCurrentSelection::~PendingSetCurrentSelection()
 
 unsigned int UIControl_GridList::PendingSetCurrentSelection::OnTick()
 {
-    m_list->setCurrentSelection(m_selection, true);
+    m_list->setCurrentSelection(m_value, true);
     return 1;
 }
 
@@ -146,6 +155,6 @@ UIControl_GridList::PendingSetEnable::~PendingSetEnable()
 
 unsigned int UIControl_GridList::PendingSetEnable::OnTick()
 {
-    m_list->EnableItem(m_item, m_enabled, true);
+    m_list->EnableItem(m_value, m_enabled, true);
     return 1;
 }

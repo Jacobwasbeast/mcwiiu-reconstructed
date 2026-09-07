@@ -41,20 +41,22 @@ public:
 
 private:
     C4JThreadImpl* m_thread;
-    void* m_data;
+    bool m_threadStarted;
+    void* m_progressData;
+    bool m_confirmationVisible;
     void (*m_destroyCallback)(int);
     void (*m_cancelCallback)(int);
     int m_destroyCallbackData;
     int m_cancelCallbackData;
-    EMiniGameId m_miniGameId;
     bool m_threadReady;
+    EMiniGameId m_miniGameId;
     bool m_miniGame;
     std::wstring m_titleText;
     std::wstring m_statusText;
     int m_progress;
-    bool m_confirmationVisible;
+    int m_cancelTooltip;
     bool m_wasCancelled;
-    bool m_confirmationPressed;
+    bool m_confirmationButtonHidden;
     UIControl_Progress m_progressControl;
     UIControl_Label m_titleLabel;
     UIControl_Label m_tipLabel;

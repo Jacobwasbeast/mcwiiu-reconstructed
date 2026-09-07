@@ -23,10 +23,10 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
       mTextureId(textureId), mCustomTexture(customTexture), mTextureAlpha(textureAlpha),
       mTextureWidth(textureWidth), mTextureHeight(textureHeight)
 {
-    m_boundsXMin = rect->xMin;
-    m_boundsXMax = rect->xMax;
-    m_boundsYMin = rect->yMin;
-    m_boundsYMax = rect->yMax;
+    m_bounds.xMin = rect->xMin;
+    m_bounds.xMax = rect->xMax;
+    m_bounds.yMin = rect->yMin;
+    m_bounds.yMax = rect->yMax;
     std::strncpy(mName, name, sizeof(mName) - 1);
     mName[sizeof(mName) - 1] = 0;
 }
@@ -35,10 +35,10 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
     : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0),
       mTextureId(-1), mCustomTexture(0), mTextureAlpha(0), mTextureWidth(0), mTextureHeight(0)
 {
-    m_boundsXMin = rect->xMin;
-    m_boundsXMax = rect->xMax;
-    m_boundsYMin = rect->yMin;
-    m_boundsYMax = rect->yMax;
+    m_bounds.xMin = rect->xMin;
+    m_bounds.xMax = rect->xMax;
+    m_bounds.yMin = rect->yMin;
+    m_bounds.yMax = rect->yMax;
     std::strncpy(mName, name, sizeof(mName) - 1);
     mName[sizeof(mName) - 1] = 0;
 }
@@ -71,16 +71,16 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
     pushFilterFlags();
     if (bounds != NULL)
     {
-        bounds->xMin = m_boundsXMin;
-        bounds->xMax = m_boundsXMax;
-        bounds->yMin = m_boundsYMin;
-        bounds->yMax = m_boundsYMax;
+        bounds->xMin = m_bounds.xMin;
+        bounds->xMax = m_bounds.xMax;
+        bounds->yMin = m_bounds.yMin;
+        bounds->yMax = m_bounds.yMax;
     }
     fuiCodeGenRectVertex vertices[4];
-    vertices[0].x = m_boundsXMin; vertices[0].y = m_boundsYMin; vertices[0].z = 0.0f; vertices[0].u = 0.0f; vertices[0].v = 0.0f;
-    vertices[1].x = m_boundsXMax; vertices[1].y = m_boundsYMin; vertices[1].z = 0.0f; vertices[1].u = 1.0f; vertices[1].v = 0.0f;
-    vertices[2].x = m_boundsXMax; vertices[2].y = m_boundsYMax; vertices[2].z = 0.0f; vertices[2].u = 1.0f; vertices[2].v = 1.0f;
-    vertices[3].x = m_boundsXMin; vertices[3].y = m_boundsYMax; vertices[3].z = 0.0f; vertices[3].u = 0.0f; vertices[3].v = 1.0f;
+    vertices[0].x = m_bounds.xMin; vertices[0].y = m_bounds.yMin; vertices[0].z = 0.0f; vertices[0].u = 0.0f; vertices[0].v = 0.0f;
+    vertices[1].x = m_bounds.xMax; vertices[1].y = m_bounds.yMin; vertices[1].z = 0.0f; vertices[1].u = 1.0f; vertices[1].v = 0.0f;
+    vertices[2].x = m_bounds.xMax; vertices[2].y = m_bounds.yMax; vertices[2].z = 0.0f; vertices[2].u = 1.0f; vertices[2].v = 1.0f;
+    vertices[3].x = m_bounds.xMin; vertices[3].y = m_bounds.yMax; vertices[3].z = 0.0f; vertices[3].u = 0.0f; vertices[3].v = 1.0f;
     if (gRenderer != NULL)
     {
         gRenderer->TextureBind(mTextureId);
@@ -95,12 +95,12 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
 
 void fuiRenderNodeCodeGenRect::setWidth(float width)
 {
-    m_boundsXMax = m_boundsXMin + width;
+    m_bounds.xMax = m_bounds.xMin + width;
 }
 
 void fuiRenderNodeCodeGenRect::setHeight(float height)
 {
-    m_boundsYMax = m_boundsYMin + height;
+    m_bounds.yMax = m_bounds.yMin + height;
 }
 
 void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned int textureHeight,

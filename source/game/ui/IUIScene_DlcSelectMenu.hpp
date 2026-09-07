@@ -18,11 +18,11 @@ public:
     IUIScene_DlcSelectMenu(eDLCContentType contentType);
 
     void tick();
-    static uint32_t MustSignInReturned(void* context, int userIndex,
-                                       C4JStorage::EMessageResult result);
+    static int MustSignInReturned(void* context, int userIndex,
+                                  C4JStorage::EMessageResult result);
     void showNotOnlineDialog(int userIndex);
-    static uint32_t UnlockPackReturned(void* context, int userIndex,
-                                       C4JStorage::EMessageResult result);
+    static int UnlockPackReturned(void* context, int userIndex,
+                                  C4JStorage::EMessageResult result);
     void tryPurchaseDlc(int userIndex, bool& handled, eDLCContentType contentType);
 
 private:

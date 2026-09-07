@@ -7,28 +7,15 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/item/Enchantment.hpp"
+#include "game/ui/EnchantmentMenu.hpp"
 #include "game/ui/FJ_EnchantingButton.hpp"
 #include "game/ui/UIScene.hpp"
+#include "game/ui/UIScene_EnchantingMenu.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-class EnchantmentMenu
-{
-public:
-    int getGoldCount();
-    int getEnchantmentCost(int index) const;
-    int getEnchantmentId(int index) const;
-};
-
-class UIScene_EnchantingMenu : public UIScene
-{
-public:
-    EnchantmentMenu* getMenu();
-    int getResolution() const
-    {
-        return m_resolution;
-    }
-};
+std::wstring _toString(int value);
 
 extern CMinecraftApp g_MinecraftApp;
 static UIControl_EnchantmentButton::EnchantmentNames g_enchantmentNames;
@@ -67,9 +54,13 @@ std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
 UIControl_EnchantmentButton::UIControl_EnchantmentButton()
     : UIControl_Button(), m_state(0), m_level(0), m_index(0), m_name(L""),
       m_focus(false),
-      m_colour((int)(g_MinecraftApp.GetHTMLColour(0x1b6) | 0xff000000)),
-      m_focusColour((int)(g_MinecraftApp.GetHTMLColour(0x1b7) | 0xff000000)),
-      m_inactiveColour((int)(g_MinecraftApp.GetHTMLColour(0x1b8) | 0xff000000))
+      m_colour((int)(g_MinecraftApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) |
+                     0xff000000)),
+      m_focusColour((int)(g_MinecraftApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) |
+                          0xff000000)),
+      m_inactiveColour((int)(g_MinecraftApp.GetHTMLColour(
+                                 eMinecraftColour_Color_EnchantTextDisabled) |
+                             0xff000000))
 {
 }
 
@@ -89,18 +80,30 @@ void UIControl_EnchantmentButton::updateState()
 {
     UIScene_EnchantingMenu* scene = static_cast<UIScene_EnchantingMenu*>(m_scene);
     EnchantmentMenu* menu = scene->getMenu();
-    const int level = menu->getEnchantmentCost(m_index);
-    Enchantment* enchantment = Enchantment::byId(menu->getEnchantmentId(m_index));
-    int state = 0;
-    if (enchantment != NULL && menu->getGoldCount() >= m_index + 1)
+    const int level = menu->mCosts[m_index];
+    const int goldCount = menu->getGoldCount();
+    Enchantment* enchantment = Enchantment::byId(menu->mEnchantmentIds[m_index]);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int state;
+    if (enchantment == NULL || goldCount < m_index + 1)
+    {
+        state = minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild
+                    ? (m_focus ? 2 : 1)
+                    : 0;
+    }
+    else if (minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level)
+    {
+        state = minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild
+                    ? (m_focus ? 2 : 1)
+                    : 0;
+    }
+    else
     {
         state = m_focus ? 2 : 1;
     }
     if (level != m_level)
     {
-        std::wstringstream text;
-        text << level;
-        setLabel(UIString(text.str()), false, false);
+        setLabel(UIString(_toString(level)), false, false);
         m_level = level;
         m_name = g_enchantmentNames.getRandomName();
     }
@@ -143,7 +146,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     UIScene_EnchantingMenu* scene = static_cast<UIScene_EnchantingMenu*>(m_scene);
     EnchantmentMenu* menu = scene->getMenu();
     float scale;
-    if (scene->getResolution() == 0)
+    if (scene->m_resolution == 0)
     {
         scale = g_MinecraftApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
     }
@@ -155,15 +158,23 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,
                            (rect->yMax - rect->yMin) / m_height, 1.0F);
     GlStateManager::scalef(scale, scale, scale);
-    const int level = menu->getEnchantmentCost(m_index);
-    Enchantment* enchantment = Enchantment::byId(menu->getEnchantmentId(m_index));
+    const int level = menu->mCosts[m_index];
+    const int goldCount = menu->getGoldCount();
+    Enchantment* enchantment = Enchantment::byId(menu->mEnchantmentIds[m_index]);
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     if (enchantment != NULL && level != 0)
     {
         GlStateManager::enableAlphaTest();
         GlStateManager::alphaFunc(4, 0.1F);
+        Minecraft* minecraft = Minecraft::GetInstance();
+        std::wstring levelText = _toString(level);
         int colour = m_inactiveColour;
-        if (m_state != 0)
+        if (goldCount >= m_index + 1 &&
+            minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel >= level)
+        {
+            colour = m_focus ? m_focusColour : m_colour;
+        }
+        else if (minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
         {
             colour = m_focus ? m_focusColour : m_colour;
         }

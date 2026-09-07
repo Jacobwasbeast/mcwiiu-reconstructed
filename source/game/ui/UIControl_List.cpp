@@ -130,8 +130,7 @@ void UIControl_List::SetItemLabel(int item, UIString label, bool immediate)
         return;
     }
     if (m_scene->hasMovie()) {
-        const std::wstring& value = *(const std::wstring*)(long)label.getString();
-        list->SetItemLabel(getListIndex(item), value);
+        list->SetItemLabel(getListIndex(item), label.getString());
     }
 }
 
@@ -190,9 +189,9 @@ bool UIControl_List::CheckElementExists(int index)
     return m_elementTypes.find((unsigned int)index) != m_elementTypes.end();
 }
 
-void UIControl_List::GetActiveItem()
+int UIControl_List::GetActiveItem()
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List()->GetActiveItem();
+    return m_fuiRenderNode->getFuiNode()->asFJ_List()->GetActiveItem();
 }
 
 void UIControl_List::UpdateControl()

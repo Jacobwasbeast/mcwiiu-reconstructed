@@ -333,7 +333,7 @@ void FJ_List::RemoveItem(int index)
     ScrollList(true, true, false);
 }
 FJ_FuiNode* FJ_List::ReturnItem(int index) { return index >= 0 && static_cast<unsigned int>(index) < m_items.size() ? m_items[index] : 0; }
-FJ_FuiNode* FJ_List::GetActiveItem() { return ReturnItem(m_activeItem); }
+int FJ_List::GetActiveItem() { return getStage()->getFocus() == m_items[m_activeItem] ? m_activeItem : -1; }
 uint32_t FJ_List::GetTopItem() { return static_cast<uint32_t>(m_topItem); }
 
 uint64_t FJ_List::setAction(unsigned char action, char* value)

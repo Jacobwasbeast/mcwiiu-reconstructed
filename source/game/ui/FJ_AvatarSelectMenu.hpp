@@ -18,10 +18,10 @@ private:
 public:
     FJ_AvatarSelectMenu(fuiRenderNode* renderNode);
     virtual ~FJ_AvatarSelectMenu();
-    void SetActiveTab(int tab);
     static FJ_AvatarSelectMenu* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void handlePress(FJ_Event* event);
+    void SetActiveTab(int tab);
 };
 
 #endif

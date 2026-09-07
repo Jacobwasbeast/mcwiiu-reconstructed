@@ -96,7 +96,7 @@ public:
     void remElement(int index);
     unsigned char IsEnabled(int index);
     bool CheckElementExists(int index);
-    void GetActiveItem();
+    int GetActiveItem();
     void SetTouchFocus(int x, int y, bool focus);
     bool CanTouchFocus(int x, int y);
     bool CanTouchTrigger(int x, int y);
@@ -105,7 +105,7 @@ public:
     void SetVerticalSpacing(int spacing);
     int GetVerticalSpacing();
 
-private:
+protected:
     std::vector<GenericPendingUpdate*> m_pendingUpdates;
     std::vector<int> m_elements;
     int m_currentSelection;

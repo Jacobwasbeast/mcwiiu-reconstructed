@@ -1,15 +1,7 @@
 #include "game/ui/FJ_BitmapIcon.hpp"
 
 #include "game/ui/fuiRenderNode.hpp"
-
-class fuiRenderNodeCodeGenRect : public fuiRenderNode
-{
-public:
-    fuiRenderNodeCodeGenRect(fuiRenderNode* pRenderNode, fuiRect* rect,
-        const char* textureName, unsigned int width, unsigned int height,
-        int texture, bool tiled, bool filtered);
-    void setTexture(unsigned int width, unsigned int height, int texture, bool filtered);
-};
+#include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 class fui
 {

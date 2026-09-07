@@ -36,6 +36,10 @@ private:
     Level* mLevel;
     BlockPos mPosition;
     Random mRandom;
+
+public:
+    int mCosts[3];
+    int mEnchantmentIds[3];
 };
 
 #endif

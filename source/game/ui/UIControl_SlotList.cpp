@@ -23,7 +23,7 @@ void UIControl_SlotList::addSlot(unsigned int slot)
 {
     if (m_fuiRenderNode == NULL)
         return;
-    FJ_FuiNode* node = m_fuiRenderNode->getRoot();
+    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
     FJ_SlotList* list = node->asFJ_SlotList();
@@ -61,7 +61,7 @@ void UIControl_SlotList::setSlotHighlighted(int slot, bool highlighted)
 {
     if (m_fuiRenderNode == NULL)
         return;
-    FJ_FuiNode* node = m_fuiRenderNode->getRoot();
+    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
     FJ_SlotList* list = node->asFJ_SlotList();
@@ -84,7 +84,7 @@ void UIControl_SlotList::showSlotRedBox(int slot, bool show)
 {
     if (m_fuiRenderNode == NULL)
         return;
-    FJ_FuiNode* node = m_fuiRenderNode->getRoot();
+    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
     FJ_SlotList* list = node->asFJ_SlotList();
@@ -93,12 +93,11 @@ void UIControl_SlotList::showSlotRedBox(int slot, bool show)
     list->SetSlotRedBox(slot, show);
 }
 
-bool UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_unknown0 = 16;
-    bool result = UIControl_Base::setupControl(scene, node, name);
+    m_controlType = 16;
+    UIControl_Base::setupControl(scene, node, name);
     m_highlightSlot = 0;
-    return result;
 }
 
 void UIControl_SlotList::ReInit()

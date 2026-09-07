@@ -1,11 +1,10 @@
+#define private public
 #include "game/ui/UIControl_ScoreboardButtonList.hpp"
+#undef private
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-void UIControl_ButtonList_setupControl(UIControl_ScoreboardButtonList* control, UIScene* scene,
-                                       fuiRenderNode* node, const std::string& name);
 
 UIControl_ScoreboardButtonList::PendingAddItem::PendingAddItem(
     UIControl_ScoreboardButtonList* list, int type, std::wstring label, int playerIcon, int voipIcon)
@@ -30,7 +29,7 @@ UIControl_ScoreboardButtonList::PendingSetSlotTextureName::~PendingSetSlotTextur
 
 unsigned int UIControl_ScoreboardButtonList::PendingSetSlotTextureName::OnTick()
 {
-    m_list->SetSlotTextureName(m_type, m_slot, m_textureName, true);
+    m_list->SetSlotTextureName(m_item, m_slot, m_textureName, true);
     return 1;
 }
 
@@ -49,7 +48,7 @@ UIControl_ScoreboardButtonList::PendingSetSlotsText::~PendingSetSlotsText()
 
 unsigned int UIControl_ScoreboardButtonList::PendingSetSlotsText::OnTick()
 {
-    m_list->setSlotsText(m_type, m_slot0, m_slot1, m_slot2, m_slot3, m_slot4, m_slot5, m_slot6, true);
+    m_list->setSlotsText(m_item, m_slot0, m_slot1, m_slot2, m_slot3, m_slot4, m_slot5, m_slot6, true);
     return 1;
 }
 
@@ -61,7 +60,7 @@ void UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode*
                                                   const std::string& name)
 {
     m_controlType = 30;
-    UIControl_ButtonList_setupControl(this, scene, node, name);
+    UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int playerIcon,

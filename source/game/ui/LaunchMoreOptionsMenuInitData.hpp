@@ -6,11 +6,7 @@
 
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/core/SuperflatConfig.hpp"
-
-namespace LevelRules
-{
-class LevelRulesetGroup;
-}
+#include "game/world/LevelRules.hpp"
 
 class LaunchMoreOptionsMenuInitData
 {
@@ -18,6 +14,7 @@ public:
     LaunchMoreOptionsMenuInitData();
 
     friend class MiniGameDef;
+    friend class UIScene_InGameSettingsListMenu;
 
 private:
     bool mFlag0;

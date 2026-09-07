@@ -163,7 +163,7 @@ int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Cont
 
 int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity>) { return 0; }
 bool AbstractContainerMenu::isValidIngredient(not_null_ptr<ItemInstance>, int) { return true; }
-not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int, int, int) { return ItemInstance::EMPTY; }
+not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int, int) { return ItemInstance::EMPTY; }
 bool AbstractContainerMenu::IsSmallInventory() { return false; }
 bool AbstractContainerMenu::matches(AbstractContainerMenu* first, AbstractContainerMenu* second) { return first != NULL && second != NULL && first->m_slots.size() == second->m_slots.size(); }
 bool AbstractContainerMenu::doQuickMoveLoop() { return true; }

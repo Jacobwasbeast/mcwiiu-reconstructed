@@ -58,7 +58,7 @@ public:
     void FixNavigation(FJ_FuiNode* node);
     void RemoveItem(int index);
     FJ_FuiNode* ReturnItem(int index);
-    FJ_FuiNode* GetActiveItem();
+    int GetActiveItem();
     uint32_t GetTopItem();
     uint64_t setAction(unsigned char action, char* value);
     uint32_t getIActiveItem();

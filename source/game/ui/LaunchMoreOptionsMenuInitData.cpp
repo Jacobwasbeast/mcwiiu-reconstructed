@@ -35,7 +35,7 @@ LaunchMoreOptionsMenuInitData::LaunchMoreOptionsMenuInitData()
     mFlag10 = false;
     mFlagA = true;
     mFlagB = true;
-    mDisplayName = L"buckets_";
+    mDisplayName.assign(L"");
     mFlag54 = false;
     mValue44 = 3;
     mFlag48 = false;

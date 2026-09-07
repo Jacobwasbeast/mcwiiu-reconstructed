@@ -18,6 +18,7 @@ class ItemInstance;
 class Level;
 class Player;
 class ServerGamePacketListenerImpl;
+class ServerPlayer;
 
 struct _PlayerKeyHash
 {
@@ -38,6 +39,7 @@ struct _PlayerKeyEq
 class AbstractContainerMenu
 {
     friend class ServerGamePacketListenerImpl;
+    friend class ServerPlayer;
 
 public:
     typedef std::vector<not_null_ptr<ItemInstance> > ItemList;
@@ -85,7 +87,7 @@ public:
     static int getRedstoneSignalFromContainer(boost::shared_ptr<Container> container);
     static int getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity);
     virtual bool isValidIngredient(not_null_ptr<ItemInstance> item, int slot);
-    virtual not_null_ptr<ItemInstance> GetQuickCraftItem(int slot, int button, int mode);
+    virtual not_null_ptr<ItemInstance> GetQuickCraftItem(int slot, int button);
     virtual bool IsSmallInventory();
     static bool matches(AbstractContainerMenu* first, AbstractContainerMenu* second);
     virtual bool doQuickMoveLoop();

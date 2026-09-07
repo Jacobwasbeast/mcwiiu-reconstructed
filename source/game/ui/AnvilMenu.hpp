@@ -46,8 +46,7 @@ public:
     int mMaterialCost;
     std::wstring mItemName;
     bool mItemNameCensored;
-    Player* mPlayer;
-    boost::shared_ptr<Player> mPlayerOwner;
+    boost::shared_ptr<Player> mPlayer;
 };
 
 #endif

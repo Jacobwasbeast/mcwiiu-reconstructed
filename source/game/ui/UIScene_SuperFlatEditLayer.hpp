@@ -1,0 +1,123 @@
+#ifndef GAME_UI_UISCENE_SUPERFLATEDITLAYER_HPP
+#define GAME_UI_UISCENE_SUPERFLATEDITLAYER_HPP
+
+#include <string>
+
+#include "game/ui/UIScene.hpp"
+#include "game/world/generation/FlatGeneratorInfo.hpp"
+#include "game/world/generation/FlatLayerInfo.hpp"
+#include "game/ui/UIControl.hpp"
+#include "game/ui/UIControl_Button.hpp"
+#include "game/ui/UIControl_Cursor.hpp"
+#include "game/ui/UIControl_Label.hpp"
+#include "game/ui/UIControl_Slider.hpp"
+#include "game/ui/UIControl_SlotList.hpp"
+#include "game/ui/UIControl_Touch.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/ui/SuperflatMenu.hpp"
+
+class ItemInstance;
+class UILayer;
+struct fuiRect;
+struct _UIVec2D
+{
+    float x;
+    float y;
+};
+
+class UIScene_SuperFlatEditLayer : public UIScene
+{
+public:
+    enum ESnap
+    {
+        ESnap_None = 0,
+        ESnap_Left = 1,
+        ESnap_Right = 2,
+        ESnap_Up = 3,
+        ESnap_Down = 4
+    };
+
+    enum EExit
+    {
+        EExit_Save = 0,
+        EExit_Cancel = 1
+    };
+
+    UIScene_SuperFlatEditLayer(int sceneType, void* data, UILayer* layer);
+    virtual ~UIScene_SuperFlatEditLayer();
+    virtual unsigned int mapElementsAndNames();
+    void updateLayerButtons();
+    void updateScrollCurrentPage(int page);
+    int getSlotId(int column, int row);
+    int getSlotId(float x, float y);
+    void componentExtents(UIControl& control, float& left, float& right, float& top, float& bottom);
+    bool isOverComponent(UIControl& control, float x, float y);
+    int getComponentByLocation(float x, float y);
+    int getComponentByLocation(const _UIVec2D& point);
+    int getSlotId(const _UIVec2D& point);
+    void SetPointerText(not_null_ptr<ItemInstance> item);
+    unsigned int switchFocus(UIControl* control);
+    void setNewPointerPos(float x, float y);
+    void setNewPointerPos(const _UIVec2D& point);
+    void _init();
+    virtual void updateTooltips();
+    virtual void updateComponents();
+    int getSnap(float x, float y) const;
+    void dmouse(float& x, float& y, float& dx, float& dy);
+    void componentCentre(UIControl& control, float& x, float& y);
+    void slotCentre(int slot, float& x, float& y);
+    bool onRow(int slot, int row);
+    static int modulo(int value, int divisor);
+    int getNextSlot(int slot, ESnap snap);
+    void doSnap(const _UIVec2D& point, ESnap snap);
+    void setNewPointerPos(UIControl* control);
+    void onMouseTick();
+    virtual void tick();
+    virtual void handleReload();
+    void exit(EExit result);
+    int getSnap(int action) const;
+    virtual void handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
+                             bool& handled);
+    virtual void handlePress(int first, int second);
+    virtual void handleSliderMove(int id, int value);
+    virtual void customDraw(const char* name, fuiRect* rect);
+    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
+                                  bool released, bool pressed);
+    virtual unsigned int GetMainPanel();
+    virtual void SetFocusToElement(int focus);
+    virtual std::wstring getMoviePath();
+    virtual int getSceneType();
+
+private:
+    int m_unknownC8;
+    float m_pointerScale;
+    int m_unknownD0;
+    int m_unknownD4;
+    int m_maxLayerHeight;
+    bool m_newLayer;
+    int m_layerIndex;
+    FlatLayerInfo m_layer;
+    FlatGeneratorInfo m_generator;
+    SuperflatMenu::CustomSuperflatBlocks* m_customBlocks;
+    float m_extentLeft;
+    float m_extentTop;
+    float m_listLeft;
+    float m_listTop;
+    float m_listRight;
+    float m_listBottom;
+    _UIVec2D m_pointerPosition;
+    int m_scrollPage;
+    UIControl* m_focusedControl;
+    UIControl_Cursor m_cursor;
+    UIControl_Label m_title;
+    UIControl_Slider m_heightSlider;
+    UIControl_Button m_confirmButton;
+    UIControl_Label m_heightLabel;
+    UIControl_Label m_typeLabel;
+    UIControl_SlotList m_slotList;
+    UIControl_Touch m_sliderTouch;
+    UIControl_Touch m_listTouch;
+    UIControl m_mainPanel;
+};
+
+#endif

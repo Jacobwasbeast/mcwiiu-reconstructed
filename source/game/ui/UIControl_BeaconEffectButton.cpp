@@ -18,9 +18,9 @@ UIControl_BeaconEffectButton::~UIControl_BeaconEffectButton()
 {
 }
 
-bool UIControl_BeaconEffectButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_BeaconEffectButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    return UIControl::setupControl(scene, node, name);
+    UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_BeaconEffectButton::SetIcon(int icon)
@@ -30,7 +30,7 @@ void UIControl_BeaconEffectButton::SetIcon(int icon)
         return;
     }
     m_icon = icon;
-    static_cast<FJ_BeaconEffectButton*>(m_fuiRenderNode->getRoot())->SetIcon(icon);
+    static_cast<FJ_BeaconEffectButton*>(m_fuiRenderNode->getFuiNode())->SetIcon(icon);
 }
 
 void UIControl_BeaconEffectButton::UpdateButtonState()
@@ -55,7 +55,7 @@ void UIControl_BeaconEffectButton::UpdateButtonState()
     {
         return;
     }
-    static_cast<FJ_BeaconEffectButton*>(m_fuiRenderNode->getRoot())->ChangeState(state);
+    static_cast<FJ_BeaconEffectButton*>(m_fuiRenderNode->getFuiNode())->ChangeState(state);
     m_state = state;
 }
 

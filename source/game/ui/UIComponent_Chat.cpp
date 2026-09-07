@@ -1,0 +1,206 @@
+#include "game/ui/UIComponent_Chat.hpp"
+
+#include <string>
+
+#include "game/client/render/C4JRender.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/core/Gui.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/ui/UIString.hpp"
+#include "game/ui/UILayer.hpp"
+#include "game/ui/fui.hpp"
+#include "game/ui/fuiFile.hpp"
+
+UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
+    : UIScene(type, layer)
+{
+    initialiseMovie();
+    m_labels[0].init(UIString(L"ComponentChat"));
+    m_labels[1].init(UIString(L"ComponentChat"));
+    m_labels[2].init(UIString(L"ComponentChat"));
+    m_labels[3].init(UIString(L"ComponentChat"));
+    m_labels[4].init(UIString(L"ComponentChat"));
+    m_labels[5].init(UIString(L"ComponentChat"));
+    m_labels[6].init(UIString(L"ComponentChat"));
+    m_labels[7].init(UIString(L"ComponentChat"));
+    m_labels[8].init(UIString(L"ComponentChat"));
+    m_labels[9].init(UIString(L"ComponentChat"));
+    m_chatLabel.init(UIString(L"ComponentChat"));
+    addTimer(0, 100);
+}
+
+UIComponent_Chat::~UIComponent_Chat()
+{
+}
+
+unsigned int UIComponent_Chat::mapElementsAndNames()
+{
+    UIScene::mapElementsAndNames();
+    fuiRenderNode* root = m_movie->getRootNode();
+    m_labels[0].setupControl(this, root, "Label1");
+    m_controls.push_back(&m_labels[0]);
+    m_labels[1].setupControl(this, root, "Label2");
+    m_controls.push_back(&m_labels[1]);
+    m_labels[2].setupControl(this, root, "Label3");
+    m_controls.push_back(&m_labels[2]);
+    m_labels[3].setupControl(this, root, "Label4");
+    m_controls.push_back(&m_labels[3]);
+    m_labels[4].setupControl(this, root, "Label5");
+    m_controls.push_back(&m_labels[4]);
+    m_labels[5].setupControl(this, root, "Label6");
+    m_controls.push_back(&m_labels[5]);
+    m_labels[6].setupControl(this, root, "Label7");
+    m_controls.push_back(&m_labels[6]);
+    m_labels[7].setupControl(this, root, "Label8");
+    m_controls.push_back(&m_labels[7]);
+    m_labels[8].setupControl(this, root, "Label9");
+    m_controls.push_back(&m_labels[8]);
+    m_labels[9].setupControl(this, root, "Label10");
+    m_controls.push_back(&m_labels[9]);
+    m_backgrounds[0].setupControl(this, root, "Label1Background");
+    m_controls.push_back(&m_backgrounds[0]);
+    m_backgrounds[1].setupControl(this, root, "Label2Background");
+    m_controls.push_back(&m_backgrounds[1]);
+    m_backgrounds[2].setupControl(this, root, "Label3Background");
+    m_controls.push_back(&m_backgrounds[2]);
+    m_backgrounds[3].setupControl(this, root, "Label4Background");
+    m_controls.push_back(&m_backgrounds[3]);
+    m_backgrounds[4].setupControl(this, root, "Label5Background");
+    m_controls.push_back(&m_backgrounds[4]);
+    m_backgrounds[5].setupControl(this, root, "Label6Background");
+    m_controls.push_back(&m_backgrounds[5]);
+    m_backgrounds[6].setupControl(this, root, "Label7Background");
+    m_controls.push_back(&m_backgrounds[6]);
+    m_backgrounds[7].setupControl(this, root, "Label8Background");
+    m_controls.push_back(&m_backgrounds[7]);
+    m_backgrounds[8].setupControl(this, root, "Label9Background");
+    m_controls.push_back(&m_backgrounds[8]);
+    m_backgrounds[9].setupControl(this, root, "Label10Background");
+    m_controls.push_back(&m_backgrounds[9]);
+    m_chatLabel.setupControl(this, root, "Jukebox");
+    m_controls.push_back(&m_chatLabel);
+    return 1;
+}
+
+std::wstring UIComponent_Chat::getMoviePath()
+{
+    unsigned int viewport = m_layer->getViewport();
+    if (viewport == C4JRender::eViewportType_FullScreen || viewport > C4JRender::eViewportType_BottomRightQuarter)
+    {
+        m_splitScreen = false;
+        return L"ComponentChat";
+    }
+    m_splitScreen = true;
+    return L"ComponentChatSplit";
+}
+
+void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType viewport)
+{
+    if (!m_splitScreen)
+    {
+        UIScene::render(width, height, viewport);
+        return;
+    }
+    int screenWidth;
+    int screenHeight;
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                             screenWidth, screenHeight);
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+        break;
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopRightQuarter:
+        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f), 0);
+        break;
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f),
+                                                 static_cast<int>(screenHeight * 0.5f));
+        break;
+    default:
+        if (viewport > C4JRender::eViewportType_BottomRightQuarter)
+            gConsoleUIController.setupRenderPosition(0, 0);
+        else
+            gConsoleUIController.setupRenderPosition(viewport);
+        break;
+    }
+    if (viewport == C4JRender::eViewportType_FullScreen)
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(height));
+    else if (viewport < C4JRender::eViewportType_LeftHalf)
+        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
+                     static_cast<float>(screenWidth), static_cast<float>(height));
+    else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(screenHeight));
+    else if (viewport > C4JRender::eViewportType_BottomRightQuarter)
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(height));
+    else
+        gFui->render(m_movie, static_cast<float>(m_stageWidth / 2), 0.0f,
+                     static_cast<float>(width), static_cast<float>(height));
+}
+
+void UIComponent_Chat::handleTimerComplete(int timerId)
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int player = m_resolution;
+    if (minecraft->mLocalPlayers[player].get() == NULL)
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            m_backgrounds[i].setOpacity(0.0f);
+            m_labels[i].setOpacity(0.0f);
+            m_labels[i].setLabel(UIString(L""), false, false);
+        }
+        m_chatLabel.setOpacity(0.0f);
+        setVisible(false);
+        return;
+    }
+    Gui* gui = minecraft->mGui;
+    bool visible = false;
+    for (int i = 0; i < 10; ++i)
+    {
+        double messageOpacity = gui->getOpacity(player, static_cast<unsigned int>(i));
+        if (messageOpacity > 0.0)
+        {
+            m_backgrounds[i].setOpacity(static_cast<float>(messageOpacity));
+            m_labels[i].setOpacity(static_cast<float>(messageOpacity));
+            m_labels[i].setLabel(UIString(gui->mMessages[player].at(i).message), false, false);
+            visible = true;
+        }
+        else
+        {
+            m_backgrounds[i].setOpacity(0.0f);
+            m_labels[i].setOpacity(0.0f);
+            m_labels[i].setLabel(UIString(L""), false, false);
+        }
+    }
+    if (gui->getJukeboxOpacity(player) > 0.0)
+        visible = true;
+    m_chatLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(player)));
+    m_chatLabel.setLabel(UIString(gui->mNowPlaying[player]), false, false);
+    setVisible(visible);
+}
+
+int UIComponent_Chat::getSceneType()
+{
+    return 36;
+}
+
+bool UIComponent_Chat::stealsFocus()
+{
+    return false;
+}
+
+bool UIComponent_Chat::hasFocus(int sceneType)
+{
+    return false;
+}
+
+bool UIComponent_Chat::hidesLowerScenes()
+{
+    return false;
+}

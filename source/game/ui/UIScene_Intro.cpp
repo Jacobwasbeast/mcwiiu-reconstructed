@@ -4,18 +4,18 @@
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
-#include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_Intro.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-static bool g_introComplete = false;
-
 UIScene_Intro::UIScene_Intro(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_inputHandled(false), m_introFocus(false)
+    : UIScene(sceneType, layer)
 {
     initialiseMovie();
+    m_introFocus = false;
+    m_inputHandled = false;
     setIntroPlatform();
     m_touchControl.init(0);
 }
@@ -39,7 +39,7 @@ std::wstring UIScene_Intro::getMoviePath()
 void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                                 bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
     if (action != 20 || m_inputHandled)
         return;
 
@@ -51,7 +51,7 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
         if (optionsStatus == 0)
         {
             m_inputHandled = false;
-            g_introComplete = true;
+            theApp.SetIntroRunning(true);
             return;
         }
         if (optionsStatus == 4 || optionsStatus == 6)
@@ -62,18 +62,18 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
             else
                 gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(2), NULL,
                                                       static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-            g_introComplete = true;
+            theApp.SetIntroRunning(true);
             return;
         }
         gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
                                               static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     }
-    g_introComplete = true;
+    theApp.SetIntroRunning(true);
 }
 
 void UIScene_Intro::handleAnimationEnd()
 {
-    g_introComplete = true;
+    theApp.SetIntroRunning(true);
     if (m_inputHandled)
         return;
 

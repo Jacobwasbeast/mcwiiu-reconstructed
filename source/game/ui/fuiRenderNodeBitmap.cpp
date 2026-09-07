@@ -8,17 +8,14 @@ fuiRenderNodeBitmap::fuiRenderNodeBitmap(fuiRenderNode* parent, fuiRenderNode* r
                                          unsigned char clipDepth, bool visible, fuiFile* file)
     : fuiRenderNode(parent, root, object, symbolIndex, eFuiObjectType_Bitmap, depth, color, clipDepth, visible, file)
 {
-    m_colorTransform = 0;
-    m_localScaleX = 1.0f;
-    m_localScaleY = 1.0f;
-    m_boundsXMin = 0.0f;
-    m_boundsYMin = 0.0f;
-    if (file != NULL && file->bitmaps != NULL && symbolIndex < (unsigned int)file->bitmapCount)
+    m_alpha = 1.0f;
+    m_bounds.xMin = 0.0f;
+    m_bounds.yMin = 0.0f;
+    if (file != NULL && file->bitmaps != NULL && symbolIndex < (unsigned int)file->header.bitmapCount)
     {
         const fuiBitmap& bitmap = file->bitmaps[symbolIndex];
-        m_boundsXMax = (float)bitmap.width;
-        m_boundsYMax = (float)bitmap.height;
-        m_width = bitmap.width;
+        m_bounds.xMax = (float)bitmap.width;
+        m_bounds.yMax = (float)bitmap.height;
     }
 }
 
@@ -50,17 +47,16 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
     pushColor();
     pushFilterFlags();
 
-    if (m_file != NULL && m_file->bitmaps != NULL && m_symbolIndex < (unsigned int)m_file->bitmapCount)
+    if (m_file != NULL && m_file->bitmaps != NULL && m_symbolIndex < (unsigned int)m_file->header.bitmapCount)
     {
         fuiBitmap* bitmap = &m_file->bitmaps[m_symbolIndex];
         m_file->initialiseRenderTexture(bitmap, true);
         const float width = (float)bitmap->width;
         const float height = (float)bitmap->height;
-        m_boundsXMin = 0.0f;
-        m_boundsXMax = width;
-        m_boundsYMin = 0.0f;
-        m_boundsYMax = height;
-        m_width = bitmap->width;
+        m_bounds.xMin = 0.0f;
+        m_bounds.xMax = width;
+        m_bounds.yMin = 0.0f;
+        m_bounds.yMax = height;
         if (bounds != NULL)
         {
             bounds->xMin = 0.0f;

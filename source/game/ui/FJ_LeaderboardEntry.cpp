@@ -1,6 +1,7 @@
 #include "game/ui/FJ_LeaderboardEntry.hpp"
 
 #include <cstdio>
+#include <vector>
 
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -16,6 +17,23 @@ public:
 };
 
 std::wstring _toString(int value);
+
+typedef std::vector<FJ_LeaderboardEntry*> FJLeaderboardEntryVector;
+typedef FJLeaderboardEntryVector::iterator FJLeaderboardEntryIterator;
+
+void __CPR241___Insert_n__Q2_3std86vector__tm__72_P19FJJ_LeaderboardEntryQ2_3std40allocator__tm__23_PJ36JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyQ4_3stdJ151JJ178J9size_typeRCZ1Z_v(
+    FJLeaderboardEntryVector& vector, FJLeaderboardEntryIterator position,
+    FJLeaderboardEntryVector::size_type count, FJ_LeaderboardEntry* const& value)
+{
+    vector.insert(position, count, value);
+}
+
+FJLeaderboardEntryIterator __CPR264__insert__Q2_3std86vector__tm__72_P19FJJ_LeaderboardEntryQ2_3std40allocator__tm__23_PJ33JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyRCZ1Z_Q2_3stdJ111J(
+    FJLeaderboardEntryVector& vector, FJLeaderboardEntryIterator position,
+    FJ_LeaderboardEntry* const& value)
+{
+    return vector.insert(position, value);
+}
 
 FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_state(0), m_rankText(NULL), m_gamertagText(NULL),

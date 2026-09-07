@@ -3,12 +3,12 @@
 
 #include <string>
 
-#include "game/ui/UIControl_List.hpp"
+#include "game/ui/UIControl_ButtonList.hpp"
 
 class UIScene;
 class fuiRenderNode;
 
-class UIControl_ScoreboardButtonList : public UIControl_List
+class UIControl_ScoreboardButtonList : public UIControl_ButtonList
 {
 public:
     class PendingAddItem : public UIControl_List::GenericPendingUpdate

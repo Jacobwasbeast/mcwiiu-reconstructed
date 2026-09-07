@@ -291,3 +291,148 @@ uint64_t FJ_LeaderboardList::FocusOnFirstEntry()
     }
     return (uint64_t)(uintptr_t)this << 32;
 }
+
+typedef std::map<int, FJ_LeaderboardList::CLeaderboardEntry> LeaderboardMap;
+typedef LeaderboardMap::iterator LeaderboardIterator;
+
+LeaderboardIterator __CPR340___Lbound__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J70JJ90JXCbL_1_0CFRCQ2_Z1Z8key_type_Q5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer(LeaderboardMap& tree, const int& key)
+{
+    return tree.lower_bound(key);
+}
+
+LeaderboardIterator __CPR340___Ubound__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J70JJ90JXCbL_1_0CFRCQ2_Z1Z8key_type_Q5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer(LeaderboardMap& tree, const int& key)
+{
+    return tree.upper_bound(key);
+}
+
+void __CPR249___Inc__Q3_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J67JJ87JXCbL_1_014const_iteratorFv_v(LeaderboardIterator& iterator)
+{
+    ++iterator;
+}
+
+void __CPR234__clear__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J68JJ88JXCbL_1_0Fv_v(LeaderboardMap& tree)
+{
+    tree.clear();
+}
+
+void __CPR324___Lrotate__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J71JJ91JXCbL_1_0FQ5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer_v(LeaderboardMap& tree, LeaderboardIterator iterator)
+{
+    if (iterator != tree.end())
+        tree.insert(*iterator);
+}
+
+void __CPR324___Rrotate__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J71JJ91JXCbL_1_0FQ5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer_v(LeaderboardMap& tree, LeaderboardIterator iterator)
+{
+    if (iterator != tree.end())
+        tree.insert(*iterator);
+}
+
+void __CPR300__erase__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J68JJ88JXCbL_1_0FQ3_3std16_Tree__tm__4_Z1Z8iterator_Q3_3stdJ238JJ256J(LeaderboardMap& tree, LeaderboardIterator iterator)
+{
+    if (iterator != tree.end())
+        tree.erase(iterator);
+}
+
+void __CPR302__erase__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J68JJ88JXCbL_1_0FQ3_3std16_Tree__tm__4_Z1Z8iteratorT1_Q3_3stdJ238JJ256J(LeaderboardMap& tree, LeaderboardIterator first, LeaderboardIterator last)
+{
+    tree.erase(first, last);
+}
+
+LeaderboardIterator __CPR282__find__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J67JJ87JXCbL_1_0FRCQ2_Z1Z8key_type_Q3_3std16_Tree__tm__4_Z1Z8iterator(LeaderboardMap& tree, const int& key)
+{
+    return tree.find(key);
+}
+
+FJ_LeaderboardList::CLeaderboardEntry* __CPR93____ct__Q2_18FJJ_LeaderboardList17CLeaderboardEntryFRCQ2_J9JJ29J(FJ_LeaderboardList::CLeaderboardEntry* entry, const FJ_LeaderboardList::CLeaderboardEntry& source)
+{
+    if (entry != NULL)
+        *entry = source;
+    return entry;
+}
+
+LeaderboardIterator __CPR377___Insert__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J70JJ90JXCbL_1_0FbQ5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointerRCQ2_Z1Z10value_type_Q3_3std16_Tree__tm__J297J8iterator(LeaderboardMap& tree, LeaderboardIterator position, const LeaderboardMap::value_type& value, bool)
+{
+    return tree.insert(position, value);
+}
+
+FJ_LeaderboardList::CLeaderboardEntry& __CPR198____vc__Q2_3std171map__tm__159_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J33JJ53JFRCZ1Z_RZ2Z(LeaderboardMap& tree, const int& key)
+{
+    return tree[key];
+}
+
+FJ_LeaderboardList::CLeaderboardEntry* __CPR324___Buynode__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J71JJ91JXCbL_1_0Fv_Q5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer()
+{
+    return new FJ_LeaderboardList::CLeaderboardEntry();
+}
+
+void __CPR234___Init__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J68JJ88JXCbL_1_0Fv_v(LeaderboardMap& tree)
+{
+    tree.clear();
+}
+
+FJ_LeaderboardList::CLeaderboardEntry& __CPR93____as__Q2_18FJJ_LeaderboardList17CLeaderboardEntryFRCQ2_J9JJ29J(FJ_LeaderboardList::CLeaderboardEntry& entry, const FJ_LeaderboardList::CLeaderboardEntry& source)
+{
+    entry = source;
+    return entry;
+}
+
+void __CPR234___Tidy__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J68JJ88JXCbL_1_0Fv_v(LeaderboardMap& tree)
+{
+    tree.clear();
+}
+
+void __CPR249___Dec__Q3_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J67JJ87JXCbL_1_014const_iteratorFv_v(LeaderboardIterator& iterator)
+{
+    --iterator;
+}
+
+void __CPR322___Erase__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J69JJ89JXCbL_1_0FQ5_Z1Z14allocator_type50rebind__tm__36_Q3_3std20_Tree_nod__tm__4_Z1Z5_Node5other7pointer_v(LeaderboardMap& tree, LeaderboardIterator iterator)
+{
+    if (iterator != tree.end())
+        tree.erase(iterator);
+}
+
+std::pair<LeaderboardIterator, bool> __CPR310__insert__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J69JJ89JXCbL_1_0FRCQ2_Z1Z10value_type_Q2_3std48pair__tm__36_Q3_3std16_Tree__tm__4_Z1Z8iteratorb(LeaderboardMap& tree, const LeaderboardMap::value_type& value, bool)
+{
+    return tree.insert(value);
+}
+
+LeaderboardIterator __CPR321__insert__Q2_3std213_Tree__tm__199_Q2_3std188_Tmap_traits__tm__167_iQ2_18FJJ_LeaderboardList17CLeaderboardEntryQ2_3std13less__tm__2_iQ2_3std84allocator__tm__67_Q2_3std57pair__tm__45_CiQ2_J69JJ89JXCbL_1_0FQ3_3std16_Tree__tm__4_Z1Z8iteratorRCQ2_Z1Z10value_type_Q3_3stdJ239JJ257J(LeaderboardMap& tree, LeaderboardIterator position, const LeaderboardMap::value_type& value)
+{
+    return tree.insert(position, value);
+}
+
+uint64_t __CPR220__AddDataSet__18FJJ_LeaderboardListFbiT2RCQ2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wT1PCQ2_3stdJ46JN66(
+    FJ_LeaderboardList* list, bool loading, int rank, int value,
+    const std::wstring& gamertag, bool complete, const std::wstring* first,
+    const std::wstring* second, const std::wstring* third,
+    const std::wstring* fourth, const std::wstring* fifth,
+    const std::wstring* sixth, const std::wstring* seventh)
+{
+    FJ_LeaderboardList::CLeaderboardEntry entry;
+    entry.rank = value;
+    entry.gamertag = gamertag.size() > 16 ? gamertag.substr(0, 16) + L"..." : gamertag;
+    entry.hasData = complete;
+    const std::wstring* columns[7] = {first, second, third, fourth, fifth, sixth, seventh};
+    for (int i = 0; i < 7; ++i)
+        entry.values[i] = columns[i] == NULL ? std::wstring() : *columns[i];
+    FJ_LeaderboardList::CLeaderboardEntry& stored = list->m_leaderboard[rank];
+    stored = entry;
+    if (complete)
+    {
+        if (list->m_firstEntry < 0 || rank < list->m_firstEntry)
+            list->m_firstEntry = rank;
+        if (rank > list->m_requestSize)
+            list->m_requestSize = rank;
+    }
+    if (loading)
+    {
+        list->UpdateVisibleLeaderboard();
+        if (list->m_needsUpdate)
+            list->FocusOnFirstEntry();
+        list->m_needsUpdate = false;
+        list->SetDataLoading(false);
+    }
+    (void)value;
+    return (uint64_t)(uintptr_t)list << 32;
+}
