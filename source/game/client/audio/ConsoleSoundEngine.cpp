@@ -2,6 +2,35 @@
 
 #include <algorithm>
 
+struct MilesMutex
+{
+    unsigned int uiData[4];
+};
+
+struct MilesDriver
+{
+    unsigned char reserved[0x6C];
+    void (*pReportMutex)(MilesDriver*, MilesMutex*, int, const char*, int, void*, const char*);
+};
+
+extern MilesDriver* g_milesDriver;
+extern MilesMutex g_milesMutex;
+extern unsigned char g_milesMutexDiagnostic;
+
+void rrMutexUnlock(MilesMutex* pMutex);
+
+void UnlockQueue__Fv()
+{
+    if (g_milesDriver != NULL)
+    {
+        g_milesDriver->pReportMutex(g_milesDriver, &g_milesMutex, 1,
+                                     "C:\\devel\\projects\\mss\\src\\sdk\\shared\\milesasync.cpp", 0x88,
+                                     &g_milesMutexDiagnostic, "Miles IO mutex");
+    }
+
+    rrMutexUnlock(&g_milesMutex);
+}
+
 ConsoleSoundEngine::ConsoleSoundEngine()
     : isPlayingStreamingCDMusic(false)
     , isPlayingStreamingGameMusic(false)

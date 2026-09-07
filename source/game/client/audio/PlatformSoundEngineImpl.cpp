@@ -81,6 +81,52 @@ int MilesEnumerateSoundInstances(SoundBank* pSoundBank, unsigned int* puiNext, u
 
 static char szSoundPath[] = "WiiU/Sound/";
 
+extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
+extern "C" void MEMFreeToDefaultHeap(void* pBlock);
+
+struct MilesMutex
+{
+    unsigned int uiData[4];
+};
+
+struct MilesDriver
+{
+    unsigned char ucReserved[0x6C];
+    void (*pReportMutex)(MilesDriver*, MilesMutex*, int, const char*, int, void*, const char*);
+};
+
+extern int g_milesMutexEnabled;
+extern MilesDriver* g_milesDriver;
+extern MilesMutex g_milesMutex;
+extern unsigned char g_milesMutexDiagnostic;
+
+void rrMutexUnlock(MilesMutex* pMutex);
+
+void OutMilesMutex()
+{
+    if (g_milesMutexEnabled != 0)
+    {
+        if (g_milesDriver != NULL)
+        {
+            g_milesDriver->pReportMutex(g_milesDriver, &g_milesMutex, 1,
+                                        "C:\\devel\\projects\\mss\\src\\sdk\\shared\\genericmss.cpp",
+                                        100, &g_milesMutexDiagnostic, "Miles mutex");
+        }
+
+        rrMutexUnlock(&g_milesMutex);
+    }
+}
+
+void* platform_alloc(unsigned int uiSize)
+{
+    return MEMAllocFromDefaultHeapEx(uiSize, 0x40);
+}
+
+void platform_free(void* pBlock)
+{
+    MEMFreeToDefaultHeap(pBlock);
+}
+
 PlatformSoundEngineImpl::PlatformSoundEngineImpl()
 {
     m_pDigitalDriver = NULL;

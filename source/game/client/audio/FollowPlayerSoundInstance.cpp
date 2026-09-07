@@ -1,5 +1,7 @@
 #include "game/client/audio/FollowPlayerSoundInstance.hpp"
 
+#include "game/world/generation/Player.hpp"
+
 FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch, bool looping)
     : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players)
     , player(player)

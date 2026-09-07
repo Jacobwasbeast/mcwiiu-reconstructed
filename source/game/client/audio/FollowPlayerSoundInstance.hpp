@@ -4,7 +4,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/audio/AbstractTickableSoundInstance.hpp"
-#include "game/entity/mob/Entity.hpp"
+
+class Player;
 
 class FollowPlayerSoundInstance : public AbstractTickableSoundInstance
 {
@@ -13,8 +14,8 @@ public:
     FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other);
     virtual ~FollowPlayerSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     boost::shared_ptr<Player> player;
