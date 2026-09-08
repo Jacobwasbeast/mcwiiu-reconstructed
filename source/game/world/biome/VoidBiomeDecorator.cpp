@@ -13,7 +13,7 @@ VoidBiomeDecorator::~VoidBiomeDecorator()
 void VoidBiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const BlockPos& origin)
 {
     BlockPos spawn = level->getSharedSpawnPos();
-    BlockPos offsetOrigin = origin.offset(8, 0, 8);
+    BlockPos offsetOrigin = origin.offset(8, spawn.y, 8);
 
     if (spawn.distSqr(offsetOrigin) > 1024.0)
         return;

@@ -1,14 +1,25 @@
 #include "game/world/biome/OceanFrozenBiome.hpp"
 
+#include <cmath>
+
 #include "game/core/PerlinSimplexNoise.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
+#include "game/world/generation/BlueIceFeature.hpp"
+#include "game/world/generation/IcebergFeature.hpp"
 
-#include <cmath>
+static PerlinSimplexNoise* sTemperatureNoise = new PerlinSimplexNoise(new Random(1234LL), 1);
+static const Biome::BlockPair BEDROCK_BLOCK(7, 0);
+
+static const int PACKED_ICE_BLOCK_ID = 174;
+static const int SNOW_BLOCK_ID = 80;
 
 OceanFrozenBiome::OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* properties)
     : Biome(id, eBiomeType_Ocean, properties),
@@ -17,28 +28,30 @@ OceanFrozenBiome::OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* pro
       mRandom(NULL),
       mIcebergsNoise(NULL),
       mIcebergsNoise2(NULL),
-      mIcebergNoise(new PerlinSimplexNoise(0LL, 3))
+      mIcebergNoise(new PerlinSimplexNoise(3456LL, 3))
 {
     clearDefaultFriendlies();
-    mCreatures.push_back(new MobSpawnerData(26, 0x0D502004ULL, 3, 5));
-    mCreatures.push_back(new MobSpawnerData(75, 0x0D502002ULL, 4, 7));
-    mWaterCreatures.push_back(new MobSpawnerData(10, 0x0D502001ULL, 2, 4));
+
+    mWaterCreatures.push_back(new MobSpawnerData(26, 0x0D502004ULL, 3, 5));
+    mWaterCreatures.push_back(new MobSpawnerData(75, 0x0D502002ULL, 4, 7));
+    mSquid.push_back(new MobSpawnerData(10, 0x0D502001ULL, 2, 4));
     mMonsters.push_back(new MobSpawnerData(10, 0x5D550044ULL, 2, 4));
     mMonsters.push_back(new MobSpawnerData(120, 0x5D540443ULL, 1, 2));
-    mAmbientCreatures.push_back(new MobSpawnerData(5, 0x2D680006ULL, 1, 2));
+    mCreatures.push_back(new MobSpawnerData(5, 0x2D680006ULL, 1, 2));
+
     clearDefaultFriendlies();
-    mRunDepth = 0;
-    mSnowMeltRate = 1.0F;
-    mMinSnowAccumulation = mDeep ? 0.5F : 0.3F;
-    mMaxSnowAccumulation = mDeep ? 0.95F : 0.9F;
+
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
+    mOceanRuinConfig.smallProbability = mDeep ? 0.5F : 0.3F;
+    mOceanRuinConfig.clusterProbability = mDeep ? 0.95F : 0.9F;
+    mOceanRuinConfig.enabled = true;
+
+    mDecorator->kelpPerChunk = 20;
+    mDecorator->seagrassPerChunk = 12;
 }
 
 OceanFrozenBiome::~OceanFrozenBiome()
 {
-    delete mIcebergsNoise;
-    delete mIcebergsNoise2;
-    delete mRandom;
-    delete mIcebergNoise;
 }
 
 float OceanFrozenBiome::getCreatureProbability()
@@ -49,131 +62,135 @@ float OceanFrozenBiome::getCreatureProbability()
 void OceanFrozenBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     Biome::decorate(level, random, pos);
+
+    if (random.nextInt(8) == 0)
+    {
+        BlockPos icebergPos = pos.offset(random.nextInt(8) + 12, 0, random.nextInt(8) + 12);
+        mDecorator->icebergGen->place(level, random, level->getHeightmapPos(icebergPos));
+    }
+
+    int blueIceCount = random.nextInt(20);
+    for (int i = 0; i < blueIceCount; ++i)
+    {
+        mDecorator->blueIceGen->place(
+            level, random,
+            pos.offset(random.nextInt(16) + 8, random.nextInt(32) + 30, random.nextInt(16) + 8));
+    }
 }
 
 void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer, int x, int z, double noise)
 {
-    long long seed = level->getSeed();
-    if (mIcebergsNoise != NULL && mIcebergsNoise2 != NULL && mSeed != seed)
+    if (mIcebergsNoise == NULL || mIcebergsNoise2 == NULL || mSeed != level->getSeed())
     {
         delete mIcebergsNoise;
         delete mIcebergsNoise2;
         delete mRandom;
-        mRandom = new Random(seed);
+
+        mRandom = new Random(mSeed);
         mIcebergsNoise = new PerlinSimplexNoise(mRandom, 4);
         mIcebergsNoise2 = new PerlinSimplexNoise(mRandom, 1);
     }
-    else if (mIcebergsNoise == NULL || mIcebergsNoise2 == NULL)
-    {
-        delete mIcebergsNoise;
-        delete mIcebergsNoise2;
-        delete mRandom;
-        mRandom = new Random(seed);
-        mIcebergsNoise = new PerlinSimplexNoise(mRandom, 4);
-        mIcebergsNoise2 = new PerlinSimplexNoise(mRandom, 1);
-    }
-    mSeed = seed;
+
+    mSeed = level->getSeed();
 
     int seaLevel = level->getSeaLevel();
-    BlockPos seaPos(x, seaLevel, z);
-    float temperature = getTemperature(seaPos);
-    double icebergNoise = mIcebergsNoise->getValue((double)x * 0.1, (double)z * 0.1);
-    double icebergNoise2 = mIcebergsNoise2->getValue((double)x * 0.9765625, (double)z * 0.9765625);
-    double height = icebergNoise;
-    if (height < 0.0)
+    float temperature = getTemperature(BlockPos(x, seaLevel, z));
+
+    double height = mIcebergsNoise->getValue((double)x * 0.1, (double)z * 0.1);
+    if (fabs(noise) < height)
     {
-        height = -height;
-    }
-    if (height < 0.7)
-    {
-        height = 0.7;
+        height = fabs(noise);
     }
 
-    float icebergHeight = (float)(height * height * 0.00087890625);
-    float icebergWidth = (float)(ceil((float)(icebergNoise2 < 0.0 ? -icebergNoise2 : icebergNoise2) * 40.0) + 14.0);
-    if (icebergWidth + 7.0F < icebergHeight)
-    {
-        icebergHeight = icebergWidth + 7.0F;
-    }
-    if (temperature > 0.1F)
-    {
-        icebergHeight -= 2.0F;
-    }
+    float icebergTop = 0.0F;
+    float icebergBottom = 0.0F;
 
-    int snowLayer = 126;
-    int iceLayer = 127;
-    int snowCount = 0;
-    int snowStart = seaLevel + 18 + random.nextInt(10);
-    const int column = (z & 15) << 7 | (x & 15) << 11;
-
-    for (int y = 127; y >= 64; y -= 2)
+    if (height > 0.7)
     {
-        int topIndex = column | iceLayer;
-        int bottomIndex = column | snowLayer;
-        if (random.nextInt(2) + 1 >= iceLayer)
+        double width = mIcebergsNoise2->getValue((double)x * 0.9765625, (double)z * 0.9765625);
+        float thickness = (float)(height * height) * 0.8F;
+        float widthLimit = ceilf(fabsf((float)width) * 40.0F) + 14.0F;
+
+        if (widthLimit < thickness)
         {
-            primer->setBlockAndData(topIndex, 174, 0);
+            thickness = widthLimit;
+        }
+
+        if (temperature > 0.1F)
+        {
+            thickness -= 2.0F;
+        }
+
+        float surface = (float)(seaLevel + 1);
+        icebergTop = surface + thickness;
+        icebergBottom = (surface - thickness) - 7.0F;
+    }
+
+    int snowCount = 0;
+    int snowLimit = random.nextInt(4) + 2;
+    int snowStart = seaLevel + 18 + random.nextInt(10);
+    int packedIceData =
+        Blocks::packed_ice->convertBlockStateToLegacyData(Blocks::packed_ice->defaultBlockState());
+    int snowData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
+    int column = (z & 15) << 7 | (x & 15) << 11;
+
+    for (int y = 127; y >= 0; --y)
+    {
+        int index = column | y;
+
+        if (random.nextInt(2) + 1 >= y)
+        {
+            primer->setBlockAndData(index, BEDROCK_BLOCK.blockId, BEDROCK_BLOCK.blockData);
         }
         else
         {
-            const BlockState* state = primer->getState(x & 15, iceLayer, z & 15);
-            Block* block = state == NULL ? NULL : state->getBlock();
-            if (block == Blocks::WATER && iceLayer < icebergHeight && random.nextFloat() > 0.01F)
-            {
-                primer->setBlockAndData(topIndex, 174, 0);
-            }
-            else if (block == Blocks::stone && iceLayer < seaLevel && icebergHeight != 0.0F && random.nextFloat() > 0.15F)
-            {
-                primer->setBlockAndData(topIndex, 174, 0);
-            }
-        }
+            const BlockState* state = primer->getState(x & 15, y, z & 15);
 
-        const BlockState* state = primer->getState(x & 15, snowLayer, z & 15);
-        Block* block = state == NULL ? NULL : state->getBlock();
-        if (block == Blocks::WATER && snowLayer < icebergHeight && random.nextFloat() > 0.01F)
-        {
-            primer->setBlockAndData(bottomIndex, 174, 0);
-        }
-        else if (block == Blocks::stone && snowLayer < seaLevel && icebergHeight != 0.0F && random.nextFloat() > 0.15F)
-        {
-            primer->setBlockAndData(bottomIndex, 174, 0);
-        }
+            if ((state->getMaterial() == Material::AIR && (float)y < icebergTop
+                 && random.nextFloat() > 0.01F)
+                || (state->getMaterial() == Material::WATER && (float)y > icebergBottom
+                    && y < seaLevel && icebergBottom != 0.0F && random.nextFloat() > 0.15F))
+            {
+                primer->setBlockAndData(index, PACKED_ICE_BLOCK_ID, packedIceData);
+                state = Blocks::packed_ice->defaultBlockState();
+            }
 
-        if (primer->getState(x & 15, iceLayer, z & 15)->getBlock() == Blocks::packed_ice && snowCount <= random.nextInt(4) + 2 && snowStart < iceLayer)
-        {
-            primer->setBlockAndData(topIndex, 80, 0);
-            ++snowCount;
+            if (state->getBlock() == Blocks::packed_ice && snowCount <= snowLimit && y > snowStart)
+            {
+                primer->setBlockAndData(index, SNOW_BLOCK_ID, snowData);
+                ++snowCount;
+            }
         }
-        if (primer->getState(x & 15, snowLayer, z & 15)->getBlock() == Blocks::packed_ice && snowCount <= random.nextInt(4) + 2 && snowStart < snowLayer)
-        {
-            primer->setBlockAndData(bottomIndex, 80, 0);
-            ++snowCount;
-        }
-        iceLayer -= 2;
-        snowLayer -= 2;
     }
 
-    Biome::buildSurfaceAt(level, random, primer, x, z, noise);
+    buildSurfaceAtDefault(level, random, primer, x, z, noise);
 }
 
 float OceanFrozenBiome::getTemperature(const BlockPos& pos)
 {
     float temperature = getDefaultBiomeTemperature();
-    double noise = mIcebergNoise->getValue((double)pos.x * 0.05, (double)pos.z * 0.05);
-    double globalNoise = mIcebergNoise->getValue((double)pos.x * 0.2, (double)pos.z * 0.2);
-    if ((float)noise + (float)globalNoise < 0.1F)
+
+    double icebergNoise = mIcebergNoise->getValue((double)pos.x * 0.05, (double)pos.z * 0.05);
+    double regionNoise = sTemperatureNoise->getValue((double)pos.x * 0.2, (double)pos.z * 0.2);
+
+    if ((float)icebergNoise + (float)regionNoise < 0.3F)
     {
-        noise = mIcebergNoise->getValue((double)pos.x * 0.09, (double)pos.z * 0.09);
-        if ((float)noise < 0.8F)
+        double localNoise = sTemperatureNoise->getValue((double)pos.x * 0.09, (double)pos.z * 0.09);
+
+        if ((float)localNoise < 0.8F)
         {
             temperature = 0.2F;
         }
     }
+
     if (pos.y > 64)
     {
-        double heightNoise = mIcebergNoise->getValue((double)pos.x * 0.125, (double)pos.z * 0.125);
-        return temperature - (float)((heightNoise * 4.0 + (double)pos.y - 64.0) * 0.05 / 30.0);
+        float heightNoise =
+            (float)(sTemperatureNoise->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
+
+        return temperature - (heightNoise + pos.y - 64.0F) * 0.05F / 30.0F;
     }
+
     return temperature;
 }
 

@@ -52,9 +52,14 @@ AbstractTreeFeature* SwampBiome::getTreeFeature(Random& random)
 unsigned int SwampBiome::getGrassColor(const BlockPos& pos)
 {
     double noise = sTemperatureNoise->getValue((double)pos.x * 0.0225, (double)pos.z * 0.0225);
+    ColourTable* colours = Minecraft::GetInstance()->getColourTable();
+
     if (noise < -0.1)
-        return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Grass_Swamp1);
-    return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Grass_Swamp2);
+    {
+        return colours->getColour(eMinecraftColour_Grass_Swamp1);
+    }
+
+    return colours->getColour(eMinecraftColour_Grass_Swamp2);
 }
 
 unsigned int SwampBiome::getFoliageColor(const BlockPos& pos)

@@ -3,7 +3,7 @@
 
 #include "game/world/biome/Biome.hpp"
 
-class Feature;
+class OreFeature;
 
 class ExtremeHillsBiome : public Biome
 {
@@ -24,7 +24,7 @@ public:
     virtual EBiomeBaseClass getBaseClass();
 
 private:
-    Feature* mEmeraldOreFeature;
+    OreFeature* mMonsterEggFeature;
     EType mType;
 };
 

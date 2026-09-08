@@ -1,8 +1,15 @@
 #include "game/world/biome/OceanWarmBiome.hpp"
 
 #include "game/util/Random.hpp"
-#include "game/world/block/BlockPos.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/generation/CoralCrustFeature.hpp"
+#include "game/world/generation/CoralFeature.hpp"
+#include "game/world/generation/CoralHangFeature.hpp"
+#include "game/world/generation/SeaAnemoneFeature.hpp"
+#include "game/world/generation/SeaPickleFeature.hpp"
 
 OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ocean, properties),
@@ -12,18 +19,22 @@ OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
 
     if (!mDeep)
     {
-        mCreatures.push_back(new MobSpawnerData(25, 0x0D502003ULL, 3, 5));
-        mCreatures.push_back(new MobSpawnerData(75, 0x0D502005ULL, 6, 10));
-        mCreatures.push_back(new MobSpawnerData(25, 0x0D502005ULL, 3, 5));
+        mWaterCreatures.push_back(new MobSpawnerData(25, 0x0D502003ULL, 3, 5));
+        mWaterCreatures.push_back(new MobSpawnerData(75, 0x0D502005ULL, 6, 10));
+        mWaterCreatures.push_back(new MobSpawnerData(25, 0x0D502005ULL, 3, 5));
     }
 
-    mWaterCreatures.push_back(new MobSpawnerData(10, 0x0D502001ULL, 2, 4));
-    mCreatures.push_back(new MobSpawnerData(7, 0x0D602001ULL, 3, 5));
+    mSquid.push_back(new MobSpawnerData(10, 0x0D502001ULL, 2, 4));
+    mWaterCreatures.push_back(new MobSpawnerData(7, 0x0D602001ULL, 3, 5));
     mMonsters.push_back(new MobSpawnerData(10, 0x5D550044ULL, 2, 4));
-    mRunDepth = 1;
-    mSnowAccumulation = 0.3F;
-    mSnowMeltRate = 0.9F;
-    mSnowEnabled = true;
+
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Warm;
+    mOceanRuinConfig.smallProbability = 0.3F;
+    mOceanRuinConfig.clusterProbability = 0.9F;
+    mOceanRuinConfig.enabled = true;
+
+    mDecorator->seaGrassPerChunk = 4;
+    mDecorator->seagrassPerChunk = 12;
 }
 
 OceanWarmBiome::~OceanWarmBiome()
@@ -38,6 +49,41 @@ float OceanWarmBiome::getCreatureProbability()
 void OceanWarmBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     Biome::decorate(level, random, pos);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        mDecorator->coralGen->place(
+            level, random, pos.offset(random.nextInt(16), 45, random.nextInt(16)));
+    }
+
+    if (random.nextInt(3) == 0)
+    {
+        mDecorator->coralCrustGen->place(
+            level, random, pos.offset(random.nextInt(10), 45, random.nextInt(10)));
+    }
+
+    for (int i = 0; i < 16; ++i)
+    {
+        mDecorator->coralHangGen->place(
+            level, random, pos.offset(random.nextInt(16), 62, random.nextInt(16)));
+    }
+
+    for (int i = 0; i < 20; ++i)
+    {
+        mDecorator->seaAnemoneGen->place(
+            level, random, pos.offset(random.nextInt(16), 62, random.nextInt(16)));
+    }
+
+    if (random.nextInt(6) == 0)
+    {
+        for (int i = 0; i < mDecorator->seaGrassPerChunk; ++i)
+        {
+            MutableBlockPos position(pos.offset(random.nextInt(24), 0, random.nextInt(24)));
+            int depth = level->getHeightmap(position.x, position.z) * 2;
+            position.setY(depth != 0 ? random.nextInt(depth) : 0);
+            mDecorator->seaPickleGen->place(level, random, position);
+        }
+    }
 }
 
 Biome::EBiomeBaseClass OceanWarmBiome::getBaseClass()

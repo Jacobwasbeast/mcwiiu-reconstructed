@@ -14,6 +14,10 @@
 DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Desert, properties)
 {
+    mCreatures.clear();
+    mChickens.clear();
+    mWolves.clear();
+
     mCreatures.push_back(new MobSpawnerData(4, 0x2D680005ULL, 2, 3));
 
     mTopBlock.blockId = 12;

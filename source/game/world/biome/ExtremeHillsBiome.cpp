@@ -2,33 +2,48 @@
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/MonsterEggBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
-#include "game/world/generation/Feature.hpp"
+#include "game/world/generation/OreFeature.hpp"
+#include "game/world/generation/SpruceFeature.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
 ExtremeHillsBiome::ExtremeHillsBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_ExtremeHills, properties),
-      mEmeraldOreFeature(NULL),
       mType(type)
 {
+    if (type == eType_ExtraTrees)
+    {
+        mDecorator->treesPerChunk = 3;
+    }
+
+    mCreatures.push_back(new MobSpawnerData(5, 0x2D698003ULL, 4, 6));
+
+    TypedBoxed<MonsterEggBlock::Variant*> variant(MonsterEggBlock::Variant::byData(0));
+    mMonsterEggFeature = new OreFeature(
+        Blocks::monster_egg->defaultBlockState()->setBoxedValue(MonsterEggBlock::VARIANT, &variant),
+        9);
 }
 
 ExtremeHillsBiome::~ExtremeHillsBiome()
 {
-    delete mEmeraldOreFeature;
+    delete mMonsterEggFeature;
 }
 
 AbstractTreeFeature* ExtremeHillsBiome::getTreeFeature(Random& random)
 {
     if (random.nextInt(3) > 0)
     {
-        return Biome::getTreeFeature(random);
+        return new SpruceFeature(false);
     }
 
     return Biome::getTreeFeature(random);
@@ -38,29 +53,20 @@ void ExtremeHillsBiome::decorate(Level* level, Random& random, const BlockPos& p
 {
     Biome::decorate(level, random, pos);
 
-    int count = random.nextInt(6) + 3;
-    for (int i = 0; i < count; ++i)
+    int oreCount = random.nextInt(6) + 3;
+    for (int i = 0; i < oreCount; ++i)
     {
-        BlockPos emeraldPos = pos.offset(random.nextInt(16), random.nextInt(28) + 4, random.nextInt(16));
-        if (level->getBlockState(emeraldPos)->getBlock() == Blocks::AIR)
+        BlockPos orePos = pos.offset(random.nextInt(16), random.nextInt(28) + 4, random.nextInt(16));
+        if (level->getBlockState(orePos)->getBlock() == Blocks::stone)
         {
-            level->setBlock(emeraldPos, Blocks::emerald_ore->defaultBlockState(), 2, false);
-        }
-
-        emeraldPos = pos.offset(random.nextInt(16), random.nextInt(28) + 4, random.nextInt(16));
-        if (level->getBlockState(emeraldPos)->getBlock() == Blocks::AIR)
-        {
-            level->setBlock(emeraldPos, Blocks::emerald_ore->defaultBlockState(), 2, false);
+            level->setBlock(orePos, Blocks::emerald_ore->defaultBlockState(), 2, false);
         }
     }
 
-    if ((count & 1) != 0)
+    for (int i = 0; i < 7; ++i)
     {
-        BlockPos emeraldPos = pos.offset(random.nextInt(16), random.nextInt(28) + 4, random.nextInt(16));
-        if (level->getBlockState(emeraldPos)->getBlock() == Blocks::AIR)
-        {
-            level->setBlock(emeraldPos, Blocks::emerald_ore->defaultBlockState(), 2, false);
-        }
+        mMonsterEggFeature->place(
+            level, random, pos.offset(random.nextInt(16), random.nextInt(64), random.nextInt(16)));
     }
 }
 
@@ -78,10 +84,12 @@ void ExtremeHillsBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer
         if (noise > 1.0 && mType != eType_ExtraTrees)
         {
             mTopBlock.blockId = 1;
+            mTopBlock.blockData = 0;
             mFillerBlock.blockId = 1;
+            mFillerBlock.blockData = 0;
         }
 
-        Biome::buildSurfaceAt(level, random, primer, x, z, noise);
+        buildSurfaceAtDefault(level, random, primer, x, z, noise);
     }
     else
     {
@@ -89,7 +97,8 @@ void ExtremeHillsBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer
         mTopBlock.blockData = 0;
         mFillerBlock.blockId = 13;
         mFillerBlock.blockData = 0;
-        Biome::buildSurfaceAt(level, random, primer, x, z, noise);
+
+        buildSurfaceAtDefault(level, random, primer, x, z, noise);
     }
 
     PIXEndNamedEvent();

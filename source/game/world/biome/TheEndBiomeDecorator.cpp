@@ -2,6 +2,8 @@
 
 #include "game/world/Level.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/TheEndDimension.hpp"
+#include "game/entity/mob/EndDragonFight.hpp"
 #include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/util/Random.hpp"
 
@@ -38,6 +40,16 @@ void TheEndBiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
             spikeGen->setSpike(&spike);
             spikeGen->place(level, *random,
                             BlockPos(spikeData[i][2], spikeData[i][5], spikeData[i][3]));
+        }
+    }
+
+    if (position.x == 0 && position.z == 0 && level != NULL
+        && level->mDimension != NULL)
+    {
+        TheEndDimension* dimension = dynamic_cast<TheEndDimension*>(level->mDimension);
+        if (dimension != NULL && dimension->getDragonFight() != NULL)
+        {
+            dimension->getDragonFight()->createNewDragon();
         }
     }
 }
