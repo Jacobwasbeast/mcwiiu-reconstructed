@@ -15,6 +15,8 @@
 #include "game/world/LevelData.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
 #include "game/world/generation/StructureManager.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/Player.hpp"
 
 DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder,
                                              const std::wstring& levelId, bool createIfMissing,
@@ -46,6 +48,25 @@ void DirectoryLevelStorage::save(boost::shared_ptr<Player> player)
 {
     if (!player)
         return;
+    PlayerUID uid = player->m_0x784;
+    if (uid == PlayerUID(0)) {
+        dontSaveMapMappingForPlayer(uid);
+        return;
+    }
+    CompoundTag* tag = new CompoundTag();
+    player->saveWithoutId(tag);
+    std::wstring path = mPlayersPrefix + uid.toString() + L"_dat";
+    if (mSaveFile) {
+        ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(path));
+        NbtIo::writeCompressed(tag, &output);
+    } else {
+        ByteArrayOutputStream* bytes = new ByteArrayOutputStream();
+        NbtIo::writeCompressed(tag, bytes);
+        boost::unordered_map<std::wstring, ByteArrayOutputStream*>::iterator old = mCachedData.find(path);
+        if (old != mCachedData.end()) delete old->second;
+        mCachedData[path] = bytes;
+    }
+    delete tag;
 }
 
 CompoundTag* DirectoryLevelStorage::loadPlayerDataTag(PlayerUID uid)
@@ -68,7 +89,13 @@ CompoundTag* DirectoryLevelStorage::load(boost::shared_ptr<Player> player)
 {
     if (!player)
         return 0;
-    return 0;
+    CompoundTag* tag = loadPlayerDataTag(player->m_0x784);
+    if (tag != 0) {
+        if (mFixer)
+            tag = mFixer->updateData(static_cast<DataFixTypes::EDataFixTypes>(1), tag);
+        player->load(tag);
+    }
+    return tag;
 }
 
 void DirectoryLevelStorage::deleteMapFilesForPlayer(PlayerUID uid)
@@ -78,6 +105,27 @@ void DirectoryLevelStorage::deleteMapFilesForPlayer(PlayerUID uid)
 
 void DirectoryLevelStorage::clearOldPlayerFiles()
 {
+    if (!mSaveFile)
+        return;
+    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(mPlayersPrefix);
+    std::sort(files->begin(), files->end(), FileEntry::newestFirst);
+    for (size_t i = 80; i < files->size(); ++i)
+    {
+        FileEntry* entry = files->at(i);
+        if (entry == 0)
+            continue;
+        std::wstring id = entry->m_fileName;
+        const std::wstring prefix = mPlayersPrefix;
+        if (id.compare(0, prefix.size(), prefix) == 0)
+            id.erase(0, prefix.size());
+        const std::wstring suffix = L".dat";
+        if (id.size() >= suffix.size() && id.compare(id.size() - suffix.size(), suffix.size(), suffix) == 0)
+            id.erase(id.size() - suffix.size());
+        PlayerUID uid(id);
+        deleteMapFilesForPlayer(uid);
+        mSaveFile->deleteFile(entry);
+    }
+    delete files;
 }
 
 void DirectoryLevelStorage::saveMapIdLookup()

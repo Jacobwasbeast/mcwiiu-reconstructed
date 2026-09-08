@@ -1,7 +1,12 @@
 #include "game/data/SparseDataStorage.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/XLockFreeStack.hpp"
 #include <string.h>
+#include <vector>
+
+static int sPendingDeleteList;
+static XLockFreeStack<unsigned char> sPendingDeleteLists[3];
 
 void SparseDataStorage::Array256_1Bit::init()
 {
@@ -163,7 +168,8 @@ unsigned int SparseDataStorage::getPlaneOffsetsDataSize()
 }
 void SparseDataStorage::queueForDelete(unsigned char* data, int)
 {
-    delete[] data;
+    if (data != NULL)
+        sPendingDeleteLists[sPendingDeleteList].Push(data);
 }
 void SparseDataStorage::updateDataAndCount(PlaneOffsets* p, int size)
 {
@@ -187,9 +193,97 @@ unsigned int SparseDataStorage::tryUpdateDataAndCount(PlaneOffsets* p, int size)
 }
 void SparseDataStorage::staticCtor() {}
 unsigned int SparseDataStorage::compress() { return getPlaneOffsetsDataSize(); }
-void SparseDataStorage::tick() {}
-void SparseDataStorage::write(DataOutputStream*) {}
-void SparseDataStorage::read(DataInputStream*) {}
+void SparseDataStorage::tick()
+{
+    XLockFreeStack<unsigned char>& pending = sPendingDeleteLists[(sPendingDeleteList + 1) % 3];
+    unsigned char* data;
+    do
+    {
+        data = pending.Pop();
+        if (data != NULL)
+            freePlaneOffsets(reinterpret_cast<PlaneOffsets*>(data), 0);
+    }
+    while (data != NULL);
+    sPendingDeleteList = (sPendingDeleteList + 1) % 3;
+}
+void SparseDataStorage::write(DataOutputStream* stream)
+{
+    unsigned int nonEmpty = 0;
+    for (int plane = 0; plane < 128; ++plane)
+        if (planeOffsets->offsets[plane] != 0)
+            ++nonEmpty;
+
+    const unsigned int blockSize = 0x80;
+    const unsigned int totalSize = blockSize * (nonEmpty + 1);
+    std::vector<unsigned char> encoded(totalSize, 0);
+    unsigned int block = 0;
+    for (int plane = 0; plane < 128; ++plane)
+    {
+        if (planeOffsets->offsets[plane] == 0)
+        {
+            encoded[plane] = 0x80;
+            continue;
+        }
+        encoded[plane] = (unsigned char)block++;
+        unsigned char* destination = &encoded[blockSize * (encoded[plane] + 1)];
+        for (int group = 0; group < 16; ++group)
+        {
+            const int first = group * 16;
+            for (int pair = 0; pair < 8; ++pair)
+            {
+                unsigned int low = planeOffsets->getData(plane, first + pair * 2) & 15;
+                unsigned int high = planeOffsets->getData(plane, first + pair * 2 + 1) & 15;
+                destination[group * 8 + pair] = (unsigned char)(low | (high << 4));
+            }
+        }
+    }
+    stream->writeInt((int)nonEmpty);
+    arrayWithLength<unsigned char> output(totalSize, false);
+    memcpy(output.data, &encoded[0], totalSize);
+    stream->write(output);
+}
+void SparseDataStorage::read(DataInputStream* stream)
+{
+    const unsigned int nonEmpty = (unsigned int)stream->readInt();
+    const unsigned int inputSize = 0x80 * (nonEmpty + 1);
+    std::vector<unsigned char> encoded(inputSize);
+    arrayWithLength<unsigned char> input(inputSize, false);
+    stream->readFully(input);
+    memcpy(&encoded[0], input.data, inputSize);
+
+    const unsigned int requiredSize = nonEmpty * 0x80 + 0x100;
+    PlaneOffsets* destination = planeOffsets;
+    bool replaced = false;
+    if (getPlaneOffsetsDataSize() != requiredSize)
+    {
+        destination = allocatePlaneOffsets(requiredSize);
+        memset(destination, 0, requiredSize);
+        replaced = true;
+    }
+    unsigned int payload = 0x100;
+    for (int plane = 0; plane < 128; ++plane)
+    {
+        const unsigned char directory = encoded[plane];
+        if (directory == 0x80)
+        {
+            destination->offsets[plane] = 0;
+            continue;
+        }
+        destination->offsets[plane] = (unsigned short)(0xc000 | ((payload >> 2) & 0x3fff));
+        const unsigned char* source = &encoded[0x80 + directory * 0x80];
+        for (int group = 0; group < 16; ++group)
+            for (int pair = 0; pair < 8; ++pair)
+            {
+                unsigned char packed = source[group * 8 + pair];
+                destination->setData(plane, group * 16 + pair * 2, packed & 15);
+                destination->setData(plane, group * 16 + pair * 2 + 1, packed >> 4);
+            }
+        payload += 0x80;
+    }
+    if (replaced)
+        updateDataAndCount(destination, (int)requiredSize);
+    compress();
+}
 bool SparseDataStorage::isSameAs(SparseDataStorage* other)
 {
     return other && dataAndCount == other->dataAndCount &&

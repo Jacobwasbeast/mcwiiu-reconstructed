@@ -17,6 +17,16 @@
 template <class T>
 void deleteElements(const std::vector<T*, std::allocator<T*> >& elements);
 
+template <class T>
+void deleteElements(const std::vector<T*, std::allocator<T*> >& elements)
+{
+    for (typename std::vector<T*, std::allocator<T*> >::const_iterator it = elements.begin();
+         it != elements.end(); ++it)
+    {
+        delete *it;
+    }
+}
+
 ListTag::ListTag(int type)
     : mList(), mType(type)
 {

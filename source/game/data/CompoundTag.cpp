@@ -26,6 +26,19 @@ std::wstring formatwstr(const wchar_t* format, ...);
 template <class K, class T>
 void deleteElements(const boost::unordered_map<K, T*>& elements);
 
+template <class K, class T>
+void deleteElements(const boost::unordered_map<K, T*>& elements)
+{
+    for (typename boost::unordered_map<K, T*>::const_iterator it = elements.begin();
+         it != elements.end(); ++it)
+    {
+        if (it->first != L"Passengers")
+        {
+            delete it->second;
+        }
+    }
+}
+
 typedef boost::unordered_map<std::wstring, Tag*> TagMap;
 
 static CompoundTag sEmptyCompoundTag;
