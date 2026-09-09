@@ -9,12 +9,16 @@ namespace nn { namespace pia { namespace common { class Job; }}}
 
 namespace nn { namespace pia { namespace session {
 
+class IMatchmakeSession;
+class JointSessionJob;
 class MeshLayerController;
 class SessionStatusCheckJob;
 
 class Session
 {
 public:
+    typedef unsigned int ProcessType;
+
     class StartupSetting
     {
     public:
@@ -28,23 +32,41 @@ public:
         const transport::Station::IdentificationToken* m_identificationToken;
     };
 
+    typedef bool (*JoiningApprovalCallback)(
+        const transport::Station::IdentificationToken* identificationToken);
+
     Result Startup(const StartupSetting& setting);
     void SetSyncClockPulseInterval(int interval);
+    bool IsHost() const;
+    bool IsJointSessionHost() const;
+    transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
+    static bool SessionJoiningApprovalCallback(
+        const transport::Station::IdentificationToken* identificationToken);
 
     MeshLayerController* m_meshLayerController;
     SessionStatusCheckJob* m_sessionStatusCheckJob;
-    common::Job* m_jointSessionJob;
+    JointSessionJob* m_jointSessionJob;
+    JoiningApprovalCallback m_joiningApprovalCallback;
     unsigned int m_startupState;
+    unsigned int m_matchmakeStatus;
     unsigned int m_disconnectStatus;
+    unsigned long long m_localStationId;
+    unsigned long long m_hostStationId;
+    unsigned long long m_jointSessionHostStationId;
     unsigned int m_sessionDisconnectReason;
+    unsigned char m_currentSessionIndex;
+    IMatchmakeSession* m_matchmakeSession[2];
+    unsigned int m_sessionId[2];
     common::ListBase m_validStationIdList;
     common::ListBase m_validStationIdFreeList;
     int m_stationIdNodeOffset;
+    transport::Station::IdentificationToken m_matchmakeAnalysisToken;
     unsigned short m_playerNum;
     unsigned short m_participantNum;
 };
 
 extern Session* g_piaSession;
+extern unsigned char g_piaMatchmakeAnalysisEnabled;
 
 }}}
 

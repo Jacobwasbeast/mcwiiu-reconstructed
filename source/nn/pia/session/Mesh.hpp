@@ -5,6 +5,8 @@
 
 namespace nn { namespace pia { namespace session {
 
+class KickoutManageJob;
+
 class Mesh
 {
 public:
@@ -18,7 +20,13 @@ public:
                                   unsigned char count) const;
     void SetSyncClockPulseInterval(int interval);
     void SetSkipCleanupReport(bool skip);
+    Result CheckConnectionError() const;
+    unsigned int GetDisconnectReason() const;
+    KickoutManageJob* GetKickoutManageJobPtr();
 
+    KickoutManageJob* m_kickoutManageJob;
+    unsigned int m_meshState;
+    unsigned int m_disconnectReason;
     unsigned int m_hostMigrationMode;
     unsigned char m_recentPlayRecordEnabled;
     transport::ProtocolId m_syncClockProtocolId;

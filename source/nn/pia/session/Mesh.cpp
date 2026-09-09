@@ -1,6 +1,7 @@
 #include "nn/pia/session/Mesh.hpp"
 
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/session/KickoutManageJob.hpp"
 #include "nn/pia/session/SyncClockProtocol.hpp"
 
 namespace nn { namespace pia { namespace session {
@@ -15,6 +16,31 @@ unsigned int Mesh::GetHostMigrationMode() const
 bool Mesh::IsRecentPlayRecordEnabled() const
 {
     return m_recentPlayRecordEnabled != 0;
+}
+
+Result Mesh::CheckConnectionError() const
+{
+    if (m_meshState == 1)
+        return 0;
+    return static_cast<Result>(0x6c50);
+}
+
+unsigned int Mesh::GetDisconnectReason() const
+{
+    if (m_meshState == 1)
+        return 0;
+    if (m_disconnectReason == 1)
+        return 1;
+    if (m_kickoutManageJob->m_kickoutReason == 0)
+        return m_disconnectReason;
+    if (m_kickoutManageJob->m_kickoutReason != 2)
+        return 5;
+    return 4;
+}
+
+KickoutManageJob* Mesh::GetKickoutManageJobPtr()
+{
+    return m_kickoutManageJob;
 }
 
 void Mesh::SetSyncClockPulseInterval(int interval)
