@@ -10,17 +10,17 @@
 MinecartSoundInstance::MinecartSoundInstance(boost::shared_ptr<Minecart> minecart)
     : AbstractTickableSoundInstance(SoundEvents::MINECART_RIDING, SoundSource::eSoundSource_Neutral)
     , minecart(minecart)
-    , volumeAdjustment(0.0f)
+    , distance(0.0f)
 {
     this->looping = true;
-    this->volume = 0.0f;
+    this->delay = 0;
     this->tick();
 }
 
 MinecartSoundInstance::MinecartSoundInstance(const MinecartSoundInstance& other)
     : AbstractTickableSoundInstance(other)
     , minecart(other.minecart)
-    , volumeAdjustment(other.volumeAdjustment)
+    , distance(other.distance)
 {
 }
 
@@ -37,11 +37,9 @@ SoundInstance* MinecartSoundInstance::getDRCClone() const
 
 void MinecartSoundInstance::tick()
 {
-    const float baseVolume = 0.0f;
-
     if (GameSettings::GetGameSettings((eGameSetting)0x23) == 0)
     {
-        this->volume = baseVolume;
+        this->volume = 0.0f;
         return;
     }
 
@@ -59,12 +57,12 @@ void MinecartSoundInstance::tick()
                                    this->minecart->mZd * this->minecart->mZd);
     if (speed >= 0.01)
     {
-        this->volumeAdjustment = Mth::clamp(this->volumeAdjustment + 0.0025f, 0.0f, 1.0f);
+        this->distance = Mth::clamp(this->distance + 0.0025f, 0.0f, 1.0f);
         this->volume = static_cast<float>(Mth::clamp(speed, 0.0, 1.75) * 0.7);
     }
     else
     {
-        this->volumeAdjustment = 0.0f;
-        this->volume = baseVolume;
+        this->distance = 0.0f;
+        this->volume = 0.0f;
     }
 }

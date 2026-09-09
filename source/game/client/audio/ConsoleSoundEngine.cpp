@@ -2,10 +2,7 @@
 
 #include <algorithm>
 
-struct MilesMutex
-{
-    unsigned int uiData[4];
-};
+struct MilesMutex;
 
 struct MilesDriver
 {

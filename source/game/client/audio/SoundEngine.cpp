@@ -1,4 +1,5 @@
 #include "game/client/audio/SoundEngine.hpp"
+#include "game/client/audio/SoundEvent.hpp"
 #include <algorithm>
 #include <cstring>
 #include "game/client/audio/SoundEvent.hpp"
@@ -118,9 +119,12 @@ unsigned int SoundEngine::OpenStreamThreadProc(void* value)
     return value == 0 ? static_cast<unsigned int>(-1) : 0U;
 }
 
-double SoundEngine::getDistanceScaler(AudioInfo*)
+double SoundEngine::getDistanceScaler(AudioInfo* info)
 {
-    return 1.0;
+    double scalar = info->soundEvent->getDistanceScalar();
+    if (info->distance == 10000.0f)
+        scalar = 10000.0;
+    return scalar;
 }
 
 void SoundEngine::UpdateSound(void*, void*, bool* active, int, float*, float*, float*, float*)

@@ -4,7 +4,7 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecart.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/Player.hpp"
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Player> player,
                                                          boost::shared_ptr<Minecart> minecart)
@@ -12,7 +12,9 @@ RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Playe
     , player(player)
     , minecart(minecart)
 {
+    this->attenuation = SoundInstance::DEFAULT_ATTENUATION;
     this->looping = true;
+    this->delay = 0;
 }
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(const RidingMinecartSoundInstance& other)
@@ -35,25 +37,21 @@ SoundInstance* RidingMinecartSoundInstance::getDRCClone() const
 
 void RidingMinecartSoundInstance::tick()
 {
-    const float baseVolume = 0.0f;
-
     if (GameSettings::GetGameSettings((eGameSetting)0x23) != 0)
     {
-        Entity* ridingPlayer = (Entity*)this->player.get();
         if (!this->minecart->mRemoved
-            && ridingPlayer->isPassenger()
-            && ridingPlayer->getVehicle().get() == this->minecart.get())
+            && this->player->isPassenger()
+            && this->player->getVehicle().get() == this->minecart.get())
         {
             this->x = static_cast<float>(this->minecart->mX);
             this->y = static_cast<float>(this->minecart->mY);
             this->z = static_cast<float>(this->minecart->mZ);
 
-            const double speed = Mth::sqrt(this->minecart->mXd * this->minecart->mXd
-                                           + this->minecart->mZd * this->minecart->mZd);
+            const float speed = Mth::sqrt(this->minecart->mXd * this->minecart->mXd
+                                          + this->minecart->mZd * this->minecart->mZd);
             if (speed >= 0.01)
             {
-                const float clampedSpeed = Mth::clamp(static_cast<float>(speed), 0.0f, 1.0f);
-                this->volume = static_cast<float>(clampedSpeed * 0.75f);
+                this->volume = Mth::clamp(speed, 0.0f, 1.0f) * 0.75f;
                 return;
             }
         }
@@ -64,5 +62,5 @@ void RidingMinecartSoundInstance::tick()
         }
     }
 
-    this->volume = baseVolume;
+    this->volume = 0.0f;
 }

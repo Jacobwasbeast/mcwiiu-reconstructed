@@ -19,7 +19,7 @@ public:
 
 private:
     boost::shared_ptr<Minecart> minecart;
-    float volumeAdjustment;
+    float distance;
 };
 
 #endif

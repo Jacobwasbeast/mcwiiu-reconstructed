@@ -84,10 +84,7 @@ static char szSoundPath[] = "WiiU/Sound/";
 extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
 extern "C" void MEMFreeToDefaultHeap(void* pBlock);
 
-struct MilesMutex
-{
-    unsigned int uiData[4];
-};
+struct MilesMutex;
 
 struct MilesDriver
 {

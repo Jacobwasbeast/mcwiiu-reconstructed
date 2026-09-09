@@ -24,15 +24,14 @@ BlockEntity* MusicBlockEntity::create()
 
 void MusicBlockEntity::playNote(Level* level, BlockPos pos)
 {
-    if (level->getBlockState(pos.above())->getMaterial() != Material::AIR)
+    if (level->getBlockState(pos.above())->getBlock()->mMaterial != Material::AIR)
     {
         return;
     }
 
     const BlockState* state = level->getBlockState(pos.below());
-    Block* block = state->getBlock();
-    int instrument = 0;
     Material* material = state->getMaterial();
+    int instrument = 0;
 
     if (material == Material::STONE)
     {
@@ -50,23 +49,26 @@ void MusicBlockEntity::playNote(Level* level, BlockPos pos)
     {
         instrument = 4;
     }
-    else if (block == Blocks::iron_block)
+
+    Block* block = state->getBlock();
+
+    if (block == Blocks::clay)
     {
         instrument = 5;
     }
-    else if (block == Blocks::wool)
+    else if (block == Blocks::gold_block)
     {
         instrument = 6;
     }
-    else if (block == Blocks::gold_block)
+    else if (block == Blocks::wool)
     {
         instrument = 7;
     }
-    else if (block == Blocks::clay)
+    else if (block == Blocks::packed_ice)
     {
         instrument = 8;
     }
-    else if (block == Blocks::packed_ice)
+    else if (block == Blocks::bone_block)
     {
         instrument = 9;
     }
@@ -77,13 +79,15 @@ void MusicBlockEntity::playNote(Level* level, BlockPos pos)
 void MusicBlockEntity::tune()
 {
     mNote = (unsigned char)((mNote + 1) % 25);
+    setChanged();
 }
 
-void MusicBlockEntity::save(CompoundTag* tag)
+CompoundTag* MusicBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putByte(L"note", mNote);
     tag->putBoolean(L"powered", mPowered);
+    return tag;
 }
 
 void MusicBlockEntity::load(CompoundTag* tag)
@@ -99,11 +103,10 @@ boost::shared_ptr<BlockEntity> MusicBlockEntity::clone()
     BlockEntity::clone(result);
     MusicBlockEntity* copy = static_cast<MusicBlockEntity*>(result.get());
     copy->mNote = mNote;
-    copy->mPowered = mPowered;
     return result;
 }
 
 unsigned long long MusicBlockEntity::GetType()
 {
-    return 0x0100020300000000ULL;
+    return 0x0000000001000203ULL;
 }

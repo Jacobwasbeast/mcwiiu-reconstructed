@@ -19,7 +19,7 @@ public:
 
 private:
     boost::shared_ptr<LocalPlayer> player;
-    int ticks;
+    unsigned int ticks;
 };
 
 #endif

@@ -1,10 +1,13 @@
 #include "game/client/audio/ElytraOnPlayerSoundInstance.hpp"
 
-#include <cmath>
-
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/core/GameModeOptions.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/LivingEntity.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Player> player)
     : AbstractTickableSoundInstance(SoundEvents::ELYTRA_FLYING, SoundSource::eSoundSource_Players)
@@ -15,6 +18,7 @@ ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Playe
 {
     this->volume = 1.0f;
     this->looping = true;
+    this->delay = 0;
 }
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(const ElytraOnPlayerSoundInstance& other)
@@ -39,45 +43,73 @@ SoundInstance* ElytraOnPlayerSoundInstance::getDRCClone() const
 
 void ElytraOnPlayerSoundInstance::tick()
 {
-    LivingEntity* entity = (LivingEntity*)this->player.get();
     ++this->ticks;
 
-    if (entity->mRemoved)
+    if (this->player->mRemoved)
     {
         this->stopped = true;
         return;
     }
 
-    if (this->ticks > 20 && !entity->isFallFlying())
+    if (this->ticks > 20 && !this->player->isFallFlying())
     {
         this->stopped = true;
         return;
     }
 
-    this->x = static_cast<float>(entity->mX);
-    this->y = static_cast<float>(entity->mY);
-    this->z = static_cast<float>(entity->mZ);
+    this->x = static_cast<float>(this->player->mX);
+    this->y = static_cast<float>(this->player->mY);
+    this->z = static_cast<float>(this->player->mZ);
 
-    float speed = static_cast<float>(Mth::sqrt(entity->mXd * entity->mXd +
-                                               entity->mYd * entity->mYd +
-                                               entity->mZd * entity->mZd));
-    speed *= 0.5f;
-
-    if (entity->getElytraProximityWarning())
+    float speed = 0.0f;
+    if (!this->player->PositionLocked())
     {
+        speed = Mth::sqrt(this->player->mXd * this->player->mXd +
+                          this->player->mYd * this->player->mYd +
+                          this->player->mZd * this->player->mZd);
+    }
+
+    float scaledSpeed = static_cast<float>(speed * 0.5);
+
+    if (this->player->getElytraProximityWarning())
         this->warning = true;
-        speed *= static_cast<float>(this->warningSoundDelay) / 10.0f + 0.8f;
+
+    if (this->warning)
+    {
+        float warningScale = static_cast<float>(this->warningSoundDelay / 10.0) + 1.0f;
+        scaledSpeed = scaledSpeed * warningScale;
         this->warningSoundDelay = this->warningSoundDelay < 10 ? this->warningSoundDelay + 1 : 10;
+        if (!this->player->getElytraProximityWarning() && warningScale == 2.0f)
+            this->warning = false;
     }
     else if (this->warningSoundDelay > 0)
     {
-        speed *= static_cast<float>(this->warningSoundDelay) / 10.0f + 0.8f;
+        scaledSpeed = scaledSpeed * (static_cast<float>(this->warningSoundDelay / 10.0) + 1.0f);
         --this->warningSoundDelay;
     }
 
-    if (speed > 0.01f)
-        this->volume = Mth::clamp(speed * speed, 0.5f, 1.03499997f);
+    if (speed >= 0.01)
+        this->volume = Mth::clamp(scaledSpeed * scaledSpeed, 0.0f, 0.8f);
     else
-        this->volume = 0.5f;
-    this->pitch = 0.8f;
+        this->volume = 0.0f;
+
+    if (this->ticks < 20)
+        this->volume = 0.0f;
+    else if (this->ticks < 40)
+        this->volume = this->volume * static_cast<float>((this->ticks - 20) / 20.0);
+
+    if (this->volume > 0.8f)
+        this->pitch = 1.0f + (this->volume - 0.8f);
+    else
+        this->pitch = 1.0f;
+
+    if (this->player->GetType() == ENTITY_TYPE_LOCAL_PLAYER)
+    {
+        boost::shared_ptr<LocalPlayer> localPlayer = boost::static_pointer_cast<LocalPlayer>(this->player);
+        if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        {
+            if (gConsoleUIController.IsSceneInStack(localPlayer->mUserIndex, static_cast<EUIScene>(5)))
+                this->volume = 0.0f;
+        }
+    }
 }

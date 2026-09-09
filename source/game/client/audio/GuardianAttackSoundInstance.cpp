@@ -3,11 +3,15 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/Guardian.hpp"
 
+static const float ATTACK_VOLUME_SCALE = 1.0f;
+
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(boost::shared_ptr<Guardian> guardian)
     : AbstractTickableSoundInstance(SoundEvents::GUARDIAN_ATTACK, SoundSource::eSoundSource_Hostile)
     , guardian(guardian)
 {
+    this->attenuation = SoundInstance::DEFAULT_ATTENUATION;
     this->looping = true;
+    this->delay = 0;
 }
 
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(const GuardianAttackSoundInstance& other)
@@ -39,7 +43,7 @@ void GuardianAttackSoundInstance::tick()
     this->y = static_cast<float>(this->guardian->mY);
     this->z = static_cast<float>(this->guardian->mZ);
 
-    const float attackAnimationScale = this->guardian->getAttackAnimationScale(0.5f);
-    this->volume = 0.0f * attackAnimationScale * attackAnimationScale;
-    this->pitch = 0.7f * attackAnimationScale + 0.5f;
+    const float attackAnimationScale = this->guardian->getAttackAnimationScale(0.0f);
+    this->volume = ATTACK_VOLUME_SCALE * attackAnimationScale * attackAnimationScale;
+    this->pitch = 0.7f + 0.5f * attackAnimationScale;
 }

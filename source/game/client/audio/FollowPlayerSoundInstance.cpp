@@ -9,6 +9,7 @@ FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> p
     this->volume = volume;
     this->pitch = pitch;
     this->looping = looping;
+    this->delay = 0;
 }
 
 FollowPlayerSoundInstance::FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other)

@@ -3,7 +3,8 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/client/audio/ConsoleSoundEngine.hpp"
-class File; class Options; class Random; class SoundEvent; class SoundInstance; class MultiplayerLocalPlayer; class AudioInfo;
+class File; class Options; class Random; class SoundEvent; class SoundInstance; class MultiplayerLocalPlayer;
+struct AudioInfo { float distance; SoundEvent* soundEvent; };
 class SoundEngine : public ConsoleSoundEngine {
 public:
  enum eMusicType { eMusicType_Overworld, eMusicType_Nether, eMusicType_End, eMusicType_Menu };

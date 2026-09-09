@@ -1,6 +1,6 @@
 #include "game/client/audio/GlideProximityWarningSoundInstance.hpp"
 
-#include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
 
 GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(boost::shared_ptr<LocalPlayer> player,
                                                                        const SoundEvent* sound)
@@ -10,6 +10,7 @@ GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(boost::sh
 {
     this->volume = 1.0f;
     this->looping = true;
+    this->delay = 0;
 }
 
 GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(
@@ -33,27 +34,24 @@ SoundInstance* GlideProximityWarningSoundInstance::getDRCClone() const
 
 void GlideProximityWarningSoundInstance::tick()
 {
-    LivingEntity* livingEntity = (LivingEntity*)this->player.get();
     ++this->ticks;
 
-    if (livingEntity->mRemoved)
+    if (this->player->mRemoved)
     {
         this->stopped = true;
         return;
     }
 
-    if (this->ticks > 20 && !livingEntity->isFallFlying())
+    if (this->ticks > 20 && !this->player->isFallFlying())
     {
         this->stopped = true;
         return;
     }
 
-    this->x = static_cast<float>(livingEntity->mX);
-    this->y = static_cast<float>(livingEntity->mY);
-    this->z = static_cast<float>(livingEntity->mZ);
+    this->x = static_cast<float>(this->player->mX);
+    this->y = static_cast<float>(this->player->mY);
+    this->z = static_cast<float>(this->player->mZ);
 
-    if (livingEntity->getElytraProximityWarning() && livingEntity->getElytraCollisionDistance() < 2.0)
-    {
+    if (this->player->getElytraProximityWarning() && this->player->getElytraCollisionDistance() < 2.0)
         this->volume = 0.8f;
-    }
 }

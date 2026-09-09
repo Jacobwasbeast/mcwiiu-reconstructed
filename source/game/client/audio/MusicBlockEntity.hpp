@@ -18,7 +18,7 @@ public:
     static BlockEntity* create();
     void playNote(Level* level, BlockPos pos);
     void tune();
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();
