@@ -154,7 +154,7 @@ public:
     void eatCarrot();
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual unsigned long long GetType();
-    virtual bool wantsMoreFood();
+    bool wantsMoreFood();
 
 private:
     int mJumpTicks;

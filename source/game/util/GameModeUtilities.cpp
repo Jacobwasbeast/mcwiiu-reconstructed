@@ -4,12 +4,15 @@
 #include <cmath>
 
 #include "game/core/Mth.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/AddItemRuleDefinition.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
@@ -17,8 +20,10 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
+#include "game/world/generation/TumbleGenerator.hpp"
 
 namespace
 {
@@ -89,9 +94,9 @@ void GameModeUtilities::Position::set(double xValue, double zValue)
     z = zValue;
 }
 
-void GameModeUtilities::Position::dist(Position* other)
+double GameModeUtilities::Position::dist(Position* other)
 {
-    std::sqrt((x - other->x) * (x - other->x) + (z - other->z) * (z - other->z));
+    return std::sqrt((x - other->x) * (x - other->x) + (z - other->z) * (z - other->z));
 }
 
 int GameModeUtilities::Position::getSpawnY(Level* level)
@@ -283,7 +288,10 @@ bool GameModeUtilities::spreadPositions(double distance, Level* level, Random* r
     {
         Position* position = positions->at(i);
         position->randomize(random, area->mMinX, area->mMinZ, area->mMaxX, area->mMaxZ);
-        if (level != NULL && !position->isSafe(level)) return false;
+        if (level != NULL &&
+            !position->isSafeInRange(level, static_cast<int>(std::floor(area->mMinY)),
+                                     static_cast<int>(std::ceil(area->mMaxY))))
+            return false;
         for (unsigned int j = 0; j < i; ++j)
             if (position->x - positions->at(j)->x < distance && position->z - positions->at(j)->z < distance) return false;
     }
@@ -291,19 +299,64 @@ bool GameModeUtilities::spreadPositions(double distance, Level* level, Random* r
 }
 
 double GameModeUtilities::setPlayerPositions(std::vector<boost::shared_ptr<ServerPlayer> >* players, Level* level,
-                                              std::vector<Position*>* positions, bool, TumbleGenerator*)
+                                              std::vector<Position*>* positions, bool, TumbleGenerator* generator)
 {
-    if (players == NULL || positions == NULL || level == NULL) return 0.0;
-    double minimum = 1.7976931348623157e+308;
-    for (unsigned int i = 0; i < players->size() && i < positions->size(); ++i)
+    double totalDistance = 0.0;
+    unsigned int playerIndex = 0;
+    unsigned int positionIndex = 0;
+    while (playerIndex < players->size())
     {
-        if (positions->at(i)->isSafe(level))
+        boost::shared_ptr<ServerPlayer> player = players->at(playerIndex);
+        Position* position = positions->at(positionIndex++);
+        double spawnY;
+        bool foundSpawnY = false;
+        if (generator == NULL || level->mIsClientSide)
         {
-            double distance = positions->at(i)->x * positions->at(i)->x + positions->at(i)->z * positions->at(i)->z;
-            if (distance < minimum) minimum = distance;
+            spawnY = (double)position->getSpawnY(level);
         }
+        else
+        {
+            int layer = gMinecraftServer->mMasterGameMode->GetSpawnLayerIndex();
+            AABB* spawnArea = generator->GetSpawnArea((unsigned int)layer);
+            spawnY = spawnArea->mMinY;
+            for (double y = spawnY; y <= spawnArea->mMaxY; y += 1.0)
+            {
+                const BlockState* state = level->getBlockState(BlockPos(position->x, y, position->z));
+                if (state->getMaterial()->isSolid())
+                {
+                    foundSpawnY = true;
+                    spawnY = y + 1.0;
+                }
+            }
+            if (!foundSpawnY)
+            {
+                position->randomize(level->mRandom, position->x - 16.0, position->z - 16.0,
+                                    position->x + 16.0, position->z + 16.0);
+                BlockPos below(BlockPos(position->x, spawnY, position->z).below());
+                level->setBlock(below, Blocks::sponge->defaultBlockState(), 3, false);
+                generator->AddAdditionalBlock(below);
+            }
+        }
+        int x = (int)position->x;
+        if (position->x < (double)x) --x;
+        int z = (int)position->z;
+        if (position->z < (double)z) --z;
+        player->teleportTo((double)((float)x + 0.5f), spawnY, (double)z + 0.5,
+                           0.0f, (float)position->y);
+        double nearest = 1.7976931348623157e+308;
+        for (unsigned int otherIndex = 0; otherIndex < positions->size(); ++otherIndex)
+        {
+            Position* other = positions->at(otherIndex);
+            if (position != other)
+            {
+                double distance = position->dist(other);
+                if (distance < nearest) nearest = distance;
+            }
+        }
+        totalDistance += nearest;
+        ++playerIndex;
     }
-    return minimum;
+    return totalDistance / (double)playerIndex;
 }
 
 void GameModeUtilities::SpreadPlayers(std::vector<boost::shared_ptr<ServerPlayer> >* players, const AABB* area,

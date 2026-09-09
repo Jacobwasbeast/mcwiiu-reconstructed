@@ -3,8 +3,15 @@
 #include <cmath>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/BreedGoal.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/TemptGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Item.hpp"
@@ -14,6 +21,9 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
 
 Rabbit::EvilRabbitAttackGoal::EvilRabbitAttackGoal(Rabbit* rabbit)
     : MeleeAttackGoal(rabbit, 1.4, true)
@@ -186,6 +196,10 @@ void Rabbit::create(Level* level)
 
 void Rabbit::staticCtor()
 {
+    static const EntityDataAccessor<int>* rabbitType = NULL;
+    rabbitType = SynchedEntityData::defineId<int>(0x2d680005ULL, 0x0d680000ULL,
+                                                   EntityDataSerializers::INT);
+    (void)rabbitType;
 }
 
 void Rabbit::setSpeedModifier(double speedModifier)
@@ -196,7 +210,17 @@ void Rabbit::setSpeedModifier(double speedModifier)
 
 void Rabbit::registerGoals()
 {
-    Mob::registerGoals();
+    mGoalSelector.addGoal(1, new FloatGoal(this), true);
+    mGoalSelector.addGoal(1, new RabbitPanicGoal(this, 1.2), true);
+    mGoalSelector.addGoal(2, new BreedGoal(this, 0.8), true);
+
+    arrayWithLength<Item*> carrotItems(1, false);
+    carrotItems.data[0] = Items::carrot;
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.0, carrotItems, false,
+                                            arrayWithLength<int>()), true);
+    mGoalSelector.addGoal(5, new RaidGardenGoal(this), true);
+    mGoalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6), true);
+    mGoalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
 }
 
 float Rabbit::getJumpPower()
@@ -361,7 +385,7 @@ bool Rabbit::hurt(const DamageSource* source, float damage)
 
 const void* Rabbit::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::RABBIT;
 }
 
 bool Rabbit::isTemptingItem(Item* item)

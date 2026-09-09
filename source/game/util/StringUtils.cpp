@@ -148,3 +148,5 @@ double atof_with_len__FPCcPi(const char* text, int* length)
     }
     return static_cast<double>(static_cast<float>(value));
 }
+
+template std::wstring toString<int>(int value);

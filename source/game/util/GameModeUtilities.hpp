@@ -33,7 +33,7 @@ public:
         bool isSafeInRange(Level* level, int minY, int maxY);
         void randomize(Random* random, std::vector<long long>* positions);
         void set(double x, double z);
-        void dist(Position* other);
+        double dist(Position* other);
         int getSpawnY(Level* level);
         double getLength();
         void normalize();
