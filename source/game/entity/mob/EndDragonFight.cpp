@@ -161,7 +161,7 @@ void EndDragonFight::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal,
 
 bool EndDragonFight::findExitPortal()
 {
-    return exitPortalFound;
+    return false;
 }
 
 void EndDragonFight::fjFindCrystals(std::vector<boost::shared_ptr<EnderCrystal> >& result, const BlockPos& pos)

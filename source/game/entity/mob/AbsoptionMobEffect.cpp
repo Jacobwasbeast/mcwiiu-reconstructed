@@ -15,13 +15,13 @@ AbsoptionMobEffect::~AbsoptionMobEffect()
 void AbsoptionMobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                                   BaseAttributeMap* attributes, int amplifier)
 {
-    entity->setAbsorptionAmount(entity->getAbsorptionAmount() - 4.0f * (amplifier + 1));
+    entity->setAbsorptionAmount(entity->getAbsorptionAmount() - (float)(4 * (amplifier + 1)));
     MobEffect::removeAttributeModifiers(entity, attributes, amplifier);
 }
 
 void AbsoptionMobEffect::addAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                                BaseAttributeMap* attributes, int amplifier)
 {
-    entity->setAbsorptionAmount(entity->getAbsorptionAmount() + 4.0f * (amplifier + 1));
+    entity->setAbsorptionAmount(entity->getAbsorptionAmount() + (float)(4 * (amplifier + 1)));
     MobEffect::addAttributeModifiers(entity, attributes, amplifier);
 }

@@ -53,7 +53,8 @@ int EntityHealthFix::getVersion()
 
 CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
 {
-    for (unsigned int i = 0; i < sEntityIDs[0].size(); ++i)
+    const unsigned int entityCount = sizeof(sEntityIDs) / sizeof(sEntityIDs[0]);
+    for (unsigned int i = 0; i < entityCount; ++i)
     {
         if (CheckID(tag, sEntityIDs[i]))
         {

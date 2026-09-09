@@ -1,14 +1,23 @@
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 #include <typeinfo>
 #include <vector>
+
+const EntityDataAccessor<not_null_ptr<ItemInstance> >* ItemEntity::DATA_ITEM = NULL;
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
     : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f), mItem()
@@ -27,16 +36,16 @@ ItemEntity::ItemEntity(Level* level)
     : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f), mItem()
 {
     _init();
-    setItem(not_null_ptr<ItemInstance>(new ItemInstance()));
+    setItem(ItemInstance::EMPTY);
 }
 
 ItemEntity::~ItemEntity()
 {
 }
 
-void ItemEntity::create(Level* level)
+ItemEntity* ItemEntity::create(Level* level)
 {
-    new ItemEntity(level);
+    return new ItemEntity(level);
 }
 
 void ItemEntity::_init()
@@ -45,22 +54,26 @@ void ItemEntity::_init()
     mAge = 0;
     mPickupDelay = 0;
     mHealth = 5;
-    mBobOffs = mRandom->nextFloat() * 6.2831855f;
-    setNoGravity(true);
+    double bob = Math::random() * 3.1415927410125732;
+    mBobOffs = (float)(bob + bob);
+    setSize(0.25f, 0.25f);
+    mCategories |= 0x400;
 }
 
-void ItemEntity::_init(Level* level, double x, double y, double z)
+void ItemEntity::_init(Level*, double x, double y, double z)
 {
+    _init();
     setPos(x, y, z);
-    mYRot = mRandom->nextFloat() * 360.0f;
-    mXd = mRandom->nextFloat() * 0.2 - 0.1;
-    mYd = 0.2;
-    mZd = mRandom->nextFloat() * 0.2 - 0.1;
-    mLevel = level;
+    mYRot = (float)(Math::random() * 360.0);
+    mXd = (double)(float)(Math::random() * 0.20000000298023224 - 0.10000000149011612);
+    mYd = 0.20000000298023224;
+    mZd = (double)(float)(Math::random() * 0.20000000298023224 - 0.10000000149011612);
 }
 
 void ItemEntity::setItem(not_null_ptr<ItemInstance> item)
 {
+    if (mEntityData != NULL && DATA_ITEM != NULL)
+        mEntityData->set(DATA_ITEM, item, true);
     mItem = item;
     mHealth = 5;
 }
@@ -77,6 +90,9 @@ void ItemEntity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 
 void ItemEntity::staticCtor()
 {
+    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
+        0x000000000800000AULL, 0x0000000008000000ULL,
+        EntityDataSerializers::ITEM_INSTANCE);
 }
 
 bool ItemEntity::makeStepSound()
@@ -87,10 +103,14 @@ bool ItemEntity::makeStepSound()
 void ItemEntity::defineSynchedData()
 {
     Entity::defineSynchedData();
+    if (mEntityData != NULL && DATA_ITEM != NULL)
+        mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 not_null_ptr<ItemInstance> ItemEntity::getItem()
 {
+    if (mEntityData != NULL && DATA_ITEM != NULL)
+        return mEntityData->get(DATA_ITEM);
     return mItem;
 }
 
@@ -124,6 +144,7 @@ void ItemEntity::mergeWithNeighbours()
         if (item)
             merge(item);
     }
+    delete entities;
 }
 
 void ItemEntity::tick()
@@ -212,10 +233,47 @@ void ItemEntity::readAdditionalSaveData(CompoundTag* tag)
 
 void ItemEntity::playerTouch(boost::shared_ptr<Player> player)
 {
-    (void)player;
-    if (mPickupDelay > 0)
+    if (mLevel->mIsClientSide)
         return;
-    remove();
+
+    not_null_ptr<ItemInstance> item = getItem();
+    if (item->isEmpty())
+    {
+        remove();
+        return;
+    }
+
+    Item* itemType = item->getItem();
+    int count = item->getCount();
+    if (mPickupDelay != 0)
+        return;
+
+    if (!mOwner.empty() && mAge < 5800 && player->getName() != mOwner)
+        return;
+
+    bool replacedExisting = false;
+    if (!player->AutoEquip(item, item, replacedExisting) && !player->mInventory->add(item))
+        return;
+
+    if (itemType == Items::diamond)
+    {
+        player->awardStat(GenericStats::diamonds(), GenericStats::param_diamonds());
+        if (!mThrower.empty())
+        {
+            boost::shared_ptr<Player> thrower = mLevel->getPlayerByName(mThrower);
+            if (thrower && thrower != player)
+                thrower->awardStat(GenericStats::diamondsToYou(), GenericStats::param_diamondsToYou());
+        }
+    }
+    if (itemType == Items::blazeRod)
+        player->awardStat(GenericStats::blazeRod(), GenericStats::param_blazeRod());
+
+    player->take(shared_from_this(), count);
+    if (item->isEmpty())
+    {
+        remove();
+        item->setCount(count);
+    }
 }
 
 std::wstring ItemEntity::getName()
@@ -279,5 +337,5 @@ void ItemEntity::makeFakeItem()
 
 unsigned long long ItemEntity::GetType()
 {
-    return 0x0800000a00000000ULL;
+    return 0x0800000aULL;
 }

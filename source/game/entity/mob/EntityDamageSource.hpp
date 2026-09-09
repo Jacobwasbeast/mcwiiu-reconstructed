@@ -20,7 +20,7 @@ public:
     virtual boost::shared_ptr<ClientboundChatPacket> getDeathMessagePacket(boost::shared_ptr<LivingEntity> entity) const;
     virtual bool scalesWithDifficulty() const;
     virtual Vec3* getSourcePosition() const;
-    virtual boost::shared_ptr<DamageSource> copy() const;
+    virtual DamageSource* copy() const;
     void setThorns();
 
 protected:

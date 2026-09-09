@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/MultiEntityMob.hpp"
 #include "game/core/BinaryHeap.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -25,7 +26,7 @@ class MultiEntityMobPart;
 class SoundEvent;
 class Vec3;
 
-class EnderDragon : public Mob
+class EnderDragon : public Mob, public MultiEntityMob
 {
 public:
     enum EEnderdragonAction
@@ -112,7 +113,7 @@ private:
     Random* mRandom;
     int mDragonPhase;
     int mTicksSinceDeath;
-    int mTarget;
+    boost::shared_ptr<Entity> mTarget;
     int mNearbyCrystal;
     bool mDragonKilled;
     bool mPreviouslyKilled;

@@ -1,4 +1,5 @@
 #include "game/entity/mob/WaterAnimal.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 
 #include <algorithm>
 
@@ -77,7 +78,7 @@ WaterBoundPathNavigation* WaterAnimal::createNavigation(Level* level)
 
 const SoundEvent* WaterAnimal::getFlopSound() const
 {
-    return NULL;
+    return SoundEvents::FISH_FLOP;
 }
 
 void WaterAnimal::aiStep()
@@ -107,7 +108,7 @@ void WaterAnimal::baseTick()
         if (getAirSupply() == -20)
         {
             setAirSupply(0);
-            hurt(NULL, 2.0f);
+            hurt(DamageSource::DROWN, 2.0f);
         }
     }
 }

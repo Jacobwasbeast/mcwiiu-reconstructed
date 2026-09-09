@@ -4,6 +4,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundType.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/Player.hpp"
@@ -126,7 +127,7 @@ double SkeletonHorse::getRideHeight()
 
 const void* SkeletonHorse::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::SKELETON_HORSE;
 }
 
 boost::shared_ptr<AgableMob> SkeletonHorse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
@@ -207,5 +208,5 @@ unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& ho
 
 unsigned long long SkeletonHorse::GetType()
 {
-    return 0x2D69000200000000ULL;
+    return 0x2D690002ULL;
 }

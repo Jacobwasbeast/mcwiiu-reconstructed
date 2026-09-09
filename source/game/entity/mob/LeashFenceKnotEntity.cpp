@@ -211,10 +211,10 @@ unsigned int LeashFenceKnotEntity::GetInteractTooltip(const EntityTooltipDataHol
 
 unsigned int LeashFenceKnotEntity::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return 0x551269b5u;
+    return 0x551269b5;
 }
 
 unsigned long long LeashFenceKnotEntity::GetType()
 {
-    return 0x0A08000300000000ULL;
+    return 0x000000000A080003ULL;
 }

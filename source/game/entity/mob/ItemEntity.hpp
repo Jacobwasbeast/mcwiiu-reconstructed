@@ -14,6 +14,8 @@ class ItemDataWalker;
 class ItemInstance;
 class Player;
 
+template <class T> class EntityDataAccessor;
+
 class ItemEntity : public Entity
 {
 public:
@@ -21,7 +23,7 @@ public:
     ItemEntity(Level* level, double x, double y, double z);
     explicit ItemEntity(Level* level);
     virtual ~ItemEntity();
-    static void create(Level* level);
+    static ItemEntity* create(Level* level);
     void _init();
     void _init(Level* level, double x, double y, double z);
     void setItem(not_null_ptr<ItemInstance> item);
@@ -65,6 +67,7 @@ private:
     std::wstring mOwner;
     float mBobOffs;
     not_null_ptr<ItemInstance> mItem;
+    static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;
 };
 
 #endif

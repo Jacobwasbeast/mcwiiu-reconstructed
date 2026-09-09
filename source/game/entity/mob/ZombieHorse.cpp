@@ -171,5 +171,5 @@ bool ZombieHorse::breathesWater()
 
 unsigned long long ZombieHorse::GetType()
 {
-    return 0x2d69000300000000ULL;
+    return 0x000000002D690003ULL;
 }

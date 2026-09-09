@@ -4,15 +4,19 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/HorseArmorItem.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+
+const EntityDataAccessor<int>* Horse::DATA_VARIANT = NULL;
+static unsigned char HorseLootTableStorage;
 
 Horse::HorseGroupData::HorseGroupData(int variant) : MobGroupData(), mVariant(variant) { }
 Horse::HorseGroupData::~HorseGroupData() { }
 
 Horse::Horse(Level* level)
-    : AbstractHorse(level), mVariant(0), mArmorType(NULL), mLayeredTextureHashName(L""),
+    : AbstractHorse(level), mArmorType(NULL), mLayeredTextureHashName(L""),
       mLayeredTextureLayers(4, true), mWearingDyedArmor(false), mDyedArmorColor(0),
       mDyedArmorLayer(-1), mArmorItem()
 {
@@ -45,9 +49,17 @@ void Horse::addDataWalkers(DataFixerUpper* fixer)
 {
     AbstractHorse::addDataWalkers(fixer, 0x2d690001ULL);
 }
-void Horse::staticCtor() { }
-void Horse::defineSynchedData() { AbstractHorse::defineSynchedData(); }
-int Horse::getVariant() { return mVariant; }
+void Horse::staticCtor()
+{
+    DATA_VARIANT = SynchedEntityData::defineId<int>(0x2d690001ULL, 0x0d690000ULL,
+                                                     EntityDataSerializers::INT);
+}
+void Horse::defineSynchedData()
+{
+    AbstractHorse::defineSynchedData();
+    getEntityData()->createDateItem(DATA_VARIANT, 0);
+}
+int Horse::getVariant() { return getEntityData()->get(DATA_VARIANT); }
 
 void Horse::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -66,7 +78,7 @@ void Horse::clearLayeredTextureInfo()
 
 void Horse::setVariant(int variant)
 {
-    mVariant = variant;
+    getEntityData()->set(DATA_VARIANT, variant, true);
     clearLayeredTextureInfo();
 }
 
@@ -88,8 +100,9 @@ void Horse::rebuildLayeredTextureInfo()
         mLayeredTextureLayers.data[layer] = -1;
     }
     layer = 0;
-    mLayeredTextureLayers.data[layer++] = mVariant & 7;
-    mLayeredTextureLayers.data[layer++] = (mVariant >> 8) % 5;
+    const int variant = getVariant();
+    mLayeredTextureLayers.data[layer++] = variant & 7;
+    mLayeredTextureLayers.data[layer++] = (variant >> 8) % 5;
     if (mArmorType != NULL)
     {
         int i;
@@ -165,7 +178,7 @@ const SoundEvent* Horse::getAmbientSound() { AbstractHorse::getAmbientSound(); r
 const SoundEvent* Horse::getDeathSound() { AbstractHorse::getDeathSound(); return SoundEvents::HORSE_DEATH; }
 const SoundEvent* Horse::getHurtSound(const DamageSource* source) { AbstractHorse::getHurtSound(source); return SoundEvents::HORSE_HURT; }
 const SoundEvent* Horse::getAngrySound() { AbstractHorse::getAngrySound(); return SoundEvents::HORSE_ANGRY; }
-const void* Horse::getDefaultLootTable() { return NULL; }
+const void* Horse::getDefaultLootTable() { return &HorseLootTableStorage; }
 
 bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
@@ -218,4 +231,4 @@ bool Horse::removeWhenFarAway()
     return AbstractHorse::removeWhenFarAway() && mArmorType == NULL;
 }
 
-unsigned long long Horse::GetType() { return 0x2d69000100000000ULL; }
+unsigned long long Horse::GetType() { return 0x000000002D690001ULL; }

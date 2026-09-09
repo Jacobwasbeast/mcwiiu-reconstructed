@@ -8,7 +8,7 @@
 
 bool HorseSaddleSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
-    return item->getItem() == Items::saddle && !isActive() && mMenu->horse->canBeSaddled();
+    return item->getItem() == Items::saddle && !hasItem() && mMenu->horse->canBeSaddled();
 }
 
 bool HorseSaddleSlot::isActive()

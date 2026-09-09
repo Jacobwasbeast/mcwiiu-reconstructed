@@ -62,9 +62,9 @@ Vec3* EntityDamageSource::getSourcePosition() const
     return Vec3::newTemp(entity->mX, entity->mY, entity->mZ);
 }
 
-boost::shared_ptr<DamageSource> EntityDamageSource::copy() const
+DamageSource* EntityDamageSource::copy() const
 {
-    return boost::shared_ptr<DamageSource>(new EntityDamageSource(*this));
+    return new EntityDamageSource(*this);
 }
 
 void EntityDamageSource::setThorns()

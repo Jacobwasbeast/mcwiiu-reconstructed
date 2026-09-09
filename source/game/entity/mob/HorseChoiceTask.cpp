@@ -11,7 +11,7 @@ HorseChoiceTask::HorseChoiceTask(Tutorial* tutorial, int horseDescriptionIdValue
                                  ETelemetryChallenges telemetryChallenge)
     : ChoiceTask(tutorial, -1, promptId, preCompletionEnabled, firstInput, secondInput,
                  completionAction, telemetryChallenge),
-      entityType(0), horseDescriptionId(horseDescriptionIdValue),
+      mState(0), entityType(0), horseDescriptionId(horseDescriptionIdValue),
       donkeyDescriptionId(donkeyDescriptionIdValue), muleDescriptionId(muleDescriptionIdValue),
       fourthDescriptionId(fourthDescriptionIdValue)
 {
@@ -23,19 +23,19 @@ HorseChoiceTask::~HorseChoiceTask()
 
 int HorseChoiceTask::getDescriptionId()
 {
-    if (entityType == 0x2D698002ULL)
+    if (entityType == 0x2D698002 && mState == 0)
     {
         return muleDescriptionId;
     }
-    if (entityType == 0x2D698001ULL)
+    if (entityType == 0x2D698001 && mState == 0)
     {
         return donkeyDescriptionId;
     }
-    if (entityType == 0x2D698003ULL)
+    if (entityType == 0x2D698003 && mState == 0)
     {
         return fourthDescriptionId;
     }
-    if (entityType == 0x2D690001ULL)
+    if (entityType == 0x2D690001 && mState == 0)
     {
         return horseDescriptionId;
     }
@@ -44,7 +44,7 @@ int HorseChoiceTask::getDescriptionId()
 
 void HorseChoiceTask::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
-    if (entityType != 0)
+    if (mState != 0 || entityType != 0)
     {
         return;
     }

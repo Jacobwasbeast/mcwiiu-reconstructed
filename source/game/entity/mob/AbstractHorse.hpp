@@ -22,6 +22,7 @@ class MobGroupData;
 class SoundType;
 class ItemInstance;
 class AgableMob;
+template <class T> class EntityDataAccessor;
 
 class AbstractHorse : public Animal, public OwnableEntity
 {
@@ -133,6 +134,8 @@ public:
     virtual unsigned long long GetType();
 
 protected:
+    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
+    static const EntityDataAccessor<std::wstring>* DATA_OWNER_UUID;
     int mFlags;
     bool mJumping;
     bool mStanding;
@@ -145,6 +148,7 @@ protected:
     float mJumpRidingScale;
     std::wstring mOwnerUUID;
     boost::shared_ptr<Container> mInventory;
+    Goal* mPanicGoal;
     Goal* mFloatGoal;
     Goal* mWaterAvoidingRandomStrollGoal;
 };

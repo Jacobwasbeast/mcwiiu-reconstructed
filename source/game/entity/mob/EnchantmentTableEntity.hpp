@@ -34,7 +34,7 @@ public:
     virtual InteractionObject::NameData GetNetworkNameData();
     void setCustomName(const std::wstring& name, const std::wstring& uuid,
                        bool chatCensored, bool uuidLocal);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual void tick();
     virtual boost::shared_ptr<BlockEntity> clone();

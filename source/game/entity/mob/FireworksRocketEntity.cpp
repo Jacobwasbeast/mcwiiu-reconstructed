@@ -12,6 +12,10 @@
 #include "game/world/Level.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+
+const EntityDataAccessor<not_null_ptr<ItemInstance> >* FireworksRocketEntity::DATA_ITEM = NULL;
+const EntityDataAccessor<int>* FireworksRocketEntity::DATA_ATTACHED_TO_ENTITY = NULL;
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
     : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner(player)
@@ -68,16 +72,20 @@ void FireworksRocketEntity::_init(double x, double y, double z, const not_null_p
 
 void FireworksRocketEntity::staticCtor()
 {
+    DATA_ITEM = SynchedEntityData::defineId<not_null_ptr<ItemInstance> >(
+        0x88000005ULL, 0x08000000ULL, NULL);
+    DATA_ATTACHED_TO_ENTITY = SynchedEntityData::defineId<int>(
+        0x88000005ULL, 0x08000000ULL, NULL);
 }
 
 bool FireworksRocketEntity::isAttachedToEntity()
 {
-    return mAttachedToEntity.get() != NULL;
+    return getSharedFlag(31);
 }
 
 bool FireworksRocketEntity::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    return distanceSqr < 4096.0;
+    return distanceSqr < 4096.0 && !isAttachedToEntity();
 }
 
 bool FireworksRocketEntity::shouldRender(double x, double y, double z)
@@ -186,8 +194,10 @@ void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
     }
 }
 
-void FireworksRocketEntity::addDataWalkers(DataFixerUpper*)
+void FireworksRocketEntity::addDataWalkers(DataFixerUpper* fixer)
 {
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
+                     new ItemDataWalker(0x88000005ULL, L"FireworksItem"));
 }
 
 void FireworksRocketEntity::addAdditonalSaveData(CompoundTag* tag)
@@ -220,6 +230,8 @@ void FireworksRocketEntity::updateDeltaAfterMove(Block* block, double x, double 
 void FireworksRocketEntity::defineSynchedData()
 {
     Entity::defineSynchedData();
+    mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    mEntityData->createDateItem(DATA_ATTACHED_TO_ENTITY, -1);
 }
 
 void FireworksRocketEntity::create(Level* level)

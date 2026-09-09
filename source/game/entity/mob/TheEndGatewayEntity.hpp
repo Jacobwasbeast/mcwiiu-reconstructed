@@ -21,7 +21,7 @@ public:
     TheEndGatewayEntity();
     virtual ~TheEndGatewayEntity();
 
-    static TheEndGatewayEntity* create();
+    static BlockEntity* create();
     bool isCoolingDown();
     static BlockPos findTallestBlock(Level* level, const BlockPos& origin, int radius, bool skipAir);
     void SetExitPortal(BlockPos* position);
@@ -33,7 +33,7 @@ public:
     void teleportEntity(boost::shared_ptr<Entity> entity);
 
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual double getViewDistance();
     virtual void tick();
     bool isSpawning();

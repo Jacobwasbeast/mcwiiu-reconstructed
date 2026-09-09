@@ -4,6 +4,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
+#include "game/world/generation/Player.hpp"
 
 IndirectEntityDamageSource::IndirectEntityDamageSource(ClientboundChatPacket::EChatPacketMessage messageValue,
                                                        ClientboundChatPacket::EChatPacketMessage deathMessageValue,
@@ -11,7 +12,7 @@ IndirectEntityDamageSource::IndirectEntityDamageSource(ClientboundChatPacket::EC
                                                        boost::shared_ptr<Entity> entityValue,
                                                        const DamageSource* baseDamageSourceValue)
     : EntityDamageSource(messageValue, deathMessageValue, directEntityValue),
-      directEntity(entityValue),
+      owner(entityValue),
       baseDamageSource(baseDamageSourceValue)
 {
 }
@@ -27,7 +28,7 @@ boost::shared_ptr<Entity> IndirectEntityDamageSource::getDirectEntity() const
 
 boost::shared_ptr<Entity> IndirectEntityDamageSource::getEntity() const
 {
-    return directEntity;
+    return owner;
 }
 
 boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> victim) const
@@ -38,12 +39,12 @@ boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMes
     if (entity && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
         item = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
 
-    boost::shared_ptr<Entity> attacker = directEntity ? directEntity : entity;
-    if (directEntity && directEntity->GetType() == 0x0c800001ULL)
-        attackerName = directEntity->getDisplayName();
+    boost::shared_ptr<Entity> attacker = owner ? owner : entity;
+    if (owner && owner->GetType() == 0x0c800001ULL)
+        attackerName = boost::static_pointer_cast<Player>(owner)->getDisplayName();
 
-    std::wstring victimName = victim->getDisplayName();
-    if (item->hasCustomHoverName())
+    std::wstring victimName = victim->getNetworkName();
+    if (!item->isEmpty() && item->hasCustomHoverName())
         return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, deathMessage, attacker, attackerName, item->getHoverName()));
     return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, message, attacker, attackerName));
 }
@@ -55,7 +56,7 @@ const DamageSource* IndirectEntityDamageSource::GetBaseDamageSource() const
     return DamageSource::GetBaseDamageSource();
 }
 
-boost::shared_ptr<DamageSource> IndirectEntityDamageSource::copy() const
+DamageSource* IndirectEntityDamageSource::copy() const
 {
-    return boost::shared_ptr<DamageSource>(new IndirectEntityDamageSource(*this));
+    return new IndirectEntityDamageSource(*this);
 }

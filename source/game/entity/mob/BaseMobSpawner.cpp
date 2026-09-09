@@ -6,6 +6,8 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/core/DifficultyInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/WeighedRandom.hpp"
@@ -88,18 +90,56 @@ void BaseMobSpawner::tick()
     bool spawned = false;
     for (int i = 0; i < mSpawnCount; ++i)
     {
-        double x = static_cast<double>(origin.x) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
-        double y = static_cast<double>(origin.y) + level->mRandom->nextInt(3) - 1;
-        double z = static_cast<double>(origin.z) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
+        ListTag* position = mNextSpawnData->getTag()->fjSafeGetListTag(L"Pos", 6);
+        double x;
+        double y;
+        double z;
+        if (position == NULL || position->size() < 1)
+        {
+            x = static_cast<double>(origin.x) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
+        }
+        else
+        {
+            x = position->getDouble(0);
+        }
+        if (position == NULL || position->size() < 2)
+        {
+            y = static_cast<double>(origin.y) + level->mRandom->nextInt(3) - 1;
+        }
+        else
+        {
+            y = position->getDouble(1);
+        }
+        if (position == NULL || position->size() < 3)
+        {
+            z = static_cast<double>(origin.z) + level->mRandom->nextDouble() * 2.0 * mSpawnRange - mSpawnRange;
+        }
+        else
+        {
+            z = position->getDouble(2);
+        }
         boost::shared_ptr<Entity> entity = OldChunkStorage::loadEntity(mNextSpawnData->getTag(), level, x, y, z, false);
         if (entity)
         {
-            AABB* box = AABB::newTemp(x - 1.0, y - 1.0, z - 1.0, x + 1.0, y + 1.0, z + 1.0);
-            std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), box);
+            AABB* box = AABB::newTemp(origin)->grow(static_cast<double>(mSpawnRange),
+                                                      static_cast<double>(mSpawnRange),
+                                                      static_cast<double>(mSpawnRange));
+            std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity), box);
             int nearby = entities == NULL ? 0 : static_cast<int>(entities->size());
             delete entities;
             if (nearby < mMaxNearbyEntities)
             {
+                if (!level->canCreateMore(entity->GetType(), 0))
+                {
+                    delay();
+                    return;
+                }
+                boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(entity);
+                if (mob)
+                {
+                    DifficultyInstance difficulty = level->getCurrentDifficultyAt(origin);
+                    mob->finalizeMobSpawn(difficulty, NULL, std::wstring());
+                }
                 OldChunkStorage::addEntityToWorld(entity, level);
                 level->levelEvent(2004, origin, 0);
                 spawned = true;

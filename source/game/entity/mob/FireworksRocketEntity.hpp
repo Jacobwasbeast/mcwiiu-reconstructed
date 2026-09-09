@@ -46,6 +46,9 @@ public:
     virtual unsigned long long GetType();
     virtual bool shouldTick();
 
+    static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;
+    static const EntityDataAccessor<int>* DATA_ATTACHED_TO_ENTITY;
+
 private:
     int mLife;
     int mLifetime;

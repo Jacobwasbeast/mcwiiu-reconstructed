@@ -188,6 +188,16 @@ int EntityIO::getNameDisplayId(const std::wstring& name)
     return it->second->nameDisplayId;
 }
 
+int EntityIO::eTypeToIoid(unsigned long long entityType)
+{
+    TypeIds::const_iterator it = sTypeIds.find(entityType);
+    if (it == sTypeIds.end())
+    {
+        return -1;
+    }
+    return it->second;
+}
+
 void EntityIO::addSpawnInfo(int id, std::wstring name, eMinecraftColour colour,
                             eMinecraftIconOverride icon)
 {

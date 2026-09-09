@@ -3,6 +3,7 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/core/HumanoidArm.hpp"
 #include "game/core/BodyControl.hpp"
 #include "game/core/CensoredString.hpp"
 #include "game/core/JumpControl.hpp"
@@ -17,6 +18,7 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/core/Sensing.hpp"
 #include "game/item/ArmorItem.hpp"
+#include "game/item/EnchantmentHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/Items.hpp"
@@ -80,7 +82,7 @@ Mob::~Mob()
 
 unsigned long long Mob::GetType()
 {
-    return 0x0d00000000000000ULL;
+    return 0x000000000d000000ULL;
 }
 
 void Mob::staticCtor()
@@ -171,7 +173,7 @@ MoveControl* Mob::getMoveControl()
 
 void* Mob::getJumpControl()
 {
-    return NULL;
+    return mJumpControl;
 }
 
 PathNavigation* Mob::getNavigation()
@@ -229,6 +231,7 @@ void Mob::playHurtSound(const DamageSource*)
 
 void Mob::resetAmbientSoundTime()
 {
+    mAmbientSoundTime = -static_cast<int>(getAmbientSoundInterval());
 }
 
 int Mob::getExperienceReward(boost::shared_ptr<Player>)
@@ -255,9 +258,11 @@ void Mob::tick()
     LivingEntity::tick();
 }
 
-float Mob::tickHeadTurn(float, float)
+float Mob::tickHeadTurn(float, float headTurnDelta)
 {
-    return 0.0f;
+    if (mLookControl != NULL)
+        mLookControl->tick();
+    return headTurnDelta;
 }
 
 const SoundEvent* Mob::getAmbientSound()
@@ -265,17 +270,49 @@ const SoundEvent* Mob::getAmbientSound()
     return NULL;
 }
 
-const SoundEvent* Mob::getDeathLoot()
+Item* Mob::getDeathLoot()
 {
     return NULL;
 }
 
-void Mob::dropDeathLoot(bool, int)
+void Mob::dropDeathLoot(bool, int lootingLevel)
 {
+    Item* item = getDeathLoot();
+    if (item == NULL)
+        return;
+    int count = mRandom->nextInt(3);
+    if (lootingLevel > 0)
+        count += mRandom->nextInt(lootingLevel + 1);
+    for (int i = 0; i < count; ++i)
+        spawnAtLocation(item, 1);
 }
 
-void Mob::dropEquipment(bool, int)
+void Mob::dropEquipment(bool hitByPlayer, int lootingLevel)
 {
+    for (int i = 0; i < 6; ++i)
+    {
+        const EquipmentSlot* slot = EquipmentSlot::SLOTS[i];
+        not_null_ptr<ItemInstance> item = getItemSlot(slot);
+        float chance = slot->getType() == EquipmentSlot::HAND
+                           ? mHandDropChances[slot->getIndex()]
+                           : mArmorDropChances[slot->getIndex()];
+        if (item->isEmpty() || EnchantmentHelper::hasVanishingCurse(item))
+            continue;
+        if (!hitByPlayer && chance <= 0.2f)
+            continue;
+        if (mRandom->nextFloat() >= chance - lootingLevel * 0.01f)
+            continue;
+        if (chance > 0.2f && item->isDamageableItem())
+        {
+            int bound = item->getMaxDamage() - 3;
+            if (bound < 1)
+                bound = 1;
+            int damage = mRandom->nextInt(bound);
+            damage = mRandom->nextInt(damage + 1);
+            item->setAuxValue(item->getMaxDamage() - damage);
+        }
+        spawnAtLocation(item, 0.0f);
+    }
 }
 
 void Mob::addDataWalkers(DataFixerUpper* fixer)
@@ -369,8 +406,33 @@ const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> ite
     return EquipmentSlot::MAINHAND;
 }
 
-void Mob::pickUpItem(boost::shared_ptr<ItemEntity>)
+void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
 {
+    if (!entity)
+        return;
+    not_null_ptr<ItemInstance> incoming = entity->getItem();
+    if (incoming.get() == NULL || incoming->isEmpty())
+        return;
+
+    const EquipmentSlot* slot = getEquipmentSlotForItem(incoming);
+    if (slot == NULL || !isValidSlotForItem(slot, incoming)
+        || EnchantmentHelper::hasBindingCurse(incoming))
+        return;
+
+    not_null_ptr<ItemInstance> equipped = getItemSlot(slot);
+    bool accept = equipped->isEmpty();
+    if (!accept && equipped->sameItem(incoming)
+        && equipped->getAuxValue() == incoming->getAuxValue()
+        && (!incoming->hasTag() || equipped->hasTag()))
+    {
+        accept = equipped->getCount() < equipped->getMaxStackSize();
+    }
+    if (!accept)
+        return;
+
+    setItemSlot(slot, incoming);
+    setPersistenceRequired(true);
+    entity->remove();
 }
 
 bool Mob::canHoldItem(not_null_ptr<ItemInstance>)
@@ -380,7 +442,7 @@ bool Mob::canHoldItem(not_null_ptr<ItemInstance>)
 
 bool Mob::removeWhenFarAway()
 {
-    return false;
+    return !isPersistenceRequired();
 }
 
 void Mob::checkDespawn()
@@ -389,6 +451,22 @@ void Mob::checkDespawn()
 
 void Mob::serverAiStep()
 {
+    ++mAmbientSoundTime;
+    checkDespawn();
+    if (mSensing != NULL)
+        mSensing->tick();
+    mTargetSelector.tick();
+    mGoalSelector.tick();
+    if (mNavigation != NULL)
+        mNavigation->tick();
+    customServerAiStep();
+    if (mLookControl != NULL)
+        mLookControl->tick();
+    if (mMoveControl != NULL)
+        mMoveControl->tick();
+    if (mJumpControl != NULL)
+        mJumpControl->tick();
+    considerForExtraWandering(shouldFollow() != 0);
 }
 
 void Mob::customServerAiStep()
@@ -402,7 +480,7 @@ int Mob::getMaxHeadXRot()
 
 int Mob::getMaxHeadYRot()
 {
-    return 75;
+    return 10;
 }
 
 float Mob::rotlerp(float from, float to, float max)
@@ -451,21 +529,43 @@ int Mob::getMaxFallDistance()
 
 std::vector<boost::shared_ptr<ItemInstance> >* Mob::getHandSlots()
 {
-    return NULL;
+    std::vector<boost::shared_ptr<ItemInstance> >* items =
+        new std::vector<boost::shared_ptr<ItemInstance> >();
+    items->push_back(mHandItems[0]);
+    items->push_back(mHandItems[1]);
+    return items;
 }
 
 std::vector<boost::shared_ptr<ItemInstance> >* Mob::getArmorSlots()
 {
-    return NULL;
+    std::vector<boost::shared_ptr<ItemInstance> >* items =
+        new std::vector<boost::shared_ptr<ItemInstance> >();
+    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
+        items->push_back(mArmorItems[i]);
+    return items;
 }
 
-void Mob::setItemSlot(const EquipmentSlot*, not_null_ptr<ItemInstance>)
+void Mob::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
+    if (slot == NULL || item.get() == NULL)
+        return;
+    playEquipSound(item);
+    if (slot->getType() == EquipmentSlot::HAND && slot->getIndex() < 2)
+        mHandItems[slot->getIndex()] = item;
+    else if (slot->getType() == EquipmentSlot::ARMOR && slot->getIndex() < 4)
+        mArmorItems[slot->getIndex()] = item;
 }
 
-not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot*)
+not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot* slot)
 {
-    return not_null_ptr<ItemInstance>();
+    if (slot != NULL)
+    {
+        if (slot->getType() == EquipmentSlot::HAND && slot->getIndex() < 2)
+            return mHandItems[slot->getIndex()];
+        if (slot->getType() == EquipmentSlot::ARMOR && slot->getIndex() < 4)
+            return mArmorItems[slot->getIndex()];
+    }
+    return ItemInstance::EMPTY;
 }
 
 not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot*, int)
@@ -495,8 +595,17 @@ bool Mob::canBeControlledByRider()
     return false;
 }
 
-void Mob::setDropChance(const EquipmentSlot*, float)
+void Mob::setDropChance(const EquipmentSlot* slot, float chance)
 {
+    if (slot == NULL)
+        return;
+    if (slot->getType() == EquipmentSlot::HAND)
+    {
+        mHandDropChances[slot->getIndex()] = chance;
+        return;
+    }
+    if (slot->getType() == EquipmentSlot::ARMOR)
+        mArmorDropChances[slot->getIndex()] = chance;
 }
 
 bool Mob::canPickUpLoot()
@@ -546,19 +655,44 @@ bool Mob::shouldRender(double distance)
     return Entity::shouldRenderAtSqrDistance(distance * distance);
 }
 
-bool Mob::isValidSlotForItem(const EquipmentSlot*, not_null_ptr<ItemInstance>)
+bool Mob::isValidSlotForItem(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
-    return true;
+    const EquipmentSlot* itemSlot = getEquipmentSlotForItem(item);
+    if (itemSlot == slot)
+        return true;
+    return (itemSlot == EquipmentSlot::MAINHAND && slot == EquipmentSlot::OFFHAND)
+        || (itemSlot == EquipmentSlot::OFFHAND && slot == EquipmentSlot::MAINHAND);
 }
 
-bool Mob::setSlot(int, const not_null_ptr<ItemInstance>&)
+bool Mob::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
+    const EquipmentSlot* equipmentSlot = NULL;
+    if (slot == 98)
+        equipmentSlot = EquipmentSlot::MAINHAND;
+    else if (slot == 99)
+        equipmentSlot = EquipmentSlot::OFFHAND;
+    else
+    {
+        for (int i = 2; i < 6; ++i)
+        {
+            if (slot == EquipmentSlot::SLOTS[i]->getIndex() + 100)
+            {
+                equipmentSlot = EquipmentSlot::SLOTS[i];
+                break;
+            }
+        }
+    }
+    if (equipmentSlot == NULL || item.get() == NULL)
+        return false;
+    if (!item->isEmpty() && !isValidSlotForItem(equipmentSlot, item))
+        return false;
+    setItemSlot(equipmentSlot, item);
     return true;
 }
 
 bool Mob::isControlledByLocalInstance()
 {
-    return true;
+    return isEffectiveAi() && Entity::isControlledByLocalInstance();
 }
 
 bool Mob::isEffectiveAi()
@@ -589,7 +723,7 @@ bool Mob::isNoAi()
 
 const HumanoidArm* Mob::getMainArm()
 {
-    return NULL;
+    return isLeftHanded() ? HumanoidArm::LEFT : HumanoidArm::RIGHT;
 }
 
 std::wstring Mob::getName()

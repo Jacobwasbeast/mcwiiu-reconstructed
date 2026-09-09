@@ -10,10 +10,13 @@
 #include "game/core/Mth.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/DiodeBlock.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 
 HangingEntity::HangingEntity(Level* level)
     : Entity(level, true), mTickCounter(0), mPos(), mDirection(NULL)
@@ -111,11 +114,15 @@ bool HangingEntity::survives()
 {
     if (mLevel == NULL || mDirection == NULL)
         return false;
-    if (!mLevel->isSolidBlockingBlock(mPos.relative(mDirection->getOpposite())))
+    if (!mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty())
         return false;
 
-    int width = (getWidth() + 15) / 16;
-    int height = (getHeight() + 15) / 16;
+    int width = getWidth() / 16;
+    int height = getHeight() / 16;
+    if (width < 1)
+        width = 1;
+    if (height < 1)
+        height = 1;
     const Direction* horizontal = mDirection->getCounterClockWise();
     BlockPos anchor = mPos.relative(mDirection->getOpposite());
     MutableBlockPos check;
@@ -131,11 +138,12 @@ bool HangingEntity::survives()
             check.move(horizontal, x + xStart);
             check.move(Direction::UP, y + yStart);
             const BlockState* state = mLevel->getBlockState(check);
-            if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
+            if (!state->getMaterial()->isSolid() && !DiodeBlock::isDiode(state))
                 return false;
         }
     }
-    return true;
+    HangingEntitySelector selector;
+    return mLevel->getEntities(shared_from_this(), mBoundingBox, &selector, NULL)->empty();
 }
 
 bool HangingEntity::isPickable()
@@ -149,7 +157,10 @@ bool HangingEntity::skipAttackInteraction(boost::shared_ptr<Entity> entity)
         return false;
     if ((entity->GetType() & 0x0C800000ULL) != 0x0C800000ULL)
         return false;
-    return hurt(NULL, 1.0f);
+
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    boost::shared_ptr<EntityDamageSource> source = DamageSource::CreatePlayerAttack(player);
+    return hurt(source.get(), 0.0f);
 }
 
 const Direction* HangingEntity::getDirection()
@@ -164,8 +175,10 @@ bool HangingEntity::hurt(const DamageSource* source, float damage)
     boost::shared_ptr<Entity> attacker = source == NULL ? boost::shared_ptr<Entity>() : source->getEntity();
     if (attacker != NULL && (attacker->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
     {
+        if (!boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
+            return false;
     }
-    if (!mRemoved)
+    if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
         markHurt();
@@ -264,12 +277,12 @@ bool HangingEntity::shouldRenderAtSqrDistance(double distanceSqr)
 
 unsigned long long HangingEntity::GetType()
 {
-    return 0x0A08000000000000ULL;
+    return 0x0A080000ULL;
 }
 
 bool HangingEntity::HangingEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity != NULL && (entity->GetType() & 0x0A080000ULL) == 0x0A080000ULL;
+    return (entity->GetType() & 0x0A080000ULL) == 0x0A080000ULL;
 }
 
 HangingEntity::HangingEntitySelector::~HangingEntitySelector()

@@ -22,10 +22,10 @@ public:
     virtual boost::shared_ptr<Entity> getEntity() const;
     virtual boost::shared_ptr<ClientboundChatPacket> getDeathMessagePacket(boost::shared_ptr<LivingEntity> entity) const;
     virtual const DamageSource* GetBaseDamageSource() const;
-    virtual boost::shared_ptr<DamageSource> copy() const;
+    virtual DamageSource* copy() const;
 
 private:
-    boost::shared_ptr<Entity> directEntity;
+    boost::shared_ptr<Entity> owner;
     const DamageSource* baseDamageSource;
 };
 

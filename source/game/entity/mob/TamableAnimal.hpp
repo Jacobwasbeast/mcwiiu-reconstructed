@@ -33,7 +33,7 @@ public:
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual void spawnTamingParticles(bool success);
     virtual void handleEntityEvent(unsigned char event, int data);
-    bool isTame();
+    virtual bool isTame();
     void setTame(bool tame);
     virtual void reassessTameGoals();
     virtual bool removeWhenFarAway();

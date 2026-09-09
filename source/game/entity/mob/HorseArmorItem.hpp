@@ -14,8 +14,8 @@ class TextureAtlasSprite;
 class HorseArmorItem : public Item
 {
 public:
-    HorseArmorItem(int itemId, int protection, int tier, const wchar_t* hash);
-    HorseArmorItem(int itemId, int protection, const int* textures, int textureCount, const wchar_t* hash);
+    HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash);
+    HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash);
     HorseArmorItem(int tier, int protection);
     virtual ~HorseArmorItem();
 

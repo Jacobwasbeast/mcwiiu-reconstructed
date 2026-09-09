@@ -19,6 +19,7 @@ class MobGroupData;
 class TippableArrow;
 class RangedBowAttackGoal;
 class ItemInstance;
+class SoundEvent;
 template <class T> class EntityDataAccessor;
 
 class AbstractSkeleton : public Monster, public RangedAttackMob
@@ -46,6 +47,7 @@ public:
     virtual void registerAttributes();
     virtual void defineSynchedData();
     virtual void playStepSound(const BlockPos& pos, Block* block);
+    virtual const SoundEvent* getStepSound() = 0;
     virtual EMobType getMobType();
     virtual void aiStep();
     virtual void rideTick();

@@ -27,6 +27,7 @@ class Sensing;
 class SoundEvent;
 class HumanoidArm;
 class ItemEntity;
+class Item;
 class JumpControl;
 class LookControl;
 class MoveControl;
@@ -36,6 +37,7 @@ template <class T> class EntityDataAccessor;
 
 class Mob : public LivingEntity
 {
+    friend class FollowFlockLeaderGoal;
 public:
     enum SpawnPlacementType
     {
@@ -101,7 +103,7 @@ public:
     void handleEntityEvent(unsigned char event, int data);
     void setLeader(bool leader);
     const SoundEvent* getAmbientSound();
-    const SoundEvent* getDeathLoot();
+    Item* getDeathLoot();
     static void addDataWalkers(DataFixerUpper* fixer);
     static void addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType);
     bool isLeftHanded();

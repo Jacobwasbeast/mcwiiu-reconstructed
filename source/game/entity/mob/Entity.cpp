@@ -369,19 +369,20 @@ Entity::Entity(Level* level, bool createEntityData)
     mCategories = 0;
     mWaterCheckBox = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     mCollisionCacheValid = false;
-    mCollisionCacheMinX = 0;
-    mCollisionCacheMinY = 0;
-    mCollisionCacheMinZ = 0;
-    mCollisionCacheMaxX = 0;
-    mCollisionCacheMaxY = 0;
-    mCollisionCacheMaxZ = 0;
-    mLiquidCacheValid = false;
-    mLiquidCacheMinX = 0;
-    mLiquidCacheMinY = 0;
-    mLiquidCacheMinZ = 0;
-    mLiquidCacheMaxX = 0;
-    mLiquidCacheMaxY = 0;
-    mLiquidCacheMaxZ = 0;
+    mFireCacheResult = false;
+    mFireCacheMinX = 0;
+    mFireCacheMinY = 0;
+    mFireCacheMinZ = 0;
+    mFireCacheMaxX = 0;
+    mFireCacheMaxY = 0;
+    mFireCacheMaxZ = 0;
+    mLavaCacheResult = false;
+    mLavaCacheMinX = 0;
+    mLavaCacheMinY = 0;
+    mLavaCacheMinZ = 0;
+    mLavaCacheMaxX = 0;
+    mLavaCacheMaxY = 0;
+    mLavaCacheMaxZ = 0;
     mInWallCacheResult = false;
     mInWallCacheX = 0.0;
     mInWallCacheY = 0.0;
@@ -533,6 +534,10 @@ Entity::~Entity()
 
     delete mLeashInfoTag;
     mLeashInfoTag = NULL;
+}
+
+void Entity::defineSynchedData()
+{
 }
 
 void Entity::fjDerivedCtorCalls()

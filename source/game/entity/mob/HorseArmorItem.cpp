@@ -6,14 +6,14 @@
 
 static const wchar_t* HORSE_ARMOR_COLOR = L"CustomColor";
 
-HorseArmorItem::HorseArmorItem(int itemId, int protection, int tier, const wchar_t* hash)
+HorseArmorItem::HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash)
     : Item(), mTier(tier), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
 {
     setBaseItemTypeAndMaterial(itemId, 0);
 }
 
-HorseArmorItem::HorseArmorItem(int itemId, int protection, const int* textures, int textureCount, const wchar_t* hash)
-    : Item(), mTier(itemId), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
+HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash)
+    : Item(), mTier(tier), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
 {
     int i;
     for (i = 0; i < textureCount; ++i)

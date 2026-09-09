@@ -248,5 +248,5 @@ bool AbstractChestedHorse::removeWhenFarAway()
 
 unsigned long long AbstractChestedHorse::GetType()
 {
-    return 0x0D69800000000000ULL;
+    return 0x000000000D698000ULL;
 }

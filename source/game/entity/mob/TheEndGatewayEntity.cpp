@@ -29,7 +29,7 @@ TheEndGatewayEntity::~TheEndGatewayEntity()
     delete mExitPortal;
 }
 
-TheEndGatewayEntity* TheEndGatewayEntity::create()
+BlockEntity* TheEndGatewayEntity::create()
 {
     return new TheEndGatewayEntity();
 }
@@ -163,7 +163,7 @@ void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
     triggerCooldown();
 }
 
-void TheEndGatewayEntity::save(CompoundTag* tag)
+CompoundTag* TheEndGatewayEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putLong(L"Age", mAge);
@@ -171,6 +171,7 @@ void TheEndGatewayEntity::save(CompoundTag* tag)
         tag->put(L"ExitPortal", NbtUtils::writeBlockPos(*mExitPortal));
     if (mExactTeleport)
         tag->putBoolean(L"ExactTeleport", mExactTeleport);
+    return tag;
 }
 
 void TheEndGatewayEntity::load(CompoundTag* tag)
@@ -259,7 +260,13 @@ bool TheEndGatewayEntity::shouldRenderFace(const Direction* direction)
 
 int TheEndGatewayEntity::getParticleAmount()
 {
-    return 0;
+    int amount = 0;
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin();
+         it != Direction::VALUES.end(); ++it)
+    {
+        amount += shouldRenderFace(*it) ? 1 : 0;
+    }
+    return amount;
 }
 
 boost::shared_ptr<BlockEntity> TheEndGatewayEntity::clone()

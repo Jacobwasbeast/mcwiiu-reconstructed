@@ -27,7 +27,7 @@ CompoundTag* EntityEquipmentToArmorAndHandFix::fix(CompoundTag* tag)
         tag->put(L"HandItems", handItems);
     }
 
-    if (equipment->size() > 1 && !tag->contains(L"ArmorItem", 10))
+    if (equipment->size() > 1 && !tag->contains(L"ArmorItems", 10))
     {
         ListTag* armorItems = new ListTag();
 

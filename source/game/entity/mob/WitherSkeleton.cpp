@@ -163,5 +163,5 @@ boost::shared_ptr<TippableArrow> WitherSkeleton::getArrow(float distanceFactor)
 
 unsigned long long WitherSkeleton::GetType()
 {
-    return 0x5d54044200000000ULL;
+    return 0x5D540442ULL;
 }

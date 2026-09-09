@@ -8,6 +8,8 @@
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/util/AABB.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -15,7 +17,10 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/ai/RangedBowAttackGoal.hpp"
+#include "game/entity/projectile/TippableArrow.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -23,7 +28,8 @@
 const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
 
 AbstractSkeleton::AbstractSkeleton(Level* level)
-    : Monster(level), mMeleeGoal(new SkeleteMeleeAttackGoal(this)), mBowGoal(NULL),
+    : Monster(level), mMeleeGoal(new SkeleteMeleeAttackGoal(this)),
+      mBowGoal(new RangedBowAttackGoal(this, 1.0, 20, 15.0f)),
       mReassessWeaponGoal(true), mInWater(false)
 {
     setSize(0.6f, 1.99f);
@@ -39,8 +45,23 @@ AbstractSkeleton::~AbstractSkeleton()
 void AbstractSkeleton::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
     boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
-    if (arrow)
-        setAggressive(true);
+    Entity* targetEntity = target.get();
+    const double dx = targetEntity->mX - mX;
+    const double dz = targetEntity->mZ - mZ;
+    const double horizontalDistance = std::sqrt(dx * dx + dz * dz);
+    const double targetY = targetEntity->mBoundingBox->mMinY
+        + static_cast<double>(targetEntity->mBbHeight) / 3.0;
+    const double dy = targetY - arrow->mY;
+    const float inaccuracy = 14.0f
+        - static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f;
+
+    arrow->shoot(dx, dy + horizontalDistance * 0.2, dz, 1.6f, inaccuracy);
+    mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
+
+    const float pitch = 1.0f / (mRandom->nextFloat() * 0.4f + 1.2f)
+        + distanceFactor * 0.5f;
+    playSound(SoundEvents::SKELETON_SHOOT, 1.0f, pitch);
+    setAggressive(true);
 }
 
 bool AbstractSkeleton::isAggressive()
@@ -70,8 +91,20 @@ void AbstractSkeleton::reassessWeaponGoal()
     }
     if (mMeleeGoal != NULL)
         mGoalSelector.removeGoal(mMeleeGoal);
-    if (mMeleeGoal != NULL)
+    if (mBowGoal != NULL)
+        mGoalSelector.removeGoal(mBowGoal);
+
+    not_null_ptr<ItemInstance> item = getMainHandItem();
+    if (!item->isEmpty() && item->getItem() == Items::bow && !isInWater())
+    {
+        int interval = mLevel->getDifficulty() == Difficulty::HARD ? 40 : 20;
+        mBowGoal->setMinAttackInterval(interval);
+        mGoalSelector.addGoal(4, mBowGoal, false);
+    }
+    else
+    {
         mGoalSelector.addGoal(4, mMeleeGoal, false);
+    }
 }
 
 void AbstractSkeleton::tick()
@@ -102,7 +135,7 @@ void AbstractSkeleton::defineSynchedData()
 
 void AbstractSkeleton::playStepSound(const BlockPos& pos, Block* block)
 {
-    Entity::playStepSound(pos, block);
+    playSound(getStepSound(), 0.15f, 1.0f);
 }
 
 EMobType AbstractSkeleton::getMobType()
@@ -160,7 +193,10 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
 
 boost::shared_ptr<TippableArrow> AbstractSkeleton::getArrow(float distanceFactor)
 {
-    return boost::shared_ptr<TippableArrow>();
+    boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, owner));
+    arrow->setEnchantmentEffectsFromEntity(owner, distanceFactor);
+    return arrow;
 }
 
 void AbstractSkeleton::readAdditionalSaveData(CompoundTag* tag)
@@ -178,7 +214,7 @@ void AbstractSkeleton::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemI
 
 double AbstractSkeleton::getEyeHeight()
 {
-    return 1.62;
+    return 1.62f;
 }
 
 double AbstractSkeleton::getRidingHeight()
@@ -193,7 +229,7 @@ bool AbstractSkeleton::breathesWater()
 
 unsigned long long AbstractSkeleton::GetType()
 {
-    return 0x4D54044000000000ULL;
+    return 0x000000004D540440ULL;
 }
 
 AbstractSkeleton::SkeleteMeleeAttackGoal::SkeleteMeleeAttackGoal(AbstractSkeleton* skeleton)

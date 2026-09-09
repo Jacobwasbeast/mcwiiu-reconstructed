@@ -82,10 +82,11 @@ void EnchantmentTableEntity::setCustomName(const std::wstring& name, const std::
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }
 
-void EnchantmentTableEntity::save(CompoundTag* tag)
+CompoundTag* EnchantmentTableEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mCustomName->saveToTag(tag);
+    return tag;
 }
 
 void EnchantmentTableEntity::load(CompoundTag* tag)
@@ -169,5 +170,5 @@ boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
 
 unsigned long long EnchantmentTableEntity::GetType()
 {
-    return 0x0120020600000000ULL;
+    return 0x0000000001200206ULL;
 }

@@ -129,12 +129,12 @@ void SynchedEntityData::set(const EntityDataAccessor<T>* accessor, T value, bool
     {
         item->setValue(value);
         mEntity->onSyncedDataUpdated(accessor);
+    }
 
-        if (updateDirty)
-        {
-            item->setDirty(true);
-            mIsDirty = true;
-        }
+    if (updateDirty)
+    {
+        item->setDirty(true);
+        mIsDirty = true;
     }
 }
 

@@ -1,11 +1,23 @@
 #include "game/entity/mob/Zombie.hpp"
 
 #include <boost/shared_ptr.hpp>
+#include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/Goal.hpp"
+#include "game/entity/ai/FindMountGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
+#include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/core/Drowned.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/MoveThroughVillageGoal.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -78,6 +90,15 @@ void Zombie::registerGoals()
 
 void Zombie::addBehaviourGoals()
 {
+    mGoalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0, false), true);
+    mGoalSelector.addGoal(1, new FindMountGoal(*this, 16.0f, -1, false, false, -1.0f), true);
+    arrayWithLength<unsigned long long> entityTypes(1, true);
+    entityTypes.data[0] = 0x5d550041ULL;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Drowned), false, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(AbstractSkeleton), true, false, false), true);
+    mTargetSelector.addGoal(5, new NearestAttackableTargetGoal(this, typeid(LivingEntity), 10, true, false, NULL, false, false), true);
 }
 
 void Zombie::registerAttributes()
@@ -209,12 +230,14 @@ const void* Zombie::getDefaultGearTable()
     return &BuiltInLootTables::ZOMBIE_EQUIPMENT;
 }
 
-void Zombie::populateDefaultEquipmentSlots(const DifficultyInstance&)
+void Zombie::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 {
+    Mob::populateDefaultEquipmentSlots(difficulty);
 }
 
-void Zombie::addDataWalkers(DataFixerUpper*)
+void Zombie::addDataWalkers(DataFixerUpper* fixer)
 {
+    Mob::addDataWalkers(fixer, 0x5d550040ULL);
 }
 
 void Zombie::addAdditonalSaveData(CompoundTag* tag)
@@ -231,8 +254,9 @@ void Zombie::readAdditionalSaveData(CompoundTag* tag)
     mConversionTime = tag->getInt(std::wstring(L"ConversionTime"));
 }
 
-void Zombie::killed(boost::shared_ptr<LivingEntity>)
+void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 {
+    Entity::killed(entity);
 }
 
 double Zombie::getEyeHeight()
@@ -329,5 +353,5 @@ void Zombie::finishConversion()
 
 unsigned long long Zombie::GetType()
 {
-    return 0x000000000D600000ULL;
+    return 0x5D550040ULL;
 }

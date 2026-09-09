@@ -23,6 +23,8 @@ class SoundType;
 class Horse : public AbstractHorse
 {
 public:
+    static const EntityDataAccessor<int>* DATA_VARIANT;
+
     class HorseGroupData : public MobGroupData
     {
     public:
@@ -74,7 +76,6 @@ public:
     bool hasTexture();
 
 private:
-    int mVariant;
     HorseArmorItem* mArmorType;
     std::wstring mLayeredTextureHashName;
     arrayWithLength<int> mLayeredTextureLayers;
