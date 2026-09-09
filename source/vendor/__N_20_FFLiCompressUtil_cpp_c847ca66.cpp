@@ -5,7 +5,7 @@
 unsigned int FFLiCalculateUnitTextureResolution(unsigned int resolution, unsigned int level);
 void _GX2InitColorBuffer(_GX2ColorBuffer* buffer, unsigned int width, unsigned int height,
                          _GX2SurfaceFormat format, _GX2AAMode aaMode);
-void GX2InitColorBufferRegs(_GX2ColorBuffer* buffer);
+extern "C" void GX2InitColorBufferRegs(_GX2ColorBuffer* buffer);
 
 void __N_20_FFLiCompressUtil_cpp_c847ca66::SetupColorBuffer(_GX2ColorBuffer* colorBuffer,
                                                             _GX2Texture* texture,

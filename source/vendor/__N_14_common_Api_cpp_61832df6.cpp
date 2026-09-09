@@ -1,20 +1,5 @@
 #include "vendor/__N_14_common_Api_cpp_61832df6.hpp"
-
-namespace nn
-{
-namespace pia
-{
-namespace common
-{
-class PayloadSizeManager
-{
-public:
-    static void CreateInstance();
-    ~PayloadSizeManager();
-};
-}
-}
-}
+#include "nn/pia/PayloadSizeManager.hpp"
 
 namespace pead
 {
@@ -31,8 +16,6 @@ namespace
 int g_printCallbackInstalled;
 __N_14_common_Api_cpp_61832df6::DelegatePrint g_delegatePrint;
 pead::IDelegate1<const pead::PrintConfig::PrintEventArg&>* g_registeredPrintCallback;
-nn::pia::common::PayloadSizeManager* g_payloadSizeManager;
-void* g_payloadSizeManagerStorage;
 void (*g_printFunction)(const char*, int);
 }
 
@@ -53,18 +36,7 @@ void __N_14_common_Api_cpp_61832df6::unregisterInternalPrintCallback()
 
 void __N_14_common_Api_cpp_61832df6::destroySystemSingletons()
 {
-    if (g_payloadSizeManager != 0)
-    {
-        g_payloadSizeManager->~PayloadSizeManager();
-        g_payloadSizeManager = 0;
-    }
-    void* storage = g_payloadSizeManagerStorage;
-    if (storage != 0)
-    {
-        pead::getArraySize(storage);
-        pead::freeToSeadHeap(storage);
-        g_payloadSizeManagerStorage = 0;
-    }
+    nn::pia::common::PayloadSizeManager::DestroyInstance();
 }
 
 void __N_14_common_Api_cpp_61832df6::createSystemSingletons()

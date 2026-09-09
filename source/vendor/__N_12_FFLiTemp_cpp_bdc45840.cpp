@@ -1,6 +1,6 @@
 #include "vendor/__N_12_FFLiTemp_cpp_bdc45840.hpp"
 
-void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
+extern "C" void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
 
 void __N_12_FFLiTemp_cpp_bdc45840::Invalidate()
 {

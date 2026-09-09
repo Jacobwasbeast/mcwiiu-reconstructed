@@ -1,19 +1,16 @@
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 #include <new>
+#include "game/core/CriticalSection.hpp"
 
-extern void OSFastMutex_Lock(void *mutex);
-extern void OSFastMutex_Unlock(void *mutex);
-extern unsigned char g_voiceProtocolMutex[];
-extern nn::pia::transport::ProtocolManager *g_piaProtocolManager;
-
+extern OSFastMutex g_voiceProtocolMutex;
 void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::lock_()
 {
-    OSFastMutex_Lock(g_voiceProtocolMutex);
+    EnterCriticalSection(&g_voiceProtocolMutex);
 }
 
 void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::unlock_()
 {
-    OSFastMutex_Unlock(g_voiceProtocolMutex);
+    LeaveCriticalSection(&g_voiceProtocolMutex);
 }
 
 bool __N_22_chat_VoiceProtocol_cpp_bf22a0fe::isOpus(nn::pia::chat::Codec codec)
@@ -51,17 +48,17 @@ nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(nn::pia::
     }
     if (*protocol != 0)
         return 0x10c08;
-    if (g_piaProtocolManager == 0)
+    if (nn::pia::transport::g_piaProtocolManager == 0)
         return 0x10c08;
-    nn::pia::transport::UnreliableProtocol *allocated = g_piaProtocolManager->AllocProtocol(0x20);
+    nn::pia::transport::UnreliableProtocol *allocated = nn::pia::transport::g_piaProtocolManager->AllocProtocol(0x20);
     if (allocated != 0)
         new (allocated) nn::pia::transport::UnreliableProtocol();
     nn::pia::transport::ProtocolId id = (unsigned short)(0x6800 | channel);
-    unsigned short created = g_piaProtocolManager->CreateProtocolImpl(allocated, id);
+    unsigned short created = nn::pia::transport::g_piaProtocolManager->CreateProtocolImpl(allocated, id);
     *protocolId = created;
     if (created != 0)
     {
-        *protocol = (nn::pia::transport::UnreliableProtocol *)g_piaProtocolManager->SearchProtocol(created, 0x68);
+        *protocol = (nn::pia::transport::UnreliableProtocol *)nn::pia::transport::g_piaProtocolManager->SearchProtocol(created, 0x68);
         return 0;
     }
     *protocol = 0;
@@ -72,9 +69,9 @@ void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::destroyProtocol(nn::pia::transport:
 {
     if (*protocol != 0)
         (*protocol)->Finalize();
-    if (g_piaProtocolManager != 0 && *protocolId != 0)
+    if (nn::pia::transport::g_piaProtocolManager != 0 && *protocolId != 0)
     {
-        g_piaProtocolManager->DestroyProtocol(*protocolId);
+        nn::pia::transport::g_piaProtocolManager->DestroyProtocol(*protocolId);
         *protocolId = 0;
         *protocol = 0;
     }

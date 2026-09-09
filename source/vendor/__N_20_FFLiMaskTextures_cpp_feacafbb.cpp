@@ -1,6 +1,7 @@
 #include "vendor/__N_20_FFLiMaskTextures_cpp_feacafbb.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 #include "platform/wiiu/FFLiDatabaseDefault.hpp"
+#include "platform/wiiu/FFLiCompressorImpl.hpp"
 
 #include <string.h>
 
@@ -12,13 +13,6 @@ struct FFLiMaskTexturesTempObject
 
 extern uint32_t FFLiGetBufferRenderTexture(uint32_t width, uint32_t height, uint32_t format);
 extern int FFLiiGetEyeRotateOffset(int value);
-
-struct FFLiCompressorDescBC3;
-template <typename T> class FFLiCompressorImpl
-{
-public:
-    static uint32_t GetTextureBufferSize(uint32_t width, uint32_t height);
-};
 
 static int g_expressionParameters[19][5] =
 {
@@ -44,7 +38,7 @@ uint32_t __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureBufferSize(
 {
     if (!compressed)
         return FFLiGetBufferRenderTexture(width, height, 0x1a);
-    return FFLiCompressorImpl<FFLiCompressorDescBC3>::GetTextureBufferSize(width, height);
+    return FFLiCompressorImpl<FFLiCompressorDescBC3>::GetTextureBufferSize(width, width, height);
 }
 
 uint32_t __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureFormat(bool compressed, bool alpha)

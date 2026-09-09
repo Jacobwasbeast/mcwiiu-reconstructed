@@ -2,8 +2,8 @@
 #include "platform/wiiu/FFLiDefaultParams.hpp"
 
 #include <cstdlib>
+#include <coreinit/debug.h>
 
-extern void OSPanic(const char* file, unsigned int line, const char* message, ...);
 extern "C" void MEMFreeToDefaultHeap(void* block);
 
 void DestroyShader__FP11PlainShader(PlainShader* shader)
@@ -14,14 +14,14 @@ void DestroyShader__FP11PlainShader(PlainShader* shader)
 
     if (shader->vertexShader != 0)
     {
-        if (shader->vertexShader->cachePtr != 0)
-            MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->vertexShader->cachePtr)));
+        if (shader->vertexShader->program != 0)
+            MEMFreeToDefaultHeap(shader->vertexShader->program);
         MEMFreeToDefaultHeap(shader->vertexShader);
     }
     if (shader->pixelShader != 0)
     {
-        if (shader->pixelShader->cachePtr != 0)
-            MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->pixelShader->cachePtr)));
+        if (shader->pixelShader->program != 0)
+            MEMFreeToDefaultHeap(shader->pixelShader->program);
         MEMFreeToDefaultHeap(shader->pixelShader);
     }
     if (shader->fetchShader.program != 0)
@@ -30,13 +30,15 @@ void DestroyShader__FP11PlainShader(PlainShader* shader)
         MEMFreeToDefaultHeap(reinterpret_cast<void*>(static_cast<uintptr_t>(shader->contextState)));
 }
 
-unsigned char ModulateModeToValue__F15FFLModulateMode(FFLModulateMode mode)
+unsigned char ModulateModeToValue(unsigned int mode)
 {
     static const unsigned char values[6] = { 0, 1, 2, 3, 4, 5 };
     if (mode > 5)
     {
-        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\MinecraftConsoles-Maintenance-", 0xe9,
-                "Invalid Condition: %d", mode);
+        OSPanic("C:\\Users\\build\\Documents\\TFS\\StoriesPark\\Minecraft\\"
+                "MinecraftConsoles-Maintenance-LegacyPlatforms\\4JLibraries_Source\\"
+                "WiiU\\Render\\MiiIcon\\PlainShader.cpp", 0xe9,
+                "Invalid Condition: %d");
         return 0;
     }
     return values[mode];
@@ -50,14 +52,14 @@ void DestroyPlainShader__FP11PlainShader(PlainShader* shader)
     DestroyShader__FP11PlainShader(shader);
 }
 
-void GX2SetCullOnlyControl(unsigned int frontFace, int cullFront, int cullBack);
-void GX2SetPixelSampler(const void* sampler, unsigned int unit);
-void GX2SetVertexSampler(const void* sampler, unsigned int unit);
-void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
-void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
-void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count, const void* values);
-void GX2DrawEx(unsigned int mode, unsigned int count, unsigned int offset, unsigned int instances);
-void GX2InitSampler(void* sampler, unsigned int clamp, unsigned int filter);
+extern "C" void GX2SetCullOnlyControl(unsigned int frontFace, int cullFront, int cullBack);
+extern "C" void GX2SetPixelSampler(const void* sampler, unsigned int unit);
+extern "C" void GX2SetVertexSampler(const void* sampler, unsigned int unit);
+extern "C" void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2DrawEx(unsigned int mode, unsigned int count, unsigned int offset, unsigned int instances);
+extern "C" void GX2InitSampler(void* sampler, unsigned int clamp, unsigned int filter);
 void ASM_MTX44Identity(float (*matrix)[4]);
 void ASM_MTX44Transpose(const float (*source)[4], float (*destination)[4]);
 
@@ -66,7 +68,7 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetCullingModeWraper(_GX2FrontFaceMo
     GX2SetCullOnlyControl(mode, cullFront, cullBack);
 }
 
-void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupCulling(FFLCullMode mode, const FFLiShaderModulateParam& param, int enabled)
+void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupCulling(FFLCullMode mode, const FFLModulateParam& param, int enabled)
 {
     const bool special = param.type < 9 && enabled != 0;
     if (mode == 0) SetCullingModeWraper(0, 0, 0);
@@ -74,7 +76,7 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupCulling(FFLCullMode mode, const
     else if (mode == 2) SetCullingModeWraper(0, special ? 0 : 1, special ? 1 : 0);
 }
 
-void __N_21_FFLiDefaultShader_cpp_d69dbbf4::BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param)
+void __N_21_FFLiDefaultShader_cpp_d69dbbf4::BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param)
 {
     if (param.texture != 0) {
         const _GX2Sampler* sampler = &shader->m_sampler;
@@ -101,13 +103,13 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulateMode(__N_21_FFLiDefault
     GX2SetPixelUniformReg(shader->m_mode, 4, value);
 }
 
-void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param)
+void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param)
 {
     BindTexture(shader, param);
-    if (param.mode == 0 || param.mode == 1 || param.mode == 2) SetupConstColor(shader->m_pixelConst1, param.color[0]);
+    if (param.mode == 0 || param.mode == 1 || param.mode == 2) SetupConstColor(shader->m_pixelConst1, *param.colorR);
     if (param.mode == 2) {
-        SetupConstColor(shader->m_pixelConst2, param.color[1]);
-        SetupConstColor(shader->m_pixelConst3, param.color[2]);
+        SetupConstColor(shader->m_pixelConst2, *param.colorG);
+        SetupConstColor(shader->m_pixelConst3, *param.colorB);
     }
     SetupModulateMode(shader, param.mode);
 }
@@ -128,8 +130,8 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupMaterial(const __N_21_FFLiDefau
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::ShaderCallbackDraw(void* shader, const FFLiDefaultShaderDrawParam* param)
 {
     __N_21_FFLiDefaultShader_cpp_d69dbbf4* object = (__N_21_FFLiDefaultShader_cpp_d69dbbf4*)shader;
-    SetupCulling(param->value[0x15], *(const FFLiShaderModulateParam*)(&param->value[0xf]), object->m_parameterStorage[191]);
-    SetupModulate(object, *(const FFLiShaderModulateParam*)(&param->value[0xf]));
+    SetupCulling(param->value[0x15], *(const FFLModulateParam*)(&param->value[0xf]), object->m_parameterStorage[191]);
+    SetupModulate(object, *(const FFLModulateParam*)(&param->value[0xf]));
     SetupMaterial(object, *param);
     if (param->value[0x19] != 0) {
         GX2SetVertexUniformReg(0, 4, param->value);

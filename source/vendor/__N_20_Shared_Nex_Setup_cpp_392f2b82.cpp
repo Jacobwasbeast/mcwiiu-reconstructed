@@ -1,4 +1,5 @@
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
+#include "nn/nex/MemoryManager.hpp"
 
 extern "C" void checkPiaCoreToUse();
 extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
@@ -103,6 +104,7 @@ void __N_20_Shared_Nex_Setup_cpp_392f2b82::InitializeRuntimeMemory(unsigned int 
     sRuntimeHeap = MEMCreateExpHeapEx(sRuntimeMemory, runtimeSize + reservedSize, 5);
     sNexAllocator = &__N_20_Shared_Nex_Setup_cpp_392f2b82::AllocFunction;
     sNexFreer = &__N_20_Shared_Nex_Setup_cpp_392f2b82::FreeFunction;
+    nn::nex::MemoryManager::SetCallbacks(sNexAllocator, sNexFreer);
     if (sReservedMemorySize != 0)
     {
         AcquireReservedMemory();

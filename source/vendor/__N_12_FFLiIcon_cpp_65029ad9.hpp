@@ -1,10 +1,21 @@
 #ifndef VENDOR___N_12_FFLIICON_CPP_65029AD9_HPP
 #define VENDOR___N_12_FFLIICON_CPP_65029AD9_HPP
 
+#include <stdint.h>
+#include "platform/wiiu/FFLiUtilShader.hpp"
+
 struct _GX2Texture;
 struct FFLiCharModel;
-struct FFLIconSetting;
 struct FFLShaderCallback;
+struct FFLIconSetting
+{
+    uint16_t width;
+    uint16_t height;
+    uint32_t backgroundType;
+    FFLColor backgroundColor;
+    uint32_t surfaceFormat;
+    bool useDepth;
+};
 enum FFLExpression
 {
     FFL_EXPRESSION_NONE = 0

@@ -2,6 +2,7 @@
 #define SOURCE_VENDOR___N_21_FFLIDEFAULTSHADER_CPP_D69DBBF4_HPP
 
 #include "platform/wiiu/FFLiUtilShader.hpp"
+#include "platform/wiiu/FFLiCharModelCreator.hpp"
 #include "game/client/render/Renderer.hpp"
 #include <stdint.h>
 #include <stddef.h>
@@ -34,12 +35,12 @@ class __N_21_FFLiDefaultShader_cpp_d69dbbf4
 {
 public:
     static void SetCullingModeWraper(_GX2FrontFaceMode mode, _GX2Boolean cullFront, _GX2Boolean cullBack);
-    static void SetupCulling(FFLCullMode mode, const FFLiShaderModulateParam& param, int enabled);
-    static void BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param);
+    static void SetupCulling(FFLCullMode mode, const FFLModulateParam& param, int enabled);
+    static void BindTexture(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param);
     static void SetupConstColor(unsigned int location, const FFLColor& color);
     static uint8_t ModulateModeToValue(FFLModulateMode mode);
     static void SetupModulateMode(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, FFLModulateMode mode);
-    static void SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiShaderModulateParam& param);
+    static void SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param);
     static void SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiDefaultShaderDrawParam& param);
     static void ShaderCallbackDraw(void* shader, const FFLiDefaultShaderDrawParam* param);
     static void ShaderCallbackSetMatrix(void* shader, const _Mat44* matrix);
@@ -106,7 +107,7 @@ static_assert(sizeof(__N_21_FFLiDefaultShader_cpp_d69dbbf4) == 0x3a8, "layout");
 typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;
 
 void DestroyShader__FP11PlainShader(PlainShader* shader);
-unsigned char ModulateModeToValue__F15FFLModulateMode(FFLModulateMode mode);
+unsigned char ModulateModeToValue(unsigned int mode);
 void DestroyPlainShader__FP11PlainShader(PlainShader* shader);
 
 #endif

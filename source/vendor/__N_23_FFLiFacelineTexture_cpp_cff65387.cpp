@@ -1,5 +1,6 @@
 #include "vendor/__N_23_FFLiFacelineTexture_cpp_cff65387.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
+#include "platform/wiiu/FFLiCompressorImpl.hpp"
 
 #include <string.h>
 
@@ -31,7 +32,7 @@ struct FFLDrawParam
     FFLPrimitiveParam primitive;
 };
 
-extern uint32_t FFLiGetMipMapNum(uint32_t width, uint32_t height);
+extern int FFLiGetMipMapNum(int width, int height);
 extern uint32_t FFLiGetBufferRenderTexture(uint32_t width, uint32_t height,
                                            uint32_t format, uint32_t mipCount);
 extern uint32_t FFLiBugCanSwapSize(uint32_t size);
@@ -39,9 +40,6 @@ extern uint32_t FFLiBugCanVgtFixedIndexSize(uint32_t size);
 extern void* FFLiBugVgtFixedIndexPtr(void* value);
 extern uint32_t FFLiRoundUp(uint32_t value, uint32_t alignment);
 extern void FFLiInvalidate(uint32_t type, void* address, uint32_t size);
-extern uint32_t FFLiCompressorBC1GetTextureBufferSize(uint32_t width, uint32_t height,
-                                                      uint32_t mipCount);
-
 uint32_t __N_23_FFLiFacelineTexture_cpp_cff65387::GetWidth(uint32_t width)
 {
     return width >> 1;
@@ -64,7 +62,7 @@ uint32_t __N_23_FFLiFacelineTexture_cpp_cff65387::GetTextureBufferSize(
     uint32_t width, uint32_t height, uint32_t mipCount, bool compressed)
 {
     if (compressed)
-        return FFLiCompressorBC1GetTextureBufferSize(width, height, mipCount);
+        return FFLiCompressorImpl<FFLiCompressorDescBC1>::GetTextureBufferSize(width, height, mipCount);
     return FFLiGetBufferRenderTexture(width, height, 0x1a, mipCount);
 }
 

@@ -1,7 +1,7 @@
 #include "vendor/__N_23_FFLiCompressUniform_cpp_56da346f.hpp"
 
 void FFLiSwapEndianArrayImpl__tm__2_f__FPZ1ZUi_v(float* values, unsigned int count);
-void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
+extern "C" void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
 
 unsigned int __N_23_FFLiCompressUniform_cpp_56da346f::GetBlockAlignedSize(unsigned int value)
 {

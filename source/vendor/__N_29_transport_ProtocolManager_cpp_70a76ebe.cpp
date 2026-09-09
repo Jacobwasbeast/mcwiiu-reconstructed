@@ -1,5 +1,7 @@
 #include "vendor/__N_29_transport_ProtocolManager_cpp_70a76ebe.hpp"
 
+uint32_t g_piaProtocolTypeMask = 0;
+
 uint32_t __N_29_transport_ProtocolManager_cpp_70a76ebe::getProtocolTypeBit(unsigned short protocolType)
 {
     switch (protocolType)

@@ -13,6 +13,10 @@ public:
 
 void SetModuleId(const char* moduleId);
 
+void SetModuleId(const char*)
+{
+}
+
 uint32_t __N_15_FFLiManager_cpp_28866420::TempMemorySize(bool temporary)
 {
     if (temporary)

@@ -9,4 +9,6 @@ public:
     static uint32_t getProtocolTypeBit(unsigned short protocolType);
 };
 
+extern uint32_t g_piaProtocolTypeMask;
+
 #endif
