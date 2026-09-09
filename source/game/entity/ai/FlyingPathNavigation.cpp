@@ -8,7 +8,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
 
 FlyingPathNavigation::FlyingPathNavigation(Mob* mob, Level* level)
     : PathNavigation(mob, level), mNodeEvaluator(mob)
@@ -33,7 +33,7 @@ bool FlyingPathNavigation::canFloat()
 
 bool FlyingPathNavigation::canUpdatePath()
 {
-    return !((!canFloat() || !isInLiquid()) && mMob->isNoGravity());
+    return !((!canFloat() || !isInLiquid()) && mMob->isPassenger());
 }
 
 Vec3* FlyingPathNavigation::getTempMobPos()
@@ -44,7 +44,7 @@ Vec3* FlyingPathNavigation::getTempMobPos()
 Path* FlyingPathNavigation::createPath(boost::shared_ptr<Entity> entity)
 {
     BlockPos pos(entity);
-    return PathNavigation::createPath(pos);
+    return createPath(pos);
 }
 
 void FlyingPathNavigation::tick()
@@ -62,10 +62,9 @@ void FlyingPathNavigation::tick()
         {
             boost::shared_ptr<Entity> entity = mMob->shared_from_this();
             Vec3* next = mPath->getPos(entity, mPath->getIndex());
-            Vec3* mobPos = getTempMobPos();
-            if (static_cast<int>(std::floor(mobPos->x)) == static_cast<int>(std::floor(next->x)) &&
-                static_cast<int>(std::floor(mobPos->y)) == static_cast<int>(std::floor(next->y)) &&
-                static_cast<int>(std::floor(mobPos->z)) == static_cast<int>(std::floor(next->z)))
+            if (static_cast<int>(std::floor(mMob->mX)) == static_cast<int>(std::floor(next->x)) &&
+                static_cast<int>(std::floor(mMob->mY)) == static_cast<int>(std::floor(next->y)) &&
+                static_cast<int>(std::floor(mMob->mZ)) == static_cast<int>(std::floor(next->z)))
                 mPath->setIndex(mPath->getIndex() + 1);
         }
         debugPathfinding();
@@ -80,69 +79,66 @@ void FlyingPathNavigation::tick()
     {
         boost::shared_ptr<Entity> entity = mMob->shared_from_this();
         Vec3* current = mPath->currentPos(entity);
-        static_cast<MoveControl*>(static_cast<Mob*>(mMob)->getMoveControl())->setWantedPosition(
-            current->x, current->y, current->z, mSpeedModifier);
+        mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
+                                                  mSpeedModifier);
     }
 }
 
-bool FlyingPathNavigation::canMoveDirectly(Vec3* a, Vec3* b, int, int, int)
+bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int, int, int)
 {
-    const double dx = b->x - a->x;
-    const double dy = b->y - a->y;
-    const double dz = b->z - a->z;
-    const double lengthSquared = dx * dx + dy * dy + dz * dz;
+    const double xDelta = end->x - start->x;
+    const double yDelta = end->y - start->y;
+    const double zDelta = end->z - start->z;
+    const double lengthSquared = xDelta * xDelta + yDelta * yDelta + zDelta * zDelta;
     if (lengthSquared < 1.0e-8)
+    {
         return false;
-
-    const double length = std::sqrt(lengthSquared);
-    const double stepX = dx / length;
-    const double stepY = dy / length;
-    const double stepZ = dz / length;
-    int currentX = static_cast<int>(std::floor(a->x));
-    int currentY = static_cast<int>(std::floor(a->y));
-    int currentZ = static_cast<int>(std::floor(a->z));
-    const int targetX = static_cast<int>(std::floor(b->x));
-    const int targetY = static_cast<int>(std::floor(b->y));
-    const int targetZ = static_cast<int>(std::floor(b->z));
-    const int directionX = stepX < 0.0 ? -1 : 1;
-    const int directionY = stepY < 0.0 ? -1 : 1;
-    const int directionZ = stepZ < 0.0 ? -1 : 1;
-    double distanceX = (static_cast<double>(currentX) - a->x) / stepX;
-    double distanceY = (static_cast<double>(currentY) - a->y) / stepY;
-    double distanceZ = (static_cast<double>(currentZ) - a->z) / stepZ;
-    if (stepX >= 0.52) distanceX += 1.0;
-    if (stepY >= 0.52) distanceY += 1.0;
-    if (stepZ >= 0.52) distanceZ += 1.0;
-
+    }
+    const double scale = 1.0 / std::sqrt(lengthSquared);
+    const double xStep = xDelta * scale;
+    const double yStep = yDelta * scale;
+    const double zStep = zDelta * scale;
+    int x = static_cast<int>(std::floor(start->x));
+    int y = static_cast<int>(std::floor(start->y));
+    int z = static_cast<int>(std::floor(start->z));
+    const int endX = static_cast<int>(std::floor(end->x));
+    const int endY = static_cast<int>(std::floor(end->y));
+    const int endZ = static_cast<int>(std::floor(end->z));
+    const int xDirection = xStep < 0.0 ? -1 : 1;
+    const int yDirection = yStep < 0.0 ? -1 : 1;
+    const int zDirection = zStep < 0.0 ? -1 : 1;
+    double xDistance = ((x - start->x) + (xStep >= 0.0 ? 1.0 : 0.0)) / xStep;
+    double yDistance = ((y - start->y) + (yStep >= 0.0 ? 1.0 : 0.0)) / yStep;
+    double zDistance = ((z - start->z) + (zStep >= 0.0 ? 1.0 : 0.0)) / zStep;
     while (true)
     {
-        if ((targetX - currentX) * directionX < 1 &&
-            (targetY - currentY) * directionY < 1 &&
-            (targetZ - currentZ) * directionZ < 1)
-            return true;
-
-        if (distanceY < distanceX)
+        if ((endX - x) * xDirection < 1 && (endY - y) * yDirection < 1 &&
+            (endZ - z) * zDirection < 1)
         {
-            if (distanceZ <= distanceY)
+            return true;
+        }
+        if (yDistance < xDistance)
+        {
+            if (zDistance < yDistance)
             {
-                distanceZ += 1.0 / std::fabs(stepZ);
-                currentZ += directionZ;
+                z += zDirection;
+                zDistance += 1.0 / std::fabs(zStep);
             }
             else
             {
-                distanceY += 1.0 / std::fabs(stepY);
-                currentY += directionY;
+                y += yDirection;
+                yDistance += 1.0 / std::fabs(yStep);
             }
         }
-        else if (distanceZ <= distanceX)
+        else if (zDistance <= xDistance)
         {
-            distanceZ += 1.0 / std::fabs(stepZ);
-            currentZ += directionZ;
+            z += zDirection;
+            zDistance += 1.0 / std::fabs(zStep);
         }
         else
         {
-            distanceX += 1.0 / std::fabs(stepX);
-            currentX += directionX;
+            x += xDirection;
+            xDistance += 1.0 / std::fabs(xStep);
         }
     }
 }
@@ -164,7 +160,7 @@ void FlyingPathNavigation::setCanFloat(bool value)
 
 bool FlyingPathNavigation::isStableDestination(const BlockPos& pos)
 {
-    return mLevel->getBlock(pos)->isPathfindable(mLevel, pos);
+    return mLevel->getBlockState(pos)->isTopSolidBlocking();
 }
 
 NodeEvaluator* FlyingPathNavigation::getNodeEvaluator()

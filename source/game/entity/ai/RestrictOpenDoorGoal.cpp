@@ -14,7 +14,6 @@
 RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob)
     : Goal(),
       mMob(mob),
-      mDoor(NULL),
       mDoorInfo()
 {
 }
@@ -31,16 +30,15 @@ bool RestrictOpenDoorGoal::canUse()
     BlockPos pos(mMob->shared_from_this());
     boost::shared_ptr<Villages> villages = mMob->mLevel->getVillages();
     boost::shared_ptr<Village> village = villages->getClosestVillage(pos, 16);
-    if (village == NULL)
+    if (!village)
         return false;
 
     boost::shared_ptr<DoorInfo> doorInfo = village->getClosestDoorInfo(pos);
-    if (doorInfo == NULL)
+    if (!doorInfo)
         return false;
 
-    mDoor = doorInfo.get();
     mDoorInfo = doorInfo;
-    return mDoor->distanceToInsideSqr(pos) <= 2.25;
+    return doorInfo->distanceToInsideSqr(pos) < 2.25;
 }
 
 bool RestrictOpenDoorGoal::canContinueToUse()
@@ -48,36 +46,35 @@ bool RestrictOpenDoorGoal::canContinueToUse()
     if (mMob->mLevel->isDay())
         return false;
 
-    if (mDoorInfo == NULL)
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (!doorInfo)
         return false;
 
-    if (mDoor->isRemoved())
+    if (doorInfo->isRemoved())
         return false;
 
     BlockPos pos(mMob->shared_from_this());
-    return mDoor->isInsideSide(pos);
+    return doorInfo->isInsideSide(pos);
 }
 
 void RestrictOpenDoorGoal::start()
 {
-    GroundPathNavigation* navigation = static_cast<GroundPathNavigation*>(mMob->getNavigation());
-    navigation->setCanOpenDoors(false);
-    navigation->setCanPassDoors(false);
+    static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanOpenDoors(false);
+    static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanPassDoors(false);
 }
 
 void RestrictOpenDoorGoal::stop()
 {
-    GroundPathNavigation* navigation = static_cast<GroundPathNavigation*>(mMob->getNavigation());
-    navigation->setCanOpenDoors(true);
-    navigation->setCanPassDoors(true);
-    mDoor = NULL;
+    static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanOpenDoors(true);
+    static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanPassDoors(true);
     mDoorInfo.reset();
 }
 
 void RestrictOpenDoorGoal::tick()
 {
-    if (mDoorInfo != NULL)
-        mDoor->incBookingCount();
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (doorInfo)
+        doorInfo->incBookingCount();
 }
 
 std::wstring RestrictOpenDoorGoal::getName()

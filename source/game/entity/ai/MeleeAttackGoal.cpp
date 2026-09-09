@@ -109,7 +109,7 @@ void MeleeAttackGoal::stop()
 void MeleeAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(target, 30.0f, 30.0f);
+    mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     bool canSeeTarget = true;
     --mTicksUntilNextPathRecalculation;

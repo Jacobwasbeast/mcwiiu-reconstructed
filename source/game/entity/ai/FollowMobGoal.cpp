@@ -86,7 +86,7 @@ void FollowMobGoal::tick()
     if (!mTarget)
         return;
 
-    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(mTarget, 10.0f, 30.0f);
+    mMob->getLookControl()->setLookAt(mTarget, 10.0f, 30.0f);
     --mTimeToRecalcPath;
     if (mTimeToRecalcPath < 1)
     {

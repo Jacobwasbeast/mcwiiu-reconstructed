@@ -2,7 +2,6 @@
 
 #include "game/core/Dolphin.hpp"
 #include "game/core/Mth.hpp"
-#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -71,7 +70,7 @@ void BreathAirGoal::tick()
     }
 
     mDolphin->moveRelative(mDolphin->mXxa, mDolphin->mYya, mDolphin->mZza, 0.02f);
-    static_cast<LookControl*>(mDolphin->getLookControl())->setLookAt(mDolphin->mX, mDolphin->mY, mDolphin->mZ, 0.0f, 0.0f);
+    mDolphin->move(eMoverType_Self, mDolphin->mXd, mDolphin->mYd, mDolphin->mZd, false);
 }
 
 bool BreathAirGoal::canUse()

@@ -43,7 +43,7 @@ void MoveToWaterGoal::stop()
     if (mMob->getNavigation()->isDone())
         mMob->getNavigation()->stop();
     else
-        static_cast<MoveControl*>(mMob->getMoveControl())->wait();
+        mMob->getMoveControl()->wait();
 }
 
 bool MoveToWaterGoal::isValidTarget(Level*, const BlockPos& pos)

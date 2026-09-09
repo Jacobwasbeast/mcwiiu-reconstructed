@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/Goal.hpp"
 
@@ -22,7 +22,7 @@ public:
 
 private:
     Mob* mMob;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     float mYd;
 };
 

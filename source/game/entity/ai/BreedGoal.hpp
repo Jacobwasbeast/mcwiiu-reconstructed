@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_BREEDGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 #include <typeinfo>
 #include "game/entity/ai/Goal.hpp"
@@ -17,18 +18,18 @@ public:
     BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType);
     virtual ~BreedGoal();
 
-    void getFreePartner();
+    boost::shared_ptr<Animal> getFreePartner();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void stop();
     virtual void tick();
-    void breed();
+    virtual void breed();
     virtual void setLevel(Level* level);
     virtual std::wstring getName();
 
 protected:
     Animal* mAnimal;
-    boost::shared_ptr<Animal> mPartner;
+    boost::weak_ptr<Animal> mPartner;
     Level* mLevel;
     const std::type_info* mPartnerType;
     int mTicks;

@@ -117,7 +117,7 @@ double JumpGoal::rotlerp(float from, float to, float amount)
 
 void JumpGoal::tick()
 {
-    if (!mCanJump && !mMob->canAddPassenger(boost::shared_ptr<Entity>()))
+    if (!mCanJump && !mMob->isUnderLiquid(Material::WATER))
     {
         mCanJump = true;
         mMob->playSound(SoundEvents::DOLPHIN_JUMP, 1.0f, 1.0f);
@@ -128,10 +128,10 @@ void JumpGoal::tick()
         mMob->mXRot = static_cast<float>(rotlerp(mMob->mXRot, 0.0f, 0.2f));
         return;
     }
-    double horizontalSpeed = std::sqrt(mMob->mXd * mMob->mXd + mMob->mZd * mMob->mZd);
-    double speed = std::sqrt(horizontalSpeed * horizontalSpeed + verticalSpeed);
-    double angle = -mMob->mYd;
-    int sign = (angle > 0.0 ? 1 : angle < 0.0 ? -1 : 0);
+    double speed = Mth::sqrt(mMob->mZd * mMob->mZd + mMob->mXd * mMob->mXd + verticalSpeed);
+    double horizontalSpeed = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mZd * mMob->mZd);
+    double fallSpeed = -mMob->mYd;
+    int sign = (0.0 < fallSpeed) - (fallSpeed < 0.0);
     double pitch = std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0));
     mMob->mXRot = static_cast<float>(static_cast<double>(sign) * pitch * 57.2957763671875);
 }

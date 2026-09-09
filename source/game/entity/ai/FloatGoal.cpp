@@ -16,14 +16,14 @@ FloatGoal::FloatGoal(Mob* mob)
 {
     setRequiredControlFlags(4);
 
-    PathNavigation* navigation = mob->getNavigation();
-    if (GroundPathNavigation* groundNavigation = dynamic_cast<GroundPathNavigation*>(navigation))
+    static_cast<GroundPathNavigation*>(mob->getNavigation())->setCanFloat(true);
+    if (dynamic_cast<GroundPathNavigation*>(mob->getNavigation()))
     {
-        groundNavigation->setCanFloat(true);
+        static_cast<GroundPathNavigation*>(mob->getNavigation())->setCanFloat(true);
     }
-    else if (FlyingPathNavigation* flyingNavigation = dynamic_cast<FlyingPathNavigation*>(navigation))
+    else if (dynamic_cast<FlyingPathNavigation*>(mob->getNavigation()))
     {
-        flyingNavigation->setCanFloat(true);
+        static_cast<FlyingPathNavigation*>(mob->getNavigation())->setCanFloat(true);
     }
 }
 
@@ -38,7 +38,6 @@ bool FloatGoal::canUse()
 
 void FloatGoal::tick()
 {
-    mMob->getNavigation()->tick();
     if (mMob->getRandom()->nextFloat() < 0.8f)
     {
         static_cast<JumpControl*>(mMob->getJumpControl())->jump();

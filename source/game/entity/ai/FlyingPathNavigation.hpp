@@ -20,12 +20,14 @@ public:
     FlyingPathNavigation(Mob* mob, Level* level);
     virtual ~FlyingPathNavigation();
 
+    using PathNavigation::createPath;
+
     virtual PathFinder* createPathFinder();
     virtual Path* createPath(boost::shared_ptr<Entity> entity);
     virtual void tick();
     virtual Vec3* getTempMobPos();
     virtual bool canUpdatePath();
-    virtual bool canMoveDirectly(Vec3* a, Vec3* b, int x, int y, int z);
+    virtual bool canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth);
     virtual NodeEvaluator* getNodeEvaluator();
     virtual bool isStableDestination(const BlockPos& pos);
 

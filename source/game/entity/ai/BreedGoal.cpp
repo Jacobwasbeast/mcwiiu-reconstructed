@@ -1,24 +1,30 @@
 #include "game/entity/ai/BreedGoal.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <string>
 #include <typeinfo>
 #include <vector>
+
+#include "game/core/Path.hpp"
+#include "game/core/Sensing.hpp"
 #include "game/entity/ai/LookControl.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 
 BreedGoal::BreedGoal(Animal* animal, double speedModifier)
-    : mAnimal(animal), mPartner(), mLevel(animal != 0 ? animal->mLevel : 0),
-      mPartnerType(animal != 0 ? &typeid(*animal) : &typeid(Animal)), mTicks(0),
-      mSpeedModifier(speedModifier)
+    : mAnimal(animal), mPartner(), mLevel(animal->mLevel),
+      mPartnerType(&typeid(*animal)), mTicks(0), mSpeedModifier(speedModifier)
 {
     setRequiredControlFlags(3);
 }
 
 BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType)
-    : mAnimal(animal), mPartner(), mLevel(animal != 0 ? animal->mLevel : 0),
+    : mAnimal(animal), mPartner(), mLevel(animal->mLevel),
       mPartnerType(&partnerType), mTicks(0), mSpeedModifier(speedModifier)
 {
     setRequiredControlFlags(3);
@@ -28,43 +34,49 @@ BreedGoal::~BreedGoal()
 {
 }
 
-void BreedGoal::getFreePartner()
+boost::shared_ptr<Animal> BreedGoal::getFreePartner()
 {
-    mPartner.reset();
-    if (mAnimal == 0 || mLevel == 0) {
-        return;
-    }
-
     AABB* area = mAnimal->mBoundingBox->grow(8.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(*mPartnerType, area);
+    boost::shared_ptr<Animal> partner;
     double nearest = 1.7976931348623157e+308;
     std::vector<boost::shared_ptr<Entity> >::const_iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it) {
-        boost::shared_ptr<Animal> animal = boost::dynamic_pointer_cast<Animal>(*it);
-        if (animal && mAnimal->canMate(animal)) {
-            double distance = mAnimal->distanceToSqr(*it);
-            if (distance < nearest) {
-                nearest = distance;
-                mPartner = animal;
-            }
+    for (it = entities->begin(); it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Animal> candidate = boost::dynamic_pointer_cast<Animal>(*it);
+        if (mAnimal->canMate(candidate) && mAnimal->distanceToSqr(candidate) < nearest)
+        {
+            partner = candidate;
+            nearest = mAnimal->distanceToSqr(candidate);
         }
     }
     delete entities;
+    return partner;
 }
 
 bool BreedGoal::canUse()
 {
-    if (mAnimal == 0 || !mAnimal->isInLove()) {
+    if (!mAnimal->isInLove())
         return false;
-    }
-    getFreePartner();
-    return mPartner.get() != NULL;
+
+    mPartner = getFreePartner();
+    return !mPartner.expired();
 }
 
 bool BreedGoal::canContinueToUse()
 {
-    return mPartner && mPartner->isAlive() && mPartner->isInLove() && mTicks < 60;
+    boost::shared_ptr<Animal> partner = mPartner.lock();
+    if (!partner)
+        return false;
+
+    if (!partner->isAlive())
+        return false;
+
+    if (!partner->isInLove())
+        return false;
+
+    return mTicks < 60;
 }
 
 void BreedGoal::stop()
@@ -76,26 +88,31 @@ void BreedGoal::stop()
 void BreedGoal::tick()
 {
     ++mTicks;
-    if (mAnimal == 0 || !mPartner) {
-        return;
-    }
-    static_cast<LookControl*>(mAnimal->getLookControl())->setLookAt(mPartner, 10.0F, 10.0F);
-    if (mTicks >= 60 && mAnimal->distanceToSqr(mPartner) < 9.0) {
-        breed();
+    boost::shared_ptr<Animal> partner = mPartner.lock();
+    mAnimal->getLookControl()->setLookAt(partner, 10.0f,
+                                         static_cast<float>(mAnimal->getMaxHeadXRot()));
+    mAnimal->getNavigation()->moveTo(partner, mSpeedModifier);
+    if (mTicks > 59)
+    {
+        BlockPos pos(partner);
+        Path* path = mAnimal->getNavigation()->getPath();
+        if (path != NULL && path->endsIn(Vec3::newTemp(&pos)) && path->IsWithinStepsToTheEnd(1) &&
+            mAnimal->getSensing()->canSee(partner) && mAnimal->distanceToSqr(partner) < 9.0)
+            breed();
     }
 }
 
 void BreedGoal::breed()
 {
-    if (mAnimal == 0 || !mPartner || mLevel == 0) {
+    boost::shared_ptr<Animal> partner = mPartner.lock();
+    mAnimal->setDespawnProtected();
+    partner->setDespawnProtected();
+    if (!mLevel->canCreateMore(mAnimal->GetType(), 1))
+    {
+        mAnimal->resetLove();
+        partner->resetLove();
         return;
     }
-    if (!mAnimal->canMate(mPartner) || !mPartner->isInLove()) {
-        return;
-    }
-    mAnimal->resetLove();
-    mPartner->resetLove();
-    mTicks = 0;
 }
 
 void BreedGoal::setLevel(Level* level)
@@ -105,5 +122,5 @@ void BreedGoal::setLevel(Level* level)
 
 std::wstring BreedGoal::getName()
 {
-    return L"Breed";
+    return std::wstring(L"Breed");
 }

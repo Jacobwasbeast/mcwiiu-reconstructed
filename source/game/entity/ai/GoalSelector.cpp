@@ -1,10 +1,10 @@
 #include "game/entity/ai/GoalSelector.hpp"
-#include "game/entity/ai/Goal.hpp"
-#include "game/world/Level.hpp"
+
 #include <algorithm>
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/entity/ai/Goal.hpp"
+#include "game/world/Level.hpp"
 
 GoalSelector::GoalSelector()
     : mTickCount(0), mNewGoalRate(3), mDisabledControlFlags(0)

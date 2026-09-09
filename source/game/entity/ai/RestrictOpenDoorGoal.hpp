@@ -1,7 +1,7 @@
 #ifndef GAME_ENTITY_AI_RESTRICTOPENDOORGOAL_HPP
 #define GAME_ENTITY_AI_RESTRICTOPENDOORGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -24,8 +24,7 @@ public:
 
 private:
     PathfinderMob* mMob;
-    DoorInfo* mDoor;
-    boost::shared_ptr<DoorInfo> mDoorInfo;
+    boost::weak_ptr<DoorInfo> mDoorInfo;
 };
 
 #endif
