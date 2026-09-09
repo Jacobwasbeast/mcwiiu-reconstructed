@@ -1,6 +1,6 @@
 #include "game/util/LegacyUtilityFunctions.hpp"
 
-extern void AIL_debug_log(const char* format, ...);
+extern "C" void AIL_debug_log(const char* format, ...);
 
 void outresfloat()
 {
