@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include "game/client/render/ParticleType.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
@@ -67,17 +69,17 @@ double Squid::getEyeHeight()
 
 const SoundEvent* Squid::getAmbientSound()
 {
-    return 0;
+    return SoundEvents::SQUID_AMBIENT;
 }
 
 const SoundEvent* Squid::getHurtSound(const DamageSource*)
 {
-    return 0;
+    return SoundEvents::SQUID_HURT;
 }
 
 const SoundEvent* Squid::getDeathSound()
 {
-    return 0;
+    return SoundEvents::SQUID_DEATH;
 }
 
 float Squid::getSoundVolume()
@@ -96,7 +98,7 @@ void Squid::playStepSound(const BlockPos&, Block*)
 
 const void* Squid::getDefaultLootTable()
 {
-    return 0;
+    return &BuiltInLootTables::SQUID;
 }
 
 void Squid::aiStep()
@@ -198,7 +200,7 @@ unsigned int Squid::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
 unsigned long long Squid::GetType()
 {
-    return 0xd50200100000000ULL;
+    return 0x0D502001ULL;
 }
 
 Squid::SquidRandomMovementGoal::SquidRandomMovementGoal(Squid* squid) : Goal(), mSquid(squid)

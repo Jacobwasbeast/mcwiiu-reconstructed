@@ -1,6 +1,7 @@
 #include "game/core/StatsCounter.hpp"
 
 #include "game/core/Stat.hpp"
+#include "game/core/Stats.hpp"
 
 #include <cstring>
 
@@ -76,7 +77,18 @@ void StatsCounter::setupStatBoards()
 
 unsigned int StatsCounter::isLargeStat(Stat* stat)
 {
-    return stat != NULL && stat->isExtended();
+    static Stat** largeStats[] = {
+        &Stats::walkOneM, &Stats::swimOneM, &Stats::fallOneM, &Stats::climbOneM,
+        &Stats::minecartOneM, &Stats::boatOneM, &Stats::pigOneM, &Stats::portalsUsed
+    };
+    for (unsigned int i = 0; i < sizeof(largeStats) / sizeof(largeStats[0]); ++i)
+    {
+        if (*largeStats[i] == stat)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned int amount, bool fromServer)

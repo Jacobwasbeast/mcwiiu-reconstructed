@@ -64,7 +64,7 @@ public:
     void setArmourStat(bool armourStat);
 
     void setExtended();
-    bool isExtended();
+    bool isExtended() { return extended; }
 
     void setAwardLocallyOnly();
     bool isAwardedFromServer() const;

@@ -2,11 +2,12 @@
 
 #include "game/world/generation/Player.hpp"
 
+class LivingEntity;
+
 #include <wchar.h>
 
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/core/L10N.hpp"
-class LivingEntity;
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 
 void AttributeModifier::_init(eMODIFIER_ID id, std::wstring name, double amount, int operation)

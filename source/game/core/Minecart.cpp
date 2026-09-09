@@ -5,12 +5,20 @@
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+
+const EntityDataAccessor<int>* Minecart::DATA_ID_DAMAGE = NULL;
+const EntityDataAccessor<int>* Minecart::DATA_ID_DISPLAY_BLOCK = NULL;
+const EntityDataAccessor<float>* Minecart::DATA_ID_DISPLAY_OFFSET = NULL;
+const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_TIME = NULL;
+const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_DIR = NULL;
+const EntityDataAccessor<bool>* Minecart::DATA_ID_CUSTOM_DISPLAY = NULL;
 
 Minecart::Minecart(Level* level) : Entity(level, true)
 {
@@ -35,6 +43,12 @@ Minecart::~Minecart()
 
 void Minecart::staticCtor()
 {
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<float>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
 }
 
 void Minecart::_init()
@@ -82,6 +96,12 @@ bool Minecart::makeStepSound()
 
 void Minecart::defineSynchedData()
 {
+    mEntityData->createDateItem(DATA_ID_DAMAGE, 0);
+    mEntityData->createDateItem(DATA_ID_DISPLAY_BLOCK, 0);
+    mEntityData->createDateItem(DATA_ID_DISPLAY_OFFSET, 0.0f);
+    mEntityData->createDateItem(DATA_ID_HURT_TIME, 0);
+    mEntityData->createDateItem(DATA_ID_HURT_DIR, 6);
+    mEntityData->createDateItem(DATA_ID_CUSTOM_DISPLAY, false);
 }
 
 AABB* Minecart::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
@@ -95,7 +115,7 @@ AABB* Minecart::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
 
 AABB* Minecart::getCollideBox()
 {
-    return mBoundingBox;
+    return NULL;
 }
 
 AABB* Minecart::getBoundingBoxForCulling()
@@ -154,7 +174,7 @@ void Minecart::onAboveBubbleCol(bool down)
 
 bool Minecart::shouldTick()
 {
-    return !mRemoved;
+    return true;
 }
 
 void Minecart::tick()

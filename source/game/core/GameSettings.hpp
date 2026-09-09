@@ -11,7 +11,8 @@ class GameSettings
 {
     unsigned char mChanged, mYAxis, mSensitivity, mSwapSticks, mVibration, mSkinFlags;
     unsigned short mOptionFlags;
-    unsigned int mTutorialFlags, mUnknown0x10, mUnknown0x14, mUnknown0x18, mUnknown0x1c;
+    unsigned int mUnknown0x08;
+    unsigned int mUnknown0x0C, mTutorialFlags, mUnknown0x10, mUnknown0x14, mUnknown0x18, mUnknown0x1c;
     unsigned int mUnknown0x20, mUnknown0x24, mUnknown0x28, mUnknown0x2c, mUnknown0x30, mUnknown0x34, mUnknown0x38, mUnknown0x3c, mUnknown0x40, mUnknown0x44, mUnknown0x48;
     unsigned int mSkinId;
     unsigned char mLanguage, mLocale;

@@ -2,45 +2,42 @@
 
 #include <string>
 
+#include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+
+AbstractProperty<int>* Coral_VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
 
 namespace
 {
-    std::wstring gCoralIconNames[5] =
+    std::wstring CORAL_ICON_NAMES[5] =
     {
         L"coral_red", L"coral_orange", L"coral_yellow", L"coral_blue", L"coral_purple"
     };
 
-    void destroyCoralIconNames(std::wstring* names, int count)
-    {
-        for (int i = 0; i < count; ++i)
-            names[i].~basic_string();
-    }
+    const AABB* CORAL_SHAPE = NULL;
 }
-
-void __T12()
-{
-    destroyCoralIconNames(gCoralIconNames, 5);
-}
-
-extern Property* Coral_VARIANT;
 
 Coral::Coral()
-    : Bush(Material::CORAL)
+    : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
+
     for (int i = 0; i < 5; ++i)
     {
         mIcons[i] = NULL;
@@ -53,70 +50,69 @@ Coral::~Coral()
 
 int Coral::getColor(const BlockState* state)
 {
-    return Block::getColor(state);
+    return Blocks::grass->getColor(state);
 }
 
 int Coral::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
-    return Block::getColor(levelSource, pos, state);
+    return Blocks::grass->getColor(levelSource, pos, state);
 }
 
 const MaterialColor* Coral::getMapColor(const BlockState* state, LevelSource* levelSource,
                                         const BlockPos& pos)
 {
-    return Block::getMapColor(state, levelSource, pos);
+    return Blocks::grass->getMapColor(state, levelSource, pos);
 }
 
-Item* Coral::getResource(const BlockState*, Random*, int)
+Item* Coral::getResource(const BlockState* state, Random* random, int lootBonus)
 {
     return NULL;
 }
 
-not_null_ptr<ItemInstance> Coral::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
+not_null_ptr<ItemInstance> Coral::getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                       const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::coral, 1,
                                                        convertBlockStateToLegacyData(state)));
 }
 
-bool Coral::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
+bool Coral::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
     return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
 void Coral::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                            Block*, const BlockPos& fromPos)
+                            Block* block, const BlockPos& fromPos)
 {
-    if (!level->mIsClientSide)
+    if (level->mIsClientSide)
     {
-        BlockPos below = fromPos.below();
-        if (!level->isSolidBlockingBlock(below))
-        {
-            const BlockState* belowState = level->getBlockState(below);
-            if (!belowState->getBlock()->mayPlace(level, fromPos))
-            {
-                level->setBlock(fromPos, Blocks::AIR->defaultBlockState(), 3, false);
-            }
-        }
-        level->levelEvent(10, fromPos, 0);
+        return;
     }
+
+    if (!level->isSolidBlockingBlock(pos.below()) && !level->getBlock(pos.below())->isSlabBlock())
+    {
+        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    }
+
+    level->addToTickNextTick(pos, this, 10);
 }
 
-TextureAtlasSprite* Coral::getTexture(const Direction*, const BlockState* state)
+TextureAtlasSprite* Coral::getTexture(const Direction* direction, const BlockState* state)
 {
-    int variant = static_cast<TypedBoxed<int>*>(state->getBoxedValue(Coral_VARIANT))->getValue();
-    return mIcons[variant];
+    return mIcons[state->getValue(Coral_VARIANT)];
 }
 
 void Coral::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 5; ++i)
-        mIcons[i] = iconRegister->registerIcon(gCoralIconNames[i]);
+    {
+        mIcons[i] = iconRegister->registerIcon(CORAL_ICON_NAMES[i]);
+    }
 }
 
 int Coral::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int variant = static_cast<TypedBoxed<int>*>(state->getBoxedValue(Coral_VARIANT))->getValue();
-    return variant;
+    return state->getValue(Coral_VARIANT);
 }
 
 const BlockState* Coral::getBlockState(int data)
@@ -127,28 +123,34 @@ const BlockState* Coral::getBlockState(int data)
 
 int Coral::getDescriptionId(int auxValue)
 {
-    static const unsigned int ids[5] = { 0U, 0x1A417707U, 0x1B1CB5E5U, 0x27B09D40U, 0xA76B491FU };
-    if (auxValue != 0 && auxValue < 5)
+    static const int DESCRIPTION_IDS[5] =
     {
-        return static_cast<int>(ids[auxValue]);
+        0, 0x1A417707, 0x1B1CB5E5, 0x27B09D40, static_cast<int>(0xA76B491FU)
+    };
+
+    if (auxValue != 0 && static_cast<unsigned int>(auxValue) < 5U)
+    {
+        return DESCRIPTION_IDS[auxValue];
     }
+
     return 0x25D640BD;
 }
 
-int Coral::getUseDescriptionId(int)
+int Coral::getUseDescriptionId(int auxValue)
 {
     return 0x226A4AE2;
 }
 
-const AABB* Coral::getShape(const BlockState*, LevelSource*, const BlockPos&)
+const AABB* Coral::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return CORAL_SHAPE;
 }
 
 BlockStateDefinition* Coral::createBlockStateDefinition()
 {
-    const Property* properties[1] = { Coral_VARIANT };
-    return new BlockStateDefinition(this, properties, 1);
+    static const Property* PROPERTIES[1] = { Coral_VARIANT };
+
+    return new BlockStateDefinition(this, PROPERTIES, 1);
 }
 
 bool Coral::isSilkTouchable()
@@ -163,41 +165,36 @@ bool Coral::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* stat
         return false;
     }
 
-    const BlockState* aboveState = level->getBlockState(pos.above(2));
-    if (aboveState->getMaterial() != Material::WATER)
+    if (level->getBlock(pos.above(2))->mMaterial == Material::AIR)
     {
-        const BlockState* currentState = level->getBlockState(pos);
-        if (currentState->getMaterial() == Material::CORAL)
-        {
-            int variant = static_cast<TypedBoxed<int>*>(currentState->getBoxedValue(Coral_VARIANT))->getValue();
-            if (static_cast<unsigned int>(variant - 1) < 7U)
-            {
-                return false;
-            }
-        }
+        return false;
+    }
 
-        bool validSupport = false;
-        Block* block = state->getBlock();
-        if (block->mayPlace(level, pos))
+    if (level->getLiquidBlock(pos)->mMaterial == Material::WATER)
+    {
+        int liquidLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
+        if (static_cast<unsigned int>(liquidLevel - 1) < 7U)
         {
-            int data = block->convertBlockStateToLegacyData(state);
-            if (block->isSolidRender(state) && !HalfSlabBlock::isBottomSlab(data))
-            {
-                validSupport = true;
-            }
-        }
-        if (state->isSolidBlockingBlock() || validSupport)
-        {
-            return true;
+            return false;
         }
     }
-    return false;
+
+    bool onSlabTop = false;
+    Block* block = state->getBlock();
+
+    if (block->isSlabBlock()
+        && !HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
+    {
+        onSlabTop = true;
+    }
+
+    return state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop;
 }
 
-void Coral::onPlace(Level* level, const BlockPos& pos, const BlockState*)
+void Coral::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (level->getBlockState(pos)->getMaterial() == mMaterial)
+    if (level->getLiquidBlock(pos)->mMaterial == mMaterial)
     {
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        level->setExtraBlock(pos, Blocks::FLOWING_WATER->defaultBlockState(), 3, false);
     }
 }

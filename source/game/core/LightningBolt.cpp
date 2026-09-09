@@ -71,7 +71,7 @@ LightningBolt::~LightningBolt()
 
 unsigned long long LightningBolt::GetType()
 {
-    return 0x0B00000100000000ULL;
+    return 0x000000000B000001ULL;
 }
 
 void LightningBolt::defineSynchedData()

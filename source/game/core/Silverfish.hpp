@@ -11,6 +11,7 @@ class Block;
 class BlockPos;
 class BlockState;
 class DamageSource;
+class Item;
 class DataFixerUpper;
 class Direction;
 class Level;
@@ -62,7 +63,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual bool hurt(const DamageSource* source, float damage);
-    virtual const SoundEvent* getDeathLoot();
+    virtual Item* getDeathLoot();
     virtual void tick();
     virtual void setYBodyRot(float yBodyRot);
     virtual double getWalkTargetValue(const BlockPos& pos);

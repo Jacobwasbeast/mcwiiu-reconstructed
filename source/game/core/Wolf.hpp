@@ -22,6 +22,7 @@ class Llama;
 class LivingEntity;
 class Player;
 class SoundEvent;
+template <class T> class EntityDataAccessor;
 
 class Wolf : public TamableAnimal
 {
@@ -87,14 +88,17 @@ public:
     virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual unsigned long long GetType();
-    virtual bool isWet();
-    virtual float getWetShade(float partialTick);
+    bool isWet();
+    float getWetShade(float partialTick);
 
 private:
+    static const EntityDataAccessor<float>* DATA_HEALTH;
+    static const EntityDataAccessor<bool>* DATA_INTERESTED;
+    static const EntityDataAccessor<int>* DATA_COLLAR_COLOR;
     float mBodyRollAngle;
-    int mInterestedAngle;
-    unsigned char mIsInterested;
-    unsigned char mIsAngry;
+    float mInterestedAngle;
+    unsigned char mIsWet;
+    unsigned char mIsWetShaking;
     float mHeadRollAngle;
     float mTailRollAngle;
 };

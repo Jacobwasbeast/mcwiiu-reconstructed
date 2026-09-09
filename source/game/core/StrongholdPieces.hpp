@@ -18,17 +18,18 @@ class StrongholdPieces
 public:
     enum EPieceClass
     {
-        ePieceClass_StairsDown = 0,
-        ePieceClass_Straight,
-        ePieceClass_ChestCorridor,
-        ePieceClass_StraightStairsDown,
-        ePieceClass_LeftTurn,
-        ePieceClass_RightTurn,
-        ePieceClass_RoomCrossing,
-        ePieceClass_PrisonHall,
-        ePieceClass_Library,
-        ePieceClass_FiveCrossing,
-        ePieceClass_PortalRoom
+        ePieceClass_None = 0,
+        ePieceClass_Straight = 1,
+        ePieceClass_PrisonHall = 2,
+        ePieceClass_LeftTurn = 3,
+        ePieceClass_RightTurn = 4,
+        ePieceClass_RoomCrossing = 5,
+        ePieceClass_StraightStairsDown = 6,
+        ePieceClass_StairsDown = 7,
+        ePieceClass_FiveCrossing = 8,
+        ePieceClass_ChestCorridor = 9,
+        ePieceClass_Library = 10,
+        ePieceClass_PortalRoom = 11
     };
 
     class PieceWeight
@@ -80,11 +81,11 @@ public:
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
         void generateSmallDoor(Level* level, Random& random, BoundingBox* box,
                                SmallDoorType type, int x, int y, int z);
-        int generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces,
+        StructurePiece* generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces,
                                           Random& random, int x, int z);
-        int generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces,
+        StructurePiece* generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces,
                                        Random& random, int x, int z);
-        int generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces,
+        StructurePiece* generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces,
                                         Random& random, int x, int z);
     protected:
         int mSmallDoor;
@@ -308,6 +309,7 @@ public:
         virtual ~StartPiece();
         virtual BlockPos getLocatorPosition();
         virtual EStructurePiece GetType();
+        StructurePiece* mPortalRoom;
         Level* mLevel;
         std::vector<StructurePiece*> mPendingChildren;
     };
@@ -327,10 +329,10 @@ public:
                                                       std::vector<StructurePiece*>* pieces,
                                                       Random& random, int x, int y, int z,
                                                       const Direction* direction, int depth);
-    static int generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces,
+    static StructurePiece* generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces,
                                           Random& random, int x, int y, int z,
                                           const Direction* direction, int depth);
-    static int generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces,
+    static StructurePiece* generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces,
                                    Random& random, int x, int y, int z,
                                    const Direction* direction, int depth);
 };

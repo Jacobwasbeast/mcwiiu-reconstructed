@@ -233,4 +233,4 @@ bool SnowMan::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
 const SoundEvent* SnowMan::getAmbientSound() { return SoundEvents::SNOWMAN_AMBIENT; }
 const SoundEvent* SnowMan::getHurtSound(const DamageSource*) { return SoundEvents::SNOWMAN_HURT; }
 const SoundEvent* SnowMan::getDeathSound() { return SoundEvents::SNOWMAN_DEATH; }
-unsigned long long SnowMan::GetType() { return 0x2d58000100000000ULL; }
+unsigned long long SnowMan::GetType() { return 0x2D580001ULL; }

@@ -12,10 +12,10 @@
 #include "game/core/System.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 extern GameRuleManager g_GameRuleManager;
 extern CMinecraftApp* g_pApp;
-extern std::vector<std::wstring> g_dlcSkinNames;
+std::vector<std::wstring> g_dlcSkinNames;
 
 struct _OVERLAPPED
 {
@@ -312,11 +312,11 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
 
             swprintf(messageText, 132, L"%ls\n\n%%ls", pFirstCorruptPack->getName().c_str());
 
-            g_ConsoleUIController.RequestErrorMessage(0xE3D8522A, 0xA69E5B0D, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, messageText, true);
+            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0xA69E5B0D, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, messageText, true);
         }
         else
         {
-            g_ConsoleUIController.RequestErrorMessage(0xE3D8522A, 0x75E79C02, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, NULL, true);
+            gConsoleUIController.RequestErrorMessage(0xE3D8522A, 0x75E79C02, messageParameters, 1, g_pApp->GetPrimaryUserIndex(), NULL, NULL, NULL, true);
         }
     }
 

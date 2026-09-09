@@ -18,12 +18,62 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/EntityDataAccessor_Base.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/world/block/Block.hpp"
+
+const EntityDataAccessor<unsigned char>* ArmorStand::DATA_FLAGS = NULL;
+const EntityDataAccessor<int>* ArmorStand::DATA_POSE = NULL;
+
+namespace
+{
+ArmorStand::Pose makeArmorStandPose(const double (&values)[21])
+{
+    return ArmorStand::Pose(
+        Vec3::newPermanent(values[0], values[1], values[2]),
+        Vec3::newPermanent(values[3], values[4], values[5]),
+        Vec3::newPermanent(values[6], values[7], values[8]),
+        Vec3::newPermanent(values[9], values[10], values[11]),
+        Vec3::newPermanent(values[12], values[13], values[14]),
+        Vec3::newPermanent(values[15], values[16], values[17]),
+        Vec3::newPermanent(values[18], values[19], values[20]));
+}
+
+const double gArmorStandPoseValues[13][21] = {
+    {0,0,0, 0,0,0, -15,0,10, -10,0,-10, 1,0,1, -1,0,-1, 0,0,0},
+    {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0},
+    {-5,0,0, 0,0,2, -60,-20,-10, -30,-5,-5, 1,0,1, -1,0,-1, 0,0,0},
+    {-5,0,0, 0,0,2, -60,-2,-10, 10,0,-5, 3,3,3, -3,-3,-3, 0,0,0},
+    {-15,0,0, 0,0,-2, -110,50,0, 20,0,-10, -5,3,3, 5,-3,-3, 0,0,0},
+    {-15,0,0, 0,0,0, -110,-35,0, -30,0,-5, -5,3,3, 5,-3,-3, 0,0,0},
+    {-15,0,0, 0,0,0, -110,-35,0, -110,35,0, -5,3,3, 5,-3,-3, 0,0,0},
+    {0,0,0, 0,0,0, -70,-40,0, 10,0,-5, 1,0,1, -1,0,-1, 0,0,0},
+    {16,20,0, 0,0,0, 246,0,89, 8,0,237, 8,20,4, -14,-18,-16, 0,13,0},
+    {-10,-20,0, 0,0,0, -100,0,0, -105,0,0, -46,0,0, 7,0,0, 0,0,0},
+    {-5,22,0, 0,22,0, 0,84,111, 8,0,-14, -14,-18,-16, 23,-13,-111, 0,0,0},
+    {-10,-20,0, 0,-18,0, 8,-112,111, 0,0,-119, -13,-42,0, 0,0,13, 0,0,0},
+    {-4,67,0, 0,8,0, 63,-8,0, 4,0,-99, 67,0,-99, 0,-8,-75, 0,0,0}
+};
+
+ArmorStand::Pose gArmorStandPoses[13] = {
+    makeArmorStandPose(gArmorStandPoseValues[0]), makeArmorStandPose(gArmorStandPoseValues[1]),
+    makeArmorStandPose(gArmorStandPoseValues[2]), makeArmorStandPose(gArmorStandPoseValues[3]),
+    makeArmorStandPose(gArmorStandPoseValues[4]), makeArmorStandPose(gArmorStandPoseValues[5]),
+    makeArmorStandPose(gArmorStandPoseValues[6]), makeArmorStandPose(gArmorStandPoseValues[7]),
+    makeArmorStandPose(gArmorStandPoseValues[8]), makeArmorStandPose(gArmorStandPoseValues[9]),
+    makeArmorStandPose(gArmorStandPoseValues[10]), makeArmorStandPose(gArmorStandPoseValues[11]),
+    makeArmorStandPose(gArmorStandPoseValues[12])
+};
+}
 
 ArmorStand::Pose::Pose(const Vec3* headPose, const Vec3* bodyPose,
-                       const Vec3* leftArmPose, const Vec3* rightArmPose,
-                       const Vec3* leftLegPose, const Vec3* rightLegPose,
+                       const Vec3* rightArmPose, const Vec3* leftArmPose,
+                       const Vec3* rightLegPose, const Vec3* leftLegPose,
                        const Vec3* rightItemPose)
     : head(const_cast<Vec3*>(headPose)), body(const_cast<Vec3*>(bodyPose)),
       leftArm(const_cast<Vec3*>(leftArmPose)), rightArm(const_cast<Vec3*>(rightArmPose)),
@@ -31,6 +81,7 @@ ArmorStand::Pose::Pose(const Vec3* headPose, const Vec3* bodyPose,
       rightItem(const_cast<Vec3*>(rightItemPose))
 {
 }
+
 
 ArmorStand::ArmorStand(Level* level) : LivingEntity(level), mHandItems(), mArmorItems()
 {
@@ -50,6 +101,12 @@ ArmorStand::~ArmorStand()
 
 void ArmorStand::staticCtor()
 {
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_ARMOR_STAND,
+                                                             ENTITY_TYPE_LIVING_ENTITY,
+                                                             EntityDataSerializers::BYTE);
+    DATA_POSE = SynchedEntityData::defineId<int>(ENTITY_TYPE_ARMOR_STAND,
+                                                  ENTITY_TYPE_LIVING_ENTITY,
+                                                  EntityDataSerializers::INT);
 }
 
 void ArmorStand::addDataWalkers(DataFixerUpper* fixer)
@@ -81,8 +138,22 @@ unsigned char ArmorStand::setBit(unsigned char value, int bit, bool enabled)
 }
 
 void ArmorStand::setShowArms(bool showArms) { mShowArms = showArms; }
-std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getHandSlots() { return NULL; }
-std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getArmorSlots() { return NULL; }
+std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getHandSlots()
+{
+    std::vector<boost::shared_ptr<ItemInstance> >* items =
+        new std::vector<boost::shared_ptr<ItemInstance> >();
+    items->push_back(mHandItems[0]);
+    items->push_back(mHandItems[1]);
+    return items;
+}
+std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getArmorSlots()
+{
+    std::vector<boost::shared_ptr<ItemInstance> >* items =
+        new std::vector<boost::shared_ptr<ItemInstance> >();
+    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
+        items->push_back(mArmorItems[i]);
+    return items;
+}
 not_null_ptr<ItemInstance> ArmorStand::getItemSlot(const EquipmentSlot* slot)
 {
     if (slot->getType() == EquipmentSlot::HAND)
@@ -149,7 +220,7 @@ bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
     setItemSlot(equipmentSlot, item);
     return true;
 }
-bool ArmorStand::isEffectiveAi() { return false; }
+bool ArmorStand::isEffectiveAi() { return !isMarker() && LivingEntity::isEffectiveAi(); }
 bool ArmorStand::isSmall() { return mFlags & 1; }
 bool ArmorStand::isNoBasePlate() { return mNoBasePlate; }
 bool ArmorStand::isMarker() { return mMarker; }
@@ -384,8 +455,29 @@ unsigned int ArmorStand::GetHitTooltip(const EntityTooltipDataHolder& tooltipDat
 {
     return tooltipData.m_bAllowedToHurt ? 0x5fb7a25aU : 0xffffffffU;
 }
-void ArmorStand::playBrokenSound() {}
-void ArmorStand::brokenByAnything() {}
+void ArmorStand::playBrokenSound() { playSound(SoundEvents::ARMORSTAND_BREAK, 1.0f, 1.0f); }
+void ArmorStand::brokenByAnything()
+{
+    playBrokenSound();
+    BlockPos pos(this);
+    BlockPos dropPos = pos.above();
+    for (std::size_t i = 0; i < mHandItems.size(); ++i)
+    {
+        if (!mHandItems[i]->isEmpty())
+        {
+            Block::popResource(mLevel, dropPos, mHandItems[i]);
+            mHandItems[i] = ItemInstance::EMPTY;
+        }
+    }
+    for (std::size_t i = 0; i < mArmorItems.size(); ++i)
+    {
+        if (!mArmorItems[i]->isEmpty())
+        {
+            Block::popResource(mLevel, dropPos, mArmorItems[i]);
+            mArmorItems[i] = ItemInstance::EMPTY;
+        }
+    }
+}
 void ArmorStand::causeDamage(float damage)
 {
     float remainingHealth = getHealth() - damage;
@@ -399,8 +491,21 @@ void ArmorStand::causeDamage(float damage)
         setHealth(remainingHealth);
     }
 }
-void ArmorStand::showBreakingParticles() {}
-void ArmorStand::brokenByPlayer() {}
+void ArmorStand::showBreakingParticles()
+{
+    if (mLevel == NULL || mLevel->mIsClientSide)
+        return;
+    ServerLevel* level = static_cast<ServerLevel*>(mLevel);
+    arrayWithLength<int> data(1, false);
+    data.data[0] = Block::getIdWithData(Blocks::stone->defaultBlockState());
+    level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + (double)mBbHeight / 2.0, mZ,
+                         (int)(mBbHeight * 100.0f), 0.05, 0.05, 0.05, 0.025,
+                         data, 0.0, 0.0, 0.0);
+}
+void ArmorStand::brokenByPlayer()
+{
+    brokenByAnything();
+}
 bool ArmorStand::hurt(const DamageSource* source, float damage)
 {
     if (source == NULL || isMarker() || isInvulnerableTo(source))
@@ -445,7 +550,7 @@ void ArmorStand::setInvisible(bool invisible) { Entity::setInvisible(invisible);
 bool ArmorStand::isBaby() { return false; }
 void ArmorStand::kill() { remove(); }
 bool ArmorStand::ignoreExplosion() { return true; }
-int ArmorStand::getPistonPushReaction() { return 0; }
+int ArmorStand::getPistonPushReaction() { return isMarker() ? 3 : Entity::getPistonPushReaction(); }
 bool ArmorStand::isAffectedByPotions() { return false; }
 void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
@@ -456,13 +561,19 @@ void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     LivingEntity::onSyncedDataUpdated(accessor);
 }
 bool ArmorStand::attackable() { return false; }
-Vec3* ArmorStand::getHeadPose() { return NULL; }
-Vec3* ArmorStand::getBodyPose() { return NULL; }
-Vec3* ArmorStand::getLeftArmPose() { return NULL; }
-Vec3* ArmorStand::getRightArmPose() { return NULL; }
-Vec3* ArmorStand::getLeftLegPose() { return NULL; }
-Vec3* ArmorStand::getRightLegPose() { return NULL; }
-Vec3* ArmorStand::getRightItemPose() { return NULL; }
+static ArmorStand::Pose& armorStandPoseForIndex(int index)
+{
+    if (index < 0) index = 0;
+    if (index > 12) index = 12;
+    return gArmorStandPoses[index];
+}
+Vec3* ArmorStand::getHeadPose() { return armorStandPoseForIndex(getPoseIndex()).head; }
+Vec3* ArmorStand::getBodyPose() { return armorStandPoseForIndex(getPoseIndex()).body; }
+Vec3* ArmorStand::getLeftArmPose() { return armorStandPoseForIndex(getPoseIndex()).leftArm; }
+Vec3* ArmorStand::getRightArmPose() { return armorStandPoseForIndex(getPoseIndex()).rightArm; }
+Vec3* ArmorStand::getLeftLegPose() { return armorStandPoseForIndex(getPoseIndex()).leftLeg; }
+Vec3* ArmorStand::getRightLegPose() { return armorStandPoseForIndex(getPoseIndex()).rightLeg; }
+Vec3* ArmorStand::getRightItemPose() { return armorStandPoseForIndex(getPoseIndex()).rightItem; }
 bool ArmorStand::isPickable() { return !mRemoved; }
 const HumanoidArm* ArmorStand::getMainArm() { return HumanoidArm::RIGHT; }
 float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
@@ -475,7 +586,7 @@ float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
     }
     return 0.0f;
 }
-double ArmorStand::getRidingHeight() { return 0.0; }
+double ArmorStand::getRidingHeight() { return isMarker() ? 0.05 : 1.45; }
 double ArmorStand::getEyeHeight() { return mMarker ? 0.0 : (mFlags & 1 ? 0.9875 : 1.8075); }
 void ArmorStand::travel(float xxa, float yya, float zza)
 {
@@ -524,9 +635,19 @@ const SoundEvent* ArmorStand::getHurtSound(const DamageSource*) { return SoundEv
 const SoundEvent* ArmorStand::getDeathSound() { return SoundEvents::ARMORSTAND_BREAK; }
 const SoundEvent* ArmorStand::getFallDamageSound(int) { return SoundEvents::ARMORSTAND_FALL; }
 void ArmorStand::setSize(float width, float height) { Entity::setSize(width, height); }
-void ArmorStand::defineSynchedData() { LivingEntity::defineSynchedData(); }
+void ArmorStand::defineSynchedData()
+{
+    LivingEntity::defineSynchedData();
+    if (DATA_FLAGS != NULL)
+        mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
+    if (DATA_POSE != NULL)
+        mEntityData->createDateItem(DATA_POSE, 0);
+}
 void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
-void ArmorStand::pushEntities() {}
+void ArmorStand::pushEntities()
+{
+    LivingEntity::pushEntities();
+}
 void ArmorStand::updateInvisibilityStatus() { LivingEntity::updateInvisibilityStatus(); }
 bool ArmorStand::generatesBubbles() { return false; }
 void ArmorStand::setAirSupply(int airSupply) { Entity::setAirSupply(airSupply); }

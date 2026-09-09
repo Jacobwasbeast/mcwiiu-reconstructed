@@ -10,6 +10,7 @@
 #include "platform/wiiu/C4JStorage.hpp"
 class DataInputStream; class DataOutputStream; class Player; class GhostPlayer;
 class GhostController {
+ friend class ClientMasterGameMode;
 public:
  struct GhostRecordSample {
   short x;
@@ -104,7 +105,9 @@ public:
   bool mPlayback;
   GhostRecord* mRecording[4];
   GhostRecord* mLoaded[4];
-  bool mRecordingActive[4];
+ bool mRecordingActive[4];
+  void* mSaveHeaderBuffer;
+  int mSaveHeaderStatus;
   std::map<int, TrackHeader> mTrackHeaders[4];
   std::deque<GhostLoadSaveOperation> mQueue;
   std::vector<boost::shared_ptr<GhostPlayer> > mGhostPlayers;

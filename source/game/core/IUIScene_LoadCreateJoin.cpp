@@ -84,6 +84,11 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
 
 uint32_t IUIScene_LoadCreateJoin::HandleTelemetrySavesReturned(void* context, SAVE_DETAILS* details, bool complete)
 {
+    (void)complete;
+    void* manager = *reinterpret_cast<void**>(reinterpret_cast<char*>(g_pApp) + 0x24);
+    void* callback = *reinterpret_cast<void**>(reinterpret_cast<char*>(manager) + 0x114);
+    typedef void (*SaveCallback)(void*, void*, SAVE_DETAILS*, int);
+    reinterpret_cast<SaveCallback>(callback)(manager, context, details, 0);
     return 0;
 }
 

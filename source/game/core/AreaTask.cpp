@@ -55,7 +55,7 @@ void AreaTask::setAsCurrentTask(bool currentTask)
     TutorialTask::setAsCurrentTask(currentTask);
     if (completionState == CompletionStateOnConstraints)
     {
-        enableConstraints(currentTask, false);
+        static_cast<TutorialTask*>(this)->enableConstraints(currentTask, false);
     }
 }
 
@@ -69,5 +69,5 @@ void AreaTask::onStateChange(eTutorial_State stateValue)
     {
         return;
     }
-    enableConstraints(true, false);
+    static_cast<TutorialTask*>(this)->enableConstraints(true, false);
 }

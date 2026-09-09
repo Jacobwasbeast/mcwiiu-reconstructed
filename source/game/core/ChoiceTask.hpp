@@ -1,12 +1,8 @@
 #ifndef GAME_CORE_CHOICETASK_HPP
 #define GAME_CORE_CHOICETASK_HPP
 
+#include "game/core/CTelemetryManager.hpp"
 #include "game/minigame/TutorialTask.hpp"
-
-enum ETelemetryChallenges
-{
-    eTelemetryChallenges_None = 0
-};
 
 class ChoiceTask : public TutorialTask
 {

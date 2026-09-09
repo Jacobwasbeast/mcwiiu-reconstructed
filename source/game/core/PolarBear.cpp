@@ -216,7 +216,7 @@ PolarBear::PolarBearAttackPlayersGoal::~PolarBearAttackPlayersGoal()
 
 bool PolarBear::PolarBearAttackPlayersGoal::canUse()
 {
-    if (mMob->isBaby()) return false;
+    if (mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL || mMob->isBaby()) return false;
     return NearestAttackableTargetGoal::canUse();
 }
 

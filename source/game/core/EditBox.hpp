@@ -31,7 +31,6 @@ private:
     int mWidth;
     int mHeight;
     std::wstring mValue;
-    int mValueLength;
     int mMaxLength;
     int mTickCount;
     bool mFocused;

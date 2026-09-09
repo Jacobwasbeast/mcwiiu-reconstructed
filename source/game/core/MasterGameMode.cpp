@@ -2,6 +2,14 @@
 #include "game/core/GameType.hpp"
 #include "game/core/System.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/PlayerList.hpp"
+#include "game/world/block/BlockRemover.hpp"
+#include <algorithm>
+#include <deque>
+#include "game/client/render/TexturePackRepository.hpp"
 
 typedef boost::unordered_map<MasterGameMode::ETimerID, MasterGameMode::_TimerInfo> TimerMap;
 
@@ -534,7 +542,45 @@ void MasterGameMode::ReturnPlayersToLobby()
 
 void MasterGameMode::Tick()
 {
-    mPlaylistDirty = true;
+    CommonMasterGameMode::Tick();
+    TickTimers();
+    if (mTutorialDirty)
+        CheckTutorialUpdate();
+    if (mRoundLevel != 0 && mRoundLevel->getServer() != 0 &&
+        mRoundLevel->getServer()->getPlayers() != 0)
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* players =
+            mRoundLevel->getServer()->getPlayers()->getPlayers();
+        if (players != 0)
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
+                 it != players->end(); ++it)
+                if (*it && IsInKillBox(*it))
+                    (*it)->kill();
+    }
+    if (mBlockRemover != 0)
+    {
+        if (!mBlockRemover->Finished())
+            mBlockRemover->Tick();
+        else
+        {
+            delete mBlockRemover;
+            mBlockRemover = 0;
+        }
+    }
+    if (mInternalState == 0 && AreLevelChunksLoaded())
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
+            minecraft->mTexturePackRepository->getSelected();
+        mRuleGroups.clear();
+        mShuffledRuleGroups.clear();
+        mRuleGroups.insert(mRuleGroups.end(), mPlaylist.begin(), mPlaylist.end());
+        mShuffledRuleGroups.insert(mShuffledRuleGroups.end(), mRuleGroups.begin(), mRuleGroups.end());
+        std::random_shuffle(mShuffledRuleGroups.begin(), mShuffledRuleGroups.end());
+        ChooseNextGameRules(true);
+        SetState(static_cast<EInternalGameModeState>(2));
+        sendTutorialUpdate(static_cast<eTutorial_GameMode>(0));
+    }
 }
 
 void MasterGameMode::SetupServerSettings(Settings* settings)

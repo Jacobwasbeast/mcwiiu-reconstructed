@@ -27,6 +27,12 @@ class SoundEvent;
 class WitherBoss : public Monster
 {
 public:
+    static const EntityDataAccessor<int>* DATA_INT_0;
+    static const EntityDataAccessor<int>* DATA_INT_1;
+    static const EntityDataAccessor<int>* DATA_INT_2;
+    static const EntityDataAccessor<int>* DATA_INVULNERABLE_TICKS;
+    static const EntityDataAccessor<bool>* DATA_AERIAL_ATTACK;
+    static const EntityDataAccessor<bool>* DATA_CHARGE_ATTACKING;
     class WitherDoNothingGoal : public Goal
     {
     public:
@@ -128,8 +134,12 @@ private:
     int mDestroyBlocksTick;
     int mShotDelay;
     int mPhase;
+    int mDyingFrames;
+    float mOverlayAlpha;
     int mShieldHealth;
     int mMaxHealth;
+    int mSpawningFrames;
+    int mFirerate;
     bool mAerialAttack;
     bool mWantsToMove;
     bool mIsPathing;

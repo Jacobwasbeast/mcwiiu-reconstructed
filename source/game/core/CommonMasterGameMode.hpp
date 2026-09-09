@@ -22,6 +22,7 @@ class StatsUID;
 class TargetAreaRuleDefinition;
 class Team;
 class Voteables;
+class ClientPacketListener;
 class CommonMasterGameMode
 {
     friend class ServerGamePacketListenerImpl;
@@ -99,6 +100,7 @@ private:
     std::vector<int> mLayerIds;
     unsigned int mChosenThemeWordId;
 protected:
+    friend class ClientPacketListener;
     Voteables* mVoteables;
 private:
     std::vector<double> mCheckpointDistances;

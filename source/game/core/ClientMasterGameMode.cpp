@@ -3,7 +3,9 @@
 #include "game/core/ClientScoreboard.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Team.hpp"
+#include "game/core/GhostController.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -13,6 +15,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/world/generation/Player.hpp"
 #include <algorithm>
 
@@ -242,8 +245,32 @@ void ClientMasterGameMode::SetNextLevelGenerationOptions(LevelGenerationOptions*
     mCurrentLevelGenOptions->getRequiredGameRules()->getActiveChunkAreas(&mTeamAreas);
 }
 
-void ClientMasterGameMode::OnShowdown() { }
-void ClientMasterGameMode::OnChestRefill() { }
+void ClientMasterGameMode::OnShowdown()
+{
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == NULL)
+        return;
+
+    const int id = miniGame->GetId();
+    const SoundEvent* event = NULL;
+    if (id == 1)
+        event = SoundEvents::MG01_SHOWDOWN;
+    else if (id == 2 || id == 4)
+        event = SoundEvents::MG02_SHOWDOWN;
+    else
+        return;
+
+    const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnShowdown);
+    PlaySound(event, static_cast<float>(sound.Volume()), 1.0f);
+}
+void ClientMasterGameMode::OnChestRefill()
+{
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame == NULL)
+        return;
+    const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnChestRefill);
+    PlaySound(SoundEvents::MG01_CHEST, static_cast<float>(sound.Volume()), 1.0f);
+}
 void ClientMasterGameMode::OnDeath(const Vec3* position)
 {
     const MiniGameDef* miniGame = GetMiniGame();
@@ -336,7 +363,49 @@ bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= 4; }
 bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= 6 && GetGameModeState() <= 10; }
 bool ClientMasterGameMode::IsInTrasitionFromLobby() { return GetGameModeState() == 0 || GetGameModeState() == 3 || GetGameModeState() == 4; }
 bool ClientMasterGameMode::CheckLocalChunksLoaded() { return mLocalChunksLoaded; }
-void ClientMasterGameMode::FireGameRoundStats() { }
+void ClientMasterGameMode::FireGameRoundStats()
+{
+    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+        return;
+    LevelGenerationOptions* options = g_pApp != NULL ? g_pApp->getLevelGenerationOptions() : NULL;
+    if (options == NULL)
+        options = mCurrentLevelGenOptions;
+    const MiniGameDef* current = GetMiniGame();
+    if (current == NULL)
+        return;
+    MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(
+        static_cast<EMiniGameId>(current->GetId()), true);
+    if (definition == NULL || !definition->IsCRCValid() || options == NULL || !options->isCRCValid())
+        return;
+
+    ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
+    GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
+    if (scoreboard == NULL || ghosts == NULL)
+        return;
+    for (int slot = 0; slot < 4; ++slot)
+    {
+        boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(slot);
+        if (!player)
+            continue;
+        StatsUID uid = player->getSUID();
+        const int uniqueId = static_cast<int>(options->getUniqueId());
+        if (!ghosts->mRecordingActive[slot] || player->isSpectator())
+            continue;
+        unsigned int lifespan = static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1));
+        int recorded = 0;
+        if (definition->ArePointsActive())
+        {
+            int points = scoreboard->GetPoints(uid, -1);
+            recorded = ghosts->RecordScore(slot, uniqueId, static_cast<unsigned short>(points), lifespan);
+        }
+        else
+        {
+            recorded = ghosts->RecordTime(slot, uniqueId, lifespan);
+        }
+        if (recorded != 0)
+            scoreboard->SetPersonalBest(uid, -1);
+    }
+}
 void ClientMasterGameMode::updateProgressRenderer() { }
 void ClientMasterGameMode::Tick() { CheckLocalChunksLoaded(); updateProgressRenderer(); }
 bool ClientMasterGameMode::isNewLevelDataPending() { return mNewLevelDataPending; }
@@ -361,7 +430,33 @@ void ClientMasterGameMode::dropAllTransitions()
     mTransitions.clear();
 }
 
-void ClientMasterGameMode::onChangeCustomGameMode() { }
+void ClientMasterGameMode::onChangeCustomGameMode()
+{
+    if (g_pApp == NULL)
+        return;
+
+    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    if (options == NULL)
+        return;
+
+    LevelRuleset* rules = options->getRequiredGameRules();
+    if (rules == NULL)
+        return;
+
+    std::vector<CheckpointRuleDefinition*>* checkpoints = rules->getCheckpoints();
+    if (checkpoints != NULL)
+        setCheckpoints(*checkpoints);
+
+    std::vector<TargetAreaRuleDefinition*> targetAreas;
+    rules->getTargetAreas(&targetAreas);
+    mTeamAreas.clear();
+    for (std::vector<TargetAreaRuleDefinition*>::const_iterator it = targetAreas.begin();
+         it != targetAreas.end(); ++it)
+    {
+        if (*it != NULL && (*it)->mPrimary)
+            mTeamAreas.push_back((*it)->getArea());
+    }
+}
 void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading() { mServerIsWaitingOnChunkLoading = true; }
 bool ClientMasterGameMode::ServerIsWaitingOnUsLoading() { return mServerIsWaitingOnChunkLoading; }
 void ClientMasterGameMode::RecievedBRUP() { if (mBRUPsRemaining > 0) --mBRUPsRemaining; }

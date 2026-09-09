@@ -7,7 +7,10 @@
 #include "game/entity/ai/AvoidEntityGoal.hpp"
 #include "game/entity/ai/RestrictSunGoal.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/Monster.hpp"
+#include "game/entity/projectile/TippableArrow.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
@@ -80,10 +83,13 @@ const SoundEvent* Stray::getStepSound()
 
 boost::shared_ptr<TippableArrow> Stray::getArrow(float distanceFactor)
 {
-    return AbstractSkeleton::getArrow(distanceFactor);
+    boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
+    if (arrow && arrow->GetType() == 0x8A020002ULL)
+        arrow->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
+    return arrow;
 }
 
 unsigned long long Stray::GetType()
 {
-    return 0x5D54044300000000ULL;
+    return 0x5D540443ULL;
 }

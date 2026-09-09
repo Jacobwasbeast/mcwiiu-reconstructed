@@ -96,6 +96,14 @@ public:
     bool isOutOfControl();
 
 private:
+    static const EntityDataAccessor<int>* DATA_STATUS;
+    static const EntityDataAccessor<int>* DATA_HURT_TIME;
+    static const EntityDataAccessor<float>* DATA_DAMAGE;
+    static const EntityDataAccessor<int>* DATA_TYPE;
+    static const EntityDataAccessor<bool>* DATA_PADDLE_LEFT;
+    static const EntityDataAccessor<bool>* DATA_PADDLE_RIGHT;
+    static const EntityDataAccessor<int>* DATA_BUBBLE_TIME;
+    static const EntityDataAccessor<bool>* DATA_SINKING;
     int mStatus;
     int mBubbleTime;
     int mHurtTime;

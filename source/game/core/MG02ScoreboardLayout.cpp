@@ -49,7 +49,6 @@ std::wstring MG02ScoreboardLayout::getLabel5(const StatsUID&) { return std::wstr
 std::wstring MG02ScoreboardLayout::getLabel6(const StatsUID&) { return std::wstring(L"px = 0"); }
 std::wstring MG02ScoreboardLayout::getLabel7(const StatsUID&) { return std::wstring(L"Overall Winner"); }
 
-uint32_t MG02ScoreboardLayout::getStatIcon1(const EScoreboardType& type) { return getStatIcon2(type); }
 uint32_t MG02ScoreboardLayout::getStatIcon2(const EScoreboardType&) { return 5; }
 uint32_t MG02ScoreboardLayout::getStatIcon3(const EScoreboardType&) { return 6; }
 uint32_t MG02ScoreboardLayout::getStatIcon4(const EScoreboardType&) { return 7; }
@@ -71,11 +70,6 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID&, const E
     if (type == EScoreboardType_Unknown && row == 1 && getNumberOfColumns() > 2)
         return std::wstring(L"0");
     return std::wstring(L"---");
-}
-
-boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int row, int, const unsigned int& value, const EScoreboardType& type)
-{
-    return getItemForSlot(column, row, value, type);
 }
 
 boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)

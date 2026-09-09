@@ -142,6 +142,16 @@ std::wstring _toString(T value)
     return stream.str();
 }
 
+std::wstring _toString(int value)
+{
+    return _toString<int>(value);
+}
+
+std::wstring _toString(float value)
+{
+    return _toString<float>(value);
+}
+
 template <typename T>
 T _fromString(const std::wstring& value)
 {
@@ -177,6 +187,7 @@ template std::wstring _toString<unsigned int>(unsigned int);
 template std::wstring _toString<float>(float);
 template std::wstring _toString<double>(double);
 template std::wstring _toString<long long>(long long);
+template std::wstring _toString<unsigned long long>(unsigned long long);
 template std::wstring _toString<const Direction*>(const Direction*);
 template std::wstring _toString<Block*>(Block*);
 template std::wstring _toString<const BlockState*>(const BlockState*);

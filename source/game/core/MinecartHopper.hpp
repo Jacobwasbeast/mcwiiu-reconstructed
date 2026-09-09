@@ -67,7 +67,6 @@ private:
     bool mEnabled;
     int mCooldown;
     BlockPos mPosition;
-    int mTransferCooldown;
 };
 
 #endif

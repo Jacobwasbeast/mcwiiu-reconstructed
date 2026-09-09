@@ -2,6 +2,18 @@
 
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/Goal.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/FollowOwnerGoal.hpp"
+#include "game/entity/ai/LeapAtTargetGoal.hpp"
+#include "game/entity/ai/BreedGoal.hpp"
+#include "game/entity/ai/TemptGoal.hpp"
+#include "game/entity/ai/NonTameRandomTargetGoal.hpp"
+#include "game/world/block/OcelotSitOnBlockGoal.hpp"
+#include "game/entity/ai/OcelotAttackGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/item/Items.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/entity/ai/SitGoal.hpp"
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Animal.hpp"
@@ -10,6 +22,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
@@ -17,6 +30,9 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/RiderPositionOverrides.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
 
 Ocelot::Ocelot(Level* level)
     : TamableAnimal(level), mTemptGoal(NULL), mSitOnBlockGoal(NULL), mCatType(0),
@@ -40,8 +56,34 @@ void Ocelot::setSittingOnBlock(bool sitting)
     mSittingOnBlock = sitting;
 }
 
-void Ocelot::staticCtor() { }
-void Ocelot::registerGoals() { }
+static Item* gOcelotFood[2] = { NULL, NULL };
+static int gOcelotFoodAux[2] = { 0, 0 };
+
+void Ocelot::staticCtor()
+{
+    SynchedEntityData::defineId<int>(0x0d6c0000ULL, 0x2d6c0001ULL, EntityDataSerializers::INT);
+    SynchedEntityData::defineId<int>(0x0d6c0000ULL, 0x2d6c0001ULL, EntityDataSerializers::INT);
+}
+void Ocelot::registerGoals()
+{
+    delete mSitOnBlockGoal;
+    mSitOnBlockGoal = new SitGoal(this);
+    arrayWithLength<Item*> food(2, false);
+    food.data[0] = gOcelotFood[0]; food.data[1] = gOcelotFood[1];
+    arrayWithLength<int> aux(2, false);
+    aux.data[0] = gOcelotFoodAux[0]; aux.data[1] = gOcelotFoodAux[1];
+    mTemptGoal = new TemptGoal(this, 0.6, food, true, aux);
+    mGoalSelector.addGoal(1, new FloatGoal(this), true);
+    mGoalSelector.addGoal(2, mSitOnBlockGoal, false);
+    mGoalSelector.addGoal(3, mTemptGoal, false);
+    mGoalSelector.addGoal(5, new FollowOwnerGoal(this, 1.0, 10.0f, 5.0f), true);
+    mGoalSelector.addGoal(6, new OcelotSitOnBlockGoal(this, 0.8), true);
+    mGoalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3f), true);
+    mGoalSelector.addGoal(8, new OcelotAttackGoal(this), true);
+    mGoalSelector.addGoal(9, new BreedGoal(this, 0.8), true);
+    mGoalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 0.8), true);
+    mGoalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 10.0f), true);
+}
 void Ocelot::defineSynchedData() { TamableAnimal::defineSynchedData(); }
 
 void Ocelot::SetIsTempted(bool tempted)
@@ -85,11 +127,12 @@ void Ocelot::readAdditionalSaveData(CompoundTag* tag)
 
 const SoundEvent* Ocelot::getAmbientSound()
 {
-    return NULL;
+    if (isInLove()) return SoundEvents::CAT_PURR;
+    return getRandom()->nextInt(4) == 0 ? SoundEvents::CAT_PURREOW : SoundEvents::CAT_AMBIENT;
 }
 
-const SoundEvent* Ocelot::getHurtSound(const DamageSource*) { return NULL; }
-const SoundEvent* Ocelot::getDeathSound() { return NULL; }
+const SoundEvent* Ocelot::getHurtSound(const DamageSource*) { return SoundEvents::CAT_HURT; }
+const SoundEvent* Ocelot::getDeathSound() { return SoundEvents::CAT_DEATH; }
 float Ocelot::getSoundVolume() { return 0.4f; }
 
 bool Ocelot::doHurtTarget(boost::shared_ptr<Entity> target)
@@ -104,7 +147,7 @@ bool Ocelot::hurt(const DamageSource* source, float damage)
     return Animal::hurt(source, damage);
 }
 
-const void* Ocelot::getDefaultLootTable() { return NULL; }
+const void* Ocelot::getDefaultLootTable() { return &BuiltInLootTables::OCELOT; }
 
 bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
@@ -153,6 +196,10 @@ void Ocelot::positionRider(const boost::shared_ptr<Entity>& passenger)
 }
 
 bool Ocelot::isSittingOnBlock() { return mSittingOnBlock; }
-unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder&) { return 0; }
+unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
+{
+    if (!holder.m_bAllowedToHurt) return 0xffffffffU;
+    return 0x82f8d90fU;
+}
 void Ocelot::reassessTameGoals() { TamableAnimal::reassessTameGoals(); }
-unsigned long long Ocelot::GetType() { return 0x2d6c000100000000ULL; }
+unsigned long long Ocelot::GetType() { return 0x000000002D6C0001ULL; }

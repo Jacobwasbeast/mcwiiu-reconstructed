@@ -155,5 +155,5 @@ const SoundEvent* MagmaCube::getJumpSound()
 
 unsigned long long MagmaCube::GetType()
 {
-    return 0x5d10800100000000ULL;
+    return 0x000000005D108001ULL;
 }

@@ -158,6 +158,7 @@ const Direction* Direction::fromVec3(const Vec3* vec)
     return UP;
 }
 
+
 const Direction* Direction::get(AxisDirection* axisDirection, Axis* axis)
 {
     for (std::vector<const Direction*>::iterator it = VALUES.begin(); it != VALUES.end(); ++it)

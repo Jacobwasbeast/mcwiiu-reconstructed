@@ -21,7 +21,6 @@ static const EntityDataAccessor<bool>* sWitherSkullDangerous = NULL;
 
 WitherSkull::WitherSkull(Level* level) : Fireball(level)
 {
-    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 
@@ -29,7 +28,6 @@ WitherSkull::WitherSkull(Level* level, boost::shared_ptr<LivingEntity> owner,
                          double xd, double yd, double zd)
     : Fireball(level, owner, xd, yd, zd)
 {
-    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 
@@ -37,7 +35,6 @@ WitherSkull::WitherSkull(Level* level, double x, double y, double z,
                          double xd, double yd, double zd)
     : Fireball(level, x, y, z, xd, yd, zd)
 {
-    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 

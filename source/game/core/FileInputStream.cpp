@@ -37,7 +37,7 @@ FileInputStream::FileInputStream(const File& file)
 
     if (mFile == INVALID_HANDLE_VALUE)
     {
-        theApp.FatalLoadError(L"<FileInputStream@%d> Failed to open %ls", __LINE__, file.getPath().c_str());
+        gApp.FatalLoadError(L"<FileInputStream@%d> Failed to open %ls", __LINE__, file.getPath().c_str());
     }
 }
 
@@ -61,7 +61,7 @@ int FileInputStream::read()
 
     if (ReadFile(mFile, &value, 1, &bytesRead, NULL) == 0)
     {
-        theApp.FatalLoadError(L"<FileInputStream@%d> Failed to read", __LINE__);
+        gApp.FatalLoadError(L"<FileInputStream@%d> Failed to read", __LINE__);
     }
     else if (bytesRead == 0)
     {
@@ -83,7 +83,7 @@ int FileInputStream::read(arrayWithLength<unsigned char> data)
 
     if (ReadFile(mFile, data.data, data.length, &bytesRead, NULL) == 0)
     {
-        theApp.FatalLoadError(L"<FileInputStream@%d> Failed to read array", __LINE__);
+        gApp.FatalLoadError(L"<FileInputStream@%d> Failed to read array", __LINE__);
     }
     else if (bytesRead == 0)
     {
@@ -105,7 +105,7 @@ int FileInputStream::read(arrayWithLength<unsigned char> data, unsigned int offs
 
     if (ReadFile(mFile, data.data + offset, length, &bytesRead, NULL) == 0)
     {
-        theApp.FatalLoadError(L"<FileInputStream@%d> Failed to read special", __LINE__);
+        gApp.FatalLoadError(L"<FileInputStream@%d> Failed to read special", __LINE__);
     }
     else if (bytesRead == 0)
     {

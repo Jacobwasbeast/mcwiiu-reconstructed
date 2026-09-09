@@ -256,7 +256,7 @@ bool DamageSource::isCreativePlayer() const
 }
 Vec3* DamageSource::getSourcePosition() const { return 0; }
 const DamageSource* DamageSource::GetBaseDamageSource() const { return 0; }
-boost::shared_ptr<DamageSource> DamageSource::copy() const { return boost::shared_ptr<DamageSource>(new DamageSource(*this)); }
+DamageSource* DamageSource::copy() const { return new DamageSource(*this); }
 void DamageSource::bypassInvul() { bypassInvulFlag = true; }
 void DamageSource::bypassGraceInvul() { bypassGraceInvulFlag = true; }
 void DamageSource::bypassMagic() { bypassMagicFlag = true; foodExhaustion = 0.0f; }

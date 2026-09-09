@@ -1,8 +1,11 @@
 #include "game/core/ClientSideMerchant.hpp"
 
+#include <cstdint>
+
 #include "game/item/MerchantContainer.hpp"
 #include "game/item/MerchantRecipe.hpp"
 #include "game/item/MerchantRecipeList.hpp"
+#include "game/world/generation/Player.hpp"
 
 ClientSideMerchant::ClientSideMerchant(boost::shared_ptr<Player> player, const std::wstring& name)
     : mPosition(), mContainer(NULL), mTradingPlayer(player), mOffers(new MerchantRecipeList()), mName(name), mVillager()
@@ -70,7 +73,11 @@ bool ClientSideMerchant::isAvailableToTrade()
 
 int ClientSideMerchant::getLevel()
 {
-    return 0;
+    if (!mTradingPlayer)
+    {
+        return 0;
+    }
+    return static_cast<int>(reinterpret_cast<uintptr_t>(mTradingPlayer->mLevel));
 }
 
 BlockPos ClientSideMerchant::getPosition()

@@ -216,5 +216,5 @@ void ShulkerBullet::defineSynchedData()
 
 unsigned long long ShulkerBullet::GetType()
 {
-    return 0x080000100000000ULL;
+    return 0x08000010ULL;
 }

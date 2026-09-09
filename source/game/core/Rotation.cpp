@@ -41,6 +41,18 @@ Rotation* Rotation::getRandom(Random random)
     return VALUES[random.nextInt(4)];
 }
 
+Rotation* Rotation::byName(std::wstring name)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        if (VALUES[i]->name == name)
+        {
+            return VALUES[i];
+        }
+    }
+    return NONE;
+}
+
 Rotation* Rotation::getRotated(Rotation* rotation)
 {
     switch (rotation->type)

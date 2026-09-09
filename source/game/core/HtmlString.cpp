@@ -54,13 +54,13 @@ std::wstring HtmlString::ToString()
         swprintf(fontSize, 8, L"%d", mFontSize);
 
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << static_cast<unsigned int>(theApp.GetHTMLColour(colour)) << L"\" size=\"" << fontSize << L"\">" << mText
+               << static_cast<unsigned int>(gApp.GetHTMLColour(colour)) << L"\" size=\"" << fontSize << L"\">" << mText
                << "</font>";
     }
     else
     {
         stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << static_cast<unsigned int>(theApp.GetHTMLColour(colour)) << L"\">" << mText << "</font>";
+               << static_cast<unsigned int>(gApp.GetHTMLColour(colour)) << L"\">" << mText << "</font>";
     }
 
     if (mItalic)

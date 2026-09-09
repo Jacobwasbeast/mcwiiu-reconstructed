@@ -25,8 +25,6 @@ public:
     int mX;
     int mY;
     std::wstring mMessage;
-    int mUnknown0;
-    int mUnknown1;
     int mId;
     bool mActive;
     bool mVisible;

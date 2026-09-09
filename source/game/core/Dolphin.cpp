@@ -37,7 +37,7 @@ Dolphin::~Dolphin()
 
 MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
-    getMaxAirSupply();
+    setAirSupply(getMaxAirSupply());
     mTreasureTime = 400;
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
@@ -72,7 +72,7 @@ void Dolphin::tick()
     {
         BlockPos above(shared_from_this());
         if (mLevel->isWaterAt(above))
-            getMaxAirSupply();
+            setAirSupply(getMaxAirSupply());
     }
     if (!isInWaterOrRain())
     {

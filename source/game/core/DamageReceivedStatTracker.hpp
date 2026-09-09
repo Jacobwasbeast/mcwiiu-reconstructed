@@ -1,20 +1,17 @@
 #ifndef GAME_CORE_DAMAGERECEIVEDSTATTRACKER_HPP
 #define GAME_CORE_DAMAGERECEIVEDSTATTRACKER_HPP
 
-#include "game/core/UntypedStatTracker.hpp"
+#include "game/core/StatTracker.hpp"
 
 class DamageEvent;
 
-class DamageReceivedStatTracker : public UntypedStatTracker
+class DamageReceivedStatTracker : public StatTracker<float>
 {
 public:
     DamageReceivedStatTracker(const StatsUID& statsUID);
     virtual ~DamageReceivedStatTracker();
 
     virtual void update(const DamageEvent* damageEvent);
-
-protected:
-    float mValue;
 };
 
 #endif

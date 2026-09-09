@@ -5,14 +5,9 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
-
-class MultiplayerLocalPlayer : public Entity
-{
-public:
-    const GameType* GetGameType();
-};
 
 CTelemetryManager::~CTelemetryManager()
 {

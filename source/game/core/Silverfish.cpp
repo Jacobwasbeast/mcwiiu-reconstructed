@@ -117,7 +117,7 @@ bool Silverfish::hurt(const DamageSource* source, float damage)
     return Monster::hurt(source, damage);
 }
 
-const SoundEvent* Silverfish::getDeathLoot()
+Item* Silverfish::getDeathLoot()
 {
     return NULL;
 }

@@ -1,6 +1,7 @@
 #include "game/core/GameRules_FloatAttribute.hpp"
 
 #include "game/core/IGameRuleAttribute.hpp"
+#include "game/util/StringUtils.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 
 #include <algorithm>
@@ -8,8 +9,6 @@
 
 std::string formatstr(const char* format, ...);
 
-template<typename T>
-std::wstring toString(T value);
 
 template<typename T>
 T fromString(const std::wstring& text);

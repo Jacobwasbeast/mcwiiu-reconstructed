@@ -348,4 +348,4 @@ bool Pig::removeWhenFarAway()
     return Animal::removeWhenFarAway() && !hasSaddle();
 }
 
-unsigned long long Pig::GetType() { return 0x2D68000300000000ULL; }
+unsigned long long Pig::GetType() { return 0x000000002D680003ULL; }

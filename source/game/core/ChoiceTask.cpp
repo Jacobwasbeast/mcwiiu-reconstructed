@@ -3,26 +3,17 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/InputConstraint.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/entity/mob/Entity.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-class CTelemetryManager
-{
-public:
-    unsigned int RecordPlayerDiedOrFailed(int playerId, int locationX, int locationY,
-                                          int locationZ, int enemyTypeId, int playerWeaponId,
-                                          int causeOfDeathId, ETelemetryChallenges challenges);
-};
-
 extern CTelemetryManager gTelemetryManager;
-extern ConsoleUIController gConsoleUIController;
 
 ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool preCompletionEnabled,
                        int firstInput, int secondInput,
                        eTutorial_CompletionAction completionAction,
                        ETelemetryChallenges telemetryChallenge)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, true, false, false),
+    : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false),
       firstInput(firstInput), secondInput(secondInput), firstChoice(false), secondChoice(false),
       completionAction(completionAction), telemetryChallenge(telemetryChallenge)
 {
@@ -43,30 +34,31 @@ ChoiceTask::~ChoiceTask()
 void ChoiceTask::sendTelemetry()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
+
     if (telemetryChallenge == eTelemetryChallenges_None)
     {
         return;
     }
 
-    int playerId = tutorial->playerId;
-    if (telemetryChallenge == (ETelemetryChallenges)1)
+    if (telemetryChallenge == static_cast<ETelemetryChallenges>(1))
     {
         tutorial->getCompleted(386);
         tutorial->setCompleted(386);
     }
-    else if (telemetryChallenge == (ETelemetryChallenges)2)
+    else if (telemetryChallenge == static_cast<ETelemetryChallenges>(2))
     {
         tutorial->getCompleted(387);
         tutorial->setCompleted(387);
     }
 
-    gTelemetryManager.RecordPlayerDiedOrFailed(playerId, 0, 0, 0, 0, 0, 0,
-                                                telemetryChallenge);
-    (void)minecraft;
+    gTelemetryManager.RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
+                                                  telemetryChallenge);
 }
 
 bool ChoiceTask::isCompleted()
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+
     if (firstChoice || secondChoice)
     {
         sendTelemetry();
@@ -74,25 +66,30 @@ bool ChoiceTask::isCompleted()
         return true;
     }
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
+    if (!gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
     {
-        return false;
-    }
+        if (minecraft->mLocalPlayers[tutorial->playerId]->isUnderLiquid(Material::WATER))
+        {
+            return false;
+        }
 
-    if (!firstChoice && g_pInput->GetValue(tutorial->playerId, (unsigned char)firstInput, false))
-    {
-        firstChoice = true;
-    }
-    if (!secondChoice && g_pInput->GetValue(tutorial->playerId, (unsigned char)secondInput, false))
-    {
-        secondChoice = true;
-    }
+        if (!firstChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                                               static_cast<unsigned char>(firstInput), false))
+        {
+            firstChoice = true;
+        }
 
-    if (firstChoice || secondChoice)
-    {
-        sendTelemetry();
-        enableConstraints(false, true);
+        if (!secondChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                                                static_cast<unsigned char>(secondInput), false))
+        {
+            secondChoice = true;
+        }
+
+        if (firstChoice || secondChoice)
+        {
+            sendTelemetry();
+            enableConstraints(false, true);
+        }
     }
 
     return firstChoice || secondChoice;
@@ -105,7 +102,7 @@ eTutorial_CompletionAction ChoiceTask::getCompletionAction()
 
 int ChoiceTask::getPromptId()
 {
-    if (!promptId)
+    if (!shownForMinimumTime)
     {
         return -1;
     }
@@ -120,10 +117,11 @@ void ChoiceTask::setAsCurrentTask(bool currentTask)
 
 void ChoiceTask::handleUIInput(int input)
 {
-    if (!activated || !promptId)
+    if (!activated || !shownForMinimumTime)
     {
         return;
     }
+
     if (input == firstInput)
     {
         firstChoice = true;

@@ -2,11 +2,12 @@
 #define GAME_CORE_KEYEDDATAWALKER_HPP
 
 #include "game/util/ResourceLocation.hpp"
+#include "game/core/DataWalker.hpp"
 
 class CompoundTag;
 class DataFixer;
 
-class KeyedDataWalker
+class KeyedDataWalker : public DataWalker
 {
 public:
     explicit KeyedDataWalker(unsigned long long type);

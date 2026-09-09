@@ -1,10 +1,13 @@
 #include "game/core/Turtle.hpp"
 
 #include "game/core/LightningBolt.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/core/Path.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/TurtleMoveControl.hpp"
+#include "game/entity/ai/BabyOnLandSelector.hpp"
 #include "game/entity/ai/TurtlePathNavigation.hpp"
+#include "game/entity/ai/TemptGoal.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
@@ -27,6 +30,7 @@
 #include "game/entity/ai/TurtleRandomStrollGoal.hpp"
 #include "game/entity/ai/TurtleTravelGoal.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
@@ -38,8 +42,14 @@ const EntityDataAccessor<BlockPos>* Turtle::DATA_TRAVEL_POS = NULL;
 const EntityDataAccessor<bool>* Turtle::DATA_GOING_HOME = NULL;
 const EntityDataAccessor<bool>* Turtle::DATA_TRAVELLING = NULL;
 
+static Item* turtleTemptItem = NULL;
+static bool turtleTemptItemInitialized = false;
+Predicate<boost::shared_ptr<Entity> >* Turtle::BABY_ON_LAND_SELECTOR = 0;
+
 void Turtle::staticCtor()
 {
+    if (BABY_ON_LAND_SELECTOR == 0)
+        BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
     DATA_HOME_POS = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BLOCK_POS);
     DATA_HAS_EGG = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
     DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
@@ -53,7 +63,7 @@ Turtle::Turtle(Level* level) : Animal(level), mLayEggTime(0)
 {
     fjDerivedCtorCalls();
     setSize(1.2f, 0.4f);
-    new TurtleMoveControl(this);
+    mMoveControl = new TurtleMoveControl(this);
 }
 
 Turtle::~Turtle()
@@ -144,6 +154,14 @@ void Turtle::registerGoals()
     mGoalSelector.addGoal(1, new TurtleGoHomeGoal(this, 1.0), true);
     mGoalSelector.addGoal(1, new TurtleLayEggGoal(this, 1.0, 4.0), true);
     mGoalSelector.addGoal(2, new TurtleBreedGoal(this, 1.0), true);
+    if (!turtleTemptItemInitialized)
+    {
+        turtleTemptItemInitialized = true;
+        turtleTemptItem = Item::byBlock(Blocks::sea_grass);
+    }
+    arrayWithLength<Item*> temptItems(1, false);
+    temptItems.data[0] = turtleTemptItem;
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, temptItems, false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new TurtleGoToWaterGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new TurtleTravelGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
@@ -254,6 +272,17 @@ void Turtle::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned int Turtle::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
+    if (isFood(holder.m_pItemInstance))
+    {
+        if (isBaby())
+        {
+            return 0x82f8d90fU;
+        }
+        if (!isInLove() && !isBreedCoolingDown() && !isBaby())
+        {
+            return 0xb47a2ab6U;
+        }
+    }
     return AgableMob::GetInteractTooltip(holder);
 }
 
@@ -313,7 +342,10 @@ void Turtle::thunderHit(const LightningBolt* lightning)
 void Turtle::die(const DamageSource* source)
 {
     LivingEntity::die(source);
-    if (source == NULL) spawnAtLocation(Items::turtleShellPiece, 1);
+    if (source == DamageSource::LIGHTNING_BOLT)
+    {
+        spawnAtLocation(Items::bowl, 1);
+    }
 }
 
 const SoundEvent* Turtle::getAmbientSound()
@@ -353,5 +385,5 @@ const void* Turtle::getDefaultLootTable()
 
 unsigned long long Turtle::GetType()
 {
-    return 0x2d68000700000000ULL;
+    return 0x000000002D680007ULL;
 }

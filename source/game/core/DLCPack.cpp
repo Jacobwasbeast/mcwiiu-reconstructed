@@ -16,17 +16,18 @@
 #include "game/core/DLCGameRulesHeader.hpp"
 #include "game/core/DLCLocalisationFile.hpp"
 #include "game/core/DLCSkinFile.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DLCUIDataFile.hpp"
 #include "game/data/StringTable.hpp"
 #include "game/world/block/DLCMaterialFile.hpp"
 
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
+unsigned int TlsAlloc();
 void TlsSetValue(unsigned int index, void* value);
 void* TlsGetValue(unsigned int index);
 bool pathCmp(DLCFile* file);
-extern unsigned int g_pathCompareTlsIndex;
-extern DLCManager g_DLCManager;
+unsigned int g_pathCompareTlsIndex = TlsAlloc();
 
 bool DLCPack::compareFilePath(DLCFile* file)
 {
@@ -202,7 +203,7 @@ bool DLCPack::hasPurchasedPack()
         unsigned int packId = GetPackId();
         if ((packId < 0x1009 && packId != 0x1001 && packId != 0x1007) ||
             (packId > 0x100a && packId != 0x100f && (packId < 0x1014 || packId > 0x1015)))
-            return g_DLCManager.IsDlcPackTemporarilyFree(packId);
+            return gApp.mDLCManager.IsDlcPackTemporarilyFree(packId);
     }
     return true;
 }

@@ -4,9 +4,11 @@
 #include <vector>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 #include "vendor/_SkinAdjustments.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/PlayerUID.hpp"
+unsigned int hash_value(const PlayerUID& uid);
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/GameRuleManager.hpp"
@@ -15,6 +17,7 @@
 #include "game/network/DisconnectPacket.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
+#include "game/core/CriticalSection.hpp"
 class LevelGenerationOptions;
 class LevelChunk;
 class Level;
@@ -38,7 +41,14 @@ class Stat;
 class DLCPack;
 class ModelPart;
 struct SKIN_BOX;
+struct MEMDATA;
 struct MOJJANG_DATA;
+struct FEATURE_DATA
+{
+    int type;
+    int x;
+    int z;
+};
 enum eGameHostOption
 {
     eGameHostOption_0 = 0,
@@ -173,12 +183,12 @@ public:
     static uint32_t ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
-    unsigned int SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const;
+    void SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const;
     void SetExtraGameData(eGameExtraData type, unsigned int value);
     void SetTutorialMode(bool tutorial, const boost::shared_ptr<Player>& player);
     uint32_t GetXuiAction(int32_t firstArgument);
     static uint32_t RemoteSaveThreadProc(void* context);
-    static uint32_t ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint64_t ExitGameFromRemoteSave(void* context);
     static uint32_t TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     static void SetupMiniGameMusic();
@@ -193,9 +203,9 @@ public:
     std::wstring getRootPath(unsigned int contentType, bool create, bool mounted, std::wstring suffix);
     std::wstring getFilePath(unsigned int firstArgument, std::wstring secondArgument, bool thirdArgument, std::wstring fourthArgument);
     uint64_t HandleDLC(DLCPack* pack);
-    static uint32_t DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index);
+    static int DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index);
     void MountNextDLC(int32_t firstArgument);
-    static uint32_t DLCInstalledCallback(void* context, int result, int index);
+    static int DLCInstalledCallback(void* context, int result, int index);
     uint32_t StartInstallDLCProcess(int32_t firstArgument);
     LevelGenerators* getLevelGenerators();
     void ClearTerrainFeaturePosition();
@@ -411,9 +421,13 @@ private:
     bool mChangingSessionType;
     bool mReallyChangingSessionType;
     unsigned int mGameMode;
+    unsigned int mHostOptions;
     bool mLoadSavesFromFolderEnabled;
     unsigned int mDisconnectReason;
     XuiActionData mXuiActions[4];
+    std::vector<XuiActionData> mPendingActions[4];
+    OSFastMutex mPendingActionsMutex;
+    OSFastMutex mActionMutex;
     unsigned int mTMSActions[4];
     unsigned int mGlobalXuiAction;
     unsigned int mXuiServerActions[4];
@@ -429,6 +443,8 @@ private:
     float mPerformanceCounterScale;
     bool mDLCInstallProcessCompleted;
     bool mDLCInstallPending;
+    unsigned int mDLCInstallCount;
+    unsigned int mDLCInstallIndex;
     bool mBanListCheck[4];
     unsigned int mAutosaveTime;
     int mOpacityTimer[4];
@@ -441,6 +457,22 @@ private:
     unsigned int mRequiredTexturePackID;
     unsigned int mOptionsCallbackStatus[4];
     EMiniGameId mFirstMiniGameType;
+    unsigned char mPlayerIds[8];
+    unsigned int mPlayerPrivileges[8];
+    unsigned char mPlayerGameTypes[8];
+    std::vector<FEATURE_DATA*> mTerrainFeaturePositions;
+    OSFastMutex mTerrainFeaturePositionsMutex;
+    boost::unordered_map<std::wstring, MEMDATA*> mMemoryTextureFiles;
+    boost::unordered_map<int, MEMDATA*> mMemoryTPDFiles;
+    OSFastMutex mMemoryTextureMutex;
+    OSFastMutex mMemoryTPDMutex;
+    boost::unordered_map<unsigned int, std::vector<ModelPart*>*> mAdditionalModelParts;
+    boost::unordered_map<unsigned int, std::vector<SKIN_BOX*>*> mAdditionalSkinBoxes;
+    OSFastMutex mAdditionalModelPartsMutex;
+    OSFastMutex mAdditionalSkinBoxesMutex;
+    unsigned int mExtraGameData;
+    boost::unordered_map<int, std::wstring> mLocaleToString;
+    boost::unordered_map<std::wstring, int> mStringToLocale;
 };
 extern CConsoleMinecraftApp gApp;
 extern CMinecraftApp* g_pApp;

@@ -11,12 +11,17 @@
 #include "game/entity/ai/AvoidEntityGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/Monster.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+
+extern SpellcasterIllager::IllagerSpell* gSpell1;
+extern SpellcasterIllager::IllagerSpell* gSpell2;
+extern SpellcasterIllager::IllagerSpell* gSpell3;
 
 EvocationIllager::EvocationIllager(Level* level) : SpellcasterIllager(level), mWololoTarget()
 {
@@ -38,7 +43,7 @@ void EvocationIllager::registerGoals()
 }
 void EvocationIllager::registerAttributes() { Monster::registerAttributes(); }
 void EvocationIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-void EvocationIllager::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer); }
+void EvocationIllager::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, 0x5D541841ULL); }
 void EvocationIllager::readAdditionalSaveData(CompoundTag* tag) { SpellcasterIllager::readAdditionalSaveData(tag); }
 void EvocationIllager::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -65,7 +70,7 @@ void EvocationIllager::setWololoTarget(const boost::shared_ptr<Sheep>& target) {
 boost::shared_ptr<Sheep> EvocationIllager::getWololoTarget() { return mWololoTarget; }
 const SoundEvent* EvocationIllager::getCastingSoundEvent() { return SoundEvents::EVOCATION_ILLAGER_CAST_SPELL; }
 void EvocationIllager::create(Level* level) { new EvocationIllager(level); }
-unsigned long long EvocationIllager::GetType() { return 0x5D54184100000000ULL; }
+unsigned long long EvocationIllager::GetType() { return 0x000000005D541841ULL; }
 
 EvocationIllager::EvokerAttackSpellGoal::EvokerAttackSpellGoal(EvocationIllager* evoker) : SpellcasterUseSpellGoal(evoker) {}
 EvocationIllager::EvokerAttackSpellGoal::~EvokerAttackSpellGoal() {}
@@ -73,7 +78,7 @@ std::wstring EvocationIllager::EvokerAttackSpellGoal::getName() { return L"Evoke
 int EvocationIllager::EvokerAttackSpellGoal::getCastingTime() { return 40; }
 int EvocationIllager::EvokerAttackSpellGoal::getCastingInterval() { return 100; }
 const SoundEvent* EvocationIllager::EvokerAttackSpellGoal::getSpellPrepareSound() { return SoundEvents::EVOCATION_ILLAGER_PREPARE_ATTACK; }
-SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerAttackSpellGoal::getSpell() { return NULL; }
+SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerAttackSpellGoal::getSpell() { return gSpell2; }
 void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double y, double z, double yRot, float xRot, int warmupDelay)
 {
     EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
@@ -107,25 +112,55 @@ void EvocationIllager::EvokerSummonSpellGoal::performSpellCasting()
     }
 }
 const SoundEvent* EvocationIllager::EvokerSummonSpellGoal::getSpellPrepareSound() { return SoundEvents::EVOCATION_ILLAGER_PREPARE_SUMMON; }
-SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerSummonSpellGoal::getSpell() { return NULL; }
+SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerSummonSpellGoal::getSpell() { return gSpell1; }
 
 EvocationIllager::EvokerWololoSpellGoal::EvokerWololoSpellGoal(EvocationIllager* evoker) : SpellcasterUseSpellGoal(evoker) {}
 EvocationIllager::EvokerWololoSpellGoal::~EvokerWololoSpellGoal() {}
-void EvocationIllager::EvokerWololoSpellGoal::tick() { SpellcasterUseSpellGoal::tick(); }
-bool EvocationIllager::EvokerWololoSpellGoal::canUse() { return SpellcasterUseSpellGoal::canUse(); }
+void EvocationIllager::EvokerWololoSpellGoal::tick()
+{
+    SpellcasterUseSpellGoal::tick();
+    boost::shared_ptr<Sheep> target = static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget();
+    if (target)
+        static_cast<LookControl*>(mSpellcaster->getLookControl())->setLookAt(target, 30.0f, 30.0f);
+}
+bool EvocationIllager::EvokerWololoSpellGoal::canUse()
+{
+    EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
+    if (evoker->getTarget() || evoker->isCastingSpell() || mSpellCastingTickCount > evoker->mTickCount)
+        return false;
+    if (!evoker->mLevel->getGameRules()->getBoolean(1))
+        return false;
+
+    SheepSelector selector;
+    AABB* area = evoker->mBoundingBox->grow(16.0, 4.0, 16.0);
+    std::vector<boost::shared_ptr<Entity> >* sheep =
+        evoker->mLevel->getEntitiesOfClass(typeid(Sheep), area, &selector, false);
+    if (sheep == NULL || sheep->empty())
+    {
+        delete area;
+        delete sheep;
+        return false;
+    }
+    boost::shared_ptr<Sheep> target = boost::static_pointer_cast<Sheep>(
+        sheep->at(evoker->mRandom->nextInt((int)sheep->size())));
+    evoker->setWololoTarget(target);
+    delete area;
+    delete sheep;
+    return true;
+}
 bool EvocationIllager::EvokerWololoSpellGoal::canContinueToUse() { return static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget() && static_cast<EvocationIllager*>(mSpellcaster)->isCastingSpell(); }
 void EvocationIllager::EvokerWololoSpellGoal::stop() { SpellcasterUseSpellGoal::stop(); static_cast<EvocationIllager*>(mSpellcaster)->setWololoTarget(boost::shared_ptr<Sheep>()); }
 std::wstring EvocationIllager::EvokerWololoSpellGoal::getName() { return L"Wololo Spell"; }
 void EvocationIllager::EvokerWololoSpellGoal::performSpellCasting()
 {
     boost::shared_ptr<Sheep> sheep = static_cast<EvocationIllager*>(mSpellcaster)->getWololoTarget();
-    if (sheep && sheep->getColor() != DyeColor::BLUE) sheep->setColor(DyeColor::BLUE);
+    if (sheep && sheep->isAlive()) sheep->setColor(DyeColor::BLUE);
 }
 int EvocationIllager::EvokerWololoSpellGoal::getCastWarmupTime() { return 40; }
 int EvocationIllager::EvokerWololoSpellGoal::getCastingTime() { return 60; }
 int EvocationIllager::EvokerWololoSpellGoal::getCastingInterval() { return 140; }
 const SoundEvent* EvocationIllager::EvokerWololoSpellGoal::getSpellPrepareSound() { return SoundEvents::EVOCATION_ILLAGER_PREPARE_WOLOLO; }
-SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerWololoSpellGoal::getSpell() { return NULL; }
+SpellcasterIllager::IllagerSpell* EvocationIllager::EvokerWololoSpellGoal::getSpell() { return gSpell3; }
 bool EvocationIllager::EvokerWololoSpellGoal::SheepSelector::apply(boost::shared_ptr<Entity> entity) const
 {
     return boost::static_pointer_cast<Sheep>(entity)->getColor() == DyeColor::BROWN;

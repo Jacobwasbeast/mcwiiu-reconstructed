@@ -77,7 +77,7 @@ public:
     bool isCreativePlayer() const;
     virtual Vec3* getSourcePosition() const;
     virtual const DamageSource* GetBaseDamageSource() const;
-    virtual boost::shared_ptr<DamageSource> copy() const;
+    virtual DamageSource* copy() const;
     void bypassInvul();
     void bypassGraceInvul();
     void bypassMagic();

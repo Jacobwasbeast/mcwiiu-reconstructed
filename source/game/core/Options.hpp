@@ -7,11 +7,13 @@
 #include "game/core/KeyMapping.hpp"
 
 class Minecraft;
+class GameRenderer;
 
 class Options
 {
 public:
     friend class Minecraft;
+    friend class GameRenderer;
 
     class Option
     {

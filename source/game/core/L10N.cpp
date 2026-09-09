@@ -1,10 +1,11 @@
 #include "game/core/L10N.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/data/StringTable.hpp"
 
 static StringTable* g_stringTable = NULL;
-extern CMinecraftApp g_MinecraftApp;
+extern CConsoleMinecraftApp gApp;
 
 const wchar_t* L10N::GetString(int id)
 {
@@ -19,9 +20,9 @@ void L10N::loadStringTable()
     g_stringTable = NULL;
 
     std::wstring path = L"languages.loc";
-    if (g_MinecraftApp.hasArchiveFile(path, true))
+    if (gApp.hasArchiveFile(path, true))
     {
-        arrayWithLength<unsigned char> data = g_MinecraftApp.getArchiveFile(path, true);
+        arrayWithLength<unsigned char> data = gApp.getArchiveFile(path, true);
         g_stringTable = new StringTable(data, false, false);
         delete[] data.data;
     }

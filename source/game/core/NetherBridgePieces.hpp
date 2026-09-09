@@ -65,7 +65,7 @@ public:
         static bool isOkBox(BoundingBox*, StartPiece*);
         virtual void readAdditionalSaveData(DataInputStream*, StructureManager*);
         virtual void addAdditionalSaveData(DataOutputStream*);
-        void updatePieceWeight(std::list<PieceWeight*>*);
+        int updatePieceWeight(std::list<PieceWeight*>*);
         StructurePiece* generatePiece(StartPiece*, std::list<PieceWeight*>*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int);
         StructurePiece* generateAndAddPiece(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, int, const Direction*, int, bool);
         StructurePiece* generateChildForward(StartPiece*, std::vector<StructurePiece*>*, Random&, int, int, bool);

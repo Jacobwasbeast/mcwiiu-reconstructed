@@ -3,10 +3,14 @@
 #include <algorithm>
 
 #include "game/core/StatsUID.hpp"
+#include "game/core/GameModeOptions.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
 
-MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType type)
-    : IScoreboardLayout(), m_scoreboardType(type)
+MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType)
+    : IScoreboardLayout()
 {
 }
 
@@ -33,16 +37,24 @@ void MG03ScoreboardLayout::Init(int value)
 {
     m_playerCount = value;
     ClearPlayersInfo();
-}
-
-uint32_t MG03ScoreboardLayout::getStatIcon1(const EScoreboardType&)
-{
-    return 0;
+    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    for (int index = 0; index < playerCount; ++index)
+    {
+        INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
+        if (player != 0)
+        {
+            PlayerInfo* info = CreatePlayerInfo();
+            BuildPlayerInfo(player, info);
+            m_players.push_back(info);
+        }
+    }
+    std::sort(m_players.begin(), m_players.end(), SORTBYSCORE);
 }
 
 uint32_t MG03ScoreboardLayout::getNumberOfColumns()
 {
-    return 3;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    return miniGame->ArePointsActive() ? 5 : 3;
 }
 
 std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID&, int)
@@ -82,17 +94,24 @@ std::wstring MG03ScoreboardLayout::getLabel7(const StatsUID&)
 
 uint32_t MG03ScoreboardLayout::getStatIcon2(const EScoreboardType&)
 {
-    return 0x74;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    return miniGame->ArePointsActive() ? 0x70 : 0x74;
 }
 
 uint32_t MG03ScoreboardLayout::getStatIcon3(const EScoreboardType&)
 {
-    return 0x75;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        return 0xffffffffu;
+    return miniGame->ArePointsActive() ? 0x71 : 0x75;
 }
 
 uint32_t MG03ScoreboardLayout::getStatIcon4(const EScoreboardType&)
 {
-    return 0x76;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        return 0xffffffffu;
+    return miniGame->ArePointsActive() ? 0x72 : 0x76;
 }
 
 uint32_t MG03ScoreboardLayout::getStatIcon5(const EScoreboardType&)
@@ -102,6 +121,18 @@ uint32_t MG03ScoreboardLayout::getStatIcon5(const EScoreboardType&)
 
 uint32_t MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
 {
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    const bool pointsActive = miniGame->ArePointsActive();
+    if (pointsActive)
+    {
+        if (column == 0)
+            return 0x6f;
+        if (column == 2)
+            return 0x73;
+        if (column == 4)
+            return type == EScoreboardType_Unknown ? 0x77 : 3;
+        return 0xffffffffu;
+    }
     if (column == 0)
         return 0x73;
     if (column == 2)
@@ -120,14 +151,9 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return std::wstring(L"---");
 }
 
-boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int, int, int, const unsigned int&, const EScoreboardType&)
-{
-    return boost::shared_ptr<ItemInstance>();
-}
-
 boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
 {
-    return getItemForSlot(row, column, -1, value, type);
+    return boost::shared_ptr<ItemInstance>();
 }
 
 unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
@@ -153,7 +179,8 @@ PlayerInfo* MG03ScoreboardLayout::CreatePlayerInfo()
 void MG03ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
     PlayerInfo* info = CreatePlayerInfo();
-    info->smallId = smallId;
+    INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
+    BuildPlayerInfo(player, info);
     m_players.push_back(info);
 }
 

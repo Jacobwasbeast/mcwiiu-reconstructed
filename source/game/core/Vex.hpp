@@ -18,6 +18,7 @@ class DifficultyInstance;
 class Level;
 class MobGroupData;
 class SoundEvent;
+template <class T> class EntityDataAccessor;
 
 class Vex : public Monster
 {
@@ -112,11 +113,12 @@ public:
     void setOwner(const boost::shared_ptr<Mob>& owner);
 
 private:
+    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
+
     boost::shared_ptr<Mob> mOwner;
     BlockPos* mBoundOrigin;
     bool mLimitedLife;
     int mLifeTicks;
-    MoveControl* mMoveControl;
 };
 
 #endif

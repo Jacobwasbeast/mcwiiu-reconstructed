@@ -2,8 +2,8 @@
 
 #include "game/network/INetworkPlayer.hpp"
 
-MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType type)
-    : IScoreboardLayout(), m_scoreboardType(type)
+MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType)
+    : IScoreboardLayout()
 {
 }
 

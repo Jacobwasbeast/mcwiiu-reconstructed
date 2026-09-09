@@ -12,6 +12,7 @@ class EntityTooltipDataHolder;
 class Level;
 class Player;
 class SoundEvent;
+class FishModel;
 
 class Fish : public WaterAnimal
 {
@@ -45,6 +46,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
 
 private:
+    friend class FishModel;
     float mSwimRotation;
     float mSwimRotationOld;
     bool mSwimFlag;

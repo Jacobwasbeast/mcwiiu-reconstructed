@@ -8,6 +8,9 @@ class BlockState; class BoundingBox; class DataInputStream; class DataOutputStre
 class OceanMonumentPieces
 {
 public:
+    static const BlockState* prismarineState;
+    static const BlockState* seaLanternState;
+    static const BlockState* goldState;
     static void loadStatic();
     OceanMonumentPieces();
     class RoomDefinition;

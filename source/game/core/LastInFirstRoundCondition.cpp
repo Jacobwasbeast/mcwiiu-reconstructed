@@ -1,12 +1,7 @@
 #include "game/core/LastInFirstRoundCondition.hpp"
 
+#include "game/core/GameStats.hpp"
 #include "game/world/generation/PlayerStats.hpp"
-
-class GameStats
-{
-public:
-    PlayerStats* GetPlayerStats(const StatsUID& uid);
-};
 
 LastInFirstRoundCondition::LastInFirstRoundCondition()
     : MultiConditionMedal::MultiCondition(-1.0f, GameMedal::OPERATOR_EQUAL, false)
@@ -26,7 +21,9 @@ bool LastInFirstRoundCondition::canAward(const GameMedal* medal, const StatsUID&
         int lastPosition = roundStats->mCheckpointPadding[0];
         int numberOfPlayers = roundStats->mCheckpointPadding[1];
         if (numberOfPlayers > 1)
+        {
             return lastPosition == numberOfPlayers - 1;
+        }
     }
 
     return false;

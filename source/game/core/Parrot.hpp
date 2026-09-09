@@ -30,6 +30,7 @@ class Vec3i;
 class Parrot : public ShoulderRidingEntity
 {
 public:
+    static const EntityDataAccessor<int>* DATA_VARIANT;
     class NotParrotPredicate : public Predicate<boost::shared_ptr<Entity> >
     {
     public:

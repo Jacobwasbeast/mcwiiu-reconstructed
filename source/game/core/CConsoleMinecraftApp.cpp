@@ -10,24 +10,27 @@
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include <stdlib.h>
 #include <string.h>
+#include <sysapp/launch.h>
 
 extern void altMain();
 extern void Sleep(unsigned int);
 extern unsigned int GetLastFileErrorCodeForViewer();
-extern unsigned char g_fatalLoadErrorRequested;
-extern unsigned char g_fatalLoadErrorReady;
-extern unsigned char g_fatalLoadErrorActive;
+struct _OVERLAPPED;
+unsigned char g_fatalLoadErrorRequested = 0;
+unsigned char g_fatalLoadErrorReady = 0;
+unsigned char g_fatalLoadErrorActive = 0;
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, void*);
+extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
 extern int GetFileSize(int, unsigned int*);
 extern int CloseHandle(int);
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 extern CStorage* gStorage;
 
 static unsigned char s_requestBackground = 0;
 static unsigned char s_signInRequested = 0;
 
 static unsigned char s_altMainOKToRun = 0;
+
 
 extern wchar_t* GetRichPresenceStringFromId(int);
 
@@ -186,7 +189,7 @@ void CConsoleMinecraftApp::CommerceInit()
 }
 int CConsoleMinecraftApp::RequestSignInUIChoices(int playerId)
 {
-    g_ConsoleUIController.NavigateToScene(playerId, (EUIScene)0x50, NULL, (EUILayer)6, (EUIGroup)7);
+    gConsoleUIController.NavigateToScene(playerId, (EUIScene)0x50, NULL, (EUILayer)6, (EUIGroup)7);
     s_signInRequested = 1;
     return 0;
 }
@@ -194,7 +197,7 @@ int CConsoleMinecraftApp::DisplaySavingMessageWiiU(void*, C4JStorage::ESavingMes
 {
     if (s_requestBackground != 0 && message == C4JStorage::ESavingMessage_0)
         s_requestBackground = 0;
-    g_ConsoleUIController.ShowSavingMessage((unsigned int)playerId, message);
+    gConsoleUIController.ShowSavingMessage((unsigned int)playerId, message);
     return 0;
 }
 void CConsoleMinecraftApp::SetNoSpaceForSaveQuota(bool value) { m_noSpaceForSaveQuota = value; }
@@ -216,7 +219,7 @@ int CConsoleMinecraftApp::Callback_SaveGameIncompleteMessageBoxReturned(void* co
     }
     else if (result == C4JStorage::EMessageResult_6)
     {
-        g_ConsoleUIController.NavigateToScene(playerId, (EUIScene)0x4e, NULL, (EUILayer)2, (EUIGroup)1);
+        gConsoleUIController.NavigateToScene(playerId, (EUIScene)0x4e, NULL, (EUILayer)2, (EUIGroup)1);
     }
     return 0;
 }
@@ -227,7 +230,7 @@ void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage
         CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
         app->EnterSaveNotificationSection();
         int messageParameters[] = { (int)0xaed18de8, (int)0xce9c596c, (int)0xfec9f75f };
-        if (g_ConsoleUIController.RequestErrorMessage(0xe6a7b0a3, 0x92727461, messageParameters, 3, 0xff,
+        if (gConsoleUIController.RequestErrorMessage(0xe6a7b0a3, 0x92727461, messageParameters, 3, 0xff,
                                                        Callback_SaveGameIncompleteMessageBoxReturned, context, NULL,
                                                        true) != 1)
             return;
@@ -237,7 +240,7 @@ void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage
 uint32_t CConsoleMinecraftApp::GetDLCInfoInstance() { return (uint32_t)(uintptr_t)m_dlcInfo; }
 void CConsoleMinecraftApp::HandleDLCLicenseChange(std::wstring& packName)
 {
-    DLCPack* pack = theApp.mDLCManager.getPack(packName);
+    DLCPack* pack = gApp.mDLCManager.getPack(packName);
     if (pack != NULL)
         pack->updateLicenseMask(1);
 }
@@ -249,6 +252,11 @@ void CConsoleMinecraftApp::SetRichPresenceContext(int context, int value)
 uint8_t CConsoleMinecraftApp::HasNoSpaceForSaveQuota() { return m_noSpaceForSaveQuota; }
 void CConsoleMinecraftApp::SetDRCCheckPlayerCountEnabled(bool value) { m_drcCheckPlayerCountEnabled = value; }
 uint8_t CConsoleMinecraftApp::getIgnoreMainMenuInputDuringInvite() { return m_ignoreMainMenuInputDuringInvite; }
+void CConsoleMinecraftApp::ExitGame()
+{
+    SYSLaunchMenu();
+}
+
 void CConsoleMinecraftApp::ReleaseSaveThumbnail()
 {
     if (m_saveThumbnail.mData != NULL)
@@ -298,7 +306,7 @@ uint32_t CConsoleMinecraftApp::UpgradeTrial()
     if (m_commerceState == 2)
     {
         int messageParameter = 0xb9a1bf4d;
-        g_ConsoleUIController.RequestErrorMessage(0xa561a8df, 0x84f3e8d2, &messageParameter, 1,
+        gConsoleUIController.RequestErrorMessage(0xa561a8df, 0x84f3e8d2, &messageParameter, 1,
                                                    gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return 1;
     }

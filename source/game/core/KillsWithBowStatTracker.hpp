@@ -11,9 +11,10 @@ public:
     KillsWithBowStatTracker(const StatsUID& statsUID);
     virtual ~KillsWithBowStatTracker();
     virtual void update(const DamageEvent* damageEvent);
+    int getValue() const;
 
 private:
-    int mKills;
+    int mValue;
 };
 
 #endif

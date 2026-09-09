@@ -3,6 +3,7 @@
 #include <string>
 
 #include "game/core/DamageSource.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
@@ -15,14 +16,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-
-class CConsoleMinecraftApp
-{
-public:
-    uint32_t GetGameHostOption(uint32_t option);
-};
-
-extern CConsoleMinecraftApp gApp;
 
 static const unsigned long long ENTITY_TYPE_ENDER_CRYSTAL = 0x000000000800000EULL;
 
@@ -150,7 +143,7 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
     if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
-        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(0xd) && !source->isExplosion())
+        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_13) && !source->isExplosion())
             mLevel->explode(shared_from_this(), mX, mY, mZ, 6.0f, false, false, true, false, false, -1.0f);
         onDestroyedBy(source);
     }

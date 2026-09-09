@@ -19,8 +19,14 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+
+extern SpellcasterIllager::IllagerSpell* gSpell4;
+extern SpellcasterIllager::IllagerSpell* gSpell5;
+
+static ResourceLocation ILLUSION_ILLAGER_LOOT_TABLE(L"minecraft", L"entities/illusion_illager");
 
 IllusionIllager::IllusionIllager(Level* level)
     : SpellcasterIllager(level), RangedAttackMob(), mIllusionLevel(0),
@@ -82,7 +88,7 @@ MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& diffic
     return Mob::finalizeMobSpawn(difficulty, data, dataString);
 }
 void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-const void* IllusionIllager::getDefaultLootTable() { return NULL; }
+const void* IllusionIllager::getDefaultLootTable() { return &ILLUSION_ILLAGER_LOOT_TABLE; }
 AABB* IllusionIllager::getBoundingBoxForCulling() { return Entity::getBoundingBoxForCulling()->grow(3.0, 0.0, 3.0); }
 
 void IllusionIllager::aiStep()
@@ -123,7 +129,7 @@ const SoundEvent* IllusionIllager::getDeathSound() { return SoundEvents::ILLUSIO
 const SoundEvent* IllusionIllager::getHurtSound(const DamageSource*) { return SoundEvents::ILLUSION_ILLAGER_HURT; }
 const SoundEvent* IllusionIllager::getCastingSoundEvent() { return SoundEvents::ILLUSION_ILLAGER_CAST_SPELL; }
 int IllusionIllager::getArmPose() { return isCastingSpell() ? 2 : (isAggressive() ? 3 : 0); }
-unsigned long long IllusionIllager::GetType() { return 0x5d54184200000000ULL; }
+unsigned long long IllusionIllager::GetType() { return 0x000000005D541842ULL; }
 
 arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 {
@@ -185,7 +191,7 @@ void IllusionIllager::IllusionistBlindnessSpellGoal::performSpellCasting()
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingTime() { return 20; }
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingInterval() { return 180; }
 const SoundEvent* IllusionIllager::IllusionistBlindnessSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_BLINDNESS; }
-SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistBlindnessSpellGoal::getSpell() { return NULL; }
+SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistBlindnessSpellGoal::getSpell() { return gSpell5; }
 std::wstring IllusionIllager::IllusionistBlindnessSpellGoal::getName() { return L"IllusionistBlindnessSpellGoal"; }
 
 IllusionIllager::IllusionistMirrorSpellGoal::IllusionistMirrorSpellGoal(IllusionIllager* illager)
@@ -202,5 +208,5 @@ void IllusionIllager::IllusionistMirrorSpellGoal::performSpellCasting()
 int IllusionIllager::IllusionistMirrorSpellGoal::getCastingTime() { return 20; }
 int IllusionIllager::IllusionistMirrorSpellGoal::getCastingInterval() { return 340; }
 const SoundEvent* IllusionIllager::IllusionistMirrorSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_MIRROR; }
-SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistMirrorSpellGoal::getSpell() { return NULL; }
+SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistMirrorSpellGoal::getSpell() { return gSpell4; }
 std::wstring IllusionIllager::IllusionistMirrorSpellGoal::getName() { return L"IllusionistMirrorSpellGoal"; }

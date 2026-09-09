@@ -1,11 +1,11 @@
 #include "game/core/BufferedImage.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/client/render/TextureUtil.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
 
 extern int wstringtofilename(const std::wstring& value, char (&result)[256]);
-extern void FatalLoadError(const wchar_t*, ...);
 
 BufferedImage::BufferedImage(int mipLevels, int width, int height)
     : m_width((unsigned int)width), m_height((unsigned int)height), m_mipmapDisabled(0)
@@ -65,7 +65,7 @@ BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
     }
     else
     {
-        FatalLoadError(L"<BufferedImage@%d> Failed to load", 0x137);
+        gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load", 0x137);
     }
 }
 

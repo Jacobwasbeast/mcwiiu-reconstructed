@@ -63,8 +63,8 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    Goal* mTemptGoal;
     Goal* mSitOnBlockGoal;
+    Goal* mTemptGoal;
     int mCatType;
     bool mIsTempted;
     bool mSittingOnBlock;

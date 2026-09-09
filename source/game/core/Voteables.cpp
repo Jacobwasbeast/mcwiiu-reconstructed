@@ -1,4 +1,5 @@
 #include "game/core/Voteables.hpp"
+#include "game/core/Voteable.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -30,7 +31,7 @@ void Voteables::addVoteable(Voteable* voteable)
 {
     if (voteable == 0)
         return;
-    const int id = static_cast<int>(size());
+    const int id = *reinterpret_cast<const int*>(voteable);
     if (find(id) == end())
         emplace(id, voteable);
 }
@@ -42,9 +43,14 @@ void Voteables::removeVoteable(int id)
         erase(found);
 }
 
-void Voteables::syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer>)
+void Voteables::syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    iterator current = begin();
-    while (current != end())
-        ++current;
+    if (empty())
+        return;
+
+    for (iterator current = begin(); current != end(); ++current)
+    {
+        if (current->second != 0)
+            current->second->syncAllVotesToPlayer(player);
+    }
 }

@@ -1,6 +1,7 @@
 #include "game/core/GameRules_HexAttribute.hpp"
 
 #include "game/core/IGameRuleAttribute.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 
 #include <string>
@@ -11,7 +12,12 @@ template<typename T>
 std::wstring toString(T value);
 
 template<typename T>
-T fromHEXString(const std::wstring& text);
+T fromHEXString(const std::wstring& text)
+{
+    return _fromHEXString<T>(text);
+}
+
+template int fromHEXString<int>(const std::wstring&);
 
 GameRules_HexAttribute::GameRules_HexAttribute(int* value)
     : mValue(value)

@@ -1,4 +1,6 @@
 #include "game/core/Guardian.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 
 #include <cmath>
 
@@ -11,9 +13,12 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+
+const EntityDataAccessor<int>* Guardian::DATA_ID_ATTACK_TARGET = NULL;
 
 Guardian::Guardian(Level* level, bool createEntityData)
     : Monster(level), mCachedAttackTarget()
@@ -41,19 +46,23 @@ Guardian::~Guardian()
 
 void Guardian::staticCtor()
 {
+    DATA_ID_ATTACK_TARGET = SynchedEntityData::defineId(0x5D544000ULL, 0, EntityDataSerializers::INT);
 }
 
-void Guardian::addDataWalkers(DataFixerUpper*)
+void Guardian::addDataWalkers(DataFixerUpper* fixer)
 {
+    Mob::addDataWalkers(fixer, 0x5D544000ULL);
 }
 
-void Guardian::create(Level*)
+void Guardian::create(Level* level)
 {
+    new Guardian(level, true);
 }
 
 void Guardian::registerGoals()
 {
-    mRandomStrollGoal = new RandomStrollGoal(this, 1.0);
+    mRandomStrollGoal = new RandomStrollGoal(this, 1.0, 80);
+    mGoalSelector.addGoal(7, new GuardianAttackGoal(this), true);
     Mob::registerGoals();
 }
 
@@ -70,6 +79,7 @@ void Guardian::createNavigation(Level* level)
 void Guardian::defineSynchedData()
 {
     Mob::defineSynchedData();
+    mEntityData->createDateItem(DATA_ID_ATTACK_TARGET, 0);
 }
 
 unsigned int Guardian::getAttackDuration()
@@ -79,15 +89,14 @@ unsigned int Guardian::getAttackDuration()
 
 void Guardian::setActiveAttackTarget(int targetId)
 {
-    if (targetId == 0)
-    {
-        mCachedAttackTarget.reset();
-    }
+    if (mEntityData != NULL && DATA_ID_ATTACK_TARGET != NULL)
+        mEntityData->set(DATA_ID_ATTACK_TARGET, targetId, true);
 }
 
 bool Guardian::hasActiveAttackTarget()
 {
-    return mCachedAttackTarget != NULL;
+    return mEntityData != NULL && DATA_ID_ATTACK_TARGET != NULL &&
+           mEntityData->get(DATA_ID_ATTACK_TARGET) != 0;
 }
 
 boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
@@ -111,22 +120,22 @@ unsigned int Guardian::getAmbientSoundInterval()
 
 const SoundEvent* Guardian::getAmbientSound()
 {
-    return NULL;
+    return isInWaterOrBubble() ? SoundEvents::GUARDIAN_AMBIENT : SoundEvents::GUARDIAN_AMBIENT_LAND;
 }
 
 const SoundEvent* Guardian::getHurtSound(const DamageSource*)
 {
-    return NULL;
+    return isInWaterOrBubble() ? SoundEvents::GUARDIAN_HURT : SoundEvents::GUARDIAN_HURT_LAND;
 }
 
 const SoundEvent* Guardian::getDeathSound()
 {
-    return NULL;
+    return isInWaterOrBubble() ? SoundEvents::GUARDIAN_DEATH : SoundEvents::GUARDIAN_DEATH_LAND;
 }
 
 const SoundEvent* Guardian::getFlopSound()
 {
-    return NULL;
+    return SoundEvents::GUARDIAN_FLOP;
 }
 
 bool Guardian::makeStepSound()
@@ -168,7 +177,7 @@ double Guardian::getSpikesAnimation(float partialTicks)
 
 const void* Guardian::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::GUARDIAN;
 }
 
 bool Guardian::isDarkEnoughToSpawn()

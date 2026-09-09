@@ -140,7 +140,6 @@ void MinecartHopper::_init()
     mPosition = BlockPos::ZERO;
     mEnabled = true;
     mCooldown = -1;
-    mTransferCooldown = 0;
 }
 
 void MinecartHopper::addDataWalkers(DataFixerUpper* fixer)
@@ -262,5 +261,5 @@ void MinecartHopper::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned long long MinecartHopper::GetType()
 {
-    return 0x0A84000500000000ULL;
+    return 0x000000000A840005ULL;
 }

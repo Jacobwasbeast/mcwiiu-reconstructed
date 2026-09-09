@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/AbstractChestedHorse.hpp"
+#include "game/entity/mob/RangedAttackMob.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
@@ -26,7 +27,7 @@ class SoundType;
 class ItemInstance;
 class AgableMob;
 
-class Llama : public AbstractChestedHorse
+class Llama : public AbstractChestedHorse, public RangedAttackMob
 {
 public:
     class LlamaDefendTargetGoal : public NearestAttackableTargetGoal
@@ -116,6 +117,10 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
 
 private:
+    static const EntityDataAccessor<int>* DATA_STRENGTH;
+    static const EntityDataAccessor<int>* DATA_SWAG;
+    static const EntityDataAccessor<int>* DATA_VARIANT;
+
     bool mDidSpit;
     int mStrength;
     int mVariant;

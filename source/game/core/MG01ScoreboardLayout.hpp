@@ -5,6 +5,8 @@
 
 class MG01ScoreboardLayout : public IScoreboardLayout
 {
+private:
+    int m_playerCount;
 public:
     explicit MG01ScoreboardLayout(EScoreboardType type);
     virtual ~MG01ScoreboardLayout();
@@ -31,8 +33,6 @@ public:
     unsigned char GetEndBarIcon(PlayerInfo* info);
     bool showLifeSpanProgress();
 
-private:
-    EScoreboardType m_scoreboardType;
 };
 
 #endif

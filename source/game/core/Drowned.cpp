@@ -9,6 +9,7 @@
 #include "game/core/DifficultyInstance.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/core/ThrownTrident.hpp"
+#include "game/core/Turtle.hpp"
 #include "game/entity/ai/DrownedPathNavigation.hpp"
 #include "game/entity/ai/FleeSunGoal.hpp"
 #include "game/entity/ai/Goal.hpp"
@@ -20,7 +21,7 @@
 #include "game/entity/ai/RangedAttackGoal.hpp"
 #include "game/entity/ai/RestrictSunGoal.hpp"
 #include "game/entity/ai/SwimMoveControl.hpp"
-#include "game/entity/mob/AbstractSkeleton.hpp"
+#include "game/entity/ai/UnderwaterOrInDarknessSelector.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -28,13 +29,19 @@
 #include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/RemoveBlockGoal.hpp"
 #include "game/world/generation/MoveThroughVillageGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/VillagerGolem.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
+
+static Predicate<boost::shared_ptr<Entity> >* DROWNED_TARGET_SELECTOR =
+    new UnderwaterOrInDarknessSelector();
 
 Drowned::Drowned(Level* level)
     : Zombie(level, false), mIsRangedAttacking(false), mMeleeAttackGoal(NULL),
@@ -157,19 +164,26 @@ void Drowned::registerAttributes()
 
 void Drowned::registerGoals()
 {
-    mMeleeAttackGoal = new MeleeAttackGoal(this, 1.0, true);
+    mMeleeAttackGoal = new MeleeAttackGoal(this, 1.0, false);
     mGoalSelector.addGoal(2, new RestrictSunGoal(this), true);
     mGoalSelector.addGoal(2, new FleeSunGoal(this, 1.0), true);
     mGoalSelector.addGoal(3, mMeleeAttackGoal, false);
+    mGoalSelector.addGoal(4, new RemoveBlockGoal(Blocks::turtle_egg, this, 1.0, 16, 2, 1.6,
+                                                 SoundEvents::TURTLE_EGG_HATCH,
+                                                 SoundEvents::TURTLE_EGG_BREAK), true);
     mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new RandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     mGoalSelector.addGoal(6, new MoveThroughVillageGoal(this, 1.0, false), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), 10, true, false,
-                                                                 NULL, false, false), true);
-    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(AbstractSkeleton), 10,
-                                                                 false, false, NULL, false, false), true);
+                                                               DROWNED_TARGET_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Villager), 10, false, false,
+                                                               DROWNED_TARGET_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), 10, true, false,
+                                                               DROWNED_TARGET_SELECTOR, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Turtle), 10, true, false,
+                                                               Turtle::BABY_ON_LAND_SELECTOR, false, false), true);
 }
 
 const SoundEvent* Drowned::getAmbientSound()
@@ -247,5 +261,5 @@ DrownedPathNavigation* Drowned::createNavigation(Level* level)
 
 unsigned long long Drowned::GetType()
 {
-    return 0x5D55004400000000ULL;
+    return 0x000000005D550044ULL;
 }

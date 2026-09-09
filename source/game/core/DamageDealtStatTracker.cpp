@@ -3,8 +3,7 @@
 #include "game/core/DamageEvent.hpp"
 
 DamageDealtStatTracker::DamageDealtStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mDamage(0.0f)
+    : StatTracker<float>(statsUID, 0.0f)
 {
 }
 
@@ -16,6 +15,6 @@ void DamageDealtStatTracker::update(const DamageEvent* damageEvent)
 {
     if (isTracking(damageEvent->mAttacker) && !isTracking(damageEvent->mVictim))
     {
-        mDamage += damageEvent->mDamage;
+        mValue += damageEvent->mDamage;
     }
 }

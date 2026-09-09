@@ -5,8 +5,7 @@
 #include "game/core/StatsUID.hpp"
 
 DeadshotStatTracker::DeadshotStatTracker(const StatsUID& statsUID)
-    : UntypedStatTracker(statsUID)
-    , mHit(false)
+    : StatTracker<bool>(statsUID, false)
     , mFallCount(-1)
 {
 }
@@ -17,14 +16,13 @@ DeadshotStatTracker::~DeadshotStatTracker()
 
 void DeadshotStatTracker::update(const DamageEvent* damageEvent)
 {
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(2), true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true))
     {
         return;
     }
 
     if (isTracking(damageEvent->mAttacker) && damageEvent->mWeapon.mItemId == 332
-        && damageEvent->mAttacker != StatsUID::EMPTY_SUID()
-        && damageEvent->mFallDistance > 0.0f)
+        && damageEvent->mVictim != StatsUID::EMPTY_SUID() && damageEvent->mFallDistance > 0.0f)
     {
         mFallCount = damageEvent->mFallCount;
     }
@@ -34,9 +32,10 @@ void DeadshotStatTracker::update(const DamageEvent* damageEvent)
         return;
     }
 
-    if (damageEvent->mFatal && damageEvent->mDamageSource == 3 && mFallCount > 0)
+    if (damageEvent->mFatal && damageEvent->mDamageSource == Scoreboard::DAMAGE_SOURCE_FALL
+        && mFallCount > 0)
     {
-        mHit = true;
+        mValue = true;
         return;
     }
 

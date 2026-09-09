@@ -101,5 +101,5 @@ int MinecartChest::getDefaultDisplayOffset()
 
 unsigned long long MinecartChest::GetType()
 {
-    return 0x0A84000200000000ULL;
+    return 0x000000000A840002ULL;
 }

@@ -132,7 +132,7 @@ unsigned int Cow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 
 unsigned long long Cow::GetType()
 {
-    return 0x2d6a000000000000ULL;
+    return 0x000000002d6a0000ULL;
 }
 
 void Cow::create(Level* level)

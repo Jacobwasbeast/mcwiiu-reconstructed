@@ -11,14 +11,14 @@ double RoundDeathsCondition::getScore(const GameMedal* medal, PlayerStats* playe
     switch (mOperator)
     {
     case GameMedal::OPERATOR_AT_LEAST:
-        return (double)playerStats->getDeathsInAnyRound(0x7fffffff);
+        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(0x7fffffff)));
 
     case GameMedal::OPERATOR_AT_MOST:
-        return (double)playerStats->getDeathsInAnyRound(0);
+        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(0)));
 
     case GameMedal::OPERATOR_EQUAL:
-        return (double)playerStats->getDeathsInAnyRound((int)mTarget);
+        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(static_cast<int>(mTarget))));
     }
 
-    return -1.0;
+    return -1.0f;
 }

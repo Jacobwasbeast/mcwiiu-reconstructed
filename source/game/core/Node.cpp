@@ -58,6 +58,7 @@ Node::Node(const Node& node)
 {
 }
 
+
 Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
 {
     Node* node;
@@ -109,6 +110,11 @@ Node* Node::cloneMove(int xValue, int yValue, int zValue)
     node->type = type;
     node->heapIdx = heapIdx;
     return node;
+}
+
+const BlockPathTypes* Node::GetType()
+{
+    return type;
 }
 
 double Node::distanceTo(Node* node)

@@ -62,14 +62,13 @@ void MinecartRideable::activateMinecart(int x, int y, int z, bool powered)
             setHurtDir(-getHurtDir());
             setHurtTime(10);
             setDamage(50.0f);
-            setDamage(50.0f);
         }
     }
 }
 
 unsigned int MinecartRideable::getType()
 {
-    return 0;
+    return static_cast<unsigned int>(ENTITY_TYPE_MINECART_RIDEABLE);
 }
 
 unsigned int MinecartRideable::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

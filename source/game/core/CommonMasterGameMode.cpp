@@ -6,6 +6,12 @@
 #include "game/minigame/PowerupRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Scoreboard.hpp"
+#include "game/world/generation/PlayerTeam.hpp"
+#include "game/util/AABB.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MapGenerator.hpp"
 #include "game/core/Voteable.hpp"
 #include "game/core/Voteables.hpp"
 
@@ -56,7 +62,35 @@ unsigned int CommonMasterGameMode::GetNextGameMode() const
     return mCurrentLevelGenOptions == NULL ? 0 : mNextState;
 }
 AABB* CommonMasterGameMode::GetTeamArea(Team*) const { return mTeamAreas.empty() ? NULL : mTeamAreas.front(); }
-Team* CommonMasterGameMode::GetTeamAtPosition(double, double, double, double) const { return NULL; }
+Team* CommonMasterGameMode::GetTeamAtPosition(double x, double y, double z, double radius) const
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    Level* level = minecraft == NULL ? NULL : minecraft->getLevel(0);
+    if (level == NULL) return NULL;
+
+    Scoreboard* scoreboard = level->GetScoreboard();
+    if (scoreboard == NULL) return NULL;
+    std::vector<PlayerTeam*>* teams = scoreboard->getPlayerTeams();
+    if (teams == NULL) return NULL;
+
+    Team* result = NULL;
+    for (std::vector<PlayerTeam*>::const_iterator it = teams->begin(); it != teams->end(); ++it)
+    {
+        Team* team = *it;
+        AABB* area = GetTeamArea(team);
+        if (area != NULL)
+        {
+            AABB* expanded = area->grow(radius);
+            if (expanded->contains(x, y, z))
+            {
+                result = team;
+                break;
+            }
+        }
+    }
+    delete teams;
+    return result;
+}
 bool CommonMasterGameMode::HasFallenOffLayer(const double& x, const double& z)
 {
     return x < -1000000.0 || z < -1000000.0;
@@ -145,9 +179,9 @@ void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& playe
 {
     rule->GiveRandomPowerup(player);
 }
-void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { mPrimaryTargetActive = true; }
-void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { mPrimaryTargetActive = false; }
-void CommonMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>&, double progress) { mTotalDistance = progress; }
+void CommonMasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { }
+void CommonMasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>&, TargetAreaRuleDefinition*) { }
+void CommonMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>&, double) { }
 void CommonMasterGameMode::setChosenThemeWordId(int id) { mChosenThemeWordId = static_cast<unsigned int>(id); }
 template<class Rule> void CommonMasterGameMode::CheckIntersectsNamedAreas(const std::vector<boost::shared_ptr<Player> >&, const std::vector<Rule*>& rules, unsigned int)
 {

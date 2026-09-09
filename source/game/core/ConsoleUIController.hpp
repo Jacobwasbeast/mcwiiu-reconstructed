@@ -2,6 +2,7 @@
 #define GAME_CORE_CONSOLEUICONTROLLER_HPP
 
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <boost/unordered_map.hpp>
 
@@ -356,6 +357,7 @@ private:
 
 extern OSFastMutex g_uiCriticalSection;
 extern ConsoleUIController gConsoleUIController;
+extern uint8_t g_introRunning;
 
 void PopupToast(void* context, int playerId, int achievementId, int imageId, int value);
 

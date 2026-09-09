@@ -13,12 +13,12 @@
 
 const EntityDataAccessor<unsigned char>* SpellcasterIllager::DATA_ID = NULL;
 
-extern SpellcasterIllager::IllagerSpell* gSpell0;
-extern SpellcasterIllager::IllagerSpell* gSpell1;
-extern SpellcasterIllager::IllagerSpell* gSpell2;
-extern SpellcasterIllager::IllagerSpell* gSpell3;
-extern SpellcasterIllager::IllagerSpell* gSpell4;
-extern SpellcasterIllager::IllagerSpell* gSpell5;
+SpellcasterIllager::IllagerSpell* gSpell0 = new SpellcasterIllager::IllagerSpell(0, 0.0, 0.0, 0.0);
+SpellcasterIllager::IllagerSpell* gSpell1 = new SpellcasterIllager::IllagerSpell(1, 0.7, 0.7, 0.8);
+SpellcasterIllager::IllagerSpell* gSpell2 = new SpellcasterIllager::IllagerSpell(2, 0.4, 0.3, 0.35);
+SpellcasterIllager::IllagerSpell* gSpell3 = new SpellcasterIllager::IllagerSpell(3, 0.7, 0.5, 0.2);
+SpellcasterIllager::IllagerSpell* gSpell4 = new SpellcasterIllager::IllagerSpell(4, 0.3, 0.3, 0.8);
+SpellcasterIllager::IllagerSpell* gSpell5 = new SpellcasterIllager::IllagerSpell(5, 0.1, 0.1, 0.2);
 
 SpellcasterIllager::SpellcasterIllager(Level* level)
     : AbstractIllager(level), mSpellTicks(0), mCurrentSpell(NULL)
@@ -66,6 +66,11 @@ bool SpellcasterIllager::isCastingSpell()
 int SpellcasterIllager::getArmPose()
 {
     return isCastingSpell() ? ILLAGER_ARM_POSE_SPELLCASTING : ILLAGER_ARM_POSE_CROSSED;
+}
+
+int SpellcasterIllager::getSpellCastingTime()
+{
+    return mSpellTicks;
 }
 
 void SpellcasterIllager::setIsCastingSpell(const IllagerSpell* spell)

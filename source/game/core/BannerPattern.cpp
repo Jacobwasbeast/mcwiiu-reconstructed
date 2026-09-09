@@ -21,9 +21,9 @@ BannerPattern::BannerPattern(unsigned int id, const std::wstring& name, const st
 
 BannerPattern::BannerPattern(unsigned int id, const std::wstring& name, ItemInstance* item,
                              int* names, wchar_t tab)
-    : patternItem(item)
 {
     _init(id, name, names, tab);
+    patternItem = item;
 }
 
 void BannerPattern::_init(unsigned int id, const std::wstring& name, int* names, wchar_t tab)

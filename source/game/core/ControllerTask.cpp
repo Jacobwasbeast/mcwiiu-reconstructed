@@ -4,49 +4,42 @@
 #include "game/core/InputConstraint.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/Tutorial.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-ControllerTask::ControllerTask(Tutorial* tutorialValue, int descriptionIdValue,
-                               bool preCompletionEnabledValue, bool showMinimumTimeValue,
-                               int* constrainedMappingsValue,
-                               unsigned int constrainedMappingCountValue,
-                               int* completionIdsValue, int completionIdCountValue,
-                               int* inputMappingsValue, unsigned int inputMappingCountValue)
-    : TutorialTask(tutorialValue, descriptionIdValue, preCompletionEnabledValue, NULL,
-                   showMinimumTimeValue, true, true),
-      useAlternateMappings(false), completionMask(0), completionIds(NULL),
-      completionIdCount(0)
+ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
+                               bool showMinimumTime, int* mappings, unsigned int mappingCount,
+                               int* completionIdValues, int completionIdValueCount,
+                               int* alternateMappings, unsigned int alternateMappingCount)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime, true, true),
+      useAlternateMappings(false)
 {
     unsigned int i;
 
-    for (i = 0; i + 1 < constrainedMappingCountValue; i += 2)
+    for (i = 0; i < mappingCount; ++i)
     {
-        constraints.push_back(new InputConstraint(constrainedMappingsValue[i]));
-        constrainedMappings[constrainedMappingsValue[i]] = false;
-        constraints.push_back(new InputConstraint(constrainedMappingsValue[i + 1]));
-        constrainedMappings[constrainedMappingsValue[i + 1]] = false;
-    }
-    if ((constrainedMappingCountValue & 1) != 0)
-    {
-        constraints.push_back(new InputConstraint(constrainedMappingsValue[i]));
-        constrainedMappings[constrainedMappingsValue[i]] = false;
+        constraints.push_back(new InputConstraint(mappings[i]));
+        constrainedMappings[mappings[i]] = false;
     }
 
-    if (inputMappingCountValue != 0)
+    if (alternateMappingCount != 0)
     {
         useAlternateMappings = true;
-        for (i = 0; i < inputMappingCountValue; ++i)
+
+        for (i = 0; i < alternateMappingCount; ++i)
         {
-            inputMappings[inputMappingsValue[i]] = false;
+            inputMappings[alternateMappings[i]] = false;
         }
     }
 
-    completionIds = new int[completionIdCountValue];
-    for (i = 0; i < static_cast<unsigned int>(completionIdCountValue); ++i)
+    completionIds = new int[completionIdValueCount];
+
+    for (int completionId = 0; completionId < completionIdValueCount; ++completionId)
     {
-        completionIds[i] = completionIdsValue[i];
+        completionIds[completionId] = completionIdValues[completionId];
     }
-    completionIdCount = static_cast<unsigned int>(completionIdCountValue);
+
+    completionIdCount = completionIdValueCount;
     completionMask = 0;
 }
 
@@ -57,15 +50,14 @@ ControllerTask::~ControllerTask()
 
 unsigned int ControllerTask::CompletionMaskIsValid()
 {
-    unsigned int i;
-
-    for (i = 0; i < completionIdCount; ++i)
+    for (int i = 0; i < completionIdCount; ++i)
     {
         if (completionMask == static_cast<unsigned int>(completionIds[i]))
         {
             return 1;
         }
     }
+
     return 0;
 }
 
@@ -77,33 +69,35 @@ bool ControllerTask::isCompleted()
     }
 
     bool result = true;
+    Minecraft* minecraft = Minecraft::GetInstance();
     boost::unordered_map<int, bool>* mappings = &constrainedMappings;
-    Minecraft::GetInstance();
-    int playerIndex = tutorial->playerId;
 
-    if (useAlternateMappings && GameSettings::GetGameSettings(playerIndex, (eGameSetting)9) != 0)
+    if (useAlternateMappings
+        && GameSettings::GetGameSettings(minecraft->mPlayer->mUserIndex,
+                                         static_cast<eGameSetting>(9)) != 0)
     {
         mappings = &inputMappings;
     }
 
-    boost::unordered_map<int, bool>::iterator mapping = mappings->begin();
     unsigned int mappingIndex = 0;
-    while (mapping != mappings->end())
+
+    for (boost::unordered_map<int, bool>::iterator mapping = mappings->begin();
+         mapping != mappings->end(); ++mapping, ++mappingIndex)
     {
-        if (!mapping->second)
+        if (mapping->second)
         {
-            if (g_pInput->GetValue(playerIndex, (unsigned char)mapping->first, false) == 0)
-            {
-                result = false;
-                ++mapping;
-                ++mappingIndex;
-                continue;
-            }
-            mapping->second = true;
-            completionMask |= 1 << (mappingIndex & 0x3f);
+            continue;
         }
-        ++mapping;
-        ++mappingIndex;
+
+        if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                               static_cast<unsigned char>(mapping->first), false) == 0)
+        {
+            result = false;
+            continue;
+        }
+
+        mapping->second = true;
+        completionMask |= 1 << (mappingIndex & 0x3f);
     }
 
     if (completionIds != NULL && CompletionMaskIsValid())
@@ -111,6 +105,7 @@ bool ControllerTask::isCompleted()
         completed = true;
         return true;
     }
+
     completed = result;
     return result;
 }

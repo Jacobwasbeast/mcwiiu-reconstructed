@@ -1,13 +1,23 @@
 #include "game/core/GameSettings.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/DLCPack.hpp"
+#include "game/core/DLCSkinFile.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/Options.hpp"
+#include "game/client/render/Renderer.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-extern GameSettings gGameSettings[4];
+GameSettings* gGameSettings[4] = { NULL, NULL, NULL, NULL };
 unsigned char gDefaultActionMappings[4][25];
-extern unsigned char gSecondaryActionMappings[4][25];
+unsigned char gSecondaryActionMappings[4][25];
 bool gTumbleMapFlags[3];
 extern CInput* g_pInput;
 
-void DefineActions()
+extern "C" void DefineActions()
 {
     static const unsigned char defaultMappings[3][25] =
     {
@@ -104,7 +114,7 @@ static GameSettings* settings(int profile)
 {
     if (profile == 255) profile = 0;
     if (profile < 0 || profile >= 4) return 0;
-    return &gGameSettings[profile];
+    return gGameSettings[profile];
 }
 
 uint32_t GameSettings::GetGameSettings(int profile, eGameSetting setting)
@@ -170,7 +180,95 @@ uint32_t GameSettings::GetInputButton(unsigned int value)
     return value < 15 ? buttons[value] : 0;
 }
 uint32_t GameSettings::GetActionVal(unsigned char value) { return GetInputButton(value & 15) | GetInputButton((value >> 4) & 255); }
-void GameSettings::ActionGameSettings(int, eGameSetting) {}
+void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
+{
+    // These actions are emitted after a profile record is edited.  The
+    // original switch deliberately leaves the intervening action values
+    // untouched; preserve that behavior while applying the proven cases.
+    switch (static_cast<int>(setting))
+    {
+    case 0:
+        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
+            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(0),
+                (static_cast<float>(settings(profile)->mYAxis) - 176.0f) / 100.0f);
+        return;
+    case 1:
+        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
+            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(1),
+                (static_cast<float>(settings(profile)->mSensitivity) - 176.0f) / 100.0f);
+        return;
+    case 2:
+        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex() && gRenderer != NULL) {
+            GameSettings* current = settings(profile);
+            if (current != NULL) {
+                const float gamma = (static_cast<float>(current->mVibration) - 176.0f) * 327.68f;
+                gRenderer->UpdateGamma(static_cast<unsigned short>(static_cast<int>(gamma) & 0xffff));
+            }
+        }
+        return;
+    case 3:
+        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
+        {
+            Minecraft* minecraft = Minecraft::GetInstance();
+            minecraft->mOptions->toggle(Options::Option::getItem(9), settings(profile)->mOptionFlags & 3);
+            g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0), minecraft->mOptions->mViewDistance);
+        }
+        return;
+    case 4:
+        if (Minecraft::GetInstance() != NULL)
+            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(3),
+                (static_cast<float>(settings(profile)->mSwapSticks) - 176.0f) / 100.0f);
+        return;
+    case 9:
+        if (g_pInput != NULL) {
+            const GameSettings* current = settings(profile);
+            const bool drc = current != NULL && (current->mOptionFlags & 0x80) != 0;
+            const unsigned char first = drc ? 2 : 0;
+            const unsigned char second = drc ? 3 : 1;
+            g_pInput->SetGameJoypadMaps(profile, 0, first);
+            g_pInput->SetGameJoypadMaps(profile, 1, second);
+            g_pInput->SetGameJoypadMaps(profile, 2, drc ? 0 : 2);
+            g_pInput->SetGameJoypadMaps(profile, 3, drc ? 1 : 3);
+        }
+        return;
+    case 0x10:
+        gConsoleUIController.RefreshTooltips(static_cast<unsigned int>(profile));
+        return;
+    case 0x11:
+        {
+            GameSettings* current = settings(profile);
+            gConsoleUIController.SetEnableTooltips(
+                static_cast<unsigned int>(profile), current != NULL && (current->mOptionFlags & 0x8000) != 0);
+        }
+        return;
+    case 0x29:
+    {
+        const unsigned int group = GetGameSettings(profile, (eGameSetting)7);
+        if (group > 0 || GetGameSettings(profile, (eGameSetting)10) != 0)
+        {
+            UpdateActionMapping(profile, static_cast<int>(group),
+                                GetGameSettings(profile, (eGameSetting)10) != 0);
+            SetGameSettings(profile, (eGameSetting)7, 0);
+            SetGameSettings(profile, (eGameSetting)10, 0);
+        }
+        return;
+    }
+    case 0x0e:
+        {
+            Minecraft* minecraft = Minecraft::GetInstance();
+            if (minecraft != NULL) {
+                for (unsigned int player = 0; player < 4; ++player) {
+                    if (minecraft->mLocalPlayers[player])
+                        gConsoleUIController.DisplayGamertag(player,
+                            minecraft->mLocalPlayers[player]->mViewport != 0);
+                }
+            }
+        }
+        return;
+    default:
+        return;
+    }
+}
 void GameSettings::SetSettingsChanged(int profile) { GameSettings* s = settings(profile); if (s) s->mChanged = 1; }
 void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned char value)
 {
@@ -247,13 +345,35 @@ void GameSettings::SetCustomisableControllerMapping(int profile, GameSettings* s
         gDefaultActionMappings[profile][i] = source->mActionMappings[i];
     }
 }
-uint64_t GameSettings::updateToLatestVersionFrom(unsigned short, int)
+uint64_t GameSettings::updateToLatestVersionFrom(unsigned short version, int profile)
 {
+    switch (version)
+    {
+    case 10: mHostOptionVersion = 0xff; updateToLatestVersionFrom(11, profile); break;
+    case 11: mDebugMask &= 0xfffeffffu; updateToLatestVersionFrom(12, profile); break;
+    case 12: mMinecraftLanguage = 0; updateToLatestVersionFrom(13, profile); break;
+    case 13: case 14: case 15: case 16: mDebugMask |= 0x80000u; updateToLatestVersionFrom(17, profile); break;
+    case 17: mDebugMask &= 0xffffffbfu; updateToLatestVersionFrom(18, profile); break;
+    case 18: case 19: case 20: mDebugMask |= 0x200000u; updateToLatestVersionFrom(21, profile); break;
+    case 21: case 22: mDebugMask |= 0x3000000u; mHostOptionVersion = 0xff; updateToLatestVersionFrom(24, profile); break;
+    case 23: mHostOptionVersion = 0xc0; updateToLatestVersionFrom(24, profile); break;
+    case 24: mDebugMask |= 0x30000000u; updateToLatestVersionFrom(25, profile); break;
+    case 25: updateToLatestVersionFrom(27, profile); break;
+    case 26: mDebugMask &= 0xbfffffffU; updateToLatestVersionFrom(27, profile); break;
+    case 27: case 28: SetCustomisableControllerMapping(profile, this); updateToLatestVersionFrom(29, profile); break;
+    case 29: case 30: mDebugMask |= 0x80400000u; updateToLatestVersionFrom(30, profile); break;
+    case 31: mDebugMask &= 0xfbffffffu; mHostOptionVersion = 0xff; updateToLatestVersionFrom(32, profile); break;
+    case 32: mLanguage = 9; updateToLatestVersionFrom(33, profile); break;
+    case 33: case 34: mDebugMask |= 0x30u; break;
+    default: break;
+    }
     return 0;
 }
 
-uint32_t GameSettings::OldProfileVersionCallback(void*, unsigned char*, unsigned short, int)
+uint32_t GameSettings::OldProfileVersionCallback(void*, unsigned char* data, unsigned short version, int profile)
 {
+    GameSettings* settings = ::settings(profile);
+    if (settings != NULL) settings->updateToLatestVersionFrom(version, profile);
     return 0;
 }
 void GameSettings::SetDefaultControls(C4JStorage::PROFILESETTINGS* values, int profile, bool)
@@ -337,12 +457,39 @@ void GameSettings::SetPlayerCape(int profile, unsigned int id, bool changed)
     }
 }
 void GameSettings::SetPlayerCape(int profile, const std::wstring&) { SetPlayerCape(profile, 0, true); }
-std::wstring GameSettings::GetPlayerCapeName(int) { return std::wstring(); }
-uint32_t GameSettings::IsAllowedSkin(int) { return 1; }
+std::wstring GameSettings::GetPlayerCapeName(int profile)
+{
+    return Player::getCapePathFromId(gGameSettings[profile]->mCapeId);
+}
+uint32_t GameSettings::IsAllowedSkin(int profile)
+{
+    GameSettings* settings = ::settings(profile);
+    if (settings == NULL)
+        return 0;
+
+    const int32_t skinId = static_cast<int32_t>(settings->mSkinId);
+    if (skinId >= 0)
+        return 1;
+
+    if (g_pApp == NULL)
+        return 0;
+    const std::wstring path = CMinecraftApp::getSkinPathFromId(settings->mSkinId);
+    DLCPack* pack = g_pApp->mDLCManager.getPackContainingSkin(path);
+    if (pack == NULL)
+        return 0;
+    DLCSkinFile* skin = dynamic_cast<DLCSkinFile*>(pack->getSkinFile(path));
+    if (skin == NULL || (!pack->hasPurchasedPack() && !skin->isFree()))
+        return 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    return minecraft == NULL || minecraft->GetMiniGame() == NULL ||
+           minecraft->GetMiniGame()->AllowSmallSkins() ||
+           skin->getSkinAdjustments()->mXMLVersion != 2;
+}
 uint32_t GameSettings::GetPlayerCapeId(int profile)
 {
-    GameSettings* s = settings(profile);
-    return s && IsAllowedSkin(profile) ? s->mCapeId : 0;
+    if (IsAllowedSkin(profile))
+        return gGameSettings[profile]->mCapeId;
+    return 0;
 }
 
 void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
@@ -363,7 +510,10 @@ void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
     }
 }
 void GameSettings::SetPlayerSkin(int profile, const std::wstring&) { SetPlayerSkin(profile, 0, true); }
-std::wstring GameSettings::GetPlayerSkinName(int) { return std::wstring(); }
+std::wstring GameSettings::GetPlayerSkinName(int profile)
+{
+    return CMinecraftApp::getSkinPathFromId(gGameSettings[profile]->mSkinId);
+}
 uint32_t GameSettings::GetPlayerSkinId(int profile)
 {
     GameSettings* s = settings(profile);
@@ -484,9 +634,9 @@ uint64_t GameSettings::SetGameSettings(int profile, eCustomGameModeHostOption op
     return (uint64_t)(uint32_t)profile << 32;
 }
 uint64_t GameSettings::GetGameSettings(eGameSetting setting) { return (uint64_t)GetGameSettings(0, setting) << 32; }
-uint32_t GameSettings::GetGameSettingsDebugMask(int profile, bool) { GameSettings* s = settings(profile); return s ? s->mDebugMask : 0; }
-uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting setting, int profile) { return (GetGameSettingsDebugMask(profile, false) & (1u << ((int)setting & 31))) != 0; }
-void GameSettings::SetGameSettingsDebugMask(int profile, unsigned int value) { GameSettings* s = settings(profile); if (s) s->mDebugMask = value; }
+uint32_t GameSettings::GetGameSettingsDebugMask(int, bool) { return 0; }
+uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting, int) { return 0; }
+void GameSettings::SetGameSettingsDebugMask(int, unsigned int) { }
 uint32_t GameSettings::GetLoggingMask() { return GetGameSettingsDebugMask(0, false); }
 void GameSettings::SetSpecialTutorialCompletionFlag(int profile, int flag)
 {

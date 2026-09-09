@@ -134,7 +134,12 @@ private:
     unsigned int mRoundEndTime;
     unsigned int mRoundTime;
     StatsMap mPlayerStats;
+    boost::shared_ptr<ServerPlayer> mRoundWinner;
+    boost::shared_ptr<ServerPlayer> mFirstPlace;
+    boost::shared_ptr<ServerPlayer> mSecondPlace;
+    boost::shared_ptr<ServerPlayer> mThirdPlace;
     unsigned int mFarthestCheckpointReached;
+    bool mLandingRecorded;
 };
 
 #endif

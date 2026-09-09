@@ -1,18 +1,9 @@
 #include "game/core/FinishedLastRoundCondition.hpp"
 
+#include "game/core/GameStats.hpp"
 #include "game/core/Minecraft.hpp"
-
-class GameStats
-{
-public:
-    PlayerStats* GetPlayerStats(const StatsUID& uid);
-};
-
-class MiniGameDef
-{
-public:
-    int GetFinalRoundIndex() const;
-};
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/PlayerStats.hpp"
 
 FinishedLastRoundCondition::FinishedLastRoundCondition()
     : MultiConditionMedal::MultiCondition(0.0f, GameMedal::OPERATOR_EQUAL, false)

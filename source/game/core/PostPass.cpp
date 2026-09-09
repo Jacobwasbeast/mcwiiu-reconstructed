@@ -1,32 +1,10 @@
 #include "game/core/PostPass.hpp"
 #include "game/item/Effect.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/Uniform.hpp"
+#include "game/core/BufferBuilder.hpp"
 #include "game/client/render/Tesselator.hpp"
-
-class Uniform
-{
-public:
-    void set(float x, float y);
-    void set(Matrix4f* matrix);
-    void set(float x);
-};
-
-class Minecraft
-{
-public:
-    static Minecraft* GetInstance();
-    int mWidth;
-    int mHeight;
-};
-
-class BufferBuilder
-{
-public:
-    void begin();
-    void end();
-    void color(int red, int green, int blue, int alpha);
-    void vertex(float x, float y, float z);
-};
 
 template<typename T> std::wstring _toString(T value);
 int RenderTargetWidth(RenderTarget* target);

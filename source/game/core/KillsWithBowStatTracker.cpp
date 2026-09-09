@@ -4,7 +4,7 @@
 
 KillsWithBowStatTracker::KillsWithBowStatTracker(const StatsUID& statsUID)
     : UntypedStatTracker(statsUID)
-    , mKills(0)
+    , mValue(0)
 {
 }
 
@@ -14,9 +14,14 @@ KillsWithBowStatTracker::~KillsWithBowStatTracker()
 
 void KillsWithBowStatTracker::update(const DamageEvent* damageEvent)
 {
-    if (isTracking(damageEvent->mAttacker) && damageEvent->mFallCount != 0
-        && damageEvent->mTime == 11)
+    if (isTracking(damageEvent->mAttacker) && damageEvent->mFatal
+        && damageEvent->mDamageSource == Scoreboard::DAMAGE_SOURCE_ARROW)
     {
-        ++mKills;
+        ++mValue;
     }
+}
+
+int KillsWithBowStatTracker::getValue() const
+{
+    return mValue;
 }

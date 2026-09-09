@@ -5,6 +5,8 @@
 
 class MG02ScoreboardLayout : public IScoreboardLayout
 {
+private:
+    int m_playerCount;
 public:
     MG02ScoreboardLayout();
     virtual ~MG02ScoreboardLayout();
@@ -17,14 +19,12 @@ public:
     virtual std::wstring getLabel5(const StatsUID& uid);
     virtual std::wstring getLabel6(const StatsUID& uid);
     virtual std::wstring getLabel7(const StatsUID& uid);
-    virtual uint32_t getStatIcon1(const EScoreboardType& type);
     virtual uint32_t getStatIcon2(const EScoreboardType& type);
     virtual uint32_t getStatIcon3(const EScoreboardType& type);
     virtual uint32_t getStatIcon4(const EScoreboardType& type);
     virtual uint32_t getStatIcon5(const EScoreboardType& type);
     virtual uint32_t getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
-    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int column, int row, int slot, const unsigned int& value, const EScoreboardType& type);
     virtual boost::shared_ptr<ItemInstance> getItemForSlot(int column, int row, const unsigned int& value, const EScoreboardType& type);
     virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);

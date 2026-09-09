@@ -18,7 +18,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<int>* SEA_PICKLE_COUNT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"pickles", 1, 4));
+AbstractProperty<int>* SeaPickle_PICKLES = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"pickles", 1, 4));
 static AbstractProperty<bool>* SEA_PICKLE_WATERLOGGED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"waterlogged"));
 
 SeaPickle::SeaPickle()
@@ -27,7 +27,7 @@ SeaPickle::SeaPickle()
     DerivedInit();
     TypedBoxed<int> count(1);
     TypedBoxed<bool> waterlogged(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(SEA_PICKLE_COUNT, &count)->setBoxedValue(SEA_PICKLE_WATERLOGGED, &waterlogged));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(SeaPickle_PICKLES, &count)->setBoxedValue(SEA_PICKLE_WATERLOGGED, &waterlogged));
 }
 
 SeaPickle::~SeaPickle()
@@ -84,7 +84,7 @@ bool SeaPickle::performBonemeal(bool checkOnly, Level* level, Random* random, co
                 if (level->getBlockState(target.below())->getBlock() != Blocks::WATER || !level->isEmptyWaterBlock(target))
                     continue;
                 const BlockState* current = level->getBlockState(target);
-                TypedBoxed<int> count(current->getBlock() == this ? current->getValue(SEA_PICKLE_COUNT) : 1);
+                TypedBoxed<int> count(current->getBlock() == this ? current->getValue(SeaPickle_PICKLES) : 1);
                 if (current->getBlock() == this && count.getValue() >= 3)
                     count = TypedBoxed<int>(3);
                 else
@@ -129,7 +129,7 @@ Item* SeaPickle::getResource(const BlockState*, Random*, int)
 
 void SeaPickle::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float, int)
 {
-    int count = state->getValue(SEA_PICKLE_COUNT);
+    int count = state->getValue(SeaPickle_PICKLES);
     Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count, 0)));
 }
 
@@ -137,7 +137,7 @@ int SeaPickle::getLightEmission(const BlockState* state)
 {
     if (state->getBlock() != this)
         return 0;
-    int count = state->getValue(SEA_PICKLE_COUNT);
+    int count = state->getValue(SeaPickle_PICKLES);
     return count < 4 && !state->getValue(SEA_PICKLE_WATERLOGGED) ? 3 * count : 0;
 }
 
@@ -180,7 +180,7 @@ std::wstring SeaPickle::getTileItemIconName()
 
 int SeaPickle::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(SEA_PICKLE_COUNT) - 1 | (state->getValue(SEA_PICKLE_WATERLOGGED) ? 8 : 0);
+    return state->getValue(SeaPickle_PICKLES) - 1 | (state->getValue(SEA_PICKLE_WATERLOGGED) ? 8 : 0);
 }
 
 unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -191,14 +191,14 @@ unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 const BlockState* SeaPickle::getBlockState(int data)
 {
     TypedBoxed<int> count((data & 7) + 1);
-    const BlockState* state = defaultBlockState()->setBoxedValue(SEA_PICKLE_COUNT, &count);
+    const BlockState* state = defaultBlockState()->setBoxedValue(SeaPickle_PICKLES, &count);
     TypedBoxed<bool> waterlogged((data >> 3) & 1);
     return state->setBoxedValue(SEA_PICKLE_WATERLOGGED, &waterlogged);
 }
 
 BlockStateDefinition* SeaPickle::createBlockStateDefinition()
 {
-    const Property* properties[2] = { SEA_PICKLE_COUNT, SEA_PICKLE_WATERLOGGED };
+    const Property* properties[2] = { SeaPickle_PICKLES, SEA_PICKLE_WATERLOGGED };
     return new BlockStateDefinition(this, properties, 2);
 }
 

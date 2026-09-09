@@ -3,27 +3,36 @@
 #include "game/core/Direction.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
-#include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<int>* CORAL_FAN_HANG_VARIANT = NULL;
-static AbstractProperty<int>* CORAL_FAN_HANG_FACING = NULL;
-static AbstractProperty<bool>* CORAL_FAN_HANG_DEAD = NULL;
+extern AbstractProperty<int>* CoralFan_PROPERTY_1;
+extern AbstractProperty<int>* CoralFan_PROPERTY_2;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
+extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
 
-Property* CoralFanHang_PROPERTY_1 = NULL;
-Property* CoralFanHang_PROPERTY_2 = NULL;
-Property* CoralFanHang_PROPERTY_3 = NULL;
+AbstractProperty<int>* CoralFanHang_PROPERTY_1 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 1));
+AbstractProperty<int>* CoralFanHang_PROPERTY_2 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"direction", 0, 3));
+AbstractProperty<bool>* CoralFanHang_PROPERTY_3 = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead_coral"));
+
+namespace
+{
+    const AABB* CORAL_FAN_HANG_SHAPE = NULL;
+}
 
 CoralFanHang::CoralFanHang()
     : CoralFan()
@@ -34,62 +43,94 @@ CoralFanHang::CoralFanHang()
     TypedBoxed<int> variant(0);
     TypedBoxed<int> facing(2);
     TypedBoxed<bool> dead(false);
-    const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(CORAL_FAN_HANG_VARIANT, &variant);
-    state = state->setBoxedValue(CORAL_FAN_HANG_FACING, &facing);
-    state = state->setBoxedValue(CORAL_FAN_HANG_DEAD, &dead);
-    registerDefaultState(state);
+    registerDefaultState(defaultBlockState()->setBoxedValue(CoralFanHang_PROPERTY_1, &variant)
+                                            ->setBoxedValue(CoralFanHang_PROPERTY_2, &facing)
+                                            ->setBoxedValue(CoralFanHang_PROPERTY_3, &dead));
 }
 
 CoralFanHang::~CoralFanHang()
 {
 }
 
-Item* CoralFanHang::getResource(const BlockState*, Random*, int)
+Item* CoralFanHang::getResource(const BlockState* state, Random* random, int lootBonus)
 {
     return NULL;
 }
 
-const AABB* CoralFanHang::getShape(const BlockState*, LevelSource*, const BlockPos&)
+const AABB* CoralFanHang::getShape(const BlockState* state, LevelSource* levelSource,
+                                   const BlockPos& pos)
 {
-    return NULL;
+    return CORAL_FAN_HANG_SHAPE;
 }
 
 const Direction* CoralFanHang::_getNeighborFromDirection(int direction) const
 {
     if (direction == 0)
-        return Direction::NORTH;
-    if (direction == 1)
-        return Direction::SOUTH;
-    if (direction == 2)
+    {
         return Direction::WEST;
-    return Direction::EAST;
+    }
+
+    if (direction == 1)
+    {
+        return Direction::EAST;
+    }
+
+    if (direction == 2)
+    {
+        return Direction::NORTH;
+    }
+
+    return Direction::SOUTH;
 }
 
 void CoralFanHang::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
-                                   Block*, const BlockPos&)
+                                   Block* block, const BlockPos& fromPos)
 {
-    if (!level->mIsClientSide)
+    if (level->mIsClientSide)
     {
-        const Direction* direction = _getNeighborFromDirection(state->getValue(CORAL_FAN_HANG_FACING));
-        BlockPos support = pos.relative(direction->getOpposite());
-        if (!level->getBlockState(support)->canProvideSupport(direction, BLOCK_SUPPORT_CENTER))
-            level->levelEvent(2001, pos, 1);
-        else
-            level->levelEvent(level->mRandom->nextInt(40, 200), pos, 1);
+        return;
     }
+
+    const Direction* facing =
+        _getNeighborFromDirection(level->getBlockState(pos)->getValue(CoralFanHang_PROPERTY_2));
+    BlockPos support = pos.relative(facing->getOpposite());
+
+    if (!level->getBlockState(support)->canProvideSupport(facing, BLOCK_SUPPORT_CENTER))
+    {
+        level->addToTickNextTick(pos, this, 1);
+        return;
+    }
+
+    level->addToTickNextTick(pos, this, level->mRandom->nextInt(40, 200));
 }
 
 TextureAtlasSprite* CoralFanHang::getTexture(const Direction* direction, const BlockState* state)
 {
-    return CoralFan::getTexture(direction, state);
+    int variant = state->getValue(CoralFanHang_PROPERTY_1);
+
+    if (this == Blocks::coral_fan_hang2)
+    {
+        variant += 2;
+    }
+
+    if (this == Blocks::coral_fan_hang3)
+    {
+        variant = 4;
+    }
+
+    if (state->getValue(CoralFanHang_PROPERTY_3))
+    {
+        return mDeadIcons[variant];
+    }
+
+    return mIcons[variant];
 }
 
 int CoralFanHang::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return (state->getValue(CORAL_FAN_HANG_VARIANT) << 1)
-        | (state->getValue(CORAL_FAN_HANG_FACING) << 2)
-        | (state->getValue(CORAL_FAN_HANG_DEAD) ? 1 : 0);
+    return (state->getValue(CoralFanHang_PROPERTY_1) << 1)
+        | (state->getValue(CoralFanHang_PROPERTY_2) << 2)
+        | (state->getValue(CoralFanHang_PROPERTY_3) ? 1 : 0);
 }
 
 const BlockState* CoralFanHang::getBlockState(int data)
@@ -97,66 +138,121 @@ const BlockState* CoralFanHang::getBlockState(int data)
     TypedBoxed<int> variant((data >> 1) & 1);
     TypedBoxed<int> facing((data >> 2) & 3);
     TypedBoxed<bool> dead((data & 1) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(CORAL_FAN_HANG_VARIANT, &variant);
-    state = state->setBoxedValue(CORAL_FAN_HANG_FACING, &facing);
-    return state->setBoxedValue(CORAL_FAN_HANG_DEAD, &dead);
+
+    return defaultBlockState()->setBoxedValue(CoralFanHang_PROPERTY_1, &variant)
+                              ->setBoxedValue(CoralFanHang_PROPERTY_2, &facing)
+                              ->setBoxedValue(CoralFanHang_PROPERTY_3, &dead);
 }
 
 not_null_ptr<ItemInstance> CoralFanHang::getSilkTouchItemInstance(const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state)));
+    Block* fanBlock = state->getValue(CoralFanHang_PROPERTY_3) ? Blocks::coral_fan_dead
+                                                         : Blocks::coral_fan;
+    TypedBoxed<int> fanDead(0);
+    const BlockState* fanState =
+        fanBlock->defaultBlockState()->setBoxedValue(CoralFan_PROPERTY_2, &fanDead);
+
+    if (state->getBlock() == Blocks::coral_fan_hang)
+    {
+        TypedBoxed<int> fanType(state->getValue(CoralFanHang_PROPERTY_1));
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+    else if (state->getBlock() == Blocks::coral_fan_hang2)
+    {
+        TypedBoxed<int> fanType(state->getValue(CoralFanHang_PROPERTY_1) == 0 ? 2 : 3);
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+    else
+    {
+        TypedBoxed<int> fanType(4);
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(fanState->getBlock(), 1,
+                         Blocks::coral_fan->convertBlockStateToLegacyData(fanState)));
 }
 
-not_null_ptr<ItemInstance> CoralFanHang::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
+not_null_ptr<ItemInstance> CoralFanHang::getCloneItemInstance(Level* level, const BlockPos& pos,
+                                                              const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state)));
+    Block* fanBlock = state->getValue(CoralFanHang_PROPERTY_3) ? Blocks::coral_fan_dead
+                                                         : Blocks::coral_fan;
+    TypedBoxed<int> fanDead(0);
+    const BlockState* fanState =
+        fanBlock->defaultBlockState()->setBoxedValue(CoralFan_PROPERTY_2, &fanDead);
+
+    if (state->getBlock() == Blocks::coral_fan_hang)
+    {
+        TypedBoxed<int> fanType(state->getValue(CoralFanHang_PROPERTY_1));
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+    else if (state->getBlock() == Blocks::coral_fan_hang2)
+    {
+        TypedBoxed<int> fanType(state->getValue(CoralFanHang_PROPERTY_1) == 0 ? 2 : 3);
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+    else
+    {
+        TypedBoxed<int> fanType(4);
+        fanState = fanState->setBoxedValue(CoralFan_PROPERTY_1, &fanType);
+    }
+
+    return not_null_ptr<ItemInstance>(
+        new ItemInstance(fanState->getBlock(), 1,
+                         Blocks::coral_fan->convertBlockStateToLegacyData(fanState)));
 }
 
 BlockStateDefinition* CoralFanHang::createBlockStateDefinition()
 {
-    if (CORAL_FAN_HANG_VARIANT == NULL)
+    static const Property* PROPERTIES[3] =
     {
-        CORAL_FAN_HANG_VARIANT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 1));
-        CORAL_FAN_HANG_FACING = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"facing", 0, 3));
-        CORAL_FAN_HANG_DEAD = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"dead"));
-        CoralFanHang_PROPERTY_1 = CORAL_FAN_HANG_VARIANT;
-        CoralFanHang_PROPERTY_2 = CORAL_FAN_HANG_FACING;
-        CoralFanHang_PROPERTY_3 = CORAL_FAN_HANG_DEAD;
-    }
-    const Property* properties[3] =
-    {
-        CORAL_FAN_HANG_VARIANT, CORAL_FAN_HANG_FACING, CORAL_FAN_HANG_DEAD
+        CoralFanHang_PROPERTY_1, CoralFanHang_PROPERTY_2, CoralFanHang_PROPERTY_3
     };
-    return new BlockStateDefinition(this, properties, 3);
+
+    return new BlockStateDefinition(this, PROPERTIES, 3);
 }
 
 void CoralFanHang::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = _getNeighborFromDirection(state->getValue(CORAL_FAN_HANG_FACING));
-    BlockPos support = pos.relative(direction->getOpposite());
+    const Direction* facing = _getNeighborFromDirection(state->getValue(CoralFanHang_PROPERTY_2));
+    BlockPos support = pos.relative(facing->getOpposite());
+
     if (!level->isUnderWater(pos, Block::getId(this), 0))
     {
         TypedBoxed<bool> dead(true);
-        level->setBlock(pos, state->setBoxedValue(CORAL_FAN_HANG_DEAD, &dead), 3, false);
+        level->setBlock(pos, state->setBoxedValue(CoralFanHang_PROPERTY_3, &dead), 3, false);
     }
-    if (!level->isSolidBlockingBlock(support)
-        && !level->getBlockState(support)->canProvideSupport(direction, BLOCK_SUPPORT_CENTER))
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+
+    if (!level->isSolidBlockingBlock(support) && !level->getBlock(support)->isSlabBlock())
+    {
+        level->setBlockAndData(pos.x, pos.y, pos.z, 0, 0, 3);
+    }
 }
 
-bool CoralFanHang::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState*)
+bool CoralFanHang::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
     const BlockState* support = level->getBlockState(pos);
-    if (support->canProvideSupport(Direction::DOWN, BLOCK_SUPPORT_CENTER))
+
+    if (support->canProvideSupport(Direction::NORTH, BLOCK_SUPPORT_CENTER))
+    {
         return true;
+    }
+
     if (HalfSlabBlock::isHalfSlab(support))
+    {
         return support->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP;
+    }
+
     return false;
 }
 
 void CoralFanHang::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!state->getValue(CORAL_FAN_HANG_DEAD)
-        && level->getExtraBlock(pos)->mBaseItemType == mBaseItemType)
-        level->setExtraBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    if (!state->getValue(CoralFanHang_PROPERTY_3)
+        && level->getLiquidBlock(pos)->mMaterial == mMaterial)
+    {
+        level->setExtraBlock(pos, Blocks::FLOWING_WATER->defaultBlockState(), 3, false);
+    }
 }
+

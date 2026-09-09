@@ -67,7 +67,6 @@ public:
     PlayerInfo* getPlayersAt(const unsigned int&);
 
 protected:
-    int m_playerCount;
     std::vector<PlayerInfo*> m_players;
 };
 

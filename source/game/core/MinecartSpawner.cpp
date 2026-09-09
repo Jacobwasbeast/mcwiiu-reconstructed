@@ -80,7 +80,7 @@ MinecartSpawner::MinecartMobSpawner* MinecartSpawner::getSpawner()
 
 unsigned long long MinecartSpawner::GetType()
 {
-    return 0x0A80000600000000ULL;
+    return 0x000000000A800006ULL;
 }
 
 MinecartSpawner::MinecartMobSpawner::MinecartMobSpawner(MinecartSpawner* minecart)

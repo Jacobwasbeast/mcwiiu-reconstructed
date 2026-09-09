@@ -10,13 +10,12 @@ EditBox::EditBox(Screen* screen, Font* font, int x, int y, int width, int height
 {
     mX = x;
     mFont = font;
-    mValueLength = 0;
     mTickCount = 0;
     mY = y;
     mWidth = width;
     mHeight = height;
     mScreen = screen;
-    mMaxLength = 7;
+    mMaxLength = 0;
     setValue(value);
 }
 
@@ -28,7 +27,6 @@ void EditBox::tick()
 void EditBox::setValue(const std::wstring& value)
 {
     mValue.assign(value);
-    mValueLength = static_cast<int>(mValue.size());
 }
 
 void EditBox::setMaxLength(int maxLength)
@@ -53,17 +51,15 @@ void EditBox::keyPressed(wchar_t key, int action)
         mScreen->tabPressed();
     }
 
-    if (action == 29 && mValueLength != 0)
+    if (action == 29 && !mValue.empty())
     {
-        mValue.assign(mValue, 0, mValueLength - 1);
-        mValueLength = static_cast<int>(mValue.size());
+        mValue = mValue.substr(0, mValue.size() - 1);
     }
 
     if (ALLOWED_CHARACTERS.find(&key, 0, 1) != std::wstring::npos
-        && (mValueLength < mMaxLength || mMaxLength == 0))
+        && (mValue.size() < static_cast<std::wstring::size_type>(mMaxLength) || mMaxLength == 0))
     {
         mValue += key;
-        ++mValueLength;
     }
 }
 

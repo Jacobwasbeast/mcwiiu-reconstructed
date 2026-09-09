@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <deque>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -35,6 +36,7 @@ class PowerupRuleDefinition;
 class Scoreboard;
 class ServerLevel;
 class ServerPlayer;
+class ServerScoreboard;
 class Settings;
 class StatsUID;
 class TargetAreaRuleDefinition;
@@ -279,6 +281,8 @@ public:
 private:
     friend class CheckpointCommand;
     friend class GameMedal;
+    friend class ServerPlayerGameMode;
+    friend class ServerScoreboard;
 
     unsigned long long mRoundStartTime;
     int mRoundTimeOffset;
@@ -291,6 +295,8 @@ private:
     int mInternalState;
     int mPreviousState;
     std::vector<LevelRules::LevelRulesetGroup*> mPlaylist;
+    std::deque<LevelRules::LevelRulesetGroup*> mRuleGroups;
+    std::deque<LevelRules::LevelRulesetGroup*> mShuffledRuleGroups;
     int mCurrentPlaylistEntry;
     int mCurrentRuleIndex;
     unsigned int mReadyPlayers;

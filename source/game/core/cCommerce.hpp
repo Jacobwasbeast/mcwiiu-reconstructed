@@ -5,6 +5,8 @@
 
 class cProductInfo;
 
+extern cProductInfo* g_pDLCProductInfo;
+
 class cCommerce
 {
 public:

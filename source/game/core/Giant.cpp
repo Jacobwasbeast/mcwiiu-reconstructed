@@ -1,6 +1,7 @@
 #include "game/core/Giant.hpp"
 
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/world/Level.hpp"
@@ -47,10 +48,10 @@ double Giant::getWalkTargetValue(const BlockPos& pos)
 
 const void* Giant::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::GIANT;
 }
 
 unsigned long long Giant::GetType()
 {
-    return 0x5D54004200000000ULL;
+    return 0x000000005D540042ULL;
 }

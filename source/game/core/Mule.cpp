@@ -126,5 +126,5 @@ bool Mule::HideUseTooltips()
 
 unsigned long long Mule::GetType()
 {
-    return 0x2d69800200000000ULL;
+    return 0x000000002D698002ULL;
 }

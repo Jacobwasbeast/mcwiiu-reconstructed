@@ -27,9 +27,10 @@ FillTool::~FillTool()
 void FillTool::Reset()
 {
     mBrushData = 0;
-    mReplaceOnlyDataMask = 0;
+    mReplaceOnlyData = 0;
+    mReplaceOnlyDataMask = -1;
+    mFillDataMask = 0x00ffffff;
     mReplaceOnlyBlock = NULL;
-    mReplaceOnlyData = 0x00ffffff;
     mFillBlock = NULL;
 }
 

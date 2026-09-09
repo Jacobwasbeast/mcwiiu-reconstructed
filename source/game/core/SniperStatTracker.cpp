@@ -2,6 +2,7 @@
 
 #include "game/core/DamageEvent.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 
 SniperStatTracker::SniperStatTracker(const StatsUID& statsUID)
     : UntypedStatTracker(statsUID)
@@ -16,7 +17,7 @@ SniperStatTracker::~SniperStatTracker()
 void SniperStatTracker::update(const DamageEvent* damageEvent)
 {
     if (isTracking(damageEvent->mAttacker)
-        && Item::byId(damageEvent->mWeapon.mItemId) != NULL)
+        && Item::byId(damageEvent->mWeapon.mItemId) == Items::bow)
     {
         if (mValue < static_cast<double>(damageEvent->mDistance))
         {

@@ -1,12 +1,13 @@
 #include "game/core/DLCSkinFile.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ChinaDlcFilter.hpp"
 #include "game/core/DLCLocalisationFile.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/data/StringTable.hpp"
 
-extern CMinecraftApp g_MinecraftApp;
+extern CConsoleMinecraftApp gApp;
 
 DLCSkinFile::DLCSkinFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Skin, path), mSkinAdjustments(), mFree(false), mAdditionalBoxes()
@@ -32,7 +33,7 @@ bool DLCSkinFile::isFiltered()
 
 void DLCSkinFile::addData(unsigned char* data, unsigned int size)
 {
-    g_MinecraftApp.AddMemoryTextureFile(m_path, data, size);
+    gApp.AddMemoryTextureFile(m_path, data, size);
 }
 
 void DLCSkinFile::addParameter(DLCManager::EDLCParameterType parameter, const std::wstring& value)

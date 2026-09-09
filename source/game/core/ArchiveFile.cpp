@@ -2,14 +2,16 @@
 #include <cstring>
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/Compression.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/FileInputStream.hpp"
 
-extern void FatalLoadError(const wchar_t*, ...);
+struct _OVERLAPPED;
+
 extern int wstringtofilename(const std::wstring&, char (&)[256]);
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern int SetFilePointer(int, int, int*, unsigned int);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, void*);
+extern int SetFilePointer(int, long, int*, unsigned int);
+extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
 extern int CloseHandle(int);
 
 ArchiveFile::ArchiveFile(File file)
@@ -17,7 +19,7 @@ ArchiveFile::ArchiveFile(File file)
     m_data = NULL;
     m_cachedData = false;
     File::operator=(file);
-    if (!file.exists()) FatalLoadError(L"<ArchiveFile@%d> Failed to load ", 0x54);
+    if (!file.exists()) gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to load ", 0x54);
     FileInputStream input(file);
     DataInputStream stream(&input);
     _readHeader(&stream);
@@ -81,7 +83,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
     boost::unordered_map<std::wstring, _MetaData*>::iterator found = m_files.find(name);
     if (found == m_files.end())
     {
-        FatalLoadError(L"<ArchiveFile@%d> Failed to find ", 0xB1, name.c_str(), getPath().c_str());
+        gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to find ", 0xB1, name.c_str(), getPath().c_str());
         return result;
     }
     _MetaData* metadata = found->second;
@@ -97,7 +99,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
         int handle = CreateFileA(filename, 0x80000000, 0, NULL, 3, 0x80, 0);
         if (handle == -1 || SetFilePointer(handle, static_cast<int>(metadata->offset), NULL, 0) == 0)
         {
-            FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
             if (handle != -1) CloseHandle(handle);
             return result;
         }
@@ -105,7 +107,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
         unsigned int read = 0;
         if (!ReadFile(handle, result.data, metadata->size, &read, NULL))
         {
-            FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(), getPath().c_str());
+            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(), getPath().c_str());
             delete[] result.data;
             result.data = NULL;
             result.length = 0;

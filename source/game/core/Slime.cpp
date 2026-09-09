@@ -1,8 +1,10 @@
 #include "game/core/Slime.hpp"
+#include "game/client/render/ParticleType.hpp"
 
 #include <cmath>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -10,6 +12,7 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
 #include "game/util/Random.hpp"
@@ -35,11 +38,13 @@ Slime::~Slime()
 
 unsigned long long Slime::GetType()
 {
-    return 0x5d10800000000000ULL;
+    return 0x5D108000ULL;
 }
 
 void Slime::staticCtor()
 {
+    DATA_ID_SIZE = SynchedEntityData::defineId<int>(0, 0x5D108000ULL,
+                                                     EntityDataSerializers::INT);
 }
 
 void Slime::create(Level* level)
@@ -117,7 +122,7 @@ bool Slime::isTiny()
 
 const void* Slime::getParticleType()
 {
-    return 0;
+    return PARTICLE_SLIME;
 }
 
 void Slime::tick()
@@ -214,9 +219,9 @@ bool Slime::isDealsDamage()
     return !isTiny();
 }
 
-float Slime::getAttackDamage()
+int Slime::getAttackDamage()
 {
-    return (float)getSize();
+    return getSize();
 }
 
 const SoundEvent* Slime::getHurtSound(const DamageSource*)
@@ -236,7 +241,7 @@ const SoundEvent* Slime::getSquishSound()
 
 const void* Slime::getDefaultLootTable()
 {
-    return 0;
+    return isTiny() ? NULL : &BuiltInLootTables::SLIME;
 }
 
 bool Slime::checkSpawnRules()

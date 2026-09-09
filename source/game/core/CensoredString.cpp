@@ -12,22 +12,22 @@ static const std::wstring& EmptyCensoredString()
 }
 
 CensoredString::CensoredString()
-    : m_colour(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
+      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(NULL, -1, -1);
 }
 
 CensoredString::CensoredString(int firstId, int secondId)
-    : m_colour(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
+      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(NULL, firstId, secondId);
 }
 
 CensoredString::CensoredString(TickAction* action, int firstId, int secondId)
-    : m_colour(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+    : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
+      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(action, firstId, secondId);
 }
@@ -39,14 +39,15 @@ CensoredString::~CensoredString()
 void CensoredString::_init(TickAction* action, int firstId, int secondId)
 {
     m_tickAction = action;
-    m_censored = L"Custom";
+    const std::wstring& empty = EmptyCensoredString();
+    m_censored = empty;
     m_flags &= static_cast<unsigned char>(0xf8);
     if (!m_useLocalization)
     {
-        m_pending = L"Custom";
+        m_pending = empty;
         m_pendingId = -1;
         m_censoredId = -1;
-        m_uuid = L"Custom";
+        m_uuid = empty;
         m_chatCensored = false;
         m_uuidLocal = true;
     }
@@ -56,7 +57,7 @@ void CensoredString::_init(TickAction* action, int firstId, int secondId)
         m_pending.assign(pending, wcslen(pending));
         m_pendingId = firstId;
         m_censoredId = secondId;
-        m_uuid = L"Custom";
+        m_uuid = empty;
         m_chatCensored = false;
         m_uuidLocal = true;
     }

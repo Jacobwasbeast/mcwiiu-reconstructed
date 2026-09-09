@@ -4,7 +4,7 @@
 class Source
 {
 public:
-    virtual ~Source();
+    virtual ~Source() {}
 };
 
 #endif

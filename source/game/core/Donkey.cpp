@@ -57,7 +57,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
     }
 
     unsigned long long type = other->GetType();
-    if (type != 0x2d69800100000000ULL && type != 0x2d69000100000000ULL)
+    if (type != 0x2d698001ULL && type != 0x2d690001ULL)
     {
         return false;
     }
@@ -68,7 +68,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
 boost::shared_ptr<AgableMob> Donkey::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AgableMob> child;
-    if (partner->GetType() == 0x2d69000100000000ULL)
+    if (partner->GetType() == 0x2d690001ULL)
     {
         child.reset(new Mule(mLevel));
     }
@@ -140,7 +140,7 @@ bool Donkey::HideUseTooltips()
 
 unsigned long long Donkey::GetType()
 {
-    return 0x2d69800100000000ULL;
+    return 0x000000002D698001ULL;
 }
 
 void Donkey::create(Level* level)

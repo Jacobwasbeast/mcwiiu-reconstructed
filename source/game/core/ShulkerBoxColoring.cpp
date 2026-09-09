@@ -5,7 +5,9 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/ShulkerBoxBlock.hpp"
 
 ShulkerBoxColoring::~ShulkerBoxColoring()
 {
@@ -25,7 +27,7 @@ bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingCo
             continue;
         }
 
-        if (Block::byItem(item->getItem()) != NULL)
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
         {
             ++shulkerBoxCount;
         }
@@ -64,13 +66,14 @@ not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<Crafti
         {
             dye = item->getAuxValue();
         }
-        else if (Block::byItem(item->getItem()) != NULL)
+        else if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
         {
             shulkerBox = item;
         }
     }
 
-    not_null_ptr<ItemInstance> result(new ItemInstance(shulkerBox->getItem(), 1, dye));
+    not_null_ptr<ItemInstance> result =
+        ShulkerBoxBlock::getColoredItemInstance(DyeColor::byItemData(dye));
     if (shulkerBox->hasTag())
     {
         result->setTag(shulkerBox->getTag()->copy());

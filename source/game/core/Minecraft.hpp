@@ -10,6 +10,7 @@
 #include "game/core/CriticalSection.hpp"
 #include "game/core/File.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/network/DisconnectPacket.hpp"
 
 class AbstractClientPlayer;
 class BlockColors;
@@ -59,6 +60,8 @@ class User;
 
 class Minecraft
 {
+    friend class ClientPacketListener;
+
 public:
     Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet, int width, int height, bool fullscreen);
 
@@ -216,6 +219,7 @@ public:
     ItemInHandRenderer* mLocalItemInHandRenderers[4];
     int mConnectionStartTime[4];
     bool mConnectionFailed[4];
+    DisconnectPacket::eDisconnectReason mDisconnectReasons[4];
     int mConnectionFailedTitle;
     int mConnectionFailedMessage;
     int mConnectionFailedParameter;

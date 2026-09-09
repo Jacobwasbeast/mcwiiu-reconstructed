@@ -1,5 +1,12 @@
 #include "game/core/MineShaftPieces.hpp"
 
+#include "game/world/generation/StructureFeatureIO.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
 MineShaftPieces::MineShaftPiece::MineShaftPiece(int genDepth, MineShaftFeature::MineShaftType type)
     : StructurePiece(genDepth), mType(type)
 {
@@ -17,13 +24,18 @@ MineShaftPieces::MineShaftPiece::~MineShaftPiece()
 const BlockState* MineShaftPieces::MineShaftPiece::getPlanksBlock()
 {
     Block* block = Block::byId(5);
-    return block == NULL ? NULL : block->defaultBlockState();
+    if (block == NULL) return NULL;
+    const BlockState* state = block->defaultBlockState();
+    if (mType != MineShaftFeature::eMineShaftType_Mesa) return state;
+    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::DARK_OAK);
+    return state->setBoxedValue(PlanksBlock::VARIANT, &variant);
 }
 
-void MineShaftPieces::MineShaftPiece::getFenceBlock()
+const BlockState* MineShaftPieces::MineShaftPiece::getFenceBlock()
 {
-    Block* block = Block::byId(85);
-    if (block != NULL) block->defaultBlockState();
+    Block* block = mType == MineShaftFeature::eMineShaftType_Mesa
+        ? Blocks::dark_oak_fence : Blocks::fence;
+    return block == NULL ? NULL : block->defaultBlockState();
 }
 
 bool MineShaftPieces::MineShaftPiece::isSupportingBox(Level* level, BoundingBox* box,
@@ -32,7 +44,7 @@ bool MineShaftPieces::MineShaftPiece::isSupportingBox(Level* level, BoundingBox*
     for (int x = x0; x <= x1; ++x)
     {
         const BlockState* state = getBlock(level, x, y + 1, z, box);
-        if (state == NULL || state->getBlock() == NULL) return false;
+        if (state == NULL || state->getMaterial() == Material::AIR) return false;
     }
     return true;
 }
@@ -45,7 +57,10 @@ void MineShaftPieces::MineShaftPiece::addAdditionalSaveData(DataOutputStream* ou
 void MineShaftPieces::MineShaftPiece::readAdditionalSaveData(DataInputStream* input,
                                                               StructureManager* structureManager)
 {
-    mType = static_cast<MineShaftFeature::MineShaftType>(input->readInt());
+    if (StructureFeatureIO::getVersion() < 2)
+        mType = MineShaftFeature::eMineShaftType_Normal;
+    else
+        mType = static_cast<MineShaftFeature::MineShaftType>(input->readInt());
 }
 
 MineShaftPieces::MineShaftCorridor::MineShaftCorridor()

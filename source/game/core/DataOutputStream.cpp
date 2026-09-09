@@ -5,29 +5,10 @@
 #include "game/core/Compression.hpp"
 #include "game/core/Double.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/core/NbtIo.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class NbtIo
-{
-public:
-    static arrayWithLength<unsigned char> compress(CompoundTag* tag);
-};
-
-class Item
-{
-public:
-    static int VALIDgetId(Item* item);
-};
-
-class ItemInstance
-{
-public:
-    bool isEmpty() const;
-    int getCount();
-    Item* getItem() const;
-    int getAuxValue() const;
-    CompoundTag* getTag();
-};
 
 DataOutputStream::DataOutputStream(OutputStream* out)
 {

@@ -162,7 +162,7 @@ bool Fish::canBeLeashed(const boost::shared_ptr<Player>&)
 
 unsigned long long Fish::GetType()
 {
-    return 0x0d50200200000000ULL;
+    return 0x000000000D502002ULL;
 }
 
 void Fish::create(Level* level)

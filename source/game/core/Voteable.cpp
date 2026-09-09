@@ -89,7 +89,7 @@ int Voteable::getOnlyVote(int playerId, int* vote) const
     {
         if (it->first.first == playerId)
         {
-            *vote = static_cast<int>(it->first.second);
+            *vote = it->first.second;
             return 1;
         }
     }
@@ -136,7 +136,14 @@ void Voteable::setVote(int playerId, int voteableId, char vote)
                 mVotes.erase(it);
         }
     }
-    mVotes[getKey(playerId, voteableId)] = vote;
+    boost::unordered_map<std::pair<int, int>, char, KeyHasher>::iterator it =
+        mVotes.find(getKey(playerId, voteableId));
+    if (it != mVotes.end())
+    {
+        it->second = vote;
+        return;
+    }
+    mVotes.emplace(getKey(playerId, voteableId), vote);
 }
 
 void Voteable::setVoteAndSync(int playerId, int voteableId, char vote)
@@ -189,7 +196,7 @@ void Voteable::syncAllVotesToPlayer(boost::shared_ptr<ServerPlayer> player)
         boost::shared_ptr<Packet> packet(
             new VotePacket(mId, it->second, it->first.first, it->first.second));
         player->mConnection->send(packet);
-}
+    }
 }
 
 void Voteable::clearVotes()

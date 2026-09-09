@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include "game/core/Achievement.hpp"
+#include "game/core/Achievements.hpp"
 #include "game/core/Stats.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -188,7 +190,7 @@ Stat* CommonStats::get_itemsCollected(int itemId, int auxValue)
     {
         return Stats::rainbowCollectionStats.data[auxValue];
     }
-    if (itemId != Item::getId(Items::dye))
+    if (itemId != Item::getId(Items::emerald))
     {
         return Stats::itemCollectedStats.data[itemId];
     }
@@ -220,7 +222,7 @@ Stat* CommonStats::get_itemsUsed(int itemId)
 
 Stat* CommonStats::get_itemsBought(int itemId)
 {
-    if (itemId == Item::getId(Items::dye))
+    if (itemId == Item::getId(Items::emerald))
     {
         return Stats::itemCollectedStats.data[itemId];
     }
@@ -248,118 +250,117 @@ Stat* CommonStats::get_completeTheEnd()
 
 Stat* CommonStats::get_enteredBiome(int biomeId)
 {
-    if (biomeId > 40)
-    {
-        biomeId -= 128;
-    }
     if (biomeId > 39 && biomeId < 48)
     {
         return Stats::biomesVisitedStats.data[0];
+    }
+    if (biomeId > 40)
+    {
+        biomeId -= 128;
     }
     return Stats::biomesVisitedStats.data[biomeId];
 }
 
 Stat* CommonStats::get_achievement(eAward award)
 {
-    switch ((int)award)
+    switch (award)
     {
-    case 0: return GenericStats::openInventory();
-    case 1: return GenericStats::mineWood();
-    case 2: return GenericStats::buildWorkbench();
-    case 3: return GenericStats::buildPickaxe();
-    case 4: return GenericStats::buildFurnace();
-    case 5: return GenericStats::acquireIron();
-    case 6: return GenericStats::buildHoe();
-    case 7: return GenericStats::makeBread();
-    case 8: return GenericStats::bakeCake();
-    case 9: return GenericStats::buildBetterPickaxe();
-    case 10: return GenericStats::cookFish();
-    case 11: return GenericStats::onARail();
-    case 12: return GenericStats::buildSword();
-    case 13: return GenericStats::killEnemy();
-    case 14: return GenericStats::killCow();
-    case 15: return GenericStats::flyPig();
-    case 16: return GenericStats::leaderOfThePack();
-    case 17: return GenericStats::MOARTools();
-    case 18: return GenericStats::dispenseWithThis();
-    case 19: return GenericStats::InToTheNether();
-    case 20: return GenericStats::mine100Blocks();
-    case 21: return GenericStats::kill10Creepers();
-    case 22: return GenericStats::porkChop();
-    case 23: return GenericStats::passingTheTime();
-    case 24: return GenericStats::archer();
-    case 25: return GenericStats::socialPost();
-    case 26: return GenericStats::snipeSkeleton();
-    case 27: return GenericStats::diamonds();
-    case 28: return NULL;
-    case 29: return GenericStats::ghast();
-    case 30: return GenericStats::blazeRod();
-    case 31: return GenericStats::potion();
-    case 32: return GenericStats::theEnd();
-    case 33: return GenericStats::winGame();
-    case 34: return GenericStats::enchantments();
-    case 35: return GenericStats::overkill();
-    case 36: return GenericStats::bookcase();
-    case 37: return GenericStats::adventuringTime();
-    case 38: return GenericStats::repopulation();
-    case 39: return GenericStats::diamondsToYou();
-    case 40: return GenericStats::theHaggler();
-    case 41: return GenericStats::potPlanter();
-    case 42: return GenericStats::itsASign();
-    case 43: return GenericStats::ironBelly();
-    case 44: return GenericStats::haveAShearfulDay();
-    case 45: return GenericStats::rainbowCollection();
-    case 46: return GenericStats::stayinFrosty();
-    case 47: return GenericStats::chestfulOfCobblestone();
-    case 48: return GenericStats::renewableEnergy();
-    case 49: return GenericStats::musicToMyEars();
-    case 50: return GenericStats::bodyGuard();
-    case 51: return GenericStats::ironMan();
-    case 52: return GenericStats::zombieDoctor();
-    case 53: return GenericStats::lionTamer();
-    case 54: return GenericStats::spawnWither();
-    case 55: return GenericStats::killWither();
-    case 56: return GenericStats::fullBeacon();
-    case 57: return GenericStats::overpowered();
-    case 58: return GenericStats::tieDyeOutfit();
-    case 59: return GenericStats::trampoline();
-    case 60: return GenericStats::theStudent();
-    case 61: return GenericStats::hasBecomeTheMaster();
-    case 62: return GenericStats::tisButAScratch();
-    case 63: return GenericStats::cupid();
-    case 64: return GenericStats::youWontLikeMeWhenImHungry();
-    case 65: return GenericStats::mine();
-    case 66: return GenericStats::theEndAgain();
-    case 67: return GenericStats::youNeedAMint();
-    case 68: return GenericStats::superSonic();
-    case 69: return GenericStats::drySpell();
-    case 70: return GenericStats::freeDiver();
-    case 71: return GenericStats::superFuel();
-    case 72: return GenericStats::saddleUp();
-    case 73: return GenericStats::tasteOfYourOwnMedicine();
-    case 74: return GenericStats::beamMeUp();
-    case 75: return GenericStats::mapRoom();
-    case 76: return GenericStats::camouflage();
-    case 77: return GenericStats::backFromTheDead();
-    case 78: return GenericStats::equipYourFists();
-    case 79: return GenericStats::tenaciousBall();
-    case 80: return GenericStats::deadshot();
-    case 81: return GenericStats::suckMySnowballs();
-    case 82: return GenericStats::mountainTop();
-    case 83: return GenericStats::willLikeNoOther();
-    case 84: return GenericStats::theDeepEnd();
-    case 85: return GenericStats::greatViewFromUpHere();
-    case 86: return GenericStats::changeOfSheets();
-    case 87: return GenericStats::cheatingDeath();
-    case 88: return GenericStats::soIGotThatGoingForMe();
-    case 89: return GenericStats::letItGo();
-    case 90: return GenericStats::feelingIll();
-    case 91: return GenericStats::_1234Pickle();
-    case 92: return GenericStats::alternativeFuel();
-    case 93: return GenericStats::moskstraumen();
-    case 94: return GenericStats::castaway();
-    case 95: return GenericStats::sleepWithTheFishes();
-    case 96: return GenericStats::echolocation();
+    case 0: return Achievements::openInventory;
+    case 1: return Achievements::mineWood;
+    case 2: return Achievements::buildWorkBench;
+    case 3: return Achievements::buildPickaxe;
+    case 4: return Achievements::buildFurnace;
+    case 5: return Achievements::acquireIron;
+    case 6: return Achievements::buildHoe;
+    case 7: return Achievements::makeBread;
+    case 8: return Achievements::bakeCake;
+    case 9: return Achievements::buildBetterPickaxe;
+    case 10: return Achievements::cookFish;
+    case 11: return Achievements::onARail;
+    case 12: return Achievements::buildSword;
+    case 13: return Achievements::killEnemy;
+    case 14: return Achievements::killCow;
+    case 15: return Achievements::flyPig;
+    case 16: return Achievements::leaderOfThePack;
+    case 17: return Achievements::MOARTools;
+    case 18: return Achievements::dispenseWithThis;
+    case 19: return Achievements::InToTheNether;
+    case 20: return Achievements::mine100Blocks;
+    case 21: return Achievements::kill10Creepers;
+    case 22: return Achievements::eatPorkChop;
+    case 23: return Achievements::play100Days;
+    case 24: return Achievements::arrowKillCreeper;
+    case 25: return Achievements::socialPost;
+    case 26: return Achievements::snipeSkeleton;
+    case 27: return Achievements::diamonds;
+    case 29: return Achievements::ghast;
+    case 30: return Achievements::blazeRod;
+    case 31: return Achievements::potion;
+    case 32: return Achievements::theEnd;
+    case 33: return Achievements::theEnd2;
+    case 34: return Achievements::enchantments;
+    case 35: return Achievements::overkill;
+    case 36: return Achievements::bookcase;
+    case 37: return Achievements::adventuringTime;
+    case 38: return Achievements::repopulation;
+    case 39: return Achievements::diamondsToYou;
+    case 40: return Achievements::theHaggler;
+    case 41: return Achievements::potPlanter;
+    case 42: return Achievements::itsASign;
+    case 43: return Achievements::ironBelly;
+    case 44: return Achievements::haveAShearfulDay;
+    case 45: return Achievements::rainbowCollection;
+    case 46: return Achievements::stayingFrosty;
+    case 47: return Achievements::chestfulOfCobblestone;
+    case 48: return Achievements::renewableEnergy;
+    case 49: return Achievements::musicToMyEars;
+    case 50: return Achievements::bodyGuard;
+    case 51: return Achievements::ironMan;
+    case 52: return Achievements::zombieDoctor;
+    case 53: return Achievements::lionTamer;
+    case 54: return Achievements::spawnWither;
+    case 55: return Achievements::killWither;
+    case 56: return Achievements::fullBeacon;
+    case 57: return Achievements::overpowered;
+    case 58: return Achievements::theDyeOutfit;
+    case 59: return Achievements::trampoline;
+    case 60: return Achievements::theStudent;
+    case 61: return Achievements::hasBecomeTheMaster;
+    case 62: return Achievements::tisButAScratch;
+    case 63: return Achievements::cupid;
+    case 64: return Achievements::youWontLikeMeWhenImHungry;
+    case 65: return Achievements::mine;
+    case 66: return Achievements::theEndAgain;
+    case 67: return Achievements::youNeedAMint;
+    case 68: return Achievements::superSonic;
+    case 69: return Achievements::drySpell;
+    case 70: return Achievements::freeDiver;
+    case 71: return Achievements::superFuel;
+    case 72: return Achievements::saddleUp;
+    case 73: return Achievements::tasteOfYourOwnMedicine;
+    case 74: return Achievements::beamMeUp;
+    case 75: return Achievements::mapRoom;
+    case 76: return Achievements::camouflage;
+    case 77: return Achievements::backFromTheDead;
+    case 78: return Achievements::equipYourFists;
+    case 79: return Achievements::tenaciousBall;
+    case 80: return Achievements::deadshot;
+    case 81: return Achievements::suckMySnowballs;
+    case 82: return Achievements::mountainTop;
+    case 83: return Achievements::willLikeNoOther;
+    case 84: return Achievements::theDeepEnd;
+    case 85: return Achievements::greatViewFromUpHere;
+    case 86: return Achievements::changeOfSheets;
+    case 87: return Achievements::cheatingDeath;
+    case 88: return Achievements::soIGotThatGoingForMe;
+    case 89: return Achievements::letItGo;
+    case 90: return Achievements::feelingIll;
+    case 91: return Achievements::_1234Pickle;
+    case 92: return Achievements::alternativeFuel;
+    case 93: return Achievements::moskstraumen;
+    case 94: return Achievements::castaway;
+    case 95: return Achievements::sleepWithTheFishes;
+    case 96: return Achievements::echolocation;
     default: return NULL;
     }
 }
@@ -459,6 +460,11 @@ arrayWithLength<unsigned char> CommonStats::getParam_itemsCrafted(int itemId, in
 }
 
 arrayWithLength<unsigned char> CommonStats::getParam_itemsSmelted(int itemId, int auxValue, int count)
+{
+    return makeParam(count);
+}
+
+arrayWithLength<unsigned char> CommonStats::getParam_itemsUsed(int itemId, int auxValue, int count)
 {
     return makeParam(count);
 }

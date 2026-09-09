@@ -1,12 +1,11 @@
 #include "game/core/cCommerce.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
 #include "game/core/DLCManager.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/cProductInfo.hpp"
 
-extern DLCManager g_DLCManager;
-extern cProductInfo* g_pDLCProductInfo;
-extern unsigned char g_bPurchasabilityUpdated;
+unsigned char g_bPurchasabilityUpdated = 0;
 extern unsigned char g_bDLCCatalogListRetrieved;
 extern unsigned char g_bDLCCatalogListInfoRetrieved;
 extern cCommerce::eDLCCatalogState g_eDLCCatalogState;
@@ -14,6 +13,7 @@ extern cCommerce::eDLCCatalogState g_eDLCCatalogState;
 unsigned char g_bDLCCatalogListRetrieved = 0;
 unsigned char g_bDLCCatalogListInfoRetrieved = 0;
 cCommerce::eDLCCatalogState g_eDLCCatalogState = cCommerce::eDLCCatalogState_Unknown;
+cProductInfo* g_pDLCProductInfo = NULL;
 
 cCommerce::cCommerce()
 {
@@ -50,11 +50,11 @@ bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
             {
                 if (packId == 0x214 || packId == 0x219)
                 {
-                    pack = g_DLCManager.getPackFromPackID(0x1197);
+                    pack = gApp.mDLCManager.getPackFromPackID(0x1197);
                 }
                 else if (packId == 0x21a)
                 {
-                    pack = g_DLCManager.getPackFromPackID(0x1195);
+                    pack = gApp.mDLCManager.getPackFromPackID(0x1195);
                 }
                 else
                 {
@@ -63,24 +63,24 @@ bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
             }
             else
             {
-                pack = g_DLCManager.getPackFromPackID(0x1196);
+                pack = gApp.mDLCManager.getPackFromPackID(0x1196);
             }
         }
         else if (packId == 0x21e)
         {
-            pack = g_DLCManager.getPackFromPackID(0x1194);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1194);
         }
         else if (packId == 0x22b)
         {
-            pack = g_DLCManager.getPackFromPackID(0x1010);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1010);
         }
         else if (packId == 0x405)
         {
-            pack = g_DLCManager.getPackFromPackID(0x1196);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1196);
         }
         else if (packId == 0x407)
         {
-            pack = g_DLCManager.getPackFromPackID(0x1195);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1195);
         }
         else
         {
@@ -91,11 +91,11 @@ bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
     {
         if (packId == 0x409)
         {
-            pack = g_DLCManager.getPackFromPackID(0x1194);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1194);
         }
         else if (packId >= 0x801 && (packId == 0x801 || packId == 0x802 || packId == 0x807 || packId == 0x809))
         {
-            pack = g_DLCManager.getPackFromPackID(0x1195);
+            pack = gApp.mDLCManager.getPackFromPackID(0x1195);
         }
         else
         {
@@ -104,19 +104,19 @@ bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
     }
     else if (packId < 0x1006)
     {
-        pack = g_DLCManager.getPackFromPackID(0x1006);
+        pack = gApp.mDLCManager.getPackFromPackID(0x1006);
     }
     else if (packId == 0x100b)
     {
-        pack = g_DLCManager.getPackFromPackID(0x1194);
+        pack = gApp.mDLCManager.getPackFromPackID(0x1194);
     }
     else if (packId == 0x100c)
     {
-        pack = g_DLCManager.getPackFromPackID(0x1196);
+        pack = gApp.mDLCManager.getPackFromPackID(0x1196);
     }
     else if (packId >= 0x1011 && packId <= 0x1013)
     {
-        pack = g_DLCManager.getPackFromPackID(0x1010);
+        pack = gApp.mDLCManager.getPackFromPackID(0x1010);
     }
     else
     {
@@ -220,3 +220,6 @@ unsigned int cCommerce::AttemptLogIn()
 {
     return 1;
 }
+
+
+

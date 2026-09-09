@@ -4,6 +4,7 @@
 #include "game/core/UntypedStatTracker.hpp"
 
 class DamageEvent;
+class SniperMedal;
 
 class SniperStatTracker : public UntypedStatTracker
 {
@@ -14,6 +15,7 @@ public:
     virtual void update(const DamageEvent* damageEvent);
 
 private:
+    friend class SniperMedal;
     double mValue;
 };
 

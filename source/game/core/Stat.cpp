@@ -101,6 +101,7 @@ void Stat::setExtended()
     extended = true;
 }
 
+
 void Stat::setAwardLocallyOnly()
 {
     awardLocallyOnly = true;

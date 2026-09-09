@@ -228,5 +228,5 @@ void MinecartTNT::addAdditonalSaveData(CompoundTag* tag)
 
 unsigned long long MinecartTNT::GetType()
 {
-    return 0x0A80000400000000ULL;
+    return 0x000000000A800004ULL;
 }

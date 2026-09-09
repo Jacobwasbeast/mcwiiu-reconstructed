@@ -29,7 +29,7 @@ public:
         virtual ~MineShaftPiece();
 
         const BlockState* getPlanksBlock();
-        void getFenceBlock();
+        const BlockState* getFenceBlock();
         bool isSupportingBox(Level* level, BoundingBox* box, int x0, int x1, int y, int z);
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);

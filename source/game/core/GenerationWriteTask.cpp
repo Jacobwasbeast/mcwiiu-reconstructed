@@ -38,6 +38,16 @@ void GenerationWriteTask::doWork(long long endTime)
                 continue;
             }
 
+            if (mLevel->mIsClientSide)
+            {
+                if (!mLevel->reallyHasChunk(chunk.x, chunk.z))
+                {
+                    Sleep(1);
+                    mChunks->push_back(chunk);
+                    continue;
+                }
+            }
+
             if (!mLevel->mIsClientSide)
             {
                 if (mLevel->getChunkSource()->getChunk(chunk.x, chunk.z) == NULL)
@@ -46,12 +56,6 @@ void GenerationWriteTask::doWork(long long endTime)
                     mChunks->push_back(chunk);
                     continue;
                 }
-            }
-            else if (!mLevel->reallyHasChunk(chunk.x, chunk.z))
-            {
-                Sleep(1);
-                mChunks->push_back(chunk);
-                continue;
             }
 
             Vec3i min = mOrigin.offset(mTransaction->getMin());

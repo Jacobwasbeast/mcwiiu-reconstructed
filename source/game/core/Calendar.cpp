@@ -2,7 +2,10 @@
 
 #include <time.h>
 
-int IsLeapYear(int year);
+int IsLeapYear(int year)
+{
+    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 1 : 0;
+}
 
 int GetYearDays(int year, int month)
 {

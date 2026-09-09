@@ -13,7 +13,7 @@
 #include "game/world/Level.hpp"
 
 static const unsigned long long ENTITY_TYPE_FISH = 0x0D50200200000000ULL;
-static const unsigned long long ENTITY_TYPE_SALMON = 0x0D50200400000000ULL;
+static const unsigned long long ENTITY_TYPE_SALMON = 0x000000000D502004ULL;
 static const EntityDataAccessor<unsigned char>* DATA_ID_SCALE = NULL;
 
 Salmon::Salmon(Level* level)

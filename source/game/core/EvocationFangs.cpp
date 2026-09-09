@@ -161,5 +161,5 @@ void EvocationFangs::create(Level* level)
 
 unsigned long long EvocationFangs::GetType()
 {
-    return 0x0800001100000000ULL;
+    return 0x0000000008000011ULL;
 }

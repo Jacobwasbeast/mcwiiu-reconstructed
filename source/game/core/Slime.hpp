@@ -125,7 +125,7 @@ public:
     void dealDamage(boost::shared_ptr<LivingEntity> entity);
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     bool isDealsDamage();
-    float getAttackDamage();
+    int getAttackDamage();
     const SoundEvent* getSquishSound();
     bool doPlayJumpSound();
     const SoundEvent* getJumpSound();

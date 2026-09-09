@@ -226,7 +226,7 @@ void LlamaSpit::addAdditonalSaveData(CompoundTag* tag)
 
 unsigned long long LlamaSpit::GetType()
 {
-    return 0x8800001200000000ULL;
+    return 0x0000000088000012ULL;
 }
 
 bool LlamaSpit::shouldTick()

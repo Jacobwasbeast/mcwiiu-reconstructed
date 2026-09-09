@@ -10,6 +10,8 @@ class Block;
 class DescFormatter
 {
 public:
+    virtual ~DescFormatter();
+
     virtual std::wstring format(const std::wstring& description) = 0;
 };
 class Item;

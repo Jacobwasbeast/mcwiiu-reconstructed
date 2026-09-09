@@ -10,10 +10,12 @@ class DataFixerUpper;
 class Entity;
 class Level;
 class SoundEvent;
+class PufferfishRenderer;
 
 class Pufferfish : public Fish
 {
 public:
+    friend class PufferfishRenderer;
     enum PuffedState
     {
         PUFFED_STATE_SMALL = 0,

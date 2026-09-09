@@ -111,6 +111,7 @@ public:
     virtual unsigned long long GetType();
 
 private:
+    static const EntityDataAccessor<int>* DATA_ID_ATTACK_TARGET;
     float mTailAnimation;
     float mTailAnimationOld;
     float mTailAnimationSpeed;

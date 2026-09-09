@@ -1,20 +1,32 @@
 #include "game/core/EndCityPieces.hpp"
 
-#include <map>
+#include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 
 #include "game/core/BoundingBox.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/core/Shulker.hpp"
+#include "game/item/ItemFrame.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/generation/StructureFeatureIO.hpp"
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructurePiece.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-static std::map<Rotation*, BlockPos> gTowerBridges;
-static std::map<Rotation*, BlockPos> gFatTowerBridges;
+static boost::unordered_map<Rotation*, BlockPos> gTowerBridges;
+static boost::unordered_map<Rotation*, BlockPos> gFatTowerBridges;
 static StructurePlaceSettings* gIgnoreEntitiesSettings = NULL;
 static StructurePlaceSettings* gIgnoreEntitiesAndBlocksSettings = NULL;
 static EndCityPieces::TowerSectionGenerator* gTowerGenerator = NULL;
@@ -83,42 +95,40 @@ void EndCityPieces::startHouseTower(StructureManager* structureManager, const Bl
     recursiveChildren(structureManager, gHouseGenerator, 1, piece, BlockPos::ZERO, pieces, random);
 }
 
-void EndCityPieces::createTowerBridgesMap()
+boost::unordered_map<Rotation*, BlockPos> EndCityPieces::createTowerBridgesMap()
 {
-    gTowerBridges.clear();
-    gTowerBridges[Rotation::NONE] = BlockPos(1, -1, 0);
-    gTowerBridges[Rotation::CLOCKWISE_90] = BlockPos(6, -1, 1);
-    gTowerBridges[Rotation::COUNTERCLOCKWISE_90] = BlockPos(0, -1, 5);
-    gTowerBridges[Rotation::CLOCKWISE_180] = BlockPos(5, -1, 6);
+    boost::unordered_map<Rotation*, BlockPos> bridges;
+    bridges[Rotation::NONE] = BlockPos(1, -1, 0);
+    bridges[Rotation::CLOCKWISE_90] = BlockPos(6, -1, 1);
+    bridges[Rotation::COUNTERCLOCKWISE_90] = BlockPos(0, -1, 5);
+    bridges[Rotation::CLOCKWISE_180] = BlockPos(5, -1, 6);
+    return bridges;
 }
 
-void EndCityPieces::createFatTowerBridgesMap()
+boost::unordered_map<Rotation*, BlockPos> EndCityPieces::createFatTowerBridgesMap()
 {
-    gFatTowerBridges.clear();
-    gFatTowerBridges[Rotation::NONE] = BlockPos(4, -1, 0);
-    gFatTowerBridges[Rotation::CLOCKWISE_90] = BlockPos(12, -1, 4);
-    gFatTowerBridges[Rotation::COUNTERCLOCKWISE_90] = BlockPos(0, -1, 8);
-    gFatTowerBridges[Rotation::CLOCKWISE_180] = BlockPos(8, -1, 12);
+    boost::unordered_map<Rotation*, BlockPos> bridges;
+    bridges[Rotation::NONE] = BlockPos(4, -1, 0);
+    bridges[Rotation::CLOCKWISE_90] = BlockPos(12, -1, 4);
+    bridges[Rotation::COUNTERCLOCKWISE_90] = BlockPos(0, -1, 8);
+    bridges[Rotation::CLOCKWISE_180] = BlockPos(8, -1, 12);
+    return bridges;
 }
 
 void EndCityPieces::loadStatic()
 {
-    createTowerBridgesMap();
-    createFatTowerBridgesMap();
-    if (gIgnoreEntitiesSettings == NULL)
-    {
-        gIgnoreEntitiesSettings = new StructurePlaceSettings();
-        gIgnoreEntitiesSettings->setIgnoreEntities(true);
-        gIgnoreEntitiesAndBlocksSettings = new StructurePlaceSettings();
-        gIgnoreEntitiesAndBlocksSettings->setIgnoreEntities(true);
-    }
-    if (gTowerGenerator == NULL)
-    {
-        gTowerGenerator = new TowerSectionGenerator();
-        gHouseGenerator = new HouseTowerSectionGenerator();
-        gTowerBridgeGenerator = new TowerBridgeSectionGenerator();
-        gFatTowerGenerator = new FatTowerSectionGenerator();
-    }
+    StructureFeatureIO::setPieceId(eStructurePiece_EndCityPiece, &EndCityPiece::Create, L"ECP");
+    gTowerBridges = createTowerBridgesMap();
+    gFatTowerBridges = createFatTowerBridgesMap();
+    gIgnoreEntitiesSettings = new StructurePlaceSettings();
+    gIgnoreEntitiesSettings->setIgnoreEntities(true);
+    gIgnoreEntitiesAndBlocksSettings = new StructurePlaceSettings();
+    gIgnoreEntitiesAndBlocksSettings->setIgnoreEntities(true);
+    gIgnoreEntitiesAndBlocksSettings->setIgnoreBlock(Blocks::AIR);
+    gHouseGenerator = new HouseTowerSectionGenerator();
+    gTowerGenerator = new TowerSectionGenerator();
+    gTowerBridgeGenerator = new TowerBridgeSectionGenerator();
+    gFatTowerGenerator = new FatTowerSectionGenerator();
 }
 
 EndCityPieces::EndCityPiece::EndCityPiece(StructureManager* structureManager,
@@ -161,14 +171,36 @@ void EndCityPieces::EndCityPiece::readAdditionalSaveData(DataInputStream* input,
 }
 
 void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
-    const BlockPos& position, Level*, Random&, BoundingBox* box)
+    const BlockPos& position, Level* level, Random& random, BoundingBox* box)
 {
     if (marker == L"Chest")
-        setBoundingBox(box);
+    {
+        BlockPos below = position.below();
+        if (box->isInside(below))
+        {
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(below);
+            if (blockEntity && blockEntity->GetType() == 0x1e00201ULL)
+            {
+                boost::shared_ptr<ChestBlockEntity> chest =
+                    boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                chest->setLootTable(&BuiltInLootTables::END_CITY_TREASURE, random.nextLong());
+            }
+        }
+    }
     else if (marker == L"Sentry")
-        setBoundingBox(box);
+    {
+        boost::shared_ptr<Shulker> shulker(new Shulker(level));
+        shulker->setPos(position.x + 0.5, position.y + 0.5, position.z + 0.5);
+        shulker->setAttachPosition(new BlockPos(position));
+        level->addEntity(shulker);
+    }
     else if (marker == L"Elytra")
-        setBoundingBox(box);
+    {
+        boost::shared_ptr<ItemFrame> frame(new ItemFrame(level, position,
+            getPlaceSettings()->getRotation()->rotate(Direction::SOUTH)));
+        frame->setItem(not_null_ptr<ItemInstance>(new ItemInstance(Items::elytra)));
+        level->addEntity(frame);
+    }
 }
 
 StructurePiece* EndCityPieces::EndCityPiece::Create()
@@ -179,11 +211,6 @@ StructurePiece* EndCityPieces::EndCityPiece::Create()
 EStructurePiece EndCityPieces::EndCityPiece::GetType()
 {
     return eStructurePiece_EndCityPiece;
-}
-
-EndCityPieces::HouseTowerSectionGenerator::HouseTowerSectionGenerator()
-{
-    init();
 }
 
 void EndCityPieces::HouseTowerSectionGenerator::init()
@@ -246,7 +273,7 @@ bool EndCityPieces::FatTowerSectionGenerator::generate(StructureManager* structu
         static_cast<eMinecraftStructureTemplate>(0x1a), rotation, true));
     piece = addHelper(pieces, addPiece(structureManager, piece, BlockPos(0, 8, 0),
         static_cast<eMinecraftStructureTemplate>(0x1a), rotation, true));
-    std::map<Rotation*, BlockPos>::iterator it;
+    boost::unordered_map<Rotation*, BlockPos>::iterator it;
     for (it = gFatTowerBridges.begin(); it != gFatTowerBridges.end(); ++it)
         if (random.nextInt(10) > 2)
             recursiveChildren(structureManager, gTowerBridgeGenerator, genDepth + 1,

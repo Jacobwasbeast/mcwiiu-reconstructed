@@ -175,5 +175,5 @@ void ThrownEnderpearl::tick()
 
 unsigned long long ThrownEnderpearl::GetType()
 {
-    return 0x8a20000300000000ULL;
+    return 0x8A200003ULL;
 }

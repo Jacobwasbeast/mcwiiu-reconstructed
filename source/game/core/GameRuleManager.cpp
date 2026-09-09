@@ -3,6 +3,7 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/Compression.hpp"
 #include "game/core/ConsoleSchematicFile.hpp"
@@ -23,7 +24,6 @@
 
 static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
-extern DLCManager g_DLCManager;
 
 GameRuleManager g_GameRuleManager;
 
@@ -525,12 +525,12 @@ unsigned int GameRuleManager::loadGameRulesPack(File* file)
     if (!file->exists()) return 0;
     DLCPack* pack = new DLCPack(L"", 0xffffffffU);
     unsigned int count = 0;
-    if (!g_DLCManager.readDLCDataFile(count, file->getPath(), pack, 0, false))
+    if (!gApp.mDLCManager.readDLCDataFile(count, file->getPath(), pack, 0, false))
     {
         delete pack;
         return 0;
     }
-    g_DLCManager.addPack(pack);
+    gApp.mDLCManager.addPack(pack);
     return 1;
 }
 

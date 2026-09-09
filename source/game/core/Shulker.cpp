@@ -1,6 +1,8 @@
 #include "game/core/Shulker.hpp"
 
 #include "game/core/AttributeModifier.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
@@ -10,11 +12,15 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<const Direction*>* Shulker::DATA_ATTACH_FACE = NULL;
 const EntityDataAccessor<BlockPos>* Shulker::DATA_ATTACH_POSITION = NULL;
@@ -85,7 +91,13 @@ bool Shulker::ShulkerDefenseAttackGoal::canUse()
 
 AABB* Shulker::ShulkerDefenseAttackGoal::getTargetSearchArea(double distance)
 {
-    return NearestAttackableTargetGoal::getTargetSearchArea(distance);
+    const Direction* attachFace = mShulker->getAttachFace();
+    Direction::Axis* axis = attachFace->getAxis();
+    if (axis == Direction::Axis::X)
+        return mShulker->mBoundingBox->grow(4.0, distance, distance);
+    if (axis == Direction::Axis::Y)
+        return mShulker->mBoundingBox->grow(distance, distance, 4.0);
+    return mShulker->mBoundingBox->grow(distance, 4.0, distance);
 }
 
 std::wstring Shulker::ShulkerDefenseAttackGoal::getName()
@@ -109,7 +121,13 @@ bool Shulker::ShulkerNearestAttackGoal::canUse()
 
 AABB* Shulker::ShulkerNearestAttackGoal::getTargetSearchArea(double distance)
 {
-    return NearestAttackableTargetGoal::getTargetSearchArea(distance);
+    const Direction* attachFace = mShulker->getAttachFace();
+    Direction::Axis* axis = attachFace->getAxis();
+    if (axis == Direction::Axis::X)
+        return mShulker->mBoundingBox->grow(4.0, distance, distance);
+    if (axis == Direction::Axis::Y)
+        return mShulker->mBoundingBox->grow(distance, distance, 4.0);
+    return mShulker->mBoundingBox->grow(distance, 4.0, distance);
 }
 
 std::wstring Shulker::ShulkerNearestAttackGoal::getName()
@@ -193,6 +211,13 @@ MobGroupData* Shulker::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
 
 void Shulker::registerGoals()
 {
+    mGoalSelector.addGoal(1, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(4, new ShulkerAttackGoal(this), true);
+    mGoalSelector.addGoal(7, new ShulkerPeekGoal(this), true);
+    mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, arrayWithLength<unsigned long long>()), true);
+    mTargetSelector.addGoal(2, new ShulkerNearestAttackGoal(this), true);
+    mTargetSelector.addGoal(3, new ShulkerDefenseAttackGoal(this), true);
 }
 
 bool Shulker::makeStepSound()
@@ -207,7 +232,7 @@ SoundSource::ESoundSource Shulker::getSoundSource()
 
 const SoundEvent* Shulker::getAmbientSound()
 {
-    return NULL;
+    return SoundEvents::SHULKER_AMBIENT;
 }
 
 bool Shulker::isClosed()
@@ -223,12 +248,12 @@ void Shulker::playAmbientSound()
 
 const SoundEvent* Shulker::getDeathSound()
 {
-    return NULL;
+    return SoundEvents::SHULKER_DEATH;
 }
 
 const SoundEvent* Shulker::getHurtSound(const DamageSource* source)
 {
-    return NULL;
+    return isClosed() ? SoundEvents::SHULKER_HURT_CLOSED : SoundEvents::SHULKER_HURT;
 }
 
 void Shulker::defineSynchedData()
@@ -291,7 +316,25 @@ double Shulker::getRidingHeight()
 
 bool Shulker::teleportSomewhere()
 {
-    return true;
+    if (mLevel == NULL || isPassenger())
+        return true;
+    BlockPos origin(this);
+    for (int attempt = 0; attempt < 5; ++attempt)
+    {
+        int x = origin.x + mRandom->nextInt(17) - 8;
+        int y = origin.y + mRandom->nextInt(17) - 8;
+        int z = origin.z + mRandom->nextInt(17) - 8;
+        BlockPos candidate(x, y, z);
+        if (!mLevel->isEmptyBlock(candidate) || !mLevel->isEmptyBlock(candidate.above()))
+            continue;
+        if (!randomTeleport(x + 0.5, y, z + 0.5))
+            continue;
+        setAttachPosition(&candidate);
+        if (SoundEvents::SHULKER_TELEPORT != NULL)
+            playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
+        return true;
+    }
+    return false;
 }
 
 void Shulker::aiStep()
@@ -391,12 +434,20 @@ bool Shulker::hasValidInterpolationPositions()
 
 const void* Shulker::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::SHULKER;
 }
 
 const DyeColor* Shulker::getColor()
 {
     return DyeColor::byBlockData(mEntityData != NULL ? mEntityData->get(DATA_COLOR) : 0);
+}
+
+void Shulker::setColor(const DyeColor* color)
+{
+    if (mEntityData != NULL && color != NULL)
+    {
+        mEntityData->set(DATA_COLOR, static_cast<unsigned char>(color->getBlockData()), true);
+    }
 }
 
 unsigned int Shulker::GetInteractTooltip(const EntityTooltipDataHolder& holder)
@@ -406,5 +457,5 @@ unsigned int Shulker::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
 unsigned long long Shulker::GetType()
 {
-    return 0;
+    return ENTITY_TYPE_SHULKER;
 }

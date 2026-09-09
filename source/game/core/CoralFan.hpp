@@ -49,11 +49,9 @@ public:
     virtual bool isWaterBlocking() const;
     virtual void checkAlive(Level* level, const BlockPos& pos, const BlockState* state);
 
-private:
-    TextureAtlasSprite* mIcons[10];
+protected:
+    TextureAtlasSprite* mIcons[5];
+    TextureAtlasSprite* mDeadIcons[5];
 };
-
-extern Property* CoralFan_PROPERTY_1;
-extern Property* CoralFan_PROPERTY_2;
 
 #endif

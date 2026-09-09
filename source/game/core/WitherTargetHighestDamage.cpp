@@ -58,12 +58,12 @@ bool WitherTargetHighestDamage::canContinueToUse()
     if (!TargetGoal::canContinueToUse())
         return false;
 
-    return getHighestDamageTarget() == mTarget;
+    return getHighestDamageTarget() == mTarget.lock();
 }
 
 void WitherTargetHighestDamage::start()
 {
-    mMob->setTarget(mTarget);
+    mMob->setTarget(mTarget.lock());
 }
 
 bool WitherTargetHighestDamage::canAttack(

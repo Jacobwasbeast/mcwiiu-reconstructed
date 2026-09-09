@@ -18,7 +18,7 @@
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
-static const unsigned long long ENTITY_TYPE_TROPICAL_FISH = 0x0D50200500000000ULL;
+static const unsigned long long ENTITY_TYPE_TROPICAL_FISH = 0x000000000D502005ULL;
 static const unsigned long long ENTITY_TYPE_FISH = 0x0D50200200000000ULL;
 
 const EntityDataAccessor<int>* TropicalFish::DATA_VARIANT = NULL;

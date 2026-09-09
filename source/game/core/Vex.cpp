@@ -1,27 +1,42 @@
 #include "game/core/Vex.hpp"
 
 #include <cmath>
+#include <typeinfo>
 
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+
+const EntityDataAccessor<unsigned char>* Vex::DATA_FLAGS = NULL;
 
 Vex::Vex(Level* level)
     : Monster(level),
       mOwner(),
       mBoundOrigin(NULL),
       mLimitedLife(false),
-      mLifeTicks(0),
-      mMoveControl(NULL)
+      mLifeTicks(0)
 {
-    mEyeHeight = 0.4f;
     fjDerivedCtorCalls();
+    mOnGround = true;
+    if (mMoveControl != NULL)
+        mMoveControl->tick();
     mMoveControl = new VexMoveControl(this);
     setSize(0.4f, 0.8f);
+    mExperienceReward = 3;
 }
 
 Vex::~Vex()
@@ -37,6 +52,9 @@ void Vex::create(Level* level)
 
 void Vex::staticCtor()
 {
+    DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(0x5D540048ULL,
+                                                              ENTITY_TYPE_MONSTER,
+                                                              EntityDataSerializers::BYTE);
 }
 
 void Vex::move(MoverType type, double x, double y, double z, bool pushedByPiston)
@@ -62,6 +80,18 @@ void Vex::tick()
 void Vex::registerGoals()
 {
     Mob::registerGoals();
+
+    mGoalSelector.addGoal(0, new FloatGoal(this), true);
+    mGoalSelector.addGoal(4, new VexChargeAttackGoal(this), true);
+    mGoalSelector.addGoal(8, new VexRandomMoveGoal(this), true);
+    mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 0.25f), true);
+    mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
+
+    arrayWithLength<unsigned long long> entityTypes(1, true);
+    entityTypes.data[0] = 0x5D540048ULL;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
+    mTargetSelector.addGoal(2, new VexCopyOwnerTargetGoal(this), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
 }
 
 void Vex::registerAttributes()
@@ -72,11 +102,12 @@ void Vex::registerAttributes()
 void Vex::defineSynchedData()
 {
     Mob::defineSynchedData();
+    mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
 }
 
 void Vex::addDataWalkers(DataFixerUpper* fixer)
 {
-    Mob::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x5D540048ULL);
 }
 
 void Vex::setLimitedLife(int lifeTicks)
@@ -162,27 +193,27 @@ void Vex::setOwner(const boost::shared_ptr<Mob>& owner)
 
 const SoundEvent* Vex::getAmbientSound()
 {
-    return NULL;
+    return SoundEvents::VEX_AMBIENT;
 }
 
 const SoundEvent* Vex::getDeathSound()
 {
-    return NULL;
+    return SoundEvents::VEX_DEATH;
 }
 
 const SoundEvent* Vex::getHurtSound(const DamageSource*)
 {
-    return NULL;
+    return SoundEvents::VEX_HURT;
 }
 
 const void* Vex::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::VEX;
 }
 
 const void* Vex::getDefaultGearTable()
 {
-    return NULL;
+    return &BuiltInLootTables::VEX_GEAR;
 }
 
 int Vex::getLightColor()
@@ -210,7 +241,7 @@ void Vex::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 
 unsigned long long Vex::GetType()
 {
-    return 0x5d54004800000000ULL;
+    return 0x5D540048ULL;
 }
 
 Vex::VexChargeAttackGoal::VexChargeAttackGoal(Vex* vex)

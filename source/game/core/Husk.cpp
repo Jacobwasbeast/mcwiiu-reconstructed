@@ -120,5 +120,5 @@ void Husk::finishConversion()
 
 unsigned long long Husk::GetType()
 {
-    return 0x5d55004300000000ULL;
+    return 0x000000005D550043ULL;
 }

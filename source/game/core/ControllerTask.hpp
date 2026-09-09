@@ -9,12 +9,13 @@ class ControllerTask : public TutorialTask
 {
 public:
     ControllerTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
-                   bool showMinimumTime, int* constrainedMappings,
-                   unsigned int constrainedMappingCount, int* completionIds,
-                   int completionIdCount, int* inputMappings,
-                   unsigned int inputMappingCount);
+                   bool showMinimumTime, int* mappings, unsigned int mappingCount,
+                   int* completionIdValues, int completionIdValueCount, int* alternateMappings,
+                   unsigned int alternateMappingCount);
     virtual ~ControllerTask();
+
     unsigned int CompletionMaskIsValid();
+
     virtual bool isCompleted();
     virtual void setAsCurrentTask(bool currentTask);
 
@@ -24,7 +25,7 @@ private:
     bool useAlternateMappings;
     unsigned int completionMask;
     int* completionIds;
-    unsigned int completionIdCount;
+    int completionIdCount;
 };
 
 #endif

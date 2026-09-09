@@ -1,22 +1,47 @@
 #include "game/core/Parrot.hpp"
 
 #include <cmath>
+#include <iterator>
+#include <boost/unordered_map.hpp>
 
 #include "game/core/DifficultyInstance.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/FlyingPathNavigation.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/util/Random.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/world/Level.hpp"
+
+namespace
+{
+boost::unordered_map<unsigned long long, const SoundEvent*> gImitatedSounds;
+}
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/FollowMobGoal.hpp"
+#include "game/entity/ai/FollowOwnerFlyingGoal.hpp"
+#include "game/entity/ai/LandOnOwnersShoulderGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/entity/ai/PanicGoal.hpp"
+#include "game/entity/ai/SitGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomFlyingGoal.hpp"
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3i.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+
+const EntityDataAccessor<int>* Parrot::DATA_VARIANT = NULL;
 
 Parrot::Parrot(Level* level)
     : ShoulderRidingEntity(level), mFlap(0.0f), mFlapSpeed(0.0f), mOFlapSpeed(0.0f),
@@ -43,9 +68,11 @@ bool Parrot::isFlying()
     return !mOnGround;
 }
 
-const SoundEvent* Parrot::getImitatedSound(unsigned long long)
+const SoundEvent* Parrot::getImitatedSound(unsigned long long type)
 {
-    return NULL;
+    boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
+        gImitatedSounds.find(type);
+    return it == gImitatedSounds.end() ? NULL : it->second;
 }
 
 double Parrot::getPitch(Random* random)
@@ -53,18 +80,53 @@ double Parrot::getPitch(Random* random)
     return static_cast<double>((random->nextFloat() - random->nextFloat()) * 0.2f + 1.5f);
 }
 
-bool Parrot::imitateNearbyMobs(Level*, Entity*)
+bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
 {
-    return false;
+    if (level == NULL || entity == NULL || entity->isSilent())
+        return false;
+    Random* random = level->getRandomFor(0, 0, 0);
+    if (random == NULL || random->nextInt(50) != 0)
+        return false;
+    AABB* box = entity->getBoundingBoxForCulling();
+    if (box == NULL)
+        return false;
+    AABB* area = box->grow(20.0);
+    NotParrotPredicate predicate;
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        level->getEntitiesOfClass(typeid(Mob), area, &predicate, false);
+    if (entities == NULL || entities->empty())
+    {
+        delete area;
+        delete entities;
+        return false;
+    }
+    boost::shared_ptr<Entity> selected = (*entities)[random->nextInt((int)entities->size())];
+    const SoundEvent* sound = selected ? getImitatedSound(selected->GetType()) : NULL;
+    if (selected && !selected->isSilent() && sound != NULL)
+        selected->playSound(sound, 0.7f, (float)getPitch(random));
+    delete area;
+    delete entities;
+    return selected && !selected->isSilent() && sound != NULL;
 }
 
-const SoundEvent* Parrot::getAmbient(Random*)
+const SoundEvent* Parrot::getAmbient(Random* random)
 {
-    return NULL;
+    if (random == NULL || random->nextInt(1000) != 0 || gImitatedSounds.empty())
+        return NULL;
+    boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
+        gImitatedSounds.begin();
+    std::advance(it, random->nextInt((int)gImitatedSounds.size()));
+    return it->second;
 }
 
-void Parrot::playAmbientSound(Level*, boost::shared_ptr<Entity>)
+void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
 {
+    if (!level || !entity || entity->isSilent())
+        return;
+    Random* random = level->getRandomFor(0, 0, 0);
+    if (random == NULL || imitateNearbyMobs(level, entity.get()) || random->nextInt(200) != 0)
+        return;
+    entity->playSound(getAmbient(random), 1.0f, (float)getPitch(random));
 }
 
 void Parrot::_init()
@@ -79,11 +141,15 @@ void Parrot::_init()
 
 void Parrot::staticCtor()
 {
+    DATA_VARIANT = SynchedEntityData::defineId<int>(0x2d6c0003ULL, 0x2d6c0000ULL,
+                                                    EntityDataSerializers::INT);
 }
 
 void Parrot::setVariant(int variant)
 {
     mVariant = variant < 0 ? 0 : (variant > 4 ? 4 : variant);
+    if (mEntityData != NULL && DATA_VARIANT != NULL)
+        mEntityData->set(DATA_VARIANT, mVariant, true);
 }
 
 MobGroupData* Parrot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -96,11 +162,23 @@ MobGroupData* Parrot::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 void Parrot::registerGoals()
 {
     Mob::registerGoals();
+    mGoalSelector.addGoal(0, new SitGoal(this), true);
+    mGoalSelector.addGoal(0, new PanicGoal(this, 1.25), true);
+    mGoalSelector.addGoal(0, new FloatGoal(this), true);
+    mGoalSelector.addGoal(1, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
+    mGoalSelector.addGoal(2, new FollowOwnerFlyingGoal(this, 1.0, 5.0f, 1.0f), true);
+    mGoalSelector.addGoal(2, new WaterAvoidingRandomFlyingGoal(this, 1.0), true);
+    mGoalSelector.addGoal(3, new LandOnOwnersShoulderGoal(this), true);
+    mGoalSelector.addGoal(3, new FollowMobGoal(this, 1.0, 3.0f, 10.0f), true);
 }
 
 void Parrot::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(6.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(SharedMonsterAttributes::FLYING_SPEED)->setBaseValue(0.4);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
 }
 
 FlyingPathNavigation* Parrot::createNavigation(Level* level)
@@ -206,12 +284,12 @@ const SoundEvent* Parrot::getAmbientSound()
 
 const SoundEvent* Parrot::getHurtSound(const DamageSource*)
 {
-    return NULL;
+    return SoundEvents::PARROT_HURT;
 }
 
 const SoundEvent* Parrot::getDeathSound()
 {
-    return NULL;
+    return SoundEvents::PARROT_DEATH;
 }
 
 void Parrot::playStepSound(const BlockPos&, Block*)
@@ -256,12 +334,14 @@ bool Parrot::hurt(const DamageSource* source, float damage)
 
 int Parrot::getVariant()
 {
-    return mVariant;
+    return mEntityData != NULL && DATA_VARIANT != NULL ? mEntityData->get(DATA_VARIANT) : mVariant;
 }
 
 void Parrot::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
+    if (mEntityData != NULL && DATA_VARIANT != NULL)
+        mEntityData->createDateItem(DATA_VARIANT, 0);
 }
 
 void Parrot::addAdditonalSaveData(CompoundTag* tag)
@@ -278,12 +358,12 @@ void Parrot::readAdditionalSaveData(CompoundTag* tag)
 
 const void* Parrot::getDefaultLootTable()
 {
-    return NULL;
+    return &BuiltInLootTables::PARROT;
 }
 
 unsigned long long Parrot::GetType()
 {
-    return 0x2d6c000300000000ULL;
+    return 0x000000002D6C0003ULL;
 }
 
 bool Parrot::NotParrotPredicate::apply(boost::shared_ptr<Entity> entity) const

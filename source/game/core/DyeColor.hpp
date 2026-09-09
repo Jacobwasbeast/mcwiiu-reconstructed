@@ -69,4 +69,6 @@ private:
     eMinecraftColour bedColor;
 };
 
+extern const DyeColor* gSheepGray;
+
 #endif

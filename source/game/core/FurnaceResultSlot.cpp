@@ -1,6 +1,15 @@
 #include "game/core/FurnaceResultSlot.hpp"
 
+#include <math.h>
+
+#include "game/core/ExperienceOrb.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/item/FurnaceRecipes.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/util/Math.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 FurnaceResultSlot::FurnaceResultSlot(boost::shared_ptr<Player> player,
                                      boost::shared_ptr<Container> container,
@@ -38,7 +47,7 @@ not_null_ptr<ItemInstance> FurnaceResultSlot::remove(int count)
 not_null_ptr<ItemInstance> FurnaceResultSlot::onTake(boost::shared_ptr<Player> player,
                                                      not_null_ptr<ItemInstance> item)
 {
-    set(item);
+    checkTakeAchievements(item);
     return Slot::onTake(player, item);
 }
 
@@ -55,6 +64,44 @@ void FurnaceResultSlot::onQuickCraft(not_null_ptr<ItemInstance> item, int count)
 
 void FurnaceResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
 {
-    item->onCraftedBy(NULL, mPlayer, mRemoveCount);
+    item->onCraftedBy(mPlayer->mLevel, mPlayer, mRemoveCount);
+
+    if (!mPlayer->mLevel->mIsClientSide)
+    {
+        int count = mRemoveCount;
+        double value = FurnaceRecipes::getInstance()->getRecipeValue(item);
+        if (value != 0.0)
+        {
+            if (value < 1.0f)
+            {
+                float experience = count * value;
+                count = static_cast<int>(floorf(experience));
+                if (count < ceilf(experience) && Math::random() < experience - count)
+                {
+                    ++count;
+                }
+            }
+
+            while (count > 0)
+            {
+                int orbValue = ExperienceOrb::getExperienceValue(count);
+                count -= orbValue;
+                mPlayer->mLevel->addEntity(boost::shared_ptr<Entity>(
+                    new ExperienceOrb(mPlayer->mLevel, mPlayer->mX, mPlayer->mY + 0.5,
+                                      mPlayer->mZ + 0.5, orbValue)));
+            }
+        }
+    }
+
+    if (item->getItem() == Items::ironIngot)
+    {
+        mPlayer->awardStat(GenericStats::acquireIron(), GenericStats::param_acquireIron());
+    }
+
+    if (item->getItem() == Items::cookedFish)
+    {
+        mPlayer->awardStat(GenericStats::cookFish(), GenericStats::param_cookFish());
+    }
+
     mRemoveCount = 0;
 }

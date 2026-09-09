@@ -118,5 +118,5 @@ void ThrownEgg::handleEntityEvent(unsigned char event, int data)
 
 unsigned long long ThrownEgg::GetType()
 {
-    return 0x8A20000200000000ULL;
+    return 0x8A200002ULL;
 }

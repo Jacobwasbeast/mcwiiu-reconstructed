@@ -3,6 +3,7 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/core/TimeCondition.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 
 RoundTimeCondition::RoundTimeCondition(const XmlObject& object)
     : TimerBasedCondition(object)
@@ -20,6 +21,16 @@ int RoundTimeCondition::GetValue(MasterGameMode* gameMode) const
 
 unsigned int RoundTimeCondition::GetThreshold(MasterGameMode* gameMode) const
 {
+    if (m_option < 0)
+    {
+        const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
+        if (miniGame->GetId() == eMiniGameId_Glide
+            && miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        {
+            return TimeCondition::GetThreshold(gameMode) << 1;
+        }
+    }
+
     return TimeCondition::GetThreshold(gameMode);
 }
 

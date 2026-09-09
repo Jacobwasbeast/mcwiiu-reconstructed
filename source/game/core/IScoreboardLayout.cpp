@@ -1,8 +1,9 @@
 #include "game/core/IScoreboardLayout.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include <cwchar>
 
-IScoreboardLayout::IScoreboardLayout() : m_playerCount(0), m_players()
+IScoreboardLayout::IScoreboardLayout() : m_players()
 {
 }
 
@@ -114,11 +115,11 @@ void IScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info
     info->smallId = player->GetSmallId();
     info->name = player->GetDisplayName();
     info->voiceStatus = 0;
-    if (player->IsTalking())
+    if (player->HasVoice())
     {
-        info->voiceStatus = 1;
+        info->voiceStatus = player->IsTalking() ? 3 : (player->IsMutedByLocalUser(0) ? 2 : 1);
     }
-    info->colour = 0;
+    info->colour = static_cast<unsigned short>(g_pApp->GetPlayerColour(info->smallId));
 }
 
 uint32_t IScoreboardLayout::getTitleIcon(int, const EScoreboardType&)

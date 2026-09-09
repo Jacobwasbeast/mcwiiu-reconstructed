@@ -28,17 +28,17 @@ public:
     class Pose
     {
     public:
-        Pose(const Vec3* head, const Vec3* body, const Vec3* leftArm,
-             const Vec3* rightArm, const Vec3* leftLeg, const Vec3* rightLeg,
+        Pose(const Vec3* head, const Vec3* body, const Vec3* rightArm,
+             const Vec3* leftArm, const Vec3* rightLeg, const Vec3* leftLeg,
              const Vec3* rightItem);
         Pose();
 
         Vec3* head;
         Vec3* body;
-        Vec3* leftArm;
         Vec3* rightArm;
-        Vec3* leftLeg;
+        Vec3* leftArm;
         Vec3* rightLeg;
+        Vec3* leftLeg;
         Vec3* rightItem;
     };
 
@@ -54,6 +54,8 @@ public:
     virtual ~ArmorStand();
 
     static void staticCtor();
+    static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
+    static const EntityDataAccessor<int>* DATA_POSE;
     static void addDataWalkers(DataFixerUpper* fixer);
     static void create(Level* level);
     void _init();

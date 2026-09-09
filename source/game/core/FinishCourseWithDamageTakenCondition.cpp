@@ -17,21 +17,14 @@ bool FinishCourseWithDamageTakenCondition::canAward(const GameMedal* medal, cons
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
     if (playerStats != NULL)
     {
-        unsigned int round = 0;
-        int totalRounds = playerStats->getTotalRounds();
-        if (totalRounds != 0)
+        for (unsigned int round = 0;
+             round < static_cast<unsigned int>(playerStats->getTotalRounds());
+             ++round)
         {
-            do
+            if (playerStats->getReachedEnd(round) != 0 && playerStats->getDamageTaken(round) == mTarget)
             {
-                if (playerStats->getReachedEnd(round) != 0 && playerStats->getDamageTaken(round) == static_cast<double>(mTarget))
-                {
-                    return true;
-                }
-
-                ++round;
-                totalRounds = playerStats->getTotalRounds();
+                return true;
             }
-            while (round < static_cast<unsigned int>(totalRounds));
         }
     }
 

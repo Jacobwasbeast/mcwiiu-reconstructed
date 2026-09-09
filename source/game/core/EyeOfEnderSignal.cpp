@@ -61,7 +61,7 @@ uint64_t EyeOfEnderSignal::signalTo(const BlockPos& pos)
         mTargetY = mY + 8.0;
     }
     mDropItem = mRandom->nextInt(5) > 0;
-    return 0;
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)) << 32;
 }
 
 void EyeOfEnderSignal::defineSynchedData()
@@ -144,8 +144,11 @@ void EyeOfEnderSignal::tick()
 
     if (mLevel != NULL && mLevel->mIsClientSide)
     {
-        mLevel->addParticle(PARTICLE_PORTAL, mX - mXd * 0.25, mY - mYd * 0.25,
-            mZ - mZd * 0.25, mXd, mYd, mZd, arrayWithLength<int>());
+        for (int i = 0; i < 4; ++i)
+        {
+            mLevel->addParticle(PARTICLE_PORTAL, mX - mXd * 0.25, mY - mYd * 0.25,
+                mZ - mZd * 0.25, mXd, mYd, mZd, arrayWithLength<int>());
+        }
         return;
     }
 
@@ -194,5 +197,5 @@ void EyeOfEnderSignal::create(Level* level)
 
 unsigned long long EyeOfEnderSignal::GetType()
 {
-    return 0x8800000400000000ULL;
+    return 0x0000000088000004ULL;
 }

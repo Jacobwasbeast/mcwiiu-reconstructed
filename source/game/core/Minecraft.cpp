@@ -3,6 +3,11 @@
 
 #include <wchar.h>
 
+Textures* Minecraft::getTextureManager()
+{
+    return mTextures;
+}
+
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
@@ -262,6 +267,7 @@ static bool sCheckForNewLocalPlayers = true;
 bool gFancyGraphics = true;
 static std::wstring sWorkingDirectory;
 static OSFastMutex sTextureRequestLock;
+GenericStats* gStats = NULL;
 
 Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet, int width, int height,
                      bool fullscreen)
@@ -348,6 +354,10 @@ Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet,
     mConnectionFailed[1] = false;
     mConnectionFailed[2] = false;
     mConnectionFailed[3] = false;
+    mDisconnectReasons[0] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[1] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[2] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[3] = DisconnectPacket::eDisconnectReason_None;
     mReloadTextures = false;
     mLocalPlayerIdx = 0;
     mPendingConnections[0] = NULL;
@@ -405,6 +415,7 @@ ItemColors* Minecraft::getItemColors()
 {
     return mItemColors;
 }
+
 
 double Minecraft::getFrameTime()
 {
@@ -1289,6 +1300,10 @@ void Minecraft::clearConnectionFailed()
     mConnectionFailedPlayerIdx = 0;
     mConnectionFailed[2] = false;
     mConnectionFailedParameter = 0;
+    mDisconnectReasons[0] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[1] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[2] = DisconnectPacket::eDisconnectReason_None;
+    mDisconnectReasons[3] = DisconnectPacket::eDisconnectReason_None;
     gApp.SetDisconnectReason(DisconnectPacket::eDisconnectReason_None);
 }
 

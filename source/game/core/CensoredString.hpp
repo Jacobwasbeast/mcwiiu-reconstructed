@@ -4,14 +4,14 @@
 #include <string>
 #include <stdint.h>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include "game/core/TickAction.hpp"
 #include "game/data/CompoundTag.hpp"
 
 class DyeColor;
 
-class CensoredString
+class CensoredString : public boost::enable_shared_from_this<CensoredString>
 {
 public:
     CensoredString();
@@ -36,7 +36,6 @@ public:
     int compare(const std::wstring& value);
 
 private:
-    boost::shared_ptr<DyeColor> m_colour;
     bool m_useLocalization;
     unsigned char m_stateBytes[47];
     unsigned char m_flags;
@@ -44,6 +43,7 @@ private:
     int m_censoredId;
     std::wstring m_pending;
     std::wstring m_censored;
+    DyeColor* m_colour;
     TickAction* m_tickAction;
     std::wstring m_uuid;
     bool m_chatCensored;

@@ -1,8 +1,13 @@
 #include "game/core/CMinecraftApp.hpp"
+#include "platform/wiiu/CInput.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/L10N.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "game/ui/UIScene_FullscreenProgress.hpp"
+#include "game/core/GameType.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
@@ -25,6 +30,7 @@ void QueryPerformanceFrequency(_LARGE_INTEGER* value);
 unsigned int GetTickCount();
 
 static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
+static boost::unordered_map<PlayerUID, MOJJANG_DATA*> g_mojangData;
 CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
@@ -76,26 +82,80 @@ unsigned int CMinecraftApp::_TipData::getNextTip()
 }
 CMinecraftApp::CMinecraftApp()
     : mPrimaryPlayerUID(0), mDebugUIFocussed(false), mGameStarted(false), mAppPaused(false),
-      mChangingSessionType(false), mReallyChangingSessionType(false), mGameMode(0),
+      mChangingSessionType(false), mReallyChangingSessionType(false), mGameMode(0), mHostOptions(0),
       mLoadSavesFromFolderEnabled(false), mDisconnectReason(0), mGlobalXuiAction(0),
       mLiveLinkRequired(false), mDebugInputEnabled(false), mTrialTimerStart(0.0f),
       mTrialPausedTime(0.0f), mLastPerformanceCounter(0), mAccumulatedPerformanceCounter(0),
       mAppTime(0.0f), mFrameTime(0.0f), mPerformanceCounterScale(0.0f),
-      mDLCInstallProcessCompleted(false), mDLCInstallPending(false), mAutosaveTime(0),
-      mNewDLCAvailable(false),
+      mDLCInstallProcessCompleted(false), mDLCInstallPending(false), mDLCInstallCount(0),
+      mDLCInstallIndex(0), mAutosaveTime(0),
+      mNewDLCAvailable(false), mExtraGameData(0),
       mCorruptSaveDeleted(false), mResetNether(false), mResetEnd(false),
       mRequiredTexturePackID(0), mFirstMiniGameType(static_cast<EMiniGameId>(0))
 {
+    InitializeCriticalSection(&mPendingActionsMutex);
+    InitializeCriticalSection(&mActionMutex);
+    InitializeCriticalSection(&mTerrainFeaturePositionsMutex);
+    InitializeCriticalSection(&mMemoryTextureMutex);
+    InitializeCriticalSection(&mMemoryTPDMutex);
+    InitializeCriticalSection(&mAdditionalModelPartsMutex);
+    InitializeCriticalSection(&mAdditionalSkinBoxesMutex);
     std::fill(mBanListCheck, mBanListCheck + 4, false);
     std::fill(mOpacityTimer, mOpacityTimer + 4, 0);
     std::fill(mOptionsCallbackStatus, mOptionsCallbackStatus + 4, 0);
+    std::fill(mPlayerIds, mPlayerIds + 8, 0);
+    std::fill(mPlayerPrivileges, mPlayerPrivileges + 8, 0);
+    std::fill(mPlayerGameTypes, mPlayerGameTypes + 8, 0);
 }
-CMinecraftApp::~CMinecraftApp() {}
+CMinecraftApp::~CMinecraftApp()
+{
+    DeleteCriticalSection(&mActionMutex);
+    DeleteCriticalSection(&mPendingActionsMutex);
+    DeleteCriticalSection(&mTerrainFeaturePositionsMutex);
+    DeleteCriticalSection(&mMemoryTextureMutex);
+    DeleteCriticalSection(&mMemoryTPDMutex);
+    DeleteCriticalSection(&mAdditionalModelPartsMutex);
+    DeleteCriticalSection(&mAdditionalSkinBoxesMutex);
+}
 void CMinecraftApp::SetGameHostOption(unsigned int& options, eGameHostOption option, unsigned int value)
 {
+    switch (static_cast<unsigned int>(option))
+    {
+    case 0: options = (options & ~3U) | (value & 3U); break;
+    case 3: options = (options & ~4U) | (value & 4U); break;
+    case 4: options = (options & ~8U) | (value & 8U); break;
+    case 6: options = (options & ~0x30U) | ((value & 3U) << 4); break;
+    case 7: options = (options & ~0x40U) | (value & 0x40U); break;
+    case 8: options = (options & ~0x80U) | (value & 0x80U); break;
+    case 9: options = (options & ~0x100U) | (value & 0x100U); break;
+    case 10: options = (options & ~0x200U) | (value & 0x200U); break;
+    case 11: options = (options & ~0x400U) | (value & 0x400U); break;
+    case 12: options = (options & ~0x800U) | (value & 0x800U); break;
+    case 13: options = (options & ~0x1000U) | (value & 0x1000U); break;
+    case 14: options = (options & ~0x2000U) | (value & 0x2000U); break;
+    case 15: options = (options & ~0x1c000U) | (value & 0x1c000U); break;
+    case 16: options = (options & ~0x4000U) | (value & 0x4000U); break;
+    case 17: options = (options & ~0x8000U) | (value & 0x8000U); break;
+    case 18: options = (options & ~0x10000U) | (value & 0x10000U); break;
+    case 20: options = (options & ~0x700000U) | ((value & 7U) << 20); break;
+    case 21: options = (options & ~0x80000000U) | ((value ^ 1U) << 31); break;
+    case 22: options = (options & ~0x40000U) | (value & 0x40000U); break;
+    case 23: options = (options & ~0x80000U) | (value & 0x80000U); break;
+    case 24: options = (options & ~0x800000U) | ((value ^ 1U) << 23); break;
+    case 25: options = (options & ~0x1000000U) | (value & 0x1000000U); break;
+    case 26: options = (options & ~0x2000000U) | ((value ^ 1U) << 25); break;
+    case 27: options = (options & ~0x4000000U) | ((value ^ 1U) << 26); break;
+    case 28: options = (options & ~0x8000000U) | ((value ^ 1U) << 27); break;
+    case 29: options = (options & ~0x10000000U) | ((value ^ 1U) << 28); break;
+    case 30: options = (options & ~0x20000000U) | ((value ^ 1U) << 29); break;
+    case 31: options = (options & ~0x40000000U) | (value & 0x40000000U); break;
+    case 32: options = value; break;
+    default: break;
+    }
 }
 void CMinecraftApp::SetGameHostOption(eGameHostOption option, unsigned int value)
 {
+    SetGameHostOption(mHostOptions, option, value);
 }
 void CMinecraftApp::SetXuiServerAction(int player, eXuiServerAction action, void* param)
 {
@@ -104,11 +164,26 @@ void CMinecraftApp::SetXuiServerAction(int player, eXuiServerAction action, void
 }
 uint32_t CMinecraftApp::GetGameHostOption(unsigned int options, eGameHostOption option)
 {
-    return 0;
+    switch (static_cast<unsigned int>(option))
+    {
+    case 0: return options & 3U; case 3: return options & 4U; case 4: return options & 8U;
+    case 5: return (options & 8U) | 0x3c81U |
+        ((static_cast<unsigned int>(GameType::SURVIVAL->getId()) & 3U) << 4);
+    case 6: return (options >> 4) & 3U; case 7: return options & 0x40U; case 8: return options & 0x80U;
+    case 9: return options & 0x100U; case 10: return options & 0x200U; case 11: return options & 0x400U;
+    case 12: return options & 0x800U; case 13: return options & 0x1000U; case 14: return options & 0x2000U;
+    case 15: return options & 0x1c000U; case 16: return options & 0x4000U; case 17: return options & 0x8000U;
+    case 18: return options & 0x10000U; case 20: return (options >> 20) & 7U; case 21: return (options >> 31) ^ 1U;
+    case 22: return options & 0x40000U; case 23: return options & 0x80000U; case 24: return ((options >> 23) & 1U) ^ 1U;
+    case 25: return options & 0x1000000U; case 26: return ((options >> 25) & 1U) ^ 1U;
+    case 27: return ((options >> 26) & 1U) ^ 1U; case 28: return ((options >> 27) & 1U) ^ 1U;
+    case 29: return ((options >> 28) & 1U) ^ 1U; case 30: return ((options >> 29) & 1U) ^ 1U;
+    case 31: return options & 0x40000000U; case 32: return options; default: return 0;
+    }
 }
 uint32_t CMinecraftApp::GetGameHostOption(eGameHostOption option)
 {
-    return 0;
+    return GetGameHostOption(mHostOptions, option);
 }
 uint32_t CMinecraftApp::GetOptionsCallbackStatus(int32_t firstArgument)
 {
@@ -126,7 +201,12 @@ void CMinecraftApp::UpdateTime()
 }
 uint8_t CMinecraftApp::GetLocalPlayerCount()
 {
-    return 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft == 0) return 0;
+    uint8_t count = 0;
+    for (int index = 0; index < 4; ++index)
+        if (minecraft->GetPlayerByPlayerIndex(index)) ++count;
+    return count;
 }
 void CMinecraftApp::loadMediaArchive()
 {
@@ -153,17 +233,96 @@ void CMinecraftApp::InitTime()
 }
 uint32_t CMinecraftApp::IsActionPending(int player, eXuiAction action)
 {
+    if (player < 0 || player >= 4) return 0;
+    EnterCriticalSection(&mPendingActionsMutex);
+    if (mXuiActions[player].action == static_cast<unsigned int>(action))
+    {
+        LeaveCriticalSection(&mPendingActionsMutex);
+        return 1;
+    }
+    for (std::vector<XuiActionData>::const_iterator it = mPendingActions[player].begin();
+         it != mPendingActions[player].end(); ++it)
+        if (it->action == static_cast<unsigned int>(action))
+        {
+            LeaveCriticalSection(&mPendingActionsMutex);
+            return 1;
+        }
+    LeaveCriticalSection(&mPendingActionsMutex);
     return 0;
 }
 bool CMinecraftApp::isValidStateTransition(eXuiAction current, eXuiAction next)
 {
-    return false;
+    const unsigned int from = static_cast<unsigned int>(current);
+    const unsigned int to = static_cast<unsigned int>(next);
+    if (from < 0x12U)
+    {
+        if (from == 3U) return to == 0U || to == 4U;
+        if (from != 4U)
+        {
+            if (from == 0x10U)
+                return to == 0U || to >= 0x10U && to <= 0x18U;
+            if (from != 0x11U) return true;
+            return to == 0x12U || to == 0x13U;
+        }
+    }
+    else if (from > 0x13U && from != 0x24U)
+    {
+        if (from == 0x25U) return to == 0x29U;
+        if (from != 0x29U) return true;
+        return to == 0U || to == 0x25U;
+    }
+    return to == 0U;
 }
 void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param)
 {
+    if (player < 0 || player >= 4) return;
+    EnterCriticalSection(&mPendingActionsMutex);
+    if (action == eXuiAction_0)
+    {
+        if (!mPendingActions[player].empty())
+        {
+            mXuiActions[player] = mPendingActions[player].front();
+            mPendingActions[player].erase(mPendingActions[player].begin());
+        }
+        else
+        {
+            mXuiActions[player].action = 0;
+            mXuiActions[player].param = param;
+        }
+        LeaveCriticalSection(&mPendingActionsMutex);
+        return;
+    }
+    const unsigned int current = mXuiActions[player].action;
+    bool duplicate = current == static_cast<unsigned int>(action);
+    for (std::vector<XuiActionData>::const_iterator it = mPendingActions[player].begin();
+         !duplicate && it != mPendingActions[player].end(); ++it)
+        duplicate = it->action == static_cast<unsigned int>(action);
+    if ((duplicate && action != static_cast<eXuiAction>(0x10) &&
+         action != static_cast<eXuiAction>(3) && action != static_cast<eXuiAction>(8)) ||
+        (current == 0x19U && action == static_cast<eXuiAction>(0x26)) ||
+        (current == 0U && action == static_cast<eXuiAction>(7)) ||
+        (current == 0x11U && action == static_cast<eXuiAction>(0x10)))
+    {
+        LeaveCriticalSection(&mPendingActionsMutex);
+        return;
+    }
+    if (current != 0 &&
+        !isValidStateTransition(static_cast<eXuiAction>(current), action))
+    {
+        XuiActionData pending = { static_cast<unsigned int>(action), param };
+        mPendingActions[player].push_back(pending);
+        LeaveCriticalSection(&mPendingActionsMutex);
+        return;
+    }
+    mXuiActions[player].action = static_cast<unsigned int>(action);
+    mXuiActions[player].param = param;
+    LeaveCriticalSection(&mPendingActionsMutex);
 }
 void CMinecraftApp::SetAction(int player, eXuiAction action, void* param)
 {
+    EnterCriticalSection(&mActionMutex);
+    SetActionInternal(player, action, param);
+    LeaveCriticalSection(&mActionMutex);
 }
 void CMinecraftApp::SetBanListCheck(int32_t firstArgument, bool secondArgument)
 {
@@ -189,9 +348,15 @@ uint64_t CMinecraftApp::SignInChangeCallback(void* context, bool signedIn, unsig
 }
 void CMinecraftApp::ProfileReadErrorCallback(void* context)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    if (app != NULL)
+        app->SetAction(app->GetPrimaryUserIndex(), static_cast<eXuiAction>(0x20), NULL);
 }
 uint32_t CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    if (app != NULL)
+        app->SetAction(profile, static_cast<eXuiAction>(0x19), settings);
     return 0;
 }
 uint32_t CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
@@ -210,9 +375,19 @@ uint8_t CMinecraftApp::GetGameStarted()
 }
 void CMinecraftApp::SetDefaultHostOptions()
 {
+    SetGameHostOption(static_cast<eGameHostOption>(0x18), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x19), 0);
+    SetGameHostOption(static_cast<eGameHostOption>(0x1a), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x1b), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x1c), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x1d), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x1e), 1);
+    SetGameHostOption(static_cast<eGameHostOption>(0x15), 1);
 }
 void CMinecraftApp::InitGameSettings()
 {
+    GameSettings::InitGameSettings();
+    SetDefaultHostOptions();
 }
 uint64_t CMinecraftApp::UpsellReturnedCallback(void* context, eUpsellType type, eUpsellResponse response, int userIndex)
 {
@@ -249,6 +424,17 @@ uint32_t CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4
 }
 uint32_t CMinecraftApp::BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result != static_cast<C4JStorage::EMessageResult>(4))
+    {
+        CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+        if (app != NULL)
+        {
+            eXuiAction action = static_cast<eXuiAction>(0xb);
+            if (button == app->GetPrimaryUserIndex())
+                action = static_cast<eXuiAction>(3);
+            app->SetAction(button, action, NULL);
+        }
+    }
     return 0;
 }
 void CMinecraftApp::SetGlobalXuiAction(eXuiAction action)
@@ -307,6 +493,12 @@ uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JS
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+        if (app != NULL)
+            app->SetAction(button, static_cast<eXuiAction>(0x16), NULL);
+    }
     return 0;
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -321,9 +513,19 @@ uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, i
 {
     return 0;
 }
-unsigned int CMinecraftApp::SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const
+void CMinecraftApp::SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const
 {
-    return 0;
+    switch (static_cast<unsigned int>(type))
+    {
+    case 0: options = value == 0 ? options & ~1U : options | 1U; break;
+    case 1: options = value == 0 ? options & ~2U : options | 2U; break;
+    case 2: options = value == 0 ? options & ~4U : options | 4U; break;
+    case 3: options = value == 0 ? options & ~8U : options | 8U; break;
+    case 4: options = (options & 0xffffU) | ((value << 16) & 0xffff0000U); break;
+    case 5: options = (options & 0xfffff80fU) | ((value << 4) & 0x7f0U); break;
+    case 6: options = value; break;
+    default: break;
+    }
 }
 void CMinecraftApp::SetExtraGameData(eGameExtraData type, unsigned int value)
 {
@@ -339,12 +541,28 @@ uint32_t CMinecraftApp::RemoteSaveThreadProc(void* context)
 {
     return 0;
 }
-uint32_t CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    if (app != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
+        app->SetAction(button, static_cast<eXuiAction>(3), NULL);
+    else if (result != static_cast<C4JStorage::EMessageResult>(5))
+    {
+        UIScene* scene = gConsoleUIController.FindScene(static_cast<EUIScene>(4));
+        if (scene != NULL)
+            static_cast<UIScene_FullscreenProgress*>(scene)->SetWasCancelled(false);
+    }
     return 0;
 }
 uint64_t CMinecraftApp::ExitGameFromRemoteSave(void* context)
 {
+    int messageParameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+    gConsoleUIController.RequestAlertMessage(static_cast<int>(0x2686c8e5),
+                                              static_cast<int>(0xc85a78c0),
+                                              messageParameters, 2,
+                                              static_cast<unsigned int>(gProfile->GetPrimaryPad()),
+                                              ExitGameFromRemoteSaveDialogReturned, context,
+                                              NULL, true);
     return 0;
 }
 uint32_t CMinecraftApp::TexturePackDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -384,7 +602,55 @@ uint8_t CMinecraftApp::DLCInstallProcessCompleted()
 }
 std::wstring CMinecraftApp::getDLCFolderName(unsigned int dlcId)
 {
-    return 0;
+    switch (dlcId)
+    {
+    case 4: return L"Tutorial_World";
+    case 0x200: return L"Skin_Pack_1";
+    case 0x201: return L"Skin_Pack_2";
+    case 0x400: return L"Mass_Effect";
+    case 0x401: return L"Skyrim";
+    case 0x402: return L"Halo";
+    case 0x405: return L"Festive";
+    case 0x406: return L"LittleBigPlanet";
+    case 0x407: return L"Greek_Mythology";
+    case 0x408: return L"Norse_Mythology";
+    case 0x409: return L"Halloween_2015";
+    case 0x40a: return L"Mario";
+    case 0x40c: return L"Adventure_Time";
+    case 0x40e: return L"Pirates_Of_The_Caribbean";
+    case 0x40f: return L"Egyptian_Mythology";
+    case 0x4f4: return L"Chinese_Mythology";
+    case 0x4f5: return L"Fallout";
+    case 0x4f9: return L"The_Nightmare_Before_Christmas";
+    case 0x801: case 0x1000801: return L"Plastic";
+    case 0x802: return L"Candy";
+    case 0x803: return L"Fantasy";
+    case 0x804: return L"Halloween_Texture_Pack";
+    case 0x805: return L"Natural";
+    case 0x806: case 0x1000806: return L"City";
+    case 0x807: return L"Cartoon";
+    case 0x808: case 0x1000808: return L"Steampunk";
+    case 0x809: return L"Pattern";
+    case 0x812: return L"Super_Cute_Texture_Pack";
+    case 0x1001: return L"Battle_Map_Pack_0";
+    case 0x1002: return L"Battle_Map_Pack_1";
+    case 0x1003: return L"Battle_Map_Pack_2";
+    case 0x1004: return L"Battle_Map_Pack_3";
+    case 0x1005: return L"Battle_Map_Pack_4";
+    case 0x1007: return L"MG02_Map_Pack_0";
+    case 0x1009: return L"MG02_Map_Pack_1";
+    case 0x100a: return L"MG04_TestWorldPack";
+    case 0x100b: return L"Halloween_Battle_Map";
+    case 0x100c: return L"Festive_Battle_Map";
+    case 0x100e: return L"Fallout_Battle_Map_Pack";
+    case 0x100f: return L"Glide_Map_Pack_0";
+    case 0x1011: return L"Glide_Beasts_Track_Pack";
+    case 0x1012: return L"Glide_Giants_Track_Pack";
+    case 0x1013: return L"Glide_Myths_Track_Pack";
+    case 0x1014: return L"MG02_Map_Pack_2";
+    case 0x1015: return L"MG02_Map_Pack_3";
+    default: return std::wstring();
+    }
 }
 std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, bool mounted, std::wstring suffix)
 {
@@ -398,20 +664,43 @@ uint64_t CMinecraftApp::HandleDLC(DLCPack* pack)
 {
     return 0;
 }
-uint32_t CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index)
+int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index)
 {
     return 0;
 }
 void CMinecraftApp::MountNextDLC(int32_t firstArgument)
 {
+    if (mDLCInstallIndex < mDLCInstallCount)
+    {
+        const int result = gStorage->MountInstalledDLC(firstArgument, mDLCInstallIndex,
+                                                        DLCMountedCallback, this, NULL);
+        if (result == 0x3e5)
+            return;
+        ++mDLCInstallIndex;
+        return;
+    }
+    mDLCInstallProcessCompleted = true;
+    mDLCInstallPending = false;
+    gConsoleUIController.HandleDLCMountingComplete();
 }
-uint32_t CMinecraftApp::DLCInstalledCallback(void* context, int result, int index)
+int CMinecraftApp::DLCInstalledCallback(void* context, int result, int index)
 {
+    if (result != -1)
+    {
+        g_pApp->mDLCInstallCount = static_cast<unsigned int>(result);
+        g_pApp->MountNextDLC(index);
+    }
     return 0;
 }
 uint32_t CMinecraftApp::StartInstallDLCProcess(int32_t firstArgument)
 {
-    return 0;
+    if (DLCInstallProcessCompleted() != 0 || mDLCInstallPending)
+        return 0;
+    mDLCInstallCount = 0;
+    mDLCInstallPending = true;
+    mDLCInstallIndex = 0;
+    gStorage->GetInstalledDLC(firstArgument, DLCInstalledCallback, this);
+    return 1;
 }
 LevelGenerators* CMinecraftApp::getLevelGenerators()
 {
@@ -419,9 +708,85 @@ LevelGenerators* CMinecraftApp::getLevelGenerators()
 }
 void CMinecraftApp::ClearTerrainFeaturePosition()
 {
+    EnterCriticalSection(&mTerrainFeaturePositionsMutex);
+    while (!mTerrainFeaturePositions.empty())
+    {
+        delete mTerrainFeaturePositions.back();
+        mTerrainFeaturePositions.pop_back();
+    }
+    LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
 }
 void CMinecraftApp::LocaleAndLanguageInit()
 {
+    static const struct { int id; const wchar_t* tag; } locales[] = {
+        {28, L"zh-CHT"},
+        {27, L"cs-CS"},
+        {29, L"la-LAS"},
+        {0, L"en-EN"},
+        {1, L"en-US"},
+        {2, L"en-GB"},
+        {3, L"en-IE"},
+        {4, L"en-AU"},
+        {5, L"en-NZ"},
+        {6, L"en-CA"},
+        {7, L"ja-JP"},
+        {8, L"de-DE"},
+        {9, L"de-AT"},
+        {10, L"fr-FR"},
+        {11, L"fr-CA"},
+        {12, L"es-ES"},
+        {13, L"es-MX"},
+        {14, L"it-IT"},
+        {15, L"ko-KR"},
+        {16, L"pt-PT"},
+        {17, L"pt-BR"},
+        {18, L"ru-RU"},
+        {19, L"nl-NL"},
+        {20, L"fi-FI"},
+        {21, L"sv-SV"},
+        {22, L"da-DA"},
+        {23, L"no-NO"},
+        {24, L"pl-PL"},
+        {25, L"tr-TR"},
+        {26, L"el-EL"},
+        {30, L"zh-SG"},
+        {31, L"zh-CN"},
+        {32, L"zh-HK"},
+        {33, L"zh-TW"},
+        {34, L"nl-BE"},
+        {35, L"da-DK"},
+        {36, L"fr-BE"},
+        {37, L"fr-CH"},
+        {38, L"de-CH"},
+        {39, L"nb-NO"},
+        {40, L"en-GR"},
+        {41, L"en-HK"},
+        {42, L"en-SA"},
+        {43, L"en-HU"},
+        {44, L"en-IN"},
+        {45, L"en-IL"},
+        {46, L"en-SG"},
+        {47, L"en-SK"},
+        {48, L"en-ZA"},
+        {49, L"en-CZ"},
+        {50, L"en-AE"},
+        {51, L"es-AR"},
+        {52, L"es-CL"},
+        {53, L"es-CO"},
+        {54, L"es-US"},
+        {55, L"sv-SE"},
+        {56, L"cs-CZ"},
+        {57, L"el-GR"},
+        {58, L"nn-NO"},
+        {59, L"sk-SK"},
+        {60, L"zh-HANS"},
+        {61, L"zh-HANT"}
+    };
+    for (const auto& locale : locales)
+    {
+        mLocaleToString[locale.id] = locale.tag;
+        mStringToLocale[locale.tag] = locale.id;
+    }
 }
 void CMinecraftApp::HandleButtonPresses()
 {
@@ -504,7 +869,7 @@ uint32_t CMinecraftApp::LoadWritingBookMenu(int player, not_null_ptr<ItemInstanc
 }
 bool CMinecraftApp::IsConsoleChatCensored()
 {
-    return false;
+    return GameSettings::GetGameSettings(GetPrimaryUserIndex(), static_cast<eGameSetting>(0x22)) == 0;
 }
 uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
 {
@@ -524,6 +889,11 @@ void CMinecraftApp::SetGameMode(eGameMode mode)
 }
 void CMinecraftApp::StartReloadingTexturePack()
 {
+    const int user = GetPrimaryUserIndex();
+    eXuiAction action = static_cast<eXuiAction>(0x24);
+    if (GetXuiAction(user) == 0x29)
+        action = static_cast<eXuiAction>(0x25);
+    SetAction(user, action, NULL);
 }
 void CMinecraftApp::StaticCtor()
 {
@@ -567,7 +937,7 @@ void CMinecraftApp::SetLiveLinkRequired(bool firstArgument)
 }
 std::wstring CMinecraftApp::GetDebugRootPath()
 {
-    return 0;
+    return L"Special";
 }
 uint32_t CMinecraftApp::DebugSettingsOn()
 {
@@ -632,7 +1002,10 @@ void CMinecraftApp::GetMemFileDetails(const std::wstring& firstArgument, unsigne
 }
 bool CMinecraftApp::IsFileInMemoryTextures(const std::wstring& path)
 {
-    return false;
+    EnterCriticalSection(&mMemoryTextureMutex);
+    const bool found = mMemoryTextureFiles.find(path) != mMemoryTextureFiles.end();
+    LeaveCriticalSection(&mMemoryTextureMutex);
+    return found;
 }
 void CMinecraftApp::GetTPD(int type, unsigned char** data, unsigned int* size)
 {
@@ -683,7 +1056,39 @@ unsigned int CMinecraftApp::GetHTMLColor(eMinecraftColour colour)
 }
 std::wstring CMinecraftApp::GetSingleActionReplacement(int32_t firstArgument, uint32_t secondArgument)
 {
-    return 0;
+    static const struct ActionIcon { uint32_t mask; const wchar_t* name; } icons[] = {
+        {0x00000001, L"ActionBottom"}, {0x00000002, L"ActionRight"},
+        {0x00000004, L"ActionLeft"}, {0x00000008, L"ActionTop"},
+        {0x0030c000, L"LeftStick"}, {0x000f0000, L"RightStick"},
+        {0x00001000, L"DPadLeft"}, {0x00002000, L"DPadRight"},
+        {0x00000400, L"DPadUp"}, {0x00000800, L"DPadDown"},
+        {0x00800000, L"TriggerL"}, {0x00400000, L"TriggerR"},
+        {0x00000040, L"ShoulderR"}, {0x00000080, L"ShoulderL"},
+        {0x00000020, L"SystemSelect"}, {0x00000010, L"SystemStart"},
+        {0x00000100, L"RightStickButton"}, {0x00000200, L"LeftStickButton"}
+    };
+    const wchar_t* action = 0;
+    for (unsigned int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i) {
+        if ((secondArgument & icons[i].mask) != 0) {
+            action = icons[i].name;
+            break;
+        }
+    }
+    if (action == 0)
+        return std::wstring(L" ") + L10N::GetString(0x211CD1AD);
+
+    const wchar_t* controller = L"_CTRL_1";
+    if (firstArgument != 4 && g_pInput != 0 &&
+        !g_pInput->IsPadDRCController(firstArgument) &&
+        g_pInput->IsPadClassicController(firstArgument))
+        controller = L"_CTRL_2";
+    const wchar_t* size = GetLocalPlayerCount() > 1 ? L"_Small" : L"";
+    wchar_t image[128];
+    const int imageSize = GetLocalPlayerCount() > 1 ? 20 : 30;
+    swprintf(image, sizeof(image) / sizeof(image[0]),
+             L"<img src=\"%ls%ls%ls\" align=\"middle\" height=\"%d\" width=\"%d\"/>",
+             action, controller, size, imageSize, imageSize);
+    return std::wstring(image);
 }
 std::wstring CMinecraftApp::GetActionReplacement(int32_t firstArgument, uint8_t secondArgument)
 {
@@ -707,14 +1112,43 @@ double CMinecraftApp::getAppTime()
 }
 void CMinecraftApp::AddTerrainFeaturePosition(_eTerrainFeatureType type, int x, int z)
 {
+    EnterCriticalSection(&mTerrainFeaturePositionsMutex);
+    for (std::vector<FEATURE_DATA*>::const_iterator it = mTerrainFeaturePositions.begin();
+         it != mTerrainFeaturePositions.end(); ++it)
+    {
+        if ((*it)->type == static_cast<int>(type) && (*it)->x == x && (*it)->z == z)
+        {
+            LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
+            return;
+        }
+    }
+    FEATURE_DATA* data = new FEATURE_DATA;
+    data->type = static_cast<int>(type);
+    data->x = x;
+    data->z = z;
+    mTerrainFeaturePositions.push_back(data);
+    LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
 }
 uint32_t CMinecraftApp::GetTerrainFeaturePosition(_eTerrainFeatureType type, int* x, int* z)
 {
+    EnterCriticalSection(&mTerrainFeaturePositionsMutex);
+    for (std::vector<FEATURE_DATA*>::const_iterator it = mTerrainFeaturePositions.begin();
+         it != mTerrainFeaturePositions.end(); ++it)
+    {
+        if ((*it)->type == static_cast<int>(type))
+        {
+            *x = (*it)->x;
+            *z = (*it)->z;
+            LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
+            return 1;
+        }
+    }
+    LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
     return 0;
 }
 MOJJANG_DATA* CMinecraftApp::GetMojangDataForXuid(PlayerUID uid)
 {
-    return 0;
+    return g_mojangData[uid];
 }
 uint8_t CMinecraftApp::GetBanListCheck(int32_t firstArgument)
 {
@@ -730,11 +1164,21 @@ uint32_t CMinecraftApp::SecondsToAutosave()
 }
 uint32_t CMinecraftApp::GetExtraGameData(unsigned int& options, eGameExtraData type) const
 {
-    return 0;
+    switch (static_cast<unsigned int>(type))
+    {
+    case 0: return options & 1U;
+    case 1: return (options >> 1) & 1U;
+    case 2: return (options >> 2) & 1U;
+    case 3: return (options >> 3) & 1U;
+    case 4: return (options >> 16) & 0xffffU;
+    case 5: return (options & 0x7f0U) >> 4;
+    case 6: return options;
+    default: return 0;
+    }
 }
 uint32_t CMinecraftApp::GetExtraGameData(eGameExtraData type)
 {
-    return 0;
+    return GetExtraGameData(mExtraGameData, type);
 }
 void CMinecraftApp::SetResetNether(bool firstArgument)
 {
@@ -779,6 +1223,21 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
 }
 void CMinecraftApp::GetImageTextData(const unsigned char* image, unsigned int size, PngTagData* data)
 {
+    static const unsigned char signature[8] =
+        { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+    if (size <= sizeof(signature) || std::memcmp(image, signature, sizeof(signature)) != 0)
+        return;
+    unsigned int offset = sizeof(signature);
+    while (offset < size)
+    {
+        unsigned int chunkSize;
+        unsigned int chunkType;
+        std::memcpy(&chunkSize, image + offset, sizeof(chunkSize));
+        std::memcpy(&chunkType, image + offset + 4, sizeof(chunkType));
+        if (chunkType == 0x74455874U)
+            ParseImageTextData(image + offset + 8, chunkSize, data);
+        offset += chunkSize + 12;
+    }
 }
 unsigned int CMinecraftApp::CreateImageTextData(unsigned char* image, const PngTagData* data)
 {
@@ -876,17 +1335,39 @@ bool CMinecraftApp::ShouldCollideWith(Block* firstArgument)
 }
 void CMinecraftApp::UpdatePlayerInfo(uint8_t firstArgument, int16_t secondArgument, uint32_t thirdArgument, uint8_t fourthArgument)
 {
+    for (unsigned int i = 0; i < 8; ++i)
+    {
+        if (mPlayerIds[i] == firstArgument)
+        {
+            mPlayerIds[i] = 0;
+            mPlayerPrivileges[i] = 0;
+            mPlayerGameTypes[i] = 0;
+        }
+    }
+    if (secondArgument >= 0 && secondArgument < 8)
+    {
+        const unsigned int slot = static_cast<unsigned int>(secondArgument);
+        mPlayerIds[slot] = firstArgument;
+        mPlayerPrivileges[slot] = thirdArgument;
+        mPlayerGameTypes[slot] = fourthArgument;
+    }
 }
 uint32_t CMinecraftApp::GetPlayerColour(uint8_t firstArgument)
 {
-    return 0;
+    for (unsigned int i = 0; i < 8; ++i)
+        if (mPlayerIds[i] == firstArgument) return i;
+    return 0xffffffffU;
 }
 uint32_t CMinecraftApp::GetPlayerPrivileges(uint8_t firstArgument)
 {
+    for (unsigned int i = 0; i < 8; ++i)
+        if (mPlayerIds[i] == firstArgument) return mPlayerPrivileges[i];
     return 0;
 }
 uint8_t CMinecraftApp::GetPlayerGameType(uint8_t firstArgument)
 {
+    for (unsigned int i = 0; i < 8; ++i)
+        if (mPlayerIds[i] == firstArgument) return mPlayerGameTypes[i];
     return 0;
 }
 std::wstring CMinecraftApp::getEntityName(uint64_t firstArgument, int32_t secondArgument)
@@ -918,11 +1399,21 @@ std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skin
 }
 std::vector<ModelPart*>* CMinecraftApp::GetAdditionalModelParts(unsigned int firstArgument)
 {
-    return 0;
+    EnterCriticalSection(&mAdditionalModelPartsMutex);
+    boost::unordered_map<unsigned int, std::vector<ModelPart*>*>::iterator it =
+        mAdditionalModelParts.find(firstArgument);
+    std::vector<ModelPart*>* result = it == mAdditionalModelParts.end() ? NULL : it->second;
+    LeaveCriticalSection(&mAdditionalModelPartsMutex);
+    return result;
 }
 std::vector<SKIN_BOX*>* CMinecraftApp::GetAdditionalSkinBoxes(unsigned int skinId)
 {
-    return 0;
+    EnterCriticalSection(&mAdditionalSkinBoxesMutex);
+    boost::unordered_map<unsigned int, std::vector<SKIN_BOX*>*>::iterator it =
+        mAdditionalSkinBoxes.find(skinId);
+    std::vector<SKIN_BOX*>* result = it == mAdditionalSkinBoxes.end() ? NULL : it->second;
+    LeaveCriticalSection(&mAdditionalSkinBoxesMutex);
+    return result;
 }
 unsigned int CMinecraftApp::getSkinIdFromPath(const std::wstring& path)
 {
@@ -990,7 +1481,8 @@ void CMinecraftApp::ProcessFakePadValueA()
 }
 uint32_t CMinecraftApp::IsVoiceChatEnabled()
 {
-    return 0;
+    return GetGameStarted() != 0 &&
+        GameSettings::GetGameSettings(GetPrimaryUserIndex(), static_cast<eGameSetting>(0x22)) != 0;
 }
 void CMinecraftApp::CaptureScreenshot(int32_t firstArgument)
 {

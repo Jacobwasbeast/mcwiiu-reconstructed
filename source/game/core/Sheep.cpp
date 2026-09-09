@@ -4,6 +4,8 @@
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/BuiltInLootTables.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -13,19 +15,18 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/EatBlockGoal.hpp"
 
-extern const DyeColor* gSheepWhite;
-extern const DyeColor* gSheepOrange;
-extern const DyeColor* gSheepMagenta;
-extern const DyeColor* gSheepLightBlue;
-extern const DyeColor* gSheepYellow;
-extern const DyeColor* gSheepPink;
+const DyeColor* gSheepWhite = NULL;
+const DyeColor* gSheepOrange = NULL;
+const DyeColor* gSheepMagenta = NULL;
+const DyeColor* gSheepLightBlue = NULL;
+const DyeColor* gSheepYellow = NULL;
+const DyeColor* gSheepPink = NULL;
 extern const DyeColor* gSheepGray;
-extern const DyeColor* gSheepBrown;
-extern const DyeColor* gSheepBlack;
-extern const SoundEvent* gSheepAmbientSound;
-extern const SoundEvent* gSheepHurtSound;
-extern const SoundEvent* gSheepDeathSound;
-extern unsigned int gSheepLootTable;
+const DyeColor* gSheepBrown = NULL;
+const DyeColor* gSheepBlack = NULL;
+const SoundEvent* gSheepAmbientSound = NULL;
+const SoundEvent* gSheepHurtSound = NULL;
+const SoundEvent* gSheepDeathSound = NULL;
 
 static const EntityDataAccessor<unsigned char>* gSheepSheared;
 static boost::unordered_map<const DyeColor*, arrayWithLength<const float> > gSheepColors;
@@ -60,6 +61,18 @@ void Sheep::createSheepColor(const DyeColor* color)
 
 unsigned long long Sheep::staticCtor()
 {
+    gSheepWhite = DyeColor::WHITE;
+    gSheepOrange = DyeColor::ORANGE;
+    gSheepMagenta = DyeColor::MAGENTA;
+    gSheepLightBlue = DyeColor::LIGHT_BLUE;
+    gSheepYellow = DyeColor::YELLOW;
+    gSheepPink = DyeColor::PINK;
+    gSheepGray = DyeColor::GRAY;
+    gSheepBrown = DyeColor::BROWN;
+    gSheepBlack = DyeColor::BLACK;
+    gSheepAmbientSound = SoundEvents::SHEEP_AMBIENT;
+    gSheepHurtSound = SoundEvents::SHEEP_HURT;
+    gSheepDeathSound = SoundEvents::SHEEP_DEATH;
     return 0x2d680002ULL;
 }
 
@@ -103,9 +116,9 @@ void Sheep::defineSynchedData()
     }
 }
 
-unsigned int Sheep::getDefaultLootTable()
+const void* Sheep::getDefaultLootTable()
 {
-    return gSheepLootTable;
+    return &BuiltInLootTables::SHEEP;
 }
 
 void Sheep::handleEntityEvent(unsigned char event, int data)

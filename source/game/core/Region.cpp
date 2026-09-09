@@ -188,5 +188,5 @@ bool Region::isEmptyBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y,
 bool Region::isEmptyWaterBlock(const BlockPos& pos) { return getBlockId(pos.x, pos.y, pos.z) == 9; }
 int Region::getBrightness(LightLayer::variety layer, const BlockPos& pos) { if (pos.y < 0 || pos.y >= 256) return layer; LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? layer : c->getBrightness(layer, pos); }
 void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states) { mCachedX = x; mCachedY = y; mCachedZ = z; mCachedStates = states; }
-unsigned int Region::elementToBlockId(unsigned short element) { return element >> 4; }
+unsigned int Region::elementToBlockId(unsigned short element) { return (element >> 4) & 0xffff; }
 unsigned int Region::elementToData(unsigned short element) { return element & 15; }

@@ -5,14 +5,9 @@
 #include <boost/weak_ptr.hpp>
 
 #include "game/core/WitherBoss.hpp"
+#include "game/core/Mth.hpp"
 
 static const unsigned long long ENTITY_TYPE_WITHER_BOSS = 0x000000005D540047ULL;
-
-class Mth
-{
-public:
-    static float wrapDegrees(float degrees);
-};
 
 BodyControl::BodyControl(LivingEntity* mob)
     : mMob(mob)

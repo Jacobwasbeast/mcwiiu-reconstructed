@@ -31,9 +31,9 @@ OceanRuin::OceanRuin()
 OceanRuin::OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth,
     bool isLarge, bool isCold)
     : ScatteredFeaturePieces::ScatteredFeaturePiece(level, random, x, 0, z, width, height, depth),
-      mBlockState(Blocks::AIR->defaultBlockState()), mIsLarge(isCold), mIsCold(isLarge)
+      mBlockState(Blocks::AIR->defaultBlockState()), mIsLarge(isLarge), mIsCold(isCold)
 {
-    setOrientation(Direction::getRandomDirection(random));
+    setOrientation(NULL);
     BoundingBox box(x, 0, z, x + width - 1, height - 1, z + depth - 1);
     setBoundingBox(&box);
     setRotation(Rotation::getRandom(random));
@@ -148,7 +148,7 @@ void OceanRuin::fillBelow(const BlockPos& pos, Mirror* mirror, Rotation* rotatio
                 if (level->getBlockState(p) != NULL && level->getBlockState(p)->getBlock() != Blocks::AIR)
                     break;
                 for (int fill = y - 1; fill >= 0; --fill)
-                    if (level->getRandomFor(x, fill, z).rollPercentageChance(0x52))
+                    if (level->getRandomFor(x, fill, z)->rollPercentageChance(0x52))
                         level->setBlock(BlockPos(x, fill, z), Blocks::stone->defaultBlockState(), 2, false);
             }
 }

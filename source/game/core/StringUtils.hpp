@@ -8,6 +8,7 @@
 bool BothAreSpaces(wchar_t first, wchar_t second);
 std::wstring toLower(const std::wstring& text);
 std::wstring trimString(const std::wstring& text);
+void stripWhitespaceForHtml(std::wstring& text, bool collapse);
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);
 std::wstring replaceAll(const std::wstring& text, const std::wstring& search, const std::wstring& replacement);
 void makeReplacements(const boost::unordered_map<std::wstring, std::wstring>& replacements, std::wstring& text);

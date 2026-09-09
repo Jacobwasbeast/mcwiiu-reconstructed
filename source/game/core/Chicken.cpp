@@ -213,7 +213,7 @@ void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
 
 unsigned long long Chicken::GetType()
 {
-    return 0x0D68000400000000ULL;
+    return 0x000000000D680004ULL;
 }
 
 void Chicken::create(Level* level)

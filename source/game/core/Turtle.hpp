@@ -6,6 +6,7 @@
 
 #include "game/entity/mob/Animal.hpp"
 #include "game/world/block/EntityDataAccessor.hpp"
+#include "game/world/block/Predicate.hpp"
 
 class Block;
 class BlockPos;
@@ -18,10 +19,12 @@ class LightningBolt;
 class MobGroupData;
 class TurtlePathNavigation;
 class ItemInstance;
+class Entity;
 
 class Turtle : public Animal
 {
 public:
+    static Predicate<boost::shared_ptr<Entity> >* BABY_ON_LAND_SELECTOR;
     Turtle(Level* level);
     virtual ~Turtle();
 

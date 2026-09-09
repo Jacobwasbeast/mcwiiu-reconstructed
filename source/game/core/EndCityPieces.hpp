@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <boost/unordered_map.hpp>
+
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/TemplateStructurePiece.hpp"
 
@@ -41,7 +43,6 @@ public:
     class HouseTowerSectionGenerator : public SectionGenerator
     {
     public:
-        HouseTowerSectionGenerator();
         virtual void init();
         virtual bool generate(StructureManager* structureManager, int genDepth,
             EndCityPiece* previous, const BlockPos& position,
@@ -102,8 +103,8 @@ public:
         std::vector<StructurePiece*>& pieces, Random& random);
     static void startHouseTower(StructureManager* structureManager, const BlockPos& position,
         Rotation* rotation, std::vector<StructurePiece*>& pieces, Random& random);
-    static void createTowerBridgesMap();
-    static void createFatTowerBridgesMap();
+    static boost::unordered_map<Rotation*, BlockPos> createTowerBridgesMap();
+    static boost::unordered_map<Rotation*, BlockPos> createFatTowerBridgesMap();
     static void loadStatic();
 };
 

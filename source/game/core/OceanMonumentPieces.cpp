@@ -2,6 +2,12 @@
 #include "game/core/BoundingBox.hpp"
 #include "game/core/Direction.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Block.hpp"
+
+const BlockState* OceanMonumentPieces::prismarineState = 0;
+const BlockState* OceanMonumentPieces::seaLanternState = 0;
+const BlockState* OceanMonumentPieces::goldState = 0;
 void OceanMonumentPieces::loadStatic() { OceanMonumentPiece::staticCtor(); }
 OceanMonumentPieces::RoomDefinition::RoomDefinition(int index) : mIndex(index), mClaimed(false), mSource(-1) { int i; for (i = 0; i < 6; ++i) { mConnections[i].reset(); mOpenings[i] = false; } }
 void OceanMonumentPieces::RoomDefinition::setConnection(const Direction* direction, const boost::shared_ptr<RoomDefinition>& connection) { if (direction != NULL) mConnections[direction->get3DDataValue()] = connection; }
@@ -32,7 +38,12 @@ OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(int genDepth, const 
 OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(const Direction* orientation, BoundingBox* box) : StructurePiece(), mRoomIndex(0) { setOrientation(orientation); setBoundingBox(box); }
 OceanMonumentPieces::OceanMonumentPiece::~OceanMonumentPiece() {}
 int OceanMonumentPieces::OceanMonumentPiece::getRoomIndex(int x, int y, int z) { return y * 25 + z * 5 + x; }
-void OceanMonumentPieces::OceanMonumentPiece::staticCtor() {}
+void OceanMonumentPieces::OceanMonumentPiece::staticCtor()
+{
+    prismarineState = Blocks::prismarine->defaultBlockState();
+    seaLanternState = Blocks::sea_lantern->defaultBlockState();
+    goldState = Blocks::gold_block->defaultBlockState();
+}
 void OceanMonumentPieces::OceanMonumentPiece::fjKeepReference(const boost::shared_ptr<RoomDefinition>& definition) { if (definition) mChildPieces.push_back(definition); }
 void OceanMonumentPieces::OceanMonumentPiece::addAdditionalSaveData(DataOutputStream* output) { if (output == NULL) return; }
 void OceanMonumentPieces::OceanMonumentPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { if (input == NULL || manager == NULL) return; }
@@ -85,59 +96,73 @@ OceanMonumentPieces::OceanMonumentCoreRoom::OceanMonumentCoreRoom() : OceanMonum
 OceanMonumentPieces::OceanMonumentCoreRoom::OceanMonumentCoreRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentCoreRoom::~OceanMonumentCoreRoom() {}
 bool OceanMonumentPieces::OceanMonumentCoreRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentCoreRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentCoreRoom::Create() { new OceanMonumentCoreRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentCoreRoom::GetType() { return eStructurePiece_OceanMonumentCoreRoom; }
 OceanMonumentPieces::OceanMonumentDoubleXRoom::OceanMonumentDoubleXRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentDoubleXRoom::OceanMonumentDoubleXRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentDoubleXRoom::~OceanMonumentDoubleXRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleXRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentDoubleXRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentDoubleXRoom::Create() { new OceanMonumentDoubleXRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleXRoom::GetType() { return eStructurePiece_OceanMonumentDoubleXRoom; }
 OceanMonumentPieces::OceanMonumentDoubleXYRoom::OceanMonumentDoubleXYRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentDoubleXYRoom::OceanMonumentDoubleXYRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentDoubleXYRoom::~OceanMonumentDoubleXYRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleXYRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentDoubleXYRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentDoubleXYRoom::Create() { new OceanMonumentDoubleXYRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleXYRoom::GetType() { return eStructurePiece_OceanMonumentDoubleXYRoom; }
 OceanMonumentPieces::OceanMonumentDoubleYRoom::OceanMonumentDoubleYRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentDoubleYRoom::OceanMonumentDoubleYRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentDoubleYRoom::~OceanMonumentDoubleYRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleYRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentDoubleYRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentDoubleYRoom::Create() { new OceanMonumentDoubleYRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleYRoom::GetType() { return eStructurePiece_OceanMonumentDoubleYRoom; }
 OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentDoubleYZRoom::~OceanMonumentDoubleYZRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleYZRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentDoubleYZRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentDoubleYZRoom::Create() { new OceanMonumentDoubleYZRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleYZRoom::GetType() { return eStructurePiece_OceanMonumentDoubleYZRoom; }
 OceanMonumentPieces::OceanMonumentDoubleZRoom::OceanMonumentDoubleZRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentDoubleZRoom::OceanMonumentDoubleZRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentDoubleZRoom::~OceanMonumentDoubleZRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleZRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentDoubleZRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentDoubleZRoom::Create() { new OceanMonumentDoubleZRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleZRoom::GetType() { return eStructurePiece_OceanMonumentDoubleZRoom; }
 OceanMonumentPieces::OceanMonumentSimpleRoom::OceanMonumentSimpleRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentSimpleRoom::OceanMonumentSimpleRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentSimpleRoom::~OceanMonumentSimpleRoom() {}
 bool OceanMonumentPieces::OceanMonumentSimpleRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentSimpleRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentSimpleRoom::Create() { new OceanMonumentSimpleRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentSimpleRoom::GetType() { return eStructurePiece_OceanMonumentSimpleRoom; }
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::OceanMonumentSimpleTopRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::OceanMonumentSimpleTopRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::~OceanMonumentSimpleTopRoom() {}
 bool OceanMonumentPieces::OceanMonumentSimpleTopRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
-void OceanMonumentPieces::OceanMonumentSimpleTopRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentSimpleTopRoom::Create() { new OceanMonumentSimpleTopRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentSimpleTopRoom::GetType() { return eStructurePiece_OceanMonumentSimpleTopRoom; }
 OceanMonumentPieces::OceanMonumentEntryRoom::OceanMonumentEntryRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentEntryRoom::OceanMonumentEntryRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d) : OceanMonumentPiece(1, o, d, 0, 0, 0) {}
 OceanMonumentPieces::OceanMonumentEntryRoom::~OceanMonumentEntryRoom() {}
 bool OceanMonumentPieces::OceanMonumentEntryRoom::postProcess(Level* l, Random& r, BoundingBox* b) {
-    if (r.nextInt(1) < 0) return false;
+    generateBox(l, b, 0, 3, 0, 2, 3, 7, prismarineState, prismarineState, false);
+    generateBox(l, b, 5, 3, 0, 7, 3, 7, prismarineState, prismarineState, false);
+    generateBox(l, b, 0, 2, 0, 1, 2, 7, prismarineState, prismarineState, false);
+    generateBox(l, b, 6, 2, 0, 7, 2, 7, prismarineState, prismarineState, false);
     generateDefaultFloor(l, b, 0, 0, true);
+    generateBox(l, b, 7, 1, 0, 7, 1, 7, prismarineState, prismarineState, false);
+    generateBox(l, b, 0, 1, 7, 7, 3, 7, prismarineState, prismarineState, false);
+    generateBox(l, b, 1, 1, 0, 2, 3, 0, prismarineState, prismarineState, false);
+    generateBox(l, b, 5, 1, 0, 6, 3, 0, prismarineState, prismarineState, false);
+    if (mRoomDefinition->mOpenings[Direction::NORTH->get3DDataValue()])
+        generateWaterBox(l, b, 3, 1, 7, 4, 2, 7, false);
+    if (mRoomDefinition->mOpenings[Direction::WEST->get3DDataValue()])
+        generateWaterBox(l, b, 0, 1, 3, 1, 2, 4, false);
+    if (mRoomDefinition->mOpenings[Direction::EAST->get3DDataValue()])
+        generateWaterBox(l, b, 6, 1, 3, 7, 2, 4, false);
     return true;
-   
-} void OceanMonumentPieces::OceanMonumentEntryRoom::Create() {} EStructurePiece OceanMonumentPieces::OceanMonumentEntryRoom::GetType() {
+}
+void OceanMonumentPieces::OceanMonumentEntryRoom::Create() {}
+EStructurePiece OceanMonumentPieces::OceanMonumentEntryRoom::GetType() {
     return eStructurePiece_OceanMonumentEntryRoom;
     }
 OceanMonumentPieces::OceanMonumentPenthouse::OceanMonumentPenthouse() : OceanMonumentPiece(0) {}

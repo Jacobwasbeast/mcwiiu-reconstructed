@@ -7,16 +7,12 @@
 Button::Button(int id, int x, int y, const std::wstring& message)
     : GuiComponent()
 {
-    mUnknown0 = 0;
-    mUnknown1 = 7;
     init(id, x, y, 200, 20, message);
 }
 
 Button::Button(int id, int x, int y, int width, int height, const std::wstring& message)
     : GuiComponent()
 {
-    mUnknown0 = 0;
-    mUnknown1 = 7;
     init(id, x, y, width, height, message);
 }
 
@@ -34,7 +30,7 @@ void Button::init(int id, int x, int y, int width, int height, const std::wstrin
 
 int Button::getYImage(bool hovered)
 {
-    if (!mVisible)
+    if (!mActive)
     {
         return 0;
     }
@@ -53,8 +49,7 @@ void Button::render(Minecraft* minecraft, int mouseX, int mouseY)
     }
 
     Font* font = minecraft->mFont;
-    int texture = minecraft->mTextures->loadTexture(8);
-    GlStateManager::bindTexture(texture);
+    GlStateManager::bindTexture(minecraft->mTextures->loadTexture(8));
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     bool hovered = mouseX >= mX && mouseY >= mY && mouseX < mX + mWidth && mouseY < mY + mHeight;

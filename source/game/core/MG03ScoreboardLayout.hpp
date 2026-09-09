@@ -5,12 +5,13 @@
 
 class MG03ScoreboardLayout : public IScoreboardLayout
 {
+private:
+    int m_playerCount;
 public:
     explicit MG03ScoreboardLayout(EScoreboardType type);
     virtual ~MG03ScoreboardLayout();
     static unsigned int SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
-    virtual uint32_t getStatIcon1(const EScoreboardType& type);
     virtual uint32_t getStatIcon2(const EScoreboardType& type);
     virtual uint32_t getStatIcon3(const EScoreboardType& type);
     virtual uint32_t getStatIcon4(const EScoreboardType& type);
@@ -24,7 +25,6 @@ public:
     virtual uint32_t getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
     virtual uint32_t getNumberOfColumns();
-    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, int slot, const unsigned int& value, const EScoreboardType& type);
     boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
     virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual std::wstring GetCustomProgressDetails(const StatsUID& uid, int& value);
@@ -35,8 +35,6 @@ public:
     std::wstring getStatForRound(const StatsUID& uid, int round);
     virtual bool showLifeSpanProgress();
 
-private:
-    EScoreboardType m_scoreboardType;
 };
 
 #endif

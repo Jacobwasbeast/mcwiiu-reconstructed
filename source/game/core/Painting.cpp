@@ -127,12 +127,12 @@ void Painting::readAdditionalSaveData(CompoundTag* tag)
 
 int Painting::getWidth()
 {
-    return motive != NULL ? motive->width : 0;
+    return motive->width;
 }
 
 int Painting::getHeight()
 {
-    return motive != NULL ? motive->height : 0;
+    return motive->height;
 }
 
 void Painting::dropItem(boost::shared_ptr<Entity> breaker)
@@ -163,5 +163,5 @@ void Painting::lerpTo(double x, double y, double z, float yRot, float xRot,
 
 unsigned long long Painting::GetType()
 {
-    return 0x0A08000100000000ULL;
+    return 0x000000000A080001ULL;
 }

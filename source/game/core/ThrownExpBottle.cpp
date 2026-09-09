@@ -71,5 +71,5 @@ double ThrownExpBottle::getGravity()
 
 unsigned long long ThrownExpBottle::GetType()
 {
-    return 0x8A20000500000000ULL;
+    return 0x8A200005ULL;
 }

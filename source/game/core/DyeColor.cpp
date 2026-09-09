@@ -16,6 +16,7 @@ const DyeColor* DyeColor::BROWN;
 const DyeColor* DyeColor::GREEN;
 const DyeColor* DyeColor::RED;
 const DyeColor* DyeColor::BLACK;
+const DyeColor* gSheepGray = NULL;
 
 std::vector<const DyeColor*> DyeColor::COLORS;
 const DyeColor* DyeColor::BY_BLOCK_DATA[16];
@@ -87,6 +88,8 @@ void DyeColor::staticCtor()
                        eMinecraftColour_HTMLColor_dark_4, eMinecraftColour_Shulker_Box_Red, eMinecraftColour_Bed_Red);
     BLACK = new DyeColor(15, 0, L"black", 0xBD5568E2, 0x6F2DFA1A, 0x1D1D21,
                          eMinecraftColour_HTMLColor_Black, eMinecraftColour_Shulker_Box_Black, eMinecraftColour_Bed_Black);
+
+    gSheepGray = GRAY;
 
     for (std::vector<const DyeColor*>::iterator it = COLORS.begin(); it != COLORS.end(); ++it)
     {

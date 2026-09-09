@@ -25,6 +25,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -229,19 +230,52 @@ bool EnderMan::hurt(const DamageSource* source, float damage)
 }
 
 void EnderMan::create(Level* level) { new EnderMan(level); }
-unsigned long long EnderMan::GetType() { return 0x5D54004300000000ULL; }
+unsigned long long EnderMan::GetType() { return 0x000000005D540043ULL; }
 
 EnderMan::EndermanLeaveBlockGoal::EndermanLeaveBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
 EnderMan::EndermanLeaveBlockGoal::~EndermanLeaveBlockGoal() { }
 bool EnderMan::EndermanLeaveBlockGoal::canUse() { return mEnderMan->getCarryingBlock() != NULL && mEnderMan->mLevel->getGameRules()->getBoolean(1) && mEnderMan->mRandom->nextInt(2000) == 0; }
-bool EnderMan::EndermanLeaveBlockGoal::canPlaceBlock(Level*, const BlockPos&, Block* block, const BlockState* oldState, const BlockState* newState) { return block != NULL && oldState != NULL && newState != NULL && oldState != newState; }
-void EnderMan::EndermanLeaveBlockGoal::tick() { mEnderMan->setCarryingBlock(NULL); }
+bool EnderMan::EndermanLeaveBlockGoal::canPlaceBlock(Level* level, const BlockPos& pos, Block* block,
+                                                     const BlockState* oldState, const BlockState* newState)
+{
+    return block->mayPlace(level, pos)
+        && oldState->getBlock() == Blocks::AIR
+        && newState->getBlock() != Blocks::AIR && newState->isSolid();
+}
+
+void EnderMan::EndermanLeaveBlockGoal::tick()
+{
+    Random* random = mEnderMan->getRandom();
+    double x = mEnderMan->mX - 1.0;
+    double draw = random->nextDouble();
+    x = x + draw;
+    x = x + draw;
+    double y = mEnderMan->mY;
+    draw = random->nextDouble();
+    y = y + draw;
+    y = y + draw;
+    double z = mEnderMan->mZ - 1.0;
+    draw = random->nextDouble();
+    z = z + draw;
+    z = z + draw;
+    BlockPos pos(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)),
+                 static_cast<int>(std::floor(z)));
+    BlockPos below = pos.below();
+    const BlockState* state = mEnderMan->mLevel->getBlockState(pos);
+    const BlockState* belowState = mEnderMan->mLevel->getBlockState(below);
+    const BlockState* carried = mEnderMan->getCarryingBlock();
+    if (carried != NULL && canPlaceBlock(mEnderMan->mLevel, pos, carried->getBlock(), state, belowState))
+    {
+        mEnderMan->mLevel->setBlock(pos, carried, 3, false);
+        mEnderMan->setCarryingBlock(NULL);
+    }
+}
 std::wstring EnderMan::EndermanLeaveBlockGoal::getName() { return L"EndermanLeaveBlock"; }
 
 EnderMan::EndermanLookForPlayerGoal::EndermanLookForPlayerGoal(EnderMan* enderMan) : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false), mTargetChangeTime(0), mAggression(0), mEnderMan(enderMan) { }
 EnderMan::EndermanLookForPlayerGoal::~EndermanLookForPlayerGoal() { }
 bool EnderMan::EndermanLookForPlayerGoal::canUse() { return NearestAttackableTargetGoal::canUse() && mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(mTarget)); }
-void EnderMan::EndermanLookForPlayerGoal::start() { mAggression = 5; }
+void EnderMan::EndermanLookForPlayerGoal::start() { mTargetChangeTime = 0; mAggression = 5; }
 void EnderMan::EndermanLookForPlayerGoal::stop() { mTarget.reset(); mEnderMan->setTarget(boost::shared_ptr<LivingEntity>()); NearestAttackableTargetGoal::stop(); }
 bool EnderMan::EndermanLookForPlayerGoal::canContinueToUse() { return mTarget && mEnderMan->isLookingAtMe(mTarget); }
 void EnderMan::EndermanLookForPlayerGoal::tick() { if (mTarget) { boost::shared_ptr<Entity> entity(mTarget, (Entity*)mTarget.get()); mEnderMan->lookAt(entity, 30.0f, 30.0f); if (++mAggression > 600) mEnderMan->teleportTowards(entity); } }

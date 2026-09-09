@@ -108,5 +108,5 @@ unsigned int MushroomCow::GetInteractTooltip(const EntityTooltipDataHolder& tool
 
 unsigned long long MushroomCow::GetType()
 {
-    return 0x2d6a000100000000ULL;
+    return 0x000000002D6A0001ULL;
 }

@@ -49,5 +49,5 @@ void DelayedRelease::addAdditonalSaveData(CompoundTag*)
 
 unsigned long long DelayedRelease::GetType()
 {
-    return 0x0800000700000000ULL;
+    return 0x0000000008000007ULL;
 }

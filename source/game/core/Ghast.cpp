@@ -137,7 +137,7 @@ void Ghast::tick()
     static_cast<MoveControl*>(getMoveControl())->tick();
 }
 
-unsigned long long Ghast::GetType() { return 0x5D0000C100000000ULL; }
+unsigned long long Ghast::GetType() { return 0x000000005D0000C1ULL; }
 
 Ghast::GhastLookGoal::GhastLookGoal(Ghast* ghast) : Goal(), mGhast(ghast)
 {

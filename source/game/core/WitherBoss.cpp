@@ -10,6 +10,8 @@
 #include "game/entity/ai/FlyingPathNavigation.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -17,7 +19,20 @@
 #include "game/server/ServerBossEvent.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
+#include "game/util/AABB.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+
+const EntityDataAccessor<int>* WitherBoss::DATA_INT_0 = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_INT_1 = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_INT_2 = NULL;
+const EntityDataAccessor<int>* WitherBoss::DATA_INVULNERABLE_TICKS = NULL;
+const EntityDataAccessor<bool>* WitherBoss::DATA_AERIAL_ATTACK = NULL;
+const EntityDataAccessor<bool>* WitherBoss::DATA_CHARGE_ATTACKING = NULL;
 
 WitherBoss::WitherDoNothingGoal::WitherDoNothingGoal(WitherBoss* wither)
     : mWither(wither)
@@ -50,8 +65,12 @@ WitherBoss::WitherBoss(Level* level)
       mDestroyBlocksTick(0),
       mShotDelay(0),
       mPhase(1),
+      mDyingFrames(0),
+      mOverlayAlpha(1.0f),
       mShieldHealth(0),
       mMaxHealth(0),
+      mSpawningFrames(0),
+      mFirerate(0),
       mAerialAttack(false),
       mWantsToMove(false),
       mIsPathing(false),
@@ -129,11 +148,26 @@ void WitherBoss::addDataWalkers(DataFixerUpper* fixer)
 
 void WitherBoss::staticCtor()
 {
+    DATA_INT_0 = SynchedEntityData::defineId<int>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::INT);
+    DATA_INT_1 = SynchedEntityData::defineId<int>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::INT);
+    DATA_INT_2 = SynchedEntityData::defineId<int>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::INT);
+    DATA_INVULNERABLE_TICKS = SynchedEntityData::defineId<int>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::INT);
+    DATA_AERIAL_ATTACK = SynchedEntityData::defineId<bool>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_CHARGE_ATTACKING = SynchedEntityData::defineId<bool>(0x5d540047ULL, 0x4d540000ULL, EntityDataSerializers::BOOLEAN);
 }
 
 void WitherBoss::defineSynchedData()
 {
     Mob::defineSynchedData();
+    if (mEntityData != NULL)
+    {
+        if (DATA_INT_0 != NULL) mEntityData->createDateItem(DATA_INT_0, 0);
+        if (DATA_INT_1 != NULL) mEntityData->createDateItem(DATA_INT_1, 0);
+        if (DATA_INT_2 != NULL) mEntityData->createDateItem(DATA_INT_2, 0);
+        if (DATA_INVULNERABLE_TICKS != NULL) mEntityData->createDateItem(DATA_INVULNERABLE_TICKS, 0);
+        if (DATA_AERIAL_ATTACK != NULL) mEntityData->createDateItem(DATA_AERIAL_ATTACK, false);
+        if (DATA_CHARGE_ATTACKING != NULL) mEntityData->createDateItem(DATA_CHARGE_ATTACKING, false);
+    }
 }
 
 void WitherBoss::registerAttributes()
@@ -203,7 +237,22 @@ void WitherBoss::readAdditionContructionTag(CompoundTag* tag)
 
 CompoundTag* WitherBoss::getAdditionContructionTag()
 {
-    return NULL;
+    CompoundTag* tag = Entity::getAdditionContructionTag();
+    if (tag == NULL)
+        tag = new CompoundTag();
+
+    tag->putBoolean(L"AirAttack", getAerialAttack());
+    tag->putInt(L"ShieldHealth", mShieldHealth);
+    tag->putInt(L"Phase", mPhase);
+    tag->putInt(L"SpawningFrames", mSpawningFrames);
+    tag->putInt(L"maxHealth", mMaxHealth);
+    tag->putInt(L"lastHealthInterval", mDestroyBlocksTick);
+    tag->putInt(L"dyingFrames", mDyingFrames);
+    tag->putFloat(L"overlayAlpha", mOverlayAlpha);
+    tag->putFloat(L"swellAmount", mSwellAmount);
+    tag->putFloat(L"oldSwellAmount", mOldSwellAmount);
+    tag->putInt(L"firerate", mFirerate);
+    return tag;
 }
 
 int WitherBoss::getAlternativeTarget(int head)
@@ -342,7 +391,7 @@ void WitherBoss::handleEntityEvent(unsigned char event, int data)
 
 double WitherBoss::getOverlayAlpha()
 {
-    return 1.0;
+    return mOverlayAlpha;
 }
 
 double WitherBoss::getSwellAmount(float partialTicks) const
@@ -414,22 +463,50 @@ void WitherBoss::registerGoals()
 
 const SoundEvent* WitherBoss::getAmbientSound()
 {
-    return NULL;
+    return SoundEvents::WITHER_AMBIENT;
 }
 
 const SoundEvent* WitherBoss::getHurtSound(const DamageSource*)
 {
-    return NULL;
+    return SoundEvents::WITHER_HURT;
 }
 
 const SoundEvent* WitherBoss::getDeathSound()
 {
-    return NULL;
+    return SoundEvents::WITHER_DEATH;
 }
 
-bool WitherBoss::destroyBlocks(Level*, const AABB*, int)
+bool WitherBoss::destroyBlocks(Level* level, const AABB* box, int expansion)
 {
-    return false;
+    if (level == NULL || box == NULL || !level->getGameRules()->getBoolean(1))
+        return false;
+    const int minX = static_cast<int>(box->mMinX) - expansion;
+    const int maxX = static_cast<int>(box->mMaxX) + expansion;
+    const int minY = static_cast<int>(box->mMinY) - expansion;
+    const int maxY = static_cast<int>(box->mMaxY) + expansion;
+    const int minZ = static_cast<int>(box->mMinZ) - expansion;
+    const int maxZ = static_cast<int>(box->mMaxZ) + expansion;
+    bool destroyed = false;
+    for (int x = minX; x <= maxX; ++x)
+        for (int y = minY; y <= maxY; ++y)
+            for (int z = minZ; z <= maxZ; ++z)
+            {
+                const BlockPos pos(x, y, z);
+                const BlockState* state = level->getBlockState(pos);
+                Block* block = state == NULL ? NULL : state->getBlock();
+                if (canDestroy(block))
+                {
+                    block->getLightColor(state, level, pos, 0);
+                    if (level->removeBlock(pos))
+                    {
+                        block->spawnResources(level, pos, state, 1);
+                        destroyed = true;
+                    }
+                }
+            }
+    if (destroyed)
+        playSound(SoundEvents::WITHER_BREAK_BLOCK, 1.0f, 0.4f);
+    return destroyed;
 }
 
 void WitherBoss::customServerAiStep()
@@ -440,6 +517,29 @@ void WitherBoss::customServerAiStep()
 
 void WitherBoss::dropDeathLoot(bool, int)
 {
+    boost::shared_ptr<ItemEntity> dropped = spawnAtLocation(Items::netherStar, 1, 0.0f);
+    if (dropped)
+        dropped->setExtendedLifetime();
+
+    if (mLevel == NULL || mLevel->mIsClientSide)
+        return;
+    AABB* area = mBoundingBox == NULL ? NULL : mBoundingBox->grow(50.0, 100.0, 50.0);
+    if (area == NULL)
+        return;
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(typeid(Player), area);
+    if (entities != NULL)
+    {
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+            if (player)
+                player->awardStat(GenericStats::killWither(), GenericStats::param_killWither());
+        }
+        delete entities;
+    }
+    delete area;
 }
 
 void WitherBoss::checkDespawn()
@@ -504,7 +604,7 @@ float WitherBoss::getHealth()
 
 unsigned int WitherBoss::getDimension()
 {
-    return 0;
+    return mDimension;
 }
 
 unsigned long long WitherBoss::GetType()
