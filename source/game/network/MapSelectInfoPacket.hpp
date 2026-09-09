@@ -22,9 +22,17 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual int getPacketId();
+    arrayWithLength<unsigned char> getData() const
+    {
+        arrayWithLength<unsigned char> view;
+        view.data = mData;
+        view.length = mLength;
+        return view;
+    }
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ClientPacketListener;
     unsigned char* mData;
     unsigned int mLength;
     bool mOwnsData;

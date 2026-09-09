@@ -109,6 +109,11 @@ unsigned char ClientboundUpdateMobEffectPacket::isEffectVisible()
     return (effectFlags >> 1) & 1;
 }
 
+unsigned char ClientboundUpdateMobEffectPacket::isEffectAmbient()
+{
+    return effectFlags & 1;
+}
+
 int ClientboundUpdateMobEffectPacket::getPacketId()
 {
     return 41;

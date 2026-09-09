@@ -28,6 +28,7 @@ public:
     arrayWithLength<unsigned char> getParamData();
     static boost::shared_ptr<Packet> create();
 private:
+    friend class ClientPacketListener;
     int statId;
     arrayWithLength<unsigned char> paramData;
 };

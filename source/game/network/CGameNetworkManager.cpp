@@ -15,13 +15,28 @@
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
 #include "platform/wiiu/cCommerceNintendo.hpp"
+#include "platform/wiiu/C4JThread.hpp"
 #include "game/network/ServerboundPreLoginPacket.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/data/ElementStorage.hpp"
+#include "game/core/Compression.hpp"
+#include "game/core/IntCache.hpp"
+#include "game/world/chunk/OldChunkStorage.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/item/FireworksRecipe.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/util/phys__Vec2.hpp"
 
 extern "C" int shutdown(int socket, int how);
 extern "C" int close(int socket);
+void SetThreadName(unsigned int threadId, const char* name);
 
 CGameNetworkManager CGameNetworkManager::sInstance;
 
@@ -91,7 +106,54 @@ bool CGameNetworkManager::TickInvitePending()
 }
 void CGameNetworkManager::DoWork() { if (m_platform) m_platform->DoWork(); TickInvitePending(); }
 bool CGameNetworkManager::IsHost() { return m_platform && m_platform->IsHost(); }
-void* CGameNetworkManager::ServerThreadProc(void*) { return 0; }
+void* CGameNetworkManager::ServerThreadProc(void* data)
+{
+    unsigned int* parameters = static_cast<unsigned int*>(data);
+    unsigned int seed = 0;
+    void* argument = 0;
+    if (parameters != 0)
+    {
+        seed = parameters[0];
+        argument = reinterpret_cast<void*>(parameters[1]);
+        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), parameters[3]);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        miniGame->SetHostOption(static_cast<eCustomGameModeHostOption>(10), parameters[4]);
+        if (parameters[5] != 0 &&
+            gApp.getLevelGenerationOptions()->getParentPackId() != parameters[6])
+        {
+            while (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() ||
+                   gConsoleUIController.IsReloadingSkin())
+                C4JThread::Sleep(1);
+            gApp.getLevelGenerationOptions()->loadBaseSaveData();
+        }
+    }
+    SetThreadName(0xffffffff, "Minecraft Server thread");
+    AABB::CreateNewThreadStorage();
+    Vec3::CreateNewThreadStorage();
+    phys::Vec2::CreateNewThreadStorage();
+    IntCache::CreateNewThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    OldChunkStorage::UseDefaultThreadStorage();
+    Entity::useSmallIds();
+    Level::enableLightingCache();
+    Block::CreateNewThreadStorage();
+    FireworksRecipe::CreateNewThreadStorage();
+    ElementStorage::CreateNewThreadStorage(static_cast<ElementStorage::eHESThreadId>(1));
+    LevelChunk::CreateNewThreadStorage();
+    MinecraftServer::main(seed, argument);
+    AABB::ReleaseThreadStorage();
+    Vec3::ReleaseThreadStorage();
+    phys::Vec2::ReleaseThreadStorage();
+    IntCache::ReleaseThreadStorage();
+    Level::destroyLightingCache();
+    Block::ReleaseThreadStorage();
+    FireworksRecipe::ReleaseThreadStorage();
+    ElementStorage::ReleaseThreadStorage();
+    LevelChunk::ReleaseThreadStorage();
+    if (data != 0)
+        free(data);
+    return 0;
+}
 void CGameNetworkManager::ServerReadyWait() { if (m_serverReadyEvent) m_serverReadyEvent->WaitForSignal(-1); }
 void CGameNetworkManager::ServerReadyDestroy() { delete m_serverReadyEvent; m_serverReadyEvent = 0; }
 bool CGameNetworkManager::IsReadyToPlayOrIdle() { return m_platform && m_platform->IsReadyToPlayOrIdle(); }
@@ -297,7 +359,7 @@ void CGameNetworkManager::FakeLocalPlayerJoined() { if (m_platform) m_platform->
 bool CGameNetworkManager::IsHandlingBootInvite() { return m_platform->IsHandlingBootInvite(); }
 void CGameNetworkManager::WiiU_ClearIsHandlingBootInvite() { NQRNetworkManager_WiiU::ClearIsHandlingBootInvite(); }
 void CGameNetworkManager::WiiU_ShowErrorViewer() { NQRNetworkManager_WiiU::ShowErrorViewer(); }
-void CGameNetworkManager::ShowConnectOnlineNintendoProgress(int i, int (*cb)(void*,bool,int), void* d) { NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(i, cb, d); }
+void CGameNetworkManager::ShowConnectOnlineNintendoProgress(int i, int (*cb)(void*,bool,int,int), void* d) { NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(i, cb, d); }
 void CGameNetworkManager::WiiU_ReleaseForeground() { NintendoVoiceChat_WiiU::ReleaseForeground(); NQRNetworkManager_WiiU::SetAppSuspended(true); }
 void CGameNetworkManager::WiiU_AcquiredForeground()
 {
@@ -372,20 +434,10 @@ unsigned int CGameNetworkManager::GetMaxPlayers()
 }
 void CGameNetworkManager::AttemptPSNSignIn(int (*cb)(void*,bool,int), void* d, bool p, int i) { if (m_platform) m_platform->AttemptPSNSignIn(cb,d,p,i); }
 void CGameNetworkManager::RecvInviteGUI() { if (m_platform) m_platform->RecvInviteGUI(); }
-void CGameNetworkManager::ClearInviteInfo() { m_inviteInfo = 0; m_pendingInvitePresence = 0; }
+void CGameNetworkManager::ClearInviteInfo() { m_inviteInfo = 0; }
 
 namespace nn
 {
-namespace ec
-{
-namespace applet
-{
-bool IsExecuting();
-void Finish();
-int GetReturnCode();
-}
-}
-
 namespace erreula
 {
 struct HomeNixSignArg
@@ -397,26 +449,23 @@ void AppearHomeNixSign(const HomeNixSignArg& arg);
 }
 }
 
-unsigned int CallbackAcquiredForeground__FPv(void*)
+extern bool CommerceAppletIsExecuting();
+extern void CommerceAppletFinish();
+extern int CommerceAppletGetReturnCode();
+
+extern "C" unsigned int CallbackAcquiredForeground(void*)
 {
     gRenderer->AcquiredForeground();
     g_pInput->AcquiredForeground();
-    if (nn::ec::applet::IsExecuting())
+    if (CommerceAppletIsExecuting())
     {
-        nn::ec::applet::Finish();
-        nn::ec::applet::GetReturnCode();
+        CommerceAppletFinish();
+        CommerceAppletGetReturnCode();
         cCommerceNintendo* commerce = static_cast<cCommerceNintendo*>(
             reinterpret_cast<void*>(gApp.GetCommerceInstance()));
         commerce->SetProcessState((cCommerceNintendo::eCommerce_Process_State)11);
     }
     CGameNetworkManager::sInstance.WiiU_AcquiredForeground();
-    return 0;
-}
-
-unsigned int CallbackHomebuttonDenied__FPv(void*)
-{
-    nn::erreula::HomeNixSignArg arg = {1};
-    nn::erreula::AppearHomeNixSign(arg);
     return 0;
 }
 

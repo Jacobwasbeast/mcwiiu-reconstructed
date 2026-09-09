@@ -10,6 +10,7 @@ class DataInputStream;
 class DataOutputStream;
 class PacketListener;
 class ServerGamePacketListenerImpl;
+class ClientPacketListener;
 
 class PlayerReadyPacket : public Packet, public boost::enable_shared_from_this<PlayerReadyPacket>
 {
@@ -28,6 +29,7 @@ public:
 
 private:
     friend class ServerGamePacketListenerImpl;
+    friend class ClientPacketListener;
 
     unsigned int mPlayerId;
     bool mReady;

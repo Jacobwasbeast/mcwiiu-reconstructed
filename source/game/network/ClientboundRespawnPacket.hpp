@@ -11,9 +11,11 @@ class Difficulty;
 class GameType;
 class LevelType;
 class PacketListener;
+class ClientPacketListener;
 
 class ClientboundRespawnPacket : public Packet, public boost::enable_shared_from_this<ClientboundRespawnPacket>
 {
+    friend class ClientPacketListener;
 public:
     ClientboundRespawnPacket();
     ClientboundRespawnPacket(char dimension, long long seed, const GameType* gameType, const Difficulty* difficulty, LevelType* levelType, bool keepData, int gameMode, int previousGameMode, int difficultyId, int dimensionType, bool hardcore, unsigned char worldType, int viewDistance, int simulationDistance, bool debug, int entityId);

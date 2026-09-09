@@ -13,6 +13,7 @@ ClientboundAddPaintingPacket::ClientboundAddPaintingPacket()
 {
     id = -1;
     pos = BlockPos();
+    direction = NULL;
     motive = L"";
 }
 

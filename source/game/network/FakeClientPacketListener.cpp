@@ -219,7 +219,7 @@ void FakeClientPacketListener::handleBlockDestruction(boost::shared_ptr<Clientbo
 
 bool FakeClientPacketListener::canHandleAsyncPackets()
 {
-    return false;
+    return true;
 }
 
 void FakeClientPacketListener::handleGameEvent(boost::shared_ptr<ClientboundGameEventPacket> packet)

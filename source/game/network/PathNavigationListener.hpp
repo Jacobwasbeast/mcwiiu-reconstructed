@@ -37,7 +37,6 @@ public:
 
 private:
     std::vector<PathNavigation*> mPathNavigations;
-    unsigned int mReserved;
     OSFastMutex mMutex;
 };
 

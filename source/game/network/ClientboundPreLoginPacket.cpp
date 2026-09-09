@@ -58,6 +58,7 @@ ClientboundPreLoginPacket::~ClientboundPreLoginPacket()
 void ClientboundPreLoginPacket::read(DataInputStream* input)
 {
     unsigned int index;
+    const unsigned int oldPlayerCount = mPlayerCount;
     mProtocolVersion = input->readShort();
     mName = Packet::readUtf(input, 32);
     mGameMode = input->readByte();
@@ -67,9 +68,9 @@ void ClientboundPreLoginPacket::read(DataInputStream* input)
     {
         std::allocator<PlayerUID> allocator;
         unsigned int oldIndex;
-        for (oldIndex = 0; oldIndex < mPlayerCount; ++oldIndex)
+        for (oldIndex = 0; oldIndex < oldPlayerCount; ++oldIndex)
             allocator.destroy(mPlayers + oldIndex);
-        allocator.deallocate(mPlayers, mPlayerCount);
+        allocator.deallocate(mPlayers, oldPlayerCount);
     }
     mPlayers = 0;
     if (mPlayerCount != 0)

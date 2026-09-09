@@ -14,6 +14,7 @@ class Entity;
 class Level;
 class Packet;
 class PacketListener;
+class ClientPacketListener;
 
 class ClientboundChatPacket : public FlexiblePacket, public boost::enable_shared_from_this<ClientboundChatPacket>
 {
@@ -53,6 +54,7 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ClientPacketListener;
     EChatPacketMessage message;
 };
 

@@ -39,6 +39,7 @@ public:
     static long long GetChunkKey(int x, int z);
     bool HasChunk(long long key) const;
     const Chunk& GetChunk(long long key) const;
+    Chunk& GetChunk(long long key);
     int GetChangesForChunk(int x, int z) const;
     bool ShouldLoadOnClient(int x, int z) const;
     Chunk& GetChunk(int x, int z, bool create);

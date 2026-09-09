@@ -11,6 +11,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ClientPacketListener;
 
 class ClientboundBlockCollectionDestructionPacket : public Packet, public boost::enable_shared_from_this<ClientboundBlockCollectionDestructionPacket>
 {
@@ -26,6 +27,7 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ClientPacketListener;
     int sourceId;
     std::vector<BlockPos> positions;
     int progress;

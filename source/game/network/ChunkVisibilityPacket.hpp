@@ -9,6 +9,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ClientPacketListener;
 
 class ChunkVisibilityPacket : public Packet, public boost::enable_shared_from_this<ChunkVisibilityPacket>
 {
@@ -24,6 +25,7 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
+    friend class ClientPacketListener;
     int x;
     int z;
     bool visible;

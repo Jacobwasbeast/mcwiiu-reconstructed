@@ -1,13 +1,11 @@
 #ifndef GAME_NETWORK_SERVERSTATUSPACKETLISTENER_HPP
 #define GAME_NETWORK_SERVERSTATUSPACKETLISTENER_HPP
 
-#include "game/network/PacketListener.hpp"
-
-class ServerStatusPacketListener : public PacketListener
+class ServerStatusPacketListener
 {
 public:
     ServerStatusPacketListener();
-    virtual ~ServerStatusPacketListener();
+    ~ServerStatusPacketListener();
 };
 
 #endif

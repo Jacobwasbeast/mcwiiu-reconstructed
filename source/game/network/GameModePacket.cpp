@@ -2,14 +2,9 @@
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/TeamInvite.hpp"
 #include "game/network/PacketListener.hpp"
-
-template <typename T>
-T _fromHEXString(const std::wstring& text);
-
-template <typename T>
-std::wstring _toHexString(T value);
 
 GameModePacket::Data::~Data()
 {

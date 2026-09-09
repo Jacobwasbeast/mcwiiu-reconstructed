@@ -2,18 +2,13 @@
 
 #include "game/core/Path.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/util/AABB.hpp"
 
-class Mob : public Entity
-{
-public:
-    PathNavigation* getNavigation();
-};
-
 PathNavigationListener::PathNavigationListener()
-    : mPathNavigations(), mReserved(0)
+    : mPathNavigations()
 {
     InitializeCriticalSection(&mMutex);
 }

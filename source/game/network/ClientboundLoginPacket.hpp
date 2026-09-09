@@ -12,9 +12,11 @@ class DataInputStream;
 class DataOutputStream;
 class LevelType;
 class PacketListener;
+class ServerConnectionListener;
 
 class ClientboundLoginPacket : public Packet, public boost::enable_shared_from_this<ClientboundLoginPacket>
 {
+    friend class ServerConnectionListener;
 public:
     ClientboundLoginPacket();
     ClientboundLoginPacket(const std::wstring&, int, LevelType*, long long, int, int, int, char, unsigned char,

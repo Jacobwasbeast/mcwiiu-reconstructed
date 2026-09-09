@@ -27,7 +27,7 @@ ClientboundAddGlobalEntityPacket::~ClientboundAddGlobalEntityPacket()
 
 int ClientboundAddGlobalEntityPacket::getPacketId()
 {
-    return 26;
+    return 0x47;
 }
 
 void ClientboundAddGlobalEntityPacket::read(DataInputStream* input)

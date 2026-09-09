@@ -9,6 +9,7 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ClientPacketListener;
 
 class UpdateProgressPacket : public Packet,
                              public boost::enable_shared_from_this<UpdateProgressPacket>
@@ -27,6 +28,7 @@ public:
     virtual int getPacketId();
 
 private:
+    friend class ClientPacketListener;
     int mProgress;
 };
 

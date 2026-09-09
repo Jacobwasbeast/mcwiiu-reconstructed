@@ -99,10 +99,17 @@
 ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(
     MinecraftServer* server, Connection* connection,
     boost::shared_ptr<ServerPlayer> player)
-    : mServer(server), mConnection(connection), mPlayer(player),
-      mDisconnected(false), mKeepAliveTime(0), mKeepAliveId(0), mTeleportId(0),
-      mPendingTeleportPosition(0), mLastX(0.0), mLastY(0.0), mLastZ(0.0),
-      mLastYRot(0.0f), mLastXRot(0.0f), mPlayerUID(0), mOldPlayerUID(0)
+    : mConnection(connection), mDisconnected(false), mPlayerUID(0),
+      mOldPlayerUID(0), mServer(server), mPlayer(player), mTickCount(0),
+      mKeepAliveId(0), mKeepAliveTime(0), mChatSpamTickCount(0),
+      mDropSpamTickCount(0), mFirstGoodX(0.0), mFirstGoodY(0.0),
+      mFirstGoodZ(0.0), mLastGoodX(0.0), mLastGoodY(0.0), mLastGoodZ(0.0),
+      mVehicleFirstGoodX(0.0), mVehicleFirstGoodY(0.0), mVehicleFirstGoodZ(0.0),
+      mVehicleLastGoodX(0.0), mVehicleLastGoodY(0.0), mVehicleLastGoodZ(0.0),
+      mPendingTeleportPosition(0), mTeleportId(0), mTeleportTime(0),
+      mClientIsFloating(false), mAboveGroundTickCount(0),
+      mClientVehicleIsFloating(false), mAboveGroundVehicleTickCount(0),
+      mReceivedMovePacketCount(0), mKnownMovePacketCount(0)
 {
     if (mConnection != 0)
         mConnection->setListener(this);
@@ -181,9 +188,12 @@ void ServerGamePacketListenerImpl::queueSend(boost::shared_ptr<Packet> packet)
 
 void ServerGamePacketListenerImpl::resetPosition()
 {
-    mLastX = mPlayer->mX;
-    mLastY = mPlayer->mY;
-    mLastZ = mPlayer->mZ;
+    mFirstGoodX = mPlayer->mX;
+    mFirstGoodY = mPlayer->mY;
+    mFirstGoodZ = mPlayer->mZ;
+    mLastGoodX = mPlayer->mX;
+    mLastGoodY = mPlayer->mY;
+    mLastGoodZ = mPlayer->mZ;
 }
 
 void ServerGamePacketListenerImpl::teleport(
@@ -196,6 +206,7 @@ void ServerGamePacketListenerImpl::teleport(
     ++mTeleportId;
     if (mTeleportId == 0x7fffffff)
         mTeleportId = 0;
+    mTeleportTime = mTickCount;
 
     if (includeRotation)
         mPlayer->absMoveTo(x, y, z, yRot, xRot);
@@ -238,27 +249,47 @@ void ServerGamePacketListenerImpl::tick()
 
     resetPosition();
     mPlayer->doTick(false, false, false);
-    mPlayer->absMoveTo(mLastX, mLastY, mLastZ, mPlayer->mYRot, mPlayer->mXRot);
+    mPlayer->absMoveTo(mFirstGoodX, mFirstGoodY, mFirstGoodZ,
+                       mPlayer->mYRot, mPlayer->mXRot);
+    ++mTickCount;
+    mKnownMovePacketCount = mReceivedMovePacketCount;
+
+    if (mClientIsFloating)
+    {
+        ++mAboveGroundTickCount;
+        if (mAboveGroundTickCount > 80)
+        {
+            disconnect(DisconnectPacket::eDisconnectReason_KeepAliveTimeout);
+            return;
+        }
+    }
+    else
+    {
+        mAboveGroundTickCount = 0;
+        mClientIsFloating = false;
+    }
+
+    if (mChatSpamTickCount > 0)
+        --mChatSpamTickCount;
+    if (mDropSpamTickCount > 0)
+        --mDropSpamTickCount;
+
     mConnection->tick();
 }
 
 bool ServerGamePacketListenerImpl::containsInvalidValues(boost::shared_ptr<ServerboundMoveVehiclePacket> packet)
 {
-    if (packet)
-    {
-        packet->getX();
-        packet->getY();
-        packet->getZ();
-        packet->getXRot();
-        packet->getYRot();
-    }
+    packet->getX();
+    packet->getY();
+    packet->getZ();
+    packet->getXRot();
+    packet->getYRot();
     return false;
 }
 
 void ServerGamePacketListenerImpl::handlePlayerInput(boost::shared_ptr<ServerboundPlayerInputPacket> packet)
 {
-    if (packet && mPlayer)
-        mPlayer->setPlayerInput(packet->getXxa(), packet->getZza(), packet->isJumping(), packet->isSneaking());
+    mPlayer->setPlayerInput(packet->getXxa(), packet->getZza(), packet->isJumping(), packet->isSneaking());
 }
 void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<ServerboundMoveVehiclePacket> packet)
 {
@@ -284,22 +315,28 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
     double dy = packet->getY() - oldY;
     double dz = packet->getZ() - oldZ;
     mPlayer->doCheckFallDamage(dy, mPlayer->mOnGround);
-    mLastX = packet->getX();
-    mLastY = packet->getY();
-    mLastZ = packet->getZ();
+    mVehicleLastGoodX = vehicle->mX;
+    mVehicleLastGoodY = vehicle->mY;
+    mVehicleLastGoodZ = vehicle->mZ;
 
     if (dx * dx + dy * dy + dz * dz > 100.0 && !mServer->isFlightAllowed())
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket(vehicle)));
 }
 void ServerGamePacketListenerImpl::handleAcceptTeleportPacket(boost::shared_ptr<ServerboundAcceptTeleportationPacket> packet)
 {
-    if (packet && packet->getId() == mTeleportId && mPendingTeleportPosition != 0 && mPlayer)
+    if (packet->getId() == mTeleportId)
     {
         mPlayer->absMoveTo(mPendingTeleportPosition->x, mPendingTeleportPosition->y,
                            mPendingTeleportPosition->z, mPlayer->mYRot, mPlayer->mXRot);
-        mPendingTeleportPosition = 0;
         if (mPlayer->isChangingDimension())
+        {
+            mLastGoodX = mPendingTeleportPosition->x;
+            mLastGoodY = mPendingTeleportPosition->y;
+            mLastGoodZ = mPendingTeleportPosition->z;
             mPlayer->hasChangedDimension();
+        }
+        delete mPendingTeleportPosition;
+        mPendingTeleportPosition = 0;
     }
 }
 void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<ServerboundMovePlayerPacket> packet)
@@ -503,12 +540,8 @@ void ServerGamePacketListenerImpl::handleSetCarriedItem(boost::shared_ptr<Server
 void ServerGamePacketListenerImpl::handleChat(boost::shared_ptr<ClientboundChatPacket> packet) {}
 void ServerGamePacketListenerImpl::handleAnimate(boost::shared_ptr<ServerboundSwingPacket> packet)
 {
-    if (mPlayer)
-    {
-        mPlayer->resetLastActionTime();
-        if (packet)
-            mPlayer->swing(packet->getHand());
-    }
+    mPlayer->resetLastActionTime();
+    mPlayer->swing(packet->getHand());
 }
 void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<ServerboundPlayerCommandPacket> packet)
 {
@@ -1260,8 +1293,16 @@ bool ServerGamePacketListenerImpl::isDisconnected()
 
 bool ServerGamePacketListenerImpl::isGuest()
 {
-    INetworkPlayer* networkPlayer = getNetworkPlayer();
+    if (mConnection->m_socket == 0)
+        return false;
+
+    INetworkPlayer* networkPlayer = mConnection->m_socket->getPlayer();
     return networkPlayer != 0 && networkPlayer->IsGuest();
+}
+
+Connection* ServerGamePacketListenerImpl::getConnection()
+{
+    return mConnection;
 }
 
 INetworkPlayer* getNetworkPlayerFromIndex(int index)

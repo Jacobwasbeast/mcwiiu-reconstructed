@@ -26,6 +26,7 @@ public:
     virtual int getEstimatedSize();
     static boost::shared_ptr<Packet> create();
 private:
+    friend class ClientPacketListener;
     friend class ServerGamePacketListenerImpl;
 
     short mPlayerId;

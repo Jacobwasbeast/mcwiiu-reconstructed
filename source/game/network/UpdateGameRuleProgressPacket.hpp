@@ -29,6 +29,7 @@ public:
     virtual int getEstimatedSize();
 
 private:
+    friend class ClientPacketListener;
     ConsoleGameRules::EGameRuleType mRuleType;
     std::wstring mDescription;
     int mItemId;

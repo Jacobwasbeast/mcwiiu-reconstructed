@@ -133,7 +133,7 @@ public:
     bool IsHandlingBootInvite();
     void WiiU_ClearIsHandlingBootInvite();
     void WiiU_ShowErrorViewer();
-    void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int), void* data);
+    void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* data);
     void WiiU_ReleaseForeground();
     void WiiU_AcquiredForeground();
     void WiiU_ReleaseCallback();
