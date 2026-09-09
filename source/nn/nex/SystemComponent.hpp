@@ -1,71 +1,79 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCOMPONENT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCOMPONENT_HPP
 
-#include <cstdint>
-
-#include "nn/nex/RootObject.hpp"
+#include "nn/nex/RefCountedObject.hpp"
+#include "nn/nex/String.hpp"
+#include "nn/nex/qResult.hpp"
 
 namespace nn
 {
 namespace nex
 {
 
-class String;
-
-class SystemComponent : public RootObject
+class SystemComponent : public RefCountedObject
 {
 public:
-    enum State
+    enum _State
     {
         STATE_CREATED = 1,
         STATE_INITIALIZING = 2,
         STATE_READY = 4,
         STATE_IN_USE = 8,
         STATE_TERMINATING = 16,
+        STATE_TERMINATION_PENDING = 32,
         STATE_TERMINATED = 64,
         STATE_INITIALIZATION_FAILED = 128,
         STATE_TERMINATION_FAILED = 256
     };
 
-    explicit SystemComponent(const String& name);
+    class Use : public RootObject
+    {
+    public:
+        Use(SystemComponent* pComponent, const wchar_t* pReason);
+        virtual ~Use();
+
+    private:
+        SystemComponent* m_pComponent;
+        const wchar_t* m_pReason;
+        bool m_bInUse;
+    };
+
+    explicit SystemComponent(const String& rName);
     virtual ~SystemComponent();
 
-    virtual void StateTransition(State state);
+    virtual const wchar_t* GetType() const;
+    virtual bool IsAKindOf(const wchar_t* pType) const;
+    virtual void EnforceDeclareSysComponentMacro() = 0;
+    virtual void StateTransition(_State state);
     virtual void OnInitialize();
     virtual void OnTerminate();
     virtual bool BeginInitialization();
     virtual bool EndInitialization();
     virtual bool BeginTermination();
     virtual bool EndTermination();
-    virtual State TestState() const;
+    virtual bool ValidTransition(_State state);
+    virtual bool UseIsAllowed();
+    virtual _State TestState();
     virtual void DoWork();
-    virtual bool ValidTransition(State state) const;
-    virtual bool UseIsAllowed() const;
 
-    void SetParent(SystemComponent* parent);
-    bool SetState(State state, bool force);
-    State Initialize();
-    State Terminate();
-    void WaitForTerminatedState(unsigned int timeout);
-    void WaitForReadyState(unsigned int timeout);
-    void SetName(const String& name);
-    bool IncrementInUseCount(const wchar_t* reason);
-    void DecrementInUseCount(const wchar_t* reason);
-    static const wchar_t* GetStateString(State state);
-    const wchar_t* GetType() const;
-    bool IsAKindOf(const wchar_t* type) const;
+    void SetParent(SystemComponent* pParent);
+    bool SetState(_State state, bool bForce);
+    _State Initialize();
+    _State Terminate();
+    qResult WaitForTerminatedState(unsigned int uiTimeout);
+    qResult WaitForReadyState(unsigned int uiTimeout);
+    void SetName(const String& rName);
+    bool IncrementInUseCount(const wchar_t* pReason);
+    void DecrementInUseCount(const wchar_t* pReason);
+    static const wchar_t* GetStateString(_State state);
 
 protected:
-    struct NameValue
-    {
-        std::uint32_t length;
-        std::uint32_t representation;
-    };
+    friend class SystemComponentGroup;
 
-    NameValue m_name;
-    std::uint32_t m_state;
-    std::int32_t m_inUseCount;
-    SystemComponent* m_parent;
+    String m_Name;
+    unsigned int m_uiState;
+    int m_iInUseCount;
+    SystemComponent* m_pParent;
 };
 
 }

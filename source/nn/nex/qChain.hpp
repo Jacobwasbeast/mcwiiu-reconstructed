@@ -1,6 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_QCHAIN_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_QCHAIN_HPP
 
+#include <cstddef>
+#include <iterator>
+
 #include "nn/nex/RootObject.hpp"
 
 namespace nn
@@ -30,6 +33,12 @@ public:
     class iterator
     {
     public:
+        typedef std::forward_iterator_tag iterator_category;
+        typedef T value_type;
+        typedef std::ptrdiff_t difference_type;
+        typedef T* pointer;
+        typedef T& reference;
+
         iterator()
             : m_element(0)
         {

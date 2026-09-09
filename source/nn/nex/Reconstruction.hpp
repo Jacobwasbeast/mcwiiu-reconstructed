@@ -22,6 +22,8 @@ public:
     MatchMakingClient();
     virtual ~MatchMakingClient();
 
+    virtual void UpdateProtocolsDefaultCredentials(Credentials* pCredentials);
+
 protected:
     MatchMakingProtocolClient m_matchMakingProtocolClient;
     MatchMakingProtocolExtClient m_matchMakingProtocolExtClient;
@@ -32,20 +34,24 @@ class MatchmakeExtensionProtocolClient : public ClientProtocol
 public:
     explicit MatchmakeExtensionProtocolClient(unsigned short protocolId);
     virtual ~MatchmakeExtensionProtocolClient();
+
+    virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
+    virtual Protocol* CreateResponder() const;
 };
 
 class MatchmakeExtensionClient : public MatchMakingClient
 {
 public:
     MatchmakeExtensionClient();
-    int Bind(Credentials* credentials);
-    void Unbind();
+    virtual ~MatchmakeExtensionClient();
+
+    virtual bool Bind(Credentials* pCredentials);
+    virtual bool Unbind();
 
 private:
     bool m_protocolRegistered;
     MatchmakeExtensionProtocolClient m_matchmakeExtensionProtocolClient;
-    std::uint32_t m_stateF0;
-    std::uint32_t m_stateF4;
+    unsigned long long m_uiLastProgressScoreTime;
 };
 
 class BackEndServices

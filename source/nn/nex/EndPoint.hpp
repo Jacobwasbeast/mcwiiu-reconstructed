@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/StationURL.hpp"
 #include "nn/nex/qResult.hpp"
 #include "nn/nex/qVector.hpp"
 
@@ -18,7 +19,6 @@ class EndPointEventHandler;
 class EndPointInfo;
 class FirstErrorHolder;
 class Key;
-class StationURL;
 class UserContext;
 
 class EndPoint : public RootObject
@@ -96,8 +96,14 @@ public:
     void SetConnectionID(unsigned int uiConnectionID);
     void SetPrincipalID(unsigned int uiPrincipalID);
 
+    unsigned int GetConnectionID() const
+    {
+        return m_uiConnectionID;
+    }
+
 protected:
     ConnectionOrientedStream* m_pStream;
+    StationURL m_stationURL;
     EndPointEventHandler* m_pEventHandler;
     unsigned int m_uiEventHandlerState;
     unsigned int m_uiConnectionID;

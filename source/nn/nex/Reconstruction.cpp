@@ -9,31 +9,39 @@ MatchmakeExtensionClient::MatchmakeExtensionClient()
     : MatchMakingClient()
     , m_protocolRegistered(false)
     , m_matchmakeExtensionProtocolClient(0)
-    , m_stateF0(0)
-    , m_stateF4(0)
+    , m_uiLastProgressScoreTime(0)
 {
     m_matchmakeExtensionProtocolClient.SetProtocolID(0x6d);
 }
 
-int MatchmakeExtensionClient::Bind(Credentials* credentials)
+MatchmakeExtensionClient::~MatchmakeExtensionClient()
 {
-    const std::uint32_t result = ServiceClient::Bind(credentials);
-    if (result != 0 && !m_protocolRegistered)
+    if (m_protocolRegistered)
+    {
+        UnregisterProtocol(&m_matchmakeExtensionProtocolClient);
+    }
+}
+
+bool MatchmakeExtensionClient::Bind(Credentials* pCredentials)
+{
+    const bool bBound = ServiceClient::Bind(pCredentials);
+    if (bBound && !m_protocolRegistered)
     {
         RegisterProtocol(&m_matchmakeExtensionProtocolClient);
         m_protocolRegistered = true;
     }
-    return static_cast<int>(result);
+    return bBound;
 }
 
-void MatchmakeExtensionClient::Unbind()
+bool MatchmakeExtensionClient::Unbind()
 {
-    const std::uint32_t result = ServiceClient::Unbind();
-    if (result != 0 && m_protocolRegistered)
+    const bool bUnbound = ServiceClient::Unbind();
+    if (bUnbound && m_protocolRegistered)
     {
         UnregisterProtocol(&m_matchmakeExtensionProtocolClient);
     }
     m_protocolRegistered = false;
+    return bUnbound;
 }
 
 std::uint32_t BackEndServices::RegisterNotificationEventHandler(

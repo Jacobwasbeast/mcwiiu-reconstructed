@@ -1,5 +1,7 @@
 #include "nn/nex/ServiceClient.hpp"
 
+#include "nn/nex/Credentials.hpp"
+#include "nn/nex/EndPoint.hpp"
 #include "nn/nex/Protocol.hpp"
 #include "nn/nex/RVClientCore.hpp"
 
@@ -8,13 +10,10 @@ namespace nn
 namespace nex
 {
 
-ServiceClient::ServiceClient(std::uint32_t serviceId)
-    : m_serviceId(serviceId)
-    , m_serviceReference(0)
-    , m_threadRegistrationActive(false)
-    , m_serviceDescriptor(0)
-    , m_credentials(0)
-    , m_registeredProtocol(0)
+ServiceClient::ServiceClient(unsigned int uiServiceID)
+    : m_uiServiceID(uiServiceID)
+    , m_pCredentials(0)
+    , m_bLocalLoopback(false)
 {
     RVClientCore::AcquireInstance();
 }
@@ -23,59 +22,85 @@ ServiceClient::~ServiceClient()
 {
 }
 
-std::uint32_t ServiceClient::Bind(Credentials* credentials)
+void ServiceClient::UseLocalLoopback(unsigned int, unsigned int)
 {
-    if (PrepareForConnection(credentials) == 0)
-        return 0;
-    return 1;
 }
 
-std::uint32_t ServiceClient::Unbind()
+bool ServiceClient::Bind(Credentials* pCredentials)
 {
-    m_registeredProtocol = 0;
+    return PrepareForConnection(pCredentials);
+}
+
+bool ServiceClient::Unbind()
+{
     SetDefaultCredentials(0);
-    return 1;
+    return true;
 }
 
-void ServiceClient::SetDefaultCredentials(Credentials* credentials)
+void ServiceClient::ConnectionStateHasChanged()
 {
-    SetCredentials(credentials);
 }
 
-void ServiceClient::SetCredentials(Credentials* credentials)
+bool ServiceClient::IsFaulty() const
 {
-    m_credentials = credentials;
+    if (m_pCredentials == 0)
+        return false;
+
+    EndPoint* pConnection = GetConnection(11);
+    return pConnection != 0 && pConnection->IsFaulty();
 }
 
-std::uint32_t ServiceClient::PrepareForConnection(Credentials* credentials)
+void ServiceClient::SetCredentials(Credentials* pCredentials)
 {
-    if (credentials == 0)
-        return 0;
+    if (m_pCredentials != 0)
+    {
+        m_pCredentials->ReleaseRef();
+        m_pCredentials = 0;
+    }
 
-    SetDefaultCredentials(credentials);
-    return 1;
+    if (pCredentials == 0)
+        return;
+
+    m_pCredentials = pCredentials;
+    m_pCredentials->AddRef();
 }
 
-void ServiceClient::RegisterExtraProtocol(Protocol* protocol, std::uint16_t)
+void ServiceClient::SetDefaultCredentials(Credentials* pCredentials)
 {
-    m_registeredProtocol = protocol;
+    UpdateProtocolsDefaultCredentials(pCredentials);
+    SetCredentials(pCredentials);
 }
 
-void ServiceClient::RegisterExtraProtocol(Protocol* protocol)
+bool ServiceClient::PrepareForConnection(Credentials* pCredentials)
 {
-    RegisterExtraProtocol(protocol, protocol == 0 ? 0 : protocol->GetProtocolID());
+    if (pCredentials == 0)
+        return false;
+
+    SetDefaultCredentials(pCredentials);
+    return true;
 }
 
-void ServiceClient::RegisterProtocol(Protocol* protocol)
+void ServiceClient::RegisterProtocol(Protocol* pProtocol)
 {
-    RegisterExtraProtocol(protocol, protocol == 0 ? 0 : protocol->GetProtocolID());
+    RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
 }
 
-std::uint32_t ServiceClient::UnregisterProtocol(Protocol* protocol)
+void ServiceClient::RegisterExtraProtocol(Protocol* pProtocol)
 {
-    (void)protocol;
-    m_registeredProtocol = 0;
-    return 1;
+    RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
+}
+
+bool ServiceClient::UnregisterProtocol(Protocol*)
+{
+    return true;
+}
+
+EndPoint* ServiceClient::GetConnection(unsigned short uiConnectionType) const
+{
+    if (!m_bLocalLoopback && m_pCredentials != 0)
+        return m_pCredentials->GetConnection(uiConnectionType);
+
+    return 0;
 }
 
 }

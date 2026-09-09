@@ -3,6 +3,7 @@
 #include <coreinit/thread.h>
 #include <cstring>
 
+#include "nn/nex/GlobalVariables.hpp"
 #include "nn/nex/Platform.hpp"
 #include "nn/nex/SpecialArray.hpp"
 #include "nn/nex/SpinTest.hpp"
@@ -162,6 +163,15 @@ bool ObjectThreadRoot::LaunchImpl()
     OSSetThreadName(m_pThreadData->m_pThread, m_nameChar8);
     OSResumeThread(m_pThreadData->m_pThread);
     return true;
+}
+
+int ObjectThreadRoot::ObjectThreadProc(int argc, void* argv)
+{
+    ObjectThreadRoot* pObjectThread = static_cast<ObjectThreadRoot*>(argv);
+
+    GlobalVariables::GetInstancePtr()->GetCurrentThread().SetValue(pObjectThread);
+    pObjectThread->CallObjectMethodWrapper();
+    return 0;
 }
 
 bool ObjectThreadRoot::Wait(std::uint32_t timeout)

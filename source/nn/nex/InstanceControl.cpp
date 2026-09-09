@@ -50,6 +50,14 @@ int InstanceControl::GetHighestID()
     return highestId;
 }
 
+bool InstanceControl::ContextIsValid(unsigned int contextId)
+{
+    g_instanceTableCriticalSection.Enter();
+    bool valid = g_instanceTable.ContextIsValid(contextId);
+    g_instanceTableCriticalSection.Leave();
+    return valid;
+}
+
 void InstanceControl::AllocateExtraContexts(unsigned int contextCount)
 {
     g_instanceTableCriticalSection.Enter();

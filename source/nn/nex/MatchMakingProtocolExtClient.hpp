@@ -10,6 +10,9 @@ class MatchMakingProtocolExtClient : public ClientProtocol
 public:
     explicit MatchMakingProtocolExtClient(unsigned short protocol_id);
     virtual ~MatchMakingProtocolExtClient();
+
+    virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
+    virtual Protocol* CreateResponder() const;
 };
 
 }}

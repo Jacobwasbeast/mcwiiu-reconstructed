@@ -38,6 +38,17 @@ public:
     void AllocateExtraContexts(unsigned int contextCount);
     void FreeExtraContexts();
 
+    bool ContextIsValid(unsigned int contextId) const
+    {
+        if (contextId == 0)
+            return true;
+
+        if (m_extraContexts->size() <= contextId)
+            return false;
+
+        return (*m_extraContexts)[contextId] != 0;
+    }
+
     InstanceControl* FindInstance(unsigned int classId, unsigned int contextId)
     {
         if (contextId == 0)

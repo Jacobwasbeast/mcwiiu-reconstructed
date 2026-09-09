@@ -7,8 +7,6 @@ namespace nn
 namespace nex
 {
 
-bool g_threadSafetyEnabled = true;
-
 void PacketBufferMultiUnitHeap::Lock() const
 {
     if (m_pMutex == 0)

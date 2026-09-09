@@ -6,14 +6,14 @@ namespace nn
 namespace nex
 {
 
-ProtocolCallContext::ProtocolCallContext(Credentials* credentials)
+ProtocolCallContext::ProtocolCallContext(Credentials* pCredentials)
     : CallContext()
     , m_returnValues()
-    , m_credentials(0)
     , m_completionFlag(0)
     , m_completionResult(0)
+    , m_credentials(0)
 {
-    SetCredentials(credentials);
+    SetCredentials(pCredentials);
 }
 
 ProtocolCallContext::~ProtocolCallContext()
@@ -24,32 +24,44 @@ ProtocolCallContext::~ProtocolCallContext()
     m_returnValues.clear();
 }
 
-void ProtocolCallContext::SetCredentials(Credentials* credentials)
+void ProtocolCallContext::SetCredentials(Credentials* pCredentials)
 {
     if (m_credentials != 0)
+    {
         m_credentials->ReleaseRef();
-    m_credentials = credentials;
-    if (m_credentials != 0)
+        m_credentials = 0;
+    }
+    if (pCredentials != 0)
+    {
+        m_credentials = pCredentials;
         m_credentials->AddRef();
+    }
 }
 
-void ProtocolCallContext::AddReturnValuePtr(void* value)
+void ProtocolCallContext::AddReturnValuePtr(void* pValue)
 {
-    m_returnValues.push_back(value);
+    m_returnValues.push_back(pValue);
 }
 
-void* ProtocolCallContext::GetReturnValuePtr(std::size_t index) const
+void* ProtocolCallContext::GetReturnValuePtr(unsigned int uiIndex)
 {
-    if (index >= m_returnValues.size())
-        return 0;
-    return m_returnValues[index];
+    if (m_returnValues[uiIndex] != 0)
+        return m_returnValues[uiIndex];
+    return 0;
 }
 
 void ProtocolCallContext::BeginTransition(State state, const qResult& result, bool publishResult)
 {
     if (state == Ready)
-        m_completionFlag = 0;
-    else if (state == CallFailed && publishResult)
+    {
+        m_returnValues.clear();
+        return;
+    }
+
+    if (state != CallFailed)
+        return;
+
+    if (publishResult)
     {
         if (m_completionFlag != 0)
         {
@@ -62,7 +74,6 @@ void ProtocolCallContext::BeginTransition(State state, const qResult& result, bo
             m_completionResult = 0;
         }
     }
-    CallContext::BeginTransition(state, result, publishResult);
 }
 
 }

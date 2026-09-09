@@ -16,7 +16,10 @@ public:
     enum Type
     {
         RendezVous = 2,
-        RendezVousSecure = 10
+        NAT = 5,
+        Routing = 8,
+        RendezVousSecure = 10,
+        Relay = 11
     };
 
     explicit Stream(Type type);

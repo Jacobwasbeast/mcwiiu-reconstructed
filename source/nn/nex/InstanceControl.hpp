@@ -17,6 +17,11 @@ public:
 
     void SetDelegatorInstance(void* delegatorInstance);
 
+    void* GetDelegatorInstance() const
+    {
+        return m_delegatorInstance;
+    }
+
     static int GetHighestID();
     static bool ContextIsValid(unsigned int contextId);
     static void AllocateExtraContexts(unsigned int contextCount);

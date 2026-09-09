@@ -3,17 +3,35 @@
 
 #include "nn/nex/Protocol.hpp"
 
-namespace nn { namespace nex {
+namespace nn
+{
+namespace nex
+{
 
 class ServerProtocol : public Protocol
 {
 public:
-    explicit ServerProtocol(unsigned int protocol_type);
-    ~ServerProtocol() override;
-    _Type GetProtocolType() const override;
-    bool UseAttemptCountMethod() const;
+    explicit ServerProtocol(unsigned int uiFlags);
+    virtual ~ServerProtocol();
+
+    virtual const wchar_t* GetType() const;
+    virtual bool IsAKindOf(const wchar_t* pType) const;
+    virtual void EnforceDeclareSysComponentMacro();
+    virtual _Type GetProtocolType() const;
+    virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
+                                         bool* pResponseRequired, EndPoint* pEndPoint) = 0;
+    virtual void DispatchProtocolMessageWithAttemptCount(unsigned int uiAttemptCount,
+                                                         Message* pRequest, Message* pResponse,
+                                                         bool* pResponseRequired, int* pAttempt,
+                                                         EndPoint* pEndPoint);
+    virtual bool UseAttemptCountMethod();
+
+    void DispatchCallRequest(unsigned int uiAttemptCount, Message* pRequest, Message* pResponse,
+                             bool* pResponseRequired, int* pAttempt, EndPoint* pEndPoint);
+    void SetCallError(qResult result);
 };
 
-}}
+}
+}
 
 #endif

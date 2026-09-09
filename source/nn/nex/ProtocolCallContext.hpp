@@ -1,7 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLCALLCONTEXT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLCALLCONTEXT_HPP
 
-#include <cstddef>
 #include <vector>
 
 #include "nn/nex/CallContext.hpp"
@@ -16,19 +15,26 @@ class Credentials;
 class ProtocolCallContext : public CallContext
 {
 public:
-    explicit ProtocolCallContext(Credentials* credentials);
-    ~ProtocolCallContext() override;
+    explicit ProtocolCallContext(Credentials* pCredentials);
+    virtual ~ProtocolCallContext();
 
-    void SetCredentials(Credentials* credentials);
-    void AddReturnValuePtr(void* value);
-    void* GetReturnValuePtr(std::size_t index) const;
+    void SetCredentials(Credentials* pCredentials);
+    void AddReturnValuePtr(void* pValue);
+    void ClearReturnValuePtr();
+    void* GetReturnValuePtr(unsigned int uiIndex);
+
+    Credentials* GetCredentials() const
+    {
+        return m_credentials;
+    }
 
 protected:
-    void BeginTransition(State state, const qResult& result, bool publishResult) override;
+    virtual void BeginTransition(State state, const qResult& result, bool publishResult);
+
     std::vector<void*> m_returnValues;
-    Credentials* m_credentials;
     bool* m_completionFlag;
     qResult* m_completionResult;
+    Credentials* m_credentials;
 };
 
 }

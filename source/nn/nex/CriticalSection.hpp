@@ -30,6 +30,8 @@ public:
     bool HasNotOwnership() const;
 
 protected:
+    friend class Core;
+
     MutexPrimitive m_mutex;
     LockChecker m_lockChecker;
 };

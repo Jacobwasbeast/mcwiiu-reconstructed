@@ -5,34 +5,34 @@
 #include <list>
 #include <set>
 
-#include "nn/nex/ServerProtocol.hpp"
+#include "nn/nex/NotificationProtocolServer.hpp"
+#include "nn/nex/NotificationEvent.hpp"
 #include "nn/nex/NotificationEventHandler.hpp"
 
 namespace nn { namespace nex {
 
-class NotificationEvent;
-
-class NotificationEventManager : public ServerProtocol
+class NotificationEventManager : public _Proto_NotificationProtocolServer
 {
 public:
-    NotificationEventManager();
-    NotificationEventManager(const NotificationEventManager& other);
+    explicit NotificationEventManager(NotificationEventManager* pParent);
     virtual ~NotificationEventManager();
 
     virtual NotificationEventManager* Clone() const;
-    std::uint32_t RegisterNotificationEventHandler(NotificationEventHandler* handler);
-    std::uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* handler);
-    std::uint32_t IsEventValid(const NotificationEvent& event);
-    void ProcessNotificationEvent(const NotificationEvent& event);
-    void ProcessNotificationEvent(std::uint32_t sender, std::uint32_t target,
-                                  const NotificationEvent& event);
+    virtual void ProcessNotificationEvent(const NotificationEvent& rEvent);
+    virtual void ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
+                                          const NotificationEvent& rEvent);
+
+    std::uint32_t RegisterNotificationEventHandler(NotificationEventHandler* pHandler);
+    std::uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* pHandler);
+    std::uint32_t IsEventValid(const NotificationEvent& rEvent);
 
 private:
     std::set<NotificationEventHandler*> m_handlers;
-    void* m_constructorContext;
-    std::list<NotificationEvent> m_recentEvents;
-    std::uint32_t m_eventCount;
-    std::uint32_t m_dispatchCount;
+    NotificationEventManager* m_pParent;
+    std::list<NotificationEvent> m_events;
+    unsigned int m_uiPrincipalID;
+    unsigned int m_uiConnectionID;
+    bool m_bDispatchServiceEvents;
 };
 
 }}

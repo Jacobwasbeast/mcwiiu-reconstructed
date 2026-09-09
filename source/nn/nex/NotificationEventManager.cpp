@@ -1,78 +1,72 @@
 #include "nn/nex/NotificationEventManager.hpp"
-#include "nn/nex/NotificationEvent.hpp"
+
+#include "nn/nex/String.hpp"
 
 namespace nn { namespace nex {
 
-NotificationEventManager::NotificationEventManager()
-    : ServerProtocol(1)
+NotificationEventManager::NotificationEventManager(NotificationEventManager* pParent)
+    : _Proto_NotificationProtocolServer(1)
     , m_handlers()
-    , m_constructorContext(0)
-    , m_recentEvents()
-    , m_eventCount(0)
-    , m_dispatchCount(0)
+    , m_pParent(pParent)
+    , m_events()
+    , m_uiPrincipalID(0)
+    , m_uiConnectionID(0)
 {
-}
-
-NotificationEventManager::NotificationEventManager(const NotificationEventManager& other)
-    : ServerProtocol(1)
-    , m_handlers()
-    , m_constructorContext(const_cast<NotificationEventManager*>(&other))
-    , m_recentEvents()
-    , m_eventCount(0)
-    , m_dispatchCount(0)
-{
+    SetFlag(8);
+    SetName(String(L"NotificationEventManager"));
 }
 
 NotificationEventManager::~NotificationEventManager()
 {
     m_handlers.clear();
-    m_recentEvents.clear();
+    m_events.clear();
 }
 
 NotificationEventManager* NotificationEventManager::Clone() const
 {
-    return new NotificationEventManager(*this);
+    return new NotificationEventManager(const_cast<NotificationEventManager*>(this));
 }
 
-std::uint32_t NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* handler)
+std::uint32_t NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
-    if (handler == 0)
+    if (pHandler == 0)
         return 0;
-    return m_handlers.insert(handler).second ? 1u : 0u;
+    return m_handlers.insert(pHandler).second ? 1u : 0u;
 }
 
-std::uint32_t NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* handler)
+std::uint32_t NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
-    if (handler == 0)
+    if (pHandler == 0)
         return 0;
-    return m_handlers.erase(handler) == 1 ? 1u : 0u;
+    return m_handlers.erase(pHandler) == 1 ? 1u : 0u;
 }
 
-std::uint32_t NotificationEventManager::IsEventValid(const NotificationEvent& event)
+std::uint32_t NotificationEventManager::IsEventValid(const NotificationEvent& rEvent)
 {
-    if (event.GetType() / 1000 != 4)
+    if (rEvent.GetType() / 1000 != 4)
         return 1;
-    return event.GetParam1() != 0 ? 1u : 0u;
+    return rEvent.GetParam1() != 0 ? 1u : 0u;
 }
 
-void NotificationEventManager::ProcessNotificationEvent(const NotificationEvent& event)
+void NotificationEventManager::ProcessNotificationEvent(const NotificationEvent&)
 {
-    if (m_recentEvents.size() >= 5)
-        m_recentEvents.pop_front();
-    m_recentEvents.push_back(event);
-    ++m_eventCount;
-    for (std::set<NotificationEventHandler*>::iterator it = m_handlers.begin(); it != m_handlers.end(); ++it)
-        (*it)->ProcessNotificationEvent(event);
 }
 
-void NotificationEventManager::ProcessNotificationEvent(std::uint32_t sender, std::uint32_t target,
-                                                        const NotificationEvent& event)
+void NotificationEventManager::ProcessNotificationEvent(unsigned int uiPrincipalID,
+                                                        unsigned int uiConnectionID,
+                                                        const NotificationEvent& rEvent)
 {
-    ++m_dispatchCount;
-    (void)sender;
-    (void)target;
-    if (IsEventValid(event) != 0)
-        ProcessNotificationEvent(event);
+    if (uiPrincipalID != m_uiPrincipalID || uiConnectionID != m_uiConnectionID)
+        return;
+    if (IsEventValid(rEvent) == 0)
+        return;
+
+    for (std::set<NotificationEventHandler*>::iterator it = m_handlers.begin();
+         it != m_handlers.end(); ++it)
+    {
+        if (rEvent.GetType() / 1000 != 115 || m_bDispatchServiceEvents)
+            (*it)->ProcessNotificationEvent(rEvent);
+    }
 }
 
 }}

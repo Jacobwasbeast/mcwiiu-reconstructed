@@ -1,12 +1,24 @@
 #include "nn/nex/Protocol.hpp"
 
-namespace nn { namespace nex {
+#include <cwchar>
 
-Protocol::Protocol(unsigned int protocol_type)
-    : SystemComponent(*reinterpret_cast<const String*>(0)),
-      m_protocol_id(0), m_end_point(NULL), m_request_broker(NULL),
-      m_protocol_type(protocol_type), m_outgoing_connection(NULL), m_local_loopback(0),
-      m_caller_pid(0), m_caller_cid(0)
+#include "nn/nex/Message.hpp"
+
+namespace nn
+{
+namespace nex
+{
+
+Protocol::Protocol(unsigned int uiFlags)
+    : SystemComponent(String(L"<unknown>"))
+    , m_uiProtocolID(0)
+    , m_pOutgoingConnection(0)
+    , m_pProtocolRequestBroker(0)
+    , m_uiFlags(uiFlags)
+    , m_pIncomingConnection(0)
+    , m_bLocalLoopback(false)
+    , m_uiCallerPID(0)
+    , m_uiCallerCID(0)
 {
 }
 
@@ -14,19 +26,113 @@ Protocol::~Protocol()
 {
 }
 
-Protocol::_Type Protocol::GetProtocolType() const
+const wchar_t* Protocol::GetType() const
 {
-    return static_cast<Protocol::_Type>(m_protocol_type);
+    return L"Protocol";
 }
 
-void Protocol::SetProtocolID(unsigned short protocol_id)
+bool Protocol::IsAKindOf(const wchar_t* pType) const
 {
-    m_protocol_id = protocol_id;
+    return std::wcscmp(L"Protocol", pType) == 0 || std::wcscmp(L"SystemComponent", pType) == 0;
 }
 
-unsigned short Protocol::GetProtocolID() const
+void Protocol::EnforceDeclareSysComponentMacro()
 {
-    return m_protocol_id;
 }
 
-}}
+void Protocol::EndPointDisconnected(EndPoint*)
+{
+}
+
+void Protocol::FaultDetected(EndPoint*, unsigned int)
+{
+}
+
+Protocol* Protocol::Clone() const
+{
+    return 0;
+}
+
+bool Protocol::FlagIsSet(unsigned int uiFlag) const
+{
+    return (m_uiFlags & uiFlag) == uiFlag;
+}
+
+void Protocol::SetFlag(unsigned int uiFlag)
+{
+    m_uiFlags |= uiFlag;
+}
+
+void Protocol::SetProtocolID(unsigned short uiProtocolID)
+{
+    m_uiProtocolID = uiProtocolID;
+}
+
+EndPoint* Protocol::GetOutgoingConnection() const
+{
+    return m_pOutgoingConnection;
+}
+
+void Protocol::SetOutgoingConnection(EndPoint* pEndPoint)
+{
+    m_pOutgoingConnection = pEndPoint;
+}
+
+void Protocol::UseLocalLoopback(unsigned int uiCallerPID, unsigned int uiCallerCID)
+{
+    m_uiCallerPID = uiCallerPID;
+    m_uiCallerCID = uiCallerCID;
+    m_pIncomingConnection = 0;
+    m_bLocalLoopback = true;
+}
+
+unsigned int Protocol::GetCallerPID() const
+{
+    return m_uiCallerPID;
+}
+
+unsigned int Protocol::GetCallerCID() const
+{
+    return m_uiCallerCID;
+}
+
+void Protocol::AssociateProtocolRequestBroker(ProtocolRequestBrokerInterface* pRequestBroker)
+{
+    m_pProtocolRequestBroker = pRequestBroker;
+}
+
+void Protocol::AddProtocolKey(Message* pMessage, _Command command, unsigned short uiProtocolID)
+{
+    if (uiProtocolID < 0x7F)
+    {
+        unsigned char uiKey = static_cast<unsigned char>(uiProtocolID & 0x7F);
+        if (command != COMMAND_RESPONSE)
+            uiKey |= 0x80;
+        pMessage->Append(&uiKey, 1, 1);
+        return;
+    }
+
+    unsigned char uiKey = 0x7F;
+    if (command != COMMAND_RESPONSE)
+        uiKey |= 0x80;
+    pMessage->Append(&uiKey, 1, 1);
+
+    unsigned short uiExtendedProtocolID = uiProtocolID;
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiExtendedProtocolID), 2, 1);
+}
+
+unsigned int Protocol::ExtractMethodID(Message* pMessage)
+{
+    unsigned int uiMethodID;
+    pMessage->ExtractPrimitive(&uiMethodID);
+    return uiMethodID;
+}
+
+void Protocol::AddMethodID(Message* pMessage, unsigned int uiMethodID)
+{
+    unsigned int uiValue = uiMethodID;
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiValue), 4, 1);
+}
+
+}
+}

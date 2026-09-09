@@ -1,6 +1,7 @@
 #include "nn/nex/EndPoint.hpp"
 
 #include "nn/nex/ConnectionOrientedStream.hpp"
+#include "nn/nex/TransportAdapter.hpp"
 
 namespace nn
 {
@@ -21,6 +22,61 @@ const wchar_t* const s_pConnectionStateStrings[] =
 
 const unsigned int CONNECTION_STATE_STRING_COUNT = 5;
 
+const int ENDPOINT_RESULT_SUCCESS = 0x00010001;
+const int ENDPOINT_RESULT_ALREADY_REGISTERED = 0x8001000E;
+
+const unsigned int KEEP_ALIVE_DISABLED = 0xFFFFFFFF;
+
+}
+
+EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
+    : m_pStream(pStream)
+    , m_stationURL(*pStationURL)
+    , m_pEventHandler(0)
+    , m_uiEventHandlerState(0)
+    , m_uiConnectionID(0)
+    , m_uiPrincipalID(0)
+    , m_iOpenCount(0)
+    , m_BroadcastState(BroadcastDisabled)
+    , m_uiCtorFlag(0)
+{
+}
+
+EndPoint::~EndPoint()
+{
+    SetConnectionID(0);
+    SetPrincipalID(0);
+    g_transportAdapter->ReleaseAddress(m_stationURL);
+}
+
+void EndPoint::DisableKeepAlive()
+{
+    SetKeepAliveTimeout(KEEP_ALIVE_DISABLED);
+}
+
+qResult EndPoint::RegisterEventHandler(EndPointEventHandler* pEventHandler)
+{
+    if (m_pEventHandler != 0)
+    {
+        return qResult(ENDPOINT_RESULT_ALREADY_REGISTERED);
+    }
+
+    m_pEventHandler = pEventHandler;
+    return qResult(ENDPOINT_RESULT_SUCCESS);
+}
+
+void EndPoint::SetErrorHolder(FirstErrorHolder* pErrorHolder)
+{
+    m_pErrorHolder = pErrorHolder;
+}
+
+void EndPoint::UnsetErrorHolder()
+{
+    m_pErrorHolder = 0;
+}
+
+void EndPoint::SignalFaultEvent(unsigned int, bool)
+{
 }
 
 void EndPoint::Open()
