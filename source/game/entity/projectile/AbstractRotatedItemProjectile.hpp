@@ -95,6 +95,8 @@ protected:
     bool mClampedToLevel;
     ePickup mPickup;
     int mShake;
+
+public:
     boost::shared_ptr<Entity> mOwner;
 };
 
