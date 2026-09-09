@@ -167,7 +167,7 @@ struct ServerPlayer : Player {
     void awardStat(Stat* stat, arrayWithLength<unsigned char> parameters);   
     void resetStat(Stat* parameterOne);   
     uint8_t hasDisconnected();   
-    uint64_t displayClientMessage(int32_t parameterOne, bool parameterTwo);   
+    void displayClientMessage(int32_t parameterOne, bool parameterTwo);   
     void completeUsingItem();   
     uint64_t restoreFrom(boost::shared_ptr<Player>* parameterOne, bool parameterTwo);   
     void onEffectAdded(MobEffectInstance* parameterOne);   

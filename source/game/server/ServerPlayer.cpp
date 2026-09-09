@@ -508,10 +508,9 @@ uint8_t ServerPlayer::hasDisconnected()
     return mDisconnected;
 }
 
-uint64_t ServerPlayer::displayClientMessage(int32_t parameterOne, bool parameterTwo)
+void ServerPlayer::displayClientMessage(int32_t parameterOne, bool parameterTwo)
 {
     Player::displayClientMessage(parameterOne, parameterTwo);
-    return 0;
 }
 
 void ServerPlayer::completeUsingItem()

@@ -29,7 +29,7 @@ void DerivedServerLevel::saveLevelData()
 {
 }
 
-DerivedServerLevel* DerivedServerLevel::postConstruct()
+void DerivedServerLevel::postConstruct()
 {
     SavedDataStorage* storage = mLevel->getSavedDataStorage();
     setSavedDataStorage(storage);
@@ -48,7 +48,6 @@ DerivedServerLevel* DerivedServerLevel::postConstruct()
     {
         villages->setLevel(this);
     }
-    return this;
 }
 
 void DerivedServerLevel::saveDimensionData()

@@ -1,10 +1,13 @@
+#include <cstddef>
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 #include "game/client/render/ParticleType.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/world/Level.hpp"
 #include "game/core/TickNextTickData.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -38,7 +41,29 @@ struct PlayerChunkMap;
 struct PortalForcer;
 struct ProgressListener;
 
+struct TickNextTickDataKeyCompare
+{
+    bool operator()(const TickNextTickData& first, const TickNextTickData& second) const
+    {
+        return TickNextTickData::compare_fnct(first, second);
+    }
+};
 
+struct TickNextTickDataKeyHash
+{
+    std::size_t operator()(const TickNextTickData& data) const
+    {
+        return TickNextTickData::hash_fnct(data);
+    }
+};
+
+struct TickNextTickDataKeyEq
+{
+    bool operator()(const TickNextTickData& first, const TickNextTickData& second) const
+    {
+        return TickNextTickData::eq_test(first, second);
+    }
+};
 
 class ServerLevel : public Level {
 public:
@@ -49,7 +74,9 @@ public:
  PlayerChunkMap* chunkMap;
  void* chunkSource;
  int32_t emptyTime;
- std::vector<TickNextTickData> pendingTicks;
+ OSFastMutex tickNextTickMutex;
+ std::set<TickNextTickData, TickNextTickDataKeyCompare> tickNextTickList;
+ boost::unordered_set<TickNextTickData, TickNextTickDataKeyHash, TickNextTickDataKeyEq> tickNextTickSet;
  boost::unordered_map<std::wstring, boost::shared_ptr<Entity> > entitiesByUuid;
  std::vector<QueuedSendBlockData*> queuedBlockUpdates;
  std::vector<BlockEventData*> blockEvents;
@@ -63,12 +90,12 @@ public:
  bool saving;
  ServerScoreboard* serverScoreboard;
  int32_t weatherTick;
- std::vector<TickNextTickData> scheduledTicks;
+ std::vector<TickNextTickData> toBeTicked;
 
  
  ServerLevel(MinecraftServer* first, boost::shared_ptr<LevelStorage> second, LevelData* third, int32_t fourth); 
  ~ServerLevel(); 
- uint8_t AllPlayersAreSleeping(); 
+ bool AllPlayersAreSleeping(); 
  EntityTracker* getTracker(); 
  void getChunkSource();
  std::vector<boost::shared_ptr<BlockEntity> >* getBlockEntitiesInRegion(int32_t first, int32_t second, int32_t third, int32_t fourth, int32_t fifth, int32_t sixth); 
@@ -77,8 +104,8 @@ public:
  PortalForcer* getPortalForcer(); 
  static int runUpdate(void* first);
  static void staticCtor();
- uint64_t createChunkSource(); 
- ServerLevel* postConstruct(); 
+ ChunkSource* createChunkSource(); 
+ void postConstruct(); 
  uint32_t allPlayersAreSleeping(); 
  uint64_t stopWeather(); 
  uint64_t awakenAllPlayers(); 
@@ -95,20 +122,20 @@ public:
  LevelChunk* getChunkIfHasChunk(int32_t first, int32_t second, bool third); 
  void findLightingTargetAround(BlockPos* first); 
  void tickBlocks();
- bool isBlockToBeTickedAt(BlockPos* first, Block* second); 
- bool hasTickNextTick(BlockPos* first, Block* second); 
- void addToTickNextTick(BlockPos* first, Block* second, int32_t third); 
- void addToTickNextTick(BlockPos* first, Block* second, int32_t third, int32_t fourth); 
- void forceAddBlockTick(BlockPos* first, Block* second, int32_t third, int32_t fourth); 
+ bool isBlockToBeTickedAt(const BlockPos& pos, Block* block);
+ bool hasTickNextTick(const BlockPos& pos, Block* block);
+ void addToTickNextTick(const BlockPos& pos, Block* block, int delay);
+ void addToTickNextTick(const BlockPos& pos, Block* block, int delay, int priority);
+ void forceAddBlockTick(const BlockPos& pos, Block* block, int delay, int priority);
  void resetEmptyTime(); 
  void tickEntities(); 
- uint64_t tickServerPlayers(); 
- bool tickPendingTicks(bool first); 
- std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* first, bool second); 
- std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* first, bool second); 
+ void tickServerPlayers(); 
+ bool tickPendingTicks(bool runAll);
+ std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* chunk, bool removeTicks);
+ std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* box, bool removeTicks);
  void isAnimalsAllowed();
  void isNpcsAllowed();
- uint64_t tick(boost::shared_ptr<Entity> first, bool second); 
+ void tick(boost::shared_ptr<Entity> first, bool second); 
  uint64_t forceTick(boost::shared_ptr<Entity> first, bool second); 
  uint32_t mayInteract(boost::shared_ptr<Player> first, BlockPos* second, Block* third); 
  void initializeLevel(LevelSettings* first); 
@@ -125,13 +152,13 @@ public:
  uint64_t entityRemovedExtra(boost::shared_ptr<Entity> first); 
  void entityRemoved(boost::shared_ptr<Entity> first); 
  uint64_t getEntity(uint32_t first, uint32_t second); 
- uint32_t addGlobalEntity(boost::shared_ptr<Entity> first); 
+ bool addGlobalEntity(boost::shared_ptr<Entity> first); 
  void broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third); 
  boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius, bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damageMultiplier);
  uint64_t blockEvent(BlockPos* first, Block* second, int32_t third, int32_t fourth); 
  uint64_t closeLevelStorage(); 
  void tickWeather(bool first); 
- void getChunkPollRange(); 
+ int getChunkPollRange(); 
  MinecraftServer* getServer(); 
  uint64_t setTimeAndAdjustBlockTicks(uint32_t first, int32_t second, uint32_t third); 
  void sendParticles(boost::shared_ptr<ServerPlayer> first, bool second, uint32_t third); 
@@ -145,7 +172,7 @@ public:
  void queueSendBlockUpdate(int32_t first, int32_t second, int32_t third, BlockState* fourth, BlockState* fifth); 
  bool atBlockEntityLimit(int32_t first, uint32_t second); 
  uint32_t setBlock(BlockPos* first, BlockState* second, int32_t third, bool fourth); 
- uint32_t addEntity(boost::shared_ptr<Entity> first); 
+ bool addEntity(boost::shared_ptr<Entity> first); 
  bool atEntityLimit(boost::shared_ptr<Entity> first); 
  bool newPrimedTntAllowed(); 
  bool newFallingBlockAllowed(); 

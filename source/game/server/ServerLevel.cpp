@@ -18,7 +18,11 @@
 #include "game/core/GameRules.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/chunk/ChunkPos.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/core/PIXNamedEvents.hpp"
@@ -89,15 +93,16 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
 }
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), saving(false), serverScoreboard(0), weatherTick(0)
+    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), saving(false), serverScoreboard(0), weatherTick(0)
 {
+    InitializeCriticalSection(&tickNextTickMutex);
 }
 
 ServerLevel::~ServerLevel()
 {
 }
 
-uint8_t ServerLevel::AllPlayersAreSleeping()
+bool ServerLevel::AllPlayersAreSleeping()
 {
     return allPlayersSleeping;
 }
@@ -230,15 +235,16 @@ void ServerLevel::staticCtor()
     sBlockUpdateThread->Run();
 }
 
-uint64_t ServerLevel::createChunkSource()
+ChunkSource* ServerLevel::createChunkSource()
 {
-    return chunkSource != 0 ? 1U : 0U;
+    ChunkStorage* storage = getLevelStorage()->createChunkStorage(mDimension);
+    ChunkGenerator* generator = mDimension->createRandomLevelGenerator();
+    return new ServerChunkCache(this, storage, generator);
 }
 
-ServerLevel* ServerLevel::postConstruct()
+void ServerLevel::postConstruct()
 {
     Level::postConstruct();
-    return this;
 }
 
 uint32_t ServerLevel::allPlayersAreSleeping()
@@ -431,46 +437,90 @@ void ServerLevel::tickBlocks()
     instructionSynchronize();
 }
 
-bool ServerLevel::isBlockToBeTickedAt(BlockPos* first, Block* second)
+bool ServerLevel::isBlockToBeTickedAt(const BlockPos& pos, Block* block)
 {
-    TickNextTickData target(*first, second);
-    for (std::vector<TickNextTickData>::const_iterator it = pendingTicks.begin();
-         it != pendingTicks.end(); ++it)
+    TickNextTickData data(pos, block);
+    std::vector<TickNextTickData>::iterator it = toBeTicked.begin();
+    while (it != toBeTicked.end())
     {
-        if (TickNextTickData::eq_test(*it, target))
-            return true;
+        if (*it == data)
+        {
+            break;
+        }
+        ++it;
     }
-    return false;
+    return it != toBeTicked.end();
 }
 
-bool ServerLevel::hasTickNextTick(BlockPos* first, Block* second)
+bool ServerLevel::hasTickNextTick(const BlockPos& pos, Block* block)
 {
-    TickNextTickData target(*first, second);
-    for (std::vector<TickNextTickData>::const_iterator it = scheduledTicks.begin();
-         it != scheduledTicks.end(); ++it)
+    TickNextTickData data(pos, block);
+    return tickNextTickSet.find(data) != tickNextTickSet.end();
+}
+
+void ServerLevel::addToTickNextTick(const BlockPos& pos, Block* block, int delay)
+{
+    addToTickNextTick(pos, block, delay, 0);
+}
+
+void ServerLevel::addToTickNextTick(const BlockPos& pos, Block* block, int delay, int priority)
+{
+    MemSect(0x1b);
+    if (Level::getInstaTick() && block->defaultBlockState()->getMaterial() != Material::AIR)
     {
-        if (TickNextTickData::eq_test(*it, target))
-            return true;
+        if (block->canInstantlyTick())
+        {
+            if (hasChunksAt(pos.offset(-8, -8, -8), pos.offset(8, 8, 8)))
+            {
+                const BlockState* state = getBlockState(pos);
+                if (state->getMaterial() != Material::AIR && state->getBlock() == block)
+                {
+                    state->getBlock()->tick(this, pos, state, mRandom);
+                    MemSect(0);
+                    return;
+                }
+            }
+            MemSect(0);
+            return;
+        }
+        delay = 1;
     }
-    return false;
+
+    TickNextTickData data(pos, block);
+    if (hasChunkAt(pos))
+    {
+        if (block->getCraftingMaterial() != Material::AIR)
+        {
+            data.delay(getGameTime() + delay);
+            data.setPriorityTilt(priority);
+        }
+        EnterCriticalSection(&tickNextTickMutex);
+        if (tickNextTickSet.find(data) == tickNextTickSet.end())
+        {
+            tickNextTickSet.insert(data);
+            tickNextTickList.insert(data);
+        }
+        LeaveCriticalSection(&tickNextTickMutex);
+    }
+    MemSect(0);
 }
 
-void ServerLevel::addToTickNextTick(BlockPos* first, Block* second, int32_t third)
+void ServerLevel::forceAddBlockTick(const BlockPos& pos, Block* block, int delay, int priority)
 {
-    addToTickNextTick(first, second, third, 0);
-}
+    TickNextTickData data(pos, block);
+    data.setPriorityTilt(priority);
+    if (block->defaultBlockState()->getMaterial() != Material::AIR)
+    {
+        data.delay(getGameTime() + delay);
+    }
 
-void ServerLevel::addToTickNextTick(BlockPos* first, Block* second, int32_t third, int32_t fourth)
-{
-    if (first && second)
-        scheduledTicks.push_back(TickNextTickData(*first, second));
-    (void)third;
-    (void)fourth;
-}
-
-void ServerLevel::forceAddBlockTick(BlockPos* first, Block* second, int32_t third, int32_t fourth)
-{
-    addToTickNextTick(first, second, third, fourth);
+    EnterCriticalSection(&tickNextTickMutex);
+    if (tickNextTickSet.find(data) == tickNextTickSet.end())
+    {
+        tickNextTickSet.insert(data);
+        tickNextTickList.insert(data);
+    }
+    LeaveCriticalSection(&tickNextTickMutex);
 }
 
 void ServerLevel::resetEmptyTime()
@@ -484,30 +534,148 @@ void ServerLevel::tickEntities()
     Level::tick();
 }
 
-uint64_t ServerLevel::tickServerPlayers()
+void ServerLevel::tickServerPlayers()
 {
     if (server && server->getPlayers())
         server->getPlayers()->tick();
-    return 1;
 }
 
-bool ServerLevel::tickPendingTicks(bool first)
+bool ServerLevel::tickPendingTicks(bool runAll)
 {
-    (void)first;
-    return !pendingTicks.empty();
+    EnterCriticalSection(&tickNextTickMutex);
+
+    int count = (int)tickNextTickList.size();
+    if (count > 1000)
+    {
+        count = 1000;
+    }
+
+    for (int i = 0; i < count; ++i)
+    {
+        std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator entry = tickNextTickList.begin();
+        TickNextTickData data = *entry;
+        if (!runAll && data.triggerTick > getGameTime())
+        {
+            break;
+        }
+        tickNextTickList.erase(entry);
+        tickNextTickSet.erase(data);
+        toBeTicked.push_back(data);
+    }
+
+    PIXBeginNamedEvent(1.035f, "Tick toBeTicked ticks (length=%i)", (int)toBeTicked.size());
+
+    std::vector<TickNextTickData>::iterator it = toBeTicked.begin();
+    while (it != toBeTicked.end())
+    {
+        TickNextTickData data = *it;
+        it = toBeTicked.erase(it);
+        if (!hasChunksAt(data.pos.offset(0, 0, 0), data.pos.offset(0, 0, 0)))
+        {
+            addToTickNextTick(data.pos, data.getBlock(), 0);
+        }
+        else
+        {
+            const BlockState* state = getBlockState(data.pos);
+            Block* block = state->getBlock();
+            const BlockState* extraState = getExtraBlockState(data.pos);
+            Block* extraBlock = extraState->getBlock();
+            if (block->getCraftingMaterial() != Material::AIR
+                && Block::isMatching(block, data.getBlock()))
+            {
+                PIXBeginNamedEvent(1.035f, "Tick block '%i'", Block::getId(block));
+                block->tick(this, data.pos, state, mRandom);
+                PIXEndNamedEvent();
+            }
+            else if (extraBlock->getCraftingMaterial() != Material::AIR
+                     && Block::isMatching(extraBlock, data.getBlock()))
+            {
+                PIXBeginNamedEvent(1.035f, "Tick Extra block '%i'", Block::getId(block));
+                extraBlock->tick(this, data.pos, extraState, mRandom);
+                PIXEndNamedEvent();
+            }
+        }
+    }
+
+    PIXEndNamedEvent();
+
+    bool ticksRemaining = !tickNextTickList.empty();
+    toBeTicked.clear();
+    LeaveCriticalSection(&tickNextTickMutex);
+    return ticksRemaining;
 }
 
-std::vector<TickNextTickData>* ServerLevel::fetchTicksInChunk(LevelChunk* first, bool second)
+std::vector<TickNextTickData>* ServerLevel::fetchTicksInChunk(LevelChunk* chunk, bool removeTicks)
 {
-    (void)first;
-    (void)second;
-    return &pendingTicks;
+    ChunkPos chunkPos = chunk->getPos();
+    BoundingBox box(chunkPos.x * 16 - 2, 0, chunkPos.z * 16 - 2,
+                    chunkPos.x * 16 + 16, 256, chunkPos.z * 16 + 16);
+    return fetchTicksInArea(&box, removeTicks);
 }
 
-std::vector<TickNextTickData>* ServerLevel::fetchTicksInArea(BoundingBox* first, bool second)
+std::vector<TickNextTickData>* ServerLevel::fetchTicksInArea(BoundingBox* box, bool removeTicks)
 {
-    (void)first; (void)second;
-    return &pendingTicks;
+    EnterCriticalSection(&tickNextTickMutex);
+
+    std::vector<TickNextTickData>* ticks = new std::vector<TickNextTickData>();
+
+    for (int pass = 0; pass < 2; ++pass)
+    {
+        if (pass == 0)
+        {
+            std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator it = tickNextTickList.begin();
+            while (it != tickNextTickList.end())
+            {
+                TickNextTickData data = *it;
+                if (data.pos.x >= box->x0 && data.pos.x < box->x1
+                    && data.pos.z >= box->z0 && data.pos.z < box->z1)
+                {
+                    if (removeTicks)
+                    {
+                        tickNextTickSet.erase(data);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                    ticks->push_back(data);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
+        else
+        {
+            std::vector<TickNextTickData>::iterator it = toBeTicked.begin();
+            while (it != toBeTicked.end())
+            {
+                TickNextTickData data = *it;
+                if (data.pos.x >= box->x0 && data.pos.x < box->x1
+                    && data.pos.z >= box->z0 && data.pos.z < box->z1)
+                {
+                    if (removeTicks)
+                    {
+                        tickNextTickList.erase(data);
+                        it = toBeTicked.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                    ticks->push_back(data);
+                }
+                else
+                {
+                    ++it;
+                }
+            }
+        }
+    }
+
+    LeaveCriticalSection(&tickNextTickMutex);
+    return ticks;
 }
 
 void ServerLevel::isAnimalsAllowed()
@@ -518,13 +686,11 @@ void ServerLevel::isNpcsAllowed()
 {
 }
 
-uint64_t ServerLevel::tick(boost::shared_ptr<Entity> first, bool second)
+void ServerLevel::tick(boost::shared_ptr<Entity> first, bool second)
 {
-    if (!first)
-        return 0;
     (void)second;
-    first->tick();
-    return 1;
+    if (first)
+        first->tick();
 }
 
 uint64_t ServerLevel::forceTick(boost::shared_ptr<Entity> first, bool second)
@@ -619,9 +785,9 @@ uint64_t ServerLevel::getEntity(uint32_t first, uint32_t second)
     return 0;
 }
 
-uint32_t ServerLevel::addGlobalEntity(boost::shared_ptr<Entity> first)
+bool ServerLevel::addGlobalEntity(boost::shared_ptr<Entity> first)
 {
-    return first && Level::addGlobalEntity(first) ? 1U : 0U;
+    return first && Level::addGlobalEntity(first);
 }
 
 void ServerLevel::broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third)
@@ -699,8 +865,10 @@ void ServerLevel::tickWeather(bool first)
         players->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(2, 0.0f)), mDimension->getType()->getId());
 }
 
-void ServerLevel::getChunkPollRange()
+int ServerLevel::getChunkPollRange()
 {
+    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+    return players->getViewDistance();
 }
 
 MinecraftServer* ServerLevel::getServer()
@@ -780,12 +948,12 @@ uint32_t ServerLevel::setBlock(BlockPos* first, BlockState* second, int32_t thir
     return first && second && Level::setBlock(*first, second, third, fourth) ? 1U : 0U;
 }
 
-uint32_t ServerLevel::addEntity(boost::shared_ptr<Entity> first)
+bool ServerLevel::addEntity(boost::shared_ptr<Entity> first)
 {
     if (!first || atEntityLimit(first))
-        return 0;
+        return false;
     entityAdded(first);
-    return 1;
+    return true;
 }
 
 bool ServerLevel::atEntityLimit(boost::shared_ptr<Entity> first)
