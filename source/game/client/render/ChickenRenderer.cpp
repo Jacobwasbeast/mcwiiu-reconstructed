@@ -6,7 +6,7 @@
 #include "game/core/Mth.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation CHICKEN_LOCATION;
+static ResourceLocation CHICKEN_LOCATION((_TEXTURE_NAME)21);
 
 ChickenRenderer::ChickenRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius)
@@ -17,7 +17,7 @@ ChickenRenderer::~ChickenRenderer()
 {
 }
 
-const ResourceLocation* ChickenRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* ChickenRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     return &CHICKEN_LOCATION;
 }

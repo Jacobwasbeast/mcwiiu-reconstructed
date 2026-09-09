@@ -15,7 +15,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-static ResourceLocation illusionIllagerLocation;
+static ResourceLocation ILLUSION_ILLAGER_LOCATION((_TEXTURE_NAME)201);
 
 IllusionIllagerRenderer::IllusionIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
@@ -29,7 +29,7 @@ IllusionIllagerRenderer::~IllusionIllagerRenderer()
 
 const ResourceLocation* IllusionIllagerRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    return &illusionIllagerLocation;
+    return &ILLUSION_ILLAGER_LOCATION;
 }
 
 void IllusionIllagerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
@@ -60,7 +60,7 @@ void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x
                             Mth::cos(phase + (float)(bob * 0.7f)) * 0.025 + z + offset->z,
                             yaw, partialTick);
     }
-    delete[] offsets.data;
+    delete offsets.data;
 }
 
 void IllusionIllagerRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)

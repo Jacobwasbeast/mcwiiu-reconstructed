@@ -4,6 +4,7 @@
 #include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Tesselator.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
@@ -15,8 +16,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/FallingBlockEntity.hpp"
-
-static ResourceLocation FALLING_BLOCK_LOCATION((_TEXTURE_NAME)0);
 
 FallingBlockRenderer::FallingBlockRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
@@ -36,7 +35,7 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     if (blockState == NULL)
         return;
 
-    bindTexture(&FALLING_BLOCK_LOCATION);
+    bindTexture(&BLOCKS_LOCATION);
 
     BlockPos blockPos(fallingBlock);
     Level* level = fallingBlock->getLevel();
@@ -91,5 +90,5 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
 
 const ResourceLocation* FallingBlockRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    return &FALLING_BLOCK_LOCATION;
+    return &BLOCKS_LOCATION;
 }

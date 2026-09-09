@@ -19,11 +19,11 @@ public:
     int getModelVersion();
 
     bool mHoldingItem;
+    ModelPart* mWitchNose;
     ModelPart* mHat;
     ModelPart* mHat2;
     ModelPart* mHat3;
     ModelPart* mHat4;
-    ModelPart* mWitchNose;
 };
 
 #endif

@@ -103,7 +103,7 @@ void WitherBossModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
 
     mUpperBodyParts[1]->mXRot = headRotation;
     mUpperBodyParts[2]->setPos(-2.0f, cosf(headRotation) * 10.0f + 6.9f, sinf(headRotation) * 10.0f - 0.5f);
-    mUpperBodyParts[2]->mXRot = (cosf(angle) * 0.1f + 0.265f) * 0.15f;
+    mUpperBodyParts[2]->mXRot = (cosf(angle) * 0.1f + 0.265f) * 3.1415927f;
     mHeads[0]->mXRot = headPitch * 0.01745329238474369f;
     mHeads[0]->mYRot = netHeadYaw * 0.01745329238474369f;
 }
@@ -112,9 +112,9 @@ void WitherBossModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, f
                                       float limbSwingAmount, float partialTicks)
 {
     boost::shared_ptr<WitherBoss> wither = boost::dynamic_pointer_cast<WitherBoss>(entity);
-    mHeads[1]->mYRot = (wither->getHeadYRot(0) - entity->mYRot) * 0.01745329238474369f;
+    mHeads[1]->mYRot = (wither->getHeadYRot(0) - entity->mYBodyRot) * 0.01745329238474369f;
     mHeads[1]->mXRot = wither->getHeadXRot(0) * 0.01745329238474369f;
-    mHeads[2]->mYRot = (wither->getHeadYRot(1) - entity->mYRot) * 0.01745329238474369f;
+    mHeads[2]->mYRot = (wither->getHeadYRot(1) - entity->mYBodyRot) * 0.01745329238474369f;
     mHeads[2]->mXRot = wither->getHeadXRot(1) * 0.01745329238474369f;
 }
 

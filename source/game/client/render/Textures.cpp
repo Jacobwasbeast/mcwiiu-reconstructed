@@ -20,8 +20,8 @@
 #include "game/item/ItemInstance.hpp"
 
 static int sIndexedTextures[256];
-static ResourceLocation sTerrainLocation((_TEXTURE_NAME)0);
-static ResourceLocation sItemsLocation((_TEXTURE_NAME)1);
+ResourceLocation BLOCKS_LOCATION((_TEXTURE_NAME)241);
+ResourceLocation ITEM_LOCATION((_TEXTURE_NAME)240);
 static bool sTextureMipmap = true;
 
 Textures::Textures(TexturePackRepository* texturePackRepository, Options* options)
@@ -249,8 +249,8 @@ void Textures::bindTextureLayers(const ResourceLocation* location)
 
 ResourceLocation* Textures::getTextureLocation(int textureName)
 {
-    if (textureName == 0) return &sTerrainLocation;
-    if (textureName == 1) return &sItemsLocation;
+    if (textureName == 0) return &BLOCKS_LOCATION;
+    if (textureName == 1) return &ITEM_LOCATION;
     return NULL;
 }
 

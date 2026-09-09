@@ -33,8 +33,7 @@
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
-static ResourceLocation ITEM_FRAME_LOCATION((_TEXTURE_NAME)0);
-static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)2);
+static ResourceLocation MAP_BACKGROUND_LOCATION((_TEXTURE_NAME)13);
 
 static float itemFrameDisplayRotation(int rotation)
 {
@@ -61,7 +60,7 @@ void ItemFrameRenderer::registerTerrainTextures(IconRegister* iconRegister)
 
 void ItemFrameRenderer::drawBlockFrame(const boost::shared_ptr<ItemFrame>& itemFrame)
 {
-    mDispatcher->mTextures->bindTexture(&ITEM_FRAME_LOCATION);
+    mDispatcher->mTextures->bindTexture(&BLOCKS_LOCATION);
     GlStateManager::pushMatrix();
     if (mBlockFrameDisplayList == -1)
     {
@@ -97,7 +96,7 @@ void ItemFrameRenderer::drawBlockFrame(const boost::shared_ptr<ItemFrame>& itemF
 void ItemFrameRenderer::drawFrame(const boost::shared_ptr<ItemFrame>& itemFrame)
 {
     GlStateManager::pushMatrix();
-    mDispatcher->mTextures->bindTexture(&ITEM_FRAME_LOCATION);
+    mDispatcher->mTextures->bindTexture(&BLOCKS_LOCATION);
     if (mFrameDisplayList == -1)
     {
         mFrameDisplayList = MemoryTracker::genLists(1);

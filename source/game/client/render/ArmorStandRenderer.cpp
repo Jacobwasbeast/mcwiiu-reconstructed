@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -12,6 +13,8 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/ElytraLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
+
+static ResourceLocation ARMOR_STAND_LOCATION((_TEXTURE_NAME)121);
 
 ArmorStandRenderer::ArmorStandRenderer(EntityRenderDispatcher* dispatcher)
     : LivingEntityRenderer(dispatcher, new ArmorStandModel(0.0f, ModelDefinition()), 0.0f)
@@ -31,30 +34,28 @@ void ArmorStandRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     if (armorStand->isMarker())
     {
-        mShadowRadius = 0.0f;
+        mItemFrame = true;
     }
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (armorStand->isMarker())
     {
-        mShadowRadius = 0.5f;
+        mItemFrame = false;
     }
 }
 
-const ResourceLocation* ArmorStandRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* ArmorStandRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
-    return &location;
+    return &ARMOR_STAND_LOCATION;
 }
 
-void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw, float partialTicks)
+void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float, float rotationYaw, float partialTicks)
 {
+    boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     GlStateManager::rotatef(180.0f - rotationYaw, 0.0f, 1.0f, 0.0f);
-    ArmorStand* armorStand = (ArmorStand*)entity.get();
-    double time = static_cast<double>(getLevel()->getGameTime() - armorStand->mTickCount) + partialTicks;
-    if (time < 5.0)
+    float time = static_cast<float>(armorStand->mLevel->getGameTime() - armorStand->mLastHit) + partialTicks;
+    if (time < 5.0f)
     {
-        GlStateManager::rotatef(static_cast<float>(std::sin(static_cast<float>(time / 1.5) * 3.1415927f) * 3.0f),
-                                0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(std::sin(time / 1.5f * 3.1415927f) * 3.0f, 0.0f, 1.0f, 0.0f);
     }
 }
 
@@ -64,7 +65,11 @@ bool ArmorStandRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     {
         return false;
     }
-    return entity->isCustomNameVisible() || entity->hasCustomName();
+    if (!entity->shouldShowName() && !entity->hasCustomName())
+    {
+        return false;
+    }
+    return entity == mDispatcher->mPlayer;
 }
 
 Model* ArmorStandRenderer::createModel(const ModelDefinition& definition)

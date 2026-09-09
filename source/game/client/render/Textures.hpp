@@ -22,6 +22,9 @@ class TextureAtlas;
 class TextureAtlasSprite;
 class TexturePackRepository;
 
+extern ResourceLocation BLOCKS_LOCATION;
+extern ResourceLocation ITEM_LOCATION;
+
 class Textures : public boost::unordered_map<std::wstring, int>
 {
 public:

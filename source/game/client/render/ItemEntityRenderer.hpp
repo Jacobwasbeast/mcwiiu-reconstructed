@@ -22,12 +22,12 @@ public:
     virtual ~ItemEntityRenderer();
 
     void renderItemBillboard(boost::shared_ptr<ItemEntity> entity, TextureAtlasSprite* sprite, int count,
-                             float red, float green, float blue, float alpha);
+                             float partialTick, float red, float green, float blue);
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void SetItemFrame(bool itemFrame);
-    float getRenderAmount(not_null_ptr<ItemInstance> item);
+    int getRenderAmount(not_null_ptr<ItemInstance> item);
 
 private:
     ItemRenderer* mItemRenderer;

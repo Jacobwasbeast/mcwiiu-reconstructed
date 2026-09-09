@@ -17,8 +17,10 @@
 #include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static ResourceLocation BANNER_LOCATION((_TEXTURE_NAME)59);
-static ResourceLocation BANNER_PATTERN_LOCATION((_TEXTURE_NAME)60);
+static ResourceLocation* BANNER_LOCATION = new ResourceLocation((_TEXTURE_NAME)146);
+static int BANNER_PATTERN_TEXTURES[2] = {146, 147};
+static ResourceLocation* BANNER_PATTERN_LOCATION =
+    new ResourceLocation(arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));
 
 BannerRenderer::BannerRenderer()
     : mModel(NULL)
@@ -144,13 +146,13 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
 
     if (hasTexture(blockEntity))
     {
-        bindTexture(&BANNER_LOCATION);
+        bindTexture(BANNER_LOCATION);
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.6666667F, -0.6666667F, -0.6666667F);
         mModel->mFlag->mShow = false;
         mModel->render();
         mModel->mFlag->mShow = true;
-        bindTextureLayers(&BANNER_PATTERN_LOCATION);
+        bindTextureLayers(BANNER_PATTERN_LOCATION);
         gRenderer->TextureBindMask(1);
         boost::shared_ptr<BannerBlockEntity> banner = boost::static_pointer_cast<BannerBlockEntity>(blockEntity);
         setupLayeredParams(banner->getPatterns(), banner->getColors(), false);

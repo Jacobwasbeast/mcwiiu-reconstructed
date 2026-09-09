@@ -20,13 +20,13 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/Villager.hpp"
 
-static ResourceLocation sVillagerTexture;
-static ResourceLocation sFarmerTexture;
-static ResourceLocation sLibrarianTexture;
-static ResourceLocation sPriestTexture;
-static ResourceLocation sBlacksmithTexture;
-static ResourceLocation sButcherTexture;
-static ResourceLocation sItemTexture;
+static ResourceLocation VILLAGER_LOCATION((_TEXTURE_NAME)62);
+static ResourceLocation FARMER_LOCATION((_TEXTURE_NAME)63);
+static ResourceLocation LIBRARIAN_LOCATION((_TEXTURE_NAME)64);
+static ResourceLocation PRIEST_LOCATION((_TEXTURE_NAME)65);
+static ResourceLocation SMITH_LOCATION((_TEXTURE_NAME)66);
+static ResourceLocation BUTCHER_LOCATION((_TEXTURE_NAME)67);
+static ResourceLocation ITEM_LOCATION((_TEXTURE_NAME)240);
 
 VillagerRenderer::VillagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new VillagerModel(0.0F, ModelDefinition()), 0.5F)
@@ -60,7 +60,7 @@ void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
     Minecraft* minecraft = Minecraft::GetInstance();
     EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-    bindTexture(&sItemTexture);
+    bindTexture(&ITEM_LOCATION);
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x,
@@ -91,19 +91,19 @@ const ResourceLocation* VillagerRenderer::getTextureLocation(boost::shared_ptr<E
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
     int profession = villager->getProfession();
     if (profession == 0)
-        return &sFarmerTexture;
+        return &FARMER_LOCATION;
     if (profession == 1)
-        return &sLibrarianTexture;
+        return &LIBRARIAN_LOCATION;
     if (profession < 3)
-        return &sPriestTexture;
+        return &PRIEST_LOCATION;
     if (profession == 3)
-        return &sBlacksmithTexture;
+        return &SMITH_LOCATION;
     if (profession == 4)
-        return &sButcherTexture;
-    return &sVillagerTexture;
+        return &BUTCHER_LOCATION;
+    return &VILLAGER_LOCATION;
 }
 
-void VillagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+void VillagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float)
 {
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
     if (villager->isBaby())
@@ -116,7 +116,6 @@ void VillagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float part
         mShadowRadius = 0.5F;
         GlStateManager::scalef(0.9375F, 0.9375F, 0.9375F);
     }
-    (void)partialTicks;
 }
 
 Model* VillagerRenderer::createModel(const ModelDefinition& definition)

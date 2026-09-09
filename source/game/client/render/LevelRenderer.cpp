@@ -1,78 +1,91 @@
 #include "game/client/render/LevelRenderer.hpp"
 
-#include <algorithm>
 #include <cmath>
+#include <cstring>
 
-#include "game/client/audio/SoundEngine.hpp"
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
-#include "game/client/render/BlockRenderer.hpp"
-#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Font.hpp"
-#include "game/client/render/ParticleEngine.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/GlStateManager.hpp"
-#include "game/core/Gui.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/Lighting.hpp"
+#include "game/core/MemoryTracker.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Options.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/util/Random.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/BlockEntity.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/LeafBlock.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
-#include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-unsigned int gChunkDimensionSizes[2] = { 0x19000, 0x1a900 };
-unsigned int gChunkDimensionBases[2] = { 0, 0x19000 };
-static const int gEndChunkCenterX = 0;
-static const int gEndChunkCenterZ = 0;
-static const int gEndChunkOuterX = 0;
-static const int gEndChunkOuterZ = 25;
-static const unsigned int gEndChunkData = 0x1a900;
+static const unsigned int gChunkDimensionSizes[2] = { 80, 20 };
+
+int gChunkDimensionBases[4];
+int gEndInnerChunkX;
+int gEndInnerChunkZ;
+int gEndOuterChunkX;
+int gEndOuterChunkZ;
+
+LevelRenderer* gLevelRenderer;
+
+static boost::unordered_map<int, int> gDisplayListLengths;
 
 int getChunkIndex(int dimension, int x, int y, int z)
 {
-    unsigned int dimensionSize;
-    unsigned int xOffset;
-    unsigned int zOffset;
-    int centeredOffset;
-
-    if (dimension < 2)
+    if ((unsigned int)dimension < 2)
     {
-        dimensionSize = gChunkDimensionSizes[dimension];
-        centeredOffset = ((int)dimensionSize >> 1) +
-                         ((int)dimensionSize < 0 && (dimensionSize & 1) != 0);
-        z += centeredOffset;
-        centeredOffset += x;
-        if (centeredOffset >= 0 && centeredOffset < (int)dimensionSize &&
-            y < 16 && z >= 0 && z < (int)dimensionSize)
-            return (int)(gChunkDimensionBases[dimension] +
-                         ((centeredOffset * dimensionSize + z) * 16) + y);
+        unsigned int size = gChunkDimensionSizes[dimension];
+        int half = (int)size / 2;
+        int offsetZ = half + z;
+        int offsetX = half + x;
+
+        if (offsetX >= 0 && offsetX < (int)size && (unsigned int)y < 16 && offsetZ >= 0 &&
+            offsetZ < (int)size)
+        {
+            return gChunkDimensionBases[dimension] + (offsetX * size + offsetZ) * 16 + y;
+        }
+
+        return -1;
     }
-    else
+
+    if (dimension != 2)
     {
-        if (dimension != 2)
-            return -1;
-
-        xOffset = (unsigned int)((x + 9) - gEndChunkCenterX);
-        zOffset = (unsigned int)((z + 9) - gEndChunkCenterZ);
-        if (xOffset < 0x12 && y < 16 && zOffset < 0x12)
-            return (int)(gEndChunkData + xOffset * 0x120 + zOffset * 16 + y);
-
-        xOffset = (unsigned int)((x + 6) - gEndChunkOuterX);
-        zOffset = (unsigned int)((z + 6) - gEndChunkOuterZ);
-        if (xOffset < 0xc && y < 16 && zOffset < 0xc)
-            return (int)(gEndChunkData + xOffset * 0xc0 + zOffset * 16 + y + 0x1440);
+        return -1;
     }
+
+    unsigned int innerX = (x + 9) - gEndInnerChunkX;
+    unsigned int innerZ = (z + 9) - gEndInnerChunkZ;
+
+    if (innerX < 18 && (unsigned int)y < 16 && innerZ < 18)
+    {
+        return gChunkDimensionBases[2] + innerX * 0x120 + innerZ * 16 + y;
+    }
+
+    unsigned int outerX = (x + 6) - gEndOuterChunkX;
+    unsigned int outerZ = (z + 6) - gEndOuterChunkZ;
+
+    if (outerX < 12 && (unsigned int)y < 16 && outerZ < 12)
+    {
+        return gChunkDimensionBases[2] + outerX * 0xc0 + outerZ * 16 + y + 0x1440;
+    }
+
     return -1;
 }
-
-unsigned int gGlobalChunkCount = 0x1c640;
 
 LevelRenderer::DestroyedBlockManager::RecentBlock::RecentBlock(const BlockPos& blockPos, Level* sourceLevel)
     : pos(blockPos), level(sourceLevel), ticks(20), remove(false)
@@ -82,7 +95,9 @@ LevelRenderer::DestroyedBlockManager::RecentBlock::RecentBlock(const BlockPos& b
 LevelRenderer::DestroyedBlockManager::RecentBlock::~RecentBlock()
 {
     for (std::vector<AABB*>::iterator box = boxes.begin(); box != boxes.end(); ++box)
+    {
         delete *box;
+    }
 }
 
 LevelRenderer::DestroyedBlockManager::DestroyedBlockManager()
@@ -90,67 +105,710 @@ LevelRenderer::DestroyedBlockManager::DestroyedBlockManager()
     InitializeCriticalSection(&lock);
 }
 
-LevelRenderer::DestroyedBlockManager::~DestroyedBlockManager()
-{
-    for (std::vector<RecentBlock*>::iterator block = blocks.begin(); block != blocks.end(); ++block)
-        delete *block;
-    DeleteCriticalSection(&lock);
-}
-
 void LevelRenderer::DestroyedBlockManager::tick()
 {
     EnterCriticalSection(&lock);
-    std::vector<RecentBlock*>::iterator block = blocks.begin();
-    while (block != blocks.end())
+
+    for (unsigned int index = 0; index < blocks.size();)
     {
-        --(*block)->ticks;
-        if ((*block)->ticks == 0)
+        if (--blocks[index]->ticks == 0)
         {
-            delete *block;
-            *block = blocks.back();
+            delete blocks[index];
+            blocks[index] = blocks[blocks.size() - 1];
             blocks.pop_back();
         }
         else
         {
-            ++block;
+            ++index;
         }
     }
+
     LeaveCriticalSection(&lock);
 }
 
 void LevelRenderer::DestroyedBlockManager::updatedChunkAt(Level* sourceLevel, const BlockPos& chunkPos, int radius)
 {
     EnterCriticalSection(&lock);
-    std::vector<RecentBlock*>::iterator block = blocks.begin();
-    while (block != blocks.end())
+
+    for (unsigned int index = 0; index < blocks.size(); ++index)
     {
-        RecentBlock* recent = *block;
-        if (recent->level == sourceLevel &&
-            recent->pos.x >= chunkPos.x && recent->pos.x < chunkPos.x + 16 &&
-            recent->pos.y >= chunkPos.y && recent->pos.y < chunkPos.y + 16 &&
-            recent->pos.z >= chunkPos.z && recent->pos.z < chunkPos.z + 16)
+        RecentBlock* recent = blocks[index];
+
+        if (recent->level == sourceLevel && recent->pos.x >= chunkPos.x &&
+            recent->pos.x < chunkPos.x + 16 && recent->pos.y >= chunkPos.y &&
+            recent->pos.y < chunkPos.y + 16 && recent->pos.z >= chunkPos.z &&
+            recent->pos.z < chunkPos.z + 16)
+        {
             recent->remove = true;
-        ++block;
+        }
     }
 
     if (radius < 2)
     {
-        block = blocks.begin();
-        while (block != blocks.end())
+        for (unsigned int index = 0; index < blocks.size();)
         {
-            if ((*block)->remove)
+            if (blocks[index]->remove)
             {
-                delete *block;
-                *block = blocks.back();
+                delete blocks[index];
+                blocks[index] = blocks[blocks.size() - 1];
                 blocks.pop_back();
             }
             else
             {
-                ++block;
+                ++index;
             }
         }
     }
+
     LeaveCriticalSection(&lock);
+}
+
+void LevelRenderer::DestroyedBlockManager::destroyingBlockAt(Level* sourceLevel, const BlockPos& blockPos)
+{
+    EnterCriticalSection(&lock);
+
+    RecentBlock* recent = new RecentBlock(blockPos, sourceLevel);
+    AABB* bounds = AABB::newTemp((double)blockPos.x, (double)blockPos.y, (double)blockPos.z,
+                                 (double)(blockPos.x + 1), (double)(blockPos.y + 1),
+                                 (double)(blockPos.z + 1));
+    const BlockState* state = Minecraft::GetInstance()->mLevel->getBlockState(blockPos);
+    Block* block = state->getBlock();
+
+    if (block != 0)
+    {
+        boost::shared_ptr<Entity> none;
+        block->addCollisionAABBs(state, sourceLevel, blockPos, bounds, &recent->boxes, none, false);
+    }
+
+    for (unsigned int index = 0; index < recent->boxes.size(); ++index)
+    {
+        AABB* box = recent->boxes[index];
+        recent->boxes[index] = AABB::newPermanent(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX,
+                                                  box->mMaxY, box->mMaxZ);
+    }
+
+    blocks.push_back(recent);
+
+    LeaveCriticalSection(&lock);
+}
+
+void LevelRenderer::DestroyedBlockManager::addAABBs(Level* sourceLevel, const AABB* area, std::vector<AABB*>* result)
+{
+    EnterCriticalSection(&lock);
+
+    for (unsigned int index = 0; index < blocks.size(); ++index)
+    {
+        if (blocks[index]->level != sourceLevel)
+        {
+            continue;
+        }
+
+        for (unsigned int box = 0; box < blocks[index]->boxes.size(); ++box)
+        {
+            if (blocks[index]->boxes[box]->intersects(area->mMinX, area->mMinY, area->mMinZ,
+                                                      area->mMaxX, area->mMaxY, area->mMaxZ))
+            {
+                AABB* hit = blocks[index]->boxes[box];
+                result->push_back(AABB::newTemp(hit->mMinX, hit->mMinY, hit->mMinZ, hit->mMaxX,
+                                                hit->mMaxY, hit->mMaxZ));
+            }
+        }
+    }
+
+    LeaveCriticalSection(&lock);
+}
+
+LevelRenderer::LevelRenderer(Minecraft* minecraft, Textures* textures)
+    : mBlockEntities(11), mRenderableBlockEntities(11), mDestroyingBlocks(11)
+{
+    mEntityRenderDispatcher = Minecraft::GetInstance()->getEntityRenderDispatcher();
+
+    for (int player = 0; player < 4; ++player)
+    {
+        mLevels[player] = 0;
+        mClipChunks[player].data = 0;
+        mClipChunks[player].length = 0;
+        mActivePlayers[player] = 0;
+        mBlockRenderers[player] = 0;
+        mLastSortX[player] = -9999.0;
+        mLastSortY[player] = -9999.0;
+        mLastSortZ[player] = -9999.0;
+    }
+
+    mChunkGridWidth = 0;
+    mChunkGridHeight = 0;
+    mChunkGridDepth = 0;
+    mDisplayList = 0;
+    mRenderTick = 0;
+    mStarList = 0;
+    mSkyList = 0;
+    mDarkList = 0;
+    mMinChunkX = 0;
+    mMinChunkY = 0;
+    mMinChunkZ = 0;
+    mMaxChunkX = 0;
+    mMaxChunkY = 0;
+    mMaxChunkZ = 0;
+    mLastViewDistance = -1;
+    mSkippedFrames = 2;
+    mCountEntitiesTotal = 0;
+    mCountEntitiesRendered = 0;
+    mCountEntitiesHidden = 0;
+    mField0x128 = 0;
+    mField0x180 = 0;
+    mField0x184 = MemoryTracker::genLists(1);
+
+    for (int counter = 0; counter < 5; ++counter)
+    {
+        mRenderCounters[counter] = 0;
+    }
+
+    InitializeCriticalSection(&mChunkMutex);
+    InitializeCriticalSection(&mBlockEntityMutex);
+    InitializeCriticalSection(&mLevelMutex);
+    InitializeCriticalSection(&mRenderableBlockEntityMutex);
+
+    mTextures = textures;
+    mCloudOffset = 0.0f;
+    mHasDirtyChunks = false;
+    mLastRebuildTime = 0;
+    mMinecraft = minecraft;
+
+    mDisplayList = MemoryTracker::genLists(getGlobalChunkCount() * 3);
+    mGlobalChunkFlags = new unsigned char[getGlobalChunkCount()];
+    memset(mGlobalChunkFlags, 0, getGlobalChunkCount());
+
+    mStarList = MemoryTracker::genLists(4);
+
+    GlStateManager::pushMatrix();
+    GlStateManager::newList(mStarList, 0);
+    renderStars();
+    GlStateManager::endList(0);
+    createCloudMesh();
+    GlStateManager::popMatrix();
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    mSkyList = mStarList + 1;
+    GlStateManager::newList(mSkyList, 0);
+    GlStateManager::depthMask(false);
+
+    for (int skyX = -384; skyX <= 384; skyX += 64)
+    {
+        for (int skyZ = -384; skyZ <= 384; skyZ += 64)
+        {
+            builder->begin();
+            builder->vertex((float)skyX, 16.0f, (float)skyZ);
+            builder->vertex((float)(skyX + 64), 16.0f, (float)skyZ);
+            builder->vertex((float)(skyX + 64), 16.0f, (float)(skyZ + 64));
+            builder->vertex((float)skyX, 16.0f, (float)(skyZ + 64));
+            builder->end();
+        }
+    }
+
+    GlStateManager::endList(0);
+
+    mDarkList = mStarList + 2;
+    GlStateManager::newList(mDarkList, 0);
+    builder->begin();
+
+    for (int darkX = -384; darkX <= 384; darkX += 64)
+    {
+        for (int darkZ = -384; darkZ <= 384; darkZ += 64)
+        {
+            builder->vertex((float)(darkX + 64), -16.0f, (float)darkZ);
+            builder->vertex((float)darkX, -16.0f, (float)darkZ);
+            builder->vertex((float)darkX, -16.0f, (float)(darkZ + 64));
+            builder->vertex((float)(darkX + 64), -16.0f, (float)(darkZ + 64));
+        }
+    }
+
+    builder->end();
+    GlStateManager::endList(0);
+
+    mHaloRingList = mStarList + 3;
+    GlStateManager::newList(mHaloRingList, 0);
+    builder->begin(1);
+    builder->color(0xffffff);
+
+    float ringU = 0.0f;
+
+    for (int segment = 0; segment < 51; ++segment)
+    {
+        float distance = Mth::abs((float)segment - 25.0f);
+        float over = distance < 19.0f ? 0.0f : distance - 19.0f;
+        float halfHeight = (over * over) / 36.0f * 10.0f + 1.0f;
+        float angle = (float)segment * 0.12566371f;
+
+        builder->vertexUV(100.0f * cosf(angle) - 99.9f, 100.0f * sinf(angle), -halfHeight, ringU, 0.0f);
+        builder->vertexUV(100.0f * cosf(angle) - 99.9f, 100.0f * sinf(angle), halfHeight, ringU, 1.0f);
+
+        ringU -= 0.25;
+    }
+
+    builder->end();
+    GlStateManager::endList(0);
+
+    gLevelRenderer = this;
+    mDestroyedBlocks = new DestroyedBlockManager();
+}
+
+LevelRenderer::~LevelRenderer()
+{
+}
+
+unsigned int LevelRenderer::getGlobalChunkCount()
+{
+    return gChunkDimensionBases[3];
+}
+
+void LevelRenderer::renderStars()
+{
+    Random random(10842LL);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    builder->begin();
+
+    for (int star = 0; star < 1500; ++star)
+    {
+        double x = (double)(random.nextFloat() * 2.0f - 1.0f);
+        double y = (double)(random.nextFloat() * 2.0f - 1.0f);
+        double z = (double)(random.nextFloat() * 2.0f - 1.0f);
+        double size = (double)(random.nextFloat() * 0.1f + 0.15f);
+        double lengthSqr = z * z + x * x + y * y;
+
+        if (lengthSqr < 1.0 && lengthSqr > 0.01)
+        {
+            double scale = 1.0 / sqrt(lengthSqr);
+
+            x = x * scale;
+            y = y * scale;
+            z = z * scale;
+
+            double centreX = x * 160.0;
+            double centreY = y * 160.0;
+            double centreZ = z * 160.0;
+            double yaw = atan2(x, z);
+            double sinYaw = sin(yaw);
+            double cosYaw = cos(yaw);
+            double pitch = atan2(sqrt(x * x + z * z), y);
+            double sinPitch = sin(pitch);
+            double cosPitch = cos(pitch);
+            double roll = random.nextDouble() * 3.1415927f * 2.0;
+            double sinRoll = sin(roll);
+            double cosRoll = cos(roll);
+
+            for (int corner = 0; corner < 4; ++corner)
+            {
+                double flat = 0.0;
+                double cornerU = (double)((corner & 2) - 1) * size;
+                double cornerV = (double)((corner + 1 & 2) - 1) * size;
+                double rolledU = cornerU * cosRoll - cornerV * sinRoll;
+                double rolledV = cornerV * cosRoll + cornerU * sinRoll;
+                double pitchedY = rolledU * sinPitch + flat * cosPitch;
+                double pitchedZ = flat * sinPitch - rolledU * cosPitch;
+                double offsetX = pitchedZ * sinYaw - rolledV * cosYaw;
+                double offsetZ = rolledV * sinYaw + pitchedZ * cosYaw;
+
+                builder->vertex((float)(centreX + offsetX), (float)(centreY + pitchedY),
+                                (float)(centreZ + offsetZ));
+            }
+        }
+    }
+
+    builder->end();
+}
+
+void LevelRenderer::createCloudMesh()
+{
+    mCloudLists = MemoryTracker::genLists(7);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    for (int face = 0; face < 7; ++face)
+    {
+        GlStateManager::newList(mCloudLists + face, 0);
+
+        if (face == 0 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(0.7f, 0.7f, 0.7f, 0.8f);
+                    builder->normal(0.0f, -1.0f, 0.0f);
+                    builder->vertexUV((float)x, 0.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x, 0.0f, (float)z + 1.0f, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        if (face == 1 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(1.0f, 1.0f, 1.0f, 0.8f);
+                    builder->normal(0.0f, 1.0f, 0.0f);
+                    builder->vertexUV((float)x, 4.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z, u, v);
+                    builder->vertexUV((float)x, 4.0f, (float)z, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        if (face == 2 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(0.9f, 0.9f, 0.9f, 0.8f);
+                    builder->normal(-1.0f, 0.0f, 0.0f);
+                    builder->vertexUV((float)x, 0.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x, 4.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x, 4.0f, (float)z, u, v);
+                    builder->vertexUV((float)x, 0.0f, (float)z, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        if (face == 3 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(0.9f, 0.9f, 0.9f, 0.8f);
+                    builder->normal(1.0f, 0.0f, 0.0f);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z + 1.0f, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        if (face == 4 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(0.8f, 0.8f, 0.8f, 0.8f);
+                    builder->normal(-1.0f, 0.0f, 0.0f);
+                    builder->vertexUV((float)x, 4.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z, u, v);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z, u, v);
+                    builder->vertexUV((float)x, 0.0f, (float)z, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        if (face == 5 || face == 6)
+        {
+            builder->begin();
+
+            for (int z = 0; z < 8; ++z)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    float u = ((float)x + 0.5f) * 0.00390625f;
+                    float v = ((float)z + 0.5f) * 0.00390625f;
+
+                    builder->color(0.8f, 0.8f, 0.8f, 0.8f);
+                    builder->normal(1.0f, 0.0f, 0.0f);
+                    builder->vertexUV((float)x, 0.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x + 1.0f, 0.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x + 1.0f, 4.0f, (float)z + 1.0f, u, v);
+                    builder->vertexUV((float)x, 4.0f, (float)z + 1.0f, u, v);
+                }
+            }
+
+            builder->end();
+        }
+
+        GlStateManager::endList(0);
+    }
+}
+
+unsigned char LevelRenderer::activePlayers()
+{
+    unsigned char count = 0;
+
+    for (int player = 0; player < 4; ++player)
+    {
+        if (mLevels[player] != 0)
+        {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+void LevelRenderer::nonStackDirtyChunksAdded()
+{
+    mDirtyChunkStack.Push((int*)1);
+}
+
+void LevelRenderer::resortChunks(int x, int y, int z, int dimension)
+{
+    if (dimension == -1)
+    {
+        dimension = mMinecraft->mPlayer->mUserIndex;
+    }
+
+    EnterCriticalSection(&mChunkMutex);
+
+    mMinChunkX = 0x7fffffff;
+    mMinChunkY = 0x7fffffff;
+    mMinChunkZ = 0x7fffffff;
+    mMaxChunkX = (int)0x80000000;
+    mMaxChunkY = (int)0x80000000;
+    mMaxChunkZ = (int)0x80000000;
+
+    int spanX = mChunkGridWidth * 16;
+
+    for (int gridX = 0; gridX < mChunkGridWidth; ++gridX)
+    {
+        int worldX = gridX * 16;
+        int wrapX = (worldX + spanX / 2) - (x - 8);
+
+        if (wrapX < 0)
+        {
+            wrapX -= spanX - 1;
+        }
+
+        wrapX = worldX - (wrapX / spanX) * spanX;
+
+        if (wrapX < mMinChunkX)
+        {
+            mMinChunkX = wrapX;
+        }
+
+        if (wrapX > mMaxChunkX)
+        {
+            mMaxChunkX = wrapX;
+        }
+
+        for (int gridZ = 0; gridZ < mChunkGridDepth; ++gridZ)
+        {
+            int worldZ = gridZ * 16;
+            int wrapZ = (worldZ + spanX / 2) - (z - 8);
+
+            if (wrapZ < 0)
+            {
+                wrapZ -= spanX - 1;
+            }
+
+            wrapZ = worldZ - (wrapZ / spanX) * spanX;
+
+            if (wrapZ < mMinChunkZ)
+            {
+                mMinChunkZ = wrapZ;
+            }
+
+            if (wrapZ > mMaxChunkZ)
+            {
+                mMaxChunkZ = wrapZ;
+            }
+
+            for (int gridY = 0; gridY < mChunkGridHeight; ++gridY)
+            {
+                int worldY = gridY * 16;
+
+                if (worldY < mMinChunkY)
+                {
+                    mMinChunkY = worldY;
+                }
+
+                if (worldY > mMaxChunkY)
+                {
+                    mMaxChunkY = worldY;
+                }
+
+                mClipChunks[dimension]
+                    .data[(gridZ * mChunkGridHeight + gridY) * mChunkGridWidth + gridX]
+                    .mChunk->setPos(wrapX, worldY, wrapZ);
+            }
+        }
+    }
+
+    nonStackDirtyChunksAdded();
+
+    LeaveCriticalSection(&mChunkMutex);
+}
+
+void LevelRenderer::allChanged(int dimension)
+{
+    if (mLevels[dimension] == 0)
+    {
+        return;
+    }
+
+    Minecraft::GetInstance()->mGameRenderer->DisableUpdateThread(4);
+
+    LeafBlock::mOldLeaves->setFancy(mMinecraft->mOptions->mFancyGraphics);
+    LeafBlock::mNewLeaves->setFancy(mMinecraft->mOptions->mFancyGraphics);
+
+    mLastViewDistance = mMinecraft->mOptions->mViewDistance;
+
+    int viewDistance = (int)sqrtf(400.0f / (float)activePlayers());
+
+    mMinecraft->mOptions->mViewDistance = viewDistance;
+    mActivePlayers[dimension] = activePlayers();
+    mChunkGridWidth = viewDistance;
+    mChunkGridHeight = 16;
+    mChunkGridDepth = viewDistance;
+
+    if (mClipChunks[dimension].data != 0)
+    {
+        for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
+        {
+            mClipChunks[dimension].data[index].mChunk->_delete();
+            delete mClipChunks[dimension].data[index].mChunk;
+        }
+
+        delete[] mClipChunks[dimension].data;
+    }
+
+    mClipChunks[dimension] =
+        arrayWithLength<ClipChunk>(mChunkGridWidth * mChunkGridHeight * mChunkGridDepth, true);
+
+    for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
+    {
+        mClipChunks[dimension].data[index].mChunk = 0;
+    }
+
+    mMinChunkX = 0;
+    mMinChunkY = 0;
+    mMinChunkZ = 0;
+    mMaxChunkX = mChunkGridWidth;
+    mMaxChunkY = mChunkGridHeight;
+    mMaxChunkZ = mChunkGridDepth;
+
+    int globalIndex = 0;
+
+    for (int gridX = 0; gridX < mChunkGridWidth; ++gridX)
+    {
+        for (int gridY = 0; gridY < mChunkGridHeight; ++gridY)
+        {
+            for (int gridZ = 0; gridZ < mChunkGridDepth; ++gridZ)
+            {
+                ClipChunk* clipChunk =
+                    &mClipChunks[dimension]
+                         .data[(gridZ * mChunkGridHeight + gridY) * mChunkGridWidth + gridX];
+
+                clipChunk->mChunk = new Chunk(mLevels[dimension], mBlockEntities, mBlockEntityMutex,
+                                              gridX * 16, gridY * 16, gridZ * 16, clipChunk);
+                clipChunk->mVisible = true;
+                clipChunk->mChunk->mUnknown = globalIndex;
+                ++globalIndex;
+            }
+        }
+    }
+
+    nonStackDirtyChunksAdded();
+
+    EnterCriticalSection(&mRenderableBlockEntityMutex);
+    mRenderableBlockEntities.clear();
+    LeaveCriticalSection(&mRenderableBlockEntityMutex);
+
+    if (mLevels[dimension] != 0)
+    {
+        boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+
+        if (camera)
+        {
+            resortChunks((int)Mth::lfloor(camera->mX), (int)Mth::lfloor(camera->mY),
+                         (int)Mth::lfloor(camera->mZ), dimension);
+        }
+    }
+
+    mSkippedFrames = 2;
+
+    Minecraft::GetInstance()->mGameRenderer->EnableUpdateThread(4);
+}
+
+void LevelRenderer::tick()
+{
+    ++mRenderTick;
+
+    if (mRenderTick % 20 != 0)
+    {
+        return;
+    }
+
+    boost::unordered_map<int, BlockDestructionProgress*>::iterator progress = mDestroyingBlocks.begin();
+
+    while (progress != mDestroyingBlocks.end())
+    {
+        if (mRenderTick - progress->second->getUpdatedRenderTick() > 400)
+        {
+            delete progress->second;
+            progress = mDestroyingBlocks.erase(progress);
+        }
+        else
+        {
+            ++progress;
+        }
+    }
+}
+
+void LevelRenderer::clear()
+{
+    boost::unordered_map<int, int>::iterator entry = gDisplayListLengths.find(mDisplayList);
+
+    if (entry != gDisplayListLengths.end())
+    {
+        GlStateManager::deleteLists(mDisplayList, entry->second);
+        gDisplayListLengths.erase(entry);
+    }
+}
+
+void LevelRenderer::allChanged()
+{
+    allChanged(mMinecraft->mPlayer->mUserIndex);
 }
 
 bool LevelRenderer::sortEntDisFunc(std::pair<int, double> first, std::pair<int, double> second)
@@ -163,659 +821,905 @@ int LevelRenderer::getDimensionIndexFromId(int id)
     return (3 - id) % 3;
 }
 
-bool LevelRenderer::isInCloud(double, double, double, float)
-{
-    return false;
-}
-
-void LevelRenderer::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource,
-                              double, double, double, float, float, float)
-{
-}
-
-void LevelRenderer::playerRemoved(boost::shared_ptr<Entity>)
-{
-}
-
-LevelRenderer::LevelRenderer(Minecraft* minecraft, Textures* textures)
-    : mTextures(textures), mLastViewDistance(0), mSkyColorChanged(false), mDisplayList(0),
-      mStarList(0), mSkyList(0), mMinecraft(minecraft), mEntityRenderDispatcher(0),
-      mBlockEntityRenderDispatcher(0), mFont(0), mChunkGridWidth(0), mChunkGridHeight(0),
-      mChunkGridDepth(0), mCameraX(0.0), mCameraY(0.0), mCameraZ(0.0), mLastCameraX(0.0),
-      mLastCameraY(0.0), mLastCameraZ(0.0), mRenderTick(0), mDestroyedBlocks(0),
-      mCloudOffset(0.0f), mGlobalChunkFlags(0)
-{
-    for (int dimension = 0; dimension < 4; ++dimension)
-        mLevels[dimension] = 0;
-    InitializeCriticalSection(&mBlockEntityMutex);
-    InitializeCriticalSection(&mChunkMutex);
-    InitializeCriticalSection(&mDirtyMutex);
-    InitializeCriticalSection(&mGlobalChunkFlagsMutex);
-    mEntityRenderDispatcher = minecraft->getEntityRenderDispatcher();
-    mFont = minecraft->mFont;
-    mDisplayList = GlStateManager::genLists(getGlobalChunkCount() * 3);
-    mStarList = GlStateManager::genLists(4);
-    mGlobalChunkFlags = new unsigned char[getGlobalChunkCount()]();
-    mDestroyedBlocks = new DestroyedBlockManager();
-    GlStateManager::newList(mStarList, 0);
-    renderStars();
-    GlStateManager::endList(0);
-    createCloudMesh();
-}
-
-LevelRenderer::~LevelRenderer()
-{
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        delete *chunk;
-    for (boost::unordered_map<int, BlockDestructionProgress*>::iterator progress = mDestroyingBlocks.begin(); progress != mDestroyingBlocks.end(); ++progress)
-        delete progress->second;
-    delete[] mGlobalChunkFlags;
-    delete mDestroyedBlocks;
-    DeleteCriticalSection(&mGlobalChunkFlagsMutex);
-    DeleteCriticalSection(&mDirtyMutex);
-    DeleteCriticalSection(&mChunkMutex);
-    DeleteCriticalSection(&mBlockEntityMutex);
-}
-
-unsigned int LevelRenderer::getGlobalChunkCount()
-{
-    return gGlobalChunkCount;
-}
-
-void LevelRenderer::renderStars()
-{
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    Random random(10842);
-    builder->begin();
-    for (int star = 0; star < 1500; ++star)
-    {
-        float x = random.nextFloat() * 2.0f - 1.0f;
-        float y = random.nextFloat() * 2.0f - 1.0f;
-        float z = random.nextFloat() * 2.0f - 1.0f;
-        float length = x * x + y * y + z * z;
-        if (length < 1.0f && length > 0.01f)
-        {
-            float scale = 100.0f / std::sqrt(length);
-            builder->vertex(x * scale, y * scale, z * scale);
-        }
-    }
-    Tesselator::getInstance()->end();
-}
-
-void LevelRenderer::createCloudMesh()
-{
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    mSkyList = mStarList + 1;
-    GlStateManager::newList(mSkyList, 0);
-    builder->begin();
-    for (int x = -384; x <= 384; x += 64)
-        for (int z = -384; z <= 384; z += 64)
-        {
-            builder->vertex((float)x, 16.0f, (float)z);
-            builder->vertex((float)(x + 64), 16.0f, (float)z);
-            builder->vertex((float)(x + 64), 16.0f, (float)(z + 64));
-            builder->vertex((float)x, 16.0f, (float)(z + 64));
-        }
-    Tesselator::getInstance()->end();
-    GlStateManager::endList(0);
-}
-
-unsigned char LevelRenderer::activePlayers()
-{
-    unsigned char count = 0;
-    for (int index = 0; index < 4; ++index)
-        if (mLevels[index] != 0)
-            ++count;
-    return count;
-}
-
-void LevelRenderer::nonStackDirtyChunksAdded()
-{
-    EnterCriticalSection(&mDirtyMutex);
-    ++mRenderTick;
-    LeaveCriticalSection(&mDirtyMutex);
-}
-
-void LevelRenderer::resortChunks(int x, int y, int z, int dimension)
-{
-    EnterCriticalSection(&mChunkMutex);
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        if (dimension < 0 || (*chunk)->mDimension == dimension)
-            (*chunk)->setPos(x, z, (*chunk)->mDimension);
-    LeaveCriticalSection(&mChunkMutex);
-}
-
-void LevelRenderer::allChanged(int dimension)
-{
-    EnterCriticalSection(&mChunkMutex);
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        if (dimension < 0 || (*chunk)->mDimension == dimension)
-            (*chunk)->setDirty();
-    LeaveCriticalSection(&mChunkMutex);
-    nonStackDirtyChunksAdded();
-}
-
-void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
-{
-    int index = getDimensionIndexFromId(dimension);
-    if (index >= 0 && index < 4)
-        mLevels[index] = level;
-    if (mBlockEntityRenderDispatcher != 0)
-        mBlockEntityRenderDispatcher->setLevel(level);
-    if (mMinecraft->mParticleEngine != 0)
-        mMinecraft->mParticleEngine->setLevel(level);
-    allChanged(dimension);
-}
-
-void LevelRenderer::tick()
-{
-    ++mRenderTick;
-    mCloudOffset += 1.0f;
-    if (mDestroyedBlocks != 0)
-        mDestroyedBlocks->tick();
-}
-
-void LevelRenderer::clear()
-{
-    allChanged(-1);
-}
-
-void LevelRenderer::allChanged()
-{
-    allChanged(-1);
-}
-
-bool LevelRenderer::shouldEntityGlow(boost::shared_ptr<Entity> entity, boost::shared_ptr<Entity> camera, Culler* culler)
-{
-    if (!entity || entity == camera)
-        return false;
-    return mEntityRenderDispatcher->shouldRender(entity, culler, entity->mX - mCameraX, entity->mY - mCameraY, entity->mZ - mCameraZ);
-}
-
 bool LevelRenderer::isGlobalIndexInSameDimension(int index, Level* level)
 {
-    if (index < 0 || level == 0 || level->mDimension == 0)
-        return false;
-    return index / (int)(getGlobalChunkCount() / 3) == getDimensionIndexFromId(level->mDimension->getType()->getId());
+    int dimensionIndex = getDimensionIndexFromId(level->mDimension->getType()->getId());
+
+    if (index < gChunkDimensionBases[1])
+    {
+        return dimensionIndex == 0;
+    }
+
+    if (index < gChunkDimensionBases[2])
+    {
+        return dimensionIndex == 1;
+    }
+
+    return dimensionIndex == (index < gChunkDimensionBases[3] ? 2 : -1);
 }
 
 void LevelRenderer::setupDestroyState()
 {
+    GlStateManager::blendFuncSeparate(8, 2, 1, 0);
+    GlStateManager::blendFunc(8, 2);
     GlStateManager::enableBlend();
-    GlStateManager::blendFunc(770, 1);
-    GlStateManager::enablePolygonOffset();
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f);
     GlStateManager::polygonOffset(-3.0f, -3.0f);
+    GlStateManager::enablePolygonOffset();
+    GlStateManager::alphaFunc(4, 0.01f);
+    GlStateManager::enableAlphaTest();
+    GlStateManager::pushMatrix();
 }
 
 void LevelRenderer::restoreDestroyState()
 {
+    GlStateManager::disableAlphaTest();
     GlStateManager::polygonOffset(0.0f, 0.0f);
     GlStateManager::disablePolygonOffset();
-    GlStateManager::disableBlend();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::depthMask(true);
+    GlStateManager::popMatrix();
 }
 
-void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* culler, float partialTick)
+unsigned int LevelRenderer::getBucketMask(double x, double y, double z, ClipChunk* chunk)
 {
-    Level* level = mLevels[getDimensionIndexFromId(camera->mDimension)];
-    mEntityRenderDispatcher->prepare(level, mFont, camera, mMinecraft->getCameraEntity(), mMinecraft->mOptions, partialTick);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    AABB* bounds = AABB::newTemp(mCameraX - 4096.0, mCameraY - 4096.0, mCameraZ - 4096.0,
-                                 mCameraX + 4096.0, mCameraY + 4096.0, mCameraZ + 4096.0);
-    level->getEntities(boost::shared_ptr<Entity>(), bounds, &entities);
-    std::vector<boost::shared_ptr<Entity> >::iterator entity = entities.begin();
-    for (; entity != entities.end(); ++entity)
-        if (*entity && mEntityRenderDispatcher->shouldRender(*entity, culler, (*entity)->mX - mCameraX, (*entity)->mY - mCameraY, (*entity)->mZ - mCameraZ))
-            mEntityRenderDispatcher->render(*entity, partialTick, true);
-}
+    unsigned int mask = 1;
 
-unsigned int LevelRenderer::getBucketMask(double x, double y, double z, ClipChunk*)
-{
-    unsigned int mask = 0;
-    if (x < 0.0) mask |= 1;
-    if (y < 0.0) mask |= 2;
-    if (z < 0.0) mask |= 4;
+    if (x <= (double)chunk->mMaxX)
+    {
+        mask = 0x21;
+    }
+
+    if ((double)chunk->mMinX <= x)
+    {
+        mask |= 8;
+    }
+
+    if ((double)chunk->mMinZ <= z)
+    {
+        mask |= 0x10;
+    }
+
+    if (z <= (double)chunk->mMaxZ)
+    {
+        mask |= 4;
+    }
+
+    if (y <= (double)chunk->mMaxY)
+    {
+        mask |= 0x40;
+    }
+
+    if ((double)chunk->mMinY <= y)
+    {
+        mask |= 2;
+    }
+
     return mask;
 }
 
 void LevelRenderer::setupCameraInsideAreas(boost::shared_ptr<Entity> camera)
 {
-    mCameraX = camera->mX;
-    mCameraY = camera->mY;
-    mCameraZ = camera->mZ;
+    if (!Minecraft::InMiniGame((EMiniGameId)3, true))
+    {
+        return;
+    }
+
+    mCameraInsideAreas.clear();
+
+    std::vector<AABB*> areas;
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+
+    if (ruleset != 0)
+    {
+        ruleset->getActiveViewAreas(&areas);
+
+        Vec3* position = Vec3::newTemp(camera->mX * 0.0625, camera->mY * 0.0625, camera->mZ * 0.0625);
+
+        for (unsigned int index = 0; index < areas.size(); ++index)
+        {
+            if (areas[index]->insideXZ(position))
+            {
+                mCameraInsideAreas.push_back(areas[index]);
+            }
+        }
+    }
 }
 
 unsigned int LevelRenderer::clippedByCameraInsideAreas(ClipChunk* chunk)
 {
-    return getBucketMask(mCameraX, mCameraY, mCameraZ, chunk);
-}
+    if (!Minecraft::InMiniGame((EMiniGameId)3, true))
+    {
+        return 0;
+    }
 
-void LevelRenderer::renderChunks(int pass, int, int count, double)
-{
-    int rendered = 0;
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end() && rendered < count; ++chunk)
-        if (!(*chunk)->isEmpty() && ((*chunk)->mRenderable & (1 << pass)) != 0)
+    if (mCameraInsideAreas.empty())
+    {
+        return 0;
+    }
+
+    unsigned int clipped = 1;
+    Vec3* position = Vec3::newTemp((double)Mth::intFloorDiv(chunk->mX, 16),
+                                   (double)Mth::intFloorDiv(chunk->mY, 16),
+                                   (double)Mth::intFloorDiv(chunk->mZ, 16));
+
+    for (unsigned int index = 0; index < mCameraInsideAreas.size(); ++index)
+    {
+        if (mCameraInsideAreas[index]->insideXZ(position))
         {
-            GlStateManager::callList(mDisplayList + rendered * 3 + pass);
-            ++rendered;
+            clipped = 0;
         }
+    }
+
+    return clipped;
 }
 
-void LevelRenderer::render(boost::shared_ptr<Entity> camera, int pass, double distance, bool translucent)
+void LevelRenderer::render(boost::shared_ptr<Entity> camera, int layer, double partialTick, bool sort)
 {
-    setupCameraInsideAreas(camera);
-    if (translucent)
-        GlStateManager::enableBlend();
-    renderChunks(pass, 0, (int)mChunks.size(), distance);
-    if (translucent)
-        GlStateManager::disableBlend();
-    mLastCameraX = mCameraX;
-    mLastCameraY = mCameraY;
-    mLastCameraZ = mCameraZ;
-}
+    int dimension = mMinecraft->mPlayer->mUserIndex;
 
-void LevelRenderer::renderSky(float)
-{
-    GlStateManager::disableTexture();
-    GlStateManager::callList(mStarList);
-    GlStateManager::enableTexture();
+    if (mActivePlayers[dimension] != activePlayers() ||
+        mMinecraft->mOptions->mViewDistance != mLastViewDistance)
+    {
+        allChanged();
+    }
+
+    if (layer == 0)
+    {
+        for (int counter = 0; counter < 5; ++counter)
+        {
+            mRenderCounters[counter] = 0;
+        }
+    }
+
+    double deltaX = camera->mX - mLastSortX[dimension];
+    double deltaY = camera->mY - mLastSortY[dimension];
+    double deltaZ = camera->mZ - mLastSortZ[dimension];
+
+    if (deltaZ * deltaZ + deltaX * deltaX + deltaY * deltaY > 16.0)
+    {
+        mLastSortX[dimension] = camera->mX;
+        mLastSortY[dimension] = camera->mY;
+        mLastSortZ[dimension] = camera->mZ;
+
+        resortChunks((int)Mth::lfloor(camera->mX), (int)Mth::lfloor(camera->mY),
+                     (int)Mth::lfloor(camera->mZ), -1);
+    }
+
+    Lighting::turnOff();
+
+    renderChunks(0, mClipChunks[dimension].length, layer, partialTick);
 }
 
 void LevelRenderer::renderHaloRing(float partialTick)
 {
+    if (!mMinecraft->mLevel->mDimension->isNaturalDimension())
+    {
+        return;
+    }
+
+    GlStateManager::disableAlphaTest();
+    GlStateManager::disableTexture();
+    GlStateManager::depthMask(false);
+    GlStateManager::enableFog();
+
+    int dimension = mMinecraft->mPlayer->mUserIndex;
+    Vec3* skyColor = mLevels[dimension]->getSkyColor(mMinecraft->getCameraEntity(), partialTick);
+    float brightness = ((float)skyColor->x + (float)skyColor->x + (float)skyColor->z +
+                        (float)skyColor->y + (float)skyColor->y + (float)skyColor->y) /
+                           6.0f * 0.4f +
+                       0.6f;
+
+    GlStateManager::color3f(brightness, brightness, brightness);
+    GlStateManager::fogMode(1);
+
+    float fogStart = GlStateManager::getFogStart();
+    float fogEnd = GlStateManager::getFogEnd();
+
+    GlStateManager::fogStart(100.0f);
+    GlStateManager::fogEnd(20.0f);
+
+    Lighting::turnOn();
+    GlStateManager::depthMask(false);
+
+    mTextures->bindTexture(L"misc/haloRing");
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    bool mipmap = builder->setMipmapEnable(true);
+
     GlStateManager::pushMatrix();
-    GlStateManager::rotatef(partialTick, 0.0f, 1.0f, 0.0f);
-    GlStateManager::callList(mSkyList);
+    GlStateManager::rotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(90.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::callList(mHaloRingList);
     GlStateManager::popMatrix();
+
+    builder->setMipmapEnable(mipmap);
+
+    GlStateManager::depthMask(true);
+    GlStateManager::enableTexture();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::disableFog();
+    GlStateManager::fogStart(fogStart);
+    GlStateManager::fogEnd(fogEnd);
 }
 
-void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, double y, double z)
+bool LevelRenderer::isInCloud(double x, double y, double z, float partialTick)
 {
-    GlStateManager::pushMatrix();
-    GlStateManager::translated(-x, -y, -z);
-    GlStateManager::callList(mSkyList + pass);
-    GlStateManager::popMatrix();
-    mCloudOffset += partialTick;
-}
-
-void LevelRenderer::renderClouds(float partialTick, int pass, double x, double y, double z)
-{
-    renderAdvancedClouds(partialTick, pass, x, y, z);
+    return false;
 }
 
 void LevelRenderer::setGlobalChunkFlag(int index, unsigned char mask, unsigned char shift)
 {
-    if (index >= 0 && (unsigned int)index < getGlobalChunkCount())
-        mGlobalChunkFlags[index] |= (unsigned char)(mask << shift);
+    if (index == -1)
+    {
+        return;
+    }
+
+    mGlobalChunkFlags[index] |= (unsigned char)(mask << shift);
 }
 
-unsigned long long LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, Level* level)
+int LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, Level* level)
 {
-    if (level == 0 || level->mDimension == 0)
-        return (unsigned long long)-1;
-    return getChunkIndex(getDimensionIndexFromId(level->mDimension->getType()->getId()), x >> 4, y >> 4, z >> 4);
+    return getChunkIndex(getDimensionIndexFromId(level->mDimension->getType()->getId()), x >> 4,
+                         y >> 4, z >> 4);
 }
 
 bool LevelRenderer::getGlobalChunkFlag(int x, int y, int z, Level* level, unsigned char mask, unsigned char shift)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    return index != (unsigned long long)-1 && (mGlobalChunkFlags[index] & (mask << shift)) != 0;
-}
+    unsigned char bits = (unsigned char)(mask << shift);
+    int index = getGlobalIndexForChunk(x, y, z, level);
 
-unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
-{
-    unsigned int rebuilt = 0;
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        if ((*chunk)->mDirty != 0)
-        {
-            (*chunk)->rebuild(count);
-            ++rebuilt;
-        }
-    return rebuilt;
-}
+    if (index == -1)
+    {
+        return false;
+    }
 
-void LevelRenderer::renderHit(boost::shared_ptr<Player>, const HitResult* hit, int, not_null_ptr<ItemInstance>, float)
-{
-    if (hit != 0 && hit->mType == HitResult::BLOCK)
-        renderLineBox(AABB::newTemp(hit->getBlockPos()), 0xffffffff);
-}
-
-void LevelRenderer::renderDestroyAnimation(Tesselator*, boost::shared_ptr<Player>, float)
-{
-    setupDestroyState();
-    for (boost::unordered_map<int, BlockDestructionProgress*>::iterator progress = mDestroyingBlocks.begin(); progress != mDestroyingBlocks.end(); ++progress)
-        renderLineBox(AABB::newTemp(progress->second->getPos()), progress->second->getProgress());
-    restoreDestroyState();
+    return (bits & mGlobalChunkFlags[index]) == bits;
 }
 
 void LevelRenderer::renderLineBox(const AABB* box, int color)
 {
-    renderColoredLineBox(box, color, true);
-}
-
-void LevelRenderer::renderHitOutline(boost::shared_ptr<Player>, const HitResult* hit, int color, float)
-{
-    if (hit != 0 && hit->mType == HitResult::BLOCK)
-        renderColoredLineBox(AABB::newTemp(hit->getBlockPos()), color, false);
-}
-
-void LevelRenderer::renderColoredLineBox(const AABB* box, int color, bool depth)
-{
-    if (!depth)
-        GlStateManager::disableDepthTest();
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin(1);
+
+    builder->begin(5);
     builder->color(color);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMaxZ);
-    Tesselator::getInstance()->end();
-    if (!depth)
-        GlStateManager::enableDepthTest();
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->end();
+
+    builder->begin(5);
+    builder->color(color);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->end();
+
+    builder->begin(4);
+    builder->color(color);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->end();
 }
 
-void LevelRenderer::renderLine(std::vector<GameRenderer::PositionStruct>* positions, std::vector<int>* colors, std::vector<int>* indices, float width)
+void LevelRenderer::renderColoredLineBox(const AABB* box, int color, bool splitLargeFaces)
 {
-    GlStateManager::lineWidth(width);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin(1);
-    for (std::vector<int>::iterator index = indices->begin(); index != indices->end(); ++index)
+
+    builder->begin(5);
+    builder->color(color);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->end();
+
+    builder->begin(5);
+    builder->color(color);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->end();
+
+    builder->begin(4);
+    builder->color(color);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->end();
+
+    if (!splitLargeFaces)
     {
-        int vertex = *index;
-        builder->color((*colors)[vertex]);
-        builder->vertex(positions->at(vertex).x, positions->at(vertex).y, positions->at(vertex).z);
+        return;
     }
-    Tesselator::getInstance()->end();
+
+    if (Mth::abs(box->mMaxX) - Mth::abs(box->mMinX) > 1.5)
+    {
+        double midX = (box->mMaxX - box->mMinX) * 0.5 + box->mMinX;
+
+        builder->begin(5);
+        builder->color(color);
+        builder->vertex((float)midX, (float)box->mMinY, (float)box->mMinZ);
+        builder->vertex((float)midX, (float)box->mMinY, (float)box->mMaxZ);
+        builder->vertex((float)midX, (float)box->mMaxY, (float)box->mMaxZ);
+        builder->vertex((float)midX, (float)box->mMaxY, (float)box->mMinZ);
+        builder->vertex((float)midX, (float)box->mMinY, (float)box->mMinZ);
+        builder->end();
+    }
+
+    if (Mth::abs(box->mMaxZ) - Mth::abs(box->mMinZ) > 1.5)
+    {
+        double midZ = (box->mMaxZ - box->mMinZ) * 0.5 + box->mMinZ;
+
+        builder->begin(5);
+        builder->color(color);
+        builder->vertex((float)box->mMinX, (float)box->mMinY, (float)midZ);
+        builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)midZ);
+        builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)midZ);
+        builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)midZ);
+        builder->vertex((float)box->mMinX, (float)box->mMinY, (float)midZ);
+        builder->end();
+    }
+}
+
+void LevelRenderer::renderLine(std::vector<GameRenderer::PositionStruct>* positions, std::vector<int>* colors, std::vector<int>* alphas, float width)
+{
+    float halfWidth = width * 0.5f;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    GlStateManager::disableCull();
+    GlStateManager::disableTexture();
+    GlStateManager::lineWidth(2.0f);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableBlend();
+    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
+    GlStateManager::depthMask(false);
+    GlStateManager::disableAlphaTest();
+
+    builder->begin(1);
+
+    for (unsigned int index = 0; index < positions->size(); ++index)
+    {
+        GameRenderer::PositionStruct position = positions->at(index);
+        int color = colors->at(index);
+        int alpha = alphas->at(index);
+        float deltaZ;
+        float deltaX;
+
+        if (index == 0)
+        {
+            deltaZ = 0.0f;
+            deltaX = 0.0f;
+
+            if (!positions->empty())
+            {
+                deltaZ = position.z - positions->at(1).z;
+                deltaX = position.x - positions->at(1).x;
+            }
+        }
+        else
+        {
+            deltaZ = positions->at(index - 1).z - position.z;
+            deltaX = positions->at(index - 1).x - position.x;
+        }
+
+        float angle = atan2f(deltaZ, deltaX) + 1.5707964f;
+
+        builder->color(color, alpha);
+        builder->vertex(halfWidth * cosf(angle) + position.x, position.y,
+                        halfWidth * sinf(angle) + position.z);
+        builder->vertex(halfWidth * cosf(angle + 3.1415927f) + position.x, position.y,
+                        position.z + halfWidth * sinf(angle + 3.1415927f));
+    }
+
+    builder->end();
+
+    GlStateManager::enableCull();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::depthMask(true);
+    GlStateManager::enableTexture();
+    GlStateManager::disableBlend();
 }
 
 void LevelRenderer::renderColoredBox(const AABB* box, int color, int alpha)
 {
+    GlStateManager::disableCull();
+
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin();
+
+    builder->begin(3);
     builder->color(color, alpha);
-    builder->vertexDouble(box->mMinX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMinY, box->mMinZ);
-    builder->vertexDouble(box->mMaxX, box->mMaxY, box->mMaxZ);
-    builder->vertexDouble(box->mMinX, box->mMaxY, box->mMaxZ);
-    Tesselator::getInstance()->end();
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMinZ);
+    builder->vertex((float)box->mMaxX, (float)box->mMinY, (float)box->mMaxZ);
+    builder->end();
+
+    GlStateManager::enableCull();
 }
 
 void LevelRenderer::renderStringInWorld(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position)
 {
-    GameRenderer::renderNameTagInWorld(Minecraft::GetInstance()->mFont, text, (float)(position->x - entity->mX),
-                                       (float)(position->y - entity->mY), (float)(position->z - entity->mZ),
-                                       0xffffffff, 1.0f, 0.02666667f, false, false, 0, 1.0f);
+    float xRot = entity->mXRot;
+    float yRot = entity->mYRot;
+    Font* font = BlockEntityRenderDispatcher::instance->getFont();
+
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)position->x, (float)position->y, (float)position->z);
+    GlStateManager::normal3f(0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-yRot, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(xRot, 1.0f, 0.0f, 0.0f);
+    GlStateManager::scalef(-0.025f, -0.025f, 0.025f);
+    GlStateManager::depthMask(false);
+
+    int halfWidth = font->width(text) / 2;
+
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    GlStateManager::disableTexture();
+    builder->begin();
+    builder->color(0.0f, 0.0f, 0.0f, 0.25f);
+    builder->vertex((float)(-(halfWidth + 1)), -1.0f, 0.0f);
+    builder->vertex((float)(-(halfWidth + 1)), 9.0f, 0.0f);
+    builder->vertex((float)(halfWidth + 1), 9.0f, 0.0f);
+    builder->vertex((float)(halfWidth + 1), -1.0f, 0.0f);
+    builder->end();
+    GlStateManager::enableTexture();
+    GlStateManager::depthMask(true);
+
+    font->draw(text, -halfWidth, 0, 0xffffffff);
+
+    GlStateManager::disableBlend();
+    GlStateManager::popMatrix();
 }
 
-void LevelRenderer::renderStringOnPlane(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* origin, Vec3*)
+void LevelRenderer::renderStringOnPlane(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position, Vec3* axis)
 {
-    renderStringInWorld(entity, text, origin);
+    Font* font = BlockEntityRenderDispatcher::instance->getFont();
+
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)position->x, (float)position->y, (float)position->z);
+    GlStateManager::normal3f(0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(1.5707964f * 57.295776f, (float)axis->x, (float)axis->y, (float)axis->z);
+    GlStateManager::scalef(-1.0f, -1.0f, 1.0f);
+    GlStateManager::depthMask(false);
+
+    int halfWidth = font->width(text) / 2;
+
+    GlStateManager::enableBlend();
+    GlStateManager::disableCull();
+    GlStateManager::blendFunc(4, 5);
+    GlStateManager::depthMask(true);
+
+    font->draw(text, -halfWidth, 0, 0xffffffff);
+
+    GlStateManager::disableBlend();
+    GlStateManager::enableCull();
+    GlStateManager::popMatrix();
 }
 
-void LevelRenderer::renderDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color,
-                                      bool drawText, bool drawSolid, bool drawWireframe, bool depth)
+void LevelRenderer::renderDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool splitLargeFaces, bool depthTest, bool thickLines, bool raiseText)
 {
-    if (drawSolid)
-        renderColoredBox(box, color, 64);
-    if (drawWireframe)
-        renderColoredLineBox(box, color, depth);
-    if (drawText)
-        renderStringInWorld(entity, text, box->getCenter());
+    if (!depthTest)
+    {
+        GlStateManager::disableDepthTest();
+    }
+
+    GlStateManager::disableLighting();
+
+    Vec3* centre = box->getCenter();
+
+    if (raiseText)
+    {
+        centre->move(0.0, 1.0, 0.0);
+    }
+
+    renderStringInWorld(entity, text, centre);
+
+    GlStateManager::disableTexture();
+
+    int alpha = 0x3f;
+    float width = 2.0f;
+
+    if (thickLines)
+    {
+        alpha = 0x7f;
+        width = 4.0f;
+    }
+
+    GlStateManager::lineWidth(width);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableBlend();
+    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
+    GlStateManager::depthMask(false);
+
+    renderColoredLineBox(box, color, splitLargeFaces);
+    renderColoredBox(box, color, alpha);
+
+    GlStateManager::depthMask(true);
+    GlStateManager::enableTexture();
+    GlStateManager::disableBlend();
+
+    if (!depthTest)
+    {
+        GlStateManager::enableDepthTest();
+    }
 }
 
-void LevelRenderer::renderFancyTextDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box,
-                                               int color, bool drawSolid, bool drawWireframe, bool depth)
+void LevelRenderer::renderFancyTextDebugVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool splitLargeFaces, bool depthTest, bool thickLines)
 {
-    renderDebugVolume(entity, text, box, color, true, drawSolid, drawWireframe, depth);
+    if (!depthTest)
+    {
+        GlStateManager::disableDepthTest();
+    }
+
+    GlStateManager::disableLighting();
+
+    Vec3* centre = box->getCenter();
+
+    renderStringOnPlane(entity, text + L" TOP", Vec3::newTemp(centre->x, box->mMaxY, centre->z),
+                        Vec3::newTemp(1.0, 0.0, 0.0));
+    renderStringOnPlane(entity, text + L" BOTTOM", Vec3::newTemp(centre->x, box->mMinY, centre->z),
+                        Vec3::newTemp(1.0, 0.0, 0.0));
+    renderStringOnPlane(entity, text + L" NORTH", Vec3::newTemp(centre->x, centre->y, box->mMinZ),
+                        Vec3::newTemp(0.0, 0.0, 0.0));
+    renderStringOnPlane(entity, text + L" SOUTH", Vec3::newTemp(centre->x, centre->y, box->mMaxZ),
+                        Vec3::newTemp(0.0, 0.0, 0.0));
+    renderStringOnPlane(entity, text + L" EAST", Vec3::newTemp(box->mMaxX, centre->y, centre->z),
+                        Vec3::newTemp(0.0, 1.0, 0.0));
+    renderStringOnPlane(entity, text + L" WEST", Vec3::newTemp(box->mMinX, centre->y, centre->z),
+                        Vec3::newTemp(0.0, -1.0, 0.0));
+
+    GlStateManager::disableTexture();
+
+    int alpha = 0x3f;
+    float width = 2.0f;
+
+    if (thickLines)
+    {
+        alpha = 0x7f;
+        width = 4.0f;
+    }
+
+    GlStateManager::lineWidth(width);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableBlend();
+    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
+    GlStateManager::depthMask(false);
+
+    renderColoredLineBox(box, color, splitLargeFaces);
+    renderColoredBox(box, color, alpha);
+
+    GlStateManager::depthMask(true);
+    GlStateManager::enableTexture();
+    GlStateManager::disableBlend();
+
+    if (!depthTest)
+    {
+        GlStateManager::enableDepthTest();
+    }
 }
 
-void LevelRenderer::renderDebugWireframeVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box,
-                                               int color, bool drawText, bool drawSolid, bool drawWireframe, bool depth)
+void LevelRenderer::renderDebugWireframeVolume(boost::shared_ptr<Entity> entity, const std::wstring& text, const AABB* box, int color, bool splitLargeFaces, bool depthTest, bool thickLines, bool raiseText)
 {
-    renderDebugVolume(entity, text, box, color, drawText, drawSolid, drawWireframe, depth);
+    if (!depthTest)
+    {
+        GlStateManager::disableDepthTest();
+    }
+
+    GlStateManager::disableLighting();
+
+    Vec3* centre = box->getCenter();
+
+    if (raiseText)
+    {
+        centre->move(0.0, 1.0, 0.0);
+    }
+
+    renderStringInWorld(entity, text, centre);
+
+    GlStateManager::disableTexture();
+
+    if (thickLines)
+    {
+        GlStateManager::lineWidth(4.0f);
+    }
+    else
+    {
+        GlStateManager::lineWidth(2.0f);
+    }
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableBlend();
+    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
+    GlStateManager::depthMask(false);
+
+    renderColoredLineBox(box, color, splitLargeFaces);
+
+    GlStateManager::depthMask(true);
+    GlStateManager::enableTexture();
+    GlStateManager::disableBlend();
+
+    if (!depthTest)
+    {
+        GlStateManager::enableDepthTest();
+    }
 }
 
 void LevelRenderer::setDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level)
 {
-    EnterCriticalSection(&mChunkMutex);
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        if ((*chunk)->mLevel == level && (*chunk)->mX >= minX - 16 && (*chunk)->mX <= maxX + 16 &&
-            (*chunk)->mZ >= minZ - 16 && (*chunk)->mZ <= maxZ + 16 &&
-            (*chunk)->mDimension >= minY - 16 && (*chunk)->mDimension <= maxY + 16)
-            (*chunk)->setDirty();
-    LeaveCriticalSection(&mChunkMutex);
+    if (level == 0)
+    {
+        level = mLevels[mMinecraft->mPlayer->mUserIndex];
+    }
+
+    int chunkMinX = Mth::intFloorDiv(minX, 16);
+    int chunkMinY = Mth::intFloorDiv(minY, 16);
+    int chunkMinZ = Mth::intFloorDiv(minZ, 16);
+    int chunkMaxX = Mth::intFloorDiv(maxX, 16);
+    int chunkMaxY = Mth::intFloorDiv(maxY, 16);
+    int chunkMaxZ = Mth::intFloorDiv(maxZ, 16);
+
+    for (int chunkX = chunkMinX; chunkX <= chunkMaxX; ++chunkX)
+    {
+        for (int chunkY = chunkMinY; chunkY <= chunkMaxY; ++chunkY)
+        {
+            for (int chunkZ = chunkMinZ; chunkZ <= chunkMaxZ; ++chunkZ)
+            {
+                int index = getGlobalIndexForChunk(chunkX * 16, chunkY * 16, chunkZ * 16, level);
+
+                if (index >= 0)
+                {
+                    mDirtyChunkStack.Push((int*)(index + 2));
+                    PIXSetMarkerDeprecated(0.0f, "Setting chunk %d %d %d dirty", chunkX * 16,
+                                           chunkY * 16, chunkZ * 16);
+                }
+            }
+        }
+    }
 }
 
-void LevelRenderer::blockChanged(Level* level, const BlockPos& pos, const BlockState*, const BlockState*, int, bool immediate)
+void LevelRenderer::blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate)
 {
-    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, level);
-    notifyNearbyEntities(level, pos, immediate);
+    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, 0);
 }
 
 void LevelRenderer::blockLightChanged(const BlockPos& pos)
 {
-    Level* level = mLevels[0];
-    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, level);
+    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, 0);
 }
 
 void LevelRenderer::setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level)
 {
-    setDirty(minX, minY, minZ, maxX, maxY, maxZ, level);
+    setDirty(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1, level);
 }
 
-void LevelRenderer::cull(Culler* culler, float)
+void LevelRenderer::playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range)
 {
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        (*chunk)->cull(culler);
 }
 
-void LevelRenderer::notifyNearbyEntities(Level* level, const BlockPos& pos, bool)
+void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(boost::shared_ptr<Entity>(), AABB::newTemp(pos), 0);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator entity = entities->begin(); entity != entities->end(); ++entity)
-        if (*entity)
-            (*entity)->setPos((*entity)->mX, (*entity)->mY, (*entity)->mZ);
+    addParticle(level, type, overrideLimiter, false, x, y, z, xa, ya, za, params);
 }
 
-void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing)
+int LevelRenderer::calculateParticleLevel(Level* level, bool overrideLimiter)
 {
-    if (mMinecraft->mSoundEngine != 0)
-        mMinecraft->mSoundEngine->playStreaming(sound, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f, 1.0f,
-                                                playing, false, ConsoleSoundEngine::eAudioDelayType_None);
+    int particles = mMinecraft->mOptions->mParticles;
+
+    if (overrideLimiter && particles == 2)
+    {
+        if (level->mRandom->nextInt(10) != 0)
+        {
+            return 2;
+        }
+    }
+    else if (particles != 1)
+    {
+        return particles;
+    }
+
+    return level->mRandom->nextInt(3) == 0 ? 2 : 1;
 }
 
-void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z,
-                                double xa, double ya, double za, arrayWithLength<int> params)
-{
-    addParticleInternal(level, type, overrideLimiter, x, y, z, xa, ya, za, params);
-}
-
-int LevelRenderer::calculateParticleLevel(Level*, bool overrideLimiter)
-{
-    return overrideLimiter ? 0 : 1;
-}
-
-void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z,
-                                        double xa, double ya, double za, arrayWithLength<int> params)
+void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
     addParticleInternal(level, type, overrideLimiter, false, x, y, z, xa, ya, za, params);
 }
 
-void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force,
-                                        double x, double y, double z, double xa, double ya, double za,
-                                        arrayWithLength<int> params)
-{
-    if ((force || calculateParticleLevel(level, overrideLimiter) < 2) && mMinecraft->mParticleEngine != 0)
-    {
-        Particle* particle = mMinecraft->mParticleEngine->createParticle(type, x, y, z, xa, ya, za, params, level);
-        if (particle != 0)
-            mMinecraft->mParticleEngine->add(particle);
-    }
-}
-
-void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z,
-                                double xa, double ya, double za, arrayWithLength<int> params)
+void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
     addParticleInternal(level, type, overrideLimiter, force, x, y, z, xa, ya, za, params);
 }
 
-void LevelRenderer::addParticle(Level* level, const ParticleType* particle, double x, double y, double z,
-                                double xa, double ya, double za, arrayWithLength<int> params)
+void LevelRenderer::addParticle(Level* level, const ParticleType* particle, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
-    level->addParticle(particle, x, y, z, xa, ya, za, params);
-}
-
-void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
-{
-    if (entity)
-        entity->setPos(entity->mX, entity->mY, entity->mZ);
-}
-
-void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
-{
-    if (entity)
-        entity->setPos(entity->mX, entity->mY, entity->mZ);
-}
-
-void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)
-{
-    levelEvent(boost::shared_ptr<Player>(), type, pos, data);
-}
-
-void LevelRenderer::levelEvent(boost::shared_ptr<Player>, int type, const BlockPos& pos, int data)
-{
-    Level* level = mLevels[0];
-    if (level == 0)
-        return;
-    arrayWithLength<int> params(1, false);
-    params.data[0] = data;
-    if (type >= 2000)
-        addParticle(level, (ePARTICLE_TYPE)data, true, (double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5,
-                    0.0, 0.0, 0.0, params);
+    addParticle(level, particle->getId(), particle->getOverrideLimiter(), x, y, z, xa, ya, za, params);
 }
 
 void LevelRenderer::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
 {
-    boost::unordered_map<int, BlockDestructionProgress*>::iterator current = mDestroyingBlocks.find(breakerId);
-    if (progress < 0 || progress > 9)
+    boost::unordered_map<int, BlockDestructionProgress*>::iterator entry =
+        mDestroyingBlocks.find(breakerId);
+
+    if ((unsigned int)progress >= 10)
     {
-        if (current != mDestroyingBlocks.end())
+        if (entry != mDestroyingBlocks.end())
         {
-            delete current->second;
-            mDestroyingBlocks.erase(current);
+            delete entry->second;
+            mDestroyingBlocks.erase(entry);
         }
+
         return;
     }
-    if (current == mDestroyingBlocks.end())
-        current = mDestroyingBlocks.insert(std::make_pair(breakerId, new BlockDestructionProgress(breakerId, pos))).first;
-    current->second->setProgress(progress);
-    current->second->updateTick(mRenderTick);
+
+    BlockDestructionProgress* destruction = 0;
+
+    if (entry != mDestroyingBlocks.end())
+    {
+        destruction = entry->second;
+    }
+
+    if (destruction == 0 || destruction->getPos().x != pos.x || destruction->getPos().y != pos.y ||
+        destruction->getPos().z != pos.z)
+    {
+        destruction = new BlockDestructionProgress(breakerId, pos);
+        mDestroyingBlocks[breakerId] = destruction;
+    }
+
+    destruction->setProgress(progress);
+    destruction->updateTick(mRenderTick);
 }
 
-void LevelRenderer::registerTextures(IconRegister*)
+void LevelRenderer::registerTextures(IconRegister* iconRegister)
 {
-    mSkyColorChanged = true;
+    for (int stage = 0; stage < 10; ++stage)
+    {
+        mDestroyStages[stage] = iconRegister->registerIcon(std::wstring(L"destroy_") + _toString(stage));
+    }
 }
 
 void LevelRenderer::fullyFlagRenderableBlockEntitiesToBeRemoved()
 {
-    for (boost::unordered_set<boost::shared_ptr<BlockEntity> >::iterator block = mRenderableBlockEntities.begin(); block != mRenderableBlockEntities.end(); ++block)
-        (*block)->setRenderRemoveStage(2);
+    EnterCriticalSection(&mBlockEntityMutex);
+
+    for (ChunkBlockEntityMap::iterator entry = mBlockEntities.begin(); entry != mBlockEntities.end();
+         ++entry)
+    {
+        std::vector<boost::shared_ptr<BlockEntity> >& list = entry->second;
+
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator blockEntity = list.begin();
+             blockEntity != list.end(); ++blockEntity)
+        {
+            (*blockEntity)->upgradeRenderRemoveStage();
+        }
+    }
+
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
-unsigned long long LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, int dimension)
+int LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, int dimension)
 {
     return getChunkIndex(getDimensionIndexFromId(dimension), x >> 4, y >> 4, z >> 4);
 }
 
 void LevelRenderer::setGlobalChunkFlag(int x, int y, int z, Level* level, unsigned char mask, unsigned char shift)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    if (index != (unsigned long long)-1)
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index != -1)
+    {
         mGlobalChunkFlags[index] |= (unsigned char)(mask << shift);
+    }
 }
 
 void LevelRenderer::clearGlobalChunkFlag(int x, int y, int z, Level* level, unsigned char mask, unsigned char shift)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    if (index != (unsigned long long)-1)
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index != -1)
+    {
         mGlobalChunkFlags[index] &= (unsigned char)~(mask << shift);
+    }
 }
 
 unsigned char LevelRenderer::getGlobalChunkFlags(int x, int y, int z, Level* level)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    return index == (unsigned long long)-1 ? 0 : mGlobalChunkFlags[index];
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index == -1)
+    {
+        return 0;
+    }
+
+    return mGlobalChunkFlags[index];
 }
 
-unsigned long long LevelRenderer::setGlobalChunkFlags(int x, int y, int z, Level* level, unsigned char flags)
+void LevelRenderer::setGlobalChunkFlags(int x, int y, int z, Level* level, unsigned char flags)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    if (index != (unsigned long long)-1)
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index != -1)
+    {
         mGlobalChunkFlags[index] = flags;
-    return index;
+    }
 }
 
 unsigned char LevelRenderer::incGlobalChunkRefCount(int x, int y, int z, Level* level)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    if (index == (unsigned long long)-1)
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index == -1)
+    {
         return 0;
+    }
+
     unsigned char flags = mGlobalChunkFlags[index];
     unsigned char count = (unsigned char)((flags >> 5) + 1);
-    mGlobalChunkFlags[index] = (unsigned char)((count << 5) | (flags & 31));
+
+    mGlobalChunkFlags[index] = (unsigned char)(count * 32 | (flags & 0x1f));
+
     return count;
 }
 
 unsigned char LevelRenderer::decGlobalChunkRefCount(int x, int y, int z, Level* level)
 {
-    unsigned long long index = getGlobalIndexForChunk(x, y, z, level);
-    if (index == (unsigned long long)-1)
+    int index = getGlobalIndexForChunk(x, y, z, level);
+
+    if (index == -1)
+    {
         return 0;
+    }
+
     unsigned char flags = mGlobalChunkFlags[index];
     unsigned char count = (unsigned char)((flags >> 5) - 1);
-    mGlobalChunkFlags[index] = (unsigned char)((count << 5) | (flags & 31));
+
+    mGlobalChunkFlags[index] = (unsigned char)(count * 32 | (flags & 0x1f));
+
     return count;
 }
 
-int LevelRenderer::checkAllPresentChunks(bool* present)
+void LevelRenderer::playerRemoved(boost::shared_ptr<Entity> player)
 {
-    int count = 0;
-    *present = true;
-    for (std::vector<Chunk*>::iterator chunk = mChunks.begin(); chunk != mChunks.end(); ++chunk)
-        if ((*chunk)->mLevel != 0)
-            ++count;
-        else
-            *present = false;
-    return count;
-}
-
-void LevelRenderer::DestroyedBlockManager::destroyingBlockAt(Level* level, const BlockPos& pos)
-{
-    EnterCriticalSection(&lock);
-    RecentBlock* recent = new RecentBlock(pos, level);
-    AABB* blockBounds = AABB::newTemp((double)pos.x, (double)pos.y, (double)pos.z,
-                                      (double)pos.x + 1.0, (double)pos.y + 1.0, (double)pos.z + 1.0);
-    const BlockState* state = level->getBlockState(pos);
-    state->getBlock()->addCollisionAABBs(state, level, pos, blockBounds, &recent->boxes,
-                                         boost::shared_ptr<Entity>(), false);
-    for (std::vector<AABB*>::iterator box = recent->boxes.begin(); box != recent->boxes.end(); ++box)
-        *box = AABB::newPermanent(*box);
-    blocks.push_back(recent);
-    LeaveCriticalSection(&lock);
-}
-
-void LevelRenderer::DestroyedBlockManager::addAABBs(Level* level, const AABB* area, std::vector<AABB*>* result)
-{
-    EnterCriticalSection(&lock);
-    for (std::vector<RecentBlock*>::iterator block = blocks.begin(); block != blocks.end(); ++block)
-        if ((*block)->level == level)
-            for (std::vector<AABB*>::iterator box = (*block)->boxes.begin(); box != (*block)->boxes.end(); ++box)
-                if ((*box)->intersects(area->mMinX, area->mMinY, area->mMinZ, area->mMaxX, area->mMaxY, area->mMaxZ))
-                    result->push_back(AABB::newTemp(*box));
-    LeaveCriticalSection(&lock);
 }
