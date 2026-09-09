@@ -37,7 +37,8 @@ LayerTheme* SchematicThemeRuleDefinition::Generate() const
             ConsoleSchematicFile* schematic = options->getSchematicFile(filename);
             if (schematic != NULL)
             {
-                theme->addAsset(static_cast<unsigned int>((*asset)->mMinimumWidth), schematic);
+                static_cast<AssetTheme<ConsoleSchematicFile*>*>(theme)->addAsset(
+                    static_cast<unsigned int>((*asset)->mMinimumWidth), schematic);
             }
         }
     }

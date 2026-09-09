@@ -11,11 +11,6 @@ unsigned int MiniGameOptionCacheKeyHasher::operator()(const std::pair<PlayerUID,
     return hash_value(key.first) ^ static_cast<unsigned int>(key.second);
 }
 
-unsigned int MiniGameOptionCache::KeyHasher::operator()(const std::pair<PlayerUID, EMiniGameId>& key) const
-{
-    return hash_value(key.first) ^ static_cast<unsigned int>(key.second);
-}
-
 MiniGameOptionCache::MiniGameOptionCache()
 {
 }

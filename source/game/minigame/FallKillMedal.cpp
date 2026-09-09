@@ -1,6 +1,6 @@
 #include "game/minigame/FallKillMedal.hpp"
 
-#include "game/core/StatTracker.hpp"
+#include "game/core/FallKillStatTracker.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
 FallKillMedal::FallKillMedal(int name, float target, unsigned int weight)

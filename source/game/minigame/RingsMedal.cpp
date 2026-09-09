@@ -3,48 +3,15 @@
 #include <cstring>
 #include <vector>
 
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/GameStats.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
-
-class LevelRuleset;
-class LevelGenerationOptions
-{
-public:
-    LevelRuleset* getRequiredGameRules();
-};
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
-
-extern CMinecraftApp gApp;
-
-class MiniGameDef
-{
-public:
-    int GetGameVariant() const;
-};
-
-class Minecraft
-{
-public:
-    static Minecraft* GetInstance();
-    const MiniGameDef* GetMiniGame();
-};
-
-class LevelRuleset
-{
-public:
-    void getTargetAreas(std::vector<TargetAreaRuleDefinition*>* areas);
-};
-
-class GameStats
-{
-public:
-    PlayerStats* GetPlayerStats(const StatsUID& uid);
-};
+#include "game/world/LevelRuleset.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 
 RingsMedal::RingsMedal(int name, unsigned int weight, eRingMedalAmount* amounts, EOperator op)
     : GameMedal(name, 0.0f, weight, op)

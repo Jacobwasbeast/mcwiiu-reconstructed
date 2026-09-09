@@ -1,8 +1,16 @@
 #include "game/minigame/FullTutorial.hpp"
 
 #include "game/core/GameModeConstraints.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/item/PopulateContainerRuleDefinition.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/util/Vec3.hpp"
+
+extern MinecraftServer* gMinecraftServer;
 
 FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool enabled)
     : Tutorial(playerId, constraints, enabled, true), mEnabledForPlayer(enabled),
@@ -34,13 +42,50 @@ void FullTutorial::AddTutorialArea(eTutorial_State state)
 
 void FullTutorial::PopulateChest(eTutorial_State state)
 {
-    if (gameModeConstraints == NULL)
+    LevelRuleset* ruleset = g_pApp != NULL ? g_pApp->getGameRuleDefinitions() : NULL;
+    if (ruleset == NULL || gMinecraftServer == NULL)
     {
         return;
     }
-    if (state == (eTutorial_State)-2)
+
+    GameRuleDefinition* definition = ruleset->getRuleByType(
+        static_cast<ConsoleGameRules::EGameRuleType>(30));
+    if (definition == NULL)
     {
         return;
+    }
+
+    Level* level = gMinecraftServer->getLevel(0);
+    MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
+        static_cast<EMiniGameId>(0xf), true);
+    if (level == NULL || miniGame == NULL)
+    {
+        return;
+    }
+
+    std::vector<GameRuleDefinition*> children;
+    definition->getChildren(&children);
+    for (std::vector<GameRuleDefinition*>::iterator it = children.begin();
+         it != children.end(); ++it)
+    {
+        PopulateContainerRuleDefinition* container =
+            dynamic_cast<PopulateContainerRuleDefinition*>(*it);
+        if (container == NULL)
+        {
+            continue;
+        }
+
+        int x;
+        int y;
+        int z;
+        container->GetPos(x, y, z);
+        if (state == static_cast<eTutorial_State>(-2) ||
+            (gameModeConstraints != NULL &&
+             gameModeConstraints->InConstraintArea(Vec3::newTemp(x, y, z),
+                                                   static_cast<int>(state))))
+        {
+            container->evaluateRule(level, ruleset, *miniGame);
+        }
     }
 }
 

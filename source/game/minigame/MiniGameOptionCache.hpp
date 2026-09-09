@@ -17,11 +17,7 @@ public:
 class MiniGameOptionCache : public boost::unordered_map<std::pair<PlayerUID, EMiniGameId>, MiniGamePlayerSettings, MiniGameOptionCacheKeyHasher>
 {
 public:
-    class KeyHasher
-    {
-    public:
-        unsigned int operator()(const std::pair<PlayerUID, EMiniGameId>& key) const;
-    };
+    typedef MiniGameOptionCacheKeyHasher KeyHasher;
 
     MiniGameOptionCache();
     ~MiniGameOptionCache();

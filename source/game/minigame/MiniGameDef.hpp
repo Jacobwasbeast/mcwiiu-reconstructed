@@ -346,7 +346,7 @@ public:
     unsigned int HostOption_Time(eCustomGameModeHostOption option, unsigned int index) const;
     std::wstring GetValueText(eCustomGameModeHostOption option, int value) const;
     static int getComparisonImageForGameMode(EMiniGameId id);
-    static int GetVariantIconPath(EMiniGameId id, unsigned int variant);
+    static std::wstring GetVariantIconPath(EMiniGameId id, unsigned int variant);
     void SetHostOption(eCustomGameModeHostOption option, unsigned int value) const;
     unsigned int HostOption_Time(eCustomGameModeHostOption option) const;
     int GetHostOptionIndexFrom_Time(eCustomGameModeHostOption option, int value) const;
@@ -496,7 +496,9 @@ private:
     bool mTutorialsEnabled;
     float mDamageIndicatorDelay;
     bool mShouldTickBlocks;
+    bool mShouldTickBlocksSet;
     bool mCanLavaConvertWater;
+    bool mCanLavaConvertWaterSet;
     EBuildMode mPlaceMode;
     EBuildMode mDestroyMode;
     EBuildMode mUseMode;

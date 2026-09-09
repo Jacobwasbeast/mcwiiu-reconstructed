@@ -4,8 +4,10 @@
 #include <cwchar>
 #include <sstream>
 #include "game/core/L10N.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/core/StringFormat.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
@@ -18,6 +20,7 @@
 class Block;
 
 static MiniGamePlayerSettings sPlayerSettings;
+static OSFastMutex sPlayerSettingsMutex;
 static MiniGameDef* sMiniGameDefs[eMiniGameId_Count];
 static MiniGameDef* sDefaultMiniGameDef;
 static unsigned int sCrcTable[256];
@@ -29,6 +32,13 @@ static Block* sPlacementRestrictedList[] = { NULL };
 static bool sBlackListInitialised;
 static bool sWhiteListInitialised;
 static bool sPlacementRestrictedListInitialised;
+
+static void setPlayerSettingsHostOptions(const GameModeOptions& setting)
+{
+    EnterCriticalSection(&sPlayerSettingsMutex);
+    static_cast<GameModeOptions&>(sPlayerSettings) = setting;
+    LeaveCriticalSection(&sPlayerSettingsMutex);
+}
 
 static std::pair<bool, int> parseNamedValue(const std::wstring& value,
                                              const wchar_t* const* names,
@@ -353,7 +363,7 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     , mPlayerGameTypeSet(false), mPlayerGameType(0), mSpectateMode(-1), mSpectateEntity(0), mSpectateEntitySet(false)
     , mPlayerAbilitiesSet(false), mPlayerAbilities(), mShowInvulnerableEffect(false), mLockedInventory(false)
     , mShowdownAnnouncements(false), mAllowPvP(false), mTutorialsEnabled(false), mDamageIndicatorDelay(0.0f)
-    , mShouldTickBlocks(true), mCanLavaConvertWater(false), mPlaceMode(EBuildMode_Default), mDestroyMode(EBuildMode_Default)
+    , mShouldTickBlocks(true), mShouldTickBlocksSet(false), mCanLavaConvertWater(false), mCanLavaConvertWaterSet(false), mPlaceMode(EBuildMode_Default), mDestroyMode(EBuildMode_Default)
     , mUseMode(EBuildMode_Default), mUseBlockMode(EBuildMode_Default), mMayPlace(), mMayDestroy(), mMayUse(), mMayUseBlock()
     , mCanTntDestroyBlocks(false), mMaxPlayersForSmallMaps(0), mFoodBalances(), mChestRefill(), mBlockData(), mLootSets()
     , mTextureName(), mCanCraft(true), mAllowsUGC(true), mHostOptions()
@@ -374,6 +384,22 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     mTextureName = object[L"texture"].asString();
     mCanCraft = object[L"canCraft"].asBool(false);
     mAllowsUGC = object[L"AllowsUGC"].asBool(false);
+    const XmlObject* blockTicking = object.child(L"BlockTicking");
+    if (blockTicking != NULL)
+    {
+        maybe<bool> overrideValue = (*blockTicking)[L"override"].maybeBool();
+        if (overrideValue.isSet())
+        {
+            mShouldTickBlocksSet = true;
+            mShouldTickBlocks = overrideValue.get();
+        }
+    }
+    maybe<bool> lavaConversion = object[L"CanLavaConvertWater"].maybeBool();
+    if (lavaConversion.isSet())
+    {
+        mCanLavaConvertWaterSet = true;
+        mCanLavaConvertWater = lavaConversion.get();
+    }
     parsePermissions(object);
     parseChestRefill(object);
     parseHostOptionSettings(object);
@@ -389,7 +415,7 @@ MiniGameDef::MiniGameDef(EMiniGameId id)
     , mPlayerGameTypeSet(false), mPlayerGameType(0), mSpectateMode(-1), mSpectateEntity(0), mSpectateEntitySet(false)
     , mPlayerAbilitiesSet(false), mPlayerAbilities(), mShowInvulnerableEffect(false), mLockedInventory(false)
     , mShowdownAnnouncements(false), mAllowPvP(false), mTutorialsEnabled(false), mDamageIndicatorDelay(0.0f)
-    , mShouldTickBlocks(true), mCanLavaConvertWater(false), mPlaceMode(EBuildMode_Default), mDestroyMode(EBuildMode_Default)
+    , mShouldTickBlocks(true), mShouldTickBlocksSet(false), mCanLavaConvertWater(false), mCanLavaConvertWaterSet(false), mPlaceMode(EBuildMode_Default), mDestroyMode(EBuildMode_Default)
     , mUseMode(EBuildMode_Default), mUseBlockMode(EBuildMode_Default), mMayPlace(), mMayDestroy(), mMayUse(), mMayUseBlock()
     , mCanTntDestroyBlocks(false), mMaxPlayersForSmallMaps(0), mFoodBalances(), mChestRefill(), mBlockData(), mLootSets()
     , mTextureName(), mCanCraft(true), mAllowsUGC(true), mHostOptions()
@@ -681,6 +707,7 @@ void MiniGameDef::StaticCtor()
     sMiniGameDefs[eMiniGameId_Tumble] = parseMiniGameDef(L"MG02.xml");
     sMiniGameDefs[eMiniGameId_Glide] = parseMiniGameDef(L"MG03.xml");
     sMiniGameDefs[eMiniGameId_Build] = NULL;
+    InitializeCriticalSection(&sPlayerSettingsMutex);
 }
 
 MiniGameDef* MiniGameDef::GetCustomGameModeById(EMiniGameId id, bool) { return GetCustomGameModeReferenceById(id); }
@@ -904,7 +931,7 @@ unsigned long long MiniGameDef::GetSpectateEntity() const
         return 0x2D6C0003ULL;
     if (spectateMode == 3)
         return 0x5D540048ULL;
-    return 0x0C80000000000000ULL;
+    return 0x000000000C800000ULL;
 }
 maybe<int> MiniGameDef::getDifficulty() const { return mDifficultySet ? maybe<int>(mDifficulty) : maybe<int>(); }
 maybe<int> MiniGameDef::getPlayerGameType() const { return mPlayerGameTypeSet ? maybe<int>(mPlayerGameType) : maybe<int>(); }
@@ -918,9 +945,9 @@ int MiniGameDef::getPotionDuration(int effectId, int value) const { return atMay
 int MiniGameDef::getLingeringDuration(int effectId, int value) const { return atMaybe(mLingeringDurations, effectId, value); }
 double MiniGameDef::getThrowPower(unsigned long long itemId, double value) const { return atMaybe(mProjectilePower, (int)itemId, value); }
 double MiniGameDef::getThrowAngle(unsigned long long itemId, double value) const { return atMaybe(mBaseDamage, (int)itemId, value); }
-bool MiniGameDef::shouldTickBlocks() const { return mShouldTickBlocks; }
+bool MiniGameDef::shouldTickBlocks() const { return mShouldTickBlocksSet ? mShouldTickBlocks : true; }
 bool MiniGameDef::shouldTickBlock(int blockId) const { return atMaybe(mBlockData.mMayPlace, blockId, mShouldTickBlocks); }
-bool MiniGameDef::canLavaConvertWater() const { return mCanLavaConvertWater; }
+bool MiniGameDef::canLavaConvertWater() const { return mCanLavaConvertWaterSet ? mCanLavaConvertWater : false; }
 bool MiniGameDef::canTntDestroyBlocks() const { return mPlayerSettings.mCanTntDestroyBlocks.isSet() ? mPlayerSettings.mCanTntDestroyBlocks.get() : false; }
 unsigned char MiniGameDef::CurrentHostOptionVersion() const { return mHostOptionVersion; }
 
@@ -962,11 +989,22 @@ int MiniGameDef::getComparisonImageForGameMode(EMiniGameId id)
     }
 }
 
-int MiniGameDef::GetVariantIconPath(EMiniGameId id, unsigned int variant) { return getComparisonImageForGameMode(id) + variant; }
+std::wstring MiniGameDef::GetVariantIconPath(EMiniGameId id, unsigned int variant)
+{
+    if (id == eMiniGameId_Tumble)
+    {
+        if (variant > 2)
+            variant = 2;
+        return formatwstr(L"Graphics\\GameModeGraphics\\MG02_M_%d", variant);
+    }
+    return std::wstring(L"default");
+}
 
 void MiniGameDef::SetHostOption(eCustomGameModeHostOption option, unsigned int value) const
 {
-    const_cast<MiniGamePlayerSettings&>(mPlayerSettings).Set(option, value);
+    GameModeOptions options = static_cast<const GameModeOptions&>(sPlayerSettings);
+    options.Set(option, value);
+    setPlayerSettingsHostOptions(options);
 }
 
 int MiniGameDef::GetHostOptionIndexFrom_Time(eCustomGameModeHostOption option, int value) const

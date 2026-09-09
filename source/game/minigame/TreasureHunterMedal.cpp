@@ -15,5 +15,5 @@ double TreasureHunterMedal::GetScore(PlayerStats* playerStats) const
         totalContainers += playerStats->getRoundStats(round)->mContainers.size();
     }
 
-    return static_cast<double>(totalContainers);
+    return static_cast<double>(static_cast<float>(totalContainers));
 }

@@ -2,15 +2,8 @@
 
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/world/generation/PlayerStats.hpp"
-
-class MiniGameDef
-{
-public:
-    int GetFinalRoundIndex() const;
-    bool ArePointsActive() const;
-    bool ArePowerupsActive() const;
-};
 
 ScoreImprovementMedal::~ScoreImprovementMedal()
 {

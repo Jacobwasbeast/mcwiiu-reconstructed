@@ -3,6 +3,8 @@
 
 #include "game/minigame/GameMedal.hpp"
 
+class PlayerStats;
+
 class ThemeSuggestionMedal : public GameMedal
 {
 public:
