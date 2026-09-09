@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "game/core/CMinecraftApp.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -32,6 +34,12 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     lakeOrigin = lakeOrigin.below(4);
+
+    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    if (options != NULL && options->checkIntersects(lakeOrigin, lakeOrigin.offset(16, 8, 16)))
+    {
+        return false;
+    }
 
     std::vector<unsigned char> mask(16 * 8 * 16, 0);
     const int ellipsoids = random.nextInt(4) + 4;

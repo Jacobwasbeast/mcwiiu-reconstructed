@@ -14,22 +14,7 @@ typedef unsigned char (*TerracottaLayerThemeFunction)(int, int);
 struct TerracottaLayerThemePattern
 {
     int size;
-    const Direction* const* values;
-    unsigned int patternRows;
-    unsigned int patternColumns;
-    unsigned int patternLayers;
-    unsigned int patternNorth;
-    unsigned int patternEast;
-    unsigned int patternSouth;
-    unsigned int patternWest;
-    unsigned int patternClockwise;
-    unsigned int patternCounterClockwise;
-    unsigned int patternOpposite;
-    unsigned int patternPrimaryDirection;
-    unsigned int patternSecondaryDirection;
-    unsigned int patternTertiaryDirection;
-    unsigned int patternQuaternaryDirection;
-    unsigned int patternOrientation;
+    const Direction* values[16];
 };
 
 class TerracottaLayerTheme : public LayerTheme
@@ -48,22 +33,7 @@ public:
 
 private:
     int mSize;
-    const Direction* const* mValues;
-    unsigned int mPatternRows;
-    unsigned int mPatternColumns;
-    unsigned int mPatternLayers;
-    unsigned int mPatternNorth;
-    unsigned int mPatternEast;
-    unsigned int mPatternSouth;
-    unsigned int mPatternWest;
-    unsigned int mPatternClockwise;
-    unsigned int mPatternCounterClockwise;
-    unsigned int mPatternOpposite;
-    unsigned int mPatternPrimaryDirection;
-    unsigned int mPatternSecondaryDirection;
-    unsigned int mPatternTertiaryDirection;
-    unsigned int mPatternQuaternaryDirection;
-    unsigned int mPatternOrientation;
+    const Direction* mValues[16];
     TerracottaLayerThemeFunction mFunction;
 };
 

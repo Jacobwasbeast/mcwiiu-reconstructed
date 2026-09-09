@@ -278,7 +278,7 @@ struct Player : LivingEntity {
     SoundSource::ESoundSource getSoundSource();
     void handleEntityEvent(uint8_t , int32_t );
     bool isImmobile();
-    void onChangedBlock(BlockPos* );
+    void onChangedBlock(const BlockPos& );
     void closeContainer();
     void prepareCustomTextures();
     void checkRidingStatistiscs(double , double , double );

@@ -3,11 +3,15 @@
 #include <algorithm>
 #include <cmath>
 
+#include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/LogBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 BigTreeFeature::FoliageCoords::FoliageCoords(const BlockPos& pos, int branchBase)
     : BlockPos(pos), mBranchBase(branchBase)
@@ -22,9 +26,9 @@ int BigTreeFeature::FoliageCoords::getBranchBase()
 BigTreeFeature::BigTreeFeature(bool doBlockNotify)
     : AbstractTreeFeature(doBlockNotify, 5, Blocks::log->defaultBlockState(),
                           Blocks::leaves->defaultBlockState(), false),
-      mRandom(), mBasePos(), mOriginY(0), mOriginZ(0), mHeightLimit(0), mHeight(0),
+      mRandom(), mLevel(nullptr), mBasePos(), mOriginY(0), mOriginZ(0), mHeightLimit(0), mHeight(0),
       mScaleWidth(0.618), mBranchSlope(0.381), mBranchDensity(1.0), mLeafDensity(0.7),
-      mTrunkWidth(1), mLeafDistanceLimit(12), mFoliageHeight(4), mFoliageCoords()
+      mTrunkWidth(1), mLeafDistanceLimit(12), mFoliageHeight(0), mFoliageCoords()
 {
 }
 
@@ -34,23 +38,17 @@ BigTreeFeature::~BigTreeFeature()
 
 double BigTreeFeature::treeShape(int height)
 {
-    double remaining = static_cast<double>(mHeightLimit - height);
-    double limit = static_cast<double>(mHeightLimit) * 0.3;
-    if (remaining < limit)
-    {
-        return -1.0;
-    }
-    double branchHeight = static_cast<double>(mHeightLimit) * 0.5;
-    double distance = branchHeight - remaining;
+    double radius = static_cast<double>(mHeightLimit) * 0.5;
+    double distance = radius - static_cast<double>(height);
     if (distance == 0.0)
     {
-        return branchHeight;
+        return radius;
     }
-    if (std::fabs(distance) < branchHeight)
+    if (std::fabs(distance) >= radius)
     {
-        return std::sqrt(branchHeight * branchHeight - distance * distance) * 0.5;
+        return 0.0;
     }
-    return 0.0;
+    return std::sqrt(radius * radius - distance * distance) * 0.5;
 }
 
 int BigTreeFeature::getSteps(const BlockPos& pos)
@@ -64,7 +62,7 @@ int BigTreeFeature::checkLine(const BlockPos& from, const BlockPos& to)
     int steps = getSteps(delta);
     if (steps == 0)
     {
-        return isFree(mLevel->getBlock(from)) ? -1 : 0;
+        return -1;
     }
     double dx = static_cast<double>(delta.x) / steps;
     double dy = static_cast<double>(delta.y) / steps;
@@ -87,8 +85,8 @@ void BigTreeFeature::prepare()
     {
         mHeight = mHeightLimit - 1;
     }
-    double radius = mLeafDensity * mHeightLimit / 13.0;
-    int clusters = static_cast<int>(1.0 + radius * radius);
+    double radius = mLeafDensity * static_cast<double>(mHeightLimit) / 13.0;
+    int clusters = static_cast<int>(1.382 + radius * radius);
     if (clusters < 1)
     {
         clusters = 1;
@@ -105,17 +103,21 @@ void BigTreeFeature::prepare()
         }
         for (int count = clusters; count > 0; --count)
         {
-            double angle = mRandom.nextFloat() * 6.2831855;
+            float angle = (mRandom.nextFloat() + mRandom.nextFloat()) * 3.1415927f;
             double distance = mBranchDensity * shape * (mRandom.nextFloat() + 0.328);
-            BlockPos branch = mBasePos.offset(distance * std::sin(angle), static_cast<double>(layer),
-                                              distance * std::cos(angle));
+            BlockPos branch = mBasePos.offset(distance * Mth::sin(angle) + 0.5,
+                                              static_cast<double>(layer),
+                                              distance * Mth::cos(angle) + 0.5);
             if (checkLine(branch, branch.above(mFoliageHeight)) == -1)
             {
-                int branchY = static_cast<int>(-std::sqrt(static_cast<double>(
+                double branchHeight = -std::sqrt(static_cast<double>(
                     (branch.x - mBasePos.x) * (branch.x - mBasePos.x) +
                     (branch.z - mBasePos.z) * (branch.z - mBasePos.z))) * mBranchSlope +
-                    mOriginY + mHeight);
-                BlockPos trunk = mBasePos.above(branchY - mOriginY);
+                    mOriginY + mHeight;
+                int branchY = branchHeight <= static_cast<double>(mOriginY + mHeight)
+                                  ? static_cast<int>(branchHeight)
+                                  : mOriginY + mHeight;
+                BlockPos trunk(mBasePos.x, branchY, mBasePos.z);
                 if (checkLine(trunk, branch) == -1)
                 {
                     mFoliageCoords.push_back(FoliageCoords(branch, branchY));
@@ -193,7 +195,20 @@ void BigTreeFeature::limb(const BlockPos& from, const BlockPos& to, Block* block
     const BlockState* state = block->defaultBlockState();
     for (int i = 0; i <= steps; ++i)
     {
-        setBlock(mLevel, from.offset(dx * i + 0.5, dy * i + 0.5, dz * i + 0.5), state, 0);
+        const BlockPos target = from.offset(dx * i + 0.5, dy * i + 0.5, dz * i + 0.5);
+        const int axis = getLogAxis(from, target);
+        LogBlock::LogAxis* logAxis = LogBlock::Y;
+        if (axis == 1)
+        {
+            logAxis = LogBlock::X;
+        }
+        else if (axis == 2)
+        {
+            logAxis = LogBlock::Z;
+        }
+        TypedBoxed<LogBlock::LogAxis*> axisValue(logAxis);
+        const BlockState* axisState = state->setBoxedValue(static_cast<const Property*>(LogBlock::AXIS), &axisValue);
+        setBlock(mLevel, target, axisState, 0);
     }
 }
 

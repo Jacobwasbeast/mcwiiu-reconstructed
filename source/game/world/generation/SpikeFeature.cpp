@@ -3,6 +3,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/core/EnderCrystal.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -11,13 +12,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-
-class EnderCrystal : public Entity
-{
-public:
-    static boost::shared_ptr<EnderCrystal> create(Level* level);
-    void setBeamTarget(BlockPos* target);
-};
 
 SpikeFeature::SpikeFeature()
     : Feature(false),
@@ -97,7 +91,7 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
     }
 
-    boost::shared_ptr<EnderCrystal> crystal = EnderCrystal::create(level);
+    boost::shared_ptr<EnderCrystal> crystal(new EnderCrystal(level));
     if (mCrystalBeamTarget == NULL)
     {
         crystal->setBeamTarget(NULL);

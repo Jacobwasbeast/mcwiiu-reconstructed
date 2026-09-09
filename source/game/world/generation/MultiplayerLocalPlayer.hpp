@@ -21,6 +21,7 @@ public:
     virtual ~MultiplayerLocalPlayer();
 
     virtual MultiPlayerLevel* GetLevel();
+    virtual const GameType* GetGameType();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual void heal(float amount);
     virtual void tick();

@@ -7,6 +7,7 @@
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
+#include "game/world/generation/FunctionLayerFill.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
 #include "game/world/generation/LayerShape.hpp"
 #include "game/world/generation/LayerTheme.hpp"
@@ -116,3 +117,4 @@ template FilterRuleDefinition<LayerSize*>::FilterRuleDefinition(
     FilterRuleDefinition<LayerSize*>::CreateChildFunc);
 template FilterRuleDefinition<LayerTheme*>::FilterRuleDefinition(
     FilterRuleDefinition<LayerTheme*>::CreateChildFunc);
+template class FilterRuleDefinition<LayerFill*>;

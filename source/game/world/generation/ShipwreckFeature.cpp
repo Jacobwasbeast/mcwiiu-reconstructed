@@ -15,10 +15,13 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
+#include "game/core/ShipwreckPiece.hpp"
 
-class ShipwreckPiece;
-extern StructurePiece* createShipwreckPiece(Level*, GenericOverworldLevelSource*, int, int,
-                                             Random&, const Direction*);
+StructurePiece* createShipwreckPiece(Level* level, GenericOverworldLevelSource* source,
+                                     int x, int z, Random& random, const Direction* direction)
+{
+    return new ShipwreckPiece(level, source, x, z, random, direction);
+}
 
 static std::vector<Biome*> gShipwreckSpawnBiomes;
 static std::vector<Biome*> gShipwreckAllowedBiomes;
@@ -130,7 +133,7 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
                                          ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos centerChunk = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random chunkRandom = level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471);
+    Random& chunkRandom = *level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_Shipwreck, chunkX, chunkZ);

@@ -82,7 +82,7 @@ bool OceanRuinFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 
     regionX /= mSpacing;
     regionZ /= mSpacing;
-    Random chunkRandom = level->getRandomFor(regionX, regionZ, 0xdb1471);
+    Random& chunkRandom = *level->getRandomFor(regionX, regionZ, 0xdb1471);
     int featureX = regionX * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
     int featureZ = regionZ * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
     bool featureChunk = chunkX == featureX && chunkZ == featureZ;

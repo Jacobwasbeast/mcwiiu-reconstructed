@@ -105,17 +105,17 @@ void IcebergFeature::setIcebergBlock(const BlockPos& pos, Level* level, Random& 
         setBlock(level, pos, mIcebergState, 0);
 }
 
-void IcebergFeature::generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x, int z, int y, int radius, int verticalRadius)
+void IcebergFeature::generateIcebergBlock(Level* level, Random& random, const BlockPos& origin, int height, int x, int y, int z, int radius, int verticalRadius)
 {
     BlockPos local(x, y, z);
     const double distance = mIsEllipse
-        ? signedDistanceEllipse(z, x, local, verticalRadius, getEllipseC(z, height), mAngle)
-        : signedDistanceCircle(z, x, local, verticalRadius, random);
+        ? signedDistanceEllipse(x, z, local, verticalRadius, getEllipseC(y, height), mAngle)
+        : signedDistanceCircle(x, z, local, verticalRadius, random);
     if (distance >= 0.0)
         return;
-    const BlockPos target = origin.offset(x, height, y);
+    const BlockPos target = origin.offset(x, y, z);
     if (level->isEmptyBlock(target) || isIcebergBlock(level->getBlockState(target)->getBlock()))
-        setIcebergBlock(target, level, random, height - radius, height);
+        setIcebergBlock(target, level, random, height - y, height);
 }
 
 bool IcebergFeature::isIcebergBlock(Block* block)

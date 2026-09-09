@@ -1,6 +1,8 @@
 #include "game/world/generation/SandFeature.hpp"
 
 #include "game/util/Random.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -8,18 +10,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& min, const BlockPos& max);
-};
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
 
 extern CMinecraftApp* g_pApp;
 

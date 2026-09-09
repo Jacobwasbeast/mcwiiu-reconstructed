@@ -82,7 +82,7 @@ bool BuriedTreasureFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorl
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
         ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random chunkRandom = level->getRandomFor(center.x, center.z, 0x100fe9d);
+    Random& chunkRandom = *level->getRandomFor(center.x, center.z, 0x100fe9d);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_BuriedTreasure, chunkX, chunkZ);
@@ -117,7 +117,7 @@ bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
 
     levelIn->setBlock(position, Block::byId(12)->defaultBlockState(), 3, false);
     boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(position);
-    if (blockEntity != NULL && blockEntity->GetType() == 0x01e0020100000000ULL)
+    if (blockEntity != NULL && blockEntity->GetType() == 0x01e00201ULL)
     {
         boost::shared_ptr<ChestBlockEntity> chest =
             boost::static_pointer_cast<ChestBlockEntity>(blockEntity);

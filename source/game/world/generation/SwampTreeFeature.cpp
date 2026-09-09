@@ -3,6 +3,8 @@
 #include <cstdlib>
 
 #include "game/util/Random.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -13,23 +15,10 @@
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-class CMinecraftApp;
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& from, const BlockPos& to);
-};
-
 extern CMinecraftApp* g_pApp;
 extern Property* OldLogBlock_VARIANT;
 extern Property* OldLeafBlock_VARIANT;
 extern Property* OldLeafBlock_DECAYABLE;
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
 
 static const BlockState* swampTrunkState = NULL;
 static const BlockState* swampLeafState = NULL;

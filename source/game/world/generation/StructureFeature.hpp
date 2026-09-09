@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
+#include <vector>
 
 #include "game/world/generation/LargeFeature.hpp"
 
@@ -44,7 +45,7 @@ public:
     virtual bool isInsideFeature(const BlockPos& pos);
     virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
                                                  bool skipExistingChunks) = 0;
-    virtual unsigned int getGuesstimatedFeaturePositions();
+    virtual std::vector<BlockPos>* getGuesstimatedFeaturePositions();
     virtual void restoreSavedData(Level* level);
     virtual void saveFeature(int chunkX, int chunkZ, StructureStart* start);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld) = 0;

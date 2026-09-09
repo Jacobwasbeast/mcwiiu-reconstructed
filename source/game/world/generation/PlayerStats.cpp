@@ -6,132 +6,24 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/DamageDealtStatTracker.hpp"
+#include "game/core/DamageReceivedStatTracker.hpp"
+#include "game/world/generation/LastPlayerDamageStatTracker.hpp"
+#include "game/world/generation/LastPlayerFatalDamageStatTracker.hpp"
+#include "game/core/FallKillStatTracker.hpp"
+#include "game/core/AmphibiousKillStatTracker.hpp"
+#include "game/core/TotalKillsStatTracker.hpp"
+#include "game/core/SniperStatTracker.hpp"
+#include "game/core/DamageTakenBySourceStatTracker.hpp"
+#include "game/core/WeaponDamageStatTracker.hpp"
+#include "game/core/DeadshotStatTracker.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class MiniGameDef
-{
-public:
-    int GetFinalRoundIndex() const;
-    unsigned int GetGameVariant() const;
-};
-
-class LevelRuleset
-{
-public:
-    std::vector<CheckpointRuleDefinition*>* getCheckpoints();
-};
-
-class LevelGenerationOptions
-{
-public:
-    LevelRuleset* getRequiredGameRules();
-};
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
-
-extern CMinecraftApp gApp;
-
-class DamageDealtStatTracker : public StatTracker<float>
-{
-public:
-    DamageDealtStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class DamageReceivedStatTracker : public StatTracker<float>
-{
-public:
-    DamageReceivedStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class LastPlayerDamageStatTracker : public StatTracker<float>
-{
-public:
-    LastPlayerDamageStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class LastPlayerFatalDamageStatTracker : public StatTracker<float>
-{
-public:
-    LastPlayerFatalDamageStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class KillsWithBowStatTracker : public StatTracker<int>
-{
-public:
-    KillsWithBowStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class MaxSnowballHitsWithSnowballOnPlayerStatTracker : public StatTracker<int>
-{
-public:
-    MaxSnowballHitsWithSnowballOnPlayerStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class FallKillStatTracker : public StatTracker<int>
-{
-public:
-    FallKillStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class AmphibiousKillStatTracker : public StatTracker<int>
-{
-public:
-    AmphibiousKillStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class TotalKillsStatTracker : public StatTracker<int>
-{
-public:
-    TotalKillsStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class SniperStatTracker : public StatTracker<int>
-{
-public:
-    SniperStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class DamageTakenBySourceStatTracker : public StatTracker<float>
-{
-public:
-    DamageTakenBySourceStatTracker(const StatsUID& statsUID, Scoreboard::EDamageSource source);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class WeaponDamageStatTracker : public StatTracker<float>
-{
-public:
-    enum ETrackingType
-    {
-        TRACKING_DEALT,
-        TRACKING_RECEIVED
-    };
-
-    WeaponDamageStatTracker(const StatsUID& statsUID, ETrackingType trackingType);
-    virtual void update(const DamageEvent* damageEvent);
-};
-
-class DeadshotStatTracker : public StatTracker<int>
-{
-public:
-    DeadshotStatTracker(const StatsUID& statsUID);
-    virtual void update(const DamageEvent* damageEvent);
-};
 
 PlayerStats::RoundStats::BlockInteractionInfo::BlockInteractionInfo()
     : mCount(0)
@@ -263,6 +155,9 @@ PlayerStats::RoundStats::RoundStats(const StatsUID& statsUID)
     , mKillsByType()
     , mWinningTheme()
     , mLifeStats()
+    , mLapsCompleted(0)
+    , mLayerTime()
+    , mLayerTimeCounter(0)
 {
     mTrackers.push_back(mDamageDealt);
     mTrackers.push_back(mDamageReceived);

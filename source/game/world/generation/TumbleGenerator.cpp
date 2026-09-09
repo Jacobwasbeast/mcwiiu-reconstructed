@@ -156,13 +156,13 @@ void TumbleGenerator::CleanUp(Level* level)
     PIXEndNamedEvent();
 }
 
-unsigned int TumbleGenerator::GetLayerBB(unsigned int layer)
+AABB* TumbleGenerator::GetLayerBB(unsigned int layer)
 {
     if (layer < mLayers.size() && layer < 9)
     {
-        return (unsigned int)mLayers[layer]->getArea();
+        return mLayers[layer]->getArea();
     }
-    return 0;
+    return NULL;
 }
 
 int TumbleGenerator::GetNumberOfLayers()

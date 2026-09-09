@@ -66,7 +66,7 @@ bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     int spacing = flatWorld ? 0x10 : mSpacing;
     int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
     int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
-    Random chunkRandom = level->getRandomFor(regionX / spacing, regionZ / spacing, 0x9E7F70);
+    Random& chunkRandom = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0x9E7F70);
     int offsetX = chunkRandom.nextInt(spacing - mSeparation);
     int offsetZ = chunkRandom.nextInt(spacing - mSeparation);
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
@@ -131,7 +131,7 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
     int villagePieceCount = 0;
     for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
     {
-        if (*it == NULL || dynamic_cast<VillagePieces::VillagePiece*>(*it) == NULL)
+        if (*it != NULL && dynamic_cast<VillagePieces::VillagePiece*>(*it) != NULL)
         {
             ++villagePieceCount;
         }
@@ -156,7 +156,7 @@ StructureStart* VillageFeature::VillageStart::Create()
 bool VillageFeature::VillageStart::isValid()
 {
     BoundingBox* box = getBoundingBox();
-    int minX = (-mDistance) / 2;
+    int minX = -(mDistance / 2) - (mDistance % 2 != 0 ? 1 : 0);
     int maxX = mDistance / 2;
     if (minX <= box->x0 && box->x1 <= maxX && minX <= box->z0 && box->z1 <= maxX)
     {

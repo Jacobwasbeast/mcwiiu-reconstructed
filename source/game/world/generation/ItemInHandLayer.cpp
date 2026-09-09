@@ -1,33 +1,13 @@
 #include "game/world/generation/ItemInHandLayer.hpp"
 
+#include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/HumanoidModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
-
-class LivingEntity
-{
-public:
-    virtual const HumanoidArm* getMainArm();
-    virtual not_null_ptr<ItemInstance> getMainHandItem();
-    virtual not_null_ptr<ItemInstance> getOffhandItem();
-    virtual bool isFallFlying();
-};
-
-class ItemInHandRenderer
-{
-public:
-    void renderItem(boost::shared_ptr<LivingEntity> entity, not_null_ptr<ItemInstance> item,
-                    ItemTransforms::TransformType transformType, bool leftHand, int seed, bool blit);
-};
-
-class Minecraft
-{
-public:
-    static Minecraft* GetInstance();
-    ItemInHandRenderer* getItemInHandRenderer();
-};
 
 ItemInHandLayer::ItemInHandLayer(LivingEntityRenderer* renderer)
     : mLivingEntityRenderer(renderer)

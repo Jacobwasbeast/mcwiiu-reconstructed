@@ -91,7 +91,7 @@ bool OceanMonumentFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld
             ? &mReducedFeatureChunk
             : &mFeatureChunk;
     ChunkPos centerChunk = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random chunkRandom = level->getRandomFor(centerChunk.x, centerChunk.z, 0x9E7F71);
+    Random& chunkRandom = *level->getRandomFor(centerChunk.x, centerChunk.z, 0x9E7F71);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_OceanMonument, chunkX, chunkZ);

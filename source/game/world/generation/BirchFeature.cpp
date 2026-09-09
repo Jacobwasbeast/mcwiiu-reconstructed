@@ -1,10 +1,14 @@
 #include "game/world/generation/BirchFeature.hpp"
 
 #include "game/util/Random.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
@@ -14,23 +18,7 @@
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
-
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& min, const BlockPos& max);
-};
-
 extern CMinecraftApp* g_pApp;
-extern Property* OldLogBlock_VARIANT;
-extern Property* OldLeafBlock_VARIANT;
-extern Property* OldLeafBlock_DECAYABLE;
-
 static const BlockState* birchTrunkState = NULL;
 static const BlockState* birchLeafState = NULL;
 

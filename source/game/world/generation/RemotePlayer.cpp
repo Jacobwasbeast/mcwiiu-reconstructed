@@ -8,11 +8,15 @@
 
 RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
     : AbstractClientPlayer(level, name),
-      mField0x878(0),
-      mField0x880(1.034999966621399f),
       mGameType(NULL)
 {
-    mField0x6d4 = 0;
+    fjDerivedCtorCalls();
+    mField0x6d4 = 0.25f;
+    mField0x1dc = 1;
+    mField0x1d8 = 1.0f;
+    setViewScale(10.0);
+    mField0x878 = 0;
+    mField0x880 = 1.034999966621399f;
     mField0x6d8 = 1.0f;
     mField0x6dc = 1;
 }
@@ -111,5 +115,5 @@ const GameType* RemotePlayer::GetGameType()
 
 unsigned long long RemotePlayer::GetType()
 {
-    return 0x0c80000200000000ULL;
+    return 0x000000000C800002ULL;
 }

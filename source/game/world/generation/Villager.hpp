@@ -8,6 +8,7 @@
 #include "game/core/MapDecoration.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/world/block/BlockPos.hpp"
 
 class CompoundTag;
 class DataFixerUpper;
@@ -124,7 +125,7 @@ public:
     void notifyTradeUpdated(const not_null_ptr<ItemInstance>& item);
     virtual bool isAvailableToTrade();
     Level* getLevel();
-    unsigned long long getPosition();
+    BlockPos getPosition();
     void setProfession(int profession);
     void _init(int profession);
     MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, bool flag, const std::wstring& name);

@@ -27,7 +27,7 @@ public:
     void renderArmWithItem(boost::shared_ptr<LivingEntity> entity, not_null_ptr<ItemInstance> item,
                            ItemTransforms::TransformType transformType, const HumanoidArm* arm);
 
-private:
+protected:
     LivingEntityRenderer* mLivingEntityRenderer;
 };
 

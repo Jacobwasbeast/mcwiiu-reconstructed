@@ -16,6 +16,7 @@ class Dimension;
 class Entity;
 class GameType;
 class Level;
+class LevelStorage;
 class MasterGameMode;
 class MinecraftServer;
 class Packet;
@@ -84,7 +85,7 @@ public:
                                   boost::shared_ptr<Packet> packet);
     void broadcastPlaylistInfo(
         std::vector<LevelRules::LevelRulesetGroup*>* groups);
-    std::vector<std::wstring>* getPlayerNames();
+    std::wstring getPlayerNames();
     boost::shared_ptr<ServerPlayer> getPlayerByName(const std::wstring& name);
     boost::shared_ptr<ServerPlayer> getPlayerFromStatsUID(const StatsUID& uid);
     void broadcast(boost::shared_ptr<Player> source, double x, double y, double z,
@@ -125,6 +126,7 @@ private:
     bool mAllowCheatsForAllPlayers;
     bool mOverrideGameMode;
     int mUnknownState;
+    boost::shared_ptr<LevelStorage> mLevelStorage;
 };
 
 #endif

@@ -4,19 +4,9 @@
 
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
-
-class Biome
-{
-public:
-    enum BiomeType
-    {
-        eBiomeType_Ocean = 10
-    };
-
-    BiomeType getBiomeType() const;
-};
 
 unsigned int UnderwaterLargeCaveFeature::isDiggable(int blockId)
 {
@@ -135,7 +125,7 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
                     const int index = (localX << 11) | (localZ << 7) | localY;
                     if (yd <= -1.8F || xd * xd + zd * zd + yd * yd >= 1.0F || localY >= 0x3e || !isDiggable(primer->getBlockId(index)))
                         continue;
-                    if (!found && level != NULL && level->getBiome(BlockPos(x, y, z))->getBiomeType() != Biome::eBiomeType_Ocean)
+                    if (!found && level != NULL && level->getBiome(BlockPos(x, y, z))->getBiomeType() != Biome::eBiomeIDs_Ocean)
                         return;
                     found = true;
                     if (localY < 9)

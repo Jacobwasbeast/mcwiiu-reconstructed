@@ -19,7 +19,7 @@ public:
     virtual void StartGeneration(Level* level);
     virtual AABB* GetSpawnArea() const;
     virtual void CleanUp(Level* level);
-    virtual unsigned int GetLayerBB(unsigned int layer);
+    virtual AABB* GetLayerBB(unsigned int layer);
     virtual int GetNumberOfLayers();
     virtual void GetLayerExtents(unsigned int layer, float* minimum, float* maximum);
     virtual unsigned int GetBlockCountOnLayer(unsigned int layer);

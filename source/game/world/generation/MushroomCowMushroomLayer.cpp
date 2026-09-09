@@ -4,7 +4,6 @@
 
 #include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/CowModel.hpp"
-#include "game/client/render/EntityRenderer.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/MushroomCowRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -30,8 +29,7 @@ void MushroomCowMushroomLayer::render(boost::shared_ptr<LivingEntity>& entity, f
 {
     if (!entity->isInvisible() && !entity->isBaby())
     {
-        EntityRenderer* renderer = (EntityRenderer*)mRenderer;
-        renderer->bindTexture(&MUSHROOM_LOCATION);
+        mRenderer->bindTexture(&MUSHROOM_LOCATION);
         GlStateManager::enableCull();
         GlStateManager::cullFace(0);
         GlStateManager::pushMatrix();
@@ -51,7 +49,7 @@ void MushroomCowMushroomLayer::render(boost::shared_ptr<LivingEntity>& entity, f
         GlStateManager::popMatrix();
 
         GlStateManager::pushMatrix();
-        static_cast<CowModel*>(renderer->getModel())->mBody->translateTo(0.0625F);
+        static_cast<CowModel*>(mRenderer->getModel())->mBody->translateTo(0.0625F);
         GlStateManager::scalef(1.0F, -1.0F, 1.0F);
         GlStateManager::translatef(3.0F, 0.7F, -0.2F);
         GlStateManager::rotatef(12.0F, 3.0F, 1.0F, 3.0F);

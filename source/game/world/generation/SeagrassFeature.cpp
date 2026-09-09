@@ -1,5 +1,6 @@
 #include "game/world/generation/SeagrassFeature.hpp"
 
+#include "game/core/SeaGrass.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -57,7 +58,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
             if (level->isWaterAt(target)
                 && level->isSolidBlockingBlock(target)
-                && Blocks::sea_grass->canSurvive(level, target, seagrassState)
+                && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target))
             {
                 level->setBlock(target, seagrassState, 0x12, false);
@@ -71,7 +72,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
             if (level->isWaterAt(target)
                 && level->isSolidBlockingBlock(target)
-                && Blocks::sea_grass->canSurvive(level, target, seagrassState)
+                && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target))
             {
                 level->setBlock(target, seagrassState, 0x12, false);
@@ -94,7 +95,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
             if (!(level->isWaterAt(target)
                 && level->isSolidBlockingBlock(target)
-                && Blocks::sea_grass->canSurvive(level, target, seagrassState)
+                && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target)))
             {
                 continue;
@@ -132,7 +133,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
         if (level->isWaterAt(target)
             && level->isSolidBlockingBlock(target)
-            && Blocks::sea_grass->canSurvive(level, target, seagrassState))
+            && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true))
         {
             level->setBlock(target, seagrassState, 0x12, false);
         }
@@ -145,7 +146,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
         if (level->isWaterAt(target)
             && level->isSolidBlockingBlock(target)
-            && Blocks::sea_grass->canSurvive(level, target, seagrassState))
+            && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true))
         {
             level->setBlock(target, seagrassState, 0x12, false);
         }

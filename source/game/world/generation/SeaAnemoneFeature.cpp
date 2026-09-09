@@ -4,14 +4,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 class Property;
 
-extern Property* CoralFan_FACING;
-extern Property* CoralFan_WATERLOGGED;
+extern AbstractProperty<int>* CoralFan_PROPERTY_1;
+extern AbstractProperty<int>* CoralFan_PROPERTY_2;
 extern Property* Coral_VARIANT;
 
 SeaAnemoneFeature::~SeaAnemoneFeature()
@@ -40,10 +41,10 @@ bool SeaAnemoneFeature::place(Level* level, Random& random, const BlockPos& orig
         if (!random.rollPercentageChance(75))
         {
             const BlockState* state = Blocks::coral_fan->defaultBlockState();
-            state = state->setBoxedValue(CoralFan_FACING,
-                                         new TypedBoxed<int>(random.nextInt(CoralFan_FACING->getValueCount())));
-            state = state->setBoxedValue(CoralFan_WATERLOGGED,
-                                         new TypedBoxed<int>(random.nextInt(CoralFan_WATERLOGGED->getValueCount())));
+            state = state->setBoxedValue(CoralFan_PROPERTY_1,
+                                         new TypedBoxed<int>(random.nextInt(CoralFan_PROPERTY_1->getValueCount())));
+            state = state->setBoxedValue(CoralFan_PROPERTY_2,
+                                         new TypedBoxed<int>(random.nextInt(CoralFan_PROPERTY_2->getValueCount())));
             setBlock(level, pos, state, 0);
             return true;
         }

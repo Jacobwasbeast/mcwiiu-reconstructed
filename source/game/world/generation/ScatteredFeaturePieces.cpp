@@ -15,6 +15,8 @@
 #include "game/world/generation/StructureFeatureIO.hpp"
 #include "game/world/generation/StructureManager.hpp"
 
+ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector* ScatteredFeaturePieces::JunglePyramidPiece::mStoneSelector = NULL;
+
 void ScatteredFeaturePieces::loadStatic()
 {
     StructureFeatureIO::setPieceId(eStructurePiece_DesertPyramidPiece, &ScatteredFeaturePieces::DesertPyramidPiece::Create, L"TeDP");
@@ -232,7 +234,10 @@ bool ScatteredFeaturePieces::JunglePyramidPiece::postProcess(Level* level, Rando
     return true;
 }
 
-void ScatteredFeaturePieces::JunglePyramidPiece::staticCtor() {}
+void ScatteredFeaturePieces::JunglePyramidPiece::staticCtor()
+{
+    mStoneSelector = new MossStoneSelector();
+}
 StructurePiece* ScatteredFeaturePieces::JunglePyramidPiece::Create() { return new JunglePyramidPiece(); }
 EStructurePiece ScatteredFeaturePieces::JunglePyramidPiece::GetType() { return eStructurePiece_JunglePyramidPiece; }
 

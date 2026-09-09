@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <cstdint>
 
 #include <boost/shared_ptr.hpp>
 
@@ -151,6 +152,8 @@ private:
     float mMissTime;
     bool mTutorialsEnabled;
     bool mDestroying;
+    uint64_t mSpectateSoundTime;
+    int mCarriedItemSlot;
 };
 
 #endif

@@ -6,6 +6,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 
+DoublePlantFeature* gDoublePlantFeature = new DoublePlantFeature();
+
 DoublePlantFeature::DoublePlantFeature()
     : Feature(false)
 {

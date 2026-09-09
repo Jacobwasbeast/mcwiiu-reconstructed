@@ -164,7 +164,7 @@ void WallGenerator::CleanUp(Level*)
 {
 }
 
-unsigned int WallGenerator::GetLayerBB(unsigned int)
+AABB* WallGenerator::GetLayerBB(unsigned int)
 {
     return 0;
 }

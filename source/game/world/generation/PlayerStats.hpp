@@ -11,6 +11,8 @@
 #include "game/core/Scoreboard.hpp"
 #include "game/core/StatTracker.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/core/KillsWithBowStatTracker.hpp"
+#include "game/world/generation/MaxSnowballHitsWithSnowballOnPlayerStatTracker.hpp"
 
 class CheckpointRuleDefinition;
 class ContainerInfo;
@@ -18,6 +20,9 @@ class DamageEvent;
 class DamageSourceMedal;
 class GameMedal;
 class Item;
+class FallKillStatTracker;
+class SniperStatTracker;
+class TotalKillsStatTracker;
 
 typedef int eTimeSpentCategory;
 
@@ -54,8 +59,8 @@ public:
         StatTracker<float>* mDamageReceived;
         UntypedStatTracker* mLastPlayerDamage;
         UntypedStatTracker* mLastPlayerFatalDamage;
-        UntypedStatTracker* mKillsWithBow;
-        UntypedStatTracker* mMaxSnowballHits;
+        KillsWithBowStatTracker* mKillsWithBow;
+        MaxSnowballHitsWithSnowballOnPlayerStatTracker* mMaxSnowballHits;
         int mJumpCount;
         int mKills;
         std::map<int, int> mItems;
@@ -109,6 +114,9 @@ public:
         unsigned short mKillsByType[4];
         std::wstring mWinningTheme;
         std::vector<PerLifeStats> mLifeStats;
+        int mLapsCompleted;
+        std::vector<unsigned int> mLayerTime;
+        int mLayerTimeCounter;
     };
 
     PlayerStats(const StatsUID& statsUID);
@@ -173,10 +181,10 @@ public:
     int mHitsFromProjectile;
     StatTracker<float>* mDamageDealt;
     StatTracker<float>* mDamageReceived;
-    StatTracker<int>* mFallKills;
+    FallKillStatTracker* mFallKills;
     StatTracker<int>* mAmphibiousKills;
-    StatTracker<int>* mTotalKills;
-    StatTracker<int>* mSniper;
+    TotalKillsStatTracker* mTotalKills;
+    SniperStatTracker* mSniper;
 
 private:
     friend class DamageSourceMedal;

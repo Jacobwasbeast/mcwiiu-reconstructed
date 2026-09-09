@@ -7,17 +7,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class VineBlock
-{
-public:
-    static const BooleanProperty* NORTH;
-    static const BooleanProperty* EAST;
-    static const BooleanProperty* SOUTH;
-    static const BooleanProperty* WEST;
-};
+#include "game/world/block/VineBlock.hpp"
 
 VinesFeature::VinesFeature()
     : Feature(false)

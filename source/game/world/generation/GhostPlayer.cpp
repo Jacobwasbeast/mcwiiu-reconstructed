@@ -53,5 +53,5 @@ GhostGameMode* GhostPlayer::GetGameMode()
 
 unsigned long long GhostPlayer::GetType()
 {
-    return 0x0c80000400000000ULL;
+    return 0x000000000C800004ULL;
 }

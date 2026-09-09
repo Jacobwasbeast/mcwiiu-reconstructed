@@ -52,9 +52,9 @@ bool LevelGenerators::SortLevelGenerators(const LevelGenerationOptions* first, c
     }
     if (compareSortIndex)
     {
-        cDLCInfo* dlcInfo = (cDLCInfo*)(unsigned long)theApp.GetDLCInfoInstance();
+        cDLCInfo* dlcInfo = (cDLCInfo*)(unsigned long)gApp.GetDLCInfoInstance();
         DLC_INFO* firstInfo = dlcInfo->GetDLCInfoForPackID(firstPackId);
-        dlcInfo = (cDLCInfo*)(unsigned long)theApp.GetDLCInfoInstance();
+        dlcInfo = (cDLCInfo*)(unsigned long)gApp.GetDLCInfoInstance();
         DLC_INFO* secondInfo = dlcInfo->GetDLCInfoForPackID(secondPackId);
         if (firstInfo != NULL && secondInfo != NULL)
         {

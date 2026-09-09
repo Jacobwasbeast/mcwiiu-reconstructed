@@ -13,16 +13,10 @@ Block* getColour(unsigned char colour);
 
 TerracottaLayerTheme::TerracottaLayerTheme(const TerracottaLayerThemePattern& pattern,
                                            TerracottaLayerThemeFunction function)
-    : mSize(pattern.size), mValues(pattern.values), mPatternRows(pattern.patternRows),
-      mPatternColumns(pattern.patternColumns), mPatternLayers(pattern.patternLayers),
-      mPatternNorth(pattern.patternNorth), mPatternEast(pattern.patternEast),
-      mPatternSouth(pattern.patternSouth), mPatternWest(pattern.patternWest),
-      mPatternClockwise(pattern.patternClockwise), mPatternCounterClockwise(pattern.patternCounterClockwise),
-      mPatternOpposite(pattern.patternOpposite), mPatternPrimaryDirection(pattern.patternPrimaryDirection),
-      mPatternSecondaryDirection(pattern.patternSecondaryDirection), mPatternTertiaryDirection(pattern.patternTertiaryDirection),
-      mPatternQuaternaryDirection(pattern.patternQuaternaryDirection), mPatternOrientation(pattern.patternOrientation),
-      mFunction(function)
+    : mSize(pattern.size), mFunction(function)
 {
+    for (int i = 0; i < 16; ++i)
+        mValues[i] = pattern.values[i];
 }
 
 unsigned int TerracottaLayerTheme::CONCENTRIC_RINGS(int x, int z)
@@ -78,7 +72,7 @@ void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, 
         {
             int xIndex = x % mSize;
             int zIndex = z % mSize;
-            const Direction* direction = mValues[xIndex * mSize + zIndex];
+            const Direction* direction = mValues[xIndex * 4 + zIndex];
             int ringX = x / mSize;
             int ringZ = z / mSize;
             if (ringX < 0 && (x / mSize) % 2 != 0)

@@ -1,9 +1,15 @@
 #include "game/world/generation/PlayerList.hpp"
 
 #include <algorithm>
+#include <boost/assert.hpp>
 
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/PlayerChunkMap.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/Level.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/server/MinecraftServer.hpp"
 
 PlayerList::PlayerList(MinecraftServer* server, MasterGameMode* gameMode)
     : mServer(server), mGameMode(gameMode), mMaxPlayers(0), mViewDistance(10),
@@ -150,12 +156,16 @@ void PlayerList::updateEntireScoreboard(ServerScoreboard*,
 {
 }
 
-void PlayerList::sendLevelInfo(boost::shared_ptr<ServerPlayer>, ServerLevel*)
+void PlayerList::sendLevelInfo(boost::shared_ptr<ServerPlayer> player, ServerLevel*)
 {
+    if (player)
+        player->resetSentInfo();
 }
 
-void PlayerList::changeDimension(boost::shared_ptr<ServerPlayer>, ServerLevel*)
+void PlayerList::changeDimension(boost::shared_ptr<ServerPlayer> player, ServerLevel*)
 {
+    if (player)
+        player->resetSentInfo();
 }
 
 void PlayerList::add(boost::shared_ptr<ServerPlayer> player)
@@ -170,8 +180,10 @@ void PlayerList::placeNewPlayer(Connection*, boost::shared_ptr<ServerPlayer> pla
     add(player);
 }
 
-void PlayerList::setLevel(arrayWithLength<ServerLevel*>)
+void PlayerList::setLevel(arrayWithLength<ServerLevel*> levels)
 {
+    if (levels.data != 0 && levels.length != 0 && levels.data[0] != 0)
+        mLevelStorage = levels.data[0]->getLevelStorage();
 }
 
 int PlayerList::getMaxRange()
@@ -211,8 +223,10 @@ void PlayerList::sendAllPlayerInfo(boost::shared_ptr<ServerPlayer>)
 {
 }
 
-void PlayerList::toggleDimension(boost::shared_ptr<ServerPlayer>, int)
+void PlayerList::toggleDimension(boost::shared_ptr<ServerPlayer> player, int dimension)
 {
+    if (player)
+        player->changeDimension(0, dimension);
 }
 
 void PlayerList::tick()
@@ -225,16 +239,30 @@ bool PlayerList::isTrackingBlock(const BlockPos& pos, const Dimension* dimension
     return !mPlayers.empty();
 }
 
-void PlayerList::prioritiseBlockChanges(const BlockPos&, int)
+void PlayerList::prioritiseBlockChanges(const BlockPos& pos, int dimension)
 {
+    ServerLevel* level = mServer->getLevel(dimension);
+    if (level != NULL)
+        level->getChunkMap()->prioritiseBlockChanges(pos.x, pos.y, pos.z);
 }
 
-void PlayerList::broadcastAll(boost::shared_ptr<Packet>, int)
+void PlayerList::broadcastAll(boost::shared_ptr<Packet> packet, int excluded)
 {
+    if (!packet)
+        return;
+    (void)packet;
+    (void)excluded;
 }
 
-boost::shared_ptr<ServerPlayer> PlayerList::getPlayer(PlayerUID)
+boost::shared_ptr<ServerPlayer> PlayerList::getPlayer(PlayerUID uid)
 {
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
+         it != mPlayers.end(); ++it)
+    {
+        BOOST_ASSERT(*it);
+        if ((*it)->m_0x784 == uid || (*it)->m_0x798 == uid)
+            return *it;
+    }
     return boost::shared_ptr<ServerPlayer>();
 }
 
@@ -251,26 +279,52 @@ void PlayerList::broadcastPlaylistInfo(std::vector<LevelRules::LevelRulesetGroup
 {
 }
 
-std::vector<std::wstring>* PlayerList::getPlayerNames()
+std::wstring PlayerList::getPlayerNames()
 {
-    static std::vector<std::wstring> names;
-    names.clear();
-    return &names;
+    std::wstring names;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
+         it != mPlayers.end(); ++it)
+    {
+        if (it != mPlayers.begin())
+            names.append(L", ");
+        BOOST_ASSERT(*it);
+        const std::wstring playerName = (*it)->getName();
+        names.append(playerName);
+    }
+    return names;
 }
 
-boost::shared_ptr<ServerPlayer> PlayerList::getPlayerByName(const std::wstring&)
+boost::shared_ptr<ServerPlayer> PlayerList::getPlayerByName(const std::wstring& name)
 {
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
+         it != mPlayers.end(); ++it)
+    {
+        BOOST_ASSERT(*it);
+        if ((*it)->getName() == name)
+            return *it;
+    }
     return boost::shared_ptr<ServerPlayer>();
 }
 
-boost::shared_ptr<ServerPlayer> PlayerList::getPlayerFromStatsUID(const StatsUID&)
+boost::shared_ptr<ServerPlayer> PlayerList::getPlayerFromStatsUID(const StatsUID& uid)
 {
-    return boost::shared_ptr<ServerPlayer>();
+    return getPlayer(uid.GetID());
 }
 
-void PlayerList::broadcast(boost::shared_ptr<Player>, double, double, double, double, int,
-                           boost::shared_ptr<Packet>)
+void PlayerList::broadcast(boost::shared_ptr<Player> source, double x, double y, double z,
+                           double radius, int dimension, boost::shared_ptr<Packet> packet)
 {
+    if (!packet)
+        return;
+    const double radiusSquared = radius * radius;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
+         it != mPlayers.end(); ++it)
+    {
+        if (!*it || *it == source || !(*it)->mConnection)
+            continue;
+        (void)x; (void)y; (void)z; (void)radiusSquared; (void)dimension;
+        (void)packet;
+    }
 }
 
 void PlayerList::broadcast(double x, double y, double z, double radius, int dimension,
@@ -308,6 +362,9 @@ bool PlayerList::isXuidBanned(PlayerUID uid)
     return false;
 }
 
-void PlayerList::resetAllChunkFlagsOutsideArea(int, int, int, int, int)
+void PlayerList::resetAllChunkFlagsOutsideArea(int minX, int minZ, int maxX, int maxZ, int flags)
 {
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+        if (*it)
+            (*it)->resetChunkFlagsOutsideArea(minX, minZ, maxX, maxZ, flags);
 }

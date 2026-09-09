@@ -81,6 +81,8 @@ public:
             virtual void next(Random& random, int x, int y, int z, bool edge);
         };
 
+        static MossStoneSelector* mStoneSelector;
+
         JunglePyramidPiece();
         JunglePyramidPiece(Level* level, Random& random, int x, int z);
         virtual ~JunglePyramidPiece();

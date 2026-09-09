@@ -1,10 +1,16 @@
 #include "game/world/generation/LocalPlayer.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/ServerboundMovePlayerPacket.hpp"
+#include "game/network/ServerboundPlayerAbilitiesPacket.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/User.hpp"
+#include "game/core/Input.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GenericStats.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/Gui.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/Tooltips.hpp"
@@ -20,22 +26,37 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/BeaconBlockEntity.hpp"
+#include "game/world/block/BrewingStandBlockEntity.hpp"
+#include "game/world/block/DispenserBlockEntity.hpp"
+#include "game/world/block/DropperBlockEntity.hpp"
+#include "game/world/block/FurnaceBlockEntity.hpp"
+#include "game/world/block/ShulkerBoxBlockEntity.hpp"
+#include "game/core/MinecartChest.hpp"
+#include "game/core/MinecartHopper.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/ServerboundPlayerCommandPacket.hpp"
 
 #include <cmath>
 #include <iostream>
 
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int playerIndex)
     : AbstractClientPlayer(level, user != 0 ? user->name : std::wstring()),
-      mPacketListener(0), mPermissionLevel(0), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
-      mSprinting(false),
-      mHandsBusy(false), mAutoJumpEnabled(true), mAutoJumpTime(0), mViewport(0), mButtonsDown(0),
+      mPacketListener(0), mPermissionLevel(0), mLastSentX(0.0), mLastSentY(0.0),
+      mLastSentZ(0.0), mLastSentYRot(0.0f), mLastSentXRot(0.0f),
+      mPositionSendCounter(0), mPreviousOnGround(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
+      mSprinting(false), mThirdPersonViewTimer(0),
+      mHandsBusy(false), mItemUsePending(false),
+      mUsedItemHand(InteractionHand::eInteractionHand_MainHand),
+      mAutoJumpEnabled(true), mAutoJumpTime(0), mViewport(0), mButtonsDown(0),
       mButtonsPressed(0), mMoveInputX(0), mMoveInputY(0), mLookInputX(0), mLookInputY(0),
       mReserved0x928(0), mReserved0x92c(0), mDestroyTicks(0), mLastAttackTick(0),
       mLastUseTick(0), mThirdPersonView(0), mGameMode(0), mDRCTouching(false), mUserIndex(-1),
       mViewBob(), mViewBobPrev(), mViewBobAmount(), mCreativeRepeatState(0), mDamageTaken(0.0f),
       mHasOpenedInventory(true), mWaitingForScoreboard(false),
-      mSessionTimer(0.0), mAdditionalModelParts(), mPercentageTraversed(0.0),
+      mSessionTimer(0.0), mAdditionalModelParts(), mWaterVisionClarity(0.0f),
+      mWaterVisionClarityO(0.0f), mWaterVisionClarityTarget(0.0f), mPercentageTraversed(0.0),
       mDamageNearbyMobs(false)
 {
 }
@@ -148,12 +169,33 @@ void LocalPlayer::openCommandBlock(boost::shared_ptr<CommandBlockEntity> block)
 
 int LocalPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level)
 {
-    return 0;
+    const int result = static_cast<int>(g_pApp->LoadTradingMenu(mPlayerIndex, mInventory, merchant, mLevel, name));
+    if (result != 0)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+    return result;
 }
 
 int LocalPlayer::openContainer(boost::shared_ptr<Container> container)
 {
-    return 0;
+    if (!container || g_pApp == NULL)
+        return 0;
+    const int player = mPlayerIndex;
+    if (boost::dynamic_pointer_cast<MinecartChest>(container))
+        return (int)g_pApp->LoadContainerMenu(player, mInventory, container);
+    if (boost::dynamic_pointer_cast<MinecartHopper>(container))
+        return (int)g_pApp->LoadHopperMenu(player, mInventory, container);
+    if (boost::dynamic_pointer_cast<FurnaceBlockEntity>(container))
+        return (int)g_pApp->LoadFurnaceMenu(player, mInventory, container);
+    if (boost::dynamic_pointer_cast<BrewingStandBlockEntity>(container))
+        return (int)g_pApp->LoadBrewingStandMenu(player, mInventory, container);
+    if (boost::dynamic_pointer_cast<BeaconBlockEntity>(container))
+        return (int)g_pApp->LoadBeaconMenu(player, mInventory, container);
+    if (boost::dynamic_pointer_cast<DispenserBlockEntity>(container) ||
+        boost::dynamic_pointer_cast<DropperBlockEntity>(container))
+        return (int)g_pApp->LoadTrapMenu(player, container, container);
+    if (boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(container))
+        return (int)g_pApp->LoadShulkerBoxMenu(player, mInventory, container);
+    return (int)g_pApp->LoadContainerMenu(player, container, container);
 }
 
 int LocalPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container)
@@ -193,6 +235,21 @@ float LocalPlayer::tickHeadTurn(float yRot, float xRot)
 
 void LocalPlayer::aiStep()
 {
+    if (mInput != NULL)
+    {
+        mInput->tick(this);
+
+        if (mInput->mMoveStrafe > -0.8f && mInput->mMoveStrafe < 0.8f &&
+            mInput->mMoveForward > -0.8f && mInput->mMoveForward < 0.8f)
+        {
+            mThirdPersonViewTimer = 0;
+        }
+        else
+        {
+            ++mThirdPersonViewTimer;
+        }
+    }
+
     Player::aiStep();
 }
 
@@ -208,7 +265,11 @@ void LocalPlayer::move(MoverType type, double xa, double ya, double za, bool col
 
 int LocalPlayer::openFireworks(int slot, int x, int y)
 {
-    return 0;
+    boost::shared_ptr<LocalPlayer> self = boost::static_pointer_cast<LocalPlayer>(shared_from_this());
+    const int result = static_cast<int>(g_pApp->LoadFireworksMenu(mPlayerIndex, self, slot, x, y));
+    if (result != 0)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+    return result;
 }
 
 void LocalPlayer::displayClientMessage(int message, bool force)
@@ -233,6 +294,10 @@ void LocalPlayer::SetThirdPersonView(int view)
 
 unsigned int LocalPlayer::CanChangeThirdPersonView()
 {
+    if (mThirdPersonViewTimer < 7 && mThirdPersonViewTimer != 0)
+    {
+        return 0;
+    }
     return 1;
 }
 
@@ -263,7 +328,8 @@ void LocalPlayer::StopSpectatingPlayer()
 
 const GameType* LocalPlayer::GetGameType()
 {
-    return 0;
+    MultiPlayerGameMode* gameMode = GetLocalGameMode();
+    return gameMode == 0 ? 0 : gameMode->GetGameType();
 }
 
 void LocalPlayer::SetGameType(const GameType* gameType)
@@ -274,7 +340,7 @@ void LocalPlayer::SetGameType(const GameType* gameType)
 
 unsigned long long LocalPlayer::GetType()
 {
-    return 0x2DULL;
+    return 0x000000000C800003ULL;
 }
 
 bool LocalPlayer::isHandsBusy()
@@ -362,6 +428,45 @@ bool LocalPlayer::isControlledCamera()
 
 unsigned long long LocalPlayer::sendPosition()
 {
+    if (!isControlledCamera())
+        return 0;
+
+    const double dx = mX - mLastSentX;
+    const double dy = mY - mLastSentY;
+    const double dz = mZ - mLastSentZ;
+    const bool positionDue = dx * dx + dy * dy + dz * dz > 0.0009 ||
+                             ++mPositionSendCounter >= 20 ||
+                             mOnGround != mPreviousOnGround;
+    const bool rotationChanged = mYRot != mLastSentYRot || mXRot != mLastSentXRot;
+
+    if (mPacketListener != NULL)
+    {
+        boost::shared_ptr<Packet> packet;
+        if (positionDue && rotationChanged)
+            packet.reset(new ServerboundMovePlayerPacket::PosRot(mX, mY, mZ, mYRot, mXRot, mOnGround, false));
+        else if (positionDue)
+            packet.reset(new ServerboundMovePlayerPacket::Pos(mX, mY, mY, mZ, mOnGround, false));
+        else if (rotationChanged)
+            packet.reset(new ServerboundMovePlayerPacket::Rot(mYRot, mXRot, mOnGround, false));
+        else if (mOnGround != mPreviousOnGround)
+            packet.reset(new ServerboundMovePlayerPacket(mOnGround, false));
+        if (packet)
+            mPacketListener->send(packet);
+    }
+
+    if (positionDue)
+    {
+        mLastSentX = mX;
+        mLastSentY = mY;
+        mLastSentZ = mZ;
+        mPositionSendCounter = 0;
+    }
+    if (rotationChanged)
+    {
+        mLastSentYRot = mYRot;
+        mLastSentXRot = mXRot;
+    }
+    mPreviousOnGround = mOnGround;
     return 0;
 }
 
@@ -386,6 +491,15 @@ void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
 
 void LocalPlayer::clientSideCloseContainer()
 {
+    not_null_ptr<ItemInstance> empty(new ItemInstance());
+    mInventory->setCarried(empty);
+    Player::closeContainer();
+    mMinecraft->setScreen(NULL);
+    if (gConsoleUIController.IsContainerMenuDisplayed(mPlayerIndex))
+    {
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+        gConsoleUIController.CloseUIScenes(mPlayerIndex, false);
+    }
 }
 
 void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
@@ -395,6 +509,8 @@ void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
 void LocalPlayer::onUpdateAbilities()
 {
+    boost::shared_ptr<Packet> packet(new ServerboundPlayerAbilitiesPacket(&mAbilities));
+    mPacketListener->send(packet);
 }
 
 bool LocalPlayer::isLocalPlayer()
@@ -414,6 +530,14 @@ double LocalPlayer::getJumpRidingScale()
 
 unsigned long long LocalPlayer::sendRidingJump()
 {
+    boost::shared_ptr<Entity> entity = shared_from_this();
+    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
+        entity, ServerboundPlayerCommandPacket::RIDING_JUMP,
+        static_cast<int>(getJumpRidingScale() * 100.0)));
+    if (mPacketListener != 0)
+    {
+        mPacketListener->send(packet);
+    }
     return 0;
 }
 
@@ -434,12 +558,12 @@ void LocalPlayer::setPermissionLevel(int level)
 
 unsigned int LocalPlayer::freeAtAndAbove(const BlockPos& pos)
 {
-    return 1;
+    return freeAt(pos) && !mLevel->getBlockState(pos.above())->isSolidRender();
 }
 
 unsigned int LocalPlayer::freeAt(const BlockPos& pos)
 {
-    return 1;
+    return !mLevel->getBlockState(pos)->isSolidRender();
 }
 
 bool LocalPlayer::checkInBlock(double x, double y, double z)
@@ -454,6 +578,7 @@ void LocalPlayer::setExperienceValues(float progress, int level, int total)
 
 void LocalPlayer::playSound(const SoundEvent* sound, float volume, float pitch)
 {
+    Entity::playSound(sound, volume, pitch);
 }
 
 bool LocalPlayer::isEffectiveAi()
@@ -463,25 +588,38 @@ bool LocalPlayer::isEffectiveAi()
 
 void LocalPlayer::startUsingItem(InteractionHand::EInteractionHand hand)
 {
+    not_null_ptr<ItemInstance> item = getItemInHand(hand);
+    if (!item->isEmpty() && !mItemUsePending)
+    {
+        LivingEntity::startUsingItem(hand);
+        mUsedItemHand = hand;
+        mItemUsePending = true;
+    }
 }
 
 bool LocalPlayer::isUsingItem()
 {
-    return false;
+    return mItemUsePending;
 }
 
 void LocalPlayer::stopUsingItem()
 {
+    LivingEntity::stopUsingItem();
+    mItemUsePending = false;
 }
 
 InteractionHand::EInteractionHand LocalPlayer::getUsedItemHand()
 {
-    return InteractionHand::EInteractionHand(0);
+    return mUsedItemHand;
 }
 
 bool LocalPlayer::isRidingJumpable()
 {
-    return false;
+    boost::shared_ptr<Entity> vehicle = getVehicle();
+    if (!isPassenger() || !vehicle)
+        return false;
+    boost::shared_ptr<AbstractHorse> horse = boost::dynamic_pointer_cast<AbstractHorse>(vehicle);
+    return horse && horse->canJump();
 }
 
 bool LocalPlayer::isAutoJumpEnabled()
@@ -678,7 +816,22 @@ void LocalPlayer::OnTakeFromAnvil(not_null_ptr<ItemInstance> item)
 
 double LocalPlayer::getUnderwaterVisionClarity()
 {
-    return 1.0;
+    const float current = mWaterVisionClarity;
+    if (current == mWaterVisionClarityO)
+        return mWaterVisionClarityTarget;
+    double value = 1.0;
+    if (current >= 5.0f)
+    {
+        if (current < 10.0f)
+            value = Mth::Lerp(0.6, 1.0, (current - 5.0f) / 5.0f);
+    }
+    else
+    {
+        value = Mth::Lerp(3.0, 0.6, current / 5.0f);
+    }
+    mWaterVisionClarityTarget = static_cast<float>(value);
+    mWaterVisionClarityO = current;
+    return value;
 }
 
 void LocalPlayer::DoAutoAttackOnTouch(boost::shared_ptr<Entity> entity)
@@ -697,6 +850,7 @@ void LocalPlayer::SetPercentageTraversed(double percentage)
 
 void LocalPlayer::setDamageNearbyMobs(bool damage)
 {
+    mAutoSpinAttackTicks = 0;
     mDamageNearbyMobs = damage;
 }
 

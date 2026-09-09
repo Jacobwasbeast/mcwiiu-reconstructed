@@ -195,7 +195,7 @@ bool StrongholdFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     return false;
 }
 
-unsigned int StrongholdFeature::getGuesstimatedFeaturePositions()
+std::vector<BlockPos>* StrongholdFeature::getGuesstimatedFeaturePositions()
 {
     std::vector<BlockPos>* positions = new std::vector<BlockPos>();
     for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
@@ -205,7 +205,7 @@ unsigned int StrongholdFeature::getGuesstimatedFeaturePositions()
             positions->push_back((*it)->getMiddleBlockPosition(64));
         }
     }
-    return (unsigned int)positions;
+    return positions;
 }
 
 StructureStart* StrongholdFeature::createStructureStart(int chunkX, int chunkZ)

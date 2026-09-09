@@ -8,15 +8,9 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/DoorBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Village.hpp"
-
-class DoorBlock
-{
-public:
-    static bool isDoor(Block* block);
-    static const Direction* getFacing(LevelSource* level, const BlockPos& pos);
-};
 
 Villages::Villages(const std::wstring& id)
     : SavedData(id), mLevel(NULL), mTick(0)

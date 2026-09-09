@@ -6,6 +6,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/core/Stat.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 
 MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener)
     : LocalPlayer(minecraft, level, user, 0),
@@ -25,6 +26,12 @@ MultiplayerLocalPlayer::~MultiplayerLocalPlayer()
 MultiPlayerLevel* MultiplayerLocalPlayer::GetLevel()
 {
     return dynamic_cast<MultiPlayerLevel*>(mLevel);
+}
+
+const GameType* MultiplayerLocalPlayer::GetGameType()
+{
+    MultiPlayerGameMode* gameMode = GetLocalGameMode();
+    return gameMode == NULL ? NULL : gameMode->GetGameType();
 }
 
 bool MultiplayerLocalPlayer::hurt(const DamageSource* source, float damage)

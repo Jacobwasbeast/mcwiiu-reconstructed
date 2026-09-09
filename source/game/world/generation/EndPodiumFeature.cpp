@@ -6,15 +6,11 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/EndPortalFrameBlock.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/DirectionProperty.hpp"
-
-namespace EndPortalFrameBlock
-{
-    extern DirectionProperty* FACING;
-}
 
 EndPodiumFeature::EndPodiumFeature(bool active)
     : Feature(false),

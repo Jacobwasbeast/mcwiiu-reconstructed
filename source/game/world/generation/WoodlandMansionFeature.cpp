@@ -104,7 +104,7 @@ bool WoodlandMansionFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWor
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
                                          ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random chunkRandom = level->getRandomFor(center.x, center.z, 0x9E7F77);
+    Random& chunkRandom = *level->getRandomFor(center.x, center.z, 0x9E7F77);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_WoodlandMansion, chunkX, chunkZ);

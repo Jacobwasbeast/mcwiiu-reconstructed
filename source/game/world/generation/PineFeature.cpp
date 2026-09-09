@@ -3,6 +3,8 @@
 #include <cstdlib>
 
 #include "game/util/Random.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -11,18 +13,6 @@
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
-
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& from, const BlockPos& to);
-};
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
 
 extern CMinecraftApp* g_pApp;
 

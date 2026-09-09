@@ -28,7 +28,7 @@ public:
     virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
                                                  bool skipExistingChunks);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
-    virtual unsigned int getGuesstimatedFeaturePositions();
+    virtual std::vector<BlockPos>* getGuesstimatedFeaturePositions();
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 
     class StrongholdStart : public StructureStart

@@ -129,6 +129,7 @@ public:
         virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
             Level* level, Random& random, BoundingBox* box);
         static TemplateStructurePiece* create();
+        static StructurePiece* Create();
         virtual EStructurePiece GetType();
         eMinecraftStructureTemplate mTemplateType;
         Rotation* mRotation;
@@ -161,6 +162,8 @@ public:
             std::vector<WoodlandMansionPiece*>& pieces, MansionGrid* grid);
         StructureManager* mStructureManager;
         Random mRandom;
+        int mRoofStartX;
+        int mRoofStartZ;
     };
 
     static void generateMansion(StructureManager* manager, const BlockPos& position,

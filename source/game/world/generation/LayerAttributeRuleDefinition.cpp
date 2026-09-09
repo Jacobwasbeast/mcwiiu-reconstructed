@@ -84,3 +84,13 @@ template class LayerAttributeRuleDefinition<LayerFill*>;
 template class LayerAttributeRuleDefinition<LayerShape*>;
 template class LayerAttributeRuleDefinition<LayerSize*>;
 template class LayerAttributeRuleDefinition<LayerTheme*>;
+
+template <>
+FilterRuleDefinition<LayerFill*>::FilterRuleDefinition(
+    FilterRuleDefinition<LayerFill*>::CreateChildFunc createChild)
+    : mCreateChild(createChild)
+    , mChild(NULL)
+    , mVariant(-1)
+    , mFilter(LayerMetadata::eFilter_AnyLayer)
+{
+}

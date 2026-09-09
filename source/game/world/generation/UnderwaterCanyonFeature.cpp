@@ -4,20 +4,10 @@
 
 #include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/UnderwaterLargeCaveFeature.hpp"
-
-class Biome
-{
-public:
-    enum BiomeType
-    {
-        eBiomeIDs_Ocean = 10
-    };
-
-    BiomeType getBiomeType() const;
-};
 
 void UnderwaterCanyonFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
 {

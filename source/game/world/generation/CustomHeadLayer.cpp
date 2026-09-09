@@ -3,6 +3,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/ItemInHandRenderer.hpp"
+#include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/SkullBlockRenderer.hpp"
 #include "game/core/Direction.hpp"
@@ -20,8 +21,6 @@
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/world/generation/Player.hpp"
 #include "vendor/_SkinAdjustments.hpp"
-
-extern SkullBlockRenderer* gSkullBlockRenderer;
 
 CustomHeadLayer::CustomHeadLayer(ModelPart* head)
     : mHead(head)
@@ -109,7 +108,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
 
         if (entity->GetType() == ENTITY_TYPE_ARMOR_STAND)
         {
-            gSkullBlockRenderer->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x0120020700000000ULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }
@@ -117,7 +116,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         {
             GlStateManager::translatef(0.0f, (-0.5f - entity->getSkinAdjustments().mHeadY) * 0.0625f, 0.0f);
 
-            gSkullBlockRenderer->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x0120020700000000ULL))->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, netHeadYaw + 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
 
             GlStateManager::popMatrix();
         }

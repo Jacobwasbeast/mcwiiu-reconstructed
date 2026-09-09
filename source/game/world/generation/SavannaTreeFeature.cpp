@@ -7,16 +7,22 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/NewLeafBlock.hpp"
+#include "game/world/block/NewLogBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 #include <cstdlib>
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
+static const BlockState* savannaTrunkState = NULL;
+static const BlockState* savannaLeafState = NULL;
+
 SavannaTreeFeature::SavannaTreeFeature(bool doBlockNotify)
     : AbstractTreeFeature(doBlockNotify, 5,
-                         Blocks::log2->getBlockState(0),
-                         Blocks::leaves2->getBlockState(0), false)
+                         savannaTrunkState, savannaLeafState, false)
 {
 }
 
@@ -26,6 +32,14 @@ SavannaTreeFeature::~SavannaTreeFeature()
 
 void SavannaTreeFeature::staticCtor()
 {
+    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(4));
+    savannaTrunkState = Blocks::log2->defaultBlockState()->setBoxedValue(
+        NewLogBlock::VARIANT, &variant);
+    savannaLeafState = Blocks::leaves2->defaultBlockState()->setBoxedValue(
+        NewLeafBlock::VARIANT, &variant);
+    TypedBoxed<bool> decayable(false);
+    savannaLeafState = savannaLeafState->setBoxedValue(
+        NewLeafBlock::DECAYABLE, &decayable);
 }
 
 void SavannaTreeFeature::placeLogAt(Level* level, const BlockPos& pos)

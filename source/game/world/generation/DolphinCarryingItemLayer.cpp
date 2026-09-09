@@ -23,7 +23,7 @@ DolphinCarryingItemLayer::~DolphinCarryingItemLayer()
 void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEntity>& entity,
                                                 const not_null_ptr<ItemInstance>& item)
 {
-    if (item->isEmpty() || item->isEmpty())
+    if (item->isEmpty())
         return;
 
     Block* block = Block::byItem(item->getItem());

@@ -6,17 +6,11 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/network/KickPlayerPacket.hpp"
 #include "game/ui/UIControl_ButtonList.hpp"
-
-class CGameNetworkManager
-{
-public:
-    static CGameNetworkManager sInstance;
-    INetworkPlayer* GetPlayerBySmallId(unsigned char smallId);
-};
 
 IUIScene_PlayerList::PlayerChange::PlayerChange(unsigned char smallIdValue, bool addedValue)
     : smallId(smallIdValue), added(addedValue)

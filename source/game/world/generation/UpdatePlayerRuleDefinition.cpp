@@ -163,11 +163,11 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
 {
     if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(11)))
     {
-        player->setHealth(static_cast<float>(mFoodLevel));
+        player->setHealth(static_cast<float>(mHealth));
     }
     if (attributeHasValue(static_cast<ConsoleGameRules::EGameRuleAttr>(10)))
     {
-        player->getFoodData()->setFoodLevel(mHealth);
+        player->getFoodData()->setFoodLevel(mFoodLevel);
     }
 
     double x = player->mX;

@@ -1,10 +1,5 @@
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
-
-class MiniGameDef
-{
-public:
-    static void GetPlayerSettings(MiniGamePlayerSettings& settings);
-};
+#include "game/minigame/MiniGameDef.hpp"
 
 static MiniGamePlayerSettings getMiniGamePlayerSettings()
 {

@@ -91,7 +91,6 @@ bool StructureFeature::postProcess(Level* level, Random& randomSource, ChunkPos*
 
 bool StructureFeature::isIntersection(int x, int z)
 {
-    restoreSavedData(level);
     if (mStructureMap.empty())
     {
         return false;
@@ -141,11 +140,6 @@ StructureStart* StructureFeature::getStructureAt(const BlockPos& pos)
 
 bool StructureFeature::isInsideFeature(const BlockPos& pos)
 {
-    if (level == NULL)
-    {
-        return false;
-    }
-    restoreSavedData(level);
     return getStructureAt(pos) != NULL;
 }
 
@@ -164,9 +158,9 @@ bool StructureFeature::isInsideBoundingFeature(Level* level, const BlockPos& pos
     return false;
 }
 
-unsigned int StructureFeature::getGuesstimatedFeaturePositions()
+std::vector<BlockPos>* StructureFeature::getGuesstimatedFeaturePositions()
 {
-    return 0;
+    return NULL;
 }
 
 void StructureFeature::restoreSavedData(Level* levelToRestore)

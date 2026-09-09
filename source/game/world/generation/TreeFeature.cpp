@@ -2,9 +2,11 @@
 
 #include <cstdlib>
 
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -15,23 +17,13 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
+#include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
-
-class LevelGenerationOptions
-{
-public:
-    bool checkIntersects(const BlockPos& min, const BlockPos& max);
-};
-
-class CMinecraftApp
-{
-public:
-    LevelGenerationOptions* getLevelGenerationOptions();
-};
 
 extern CMinecraftApp* g_pApp;
 extern Property* OldLogBlock_VARIANT;

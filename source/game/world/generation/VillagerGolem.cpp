@@ -15,6 +15,7 @@
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/entity/ai/MoveTowardsTargetGoal.hpp"
 #include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
@@ -74,6 +75,7 @@ void VillagerGolem::staticCtor()
 void VillagerGolem::registerGoals()
 {
     mGoalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0, true), true);
+    mGoalSelector.addGoal(2, new MoveTowardsTargetGoal(this, 0.9, 32.0f), true);
     mGoalSelector.addGoal(3, new MoveThroughVillageGoal(this, 0.6, false), true);
     mGoalSelector.addGoal(4, new MoveTowardsRestrictionGoal(this, 1.0), true);
     mGoalSelector.addGoal(5, new OfferFlowerGoal(this), true);

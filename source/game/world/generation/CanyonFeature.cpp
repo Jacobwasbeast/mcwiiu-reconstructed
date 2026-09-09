@@ -4,28 +4,10 @@
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/LargeCaveFeature.hpp"
-
-class Biome
-{
-public:
-    struct BlockPair
-    {
-        int blockId;
-        int blockData;
-    };
-
-    BlockPair mTopBlock;
-
-    enum BiomeType
-    {
-        eBiomeType_Ocean = 10
-    };
-
-    BiomeType getBiomeType() const;
-};
 
 void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z, float width, float yaw, float pitch, int start, int length, double scale)
 {

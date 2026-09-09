@@ -392,7 +392,7 @@ void Player::playSound(const SoundEvent* sound, float volume, float pitch)
 
 uint64_t Player::GetType()
 {
-    return 0x0c80000000000000ULL;
+    return 0x000000000C800000ULL;
 }
 
 uint32_t Player::GetThirdPersonView(bool)
@@ -441,7 +441,7 @@ void Player::SetLiftForceModifier(double modifier)
 
 GameMode* Player::GetGameMode()
 {
-    return NULL;
+    return 0;
 }
 
 bool Player::isPickable()
@@ -558,7 +558,7 @@ void Player::handleCollectItem(not_null_ptr<ItemInstance>)
 
 bool Player::ShouldRenderShadow()
 {
-    return true;
+    return !(isSpectator() && IsSpectatingOtherPlayer());
 }
 
 std::wstring Player::getDisplayName()
@@ -1004,11 +1004,9 @@ void Player::AwardTimerAchievement(int32_t achievement)
     }
 }
 
-void Player::onChangedBlock(BlockPos* position)
+void Player::onChangedBlock(const BlockPos& position)
 {
-    if (position != NULL && !isSwimming()) {
-        LivingEntity::onChangedBlock(*position);
-    }
+    if (!isSwimming()) LivingEntity::onChangedBlock(position);
 }
 
 void Player::serverAiStep()

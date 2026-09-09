@@ -7,6 +7,7 @@
 #include "game/core/Rotation.hpp"
 #include "game/data/LevelStorage.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/TheEndDimension.hpp"
 #include "game/world/TheEndLevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
@@ -14,12 +15,6 @@
 #include "game/core/EndCityPieces.hpp"
 
 extern CMinecraftApp* g_pApp;
-
-class TheEndDimension
-{
-public:
-    static ChunkPos* closestAreaToPoint(int x, int z);
-};
 
 EndCityFeature::EndCityFeature(TheEndLevelSource* source)
     : StructureFeature(), mSource(source)
@@ -46,7 +41,7 @@ bool EndCityFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     {
         return false;
     }
-    Random chunkRandom = level->getRandomFor(area->x, area->z, 0x9E7F71);
+    Random& chunkRandom = *level->getRandomFor(area->x, area->z, 0x9E7F71);
     return chunkX == area->x && chunkZ == area->z && chunkRandom.nextDouble() < 0.33;
 }
 

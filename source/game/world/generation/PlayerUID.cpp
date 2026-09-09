@@ -3,10 +3,7 @@
 #include <cstring>
 #include <cwchar>
 
-struct FFLCreateID
-{
-    unsigned char data[10];
-};
+#include "platform/wiiu/FFLiTypes.hpp"
 
 template<typename T> T _fromHEXString(const std::wstring& text);
 template<> int _fromHEXString<int>(const std::wstring& text);

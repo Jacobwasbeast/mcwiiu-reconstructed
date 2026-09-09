@@ -5,6 +5,7 @@
 #include "game/client/render/ItemInHandRenderer.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/SnowManRenderer.hpp"
+#include "game/client/render/SnowManModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/SnowMan.hpp"

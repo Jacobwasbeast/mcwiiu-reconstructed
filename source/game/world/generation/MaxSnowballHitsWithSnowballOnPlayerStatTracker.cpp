@@ -43,3 +43,8 @@ void MaxSnowballHitsWithSnowballOnPlayerStatTracker::update(const DamageEvent* d
         }
     }
 }
+
+unsigned int MaxSnowballHitsWithSnowballOnPlayerStatTracker::getValue() const
+{
+    return mMaxSnowballHits;
+}

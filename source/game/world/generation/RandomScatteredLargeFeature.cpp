@@ -66,7 +66,7 @@ bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool fl
     }
     int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
     int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
-    Random random = level->getRandomFor(regionX / spacing, regionZ / spacing, 0xDB1471);
+    Random& random = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0xDB1471);
     int offsetX = random.nextInt(mSpacing - mSeparation);
     int offsetZ = random.nextInt(mSpacing - mSeparation);
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
