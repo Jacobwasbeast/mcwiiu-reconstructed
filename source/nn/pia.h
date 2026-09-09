@@ -1,10 +1,15 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_H
 #define LEGACY_CONSOLE_WIIU_NN_PIA_H
 
+#include "nn/pia/Reconstruction.hpp"
+#include <coreinit/fastmutex.h>
+
+
 namespace nn
 {
 namespace pia
 {
+typedef int Result;
 typedef short StationIndex;
 
 namespace common
@@ -64,7 +69,7 @@ public:
     void Unlock();
     void Trace(unsigned long long value) const;
 private:
-    unsigned char m_data[44];
+    OSFastMutex m_mutex;
 };
 }
 
@@ -253,6 +258,16 @@ public:
     void HostChangeEventNotice(unsigned int param);
 };
 }
+
+namespace chat
+{
+Result Initialize();
+Result BeginSetup();
+Result EndSetup();
+Result Finalize();
+}
+void Assert(const char* expression, const char* file, unsigned int line,
+            const char* function, ...);
 }
 }
 
