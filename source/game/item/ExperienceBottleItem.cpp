@@ -43,7 +43,7 @@ InteractionResultHolder ExperienceBottleItem::use(Level* level,
                      player->mY,
                      player->mZ,
                      SoundEvents::EXPERIENCE_BOTTLE_THROW,
-                     SoundSource::eSoundSource_Players,
+                     SoundSource::eSoundSource_Neutral,
                      0.5f,
                      0.4f / (random->nextFloat() * 0.4f + 0.8f),
                      16.0f);
@@ -55,7 +55,6 @@ InteractionResultHolder ExperienceBottleItem::use(Level* level,
         level->addEntity(bottle);
     }
 
-    player->swing(hand);
     player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
 

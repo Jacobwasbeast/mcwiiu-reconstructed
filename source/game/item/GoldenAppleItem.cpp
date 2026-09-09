@@ -27,14 +27,18 @@ bool GoldenAppleItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 const Rarity* GoldenAppleItem::getRarity(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getAuxValue() == 0)
+    {
         return Rarity::RARE;
+    }
     return Rarity::EPIC;
 }
 
 int GoldenAppleItem::getUseDescriptionId(int auxValue)
 {
     if (auxValue != 0)
+    {
         return (int)0x5cf7965c;
+    }
     return (int)0x00cd42e1;
 }
 
@@ -47,26 +51,26 @@ void GoldenAppleItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance,
                                    Level* level,
                                    boost::shared_ptr<Player> player)
 {
-    if (level->mIsClientSide)
-        return;
-
-    if (itemInstance->getAuxValue() < 1)
+    if (!level->mIsClientSide)
     {
-        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1),
-                          boost::shared_ptr<Entity>());
-        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0),
-                          boost::shared_ptr<Entity>());
-    }
-    else
-    {
-        player->awardStat(GenericStats::overpowered(), GenericStats::param_overpowered());
-        player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4),
-                          boost::shared_ptr<Entity>());
-        player->addEffect(new MobEffectInstance(MobEffects::DAMAGE_RESISTANCE, 6000, 0),
-                          boost::shared_ptr<Entity>());
-        player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0),
-                          boost::shared_ptr<Entity>());
-        player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3),
-                          boost::shared_ptr<Entity>());
+        if (itemInstance->getAuxValue() < 1)
+        {
+            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 100, 1),
+                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 0),
+                              boost::shared_ptr<Entity>());
+        }
+        else
+        {
+            player->awardStat(GenericStats::overpowered(), GenericStats::param_overpowered());
+            player->addEffect(new MobEffectInstance(MobEffects::REGENERATION, 600, 4),
+                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::DAMAGE_RESISTANCE, 6000, 0),
+                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::FIRE_RESISTANCE, 6000, 0),
+                              boost::shared_ptr<Entity>());
+            player->addEffect(new MobEffectInstance(MobEffects::ABSORPTION, 2400, 3),
+                              boost::shared_ptr<Entity>());
+        }
     }
 }

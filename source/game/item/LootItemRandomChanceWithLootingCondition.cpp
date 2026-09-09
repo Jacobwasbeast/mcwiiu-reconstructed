@@ -24,5 +24,5 @@ bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTable
             boost::dynamic_pointer_cast<LivingEntity>(context.getEntity(LootTableContext::DIRECT_KILLER)));
     }
 
-    return random->nextFloat() < chance + static_cast<float>(lootingLevel) * lootingMultiplier;
+    return random->nextFloat() < static_cast<float>(lootingLevel) * lootingMultiplier + chance;
 }

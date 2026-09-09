@@ -109,15 +109,17 @@ boost::shared_ptr<Mob> SpawnEggItem::getMob(Level* level, const ResourceLocation
     return mob;
 }
 
-void SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType,
-                              double x, double y, double z, int* error,
-                              const std::wstring& customName)
+boost::shared_ptr<Mob> SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType,
+                                                double x, double y, double z, int* error,
+                                                const std::wstring& customName)
 {
     boost::shared_ptr<Mob> mob = getMob(level, entityType, x, y, z, error, customName);
-    if (mob && level != NULL)
+    if (mob && (mob->GetType() & 0x0D000000ULL) == 0x0D000000ULL)
     {
-        level->addEntity(boost::static_pointer_cast<Entity>(mob));
+        level->addEntity(mob);
+        mob->playAmbientSound();
     }
+    return mob;
 }
 
 void SpawnEggItem::updateCustomEntityTag(Level*, boost::shared_ptr<Player>,

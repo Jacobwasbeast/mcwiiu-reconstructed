@@ -5,7 +5,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
 
-static arrayWithLength<Block*> BLOCKS(26, false);
+static arrayWithLength<Block*> BLOCKS(26, true);
 
 void PickaxeItem::staticCtor()
 {
@@ -31,6 +31,7 @@ void PickaxeItem::staticCtor()
     BLOCKS.data[19] = Blocks::rail;
     BLOCKS.data[20] = Blocks::redstone_ore;
     BLOCKS.data[21] = Blocks::sandstone;
+    BLOCKS.data[21] = Blocks::red_sandstone;
     BLOCKS.data[22] = Blocks::stone;
     BLOCKS.data[23] = Blocks::stone_slab;
     BLOCKS.data[24] = Blocks::stone_button;
@@ -57,8 +58,7 @@ bool PickaxeItem::canDestroySpecial(const BlockState* state)
 
     if (block == Blocks::diamond_block || block == Blocks::diamond_ore ||
         block == Blocks::emerald_ore || block == Blocks::emerald_block ||
-        block == Blocks::gold_block || block == Blocks::gold_ore ||
-        block == Blocks::redstone_ore || block == Blocks::lit_redstone_ore)
+        block == Blocks::gold_block || block == Blocks::gold_ore)
     {
         return mTier->getLevel() >= 2;
     }
@@ -67,6 +67,11 @@ bool PickaxeItem::canDestroySpecial(const BlockState* state)
         block == Blocks::lapis_block || block == Blocks::lapis_ore)
     {
         return mTier->getLevel() >= 1;
+    }
+
+    if (block == Blocks::redstone_ore || block == Blocks::lit_redstone_ore)
+    {
+        return mTier->getLevel() >= 2;
     }
 
     Material* material = state->getMaterial();

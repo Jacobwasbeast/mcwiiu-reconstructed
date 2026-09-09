@@ -36,7 +36,7 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
                      player->mY,
                      player->mZ,
                      SoundEvents::ENDERPEARL_THROW,
-                     SoundSource::eSoundSource_Players,
+                     SoundSource::eSoundSource_Neutral,
                      0.5f,
                      0.4f / (random->nextFloat() * 0.4f + 0.8f),
                      16.0f);
@@ -44,13 +44,13 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<ThrownEnderpearl> enderpearl(new ThrownEnderpearl(level, player));
+        enderpearl->shootFromRotation(player, player->mXRot, player->mYRot, 0.0f, 1.5f, 1.0f);
         level->addEntity(enderpearl);
+        player->getCooldowns()->addCooldown(this, 20);
     }
 
-    player->swing(hand);
     player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
-    player->getCooldowns()->addCooldown(this, 20);
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

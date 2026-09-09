@@ -66,34 +66,36 @@ bool ShapedRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContaine
     {
         for (gridRow = 0; gridRow < 3; ++gridRow)
         {
-            ItemInstance* ingredient = NULL;
+            ItemInstance* ingredient = ItemInstance::EMPTY.get();
             int recipeColumn = gridColumn - column;
             int recipeRow = gridRow - row;
             if (recipeColumn >= 0 && recipeRow >= 0 && recipeColumn < mWidth && recipeRow < mHeight)
             {
                 if (mirror)
                 {
-                    recipeColumn = mWidth - recipeColumn - 1;
+                    ingredient = mIngredients[mWidth - recipeColumn - 1 + recipeRow * mWidth];
                 }
-                ingredient = mIngredients[recipeColumn + recipeRow * mWidth];
+                else
+                {
+                    ingredient = mIngredients[recipeColumn + recipeRow * mWidth];
+                }
             }
 
             not_null_ptr<ItemInstance> item = craftingContainer->getItem(gridColumn, gridRow);
-            if (item->isEmpty() != (ingredient == NULL || ingredient->isEmpty()))
-            {
-                return false;
-            }
-            if (item->isEmpty())
+            if (item->isEmpty() && ingredient->isEmpty())
             {
                 continue;
             }
-            if (item->getItem() != ingredient->getItem())
+            if (item->isEmpty() != ingredient->isEmpty())
             {
                 return false;
             }
-            int auxValue = ingredient->getAuxValue();
-            if (auxValue != -1 && item->getAuxValue() != auxValue &&
-                (auxValue != 0 || item->isDamageableItem()))
+            if (ingredient->getItem() != item->getItem())
+            {
+                return false;
+            }
+            if (ingredient->getAuxValue() != -1 && ingredient->getAuxValue() != item->getAuxValue() &&
+                (ingredient->getAuxValue() != 0 || !item->isDamageableItem()))
             {
                 return false;
             }
@@ -145,49 +147,16 @@ int ShapedRecipe::size()
 
 bool ShapedRecipe::recipeRequires(int itemId)
 {
-    if (mWidth > 0)
+    int column;
+    int row;
+    for (column = 0; column < 3; ++column)
     {
-        if (mHeight > 0)
+        for (row = 0; row < 3; ++row)
         {
-            mIngredients[0]->isEmpty();
-        }
-        if (mHeight > 1)
-        {
-            mIngredients[mWidth]->isEmpty();
-        }
-        if (mHeight > 2)
-        {
-            mIngredients[mWidth * 2]->isEmpty();
-        }
-    }
-    if (mWidth > 1)
-    {
-        if (mHeight > 0)
-        {
-            mIngredients[1]->isEmpty();
-        }
-        if (mHeight > 1)
-        {
-            mIngredients[mWidth + 1]->isEmpty();
-        }
-        if (mHeight > 2)
-        {
-            mIngredients[mWidth * 2 + 1]->isEmpty();
-        }
-    }
-    if (mWidth > 2)
-    {
-        if (mHeight > 0)
-        {
-            mIngredients[2]->isEmpty();
-        }
-        if (mHeight > 1)
-        {
-            mIngredients[mWidth + 2]->isEmpty();
-        }
-        if (mHeight > 2)
-        {
-            mIngredients[mWidth * 2 + 2]->isEmpty();
+            if (column < mWidth && row < mHeight)
+            {
+                mIngredients[column + row * mWidth]->isEmpty();
+            }
         }
     }
     return false;

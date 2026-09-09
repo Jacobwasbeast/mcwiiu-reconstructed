@@ -104,7 +104,7 @@ public:
     static std::vector<EnchantmentInstance*>* getAvailableEnchantmentResults(int cost, const not_null_ptr<ItemInstance>& item, bool treasure);
     static void filterCompatibleEnchantments(std::vector<EnchantmentInstance*>* enchantments, const EnchantmentInstance* selected);
     static std::vector<EnchantmentInstance*>* selectEnchantment(Random* random, const not_null_ptr<ItemInstance>& item, int level, bool treasure);
-    static void enchantItem(Random* random, not_null_ptr<ItemInstance> item, int level, bool treasure);
+    static not_null_ptr<ItemInstance> enchantItem(Random* random, not_null_ptr<ItemInstance> item, int level, bool treasure);
     static float getSweepingDamageRatio(const boost::shared_ptr<LivingEntity>& entity);
 };
 

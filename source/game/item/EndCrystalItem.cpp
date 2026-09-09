@@ -60,9 +60,8 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
 
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(
         boost::shared_ptr<Entity>(),
-        AABB::newTemp(static_cast<double>(pos.x), static_cast<double>(pos.y) + 1.0,
-                      static_cast<double>(pos.z), static_cast<double>(pos.x) + 1.0,
-                      static_cast<double>(pos.y) + 3.0, static_cast<double>(pos.z) + 1.0),
+        AABB::newTemp(abovePos.x, abovePos.y, abovePos.z,
+                      abovePos.x + 1.0, abovePos.y + 2.0, abovePos.z + 1.0),
         NULL);
     if (entities->size() != 0)
     {
@@ -82,11 +81,8 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
             return InteractionResult::eInteractionResult_Fail;
         }
 
-        boost::shared_ptr<EnderCrystal> crystal(new EnderCrystal(
-            level,
-            static_cast<double>(pos.x) + 0.5,
-            static_cast<double>(pos.y) + 1.0,
-            static_cast<double>(pos.z) + 0.5));
+        boost::shared_ptr<EnderCrystal> crystal(
+            new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
         crystal->setShowBottom(false);
         level->addEntity(crystal);
 

@@ -3,6 +3,7 @@
 #include "game/item/EnchantmentInstance.hpp"
 #include "game/item/Enchantments.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/EnchantedBookItem.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
@@ -285,19 +286,29 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::selectEnchantment(
     return getAvailableEnchantmentResults(level, item, treasure);
 }
 
-void EnchantmentHelper::enchantItem(
+not_null_ptr<ItemInstance> EnchantmentHelper::enchantItem(
     Random* random,
     not_null_ptr<ItemInstance> item,
     int level,
     bool treasure)
 {
     std::vector<EnchantmentInstance*>* list = selectEnchantment(random, item, level, treasure);
+    bool isBook = item->getItem() == Items::book;
+    if (isBook)
+    {
+        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::enchantedBook));
+    }
+
     if (list != NULL)
     {
         for (std::vector<EnchantmentInstance*>::iterator it = list->begin();
              it != list->end(); ++it)
         {
-            if (item->getItem() != NULL)
+            if (isBook)
+            {
+                EnchantedBookItem::addEnchantment(item, *it);
+            }
+            else
             {
                 item->enchant((*it)->enchantment, (*it)->level);
             }
@@ -305,4 +316,6 @@ void EnchantmentHelper::enchantItem(
         }
         delete list;
     }
+
+    return item;
 }

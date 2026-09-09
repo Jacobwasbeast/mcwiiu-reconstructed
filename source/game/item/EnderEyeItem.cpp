@@ -62,7 +62,7 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::END_PORTAL_FRAME_FILL,
                          SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
 
-        BlockPattern* pattern = (BlockPattern*)EndPortalFrameBlock::getOrCreatePortalShape();
+        BlockPattern* pattern = EndPortalFrameBlock::getOrCreatePortalShape();
         BlockPattern::BlockPatternMatch* match = pattern->find(level, pos);
         if (match != NULL)
         {

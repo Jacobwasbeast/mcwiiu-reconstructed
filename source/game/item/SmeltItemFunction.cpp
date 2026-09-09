@@ -17,12 +17,12 @@ not_null_ptr<ItemInstance> SmeltItemFunction::apply(const not_null_ptr<ItemInsta
 {
     if (!itemInstance->isEmpty())
     {
-        not_null_ptr<ItemInstance> result = FurnaceRecipes::getInstance()->getResult(itemInstance);
+        ItemInstance* result = FurnaceRecipes::getInstance()->getResult(itemInstance);
         if (!result->isEmpty())
         {
-            result = result->copy();
-            result->setCount(itemInstance->getCount());
-            return result;
+            not_null_ptr<ItemInstance> smelted = result->copy();
+            smelted->setCount(itemInstance->getCount());
+            return smelted;
         }
     }
     return itemInstance;

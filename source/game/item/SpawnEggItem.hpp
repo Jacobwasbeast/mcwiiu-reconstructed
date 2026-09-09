@@ -34,9 +34,9 @@ public:
     static boost::shared_ptr<Mob> getMob(Level* level, const ResourceLocation& entityType,
                                          double x, double y, double z, int* error,
                                          const std::wstring& customName);
-    static void spawnMobAt(Level* level, const ResourceLocation& entityType,
-                           double x, double y, double z, int* error,
-                           const std::wstring& customName);
+    static boost::shared_ptr<Mob> spawnMobAt(Level* level, const ResourceLocation& entityType,
+                                             double x, double y, double z, int* error,
+                                             const std::wstring& customName);
     static void updateCustomEntityTag(Level* level, boost::shared_ptr<Player> player,
                                       not_null_ptr<ItemInstance> itemInstance,
                                       boost::shared_ptr<Entity> entity);

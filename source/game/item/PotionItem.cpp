@@ -2,13 +2,23 @@
 
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/entity/mob/MobEffect.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/Potion.hpp"
+#include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
-#include "game/entity/mob/MobEffectInstance.hpp"
+
+static std::wstring gBottleTextureName;
+static std::wstring gPotionOverlayTextureName;
 
 PotionItem::PotionItem()
     : Item(), mIcon(NULL), mLayerIcon(NULL)
@@ -27,47 +37,72 @@ uint32_t PotionItem::getPotionType() const
 
 boost::shared_ptr<ItemInstance> PotionItem::getDefaultInstance()
 {
-    boost::shared_ptr<ItemInstance> itemInstance = Item::getDefaultInstance();
-    not_null_ptr<ItemInstance> potionItem;
-    static_cast<boost::shared_ptr<ItemInstance>&>(potionItem) = itemInstance;
-    PotionUtils::setPotion(potionItem, Potion::byId(0));
-    return itemInstance;
+    return PotionUtils::setPotion(Item::getDefaultInstance(), Potions::WATER);
 }
 
 not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                        Level* level,
                                                        boost::shared_ptr<LivingEntity> entity)
 {
-    if (entity.get() != NULL)
+    boost::shared_ptr<Player> player;
+    if ((entity->GetType() & 0xC800000ULL) == 0xC800000ULL)
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        player = boost::static_pointer_cast<Player>(entity);
         if (player.get() != NULL)
         {
             player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
                               GenericStats::param_itemsUsed(player, itemInstance));
-        }
-    }
-
-    if (entity.get() != NULL && !entity->isCreative())
-    {
-        itemInstance->shrink(1);
-    }
-
-    std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(itemInstance);
-    if (effects != NULL && entity.get() != NULL)
-    {
-        std::vector<MobEffectInstance*>::iterator it;
-        for (it = effects->begin(); it != effects->end(); ++it)
-        {
-            MobEffectInstance* effect = *it;
-            if (effect != NULL)
+            if (PotionUtils::hasEffect(itemInstance, MobEffects::WATER_BREATHING))
             {
-                entity->addEffect(new MobEffectInstance(effect->getEffect(),
-                                                        effect->getDuration(),
-                                                        effect->getAmplifier()), entity);
+                player->ResetTimerAchievement(1);
             }
         }
-        delete effects;
+    }
+
+    if (!level->mIsClientSide)
+    {
+        if (player.get() == NULL || !player->mAbilities.mInstabuild)
+        {
+            itemInstance->shrink(1);
+        }
+
+        std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(itemInstance);
+        if (effects != NULL)
+        {
+            std::vector<MobEffectInstance*>::iterator it;
+            for (it = effects->begin(); it != effects->end(); ++it)
+            {
+                MobEffectInstance* effect = *it;
+                if (!effect->getEffect()->isInstantenous())
+                {
+                    entity->addEffect(new MobEffectInstance(effect->getEffect(),
+                                                            effect->getDuration(),
+                                                            effect->getAmplifier()),
+                                      boost::shared_ptr<Entity>());
+                }
+                else
+                {
+                    effect->getEffect()->applyInstantenousEffect(player, player, entity,
+                                                                 effect->getAmplifier(), 1.0);
+                }
+            }
+            delete effects;
+        }
+
+        if (player.get() == NULL
+            || (!player->mAbilities.mInstabuild
+                && !Minecraft::InMiniGame(eMiniGameId_Any, true)))
+        {
+            if (itemInstance->isEmpty())
+            {
+                return not_null_ptr<ItemInstance>(new ItemInstance(Items::glassBottle));
+            }
+            if (player.get() != NULL)
+            {
+                player->mInventory->add(
+                    not_null_ptr<ItemInstance>(new ItemInstance(Items::glassBottle)));
+            }
+        }
     }
 
     return itemInstance;
@@ -147,7 +182,7 @@ bool PotionItem::hasMultipleSpriteLayers()
 void PotionItem::registerIcons(IconRegister* iconRegister)
 {
     mIcon = iconRegister->registerIcon(getBottleTextureName());
-    mLayerIcon = iconRegister->registerIcon(std::wstring());
+    mLayerIcon = iconRegister->registerIcon(gPotionOverlayTextureName);
 }
 
 unsigned int PotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
@@ -161,5 +196,5 @@ unsigned int PotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 
 std::wstring PotionItem::getBottleTextureName()
 {
-    return std::wstring();
+    return gBottleTextureName;
 }

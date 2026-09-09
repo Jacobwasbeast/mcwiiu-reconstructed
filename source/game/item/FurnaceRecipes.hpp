@@ -13,7 +13,7 @@ class FurnaceRecipes : public boost::unordered_map<ItemInstance*, ItemInstance*>
 public:
     FurnaceRecipes();
     bool isSameItem(not_null_ptr<ItemInstance> item, ItemInstance* recipeItem);
-    not_null_ptr<ItemInstance> getResult(not_null_ptr<ItemInstance> item);
+    ItemInstance* getResult(not_null_ptr<ItemInstance> item);
     static FurnaceRecipes* getInstance();
     double getRecipeValue(not_null_ptr<ItemInstance> item);
     void addFurnaceRecipe(ItemInstance* item, ItemInstance* result, float experience);

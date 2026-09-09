@@ -1,13 +1,15 @@
 #include "game/item/PotionBrewing.hpp"
 
+#include "game/item/FishFoodItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Potion.hpp"
+#include "game/item/PotionItem.hpp"
 #include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
 
-static std::vector<PotionBrewing::Mix<Item>*> containerMixes;
 static std::vector<PotionBrewing::Mix<Potion>*> potionMixes;
+static std::vector<PotionBrewing::Mix<Item>*> containerMixes;
 static std::vector<PotionBrewing::ItemInstancePredicate*> containerPredicates;
 
 PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item)
@@ -23,8 +25,10 @@ PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item, int auxV
 bool PotionBrewing::ItemInstancePredicate::apply(not_null_ptr<ItemInstance> itemInstance) const
 {
     if (itemInstance->getItem() != mItem)
+    {
         return false;
-    return mAuxValue == -1 || itemInstance->getAuxValue() == mAuxValue;
+    }
+    return mAuxValue == -1 || mAuxValue == itemInstance->getAuxValue();
 }
 
 PotionBrewing::ItemInstancePredicate::~ItemInstancePredicate()
@@ -33,12 +37,13 @@ PotionBrewing::ItemInstancePredicate::~ItemInstancePredicate()
 
 bool PotionBrewing::PredicateItemInstance::apply(not_null_ptr<ItemInstance> itemInstance) const
 {
-    std::vector<PotionBrewing::ItemInstancePredicate*>::const_iterator it = containerPredicates.begin();
-    while (it != containerPredicates.end())
+    std::vector<PotionBrewing::ItemInstancePredicate*>::const_iterator predicate;
+    for (predicate = containerPredicates.begin(); predicate != containerPredicates.end(); ++predicate)
     {
-        if ((*it)->apply(itemInstance))
+        if ((*predicate)->apply(itemInstance))
+        {
             return true;
-        ++it;
+        }
     }
     return false;
 }
@@ -49,24 +54,26 @@ PotionBrewing::PredicateItemInstance::~PredicateItemInstance()
 
 bool PotionBrewing::isContainerIngredient(not_null_ptr<ItemInstance> itemInstance)
 {
-    std::vector<Mix<Item>*>::const_iterator it = containerMixes.begin();
-    while (it != containerMixes.end())
+    unsigned int i;
+    for (i = 0; i < containerMixes.size(); ++i)
     {
-        if ((*it)->ingredient->apply(itemInstance))
+        if (containerMixes.at(i)->ingredient->apply(itemInstance))
+        {
             return true;
-        ++it;
+        }
     }
     return false;
 }
 
 bool PotionBrewing::isPotionIngredient(not_null_ptr<ItemInstance> itemInstance)
 {
-    std::vector<Mix<Potion>*>::const_iterator it = potionMixes.begin();
-    while (it != potionMixes.end())
+    unsigned int i;
+    for (i = 0; i < potionMixes.size(); ++i)
     {
-        if ((*it)->ingredient->apply(itemInstance))
+        if (potionMixes.at(i)->ingredient->apply(itemInstance))
+        {
             return true;
-        ++it;
+        }
     }
     return false;
 }
@@ -79,12 +86,14 @@ bool PotionBrewing::isIngredient(not_null_ptr<ItemInstance> itemInstance)
 bool PotionBrewing::hasContainerMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
     Item* itemType = item->getItem();
-    std::vector<Mix<Item>*>::const_iterator it = containerMixes.begin();
-    while (it != containerMixes.end())
+    unsigned int i;
+    for (i = 0; i < containerMixes.size(); ++i)
     {
-        if ((*it)->from == itemType && (*it)->ingredient->apply(ingredient))
+        Mix<Item>* containerMix = containerMixes.at(i);
+        if (containerMix->from == itemType && containerMix->ingredient->apply(ingredient))
+        {
             return true;
-        ++it;
+        }
     }
     return false;
 }
@@ -92,12 +101,14 @@ bool PotionBrewing::hasContainerMix(not_null_ptr<ItemInstance> item, not_null_pt
 bool PotionBrewing::hasPotionMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
     Potion* potion = PotionUtils::getPotion(item);
-    std::vector<Mix<Potion>*>::const_iterator it = potionMixes.begin();
-    while (it != potionMixes.end())
+    unsigned int i;
+    for (i = 0; i < potionMixes.size(); ++i)
     {
-        if ((*it)->from == potion && (*it)->ingredient->apply(ingredient))
+        Mix<Potion>* potionMix = potionMixes.at(i);
+        if (potionMix->from == potion && potionMix->ingredient->apply(ingredient))
+        {
             return true;
-        ++it;
+        }
     }
     return false;
 }
@@ -105,38 +116,37 @@ bool PotionBrewing::hasPotionMix(not_null_ptr<ItemInstance> item, not_null_ptr<I
 bool PotionBrewing::hasMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
     if (hasContainerMix(item, ingredient))
+    {
         return true;
+    }
     return hasPotionMix(item, ingredient);
 }
 
-void PotionBrewing::mix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
+not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredient, not_null_ptr<ItemInstance> item)
 {
     if (!item->isEmpty())
     {
         Potion* potion = PotionUtils::getPotion(item);
         Item* itemType = item->getItem();
-        std::vector<Mix<Item>*>::const_iterator itemIt = containerMixes.begin();
-        while (itemIt != containerMixes.end())
+        unsigned int i;
+        for (i = 0; i < containerMixes.size(); ++i)
         {
-            if ((*itemIt)->from == itemType && (*itemIt)->ingredient->apply(ingredient))
+            Mix<Item>* containerMix = containerMixes.at(i);
+            if (containerMix->from == itemType && containerMix->ingredient->apply(ingredient))
             {
-                not_null_ptr<ItemInstance> result(new ItemInstance((*itemIt)->result));
-                PotionUtils::setPotion(item, potion);
-                return;
+                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(containerMix->result)), potion);
             }
-            ++itemIt;
         }
-        std::vector<Mix<Potion>*>::const_iterator potionIt = potionMixes.begin();
-        while (potionIt != potionMixes.end())
+        for (i = 0; i < potionMixes.size(); ++i)
         {
-            if ((*potionIt)->from == potion && (*potionIt)->ingredient->apply(ingredient))
+            Mix<Potion>* potionMix = potionMixes.at(i);
+            if (potionMix->from == potion && potionMix->ingredient->apply(ingredient))
             {
-                PotionUtils::setPotion(item, (*potionIt)->result);
-                return;
+                return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(itemType)), potionMix->result);
             }
-            ++potionIt;
         }
     }
+    return item;
 }
 
 void PotionBrewing::addContainer(ItemInstancePredicate* predicate)
@@ -146,33 +156,103 @@ void PotionBrewing::addContainer(ItemInstancePredicate* predicate)
 
 void PotionBrewing::addContainerRecipe(PotionItem* from, ItemInstancePredicate* ingredient, PotionItem* result)
 {
-    Mix<Item>* mix = new Mix<Item>;
-    mix->from = (Item*)from;
-    mix->ingredient = ingredient;
-    mix->result = (Item*)result;
-    containerMixes.push_back(mix);
+    Mix<Item>* containerMix = new Mix<Item>;
+    containerMix->from = from;
+    containerMix->ingredient = ingredient;
+    containerMix->result = result;
+    containerMixes.push_back(containerMix);
 }
 
 void PotionBrewing::addMix(Potion* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, Potion* result)
 {
-    Mix<Potion>* mix = new Mix<Potion>;
-    mix->from = from;
-    mix->ingredient = ingredient;
-    mix->result = result;
-    potionMixes.push_back(mix);
+    Mix<Potion>* potionMix = new Mix<Potion>;
+    potionMix->from = from;
+    potionMix->ingredient = ingredient;
+    potionMix->result = result;
+    potionMixes.push_back(potionMix);
 }
 
 void PotionBrewing::StaticCtor()
 {
-    ItemInstancePredicate* potion = new ItemInstancePredicate(Items::potion);
-    ItemInstancePredicate* splashPotion = new ItemInstancePredicate(Items::splashPotion);
-    ItemInstancePredicate* gunpowder = new ItemInstancePredicate(Items::gunpowder);
-    ItemInstancePredicate* dragonBreath = new ItemInstancePredicate(Items::dragonBreath);
-    addContainer(potion);
-    addContainer(splashPotion);
+    ItemInstancePredicate* netherWart = new ItemInstancePredicate(Items::netherWart);
+    ItemInstancePredicate* goldenCarrot = new ItemInstancePredicate(Items::goldenCarrot);
+    ItemInstancePredicate* redstone = new ItemInstancePredicate(Items::redstone);
+    ItemInstancePredicate* fermentedSpiderEye = new ItemInstancePredicate(Items::fermentedSpiderEye);
+    ItemInstancePredicate* rabbitFoot = new ItemInstancePredicate(Items::rabbitFoot);
+    ItemInstancePredicate* glowstoneDust = new ItemInstancePredicate(Items::glowstoneDust);
+    ItemInstancePredicate* magmaCream = new ItemInstancePredicate(Items::magmaCream);
+    ItemInstancePredicate* sugar = new ItemInstancePredicate(Items::sugar);
+    ItemInstancePredicate* pufferfish = new ItemInstancePredicate(Items::fish, gPufferfishFoodType->getId());
+    ItemInstancePredicate* speckledMelon = new ItemInstancePredicate(Items::speckledMelon);
+    ItemInstancePredicate* spiderEye = new ItemInstancePredicate(Items::spiderEye);
+    ItemInstancePredicate* ghastTear = new ItemInstancePredicate(Items::ghastTear);
+    ItemInstancePredicate* blazePowder = new ItemInstancePredicate(Items::blazePowder);
+    ItemInstancePredicate* phantomMembrane = new ItemInstancePredicate(Items::phantomMembrane);
+    ItemInstancePredicate* turtleHelmet = new ItemInstancePredicate(Items::turtleHelmet);
+
+    addContainer(new ItemInstancePredicate(Items::potion));
+    addContainer(new ItemInstancePredicate(Items::splashPotion));
     addContainer(new ItemInstancePredicate(Items::lingeringPotion));
-    addContainerRecipe((PotionItem*)Items::potion, gunpowder, (PotionItem*)Items::splashPotion);
-    addContainerRecipe((PotionItem*)Items::splashPotion, dragonBreath, (PotionItem*)Items::lingeringPotion);
-    addMix(Potions::WATER, new ItemInstancePredicate(Items::netherWart), Potions::AWKWARD);
-    addMix(Potions::AWKWARD, new ItemInstancePredicate(Items::sugar), Potions::SWIFTNESS);
+
+    addContainerRecipe(static_cast<PotionItem*>(Items::potion),
+                       new ItemInstancePredicate(Items::gunpowder),
+                       static_cast<PotionItem*>(Items::splashPotion));
+    addContainerRecipe(static_cast<PotionItem*>(Items::splashPotion),
+                       new ItemInstancePredicate(Items::dragonBreath),
+                       static_cast<PotionItem*>(Items::lingeringPotion));
+
+    addMix(Potions::WATER, speckledMelon, Potions::MUNDANE);
+    addMix(Potions::WATER, ghastTear, Potions::MUNDANE);
+    addMix(Potions::WATER, rabbitFoot, Potions::MUNDANE);
+    addMix(Potions::WATER, blazePowder, Potions::MUNDANE);
+    addMix(Potions::WATER, spiderEye, Potions::MUNDANE);
+    addMix(Potions::WATER, sugar, Potions::MUNDANE);
+    addMix(Potions::WATER, magmaCream, Potions::MUNDANE);
+    addMix(Potions::WATER, glowstoneDust, Potions::THICK);
+    addMix(Potions::WATER, redstone, Potions::MUNDANE);
+    addMix(Potions::WATER, netherWart, Potions::AWKWARD);
+    addMix(Potions::AWKWARD, goldenCarrot, Potions::NIGHT_VISION);
+    addMix(Potions::NIGHT_VISION, redstone, Potions::LONG_NIGHT_VISION);
+    addMix(Potions::NIGHT_VISION, fermentedSpiderEye, Potions::INVISIBILITY);
+    addMix(Potions::LONG_NIGHT_VISION, fermentedSpiderEye, Potions::LONG_INVISIBILITY);
+    addMix(Potions::INVISIBILITY, redstone, Potions::LONG_INVISIBILITY);
+    addMix(Potions::AWKWARD, magmaCream, Potions::FIRE_RESISTANCE);
+    addMix(Potions::FIRE_RESISTANCE, redstone, Potions::LONG_FIRE_RESISTANCE);
+    addMix(Potions::AWKWARD, rabbitFoot, Potions::LEAPING);
+    addMix(Potions::LEAPING, redstone, Potions::LONG_LEAPING);
+    addMix(Potions::LEAPING, glowstoneDust, Potions::STRONG_LEAPING);
+    addMix(Potions::LEAPING, fermentedSpiderEye, Potions::SLOWNESS);
+    addMix(Potions::LONG_LEAPING, fermentedSpiderEye, Potions::LONG_SLOWNESS);
+    addMix(Potions::SLOWNESS, redstone, Potions::LONG_SLOWNESS);
+    addMix(Potions::AWKWARD, turtleHelmet, Potions::TURTLE_MASTER);
+    addMix(Potions::TURTLE_MASTER, redstone, Potions::LONG_TURTLE_MASTER);
+    addMix(Potions::TURTLE_MASTER, glowstoneDust, Potions::STRONG_TURTLE_MASTER);
+    addMix(Potions::SWIFTNESS, fermentedSpiderEye, Potions::SLOWNESS);
+    addMix(Potions::LONG_SWIFTNESS, fermentedSpiderEye, Potions::LONG_SLOWNESS);
+    addMix(Potions::AWKWARD, sugar, Potions::SWIFTNESS);
+    addMix(Potions::SWIFTNESS, redstone, Potions::LONG_SWIFTNESS);
+    addMix(Potions::SWIFTNESS, glowstoneDust, Potions::STRONG_SWIFTNESS);
+    addMix(Potions::AWKWARD, pufferfish, Potions::WATER_BREATHING);
+    addMix(Potions::WATER_BREATHING, redstone, Potions::LONG_WATER_BREATHING);
+    addMix(Potions::AWKWARD, speckledMelon, Potions::HEALING);
+    addMix(Potions::HEALING, glowstoneDust, Potions::STRONG_HEALING);
+    addMix(Potions::HEALING, fermentedSpiderEye, Potions::HARMING);
+    addMix(Potions::STRONG_HEALING, fermentedSpiderEye, Potions::STRONG_HARMING);
+    addMix(Potions::HARMING, glowstoneDust, Potions::STRONG_HARMING);
+    addMix(Potions::POISON, fermentedSpiderEye, Potions::HARMING);
+    addMix(Potions::LONG_POISON, fermentedSpiderEye, Potions::HARMING);
+    addMix(Potions::STRONG_POISON, fermentedSpiderEye, Potions::STRONG_HARMING);
+    addMix(Potions::AWKWARD, spiderEye, Potions::POISON);
+    addMix(Potions::POISON, redstone, Potions::LONG_POISON);
+    addMix(Potions::POISON, glowstoneDust, Potions::STRONG_POISON);
+    addMix(Potions::AWKWARD, ghastTear, Potions::REGENERATION);
+    addMix(Potions::REGENERATION, redstone, Potions::LONG_REGENERATION);
+    addMix(Potions::REGENERATION, glowstoneDust, Potions::STRONG_REGENERATION);
+    addMix(Potions::AWKWARD, blazePowder, Potions::STRENGTH);
+    addMix(Potions::STRENGTH, redstone, Potions::LONG_STRENGTH);
+    addMix(Potions::STRENGTH, glowstoneDust, Potions::STRONG_STRENGTH);
+    addMix(Potions::WATER, fermentedSpiderEye, Potions::WEAKNESS);
+    addMix(Potions::WEAKNESS, redstone, Potions::LONG_WEAKNESS);
+    addMix(Potions::AWKWARD, phantomMembrane, Potions::SLOW_FALLING);
+    addMix(Potions::SLOW_FALLING, redstone, Potions::LONG_SLOW_FALLING);
 }

@@ -66,9 +66,9 @@ bool ShapelessRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
                 std::vector<ItemInstance*>::iterator ingredient = remaining.begin();
                 for (; ingredient != remaining.end(); ++ingredient)
                 {
-                    if ((*ingredient)->getItem() == item->getItem() &&
+                    if (item->getItem() == (*ingredient)->getItem() &&
                         ((*ingredient)->getAuxValue() == -1 ||
-                         (*ingredient)->getAuxValue() == item->getAuxValue() ||
+                         item->getAuxValue() == (*ingredient)->getAuxValue() ||
                          ((*ingredient)->getAuxValue() == 0 && (*ingredient)->isDamageableItem())))
                     {
                         break;
@@ -188,7 +188,7 @@ boost::shared_ptr<CraftingContainer> ShapelessRecipe::generateExpectedCraftSlots
     std::vector<ItemInstance*>::iterator ingredient;
     for (ingredient = mIngredients->begin(); ingredient != mIngredients->end(); ++ingredient)
     {
-        if (!(*ingredient)->isEmpty())
+        if (*ingredient != NULL && !(*ingredient)->isEmpty())
         {
             container->setItem(slot, (*ingredient)->copy());
             ++slot;

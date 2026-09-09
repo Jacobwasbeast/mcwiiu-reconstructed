@@ -2,6 +2,8 @@
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/world/generation/Player.hpp"
 
 WritableBookItem::WritableBookItem()
     : Item()
@@ -17,8 +19,9 @@ InteractionResultHolder WritableBookItem::use(Level* level,
                                               boost::shared_ptr<Player> player,
                                               InteractionHand::EInteractionHand hand)
 {
-    InteractionResultHolder item = Item::use(level, player, hand);
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, item.getObject());
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    player->openItemInstanceGui(itemInstance, hand);
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
 bool WritableBookItem::TestUse(Level* level,

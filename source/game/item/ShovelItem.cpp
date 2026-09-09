@@ -17,16 +17,16 @@ static arrayWithLength<Block*> BLOCKS(12, false);
 
 void ShovelItem::staticCtor()
 {
-    BLOCKS.data[0] = Blocks::snow_layer;
-    BLOCKS.data[1] = Blocks::snow;
-    BLOCKS.data[2] = Blocks::sand;
-    BLOCKS.data[3] = Blocks::dirt;
-    BLOCKS.data[4] = Blocks::grass;
-    BLOCKS.data[5] = Blocks::gravel;
-    BLOCKS.data[6] = Blocks::clay;
-    BLOCKS.data[7] = Blocks::farmland;
-    BLOCKS.data[8] = Blocks::soul_sand;
-    BLOCKS.data[9] = Blocks::mycelium;
+    BLOCKS.data[0] = Blocks::clay;
+    BLOCKS.data[1] = Blocks::dirt;
+    BLOCKS.data[2] = Blocks::farmland;
+    BLOCKS.data[3] = Blocks::grass;
+    BLOCKS.data[4] = Blocks::gravel;
+    BLOCKS.data[5] = Blocks::mycelium;
+    BLOCKS.data[6] = Blocks::sand;
+    BLOCKS.data[7] = Blocks::snow;
+    BLOCKS.data[8] = Blocks::snow_layer;
+    BLOCKS.data[9] = Blocks::soul_sand;
     BLOCKS.data[10] = Blocks::grass_path;
     BLOCKS.data[11] = Blocks::concrete_powder;
 }
@@ -43,7 +43,7 @@ ShovelItem::~ShovelItem()
 bool ShovelItem::canDestroySpecial(const BlockState* state)
 {
     Block* block = state->getBlock();
-    return block == Blocks::snow || block == Blocks::snow_layer;
+    return block == Blocks::snow_layer || block == Blocks::snow;
 }
 
 InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player> player,
@@ -67,7 +67,7 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
     Block* block = level->getBlockState(pos)->getBlock();
     if (direction != Direction::DOWN &&
         level->getBlockState(pos.above())->getMaterial() == Material::AIR &&
-        block == Blocks::grass_path)
+        block == Blocks::grass)
     {
         if (!simulate)
         {
@@ -80,7 +80,7 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
                              16.0f);
             if (!level->mIsClientSide)
             {
-                level->setBlock(pos, Blocks::dirt->defaultBlockState(), 11, false);
+                level->setBlock(pos, Blocks::grass_path->defaultBlockState(), 11, false);
                 itemInstance->hurtAndBreak(1, player);
             }
         }

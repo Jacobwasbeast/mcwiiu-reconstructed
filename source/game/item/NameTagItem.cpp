@@ -22,12 +22,12 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
         return false;
     }
 
-    if (Entity::instanceof(boost::static_pointer_cast<Entity>(target), ENTITY_TYPE_PLAYER))
+    if (Entity::instanceof(target, ENTITY_TYPE_PLAYER))
     {
         return false;
     }
 
-    if (itemInstance->getHoverName() == target->getName())
+    if (itemInstance->getHoverName() == target->getCustomName())
     {
         return false;
     }
@@ -36,19 +36,16 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                           itemInstance->getOwnerUUID(),
                           itemInstance->wasCreatedByRestrictedPlayer());
 
-    if (Entity::instanceof(boost::static_pointer_cast<Entity>(target), ENTITY_TYPE_MOB))
+    if (Entity::instanceof(target, ENTITY_TYPE_MOB))
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(target);
         mob->setPersistenceRequired(true);
 
-        if (mob->PositionLocked())
+        if (mob->isPassenger() &&
+            (mob->getVehicle()->GetType() & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
         {
-            boost::shared_ptr<Entity> mobTarget = mob->getTarget();
-            if (Entity::instanceof(mobTarget, ENTITY_TYPE_MOB))
-            {
-                boost::shared_ptr<Mob> targetMob = boost::static_pointer_cast<Mob>(mobTarget);
-                targetMob->setPersistenceRequired(true);
-            }
+            boost::shared_ptr<Mob> vehicle = boost::static_pointer_cast<Mob>(mob->getVehicle());
+            vehicle->setPersistenceRequired(true);
         }
     }
 

@@ -5,8 +5,6 @@
 #include "game/item/Items.hpp"
 #include "game/world/block/Blocks.hpp"
 
-extern FishFoodItem::Type* gFishFoodTypes[4];
-
 FurnaceRecipes* gFurnaceRecipes = 0;
 
 FurnaceRecipes::FurnaceRecipes()
@@ -69,17 +67,17 @@ bool FurnaceRecipes::isSameItem(not_null_ptr<ItemInstance> item, ItemInstance* r
     return true;
 }
 
-not_null_ptr<ItemInstance> FurnaceRecipes::getResult(not_null_ptr<ItemInstance> item)
+ItemInstance* FurnaceRecipes::getResult(not_null_ptr<ItemInstance> item)
 {
     iterator it;
     for (it = begin(); it != end(); ++it)
     {
         if (isSameItem(item, it->first))
         {
-            return not_null_ptr<ItemInstance>(it->second);
+            return it->second;
         }
     }
-    return ItemInstance::EMPTY;
+    return ItemInstance::EMPTY.get();
 }
 
 FurnaceRecipes* FurnaceRecipes::getInstance()

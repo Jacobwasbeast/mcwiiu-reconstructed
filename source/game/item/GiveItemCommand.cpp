@@ -70,6 +70,7 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
                                       ((player->getRandom()->nextFloat() - player->getRandom()->nextFloat()) * 0.7f + 1.0f) * 2.0f,
                                       16.0f);
 
+            player->mInventoryMenu->broadcastChanges();
         }
 
         if (added && item->getCount() <= 0)

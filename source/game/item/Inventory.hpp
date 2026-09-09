@@ -103,13 +103,18 @@ private:
     friend class Minecraft;
     friend class ServerGamePacketListenerImpl;
     friend class MultiPlayerGameMode;
+    friend class Gui;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;
     NonNullList<not_null_ptr<ItemInstance> > m_offhand;
     NonNullList<not_null_ptr<ItemInstance> > m_compartments[3];
     bool m_hasPickedItem;
+
+public:
     int m_selected;
+
+private:
     Player* m_player;
     not_null_ptr<ItemInstance> m_auxiliaryItem;
     not_null_ptr<ItemInstance> m_carried;

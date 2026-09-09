@@ -54,7 +54,7 @@ public:
     static bool hasContainerMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient);
     static bool hasPotionMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient);
     static bool hasMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient);
-    static void mix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient);
+    static not_null_ptr<ItemInstance> mix(not_null_ptr<ItemInstance> ingredient, not_null_ptr<ItemInstance> item);
     static void addContainer(ItemInstancePredicate* predicate);
     static void addContainerRecipe(PotionItem* from, ItemInstancePredicate* ingredient, PotionItem* result);
     static void addMix(Potion* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, Potion* result);

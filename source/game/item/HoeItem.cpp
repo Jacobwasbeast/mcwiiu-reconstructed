@@ -1,5 +1,9 @@
 #include "game/item/HoeItem.hpp"
 
+#include <typeinfo>
+
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/EquipmentSlot.hpp"
@@ -15,11 +19,16 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/Player.hpp"
 
 HoeItem::HoeItem(const Item::Tier* tier)
-    : Item(), mAttackDamage(0.0f), mTier(tier)
+    : Item()
 {
-    mMaterialData = 1;
+    mMaxStackSize = 1;
+    mTier = tier;
     setMaxDamage(tier->getUses());
     mAttackDamage = 1.0f + tier->getAttackDamageBonus();
 }
@@ -34,12 +43,12 @@ void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance,
                        const BlockPos& pos,
                        const BlockState* state)
 {
-    level->setBlock(pos, state, 11, false);
+    level->playSound(player, pos, SoundEvents::HOE_TILL, SoundSource::eSoundSource_Blocks,
+                     1.0f, 1.0f, 16.0f);
     if (!level->mIsClientSide)
     {
-        LivingEntity* livingPlayer = (LivingEntity*)(void*)player.get();
-        boost::shared_ptr<LivingEntity> entity(player, livingPlayer);
-        itemInstance->hurtAndBreak(1, entity);
+        level->setBlock(pos, state, 11, false);
+        itemInstance->hurtAndBreak(1, player);
     }
 }
 
@@ -53,60 +62,45 @@ InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> p
                                                       float hitZ,
                                                       bool simulate)
 {
-    LivingEntity* livingPlayer = (LivingEntity*)(void*)player.get();
-    not_null_ptr<ItemInstance> itemInstance = livingPlayer->getItemInHand(hand);
-    BlockPos targetPos = pos.relative(direction);
-    const BlockState* targetState = level->getBlockState(targetPos);
-    bool blockUsed =
-        targetState->getBlock()->use(level, targetPos, targetState, player, hand, direction,
-                                     hitX, hitY, hitZ, simulate);
-    if (!blockUsed)
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    Block* block = level->getBlockState(pos)->getBlock();
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
     Block* replacement = NULL;
-    bool canTill = true;
-    if (direction != Direction::DOWN)
+    InteractionResult::EInteractionResult result = InteractionResult::eInteractionResult_Pass;
+    if (direction != Direction::DOWN
+        && level->getBlockState(pos.above())->getBlock()->mMaterial == Material::AIR)
     {
-        if (level->getBlockState(pos.above())->getBlock() != Blocks::AIR)
-        {
-            canTill = false;
-        }
-        else if (block == Blocks::grass)
+        if (block == Blocks::grass || block == Blocks::grass_path)
         {
             replacement = Blocks::farmland;
+            result = InteractionResult::eInteractionResult_Success;
         }
         else if (block == Blocks::dirt)
         {
-            const BlockState* dirtState = level->getBlockState(pos);
-            int data = block->convertBlockStateToLegacyData(dirtState);
-            if (data == 1)
-            {
-                replacement = Blocks::dirt;
-            }
-            else
+            int data = state->getValue(gVariantProperty)->getData();
+            if (data == 0)
             {
                 replacement = Blocks::farmland;
+                result = InteractionResult::eInteractionResult_Success;
+            }
+            else if (data == 1)
+            {
+                replacement = Blocks::dirt;
+                result = InteractionResult::eInteractionResult_Success;
             }
         }
-        else
-        {
-            canTill = false;
-        }
-    }
-    else
-    {
-        canTill = false;
     }
 
-    if (canTill && !simulate)
+    if (!simulate && result == InteractionResult::eInteractionResult_Success)
     {
         setBlock(itemInstance, player, level, pos, replacement->defaultBlockState());
     }
-    return canTill ? InteractionResult::eInteractionResult_Success
-                   : InteractionResult::eInteractionResult_Pass;
+    return result;
 }
 
 bool HoeItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
@@ -142,7 +136,7 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* HoeItem::getDefaultAttr
         (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] =
             new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
         (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, mAttackDamage - 4.0, 0);
+            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, mAttackDamage - 4.0f, 0);
     }
     return modifiers;
 }
