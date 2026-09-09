@@ -100,12 +100,13 @@ bool NodeEvaluator::isCanSinkInWaterWalk()
     return mCanSinkInWaterWalk;
 }
 
-void NodeEvaluator::getBlockState(LevelSource* levelSource, const BlockPos& pos)
+const BlockState* NodeEvaluator::getBlockState(LevelSource* levelSource, const BlockPos& pos)
 {
-    levelSource->getBlockState(pos);
+    return levelSource->getBlockState(pos);
 }
 
-void NodeEvaluator::getBlockState(EntityTickCache& tickCache, LevelSource* levelSource, const BlockPos& pos)
+const BlockState* NodeEvaluator::getBlockState(EntityTickCache& tickCache, LevelSource* levelSource,
+                                               const BlockPos& pos)
 {
-    levelSource->getBlockState(tickCache, pos);
+    return levelSource->getBlockState(tickCache, pos);
 }

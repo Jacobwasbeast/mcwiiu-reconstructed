@@ -147,9 +147,10 @@ bool CircleAroundAnchorGoal::touchingTarget() const
     }
 
     MoveControl* moveControl = mMob->getMoveControl();
+    Vec3* position = mMob->getPos(0.0f);
     Vec3* wanted = Vec3::newTemp(moveControl->getWantedX(), moveControl->getWantedY(),
                                  moveControl->getWantedZ());
-    return wanted->distanceToSqr(mMob->getPos(0.0f)) < (double)mMinDistanceSquared;
+    return wanted->distanceToSqr(position) < (double)mMinDistanceSquared;
 }
 
 void CircleAroundAnchorGoal::tick()

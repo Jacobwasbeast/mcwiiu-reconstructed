@@ -11,6 +11,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
 
@@ -30,12 +31,14 @@ MoveIndoorsGoal::~MoveIndoorsGoal()
 
 bool MoveIndoorsGoal::canUse()
 {
-    boost::shared_ptr<Entity> entity = mMob->shared_from_this();
-    BlockPos pos(entity);
+    BlockPos pos(mMob->shared_from_this());
 
     if (mMob->mLevel->isDay())
     {
-        if (!mMob->mLevel->isRaining() || mMob->mLevel->canSeeSky(pos))
+        if (!mMob->mLevel->isRaining())
+            return false;
+
+        if (mMob->mLevel->getBiome(pos)->hasRain())
             return false;
     }
 
@@ -46,16 +49,13 @@ bool MoveIndoorsGoal::canUse()
             && mMob->distanceToSqr((double)mDoorX, mMob->mY, (double)mDoorZ) < 4.0)
             return false;
 
-        boost::shared_ptr<Villages> villages = mMob->mLevel->getVillages();
-        boost::shared_ptr<Village> village = villages->getClosestVillage(pos, 14);
+        boost::shared_ptr<Village> village =
+            mMob->mLevel->getVillages()->getClosestVillage(pos, 14);
         if (village)
         {
-            boost::shared_ptr<DoorInfo> door = village->getBestDoorInfo(pos);
-            if (door)
-            {
-                mDoorInfo = door;
-                return true;
-            }
+            boost::shared_ptr<DoorInfo> doorInfo = village->getBestDoorInfo(pos);
+            mDoorInfo = doorInfo;
+            return doorInfo.get() != NULL;
         }
     }
 
@@ -70,10 +70,15 @@ bool MoveIndoorsGoal::canContinueToUse()
 void MoveIndoorsGoal::start()
 {
     mDoorX = -1;
-    if (!mDoorInfo)
-        return;
 
-    BlockPos pos = mDoorInfo->getIndoorPos();
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (!doorInfo)
+    {
+        mDoorInfo.reset();
+        return;
+    }
+
+    BlockPos pos = doorInfo->getIndoorPos();
     if (mMob->distanceToSqr(pos) <= 256.0)
     {
         mMob->getNavigation()->moveTo((double)pos.x + 0.5,
@@ -83,12 +88,11 @@ void MoveIndoorsGoal::start()
     }
     else
     {
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-        Vec3* target = Vec3::newTemp((double)pos.x + 0.5,
-                                     (double)pos.y,
-                                     (double)pos.z + 0.5);
-        Vec3* destination = RandomPos::getPosTowards(mob, 14, 3, target);
+        Vec3* destination = RandomPos::getPosTowards(
+            boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
+            14,
+            3,
+            Vec3::newTemp((double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5));
         if (destination != NULL)
         {
             mMob->getNavigation()->moveTo(destination->x, destination->y,
@@ -99,12 +103,15 @@ void MoveIndoorsGoal::start()
 
 void MoveIndoorsGoal::stop()
 {
-    if (!mDoorInfo)
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (!doorInfo)
+    {
+        mDoorInfo.reset();
         return;
+    }
 
-    BlockPos pos = mDoorInfo->getIndoorPos();
-    mDoorX = pos.x;
-    mDoorZ = pos.z;
+    mDoorX = doorInfo->getIndoorPos().x;
+    mDoorZ = doorInfo->getIndoorPos().z;
     mDoorInfo.reset();
 }
 

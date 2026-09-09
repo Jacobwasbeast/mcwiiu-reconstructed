@@ -20,6 +20,7 @@ DoorInteractGoal::DoorInteractGoal(Mob* mob)
       mDoorX(0.0f),
       mDoorZ(0.0f)
 {
+    mDoorPos = BlockPos::ZERO;
 }
 
 DoorInteractGoal::~DoorInteractGoal()
@@ -84,14 +85,14 @@ bool DoorInteractGoal::canContinueToUse()
 void DoorInteractGoal::start()
 {
     mHasDoor = false;
-    mDoorX = (float)mDoorPos.x + 0.5f - (float)mMob->mX;
-    mDoorZ = (float)mDoorPos.z + 0.5f - (float)mMob->mZ;
+    mDoorX = (float)((double)((float)mDoorPos.x + 0.5f) - mMob->mX);
+    mDoorZ = (float)((double)((float)mDoorPos.z + 0.5f) - mMob->mZ);
 }
 
 void DoorInteractGoal::tick()
 {
-    float x = (float)mDoorPos.x + 0.5f - (float)mMob->mX;
-    float z = (float)mDoorPos.z + 0.5f - (float)mMob->mZ;
+    float x = (float)((double)((float)mDoorPos.x + 0.5f) - mMob->mX);
+    float z = (float)((double)((float)mDoorPos.z + 0.5f) - mMob->mZ);
     if (mDoorX * x + mDoorZ * z < 0.0f)
         mHasDoor = true;
 }

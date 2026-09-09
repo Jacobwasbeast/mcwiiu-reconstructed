@@ -1,5 +1,7 @@
 #include "game/entity/ai/OcelotAttackGoal.hpp"
 
+#include <boost/shared_ptr.hpp>
+
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -14,6 +16,7 @@ OcelotAttackGoal::OcelotAttackGoal(Mob* mob)
       mValue(0.0f),
       mFlag(false)
 {
+    mTarget.reset();
     setRequiredControlFlags(3);
 }
 
@@ -33,43 +36,46 @@ bool OcelotAttackGoal::canUse()
 
 bool OcelotAttackGoal::canContinueToUse()
 {
-    boost::shared_ptr<Entity> target = mTarget;
-    if (!target || !target->isAlive())
+    if (!mTarget.lock() || !mTarget.lock()->isAlive())
         return false;
 
-    if (mMob->distanceToSqr(target) > 225.0)
-        return true;
+    if (mMob->distanceToSqr(mTarget.lock()) > 225.0)
+        return false;
 
-    return !mMob->getNavigation()->isDone();
+    return !mMob->getNavigation()->isDone() || canUse();
 }
 
 void OcelotAttackGoal::stop()
 {
-    mTarget.reset();
+    mTarget = boost::weak_ptr<Entity>().lock();
     mMob->getNavigation()->stop();
 }
 
 void OcelotAttackGoal::tick()
 {
-    boost::shared_ptr<Entity> target = mTarget;
-    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(target, 30.0f, 30.0f);
+    mMob->getLookControl()->setLookAt(mTarget.lock(), 30.0f, 30.0f);
 
-    double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
-    double speed = 1.33;
-    if (distance < 16.0)
-        speed = 0.8;
+    double attackReachSqr = (double)((mMob->mBbWidth * 2.0f) * (mMob->mBbWidth * 2.0f));
+    double distance = mMob->distanceToSqr(mTarget.lock()->mX,
+                                          mTarget.lock()->mBoundingBox->mMinY,
+                                          mTarget.lock()->mZ);
+
+    double speed = 0.8;
+    if (distance > attackReachSqr && distance < 16.0)
+        speed = 1.33;
     else if (distance < 225.0)
         speed = 0.6;
 
-    mMob->getNavigation()->moveTo(target, speed);
+    mMob->getNavigation()->moveTo(mTarget.lock(), speed);
 
     mAttackTime = mAttackTime - 1;
     if (mAttackTime < 0)
         mAttackTime = 0;
-    if (distance <= 16.0 && mAttackTime <= 0)
+
+    if (distance <= attackReachSqr && mAttackTime <= 0)
     {
         mAttackTime = 20;
-        mMob->doHurtTarget(target);
+        mMob->doHurtTarget(mTarget.lock());
     }
 }
 

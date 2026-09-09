@@ -2,11 +2,13 @@
 #define GAME_ENTITY_AI_AVOIDENTITYGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 #include <typeinfo>
 
 #include "game/entity/ai/Goal.hpp"
 
+class AvoidEntityGoalEntitySelector;
 class Entity;
 class PathfinderMob;
 class Path;
@@ -40,7 +42,10 @@ private:
     PathNavigation* mNavigation;
     const std::type_info* mAvoidType;
     const Predicate<boost::shared_ptr<Entity> >* mSelector;
-    boost::shared_ptr<Entity> mToAvoid;
+    AvoidEntityGoalEntitySelector* mEntitySelector;
+
+protected:
+    boost::weak_ptr<Entity> mToAvoid;
 };
 
 #endif

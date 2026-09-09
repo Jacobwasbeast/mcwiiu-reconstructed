@@ -29,9 +29,9 @@ bool TurtleBreedGoal::canUse()
 void TurtleBreedGoal::breed()
 {
     boost::shared_ptr<Player> player = mAnimal->getLoveCause();
-    if (!player)
+    if (!player && mPartner.lock()->getLoveCause())
     {
-        player = mPartner->getLoveCause();
+        player = mPartner.lock()->getLoveCause();
     }
 
     if (player)
@@ -42,13 +42,14 @@ void TurtleBreedGoal::breed()
 
     mTurtle->setHasEgg(true);
     mAnimal->resetLove();
-    mPartner->resetLove();
+    mPartner.lock()->resetLove();
 
+    Random* random = mAnimal->getRandom();
     if (mLevel->getGameRules()->getBoolean(4))
     {
         boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
             mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ,
-            mAnimal->getRandom()->nextInt(7) + 1));
+            random->nextInt(7) + 1));
         mLevel->addEntity(orb);
     }
 }

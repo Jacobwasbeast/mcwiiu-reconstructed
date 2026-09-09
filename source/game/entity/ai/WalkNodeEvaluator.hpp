@@ -40,6 +40,8 @@ protected:
 private:
     bool mFlag0;
     bool mFlag1;
+
+protected:
     Entity* mEntity;
 };
 

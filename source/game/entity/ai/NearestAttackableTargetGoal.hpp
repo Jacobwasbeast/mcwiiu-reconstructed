@@ -4,6 +4,7 @@
 #include <typeinfo>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/TargetGoal.hpp"
 #include "game/world/Level.hpp"
@@ -58,7 +59,7 @@ private:
     int mRandomInterval;
     DistComp mSorter;
     SubselectEntitySelector* mTargetSelector;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     bool mIncludeRemoved;
     DisguisedRangeModifier* mRangeModifier;
 };

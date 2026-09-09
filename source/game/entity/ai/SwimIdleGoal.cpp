@@ -1,6 +1,8 @@
 #include "game/entity/ai/SwimIdleGoal.hpp"
 
+#include <cstdlib>
 #include <string>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Mth.hpp"
@@ -53,7 +55,7 @@ bool SwimIdleGoal::canContinueToUse()
 void SwimIdleGoal::start()
 {
     mTicks = 0;
-    mStartPos = mMob->getPos(2.0f);
+    mStartPos = mMob->getPos(0.0f);
     Goal::start();
 }
 
@@ -75,26 +77,25 @@ void SwimIdleGoal::tick()
 
     boost::shared_ptr<WaterAnimal> waterAnimal =
         boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
-    if (waterAnimal->mSpeed <= 2.0f)
+    if (waterAnimal->mSpeed > 0.0f)
     {
-        return;
+        const int id = mMob->getId();
+        const float phase = static_cast<float>(std::abs(id) % 100);
+        const float angle =
+            (static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mMovementSpeedScale;
+        const float swim = Mth::sin(angle) * waterAnimal->mSpeed;
+        const float yaw = mMob->mYRot * 0.01745329238474369f;
+        const float cosYaw = Mth::cos(yaw);
+        const float sinYaw = Mth::sin(yaw);
+
+        mMob->mXd += static_cast<double>(swim * cosYaw);
+        mMob->mZd += static_cast<double>(swim * sinYaw);
+
+        const int bobId = mMob->getId();
+        const float bobPhase = static_cast<float>(std::abs(bobId) % 100);
+        const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + bobPhase) * 0.75f);
+        mMob->mYd += static_cast<double>(bob * 0.05f * (sinYaw + cosYaw) * 0.5f);
     }
-
-    const int id = mMob->getId();
-    const float phase = static_cast<float>(id % 100);
-    const float angle = (static_cast<float>(mMob->mTickCount) + phase) * mMob->mMovementSpeedScale;
-    const float swim = Mth::sin(angle) * waterAnimal->mSpeed;
-    const float yaw = mMob->mYRot * 0.01745329238474369f;
-    const float cosYaw = Mth::cos(yaw);
-    const float sinYaw = Mth::sin(yaw);
-
-    mMob->mXd += static_cast<double>(swim * cosYaw);
-    mMob->mZd += static_cast<double>(swim * sinYaw);
-
-    const int bobId = mMob->getId();
-    const float bobPhase = static_cast<float>(bobId % 100);
-    const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + bobPhase) * 0.75f);
-    mMob->mYd += static_cast<double>(bob * 0.05f * (sinYaw + cosYaw) * 0.5f);
 }
 
 std::wstring SwimIdleGoal::getName()

@@ -1,6 +1,6 @@
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 
-#include <math.h>
+#include <cmath>
 
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -29,8 +29,8 @@ bool RandomLookAroundGoal::canContinueToUse()
 void RandomLookAroundGoal::start()
 {
     double angle = mMob->getRandom()->nextDouble() * 6.2831854820251465;
-    mLookAtX = cos(angle);
-    mLookAtZ = sin(angle);
+    mLookAtX = std::cos(angle);
+    mLookAtZ = std::sin(angle);
     mLookTime = 20 + mMob->getRandom()->nextInt(20);
 }
 

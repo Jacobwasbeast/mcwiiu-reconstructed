@@ -4,14 +4,17 @@
 #include <typeinfo>
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/SubselectEntitySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/AABB.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/generation/Player.hpp"
 
 NearestAttackableTargetGoal::DistComp::DistComp(Entity* entity)
@@ -36,14 +39,15 @@ NearestAttackableTargetGoal::DisguisedRangeModifier::~DisguisedRangeModifier()
 
 double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_ptr<Player> player) const
 {
-    not_null_ptr<ItemInstance> item = player->getMainHandItem();
-    if (item->getItem() != NULL)
+    not_null_ptr<ItemInstance> item = player->getItemSlot(EquipmentSlot::HEAD);
+    if (item->getItem() == Items::skull)
     {
         int damage = item->getDamageValue();
-        unsigned long long type = mMob->GetType();
-        if ((type == ENTITY_TYPE_PIG_ZOMBIE && damage == 0)
-            || (type == ENTITY_TYPE_ZOMBIE && damage == 2)
-            || (type == ENTITY_TYPE_ZOMBIE_VILLAGER && damage == 4))
+        bool disguisedAsSkeleton = mMob->GetType() == 0x5D540441ULL && damage == 0;
+        bool disguisedAsZombie =
+            (mMob->GetType() & ENTITY_TYPE_ZOMBIE) == ENTITY_TYPE_ZOMBIE && damage == 2;
+        bool disguisedAsCreeper = mMob->GetType() == 0x5D540041ULL && damage == 4;
+        if (disguisedAsSkeleton || disguisedAsZombie || disguisedAsCreeper)
             return 0.5;
     }
     return 1.0;
@@ -56,7 +60,8 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
       mSorter(mob)
 {
     setRequiredControlFlags(1);
-    mTargetSelector = new SubselectEntitySelector(this, NULL, false);
+    mTargetSelector = new SubselectEntitySelector(
+        this, Predicates<boost::shared_ptr<Entity> >::alwaysTrue, false);
     mIncludeRemoved = includeRemoved;
     mRangeModifier = new DisguisedRangeModifier(mob);
 }
@@ -87,44 +92,50 @@ bool NearestAttackableTargetGoal::canUse()
     if (*mTargetType == typeid(Player) || *mTargetType == typeid(ServerPlayer))
     {
         mTarget = mMob->mLevel->getNearestAttackablePlayer(
-            mMob->mX, mMob->mY, mMob->mZ,
-            getFollowDistance() + (double)mMob->mBbWidth,
-            (double)mMob->mBbHeight, mRangeModifier, mTargetSelector);
-        return !!mTarget;
+            mMob->mX, mMob->mY + mMob->getEyeHeight(), mMob->mZ,
+            getFollowDistance(), getFollowDistance(), mRangeModifier, mTargetSelector);
+        return mTarget.lock().get() != NULL;
     }
+
     std::vector<boost::shared_ptr<Entity> >* entities =
         mMob->mLevel->getEntitiesOfClass(*mTargetType,
             getTargetSearchArea(getFollowDistance()), mTargetSelector, mIncludeRemoved);
-    if (entities == NULL || entities->empty())
+    bool found = false;
+    if (entities != NULL && !entities->empty())
     {
-        delete entities;
-        return false;
+        std::sort(entities->begin(), entities->end(), mSorter);
+        double distance = getFollowDistance();
+        if (mMob->distanceToSqr(entities->at(0)) <= distance * distance)
+        {
+            mTarget = boost::dynamic_pointer_cast<LivingEntity>(entities->at(0));
+            found = true;
+        }
     }
-    std::sort(entities->begin(), entities->end(), mSorter);
-    double distance = getFollowDistance();
-    if (mMob->distanceToSqr((*entities)[0]) <= distance * distance)
-        mTarget = boost::dynamic_pointer_cast<LivingEntity>((*entities)[0]);
-    else
-        mTarget.reset();
     delete entities;
-    return !!mTarget;
+    return found;
 }
 
 bool NearestAttackableTargetGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
     if (!target)
-        target = mTarget;
-    if (!target || !target->isAlive())
+        target = TargetGoal::mTarget.lock();
+
+    if (!target)
         return false;
-    if (mTargetSelector && !mTargetSelector->apply(target))
+
+    if (!target->isAlive())
         return false;
+
+    if (!mTargetSelector->apply(target))
+        return false;
+
     return TargetGoal::canContinueToUse();
 }
 
 void NearestAttackableTargetGoal::start()
 {
-    mMob->setTarget(mTarget);
+    mMob->setTarget(mTarget.lock());
     TargetGoal::start();
 }
 

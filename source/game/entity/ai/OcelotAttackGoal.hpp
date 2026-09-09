@@ -1,7 +1,7 @@
 #ifndef GAME_ENTITY_AI_OCELOTATTACKGOAL_HPP
 #define GAME_ENTITY_AI_OCELOTATTACKGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -26,7 +26,7 @@ public:
 protected:
     Level* mLevel;
     Mob* mMob;
-    boost::shared_ptr<Entity> mTarget;
+    boost::weak_ptr<Entity> mTarget;
     int mAttackTime;
     float mValue;
     bool mFlag;

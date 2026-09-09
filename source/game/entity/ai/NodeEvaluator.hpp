@@ -40,8 +40,8 @@ public:
     bool isCanFloat();
     void setSinkInWaterWalk(bool value);
     bool isCanSinkInWaterWalk();
-    void getBlockState(LevelSource* levelSource, const BlockPos& pos);
-    void getBlockState(EntityTickCache& tickCache, LevelSource* levelSource, const BlockPos& pos);
+    const BlockState* getBlockState(LevelSource* levelSource, const BlockPos& pos);
+    const BlockState* getBlockState(EntityTickCache& tickCache, LevelSource* levelSource, const BlockPos& pos);
     unsigned int getNodesCount();
 
 protected:
