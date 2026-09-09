@@ -1,13 +1,20 @@
 #include "game/world/biome/TaigaBiome.hpp"
 
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-#include "game/world/block/Block.hpp"
-#include "game/world/block/BlockPos.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/biome/BiomeDecorator.hpp"
-#include "game/world/chunk/ChunkPrimer.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockBlobFeature.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/generation/DoublePlantFeature.hpp"
 #include "game/world/generation/MegaPineTreeFeature.hpp"
 #include "game/world/generation/PineFeature.hpp"
@@ -15,31 +22,26 @@
 #include "game/world/generation/TallgrassFeature.hpp"
 
 extern DoublePlantFeature* gDoublePlantFeature;
-extern DoublePlantBlock::Variant* gDoublePlantGrass;
-extern TallGrassBlock::Variant* gTallGrass;
-extern TallGrassBlock::Variant* gFern;
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 TaigaBiome::TaigaBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Taiga, properties),
       mType(type)
 {
-    mMonsters.push_back(new MobSpawnerData(8, 0x0D6C0002ULL, 4, 4));
+    mWolves.push_back(new MobSpawnerData(8, 0x0D6C0002ULL, 4, 4));
     mCreatures.push_back(new MobSpawnerData(4, 0x2D680005ULL, 2, 3));
+
     mDecorator->treesPerChunk = 10;
 
     if (type == eType_MegaTaiga || type == eType_Mutated)
     {
-        mDecorator->flowersPerChunk = 7;
-        mDecorator->grassPerChunk = 1;
-        mDecorator->deadBushPerChunk = 3;
+        mDecorator->grassPerChunk = 7;
+        mDecorator->deadBushPerChunk = 1;
+        mDecorator->mushroomsPerChunk = 3;
     }
     else
     {
-        mDecorator->flowersPerChunk = 1;
-        mDecorator->deadBushPerChunk = 1;
+        mDecorator->grassPerChunk = 1;
+        mDecorator->mushroomsPerChunk = 1;
     }
 }
 
@@ -55,6 +57,7 @@ AbstractTreeFeature* TaigaBiome::getTreeFeature(Random& random)
         {
             return new MegaPineTreeFeature(false, false);
         }
+
         return new MegaPineTreeFeature(false, true);
     }
 
@@ -62,6 +65,7 @@ AbstractTreeFeature* TaigaBiome::getTreeFeature(Random& random)
     {
         return new PineFeature();
     }
+
     return new SpruceFeature(false);
 }
 
@@ -69,33 +73,35 @@ Feature* TaigaBiome::getGrassFeature(Random& random)
 {
     if (random.nextInt(5) > 0)
     {
-        return new TallgrassFeature(gTallGrass);
+        return new TallgrassFeature(gFern);
     }
-    return new TallgrassFeature(gFern);
+
+    return new TallgrassFeature(gTallGrass);
 }
 
 void TaigaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
-    if ((mType == eType_MegaTaiga || mType == eType_Mutated))
+    if (mType == eType_MegaTaiga || mType == eType_Mutated)
     {
-        const int blobCount = random.nextInt(3);
+        int blobCount = random.nextInt(3);
         for (int i = 0; i < blobCount; ++i)
         {
-            BlockPos blobPos = level->getHeightmapPos(pos.offset(random.nextInt(16) + 8, 0,
-                                                                  random.nextInt(16) + 8));
-            BlockBlobFeature blob(Blocks::stone, 0);
+            int x = random.nextInt(16) + 8;
+            int z = random.nextInt(16) + 8;
+            BlockPos blobPos = level->getHeightmapPos(pos.offset(x, 0, z));
+            BlockBlobFeature blob(Blocks::mossy_cobblestone, 0);
             blob.place(level, random, blobPos);
         }
     }
 
-    gDoublePlantFeature->setNextPlantType(gDoublePlantGrass);
-    for (int i = 0; i < 8; ++i)
+    gDoublePlantFeature->setNextPlantType(DoublePlantBlock::VARIANTS[3]);
+
+    for (int i = 0; i < 7; ++i)
     {
-        const int x = random.nextInt(16);
-        const int z = random.nextInt(16);
-        BlockPos plantPos = level->getHeightmapPos(pos.offset(x + 8, 0, z + 8));
-        const int y = random.nextInt(plantPos.y + 32);
-        gDoublePlantFeature->place(level, random, pos.offset(x + 8, y, z + 8));
+        int x = random.nextInt(16) + 8;
+        int z = random.nextInt(16) + 8;
+        int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
+        gDoublePlantFeature->place(level, random, pos.offset(x, y, z));
     }
 
     Biome::decorate(level, random, pos);
@@ -108,24 +114,28 @@ void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
 
     if (mType == eType_MegaTaiga || mType == eType_Mutated)
     {
-        mTopBlock.blockId = 2;
-        mTopBlock.blockData = 0;
-        mFillerBlock.blockId = 3;
-        mFillerBlock.blockData = 0;
+        mTopBlock = BlockPair(2, 0);
+        mFillerBlock = BlockPair(3, 0);
 
         if (noise > 1.75)
         {
+            TypedBoxed<DirtBlock::Variant*> variant(gVariants[1]);
+            const BlockState* coarseDirt =
+                Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
             mTopBlock.blockId = 3;
-            mTopBlock.blockData = 1;
+            mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(coarseDirt);
         }
-        else if (noise < -0.95)
+        else if (noise > -0.95)
         {
+            TypedBoxed<DirtBlock::Variant*> variant(gVariants[2]);
+            const BlockState* podzol =
+                Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+            mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(podzol);
             mTopBlock.blockId = 3;
-            mTopBlock.blockData = 2;
         }
     }
 
-    Biome::buildSurfaceAt(level, random, primer, x, z, noise);
+    buildSurfaceAtDefault(level, random, primer, x, z, noise);
     PIXEndNamedEvent();
 }
 

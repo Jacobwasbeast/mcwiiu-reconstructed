@@ -9,12 +9,19 @@
 TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_TheEnd, properties)
 {
-    mTopBlock.blockId = 3;
-    mTopBlock.blockData = Blocks::end_stone->convertBlockStateToLegacyData(Blocks::end_stone->defaultBlockState());
-    mFillerBlock.blockId = 3;
-    mFillerBlock.blockData = Blocks::end_stone->convertBlockStateToLegacyData(Blocks::end_stone->defaultBlockState());
+    mMonsters.clear();
+    mCreatures.clear();
+    mWaterCreatures.clear();
+    mChickens.clear();
+    mWolves.clear();
+    mAmbientCreatures.clear();
 
     mMonsters.push_back(new MobSpawnerData(10, 0x5D540043ULL, 4, 4));
+
+    mTopBlock.blockId = 3;
+    mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState());
+    mFillerBlock.blockId = 3;
+    mFillerBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState());
 
     mDecorator = new TheEndBiomeDecorator();
 }
@@ -30,10 +37,10 @@ unsigned int TheEndBiome::getSkyColor(float temperature)
 
 Vec3* TheEndBiome::getFogColor(float celestialAngle, float partialTicks) const
 {
+    unsigned int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_End_Fog_Colour);
+
     float brightness = Mth::cos(celestialAngle * 3.1415927F * 2.0F) * 2.0F + 0.5F;
     brightness = Mth::clamp(brightness, 0.0F, 1.0F);
-
-    unsigned int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_End_Fog_Colour);
 
     float red = (float)(fogColour >> 16 & 0xFF) / 255.0F;
     float green = (float)(fogColour >> 8 & 0xFF) / 255.0F;

@@ -12,10 +12,11 @@
 
 IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ice, properties),
-      mHasIceSpikes(hasIceSpikes),
       mIceSpikeFeature(new IceSpikeFeature),
       mIcePatchFeature(new IcePatchFeature(4))
 {
+    mHasIceSpikes = hasIceSpikes;
+
     if (hasIceSpikes)
     {
         mTopBlock.blockId = 80;
@@ -56,25 +57,19 @@ void IceBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     if (mHasIceSpikes)
     {
-        BlockPos featurePos = pos.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
-        featurePos = level->getHeightmapPos(featurePos);
-        mIceSpikeFeature->place(level, random, featurePos);
+        for (int i = 0; i < 3; ++i)
+        {
+            int x = random.nextInt(16) + 8;
+            int z = random.nextInt(16) + 8;
+            mIceSpikeFeature->place(level, random, level->getHeightmapPos(pos.offset(x, 0, z)));
+        }
 
-        featurePos = pos.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
-        featurePos = level->getHeightmapPos(featurePos);
-        mIceSpikeFeature->place(level, random, featurePos);
-
-        featurePos = pos.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
-        featurePos = level->getHeightmapPos(featurePos);
-        mIceSpikeFeature->place(level, random, featurePos);
-
-        featurePos = pos.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
-        featurePos = level->getHeightmapPos(featurePos);
-        mIcePatchFeature->place(level, random, featurePos);
-
-        featurePos = pos.offset(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
-        featurePos = level->getHeightmapPos(featurePos);
-        mIcePatchFeature->place(level, random, featurePos);
+        for (int i = 0; i < 2; ++i)
+        {
+            int x = random.nextInt(16) + 8;
+            int z = random.nextInt(16) + 8;
+            mIcePatchFeature->place(level, random, level->getHeightmapPos(pos.offset(x, 0, z)));
+        }
     }
 
     Biome::decorate(level, random, pos);

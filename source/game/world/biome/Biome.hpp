@@ -215,6 +215,8 @@ public:
         int mMaxCount;
     };
 
+    static const BlockPair STONE_BLOCK;
+
     static const BiomeHeight HEIGHT_DEFAULT;
     static const BiomeHeight HEIGHT_SHALLOW_WATERS;
     static const BiomeHeight HEIGHT_OCEANS;

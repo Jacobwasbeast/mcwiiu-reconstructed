@@ -3,7 +3,6 @@
 
 #include "game/world/biome/Biome.hpp"
 
-class Feature;
 class IcePatchFeature;
 class IceSpikeFeature;
 

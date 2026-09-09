@@ -59,7 +59,7 @@ static const int MAX_BIOME_ID = 256;
 static const int STONE_BLOCK_ID = 1;
 static const int SAND_BLOCK_ID = 12;
 
-static const Biome::BlockPair STONE_BLOCK(1, 0);
+const Biome::BlockPair Biome::STONE_BLOCK(1, 0);
 static const Biome::BlockPair AIR_BLOCK(0, 0);
 static const Biome::BlockPair BEDROCK_BLOCK(7, 0);
 static const Biome::BlockPair GRAVEL_BLOCK(13, 0);

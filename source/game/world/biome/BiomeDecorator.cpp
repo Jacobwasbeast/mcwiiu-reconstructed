@@ -2,8 +2,10 @@
 
 #include "game/core/Bush.hpp"
 #include "game/core/CustomizableSourceSettings.hpp"
-#include "game/world/block/Material.hpp"
+#include "game/core/MemSect.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/SuperflatConfig.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
@@ -33,10 +35,6 @@
 #include "game/world/generation/SeaPickleFeature.hpp"
 #include "game/world/generation/SpringFeature.hpp"
 #include "game/world/generation/WaterlilyFeature.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-void MemSect(int section);
 
 static void placeFeature(Feature* feature, Level* level, Random* random, const BlockPos& pos)
 {

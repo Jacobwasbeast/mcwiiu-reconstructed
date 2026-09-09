@@ -6,6 +6,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 
 MutatedSavannaBiome::MutatedSavannaBiome(EBiomeIDs biomeId, BiomeProperties* properties)
@@ -26,22 +30,21 @@ void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrim
     mTopBlock = BlockPair(2, 0);
     mFillerBlock = BlockPair(3, 0);
 
-    if (noise <= 1.75)
-    {
-        if (noise > -0.5)
-        {
-            Block* dirt = Block::byId(3);
-            mTopBlock.blockId = 3;
-            mTopBlock.blockData = dirt->convertBlockStateToLegacyData(dirt->getBlockState(1));
-        }
-    }
-    else
+    if (noise > 1.75)
     {
         mTopBlock = BlockPair(1, 0);
         mFillerBlock = BlockPair(1, 0);
     }
+    else if (noise > -0.5)
+    {
+        TypedBoxed<DirtBlock::Variant*> variant(gVariants[1]);
+        const BlockState* coarseDirt =
+            Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+        mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(coarseDirt);
+        mTopBlock.blockId = 3;
+    }
 
-    Biome::buildSurfaceAt(level, random, primer, x, z, noise);
+    buildSurfaceAtDefault(level, random, primer, x, z, noise);
 }
 
 void MutatedSavannaBiome::decorate(Level* level, Random& random, const BlockPos& pos)

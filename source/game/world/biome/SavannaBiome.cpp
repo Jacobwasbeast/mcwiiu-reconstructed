@@ -44,14 +44,12 @@ void SavannaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     gDoublePlantFeature->setNextPlantType(gDoublePlantGrass);
 
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 7; ++i)
     {
-        int x = random.nextInt(16);
-        int z = random.nextInt(16);
-        BlockPos plantPos = pos.offset(x + 8, 0, z + 8);
-        plantPos = level->getHeightmapPos(plantPos);
-        int y = random.nextInt(plantPos.y + 32);
-        gDoublePlantFeature->place(level, random, pos.offset(x + 8, y, z + 8));
+        int x = random.nextInt(16) + 8;
+        int z = random.nextInt(16) + 8;
+        int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
+        gDoublePlantFeature->place(level, random, pos.offset(x, y, z));
     }
 
     Biome::decorate(level, random, pos);
