@@ -7,11 +7,13 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/client/render/Font.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -31,10 +33,9 @@ namespace
 
 UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer), m_button1(), m_button2(), m_button3(), m_button4(), m_button5(),
-      m_button6(), m_button7(), m_timer(), m_splashes(), m_showUpsell(false), m_signedIn(false),
-      m_unused(false), m_trial(false), m_loading(false), m_splashX(0.0f), m_splashY(0.0f),
-      m_splashWidth(0.0f), m_splashHeight(0.0f), m_splashIndex(0), m_pendingAction(0),
-      m_pendingUser(0), m_pendingResult(0)
+      m_button6(), m_button7(), m_timer(), m_loading(false), m_showUpsell(false),
+      m_signedIn(false), m_unused(false), m_trial(false), m_splashX(0.0f), m_splashY(0.0f),
+      m_splashWidth(0.0f), m_splashHeight(0.0f), m_splashes(), m_splash(), m_pendingAction(0)
 {
     gApp.SetDRCIconEnabled(true);
     gApp.SetDRCCheckPlayerCountEnabled(true);
@@ -116,15 +117,14 @@ void UIScene_MainMenu::updateComponents()
 void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (rect == NULL || minecraft == NULL || minecraft->mFont == NULL || m_splashes.empty())
-        return;
+    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
+    m_splashX = static_cast<float>(minecraft->mWidth);
+    m_splashY = static_cast<float>(minecraft->mHeight);
+    m_splashWidth = static_cast<float>(calculator.mWidthScale);
+    m_splashHeight = static_cast<float>(calculator.mHeightScale);
+    gRenderer->TextureBindVertex(-1);
 
-    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth,
-                                    minecraft->mHeight, -1);
-    m_splashWidth = static_cast<float>(calculator.getWidth());
-    m_splashHeight = static_cast<float>(calculator.getHeight());
-
-    const std::wstring& splash = m_splashes[static_cast<unsigned int>(m_splashIndex) % m_splashes.size()];
+    Font* font = minecraft->mFont;
     GlStateManager::disableCull();
     GlStateManager::disableDepthTest();
     GlStateManager::disableLighting();
@@ -132,13 +132,12 @@ void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
     GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 0.0f);
     GlStateManager::rotatef(-17.0f, 0.0f, 0.0f, 1.0f);
 
-    const float pulse = 1.8f - Mth::abs(Mth::sin(
-        static_cast<float>(System::processTimeInMilliSecs() % 1000) * 0.0062831855f) * 0.1f);
-    const float scale = pulse * (m_splashWidth / (m_splashHeight == 0.0f ? 1.0f : m_splashHeight));
-    const int width = minecraft->mFont->width(splash);
-    GlStateManager::scalef(scale / (width == 0 ? 1.0f : static_cast<float>(width)),
-                           scale / (width == 0 ? 1.0f : static_cast<float>(width)), 1.0f);
-    minecraft->mFont->drawShadow(splash, -(width / 2), -8, 0xffffff00);
+    float phase = static_cast<float>(System::processTimeInMilliSecs() % 1000) / 1000.0f * 3.1415927f;
+    float scale = (1.8f - Mth::abs(Mth::sin(phase + phase) * 0.1f)) *
+                  (m_splashX / m_splashWidth) * 100.0f;
+    float factor = scale / static_cast<float>(font->width(m_splash) + 32);
+    GlStateManager::scalef(factor, factor, factor);
+    font->drawShadow(m_splash, -(font->width(m_splash) / 2), -8, 0xffffff00);
     GlStateManager::popMatrix();
     GlStateManager::disableRescaleNormal();
     GlStateManager::enableDepthTest();
@@ -191,37 +190,75 @@ void UIScene_MainMenu::RunLeaderboards(int playerId)
     proceedToScene(playerId, static_cast<EUIScene>(0x16));
 }
 
-int UIScene_MainMenu::Leaderboards_SignInReturned(void*, bool signedIn, int, int)
+int UIScene_MainMenu::Leaderboards_SignInReturned(void* context, bool signedIn, int userIndex,
+                                                  int)
 {
-    if (signedIn)
-        s_nextScene = 0x16;
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    if (!signedIn)
+    {
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
+    }
+    else
+    {
+        gProfile->SetCurrentGameActivity(userIndex, 1, false);
+        scene->RunLeaderboards(userIndex);
+    }
     return 0;
 }
 
 void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
 {
     m_pendingAction = 5;
-    m_pendingUser = playerId;
     if (gApp.DLCInstallProcessCompleted())
         proceedToScene(playerId, static_cast<EUIScene>(0x2c));
 }
 
-int UIScene_MainMenu::UnlockFullGame_SignInReturned(void* context, bool signedIn, int userIndex, int)
+int UIScene_MainMenu::UnlockFullGame_SignInReturned(void* context, bool signedIn, int userIndex,
+                                                    int playerIndex)
 {
-    if (signedIn)
-        static_cast<UIScene_MainMenu*>(context)->RunUnlockOrDLC(userIndex);
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    if (!signedIn)
+    {
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
+    }
+    else
+    {
+        gProfile->SetCurrentGameActivity(userIndex, 1, false);
+        gProfile->SetPrimaryPad(playerIndex);
+        scene->RunUnlockOrDLC(userIndex);
+    }
     return 0;
 }
 
-int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int button,
+int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int userIndex,
                                                   C4JStorage::EMessageResult result)
 {
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (scene == NULL)
-        return 0;
     if (result == static_cast<C4JStorage::EMessageResult>(4))
     {
-        scene->m_pendingResult = button;
+        if (scene->m_pendingAction == 1)
+            CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
+                                                                  CreateLoad_SignInReturned, scene);
+        else if (scene->m_pendingAction == 2)
+            CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
+                                                                  Leaderboards_SignInReturned,
+                                                                  scene);
+        else if (scene->m_pendingAction == 5)
+            CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
+                                                                  UnlockFullGame_SignInReturned,
+                                                                  scene);
     }
     else if (scene->m_pendingAction == 1)
     {
@@ -237,12 +274,14 @@ int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int button,
 int UIScene_MainMenu::MiniGamesUnlock_Returned(void* context, int playerId,
                                                C4JStorage::EMessageResult result)
 {
-    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (scene != NULL) {
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
+    if (scene != NULL)
+    {
         if (result == static_cast<C4JStorage::EMessageResult>(4))
             scene->RunUnlockOrDLC(playerId);
         else
-            scene->m_showUpsell = false;
+            scene->m_loading = false;
     }
     return 0;
 }
@@ -264,10 +303,30 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
     }
 }
 
-int UIScene_MainMenu::CreateLoad_SignInReturned(void* context, bool signedIn, int userIndex, int)
+int UIScene_MainMenu::CreateLoad_SignInReturned(void* context, bool signedIn, int userIndex,
+                                                int playerIndex)
 {
-    if (signedIn)
-        static_cast<UIScene_MainMenu*>(context)->RunPlayGame(userIndex);
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    gProfile->SetPrimaryPad(playerIndex);
+    if (!signedIn)
+    {
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
+    }
+    else
+    {
+        gProfile->SetCurrentGameActivity(userIndex, 1, false);
+        bool online = gProfile->IsSignedInLive(userIndex);
+        if (!gProfile->IsGuest(gProfile->GetPrimaryPad()) && gProfile->IsFullVersion() && !online)
+            scene->RunPlayGameOffline(userIndex);
+        else
+            scene->RunPlayGame(userIndex);
+    }
     return 0;
 }
 
@@ -276,9 +335,26 @@ void UIScene_MainMenu::RunAchievements(int playerId)
     proceedToScene(playerId, static_cast<EUIScene>(0x51));
 }
 
-int UIScene_MainMenu::Achievements_SignInReturned(void*, bool signedIn, int, int)
+int UIScene_MainMenu::Achievements_SignInReturned(void* context, bool signedIn, int userIndex,
+                                                  int)
 {
-    return signedIn ? 0 : 0;
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    if (!signedIn)
+    {
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
+    }
+    else
+    {
+        gProfile->SetCurrentGameActivity(userIndex, 1, false);
+        scene->RunAchievements(userIndex);
+    }
+    return 0;
 }
 
 void UIScene_MainMenu::RunHelpAndOptions(int playerId)
@@ -286,19 +362,24 @@ void UIScene_MainMenu::RunHelpAndOptions(int playerId)
     proceedToScene(playerId, static_cast<EUIScene>(0x0f));
 }
 
-int UIScene_MainMenu::HelpAndOptions_SignInReturned(void* context, bool signedIn,
-                                                   int userIndex, int)
+int UIScene_MainMenu::HelpAndOptions_SignInReturned(void* context, bool signedIn, int userIndex,
+                                                    int)
 {
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (scene == NULL)
-        return 0;
-    if (signedIn)
+    if (!signedIn)
     {
-        scene->RunHelpAndOptions(userIndex);
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
     }
     else
     {
-        scene->m_loading = false;
+        gProfile->SetCurrentGameActivity(userIndex, 1, false);
+        scene->RunHelpAndOptions(userIndex);
     }
     return 0;
 }
@@ -319,13 +400,48 @@ void UIScene_MainMenu::RunAction(int playerId)
     }
 }
 
-int UIScene_MainMenu::MustSignInReturned(void* context, int, C4JStorage::EMessageResult result)
+int UIScene_MainMenu::MustSignInReturned(void* context, int userIndex,
+                                         C4JStorage::EMessageResult result)
 {
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
-    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(4))
-        scene->RunAction(scene->m_pendingUser);
-    else if (scene != NULL)
-        scene->m_showUpsell = false;
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        switch (scene->m_pendingAction)
+        {
+        case 1:
+            gProfile->RequestSignInUI(false, true, true, false, true, CreateLoad_SignInReturned,
+                                      scene, userIndex);
+            break;
+        case 2:
+            gProfile->RequestSignInUI(false, false, true, false, true, Leaderboards_SignInReturned,
+                                      scene, userIndex);
+            break;
+        case 3:
+            gProfile->RequestSignInUI(false, false, true, false, true, Achievements_SignInReturned,
+                                      scene, userIndex);
+            break;
+        case 4:
+            gProfile->RequestSignInUI(false, false, true, false, true, HelpAndOptions_SignInReturned,
+                                      scene, userIndex);
+            break;
+        case 5:
+            gProfile->RequestSignInUI(false, false, true, false, true,
+                                      UnlockFullGame_SignInReturned, scene, userIndex);
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        scene->m_loading = false;
+        gProfile->SetLockedProfile(-1);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (gProfile->IsSignedIn(i))
+                gProfile->SetCurrentGameActivity(i, 1, false);
+        }
+    }
     return 0;
 }
 
@@ -333,7 +449,6 @@ void UIScene_MainMenu::handlePress(int first, int)
 {
     if (first >= 0 && first <= 5) {
         m_pendingAction = first + 1;
-        m_pendingUser = 0;
         gConsoleUIController.PlayUISFX(NULL);
         RunAction(0);
     } else if (first == 6) {

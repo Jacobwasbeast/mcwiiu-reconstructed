@@ -44,11 +44,13 @@ void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* font, float 
 fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNode* node, fuiObject* object,
     unsigned int symbolIndex, unsigned char type, fuiRGBA* colour, unsigned char renderFlags, bool visible, fuiFile* file)
     : fuiRenderNode(parent, node, object, symbolIndex, static_cast<eFuiObjectType>(type), renderFlags, colour, 0, visible, file),
-      m_text(), m_htmlText(), m_word(), m_wrappedText(), m_attribute(), m_lineWidths(), m_lineHeights(),
-      m_renderState(), m_font(NULL), m_scrollH(0.0f), m_glyphScale(1.0f), m_lineSpacing(0.0f),
-      m_textWidth(0.0f), m_textHeight(0.0f), m_numLines(0), m_autoSize(TextFieldAutoSizeNone), m_html(false), m_dirty(true)
+      m_html(false), m_text(), m_scrollH(0.0f), m_alignment(0), m_wordWrap(false), m_multiline(false),
+      m_autoSize(TextFieldAutoSizeCenter), m_htmlAlignment(0), m_textWidth(0.0f), m_textHeight(0.0f),
+      m_numLines(0), m_lineWidths(), m_lineHeights(), m_font(NULL), m_glyphScale(1.0f),
+      m_colour(0), m_textSet(false), m_fieldWidth(0.0f), m_renderState(), m_htmlText(), m_wrappedText(),
+      m_attribute(), m_word(), m_dirty(true)
 {
-    m_renderState.init(NULL, 0.0f, 0.0f);
+    InitializeCriticalSection(&m_lock);
 }
 
 fuiRenderNodeEditText::~fuiRenderNodeEditText()
@@ -101,12 +103,12 @@ const wchar_t* fuiRenderNodeEditText::incStringPtr(const wchar_t* text) const
 
 float fuiRenderNodeEditText::getGlyphScale()
 {
-    return m_font == NULL ? m_glyphScale : m_font->getGlyphScale(m_glyphScale);
+    return m_boldFont->getGlyphScale(m_glyphScale);
 }
 
 float fuiRenderNodeEditText::getRenderedGlyphHeight(wchar_t character)
 {
-    return m_font == NULL ? m_lineSpacing : m_font->getRenderedGlyphHeight(static_cast<unsigned short>(character), m_glyphScale);
+    return m_boldFont->getRenderedGlyphHeight(static_cast<unsigned short>(character), m_glyphScale);
 }
 
 bool fuiRenderNodeEditText::useBitmapFont(unsigned short character, fuiFontSet* font)
@@ -355,10 +357,29 @@ void fuiRenderNodeEditText::renderStringShadow(const std::wstring& text, float x
 
 void fuiRenderNodeEditText::autoSizeBounds()
 {
-    if (m_autoSize != TextFieldAutoSizeNone)
+    float width = 0.0f;
+    float height = 0.0f;
+    getRenderedStringWidthHeight(m_text, m_font, m_glyphScale, width, height);
+
+    float bounds = -(getGlyphScale() - width);
+    if (m_textWidth != bounds || m_textHeight != height)
     {
-        m_textWidth = m_lineWidths.empty() ? 0.0f : *std::max_element(m_lineWidths.begin(), m_lineWidths.end());
-        m_textHeight = m_lineHeights.empty() ? 0.0f : static_cast<float>(m_lineHeights.size()) * m_lineSpacing;
+        m_textWidth = bounds;
+        m_textHeight = height;
+        m_dirty = true;
+    }
+
+    if (m_autoSize == TextFieldAutoSizeLeft)
+    {
+        m_bounds.xMax = m_bounds.xMin + (getGlyphScale() + width);
+        m_bounds.yMax = height * 1.0436591f + m_bounds.yMin;
+        progogateBounds();
+    }
+    else if (m_autoSize == TextFieldAutoSizeRight)
+    {
+        m_bounds.yMax = height * 1.0436591f + m_bounds.yMin;
+        m_alignment = 1;
+        progogateBounds();
     }
 }
 
@@ -389,7 +410,7 @@ void fuiRenderNodeEditText::render(fuiRect* rect, fuiMatrix* matrix)
     if (m_dirty)
     {
         RenderStringStateData state;
-        state.init(m_font, m_glyphScale, m_lineSpacing);
+        state.init(m_font, m_glyphScale, getGlyphScale());
         renderString(m_html ? m_htmlText : m_text, state);
         m_renderState = state;
         m_dirty = false;
@@ -441,7 +462,7 @@ std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)
     if (index < 0 || static_cast<std::wstring::size_type>(index) >= m_text.size())
         return std::pair<float, float>(0.0f, 0.0f);
     RenderStringStateData state;
-    state.init(m_font, m_glyphScale, m_lineSpacing);
+    state.init(m_font, m_glyphScale, getGlyphScale());
     for (int i = 0; i < index; ++i)
         state.x += getRenderedGlyphWidth(m_text[static_cast<std::wstring::size_type>(i)], state);
     return std::pair<float, float>(state.x, getRenderedGlyphHeight(m_text[static_cast<std::wstring::size_type>(index)]));

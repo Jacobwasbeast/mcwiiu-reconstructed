@@ -25,31 +25,20 @@ void ControlsScreen::init()
     Language* language = Language::getInstance();
     int left = getLeftScreenPosition();
 
-    for (int key = 0; key < 14; key += 2)
+    for (int key = 0; key < 14; ++key)
     {
-        mButtons.push_back(new SmallButton(key, left, mHeight / 6 + (key / 2) * 24, 70, 20,
-            mOptions->getKeyMessage(key)));
-        mButtons.push_back(new SmallButton(key + 1, left + 160,
-            mHeight / 6 + ((key + 1) / 2) * 24, 70, 20,
-            mOptions->getKeyMessage(key + 1)));
+        mButtons.push_back(new SmallButton(key, left + (key % 2) * 160,
+            mHeight / 6 + (key / 2) * 24, 70, 20, mOptions->getKeyMessage(key)));
     }
 
     mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168,
-        language->getElement(L"gui_done")));
-    mTitle = language->getElement(L"controls_title");
+        language->getElement(L"gui.done")));
+    mTitle = language->getElement(L"controls.title");
 }
 
 void ControlsScreen::buttonClicked(Button* button)
 {
-    for (int key = 0; key < 12; key += 4)
-    {
-        mButtons[key]->mMessage = mOptions->getKeyMessage(key);
-        mButtons[key + 1]->mMessage = mOptions->getKeyMessage(key + 1);
-        mButtons[key + 2]->mMessage = mOptions->getKeyMessage(key + 2);
-        mButtons[key + 3]->mMessage = mOptions->getKeyMessage(key + 3);
-    }
-
-    for (int key = 12; key < 14; ++key)
+    for (int key = 0; key < 14; ++key)
     {
         mButtons[key]->mMessage = mOptions->getKeyMessage(key);
     }

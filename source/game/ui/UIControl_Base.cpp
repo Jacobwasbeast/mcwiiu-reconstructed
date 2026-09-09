@@ -40,7 +40,7 @@ void UIControl_Base::setLabel(UIString label, bool update, bool force)
     if (label.isCharString() == 0)
         text.assign(m_label.getString());
     else
-        text = convStringToWstring(std::string((const char*)label.getCharString()));
+        text = convStringToWstring(std::string(label.getCharString().c_str()));
 
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node->isFJ_Base())

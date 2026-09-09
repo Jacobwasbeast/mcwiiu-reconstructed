@@ -1,7 +1,6 @@
 #ifndef GAME_UI_UISCENE_MAINMENU_HPP
 #define GAME_UI_UISCENE_MAINMENU_HPP
 
-#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -72,20 +71,18 @@ private:
     UIControl_Button m_button6;
     UIControl_Button m_button7;
     UIControl m_timer;
-    std::vector<std::wstring> m_splashes;
+    bool m_loading;
     bool m_showUpsell;
     bool m_signedIn;
     bool m_unused;
     bool m_trial;
-    bool m_loading;
     float m_splashX;
     float m_splashY;
     float m_splashWidth;
     float m_splashHeight;
-    int16_t m_splashIndex;
+    std::vector<std::wstring> m_splashes;
+    std::wstring m_splash;
     int m_pendingAction;
-    int m_pendingUser;
-    int m_pendingResult;
 };
 
 #endif

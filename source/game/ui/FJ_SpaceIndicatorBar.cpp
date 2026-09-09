@@ -5,27 +5,19 @@
 
 FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)
-    , m_barWidth(0.0f)
-    , m_saveGameFiller(NULL)
-    , m_totalFiller(NULL)
-    , m_saveBar(NULL)
-    , m_saveBarFiller(NULL)
 {
     GetBarFiller();
 
-    float width = m_saveBar->getWidth();
-    float height = m_saveBar->getHeight();
-    m_barWidth = width;
-    fuiRect rect = { 0.0f, width, 0.0f, height };
+    m_barWidth = m_saveBar->getWidth();
+
+    fuiRect rect = { 0.0f, m_saveBar->getWidth(), 0.0f, m_saveBar->getHeight() };
     fuiRenderNodeCodeGenRect* greenNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "fillerMask_Green");
     m_saveGameFiller = new FJ_FuiNode(greenNode);
     m_saveBar->addMask(m_saveGameFiller);
 
-    width = m_saveBarFiller->getWidth();
-    height = m_saveBarFiller->getHeight();
-    rect.xMax = width;
-    rect.yMax = height;
+    rect.xMax = m_saveBarFiller->getWidth();
+    rect.yMax = m_saveBarFiller->getHeight();
     fuiRenderNodeCodeGenRect* yellowNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "fillerMask_Yellow");
     m_totalFiller = new FJ_FuiNode(yellowNode);

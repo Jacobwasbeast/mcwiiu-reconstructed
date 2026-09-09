@@ -2,6 +2,9 @@
 #define GAME_UI_UISTRING_HPP
 
 #include <string>
+
+#include <boost/shared_ptr.hpp>
+
 #include "game/core/FJStringBuilder.hpp"
 
 class UIString
@@ -18,7 +21,7 @@ public:
         unsigned int needsUpdating();
         void setUpdated();
         std::wstring& getString();
-        int getCharString();
+        std::string& getCharString();
         unsigned char isCharString();
         unsigned int length();
     private:
@@ -28,8 +31,8 @@ public:
         unsigned int mUpdatedLocale;
         std::wstring mString;
         std::string mCharString;
-        bool mIsCharString;
         bool mIsConstant;
+        bool mIsCharString;
         FJStringBuilder mBuilder;
     };
     UIString();
@@ -47,13 +50,12 @@ public:
     unsigned int needsUpdating();
     void setUpdated();
     std::wstring& getString();
-    unsigned int getCharString();
+    std::string& getCharString();
     unsigned char isCharString();
     const wchar_t* c_str();
     unsigned int length();
 private:
-    UIStringCore* mCore;
-    unsigned int mReferences;
+    boost::shared_ptr<UIStringCore> mCore;
 };
 
 #endif

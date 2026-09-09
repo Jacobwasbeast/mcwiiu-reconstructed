@@ -43,7 +43,8 @@ void UITTFFont::init(const std::string& fontName, std::vector<std::string> fontF
     for (fontIndex = 0; fontIndex < fontCount; ++fontIndex)
     {
         int file = CreateFileA(fontFiles[fontIndex].c_str(), 0x80000000, 0, NULL, 3, 0x80, 0);
-        unsigned int fileSize = GetFileSize(file, NULL);
+        unsigned int fileSizeHigh = 0;
+        unsigned int fileSize = GetFileSize(file, &fileSizeHigh);
         if (fileSize != 0)
         {
             unsigned char* data = new unsigned char[fileSize];

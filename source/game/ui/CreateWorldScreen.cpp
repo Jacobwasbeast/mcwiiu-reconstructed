@@ -126,10 +126,11 @@ void CreateWorldScreen::buttonClicked(Button* button)
 
 void CreateWorldScreen::keyPressed(wchar_t key, int action)
 {
-    mNameEdit->keyPressed(key, action);
+    EditBox* edit = mNameEdit->mFocused ? mNameEdit : mSeedEdit;
+    edit->keyPressed(key, action);
     if (action == 13)
     {
-        tabPressed();
+        buttonClicked(mButtons[0]);
     }
     mButtons[0]->mActive = !mNameEdit->getValue().empty();
     updateResultFolder();

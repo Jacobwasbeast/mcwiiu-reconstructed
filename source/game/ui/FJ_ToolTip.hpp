@@ -19,10 +19,10 @@ public:
     fuiRenderNodeEditText* GetSecondaryTextField();
     void SetSecondaryText(const std::wstring& text);
     void SetType(int type, int subtype);
-    uint64_t Init(const std::wstring& label, int id, bool visible, int type, int subtype);
+    void Init(const std::wstring& label, int id, bool visible, int type, int subtype);
     void UpdateControllerType(int controllerType);
     uint8_t IsSingleButtonToolTip();
-    uint64_t Animate();
+    void Animate();
     virtual void SetLabel(const std::wstring& label);
     void ChangeType(int type, int subtype);
 

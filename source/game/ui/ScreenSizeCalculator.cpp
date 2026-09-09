@@ -1,8 +1,6 @@
-#define private public
-#include "game/core/Options.hpp"
-#undef private
-
 #include <cmath>
+
+#include "game/core/Options.hpp"
 
 #include "game/core/Minecraft.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"

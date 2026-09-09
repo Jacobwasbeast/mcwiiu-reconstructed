@@ -25,8 +25,7 @@ public:
     virtual unsigned int getDefaultGtcButtons();
 
 private:
-    bool m_unknownC8;
-    unsigned char m_reservedC9[3];
+    bool m_ignoreInput;
     UIControl_Button m_acceptButton;
     UIControl_DynamicLabel m_eulaText;
 };

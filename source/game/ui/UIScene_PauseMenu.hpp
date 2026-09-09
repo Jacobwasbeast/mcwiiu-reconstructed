@@ -55,6 +55,7 @@ public:
     virtual int getSceneType();
     static unsigned int MustSignInReturnedNintendo(void* context, int button, C4JStorage::EMessageResult result);
 private:
+    bool m_texturePackWarningPending;
     UIControl_MultiList m_buttonList;
     bool m_ignoreInput;
 };

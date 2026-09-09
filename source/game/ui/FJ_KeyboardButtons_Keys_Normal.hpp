@@ -13,9 +13,6 @@ public:
     virtual ~FJ_KeyboardButtons_Keys_Normal();
     static FJ_KeyboardButtons* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
-
-private:
-    int m_size;
 };
 
 #endif

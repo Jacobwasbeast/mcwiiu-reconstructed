@@ -31,7 +31,7 @@ public:
 private:
     boost::shared_ptr<SignBlockEntity> m_sign;
     int m_selectedLine;
-    bool m_cancelRequested;
+    bool m_confirmRequested;
     bool m_keyboardActive;
     UIControl_Button m_confirmButton;
     UIControl_Label m_messageLabel;

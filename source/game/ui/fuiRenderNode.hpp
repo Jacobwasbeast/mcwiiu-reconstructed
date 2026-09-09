@@ -89,6 +89,7 @@ public:
     fuiRenderNode* getRoot();
     fuiRenderNode* getParent() { return m_parent; }
     FJ_FuiNode* getFuiNode() { return m_node; }
+    void setFuiNode(FJ_FuiNode* node) { m_node = node; }
     void pushMatrix();
     void pushColor();
     void popColor();

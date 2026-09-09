@@ -2,8 +2,8 @@
 
 FJ_KeyboardButtons_Keys_Normal::FJ_KeyboardButtons_Keys_Normal(fuiRenderNode* renderNode)
     : FJ_KeyboardButtons(renderNode)
-    , m_size(3)
 {
+    m_keyboardOffset = 3;
 }
 
 FJ_KeyboardButtons_Keys_Normal::~FJ_KeyboardButtons_Keys_Normal()

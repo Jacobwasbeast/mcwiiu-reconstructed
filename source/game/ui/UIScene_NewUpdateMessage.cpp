@@ -23,7 +23,7 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
 
     std::wstring text(L10N::GetString(static_cast<int>(0x31bf39b5)));
     text += L"\r\n";
-    gApp.FormatHTMLString(m_resolution, text, -1);
+    text = gApp.FormatHTMLString(m_resolution, text, -1);
 
     std::vector<std::wstring> lines;
     std::wstring::size_type start = 0;
@@ -38,7 +38,7 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
     for (unsigned int i = 0; i < lines.size(); ++i)
         m_eulaText.addText(lines[i], i == lines.size() - 1);
 
-    m_unknownC8 = false;
+    m_ignoreInput = false;
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -76,7 +76,7 @@ std::wstring UIScene_NewUpdateMessage::getMoviePath()
 void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool released,
                                            bool pressed, bool&)
 {
-    if (!m_unknownC8)
+    if (!m_ignoreInput)
     {
         gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
         if (action < 8)

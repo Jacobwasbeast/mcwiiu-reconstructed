@@ -1,19 +1,23 @@
 #include "game/ui/UIScene_SignEntryMenu.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/UIControl_Base.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/UIString.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_sign(), m_selectedLine(0), m_cancelRequested(false),
+    : UIScene(type, layer), m_sign(), m_selectedLine(0), m_confirmRequested(false),
       m_keyboardActive(false)
 {
     if (data != NULL)
@@ -55,7 +59,7 @@ unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
 
 void UIScene_SignEntryMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_resolution, (int)0x8d6323ed, 0x4f6bcf5e,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -64,23 +68,17 @@ void UIScene_SignEntryMenu::tick()
 {
     UIScene::tick();
 
-    if (m_cancelRequested)
+    if (!m_confirmRequested)
+        return;
+
+    m_confirmRequested = false;
+    for (int i = 0; i < 4; ++i)
     {
-        m_cancelRequested = false;
-        if (m_sign != 0)
-        {
-            std::wstring empty;
-            for (int i = 0; i < 4; ++i)
-                m_sign->SetMessage(i, empty);
-            m_sign->setChanged();
-        }
-        gConsoleUIController.CloseUIScenes(m_sceneType, false);
-        return;
+        std::wstring line(m_lineInputs[i].getLabel());
+        m_sign->SetMessage(i, line);
     }
-
-    if (m_sign == 0)
-        return;
-
+    m_sign->setChanged();
+    gConsoleUIController.CloseUIScenes(m_resolution, false);
 }
 
 std::wstring UIScene_SignEntryMenu::getMoviePath()
@@ -93,25 +91,27 @@ std::wstring UIScene_SignEntryMenu::getMoviePath()
 void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                         bool pressed, bool& handled)
 {
-    if (m_cancelRequested || m_keyboardActive)
+    if (m_confirmRequested || m_keyboardActive)
         return;
 
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (action > 3 && (action < 6 || action == 0x14))
+    if (action <= 3)
+        return;
+
+    if (action < 6 || action == 0x14)
     {
         sendInputToMovie(action, repeat, released, pressed);
         handled = true;
     }
     else if (action == 0x15 && released)
     {
-        if (m_sign != 0)
-        {
-            std::wstring empty;
-            for (int i = 0; i < 4; ++i)
-                m_sign->SetMessage(i, empty);
-            m_sign->setChanged();
-        }
+        std::wstring empty(L"");
+        m_sign->SetMessage(0, empty);
+        m_sign->SetMessage(1, empty);
+        m_sign->SetMessage(2, empty);
+        m_sign->SetMessage(3, empty);
         navigateBack();
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
         handled = true;
     }
 }
@@ -119,15 +119,16 @@ void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, b
 int UIScene_SignEntryMenu::KeyboardCompleteCallback(void* data, bool accepted)
 {
     UIScene_SignEntryMenu* scene = static_cast<UIScene_SignEntryMenu*>(data);
-    if (scene != NULL)
+    if (scene == NULL)
+        return 0;
+
+    scene->m_keyboardActive = false;
+    if (accepted)
     {
-        scene->m_keyboardActive = false;
-        if (accepted && g_pInput != NULL)
-        {
-            wchar_t text[128];
-            g_pInput->GetText(text, 127);
-            scene->m_lineInputs[scene->m_selectedLine].setLabel(UIString(text), false, false);
-        }
+        wchar_t text[128];
+        std::memset(text, 0, sizeof(text));
+        g_pInput->GetText(text, 0x7f);
+        scene->m_lineInputs[scene->m_selectedLine].setLabel(UIString(text), false, false);
     }
     return 0;
 }
@@ -138,26 +139,21 @@ void UIScene_SignEntryMenu::handlePress(int first, int)
     {
         m_selectedLine = first;
         m_keyboardActive = true;
-        if (g_pInput != NULL)
-        {
-            const wchar_t* title = L10N::GetString(0x3121eb00);
-            const wchar_t* initial = m_lineInputs[m_selectedLine].getLabel();
-            if (g_pInput->RequestKeyboard(title, initial, m_sceneType, 0x7f,
-                                           KeyboardCompleteCallback, this,
-                                           C_4JInput::EKeyboardMode_0) != 0)
-                m_keyboardActive = false;
-        }
+        if (g_pInput->RequestKeyboard(L10N::GetString(0x3121eb00),
+                                      m_lineInputs[m_selectedLine].getLabel(), m_resolution, 0xf,
+                                      KeyboardCompleteCallback, this,
+                                      static_cast<C_4JInput::EKeyboardMode>(3)) != 0)
+            m_keyboardActive = false;
     }
     else if (first == 4)
     {
-        m_cancelRequested = true;
+        m_confirmRequested = true;
     }
 }
 
 void UIScene_SignEntryMenu::handleDestroy()
 {
-    if (g_pInput != NULL)
-        g_pInput->DestroyKeyboard();
+    g_pInput->DestroyKeyboard();
 }
 
 int UIScene_SignEntryMenu::getSceneType()

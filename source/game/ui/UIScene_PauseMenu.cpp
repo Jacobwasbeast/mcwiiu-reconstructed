@@ -363,6 +363,7 @@ int UIScene_PauseMenu::SaveGameDialogReturned(void*, int button, C4JStorage::EMe
 int UIScene_PauseMenu::EnableAutosaveDialogReturned(void*, int button, C4JStorage::EMessageResult result)
 {
     g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0x16), result != static_cast<C4JStorage::EMessageResult>(5));
+    gStorage->SetSaveDisabled(false);
     g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
     return 0;
 }
@@ -372,6 +373,7 @@ int UIScene_PauseMenu::DisableAutosaveDialogReturned(void*, int button, C4JStora
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
         g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0x16), 1);
+        gStorage->SetSaveDisabled(false);
         g_pApp->SetAction(button, static_cast<eXuiAction>(1), NULL);
     }
     return 0;
@@ -389,11 +391,49 @@ int UIScene_PauseMenu::UnlockFullSaveReturned(void*, int button, C4JStorage::EMe
 
 void UIScene_PauseMenu::PerformActionSaveGame()
 {
-    if (Minecraft::GetInstance() != NULL && !Minecraft::GetInstance()->isClientSide())
+    if (!gProfile->IsFullVersion())
     {
-        TexturePackRepository* repository = Minecraft::GetInstance()->mTexturePackRepository;
-        if (repository != NULL && repository->getSelected() != NULL && repository->getSelected()->getDLCParentPackId() != 0)
-            repository->getSelected()->getDLCParentPackId();
+        if (gProfile->IsSignedInLive(m_resolution))
+        {
+            int parameters[2];
+            parameters[0] = (int)0xb9a1bf4d;
+            parameters[1] = 0x4fcbc7e7;
+            gConsoleUIController.RequestAlertMessage(
+                (int)0xc6058d6b, (int)0xc75616c3, parameters, 2, m_resolution,
+                UnlockFullSaveReturned, reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
+        }
+        return;
+    }
+
+    TexturePackRepository* repository = Minecraft::GetInstance()->mTexturePackRepository;
+    if (repository->getSelected() != TexturePackRepository::defaultTexturePack)
+    {
+        DLCPack* pack = Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getDLCPack();
+        if (!pack->hasPurchasedPack())
+        {
+            int parameters[2];
+            parameters[0] = (int)0xb9a1bf4d;
+            parameters[1] = 0x4fcbc7e7;
+            gConsoleUIController.RequestAlertMessage(
+                0x3bb3096e, 0x0d52c2e3, parameters, 2, m_resolution,
+                WarningTrialTexturePackReturned,
+                reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
+            return;
+        }
+        m_texturePackWarningPending = false;
+    }
+
+    bool saveExists = false;
+    gStorage->DoesSaveExist(&saveExists);
+    int parameters[2];
+    parameters[0] = 0x4fcbc7e7;
+    parameters[1] = (int)0xb9a1bf4d;
+    if (saveExists)
+    {
+        gConsoleUIController.RequestAlertMessage(
+            0x3143fcab, (int)0xd66b8839, parameters, 2, m_resolution, SaveGameDialogReturned,
+            reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
+        return;
     }
     g_pApp->SetAction(m_resolution, static_cast<eXuiAction>(1), NULL);
 }

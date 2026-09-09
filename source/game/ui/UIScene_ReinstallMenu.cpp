@@ -5,6 +5,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 
 UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer)
     : UIScene(type, layer)
@@ -21,25 +22,20 @@ unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
 
-    m_button1.setupControl(this, root, std::string("Button1"));
-    m_controls.push_back(&m_button1);
-    m_button2.setupControl(this, root, std::string("Button2"));
-    m_controls.push_back(&m_button2);
-    m_button3.setupControl(this, root, std::string("Button3"));
-    m_controls.push_back(&m_button3);
-    m_button4.setupControl(this, root, std::string("Button4"));
-    m_controls.push_back(&m_button4);
-    m_button5.setupControl(this, root, std::string("Button5"));
-    m_controls.push_back(&m_button5);
-    m_button6.setupControl(this, root, std::string("Button6"));
-    m_controls.push_back(&m_button6);
+    static const char* const names[6] = { "Button1", "Button2", "Button3",
+                                          "Button4", "Button5", "Button6" };
+    for (int i = 0; i < 6; ++i)
+    {
+        m_buttons[i].setupControl(this, root, std::string(names[i]));
+        m_controls.push_back(&m_buttons[i]);
+    }
 
     return 1;
 }
 
 void UIScene_ReinstallMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5, 0x21c0a77,
+    gConsoleUIController.SetTooltips(m_resolution, (int)0x8d6323ed, 0x4f6bcf5e, 0x21c0a77d,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, false, false);
 }
@@ -49,13 +45,13 @@ void UIScene_ReinstallMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mPendingLevelChange == 0)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), true);
+        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), true);
     }
     else
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), false);
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), false);
     }
 }
 
@@ -66,15 +62,15 @@ std::wstring UIScene_ReinstallMenu::getMoviePath()
     return std::wstring(L"ReinstallSplit");
 }
 
-void UIScene_ReinstallMenu::handleInput(int playerId, int action, bool repeat, bool released,
+void UIScene_ReinstallMenu::handleInput(int, int action, bool repeat, bool released,
                                         bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
     if (action > 3)
     {
         if (action < 6 || action == 0x14)
             sendInputToMovie(action, repeat, released, pressed);
-        else if (action == 0x15 && pressed && !released)
+        else if (action == 0x15 && released && !repeat)
             navigateBack();
     }
 }

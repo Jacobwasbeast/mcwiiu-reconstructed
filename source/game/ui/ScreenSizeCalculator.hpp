@@ -18,8 +18,12 @@ public:
 private:
     uint32_t mWidth;
     uint32_t mHeight;
+
+public:
     double mWidthScale;
     double mHeightScale;
+
+private:
     int mScale;
 };
 

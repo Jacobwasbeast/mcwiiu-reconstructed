@@ -24,12 +24,7 @@ public:
     virtual int getSceneType();
 
 private:
-    UIControl_Button m_button1;
-    UIControl_Button m_button2;
-    UIControl_Button m_button3;
-    UIControl_Button m_button4;
-    UIControl_Button m_button5;
-    UIControl_Button m_button6;
+    UIControl_Button m_buttons[6];
 };
 
 #endif

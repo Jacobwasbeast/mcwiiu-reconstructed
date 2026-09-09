@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "game/core/CriticalSection.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiFontSet.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -121,24 +122,37 @@ public:
     unsigned int getNumLines();
 
 private:
+    OSFastMutex m_lock;
+    bool m_html;
     std::wstring m_text;
-    std::wstring m_htmlText;
-    std::wstring m_word;
-    std::wstring m_wrappedText;
-    std::wstring m_attribute;
-    std::vector<float> m_lineWidths;
-    std::vector<float> m_lineHeights;
-    RenderStringStateData m_renderState;
-    fuiFontSet* m_font;
     float m_scrollH;
-    float m_glyphScale;
-    float m_lineSpacing;
+    unsigned int m_alignment;
+
+public:
+    bool m_wordWrap;
+    bool m_multiline;
+
+private:
+    TextFieldAutoSize m_autoSize;
+    int m_htmlAlignment;
     float m_textWidth;
     float m_textHeight;
     unsigned int m_numLines;
-    TextFieldAutoSize m_autoSize;
-    bool m_html;
+    std::vector<float> m_lineWidths;
+    std::vector<float> m_lineHeights;
+    fuiFontSet* m_font;
+    fuiFontSet* m_boldFont;
+    float m_glyphScale;
+    unsigned int m_colour;
+    bool m_textSet;
+    float m_fieldWidth;
+    RenderStringStateData m_renderState;
+    std::wstring m_htmlText;
+    std::wstring m_wrappedText;
+    std::wstring m_attribute;
+    std::wstring m_word;
     bool m_dirty;
+    int m_lastFrame;
 };
 
 #endif

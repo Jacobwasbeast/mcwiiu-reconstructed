@@ -1,26 +1,19 @@
 #include "game/ui/JoinMultiplayerScreen.hpp"
 
-#include <cwchar>
 #include <string>
 #include <vector>
 
 #include "game/core/Button.hpp"
-#define private public
 #include "game/core/EditBox.hpp"
-#undef private
 #include "game/core/GuiComponent.hpp"
 #include "game/core/Language.hpp"
 #include "game/core/Minecraft.hpp"
-#define private public
 #include "game/core/Options.hpp"
-#undef private
+#include "game/core/StringUtils.hpp"
 
 template<typename T>
 T _fromString(const std::wstring& value);
 
-std::wstring trimString(const std::wstring& value);
-void replaceAll(std::wstring& result, const std::wstring& source,
-                const std::wstring& search, const std::wstring& replacement);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 
 JoinMultiplayerScreen::JoinMultiplayerScreen(Screen* parentScreen)
@@ -40,18 +33,18 @@ void JoinMultiplayerScreen::tick()
 void JoinMultiplayerScreen::init()
 {
     Language* language = Language::getInstance();
+    mButtons.clear();
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 108,
-                                  language->getElement(L"multiplayer_connect")));
+                                  language->getElement(L"multiplayer.connect")));
     mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132,
-                                  language->getElement(L"gui_cancel")));
+                                  language->getElement(L"gui.cancel")));
 
-    std::wstring value;
-    replaceAll(value, mMinecraft->mOptions->mLastServer, L"_", L":");
+    std::wstring value = replaceAll(mMinecraft->mOptions->mLastServer, L"_", L":");
     mButtons[0]->mActive = !value.empty();
     mEditBox = new EditBox(this, mFont, mWidth / 2 - 100, mHeight / 4 + 58,
                            200, 20, value);
-    mEditBox->mActive = true;
-    mEditBox->setMaxLength(0x80);
+    mEditBox->mFocused = true;
+    mEditBox->setMaxLength(128);
 }
 
 void JoinMultiplayerScreen::removed()
@@ -66,25 +59,24 @@ void JoinMultiplayerScreen::buttonClicked(Button* button)
     if (button->mId == 1)
     {
         mMinecraft->setScreen(mParentScreen);
+        return;
     }
 
     if (button->mId == 0)
     {
         std::wstring value = trimString(mEditBox->getValue());
-        std::wstring savedValue;
-        replaceAll(savedValue, value, L":", L"_");
-        mMinecraft->mOptions->mLastServer = savedValue;
+        mMinecraft->mOptions->mLastServer = replaceAll(value, L":", L"_");
         mMinecraft->mOptions->save();
 
-        std::vector<std::wstring> parts = stringSplit(value, L',');
-        if (!parts.empty() && !parts[0].empty() && parts[0][0] == L'[')
+        std::vector<std::wstring> parts = stringSplit(value, L'L');
+        if (value[0] == L'[')
         {
             std::wstring::size_type close = value.find(L"]");
             if (close != std::wstring::npos)
             {
-                std::wstring address = value.substr(1, close - 1);
+                std::wstring address = value.substr(1, close);
                 std::wstring port = trimString(value.substr(close + 1));
-                if (!port.empty() && port[0] == L':')
+                if (port[0] == L':' && !port.empty())
                 {
                     port = port.substr(1);
                     parts.clear();
@@ -100,7 +92,10 @@ void JoinMultiplayerScreen::buttonClicked(Button* button)
         }
 
         if (parts.size() > 2)
+        {
+            parts.clear();
             parts.push_back(value);
+        }
     }
 }
 
@@ -129,13 +124,13 @@ void JoinMultiplayerScreen::render(int x, int y, float partialTick)
 {
     Language* language = Language::getInstance();
     renderBackground();
-    drawCenteredString(mFont, language->getElement(L"multiplayer_title"),
+    drawCenteredString(mFont, language->getElement(L"multiplayer.title"),
                        mWidth / 2, mHeight / 4 - 40, 0xffffff);
-    drawString(mFont, language->getElement(L"multiplayer_info1"),
+    drawString(mFont, language->getElement(L"multiplayer.info1"),
                mWidth / 2 - 140, mHeight / 4, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"multiplayer_info2"),
+    drawString(mFont, language->getElement(L"multiplayer.info2"),
                mWidth / 2 - 140, mHeight / 4 + 9, 0xa0a0a0);
-    drawString(mFont, language->getElement(L"multiplayer_ipinfo"),
+    drawString(mFont, language->getElement(L"multiplayer.ipinfo"),
                mWidth / 2 - 140, mHeight / 4 + 36, 0xa0a0a0);
     mEditBox->render();
     Screen::render(x, y, partialTick);
