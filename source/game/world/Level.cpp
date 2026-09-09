@@ -1,6 +1,7 @@
 #include "game/world/Level.hpp"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstddef>
 
@@ -8,15 +9,18 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/BoundingBox.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/ColourTable.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/Explosion.hpp"
 #include "game/core/GameRules.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/LootTables.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Scoreboard.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
@@ -26,7 +30,9 @@
 #include "game/data/SavedDataStorage.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/MobCategory.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
 #include "game/network/LevelListener.hpp"
 #include "game/network/PathNavigationListener.hpp"
 #include "game/server/ObserverBlock.hpp"
@@ -41,6 +47,7 @@
 #include "game/world/LevelType.hpp"
 #include "game/world/WorldBorder.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/biome/BiomeColors.hpp"
 #include "game/world/biome/BiomeSource.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
@@ -48,6 +55,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DiodeBlock.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/LiquidBlock.hpp"
@@ -56,6 +64,7 @@
 #include "game/world/block/Predicate.hpp"
 #include "game/world/block/RedstoneTorchBlock.hpp"
 #include "game/world/block/SnowLayerBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/PlayerUID.hpp"
@@ -70,6 +79,7 @@ void XMemSet128(void* destination, int value, unsigned int size);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 void MemSect(int section);
+void instructionSynchronize();
 
 static unsigned int sInstaTickTlsIndex = TlsAlloc();
 static unsigned int sLightingCacheTlsIndex = TlsAlloc();
@@ -102,7 +112,7 @@ Level::~Level()
         delete mPathListener;
     }
 
-    delete mRandom;
+    delete[] mLightUpdateQueue;
 
     if (mDimension != NULL)
     {
@@ -119,7 +129,7 @@ Level::~Level()
         delete mLevelData;
     }
 
-    delete[] mLightUpdateQueue;
+    delete mRandom;
 
     if (mWorldBorder != NULL)
     {
@@ -132,14 +142,11 @@ Level::~Level()
     }
 
     DeleteCriticalSection(&mLightMutex);
-
     if (mSavedDataStorage != NULL)
     {
         delete mSavedDataStorage;
     }
-
     mSavedDataStorage = NULL;
-
     DeleteCriticalSection(&mEntityMutex);
     DeleteCriticalSection(&mBlockEntityMutex);
 }
@@ -194,7 +201,7 @@ void Level::_init()
 
 bool Level::isWaterAt(const BlockPos& pos)
 {
-    return getBlockState(pos)->getMaterial() == Material::WATER;
+    return getBlock(pos)->mMaterial == Material::WATER;
 }
 
 bool Level::shouldFreeze(const BlockPos& pos, bool checkNeighbours)
@@ -452,7 +459,7 @@ bool Level::isEmptyBlock(const BlockPos& pos)
 
 bool Level::isEmptyWaterBlock(const BlockPos& pos)
 {
-    return getBlockState(pos)->getMaterial() == Material::WATER;
+    return getBlock(pos)->mMaterial == Material::WATER;
 }
 
 bool Level::hasChunksAt(const BlockPos& pos, int radius, bool allowEmpty)
@@ -1494,7 +1501,7 @@ bool Level::internalSetBlock(bool extraBlock, const BlockPos& pos, const BlockSt
         return true;
     }
 
-    blockUpdated(pos, oldState->getBlock(), ((flags >> 4) & 1) == 0);
+    blockUpdated(pos, state->getBlock(), ((flags >> 4) & 1) == 0);
 
     if (state->hasAnalogOutputSignal())
     {
@@ -1720,6 +1727,7 @@ void Level::lightColumnChanged(int x, int z, int fromY, int toY)
     PIXEndNamedEvent();
 
     PIXEndNamedEvent();
+    instructionSynchronize();
 }
 
 void Level::updateNeighborsAtExceptFromFacing(const BlockPos& pos, Block* block, const Direction* skipSide)
@@ -2685,13 +2693,13 @@ bool Level::addEntity(boost::shared_ptr<Entity> entity)
     int chunkZ = Mth::fastFloor(entity->mZ * 0.0625);
     bool forcedLoading = entity->mForcedLoading;
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER && !forcedLoading
-        && !hasChunk(chunkX, chunkZ, false))
+    bool playerEntity = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+    if (!playerEntity && !forcedLoading && !hasChunk(chunkX, chunkZ, false))
     {
         return false;
     }
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if (playerEntity)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
@@ -2763,25 +2771,21 @@ void Level::removeEntity(boost::shared_ptr<Entity> entity)
 
     entity->remove();
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    bool playerEntity = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+    if (playerEntity)
     {
-        return;
+        std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
+        while (it != mPlayers.end() && *it != boost::static_pointer_cast<Player>(entity))
+        {
+            ++it;
+        }
+        if (it != mPlayers.end())
+        {
+            mPlayers.erase(it);
+        }
+        updateSleepingPlayerList();
+        playerRemoved(entity);
     }
-
-    std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
-
-    while (it != mPlayers.end() && *it != boost::static_pointer_cast<Player>(entity))
-    {
-        ++it;
-    }
-
-    if (it != mPlayers.end())
-    {
-        mPlayers.erase(it);
-    }
-
-    updateSleepingPlayerList();
-    playerRemoved(entity);
 }
 
 void Level::removeEntityImmediately(boost::shared_ptr<Entity> entity)
@@ -2789,7 +2793,7 @@ void Level::removeEntityImmediately(boost::shared_ptr<Entity> entity)
     entity->setDropContainerContent(false);
     entity->remove();
 
-    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    if ((entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
     {
         std::vector<boost::shared_ptr<Player> >::iterator playerIt = mPlayers.begin();
 
@@ -2891,7 +2895,6 @@ bool Level::checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr
     {
         return false;
     }
-
     bool found = false;
     Vec3* flow = Vec3::newTemp(0.0, 0.0, 0.0);
 
@@ -2931,19 +2934,7 @@ bool Level::checkAndHandleWater(AABB* box, Material* material, boost::shared_ptr
 
 float Level::getTimeOfDay(float partialTick)
 {
-    long long dayTime = mLevelData->getDayTime();
-    float angle = (float)((dayTime % 24000) + partialTick) / 24000.0f - 0.25f;
-    if (angle < 0.0f)
-    {
-        angle += 1.0f;
-    }
-    if (angle > 1.0f)
-    {
-        angle -= 1.0f;
-    }
-    float cosine = (float)std::cos((double)angle * 3.14159265358979323846);
-    float adjusted = angle + (0.5f - cosine) / 3.0f;
-    return adjusted;
+    return static_cast<float>(mDimension->getTimeOfDay(mLevelData->getDayTime(), partialTick));
 }
 
 float Level::getRainLevel(float partialTick)
@@ -2953,17 +2944,28 @@ float Level::getRainLevel(float partialTick)
 
 float Level::getThunderLevel(float partialTick)
 {
-    return mOldThunderLevel + (mThunderLevel - mOldThunderLevel) * partialTick;
+    return (mOldThunderLevel + (mThunderLevel - mOldThunderLevel) * partialTick)
+        * getRainLevel(partialTick);
 }
 
-float Level::getOldSkyDarken(float partialTick)
+int Level::getOldSkyDarken(float partialTick)
 {
-    return (float)mSkyDarken;
+    float daylight = Mth::clamp(1.0f - (Mth::cos(getTimeOfDay(partialTick) * 6.2831855f) * 2.0f + 0.5f),
+                                0.0f, 1.0f);
+    daylight = 1.0f - daylight;
+    daylight *= 1.0f - getRainLevel(partialTick) * 5.0f / 16.0f;
+    daylight *= 1.0f - getThunderLevel(partialTick) * 5.0f / 16.0f;
+    return static_cast<int>((1.0f - daylight) * 11.0f);
 }
 
 float Level::getSkyDarken(float partialTick)
 {
-    return (float)mSkyDarken;
+    float daylight = Mth::clamp(1.0f - (Mth::cos(getTimeOfDay(partialTick) * 6.2831855f) * 2.0f + 0.2f),
+                                0.0f, 1.0f);
+    daylight = 1.0f - daylight;
+    daylight *= 1.0f - getRainLevel(partialTick) * 5.0f / 16.0f;
+    daylight *= 1.0f - getThunderLevel(partialTick) * 5.0f / 16.0f;
+    return daylight * 0.8f + 0.2f;
 }
 
 int Level::getMoonPhase()
@@ -2982,25 +2984,54 @@ float Level::getSunAngle(float partialTick)
     return getTimeOfDay(partialTick) * 6.28318530717958647692f;
 }
 
-int Level::getCloudColor(float partialTick)
+Vec3* Level::getCloudColor(float partialTick)
 {
-    return mCloudColour;
+    float daylight = Mth::clamp(Mth::cos(getTimeOfDay(partialTick) * 6.2831855f) * 2.0f + 0.5f,
+                                0.0f, 1.0f);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_In_Cloud_Base_Colour);
+    float red = static_cast<float>((colour >> 16) & 255) / 255.0f;
+    float green = static_cast<float>((colour >> 8) & 255) / 255.0f;
+    float blue = static_cast<float>(colour & 255) / 255.0f;
+    float rain = getRainLevel(partialTick);
+    if (rain > 0.0f)
+    {
+        float grey = (red * 0.3f + green * 0.59f + blue * 0.11f) * 0.6f;
+        float clear = 1.0f - rain * 0.95f;
+        red = red * clear + grey * (1.0f - clear);
+        green = green * clear + grey * (1.0f - clear);
+        blue = blue * clear + grey * (1.0f - clear);
+    }
+    red *= daylight * 0.9f + 0.1f;
+    green *= daylight * 0.9f + 0.1f;
+    blue *= daylight * 0.85f + 0.15f;
+    float thunder = getThunderLevel(partialTick);
+    if (thunder > 0.0f)
+    {
+        float grey = (red * 0.3f + green * 0.59f + blue * 0.11f) * 0.2f;
+        float clear = 1.0f - thunder * 0.95f;
+        red = red * clear + grey * (1.0f - clear);
+        green = green * clear + grey * (1.0f - clear);
+        blue = blue * clear + grey * (1.0f - clear);
+    }
+    return Vec3::newTemp(red, green, blue);
 }
 
 bool Level::biomeHasRain(const BlockPos& pos)
 {
-    return getBiome(pos)->hasRain();
+    return getChunkAt(pos)->biomeHasRain(pos.x & 15, pos.z & 15);
 }
 
 bool Level::biomeHasSnow(const BlockPos& pos)
 {
-    return getBiome(pos)->getTemperature(pos) < 0.15f;
+    return getChunkAt(pos)->biomeHasSnow(pos.x & 15, pos.z & 15);
 }
 
 float Level::getStarBrightness(float partialTick)
 {
-    float sky = 1.0f - getSkyDarken(partialTick) / 15.0f;
-    return sky * sky * 0.5f;
+    float brightness = Mth::clamp(1.0f - (Mth::cos(getTimeOfDay(partialTick) * 6.2831855f) * 2.0f + 0.25f),
+                                  0.0f, 1.0f);
+    return brightness * brightness * 0.5f;
 }
 
 const Difficulty* Level::getDifficulty()
@@ -3060,7 +3091,7 @@ int Level::getMaxBuildHeight()
 
 int Level::getHeight()
 {
-    return getMaxBuildHeight();
+    return mDimension->isUltraWarm() ? 128 : 256;
 }
 
 WorldBorder* Level::getWorldBorder()
@@ -3095,25 +3126,14 @@ bool Level::isFlatLand()
 
 bool Level::AllPlayersAreSleeping()
 {
-    if (mPlayers.empty())
-    {
-        return false;
-    }
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
-    {
-        if (!(*it)->isSleeping())
-        {
-            return false;
-        }
-    }
-    return true;
+    return false;
 }
 
 bool Level::isSpawnChunk(int chunkX, int chunkZ)
 {
-    int spawnX = mLevelData->getXSpawn() >> 4;
-    int spawnZ = mLevelData->getZSpawn() >> 4;
-    return chunkX >= spawnX - 1 && chunkX <= spawnX + 1 && chunkZ >= spawnZ - 1 && chunkZ <= spawnZ + 1;
+    BlockPos spawn = getSharedSpawnPos();
+    return static_cast<unsigned int>(chunkX * 16 - spawn.x + 136) < 257
+        && static_cast<unsigned int>(chunkZ * 16 - spawn.z + 136) < 257;
 }
 
 bool Level::getHasBeenInCreative()
@@ -3128,7 +3148,7 @@ bool Level::isGenerateMapFeatures()
 
 BlockPos Level::getTopRainBlockPos(const BlockPos& pos)
 {
-    return getHeightmapPos(pos);
+    return getChunkAt(pos)->getTopRainBlock(pos);
 }
 
 bool Level::isSnowTemperature(const BlockPos& pos)
@@ -3189,18 +3209,11 @@ SavedDataStorage* Level::getSavedDataStorage()
 
 void Level::setSavedData(const std::wstring& id, boost::shared_ptr<SavedData> data)
 {
-    if (mSavedDataStorage != NULL)
-    {
-        mSavedDataStorage->set(id, data);
-    }
+    mSavedDataStorage->set(id, data);
 }
 
 boost::shared_ptr<SavedData> Level::getSavedData(const std::type_info& type, const std::wstring& id)
 {
-    if (mSavedDataStorage == NULL)
-    {
-        return boost::shared_ptr<SavedData>();
-    }
     return mSavedDataStorage->get(type, id);
 }
 
@@ -3211,7 +3224,7 @@ int Level::getFreeAuxValueFor(const std::wstring& id)
 
 int Level::getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale)
 {
-    return mSavedDataStorage == NULL ? -1 : mSavedDataStorage->getAuxValueForMap(uid, dimension, x, z, scale);
+    return mSavedDataStorage->getAuxValueForMap(uid, dimension, x, z, scale);
 }
 
 void Level::globalLevelEvent(int type, const BlockPos& pos, int data)
@@ -3222,9 +3235,12 @@ void Level::globalLevelEvent(int type, const BlockPos& pos, int data)
     }
 }
 
-Random Level::getRandomFor(int x, int y, int z)
+Random* Level::getRandomFor(int x, int y, int z)
 {
-    return fjGetRandomFor(getSeed(), x, y, z);
+    mRandom->setSeed(getSeed() + static_cast<long long>(x) * 341873128712LL
+                     + static_cast<long long>(y) * 132897987541LL
+                     + z);
+    return mRandom;
 }
 
 Random Level::fjGetRandomFor(long long seed, int x, int y, int z)
@@ -3236,12 +3252,12 @@ Random Level::fjGetRandomFor(long long seed, int x, int y, int z)
 
 bool Level::isAllEmpty()
 {
-    return mEntities.empty() && mGlobalEntities.empty();
+    return false;
 }
 
-int Level::getHorizonHeight()
+double Level::getHorizonHeight()
 {
-    return mLevelData->getYSpawn();
+    return mLevelData->getGeneratorType() == LevelType::FLAT ? 0.0 : 63.0;
 }
 
 void Level::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
@@ -3331,56 +3347,17 @@ boost::shared_ptr<Player> Level::getNearestPlayer(boost::shared_ptr<Entity> enti
 boost::shared_ptr<Player> Level::getNearestPlayer(boost::shared_ptr<Entity> entity, double distance,
                                                    bool includeCreative, double maxYDistance)
 {
-    if (entity == NULL)
-    {
-        return boost::shared_ptr<Player>();
-    }
-
-    boost::shared_ptr<Player> nearest;
-    double nearestDistance = -1.0;
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
-    {
-        boost::shared_ptr<Player> player = *it;
-        if (player == NULL || (!includeCreative && player->isCreative()))
-        {
-            continue;
-        }
-
-        double currentDistance = entity->distanceToSqr(player);
-        if ((distance < 0.0 || currentDistance < distance * distance)
-            && (maxYDistance < 0.0 || std::fabs(entity->mY - player->mY) <= maxYDistance)
-            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
-        {
-            nearest = player;
-            nearestDistance = currentDistance;
-        }
-    }
-    return nearest;
+    const Predicate<boost::shared_ptr<Entity> >* predicate = includeCreative
+        ? EntitySelector::NO_CREATIVE_OR_SPECTATOR : EntitySelector::NO_SPECTATORS;
+    return getNearestPlayerPredicate(entity, distance, predicate);
 }
 
 boost::shared_ptr<Player> Level::getNearestPlayer(double x, double y, double z, double distance,
                                                    bool includeCreative, double maxYDistance)
 {
-    boost::shared_ptr<Player> nearest;
-    double nearestDistance = -1.0;
-    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
-    {
-        boost::shared_ptr<Player> player = *it;
-        if (player == NULL || (!includeCreative && player->isCreative()))
-        {
-            continue;
-        }
-
-        double currentDistance = player->distanceToSqr(x, y, z);
-        if ((distance < 0.0 || currentDistance < distance * distance)
-            && (maxYDistance < 0.0 || std::fabs(player->mY - y) <= maxYDistance)
-            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
-        {
-            nearest = player;
-            nearestDistance = currentDistance;
-        }
-    }
-    return nearest;
+    const Predicate<boost::shared_ptr<Entity> >* predicate = includeCreative
+        ? EntitySelector::NO_CREATIVE_OR_SPECTATOR : EntitySelector::NO_SPECTATORS;
+    return getNearestPlayerPredicate(x, y, z, distance, predicate);
 }
 
 boost::shared_ptr<Player> Level::getNearestPlayer(double x, double y, double z)
@@ -3407,7 +3384,7 @@ boost::shared_ptr<Player> Level::getNearestPlayer(double x, double y, double z)
 boost::shared_ptr<Player> Level::getNearestPlayerNotCreative(boost::shared_ptr<Entity> entity, double distance,
                                                               double maxYDistance)
 {
-    return getNearestPlayer(entity, distance, false, maxYDistance);
+    return getNearestPlayer(entity, distance, true, maxYDistance);
 }
 
 boost::shared_ptr<Player> Level::getNearestPlayerPredicate(
@@ -3452,7 +3429,7 @@ boost::shared_ptr<Player> Level::getNearestPlayerPredicate(double x, double y, d
 
         double currentDistance = player->distanceToSqr(x, y, z);
         if ((distance < 0.0 || currentDistance < distance * distance)
-            && (nearestDistance < 0.0 || currentDistance < nearestDistance))
+            && (nearestDistance < 0.0 || currentDistance < nearestDistance) && player->isAlive())
         {
             nearest = player;
             nearestDistance = currentDistance;
@@ -3478,6 +3455,18 @@ long long Level::getDayTime()
 
 void Level::setDayTime(long long value)
 {
+    if (value != 0)
+    {
+        long long oldTime = mLevelData->getDayTime();
+        unsigned long long delta = static_cast<unsigned long long>(value) - oldTime;
+        if (oldTime > 0 && delta < 101)
+        {
+            for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+            {
+                (*it)->awardStat(gStats->get_timePlayed(), GenericStats::param_time(static_cast<int>(delta)));
+            }
+        }
+    }
     mLevelData->setDayTime(value);
 }
 
@@ -3496,7 +3485,13 @@ bool Level::ShouldForceTimeUpdate()
 
 BlockPos Level::getSharedSpawnPos()
 {
-    return BlockPos(mLevelData->getXSpawn(), mLevelData->getYSpawn(), mLevelData->getZSpawn());
+    BlockPos spawn(mLevelData->getXSpawn(), mLevelData->getYSpawn(), mLevelData->getZSpawn());
+    if (!mWorldBorder->isWithinBounds(spawn))
+    {
+        spawn = getHeightmapPos(BlockPos(static_cast<int>(mWorldBorder->getCenterX()), 0,
+                                         static_cast<int>(mWorldBorder->getCenterZ())));
+    }
+    return spawn;
 }
 
 ChunkSource* Level::getChunkSource()
@@ -3602,10 +3597,7 @@ void Level::disconnect(bool save)
 
 void Level::checkSession()
 {
-    if (mLevelStorage != NULL)
-    {
-        mLevelStorage->checkSession();
-    }
+    mLevelStorage->checkSession();
 }
 
 void Level::broadcastEntityEvent(boost::shared_ptr<Entity> entity, unsigned char event, int data)
@@ -3624,11 +3616,7 @@ boost::shared_ptr<Villages> Level::getVillages()
 
 BlockPos* Level::findNearestMapFeature(const std::wstring& feature, const BlockPos& pos, bool findUnexplored)
 {
-    if (mChunkSource == NULL)
-    {
-        return NULL;
-    }
-    return mChunkSource->findNearestMapFeature(this, feature, pos, findUnexplored);
+    return NULL;
 }
 
 bool Level::isHumidAt(const BlockPos& pos)
@@ -3651,7 +3639,7 @@ void Level::blockEntityRemovedExtra(boost::shared_ptr<BlockEntity>)
     return;
 }
 
-std::vector<boost::shared_ptr<Player> >* Level::getPlayers(unsigned long long,
+std::vector<boost::shared_ptr<Player> >* Level::getPlayers(unsigned long long flags,
                                                              const Predicate<boost::shared_ptr<Player> >* predicate)
 {
     std::vector<boost::shared_ptr<Player> >* result = new std::vector<boost::shared_ptr<Player> >();
@@ -3659,32 +3647,36 @@ std::vector<boost::shared_ptr<Player> >* Level::getPlayers(unsigned long long,
     while (it != mPlayers.end())
     {
         boost::shared_ptr<Player> player = *it;
-        if (player != NULL && (predicate == NULL || predicate->apply(player)))
+        if (player != NULL)
         {
-            result->push_back(player);
+            unsigned long long type = player->GetType();
+            unsigned long long required = flags;
+            bool matches = (flags & 0x3FULL) == 0
+                ? ((type & (required >> 32)) == (required >> 32)
+                    && (type & (required & 0xFFFFFFFFULL)) == (required & 0xFFFFFFFFULL))
+                : type == required;
+            if (matches && (predicate == NULL || predicate->apply(player)))
+            {
+                result->push_back(player);
+            }
         }
         ++it;
     }
     return result;
 }
 
-std::vector<boost::shared_ptr<Entity> >* Level::getAllEntities()
+std::vector<boost::shared_ptr<Entity> > Level::getAllEntities()
 {
-    return &mEntities;
+    EnterCriticalSection(&mEntityMutex);
+    std::vector<boost::shared_ptr<Entity> > entities(mEntities);
+    LeaveCriticalSection(&mEntityMutex);
+    return entities;
 }
 
 boost::shared_ptr<Entity> Level::getEntity(int id)
 {
-    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
-    while (it != mEntities.end())
-    {
-        if (*it != NULL && (*it)->getId() == id)
-        {
-            return *it;
-        }
-        ++it;
-    }
-    return boost::shared_ptr<Entity>();
+    boost::unordered_map<int, boost::shared_ptr<Entity>, IntKeyHash2, IntKeyEq>::iterator it = mEntityMap.find(id);
+    return it == mEntityMap.end() ? boost::shared_ptr<Entity>() : it->second;
 }
 
 bool Level::isFullAABBBlock(const BlockPos& pos)
@@ -3791,24 +3783,28 @@ void Level::tick(boost::shared_ptr<Entity> entity)
 
 bool Level::addBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
-    if (entity == NULL || entity->isRemoved())
+    EnterCriticalSection(&mBlockEntityMutex);
+    mBlockEntities.push_back(entity);
+    if ((entity->GetType() & 0x1200200ULL) == 0x1200200ULL)
     {
-        return false;
+        mTickingBlockEntities.push_back(entity);
     }
-    AddToBlockEntityList(entity);
+    if (mIsClientSide)
+    {
+        BlockPos pos = entity->getBlockPos();
+        const BlockState* state = getBlockState(pos);
+        sendBlockUpdated(pos, state, state, 2, true);
+    }
+    blockEntityAddedExtra(entity);
+    LeaveCriticalSection(&mBlockEntityMutex);
     return true;
 }
 
 void Level::AddToBlockEntityList(boost::shared_ptr<BlockEntity> entity)
 {
-    if (mProcessingBlockEntities)
+    if (std::find(mBlockEntities.begin(), mBlockEntities.end(), entity) == mBlockEntities.end())
     {
-        mPendingBlockEntities.push_back(entity);
-    }
-    else
-    {
-        mBlockEntities.push_back(entity);
-        blockEntityAddedExtra(entity);
+        addBlockEntity(entity);
     }
 }
 
@@ -3818,28 +3814,126 @@ void Level::tickServerPlayers()
 
 void Level::addAllPendingBlockEntities(std::vector<boost::shared_ptr<BlockEntity> >& entities)
 {
-    std::vector<boost::shared_ptr<BlockEntity> >::iterator it = entities.begin();
-    while (it != entities.end())
+    EnterCriticalSection(&mBlockEntityMutex);
+    if (mProcessingBlockEntities)
     {
-        addBlockEntity(*it);
-        ++it;
+        mPendingBlockEntities.insert(mPendingBlockEntities.end(), entities.begin(), entities.end());
     }
-    entities.clear();
+    else
+    {
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+        {
+            AddToBlockEntityList(*it);
+        }
+    }
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 {
-    if (entity == NULL || entity->mRemoved)
+    if (entity == NULL)
     {
         return;
     }
-    if (entity->shouldTick())
+
+    int blockX = Mth::fastFloor(entity->mX);
+    int blockZ = Mth::fastFloor(entity->mZ);
+    int chunkX = Mth::fastFloor(entity->mX * 0.0625);
+    int chunkZ = Mth::fastFloor(entity->mZ * 0.0625);
+    if (updateChunk)
+    {
+        bool player = (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL;
+        if (!player && !hasChunksAt(blockX - 32, 0, blockZ - 32,
+                                    blockX + 32, 0, blockZ + 32, true))
+        {
+            if (!mIsClientSide && (entity->GetType() & 0x0d000000ULL) == 0x0d000000ULL)
+            {
+                boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+                mob->checkDespawn();
+            }
+            if (entity->mRemoved)
+            {
+                return;
+            }
+        }
+    }
+
+    if (updateChunk && (entity->mRemoved
+                        || (entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL))
+    {
+        ++entity->mTickCount;
+        entity->stopCurrentLerp();
+    }
+
+    entity->mXOld = entity->mX;
+    entity->mYOld = entity->mY;
+    entity->mZOld = entity->mZ;
+    entity->mXo = entity->mX;
+    entity->mYo = entity->mY;
+    entity->mZo = entity->mZ;
+    entity->mYRotO = entity->mYRot;
+    entity->mXRotO = entity->mXRot;
+    if (!entity->mRemoved && entity->shouldTick())
     {
         entity->tick();
     }
+
+    if (updateChunk && entity->mRemoved)
+    {
+        if (entity->mAddedToChunk && hasChunk(entity->mChunkX, entity->mChunkZ, true))
+        {
+            MemSect(0x27);
+            getChunk(entity->mChunkX, entity->mChunkZ)->removeEntity(entity, entity->mChunkY);
+            MemSect(0);
+        }
+    }
+    else if (updateChunk)
+    {
+        int oldChunkX = entity->mChunkX;
+        int oldChunkY = entity->mChunkY;
+        int oldChunkZ = entity->mChunkZ;
+        int newChunkY = Mth::fastFloor(entity->mY * 0.0625);
+        if (newChunkY < 0)
+        {
+            newChunkY = 0;
+        }
+        if (entity->mAddedToChunk
+            && (oldChunkX != chunkX || oldChunkY != newChunkY || oldChunkZ != chunkZ))
+        {
+            if (hasChunk(oldChunkX, oldChunkZ, true))
+            {
+                getChunk(oldChunkX, oldChunkZ)->removeEntity(entity, oldChunkY);
+            }
+            getChunk(chunkX, chunkZ)->addEntity(entity);
+        }
+        else if (!entity->mAddedToChunk)
+        {
+            getChunk(chunkX, chunkZ)->addEntity(entity);
+        }
+        ensureAdded(entity);
+    }
+
     if (updateChunk && !entity->mRemoved)
     {
-        ensureAdded(entity);
+        std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
+        if (passengers != NULL)
+        {
+            std::vector<boost::weak_ptr<Entity> >::iterator passenger = passengers->begin();
+            while (passenger != passengers->end())
+            {
+                boost::shared_ptr<Entity> mounted = passenger->lock();
+                if (mounted == NULL)
+                {
+                    passenger = passengers->erase(passenger);
+                    continue;
+                }
+                if (!mounted->mRemoved && mounted->mVehicle.get() == entity.get())
+                {
+                    tick(mounted, false);
+                }
+                ++passenger;
+            }
+        }
     }
 }
 
@@ -3873,30 +3967,43 @@ void Level::tickEntities()
 
 void Level::addEntities(std::vector<boost::shared_ptr<Entity> >* entities)
 {
-    if (entities == NULL)
-    {
-        return;
-    }
+    EnterCriticalSection(&mEntityMutex);
+    mEntities.insert(mEntities.end(), entities->begin(), entities->end());
+    bool checkDuplicates = false;
     std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
     while (it != entities->end())
     {
-        addEntity(*it);
+        entityAdded(*it);
+        if ((*it)->GetType() == 0x0d000005ULL)
+        {
+            checkDuplicates = true;
+        }
         ++it;
     }
+    if (checkDuplicates)
+    {
+        bool found = false;
+        for (it = mEntities.begin(); it != mEntities.end(); ++it)
+        {
+            if ((*it)->GetType() == 0x0d000005ULL)
+            {
+                if (found)
+                {
+                    (*it)->remove();
+                }
+                else
+                {
+                    found = true;
+                }
+            }
+        }
+    }
+    LeaveCriticalSection(&mEntityMutex);
 }
 
 void Level::removeEntities(std::vector<boost::shared_ptr<Entity> >* entities)
 {
-    if (entities == NULL)
-    {
-        return;
-    }
-    std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-    while (it != entities->end())
-    {
-        removeEntity(*it);
-        ++it;
-    }
+    mEntitiesToRemove.insert(mEntitiesToRemove.end(), entities->begin(), entities->end());
 }
 
 void Level::ensureAdded(boost::shared_ptr<Entity> entity)
@@ -3918,6 +4025,7 @@ void Level::ensureAdded(boost::shared_ptr<Entity> entity)
         mEntities.push_back(entity);
     }
     LeaveCriticalSection(&mEntityMutex);
+    instructionSynchronize();
 }
 
 bool Level::mayInteract(boost::shared_ptr<Player>, const BlockPos&, Block*)
@@ -3927,10 +4035,8 @@ bool Level::mayInteract(boost::shared_ptr<Player>, const BlockPos&, Block*)
 
 void Level::blockEvent(const BlockPos& pos, Block* block, int event, int data)
 {
-    if (getBlock(pos) == block)
-    {
-        block->triggerEvent(getBlockState(pos), this, pos, event, data);
-    }
+    const BlockState* state = getBlockState(pos);
+    state->triggerEvent(this, pos, event, data);
 }
 
 void Level::createFireworks(double, double, double, double, double, double, CompoundTag*)
@@ -3960,7 +4066,7 @@ void Level::tickClientSideBlocks(int, int, LevelChunk*)
 
 void Level::tickBlocks()
 {
-    tickPendingTicks(false);
+    buildAndPrepareChunksToPoll();
 }
 
 void Level::instaTick(const BlockPos& pos, const BlockState* state, Random& random)
@@ -3970,9 +4076,20 @@ void Level::instaTick(const BlockPos& pos, const BlockState* state, Random& rand
     setInstaTick(false);
 }
 
-boost::shared_ptr<Player> Level::getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance)
+std::vector<boost::shared_ptr<Player> >* Level::getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance)
 {
-    return getNearestPlayer(entity, distance, false, -1.0);
+    std::vector<boost::shared_ptr<Player> >* result = new std::vector<boost::shared_ptr<Player> >();
+    bool unlimited = distance < 0.0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        double distanceSquared = (*it)->distanceToSqr(entity->mX, entity->mY, entity->mZ);
+        if ((unlimited || distanceSquared < distance * distance) && (*it)->isAlive()
+            && distanceSquared > 0.0)
+        {
+            result->push_back(*it);
+        }
+    }
+    return result;
 }
 
 bool Level::hasNearPlayer(double x, double y, double z, double distance)
@@ -3982,14 +4099,48 @@ bool Level::hasNearPlayer(double x, double y, double z, double distance)
 
 boost::shared_ptr<Player> Level::getNearestAttackablePlayer(
     double x, double y, double z, double distance, double maxYDistance,
-    const RangeModifier*, const Predicate<boost::shared_ptr<Entity> >* predicate)
+    const RangeModifier* modifier, const Predicate<boost::shared_ptr<Entity> >* predicate)
 {
-    return getNearestPlayerPredicate(x, y, z, distance, predicate);
+    boost::shared_ptr<Player> nearest;
+    double nearestDistance = -1.0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        boost::shared_ptr<Player> player = *it;
+        if (player->mAbilities.mInvulnerable || !player->isAlive() || player->hasInvisiblePrivilege()
+            || player->isSpectator()
+            || (predicate != NULL && !predicate->apply(boost::static_pointer_cast<Entity>(player))))
+        {
+            continue;
+        }
+        double adjustedRange = distance;
+        if (player->isSneaking())
+        {
+            adjustedRange *= 0.800000011920929;
+        }
+        if (player->isInvisible())
+        {
+            float cover = std::max(static_cast<float>(player->getArmorCoverPercentage()), 0.1f);
+            adjustedRange *= 0.7f * cover;
+        }
+        if (modifier != NULL)
+        {
+            adjustedRange *= modifier->apply(player);
+        }
+        double distanceSquared = player->distanceToSqr(x, player->mY, z);
+        if ((distance < 0.0 || distanceSquared < adjustedRange * adjustedRange)
+            && (maxYDistance < 0.0 || std::fabs(player->mY - y) < maxYDistance)
+            && (nearestDistance < 0.0 || distanceSquared < nearestDistance))
+        {
+            nearest = player;
+            nearestDistance = distanceSquared;
+        }
+    }
+    return nearest;
 }
 
-boost::shared_ptr<Player> Level::getNearestAttackablePlayer(const BlockPos& pos, double distance, double)
+boost::shared_ptr<Player> Level::getNearestAttackablePlayer(const BlockPos& pos, double distance, double maxYDistance)
 {
-    return getNearestPlayer(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, distance, false, -1.0);
+    return getNearestAttackablePlayer(pos.x, pos.y, pos.z, distance, maxYDistance, NULL, NULL);
 }
 
 boost::shared_ptr<Player> Level::getPlayerByName(const std::wstring& name)
@@ -4032,16 +4183,21 @@ void Level::blockEntityChanged(const BlockPos& pos, boost::shared_ptr<BlockEntit
 
 boost::shared_ptr<BlockEntity> Level::getPendingBlockEntityAt(const BlockPos& pos)
 {
-    std::vector<boost::shared_ptr<BlockEntity> >::reverse_iterator it = mPendingBlockEntities.rbegin();
-    while (it != mPendingBlockEntities.rend())
+    EnterCriticalSection(&mBlockEntityMutex);
+    boost::shared_ptr<BlockEntity> result;
+    std::vector<boost::shared_ptr<BlockEntity> >::iterator it = mPendingBlockEntities.begin();
+    while (it != mPendingBlockEntities.end())
     {
-        if (*it != NULL && !(*it)->isRemoved() && (*it)->getBlockPos() == pos)
+        boost::shared_ptr<BlockEntity> entity = *it;
+        if (!entity->isRemoved() && entity->getBlockPos() == pos)
         {
-            return *it;
+            result = entity;
+            break;
         }
         ++it;
     }
-    return boost::shared_ptr<BlockEntity>();
+    LeaveCriticalSection(&mBlockEntityMutex);
+    return result;
 }
 
 boost::shared_ptr<BlockEntity> Level::getBlockEntity(const BlockPos& pos)
@@ -4050,56 +4206,110 @@ boost::shared_ptr<BlockEntity> Level::getBlockEntity(const BlockPos& pos)
     {
         return boost::shared_ptr<BlockEntity>();
     }
-    boost::shared_ptr<BlockEntity> pending = getPendingBlockEntityAt(pos);
-    if (pending != NULL)
+    if (mProcessingBlockEntities)
     {
-        return pending;
+        boost::shared_ptr<BlockEntity> pending = getPendingBlockEntityAt(pos);
+        if (pending != NULL)
+        {
+            return pending;
+        }
     }
     LevelChunk* chunk = getChunkAt(pos);
-    return chunk == NULL ? boost::shared_ptr<BlockEntity>() : chunk->getBlockEntity(pos, LevelChunk::IMMEDIATE);
+    boost::shared_ptr<BlockEntity> result = chunk->getBlockEntity(pos, LevelChunk::IMMEDIATE);
+    if (result == NULL)
+    {
+        result = getPendingBlockEntityAt(pos);
+    }
+    return result;
 }
 
 void Level::setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity)
 {
-    if (entity == NULL || isOutsideBuildHeight(pos))
+    if (isOutsideBuildHeight(pos) || entity == NULL || entity->isRemoved())
     {
         return;
     }
-    entity->setLevel(this);
-    entity->setPosition(pos);
-    entity->clearRemoved();
+    EnterCriticalSection(&mBlockEntityMutex);
     if (mProcessingBlockEntities)
     {
+        entity->setPosition(pos);
+        for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = mPendingBlockEntities.begin();
+             it != mPendingBlockEntities.end();)
+        {
+            boost::shared_ptr<BlockEntity> pending = *it;
+            if (pending->getBlockPos() == pos)
+            {
+                pending->setRemoved();
+                it = mPendingBlockEntities.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
         mPendingBlockEntities.push_back(entity);
     }
     else
     {
-        getChunkAt(pos)->setBlockEntity(pos, entity);
-        addBlockEntity(entity);
+        LevelChunk* chunk = getChunkAt(pos);
+        if (chunk != NULL)
+        {
+            chunk->setBlockEntity(pos, entity);
+        }
+        AddToBlockEntityList(entity);
     }
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 void Level::removeBlockEntity(const BlockPos& pos)
 {
+    EnterCriticalSection(&mBlockEntityMutex);
     boost::shared_ptr<BlockEntity> entity = getBlockEntity(pos);
     if (entity != NULL)
     {
-        entity->setRemoved();
-        markForRemoval(entity);
+        if (mProcessingBlockEntities)
+        {
+            entity->setRemoved();
+        }
+        std::vector<boost::shared_ptr<BlockEntity> >::iterator it =
+            std::find(mPendingBlockEntities.begin(), mPendingBlockEntities.end(), entity);
+        if (it != mPendingBlockEntities.end())
+        {
+            mPendingBlockEntities.erase(it);
+        }
+        if (mProcessingBlockEntities)
+        {
+            LeaveCriticalSection(&mBlockEntityMutex);
+            return;
+        }
+        it = std::find(mBlockEntities.begin(), mBlockEntities.end(), entity);
+        if (it != mBlockEntities.end())
+        {
+            mBlockEntities.erase(it);
+        }
+        if ((entity->GetType() & 0x1200200ULL) == 0x1200200ULL)
+        {
+            it = std::find(mTickingBlockEntities.begin(), mTickingBlockEntities.end(), entity);
+            if (it != mTickingBlockEntities.end())
+            {
+                mTickingBlockEntities.erase(it);
+            }
+        }
+        blockEntityRemovedExtra(entity);
     }
     LevelChunk* chunk = getChunkAt(pos);
     if (chunk != NULL)
     {
         chunk->removeBlockEntity(pos);
     }
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 void Level::markForRemoval(boost::shared_ptr<BlockEntity> entity)
 {
-    if (entity != NULL)
-    {
-        mBlockEntitiesToRemove.push_back(entity);
-    }
+    EnterCriticalSection(&mBlockEntityMutex);
+    mBlockEntitiesToRemove.push_back(entity);
+    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 bool Level::isSolidBlockingBlockInLoadedChunk(const BlockPos& pos, bool allowEmpty)
@@ -4118,32 +4328,108 @@ bool Level::isSolidBlockingBlockInLoadedChunk(const BlockPos& pos, bool allowEmp
 
 void Level::prepareWeather()
 {
-    mRainLevel = mOldRainLevel = mLevelData->isRaining() ? 1.0f : 0.0f;
-    mThunderLevel = mOldThunderLevel = mLevelData->isThundering() ? 1.0f : 0.0f;
+    if (mLevelData->isRaining())
+    {
+        mRainLevel = 1.0f;
+        if (mLevelData->isThundering())
+        {
+            mThunderLevel = 1.0f;
+        }
+    }
 }
 
 void Level::tick()
 {
-    tickWeather(true);
-    updateSkyBrightness();
-    tickBlocks();
+    PIXBeginNamedEvent(0.0f, "Weather tick");
+    tickWeather(false);
+    PIXEndNamedEvent();
 }
 
-void Level::tickWeather(bool)
+void Level::tickWeather(bool immediate)
 {
-    mOldRainLevel = mRainLevel;
+    if (!mDimension->isHasSkyLight() || mIsClientSide
+        || (!getGameRules()->getBoolean(18) && !immediate)
+        || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)))
+    {
+        return;
+    }
+    int clearTime = mLevelData->getClearWeatherTime();
+    if (clearTime > 0)
+    {
+        mLevelData->setClearWeatherTime(clearTime - 1);
+        mLevelData->setThunderTime(mLevelData->isThundering() ? 1 : 2);
+        mLevelData->setRainTime(mLevelData->isRaining() ? 1 : 2);
+    }
+    int thunderTime = mLevelData->getThunderTime();
+    if (thunderTime <= 0)
+    {
+        mLevelData->setThunderTime(mLevelData->isThundering()
+            ? mRandom->nextInt(12000) + 3600 : mRandom->nextInt(168000) + 12000);
+    }
+    else
+    {
+        mLevelData->setThunderTime(--thunderTime);
+        if (thunderTime <= 0)
+        {
+            mLevelData->setThundering(!mLevelData->isThundering());
+        }
+    }
     mOldThunderLevel = mThunderLevel;
-    float rainTarget = mLevelData->isRaining() ? 1.0f : 0.0f;
-    float thunderTarget = mLevelData->isThundering() ? 1.0f : 0.0f;
-    mRainLevel += rainTarget > mRainLevel ? 0.01f : -0.01f;
-    mThunderLevel += thunderTarget > mThunderLevel ? 0.01f : -0.01f;
-    mRainLevel = Mth::clamp(mRainLevel, 0.0f, 1.0f);
+    if (immediate)
+    {
+        mOldThunderLevel = mThunderLevel = mLevelData->isThundering() ? 1.0f : 0.0f;
+    }
+    mThunderLevel += mLevelData->isThundering() ? 0.01f : -0.01f;
     mThunderLevel = Mth::clamp(mThunderLevel, 0.0f, 1.0f);
+    int rainTime = mLevelData->getRainTime();
+    if (rainTime <= 0)
+    {
+        mLevelData->setRainTime(mLevelData->isRaining()
+            ? mRandom->nextInt(12000) + 12000 : mRandom->nextInt(168000) + 12000);
+    }
+    else
+    {
+        mLevelData->setRainTime(--rainTime);
+        if (rainTime <= 0)
+        {
+            mLevelData->setRaining(!mLevelData->isRaining());
+        }
+    }
+    mOldRainLevel = mRainLevel;
+    if (immediate)
+    {
+        mOldRainLevel = mRainLevel = mLevelData->isRaining() ? 1.0f : 0.0f;
+    }
+    mRainLevel += mLevelData->isRaining() ? 0.01f : -0.01f;
+    mRainLevel = Mth::clamp(mRainLevel, 0.0f, 1.0f);
 }
 
 void Level::buildAndPrepareChunksToPoll()
 {
-    mChunkSource->tick();
+    int count = std::min(static_cast<int>(mPlayers.size()), 8);
+    int chunkX[8];
+    int chunkZ[8];
+    for (int i = 0; i < count; ++i)
+    {
+        boost::shared_ptr<Player> player = mPlayers[i];
+        chunkX[i] = Mth::fastFloor(player->mX * 0.0625);
+        chunkZ[i] = Mth::fastFloor(player->mZ * 0.0625);
+        mChunksToPoll.insert(ChunkPos(chunkX[i], chunkZ[i]));
+    }
+    for (int radius = 1; radius <= 9; ++radius)
+    {
+        for (int offset = 0; offset < radius * 2; ++offset)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                mChunksToPoll.insert(ChunkPos(chunkX[i] - radius + offset, chunkZ[i] - radius));
+                mChunksToPoll.insert(ChunkPos(chunkX[i] + radius, chunkZ[i] - radius + offset));
+                mChunksToPoll.insert(ChunkPos(chunkX[i] + radius - offset, chunkZ[i] + radius));
+                mChunksToPoll.insert(ChunkPos(chunkX[i] - radius, chunkZ[i] + radius - offset));
+            }
+        }
+    }
+    instructionSynchronize();
 }
 
 std::vector<boost::shared_ptr<Entity> >* Level::getEntities(
@@ -4151,24 +4437,37 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntities(
     const Predicate<boost::shared_ptr<Entity> >* predicate,
     std::vector<boost::shared_ptr<Entity> >* entities)
 {
-    std::vector<boost::shared_ptr<Entity> >* result = entities != NULL ? entities : &mEntities;
+    MemSect(0x28);
+    std::vector<boost::shared_ptr<Entity> >* result = entities != NULL ? entities : &mEntityQueryResult;
     result->clear();
-    if (box == NULL)
+    int minChunkX = Mth::fastFloor((box->mMinX - 2.0) * 0.0625);
+    double upperX = (box->mMaxX + 2.0) * 0.0625;
+    int maxChunkX = static_cast<int>(upperX);
+    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
     {
-        return result;
+        ++maxChunkX;
     }
-    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
-    while (it != mEntities.end())
+    int minChunkZ = Mth::fastFloor((box->mMinZ - 2.0) * 0.0625);
+    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
+    int maxChunkZ = static_cast<int>(upperZ);
+    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
     {
-        boost::shared_ptr<Entity> entity = *it;
-        if (entity != NULL && entity != excluded && !entity->mRemoved && entity->mBoundingBox != NULL
-            && entity->mBoundingBox->intersectsInner(box)
-            && (predicate == NULL || predicate->apply(entity)))
+        ++maxChunkZ;
+    }
+    EnterCriticalSection(&mEntityMutex);
+    for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
+    {
+        for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
         {
-            result->push_back(entity);
+            LevelChunk* chunk = getChunkIfHasChunk(chunkX, chunkZ, true);
+            if (chunk != NULL)
+            {
+                chunk->getEntities(excluded, box, *result, predicate);
+            }
         }
-        ++it;
     }
+    MemSect(0);
+    LeaveCriticalSection(&mEntityMutex);
     return result;
 }
 
@@ -4183,51 +4482,99 @@ std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(
     const std::type_info& type, const AABB* box,
     const Predicate<boost::shared_ptr<Entity> >* predicate, bool includeRemoved)
 {
-    std::vector<boost::shared_ptr<Entity> >* result = new std::vector<boost::shared_ptr<Entity> >();
-    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
-    while (it != mEntities.end())
+    int minChunkX = Mth::fastFloor((box->mMinX - 2.0) * 0.0625);
+    double upperX = (box->mMaxX + 2.0) * 0.0625;
+    int maxChunkX = static_cast<int>(upperX);
+    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
     {
-        boost::shared_ptr<Entity> entity = *it;
-        if (entity != NULL && (includeRemoved || !entity->mRemoved) && typeid(*entity) == type
-            && (box == NULL || (entity->mBoundingBox != NULL && entity->mBoundingBox->intersectsInner(box)))
-            && (predicate == NULL || predicate->apply(entity)))
-        {
-            result->push_back(entity);
-        }
-        ++it;
+        ++maxChunkX;
     }
+    int minChunkZ = Mth::fastFloor((box->mMinZ - 2.0) * 0.0625);
+    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
+    int maxChunkZ = static_cast<int>(upperZ);
+    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
+    {
+        ++maxChunkZ;
+    }
+    std::vector<boost::shared_ptr<Entity> >* result = new std::vector<boost::shared_ptr<Entity> >();
+    EnterCriticalSection(&mEntityMutex);
+    for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
+    {
+        for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
+        {
+            LevelChunk* chunk = getChunkIfHasChunk(chunkX, chunkZ, true);
+            if (chunk != NULL)
+            {
+                chunk->getEntitiesOfClass(type, box, *result, predicate, includeRemoved);
+            }
+        }
+    }
+    LeaveCriticalSection(&mEntityMutex);
     return result;
 }
 
 std::vector<boost::shared_ptr<Entity> >* Level::getEntitiesOfClass(const std::type_info& type,
                                                                     const AABB* box)
 {
-    return getEntitiesOfClass(type, box, NULL, false);
+    return getEntitiesOfClass(type, box, EntitySelector::NO_SPECTATORS, false);
 }
 
 bool Level::hasEntitiesOfClass(const std::type_info& type, const AABB* box,
                                const Predicate<boost::shared_ptr<Entity> >* predicate,
                                bool includeRemoved)
 {
-    std::vector<boost::shared_ptr<Entity> >* entities = getEntitiesOfClass(type, box, predicate, includeRemoved);
-    bool result = !entities->empty();
-    delete entities;
-    return result;
+    int minChunkX = Mth::fastFloor((box->mMinX - 2.0) * 0.0625);
+    double upperX = (box->mMaxX + 2.0) * 0.0625;
+    int maxChunkX = static_cast<int>(upperX);
+    if (static_cast<float>(maxChunkX) < static_cast<float>(upperX))
+    {
+        ++maxChunkX;
+    }
+    int minChunkZ = Mth::fastFloor((box->mMinZ - 2.0) * 0.0625);
+    double upperZ = (box->mMaxZ + 2.0) * 0.0625;
+    int maxChunkZ = static_cast<int>(upperZ);
+    if (static_cast<float>(maxChunkZ) < static_cast<float>(upperZ))
+    {
+        ++maxChunkZ;
+    }
+    std::vector<boost::shared_ptr<Entity> >* found = new std::vector<boost::shared_ptr<Entity> >();
+    EnterCriticalSection(&mEntityMutex);
+    for (int chunkX = minChunkX; chunkX <= maxChunkX; ++chunkX)
+    {
+        for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
+        {
+            LevelChunk* chunk = getChunkIfHasChunk(chunkX, chunkZ, true);
+            if (chunk == NULL)
+            {
+                continue;
+            }
+            chunk->getEntitiesOfClass(type, box, *found, predicate, includeRemoved);
+            if (!found->empty())
+            {
+                delete found;
+                LeaveCriticalSection(&mEntityMutex);
+                return true;
+            }
+        }
+    }
+    delete found;
+    LeaveCriticalSection(&mEntityMutex);
+    return false;
 }
 
 boost::shared_ptr<Entity> Level::getClosestEntityOfClass(const std::type_info& type, const AABB* box,
                                                          boost::shared_ptr<Entity> excluded)
 {
     boost::shared_ptr<Entity> closest;
-    double closestDistance = -1.0;
+    double closestDistance = DBL_MAX;
     std::vector<boost::shared_ptr<Entity> >* entities = getEntitiesOfClass(type, box);
     std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
     while (it != entities->end())
     {
         if (*it != excluded)
         {
-            double distance = excluded == NULL ? 0.0 : (*it)->distanceToSqr(excluded);
-            if (closestDistance < 0.0 || distance < closestDistance)
+            double distance = excluded->distanceToSqr(*it);
+            if (distance <= closestDistance)
             {
                 closest = *it;
                 closestDistance = distance;
@@ -4241,9 +4588,18 @@ boost::shared_ptr<Entity> Level::getClosestEntityOfClass(const std::type_info& t
 
 bool Level::isUnobstructed(const AABB* box, boost::shared_ptr<Entity> excluded)
 {
-    std::vector<boost::shared_ptr<Entity> > entities;
-    getEntities(excluded, box, &entities);
-    return entities.empty();
+    std::vector<boost::shared_ptr<Entity> >* entities = getEntities(boost::shared_ptr<Entity>(), box, NULL);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    {
+        if (!(*it)->mRemoved && (*it)->mBlocksBuilding && *it != excluded
+            && (excluded == NULL || (*it)->isPassengerOfSameVehicle(excluded)))
+        {
+            delete entities;
+            return false;
+        }
+    }
+    delete entities;
+    return true;
 }
 
 bool Level::isUnobstructed(const AABB* box)
@@ -4329,116 +4685,349 @@ bool Level::hasBlockCubes(const AABB* box)
 
 bool Level::containsAnyBlocks(AABB* box)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
-    for (int x = minX; x < maxX; ++x)
-        for (int y = minY; y < maxY; ++y)
-            for (int z = minZ; z < maxZ; ++z)
-                if (!isEmptyBlock(BlockPos(x, y, z)))
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
+    for (int x = minX; x <= maxX; ++x)
+    {
+        for (int y = minY; y <= maxY; ++y)
+        {
+            for (int z = minZ; z <= maxZ; ++z)
+            {
+                BlockPos pos(x, y, z);
+                if (getBlockState(pos)->getMaterial() != Material::AIR)
+                {
                     return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
 bool Level::containsAnyLiquid(AABB* box)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
     for (int x = minX; x < maxX; ++x)
+    {
         for (int y = minY; y < maxY; ++y)
+        {
             for (int z = minZ; z < maxZ; ++z)
-                if (getBlockState(BlockPos(x, y, z))->getMaterial()->isLiquid())
+            {
+                BlockPos pos(x, y, z);
+                if (getLiquidBlockState(pos)->getMaterial()->isLiquid())
+                {
                     return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
 bool Level::containsAnysolidBlocking(AABB* box)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
     for (int x = minX; x < maxX; ++x)
+    {
         for (int y = minY; y < maxY; ++y)
+        {
             for (int z = minZ; z < maxZ; ++z)
-                if (isSolidBlockingBlock(BlockPos(x, y, z)))
+            {
+                BlockPos pos(x, y, z);
+                if (getBlockState(pos)->getMaterial()->isSolidBlocking())
+                {
                     return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
 bool Level::containsAnyLiquid_NoLoad(AABB* box)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
-    for (int x = minX; x < maxX; ++x)
-        for (int y = minY; y < maxY; ++y)
-            for (int z = minZ; z < maxZ; ++z)
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
+    for (int x = minX; x <= maxX; ++x)
+    {
+        for (int y = minY; y <= maxY; ++y)
+        {
+            for (int z = minZ; z <= maxZ; ++z)
             {
                 BlockPos pos(x, y, z);
-                if (hasChunkAt(pos) && getBlockState(pos)->getMaterial()->isLiquid())
+                if (!hasChunkAt(pos) || getLiquidBlockState(pos)->getMaterial()->isLiquid())
+                {
                     return true;
+                }
             }
+        }
+    }
     return false;
 }
 
 bool Level::containsFireBlock(AABB* box)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
+    if (!hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, true))
+    {
+        return false;
+    }
     for (int x = minX; x < maxX; ++x)
+    {
         for (int y = minY; y < maxY; ++y)
+        {
             for (int z = minZ; z < maxZ; ++z)
-                if (getBlock(BlockPos(x, y, z)) == Blocks::FIRE)
+            {
+                Block* block = getBlock(BlockPos(x, y, z));
+                if (block == Blocks::FIRE || block == Blocks::flowing_lava || block == Blocks::lava)
+                {
                     return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
-bool Level::containsFireBlock(Entity*, AABB* box)
+bool Level::containsFireBlock(Entity* entity, AABB* box)
 {
-    return containsFireBlock(box);
+    int minX = Mth::floor(box->mMinX), maxX = Mth::floor(box->mMaxX + 1.0);
+    int minY = std::max(0, Mth::floor(box->mMinY)), maxY = std::min(256, Mth::floor(box->mMaxY + 1.0));
+    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::floor(box->mMaxZ + 1.0);
+
+    if (!entity->mTickCache.mCacheChanged && entity->mFireCacheMinX == minX
+        && entity->mFireCacheMinY == minY && entity->mFireCacheMinZ == minZ
+        && entity->mFireCacheMaxX == maxX && entity->mFireCacheMaxY == maxY
+        && entity->mFireCacheMaxZ == maxZ)
+    {
+        return entity->mFireCacheResult;
+    }
+
+    entity->mFireCacheMinX = minX;
+    entity->mFireCacheMinY = minY;
+    entity->mFireCacheMinZ = minZ;
+    entity->mFireCacheMaxX = maxX;
+    entity->mFireCacheMaxY = maxY;
+    entity->mFireCacheMaxZ = maxZ;
+    if (!hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, true))
+    {
+        entity->mFireCacheResult = false;
+        return false;
+    }
+
+    for (int x = minX; x < maxX; ++x)
+        for (int y = minY; y < maxY; ++y)
+            for (int z = minZ; z < maxZ; ++z)
+                {
+                    Block* block = Block::byId(getBlockId(entity->mTickCache, x, y, z));
+                    if (block == Blocks::FIRE || block == Blocks::flowing_lava || block == Blocks::lava)
+                    {
+                        entity->mFireCacheResult = true;
+                        return true;
+                    }
+                }
+    entity->mFireCacheResult = false;
+    return false;
 }
 
 bool Level::containsMaterial(AABB* box, Material* material)
 {
-    int minX = static_cast<int>(std::floor(box->mMinX));
-    int maxX = static_cast<int>(std::floor(box->mMaxX + 1.0));
-    int minY = static_cast<int>(std::floor(box->mMinY));
-    int maxY = static_cast<int>(std::floor(box->mMaxY + 1.0));
-    int minZ = static_cast<int>(std::floor(box->mMinZ));
-    int maxZ = static_cast<int>(std::floor(box->mMaxZ + 1.0));
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
     for (int x = minX; x < maxX; ++x)
+    {
         for (int y = minY; y < maxY; ++y)
+        {
             for (int z = minZ; z < maxZ; ++z)
-                if (getBlockState(BlockPos(x, y, z))->getMaterial() == material)
+            {
+                if (getBlock(BlockPos(x, y, z))->mMaterial == material)
+                {
                     return true;
+                }
+            }
+        }
+    }
     return false;
 }
 
-bool Level::isInLava(Entity*, AABB* box)
+bool Level::isInLava(Entity* entity, AABB* box)
 {
-    return containsMaterial(box, Material::LAVA);
+    int minX = Mth::floor(box->mMinX), maxX = Mth::floor(box->mMaxX + 1.0);
+    int minY = std::max(0, Mth::floor(box->mMinY)), maxY = std::min(256, Mth::floor(box->mMaxY + 1.0));
+    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::floor(box->mMaxZ + 1.0);
+
+    if (!entity->mTickCache.mCacheChanged && entity->mLavaCacheMinX == minX
+        && entity->mLavaCacheMinY == minY && entity->mLavaCacheMinZ == minZ
+        && entity->mLavaCacheMaxX == maxX && entity->mLavaCacheMaxY == maxY
+        && entity->mLavaCacheMaxZ == maxZ)
+    {
+        return entity->mLavaCacheResult;
+    }
+
+    entity->mLavaCacheMinX = minX;
+    entity->mLavaCacheMinY = minY;
+    entity->mLavaCacheMinZ = minZ;
+    entity->mLavaCacheMaxX = maxX;
+    entity->mLavaCacheMaxY = maxY;
+    entity->mLavaCacheMaxZ = maxZ;
+    for (int x = minX; x < maxX; ++x)
+        for (int y = minY; y < maxY; ++y)
+            for (int z = minZ; z < maxZ; ++z)
+                {
+                    Block* block = Block::byId(getBlockId(entity->mTickCache, x, y, z));
+                    if (block != NULL && block->mMaterial == Material::LAVA)
+                    {
+                        entity->mLavaCacheResult = true;
+                        return true;
+                    }
+                }
+    entity->mLavaCacheResult = false;
+    return false;
 }
 
 bool Level::containsLiquid(AABB* box, Material* material)
 {
-    return material != NULL && material->isLiquid() && containsMaterial(box, material);
+    int minX = Mth::fastFloor(box->mMinX);
+    int minY = Mth::fastFloor(box->mMinY);
+    int minZ = Mth::fastFloor(box->mMinZ);
+    int maxX = static_cast<int>(box->mMaxX);
+    int maxY = static_cast<int>(box->mMaxY);
+    int maxZ = static_cast<int>(box->mMaxZ);
+    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    {
+        ++maxX;
+    }
+    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
+    {
+        ++maxY;
+    }
+    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
+    {
+        ++maxZ;
+    }
+    for (int x = minX; x < maxX; ++x)
+    {
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int z = minZ; z < maxZ; ++z)
+            {
+                const BlockState* state = getBlockState(BlockPos(x, y, z));
+                if (state->getMaterial() == material)
+                {
+                    int level = state->getValue(LiquidBlock::LEVEL);
+                    double surface = y + 1;
+                    if (level < 8)
+                    {
+                        surface -= level * 0.125;
+                    }
+                    if (box->mMinY <= surface)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool Level::canProvideSupport(const BlockPos& pos, const Direction* direction,
@@ -4459,45 +5048,63 @@ bool Level::isTouchingMaterial(const BlockPos& pos, const Material* material)
         || getBlockState(pos.relative(Direction::EAST))->getMaterial() == material;
 }
 
-int Level::countInstanceOf(unsigned long long type, bool includeRemoved,
+int Level::countInstanceOf(unsigned long long type, bool exact,
                            unsigned int* count, unsigned int* result)
 {
     unsigned int matches = 0;
-    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
-    while (it != mEntities.end())
-    {
-        if (*it != NULL && (includeRemoved || !(*it)->mRemoved) && (*it)->GetType() == type)
-        {
-            ++matches;
-        }
-        ++it;
-    }
     if (count != NULL)
     {
-        *count = static_cast<unsigned int>(mEntities.size());
+        *count = 0;
     }
     if (result != NULL)
     {
-        *result = matches;
+        *result = 0;
     }
-    return static_cast<int>(matches);
-}
-
-int Level::countInstanceOfInRange(unsigned long long type, bool includeRemoved,
-                                  int x, int y, int z, int range)
-{
-    int matches = 0;
-    double rangeSquared = static_cast<double>(range) * range;
+    EnterCriticalSection(&mEntityMutex);
     std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
     while (it != mEntities.end())
     {
-        if (*it != NULL && (includeRemoved || !(*it)->mRemoved) && (*it)->GetType() == type
-            && (*it)->distanceToSqr(x, y, z) <= rangeSquared)
+        unsigned long long entityType = (*it)->GetType();
+        bool matchesType = exact || (type & 0x3fULL) != 0
+            ? entityType == type : (entityType & type) == type;
+        if (matchesType)
         {
             ++matches;
+            if (exact && count != NULL && (*it)->isDespawnProtected())
+            {
+                ++*count;
+            }
+            if (exact && result != NULL && (*it)->couldWander())
+            {
+                ++*result;
+            }
         }
         ++it;
     }
+    LeaveCriticalSection(&mEntityMutex);
+    return static_cast<int>(matches);
+}
+
+int Level::countInstanceOfInRange(unsigned long long type, bool exact,
+                                  int range, int x, int y, int z)
+{
+    int matches = 0;
+    EnterCriticalSection(&mEntityMutex);
+    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
+    while (it != mEntities.end())
+    {
+        int distance = static_cast<int>((*it)->distanceTo(x, y, z));
+        if (distance * distance <= range * range)
+        {
+            unsigned long long entityType = (*it)->GetType();
+            if (exact || (type & 0x3fULL) != 0 ? entityType == type : (entityType & type) == type)
+            {
+                ++matches;
+            }
+        }
+        ++it;
+    }
+    LeaveCriticalSection(&mEntityMutex);
     return matches;
 }
 
@@ -4505,12 +5112,16 @@ bool Level::mayPlace(Block* block, const BlockPos& pos, bool replaceable,
                      const Direction* direction, boost::shared_ptr<Entity> entity)
 {
     const BlockState* oldState = getBlockState(pos);
-    if (!replaceable && oldState != NULL && !oldState->getMaterial()->isReplaceable())
+    const AABB* shape = replaceable ? NULL : block->defaultBlockState()->getShape(this, pos);
+    if (shape != NULL && !isUnobstructed(shape->move(pos), entity))
     {
         return false;
     }
-    const AABB* shape = block->getShape(block->defaultBlockState(), this, pos);
-    return (shape == NULL || isUnobstructed(shape->move(pos), entity)) && block->mayPlace(this, pos, direction);
+    if (oldState->getMaterial() == Material::DECORATION && block == Blocks::anvil)
+    {
+        return true;
+    }
+    return oldState->getMaterial()->isReplaceable() && block->mayPlace(this, pos, direction);
 }
 
 boost::shared_ptr<Explosion> Level::explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
@@ -4564,108 +5175,242 @@ bool Level::extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos
     return setBlock(target, Blocks::AIR->defaultBlockState(), 11, false);
 }
 
-int Level::getSkyColor(boost::shared_ptr<Entity> entity, float partialTick)
+Vec3* Level::getSkyColor(boost::shared_ptr<Entity> entity, float partialTick)
 {
-    boost::shared_ptr<Entity> source = entity;
-    if (source == NULL)
+    float daylight = Mth::clamp(Mth::cos(getTimeOfDay(partialTick) * 6.2831855f) * 2.0f + 0.5f,
+                                0.0f, 1.0f);
+    BlockPos pos(Mth::fastFloor(entity->mX), Mth::fastFloor(entity->mY), Mth::fastFloor(entity->mZ));
+    unsigned int colour = BiomeColors::getAverageSkyColor(this, pos);
+    float red = static_cast<float>((colour >> 16) & 255) / 255.0f * daylight;
+    float green = static_cast<float>((colour >> 8) & 255) / 255.0f * daylight;
+    float blue = static_cast<float>(colour & 255) / 255.0f * daylight;
+    float rain = getRainLevel(partialTick);
+    if (rain > 0.0f)
     {
-        return 0;
+        float grey = (red * 0.3f + green * 0.59f + blue * 0.11f) * 0.6f;
+        float clear = 1.0f - rain * 0.75f;
+        red = red * clear + grey * (1.0f - clear);
+        green = green * clear + grey * (1.0f - clear);
+        blue = blue * clear + grey * (1.0f - clear);
     }
-    BlockPos pos(static_cast<int>(std::floor(source->mX)), static_cast<int>(std::floor(source->mY)),
-                 static_cast<int>(std::floor(source->mZ)));
-    int color = static_cast<int>(getBiome(pos)->getSkyColor(0.5f));
-    float brightness = 1.0f - getSkyDarken(partialTick) / 15.0f;
-    int red = static_cast<int>(((color >> 16) & 255) * brightness);
-    int green = static_cast<int>(((color >> 8) & 255) * brightness);
-    int blue = static_cast<int>((color & 255) * brightness);
-    return (red << 16) | (green << 8) | blue;
+    float thunder = getThunderLevel(partialTick);
+    if (thunder > 0.0f)
+    {
+        float grey = (red * 0.3f + green * 0.59f + blue * 0.11f) * 0.2f;
+        float clear = 1.0f - thunder * 0.75f;
+        red = red * clear + grey * (1.0f - clear);
+        green = green * clear + grey * (1.0f - clear);
+        blue = blue * clear + grey * (1.0f - clear);
+    }
+    if (mSkyFlashTime > 0)
+    {
+        float flash = std::min(mSkyFlashTime - partialTick, 1.0f) * 0.45f;
+        float clear = 1.0f - flash;
+        red = red * clear + 0.8f * flash;
+        green = green * clear + 0.8f * flash;
+        blue = blue * clear + flash;
+    }
+    return Vec3::newTemp(red, green, blue);
 }
 
-Vec3* Level::getFogColor(boost::shared_ptr<Entity>, float partialTick)
+Vec3* Level::getFogColor(boost::shared_ptr<Entity> entity, float partialTick)
 {
-    return mDimension->getFogColor(getTimeOfDay(partialTick), partialTick);
+    BlockPos pos(Mth::fastFloor(entity->mX), 0, Mth::fastFloor(entity->mZ));
+    return getBiome(pos)->getFogColor(getTimeOfDay(partialTick), partialTick);
 }
 
 int Level::calcSnowBlockDepth(const BlockPos& pos, int depth)
 {
-    const BlockState* state = getBlockState(pos);
-    if (state->getBlock() != Blocks::snow_layer)
+    BlockPos current = pos;
+    int layers = 0;
+    int blockCount = depth < 1 ? 1 : depth + 1;
+    for (int i = 0; i < blockCount; ++i)
     {
-        return 0;
+        Block* block = getBlock(current);
+        if (block == Blocks::snow_layer)
+        {
+            layers += block->defaultBlockState()->getValue(SnowLayerBlock::LAYERS) + 1;
+        }
+        else if (block == Blocks::snow)
+        {
+            layers += 8;
+        }
+        else
+        {
+            return layers;
+        }
+        current = current.below();
     }
-    int layers = state->getBlock()->convertBlockStateToLegacyData(state) + 1;
-    return layers < depth ? layers : depth;
+    return layers;
 }
 
 bool Level::canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool allowExisting, int* depth)
 {
-    const BlockState* state = getBlockState(pos);
-    int layers = state->getBlock() == Blocks::snow_layer
-        ? state->getBlock()->convertBlockStateToLegacyData(state) + 1 : 0;
+    Biome* biome = getBiome(pos);
+    if (biome->getTemperature(pos) >= 0.15f || getBrightness(LightLayer::BLOCK, pos) > 11)
+    {
+        return false;
+    }
+    if (checkNeighbors && static_cast<unsigned int>(pos.y) > 255)
+    {
+        return false;
+    }
+    Block* block = getBlock(pos);
+    if (block == Blocks::snow_layer)
+    {
+        int layers = block->defaultBlockState()->getValue(SnowLayerBlock::LAYERS);
+        if (depth != NULL && layers == 7)
+        {
+            return false;
+        }
+        if (allowExisting)
+        {
+            int maximum = biome->getMaxSnowLayers();
+            if (maximum > 0 && calcSnowBlockDepth(pos, maximum) >= maximum)
+            {
+                return false;
+            }
+        }
+        if (depth != NULL)
+        {
+            *depth = layers + 2;
+        }
+        return true;
+    }
+    if (block != Blocks::AIR)
+    {
+        return false;
+    }
+    Block* below = getBlock(pos.below());
+    Material* material = below->defaultBlockState()->getMaterial();
+    if (below == Blocks::snow_layer)
+    {
+        if (below->defaultBlockState()->getValue(SnowLayerBlock::LAYERS) != 7)
+        {
+            return false;
+        }
+        if (allowExisting)
+        {
+            int maximum = biome->getMaxSnowLayers();
+            if (maximum > 0 && calcSnowBlockDepth(pos, maximum) >= maximum)
+            {
+                return false;
+            }
+        }
+    }
+    else
+    {
+        if (checkNeighbors && (below == Blocks::ice || below == Blocks::packed_ice
+                               || below == Blocks::frosted_ice))
+        {
+            return false;
+        }
+        if (!below->defaultBlockState()->isSolid() && material != Material::LEAVES
+            && material != Material::ICE && material != Material::DIRT)
+        {
+            return false;
+        }
+        if (!material->blocksMotion())
+        {
+            return false;
+        }
+    }
     if (depth != NULL)
     {
-        *depth = layers;
+        *depth = 1;
     }
-    if (layers != 0)
-    {
-        return allowExisting && layers < 8;
-    }
-    if (!state->getMaterial()->isReplaceable())
-    {
-        return false;
-    }
-    if (checkNeighbors && !isSolidBlockingBlock(pos.below()))
-    {
-        return false;
-    }
-    return Blocks::snow_layer->mayPlace(this, pos);
+    return true;
 }
 
 bool Level::tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool allowExisting)
 {
-    int depth = 0;
-    if (!canPlaceSnowLayer(pos, checkNeighbors, allowExisting, &depth))
+    if (!getGameRules()->getBoolean(18))
     {
         return false;
     }
-    const BlockState* state = Blocks::snow_layer->getBlockState(depth < 7 ? depth : 7);
-    return setBlock(pos, state, 2, false);
+    int depth = 0;
+    bool canPlace = canPlaceSnowLayer(pos, checkNeighbors, true, &depth);
+    if (allowExisting)
+    {
+        int threshold = depth / 2;
+        int bestDepth = depth;
+        BlockPos bestPos = pos;
+        for (int direction = 2; direction < 6; ++direction)
+        {
+            BlockPos candidate = pos.relative(Direction::from3DDataValue(direction));
+            int candidateDepth = 0;
+            if (canPlaceSnowLayer(candidate, checkNeighbors, true, &candidateDepth)
+                && candidateDepth < bestDepth)
+            {
+                LevelChunk* chunk = getChunkAt(pos);
+                if ((chunk != NULL && chunk->getTopRainBlock(candidate) == candidate)
+                    || candidateDepth < threshold)
+                {
+                    bestPos = candidate;
+                    bestDepth = candidateDepth;
+                }
+            }
+        }
+        if (bestPos != pos)
+        {
+            setBlock(bestPos, SnowLayerBlock::buildSnowBlock(this, bestPos, 1, 1), 2, false);
+            return true;
+        }
+    }
+    if (!canPlace)
+    {
+        return false;
+    }
+    setBlock(pos, SnowLayerBlock::buildSnowBlock(this, pos, 1, 1), 2, false);
+    return true;
 }
 
 arrayWithLength<unsigned char> Level::getBlocksAndData(int x, int y, int z, int width, int height,
                                                         int depth, bool includeLight)
 {
     arrayWithLength<unsigned char> data(static_cast<unsigned int>(width * height * depth * 5), true);
-    unsigned int index = 0;
-    for (int yy = 0; yy < height; ++yy)
-        for (int zz = 0; zz < depth; ++zz)
-            for (int xx = 0; xx < width; ++xx)
-            {
-                BlockPos pos(x + xx, y + yy, z + zz);
-                int blockId = getBlockId(pos.x, pos.y, pos.z);
-                data.data[index++] = static_cast<unsigned char>(blockId);
-                data.data[index++] = static_cast<unsigned char>(blockId >> 8);
-                data.data[index++] = static_cast<unsigned char>(getBlockData(pos.x, pos.y, pos.z));
-                data.data[index++] = static_cast<unsigned char>(getExtraBlockId(pos.x, pos.y, pos.z));
-                data.data[index++] = includeLight ? static_cast<unsigned char>(getRawBrightness(pos)) : 0;
-            }
+    int minY = std::max(y, 0);
+    int maxY = std::min(y + height, 256);
+    int offset = 0;
+    for (int chunkX = x >> 4; chunkX <= (x + width - 1) >> 4; ++chunkX)
+    {
+        int minX = std::max(0, x - (chunkX << 4));
+        int maxX = std::min(16, x + width - (chunkX << 4));
+        for (int chunkZ = z >> 4; chunkZ <= (z + depth - 1) >> 4; ++chunkZ)
+        {
+            int minZ = std::max(0, z - (chunkZ << 4));
+            int maxZ = std::min(16, z + depth - (chunkZ << 4));
+            offset = getChunk(chunkX, chunkZ)->getBlocksAndData(
+                &data, minX, minY, minZ, maxX, maxY, maxZ, offset, includeLight);
+        }
+    }
     return data;
 }
 
 void Level::setBlocksAndData(int x, int y, int z, int width, int height, int depth,
-                             arrayWithLength<unsigned char> data, bool)
+                             arrayWithLength<unsigned char> data, bool includeLight)
 {
-    unsigned int index = 0;
-    for (int yy = 0; yy < height; ++yy)
-        for (int zz = 0; zz < depth; ++zz)
-            for (int xx = 0; xx < width && index + 4 < data.length; ++xx)
+    int minY = std::max(y, 0);
+    int maxY = std::min(y + height, 256);
+    int offset = 0;
+    for (int chunkX = x >> 4; chunkX <= (x + width - 1) >> 4; ++chunkX)
+    {
+        int minX = std::max(0, x - (chunkX << 4));
+        int maxX = std::min(16, x + width - (chunkX << 4));
+        for (int chunkZ = z >> 4; chunkZ <= (z + depth - 1) >> 4; ++chunkZ)
+        {
+            int minZ = std::max(0, z - (chunkZ << 4));
+            int maxZ = std::min(16, z + depth - (chunkZ << 4));
+            LevelChunk* chunk = getChunk(chunkX, chunkZ);
+            if (static_cast<unsigned int>(offset) < data.length)
             {
-                int blockId = data.data[index] | (data.data[index + 1] << 8);
-                int blockData = data.data[index + 2];
-                setBlockAndData(x + xx, y + yy, z + zz, blockId, blockData, 2);
-                index += 5;
+                offset = chunk->setBlocksAndData(data, minX, minY, minZ, maxX, maxY, maxZ,
+                                                offset, includeLight);
             }
-    setBlocksDirty(BlockPos(x, y, z), BlockPos(x + width, y + height, z + depth));
+            setBlocksDirty(BlockPos((chunkX << 4) + minX, minY, (chunkZ << 4) + minZ),
+                           BlockPos((chunkX << 4) + maxX, maxY, (chunkZ << 4) + maxZ));
+        }
+    }
 }
 
 void Level::setFromRawData(int x, int z, arrayWithLength<unsigned char> data)
@@ -4680,94 +5425,186 @@ void Level::setFromRawData(int x, int z, arrayWithLength<unsigned char> data)
 
 LevelChunk* Level::getCacheChunkDirect(int x, int z)
 {
-    return mChunkSource->getChunkIfLoaded(x, z);
+    int halfSize = mChunkCacheSize / 2;
+    return mChunkCache[(x + halfSize) * mChunkCacheSize + z + halfSize];
 }
 
 bool Level::isChunkPostPostProcessed(int x, int z)
 {
-    LevelChunk* chunk = mChunkSource->getChunkIfLoaded(x, z);
-    return chunk != NULL && !chunk->isEmpty() && chunk->postProcessAt(x, z);
+    LevelChunk* chunk = mChunkSource->getChunk(x, z);
+    if (chunk == NULL || chunk->isInvalid())
+    {
+        return false;
+    }
+    return chunk->isReady() || chunk->isTerrainPopulated();
 }
 
 bool Level::isChunkFinalised(int x, int z)
 {
-    LevelChunk* chunk = mChunkSource->getChunkIfLoaded(x, z);
-    return chunk != NULL && chunk->isLoaded() && chunk->isLightPopulated();
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dz = -1; dz <= 1; ++dz)
+        {
+            if (!isChunkPostPostProcessed(x + dx, z + dz))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void Level::refreshLevelInfoFromLevelGen()
 {
     LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options != NULL)
-    {
-        mLevelData->setCloudHeight(options->getCloudHeight());
-        mLevelData->setDayTime(options->getDayTime());
-        mFogDistance = options->getFogDistance();
-    }
+    mLevelData->setCloudHeight(options->getCloudHeight());
+    mLevelData->setDayTime(options->getDayTime());
+    mFogDistance = options->getFogDistance();
 }
 
 void Level::refreshFromLevelGen()
 {
     ConsoleSaveFile* saveFile = mLevelStorage->getSaveFile();
-    if (saveFile != NULL)
-    {
-        saveFile->refreshFromLevelgen();
-    }
+    saveFile->refreshFromLevelgen();
     refreshLevelInfoFromLevelGen();
 }
 
 bool Level::canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType)
 {
-    unsigned int count = 0;
-    unsigned int matches = 0;
-    countInstanceOf(type, false, &count, &matches);
-    int limit = spawnType == 0 ? 70 : (spawnType == 1 ? 15 : 5);
-    return static_cast<int>(matches) < limit;
+    int count = 0;
+    int limit = 0;
+    if (spawnType == 0 || spawnType == 2)
+    {
+        MobCategory* category = MobCategory::getCategory(type);
+        if (category != NULL)
+        {
+            count = countInstanceOf(category->getEnumBaseClass(), category->isSingleType(), NULL, NULL);
+            limit = category->getMaxInstancesPerLevelWithSpawnEgg();
+        }
+        else if ((type & 0xa800000ULL) == 0xa800000ULL)
+        {
+            return countInstanceOf(0xa800000ULL, false, NULL, NULL) < 250;
+        }
+        else if (type == 0x8000008ULL)
+        {
+            return countInstanceOf(0x8000008ULL, true, NULL, NULL) < 40;
+        }
+    }
+    else if (spawnType == 1)
+    {
+        MobCategory* category = MobCategory::getCategory(type);
+        if (category != NULL && (category->isSingleType() || category->getEnumBaseClass() == 0x20000000ULL))
+        {
+            count = countInstanceOf(type, category->isSingleType(), NULL, NULL);
+            limit = category->getMaxInstancesPerLevelWithBreeding();
+        }
+    }
+    return limit == 0 || count < limit;
 }
 
-double Level::getSpecialMultiplier(int type)
+double Level::getSpecialMultiplier(int)
 {
-    double moon = getMoonBrightness();
-    double difficulty = static_cast<double>(getDifficulty()->getId());
-    if (type == 0)
+    const Difficulty* difficulty = mLevelData->getDifficulty();
+    long long time = mLevelData->getGameTime();
+    float moon = getMoonBrightness();
+    if (difficulty == Difficulty::PEACEFUL)
     {
-        return 1.0 + moon * difficulty * 0.25;
+        return 0.0;
     }
-    if (type == 1)
+    float timeFactor = Mth::clamp(static_cast<float>(time) + (-72000.0f / 1440000.0f),
+                                 0.0f, 1.0f) * 0.25f;
+    float localFactor = Mth::clamp((3600000.0f * 0.5f) / 3600000.0f, 0.0f, 1.0f)
+        * (difficulty == Difficulty::HARD ? 1.0f : 0.75f);
+    localFactor += Mth::clamp(moon * 0.25f, 0.0f, timeFactor);
+    if (difficulty == Difficulty::EASY)
     {
-        return 1.0 + getThunderLevel(1.0f) * 0.5;
+        localFactor *= 0.5f;
     }
-    return 1.0;
+    float effective = (0.75f + timeFactor + localFactor) * difficulty->getId();
+    if (effective < 2.0f)
+    {
+        return 0.0;
+    }
+    if (effective > 4.0f)
+    {
+        return 1.0;
+    }
+    return (effective - 2.0f) * 0.5f;
 }
 
 void Level::removeAllEntities(bool players, bool mobs, bool items, bool vehicles,
                               int x, int y, int z, int radius)
 {
-    double radiusSquared = static_cast<double>(radius) * radius;
-    std::vector<boost::shared_ptr<Entity> >::iterator it = mEntities.begin();
-    while (it != mEntities.end())
+    std::vector<boost::shared_ptr<Entity> > entities = getAllEntities();
+    std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin();
+    while (it != entities.end())
     {
         boost::shared_ptr<Entity> entity = *it;
-        bool inRange = radius < 0 || entity->distanceToSqr(x, y, z) <= radiusSquared;
-        if (inRange && (players || mobs || items || vehicles))
+        if (entity == NULL)
         {
-            entity->remove();
-            it = mEntities.erase(it);
+            it = entities.erase(it);
+            continue;
         }
-        else
+
+        unsigned long long type = entity->GetType();
+        bool isPlayer = (type & 0x0a080000ULL) == 0x0a080000ULL
+            || type == 0x0c000001ULL;
+        bool isMob = (type & 0x0d000000ULL) == 0x0d000000ULL;
+        bool isItem = (type & 0x0a800000ULL) == 0x0a800000ULL
+            || type == 0x08000008ULL;
+        bool isVehicle = (type & 0x0c800000ULL) == 0x0c800000ULL
+            || type == 0x0d000005ULL || type == 0x0800000eULL;
+        bool inMiniGame = false;
+        if (isVehicle)
         {
-            ++it;
+            inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
         }
+        bool inBounds = entity->mChunkX >= x && entity->mChunkX <= z
+            && entity->mChunkZ >= y && entity->mChunkZ <= radius;
+        if (isVehicle && inMiniGame)
+        {
+            it = entities.erase(it);
+            continue;
+        }
+        if (isVehicle || inBounds)
+        {
+            if ((players || !isPlayer) && (mobs || !isMob)
+                && (items || !isItem)
+                && (vehicles || (isPlayer || isMob || isItem)))
+            {
+                ++it;
+                continue;
+            }
+        }
+        it = entities.erase(it);
     }
+    removeEntities(&entities);
 }
 
 void Level::updateNeighbourForOutputSignal(const BlockPos& pos, Block* block)
 {
-    std::vector<const Direction*>::iterator direction = Direction::VALUES.begin();
-    while (direction != Direction::VALUES.end())
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    DiodeBlock* comparator = static_cast<DiodeBlock*>(Blocks::unpowered_comparator);
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        BlockPos neighbour = pos.relative(*direction);
-        neighborChanged(neighbour, block, pos);
-        ++direction;
+        BlockPos neighbour = pos.relative(directions.data[i]);
+        if (!hasChunkAt(neighbour))
+        {
+            continue;
+        }
+        const BlockState* state = getBlockState(neighbour);
+        if (comparator->isSameDiode(state))
+        {
+            state->neighborChanged(this, neighbour, block, pos);
+        }
+        else if (state->isSolidBlockingCubeAndNotSignalSource())
+        {
+            neighbour = neighbour.relative(directions.data[i]);
+            state = getBlockState(neighbour);
+            if (comparator->isSameDiode(state))
+            {
+                state->neighborChanged(this, neighbour, block, pos);
+            }
+        }
     }
 }

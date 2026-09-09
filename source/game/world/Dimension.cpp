@@ -40,6 +40,7 @@ void Dimension::init(Level* level)
     init();
     mLevelType = level->getLevelData()->getGeneratorType();
     mSuperflatConfig = level->getLevelData()->getGeneratorOptions();
+    updateLightRamp();
     mXZSize = level->getLevelData()->getXZSize();
 }
 
@@ -58,22 +59,21 @@ void Dimension::updateLightRamp()
 void Dimension::init()
 {
     mHasSkyLight = 1;
-    LevelData* levelData = mLevel->getLevelData();
-    if (levelData->getGeneratorType() == LevelType::FLAT)
+    if (mLevel->getLevelData()->getGeneratorType() == LevelType::FLAT)
     {
-        SuperflatConfig* config = levelData->getGeneratorOptions();
+        SuperflatConfig* config = mLevel->getLevelData()->getGeneratorOptions();
         if (config == NULL)
         {
-            config = (new SuperflatConfig())->makeDefaults();
-            levelData->setGeneratorOptions(config);
+            config = new SuperflatConfig();
+            config->makeDefaults();
+            mLevel->getLevelData()->setGeneratorOptions(config);
         }
-        FlatGeneratorInfo info(config);
-        Biome* biome = Biome::getBiome(info.getBiome(), Biome::PLAINS);
+        Biome* biome = Biome::getBiome(FlatGeneratorInfo(config).getBiome(), Biome::DEFAULT);
         mBiomeSource = new FixedBiomeSource(biome, biome->getDownfall());
     }
     else
     {
-        mBiomeSource = new BiomeSource(levelData);
+        mBiomeSource = new BiomeSource(mLevel->getLevelData());
     }
 }
 

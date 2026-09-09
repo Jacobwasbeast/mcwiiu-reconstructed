@@ -4,6 +4,7 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/generation/StructureFeature.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 
 CustomLevelSource::~CustomLevelSource()
@@ -37,8 +38,17 @@ std::vector<Biome::MobSpawnerData*> CustomLevelSource::getMobsAt(MobCategory*, c
     return std::vector<Biome::MobSpawnerData*>();
 }
 
-bool CustomLevelSource::isPosInFeature(Level*, const std::wstring&, const BlockPos&)
+bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
+    if (!mGenerateStructures) return false;
+    if (feature == L"Stronghold" && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+    if (feature == L"Shipwreck" && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
+    if (feature == L"Mansion" && mMansion != NULL) return mMansion->isInsideFeature(pos);
+    if (feature == L"Monument" && mMonument != NULL) return mMonument->isInsideFeature(pos);
+    if (feature == L"Village" && mVillage != NULL) return mVillage->isInsideFeature(pos);
+    if (feature == L"Mineshaft" && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
+    if (feature == L"Temple" && mTemple != NULL) return mTemple->isInsideFeature(pos);
+    if (feature == L"Ocean_Ruin" && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
     return false;
 }
 

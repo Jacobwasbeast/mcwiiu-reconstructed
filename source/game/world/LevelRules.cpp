@@ -3,10 +3,10 @@
 #include <algorithm>
 
 #include "game/core/DLCPack.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 
-extern DLCManager g_DLCManager;
 
 static const int g_mapRuleOrder[27] =
 {
@@ -121,7 +121,7 @@ void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRulesetGro
             if (requirePurchase)
             {
                 available = ruleset->getGenerationOptions()->mPack->hasPurchasedPack() ||
-                            g_DLCManager.IsMiniGameTemporarilyFree(static_cast<int>(type));
+                            gApp.mDLCManager.IsMiniGameTemporarilyFree(static_cast<int>(type));
             }
             if (available)
             {

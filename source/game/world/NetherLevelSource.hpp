@@ -11,16 +11,18 @@
 #include "game/world/generation/NetherBridgeFeature.hpp"
 
 class BlockPos;
+class BushFeature;
 class ChunkPrimer;
-class Feature;
+class HellFireFeature;
+class HellPortalFeature;
+class HellSpringFeature;
+class LargeHellCaveFeature;
 class Level;
 class LevelChunk;
+class LightGemFeature;
 class MobCategory;
 class OreFeature;
-class HellSpringFeature;
-class BushFeature;
 class StructureFeature;
-class LargeFeature;
 
 class NetherLevelSource : public ChunkGenerator
 {
@@ -55,17 +57,17 @@ private:
     PerlinNoise* mNoise5;
     PerlinNoise* mNoise6;
     PerlinNoise* mNoise7;
-    Feature* mFeature1;
-    Feature* mFeature2;
-    Feature* mFeature3;
+    HellFireFeature* mFireFeature;
+    LightGemFeature* mLightGemFeature;
+    HellPortalFeature* mHellPortalFeature;
     OreFeature* mQuartzOre;
-    OreFeature* mGlowstoneOre;
+    OreFeature* mMagmaOre;
     HellSpringFeature* mLavaSpring;
     HellSpringFeature* mLavaSpringOpen;
     BushFeature* mBrownMushroom;
     BushFeature* mRedMushroom;
     NetherBridgeFeature* mNetherBridgeFeature;
-    LargeFeature* mCaves;
+    LargeHellCaveFeature* mCaves;
 };
 
 #endif

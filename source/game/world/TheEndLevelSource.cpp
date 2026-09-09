@@ -18,12 +18,7 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/EndCityFeature.hpp"
 #include "game/world/generation/EndIslandFeature.hpp"
-
-class TheEndDimension
-{
-public:
-    static ChunkPos* closestAreaToPoint(int x, int z);
-};
+#include "game/world/TheEndDimension.hpp"
 
 TheEndLevelSource::TheEndLevelSource(Level* level, bool generateStructures, long long seed,
                                      const BlockPos& origin)

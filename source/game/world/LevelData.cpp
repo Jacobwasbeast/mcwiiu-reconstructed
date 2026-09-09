@@ -1,8 +1,10 @@
 #include "game/world/LevelData.hpp"
 
 LevelData::LevelData()
-    : mGeneratorType(0), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0),
+    : mSeed(0), mGeneratorType(0), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0),
       mGameTime(0), mDayTime(0), mSpawnXStronghold(0), mSpawnZStronghold(0),
+      mHasStronghold(false), mXStrongholdEndPortal(0), mZStrongholdEndPortal(0),
+      mHasStrongholdEndPortal(false),
       mSizeOnDisk(0), mVersion(19133), mClearWeatherTime(0), mRaining(false),
       mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
       mGenerateMapFeatures(true), mHardcore(false), mAllowCommands(false),
@@ -27,10 +29,15 @@ LevelData::LevelData(LevelSettings* settings, const std::wstring& name) : LevelD
 LevelData::LevelData(LevelData* other) : LevelData()
 {
     if (other != 0) {
+        mSeed = other->mSeed;
         mGeneratorType = other->mGeneratorType; mGeneratorOptions = other->mGeneratorOptions;
         mXSpawn = other->mXSpawn; mYSpawn = other->mYSpawn; mZSpawn = other->mZSpawn;
         mGameTime = other->mGameTime; mDayTime = other->mDayTime;
         mSpawnXStronghold = other->mSpawnXStronghold; mSpawnZStronghold = other->mSpawnZStronghold;
+        mHasStronghold = other->mHasStronghold;
+        mXStrongholdEndPortal = other->mXStrongholdEndPortal;
+        mZStrongholdEndPortal = other->mZStrongholdEndPortal;
+        mHasStrongholdEndPortal = other->mHasStrongholdEndPortal;
         mSizeOnDisk = other->mSizeOnDisk; mVersion = other->mVersion;
         mClearWeatherTime = other->mClearWeatherTime; mRaining = other->mRaining;
         mRainTime = other->mRainTime; mThundering = other->mThundering; mThunderTime = other->mThunderTime;
@@ -51,7 +58,7 @@ LevelData::~LevelData() {}
 CompoundTag* LevelData::createTag()
 {
     CompoundTag* tag = new CompoundTag();
-    tag->putLong(L"RandomSeed", mGameTime);
+    tag->putLong(L"RandomSeed", mSeed);
     tag->putInt(L"SpawnX", mXSpawn); tag->putInt(L"SpawnY", mYSpawn); tag->putInt(L"SpawnZ", mZSpawn);
     tag->putLong(L"Time", mGameTime); tag->putLong(L"LastUpdate", mDayTime);
     tag->putString(L"LevelName", mLevelName);
@@ -65,12 +72,14 @@ CompoundTag* LevelData::createTag(std::vector<boost::shared_ptr<Player> >* playe
 
 void LevelData::addWalkers(DataFixerUpper* fixer)
 {
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Player,
+                     new TagUpdateWalker(L"Player", 10, DataFixTypes::eDataFixTypes_Player));
 }
 
 void LevelData::setTagData(CompoundTag* tag)
 {
     if (tag == 0) return;
-    if (tag->contains(L"RandomSeed")) mGameTime = tag->getLong(L"RandomSeed");
+    if (tag->contains(L"RandomSeed")) mSeed = tag->getLong(L"RandomSeed");
     if (tag->contains(L"SpawnX")) mXSpawn = tag->getInt(L"SpawnX");
     if (tag->contains(L"SpawnY")) mYSpawn = tag->getInt(L"SpawnY");
     if (tag->contains(L"SpawnZ")) mZSpawn = tag->getInt(L"SpawnZ");
@@ -81,30 +90,30 @@ void LevelData::setTagData(CompoundTag* tag)
     if (tag->contains(L"thundering")) mThundering = tag->getBoolean(L"thundering");
 }
 
-long long LevelData::getSeed() { return mGameTime; }
+long long LevelData::getSeed() { return mSeed; }
 int LevelData::getXSpawn() { return mXSpawn; }
 int LevelData::getYSpawn() { return mYSpawn; }
 int LevelData::getZSpawn() { return mZSpawn; }
 int LevelData::getXStronghold() { return mSpawnXStronghold; }
 int LevelData::getZStronghold() { return mSpawnZStronghold; }
-int LevelData::getXStrongholdEndPortal() { return mSpawnXStronghold; }
-int LevelData::getZStrongholdEndPortal() { return mSpawnZStronghold; }
+int LevelData::getXStrongholdEndPortal() { return mXStrongholdEndPortal; }
+int LevelData::getZStrongholdEndPortal() { return mZStrongholdEndPortal; }
 long long LevelData::getGameTime() { return mGameTime; }
 long long LevelData::getDayTime() { return mDayTime; }
 long long LevelData::getSizeOnDisk() { return mSizeOnDisk; }
 CompoundTag* LevelData::getLoadedPlayerTag() { return mLoadedPlayerTag; }
-void LevelData::setSeed(long long value) { mGameTime = value; }
+void LevelData::setSeed(long long value) { mSeed = value; }
 void LevelData::setXSpawn(int value) { mXSpawn = value; }
 void LevelData::setYSpawn(int value) { mYSpawn = value; }
 void LevelData::setZSpawn(int value) { mZSpawn = value; }
-void LevelData::setHasStronghold() { mSpawnXStronghold = 1; }
-bool LevelData::getHasStronghold() { return mSpawnXStronghold != 0; }
+void LevelData::setHasStronghold() { mHasStronghold = true; }
+bool LevelData::getHasStronghold() { return mHasStronghold; }
 void LevelData::setXStronghold(int value) { mSpawnXStronghold = value; }
 void LevelData::setZStronghold(int value) { mSpawnZStronghold = value; }
-void LevelData::setHasStrongholdEndPortal() { mSpawnXStronghold = 1; }
-bool LevelData::getHasStrongholdEndPortal() { return mSpawnXStronghold != 0; }
-void LevelData::setXStrongholdEndPortal(int value) { mSpawnXStronghold = value; }
-void LevelData::setZStrongholdEndPortal(int value) { mSpawnZStronghold = value; }
+void LevelData::setHasStrongholdEndPortal() { mHasStrongholdEndPortal = true; }
+bool LevelData::getHasStrongholdEndPortal() { return mHasStrongholdEndPortal; }
+void LevelData::setXStrongholdEndPortal(int value) { mXStrongholdEndPortal = value; }
+void LevelData::setZStrongholdEndPortal(int value) { mZStrongholdEndPortal = value; }
 void LevelData::setGameTime(long long value) { mGameTime = value; }
 void LevelData::setDayTime(long long value) { mDayTime = value; }
 void LevelData::setSizeOnDisk(long long value) { mSizeOnDisk = value; }

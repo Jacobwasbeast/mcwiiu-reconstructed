@@ -39,17 +39,15 @@ public:
     bool isWater(const BlockPos& pos);
 
 private:
-    Level* mLevel;
-    unsigned int mGeneratorData[8];
+    int mLevelSize;
     bool mGenerateStructures;
-    unsigned int mFeatureData[7];
     StructureFeature* mStronghold;
-    StructureFeature* mShipwreck;
-    StructureFeature* mMonument;
-    StructureFeature* mMansion;
     StructureFeature* mVillage;
     StructureFeature* mMineshaft;
     StructureFeature* mTemple;
+    StructureFeature* mMonument;
+    StructureFeature* mMansion;
+    StructureFeature* mShipwreck;
     StructureFeature* mOceanRuin;
 };
 

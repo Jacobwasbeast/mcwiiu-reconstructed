@@ -112,6 +112,7 @@ public:
     virtual int getBiomeCentreZChunk();
 
 private:
+    long long mSeed;
     LevelType* mGeneratorType;
     SuperflatConfig* mGeneratorOptions;
     int mXSpawn;
@@ -121,6 +122,10 @@ private:
     long long mDayTime;
     int mSpawnXStronghold;
     int mSpawnZStronghold;
+    bool mHasStronghold;
+    int mXStrongholdEndPortal;
+    int mZStrongholdEndPortal;
+    bool mHasStrongholdEndPortal;
     long long mSizeOnDisk;
     int mVersion;
     int mClearWeatherTime;

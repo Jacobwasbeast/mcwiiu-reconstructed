@@ -6,7 +6,6 @@
 
 #include <boost/unordered_map.hpp>
 
-#include "game/core/ColourTable.hpp"
 #include "game/core/File.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/biome/Biome.hpp"

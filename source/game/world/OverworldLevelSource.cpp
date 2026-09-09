@@ -688,7 +688,6 @@ bool OverworldLevelSource::isPosInFeature(Level*, const std::wstring& feature, c
     if (feature == L"Village" && mVillage != NULL) return mVillage->isInsideFeature(pos);
     if (feature == L"Mineshaft" && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
     if (feature == L"Temple" && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (feature == L"Buried_Treasure" && mBuriedTreasure != NULL) return mBuriedTreasure->isInsideFeature(pos);
     if (feature == L"Ocean_Ruin" && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
     return false;
 }

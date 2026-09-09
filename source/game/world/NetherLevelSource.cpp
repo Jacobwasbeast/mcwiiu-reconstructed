@@ -14,10 +14,13 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/core/Bush.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/generation/BushFeature.hpp"
 #include "game/world/generation/HellFireFeature.hpp"
+#include "game/world/generation/HellPortalFeature.hpp"
 #include "game/world/generation/HellSpringFeature.hpp"
-#include "game/world/generation/LargeFeature.hpp"
+#include "game/world/generation/LargeHellCaveFeature.hpp"
+#include "game/world/generation/LightGemFeature.hpp"
 #include "game/world/generation/OreFeature.hpp"
 
 NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long long seed)
@@ -34,17 +37,17 @@ NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long
       mNoise5(new PerlinNoise(&mRandom, 4)),
       mNoise6(new PerlinNoise(&mRandom, 10)),
       mNoise7(new PerlinNoise(&mRandom, 16)),
-      mFeature1(new HellSpringFeature(Blocks::lava, true)),
-      mFeature2(new HellSpringFeature(Blocks::lava, false)),
-      mFeature3(new HellSpringFeature(Blocks::lava, true)),
+      mFireFeature(new HellFireFeature()),
+      mLightGemFeature(new LightGemFeature()),
+      mHellPortalFeature(new HellPortalFeature()),
       mQuartzOre(new OreFeature(Blocks::quartz_ore->defaultBlockState(), 14)),
-      mGlowstoneOre(new OreFeature(Blocks::glowstone->defaultBlockState(), 33)),
-      mLavaSpring(new HellSpringFeature(Blocks::lava, true)),
-      mLavaSpringOpen(new HellSpringFeature(Blocks::lava, false)),
+      mMagmaOre(new OreFeature(Blocks::magma->defaultBlockState(), 33)),
+      mLavaSpring(new HellSpringFeature(Blocks::flowing_lava, true)),
+      mLavaSpringOpen(new HellSpringFeature(Blocks::flowing_lava, false)),
       mBrownMushroom(new BushFeature(static_cast<Bush*>(Blocks::brown_mushroom))),
       mRedMushroom(new BushFeature(static_cast<Bush*>(Blocks::red_mushroom))),
       mNetherBridgeFeature(new NetherBridgeFeature()),
-      mCaves(new LargeFeature())
+      mCaves(new LargeHellCaveFeature())
 {
     mLevel->setSeaLevel(63);
 }
@@ -58,11 +61,11 @@ NetherLevelSource::~NetherLevelSource()
     delete mNoise5;
     delete mNoise6;
     delete mNoise7;
-    delete mFeature1;
-    delete mFeature2;
-    delete mFeature3;
+    delete mFireFeature;
+    delete mLightGemFeature;
+    delete mHellPortalFeature;
     delete mQuartzOre;
-    delete mGlowstoneOre;
+    delete mMagmaOre;
     delete mLavaSpring;
     delete mLavaSpringOpen;
     delete mBrownMushroom;
@@ -232,49 +235,85 @@ LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
 
 void NetherLevelSource::postProcess(int chunkX, int chunkZ)
 {
-    BlockPos origin(chunkX << 4, 0, chunkZ << 4);
+    Level::setInstaTick(true);
+    const BlockPos origin(chunkX << 4, 0, chunkZ << 4);
+    Biome* biome = mLevel->getBiome(origin.offset(16, 0, 16));
+    ChunkPos chunkPos(chunkX, chunkZ);
     mPopulationRandom.setSeed(mLevel->getSeed());
     const long long xSeed = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
     const long long zSeed = mPopulationRandom.nextLong() / 2LL * 2LL + 1LL;
-    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed + static_cast<long long>(chunkZ) * zSeed) ^ mLevel->getSeed());
-    ChunkPos chunkPos(chunkX, chunkZ);
+    mPopulationRandom.setSeed((static_cast<long long>(chunkX) * xSeed +
+                               static_cast<long long>(chunkZ) * zSeed) ^ mLevel->getSeed());
+
     mNetherBridgeFeature->postProcess(mLevel, mPopulationRandom, &chunkPos);
-    for (int i = 0; i < 2; ++i)
+
+    for (int i = 0; i < 8; ++i)
     {
-        mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                                                     mPopulationRandom.nextInt(120) + 4,
-                                                                     mPopulationRandom.nextInt(16) + 8));
+        mLavaSpringOpen->place(mLevel, mPopulationRandom,
+                               origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                             mPopulationRandom.nextInt(120) + 4,
+                                             mPopulationRandom.nextInt(16) + 8));
     }
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1; ++i)
     {
-        mGlowstoneOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                                                       mPopulationRandom.nextInt(128),
-                                                                       mPopulationRandom.nextInt(16) + 8));
+        mFireFeature->place(mLevel, mPopulationRandom,
+                            origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                          mPopulationRandom.nextInt(120) + 4,
+                                          mPopulationRandom.nextInt(16) + 8));
     }
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1); ++i)
     {
-        mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16),
-                                                                      mPopulationRandom.nextInt(108) + 10,
-                                                                      mPopulationRandom.nextInt(16)));
+        mLightGemFeature->place(mLevel, mPopulationRandom,
+                                origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                              mPopulationRandom.nextInt(120) + 4,
+                                              mPopulationRandom.nextInt(16) + 8));
     }
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 10; ++i)
     {
-        mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16),
-                                                                          mPopulationRandom.nextInt(108) + 10,
-                                                                          mPopulationRandom.nextInt(16)));
+        mHellPortalFeature->place(mLevel, mPopulationRandom,
+                                  origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                                mPopulationRandom.nextInt(128),
+                                                mPopulationRandom.nextInt(16) + 8));
     }
     if (mPopulationRandom.nextBoolean())
     {
-        mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                                                        mPopulationRandom.nextInt(128),
-                                                                        mPopulationRandom.nextInt(16) + 8));
+        mBrownMushroom->place(mLevel, mPopulationRandom,
+                              origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                            mPopulationRandom.nextInt(128),
+                                            mPopulationRandom.nextInt(16) + 8));
     }
     if (mPopulationRandom.nextBoolean())
     {
-        mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8,
-                                                                      mPopulationRandom.nextInt(128),
-                                                                      mPopulationRandom.nextInt(16) + 8));
+        mRedMushroom->place(mLevel, mPopulationRandom,
+                            origin.offset(mPopulationRandom.nextInt(16) + 8,
+                                          mPopulationRandom.nextInt(128),
+                                          mPopulationRandom.nextInt(16) + 8));
     }
+    for (int i = 0; i < 16; ++i)
+    {
+        mQuartzOre->place(mLevel, mPopulationRandom,
+                          origin.offset(mPopulationRandom.nextInt(16),
+                                        mPopulationRandom.nextInt(108) + 10,
+                                        mPopulationRandom.nextInt(16)));
+    }
+    const int magmaHeight = mLevel->getSeaLevel() / 2 - 4;
+    for (int i = 0; i < 4; ++i)
+    {
+        mMagmaOre->place(mLevel, mPopulationRandom,
+                         origin.offset(mPopulationRandom.nextInt(16),
+                                       magmaHeight + mPopulationRandom.nextInt(10),
+                                       mPopulationRandom.nextInt(16)));
+    }
+    for (int i = 0; i < 16; ++i)
+    {
+        mLavaSpring->place(mLevel, mPopulationRandom,
+                           origin.offset(mPopulationRandom.nextInt(16),
+                                         mPopulationRandom.nextInt(108) + 10,
+                                         mPopulationRandom.nextInt(16)));
+    }
+
+    biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX << 4, 0, chunkZ << 4));
+    Level::setInstaTick(false);
     g_pApp->processSchematics(mLevel->getChunk(chunkX, chunkZ));
 }
 
@@ -307,8 +346,7 @@ bool NetherLevelSource::isPosInFeature(Level*, const std::wstring& feature, cons
     return feature == L"Fortress" && mNetherBridgeFeature->isInsideFeature(pos);
 }
 
-void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ)
+void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int chunkX, int chunkZ)
 {
     mNetherBridgeFeature->apply(mLevel, chunkX, chunkZ, NULL);
-    (void)chunk;
 }

@@ -77,7 +77,7 @@ void TheEndDimension::init()
     {
         mDragonFight = NULL;
     }
-    theApp.SetExtraGameData(static_cast<eGameExtraData>(3), mModernEnd);
+    gApp.SetExtraGameData(static_cast<eGameExtraData>(3), mModernEnd);
 }
 
 ChunkGenerator* TheEndDimension::createRandomLevelGenerator() const

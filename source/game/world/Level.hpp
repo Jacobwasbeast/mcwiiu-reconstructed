@@ -5,17 +5,20 @@
 #include <string>
 #include <typeinfo>
 #include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "game/core/CustomSet.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockProperties.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/chunk/Chunk.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/LevelSource.hpp"
@@ -68,7 +71,8 @@ public:
     class RangeModifier
     {
     public:
-        ~RangeModifier();
+        virtual ~RangeModifier();
+        virtual double apply(boost::shared_ptr<Player> player) const = 0;
     };
 
     Level(boost::shared_ptr<LevelStorage> levelStorage, LevelData* levelData, Dimension* dimension, bool isClientSide);
@@ -117,6 +121,7 @@ public:
     bool reallyHasChunksAt(const BlockPos& pos, int radius);
     bool hasChunksAt(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, bool allowEmpty);
     virtual bool hasChunk(int chunkX, int chunkZ, bool allowEmpty) = 0;
+    virtual LevelChunk* getChunkIfHasChunk(int chunkX, int chunkZ, bool allowEmpty) = 0;
     LevelChunk* getChunkAt(int x, int z);
     LevelChunk* getChunkLoadedOrUnloadedAt(int x, int z);
     bool isChunkGeneratedAt(int chunkX, int chunkZ);
@@ -154,7 +159,7 @@ public:
     bool setBlockAndUpdate(const BlockPos& pos, const BlockState* state);
     void sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate);
     void playMusic(double x, double y, double z, const std::wstring& sound, float volume);
-    int getSkyColor(boost::shared_ptr<Entity> entity, float partialTick);
+    Vec3* getSkyColor(boost::shared_ptr<Entity> entity, float partialTick);
     Vec3* getFogColor(boost::shared_ptr<Entity> entity, float partialTick);
     BlockPos getTopSolidBlockPos(const BlockPos& pos);
     int getAboveTopSolidBlock(const BlockPos& pos, bool checkLiquid, bool checkSolid);
@@ -237,12 +242,12 @@ public:
     float getTimeOfDay(float partialTick);
     float getRainLevel(float partialTick);
     float getThunderLevel(float partialTick);
-    float getOldSkyDarken(float partialTick);
+    int getOldSkyDarken(float partialTick);
     float getSkyDarken(float partialTick);
     int getMoonPhase();
     float getMoonBrightness();
     float getSunAngle(float partialTick);
-    int getCloudColor(float partialTick);
+    Vec3* getCloudColor(float partialTick);
     bool biomeHasRain(const BlockPos& pos);
     bool biomeHasSnow(const BlockPos& pos);
     float getStarBrightness(float partialTick);
@@ -287,7 +292,7 @@ public:
     bool isUnderWater(const BlockPos& pos, const BlockState* state);
     bool isUnderWater(const BlockPos& pos, int x, int z);
     bool isTouchingMaterial(const BlockPos& pos, const Material* material);
-    boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
+    virtual boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius,
                  bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damage);
     double getSeenPercent(Vec3* source, AABB* box);
     bool extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos, const Direction* direction);
@@ -305,10 +310,10 @@ public:
     void updateSkyBrightness();
     void tick();
     void prepareWeather();
-    void tickWeather(bool blockEvents);
-    void buildAndPrepareChunksToPoll();
+    virtual void tickWeather(bool blockEvents);
+    virtual void buildAndPrepareChunksToPoll();
     void tickClientSideBlocks(int x, int z, LevelChunk* chunk);
-    void tickBlocks();
+    virtual void tickBlocks();
     void instaTick(const BlockPos& pos, const BlockState* state, Random& random);
     bool shouldFreeze(const BlockPos& pos);
     int calcSnowBlockDepth(const BlockPos& pos, int depth);
@@ -327,10 +332,10 @@ public:
     boost::shared_ptr<Entity> getClosestEntityOfClass(const std::type_info& type, const AABB* box,
                                                       boost::shared_ptr<Entity> excluded);
     boost::shared_ptr<Entity> getEntity(int id);
-    std::vector<boost::shared_ptr<Entity> >* getAllEntities();
+    std::vector<boost::shared_ptr<Entity> > getAllEntities();
     void blockEntityChanged(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
-    int countInstanceOf(unsigned long long type, bool includeRemoved, unsigned int* count, unsigned int* result);
-    int countInstanceOfInRange(unsigned long long type, bool includeRemoved, int x, int y, int z, int range);
+    int countInstanceOf(unsigned long long type, bool exact, unsigned int* count, unsigned int* result);
+    int countInstanceOfInRange(unsigned long long type, bool exact, int range, int x, int y, int z);
     void addEntities(std::vector<boost::shared_ptr<Entity> >* entities);
     void removeEntities(std::vector<boost::shared_ptr<Entity> >* entities);
     bool mayPlace(Block* block, const BlockPos& pos, bool replaceable, const Direction* direction,
@@ -341,7 +346,7 @@ public:
         const Predicate<boost::shared_ptr<Entity> >* predicate);
     boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z, double distance,
                                                bool includeCreative, double maxYDistance);
-    boost::shared_ptr<Player> getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance);
+    std::vector<boost::shared_ptr<Player> >* getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance);
     bool hasNearPlayer(double x, double y, double z, double distance);
     boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z);
     boost::shared_ptr<Player> getNearestAttackablePlayer(double x, double y, double z, double distance,
@@ -402,10 +407,10 @@ public:
     int getFreeAuxValueFor(const std::wstring& id);
     int getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale);
     void globalLevelEvent(int type, const BlockPos& pos, int data);
-    Random getRandomFor(int x, int y, int z);
+    Random* getRandomFor(int x, int y, int z);
     static Random fjGetRandomFor(long long seed, int x, int y, int z);
     bool isAllEmpty();
-    int getHorizonHeight();
+    double getHorizonHeight();
     void destroyBlockProgress(int breakerId, const BlockPos& pos, int progress);
     void setSeaLevel(int value);
     LevelType* getGeneratorType();
@@ -458,6 +463,7 @@ private:
     OSFastMutex mLightMutex;
     boost::shared_ptr<Villages> mVillages;
     std::vector<boost::shared_ptr<Entity> > mEntities;
+    boost::unordered_map<int, boost::shared_ptr<Entity>, IntKeyHash2, IntKeyEq> mEntityMap;
     std::vector<boost::shared_ptr<Entity> > mEntitiesToRemove;
     std::vector<boost::shared_ptr<Entity> > mGlobalEntities;
     std::vector<boost::shared_ptr<BlockEntity> > mBlockEntities;
@@ -471,13 +477,19 @@ public:
 
 private:
     std::vector<AABB*> mCollisionBoxes;
+    std::vector<boost::shared_ptr<Entity> > mEntityQueryResult;
+protected:
+    CustomSet mChunksToPoll;
+private:
     LevelChunk** mChunkCache;
     int mChunkCacheSize;
     int mSeaLevel;
     int mCloudColour;
     int mSkyDarken;
+protected:
     int mRandValue;
     int mAddend;
+private:
     int mSkyFlashTime;
     float mOldRainLevel;
     float mRainLevel;

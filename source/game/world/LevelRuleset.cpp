@@ -28,7 +28,14 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/util/AABB.hpp"
 
-struct _OVERLAPPED;
+struct _OVERLAPPED
+{
+    unsigned int Internal;
+    unsigned int InternalHigh;
+    unsigned int Offset;
+    unsigned int OffsetHigh;
+    int hEvent;
+};
 
 template<typename T> T _fromString(const std::wstring& value);
 std::string formatstr(const char* format, ...);
@@ -40,6 +47,13 @@ int WriteFile(int file, const void* buffer, unsigned int bytesToWrite,
               unsigned int* bytesWritten, _OVERLAPPED* overlapped);
 int CloseHandle(int handle);
 void __debugbreak();
+
+static const int INVALID_HANDLE_VALUE = -1;
+static const unsigned int GENERIC_WRITE = 0x40000000;
+static const unsigned int CREATE_ALWAYS = 2;
+static const unsigned int FILE_FLAG_RANDOM_ACCESS = 0x10000000;
+
+static char s_levelRulesFileName[256];
 
 LevelRuleset::LevelRuleset()
     : CompoundGameRuleDefinition(),
@@ -552,9 +566,9 @@ void LevelRuleset::WriteRulesetXMLData()
     xml += "</LevelRules>\n";
 
     std::wstring path = g_pApp->GetDebugRootPath() + L"LevelRules.xml";
-    char fileName[256];
-    int file = CreateFileA(wstringtofilename(path, fileName), 0x40000000, 0, NULL, 2, 0x10000000, 0);
-    if (file == -1)
+    int file = CreateFileA(wstringtofilename(path, s_levelRulesFileName), GENERIC_WRITE, 0, NULL,
+                           CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
+    if (file == INVALID_HANDLE_VALUE)
     {
         __debugbreak();
         return;

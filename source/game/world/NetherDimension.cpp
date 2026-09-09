@@ -22,8 +22,8 @@ NetherDimension::~NetherDimension()
 void NetherDimension::init()
 {
     mBiomeSource = new FixedBiomeSource(Biome::HELL, 4.5f);
-    mHasSkyLight = true;
-    mUltraWarm = true;
+    mHasCeiling = 1;
+    mUltraWarm = 1;
 }
 
 Vec3* NetherDimension::getFogColor(float celestialAngle, float timeOfDay)
@@ -88,9 +88,8 @@ const DimensionType* NetherDimension::getType() const
 
 int NetherDimension::getXZSize()
 {
-    LevelData* levelData = mLevel->getLevelData();
-    return static_cast<int>(ceilf(static_cast<float>(levelData->getXZSize()) /
-                                  static_cast<float>(levelData->getHellScale())));
+    return static_cast<int>(ceilf(static_cast<float>(mLevel->getLevelData()->getXZSize()) /
+                                  static_cast<float>(mLevel->getLevelData()->getHellScale())));
 }
 
 AABB* NetherDimension::getPlayerConstraints(const BlockPos& pos)

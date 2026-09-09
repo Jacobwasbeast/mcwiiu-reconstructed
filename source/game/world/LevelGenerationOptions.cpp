@@ -22,6 +22,8 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/ConsoleGenerateStructure.hpp"
 
+struct _OVERLAPPED;
+
 template<typename T>
 std::wstring _toString(T value);
 
@@ -35,7 +37,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* highSize);
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, void* overlapped);
+int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
 int CloseHandle(int file);
 
 LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
