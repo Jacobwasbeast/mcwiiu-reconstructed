@@ -23,6 +23,7 @@ AbstractProperty<const Direction*>* DoublePlantBlock::FACING = NULL;
 DoublePlantBlock::Variant* DoublePlantBlock::VARIANTS[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
 DoublePlantBlock::Half* DoublePlantBlock::HALVES[2] = { NULL, NULL };
 DoublePlantBlock::Variant* gDoublePlantGrass = NULL;
+DoublePlantBlock::Variant* gDoublePlantFern = NULL;
 
 DoublePlantBlock::Half::Half(int id) : mId(id) {}
 DoublePlantBlock::Half::~Half() {}
@@ -86,6 +87,7 @@ void DoublePlantBlock::blockStaticCtor()
         VARIANTS[4] = new Variant(4, L"rose", 179, 179, NULL);
         VARIANTS[5] = new Variant(5, L"paeonia", 180, 180, NULL);
         gDoublePlantGrass = VARIANTS[2];
+        gDoublePlantFern = VARIANTS[3];
     }
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }

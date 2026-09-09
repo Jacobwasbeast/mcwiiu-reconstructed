@@ -69,12 +69,12 @@ private:
     bool mLarge;
     int mRefilledAnimationTicks;
     bool mNeighborsChecked;
+
+public:
     boost::weak_ptr<ChestBlockEntity> mNorthNeighbour;
     boost::weak_ptr<ChestBlockEntity> mEastNeighbour;
     boost::weak_ptr<ChestBlockEntity> mWestNeighbour;
     boost::weak_ptr<ChestBlockEntity> mSouthNeighbour;
-
-public:
     float mOpen;
     float mOpenOld;
     int mOpenCount;

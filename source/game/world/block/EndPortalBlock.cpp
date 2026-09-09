@@ -29,11 +29,9 @@ EndPortalBlock::~EndPortalBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int)
 {
-    boost::shared_ptr<TheEndPortalBlockEntity> entity(new TheEndPortalBlockEntity());
-    entity->setData(data);
-    return entity;
+    return boost::shared_ptr<TheEndPortalBlockEntity>(new TheEndPortalBlockEntity());
 }
 
 const AABB* EndPortalBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
@@ -69,7 +67,7 @@ int EndPortalBlock::getResourceCount(Random*)
     return 0;
 }
 
-void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*,
+void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                   const boost::shared_ptr<Entity>& entity)
 {
     if (entity->GetType() == 0x08000003ULL)
@@ -79,21 +77,32 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
         && Minecraft::GetInstance()->GetMiniGame()->ArePortalsDisabled())
         return;
 
-    if (entity->isPassenger() || entity->isVehicle() || entity->isIgnoringBlockTriggers())
+    if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
         return;
 
-    AABB* box = entity->mBoundingBox;
-    AABB* portalBox = AABB::newTemp(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
-    AABB* movedBox = portalBox->move(pos);
-    if (box == NULL || !box->intersects(movedBox->mMinX, movedBox->mMinY, movedBox->mMinZ,
-                                        movedBox->mMaxX, movedBox->mMaxY, movedBox->mMaxZ))
+    AABB* portalBox;
+    if ((entity->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+    {
+        portalBox = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1.0, pos.y + 1.0, pos.z + 1.0);
+    }
+    else
+    {
+        portalBox = state->getShape(level, pos)->move(pos);
+    }
+
+    if (level->mIsClientSide)
         return;
 
-    if (!level->mIsClientSide && !level->getLevelData()->getHasStrongholdEndPortal())
+    if (!entity->mBoundingBox->intersects(portalBox->mMinX, portalBox->mMinY, portalBox->mMinZ,
+                                          portalBox->mMaxX, portalBox->mMaxY, portalBox->mMaxZ))
+        return;
+
+    if ((entity->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
     {
         int x = 0;
         int z = 0;
-        if (g_pApp->GetTerrainFeaturePosition((_eTerrainFeatureType)6, &x, &z))
+        if (level->mDimension == NULL && !level->getLevelData()->getHasStrongholdEndPortal()
+            && g_pApp->GetTerrainFeaturePosition((_eTerrainFeatureType)6, &x, &z))
         {
             level->getLevelData()->setXStrongholdEndPortal(x);
             level->getLevelData()->setZStrongholdEndPortal(z);
@@ -102,7 +111,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
     }
 
     if (!entity->mIgnorePortals)
-        entity->handleInsidePortal(pos);
+        entity->changeDimension(1);
 }
 
 void EndPortalBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)

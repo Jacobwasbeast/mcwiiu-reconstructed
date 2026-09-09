@@ -19,6 +19,7 @@
 #include "game/item/Items.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/item/Item.hpp"
@@ -27,7 +28,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 DirectionProperty* EndPortalFrameBlock::FACING = NULL;
-BooleanProperty* EndPortalFrameBlock::EYE = NULL;
+BooleanProperty* EndPortalFrameBlock::EYE =
+    static_cast<BooleanProperty*>(BooleanProperty::create(L"eye"));
 
 static const AABB* END_PORTAL_FRAME_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.8125, 1.0);
 static const AABB* END_PORTAL_FRAME_EYE_SHAPE = AABB::newPermanent(0.25, 0.8125, 0.25, 0.75, 1.0, 0.75);
@@ -52,7 +54,8 @@ EndPortalFrameBlock::EndPortalFrameBlock()
 {
     TypedBoxed<const Direction*> facing(Direction::NORTH);
     TypedBoxed<bool> eye(false);
-    registerDefaultState(defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(EYE, &eye));
+    registerDefaultState(
+        mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(EYE, &eye));
 }
 
 EndPortalFrameBlock::~EndPortalFrameBlock()
@@ -61,8 +64,7 @@ EndPortalFrameBlock::~EndPortalFrameBlock()
 
 void EndPortalFrameBlock::blockStaticCtor()
 {
-    FACING = DirectionProperty::create(L"facing", Direction::Plane::HORIZONTAL);
-    EYE = static_cast<BooleanProperty*>(BooleanProperty::create(L"eye"));
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 bool EndPortalFrameBlock::isSolidRender(const BlockState* state) const
@@ -156,7 +158,7 @@ BlockPattern* EndPortalFrameBlock::getOrCreatePortalShape()
     {
         std::wstring rows[5] = { L"?vvv?", L">???<", L">???<", L">???<", L"?^^^?" };
         END_PORTAL_SHAPE = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'?', Predicates<BlockInWorld*>::alwaysTrue)
+            ->where(L'?', BlockInWorld::hasState(Predicates<const BlockState*>::alwaysTrue))
             ->where(L'^', portalFramePredicate(Direction::SOUTH))
             ->where(L'>', portalFramePredicate(Direction::WEST))
             ->where(L'v', portalFramePredicate(Direction::NORTH))
@@ -185,7 +187,7 @@ TextureAtlasSprite* EndPortalFrameBlock::getTexture(const Direction* direction, 
     }
     if (direction == Direction::DOWN)
     {
-        return mIcon;
+        return Blocks::end_stone->getTexture(direction);
     }
     return mIcon;
 }
@@ -199,5 +201,5 @@ void EndPortalFrameBlock::registerIcons(IconRegister* iconRegister)
 
 EBlockRenderShape EndPortalFrameBlock::getRenderShape(const BlockState* state)
 {
-    return static_cast<EBlockRenderShape>(26);
+    return BLOCK_RENDER_AIR_PORTAL_FRAME;
 }

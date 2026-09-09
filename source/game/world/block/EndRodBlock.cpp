@@ -15,23 +15,29 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static const AABB* END_ROD_SHAPE_X = AABB::newPermanent(0.0, 0.25, 0.25, 1.0, 0.75, 0.75);
-static const AABB* END_ROD_SHAPE_Y = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
-static const AABB* END_ROD_SHAPE_Z = AABB::newPermanent(0.25, 0.25, 0.0, 0.75, 0.75, 1.0);
+static const AABB* END_ROD_SHAPE_Y = AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 1.0, 0.625);
+static const AABB* END_ROD_SHAPE_Z = AABB::newPermanent(0.375, 0.375, 0.0, 0.625, 0.625, 1.0);
+static const AABB* END_ROD_SHAPE_X = AABB::newPermanent(0.0, 0.375, 0.375, 1.0, 0.625, 0.625);
 
-static const AABB* END_ROD_ROD_DOWN = AABB::newPermanent(0.25, 0.25, 0.25, 0.75, 1.0, 0.75);
-static const AABB* END_ROD_ROD_UP = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 0.75, 0.75);
-static const AABB* END_ROD_ROD_NORTH = AABB::newPermanent(0.25, 0.25, 0.25, 0.75, 0.75, 1.0);
-static const AABB* END_ROD_ROD_SOUTH = AABB::newPermanent(0.25, 0.25, 0.0, 0.75, 0.75, 0.75);
-static const AABB* END_ROD_ROD_WEST = AABB::newPermanent(0.25, 0.25, 0.25, 1.0, 0.75, 0.75);
-static const AABB* END_ROD_ROD_EAST = AABB::newPermanent(0.0, 0.25, 0.25, 0.75, 0.75, 0.75);
+static const AABB* endRodPart(double x0, double y0, double z0, double x1, double y1, double z1)
+{
+    AABB* part = AABB::newPermanent(x0, y0, z0, x1, y1, z1);
+    part->divideInternalsBy(16.0);
+    return part;
+}
 
-static const AABB* END_ROD_BASE_DOWN = AABB::newPermanent(0.1875, 0.1875, 0.1875, 0.8125, 1.0, 0.8125);
-static const AABB* END_ROD_BASE_UP = AABB::newPermanent(0.1875, 0.0, 0.1875, 0.8125, 0.8125, 0.8125);
-static const AABB* END_ROD_BASE_NORTH = AABB::newPermanent(0.1875, 0.1875, 0.1875, 0.8125, 0.8125, 1.0);
-static const AABB* END_ROD_BASE_SOUTH = AABB::newPermanent(0.1875, 0.1875, 0.0, 0.8125, 0.8125, 0.8125);
-static const AABB* END_ROD_BASE_WEST = AABB::newPermanent(0.1875, 0.1875, 0.1875, 1.0, 0.8125, 0.8125);
-static const AABB* END_ROD_BASE_EAST = AABB::newPermanent(0.0, 0.1875, 0.1875, 0.8125, 0.8125, 0.8125);
+static const AABB* END_ROD_UP_ROD = endRodPart(7.0, 1.0, 7.0, 9.0, 16.0, 9.0);
+static const AABB* END_ROD_UP_BASE = endRodPart(6.0, 0.0, 6.0, 10.0, 1.0, 10.0);
+static const AABB* END_ROD_DOWN_ROD = endRodPart(7.0, 0.0, 7.0, 9.0, 15.0, 9.0);
+static const AABB* END_ROD_DOWN_BASE = endRodPart(6.0, 15.0, 6.0, 10.0, 16.0, 10.0);
+static const AABB* END_ROD_SOUTH_ROD = endRodPart(7.0, 7.0, 1.0, 9.0, 9.0, 16.0);
+static const AABB* END_ROD_SOUTH_BASE = endRodPart(6.0, 6.0, 0.0, 10.0, 10.0, 1.0);
+static const AABB* END_ROD_NORTH_ROD = endRodPart(7.0, 7.0, 0.0, 9.0, 9.0, 15.0);
+static const AABB* END_ROD_NORTH_BASE = endRodPart(6.0, 6.0, 15.0, 10.0, 10.0, 16.0);
+static const AABB* END_ROD_EAST_ROD = endRodPart(1.0, 7.0, 7.0, 16.0, 9.0, 9.0);
+static const AABB* END_ROD_EAST_BASE = endRodPart(0.0, 6.0, 6.0, 1.0, 10.0, 10.0);
+static const AABB* END_ROD_WEST_ROD = endRodPart(0.0, 7.0, 7.0, 15.0, 9.0, 9.0);
+static const AABB* END_ROD_WEST_BASE = endRodPart(15.0, 6.0, 6.0, 16.0, 10.0, 10.0);
 
 EndRodBlock::EndRodBlock()
     : DirectionalBlock(Material::DECORATION)
@@ -46,7 +52,7 @@ EndRodBlock::~EndRodBlock()
 void EndRodBlock::DerivedInit()
 {
     Block::DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::DOWN);
+    TypedBoxed<const Direction*> facing(Direction::UP);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing));
 }
 
@@ -92,16 +98,18 @@ const BlockState* EndRodBlock::getStateForPlacement(Level* level, const BlockPos
 void EndRodBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
     const Direction* direction = state->getValue(DirectionalBlock::FACING_PROPERTY);
-    double spread = 0.4 - (random->nextFloat() + random->nextFloat()) * 0.4;
-    double x = static_cast<double>(pos.x) + 0.55 - static_cast<double>(random->nextFloat()) * 0.1 + direction->getNormal().x * spread;
-    double y = static_cast<double>(pos.y) + 0.55 - static_cast<double>(random->nextFloat()) * 0.1 + direction->getNormal().y * spread;
-    double z = static_cast<double>(pos.z) + 0.55 - static_cast<double>(random->nextFloat()) * 0.1 + direction->getNormal().z * spread;
+    double x = static_cast<double>(pos.x) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
+    double y = static_cast<double>(pos.y) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
+    double z = static_cast<double>(pos.z) + 0.55 - static_cast<double>(random->nextFloat() * 0.1F);
+    double spread = 0.4 - static_cast<double>((random->nextFloat() + random->nextFloat()) * 0.4F);
     if (random->nextInt(5) == 0)
     {
-        double velocityX = random->nextGaussian() * 0.005;
-        double velocityY = random->nextGaussian() * 0.005;
-        double velocityZ = random->nextGaussian() * 0.005;
-        level->addParticle(PARTICLE_END_ROD, x, y, z, velocityX, velocityY, velocityZ, arrayWithLength<int>());
+        level->addParticle(PARTICLE_END_ROD,
+                           x + static_cast<double>(direction->getNormal().x) * spread,
+                           y + static_cast<double>(direction->getNormal().y) * spread,
+                           z + static_cast<double>(direction->getNormal().z) * spread,
+                           random->nextGaussian() * 0.005, random->nextGaussian() * 0.005,
+                           random->nextGaussian() * 0.005, arrayWithLength<int>());
     }
 }
 
@@ -118,10 +126,10 @@ int EndRodBlock::convertBlockStateToLegacyData(const BlockState* state)
     return state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue();
 }
 
-EPistonPushReaction EndRodBlock::getPistonPushReaction(const BlockState*) { return static_cast<EPistonPushReaction>(0); }
+EPistonPushReaction EndRodBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_NORMAL; }
 EBlockFaceShape EndRodBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
-    return static_cast<EBlockFaceShape>(8);
+    return BLOCK_FACE_UNDEFINED;
 }
 EBlockRenderShape EndRodBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(44); }
 
@@ -129,12 +137,12 @@ const AABB* EndRodBlock::getShapeRod(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
-    case 0: return END_ROD_ROD_DOWN;
-    case 1: return END_ROD_ROD_UP;
-    case 2: return END_ROD_ROD_NORTH;
-    case 3: return END_ROD_ROD_SOUTH;
-    case 4: return END_ROD_ROD_WEST;
-    default: return END_ROD_ROD_EAST;
+    case 0: return END_ROD_DOWN_ROD;
+    case 2: return END_ROD_NORTH_ROD;
+    case 3: return END_ROD_SOUTH_ROD;
+    case 4: return END_ROD_WEST_ROD;
+    case 5: return END_ROD_EAST_ROD;
+    default: return END_ROD_UP_ROD;
     }
 }
 
@@ -142,12 +150,12 @@ const AABB* EndRodBlock::getShapeBase(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
-    case 0: return END_ROD_BASE_DOWN;
-    case 1: return END_ROD_BASE_UP;
-    case 2: return END_ROD_BASE_NORTH;
-    case 3: return END_ROD_BASE_SOUTH;
-    case 4: return END_ROD_BASE_WEST;
-    default: return END_ROD_BASE_EAST;
+    case 0: return END_ROD_DOWN_BASE;
+    case 2: return END_ROD_NORTH_BASE;
+    case 3: return END_ROD_SOUTH_BASE;
+    case 4: return END_ROD_WEST_BASE;
+    case 5: return END_ROD_EAST_BASE;
+    default: return END_ROD_UP_BASE;
     }
 }
 

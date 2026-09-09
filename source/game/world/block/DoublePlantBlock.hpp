@@ -124,4 +124,7 @@ public:
     static Half* HALVES[2];
 };
 
+extern DoublePlantBlock::Variant* gDoublePlantGrass;
+extern DoublePlantBlock::Variant* gDoublePlantFern;
+
 #endif

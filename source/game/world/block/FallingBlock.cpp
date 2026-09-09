@@ -15,13 +15,13 @@ bool FallingBlock::fallInstantly;
 FallingBlock::FallingBlock()
     : Block(Material::SAND)
 {
-    mBlockType = (EBlockType)11;
+    mBlockType = EBLOCK_TYPE_FALLING;
 }
 
 FallingBlock::FallingBlock(Material* material)
     : Block(material)
 {
-    mBlockType = (EBlockType)11;
+    mBlockType = EBLOCK_TYPE_FALLING;
 }
 
 FallingBlock::~FallingBlock()

@@ -48,7 +48,8 @@ enum EBlockType
     EBLOCK_TYPE_RAIL = 2,
     EBLOCK_TYPE_FENCE = 5,
     EBLOCK_TYPE_MOB_SPAWNER = 6,
-    EBLOCK_TYPE_SLAB = 8
+    EBLOCK_TYPE_SLAB = 8,
+    EBLOCK_TYPE_FALLING = 11
 };
 
 enum EBlockRenderShape
@@ -56,7 +57,9 @@ enum EBlockRenderShape
     BLOCK_RENDER_MODEL = 0,
     BLOCK_RENDER_ENTITY = 1,
     BLOCK_RENDER_INVISIBLE = 2,
-    BLOCK_RENDER_DOOR = 7
+    BLOCK_RENDER_DOOR = 7,
+    BLOCK_RENDER_AIR_PORTAL_FRAME = 26,
+    BLOCK_RENDER_END_ROD = 44
 };
 
 enum EBlockOffsetType
