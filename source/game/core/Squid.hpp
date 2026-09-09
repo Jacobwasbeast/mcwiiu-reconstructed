@@ -58,18 +58,19 @@ public:
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned long long GetType();
 
+    float mXBodyRot;
+    float mXBodyRotO;
+    float mZBodyRot;
+    float mZBodyRotO;
+    float mTentacleMovement;
+    float mOldTentacleMovement;
+    float mTentacleAngle;
+    float mOldTentacleAngle;
+
 private:
-    int mBodyRotation;
-    int mBodyRotationOld;
-    int mTentacleMovement;
-    int mTentacleMovementOld;
-    int mTentacleAngle;
-    int mTentacleAngleOld;
-    int mRotationVelocity;
-    int mMovementDuration;
-    int mMovementTicks;
-    float mTentacleAngleScale;
-    int mMovementDelay;
+    float mSpeed;
+    float mTentacleSpeed;
+    float mRotateSpeed;
     float mMovementX;
     float mMovementY;
     float mMovementZ;

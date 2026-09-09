@@ -2,10 +2,18 @@
 
 #include <algorithm>
 
+#include "game/core/ClientScoreboard.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 MG02ScoreboardLayout::MG02ScoreboardLayout()
     : IScoreboardLayout()
@@ -33,50 +41,106 @@ bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 
 void MG02ScoreboardLayout::Init(int value)
 {
-    m_playerCount = value;
+    m_localPlayerIdx = value;
     ClearPlayersInfo();
 }
 
-uint32_t MG02ScoreboardLayout::getNumberOfColumns()
+unsigned int MG02ScoreboardLayout::getNumberOfColumns()
 {
-    return m_playerCount == 1 ? 2 : 3;
+    if (Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() == 1)
+    {
+        return 2;
+    }
+    return 3;
 }
 
-std::wstring MG02ScoreboardLayout::getLabel2(const StatsUID&) { return std::wstring(L"Blocks Destroyed: {BLOCKS}"); }
-std::wstring MG02ScoreboardLayout::getLabel3(const StatsUID&) { return std::wstring(L"Jumps: {JUMPS}"); }
-std::wstring MG02ScoreboardLayout::getLabel4(const StatsUID&) { return std::wstring(L"Distance: {DELTA}"); }
-std::wstring MG02ScoreboardLayout::getLabel5(const StatsUID&) { return std::wstring(L"Winner"); }
-std::wstring MG02ScoreboardLayout::getLabel6(const StatsUID&) { return std::wstring(L"px = 0"); }
-std::wstring MG02ScoreboardLayout::getLabel7(const StatsUID&) { return std::wstring(L"Overall Winner"); }
+UIString MG02ScoreboardLayout::getLabel2(const StatsUID& uid)
+{
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int blocks = scoreboard->GetTotalBlocksDestroyed(uid);
+    std::wstring text(L10N::GetString(0x782d903f));
+    text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
+    return UIString(text);
+}
 
-uint32_t MG02ScoreboardLayout::getStatIcon2(const EScoreboardType&) { return 5; }
-uint32_t MG02ScoreboardLayout::getStatIcon3(const EScoreboardType&) { return 6; }
-uint32_t MG02ScoreboardLayout::getStatIcon4(const EScoreboardType&) { return 7; }
-uint32_t MG02ScoreboardLayout::getStatIcon5(const EScoreboardType&) { return 0xffffffff; }
+UIString MG02ScoreboardLayout::getLabel3(const StatsUID& uid)
+{
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int jumps = scoreboard->GetTotalJumps(uid);
+    std::wstring text(L10N::GetString(0xd6524620));
+    text = replaceAll(text, L"{*JUMPS*}", _toString<unsigned int>(jumps));
+    return UIString(text);
+}
 
-uint32_t MG02ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
+UIString MG02ScoreboardLayout::getLabel4(const StatsUID& uid)
+{
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int distance = scoreboard->GetTotalDistanceTravelled(uid);
+    std::wstring text(L10N::GetString(0x2815dc90));
+    text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
+    return UIString(text);
+}
+
+UIString MG02ScoreboardLayout::getLabel5(const StatsUID& uid)
+{
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    if (scoreboard->IsOverallWinner(uid))
+    {
+        return UIString(0x9148f7e8);
+    }
+    return UIString(L"");
+}
+
+UIString MG02ScoreboardLayout::getLabel6(const StatsUID&)
+{
+    return UIString(L"");
+}
+
+UIString MG02ScoreboardLayout::getLabel7(const StatsUID&)
+{
+    return UIString(0xe063a16f);
+}
+
+unsigned int MG02ScoreboardLayout::getStatIcon2(const EScoreboardType&) { return 5; }
+unsigned int MG02ScoreboardLayout::getStatIcon3(const EScoreboardType&) { return 6; }
+unsigned int MG02ScoreboardLayout::getStatIcon4(const EScoreboardType&) { return 7; }
+unsigned int MG02ScoreboardLayout::getStatIcon5(const EScoreboardType&) { return 0xffffffff; }
+
+unsigned int MG02ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
 {
     if (column == 0)
         return 4;
-    if (column == (int)getNumberOfColumns() - 1 && type != EScoreboardType_Unknown)
+    if (column == (int)getNumberOfColumns() - 1 && type != EScoreboardType_Scoreboard)
         return 3;
     return 0xffffffff;
 }
 
-std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID&, const EScoreboardType& type)
+std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, const EScoreboardType&)
 {
-    if (type == EScoreboardType_Unknown && row == 0)
-        return std::wstring(L"0");
-    if (type == EScoreboardType_Unknown && row == 1 && getNumberOfColumns() > 2)
-        return std::wstring(L"0");
-    return std::wstring(L"---");
+    if (row == 0)
+    {
+        ClientScoreboard* scoreboard =
+            Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        return _toString<int>(scoreboard->GetRoundsWon(uid));
+    }
+    if (row == 1 && getNumberOfColumns() > 2)
+    {
+        ClientScoreboard* scoreboard =
+            Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        return _toString<int>(scoreboard->GetDeaths(uid, -1));
+    }
+    return std::wstring(L"");
 }
 
 boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)
 {
     if (column != -1)
     {
-        if (type == EScoreboardType_Unknown)
+        if (type == EScoreboardType_Scoreboard)
         {
             int auxValue = 3;
             if (column == 1)
@@ -98,7 +162,7 @@ boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column,
 
 unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
-    return info == 0 ? 0x6e : (uint32_t)(info->voiceStatus ^ 1);
+    return info == 0 ? 0x6e : (unsigned int)(info->voiceStatus ^ 1);
 }
 
 void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)

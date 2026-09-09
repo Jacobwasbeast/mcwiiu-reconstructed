@@ -10,7 +10,7 @@ class Entity;
 
 struct PositionOverrideStruct
 {
-    bool isSitting;
+    bool isTamed;
     bool isSaddled;
     double x;
     double y;

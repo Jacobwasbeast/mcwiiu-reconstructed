@@ -1,6 +1,15 @@
 #include "game/core/MG01ScoreboardLayout.hpp"
 
+#include "game/core/ClientScoreboard.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/StatsUID.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/StringUtils.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType)
     : IScoreboardLayout()
@@ -34,11 +43,15 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
 
 void MG01ScoreboardLayout::Init(int value)
 {
-    m_playerCount = value;
+    m_localPlayerIdx = value;
 }
 
 unsigned int MG01ScoreboardLayout::getNumberOfColumns()
 {
+    if (Minecraft::GetInstance()->GetMiniGame()->GetRoundCount() == 1)
+    {
+        return 2;
+    }
     return 3;
 }
 
@@ -47,34 +60,104 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int, int, c
     return boost::shared_ptr<ItemInstance>();
 }
 
-std::wstring MG01ScoreboardLayout::getLabel2(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel2(const StatsUID&)
 {
-    return std::wstring();
+    return UIString(0x5450e4b5);
 }
 
-std::wstring MG01ScoreboardLayout::getLabel3(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
-    return std::wstring();
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
+    int total = 0;
+    for (int round = 0; round < rounds; ++round)
+    {
+        total += scoreboard->GetDamageDealt(uid, round);
+    }
+    std::wstring text(L10N::GetString(0x7cea6c57));
+    text = replaceAll(text, L"{*DAMAGE*}", _toString<int>(total));
+    return UIString(text);
 }
 
-std::wstring MG01ScoreboardLayout::getLabel4(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel4(const StatsUID& uid)
 {
-    return std::wstring();
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
+    int total = 0;
+    for (int round = 0; round < rounds; ++round)
+    {
+        total += scoreboard->GetDamageReceived(uid, round);
+    }
+    std::wstring text(L10N::GetString(0x2b967c02));
+    text = replaceAll(text, L"{*DAMAGE*}", _toString<int>(total));
+    return UIString(text);
 }
 
-std::wstring MG01ScoreboardLayout::getLabel5(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
-    return std::wstring();
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1
+        && scoreboard->GetSurvived(uid, -1))
+    {
+        if (!scoreboard->IsWinner(uid, -1))
+        {
+            return UIString(0x2473f5a1);
+        }
+    }
+    else
+    {
+        if (!scoreboard->HasStats(uid))
+        {
+            return UIString(0xfebed1b8);
+        }
+        if (!scoreboard->IsOverallWinner(uid))
+        {
+            return UIString(0xea95ecf3);
+        }
+    }
+    return UIString(0x9148f7e8);
 }
 
-std::wstring MG01ScoreboardLayout::getLabel6(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel6(const StatsUID& uid)
 {
-    return std::wstring();
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1)
+    {
+        if (!scoreboard->GetSurvived(uid, -1))
+        {
+            return UIString(scoreboard->GetKiller(uid, -1, -1));
+        }
+    }
+    else
+    {
+        if (!scoreboard->IsOverallWinner(uid) && scoreboard->HasStats(uid))
+        {
+            return UIString(scoreboard->GetNemesis(uid));
+        }
+    }
+    return UIString(L"");
 }
 
-std::wstring MG01ScoreboardLayout::getLabel7(const StatsUID&)
+UIString MG01ScoreboardLayout::getLabel7(const StatsUID& uid)
 {
-    return std::wstring();
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    if (!scoreboard->HasStats(uid))
+    {
+        return UIString(L"");
+    }
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1)
+    {
+        return UIString(0x5f46455c);
+    }
+    return UIString(0x51f24780);
 }
 
 unsigned int MG01ScoreboardLayout::getStatIcon2(const EScoreboardType&)
@@ -99,12 +182,13 @@ unsigned int MG01ScoreboardLayout::getStatIcon5(const EScoreboardType&)
 
 unsigned int MG01ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
 {
-    const unsigned int columns = getNumberOfColumns();
-    if (column == static_cast<int>(columns) - 3)
+    if (column == static_cast<int>(getNumberOfColumns()) - 3)
     {
         return 4;
     }
-    if (column == static_cast<int>(columns) - 1 && type == EScoreboardType_Unknown)
+    if (column != static_cast<int>(getNumberOfColumns()) - 2 &&
+        column == static_cast<int>(getNumberOfColumns()) - 1 &&
+        type != EScoreboardType_Scoreboard)
     {
         return 3;
     }

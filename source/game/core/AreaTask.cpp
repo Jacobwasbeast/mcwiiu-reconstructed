@@ -6,12 +6,13 @@ AreaTask::AreaTask(eTutorial_State stateValue, Tutorial* tutorialValue,
                    std::vector<TutorialConstraint*>* constraintsValue, int descriptionId,
                    EAreaTaskCompletionStates completionStateValue)
     : TutorialTask(tutorialValue, descriptionId, false, constraintsValue, false, false, false),
-      completionState(completionStateValue), state(stateValue)
+      state(stateValue)
 {
     if (stateValue == eTutorial_State_None)
     {
         enableConstraints(true, false);
     }
+    completionState = completionStateValue;
 }
 
 AreaTask::~AreaTask()
@@ -28,7 +29,7 @@ bool AreaTask::isCompleted()
     bool result = false;
     if (completionState == CompletionStateOnStateChange)
     {
-        result = hasBeenActivated();
+        result = activated;
     }
     else if (completionState == CompletionStateOnConstraints)
     {
@@ -55,7 +56,7 @@ void AreaTask::setAsCurrentTask(bool currentTask)
     TutorialTask::setAsCurrentTask(currentTask);
     if (completionState == CompletionStateOnConstraints)
     {
-        static_cast<TutorialTask*>(this)->enableConstraints(currentTask, false);
+        enableConstraints(currentTask, false);
     }
 }
 
@@ -69,5 +70,5 @@ void AreaTask::onStateChange(eTutorial_State stateValue)
     {
         return;
     }
-    static_cast<TutorialTask*>(this)->enableConstraints(true, false);
+    enableConstraints(true, false);
 }

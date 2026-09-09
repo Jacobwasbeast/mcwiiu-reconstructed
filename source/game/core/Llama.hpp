@@ -79,7 +79,7 @@ public:
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual double getRideHeight();
     virtual bool canBeControlledByRider();
-    int handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
+    virtual int handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
     virtual bool isImmobile();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
     bool hasSwag();
@@ -89,7 +89,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual void playChestEquipsSound();
-    boost::shared_ptr<Entity> makeMad();
+    virtual void makeMad();
     virtual const void* getDefaultLootTable();
     virtual int getInventoryColumns();
     virtual bool wearsArmor();
@@ -111,8 +111,8 @@ public:
     bool inCaravan();
     boost::shared_ptr<Llama> getCaravanHead();
     double followLeashSpeed();
-    boost::shared_ptr<Entity> followMommy();
-    bool canEatGrass() const;
+    virtual void followMommy();
+    virtual bool canEatGrass() const;
     virtual unsigned long long GetType();
     static void addDataWalkers(DataFixerUpper* fixer);
 

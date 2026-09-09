@@ -1,12 +1,11 @@
-#define private public
 #include "game/core/PathFinder.hpp"
-#undef private
 
 #include <cmath>
 
 #include "game/core/Path.hpp"
 #include "game/entity/ai/NodeEvaluator.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/Block.hpp"
@@ -111,15 +110,14 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
     clear();
     mNodeEvaluator->prepare(levelSource, mob);
     Node* start = mNodeEvaluator->getStart();
-    Entity* entity = (Entity*)mob;
-    BlockPos mobPos(entity->mX, entity->mY, entity->mZ);
+    BlockPos mobPos(mob->mX, mob->mY, mob->mZ);
     Block* block = levelSource->getBlock(mobPos);
     if (block->instanceof(EBLOCK_TYPE_RAIL))
     {
-        int mobX = (int)floor(entity->mX + 0.5);
-        int mobZ = (int)floor(entity->mZ + 0.5);
-        if ((double)mobX == floor(entity->mX)) --mobX;
-        if ((double)mobZ == floor(entity->mZ)) --mobZ;
+        int mobX = (int)floor(mob->mX + 0.5);
+        int mobZ = (int)floor(mob->mZ + 0.5);
+        if ((double)mobX == floor(mob->mX)) --mobX;
+        if ((double)mobZ == floor(mob->mZ)) --mobZ;
         Node* adjusted = mNodeEvaluator->getNode(mobX, start->y, mobZ);
         if (adjusted != NULL)
         {

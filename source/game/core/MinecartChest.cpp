@@ -80,9 +80,9 @@ void MinecartChest::destroy(const DamageSource* source)
     }
 }
 
-unsigned int MinecartChest::getType()
+const Minecart::Type* MinecartChest::getType()
 {
-    return 0;
+    return Minecart::Type::CHEST;
 }
 
 const BlockState* MinecartChest::getDefaultDisplayBlockState()

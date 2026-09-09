@@ -39,8 +39,8 @@ public:
     virtual ~Sheep();
     static void create(Level* level);
     static arrayWithLength<const float> getColorArray(const DyeColor* color);
-    static void createSheepColor(const DyeColor* color);
-    static unsigned long long staticCtor();
+    static arrayWithLength<const float> createSheepColor(const DyeColor* color);
+    static void staticCtor();
     virtual void registerGoals();
     virtual void customServerAiStep();
     virtual void aiStep();
@@ -63,7 +63,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    static unsigned int getRandomSheepColor(Random* random);
+    static const DyeColor* getRandomSheepColor(Random* random);
     const DyeColor* getOffspringColor(boost::shared_ptr<Animal> first, boost::shared_ptr<Animal> second);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual void ate();

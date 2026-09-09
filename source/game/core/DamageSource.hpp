@@ -19,6 +19,14 @@ class Vec3;
 class DamageSource
 {
 public:
+    enum EDamageMsgId
+    {
+        eDamageMsgId_MobAttack = 0x1D,
+        eDamageMsgId_PlayerAttack = 0x1E,
+        eDamageMsgId_Arrow = 0x1F,
+        eDamageMsgId_Trident = 0x2A
+    };
+
     static const DamageSource* IN_FIRE;
     static const DamageSource* ON_FIRE;
     static const DamageSource* OUT_OF_WORLD;
@@ -32,15 +40,18 @@ public:
     static const DamageSource* MAGIC;
     static const DamageSource* CRAMMING;
     static const DamageSource* DROWN;
+    static const DamageSource* STARVE;
+    static const DamageSource* CACTUS;
     static const DamageSource* FALL;
     static const DamageSource* LIGHTNING_BOLT;
     static const DamageSource* CREATIVE_PLAYER;
+    static const DamageSource* DRY_OUT;
 
     DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage);
     DamageSource(const DamageSource& source);
     virtual ~DamageSource();
     bool equals(const DamageSource* source) const;
-    static boost::shared_ptr<EntityDamageSource> CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
+    static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
     DamageSource* setProjectile();
     static boost::shared_ptr<DamageSource> CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static boost::shared_ptr<EntityDamageSource> CreatePlayerAttack(boost::shared_ptr<Player> player);

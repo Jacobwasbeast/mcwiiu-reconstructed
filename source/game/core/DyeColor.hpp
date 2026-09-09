@@ -27,6 +27,8 @@ public:
     static const DyeColor* RED;
     static const DyeColor* BLACK;
 
+    static std::vector<const DyeColor*> COLORS;
+
     DyeColor(int blockData, int itemData, const std::wstring& serializedName,
              int name, int useName, int textureDiffuseColor,
              eMinecraftColour fontColorFormat, eMinecraftColour shulkerColor,
@@ -53,7 +55,6 @@ public:
     virtual std::wstring getSerializedName() const;
 
 private:
-    static std::vector<const DyeColor*> COLORS;
     static const DyeColor* BY_BLOCK_DATA[16];
     static const DyeColor* BY_ITEM_DATA[16];
 
@@ -68,7 +69,5 @@ private:
     eMinecraftColour shulkerColor;
     eMinecraftColour bedColor;
 };
-
-extern const DyeColor* gSheepGray;
 
 #endif

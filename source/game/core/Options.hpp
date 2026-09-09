@@ -83,7 +83,11 @@ private:
     bool mAnaglyph3d;
     bool mAdvancedOpengl;
     int mFpsLimit;
+
+public:
     bool mFancyGraphics;
+
+private:
     bool mAmbientOcclusion;
     bool mClouds;
     bool mAutoJump;
@@ -129,8 +133,10 @@ private:
 public:
     int mGuiScale;
 
-private:
+public:
     int mParticles;
+
+private:
     float mFov;
     float mGamma;
     bool mUnknownFlag6;

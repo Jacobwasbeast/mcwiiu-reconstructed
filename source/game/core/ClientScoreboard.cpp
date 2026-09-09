@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <limits>
 
+static const unsigned short NO_VOTES_GIVEN[4] = { 0, 0, 0, 0 };
+static const unsigned short NO_VOTES_RECEIVED[4] = { 0, 0, 0, 0 };
+
 ClientScoreboard::ClientScoreboard()
     : Scoreboard(), mPlayerStats()
 {
@@ -381,16 +384,16 @@ int ClientScoreboard::GetTotalJumps(const StatsUID& suid)
     return GetTotalLifeSpan(suid);
 }
 
-int ClientScoreboard::GetVotesGiven(const StatsUID& suid, int round)
+const unsigned short* ClientScoreboard::GetVotesGiven(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? 0 : stats->mKillsOther;
+    return stats == NULL ? NO_VOTES_GIVEN : &stats->mDeathsMelee;
 }
 
-int ClientScoreboard::GetVotesReceived(const StatsUID& suid, int round)
+const unsigned short* ClientScoreboard::GetVotesReceived(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? 0 : stats->mDeathsOther;
+    return stats == NULL ? NO_VOTES_RECEIVED : &stats->mKillsMelee;
 }
 
 int ClientScoreboard::GetRoundLength(unsigned int round)

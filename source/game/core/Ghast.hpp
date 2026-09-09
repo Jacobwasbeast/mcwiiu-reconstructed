@@ -77,9 +77,9 @@ public:
     static void staticCtor();
     void _init();
     virtual void registerGoals();
-    bool isCharging();
-    void setCharging(bool charging);
-    int getExplosionPower();
+    virtual bool isCharging();
+    virtual void setCharging(bool charging);
+    virtual int getExplosionPower();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual void defineSynchedData();
     virtual void registerAttributes();

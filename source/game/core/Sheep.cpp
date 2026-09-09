@@ -1,18 +1,20 @@
 #include "game/core/Sheep.hpp"
 
-#include <cmath>
-
 #include "game/core/DyeColor.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/AgableMob.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/entity/ai/BreedGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/FollowParentGoal.hpp"
@@ -23,34 +25,27 @@
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/CraftingContainer.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/Recipes.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/block/EatBlockGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 
-const DyeColor* gSheepWhite = NULL;
-const DyeColor* gSheepOrange = NULL;
-const DyeColor* gSheepMagenta = NULL;
-const DyeColor* gSheepLightBlue = NULL;
-const DyeColor* gSheepYellow = NULL;
-const DyeColor* gSheepPink = NULL;
-extern const DyeColor* gSheepGray;
-const DyeColor* gSheepBrown = NULL;
-const DyeColor* gSheepBlack = NULL;
-const SoundEvent* gSheepAmbientSound = NULL;
-const SoundEvent* gSheepHurtSound = NULL;
-const SoundEvent* gSheepDeathSound = NULL;
-
 static const EntityDataAccessor<unsigned char>* gSheepSheared;
 static boost::unordered_map<const DyeColor*, arrayWithLength<const float> > gSheepColors;
 
-Sheep::Sheep(Level* level) : Animal(level), mContainer(NULL), mCraftingContainer(), mEatBlockGoal(NULL)
+Sheep::Sheep(Level* level) : Animal(level)
 {
     fjDerivedCtorCalls();
     setSize(0.9f, 1.3f);
     mEatAnimationTick = 0;
     mContainer = new SheepContainer();
-    mCraftingContainer.reset(new CraftingContainer(mContainer, 2, 1));
+    mCraftingContainer = boost::shared_ptr<CraftingContainer>(new CraftingContainer(mContainer, 2, 1));
+    mCraftingContainer->setItem(0, not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 0)));
+    mCraftingContainer->setItem(1, not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, 0)));
 }
 
 Sheep::~Sheep()
@@ -68,26 +63,41 @@ arrayWithLength<const float> Sheep::getColorArray(const DyeColor* color)
     return gSheepColors[color];
 }
 
-void Sheep::createSheepColor(const DyeColor* color)
+arrayWithLength<const float> Sheep::createSheepColor(const DyeColor* color)
 {
-    gSheepColors[color] = color->getTextureDiffuseColors();
+    arrayWithLength<const float> diffuseColors = color->getTextureDiffuseColors();
+
+    float* values = new float[3];
+    values[0] = diffuseColors.data[0] * 0.75f;
+    values[1] = diffuseColors.data[1] * 0.75f;
+    values[2] = diffuseColors.data[2] * 0.75f;
+
+    arrayWithLength<const float> colors;
+    colors.data = values;
+    colors.length = 3;
+    return colors;
 }
 
-unsigned long long Sheep::staticCtor()
+void Sheep::staticCtor()
 {
-    gSheepWhite = DyeColor::WHITE;
-    gSheepOrange = DyeColor::ORANGE;
-    gSheepMagenta = DyeColor::MAGENTA;
-    gSheepLightBlue = DyeColor::LIGHT_BLUE;
-    gSheepYellow = DyeColor::YELLOW;
-    gSheepPink = DyeColor::PINK;
-    gSheepGray = DyeColor::GRAY;
-    gSheepBrown = DyeColor::BROWN;
-    gSheepBlack = DyeColor::BLACK;
-    gSheepAmbientSound = SoundEvents::SHEEP_AMBIENT;
-    gSheepHurtSound = SoundEvents::SHEEP_HURT;
-    gSheepDeathSound = SoundEvents::SHEEP_DEATH;
-    return 0x2d680002ULL;
+    gSheepSheared = SynchedEntityData::defineId(0x000000002D680002ULL, 0x000000000D680000ULL,
+                                                EntityDataSerializers::BYTE);
+
+    for (std::vector<const DyeColor*>::iterator it = DyeColor::COLORS.begin();
+         it != DyeColor::COLORS.end(); ++it)
+    {
+        gSheepColors[*it] = createSheepColor(*it);
+    }
+
+    float* white = new float[3];
+    white[0] = 0.9019608f;
+    white[1] = 0.9019608f;
+    white[2] = 0.9019608f;
+
+    arrayWithLength<const float> whiteColors;
+    whiteColors.data = white;
+    whiteColors.length = 3;
+    gSheepColors[DyeColor::WHITE] = whiteColors;
 }
 
 void Sheep::registerGoals()
@@ -141,7 +151,7 @@ void Sheep::registerAttributes()
 void Sheep::defineSynchedData()
 {
     Animal::defineSynchedData();
-    getEntityData()->createDateItem(gSheepSheared, static_cast<unsigned char>(0));
+    mEntityData->createDateItem(gSheepSheared, static_cast<unsigned char>(0));
 }
 
 const void* Sheep::getDefaultLootTable()
@@ -164,45 +174,87 @@ double Sheep::getHeadEatPositionScale(float partialTick)
 {
     if (mEatAnimationTick < 1)
     {
-        return 0.0;
+        return 0.0f;
+    }
+    if (mEatAnimationTick >= 4 && mEatAnimationTick <= 36)
+    {
+        return 1.0f;
     }
     if (mEatAnimationTick < 4)
     {
-        return (mEatAnimationTick - partialTick) * 0.25;
+        return (mEatAnimationTick - partialTick) * 0.25f;
     }
-    return -((mEatAnimationTick - 40 - partialTick) * 0.25);
+    return -((mEatAnimationTick - 40 - partialTick) * 0.25f);
 }
 
 double Sheep::getHeadEatAngleScale(float partialTick)
 {
-    if (mEatAnimationTick >= 5 && mEatAnimationTick < 37)
+    if (mEatAnimationTick > 4 && mEatAnimationTick <= 36)
     {
-        return static_cast<float>(Mth::sin((mEatAnimationTick - 4 - partialTick) * 0.03125 * 28.7) * 0.2 + 0.4);
+        return 0.62831855f
+               + 0.21991149f * Mth::sin((mEatAnimationTick - 4 - partialTick) * 0.03125f * 28.7f);
     }
-    return mEatAnimationTick < 1 ? 0.0 : 0.4;
+    return mEatAnimationTick > 0 ? 0.62831855f : mXRot * 0.017453292f;
 }
 
 bool Sheep::isSheared()
 {
-    return mEntityData != NULL && gSheepSheared != NULL && mEntityData->get(gSheepSheared) != 0;
+    return (mEntityData->get(gSheepSheared) & 0x10) != 0;
 }
 
 void Sheep::setSheared(bool sheared)
 {
-    if (mEntityData != NULL && gSheepSheared != NULL)
+    unsigned char value = mEntityData->get(gSheepSheared);
+    if (sheared)
     {
-        unsigned char value = mEntityData->get(gSheepSheared);
-        mEntityData->set(gSheepSheared, static_cast<unsigned char>((value & 0xf0) | (sheared ? 0x10 : 0)), true);
+        mEntityData->set(gSheepSheared, static_cast<unsigned char>(value | 0x10), true);
+    }
+    else
+    {
+        mEntityData->set(gSheepSheared, static_cast<unsigned char>(value & 0xef), true);
     }
 }
 
 const DyeColor* Sheep::getColor()
 {
-    return DyeColor::byBlockData(mEntityData != NULL && gSheepSheared != NULL ? mEntityData->get(gSheepSheared) & 0x0f : 0);
+    return DyeColor::byBlockData(mEntityData->get(gSheepSheared) & 0x0f);
 }
 
 bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+
+    if (!player->isAllowedToInteract(shared_from_this()))
+    {
+        return false;
+    }
+
+    if (itemInstance->getItem() == Items::shears && !isSheared() && !isBaby())
+    {
+        if (!mLevel->mIsClientSide)
+        {
+            setSheared(true);
+
+            int count = mRandom->nextInt(3) + 1;
+            for (int i = 0; i < count; ++i)
+            {
+                boost::shared_ptr<ItemEntity> wool = spawnAtLocation(
+                    not_null_ptr<ItemInstance>(new ItemInstance(Blocks::wool, 1, getColor()->getBlockData())),
+                    1.0f);
+                wool->mYd += mRandom->nextFloat() * 0.05f;
+                wool->mXd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
+                wool->mZd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
+            }
+
+            player->awardStat(gStats->get_shearedEntity(0x000000002D680002ULL),
+                              GenericStats::param_shearedEntity(0x000000002D680002ULL));
+        }
+
+        itemInstance->hurtAndBreak(1, player);
+        playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.0f);
+        return true;
+    }
+
     return Animal::mobInteract(player, hand);
 }
 
@@ -220,11 +272,10 @@ void Sheep::addAdditonalSaveData(CompoundTag* tag)
 
 void Sheep::setColor(const DyeColor* color)
 {
-    if (mEntityData != NULL && gSheepSheared != NULL && color != NULL)
-    {
-        unsigned char value = mEntityData->get(gSheepSheared);
-        mEntityData->set(gSheepSheared, static_cast<unsigned char>((value & 0xf0) | color->getBlockData()), true);
-    }
+    unsigned char value = mEntityData->get(gSheepSheared);
+    mEntityData->set(gSheepSheared,
+                     static_cast<unsigned char>((value & 0xf0) | (color->getBlockData() & 0x0f)),
+                     true);
 }
 
 void Sheep::readAdditionalSaveData(CompoundTag* tag)
@@ -236,40 +287,76 @@ void Sheep::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned int Sheep::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
+    int itemId = Item::getId(holder.m_pItemInstance->getItem());
+
+    if (itemId == 351)
+    {
+        const DyeColor* color = DyeColor::byItemData(holder.m_pItemInstance->getAuxValue());
+        if (!isSheared() && getColor() != color)
+        {
+            return 0x1a4e966dU;
+        }
+    }
+    else if (itemId == 359)
+    {
+        if (!isBaby() && !isSheared())
+        {
+            return 0xbe5aab60U;
+        }
+    }
+
     return Animal::GetInteractTooltip(holder);
 }
 
-const SoundEvent* Sheep::getAmbientSound() { return gSheepAmbientSound; }
-const SoundEvent* Sheep::getHurtSound(const DamageSource*) { return gSheepHurtSound; }
-const SoundEvent* Sheep::getDeathSound() { return gSheepDeathSound; }
+const SoundEvent* Sheep::getAmbientSound() { return SoundEvents::SHEEP_AMBIENT; }
+const SoundEvent* Sheep::getHurtSound(const DamageSource*) { return SoundEvents::SHEEP_HURT; }
+const SoundEvent* Sheep::getDeathSound() { return SoundEvents::SHEEP_DEATH; }
 
-void Sheep::playStepSound(const BlockPos& pos, Block* block)
+void Sheep::playStepSound(const BlockPos&, Block*)
 {
-    Entity::makeStepSound();
+    playSound(SoundEvents::SHEEP_STEP, 0.15f, 1.0f);
 }
 
-unsigned int Sheep::getRandomSheepColor(Random* random)
+const DyeColor* Sheep::getRandomSheepColor(Random* random)
 {
     int value = random->nextInt(100);
-    if (value < 5) return gSheepBlack->getBlockData();
-    if (value < 10) return gSheepGray->getBlockData();
-    if (value < 15) return gSheepLightBlue->getBlockData();
-    if (value < 18) return gSheepPink->getBlockData();
-    if (random->nextInt(500) == 0) return gSheepBrown->getBlockData();
-    return gSheepWhite->getBlockData();
+    if (value < 5) return DyeColor::BLACK;
+    if (value < 10) return DyeColor::GRAY;
+    if (value < 15) return DyeColor::SILVER;
+    if (value < 18) return DyeColor::BROWN;
+    return random->nextInt(500) == 0 ? DyeColor::PINK : DyeColor::WHITE;
 }
 
 const DyeColor* Sheep::getOffspringColor(boost::shared_ptr<Animal> first, boost::shared_ptr<Animal> second)
 {
-    return DyeColor::byBlockData((first ? static_cast<Sheep*>(first.get())->getColor()->getBlockData() : 0) ^ (second ? static_cast<Sheep*>(second.get())->getColor()->getBlockData() : 0));
+    int firstData = boost::dynamic_pointer_cast<Sheep>(first)->getColor()->getItemData();
+    int secondData = boost::dynamic_pointer_cast<Sheep>(second)->getColor()->getItemData();
+
+    mCraftingContainer->getItem(0)->setAuxValue(firstData);
+    mCraftingContainer->getItem(1)->setAuxValue(secondData);
+
+    not_null_ptr<ItemInstance> result = Recipes::getInstance()->getItemFor(
+        mCraftingContainer, first->mLevel, NULL, Recipes::eRecipeCategory_Crafting);
+
+    int itemData;
+    if (result->getItem() == Items::dye)
+    {
+        itemData = result->getAuxValue();
+    }
+    else
+    {
+        itemData = mLevel->mRandom->nextBoolean() ? firstData : secondData;
+    }
+
+    return DyeColor::byItemData(itemData);
 }
 
 boost::shared_ptr<AgableMob> Sheep::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
-    boost::shared_ptr<AgableMob> offspring(new Sheep(mLevel));
-    boost::shared_ptr<Animal> first = boost::dynamic_pointer_cast<Animal>(shared_from_this());
-    boost::shared_ptr<Animal> second = boost::dynamic_pointer_cast<Animal>(partner);
-    static_cast<Sheep*>(offspring.get())->setColor(getOffspringColor(first, second));
+    boost::shared_ptr<Sheep> partnerSheep = boost::dynamic_pointer_cast<Sheep>(partner);
+    boost::shared_ptr<Sheep> offspring(new Sheep(mLevel));
+    offspring->setColor(
+        getOffspringColor(boost::dynamic_pointer_cast<Animal>(shared_from_this()), partnerSheep));
     return offspring;
 }
 
@@ -282,21 +369,21 @@ void Sheep::ate()
     }
 }
 
-MobGroupData* Sheep::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group, const std::wstring& name)
+MobGroupData* Sheep::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group, const std::wstring&)
 {
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, group, name);
-    setColor(DyeColor::byBlockData(getRandomSheepColor(getRandom())));
+    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, group, L"");
+    setColor(getRandomSheepColor(mLevel->mRandom));
     return result;
 }
 
 double Sheep::getEyeHeight()
 {
-    return 0.95 * mBaseHeight;
+    return 0.95f * mBbHeight;
 }
 
 unsigned long long Sheep::GetType()
 {
-    return 0x2d680002ULL;
+    return 0x000000002D680002ULL;
 }
 
 Sheep::SheepContainer::~SheepContainer()

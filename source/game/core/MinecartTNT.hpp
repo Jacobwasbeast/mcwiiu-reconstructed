@@ -21,7 +21,7 @@ public:
     static void create(Level* level);
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual void tick();
     virtual bool hurt(const DamageSource* source, float damage);

@@ -102,9 +102,10 @@ void WitherSkull::onHit(const HitResult* result)
     {
         if (mOwner)
         {
-            boost::shared_ptr<EntityDamageSource> source = DamageSource::CreateMobAttack(mOwner);
-            if (result->mEntity->hurt(source.get(), 8.0f) && result->mEntity->isAlive())
+            EntityDamageSource* source = DamageSource::CreateMobAttack(mOwner);
+            if (result->mEntity->hurt(source, 8.0f) && result->mEntity->isAlive())
                 doEnchantDamageEffects(mOwner, result->mEntity);
+            delete source;
         }
         else
         {

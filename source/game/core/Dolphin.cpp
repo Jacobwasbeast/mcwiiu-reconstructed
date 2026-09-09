@@ -10,14 +10,18 @@
 #include "game/entity/ai/FindUnderwaterTreasureGoal.hpp"
 #include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/FishFoodItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/Player.hpp"
@@ -70,16 +74,24 @@ void Dolphin::tick()
     Mob::tick();
     if (!mLevel->mIsClientSide)
     {
-        BlockPos above(shared_from_this());
-        if (mLevel->isWaterAt(above))
+        BlockPos above(mX, mY + 1.0, mZ);
+        if (mLevel->getBlockState(above)->getMaterial() == Material::AIR)
+        {
             setAirSupply(getMaxAirSupply());
+        }
     }
     if (!isInWaterOrRain())
     {
         --mTreasureTime;
-        if (mTreasureTime < 1) hurt(NULL, 1.0f);
+        if (mTreasureTime < 1)
+        {
+            hurt(NULL, 1.0f);
+        }
     }
-    else mTreasureTime = 400;
+    else
+    {
+        mTreasureTime = 400;
+    }
 }
 
 bool Dolphin::isPushedByWater() { return false; }
@@ -100,12 +112,17 @@ const void* Dolphin::getDefaultLootTable() { return &BuiltInLootTables::DOLPHIN;
 
 bool Dolphin::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    if (target == NULL) return false;
-    LivingEntity* living = dynamic_cast<LivingEntity*>(target.get());
-    if (living == NULL) return false;
-    AttributeInstance* attack = getAttribute(NULL);
-    float damage = attack == NULL ? 0.0f : (float)attack->getValue();
-    return target->hurt(NULL, damage);
+    EntityDamageSource* source =
+        DamageSource::CreateMobAttack(boost::static_pointer_cast<Mob>(shared_from_this()));
+    bool hurtTarget = target->hurt(source,
+        (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
+    delete source;
+    if (hurtTarget)
+    {
+        doEnchantDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), target);
+        playSound(SoundEvents::DOLPHIN_ATTACK, 1.0f, 1.0f);
+    }
+    return hurtTarget;
 }
 
 void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
@@ -160,8 +177,10 @@ void Dolphin::registerGoals()
 void Dolphin::registerAttributes()
 {
     Mob::registerAttributes();
-    AttributeInstance* health = getAttribute(NULL);
-    if (health != NULL) health->setBaseValue(5.0);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.2f);
+    getAttributes()->registerAttribute(SharedMonsterAttributes::ATTACK_DAMAGE);
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(3.0);
 }
 
 WaterBoundPathNavigation* Dolphin::createNavigation(Level* level)

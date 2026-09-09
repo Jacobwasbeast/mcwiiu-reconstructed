@@ -55,7 +55,7 @@ boost::shared_ptr<Entity> LootTableContext::getEntity(EntityTarget target)
 
     if (target == DIRECT_KILLER)
     {
-        return mDamageSource == NULL ? boost::shared_ptr<Entity>() : mDamageSource->getDirectEntity();
+        return mDamageSource == NULL ? boost::shared_ptr<Entity>() : mDamageSource->getEntity();
     }
 
     if (target == KILLER)

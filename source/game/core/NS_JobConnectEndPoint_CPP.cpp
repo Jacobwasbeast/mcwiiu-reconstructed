@@ -5,13 +5,13 @@ namespace NS_JobConnectEndPoint_CPP
 
 void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnect, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::Scheduler* pScheduler = nn::nex::Scheduler::GetInstance();
+    nn::nex::Scheduler* pScheduler = nn::nex::Core::GetInstance()->GetScheduler();
     nn::nex::CriticalSection& csScheduler = pScheduler->GetCriticalSection();
 
     csScheduler.Enter();
 
     nn::nex::JobConnectEndPoint* pJob = static_cast<nn::nex::JobConnectEndPoint*>(pUserContext->GetPointer());
-    if (pJob->GetState() == nn::nex::Job::SUSPENDED)
+    if (pJob->GetState() == nn::nex::Job::Suspended)
     {
         pJob->ReportConnectResult(resultConnect);
     }
@@ -21,7 +21,7 @@ void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnec
 
 void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultDisconnect, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::Scheduler* pScheduler = nn::nex::Scheduler::GetInstance();
+    nn::nex::Scheduler* pScheduler = nn::nex::Core::GetInstance()->GetScheduler();
     nn::nex::CriticalSection& csScheduler = pScheduler->GetCriticalSection();
 
     csScheduler.Enter();

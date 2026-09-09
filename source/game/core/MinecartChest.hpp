@@ -28,7 +28,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual unsigned int getContainerType();
     virtual void destroy(const DamageSource* source);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual int getDefaultDisplayOffset();
     virtual unsigned long long GetType();

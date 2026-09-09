@@ -23,7 +23,7 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player,
                           InteractionHand::EInteractionHand hand);
     virtual void activateMinecart(int x, int y, int z, bool powered);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned long long GetType();
 };

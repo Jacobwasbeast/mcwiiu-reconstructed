@@ -51,10 +51,10 @@ public:
     float cost;
     float costMalus;
     const BlockPathTypes* type;
+    bool hasAcceptedNode;
+    Node* acceptedNode;
 
 private:
-    bool inOpen;
-    int searchState;
     static unsigned int poolSize;
     static bool usePool;
     static Node pool[1024];

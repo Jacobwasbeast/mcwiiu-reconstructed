@@ -54,9 +54,9 @@ void MinecartFurnace::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
 }
 
-unsigned int MinecartFurnace::getType()
+const Minecart::Type* MinecartFurnace::getType()
 {
-    return 0;
+    return Minecart::Type::FURNACE;
 }
 
 void MinecartFurnace::defineSynchedData()

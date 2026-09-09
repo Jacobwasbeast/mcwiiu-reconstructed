@@ -75,7 +75,7 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
             spawnAtLocation(Item::byBlock(Blocks::red_mushroom), 1, 0.0f);
 
         itemInstance->hurtAndBreak(1, player);
-        playSound(SoundEvents::MOOSHROOM_SHEAR, 1.0f, 1.75f);
+        playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.75f);
         return true;
     }
 

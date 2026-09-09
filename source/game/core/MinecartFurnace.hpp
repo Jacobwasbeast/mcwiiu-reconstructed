@@ -26,7 +26,7 @@ public:
     static void staticCtor();
     virtual unsigned int getContainerType();
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual void defineSynchedData();
     void setHasFuel(bool hasFuel);
     bool hasFuel();

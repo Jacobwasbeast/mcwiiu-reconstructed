@@ -73,7 +73,7 @@ void Pufferfish::damageNearbyMobs()
             (type & ENTITY_TYPE_MONSTER) == ENTITY_TYPE_MONSTER)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-            if (living->hurt(boost::static_pointer_cast<DamageSource>(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this()))).get(), mDamage))
+            if (living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage))
                 living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), shared_from_this());
         }
     }

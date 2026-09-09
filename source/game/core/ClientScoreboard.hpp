@@ -67,8 +67,8 @@ public:
     int GetTotalDistanceTravelled(const StatsUID& suid);
     int GetTotalTrapsSetOff(const StatsUID& suid);
     int GetTotalJumps(const StatsUID& suid);
-    int GetVotesGiven(const StatsUID& suid, int round);
-    int GetVotesReceived(const StatsUID& suid, int round);
+    const unsigned short* GetVotesGiven(const StatsUID& suid, int round);
+    const unsigned short* GetVotesReceived(const StatsUID& suid, int round);
     int GetRoundLength(unsigned int round);
     void GetPlayersSortedByPoints(std::list<std::pair<std::wstring, int> >& players, int round);
     void GetPlayersSortedByPosition(std::list<std::pair<std::wstring, int> >& players, int round);

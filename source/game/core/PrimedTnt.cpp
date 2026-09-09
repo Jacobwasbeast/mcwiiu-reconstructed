@@ -80,8 +80,7 @@ bool PrimedTnt::isPickable()
 
 void PrimedTnt::explode()
 {
-    bool restricted = Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true);
-    if (restricted && Minecraft::GetInstance()->GetMiniGame() != NULL
+    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true)
         && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
     {
         mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
@@ -99,8 +98,7 @@ void PrimedTnt::tick()
     mXo = mX;
     mYo = mY;
     mZo = mZ;
-    updateInWaterState();
-    if (!mNoPhysics)
+    if (!isNoGravity())
     {
         mYd -= 0.04;
     }
@@ -118,13 +116,14 @@ void PrimedTnt::tick()
     if (mLife <= 0)
     {
         remove();
-        if (mLevel != NULL && !mLevel->mIsClientSide)
+        if (!mLevel->mIsClientSide)
         {
             explode();
         }
     }
     else
     {
+        updateInWaterState();
         mLevel->addParticle(ePARTICLE_SMOKE, false, mX, mY + 0.5, mZ, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
     PIXEndNamedEvent();

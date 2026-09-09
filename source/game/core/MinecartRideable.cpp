@@ -4,6 +4,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 MinecartRideable::MinecartRideable(Level* level) : Minecart(level)
 {
@@ -34,15 +36,14 @@ void MinecartRideable::addDataWalkers(DataFixerUpper* dataFixerUpper)
 bool MinecartRideable::interact(const boost::shared_ptr<Player>& player,
                                 InteractionHand::EInteractionHand hand)
 {
-    Entity* playerEntity = (Entity*)player.get();
-    if (playerEntity->isVehicle())
+    if (player->isSneaking())
     {
         return false;
     }
 
-    if (!mLevel->mIsClientSide)
+    if (!isVehicle() && !mLevel->mIsClientSide)
     {
-        playerEntity->startRiding(shared_from_this());
+        player->startRiding(shared_from_this());
     }
 
     return true;
@@ -62,18 +63,19 @@ void MinecartRideable::activateMinecart(int x, int y, int z, bool powered)
             setHurtDir(-getHurtDir());
             setHurtTime(10);
             setDamage(50.0f);
+            markHurt();
         }
     }
 }
 
-unsigned int MinecartRideable::getType()
+const Minecart::Type* MinecartRideable::getType()
 {
-    return static_cast<unsigned int>(ENTITY_TYPE_MINECART_RIDEABLE);
+    return Minecart::Type::RIDEABLE;
 }
 
 unsigned int MinecartRideable::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (!((Entity*)tooltipData.m_pPlayer.get())->isVehicle() && getPassengers()->empty())
+    if (!tooltipData.m_pPlayer->isSneaking() && getPassengers()->empty())
     {
         return 0x257433afU;
     }

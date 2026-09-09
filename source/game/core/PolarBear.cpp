@@ -140,9 +140,10 @@ bool PolarBear::doHurtTarget(boost::shared_ptr<Entity> target)
     boost::shared_ptr<LivingEntity> livingTarget = boost::dynamic_pointer_cast<LivingEntity>(target);
     if (!livingTarget) return false;
     boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    boost::shared_ptr<EntityDamageSource> source = DamageSource::CreateMobAttack(attacker);
+    EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
     float damage = static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
-    bool hurt = livingTarget->hurt(source.get(), damage);
+    bool hurt = livingTarget->hurt(source, damage);
+    delete source;
     if (hurt) doEnchantDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), target);
     return hurt;
 }

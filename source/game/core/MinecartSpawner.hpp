@@ -31,7 +31,7 @@ public:
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);

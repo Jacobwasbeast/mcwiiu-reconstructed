@@ -3,7 +3,8 @@
 
 #include <vector>
 
-class Item;
+#include "game/core/Object.hpp"
+
 class Recipes;
 
 class ToolRecipies
@@ -13,7 +14,7 @@ public:
     void addRecipes(Recipes* recipes);
 
 private:
-    std::vector<std::vector<Item*> > mTools;
+    std::vector<Object*>* mLists;
 };
 
 #endif

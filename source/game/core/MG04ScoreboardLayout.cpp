@@ -2,10 +2,17 @@
 
 #include <sstream>
 
+#include "game/core/ClientScoreboard.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 MG04ScoreboardLayout::MG04ScoreboardLayout() : IScoreboardLayout()
 {
@@ -42,63 +49,84 @@ bool MG04ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 
 void MG04ScoreboardLayout::Init(int value)
 {
-    m_playerCount = value;
+    m_localPlayerIdx = value;
     ClearPlayersInfo();
 }
 
-std::wstring MG04ScoreboardLayout::getLabel2(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel2(const StatsUID& uid)
 {
-    return L"Blocks Placed: {BLOCKS}";
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int blocks = scoreboard->GetBlocksPlaced(uid, -1);
+    std::wstring text(L"");
+    text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
+    return UIString(text);
 }
 
-std::wstring MG04ScoreboardLayout::getLabel3(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
-    return L"Blocks Destroyed: {BLOCKS}";
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int blocks = scoreboard->GetBlocksDestroyed(uid, -1);
+    std::wstring text(L10N::GetString(0x782d903f));
+    text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
+    return UIString(text);
 }
 
-std::wstring MG04ScoreboardLayout::getLabel4(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel4(const StatsUID& uid)
 {
-    return L"Distance: {DELTA}";
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const int distance = scoreboard->GetTotalDistanceTravelled(uid);
+    std::wstring text(L10N::GetString(0x2815dc90));
+    text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
+    return UIString(text);
 }
 
-std::wstring MG04ScoreboardLayout::getLabel5(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
-    return L"Winner";
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    if (scoreboard->IsOverallWinner(uid))
+    {
+        return UIString(0x9148f7e8);
+    }
+    return UIString(L"");
 }
 
-std::wstring MG04ScoreboardLayout::getLabel6(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel6(const StatsUID&)
 {
-    return L"";
+    return UIString(L"");
 }
 
-std::wstring MG04ScoreboardLayout::getLabel7(const StatsUID&)
+UIString MG04ScoreboardLayout::getLabel7(const StatsUID&)
 {
-    return L"Overall Winner";
+    return UIString(0xe063a16f);
 }
 
-uint32_t MG04ScoreboardLayout::getStatIcon2(const EScoreboardType&)
+unsigned int MG04ScoreboardLayout::getStatIcon2(const EScoreboardType&)
 {
     return 5;
 }
 
-uint32_t MG04ScoreboardLayout::getStatIcon3(const EScoreboardType&)
+unsigned int MG04ScoreboardLayout::getStatIcon3(const EScoreboardType&)
 {
     return 5;
 }
 
-uint32_t MG04ScoreboardLayout::getStatIcon4(const EScoreboardType&)
+unsigned int MG04ScoreboardLayout::getStatIcon4(const EScoreboardType&)
 {
     return 7;
 }
 
-uint32_t MG04ScoreboardLayout::getStatIcon5(const EScoreboardType&)
+unsigned int MG04ScoreboardLayout::getStatIcon5(const EScoreboardType&)
 {
     return 7;
 }
 
-uint32_t MG04ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
+unsigned int MG04ScoreboardLayout::getTitleIcon(int column, const EScoreboardType&)
 {
-    if (static_cast<unsigned int>(type) < 3)
+    if (static_cast<unsigned int>(column) < 3)
     {
         return 0x77;
     }
@@ -107,20 +135,20 @@ uint32_t MG04ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& t
 
 std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID&, const EScoreboardType& type)
 {
-    if (type == EScoreboardType_Unknown)
-        return std::wstring(L"---");
+    if (type == EScoreboardType_Scoreboard)
+        return std::wstring(L"");
     if (column >= 0 && column < 3)
     {
         std::wstringstream text;
         text << column;
         return text.str();
     }
-    return std::wstring(L"---");
+    return std::wstring(L"");
 }
 
 boost::shared_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&, const EScoreboardType& type)
 {
-    if (type == EScoreboardType_Unknown)
+    if (type == EScoreboardType_Scoreboard)
     {
         if (row == 3)
         {
@@ -193,7 +221,7 @@ bool MG04ScoreboardLayout::showLifeSpanProgress()
     return true;
 }
 
-uint32_t MG04ScoreboardLayout::getNumberOfColumns()
+unsigned int MG04ScoreboardLayout::getNumberOfColumns()
 {
     return 4;
 }

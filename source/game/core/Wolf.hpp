@@ -67,14 +67,14 @@ public:
     virtual void aiStep();
     bool isInterested();
     virtual void tick();
-    double getBodyRollAngle(float partialTick, float scale);
+    double getBodyRollAngle(float partialTick, float offset);
     double getHeadRollAngle(float partialTick);
     virtual double getEyeHeight();
     virtual int getMaxHeadXRot();
     virtual bool hurt(const DamageSource* source, float amount);
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
-    void setTame(bool tame);
-    void tame(boost::shared_ptr<Player> player, bool success, bool showParticles);
+    virtual void setTame(bool tame);
+    void tame(boost::shared_ptr<Player> player, bool showParticles, bool flag);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void handleEntityEvent(unsigned char event, int data);
     double getTailAngle();
@@ -85,7 +85,7 @@ public:
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     void setIsInterested(bool interested);
     virtual bool canMate(const boost::shared_ptr<Animal>& other);
-    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target);
+    virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual unsigned long long GetType();
     bool isWet();
@@ -95,12 +95,12 @@ private:
     static const EntityDataAccessor<float>* DATA_HEALTH;
     static const EntityDataAccessor<bool>* DATA_INTERESTED;
     static const EntityDataAccessor<int>* DATA_COLLAR_COLOR;
-    float mBodyRollAngle;
     float mInterestedAngle;
-    unsigned char mIsWet;
-    unsigned char mIsWetShaking;
-    float mHeadRollAngle;
-    float mTailRollAngle;
+    float mInterestedAngleO;
+    bool mIsWet;
+    bool mIsShaking;
+    float mShakeAnim;
+    float mShakeAnimO;
 };
 
 #endif

@@ -46,7 +46,7 @@ public:
 
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual unsigned int getType();
+    virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual int getDefaultDisplayOffset();
     virtual bool interact(const boost::shared_ptr<Player>& player,

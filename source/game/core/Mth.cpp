@@ -147,12 +147,6 @@ float Mth::sqrt(double value)
     return ::sqrt(value);
 }
 
-int Mth::floor(float value)
-{
-    int truncated = (int)value;
-    return value < (float)truncated ? truncated - 1 : truncated;
-}
-
 long long Mth::lfloor(double value)
 {
     long long truncated = (long long)value;

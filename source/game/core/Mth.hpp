@@ -25,6 +25,7 @@ public:
     static float sqrt(float value);
     static float sqrt(double value);
     static int floor(float value);
+    static int ceil(float value);
     static long long lfloor(double value);
     static int absFloor(double value);
     static int fastFloor(double value);
@@ -105,6 +106,18 @@ public:
     template <typename T>
     static void shuffle(std::vector<T>* values, Random& random);
 };
+
+inline int Mth::floor(float value)
+{
+    int truncated = (int)value;
+    return value < (float)truncated ? truncated - 1 : truncated;
+}
+
+inline int Mth::ceil(float value)
+{
+    int truncated = (int)value;
+    return (float)truncated < value ? truncated + 1 : truncated;
+}
 
 template <typename T>
 void Mth::shuffle(std::vector<T>* values, Random& random)

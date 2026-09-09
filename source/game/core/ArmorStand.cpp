@@ -26,6 +26,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<unsigned char>* ArmorStand::DATA_FLAGS = NULL;
 const EntityDataAccessor<int>* ArmorStand::DATA_POSE = NULL;
@@ -120,16 +121,17 @@ void ArmorStand::addDataWalkers(DataFixerUpper* fixer)
 
 void ArmorStand::_init()
 {
-    mFlags = 0;
-    mPoseIndex = 0;
-    mShowArms = true;
-    mNoBasePlate = false;
-    mMarker = false;
+    fjDerivedCtorCalls();
     mDisabledSlots = 0;
-    mLastSignal = 0;
+    mInvisible = false;
+    mLastHit = 0;
+    mWasMarker = false;
+    mNoPhysics = isNoGravity();
+    setSize(0.5f, 1.975f);
     mHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
     mArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
-    setSize(0.5f, 1.975f);
+    mLastSignal = 0;
+    setShowArms(true);
 }
 
 unsigned char ArmorStand::setBit(unsigned char value, int bit, bool enabled)
@@ -137,7 +139,10 @@ unsigned char ArmorStand::setBit(unsigned char value, int bit, bool enabled)
     return enabled ? (unsigned char)(value | bit) : (unsigned char)(value & ~bit);
 }
 
-void ArmorStand::setShowArms(bool showArms) { mShowArms = showArms; }
+void ArmorStand::setShowArms(bool showArms)
+{
+    mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 4, showArms), true);
+}
 std::vector<boost::shared_ptr<ItemInstance> >* ArmorStand::getHandSlots()
 {
     std::vector<boost::shared_ptr<ItemInstance> >* items =
@@ -221,10 +226,10 @@ bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
     return true;
 }
 bool ArmorStand::isEffectiveAi() { return !isMarker() && LivingEntity::isEffectiveAi(); }
-bool ArmorStand::isSmall() { return mFlags & 1; }
-bool ArmorStand::isNoBasePlate() { return mNoBasePlate; }
-bool ArmorStand::isMarker() { return mMarker; }
-int ArmorStand::getPoseIndex() { return mPoseIndex; }
+bool ArmorStand::isSmall() { return (mEntityData->get(DATA_FLAGS) & 1) != 0; }
+bool ArmorStand::isNoBasePlate() { return (mEntityData->get(DATA_FLAGS) & 8) != 0; }
+bool ArmorStand::isMarker() { return (mEntityData->get(DATA_FLAGS) & 0x10) != 0; }
+int ArmorStand::getPoseIndex() { return mEntityData->get(DATA_POSE); }
 void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
 {
     ListTag* armorItems = new ListTag();
@@ -266,10 +271,21 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
     pose->putInt(L"LastSignal", mLastSignal);
     tag->put(L"Pose", pose);
 }
-void ArmorStand::setSmall(bool small) { mFlags = setBit((unsigned char)mFlags, 1, small); }
-void ArmorStand::setNoBasePlate(bool noBasePlate) { mNoBasePlate = noBasePlate; }
-void ArmorStand::setMarker(bool marker) { mMarker = marker; }
-void ArmorStand::setPoseIndex(int pose) { mPoseIndex = pose; }
+void ArmorStand::setSmall(bool small)
+{
+    mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 1, small), true);
+    setSize(0.5f, 1.975f);
+}
+void ArmorStand::setNoBasePlate(bool noBasePlate)
+{
+    mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 8, noBasePlate), true);
+}
+void ArmorStand::setMarker(bool marker)
+{
+    mEntityData->set(DATA_FLAGS, setBit(mEntityData->get(DATA_FLAGS), 0x10, marker), true);
+    setSize(0.5f, 1.975f);
+}
+void ArmorStand::setPoseIndex(int pose) { mEntityData->set(DATA_POSE, pose, true); }
 void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
 {
     if (tag->contains(L"ArmorItems", 9))
@@ -305,6 +321,8 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
     setNoGravity(tag->getBoolean(L"NoGravity"));
     setNoBasePlate(tag->getBoolean(L"NoBasePlate"));
     setMarker(tag->getBoolean(L"Marker"));
+    mWasMarker = !isMarker();
+    mNoPhysics = isNoGravity();
     if (tag->contains(L"Pose", 10))
     {
         CompoundTag* pose = tag->getCompound(L"Pose");
@@ -385,7 +403,7 @@ bool ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const Equipme
     }
     return true;
 }
-bool ArmorStand::isShowArms() { return mShowArms; }
+bool ArmorStand::isShowArms() { return (mEntityData->get(DATA_FLAGS) & 4) != 0; }
 bool ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
                             InteractionHand::EInteractionHand hand)
 {
@@ -508,37 +526,112 @@ void ArmorStand::brokenByPlayer()
 }
 bool ArmorStand::hurt(const DamageSource* source, float damage)
 {
-    if (source == NULL || isMarker() || isInvulnerableTo(source))
+    boost::shared_ptr<Entity> sourceEntity = source->getEntity();
+    if (sourceEntity && (sourceEntity->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    {
+        boost::shared_ptr<Player> sourcePlayer = boost::dynamic_pointer_cast<Player>(sourceEntity);
+        if (sourcePlayer->isAllowedToHurtEntity(shared_from_this()) == 0)
+        {
+            return false;
+        }
+    }
+
+    if (mLevel->mIsClientSide)
     {
         return false;
     }
-    if (source == DamageSource::FALL)
+
+    if (DamageSource::OUT_OF_WORLD->equals(source))
+    {
+        remove();
+        return false;
+    }
+
+    if (isInvulnerableTo(source) || mInvisible || isMarker())
     {
         return false;
     }
+
     if (source->isExplosion())
     {
         brokenByAnything();
         remove();
         return false;
     }
+
+    if (DamageSource::IN_FIRE->equals(source))
+    {
+        if (!isOnFire())
+        {
+            setSecondsOnFire(5);
+        }
+        else
+        {
+            causeDamage(0.15f);
+        }
+        return false;
+    }
+
+    if (DamageSource::ON_FIRE->equals(source) && getHealth() > 0.5f)
+    {
+        causeDamage(4.0f);
+        return false;
+    }
+
+    const int msgId = source->getMsgId();
+    if (msgId != DamageSource::eDamageMsgId_PlayerAttack &&
+        msgId != DamageSource::eDamageMsgId_Arrow &&
+        msgId != DamageSource::eDamageMsgId_Trident)
+    {
+        return false;
+    }
+
+    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
+    if ((directEntity->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+    {
+        directEntity->remove();
+    }
+
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if ((attacker->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    {
+        boost::shared_ptr<Player> attackingPlayer = boost::dynamic_pointer_cast<Player>(source->getEntity());
+        if (!attackingPlayer->mAbilities.mMayBuild)
+        {
+            return false;
+        }
+    }
+
     if (source->isCreativePlayer())
     {
         playBrokenSound();
         showBreakingParticles();
-        brokenByPlayer();
         remove();
-        return true;
+        return false;
     }
-    causeDamage(damage > 0.0f ? damage : 0.15f);
-    return true;
+
+    long long gameTime = mLevel->getGameTime();
+    if (gameTime - mLastHit > 5 &&
+        msgId != DamageSource::eDamageMsgId_Arrow &&
+        msgId != DamageSource::eDamageMsgId_Trident)
+    {
+        mLevel->broadcastEntityEvent(shared_from_this(), 32, 0);
+        mLastHit = gameTime;
+    }
+    else
+    {
+        brokenByPlayer();
+        showBreakingParticles();
+        remove();
+    }
+    return false;
 }
 void ArmorStand::handleEntityEvent(unsigned char event, int data)
 {
     if (event == 0x20)
     {
         playBrokenSound();
-        mLastSignal = mLevel == NULL ? data : (int)mLevel->getGameTime();
+        mLastHit = mLevel->getGameTime();
     }
     else
     {
@@ -546,8 +639,12 @@ void ArmorStand::handleEntityEvent(unsigned char event, int data)
     }
 }
 bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr) { return distanceSqr < 4096.0; }
-void ArmorStand::setInvisible(bool invisible) { Entity::setInvisible(invisible); }
-bool ArmorStand::isBaby() { return false; }
+void ArmorStand::setInvisible(bool invisible)
+{
+    mInvisible = invisible;
+    Entity::setInvisible(invisible);
+}
+bool ArmorStand::isBaby() { return isSmall(); }
 void ArmorStand::kill() { remove(); }
 bool ArmorStand::ignoreExplosion() { return true; }
 int ArmorStand::getPistonPushReaction() { return isMarker() ? 3 : Entity::getPistonPushReaction(); }
@@ -587,7 +684,7 @@ float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
     return 0.0f;
 }
 double ArmorStand::getRidingHeight() { return isMarker() ? 0.05 : 1.45; }
-double ArmorStand::getEyeHeight() { return mMarker ? 0.0 : (mFlags & 1 ? 0.9875 : 1.8075); }
+double ArmorStand::getEyeHeight() { return (double)(mBbHeight * (isBaby() ? 0.5f : 0.9f)); }
 void ArmorStand::travel(float xxa, float yya, float zza)
 {
     if (!isNoGravity())
@@ -648,7 +745,7 @@ void ArmorStand::pushEntities()
 {
     LivingEntity::pushEntities();
 }
-void ArmorStand::updateInvisibilityStatus() { LivingEntity::updateInvisibilityStatus(); }
+void ArmorStand::updateInvisibilityStatus() { setInvisible(mInvisible); }
 bool ArmorStand::generatesBubbles() { return false; }
 void ArmorStand::setAirSupply(int airSupply) { Entity::setAirSupply(airSupply); }
 unsigned long long ArmorStand::GetType() { return ENTITY_TYPE_ARMOR_STAND; }

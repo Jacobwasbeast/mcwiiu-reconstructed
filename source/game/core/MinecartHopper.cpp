@@ -147,9 +147,9 @@ void MinecartHopper::addDataWalkers(DataFixerUpper* fixer)
     MinecartContainer::addDataWalkers(fixer, 0x0A84000500000000ULL);
 }
 
-unsigned int MinecartHopper::getType()
+const Minecart::Type* MinecartHopper::getType()
 {
-    return 0;
+    return Minecart::Type::HOPPER;
 }
 
 const BlockState* MinecartHopper::getDefaultDisplayBlockState()

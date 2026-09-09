@@ -2,29 +2,30 @@
 #define GAME_CORE_MG03SCOREBOARDLAYOUT_HPP
 
 #include "game/core/IScoreboardLayout.hpp"
+#include "game/ui/UIString.hpp"
 
 class MG03ScoreboardLayout : public IScoreboardLayout
 {
 private:
-    int m_playerCount;
+    int m_localPlayerIdx;
 public:
     explicit MG03ScoreboardLayout(EScoreboardType type);
     virtual ~MG03ScoreboardLayout();
     static unsigned int SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
-    virtual uint32_t getStatIcon2(const EScoreboardType& type);
-    virtual uint32_t getStatIcon3(const EScoreboardType& type);
-    virtual uint32_t getStatIcon4(const EScoreboardType& type);
-    virtual uint32_t getStatIcon5(const EScoreboardType& type);
-    virtual std::wstring getLabel2(const StatsUID& uid);
-    virtual std::wstring getLabel3(const StatsUID& uid);
-    virtual std::wstring getLabel4(const StatsUID& uid);
-    virtual std::wstring getLabel5(const StatsUID& uid);
-    virtual std::wstring getLabel6(const StatsUID& uid);
-    virtual std::wstring getLabel7(const StatsUID& uid);
-    virtual uint32_t getTitleIcon(int column, const EScoreboardType& type);
+    virtual unsigned int getStatIcon2(const EScoreboardType& type);
+    virtual unsigned int getStatIcon3(const EScoreboardType& type);
+    virtual unsigned int getStatIcon4(const EScoreboardType& type);
+    virtual unsigned int getStatIcon5(const EScoreboardType& type);
+    virtual UIString getLabel2(const StatsUID& uid);
+    virtual UIString getLabel3(const StatsUID& uid);
+    virtual UIString getLabel4(const StatsUID& uid);
+    virtual UIString getLabel5(const StatsUID& uid);
+    virtual UIString getLabel6(const StatsUID& uid);
+    virtual UIString getLabel7(const StatsUID& uid);
+    virtual unsigned int getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
-    virtual uint32_t getNumberOfColumns();
+    virtual unsigned int getNumberOfColumns();
     boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
     virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual std::wstring GetCustomProgressDetails(const StatsUID& uid, int& value);

@@ -1,10 +1,10 @@
 #include "game/core/QueueToken.hpp"
 
-extern unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* address);
-extern unsigned int rrAtomicCmpXchg32(volatile unsigned int* address,
-                                      unsigned int value,
-                                      unsigned int comparand);
-extern void rrThreadSleep(unsigned int milliseconds);
+extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* address);
+extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* address,
+                                          unsigned int value,
+                                          unsigned int comparand);
+extern "C" void rrThreadSleep(unsigned int milliseconds);
 
 static volatile unsigned int s_queueTokens = 0;
 

@@ -8,17 +8,20 @@
 #include "game/core/InteractionHand.hpp"
 
 class AgableMob;
+class AvoidEntityGoal;
 class CompoundTag;
 class DamageSource;
 class DataFixerUpper;
 class DifficultyInstance;
 class Entity;
 class EntityTooltipDataHolder;
-class Goal;
 class ItemInstance;
 class Level;
 class MobGroupData;
+class Player;
 class SoundEvent;
+class TemptGoal;
+template <class T> class EntityDataAccessor;
 
 class Ocelot : public TamableAnimal
 {
@@ -26,16 +29,17 @@ public:
     Ocelot(Level* level);
     virtual ~Ocelot();
     static void create(Level* level);
-    void setSittingOnBlock(bool sitting);
     static void staticCtor();
+    static void addDataWalkers(DataFixerUpper* fixer);
+    void setSittingOnBlock(bool sitting);
+    bool isSittingOnBlock();
+    void SetIsTempted(bool tempted);
     virtual void registerGoals();
     virtual void defineSynchedData();
-    void SetIsTempted(bool tempted);
     virtual void customServerAiStep();
     virtual bool removeWhenFarAway();
     virtual void registerAttributes();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);
-    static void addDataWalkers(DataFixerUpper* fixer);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual const SoundEvent* getAmbientSound();
@@ -49,25 +53,23 @@ public:
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isFood(const not_null_ptr<ItemInstance>& item);
     virtual bool canMate(const boost::shared_ptr<Animal>& other);
-    int getCatType();
-    void setCatType(int type);
+    virtual int getCatType();
+    virtual void setCatType(int catType);
     virtual bool checkSpawnRules();
     virtual bool checkSpawnObstruction();
     virtual std::wstring getName();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& dataString);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
-    bool isSittingOnBlock();
-    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
+    virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual void reassessTameGoals();
     virtual unsigned long long GetType();
 
 private:
-    Goal* mSitOnBlockGoal;
-    Goal* mTemptGoal;
-    int mCatType;
-    bool mIsTempted;
-    bool mSittingOnBlock;
+    static const EntityDataAccessor<int>* DATA_CAT_TYPE;
+    static const EntityDataAccessor<bool>* DATA_IS_TEMPTED;
+    AvoidEntityGoal* mAvoidPlayersGoal;
+    TemptGoal* mTemptGoal;
 };
 
 #endif

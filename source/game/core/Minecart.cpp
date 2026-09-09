@@ -2,6 +2,12 @@
 
 #include <cmath>
 
+#include "game/core/MinecartChest.hpp"
+#include "game/core/MinecartFurnace.hpp"
+#include "game/core/MinecartHopper.hpp"
+#include "game/core/MinecartRideable.hpp"
+#include "game/core/MinecartSpawner.hpp"
+#include "game/core/MinecartTNT.hpp"
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -110,11 +116,21 @@ void Minecart::setPos(double x, double y, double z)
 
 boost::shared_ptr<Minecart> Minecart::createMinecart(Level* level, double x, double y, double z, const Type* type)
 {
-    if (type == NULL || type->mId == 0)
+    switch (type->mId)
     {
-        return boost::shared_ptr<Minecart>(new Minecart(level, x, y, z));
+    case 1:
+        return boost::shared_ptr<Minecart>(new MinecartChest(level, x, y, z));
+    case 2:
+        return boost::shared_ptr<Minecart>(new MinecartFurnace(level, x, y, z));
+    case 3:
+        return boost::shared_ptr<Minecart>(new MinecartTNT(level, x, y, z));
+    case 4:
+        return boost::shared_ptr<Minecart>(new MinecartSpawner(level, x, y, z));
+    case 5:
+        return boost::shared_ptr<Minecart>(new MinecartHopper(level, x, y, z));
+    default:
+        return boost::shared_ptr<Minecart>(new MinecartRideable(level, x, y, z));
     }
-    return boost::shared_ptr<Minecart>(new Minecart(level, x, y, z));
 }
 
 bool Minecart::makeStepSound()

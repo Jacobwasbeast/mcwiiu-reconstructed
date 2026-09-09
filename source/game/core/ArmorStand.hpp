@@ -139,15 +139,14 @@ public:
     virtual unsigned long long GetType();
     virtual void thunderHit(const LightningBolt* lightningBolt);
 
+    long long mLastHit;
+
 private:
-    int mFlags;
-    int mPoseIndex;
     NonNullList<not_null_ptr<ItemInstance> > mHandItems;
     NonNullList<not_null_ptr<ItemInstance> > mArmorItems;
-    bool mShowArms;
-    bool mNoBasePlate;
-    bool mMarker;
+    bool mInvisible;
     int mDisabledSlots;
+    bool mWasMarker;
     int mLastSignal;
 };
 

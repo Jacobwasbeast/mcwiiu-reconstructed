@@ -41,7 +41,7 @@ Llama::LlamaGroupData::LlamaGroupData(int variant) : MobGroupData(), mVariant(va
 Llama::LlamaGroupData::~LlamaGroupData() { }
 
 Llama::LlamaHurtByTargetGoal::LlamaHurtByTargetGoal(Llama* llama)
-    : HurtByTargetGoal(llama, false, arrayWithLength<unsigned long long>(NULL, 0)) { }
+    : HurtByTargetGoal(llama, false, arrayWithLength<unsigned long long>()) { }
 Llama::LlamaHurtByTargetGoal::~LlamaHurtByTargetGoal() { }
 bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 {
@@ -162,7 +162,14 @@ void Llama::playStepSound(const BlockPos&, Block*)
     playSound(SoundEvents::LLAMA_STEP, 0.15f, 1.0f);
 }
 void Llama::playChestEquipsSound() { AbstractChestedHorse::playChestEquipsSound(); }
-boost::shared_ptr<Entity> Llama::makeMad() { return boost::shared_ptr<Entity>(); }
+void Llama::makeMad()
+{
+    const SoundEvent* sound = getAngrySound();
+    if (sound != NULL)
+    {
+        playSound(sound, getSoundVolume(), getVoicePitch());
+    }
+}
 const void* Llama::getDefaultLootTable() { return &BuiltInLootTables::LLAMA; }
 int Llama::getInventoryColumns() { return getStrength(); }
 bool Llama::wearsArmor() { return true; }
@@ -217,6 +224,12 @@ bool Llama::hasCaravanTail() { return mCaravanTail.get() != NULL; }
 bool Llama::inCaravan() { return mCaravanHead.get() != NULL; }
 boost::shared_ptr<Llama> Llama::getCaravanHead() { return mCaravanHead; }
 double Llama::followLeashSpeed() { return 2.0; }
-boost::shared_ptr<Entity> Llama::followMommy() { return AbstractHorse::followMommy(); }
+void Llama::followMommy()
+{
+    if (!inCaravan() && isBaby())
+    {
+        AbstractHorse::followMommy();
+    }
+}
 bool Llama::canEatGrass() const { return false; }
 unsigned long long Llama::GetType() { return 0x000000002D698003ULL; }

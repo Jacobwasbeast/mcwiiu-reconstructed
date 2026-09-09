@@ -38,9 +38,9 @@ void MinecartSpawner::addDataWalkers(DataFixerUpper* fixer)
                      new OverwritableWalker(0x000000000A800006ULL, L"MobSpawner"));
 }
 
-unsigned int MinecartSpawner::getType()
+const Minecart::Type* MinecartSpawner::getType()
 {
-    return 0;
+    return Minecart::Type::SPAWNER;
 }
 
 const BlockState* MinecartSpawner::getDefaultDisplayBlockState()

@@ -53,9 +53,9 @@ void MinecartTNT::addDataWalkers(DataFixerUpper*)
 {
 }
 
-unsigned int MinecartTNT::getType()
+const Minecart::Type* MinecartTNT::getType()
 {
-    return 0;
+    return Minecart::Type::TNT;
 }
 
 const BlockState* MinecartTNT::getDefaultDisplayBlockState()
