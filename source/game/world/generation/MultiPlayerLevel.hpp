@@ -60,7 +60,7 @@ public:
                               const Difficulty* difficulty, int seaLevel);
     virtual void tick();
     void clearResetRegion(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
-    virtual void createChunkSource();
+    virtual ChunkSource* createChunkSource();
     ChunkSource* getChunkSource();
     virtual bool hasChunk(int x, int z, bool allowEmpty);
     virtual bool hasChunksAt(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, bool allowEmpty);

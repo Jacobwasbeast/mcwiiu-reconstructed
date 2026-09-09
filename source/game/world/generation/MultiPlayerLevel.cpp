@@ -211,7 +211,7 @@ void MultiPlayerLevel::clearResetRegion(int minX, int minY, int minZ,
     }
 }
 
-void MultiPlayerLevel::createChunkSource()
+ChunkSource* MultiPlayerLevel::createChunkSource()
 {
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
         CGameNetworkManager::sInstance.IsHost())
@@ -219,11 +219,12 @@ void MultiPlayerLevel::createChunkSource()
     else
         mClientChunkCache = new ClientChunkCache(
             this, getLevelStorage()->createChunkStorage(mDimension));
+    return mClientChunkCache;
 }
 
 ChunkSource* MultiPlayerLevel::getChunkSource()
 {
-    return mClientChunkCache;
+    return Level::getChunkSource();
 }
 
 bool MultiPlayerLevel::hasChunk(int x, int z, bool allowEmpty)

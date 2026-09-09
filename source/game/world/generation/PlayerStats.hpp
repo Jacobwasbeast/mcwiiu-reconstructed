@@ -182,7 +182,7 @@ public:
     StatTracker<float>* mDamageDealt;
     StatTracker<float>* mDamageReceived;
     FallKillStatTracker* mFallKills;
-    StatTracker<int>* mAmphibiousKills;
+    StatTracker<unsigned int>* mAmphibiousKills;
     TotalKillsStatTracker* mTotalKills;
     SniperStatTracker* mSniper;
 
