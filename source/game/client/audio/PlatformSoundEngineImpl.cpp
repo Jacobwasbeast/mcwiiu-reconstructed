@@ -34,50 +34,50 @@ struct _MILESSOUNDINSTANCEINFO
 
 typedef int (*RIB_MAIN_FUNC)(unsigned int uiProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
 
-void AXInit();
-void MIXInit();
+extern "C" void AXInit();
+extern "C" void MIXInit();
 
-int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
-unsigned int RIB_load_static_provider_library(RIB_MAIN_FUNC pMain, const char* pLibraryName);
+extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
+extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_FUNC pMain, const char* pLibraryName);
 
 unsigned int file_open_callback(const char* pFileName, unsigned int* puiFileHandle);
 void file_close_callback(unsigned int uiFileHandle);
 void file_seek_callback(unsigned int uiFileHandle, int iOffset, unsigned int uiType);
 int file_read_callback(unsigned int uiFileHandle, void* pBuffer, unsigned int uiBytes);
 
-void AIL_startup();
-void AIL_shutdown();
-const char* AIL_last_error();
-void AIL_set_file_callbacks(unsigned int (*pOpen)(const char*, unsigned int*), void (*pClose)(unsigned int), void (*pSeek)(unsigned int, int, unsigned int), int (*pRead)(unsigned int, void*, unsigned int));
-unsigned int AIL_output_ax(int iDevice);
-_DIG_DRIVER* AIL_open_generic_digital_driver(unsigned int uiFrequency, int iBits, int iChannels, unsigned int uiFlags, unsigned int uiProvider);
-void AIL_close_digital_driver(_DIG_DRIVER* pDriver);
-void AIL_set_3D_rolloff_factor(_DIG_DRIVER* pDriver, float fRolloffFactor);
-void AIL_set_listener_3D_position(_DIG_DRIVER* pDriver, float fX, float fY, float fZ);
-void AIL_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float fFaceX, float fFaceY, float fFaceZ, float fUpX, float fUpY, float fUpZ);
-void AIL_register_falloff_function_callback(_SAMPLE* pSample, float (*pCallback)(_SAMPLE*, float, float, float, float));
-void AIL_set_sample_is_3D(_SAMPLE* pSample, int iIs3D);
-void AIL_set_sample_3D_distances(_SAMPLE* pSample, float fMaxDistance, float fMinDistance, int iAutoWetAttenuation);
-void AIL_set_sample_3D_position(_SAMPLE* pSample, float fX, float fY, float fZ);
-void AIL_set_sample_playback_rate_factor(_SAMPLE* pSample, float fFactor);
-void AIL_set_sample_volume_levels(_SAMPLE* pSample, float fLeftLevel, float fRightLevel);
-_STREAM* AIL_open_stream(_DIG_DRIVER* pDriver, const char* pFileName, int iStreamMem);
-void AIL_start_stream(_STREAM* pStream);
-void AIL_pause_stream(_STREAM* pStream, int iOnOff);
-void AIL_close_stream(_STREAM* pStream);
-int AIL_stream_status(_STREAM* pStream);
-_SAMPLE* AIL_stream_sample_handle(_STREAM* pStream);
-unsigned int AIL_enqueue_event_start();
-unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* pData, int iDataSize, int iFlags);
-void AIL_enqueue_event_end_named(unsigned int uiQueue, const char* pEventName);
+extern "C" void AIL_startup();
+extern "C" void AIL_shutdown();
+extern "C" const char* AIL_last_error();
+extern "C" void AIL_set_file_callbacks(unsigned int (*pOpen)(const char*, unsigned int*), void (*pClose)(unsigned int), void (*pSeek)(unsigned int, int, unsigned int), int (*pRead)(unsigned int, void*, unsigned int));
+extern "C" unsigned int AIL_output_ax(int iDevice);
+extern "C" _DIG_DRIVER* AIL_open_generic_digital_driver(unsigned int uiFrequency, int iBits, int iChannels, unsigned int uiFlags, unsigned int uiProvider);
+extern "C" void AIL_close_digital_driver(_DIG_DRIVER* pDriver);
+extern "C" void AIL_set_3D_rolloff_factor(_DIG_DRIVER* pDriver, float fRolloffFactor);
+extern "C" void AIL_set_listener_3D_position(_DIG_DRIVER* pDriver, float fX, float fY, float fZ);
+extern "C" void AIL_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float fFaceX, float fFaceY, float fFaceZ, float fUpX, float fUpY, float fUpZ);
+extern "C" void AIL_register_falloff_function_callback(_SAMPLE* pSample, float (*pCallback)(_SAMPLE*, float, float, float, float));
+extern "C" void AIL_set_sample_is_3D(_SAMPLE* pSample, int iIs3D);
+extern "C" void AIL_set_sample_3D_distances(_SAMPLE* pSample, float fMaxDistance, float fMinDistance, int iAutoWetAttenuation);
+extern "C" void AIL_set_sample_3D_position(_SAMPLE* pSample, float fX, float fY, float fZ);
+extern "C" void AIL_set_sample_playback_rate_factor(_SAMPLE* pSample, float fFactor);
+extern "C" void AIL_set_sample_volume_levels(_SAMPLE* pSample, float fLeftLevel, float fRightLevel);
+extern "C" _STREAM* AIL_open_stream(_DIG_DRIVER* pDriver, const char* pFileName, int iStreamMem);
+extern "C" void AIL_start_stream(_STREAM* pStream);
+extern "C" void AIL_pause_stream(_STREAM* pStream, int iOnOff);
+extern "C" void AIL_close_stream(_STREAM* pStream);
+extern "C" int AIL_stream_status(_STREAM* pStream);
+extern "C" _SAMPLE* AIL_stream_sample_handle(_STREAM* pStream);
+extern "C" unsigned int AIL_enqueue_event_start();
+extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* pData, int iDataSize, int iFlags);
+extern "C" void AIL_enqueue_event_end_named(unsigned int uiQueue, const char* pEventName);
 
-void MilesSetEventErrorCallback(void (*pCallback)(long long, const char*));
-int MilesStartupEventSystem(_DIG_DRIVER* pDriver, int iEventMemory, int iFlags, int iStreamMemory);
-SoundBank* MilesAddSoundBank(const char* pFileName, int iFlags);
-void MilesEnqueueEventByName(const char* pEventName);
-void MilesBeginEventQueueProcessing();
-void MilesCompleteEventQueueProcessing();
-int MilesEnumerateSoundInstances(SoundBank* pSoundBank, unsigned int* puiNext, unsigned int uiTypeMask, const char* pLabels, int iEventIndex, int iEventSerial, _MILESSOUNDINSTANCEINFO* pInfo);
+extern "C" void MilesSetEventErrorCallback(void (*pCallback)(long long, const char*));
+extern "C" int MilesStartupEventSystem(_DIG_DRIVER* pDriver, int iEventMemory, int iFlags, int iStreamMemory);
+extern "C" SoundBank* MilesAddSoundBank(const char* pFileName, int iFlags);
+extern "C" void MilesEnqueueEventByName(const char* pEventName);
+extern "C" void MilesBeginEventQueueProcessing();
+extern "C" void MilesCompleteEventQueueProcessing();
+extern "C" int MilesEnumerateSoundInstances(SoundBank* pSoundBank, unsigned int* puiNext, unsigned int uiTypeMask, const char* pLabels, int iEventIndex, int iEventSerial, _MILESSOUNDINSTANCEINFO* pInfo);
 
 static char szSoundPath[] = "WiiU/Sound/";
 
