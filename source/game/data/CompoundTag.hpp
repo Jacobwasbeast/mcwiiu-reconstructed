@@ -72,7 +72,7 @@ public:
     int size();
     std::vector<std::wstring>* getAllKeys();
     std::vector<Tag*>* getAllTags();
-    boost::unordered_map<std::wstring, Tag*>& getAllTagsMap();
+    boost::unordered_map<std::wstring, Tag*>* getAllTagsMap();
 
     bool equalsWithException(Tag* other, std::vector<std::wstring>* exceptions);
     int GetNumValidTagsAfterException(std::vector<std::wstring>* exceptions);

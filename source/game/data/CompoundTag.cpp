@@ -498,9 +498,9 @@ std::vector<Tag*>* CompoundTag::getAllTags()
     return tags;
 }
 
-boost::unordered_map<std::wstring, Tag*>& CompoundTag::getAllTagsMap()
+boost::unordered_map<std::wstring, Tag*>* CompoundTag::getAllTagsMap()
 {
-    return mTags;
+    return &mTags;
 }
 
 bool CompoundTag::equalsWithException(Tag* other, std::vector<std::wstring>* exceptions)
