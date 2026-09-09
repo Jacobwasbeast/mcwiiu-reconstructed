@@ -28,7 +28,7 @@ void StaticLiquidBlock::neighborChanged(const BlockState* state, Level* level, c
     LiquidBlock::neighborChanged(state, level, pos, block, fromPos);
     if (Block::byId(LiquidBlock::getLiquidElement(level, pos) >> 4) == this)
     {
-        updateLiquid(level, pos, state);
+        setDynamic(level, pos, state);
     }
 }
 

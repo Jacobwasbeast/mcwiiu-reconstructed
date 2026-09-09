@@ -8,7 +8,6 @@ class BlockState;
 class CompoundTag;
 class DataFixerUpper;
 class Level;
-class Tag;
 
 class FallingBlockEntity : public Entity
 {
@@ -48,10 +47,11 @@ private:
     const BlockState* mBlockState;
     int mTime;
     bool mDropItem;
+    bool mCancelDrop;
     bool mHurtsEntities;
     int mFallHurtMax;
     float mFallHurtAmount;
-    Tag* mBlockEntityData;
+    CompoundTag* mBlockEntityData;
 };
 
 #endif

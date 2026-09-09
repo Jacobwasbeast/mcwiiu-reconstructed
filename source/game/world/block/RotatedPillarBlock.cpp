@@ -6,6 +6,8 @@
 #include "game/core/Boxed.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -30,7 +32,7 @@ void RotatedPillarBlock::blockStaticCtor()
 }
 
 RotatedPillarBlock::RotatedPillarBlock(Material* material)
-    : Block(material)
+    : Block(material, material->getColor())
 {
 }
 
@@ -48,13 +50,13 @@ const BlockState* RotatedPillarBlock::rotate(const BlockState* state, Rotation* 
     if (rotation->getType() == Rotation::eTYPE_Clockwise90 ||
         rotation->getType() == Rotation::eTYPE_CounterClockwise90)
     {
-        Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
-        if (axis == Direction::Axis::X)
+        int axis = state->getValue(gRotatedPillarBlockAxisProperty)->getId();
+        if (axis == Direction::Axis::eAxis_X)
         {
             TypedBoxed<Direction::Axis*> value(Direction::Axis::Z);
             return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
         }
-        if (axis == Direction::Axis::Z)
+        if (axis == Direction::Axis::eAxis_Z)
         {
             TypedBoxed<Direction::Axis*> value(Direction::Axis::X);
             return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
@@ -96,17 +98,13 @@ int RotatedPillarBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* RotatedPillarBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { NULL };
-    if (properties[0] == NULL)
-    {
-        properties[0] = gRotatedPillarBlockAxisProperty;
-    }
+    static const Property* properties[] = { gRotatedPillarBlockAxisProperty };
     return new BlockStateDefinition(this, properties, 1);
 }
 
-not_null_ptr<ItemInstance> RotatedPillarBlock::getSilkTouchItemInstance(const BlockState* state)
+not_null_ptr<ItemInstance> RotatedPillarBlock::getSilkTouchItemInstance(const BlockState*)
 {
-    return Block::getSilkTouchItemInstance(state);
+    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this)));
 }
 
 const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
@@ -118,11 +116,23 @@ const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const B
 
 TextureAtlasSprite* RotatedPillarBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
-    if (axis == direction->getAxis())
+    Direction::Axis* axis = getAxis(state);
+    if (axis == Direction::Axis::Y
+        && (direction == Direction::UP || direction == Direction::DOWN))
     {
         return getTopTexture(state);
     }
+    if (axis == Direction::Axis::X
+        && (direction == Direction::EAST || direction == Direction::WEST))
+    {
+        return getTopTexture(state);
+    }
+    if (axis == Direction::Axis::Z
+        && (direction == Direction::NORTH || direction == Direction::SOUTH))
+    {
+        return getTopTexture(state);
+    }
+
     return getTypeTexture(state);
 }
 

@@ -23,7 +23,7 @@ public:
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
-    virtual void spawnParticles(Level* level, const BlockPos& pos);
+    void spawnParticles(Level* level, const BlockPos& pos);
     virtual void interact(Level* level, const BlockPos& pos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

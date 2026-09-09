@@ -4,15 +4,21 @@
 #include "game/core/IconRegister.hpp"
 #include "game/item/Item.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+static const AABB* gGrassPathShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.9375, 1.0);
 
 GrassPathBlock::GrassPathBlock()
-    : Block(Material::DIRT), mTopIcon(NULL)
+    : Block(Material::DIRT)
 {
     DerivedInit();
     setLightBlock(0xff);
@@ -37,9 +43,9 @@ bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* leve
     {
         const BlockState* neighbourState = levelSource->getBlockState(pos.relative(direction));
         Block* neighbour = neighbourState->getBlock();
-        return !neighbourState->isSolidBlockingCube()
-            && neighbour != Blocks::leaves
-            && neighbour != Blocks::leaves2;
+        return !neighbourState->isSolidRender()
+            && neighbour != Blocks::farmland
+            && neighbour != Blocks::grass_path;
     }
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
@@ -47,7 +53,7 @@ bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* leve
 void GrassPathBlock::updateBlockState(Level* level, const BlockPos& pos)
 {
     const BlockState* aboveState = level->getBlockState(pos.above());
-    if (aboveState->getMaterial()->blocksMotion())
+    if (aboveState->getMaterial()->isSolid())
     {
         level->setBlockAndUpdate(pos, Blocks::dirt->defaultBlockState());
     }
@@ -66,7 +72,7 @@ bool GrassPathBlock::isSilkTouchable()
 
 const AABB* GrassPathBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gGrassPathShape;
 }
 
 bool GrassPathBlock::isSolidRender(const BlockState*) const
@@ -81,7 +87,9 @@ bool GrassPathBlock::isCubeShaped(const BlockState*)
 
 Item* GrassPathBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
-    return Blocks::dirt->getResource(Blocks::dirt->defaultBlockState(), random, lootBonus);
+    TypedBoxed<DirtBlock::Variant*> variant(gVariants[0]);
+    const BlockState* state = Blocks::dirt->defaultBlockState()->setBoxedValue(gVariantProperty, &variant);
+    return Blocks::dirt->getResource(state, random, lootBonus);
 }
 
 not_null_ptr<ItemInstance> GrassPathBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
@@ -117,7 +125,7 @@ bool GrassPathBlock::canContainLiquid(const BlockState*) const
     return false;
 }
 
-TextureAtlasSprite* GrassPathBlock::getTexture(const Direction* direction, const BlockState* state)
+TextureAtlasSprite* GrassPathBlock::getTexture(const Direction* direction, const BlockState*)
 {
     if (direction == Direction::UP)
     {
@@ -125,12 +133,12 @@ TextureAtlasSprite* GrassPathBlock::getTexture(const Direction* direction, const
     }
     if (direction == Direction::DOWN)
     {
-        return Blocks::dirt->getTexture(direction, state);
+        return Blocks::dirt->getTexture(direction);
     }
     return mIcon;
 }
 
-TextureAtlasSprite* GrassPathBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction, const BlockState* state)
+TextureAtlasSprite* GrassPathBlock::getTexture(LevelSource*, const BlockPos&, const Direction* direction, const BlockState*)
 {
     if (direction == Direction::UP)
     {
@@ -138,7 +146,7 @@ TextureAtlasSprite* GrassPathBlock::getTexture(LevelSource* levelSource, const B
     }
     if (direction == Direction::DOWN)
     {
-        return Blocks::dirt->getTexture(levelSource, pos, direction, state);
+        return Blocks::dirt->getTexture(direction);
     }
     return mIcon;
 }

@@ -86,4 +86,6 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
 };
 
+extern BedBlock::Part gBedHead;
+
 #endif

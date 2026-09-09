@@ -6,6 +6,7 @@
 
 #include "game/world/block/BaseEntityBlock.hpp"
 #include "game/world/block/EntityBlock.hpp"
+#include "game/world/block/PistonHeadBlock.hpp"
 
 class AABB;
 class BlockEntity;
@@ -28,6 +29,9 @@ class Player;
 class PistonMagicBlock : public BaseEntityBlock, public EntityBlock
 {
 public:
+    static AbstractProperty<const Direction*>* FACING;
+    static AbstractProperty<PistonHeadBlock::PistonType*>* TYPE;
+
     PistonMagicBlock();
     virtual ~PistonMagicBlock();
 

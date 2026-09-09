@@ -59,6 +59,11 @@ unsigned long long MinecartCommandBlock::GetType()
     return 0x000000000A800005ULL;
 }
 
+const Minecart::Type* MinecartCommandBlock::getType()
+{
+    return Minecart::Type::COMMAND_BLOCK;
+}
+
 const BlockState* MinecartCommandBlock::getDefaultDisplayBlockState()
 {
     return Blocks::command_block->defaultBlockState();

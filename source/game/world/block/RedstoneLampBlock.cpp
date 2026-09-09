@@ -11,7 +11,7 @@
 #include "game/world/block/Material.hpp"
 
 RedstoneLampBlock::RedstoneLampBlock(bool lit)
-    : Block(Material::GLASS), mLit(lit)
+    : Block(Material::BUILDABLE_GLASS), mLit(lit)
 {
     DerivedInit();
     if (lit)
@@ -50,7 +50,7 @@ void RedstoneLampBlock::neighborChanged(const BlockState* state, Level* level, c
         {
             if (!level->hasNeighborSignal(pos))
             {
-                level->setBlock(pos, Blocks::redstone_lamp->defaultBlockState(), 4, false);
+                level->addToTickNextTick(pos, this, 4);
                 return;
             }
             if (mLit)
@@ -85,5 +85,12 @@ not_null_ptr<ItemInstance> RedstoneLampBlock::getSilkTouchItemInstance(const Blo
 
 void RedstoneLampBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(mLit ? L"redstoneLight_lit" : L"redstoneLight");
+    if (!mLit)
+    {
+        mIcon = iconRegister->registerIcon(L"redstoneLight");
+    }
+    else
+    {
+        mIcon = iconRegister->registerIcon(L"redstoneLight_lit");
+    }
 }

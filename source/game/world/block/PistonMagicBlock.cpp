@@ -17,26 +17,27 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
 #include "game/world/block/PistonHeadBlock.hpp"
 #include "game/world/block/PistonMovingBlockEntity.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+AbstractProperty<const Direction*>* PistonMagicBlock::FACING = NULL;
+AbstractProperty<PistonHeadBlock::PistonType*>* PistonMagicBlock::TYPE = NULL;
+
 PistonMagicBlock::PistonMagicBlock()
-    : BaseEntityBlock(NULL), EntityBlock()
+    : BaseEntityBlock(Material::PISTON), EntityBlock()
 {
     DerivedInit();
-    const BlockState* state = defaultBlockState();
+    const BlockState* state = mStateDefinition->any();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
-    TypedBoxed<bool> extended(false);
-    if (state != NULL)
-    {
-        state = state->setBoxedValue(PistonBaseBlock::FACING, &facing);
-        state = state->setBoxedValue(PistonBaseBlock::EXTENDED, &extended);
-        registerDefaultState(state);
-    }
-    setDestroyTime(0.4f);
+    state = state->setBoxedValue(FACING, &facing);
+    TypedBoxed<PistonHeadBlock::PistonType*> type(pistonTypeNormal);
+    registerDefaultState(state->setBoxedValue(TYPE, &type));
+    setDestroyTime(-1.0f);
 }
 
 PistonMagicBlock::~PistonMagicBlock()
@@ -58,6 +59,8 @@ boost::shared_ptr<BlockEntity> PistonMagicBlock::newMovingBlockEntity(const Bloc
 
 void PistonMagicBlock::blockStaticCtor()
 {
+    FACING = DirectionalBlock::FACING;
+    TYPE = PistonHeadBlock::TYPE;
 }
 
 void PistonMagicBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -82,10 +85,11 @@ bool PistonMagicBlock::mayPlace(Level*, const BlockPos&, const Direction*)
 
 void PistonMagicBlock::destroy(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(PistonBaseBlock::FACING);
+    const Direction* direction = state->getValue(FACING);
     BlockPos adjacent = pos.relative(direction->getOpposite());
     const BlockState* adjacentState = level->getBlockState(adjacent);
-    if (adjacentState != NULL && adjacentState->getBlock() == this)
+    Block* adjacentBlock = adjacentState->getBlock();
+    if (adjacentBlock != NULL && dynamic_cast<PistonBaseBlock*>(adjacentBlock) != NULL)
     {
         if (adjacentState->getValue(PistonBaseBlock::EXTENDED))
             level->removeBlock(adjacent);
@@ -180,46 +184,53 @@ bool PistonMagicBlock::canContainLiquid(const BlockState*) const
 
 not_null_ptr<ItemInstance> PistonMagicBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
-    return not_null_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 const BlockState* PistonMagicBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
     TypedBoxed<const Direction*> facing(PistonHeadBlock::getFacing(data));
-    TypedBoxed<bool> extended((data & 8) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(PistonBaseBlock::FACING, &facing);
-    return state->setBoxedValue(PistonBaseBlock::EXTENDED, &extended);
+    state = state->setBoxedValue(FACING, &facing);
+    if ((data & 8) == 0)
+    {
+        TypedBoxed<PistonHeadBlock::PistonType*> normal(pistonTypeNormal);
+        return state->setBoxedValue(TYPE, &normal);
+    }
+
+    TypedBoxed<PistonHeadBlock::PistonType*> sticky(pistonTypeSticky);
+    return state->setBoxedValue(TYPE, &sticky);
 }
 
 int PistonMagicBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(PistonBaseBlock::FACING)->get3DDataValue();
-    if (state->getValue(PistonBaseBlock::EXTENDED))
+    int data = state->getValue(FACING)->get3DDataValue();
+    if (state->getValue(TYPE) == pistonTypeSticky)
         data |= 8;
     return data;
 }
 
 const BlockState* PistonMagicBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(PistonBaseBlock::FACING)));
-    return state->setBoxedValue(PistonBaseBlock::FACING, &facing);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
+    return state->setBoxedValue(FACING, &facing);
 }
 
 const BlockState* PistonMagicBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(PistonBaseBlock::FACING)));
+    return rotate(state, mirror->getRotation(state->getValue(FACING)));
 }
 
 BlockStateDefinition* PistonMagicBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { PistonBaseBlock::FACING, PistonBaseBlock::EXTENDED };
+    static const Property* properties[] = { FACING, TYPE };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 EBlockFaceShape PistonMagicBlock::getBlockFaceShape(LevelSource*, const BlockState*,
                                                     const BlockPos&, const Direction*)
 {
-    return (EBlockFaceShape)8;
+    return BLOCK_FACE_UNDEFINED;
 }
 
 void PistonMagicBlock::registerIcons(IconRegister*)

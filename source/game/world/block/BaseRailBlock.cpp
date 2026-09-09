@@ -14,7 +14,7 @@
 static const AABB* gRailFlatAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 static const AABB* gRailAscendingAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
 
-static BaseRailBlock::RailShape* gRailShapes[10] =
+BaseRailBlock::RailShape* gRailShapes[10] =
 {
     new BaseRailBlock::RailShape(0, L"north_south"),
     new BaseRailBlock::RailShape(1, L"east_west"),

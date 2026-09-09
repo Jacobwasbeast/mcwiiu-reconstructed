@@ -87,6 +87,8 @@ public:
     bool mIsPowered;
 };
 
+extern BaseRailBlock::RailShape* gRailShapes[10];
+
 bool railfilter(BaseRailBlock::RailShape* shape);
 bool railpredicate(BaseRailBlock::RailShape* shape);
 

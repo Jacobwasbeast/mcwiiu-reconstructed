@@ -78,4 +78,7 @@ private:
     bool mSticky;
 };
 
+extern PistonHeadBlock::PistonType* pistonTypeNormal;
+extern PistonHeadBlock::PistonType* pistonTypeSticky;
+
 #endif

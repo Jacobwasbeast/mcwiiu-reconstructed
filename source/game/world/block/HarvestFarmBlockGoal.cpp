@@ -1,9 +1,9 @@
 #include "game/world/block/HarvestFarmBlockGoal.hpp"
 
 #include "game/entity/ai/LookControl.hpp"
-#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/SimpleContainer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -65,7 +65,7 @@ bool HarvestFarmBlockGoal::canContinueToUse()
 
 int HarvestFarmBlockGoal::findInventorySlotForFarmSeeds()
 {
-    Inventory* inventory = mVillager->getInventory();
+    SimpleContainer* inventory = mVillager->getInventory();
     for (int slot = 0; slot < (int)inventory->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> item = inventory->getItem(slot);
@@ -111,7 +111,7 @@ void HarvestFarmBlockGoal::tick()
                 mNextStartTick = 0;
                 return;
             }
-            Inventory* inventory = mVillager->getInventory();
+            SimpleContainer* inventory = mVillager->getInventory();
             not_null_ptr<ItemInstance> item = inventory->getItem(slot);
             Item* itemType = item->getItem();
             if (itemType == Items::wheatSeeds)

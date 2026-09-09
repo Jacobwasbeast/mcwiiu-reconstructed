@@ -6,10 +6,14 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/core/DataWalker.hpp"
 #include "game/item/ContainerHelper.hpp"
+#include "game/item/Containers.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/PotionBrewing.hpp"
 #include "game/ui/BrewingStandMenu.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
@@ -261,19 +265,28 @@ arrayWithLength<unsigned char> BrewingStandBlockEntity::getPotionBits()
 
 void BrewingStandBlockEntity::doBrew()
 {
-    if (!isBrewable())
-    {
-        return;
-    }
+    not_null_ptr<ItemInstance> ingredient = mItems[3];
     for (unsigned int i = 0; i < 3; ++i)
     {
-        PotionBrewing::mix(mItems[i], mItems[3]);
+        mItems[i] = PotionBrewing::mix(ingredient, mItems[i]);
     }
-    mItems[3]->shrink(1);
-    if (mItems[3]->isEmpty())
+    ingredient->shrink(1);
+    BlockPos pos = getBlockPos();
+    if (ingredient->getItem()->hasCraftingRemainingItem())
     {
-        mItems[3] = ItemInstance::EMPTY;
+        not_null_ptr<ItemInstance> remaining(new ItemInstance(ingredient->getItem()->getCraftingRemainingItem()));
+        if (ingredient->isEmpty())
+        {
+            ingredient = remaining;
+        }
+        else
+        {
+            Containers::dropItemStack(mLevel, (double)pos.x, (double)pos.y, (double)pos.z, remaining);
+        }
     }
+    mItems[3] = ingredient;
+    mLevel->levelEvent(1035, pos, 0);
+    --mFuel;
 }
 
 void BrewingStandBlockEntity::tick()
@@ -289,7 +302,6 @@ void BrewingStandBlockEntity::tick()
     }
     else if (brewable && mFuel > 0)
     {
-        --mFuel;
         mBrewTime = 400;
     }
 }

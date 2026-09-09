@@ -29,8 +29,8 @@ AbstractProperty<const Direction*>* PistonHeadBlock::FACING = NULL;
 AbstractProperty<PistonHeadBlock::PistonType*>* PistonHeadBlock::TYPE = NULL;
 AbstractProperty<bool>* PistonHeadBlock::SHORT = NULL;
 
-static PistonHeadBlock::PistonType* pistonTypeNormal = NULL;
-static PistonHeadBlock::PistonType* pistonTypeSticky = NULL;
+PistonHeadBlock::PistonType* pistonTypeNormal = NULL;
+PistonHeadBlock::PistonType* pistonTypeSticky = NULL;
 static const AABB* pistonHeadShapes[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
 static const AABB* pistonArmShapes[12] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 

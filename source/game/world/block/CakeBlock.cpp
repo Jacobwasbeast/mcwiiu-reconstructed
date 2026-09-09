@@ -94,7 +94,7 @@ void CakeBlock::neighborChanged(const BlockState*, Level* level, const BlockPos&
                                 Block*, const BlockPos&)
 {
     if (!canSurvive(level, pos, NULL))
-        level->blockUpdated(pos, this, true);
+        level->removeBlock(pos);
 }
 
 bool CakeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
@@ -125,8 +125,9 @@ int CakeBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pPlayer->getFoodData()->needsFood()
-        && tooltipData.m_bUseItem && tooltipData.m_bCanPlace)
+    if (!tooltipData.m_pPlayer->mAbilities.mInstabuild
+        && tooltipData.m_pPlayer->getFoodData()->needsFood()
+        && tooltipData.m_bUseItem && tooltipData.m_bIsInside)
         return 0xD26C6DB5u;
     return Block::GetInteractTooltip(tooltipData);
 }

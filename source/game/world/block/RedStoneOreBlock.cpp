@@ -10,16 +10,19 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
 RedStoneOreBlock::RedStoneOreBlock(bool lit)
-    : Block(Material::STONE), mLit(lit)
+    : Block(Material::STONE)
 {
     DerivedInit();
     if (lit)
     {
         setTicking(true);
     }
+
+    mLit = lit;
 }
 
 RedStoneOreBlock::~RedStoneOreBlock()
@@ -56,54 +59,54 @@ bool RedStoneOreBlock::use(Level* level, const BlockPos& pos, const BlockState* 
     {
         return false;
     }
+
+    interact(level, pos);
     return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false);
 }
 
 void RedStoneOreBlock::spawnParticles(Level* level, const BlockPos& pos)
 {
-    static const int sides = 6;
-    int side;
-    for (side = 0; side < sides; ++side)
+    Random* random = level->mRandom;
+    const double edge = 0.0625;
+
+    for (int i = 0; i < 6; ++i)
     {
-        BlockPos adjacent;
-        double x = pos.x + 0.5;
-        double y = pos.y + 0.5;
-        double z = pos.z + 0.5;
-        if (side == 0)
+        double x = (double)((float)pos.x + random->nextFloat());
+        double y = (double)((float)pos.y + random->nextFloat());
+        double z = (double)((float)pos.z + random->nextFloat());
+
+        if (i == 0 && !level->getBlockState(pos.above())->isSolidRender())
         {
-            adjacent = pos.above();
-            y += 0.5;
+            y = (double)pos.y + edge + 1.0;
         }
-        else if (side == 1)
+        if (i == 1 && !level->getBlockState(pos.below())->isSolidRender())
         {
-            adjacent = pos.below();
-            y -= 0.5;
+            y = (double)pos.y - edge;
         }
-        else if (side == 2)
+        if (i == 2 && !level->getBlockState(pos.south())->isSolidRender())
         {
-            adjacent = pos.south();
-            z += 0.5;
+            z = (double)pos.z + edge + 1.0;
         }
-        else if (side == 3)
+        if (i == 3 && !level->getBlockState(pos.north())->isSolidRender())
         {
-            adjacent = pos.north();
-            z -= 0.5;
+            z = (double)pos.z - edge;
         }
-        else if (side == 4)
+        if (i == 4 && !level->getBlockState(pos.east())->isSolidRender())
         {
-            adjacent = pos.east();
-            x += 0.5;
+            x = (double)pos.x + edge + 1.0;
         }
-        else
+        if (i == 5 && !level->getBlockState(pos.west())->isSolidRender())
         {
-            adjacent = pos.west();
-            x -= 0.5;
+            x = (double)pos.x - edge;
         }
-        if (level->getBlockState(adjacent)->isSolidRender())
+
+        if (x < (double)pos.x || x > (double)(pos.x + 1)
+            || y < 0.0 || y > (double)(pos.y + 1)
+            || z < (double)pos.z || z > (double)(pos.z + 1))
         {
-            continue;
+            arrayWithLength<int> params;
+            level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, params);
         }
-        level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
 
@@ -159,9 +162,10 @@ void RedStoneOreBlock::animateTick(const BlockState*, Level* level, const BlockP
 
 unsigned int RedStoneOreBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pBlockState == NULL && tooltipData.m_bUseItem)
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
+        && tooltipData.m_bIsInside)
     {
-        return 3931015550U;
+        return 0xEA4E897EU;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

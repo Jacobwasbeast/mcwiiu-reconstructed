@@ -8,6 +8,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/Material.hpp"
+
+static const AABB* LILY_PAD_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.09375, 0.9375);
 
 WaterlilyBlock::WaterlilyBlock()
     : Bush()
@@ -25,8 +29,7 @@ void WaterlilyBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos
 {
     if (entity && entity->GetType() != ENTITY_TYPE_BOAT)
     {
-        AABB emptyBox;
-        Block::addCollisionAABB(pos, entityBox, collidingBoxes, &emptyBox);
+        Block::addCollisionAABB(pos, entityBox, collidingBoxes, LILY_PAD_AABB);
     }
 }
 
@@ -34,7 +37,7 @@ void WaterlilyBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                   const boost::shared_ptr<Entity>& entity)
 {
     Block::entityInside(level, pos, state, entity);
-    if (entity && entity->GetType() == ENTITY_TYPE_BOAT)
+    if (entity->GetType() == ENTITY_TYPE_BOAT)
     {
         level->destroyBlock(pos, true);
     }
@@ -55,37 +58,32 @@ int WaterlilyBlock::getColor(LevelSource*, const BlockPos&)
     return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Tile_WaterLily);
 }
 
-int WaterlilyBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
+int WaterlilyBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState*)
 {
-    return Block::getColor(levelSource, pos, state);
+    return getColor(levelSource, pos);
 }
 
 const AABB* WaterlilyBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return LILY_PAD_AABB;
 }
 
 bool WaterlilyBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 {
-    Block* block = state->getBlock();
-    return block == Blocks::WATER || block == Blocks::frosted_ice;
+    return state->getBlock() == Blocks::WATER || state->getMaterial() == Material::ICE;
 }
 
 bool WaterlilyBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (pos.y > 255)
+    if (pos.y < 0 || pos.y > 255)
     {
         return false;
     }
 
-    BlockPos below = pos.below();
-    const BlockState* belowState = level->getBlockState(below);
-    Block* belowBlock = belowState->getBlock();
-    if (belowBlock == Blocks::WATER)
-    {
-        return true;
-    }
-    return belowBlock == Blocks::frosted_ice;
+    const BlockState* belowState = level->getBlockState(pos.below());
+    Material* material = belowState->getMaterial();
+    return (material == Material::WATER && belowState->getValue(LiquidBlock::LEVEL) == 0)
+        || material == Material::ICE;
 }
 
 int WaterlilyBlock::convertBlockStateToLegacyData(const BlockState*)

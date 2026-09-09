@@ -3,14 +3,31 @@
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/Boxed.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/GameModeConstraints.hpp"
+#include "game/core/GameRules.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/SpawnEggItem.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockInWorld.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
@@ -49,23 +66,65 @@ void PortalBlock::blockStaticCtor()
 
 BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const BlockPos& pos)
 {
+    Direction::Axis* axis = Direction::Axis::Z;
     PortalShape shape(level, pos, Direction::Axis::X);
-    Direction::Axis* axis = Direction::Axis::X;
+    boost::shared_ptr<BlockPattern::BlockLoadingCache> cache(BlockPattern::createLevelCache(level, true));
+
     if (!shape.isValid())
     {
-        PortalShape alternate(level, pos, Direction::Axis::Z);
-        if (!alternate.isValid())
-        {
-            boost::shared_ptr<BlockPattern::BlockLoadingCache> cache(BlockPattern::createLevelCache(level, true));
-            return new BlockPattern::BlockPatternMatch(pos, Direction::NORTH, Direction::UP, cache, 1, 1, 1);
-        }
-        axis = Direction::Axis::Z;
+        axis = Direction::Axis::X;
+        shape = PortalShape(level, pos, Direction::Axis::Z);
     }
-    PortalShape selected(level, pos, axis);
-    boost::shared_ptr<BlockPattern::BlockLoadingCache> cache(BlockPattern::createLevelCache(level, true));
-    const Direction* forwards = axis == Direction::Axis::X ? Direction::NORTH : Direction::EAST;
-    return new BlockPattern::BlockPatternMatch(pos, forwards, Direction::UP, cache,
-                                               selected.getWidth(), selected.getHeight(), 1);
+
+    if (!shape.isValid())
+    {
+        return new BlockPattern::BlockPatternMatch(pos, Direction::NORTH, Direction::UP, cache, 1, 1, 1);
+    }
+
+    int filled[2];
+    filled[0] = 0;
+    filled[1] = 0;
+
+    const Direction* facing = shape.mRightDir->getCounterClockWise();
+    BlockPos topLeft = shape.mBottomLeft->above(shape.getHeight() - 1);
+
+    for (int i = 0; i < 2; ++i)
+    {
+        Direction::AxisDirection* axisDirection = Direction::AxisDirection::VALUES[i];
+        BlockPos frontTopLeft = facing->getAxisDirection() == axisDirection
+                                    ? topLeft
+                                    : topLeft.relative(shape.mRightDir, shape.getWidth() - 1);
+        BlockPattern::BlockPatternMatch match(frontTopLeft, Direction::get(axisDirection, axis),
+                                              Direction::UP, cache,
+                                              shape.getWidth(), shape.getHeight(), 1);
+
+        for (int x = 0; x < shape.getWidth(); ++x)
+        {
+            for (int y = 0; y < shape.getHeight(); ++y)
+            {
+                BlockInWorld* blockInWorld = match.getBlock(x, y, 1);
+                if (blockInWorld->getState() != NULL
+                    && blockInWorld->getState()->getMaterial() != Material::AIR)
+                {
+                    ++filled[axisDirection->getOrdinal()];
+                }
+            }
+        }
+    }
+
+    Direction::AxisDirection* best = Direction::AxisDirection::POSITIVE;
+    for (int i = 0; i < 2; ++i)
+    {
+        if (filled[Direction::AxisDirection::VALUES[i]->getOrdinal()] < filled[best->getOrdinal()])
+            best = Direction::AxisDirection::VALUES[i];
+    }
+
+    BlockPos frontTopLeft = facing->getAxisDirection() == best
+                                ? topLeft
+                                : topLeft.relative(shape.mRightDir, shape.getWidth() - 1);
+    return new BlockPattern::BlockPatternMatch(frontTopLeft, Direction::get(best, axis),
+                                               Direction::UP, cache,
+                                               shape.getWidth(), shape.getHeight(), 1);
 }
 
 const AABB* PortalBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -79,6 +138,32 @@ const AABB* PortalBlock::getShape(const BlockState* state, LevelSource* levelSou
 void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     Block::tick(level, pos, state, random);
+
+    if (level->mDimension->isNaturalDimension()
+        && level->getGameRules()->getBoolean(3)
+        && random->nextInt(2000) < level->getDifficulty()->getId())
+    {
+        int y = pos.y;
+        BlockPos ground = pos;
+        while (!level->getBlockState(ground)->isTopSolidBlocking() && ground.y > 0)
+        {
+            ground = ground.below();
+        }
+
+        if (y > 0 && !level->getBlockState(ground.above())->isSolidBlockingCubeAndNotSignalSource())
+        {
+            int error = 0;
+            std::wstring customName;
+            boost::shared_ptr<Mob> mob =
+                SpawnEggItem::spawnMobAt(level, EntityIO::getKey(0x000000005D550041ULL),
+                                         (double)ground.x + 0.5, (double)ground.y + 1.1,
+                                         (double)ground.z + 0.5, &error, customName);
+            if (mob)
+            {
+                mob->mPortalCooldown = mob->getDimensionChangingDelay();
+            }
+        }
+    }
 }
 
 const AABB* PortalBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -134,21 +219,62 @@ bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSo
 int PortalBlock::getResourceCount(Random* random) { return 0; }
 int PortalBlock::getRenderLayer() { return 1; }
 
-void PortalBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
+void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
-    if (!entity)
+    if (entity->GetType() == 0x8000003ULL)
         return;
+    if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
+        return;
+
+    if ((entity->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    {
+        if (Minecraft::GetInstance()->mGameMode == NULL)
+            return;
+        if (!Minecraft::GetInstance()->mGameMode->getGameModeConstraints()->CanUsePortal())
+            return;
+    }
+
+    entity->handleInsidePortal(pos);
 }
 
-void PortalBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
+void PortalBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
-    if (random == NULL)
-        return;
+    if (random->nextInt(100) == 0)
+    {
+        level->playLocalSound((double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5,
+                              SoundEvents::PORTAL_AMBIENT, SoundSource::eSoundSource_Blocks,
+                              0.5f, random->nextFloat() * 0.4f + 0.8f, false, 16.0f);
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        double x = (double)((float)pos.x + random->nextFloat());
+        double y = (double)((float)pos.y + random->nextFloat());
+        double z = (double)((float)pos.z + random->nextFloat());
+        double xa = ((double)random->nextFloat() - 0.5) * 0.5;
+        double ya = ((double)random->nextFloat() - 0.5) * 0.5;
+        double za = ((double)random->nextFloat() - 0.5) * 0.5;
+        int side = random->nextInt(2) * 2 - 1;
+        if (level->getBlockState(pos.west())->getBlock() != this
+            && level->getBlockState(pos.east())->getBlock() != this)
+        {
+            x = (double)pos.x + 0.5 + 0.25 * (double)side;
+            xa = (double)(random->nextFloat() * 2.0f * (float)side);
+        }
+        else
+        {
+            z = (double)pos.z + 0.5 + 0.25 * (double)side;
+            za = (double)(random->nextFloat() * 2.0f * (float)side);
+        }
+
+        arrayWithLength<int> params;
+        level->addParticle(PARTICLE_PORTAL, x, y, z, xa, ya, za, params);
+    }
 }
 
-not_null_ptr<ItemInstance> PortalBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
+not_null_ptr<ItemInstance> PortalBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
-    return Block::getCloneItemInstance(level, pos, state);
+    return ItemInstance::EMPTY;
 }
 
 bool PortalBlock::isWaterBlocking() const { return true; }

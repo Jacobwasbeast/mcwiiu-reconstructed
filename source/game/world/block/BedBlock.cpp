@@ -24,7 +24,7 @@
 
 #include <typeinfo>
 
-static BedBlock::Part gBedHead(0, L"head");
+BedBlock::Part gBedHead(0, L"head");
 static BedBlock::Part gBedFoot(1, L"foot");
 static const AABB* gBedShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0);
 

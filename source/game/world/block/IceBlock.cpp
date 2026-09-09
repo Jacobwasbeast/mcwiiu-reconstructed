@@ -53,9 +53,8 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
 
         spawnResources(level, pos, state,
                        EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool));
-        BlockPos below = pos.below();
-        const BlockState* belowState = level->getBlockState(below);
-        if (belowState->getMaterial()->isSolid() || belowState->getMaterial()->isLiquid())
+        Material* material = level->getBlockState(pos.below())->getBlock()->getCraftingMaterial();
+        if (material->blocksMotion() || material->isLiquid())
         {
             level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
         }
@@ -80,7 +79,7 @@ void IceBlock::melt(Level* level, const BlockPos& pos)
     }
 
     level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
-    level->neighborChanged(pos, level->getBlockState(pos)->getBlock(), pos);
+    level->neighborChanged(pos, level->getBlock(pos), pos);
 }
 
 void IceBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)

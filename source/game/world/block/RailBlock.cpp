@@ -1,6 +1,7 @@
 #include "game/world/block/RailBlock.hpp"
 
 #include <typeinfo>
+
 #include <boost/unordered_set.hpp>
 
 #include "game/core/IconRegister.hpp"
@@ -8,52 +9,40 @@
 #include "game/core/Rotation.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static BaseRailBlock::RailShape* gRailShapes[10] =
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 static EnumProperty<BaseRailBlock::RailShape*>* gRailShapeProperty = NULL;
-
-class RailShapePredicate : public Predicate<BaseRailBlock::RailShape*>
-{
-public:
-    virtual bool apply(BaseRailBlock::RailShape*) const { return true; }
-};
-
-static RailShapePredicate gRailShapePredicate;
-
-static const BlockState* railState(const BlockState* state, const Property* property,
-                                   BaseRailBlock::RailShape* shape)
-{
-    TypedBoxed<BaseRailBlock::RailShape*> value(shape);
-    return state->setBoxedValue(property, &value);
-}
 
 void RailBlock::blockStaticCtor()
 {
-    static const wchar_t* names[10] =
-        { L"north_south", L"east_west", L"ascending_east", L"ascending_west",
-          L"ascending_north", L"ascending_south", L"south_east", L"south_west",
-          L"north_west", L"north_east" };
     boost::unordered_set<BaseRailBlock::RailShape*> values;
-    for (int i = 0; i < 10; ++i)
-    {
-        gRailShapes[i] = new BaseRailBlock::RailShape(i, names[i]);
-        values.insert(gRailShapes[i]);
-    }
+    values.insert(gRailShapes[0]);
+    values.insert(gRailShapes[1]);
+    values.insert(gRailShapes[2]);
+    values.insert(gRailShapes[3]);
+    values.insert(gRailShapes[4]);
+    values.insert(gRailShapes[5]);
+    values.insert(gRailShapes[6]);
+    values.insert(gRailShapes[7]);
+    values.insert(gRailShapes[8]);
+    values.insert(gRailShapes[9]);
+
     gRailShapeProperty = EnumProperty<BaseRailBlock::RailShape*>::create(
-        L"shape", typeid(BaseRailBlock::RailShape*), values, &gRailShapePredicate);
+        L"shape", typeid(BaseRailBlock::RailShape*), values,
+        Predicates<BaseRailBlock::RailShape*>::alwaysTrue);
 }
 
 RailBlock::RailBlock()
-    : BaseRailBlock(false), mTurnedTexture(NULL)
+    : BaseRailBlock(false)
 {
     DerivedInit();
-    TypedBoxed<BaseRailBlock::RailShape*> value(gRailShapes[0]);
-    registerDefaultState(defaultBlockState()->setBoxedValue(gRailShapeProperty, &value));
+    TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(gRailShapeProperty, &shape));
 }
 
 RailBlock::~RailBlock()
@@ -62,11 +51,13 @@ RailBlock::~RailBlock()
 
 void RailBlock::updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block)
 {
-    if (defaultBlockState()->isSignalSource())
+    if (block->defaultBlockState()->isSignalSource())
     {
-        BaseRailBlock::Rail rail(level, pos, state);
+        Rail rail(level, pos, state);
         if (rail.countPotentialConnections() == 3)
-            level->setBlock(pos, state, 0, false);
+        {
+            updateDir(level, pos, state, false);
+        }
     }
 }
 
@@ -77,8 +68,8 @@ const Property* RailBlock::getShapeProperty()
 
 const BlockState* RailBlock::getBlockState(int data)
 {
-    return railState(defaultBlockState(), gRailShapeProperty,
-                     BaseRailBlock::RailShape::byData(data));
+    TypedBoxed<BaseRailBlock::RailShape*> shape(BaseRailBlock::RailShape::byData(data));
+    return defaultBlockState()->setBoxedValue(gRailShapeProperty, &shape);
 }
 
 int RailBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -88,59 +79,271 @@ int RailBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int RailBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    unsigned int result = Block::GetInteractTooltip(tooltipData);
-    if (tooltipData.m_bIsInside && tooltipData.m_pBlockState == NULL)
-        return 0x4c36cd96;
-    return result;
+    unsigned int tooltip = Block::GetInteractTooltip(tooltipData);
+    if (tooltipData.m_bIsInside
+        && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
+    {
+        return 0x4C36CD96U;
+    }
+
+    return tooltip;
 }
 
 const BlockState* RailBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    int shape = convertBlockStateToLegacyData(state);
-    int rotated = shape;
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-        { static const int map[10] = { 1, 0, 3, 2, 5, 4, 8, 9, 7, 6 }; rotated = map[shape]; }
-        break;
     case Rotation::eTYPE_Clockwise180:
-        { static const int map[10] = { 0, 1, 5, 4, 3, 2, 9, 8, 6, 7 }; rotated = map[shape]; }
-        break;
+        switch (state->getValue(gRailShapeProperty)->getData())
+        {
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        }
     case Rotation::eTYPE_CounterClockwise90:
-        { static const int map[10] = { 1, 0, 4, 5, 2, 3, 9, 8, 6, 7 }; rotated = map[shape]; }
-        break;
+        switch (state->getValue(gRailShapeProperty)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[1]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 1:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        }
+    case Rotation::eTYPE_Clockwise90:
+        switch (state->getValue(gRailShapeProperty)->getData())
+        {
+        case 0:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[1]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 1:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[0]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        }
     default:
         break;
     }
-    return railState(state, gRailShapeProperty, gRailShapes[rotated]);
+
+    return state;
 }
 
 const BlockState* RailBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    int shape = convertBlockStateToLegacyData(state);
-    int mirrored = shape;
     if (mirror->getType() == Mirror::eTYPE_LeftRight)
     {
-        static const int map[10] = { 0, 1, 4, 5, 2, 3, 6, 9, 8, 7 };
-        mirrored = map[shape];
+        switch (state->getValue(gRailShapeProperty)->getData())
+        {
+        case 4:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[5]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 5:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[4]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        }
     }
     else if (mirror->getType() == Mirror::eTYPE_FrontBack)
     {
-        static const int map[10] = { 0, 1, 5, 4, 3, 2, 9, 8, 7, 6 };
-        mirrored = map[shape];
+        switch (state->getValue(gRailShapeProperty)->getData())
+        {
+        case 2:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[3]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 3:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[2]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 6:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[7]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 7:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[6]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 8:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[9]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        case 9:
+        {
+            TypedBoxed<BaseRailBlock::RailShape*> shape(gRailShapes[8]);
+            return state->setBoxedValue(gRailShapeProperty, &shape);
+        }
+        }
     }
-    return railState(state, gRailShapeProperty, gRailShapes[mirrored]);
+
+    return Block::mirror(state, mirror);
 }
 
 BlockStateDefinition* RailBlock::createBlockStateDefinition()
 {
-    const Property* properties[1] = { gRailShapeProperty };
+    static const Property* properties[] = { gRailShapeProperty };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* RailBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return convertBlockStateToLegacyData(state) > 5 ? mTurnedTexture : mIcon;
+    if (state->getValue(gRailShapeProperty)->getData() > 5)
+    {
+        return mTurnedTexture;
+    }
+
+    return mIcon;
 }
 
 void RailBlock::registerIcons(IconRegister* iconRegister)

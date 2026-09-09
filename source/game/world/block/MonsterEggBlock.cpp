@@ -3,8 +3,11 @@
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
+#include "game/core/Silverfish.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -140,19 +143,25 @@ not_null_ptr<ItemInstance> MonsterEggBlock::getSilkTouchItemInstance(const Block
     return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone));
 }
 
-void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
+void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState*, float, int)
 {
-    if (level->mIsClientSide || !level->getGameRules()->getBoolean(5))
+    if (!level->mIsClientSide && level->getGameRules()->getBoolean(5))
     {
-        return;
+        if (level->countInstanceOf(ENTITY_TYPE_MONSTER, false, NULL, NULL) < 70
+            && level->countInstanceOf(0x000000005D540044ULL, true, NULL, NULL) < 15)
+        {
+            boost::shared_ptr<Silverfish> silverfish(new Silverfish(level));
+            silverfish->moveTo(pos.x + 0.5, pos.y, pos.z + 0.5, 0.0f, 0.0f);
+            level->addEntity(silverfish);
+            silverfish->spawnAnim();
+        }
     }
-    Block::spawnResources(level, pos, state, chance, lootBonus);
 }
 
 not_null_ptr<ItemInstance> MonsterEggBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(
-        this, 1, state->getBlock()->getSpawnResourcesAuxValue(state)));
+        this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
 }
 
 const BlockState* MonsterEggBlock::getBlockState(int data)

@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_ROTATEDPILLARBLOCK_HPP
 #define GAME_WORLD_BLOCK_ROTATEDPILLARBLOCK_HPP
 
+#include "game/core/Direction.hpp"
 #include "game/world/block/Block.hpp"
 
 class BlockPos;
@@ -33,6 +34,7 @@ public:
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual TextureAtlasSprite* getTypeTexture(const BlockState* state);
     virtual TextureAtlasSprite* getTopTexture(const BlockState* state);
+    virtual Direction::Axis* getAxis(const BlockState* state) = 0;
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 protected:

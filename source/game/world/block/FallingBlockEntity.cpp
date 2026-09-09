@@ -1,50 +1,71 @@
 #include "game/world/block/FallingBlockEntity.hpp"
 
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/unordered_map.hpp>
+
+#include "game/core/DamageSource.hpp"
+#include "game/core/Direction.hpp"
+#include "game/core/GameRules.hpp"
+#include "game/core/HitResult.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/Tag.hpp"
-#include "game/world/block/EntityDataSerializer.hpp"
-#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/AnvilBlock.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/EntityDataSerializer.hpp"
+#include "game/world/block/FallingBlock.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 const EntityDataAccessor<BlockPos>* FallingBlockEntity::DATA_START_POS = NULL;
 static const unsigned long long ENTITY_TYPE_FALLING_BLOCK = 0x0000000008000009ULL;
 
 FallingBlockEntity::FallingBlockEntity(Level* level, double x, double y, double z, const BlockState* blockState)
-    : Entity(level, true), mBlockState(blockState), mTime(0), mDropItem(true), mHurtsEntities(false),
-      mFallHurtMax(40), mFallHurtAmount(2.0f), mBlockEntityData(NULL)
+    : Entity(level, true)
 {
     _init();
+    mBlockState = blockState;
+    mBlocksBuilding = true;
     setSize(0.98f, 0.98f);
     setPos(x, y + (1.0f - mBbHeight) * 0.5f, z);
-    mXo = mX;
-    mYo = mY;
-    mZo = mZ;
-    mXOld = mX;
-    mYOld = mY;
-    mZOld = mZ;
+    mXd = 0.0;
+    mYd = 0.0;
+    mZd = 0.0;
+    mXo = x;
+    mYo = y;
+    mZo = z;
+    mXOld = x;
+    mYOld = y;
+    mZOld = z;
     setStartPos(BlockPos(this));
 }
 
 FallingBlockEntity::FallingBlockEntity(Level* level)
-    : Entity(level, true), mBlockState(NULL), mTime(0), mDropItem(true), mHurtsEntities(false),
-      mFallHurtMax(40), mFallHurtAmount(2.0f), mBlockEntityData(NULL)
+    : Entity(level, true)
 {
     _init();
 }
 
 FallingBlockEntity::~FallingBlockEntity()
 {
-    if (mBlockEntityData != NULL)
-    {
-        delete mBlockEntityData;
-        mBlockEntityData = NULL;
-    }
+    delete mBlockEntityData;
 }
 
 void FallingBlockEntity::staticCtor()
@@ -55,25 +76,25 @@ void FallingBlockEntity::staticCtor()
 void FallingBlockEntity::_init()
 {
     fjDerivedCtorCalls();
-    mDropItem = true;
-    mHurtsEntities = false;
-    mBlockEntityData = NULL;
+    mBlockState = NULL;
     mTime = 0;
+    mDropItem = true;
+    mCancelDrop = false;
+    mHurtsEntities = false;
     mFallHurtMax = 40;
     mFallHurtAmount = 2.0f;
+    mBlockEntityData = NULL;
+    mIgnoreVerticalCollision = mLevel->mIsClientSide;
 }
 
 void FallingBlockEntity::setStartPos(const BlockPos& pos)
 {
-    if (DATA_START_POS != NULL)
-    {
-        getEntityData()->set(DATA_START_POS, pos, true);
-    }
+    mEntityData->set(DATA_START_POS, pos, true);
 }
 
 void FallingBlockEntity::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_START_POS, BlockPos::ZERO);
+    mEntityData->createDateItem(DATA_START_POS, BlockPos::ZERO);
 }
 
 bool FallingBlockEntity::isAttackable()
@@ -93,30 +114,195 @@ bool FallingBlockEntity::isPickable()
 
 void FallingBlockEntity::tick()
 {
-    if (mRemoved)
+    PIXBeginNamedEvent(0.0F, "Falling Block Entity tick");
+
+    Block* block = mBlockState->getBlock();
+    if (mBlockState->getMaterial() == Material::AIR)
     {
+        remove();
+        PIXEndNamedEvent();
         return;
     }
 
     mXo = mX;
     mYo = mY;
     mZo = mZ;
-    ++mTime;
-    mYd -= 0.04;
-    move(eMoverType_Self, mXd, mYd, mZd, true);
-    if (mOnGround)
+    if (mTime++ == 0)
     {
-        mYd *= -0.5;
-        mXd *= 0.7;
-        mZd *= 0.7;
+        BlockPos startPos(shared_from_this());
+        if (mLevel->getBlockState(startPos)->getBlock() == block)
+        {
+            mLevel->removeBlock(startPos);
+        }
+        else if (!mLevel->mIsClientSide)
+        {
+            remove();
+            PIXEndNamedEvent();
+            return;
+        }
     }
+
+    if (!isNoGravity())
+    {
+        mYd -= 0.04;
+    }
+
+    move(eMoverType_Self, mXd, mYd, mZd, false);
+
+    if (!mLevel->mIsClientSide)
+    {
+        MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
+        if (masterGameMode != NULL && masterGameMode->IsInKillBox(shared_from_this()))
+        {
+            remove();
+        }
+
+        BlockPos pos(shared_from_this());
+        bool concretePowder = mBlockState->getBlock() == Blocks::concrete_powder;
+        bool inWater = concretePowder && mLevel->getBlockState(pos)->getMaterial() == Material::WATER;
+        if (concretePowder && mXd * mXd + mYd * mYd + mZd * mZd > 1.0)
+        {
+            HitResult* hitResult = mLevel->clip(Vec3::newTemp(mXo, mYo, mZo), Vec3::newTemp(mX, mY, mZ), true);
+            if (hitResult != NULL)
+            {
+                if (mLevel->getBlockState(hitResult->getBlockPos())->getMaterial() == Material::WATER)
+                {
+                    pos = hitResult->getBlockPos();
+                    inWater = true;
+                }
+                delete hitResult;
+            }
+        }
+
+        if (!mOnGround && !inWater)
+        {
+            if (mTime > 100 && !mLevel->mIsClientSide && (pos.y < 1 || pos.y > 256))
+            {
+                if (mDropItem && mLevel->getGameRules()->getBoolean(6))
+                {
+                    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                }
+                remove();
+            }
+        }
+        else
+        {
+            const BlockState* landedOn = mLevel->getBlockState(pos);
+            if (!inWater && FallingBlock::isFree(mLevel->getBlockState(BlockPos(mX, mY - 0.01, mZ))))
+            {
+                mOnGround = false;
+                return;
+            }
+
+            mXd *= 0.7;
+            mZd *= 0.7;
+            mYd *= -0.5;
+            if (landedOn->getBlock() != Blocks::piston_extension)
+            {
+                remove();
+                if (!mCancelDrop)
+                {
+                    bool placed = false;
+                    if (mLevel->mayPlace(block, pos, true, Direction::UP, boost::shared_ptr<Entity>())
+                        && (inWater || !FallingBlock::isFree(mLevel->getBlockState(pos.below())))
+                        && mLevel->setBlock(pos, mBlockState, 3, false))
+                    {
+                        placed = true;
+                    }
+
+                    if (placed)
+                    {
+                        FallingBlock* fallingBlock = dynamic_cast<FallingBlock*>(block);
+                        if (fallingBlock != NULL)
+                        {
+                            fallingBlock->onLand(mLevel, pos, mBlockState, landedOn);
+                        }
+
+                        if (mBlockEntityData != NULL && block->mBlockEntity)
+                        {
+                            boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(pos);
+                            if (blockEntity != NULL)
+                            {
+                                CompoundTag* blockEntityTag = blockEntity->save(new CompoundTag());
+                                boost::unordered_map<std::wstring, Tag*>& tags = mBlockEntityData->getAllTagsMap();
+                                for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags.begin(); it != tags.end(); ++it)
+                                {
+                                    if (it->first.compare(L"x") != 0 && it->first.compare(L"y") != 0
+                                        && it->first.compare(L"z") != 0)
+                                    {
+                                        blockEntityTag->put(it->first, it->second->copy());
+                                    }
+                                }
+                                blockEntity->load(blockEntityTag);
+                                blockEntity->setChanged();
+                            }
+                        }
+                    }
+                    else if (mDropItem && mLevel->getGameRules()->getBoolean(6))
+                    {
+                        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                    }
+                }
+                else
+                {
+                    FallingBlock* fallingBlock = dynamic_cast<FallingBlock*>(block);
+                    if (fallingBlock != NULL)
+                    {
+                        fallingBlock->onBroken(mLevel, pos);
+                    }
+                }
+            }
+        }
+    }
+
+    mXd *= 0.98;
+    mYd *= 0.98;
+    mZd *= 0.98;
+    PIXEndNamedEvent();
 }
 
 void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultiplier)
 {
-    if (!mHurtsEntities || fallDistance <= 1.0f)
+    Block* block = mBlockState->getBlock();
+    if (!mHurtsEntities)
     {
         return;
+    }
+
+    int distance = (int)(fallDistance - 1.0f);
+    if ((float)distance < fallDistance - 1.0f)
+    {
+        ++distance;
+    }
+
+    if (distance <= 0)
+    {
+        return;
+    }
+
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        new std::vector<boost::shared_ptr<Entity> >(*mLevel->getEntities(shared_from_this(), mBoundingBox, NULL));
+    bool anvil = block == Blocks::anvil;
+    const DamageSource* damageSource = anvil ? DamageSource::ANVIL : DamageSource::FALLING_BLOCK;
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    {
+        int damage = Mth::floor((float)distance * mFallHurtAmount);
+        (*it)->hurt(damageSource, (float)(damage > mFallHurtMax ? mFallHurtMax : damage));
+    }
+    delete entities;
+
+    if (anvil && mRandom->nextFloat() < (float)distance * 0.05f + 0.05f)
+    {
+        int anvilDamage = mBlockState->getValue(AnvilBlock::DAMAGE) + 1;
+        if (anvilDamage > 2)
+        {
+            mCancelDrop = true;
+        }
+        else
+        {
+            TypedBoxed<int> boxedDamage(anvilDamage);
+            mBlockState = mBlockState->setBoxedValue(AnvilBlock::DAMAGE, &boxedDamage);
+        }
     }
 }
 
@@ -126,10 +312,11 @@ void FallingBlockEntity::addDataWalkers(DataFixerUpper*)
 
 void FallingBlockEntity::addAdditonalSaveData(CompoundTag* tag)
 {
-    Block* block = mBlockState == NULL ? NULL : mBlockState->getBlock();
-    tag->putString(std::wstring(L"Block"), block == NULL ? std::wstring(L"") : block->getName());
-    tag->putByte(std::wstring(L"Data"), block == NULL ? 0 : (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
-    tag->putInt(std::wstring(L"Time"), mTime);
+    Block* block = mBlockState == NULL ? Blocks::AIR : mBlockState->getBlock();
+    ResourceLocation location = Block::blockRegistry->getKey(block);
+    tag->putString(std::wstring(L"Block"), location.toString());
+    tag->putByte(std::wstring(L"Data"), (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
+    tag->putInt(std::wstring(L"Time"), (unsigned char)mTime);
     tag->putBoolean(std::wstring(L"DropItem"), mDropItem);
     tag->putBoolean(std::wstring(L"HurtEntities"), mHurtsEntities);
     tag->putFloat(std::wstring(L"FallHurtAmount"), mFallHurtAmount);
@@ -142,35 +329,47 @@ void FallingBlockEntity::addAdditonalSaveData(CompoundTag* tag)
 
 void FallingBlockEntity::readAdditionalSaveData(CompoundTag* tag)
 {
+    int data = tag->getByte(std::wstring(L"Data"));
     if (tag->contains(std::wstring(L"Block"), 8))
     {
-        Block* block = Block::byString(tag->getString(std::wstring(L"Block")));
-        mBlockState = block == NULL ? NULL : block->getBlockState((int)tag->getByte(std::wstring(L"Data")));
+        mBlockState = Block::byString(tag->getString(std::wstring(L"Block")))->getBlockState(data);
     }
     else if (tag->contains(std::wstring(L"TileID"), 99))
     {
-        Block* block = Block::byId(tag->getInt(std::wstring(L"TileID")));
-        mBlockState = block == NULL ? NULL : block->getBlockState((int)tag->getByte(std::wstring(L"Tile")));
+        mBlockState = Block::byId(tag->getInt(std::wstring(L"TileID")))->getBlockState(data);
+    }
+    else
+    {
+        mBlockState = Block::byId(tag->getByte(std::wstring(L"Tile")))->getBlockState(data);
     }
 
-    mTime = tag->getInt(std::wstring(L"Time"));
+    mTime = (unsigned char)tag->getInt(std::wstring(L"Time"));
+
+    Block* block = mBlockState->getBlock();
     if (tag->contains(std::wstring(L"HurtEntities"), 99))
     {
         mHurtsEntities = tag->getBoolean(std::wstring(L"HurtEntities"));
         mFallHurtAmount = tag->getFloat(std::wstring(L"FallHurtAmount"));
         mFallHurtMax = tag->getInt(std::wstring(L"FallHurtMax"));
     }
+    else if (block == Blocks::anvil)
+    {
+        mHurtsEntities = true;
+    }
+
     if (tag->contains(std::wstring(L"DropItem"), 99))
     {
         mDropItem = tag->getBoolean(std::wstring(L"DropItem"));
     }
+
     if (tag->contains(std::wstring(L"TileEntityData"), 10))
     {
         mBlockEntityData = tag->getCompound(std::wstring(L"TileEntityData"));
     }
-    if (mBlockState == NULL)
+
+    if (block == NULL || block->defaultBlockState()->getMaterial() == Material::AIR)
     {
-        mBlockState = Block::byId(0)->defaultBlockState();
+        mBlockState = Blocks::sand->defaultBlockState();
     }
 }
 

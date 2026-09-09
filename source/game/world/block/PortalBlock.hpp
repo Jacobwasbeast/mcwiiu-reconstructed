@@ -31,7 +31,6 @@ public:
         int getWidth();
         void createPortalBlocks();
 
-    private:
         Level* mLevel;
         Direction::Axis* mAxis;
         const Direction* mRightDir;

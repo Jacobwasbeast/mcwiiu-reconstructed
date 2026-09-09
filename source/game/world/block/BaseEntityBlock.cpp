@@ -34,7 +34,7 @@ BaseEntityBlock::~BaseEntityBlock()
 
 bool BaseEntityBlock::isCactus(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    return level->getBlockState(pos.relative(direction))->getBlock() == Blocks::cactus;
+    return level->getBlockState(pos.relative(direction))->getMaterial() == Material::CACTUS;
 }
 
 bool BaseEntityBlock::touchesCactus(Level* level, const BlockPos& pos)

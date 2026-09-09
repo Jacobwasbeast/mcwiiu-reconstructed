@@ -316,6 +316,10 @@ public:
     EBlockType mBlockType;
 };
 
+extern unsigned int THREAD_STORAGE_INDEX;
+
+void* TlsGetValue(unsigned int index);
+
 void createItem__FP5Block(not_null_ptr<ItemInstance>* item, Block* block);
 
 #endif

@@ -258,19 +258,25 @@ bool FurnaceBlockEntity::isLit(boost::shared_ptr<Container> container)
 bool FurnaceBlockEntity::canBurn()
 {
     if (mItems[0]->isEmpty()) return false;
-    not_null_ptr<ItemInstance> result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
+    ItemInstance* result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
     if (result->isEmpty()) return false;
     if (mItems[2]->isEmpty()) return true;
-    if (!mItems[2]->sameItem(result)) return false;
+    if (!mItems[2]->sameItem_not_shared(result)) return false;
     return mItems[2]->getCount() < getMaxStackSize() && mItems[2]->getCount() < mItems[2]->getMaxStackSize();
 }
 
 void FurnaceBlockEntity::burn()
 {
     if (!canBurn()) return;
-    not_null_ptr<ItemInstance> result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
-    if (mItems[2]->isEmpty()) mItems[2] = result;
-    else mItems[2]->grow(result->getCount());
+    ItemInstance* result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
+    if (!mItems[2]->isEmpty())
+    {
+        if (mItems[2]->getItem() == result->getItem()) mItems[2]->grow(1);
+    }
+    else
+    {
+        mItems[2] = result->copy();
+    }
     mItems[0]->shrink(1);
     if (mItems[0]->isEmpty()) mItems[0] = not_null_ptr<ItemInstance>();
 }

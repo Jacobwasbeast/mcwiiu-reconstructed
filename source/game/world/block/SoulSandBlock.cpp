@@ -8,13 +8,14 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
 static const AABB* SOUL_SAND_CLIP_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0);
 
 SoulSandBlock::SoulSandBlock()
-    : Block(Material::SAND, MaterialColor::SAND)
+    : Block(Material::SAND, MaterialColor::COLOR_BROWN)
 {
     DerivedInit();
     setTicking(true);
@@ -38,37 +39,37 @@ void SoulSandBlock::entityInside(Level*, const BlockPos&, const BlockState*,
 
 void SoulSandBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
 {
-    const BlockPos above = pos.above();
-    if (level->getBlock(above.above()) == Blocks::AIR && level->isEmptyWaterBlock(above))
+    Block* blockAbove = level->getBlock(pos.above().above());
+    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::AIR)
     {
-        const BlockState* liquidState = level->getLiquidBlockState(above);
-        if (liquidState != NULL && liquidState->getBlock()->convertBlockStateToLegacyData(liquidState) != 0)
+        int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
+        if (!level->isEmptyWaterBlock(pos.above()))
             return;
-        if (!level->isEmptyWaterBlock(above))
+        if (liquidLevel != 0)
             return;
     }
-    BubbleColumnSegment* bubbleColumnSegment = static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment);
-    bubbleColumnSegment->addBubbleColumnSegment(level, pos);
+
+    static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment)->addBubbleColumnSegment(level, pos);
 }
 
 void SoulSandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                     Block*, const BlockPos& fromPos)
 {
-    if (pos.above() == fromPos && level->isEmptyWaterBlock(pos.above()))
+    if (fromPos == pos.above() && level->isEmptyWaterBlock(pos.above()))
         level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));
 }
 
 void SoulSandBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    const BlockPos above = pos.above();
-    if (level->getBlock(above.above()) == Blocks::AIR && level->isEmptyWaterBlock(above))
+    Block* blockAbove = level->getBlock(pos.above().above());
+    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::AIR)
     {
-        const BlockState* liquidState = level->getLiquidBlockState(above);
-        if (liquidState != NULL && liquidState->getBlock()->convertBlockStateToLegacyData(liquidState) != 0)
+        int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
+        if (!level->isEmptyWaterBlock(pos.above()))
             return;
-        if (!level->isEmptyWaterBlock(above))
+        if (liquidLevel != 0)
             return;
     }
-    BubbleColumnSegment* bubbleColumnSegment = static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment);
-    bubbleColumnSegment->addBubbleColumnSegment(level, pos);
+
+    static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment)->addBubbleColumnSegment(level, pos);
 }
