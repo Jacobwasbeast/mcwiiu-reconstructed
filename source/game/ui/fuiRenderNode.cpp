@@ -189,6 +189,16 @@ float fuiRenderNode::getAlpha()
     return m_alpha;
 }
 
+unsigned int fuiRenderNode::getColor() const
+{
+    return m_color;
+}
+
+void fuiRenderNode::setColor(unsigned int color)
+{
+    m_color = color;
+}
+
 fuiRenderNode* fuiRenderNode::asTimeline()
 {
     return m_type == eFuiObjectType_Timeline ? this : 0;

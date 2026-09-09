@@ -8,18 +8,18 @@ UIControl_Progress::UIControl_Progress()
     : UIControl_Base(), m_minimum(0), m_maximum(100), m_progress(0),
       m_progressRatio(0.0f), m_showBar(true)
 {
-    m_controlType = 13;
+    m_controlType = UIControl::eUIControlType_Progress;
 }
 
 UIControl_Progress::~UIControl_Progress()
 {
 }
 
-bool UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
                                       const std::string& name)
 {
-    m_controlType = 13;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_Progress;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Progress::init(UIString label, int controlId, int minimum, int maximum,

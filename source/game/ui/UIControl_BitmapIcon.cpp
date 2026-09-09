@@ -1,13 +1,8 @@
 #include "game/ui/UIControl_BitmapIcon.hpp"
 
 #include "game/ui/FJ_BitmapIcon.hpp"
+#include "platform/wiiu/C4JThread.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class C4JThread
-{
-public:
-    static bool isMainThread();
-};
 
 UIControl_BitmapIcon::UIControl_BitmapIcon()
     : m_textureNamePending(false)
@@ -41,10 +36,10 @@ void UIControl_BitmapIcon::tick()
     }
 }
 
-bool UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_BitmapIcon::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 19;
-    return UIControl::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_BitmapIcon;
+    UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_BitmapIcon::ReInit()

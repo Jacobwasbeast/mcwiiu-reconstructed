@@ -14,10 +14,7 @@ FJ_BeaconEffectButton::~FJ_BeaconEffectButton()
 void FJ_BeaconEffectButton::ChangeState(int state)
 {
     static const char* stateLabels[] = {"Default", "Active", "Focused", "Selected"};
-    if (state >= 0 && state < 4)
-    {
-        gotoAndStop(std::string(stateLabels[state]));
-    }
+    gotoAndStop(std::string(stateLabels[state]));
     m_state = state;
 }
 
@@ -39,3 +36,5 @@ void FJ_BeaconEffectButton::SetIcon(int icon)
     iconMovieClip->gotoAndStop(iconFrames[icon] + 2);
     tickMovieClip->setVisible(false);
 }
+
+

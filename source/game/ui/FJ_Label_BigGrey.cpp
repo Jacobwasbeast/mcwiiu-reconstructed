@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_BigGrey::FJ_Label_BigGrey(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label_BigGrey::~FJ_Label_BigGrey()
 {
 }

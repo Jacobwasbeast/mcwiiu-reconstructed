@@ -233,6 +233,12 @@ public:
         int mUnused[2];
         void* mName;
     };
+    struct BiomeItem
+    {
+        int id;
+        int reserved;
+        not_null_ptr<ItemInstance> item;
+    };
     class PresetCache
     {
     public:
@@ -251,12 +257,12 @@ public:
         static bool hasRestrictedPlacement(int id);
         static bool sanitiseLayer(int* ids, int* data, int layer);
         static void sanitise(FlatGeneratorInfo& info);
-        static bool verify(LaunchMoreOptionsMenuInitData* data, SuperflatConfig* config);
+        static uint32_t verify(LaunchMoreOptionsMenuInitData* data, SuperflatConfig* config);
         static bool inlist(const int* list, int value);
         ~CustomSuperflatBlocks();
         int itemcount() const;
     };
-    static int getBiomeInfoA();
+    static BiomeItem* getBiomeInfoA();
 };
 
 #endif

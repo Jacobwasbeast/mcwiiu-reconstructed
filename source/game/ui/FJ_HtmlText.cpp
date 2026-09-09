@@ -5,16 +5,11 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_Factory
-{
-public:
-    static FJ_FuiNode* createObject(const char*, fuiRenderNode*, bool, const char*);
-};
 
 FJ_HtmlText::FJ_HtmlText(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)

@@ -3,9 +3,12 @@
 #include "game/core/Slot.hpp"
 #include "game/item/EnchantmentCostSlot.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/EnchantedBookItem.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
+#include "game/world/generation/Player.hpp"
 
 EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos)
     : AbstractContainerMenu(), mEnchantmentContainer(new EnchantmentContainer(this)), mLevel(level), mPosition(pos), mRandom()
@@ -74,6 +77,13 @@ void EnchantmentMenu::addSlotListener(net_minecraft_world_inventory::ContainerLi
 void EnchantmentMenu::broadcastChanges()
 {
     AbstractContainerMenu::broadcastChanges();
+
+    for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
+         it != m_listeners.end(); ++it)
+    {
+        if (*it != 0)
+            broadcastData(*it);
+    }
 }
 
 void EnchantmentMenu::setData(int id, int value)
@@ -95,9 +105,54 @@ void EnchantmentMenu::slotsChanged()
     AbstractContainerMenu::slotsChanged();
 }
 
-bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player>, int)
+bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
 {
-    return false;
+    if (!player || id < 0 || id >= 3)
+        return false;
+
+    not_null_ptr<ItemInstance> item = mEnchantmentContainer->getItem(0);
+    if (item->isEmpty() || mCosts[id] <= 0)
+        return false;
+
+    const int lapisRequired = id + 1;
+    not_null_ptr<ItemInstance> lapis = mEnchantmentContainer->getItem(1);
+    if (lapis->isEmpty() || lapis->getCount() < lapisRequired)
+        return false;
+
+    if (!player->mAbilities.mInstabuild &&
+        (player->mExperienceLevel < lapisRequired || player->mExperienceLevel < mCosts[id]))
+        return false;
+
+    std::vector<EnchantmentInstance*>* results =
+        getEnchantmentList(item, mCosts[id], id);
+    if (results == 0 || results->empty())
+        return false;
+
+    if (item->getItem() == Items::enchantedBook)
+    {
+        for (std::vector<EnchantmentInstance*>::iterator it = results->begin();
+             it != results->end(); ++it)
+        {
+            if (*it != 0)
+                EnchantedBookItem::addEnchantment(item, *it);
+        }
+    }
+    else
+    {
+        for (std::vector<EnchantmentInstance*>::iterator it = results->begin();
+             it != results->end(); ++it)
+        {
+            if (*it != 0)
+                item->enchant((*it)->enchantment, (*it)->level);
+        }
+    }
+    delete results;
+
+    if (!player->mAbilities.mInstabuild)
+        player->giveExperienceLevels(-mCosts[id]);
+    lapis->shrink(lapisRequired);
+    slotsChanged();
+    return true;
 }
 
 int EnchantmentMenu::getGoldCount()

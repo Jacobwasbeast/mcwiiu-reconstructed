@@ -13,7 +13,6 @@
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 
-extern CConsoleMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 
@@ -36,7 +35,7 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* laye
     m_catalogReady = true;
     m_shouldNavigateBack = false;
 
-    cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+    cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
     if (commerce->GetDLCCatalogState() != 1)
     {
         if (commerce->GetDLCCatalogState() == 2)
@@ -59,7 +58,7 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* laye
 UIScene_DLCOffersMenu::~UIScene_DLCOffersMenu()
 {
     g_pApp->SetLiveLinkRequired(false);
-    cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+    cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
     commerce->ClearProductInfo();
 }
 
@@ -83,7 +82,7 @@ unsigned int UIScene_DLCOffersMenu::mapElementsAndNames()
 
 uint32_t UIScene_DLCOffersMenu::ExitDLCOffersMenu(void*, int, C4JStorage::EMessageResult)
 {
-    cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+    cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
     commerce->ClearProductInfo();
     gConsoleUIController.NavigateToHomeMenu(false);
     return 0;
@@ -91,7 +90,7 @@ uint32_t UIScene_DLCOffersMenu::ExitDLCOffersMenu(void*, int, C4JStorage::EMessa
 
 uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo* product)
 {
-    cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+    cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
     if (commerce->GetPurchasabilityUpdated() != 0)
     {
         if (commerce->ProductListAvailable() != 0 && m_productCount != 0)
@@ -116,7 +115,7 @@ uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo* product)
             void* imageData = NULL;
             unsigned int imageSize = 0;
             bool freeImageData = false;
-            cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)theApp.GetDLCInfoInstance());
+            cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance());
             dlcInfo->DLC_RetrieveImageData(product->GetBanner(), &imageData, &imageSize,
                                            &freeImageData);
             if (imageData == NULL)
@@ -152,7 +151,7 @@ void UIScene_DLCOffersMenu::tick()
             navigateBack();
             return;
         }
-        cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+        cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
         if (commerce->ProductListAvailable() != 0 &&
             commerce->GetDLCCatalogListInfoRetrieved() != 0)
         {
@@ -175,7 +174,7 @@ void UIScene_DLCOffersMenu::tick()
     }
     if (!m_purchasabilityChanged)
     {
-        cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+        cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
         if (commerce->ProductListAvailable() != 0 && m_productCount != 0 &&
             m_offerList.hasFocus())
         {
@@ -232,7 +231,7 @@ void UIScene_DLCOffersMenu::handlePress(int first, int second)
 {
     if (first == 0)
     {
-        cCommerce* commerce = static_cast<cCommerce*>((void*)theApp.GetCommerceInstance());
+        cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
         commerce->PurchaseDLCByIndex(static_cast<unsigned int>(second), m_controlFocus);
     }
 }

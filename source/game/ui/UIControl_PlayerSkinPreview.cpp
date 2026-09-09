@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include "game/client/render/EntityRenderer.hpp"
+#include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/client/render/PlayerRenderer.hpp"
 #include "game/client/render/PlayerModel.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameSettings.hpp"
@@ -167,7 +169,15 @@ void UIControl_PlayerSkinPreview::render(fuiRect* rect)
     GlStateManager::pushMatrix();
     GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 50.0f);
     Lighting::turnOn();
-    render(NULL, 0.0, 0.0, 0.0, 0.0f, 0.0f);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
+    PlayerRenderer* renderer = NULL;
+    if (dispatcher != NULL)
+    {
+        renderer = dispatcher->getPlayerRenderer(
+            static_cast<EPlayerModelType>(Player::GetModelTypeFromTextureId(mTextureName)));
+    }
+    render(renderer, 0.0, 0.0, 0.0, 0.0f, 0.0f);
     Lighting::turnOff();
     GlStateManager::popMatrix();
     GlStateManager::disableRescaleNormal();

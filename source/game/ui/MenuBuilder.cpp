@@ -10,34 +10,13 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/BannerItem.hpp"
 #include "game/item/Potion.hpp"
+#include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class BannerItem
-{
-public:
-    static ItemInstance* makeBanner(const DyeColor* color, ListTag* patterns);
-};
-
-class BannerBlockEntity
-{
-public:
-    static void addTags(const not_null_ptr<ItemInstance>& item, int color, ListTag* patterns);
-    static void fjAddPatternToItem(const not_null_ptr<ItemInstance>& item,
-                                   const BannerPattern* pattern, const DyeColor* color);
-};
-
-UIScene_CreativeMenu::ItemBuilder::ItemBuilder(const ItemInstance& value)
-    : item(value)
-{
-}
-
-UIScene_CreativeMenu::ItemBuilder::~ItemBuilder()
-{
-}
 
 static void addItem(std::vector<const UIScene_CreativeMenu::ItemBuilder*>* items,
                     const ItemInstance& item)

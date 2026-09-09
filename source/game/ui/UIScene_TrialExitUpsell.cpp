@@ -35,7 +35,7 @@ void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat,
         if (pressed)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            theApp.ExitGame();
+            gApp.ExitGame();
             return;
         }
     }

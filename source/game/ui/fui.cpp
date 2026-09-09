@@ -361,14 +361,14 @@ uint32_t fui::getFuiFileFromIndex(unsigned int index)
     return (uint32_t)m_files[m_permanentFileIndices[index]];
 }
 
-int fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent)
+fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent)
 {
     if (*name == '\0')
     {
         fuiRenderNodeTimeline* timeline = new fuiRenderNodeTimeline(parent->m_stage, NULL, NULL, 0, 0, NULL, 0, false, NULL);
         timeline->disableCtor();
         timeline->gather(false);
-        return (int)timeline;
+        return timeline;
     }
 
     fuiRenderNode* node = NULL;
@@ -398,7 +398,7 @@ int fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent)
         }
     }
 
-    return (int)node;
+    return node;
 }
 
 int fui::findBitmapFromSymbol(const char* name, fuiFile** file)

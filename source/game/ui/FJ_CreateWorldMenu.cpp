@@ -40,12 +40,11 @@ FJ_Document* FJ_CreateWorldMenu::Create(fuiRenderNode* renderNode)
 
 unsigned int FJ_CreateWorldMenu::getType()
 {
-    return 22;
+    return 0x16;
 }
 
 void FJ_CreateWorldMenu::init(FJ_Event* event)
 {
-    std::string name("MainPanel");
-    m_root = getChildByName(name);
+    m_root = getChildByName(std::string("MainPanel"));
     FJ_Document::init(event);
 }

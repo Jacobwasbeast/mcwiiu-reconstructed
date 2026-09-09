@@ -5,6 +5,7 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Base.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
@@ -143,7 +144,7 @@ unsigned int FJ_EndPoem::SetNextLabel(const std::wstring& label, int index, bool
     }
     if (!append || !waitingForLabel)
     {
-        node->gotoAndStop(label.empty() ? std::string(" ") : std::string(" "));
+        node->asFJ_Base()->SetLabel(label.empty() ? std::wstring(L" ") : label);
     }
     node->setVisible(true);
     currentLabel = index;

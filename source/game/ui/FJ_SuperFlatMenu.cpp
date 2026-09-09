@@ -3,32 +3,13 @@
 #include <string>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Base
-{
-public:
-    FJ_Base* getObjListParent();
-    int getId();
-};
-
-class FJ_CheckBox : public FJ_Base
-{
-};
-
-class FJ_HtmlText
-{
-public:
-    void setText(const std::wstring& text);
-};
-
-class UIScene
-{
-public:
-    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-};
 
 FJ_SuperFlatMenu::FJ_SuperFlatMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode), m_activeTab(0), m_currentTab(-1), m_helpTextSet(false),
@@ -51,7 +32,7 @@ void FJ_SuperFlatMenu::handleCheckboxToggled(FJ_Event* event)
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
     if (checkBox != NULL)
     {
-        FJ_Base* listItem = checkBox->getObjListParent();
+        FJ_Base* listItem = static_cast<FJ_Base*>(checkBox->getObjListParent());
         m_pCallbackScene->handleCheckboxElementToggled(listItem->getId(), checkBox->getId(), checkBox->getId());
     }
 }
@@ -75,9 +56,9 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
 
     if (!m_helpTextSet)
     {
-        static_cast<FJ_HtmlText*>(layersHelp->asFJ_HtmlText())->setText(L"");
-        static_cast<FJ_HtmlText*>(biomesHelp->asFJ_HtmlText())->setText(L"");
-        static_cast<FJ_HtmlText*>(propertiesHelp->asFJ_HtmlText())->setText(L"");
+        static_cast<FJ_HtmlText*>(layersHelp->asFJ_HtmlText())->SetLabel(L"");
+        static_cast<FJ_HtmlText*>(biomesHelp->asFJ_HtmlText())->SetLabel(L"");
+        static_cast<FJ_HtmlText*>(propertiesHelp->asFJ_HtmlText())->SetLabel(L"");
         m_helpTextSet = true;
     }
 

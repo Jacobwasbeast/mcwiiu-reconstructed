@@ -386,7 +386,6 @@ void fuiRenderNodeEditText::preRender()
 
 void fuiRenderNodeEditText::render(fuiRect* rect, fuiMatrix* matrix)
 {
-    fuiRenderNode::render(rect, matrix);
     if (m_dirty)
     {
         RenderStringStateData state;
@@ -424,16 +423,16 @@ void fuiRenderNodeEditText::setHTMLText(const std::wstring& text)
     m_dirty = true;
 }
 
-void fuiRenderNodeEditText::setAutoSize(TextFieldAutoSize autoSize)
+void fuiRenderNodeEditText::setAutoSize(int autoSize)
 {
-    if (m_autoSize != autoSize)
+    if (m_autoSize != static_cast<TextFieldAutoSize>(autoSize))
     {
         if (m_html)
         {
             autoSizeBounds();
             m_dirty = true;
         }
-        m_autoSize = autoSize;
+        m_autoSize = static_cast<TextFieldAutoSize>(autoSize);
     }
 }
 

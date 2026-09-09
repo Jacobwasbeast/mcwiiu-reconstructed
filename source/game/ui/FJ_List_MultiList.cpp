@@ -14,7 +14,6 @@
 #include "game/ui/FJ_ListButtonController.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-uint64_t __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(FJ_Base* node, std::vector<std::wstring>& labels);
 
 void __CPR268__SetPossibleLabels__17FJJ_List_MultiListFiQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ73J(
     FJ_List_MultiList* list, int index, std::vector<std::wstring> labels)
@@ -61,7 +60,7 @@ void FJ_List_MultiList::addNewItem_Button(const std::wstring& label, int id, boo
     item->UseEllipsis(useEllipsis);
     if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
     {
-        __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(item, m_labelLists[static_cast<unsigned int>(id)]);
+        item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(item, label, id);
@@ -75,7 +74,7 @@ void FJ_List_MultiList::addNewItem_MenuButton(const std::wstring& label, int id)
         : FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Normal", m_pRenderNode, true, NULL);
     if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
     {
-        __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(node->asFJ_Base(), m_labelLists[static_cast<unsigned int>(id)]);
+        node->asFJ_Base()->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(node->asFJ_Base(), label, id);
@@ -89,7 +88,7 @@ void FJ_List_MultiList::addNewItem_ControllerButton(const std::wstring& label, c
         : FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonController_Normal", m_pRenderNode, true, NULL)->asFJ_ListButtonController();
     if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
     {
-        __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(item, m_labelLists[static_cast<unsigned int>(id)]);
+        item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(item, label, id);
@@ -104,7 +103,7 @@ void FJ_List_MultiList::addNewItem_CheckBox(const std::wstring& label, int id, b
         : FJ_Factory::createObject("fourj.Checkbox.FJ_CheckBox_Normal", m_pRenderNode, true, NULL)->asFJ_CheckBox();
     if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
     {
-        __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(item, m_labelLists[static_cast<unsigned int>(id)]);
+        item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(item, label, id);
@@ -118,7 +117,7 @@ void FJ_List_MultiList::addNewItem_Slider(const std::wstring& label, int id, int
         : FJ_Factory::createObject("fourj.FJ_Slider_Normal", m_pRenderNode, true, NULL)->asFJ_Slider();
     if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
     {
-        __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(item, m_labelLists[static_cast<unsigned int>(id)]);
+        item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(item, label, id);

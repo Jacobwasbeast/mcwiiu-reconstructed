@@ -8,7 +8,11 @@ class fuiRenderNode;
 class FJ_Label_Black : public FJ_Label
 {
 public:
-    explicit FJ_Label_Black(fuiRenderNode* renderNode);
+    FJ_Label_Black(fuiRenderNode* renderNode)
+        : FJ_Label(renderNode)
+    {
+    }
+
     virtual ~FJ_Label_Black();
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

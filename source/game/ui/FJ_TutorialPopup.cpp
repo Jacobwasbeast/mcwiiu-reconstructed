@@ -1,22 +1,12 @@
 #include "game/ui/FJ_TutorialPopup.hpp"
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
+#include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_HtmlText : public FJ_FuiNode
-{
-public:
-    int getTextHeight();
-};
-
-class fuiRenderNodeTimeline : public fuiRenderNode
-{
-public:
-    void removeChild(fuiRenderNode* child, bool destroy);
-};
 
 FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode)

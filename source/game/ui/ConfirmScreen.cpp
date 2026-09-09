@@ -1,7 +1,7 @@
 #include "game/ui/ConfirmScreen.hpp"
 
-#include "game/core/Button.hpp"
 #include "game/core/GuiComponent.hpp"
+#include "game/core/SmallButton.hpp"
 
 static int s_confirmScreenTicks = 0;
 
@@ -18,8 +18,8 @@ ConfirmScreen::~ConfirmScreen()
 
 void ConfirmScreen::init()
 {
-    mButtons.push_back(new Button(0, mWidth / 2 - 155, mHeight / 6 + 96, mYesMessage));
-    mButtons.push_back(new Button(1, mWidth / 2 + 5, mHeight / 6 + 96, mNoMessage));
+    mButtons.push_back(new SmallButton(0, mWidth / 2 - 155, mHeight / 6 + 96, mYesMessage));
+    mButtons.push_back(new SmallButton(1, mWidth / 2 + 5, mHeight / 6 + 96, mNoMessage));
 }
 
 void ConfirmScreen::buttonClicked(Button* button)
@@ -40,4 +40,3 @@ void ConfirmScreen::render(int x, int y, float partialTick)
         buttonClicked(mButtons[0]);
     }
 }
-

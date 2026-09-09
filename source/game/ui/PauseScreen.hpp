@@ -13,6 +13,7 @@ public:
 
     virtual void render(int x, int y, float partialTick);
     virtual void buttonClicked(Button* button);
+    void buttonClicked(Button button);
     virtual void tick();
     void init();
 

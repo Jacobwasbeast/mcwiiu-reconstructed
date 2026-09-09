@@ -3,6 +3,7 @@
 #include "game/core/Slot.hpp"
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/HorseArmorSlot.hpp"
+#include "game/entity/mob/HorseSaddleSlot.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -16,7 +17,7 @@ HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> horseContain
 {
     horseContainer->startOpen(player);
 
-    addSlot(new Slot(horseContainer, 0, 8, 18));
+    addSlot(new HorseSaddleSlot(this, horseContainer, 0, 8, 18));
     addSlot(new HorseArmorSlot(this, horseContainer, 1, 8, 36));
 
     boost::shared_ptr<AbstractChestedHorse> chestedHorse =

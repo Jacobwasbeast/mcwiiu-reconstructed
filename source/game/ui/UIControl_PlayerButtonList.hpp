@@ -27,7 +27,7 @@ public:
     };
 
     virtual ~UIControl_PlayerButtonList();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void setVOIPIcon(int item, int icon);
     void addItem(const std::wstring& label, int playerIcon, int voipIcon, bool immediate);
     void setPlayerIcon(int item, int icon);

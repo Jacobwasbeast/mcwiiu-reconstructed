@@ -15,8 +15,6 @@ FJ_FuiNodeStage::~FJ_FuiNodeStage()
 
 void FJ_FuiNodeStage::removeFocus(FJ_FuiNode* pNode)
 {
-    if (m_pFocus == pNode)
-        m_pFocus = NULL;
 }
 
 void FJ_FuiNodeStage::setFocus(FJ_FuiNode* pNode)

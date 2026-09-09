@@ -7,9 +7,6 @@ class fuiRenderNode;
 
 class FJ_HtmlText_WithPanel_Normal : public FJ_HtmlText_WithPanel
 {
-protected:
-    fuiRenderNode* m_pTextField;
-
 public:
     FJ_HtmlText_WithPanel_Normal(fuiRenderNode* pRenderNode)
         : FJ_HtmlText_WithPanel(pRenderNode)

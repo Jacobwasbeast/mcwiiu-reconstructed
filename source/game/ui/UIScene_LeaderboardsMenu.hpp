@@ -68,7 +68,7 @@ public:
     static int ExitLeaderboards(void* context, int button, C4JStorage::EMessageResult result);
 
 private:
-    unsigned int m_unknownC8;
+    unsigned int m_unknown;
     unsigned int m_leaderboardId;
     std::vector<LeaderboardEntry> m_entries;
     LeaderboardInterface m_leaderboardInterface;

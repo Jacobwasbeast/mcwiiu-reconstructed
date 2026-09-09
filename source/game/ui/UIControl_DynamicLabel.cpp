@@ -1,14 +1,9 @@
 #include "game/ui/UIControl_DynamicLabel.hpp"
 
 #include "game/ui/FJ_DynamicHtmlText.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class ConsoleUIController
-{
-public:
-    void TouchBoxAdd(UIControl* control, UIScene* scene);
-};
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -31,11 +26,11 @@ int UIControl_DynamicLabel::GetRealHeight()
     return (int)static_cast<FJ_DynamicHtmlText*>(m_fuiRenderNode->getFuiNode())->GetRealHeight();
 }
 
-bool UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
                                           const std::string& name)
 {
-    m_controlType = 4;
-    return UIControl::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_DynamicLabel;
+    UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_DynamicLabel::addText(const std::wstring& text, bool setup)

@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_Black.hpp"
 
-FJ_Label_Black::FJ_Label_Black(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label_Black::~FJ_Label_Black()
 {
 }

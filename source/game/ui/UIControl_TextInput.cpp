@@ -42,11 +42,11 @@ void UIControl_TextInput::init(UIString label, int id)
     SetCharLimit(101);
 }
 
-bool UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
                                        const std::string& name)
 {
-    m_controlType = 17;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_TextInput;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_TextInput::ReInit()

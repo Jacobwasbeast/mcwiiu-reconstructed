@@ -2,11 +2,18 @@
 
 #include <algorithm>
 #include <cwchar>
+#include <cmath>
 
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/core/FoodData.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/FJ_Hud.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -93,6 +100,37 @@ void UIScene_HUD::tick()
 
 void UIScene_HUD::updateSafeZone()
 {
+    switch (m_layer->getViewport()) {
+    default:
+    case C4JRender::eViewportType_FullScreen:
+        setSafeZone(getSafeZoneHalfHeight(), getSafeZoneHalfHeight(), getSafeZoneHalfWidth(),
+                    getSafeZoneHalfWidth());
+        break;
+    case C4JRender::eViewportType_TopHalf:
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, 0.0);
+        break;
+    case C4JRender::eViewportType_BottomHalf:
+        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, 0.0);
+        break;
+    case C4JRender::eViewportType_LeftHalf:
+        setSafeZone(0.0, 0.0, getSafeZoneHalfWidth(), 0.0);
+        break;
+    case C4JRender::eViewportType_RightHalf:
+        setSafeZone(0.0, 0.0, 0.0, getSafeZoneHalfWidth());
+        break;
+    case C4JRender::eViewportType_TopLeftQuarter:
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth(), 0.0);
+        break;
+    case C4JRender::eViewportType_TopRightQuarter:
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, getSafeZoneHalfWidth());
+        break;
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        setSafeZone(0.0, getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), 0.0);
+        break;
+    case C4JRender::eViewportType_BottomRightQuarter:
+        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth());
+        break;
+    }
 }
 
 std::wstring UIScene_HUD::getMoviePath()
@@ -162,7 +200,29 @@ void UIScene_HUD::ShowAir(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->Sho
 void UIScene_HUD::SetRidingHorse(bool riding, bool showJump, int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetRidingHorse(riding, showJump, health); }
 void UIScene_HUD::SetRegenerationEffect(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetRegenerationEffect(enabled); }
 void UIScene_HUD::SetHealthAbsorb(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHealthAbsorb(true, health); }
-void UIScene_HUD::InitMainHUD() { }
+void UIScene_HUD::InitMainHUD()
+{
+    const bool visible = !HideMainHUD();
+    ShowGameModePlayers(true);
+    ShowHealth(visible);
+    ShowFood(visible);
+    ShowArmour(visible);
+    ShowQuickSelect(visible);
+    ShowExpBar(visible);
+    ShowHorseHealth(visible);
+    ShowAir(false);
+    SetRidingHorse(false, false, 0);
+    SetRegenerationEffect(false);
+    SetHealthAbsorb(0);
+    m_armorIcons[0] = visible;
+    m_armorIcons[1] = visible;
+    m_armorIcons[2] = visible;
+    m_armorIcons[3] = visible;
+    m_previousArmorIcons[0] = visible;
+    m_previousArmorIcons[1] = visible;
+    m_previousArmorIcons[2] = visible;
+    m_previousArmorIcons[3] = visible;
+}
 void UIScene_HUD::SetTooltipsEnabled(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTooltipsEnabled(enabled); }
 void UIScene_HUD::handleReload()
 {
@@ -170,7 +230,7 @@ void UIScene_HUD::handleReload()
     UIScene::handleReload();
 }
 
-unsigned int UIScene_HUD::getPad() { return 0; }
+unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_sceneType); }
 void UIScene_HUD::SetOpacity(float opacity) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAlpha(opacity); }
 void UIScene_HUD::SetVisible(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHealth(visible); }
 unsigned char UIScene_HUD::GetHudLoading() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHudLoading(); }
@@ -232,8 +292,54 @@ void UIScene_HUD::SetPositions(unsigned int position, const std::wstring& label,
 void UIScene_HUD::SetSpeedometer(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetSpeedometer((int)value); }
 void UIScene_HUD::SetScoreIcon(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetScoreIcon((int)value); }
 unsigned int UIScene_HUD::GetStatusEffectsYOffset() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetStatusEffectsYOffset(); }
-void UIScene_HUD::renderPlayerHealth() { }
-void UIScene_HUD::renderVehicleHealth() { }
+void UIScene_HUD::renderPlayerHealth()
+{
+    ShowHealth(true);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
+    if (player == 0)
+        return;
+
+    SetRegenerationEffect(player->hasEffect(MobEffects::REGENERATION));
+
+    const int health = (int)std::ceil(player->getHealth());
+    const int armour = player->getArmorValue();
+    SetHealth(health, m_previousHealth, health < m_previousHealth, false, armour == 0 && health == 0);
+    m_previousHealth = health;
+    SetHealthAbsorb((int)player->getAbsorptionAmount());
+    ShowArmour(armour > 0);
+    if (armour > 0)
+        SetArmour(armour);
+
+    boost::shared_ptr<Entity> vehicle = player->getVehicle();
+    if (vehicle == 0 || (vehicle->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    {
+        SetRidingHorse(false, false, 0);
+        ShowFood(true);
+        ShowHorseHealth(false);
+        FoodData* food = player->getFoodData();
+        SetFood(food->getFoodLevel(), food->getLastFoodLevel(), false);
+        SetFoodSaturationLevel((int)food->getSaturationLevel());
+    }
+}
+void UIScene_HUD::renderVehicleHealth()
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
+    if (player == 0)
+        return;
+    boost::shared_ptr<Entity> vehicle = player->getVehicle();
+    if (vehicle == 0 || (vehicle->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
+    {
+        SetRidingHorse(false, false, 0);
+        ShowHorseHealth(false);
+        return;
+    }
+    boost::shared_ptr<LivingEntity> livingVehicle = boost::static_pointer_cast<LivingEntity>(vehicle);
+    SetRidingHorse(true, player->isRidingJumpable(), (int)livingVehicle->getMaxHealth());
+    SetHorseHealth((int)std::ceil(livingVehicle->getHealth()), false);
+    ShowHorseHealth(true);
+}
 std::wstring UIScene_HUD::formatTime(long long time, bool showHours)
 {
     wchar_t text[32];
@@ -261,7 +367,24 @@ void UIScene_HUD::updateGameModePlayers() { }
 void UIScene_HUD::ClearGlideHUD(int) { ShowScore(false); ShowExpBar(false); SetHudGameMode(1); ShowGameModePlayers(true); updateGameModePlayers(); SetRoundNumber(0, 0, false); }
 void UIScene_HUD::showTimedSplash(const std::wstring& label, unsigned int duration, int icon) { ShowAnimatedSplash(label, true, (int)duration); SetAnimatedSplashIcon(icon); }
 void UIScene_HUD::updateFrameTick() { }
-void UIScene_HUD::handleGameTick() { }
+void UIScene_HUD::handleGameTick()
+{
+    if (m_movie == 0 || g_pApp->GetGameStarted() == 0)
+        return;
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    const int playerId = m_resolution;
+    if (minecraft->mLocalPlayers[playerId] && minecraft->mGameModes[playerId])
+    {
+        m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), true);
+        updateFrameTick();
+        GetHudLoading();
+    }
+    else
+    {
+        m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), false);
+    }
+}
 void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewport) { UIScene::render(width, height, viewport); }
 void UIScene_HUD::updateViewportTouchOffset() { UIScene::updateViewportTouchOffset(); }
 void UIScene_HUD::handleTimerComplete(int timerId) { UIScene::handleTimerComplete(timerId); }

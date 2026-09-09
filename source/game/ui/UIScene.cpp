@@ -31,13 +31,11 @@ void PIXEndNamedEvent();
 
 UIScene::UIScene(int sceneType, UILayer* layer)
     : m_moviePath(L""), m_movie(0), m_movieLoaded(false), m_itemRenderer(0),
-      m_controlFocus(-1), m_controlChildFocus(0),
-      m_opacity(1.0f), m_opacityInitialised(false), m_visible(true), m_tickedLastFrame(false),
-      m_backScene(0), m_callbackId(0), m_resolution(0), m_reloading(false),
-      m_hasGainedFocus(false), m_stageWidth(0), m_stageHeight(0), m_originalStageWidth(0),
-      m_originalStageHeight(0), m_layer(layer), m_hasFocus(false),
-      m_sceneType(sceneType), m_hasTicked(false), m_unknownA9(false), m_updatePending(true),
-      m_unknownAC(0)
+      m_controlFocus(-1), m_controlChildFocus(0), m_opacity(1.0f), m_opacityInitialised(false),
+      m_visible(true), m_tickedLastFrame(false), m_backScene(0), m_callbackId(0),
+      m_reloading(false), m_hasGainedFocus(false), m_layer(layer), m_hasFocus(false),
+      m_sceneType(sceneType), m_hasTicked(false), m_slotDrawPending(false), m_updatePending(true),
+      m_slotDrawCount(0)
 {
 }
 
@@ -79,9 +77,8 @@ void UIScene::reloadMovie(bool force)
     handleReload();
 
     if (m_movie != 0) {
-        FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-        if (root->isFJ_Document())
-            root->asFJ_Document()->SetFocus(m_controlFocus);
+        if (m_movie->getRootNode()->getFuiNode()->isFJ_Document())
+            m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SetFocus(m_controlFocus);
     }
 
     m_reloading = false;
@@ -100,7 +97,6 @@ bool UIScene::hasMovie()
 
 void UIScene::updateSafeZone()
 {
-    const double zero = 0.0;
     switch (m_layer->getViewport()) {
     default:
     case C4JRender::eViewportType_FullScreen:
@@ -108,28 +104,28 @@ void UIScene::updateSafeZone()
                     getSafeZoneHalfWidth());
         break;
     case C4JRender::eViewportType_TopHalf:
-        setSafeZone(getSafeZoneHalfHeight(), zero, zero, zero);
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, 0.0);
         break;
     case C4JRender::eViewportType_BottomHalf:
-        setSafeZone(zero, getSafeZoneHalfHeight(), zero, zero);
+        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, 0.0);
         break;
     case C4JRender::eViewportType_LeftHalf:
-        setSafeZone(zero, zero, getSafeZoneHalfWidth(), zero);
+        setSafeZone(0.0, 0.0, getSafeZoneHalfWidth(), 0.0);
         break;
     case C4JRender::eViewportType_RightHalf:
-        setSafeZone(zero, zero, zero, getSafeZoneHalfWidth());
+        setSafeZone(0.0, 0.0, 0.0, getSafeZoneHalfWidth());
         break;
     case C4JRender::eViewportType_TopLeftQuarter:
-        setSafeZone(getSafeZoneHalfHeight(), zero, getSafeZoneHalfWidth(), zero);
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth(), 0.0);
         break;
     case C4JRender::eViewportType_TopRightQuarter:
-        setSafeZone(getSafeZoneHalfHeight(), zero, zero, getSafeZoneHalfWidth());
+        setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, getSafeZoneHalfWidth());
         break;
     case C4JRender::eViewportType_BottomLeftQuarter:
-        setSafeZone(zero, getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), zero);
+        setSafeZone(0.0, getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), 0.0);
         break;
     case C4JRender::eViewportType_BottomRightQuarter:
-        setSafeZone(zero, getSafeZoneHalfHeight(), zero, getSafeZoneHalfWidth());
+        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth());
         break;
     }
 }
@@ -181,10 +177,8 @@ void UIScene::tick()
 
 void UIScene::SetFocusToElement(int focus)
 {
-    FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-    FJ_Document* document = root->asFJ_Document();
-    if (document != 0)
-        document->SetFocus(focus);
+    if (m_movie->getRootNode()->getFuiNode()->asFJ_Document() != 0)
+        m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SetFocus(focus);
     _handleFocusChange(focus, 0);
 }
 
@@ -370,7 +364,7 @@ void UIScene::customDrawFui(void* context, const char* name, fuiRect* rect)
 
 void UIScene::tickTimers()
 {
-    const unsigned int now = static_cast<unsigned int>(System::processTimeInMilliSecs());
+    const int now = static_cast<int>(System::processTimeInMilliSecs());
     boost::unordered_map<int, _TimerInfo>::iterator it = m_timers.begin();
     while (it != m_timers.end()) {
         if (!it->second.active) {
@@ -422,15 +416,16 @@ void UIScene::loadMovie()
 {
     EnterCriticalSection(&g_uiCriticalSection);
     std::wstring path = getMoviePath();
-    if (gFui->getResolution() == 0) {
-        path.append(L"480.fui");
-        m_resolution = 2;
-    } else {
+    if (gRenderer->IsWidescreen()) {
         path.append(L"720.fui");
         m_resolution = 1;
+    } else {
+        path.append(L"480.fui");
+        m_resolution = 2;
     }
 
-    ConsoleUIController::_CachedMovieData& movieData = gConsoleUIController.getMovieData(path);
+    ConsoleUIController::_CachedMovieData& movieData =
+        gConsoleUIController.getMovieData(path.c_str());
     m_movie = (fuiFile*)gFui->load(movieData.data, true, gFui->getResolution());
     m_movie->getRootNode()->getFuiNode()->setCallbackScene(this);
     m_movie->setCustomDrawCallback(customDrawFui, this);
@@ -453,7 +448,7 @@ void UIScene::addTimer(int timerId, int duration)
 {
     _TimerInfo info;
     info.duration = duration;
-    info.triggerTime = static_cast<unsigned int>(System::processTimeInMilliSecs()) + duration;
+    info.triggerTime = static_cast<int>(System::processTimeInMilliSecs()) + duration;
     info.active = true;
     m_timers[timerId] = info;
 }
@@ -527,14 +522,14 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     Lighting::turnOn();
     GlStateManager::popMatrix();
 
-    const int count = item->getCount();
-    if (count > 0) {
+    const int popTime = item->getPopTime();
+    if (popTime > 0) {
         const float translateX = 8.0f * scaleX + x;
         const float translateY = 12.0f * scaleY + y;
-        const float countScale = count / 5.0f + 1.0f;
+        const float popScale = popTime / 5.0f + 1.0f;
         GlStateManager::pushMatrix();
         GlStateManager::translatef(translateX, translateY, 0.0f);
-        GlStateManager::scalef(1.0f / countScale, (countScale + 1.0f) * 0.5f, 1.0f);
+        GlStateManager::scalef(1.0f / popScale, (popScale + 1.0f) * 0.5f, 1.0f);
         GlStateManager::translatef(-translateX, -translateY, 0.0f);
     }
 
@@ -549,7 +544,7 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     gRenderer->StateSetBlendFunc(4, 5);
     gRenderer->StateSetBlendFactor(0xFFFFFFFF);
 
-    std::wstring countText;
+    std::wstring countText = L"";
     int countColour = -1;
     TextureAtlasSprite* countIcon = 0;
     if (getSceneType() == 0x31) {
@@ -565,7 +560,7 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
                                           !drawOverlay, countIcon);
     PIXEndNamedEvent();
 
-    if (count > 0)
+    if (popTime > 0)
         GlStateManager::popMatrix();
 
     if (drawDecorations) {
@@ -608,7 +603,7 @@ void UIScene::UpdateSceneControls()
 void UIScene::removeControl(UIControl_Base* control, bool destroy)
 {
     std::string name = control->m_name;
-    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->RemoveObject(name, destroy);
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->RemoveObject(name, destroy);
     control->removeUINodeRef();
     UpdateSceneControls();
     control->m_flag = true;
@@ -617,7 +612,7 @@ void UIScene::removeControl(UIControl_Base* control, bool destroy)
 
 void UIScene::doHorizontalResizeCheck()
 {
-    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->DoHorizontalResizeCheck();
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->DoHorizontalResizeCheck();
 }
 
 UIScene* UIScene::getBackScene()
@@ -637,9 +632,8 @@ void UIScene::gainFocus()
 
             bool hadFocus = m_hasGainedFocus;
             if (!hadFocus) {
-                FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-                if (root->isFJ_Document())
-                    root->asFJ_Document()->SetFocus(-1);
+                if (m_movie->getRootNode()->getFuiNode()->isFJ_Document())
+                    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SetFocus(-1);
                 hadFocus = m_hasGainedFocus;
             }
 
@@ -672,28 +666,29 @@ void UIScene::setBackScene(UIScene* scene)
 
 void UIScene::setSafeZone(double top, double bottom, double left, double right)
 {
-    FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-    if (root->getType() == 0x59) {
-        root->asFJ_Hud()->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom),
-                                     static_cast<int>(left), static_cast<int>(right));
-    } else if (root->getType() == 0x58) {
-        static_cast<FJ_HowToPlay*>(root)->SetSafeZone(static_cast<int>(top),
-                                                     static_cast<int>(bottom),
-                                                     static_cast<int>(left),
-                                                     static_cast<int>(right));
-    } else if (root->getType() == 0x5a) {
-        static_cast<FJ_TutorialPopup*>(root)->SetSafeZone(
-            static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
-            static_cast<int>(right));
-    } else if (root->isFJ_Document()) {
-        root->asFJ_Document()->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom),
-                                          static_cast<int>(left), static_cast<int>(right));
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x59) {
+        static_cast<FJ_Hud*>(m_movie->getRootNode()->getFuiNode())
+            ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
+                          static_cast<int>(right));
+    } else if (m_movie->getRootNode()->getFuiNode()->getType() == 0x58) {
+        static_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode())
+            ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
+                          static_cast<int>(right));
+    } else if (m_movie->getRootNode()->getFuiNode()->getType() == 0x5a) {
+        static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode())
+            ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
+                          static_cast<int>(right));
+    } else if (m_movie->getRootNode()->getFuiNode()->getType() != 0) {
+        static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())
+            ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
+                          static_cast<int>(right));
     }
 }
 
 void UIScene::resetHorizontalResizeCheck()
 {
-    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->ResetHorizontalResizeCheck();
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())
+        ->ResetHorizontalResizeCheck();
 }
 
 void UIScene::_handleFocusChange(int focus, int childFocus)
@@ -708,7 +703,7 @@ void UIScene::_handleInitFocus(int focus, int childFocus)
 {
     m_controlChildFocus = childFocus;
     m_controlFocus = focus;
-    handleInitFocus(focus, childFocus);
+    handleFocusChange(focus, childFocus);
 }
 
 bool UIScene::controlHasFocus(UIControl_Base* control)
@@ -729,11 +724,10 @@ void UIScene::setOpacity(float opacity)
     m_opacity = opacity;
     if (m_opacityInitialised)
         m_opacityInitialised = false;
-    FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-    if (root->isFJ_Hud())
-        root->asFJ_Hud()->SetAlpha(opacity);
+    if (m_movie->getRootNode()->getFuiNode()->isFJ_Hud())
+        static_cast<FJ_Hud*>(m_movie->getRootNode()->getFuiNode())->SetAlpha(opacity);
     else
-        root->setAlpha(opacity);
+        m_movie->getRootNode()->getFuiNode()->setAlpha(opacity);
 }
 
 void UIScene::setVisible(bool visible)
@@ -749,10 +743,10 @@ bool UIScene::hasTimer(int timerId)
 
 void UIScene::slideLeft()
 {
-    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SlideLeft();
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->SlideLeft();
 }
 
 void UIScene::slideRight()
 {
-    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SlideRight();
+    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->SlideRight();
 }

@@ -6,12 +6,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_List.hpp"
-
-class UIScene
-{
-public:
-    virtual void handleAnimationEnd();
-};
+#include "game/ui/UIScene.hpp"
 
 FJ_SkinSelect::FJ_SkinSelect(fuiRenderNode* renderNode)
     : FJ_Document(renderNode), m_animationPlaying(false)

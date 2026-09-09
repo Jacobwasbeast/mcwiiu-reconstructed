@@ -4,20 +4,13 @@
 #include "game/core/Lighting.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/fuiRect.hpp"
-
-class Options;
-class ScreenSizeCalculator
-{
-public:
-    ScreenSizeCalculator(Options* options, int width, int height, int guiScale);
-    int getWidth() const;
-    int getHeight() const;
-};
+#include "game/ui/ScreenSizeCalculator.hpp"
 
 UIControl_MinecraftHorse::UIControl_MinecraftHorse()
     : mScreenWidth(0.0f), mScreenHeight(0.0f), mScaledWidth(0.0f), mScaledHeight(0.0f)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
+    m_controlType = static_cast<UIControl::eUIControlType>(0x0b);
     mScreenWidth = (float)minecraft->mWidth;
     mScreenHeight = (float)minecraft->mHeight;
     ScreenSizeCalculator sizeCalculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
@@ -45,6 +38,7 @@ void UIControl_MinecraftHorse::render(fuiRect* rect)
     Lighting::turnOn();
     GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(20.0f, 1.0f, 0.0f, 0.0f);
+
     GlStateManager::popMatrix();
     Lighting::turnOff();
     GlStateManager::disableRescaleNormal();

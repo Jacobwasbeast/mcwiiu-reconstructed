@@ -8,12 +8,19 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
+static std::string s_enchantingButtonStates[3] =
+{
+    std::string("Inactive"),
+    std::string("Active"),
+    std::string("Selected")
+};
+
 FJ_EnchantingButton::FJ_EnchantingButton(fuiRenderNode* pRenderNode)
     : FJ_Base(pRenderNode)
 {
     SetLabelAlignment(0);
     m_isLabel = false;
-    InitBase(L"EnchantmentLevel", 0);
+    InitBase(L"", 0);
     addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
     SetupIggySlot();
     m_state = 0;
@@ -23,10 +30,9 @@ FJ_EnchantingButton::~FJ_EnchantingButton()
 {
 }
 
-void FJ_EnchantingButton::HandleUpdateLabel(FJ_Event* pEvent)
+void FJ_EnchantingButton::HandleUpdateLabel(FJ_Event*)
 {
-    (void)pEvent;
-    GetLabelTooWide(NULL);
+    SetLabel(m_label);
 }
 
 void FJ_EnchantingButton::_HandleUpdateLabel(FJ_FuiNode* pNode, FJ_Event* pEvent)
@@ -61,8 +67,7 @@ void FJ_EnchantingButton::SetEnchantmentLevel(int level)
 
 void FJ_EnchantingButton::ChangeState(int state)
 {
-    static const std::string stateLabels[] = {"", "", "", "", "", "", "", ""};
-    gotoAndStop(stateLabels[state]);
+    gotoAndStop(s_enchantingButtonStates[state]);
     m_state = state;
     SetEnchantmentLevel(m_enchantmentLevel);
 }

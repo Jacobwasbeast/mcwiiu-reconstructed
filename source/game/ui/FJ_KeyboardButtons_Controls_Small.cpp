@@ -3,6 +3,7 @@
 FJ_KeyboardButtons_Controls_Small::FJ_KeyboardButtons_Controls_Small(fuiRenderNode* renderNode)
     : FJ_KeyboardButtons(renderNode)
 {
+    m_keyboardOffset = 2;
 }
 
 FJ_KeyboardButtons_Controls_Small::~FJ_KeyboardButtons_Controls_Small()

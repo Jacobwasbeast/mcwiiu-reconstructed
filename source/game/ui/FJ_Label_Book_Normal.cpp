@@ -10,9 +10,9 @@ FJ_Label_Book_Normal::~FJ_Label_Book_Normal()
 {
 }
 
-int FJ_Label_Book_Normal::Create(fuiRenderNode* renderNode)
+FJ_Label_Book_Normal* FJ_Label_Book_Normal::Create(fuiRenderNode* renderNode)
 {
-    return (int)new FJ_Label_Book_Normal(renderNode);
+    return new FJ_Label_Book_Normal(renderNode);
 }
 
 unsigned int FJ_Label_Book_Normal::getType()

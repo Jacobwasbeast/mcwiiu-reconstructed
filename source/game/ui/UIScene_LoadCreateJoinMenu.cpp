@@ -135,8 +135,25 @@ void UIScene_LoadCreateJoinMenu::handleReload()
     m_scene.reloadMovie(true);
 }
 
-void UIScene_LoadCreateJoinMenu::handlePress(int, int)
+void UIScene_LoadCreateJoinMenu::handlePress(int first, int second)
 {
+    if (first == 0)
+    {
+        HandleLoadListPress(second);
+        return;
+    }
+    if (first == 2)
+    {
+        HandleGamesListPressed(second);
+        return;
+    }
+    if (first == 1)
+    {
+        int child = second;
+        if (m_scene.getSceneType() == 0)
+            --child;
+        HandleNewListPress(second, child);
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::handleFocusChange(int focus, int childFocus)
@@ -305,7 +322,7 @@ unsigned int UIScene_LoadCreateJoinMenu::GetJoinListSelection()
 
 bool UIScene_LoadCreateJoinMenu::IsJoinListEnabled()
 {
-    return m_gamesList.getVisible();
+    return true;
 }
 
 void UIScene_LoadCreateJoinMenu::SetJoinListEnabled(bool enabled)

@@ -4,28 +4,19 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class UIScene
-{
-public:
-    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-};
-
-class fuiRenderNodeEditText : public fuiRenderNode
-{
-public:
-    virtual float getWidth();
-};
+#include "game/ui/fuiRenderNodeEditText.hpp"
 
 static bool s_checkBoxKeyDown = false;
 
 static std::string s_checkBoxStates[4] =
 {
-    std::string("Unchecked"),
-    std::string("DisabledUnchecked"),
-    std::string("Checked"),
-    std::string("DisabledChecked")
+    std::string("Active_Selected"),
+    std::string("Inactive_Selected"),
+    std::string("Active_Unselected"),
+    std::string("Inactive_Unselected")
 };
 
 static const std::string& checkBoxStateLabel(bool enabled, int state)
@@ -45,9 +36,7 @@ FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
     addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
     m_oldWidth = static_cast<int>(getWidth());
-    fuiRenderNodeEditText* textField = GetTextField();
-    if (textField != NULL)
-        m_labelWidth = static_cast<int>(textField->getWidth());
+    m_labelWidth = static_cast<int>(GetTextField()->getWidth());
 }
 
 FJ_CheckBox::~FJ_CheckBox()
@@ -132,7 +121,8 @@ void FJ_CheckBox::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_CheckBox::keyDownHandler(FJ_Event* event)
 {
-    if (!m_enabled || s_checkBoxKeyDown || event->m_pTarget != NULL)
+    if (!m_enabled || s_checkBoxKeyDown ||
+        static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode != 0)
         return;
     s_checkBoxKeyDown = true;
     SetCheckBox(!m_checked);
@@ -145,7 +135,7 @@ void FJ_CheckBox::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_CheckBox::keyUpHandler(FJ_Event* event)
 {
-    if (event->m_pTarget == NULL)
+    if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 0)
         s_checkBoxKeyDown = false;
 }
 

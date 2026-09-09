@@ -9,9 +9,9 @@
 #include "game/ui/TitleScreen.hpp"
 
 ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring& address, int port)
-    : Screen()
+    : Screen(), mConnection(NULL), mFinished(false)
 {
-    mFinished = false;
+    mMinecraft = minecraft;
     minecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
 }
 

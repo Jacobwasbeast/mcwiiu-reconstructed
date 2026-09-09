@@ -7,13 +7,7 @@
 
 namespace
 {
-const char* const platformNames[] =
-{
-    "Xbox360",
-    "PS3",
-    "WiiU",
-    "Vita"
-};
+std::string platformLookup[4] = {};
 }
 
 FJ_DebugMarketingGuide::FJ_DebugMarketingGuide(fuiRenderNode* renderNode)
@@ -42,7 +36,7 @@ unsigned int FJ_DebugMarketingGuide::getType()
 
 void FJ_DebugMarketingGuide::SetPlatform(int platform)
 {
-    FJ_FuiNode* child = getChildByName(std::string(platformNames[platform]));
+    FJ_FuiNode* child = getChildByName(platformLookup[platform]);
     if (child != NULL)
         child->setVisible(true);
 }

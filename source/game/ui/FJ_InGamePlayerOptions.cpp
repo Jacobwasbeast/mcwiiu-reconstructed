@@ -3,29 +3,13 @@
 #include <string>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_List_MultiList.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_Base
-{
-public:
-    int getId();
-};
-
-class FJ_CheckBox : public FJ_Base
-{
-public:
-    bool getChecked();
-};
-
-class FJ_List_MultiList
-{
-public:
-    int GetListHeight();
-};
 
 void FJ_InGamePlayerOptions::handleCheckboxToggled(FJ_Event* event)
 {

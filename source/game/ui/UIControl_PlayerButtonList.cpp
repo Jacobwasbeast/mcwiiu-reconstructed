@@ -5,7 +5,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-bool UIControl_ButtonList_setupControl(void* control, UIScene* scene, fuiRenderNode* node,
+void UIControl_ButtonList_setupControl(void* control, UIScene* scene, fuiRenderNode* node,
                                        const std::string& name);
 
 UIControl_PlayerButtonList::PendingAddItem::PendingAddItem(
@@ -54,11 +54,11 @@ void UIControl_PlayerButtonList::addItem(const std::wstring& label, int playerIc
     m_pendingUpdates.push_back(new PendingAddItem(this, 0, label, playerIcon, voipIcon));
 }
 
-bool UIControl_PlayerButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_PlayerButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                               const std::string& name)
 {
-    m_controlType = 0x1d;
-    return UIControl_ButtonList_setupControl(this, scene, node, name);
+    m_controlType = static_cast<UIControl::eUIControlType>(0x1d);
+    UIControl_ButtonList_setupControl(this, scene, node, name);
 }
 
 void UIControl_PlayerButtonList::setPlayerIcon(int item, int icon)

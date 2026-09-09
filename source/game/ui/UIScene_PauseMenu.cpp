@@ -28,7 +28,6 @@
 extern void Sleep(unsigned int milliseconds);
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
-extern CConsoleMinecraftApp theApp;
 #define gGameNetworkManager CGameNetworkManager::sInstance
 
 void UIScene_PauseMenu::Init()
@@ -41,7 +40,7 @@ void UIScene_PauseMenu::Init()
         if (gGameNetworkManager.IsHost())
         {
             m_buttonList.AddNewMenuButton(L10N::GetString(0xfb98ec1c), 5);
-            if (theApp.HasNoSpaceForSaveQuota())
+            if (gApp.HasNoSpaceForSaveQuota())
                 m_buttonList.EnableItem(5, false, true);
         }
     }
@@ -284,7 +283,7 @@ void UIScene_PauseMenu::OpenExitGameDialog(
     {
         if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
         {
-            if (gStorage->GetSaveDisabled() || theApp.HasNoSpaceForSaveQuota())
+            if (gStorage->GetSaveDisabled() || gApp.HasNoSpaceForSaveQuota())
             {
                 message = 0x59c349d9;
             }

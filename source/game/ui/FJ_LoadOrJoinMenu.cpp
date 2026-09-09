@@ -1,22 +1,11 @@
 #include "game/ui/FJ_LoadOrJoinMenu.hpp"
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/UIScene.hpp"
-
-class FJ_Base
-{
-public:
-    unsigned int getId();
-};
-
-class FJ_Button : public FJ_Base
-{
-public:
-    FJ_FuiNode* getObjListParent();
-    void setButtonPressed(bool pressed);
-};
 
 FJ_LoadOrJoinMenu::FJ_LoadOrJoinMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)

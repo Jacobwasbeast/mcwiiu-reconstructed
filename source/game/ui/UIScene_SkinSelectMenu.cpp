@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_SkinSelectMenu.hpp"
 
 #include <algorithm>
+#include <cstdio>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -97,7 +98,11 @@ unsigned char UIScene_SkinSelectMenu::getTextureId(int index)
 {
     if (index > 0x12)
         return 0x25;
-    return static_cast<unsigned char>(index);
+    static const unsigned char textureIds[19] = {
+        0x25, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
+        0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9
+    };
+    return textureIds[index];
 }
 
 unsigned int UIScene_SkinSelectMenu::getNextSkinIndex(unsigned int index)
@@ -237,6 +242,10 @@ void UIScene_SkinSelectMenu::updateComponents()
 
 void UIScene_SkinSelectMenu::handleAnimationEnd()
 {
+    if (!m_skinChanging)
+    {
+        return;
+    }
     m_skinChanging = false;
     m_favouriteChanged = true;
 }
@@ -260,8 +269,22 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
     setCharacterSelected(true);
 }
 
-unsigned int UIScene_SkinSelectMenu::ManageFavoritesReturned(void*, int, C4JStorage::EMessageResult)
+unsigned int UIScene_SkinSelectMenu::ManageFavoritesReturned(void* context, int, C4JStorage::EMessageResult result)
 {
+    UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
+    UIScene_SkinSelectMenu* scene = dynamic_cast<UIScene_SkinSelectMenu*>(callbackScene);
+    if (scene != NULL)
+    {
+        if (result == static_cast<C4JStorage::EMessageResult>(4))
+        {
+            scene->m_skinButtonList.HighlightItem(static_cast<unsigned int>(scene->m_packTypeId), false);
+            scene->handlePackIndexChanged();
+        }
+        else
+        {
+            scene->m_inputPending = false;
+        }
+    }
     return 0;
 }
 
@@ -285,8 +308,26 @@ void UIScene_SkinSelectMenu::handleInput(int player, int action, bool, bool, boo
     }
 }
 
-void UIScene_SkinSelectMenu::customDraw(const char*, fuiRect*)
+void UIScene_SkinSelectMenu::customDraw(const char* name, fuiRect* rect)
 {
+    if (m_characterFacing && m_movie != NULL)
+    {
+        FJ_FuiNode* characters = m_movie->getRootNode()->getFuiNode()->getChildByName("IggyCharacters");
+        if (characters != NULL && characters->currentFrame() == 1)
+        {
+            m_characterPreviews[0].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, false);
+            m_characterPreviews[1].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, false);
+            m_characterPreviews[2].SetFacing(UIControl_PlayerSkinPreview::eFacingLeft, false);
+            m_characterFacing = false;
+            m_skinChanging = false;
+            handleSkinIndexChanged();
+        }
+    }
+    int character = -1;
+    if (name != NULL)
+        std::sscanf(name, "Character%d", &character);
+    if (character >= 0 && character < 7)
+        m_characterPreviews[character].render(rect);
 }
 
 void UIScene_SkinSelectMenu::HandleDLCMountingComplete()

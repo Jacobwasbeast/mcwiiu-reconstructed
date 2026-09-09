@@ -1,4 +1,5 @@
 #include "game/ui/UIControl_LeaderboardList.hpp"
+#include "game/core/ConsoleUIController.hpp"
 
 #include <string>
 
@@ -7,13 +8,7 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-class ConsoleUIController
-{
-public:
-    void TouchBoxAdd(UIControl* control, UIScene* scene);
-};
-
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 
 UIControl_LeaderboardList::UIControl_LeaderboardList()
     : UIControl_Base()
@@ -29,18 +24,17 @@ void UIControl_LeaderboardList::clearList()
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->ResetLeaderboard();
 }
 
-bool UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
                                              const std::string& name)
 {
-    m_controlType = 9;
-    bool result = UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_LeaderboardList;
+    UIControl_Base::setupControl(scene, node, name);
     m_touchBoxAdded = false;
-    return result;
 }
 
 void UIControl_LeaderboardList::init(int controlId)
 {
-    m_controlType = controlId;
+    m_controlId = controlId;
 }
 
 void UIControl_LeaderboardList::ReInit()
@@ -61,7 +55,7 @@ void UIControl_LeaderboardList::initLeaderboard(int firstValue, int spacing, int
     list->InitLeaderboard(firstValue, spacing, offset);
     if (!m_touchBoxAdded) {
         if (m_scene->getSceneType() == 4 || m_scene->getSceneType() == 6)
-            g_ConsoleUIController.TouchBoxAdd(this, m_scene);
+            gConsoleUIController.TouchBoxAdd(this, m_scene);
         m_touchBoxAdded = true;
     }
 }

@@ -12,7 +12,7 @@
 #include "game/ui/fuiFile.hpp"
 
 UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
-    : UIScene(type, layer)
+    : UIScene(type, layer), m_splitScreen(false)
 {
     initialiseMovie();
     m_labels[0].init(UIString(L"ComponentChat"));

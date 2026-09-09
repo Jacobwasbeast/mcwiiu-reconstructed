@@ -25,7 +25,6 @@ public:
 private:
     bool m_useLayerIcon;
     bool m_useIggyIcons;
-    unsigned char m_unusedBytes[2];
 };
 
 #endif

@@ -1,7 +1,9 @@
 #include "game/ui/FJ_GameModeSelection.hpp"
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_GameModeSelection::FJ_GameModeSelection(fuiRenderNode* renderNode)
@@ -25,9 +27,11 @@ unsigned int FJ_GameModeSelection::getType()
 
 void FJ_GameModeSelection::handlePress(FJ_Event* event)
 {
-    FJ_Document::handlePress(event);
-    if (event != 0 && event->m_pTarget != 0)
+    FJ_Button* button = event->m_pTarget->asFJ_Button();
+    if (button != NULL)
     {
-        event->m_pTarget->setVisible(true);
+        FJ_FuiNode* parent = button->getObjListParent();
+        m_pCallbackScene->handlePress(parent->asFJ_Base()->getId(), button->getId());
+        button->setButtonPressed(false);
     }
 }

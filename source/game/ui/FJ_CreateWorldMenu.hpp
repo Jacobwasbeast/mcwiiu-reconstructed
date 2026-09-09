@@ -9,9 +9,6 @@ class fuiRenderNode;
 
 class FJ_CreateWorldMenu : public FJ_Document
 {
-private:
-    FJ_FuiNode* m_root;
-
 public:
     FJ_CreateWorldMenu(fuiRenderNode* renderNode);
     virtual ~FJ_CreateWorldMenu();

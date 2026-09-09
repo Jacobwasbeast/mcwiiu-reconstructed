@@ -1,24 +1,12 @@
 #include "game/ui/UIControl_HTMLLabel.hpp"
 
 #include "game/ui/FJ_DynamicHtmlText.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_HtmlText
-{
-public:
-    double GetRealWidth();
-    double GetRealHeight();
-    void TouchScroll(int offset, bool active);
-};
-
-class ConsoleUIController
-{
-public:
-    void TouchBoxAdd(UIControl* control, UIScene* scene);
-};
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -55,11 +43,11 @@ int UIControl_HTMLLabel::GetRealHeight()
     return 0;
 }
 
-bool UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
                                        const std::string& name)
 {
-    m_controlType = 7;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_HTMLLabel;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_HTMLLabel::ReInit()

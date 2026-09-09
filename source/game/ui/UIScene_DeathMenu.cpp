@@ -154,14 +154,14 @@ void UIScene_DeathMenu::tick()
     UIScene::tick();
 }
 
-void UIScene_DeathMenu::handlePress(int first, int)
+void UIScene_DeathMenu::handlePress(int, int action)
 {
-    if (first == 0)
+    if (action == 0)
     {
         m_deathMenuActive = true;
         g_pApp->SetAction(m_resolution, static_cast<eXuiAction>(6), NULL);
     }
-    else if (first == 1)
+    else if (action == 1)
     {
         telemetryManagerInstance->RecordLevelExit(
             m_resolution, static_cast<ESen_LevelExitStatus>(3));

@@ -2,51 +2,16 @@
 
 #include <string>
 
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
+#include "game/ui/FJ_List.hpp"
+#include "game/ui/FJ_List_MultiList.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Base
-{
-public:
-    int getId();
-};
-
-class FJ_CheckBox : public FJ_Base
-{
-public:
-    bool getChecked();
-};
-
-class FJ_List
-{
-public:
-    int GetListHeight();
-};
-
-class FJ_List_MultiList : public FJ_List
-{
-};
-
-class FJ_HtmlText
-{
-public:
-    int GetNumberOfLines();
-    int GetOptimalHeight(int width);
-    int GetRealHeight();
-};
-
-class UIScene
-{
-public:
-    virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-};
-
-class Math
-{
-public:
-    static int round(float value);
-};
+#include "game/util/Math.hpp"
 
 static FJ_FuiNode* child(FJ_FuiNode* node, const char* name)
 {
@@ -87,7 +52,7 @@ void FJ_LoadMenu::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_LoadMenu::init(FJ_Event* event)
 {
-    getChildByName(std::string("MainPanel"));
+    m_root = getChildByName(std::string("MainPanel"));
     FJ_Document::init(event);
 }
 

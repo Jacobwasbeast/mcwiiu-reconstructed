@@ -14,7 +14,7 @@ std::wstring trimString(const std::wstring& value);
 template<typename T>
 T _fromString(const std::wstring& value);
 
-extern int gCreateWorldScreenTickCount;
+int gCreateWorldScreenTickCount = 0;
 
 CreateWorldScreen::CreateWorldScreen(Screen* parentScreen)
     : Screen(), mParentScreen(parentScreen), mNameEdit(0), mSeedEdit(0), mResultFolder(),

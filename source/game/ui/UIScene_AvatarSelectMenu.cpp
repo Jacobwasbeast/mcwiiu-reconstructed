@@ -11,9 +11,8 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/MiiData.hpp"
 
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
-extern CConsoleMinecraftApp theApp;
 
 UIScene_AvatarSelectMenu::TabControls::TabControls()
     : UIControl(), m_list(), m_title(), m_timer(), m_miis()
@@ -32,7 +31,7 @@ UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILay
       m_userFocus(0), m_favouriteFocus(0), m_guestFocus(0), m_pad(0), m_choice(0), m_activeTab(0)
 {
     initialiseMovie();
-    theApp.SetLiveLinkRequired(true);
+    gApp.SetLiveLinkRequired(true);
     m_userControls.m_list.init(0);
     m_favouriteControls.m_list.init(1);
     m_guestControls.m_list.init(2);
@@ -48,11 +47,11 @@ UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILay
         {
             m_pad = i;
             m_choice = i;
-            g_ConsoleUIController.HidePressStart();
+            gConsoleUIController.HidePressStart();
             m_userTabTouch.init(3);
             m_favouriteTabTouch.init(4);
             m_guestTabTouch.init(5);
-            g_ConsoleUIController.TouchBoxRebuild(this);
+            gConsoleUIController.TouchBoxRebuild(this);
             break;
         }
     }
@@ -120,7 +119,7 @@ void UIScene_AvatarSelectMenu::handleLoseFocus() {}
 void UIScene_AvatarSelectMenu::handleGainFocus(bool hadFocus)
 {
     updateTooltips();
-    if (hadFocus) { theApp.SetLiveLinkRequired(true); m_initialised = false; }
+    if (hadFocus) { gApp.SetLiveLinkRequired(true); m_initialised = false; }
 }
 
 void UIScene_AvatarSelectMenu::handleTimerComplete(int) {}
@@ -130,8 +129,8 @@ unsigned int UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
     if (m_initialised) return 0;
     if (action == 1 || action == 0x15)
     {
-        theApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
-        g_ConsoleUIController.NavigateBack(GetPad(), false, (EUIScene)0x53, (EUILayer)8);
+        gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
+        gConsoleUIController.NavigateBack(GetPad(), false, (EUIScene)0x53, (EUILayer)8);
         return 1;
     }
     if (action == 6 || action == 7 || action == 10)
@@ -150,7 +149,7 @@ void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool re
 {
     if (!m_initialised && released)
     {
-        g_ConsoleUIController.AnimateKeyPress(m_pad, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_pad, action, repeat, released, pressed);
         if (action < 4 || (action > 5 && action < 8) || (action > 9 && action != 0x14))
             handled = handleKeyDown(m_pad, action, repeat) != 0;
         else { sendInputToMovie(action, repeat, released, pressed); handled = true; }
@@ -189,8 +188,8 @@ void UIScene_AvatarSelectMenu::tick()
     UIScene::tick();
     if (gProfile->QuerySigninStatus())
     {
-        theApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
-        g_ConsoleUIController.NavigateBack(GetPad(), false, (EUIScene)0x53, (EUILayer)8);
+        gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
+        gConsoleUIController.NavigateBack(GetPad(), false, (EUIScene)0x53, (EUILayer)8);
     }
     if (m_navigateBack) navigateBack();
     if (hasFocus(m_pad) && !m_miisAdded) { AddMiiItems(); m_miisAdded = true; }
@@ -199,10 +198,10 @@ void UIScene_AvatarSelectMenu::tick()
 void UIScene_AvatarSelectMenu::SelectTab(int tab)
 {
     m_activeTab = tab;
-    g_ConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     FJ_AvatarSelectMenu* menu = (FJ_AvatarSelectMenu*)m_movie->getRootNode()->getFuiNode();
     if (menu != NULL) menu->SetActiveTab(tab);
-    g_ConsoleUIController.TouchBoxRebuild(this);
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 std::wstring UIScene_AvatarSelectMenu::getMoviePath() { return std::wstring(L"AvatarSelectMenu"); }
@@ -213,7 +212,7 @@ void UIScene_AvatarSelectMenu::handlePress(int first, int second)
     if (first == 0 && second >= 0 && second < (int)m_userControls.m_miis.size()) mii = m_userControls.m_miis[second];
     else if (first == 1 && second >= 0 && second < (int)m_favouriteControls.m_miis.size()) mii = m_favouriteControls.m_miis[second];
     else if (first == 2 && second >= 0 && second < (int)m_guestControls.m_miis.size()) mii = m_guestControls.m_miis[second];
-    theApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+    gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
     navigateBack();
 }
 

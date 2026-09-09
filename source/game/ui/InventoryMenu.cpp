@@ -8,6 +8,11 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ResultContainer.hpp"
 
+static const EquipmentSlot* gInventoryMenuFeet = NULL;
+static const EquipmentSlot* gInventoryMenuLegs = NULL;
+static const EquipmentSlot* gInventoryMenuChest = NULL;
+static const EquipmentSlot* gInventoryMenuHead = NULL;
+
 InventoryMenu::InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player)
     : mPlayer(player), mActive(active)
 {
@@ -20,6 +25,10 @@ InventoryMenu::~InventoryMenu()
 
 void InventoryMenu::staticCtor()
 {
+    gInventoryMenuFeet = EquipmentSlot::FEET;
+    gInventoryMenuLegs = EquipmentSlot::LEGS;
+    gInventoryMenuChest = EquipmentSlot::CHEST;
+    gInventoryMenuHead = EquipmentSlot::HEAD;
 }
 
 void InventoryMenu::_init(boost::shared_ptr<Inventory> inventory, bool active)

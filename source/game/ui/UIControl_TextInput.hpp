@@ -10,7 +10,7 @@ public:
     virtual ~UIControl_TextInput();
     void SetCharLimit(int limit);
     void init(UIString label, int id);
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     virtual void setFocus(bool focus);
     virtual bool hasFocus();

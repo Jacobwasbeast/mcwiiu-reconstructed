@@ -21,7 +21,6 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 
-extern CConsoleMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer* layer)
@@ -32,8 +31,8 @@ UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer*
 {
     initialiseMovie();
     m_miniGameType = 0;
-    if (theApp.getLevelRules() != NULL)
-        theApp.getLevelRules()->getRulesByType((LevelRules::ELevelRuleType)0,
+    if (gApp.getLevelRules() != NULL)
+        gApp.getLevelRules()->getRulesByType((LevelRules::ELevelRuleType)0,
                                                &m_levelRuleGroups, true);
     std::sort(m_levelRuleGroups.begin(), m_levelRuleGroups.end(),
               LevelRules::LevelRulesetGroup::SortMapRules);
@@ -101,7 +100,7 @@ void UIScene_MapSelectMenu::_init()
 
 std::wstring UIScene_MapSelectMenu::getMoviePath()
 {
-    return theApp.GetLocalPlayerCount() < 2 ? L"MapSelectMenu" : L"MapSelectMenuSplit";
+    return gApp.GetLocalPlayerCount() < 2 ? L"MapSelectMenu" : L"MapSelectMenuSplit";
 }
 
 void UIScene_MapSelectMenu::updateTooltips()
@@ -173,12 +172,12 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
     LevelGenerationOptions* options = ruleset->getGenerationOptions();
     DLCPack* pack = options->getPack();
     bool purchased = pack->hasPurchasedPack();
-    if (!purchased && theApp.mDLCManager.IsMiniGameTemporarilyFree((int)ruleset->getRuleType()))
+    if (!purchased && gApp.mDLCManager.IsMiniGameTemporarilyFree((int)ruleset->getRuleType()))
         purchased = true;
     if (!purchased && tryPurchase)
     {
         bool handled = false;
-        cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)theApp.GetDLCInfoInstance());
+        cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance());
         DLC_INFO* info = dlcInfo->GetDLCInfoForPackID(pack->GetPackId());
         int contentType = info == NULL ? 0 : info->ContentType;
         tryPurchaseDlc(m_sceneType, handled, (eDLCContentType)contentType);

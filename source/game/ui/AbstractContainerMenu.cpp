@@ -2,6 +2,11 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 
 AbstractContainerMenu::AbstractContainerMenu()
     : m_containerId(0), m_transactionId(0), m_quickcraftType(-1), m_quickcraftStatus(0), m_quickcraftActive(false), m_changed(false), m_data(0)
@@ -10,6 +15,11 @@ AbstractContainerMenu::AbstractContainerMenu()
 
 AbstractContainerMenu::~AbstractContainerMenu()
 {
+}
+
+bool AbstractContainerMenu::isPauseScreen()
+{
+    return false;
 }
 
 int AbstractContainerMenu::addSlot(Slot* slot)
@@ -117,7 +127,18 @@ void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player>, Level*, bo
     if (container) container->clearContent();
 }
 
-void AbstractContainerMenu::removed(boost::shared_ptr<Player>) { }
+void AbstractContainerMenu::removed(boost::shared_ptr<Player> player)
+{
+    if (!player || !player->mInventory)
+        return;
+
+    not_null_ptr<ItemInstance> carried = player->mInventory->getCarried();
+    if (!carried->isEmpty())
+    {
+        player->drop(carried, false);
+        player->mInventory->setCarried(ItemInstance::EMPTY);
+    }
+}
 void AbstractContainerMenu::slotsChanged() { broadcastChanges(); }
 
 void AbstractContainerMenu::setItem(unsigned int index, not_null_ptr<ItemInstance> item)
@@ -161,9 +182,20 @@ int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Cont
     return (filled * 15) / (int)container->getContainerSize();
 }
 
-int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity>) { return 0; }
+int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity)
+{
+    if (!entity) return 0;
+    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(entity);
+    return container ? getRedstoneSignalFromContainer(container) : 0;
+}
 bool AbstractContainerMenu::isValidIngredient(not_null_ptr<ItemInstance>, int) { return true; }
 not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int, int) { return ItemInstance::EMPTY; }
-bool AbstractContainerMenu::IsSmallInventory() { return false; }
+bool AbstractContainerMenu::IsSmallInventory()
+{
+    if (!g_pApp || !g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f))) return false;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    return minecraft != NULL && minecraft->GetMiniGame() != NULL &&
+           minecraft->GetMiniGame()->IsSmallInventoryEnabled();
+}
 bool AbstractContainerMenu::matches(AbstractContainerMenu* first, AbstractContainerMenu* second) { return first != NULL && second != NULL && first->m_slots.size() == second->m_slots.size(); }
 bool AbstractContainerMenu::doQuickMoveLoop() { return true; }

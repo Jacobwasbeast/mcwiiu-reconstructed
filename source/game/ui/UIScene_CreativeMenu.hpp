@@ -9,6 +9,7 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/ui/UIControl_Touch.hpp"
+#include "game/item/ItemInstance.hpp"
 
 class AbstractContainerMenu;
 class Inventory;
@@ -25,6 +26,15 @@ struct _UIVec2D
 class UIScene_CreativeMenu : public UIScene_AbstractContainerMenu
 {
 public:
+    class ItemBuilder
+    {
+    public:
+        ItemBuilder(const ItemInstance& item);
+        virtual ~ItemBuilder();
+
+        ItemInstance item;
+    };
+
     enum ECreativeInventoryTabs
     {
         ECreativeInventoryTabs_Building = 0,
@@ -145,6 +155,10 @@ private:
     int m_tabCurrentPages[8];
     AbstractContainerMenu* m_containerMenu;
     IUIScene_AbstractContainerMenu* m_sceneInterface;
+
+    static TabSpec* s_tabSpecs[8];
+    static std::vector<const ItemBuilder*> s_groupItems[12];
+
 };
 
 #endif

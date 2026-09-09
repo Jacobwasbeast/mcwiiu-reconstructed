@@ -4,15 +4,9 @@
 #include <string>
 
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class fuiRenderNodeEditText : public fuiRenderNode
-{
-public:
-    void setText(const std::wstring& text);
-    void setAutoSize(int autoSize);
-};
 
 extern std::string g_toolTipTypeLabels[];
 extern std::string g_toolTipAnimationLabels[];

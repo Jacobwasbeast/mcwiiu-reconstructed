@@ -21,6 +21,8 @@ FJ_Cursor::~FJ_Cursor()
 void FJ_Cursor::TopAlignPanel()
 {
     FJ_FuiNode* parent = getParent();
+    if (parent == 0 || parent->getParent() == 0)
+        return;
     int panelBottom = (int)(parent->getY() + getY() - m_textPanel->getHeight());
     FJ_Document* document = parent->getParent()->asFJ_Document();
     int safeTop = document->getISafeZoneTop();
@@ -55,10 +57,11 @@ void FJ_Cursor::UpdatePanelAlignment()
     {
         float right = getX() + getWidth() + (float)m_panelAlignment;
         float stageWidth = (float)getStage()->getStageWidth();
-        FJ_Document* document = getParent()->asFJ_Document();
-        int safeRight = document->getISafeZoneRight();
-        if (getParent() != 0)
+        FJ_FuiNode* parent = getParent();
+        if (parent != 0)
         {
+            FJ_Document* document = parent->asFJ_Document();
+            int safeRight = document->getISafeZoneRight();
             TopAlignPanel();
             AlignPanel(right <= (int)(stageWidth - (float)safeRight));
         }

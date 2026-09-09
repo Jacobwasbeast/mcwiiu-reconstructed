@@ -28,21 +28,20 @@ void FJ_InGameHostOptions::InitMenu()
 {
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
     FJ_FuiNode* list = getChildByName(std::string("HostOptionsList"));
-    FJ_FuiNode* backgroundItem = background->getChildAt(0);
-    const float backgroundHeight = background->getHeight();
+    const float backgroundHeight = background->getChildAt(0)->getHeight();
     FJ_List* hostOptionsList = static_cast<FJ_List*>(list->asFJ_List_MultiList());
     const int listHeight = hostOptionsList->GetListHeight();
 
     if (static_cast<float>(listHeight) < list->getHeight())
     {
-        backgroundItem->setY(static_cast<float>(listHeight) +
-                             (list->getY() - background->getY()) * 2.0f);
+        background->getChildAt(0)->setY(static_cast<float>(listHeight) +
+                                         (list->getY() - background->getY()) * 2.0f);
 
         const float amount = static_cast<float>(Math::round((backgroundHeight -
-                                                              backgroundItem->getHeight()) * 0.5f));
+                                                              background->getChildAt(0)->getHeight()) * 0.5f));
         if (amount > 0.0f)
         {
-            backgroundItem->incY(amount);
+            background->getChildAt(0)->incY(amount);
             list->incY(amount);
         }
     }

@@ -29,16 +29,85 @@ UIGroup::UIGroup(EUIGroup group, int player)
         m_displayList = MemoryTracker::genLists(1);
     }
 }
-void UIGroup::getRenderDimensions(int& width,int& height) { gConsoleUIController.getRenderDimensions((C4JRender::eViewportType)m_viewportType,width,height); }
-unsigned int UIGroup::GetLayerIndex(UILayer* layer) { int i; for(i=0;i<8;++i) if(m_layers[i]==layer)return (unsigned int)i; return 0; }
-unsigned int UIGroup::RequestFocus(UILayer* layer) { unsigned int n=GetLayerIndex(layer),i; if(n==0)return 1; for(i=0;i<n;++i)if(m_layers[i]->HasFocus(0))return 0; return 1; }
-void UIGroup::UpdateFocusState() { m_focusTimer=10; }
-bool UIGroup::IsFullscreenGroup() { return m_group==1; }
-unsigned int UIGroup::GetViewportType() { return (unsigned int)m_viewportType; }
-void UIGroup::DestroyAll() { int i; for(i=0;i<8;++i)m_layers[i]->DestroyAll(); }
-void UIGroup::ReloadAll() { int last=8,i; for(i=0;i<8;++i)if(m_layers[i]->hidesLowerScenes()){last=i+1;break;} for(i=last-1;i>=0;--i)m_layers[i]->ReloadAll(i!=4); }
-void UIGroup::_UpdateFocusState() { int i; for(i=0;i<8;++i)if(m_layers[i]->updateFocusState(true))return; }
-void UIGroup::tick() { int i; if(m_player<0){for(i=0;i<8;++i)m_layers[i]->tick();if(m_focusTimer>0&&--m_focusTimer==0)_UpdateFocusState();} }
+
+void UIGroup::getRenderDimensions(int& width, int& height)
+{
+    gConsoleUIController.getRenderDimensions(
+        static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
+}
+
+unsigned int UIGroup::GetLayerIndex(UILayer* layer)
+{
+    for (int i = 0; i < 8; ++i)
+        if (m_layers[i] == layer)
+            return static_cast<unsigned int>(i);
+    return 0;
+}
+
+unsigned int UIGroup::RequestFocus(UILayer* layer)
+{
+    unsigned int index = GetLayerIndex(layer);
+    if (index == 0)
+        return 1;
+    for (unsigned int i = 0; i < index; ++i)
+        if (m_layers[i]->HasFocus(0))
+            return 0;
+    return 1;
+}
+
+void UIGroup::UpdateFocusState()
+{
+    m_focusTimer = 10;
+}
+
+bool UIGroup::IsFullscreenGroup()
+{
+    return m_group == 1;
+}
+
+unsigned int UIGroup::GetViewportType()
+{
+    return static_cast<unsigned int>(m_viewportType);
+}
+
+void UIGroup::DestroyAll()
+{
+    for (int i = 0; i < 8; ++i)
+        m_layers[i]->DestroyAll();
+}
+
+void UIGroup::ReloadAll()
+{
+    int lastLayer = 8;
+    for (int i = 0; i < 8; ++i)
+    {
+        if (m_layers[i]->hidesLowerScenes())
+        {
+            lastLayer = i + 1;
+            break;
+        }
+    }
+    for (int i = lastLayer - 1; i >= 0; --i)
+        m_layers[i]->ReloadAll(i != 4);
+}
+
+void UIGroup::_UpdateFocusState()
+{
+    for (int i = 0; i < 8; ++i)
+        if (m_layers[i]->updateFocusState(true))
+            return;
+}
+
+void UIGroup::tick()
+{
+    if (m_player < 0)
+    {
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->tick();
+        if (m_focusTimer > 0 && --m_focusTimer == 0)
+            _UpdateFocusState();
+    }
+}
 void UIGroup::render()
 {
     int width = 0;
@@ -71,7 +140,15 @@ void UIGroup::render()
         m_layers[layer]->render(width, height, (C4JRender::eViewportType)m_viewportType);
     }
 }
-int UIGroup::hidesLowerScenes() { int i; if(m_player>=0)return 0; for(i=7;i>=0;--i)if(m_layers[i]->hidesLowerScenes())return 1;return 0; }
+int UIGroup::hidesLowerScenes()
+{
+    if (m_player >= 0)
+        return 0;
+    for (int i = 7; i >= 0; --i)
+        if (m_layers[i]->hidesLowerScenes())
+            return 1;
+    return 0;
+}
 void UIGroup::updateStackStates()
 {
     bool state[5] = { false, false, false, false, false };
@@ -92,24 +169,128 @@ void UIGroup::updateStackStates()
     m_ignoreAutosaveMenuDisplayed = state[3];
     m_ignorePlayerJoinMenuDisplayed = state[4];
 }
-bool UIGroup::NavigateToScene(int player,EUIScene scene,void* data,EUILayer layer){bool result=m_layers[(int)layer]->NavigateToScene(player,scene,data);updateStackStates();return result;}
-int UIGroup::NavigateBack(int player,EUIScene scene,EUILayer layer){int i,result=0;for(i=0;i<8;++i)if((int)layer>=8||i==(int)layer)result=m_layers[i]->NavigateBack(player,scene)||result;updateStackStates();return result;}
-void UIGroup::closeAllScenes(){int i;for(i=0;i<8;++i)if(i!=2)m_layers[i]->closeAllScenes();updateStackStates();}
-UIScene* UIGroup::GetTopScene(EUILayer layer){return m_layers[(int)layer]->GetTopScene();}
-bool UIGroup::IsSceneInStack(EUIScene scene){int i;for(i=0;i<8;++i)if(m_layers[i]->IsSceneInStack(scene))return true;return false;}
-unsigned char UIGroup::GetMenuDisplayed(){return m_menuDisplayed;}
-void UIGroup::handleInput(int player,int action,bool repeat,bool released,bool pressed,bool& handled){int i;if(m_player<0)for(i=0;i<8&&!handled;++i)m_layers[i]->handleInput(player,action,repeat,released,pressed,handled);}
-UIScene* UIGroup::getCurrentScene(int player){int i;UIScene* scene;for(i=0;i<8;++i){scene=m_layers[i]->getCurrentScene(player);if(scene)return scene;}return 0;}
-void UIGroup::showComponent(int player,EUIScene scene,EUILayer layer,bool show){m_layers[(int)layer]->showComponent(player,scene,show);}
+bool UIGroup::NavigateToScene(int player, EUIScene scene, void* data, EUILayer layer)
+{
+    bool result = m_layers[static_cast<int>(layer)]->NavigateToScene(player, scene, data);
+    updateStackStates();
+    return result;
+}
+
+int UIGroup::NavigateBack(int player, EUIScene scene, EUILayer layer)
+{
+    int result = 0;
+    for (int i = 0; i < 8; ++i)
+        if (static_cast<int>(layer) >= 8 || i == static_cast<int>(layer))
+            result = m_layers[i]->NavigateBack(player, scene) || result;
+    updateStackStates();
+    return result;
+}
+
+void UIGroup::closeAllScenes()
+{
+    for (int i = 0; i < 8; ++i)
+        if (i != 2)
+            m_layers[i]->closeAllScenes();
+    updateStackStates();
+}
+UIScene* UIGroup::GetTopScene(EUILayer layer)
+{
+    return m_layers[static_cast<int>(layer)]->GetTopScene();
+}
+
+bool UIGroup::IsSceneInStack(EUIScene scene)
+{
+    for (int i = 0; i < 8; ++i)
+        if (m_layers[i]->IsSceneInStack(scene))
+            return true;
+    return false;
+}
+
+unsigned char UIGroup::GetMenuDisplayed()
+{
+    return m_menuDisplayed;
+}
+
+void UIGroup::handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled)
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8 && !handled; ++i)
+            m_layers[i]->handleInput(player, action, repeat, released, pressed, handled);
+}
+
+UIScene* UIGroup::getCurrentScene(int player)
+{
+    for (int i = 0; i < 8; ++i)
+    {
+        UIScene* scene = m_layers[i]->getCurrentScene(player);
+        if (scene != 0)
+            return scene;
+    }
+    return 0;
+}
+void UIGroup::showComponent(int player, EUIScene scene, EUILayer layer, bool show)
+{
+    m_layers[static_cast<int>(layer)]->showComponent(player, scene, show);
+}
 UIScene* UIGroup::addComponent(int player,EUIScene scene,EUILayer layer){return m_layers[(int)layer]->addComponent(player,scene,0);}
 void UIGroup::removeComponent(EUIScene scene,EUILayer layer){m_layers[(int)layer]->removeComponent(scene);}
 void UIGroup::ReloadAllLayers(){int i;for(i=0;i<8;++i)m_layers[i]->ReloadAll(true);}
 void UIGroup::SetViewportType(C4JRender::eViewportType viewport){if(m_viewportType!=(int)viewport){m_viewportType=(int)viewport;ReloadAllLayers();}}
-void UIGroup::HandleDLCMountingComplete(){int i;if(m_player<0)for(i=0;i<8;++i)m_layers[i]->HandleDLCMountingComplete();}
-void UIGroup::HandleDLCInstalled(){int i;if(m_player<0)for(i=0;i<8;++i)m_layers[i]->HandleDLCInstalled();}
-void UIGroup::HandleDLCLicenseChange(){int i;if(m_player<0)for(i=0;i<8;++i)m_layers[i]->HandleDLCLicenseChange();}
-void UIGroup::HandleTMSBanFileRetrieved(){int i;if(m_player<0)for(i=0;i<8;++i)m_layers[i]->HandleTMSBanFileRetrieved();}
-void UIGroup::HandleMessage(EUIMessage message,void* data){int i;if(m_player<0)for(i=0;i<8;++i)m_layers[i]->HandleMessage(message,data);}
-void UIGroup::HandleSaveDeviceRemoved(int device){int i;for(i=0;i<8;++i)m_layers[i]->HandleSaveDeviceRemoved(device);}
-UIScene* UIGroup::FindScene(EUIScene scene){int i;UIScene* found;for(i=0;i<8;++i){found=m_layers[i]->FindScene(scene);if(found)return found;}return 0;}
-void UIGroup::ClearTooltips(){UIScene* scene=GetTopScene((EUILayer)2);if(scene)scene->handleTouchBoxRebuild();}
+void UIGroup::HandleDLCMountingComplete()
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->HandleDLCMountingComplete();
+}
+
+void UIGroup::HandleDLCInstalled()
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->HandleDLCInstalled();
+}
+
+void UIGroup::HandleDLCLicenseChange()
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->HandleDLCLicenseChange();
+}
+
+void UIGroup::HandleTMSBanFileRetrieved()
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->HandleTMSBanFileRetrieved();
+}
+
+void UIGroup::HandleMessage(EUIMessage message, void* data)
+{
+    if (m_player < 0)
+        for (int i = 0; i < 8; ++i)
+            m_layers[i]->HandleMessage(message, data);
+}
+
+void UIGroup::HandleSaveDeviceRemoved(int device)
+{
+    for (int i = 0; i < 8; ++i)
+        m_layers[i]->HandleSaveDeviceRemoved(device);
+}
+
+UIScene* UIGroup::FindScene(EUIScene scene)
+{
+    for (int i = 0; i < 8; ++i)
+    {
+        UIScene* found = m_layers[i]->FindScene(scene);
+        if (found != 0)
+            return found;
+    }
+    return 0;
+}
+
+void UIGroup::ClearTooltips()
+{
+    UIScene* scene = GetTopScene(static_cast<EUILayer>(2));
+    if (scene != 0)
+        scene->handleTouchBoxRebuild();
+}

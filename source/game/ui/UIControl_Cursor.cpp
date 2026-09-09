@@ -11,8 +11,8 @@ UIControl_Cursor::~UIControl_Cursor()
 {
 }
 
-bool UIControl_Cursor::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Cursor::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 3;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_Cursor;
+    UIControl_Base::setupControl(scene, node, name);
 }

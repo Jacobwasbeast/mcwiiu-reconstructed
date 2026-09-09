@@ -9,12 +9,8 @@
 #include "game/core/Mth.hpp"
 #include "game/ui/OptionsScreen.hpp"
 #include "game/ui/TitleScreen.hpp"
-
-class MultiPlayerGameMode
-{
-public:
-    void disconnect();
-};
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 
 PauseScreen::~PauseScreen()
 {
@@ -53,13 +49,36 @@ void PauseScreen::buttonClicked(Button* button)
     {
         if (mMinecraft->isClientSide())
         {
-            mMinecraft->mGameMode->disconnect();
+            mMinecraft->mLevel->disconnect(true);
         }
         mMinecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
         mMinecraft->setScreen(new TitleScreen());
     }
 
     if (button->mId == 4)
+    {
+        mMinecraft->setScreen(NULL);
+    }
+}
+
+void PauseScreen::buttonClicked(Button button)
+{
+    if (button.mId == 0)
+    {
+        mMinecraft->setScreen(new OptionsScreen(this, mMinecraft->mOptions));
+    }
+
+    if (button.mId == 1)
+    {
+        if (mMinecraft->isClientSide())
+        {
+            mMinecraft->mLevel->disconnect(true);
+        }
+        mMinecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
+        mMinecraft->setScreen(new TitleScreen());
+    }
+
+    if (button.mId == 4)
     {
         mMinecraft->setScreen(NULL);
     }

@@ -1,31 +1,12 @@
 #include "game/ui/FJ_SlotList_Slot.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Factory.hpp"
+#include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 #include <cstdio>
 
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_FuiNodeStage
-{
-public:
-    fuiRenderNode* m_pRenderNode;
-};
-
-class fuiRenderNodeCodeGenRect : public fuiRenderNode
-{
-public:
-    fuiRenderNodeCodeGenRect(fuiRenderNode* pRenderNode, fuiRect* rect, const char* name);
-    virtual void gather(bool);
-    virtual void preRender();
-    virtual void render(fuiRect*, fuiMatrix*);
-};
-
-class FJ_Factory
-{
-public:
-    static FJ_FuiNode* createObject(const char* name, fuiRenderNode* renderNode,
-        bool visible, const char* className);
-};
 
 FJ_SlotList_Slot::FJ_SlotList_Slot(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_iSlotId(0), m_pRedBox(NULL),

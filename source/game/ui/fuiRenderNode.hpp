@@ -72,6 +72,8 @@ public:
     bool isVisible();
     void setAlpha(float);
     float getAlpha();
+    unsigned int getColor() const;
+    void setColor(unsigned int color);
     fuiRenderNode* asTimeline();
     void progogateBounds();
     const char* getName() { return m_name; }

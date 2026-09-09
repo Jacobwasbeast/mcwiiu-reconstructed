@@ -1,7 +1,3 @@
-#define private public
-#include "game/ui/FJ_List.hpp"
-#undef private
-
 #include "game/ui/FJ_List_ListButtonLayerIcon.hpp"
 
 #include "game/ui/FJ_Button.hpp"
@@ -67,7 +63,7 @@ uint64_t FJ_List_ListButtonLayerIcon::SetTextureName(int index,
     FJ_ListButtonLayerIcon* item = static_cast<FJ_ListButtonLayerIcon*>(ReturnItem(index));
     if (item != NULL)
     {
-        std::wstring layerName;
+        std::wstring layerName(L"fourj.Button");
         item->SetTextureName(textureName, layerName);
     }
     return 0;

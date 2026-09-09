@@ -31,7 +31,7 @@ public:
     struct _TimerInfo
     {
         int duration;
-        unsigned int triggerTime;
+        int triggerTime;
         bool active;
     };
 
@@ -163,10 +163,11 @@ protected:
     bool m_hasFocus;
     int m_sceneType;
     bool m_hasTicked;
-    bool m_unknownA9;
+    bool m_slotDrawPending;
     bool m_updatePending;
-    int m_unknownAC;
+    int m_slotDrawCount;
     std::vector<_CachedSlotDrawData*> m_cachedSlotDrawData;
+    int m_unknownC0;
 };
 
 #endif

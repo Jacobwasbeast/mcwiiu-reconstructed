@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ListButtonController.hpp"
 #include "game/ui/FJ_Button.hpp"
@@ -20,8 +21,10 @@ FJ_List::FJ_List(fuiRenderNode* renderNode)
       m_touchItem(0), m_scrollChanged(false), m_touchActive(false),
       m_blockTouchTrigger(false), m_highlightFromTouch(false)
 {
-    m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
-    m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
+    m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject(
+        "fourj.FJ_ScrollArrow", renderNode, true, 0));
+    m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject(
+        "fourj.FJ_ScrollArrow", renderNode, true, 0));
     FJ_FuiNode* background = getChildByName(std::string("ButtonListBackground"));
     if (background != 0)
         m_background = background->asMovieClip();
@@ -29,7 +32,8 @@ FJ_List::FJ_List(fuiRenderNode* renderNode)
         m_background->gotoAndPlay(std::string("ButtonListBackground"));
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
-    m_touchSize = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.5f);
+    m_touchSize = m_upArrow == 0 ? static_cast<int>(getHeight()) :
+        static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.5f);
 }
 
 FJ_List::~FJ_List()
@@ -101,7 +105,14 @@ void FJ_List::HandlePageUpDownNavigation(bool up)
 
 uint64_t FJ_List::LoseListFocus()
 {
-    if (m_background != 0) m_background->gotoAndPlay(std::string("FadeOut"));
+    FJ_FuiNodeStage* stage = getStage();
+    FJ_FuiNode* focus = stage == 0 ? 0 : stage->getFocus();
+    FJ_Base* focusedBase = focus == 0 ? 0 : focus->asFJ_Base();
+    bool belongsToList = focus != 0 &&
+        ((focusedBase == 0 && focus->isFJ_List() && focus != this) ||
+         (focusedBase != 0 && focusedBase->getObjListParent() != this));
+    if (belongsToList && m_background != 0)
+        m_background->gotoAndPlay(std::string("FadeOut"));
     return 0;
 }
 
@@ -131,7 +142,10 @@ void FJ_List::Init(int id)
     InitBase(std::wstring(L"ButtonList"), id);
     FJ_FuiNode* parent = getParent();
     if (parent != 0) m_background = parent->getChildByName(m_action)->asMovieClip();
-    m_touchSize = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.5f);
+    if (m_upArrow != 0)
+        m_touchSize = static_cast<int>(getHeight() - m_upArrow->getHeight() / 1.5f);
+    else
+        m_touchSize = static_cast<int>(getHeight());
 }
 
 void FJ_List::UpdateScrollListArrows()
@@ -201,16 +215,26 @@ std::wstring FJ_List::GetItemLabel(int index)
 {
     if (index < 0 || static_cast<unsigned int>(index) >= m_items.size()) return std::wstring(L" ");
     FJ_Base* base = m_items[static_cast<unsigned int>(index)]->asFJ_Base();
-    return base != 0 ? std::wstring() : std::wstring(L" ");
+    if (base == 0) return std::wstring(L" ");
+    const std::wstring* label = reinterpret_cast<const std::wstring*>(
+        static_cast<uintptr_t>(base->GetLabel()));
+    return label == 0 ? std::wstring(L" ") : *label;
 }
 
 void FJ_List::HandleScrollListArrows(bool addArrows)
 {
+    if (m_upArrow == 0 || m_downArrow == 0) return;
     if (addArrows && m_items.size() >= static_cast<unsigned int>(m_maxItemsVisibleUp) && m_upArrow->getParent() == 0)
     {
         FJ_FuiNode* parent = getParent();
-        if (parent != 0) { parent->addChild(m_upArrow); parent->addChild(m_downArrow); }
-        m_upArrow->ChangeState(0); m_downArrow->ChangeState(3);
+        if (parent != 0)
+        {
+            parent->addChild(m_upArrow);
+            parent->addChild(m_downArrow);
+            UpdateScrollListArrows();
+            m_upArrow->ChangeState(0);
+            m_downArrow->ChangeState(3);
+        }
     }
     if (m_upArrow != 0) m_upArrow->setVisible(m_topItem > 0);
     if (m_downArrow != 0) m_downArrow->setVisible(m_topItem + m_maxItemsVisibleUp < static_cast<int>(m_items.size()));
@@ -225,10 +249,24 @@ uint64_t FJ_List::ScrollList(bool down, bool page, bool fromTouch)
         m_highlightFromTouch = false;
     }
     int amount = page ? m_maxItemsVisibleUp : 1;
+    if (amount < 1) amount = 1;
     if (down) m_topItem += amount; else m_topItem -= amount;
     if (m_topItem < 0) m_topItem = 0;
     int last = static_cast<int>(m_items.size()) - m_maxItemsVisibleUp;
     if (last >= 0 && m_topItem > last) m_topItem = last;
+
+    int y = static_cast<int>(getY());
+    for (unsigned int i = 0; i < m_items.size(); ++i)
+    {
+        FJ_FuiNode* item = m_items[i];
+        item->setY(static_cast<float>(y));
+        const int itemHeight = Math::round(static_cast<float>(GetListItemHeight(static_cast<int>(i))));
+        const bool isVisible = static_cast<int>(i) >= m_topItem &&
+            static_cast<int>(i) < m_topItem + m_maxItemsVisibleUp;
+        item->setVisible(isVisible);
+        y += itemHeight + m_verticalSpacing;
+    }
+    m_scrollChanged = true;
     HandleScrollListArrows(false);
     return 0;
 }
@@ -269,15 +307,34 @@ void FJ_List::removeAllItems()
     FJ_FuiNodeStage* stage = getStage();
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        if (stage->getFocus() == m_items[i]) stage->removeFocus(m_items[i]);
+        if (stage != 0 && stage->getFocus() == m_items[i]) stage->removeFocus(m_items[i]);
         if (m_items[i]->getParent() != 0) m_items[i]->getParent()->removeChild(m_items[i], true);
     }
     m_items.clear(); m_activeItem = 0; m_topItem = 0; HandleScrollListArrows(false);
 }
 
-uint64_t FJ_List::SetButtonLabel(int index, const std::wstring& label) { SetItemLabel(index, label); return 0; }
-uint64_t FJ_List::SetItemAlpha(int index, float alpha) { if (index >= 0 && static_cast<unsigned int>(index) < m_items.size()) m_items[index]->setAlpha(alpha); return 0; }
-void FJ_List::SetItemLabel(int index, const std::wstring& label) { if (index >= 0 && static_cast<unsigned int>(index) < m_items.size()) { FJ_Base* b=m_items[index]->asFJ_Base(); if(b!=0)b->SetLabel(label); } }
+uint64_t FJ_List::SetButtonLabel(int index, const std::wstring& label)
+{
+    SetItemLabel(index, label);
+    return 0;
+}
+
+uint64_t FJ_List::SetItemAlpha(int index, float alpha)
+{
+    if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
+        m_items[index]->setAlpha(alpha);
+    return 0;
+}
+
+void FJ_List::SetItemLabel(int index, const std::wstring& label)
+{
+    if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
+    {
+        FJ_Base* item = m_items[index]->asFJ_Base();
+        if (item != 0)
+            item->SetLabel(label);
+    }
+}
 
 uint64_t FJ_List::EnableItem(int index, bool enabled)
 {
@@ -319,6 +376,7 @@ void FJ_List::RemoveItem(int index)
 {
     if (index < 0 || static_cast<unsigned int>(index) >= m_items.size())
         return;
+    FixNavigation(m_items[index]);
     if (m_items[index]->getParent() != 0)
         m_items[index]->getParent()->removeChild(m_items[index], true);
     m_items.erase(m_items.begin() + index);
@@ -330,10 +388,19 @@ void FJ_List::RemoveItem(int index)
     }
     if (m_activeItem >= static_cast<int>(m_items.size()))
         m_activeItem = static_cast<int>(m_items.size()) - 1;
+    if (m_activeItem < 0) m_activeItem = 0;
+    if (index <= m_topItem && m_topItem > 0) --m_topItem;
     ScrollList(true, true, false);
+    HandleScrollListArrows(true);
 }
 FJ_FuiNode* FJ_List::ReturnItem(int index) { return index >= 0 && static_cast<unsigned int>(index) < m_items.size() ? m_items[index] : 0; }
-int FJ_List::GetActiveItem() { return getStage()->getFocus() == m_items[m_activeItem] ? m_activeItem : -1; }
+int FJ_List::GetActiveItem()
+{
+    if (m_activeItem < 0 || static_cast<unsigned int>(m_activeItem) >= m_items.size()) return -1;
+    FJ_FuiNodeStage* stage = getStage();
+    return stage != 0 && stage->getFocus() == m_items[static_cast<unsigned int>(m_activeItem)] ?
+        m_activeItem : -1;
+}
 uint32_t FJ_List::GetTopItem() { return static_cast<uint32_t>(m_topItem); }
 
 uint64_t FJ_List::setAction(unsigned char action, char* value)

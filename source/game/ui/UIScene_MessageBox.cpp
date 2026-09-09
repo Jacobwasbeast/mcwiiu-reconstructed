@@ -156,7 +156,7 @@ int UIScene_MessageBox::getSceneType()
 
 unsigned int UIScene_MessageBox::getSubSceneType() const
 {
-    return m_buttonCount;
+    return static_cast<unsigned int>(m_titleId);
 }
 
 bool UIScene_MessageBox::hidesLowerScenes()

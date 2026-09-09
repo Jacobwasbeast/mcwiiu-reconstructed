@@ -4,6 +4,7 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/util/Math.hpp"
 
 FJ_BiomeSelectMenu::FJ_BiomeSelectMenu(fuiRenderNode* renderNode)
     : FJ_AbstractContainerDocument(renderNode), mNavigatorWidth(0.0f), mNavigatorHeight(0.0f),
@@ -36,15 +37,44 @@ unsigned int FJ_BiomeSelectMenu::getType()
 void FJ_BiomeSelectMenu::SetMapNavigator(float scale, int x, int z)
 {
     FJ_FuiNode* guide = getChildByName(std::string("MainPanel_NavigatorGuide"));
-    if (guide == NULL || scale == 0.0f)
+    guide->setWidth(static_cast<float>(Math::round(mNavigatorWidth / scale)));
+    guide->setHeight(static_cast<float>(Math::round(mNavigatorHeight / scale)));
+
+    const float guideWidth = guide->getWidth();
+    const float halfWidthDelta = mNavigatorWidth * 0.5f - guideWidth * 0.5f;
+    const float targetX = mNavigatorX + static_cast<float>(Math::round(
+        mNavigatorWidth / 200.0f * static_cast<float>(x) + halfWidthDelta));
+    const float targetY = mNavigatorY + static_cast<float>(Math::round(
+        mNavigatorWidth / 200.0f * static_cast<float>(z) + halfWidthDelta));
+    guide->setX(targetX);
+    guide->setY(targetY);
+
+    if (guide->getX() + guideWidth <= mNavigatorX + mNavigatorWidth)
     {
-        return;
+        if (guide->getX() < mNavigatorX)
+        {
+            guide->setX(mNavigatorX);
+        }
+        if (guide->getY() + guideWidth <= mNavigatorY + mNavigatorWidth)
+        {
+            if (guide->getY() < mNavigatorY)
+            {
+                guide->setY(mNavigatorY);
+            }
+            return;
+        }
     }
-    float ratio = 1.0f / scale;
-    float width = mNavigatorWidth * ratio;
-    float height = mNavigatorHeight * ratio;
-    guide->setWidth(width);
-    guide->setHeight(height);
-    guide->setX(mNavigatorX + (mNavigatorWidth - width) * 0.5f + (float)x * mNavigatorWidth / 128.0f);
-    guide->setY(mNavigatorY + (mNavigatorHeight - height) * 0.5f + (float)z * mNavigatorHeight / 128.0f);
+    else
+    {
+        guide->setX(mNavigatorX + mNavigatorWidth - guideWidth);
+        if (guide->getY() + guideWidth <= mNavigatorY + mNavigatorWidth)
+        {
+            if (guide->getY() < mNavigatorY)
+            {
+                guide->setY(mNavigatorY);
+            }
+            return;
+        }
+    }
+    guide->setY(mNavigatorY + mNavigatorWidth - guideWidth);
 }

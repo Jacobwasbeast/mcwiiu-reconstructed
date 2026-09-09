@@ -8,7 +8,7 @@ class UIControl_Button : public UIControl_Base
 public:
     UIControl_Button();
     virtual ~UIControl_Button();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void init(UIString label, int id);
     virtual void ReInit();
     void setEnable(bool enable, bool immediate);

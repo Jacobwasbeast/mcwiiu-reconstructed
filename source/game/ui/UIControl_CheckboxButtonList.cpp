@@ -11,11 +11,11 @@ UIControl_CheckboxButtonList::~UIControl_CheckboxButtonList()
 {
 }
 
-bool UIControl_CheckboxButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_CheckboxButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
-    m_controlType = 23;
-    return UIControl_List::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_CheckboxButtonList;
+    UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_CheckboxButtonList::UseIggyIcons()

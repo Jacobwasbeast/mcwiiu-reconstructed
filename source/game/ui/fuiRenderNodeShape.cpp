@@ -51,8 +51,8 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
     unsigned int i;
     for (i = 0; i < shape->shapeComponentCount; ++i, ++component)
     {
-        unsigned int vertexOffset = component->vertexCount;
-        unsigned int vertexCount = component->vertexOffset;
+        unsigned int vertexOffset = component->vertexOffset;
+        unsigned int vertexCount = component->vertexCount;
         if (vertexCount != 0)
         {
             C4JRender::eVertexType vertexType = C4JRender::eVertexType_UI;

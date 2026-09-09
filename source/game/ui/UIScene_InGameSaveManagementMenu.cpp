@@ -12,7 +12,6 @@
 #include "platform/wiiu/CStorage.hpp"
 
 std::wstring convUtf8ToWstring(const char* value);
-extern DLCManager g_DLCManager;
 
 namespace
 {
@@ -61,7 +60,7 @@ UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int sceneType
     {
         Initialise();
         if (!m_deletePending)
-            g_DLCManager.checkForCorruptDLCAndAlert(true);
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
     }
     m_layer->addComponent(sceneType, (EUIScene)0x48, sceneData);
 }

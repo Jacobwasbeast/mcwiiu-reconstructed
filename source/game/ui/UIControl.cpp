@@ -3,8 +3,8 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl::UIControl()
-    : m_controlType(0),
-      m_controlId(0),
+    : m_controlId(0),
+      m_controlType(eUIControlType_Unknown),
       m_flag(false),
       m_name("buckets_"),
       m_fuiRenderNode(0),
@@ -71,7 +71,7 @@ void UIControl::removeUINodeRef()
     m_fuiRenderNode = 0;
 }
 
-bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_scene = scene;
     m_name.assign(name, 0, std::string::npos);
@@ -82,7 +82,6 @@ bool UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::str
         m_width = m_fuiRenderNode->getWidth();
         m_height = m_fuiRenderNode->getHeight();
     }
-    return m_fuiRenderNode != 0;
 }
 
 void UIControl::UpdateControl()

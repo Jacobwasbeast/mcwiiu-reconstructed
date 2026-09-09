@@ -1,14 +1,7 @@
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_SlotList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_SlotList
-{
-public:
-    void addSlot(int slot, bool highlighted, bool visible);
-    void SetSlotHighlight(int slot, bool highlighted);
-    void SetSlotRedBox(int slot, bool show);
-};
 
 UIControl_SlotList::UIControl_SlotList()
     : m_highlightSlot(-1)
@@ -93,12 +86,11 @@ void UIControl_SlotList::showSlotRedBox(int slot, bool show)
     list->SetSlotRedBox(slot, show);
 }
 
-bool UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 16;
-    bool result = UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_SlotList;
+    UIControl_Base::setupControl(scene, node, name);
     m_highlightSlot = 0;
-    return result;
 }
 
 void UIControl_SlotList::ReInit()

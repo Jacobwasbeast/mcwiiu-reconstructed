@@ -3,6 +3,7 @@
 #include <cwchar>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/DLCPack.hpp"
@@ -20,7 +21,6 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
-extern DLCManager g_DLCManager;
 
 static LaunchMoreOptionsMenuInitData* getLoadMenuInitData(UIScene_LoadMenu* scene)
 {
@@ -290,7 +290,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
                 bool available = options != NULL && options->getPack() != NULL &&
                                  options->getPack()->hasPurchasedPack();
                 if (!available &&
-                    !g_DLCManager.IsMiniGameTemporarilyFree(static_cast<int>(ruleset->getRuleType())))
+                    !gApp.mDLCManager.IsMiniGameTemporarilyFree(static_cast<int>(ruleset->getRuleType())))
                     group = groups.erase(group);
                 else
                     ++group;
@@ -418,7 +418,9 @@ void UIScene_LoadMenu::checkDialogReturned(bool& value, C4JStorage::EMessageResu
 uint32_t UIScene_LoadMenu::CheckResetNetherReturned(void* context, int,
                                                     C4JStorage::EMessageResult result)
 {
-    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(context);
+    UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(
+        static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
+    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(callbackScene);
     if (scene != NULL)
     {
         scene->m_resetNetherPending = false;
@@ -428,9 +430,11 @@ uint32_t UIScene_LoadMenu::CheckResetNetherReturned(void* context, int,
 }
 
 uint32_t UIScene_LoadMenu::CheckUpdateTheEndReturned(void* context, int,
-                                                     C4JStorage::EMessageResult result)
+                                                      C4JStorage::EMessageResult result)
 {
-    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(context);
+    UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(
+        static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
+    UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(callbackScene);
     if (scene != NULL)
     {
         scene->m_updateEndPending = false;
@@ -477,3 +481,5 @@ int UIScene_LoadMenu::getSceneType()
 {
     return 0x23;
 }
+
+

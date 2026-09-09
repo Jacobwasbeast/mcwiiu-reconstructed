@@ -13,11 +13,11 @@ UIControl_LayerIconButtonList::~UIControl_LayerIconButtonList()
 {
 }
 
-bool UIControl_LayerIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_LayerIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
     const std::string& name)
 {
-    m_controlType = 25;
-    return UIControl_List::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_LayerIconButtonList;
+    UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_LayerIconButtonList::UseIggyIcons()

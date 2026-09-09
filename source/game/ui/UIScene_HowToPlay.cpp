@@ -5,6 +5,7 @@
 #include <cstring>
 #include <new>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -33,7 +34,6 @@
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/SandBlock.hpp"
 
-extern CMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 
 void replaceAll(std::wstring& result, const std::wstring& source,
@@ -146,7 +146,7 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
     m_page = static_cast<int>(page);
     const wchar_t* title = L10N::GetString(0x18d8ea9);
     std::wstring text(title == NULL ? L"" : title);
-    theApp.FormatHTMLString(m_resolution, text, m_controlFocus);
+    gApp.FormatHTMLString(m_resolution, text, m_controlFocus);
     stripWhitespaceForHtml(text, true);
     m_dynamicHtmlText.addText(text, true);
     if (m_movie != NULL && m_movie->getRootNode() != NULL)
@@ -212,7 +212,7 @@ void UIScene_HowToPlay::updateTooltips()
 
 std::wstring UIScene_HowToPlay::getMoviePath()
 {
-    return theApp.GetLocalPlayerCount() < 2 ? L"HowToPlay" : L"HowToPlaySplit";
+    return gApp.GetLocalPlayerCount() < 2 ? L"HowToPlay" : L"HowToPlaySplit";
 }
 
 void UIScene_HowToPlay::handleReload()
@@ -261,7 +261,7 @@ void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
     {
         std::wstring text = variant == 2 ? L"elemental spirit animal" : (variant == 1 ? L"klaatu berata niktu" : L"the elder scrolls");
         minecraft->mFont->drawWordWrap(text, 0, 0, static_cast<int>(width),
-                                       theApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)) | 0xff000000);
+                                       gApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)) | 0xff000000);
     }
     GlStateManager::disableAlphaTest();
     GlStateManager::disableRescaleNormal();

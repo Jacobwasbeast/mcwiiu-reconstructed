@@ -6,6 +6,7 @@
 #include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_TextInput.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -13,23 +14,18 @@ FJ_DebugCreateSchematic::FJ_DebugCreateSchematic(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
-
-    FJ_FuiNode* name = getChildByName(std::string("Name"));
-    name->setVisible(true);
+    static_cast<FJ_TextInput*>(getChildByName(std::string("Name")))->m_bUseScale = true;
 }
 
 FJ_DebugCreateSchematic::~FJ_DebugCreateSchematic()
 {
 }
 
-uint64_t FJ_DebugCreateSchematic::handleCheckboxToggled(FJ_Event* event)
+void FJ_DebugCreateSchematic::handleCheckboxToggled(FJ_Event* event)
 {
     FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
     if (checkBox != NULL)
-    {
         m_pCallbackScene->handleCheckboxToggled(checkBox->getId(), checkBox->getChecked());
-    }
-    return 0;
 }
 
 void FJ_DebugCreateSchematic::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event)
@@ -44,5 +40,5 @@ FJ_Document* FJ_DebugCreateSchematic::Create(fuiRenderNode* renderNode)
 
 unsigned int FJ_DebugCreateSchematic::getType()
 {
-    return 52;
+    return 0x34;
 }

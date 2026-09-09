@@ -7,9 +7,6 @@ class fuiRenderNode;
 
 class FJ_HtmlText_Small : public FJ_HtmlText
 {
-private:
-    fuiRenderNode* m_textField;
-
 public:
     FJ_HtmlText_Small(fuiRenderNode* pRenderNode)
         : FJ_HtmlText(pRenderNode)

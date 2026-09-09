@@ -56,11 +56,9 @@ private:
     FJ_ScrollArrowH* m_leftArrow;
     FJ_ScrollArrowH* m_rightArrow;
     bool m_selectorEnabled;
-    unsigned char m_padding0[3];
     int m_touchX;
     int m_touchSlot;
     bool m_touchMoved;
-    unsigned char m_padding1[3];
 };
 
 #endif

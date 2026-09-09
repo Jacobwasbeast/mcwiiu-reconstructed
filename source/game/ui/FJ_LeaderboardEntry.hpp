@@ -4,20 +4,10 @@
 #include <string>
 
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_LeaderboardList.hpp"
 
 class fuiRenderNode;
 class fuiRenderNodeEditText;
-class FJ_LeaderboardList
-{
-public:
-    struct CLeaderboardEntry
-    {
-        int rank;
-        std::wstring gamertag;
-        bool hasData;
-        std::wstring values[7];
-    };
-};
 
 class FJ_LeaderboardEntry : public FJ_FuiNode
 {

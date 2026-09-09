@@ -165,17 +165,17 @@ void UIScene_AbstractContainerMenu::tick()
 
 void UIScene_AbstractContainerMenu::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    m_unknownA9 = true;
+    m_slotDrawPending = true;
     m_updatePending = m_updatePending || m_menu->needsRendered();
     if (m_updatePending)
     {
-        m_unknownAC = static_cast<int>(GetBaseSlotCount());
+        m_slotDrawCount = static_cast<int>(GetBaseSlotCount());
         AbstractContainerMenu::ItemList* items = m_menu->getItems();
         for (unsigned int slot = 0; slot < items->size(); ++slot)
         {
             Slot* menuSlot = m_menu->getSlot(static_cast<int>(slot));
             if (menuSlot != 0 && menuSlot->hasItem())
-                ++m_unknownAC;
+                ++m_slotDrawCount;
         }
     }
     UIScene::render(width, height, viewport);

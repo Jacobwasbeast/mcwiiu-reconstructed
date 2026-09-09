@@ -30,7 +30,7 @@ void FJ_ChestMenu::SetSafeZone(int top, int bottom, int left, int right)
     double height = stage->getStageHeight();
     if (height == 360.0 || height == 540.0)
     {
-        setX(-static_cast<float>(right) - 176.0f);
-        setY(-static_cast<float>(top) - 176.0f);
+        setX(-static_cast<float>(right));
+        setY(static_cast<float>(bottom));
     }
 }

@@ -17,8 +17,8 @@ void FJ_HtmlText_WithPanel_Small::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0);
-    m_pTextField = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
-    addChild(m_pTextField);
+    m_pText = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
+    addChild(m_pText);
     removeChild(textContainer, true);
 }
 

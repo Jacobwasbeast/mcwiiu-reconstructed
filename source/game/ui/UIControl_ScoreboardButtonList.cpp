@@ -54,11 +54,11 @@ UIControl_ScoreboardButtonList::~UIControl_ScoreboardButtonList()
 {
 }
 
-bool UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                   const std::string& name)
 {
-    m_controlType = 30;
-    return UIControl_ButtonList::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_ScoreboardButtonList;
+    UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int playerIcon,

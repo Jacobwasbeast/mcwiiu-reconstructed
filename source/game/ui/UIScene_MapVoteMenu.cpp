@@ -64,8 +64,7 @@ void UIScene_MapVoteMenu::InitForMap()
     mode->GetUniquePlaylist(playlist);
     for (unsigned int i = 0; i < playlist.size(); ++i)
     {
-        std::wstring texture = L"";
-        MiniGameDef::GetVariantIconPath(Minecraft::GetMiniGameId(), i);
+        std::wstring texture = MiniGameDef::GetVariantIconPath(Minecraft::GetMiniGameId(), i);
         LevelGenerationOptions* options = g_pApp->getLevelRules()->getLevelGenFromUniqueId(type, playlist[i].uniqueId);
         std::wstring name = options != 0 ? options->getWorldName() : L"";
         if (name.empty())
@@ -97,8 +96,7 @@ void UIScene_MapVoteMenu::InitForVariant()
         count = definition->GetLootSetCount();
     for (int i = 0; i < count; ++i)
     {
-        std::wstring icon;
-        MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
         std::wstring label = definition->GetLootSetText(i);
         bool checked = mode->GetMapVote(m_resolution, i) != 0;
         if (checked)
@@ -117,8 +115,7 @@ void UIScene_MapVoteMenu::InitForTheme()
     m_mapDescription.init(UIString(L"MapSel"));
     for (unsigned int i = 0; i < 1; ++i)
     {
-        std::wstring icon;
-        MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
         std::wstring label = L"";
         bool checked = mode->GetMapVote(m_resolution, i) != 0;
         if (checked)

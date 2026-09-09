@@ -293,8 +293,8 @@ void FJ_PressStartToPlay::ShowChestRefillAnimation(bool left, int yOffset)
         }
         else
         {
-            animation->setX(-(animation->getWidth() - getStage()->getStageWidth()));
-            animation->setY(-(animation->getHeight() - getStage()->getStageHeight()));
+            animation->setX(-(animation->getWidth() * 0.5f - getStage()->getStageWidth() * 0.5f));
+            animation->setY(-(animation->getHeight() * 0.5f - getStage()->getStageHeight() * 0.5f));
         }
         if (movie != 0)
         {

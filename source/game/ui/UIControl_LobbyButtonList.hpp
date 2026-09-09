@@ -10,7 +10,7 @@ class UIControl_LobbyButtonList
 {
 public:
     virtual ~UIControl_LobbyButtonList();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::wstring& label, bool host, int playerIcon, int voipIcon);
     void setPlayerIcon(int item, int icon);
     void setVOIPIcon(int item, int icon);

@@ -31,6 +31,7 @@ public:
     void InitBase(const std::wstring& name, int id);
     fuiRenderNodeEditText* GetTextField();
     void CheckLabelWidth(const std::wstring& label);
+    void CheckLabelWidths(std::vector<std::wstring>& labels);
     void SetLabelAlignment(int alignment);
     uint64_t DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
     uint64_t DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
@@ -74,7 +75,7 @@ protected:
     bool m_widthChanged;
     bool m_heightChanged;
     int m_wrapWidth;
-    int m_wrapHeight;
+    bool m_wrapHeight;
     int m_preScaleWidth;
     int m_maxLabelWidth;
     std::vector<FJ_FuiNode*> m_objects;

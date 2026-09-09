@@ -32,10 +32,10 @@ void UIControl_TexturePackList::setEnabled(bool enabled)
     static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->EnableSelector(enabled);
 }
 
-bool UIControl_TexturePackList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_TexturePackList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 18;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_TexturePackList;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_TexturePackList::addPack(int id, const std::wstring& name, bool alreadyAdded)

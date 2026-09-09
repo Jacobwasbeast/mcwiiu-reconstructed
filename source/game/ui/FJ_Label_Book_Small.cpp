@@ -1,19 +1,18 @@
 #include "game/ui/FJ_Label_Book_Small.hpp"
 
 FJ_Label_Book_Small::FJ_Label_Book_Small(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode)
+    : FJ_Label(pRenderNode)
 {
-    m_labelData[0x8d] = 1;
+    m_labelTooWide = true;
 }
 
 FJ_Label_Book_Small::~FJ_Label_Book_Small()
 {
 }
 
-int FJ_Label_Book_Small::Create(fuiRenderNode* pRenderNode)
+FJ_Label* FJ_Label_Book_Small::Create(fuiRenderNode* pRenderNode)
 {
-    FJ_Label_Book_Small* label = new FJ_Label_Book_Small(pRenderNode);
-    return (int)label;
+    return new FJ_Label_Book_Small(pRenderNode);
 }
 
 unsigned int FJ_Label_Book_Small::getType()

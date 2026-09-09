@@ -19,6 +19,7 @@
 #include "game/network/GameCommandPacket.hpp"
 #include "game/network/ServerSettingsChangedPacket.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_InGameHostOptions.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -29,12 +30,6 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
-
-class FJ_InGameHostOptions : public FJ_FuiNode
-{
-public:
-    void InitMenu();
-};
 
 static void addHostCheckbox(UIControl_MultiList* list, int stringId, int id, bool checked)
 {

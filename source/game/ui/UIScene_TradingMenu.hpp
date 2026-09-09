@@ -58,6 +58,11 @@ private:
     bool m_scrollLeftShown;
     boost::shared_ptr<MerchantMenu> m_merchantMenu;
     std::vector<std::pair<MerchantRecipe*, int> > m_trades;
+    int m_tradeCount;
+    int m_tradeRow;
+    int m_tradeOffset;
+    int m_tradeState;
+    int m_tradeFocus;
     UIControl m_mainPanel;
     UIControl_SlotList m_tradingBar;
     UIControl_SlotList m_request1;

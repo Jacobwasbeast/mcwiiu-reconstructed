@@ -1,7 +1,7 @@
 #include "game/ui/FJ_ListButtonScoreBoard_Normal.hpp"
 
 FJ_ListButtonScoreBoard_Normal::FJ_ListButtonScoreBoard_Normal(fuiRenderNode* renderNode)
-    : FJ_ListButtonScoreBoard(renderNode)
+    : FJ_ListButtonScoreBoard(renderNode), m_small(false)
 {
 }
 

@@ -10,8 +10,8 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_Label::FJ_Label(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_textAlignment(eTextAlignment_Center), m_actionUseHtmlText(false),
-      m_actionUseSmallText(false), m_actionUseLargeText(false), m_actionUseBoldText(false)
+    : FJ_Base(renderNode), m_textAlignment(eTextAlignment_Center), m_multiline(false),
+      m_wordWrap(false), m_useEllipsis(false), m_manualWordWrap(false)
 {
 }
 
@@ -31,7 +31,7 @@ void FJ_Label::SetTextAlignment(ETextAlignment alignment)
 
 void FJ_Label::setUseHtmlText(bool useHtmlText)
 {
-    m_textChanged = useHtmlText;
+    m_centered = useHtmlText;
 }
 
 unsigned int FJ_Label::getType()
@@ -49,18 +49,18 @@ void FJ_Label::ResetLabel()
 {
     m_objectWidth = -1.0f;
     m_objectHeight = -1.0f;
-    m_textChanged = false;
+    m_isLabel = false;
     m_newWidth = static_cast<int>(getWidth());
 }
 
 void FJ_Label::SetLabel(const std::wstring& label)
 {
     FJ_Base::SetLabelAlignment(static_cast<int>(m_textAlignment));
-    m_textContainerChanged = m_actionUseBoldText;
-    m_textContainerVisible = m_actionUseSmallText;
-    m_textOnly = m_actionUseLargeText;
-    m_isLabel = m_actionUseHtmlText;
-    m_textChanged = true;
+    m_textChanged = m_manualWordWrap;
+    m_textContainerChanged = m_wordWrap;
+    m_textOnly = m_useEllipsis;
+    m_textContainerVisible = m_multiline;
+    m_isLabel = true;
     FJ_Base::SetLabel(label);
 }
 
@@ -81,21 +81,17 @@ int FJ_Label::GetAverageCharHeight()
 
 void FJ_Label::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    float textWidth = textField->getWidth();
-    float requiredWidth = m_objectWidth <= textWidth ? textWidth : static_cast<float>(static_cast<int>(m_objectWidth));
-    if (getWidth() < requiredWidth)
+    const float measured = textField->getWidth();
+    float required = static_cast<float>(m_maxLabelWidth) <= measured
+                         ? static_cast<float>(static_cast<int>(measured))
+                         : static_cast<float>(m_maxLabelWidth);
+    if (required <= getWidth())
     {
-        int required = static_cast<int>(requiredWidth);
-        if (m_newWidth < required)
-        {
-            m_newWidth = required;
-        }
-        return;
+        required = getWidth();
     }
-    int width = static_cast<int>(getWidth());
-    if (m_newWidth < width)
+    if (m_newWidth < static_cast<int>(required))
     {
-        m_newWidth = width;
+        m_newWidth = static_cast<int>(required);
     }
 }
 
@@ -107,19 +103,19 @@ uint64_t FJ_Label::setAction(unsigned char action, char* value)
     }
     else if (action == 6)
     {
-        m_actionUseHtmlText = std::strcmp(value, "true") == 0;
+        m_multiline = std::strcmp(value, "true") == 0;
     }
     else if (action == 7)
     {
-        m_actionUseSmallText = std::strcmp(value, "true") == 0;
+        m_useEllipsis = std::strcmp(value, "true") == 0;
     }
     else if (action == 8)
     {
-        m_actionUseLargeText = std::strcmp(value, "true") == 0;
+        m_wordWrap = std::strcmp(value, "true") == 0;
     }
     else if (action == 9)
     {
-        m_actionUseBoldText = std::strcmp(value, "true") == 0;
+        m_manualWordWrap = std::strcmp(value, "true") == 0;
     }
     return (uint64_t)(unsigned long)this;
 }

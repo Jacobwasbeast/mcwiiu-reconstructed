@@ -1,34 +1,14 @@
 #include "game/ui/UIControl_Label.hpp"
 
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
+#include "game/ui/FJ_Label.hpp"
+#include "game/ui/FJ_LabelOutline.hpp"
+#include "game/ui/FJ_Label_Blink.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 #include <string>
-
-class FJ_Label
-{
-public:
-    virtual void SetLabel(const std::wstring& label);
-};
-
-class FJ_HtmlText
-{
-public:
-    virtual void SetLabel(const std::wstring& label);
-};
-
-class FJ_LabelOutline
-{
-public:
-    void Init(const std::wstring& label);
-};
-
-class FJ_Label_Blink
-{
-public:
-    void Init(const std::wstring& label);
-};
 
 UIControl_Label::UIControl_Label()
     : UIControl_Base()
@@ -40,10 +20,10 @@ UIControl_Label::~UIControl_Label()
 {
 }
 
-bool UIControl_Label::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Label::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 8;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_Label;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Label::init(UIString label)

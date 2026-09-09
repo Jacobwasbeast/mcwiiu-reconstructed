@@ -4,6 +4,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/ui/UIControl_PlayerButtonList.hpp"
 #include "game/ui/UIString.hpp"
@@ -16,22 +17,6 @@
 
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
-
-class CGameNetworkManager
-{
-public:
-    static CGameNetworkManager sInstance;
-    INetworkPlayer* GetLocalPlayerByUserIndex(int userIndex);
-    int GetPlayerCount();
-    bool IsLocalGame();
-    INetworkPlayer* GetPlayerByIndex(int index);
-    INetworkPlayer* GetPlayerBySmallId(unsigned char smallId);
-    INetworkPlayer* GetHostPlayer();
-    void RegisterPlayerChangedCallback(int userIndex,
-                                       void (*callback)(void*, INetworkPlayer*, bool), void* data);
-    void UnRegisterPlayerChangedCallback(int userIndex,
-                                         void (*callback)(void*, INetworkPlayer*, bool), void* data);
-};
 
 struct _XPARTY_USER_LIST
 {

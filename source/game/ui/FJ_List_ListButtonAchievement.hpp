@@ -17,8 +17,6 @@ public:
     static FJ_List2D* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 
-private:
-    unsigned char m_achievementListData[8];
 };
 
 #endif

@@ -8,6 +8,7 @@
 
 class FJ_Event;
 class fuiRenderNode;
+class FJ_MobEffect_Tile;
 
 class FJ_Hud : public FJ_FuiNode
 {
@@ -99,6 +100,18 @@ private:
     unsigned char m_layout[800];
     std::vector<FJ_FuiNode*> m_checkpointNodes;
     unsigned char m_tail[428];
+    int m_gameMode;
+    FJ_MobEffect_Tile* m_statusEffectTiles[27];
+    bool m_statusEffectAmbient[27];
+    FJ_FuiNode* m_damageIndicators[4];
+    float m_damageIndicatorAlpha[4];
+    FJ_FuiNode* m_iggySplash;
+    FJ_FuiNode* m_offhandSlot;
+    FJ_FuiNode* m_hotbarAnchor;
+    float m_splashX;
+    float m_splashY;
+    bool m_offhandEnabled;
+    bool m_rightHanded;
 };
 
 #endif

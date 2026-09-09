@@ -7,10 +7,13 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/MerchantRecipe.hpp"
+#include "game/core/Slot.hpp"
 #include "game/ui/FJ_TradingMenu.hpp"
 #include "game/ui/MerchantMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
+
+#include <cstdio>
 
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
@@ -21,6 +24,11 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
       m_scrollLeftShown(true),
       m_merchantMenu(),
       m_trades(),
+      m_tradeCount(0),
+      m_tradeRow(0),
+      m_tradeOffset(0),
+      m_tradeState(0),
+      m_tradeFocus(0),
       m_mainPanel(),
       m_tradingBar(),
       m_request1(),
@@ -212,8 +220,58 @@ void UIScene_TradingMenu::handleInput(int playerId, int action, bool repeat, boo
         handled = handleKeyDown(playerId, action, repeat) != 0;
 }
 
-void UIScene_TradingMenu::customDraw(const char*, fuiRect*)
+void UIScene_TradingMenu::customDraw(const char* name, fuiRect* rect)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft == 0 || rect == 0 || name == 0 || !m_merchantMenu)
+        return;
+
+    int slotId = -1;
+    if (std::sscanf(name, "slot_%d", &slotId) != 1)
+        return;
+
+    not_null_ptr<ItemInstance> item;
+    const int tradeCount = static_cast<int>(m_trades.size());
+    if (slotId < 0)
+        return;
+
+    if (slotId < 0x27)
+    {
+        Slot* slot = m_merchantMenu->getSlot(slotId);
+        if (slot == 0)
+            return;
+        item = slot->getItem();
+    }
+    else
+    {
+        int tradeIndex;
+        if (slotId < 0x29)
+        {
+            if (tradeCount == 0 || m_tradeRow + m_tradeOffset >= tradeCount)
+                return;
+            tradeIndex = m_tradeOffset;
+        }
+        else
+        {
+            tradeIndex = slotId - 0x29 + m_tradeOffset;
+            if (tradeCount == 0 || tradeIndex >= tradeCount)
+                return;
+        }
+
+        MerchantRecipe* recipe = m_trades[tradeIndex].first;
+        if (recipe == 0)
+            return;
+        if (slotId == 0x27)
+            item = recipe->getBuyAItem();
+        else if (slotId == 0x28)
+            item = recipe->getBuyBItem();
+        else
+            item = recipe->getSellItem();
+    }
+
+    if (item->isEmpty())
+        return;
+    customDrawSlotControlFui(rect, m_sceneType, item, 1.0f, true, false, false);
 }
 
 void UIScene_TradingMenu::handleInventoryUpdated(void*)

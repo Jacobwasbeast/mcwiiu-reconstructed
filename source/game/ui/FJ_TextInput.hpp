@@ -7,6 +7,8 @@
 #include "game/ui/FJ_Base.hpp"
 
 class FJ_Event;
+class FJ_DebugCreateSchematic;
+class FJ_DebugFillArea;
 class FJ_FuiNode;
 class FJ_Factory;
 class FJ_ScrollArrowH;
@@ -47,6 +49,9 @@ public:
     void NonFocusSelect();
 
 private:
+    friend class FJ_DebugCreateSchematic;
+    friend class FJ_DebugFillArea;
+
     int m_scrollWidth;
     int m_state;
     bool m_firstFocus;

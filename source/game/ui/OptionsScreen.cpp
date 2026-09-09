@@ -7,25 +7,9 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/Options.hpp"
 #include "game/core/SmallButton.hpp"
-
-class SlideButton : public Button
-{
-public:
-    SlideButton(int id, int x, int y, const Options::Option* option,
-                const std::wstring& message, float value);
-};
-
-class VideoSettingsScreen : public Screen
-{
-public:
-    VideoSettingsScreen(Screen* parentScreen, Options* options);
-};
-
-class ControlsScreen : public Screen
-{
-public:
-    ControlsScreen(Screen* parentScreen, Options* options);
-};
+#include "game/core/SlideButton.hpp"
+#include "game/ui/VideoSettingsScreen.hpp"
+#include "game/ui/ControlsScreen.hpp"
 
 OptionsScreen::OptionsScreen(Screen* parentScreen, Options* options)
     : Screen(), mParentScreen(parentScreen), mTitle(L"Options"), mOptions(options)

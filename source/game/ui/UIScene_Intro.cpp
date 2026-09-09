@@ -10,6 +10,8 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
+uint8_t g_introRunning = 0;
+
 UIScene_Intro::UIScene_Intro(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
 {
@@ -44,14 +46,14 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
         return;
 
     m_inputHandled = true;
-    if (theApp.HasNoSpaceForSaveQuota() == 0)
+    if (gApp.HasNoSpaceForSaveQuota() == 0)
     {
         int primaryPlayer = g_pApp->GetPrimaryUserIndex();
         uint32_t optionsStatus = g_pApp->GetOptionsCallbackStatus(primaryPlayer);
         if (optionsStatus == 0)
         {
             m_inputHandled = false;
-            theApp.SetIntroRunning(true);
+            g_introRunning = 1;
             return;
         }
         if (optionsStatus == 4 || optionsStatus == 6)
@@ -62,23 +64,23 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool rele
             else
                 gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(2), NULL,
                                                       static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
-            theApp.SetIntroRunning(true);
+            g_introRunning = 1;
             return;
         }
         gConsoleUIController.NavigateToScene(primaryPlayer, static_cast<EUIScene>(0x4d), NULL,
                                               static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     }
-    theApp.SetIntroRunning(true);
+    g_introRunning = 1;
 }
 
 void UIScene_Intro::handleAnimationEnd()
 {
-    theApp.SetIntroRunning(true);
+    g_introRunning = 1;
     if (m_inputHandled)
         return;
 
     m_inputHandled = true;
-    if (theApp.HasNoSpaceForSaveQuota() != 0)
+    if (gApp.HasNoSpaceForSaveQuota() != 0)
         return;
 
     int primaryPlayer = g_pApp->GetPrimaryUserIndex();

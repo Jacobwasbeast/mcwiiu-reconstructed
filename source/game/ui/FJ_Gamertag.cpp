@@ -1,13 +1,8 @@
 #include "game/ui/FJ_Gamertag.hpp"
 
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_Label.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Label
-{
-public:
-    virtual void SetLabel(const std::wstring& label);
-};
 
 FJ_Gamertag::FJ_Gamertag(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)

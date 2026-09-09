@@ -3,10 +3,10 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_KeyboardButtons::FJ_KeyboardButtons(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_keyboardOffset(0), m_remotePressButton(false),
-      m_keyboardWidth(0), m_keyboardHeight(0)
+    : FJ_Button(renderNode)
 {
     m_keyboardWidth = static_cast<int>(getWidth());
+    m_remotePressButton = false;
     m_keyboardHeight = static_cast<int>(getHeight());
 }
 
@@ -83,8 +83,7 @@ void FJ_KeyboardButtons::UpdateLabel()
 
     if (getEnabled() && getCurrentState() == 3)
     {
-        FJ_FuiNode* background = getChildByName(std::string("KeyboardBackground"));
-        FJ_FuiNode* backgroundMovieClip = background == 0 ? 0 : background->asMovieClip();
+        FJ_FuiNode* backgroundMovieClip = getChildByName(std::string("KeyboardBackground"))->asMovieClip();
         if (backgroundMovieClip != 0)
         {
             backgroundMovieClip->setWidth(static_cast<float>(m_keyboardWidth - m_keyboardOffset * 2) / getScaleX());

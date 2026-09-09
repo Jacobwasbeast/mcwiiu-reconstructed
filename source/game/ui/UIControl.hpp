@@ -13,12 +13,33 @@ class UIControl
 public:
     enum eUIControlType
     {
-        eUIControlType_Unknown = 0
+        eUIControlType_Unknown = 0,
+        eUIControlType_Button = 1,
+        eUIControlType_CheckBox = 2,
+        eUIControlType_Cursor = 3,
+        eUIControlType_DynamicLabel = 4,
+        eUIControlType_EnchantmentButton = 6,
+        eUIControlType_HTMLLabel = 7,
+        eUIControlType_Label = 8,
+        eUIControlType_LeaderboardList = 9,
+        eUIControlType_MinecraftPlayer = 10,
+        eUIControlType_Progress = 13,
+        eUIControlType_Slider = 15,
+        eUIControlType_SlotList = 16,
+        eUIControlType_TextInput = 17,
+        eUIControlType_TexturePackList = 18,
+        eUIControlType_BitmapIcon = 19,
+        eUIControlType_Touch = 20,
+        eUIControlType_CheckboxButtonList = 23,
+        eUIControlType_LayerIconButtonList = 25,
+        eUIControlType_MultiList = 28,
+        eUIControlType_ScoreboardButtonList = 30,
+        eUIControlType_AchievementsList = 31
     };
 
     UIControl();
     virtual ~UIControl();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void UpdateControl();
     virtual void tick();
     virtual void ReInit();
@@ -38,8 +59,8 @@ public:
     UIControl& operator=(const UIControl& other);
 
 protected:
-    int m_controlType;
     int m_controlId;
+    eUIControlType m_controlType;
     bool m_flag;
     std::string m_name;
     fuiRenderNode* m_fuiRenderNode;

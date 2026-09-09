@@ -4,6 +4,8 @@
 
 #include "game/client/render/Font.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/item/Enchantment.hpp"
@@ -15,9 +17,8 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-std::wstring _toString(int value);
 
-extern CMinecraftApp g_MinecraftApp;
+extern CConsoleMinecraftApp gApp;
 static UIControl_EnchantmentButton::EnchantmentNames g_enchantmentNames;
 
 UIControl_EnchantmentButton::EnchantmentNames::EnchantmentNames()
@@ -54,11 +55,11 @@ std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
 UIControl_EnchantmentButton::UIControl_EnchantmentButton()
     : UIControl_Button(), m_state(0), m_level(0), m_index(0), m_name(L""),
       m_focus(false),
-      m_colour((int)(g_MinecraftApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) |
+      m_colour((int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) |
                      0xff000000)),
-      m_focusColour((int)(g_MinecraftApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) |
+      m_focusColour((int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) |
                           0xff000000)),
-      m_inactiveColour((int)(g_MinecraftApp.GetHTMLColour(
+      m_inactiveColour((int)(gApp.GetHTMLColour(
                                  eMinecraftColour_Color_EnchantTextDisabled) |
                              0xff000000))
 {
@@ -68,12 +69,12 @@ UIControl_EnchantmentButton::~UIControl_EnchantmentButton()
 {
 }
 
-bool UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
-    m_controlType = 6;
+    m_controlType = UIControl::eUIControlType_EnchantmentButton;
     m_controlId = 1;
-    return UIControl_Button::setupControl(scene, node, name);
+    UIControl_Button::setupControl(scene, node, name);
 }
 
 void UIControl_EnchantmentButton::updateState()
@@ -148,11 +149,11 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     float scale;
     if (scene->getPad() == 0)
     {
-        scale = g_MinecraftApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
+        scale = gApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
     }
     else
     {
-        scale = g_MinecraftApp.GetLocalPlayerCount() < 2 ? 2.5F : 2.0F;
+        scale = gApp.GetLocalPlayerCount() < 2 ? 2.5F : 2.0F;
     }
 
     GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,

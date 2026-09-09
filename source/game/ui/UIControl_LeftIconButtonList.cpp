@@ -13,11 +13,11 @@ UIControl_LeftIconButtonList::~UIControl_LeftIconButtonList()
 {
 }
 
-bool UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+void UIControl_LeftIconButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
-    m_controlType = 0x1a;
-    return UIControl_List::setupControl(scene, node, name);
+    m_controlType = static_cast<UIControl::eUIControlType>(0x1a);
+    UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_LeftIconButtonList::UseIggyIcons()

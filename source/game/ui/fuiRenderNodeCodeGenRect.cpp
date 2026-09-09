@@ -4,6 +4,7 @@
 
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/ui/fui.hpp"
 
 extern Renderer* gRenderer;
 
@@ -106,6 +107,17 @@ void fuiRenderNodeCodeGenRect::setHeight(float height)
 void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned int textureHeight,
                                           int textureId, bool textureAlpha)
 {
+    if (mTextureId >= 0)
+    {
+        if (!mCustomTexture)
+        {
+            gRenderer->TextureFree(mTextureId);
+        }
+        else if (!mTextureAlpha)
+        {
+            gFui->releaseCustomTexture(mTextureId);
+        }
+    }
     mTextureWidth = textureWidth;
     mTextureHeight = textureHeight;
     mTextureId = textureId;

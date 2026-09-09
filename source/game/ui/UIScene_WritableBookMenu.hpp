@@ -84,7 +84,7 @@ private:
     bool m_canEdit;
     bool m_textChanged;
     bool m_titleChanged;
-    unsigned char m_alignmentGap[0x1fd];
+    unsigned char m_reserved[0x1fd];
     int m_controlState;
     bool m_bookIsSigned;
     bool m_unused;

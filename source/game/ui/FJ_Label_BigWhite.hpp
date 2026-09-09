@@ -8,7 +8,11 @@ class fuiRenderNode;
 class FJ_Label_BigWhite : public FJ_Label
 {
 public:
-    explicit FJ_Label_BigWhite(fuiRenderNode* renderNode);
+    FJ_Label_BigWhite(fuiRenderNode* renderNode)
+        : FJ_Label(renderNode)
+    {
+    }
+
     virtual ~FJ_Label_BigWhite();
 
     static FJ_Label* Create(fuiRenderNode* pRenderNode);

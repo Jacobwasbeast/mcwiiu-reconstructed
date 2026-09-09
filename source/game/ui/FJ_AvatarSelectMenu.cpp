@@ -47,8 +47,7 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
     FJ_FuiNode* favouriteTab = getChildByName("FavouriteTab");
     FJ_FuiNode* favouriteList = favouriteTab->getChildByName("FavouriteList");
     FJ_FuiNode* guestTab = getChildByName("GuestTab");
-    FJ_FuiNode* guestList = guestTab->getChildByName("GuestList");
-    FJ_FuiNode* activeTab = userTab;
+    FJ_FuiNode* guestList = guestTab->getChildByName("GuestTabList");
 
     if (tab == 0)
     {
@@ -59,10 +58,24 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
         favouriteList->setVisible(favouriteTab->isVisible());
         guestList->setVisible(guestTab->isVisible());
         gotoAndStop("UserTab");
+
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 1)
+                m_favouriteTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 2)
+                m_guestTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
+
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = userTab;
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_userTabFocus);
+        if (m_userTabFocus >= 0)
+            OnFocusChange(true);
     }
     else if (tab == 1)
     {
-        activeTab = favouriteTab;
         userTab->setVisible(false);
         favouriteTab->setVisible(true);
         guestTab->setVisible(false);
@@ -70,10 +83,24 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
         favouriteList->setVisible(favouriteTab->isVisible());
         guestList->setVisible(guestTab->isVisible());
         gotoAndStop("FavouriteTab");
+
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 0)
+                m_userTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 2)
+                m_guestTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
+
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = favouriteTab;
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_favouriteTabFocus);
+        if (m_favouriteTabFocus >= 0)
+            OnFocusChange(true);
     }
     else if (tab == 2)
     {
-        activeTab = guestTab;
         userTab->setVisible(false);
         favouriteTab->setVisible(false);
         guestTab->setVisible(true);
@@ -81,34 +108,23 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
         favouriteList->setVisible(favouriteTab->isVisible());
         guestList->setVisible(guestTab->isVisible());
         gotoAndStop("GuestTab");
-    }
-    else
-    {
-        m_currentTab = tab;
-        m_activeTab = tab;
-        return;
+
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 0)
+                m_userTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 1)
+                m_favouriteTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
+
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = guestTab;
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_guestTabFocus);
+        if (m_guestTabFocus >= 0)
+            OnFocusChange(true);
     }
 
-    FJ_FuiNode* focus = getStage()->getFocus();
-    if (focus->isFJ_Base() && m_currentTab != tab)
-    {
-        int focusId = focus->asFJ_Base()->getId();
-        if (m_currentTab == 0)
-            m_userTabFocus = focusId;
-        else if (m_currentTab == 1)
-            m_favouriteTabFocus = focusId;
-        else if (m_currentTab == 2)
-            m_guestTabFocus = focusId;
-    }
-
-    m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
-    m_root = activeTab;
-    m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
-    int focusId = tab == 0 ? m_userTabFocus :
-                  (tab == 1 ? m_favouriteTabFocus : m_guestTabFocus);
-    SetFocus(focusId);
-    if (focusId >= 0)
-        setVisible(true);
     m_currentTab = tab;
     m_activeTab = tab;
 }

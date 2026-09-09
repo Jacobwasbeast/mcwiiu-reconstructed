@@ -24,15 +24,14 @@ public:
     void ShowArmorSlot(int slot, bool visible);
 
 private:
-    unsigned int m_layoutPrefix;
     FJ_FuiNode* m_armorSlots[4];
     FJ_FuiNode* m_effectNodes[27];
-    unsigned char m_effectFlags[27];
-    unsigned char m_effectState[29];
-    int m_effectStartY;
-    int m_effectEndY;
+    unsigned char m_effectActive[27];
+    unsigned char m_effectRefreshed[27];
+    int m_effectTopY;
+    int m_effectNextY;
     int m_effectBottomY;
-    unsigned char m_inventoryHidden;
+    bool m_inventoryHidden;
 };
 
 #endif

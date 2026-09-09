@@ -8,20 +8,10 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_IconSlot.hpp"
 #include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
+#include "game/ui/FJ_Button.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class UIScene
-{
-public:
-    virtual void handlePress(int first, int second);
-};
-
-class FJ_Button : public FJ_Base
-{
-public:
-    void setButtonPressed(bool pressed);
-};
 
 FJ_GameModeScoreboard::FJ_GameModeScoreboard(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)

@@ -6,25 +6,28 @@
 
 #include "game/ui/FJ_Document.hpp"
 
+class FJ_LabelOutline;
 class fuiRenderNode;
 
 class FJ_CreditsMenu : public FJ_Document
 {
 private:
     float m_scrollAmount;
-    FJ_FuiNode* m_smallLabels[25];
-    FJ_FuiNode* m_mediumLabels[12];
-    FJ_FuiNode* m_largeLabels[28];
+    FJ_LabelOutline* m_smallLabels[25];
+    FJ_LabelOutline* m_mediumLabels[12];
+    FJ_LabelOutline* m_largeLabels[20];
+    FJ_LabelOutline* m_extraLargeLabels[8];
     FJ_FuiNode* m_logoIggy;
     FJ_FuiNode* m_logoMiles;
     FJ_FuiNode* m_logoDolby;
     FJ_FuiNode* m_logoNintendo;
     std::vector<FJ_FuiNode*> m_scrollingNodes;
+    bool m_requestingLabel;
     int m_scrollTop;
     int m_scrollBottom;
     FJ_FuiNode* m_creditsContent;
-    int m_unused;
-    bool m_requestingLabel;
+    FJ_FuiNode* m_blendingContainer;
+    int m_logoLanguage;
 
 public:
     explicit FJ_CreditsMenu(fuiRenderNode* renderNode);

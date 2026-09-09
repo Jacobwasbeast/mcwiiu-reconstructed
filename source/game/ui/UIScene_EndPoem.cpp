@@ -2,6 +2,7 @@
 
 #include <cwchar>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
@@ -15,7 +16,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/util/Random.hpp"
 
-extern CMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 
 std::wstring escapeXML(const std::wstring& text);
@@ -31,7 +31,7 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
     m_text += L10N::GetString(0x69414293);
     m_text += L10N::GetString(0x433ec82a);
     m_text += L" ";
-    theApp.FormatHTMLString(m_resolution, m_text, static_cast<int>(0xff000000));
+    gApp.FormatHTMLString(m_resolution, m_text, static_cast<int>(0xff000000));
 
     Minecraft* minecraft = Minecraft::GetInstance();
     std::wstring playerName;
@@ -99,8 +99,8 @@ void UIScene_EndPoem::updateNoise()
             else if (colourChoice == 2) colour = 0x19b;
             wchar_t colourText[64];
             std::swprintf(colourText, 64, L"<font color=\"#%08x\" shadowcolor=\"#%08x\">",
-                          theApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)),
-                          theApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)));
+                          gApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)),
+                          gApp.GetHTMLColour(static_cast<eMinecraftColour>(colour)));
             replacement += colourText;
         }
         m_text.replace(position, noise.size(), replacement);
@@ -163,7 +163,7 @@ void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool re
                 {
                     if (minecraft->mLocalPlayers[i])
                     {
-                        theApp.SetAction(i, static_cast<eXuiAction>(6), NULL);
+                        gApp.SetAction(i, static_cast<eXuiAction>(6), NULL);
                     }
                 }
                 if (minecraft->mGameMode != NULL && minecraft->mGameMode->getTutorial() != NULL)

@@ -7,7 +7,17 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-static std::string s_buttonStates[8];
+static std::string s_buttonStates[8] =
+{
+    std::string("Active_First_Selected", 21),
+    std::string("Inactive_Selected", 17),
+    std::string("Active_Selected", 15),
+    std::string("Inactive_Selected", 17),
+    std::string("Active_Unselected", 17),
+    std::string("Inactive_Unselected", 19),
+    std::string("Active_Pressed", 14),
+    std::string("Inactive_Selected", 17)
+};
 
 class FJ_ButtonRenderNodeAccess : public fuiRenderNode
 {
@@ -38,6 +48,11 @@ FJ_Button::FJ_Button(fuiRenderNode* renderNode)
 }
 
 FJ_Button::~FJ_Button() {}
+
+FJ_FuiNode* FJ_Button::getObjListParent()
+{
+    return m_objListParent;
+}
 
 void FJ_Button::setButtonPressed(bool pressed) { m_buttonPressed = pressed; }
 

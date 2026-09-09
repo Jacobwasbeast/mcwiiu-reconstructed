@@ -10,7 +10,7 @@ class UIControl_LayerIconButtonList : public UIControl_List
 public:
     UIControl_LayerIconButtonList();
     virtual ~UIControl_LayerIconButtonList();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void UseIggyIcons();
     void AddNewItem(const std::wstring& label, const std::wstring& secondaryText,
         int id, const std::wstring& textureName);

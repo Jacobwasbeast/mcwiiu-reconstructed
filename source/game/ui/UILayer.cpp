@@ -1,5 +1,11 @@
 #include "game/ui/UILayer.hpp"
 #include <algorithm>
+#include "game/ui/UIScene_Intro.hpp"
+#include "game/ui/UIScene_SaveMessage.hpp"
+#include "game/ui/UIScene_MainMenu.hpp"
+#include "game/ui/UIScene_FullscreenProgress.hpp"
+#include "game/ui/UIScene_PauseMenu.hpp"
+#include "game/ui/UIScene_CraftingMenu.hpp"
 
 UILayer::UILayer(UIGroup* group) : m_focusChanged(false), m_menuDisplayed(false), m_fullscreen(false), m_viewportChanged(false), m_reloadPending(false), m_inputHandled(false), m_group(group) {}
 void UILayer::getRenderDimensions(int& width, int& height) { width = 0; height = 0; }
@@ -60,7 +66,29 @@ bool UILayer::updateFocusState(bool requestFocus) {
     return requestFocus;
 }
 void UILayer::closeAllScenes() { while(!m_scenes.empty()) removeScene(m_scenes.back()); }
-bool UILayer::NavigateToScene(int,EUIScene,void*) { return false; }
+bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
+{
+    UIScene* created = NULL;
+    switch (static_cast<int>(scene))
+    {
+    case 1: created = new UIScene_Intro(0, data, this); break;
+    case 2: created = new UIScene_SaveMessage(0, data, this); break;
+    case 3: created = new UIScene_MainMenu(0, data, this); break;
+    case 4: created = new UIScene_FullscreenProgress(0, data, this); break;
+    case 5: created = new UIScene_PauseMenu(0, data, this); break;
+    case 6:
+    case 7: created = new UIScene_CraftingMenu(0, data, this); break;
+    default: return false;
+    }
+    if (created == NULL)
+        return false;
+    if (!m_scenes.empty())
+        created->setBackScene(m_scenes.back());
+    m_scenes.push_back(created);
+    updateFocusState(false);
+    created->handleInitFocus(player, 0);
+    return true;
+}
 void UILayer::removeScene(UIScene* scene) {
     std::vector<UIScene*>::iterator it=std::find(m_scenes.begin(),m_scenes.end(),scene);
     if (it!=m_scenes.end()) {

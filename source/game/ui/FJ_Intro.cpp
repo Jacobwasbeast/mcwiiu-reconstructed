@@ -6,69 +6,69 @@
 
 namespace
 {
-    std::vector<std::string> g_introLabels[11];
-    bool g_introLabelsPending = true;
+    std::vector<std::string> g_0x104F357C[11];
+    bool g_0x104C6614 = true;
 }
 
 FJ_Intro::FJ_Intro(fuiRenderNode* renderNode)
     : FJ_Document(renderNode), m_platform(0), m_animationStep(0), m_alternate(false)
 {
-    if (g_introLabelsPending)
+    if (g_0x104C6614)
     {
-        g_introLabels[0].push_back("ESRB");
-        g_introLabels[0].push_back("Mojang");
-        g_introLabels[0].push_back("4J");
+        g_0x104F357C[0].push_back("ESRB");
+        g_0x104F357C[0].push_back("Mojang");
+        g_0x104F357C[0].push_back("4J");
 
-        g_introLabels[1].push_back("ESRB");
-        g_introLabels[1].push_back("XboxLive");
-        g_introLabels[1].push_back("Microsoft");
-        g_introLabels[1].push_back("Mojang");
-        g_introLabels[1].push_back("4J");
+        g_0x104F357C[1].push_back("ESRB");
+        g_0x104F357C[1].push_back("XboxLive");
+        g_0x104F357C[1].push_back("Microsoft");
+        g_0x104F357C[1].push_back("Mojang");
+        g_0x104F357C[1].push_back("4J");
 
-        g_introLabels[2].push_back("ESRB");
-        g_introLabels[2].push_back("Microsoft");
-        g_introLabels[2].push_back("Mojang");
-        g_introLabels[2].push_back("4J");
+        g_0x104F357C[2].push_back("ESRB");
+        g_0x104F357C[2].push_back("Microsoft");
+        g_0x104F357C[2].push_back("Mojang");
+        g_0x104F357C[2].push_back("4J");
 
-        g_introLabels[3].push_back("ESRB");
-        g_introLabels[3].push_back("Mojang");
-        g_introLabels[3].push_back("4J");
+        g_0x104F357C[3].push_back("ESRB");
+        g_0x104F357C[3].push_back("Mojang");
+        g_0x104F357C[3].push_back("4J");
 
-        g_introLabels[4].push_back("ESRB");
-        g_introLabels[4].push_back("Mojang");
-        g_introLabels[4].push_back("4J");
+        g_0x104F357C[4].push_back("ESRB");
+        g_0x104F357C[4].push_back("Mojang");
+        g_0x104F357C[4].push_back("4J");
 
-        g_introLabels[5].push_back("ESRB");
-        g_introLabels[5].push_back("Mojang");
-        g_introLabels[5].push_back("4J");
+        g_0x104F357C[5].push_back("ESRB");
+        g_0x104F357C[5].push_back("Mojang");
+        g_0x104F357C[5].push_back("4J");
 
-        g_introLabels[6].push_back("ESRB");
-        g_introLabels[6].push_back("Mojang");
-        g_introLabels[6].push_back("4J");
+        g_0x104F357C[6].push_back("ESRB");
+        g_0x104F357C[6].push_back("Mojang");
+        g_0x104F357C[6].push_back("4J");
 
-        g_introLabels[7].push_back("ESRB");
-        g_introLabels[7].push_back("Mojang");
-        g_introLabels[7].push_back("4J");
+        g_0x104F357C[7].push_back("ESRB");
+        g_0x104F357C[7].push_back("Mojang");
+        g_0x104F357C[7].push_back("4J");
 
-        g_introLabels[8].push_back("ESRB");
-        g_introLabels[8].push_back("Chinese_Health_Warning");
-        g_introLabels[8].push_back("Mojang");
-        g_introLabels[8].push_back("4J");
-        g_introLabels[8].push_back("Chinese_Logo_XboxOne");
+        g_0x104F357C[8].push_back("ESRB");
+        g_0x104F357C[8].push_back("Chinese_Health_Warning");
+        g_0x104F357C[8].push_back("Mojang");
+        g_0x104F357C[8].push_back("4J");
+        g_0x104F357C[8].push_back("Chinese_Logo_XboxOne");
 
-        g_introLabels[9].push_back("ESRB");
-        g_introLabels[9].push_back("Chinese_Health_Warning");
-        g_introLabels[9].push_back("Mojang");
-        g_introLabels[9].push_back("4J");
-        g_introLabels[9].push_back("Chinese_Logo_PS4");
+        g_0x104F357C[9].push_back("ESRB");
+        g_0x104F357C[9].push_back("Chinese_Health_Warning");
+        g_0x104F357C[9].push_back("Mojang");
+        g_0x104F357C[9].push_back("4J");
+        g_0x104F357C[9].push_back("Chinese_Logo_PS4");
 
-        g_introLabels[10].push_back("ESRB");
-        g_introLabels[10].push_back("Chinese_Health_Warning");
-        g_introLabels[10].push_back("Mojang");
-        g_introLabels[10].push_back("4J");
-        g_introLabels[10].push_back("Chinese_Logo_PSVita");
+        g_0x104F357C[10].push_back("ESRB");
+        g_0x104F357C[10].push_back("Chinese_Health_Warning");
+        g_0x104F357C[10].push_back("Mojang");
+        g_0x104F357C[10].push_back("4J");
+        g_0x104F357C[10].push_back("Chinese_Logo_PSVita");
 
-        g_introLabelsPending = false;
+        g_0x104C6614 = false;
     }
 }
 
@@ -89,10 +89,10 @@ unsigned int FJ_Intro::getType()
 void FJ_Intro::handleAnimationStep(FJ_Event*)
 {
     ++m_animationStep;
-    if (!g_introLabels[m_platform].empty() &&
-        m_animationStep < static_cast<int>(g_introLabels[m_platform].size()))
+    if (!g_0x104F357C[m_platform].empty() &&
+        m_animationStep < static_cast<int>(g_0x104F357C[m_platform].size()))
     {
-        gotoAndPlay(g_introLabels[m_platform][m_animationStep]);
+        gotoAndPlay(g_0x104F357C[m_platform][m_animationStep]);
     }
     else
     {
@@ -130,5 +130,5 @@ void FJ_Intro::SetIntroPlatform(int platform, bool alternate, bool mappedPlatfor
         }
     }
     m_platform = platform;
-    gotoAndPlay(g_introLabels[m_platform][m_alternate]);
+    gotoAndPlay(g_0x104F357C[m_platform][m_alternate]);
 }

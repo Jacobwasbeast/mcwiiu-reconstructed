@@ -1,7 +1,3 @@
-#define private public
-#include "game/ui/FJ_List.hpp"
-#undef private
-
 #include "game/ui/FJ_List_ListButtonCheckbox.hpp"
 
 #include "game/ui/FJ_Factory.hpp"
@@ -38,8 +34,8 @@ void FJ_List_ListButtonCheckbox::addNewItem(const std::wstring& label, int id,
                                             const std::wstring& textureName)
 {
     const char* objectName = m_checkboxTick
-        ? "fourj.Buttons.FJ_ListButtonCheckbox_Normal"
-        : "fourj.Buttons.FJ_ListButtonCheckbox_Small";
+        ? "fourj.Buttons.FJ_ListButtonCheckbox_Small"
+        : "fourj.Buttons.FJ_ListButtonCheckbox_Normal";
     FJ_ListButtonCheckbox* item = static_cast<FJ_ListButtonCheckbox*>(
         FJ_Factory::createObject(objectName, m_pRenderNode, true, NULL));
 

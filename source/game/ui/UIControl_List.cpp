@@ -31,9 +31,9 @@ void UIControl_List::addElement(UIControl::eUIControlType type, int index)
     m_elements.push_back(index);
 }
 
-bool UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    return UIControl_Base::setupControl(scene, node, name);
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_List::GetTopItem()
@@ -67,7 +67,7 @@ unsigned int UIControl_List::getCurrentSelection() const
 
 void UIControl_List::init(int controlId)
 {
-    m_controlType = controlId;
+    m_controlType = static_cast<UIControl::eUIControlType>(controlId);
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
     int sceneType = m_scene->getSceneType();

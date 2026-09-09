@@ -3,16 +3,11 @@
 #include <cstdio>
 
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_Label.hpp"
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Factory
-{
-public:
-    static FJ_FuiNode* createObject(const char*, fuiRenderNode*, bool, const char*);
-};
 
 FJ_DynamicHtmlText::FJ_DynamicHtmlText(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_text(), m_labels(), m_labelTextIndices()

@@ -156,7 +156,6 @@ void UIComponent_Tooltips::SetTooltipText(unsigned int player, int index)
 
 void UIComponent_Tooltips::SetEnableTooltips(bool enabled)
 {
-    m_tooltipsEnabled = enabled;
 }
 
 void UIComponent_Tooltips::ShowTooltip(unsigned int player, bool visible)
@@ -208,7 +207,7 @@ unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
                                                         unsigned int& button, int type)
 {
     button = GetToolTipButton(player);
-    bool changed;
+    bool changed = false;
     return _SetTooltip(player, type, (int)action, (int)button, changed);
 }
 
@@ -240,8 +239,6 @@ void UIComponent_Tooltips::SetTooltips(int player, int first, int second, int th
 
 void UIComponent_Tooltips::EnableTooltip(unsigned int player, bool enabled)
 {
-    if (player < 16)
-        m_tooltipValues[player].m_enabled = enabled;
 }
 
 bool UIComponent_Tooltips::IsToolTipDynamic(unsigned int player, EControllerActions& action)

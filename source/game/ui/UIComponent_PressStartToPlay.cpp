@@ -20,7 +20,16 @@
 namespace
 {
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search,
-                const std::wstring& replacement);
+                const std::wstring& replacement)
+{
+    result = source;
+    std::wstring::size_type position = 0;
+    while ((position = result.find(search, position)) != std::wstring::npos)
+    {
+        result.replace(position, search.length(), replacement);
+        ++position;
+    }
+}
 
 struct AvatarRequest
 {
@@ -79,7 +88,7 @@ unsigned int UIComponent_PressStartToPlay::GetAchievementToastShowing(int player
 unsigned char UIComponent_PressStartToPlay::GetHoldToShowAchievementsActive(bool includeCancelled)
 {
     if (includeCancelled)
-        m_holdToShowAchievementsActive = true;
+        m_holdActionCancelled = true;
     return m_holdToShowAchievements;
 }
 
@@ -176,7 +185,7 @@ void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
     m_showPressStart[player] = show;
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie())
     {
-        if (!theApp.IsDrcPreventingSplitscreen())
+        if (!gApp.IsDrcPreventingSplitscreen())
             SetText(UIString(L10N::GetString(0x0bcc1ead)), false);
         else
             SetText(UIString(L10N::GetString(0x9a0686fb)), true);
@@ -230,7 +239,7 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
         toast.description = L10N::GetString(0x4523129e);
         replaceAll(toast.description, toast.description, L"__CONTROLLER_VK_X__",
                    L"__CONTROLLER_VK_Y__");
-        theApp.FormatHTMLString(request->player, toast.description, -1);
+        gApp.FormatHTMLString(request->player, toast.description, -1);
         toast.gamerPic = texture;
         toast.achievementIcon = info->icon;
         if (!request->scene->m_achievementToastShowing)

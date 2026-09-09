@@ -13,6 +13,7 @@
 #include "game/core/GameType.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
@@ -26,18 +27,6 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
-
-class CGameNetworkManager
-{
-public:
-    static CGameNetworkManager sInstance;
-    INetworkPlayer* GetLocalPlayerByUserIndex(int userIndex);
-    INetworkPlayer* GetPlayerBySmallId(unsigned char smallId);
-    void RegisterPlayerChangedCallback(int userIndex,
-                                       void (*callback)(void*, INetworkPlayer*, bool), void* data);
-    void UnRegisterPlayerChangedCallback(int userIndex,
-                                         void (*callback)(void*, INetworkPlayer*, bool), void* data);
-};
 
 static void addPlayerCheckbox(UIControl_MultiList* list, int stringId, int id, bool checked)
 {

@@ -18,7 +18,7 @@ UIControl_MinecraftPlayer::UIControl_MinecraftPlayer()
     : mScreenWidth(0.0f), mScreenHeight(0.0f), mScaledWidth(0.0f), mScaledHeight(0.0f)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    m_controlType = 10;
+    m_controlType = UIControl::eUIControlType_MinecraftPlayer;
     mScreenWidth = (float)minecraft->mWidth;
     mScreenHeight = (float)minecraft->mHeight;
     ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);

@@ -11,7 +11,7 @@ class UIControl_DLCButtonList : public UIControl_List
 {
 public:
     virtual ~UIControl_DLCButtonList();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::string& label, bool enabled, int index);
     void addItem(const std::wstring& label, bool enabled, int index);
     void showTick(int item, bool show);

@@ -76,9 +76,9 @@ int UIControl_GridList::getListIndex(int index)
     return -1;
 }
 
-bool UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    return UIControl_Base::setupControl(scene, node, name);
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_GridList::clearList()
@@ -89,7 +89,7 @@ void UIControl_GridList::clearList()
 
 void UIControl_GridList::init(int controlId)
 {
-    m_controlType = controlId;
+    m_controlType = static_cast<UIControl::eUIControlType>(controlId);
     FJ_List2D* list = m_fuiRenderNode->getFuiNode()->asFJ_List2D();
     list->Init(controlId);
     int sceneType = m_scene->getSceneType();

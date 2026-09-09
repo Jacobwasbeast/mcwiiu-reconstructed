@@ -104,7 +104,7 @@ public:
     unsigned char getCurrentStencilMask();
     void incrementStencilMask();
     uint32_t getFuiFileFromIndex(unsigned int index);
-    int createNodeFromSymbol(const char* name, fuiRenderNode* parent);
+    fuiRenderNode* createNodeFromSymbol(const char* name, fuiRenderNode* parent);
     int findBitmapFromSymbol(const char* name, fuiFile** file);
     void installTrueTypeFont(int fontIndex, const void** data, const char* name, unsigned short missingGlyph);
     void uninstallTrueTypeFont(const char* name);

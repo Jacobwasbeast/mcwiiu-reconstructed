@@ -31,8 +31,8 @@ public:
     void SetFocus(int id);
     void SetSafeZone(int top, int bottom, int left, int right);
     void handlePress(FJ_Event* event);
-    void keyDownHandler(FJ_Event* event);
-    void OnFocusChange(bool focused);
+    virtual void keyDownHandler(FJ_Event* event);
+    virtual void OnFocusChange(bool focused);
     FJ_FuiNode* GetTopObject(FJ_FuiNode* node);
     void RepositionItems(FJ_FuiNode* first, FJ_FuiNode* second, bool horizontal);
     void FixNavigation(FJ_FuiNode* node);
@@ -51,7 +51,7 @@ protected:
     int m_safeZoneLeft;
     int m_safeZoneRight;
     FJ_FuiNode* m_root;
-    int m_focus;
+    FJ_FuiNode* m_focus;
     int m_horizontalResize;
     int m_horizontalOffset;
     bool m_focusChange;

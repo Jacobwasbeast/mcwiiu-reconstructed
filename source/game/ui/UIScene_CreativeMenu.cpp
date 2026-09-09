@@ -4,13 +4,38 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/Potions.hpp"
+#include "game/core/Slot.hpp"
+#include "game/util/Math.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/FJ_CreativeMenu.hpp"
+#include "game/ui/MenuBuilder.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Block.hpp"
 
 extern ConsoleUIController gConsoleUIController;
+
+UIScene_CreativeMenu::TabSpec* UIScene_CreativeMenu::s_tabSpecs[8] = {};
+std::vector<const UIScene_CreativeMenu::ItemBuilder*> UIScene_CreativeMenu::s_groupItems[12];
+
+UIScene_CreativeMenu::ItemBuilder::ItemBuilder(const ItemInstance& value)
+    : item(value)
+{
+}
+
+UIScene_CreativeMenu::ItemBuilder::~ItemBuilder()
+{
+}
+
 
 UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int groupCount,
                                        ECreative_Inventory_Groups* groups, int specialCount,
@@ -25,8 +50,18 @@ UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int 
         m_specialGroups.assign(specialGroups, specialGroups + specialCount);
     if (extraGroups != 0 && extraCount > 0)
         m_extraGroups.assign(extraGroups, extraGroups + extraCount);
-    const int total = static_cast<int>(m_groups.size() + m_specialGroups.size() + m_extraGroups.size());
-    m_pageCount = total > 0 ? (total + 49) / 50 : 0;
+    int ordinaryTotal = 0;
+    const auto count = [&ordinaryTotal](const std::vector<ECreative_Inventory_Groups>& groups)
+    {
+        for (ECreative_Inventory_Groups group : groups)
+            ordinaryTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
+    };
+    count(m_groups);
+    int extraTotal = 0;
+    for (ECreative_Inventory_Groups group : m_extraGroups)
+        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
+    const int ordinarySlots = std::max(1, 50 - extraTotal);
+    m_pageCount = ordinaryTotal > 0 ? (ordinaryTotal + ordinarySlots - 1) / ordinarySlots : 0;
 }
 
 unsigned int UIScene_CreativeMenu::TabSpec::getPageCount()
@@ -38,10 +73,34 @@ void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, in
 {
     if (menu == 0)
         return;
-    const unsigned int first = offset + static_cast<unsigned int>(std::max(page, 0) * 50);
-    const unsigned int last = first + 50;
-    for (unsigned int slot = first; slot < last; ++slot)
-        menu->setItem(slot, ItemInstance::EMPTY);
+    unsigned int emitted = 0;
+    const unsigned int pageStart = offset;
+    const auto emit = [&emitted, menu](const std::vector<ECreative_Inventory_Groups>& groups,
+                                       unsigned int skip)
+    {
+        for (ECreative_Inventory_Groups group : groups)
+        {
+            for (const ItemBuilder* item : UIScene_CreativeMenu::s_groupItems[group])
+            {
+                if (skip != 0) { --skip; continue; }
+                if (emitted >= 50) return;
+                menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance(item->item)));
+            }
+        }
+    };
+    if (page >= 0 && page < static_cast<int>(m_specialGroups.size()))
+    {
+        const ECreative_Inventory_Groups group = m_specialGroups[page];
+        const std::vector<ECreative_Inventory_Groups> selected(1, group);
+        emit(selected, 0);
+    }
+    int extraTotal = 0;
+    for (ECreative_Inventory_Groups group : m_extraGroups)
+        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
+    const unsigned int ordinarySlots = static_cast<unsigned int>(std::max(1, 50 - extraTotal));
+    emit(m_groups, pageStart * ordinarySlots);
+    while (emitted < 50)
+        menu->setItem(emitted++, not_null_ptr<ItemInstance>(new ItemInstance(*ItemInstance::EMPTY)));
 }
 
 UIScene_CreativeMenu::ItemPickerMenu::ItemPickerMenu(boost::shared_ptr<SimpleContainer> container,
@@ -147,8 +206,31 @@ unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
     return value == 0 ? 0U : 1U;
 }
 
-void UIScene_CreativeMenu::handleOutsideClicked(int, int, int)
+void UIScene_CreativeMenu::handleOutsideClicked(int playerId, int, int button)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft == 0 || playerId < 0 || playerId >= 4 ||
+        !minecraft->mLocalPlayers[playerId] || minecraft->mGameModes[playerId] == 0)
+        return;
+
+    Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
+    if (inventory == 0)
+        return;
+
+    not_null_ptr<ItemInstance> carried = inventory->getCarried();
+    if (carried->isEmpty())
+        return;
+
+    if (button == 0)
+    {
+        minecraft->mGameModes[playerId]->handleCreativeModeItemDrop(carried);
+        inventory->setCarried(ItemInstance::EMPTY);
+    }
+    else if (button == 1)
+    {
+        not_null_ptr<ItemInstance> one = carried->split(1);
+        minecraft->mGameModes[playerId]->handleCreativeModeItemDrop(one);
+    }
 }
 
 void UIScene_CreativeMenu::updateTabHighlightAndText(ECreativeInventoryTabs tab)
@@ -168,8 +250,26 @@ void UIScene_CreativeMenu::switchTab(ECreativeInventoryTabs tab)
     updateScrollCurrentPage(m_tabCurrentPages[m_currentTab], m_tabPages[m_currentTab]);
 }
 
-void UIScene_CreativeMenu::ScrollBar(_UIVec2D)
+void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
 {
+    _UIVec2D origin = { 0.0f, 0.0f };
+    _UIVec2D size = { 0.0f, 0.0f };
+    m_sceneInterface->GetItemScreenData(
+        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1f), 0, &origin, &size);
+
+    float fraction = (position.y - origin.y) / size.y;
+    if (fraction < 0.0f)
+        fraction = 0.0f;
+    if (fraction > 1.0f)
+        fraction = 1.0f;
+
+    if (m_currentTab >= 0 && m_currentTab < 8)
+    {
+        const int pageCount = static_cast<int>(m_tabPages[m_currentTab]);
+        m_tabCurrentPages[m_currentTab] = Math::round(
+            fraction * static_cast<float>(pageCount - 1));
+        switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
+    }
 }
 
 void UIScene_CreativeMenu::handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
@@ -197,8 +297,26 @@ int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance>, int&
     return 0;
 }
 
-void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection, int, int)
+void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                 int slot, int button)
 {
+    Slot* source = m_sceneInterface->getSlot(section, slot);
+    if (source == 0 || !source->hasItem())
+        return;
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    const int playerId = m_sceneInterface->getPad();
+    if (minecraft == 0 || playerId < 0 || playerId >= 4 || !minecraft->mLocalPlayers[playerId])
+        return;
+
+    Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
+    if (inventory == 0)
+        return;
+
+    not_null_ptr<ItemInstance> item = source->getItem()->copy();
+    if (button == 1)
+        item->setCount(item->getMaxStackSize());
+    inventory->setCarried(item);
 }
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -231,6 +349,134 @@ unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMe
 
 void UIScene_CreativeMenu::staticCtor()
 {
+    MenuBuilder builder;
+    builder.mItems = &s_groupItems[0];
+
+    const auto addBlock = [&builder](Block* block)
+    {
+        builder.ITEM_BLOCKSTATE(block->defaultBlockState());
+    };
+    const auto addBlockItem = [&builder](Block* block, int aux)
+    {
+        builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, aux)));
+    };
+
+    addBlock(Blocks::stone);
+    addBlock(Blocks::grass);
+    addBlock(Blocks::grass_path);
+    addBlock(Blocks::dirt);
+    addBlock(Blocks::cobblestone);
+    addBlock(Blocks::sand);
+    addBlock(Blocks::sandstone);
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::spruceDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::birchDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::jungleDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::acaciaDoor, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::darkOakDoor, 1, 0)));
+    for (Block* stairs : {Blocks::oak_stairs, Blocks::spruce_stairs, Blocks::jungle_stairs,
+                          Blocks::acacia_stairs, Blocks::stone_stairs, Blocks::brick_stairs,
+                          Blocks::stone_brick_stairs, Blocks::nether_brick_stairs,
+                          Blocks::red_sandstone_stairs, Blocks::quartz_stairs,
+                          Blocks::purpur_stairs, Blocks::prismarine_stairs})
+        addBlockItem(stairs, 2);
+    for (const int aux : {15, 11, 3, 13, 5, 6, 2, 10, 12, 4, 0, 7})
+        addBlockItem(Blocks::stained_hardened_clay, aux);
+    builder.mItems = &s_groupItems[1];
+    for (const int aux : {9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7})
+        addBlockItem(Blocks::stained_glass, aux);
+    for (const int aux : {15, 11, 3, 9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7})
+        addBlockItem(Blocks::stained_glass_pane, aux);
+    for (const int aux : {0, 0, 2, 3, 4})
+        addBlockItem(Blocks::coral, aux);
+    for (const int aux : {0, 0, 2, 3, 4})
+        addBlockItem(Blocks::coral_fan, aux);
+    for (const int aux : {0, 0, 2, 3, 4})
+        addBlockItem(Blocks::coral_fan_dead, aux);
+    for (const int aux : {0, 0, 2, 3, 4, 8, 9, 10, 11, 12})
+        addBlockItem(Blocks::coral_block, aux);
+    addBlockItem(Blocks::piston, 5);
+    addBlockItem(Blocks::sticky_piston, 5);
+    addBlockItem(Blocks::stone_button, 4);
+    addBlockItem(Blocks::wooden_button, 4);
+    addBlockItem(Blocks::acacia_button, 4);
+    addBlockItem(Blocks::birch_button, 4);
+    addBlockItem(Blocks::dark_oak_button, 4);
+    addBlockItem(Blocks::jungle_button, 4);
+    addBlockItem(Blocks::spruce_button, 4);
+    addBlockItem(Blocks::redstone_torch, 5);
+    builder.mItems = &s_groupItems[8];
+    builder.POTION(Items::potion, Potions::WATER);
+    builder.POTION(Items::potion, Potions::AWKWARD);
+
+    builder.mItems = &s_groupItems[1];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::painting, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::sign, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::kelp, 1, 0)));
+    builder.mItems = &s_groupItems[2];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::redstone, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::repeater, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::comparator, 1, 0)));
+    builder.mItems = &s_groupItems[3];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::minecart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::chestMinecart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::furnaceMinecart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::hopperMinecart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::tntMinecart, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::elytra, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::saddle, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::boat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::spruceBoat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::birchBoat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::jungleBoat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::acaciaBoat, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::darkOakBoat, 1, 0)));
+    builder.mItems = &s_groupItems[11];
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::brewingStand, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::brewingStand, 1, 15)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 11)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 3)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 9)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 13)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 5)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 6)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 2)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 10)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 14)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 12)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 1)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 4)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 0)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 8)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::cake, 1, 7)));
+    builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::endCrystal, 1, 0)));
+
+    static ECreative_Inventory_Groups structures[] = {static_cast<ECreative_Inventory_Groups>(0)};
+    static ECreative_Inventory_Groups decoration[] = {static_cast<ECreative_Inventory_Groups>(1)};
+    static ECreative_Inventory_Groups redstone[] = {static_cast<ECreative_Inventory_Groups>(3), static_cast<ECreative_Inventory_Groups>(2)};
+    static ECreative_Inventory_Groups materials[] = {static_cast<ECreative_Inventory_Groups>(4)};
+    static ECreative_Inventory_Groups food[] = {static_cast<ECreative_Inventory_Groups>(5)};
+    static ECreative_Inventory_Groups tools[] = {static_cast<ECreative_Inventory_Groups>(6)};
+    static ECreative_Inventory_Groups brewing[] = {static_cast<ECreative_Inventory_Groups>(7), static_cast<ECreative_Inventory_Groups>(8), static_cast<ECreative_Inventory_Groups>(9), static_cast<ECreative_Inventory_Groups>(10)};
+    static ECreative_Inventory_Groups misc[] = {static_cast<ECreative_Inventory_Groups>(11)};
+    s_tabSpecs[0] = new TabSpec(L"Structures", 0x0FBC6E08, 1, structures, 0, 0, 0, 0);
+    s_tabSpecs[1] = new TabSpec(L"Decoration", static_cast<int>(0xAC698282), 1, decoration, 0, 0, 0, 0);
+    s_tabSpecs[2] = new TabSpec(L"RedstoneAndTransport", 0x060380CB, 2, redstone, 3, 0, 0, 0);
+    s_tabSpecs[3] = new TabSpec(L"Materials", 0x448C117B, 1, materials, 0, 0, 0, 0);
+    s_tabSpecs[4] = new TabSpec(L"Food", static_cast<int>(0xEF31F309), 1, food, 0, 0, 0, 0);
+    s_tabSpecs[5] = new TabSpec(L"Tools", static_cast<int>(0xAD2EBC52), 1, tools, 0, 0, 0, 0);
+    s_tabSpecs[6] = new TabSpec(L"Brewing", 0x50D06098, 4, brewing, 0, 0, 0, 0);
+    s_tabSpecs[7] = new TabSpec(L"Misc", static_cast<int>(0xBC0FD661), 1, misc, 0, 0, 0, 0);
+
 }
 
 unsigned int UIScene_CreativeMenu::mapElementsAndNames()

@@ -6,9 +6,18 @@
 #include "game/core/Language.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/JoinMultiplayerScreen.hpp"
+#include "game/ui/OptionsScreen.hpp"
+#include "game/ui/SelectWorldScreen.hpp"
 
-extern Screen* createOptionsScreen(TitleScreen* parent, void* options);
-extern Screen* createSelectWorldScreen(TitleScreen* parent);
+Screen* createOptionsScreen(TitleScreen* parent, void* options)
+{
+    return new OptionsScreen(parent, static_cast<Options*>(options));
+}
+
+Screen* createSelectWorldScreen(TitleScreen* parent)
+{
+    return new SelectWorldScreen(parent);
+}
 
 TitleScreen::TitleScreen()
     : mLogoWidth(256.0f), mTitle(), mMultiplayerButton(NULL)

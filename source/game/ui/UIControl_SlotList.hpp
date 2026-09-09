@@ -13,7 +13,7 @@ public:
     void setSlotHighlighted(int slot, bool highlighted);
     void setHighlightSlot(int slot);
     void showSlotRedBox(int slot, bool show);
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     virtual void setFocus(bool focus);
 

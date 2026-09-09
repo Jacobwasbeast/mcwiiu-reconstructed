@@ -156,7 +156,9 @@ unsigned int fuiFile::resolveReferences(fuiFile* other)
 
 void fuiFile::dumpUnresolvedReferences()
 {
-    if (referenceData == NULL || header.referenceCount == 0)
+    if (referenceData == NULL)
+        return;
+    if (header.referenceCount == 0)
         return;
 }
 
@@ -226,7 +228,7 @@ int fuiFile::createNodeFromSymbol(const char* name, fuiRenderNode* parent, int v
         {
             if (symbolData[i].objectType == eFuiObjectType_Timeline)
             {
-                fuiRenderNode* node = new fuiRenderNodeTimeline(parent->getStage(), NULL,
+                fuiRenderNodeTimeline* node = new fuiRenderNodeTimeline(parent->getStage(), NULL,
                     &timelineData[symbolData[i].objectIndex], 0, 0, NULL, 0, false, this);
                 node->disableCtor();
                 node->gather(false);

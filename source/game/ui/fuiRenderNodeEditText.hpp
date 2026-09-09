@@ -107,7 +107,7 @@ public:
     void setText(const std::wstring&);
     void appendText(const std::wstring&);
     void setHTMLText(const std::wstring&);
-    void setAutoSize(TextFieldAutoSize);
+    void setAutoSize(int);
     std::pair<float, float> getCharBoundaries(int);
     std::wstring createWordWrappedString(std::wstring, fuiFontSet*, float, float);
     virtual void setWidth(float);

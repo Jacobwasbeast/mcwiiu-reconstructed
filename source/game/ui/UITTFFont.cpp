@@ -3,9 +3,11 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/fui.hpp"
 
+struct _OVERLAPPED;
+
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern unsigned int GetFileSize(int, unsigned int*);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, void*);
+extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
 extern int CloseHandle(int);
 
 UITTFFont::UITTFFont(const std::string& fontName, const std::string& fontFile, int missingGlyph)
@@ -49,7 +51,7 @@ void UITTFFont::init(const std::string& fontName, std::vector<std::string> fontF
             unsigned int bytesRead;
             if (ReadFile(file, data, fileSize, &bytesRead, NULL) == 0)
             {
-                theApp.FatalLoadError(L"<UITTFFont@%d> Failed to load font %s", 72,
+                gApp.FatalLoadError(L"<UITTFFont@%d> Failed to load font %s", 72,
                                       fontFiles[fontIndex].c_str());
             }
             CloseHandle(file);

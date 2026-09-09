@@ -4,22 +4,11 @@
 #include "game/core/FurnaceResultSlot.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/FurnaceRecipes.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/FurnaceBlockEntity.hpp"
-
-class FurnaceRecipes
-{
-public:
-    static FurnaceRecipes* getInstance();
-    not_null_ptr<ItemInstance> getResult(not_null_ptr<ItemInstance> item);
-};
-
-class Player
-{
-public:
-    void awardStat(Stat* stat, arrayWithLength<unsigned char> parameters);
-};
+#include "game/world/generation/Player.hpp"
 
 FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory,
                          boost::shared_ptr<Container> container)

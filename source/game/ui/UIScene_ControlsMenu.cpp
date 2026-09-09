@@ -2,14 +2,15 @@
 
 #include <string>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/ui/UIControl_List.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 
-extern CMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_ControlsMenu::UIScene_ControlsMenu(int player, void* data, UILayer* layer)
@@ -41,7 +42,7 @@ std::wstring UIScene_ControlsMenu::GetControlsString(int player, EControllerActi
     }
     else
     {
-        result = theApp.GetActionReplacement(player, (unsigned char)action);
+        result = gApp.GetActionReplacement(player, (unsigned char)action);
         mapped = true;
     }
     return result;
@@ -50,7 +51,7 @@ std::wstring UIScene_ControlsMenu::GetControlsString(int player, EControllerActi
 void UIScene_ControlsMenu::SetControlsHelp(int player, int control, std::wstring help)
 {
     if (!help.empty())
-        theApp.FormatHTMLString(player, help, -1);
+        gApp.FormatHTMLString(player, help, -1);
     m_flags[3] = 0;
 }
 
@@ -131,6 +132,23 @@ void UIScene_ControlsMenu::UpdateControls(int player)
 unsigned int UIScene_ControlsMenu::ResetControlsWarningDialogReturned(void* context, int button,
                                                                         C4JStorage::EMessageResult result)
 {
+    UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
+    if (scene != NULL)
+    {
+        if (result == static_cast<C4JStorage::EMessageResult>(4))
+        {
+            GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_resolution),
+                                             scene->m_resolution, true);
+            GameSettings::CheckGameSettingsChanged(true, button);
+            scene->UpdateControls(scene->m_resolution);
+        }
+        else if (result == static_cast<C4JStorage::EMessageResult>(5) ||
+                 result == static_cast<C4JStorage::EMessageResult>(3))
+        {
+            scene->navigateBack();
+        }
+    }
     return 0;
 }
 
@@ -163,7 +181,7 @@ void UIScene_ControlsMenu::tick()
 
 std::wstring UIScene_ControlsMenu::getMoviePath()
 {
-    return theApp.GetLocalPlayerCount() < 2 ? L"Controls" : L"ControlsSplit";
+    return gApp.GetLocalPlayerCount() < 2 ? L"Controls" : L"ControlsSplit";
 }
 
 void UIScene_ControlsMenu::handleCheckboxElementToggled(int first, int second, bool checked)
@@ -182,12 +200,30 @@ void UIScene_ControlsMenu::handleCheckboxElementToggled(int first, int second, b
 unsigned int UIScene_ControlsMenu::ResetDefaultsDialogReturned(void* context, int button,
                                                                 C4JStorage::EMessageResult result)
 {
+    UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
+    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_resolution),
+                                         scene->m_resolution, true);
+        GameSettings::CheckGameSettingsChanged(true, button);
+        scene->UpdateControls(scene->m_resolution);
+    }
     return 0;
 }
 
 unsigned int UIScene_ControlsMenu::ControlsWarningDialogReturned(void* context, int button,
                                                                   C4JStorage::EMessageResult result)
 {
+    UIScene_ControlsMenu* scene = static_cast<UIScene_ControlsMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
+    if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        GameSettings::CheckGameSettingsChanged(true, button);
+        GameSettings::ActionGameSettings(button, (eGameSetting)0x29);
+        scene->m_flags[2] = 0;
+        scene->navigateBack();
+    }
     return 0;
 }
 

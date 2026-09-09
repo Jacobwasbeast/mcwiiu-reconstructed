@@ -10,7 +10,7 @@ public:
     virtual ~UIControl_DynamicLabel();
     int GetRealWidth();
     int GetRealHeight();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addText(const std::wstring& text, bool setup);
     virtual void ReInit();
     void SetupTouch();

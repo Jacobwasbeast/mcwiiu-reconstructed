@@ -293,7 +293,7 @@ UIControl* UIScene_HorseInventoryMenu::getSection(
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x49))
         return &this->UIScene_AbstractContainerMenu::m_inventoryList;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4a))
-        return (m_horse->GetType() & 0x0d69800000000000ULL) == 0x0d69800000000000ULL &&
+        return (m_horse->GetType() & 0x0d698000ULL) == 0x0d698000ULL &&
             boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest()
             ? &m_inventoryList : 0;
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4b))

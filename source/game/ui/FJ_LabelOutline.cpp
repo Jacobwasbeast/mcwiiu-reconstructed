@@ -15,7 +15,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
     labelContainer->setScaleY(100.0f);
 
     m_labelText = static_cast<fuiRenderNodeEditText*>(labelContainer->getRenderNodeChildByName(std::string("FJ_Label"))->asEditText());
-    m_labelText->setAutoSize(static_cast<TextFieldAutoSize>(1));
+    m_labelText->setAutoSize(TextFieldAutoSizeLeft);
 
     int i;
     for (i = 0; i < 4; ++i)
@@ -27,7 +27,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
         {
             fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(outline->asEditText());
             m_outlineText.push_back(text);
-            text->setAutoSize(static_cast<TextFieldAutoSize>(1));
+            text->setAutoSize(TextFieldAutoSizeLeft);
             m_outlineX.push_back(text->getX());
         }
 
@@ -37,7 +37,7 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
         {
             fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(outline->asEditText());
             m_outlineText.push_back(text);
-            text->setAutoSize(static_cast<TextFieldAutoSize>(1));
+            text->setAutoSize(TextFieldAutoSizeLeft);
             m_outlineX.push_back(text->getX());
         }
     }
@@ -64,8 +64,8 @@ void FJ_LabelOutline::SetLabel(const std::wstring& label)
     float offset = 0.0f;
     if (m_outlineEnabled)
     {
-        offset = m_labelText->getX() - (m_labelText->getWidth() * 0.5f - static_cast<float>(m_outlineWidth));
-        m_labelText->setX(offset);
+        offset = static_cast<float>(static_cast<int>(m_labelText->getWidth() * 0.5f - static_cast<float>(m_outlineWidth)));
+        m_labelText->setX(m_labelText->getX() - offset);
     }
 
     std::size_t i;

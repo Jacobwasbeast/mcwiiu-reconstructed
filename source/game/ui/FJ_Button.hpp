@@ -15,6 +15,7 @@ class FJ_Button : public FJ_Base
 public:
     explicit FJ_Button(fuiRenderNode* renderNode);
     virtual ~FJ_Button();
+    FJ_FuiNode* getObjListParent();
 
     void setButtonPressed(bool pressed);
     void ChangeState(int state);
@@ -40,10 +41,10 @@ public:
     void EnableButton(bool enabled);
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);
 
-    bool getButtonPressed();
-    bool getShowOutline();
-    bool getEnabled();
-    int getCurrentState();
+    bool getButtonPressed() { return m_buttonPressed; }
+    bool getShowOutline() { return m_showOutline; }
+    bool getEnabled() { return m_enabled; }
+    int getCurrentState() { return m_currentState; }
 
 private:
     bool m_buttonPressed;

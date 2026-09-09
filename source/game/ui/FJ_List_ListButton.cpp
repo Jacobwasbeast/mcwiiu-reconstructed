@@ -1,8 +1,6 @@
-#define private public
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_ListButton.hpp"
-#undef private
 
 #include "game/ui/FJ_List_ListButton.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -36,7 +34,7 @@ void FJ_List_ListButton::addNewItem(const std::wstring& label, int id)
     }
 
     addNewListItem(button, label, id);
-    button->m_labelAlignment = m_labelAlignment;
+    button->SetLabelAlignment(m_labelAlignment);
     button->Init(label, id);
 }
 

@@ -33,10 +33,10 @@ public:
 
 protected:
     ETextAlignment m_textAlignment;
-    bool m_actionUseHtmlText;
-    bool m_actionUseSmallText;
-    bool m_actionUseLargeText;
-    bool m_actionUseBoldText;
+    bool m_multiline;
+    bool m_wordWrap;
+    bool m_useEllipsis;
+    bool m_manualWordWrap;
 };
 
 #endif

@@ -1,4 +1,6 @@
 #include "game/ui/UIControl_Base.hpp"
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_Cursor.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -6,22 +8,8 @@
 #include <string>
 #include <vector>
 
-class FJ_Base
-{
-public:
-    void SetLabel(const std::wstring& label);
-    int GetLabel();
-};
-
-class FJ_Cursor
-{
-public:
-    void SetLabel(const std::wstring& label);
-};
-
 std::wstring convStringToWstring(const std::string& value);
 
-void __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(FJ_Base* node, std::vector<std::wstring>& labels);
 
 UIControl_Base::UIControl_Base()
 {
@@ -32,9 +20,9 @@ UIControl_Base::~UIControl_Base()
 {
 }
 
-bool UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    return UIControl::setupControl(scene, node, name);
+    UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_Base::setLabel(UIString label, bool update, bool force)
@@ -85,7 +73,6 @@ void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCoun
     unsigned int remainder = labelCount & 3;
     unsigned int i;
 
-    (void)firstLabel;
     for (i = 0; i < groupCount; ++i)
     {
         wchar_t* group = labels[i * 4 + 1];
@@ -99,7 +86,7 @@ void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCoun
         possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
 
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    __CPR256__CheckLabelWidths__7FJJ_BaseFRQ2_3std218vector__tm__203_Q2_3std78basic_string__tm__58_wQ2_3std20char_traits__tm__2_wQ2_3std18allocator__tm__2_wQ2_3std105allocator__tm__88_Q2_3stdJ61J(node->asFJ_Base(), possibleLabels);
+    node->asFJ_Base()->CheckLabelWidths(possibleLabels);
 }
 
 bool UIControl_Base::hasFocus()

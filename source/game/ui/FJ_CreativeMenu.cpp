@@ -16,8 +16,7 @@ FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode)
     FJ_FuiNode* scrollBar = getChildByName(std::string("MainPanel.Scrollbar"));
     if (scrollBar != NULL)
     {
-        FJ_Base* pageNumber = getChildByName(std::string("MainPanel.PageNumber"))->asFJ_Base();
-        pageNumber->SetTextOnly(std::wstring(L""));
+        getChildByName(std::string("MainPanel.PageNumber"))->asFJ_Base()->SetLabel(L"");
 
         m_scrollUpArrow = scrollBar->getChildByName(std::string("ScrollUpArrow"))->asFJ_ScrollArrow();
         m_scrollDownArrow = scrollBar->getChildByName(std::string("ScrollDownArrow"))->asFJ_ScrollArrow();
@@ -25,11 +24,12 @@ FJ_CreativeMenu::FJ_CreativeMenu(fuiRenderNode* renderNode)
         m_scrollDownArrow->ChangeState(3);
         m_currentPage = 0;
         m_scrollBarButtonPosition = static_cast<int>(scrollBar->getChildByName(std::string("ScrollBarButton"))->getY());
-
-        FJ_FuiNode* track = scrollBar->getChildByName(std::string("ScrollBarTrack"));
-        FJ_FuiNode* button = scrollBar->getChildByName(std::string("ScrollBarButton"));
         m_scrollBarEndPosition = static_cast<int>(
-            button->getY() - track->getY() + track->getY() + track->getHeight() - button->getHeight());
+            (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY() -
+             scrollBar->getChildByName(std::string("ScrollBarButton"))->getY()) +
+            (scrollBar->getChildByName(std::string("ScrollBarTrack"))->getY() +
+             scrollBar->getChildByName(std::string("ScrollBarTrack"))->getHeight()) -
+            scrollBar->getChildByName(std::string("ScrollBarButton"))->getHeight());
     }
     addEventListener(eFJEventType_SlideComplete, this, _handleSlideComplete, false);
 }
@@ -61,10 +61,8 @@ unsigned int FJ_CreativeMenu::getType()
 void FJ_CreativeMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    double stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0 && stageHeight != 540.0)
-        return;
-    setX(-static_cast<float>(right) - 176.0f);
+    if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
+        setY(static_cast<float>(top));
 }
 
 void FJ_CreativeMenu::SetActiveTab(int tab)
@@ -136,16 +134,17 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
     if (page == 0)
         m_scrollUpArrow->setVisible(false);
 
-    FJ_FuiNode* button = scrollBar->getChildByName(std::string("ScrollBarButton"));
     if (pageCount < 2)
     {
-        button->setX(static_cast<float>(m_scrollBarButtonPosition));
+        scrollBar->getChildByName(std::string("ScrollBarButton"))
+            ->setY(static_cast<float>(m_scrollBarButtonPosition));
     }
     else
     {
-        button->setX(static_cast<float>(m_scrollBarButtonPosition) +
-                     static_cast<float>(m_scrollBarEndPosition - m_scrollBarButtonPosition) *
-                     (static_cast<float>(page) / static_cast<float>(lastPage)));
+        scrollBar->getChildByName(std::string("ScrollBarButton"))
+            ->setY(static_cast<float>(m_scrollBarEndPosition - m_scrollBarButtonPosition) *
+                   (static_cast<float>(page) / static_cast<float>(lastPage)) +
+                   static_cast<float>(m_scrollBarButtonPosition));
     }
     m_currentPage = page;
 }

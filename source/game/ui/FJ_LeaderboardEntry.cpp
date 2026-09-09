@@ -4,19 +4,8 @@
 #include <vector>
 
 #include "game/ui/fuiRenderNode.hpp"
-
-class fuiRenderNodeEditText : public fuiRenderNode
-{
-public:
-    void setAutoSize(int autoSize);
-    void setText(const std::wstring& text);
-    void copyColorFrom(fuiRenderNodeEditText* source)
-    {
-        m_color = source->m_color;
-    }
-};
-
-std::wstring _toString(int value);
+#include "game/ui/fuiRenderNodeEditText.hpp"
+#include "game/core/StringConversion.hpp"
 
 typedef std::vector<FJ_LeaderboardEntry*> FJLeaderboardEntryVector;
 typedef FJLeaderboardEntryVector::iterator FJLeaderboardEntryIterator;
@@ -183,9 +172,9 @@ unsigned int FJ_LeaderboardEntry::getType()
 void FJ_LeaderboardEntry::UpdateHighlightColours()
 {
     FJ_FuiNode* style = getChildByName("StyleContainer")->getChildAt(0)->asMovieClip();
-    fuiRenderNodeEditText* source = static_cast<fuiRenderNodeEditText*>(style->getRenderNodeChildAt(0)->asEditText());
-    m_rankText->copyColorFrom(source);
-    m_gamertagText->copyColorFrom(source);
+    unsigned int color = style->getRenderNodeChildAt(0)->asEditText()->getColor();
+    m_rankText->setColor(color);
+    m_gamertagText->setColor(color);
     for (int i = 0; i < 7; ++i)
-        m_columnText[i]->copyColorFrom(source);
+        m_columnText[i]->setColor(color);
 }

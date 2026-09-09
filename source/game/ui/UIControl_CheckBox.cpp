@@ -3,14 +3,9 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/core/ConsoleUIController.hpp"
 
-class ConsoleUIController
-{
-public:
-    void TouchBoxAdd(UIControl* control, UIScene* scene);
-};
-
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 
 UIControl_CheckBox::UIControl_CheckBox()
     : UIControl_Base()
@@ -40,24 +35,23 @@ unsigned int UIControl_CheckBox::IsChecked()
     return m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->getChecked();
 }
 
-bool UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 2;
+    m_controlType = UIControl::eUIControlType_CheckBox;
     UIControl_Base::setupControl(scene, node, name);
     m_enabled = true;
-    return true;
 }
 
 void UIControl_CheckBox::init(UIString label, int id, bool checked)
 {
     m_label = label;
-    m_controlType = (unsigned short)id;
+    m_controlType = static_cast<UIControl::eUIControlType>(id);
     m_checked = checked;
     m_fuiRenderNode->getFuiNode()->asFJ_CheckBox()->Init(label.getString(), id, checked);
 
     int sceneType = m_scene->getSceneType();
     if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
-        g_ConsoleUIController.TouchBoxAdd(this, m_scene);
+        gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
 unsigned char UIControl_CheckBox::TouchIsChecked()

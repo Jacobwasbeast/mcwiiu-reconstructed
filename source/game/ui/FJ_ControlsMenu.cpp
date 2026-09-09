@@ -9,16 +9,10 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_HtmlTextPanel.hpp"
 #include "game/ui/FJ_HtmlTextPanelLarge.hpp"
+#include "game/ui/FJ_List.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_List
-{
-public:
-    int GetActiveItem();
-    FJ_FuiNode* ReturnItem(int index);
-};
 
 FJ_ControlsMenu::FJ_ControlsMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
@@ -49,7 +43,7 @@ FJ_Document* FJ_ControlsMenu::Create(fuiRenderNode* renderNode)
 
 unsigned int FJ_ControlsMenu::getType()
 {
-    return 37;
+    return 0x25;
 }
 
 void FJ_ControlsMenu::init(FJ_Event* event)
@@ -75,35 +69,52 @@ void FJ_ControlsMenu::SetSafeZone(int top, int bottom, int left, int right)
     FJ_FuiNode* version = getChildByName(std::string("Version"));
     if (version != NULL)
     {
-        version->setX(getStage()->getStageWidth() - version->getWidth() - right);
-        version->setY(getStage()->getStageHeight() - version->getHeight() - top - version->getHeight());
+        version->setX(getStage()->getStageWidth() - version->getWidth() -
+                      static_cast<float>(right));
+        version->setY(getStage()->getStageHeight() - version->getHeight() -
+                      static_cast<float>(bottom) - version->getHeight());
     }
 }
 
 void FJ_ControlsMenu::PositionControlsHelp()
 {
-    FJ_FuiNode* controlsListNode = getChildByName(std::string("ControlsMultiList"));
-    FJ_List* controlsList = controlsListNode->asFJ_List();
+    FJ_List* controlsList = static_cast<FJ_List*>(m_root->getChildByName(std::string("ControlsMultiList")));
     FJ_FuiNode* activeItem = controlsList->ReturnItem(controlsList->GetActiveItem());
     if (activeItem == NULL)
         return;
 
-    FJ_FuiNode* helpPanel = getChildByName(std::string("ControlsHelpPanel"));
-    FJ_FuiNode* backgroundPanel = getChildByName(std::string("BackgroundPanel"));
+    getChildByName(std::string("ControlsHelpPanel"))->setX(static_cast<float>(Math::round(
+        getChildByName(std::string("BackgroundPanel"))->getX() +
+        getChildByName(std::string("BackgroundPanel"))->getWidth() - 5.0f)));
 
-    helpPanel->setX(Math::round(backgroundPanel->getX() + backgroundPanel->getWidth() - 5.0f));
-    helpPanel->setY(Math::round(activeItem->getY() + activeItem->getHeight() * 0.5f - helpPanel->getHeight() * 0.5f));
+    getChildByName(std::string("ControlsHelpPanel"))->setY(static_cast<float>(Math::round(
+        activeItem->getY() + activeItem->getHeight() * 0.5f -
+        getChildByName(std::string("ControlsHelpPanel"))->getHeight() * 0.5f)));
 
-    if (helpPanel->getY() + helpPanel->getHeight() <= backgroundPanel->getY() + backgroundPanel->getHeight())
+    if (getChildByName(std::string("ControlsHelpPanel"))->getY() +
+        getChildByName(std::string("ControlsHelpPanel"))->getHeight() <=
+        getChildByName(std::string("BackgroundPanel"))->getY() +
+        getChildByName(std::string("BackgroundPanel"))->getHeight())
     {
-        if (helpPanel->getY() < backgroundPanel->getY())
-            helpPanel->setY(Math::round(backgroundPanel->getY() + 5.0f));
+        if (getChildByName(std::string("ControlsHelpPanel"))->getY() <
+            getChildByName(std::string("BackgroundPanel"))->getY())
+        {
+            getChildByName(std::string("ControlsHelpPanel"))->setY(
+                getChildByName(std::string("ControlsHelpPanel"))->getY() +
+                static_cast<float>(Math::round(
+                    getChildByName(std::string("BackgroundPanel"))->getY() -
+                    getChildByName(std::string("ControlsHelpPanel"))->getY())) + 5.0f);
+        }
     }
     else
     {
-        const int overflow = Math::round(helpPanel->getY() + helpPanel->getHeight() -
-                                         backgroundPanel->getY() - backgroundPanel->getHeight());
-        helpPanel->setY(Math::round(helpPanel->getY() - overflow - 5.0f));
+        getChildByName(std::string("ControlsHelpPanel"))->setY(
+            getChildByName(std::string("ControlsHelpPanel"))->getY() -
+            static_cast<float>(Math::round(
+                getChildByName(std::string("ControlsHelpPanel"))->getY() +
+                getChildByName(std::string("ControlsHelpPanel"))->getHeight() -
+                (getChildByName(std::string("BackgroundPanel"))->getY() +
+                 getChildByName(std::string("BackgroundPanel"))->getHeight()))) - 5.0f);
     }
 }
 

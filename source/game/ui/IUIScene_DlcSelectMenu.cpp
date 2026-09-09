@@ -9,7 +9,6 @@
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-extern CConsoleMinecraftApp theApp;
 extern ConsoleUIController gConsoleUIController;
 
 IUIScene_DlcSelectMenu::IUIScene_DlcSelectMenu(eDLCContentType contentType)
@@ -48,7 +47,7 @@ int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
         else
         {
             cCommerce* commerce = static_cast<cCommerce*>(
-                (void*)theApp.GetCommerceInstance());
+                (void*)gApp.GetCommerceInstance());
             if (!commerce->OwnsBundleContainingPack(menu->m_pack->GetPackId()))
             {
                 int messageParameter = (int)0xb9a1bf4d;
@@ -80,14 +79,14 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
     }
 
     cDLCInfo* dlcInfo = static_cast<cDLCInfo*>(
-        (void*)theApp.GetDLCInfoInstance());
+        (void*)gApp.GetDLCInfoInstance());
     DLC_INFO* info = dlcInfo->GetDLCInfoForPackID(m_pack->GetPackId());
     if (info == NULL)
         return;
 
     m_contentType = (eDLCContentType)info->ContentType;
     cCommerce* commerce = static_cast<cCommerce*>(
-        (void*)theApp.GetCommerceInstance());
+        (void*)gApp.GetCommerceInstance());
     if (commerce->AttemptLogIn() != 0)
         return;
 

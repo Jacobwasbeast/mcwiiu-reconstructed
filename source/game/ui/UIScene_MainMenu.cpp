@@ -7,7 +7,13 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/System.hpp"
+#include "game/client/render/Font.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/ScreenSizeCalculator.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/UIString.hpp"
@@ -107,8 +113,35 @@ void UIScene_MainMenu::updateComponents()
     }
 }
 
-void UIScene_MainMenu::customDrawSplash(fuiRect*)
+void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (rect == NULL || minecraft == NULL || minecraft->mFont == NULL || m_splashes.empty())
+        return;
+
+    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth,
+                                    minecraft->mHeight, -1);
+    m_splashWidth = static_cast<float>(calculator.getWidth());
+    m_splashHeight = static_cast<float>(calculator.getHeight());
+
+    const std::wstring& splash = m_splashes[static_cast<unsigned int>(m_splashIndex) % m_splashes.size()];
+    GlStateManager::disableCull();
+    GlStateManager::disableDepthTest();
+    GlStateManager::disableLighting();
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 0.0f);
+    GlStateManager::rotatef(-17.0f, 0.0f, 0.0f, 1.0f);
+
+    const float pulse = 1.8f - Mth::abs(Mth::sin(
+        static_cast<float>(System::processTimeInMilliSecs() % 1000) * 0.0062831855f) * 0.1f);
+    const float scale = pulse * (m_splashWidth / (m_splashHeight == 0.0f ? 1.0f : m_splashHeight));
+    const int width = minecraft->mFont->width(splash);
+    GlStateManager::scalef(scale / (width == 0 ? 1.0f : static_cast<float>(width)),
+                           scale / (width == 0 ? 1.0f : static_cast<float>(width)), 1.0f);
+    minecraft->mFont->drawShadow(splash, -(width / 2), -8, 0xffffff00);
+    GlStateManager::popMatrix();
+    GlStateManager::disableRescaleNormal();
+    GlStateManager::enableDepthTest();
 }
 
 void UIScene_MainMenu::customDraw(const char* name, fuiRect* rect)
@@ -180,8 +213,24 @@ int UIScene_MainMenu::UnlockFullGame_SignInReturned(void* context, bool signedIn
     return 0;
 }
 
-int UIScene_MainMenu::MustConnectReturnedNintendo(void*, int, C4JStorage::EMessageResult)
+int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int button,
+                                                  C4JStorage::EMessageResult result)
 {
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    if (scene == NULL)
+        return 0;
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        scene->m_pendingResult = button;
+    }
+    else if (scene->m_pendingAction == 1)
+    {
+        CreateLoad_SignInReturned(scene, result == static_cast<C4JStorage::EMessageResult>(5), 0, 0);
+    }
+    else
+    {
+        scene->m_loading = false;
+    }
     return 0;
 }
 
@@ -237,8 +286,20 @@ void UIScene_MainMenu::RunHelpAndOptions(int playerId)
     proceedToScene(playerId, static_cast<EUIScene>(0x0f));
 }
 
-int UIScene_MainMenu::HelpAndOptions_SignInReturned(void*, bool, int, int)
+int UIScene_MainMenu::HelpAndOptions_SignInReturned(void* context, bool signedIn,
+                                                   int userIndex, int)
 {
+    UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
+    if (scene == NULL)
+        return 0;
+    if (signedIn)
+    {
+        scene->RunHelpAndOptions(userIndex);
+    }
+    else
+    {
+        scene->m_loading = false;
+    }
     return 0;
 }
 

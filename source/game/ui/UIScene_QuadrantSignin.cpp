@@ -44,7 +44,7 @@ UIScene_QuadrantSignin::UIScene_QuadrantSignin(int type, void* data, UILayer* la
     if (g_pInput != NULL && g_pInput->IsDRCConnected() != 0)
     {
         GetQuadrantDocument(m_movie->getRootNode())->SetABSwap(true);
-        theApp.SetDRCIconEnabled(false);
+        gApp.SetDRCIconEnabled(false);
         layer->addComponent(type, static_cast<EUIScene>(0x48), NULL);
     }
 }
@@ -260,7 +260,7 @@ void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, 
                 gConsoleUIController.NavigateToHomeMenu(false);
             else
             {
-                theApp.SetDRCIconEnabled(true);
+                gApp.SetDRCIconEnabled(true);
                 navigateBack();
             }
         }

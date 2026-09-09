@@ -3,12 +3,7 @@
 #include "game/ui/UIControl_Base.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class ConsoleUIController
-{
-public:
-    void TouchBoxAdd(UIControl* control, UIScene* scene);
-};
+#include "game/core/ConsoleUIController.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
@@ -21,15 +16,15 @@ UIControl_Touch::~UIControl_Touch()
 {
 }
 
-bool UIControl_Touch::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Touch::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 20;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_Touch;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Touch::init(int controlType)
 {
-    m_controlType = controlType;
+    m_controlType = static_cast<UIControl::eUIControlType>(controlType);
     int sceneType = m_scene->getSceneType();
     if (sceneType == 2 || sceneType == 4 || sceneType == 6 || sceneType == 7) {
         gConsoleUIController.TouchBoxAdd(this, m_scene);

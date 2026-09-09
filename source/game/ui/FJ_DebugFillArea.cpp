@@ -6,6 +6,7 @@
 #include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_TextInput.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -13,15 +14,10 @@ FJ_DebugFillArea::FJ_DebugFillArea(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
-
-    FJ_FuiNode* node = getChildByName(std::string("EdgeTile"));
-    node->setVisible(true);
-    node = getChildByName(std::string("EdgeData"));
-    node->setVisible(true);
-    node = getChildByName(std::string("FillTile"));
-    node->setVisible(true);
-    node = getChildByName(std::string("FillData"));
-    node->setVisible(true);
+    static_cast<FJ_TextInput*>(getChildByName(std::string("EdgeTile")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("EdgeData")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("FillTile")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("FillData")))->m_bUseScale = true;
 }
 
 FJ_DebugFillArea::~FJ_DebugFillArea()
@@ -47,5 +43,5 @@ FJ_Document* FJ_DebugFillArea::Create(fuiRenderNode* renderNode)
 
 unsigned int FJ_DebugFillArea::getType()
 {
-    return 53;
+    return 0x35;
 }

@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_BigBlack::FJ_Label_BigBlack(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label_BigBlack::~FJ_Label_BigBlack()
 {
 }

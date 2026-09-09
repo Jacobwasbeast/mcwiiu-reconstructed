@@ -13,7 +13,7 @@ class UIControl_LeftIconButtonList : public UIControl_ButtonList
 public:
     UIControl_LeftIconButtonList();
     virtual ~UIControl_LeftIconButtonList();
-    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void UseIggyIcons();
     void AddNewItem(const std::wstring& label, int id, const std::wstring& textureName);
     void AddNewItem(const std::wstring& label, int id, const std::wstring& textureName,

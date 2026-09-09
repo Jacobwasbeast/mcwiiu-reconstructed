@@ -45,10 +45,10 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
         gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
-bool UIControl_Slider::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_Slider::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 15;
-    return UIControl_Base::setupControl(scene, node, name);
+    m_controlType = UIControl::eUIControlType_Slider;
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Slider::setFocus(bool focus)

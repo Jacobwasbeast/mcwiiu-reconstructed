@@ -6,6 +6,7 @@
 #include "game/item/FishFoodItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/ui/UIScene_CreativeMenu.hpp"
 
 class BannerPattern;
 class Block;
@@ -16,19 +17,6 @@ class Potion;
 
 template <typename T>
 class AbstractProperty;
-
-class UIScene_CreativeMenu
-{
-public:
-    class ItemBuilder
-    {
-    public:
-        ItemBuilder(const ItemInstance& item);
-        virtual ~ItemBuilder();
-
-        ItemInstance item;
-    };
-};
 
 class MenuBuilder
 {
@@ -75,7 +63,7 @@ public:
     void ITEM_AUX__tm__23_Q2_12FishFoodItem4Type(Item* item, FishFoodItem::Type* type);
     void POTION(Item* item, Potion* potion);
 
-private:
+public:
     std::vector<const UIScene_CreativeMenu::ItemBuilder*>* mItems;
 };
 

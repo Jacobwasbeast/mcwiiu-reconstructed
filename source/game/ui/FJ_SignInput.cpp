@@ -2,6 +2,7 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/UIScene.hpp"
 
 FJ_SignInput::FJ_SignInput(fuiRenderNode* renderNode) : FJ_Base(renderNode), m_maxLength(15), m_leftArrow(0), m_rightArrow(0)
 {
@@ -57,8 +58,7 @@ void FJ_SignInput::keyDownHandler(FJ_Event* event)
     if (event != 0 && !event->m_bCancelable)
     {
         FJ_FuiNode* root = getRoot();
-        if (root != 0)
-            root->getRoot();
+        root->m_pCallbackScene->handlePress(getId(), 0);
     }
 }
 

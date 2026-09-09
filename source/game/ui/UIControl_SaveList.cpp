@@ -8,10 +8,10 @@ UIControl_SaveList::~UIControl_SaveList()
 {
 }
 
-bool UIControl_SaveList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+void UIControl_SaveList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    m_controlType = 14;
-    return UIControl_ButtonList::setupControl(scene, node, name);
+    m_controlType = static_cast<UIControl::eUIControlType>(14);
+    UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_SaveList::addItem(const std::wstring& label, const std::wstring& textureName, int index)

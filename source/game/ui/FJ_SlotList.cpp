@@ -64,6 +64,16 @@ void FJ_SlotList::Init()
     removeChild(background, true);
 }
 
+int FJ_SlotList::getRows()
+{
+    return m_rows;
+}
+
+int FJ_SlotList::getColumns()
+{
+    return m_columns;
+}
+
 void FJ_SlotList::Clear()
 {
     if (m_slots.empty())

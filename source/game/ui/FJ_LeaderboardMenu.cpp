@@ -4,14 +4,9 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_Label.hpp"
 #include "game/ui/FJ_LeaderboardList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
-
-class FJ_Label
-{
-public:
-    virtual void SetLabel(const std::wstring& label);
-};
 
 FJ_LeaderboardMenu::FJ_LeaderboardMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)

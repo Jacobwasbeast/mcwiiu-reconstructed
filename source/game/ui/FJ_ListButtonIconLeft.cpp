@@ -4,17 +4,9 @@
 
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
-
-class fui
-{
-public:
-    unsigned int getCustomTexture(const std::wstring& textureName,
-        unsigned int* width, unsigned int* height, bool* hasAlpha);
-};
-
-extern fui* gFui;
 
 FJ_ListButtonIconLeft::FJ_ListButtonIconLeft(fuiRenderNode* renderNode)
     : FJ_Button(renderNode), m_pIconPlaceholder(NULL), m_pIconPlaceholder1(NULL)

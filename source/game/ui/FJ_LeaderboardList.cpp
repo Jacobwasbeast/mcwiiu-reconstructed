@@ -1,4 +1,6 @@
 #include "game/ui/FJ_LeaderboardList.hpp"
+#include "game/ui/FJ_LeaderboardEntry.hpp"
+#include "game/ui/FJ_Factory.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -9,19 +11,6 @@
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
-
-class FJ_Factory
-{
-public:
-    static FJ_FuiNode* createObject(const char*, fuiRenderNode*, bool, const char*);
-};
-
-class FJ_LeaderboardEntry : public FJ_FuiNode
-{
-public:
-    void Init(int, int, int, int);
-    void SetData(FJ_LeaderboardList::CLeaderboardEntry*);
-};
 
 FJ_LeaderboardList::FJ_LeaderboardList(fuiRenderNode* renderNode)
     : FJ_FuiNode(renderNode), m_small(false), m_entrySpacing(4), m_visibleEntries(10),

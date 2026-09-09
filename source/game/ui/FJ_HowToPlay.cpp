@@ -233,6 +233,7 @@ void FJ_HowToPlay::init(FJ_Event* pEvent)
 
 void FJ_HowToPlay::InitScene()
 {
+    addEventListener(eFJEventType_Init, this, _init, false);
     m_page = -1;
     m_dynamicHtmlTextName.assign("DynamicHtmlText");
     m_dynamicHtmlText = getChildByName(m_dynamicHtmlTextName);
