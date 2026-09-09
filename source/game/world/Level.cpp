@@ -3559,8 +3559,9 @@ bool Level::shouldFreeze(const BlockPos& pos)
     return shouldFreeze(pos, true);
 }
 
-void Level::tickPendingTicks(bool runAll)
+bool Level::tickPendingTicks(bool runAll)
 {
+    return false;
 }
 
 std::vector<TickNextTickData>* Level::fetchTicksInChunk(LevelChunk* chunk, bool runAll)
@@ -3568,8 +3569,9 @@ std::vector<TickNextTickData>* Level::fetchTicksInChunk(LevelChunk* chunk, bool 
     return NULL;
 }
 
-void Level::fetchTicksInArea(BoundingBox* box, bool runAll)
+std::vector<TickNextTickData>* Level::fetchTicksInArea(BoundingBox* box, bool runAll)
 {
+    return NULL;
 }
 
 void Level::updateSleepingPlayerList()

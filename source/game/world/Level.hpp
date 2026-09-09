@@ -322,9 +322,9 @@ public:
     int calcSnowBlockDepth(const BlockPos& pos, int depth);
     bool canPlaceSnowLayer(const BlockPos& pos, bool checkNeighbors, bool allowExisting, int* depth);
     bool tryToPlaceTopSnow(const BlockPos& pos, bool checkNeighbors, bool allowExisting);
-    virtual void tickPendingTicks(bool runAll);
+    virtual bool tickPendingTicks(bool runAll);
     virtual std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* chunk, bool runAll);
-    virtual void fetchTicksInArea(BoundingBox* box, bool runAll);
+    virtual std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* box, bool runAll);
     std::vector<boost::shared_ptr<Player> >* getPlayers(unsigned long long flags,
                                                         const Predicate<boost::shared_ptr<Player> >* predicate);
     std::vector<boost::shared_ptr<Entity> >* getEntitiesOfClass(const std::type_info& type,
