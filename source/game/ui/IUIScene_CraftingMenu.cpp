@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/GameModeConstraints.hpp"
@@ -72,7 +73,7 @@ int IUIScene_CraftingMenu::GetRecipeId(int group, int recipe)
 
 bool IUIScene_CraftingMenu::isSpinnerGroup()
 {
-    return m_currentGroup == 0 && (m_currentTab == 1 || m_currentTab == 2 || m_currentTab == 3);
+    return (m_currentGroup == 0 && m_currentTab == 1) || m_currentTab == 2 || m_currentTab == 3;
 }
 
 bool IUIScene_CraftingMenu::isInventoryItem()
@@ -272,18 +273,31 @@ int IUIScene_CraftingMenu::getNumSpinnerSlots()
 {
     if (!isSpinnerGroup())
         return 0;
-    if ((m_currentTab == 1 && m_craftingMode == 1) ||
-        (m_currentTab == 2 && m_currentGroup == 0))
-        return 3;
+    if (m_currentTab == 1)
+    {
+        if (m_craftingMode == 1)
+            return 3;
+    }
+    else if (m_currentTab == 2)
+    {
+        if (m_currentGroup == 0)
+            return 3;
+    }
+    else if (m_currentTab != 3)
+    {
+        return 0;
+    }
     return 2;
 }
 
 bool IUIScene_CraftingMenu::canAddMoreStacks()
 {
-    if (isSpinnerGroup() && !isInventoryItem())
+    if (isSpinnerGroup() &&
+        ((!isInventoryItem() && !isDuplicateItem()) || (!isInventoryItem() && isDuplicateItem())))
         return true;
-    return m_baseRecipeItem && !m_baseRecipeItem->isEmpty() &&
-           BannerBlockEntity::getPatternCount(m_baseRecipeItem) < 6;
+    if (m_baseRecipeItem->isEmpty())
+        return false;
+    return BannerBlockEntity::getPatternCount(m_baseRecipeItem) < 6;
 }
 
 void IUIScene_CraftingMenu::UpdateHorizontalSlots()
@@ -465,6 +479,7 @@ void IUIScene_CraftingMenu::refreshAllSlots()
     m_verticalSlots[0] = getCurrentVSlotMax();
     m_verticalSlots[1] = 0;
     m_verticalSlots[2] = 1;
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     UpdateSlotsAndHighlight();
     setGroupText(GetGroupNameText(getCurrentGroup()));
 }

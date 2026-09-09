@@ -134,7 +134,7 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
     }
     else
     {
-        not_null_ptr<ItemInstance> result = FurnaceRecipes::getInstance()->getResult(item);
+        ItemInstance* result = FurnaceRecipes::getInstance()->getResult(item);
         if (!result->isEmpty())
         {
             moved = moveItemStackTo(item, 0, 1, false, true, true);

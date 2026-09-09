@@ -10,9 +10,10 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-std::wstring _toString(int value);
+template<typename T>
+std::wstring _toString(T value);
 
-static int gDeathScreenRenderTicks = 0;
+static int s_deathScreenTicks = 0;
 
 DeathScreen::~DeathScreen()
 {
@@ -27,9 +28,9 @@ void DeathScreen::init()
     mButtons.push_back(new Button(2, mWidth / 2 - 100, mHeight / 4 + 96,
                                   std::wstring(L"Title menu")));
 
-    if (mMinecraft->mLevel == NULL)
+    if (mMinecraft->mUser == NULL)
     {
-        mButtons[0]->mActive = false;
+        mButtons[1]->mActive = false;
     }
 }
 
@@ -41,10 +42,7 @@ void DeathScreen::buttonClicked(Button* button)
 {
     if (button->mId == 1)
     {
-        if (mMinecraft->mPlayer)
-        {
-            mMinecraft->mPlayer->respawn();
-        }
+        mMinecraft->mPlayer->respawn();
         mMinecraft->setScreen(NULL);
     }
 
@@ -57,20 +55,20 @@ void DeathScreen::buttonClicked(Button* button)
 
 void DeathScreen::render(int x, int y, float partialTick)
 {
-    fillGradient(0, 0, mWidth, mHeight, 0x60500000, static_cast<int>(0xa0803030));
+    fillGradient(0, 0, mWidth, mHeight, 0x60500000, 0xa0803030);
     GlStateManager::pushMatrix();
-    GlStateManager::scalef(0.8f, 0.8f, 0.8f);
-    drawCenteredString(mFont, std::wstring(L"Game over!"), mWidth / 4, 30, 0xffffff);
+    GlStateManager::scalef(2.0f, 2.0f, 2.0f);
+    drawCenteredString(mFont, std::wstring(L"Game over!"), mWidth / 2 / 2, 30, 0xffffff);
     GlStateManager::popMatrix();
 
-    std::wstring score = std::wstring(L"Score: &e") + _toString(mMinecraft->mPlayer->getScore());
+    std::wstring score = std::wstring(L"Score: &e") + _toString<int>(mMinecraft->mPlayer->getScore());
     drawCenteredString(mFont, score, mWidth / 2, 100, 0xffffff);
 
     Screen::render(x, y, partialTick);
 
-    if (gDeathScreenRenderTicks++ == 100)
+    if (s_deathScreenTicks++ == 100)
     {
-        gDeathScreenRenderTicks = 0;
+        s_deathScreenTicks = 0;
         buttonClicked(mButtons[0]);
     }
 }

@@ -158,7 +158,6 @@ void AnvilMenu::createResult()
             boost::unordered_map<Enchantment*, int>::iterator added;
             for (added = addedEnchantments->begin(); added != addedEnchantments->end(); ++added)
             {
-                hadEnchantment = true;
                 Enchantment* enchantment = added->first;
                 int oldLevel = 0;
                 boost::unordered_map<Enchantment*, int>::iterator current =
@@ -185,23 +184,29 @@ void AnvilMenu::createResult()
                 if (canApply)
                 {
                     appliedEnchantment = true;
-                    int maxLevel = enchantment->getMaxLevel();
-                    if (maxLevel < level) level = maxLevel;
+                    if (enchantment->getMaxLevel() < level) level = enchantment->getMaxLevel();
                     (*enchantments)[enchantment] = level;
 
                     int rarityCost = 0;
-                    unsigned int weight = enchantment->getRarity()->getWeight();
-                    if (weight == Rarity::COMMON->getWeight()) rarityCost = 1;
-                    else if (weight == Rarity::UNCOMMON->getWeight()) rarityCost = 2;
-                    else if (weight == Rarity::RARE->getWeight()) rarityCost = 4;
-                    else if (weight == Rarity::EPIC->getWeight()) rarityCost = 8;
+                    if (enchantment->getRarity()->getWeight() == Rarity::COMMON->getWeight())
+                        rarityCost = 1;
+                    else if (enchantment->getRarity()->getWeight() == Rarity::UNCOMMON->getWeight())
+                        rarityCost = 2;
+                    else if (enchantment->getRarity()->getWeight() == Rarity::RARE->getWeight())
+                        rarityCost = 4;
+                    else if (enchantment->getRarity()->getWeight() == Rarity::EPIC->getWeight())
+                        rarityCost = 8;
                     if (enchantedBook)
                     {
-                        rarityCost /= 2;
-                        if (rarityCost < 1) rarityCost = 1;
+                        rarityCost >>= 1;
+                        if (rarityCost == 0) rarityCost = 1;
                     }
                     operationCost += rarityCost * level;
                     if (first->getCount() > 1) operationCost = 40;
+                }
+                else
+                {
+                    hadEnchantment = true;
                 }
             }
             delete addedEnchantments;

@@ -157,7 +157,7 @@ protected:
     int m_descriptionState;
     bool m_tabsDirty;
     bool m_compactInventory;
-    unsigned char m_sceneControls[1282];
+    unsigned char m_unknownAAA[0x502];
     int m_currentTab;
     int m_lastTab;
 };

@@ -56,7 +56,7 @@ public:
     virtual void broadcastChanges();
     virtual bool needsRendered();
     virtual bool clickMenuButton(boost::shared_ptr<Player> player, int id);
-    virtual int getSlotFor(boost::shared_ptr<Container> container, int index);
+    virtual Slot* getSlotFor(boost::shared_ptr<Container> container, int index);
     virtual Slot* getSlot(int index);
     virtual ItemList getAllItems(int start, int count);
     virtual ItemList takeAll(boost::shared_ptr<Player> player, int start, int count, int mode);

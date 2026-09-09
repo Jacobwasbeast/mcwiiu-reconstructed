@@ -67,11 +67,11 @@ void AbstractContainerMenu::broadcastChanges()
 bool AbstractContainerMenu::needsRendered() { return m_changed; }
 bool AbstractContainerMenu::clickMenuButton(boost::shared_ptr<Player>, int) { return false; }
 
-int AbstractContainerMenu::getSlotFor(boost::shared_ptr<Container> container, int index)
+Slot* AbstractContainerMenu::getSlotFor(boost::shared_ptr<Container> container, int index)
 {
-    unsigned int i;
-    for (i = 0; i < m_slots.size(); ++i) if (m_slots[i]->isAt(container, index)) return (int)i;
-    return -1;
+    std::vector<Slot*>::iterator it;
+    for (it = m_slots.begin(); it != m_slots.end(); ++it) if ((*it)->isAt(container, index)) return *it;
+    return NULL;
 }
 
 Slot* AbstractContainerMenu::getSlot(int index)

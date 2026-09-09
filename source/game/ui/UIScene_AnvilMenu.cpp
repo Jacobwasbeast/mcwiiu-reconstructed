@@ -7,6 +7,10 @@
 #include "game/ui/AnvilMenu.hpp"
 #include "game/ui/FJ_AnvilMenu.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CInput.hpp"
+
+extern CInput* g_pInput;
 
 UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void*, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_anvilMenu(0),
@@ -27,31 +31,125 @@ bool UIScene_AnvilMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::EScene
 
 unsigned int UIScene_AnvilMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return IsSectionSlotList(section) ? 1U : 0U;
+    static const unsigned char columns[] = { 9, 9, 1, 1, 1 };
+    const int value = static_cast<int>(section);
+    if (value < 0x31 || value > 0x35)
+        return 0;
+    return columns[value - 0x31];
 }
 
 unsigned int UIScene_AnvilMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x32))
-        return UIScene_AbstractContainerMenu::GetInventoryRows();
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x31) ||
-        IsSectionSlotList(section))
-        return 1U;
-    return 0U;
+    const int value = static_cast<int>(section);
+    if (value < 0x31 || value > 0x35)
+        return 0;
+    if (value == 0x32)
+        return m_sceneInterface->GetInventoryRows();
+    return 1;
 }
 
 unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                               IUIScene_AbstractContainerMenu::ETapState state,
                                                               int* x, int* y)
 {
-    IUIScene_AbstractContainerMenu::ESceneSection result = section;
-    if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        result = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(section - 1);
-    else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        result = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(section + 1);
-    if (m_sceneInterface != 0)
-        m_sceneInterface->updateSlotPosition(section, result, state, x, y, 0, 0);
-    return result;
+    const int value = static_cast<int>(section);
+    const int direction = static_cast<int>(state);
+    int target = value;
+    int horizontalOffset = 0;
+
+    if (value == 0x31)
+    {
+        if (direction == 1)
+        {
+            if (m_sceneInterface->m_inventorySmall == 0)
+                target = 0x32;
+            else if (*x < 4)
+                target = 0x33;
+            else if (*x < 5)
+                target = 0x34;
+            else
+                target = 0x35;
+        }
+        else if (direction == 2)
+        {
+            target = *x < 4 ? 0x33 : 0x36;
+        }
+    }
+    else if (value == 0x32)
+    {
+        if (direction == 1)
+        {
+            if (*x < 4)
+                target = 0x33;
+            else if (*x < 5)
+                target = 0x34;
+            else
+                target = 0x35;
+        }
+        else if (direction == 2)
+        {
+            target = 0x31;
+        }
+    }
+    else if (value == 0x33)
+    {
+        if (direction == 1)
+            target = 0x36;
+        else if (direction == 2)
+        {
+            target = m_sceneInterface->m_inventorySmall != 0 ? 0x31 : 0x32;
+            horizontalOffset = 3;
+        }
+        else if (direction == 3)
+            target = 0x35;
+        else if (direction == 4)
+            target = 0x34;
+    }
+    else if (value == 0x34)
+    {
+        if (direction == 1)
+            target = 0x36;
+        else if (direction == 2)
+        {
+            target = m_sceneInterface->m_inventorySmall != 0 ? 0x31 : 0x32;
+            horizontalOffset = -4;
+        }
+        else if (direction == 3)
+            target = 0x33;
+        else if (direction == 4)
+            target = 0x35;
+    }
+    else if (value == 0x35)
+    {
+        if (direction == 1)
+            target = 0x36;
+        else if (direction == 2)
+        {
+            target = m_sceneInterface->m_inventorySmall != 0 ? 0x31 : 0x32;
+            horizontalOffset = -5;
+        }
+        else if (direction == 3)
+            target = 0x34;
+        else if (direction == 4)
+            target = 0x33;
+    }
+    else if (value == 0x36)
+    {
+        if (direction == 1)
+        {
+            target = 0x31;
+            horizontalOffset = -4;
+        }
+        else if (direction == 2)
+        {
+            target = 0x34;
+        }
+    }
+
+    m_sceneInterface->updateSlotPosition(section,
+        static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(target), state, x, y,
+        horizontalOffset, 0);
+    return static_cast<unsigned int>(target);
 }
 
 void UIScene_AnvilMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
@@ -125,10 +223,11 @@ void UIScene_AnvilMenu::handleEditNamePressed()
 }
 
 void UIScene_AnvilMenu::handleOtherClicked(int, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                            int, bool pressed)
+                                            int, bool)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x36) && pressed)
-        handleEditNamePressed();
+    if (section != 0x36)
+        return;
+    handleEditNamePressed();
 }
 
 int UIScene_AnvilMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -143,9 +242,21 @@ int UIScene_AnvilMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESc
 void UIScene_AnvilMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                 int slot, int direction, bool wrap)
 {
-    int columns = getSectionColumns(section);
-    if (wrap && IsSectionSlotList(section))
-        m_resultSlot.setHighlightSlot(slot + direction * columns);
+    const int columns = static_cast<int>(getSectionColumns(section));
+    const int value = static_cast<int>(section);
+    UIControl_SlotList* list = static_cast<UIControl_SlotList*>(0);
+    if (value == 0x31)
+        list = &m_hotbarList;
+    else if (value == 0x32)
+        list = &m_inventoryList;
+    else if (value == 0x33)
+        list = &m_ingredientSlot;
+    else if (value == 0x34)
+        list = &m_ingredientSlot2;
+    else if (value == 0x35)
+        list = &m_resultSlot;
+    if (wrap)
+        list->setHighlightSlot(slot + direction * columns);
 }
 
 void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu*,
@@ -169,8 +280,7 @@ void UIScene_AnvilMenu::setAllContainerData(AbstractContainerMenu*, boost::share
 
 void UIScene_AnvilMenu::setCostLabel(const std::wstring& label, bool safe)
 {
-    if (m_movie != 0 && m_movie->getRootNode() != 0)
-        FJ_AnvilMenu::Create(m_movie->getRootNode())->SetCostLabel(label, safe);
+    static_cast<FJ_AnvilMenu*>(m_movie->getRootNode()->getFuiNode())->SetCostLabel(label, safe);
 }
 
 unsigned int UIScene_AnvilMenu::mapElementsAndNames()
@@ -198,7 +308,10 @@ void UIScene_AnvilMenu::handleReload()
 void UIScene_AnvilMenu::showCross(bool show)
 {
     if (m_crossVisible != show)
+    {
+        static_cast<FJ_AnvilMenu*>(m_movie->getRootNode()->getFuiNode())->ShowRedCross(show);
         m_crossVisible = show;
+    }
 }
 
 void UIScene_AnvilMenu::handleTick()
@@ -231,6 +344,7 @@ void UIScene_AnvilMenu::setEditNameValue(const std::wstring& value)
 
 void UIScene_AnvilMenu::handleDestroy()
 {
+    g_pInput->DestroyKeyboard();
     UIScene_AbstractContainerMenu::handleDestroy();
 }
 
@@ -240,10 +354,8 @@ void UIScene_AnvilMenu::updateItemName()
         setEditNameValue(m_pendingName->name);
 }
 
-void UIScene_AnvilMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section)
+void UIScene_AnvilMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
 {
-    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x36))
-        handleEditNamePressed();
 }
 
 int UIScene_AnvilMenu::getSceneType()
