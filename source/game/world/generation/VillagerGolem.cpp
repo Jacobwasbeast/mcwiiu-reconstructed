@@ -189,8 +189,9 @@ bool VillagerGolem::doHurtTarget(boost::shared_ptr<Entity> entity)
 {
     mAttackAnimationTick = 10;
     boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    boost::shared_ptr<EntityDamageSource> source = DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
-    bool hurt = target && target->hurt(source.get(), static_cast<float>(mRandom->nextInt(8) + 7));
+    EntityDamageSource* source = DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
+    bool hurt = target && target->hurt(source, static_cast<float>(mRandom->nextInt(8) + 7));
+    delete source;
     if (hurt)
         doEnchantDamageEffects(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()), entity);
     return hurt;

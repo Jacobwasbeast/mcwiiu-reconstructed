@@ -6,9 +6,9 @@
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
-#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/SimpleContainer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Villager.hpp"
 
@@ -43,7 +43,7 @@ void VillagerInteractGoal::tick()
     if (mInteractionDelay <= 0 || --mInteractionDelay != 0)
         return;
 
-    Inventory* inventory = mVillager->getInventory();
+    SimpleContainer* inventory = mVillager->getInventory();
     for (unsigned int slot = 0; slot < inventory->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> item = inventory->getItem(slot);

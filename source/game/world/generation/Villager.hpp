@@ -2,12 +2,16 @@
 #define GAME_WORLD_GENERATION_VILLAGER_HPP
 
 #include <string>
+#include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
-#include "game/entity/mob/AgableMob.hpp"
 #include "game/core/MapDecoration.hpp"
+#include "game/core/Merchant.hpp"
+#include "game/entity/mob/AgableMob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 class CompoundTag;
@@ -17,21 +21,22 @@ class DifficultyInstance;
 class EntityTooltipDataHolder;
 class Item;
 class ItemEntity;
-class Inventory;
 class Level;
 class LightningBolt;
-class Merchant;
+class LivingEntity;
 class MerchantRecipe;
 class MerchantRecipeList;
 class MobGroupData;
 class ParticleType;
-class Random;
-class LivingEntity;
 class Player;
-class MapDecoration;
+class Random;
+class SimpleContainer;
 class SoundEvent;
+class Village;
 
-class Villager : public AgableMob
+template <class T> class EntityDataAccessor;
+
+class Villager : public AgableMob, public Merchant
 {
 public:
     class PriceRange
@@ -45,42 +50,48 @@ public:
         int mMax;
     };
 
-    class EmeraldForItems
+    class ItemListing
+    {
+    public:
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random) = 0;
+    };
+
+    class EmeraldForItems : public ItemListing
     {
     public:
         EmeraldForItems(Item* item, PriceRange price);
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     private:
         Item* mItem;
         PriceRange mPrice;
     };
 
-    class ItemForEmeralds
+    class ItemForEmeralds : public ItemListing
     {
     public:
         ItemForEmeralds(Item* item, const PriceRange& price);
         ItemForEmeralds(const ItemInstance& item, const PriceRange& price);
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     private:
         ItemInstance mItem;
         PriceRange mPrice;
     };
 
-    class EnchantedItemForEmeralds
+    class EnchantedItemForEmeralds : public ItemListing
     {
     public:
         EnchantedItemForEmeralds(Item* item, const PriceRange& price);
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     private:
         ItemInstance mItem;
         PriceRange mPrice;
     };
 
-    class ItemAndEmeraldToItem
+    class ItemAndEmeraldToItem : public ItemListing
     {
     public:
         ItemAndEmeraldToItem(Item* firstItem, const PriceRange& firstPrice, Item* secondItem, const PriceRange& secondPrice);
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     private:
         ItemInstance mFirstItem;
         PriceRange mFirstPrice;
@@ -88,106 +99,120 @@ public:
         PriceRange mSecondPrice;
     };
 
-    class EnchantBookForEmeralds
+    class EnchantBookForEmeralds : public ItemListing
     {
     public:
         EnchantBookForEmeralds();
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     };
 
-    class TreasureMapForEmeralds
+    class TreasureMapForEmeralds : public ItemListing
     {
     public:
         TreasureMapForEmeralds(const PriceRange& price, std::wstring name, const MapDecoration::Type* icon);
-        void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
+        virtual void addMerchantRecipe(boost::shared_ptr<Merchant> merchant, MerchantRecipeList* recipes, Random* random);
     private:
         PriceRange mPrice;
         std::wstring mName;
         const MapDecoration::Type* mIcon;
-        int mUnknown;
     };
 
     Villager(Level* level);
     Villager(Level* level, int profession);
     virtual ~Villager();
+
     static void create(Level* level);
-    int getProfession();
-    unsigned int getCareer();
-    virtual std::wstring getDisplayName();
-    void setTrading(int trading);
-    void setTradingPlayer(const boost::shared_ptr<Player>& player);
-    boost::shared_ptr<Player> getTradingPlayer();
-    void setCareer(int career);
-    void increaseMerchantCareer();
-    MerchantRecipeList* getOffers(const boost::shared_ptr<Player>& player);
-    void overrideOffers(MerchantRecipeList* offers);
-    void notifyTrade(MerchantRecipe* recipe);
-    void notifyTradeUpdated(const not_null_ptr<ItemInstance>& item);
-    virtual bool isAvailableToTrade();
-    Level* getLevel();
-    BlockPos getPosition();
-    void setProfession(int profession);
+    static void staticCtor();
+    static void addDataWalkers(DataFixerUpper* fixer);
+
     void _init(int profession);
-    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, bool flag, const std::wstring& name);
+
+    int getProfession();
+    void setProfession(int profession);
+    unsigned int getCareer();
+    void setCareer(int career);
+    unsigned int getTrading();
+    void setTrading(int trading);
+    bool isTrading();
+    void increaseMerchantCareer();
     void setRewardPlayersInVillage();
-    unsigned int countFood(int amount);
+    bool countFood(int multiplier);
     bool hasExcessFood();
     bool wantsMoreFood();
-    Inventory* getInventory();
-    static void staticCtor();
-    void loadPersonalAiGoals();
-    virtual void grewUp();
-    void registerAttributes();
-    void registerGoals();
-    bool isTrading();
-    virtual void customServerAiStep();
-    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-    virtual bool hurt(const DamageSource* source, float amount);
+    bool hasEnoughFoodToBreed();
+    bool isWillingToBreed(bool consumeFood);
+    void setWillingToBreed(bool willing);
+    bool isInLove();
+    void setInLove(bool inLove);
+    bool isChasing();
+    void setChasing(bool chasing);
+    bool wantsItem(Item* item);
+    bool hasFarmSeeds();
+    SimpleContainer* getInventory();
+    void addParticlesAroundSelf(const ParticleType* particle);
+    MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, bool randomProfession, const std::wstring& dataString);
+
+    virtual unsigned long long GetType();
+    virtual void defineSynchedData();
+    virtual bool hurt(const DamageSource* source, float damage);
+    virtual void readAdditionalSaveData(CompoundTag* tag);
+    virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual bool HideUseTooltips();
-    virtual void defineSynchedData();
-    static void addDataWalkers(DataFixerUpper* fixer);
-    virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual bool removeWhenFarAway();
-    virtual const SoundEvent* getAmbientSound();
+    virtual void handleEntityEvent(unsigned char event, int data);
+    virtual void thunderHit(const LightningBolt* lightningBolt);
+    virtual std::wstring getDisplayName();
+    virtual double getEyeHeight();
+    virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
+    virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
+    virtual void registerAttributes();
+    virtual void setLastHurtByMob(boost::shared_ptr<LivingEntity> attacker);
+    virtual void die(const DamageSource* source);
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    unsigned int getTrading();
-    virtual bool isInLove();
-    virtual void setInLove(bool value);
-    virtual void setChasing(bool value);
-    virtual bool isChasing();
-    virtual void setLastHurtByMob(boost::shared_ptr<LivingEntity> entity);
-    virtual void die(const DamageSource* source);
-    virtual void hasEnoughFoodToBreed();
-    virtual bool isWillingToBreed(bool value);
-    virtual void setWillingToBreed(bool value);
-    virtual const char* getDefaultLootTable();
-    virtual double getEyeHeight();
-    virtual void addParticlesAroundSelf(const ParticleType* particle);
-    virtual void handleEntityEvent(unsigned char event, int data);
-    virtual void finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
+    virtual void registerGoals();
+    virtual const SoundEvent* getAmbientSound();
+    virtual const void* getDefaultLootTable();
+    virtual void pickUpItem(boost::shared_ptr<ItemEntity> itemEntity);
+    virtual bool removeWhenFarAway();
+    virtual void customServerAiStep();
+    virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
+    virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
-    virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
-    virtual void thunderHit(const LightningBolt* bolt);
-    virtual bool wantsItem(Item* item);
-    virtual void pickUpItem(boost::shared_ptr<ItemEntity> item);
-    virtual bool hasFarmSeeds();
-    virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
-    virtual unsigned long long GetType();
+    virtual void grewUp();
+    virtual void loadPersonalAiGoals();
+
+    virtual void setTradingPlayer(const boost::shared_ptr<Player>& player);
+    virtual boost::shared_ptr<Player> getTradingPlayer();
+    virtual void notifyTrade(MerchantRecipe* recipe);
+    virtual void notifyTradeUpdated(const not_null_ptr<ItemInstance>& item);
+    virtual MerchantRecipeList* getOffers(const boost::shared_ptr<Player>& player);
+    virtual Level* getLevel();
+    virtual BlockPos getPosition();
+    virtual void overrideOffers(MerchantRecipeList* offers);
+    virtual bool isAvailableToTrade();
 
 private:
-    int mProfession;
-    int mCareer;
-    bool mTrading;
+    static const EntityDataAccessor<int>* DATA_PROFESSION;
+    static const EntityDataAccessor<int>* DATA_CAREER;
+    static const EntityDataAccessor<int>* DATA_TRADING;
+    static std::vector<std::vector<std::vector<arrayWithLength<ItemListing*> > > > sTrades;
+
+    int mRandomTickDivider;
     bool mInLove;
     bool mChasing;
-    bool mWillingToBreed;
+    boost::weak_ptr<Village> mVillage;
+    boost::weak_ptr<Player> mTradingPlayer;
     MerchantRecipeList* mOffers;
-    boost::shared_ptr<Player> mTradingPlayer;
-    Level* mVillagerLevel;
-    Inventory* mInventory;
+    int mTimeUntilReset;
+    bool mNeedsInitialization;
+    bool mWillingToBreed;
+    int mRiches;
+    std::wstring mLastTradedPlayerName;
+    int mCareerLevel;
+    bool mRewardPlayersInVillage;
+    bool mAdditionalTasksSet;
+    SimpleContainer* mInventory;
 };
 
 #endif

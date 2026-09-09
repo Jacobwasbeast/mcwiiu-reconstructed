@@ -752,7 +752,7 @@ uint32_t Player::openContainer(boost::shared_ptr<Container>)
     return 0;
 }
 
-uint32_t Player::openHorseInventory(uint32_t, boost::shared_ptr<Container>)
+int Player::openHorseInventory(boost::shared_ptr<AbstractHorse>, boost::shared_ptr<Container>)
 {
     return 0;
 }
@@ -1113,8 +1113,9 @@ void Player::jumpFromGround()
         ? FoodConstants::ExhaustionSprintJump() : FoodConstants::ExhaustionJump()));
 }
 
-void Player::awardStat(Stat*, arrayWithLength<unsigned char>)
+void Player::awardStat(Stat*, arrayWithLength<unsigned char> parameters)
 {
+    delete[] parameters.data;
 }
 
 void Player::calculateFlapping()
@@ -1431,7 +1432,7 @@ bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
     return 0;
 }
 
-uint64_t Player::getModelName()
+uint32_t Player::getModelName()
 {
     _SkinAdjustments adjustments = getSkinAdjustmentsById(mField0x7dc);
     if (static_cast<int32_t>(mField0x7dc) < 0)

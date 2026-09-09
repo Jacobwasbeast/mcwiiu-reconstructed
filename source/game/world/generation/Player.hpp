@@ -19,6 +19,7 @@
 
 class ItemInstance;
 class AbstractContainerMenu;
+class AbstractHorse;
 class Container;
 class FishingHook;
 class ModelPart;
@@ -332,7 +333,7 @@ struct Player : LivingEntity {
     void openCommandBlock(uint32_t );
     uint32_t openTrading(uint32_t , std::wstring* , int32_t );
     uint32_t openContainer(boost::shared_ptr<Container> );
-    uint32_t openHorseInventory(uint32_t , boost::shared_ptr<Container> );
+    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> , boost::shared_ptr<Container> );
     uint32_t startBlockInteraction(InteractionObject* );
     void openItemInstanceGui(not_null_ptr<ItemInstance> , uint32_t );
     uint32_t interactOn(boost::shared_ptr<Entity> , InteractionHand::EInteractionHand );
@@ -358,19 +359,19 @@ struct Player : LivingEntity {
     uint32_t isSleepingLongEnough();
     uint32_t getSleepTimer();
     uint32_t getDeathFadeTimer();
-    void displayClientMessage(int32_t , bool );
-    BlockPos* getRespawnPosition();
-    uint8_t isRespawnForced();
-    uint64_t setRespawnPosition(BlockPos* , bool );
-    uint32_t hasAchievement(Achievement* );
-    void awardStat(Stat* , arrayWithLength<unsigned char> );
-    void resetStat(Stat* );
+    virtual void displayClientMessage(int32_t , bool );
+    virtual BlockPos* getRespawnPosition();
+    virtual uint8_t isRespawnForced();
+    virtual uint64_t setRespawnPosition(BlockPos* , bool );
+    virtual uint32_t hasAchievement(Achievement* );
+    virtual void awardStat(Stat* , arrayWithLength<unsigned char> );
+    virtual void resetStat(Stat* );
     void jumpFromGround();
     void fjCheckSuperSonic(double , double , double , double , double , double );
     void travel(float , float , float );
     float getSpeed();
     void ResetTimerAchievement(int32_t );
-    void checkMovementStatistiscs(double , double , double );
+    virtual void checkMovementStatistiscs(double , double , double );
     void causeFallDamage(float , float );
     void doWaterSplashEffect();
     const SoundEvent* getFallDamageSound(int32_t );
@@ -427,7 +428,7 @@ struct Player : LivingEntity {
     uint8_t canUseCommandBlocks();
     static uint32_t GetModelTypeFromAnimBitmask(uint32_t );
     static uint32_t GetModelTypeFromTextureId(int32_t );
-    uint64_t getModelName();
+    uint32_t getModelName();
     static uint32_t hash_fnct(boost::shared_ptr<Player> );
     static bool eq_test(boost::shared_ptr<Player> , boost::shared_ptr<Player> );
     uint8_t getTexture();
