@@ -13,6 +13,7 @@ public:
 
     arrayWithLength();
     arrayWithLength(unsigned int count, bool clear);
+    arrayWithLength(T* values, unsigned int count);
     arrayWithLength(std::vector<T>& values);
 
     void resize(unsigned int newLength);
@@ -40,6 +41,13 @@ arrayWithLength<T>::arrayWithLength(unsigned int count, bool clear)
     }
 
     data = newData;
+    length = count;
+}
+
+template <class T>
+arrayWithLength<T>::arrayWithLength(T* values, unsigned int count)
+{
+    data = values;
     length = count;
 }
 
