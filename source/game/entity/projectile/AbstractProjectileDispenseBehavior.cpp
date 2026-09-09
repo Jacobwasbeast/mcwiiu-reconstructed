@@ -12,13 +12,7 @@
 #include "game/world/block/BlockSource.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DirectionProperty.hpp"
-
-class DispenserBlock
-{
-public:
-    static DirectionProperty* FACING;
-    static Position* getDispensePosition(BlockSource* blockSource);
-};
+#include "game/world/block/DispenserBlock.hpp"
 
 AbstractProjectileDispenseBehavior::~AbstractProjectileDispenseBehavior()
 {
@@ -34,8 +28,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
     {
         Position* position = DispenserBlock::getDispensePosition(blockSource);
         const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
-        not_null_ptr<ItemInstance> projectileItem = itemInstance->split(1);
-        boost::shared_ptr<Projectile> projectile = getProjectile(level, position, projectileItem);
+        boost::shared_ptr<Projectile> projectile = getProjectile(level, position, itemInstance);
         const Vec3i normal = direction->getNormal();
 
         projectile->shoot((double)normal.x, (double)normal.y + 0.1, (double)normal.z,
@@ -44,6 +37,7 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
         level->addEntity(entity);
 
         delete position;
+        itemInstance->split(1);
     }
     else
     {

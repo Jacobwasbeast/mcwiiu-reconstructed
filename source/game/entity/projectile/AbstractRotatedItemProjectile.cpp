@@ -25,9 +25,9 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
-void fjSanitisePosAndVel(Entity* entity);
+static void sanitizePositionAndVelocity(Entity* entity);
 
-void fjSanitisePosAndVel(Entity* entity)
+static void sanitizePositionAndVelocity(Entity* entity)
 {
     entity->mX = std::floor(entity->mX * 32.0) * 0.03125;
     entity->mY = std::floor(entity->mY * 32.0) * 0.03125;
@@ -115,7 +115,7 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     mLife = 0;
     mXRot = static_cast<float>(std::atan2(y, horizontal) * 57.2957763671875);
     mXRotO = mXRot;
-    fjSanitisePosAndVel(this);
+    sanitizePositionAndVelocity(this);
 }
 
 void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot,
@@ -130,7 +130,7 @@ void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> 
     mZd += entity->mZd;
     if (!entity->mOnGround)
         mYd += entity->mYd;
-    fjSanitisePosAndVel(this);
+    sanitizePositionAndVelocity(this);
 }
 
 void AbstractRotatedItemProjectile::setFlag(int flag, bool value)

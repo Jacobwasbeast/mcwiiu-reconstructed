@@ -2,6 +2,8 @@
 
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -11,9 +13,7 @@
 #include "game/item/Potion.hpp"
 #include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/minigame/EMiniGameId.hpp"
-#include "game/client/render/ParticleType.hpp"
 #include "game/world/Level.hpp"
 
 const EntityDataAccessor<int>* TippableArrow::DATA_EFFECT_COLOR_ID = NULL;
@@ -118,7 +118,7 @@ void TippableArrow::setEffectsFromItem(const not_null_ptr<ItemInstance>& itemIns
 void TippableArrow::addEffect(MobEffectInstance* effect)
 {
     mEffects.push_back(effect);
-    if (mPotion == Potions::EMPTY && mEffects.empty())
+    if (mPotion == Potions::EMPTY && mEffects.begin() == mEffects.end())
         mEntityData->set(DATA_EFFECT_COLOR_ID, -1, true);
     else
     {
@@ -227,7 +227,8 @@ void TippableArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& ent
     {
         int duration = (*it)->getDuration() /
             (Minecraft::InMiniGame(eMiniGameId_Battle, false) ? 3 : 8);
-        if (duration < 1) duration = 1;
+        if (duration < 1)
+            duration = 1;
         entity->addEffect(new MobEffectInstance((*it)->getEffect(), duration,
             (*it)->getAmplifier(), (*it)->isAmbient(), (*it)->isVisible()),
             boost::shared_ptr<Entity>());

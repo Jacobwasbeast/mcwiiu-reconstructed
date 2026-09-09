@@ -58,8 +58,9 @@ bool Projectile::onHit(const HitResult* result)
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
     {
         BlockPos pos = result->getBlockPos();
-        mLevel->explode(boost::shared_ptr<Entity>(), pos.x, pos.y, pos.z, 2.0f,
+        mLevel->explode(boost::shared_ptr<Entity>(), pos.x - 0.5, pos.y - 0.5, pos.z - 0.5, 2.0f,
             false, true, false, false, false, 1.0f);
     }
     return false;
 }
+

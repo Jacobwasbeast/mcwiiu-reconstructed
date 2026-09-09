@@ -4,13 +4,10 @@
 #include "game/core/GameRules.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
-
-class LivingEntity : public Entity
-{
-};
 
 SmallFireball::SmallFireball(Level* level)
     : Fireball(level)
@@ -107,5 +104,5 @@ bool SmallFireball::hurt(const DamageSource*, float)
 
 unsigned long long SmallFireball::GetType()
 {
-    return 0x8A40000400000000ULL;
+    return 0x8A400004ULL;
 }

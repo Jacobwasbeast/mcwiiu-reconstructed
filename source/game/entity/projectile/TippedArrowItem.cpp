@@ -1,17 +1,12 @@
 #include "game/entity/projectile/TippedArrowItem.hpp"
 
 #include "game/core/IconRegister.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/entity/projectile/TippableArrow.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/minigame/EMiniGameId.hpp"
-
-class Minecraft
-{
-public:
-    static bool InMiniGame(EMiniGameId miniGameId, bool includeNextGameMode);
-};
 
 TippedArrowItem::~TippedArrowItem()
 {

@@ -7,11 +7,8 @@
 #include "game/core/HitResult.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
-
-class LivingEntity : public Entity
-{
-};
 
 LargeFireball::LargeFireball(Level* level)
     : Fireball(level), mExplosionPower(1)
@@ -82,5 +79,5 @@ void LargeFireball::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned long long LargeFireball::GetType()
 {
-    return 0x8a40000300000000ULL;
+    return 0x000000008A400003ULL;
 }

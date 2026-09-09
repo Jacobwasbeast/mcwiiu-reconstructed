@@ -5,35 +5,18 @@
 #include <vector>
 
 #include "game/core/HitResult.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/projectile/ProjectileUtil.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
-
-class LivingEntity : public Entity
-{
-};
-
-class DamageSource
-{
-public:
-    boost::shared_ptr<Entity> getDirectEntity() const;
-};
-
-class ProjectileUtil
-{
-public:
-    static HitResult* forwardsRaycast(const boost::shared_ptr<Entity>& entity,
-                                      bool checkEntities,
-                                      const std::vector<boost::shared_ptr<Entity> >* ignoredEntities,
-                                      const std::vector<unsigned long long>* ignoredEntityTypes);
-    static void rotateTowardsMovement(const boost::shared_ptr<Entity>& entity, float rotationSpeed);
-};
 
 Fireball::Fireball(Level* level)
     : Entity(level, true), mOwner(), mLife(0), mUnknown(0), mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0)
@@ -279,5 +262,5 @@ std::vector<unsigned long long>* Fireball::getEntityTypesToIgnoreCollisionsWith(
 
 unsigned long long Fireball::GetType()
 {
-    return 0x8A40000000000000ULL;
+    return 0x000000008A400000ULL;
 }

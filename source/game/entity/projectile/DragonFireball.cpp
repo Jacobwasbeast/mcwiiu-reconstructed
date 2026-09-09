@@ -9,6 +9,8 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
 #include "game/item/AreaEffectCloud.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -66,7 +68,7 @@ void DragonFireball::onHit(const HitResult* result)
         cloud->setDuration(200);
         cloud->setRadiusPerTick((7.0f - cloud->getRadius()) /
                                 static_cast<float>(cloud->getDuration() - 1));
-        cloud->addEffect(NULL);
+        cloud->addEffect(new MobEffectInstance(MobEffects::HARM, 1, 1));
         mLevel->addEntity(boost::static_pointer_cast<Entity>(cloud));
 
         if (entities != NULL)
@@ -112,7 +114,7 @@ bool DragonFireball::shouldBurn()
 
 unsigned long long DragonFireball::GetType()
 {
-    return 0x8a40000100000000ULL;
+    return 0x000000008A400001ULL;
 }
 
 void DragonFireball::create(Level* level)
