@@ -5,10 +5,6 @@ class __N_14_chat_Queue_cpp_8071bfa5
 {
 public:
     static void flushQueue(unsigned int streamIndex);
-
-private:
-    unsigned int queuedPacketCount;
-    unsigned int queuedPacketBytes;
 };
 
 #endif

@@ -8,7 +8,6 @@
 extern int FFLiGetDatabasePath(char *path, unsigned int pathSize, unsigned long long titleId, const char *relativePath);
 extern unsigned int FFLiConvertFSStatusToFFLResult(int status);
 extern unsigned int FFLiMin(unsigned int first, unsigned int second);
-extern int FFLiMakeDatabaseDir(FFLiFsCommand *command, const char *path);
 
 int __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(char *path, unsigned int pathSize, unsigned long long titleId, const char *relativePath)
 {
@@ -127,9 +126,4 @@ int __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDirPath(char *directoryPath
     std::memcpy(directoryPath, path, static_cast<unsigned int>(separator - path));
     directoryPath[separator - path] = 0;
     return 0;
-}
-
-int __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::MakeDatabaseDir(FFLiFsCommand *command, const char *path)
-{
-    return FFLiMakeDatabaseDir(command, path);
 }

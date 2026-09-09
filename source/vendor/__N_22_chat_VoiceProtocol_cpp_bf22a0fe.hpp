@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "nn/pia.h"
 #include "nn/pia/Reconstruction.hpp"
+#include "vendor/__N_18_chat_HandsFree_cpp_120265b3.hpp"
+#include "vendor/VCTAudio.hpp"
 
 namespace nn { namespace pia {
 typedef int Result;
@@ -13,7 +15,6 @@ unsigned char IsInitialized();
 }
 namespace chat {
 
-struct VCTSession;
 class HandsFree;
 
 enum Codec { CODEC_0 = 0, CODEC_1, CODEC_2, CODEC_3, CODEC_4, CODEC_5, CODEC_6 };
@@ -69,12 +70,11 @@ private:
     Result setupProtocols(unsigned char maxPlayers, unsigned int dataSize);
     void freeProc();
     void destroyProtocols();
-    Result receiveCore(void* pData, unsigned int uiSize,
-                       unsigned short* pStationIndex, void* pCidBuffer);
+    Result receiveCore(void* pData, unsigned int uiSize, unsigned short* pCids);
 
     unsigned int m_secondaryState;
     unsigned int m_secondaryStatus;
-    VCTSession* m_vctSession;
+    ::VCTSession* m_vctSession;
     void* m_auxiliarySession;
     StationIndex m_stationIndex;
     unsigned int m_codec;
@@ -103,11 +103,6 @@ extern unsigned int g_voiceAudioFrameLength;
 extern unsigned int g_voiceAudioDataSize;
 extern unsigned char g_voiceVadActivity;
 extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance;
-extern void VCT_ClearStreaming(nn::pia::chat::VCTSession* session);
-
-
-enum VCTCodec { VCT_CODEC_0 = 0, VCT_CODEC_1, VCT_CODEC_2, VCT_CODEC_3, VCT_CODEC_4, VCT_CODEC_5, VCT_CODEC_6 };
-enum TMC_HF_EC_MODE { TMC_HF_EC_MODE_0 = 0, TMC_HF_EC_MODE_1, TMC_HF_EC_MODE_2 };
 
 class __N_22_chat_VoiceProtocol_cpp_bf22a0fe
 {

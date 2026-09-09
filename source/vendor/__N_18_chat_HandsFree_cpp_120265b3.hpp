@@ -1,6 +1,8 @@
 #ifndef SOURCE_VENDOR___N_18_CHAT_HANDSFREE_CPP_120265B3_HPP
 #define SOURCE_VENDOR___N_18_CHAT_HANDSFREE_CPP_120265B3_HPP
 
+#include "vendor/TmcHandsFree.hpp"
+
 enum TMC_HF_EC_MODE
 {
     TMC_HF_EC_MODE_0 = 0,

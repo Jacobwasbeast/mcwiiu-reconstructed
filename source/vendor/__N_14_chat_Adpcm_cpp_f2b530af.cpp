@@ -63,6 +63,30 @@ void __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_24(const unsigned char* in
     for (i = 0; i < count / 3; ++i) { b0=input[i*3]; b1=input[i*3+1]; b2=input[i*3+2]; code[0]=b0>>5; code[1]=(b0>>2)&7; code[2]=((b0&3)<<1)|(b1>>7); code[3]=(b1>>4)&7; code[4]=(b1>>1)&7; code[5]=((b1&1)<<2)|(b2>>6); code[6]=(b2>>3)&7; code[7]=b2&7; for(j=0;j<8;++j) output[i*8+j]=adpcm_decode(code[j],3,state); }
 }
 
+void nn::pia::chat::Adpcm::Decode(const unsigned char* pData, short* pOut, unsigned int uiSize, VCTCodec codec)
+{
+    const unsigned int headerSize = sizeof(State);
+    const State* header = reinterpret_cast<const State*>(pData);
+    State state;
+    state.sample = header->sample;
+    state.index = header->index;
+
+    switch (codec)
+    {
+    case VCT_CODEC_2:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_16(pData + headerSize, pOut, uiSize - headerSize, &state);
+        break;
+    case VCT_CODEC_3:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_24(pData + headerSize, pOut, uiSize - headerSize, &state);
+        break;
+    case VCT_CODEC_4:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_32(pData + headerSize, pOut, uiSize - headerSize, &state);
+        break;
+    default:
+        break;
+    }
+}
+
 static void adpcm_encode_codes(unsigned char* output, const short* input, unsigned int count, unsigned int bits, nn::pia::chat::Adpcm::State* state)
 {
     unsigned int i; for (i=0;i<count/(8/bits);++i) { unsigned int j; unsigned char b=0; for(j=0;j<8/bits;++j) b |= (unsigned char)(adpcm_encode(input[i*(8/bits)+j],bits,state) << (j*bits)); output[i]=b; }
@@ -72,4 +96,28 @@ void __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_32(unsigned char* output, 
 void __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_24(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     unsigned int i,j; for(i=0;i<count/8;++i) { unsigned int code[8]; unsigned char b0=0,b1=0,b2=0; for(j=0;j<8;++j) code[j]=adpcm_encode(input[i*8+j],3,state); b0=(unsigned char)((code[0]<<5)|(code[1]<<2)|(code[2]>>1)); b1=(unsigned char)((code[2]<<7)|(code[3]<<4)|(code[4]<<1)|(code[5]>>2)); b2=(unsigned char)((code[5]<<6)|(code[6]<<3)|code[7]); output[i*3]=b0; output[i*3+1]=b1; output[i*3+2]=b2; }
+}
+
+void nn::pia::chat::Adpcm::Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize, State* pState, VCTCodec codec)
+{
+    const unsigned int headerSize = sizeof(State);
+    State* header = reinterpret_cast<State*>(pOut);
+    header->sample = pState->sample;
+    header->index = pState->index;
+    header->reserved = 0;
+
+    switch (codec)
+    {
+    case VCT_CODEC_2:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_16(pOut + headerSize, pAudio, uiSize, pState);
+        break;
+    case VCT_CODEC_3:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_24(pOut + headerSize, pAudio, uiSize, pState);
+        break;
+    case VCT_CODEC_4:
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_32(pOut + headerSize, pAudio, uiSize, pState);
+        break;
+    default:
+        break;
+    }
 }

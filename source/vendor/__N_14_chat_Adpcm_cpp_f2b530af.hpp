@@ -1,26 +1,7 @@
 #ifndef SOURCE_VENDOR___N_14_CHAT_ADPCM_CPP_F2B530AF_HPP
 #define SOURCE_VENDOR___N_14_CHAT_ADPCM_CPP_F2B530AF_HPP
 
-#include <stdint.h>
-
-namespace nn
-{
-namespace pia
-{
-namespace chat
-{
-class Adpcm
-{
-public:
-    struct State
-    {
-        short sample;
-        unsigned char index;
-    };
-};
-}
-}
-}
+#include "nn/pia/chat/Adpcm.hpp"
 
 class __N_14_chat_Adpcm_cpp_f2b530af
 {
