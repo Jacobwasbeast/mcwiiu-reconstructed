@@ -212,12 +212,12 @@ extern "C" void Platform_SeekFromBeginning(MilesFile* pFile, unsigned int uPosit
 
 void TlsSetValue(int iIndex, void* pValue)
 {
-    OSSetThreadSpecific((unsigned int)iIndex, pValue);
+    OSSetThreadSpecific((OSThreadSpecificID)iIndex, pValue);
 }
 
 void* TlsGetValue(int iIndex)
 {
-    return OSGetThreadSpecific((unsigned int)iIndex);
+    return OSGetThreadSpecific((OSThreadSpecificID)iIndex);
 }
 
 static rrThread* find_rrthread_in_tls(rrThread* pThread)
@@ -321,7 +321,7 @@ extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long lon
     return lPrevious;
 }
 
-extern "C" void rrMutexCreate(rrMutex* pMutex)
+extern "C" void rrMutexCreate(rrMutex* pMutex, int)
 {
     rriMutex* pNative;
 

@@ -1,23 +1,17 @@
 #include "vendor/MilesApi.hpp"
 
 #include <stddef.h>
+#include <string.h>
+
+#include "vendor/MilesFilters.hpp"
+#include "vendor/MilesMixer.hpp"
+#include "vendor/MilesRib.hpp"
+#include "vendor/MilesTime.hpp"
 
 typedef int (*MSS_PROVIDER_STARTUP_CALLBACK)();
-typedef int (*RIB_MAIN_CALLBACK)(unsigned int uProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
 
 extern "C" void* platform_alloc(unsigned int uSize);
 extern "C" void platform_free(void* pBlock);
-
-extern "C" int MIX_RIB_MAIN(unsigned int uProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
-
-extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain, const char* pLibraryName);
-extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int* puIndex, unsigned int* puProvider);
-extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* pInterfaceName, unsigned int uEntryType, const char* pEntryName, void* pEntry);
-extern "C" void RIB_free_provider_library(unsigned int uProvider);
-
-extern "C" void FLT_init_list();
-
-extern "C" unsigned long long rrGetTime();
 
 static const unsigned int MILES_API_ENUMERATE_FIRST = 0xFFFFFFFF;
 
@@ -25,6 +19,8 @@ static const unsigned int MILES_LOCK_STATE_RELEASED = 1;
 static const unsigned int MILES_LOCK_STATE_ACQUIRED = 2;
 
 static const int MSS_PROVIDER_ALREADY_STARTED = 2;
+
+static const int MILES_API_MUTEX_KIND = 2;
 
 static const char MILES_API_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\genericmss.cpp";
 static const char MILES_API_MUTEX_NAME[] = "Miles mutex";
@@ -116,6 +112,17 @@ extern "C" int AIL_API_background()
     return 0;
 }
 
+extern "C" void AIL_API_set_error(const char* pError)
+{
+    if (pError == NULL)
+    {
+        AIL_error[0] = '\0';
+        return;
+    }
+
+    strcpy(AIL_error, pError);
+}
+
 extern "C" void* AIL_API_mem_alloc_lock(unsigned int uSize)
 {
     return AIL_mem_alloc_handler(uSize);
@@ -178,7 +185,7 @@ extern "C" void AIL_API_startup()
     rrGetTime();
 
     MSS_api_started = 1;
-    rrMutexCreate(&MSS_api_mutex);
+    rrMutexCreate(&MSS_api_mutex, MILES_API_MUTEX_KIND);
 
     if (MSS_profile != NULL)
     {

@@ -26,6 +26,7 @@ extern "C" void AIL_lock_mutex();
 extern "C" void AIL_unlock_mutex();
 extern "C" void AIL_API_startup();
 extern "C" int AIL_API_background();
+extern "C" void AIL_API_set_error(const char* pError);
 extern "C" void* AIL_API_mem_alloc_lock(unsigned int uSize);
 extern "C" void AIL_API_mem_free_lock(void* pBlock);
 

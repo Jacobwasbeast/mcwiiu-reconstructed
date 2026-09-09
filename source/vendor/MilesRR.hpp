@@ -54,7 +54,7 @@ extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTa
 extern "C" int rrAtomicAddExchange32(volatile int* pTarget, int iValue);
 extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long long lValue);
 
-extern "C" void rrMutexCreate(rrMutex* pMutex);
+extern "C" void rrMutexCreate(rrMutex* pMutex, int iKind);
 extern "C" void rrMutexDestroy(rrMutex* pMutex);
 extern "C" void rrMutexLock(rrMutex* pMutex);
 extern "C" void rrMutexUnlock(rrMutex* pMutex);

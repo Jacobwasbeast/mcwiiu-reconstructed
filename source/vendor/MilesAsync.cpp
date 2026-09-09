@@ -35,6 +35,8 @@ static const unsigned int MILES_ASYNC_FLAG_NO_SEEK = 4;
 static const unsigned int MILES_LOCK_STATE_RELEASED = 1;
 static const unsigned int MILES_LOCK_STATE_ACQUIRED = 2;
 
+static const int MILES_ASYNC_MUTEX_KIND = 1;
+
 static const unsigned int MILES_ASYNC_THREAD_STACK_SIZE = 0x4000;
 static const unsigned int MILES_ASYNC_THREAD_BLOCK_SIZE = 0x4100;
 static const unsigned int MILES_ASYNC_THREAD_FLAGS = 8;
@@ -605,7 +607,7 @@ int MilesAsyncStartup_default()
         MilesAsyncStarted = 1;
         MilesAsyncQuitting = 0;
 
-        rrMutexCreate(&MilesAsyncQueueMutex);
+        rrMutexCreate(&MilesAsyncQueueMutex, MILES_ASYNC_MUTEX_KIND);
 
         if (MSS_profile != NULL)
         {
