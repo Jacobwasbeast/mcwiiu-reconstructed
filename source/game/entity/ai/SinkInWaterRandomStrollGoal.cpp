@@ -16,13 +16,13 @@ SinkInWaterRandomStrollGoal::~SinkInWaterRandomStrollGoal()
 
 void SinkInWaterRandomStrollGoal::tick()
 {
-    mMob->getNavigation()->tick();
+    mMob->isInWater();
     Goal::tick();
 }
 
 Vec3* SinkInWaterRandomStrollGoal::getPosition()
 {
-    if (mMob->getNavigation()->isDone())
+    if (mMob->isInWater())
     {
         return RandomStrollGoal::getPosition();
     }

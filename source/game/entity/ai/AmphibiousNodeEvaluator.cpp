@@ -58,6 +58,10 @@ double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
 
 Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange, double maxFallDistance)
 {
+    BlockPos position(x, y, z);
+    if (inWaterDependentPosHeight(position) - maxFallDistance > 0.0)
+        return NULL;
+
     Node* node = NodeEvaluator::getNode(x, y, z);
     const BlockPathTypes* type = WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y, z, mMob,
                                                                       mEntityWidth, mEntityHeight, mEntityY,

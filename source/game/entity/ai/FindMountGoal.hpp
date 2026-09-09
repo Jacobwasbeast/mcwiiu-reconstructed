@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_FINDMOUNTGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -26,7 +27,7 @@ public:
 private:
     double getAttackReachSqr();
 
-    boost::shared_ptr<Entity> mTarget;
+    boost::weak_ptr<Entity> mTarget;
     float mTargetDistance;
     int mTimeToRecalcPath;
     int mStartCounter;

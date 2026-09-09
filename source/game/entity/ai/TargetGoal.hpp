@@ -4,6 +4,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/Goal.hpp"
 
@@ -28,7 +29,10 @@ public:
     bool canReach(boost::shared_ptr<LivingEntity> target);
     virtual bool canAttack(boost::shared_ptr<LivingEntity> target, bool allowInvulnerablePlayers);
     void setUnseenMemoryTicks(int ticks);
-    virtual std::wstring getName();
+    virtual std::wstring getName()
+    {
+        return std::wstring(L"TargetGoal");
+    }
 
 protected:
     PathfinderMob* mMob;
@@ -37,7 +41,7 @@ protected:
     int mCanReach;
     int mTargetSearchDelay;
     int mUnseenTicks;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     int mUnseenMemoryTicks;
 };
 

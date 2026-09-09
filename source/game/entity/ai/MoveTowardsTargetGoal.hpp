@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_MOVETOWARDSTARGETGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -24,7 +25,7 @@ public:
 
 private:
     PathfinderMob* mMob;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     Vec3 mWantedPosition;
     double mSpeedModifier;
     float mWithin;

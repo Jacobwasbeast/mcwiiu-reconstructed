@@ -5,9 +5,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/Dolphin.hpp"
+#include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -23,7 +26,7 @@ bool PlayWithItemsGoal::canUse()
 
     AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(Entity), searchBox);
+        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
     bool result = true;
     if (entities->empty())
     {
@@ -42,10 +45,11 @@ void PlayWithItemsGoal::start()
 {
     AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(Entity), searchBox);
+        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
     if (!entities->empty())
     {
-        mDolphin->getNavigation()->moveTo(entities->at(0), 1.2);
+        mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);
+        mDolphin->playSound(SoundEvents::DOLPHIN_PLAY, 1.0f, 1.0f);
     }
     delete entities;
 }
@@ -56,7 +60,7 @@ void PlayWithItemsGoal::stop()
     if (!item->isEmpty())
     {
         mDolphin->drop(item);
-        mDolphin->mLevel->broadcastEntityEvent(mDolphin->shared_from_this(), 0, 0);
+        mDolphin->setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
     }
 }
 
@@ -66,21 +70,21 @@ void PlayWithItemsGoal::tick()
     if (!item->isEmpty())
     {
         mDolphin->drop(item);
-        mDolphin->mLevel->broadcastEntityEvent(mDolphin->shared_from_this(), 0, 0);
+        mDolphin->setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
         return;
     }
 
     AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(Entity), searchBox);
+        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
     if (!entities->empty())
     {
-        mDolphin->getNavigation()->moveTo(entities->at(0), 1.2);
+        mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);
     }
     delete entities;
 }
 
 std::wstring PlayWithItemsGoal::getName()
 {
-    return std::wstring(L"Play with Item Goal!!");
+    return L"Play with Item Goal!!";
 }

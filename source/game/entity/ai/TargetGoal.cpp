@@ -1,22 +1,26 @@
 #include "game/entity/ai/TargetGoal.hpp"
 
+#include <cmath>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/Path.hpp"
 #include "game/core/Sensing.hpp"
+#include "game/core/Team.hpp"
 #include "game/core/WitherBoss.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
-#include "game/entity/mob/SharedMonsterAttributes.hpp"
-#include "game/entity/mob/WitherSkeleton.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/mob/WitherSkeleton.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 TargetGoal::TargetGoal(PathfinderMob* mob, bool mustSee)
     : Goal()
@@ -49,37 +53,47 @@ void TargetGoal::_init(PathfinderMob* mob, bool mustSee, bool mustReach)
 bool TargetGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
+    if (!target)
+        target = mTarget.lock();
+
     if (!target || !target->isAlive())
         return false;
 
-    if ((mMob->GetType() & 0x000000005D540442ULL) == 0x000000005D540442ULL)
+    if (mMob->GetType() == 0x5D540442ULL)
     {
-        WitherSkeleton* wither = static_cast<WitherSkeleton*>(mMob);
-        boost::shared_ptr<LivingEntity> parent =
-            boost::static_pointer_cast<LivingEntity>(wither->getWitherParent());
+        boost::shared_ptr<WitherBoss> parent =
+            static_cast<WitherSkeleton*>(mMob)->getWitherParent();
         if (parent && parent->getId() == target->getId())
             return false;
     }
 
-    if (mMob->distanceToSqr(target) > getFollowDistance() * getFollowDistance())
+    Team* team = mMob->getTeam();
+    if (team != NULL && target->getTeam() == team)
+        return false;
+
+    double followDistance = getFollowDistance();
+    if (mMob->distanceToSqr(target) > followDistance * followDistance)
         return false;
 
     if (mMustSee)
     {
         if (mMob->getSensing()->canSee(target))
             mUnseenTicks = 0;
-        else
-            ++mUnseenTicks;
-        if (mUnseenTicks > mUnseenMemoryTicks)
+        else if (++mUnseenTicks > mUnseenMemoryTicks)
             return false;
     }
 
     if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
-        if (target->isCreative() || mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL
+            || boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+        {
+            mMob->setTarget(boost::shared_ptr<LivingEntity>());
             return false;
+        }
     }
 
+    mMob->setTarget(target);
     return true;
 }
 
@@ -140,9 +154,9 @@ bool TargetGoal::canReach(boost::shared_ptr<LivingEntity> target)
     if (last == NULL)
         return false;
 
-    int x = (int)target->mX;
-    int z = (int)target->mZ;
-    bool result = ((last->x - x) * (last->x - x) + (last->z - z) * (last->z - z)) <= 2.25;
+    int x = (int)std::floor(target->mX);
+    int z = (int)std::floor(target->mZ);
+    bool result = (double)((last->x - x) * (last->x - x) + (last->z - z) * (last->z - z)) <= 2.25;
     delete path;
     return result;
 }
@@ -152,27 +166,24 @@ bool TargetGoal::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInv
     if (!canAttack(mMob, target, allowInvulnerablePlayers, mMustSee))
         return false;
 
-    BlockPos pos((int)target->mX, (int)target->mY, (int)target->mZ);
+    BlockPos pos((int)std::floor(target->mX), (int)std::floor(target->mY),
+                 (int)std::floor(target->mZ));
     if (!mMob->isWithinRestriction(pos))
         return false;
 
     if (!mMustReach)
         return true;
 
-    --mTargetSearchDelay;
-    if (mTargetSearchDelay > 0 && mCanReach != 0)
-        return mCanReach == 1;
+    if (--mTargetSearchDelay <= 0)
+        mCanReach = 0;
 
-    mCanReach = canReach(target) ? 1 : 2;
-    return mCanReach == 1;
+    if (mCanReach == 0)
+        mCanReach = canReach(target) ? 1 : 2;
+
+    return mCanReach != 2;
 }
 
 void TargetGoal::setUnseenMemoryTicks(int ticks)
 {
     mUnseenMemoryTicks = ticks;
-}
-
-std::wstring TargetGoal::getName()
-{
-    return std::wstring(L"TargetGoal");
 }

@@ -3,10 +3,7 @@
 #include "game/entity/ai/EntitySelector.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
-
-class LivingEntity : public Entity
-{
-};
+#include "game/entity/mob/LivingEntity.hpp"
 
 SubselectEntitySelector::SubselectEntitySelector(NearestAttackableTargetGoal* goal, const Predicate<boost::shared_ptr<Entity> >* selector, bool ownsSelector)
     : mOwnsSelector(ownsSelector),

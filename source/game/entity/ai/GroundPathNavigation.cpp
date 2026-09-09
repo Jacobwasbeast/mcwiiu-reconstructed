@@ -16,7 +16,7 @@ GroundPathNavigation::GroundPathNavigation(Mob* mob, Level* level, bool createPa
 {
     if (createPathFinder)
     {
-        this->createPathFinder();
+        mPathFinder = this->createPathFinder();
     }
 }
 
@@ -29,10 +29,10 @@ NodeEvaluator* GroundPathNavigation::getNodeEvaluator()
     return &mNodeEvaluator;
 }
 
-void GroundPathNavigation::createPathFinder()
+PathFinder* GroundPathNavigation::createPathFinder()
 {
     mNodeEvaluator.setCanPassDoors(true);
-    mPathFinder = new PathFinder(&mNodeEvaluator);
+    return new PathFinder(&mNodeEvaluator);
 }
 
 bool GroundPathNavigation::canFloat()

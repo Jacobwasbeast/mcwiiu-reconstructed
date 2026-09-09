@@ -18,7 +18,7 @@ public:
     virtual ~GroundPathNavigation();
 
     virtual NodeEvaluator* getNodeEvaluator();
-    virtual void createPathFinder();
+    virtual PathFinder* createPathFinder();
     bool canFloat();
     bool canSinkInWaterWalk();
     virtual bool canUpdatePath();

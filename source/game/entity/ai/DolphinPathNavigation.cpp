@@ -8,6 +8,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
 
 DolphinPathNavigation::DolphinPathNavigation(Dolphin* dolphin, Level* level)
     : WaterBoundPathNavigation(dolphin, level, true, true)
@@ -25,20 +26,19 @@ bool DolphinPathNavigation::canUpdatePath()
 
 bool DolphinPathNavigation::isStableDestination(const BlockPos& pos)
 {
-    if (mMob->isInWaterOrBubble())
+    if (mMob->isInWater())
         return WaterBoundPathNavigation::isStableDestination(pos);
-    return !mLevel->getBlock(pos)->isPathfindable(mLevel, pos);
+    return !mLevel->getBlockState(pos)->isSolid();
 }
 
 void DolphinPathNavigation::updatePath()
 {
-    if (mMob->isInWaterOrBubble())
+    if (mMob->isInWater())
     {
         WaterBoundPathNavigation::updatePath();
         return;
     }
 
-    boost::shared_ptr<Entity> entity = mMob->shared_from_this();
     Vec3* mobPos = getTempMobPos();
     int index = mPath->getIndex();
     int size = mPath->getSize();
@@ -47,15 +47,16 @@ void DolphinPathNavigation::updatePath()
 
     while (index < size)
     {
-        Vec3* pathPos = mPath->getPos(entity, index);
+        Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), index);
         Vec3* horizontalPos = Vec3::newTemp(mobPos->x, pathPos->y, mobPos->z);
         if (horizontalPos->distanceToSqr(pathPos) < waypointDistance &&
             std::fabs(mobPos->y - pathPos->y) < waypointHeight)
             mPath->setIndex(index + 1);
         ++index;
+        size = mPath->getSize();
     }
 
-    int width = static_cast<int>(std::ceil(mMob->mBbWidth));
+    int width = static_cast<int>(ceilf(mMob->mBbWidth));
     int height = static_cast<int>(mMob->mBbHeight) + 1;
     int best = mPath->getIndex() + 6;
     if (size - 1 < best)
@@ -65,7 +66,7 @@ void DolphinPathNavigation::updatePath()
     const double maxDistance = 36.0;
     while (index < best)
     {
-        Vec3* pathPos = mPath->getPos(entity, best);
+        Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), best);
         if (pathPos->distanceToSqr(mobPos) <= maxDistance &&
             canMoveDirectly(mobPos, pathPos, width, height, width))
         {
@@ -82,7 +83,7 @@ void DolphinPathNavigation::updatePath()
 
 Path* DolphinPathNavigation::createPath(const BlockPos& pos)
 {
-    if (mMob->isInWaterOrBubble())
+    if (mMob->isInWater())
         return PathNavigation::createPath(pos);
     return PathNavigation::createDirectPath(pos);
 }

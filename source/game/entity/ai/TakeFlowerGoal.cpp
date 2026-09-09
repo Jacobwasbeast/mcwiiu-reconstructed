@@ -26,39 +26,44 @@ TakeFlowerGoal::~TakeFlowerGoal()
 bool TakeFlowerGoal::canUse()
 {
     if (mVillager->getAge() >= 0 || !mVillager->mLevel->isDay())
+    {
         return false;
+    }
 
-    AABB* area = mVillager->mBoundingBox->grow(6.0, 2.0, 6.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mVillager->mLevel->getEntitiesOfClass(typeid(VillagerGolem), area);
+    std::vector<boost::shared_ptr<Entity> >* entities = mVillager->mLevel->getEntitiesOfClass(
+        typeid(VillagerGolem), mVillager->mBoundingBox->grow(6.0, 2.0, 6.0));
+
+    if (entities->empty())
+    {
+        delete entities;
+        return false;
+    }
 
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
-        boost::shared_ptr<VillagerGolem> golem =
-            boost::dynamic_pointer_cast<VillagerGolem>(*it);
-        if (golem && golem->getOfferFlowerTick() > 0)
+        boost::shared_ptr<VillagerGolem> golem = boost::dynamic_pointer_cast<VillagerGolem>(*it);
+        if (golem->getOfferFlowerTick() > 0)
         {
             mGolem = golem;
-            delete entities;
-            return true;
+            break;
         }
     }
 
     delete entities;
-    return false;
+    return mGolem.lock().get() != NULL;
 }
 
 bool TakeFlowerGoal::canContinueToUse()
 {
-    return mGolem && mGolem->getOfferFlowerTick() > 0;
+    return mGolem.lock() && mGolem.lock()->getOfferFlowerTick() > 0;
 }
 
 void TakeFlowerGoal::start()
 {
     mTicks = mVillager->getRandom()->nextInt(320);
     mWantsToTakeFlower = false;
-    mVillager->getNavigation()->stop();
+    mGolem.lock()->getNavigation()->stop();
 }
 
 void TakeFlowerGoal::stop()
@@ -69,24 +74,17 @@ void TakeFlowerGoal::stop()
 
 void TakeFlowerGoal::tick()
 {
-    mVillager->getLookControl()->setLookAt(mGolem, 30.0f, 30.0f);
+    mVillager->getLookControl()->setLookAt(mGolem.lock(), 30.0f, 30.0f);
 
-    if (mGolem->getOfferFlowerTick() == mTicks)
+    if (mGolem.lock()->getOfferFlowerTick() == mTicks)
     {
-        if (!mWantsToTakeFlower)
-        {
-            mVillager->getNavigation()->moveTo(mGolem, 0.5);
-            mWantsToTakeFlower = true;
-        }
-    }
-    else if (!mWantsToTakeFlower)
-    {
-        return;
+        mVillager->getNavigation()->moveTo(mGolem.lock(), 0.5);
+        mWantsToTakeFlower = true;
     }
 
-    if (mVillager->distanceToSqr(mGolem) < 4.0)
+    if (mWantsToTakeFlower && mVillager->distanceToSqr(mGolem.lock()) < 4.0)
     {
-        mGolem->offerFlower(false);
+        mGolem.lock()->offerFlower(false);
         mVillager->getNavigation()->stop();
     }
 }

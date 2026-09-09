@@ -1,8 +1,10 @@
 #ifndef GAME_ENTITY_AI_TAKEFLOWERGOAL_HPP
 #define GAME_ENTITY_AI_TAKEFLOWERGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <string>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/Goal.hpp"
 
@@ -24,7 +26,7 @@ public:
 
 private:
     Villager* mVillager;
-    boost::shared_ptr<VillagerGolem> mGolem;
+    boost::weak_ptr<VillagerGolem> mGolem;
     int mTicks;
     bool mWantsToTakeFlower;
 };

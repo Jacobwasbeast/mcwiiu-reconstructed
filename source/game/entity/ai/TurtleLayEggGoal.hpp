@@ -10,7 +10,7 @@ class Turtle;
 class TurtleLayEggGoal : public MoveToBlockGoal
 {
 public:
-    TurtleLayEggGoal(Turtle* turtle, double speedModifier, double maxStayDistance);
+    TurtleLayEggGoal(Turtle* turtle, double speedModifier, double searchDistance);
     virtual ~TurtleLayEggGoal();
 
     bool isNearHome();
@@ -26,7 +26,7 @@ public:
 private:
     Turtle* mTurtle;
     int mLayEggCounter;
-    double mSpeedModifierSquared;
+    double mSearchDistanceSquared;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef GAME_ENTITY_AI_SWELLGOAL_HPP
 #define GAME_ENTITY_AI_SWELLGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -23,7 +23,7 @@ public:
 
 private:
     Creeper* mCreeper;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
 };
 
 #endif

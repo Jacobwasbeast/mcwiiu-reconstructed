@@ -4,6 +4,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/Goal.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -38,12 +39,13 @@ private:
     double mTargetZ;
     double mTargetXRot;
     double mTargetYRot;
-    boost::shared_ptr<Player> mPlayer;
+    boost::weak_ptr<Player> mPlayer;
+    int mDelayTemptCounter;
+    bool mRunning;
     arrayWithLength<Item*> mItems;
     arrayWithLength<int> mItemAuxValues;
     bool mCanScare;
-    bool mRunning;
-    int mDelayTemptCounter;
+    bool mField0x61;
 };
 
 #endif

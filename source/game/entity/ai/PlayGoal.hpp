@@ -1,7 +1,7 @@
 #ifndef GAME_ENTITY_AI_PLAYGOAL_HPP
 #define GAME_ENTITY_AI_PLAYGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -23,11 +23,10 @@ public:
 
 private:
     Villager* mVillager;
-    boost::shared_ptr<Villager> mTarget;
+    boost::weak_ptr<Villager> mTarget;
     double mSpeedModifier;
     Vec3 mPlayPosition;
     int mPlayTime;
-    void* mUnknown;
 };
 
 #endif

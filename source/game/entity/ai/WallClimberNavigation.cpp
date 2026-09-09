@@ -12,7 +12,7 @@ WallClimberNavigation::WallClimberNavigation(Mob* mob, Level* level)
     : GroundPathNavigation(mob, level, false),
       mTargetPos(0)
 {
-    GroundPathNavigation::createPathFinder();
+    mPathFinder = GroundPathNavigation::createPathFinder();
 }
 
 WallClimberNavigation::~WallClimberNavigation()
@@ -47,7 +47,7 @@ bool WallClimberNavigation::moveTo(boost::shared_ptr<Entity> entity, double spee
         mSpeedModifier = speed;
         return true;
     }
-    return PathNavigation::moveTo(path, speed);
+    return moveTo(path, speed);
 }
 
 void WallClimberNavigation::tick()
@@ -62,12 +62,12 @@ void WallClimberNavigation::tick()
         return;
     }
 
-    const double widthSquared = (double)mMob->mBbWidth * (double)mMob->mBbWidth;
+    const double widthSquared = (double)(mMob->mBbWidth * mMob->mBbWidth);
     if (widthSquared <= mMob->distanceSqrToBlockPosCenter(*mTargetPos))
     {
         if (mMob->mY <= (double)mTargetPos->y)
         {
-            static_cast<MoveControl*>(static_cast<Mob*>(mMob)->getMoveControl())->setWantedPosition(
+            mMob->getMoveControl()->setWantedPosition(
                 (double)mTargetPos->x, (double)mTargetPos->y, (double)mTargetPos->z, mSpeedModifier);
             return;
         }
@@ -75,11 +75,10 @@ void WallClimberNavigation::tick()
         BlockPos pos(mTargetPos->x, (int)std::floor(mMob->mY), mTargetPos->z);
         if (widthSquared <= mMob->distanceSqrToBlockPosCenter(pos))
         {
-            static_cast<MoveControl*>(static_cast<Mob*>(mMob)->getMoveControl())->setWantedPosition(
+            mMob->getMoveControl()->setWantedPosition(
                 (double)mTargetPos->x, (double)mTargetPos->y, (double)mTargetPos->z, mSpeedModifier);
             return;
         }
     }
-    delete mTargetPos;
     mTargetPos = 0;
 }

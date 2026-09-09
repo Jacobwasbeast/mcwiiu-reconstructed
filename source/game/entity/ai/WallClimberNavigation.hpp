@@ -17,6 +17,8 @@ public:
     WallClimberNavigation(Mob* mob, Level* level);
     virtual ~WallClimberNavigation();
 
+    using GroundPathNavigation::moveTo;
+
     virtual Path* createPath(const BlockPos& pos);
     virtual Path* createPath(boost::shared_ptr<Entity> entity);
     virtual bool moveTo(boost::shared_ptr<Entity> entity, double speed);

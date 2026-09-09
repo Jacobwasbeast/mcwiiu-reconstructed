@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_FOLLOWBOATGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -26,8 +27,8 @@ private:
     int mSearchDistance;
     int mMaxDistance;
     int mCooldown;
+    boost::weak_ptr<Entity> mTarget;
     int mState;
-    boost::shared_ptr<Entity> mTarget;
     Dolphin* mDolphin;
 };
 

@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_LANDONOWNERSSHOULDERGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -23,7 +24,7 @@ public:
 
 private:
     ShoulderRidingEntity* mOwner;
-    boost::shared_ptr<Player> mPlayer;
+    boost::weak_ptr<Player> mPlayer;
     bool mShoulderRiding;
 };
 

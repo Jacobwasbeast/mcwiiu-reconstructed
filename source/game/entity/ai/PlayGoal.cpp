@@ -5,6 +5,7 @@
 
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
@@ -13,8 +14,9 @@
 
 PlayGoal::PlayGoal(Villager* villager, double speedModifier)
     : mVillager(villager), mTarget(), mSpeedModifier(speedModifier),
-      mPlayPosition(1.0, 1.0, 1.0), mPlayTime(0)
+      mPlayPosition(0.0, 0.0, 0.0), mPlayTime(0)
 {
+    mTarget.reset();
     setRequiredControlFlags(1);
 }
 
@@ -37,13 +39,16 @@ bool PlayGoal::canUse()
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
-        boost::shared_ptr<Villager> candidate =
-            boost::dynamic_pointer_cast<Villager>(*it);
-        if (!candidate || candidate.get() == mVillager || candidate->isChasing()
-            || candidate->getAge() >= 0)
+        boost::shared_ptr<Entity> entity = *it;
+        if (entity.get() == mVillager)
             continue;
 
-        double distance = mVillager->distanceToSqr(*it);
+        boost::shared_ptr<Villager> candidate =
+            boost::dynamic_pointer_cast<Villager>(entity);
+        if (candidate->isChasing() || candidate->getAge() >= 0)
+            continue;
+
+        double distance = candidate->distanceToSqr(mVillager->shared_from_this());
         if (distance <= closestDistance)
         {
             closestDistance = distance;
@@ -52,57 +57,60 @@ bool PlayGoal::canUse()
     }
 
     delete entities;
-    if (mTarget)
-        return true;
 
-    boost::shared_ptr<Entity> self = mVillager->shared_from_this();
-    boost::shared_ptr<PathfinderMob> mob =
-        boost::dynamic_pointer_cast<PathfinderMob>(self);
-    return RandomPos::getPos(mob, 16, 3, -1) != 0;
+    if (!mTarget.lock())
+    {
+        boost::shared_ptr<PathfinderMob> mob =
+            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this());
+        if (RandomPos::getPos(mob, 16, 3, -1) == 0)
+            return false;
+    }
+    return true;
 }
 
 bool PlayGoal::canContinueToUse()
 {
-    return mPlayTime > 0 && mTarget;
+    return mPlayTime > 0 && mTarget.lock();
 }
 
 void PlayGoal::start()
 {
-    if (mTarget)
-        mTarget->setChasing(true);
+    if (mTarget.lock())
+        mVillager->setChasing(true);
     mPlayTime = 1000;
 }
 
 void PlayGoal::stop()
 {
-    if (mTarget)
-        mTarget->setChasing(false);
+    mVillager->setChasing(false);
     mTarget.reset();
 }
 
 void PlayGoal::tick()
 {
     --mPlayTime;
-    if (mTarget)
+
+    if (mTarget.lock())
     {
-        if (mVillager->distanceToSqr(mTarget) > 4.0)
-            mVillager->getNavigation()->moveTo(mTarget, mSpeedModifier);
+        if (mVillager->distanceToSqr(mTarget.lock()) > 4.0)
+            mVillager->getNavigation()->moveTo(mTarget.lock(), mSpeedModifier);
         return;
     }
 
-    PathNavigation* navigation = mVillager->getNavigation();
-    if (navigation->isDone())
+    if (mVillager->getNavigation()->isDone())
     {
-        boost::shared_ptr<Entity> self = mVillager->shared_from_this();
         boost::shared_ptr<PathfinderMob> mob =
-            boost::dynamic_pointer_cast<PathfinderMob>(self);
+            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this());
         Vec3* position = RandomPos::getPos(mob, 16, 3, -1);
         if (position != 0)
-            navigation->moveTo(position->x, position->y, position->z, mSpeedModifier);
+        {
+            mVillager->getNavigation()->moveTo(position->x, position->y, position->z,
+                                               mSpeedModifier);
+        }
     }
 }
 
 std::wstring PlayGoal::getName()
 {
-    return std::wstring(L"Play");
+    return L"Play";
 }

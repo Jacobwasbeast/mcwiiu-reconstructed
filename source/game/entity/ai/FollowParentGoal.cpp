@@ -4,16 +4,11 @@
 #include <vector>
 
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
-
-class Animal : public Entity
-{
-public:
-    virtual int getAge();
-    virtual PathNavigation* getNavigation();
-};
+#include "game/world/block/BlockPos.hpp"
 
 FollowParentGoal::FollowParentGoal(Animal* animal, double speedModifier)
     : mAnimal(animal), mParentAnimal(), mSpeedModifier(speedModifier), mTimeToRecalcPath(0)
@@ -27,47 +22,56 @@ FollowParentGoal::~FollowParentGoal()
 bool FollowParentGoal::canUse()
 {
     if (mAnimal->getAge() >= 0)
-        return false;
-
-    if (!mParentAnimal)
     {
-        AABB* searchBox = ((Entity*)mAnimal)->mBoundingBox->grow(8.0, 4.0, 8.0);
-        std::vector<boost::shared_ptr<Entity> >* animals =
-            ((Entity*)mAnimal)->mLevel->getEntitiesOfClass(typeid(*mAnimal), searchBox);
-        boost::shared_ptr<Animal> closest;
-        double closestDistance = 1.7976931348623157e+308;
+        return false;
+    }
 
-        std::vector<boost::shared_ptr<Entity> >::iterator it;
-        for (it = animals->begin(); it != animals->end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >* animals =
+        mAnimal->mLevel->getEntitiesOfClass(typeid(*mAnimal), mAnimal->mBoundingBox->grow(8.0, 4.0, 8.0));
+
+    boost::shared_ptr<Entity> parent;
+    double closestDistance = 1.7976931348623157e+308;
+
+    std::vector<boost::shared_ptr<Entity> >::iterator it;
+    for (it = animals->begin(); it != animals->end(); ++it)
+    {
+        Animal* candidate = static_cast<Animal*>(it->get());
+        if (candidate->getAge() >= 0)
         {
-            boost::shared_ptr<Animal> candidate = boost::dynamic_pointer_cast<Animal>(*it);
-            if (!candidate || candidate->getAge() < 0)
-                continue;
-
-            double distance = ((Entity*)mAnimal)->distanceToSqr(*it);
+            double distance = mAnimal->distanceToSqr(BlockPos(candidate));
             if (distance <= closestDistance)
             {
                 closestDistance = distance;
-                closest = candidate;
+                parent = *it;
             }
         }
-
-        delete animals;
-        if (!closest || closestDistance < 9.0)
-            return false;
-
-        mParentAnimal = closest;
     }
 
+    delete animals;
+
+    if (!parent || closestDistance < 9.0)
+    {
+        return false;
+    }
+
+    mParentAnimal = boost::dynamic_pointer_cast<Animal>(parent);
     return true;
 }
 
 bool FollowParentGoal::canContinueToUse()
 {
-    if (mAnimal->getAge() >= 0 || !mParentAnimal)
+    if (mAnimal->getAge() >= 0)
+    {
         return false;
+    }
 
-    double distance = ((Entity*)mAnimal)->distanceToSqr(mParentAnimal);
+    if (!mParentAnimal.lock() || !mParentAnimal.lock()->isAlive())
+    {
+        return false;
+    }
+
+    boost::shared_ptr<Animal> parent = mParentAnimal.lock();
+    double distance = mAnimal->distanceToSqr(boost::static_pointer_cast<Entity>(parent));
     return distance >= 9.0 && distance <= 256.0;
 }
 
@@ -87,8 +91,7 @@ void FollowParentGoal::tick()
     if (mTimeToRecalcPath < 1)
     {
         mTimeToRecalcPath = 10;
-        mAnimal->getNavigation()->moveTo(boost::static_pointer_cast<Entity>(mParentAnimal),
-                                         mSpeedModifier);
+        mAnimal->getNavigation()->moveTo(mParentAnimal.lock(), mSpeedModifier);
     }
 }
 

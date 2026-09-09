@@ -23,13 +23,14 @@ TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
     mTargetXRot = 0.0;
     mTargetYRot = 0.0;
     mPlayer.reset();
+    mDelayTemptCounter = 0;
+    mRunning = false;
     mItems.data = items.data;
     mItems.length = items.length;
     mItemAuxValues.data = itemAuxValues.data;
     mItemAuxValues.length = itemAuxValues.length;
     mCanScare = canScare;
-    mRunning = false;
-    mDelayTemptCounter = 0;
+    mField0x61 = false;
     setRequiredControlFlags(3);
 }
 
@@ -60,44 +61,72 @@ bool TemptGoal::canUse()
     }
 
     mPlayer = mMob->mLevel->getNearestPlayer(mMob->shared_from_this(), 10.0, -1.0);
-    if (!mPlayer)
+    if (!mPlayer.lock())
     {
         return false;
     }
 
-    return shouldFollowItem(mPlayer->getMainHandItem())
-        || shouldFollowItem(mPlayer->getOffhandItem());
+    mMob->setDespawnProtected();
+    return shouldFollowItem(mPlayer.lock()->getMainHandItem())
+        || shouldFollowItem(mPlayer.lock()->getOffhandItem());
 }
 
 bool TemptGoal::canContinueToUse()
 {
-    if (!mCanScare || !mPlayer)
+    if (mCanScare)
     {
-        return false;
+        boost::shared_ptr<Player> player = mPlayer.lock();
+        if (!player)
+        {
+            return false;
+        }
+
+        if (mMob->distanceToSqr(player) < 36.0)
+        {
+            if (player->distanceToSqr(mTargetX, mTargetY, mTargetZ) > 0.010000000000000002)
+            {
+                mDelayTemptCounter = 100;
+                return false;
+            }
+
+            double xRotDelta = fabs((double)player->mXRot - mTargetXRot);
+            double yRotDelta = fabs((double)player->mYRot - mTargetYRot);
+            if (xRotDelta > 360.0 - xRotDelta)
+            {
+                xRotDelta = 360.0 - xRotDelta;
+            }
+            if (yRotDelta > 360.0 - yRotDelta)
+            {
+                yRotDelta = 360.0 - yRotDelta;
+            }
+            if (xRotDelta > 5.0 || yRotDelta > 5.0)
+            {
+                mDelayTemptCounter = 100;
+                return false;
+            }
+        }
+        else
+        {
+            mTargetX = player->mX;
+            mTargetY = player->mY;
+            mTargetZ = player->mZ;
+        }
+
+        mTargetXRot = (double)player->mXRot;
+        mTargetYRot = (double)player->mYRot;
     }
 
-    if (mMob->distanceToSqr(mPlayer) < 36.0
-        && mMob->distanceToSqr(mTargetX, mTargetY, mTargetZ) > 0.01)
-    {
-        mDelayTemptCounter = 100;
-        return false;
-    }
-
-    mTargetX = mPlayer->mX;
-    mTargetY = mPlayer->mY;
-    mTargetZ = mPlayer->mZ;
-    mTargetXRot = (double)mPlayer->mXRot;
-    mTargetYRot = (double)mPlayer->mYRot;
-    return true;
+    return canUse();
 }
 
 void TemptGoal::start()
 {
-    mTargetX = mPlayer->mX;
-    mTargetY = mPlayer->mY;
-    mTargetZ = mPlayer->mZ;
-    mTargetXRot = (double)mPlayer->mXRot;
-    mTargetYRot = (double)mPlayer->mYRot;
+    boost::shared_ptr<Player> player = mPlayer.lock();
+    mTargetX = player->mX;
+    mTargetY = player->mY;
+    mTargetZ = player->mZ;
+    mTargetXRot = (double)player->mXRot;
+    mTargetYRot = (double)player->mYRot;
     mRunning = true;
 }
 
@@ -110,16 +139,16 @@ void TemptGoal::stop()
 
 void TemptGoal::tick()
 {
-    mMob->getLookControl()->setLookAt(mPlayer, mMob->getMaxHeadYRot(),
+    mMob->getLookControl()->setLookAt(mPlayer.lock(), mMob->getMaxHeadYRot(),
                                       mMob->getMaxHeadXRot());
 
-    if (mMob->distanceToSqr(mPlayer) < 6.25)
+    if (mMob->distanceToSqr(mPlayer.lock()) < 6.25)
     {
         mMob->getNavigation()->stop();
     }
     else
     {
-        mMob->getNavigation()->moveTo(mPlayer, mSpeedModifier);
+        mMob->getNavigation()->moveTo(mPlayer.lock(), mSpeedModifier);
     }
 }
 

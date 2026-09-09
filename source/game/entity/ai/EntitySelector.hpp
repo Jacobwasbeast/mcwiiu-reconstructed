@@ -14,6 +14,8 @@ bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity);
 namespace EntitySelector
 {
     extern Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS;
+    extern Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR;
+    extern Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE;
 
     Predicate<boost::shared_ptr<Entity> >* withinDistance(double x, double y, double z, double distance);
     Predicate<boost::shared_ptr<Entity> >* riding(boost::shared_ptr<Entity> entity);

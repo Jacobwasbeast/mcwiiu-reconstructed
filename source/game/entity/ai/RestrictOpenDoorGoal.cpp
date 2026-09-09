@@ -4,26 +4,12 @@
 
 #include "game/core/DoorInfo.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
-
-class Entity;
-
-class Level
-{
-public:
-    bool isDay();
-    boost::shared_ptr<Villages> getVillages();
-};
-
-class PathfinderMob
-{
-public:
-    Level* mLevel;
-    boost::shared_ptr<Entity> shared_from_this();
-    GroundPathNavigation* getNavigation();
-};
 
 RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob)
     : Goal(),
@@ -74,14 +60,16 @@ bool RestrictOpenDoorGoal::canContinueToUse()
 
 void RestrictOpenDoorGoal::start()
 {
-    mMob->getNavigation()->setCanOpenDoors(false);
-    mMob->getNavigation()->setCanPassDoors(false);
+    GroundPathNavigation* navigation = static_cast<GroundPathNavigation*>(mMob->getNavigation());
+    navigation->setCanOpenDoors(false);
+    navigation->setCanPassDoors(false);
 }
 
 void RestrictOpenDoorGoal::stop()
 {
-    mMob->getNavigation()->setCanOpenDoors(true);
-    mMob->getNavigation()->setCanPassDoors(true);
+    GroundPathNavigation* navigation = static_cast<GroundPathNavigation*>(mMob->getNavigation());
+    navigation->setCanOpenDoors(true);
+    navigation->setCanPassDoors(true);
     mDoor = NULL;
     mDoorInfo.reset();
 }

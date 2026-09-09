@@ -14,8 +14,8 @@ TurtleRandomStrollGoal::~TurtleRandomStrollGoal()
 bool TurtleRandomStrollGoal::canUse()
 {
     Turtle* turtle = static_cast<Turtle*>(mMob);
-    if ((turtle->GetType() != 0x2d680007 || !turtle->hasEgg() || turtle->hasGivenUpOnEgg())
-        && turtle->getRidingHeight() == 0.0)
+    if ((turtle->GetType() != 0x2D680007ULL || !turtle->hasEgg() || turtle->hasGivenUpOnEgg())
+        && !turtle->isInWater())
     {
         return RandomStrollGoal::canUse();
     }

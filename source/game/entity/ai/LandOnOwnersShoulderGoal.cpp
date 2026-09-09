@@ -18,19 +18,12 @@ LandOnOwnersShoulderGoal::~LandOnOwnersShoulderGoal()
 
 bool LandOnOwnersShoulderGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> livingEntity = mOwner->getLastHurtByMob();
-    if (!livingEntity)
-    {
-        return false;
-    }
+    boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mOwner->getOwner());
+    bool canLand = owner && !boost::static_pointer_cast<Player>(owner)->isSpectator()
+        && !boost::static_pointer_cast<Player>(owner)->mAbilities.mFlying
+        && !owner->isInWater();
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(livingEntity);
-    if (player->isSpectator() || player->isCreative() || player->isPassenger())
-    {
-        return false;
-    }
-
-    return !mOwner->isSitting() && mOwner->canSitOnShoulder();
+    return !mOwner->isSitting() && canLand && mOwner->canSitOnShoulder();
 }
 
 bool LandOnOwnersShoulderGoal::canInterrupt()
@@ -40,24 +33,23 @@ bool LandOnOwnersShoulderGoal::canInterrupt()
 
 void LandOnOwnersShoulderGoal::start()
 {
-    mPlayer = boost::static_pointer_cast<Player>(mOwner->getLastHurtByMob());
+    mPlayer = boost::static_pointer_cast<Player>(mOwner->getOwner());
     mShoulderRiding = false;
 }
 
 void LandOnOwnersShoulderGoal::tick()
 {
-    if (!mShoulderRiding && !mOwner->isSitting() && !mOwner->isLeashed() && mPlayer)
+    if (!mShoulderRiding && !mOwner->isSitting() && !mOwner->isLeashed())
     {
-        AABB* ownerBox = mOwner->mBoundingBox;
-        AABB* playerBox = mPlayer->mBoundingBox;
-        if (ownerBox->intersects(playerBox->mMinX,
-                                 playerBox->mMinY,
-                                 playerBox->mMinZ,
-                                 playerBox->mMaxX,
-                                 playerBox->mMaxY,
-                                 playerBox->mMaxZ))
+        boost::shared_ptr<Player> player = mPlayer.lock();
+        if (player)
         {
-            mShoulderRiding = mOwner->setEntityOnShoulder(mPlayer);
+            AABB* playerBox = player->mBoundingBox;
+            if (mOwner->mBoundingBox->intersects(playerBox->mMinX, playerBox->mMinY, playerBox->mMinZ,
+                                                 playerBox->mMaxX, playerBox->mMaxY, playerBox->mMaxZ))
+            {
+                mShoulderRiding = mOwner->setEntityOnShoulder(player);
+            }
         }
     }
 }

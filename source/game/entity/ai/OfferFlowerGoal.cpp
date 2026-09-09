@@ -31,16 +31,15 @@ bool OfferFlowerGoal::canUse()
         return false;
 
     AABB* area = mGolem->mBoundingBox->grow(6.0, 2.0, 6.0);
-    boost::shared_ptr<Entity> golem = mGolem->shared_from_this();
-    boost::shared_ptr<Entity> entity =
-        mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), area, golem);
-    mTarget = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    return !!mTarget;
+    boost::shared_ptr<Entity> closest =
+        mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), area, mGolem->shared_from_this());
+    mTarget = boost::dynamic_pointer_cast<Villager>(closest);
+    return !!mTarget.lock();
 }
 
 bool OfferFlowerGoal::canContinueToUse()
 {
-    return mTicks > 0 && !!mTarget;
+    return mTicks > 0 && mTarget.lock();
 }
 
 void OfferFlowerGoal::start()
@@ -53,12 +52,11 @@ void OfferFlowerGoal::stop()
 {
     mGolem->offerFlower(false);
     mTarget.reset();
-    mTicks = 0;
 }
 
 void OfferFlowerGoal::tick()
 {
-    mGolem->getLookControl()->setLookAt(mTarget, 30.0f, 30.0f);
+    mGolem->getLookControl()->setLookAt(mTarget.lock(), 30.0f, 30.0f);
     --mTicks;
 }
 

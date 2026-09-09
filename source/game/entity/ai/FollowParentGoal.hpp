@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_FOLLOWPARENTGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -22,7 +23,7 @@ public:
 
 private:
     Animal* mAnimal;
-    boost::shared_ptr<Animal> mParentAnimal;
+    boost::weak_ptr<Animal> mParentAnimal;
     double mSpeedModifier;
     int mTimeToRecalcPath;
 };

@@ -1,6 +1,6 @@
 #include "game/entity/ai/FlyNodeEvaluator.hpp"
 
-#include <unordered_set>
+#include <boost/unordered_set.hpp>
 
 #include "game/core/Node.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -9,31 +9,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-static int addFlyNeighbor(FlyNodeEvaluator* evaluator, arrayWithLength<Node*>* neighbors,
-                          Node* target, float maxCost, int count, int x, int y, int z)
-{
-    Node* node = evaluator->getNode(x, y, z);
-    if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
-        neighbors->data[count++] = node;
-    return count;
-}
-
-struct FlyBlockPosHash
-{
-    std::size_t operator()(const BlockPos& pos) const
-    {
-        return static_cast<std::size_t>(pos.hashCode());
-    }
-};
-
-struct FlyBlockPosEqual
-{
-    bool operator()(const BlockPos& left, const BlockPos& right) const
-    {
-        return left.equals(right);
-    }
-};
+#include "game/world/block/Blocks.hpp"
 
 FlyNodeEvaluator::FlyNodeEvaluator(Entity* entity)
     : WalkNodeEvaluator(entity)
@@ -43,10 +19,12 @@ FlyNodeEvaluator::FlyNodeEvaluator(Entity* entity)
 void FlyNodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
 {
     WalkNodeEvaluator::prepare(levelSource, mob);
+    mOldWaterCost = mob->getPathfindingMalus(BlockPathTypes::WATER);
 }
 
 void FlyNodeEvaluator::done()
 {
+    mMob->setPathfindingMalus(BlockPathTypes::WATER, mOldWaterCost);
     WalkNodeEvaluator::done();
 }
 
@@ -64,41 +42,47 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, const BlockPo
 
 Node* FlyNodeEvaluator::getStart()
 {
-    int x = static_cast<int>(mMob->mX);
-    if (mMob->mX < static_cast<double>(x)) --x;
-    int z = static_cast<int>(mMob->mZ);
-    if (mMob->mZ < static_cast<double>(z)) --z;
-    int y = static_cast<int>(mMob->mY + 0.5);
-    if (mMob->mY + 0.5 < static_cast<double>(y)) --y;
-
-    if (isCanFloat() && mMob->canFly())
+    int y;
+    if (isCanFloat() && mMob->isInWater())
     {
         y = static_cast<int>(mMob->mBoundingBox->mMinY);
-        if (mMob->mBoundingBox->mMinY < static_cast<double>(y)) --y;
-        while (getBlockPathType(mLevelSource, x, y, z) == BlockPathTypes::WATER)
+        int x = static_cast<int>(mMob->mX);
+        int z = static_cast<int>(mMob->mZ);
+        if (mMob->mX < static_cast<double>(x)) --x;
+        if (mMob->mZ < static_cast<double>(z)) --z;
+
+        int blockId = mLevelSource->getBlockId(x, y, z);
+        while (blockId == 8 || blockId == 9)
+        {
             ++y;
-        while (getBlockPathType(mLevelSource, x, y, z) == BlockPathTypes::WATER_BORDER)
-            ++y;
+            blockId = mLevelSource->getBlockId(x, y, z);
+        }
     }
-
-    const BlockPathTypes* startType = getBlockPathType(mMob, x, y, z);
-    if (mMob->getPathfindingMalus(startType) >= 0.0)
-        return NodeEvaluator::getNode(x, y, z);
-
-    const int offsets[3] = { -1, 0, 1 };
-    std::unordered_set<BlockPos, FlyBlockPosHash, FlyBlockPosEqual> positions;
-    positions.insert(BlockPos(mMob->mX, static_cast<double>(y), mMob->mZ));
-    positions.insert(BlockPos(mMob->mX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
-    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mZ));
-    positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
-
-    for (std::unordered_set<BlockPos, FlyBlockPosHash, FlyBlockPosEqual>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+    else
     {
-        const BlockPathTypes* type = getBlockPathType(mMob, *it);
-        if (mMob->getPathfindingMalus(type) >= 0.0)
-            return NodeEvaluator::getNode(it->x, it->y, it->z);
+        y = static_cast<int>(mMob->mBoundingBox->mMinY + 0.5);
+        if (mMob->mBoundingBox->mMinY + 0.5 < static_cast<double>(y)) --y;
     }
-    return NodeEvaluator::getNode(x, y, z);
+
+    BlockPos start(mMob);
+    const BlockPathTypes* startType = getBlockPathType(mMob, start.x, y, start.z);
+    if (mMob->getPathfindingMalus(startType) < 0.0f)
+    {
+        boost::unordered_set<BlockPos> positions;
+        positions.insert(BlockPos(mMob->mBoundingBox->mMinX, static_cast<double>(y), mMob->mBoundingBox->mMinZ));
+        positions.insert(BlockPos(mMob->mBoundingBox->mMinX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
+        positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mBoundingBox->mMinZ));
+        positions.insert(BlockPos(mMob->mBoundingBox->mMaxX, static_cast<double>(y), mMob->mBoundingBox->mMaxZ));
+
+        for (boost::unordered_set<BlockPos>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+        {
+            const BlockPathTypes* type = getBlockPathType(mMob, *it);
+            if (mMob->getPathfindingMalus(type) >= 0.0f)
+                return NodeEvaluator::getNode(it->x, it->y, it->z);
+        }
+    }
+
+    return NodeEvaluator::getNode(start.x, y, start.z);
 }
 
 Node* FlyNodeEvaluator::getGoal(double x, double y, double z)
@@ -115,61 +99,153 @@ Node* FlyNodeEvaluator::getGoal(double x, double y, double z)
 int FlyNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
 {
     int count = 0;
-    const int x = current->x;
-    const int y = current->y;
-    const int z = current->z;
-    int dx, dy, dz;
-    for (dy = -1; dy <= 1; ++dy)
-        for (dx = -1; dx <= 1; ++dx)
-            for (dz = -1; dz <= 1; ++dz)
-                if (dx != 0 || dy != 0 || dz != 0)
-                    count = addFlyNeighbor(this, neighbors, target, maxCost, count, x + dx, y + dy, z + dz);
+    Node* south = getNode(current->x, current->y, current->z + 1);
+    Node* west = getNode(current->x - 1, current->y, current->z);
+    Node* east = getNode(current->x + 1, current->y, current->z);
+    Node* north = getNode(current->x, current->y, current->z - 1);
+    Node* up = getNode(current->x, current->y + 1, current->z);
+    Node* down = getNode(current->x, current->y - 1, current->z);
+
+    if (south != NULL && !south->closed && south->distanceTo(target) < maxCost)
+        neighbors->data[count++] = south;
+    if (west != NULL && !west->closed && west->distanceTo(target) < maxCost)
+        neighbors->data[count++] = west;
+    if (east != NULL && !east->closed && east->distanceTo(target) < maxCost)
+        neighbors->data[count++] = east;
+    if (north != NULL && !north->closed && north->distanceTo(target) < maxCost)
+        neighbors->data[count++] = north;
+    if (up != NULL && !up->closed && up->distanceTo(target) < maxCost)
+        neighbors->data[count++] = up;
+    if (down != NULL && !down->closed && down->distanceTo(target) < maxCost)
+        neighbors->data[count++] = down;
+
+    bool openNorth = north == NULL || north->costMalus != 0.0f;
+    bool openSouth = south == NULL || south->costMalus != 0.0f;
+    bool openEast = east == NULL || east->costMalus != 0.0f;
+    bool openWest = west == NULL || west->costMalus != 0.0f;
+    bool openUp = up == NULL || up->costMalus != 0.0f;
+    bool openDown = down == NULL || down->costMalus != 0.0f;
+
+    if (openNorth)
+    {
+        Node* northWest = openWest ? getNode(current->x - 1, current->y, current->z - 1) : NULL;
+        if (northWest != NULL && !northWest->closed && northWest->distanceTo(target) < maxCost)
+            neighbors->data[count++] = northWest;
+
+        Node* northEast = openEast ? getNode(current->x + 1, current->y, current->z - 1) : NULL;
+        if (northEast != NULL && !northEast->closed && northEast->distanceTo(target) < maxCost)
+            neighbors->data[count++] = northEast;
+    }
+
+    if (openSouth)
+    {
+        Node* southWest = openWest ? getNode(current->x - 1, current->y, current->z + 1) : NULL;
+        if (southWest != NULL && !southWest->closed && southWest->distanceTo(target) < maxCost)
+            neighbors->data[count++] = southWest;
+
+        Node* southEast = openEast ? getNode(current->x + 1, current->y, current->z + 1) : NULL;
+        if (southEast != NULL && !southEast->closed && southEast->distanceTo(target) < maxCost)
+            neighbors->data[count++] = southEast;
+    }
+
+    Node* upNorth = openNorth && openUp ? getNode(current->x, current->y + 1, current->z - 1) : NULL;
+    if (upNorth != NULL && !upNorth->closed && upNorth->distanceTo(target) < maxCost)
+        neighbors->data[count++] = upNorth;
+
+    Node* upSouth = openSouth && openUp ? getNode(current->x, current->y + 1, current->z + 1) : NULL;
+    if (upSouth != NULL && !upSouth->closed && upSouth->distanceTo(target) < maxCost)
+        neighbors->data[count++] = upSouth;
+
+    Node* upEast = openEast && openUp ? getNode(current->x + 1, current->y + 1, current->z) : NULL;
+    if (upEast != NULL && !upEast->closed && upEast->distanceTo(target) < maxCost)
+        neighbors->data[count++] = upEast;
+
+    Node* upWest = openWest && openUp ? getNode(current->x - 1, current->y + 1, current->z) : NULL;
+    if (upWest != NULL && !upWest->closed && upWest->distanceTo(target) < maxCost)
+        neighbors->data[count++] = upWest;
+
+    Node* downNorth = openNorth && openDown ? getNode(current->x, current->y - 1, current->z - 1) : NULL;
+    if (downNorth != NULL && !downNorth->closed && downNorth->distanceTo(target) < maxCost)
+        neighbors->data[count++] = downNorth;
+
+    Node* downSouth = openSouth && openDown ? getNode(current->x, current->y - 1, current->z + 1) : NULL;
+    if (downSouth != NULL && !downSouth->closed && downSouth->distanceTo(target) < maxCost)
+        neighbors->data[count++] = downSouth;
+
+    Node* downEast = openEast && openDown ? getNode(current->x + 1, current->y - 1, current->z) : NULL;
+    if (downEast != NULL && !downEast->closed && downEast->distanceTo(target) < maxCost)
+        neighbors->data[count++] = downEast;
+
+    Node* downWest = openWest && openDown ? getNode(current->x - 1, current->y - 1, current->z) : NULL;
+    if (downWest != NULL && !downWest->closed && downWest->distanceTo(target) < maxCost)
+        neighbors->data[count++] = downWest;
+
     return count;
 }
 
 Node* FlyNodeEvaluator::getNode(int x, int y, int z)
 {
+    Node* node = NULL;
     const BlockPathTypes* type = getBlockPathType(mMob, x, y, z);
-    double malus = mMob->getPathfindingMalus(type);
-    if (malus < 0.0)
-        return NULL;
-    return NodeEvaluator::getNode(x, y, z);
+    float malus = mMob->getPathfindingMalus(type);
+    if (malus >= 0.0f)
+    {
+        node = NodeEvaluator::getNode(x, y, z);
+        float cost = node->costMalus < malus ? malus : node->costMalus;
+        node->type = type;
+        node->costMalus = type == BlockPathTypes::WALKABLE ? cost + 1.0f : cost;
+    }
+    return node;
 }
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z,
                                                           Mob* mob, int sizeX, int sizeY, int sizeZ,
                                                           bool canOpenDoors, bool canPassDoors)
 {
-    int flags = 0;
-    const BlockPathTypes* result = WalkNodeEvaluator::getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ,
-                                                                          canOpenDoors, canPassDoors, flags,
-                                                                          BlockPathTypes::BLOCKED);
-    if ((flags & (1 << (result->ordinal() & 31))) == 0)
-        return result;
+    int pathTypeFlags = 0;
+    BlockPos mobPos(mob);
+    const BlockPathTypes* result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ,
+                                                     canOpenDoors, canPassDoors, pathTypeFlags,
+                                                     BlockPathTypes::BLOCKED);
+    if ((pathTypeFlags & 1 << BlockPathTypes::FENCE->ordinal()) != 0)
+        return BlockPathTypes::FENCE;
+
+    const BlockPathTypes* best = BlockPathTypes::BLOCKED;
     for (int i = 0; i < 19; ++i)
     {
         const BlockPathTypes* type = BlockPathTypes::VALUES[i];
-        if ((flags & (1 << (type->ordinal() & 31))) != 0)
+        if ((pathTypeFlags & 1 << type->ordinal()) != 0)
         {
-            double malus = mob->getPathfindingMalus(type);
-            if (malus < 0.0)
+            if (mob->getPathfindingMalus(type) < 0.0f)
                 return type;
-            if (malus >= mob->getPathfindingMalus(result))
-                result = type;
+            if (mob->getPathfindingMalus(best) <= mob->getPathfindingMalus(type))
+                best = type;
         }
     }
-    return result;
+
+    if (result == BlockPathTypes::OPEN && mob->getPathfindingMalus(best) == 0.0f)
+        return BlockPathTypes::OPEN;
+    return best;
 }
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSource, int x, int y, int z)
 {
     const BlockPathTypes* result = WalkNodeEvaluator::getBlockPathTypeRaw(levelSource, x, y, z);
-    if (result == BlockPathTypes::BLOCKED && y > 0)
+    if (result == BlockPathTypes::OPEN && y > 0)
     {
         BlockPos below(x, y - 1, z);
+        Block* block = levelSource->getBlock(below);
         const BlockPathTypes* belowType = WalkNodeEvaluator::getBlockPathTypeRaw(levelSource, x, y - 1, z);
-        if (belowType == BlockPathTypes::OPEN || belowType == BlockPathTypes::WALKABLE || belowType == BlockPathTypes::WATER)
-            result = belowType;
+        result = belowType == BlockPathTypes::DAMAGE_FIRE || block == Blocks::magma ||
+                 belowType == BlockPathTypes::LAVA
+            ? BlockPathTypes::DAMAGE_FIRE
+            : belowType == BlockPathTypes::DAMAGE_CACTUS
+                ? BlockPathTypes::DAMAGE_CACTUS
+                : belowType == BlockPathTypes::WALKABLE || belowType == BlockPathTypes::OPEN ||
+                          belowType == BlockPathTypes::WATER
+                    ? BlockPathTypes::OPEN
+                    : BlockPathTypes::WALKABLE;
     }
+
     return WalkNodeEvaluator::checkNeighbourBlocks(levelSource, x, y, z, result);
 }

@@ -2,20 +2,12 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/entity/mob/Entity.hpp"
+#include "game/core/Turtle.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-class LivingEntity;
-
-class PathfinderMob : public Entity
-{
-public:
-    virtual boost::shared_ptr<LivingEntity> getLastHurtByMob();
-    bool isOnFire();
-};
-
 TurtlePanicGoal::TurtlePanicGoal(Turtle* turtle, double speedModifier)
-    : PanicGoal((PathfinderMob*)turtle, speedModifier)
+    : PanicGoal(static_cast<PathfinderMob*>(turtle), speedModifier)
 {
 }
 

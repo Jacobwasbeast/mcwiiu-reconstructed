@@ -16,20 +16,14 @@ FloatGoal::FloatGoal(Mob* mob)
 {
     setRequiredControlFlags(4);
 
-    static_cast<GroundPathNavigation*>(mob->getNavigation())->setCanFloat(true);
-
     PathNavigation* navigation = mob->getNavigation();
-    if (dynamic_cast<GroundPathNavigation*>(navigation) == NULL)
+    if (GroundPathNavigation* groundNavigation = dynamic_cast<GroundPathNavigation*>(navigation))
     {
-        navigation = mob->getNavigation();
-        if (dynamic_cast<FlyingPathNavigation*>(navigation) != NULL)
-        {
-            static_cast<FlyingPathNavigation*>(mob->getNavigation())->setCanFloat(true);
-        }
+        groundNavigation->setCanFloat(true);
     }
-    else
+    else if (FlyingPathNavigation* flyingNavigation = dynamic_cast<FlyingPathNavigation*>(navigation))
     {
-        static_cast<GroundPathNavigation*>(mob->getNavigation())->setCanFloat(true);
+        flyingNavigation->setCanFloat(true);
     }
 }
 

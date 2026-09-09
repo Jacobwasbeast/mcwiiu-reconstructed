@@ -10,18 +10,12 @@
 #include "game/core/LightningBolt.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SkeletonHorse.hpp"
+#include "game/entity/mob/Skeleton.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-
-class Skeleton : public AbstractSkeleton
-{
-public:
-    Skeleton(Level* level);
-    virtual ~Skeleton();
-};
 
 SkeletonTrapGoal::SkeletonTrapGoal(SkeletonHorse* horse)
     : mHorse(horse)

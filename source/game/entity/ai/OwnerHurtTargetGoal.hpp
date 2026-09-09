@@ -1,7 +1,7 @@
 #ifndef GAME_ENTITY_AI_OWNERHURTTARGETGOAL_HPP
 #define GAME_ENTITY_AI_OWNERHURTTARGETGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/TargetGoal.hpp"
@@ -20,7 +20,7 @@ public:
 
 private:
     TamableAnimal* mTamable;
-    boost::shared_ptr<LivingEntity> mOwnerLastHurt;
+    boost::weak_ptr<LivingEntity> mOwnerLastHurt;
     int mTimestamp;
 };
 

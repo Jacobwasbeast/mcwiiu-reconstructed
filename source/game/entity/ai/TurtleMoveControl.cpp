@@ -5,10 +5,11 @@
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/JumpControl.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Turtle.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
-#include "game/core/Turtle.hpp"
 
 TurtleMoveControl::TurtleMoveControl(Turtle* turtle)
     : MoveControl(turtle), mTurtle(turtle)
@@ -21,29 +22,28 @@ TurtleMoveControl::~TurtleMoveControl()
 
 void TurtleMoveControl::updateSpeed()
 {
-    AttributeInstance* movementSpeed = mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-    double speed = movementSpeed->getValue();
-
-    if (!mTurtle->isGoingHome())
+    if (mTurtle->isInWater())
     {
-        if (mTurtle->isInWater())
+        mTurtle->mYd += 0.005;
+        BlockPos homePos = mTurtle->getHomePos();
+        if (mTurtle->distanceToSqr(homePos) > 256.0)
         {
-            double adjustedSpeed = speed * 0.5;
-            if (adjustedSpeed < 0.06)
-                adjustedSpeed = 0.06;
-            mTurtle->setSpeed((float)adjustedSpeed);
+            float speed = mTurtle->getSpeed() * 0.5f;
+            if (speed < 0.08f)
+            {
+                speed = 0.08f;
+            }
+            mTurtle->setSpeed(speed);
         }
-        return;
     }
-
-    mTurtle->mY += 0.005;
-    BlockPos homePos = mTurtle->getHomePos();
-    if (mTurtle->distanceToSqr(homePos) > 256.0)
+    else if (mTurtle->mOnGround)
     {
-        double adjustedSpeed = speed * 0.5;
-        if (adjustedSpeed < 0.08)
-            adjustedSpeed = 0.08;
-        mTurtle->setSpeed((float)adjustedSpeed);
+        float speed = mTurtle->getSpeed() * 0.5f;
+        if (speed < 0.06f)
+        {
+            speed = 0.06f;
+        }
+        mTurtle->setSpeed(speed);
     }
 }
 
@@ -59,46 +59,45 @@ void TurtleMoveControl::tick()
 
     if (mOperation == JUMPING)
     {
-        AttributeInstance* movementSpeed = mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-        mTurtle->setSpeed((float)(mSpeedModifier * movementSpeed->getValue()));
-        if (mTurtle->isInWater())
+        mMob->setSpeed((float)(mSpeedModifier
+            * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        if (mMob->mOnGround)
+        {
             mOperation = WAIT;
+        }
     }
-
-    if (mOperation == MOVE_TO || mOperation == JUMPING)
+    else if (mOperation != MOVE_TO || mTurtle->getNavigation()->isDone())
     {
-        if (mOperation == MOVE_TO)
-        {
-            mTurtle->getNavigation()->stop();
-            if (mTurtle->getNavigation()->isDone())
-            {
-                mTurtle->setSpeed(0.0f);
-                return;
-            }
-        }
-
-        double x = mWantedX - mTurtle->mX;
-        double z = mWantedZ - mTurtle->mZ;
-        double y = mWantedY - mTurtle->mY;
-        double distance = Mth::sqrt(x * x + y * y + z * z);
-        float wantedYRot = (float)(atan2(z, x) * 57.2957763671875) - 90.0f;
-        mTurtle->mYRot = rotlerp(mTurtle->mYRot, wantedYRot, 30.0f);
-        mTurtle->mYBodyRot = mTurtle->mYRot;
-
-        AttributeInstance* movementSpeed = mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-        double currentSpeed = movementSpeed->getValue();
-        mTurtle->setSpeed((float)((mSpeedModifier * currentSpeed - currentSpeed) * 0.125 + currentSpeed));
-
-        float horizontalLimit = mTurtle->mBbWidth * mTurtle->mBbWidth;
-        if (horizontalLimit < 1.0f)
-            horizontalLimit = 1.0f;
-        if (mTurtle->mMaxUpStep < y / distance && x * x + z * z < horizontalLimit)
-        {
-            static_cast<JumpControl*>(mTurtle->getJumpControl())->jump();
-            mOperation = JUMPING;
-        }
+        mTurtle->setSpeed(0.0f);
         return;
     }
 
-    mTurtle->setSpeed(0.0f);
+    double x = mWantedX - mTurtle->mX;
+    double y = mWantedY - mTurtle->mY;
+    double z = mWantedZ - mTurtle->mZ;
+    double distance = Mth::sqrt(x * x + y * y + z * z);
+    float wantedYRot = (float)(atan2(z, x) * 57.2957763671875) - 90.0f;
+    mTurtle->mYRot = rotlerp(mTurtle->mYRot, wantedYRot, 30.0f);
+    mTurtle->mYBodyRot = mTurtle->mYRot;
+
+    float wantedSpeed = (float)(mSpeedModifier
+        * mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
+    mTurtle->setSpeed((wantedSpeed - mTurtle->getSpeed()) * 0.125f + mTurtle->getSpeed());
+
+    double climb = y / distance;
+    mTurtle->mYd += (double)mTurtle->getSpeed() * climb * 0.1;
+
+    if ((double)mMob->mMaxUpStep < climb)
+    {
+        float horizontalLimit = 1.0f;
+        if (horizontalLimit < mMob->mBbWidth)
+        {
+            horizontalLimit = mMob->mBbWidth;
+        }
+        if (x * x + z * z < (double)horizontalLimit)
+        {
+            static_cast<JumpControl*>(mMob->getJumpControl())->jump();
+            mOperation = JUMPING;
+        }
+    }
 }

@@ -2,6 +2,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/TamableAnimal.hpp"
 
 OwnerHurtTargetGoal::OwnerHurtTargetGoal(TamableAnimal* tamable)
@@ -22,37 +24,32 @@ bool OwnerHurtTargetGoal::canUse()
     if (!mTamable->isTame())
         return false;
 
-    boost::shared_ptr<Entity> owner = mTamable->getOwner();
-    boost::shared_ptr<LivingEntity> livingOwner = boost::dynamic_pointer_cast<LivingEntity>(owner);
-    if (!livingOwner)
+    boost::shared_ptr<LivingEntity> owner =
+        boost::dynamic_pointer_cast<LivingEntity>(mTamable->getOwner());
+    if (!owner)
         return false;
 
-    boost::shared_ptr<LivingEntity> ownerLastHurt = livingOwner->getLastHurtMob();
-    mOwnerLastHurt = ownerLastHurt;
-    int timestamp = livingOwner->getLastHurtMobTimestamp();
-    if (timestamp == mTimestamp)
-        return false;
-
-    if (!canAttack(mOwnerLastHurt, false))
-        return false;
-
-    return mTamable->wantsToAttack(mOwnerLastHurt, livingOwner);
+    mOwnerLastHurt = owner->getLastHurtMob();
+    int timestamp = owner->getLastHurtMobTimestamp();
+    boost::shared_ptr<LivingEntity> lastHurt = mOwnerLastHurt.lock();
+    return timestamp != mTimestamp && canAttack(lastHurt, false)
+        && mTamable->wantsToAttack(lastHurt, owner);
 }
 
 void OwnerHurtTargetGoal::start()
 {
-    mMob->setTarget(mOwnerLastHurt);
+    mMob->setTarget(mOwnerLastHurt.lock());
 
-    boost::shared_ptr<Entity> owner = mTamable->getOwner();
-    boost::shared_ptr<LivingEntity> livingOwner = boost::dynamic_pointer_cast<LivingEntity>(owner);
-    if (livingOwner != NULL)
+    boost::shared_ptr<LivingEntity> owner =
+        boost::dynamic_pointer_cast<LivingEntity>(mTamable->getOwner());
+    if (owner)
     {
-        mTimestamp = livingOwner->getLastHurtMobTimestamp();
+        mTimestamp = owner->getLastHurtMobTimestamp();
         TargetGoal::start();
     }
 }
 
 std::wstring OwnerHurtTargetGoal::getName()
 {
-    return std::wstring(L"OwnerHurtTargetGoal");
+    return L"OwnerHurtTargetGoal";
 }

@@ -19,6 +19,11 @@ WalkNodeEvaluator::WalkNodeEvaluator(Entity* entity)
 
 void WalkNodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
 {
+    if (mEntity == NULL)
+    {
+        mEntity = mob;
+    }
+
     NodeEvaluator::prepare(levelSource, mob);
     mOldWaterCost = mob->getPathfindingMalus(BlockPathTypes::WATER);
     mFlag0 = false;
@@ -189,6 +194,10 @@ Node* WalkNodeEvaluator::getLandNode(int x, int y, int z, int verticalRange, dou
     if (type == BlockPathTypes::BLOCKED)
         return NULL;
     Node* node = NodeEvaluator::getNode(x, y, z);
+    node->type = type;
+    const float malus = mMob->getPathfindingMalus(type);
+    if (malus >= 0.0f && node->costMalus < malus)
+        node->costMalus = malus;
     return node;
 }
 

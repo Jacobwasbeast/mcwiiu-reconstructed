@@ -2,10 +2,10 @@
 
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
-#include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
-#include "game/entity/mob/PathfinderMob.hpp"
+#include "game/world/block/Material.hpp"
 
 RestrictSunGoal::RestrictSunGoal(PathfinderMob* mob)
     : Goal(),
@@ -19,14 +19,9 @@ RestrictSunGoal::~RestrictSunGoal()
 
 bool RestrictSunGoal::canUse()
 {
-    if (!mMob->mLevel->isDay())
-        return false;
-
-    not_null_ptr<ItemInstance> helmet = mMob->getItemSlot(EquipmentSlot::HEAD);
-    if (!helmet->isEmpty())
-        return false;
-
-    return dynamic_cast<GroundPathNavigation*>(mMob->getNavigation()) != NULL;
+    return mMob->mLevel->isDay()
+        && mMob->getItemSlot(EquipmentSlot::HEAD)->isEmpty()
+        && !mMob->isUnderLiquid(Material::WATER);
 }
 
 void RestrictSunGoal::start()
@@ -41,5 +36,5 @@ void RestrictSunGoal::stop()
 
 std::wstring RestrictSunGoal::getName()
 {
-    return std::wstring(L"RestrictSun");
+    return L"RestrictSun";
 }

@@ -4,6 +4,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/Goal.hpp"
 
@@ -28,7 +29,7 @@ public:
 
 private:
     Wolf* mWolf;
-    boost::shared_ptr<Player> mPlayer;
+    boost::weak_ptr<Player> mPlayer;
     Level* mLevel;
     float mDistance;
     int mTime;

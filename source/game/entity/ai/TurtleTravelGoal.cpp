@@ -8,20 +8,10 @@
 #include "game/entity/mob/Animal.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class PathfinderMob;
-
-namespace RandomPos
-{
-extern Vec3* getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target)
-    __asm__("getPosTowards__9RandomPosSFRCQ2_5boost34shared_ptr__tm__16_13PathfinderMobiT2P4Vec3");
-extern Vec3* getPosTowards(const boost::shared_ptr<PathfinderMob>& mob, int xz, int y, Vec3* target,
-                           double maxAngleDelta)
-    __asm__("getPosTowards__9RandomPosSFRCQ2_5boost34shared_ptr__tm__16_13PathfinderMobiT2P4Vec3d");
-}
 
 TurtleTravelGoal::TurtleTravelGoal(Turtle* turtle, double speedModifier)
     : Goal(),

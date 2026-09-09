@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_SWIMWITHMOBGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -31,12 +32,12 @@ public:
     virtual std::wstring getName();
 
 private:
-    Mob* mMob;
-    float mSpeedModifier;
-    boost::shared_ptr<Entity> mWantedMob;
+    boost::weak_ptr<Entity> mWantedMob;
     int mCooldown;
     int mState;
     arrayWithLength<unsigned long long> mEntityTypes;
+    Mob* mMob;
+    float mSpeedModifier;
     float mMaxDistance;
     int mSearchDistance;
 };

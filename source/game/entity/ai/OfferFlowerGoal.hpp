@@ -1,12 +1,12 @@
 #ifndef GAME_ENTITY_AI_OFFERFLOWERGOAL_HPP
 #define GAME_ENTITY_AI_OFFERFLOWERGOAL_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
 
-class LivingEntity;
+class Villager;
 class VillagerGolem;
 
 class OfferFlowerGoal : public Goal
@@ -24,7 +24,7 @@ public:
 
 private:
     VillagerGolem* mGolem;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<Villager> mTarget;
     int mTicks;
 };
 

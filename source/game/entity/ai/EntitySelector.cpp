@@ -3,6 +3,8 @@
 #include "game/entity/ai/RidingSelector.hpp"
 #include "game/entity/ai/WithinDistanceSelector.hpp"
 #include "game/entity/ai/NoSpectatorsSelector.hpp"
+#include "game/entity/ai/NoCreativeOrSpectatorSelector.hpp"
+#include "game/entity/ai/AliveEntitySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/Player.hpp"
 
@@ -15,7 +17,7 @@ bool validPlayerPredicate(boost::shared_ptr<Player> player)
         validPlayerDistance = EntitySelector::withinDistance(0.0, 128.0, 0.0, 192.0);
     }
 
-    return EntitySelector::NO_SPECTATORS->apply(player)
+    return EntitySelector::ENTITY_STILL_ALIVE->apply(player)
         && validPlayerDistance->apply(player);
 }
 
@@ -26,6 +28,8 @@ bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity)
 
 namespace EntitySelector
 {
+    Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE = new AliveEntitySelector();
+    Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR = new NoCreativeOrSpectatorSelector();
     Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS = new NoSpectatorsSelector();
 }
 

@@ -12,7 +12,7 @@ MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedMod
                                              float within)
     : mMob(mob),
       mTarget(),
-      mWantedPosition(0.25, 0.25, 0.25),
+      mWantedPosition(0.0, 0.0, 0.0),
       mSpeedModifier(speedModifier),
       mWithin(within)
 {
@@ -26,18 +26,24 @@ MoveTowardsTargetGoal::~MoveTowardsTargetGoal()
 bool MoveTowardsTargetGoal::canUse()
 {
     mTarget = mMob->getTarget();
-    if (!mTarget)
+    if (!mTarget.lock())
+    {
         return false;
+    }
 
-    if (mMob->distanceToSqr(mTarget) > static_cast<double>(mWithin * mWithin))
+    if (mTarget.lock()->distanceToSqr(mMob->shared_from_this()) > (double)(mWithin * mWithin))
+    {
         return false;
+    }
 
     boost::shared_ptr<PathfinderMob> mob =
         boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    Vec3* targetPosition = Vec3::newTemp(mTarget->mX, mTarget->mY, mTarget->mZ);
+    Vec3* targetPosition = Vec3::newTemp(mTarget.lock()->mX, mTarget.lock()->mY, mTarget.lock()->mZ);
     Vec3* position = RandomPos::getPosTowards(mob, 16, 7, targetPosition);
     if (position == NULL)
+    {
         return false;
+    }
 
     mWantedPosition = *position;
     return true;
@@ -45,13 +51,23 @@ bool MoveTowardsTargetGoal::canUse()
 
 bool MoveTowardsTargetGoal::canContinueToUse()
 {
-    if (!mTarget)
+    if (!mTarget.lock())
+    {
         return false;
+    }
 
-    if (!mTarget->isAlive() || mMob->getNavigation()->isDone())
+    if (mMob->getNavigation()->isDone())
+    {
         return false;
+    }
 
-    return mMob->distanceToSqr(mTarget) < static_cast<double>(mWithin * mWithin);
+    if (!mTarget.lock()->isAlive())
+    {
+        return false;
+    }
+
+    return mTarget.lock()->distanceToSqr(mMob->shared_from_this()) <
+           (double)(mWithin * mWithin);
 }
 
 void MoveTowardsTargetGoal::start()

@@ -23,7 +23,7 @@ bool RandomLookAroundGoal::canUse()
 
 bool RandomLookAroundGoal::canContinueToUse()
 {
-    return mLookTime > 0;
+    return mLookTime >= 0;
 }
 
 void RandomLookAroundGoal::start()
@@ -37,7 +37,7 @@ void RandomLookAroundGoal::start()
 void RandomLookAroundGoal::tick()
 {
     --mLookTime;
-    static_cast<LookControl*>(mMob->getLookControl())->setLookAt(
+    mMob->getLookControl()->setLookAt(
         mMob->mX + mLookAtX,
         mMob->mY + mMob->getEyeHeight(),
         mMob->mZ + mLookAtZ,

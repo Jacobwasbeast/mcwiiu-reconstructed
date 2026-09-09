@@ -16,7 +16,7 @@ public:
     DrownedPathNavigation(Mob* mob, Level* level);
     virtual ~DrownedPathNavigation();
 
-    virtual void createPathFinder();
+    virtual PathFinder* createPathFinder();
     virtual Path* createPath(const BlockPos& pos);
     virtual void tick();
     virtual void updatePath();

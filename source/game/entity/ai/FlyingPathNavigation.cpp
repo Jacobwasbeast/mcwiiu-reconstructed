@@ -107,9 +107,12 @@ bool FlyingPathNavigation::canMoveDirectly(Vec3* a, Vec3* b, int, int, int)
     const int directionX = stepX < 0.0 ? -1 : 1;
     const int directionY = stepY < 0.0 ? -1 : 1;
     const int directionZ = stepZ < 0.0 ? -1 : 1;
-    double distanceX = ((stepX < 0.0 ? currentX : currentX + 1.0) - a->x) / stepX;
-    double distanceY = ((stepY < 0.0 ? currentY : currentY + 1.0) - a->y) / stepY;
-    double distanceZ = ((stepZ < 0.0 ? currentZ : currentZ + 1.0) - a->z) / stepZ;
+    double distanceX = (static_cast<double>(currentX) - a->x) / stepX;
+    double distanceY = (static_cast<double>(currentY) - a->y) / stepY;
+    double distanceZ = (static_cast<double>(currentZ) - a->z) / stepZ;
+    if (stepX >= 0.52) distanceX += 1.0;
+    if (stepY >= 0.52) distanceY += 1.0;
+    if (stepZ >= 0.52) distanceZ += 1.0;
 
     while (true)
     {

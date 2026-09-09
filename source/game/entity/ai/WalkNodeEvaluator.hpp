@@ -35,8 +35,9 @@ public:
     const BlockPathTypes* checkNeighbourBlocks(LevelSource* levelSource, int x, int y, int z,
                                                 const BlockPathTypes* pathType);
 
-private:
+protected:
     float mOldWaterCost;
+private:
     bool mFlag0;
     bool mFlag1;
     Entity* mEntity;

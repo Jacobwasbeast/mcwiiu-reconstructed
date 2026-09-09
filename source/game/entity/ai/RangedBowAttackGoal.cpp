@@ -1,10 +1,9 @@
 #include "game/entity/ai/RangedBowAttackGoal.hpp"
 
+#include "game/core/Sensing.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
-#include "game/core/Sensing.hpp"
-#include "game/util/Random.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/Monster.hpp"
 #include "game/entity/mob/RangedAttackMob.hpp"
@@ -12,6 +11,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
 
 RangedBowAttackGoal::RangedBowAttackGoal(Monster* mob, double speedModifier, int attackInterval,
                                          float attackRadius)
@@ -33,38 +33,37 @@ void RangedBowAttackGoal::setMinAttackInterval(int attackInterval)
 
 bool RangedBowAttackGoal::isHoldingBow()
 {
-    not_null_ptr<ItemInstance> item = mMob->getMainHandItem();
-    return !item->isEmpty() && item->getItem() == Items::bow;
+    return !mMob->getMainHandItem()->isEmpty()
+        && mMob->getMainHandItem()->getItem() == Items::bow;
 }
 
 bool RangedBowAttackGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    return target != NULL && isHoldingBow();
+    if (!mMob->getTarget())
+        return false;
+    return isHoldingBow();
 }
 
 bool RangedBowAttackGoal::canContinueToUse()
 {
-    if (!Goal::canInterrupt())
-        return !mMob->getNavigation()->isDone();
+    if (!canUse() && mMob->getNavigation()->isDone())
+        return false;
     return isHoldingBow();
 }
 
 void RangedBowAttackGoal::start()
 {
     Goal::start();
-    RangedAttackMob* rangedAttackMob = dynamic_cast<RangedAttackMob*>(mMob);
-    rangedAttackMob->setAggressive(true);
+    dynamic_cast<RangedAttackMob*>(mMob)->setAggressive(true);
 }
 
 void RangedBowAttackGoal::stop()
 {
     Goal::stop();
-    RangedAttackMob* rangedAttackMob = dynamic_cast<RangedAttackMob*>(mMob);
-    rangedAttackMob->setAggressive(false);
-    mMob->stopUsingItem();
+    dynamic_cast<RangedAttackMob*>(mMob)->setAggressive(false);
     mSeeTime = 0;
     mAttackTime = -1;
+    mMob->stopUsingItem();
 }
 
 void RangedBowAttackGoal::tick()
@@ -75,74 +74,77 @@ void RangedBowAttackGoal::tick()
 
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     bool canSee = mMob->getSensing()->canSee(target);
+    bool hadSeen = mSeeTime > 0;
+    if (canSee != hadSeen)
+        mSeeTime = 0;
+
     if (canSee)
         ++mSeeTime;
     else
-        mSeeTime = 0;
-
-    if (!canSee || distance > static_cast<double>(mAttackRadiusSqr))
-    {
         --mSeeTime;
+
+    if (distance > (double)mAttackRadiusSqr || mSeeTime < 20)
+    {
         mMob->getNavigation()->moveTo(target, mSpeedModifier);
-    }
-    else if (mSeeTime >= 20)
-    {
-        mMob->getNavigation()->stop();
-    }
-
-    if (canSee)
-        mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
-    else
-        mMob->lookAt(target, 30.0f, 30.0f);
-
-    if (mSeeTime < 20)
-    {
         mStrafingTime = -1;
     }
     else
     {
+        mMob->getNavigation()->stop();
         ++mStrafingTime;
-        if (mStrafingTime < 20)
+    }
+
+    if (mStrafingTime >= 20)
+    {
+        if ((double)mMob->getRandom()->nextFloat() < 0.3)
+            mStrafingClockwise = !mStrafingClockwise;
+        if ((double)mMob->getRandom()->nextFloat() < 0.3)
+            mStrafingBackwards = !mStrafingBackwards;
+        mStrafingTime = 0;
+    }
+
+    if (mStrafingTime > -1)
+    {
+        if (distance > (double)(mAttackRadiusSqr * 0.75f))
+            mStrafingBackwards = false;
+        else if (distance < (double)(mAttackRadiusSqr * 0.25f))
+            mStrafingBackwards = true;
+
+        mMob->getMoveControl()->strafe(mStrafingBackwards ? -0.5f : 0.5f,
+                                       mStrafingClockwise ? 0.5f : -0.5f);
+        mMob->lookAt(target, 30.0f, 30.0f);
+    }
+    else
+    {
+        mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
+    }
+
+    if (mMob->isUsingItem())
+    {
+        if (!canSee)
         {
-            if (distance <= static_cast<double>(mAttackRadiusSqr * 0.75f))
-            {
-                if (distance < static_cast<double>(mAttackRadiusSqr * 0.25f))
-                    mStrafingBackwards = true;
-            }
-            else
-            {
-                mStrafingBackwards = false;
-            }
-            float forwards = mStrafingBackwards ? -0.5f : 0.5f;
-            float sideways = mStrafingClockwise ? 0.5f : -0.5f;
-            mMob->getMoveControl()->strafe(forwards, sideways);
+            if (mSeeTime < -60)
+                mMob->stopUsingItem();
         }
         else
         {
-            mStrafingTime = 0;
-            if (mMob->getRandom()->nextFloat() < 0.3f)
-                mStrafingClockwise = !mStrafingClockwise;
-            if (mMob->getRandom()->nextFloat() < 0.3f)
-                mStrafingBackwards = !mStrafingBackwards;
+            int ticksUsingItem = mMob->getTicksUsingItem();
+            if (ticksUsingItem >= BowItem::GetMaxBowDuration())
+            {
+                mMob->stopUsingItem();
+                dynamic_cast<RangedAttackMob*>(mMob)->performRangedAttack(
+                    target, BowItem::getPowerForTime(ticksUsingItem));
+                mAttackTime = mAttackInterval;
+            }
         }
     }
-
-    --mAttackTime;
-    if (!mMob->isUsingItem())
+    else if (--mAttackTime <= 0 && mSeeTime >= -60)
     {
-        if (mAttackTime < 1 && mSeeTime > -60)
-            mMob->startUsingItem(InteractionHand::eInteractionHand_MainHand);
-    }
-    else if (mMob->getTicksUsingItem() >= BowItem::GetMaxBowDuration())
-    {
-        mMob->stopUsingItem();
-        RangedAttackMob* rangedAttackMob = dynamic_cast<RangedAttackMob*>(mMob);
-        rangedAttackMob->performRangedAttack(target, BowItem::getPowerForTime(mMob->getTicksUsingItem()));
-        mAttackTime = mAttackInterval;
+        mMob->startUsingItem(InteractionHand::eInteractionHand_MainHand);
     }
 }
 
 std::wstring RangedBowAttackGoal::getName()
 {
-    return std::wstring(L"RangedBowAtack");
+    return L"RangedBowAtack";
 }

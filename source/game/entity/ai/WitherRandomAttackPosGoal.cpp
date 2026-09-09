@@ -4,8 +4,10 @@
 
 #include "game/core/WitherBoss.hpp"
 #include "game/entity/ai/Goal.hpp"
-#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/util/Vec3.hpp"
 
@@ -28,14 +30,14 @@ void WitherRandomAttackPosGoal::start()
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
     mIsPathing = true;
     wither->setIsPathing(true);
-    mSpeedModifier *= 15.0;
+    mMob->mFlyingSpeed *= 15.0f;
     RandomStrollGoal::start();
 }
 
 void WitherRandomAttackPosGoal::stop()
 {
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
-    mSpeedModifier /= 15.0;
+    mMob->mFlyingSpeed /= 15.0f;
     mIsPathing = false;
     wither->setWantsToMove(false);
     wither->setIsPathing(false);
@@ -46,10 +48,12 @@ void WitherRandomAttackPosGoal::stop()
 bool WitherRandomAttackPosGoal::canUse()
 {
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
-    if (!mMob->getNavigation()->isDone() || wither->isPowered() || !wither->wantsToMove())
+    if (!mMob->getTarget() || wither->isPowered() || !wither->wantsToMove())
     {
         return false;
     }
+
+    Vec3* targetPos = mMob->getTarget()->getPos(1.0f);
 
     if (!mIsPathing)
     {
@@ -59,9 +63,11 @@ bool WitherRandomAttackPosGoal::canUse()
         if (position != NULL)
         {
             Vec3* direction = position->subtract(mMob->mX, mMob->mY, mMob->mZ);
-            direction->y = 0.0001;
+            direction->y = 0.0;
             direction->normalize();
-            Vec3* target = direction->multiply((double)mXz)->add(mMob->getPos(1.0f));
+            float scale = (float)mXz;
+            direction->multiply(scale, scale, scale);
+            Vec3* target = direction->add(targetPos);
             target->y = mMob->mY;
             mWantedX = target->x;
             mWantedY = target->y;
