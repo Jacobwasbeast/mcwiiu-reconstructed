@@ -242,12 +242,6 @@ private:
     unsigned int m_scalarStorage[34];
     common::CriticalSection m_criticalSection;
 };
-
-class StationPacketHandler
-{
-public:
-    static StationConnectionInfoTable* GetStationConnectionInfoTable();
-};
 }
 
 namespace inet
@@ -270,5 +264,7 @@ void Assert(const char* expression, const char* file, unsigned int line,
             const char* function, ...);
 }
 }
+
+#include "nn/pia/transport/StationPacketHandler.hpp"
 
 #endif

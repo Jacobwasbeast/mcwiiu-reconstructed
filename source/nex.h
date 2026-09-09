@@ -2,6 +2,12 @@
 #define LEGACY_CONSOLE_WIIU_NEX_H
 
 #include <stdint.h>
+#include "nn/nex/Core.hpp"
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/Job.hpp"
+#include "nn/nex/RootObject.hpp"
+#include "nn/nex/Scheduler.hpp"
+#include "nn/nex/UserContext.hpp"
 #include "vendor/__N_19_OnlineCore_Blob_cpp_9428d484.hpp"
 
 namespace nn
@@ -44,74 +50,10 @@ private:
     unsigned char m_data[16];
 };
 
-class MutexPrimitive
-{
-public:
-    MutexPrimitive();
-    virtual ~MutexPrimitive();
-private:
-    unsigned char m_data[44];
-};
-
-class LockChecker
-{
-public:
-    LockChecker(unsigned int value);
-    LockChecker(const LockChecker& other);
-    virtual ~LockChecker();
-    LockChecker& operator=(const LockChecker& other);
-private:
-    unsigned char m_data[16];
-};
-
-class CriticalSection
-{
-public:
-    CriticalSection(unsigned int value);
-    CriticalSection(const CriticalSection& other);
-    virtual ~CriticalSection();
-    virtual void Enter();
-    virtual void Leave();
-    virtual bool IsForce() const;
-    CriticalSection& operator=(const CriticalSection& other);
-    bool ValidateOwnership(bool expected) const;
-    bool HasOwnership() const;
-    bool HasNotOwnership() const;
-private:
-    MutexPrimitive m_mutex;
-    LockChecker m_lockChecker;
-};
-
-class UserContext
-{
-public:
-    void* GetPointer() const;
-};
-
-class Scheduler
-{
-public:
-    static Scheduler* GetInstance();
-    CriticalSection& GetCriticalSection();
-};
-
-class Job
-{
-public:
-    enum State
-    {
-        SUSPENDED = 2
-    };
-
-    int GetState() const;
-};
-
 class JobConnectEndPoint : public Job
 {
 public:
     void ReportConnectResult(qResult result);
-    void SetToReady();
-    void ReleaseRef();
 };
 
 class CallbackRoot
@@ -196,21 +138,6 @@ StringStream& noshowbase(StringStream& stream);
 StringStream& endl(StringStream& stream);
 StringStream& boolalpha(StringStream& stream);
 StringStream& noboolalpha(StringStream& stream);
-
-class RootObject
-{
-public:
-    virtual ~RootObject();
-};
-
-class ForcedCriticalSection
-{
-public:
-    ForcedCriticalSection();
-    ~ForcedCriticalSection();
-private:
-    unsigned char m_storage[72];
-};
 
 class BadEvents
 {
