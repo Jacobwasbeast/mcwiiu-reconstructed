@@ -1,7 +1,7 @@
 #include "game/minigame/FullTutorial.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/GameModeConstraints.hpp"
-#include "game/core/CMinecraftApp.hpp"
 #include "game/item/PopulateContainerRuleDefinition.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -10,10 +10,8 @@
 #include "game/world/LevelRuleset.hpp"
 #include "game/util/Vec3.hpp"
 
-extern MinecraftServer* gMinecraftServer;
-
 FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool enabled)
-    : Tutorial(playerId, constraints, enabled, true), mEnabledForPlayer(enabled),
+    : Tutorial(playerId, constraints, true, false), mEnabledForPlayer(enabled),
       mTutorialStarted(false)
 {
     int i;
@@ -42,8 +40,8 @@ void FullTutorial::AddTutorialArea(eTutorial_State state)
 
 void FullTutorial::PopulateChest(eTutorial_State state)
 {
-    LevelRuleset* ruleset = g_pApp != NULL ? g_pApp->getGameRuleDefinitions() : NULL;
-    if (ruleset == NULL || gMinecraftServer == NULL)
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    if (ruleset == NULL)
     {
         return;
     }
@@ -55,36 +53,28 @@ void FullTutorial::PopulateChest(eTutorial_State state)
         return;
     }
 
-    Level* level = gMinecraftServer->getLevel(0);
-    MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
-        static_cast<EMiniGameId>(0xf), true);
-    if (level == NULL || miniGame == NULL)
-    {
-        return;
-    }
+    ServerLevel* level = gMinecraftServer->getLevel(0);
 
     std::vector<GameRuleDefinition*> children;
-    definition->getChildren(&children);
+    definition->getChildren(&children, static_cast<ConsoleGameRules::EGameRuleType>(32));
+
     for (std::vector<GameRuleDefinition*>::iterator it = children.begin();
          it != children.end(); ++it)
     {
         PopulateContainerRuleDefinition* container =
-            dynamic_cast<PopulateContainerRuleDefinition*>(*it);
-        if (container == NULL)
-        {
-            continue;
-        }
+            static_cast<PopulateContainerRuleDefinition*>(*it);
 
         int x;
         int y;
         int z;
         container->GetPos(x, y, z);
+
         if (state == static_cast<eTutorial_State>(-2) ||
-            (gameModeConstraints != NULL &&
-             gameModeConstraints->InConstraintArea(Vec3::newTemp(x, y, z),
-                                                   static_cast<int>(state))))
+            gameModeConstraints->InConstraintArea(Vec3::newTemp(x, y, z),
+                                                  static_cast<int>(state)))
         {
-            container->evaluateRule(level, ruleset, *miniGame);
+            container->evaluateRule(level, ruleset,
+                                    *MiniGameDef::GetCustomGameModeById(eMiniGameId_Any, true));
         }
     }
 }
@@ -94,10 +84,9 @@ void FullTutorial::tick()
     std::vector<eTutorial_State>::iterator state = completedStates.begin();
     while (state != completedStates.end())
     {
-        if (gameModeConstraints != NULL &&
-            gameModeConstraints->NotInConstraintArea(playerId, (int)*state))
+        if (gameModeConstraints->NotInConstraintArea(playerId, static_cast<int>(*state)))
         {
-            mStateCompleted[(int)*state] = 0;
+            mStateCompleted[static_cast<int>(*state)] = 0;
             AddTutorialArea(*state);
             PopulateChest(*state);
             state = completedStates.erase(state);
@@ -112,11 +101,11 @@ void FullTutorial::tick()
 
 unsigned char FullTutorial::isStateCompleted(eTutorial_State state)
 {
-    return mStateCompleted[(int)state];
+    return mStateCompleted[static_cast<int>(state)];
 }
 
 void FullTutorial::setStateCompleted(eTutorial_State state)
 {
-    mStateCompleted[(int)state] = 1;
+    mStateCompleted[static_cast<int>(state)] = 1;
     Tutorial::setStateCompleted(state);
 }

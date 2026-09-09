@@ -25,14 +25,13 @@ DamageSourceMedal::~DamageSourceMedal()
 
 double DamageSourceMedal::GetScore(PlayerStats* playerStats) const
 {
-    double score = 0.0;
+    float score = 0.0f;
 
     for (std::vector<Scoreboard::EDamageSource>::const_iterator source = mSources->begin();
          source != mSources->end(); ++source)
     {
-        score = static_cast<double>(static_cast<float>(
-            score + static_cast<double>(static_cast<StatTracker<float>*>(
-                playerStats->mDamageTakenBySource[*source])->getValue())));
+        score += static_cast<StatTracker<float>*>(
+            playerStats->mDamageTakenBySource[*source])->getValue();
     }
 
     return score;

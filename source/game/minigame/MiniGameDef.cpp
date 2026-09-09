@@ -857,31 +857,38 @@ bool MiniGameDef::IsChestRefillEnabled() const { return mPlayerSettings.mChestRe
 bool MiniGameDef::ForceSpectateModeFollow() const { return mId == eMiniGameId_Glide; }
 bool MiniGameDef::SupressGameModeMessages() const { return true; }
 
+static const MiniGameDef::FoodBalance gDefaultFoodBalance;
+
 const MiniGameDef::FoodBalance* MiniGameDef::GetFoodBalance() const
 {
-    boost::unordered_map<int, FoodBalance*>::const_iterator it = mFoodBalances.find(mPlayerSettings.mFoodBalance);
-    return it == mFoodBalances.end() ? NULL : it->second;
+    if (mFoodBalances.find(mPlayerSettings.mFoodBalance) != mFoodBalances.end())
+    {
+        return mFoodBalances.at(mPlayerSettings.mFoodBalance);
+    }
+    return &gDefaultFoodBalance;
 }
 
-unsigned int MiniGameDef::getMaxFood(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mMaxFoodEnabled ? f->mMaxFood : value; }
-double MiniGameDef::getMaxSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mMaxSaturationEnabled ? f->mMaxSaturation : value; }
-double MiniGameDef::getStartSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mStartSaturationEnabled ? f->mStartSaturation : value; }
-double MiniGameDef::getExhaustionDrop(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionDropEnabled ? f->mExhaustionDrop : value; }
-unsigned int MiniGameDef::getHealthTickCount(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mHealthTickEnabled ? f->mHealthTickCount : value; }
-unsigned int MiniGameDef::getHealthTickCountSaturated(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mHealthTickSaturatedEnabled ? f->mHealthTickCountSaturated : value; }
-unsigned int MiniGameDef::getHealLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mHealLevelEnabled ? f->mHealLevel : value; }
-unsigned int MiniGameDef::getStarveLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mStarveLevelEnabled ? f->mStarveLevel : value; }
-unsigned int MiniGameDef::getSprintLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mSprintLevelEnabled ? f->mSprintLevel : value; }
-double MiniGameDef::getExhaustionHeal(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionHealEnabled ? f->mExhaustionHeal : value; }
-double MiniGameDef::getExhaustionJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionJumpEnabled ? f->mExhaustionJump : value; }
-double MiniGameDef::getExhaustionSprintJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionSprintJumpEnabled ? f->mExhaustionSprintJump : value; }
-double MiniGameDef::getExhaustionMine(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionMineEnabled ? f->mExhaustionMine : value; }
-double MiniGameDef::getExhaustionAttack(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionAttackEnabled ? f->mExhaustionAttack : value; }
-double MiniGameDef::getExhaustionWalk(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionWalkEnabled ? f->mExhaustionWalk : value; }
-double MiniGameDef::getExhaustionSprint(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionSprintEnabled ? f->mExhaustionSprint : value; }
-double MiniGameDef::getExhaustionSneak(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionSneakEnabled ? f->mExhaustionSneak : value; }
-double MiniGameDef::getExhaustionSwim(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionSwimEnabled ? f->mExhaustionSwim : value; }
-double MiniGameDef::getExhaustionIdle(float value) const { const FoodBalance* f = GetFoodBalance(); return f != NULL && f->mExhaustionIdleEnabled ? f->mExhaustionIdle : value; }
+unsigned int MiniGameDef::getMaxFood(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxFoodEnabled ? f->mMaxFood : value; }
+double MiniGameDef::getMaxSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxSaturationEnabled ? f->mMaxSaturation : value; }
+double MiniGameDef::getStartSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mStartSaturationEnabled ? f->mStartSaturation : value; }
+double MiniGameDef::getSaturationFloor(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mSaturationFloorEnabled ? f->mSaturationFloor : value; }
+double MiniGameDef::getExhaustionDrop(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDropEnabled ? f->mExhaustionDrop : value; }
+unsigned int MiniGameDef::getHealthTickCount(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickEnabled ? f->mHealthTickCount : value; }
+unsigned int MiniGameDef::getHealthTickCountSaturated(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickSaturatedEnabled ? f->mHealthTickCountSaturated : value; }
+unsigned int MiniGameDef::getHealLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealLevelEnabled ? f->mHealLevel : value; }
+unsigned int MiniGameDef::getStarveLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mStarveLevelEnabled ? f->mStarveLevel : value; }
+unsigned int MiniGameDef::getSprintLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mSprintLevelEnabled ? f->mSprintLevel : value; }
+double MiniGameDef::getExhaustionHeal(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionHealEnabled ? f->mExhaustionHeal : value; }
+double MiniGameDef::getExhaustionJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionJumpEnabled ? f->mExhaustionJump : value; }
+double MiniGameDef::getExhaustionSprintJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprintJumpEnabled ? f->mExhaustionSprintJump : value; }
+double MiniGameDef::getExhaustionMine(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionMineEnabled ? f->mExhaustionMine : value; }
+double MiniGameDef::getExhaustionAttack(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionAttackEnabled ? f->mExhaustionAttack : value; }
+double MiniGameDef::getExhaustionDamage(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDamageEnabled ? f->mExhaustionDamage : value; }
+double MiniGameDef::getExhaustionWalk(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionWalkEnabled ? f->mExhaustionWalk : value; }
+double MiniGameDef::getExhaustionSprint(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprintEnabled ? f->mExhaustionSprint : value; }
+double MiniGameDef::getExhaustionSneak(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSneakEnabled ? f->mExhaustionSneak : value; }
+double MiniGameDef::getExhaustionSwim(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSwimEnabled ? f->mExhaustionSwim : value; }
+double MiniGameDef::getExhaustionIdle(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionIdleEnabled ? f->mExhaustionIdle : value; }
 
 unsigned int MiniGameDef::getCentralRefillChance() const { return mChestRefill.mEnabled ? mChestRefill.mCentralChance : 0; }
 unsigned int MiniGameDef::getOuterRefillChance() const { return mChestRefill.mOuterEnabled ? mChestRefill.mOuterChance : 0; }

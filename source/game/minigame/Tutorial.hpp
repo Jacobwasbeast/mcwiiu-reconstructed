@@ -134,19 +134,36 @@ public:
     static void debugResetPlayerSavedProgress(int playerId);
 
     int currentState;
-    bool initialized;
-    bool enabled;
-    bool popupVisible;
-    bool popupPending;
-    bool tutorialVisible;
-    int playerId;
+    bool stateChanged;
+    bool splitScreen;
+    bool started;
+    int startTime;
     GameModeConstraints* gameModeConstraints;
     boost::unordered_map<int, TutorialMessage*> messages;
     std::vector<TutorialTask*> tasks;
+    std::vector<TutorialTask*> stateTasks[44];
+    std::vector<TutorialHint*> stateHints[44];
+    TutorialTask* currentTask[44];
     std::vector<eTutorial_State> completedStates;
+    bool overridesGameHostOptions;
+    bool gameHostOptionsOverridden;
+    eTutorial_GameMode gameMode;
+    bool gameModeChanged;
+    bool hintShown;
+    int playerId;
+    int visibleTime;
+    int messageTime;
     PopupMessageDetails* currentMessage;
+    int messageState;
+    int messageRepeatCount;
+    bool popupVisible;
+    bool popupPending;
+    bool uiControllerSet;
+    bool tutorialHidden;
     UIScene* currentScene;
-    int currentTaskIndex;
+    bool tasksChecked;
+    bool completed;
+    bool enabled;
 };
 
 #endif

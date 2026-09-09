@@ -291,6 +291,7 @@ public:
     unsigned int getMaxFood(int index) const;
     double getMaxSaturation(float value) const;
     double getStartSaturation(float value) const;
+    double getSaturationFloor(float value) const;
     double getExhaustionDrop(float value) const;
     unsigned int getHealthTickCount(int index) const;
     unsigned int getHealthTickCountSaturated(int index) const;
@@ -302,6 +303,7 @@ public:
     double getExhaustionSprintJump(float value) const;
     double getExhaustionMine(float value) const;
     double getExhaustionAttack(float value) const;
+    double getExhaustionDamage(float value) const;
     double getExhaustionWalk(float value) const;
     double getExhaustionSprint(float value) const;
     double getExhaustionSneak(float value) const;
@@ -432,8 +434,6 @@ public:
     bool AllowCrafting() const;
     bool GetNaturalRegeneration() const;
     int GetTeamMaxSize() const;
-    double getSaturationFloor(float value) const;
-    double getExhaustionDamage(float value) const;
     int getProtection(int a, int b) const;
     int getComparisonImageForGameMode() const;
     bool HasHostOption(eCustomGameModeHostOption option) const;

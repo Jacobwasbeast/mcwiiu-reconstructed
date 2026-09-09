@@ -1,7 +1,9 @@
 #include "game/minigame/FirstToDieMedal.hpp"
 
+#include "game/world/generation/PlayerStats.hpp"
+
 FirstToDieMedal::FirstToDieMedal(int name, float target, unsigned int weight)
-    : GameMedal(name, target, weight, GameMedal::OPERATOR_AT_MOST)
+    : GameMedal(name, target, weight, GameMedal::OPERATOR_AT_LEAST, true, false)
 {
 }
 
@@ -11,27 +13,24 @@ FirstToDieMedal::~FirstToDieMedal()
 
 double FirstToDieMedal::GetScore(PlayerStats* playerStats) const
 {
-    const float initialScore = 10.0f;
-    const float decay = 0.95f;
-    double score = 0.0;
-    int winningRounds = 0;
-    float roundScore = initialScore;
-    unsigned int round = 0;
+    float score = 0.0f;
+    float roundScore = 10.0f;
+    int scoringRounds = 0;
 
-    while (round < playerStats->getTotalRounds())
+    for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
     {
-        if (playerStats->getRoundStats(round)->mWon == 1)
+        if (playerStats->getRoundStats(round)->mLives == 1)
         {
-            score = (double)(float)(score + (double)roundScore);
-            ++winningRounds;
+            score += roundScore;
+            ++scoringRounds;
         }
-        roundScore = (float)((double)roundScore * (double)decay);
-        ++round;
+
+        roundScore *= 0.95f;
     }
 
-    if (winningRounds < 2)
+    if (scoringRounds < 2)
     {
-        score = 0.0;
+        score = 0.0f;
     }
 
     return score;

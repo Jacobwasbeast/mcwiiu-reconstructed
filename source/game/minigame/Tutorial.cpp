@@ -4,13 +4,19 @@
 #include "game/minigame/TutorialHint.hpp"
 #include "game/minigame/TutorialMessage.hpp"
 #include "game/minigame/TutorialTask.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/world/block/LookAtBlockHint.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
+unsigned int GetTickCount();
+
+extern ConsoleUIController gConsoleUIController;
+
 namespace
 {
+    unsigned int gTutorialVisibleTime = 7000;
     std::vector<int> gTutorialCompletionIds;
     static const int gTutorialCompletionIdValues[] = { 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 65, 66, 67, 68, 69, 70, 72, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 101, 102, 103, 104, 105, 107, 106, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 188, 190, 191, 192, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 34, 36, 29, 31, 33, 35, 189, 8, 193, 194, 195, 309, 310, 311, 312, 313, 308, 196, 100, 64, 314, 315, 316, 317, 318, 319, 149, 150, 151, 152, 153, 197, 198, 199, 200, 38, 39, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 383, 384 };
 }
@@ -35,12 +41,15 @@ unsigned int Tutorial::PopupMessageDetails::isSameContent(PopupMessageDetails* d
 
 Tutorial::Tutorial(int playerIdValue, GameModeConstraints* constraints, bool enabledValue,
                    bool skipSetup)
-    : currentState(0), initialized(false), enabled(enabledValue), popupVisible(true),
-      popupPending(false), tutorialVisible(false), playerId(playerIdValue),
-      gameModeConstraints(constraints), messages(), tasks(), completedStates(),
-      currentMessage(NULL), currentScene(NULL), currentTaskIndex(-1)
+    : currentState(0), stateChanged(false), started(false), startTime(0),
+      gameModeConstraints(constraints), messages(), tasks(), currentTask(),
+      completedStates(), overridesGameHostOptions(false), gameHostOptionsOverridden(false),
+      gameMode(static_cast<eTutorial_GameMode>(4)), gameModeChanged(false), hintShown(false),
+      playerId(playerIdValue), visibleTime(0), currentMessage(NULL), messageState(0),
+      messageRepeatCount(0), popupVisible(true), popupPending(false), uiControllerSet(false),
+      tutorialHidden(false), currentScene(NULL), tasksChecked(false), completed(false),
+      enabled(enabledValue)
 {
-    initialized = true;
     if (!skipSetup)
     {
         AddHints();
@@ -181,10 +190,11 @@ unsigned int Tutorial::AddHints()
 
 void Tutorial::addTask(eTutorial_State state, TutorialTask* task)
 {
-    if (task != NULL && state == (eTutorial_State)0)
+    if (state == eTutorial_State_None)
     {
         tasks.push_back(task);
     }
+    stateTasks[state].push_back(task);
 }
 
 unsigned int Tutorial::AddTasks(bool enabledValue)
@@ -251,13 +261,19 @@ unsigned int Tutorial::isSelectedItemState()
 
 void Tutorial::tick()
 {
-    if (!initialized || !enabled)
+    if (!started)
     {
-        return;
-    }
-    if (currentMessage != NULL)
-    {
-        popupVisible = true;
+        unsigned int now = GetTickCount();
+        if (startTime == 0)
+        {
+            startTime = (int)now;
+            return;
+        }
+        if (now - (unsigned int)startTime < 1501)
+        {
+            return;
+        }
+        started = true;
     }
 }
 
@@ -279,13 +295,14 @@ void Tutorial::changeTutorialState(eTutorial_State state, UIScene* scene)
         return;
     }
     setMessage((PopupMessageDetails*)NULL);
-    currentState = (int)state;
     currentScene = scene;
-    currentTaskIndex = -1;
+    currentState = (int)state;
     if (gameModeConstraints != NULL)
     {
         gameModeConstraints->SetCurrentState(currentState);
     }
+    popupPending = false;
+    stateChanged = true;
 }
 
 void Tutorial::setMessage(const std::wstring& messageValue, int displayTimeValue,
@@ -302,7 +319,17 @@ void Tutorial::setMessage(const std::wstring& messageValue, int displayTimeValue
 void Tutorial::showTutorialPopup(bool show)
 {
     popupVisible = show;
-    tutorialVisible = show;
+    if (!show)
+    {
+        TutorialTask* task = currentTask[currentState];
+        if (task != NULL
+            && (!task->AllowFade()
+                || GetTickCount() < (unsigned int)visibleTime + gTutorialVisibleTime))
+        {
+            tutorialHidden = true;
+        }
+        gConsoleUIController.SetTutorialVisible(playerId, false);
+    }
 }
 
 unsigned int Tutorial::useItemOn(Level* level, not_null_ptr<ItemInstance> item,
@@ -448,9 +475,23 @@ void Tutorial::onEffectChanged(MobEffect* effect, bool added)
     enabled = added || enabled;
 }
 
-void Tutorial::onGameModeChange(eTutorial_GameMode gameMode)
+void Tutorial::onGameModeChange(eTutorial_GameMode newGameMode)
 {
-    enabled = gameMode != eTutorial_GameMode_None;
+    if (gameMode == newGameMode)
+    {
+        return;
+    }
+    if (gameMode == static_cast<eTutorial_GameMode>(10) && !hintShown)
+    {
+        return;
+    }
+    gameMode = newGameMode;
+    gameModeChanged = true;
+    if (newGameMode != static_cast<eTutorial_GameMode>(10))
+    {
+        return;
+    }
+    hintShown = false;
 }
 
 unsigned int Tutorial::staticCtor()
