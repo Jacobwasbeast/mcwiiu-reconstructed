@@ -28,10 +28,10 @@ public:
     virtual void Trace(unsigned long long value) const;
     virtual unsigned short GetProtocolType() const;
     virtual void CleanupWithStationAddress();
+    virtual void Cleanup();
     virtual unsigned int IsProtocolFilteringEnabled() const;
     void SetPort(unsigned char port);
     unsigned int GetStationPacketHandler();
-    void Cleanup();
 protected:
     friend class ProtocolManager;
     ProtocolId mProtocolId;

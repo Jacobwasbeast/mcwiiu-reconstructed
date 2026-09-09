@@ -23,24 +23,6 @@ unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
 
-class CodecFacade
-{
-public:
-    CodecFacade();
-    virtual ~CodecFacade();
-    virtual void Trace(unsigned long long value) const;
-    void Initialize();
-    void Finalize();
-    static void CreateInstance();
-    static void DestroyInstance();
-
-private:
-    unsigned int m_state;
-};
-
-extern CodecFacade* g_codecFacade;
-extern void* g_codecStorage;
-
 class ChatApi
 {
 public:

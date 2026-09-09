@@ -3,6 +3,7 @@
 #include "nn/pia/chat/HandsFree.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "vendor/VCTAudio.hpp"
 #include <new>
 
 extern unsigned int g_voiceAudioFrameLength = 0;
@@ -10,13 +11,6 @@ extern unsigned int g_voiceAudioDataSize = 0;
 extern unsigned char g_voiceVadActivity = 0;
 extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance = 0;
 OSFastMutex g_voiceProtocolMutex;
-extern int VCT_AddConferenceClient(unsigned short stationIndex);
-extern int VCT_RemoveConferenceClient(unsigned short stationIndex);
-extern int VCT_OnConferenceClient(unsigned short stationIndex);
-extern int VCT_ReceiveAudio(void* pData, unsigned int size, unsigned short* pStationIndex, void* pCidBuffer);
-extern void VCT_GetAudioInfoFromCid(unsigned short cid, void* audioInfo);
-extern unsigned int VCT_GetAudioScale(const void* audio, unsigned int size);
-extern int VCT_SendAudioEx(const void* audio, unsigned int size, unsigned int scale);
 
 namespace nn
 {
@@ -204,11 +198,10 @@ Result VoiceProtocol::setupProtocols(unsigned char maxPlayers, unsigned int data
     return 0;
 }
 
-Result VoiceProtocol::receiveCore(void* pData, unsigned int uiSize,
-                                    unsigned short* pStationIndex, void* pCidBuffer)
+Result VoiceProtocol::receiveCore(void* pData, unsigned int uiSize, unsigned short* pCids)
 {
     EnterCriticalSection(&g_voiceProtocolMutex);
-    const Result result = VCT_ReceiveAudio(pData, uiSize, pStationIndex, pCidBuffer);
+    const Result result = VCT_ReceiveAudio(pData, uiSize, pCids);
     LeaveCriticalSection(&g_voiceProtocolMutex);
     return result;
 }
@@ -256,7 +249,7 @@ Result VoiceProtocol::Send(const short* pData, unsigned int uiSamples,
     if (processResult != 0)
         return processResult;
     const unsigned int scale = VCT_GetAudioScale(m_pead, uiSamples << 1);
-    const int result = VCT_SendAudioEx(m_pead, uiSamples, scale);
+    const int result = VCT_SendAudioEx(m_pead, scale);
     if (result == 0 || result == 0x2c0a)
         return 0;
     if (result == 0x10c08 || result == 0x10c07)
@@ -268,9 +261,8 @@ Result VoiceProtocol::Receive(void* pData, unsigned int uiSize,
 {
     if (pData == 0)
         return 0x10c07;
-    unsigned short cid = 0;
-    unsigned char cids[32] = {};
-    const Result result = receiveCore(pData, uiSize, &cid, cids);
+    unsigned short cids[16];
+    const Result result = receiveCore(pData, uiSize, pStationIndex != 0 ? cids : 0);
     if (result != 0)
     {
         if (result == 0x2c09 || result == 0x10c07 || result == 0x10c08)
@@ -278,16 +270,17 @@ Result VoiceProtocol::Receive(void* pData, unsigned int uiSize,
         return 0xc0b;
     }
     if (pStationIndex != 0)
-        *pStationIndex = static_cast<StationIndex>(cid == 0 ? 0xfd : cid - 1);
+        *pStationIndex = static_cast<StationIndex>(
+            __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertCid(cids[0]));
     return 0;
 }
 Result VoiceProtocol::GetAudioInfo(StationIndex stationIndex, AudioInfo* audioInfo) const
 {
     if (static_cast<unsigned short>(stationIndex) >= 0x20 || audioInfo == 0)
         return 0x10c07;
-    unsigned char source[96];
-    VCT_GetAudioInfoFromCid(static_cast<unsigned short>(stationIndex + 1), source);
-    memcpy(audioInfo, source, sizeof(source));
+    VCTAudioInfo source;
+    VCT_GetAudioInfoFromCid(static_cast<unsigned short>(stationIndex + 1), &source);
+    memcpy(audioInfo, &source, sizeof(source));
     return 0;
 }
 bool VoiceProtocol::IsClientInConference(StationIndex stationIndex) const
