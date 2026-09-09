@@ -10,7 +10,16 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+#include "nn/nex/DataStoreClientInterface.hpp"
+#include "nn/nex/DataStoreSearchParam.hpp"
+#include "nn/nex/DataStoreSearchResult.hpp"
+#include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/Reconstruction.hpp"
+#include "nn/nex/qResult.hpp"
+#include "nn/pia/String.hpp"
+#include "nn/pia/inet/NexSessionStartupSetting.hpp"
+#include "nn/pia/session/Session.hpp"
+#include "nn/pia/transport/Station.hpp"
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
 
 static NQRNetworkManager_WiiU* s_networkManager;
@@ -23,23 +32,9 @@ static bool s_cancelConnect;
 static bool s_appSuspended;
 static bool s_handlingBootInvite;
 
-namespace nn
-{
-namespace pia
-{
-namespace session
-{
-class Session;
-}
-}
-}
-
 extern "C" void checkPiaCoreToUse();
-extern void* Nex_GetDataStoreClientNative();
-extern int Nex_SearchObjectNative();
-extern void Pia_StartupSessionNative(void* result, void* token, const char* name);
 
-static void* s_dataStoreClient;
+static nn::nex::DataStoreClientInterface* s_dataStoreClient;
 static nn::nex::MatchmakeExtensionClient* s_matchmakeClient;
 static bool s_matchmakeHandlerRegistered;
 static nn::nex::NgsFacade* s_ngsFacade;
@@ -50,9 +45,25 @@ static nn::nex::NotificationEventHandler* s_matchmakeNotificationHandler;
 
 unsigned int GetTickCount();
 
-void NQRNetworkManager_WiiU_Pia_StartupSession(void* result, void* token, const char* name)
+nn::pia::Result NQRNetworkManager_WiiU_Pia_StartupSession__FPQ5_2nn3pia9transport7Station19IdentificationTokenPc(
+    nn::pia::transport::Station::IdentificationToken* token, char* name)
 {
-    Pia_StartupSessionNative(result, token, name);
+    nn::pia::inet::NexSessionStartupSetting setting;
+    nn::pia::transport::Station::PlayerInfo playerInfo;
+
+    setting.m_field00 = 10000;
+    setting.m_field04 = 500;
+    setting.m_identificationToken = token;
+    setting.m_hostMigrationEnabled = false;
+    setting.m_bandwidthCheckMeasurementTime = 200;
+    setting.m_bandwidthCheckIpPacketSize = 0x400;
+    setting.m_recentPlayRecordEnabled = false;
+
+    playerInfo.m_language = 1;
+    playerInfo.m_name.Copy(nn::pia::common::String(name));
+    setting.m_playerInfo[0] = playerInfo;
+
+    return nn::pia::session::g_piaSession->Startup(setting);
 }
 
 unsigned int Nex_FinalizeDataStore__Fv()
@@ -139,7 +150,20 @@ unsigned int Nex_InitializeNex__FUiT1Q4_2nn3nex4Core10ThreadMode(unsigned int ru
 
 unsigned int Nex_SearchObject__Fv()
 {
-    return static_cast<unsigned int>(Nex_SearchObjectNative());
+    nn::nex::ProtocolCallContext callContext(NULL);
+    nn::nex::DataStoreSearchParam searchParam;
+    searchParam.Reset();
+    nn::nex::DataStoreSearchResult searchResult;
+    nn::nex::qResult result;
+
+    searchParam.m_uiSearchTarget = 10;
+    s_dataStoreClient->SearchObject(&callContext, searchParam, &searchResult);
+    callContext.Wait(0xFFFFFFFF);
+    result = callContext.GetResult();
+    if (!result)
+        return 0;
+
+    return 0;
 }
 
 void StartNATSessionCallback__FPQ3_2nn3nex11CallContextPCQ3_2nn3nex11UserContext(nn::nex::CallContext* context, const void* userContext)

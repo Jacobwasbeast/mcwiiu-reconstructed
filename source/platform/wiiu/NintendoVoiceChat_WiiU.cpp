@@ -9,21 +9,11 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/network/CGameNetworkManager.hpp"
+#include "nn/pia.h"
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/SndMicDevice.hpp"
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
-
-namespace nn
-{
-namespace pia
-{
-void Assert(const char* expression, const char* file, unsigned int line, const char* function, ...);
-}
-}
-
-
-nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol();
 
 extern "C" void checkPiaCoreToUse()
 {
@@ -36,7 +26,6 @@ void AssertPiaError(nn::pia::Result& result)
 struct VoiceChatMessage
 {
     int type;
-    int reserved;
     unsigned long long stationId;
 };
 
@@ -155,7 +144,6 @@ void NintendoVoiceChat_WiiU::RemovePlayer(NQRNetworkPlayer* player)
                 }
             VoiceChatMessage message;
             message.type = 1;
-            message.reserved = 0;
             message.stationId = uid.mii.principalId;
             s_messageQueue.push_back(message);
         }
@@ -257,7 +245,6 @@ void NintendoVoiceChat_WiiU::AddPlayer(NQRNetworkPlayer* player)
                 s_voicePlayers.push_back(player);
                 VoiceChatMessage message;
                 message.type = 0;
-                message.reserved = 0;
                 message.stationId = uid.mii.principalId;
                 s_messageQueue.push_back(message);
             }
