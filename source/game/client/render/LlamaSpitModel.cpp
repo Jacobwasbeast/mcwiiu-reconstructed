@@ -8,6 +8,11 @@ LlamaSpitModel::LlamaSpitModel(const ModelDefinition& modelDefinition)
     _init(0.0f, modelDefinition);
 }
 
+LlamaSpitModel::LlamaSpitModel(float delta, const ModelDefinition& modelDefinition)
+{
+    _init(delta, modelDefinition);
+}
+
 LlamaSpitModel::~LlamaSpitModel()
 {
 }

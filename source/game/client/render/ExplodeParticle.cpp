@@ -50,14 +50,13 @@ void ExplodeParticle::tick()
     xo = x;
     yo = y;
     zo = z;
-    ++age;
-    if (age >= lifetime)
+    if (age++ >= lifetime)
     {
         remove();
     }
 
     setMiscTex(7 - (age << 3) / lifetime);
-    xd += 0.004;
+    yd += 0.004;
     move(xd, yd, zd);
     xd *= 0.9;
     yd *= 0.9;

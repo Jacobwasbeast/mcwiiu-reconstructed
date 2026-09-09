@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/VexModel.hpp"
+#include "game/client/render/HumanoidMobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -12,7 +12,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class VexRenderer : public VexModel
+class VexRenderer : public HumanoidMobRenderer
 {
 public:
     VexRenderer(EntityRenderDispatcher* dispatcher);
@@ -21,8 +21,11 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
     virtual Model* createModel(const ModelDefinition& definition);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
+
+protected:
+    unsigned int mModelVersion;
 };
 
 #endif

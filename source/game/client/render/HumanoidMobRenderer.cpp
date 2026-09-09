@@ -6,6 +6,8 @@
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
 
+static ResourceLocation HUMANOID_LOCATION;
+
 HumanoidMobRenderer::HumanoidMobRenderer(EntityRenderDispatcher* dispatcher, HumanoidModel* model,
                                          float shadowRadius)
     : MobRenderer(dispatcher, model, shadowRadius)
@@ -21,11 +23,10 @@ HumanoidMobRenderer::~HumanoidMobRenderer()
 
 const ResourceLocation* HumanoidMobRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
-    return &location;
+    return &HUMANOID_LOCATION;
 }
 
 void HumanoidMobRenderer::translateWeaponItem()
 {
-    GlStateManager::translatef(0.0f, 0.1875f, -0.25f);
+    GlStateManager::translatef(0.0f, 0.1875f, 0.0f);
 }

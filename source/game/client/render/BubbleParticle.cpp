@@ -4,9 +4,9 @@
 #include "game/util/Math.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
 BubbleParticle::BubbleParticle(Level* level,
@@ -36,7 +36,7 @@ BubbleParticle::BubbleParticle(Level* level,
     lifetime = (int)(8.0 / (Math::random() * 0.8 + 0.2));
 
     BlockPos pos(x, y, z);
-    if (level->getBlockState(pos)->getMaterial() == Material::WATER)
+    if (level->getBlockState(pos)->getMaterial() == Material::BUBBLE_COLUMN)
     {
         lifetime *= 5;
         int blockId = level->getBlockId((int)x, (int)y + 1, (int)z);
@@ -58,8 +58,7 @@ void BubbleParticle::tick()
     zo = z;
 
     yd += 0.002;
-    BlockPos pos(x, y, z);
-    if (level->getBlockState(pos)->getMaterial() == Material::WATER)
+    if (level->getBlockState(BlockPos(x, y, z))->getMaterial() == Material::BUBBLE_COLUMN)
     {
         yd += 0.003;
     }
@@ -70,20 +69,21 @@ void BubbleParticle::tick()
     yd *= 0.85;
     zd *= 0.85;
 
-    pos = BlockPos(x, y, z);
+    BlockPos pos(x, y, z);
     const BlockState* state = level->getBlockState(pos);
-    const BlockState* below = level->getBlockState(pos.below());
-    bool inWater = true;
-    if (!state->getMaterial()->isLiquid()
-        && (!below->getMaterial()->isLiquid() || state->getBlock() != Blocks::AIR))
+    Block* block = level->getBlock(pos);
+    Block* blockBelow = level->getBlock(pos.below());
+    bool survives = true;
+    if (!block->ParticlesSurviveWithin()
+        && (!blockBelow->ParticlesSurviveWithin() || state->getMaterial() != Material::AIR))
     {
-        inWater = false;
+        survives = false;
     }
 
-    state = level->getBlockState(pos);
-    if (state->getBlock() != Blocks::WATER
-        && state->getBlock() != Blocks::FLOWING_WATER
-        && !inWater)
+    Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
+    if (material != Material::WATER
+        && material != Material::BUBBLE_COLUMN
+        && !survives)
     {
         lifetime = 0;
     }

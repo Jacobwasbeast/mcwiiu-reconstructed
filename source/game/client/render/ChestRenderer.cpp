@@ -28,62 +28,36 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
                            bool bUseDisplayList)
 {
     boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
-    int data = 0;
-    boost::shared_ptr<ChestBlockEntity> neighbour;
-    bool large = false;
-    bool trapped = false;
-    bool eastNeighbour = false;
-    bool southNeighbour = false;
 
     GlStateManager::enableDepthTest();
     GlStateManager::depthFunc(3);
     GlStateManager::depthMask(true);
 
+    int data = 0;
     if (chest->hasLevel())
     {
         data = chest->getData();
         chest->checkNeighbors();
     }
 
-    neighbour = chest->getNeighbour();
-    if (neighbour)
+    if (chest->mNorthNeighbour.lock() || chest->mWestNeighbour.lock())
     {
-        BlockPos chestPos = chest->getBlockPos();
-        BlockPos neighbourPos = neighbour->getBlockPos();
-        if (neighbourPos.x < chestPos.x || neighbourPos.z < chestPos.z)
-        {
-            return;
-        }
-        eastNeighbour = neighbourPos.x > chestPos.x;
-        southNeighbour = neighbourPos.z > chestPos.z;
+        return;
+    }
+
+    bool large = false;
+    if (chest->mEastNeighbour.lock() || chest->mSouthNeighbour.lock())
+    {
         large = true;
     }
-    trapped = chest->getType() == 1;
 
-    if (breakProgress >= 0)
+    ChestModel* model;
+    if (large)
     {
-        bindTexture(&BREAKING_LOCATIONS[breakProgress]);
-
-        GlStateManager::matrixMode(2);
-        GlStateManager::pushMatrix();
-        if (large)
+        model = mLargeChestModel;
+        if (breakProgress < 0)
         {
-            GlStateManager::scalef(8.0F, 4.0F, 1.0F);
-        }
-        else
-        {
-            GlStateManager::scalef(4.0F, 4.0F, 1.0F);
-        }
-        GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
-        GlStateManager::matrixMode(0);
-        GlStateManager::pushMatrix();
-        GlStateManager::enableRescaleNormal();
-    }
-    else
-    {
-        if (large)
-        {
-            if (trapped)
+            if (chest->getType() == 1)
             {
                 bindTexture(&LARGE_TRAPPED_CHEST_LOCATION);
             }
@@ -91,10 +65,29 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
             {
                 bindTexture(&LARGE_CHEST_LOCATION);
             }
+
+            GlStateManager::pushMatrix();
+            GlStateManager::enableRescaleNormal();
         }
         else
         {
-            if (trapped)
+            bindTexture(&BREAKING_LOCATIONS[breakProgress]);
+
+            GlStateManager::matrixMode(2);
+            GlStateManager::pushMatrix();
+            GlStateManager::scalef(8.0F, 4.0F, 1.0F);
+            GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
+            GlStateManager::matrixMode(0);
+            GlStateManager::pushMatrix();
+            GlStateManager::enableRescaleNormal();
+        }
+    }
+    else
+    {
+        model = mChestModel;
+        if (breakProgress < 0)
+        {
+            if (chest->getType() == 1)
             {
                 bindTexture(&TRAPPED_CHEST_LOCATION);
             }
@@ -102,10 +95,22 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
             {
                 bindTexture(&CHEST_LOCATION);
             }
-        }
 
-        GlStateManager::pushMatrix();
-        GlStateManager::enableRescaleNormal();
+            GlStateManager::pushMatrix();
+            GlStateManager::enableRescaleNormal();
+        }
+        else
+        {
+            bindTexture(&BREAKING_LOCATIONS[breakProgress]);
+
+            GlStateManager::matrixMode(2);
+            GlStateManager::pushMatrix();
+            GlStateManager::scalef(4.0F, 4.0F, 1.0F);
+            GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
+            GlStateManager::matrixMode(0);
+            GlStateManager::pushMatrix();
+            GlStateManager::enableRescaleNormal();
+        }
     }
 
     if (bTranslucent)
@@ -118,9 +123,18 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     GlStateManager::translatef(0.5F, 0.5F, 0.5F);
 
     float yRot = 0.0F;
+    bool eastNeighbour = false;
     if (data == 2)
     {
         yRot = 180.0F;
+        if (chest->mEastNeighbour.lock())
+        {
+            eastNeighbour = true;
+        }
+    }
+    else if (data == 3)
+    {
+        yRot = 0.0F;
     }
     else if (data == 4)
     {
@@ -131,11 +145,21 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
         yRot = -90.0F;
     }
 
-    if (data == 2 && eastNeighbour)
+    if (eastNeighbour)
     {
         GlStateManager::translatef(1.0F, 0.0F, 0.0F);
     }
-    else if (data == 5 && southNeighbour)
+
+    bool southNeighbour = false;
+    if (data == 5)
+    {
+        if (chest->mSouthNeighbour.lock())
+        {
+            southNeighbour = true;
+        }
+    }
+
+    if (southNeighbour)
     {
         GlStateManager::translatef(0.0F, 0.0F, -1.0F);
     }
@@ -144,23 +168,19 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
 
     float openness = chest->mOpenOld + (chest->mOpen - chest->mOpenOld) * a;
-    if (large)
+    if (chest->mNorthNeighbour.lock())
     {
-        float neighbourOpenness = neighbour->mOpenOld +
-            (neighbour->mOpen - neighbour->mOpenOld) * a;
+        float neighbourOpenness = chest->mNorthNeighbour.lock()->mOpenOld
+            + (chest->mNorthNeighbour.lock()->mOpen - chest->mNorthNeighbour.lock()->mOpenOld) * a;
         if (neighbourOpenness > openness)
         {
             openness = neighbourOpenness;
         }
     }
+
     openness = 1.0F - openness;
     openness = 1.0F - openness * openness * openness;
 
-    ChestModel* model = mChestModel;
-    if (large)
-    {
-        model = mLargeChestModel;
-    }
     model->mLid->mXRot = -(openness * 1.5707964F);
     model->render(bUseDisplayList);
 

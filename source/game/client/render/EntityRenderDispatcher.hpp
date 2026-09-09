@@ -43,9 +43,9 @@ public:
     void renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                       float yaw, float partialTicks, int color);
     void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                float yaw, float partialTicks, bool renderShadow, bool renderName,
-                bool renderFire, bool renderLeash);
-    void render(boost::shared_ptr<Entity>& entity, float partialTicks, bool renderShadow);
+                float yaw, float partialTicks, bool renderOutlines, bool itemFrame,
+                bool renderShadow, bool renderLeash);
+    void render(boost::shared_ptr<Entity>& entity, float partialTicks, bool renderOutlines);
     void renderSecondPass(boost::shared_ptr<Entity>& entity, float partialTicks);
     void setupForTexturePack(TexturePack* texturePack);
     void setPlayerRotY(float value);
@@ -64,15 +64,17 @@ public:
     Level* mLevel;
     boost::shared_ptr<Entity> mCamera;
     boost::shared_ptr<Entity> mPlayer;
-    Options* mOptions;
     float mCameraYRot;
     float mCameraXRot;
-    float mPlayerRotY;
+    Options* mOptions;
     bool mRenderName;
     bool mRenderLeash;
+    double mCameraX;
+    double mCameraY;
+    double mCameraZ;
+    bool mSolidRendering;
     bool mRenderShadow;
     bool mRenderHitBoxes;
-    bool mSolidRendering;
 };
 
 #endif

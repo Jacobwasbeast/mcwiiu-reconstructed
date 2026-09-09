@@ -36,8 +36,7 @@ void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     if (mSolidRender)
     {
         GlStateManager::enableColorMaterial();
-        getTeamColor(entity);
-        GlStateManager::setupSolidRenderingTextureCombine(0);
+        GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
 
     mModel->render(entity, partialTick, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, false);

@@ -4,8 +4,9 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
-#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 
 WaterCurrentDownParticle::WaterCurrentDownParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0),
@@ -38,11 +39,23 @@ void WaterCurrentDownParticle::tick()
         remove();
 
     BlockPos pos(x, y, z);
-    Block* block = level->getBlockState(pos)->getBlock();
-    Block* below = level->getBlockState(pos.below())->getBlock();
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = level->getBlock(pos);
+    Block* blockBelow = level->getBlock(pos.below());
+    bool survives = true;
+    if (!block->ParticlesSurviveWithin()
+        && (!blockBelow->ParticlesSurviveWithin() || state->getMaterial() != Material::AIR))
+    {
+        survives = false;
+    }
 
-    if (below != Blocks::WATER && below != Blocks::FLOWING_WATER && !block->isLiquidBlock())
+    Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
+    if (material != Material::WATER
+        && material != Material::BUBBLE_COLUMN
+        && !survives)
+    {
         remove();
+    }
 
     rotation += 0.08f;
 }

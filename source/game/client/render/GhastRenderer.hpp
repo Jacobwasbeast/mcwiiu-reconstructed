@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/GhastModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -12,15 +12,15 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class GhastRenderer : public GhastModel
+class GhastRenderer : public MobRenderer
 {
 public:
     GhastRenderer(EntityRenderDispatcher* dispatcher);
     virtual ~GhastRenderer();
 
-    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
+    virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);
 };
 
 #endif

@@ -35,7 +35,7 @@ void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
 
-    mModel->render(entity, 3.0F, 3.0F, 3.0F, 3.0F, -5.0F, 0.0625F, true);
+    mModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, true);
 
     if (mSolidRender)
     {

@@ -8,6 +8,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
@@ -119,4 +120,18 @@ const ResourceLocation* ItemEntityRenderer::getTextureLocation(boost::shared_ptr
 void ItemEntityRenderer::SetItemFrame(bool itemFrame)
 {
     mItemFrame = itemFrame;
+}
+
+float ItemEntityRenderer::getRenderAmount(not_null_ptr<ItemInstance> item)
+{
+    int amount = 1;
+    if (item->getCount() > 1)
+        amount = 2;
+    if (item->getCount() > 5)
+        amount = 3;
+    if (item->getCount() > 20)
+        amount = 4;
+    if (item->getCount() > 40)
+        amount = 5;
+    return (float)amount;
 }

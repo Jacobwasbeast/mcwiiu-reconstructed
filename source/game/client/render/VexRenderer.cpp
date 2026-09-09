@@ -1,17 +1,20 @@
 #include "game/client/render/VexRenderer.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/VexModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/util/ResourceLocation.hpp"
 #include "game/core/Vex.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation VEX_LOCATION;
-static ResourceLocation VEX_CHARGING_LOCATION;
+static ResourceLocation VEX_LOCATION((_TEXTURE_NAME)199);
+static ResourceLocation VEX_CHARGING_LOCATION((_TEXTURE_NAME)200);
 
-VexRenderer::VexRenderer(EntityRenderDispatcher*)
-    : VexModel(ModelDefinition())
+VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher)
+    : HumanoidMobRenderer(dispatcher, new VexModel(ModelDefinition()), 0.3F)
 {
+    mModelVersion = static_cast<VexModel*>(mModel)->getModelVersion();
 }
 
 VexRenderer::~VexRenderer()
@@ -20,12 +23,15 @@ VexRenderer::~VexRenderer()
 
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
+        && (entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
-        boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
-        if (vex->isCharging())
-            return &VEX_CHARGING_LOCATION;
+        return &VEX_LOCATION;
     }
+
+    boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
+    if (vex->isCharging())
+        return &VEX_CHARGING_LOCATION;
 
     return &VEX_LOCATION;
 }
@@ -33,15 +39,23 @@ const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity
 void VexRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                          float yaw, float partialTick)
 {
-    VexModel::render(entity, (float)x, (float)y, (float)z, yaw, partialTick, 1.0F, false);
-}
+    unsigned int modelVersion = static_cast<VexModel*>(mModel)->getModelVersion();
+    if (modelVersion != mModelVersion)
+    {
+        delete mModel;
+        mModel = new VexModel(ModelDefinition());
+        mModelVersion = modelVersion;
+    }
 
-void VexRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
-{
-    GlStateManager::scalef(0.4F, 0.4F, 0.4F);
+    MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
 Model* VexRenderer::createModel(const ModelDefinition& definition)
 {
     return new VexModel(definition);
+}
+
+void VexRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
+{
+    GlStateManager::scalef(0.4F, 0.4F, 0.4F);
 }

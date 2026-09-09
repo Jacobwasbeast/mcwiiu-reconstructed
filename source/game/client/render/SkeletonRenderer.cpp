@@ -29,7 +29,7 @@ SkeletonRenderer::~SkeletonRenderer()
 
 void SkeletonRenderer::translateWeaponItem()
 {
-    GlStateManager::translatef(0.09375f, 0.1875f, -3.0f);
+    GlStateManager::translatef(0.09375f, 0.1875f, 0.0f);
 }
 
 const ResourceLocation* SkeletonRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

@@ -22,7 +22,8 @@ TextureTheme::BlockStack::BlockStack(const BlockState* state, unsigned int count
 {
     for (unsigned int i = 0; i < count; ++i)
         mStates.push_back(state);
-    mStates.push_back(Blocks::AIR->defaultBlockState());
+    static const BlockState* air = Blocks::AIR->defaultBlockState();
+    mStates.push_back(air);
 }
 
 TextureTheme::BlockStack::BlockStack(std::vector<const BlockState*>& states, int offset)
@@ -54,7 +55,7 @@ TextureTheme::TextureTheme()
 const TextureTheme::BlockStack& TextureTheme::getStack(BufferedImage* image, int x, int y) const
 {
     static BlockStack defaultStack;
-    static BlockStack invalidStack(NULL, 1, 0);
+    static BlockStack invalidStack(Blocks::AIR->defaultBlockState(), 1, 0);
     if (x > 0 && y > 0 && x < (int)image->getWidth() && y < (int)image->getHeight())
     {
         int key = image->getData()[(x * image->getWidth() + y)] & 0xFFFFFF;
@@ -72,8 +73,10 @@ void TextureTheme::addStack(const std::wstring& key, const BlockStack& stack)
     mStacks.emplace(std::make_pair(value, stack));
 }
 
-void TextureTheme::Apply(Random&, BlockTransaction* transaction, int& width, int& depth) const
+void TextureTheme::Apply(Random&, BlockTransaction* transaction, int&, int&) const
 {
+    const int width = transaction->mSize.x;
+    const int depth = transaction->mSize.z;
     unsigned int size = width > depth ? width : depth;
     BufferedImage* image = mAssets.getAssetForSize(size);
     int xOffset = ((int)image->getWidth() - width) / 2;
@@ -86,7 +89,7 @@ void TextureTheme::Apply(Random&, BlockTransaction* transaction, int& width, int
             int top = RandomPatchesLayerTheme::HighestSolidBlock(transaction, x, z);
             if (top == -1)
                 continue;
-            for (int y = 1; y < transaction->mSize.y; ++y)
+            for (int y = transaction->mSize.y - 1; y > 0; --y)
             {
                 const BlockState* state = stack.at(top - y);
                 if (state != NULL)

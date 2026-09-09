@@ -24,50 +24,50 @@ void CritParticle::render(BufferBuilder* buffer,
 {
     float fade = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
                             0.0f, 1.0f);
-    alpha = sizeMultiplier * fade;
+    size = sizeMultiplier * fade;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
 void CritParticle::tick()
 {
-    int currentAge = age++;
     xo = x;
     yo = y;
     zo = z;
-    if (currentAge >= lifetime)
+
+    if (age++ >= lifetime)
         remove();
 
     move(xd, yd, zd);
 
-    xd *= 0.7;
-    zd *= 0.7;
-    alpha *= 0.96f;
-    gCol *= 0.9f;
-    yd = yd * 0.7 - 0.1;
+    xd *= 0.7f;
+    zd *= 0.7f;
+    gCol *= 0.96f;
+    bCol *= 0.9f;
+    yd = yd * 0.7f - 0.02f;
 
-    if (hasPhysics)
+    if (onGround)
     {
-        xd *= 0.7;
-        zd *= 0.7;
+        xd *= 0.7f;
+        zd *= 0.7f;
     }
 }
 
 void CritParticle::_init(Level* level, double x, double y, double z,
                          double xa, double ya, double za, float scale)
 {
-    xd = xd * 0.1 + xa * 0.4;
-    yd = yd * 0.1 + ya * 0.4;
-    zd = zd * 0.1 + za * 0.4;
+    xd = xd * 0.1f + xa * 0.4;
+    yd = yd * 0.1f + ya * 0.4;
+    zd = zd * 0.1f + za * 0.4;
 
-    float color = (float)(random.nextDouble() * 0.3 + 0.6);
+    float color = (float)(random.nextDouble() * 0.3f + 0.6f);
     rCol = color;
     gCol = color;
     bCol = color;
 
     size = size * 0.75f * scale;
     sizeMultiplier = size;
-    lifetime = (int)(6.0 / (random.nextDouble() * 0.8 + 0.6)) * (int)scale;
     hasPhysics = true;
+    lifetime = (int)((int)(6.0 / (random.nextDouble() * 0.8 + 0.6)) * scale);
     setMiscTex(65);
 }
 
@@ -82,7 +82,7 @@ Particle* CritParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* lev
                                                  arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
-    particle->setMiscTex(65);
+    particle->tick();
     return particle;
 }
 
@@ -92,8 +92,9 @@ Particle* CritParticle::MagicProvider::createParticle(ePARTICLE_TYPE type, Level
                                                       arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
-    particle->setColor((float)(particle->getRedCol() * 0.3),
-                       (float)(particle->getGreenCol() * 0.8),
+    particle->tick();
+    particle->setColor((float)(particle->getRedCol() * 0.3f),
+                       (float)(particle->getGreenCol() * 0.8f),
                        (float)particle->getBlueCol());
     particle->setMiscTex(66);
     return particle;
@@ -105,6 +106,7 @@ Particle* CritParticle::DamageIndicatorProvider::createParticle(ePARTICLE_TYPE t
                                                                 arrayWithLength<int> params)
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
+    particle->tick();
     particle->setLifetime(20);
     particle->setMiscTex(67);
     return particle;
