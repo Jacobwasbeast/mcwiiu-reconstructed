@@ -2,15 +2,9 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_CHAT_HANDSFREE_HPP
 
 #include <stdint.h>
+#include "vendor/__N_18_chat_HandsFree_cpp_120265b3.hpp"
 
 namespace nn { namespace pia { namespace chat {
-
-enum TMC_HF_EC_MODE
-{
-    TMC_HF_EC_MODE_0 = 0,
-    TMC_HF_EC_MODE_1 = 1,
-    TMC_HF_EC_MODE_2 = 2
-};
 
 class HandsFree
 {
@@ -25,12 +19,26 @@ public:
                 const short* inputRight, const short* inputReference);
 
 private:
+    struct TmcConfig
+    {
+        void* workspace;
+        uint16_t flags;
+        uint16_t neutral;
+        int32_t echoCancellerMode;
+        int16_t noiseSuppressorLevel;
+        int16_t agcParameterA;
+        int16_t agcParameterB;
+        int32_t inputMode;
+        int32_t outputMode;
+        int32_t error;
+    };
+
     void* m_handle;
     int32_t m_ecMode;
     int32_t m_noiseSuppressorLevel;
     int32_t m_agcLevel;
-    int32_t m_state;
-    uint8_t m_config[32];
+    void* m_workspace;
+    TmcConfig m_config;
 };
 
 }}}
