@@ -12,8 +12,8 @@ public:
     FFLiZlibInflator(FFLiAllocatorInterface& allocator);
     virtual ~FFLiZlibInflator();
 
-    virtual void Process(void** output, unsigned int* outputSize, const void** input,
-                         unsigned int* inputSize, int flush);
+    virtual int Process(void** output, unsigned int* outputSize, const void** input,
+                        unsigned int* inputSize, int flush);
     virtual unsigned int TotalInputSize() const;
     virtual unsigned int TotalOutputSize() const;
 

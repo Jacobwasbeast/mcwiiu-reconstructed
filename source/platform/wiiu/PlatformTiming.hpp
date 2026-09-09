@@ -6,7 +6,7 @@ struct _LARGE_INTEGER
     long long QuadPart;
 };
 
-unsigned int QueryPerformanceCounter__FP14_LARGE_INTEGER(_LARGE_INTEGER* value);
-void QueryPerformanceFrequency__FP14_LARGE_INTEGER(_LARGE_INTEGER* value);
+unsigned int QueryPerformanceCounter(_LARGE_INTEGER* value);
+void QueryPerformanceFrequency(_LARGE_INTEGER* value);
 
 #endif

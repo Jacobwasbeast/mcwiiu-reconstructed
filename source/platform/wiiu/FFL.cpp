@@ -20,6 +20,7 @@
 #include "platform/wiiu/FFLiStoreDataCFL.hpp"
 #include "vendor/__N_20_FFLiRawMaskParts_cpp_7c9651f3.hpp"
 
+#include <sysapp/title.h>
 #include <string.h>
 
 extern void instructionSynchronize();
@@ -27,7 +28,10 @@ extern void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44*, _Mat34*, unsigned shor
 
 static FFLiDefaultShader sDefaultShader;
 static void* sDefaultShaderWork;
-extern const unsigned char gFFLIconShaderData[];
+#include "platform/wiiu/FFL_gFFLIconShaderData.inc"
+
+uint32_t gOffScreenSrgbFetchMode = 0;
+uint8_t gOffScreenSrgbFetchEnabled = 1;
 
 static const void* resolveDefaultShaderData(const char* name)
 {
@@ -36,6 +40,8 @@ static const void* resolveDefaultShaderData(const char* name)
 }
 
 extern "C" void GX2SetContextState(const void*);
+extern "C" void GX2SetShaderModeEx(uint32_t, uint32_t, uint32_t, uint32_t,
+                                    uint32_t, uint32_t, uint32_t);
 extern "C" void GX2SetFetchShader(const void*);
 extern "C" void GX2SetVertexShader(const void*);
 extern "C" void GX2SetPixelShader(const void*);
@@ -64,7 +70,7 @@ float FFLiMin__tm__2_f__FZ1ZT1_Z1Z(float lhs, float rhs) { return rhs < lhs ? rh
 float FFLiMax__tm__2_f__FZ1ZT1_Z1Z(float lhs, float rhs) { return lhs < rhs ? rhs : lhs; }
 bool FFLiRange__tm__2_i__FZ1ZN21_b(int minimum, int maximum, int value) { return minimum <= value && value <= maximum; }
 
-uint32_t FFLiRoundUp__FUiT1(uint32_t value, uint32_t alignment) { return (value + alignment - 1) & ~(alignment - 1); }
+uint32_t FFLiRoundUp(uint32_t value, uint32_t alignment) { return (value + alignment - 1) & ~(alignment - 1); }
 void* FFLiRoundUpPtr__FPvUi(void* pointer, uint32_t alignment)
 {
     uintptr_t value = reinterpret_cast<uintptr_t>(pointer);
@@ -143,7 +149,7 @@ int FFLiDateToDays__FiN21(int year, int month, int day)
     return days;
 }
 uint32_t FFLiGetMipMapLevelSize__FUiT1(uint32_t baseSize, uint32_t level) { return baseSize >> (level * 2); }
-int FFLiGetMipMapNum__FiT1(int width, int height)
+int FFLiGetMipMapNum(int width, int height)
 {
     int count = 1;
     while (width > 32 && height > 32) { width /= 2; height /= 2; ++count; }
@@ -175,7 +181,7 @@ uint16_t FFLiGetCRC16__FUsPCvUi(uint16_t crc, const void* data, uint32_t size)
     }
     return crc;
 }
-void FFLiPutCRC16__FUsPvUi(uint16_t initial, void* data, uint32_t size)
+void FFLiPutCRC16(uint16_t initial, void* data, uint32_t size)
 {
     uint16_t* stored = reinterpret_cast<uint16_t*>(static_cast<uint8_t*>(data) + size - 2);
     *stored = 0;
@@ -288,9 +294,7 @@ void FFLiInitModulateShapeNoseline__FP16FFLModulateParamRC11_GX2Texture(FFLModul
 void FFLiInitModulateShapeGlass__FP16FFLModulateParamiRC11_GX2Texture(FFLModulateParam* p, int i, const _GX2Texture& t) { initModulate(p,4,8,FFLiGetGlassColor__Fi(i),0,0,&t); }
 void FFLiInitModulateFill__FP16FFLModulateParam(FFLModulateParam* p) { initModulate(p,0,17,&sTransparent,0,0,0); }
 
-extern void GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(_GX2Texture*, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-extern void GX2InitDepthBuffer__FP15_GX2DepthBufferUiT217_GX2SurfaceFormat10_GX2AAMode(_GX2DepthBuffer*, uint32_t, uint32_t, uint32_t, uint32_t);
-extern void GX2Invalidate(uint32_t, void*, uint32_t);
+extern "C" void GX2Invalidate(uint32_t, void*, uint32_t);
 void FFLiDestroyDefaultShader__FP17FFLiDefaultShader(FFLiDefaultShader* shader);
 int FFLiLoadTextureWithAllocate__FPP11_GX2Texture20FFLiTexturePartsTypeUiP18FFLiResourceLoaderP19FFLiBufferAllocator(
     _GX2Texture**, uint32_t, uint32_t, FFLiResourceLoader*, FFLiBufferAllocator*);
@@ -299,15 +303,16 @@ void FFLiInvalidateTexture__FP11_GX2Texture(_GX2Texture*);
 int FFLiGetBufferRenderTexture__FUiT117_GX2SurfaceFormatT1(uint32_t width, uint32_t height, uint32_t format, uint32_t mipCount)
 {
     _GX2Texture texture = {};
-    GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(&texture, width, height, 0, mipCount, format, 1);
-    return texture.surface.alignment + FFLiRoundUp__FUiT1(texture.surface.imageSize, texture.surface.alignment) +
-           FFLiRoundUp__FUiT1(texture.surface.mipSize, texture.surface.alignment);
+    GX2InitTexture(&texture, width, height, 0, mipCount,
+                   static_cast<_GX2SurfaceFormat>(format), GX2_SURFACE_DIM_TEXTURE_2D);
+    return texture.surface.alignment + FFLiRoundUp(texture.surface.imageSize, texture.surface.alignment) +
+           FFLiRoundUp(texture.surface.mipSize, texture.surface.alignment);
 }
 
 int FFLiGetDepthBufferSizeRenderTexture__FUiT1(uint32_t width, uint32_t height)
 {
     _GX2DepthBuffer depth = {};
-    GX2InitDepthBuffer__FP15_GX2DepthBufferUiT217_GX2SurfaceFormat10_GX2AAMode(&depth, width, height, 5, 0);
+    GX2InitDepthBuffer(&depth, width, height, GX2_SURFACE_FORMAT_UNORM_D24_S8, GX2_AA_MODE1X);
     return depth.surface.imageSize + depth.hiZSize;
 }
 
@@ -325,9 +330,9 @@ void FFLiFlushRenderTexture__FP17FFLiRenderTexture(FFLiRenderTexture* texture) {
 
 int FFLiGetBufferRawMaskParts__Fv()
 {
-    uint32_t indices = FFLiRoundUp__FUiT1(FFLiBugCanVgtFixedIndexSize__FUi(8), 0x20);
-    uint32_t positions = FFLiRoundUp__FUiT1(FFLiBugCanSwapSize__FUi(0x40), 0x40);
-    uint32_t texCoords = FFLiRoundUp__FUiT1(FFLiBugCanSwapSize__FUi(0x20), 0x40);
+    uint32_t indices = FFLiRoundUp(FFLiBugCanVgtFixedIndexSize__FUi(8), 0x20);
+    uint32_t positions = FFLiRoundUp(FFLiBugCanSwapSize__FUi(0x40), 0x40);
+    uint32_t texCoords = FFLiRoundUp(FFLiBugCanSwapSize__FUi(0x20), 0x40);
     return indices + 0x40 + positions + texCoords;
 }
 int FFLiGetBufferRawMask__Fv() { return FFLiGetBufferRawMaskParts__Fv() * 9; }
@@ -394,10 +399,26 @@ void FFLSetMatrixDefaultShader(const _Mat44* projection, const _Mat34* view)
         &sDefaultShader, projection, view);
 }
 
-int FFLInitRes(void* work, const FFLInitDesc* initDesc,
-               const FFLResourceDesc* resourceDesc)
+void FFLSetMatrixDefaultShader(void* shader, const _Mat44* projection, const _Mat34* view)
 {
-    return __N_15_FFLiManager_cpp_28866420::InitResImpl(work, initDesc,
+    FFLiSetMatrixDefaultShader__FP17FFLiDefaultShaderPC6_Mat44PC6_Mat34(
+        shader != 0 ? reinterpret_cast<FFLiDefaultShader*>(shader) : &sDefaultShader,
+        projection, view);
+}
+
+void FFLiRenderTexture::CopyTo(_GX2Texture* destination)
+{
+    if (destination != 0) *destination = texture;
+}
+
+unsigned int FFLiRenderTexture::GetSurfaceFormat() const
+{
+    return texture.surface.format;
+}
+
+int FFLInitRes(void* work, FFLResourceDesc* resourceDesc)
+{
+    return __N_15_FFLiManager_cpp_28866420::InitResImpl(work, 0,
                                                          resourceDesc);
 }
 
@@ -406,10 +427,9 @@ void FFLInitResGPUStep(void)
     if (FFLiManager::IsConstruct()) FFLiManager::GetInstance()->SetupGPU();
 }
 
-int FFLGetWorkSize(const FFLInitDesc* initDesc)
+int FFLGetWorkSize(FFLResourceDesc* resourceDesc)
 {
-    if (initDesc == 0) return 0;
-    return FFLiManager::GetBufferSize(initDesc);
+    return FFLiManager::GetBufferSize(reinterpret_cast<const FFLInitDesc*>(resourceDesc));
 }
 
 int FFLExit(void)
@@ -579,8 +599,8 @@ void FFLiInitFacelineTexture__FP17FFLiRenderTextureUibT3P19FFLiBufferAllocator(
         width, height, mipCount, false);
     texture->texture.surface.imagePtr = reinterpret_cast<void*>(allocator->Allocate(size, texture->texture.surface.alignment));
     texture->texture.surface.mipPtr = 0;
-    GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(
-        &texture->texture, width, height, 0, mipCount, 1, 1);
+    GX2InitTexture(&texture->texture, width, height, 0, mipCount,
+                   GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8, GX2_SURFACE_DIM_TEXTURE_2D);
 }
 
 int FFLiInitTempObjectFacelineTexture__FP29FFLiFacelineTextureTempObjectP17FFLiRenderTexturePC12FFLiCharInfoUibN25P18FFLiResourceLoaderP19FFLiBufferAllocatorP23FFLiRenderTextureBuffer(
@@ -626,7 +646,7 @@ unsigned int FFLiMakeIconEx__FP11_GX2TexturePC13FFLiCharModel13FFLExpressionPC14
 
 int FFLiInitRes__FPvPC11FFLInitDesc(void* work, const FFLInitDesc* initDesc)
 {
-    return FFLInitRes(work, initDesc, 0);
+    return __N_15_FFLiManager_cpp_28866420::InitResImpl(work, initDesc, 0);
 }
 
 void FFLiInitResGPUStep__Fv(void)
@@ -636,7 +656,7 @@ void FFLiInitResGPUStep__Fv(void)
 
 int FFLiGetWorkSize__FPC11FFLInitDesc(const FFLInitDesc* initDesc)
 {
-    return FFLGetWorkSize(initDesc);
+    return FFLiManager::GetBufferSize(initDesc);
 }
 
 int FFLiExit__Fv(void)
@@ -650,7 +670,7 @@ int FFLiGetBufferSizeMaskTextures__FUiT1bT3(uint32_t expressionMask,
 {
     const int count = __N_20_FFLiMaskTextures_cpp_feacafbb::ExpressionFlagCount(expressionMask);
     const uint32_t width = resolution * 2;
-    const uint32_t levels = mipmap && useMipmap ? FFLiGetMipMapNum__FiT1(width, width) : 1;
+    const uint32_t levels = mipmap && useMipmap ? FFLiGetMipMapNum(width, width) : 1;
     return static_cast<int>(count * __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureBufferSize(
         width, width, false) + levels * sizeof(FFLiRenderTexture*));
 }
@@ -667,7 +687,7 @@ int FFLiGetTempBufferSizeMaskTextures__FUiT1bT3P19FFLiResourceManager15FFLResour
 int FFLiGetCompressBufferSizeMaskTexture__FUib(uint32_t resolution, bool mipmap)
 {
     const uint32_t width = resolution * 2;
-    const uint32_t levels = mipmap ? FFLiGetMipMapNum__FiT1(width, width) : 1;
+    const uint32_t levels = mipmap ? FFLiGetMipMapNum(width, width) : 1;
     return static_cast<int>(__N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureBufferSize(
         width, width, true) * 9 + levels * 0x40);
 }
@@ -823,8 +843,7 @@ const uint32_t* FFLiGetEyeMouthTypeElement__F13FFLExpression(uint32_t expression
 
 uint64_t FFLiGetMiiStudioTitleID__Fv(void)
 {
-    extern uint64_t SYSGetSystemApplicationTitleId(uint32_t);
-    return SYSGetSystemApplicationTitleId(4);
+    return _SYSGetSystemApplicationTitleId(SYSTEM_APP_ID_MII_MAKER);
 }
 
 int FFLiGetResourcePath__FPcUiPCc(char* path, uint32_t size, const char* suffix)
@@ -890,8 +909,8 @@ void FFLiInitRenderTexture__FP17FFLiRenderTextureUiT217_GX2SurfaceFormatT2P19FFL
     FFLiRenderTexture* texture, uint32_t width, uint32_t height, uint32_t format,
     uint32_t mipCount, FFLiBufferAllocator* allocator)
 {
-    GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(
-        &texture->texture, width, height, 0, mipCount, format, 1);
+    GX2InitTexture(&texture->texture, width, height, 0, mipCount,
+                   static_cast<_GX2SurfaceFormat>(format), GX2_SURFACE_DIM_TEXTURE_2D);
     texture->texture.surface.imagePtr = reinterpret_cast<void*>(allocator->Allocate(
         texture->texture.surface.imageSize, texture->texture.surface.alignment));
     texture->texture.surface.mipPtr = texture->texture.surface.mipSize == 0 ? 0 :
@@ -902,8 +921,8 @@ void FFLiInitByBufferRenderTexture__FP17FFLiRenderTextureUiT217_GX2SurfaceFormat
     FFLiRenderTexture* texture, uint32_t width, uint32_t height, uint32_t format,
     uint32_t mipCount, FFLiRenderTextureBuffer* buffer)
 {
-    GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(
-        &texture->texture, width, height, 0, mipCount, format, 1);
+    GX2InitTexture(&texture->texture, width, height, 0, mipCount,
+                   static_cast<_GX2SurfaceFormat>(format), GX2_SURFACE_DIM_TEXTURE_2D);
     texture->texture.surface.imagePtr = buffer->buffer;
     texture->texture.surface.mipPtr = 0;
 }
@@ -977,8 +996,10 @@ void FFLiInvalidateShape__FP12FFLDrawParam(FFLDrawParam* drawParam)
 
 void FFLiTempSetShaderMode__F14_GX2ShaderMode(uint32_t mode)
 {
-    extern void GX2SetShaderMode(uint32_t);
-    GX2SetShaderMode(mode);
+    if (mode == 2)
+        GX2SetShaderModeEx(mode, 0x2c, 0x20, 0x40, 0x30, 0x4c, 0xb0);
+    else
+        GX2SetShaderModeEx(mode, 0x30, 0x40, 0, 0, 0xc8, 0xc0);
 }
 
 int FFLiLoadTextureWithAllocate__FPP11_GX2Texture20FFLiTexturePartsTypeUiP18FFLiResourceLoaderP19FFLiBufferAllocator(
@@ -1261,22 +1282,20 @@ void FFLiGetAdditionalInfo__FP17FFLAdditionalInfoPC12FFLiCharInfoi13FFLFontRegio
 
 bool FFLiUseOffScreenSrgbFetch__Fv()
 {
-    extern uint32_t gOffScreenSrgbFetchMode;
-    extern uint8_t gOffScreenSrgbFetchEnabled;
     return gOffScreenSrgbFetchEnabled != 0 && gOffScreenSrgbFetchMode == 1;
 }
 
-int FFLiGetBufferSizeFacelineTexture__FUibT2(uint32_t resolution, bool mipmap, bool useMipmap)
+int FFLiGetBufferSizeFacelineTexture(uint32_t resolution, bool mipmap, bool useMipmap)
 {
     const uint32_t width = resolution * 2;
-    const uint32_t levels = mipmap ? FFLiGetMipMapNum__FiT1(width, width) : 1;
+    const uint32_t levels = mipmap ? FFLiGetMipMapNum(width, width) : 1;
     return FFLiGetBufferRenderTexture__FUiT117_GX2SurfaceFormatT1(width, width, 1, useMipmap ? levels : 1);
 }
 
 int FFLiGetCompressBufferSizeFacelineTexture__FUib(uint32_t resolution, bool mipmap)
 {
     const uint32_t width = resolution * 2;
-    const uint32_t levels = mipmap ? FFLiGetMipMapNum__FiT1(width, width) : 1;
+    const uint32_t levels = mipmap ? FFLiGetMipMapNum(width, width) : 1;
     return FFLiGetBufferRenderTexture__FUiT117_GX2SurfaceFormatT1(width, width, 0x1a, levels);
 }
 
@@ -1288,7 +1307,6 @@ uint32_t FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceTy
 
 void FFLiTempSetContextState__FPC16_GX2ContextState(const void* state)
 {
-    extern void GX2SetContextState(const void*);
     GX2SetContextState(state);
 }
 
@@ -1477,4 +1495,258 @@ int FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination,
 void FFLiClearCreatorNameFromOfficial(FFLiMiiDataOfficial* data)
 {
     FFLiClearCreatorNameFromOfficial__FP19FFLiMiiDataOfficial(data);
+}
+
+int FFLiLoadShape(FFLDrawParam* drawParam, FFLBoundingBox* bounds,
+                  FFLiCharModel* model, FFLiShapePartsType parts,
+                  unsigned short index, FFLiResourceLoader* loader,
+                  FFLiBufferAllocator* allocator)
+{
+    return FFLiLoadShape__FP12FFLDrawParamP14FFLBoundingBoxP13FFLiCharModel18FFLiShapePartsTypeUsP18FFLiResourceLoaderP19FFLiBufferAllocator(
+        drawParam, bounds, model, parts, index, loader, allocator);
+}
+
+void FFLiInvalidate(unsigned int type, void* data, unsigned int size)
+{
+    FFLiInvalidate__F18_GX2InvalidateTypePvUi(type, data, size);
+}
+
+int FFLiCanDrawShape(const FFLDrawParam* drawParam)
+{
+    return FFLiCanDrawShape__FPC12FFLDrawParam(drawParam);
+}
+
+bool FFLiIsValidMiiID(const FFLCreateID* id)
+{
+    return FFLiIsValidMiiID(reinterpret_cast<const FFLiMiiID*>(id));
+}
+
+void FFLiBugEndianSwap(void* data, unsigned int size)
+{
+    FFLiBugEndianSwap__FPvUi(data, size);
+}
+
+void FFLDeleteCharModel(void* model)
+{
+    FFLDeleteCharModel(reinterpret_cast<FFLCharModel*>(model));
+}
+
+bool FFLiIsSpecialMiiID(const FFLCreateID* id)
+{
+    const FFLiMiiID* value = reinterpret_cast<const FFLiMiiID*>(id);
+    return FFLiIsSpecialMiiID(value);
+}
+
+int FFLiGetDatabasePath(char* path, unsigned int size,
+                        unsigned long long titleId, const char* suffix)
+{
+    return FFLiGetDatabasePath__FPcUiULPCc(path, size, titleId, suffix);
+}
+
+int FFLiGetResourcePath(char* path, unsigned int size, const char* suffix)
+{
+    return FFLiGetResourcePath__FPcUiPCc(path, size, suffix);
+}
+
+void FFLSetShaderCallback(void* callback)
+{
+    FFLSetShaderCallback(reinterpret_cast<const FFLShaderCallback*>(callback));
+}
+
+unsigned int FFLiInitMaskTextures(FFLiMaskTextures* textures,
+                                   unsigned int expressionMask,
+                                   unsigned int resolution, bool mipmap,
+                                   bool useMipmap, FFLiBufferAllocator* allocator)
+{
+    return FFLiInitMaskTextures__FP16FFLiMaskTexturesUiT2bT4P19FFLiBufferAllocator(
+        textures, expressionMask, resolution, mipmap, useMipmap, allocator);
+}
+
+unsigned int FFLiGetIconBufferSize(const FFLIconSetting* setting)
+{
+    return FFLiGetIconBufferSize__FPC14FFLIconSetting(setting);
+}
+
+void FFLiInitRenderTexture(FFLiRenderTexture* texture, unsigned int width,
+                           unsigned int height, unsigned int format,
+                           FFLiBufferAllocator* allocator)
+{
+    FFLiInitRenderTexture__FP17FFLiRenderTextureUiT217_GX2SurfaceFormatT2P19FFLiBufferAllocator(
+        texture, width, height, format, 1, allocator);
+}
+
+void FFLiTempSetShaderMode(int mode)
+{
+    FFLiTempSetShaderMode__F14_GX2ShaderMode(static_cast<uint32_t>(mode));
+}
+
+void FFLDrawOpaWithCallback(const FFLiCharModel& model,
+                            const FFLShaderCallback* callback)
+{
+    FFLDrawOpaWithCallback(reinterpret_cast<const FFLCharModel*>(&model), callback);
+}
+
+void FFLDrawXluWithCallback(const FFLiCharModel& model,
+                            const FFLShaderCallback* callback)
+{
+    FFLDrawXluWithCallback(reinterpret_cast<const FFLCharModel*>(&model), callback);
+}
+
+void FFLiFlushRenderTexture(FFLiRenderTexture* texture)
+{
+    FFLiFlushRenderTexture__FP17FFLiRenderTexture(texture);
+}
+
+unsigned int FFLiGetMipMapLevelSize(unsigned int baseSize, unsigned int level)
+{
+    return FFLiGetMipMapLevelSize__FUiT1(baseSize, level);
+}
+
+void FFLiSetupRenderTexture(FFLiRenderTexture* texture,
+                            const FFLColor* clearColor, void* depthBuffer,
+                            unsigned int mipLevel, unsigned int format,
+                            const FFLShaderCallback* callback)
+{
+    FFLiSetupRenderTexture__FP17FFLiRenderTexturePC8FFLColorPvUi17_GX2SurfaceFormatPC18FFLiShaderCallback(
+        texture, clearColor, depthBuffer, mipLevel, format, callback);
+}
+
+void FFLiInitFacelineTexture(FFLiRenderTexture* texture, unsigned int resolution,
+                             bool mipmap, bool useMipmap,
+                             FFLiBufferAllocator* allocator)
+{
+    FFLiInitFacelineTexture__FP17FFLiRenderTextureUibT3P19FFLiBufferAllocator(
+        texture, resolution, mipmap, useMipmap, allocator);
+}
+
+void FFLiTempSetContextState(const _GX2ContextState* state)
+{
+    FFLiTempSetContextState__FPC16_GX2ContextState(state);
+}
+
+void FFLiInitModulateShapeCap(FFLModulateParam* param, int index,
+                              const _GX2Texture& texture)
+{
+    FFLiInitModulateShapeCap__FP16FFLModulateParamiRC11_GX2Texture(param, index, texture);
+}
+
+void FFLiInitModulateShapeHair(FFLModulateParam* param, int index)
+{
+    FFLiInitModulateShapeHair__FP16FFLModulateParami(param, index);
+}
+
+void FFLiInitModulateShapeNose(FFLModulateParam* param, int index)
+{
+    FFLiInitModulateShapeNose__FP16FFLModulateParami(param, index);
+}
+
+int FFLiGetBufferRenderTexture(unsigned int width, unsigned int height,
+                               unsigned int format)
+{
+    return FFLiGetBufferRenderTexture__FUiT117_GX2SurfaceFormatT1(width, height, format, 1);
+}
+
+int FFLiGetBufferRenderTexture(unsigned int width, unsigned int height,
+                               unsigned int format, unsigned int mipCount)
+{
+    return FFLiGetBufferRenderTexture__FUiT117_GX2SurfaceFormatT1(width, height, format, mipCount);
+}
+
+int FFLiStoreDataCFLToCharInfo(FFLiCharInfo* destination,
+                               const FFLiStoreDataCFL& source)
+{
+    return FFLiStoreDataCFLToCharInfo__FP12FFLiCharInfoRC16FFLiStoreDataCFL(destination, source);
+}
+
+unsigned int FFLiBugCanVgtFixedIndexSize(unsigned int size)
+{
+    return FFLiBugCanVgtFixedIndexSize__FUi(size);
+}
+
+unsigned int FFLiBugCanVgtFixedIndexSize()
+{
+    return FFLiBugCanVgtFixedIndexSize__FUi(0);
+}
+
+int FFLiLoadTextureWithAllocate(_GX2Texture** texture,
+                                FFLiTexturePartsType parts, unsigned int index,
+                                FFLiResourceLoader* loader,
+                                FFLiBufferAllocator* allocator)
+{
+    return FFLiLoadTextureWithAllocate__FPP11_GX2Texture20FFLiTexturePartsTypeUiP18FFLiResourceLoaderP19FFLiBufferAllocator(
+        texture, parts, index, loader, allocator);
+}
+
+void FFLiInitModulateShapeFaceline(FFLModulateParam* param,
+                                   const _GX2Texture& texture)
+{
+    FFLiInitModulateShapeFaceline__FP16FFLModulateParamRC11_GX2Texture(param, texture);
+}
+
+uint32_t FFLiGetTextureMaxSizeWithAlign(const FFLiResourceManager* manager,
+                                        FFLResourceType type,
+                                        FFLiTexturePartsType parts)
+{
+    return FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(manager, type, parts);
+}
+
+int FFLiInitTempObjectMaskTextures(
+    FFLiMaskTexturesTempObject* object, const FFLiMaskTextures* textures,
+    const FFLiCharInfo* info, unsigned int expressionMask, unsigned int resolution,
+    bool mipmap, bool useMipmap, bool useUB, FFLiResourceLoader* loader,
+    FFLiBufferAllocator* allocator, FFLiRenderTextureBuffer* buffer)
+{
+    return FFLiInitTempObjectMaskTextures__FP26FFLiMaskTexturesTempObjectPC16FFLiMaskTexturesPC12FFLiCharInfoUiT4bN26P18FFLiResourceLoaderP19FFLiBufferAllocatorP23FFLiRenderTextureBuffer(
+        object, textures, info, expressionMask, resolution, mipmap, useMipmap,
+        useUB, loader, allocator, buffer);
+}
+
+int FFLiGetTempBufferSizeMaskTextures(unsigned int expressionMask, unsigned int resolution,
+                                      bool mipmap, bool useMipmap,
+                                      const FFLiResourceManager* manager,
+                                      FFLResourceType type)
+{
+    return FFLiGetTempBufferSizeMaskTextures__FUiT1bT3P19FFLiResourceManager15FFLResourceType(
+        expressionMask, resolution, mipmap, useMipmap,
+        const_cast<FFLiResourceManager*>(manager), type);
+}
+
+int FFLiInitTempObjectFacelineTexture(
+    FFLiFacelineTextureTempObject* object, FFLiRenderTexture* texture,
+    const FFLiCharInfo* info, unsigned int resolution, bool mipmap,
+    bool useMipmap, bool useUB, FFLiResourceLoader* loader,
+    FFLiBufferAllocator* allocator, FFLiRenderTextureBuffer* buffer)
+{
+    return FFLiInitTempObjectFacelineTexture__FP29FFLiFacelineTextureTempObjectP17FFLiRenderTexturePC12FFLiCharInfoUibN25P18FFLiResourceLoaderP19FFLiBufferAllocatorP23FFLiRenderTextureBuffer(
+        object, texture, info, resolution, mipmap, useMipmap, useUB,
+        loader, allocator, buffer);
+}
+
+int FFLiGetDepthBufferSizeRenderTexture(unsigned int width, unsigned int height)
+{
+    return FFLiGetDepthBufferSizeRenderTexture__FUiT1(width, height);
+}
+
+int FFLiGetCompressBufferSizeMaskTexture(unsigned int resolution, bool mipmap)
+{
+    return FFLiGetCompressBufferSizeMaskTexture__FUib(resolution, mipmap);
+}
+
+int FFLiGetTempBufferSizeFacelineTexture(unsigned int resolution, bool mipmap,
+                                         bool useMipmap,
+                                         const FFLiResourceManager* manager,
+                                         FFLResourceType type)
+{
+    return FFLiGetTempBufferSizeFacelineTexture__FUibT2P19FFLiResourceManager15FFLResourceType(
+        resolution, mipmap, useMipmap, const_cast<FFLiResourceManager*>(manager), type);
+}
+
+int FFLiGetCompressBufferSizeFacelineTexture(unsigned int resolution, bool mipmap)
+{
+    return FFLiGetCompressBufferSizeFacelineTexture__FUib(resolution, mipmap);
+}
+
+unsigned int FFLiMin(unsigned int lhs, unsigned int rhs)
+{
+    return FFLiMin__tm__3_Ui__FZ1ZT1_Z1Z(lhs, rhs);
 }

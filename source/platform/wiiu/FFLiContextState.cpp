@@ -1,7 +1,7 @@
 #include "platform/wiiu/FFLiContextState.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 
-void GX2SetupContextStateEx(_GX2ContextState* state, int profilingEnabled);
+extern "C" void GX2SetupContextStateEx(_GX2ContextState* state, int profilingEnabled);
 void FFLiTempSetContextState(const _GX2ContextState* contextState);
 
 FFLiContextState::FFLiContextState()

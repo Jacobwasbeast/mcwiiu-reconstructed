@@ -7,6 +7,8 @@ struct FFLDrawParam;
 
 class FFLiShaderCallback
 {
+    friend class FFLiManager;
+
 private:
     const FFLShaderCallback* m_callback;
 

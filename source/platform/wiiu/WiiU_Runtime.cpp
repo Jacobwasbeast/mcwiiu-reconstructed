@@ -6,8 +6,50 @@
 #include <coreinit/time.h>
 
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 
-static FSClient* sFileSystemClient;
+static FSClient* sFileSystemClient = 0;
+
+extern void altMain();
+extern void altMainStop();
+
+FSClient* GetWiiUFileSystemClient()
+{
+    return sFileSystemClient;
+}
+
+unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime)
+{
+    (void)fileTime;
+    (void)systemTime;
+    return 0;
+}
+
+static void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
+{
+    if (state == FS_VOLUME_STATE_READY)
+    {
+        altMainStop();
+    }
+    else
+    {
+        (void)FSGetLastErrorCodeForViewer(client);
+        altMain();
+    }
+}
+
+extern "C" void WiiUInitialise()
+{
+    FSInit();
+    sFileSystemClient = static_cast<FSClient*>(std::malloc(sizeof(FSClient)));
+    if (sFileSystemClient != 0)
+    {
+        FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
+        FSStateChangeParams notification = {stateChangeCallback, 0, 0};
+        FSSetStateChangeNotification(sFileSystemClient, &notification);
+        WiiUFileCacheInitialise();
+    }
+}
 
 unsigned int GetLastFileErrorCodeForViewer()
 {
@@ -20,6 +62,13 @@ unsigned int GetLastError()
 }
 
 void GlobalMemoryStatus(MEMORYSTATUS* status)
+{
+    status->dwTotalPhys = 0;
+    status->dwAvailPhys = 0;
+    status->dwAvailVirtual = 0;
+}
+
+void GlobalMemoryStatus(_MEMORYSTATUS* status)
 {
     status->dwTotalPhys = 0;
     status->dwAvailPhys = 0;

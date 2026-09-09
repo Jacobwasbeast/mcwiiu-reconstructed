@@ -1,11 +1,15 @@
 #ifndef PLATFORM_WIIU_FFLIUTILSHADER_HPP
 #define PLATFORM_WIIU_FFLIUTILSHADER_HPP
 #include <stdint.h>
-struct _GX2ShaderUniformVar { const char* name; unsigned int offset; unsigned int type; int location; unsigned int count; };
-struct _GX2ShaderUniformBlock { const char* name; unsigned int location; unsigned int size; };
-struct _GX2ShaderSampler { const char* name; int location; unsigned int type; };
-struct _GX2PixelShader { unsigned int words[41]; unsigned int cacheSize; unsigned int cachePtr; unsigned int wordsAfterCache; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int wordsAfterVars[4]; unsigned int samplerCount; _GX2ShaderSampler* samplers; };
-struct _GX2VertexShader { unsigned int words[52]; unsigned int cacheSize; unsigned int cachePtr; unsigned int wordsAfterCache; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int wordsAfterVars[4]; unsigned int samplerCount; _GX2ShaderSampler* samplers; };
+struct _GX2ShaderUniformVar { const char* name; unsigned int type; unsigned int count; unsigned int offset; int block; };
+struct _GX2ShaderUniformBlock { const char* name; unsigned int offset; unsigned int size; };
+struct _GX2ShaderSampler { const char* name; unsigned int type; unsigned int location; };
+struct _GX2UniformInitialValue { float value[4]; unsigned int offset; };
+struct _GX2LoopVar { unsigned int offset; unsigned int value; };
+struct _GX2AttribVar { const char* name; unsigned int type; unsigned int count; unsigned int location; };
+struct _GX2RBuffer { unsigned int flags; unsigned int elemSize; unsigned int elemCount; void* buffer; };
+struct _GX2PixelShader { unsigned int words[41]; unsigned int size; void* program; unsigned int mode; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int initialValueCount; _GX2UniformInitialValue* initialValues; unsigned int loopVarCount; _GX2LoopVar* loopVars; unsigned int samplerCount; _GX2ShaderSampler* samplers; _GX2RBuffer gx2rBuffer; };
+struct _GX2VertexShader { unsigned int words[52]; unsigned int size; void* program; unsigned int mode; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int initialValueCount; _GX2UniformInitialValue* initialValues; unsigned int loopVarCount; _GX2LoopVar* loopVars; unsigned int samplerCount; _GX2ShaderSampler* samplers; unsigned int attribVarCount; _GX2AttribVar* attribVars; unsigned int ringItemsize; unsigned int hasStreamOut; unsigned int streamOutStride[4]; _GX2RBuffer gx2rBuffer; };
 struct _Mat44 { float value[4][4]; };
 struct _Mat34 { float value[3][4]; };
 struct FFLColor
@@ -17,7 +21,7 @@ struct FFLColor
     };
 };
 typedef unsigned int FFLModulateMode;
-struct FFLiShaderModulateParam { FFLModulateMode mode; unsigned int type; FFLColor color[3]; const void* texture; };
+struct FFLModulateParam;
 class FFLiUtilShaderAllocator;
 class FFLiUtilShader
 {
@@ -82,7 +86,8 @@ void SetupExtShaderForCreateModel__Fv();
 void SetupExtShaderForDrawTexture__FUsT1(unsigned short, unsigned short);
 void SetConstColor__FUiPC8FFLColor(unsigned int, const FFLColor*);
 void SetModulateMode__FP11PlainShader15FFLModulateMode(PlainShader*, FFLModulateMode);
-void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLiShaderModulateParam*);
+void BindTexture__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLModulateParam*);
+void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const FFLModulateParam*);
 void SetMatrix__FPvPC6_Mat44(void*, const _Mat44*);
 void SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(const PlainShader*, const _Mat44*);
 #endif

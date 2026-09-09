@@ -5,15 +5,14 @@
 #include "platform/wiiu/CInput.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include <coreinit/messagequeue.h>
 
 extern "C" int ProcUIProcessMessages(int count);
 extern "C" void ShutdownAndExit();
 extern "C" void ReleaseCallback();
-extern "C" void Sleep(unsigned int milliseconds);
-extern "C" void PIXBeginNamedEvent(float colour, const char* name, ...);
-extern "C" void PIXEndNamedEvent();
+void Sleep(unsigned int milliseconds);
 
 extern CInput* g_pInput;
 extern Renderer* gRenderer;
@@ -35,6 +34,14 @@ void altMain()
 void altMainStop()
 {
     s_altMainStopRequested = 0;
+}
+
+void waitForAltMainThreadToComplete()
+{
+    while (s_altMainStopRequested != 0)
+    {
+        Sleep(10);
+    }
 }
 
 int altMainThread(int, void*)

@@ -1,12 +1,5 @@
 #include "platform/wiiu/FFLiAllocator.hpp"
-
-extern "C"
-{
-void* MEMCreateExpHeapEx(void* address, unsigned int size, unsigned short flags);
-void MEMDestroyExpHeap(void* heap);
-void* MEMAllocFromExpHeapEx(void* heap, unsigned int size, int alignment);
-void MEMFreeToExpHeap(void* heap, void* block);
-}
+#include <coreinit/memexpheap.h>
 
 FFLiAllocator::FFLiAllocator()
 {

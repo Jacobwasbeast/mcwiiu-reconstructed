@@ -9,29 +9,12 @@
 #include <new>
 #include <vector>
 
-extern "C"
-{
-void OSInitMutex(void*);
-void OSLockMutex(void*);
-void OSUnlockMutex(void*);
-bool OSTryLockMutex(void*);
-void OSInitEvent(void*, bool, bool);
-void OSWaitEvent(void*);
-bool OSTimedWaitEvent(void*, long long);
-void OSSignalEvent(void*);
-void OSResetEvent(void*);
-void OSSleepTicks(long long);
-void OSYieldThread();
-long long OSGetSystemTime();
-long long OSTicksToNanoseconds(long long);
-long long OSNanosecondsToTicks(long long);
-int OSGetCoreId();
-int OSGetThreadPriority(OSThread*);
-bool OSSetThreadPriority(OSThread*, int);
-bool OSSetThreadAffinity(OSThread*, unsigned int);
-void OSJoinThread(OSThread*, int*);
-void OSResumeThread(OSThread*);
-}
+#include <coreinit/time.h>
+#include <coreinit/core.h>
+#include <coreinit/mutex.h>
+#include <coreinit/thread.h>
+#include <coreinit/event.h>
+
 
 namespace pead
 {
@@ -230,6 +213,22 @@ int BufferedSafeStringBase<char>::format__S(const char* formatText, ...)
 }
 
 template <>
+int BufferedSafeStringBase<wchar_t>::formatV__S(const wchar_t* formatText, va_list args)
+{
+    return formatV(formatText, args);
+}
+
+template <>
+int BufferedSafeStringBase<wchar_t>::format__S(const wchar_t* formatText, ...)
+{
+    va_list args;
+    va_start(args, formatText);
+    int result = formatV__S(formatText, args);
+    va_end(args);
+    return result;
+}
+
+template <>
 int BufferedSafeStringBase<char>::appendWithFormatV__S(const char* formatText, va_list args)
 {
     return appendWithFormatV(formatText, args);
@@ -243,6 +242,16 @@ int BufferedSafeStringBase<wchar_t>::appendWithFormatV__S(const wchar_t* formatT
 
 template <>
 int BufferedSafeStringBase<char>::appendWithFormat__S(const char* formatText, ...)
+{
+    va_list args;
+    va_start(args, formatText);
+    int result = appendWithFormatV__S(formatText, args);
+    va_end(args);
+    return result;
+}
+
+template <>
+int BufferedSafeStringBase<wchar_t>::appendWithFormat__S(const wchar_t* formatText, ...)
 {
     va_list args;
     va_start(args, formatText);
@@ -316,7 +325,26 @@ ListNode* ListImpl::nth(int index) const
 
 void ListImpl::sort(int offset, int (*compare)(const void*, const void*))
 {
-    mergeSort(offset, compare);
+    if (mCount <= 1)
+        return;
+
+    ListNode* node = nth(1);
+    while (node != &mStart)
+    {
+        ListNode* next = node->next();
+        if (compare(reinterpret_cast<const char*>(node->prev()) - offset,
+                    reinterpret_cast<const char*>(node) - offset) > 0)
+        {
+            ListNode* insertion = node->prev();
+            while (insertion != &mStart &&
+                   compare(reinterpret_cast<const char*>(insertion) - offset,
+                           reinterpret_cast<const char*>(node) - offset) > 0)
+                insertion = insertion->prev();
+            node->erase_();
+            insertion->insertBack_(node);
+        }
+        node = next;
+    }
 }
 
 void ListImpl::clear()
@@ -396,10 +424,10 @@ int PtrArrayImpl::binarySearch(const void* value, int (*compare)(const void*, co
 
 void pead::Random::init(unsigned int seed)
 {
-    mContext[0] = seed;
-    mContext[1] = seed ^ 0x6c078965u;
-    mContext[2] = seed ^ 0x9908b0dfu;
-    mContext[3] = seed ^ 0x9d2c5680u;
+    mContext[0] = (seed ^ (seed >> 30)) * 0x6c078965u + 1;
+    mContext[1] = (mContext[0] ^ (mContext[0] >> 30)) * 0x6c078965u + 2;
+    mContext[2] = (mContext[1] ^ (mContext[1] >> 30)) * 0x6c078965u + 3;
+    mContext[3] = (mContext[2] ^ (mContext[2] >> 30)) * 0x6c078965u + 4;
 }
 
 void pead::Random::init()
@@ -820,9 +848,30 @@ int BitFlagUtil::findOnBitFromRight(unsigned int value, int start)
 }
 
 CoreId::CoreId() : mId(OSGetCoreId()) {}
-void CoreInfo::configure() {}
-int CoreInfo::getPlatformMask(CoreId id) { return 1 << id.value(); }
-bool __N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(unsigned char) { return false; }
+static unsigned int sCoreCount;
+static unsigned int sCoreIdMap[3];
+static unsigned int sCoreIndexTable[3];
+
+void CoreInfo::configure()
+{
+    sCoreCount = 3;
+    sCoreIdMap[0] = 1;
+    sCoreIdMap[1] = 0;
+    sCoreIdMap[2] = 2;
+    sCoreIndexTable[sCoreIdMap[0]] = 0;
+    sCoreIndexTable[sCoreIdMap[1]] = 1;
+    sCoreIndexTable[sCoreIdMap[2]] = 2;
+}
+
+int CoreInfo::getPlatformMask(CoreId id)
+{
+    return 1 << (sCoreIdMap[id.value()] & 0x3f);
+}
+
+bool __N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(unsigned char)
+{
+    return false;
+}
 
 IDisposer::IDisposer() : mDisposerNode(), mHeap(HeapMgr::instance() ? HeapMgr::instance()->getCurrentHeap() : 0)
 {
@@ -1129,26 +1178,26 @@ unsigned int getArraySize(void* address)
     return header & 1 ? *(unsigned int*)(header + 11) : header;
 }
 
-CriticalSection::CriticalSection() : IDisposer() { OSInitMutex(mStorage); }
-CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_Allow) { OSInitMutex(mStorage); }
+CriticalSection::CriticalSection() : IDisposer() { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_Allow) { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 CriticalSection::~CriticalSection() {}
-void CriticalSection::lock() { OSLockMutex(mStorage); }
-void CriticalSection::unlock() { OSUnlockMutex(mStorage); }
+void CriticalSection::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+void CriticalSection::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 
-pead::Mutex::Mutex() : IDisposer() { OSInitMutex(mStorage); }
+pead::Mutex::Mutex() : IDisposer() { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 Mutex::~Mutex() {}
-void Mutex::lock() { OSLockMutex(mStorage); }
-void Mutex::unlock() { OSUnlockMutex(mStorage); }
+void Mutex::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+void Mutex::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 
 long long TickSpan::toNanoSeconds() const { return OSTicksToNanoseconds(mTicks); }
 
 pead::Event::Event(bool manualReset) : IDisposer() { initialize(manualReset); }
 Event::~Event() {}
-void Event::initialize(bool manualReset) { OSInitEvent(mStorage, false, manualReset); }
-void Event::wait() { OSWaitEvent(mStorage); }
-bool Event::wait(TickSpan timeout) { return OSTimedWaitEvent(mStorage, timeout.getTicks()); }
-void Event::setSignal() { OSSignalEvent(mStorage); }
-void Event::resetSignal() { OSResetEvent(mStorage); }
+void Event::initialize(bool manualReset) { OSInitEvent(reinterpret_cast<OSEvent*>(mStorage), false, static_cast<OSEventMode>(manualReset)); }
+void Event::wait() { OSWaitEvent(reinterpret_cast<OSEvent*>(mStorage)); }
+bool Event::wait(TickSpan timeout) { return OSWaitEventWithTimeout(reinterpret_cast<OSEvent*>(mStorage), timeout.toNanoSeconds()); }
+void Event::setSignal() { OSSignalEvent(reinterpret_cast<OSEvent*>(mStorage)); }
+void Event::resetSignal() { OSResetEvent(reinterpret_cast<OSEvent*>(mStorage)); }
 
 MessageQueue::MessageQueue() : mMessages(0), mCapacity(0), mCount(0), mRead(0), mWrite(0), mHeap(0) {}
 MessageQueue::~MessageQueue() { free(); }

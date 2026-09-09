@@ -10,69 +10,18 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+#include "nn/nex/Reconstruction.hpp"
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
 
 static NQRNetworkManager_WiiU* s_networkManager;
 static int (*s_connectCallback)(void*, bool, int);
 static void* s_connectCallbackData;
+static int (*s_connectProgressCallback)(void*, bool, int, int);
+static void* s_connectProgressCallbackData;
+static int s_connectProgressUserIndex;
 static bool s_cancelConnect;
 static bool s_appSuspended;
 static bool s_handlingBootInvite;
-
-namespace nn
-{
-namespace nex
-{
-class ConnectivityManager
-{
-public:
-    static ConnectivityManager* GetInstanceWithoutNetworkCheck();
-    void OnStartNATSession(void* context);
-};
-
-class MatchmakeExtensionClient
-{
-public:
-    MatchmakeExtensionClient();
-    int Bind(void* credentials);
-    void Unbind();
-};
-
-class BackEndServices
-{
-public:
-    void RegisterNotificationEventHandler(void* handler);
-    void UnregisterNotificationEventHandler(void* handler);
-};
-
-class NgsFacade
-{
-public:
-    BackEndServices* GetBackEndServices();
-    void* GetCredentials();
-};
-
-class EventLog
-{
-public:
-    static EventLog* GetInstance();
-    void SetLogLevel(int level);
-};
-
-class TraceLog
-{
-public:
-    static TraceLog* GetInstance();
-};
-
-class GlobalVariables
-{
-public:
-    static void AcquireInstance();
-    static void ReleaseInstance();
-};
-}
-}
 
 namespace nn
 {
@@ -85,9 +34,7 @@ class Session;
 }
 }
 
-extern void checkPiaCoreToUse();
-extern void FinalizeRuntimeMemory();
-extern nn::nex::NgsFacade* Nex_GetNgsFacadeInstanceNative();
+extern "C" void checkPiaCoreToUse();
 extern void* Nex_GetDataStoreClientNative();
 extern int Nex_SearchObjectNative();
 extern void Pia_StartupSessionNative(void* result, void* token, const char* name);
@@ -99,7 +46,7 @@ static nn::nex::NgsFacade* s_ngsFacade;
 static bool s_nexInitialised;
 static unsigned int s_errorHandlingState;
 static unsigned int s_errorHandlingResult;
-static unsigned char s_matchmakeNotificationHandler;
+static nn::nex::NotificationEventHandler* s_matchmakeNotificationHandler;
 
 unsigned int GetTickCount();
 
@@ -129,7 +76,7 @@ unsigned int Nex_FinalizeMatchmake__Fv()
     {
         if (s_matchmakeHandlerRegistered && s_ngsFacade != NULL)
         {
-            s_ngsFacade->GetBackEndServices()->UnregisterNotificationEventHandler(&s_matchmakeNotificationHandler);
+            s_ngsFacade->UnregisterNotificationEventHandler(s_matchmakeNotificationHandler);
             s_matchmakeHandlerRegistered = false;
         }
         s_matchmakeClient->Unbind();
@@ -152,7 +99,7 @@ void Nex_FinalizeNex__Fv()
         s_ngsFacade = NULL;
         nn::nex::GlobalVariables::ReleaseInstance();
         Nex_FinalizeErrorHandling__Fv();
-        FinalizeRuntimeMemory();
+        __N_20_Shared_Nex_Setup_cpp_392f2b82::FinalizeRuntimeMemory();
         s_nexInitialised = false;
     }
 }
@@ -170,11 +117,11 @@ void* Nex_GetNgsFacadeInstance__Fv()
 unsigned int Nex_InitializeMatchmake__Fv()
 {
     s_matchmakeClient = new nn::nex::MatchmakeExtensionClient();
-    s_ngsFacade = Nex_GetNgsFacadeInstanceNative();
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance__Fv());
     if (s_matchmakeClient == NULL || s_ngsFacade == NULL ||
         s_matchmakeClient->Bind(s_ngsFacade->GetCredentials()) == 0)
         return 0;
-    s_ngsFacade->GetBackEndServices()->RegisterNotificationEventHandler(&s_matchmakeNotificationHandler);
+    s_ngsFacade->RegisterNotificationEventHandler(s_matchmakeNotificationHandler);
     s_matchmakeHandlerRegistered = true;
     return 1;
 }
@@ -185,7 +132,7 @@ unsigned int Nex_InitializeNex__FUiT1Q4_2nn3nex4Core10ThreadMode(unsigned int ru
     __N_20_Shared_Nex_Setup_cpp_392f2b82::InitializeRuntimeMemory(runtimeSize, reservedSize);
     nn::nex::GlobalVariables::AcquireInstance();
     Nex_InitializeErrorHandling__Fv();
-    s_ngsFacade = Nex_GetNgsFacadeInstanceNative();
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance__Fv());
     s_nexInitialised = true;
     return 0;
 }
@@ -195,7 +142,7 @@ unsigned int Nex_SearchObject__Fv()
     return static_cast<unsigned int>(Nex_SearchObjectNative());
 }
 
-void StartNATSessionCallback__FPQ3_2nn3nex11CallContextPCQ3_2nn3nex11UserContext(void* context, const void* userContext)
+void StartNATSessionCallback__FPQ3_2nn3nex11CallContextPCQ3_2nn3nex11UserContext(nn::nex::CallContext* context, const void* userContext)
 {
     nn::nex::ConnectivityManager* manager = nn::nex::ConnectivityManager::GetInstanceWithoutNetworkCheck();
     if (userContext != NULL && *static_cast<void* const*>(userContext) == manager)
@@ -316,6 +263,12 @@ int NQRNetworkManager_WiiU::ConnectOnlineNintendo_Returned(void* context, bool c
         else
             manager->m_lastNetworkError = error;
     }
+    if (s_connectProgressCallback != NULL)
+    {
+        int (*callback)(void*, bool, int, int) = s_connectProgressCallback;
+        s_connectProgressCallback = NULL;
+        return callback(s_connectProgressCallbackData, connected, error, s_connectProgressUserIndex);
+    }
     if (s_connectCallback != NULL)
         return s_connectCallback(s_connectCallbackData, connected, error);
     return 0;
@@ -333,6 +286,8 @@ void NQRNetworkManager_WiiU::CancelConnectCallbacks()
 {
     s_connectCallback = NULL;
     s_connectCallbackData = NULL;
+    s_connectProgressCallback = NULL;
+    s_connectProgressCallbackData = NULL;
     s_cancelConnect = false;
 }
 
@@ -341,12 +296,15 @@ void NQRNetworkManager_WiiU::CancelConnectOnlineNintendo(void*)
     s_cancelConnect = true;
     s_connectCallback = NULL;
     s_connectCallbackData = NULL;
+    s_connectProgressCallback = NULL;
+    s_connectProgressCallbackData = NULL;
 }
 
-void NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(int, int (*callback)(void*, bool, int), void* callbackData)
+void NQRNetworkManager_WiiU::ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData)
 {
-    s_connectCallback = callback;
-    s_connectCallbackData = callbackData;
+    s_connectProgressCallback = callback;
+    s_connectProgressCallbackData = callbackData;
+    s_connectProgressUserIndex = userIndex;
     s_cancelConnect = false;
     if (s_networkManager != NULL)
         s_networkManager->TryToConnectOnline();
@@ -962,7 +920,7 @@ bool NQRNetworkManager_WiiU::AddRemotePlayersAndSync(unsigned long long stationI
     return true;
 }
 
-void NQRNetworkManager_WiiU::__CPR95__SendJJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
+void NQRNetworkManager_WiiU::SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
 {
     unsigned int packet[2];
     packet[0] = playerMask;
@@ -1515,7 +1473,10 @@ void NQRNetworkManager_WiiU::TryToConnectOnline(int (*callback)(void*, bool, int
     s_connectCallbackData = callbackData;
     s_cancelConnect = false;
     if (showProgress)
-        ShowConnectOnlineNintendoProgress(0, callback, callbackData);
+    {
+        if (s_networkManager != NULL)
+            s_networkManager->TryToConnectOnline();
+    }
     else
         TryToConnectOnline();
 }

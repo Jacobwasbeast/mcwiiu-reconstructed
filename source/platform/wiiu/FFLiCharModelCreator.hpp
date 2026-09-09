@@ -97,6 +97,9 @@ struct FFLBoundingBox
 struct FFLiRenderTexture
 {
     _GX2Texture texture;
+
+    void CopyTo(_GX2Texture* destination);
+    unsigned int GetSurfaceFormat() const;
 };
 
 struct FFLiMaskTextures
@@ -195,6 +198,9 @@ struct FFLiCharModel
     FFLVec3 transformedParts[8];
     FFLModelType modelType;
     FFLBoundingBox boundingBoxes[3];
+
+    unsigned int GetExpressionMask() const;
+    int GetFavoriteColorIndex() const;
 };
 
 class __N_24_FFLiCharModelCreator_cpp_1f5483f2

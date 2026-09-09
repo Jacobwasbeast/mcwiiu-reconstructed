@@ -4,22 +4,20 @@
 #include <cstring>
 #include <stdint.h>
 
-extern void _GX2InitColorBuffer(_GX2ColorBuffer*, unsigned int, unsigned int, unsigned int, unsigned int);
+extern void _GX2InitColorBuffer(_GX2ColorBuffer*, unsigned int, unsigned int,
+                                _GX2SurfaceFormat, _GX2AAMode);
 extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
 extern "C" void GX2InitDepthBufferRegs(_GX2DepthBuffer*);
-extern void GX2InitTextureRegs(_GX2Texture*);
+extern "C" void GX2InitTextureRegs(_GX2Texture*);
+extern "C" unsigned int GX2TempGetGPUVersion();
 extern "C" void OSPanic(const char*, int, const char*);
 extern void C_MTXPerspective(float (*)[4], float, float, float, float);
 extern void C_MTXLookAt(_Mat34*, const float*, const float*, const float*);
 extern void instructionSynchronize();
-extern unsigned int _GFDGetBlockCount(unsigned int, const void*);
-extern unsigned int _GFDGetBlockDataSize(unsigned int, unsigned int, const void*);
-extern int _GFDCheckHeaderVersions(const void*);
-extern int _GFDCheckBlockHeaderMagicVersions(const void*);
-extern int _GFDRelocateBlock(unsigned int, void*);
+unsigned int GFDCleanTag(unsigned int value);
 
-void GX2InitColorBufferFTV__FP15_GX2ColorBufferUiT217_GX2SurfaceFormat10_GX2AAMode(
-    _GX2ColorBuffer* buffer, unsigned int width, unsigned int height, unsigned int format, unsigned int aaMode)
+void GX2InitColorBufferFTV(
+    _GX2ColorBuffer* buffer, unsigned int width, unsigned int height, _GX2SurfaceFormat format, _GX2AAMode aaMode)
 {
     buffer->surface.use = 3;
     _GX2InitColorBuffer(buffer, width, height, format, aaMode);
@@ -34,8 +32,8 @@ void GX2InitColorBufferFTV__FP15_GX2ColorBufferUiT217_GX2SurfaceFormat10_GX2AAMo
     }
 }
 
-void GX2InitDepthBuffer__FP15_GX2DepthBufferUiT217_GX2SurfaceFormat10_GX2AAMode(
-    _GX2DepthBuffer* buffer, unsigned int width, unsigned int height, unsigned int format, unsigned int aaMode)
+void GX2InitDepthBuffer(
+    _GX2DepthBuffer* buffer, unsigned int width, unsigned int height, _GX2SurfaceFormat format, _GX2AAMode aaMode)
 {
     buffer->surface.width = width;
     buffer->surface.height = height;
@@ -55,9 +53,9 @@ void GX2InitDepthBuffer__FP15_GX2DepthBufferUiT217_GX2SurfaceFormat10_GX2AAMode(
     GX2InitDepthBufferRegs(buffer);
 }
 
-void GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(
+void GX2InitTexture(
     _GX2Texture* texture, unsigned int width, unsigned int height, unsigned int depth, unsigned int numMips,
-    unsigned int format, unsigned int dim)
+    _GX2SurfaceFormat format, _GX2SurfaceDim dim)
 {
     std::memset(texture, 0, sizeof(*texture));
     texture->surface.dim = dim;
@@ -73,6 +71,61 @@ void GX2InitTexture__FP11_GX2TextureUiN3217_GX2SurfaceFormat14_GX2SurfaceDim(
     texture->compMap = 0;
     GX2CalcSurfaceSizeAndAlignment(&texture->surface);
     GX2InitTextureRegs(texture);
+}
+
+int _GFDCheckBlockHeaderMagicVersions(const void* data)
+{
+    const uint32_t* block = static_cast<const uint32_t*>(data);
+    if (block == 0 || block[0] != 0x424C4B7B)
+        return 0;
+    return block[2] == 1 ? 1 : 0;
+}
+
+int _GFDCheckHeaderVersions(const void* data)
+{
+    if (data == 0)
+        return 0;
+    const uint32_t* header = static_cast<const uint32_t*>(data);
+    if (header[0] != 0x47667832 || header[2] != 7 || header[3] > 1)
+        return 0;
+    return header[4] == GX2TempGetGPUVersion() ? 1 : 0;
+}
+
+int _GFDRelocateBlockEx(void* descriptor, unsigned int unused,
+                        intptr_t relocationBase, void* relocationData)
+{
+    if (descriptor == 0 || relocationData == 0)
+        return 0;
+    uint8_t* bytes = static_cast<uint8_t*>(descriptor);
+    uint32_t* relocationTable = static_cast<uint32_t*>(relocationData);
+    const uint32_t tag = GFDCleanTag(*reinterpret_cast<const uint32_t*>(bytes + 0x24));
+    const uint32_t count = *reinterpret_cast<const uint32_t*>(bytes + 0x20);
+    for (uint32_t index = 0; index < count; ++index)
+    {
+        uint32_t* patch = relocationTable + (tag / sizeof(uint32_t)) + index;
+        if (*patch != 0)
+        {
+            uint32_t* target = reinterpret_cast<uint32_t*>(relocationBase + GFDCleanTag(*patch));
+            const int32_t value = static_cast<int32_t>(GFDCleanTag(*target));
+            *target = static_cast<uint32_t>(value - static_cast<int32_t>(unused) +
+                                            static_cast<int32_t>(relocationBase));
+        }
+    }
+    *reinterpret_cast<uint32_t*>(bytes + 0x1c) = static_cast<uint32_t>(relocationBase);
+    return 1;
+}
+
+int _GFDRelocateBlock(unsigned int size, void* base)
+{
+    if (base == 0)
+        return 0;
+    uint8_t* bytes = static_cast<uint8_t*>(base);
+    if (*reinterpret_cast<uint32_t*>(bytes + size - 0x0c) != 0)
+        return 1;
+    uint8_t* descriptor = bytes + size - 0x28;
+    uint32_t* table = reinterpret_cast<uint32_t*>(
+        bytes + GFDCleanTag(*reinterpret_cast<uint32_t*>(descriptor + 0x24)));
+    return _GFDRelocateBlockEx(descriptor, 0, reinterpret_cast<intptr_t>(base), table);
 }
 
 void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44* projection, _Mat34* view,
@@ -146,14 +199,52 @@ unsigned int GetPixelSamplerLocation__FPC15_GX2PixelShaderPCc(const _GX2PixelSha
     return static_cast<unsigned int>(location);
 }
 
-static unsigned int GFDGetBlockCountForType(unsigned int type, const void* data)
+unsigned int _GFDGetBlockCount(unsigned int type, const void* data)
 {
-    return _GFDGetBlockCount(type, data);
+    if (data == 0 || _GFDCheckHeaderVersions(data) == 0)
+        return 0;
+
+    const uint8_t* block = static_cast<const uint8_t*>(data) +
+                           *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(data) + 4);
+    unsigned int count = 0;
+    while (_GFDCheckBlockHeaderMagicVersions(block) != 0)
+    {
+        const uint32_t blockType = *reinterpret_cast<const uint32_t*>(block + 0x10);
+        const uint32_t blockHeaderSize = *reinterpret_cast<const uint32_t*>(block + 4);
+        const uint32_t blockDataSize = *reinterpret_cast<const uint32_t*>(block + 0x14);
+        if (blockType == type)
+            ++count;
+        if (blockType == 1)
+            break;
+        block += blockHeaderSize + blockDataSize;
+    }
+    return count;
 }
 
-static unsigned int GFDGetBlockSizeForType(unsigned int type, unsigned int index, const void* data)
+unsigned int _GFDGetBlockDataSize(unsigned int type, unsigned int index, const void* data)
 {
-    return _GFDGetBlockDataSize(type, index, data);
+    if (data == 0 || _GFDCheckHeaderVersions(data) == 0)
+        return 0;
+
+    const uint8_t* block = static_cast<const uint8_t*>(data) +
+                           *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(data) + 4);
+    unsigned int current = 0;
+    while (_GFDCheckBlockHeaderMagicVersions(block) != 0)
+    {
+        const uint32_t blockType = *reinterpret_cast<const uint32_t*>(block + 0x10);
+        const uint32_t blockHeaderSize = *reinterpret_cast<const uint32_t*>(block + 4);
+        const uint32_t blockDataSize = *reinterpret_cast<const uint32_t*>(block + 0x14);
+        if (blockType == type)
+        {
+            if (current == index)
+                return blockDataSize;
+            ++current;
+        }
+        if (blockType == 1)
+            break;
+        block += blockHeaderSize + blockDataSize;
+    }
+    return 0;
 }
 
 unsigned int GFDCleanTag(unsigned int value)
@@ -163,32 +254,32 @@ unsigned int GFDCleanTag(unsigned int value)
 
 unsigned int GFDGetVertexShaderCount(const void* data)
 {
-    return GFDGetBlockCountForType(3, data);
+    return _GFDGetBlockCount(3, data);
 }
 
 unsigned int GFDGetPixelShaderCount(const void* data)
 {
-    return GFDGetBlockCountForType(6, data);
+    return _GFDGetBlockCount(6, data);
 }
 
 unsigned int GFDGetVertexShaderHeaderSize(unsigned int index, const void* data)
 {
-    return GFDGetBlockSizeForType(3, index, data);
+    return _GFDGetBlockDataSize(3, index, data);
 }
 
 unsigned int GFDGetPixelShaderHeaderSize(unsigned int index, const void* data)
 {
-    return GFDGetBlockSizeForType(6, index, data);
+    return _GFDGetBlockDataSize(6, index, data);
 }
 
 unsigned int GFDGetVertexShaderProgramSize(unsigned int index, const void* data)
 {
-    return GFDGetBlockSizeForType(5, index, data);
+    return _GFDGetBlockDataSize(5, index, data);
 }
 
 unsigned int GFDGetPixelShaderProgramSize(unsigned int index, const void* data)
 {
-    return GFDGetBlockSizeForType(7, index, data);
+    return _GFDGetBlockDataSize(7, index, data);
 }
 
 static int GFDGetShader(void* shader, void* program, unsigned int index, const void* data,

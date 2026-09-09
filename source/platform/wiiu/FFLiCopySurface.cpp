@@ -1,6 +1,7 @@
 #include "platform/wiiu/FFLiCopySurface.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "platform/wiiu/WiiU_GX2.hpp"
 
 #include <cstring>
 
@@ -19,7 +20,7 @@ extern unsigned int FFLiGetMipMapLevelSize(unsigned int value, unsigned int leve
 extern void FFLiInvalidateSurface(_GX2Surface* surface, unsigned int type);
 extern void instructionSynchronize();
 extern void _GX2InitColorBuffer(_GX2ColorBuffer* buffer, unsigned int width, unsigned int height,
-                                unsigned int format, unsigned int aaMode);
+                                _GX2SurfaceFormat format, _GX2AAMode aaMode);
 
 unsigned int FFLiCopySurface::GetBufferSize()
 {
@@ -86,7 +87,8 @@ void FFLiCopySurface::SetupDstSurface(_GX2Surface* surface, unsigned int level)
 {
     _GX2ColorBuffer colorBuffer;
     std::memset(&colorBuffer, 0, sizeof(colorBuffer));
-    _GX2InitColorBuffer(&colorBuffer, surface->width, surface->height, surface->format, 0);
+    _GX2InitColorBuffer(&colorBuffer, surface->width, surface->height,
+                        (_GX2SurfaceFormat)surface->format, GX2_AA_MODE1X);
     colorBuffer.surface.imagePtr = surface->imagePtr;
     colorBuffer.surface.mipPtr = surface->mipPtr;
     colorBuffer.surface.imageSize = surface->imageSize;
@@ -114,5 +116,5 @@ void FFLiCopySurface::Execute(_GX2Surface* destination, unsigned int destination
 
 bool FFLiCopySurface::CanInitCharModel(bool first, bool second) const
 {
-    return second;
+    return first;
 }

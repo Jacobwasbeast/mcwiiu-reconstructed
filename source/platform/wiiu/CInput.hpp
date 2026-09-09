@@ -151,7 +151,7 @@ public:
     unsigned char reservedBeforeKeyboardState[3];
     eKeyboardProcessState keyboardState;
     FSClient* keyboardFileClient;
-    void* keyboardWorkMemory;
+    void* keyboardErrorViewerWorkMemory;
     C_4JInput::EKeyboardMode keyboardMode;
     unsigned int reservedAfterKeyboardMode[2];
     KeyboardCallback keyboardCallback;

@@ -2,7 +2,7 @@
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 
 void FFLiSwapEndianArrayImpl__tm__2_f__FPZ1ZUi_v(float* values, unsigned int count);
-void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
+extern "C" void GX2Invalidate(unsigned int invalidateType, void* address, unsigned int size);
 
 static unsigned int FFLiCompressUniformGetBlockAlignedSize(unsigned int value)
 {

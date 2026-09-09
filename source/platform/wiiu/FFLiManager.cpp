@@ -191,3 +191,8 @@ void FFLiManager::CanInitCharModel() const
 {
     m_copySurface.CanInitCharModel(m_gpuReady, m_compressor != 0);
 }
+
+const FFLShaderCallback* FFLiManager::GetShaderCallback() const
+{
+    return m_shaderCallback.m_callback;
+}

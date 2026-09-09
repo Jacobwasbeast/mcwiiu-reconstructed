@@ -7,7 +7,7 @@
 #include "game/core/ConsoleUIController.hpp"
 
 extern CConsoleMinecraftApp gApp;
-extern ConsoleUIController g_ConsoleUIController;
+extern ConsoleUIController gConsoleUIController;
 
 UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* layer)
     : UIScene(sceneType, layer)
@@ -122,7 +122,7 @@ void UIComponent_WiiUDRC::SetDRCIcon(bool enable, bool connected)
 void UIComponent_WiiUDRC::tick()
 {
     UIScene::tick();
-    if (!g_ConsoleUIController.IsReloadingSkin())
+    if (!gConsoleUIController.IsReloadingSkin())
     {
         bool iconEnabled = gApp.GetDRCIconEnabled();
         bool outputEnabled = gApp.GetDRCOutputEnabled();

@@ -1,6 +1,7 @@
 #include "platform/wiiu/FFLiFsFile.hpp"
 
 extern "C" FSStatus FSFlushQuota(FSClient *, FSCmdBlock *, const char *, FSErrorFlag);
+extern "C" FSStatus FSRemove(FSClient *, FSCmdBlock *, const char *, FSErrorFlag);
 
 static FSClient *GetFSClient(FFLiFsClient *client)
 {
@@ -68,4 +69,10 @@ int FFLiFsFile::FlushQuota(FFLiFsCommand *command, const char *path, unsigned in
 {
     return FSFlushQuota(GetFSClient(command->m_client), GetFSCmdBlock(&command->m_commandBuffer), path,
                         static_cast<FSErrorFlag>(error));
+}
+
+int FFLiFsFile::Remove(FFLiFsCommand *command, const char *path, unsigned int error)
+{
+    return FSRemove(GetFSClient(command->m_client), GetFSCmdBlock(&command->m_commandBuffer), path,
+                    static_cast<FSErrorFlag>(error));
 }

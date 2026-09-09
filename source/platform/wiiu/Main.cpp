@@ -10,6 +10,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/core/Compression.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/ElementStorage.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/util/AABB.hpp"
@@ -26,46 +27,44 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 #include "platform/wiiu/WiiUFileSystemHelpers.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #include "platform/wiiu/FJ_WiiUDRC.hpp"
 #include "game/client/render/Renderer.hpp"
 
 #include <coreinit/messagequeue.h>
+#include <nn/ac/ac_cpp.h>
+#include <nn/erreula/erreula_cpp.h>
 #include <cwchar>
 
-extern "C" void _main();
 extern "C" void OSBlockThreadsOnExit();
 extern "C" void OSInitMessageQueue(OSMessageQueue*, OSMessage*, int);
 extern "C" int ProcUIInitEx(int (*saveCallback)(void*), void* context);
 extern "C" int ProcUIRegisterCallback(int, unsigned int (*callback)(void*), void*, int);
 extern "C" int ProcUIProcessMessages(int);
-extern "C" void Sleep(unsigned int);
-extern "C" void PIXBeginNamedEvent(float, const char*, ...);
-extern "C" void PIXEndNamedEvent();
+void Sleep(unsigned int);
 extern "C" void DefineActions();
-extern "C" void WiiUInitialise();
 extern "C" void RegisterAwardsWithProfileManager();
 extern "C" void ReleaseCallback();
 extern "C" int SaveCallback(void*);
 extern "C" void ShutdownAndExit();
 extern "C" void CallbackAcquiredForeground(void*);
-extern "C" void CallbackReleaseForeground(void*);
-extern "C" void CallbackHomebuttonDenied(void*);
+extern unsigned int CallbackReleaseForeground__FPv(void*);
+extern unsigned int CallbackHomebuttonDenied(void*);
 extern bool ReadDir(int*, FSDirEntry*);
 extern int altMainThread(int, void*);
-
-namespace nn
-{
-namespace ac
-{
-void Initialize();
-}
-}
 
 extern CInput* g_pInput;
 extern CStorage* gStorage;
 extern CProfile* gProfile;
 extern Renderer* gRenderer;
 extern CConsoleMinecraftApp gApp;
+
+unsigned int CallbackHomebuttonDenied(void*)
+{
+    nn::erreula::HomeNixSignArg arg;
+    nn::erreula::AppearHomeNixSign(arg);
+    return 0;
+}
 
 static OSMessageQueue gMainMessageQueue;
 static OSMessage gMainMessageBuffer;
@@ -75,7 +74,6 @@ static unsigned char gMainThreadStack[0x20000];
 
 int main()
 {
-    _main();
     OSBlockThreadsOnExit();
     ShutdownManager::Initialise();
     CGameNetworkManager::sInstance.WiiU_SetBootFromFriendList();
@@ -92,8 +90,8 @@ int main()
     DefineActions();
     ProcUIInitEx(SaveCallback, 0);
     ProcUIRegisterCallback(0, (unsigned int (*)(void*))CallbackAcquiredForeground, 0, 100);
-    ProcUIRegisterCallback(1, (unsigned int (*)(void*))CallbackReleaseForeground, 0, 100);
-    ProcUIRegisterCallback(5, (unsigned int (*)(void*))CallbackHomebuttonDenied, 0, 100);
+    ProcUIRegisterCallback(1, CallbackReleaseForeground__FPv, 0, 100);
+    ProcUIRegisterCallback(5, CallbackHomebuttonDenied, 0, 100);
     nn::ac::Initialize();
     WiiUInitialise();
 

@@ -1,19 +1,21 @@
 #include "platform/wiiu/WiiUFileSystemHelpers.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 extern void setAltMainOKToRun();
 extern void* GetCommandBlock();
 extern void waitForAltMainThreadToComplete();
 
-extern "C" int FSOpenDir(void* client, void* commandBlock, const char* path, int* directory,
-                          unsigned int error);
-
-static void* s_fileSystemClient = 0;
-
 int OpenDir(const char* path, int* directory)
 {
     setAltMainOKToRun();
-    void* commandBlock = GetCommandBlock();
-    int result = FSOpenDir(s_fileSystemClient, commandBlock, path, directory, 0);
+    FSCmdBlock* commandBlock = static_cast<FSCmdBlock*>(GetCommandBlock());
+    FSDirectoryHandle handle = directory != 0 ? static_cast<FSDirectoryHandle>(*directory) : 0;
+    FSStatus result = FSOpenDir(GetWiiUFileSystemClient(), commandBlock, path, &handle,
+                                FS_ERROR_FLAG_NONE);
+    if (directory != 0)
+    {
+        *directory = static_cast<int>(handle);
+    }
     waitForAltMainThreadToComplete();
-    return result;
+    return result == 0;
 }

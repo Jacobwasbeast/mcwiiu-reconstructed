@@ -16,7 +16,7 @@ extern "C" void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count
 extern "C" void GX2SetPixelUniformBlock(unsigned int offset, unsigned int count, const void* values);
 extern "C" void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
 extern "C" void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
-extern void FFLiInvalidateShader(void* buffer, unsigned int size);
+extern void FFLiInvalidateShader__FPvUi(void* buffer, unsigned int size);
 
 FFLiCompressShader::FFLiCompressShader()
     : mVertexShader(0), mPixelShader(0), mVertexUniformBlock(0), mPixelUniformBlock(0), mTexture(0)
@@ -31,7 +31,7 @@ FFLiCompressShader::~FFLiCompressShader()
 
 bool FFLiCompressShader::UseUB() const
 {
-    return mVertexShader->wordsAfterCache == 1;
+    return mVertexShader->mode == 1;
 }
 
 unsigned int FFLiCompressShader::SetupLocationForUB()
@@ -67,9 +67,9 @@ bool FFLiCompressShader::SetupCPU(const void* shaderData, unsigned int shaderInd
 
 void FFLiCompressShader::SetupGPU()
 {
-    FFLiInvalidateShader((void*)mFetchShader.program, mFetchShader.words[2]);
-    FFLiInvalidateShader((void*)mVertexShader->cachePtr, mVertexShader->cacheSize);
-    FFLiInvalidateShader((void*)mPixelShader->cachePtr, mPixelShader->cacheSize);
+    FFLiInvalidateShader__FPvUi((void*)mFetchShader.program, mFetchShader.words[2]);
+    FFLiInvalidateShader__FPvUi(mVertexShader->program, mVertexShader->size);
+    FFLiInvalidateShader__FPvUi(mPixelShader->program, mPixelShader->size);
 }
 
 void FFLiCompressShader::Bind() const

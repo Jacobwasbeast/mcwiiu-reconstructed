@@ -1,8 +1,11 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/System.hpp"
 #include <coreinit/memdefaultheap.h>
+#include <coreinit/fastmutex.h>
+#include <coreinit/atomic64.h>
 #include <coreinit/mutex.h>
 #include <coreinit/thread.h>
+#include <coreinit/systeminfo.h>
 #include <stdio.h>
 #include <vector>
 
@@ -14,8 +17,52 @@ static __thread uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
 static const unsigned int s_processorAffinity[3] = { 0x01020400u, 0x1211100Fu, 0x0E000000u };
 static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
 
+extern void InitializeCriticalSection(OSFastMutex*);
+extern void InitializeCriticalSectionAndSpinCount(OSFastMutex*, unsigned long);
+extern void EnterCriticalSection(OSFastMutex*);
+extern int TryEnterCriticalSection(OSFastMutex*);
+extern void DeleteCriticalSection(OSFastMutex*);
+
+void SetThreadName(unsigned int, const char*)
+{
+}
+
+void InitializeCriticalSectionAndSpinCount(void* mutex, unsigned long spinCount)
+{
+    InitializeCriticalSectionAndSpinCount(static_cast<OSFastMutex*>(mutex), spinCount);
+}
+
+void EnterCriticalSection(void* mutex)
+{
+    EnterCriticalSection(static_cast<OSFastMutex*>(mutex));
+}
+
+void instructionSynchronize()
+{
+    __asm__ volatile("isync" ::: "memory");
+}
+
+uint64_t InterlockedCompareExchangeRelease64(volatile long long* destination,
+                                             long long exchange,
+                                             long long comparand)
+{
+    uint64_t previous = 0;
+    OSCompareAndSwapAtomicEx64(reinterpret_cast<volatile uint64_t*>(destination),
+                               static_cast<uint64_t>(comparand),
+                               static_cast<uint64_t>(exchange), &previous);
+    return previous;
+}
+
 typedef std::vector<C4JThreadImpl*> C4JThreadVector;
 typedef C4JThreadVector::iterator C4JThreadVectorIterator;
+
+void Sleep(unsigned int milliseconds)
+{
+    const uint64_t ticks = static_cast<uint64_t>(milliseconds) *
+                           static_cast<uint64_t>(OSGetSystemInfo()->busClockSpeed >> 2) /
+                           1000ull;
+    OSSleepTicks(ticks);
+}
 
 struct ThreadMutexInitializer
 {

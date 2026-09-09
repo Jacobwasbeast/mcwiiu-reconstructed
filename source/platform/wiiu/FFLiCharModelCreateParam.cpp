@@ -1,16 +1,8 @@
 #include "platform/wiiu/FFLiCharModelCreateParam.hpp"
+#include "platform/wiiu/FFLiCharModelCreator.hpp"
 
 #include "platform/wiiu/FFLiResourceManager.hpp"
 #include "platform/wiiu/FFLiResourceUncompressBuffer.hpp"
-
-struct FFLCharModelDesc
-{
-    FFLResolution resolution;
-    uint32_t mask;
-    uint32_t reserved;
-    uint32_t resourceType;
-    bool useMipmap;
-};
 
 extern int FFLiGetBufferSizeFacelineTexture(uint32_t resolution, bool mipmap, bool useMipmap);
 extern int FFLiGetBufferSizeMaskTextures(uint32_t mask, uint32_t resolution, bool mipmap, bool useMipmap);
@@ -52,8 +44,8 @@ uint32_t FFLiCharModelCreateParam::IsEnabledMipMap(FFLResolution resolution)
 uint32_t FFLiCharModelCreateParam::CheckModelDesc(const FFLCharModelDesc* description, bool specialMii)
 {
     if (description != 0 && description->resourceType < 2 &&
-        (description->mask & 0x7ffffU) != 0 &&
-        (description->reserved & 7U) != 0 &&
+        (description->expressionFlag & 0x7ffffU) != 0 &&
+        (description->modelFlag & 7U) != 0 &&
         (description->useMipmap == false || specialMii))
         return 1;
     return 0;
@@ -73,7 +65,7 @@ int32_t FFLiCharModelCreateParam::GetBufferSize(const FFLCharModelDesc* descript
     for (part = 0; part < 12; ++part)
         size += m_resourceManager->GetShapeAlignedMaxSize(resourceType, static_cast<FFLiShapePartsType>(part));
     size += FFLiGetBufferSizeFacelineTexture(resolution, mipmap, description->useMipmap);
-    size += FFLiGetBufferSizeMaskTextures(description->mask, resolution, mipmap, description->useMipmap);
+    size += FFLiGetBufferSizeMaskTextures(description->expressionFlag, resolution, mipmap, description->useMipmap);
     size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(1));
     size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(10));
     size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(6));
@@ -99,7 +91,7 @@ int32_t FFLiCharModelCreateParam::GetTempBufferSize(const FFLCharModelDesc* desc
     const uint32_t resolution = GetResolution(description->resolution);
     const bool mipmap = IsEnabledMipMap(description->resolution) != 0;
     const FFLResourceType resourceType = static_cast<FFLResourceType>(description->resourceType);
-    const int maskSize = FFLiGetTempBufferSizeMaskTextures(description->mask, resolution, mipmap,
+    const int maskSize = FFLiGetTempBufferSizeMaskTextures(description->expressionFlag, resolution, mipmap,
                                                             description->useMipmap, m_resourceManager, resourceType);
     const int facelineSize = FFLiGetTempBufferSizeFacelineTexture(resolution, mipmap, description->useMipmap,
                                                                    m_resourceManager, resourceType);

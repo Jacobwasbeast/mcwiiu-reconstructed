@@ -1,4 +1,5 @@
 #include "platform/wiiu/FFLiUtilShader.hpp"
+#include "platform/wiiu/FFLiCharModelCreator.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 #include "platform/wiiu/FFLiUtilShaderAllocator.hpp"
 #include <cstring>
@@ -8,7 +9,7 @@ extern "C" unsigned int GX2CalcFetchShaderSizeEx(unsigned int,unsigned int,unsig
 extern "C" void GX2InitFetchShaderEx(FFLiUtilShader::FetchShader*,unsigned int,unsigned int,void*,unsigned int,unsigned int);
 extern unsigned int GFDGetPixelShaderCount(const void*); extern unsigned int GFDGetPixelShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetPixelShaderProgramSize(unsigned int,const void*); extern int GFDGetPixelShader(_GX2PixelShader*,void*,unsigned int,const void*);
 extern unsigned int GFDGetVertexShaderCount(const void*); extern unsigned int GFDGetVertexShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetVertexShaderProgramSize(unsigned int,const void*); extern int GFDGetVertexShader(_GX2VertexShader*,void*,unsigned int,const void*);
-extern void FFLiBugEndianSwap(void*,unsigned int); extern void FFLiInvalidateShader(void*,unsigned int);
+extern void FFLiBugEndianSwap(void*,unsigned int); extern void FFLiInvalidateShader__FPvUi(void*,unsigned int);
 extern int FFLGetBufferSizeDefaultShader(const char*);
 extern int FFLInitDefaultShader(void*, void*, const char*);
 extern void FFLSetDefaultShader(void*);
@@ -33,7 +34,7 @@ extern "C" void GX2SetVertexSampler(const void*, unsigned int);
 extern "C" void GX2SetPixelUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void GX2SetVertexUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void OSPanic(const char*, unsigned int, const char*, ...);
-extern unsigned char ModulateModeToValue(FFLModulateMode);
+extern unsigned char ModulateModeToValue(unsigned int);
 static PlainShader gDefaultShader;
 static PlainShader gExtShader;
 static unsigned int gShaderType;
@@ -149,17 +150,23 @@ void SetModulateMode__FP11PlainShader15FFLModulateMode(PlainShader* shader, FFLM
     GX2SetPixelUniformReg(shader->pixelMode, 4, value);
 }
 
-void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader* shader, const FFLiShaderModulateParam* param)
+void BindTexture__FP11PlainShaderPC16FFLModulateParam(PlainShader* shader, const FFLModulateParam* param)
 {
-    if (shader == 0 || param == 0) OSPanic("FFLiUtilShader.cpp", 0x117, "Invalid pointer: %x", 0);
-    if (param->texture != 0) {
+    if (param->texture != 0)
+    {
         GX2SetPixelSampler(param->texture, shader->pixelSampler);
         GX2SetVertexSampler(param->texture, shader->pixelSampler);
     }
-    if (param->mode == 0 || param->mode == 1 || param->mode == 2) SetConstColor__FUiPC8FFLColor(shader->pixelColor1, &param->color[0]);
+}
+
+void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader* shader, const FFLModulateParam* param)
+{
+    if (shader == 0 || param == 0) OSPanic("FFLiUtilShader.cpp", 0x117, "Invalid pointer: %x", 0);
+    BindTexture__FP11PlainShaderPC16FFLModulateParam(shader, param);
+    if (param->mode == 0 || param->mode == 1 || param->mode == 2) SetConstColor__FUiPC8FFLColor(shader->pixelColor1, param->colorR);
     if (param->mode == 2) {
-        SetConstColor__FUiPC8FFLColor(shader->pixelColor2, &param->color[1]);
-        SetConstColor__FUiPC8FFLColor(shader->pixelColor3, &param->color[2]);
+        SetConstColor__FUiPC8FFLColor(shader->pixelColor2, param->colorG);
+        SetConstColor__FUiPC8FFLColor(shader->pixelColor3, param->colorB);
     }
     SetModulateMode__FP11PlainShader15FFLModulateMode(shader, param->mode);
 }
@@ -214,13 +221,13 @@ bool FFLiUtilShader::BuildShader(FetchShader* f,const _GX2VertexShader* s,FFLiUt
     for(i=0;i<n;++i) {
         unsigned int j;
         for(j=0;j<s->uniformVarCount;++j) if(std::strcmp(s->uniformVars[j].name,d[i].name)==0) break;
-        if(j==s->uniformVarCount||s->uniformVars[j].location<0) return false;
+        if(j==s->uniformVarCount) return false;
     }
     GX2InitFetchShaderEx(f,z,n,p,0,0);
     FFLiBugEndianSwap(p,z);
     if (inv)
     {
-        FFLiInvalidateShader((void*)f->words[3], f->words[2]);
+        FFLiInvalidateShader__FPvUi((void*)f->words[3], f->words[2]);
     }
     return true;
 }
@@ -234,7 +241,7 @@ bool FFLiUtilShader::BuildShaderImpl(_GX2PixelShader** o,FFLiUtilShaderAllocator
     void* q=(void*)a->mProgramAllocator.Allocate(p,0x100);
     if(!GFDGetPixelShader(s,q,i,d)) return false;
     FFLiBugEndianSwap(q,p); *o=s;
-    if(v) FFLiInvalidateShader((void*)s->cachePtr,s->cacheSize);
+    if(v) FFLiInvalidateShader__FPvUi(s->program,s->size);
     return true;
 }
 bool FFLiUtilShader::BuildShader(_GX2PixelShader** o, FFLiUtilShaderAllocator* a, const void* d, unsigned int i, bool v)
@@ -250,7 +257,7 @@ bool FFLiUtilShader::BuildShaderImpl(_GX2VertexShader** o,FFLiUtilShaderAllocato
     void* q=(void*)a->mProgramAllocator.Allocate(p,0x100);
     if(!GFDGetVertexShader(s,q,i,d)) return false;
     FFLiBugEndianSwap(q,p); *o=s;
-    if(v) FFLiInvalidateShader((void*)s->cachePtr,s->cacheSize);
+    if(v) FFLiInvalidateShader__FPvUi(s->program,s->size);
     return true;
 }
 bool FFLiUtilShader::BuildShader(_GX2VertexShader** o, FFLiUtilShaderAllocator* a, const void* d, unsigned int i, bool v)
@@ -265,8 +272,7 @@ bool FFLiUtilShader::GetUniformLocation(unsigned int* o, const _GX2PixelShader* 
     {
         if (std::strcmp(s->uniformVars[i].name, n) == 0)
         {
-            if (s->uniformVars[i].location < 0) return false;
-            *o = s->uniformVars[i].location;
+            *o = s->uniformVars[i].offset;
             return true;
         }
     }
@@ -279,8 +285,7 @@ bool FFLiUtilShader::GetUniformLocation(unsigned int* o, const _GX2VertexShader*
     {
         if (std::strcmp(s->uniformVars[i].name, n) == 0)
         {
-            if (s->uniformVars[i].location < 0) return false;
-            *o = s->uniformVars[i].location;
+            *o = s->uniformVars[i].offset;
             return true;
         }
     }
@@ -293,7 +298,7 @@ bool FFLiUtilShader::GetUniformBlockLocation(unsigned int* o, const _GX2PixelSha
     {
         if (std::strcmp(s->uniformBlocks[i].name, n) == 0)
         {
-            *o = s->uniformBlocks[i].location;
+            *o = s->uniformBlocks[i].offset;
             return true;
         }
     }
@@ -306,7 +311,7 @@ bool FFLiUtilShader::GetUniformBlockLocation(unsigned int* o, const _GX2VertexSh
     {
         if (std::strcmp(s->uniformBlocks[i].name, n) == 0)
         {
-            *o = s->uniformBlocks[i].location;
+            *o = s->uniformBlocks[i].offset;
             return true;
         }
     }
@@ -319,7 +324,6 @@ bool FFLiUtilShader::GetSamplerLocation(unsigned int* o, const _GX2PixelShader* 
     {
         if (std::strcmp(s->samplers[i].name, n) == 0)
         {
-            if (s->samplers[i].location < 0) return false;
             *o = s->samplers[i].location;
             return true;
         }
@@ -333,7 +337,6 @@ bool FFLiUtilShader::GetSamplerLocation(unsigned int* o, const _GX2VertexShader*
     {
         if (std::strcmp(s->samplers[i].name, n) == 0)
         {
-            if (s->samplers[i].location < 0) return false;
             *o = s->samplers[i].location;
             return true;
         }
@@ -391,7 +394,7 @@ bool FFLiUtilShader::CheckUniformBlock(const _GX2PixelShader* s, unsigned int, c
     for (i = 0; i < n; ++i)
     {
         const _GX2ShaderUniformBlock* b = GetUniformBlock(s, d[i].name);
-        if (b == NULL || b->location != d[i].offset || b->size != d[i].size)
+        if (b == NULL || b->offset != d[i].offset || b->size != d[i].size)
             return false;
     }
     return true;
@@ -403,7 +406,7 @@ bool FFLiUtilShader::CheckUniformBlock(const _GX2VertexShader* s, unsigned int, 
     for (i = 0; i < n; ++i)
     {
         const _GX2ShaderUniformBlock* b = GetUniformBlock(s, d[i].name);
-        if (b == NULL || b->location != d[i].offset || b->size != d[i].size)
+        if (b == NULL || b->offset != d[i].offset || b->size != d[i].size)
             return false;
     }
     return true;

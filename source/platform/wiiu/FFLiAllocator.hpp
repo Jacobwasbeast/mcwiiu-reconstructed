@@ -1,6 +1,8 @@
 #ifndef PLATFORM_WIIU_FFLIALLOCATOR_HPP
 #define PLATFORM_WIIU_FFLIALLOCATOR_HPP
 
+#include <coreinit/memheap.h>
+
 class FFLiAllocator
 {
 public:
@@ -12,7 +14,7 @@ public:
     void Free(void* block);
 
 private:
-    void* mHeap;
+    MEMHeapHandle mHeap;
 };
 
 #endif

@@ -1,11 +1,10 @@
 #include "platform/wiiu/FFLiSystemContext.hpp"
 
 #include <cstring>
+#include <nn/act/client_cpp.h>
 
 extern unsigned int FFLiGetSecondsFrom_2000_01_01__Fv();
 extern unsigned long long FFLiGetMiiStudioTitleID__Fv();
-extern int FFLiSystemContextGetCreateID(FFLiCreateIDBase*, unsigned int, unsigned char);
-extern int FFLiSystemContextIsReady();
 
 FFLiSystemContext::FFLiSystemContext()
 {
@@ -65,18 +64,20 @@ unsigned long long FFLiSystemContext::TitleID() const
 
 unsigned int FFLiSystemContext::AfterConstruct()
 {
-    if (FFLiSystemContextIsReady() != 0)
+    if (!nn::act::Initialize().IsSuccess())
     {
         return 0;
     }
-    if (FFLiSystemContextGetCreateID(&mCreateIDBase, 0x4a0, 0xff) != 0)
+    nn::act::TransferrableId transferableID = 0;
+    if (!nn::act::GetTransferableIdEx(&transferableID, 0x4a0, 0xff).IsSuccess())
     {
         return 0;
     }
-    if (FFLiSystemContextIsReady() != 0)
+    if (!nn::act::Finalize().IsSuccess())
     {
         return 0;
     }
+    std::memcpy(&mCreateIDBase, &transferableID, sizeof(mCreateIDBase));
     const unsigned long long titleID = FFLiGetMiiStudioTitleID__Fv();
     mTitleIDLow = static_cast<unsigned int>(titleID);
     mTitleIDHigh = static_cast<unsigned int>(titleID >> 32);

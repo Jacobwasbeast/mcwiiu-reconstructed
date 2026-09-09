@@ -67,6 +67,7 @@ public:
     static int32_t Create(void* work, const FFLInitDesc* initDesc, const FFLResourceDesc* resourceDesc);
     void SetupGPU();
     void CanInitCharModel() const;
+    const FFLShaderCallback* GetShaderCallback() const;
 };
 
 #endif

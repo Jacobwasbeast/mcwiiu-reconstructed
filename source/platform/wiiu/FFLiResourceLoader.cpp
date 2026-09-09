@@ -1,9 +1,10 @@
 #include "platform/wiiu/FFLiResourceLoader.hpp"
 #include "platform/wiiu/FFLiFsCommand.hpp"
 #include "platform/wiiu/FFLiResourceUncompressBuffer.hpp"
+#include "vendor/__N_22_FFLiResourceLoader_cpp_4cb71113.hpp"
 
 extern unsigned int FFLiRoundUp(unsigned int value, unsigned int alignment);
-extern bool FFLiResourceLoaderUncompress(void* destination, const void* source, FFLiResourceUncompressBuffer* buffer, const FFLiResourcePartsInfo& parts);
+bool FFLiResourceLoaderUncompress(void* destination, const void* source, FFLiResourceUncompressBuffer* buffer, const FFLiResourcePartsInfo& parts);
 
 FFLiResourceLoader::FFLiResourceLoader(FFLiResourceManager* resourceManager, FFLiResourceLoaderBuffer* buffer, FFLResourceType resourceType)
     : m_resourceManager(resourceManager), m_buffer(buffer), m_command(FFLiFsCommand::PlacementNew(0, 0)), m_file(0), m_resourceType(resourceType)

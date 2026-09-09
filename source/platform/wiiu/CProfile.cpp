@@ -1,34 +1,26 @@
 #include "platform/wiiu/CProfile.hpp"
 
 #include <cstdarg>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <coreinit/fastmutex.h>
+#include <coreinit/memdefaultheap.h>
+#include <nn/save.h>
+#include <nn/act/client_cpp.h>
+#include <nn/fp/fp_cpp.h>
 
 #include "game/core/CAchievements.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 namespace nn
 {
-    namespace act
-    {
-        unsigned int Initialize();
-        unsigned int GetUuid(ACTUuid*);
-        int GetSlotNoEx(const ACTUuid&);
-        bool IsNetworkAccount();
-        unsigned int GetAccountId(char*);
-        unsigned int GetPrincipalId();
-        unsigned char GetSlotNo();
-        int GetNumOfAccounts();
-    }
-
-    namespace fp
-    {
-        unsigned int Initialize();
-        int ResultToErrorCode(unsigned int);
-        unsigned int UpdateGameMode(const GameMode*, const wchar_t*, unsigned int);
-        unsigned int UpdateGameModeDescription(const wchar_t*);
-    }
+namespace act
+{
+// WUT exports this original Wii U entry point but omits its C++ declaration.
+unsigned char GetSlotNoEx(const ACTUuid&) asm("GetSlotNoEx__Q2_2nn3actFRC7ACTUuid");
+}
 }
 
 unsigned int GetTickCount();
@@ -37,37 +29,35 @@ int getSlotId(int);
 int SCIGetParentalEnable(unsigned char*);
 int SCIGetParentalAccountEShopPurchase(unsigned char*, unsigned char);
 int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
-int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
+extern "C" int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
 int VerifyCountryRange(unsigned int*);
 int SCIGetISOResource(char*, unsigned int, const char*);
-extern "C"
-{
-void OSFastMutex_Init(OSFastMutex*, const char*);
-void OSFastMutex_Lock(OSFastMutex*);
-void OSFastMutex_Unlock(OSFastMutex*);
-void OSSleepTicks(unsigned long long);
-void* MEMAllocFromDefaultHeapEx(unsigned int, int);
-void MEMFreeToDefaultHeap(void*);
-void* allocAligned();
-int FSInitCmdBlock(void*);
-int FSAddClient(FSClient*, unsigned int);
-int FSSetStateChangeNotification(FSClient*, void*);
-}
+extern "C" void* allocAligned();
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
-extern "C"
-{
-int SAVEInitSaveDir(unsigned char);
-int SAVEOpenFile(FSClient*, void*, unsigned char, const char*, const char*, int*, unsigned int);
-int SAVEFlushQuota(FSClient*, void*, unsigned char, unsigned int);
-int FSWriteFile(FSClient*, void*, const void*, unsigned int, unsigned int, int, unsigned int, unsigned int);
-int FSReadFile(FSClient*, void*, void*, unsigned int, unsigned int, int, unsigned int, unsigned int);
-int FSCloseFile(FSClient*, void*, int, unsigned int);
-int FSGetStatFile(FSClient*, void*, int, void*, unsigned int);
-}
 
 CProfile* gProfile;
 
 static char sCountryCodeData[0x300];
+
+static std::u16string ToUtf16(const wchar_t* source)
+{
+    std::u16string result;
+    if (source == NULL)
+        return result;
+    for (const wchar_t* current = source; *current != L'\0'; ++current)
+    {
+        uint32_t codePoint = static_cast<uint32_t>(*current);
+        if (codePoint <= 0xffff)
+            result.push_back(static_cast<char16_t>(codePoint));
+        else if (codePoint <= 0x10ffff)
+        {
+            codePoint -= 0x10000;
+            result.push_back(static_cast<char16_t>(0xd800 + (codePoint >> 10)));
+            result.push_back(static_cast<char16_t>(0xdc00 + (codePoint & 0x3ff)));
+        }
+    }
+    return result;
+}
 
 PlayerUID getPlayerUID(int quadrant, bool includeOffline)
 {
@@ -291,7 +281,7 @@ void CProfile::SetSignInChange(bool changed)
 void CProfile::Initialise(const void*, const void*, unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*)
 {
     nn::act::Initialize();
-    nn::act::GetUuid(&mAccountUuid);
+    nn::act::GetUuid(reinterpret_cast<char*>(&mAccountUuid));
     TryToConnectOnline();
     mNetworkAccount = nn::act::IsNetworkAccount();
     if (mNetworkAccount)
@@ -883,12 +873,13 @@ void CProfile::RichPresenceRegisterContextString(int context, int value, int str
 void CProfile::RichPresenceInit(int, int titleId)
 {
     mRichPresenceSettingHandler = (RichPresenceSettingHandler)titleId;
-    unsigned int result = nn::fp::Initialize();
-    unsigned int level = (result >> 27) & 3;
+    nn::Result result = nn::fp::Initialize();
+    unsigned int resultValue = static_cast<NNResult>(result).value;
+    unsigned int level = (resultValue >> 27) & 3;
     unsigned int moduleMask = level == 3 ? 0x07f00000 : 0x1ff00000;
     unsigned int descriptionMask = level == 3 ? 0x3ff : 0xfffff;
-    unsigned int description = result & descriptionMask;
-    if ((result & moduleMask) == 0x00c00000 && description > 0x31ff && description < 0x1f400)
+    unsigned int description = resultValue & descriptionMask;
+    if ((resultValue & moduleMask) == 0x00c00000 && description > 0x31ff && description < 0x1f400)
     {
         unsigned int errorCode = nn::fp::ResultToErrorCode(result);
         DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n",
@@ -946,12 +937,13 @@ void CProfile::SetPresenceString(int presence)
         return;
     }
 
-    unsigned int result;
+    nn::Result result;
+    std::u16string utf16Text = ToUtf16(text.c_str());
     if (mGameModeUpdateReady || mPresenceUpdateDelay)
-        result = nn::fp::UpdateGameMode((nn::fp::GameMode*)mGameModeData, text.c_str(), 0);
+        result = nn::fp::UpdateGameMode((nn::fp::GameMode*)mGameModeData, utf16Text.c_str(), 0);
     else
-        result = nn::fp::UpdateGameModeDescription(text.c_str());
-    if ((result & 0x80000000U) == 0)
+        result = nn::fp::UpdateGameModeDescription(utf16Text.c_str());
+    if (result.IsSuccess())
     {
         mLastPresenceUpdate = now;
         mPresenceUpdatePending = false;
@@ -1306,7 +1298,10 @@ CAchievements* CProfile::nextAwardManagerTask()
 
 int CProfile::openAwardManagerFile(int& file, const char* mode, unsigned char slot, const char* filename)
 {
-    return SAVEOpenFile(&mFileSystemClient, mFileSystemCommand, slot, filename, mode, &file, 0xffffffffU);
+    FSFileHandle handle = static_cast<FSFileHandle>(file);
+    FSStatus result = SAVEOpenFile(&mFileSystemClient, &mFileSystemCommand, slot, filename, mode, &handle, FS_ERROR_FLAG_ALL);
+    std::memcpy(&file, &handle, sizeof(file));
+    return result;
 }
 
 void CProfile::EnterInitSaveDirCS()
@@ -1341,13 +1336,13 @@ int CProfile::initSaveDirectory(unsigned char slot)
 void CProfile::closeAwardManagerFile(int& file)
 {
     if (file != -1)
-        FSCloseFile(&mFileSystemClient, mFileSystemCommand, file, 0xffffffffU);
+        FSCloseFile(&mFileSystemClient, &mFileSystemCommand, file, FS_ERROR_FLAG_ALL);
 }
 
 void CProfile::flushSaveDirectory(unsigned char slot)
 {
     nn::act::GetNumOfAccounts();
-    SAVEFlushQuota(&mFileSystemClient, mFileSystemCommand, slot, 0xffffffffU);
+    SAVEFlushQuota(&mFileSystemClient, &mFileSystemCommand, slot, FS_ERROR_FLAG_ALL);
 }
 
 void CProfile::AwardManagerThreadProc(int, void* argument)
@@ -1368,10 +1363,10 @@ void CProfile::AwardManagerThreadProc(int, void* argument)
         {
             if (profile->openAwardManagerFile(file, "w+", achievements->mSlotId, filename) == 0)
             {
-                void* data = allocAligned();
+                uint8_t* data = static_cast<uint8_t*>(allocAligned());
                 achievements->mHasAchievementsFile = true;
                 achievements->WriteTo(data, 16);
-                FSWriteFile(&profile->mFileSystemClient, profile->mFileSystemCommand, data, 1, 16, file, 0, 0xffffffffU);
+                FSWriteFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16, file, 0, FS_ERROR_FLAG_ALL);
                 profile->closeAwardManagerFile(file);
                 MEMFreeToDefaultHeap(data);
                 if (achievements->mSlotId != nn::act::GetSlotNo())
@@ -1387,11 +1382,11 @@ void CProfile::AwardManagerThreadProc(int, void* argument)
         {
             if (profile->openAwardManagerFile(file, "r", achievements->mSlotId, filename) == 0)
             {
-                unsigned char stat[104];
-                if (FSGetStatFile(&profile->mFileSystemClient, profile->mFileSystemCommand, file, stat, 0xffffffffU) == 0)
+                FSStat stat;
+                if (FSGetStatFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, file, &stat, FS_ERROR_FLAG_ALL) == 0)
                 {
-                    void* data = allocAligned();
-                    int bytesRead = FSReadFile(&profile->mFileSystemClient, profile->mFileSystemCommand, data, 1, 16, file, 0, 0xffffffffU);
+                    uint8_t* data = static_cast<uint8_t*>(allocAligned());
+                    int bytesRead = FSReadFile(&profile->mFileSystemClient, &profile->mFileSystemCommand, data, 1, 16, file, 0, FS_ERROR_FLAG_ALL);
                     achievements->mHasAchievementsFile = true;
                     achievements->ReadFrom(data, bytesRead);
                     profile->closeAwardManagerFile(file);
@@ -1416,8 +1411,8 @@ void CProfile::AwardManagerOnCreate()
     mAwardHandler = NULL;
     mAwardContext = NULL;
     OSFastMutex_Init(&mAwardMutex, "AwardManager");
-    FSInitCmdBlock(mFileSystemCommand);
-    FSAddClient(&mFileSystemClient, 0xffffffffU);
+    FSInitCmdBlock(&mFileSystemCommand);
+    FSAddClient(&mFileSystemClient, FS_ERROR_FLAG_ALL);
     FSStateChangeParams notification = { stateChangeCallback, NULL, 0 };
     FSSetStateChangeNotification(&mFileSystemClient, &notification);
     mAwardThreadStack = MEMAllocFromDefaultHeapEx(60000, 16);

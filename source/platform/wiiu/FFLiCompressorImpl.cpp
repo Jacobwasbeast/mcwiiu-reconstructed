@@ -22,7 +22,7 @@ extern "C" void GX2SetViewport(float, float, float, float, float, float);
 extern "C" void GX2SetScissor(unsigned int, unsigned int, unsigned int, unsigned int);
 extern "C" void GX2SetColorBuffer(_GX2ColorBuffer*, unsigned int);
 extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
-extern void GX2InitTextureRegs(_GX2Texture*);
+extern "C" void GX2InitTextureRegs(_GX2Texture*);
 extern void instructionSynchronize();
 
 template <class Descriptor>
@@ -82,7 +82,8 @@ void FFLiCompressorImpl<Descriptor>::SetupGPU()
 }
 
 template <class Descriptor>
-unsigned int FFLiCompressorImpl<Descriptor>::GetTextureBufferSize(unsigned int width, unsigned int height)
+unsigned int FFLiCompressorImpl<Descriptor>::GetTextureBufferSize(unsigned int width, unsigned int height,
+                                                                  unsigned int mipCount)
 {
     _GX2Texture texture;
     std::memset(&texture, 0, sizeof(texture));
@@ -90,7 +91,7 @@ unsigned int FFLiCompressorImpl<Descriptor>::GetTextureBufferSize(unsigned int w
     texture.surface.width = width;
     texture.surface.height = height;
     texture.surface.depth = 1;
-    texture.surface.numMips = 1;
+    texture.surface.numMips = mipCount;
     texture.surface.format = Descriptor::ColorFormat;
     texture.surface.aaMode = 0;
     texture.surface.use = 1;

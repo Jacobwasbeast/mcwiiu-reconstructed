@@ -66,3 +66,18 @@ unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
     m_values[index] = value;
     return 1;
 }
+
+unsigned int TlsAlloc()
+{
+    return static_cast<unsigned int>(TLSStorageCafe::Instance()->Alloc());
+}
+
+void* TlsGetValue(unsigned int index)
+{
+    return reinterpret_cast<void*>(TLSStorageCafe::Instance()->GetValue(index));
+}
+
+int TlsSetValue(unsigned int index, void* value)
+{
+    return static_cast<int>(TLSStorageCafe::Instance()->SetValue(index, value));
+}

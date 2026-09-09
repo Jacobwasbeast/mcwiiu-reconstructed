@@ -6,6 +6,7 @@
 #include <wchar.h>
 
 #include <nn/result.h>
+#include <nn/fp/fp_cpp.h>
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameModeOptions.hpp"
@@ -25,13 +26,30 @@ unsigned int GetTickCount();
 
 namespace nn
 {
-namespace fp
+namespace ec
 {
-nn::Result GetFriendAccountId(char* accountIds, unsigned int* friendIds, unsigned int count)
-    asm("GetFriendAccountId__Q2_2nn2fpFPA17_cPCUiUi");
-nn::Result GetFriendList(unsigned int* friendIds, unsigned int* count, unsigned int offset, unsigned int maxCount)
-    asm("GetFriendList__Q2_2nn2fpFPUiT1UiT3");
+namespace applet
+{
+bool IsExecuting() asm("IsExecuting__Q3_2nn2ec6appletFv");
+void Finish() asm("Finish__Q3_2nn2ec6appletFv");
+int GetReturnCode() asm("GetReturnCode__Q3_2nn2ec6appletFv");
 }
+}
+}
+
+bool CommerceAppletIsExecuting()
+{
+    return nn::ec::applet::IsExecuting();
+}
+
+void CommerceAppletFinish()
+{
+    nn::ec::applet::Finish();
+}
+
+int CommerceAppletGetReturnCode()
+{
+    return nn::ec::applet::GetReturnCode();
 }
 
 class CMatchMakeSearchParam

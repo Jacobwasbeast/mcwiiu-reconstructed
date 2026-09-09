@@ -10,26 +10,20 @@
 #include "platform/wiiu/FFLiCopySurface.hpp"
 #include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
 struct FFLCharModel { FFLiCharModel model; };
+struct FFLResourceDesc;
 struct FFLShaderCallback;
 class FFLiShaderCallback;
 struct FFLStoreData;
+struct FFLiStoreDataCFL;
 struct FFLiMiiDataOfficial;
 struct FFLiMiiDataCore;
 struct FFLiMiiDataCoreRFL;
 template <class Descriptor> class FFLiCompressorImpl;
 struct FFLiCompressorDescBC1;
 struct FFLiCompressorDescBC3;
+struct _GX2ContextState;
 class __N_21_FFLiDefaultShader_cpp_d69dbbf4;
 typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;
-struct FFLIconSetting
-{
-    uint32_t width;
-    uint32_t height;
-    uint32_t backgroundType;
-    FFLColor backgroundColor;
-    uint32_t surfaceFormat;
-    bool useDepth;
-};
 struct FFLiMiiID { uint8_t value[10]; };
 struct FFLiDateTime { int year, month, day, hour, minute, second; };
 struct FFLAdditionalInfo
@@ -96,5 +90,52 @@ int FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination,
                                    const FFLiMiiDataCoreRFL& source,
                                    bool replaceName);
 void FFLiClearCreatorNameFromOfficial(FFLiMiiDataOfficial* data);
+
+int FFLInitRes(void* work, FFLResourceDesc* resourceDesc);
+int FFLGetWorkSize(FFLResourceDesc* resourceDesc);
+int FFLiGetBufferSizeFacelineTexture(uint32_t resolution, bool mipmap, bool useMipmap);
+
+int FFLiLoadShape(FFLDrawParam*, FFLBoundingBox*, FFLiCharModel*, FFLiShapePartsType,
+                  unsigned short, FFLiResourceLoader*, FFLiBufferAllocator*);
+void FFLiInvalidate(unsigned int, void*, unsigned int);
+int FFLiCanDrawShape(const FFLDrawParam*);
+bool FFLiIsValidMiiID(const FFLCreateID*);
+void FFLiBugEndianSwap(void*, unsigned int);
+void FFLDeleteCharModel(void*);
+bool FFLiIsSpecialMiiID(const FFLCreateID*);
+int FFLiGetDatabasePath(char*, unsigned int, unsigned long long, const char*);
+int FFLiGetResourcePath(char*, unsigned int, const char*);
+void FFLSetShaderCallback(void*);
+unsigned int FFLiInitMaskTextures(FFLiMaskTextures*, unsigned int, unsigned int, bool, bool, FFLiBufferAllocator*);
+unsigned int FFLiGetIconBufferSize(const FFLIconSetting*);
+void FFLiInitRenderTexture(FFLiRenderTexture*, unsigned int, unsigned int, unsigned int, FFLiBufferAllocator*);
+void FFLiTempSetShaderMode(int);
+void FFLDrawOpaWithCallback(const FFLiCharModel&, const FFLShaderCallback*);
+void FFLDrawXluWithCallback(const FFLiCharModel&, const FFLShaderCallback*);
+void FFLiFlushRenderTexture(FFLiRenderTexture*);
+unsigned int FFLiGetMipMapLevelSize(unsigned int, unsigned int);
+void FFLiSetupRenderTexture(FFLiRenderTexture*, const FFLColor*, void*, unsigned int, unsigned int, const FFLShaderCallback*);
+void FFLiInitFacelineTexture(FFLiRenderTexture*, unsigned int, bool, bool, FFLiBufferAllocator*);
+void FFLiTempSetContextState(const _GX2ContextState*);
+void FFLiInitModulateShapeCap(FFLModulateParam*, int, const _GX2Texture&);
+void FFLiInitModulateShapeHair(FFLModulateParam*, int);
+void FFLiInitModulateShapeNose(FFLModulateParam*, int);
+int FFLiGetBufferRenderTexture(unsigned int, unsigned int, unsigned int);
+int FFLiGetBufferRenderTexture(unsigned int, unsigned int, unsigned int, unsigned int);
+int FFLiStoreDataCFLToCharInfo(FFLiCharInfo*, const FFLiStoreDataCFL&);
+unsigned int FFLiBugCanVgtFixedIndexSize(unsigned int);
+unsigned int FFLiBugCanVgtFixedIndexSize();
+int FFLiLoadTextureWithAllocate(_GX2Texture**, FFLiTexturePartsType, unsigned int, FFLiResourceLoader*, FFLiBufferAllocator*);
+void FFLiInitModulateShapeFaceline(FFLModulateParam*, const _GX2Texture&);
+uint32_t FFLiGetTextureMaxSizeWithAlign(const FFLiResourceManager*, FFLResourceType, FFLiTexturePartsType);
+int FFLiInitTempObjectMaskTextures(FFLiMaskTexturesTempObject*, const FFLiMaskTextures*, const FFLiCharInfo*, unsigned int, unsigned int, bool, bool, bool, FFLiResourceLoader*, FFLiBufferAllocator*, FFLiRenderTextureBuffer*);
+int FFLiGetTempBufferSizeMaskTextures(unsigned int, unsigned int, bool, bool, const FFLiResourceManager*, FFLResourceType);
+int FFLiInitTempObjectFacelineTexture(FFLiFacelineTextureTempObject*, FFLiRenderTexture*, const FFLiCharInfo*, unsigned int, bool, bool, bool, FFLiResourceLoader*, FFLiBufferAllocator*, FFLiRenderTextureBuffer*);
+int FFLiGetDepthBufferSizeRenderTexture(unsigned int, unsigned int);
+int FFLiGetCompressBufferSizeMaskTexture(unsigned int, bool);
+int FFLiGetTempBufferSizeFacelineTexture(unsigned int, bool, bool, const FFLiResourceManager*, FFLResourceType);
+int FFLiGetCompressBufferSizeFacelineTexture(unsigned int, bool);
+unsigned int FFLiMin(unsigned int, unsigned int);
+void FFLSetMatrixDefaultShader(void*, const _Mat44*, const _Mat34*);
 
 #endif

@@ -11,7 +11,7 @@ extern "C" void GX2InitSampler(_GX2Sampler* sampler, unsigned int clampMode, uns
 extern "C" void GX2InitSamplerLOD(_GX2Sampler* sampler, float minLod, float maxLod, float lodBias);
 extern "C" void GX2SetPixelSampler(const _GX2Sampler* sampler, unsigned int unit);
 extern "C" void GX2SetPixelTexture(const _GX2Texture* texture, unsigned int unit);
-extern void FFLiInvalidateShader(void* buffer, unsigned int size);
+extern void FFLiInvalidateShader__FPvUi(void* buffer, unsigned int size);
 
 FFLiCopySurfaceShader::FFLiCopySurfaceShader()
     : mVertexShader(0), mPixelShader(0), mSamplerLocation(0)
@@ -48,9 +48,9 @@ bool FFLiCopySurfaceShader::SetupCPU(FFLiBufferAllocator* allocator)
 
 void FFLiCopySurfaceShader::SetupGPU()
 {
-    FFLiInvalidateShader((void*)mFetchShader.program, mFetchShader.words[2]);
-    FFLiInvalidateShader((void*)mVertexShader->cachePtr, mVertexShader->cacheSize);
-    FFLiInvalidateShader((void*)mPixelShader->cachePtr, mPixelShader->cacheSize);
+    FFLiInvalidateShader__FPvUi((void*)mFetchShader.program, mFetchShader.words[2]);
+    FFLiInvalidateShader__FPvUi(mVertexShader->program, mVertexShader->size);
+    FFLiInvalidateShader__FPvUi(mPixelShader->program, mPixelShader->size);
 }
 
 void FFLiCopySurfaceShader::Bind() const

@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 #include <boost/unordered_map.hpp>
+#include <nn/ffl/miidata.h>
+#include <coreinit/filesystem.h>
+#include <nn/pia.h>
 
 #include "game/core/CriticalSection.hpp"
 #include "game/util/ACTUuid.hpp"
@@ -15,16 +18,10 @@
 #include "platform/wiiu/MiiData.hpp"
 
 class CAchievements;
-struct FFLCreateID
-{
-    unsigned char data[10];
-};
-struct FSCmdBlock;
 
 namespace nn
 {
     namespace fp { struct GameMode; }
-    namespace pia { namespace transport { class Station { public: struct PlayerInfo; }; } }
 }
 
 enum eAwardType
@@ -428,7 +425,7 @@ private:
     void* mAwardThreadStack;
     void* mAwardThreadStackTop;
     FSClient mFileSystemClient;
-    unsigned char mFileSystemCommand[2688];
+    FSCmdBlock mFileSystemCommand;
     OSFastMutex mAwardMutex;
 };
 

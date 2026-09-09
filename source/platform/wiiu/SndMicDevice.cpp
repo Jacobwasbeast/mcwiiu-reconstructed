@@ -1,6 +1,8 @@
 #include "platform/wiiu/SndMicDevice.hpp"
+#include <coreinit/memdefaultheap.h>
 
 #include <coreinit/time.h>
+#include <coreinit/thread.h>
 #include <string.h>
 
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
@@ -9,28 +11,6 @@ namespace nn
 {
 namespace pia
 {
-namespace chat
-{
-struct AudioInfo
-{
-    unsigned int m_Unknown0;
-    unsigned int m_Unknown1;
-    unsigned int m_Unknown2;
-    unsigned int m_Unknown3;
-    unsigned int m_Sequence;
-};
-
-class VoiceProtocol
-{
-public:
-    int GetAudioFrameLength() const;
-    unsigned int GetAudioDataSize() const;
-    bool IsInCommunication() const;
-    nn::pia::Result Receive(void* pData, unsigned int uiSize, nn::pia::StationIndex* pStationIndex);
-    nn::pia::Result Send(const short* pData, unsigned int uiSamples, const short* pLeft, const short* pRight);
-    nn::pia::Result GetAudioInfo(unsigned long long uiStationId, AudioInfo* pAudioInfo) const;
-};
-}
 }
 }
 
@@ -121,15 +101,11 @@ enum eAXDevice
 
 extern "C"
 {
-void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
-void MEMFreeToDefaultHeap(void* pMemory);
-
 void OSSleepTicks(OSTime ticks);
 int OSGetCoreCount();
 int OSGetCoreId();
 int OSGetMainCoreId();
-OSThread* OSGetDefaultThread(int iCoreId);
-int OSRunThread(OSThread* pThread, int (*pEntryPoint)(int, void*), int iArgc, void* pArgv);
+OSThread* OSGetDefaultThread(unsigned int iCoreId);
 int OSIsThreadTerminated(OSThread* pThread);
 void OSPanic(const char* pFile, int iLine, const char* pMessage);
 
@@ -184,6 +160,11 @@ static nn::pia::chat::VoiceProtocol* g_pChatVoiceProtocol = NULL;
 int MicSndFrameThread(int iArgc, void* pArgv)
 {
     return static_cast<SndMicDevice*>(pArgv)->MicSndFrameThreadImpl();
+}
+
+static int MicSndFrameThreadWut(int iArgc, const char** pArgv)
+{
+    return MicSndFrameThread(iArgc, const_cast<void*>(reinterpret_cast<const void*>(pArgv)));
 }
 
 int SndMicDevice::RSMP32to8(short* pSrc, int iSrcSamples, short* pDst)
@@ -776,7 +757,8 @@ void SndMicDevice::InitializeMicSndCommon(SND_PARAM* pParam)
         m_pMicSndThread = OSGetDefaultThread(0);
     }
 
-    if (OSRunThread(m_pMicSndThread, MicSndFrameThread, 0, this) == 0)
+    if (OSRunThread(m_pMicSndThread, MicSndFrameThreadWut, 0,
+                    reinterpret_cast<const char**>(this)) == 0)
     {
         OSPanic(__FILE__, __LINE__, "Can't run micsnd thread\n");
     }

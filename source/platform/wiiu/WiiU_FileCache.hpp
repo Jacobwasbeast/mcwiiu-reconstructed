@@ -2,11 +2,15 @@
 #define SOURCE_PLATFORM_WIIU_WIIU_FILECACHE_HPP
 
 #include <stdint.h>
+#include <coreinit/filesystem.h>
 
-struct FSDirEntry;
+int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
+int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, struct _OVERLAPPED* overlapped);
+void WiiUFileCacheInitialise();
 
 class WiiU_FileCache
 {
+    friend int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
 private:
     unsigned char *m_cache;
     int m_file;

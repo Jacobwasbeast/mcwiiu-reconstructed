@@ -182,4 +182,8 @@ private:
     std::vector<INetworkPlayer*> m_networkPlayers;
 };
 
+bool CommerceAppletIsExecuting();
+void CommerceAppletFinish();
+int CommerceAppletGetReturnCode();
+
 #endif

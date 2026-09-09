@@ -1,32 +1,24 @@
 #include "platform/wiiu/CStorage.hpp"
+#include <coreinit/memdefaultheap.h>
 #include "game/client/render/Renderer.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
+#include <nn/act/client_cpp.h>
 
-extern CProfile* g_profile;
-
-class CConsoleMinecraftApp
-{
-public:
-    static void RequestToBackground();
-    static unsigned char ReadyToBackground();
-};
+extern CProfile* gProfile;
 
 extern "C"
 {
-void* MEMAllocFromDefaultHeapEx(unsigned int, int);
-void MEMFreeToDefaultHeap(void*);
 void OSFastMutex_Init(OSFastMutex*, const char*);
 void OSFastMutex_Lock(OSFastMutex*);
 void OSFastMutex_Unlock(OSFastMutex*);
-void Sleep(unsigned int);
-unsigned int GetTickCount();
-
 int strcasecmp(const char*, const char*);
 void* memalign(unsigned int, unsigned int);
 
@@ -34,27 +26,22 @@ extern "C" int SAVEGetStatEvidence(FSClient*, FSCmdBlock*, unsigned char, const 
     __asm__("SAVEGetStat");
 
 }
+void Sleep(unsigned int);
+
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
 extern "C"
 {
 int MCP_Open();
 int MCP_GetSysProdSettings(int, void*);
 }
-void MCP_Close(int);
+extern "C" void MCP_Close(int);
 extern "C" void OSReport(const char*, ...);
 extern "C" void OSSavesDone_ReadyToRelease();
 extern void altMain();
 extern void altMainStop();
 
-namespace nn
-{
-    namespace act
-    {
-        unsigned char GetSlotNo();
-    }
-}
-
 static CStorage* s_storage;
+CStorage* gStorage = new CStorage();
 static char s_wideStringBuffer[1024];
 static FSClient s_sciClient;
 static FSCmdBlock s_sciCommandBlock;
@@ -329,7 +316,10 @@ unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned char* data, int leng
     return crc;
 }
 unsigned int CStorage::CRC(unsigned char* data, int length) { return ~UpdateCRC(FS_ERROR_FLAG_ALL, data, length); }
-void CStorage::DebugPrintf(const char*, ...) {}
+void CStorage::DebugPrintf(const char*, ...)
+{
+    return;
+}
 void CStorage::SetSaveDeviceSelected(unsigned int, bool) {}
 int CStorage::GetSaveDeviceSelected(unsigned int) { return 1; }
 void CStorage::ClearDLCOffers() {}
@@ -462,19 +452,19 @@ std::string CStorage::GetOptionsFilename(int profile)
 {
     PlayerUID player(0);
     char filename[128];
-    g_profile->GetXUID(profile, &player, false);
+    gProfile->GetXUID(profile, &player, false);
     std::sprintf(filename, "options_%ls", player.toString().c_str());
     return std::string(filename);
 }
 unsigned int CStorage::SaveOptionsThreadProc(int profile)
 {
     OSFastMutex_Lock(&m_storageMutex);
-    if (!g_profile->IsSignedIn(profile) || g_profile->IsGuest(profile)) {
+    if (!gProfile->IsSignedIn(profile) || gProfile->IsGuest(profile)) {
         m_profileWriteState[profile].state = 4;
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
-    g_profile->EnterInitSaveDirCS();
+    gProfile->EnterInitSaveDirCS();
     FSFileHandle handle;
     unsigned char slot = nn::act::GetSlotNo();
     int result = SAVEOpenFile(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "w",
@@ -494,7 +484,7 @@ unsigned int CStorage::SaveOptionsThreadProc(int profile)
         SAVERollbackQuota(&m_profileClient, &m_profileCommandBlock, slot, FS_ERROR_FLAG_ALL);
         m_profileWriteState[profile].state = 4;
     }
-    g_profile->LeaveInitSaveDirCS();
+    gProfile->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
@@ -502,12 +492,12 @@ int CStorage::_SaveOptionsThreadProc(int slot, void*) { return s_storage->SaveOp
 unsigned int CStorage::LoadOptionsThreadProc(int profile)
 {
     OSFastMutex_Lock(&m_storageMutex);
-    if (!g_profile->IsSignedIn(profile) || g_profile->IsGuest(profile)) {
+    if (!gProfile->IsSignedIn(profile) || gProfile->IsGuest(profile)) {
         m_profileReadState[profile].state = 8;
         OSFastMutex_Unlock(&m_storageMutex);
         return 0;
     }
-    g_profile->EnterInitSaveDirCS();
+    gProfile->EnterInitSaveDirCS();
     FSFileHandle handle;
     unsigned char slot = nn::act::GetSlotNo();
     int result = SAVEOpenFile(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), "r",
@@ -525,7 +515,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                                FS_ERROR_FLAG_ALL) == (int)m_gameProfileStride) {
                     m_profileReadState[profile].state = 7;
                     FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
-                    g_profile->LeaveInitSaveDirCS();
+                    gProfile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
@@ -539,7 +529,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                 if (bytesRead <= (int)m_gameProfileStride) {
                     m_oldProfileVersionCallback(m_oldProfileVersionContext, buffer, storedVersion, profile);
                     m_profileReadState[profile].state = 7;
-                    g_profile->LeaveInitSaveDirCS();
+                    gProfile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
@@ -548,7 +538,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                 MEMFreeToDefaultHeap(buffer);
                 m_profileReadBuffers[profile] = NULL;
                 m_profileReadState[profile].state = 8;
-                g_profile->LeaveInitSaveDirCS();
+                gProfile->LeaveInitSaveDirCS();
                 OSFastMutex_Unlock(&m_storageMutex);
                 return 0;
             }
@@ -557,7 +547,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
     } else if (result != -6)
         m_profileUpdateRequired = true;
     m_profileReadState[profile].state = 8;
-    g_profile->LeaveInitSaveDirCS();
+    gProfile->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
@@ -651,7 +641,7 @@ int CStorage::IsOptionsWriteInProgress()
 unsigned int CStorage::DeleteOptionsThreadProc(int profile)
 {
     OSFastMutex_Lock(&m_storageMutex);
-    if (g_profile->IsSignedIn(profile) && !g_profile->IsGuest(profile)) {
+    if (gProfile->IsSignedIn(profile) && !gProfile->IsGuest(profile)) {
         unsigned char slot = nn::act::GetSlotNo();
         int result =
             SAVERemove(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), FS_ERROR_FLAG_ALL);
@@ -812,7 +802,7 @@ int CStorage::LoadSaveDataThumbnail(SAVE_INFO* info, int (*callback)(void*, unsi
 }
 unsigned int CStorage::LoadGameThreadProc()
 {
-    g_profile->EnterInitSaveDirCS();
+    gProfile->EnterInitSaveDirCS();
     unsigned char slot = nn::act::GetSlotNo();
     FSFileHandle file;
     FSStat stat;
@@ -824,11 +814,11 @@ unsigned int CStorage::LoadGameThreadProc()
         if (m_saveSize == stat.size) {
             FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
             m_saveState = 8;
-            g_profile->LeaveInitSaveDirCS();
+            gProfile->LeaveInitSaveDirCS();
             return 0;
         }
     }
-    g_profile->LeaveInitSaveDirCS();
+    gProfile->LeaveInitSaveDirCS();
     m_saveState = 9;
     return 0;
 }
@@ -973,7 +963,7 @@ unsigned int CStorage::SaveGameThreadProc()
         return 0;
     }
     OSFastMutex_Lock(&m_storageMutex);
-    g_profile->EnterInitSaveDirCS();
+    gProfile->EnterInitSaveDirCS();
     if (hadSave)
         SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, FS_ERROR_FLAG_ALL);
     if (hadMetadata)
@@ -996,7 +986,7 @@ unsigned int CStorage::SaveGameThreadProc()
                 FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
                 if (result == (int)metadataSize &&
                     SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
-                    g_profile->LeaveInitSaveDirCS();
+                    gProfile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     if (m_savesInfo != NULL)
                         m_savesInfo->nandSize += saveNandSize + metadataNandSize - replacedSize;
@@ -1014,7 +1004,7 @@ unsigned int CStorage::SaveGameThreadProc()
     } else
         m_saveState = 3;
     SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
-    g_profile->LeaveInitSaveDirCS();
+    gProfile->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
@@ -1669,10 +1659,10 @@ char* CStorage::wstringtochararray(const std::wstring& value)
 unsigned int CStorage::LoadGenericDataThreadProc(int slot)
 {
     OSFastMutex_Lock(&m_storageMutex);
-    if (g_profile->IsSignedIn(slot) && !g_profile->IsGuest(slot)) {
-        g_profile->EnterInitSaveDirCS();
+    if (gProfile->IsSignedIn(slot) && !gProfile->IsGuest(slot)) {
+        gProfile->EnterInitSaveDirCS();
         unsigned char quadrant;
-        if (g_profile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
+        if (gProfile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
             FSFileHandle handle;
             int result = SAVEOpenFile(&m_genericClient, &m_genericCommandBlock, quadrant,
                                       wstringtochararray(m_genericFilename), "r", &handle, FS_ERROR_FLAG_ALL);
@@ -1685,12 +1675,12 @@ unsigned int CStorage::LoadGenericDataThreadProc(int slot)
                                handle, 0, FS_ERROR_FLAG_ALL) == (int)m_genericLoadedSize) {
                     FSCloseFile(&m_genericClient, &m_genericCommandBlock, handle, FS_ERROR_FLAG_ALL);
                     m_genericState = 9;
-                    g_profile->LeaveInitSaveDirCS();
+                    gProfile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
             }
-            g_profile->LeaveInitSaveDirCS();
+            gProfile->LeaveInitSaveDirCS();
             m_genericState = 10;
             return 0;
         }
@@ -1707,16 +1697,16 @@ int CStorage::_LoadGenericDataThreadProc(int slot, void*)
 unsigned int CStorage::SaveGenericDataThreadProc(int slot)
 {
     OSFastMutex_Lock(&m_storageMutex);
-    if (g_profile->IsSignedIn(slot) && !g_profile->IsGuest(slot)) {
-        g_profile->EnterInitSaveDirCS();
+    if (gProfile->IsSignedIn(slot) && !gProfile->IsGuest(slot)) {
+        gProfile->EnterInitSaveDirCS();
         unsigned char quadrant;
-        if (g_profile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
+        if (gProfile->initSaveDirectoryForQuadrant(slot, &quadrant)) {
             FSFileHandle handle;
             int result = SAVEOpenFile(&m_genericClient, &m_genericCommandBlock, quadrant,
                                       wstringtochararray(m_genericFilename), "w", &handle, FS_ERROR_FLAG_ALL);
             if (result != 0) {
                 SAVERollbackQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL);
-                g_profile->LeaveInitSaveDirCS();
+                gProfile->LeaveInitSaveDirCS();
                 m_genericState = result == -12 ? 6 : 4;
                 OSFastMutex_Unlock(&m_storageMutex);
                 return 0;
@@ -1730,7 +1720,7 @@ unsigned int CStorage::SaveGenericDataThreadProc(int slot)
             if (result == (int)m_genericDataSize) {
                 if (SAVEFlushQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL) == 0) {
                     m_genericState = 3;
-                    g_profile->LeaveInitSaveDirCS();
+                gProfile->LeaveInitSaveDirCS();
                     OSFastMutex_Unlock(&m_storageMutex);
                     return 0;
                 }
@@ -1740,7 +1730,7 @@ unsigned int CStorage::SaveGenericDataThreadProc(int slot)
                 SAVERollbackQuota(&m_genericClient, &m_genericCommandBlock, quadrant, FS_ERROR_FLAG_ALL);
                 m_genericState = result == -12 ? 6 : 4;
             }
-            g_profile->LeaveInitSaveDirCS();
+            gProfile->LeaveInitSaveDirCS();
             OSFastMutex_Unlock(&m_storageMutex);
             return 0;
         }

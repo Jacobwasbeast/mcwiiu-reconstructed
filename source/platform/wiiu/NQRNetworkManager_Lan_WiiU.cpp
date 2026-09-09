@@ -22,15 +22,10 @@ unsigned int GetTickCount();
 extern "C" int socket_lib_init();
 extern "C" int socket_lib_finish();
 extern "C" void OSFastMutex_Unlock(OSFastMutex* mutex);
-extern void Pia_Lan_StartupSessionNative(void* result, void* token, const char* name);
+extern "C" void checkPiaCoreToUse();
 
 static bool s_socketLibraryInitialised;
 static bool s_localCommunicationInitialised;
-
-void NQRNetworkManager_Lan_WiiU_Pia_StartupSession(void* result, void* token, const char* name)
-{
-    Pia_Lan_StartupSessionNative(result, token, name);
-}
 
 int Net_InitialiseSocket()
 {
@@ -59,6 +54,30 @@ void LeaveCriticalSection(OSFastMutex* mutex)
 void LeaveCriticalSection(void* mutex)
 {
     OSFastMutex_Unlock(static_cast<OSFastMutex*>(mutex));
+}
+
+void InitializeCriticalSection(OSFastMutex* mutex)
+{
+    OSFastMutex_Init(mutex, "map/set<T> too long");
+}
+
+void InitializeCriticalSectionAndSpinCount(OSFastMutex* mutex, unsigned long)
+{
+    InitializeCriticalSection(mutex);
+}
+
+void EnterCriticalSection(OSFastMutex* mutex)
+{
+    OSFastMutex_Lock(mutex);
+}
+
+int TryEnterCriticalSection(OSFastMutex* mutex)
+{
+    return OSFastMutex_TryLock(mutex) != 0;
+}
+
+void DeleteCriticalSection(OSFastMutex*)
+{
 }
 
 void Local_FinalizeLocalCommunication()
@@ -211,7 +230,6 @@ void NQRNetworkManager_Lan_WiiU::SetFriendSearchState(eNQRNetworkManagerFriendSe
 
 void NQRNetworkManager_Lan_WiiU::Tick()
 {
-    UpdateInvitationChecks();
     if (m_tickEvent != NULL)
         m_tickEvent->Set();
 }
@@ -695,6 +713,7 @@ void NQRNetworkManager_Lan_WiiU::ResetToIdle()
 
 void NQRNetworkManager_Lan_WiiU::TickNexAsyncProcess()
 {
+    checkPiaCoreToUse();
     if (m_nexAsyncProcess != eNEXAsyncProcess_None)
     {
         SetNexAsyncProcess(eNEXAsyncProcess_None);
@@ -703,13 +722,28 @@ void NQRNetworkManager_Lan_WiiU::TickNexAsyncProcess()
     if (m_createRequested)
         Pia_CreateSession();
     else if (m_joinRequested)
-        Pia_JoinSession();
+    {
+        if (canRunRateControlledEvent())
+            Pia_JoinSession();
+    }
     else if (m_leaveRequested)
         Pia_LeaveSession();
     else if (m_browseRequested)
-        Pia_BrowseSession();
+    {
+        if (canRunRateControlledEvent())
+        {
+            m_browseRequested = false;
+            return;
+        }
+    }
     else if (m_randomJoinRequested)
-        Pia_JoinRandomSession();
+    {
+        if (canRunRateControlledEvent())
+        {
+            m_randomJoinRequested = false;
+            return;
+        }
+    }
     else if (m_updateRequested)
         UpdateExternalRoomDataFromThread();
 }
@@ -787,7 +821,7 @@ bool NQRNetworkManager_Lan_WiiU::AddRemotePlayersAndSync(unsigned long long stat
     return true;
 }
 
-void NQRNetworkManager_Lan_WiiU::__CPR103__SendJJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
+void NQRNetworkManager_Lan_WiiU::SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
 {
     unsigned int packet[2];
     packet[0] = playerMask;
@@ -911,7 +945,6 @@ void NQRNetworkManager_Lan_WiiU::Initialise()
     m_running = true;
     m_tickThread->Run();
     SetState(eNQRNetworkManagerInternalState_Initialising);
-    TryToConnectOnline();
 }
 
 void NQRNetworkManager_Lan_WiiU::Terminate()
@@ -1110,7 +1143,6 @@ bool NQRNetworkManager_Lan_WiiU::FindAndJoinRoom(int userIndexMask, unsigned int
     m_matchmaking = true;
     m_browseRequested = (searchFlags & 15) != 0;
     SetState(eNQRNetworkManagerInternalState_JoinSearchingMatchmakeSession);
-    Pia_SignalBrowseSession();
     return true;
 }
 

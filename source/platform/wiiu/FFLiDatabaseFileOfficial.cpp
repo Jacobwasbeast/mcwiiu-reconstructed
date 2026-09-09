@@ -7,12 +7,13 @@ bool FFLiIsNullMiiID(const FFLCreateID* createId);
 bool FFLiIsTemporaryMiiID(const FFLCreateID* createId);
 bool FFLiIsSpecialMiiID(const FFLCreateID* createId);
 bool FFLiIsValidMiiID(const FFLCreateID* createId);
-bool FFLiIsSameAuthorID(const FFLiAuthorID* first, const FFLiAuthorID* second);
+bool FFLiIsSameAuthorID__FPC12FFLiAuthorIDT1(const FFLiAuthorID* first, const FFLiAuthorID* second);
 void FFLiPutCRC16(unsigned short seed, void* data, unsigned int size);
 bool FFLiIsValidCRC16(const void* data, unsigned int size);
 void FFLiMiiDataOfficial2CharInfo(FFLiCharInfo* charInfo, const FFLiMiiDataOfficial& miiData);
 bool FFLiVerifyCharInfo(const FFLiCharInfo* charInfo, int mode);
 void FFLiCharInfo2MiiDataOfficial(FFLiMiiDataOfficial* miiData, const FFLiCharInfo& charInfo, bool clearAuthor);
+void FFLiCharInfo2MiiDataCore__FP15FFLiMiiDataCoreRC12FFLiCharInfob(FFLiMiiDataCore*, const FFLiCharInfo&, bool);
 
 namespace
 {
@@ -36,12 +37,87 @@ const FFLiMiiDataOfficial* FFLiDatabaseFileOfficial::GetImpl(unsigned short inde
     return m_miis + index;
 }
 
+FFLiMiiDataOfficial* FFLiDatabaseFileOfficial::GetImpl(unsigned short index)
+{
+    return m_miis + index;
+}
+
+void FFLiCharInfo2MiiDataOfficial(FFLiMiiDataOfficial* miiData, const FFLiCharInfo& charInfo, bool clearAuthor)
+{
+    FFLiCharInfo2MiiDataCore__FP15FFLiMiiDataCoreRC12FFLiCharInfob(miiData, charInfo, clearAuthor);
+}
+
+bool FFLiDatabaseFileOfficial::SetRegular(unsigned short index, bool regular)
+{
+    if (index >= 3000)
+        return false;
+    FFLiCharInfo info;
+    if (!Get(&info, index, true, true))
+        return false;
+    const FFLCreateID& id = *reinterpret_cast<const FFLCreateID*>(info.data + 264);
+    unsigned int slot = 0;
+    if (regular)
+    {
+        if (FindRegularList(&slot, &id))
+            return false;
+        if (!FindEmptyRegularList(&slot))
+            return false;
+        m_regular[slot] = id;
+        return true;
+    }
+    if (!FindRegularList(&slot, &id))
+        return false;
+    SetNullCreateID(m_regular[slot]);
+    return true;
+}
+
+void FFLiDatabaseFileOfficial::ResetAuthorID(unsigned short index, const FFLiAuthorID& authorId)
+{
+    if (index < 3000 && FFLiIsSameAuthorID__FPC12FFLiAuthorIDT1(&m_miis[index].authorId, &authorId))
+        memset(m_miis[index].authorId.data, 0, sizeof(m_miis[index].authorId.data));
+}
+
+void FFLiDatabaseFileOfficial::ResetAllAuthorID(const FFLiAuthorID& authorId)
+{
+    for (unsigned short i = 0; i < 3000; ++i)
+        ResetAuthorID(i, authorId);
+}
+
+bool FFLiDatabaseFileOfficial::Set(const FFLiCharInfo& charInfo, unsigned short index)
+{
+    if (index >= 3000 || !FFLiVerifyCharInfo(&charInfo, 1))
+        return false;
+    FFLiCharInfo2MiiDataOfficial(&m_miis[index], charInfo, false);
+    return true;
+}
+
+void FFLiDatabaseFileOfficial::DeleteMii(FFLiMiiDataOfficial* miiData, unsigned short index)
+{
+    if (miiData == 0 || index >= 3000)
+        return;
+    memset(miiData, 0, sizeof(*miiData));
+}
+
 bool FFLiDatabaseFileOfficial::FindRegularList(unsigned int* index, const FFLCreateID* createId) const
 {
     unsigned int i;
     for (i = 0; i < 50; ++i)
     {
         if (FFLiIsSameMiiID(createId, &m_regular[i]))
+        {
+            if (index != NULL)
+                *index = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FFLiDatabaseFileOfficial::FindEmptyRegularList(unsigned int* index) const
+{
+    for (unsigned int i = 0; i < 50; ++i)
+    {
+        if (FFLiIsNullMiiID(&m_regular[i]))
         {
             if (index != NULL)
                 *index = i;

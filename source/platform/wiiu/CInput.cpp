@@ -1,5 +1,6 @@
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
+#include "game/core/GameSettings.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -9,6 +10,7 @@
 #include <coreinit/filesystem.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/systeminfo.h>
+#include <coreinit/userconfig.h>
 #include <nn/erreula.h>
 #include <nn/swkbd.h>
 #include <padscore/kpad.h>
@@ -16,6 +18,12 @@
 #include <vpad/input.h>
 
 extern "C" int SCIGetCafeLanguage(unsigned int* language);
+int XEnableGuestSignin(int enable)
+{
+    (void)enable;
+    return 0;
+}
+
 extern "C" int SCIGetPlatformRegion(unsigned int* region);
 extern "C" int OSResumeThread(OSThread* thread);
 extern "C" void KPADReset(void);
@@ -25,7 +33,7 @@ static void ConnectCallbackAdapter(WPADChan channel, WPADError result)
     CInput::ConnectCallback(static_cast<int>(channel), static_cast<int>(result));
 }
 
-int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value);
+extern "C" int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value);
 int SCIGetSystemSettings(void* settings);
 
 double multiBreak(double first, double second, double third)
@@ -142,6 +150,71 @@ static unsigned char s_fontStack[0x20000];
 static unsigned char s_predictStack[0x20000];
 static CInput* s_inputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
+
+static unsigned char s_xLanguage = 0xff;
+static unsigned char s_xLocale = 0xff;
+
+extern "C" int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value)
+{
+    UCHandle handle = UCOpen();
+    if (handle < 0)
+        return 0;
+
+    UCSysConfig config;
+    std::memset(&config, 0, sizeof(config));
+    if (key != 0)
+        std::strncpy(config.name, key, sizeof(config.name) - 1);
+    config.access = 1911;
+    config.dataType = static_cast<UCDataType>(type);
+    config.dataSize = size;
+    config.data = value;
+    UCError error = UCReadSysConfig(handle, 1, &config);
+    UCClose(handle);
+    if (error == 0)
+        return 1;
+    if (error == -0x200009)
+        return -4;
+    if (error == -0x200015)
+        return -3;
+    return -1;
+}
+
+unsigned int XGetLanguage()
+{
+    unsigned int language = GameSettings::GetMinecraftLanguage(0);
+    if (language != 0)
+        return language;
+    if (s_xLanguage == 0xff && SCIGetCafeLanguage(&language) != 1)
+        s_xLanguage = 0xff;
+    else if (s_xLanguage == 0xff)
+        s_xLanguage = static_cast<unsigned char>(language);
+    if (s_xLanguage == 0)
+        return 2;
+    if (s_xLanguage < 2)
+        return 1;
+    if (s_xLanguage < 0xc)
+    {
+        static const unsigned char languageMap[] = { 0, 0, 4, 3, 6, 5, 0x11, 7, 0x10, 9, 0xc, 8 };
+        return languageMap[s_xLanguage];
+    }
+    return 1;
+}
+
+int XGetLocale()
+{
+    unsigned int locale = GameSettings::GetMinecraftLocale(0);
+    if (locale != 0)
+        return locale;
+    if (s_xLocale == 0xff && SCIGetCafeLanguage(&locale) != 1)
+        s_xLocale = 0xff;
+    else if (s_xLocale == 0xff)
+        s_xLocale = static_cast<unsigned char>(locale);
+    if (s_xLocale > 0xb)
+        return 0x24;
+    static const unsigned char localeMap[] = { 0x14, 0x24, 0x16, 0x0d, 0x13, 0x05,
+                                               0x25, 0x04, 0x04, 0x0d, 0x1b, 0x22 };
+    return localeMap[s_xLocale];
+}
 
 static int GetStickValue(float value)
 {
@@ -1485,8 +1558,8 @@ void CInput::InitialiseKeyboard()
     keyboardFileClient = static_cast<FSClient*>(std::malloc(sizeof(FSClient)));
     FSAddClient(keyboardFileClient, FS_ERROR_FLAG_NONE);
     nn::swkbd::CreateArg createArg;
-    keyboardWorkMemory = new unsigned char[nn::swkbd::GetWorkMemorySize(0)];
-    createArg.workMemory = keyboardWorkMemory;
+    keyboardErrorViewerWorkMemory = new unsigned char[nn::swkbd::GetWorkMemorySize(0)];
+    createArg.workMemory = keyboardErrorViewerWorkMemory;
     createArg.fsClient = keyboardFileClient;
     unsigned int platformRegion = 4;
     if (SCIGetPlatformRegion(&platformRegion) == 1)
@@ -1564,8 +1637,8 @@ void CInput::InitialiseErrorViewer()
     errorViewerFileClient = static_cast<FSClient*>(std::malloc(sizeof(FSClient)));
     FSAddClient(errorViewerFileClient, FS_ERROR_FLAG_NONE);
     nn::erreula::CreateArg createArg;
-    keyboardWorkMemory = std::malloc(nn::erreula::GetWorkMemorySize());
-    createArg.workMemory = keyboardWorkMemory;
+    keyboardErrorViewerWorkMemory = std::malloc(nn::erreula::GetWorkMemorySize());
+    createArg.workMemory = keyboardErrorViewerWorkMemory;
     createArg.fsClient = errorViewerFileClient;
     unsigned int platformRegion = 4;
     if (SCIGetPlatformRegion(&platformRegion) == 1)

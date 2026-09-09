@@ -159,7 +159,7 @@ public:
     static int ConnectOnlineNintendoThreadProc(void* context);
     void CancelConnectCallbacks();
     static void CancelConnectOnlineNintendo(void* context);
-    static void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int), void* callbackData);
+    static void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
     static int InvitationMustConnectReturned(void* context, int button, C4JStorage::EMessageResult result);
     void UpdateInvitationChecks();
@@ -226,7 +226,7 @@ public:
     void NetworkPlayerConnectionComplete(NQRNetworkPlayer* player);
     void PollUnconnectedStations();
     bool AddRemotePlayersAndSync(unsigned long long stationId, ClientJoinData& joinData, EJoinFailedReason* reason);
-    void __CPR95__SendJJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason);
+    void SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason);
     void PollReceiveData();
     static void ShowErrorViewer();
     void RemoveLocalClientPlayers(int userIndex);

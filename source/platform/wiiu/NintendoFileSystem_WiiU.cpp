@@ -1,16 +1,13 @@
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
+#include <coreinit/filesystem.h>
+
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
 extern void getFinalFilePath(char (&path)[256], const char* fileName);
 extern void* GetCommandBlock();
-
-extern "C" int FSOpenFile(void* client, void* commandBlock, const char* path, const char* mode,
-                           int* file, unsigned int error);
-extern "C" int FSMakeDir(void* client, void* commandBlock, const char* path, unsigned int error);
-extern "C" int FSCloseDir(void* client, void* commandBlock, int directory, unsigned int error);
 
 static void* s_fileSystemClient = 0;
 
@@ -27,7 +24,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
     char path[256];
     getFinalFilePath(path, fileName);
     void* commandBlock = GetCommandBlock();
-    int file = -1;
+    FSFileHandle file = static_cast<FSFileHandle>(-1);
 
     if (creationDisposition != 0)
     {
@@ -47,13 +44,14 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
             }
         }
 
-        FSOpenFile(s_fileSystemClient, commandBlock, path, mode, &file, 8);
-        if (file != -1)
-            WiiU_FileCache::CreateFileCache(file);
+        FSOpenFile(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+                   path, mode, &file, static_cast<FSErrorFlag>(8));
+        if (file != static_cast<FSFileHandle>(-1))
+            WiiU_FileCache::CreateFileCache(static_cast<int>(file));
     }
 
     waitForAltMainThreadToComplete();
-    return file;
+    return static_cast<int>(file);
 }
 
 bool CreateDirectoryA(const char* pathName, void* securityAttributes)
@@ -64,7 +62,8 @@ bool CreateDirectoryA(const char* pathName, void* securityAttributes)
     char path[256];
     getFinalFilePath(path, pathName);
     void* commandBlock = GetCommandBlock();
-    int result = FSMakeDir(s_fileSystemClient, commandBlock, path, 0);
+    FSStatus result = FSMakeDir(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+                                path, FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
 }
@@ -73,7 +72,8 @@ int CloseDir(int* directory)
 {
     setAltMainOKToRun();
     void* commandBlock = GetCommandBlock();
-    int result = FSCloseDir(s_fileSystemClient, commandBlock, *directory, 0);
+    FSStatus result = FSCloseDir(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+                                 static_cast<FSDirectoryHandle>(*directory), FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result;
 }

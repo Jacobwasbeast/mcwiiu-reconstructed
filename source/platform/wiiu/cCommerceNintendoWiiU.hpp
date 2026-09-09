@@ -6,6 +6,7 @@
 #include "platform/wiiu/cCommerceNintendo.hpp"
 
 #include <nn/result.h>
+#include <nn/ac.h>
 
 namespace nn
 {
@@ -15,17 +16,34 @@ namespace nn
         {
         public:
             Money(const char*, const char*, const char*);
-            const char* GetAmount() const;
+            const char* GetAmount() const
+                asm("GetAmount__Q3_2nn2ec5MoneyCFv");
         private:
             unsigned char m_data[64];
         };
 
-        class ShoppingCatalog
+        class Item;
+        class Query;
+        enum SalesStatusFilter
+        {
+            SalesStatusFilter_0 = 0
+        };
+
+        class ItemList
+        {
+        public:
+            Item* GetItem(uint32_t)
+                asm("GetItem__Q3_2nn2ec8ItemListFUi");
+        };
+
+        class ShoppingCatalog : public ItemList
         {
         public:
             ShoppingCatalog();
-            uint32_t GetTotal() const;
-            void* GetItem(uint32_t);
+            uint32_t GetTotal() const
+                asm("GetTotal__Q3_2nn2ec15ShoppingCatalogCFv");
+            uint32_t RetrieveAocs(const Query*, uint32_t, uint32_t)
+                asm("RetrieveAocs__Q3_2nn2ec15ShoppingCatalogFPCQ3_2nn2ec5QueryUiT2");
         private:
             unsigned char m_data[8];
         };
@@ -35,26 +53,39 @@ namespace nn
         public:
             Query();
             ~Query();
+            uint32_t SetSalesStatusFilter(nn::ec::SalesStatusFilter)
+                asm("SetSalesStatusFilter__Q3_2nn2ec5QueryFQ3_2nn2ec17SalesStatusFilter");
         };
 
         class DateTime
         {
         public:
-            DateTime();
-            long long operator-(const DateTime&) const;
+            DateTime()
+                asm("__ct__Q3_2nn2ec8DateTimeFv");
+            long long operator-(const DateTime&) const
+                asm("__mi__Q3_2nn2ec8DateTimeCFRCQ3_2nn2ec8DateTime");
         };
 
-        uint32_t Connect();
-        uint32_t SynchronizeAocRights();
-        uint32_t Initialize(uint32_t);
-        void GetBalance(Money*);
-        void GetServerTime(DateTime*);
-        uint32_t GetErrorCode(const nn::Result&);
-        void GetLastServerErrorMessage(wchar_t*, wchar_t*);
+        uint32_t SynchronizeAocRights()
+            asm("SynchronizeAocRights__Q2_2nn2ecFv");
+        uint32_t Initialize(uint32_t)
+            asm("Initialize__Q2_2nn2ecFUi");
+        uint32_t Login()
+            asm("Login__Q2_2nn2ecFv");
+        void GetBalance(Money*)
+            asm("GetBalance__Q2_2nn2ecFPQ3_2nn2ec5Money");
+        void GetServerTime(DateTime*)
+            asm("GetServerTime__Q2_2nn2ecFPQ3_2nn2ec8DateTime");
+        uint32_t GetErrorCode(const nn::Result&)
+            asm("GetErrorCode__Q2_2nn2ecFRCQ2_2nn6Result");
+        void GetLastServerErrorMessage(wchar_t*, wchar_t*)
+            asm("GetLastServerErrorMessage__Q2_2nn2ecFPwT1");
         namespace applet
         {
-            uint32_t Purchase(const void*, Money*);
-            uint32_t Download(const void*);
+            uint32_t Purchase(const Item*, Money*)
+                asm("Purchase__Q3_2nn2ec6appletFPCQ3_2nn2ec4ItemPQ3_2nn2ec5Money");
+            uint32_t Download(const Item*)
+                asm("Download__Q3_2nn2ec6appletFPCQ3_2nn2ec4Item");
         }
     }
 
@@ -86,7 +117,7 @@ public:
     virtual void SetDLCCatalogState(cCommerce::eDLCCatalogState state);
     virtual unsigned int AttemptLogIn();
     virtual void GetShoppingCatalog();
-    virtual DLC_INFO* GetCommerceInfo();
+    virtual CatalogRecord* GetCommerceInfo();
     void SetErrorOccurred(bool errorOccurred);
     bool GetErrorOccurred();
     void AsserteCommerceError(nn::Result& result);
@@ -95,7 +126,7 @@ public:
 
 private:
     unsigned char m_prefixData[32];
-    void* m_catalogData;
+    CatalogRecord* m_catalogData;
     unsigned char m_catalogStateData[0x684];
     nn::ec::Money m_balance;
     nn::ec::ShoppingCatalog m_shoppingCatalog;

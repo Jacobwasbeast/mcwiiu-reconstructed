@@ -18,49 +18,14 @@ namespace nn
 {
 namespace pia
 {
-namespace chat
-{
-class VoiceProtocol : public nn::pia::transport::UnreliableProtocol
-{
-public:
-    struct Setting
-    {
-        unsigned int bufferSize;
-        unsigned int maxPlayers;
-        unsigned int dataSize;
-        unsigned char codec;
-        unsigned char reserved[3];
-        unsigned int frameLength;
-        unsigned short sampleRate;
-        unsigned short settingTailPadding;
-    };
-
-    VoiceProtocol();
-    int GetAudioFrameLength() const;
-    unsigned int GetAudioDataSize() const;
-    bool IsInCommunication() const;
-    unsigned int GetVadActivity() const;
-    bool IsClientInConference(unsigned long long stationId) const;
-    nn::pia::Result AddConferenceClient(unsigned long long stationId);
-    nn::pia::Result RemoveConferenceClient(unsigned long long stationId);
-    int Initialize(const Setting& setting);
-    int Finalize();
-    void ClearStreaming();
-};
-
-int Initialize();
-int BeginSetup();
-int EndSetup();
-int Finalize();
-}
-}
-}
-
-extern nn::pia::transport::ProtocolManager* g_piaProtocolManager;
-nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol();
 void Assert(const char* expression, const char* file, unsigned int line, const char* function, ...);
+}
+}
 
-void checkPiaCoreToUse()
+
+nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol();
+
+extern "C" void checkPiaCoreToUse()
 {
 }
 
@@ -94,7 +59,7 @@ nn::pia::chat::VoiceProtocol* Chat_GetVoiceProtocol()
     return NULL;
 }
 
-void ReleaseCallback()
+extern "C" void ReleaseCallback()
 {
     CGameNetworkManager::sInstance.WiiU_ReleaseCallback();
     ProcUIDrawDoneRelease();
@@ -233,7 +198,7 @@ void NintendoVoiceChat_WiiU::InitialiseAfterOnline()
     AssertPiaError(result);
     result = nn::pia::chat::BeginSetup();
     AssertPiaError(result);
-    s_protocolManager = g_piaProtocolManager;
+    s_protocolManager = nn::pia::transport::g_piaProtocolManager;
     if (s_protocolManager != NULL)
     {
         nn::pia::transport::UnreliableProtocol* memory = s_protocolManager->AllocProtocol(0x90);
@@ -243,7 +208,7 @@ void NintendoVoiceChat_WiiU::InitialiseAfterOnline()
         if (protocol != NULL)
             s_protocolId = s_protocolManager->CreateProtocolImpl(protocol, 0x7801);
         else
-            Assert("protocol", "transport/ProtocolManager.h", 0x56, "NintendoVoiceChat_WiiU::InitialiseAfterOnline");
+            nn::pia::Assert("protocol", "transport/ProtocolManager.h", 0x56, "NintendoVoiceChat_WiiU::InitialiseAfterOnline");
     }
     nn::pia::chat::VoiceProtocol::Setting setting;
     setting.bufferSize = 0x90;

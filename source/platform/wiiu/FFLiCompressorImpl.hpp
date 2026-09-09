@@ -11,12 +11,12 @@ class FFLiCompressorParam;
 
 struct FFLiCompressorDescBC1
 {
-    static const unsigned int ColorFormat = 0x11f;
+    static const unsigned int ColorFormat = 0x31;
 };
 
 struct FFLiCompressorDescBC3
 {
-    static const unsigned int ColorFormat = 0x122;
+    static const unsigned int ColorFormat = 0x33;
 };
 
 template <class Descriptor>
@@ -29,7 +29,7 @@ public:
     bool SetupCPU(const void* shaderData, unsigned int shaderIndex);
     bool UseUB() const;
     void SetupGPU();
-    static unsigned int GetTextureBufferSize(unsigned int width, unsigned int height);
+    static unsigned int GetTextureBufferSize(unsigned int width, unsigned int height, unsigned int mipCount);
     void CompressImpl(_GX2Texture* destination, const _GX2Texture* source, const FFLiCompressorParam* param);
 
 private:

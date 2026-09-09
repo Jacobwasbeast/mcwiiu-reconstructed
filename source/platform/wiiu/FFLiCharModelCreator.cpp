@@ -12,6 +12,16 @@
 
 #include <cstring>
 
+unsigned int FFLiCharModel::GetExpressionMask() const
+{
+    return description.expressionFlag;
+}
+
+int FFLiCharModel::GetFavoriteColorIndex() const
+{
+    return static_cast<int>(info.data[0x08]);
+}
+
 int FFLiLoadShape(FFLDrawParam*, FFLBoundingBox*, FFLiCharModel*, FFLiShapePartsType, unsigned short, FFLiResourceLoader*, FFLiBufferAllocator*);
 void FFLiAdjustShape(FFLDrawParam*, FFLBoundingBox*, float, float, const FFLVec3*, bool, const FFLiCoordinate*, FFLiShapePartsType, bool);
 int FFLiCanDrawShape(const FFLDrawParam*);
@@ -23,7 +33,7 @@ void FFLiInitFacelineTexture(FFLiRenderTexture*, unsigned int, bool, bool, FFLiB
 int FFLiInitTempObjectFacelineTexture(FFLiFacelineTextureTempObject*, FFLiRenderTexture*, const FFLiCharInfo*, unsigned int, bool, bool, bool, FFLiResourceLoader*, FFLiBufferAllocator*, FFLiRenderTextureBuffer*);
 void FFLiInvalidateShape(FFLDrawParam*);
 void FFLiTempSetContextState(const _GX2ContextState*);
-void ASM_MTX44Identity(_Mat44*);
+void ASM_MTX44Identity(float (*)[4]);
 void FFLiRenderMaskTextures(FFLiMaskTextures*, FFLiMaskTexturesTempObject*, const FFLiShaderCallback*, FFLiCopySurface*, FFLiCompressorImpl<FFLiCompressorDescBC3>*);
 void FFLiRenderFacelineTexture(FFLiRenderTexture*, const FFLiCharInfo*, unsigned int, FFLiFacelineTextureTempObject*, const FFLiShaderCallback*, FFLiCopySurface*, FFLiCompressorImpl<FFLiCompressorDescBC1>*);
 void FFLiInitModulateShapeFaceline(FFLModulateParam*, const _GX2Texture&);
@@ -463,7 +473,7 @@ void FFLiCharModelCreator::ExecuteGPUStep(FFLiCharModel* model, const FFLShaderC
     shader.CallSetContextState();
 
     _Mat44 matrix;
-    ASM_MTX44Identity(&matrix);
+    ASM_MTX44Identity(matrix.value);
     shader.CallSetMatrix(matrix);
 
     FFLiRenderMaskTextures(&model->maskTextures,

@@ -177,7 +177,6 @@ public:
     void SetFriendSearchState(eNQRNetworkManagerFriendSearchState state);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
     static int InvitationMustConnectReturned(void* context, int button, C4JStorage::EMessageResult result);
-    void UpdateInvitationChecks();
     NQRNetworkPlayer* GetPlayerFromStationIdAndLocalIdx(unsigned long long stationId, int localIndex);
     void RemoveConnectedStation(unsigned long long stationId);
     void RemoveConnectedPlayer(NQRNetworkPlayer* player);
@@ -225,7 +224,6 @@ public:
     bool Pia_JoinSession();
     bool Pia_JoinMatchmakeSession();
     bool Pia_LeaveSession();
-    void Pia_SignalBrowseSession();
     bool Pia_BrowseSession();
     bool Pia_JoinRandomSession();
     void UpdateExternalRoomDataFromThread();
@@ -246,7 +244,7 @@ public:
     void NetworkPlayerConnectionComplete(NQRNetworkPlayer* player);
     void PollUnconnectedStations();
     bool AddRemotePlayersAndSync(unsigned long long stationId, ClientJoinData& joinData, EJoinFailedReason* reason);
-    void __CPR103__SendJJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason);
+    void SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason);
     void SendSaveTransferAckPacket();
     void PollReceiveData();
     void SendSaveTransferDataPacket(void* data, int size);
@@ -254,7 +252,6 @@ public:
     static void ShowErrorViewer();
     void RemoveLocalClientPlayers(int userIndex);
     void ErrorHandlingTick();
-    void TryToConnectOnline();
     void TickFromThread();
     void RunTickThread();
     static int TickThreadProc(void* context);
