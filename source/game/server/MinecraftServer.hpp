@@ -119,6 +119,7 @@ public:
     Settings* mSettings;
     arrayWithLength<ServerLevel*> mLevels;
     PlayerList* mPlayers;
+    int mLoginComparisonValue;
 
 private:
     ConsoleSchematicFile* schematicFiles[8];

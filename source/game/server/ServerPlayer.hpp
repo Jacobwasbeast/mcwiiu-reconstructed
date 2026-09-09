@@ -75,6 +75,7 @@ struct ServerPlayer : Player {
     int32_t mRemoveEntityCount;
     int32_t mRespawnDimension;
     uint32_t mEntitiesToRemove;   
+    double* mLevitationSourceY;
     uint8_t mChangingDimension;
     uint8_t mPadding4[4];
     int32_t mSpawnInvulnerableTime;
@@ -91,7 +92,8 @@ struct ServerPlayer : Player {
     int32_t mTeleportPending;
     int32_t mCameraEntity;
     int32_t mType;
-    uint8_t mPadding8[4];
+    bool mDisconnected;
+    uint8_t mPadding8[3];
 
     
     ServerPlayer(MinecraftServer* parameterOne, ServerLevel* parameterTwo, const std::wstring& parameterThree, ServerPlayerGameMode* parameterFour);   
@@ -190,7 +192,7 @@ struct ServerPlayer : Player {
     void startFallFlying();
     void stopFallFlying();
     uint32_t getPlayerViewDistanceModifier();   
-    void handleCollectItem(not_null_ptr_ItemInstance* parameterOne);   
+    void handleCollectItem(not_null_ptr<ItemInstance> parameterOne);
     void SetCamera(boost::shared_ptr<Entity> parameterOne);   
     const GameType* GetGameType();
     ServerPlayerGameMode* GetGameMode();   

@@ -1,5 +1,12 @@
 #include "game/server/ServerScoreboard.hpp"
 
+#include "game/core/GameStats.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/network/ScoreboardPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
+
 ServerScoreboard::ServerScoreboard(MinecraftServer* server)
     : Scoreboard(), mServer(server), mPlayerStats()
 {
@@ -54,15 +61,48 @@ void ServerScoreboard::OnPlayerStatsRemoved(const StatsUID& suid, const std::wst
 void ServerScoreboard::SyncPlayerScores(std::vector<boost::shared_ptr<ServerPlayer> >* players,
                                         boost::shared_ptr<ServerPlayer> player)
 {
-    if (players != NULL)
+    if (players == NULL || player == NULL || player->mConnection == NULL || mServer == NULL ||
+        mServer->mMasterGameMode == NULL)
     {
-        std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-        while (it != players->end())
+        return;
+    }
+
+    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
+    for (; it != players->end(); ++it)
+    {
+        if (*it == NULL)
         {
-            ++it;
+            continue;
+        }
+
+        StatsUID uid = (*it)->getSUID();
+        ::PlayerStats* gameStats = mServer->mMasterGameMode->mGameStats.GetPlayerStats(uid);
+        if (gameStats == NULL)
+        {
+            continue;
+        }
+
+        int rounds = gameStats->getTotalRounds();
+        for (int round = 0; round < rounds; ++round)
+        {
+            ::PlayerStats::RoundStats* roundStats = gameStats->getRoundStats(round);
+            if (roundStats == NULL)
+            {
+                continue;
+            }
+
+            int lives = roundStats->getNumberLifeStats();
+            for (int life = 0; life < lives; ++life)
+            {
+                Scoreboard::PlayerStats* stats = GetPlayerStats(uid, round);
+                ScoreboardPacket::AddPlayerStatsData* data =
+                    new ScoreboardPacket::AddPlayerStatsData(stats, round, life);
+                boost::shared_ptr<Packet> packet(
+                    new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS, data));
+                player->mConnection->send(packet);
+            }
         }
     }
-    player.reset();
 }
 
 void ServerScoreboard::ResetPlayerScores()

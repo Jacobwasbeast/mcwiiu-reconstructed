@@ -1,4 +1,9 @@
 #include "game/server/ServerChunkCache.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/chunk/ChunkGenerator.hpp"
+#include "game/world/chunk/ChunkStorage.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include <cstdint>
 #include <sstream>
 
 ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator)
@@ -15,7 +20,7 @@ ServerChunkCache::~ServerChunkCache()
 
 int ServerChunkCache::computeIdx(int x, int z)
 {
-    return ((x + m_xCenter) & (m_width - 1)) * m_depth + ((z + m_zCenter) & (m_depth - 1));
+    return (x + m_depth) * m_width + (z + m_depth);
 }
 
 bool ServerChunkCache::inBounds(int x, int z)
@@ -92,8 +97,47 @@ LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
     return chunk;
 }
 
-void ServerChunkCache::updatePostProcessFlag(short, int, int, int, int, LevelChunk*) {}
-void ServerChunkCache::updatePostProcessFlags(int, int) {}
+void ServerChunkCache::updatePostProcessFlag(short index, int x, int z, int dx, int dz, LevelChunk* chunk)
+{
+    const int neighborX = x + dx;
+    const int neighborZ = z + dz;
+    if (!hasChunk(neighborX, neighborZ))
+        return;
+    LevelChunk* neighbor = getChunkIfLoaded(neighborX, neighborZ);
+    if (neighbor == reinterpret_cast<LevelChunk*>(m_storage) ||
+        (neighbor != 0 && (neighbor->mChunkFlags & 2) != 0))
+    {
+        chunk->mChunkFlags |= static_cast<unsigned short>(index);
+    }
+}
+
+void ServerChunkCache::updatePostProcessFlags(int x, int z)
+{
+    LevelChunk* chunk = getChunk(x, z);
+    if (chunk != reinterpret_cast<LevelChunk*>(m_storage))
+    {
+        updatePostProcessFlag(8, x, z, 0, -1, chunk);
+        updatePostProcessFlag(0x10, x, z, -1, -1, chunk);
+        updatePostProcessFlag(4, x, z, -1, 0, chunk);
+        updatePostProcessFlag(0x20, x, z, -1, 1, chunk);
+        updatePostProcessFlag(0x40, x, z, 0, 1, chunk);
+        updatePostProcessFlag(0x80, x, z, 1, 1, chunk);
+        updatePostProcessFlag(0x100, x, z, 1, 0, chunk);
+        updatePostProcessFlag(0x200, x, z, 1, -1, chunk);
+        if ((chunk->mChunkFlags & 2) != 0)
+        {
+            flagPostProcessComplete(4, x + 1, z);
+            flagPostProcessComplete(0x10, x + 1, z + 1);
+            flagPostProcessComplete(8, x, z + 1);
+            flagPostProcessComplete(0x200, x - 1, z + 1);
+            flagPostProcessComplete(0x100, x - 1, z);
+            flagPostProcessComplete(0x80, x - 1, z - 1);
+            flagPostProcessComplete(0x40, x, z - 1);
+            flagPostProcessComplete(0x20, x + 1, z - 1);
+        }
+    }
+    flagPostProcessComplete(0, x, z);
+}
 
 int ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk*, LevelChunk* newChunk, bool)
 {
@@ -151,18 +195,47 @@ LevelChunk* ServerChunkCache::getChunkLoadedOrUnloaded(int x, int z)
     return getChunkIfLoaded(x, z);
 }
 
-void ServerChunkCache::saveEntities(LevelChunk*) {}
-void ServerChunkCache::save(LevelChunk*) {}
-void ServerChunkCache::flagPostProcessComplete(short, int, int) {}
+void ServerChunkCache::saveEntities(LevelChunk* chunk)
+{
+    if (m_storage != 0 && chunk != 0)
+        m_storage->saveEntities(m_level, chunk);
+}
+void ServerChunkCache::save(LevelChunk* chunk)
+{
+    if (m_storage != 0 && chunk != 0)
+    {
+        chunk->setLastSaveTime(m_level->getGameTime());
+        m_storage->save(m_level, chunk);
+    }
+}
+void ServerChunkCache::flagPostProcessComplete(short index, int x, int z)
+{
+    LevelChunk* chunk = getChunkIfLoaded(x, z);
+    if (chunk != 0)
+        chunk->flagPostProcessComplete(index);
+}
 void ServerChunkCache::saveAllEntities()
 {
-    for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
+    for (std::deque<LevelChunk*>::iterator i = m_toSave.begin(); i != m_toSave.end(); ++i)
         saveEntities(*i);
+    if (m_storage != 0)
+        m_storage->flush();
 }
 
-void ServerChunkCache::save(bool, ProgressListener*)
+void ServerChunkCache::save(bool force, ProgressListener*)
 {
-    saveAllEntities();
+    for (std::vector<LevelChunk*>::iterator i = m_loadedChunks.begin(); i != m_loadedChunks.end(); ++i)
+    {
+        LevelChunk* chunk = *i;
+        if (chunk != 0 && (force || !m_toSave.empty()))
+        {
+            saveEntities(chunk);
+            save(chunk);
+            chunk->setUnsaved(false);
+        }
+    }
+    if (m_storage != 0)
+        m_storage->flush();
 }
 
 void ServerChunkCache::tick()
@@ -183,21 +256,22 @@ std::wstring ServerChunkCache::gatherStats()
     return result.str();
 }
 
-std::vector<Mob*> ServerChunkCache::getMobsAt(MobCategory*, const BlockPos&)
+std::vector<Biome::MobSpawnerData*> ServerChunkCache::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
-    return std::vector<Mob*>();
+    return m_generator->getMobsAt(category, pos);
 }
 
-BlockPos* ServerChunkCache::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)
+BlockPos* ServerChunkCache::findNearestMapFeature(Level* level, const std::wstring& feature,
+                                                  const BlockPos& pos, bool takeBlock)
 {
-    return 0;
+    return m_generator->findNearestMapFeature(level, feature, pos, takeBlock);
 }
 
 void ServerChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int) {}
 
-LevelChunk* ServerChunkCache::getChunkAt(const BlockPos&)
+LevelChunk* ServerChunkCache::getChunkAt(const BlockPos& pos)
 {
-    return getChunk(0, 0);
+    return getChunk(pos.x >> 4, pos.z >> 4);
 }
 
 unsigned int ServerChunkCache::runSaveThreadProc(void*)
@@ -218,5 +292,5 @@ void ServerChunkCache::setOverrideBoundFunction(bool (*function)(void*, int, int
 
 unsigned int ServerChunkCache::getCache()
 {
-    return (unsigned int)m_chunks.size();
+    return static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(m_chunks.data()));
 }

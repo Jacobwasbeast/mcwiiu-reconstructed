@@ -2,6 +2,7 @@
 #define GAME_SERVER_SERVERCHUNKCache_HPP
 
 #include "game/world/chunk/ChunkSource.hpp"
+#include "game/world/biome/Biome.hpp"
 #include <deque>
 #include <vector>
 #include <string>
@@ -51,7 +52,7 @@ public:
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
-    virtual std::vector<Mob*> getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature, const BlockPos& pos, bool takeBlock);
     virtual void recreateLogicStructuresForChunk(LevelChunk* chunk, int x, int z);
     virtual LevelChunk* getChunkAt(const BlockPos& pos);

@@ -1,23 +1,30 @@
 #include "game/server/MinecraftServer.hpp"
 
 #include <ctime>
+#include <algorithm>
 
 #include "game/core/GameRules.hpp"
+#include "game/core/GameRuleManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/network/ServerConnection.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/network/ClientboundGameEventPacket.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/data/ConsoleSaveFile.hpp"
+#include "game/data/LevelStorage.hpp"
+#include "game/core/FileEntry.hpp"
 
 MinecraftServer* gMinecraftServer = 0;
 
 MinecraftServer::MinecraftServer()
-    : mConnection(0), mSettings(0), mPlayers(0), tickCount(0), running(true), levelLoaded(false), shuttingDown(false), saving(false), networkTick(0), progressNameLength(0), progressNameCapacity(0), progressValue(0), commandDispatcher(0), consoleInputIndex(0), consoleInputCount(0), animals(true), npcsEnabled(true), pvpAllowed(true), flightAllowed(false), serverFlags(0), statusMessageLength(0), statusMessageCapacity(0), maxBuildHeight(256), difficulty(0), levelType(0), defaultGameType(GameType::SURVIVAL), gameModeId(0), playerIdleTimeout(0), progressRenderer(0), levelStorage(0), postProcessState(0), postProcessEvent(0), serverPaused(false), forceGameType(false), suspending(false), stopping(false), lastServerTime(0), postProcessing(false), suspended(false), shutdownFlags(0), mMasterGameMode(0)
+    : mConnection(0), mSettings(0), mPlayers(0), mLoginComparisonValue(0), tickCount(0), running(true), levelLoaded(false), shuttingDown(false), saving(false), networkTick(0), progressNameLength(0), progressNameCapacity(0), progressValue(0), commandDispatcher(0), consoleInputIndex(0), consoleInputCount(0), animals(true), npcsEnabled(true), pvpAllowed(true), flightAllowed(false), serverFlags(0), statusMessageLength(0), statusMessageCapacity(0), maxBuildHeight(256), difficulty(0), levelType(0), defaultGameType(GameType::SURVIVAL), gameModeId(0), playerIdleTimeout(0), progressRenderer(0), levelStorage(0), postProcessState(0), postProcessEvent(0), serverPaused(false), forceGameType(false), suspending(false), stopping(false), lastServerTime(0), postProcessing(false), suspended(false), shutdownFlags(0), mMasterGameMode(0)
 {
     unsigned int i;
     for (i = 0; i < 8; ++i)
@@ -85,8 +92,44 @@ ServerLevel* MinecraftServer::getLevel(int dimension)
     unsigned int index = dimension == -1 ? 1 : dimension == 1 ? 2 : 0;
     return index < mLevels.length ? mLevels.data[index] : 0;
 }
-void MinecraftServer::saveGameRules() {}
-void MinecraftServer::endProgress() {}
+void MinecraftServer::saveGameRules()
+{
+    unsigned char* data = 0;
+    unsigned int size = 0;
+    g_GameRuleManager.saveGameRules(&data, &size);
+    if (data == 0 || size == 0)
+        return;
+
+    ServerLevel* level = getLevel(0);
+    if (level == 0) {
+        delete[] data;
+        return;
+    }
+    boost::shared_ptr<LevelStorage> storage = level->getLevelStorage();
+    if (!storage) {
+        delete[] data;
+        return;
+    }
+    ConsoleSaveFile* saveFile = storage->getSaveFile();
+    if (saveFile == 0) {
+        delete[] data;
+        return;
+    }
+    FileEntry* entry = saveFile->createFile(ConsoleSavePath(L"requiredGameRules.grf"));
+    if (entry != 0) {
+        int high = 0;
+        unsigned int written = 0;
+        saveFile->setFilePointer(entry, 0, &high, 0);
+        saveFile->writeFile(entry, data, size, &written);
+        saveFile->closeHandle(entry);
+    }
+    delete[] data;
+}
+void MinecraftServer::endProgress()
+{
+    progressName.clear();
+    progressValue = 0;
+}
 bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring&, long long, LevelType*, _NetworkGameInitData*) { return true; }
 bool MinecraftServer::initServer(long long, _NetworkGameInitData*, unsigned int, bool) { running = true; return true; }
 
@@ -131,10 +174,33 @@ int MinecraftServer::getSpawnRadius(ServerLevel* level) { return level == 0 ? 10
 void MinecraftServer::halt() { running = false; }
 void MinecraftServer::fjSetServerPaused(bool value) { serverPaused = value; }
 void MinecraftServer::tick() { if (running) chunkPacketManagement_PreTick(); }
-void MinecraftServer::chunkPacketManagement_PreTick() {}
+void MinecraftServer::chunkPacketManagement_PreTick()
+{
+    if (mConnection == 0)
+        return;
+
+    std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >& players =
+        mConnection->getPlayers();
+    std::stable_sort(players.begin(), players.end(),
+        [](const boost::shared_ptr<ServerGamePacketListenerImpl>& first,
+           const boost::shared_ptr<ServerGamePacketListenerImpl>& second) {
+            INetworkPlayer* firstPlayer = first ? first->getNetworkPlayer() : 0;
+            INetworkPlayer* secondPlayer = second ? second->getNetworkPlayer() : 0;
+            const int firstAge = firstPlayer == 0 ? 0 : firstPlayer->GetTimeSinceLastChunkPacket_ms();
+            const int secondAge = secondPlayer == 0 ? 0 : secondPlayer->GetTimeSinceLastChunkPacket_ms();
+            return firstAge > secondAge;
+        });
+}
 void MinecraftServer::run(long long seed, void* argument) { if (initServer(seed, (_NetworkGameInitData*)argument, 0, false)) running = true; }
-void MinecraftServer::broadcastStartSavingPacket() {}
-void MinecraftServer::broadcastStopSavingPacket() {}
+void MinecraftServer::broadcastStartSavingPacket()
+{
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(11, 3.0f)));
+}
+
+void MinecraftServer::broadcastStopSavingPacket()
+{
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(12, 3.0f)));
+}
 unsigned long long MinecraftServer::main(long long seed, void* argument) { MinecraftServer server; gMinecraftServer = &server; server.run(seed, argument); return 0; }
 void MinecraftServer::HaltServer(bool) { if (gMinecraftServer != 0) gMinecraftServer->halt(); }
 void MinecraftServer::info(const std::wstring&) {}

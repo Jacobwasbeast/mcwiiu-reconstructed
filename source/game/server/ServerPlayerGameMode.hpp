@@ -21,6 +21,7 @@ class ServerPlayer;
 
 class ServerPlayerGameMode : public GameMode
 {
+    friend struct ServerPlayer;
 public:
     ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode);
     virtual ~ServerPlayerGameMode();
@@ -88,7 +89,7 @@ public:
 
 private:
     Level* mLevel;
-    Entity* mPlayer;
+    boost::shared_ptr<Player> mPlayer;
     bool mDestroying;
     int mDestroyProgress;
     BlockPos mDestroyPos;
@@ -101,6 +102,7 @@ private:
     MasterGameMode* mMasterGameMode;
     int mDeaths;
     int mKills;
+    int mUnknown58;
     int mLastCheckpoint;
 };
 

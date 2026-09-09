@@ -10,7 +10,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/biome/Biome.hpp"
-class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard;
+class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard; class Explosion;
 
 #ifndef GAME_SERVER_SERVERLEVEL_HPP
 #define GAME_SERVER_SERVERLEVEL_HPP
@@ -52,6 +52,7 @@ public:
  std::vector<TickNextTickData> pendingTicks;
  boost::unordered_map<std::wstring, boost::shared_ptr<Entity> > entitiesByUuid;
  std::vector<QueuedSendBlockData*> queuedBlockUpdates;
+ std::vector<BlockEventData*> blockEvents;
  int32_t blockEventCount;
  bool allPlayersSleeping;
  bool updatingBlocks;
@@ -74,8 +75,8 @@ public:
  PlayerChunkMap* getChunkMap(); 
  BlockPos* getDimensionSpecificSpawn();
  PortalForcer* getPortalForcer(); 
- static uint32_t runUpdate(uint32_t first); 
- static uint64_t staticCtor(); 
+ static int runUpdate(void* first);
+ static void staticCtor();
  uint64_t createChunkSource(); 
  ServerLevel* postConstruct(); 
  uint32_t allPlayersAreSleeping(); 
@@ -91,9 +92,9 @@ public:
  void updateSleepingPlayerList(); 
  void validateSpawn(); 
  bool hasChunk(int32_t first, int32_t second, bool third); 
- uint64_t getChunkIfHasChunk(int32_t first, int32_t second, bool third); 
+ LevelChunk* getChunkIfHasChunk(int32_t first, int32_t second, bool third); 
  void findLightingTargetAround(BlockPos* first); 
- uint64_t tickBlocks(); 
+ void tickBlocks();
  bool isBlockToBeTickedAt(BlockPos* first, Block* second); 
  bool hasTickNextTick(BlockPos* first, Block* second); 
  void addToTickNextTick(BlockPos* first, Block* second, int32_t third); 
@@ -126,10 +127,10 @@ public:
  uint64_t getEntity(uint32_t first, uint32_t second); 
  uint32_t addGlobalEntity(boost::shared_ptr<Entity> first); 
  void broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third); 
- uint64_t explode(uint64_t first, uint64_t second, uint64_t third, uint64_t fourth, uint32_t fifth, uint32_t sixth, uint32_t seventh, int32_t eighth); 
+ boost::shared_ptr<Explosion> explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius, bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damageMultiplier);
  uint64_t blockEvent(BlockPos* first, Block* second, int32_t third, int32_t fourth); 
  uint64_t closeLevelStorage(); 
- uint64_t tickWeather(bool first); 
+ void tickWeather(bool first); 
  void getChunkPollRange(); 
  MinecraftServer* getServer(); 
  uint64_t setTimeAndAdjustBlockTicks(uint32_t first, int32_t second, uint32_t third); 
@@ -160,4 +161,3 @@ public:
 };
 
 #endif
-
