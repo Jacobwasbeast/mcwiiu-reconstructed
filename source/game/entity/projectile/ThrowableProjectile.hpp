@@ -32,7 +32,7 @@ public:
     virtual double getGravity();
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    boost::shared_ptr<LivingEntity> getOwner();
+    virtual boost::shared_ptr<LivingEntity> getOwner();
     Vec3* fjGetParticleSpawnPos() const;
     virtual bool shouldTick();
 protected:
