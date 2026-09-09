@@ -16,6 +16,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BlockStatePredicate.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Material.hpp"
@@ -90,7 +91,7 @@ void EndPortalFrameBlock::addCollisionAABBs(const BlockState* state, Level* leve
 
 Item* EndPortalFrameBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
-    return Item::byBlock(this);
+    return Items::air;
 }
 
 const BlockState* EndPortalFrameBlock::getStateForPlacement(Level* level, const BlockPos& pos,

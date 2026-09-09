@@ -4,6 +4,8 @@
 #include "game/world/block/Block.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+Block* gDoubleSlabPurpur = NULL;
+
 Block* Blocks::AIR = NULL;
 Block* Blocks::stone = NULL;
 Block* Blocks::grass = NULL;
@@ -520,6 +522,7 @@ void Blocks::staticInit()
     purpur_pillar = get(L"purpur_pillar");
     purpur_stairs = get(L"purpur_stairs");
     purpur_double_slab = get(L"purpur_double_slab");
+    gDoubleSlabPurpur = purpur_double_slab;
     purpur_slab = get(L"purpur_slab");
     end_bricks = get(L"end_bricks");
     beetroots = get(L"beetroots");

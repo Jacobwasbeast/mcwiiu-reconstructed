@@ -59,7 +59,7 @@ public:
         int getData();
         static Variant* byData(int data);
         TextureAtlasSprite* getIcon(ETexture texture);
-        int getTexture(int texture);
+        std::wstring* getTexture(int texture);
         void setIcon(ETexture texture, TextureAtlasSprite* icon);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;

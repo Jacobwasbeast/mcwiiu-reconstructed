@@ -34,10 +34,11 @@ boost::shared_ptr<BlockEntity> ComparatorBlockEntity::clone()
     return result;
 }
 
-void ComparatorBlockEntity::save(CompoundTag* tag)
+CompoundTag* ComparatorBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"OutputSignal", mOutputSignal);
+    return tag;
 }
 
 void ComparatorBlockEntity::load(CompoundTag* tag)
@@ -48,5 +49,5 @@ void ComparatorBlockEntity::load(CompoundTag* tag)
 
 unsigned long long ComparatorBlockEntity::GetType()
 {
-    return 0x0100020A00000000ULL;
+    return 0x000000000100020AULL;
 }

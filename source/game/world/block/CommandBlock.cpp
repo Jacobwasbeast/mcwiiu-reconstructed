@@ -19,20 +19,17 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<const Direction*>* gCommandBlockFacing = NULL;
-static AbstractProperty<bool>* gCommandBlockConditional = NULL;
+AbstractProperty<const Direction*>* CommandBlock::FACING = NULL;
+AbstractProperty<bool>* CommandBlock::CONDITIONAL =
+    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"conditional"));
 
 void CommandBlock::blockStaticCtor()
 {
-    gCommandBlockFacing = DirectionalBlock::FACING_PROPERTY;
-    if (gCommandBlockConditional == NULL)
-    {
-        gCommandBlockConditional = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"conditional"));
-    }
+    FACING = DirectionalBlock::FACING;
 }
 
 CommandBlock::CommandBlock(const MaterialColor* materialColor, Mode mode)
-    : BaseEntityBlock(Material::STONE, materialColor),
+    : BaseEntityBlock(Material::METAL, materialColor),
       mFrontIcon(NULL),
       mBackIcon(NULL),
       mConditionalIcon(NULL),
@@ -42,15 +39,8 @@ CommandBlock::CommandBlock(const MaterialColor* materialColor, Mode mode)
     TypedBoxed<const Direction*> facing(Direction::NORTH);
     TypedBoxed<bool> conditional(false);
     const BlockState* state = mStateDefinition->any();
-    if (gCommandBlockFacing != NULL)
-    {
-        state = state->setBoxedValue(gCommandBlockFacing, &facing);
-    }
-    if (gCommandBlockConditional != NULL)
-    {
-        state = state->setBoxedValue(gCommandBlockConditional, &conditional);
-    }
-    registerDefaultState(state);
+    state = state->setBoxedValue(FACING, &facing);
+    registerDefaultState(state->setBoxedValue(CONDITIONAL, &conditional));
 }
 
 CommandBlock::~CommandBlock()
@@ -64,7 +54,7 @@ unsigned int CommandBlock::getMode()
 
 boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level*, int)
 {
-    return boost::shared_ptr<BlockEntity>(new CommandBlockEntity(mMode));
+    return boost::shared_ptr<BlockEntity>(new CommandBlockEntity(static_cast<CommandBlock::Mode>(mMode)));
 }
 
 void CommandBlock::neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&)
@@ -122,7 +112,7 @@ int CommandBlock::getResourceCount(Random*)
 
 EBlockRenderShape CommandBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_MODEL;
+    return (EBlockRenderShape)55;
 }
 
 const BlockState* CommandBlock::getBlockState(int data)
@@ -130,14 +120,14 @@ const BlockState* CommandBlock::getBlockState(int data)
     TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data & 7));
     TypedBoxed<bool> conditional((data & 8) != 0);
     const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(gCommandBlockFacing, &facing);
-    return state->setBoxedValue(gCommandBlockConditional, &conditional);
+    state = state->setBoxedValue(FACING, &facing);
+    return state->setBoxedValue(CONDITIONAL, &conditional);
 }
 
 int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(gCommandBlockFacing)->get3DDataValue();
-    if (state->getValue(gCommandBlockConditional))
+    int data = state->getValue(FACING)->get3DDataValue();
+    if (state->getValue(CONDITIONAL))
     {
         data |= 8;
     }
@@ -146,18 +136,18 @@ int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CommandBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(gCommandBlockFacing)));
-    return state->setBoxedValue(gCommandBlockFacing, &facing);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
+    return state->setBoxedValue(FACING, &facing);
 }
 
 const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(gCommandBlockFacing)));
+    return rotate(state, mirror->getRotation(state->getValue(FACING)));
 }
 
 BlockStateDefinition* CommandBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gCommandBlockFacing, gCommandBlockConditional };
+    const Property* properties[] = { FACING, CONDITIONAL };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -167,26 +157,27 @@ const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos
     TypedBoxed<const Direction*> boxedFacing(facing);
     TypedBoxed<bool> conditional(false);
     const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(gCommandBlockFacing, &boxedFacing);
-    return state->setBoxedValue(gCommandBlockConditional, &conditional);
+    state = state->setBoxedValue(FACING, &boxedFacing);
+    return state->setBoxedValue(CONDITIONAL, &conditional);
 }
 
 bool CommandBlock::isCommandBlock(Block* block)
 {
-    return block == Blocks::command_block || block == Blocks::repeating_command_block || block == Blocks::chain_command_block;
+    return block == Blocks::command_block || block == Blocks::chain_command_block
+        || block == Blocks::repeating_command_block;
 }
 
 TextureAtlasSprite* CommandBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == state->getValue(gCommandBlockFacing))
+    if (direction == state->getValue(FACING))
     {
         return mBackIcon;
     }
-    if (direction == state->getValue(gCommandBlockFacing)->getOpposite())
+    if (direction == state->getValue(FACING)->getOpposite())
     {
         return mFrontIcon;
     }
-    if (state->getValue(gCommandBlockConditional))
+    if (state->getValue(CONDITIONAL))
     {
         return mConditionalIcon;
     }

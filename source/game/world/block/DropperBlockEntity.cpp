@@ -32,14 +32,11 @@ boost::shared_ptr<BlockEntity> DropperBlockEntity::clone()
 {
     boost::shared_ptr<DropperBlockEntity> result(new DropperBlockEntity());
     BlockEntity::clone(result);
-    if (mCustomName)
-    {
-        result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
-    }
+    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
     return result;
 }
 
 unsigned long long DropperBlockEntity::GetType()
 {
-    return 0x003c002010000000ULL;
+    return 0x0000000003C00201ULL;
 }

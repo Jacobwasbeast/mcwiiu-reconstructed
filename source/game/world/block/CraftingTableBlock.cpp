@@ -4,13 +4,15 @@
 #include "game/core/IconRegister.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/ui/CraftingMenu.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
 CraftingTableBlock::CraftingTableBlock()
-    : Block(0)
-    , mTopTexture(0)
-    , mFrontTexture(0)
+    : Block(Material::WOOD)
+    , mTopTexture(NULL)
+    , mFrontTexture(NULL)
 {
     DerivedInit();
 }
@@ -32,6 +34,10 @@ bool CraftingTableBlock::use(Level* level, const BlockPos& pos, const BlockState
     {
         return false;
     }
+    if (level->mIsClientSide)
+    {
+        return true;
+    }
 
     CraftingTable table(level, pos);
     player->startBlockInteraction(&table);
@@ -48,7 +54,7 @@ TextureAtlasSprite* CraftingTableBlock::getTexture(const Direction* direction, c
     {
         return Blocks::planks->getTexture(direction, state);
     }
-    if (direction == Direction::NORTH || direction == Direction::SOUTH)
+    if (direction == Direction::NORTH || direction == Direction::WEST)
     {
         return mFrontTexture;
     }
@@ -64,7 +70,7 @@ void CraftingTableBlock::registerIcons(IconRegister* iconRegister)
 
 unsigned int CraftingTableBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if ((tooltipData.m_bUseItem || tooltipData.m_bCanPlace) && tooltipData.m_bCanDestroy)
+    if ((tooltipData.m_bUseItem || tooltipData.m_bCanDestroy) && tooltipData.m_bIsInside)
     {
         return 0xea4e897e;
     }

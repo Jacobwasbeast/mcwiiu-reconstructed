@@ -8,29 +8,25 @@ BlocksPresentWithIdMedal::~BlocksPresentWithIdMedal()
 
 double BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
 {
-    double score = 1.0;
-    unsigned int round = 0;
-    unsigned int totalRounds = playerStats->getTotalRounds();
+    float score = 0.0f;
 
-    if (totalRounds != 0)
+    for (unsigned int round = 0; round < (unsigned int)playerStats->getTotalRounds(); round++)
     {
-        do
+        if (!playerStats->hasRoundStats(round))
         {
-            if (playerStats->hasRoundStats(round))
-            {
-                PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-                int blockCount = 0;
-
-                for (std::set<int>::const_iterator it = mBlockIds.begin(); it != mBlockIds.end(); ++it)
-                    blockCount += roundStats->mBlocksPlacedInfo.mRounds[*it];
-
-                score = static_cast<double>((*mScoreFunction)(blockCount, roundStats->mBlocksPlacedInfo.mCount));
-            }
-
-            ++round;
-            totalRounds = playerStats->getTotalRounds();
+            continue;
         }
-        while (round < totalRounds);
+
+        PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
+        int blockCount = 0;
+
+        std::set<int>::const_iterator it = mBlockIds.begin();
+        for (; it != mBlockIds.end(); ++it)
+        {
+            blockCount += roundStats->mBlocksUsed.mItems[*it];
+        }
+
+        score = (*mScoreFunction)(blockCount, roundStats->mBlocksUsed.mCount);
     }
 
     return score;

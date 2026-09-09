@@ -15,6 +15,7 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static EnumProperty<const DyeColor*>* gStainedGlassBlockColorProperty = NULL;
@@ -29,7 +30,7 @@ void StainedGlassBlock::blockStaticCtor()
     }
 
     gStainedGlassBlockColorProperty = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), colors, NULL);
+        L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 StainedGlassBlock::StainedGlassBlock(Material* material)

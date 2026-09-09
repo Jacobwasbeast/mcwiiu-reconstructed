@@ -130,8 +130,11 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
 
 void RedstoneTorchBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (hasNeighborSignal(level, pos, state) == mLit)
-        level->setBlock(pos, copyTorchState(state, mLit ? Blocks::unlit_redstone_torch->defaultBlockState() : Blocks::redstone_torch->defaultBlockState()), 3, false);
+    if (hasNeighborSignal(level, pos, state) != mLit
+        && !level->isBlockToBeTickedAt(pos, this))
+    {
+        level->addToTickNextTick(pos, this, getTickDelay(level));
+    }
 }
 
 int RedstoneTorchBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)

@@ -1,6 +1,7 @@
 #include "game/world/block/HopperBlock.hpp"
 
 #include "game/core/Boxed.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
@@ -15,6 +16,7 @@
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/HopperBlockEntity.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static DirectionProperty* HopperBlock_FACING = NULL;
@@ -48,7 +50,7 @@ void HopperBlock::blockStaticCtor()
 
 const AABB* HopperBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return Block::getShape(state, levelSource, pos);
 }
 
 void HopperBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,
@@ -210,7 +212,7 @@ BlockStateDefinition* HopperBlock::createBlockStateDefinition()
 EBlockFaceShape HopperBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
                                                const BlockPos& pos, const Direction* direction)
 {
-    return BLOCK_FACE_UNDEFINED;
+    return direction == Direction::UP ? BLOCK_FACE_BOWL : BLOCK_FACE_UNDEFINED;
 }
 
 TextureAtlasSprite* HopperBlock::getTexture(const Direction* direction, const BlockState* state)
@@ -227,6 +229,11 @@ void HopperBlock::registerIcons(IconRegister* iconRegister)
 
 TextureAtlasSprite* HopperBlock::getTexture(const std::wstring& name)
 {
+    HopperBlock* hopper = static_cast<HopperBlock*>(Blocks::hopper);
+    if (name == L"hopper_outside")
+        return hopper->mSideTexture;
+    if (name == L"hopper_inside")
+        return hopper->mBottomTexture;
     return NULL;
 }
 

@@ -8,15 +8,15 @@
 class BlockPlacedOverTime : public GameMedal
 {
 public:
-    typedef double ScoreFunction(int, const std::map<int, int>&);
+    typedef float ScoreFunction(int, const std::map<int, int>&);
 
     BlockPlacedOverTime(int name, float target, unsigned int weight, ScoreFunction& scoreFunction, GameMedal::EOperator op);
     virtual ~BlockPlacedOverTime();
 
-    static double START_DELAY(int roundTime, const std::map<int, int>& blocksPlaced);
-    static double TIME_LEFTOVER(int roundTime, const std::map<int, int>& blocksPlaced);
-    static double IN_FIRST_10SECS(int roundTime, const std::map<int, int>& blocksPlaced);
-    static double IN_LAST_10SECS(int roundTime, const std::map<int, int>& blocksPlaced);
+    static float START_DELAY(int lastRound, const std::map<int, int>& blocksPlaced);
+    static float TIME_LEFTOVER(int lastRound, const std::map<int, int>& blocksPlaced);
+    static float IN_FIRST_10SECS(int lastRound, const std::map<int, int>& blocksPlaced);
+    static float IN_LAST_10SECS(int lastRound, const std::map<int, int>& blocksPlaced);
 
     virtual double GetScore(PlayerStats* playerStats) const;
 

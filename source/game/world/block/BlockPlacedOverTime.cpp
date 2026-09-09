@@ -2,33 +2,24 @@
 
 #include <map>
 
+#include "game/core/GameStats.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-class GameStats
+float countEmpty(const std::map<int, int>& blocksPlaced, int firstRound, int lastRound)
 {
-public:
-    int GetRoundTime();
-};
-
-double countEmpty(const std::map<int, int>& blocksPlaced, int firstRound, int lastRound)
-{
-    double score = 176.0;
+    float score = 0.0f;
     int direction = lastRound < firstRound ? -1 : 1;
 
-    if (firstRound != lastRound)
+    while (firstRound != lastRound)
     {
-        do
+        std::map<int, int>::const_iterator found = blocksPlaced.find(firstRound);
+        if (found != blocksPlaced.end() && found->second != 0)
         {
-            std::map<int, int>::const_iterator found = blocksPlaced.find(firstRound);
-            if (found != blocksPlaced.end() && found->second != 0)
-            {
-                break;
-            }
-
-            firstRound += direction;
-            score = (double)(float)(score + 10.0);
+            break;
         }
-        while (firstRound != lastRound);
+
+        firstRound += direction;
+        score += 10.0f;
     }
 
     return score;
@@ -49,60 +40,52 @@ BlockPlacedOverTime::~BlockPlacedOverTime()
 {
 }
 
-double BlockPlacedOverTime::START_DELAY(int roundTime, const std::map<int, int>& blocksPlaced)
+float BlockPlacedOverTime::START_DELAY(int lastRound, const std::map<int, int>& blocksPlaced)
 {
-    return countEmpty(blocksPlaced, 0, roundTime);
+    return countEmpty(blocksPlaced, 0, lastRound);
 }
 
-double BlockPlacedOverTime::TIME_LEFTOVER(int roundTime, const std::map<int, int>& blocksPlaced)
+float BlockPlacedOverTime::TIME_LEFTOVER(int lastRound, const std::map<int, int>& blocksPlaced)
 {
-    return countEmpty(blocksPlaced, roundTime, 0);
+    return countEmpty(blocksPlaced, lastRound, 0);
 }
 
-double BlockPlacedOverTime::IN_FIRST_10SECS(int roundTime, const std::map<int, int>& blocksPlaced)
+float BlockPlacedOverTime::IN_FIRST_10SECS(int lastRound, const std::map<int, int>& blocksPlaced)
 {
-    std::map<int, int>::const_iterator found = blocksPlaced.find(roundTime);
+    std::map<int, int>::const_iterator found = blocksPlaced.find(0);
     if (found == blocksPlaced.end())
     {
-        return 176.0;
+        return 0.0f;
     }
 
-    return (double)(found->second - 176);
+    return (float)found->second;
 }
 
-double BlockPlacedOverTime::IN_LAST_10SECS(int roundTime, const std::map<int, int>& blocksPlaced)
+float BlockPlacedOverTime::IN_LAST_10SECS(int lastRound, const std::map<int, int>& blocksPlaced)
 {
-    std::map<int, int>::const_iterator found = blocksPlaced.find(roundTime - 1);
+    std::map<int, int>::const_iterator found = blocksPlaced.find(lastRound - 1);
     if (found == blocksPlaced.end())
     {
-        return 176.0;
+        return 0.0f;
     }
 
-    return (double)(found->second - 176);
+    return (float)found->second;
 }
 
 double BlockPlacedOverTime::GetScore(PlayerStats* playerStats) const
 {
-    double score = 0.0;
-    unsigned int round = 0;
-    unsigned int totalRounds = playerStats->getTotalRounds();
+    float score = 0.0f;
 
-    if (totalRounds != 0)
+    for (unsigned int round = 0; round < (unsigned int)playerStats->getTotalRounds(); round++)
     {
-        do
+        if (!playerStats->hasRoundStats(round))
         {
-            if (playerStats->hasRoundStats(round))
-            {
-                PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-                GameStats* gameStats = getGameStats();
-                int roundTime = gameStats->GetRoundTime();
-                score = (double)(float)(score + (*mScoreFunction)(roundTime / 10 - 1, roundStats->mBlocksPlacedInfo.mRounds));
-            }
-
-            ++round;
-            totalRounds = playerStats->getTotalRounds();
+            continue;
         }
-        while (round < totalRounds);
+
+        PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
+        int roundTime = getGameStats()->GetRoundTime();
+        score += (*mScoreFunction)(roundTime / 10 - 1, roundStats->mBlocksPlacedInfo.mRounds);
     }
 
     return score;

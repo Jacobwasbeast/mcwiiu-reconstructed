@@ -50,11 +50,12 @@ void FlowerPotBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
 }
 
-void FlowerPotBlockEntity::save(CompoundTag* tag)
+CompoundTag* FlowerPotBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"Item", Item::VALIDgetId(mPlantItem));
     tag->putInt(L"Data", mItemData);
+    return tag;
 }
 
 void FlowerPotBlockEntity::load(CompoundTag* tag)
@@ -85,5 +86,5 @@ boost::shared_ptr<BlockEntity> FlowerPotBlockEntity::clone()
 
 unsigned long long FlowerPotBlockEntity::GetType()
 {
-    return 0x0100020D00000000ULL;
+    return 0x000000000100020DULL;
 }

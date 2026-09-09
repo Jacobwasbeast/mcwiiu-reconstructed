@@ -2,15 +2,10 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/block/MaterialColor.hpp"
-
-class Items
-{
-public:
-    static Item* melon;
-};
 
 MelonBlock::MelonBlock()
     : Block(Material::VEGETABLE, MaterialColor::COLOR_LIGHT_GREEN)

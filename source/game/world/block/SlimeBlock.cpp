@@ -1,18 +1,13 @@
 #include "game/world/block/SlimeBlock.hpp"
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
 #include <cmath>
 #include <boost/pointer_cast.hpp>
-
-class MultiplayerLocalPlayer : public Entity
-{
-public:
-    void onSlimeBlockBounce();
-};
 
 SlimeBlock::SlimeBlock()
     : HalfTransparentBlock(L"slime", Material::CLAY, false, MaterialColor::GRASS)

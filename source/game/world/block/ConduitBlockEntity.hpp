@@ -26,7 +26,7 @@ public:
     virtual void tick();
     void loadFromPacket(Level* level, const BlockPos& position, CompoundTag* tag);
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();
     void incrementAnimationValue(float amount);

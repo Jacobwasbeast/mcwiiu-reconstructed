@@ -5,6 +5,7 @@
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -113,7 +114,7 @@ bool PistonMagicBlock::use(Level* level, const BlockPos& pos, const BlockState* 
 
 Item* PistonMagicBlock::getResource(const BlockState*, Random*, int)
 {
-    return NULL;
+    return Items::air;
 }
 
 boost::shared_ptr<PistonMovingBlockEntity> PistonMagicBlock::getEntity(LevelSource* levelSource,

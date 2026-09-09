@@ -37,7 +37,7 @@ public:
     BlockEntityMobSpawner* getSpawner();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void tick();
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();

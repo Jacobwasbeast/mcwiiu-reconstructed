@@ -14,7 +14,7 @@ public:
     static BlockEntity* create();
     virtual unsigned long long GetType();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual boost::shared_ptr<BlockEntity> clone();
 
     unsigned int getOutputSignal();

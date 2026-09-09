@@ -4,7 +4,6 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
-#include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -65,7 +64,7 @@ InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<
             return InteractionResult::eInteractionResult_Fail;
         }
 
-        player->awardStat(Stats::blockPlacedStats.data[Block::getId(mBlock)],
+        player->awardStat(gStats->get_blocksPlaced(Block::getId(mBlock)),
                           GenericStats::param_blocksPlaced(placedState, 1));
 
         const BlockState* placedBlockState = level->getBlockState(placePos);

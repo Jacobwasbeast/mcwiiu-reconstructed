@@ -44,7 +44,7 @@ const AABB* WallSignBlock::getShape(const BlockState* state, LevelSource*, const
     switch (state->getValue(FACING)->get3DDataValue())
     {
     case 3: return WALL_SIGN_SHAPE_SOUTH;
-    case 4: return WALL_SIGN_SHAPE_NORTH;
+    case 4: return WALL_SIGN_SHAPE_WEST;
     case 5: return WALL_SIGN_SHAPE_EAST;
     default: return WALL_SIGN_SHAPE_NORTH;
     }

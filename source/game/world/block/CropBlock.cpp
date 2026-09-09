@@ -26,7 +26,17 @@
 
 template <typename T> std::wstring toString(T value);
 
-static const AABB* SHAPE_BY_AGE[8];
+static const AABB* SHAPE_BY_AGE[8] =
+{
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.875, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+};
 AbstractProperty<int>* CropBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 7));
 
 CropBlock::CropBlock(bool derivedInit)
@@ -97,13 +107,13 @@ int CropBlock::getMaxAge()
 
 int CropBlock::getAge(const BlockState* state)
 {
-    return state->getValue(AGE);
+    return state->getValue(getAgeProperty());
 }
 
 const BlockState* CropBlock::getStateForAge(int age)
 {
     TypedBoxed<int> value(age);
-    return defaultBlockState()->setBoxedValue(AGE, &value);
+    return defaultBlockState()->setBoxedValue(getAgeProperty(), &value);
 }
 
 double CropBlock::getGrowthSpeed(Block* block, Level* level, const BlockPos& pos)
@@ -240,7 +250,7 @@ BlockStateDefinition* CropBlock::createBlockStateDefinition()
 
 TextureAtlasSprite* CropBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return mStageIcons[Mth::clamp(getAge(state), 0, 7)];
+    return mStageIcons[Mth::clamp(state->getValue(AGE), 0, 7)];
 }
 
 void CropBlock::registerIcons(IconRegister* iconRegister)

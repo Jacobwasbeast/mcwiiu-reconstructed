@@ -76,6 +76,9 @@ public:
     virtual void trySpreadFire(Level* level, const BlockPos& pos, Random* random);
     static LiquidBlock* getStaticLiquid(Material* material);
     static TextureAtlasSprite* getTexture(const std::wstring& name);
+
+private:
+    TextureAtlasSprite* mFlowIcon;
 };
 
 #endif

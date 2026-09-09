@@ -22,6 +22,25 @@ static AbstractProperty<bool>* CHORUS_EAST = static_cast<AbstractProperty<bool>*
 static AbstractProperty<bool>* CHORUS_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
 static AbstractProperty<bool>* CHORUS_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
 
+static inline AABB* createChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+{
+    AABB* shape = AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ);
+    shape->divideInternalsBy(16.0);
+    return shape;
+}
+
+static inline AABB* createTempChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+{
+    AABB* shape = AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ);
+    shape->divideInternalsBy(16.0);
+    return shape;
+}
+
+static const AABB* CHORUS_NORTH_SHAPE = createChorusShape(4.0, 4.0, 0.0, 12.0, 12.0, 4.0);
+static const AABB* CHORUS_SOUTH_SHAPE = createChorusShape(4.0, 4.0, 12.0, 12.0, 12.0, 16.0);
+static const AABB* CHORUS_EAST_SHAPE = createChorusShape(12.0, 4.0, 4.0, 16.0, 12.0, 12.0);
+static const AABB* CHORUS_WEST_SHAPE = createChorusShape(0.0, 4.0, 4.0, 4.0, 12.0, 12.0);
+
 ChorusPlantBlock::ChorusPlantBlock()
     : Block(Material::PLANT, MaterialColor::COLOR_PURPLE)
 {
@@ -79,7 +98,7 @@ const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockS
 
 const AABB* ChorusPlantBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* actual = levelSource == NULL ? state : fillVirtualBlockStateProperties(state, levelSource, pos);
+    const BlockState* actual = levelSource == NULL ? state : state->fillVirtualBlockStateProperties(levelSource, pos);
     double minX = actual->getValue(CHORUS_WEST) ? 0.0 : 0.1875;
     double minY = actual->getValue(CHORUS_DOWN) ? 0.0 : 0.1875;
     double minZ = actual->getValue(CHORUS_NORTH) ? 0.0 : 0.1875;
@@ -93,21 +112,21 @@ void ChorusPlantBlock::addCollisionAABBs(const BlockState* state, Level* level, 
                                          std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState)
 {
     if (!isActualState)
-        state = fillVirtualBlockStateProperties(state, level, pos);
+        state = state->fillVirtualBlockStateProperties(level, pos);
     addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.1875, 0.8125, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_DOWN)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.0, 0.1875, 0.8125, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_UP)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.1875, 0.8125, 1.0, 0.8125));
-    if (state->getValue(CHORUS_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.0, 0.8125, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.1875, 1.0, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.1875, 0.8125, 0.8125, 1.0));
-    if (state->getValue(CHORUS_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.1875, 0.1875, 0.8125, 0.8125, 0.8125));
+    if (state->getValue(CHORUS_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.1875, 0.1875, 0.1875, 0.8125, 0.8125));
+    if (state->getValue(CHORUS_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.8125, 0.1875, 0.1875, 1.0, 0.8125, 0.8125));
+    if (state->getValue(CHORUS_UP)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.8125, 0.1875, 0.8125, 1.0, 0.8125));
+    if (state->getValue(CHORUS_DOWN)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.0, 0.1875, 0.8125, 0.1875, 0.8125));
+    if (state->getValue(CHORUS_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.0, 0.8125, 0.8125, 0.1875));
+    if (state->getValue(CHORUS_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.8125, 0.8125, 0.8125, 1.0));
 }
 
 int ChorusPlantBlock::convertBlockStateToLegacyData(const BlockState*) { return 0; }
 
 void ChorusPlantBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!canSurvive(level, pos, state)) level->blockUpdated(pos, this, true);
+    if (!canSurvive(level, pos, state)) level->destroyBlock(pos, true);
 }
 
 Item* ChorusPlantBlock::getResource(const BlockState*, Random*, int) { return Items::air; }
@@ -122,33 +141,33 @@ bool ChorusPlantBlock::mayPlace(Level* level, const BlockPos& pos)
 
 void ChorusPlantBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (!canSurvive(level, pos, NULL)) level->blockUpdated(pos, this, true);
+    if (!canSurvive(level, pos, NULL)) level->addToTickNextTick(pos, this, 1);
 }
 
 bool ChorusPlantBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 {
-    Block* above = level->getBlock(pos.above());
-    Block* below = level->getBlock(pos.below());
-    if (above != this && below != this)
+    bool aboveEmpty = level->isEmptyBlock(pos.above());
+    bool belowEmpty = level->isEmptyBlock(pos.below());
+
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
     {
-        const Direction* directions[] = { Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST };
-        for (int i = 0; i < 4; ++i)
-            if (level->getBlock(pos.relative(directions[i])) == this) return true;
-    }
-    else
-    {
-        const Direction* directions[] = { Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST };
-        for (int i = 0; i < 4; ++i)
+        BlockPos side = pos.relative(directions.data[i]);
+        if (level->getBlock(side) == this)
         {
-            BlockPos side = pos.relative(directions[i]);
-            if (level->getBlock(side) == this)
+            if (!aboveEmpty && !belowEmpty)
             {
-                Block* sideBelow = level->getBlock(side.below());
-                if (sideBelow == this || sideBelow == Blocks::end_stone) return true;
+                return false;
+            }
+            Block* sideBelow = level->getBlock(side.below());
+            if (sideBelow == this || sideBelow == Blocks::end_stone)
+            {
+                return true;
             }
         }
     }
-    below = level->getBlock(pos.below());
+
+    Block* below = level->getBlock(pos.below());
     return below == this || below == Blocks::end_stone;
 }
 
@@ -160,8 +179,17 @@ EBlockRenderShape ChorusPlantBlock::getRenderShape(const BlockState*) { return (
 const AABB* ChorusPlantBlock::getVerticalShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     if (state->getValue(CHORUS_DOWN))
-        return state->getValue(CHORUS_UP) ? AABB::newTemp(0.1875, 0.1875, 0.1875, 0.8125, 0.8125, 0.8125) : AABB::newTemp(0.25, 0.0, 0.25, 0.75, 0.75, 0.75);
-    if (state->getValue(CHORUS_UP)) return AABB::newTemp(0.25, 0.25, 0.25, 0.75, 1.0, 0.75);
+    {
+        if (state->getValue(CHORUS_UP))
+        {
+            return createTempChorusShape(4.0, 0.0, 4.0, 12.0, 16.0, 12.0);
+        }
+        return createTempChorusShape(4.0, 0.0, 4.0, 12.0, 12.0, 12.0);
+    }
+    if (state->getValue(CHORUS_UP))
+    {
+        return createTempChorusShape(4.0, 4.0, 4.0, 12.0, 16.0, 12.0);
+    }
     return NULL;
 }
 
@@ -169,26 +197,32 @@ const AABB* ChorusPlantBlock::getHorizontalShape(const BlockState*, const Direct
 {
     switch (direction->get3DDataValue())
     {
-    case 2: return AABB::newTemp(0.25, 0.25, 0.0, 0.75, 0.75, 0.75);
-    case 3: return AABB::newTemp(0.25, 0.25, 0.25, 1.0, 0.75, 0.75);
-    case 4: return AABB::newTemp(0.25, 0.25, 0.25, 0.75, 0.75, 1.0);
-    case 5: return AABB::newTemp(0.0, 0.25, 0.25, 0.75, 0.75, 0.75);
+    case Direction::eDirection_North: return CHORUS_NORTH_SHAPE;
+    case Direction::eDirection_South: return CHORUS_SOUTH_SHAPE;
+    case Direction::eDirection_West: return CHORUS_WEST_SHAPE;
+    case Direction::eDirection_East: return CHORUS_EAST_SHAPE;
     default: return NULL;
     }
 }
 
 const AABB* ChorusPlantBlock::getRandomNoduleShape(bool large, const BlockState*, const Direction* direction)
 {
-    double low = large ? 0.3125 : 0.25;
-    double high = large ? 0.8125 : 0.75;
-    double far = large ? 0.875 : 0.8125;
     switch (direction->get3DDataValue())
     {
-    case 2: return AABB::newTemp(low, low, 0.0, high, high, low);
-    case 3: return AABB::newTemp(low, low, low, far, high, high);
-    case 4: return AABB::newTemp(low, low, low, high, high, far);
-    case 5: return AABB::newTemp(0.0, low, low, low, high, high);
-    default: return NULL;
+    case Direction::eDirection_North:
+        return large ? createTempChorusShape(5.0, 5.0, 2.0, 11.0, 11.0, 4.0)
+                     : createTempChorusShape(4.0, 4.0, 3.0, 12.0, 12.0, 4.0);
+    case Direction::eDirection_South:
+        return large ? createTempChorusShape(5.0, 5.0, 11.0, 11.0, 11.0, 14.0)
+                     : createTempChorusShape(4.0, 4.0, 12.0, 12.0, 12.0, 13.0);
+    case Direction::eDirection_West:
+        return large ? createTempChorusShape(2.0, 5.0, 5.0, 4.0, 11.0, 11.0)
+                     : createTempChorusShape(3.0, 4.0, 4.0, 4.0, 12.0, 12.0);
+    case Direction::eDirection_East:
+        return large ? createTempChorusShape(12.0, 5.0, 5.0, 14.0, 11.0, 11.0)
+                     : createTempChorusShape(12.0, 4.0, 4.0, 13.0, 12.0, 12.0);
+    default:
+        return NULL;
     }
 }
 

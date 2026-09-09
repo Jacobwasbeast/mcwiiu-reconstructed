@@ -70,7 +70,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     void loadFromTag(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
     virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     const DyeColor* getColor();

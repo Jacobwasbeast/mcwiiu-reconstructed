@@ -34,7 +34,6 @@ public:
         virtual std::wstring getSerializedName() const;
 
         std::wstring mName;
-        int mValue;
     };
 
     RedStoneWireBlock();
@@ -53,8 +52,8 @@ public:
     virtual bool waterSpreadCausesSpawn();
     virtual bool canContainLiquid(const BlockState* state) const;
     int checkTarget(Level* level, const BlockPos& pos, int strength);
-    void updatePowerStrength(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const BlockState* state);
-    void updatePowerStrength(Level* level, const BlockPos& pos, const BlockState* state);
+    const BlockState* updatePowerStrength(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const BlockState* state);
+    const BlockState* updatePowerStrength(Level* level, const BlockPos& pos, const BlockState* state);
     void checkCornerChangeAt(Level* level, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
@@ -80,10 +79,10 @@ public:
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 private:
-    TextureAtlasSprite* mNorthIcon;
-    TextureAtlasSprite* mEastIcon;
-    TextureAtlasSprite* mSouthIcon;
-    TextureAtlasSprite* mWestIcon;
+    TextureAtlasSprite* mCrossIcon;
+    TextureAtlasSprite* mLineIcon;
+    TextureAtlasSprite* mCrossOverlayIcon;
+    TextureAtlasSprite* mLineOverlayIcon;
     bool mSignalSource;
     boost::unordered_set<BlockPos, boost::hash<const BlockPos>, std::equal_to<const BlockPos>, std::allocator<BlockPos> > mUpdatedPositions;
 };

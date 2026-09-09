@@ -83,11 +83,11 @@ public:
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const Property* getShapeProperty() = 0;
-    virtual bool usesDataBit();
+    virtual bool usesDataBit() { return mIsPowered; }
     bool mIsPowered;
 };
 
-bool railfilter__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape);
-bool railpredicate__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape);
+bool railfilter(BaseRailBlock::RailShape* shape);
+bool railpredicate(BaseRailBlock::RailShape* shape);
 
 #endif

@@ -58,7 +58,7 @@ public:
     void doBrew();
     virtual void tick();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual std::wstring getDisplayName();
     virtual void setChanged();

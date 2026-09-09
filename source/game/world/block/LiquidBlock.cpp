@@ -3,6 +3,7 @@
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/Math.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -10,11 +11,17 @@
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/Dimension.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 
 #include <cmath>
 
@@ -23,6 +30,7 @@ AbstractProperty<int>* LiquidBlock::LEVEL =
 
 LiquidBlock::LiquidBlock(Material* material) : Block(material)
 {
+    mFlowIcon = NULL;
     mBlockType = EBLOCK_TYPE_MOB_SPAWNER;
     setTicking(true);
 }
@@ -62,9 +70,9 @@ void LiquidBlock::DerivedInit()
     }
 }
 
-const AABB* LiquidBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
+const AABB* LiquidBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return Block::getShape(state, levelSource, pos);
 }
 
 const AABB* LiquidBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -164,12 +172,12 @@ bool LiquidBlock::shouldRenderBackwardUpFace(LevelSource* levelSource, const Blo
 
 EBlockRenderShape LiquidBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_INVISIBLE;
+    return static_cast<EBlockRenderShape>(4);
 }
 
 Item* LiquidBlock::getResource(const BlockState*, Random*, int)
 {
-    return NULL;
+    return Items::air;
 }
 
 int LiquidBlock::getResourceCount(Random*)
@@ -252,8 +260,31 @@ int LiquidBlock::getRenderLayer()
 
 void LiquidBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    if (state != NULL && level != NULL && random != NULL && random->nextInt(10) == 0)
-        level->globalLevelEvent(2000, pos, 0);
+    if (mMaterial == Material::WATER)
+    {
+        if (random->nextInt(64) == 0)
+            level->addParticle(PARTICLE_SUSPENDED, pos.x + random->nextDouble(), pos.y + random->nextDouble(),
+                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>(2, true));
+
+        const BlockState* above = level->getBlockState(pos.above());
+        if (above != NULL && above->getMaterial() == Material::AIR && random->nextInt(10) == 0)
+            level->addParticle(PARTICLE_DRIP_WATER, pos.x + random->nextFloat(), pos.y + 1.0,
+                               pos.z + random->nextFloat(), 0.0, 0.0, 0.0,
+                               arrayWithLength<int>(2, true));
+    }
+    else if (mMaterial == Material::LAVA)
+    {
+        if (random->nextInt(100) == 0)
+            level->addParticle(PARTICLE_LAVA, pos.x + random->nextDouble(), pos.y + 1.0,
+                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0,
+                               arrayWithLength<int>(2, true));
+
+        const BlockState* above = level->getBlockState(pos.above());
+        if (above != NULL && above->getMaterial() == Material::AIR && random->nextInt(200) == 0)
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextFloat(), pos.y + 1.0,
+                               pos.z + random->nextFloat(), 0.0, 0.0, 0.0,
+                               arrayWithLength<int>(2, true));
+    }
 }
 
 LiquidBlock* LiquidBlock::getDynamicLiquid(Material* material)
@@ -295,8 +326,15 @@ bool LiquidBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
 
 void LiquidBlock::fizz(Level* level, const BlockPos& pos)
 {
-    if (level != NULL)
-        level->globalLevelEvent(2000, pos, 0);
+    level->playLocalSound(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
+                          SoundEvents::LAVA_EXTINGUISH, SoundSource::eSoundSource_Blocks,
+                          0.5f, Math::random() * 0.8f + 1.2f, false, 16.0f);
+    for (int i = 0; i < 8; ++i)
+    {
+        level->addParticle(PARTICLE_LARGE_SMOKE,
+                           pos.x + Math::random(), pos.y + 1.2, pos.z + Math::random(),
+                           0.0, 0.0, 0.0, arrayWithLength<int>(2, true));
+    }
 }
 
 const BlockState* LiquidBlock::getBlockState(int data)
@@ -341,6 +379,7 @@ unsigned int LiquidBlock::getStaticLiquidElementId(unsigned short elementId)
 void LiquidBlock::registerIcons(IconRegister* iconRegister)
 {
     mIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water_still" : L"lava_still");
+    mFlowIcon = iconRegister->registerIcon(mMaterial == Material::WATER ? L"water_flow" : L"lava_flow");
     mUseSharedIcon = false;
 }
 
@@ -348,7 +387,7 @@ TextureAtlasSprite* LiquidBlock::getTexture(const Direction* direction, const Bl
 {
     if (direction == Direction::UP || direction == Direction::DOWN)
         return mIcon;
-    return mIcon;
+    return mFlowIcon;
 }
 
 double LiquidBlock::getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -380,6 +419,60 @@ void LiquidBlock::setLiquidElement(Level* level, const BlockPos& pos, unsigned s
 
 void LiquidBlock::trySpreadFire(Level* level, const BlockPos& pos, Random* random)
 {
-    if (level != NULL && random != NULL && random->nextInt(3) == 0)
-        level->hasChunkAt(pos);
+    if (!level->getGameRules()->getBoolean(0))
+        return;
+
+    const BlockState* above = level->getBlockState(pos.above());
+    if (above != NULL && above->getMaterial() != Material::AIR &&
+        !above->getMaterial()->isFlammable())
+        return;
+
+    for (int i = 0; i < 5; ++i)
+    {
+        BlockPos candidate = pos.offset(random->nextInt(3) - 1,
+                                        random->nextInt(3) - 1,
+                                        random->nextInt(3) - 1);
+        if (candidate.y < 256 && !level->hasChunkAt(candidate))
+            return;
+
+        const BlockState* state = level->getBlockState(candidate);
+        if (state != NULL && state->getMaterial()->isFlammable())
+        {
+            const Direction* directions[] = { Direction::WEST, Direction::EAST,
+                                               Direction::NORTH, Direction::SOUTH,
+                                               Direction::UP, Direction::DOWN };
+            for (unsigned int direction = 0; direction < 6; ++direction)
+            {
+                BlockPos adjacent = candidate.relative(directions[direction]);
+                if (level->getBlockState(adjacent)->getMaterial() == Material::AIR)
+                {
+                    level->setBlock(adjacent, Blocks::FIRE->defaultBlockState(), 11, false);
+                    return;
+                }
+            }
+        }
+
+        candidate = pos.offset(random->nextInt(3) - 1,
+                               random->nextInt(3) - 1,
+                               random->nextInt(3) - 1);
+        if (candidate.y < 256 && !level->hasChunkAt(candidate))
+            return;
+
+        state = level->getBlockState(candidate);
+        if (state != NULL && state->getMaterial()->isFlammable())
+        {
+            const Direction* directions[] = { Direction::WEST, Direction::EAST,
+                                               Direction::NORTH, Direction::SOUTH,
+                                               Direction::UP, Direction::DOWN };
+            for (unsigned int direction = 0; direction < 6; ++direction)
+            {
+                BlockPos adjacent = candidate.relative(directions[direction]);
+                if (level->getBlockState(adjacent)->getMaterial() == Material::AIR)
+                {
+                    level->setBlock(adjacent, Blocks::FIRE->defaultBlockState(), 11, false);
+                    return;
+                }
+            }
+        }
+    }
 }

@@ -14,8 +14,10 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/generation/Player.hpp"
 
+static const AABB* gDeadBushShape = NULL;
+
 DeadBushBlock::DeadBushBlock()
-    : Bush(Material::PLANT)
+    : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
 }
@@ -26,18 +28,20 @@ DeadBushBlock::~DeadBushBlock()
 
 const AABB* DeadBushBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gDeadBushShape;
 }
 
 const MaterialColor* DeadBushBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return MaterialColor::PLANT;
+    return MaterialColor::WOOD;
 }
 
 bool DeadBushBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 {
-    Block* block = state->getBlock();
-    return block == Blocks::grass || block == Blocks::dirt || block == Blocks::farmland || block == Blocks::sand;
+    return state->getBlock() == Blocks::sand
+        || state->getBlock() == Blocks::hardened_clay
+        || state->getBlock() == Blocks::stained_hardened_clay
+        || state->getBlock() == Blocks::dirt;
 }
 
 bool DeadBushBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
@@ -47,7 +51,7 @@ bool DeadBushBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
 
 Item* DeadBushBlock::getResource(const BlockState*, Random*, int)
 {
-    return NULL;
+    return Items::stick;
 }
 
 void DeadBushBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
@@ -58,7 +62,7 @@ void DeadBushBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player
     {
         player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
                           GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1, 0)));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::deadbush, 1, 0)));
         return;
     }
 

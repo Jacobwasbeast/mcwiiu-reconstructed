@@ -117,7 +117,8 @@ const BlockState* TripWireHookBlock::calculateState(Level* level, const BlockPos
     const Direction* facing = state->getValue(FACING);
     const Direction* opposite = facing->getOpposite();
     bool connected = false;
-    bool disarmed = false;
+    bool wirePowered = false;
+    bool wireDisarmed = false;
     const BlockState* result = replacement ? replacement : defaultBlockState();
     for (int i = 1; i <= 41; ++i)
     {
@@ -134,15 +135,44 @@ const BlockState* TripWireHookBlock::calculateState(Level* level, const BlockPos
             }
         }
         else if (block != this && block->isSolidBlockingCube(other)) break;
-        disarmed = disarmed || other->getValue(DISARMED);
+        wireDisarmed = wireDisarmed || other->getValue(DISARMED);
+        wirePowered = wirePowered || (!other->getValue(DISARMED) && other->getValue(POWERED));
     }
-    TypedBoxed<bool> attachedValue(connected && attached);
-    TypedBoxed<bool> poweredValue(powered);
+    bool newAttached = connected && attached;
+    TypedBoxed<bool> attachedValue(newAttached);
+    TypedBoxed<bool> poweredValue(wirePowered || powered);
     TypedBoxed<const Direction*> facingValue(facing);
     result = result->setBoxedValue(FACING, &facingValue);
     result = result->setBoxedValue(ATTACHED, &attachedValue);
     result = result->setBoxedValue(POWERED, &poweredValue);
-    if (result->hasProperty(DISARMED)) { TypedBoxed<bool> disarmedValue(disarmed); result = result->setBoxedValue(DISARMED, &disarmedValue); }
+    if (result->hasProperty(DISARMED))
+    {
+        TypedBoxed<bool> disarmedValue(wireDisarmed);
+        result = result->setBoxedValue(DISARMED, &disarmedValue);
+    }
+    if (distance > 0)
+    {
+        BlockPos otherPos = pos.relative(facing, distance);
+        const BlockState* other = level->getBlockState(otherPos);
+        if (other->getBlock() == this)
+        {
+            TypedBoxed<const Direction*> otherFacing(opposite);
+            const BlockState* otherState = other->setBoxedValue(FACING, &otherFacing)
+                ->setBoxedValue(ATTACHED, &attachedValue)
+                ->setBoxedValue(POWERED, &poweredValue);
+            level->setBlock(otherPos, otherState, 3, false);
+            notifyNeighbors(level, otherPos, opposite);
+            playSound(level, otherPos, newAttached, poweredValue.getValue(),
+                      other->getValue(ATTACHED), other->getValue(POWERED));
+        }
+    }
+    playSound(level, pos, newAttached, poweredValue.getValue(),
+              state->getValue(ATTACHED), state->getValue(POWERED));
+    if (!attached)
+    {
+        level->setBlock(pos, result, 3, false);
+        notifyNeighbors(level, pos, facing);
+    }
     return result;
 }
 

@@ -23,14 +23,14 @@ void BaseCommandBlock::load(CompoundTag* tag) {
     if (tag->contains(L"TrackOutput", 1)) mTrackOutput = tag->getBoolean(L"TrackOutput");
     tag->contains(L"LastOutput", 8); mLastOutput = L"";
 }
-bool BaseCommandBlock::hasPermission(unsigned int) { return false; }
+bool BaseCommandBlock::hasPermission(EGameCommand) { return false; }
 void BaseCommandBlock::setCommand(const std::wstring& command) { mCommand = command; mSuccessCount = 0; }
 std::wstring BaseCommandBlock::getCommand() { return mCommand; }
 void BaseCommandBlock::performCommand(Level*) {}
 std::wstring BaseCommandBlock::getName() { return mName; }
 std::wstring BaseCommandBlock::getDisplayName() { return getName(); }
 void BaseCommandBlock::setName(const std::wstring& name, bool) { mName = name; }
-void BaseCommandBlock::sendMessage(int, int*, unsigned int, std::wstring*, unsigned int) {}
+void BaseCommandBlock::sendMessage(ClientboundChatPacket::EChatPacketMessage, int*, unsigned int, std::wstring*, unsigned int) {}
 bool BaseCommandBlock::isSendMessageEnabled() { return false; }
 void BaseCommandBlock::setCommandStats(CommandStats::CommandStatType, int) {}
 void BaseCommandBlock::setLastOutput(std::wstring output) { mLastOutput = output; }

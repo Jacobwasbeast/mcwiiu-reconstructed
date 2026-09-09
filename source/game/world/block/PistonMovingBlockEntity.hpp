@@ -30,7 +30,7 @@ public:
     AABB* getAABB(LevelSource*, const BlockPos&, float);
     AABB* getAABB(LevelSource*, const BlockPos&);
     void moveByPositionAndProgress(AABB*);
-    void getMinMaxPiecesAABB(std::vector<AABB*>*);
+    AABB* getMinMaxPiecesAABB(std::vector<AABB*>*);
     AABB* getMovementArea(AABB*, const Direction*, double);
     static double getDeltaX(AABB*, const Direction*, AABB*);
     static double getDeltaY(AABB*, const Direction*, AABB*);
@@ -41,7 +41,7 @@ public:
     virtual void tick();
     static void addDataWalkers(DataFixerUpper*);
     virtual void load(CompoundTag*);
-    virtual void save(CompoundTag*);
+    virtual CompoundTag* save(CompoundTag*);
     void addCollissionAABBs(Level*, const BlockPos&, const AABB*, std::vector<AABB*>*, boost::shared_ptr<Entity>);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();

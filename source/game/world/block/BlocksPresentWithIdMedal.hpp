@@ -12,19 +12,19 @@ class BlocksPresentWithIdMedal : public GameMedal
 public:
     BlocksPresentWithIdMedal(int name, float target, unsigned int weight,
                              const std::set<int>& blockIds,
-                             int (&scoreFunction)(int, int), float value,
+                             float (&scoreFunction)(int, int), float value,
                              GameMedal::EOperator op);
 
     virtual ~BlocksPresentWithIdMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 
-    static int ABSOLUTE_VALUE(int value, int total);
-    static int PERCENTAGE_OF_TOTAL(int value, int total);
+    static float ABSOLUTE_VALUE(int value, int total);
+    static float PERCENTAGE_OF_TOTAL(int value, int total);
 
 private:
     std::set<int> mBlockIds;
-    int (*mScoreFunction)(int, int);
+    float (*mScoreFunction)(int, int);
 };
 
 #endif

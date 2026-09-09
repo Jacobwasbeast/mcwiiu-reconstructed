@@ -61,14 +61,14 @@ public:
     int getTotalCookTime(not_null_ptr<ItemInstance> item);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     bool isLit();
     static bool isLit(boost::shared_ptr<Container> container);
     bool canBurn();
     void burn();
     virtual void tick();
     virtual boost::shared_ptr<BlockEntity> clone();
-    static FurnaceBlockEntity* create();
+    static BlockEntity* create();
     static int getBurnDuration(not_null_ptr<ItemInstance> item);
     static bool isFuel(not_null_ptr<ItemInstance> item);
     bool wasCharcoalUsed();

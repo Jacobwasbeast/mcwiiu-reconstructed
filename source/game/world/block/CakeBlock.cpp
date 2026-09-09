@@ -103,7 +103,7 @@ bool CakeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 }
 
 int CakeBlock::getResourceCount(Random*) { return 0; }
-Item* CakeBlock::getResource(const BlockState*, Random*, int) { return NULL; }
+Item* CakeBlock::getResource(const BlockState*, Random*, int) { return Items::cake; }
 
 not_null_ptr<ItemInstance> CakeBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {

@@ -148,11 +148,12 @@ void HopperBlockEntity::load(CompoundTag* tag)
     mCooldown = tag->getInt(L"TransferCooldown");
 }
 
-void HopperBlockEntity::save(CompoundTag* tag)
+CompoundTag* HopperBlockEntity::save(CompoundTag* tag)
 {
     LockableContainerBlockEntity::save(tag);
     ContainerHelper::saveAllItems(tag, mItems);
     tag->putInt(L"TransferCooldown", mCooldown);
+    return tag;
 }
 
 void HopperBlockEntity::tick()
@@ -376,5 +377,5 @@ std::wstring HopperBlockEntity::getDisplayName()
 
 unsigned long long HopperBlockEntity::GetType()
 {
-    return 0x01e0020500000000ULL;
+    return 0x0000000001E00205ULL;
 }

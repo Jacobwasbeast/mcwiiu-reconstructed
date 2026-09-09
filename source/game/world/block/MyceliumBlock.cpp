@@ -11,6 +11,8 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -72,7 +74,8 @@ void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
             {
                 targetLightBlock = targetExtraLightBlock;
             }
-            if (targetState->getBlock() == Blocks::dirt && targetState == Blocks::dirt->defaultBlockState())
+            if (targetState->getBlock() == Blocks::dirt
+                && targetState->getValue(static_cast<AbstractProperty<DirtBlock::Variant*>*>(gVariantProperty)) == gVariants[0])
             {
                 if (level->getRawBrightness(target.above()) > 3 && targetLightBlock < 3)
                 {

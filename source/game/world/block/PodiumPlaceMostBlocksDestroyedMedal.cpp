@@ -1,39 +1,11 @@
 #include "game/world/block/PodiumPlaceMostBlocksDestroyedMedal.hpp"
 
-#include <boost/shared_ptr.hpp>
-
+#include "game/core/GameStats.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerStats.hpp"
-
-class GameStats;
-class PlayerList;
-class MinecraftServer;
-class ServerPlayer;
-
-extern MinecraftServer* gMinecraftServer;
-
-class GameStats
-{
-public:
-    boost::shared_ptr<ServerPlayer> GetFirstPlace();
-    boost::shared_ptr<ServerPlayer> GetSecondPlace();
-    boost::shared_ptr<ServerPlayer> GetThirdPlace();
-    int GetMostBlocksDestroyed();
-    int GetSecondMostBlocksDestroyed();
-    int GetThirdMostBlocksDestroyed();
-};
-
-class PlayerList
-{
-public:
-    boost::shared_ptr<ServerPlayer> getPlayerFromStatsUID(const StatsUID& statsUID);
-};
-
-class MinecraftServer
-{
-public:
-    PlayerList* getPlayers();
-};
 
 PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium podium,
     int name, float target, unsigned int weight, GameMedal::EOperator op)

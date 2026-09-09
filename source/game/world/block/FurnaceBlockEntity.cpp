@@ -19,7 +19,7 @@ FurnaceBlockEntity::~FurnaceBlockEntity()
 {
 }
 
-FurnaceBlockEntity* FurnaceBlockEntity::create()
+BlockEntity* FurnaceBlockEntity::create()
 {
     return new FurnaceBlockEntity();
 }
@@ -233,7 +233,7 @@ void FurnaceBlockEntity::load(CompoundTag* tag)
     mCharcoalUsed = tag->getBoolean(L"CharcoalUsed");
 }
 
-void FurnaceBlockEntity::save(CompoundTag* tag)
+CompoundTag* FurnaceBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putShort(L"BurnTime", (short)mLitTime);
@@ -242,6 +242,7 @@ void FurnaceBlockEntity::save(CompoundTag* tag)
     ContainerHelper::saveAllItems(tag, mItems);
     tag->putBoolean(L"CharcoalUsed", mCharcoalUsed);
     if (mName != NULL) mName->saveToTag(tag);
+    return tag;
 }
 
 bool FurnaceBlockEntity::isLit()
@@ -310,5 +311,5 @@ boost::shared_ptr<BlockEntity> FurnaceBlockEntity::clone()
 
 unsigned long long FurnaceBlockEntity::GetType()
 {
-    return 0x01e0020200000000ULL;
+    return 0x0000000001E00202ULL;
 }

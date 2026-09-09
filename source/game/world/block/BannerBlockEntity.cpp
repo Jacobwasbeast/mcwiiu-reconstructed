@@ -89,12 +89,13 @@ not_null_ptr<ItemInstance> BannerBlockEntity::getItem()
     return item;
 }
 
-void BannerBlockEntity::save(CompoundTag* tag)
+CompoundTag* BannerBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"Base", mBaseColor->getItemData());
     if (mPatterns != NULL) tag->put(L"Patterns", mPatterns);
     mCustomName->saveToTag(tag);
+    return tag;
 }
 
 void BannerBlockEntity::addTags(CompoundTag* tag, int color, ListTag* patterns)
@@ -226,7 +227,7 @@ boost::shared_ptr<BlockEntity> BannerBlockEntity::clone()
 
 unsigned long long BannerBlockEntity::GetType()
 {
-    return 0x0100020c00000000ULL;
+    return 0x000000000100020cULL;
 }
 
 BlockEntity* BannerBlockEntity::create()

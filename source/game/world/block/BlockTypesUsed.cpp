@@ -18,12 +18,12 @@ double BlockTypesUsed::GetScore(PlayerStats* playerStats) const
         }
 
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-        std::map<int, int>::const_iterator it = roundStats->mBlocksUsed.mRounds.begin();
-        for (; it != roundStats->mBlocksUsed.mRounds.end(); ++it)
+        std::map<int, int>::const_iterator it = roundStats->mBlocksUsed.mItems.begin();
+        for (; it != roundStats->mBlocksUsed.mItems.end(); ++it)
         {
             blockTypes.insert(it->first);
         }
     }
 
-    return (double)(float)blockTypes.size();
+    return (float)blockTypes.size();
 }

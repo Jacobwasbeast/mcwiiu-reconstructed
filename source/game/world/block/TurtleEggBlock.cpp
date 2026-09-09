@@ -9,9 +9,11 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
@@ -20,6 +22,12 @@
 static AbstractProperty<int>* TURTLE_EGG_HATCH = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"hatch", 0, 2));
 static AbstractProperty<int>* TURTLE_EGG_COUNT = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"eggs", 1, 4));
 static TextureAtlasSprite* turtleEggTexture[4];
+static const AABB* TURTLE_EGG_SHAPE[4] = {
+    AABB::newPermanent(3.0 / 16.0, 0.0, 3.0 / 16.0, 13.0 / 16.0, 7.0 / 16.0, 13.0 / 16.0),
+    AABB::newPermanent(2.0 / 16.0, 0.0, 2.0 / 16.0, 14.0 / 16.0, 7.0 / 16.0, 14.0 / 16.0),
+    AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0, 15.0 / 16.0, 7.0 / 16.0, 15.0 / 16.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 7.0 / 16.0, 1.0)
+};
 
 TurtleEggBlock::TurtleEggBlock()
     : Block(Material::EGG)
@@ -99,7 +107,7 @@ bool TurtleEggBlock::playerWillDestroy(Level* level, const BlockPos& pos, const 
 
 Item* TurtleEggBlock::getResource(const BlockState*, Random*, int)
 {
-    return Item::byBlock(this);
+    return Items::air;
 }
 
 bool TurtleEggBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -108,9 +116,21 @@ bool TurtleEggBlock::mayPlace(Level* level, const BlockPos& pos)
     return below->getBlock() != NULL && below->getBlock()->isSolidRender(below);
 }
 
-bool TurtleEggBlock::use(Level*, const BlockPos&, const BlockState*, boost::shared_ptr<Player>, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
+bool TurtleEggBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool)
 {
-    return false;
+    if (!player)
+        return false;
+    not_null_ptr<ItemInstance> held = player->getItemInHand(hand);
+    if (held->isEmpty() || held->getItem() != Item::byBlock(this))
+        return false;
+    int count = state->getValue(TURTLE_EGG_COUNT);
+    if (count >= 3)
+        return false;
+    TypedBoxed<int> value(count + 1);
+    level->setBlock(pos, state->setBoxedValue(TURTLE_EGG_COUNT, &value), 3, false);
+    if (!player->mAbilities.mInstabuild)
+        held->shrink(1);
+    return true;
 }
 
 bool TurtleEggBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>)
@@ -135,7 +155,13 @@ void TurtleEggBlock::addCollisionAABBs(const BlockState* state, Level* level, co
     if (count > 3) Block::addCollisionAABBs(state, level, pos, entityBox, boxes, entity, actual);
 }
 
-const AABB* TurtleEggBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* TurtleEggBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
+{
+    int count = state->getValue(TURTLE_EGG_COUNT);
+    if (count < 1) count = 1;
+    if (count > 4) count = 4;
+    return TURTLE_EGG_SHAPE[count - 1];
+}
 EBlockRenderShape TurtleEggBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(50); }
 int TurtleEggBlock::getRenderLayer() { return 0; }
 bool TurtleEggBlock::canInstantlyTick() { return false; }

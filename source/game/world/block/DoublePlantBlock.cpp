@@ -12,7 +12,9 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
 AbstractProperty<DoublePlantBlock::Variant*>* DoublePlantBlock::VARIANT = NULL;
@@ -20,6 +22,7 @@ AbstractProperty<DoublePlantBlock::Half*>* DoublePlantBlock::HALF = NULL;
 AbstractProperty<const Direction*>* DoublePlantBlock::FACING = NULL;
 DoublePlantBlock::Variant* DoublePlantBlock::VARIANTS[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
 DoublePlantBlock::Half* DoublePlantBlock::HALVES[2] = { NULL, NULL };
+DoublePlantBlock::Variant* gDoublePlantGrass = NULL;
 
 DoublePlantBlock::Half::Half(int id) : mId(id) {}
 DoublePlantBlock::Half::~Half() {}
@@ -40,7 +43,7 @@ DoublePlantBlock::Variant* DoublePlantBlock::Variant::byData(int data)
     return VARIANTS[data];
 }
 TextureAtlasSprite* DoublePlantBlock::Variant::getIcon(ETexture texture) { return mIcons[texture]; }
-int DoublePlantBlock::Variant::getTexture(int texture) { return mTextures == NULL ? 0 : texture; }
+std::wstring* DoublePlantBlock::Variant::getTexture(int texture) { return mTextures + texture; }
 void DoublePlantBlock::Variant::setIcon(ETexture texture, TextureAtlasSprite* icon) { mIcons[texture] = icon; }
 std::wstring DoublePlantBlock::Variant::toString() const { return mName; }
 std::wstring DoublePlantBlock::Variant::getSerializedName() const { return mName; }
@@ -82,7 +85,9 @@ void DoublePlantBlock::blockStaticCtor()
         VARIANTS[3] = new Variant(3, L"fern", 178, 178, NULL);
         VARIANTS[4] = new Variant(4, L"rose", 179, 179, NULL);
         VARIANTS[5] = new Variant(5, L"paeonia", 180, 180, NULL);
+        gDoublePlantGrass = VARIANTS[2];
     }
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 const AABB* DoublePlantBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -143,11 +148,13 @@ int DoublePlantBlock::popGrassResources(Level* level, const BlockPos& pos, const
 }
 void DoublePlantBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
 {
-    popGrassResources(level, pos, state, player); Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+    popGrassResources(level, pos, state, player);
+    Block::playerDestroy(level, player, pos, state, blockEntity, tool);
 }
 bool DoublePlantBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    popGrassResources(level, pos, state, player); return Block::playerWillDestroy(level, pos, state, player);
+    popGrassResources(level, pos, state, player);
+    return Block::playerWillDestroy(level, pos, state, player);
 }
 not_null_ptr<ItemInstance> DoublePlantBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
@@ -181,7 +188,8 @@ int DoublePlantBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int DoublePlantBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData) { return Block::GetInteractTooltip(tooltipData); }
 BlockStateDefinition* DoublePlantBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT, HALF, FACING }; return new BlockStateDefinition(this, properties, 3);
+    const Property* properties[] = { VARIANT, HALF, FACING };
+    return new BlockStateDefinition(this, properties, 3);
 }
 EBlockOffsetType DoublePlantBlock::getOffsetType() { return BLOCK_OFFSET_XZ; }
 EBlockRenderShape DoublePlantBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)41; }
@@ -190,5 +198,16 @@ TextureAtlasSprite* DoublePlantBlock::getIconTexture(const Direction*, const Blo
 TextureAtlasSprite* DoublePlantBlock::getTexture(const Direction*, const BlockState* state) { return getTexture(state, Variant::BOTTOM); }
 void DoublePlantBlock::registerIcons(IconRegister* iconRegister)
 {
-    int i; for (i = 0; i < 6; ++i) if (VARIANTS[i] != NULL) { int j; for (j = 0; j < 4; ++j) VARIANTS[i]->setIcon((Variant::ETexture)j, iconRegister->registerIcon(L"double_plant")); }
+    for (int variantIndex = 0; variantIndex < 6; ++variantIndex)
+    {
+        Variant* variant = VARIANTS[variantIndex];
+        for (int texture = 0; texture < 4; ++texture)
+        {
+            std::wstring* name = variant->getTexture(texture);
+            if (!name->empty())
+            {
+                variant->setIcon(static_cast<Variant::ETexture>(texture), iconRegister->registerIcon(*name));
+            }
+        }
+    }
 }

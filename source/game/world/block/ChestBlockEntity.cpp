@@ -1,9 +1,18 @@
 #include "game/world/block/ChestBlockEntity.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ParticleType.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/item/CompoundContainer.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
+#include "game/ui/ChestMenu.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/generation/Player.hpp"
 
 ChestBlockEntity::ChestBlockEntity(bool large)
     : RandomizableLockableContainerBlockEntity(),
@@ -87,7 +96,7 @@ std::wstring ChestBlockEntity::getCustomName()
 
 unsigned int ChestBlockEntity::getContainerSize()
 {
-    return mItems.size();
+    return 0x1b;
 }
 
 bool ChestBlockEntity::isEmpty()
@@ -115,7 +124,7 @@ void ChestBlockEntity::setChanged()
 
 bool ChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (isRemoved() || !player)
+    if (mNeighbourRemoved)
     {
         return false;
     }
@@ -124,35 +133,47 @@ bool ChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 
 void ChestBlockEntity::startOpen(boost::shared_ptr<Player> player)
 {
-    if (!player)
+    if (player->isSpectator())
     {
         return;
     }
+    if (mOpenCount < 0)
+    {
+        mOpenCount = 0;
+    }
     ++mOpenCount;
-    RandomizableLockableContainerBlockEntity::startOpen(player);
+    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+    mLevel->updateNeighborsAt(mPos, getBlock(), false);
+    if (getType() != 1)
+    {
+        mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+    }
 }
 
 void ChestBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 {
-    if (mOpenCount > 0)
+    if (player->isSpectator() || dynamic_cast<ChestBlock*>(getBlock()) == NULL)
     {
-        --mOpenCount;
+        return;
     }
-    RandomizableLockableContainerBlockEntity::stopOpen(player);
+    --mOpenCount;
+    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+    mLevel->updateNeighborsAt(mPos, getBlock(), false);
+    if (getType() != 1)
+    {
+        mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+    }
 }
 
-bool ChestBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
+bool ChestBlockEntity::canPlaceItem(int, not_null_ptr<ItemInstance>)
 {
-    return slot >= 0 && static_cast<unsigned int>(slot) < getContainerSize() && !!item;
+    return true;
 }
 
 AbstractContainerMenu* ChestBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    if (player)
-    {
-        unpackLootTable(player);
-    }
-    return NULL;
+    unpackLootTable(player);
+    return new ChestMenu(inventory, boost::static_pointer_cast<ChestBlockEntity>(shared_from_this()), player);
 }
 
 int ChestBlockEntity::getTypeId(bool large)
@@ -175,14 +196,20 @@ void ChestBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 
 void ChestBlockEntity::load(CompoundTag* tag)
 {
-    LockableContainerBlockEntity::load(tag);
+    BlockEntity::load(tag);
+    mCustomName->loadFromTag(tag);
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
+    mLarge = tag->getBoolean(L"bonus");
 }
 
-void ChestBlockEntity::save(CompoundTag* tag)
+CompoundTag* ChestBlockEntity::save(CompoundTag* tag)
 {
-    LockableContainerBlockEntity::save(tag);
+    BlockEntity::save(tag);
+    mCustomName->saveToTag(tag);
     ContainerHelper::saveAllItems(tag, mItems);
+    tag->putBoolean(L"bonus", mLarge);
+    return tag;
 }
 
 void ChestBlockEntity::clearCache()
@@ -310,32 +337,117 @@ void ChestBlockEntity::checkNeighbors()
 
 void ChestBlockEntity::tickRefilledAnimation()
 {
-    if (mRefilledAnimationTicks > 0)
+    if (mRefilledAnimationTicks < 0)
     {
-        --mRefilledAnimationTicks;
+        return;
     }
+    if (getLevel()->mRandom->nextInt(4) != 0)
+    {
+        return;
+    }
+    double x = (double)getBlockPos().x + (double)getLevel()->mRandom->nextFloat();
+    double y = (double)getBlockPos().y + 0.7;
+    double z = (double)getBlockPos().z + (double)getLevel()->mRandom->nextFloat();
+    mLevel->addParticle(PARTICLE_CHEST_REFILL, true, x, y, z, 0.0, 0.1, 0.0, arrayWithLength<int>());
+    --mRefilledAnimationTicks;
 }
 
 void ChestBlockEntity::tick()
 {
-    ++mTickCount;
     tickRefilledAnimation();
     checkNeighbors();
-    mOpenOld = mOpen;
-    if (mOpenCount > 0 && mOpen < 1.0F)
+    if (mNeighbourRemoved)
     {
-        mOpen += 0.1F;
-        if (mOpen > 1.0F)
-        {
-            mOpen = 1.0F;
-        }
+        mLevel->updateNeighborsAt(mPos, getBlock(), false);
+        mNeighbourRemoved = false;
     }
-    else if (mOpenCount == 0 && mOpen > 0.0F)
+
+    int x = mPos.x;
+    int y = mPos.y;
+    int z = mPos.z;
+    ++mTickCount;
+
+    if (!mLevel->mIsClientSide && mOpenCount != 0 && (mTickCount + x + y + z) % 200 == 0)
     {
-        mOpen -= 0.1F;
-        if (mOpen < 0.0F)
+        mOpenCount = 0;
+        const AABB* range = AABB::newTemp((double)((float)x - 5.0f), (double)((float)y - 5.0f),
+                                          (double)((float)z - 5.0f), (double)((float)(x + 1) + 5.0f),
+                                          (double)((float)(y + 1) + 5.0f), (double)((float)(z + 1) + 5.0f));
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), range);
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
         {
-            mOpen = 0.0F;
+            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+            ChestMenu* menu = dynamic_cast<ChestMenu*>(player->mContainerMenu);
+            if (menu == NULL)
+            {
+                continue;
+            }
+            boost::shared_ptr<Container> container = menu->getContainer();
+            boost::shared_ptr<Container> self =
+                boost::dynamic_pointer_cast<Container>(shared_from_this());
+            boost::shared_ptr<CompoundContainer> compound =
+                boost::dynamic_pointer_cast<CompoundContainer>(container);
+            if (container == self || (compound.get() != NULL && compound->contains(self)))
+            {
+                ++mOpenCount;
+            }
+        }
+        delete entities;
+    }
+
+    mOpenOld = mOpen;
+    if (mOpenCount > 0 && mOpen == 0.0f && mNorthNeighbour.expired() && mWestNeighbour.expired())
+    {
+        double soundX = (double)x + 0.5;
+        double soundZ = (double)z + 0.5;
+        if (!mEastNeighbour.expired())
+        {
+            soundZ += 0.5;
+        }
+        if (!mSouthNeighbour.expired())
+        {
+            soundX += 0.5;
+        }
+        mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
+                          SoundEvents::CHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.2f,
+                          mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+    }
+
+    if ((mOpenCount == 0 && mOpen > 0.0f) || (mOpenCount > 0 && mOpen < 1.0f))
+    {
+        float previous = mOpen;
+        if (mOpenCount > 0)
+        {
+            mOpen += 0.1f;
+        }
+        else
+        {
+            mOpen -= 0.1f;
+        }
+        if (mOpen > 1.0f)
+        {
+            mOpen = 1.0f;
+        }
+        if (mOpen < 0.5f && previous >= 0.5f && mNorthNeighbour.expired() && mWestNeighbour.expired())
+        {
+            double soundX = (double)x + 0.5;
+            double soundZ = (double)z + 0.5;
+            if (!mEastNeighbour.expired())
+            {
+                soundZ += 0.5;
+            }
+            if (!mSouthNeighbour.expired())
+            {
+                soundX += 0.5;
+            }
+            mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
+                              SoundEvents::CHEST_CLOSE, SoundSource::eSoundSource_Blocks, 0.2f,
+                              mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+        }
+        if (mOpen < 0.0f)
+        {
+            mOpen = 0.0f;
         }
     }
 }
@@ -365,12 +477,11 @@ int ChestBlockEntity::getType()
 {
     if (mCachedType == -1)
     {
-        ChestBlock* chestBlock = dynamic_cast<ChestBlock*>(getBlock());
-        if (!mLevel || !chestBlock)
+        if (mLevel == NULL || dynamic_cast<ChestBlock*>(getBlock()) == NULL)
         {
             return 0;
         }
-        mCachedType = 0;
+        mCachedType = ((ChestBlock*)getBlock())->mType;
     }
     return mCachedType;
 }
@@ -415,5 +526,5 @@ std::wstring ChestBlockEntity::getDisplayName()
 
 unsigned long long ChestBlockEntity::GetType()
 {
-    return 0x01e0020100000000ULL;
+    return 0x0000000001e00201ULL;
 }

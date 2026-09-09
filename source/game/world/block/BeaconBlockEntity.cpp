@@ -1,8 +1,23 @@
 #include "game/world/block/BeaconBlockEntity.hpp"
 
 #include <algorithm>
+#include <typeinfo>
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/world/Level.hpp"
+#include "game/util/AABB.hpp"
+#include "game/ui/BeaconMenu.hpp"
+
+namespace
+{
+MobEffect* sBeaconEffects[12] = {0};
+MobEffect* sBeaconEffectOrder[6] = {0};
+int sBeaconEffectCount = 0;
+}
 
 BeaconBlockEntity::BeaconBeamSection::BeaconBeamSection(arrayWithLength<float> color)
     : mRed(color.length > 0 ? color.data[0] : 0.0F),
@@ -183,12 +198,15 @@ void BeaconBlockEntity::clearContent()
 
 AbstractContainerMenu* BeaconBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    return NULL;
+    (void)player;
+    boost::shared_ptr<Container> beacon = boost::dynamic_pointer_cast<Container>(shared_from_this());
+    boost::shared_ptr<Container> playerContainer = boost::static_pointer_cast<Container>(inventory);
+    return new BeaconMenu(playerContainer, beacon);
 }
 
 int BeaconBlockEntity::getTypeId(bool large)
 {
-    return 0;
+    return 7;
 }
 
 InteractionObject::NameData BeaconBlockEntity::GetNetworkNameData()
@@ -238,6 +256,26 @@ void BeaconBlockEntity::updateShape()
 
 void BeaconBlockEntity::applyEffects()
 {
+    if (mLevel == NULL || mLevels <= 0 || mPrimaryPower == NULL) return;
+    const int radius = mLevels * 10 + 10;
+    AABB searchArea(static_cast<double>(mPos.x - radius), static_cast<double>(mPos.y - radius),
+                    static_cast<double>(mPos.z - radius), static_cast<double>(mPos.x + radius + 1),
+                    static_cast<double>(mPos.y + radius + 1), static_cast<double>(mPos.z + radius + 1));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), &searchArea);
+    if (entities == NULL) return;
+    const int duration = radius * 20;
+    const int amplifier = mLevels >= 4 ? 1 : 0;
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+        if (player != NULL) player->addEffect(new MobEffectInstance(mPrimaryPower, duration, amplifier), boost::shared_ptr<Entity>());
+    }
+    if (mLevels >= 4 && mSecondaryPower != NULL && mSecondaryPower != mPrimaryPower)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+        {
+            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+            if (player != NULL) player->addEffect(new MobEffectInstance(mSecondaryPower, duration, 0), boost::shared_ptr<Entity>());
+        }
 }
 
 void BeaconBlockEntity::checkValidity()
@@ -264,10 +302,21 @@ boost::shared_ptr<BlockEntity> BeaconBlockEntity::clone()
 
 void BeaconBlockEntity::AddEffect(int level, int slot, MobEffect* effect)
 {
+    sBeaconEffects[level * 3 + slot] = effect;
+    sBeaconEffectOrder[sBeaconEffectCount++] = effect;
 }
 
 void BeaconBlockEntity::staticCtor()
 {
+    for (int i = 0; i < 12; ++i) sBeaconEffects[i] = NULL;
+    for (int i = 0; i < 6; ++i) sBeaconEffectOrder[i] = NULL;
+    sBeaconEffectCount = 0;
+    AddEffect(0, 0, MobEffects::MOVEMENT_SPEED);
+    AddEffect(0, 1, MobEffects::DIG_SPEED);
+    AddEffect(1, 0, MobEffects::DAMAGE_RESISTANCE);
+    AddEffect(1, 1, MobEffects::JUMP);
+    AddEffect(2, 0, MobEffects::DAMAGE_BOOST);
+    AddEffect(3, 0, MobEffects::REGENERATION);
 }
 
 void BeaconBlockEntity::tick()
@@ -311,13 +360,14 @@ void BeaconBlockEntity::load(CompoundTag* tag)
     mName->loadFromTag(tag);
 }
 
-void BeaconBlockEntity::save(CompoundTag* tag)
+CompoundTag* BeaconBlockEntity::save(CompoundTag* tag)
 {
     LockableContainerBlockEntity::save(tag);
     tag->putInt(L"Levels", mLevels);
     tag->putInt(L"BeamDirection", mBeamDirection);
     tag->putInt(L"BeamLength", mBeamLength);
     mName->saveToTag(tag);
+    return tag;
 }
 
 bool BeaconBlockEntity::triggerEvent(int id, int param)
@@ -352,5 +402,5 @@ BlockEntity* BeaconBlockEntity::create()
 
 unsigned long long BeaconBlockEntity::GetType()
 {
-    return 0x01E0020400000000ULL;
+    return 0x0000000001E00204ULL;
 }

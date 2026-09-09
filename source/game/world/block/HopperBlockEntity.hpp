@@ -46,7 +46,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void tick();
 
     bool inventoryEmpty();

@@ -22,7 +22,7 @@ public:
     not_null_ptr<ItemInstance> getItem();
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual CompoundTag* getUpdateTag();
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     bool isHeadPiece();

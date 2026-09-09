@@ -44,7 +44,7 @@ public:
     virtual int getTypeId(bool large);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void clearCache();
     void heyImYourNeighbor(boost::shared_ptr<ChestBlockEntity> neighbour, const Direction* direction);
     boost::shared_ptr<ChestBlockEntity> getNeighbour();

@@ -48,6 +48,7 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
     queue.push_back(std::make_pair(pos, 0));
     int removed = 0;
 
+    const BlockState* air = Blocks::AIR->defaultBlockState();
     while (!queue.empty() && removed <= 64)
     {
         std::pair<BlockPos, int> current = queue.front();
@@ -61,22 +62,24 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
 
             if (adjacentState->getMaterial() == Material::WATER)
             {
-                level->setBlock(adjacent, Blocks::AIR->defaultBlockState(), 3, false);
+                level->setBlock(adjacent, air, 3, false);
                 ++removed;
                 if (current.second < 6)
                     queue.push_back(std::make_pair(adjacent, current.second + 1));
             }
-            else if (adjacentState->getBlock() == Blocks::FLOWING_WATER)
+            else if (adjacentState->getBlock()->isLiquidBlock())
             {
-                level->setBlockAndUpdate(adjacent, Blocks::AIR->defaultBlockState());
-                level->setBlock(adjacent, Blocks::AIR->defaultBlockState(), 3, false);
+                level->setBlockAndUpdate(adjacent, air);
+                level->setBlock(adjacent, air, 3, false);
                 ++removed;
                 if (current.second < 6)
                     queue.push_back(std::make_pair(adjacent, current.second + 1));
             }
-            else if (adjacentState->getBlock() == Blocks::WATER)
+            else if (!level->isEmptyBlock(adjacent) &&
+                     level->getLiquidBlockState(adjacent)->getMaterial() == Material::WATER)
             {
-                level->setBlockAndUpdate(adjacent, Blocks::AIR->defaultBlockState());
+                level->setBlockAndUpdate(adjacent, air);
+                ++removed;
                 if (current.second < 6)
                     queue.push_back(std::make_pair(adjacent, current.second + 1));
             }

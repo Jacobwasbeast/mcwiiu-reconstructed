@@ -13,17 +13,17 @@ DriedKelpBlock::DriedKelpBlock(Material* material)
     DerivedInit();
     setTicking(true);
     mSideIcon = NULL;
-    mBottomIcon = NULL;
+    mFlippedSideIcon = NULL;
 }
 
 DriedKelpBlock::~DriedKelpBlock()
 {
 }
 
-void DriedKelpBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos& fromPos)
+void DriedKelpBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!level->mIsClientSide
-        && level->getBlockId(fromPos.x, fromPos.y + 1, fromPos.z) == 51
+        && level->getBlockId(pos.x, pos.y + 1, pos.z) == 51
         && level->isUnderWater(pos, 269, 0))
     {
         level->removeBlock(pos.above());
@@ -47,7 +47,7 @@ TextureAtlasSprite* DriedKelpBlock::getTexture(const Direction* direction, const
     }
     if (direction == Direction::SOUTH || direction == Direction::EAST)
     {
-        return mBottomIcon;
+        return mFlippedSideIcon;
     }
     return mTopIcon;
 }
@@ -56,5 +56,6 @@ void DriedKelpBlock::registerIcons(IconRegister* iconRegister)
 {
     mSideIcon = iconRegister->registerIcon(L"dried_kelp_side");
     mTopIcon = iconRegister->registerIcon(L"dried_kelp_top");
-    mBottomIcon = new FlippedIcon(mSideIcon, true, false);
+    delete mFlippedSideIcon;
+    mFlippedSideIcon = new FlippedIcon(mSideIcon, true, false);
 }

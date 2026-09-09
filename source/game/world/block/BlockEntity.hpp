@@ -31,7 +31,7 @@ public:
     virtual void setLevel(Level* level);
     virtual bool hasLevel();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void tick();
     virtual void setLevelForLoading(Level* level);
     virtual int getData();

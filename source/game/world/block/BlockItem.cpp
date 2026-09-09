@@ -72,8 +72,8 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
     }
 
     CompoundTag* entityTag = new CompoundTag;
-    blockEntity->save(entityTag);
-    CompoundTag* originalTag = entityTag->copy();
+    CompoundTag* savedTag = blockEntity->save(entityTag);
+    CompoundTag* originalTag = savedTag->copy();
     entityTag->merge(tag);
     entityTag->putInt(L"x", pos.x);
     entityTag->putInt(L"y", pos.y);
@@ -156,7 +156,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             }
 
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-            if (blockEntity.get() != NULL && blockEntity->GetType() == 0x0120021200000000ULL)
+            if (blockEntity.get() != NULL && blockEntity->GetType() == 0x01200212ULL)
             {
                 boost::shared_ptr<ConduitBlockEntity> conduit =
                     boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);

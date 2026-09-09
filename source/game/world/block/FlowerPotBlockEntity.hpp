@@ -24,7 +24,7 @@ public:
     void setItemInstance(const not_null_ptr<ItemInstance>& item);
     int getItemData();
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();

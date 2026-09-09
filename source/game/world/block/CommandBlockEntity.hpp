@@ -41,7 +41,7 @@ public:
     unsigned char isPowered();
     unsigned char wasConditionMet();
     unsigned char isAutomatic();
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     void setAutomatic(bool automatic);
     virtual void load(CompoundTag* tag);
     virtual boost::shared_ptr<Packet> getUpdatePacket();

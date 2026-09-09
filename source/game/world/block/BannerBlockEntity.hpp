@@ -30,7 +30,7 @@ public:
     static ItemInstance* addTags(ItemInstance* item, int color, ListTag* patterns);
     static void addTags(not_null_ptr<ItemInstance> item, int color, ListTag* patterns);
     not_null_ptr<ItemInstance> getItem();
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     static void addTags(CompoundTag* tag, int color, ListTag* patterns);
     virtual void load(CompoundTag* tag);
     virtual boost::shared_ptr<Packet> getUpdatePacket();

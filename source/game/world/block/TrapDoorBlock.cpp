@@ -202,4 +202,7 @@ EBlockFaceShape TrapDoorBlock::getBlockFaceShape(LevelSource*, const BlockState*
     return BLOCK_FACE_UNDEFINED;
 }
 
-EBlockRenderShape TrapDoorBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_MODEL; }
+EBlockRenderShape TrapDoorBlock::getRenderShape(const BlockState*)
+{
+    return static_cast<EBlockRenderShape>(0x2b);
+}

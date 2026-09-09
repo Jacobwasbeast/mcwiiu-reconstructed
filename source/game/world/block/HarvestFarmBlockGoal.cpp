@@ -8,13 +8,8 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/CropBlock.hpp"
 #include "game/world/generation/Villager.hpp"
-
-class CropBlock
-{
-public:
-    static bool isMaxAge(const BlockState* state);
-};
 
 static bool isCropBlock(Block* block)
 {
@@ -153,7 +148,7 @@ void HarvestFarmBlockGoal::tick()
     }
     else if (mTargetType == 0)
     {
-        if (isCropBlock(block) && CropBlock::isMaxAge(state))
+        if (isCropBlock(block) && static_cast<CropBlock*>(block)->isMaxAge(state))
         {
             level->destroyBlock(above, true);
             mTargetType = -1;
@@ -184,7 +179,7 @@ bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     }
     if (mWantsMoreFood && isCropBlock(aboveBlock) &&
         (mTargetType == 0 || mTargetType == -1) &&
-        CropBlock::isMaxAge(aboveState))
+        static_cast<CropBlock*>(aboveBlock)->isMaxAge(aboveState))
     {
         mTargetType = 0;
         return true;

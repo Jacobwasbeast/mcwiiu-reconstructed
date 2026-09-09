@@ -79,7 +79,7 @@ bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos,
     }
     const BlockState* state = level->getBlockState(pos);
     const Material* material = state->getMaterial();
-    if (material != getCraftingMaterial() && material != Material::AIR)
+    if (material != getCraftingMaterial() && material != Material::LAVA)
     {
         return !_isWaterBlocking(level, pos, sourcePos, direction);
     }
@@ -124,6 +124,8 @@ int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int
     int best = 1000;
     static const Direction* directions[4] = {Direction::WEST, Direction::EAST,
                                              Direction::NORTH, Direction::SOUTH};
+    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST,
+                                                 Direction::SOUTH, Direction::NORTH};
     for (int index = 0; index < 4; ++index)
     {
         if (index == directionIndex)
@@ -131,7 +133,7 @@ int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int
             continue;
         }
         const BlockPos next = pos.relative(directions[index]);
-        if (_isWaterBlocking(level, next, pos, directions[index]))
+        if (_isWaterBlocking(level, next, pos, fromDirections[index]))
         {
             continue;
         }
@@ -139,7 +141,7 @@ int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int
         if (state->getMaterial() == getCraftingMaterial())
         {
             const BlockPos below = next.below();
-            if (_isWaterBlocking(level, below, pos, Direction::DOWN))
+            if (_isWaterBlocking(level, below, pos, Direction::UP))
             {
                 const int limit = getCraftingMaterial() == Material::LAVA ? 2 : 4;
                 if (distance < limit)
@@ -160,15 +162,17 @@ void DynamicLiquidBlock::_getSpread(Level* level, const BlockPos& pos, bool (&sp
 {
     static const Direction* directions[4] = {Direction::WEST, Direction::EAST,
                                              Direction::NORTH, Direction::SOUTH};
+    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST,
+                                                 Direction::SOUTH, Direction::NORTH};
     int distances[4] = {1000, 1000, 1000, 1000};
     int minimum = 1000;
     for (int index = 0; index < 4; ++index)
     {
         const BlockPos next = pos.relative(directions[index]);
-        if (!_isWaterBlocking(level, next, pos, directions[index]))
+        if (!_isWaterBlocking(level, next, pos, fromDirections[index]))
         {
             const BlockPos below = next.below();
-            if (_isWaterBlocking(level, below, pos, Direction::DOWN))
+            if (_isWaterBlocking(level, below, pos, Direction::UP))
             {
                 distances[index] = _getSlopeDistance(level, next, 1, index);
             }

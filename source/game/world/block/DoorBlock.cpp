@@ -58,7 +58,8 @@ std::wstring DoorBlock::HingeSide::toString() const { return getSerializedName()
 std::wstring DoorBlock::HingeSide::getSerializedName() const { return this == DoorBlock::LEFT ? L"left" : L"right"; }
 
 DoorBlock::DoorBlock(Material* material)
-    : Block(material)
+    : Block(material),
+      mDoorData(0)
 {
     DerivedInit();
     const BlockState* state = mStateDefinition->any();

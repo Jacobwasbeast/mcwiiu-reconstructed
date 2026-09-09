@@ -2,7 +2,9 @@
 
 #include "game/core/Mth.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ItemFrame.hpp"
 #include "game/util/Math.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 
 double ClockItem_ItemPropertyFunction::wobble(Level* level, double value)
@@ -27,24 +29,17 @@ float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstan
     {
         boost::shared_ptr<ItemFrame> frame = itemInstance->getFrame();
         if (frame)
-            return 0.0f;
+            level = frame->mLevel;
     }
 
     if (level == NULL)
         return 0.0f;
 
     double value;
-    if (level->isDay())
+    if (level->mDimension->isNaturalDimension())
         value = level->getTimeOfDay(1.0f);
     else
         value = Math::random();
 
     return (float)Mth::positiveModulo((float)wobble(level, value), 1.0f);
-}
-
-float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstance,
-                                           Level* level,
-                                           boost::shared_ptr<LivingEntity> entity) const
-{
-    return const_cast<ClockItem_ItemPropertyFunction*>(this)->call(itemInstance, level, entity);
 }

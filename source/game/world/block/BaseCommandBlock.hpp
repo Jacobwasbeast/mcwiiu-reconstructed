@@ -3,14 +3,15 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/command/CommandStats.hpp"
+#include "game/command/CommandSender.hpp"
 class CompoundTag; class Entity; class Level; class MinecraftServer; class Player; class BlockPos; class Vec3;
-class BaseCommandBlock {
+class BaseCommandBlock : public CommandSender {
 public:
     BaseCommandBlock(); virtual ~BaseCommandBlock();
-    virtual void sendMessage(int, int*, unsigned int, std::wstring*, unsigned int);
-    virtual bool hasPermission(unsigned int); virtual std::wstring getDisplayName();
+    virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage, int*, unsigned int, std::wstring*, unsigned int);
+    virtual bool hasPermission(EGameCommand); virtual std::wstring getDisplayName();
     virtual BlockPos getCommandSenderBlockPosition() = 0; virtual Vec3* getCommandSenderWorldPosition() = 0; virtual Level* getCommandSenderWorld() = 0;
-    virtual boost::shared_ptr<Entity> getCommandSenderEntity(); virtual bool isSendMessageEnabled();
+    virtual bool isSendMessageEnabled();
     virtual void setCommandStats(CommandStats::CommandStatType, int); virtual MinecraftServer* getServer();
     unsigned int getSuccessCount(); std::wstring getLastOutput(); CompoundTag* save(CompoundTag*); void load(CompoundTag*);
     void setCommand(const std::wstring&); std::wstring getCommand(); void performCommand(Level*); std::wstring getName();

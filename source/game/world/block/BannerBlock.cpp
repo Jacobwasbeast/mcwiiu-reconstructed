@@ -11,8 +11,12 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/util/Random.hpp"
+
+DirectionProperty* BannerBlock::FACING = NULL;
 
 BannerBlock::BannerBlock()
     : BaseEntityBlock(Material::WOOD)
@@ -32,6 +36,7 @@ boost::shared_ptr<BlockEntity> BannerBlock::newBlockEntity(Level*, int data)
 
 void BannerBlock::blockStaticCtor()
 {
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 std::wstring BannerBlock::getName()

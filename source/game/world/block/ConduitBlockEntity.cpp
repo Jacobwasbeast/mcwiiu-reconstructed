@@ -200,12 +200,13 @@ void ConduitBlockEntity::load(CompoundTag* tag)
     mActiveRotation = tag->getFloat(L"Rotation");
 }
 
-void ConduitBlockEntity::save(CompoundTag* tag)
+CompoundTag* ConduitBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"Target", mTargetId);
     tag->putBoolean(L"Active", mActive);
     tag->putFloat(L"Rotation", mActiveRotation);
+    return tag;
 }
 
 boost::shared_ptr<Packet> ConduitBlockEntity::getUpdatePacket()
@@ -240,5 +241,5 @@ void ConduitBlockEntity::incrementWindLevel()
 
 unsigned long long ConduitBlockEntity::GetType()
 {
-    return 0x0120021200000000ULL;
+    return 0x0000000001200212ULL;
 }

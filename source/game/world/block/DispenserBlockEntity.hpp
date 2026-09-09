@@ -33,7 +33,7 @@ public:
     virtual int getTypeId(bool large);
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
 
     virtual int getRandomSlot();
     virtual int addItem(not_null_ptr<ItemInstance> item);

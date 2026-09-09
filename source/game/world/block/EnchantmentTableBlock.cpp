@@ -99,7 +99,7 @@ bool EnchantmentTableBlock::isSolidRender(const BlockState*) const
 
 EBlockRenderShape EnchantmentTableBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_ENTITY;
+    return BLOCK_RENDER_MODEL;
 }
 
 bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockState*,

@@ -9,12 +9,8 @@ BlockInWorld::BlockInWorld(Level* level, const BlockPos& pos, bool loadChunks)
 
 const BlockState* BlockInWorld::getState()
 {
-    if (mState == NULL)
+    if (mState == NULL && (mLoadChunks || mLevel->hasChunkAt(mPos)))
     {
-        if (!mLoadChunks && !mLevel->hasChunkAt(mPos))
-        {
-            return mState;
-        }
         mState = mLevel->getBlockState(mPos);
     }
     return mState;
@@ -22,7 +18,7 @@ const BlockState* BlockInWorld::getState()
 
 boost::shared_ptr<BlockEntity> BlockInWorld::getEntity()
 {
-    if (!mEntity && !mEntityCached)
+    if (mEntity.get() == NULL && !mEntityCached)
     {
         mEntity = mLevel->getBlockEntity(mPos);
         mEntityCached = true;

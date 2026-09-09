@@ -22,12 +22,13 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 DropperBlock::DropperBlock()
-    : DispenserBlock(), mDropperBehavior(new DefaultDispenseItemBehavior())
+    : DispenserBlock()
 {
     Block::ClearDerivedInit();
     Block::DerivedInit();
     TypedBoxed<bool> triggered(false);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(TRIGGERED, &triggered));
+    mDropperBehavior = new DefaultDispenseItemBehavior();
 }
 
 DropperBlock::~DropperBlock()

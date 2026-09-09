@@ -10,11 +10,14 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
+static const AABB* CACTUS_COLLISION_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
+                                                               15.0 / 16.0, 15.0 / 16.0, 15.0 / 16.0);
 static const AABB* CACTUS_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
                                                       15.0 / 16.0, 1.0, 15.0 / 16.0);
 
@@ -38,14 +41,16 @@ void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
         int height = 1;
         while (level->getBlockState(pos.below(height))->getBlock() == this)
             ++height;
-        if (height <= 3)
+        if (height < 3)
         {
             int age = state->getValue(AGE);
             if (age == 15)
             {
-                level->setBlock(pos.above(), defaultBlockState(), 4, false);
+                level->setBlockAndUpdate(pos.above(), defaultBlockState());
                 TypedBoxed<int> reset(0);
-                level->setBlock(pos, state->setBoxedValue(AGE, &reset), 4, false);
+                const BlockState* resetState = state->setBoxedValue(AGE, &reset);
+                level->setBlock(pos, resetState, 4, false);
+                resetState->neighborChanged(level, pos.above(), this, pos);
             }
             else
             {
@@ -58,7 +63,7 @@ void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
 
 const AABB* CactusBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return CACTUS_COLLISION_SHAPE;
 }
 
 const AABB* CactusBlock::getOutlineAABB(const BlockState*, Level*, const BlockPos& pos)
@@ -84,7 +89,7 @@ bool CactusBlock::mayPlace(Level* level, const BlockPos& pos)
 void CactusBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!canSurvive(level, pos, NULL))
-        level->blockUpdated(pos, this, true);
+        level->destroyBlock(pos, true);
 }
 
 bool CactusBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
@@ -92,15 +97,15 @@ bool CactusBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        const BlockState* neighbor = level->getBlockState(pos.relative(directions.data[i]));
-        if (neighbor->getMaterial()->isSolid() || neighbor->getMaterial() == Material::CACTUS)
+        Material* material = level->getBlockState(pos.relative(directions.data[i]))->getMaterial();
+        if (material->isSolid() || material == Material::LAVA)
             return false;
     }
 
-    const Material* belowMaterial = level->getBlockState(pos.below())->getMaterial();
-    if (belowMaterial != Material::CACTUS && belowMaterial != Material::SAND)
+    Block* below = level->getBlockState(pos.below())->getBlock();
+    if (below != Blocks::cactus && below != Blocks::sand)
         return false;
-    return !level->getBlockState(pos.above())->getMaterial()->blocksMotion();
+    return !level->getBlockState(pos.above())->getMaterial()->isLiquid();
 }
 
 void CactusBlock::entityInside(Level*, const BlockPos&, const BlockState*, const boost::shared_ptr<Entity>& entity)

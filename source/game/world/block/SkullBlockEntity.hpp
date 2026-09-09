@@ -25,7 +25,7 @@ public:
     static int ValidateSkullType(int type);
     void setSkullType(int type, const std::wstring& extraType);
     void setRotation(int rotation);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual void tick();
     double getMouthAnimation(float partialTick);

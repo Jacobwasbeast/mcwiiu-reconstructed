@@ -11,18 +11,35 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-bool railfilter__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape)
-{
-    return shape == NULL || shape->getData() < 6;
-}
-
-bool railpredicate__FPQ2_13BaseRailBlock9RailShape(BaseRailBlock::RailShape* shape)
-{
-    return shape == NULL || shape->getData() < 6;
-}
+static const AABB* gRailFlatAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
+static const AABB* gRailAscendingAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
 
 static BaseRailBlock::RailShape* gRailShapes[10] =
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+{
+    new BaseRailBlock::RailShape(0, L"north_south"),
+    new BaseRailBlock::RailShape(1, L"east_west"),
+    new BaseRailBlock::RailShape(2, L"ascending_east"),
+    new BaseRailBlock::RailShape(3, L"ascending_west"),
+    new BaseRailBlock::RailShape(4, L"ascending_north"),
+    new BaseRailBlock::RailShape(5, L"ascending_south"),
+    new BaseRailBlock::RailShape(6, L"south_east"),
+    new BaseRailBlock::RailShape(7, L"south_west"),
+    new BaseRailBlock::RailShape(8, L"north_west"),
+    new BaseRailBlock::RailShape(9, L"north_east")
+};
+
+bool railfilter(BaseRailBlock::RailShape* shape)
+{
+    return shape != gRailShapes[9] && shape != gRailShapes[8] &&
+           shape != gRailShapes[6] && shape != gRailShapes[7];
+}
+
+bool railpredicate(BaseRailBlock::RailShape* shape)
+{
+    return shape != gRailShapes[9] && shape != gRailShapes[8] &&
+           shape != gRailShapes[6] && shape != gRailShapes[7];
+}
+
 static const AABB* gRailClipAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 
 BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
@@ -96,16 +113,16 @@ bool BaseRailBlock::isSolidRender(const BlockState*) const
 
 const AABB* BaseRailBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    RailShape* shape = NULL;
-    if (state != NULL && state->getBlock() == this)
+    if (state->getBlock() == this)
     {
-        const Property* property = getShapeProperty();
-        TypedBoxed<RailShape*>* boxed = static_cast<TypedBoxed<RailShape*>*>(state->getBoxedValue(property));
-        shape = boxed->getValue();
+        RailShape* shape = static_cast<TypedBoxed<RailShape*>*>(
+            state->getBoxedValue(getShapeProperty()))->getValue();
+        if (shape != NULL && shape->isAscending())
+        {
+            return gRailAscendingAABB;
+        }
     }
-    static const AABB* flat = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
-    static const AABB* raised = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.625, 1.0);
-    return shape != NULL && shape->isAscending() ? raised : flat;
+    return gRailFlatAABB;
 }
 
 EBlockFaceShape BaseRailBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
@@ -120,11 +137,8 @@ bool BaseRailBlock::isCubeShaped(const BlockState*)
 
 bool BaseRailBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    BlockPos below = pos.below();
-    BlockState* state = const_cast<BlockState*>(level->getBlockState(below));
-    if (state->isSolidBlockingCube())
-        return true;
-    return !Block::isExceptionForTopSolidBlocking(state->getBlock());
+    return level->getBlockState(pos.below())->isTopSolidBlocking()
+        || Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.below())->getBlock());
 }
 
 void BaseRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -137,25 +151,51 @@ void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const
                                     Block* block, const BlockPos& fromPos)
 {
     if (level->mIsClientSide)
+    {
         return;
-    RailShape* shape = NULL;
-    TypedBoxed<RailShape*>* boxed = static_cast<TypedBoxed<RailShape*>*>(state->getBoxedValue(getShapeProperty()));
-    shape = boxed->getValue();
-    bool unsupported = !level->getBlockState(pos.below())->isSolidBlockingCube() &&
-        !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.below())->getBlock());
-    if (shape != NULL && shape->isAscending())
-    {
-        if (shape == gRailShapes[2] || shape == gRailShapes[3])
-            unsupported = unsupported || !level->getBlockState(pos.east())->isSolidBlockingCube();
-        else
-            unsupported = unsupported || !level->getBlockState(pos.north())->isSolidBlockingCube();
     }
-    if (unsupported)
+
+    RailShape* shape = static_cast<TypedBoxed<RailShape*>*>(
+        state->getBoxedValue(getShapeProperty()))->getValue();
+    bool unsupported = false;
+    if (!level->getBlockState(pos.below())->isTopSolidBlocking()
+        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.below())->getBlock()))
     {
+        unsupported = true;
+    }
+
+    if (shape == gRailShapes[2]
+        && !level->getBlockState(pos.east())->isTopSolidBlocking()
+        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.east())->getBlock()))
+    {
+        unsupported = true;
+    }
+    else if (shape == gRailShapes[3]
+        && !level->getBlockState(pos.west())->isTopSolidBlocking()
+        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.west())->getBlock()))
+    {
+        unsupported = true;
+    }
+    else if (shape == gRailShapes[4]
+        && !level->getBlockState(pos.north())->isTopSolidBlocking()
+        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.north())->getBlock()))
+    {
+        unsupported = true;
+    }
+    else if (shape == gRailShapes[5]
+        && !level->getBlockState(pos.south())->isTopSolidBlocking()
+        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.south())->getBlock()))
+    {
+        unsupported = true;
+    }
+
+    if (unsupported && !level->isEmptyBlock(pos))
+    {
+        spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
         return;
     }
-    Block::neighborChanged(state, level, pos, block, fromPos);
+    updateState(state, level, pos, block);
 }
 
 void BaseRailBlock::updateState(const BlockState*, Level*, const BlockPos&, Block*)

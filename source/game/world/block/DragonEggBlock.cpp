@@ -10,6 +10,8 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
+static const AABB* gDragonEggShape = NULL;
+
 DragonEggBlock::DragonEggBlock() : Block(Material::EGG, MaterialColor::COLOR_BLACK)
 {
     DerivedInit();
@@ -21,7 +23,7 @@ DragonEggBlock::~DragonEggBlock()
 
 const AABB* DragonEggBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return gDragonEggShape;
 }
 
 void DragonEggBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
@@ -38,19 +40,15 @@ void DragonEggBlock::checkSlide(Level* level, const BlockPos& pos)
 {
     if (!FallingBlock::isFree(level->getBlockState(pos.below())) || pos.y < 0)
         return;
-    if (!level->mIsClientSide && level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
+    if (!FallingBlock::fallInstantly && level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
     {
-        if (!level->newFallingBlockAllowed())
-        {
-            level->addToTickNextTick(pos, this, getTickDelay(level), 0);
-            return;
-        }
-        level->addEntity(boost::shared_ptr<Entity>(new FallingBlockEntity(level,
-            (double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5, defaultBlockState())));
+        boost::shared_ptr<FallingBlockEntity> entity(new FallingBlockEntity(
+            level, pos.x + 0.5f, pos.y, pos.z + 0.5f, defaultBlockState()));
+        level->addEntity(entity);
         return;
     }
     level->removeBlock(pos);
-    BlockPos target = pos.below();
+    BlockPos target = pos;
     while (FallingBlock::isFree(level->getBlockState(target)))
     {
         if (target.y < 1)
@@ -58,7 +56,7 @@ void DragonEggBlock::checkSlide(Level* level, const BlockPos& pos)
         target = target.below();
     }
     if (target.y > 0)
-        level->setBlockAndUpdate(target.above(), defaultBlockState());
+        level->setBlock(target, defaultBlockState(), 2, false);
 }
 
 void DragonEggBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random*)
@@ -73,11 +71,14 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
         return;
     for (int attempt = 0; attempt < 500; ++attempt)
     {
-        BlockPos target = pos.offset(level->mRandom->nextInt(16) - level->mRandom->nextInt(16),
-                                     level->mRandom->nextInt(8) - level->mRandom->nextInt(8),
-                                     level->mRandom->nextInt(16) - level->mRandom->nextInt(16));
-        const BlockState* targetState = level->getBlockState(target);
-        if (targetState->getMaterial() == Material::AIR)
+        int x0 = level->mRandom->nextInt(16);
+        int x1 = level->mRandom->nextInt(16);
+        int y0 = level->mRandom->nextInt(8);
+        int y1 = level->mRandom->nextInt(8);
+        int z0 = level->mRandom->nextInt(16);
+        int z1 = level->mRandom->nextInt(16);
+        BlockPos target = pos.offset(x0 - x1, y0 - y1, z0 - z1);
+        if (level->getBlockState(target)->getBlock()->mMaterial == Material::AIR)
         {
             if (level->mIsClientSide)
                 return;
@@ -126,14 +127,21 @@ void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z
     {
         for (int j = 0; j < 2; ++j)
         {
-            double px = (double)x + 0.5 + (double)dx * level->mRandom->nextDouble() + level->mRandom->nextDouble() - 0.5;
-            double py = (double)y - 0.5 + (double)dy * level->mRandom->nextDouble() + level->mRandom->nextDouble();
-            double pz = (double)z + 0.5 + (double)dz * level->mRandom->nextDouble() + level->mRandom->nextDouble() - 0.5;
+            double along = level->mRandom->nextDouble();
+            float xa = level->mRandom->nextFloat();
+            float ya = level->mRandom->nextFloat();
+            float za = level->mRandom->nextFloat();
+            double jitterX = level->mRandom->nextDouble();
+            double jitterY = level->mRandom->nextDouble();
+            double jitterZ = level->mRandom->nextDouble();
             arrayWithLength<int> params;
-            level->addParticle(PARTICLE_PORTAL, px, py, pz,
-                               (double)(level->mRandom->nextFloat() - 0.5f) * 0.2,
-                               (double)(level->mRandom->nextFloat() - 0.5f) * 0.2,
-                               (double)(level->mRandom->nextFloat() - 0.5f) * 0.2, params);
+            level->addParticle(PARTICLE_PORTAL,
+                               (double)x + 0.5 + (double)dx * along + (jitterX - 0.5),
+                               (double)y - 0.5 + (double)dy * along + jitterY,
+                               (double)z + 0.5 + (double)dz * along + (jitterZ - 0.5),
+                               (double)((xa - 0.5f) * 0.2f),
+                               (double)((ya - 0.5f) * 0.2f),
+                               (double)((za - 0.5f) * 0.2f), params);
         }
     }
 }

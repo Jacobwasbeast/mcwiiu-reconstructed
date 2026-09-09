@@ -17,11 +17,6 @@
 #include "game/world/block/TallGrassBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-class Property;
-
-extern bool tallGrassPredicate(Boxed* value);
-extern Property* TallGrassBlock_VARIANT;
-
 static Predicate<const BlockState*>* sTallGrassPredicate;
 
 bool tallGrassPredicate(Boxed* value)
@@ -44,10 +39,10 @@ EatBlockGoal::~EatBlockGoal()
 
 void EatBlockGoal::staticCtor()
 {
-    sTallGrassPredicate = BlockStatePredicate::forBlock(Blocks::tallgrass);
-    static_cast<BlockStatePredicate*>(sTallGrassPredicate)->where(
-        TallGrassBlock_VARIANT,
-        new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
+    sTallGrassPredicate = static_cast<BlockStatePredicate*>(
+        BlockStatePredicate::forBlock(Blocks::tallgrass))->where(
+            TallGrassBlock_VARIANT,
+            new Predicates<Boxed*>::FunctionPredicate(tallGrassPredicate));
 }
 
 bool EatBlockGoal::canUse()
@@ -98,8 +93,8 @@ void EatBlockGoal::tick()
     if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
     {
         if (mLevel->getGameRules()->getBoolean(1))
-            mLevel->levelEvent(2001, pos, Block::getId(Blocks::grass));
-        mMob->getNavigation()->stop();
+            mLevel->destroyBlock(pos, false);
+        mMob->ate();
         return;
     }
 
@@ -110,7 +105,7 @@ void EatBlockGoal::tick()
         mLevel->levelEvent(2001, below, Block::getId(Blocks::grass));
         mLevel->setBlock(below, Blocks::dirt->defaultBlockState(), 2, false);
     }
-    mMob->getNavigation()->stop();
+    mMob->ate();
 }
 
 void EatBlockGoal::setLevel(Level* level)

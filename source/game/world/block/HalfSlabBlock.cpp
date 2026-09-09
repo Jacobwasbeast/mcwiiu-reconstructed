@@ -13,17 +13,18 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Blocks.hpp"
 
 class AABB;
-extern Block* gHalfSlabStone;
+Block* gHalfSlabStone = NULL;
 Block* gHalfSlabWood = NULL;
-extern Block* gHalfSlabStone2;
+Block* gHalfSlabStone2 = NULL;
 Block* gHalfSlabPurpur = NULL;
 Block* gHalfSlabPrismarine = NULL;
 extern Block* gDoubleSlabPurpur;
-extern Block* gDoubleSlabWood;
+Block* gDoubleSlabWood = NULL;
 Block* gDoubleSlabStone2 = NULL;
-extern Block* gDoubleSlabStone;
+Block* gDoubleSlabStone = NULL;
 Block* gDoubleSlabPrismarine = NULL;
 
 static const AABB* FULL_BLOCK_SHAPE = NULL;
@@ -56,6 +57,16 @@ std::wstring HalfSlabBlock::Half::getSerializedName() const
 
 void HalfSlabBlock::blockStaticCtor()
 {
+    gHalfSlabStone = Blocks::stone_slab;
+    gHalfSlabStone2 = Blocks::stone_slab2;
+    gHalfSlabWood = Blocks::wooden_slab;
+    gHalfSlabPurpur = Blocks::purpur_slab;
+    gHalfSlabPrismarine = Blocks::prismarine_slab;
+    gDoubleSlabStone = Blocks::double_stone_slab;
+    gDoubleSlabStone2 = Blocks::double_stone_slab2;
+    gDoubleSlabWood = Blocks::double_wooden_slab;
+    gDoubleSlabPurpur = Blocks::purpur_double_slab;
+    gDoubleSlabPrismarine = Blocks::prismarine_double_slab;
     std::wstring name = L"half";
 
     boost::unordered_set<Half*> values;

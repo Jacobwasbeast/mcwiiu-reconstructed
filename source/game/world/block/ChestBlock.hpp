@@ -8,6 +8,8 @@
 
 class BlockEntity;
 class Container;
+class DirectionProperty;
+class LockableContainer;
 class BlockPos;
 class BlockState;
 class BlockStateDefinition;
@@ -31,6 +33,8 @@ public:
         TYPE_LEFT,
         TYPE_RIGHT
     };
+
+    static DirectionProperty* FACING;
 
     explicit ChestBlock(Type type);
     virtual ~ChestBlock();
@@ -57,8 +61,8 @@ public:
     static bool isBlockedChestByBlock(Level* level, const BlockPos& pos);
     static bool isEntityOnChest(Level* level, const BlockPos& pos);
     static bool isChestBlockedAt(Level* level, const BlockPos& pos);
-    boost::shared_ptr<Container> getContainer(Level* level, const BlockPos& pos, bool force);
-    boost::shared_ptr<Container> getContainer(Level* level, const BlockPos& pos);
+    boost::shared_ptr<LockableContainer> getContainer(Level* level, const BlockPos& pos, bool force);
+    boost::shared_ptr<LockableContainer> getContainer(Level* level, const BlockPos& pos);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
@@ -81,7 +85,6 @@ public:
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
 
-private:
     Type mType;
 };
 

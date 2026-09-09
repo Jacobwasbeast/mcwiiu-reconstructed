@@ -29,8 +29,3 @@ void IdMapper<const BlockState*>::addMapping(const BlockState* state, int id)
     const_cast<BlockState*>(state)->mElementId = id;
     mBlockStates[id] = state;
 }
-
-bool IdMapper<const BlockState*>::contains(int id)
-{
-    return id >= 0 && id < BLOCK_STATE_COUNT && mBlockStates[id] != NULL;
-}

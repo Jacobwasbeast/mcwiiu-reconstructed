@@ -28,7 +28,6 @@ public:
         Variant(int data, const std::wstring& name, int translationKey);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
-        std::wstring getName();
         int getData();
         static Variant* byData(int data);
         int getTranslationKey();

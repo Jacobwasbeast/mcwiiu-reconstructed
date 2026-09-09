@@ -4,6 +4,8 @@
 
 #include "game/core/DyeColor.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 
 BedBlockEntity::BedBlockEntity()
     : BlockEntity(), mColor(DyeColor::WHITE)
@@ -22,10 +24,7 @@ void BedBlockEntity::setColor(const DyeColor* color)
 
 void BedBlockEntity::setItemValues(not_null_ptr<ItemInstance> item)
 {
-    if (item)
-    {
-        setColor(mColor);
-    }
+    setColor(DyeColor::byBlockData(item->getAuxValue()));
 }
 
 const DyeColor* BedBlockEntity::getColor()
@@ -35,7 +34,7 @@ const DyeColor* BedBlockEntity::getColor()
 
 not_null_ptr<ItemInstance> BedBlockEntity::getItem()
 {
-    return not_null_ptr<ItemInstance>();
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, mColor->getBlockData()));
 }
 
 boost::shared_ptr<BlockEntity> BedBlockEntity::clone()
@@ -56,10 +55,11 @@ void BedBlockEntity::load(CompoundTag* tag)
     }
 }
 
-void BedBlockEntity::save(CompoundTag* tag)
+CompoundTag* BedBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putInt(L"color", mColor->getBlockData());
+    return tag;
 }
 
 CompoundTag* BedBlockEntity::getUpdateTag()
@@ -81,7 +81,7 @@ bool BedBlockEntity::isHeadPiece()
 
 unsigned long long BedBlockEntity::GetType()
 {
-    return 0x0100021000000000ULL;
+    return 0x0000000001000210ULL;
 }
 
 BlockEntity* BedBlockEntity::create()

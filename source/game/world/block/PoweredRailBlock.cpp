@@ -74,34 +74,71 @@ bool PoweredRailBlock::findPoweredRailSignal(Level* level, const BlockPos& pos,
 
     BaseRailBlock::RailShape* shape = state->getValue(gPoweredRailShapeProperty);
     BlockPos next = pos;
-    bool checkSide = true;
+    BaseRailBlock::RailShape* directionShape = shape;
+    bool checkBelow = true;
     switch (shape->getData())
     {
     case 0: next = forward ? pos.south() : pos.north(); break;
-    case 1: next = forward ? pos.east() : pos.west(); break;
-    case 2: next = forward ? pos.east().above() : pos.west(); break;
-    case 3: next = forward ? pos.east() : pos.west().above(); break;
+    case 1: next = forward ? pos.west() : pos.east(); break;
+    case 2:
+        directionShape = gPoweredRailShapes[1];
+        if (forward)
+            next = pos.west();
+        else
+        {
+            next = pos.east().above();
+            checkBelow = false;
+        }
+        break;
+    case 3:
+        directionShape = gPoweredRailShapes[1];
+        if (forward)
+        {
+            next = pos.west().above();
+            checkBelow = false;
+        }
+        else
+            next = pos.east();
+        break;
     case 4:
-        if (forward) next = pos.south();
-        else { next = pos.north().above(); checkSide = false; }
+        directionShape = gPoweredRailShapes[0];
+        if (forward)
+            next = pos.south();
+        else
+        {
+            next = pos.north().above();
+            checkBelow = false;
+        }
         break;
     case 5:
-        if (forward) { next = pos.south().above(); checkSide = false; }
-        else next = pos.north();
+        directionShape = gPoweredRailShapes[0];
+        if (forward)
+        {
+            next = pos.south().above();
+            checkBelow = false;
+        }
+        else
+            next = pos.north();
         break;
-    default: next = forward ? pos.south() : pos.north(); break;
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+        if (!isSameRailWithPower(level, next, forward, distance, directionShape))
+        {
+            next = pos.east().below();
+            directionShape = gPoweredRailShapes[1];
+            return isSameRailWithPower(level, next, forward, distance, directionShape);
+        }
+        return true;
+    default:
+        break;
     }
 
-    if (isSameRailWithPower(level, next, forward, distance + 1,
-                            forward ? shape : shape))
+    if (isSameRailWithPower(level, next, forward, distance, directionShape))
         return true;
-    if (checkSide)
-    {
-        BlockPos side = next.west();
-        if (isSameRailWithPower(level, side, forward, distance + 1, shape))
-            return true;
-    }
-    return false;
+    return checkBelow &&
+        isSameRailWithPower(level, next.below(), forward, distance, directionShape);
 }
 
 bool PoweredRailBlock::isSameRailWithPower(Level* level, const BlockPos& pos, bool forward,
@@ -111,19 +148,19 @@ bool PoweredRailBlock::isSameRailWithPower(Level* level, const BlockPos& pos, bo
     if (state->getBlock() != this)
         return false;
     BaseRailBlock::RailShape* otherShape = state->getValue(gPoweredRailShapeProperty);
-    if (shape != NULL && otherShape != shape)
-    {
-        int data = otherShape->getData();
-        if (shape == gPoweredRailShapes[0] && data != 0 && data != 2 && data != 3 && data != 4 && data != 5)
-            return false;
-        if (shape == gPoweredRailShapes[1] && data != 1 && data != 2 && data != 3 && data != 6 && data != 7 && data != 8 && data != 9)
-            return false;
-    }
+    if (shape == gPoweredRailShapes[1] &&
+        (otherShape == gPoweredRailShapes[0] || otherShape == gPoweredRailShapes[4] ||
+         otherShape == gPoweredRailShapes[5]))
+        return false;
+    if (shape == gPoweredRailShapes[0] &&
+        (otherShape == gPoweredRailShapes[1] || otherShape == gPoweredRailShapes[2] ||
+         otherShape == gPoweredRailShapes[3]))
+        return false;
     if (state->getValue(gPoweredRailProperty))
         return true;
     if (level->hasNeighborSignal(pos))
         return true;
-    return findPoweredRailSignal(level, pos, state, forward, distance);
+    return findPoweredRailSignal(level, pos, state, forward, distance + 1);
 }
 
 void PoweredRailBlock::updateState(const BlockState* state, Level* level, const BlockPos& pos, Block*)

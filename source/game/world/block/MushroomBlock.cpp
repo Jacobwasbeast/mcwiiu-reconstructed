@@ -10,6 +10,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirtBlock.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/HugeMushroomFeature.hpp"
@@ -127,7 +129,7 @@ bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSta
     if (belowBlock == Blocks::mycelium)
         return true;
 
-    if (belowBlock == Blocks::dirt && belowState == Blocks::dirt->getBlockState(2))
+    if (belowBlock == Blocks::dirt && belowState->getValue(static_cast<AbstractProperty<DirtBlock::Variant*>*>(gVariantProperty)) == gVariants[2])
         return true;
 
     return level->getDaytimeRawBrightness(pos) < 13

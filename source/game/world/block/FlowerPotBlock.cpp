@@ -20,6 +20,7 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/FlowerBlock.hpp"
 #include "game/world/block/FlowerPotBlockEntity.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TallGrassBlock.hpp"
@@ -114,7 +115,10 @@ std::wstring FlowerPotBlock::getName()
 
 const AABB* FlowerPotBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    static AABB* shape = NULL;
+    if (shape == NULL)
+        shape = AABB::newPermanent(0.3, 0.0, 0.3, 0.7, 0.6, 0.7);
+    return shape;
 }
 
 bool FlowerPotBlock::isSolidRender(const BlockState*) const { return false; }
@@ -243,8 +247,40 @@ const BlockState* FlowerPotBlock::fillVirtualBlockStateProperties(const BlockSta
 
 int FlowerPotBlock::getRenderLayer() { return 0; }
 EBlockFaceShape FlowerPotBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
-EBlockRenderShape FlowerPotBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_ENTITY; }
-unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder&) { return 0; }
+EBlockRenderShape FlowerPotBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(0x21); }
+unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    boost::shared_ptr<BlockEntity> blockEntity;
+    if (tooltipData.m_pLevel != NULL)
+        blockEntity = tooltipData.m_pLevel->getBlockEntity(tooltipData.m_blockPos);
+
+    boost::shared_ptr<FlowerPotBlockEntity> pot =
+        boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+    bool occupied = false;
+    if (pot)
+    {
+        not_null_ptr<ItemInstance> plant = pot->getPlantItemInstance();
+        occupied = !plant->isEmpty();
+    }
+
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    {
+        not_null_ptr<ItemInstance> offered = tooltipData.m_pItemInstance;
+        if (!offered->isEmpty())
+        {
+            const int id = Item::getId(offered->getItem());
+            bool accepted = id == 0x06 || id == 0x20 || (id >= 0x25 && id <= 0x28) || id == 0x51;
+            if (id == 0x1f)
+                accepted = gTallGrass != NULL && offered->getAuxValue() == gTallGrass->getData();
+            if (accepted)
+                return occupied ? 0x512092d2u : 0x3d8502afu;
+        }
+    }
+
+    if (tooltipData.m_pItemInstance->isEmpty() && !occupied)
+        return 0x3d8502afu;
+    return Block::GetInteractTooltip(tooltipData);
+}
 
 bool FlowerPotBlock::mayPlace(Level* level, const BlockPos& pos)
 {

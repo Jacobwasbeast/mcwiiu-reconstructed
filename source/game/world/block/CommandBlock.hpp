@@ -35,6 +35,9 @@ public:
         CHAIN = 2
     };
 
+    static AbstractProperty<const Direction*>* FACING;
+    static AbstractProperty<bool>* CONDITIONAL;
+
     CommandBlock(const MaterialColor* materialColor, Mode mode);
     virtual ~CommandBlock();
     unsigned int getMode();

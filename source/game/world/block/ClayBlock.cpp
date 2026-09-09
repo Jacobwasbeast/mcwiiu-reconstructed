@@ -1,6 +1,7 @@
 #include "game/world/block/ClayBlock.hpp"
 
 #include "game/core/DyeColor.hpp"
+#include "game/core/SeaGrass.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -9,13 +10,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
-
-class SeaGrass
-{
-public:
-    static bool trySpawnSeaGrass(bool checkOnly, Level* level, Random* random,
-                                 const BlockPos& pos, const BlockState* state);
-};
 
 ClayBlock::ClayBlock()
     : Block(Material::CLAY)

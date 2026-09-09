@@ -12,6 +12,7 @@ class BlockEntity;
 class BlockPos;
 class BlockState;
 class Direction;
+class DirectionProperty;
 class Item;
 class Level;
 class LevelSource;
@@ -23,7 +24,10 @@ public:
     BannerBlock();
     virtual ~BannerBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
+
+    static DirectionProperty* FACING;
     static void blockStaticCtor();
+
     virtual std::wstring getName();
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isCubeShaped(const BlockState* state);

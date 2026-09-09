@@ -223,7 +223,6 @@ void LeverBlock::neighborChanged(const BlockState* state, Level* level, const Bl
     if (canSurvive(level, pos, state))
     {
         const Direction* direction = state->getValue(FACING)->getDirection();
-        (void)(fromPos != pos.relative(direction));
         if (!canAttachTo(level, pos, direction))
         {
             spawnResources(level, pos, state, 0);

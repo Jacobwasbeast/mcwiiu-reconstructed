@@ -9,12 +9,7 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-
-class MobSpawnerBlockEntity
-{
-public:
-    static BlockEntity* create();
-};
+#include "game/world/block/MobSpawnerBlockEntity.hpp"
 
 MobSpawnerBlock::MobSpawnerBlock()
     : BaseEntityBlock(NULL)

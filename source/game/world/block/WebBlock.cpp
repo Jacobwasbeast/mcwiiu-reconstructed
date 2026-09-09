@@ -47,7 +47,7 @@ bool WebBlock::isCubeShaped(const BlockState* state)
 
 Item* WebBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
-    return NULL;
+    return Items::string;
 }
 
 bool WebBlock::isSilkTouchable()

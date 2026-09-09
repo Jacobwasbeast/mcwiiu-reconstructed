@@ -22,7 +22,7 @@ MobSpawnerBlockEntity::~MobSpawnerBlockEntity()
 
 unsigned long long MobSpawnerBlockEntity::GetType()
 {
-    return 0x0120020100000000ULL;
+    return 0x0000000001200201ULL;
 }
 
 BlockEntity* MobSpawnerBlockEntity::create()
@@ -47,10 +47,11 @@ void MobSpawnerBlockEntity::load(CompoundTag* tag)
     mSpawner->load(tag);
 }
 
-void MobSpawnerBlockEntity::save(CompoundTag* tag)
+CompoundTag* MobSpawnerBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mSpawner->save(tag);
+    return tag;
 }
 
 void MobSpawnerBlockEntity::tick()

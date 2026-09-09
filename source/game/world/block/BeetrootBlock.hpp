@@ -18,6 +18,8 @@ class TextureAtlasSprite;
 class BeetrootBlock : public CropBlock
 {
 public:
+    static AbstractProperty<int>* AGE;
+
     BeetrootBlock();
     virtual ~BeetrootBlock();
     virtual AbstractProperty<int>* getAgeProperty();

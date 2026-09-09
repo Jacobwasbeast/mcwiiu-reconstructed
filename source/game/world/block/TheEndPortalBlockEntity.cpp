@@ -25,5 +25,5 @@ bool TheEndPortalBlockEntity::shouldRenderFace(const Direction* direction)
 
 unsigned long long TheEndPortalBlockEntity::GetType()
 {
-    return 0x0130020000000000ULL;
+    return 0x01300200ULL;
 }

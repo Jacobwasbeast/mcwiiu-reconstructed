@@ -9,6 +9,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/PotionBrewing.hpp"
+#include "game/ui/BrewingStandMenu.hpp"
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
@@ -179,7 +180,9 @@ void BrewingStandBlockEntity::clearContent()
 
 AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    return NULL;
+    (void)player;
+    boost::shared_ptr<Container> self = boost::dynamic_pointer_cast<Container>(shared_from_this());
+    return new BrewingStandMenu(inventory, self);
 }
 
 int BrewingStandBlockEntity::getTypeId(bool large)
@@ -300,13 +303,14 @@ void BrewingStandBlockEntity::load(CompoundTag* tag)
     mFuel = tag->getByte(L"Fuel");
 }
 
-void BrewingStandBlockEntity::save(CompoundTag* tag)
+CompoundTag* BrewingStandBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mCustomName->saveToTag(tag);
     ContainerHelper::saveAllItems(tag, mItems);
     tag->putShort(L"BrewTime", (short)mBrewTime);
     tag->putByte(L"Fuel", (unsigned char)mFuel);
+    return tag;
 }
 
 boost::shared_ptr<BlockEntity> BrewingStandBlockEntity::clone()
@@ -335,5 +339,5 @@ BlockEntity* BrewingStandBlockEntity::create()
 
 unsigned long long BrewingStandBlockEntity::GetType()
 {
-    return 0;
+    return 0x0000000001E00203ULL;
 }

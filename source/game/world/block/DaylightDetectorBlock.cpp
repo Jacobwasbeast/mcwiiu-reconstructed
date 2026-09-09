@@ -141,6 +141,8 @@ unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHol
 
 unsigned int DaylightDetectorBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
+    if (tooltipData.m_bCanPlace && tooltipData.m_bIsInside)
+        return 0x5fb7a25au;
     return 0xffffffffu;
 }
 

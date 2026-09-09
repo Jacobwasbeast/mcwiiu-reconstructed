@@ -270,7 +270,7 @@ public:
     bool instanceof(EBlockType blockType);
     int mCachedElementId;
 
-    Material* getCraftingMaterial();
+    Material* getCraftingMaterial() { return mMaterial; }
 
 public:
     void _init(Material* material, const MaterialColor* materialColor);

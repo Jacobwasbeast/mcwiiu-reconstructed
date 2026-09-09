@@ -6,6 +6,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/item/Containers.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
@@ -74,8 +75,8 @@ void BrewingStandBlock::addCollisionAABBs(const BlockState*, Level*, const Block
                                           const AABB* entityBox, std::vector<AABB*>* collidingBoxes,
                                           boost::shared_ptr<Entity>, bool)
 {
-    addCollisionAABB(pos, entityBox, collidingBoxes, gBrewingStandBaseShape);
     addCollisionAABB(pos, entityBox, collidingBoxes, gBrewingStandShape);
+    addCollisionAABB(pos, entityBox, collidingBoxes, gBrewingStandBaseShape);
 }
 
 const AABB* BrewingStandBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
@@ -114,8 +115,9 @@ void BrewingStandBlock::setPlacedBy(Level* level, const BlockPos& pos, const Blo
 
 void BrewingStandBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
-    level->addParticle(PARTICLE_SMOKE, pos.x + random->nextFloat(), pos.y + 0.7,
-                       pos.z + random->nextFloat(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+    level->addParticle(PARTICLE_SMOKE, pos.x + 0.4 + random->nextFloat() * 0.2,
+                       pos.y + 0.7, pos.z + 0.4 + random->nextFloat() * 0.2,
+                       0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void BrewingStandBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -130,7 +132,7 @@ void BrewingStandBlock::onRemove(Level* level, const BlockPos& pos, const BlockS
 
 Item* BrewingStandBlock::getResource(const BlockState*, Random*, int)
 {
-    return Item::byBlock(this);
+    return Items::brewingStand;
 }
 
 not_null_ptr<ItemInstance> BrewingStandBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)

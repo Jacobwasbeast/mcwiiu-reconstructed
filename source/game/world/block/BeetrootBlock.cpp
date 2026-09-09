@@ -18,14 +18,19 @@
 template <typename T>
 std::wstring toString(T value);
 
-static const AABB* SHAPE_BY_AGE[4];
+AbstractProperty<int>* BeetrootBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 3));
+
+static const AABB* SHAPE_BY_AGE[4] = {
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.25, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0)
+};
 
 BeetrootBlock::BeetrootBlock()
-    : CropBlock(true)
+    : CropBlock(true), mStageIcons()
 {
-    DerivedInit();
-    for (int i = 0; i < 4; ++i)
-        mStageIcons[i] = 0;
+    CropBlock::DerivedInit();
 }
 
 BeetrootBlock::~BeetrootBlock()
@@ -69,7 +74,7 @@ int BeetrootBlock::getBonemealAgeIncrease(Level* level)
 
 BlockStateDefinition* BeetrootBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 

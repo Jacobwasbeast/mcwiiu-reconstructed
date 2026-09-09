@@ -7,6 +7,7 @@
 #include "game/core/DyeColor.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/SeaGrass.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
@@ -20,13 +21,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class SeaGrass
-{
-public:
-    static bool trySpawnSeaGrass(bool checkOnly, Level* level, Random* random,
-                                 const BlockPos& pos, const BlockState* state);
-};
 
 DirtBlock::Variant* gVariants[3] = { NULL, NULL, NULL };
 EnumProperty<DirtBlock::Variant*>* gVariantProperty = NULL;

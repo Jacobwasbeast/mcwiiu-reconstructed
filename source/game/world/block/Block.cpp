@@ -321,6 +321,7 @@ Block::Block(Material* material, const MaterialColor* materialColor)
     _init(material, materialColor);
 }
 
+
 Block::~Block()
 {
 }

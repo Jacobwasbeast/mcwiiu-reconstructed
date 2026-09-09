@@ -19,12 +19,19 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
-CauldronBlock::CauldronBlock() : BaseEntityBlock(Material::METAL, MaterialColor::METAL), mInnerIcon(NULL), mTopIcon(NULL), mBottomIcon(NULL), mWaterIcon(NULL)
+CauldronBlock::CauldronBlock()
+    : BaseEntityBlock(Material::METAL, MaterialColor::METAL),
+      mInnerIcon(NULL),
+      mTopIcon(NULL),
+      mBottomIcon(NULL),
+      mWaterIcon(NULL)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any());
 }
-CauldronBlock::~CauldronBlock() {}
+CauldronBlock::~CauldronBlock()
+{
+}
 
 boost::shared_ptr<BlockEntity> CauldronBlock::newBlockEntity(Level*, int data)
 {
@@ -42,22 +49,62 @@ void CauldronBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos&
     static const AABB east(0.875, 0.0, 0.125, 1.0, 1.0, 0.875);
     addCollisionAABB(pos, box, boxes, &inner); addCollisionAABB(pos, box, boxes, &north); addCollisionAABB(pos, box, boxes, &south); addCollisionAABB(pos, box, boxes, &west); addCollisionAABB(pos, box, boxes, &east);
 }
-const AABB* CauldronBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
-bool CauldronBlock::isSolidRender(const BlockState*) const { return false; }
-bool CauldronBlock::isCubeShaped(const BlockState*) { return false; }
-void CauldronBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity) { Block::entityInside(level, pos, state, entity); }
-bool CauldronBlock::TestUse() { return false; }
+const AABB* CauldronBlock::getShape(const BlockState* state, LevelSource* levelSource,
+                                    const BlockPos& pos)
+{
+    return Block::getShape(state, levelSource, pos);
+}
+
+bool CauldronBlock::isSolidRender(const BlockState*) const
+{
+    return false;
+}
+
+bool CauldronBlock::isCubeShaped(const BlockState*)
+{
+    return false;
+}
+
+void CauldronBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
+                                 const boost::shared_ptr<Entity>& entity)
+{
+    Block::entityInside(level, pos, state, entity);
+}
+
+bool CauldronBlock::TestUse()
+{
+    return false;
+}
 
 void CauldronBlock::useInventory(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> replacement, int count)
 {
-    if (item.get() != NULL && replacement.get() != NULL) item->shrink(count);
-    if (player.get() != NULL && replacement.get() != NULL && !player->addItem(replacement)) player->drop(replacement, false);
-}
-void CauldronBlock::spawnCauldronEvent(Level* level, const BlockState*, const BlockPos& pos, int event) const { if (level != NULL) level->levelEvent(event, pos, 0); }
-void CauldronBlock::explodeCauldronContents(Level* level, const BlockState* state, const BlockPos& pos) { spawnCauldronEvent(level, state, pos, 0xdad); }
-void CauldronBlock::decrementStack(not_null_ptr<ItemInstance> item) { if (item.get() != NULL) item->shrink(1); }
+    if (item.get() != NULL && replacement.get() != NULL)
+        item->shrink(count);
 
-bool CauldronBlock::use(Level* level, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
+    if (player.get() != NULL && replacement.get() != NULL && !player->addItem(replacement))
+        player->drop(replacement, false);
+}
+
+void CauldronBlock::spawnCauldronEvent(Level* level, const BlockState*, const BlockPos& pos, int event) const
+{
+    if (level != NULL)
+        level->levelEvent(event, pos, 0);
+}
+
+void CauldronBlock::explodeCauldronContents(Level* level, const BlockState* state, const BlockPos& pos)
+{
+    spawnCauldronEvent(level, state, pos, 0xdad);
+}
+
+void CauldronBlock::decrementStack(not_null_ptr<ItemInstance> item)
+{
+    if (item.get() != NULL)
+        item->shrink(1);
+}
+
+bool CauldronBlock::use(Level* level, const BlockPos&, const BlockState* state,
+                        boost::shared_ptr<Player>, InteractionHand::EInteractionHand,
+                        const Direction*, float, float, float, bool)
 {
     return level != NULL && state != NULL;
 }
@@ -69,15 +116,33 @@ void CauldronBlock::setWaterLevel(Level* level, const BlockPos& pos, const Block
 }
 void CauldronBlock::handleRain(Level* level, const BlockPos& pos)
 {
-    if (level != NULL && level->mRandom != NULL && level->mRandom->nextInt(20) == 1) {
+    if (level != NULL && level->mRandom != NULL && level->mRandom->nextInt(20) == 1)
+    {
         const BlockState* state = level->getBlockState(pos);
-        if (state != NULL && convertBlockStateToLegacyData(state) < 6) setWaterLevel(level, pos, state, convertBlockStateToLegacyData(state) + 1);
+        if (state != NULL && convertBlockStateToLegacyData(state) < 6)
+            setWaterLevel(level, pos, state, convertBlockStateToLegacyData(state) + 1);
     }
 }
-Item* CauldronBlock::getResource(const BlockState*, Random*, int) { return Items::cauldron; }
-not_null_ptr<ItemInstance> CauldronBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(Items::cauldron)); }
-bool CauldronBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
-int CauldronBlock::getAnalogOutputSignal(const BlockState* state, Level*, const BlockPos&) { return (convertBlockStateToLegacyData(state) + 1) * 3; }
+
+Item* CauldronBlock::getResource(const BlockState*, Random*, int)
+{
+    return Items::cauldron;
+}
+
+not_null_ptr<ItemInstance> CauldronBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
+{
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::cauldron));
+}
+
+bool CauldronBlock::hasAnalogOutputSignal(const BlockState*)
+{
+    return true;
+}
+
+int CauldronBlock::getAnalogOutputSignal(const BlockState* state, Level*, const BlockPos&)
+{
+    return (convertBlockStateToLegacyData(state) + 1) * 3;
+}
 
 const BlockState* CauldronBlock::getBlockState(int data)
 {
@@ -85,11 +150,30 @@ const BlockState* CauldronBlock::getBlockState(int data)
     const Property* property = mStateDefinition->getProperties()[0];
     return defaultBlockState()->setBoxedValue(property, mStateDefinition->getPropertyValue(property, (unsigned short)Mth::clamp(data, 0, 6)));
 }
-int CauldronBlock::convertBlockStateToLegacyData(const BlockState* state) { return state == NULL ? 0 : state->mElementId; }
-unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& data) { return Block::GetInteractTooltip(data); }
-bool CauldronBlock::canProvideSupport(const BlockState*, const Direction* direction, EBlockSupportType type) { return direction == Direction::DOWN && (type == BLOCK_SUPPORT_EDGE || type == BLOCK_SUPPORT_ANY); }
-BlockStateDefinition* CauldronBlock::createBlockStateDefinition() { return new BlockStateDefinition(this); }
-bool CauldronBlock::isPathfindable(LevelSource*, const BlockPos&) { return true; }
+int CauldronBlock::convertBlockStateToLegacyData(const BlockState* state)
+{
+    return state == NULL ? 0 : state->mElementId;
+}
+
+unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& data)
+{
+    return Block::GetInteractTooltip(data);
+}
+
+bool CauldronBlock::canProvideSupport(const BlockState*, const Direction* direction, EBlockSupportType type)
+{
+    return direction == Direction::DOWN && (type == BLOCK_SUPPORT_EDGE || type == BLOCK_SUPPORT_ANY);
+}
+
+BlockStateDefinition* CauldronBlock::createBlockStateDefinition()
+{
+    return new BlockStateDefinition(this);
+}
+
+bool CauldronBlock::isPathfindable(LevelSource*, const BlockPos&)
+{
+    return true;
+}
 EBlockFaceShape CauldronBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
                                                  const Direction* direction)
 {
@@ -135,5 +219,5 @@ void CauldronBlock::animateTick(const BlockState*, Level* level, const BlockPos&
 void CauldronBlock::spawnSplashParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2001, BlockPos((int)x, (int)y, (int)z), color); }
 void CauldronBlock::spawnBubbleParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2002, BlockPos((int)x, (int)y, (int)z), color); }
 void CauldronBlock::spawnExplosionParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2003, BlockPos((int)x, (int)y, (int)z), color); }
-EPistonPushReaction CauldronBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_DESTROY; }
+EPistonPushReaction CauldronBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_NORMAL; }
 bool CauldronBlock::ParticlesSurviveWithin() { return true; }

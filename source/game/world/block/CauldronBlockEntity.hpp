@@ -58,7 +58,7 @@ public:
 
     virtual void load(CompoundTag* tag);
     void loadFromPacket(Level* level, const BlockPos& pos, CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void tick();
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();

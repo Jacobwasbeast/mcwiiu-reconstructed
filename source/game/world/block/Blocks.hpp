@@ -1,6 +1,10 @@
 #ifndef GAME_WORLD_BLOCK_BLOCKS_HPP
 #define GAME_WORLD_BLOCK_BLOCKS_HPP
 
+class Block;
+
+extern Block* gDoubleSlabPurpur;
+
 #include <string>
 
 class Block;

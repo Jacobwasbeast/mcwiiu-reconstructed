@@ -2,7 +2,6 @@
 #define GAME_WORLD_BLOCK_BLOCKTYPESUSED_HPP
 
 #include "game/minigame/GameMedal.hpp"
-#include "game/world/generation/PlayerStats.hpp"
 
 class BlockTypesUsed : public GameMedal
 {

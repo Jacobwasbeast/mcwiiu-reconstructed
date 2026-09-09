@@ -7,10 +7,8 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/world/block/IdMap.hpp"
+#include "game/world/block/IdMapper.hpp"
 #include "game/world/block/SimpleRegistry.hpp"
-
-template <class T>
-class IdMapper;
 
 template <class K,
           class V,
@@ -36,14 +34,14 @@ public:
 
 private:
     int mNextId;
-    IdMapper<V>* mIdMapper;
+    IdMapper<V> mIdMapper;
     boost::unordered_map<V, K, ValueHash, ValueEqual> mInverseRegistry;
 };
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::MappedRegistry()
+    : mIdMapper()
 {
-    mIdMapper = new IdMapper<V>();
     const boost::unordered_map<K, V, KeyHash, KeyEqual>& registry = this->keySet();
 
     for (typename boost::unordered_map<K, V, KeyHash, KeyEqual>::const_iterator it = registry.begin();
@@ -57,7 +55,6 @@ MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::MappedRegistry()
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::~MappedRegistry()
 {
-    delete mIdMapper;
 }
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
@@ -83,7 +80,7 @@ bool MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::containsKey
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 void MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::registerMapping(int id, K key, V value)
 {
-    mIdMapper->addMapping(value, id);
+    mIdMapper.addMapping(value, id);
 
     registerKey(key, value);
 }
@@ -103,19 +100,19 @@ K MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::getKey(V value
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 int MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::getId(V value)
 {
-    return mIdMapper->getId(value);
+    return mIdMapper.getId(value);
 }
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 V MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::byId(int id)
 {
-    return mIdMapper->byId(id);
+    return mIdMapper.byId(id);
 }
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 bool MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::containsId(int id)
 {
-    return mIdMapper->byId(id) != V();
+    return mIdMapper.byId(id) != V();
 }
 
 #endif

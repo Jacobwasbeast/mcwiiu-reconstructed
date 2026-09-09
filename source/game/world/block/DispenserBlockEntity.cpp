@@ -12,8 +12,10 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/ui/DispenserMenu.hpp"
-#include "game/util/Math.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/block/BlockEntity.hpp"
+
+static Random gDispenserRandom;
 
 DispenserBlockEntity::DispenserBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY))
@@ -94,17 +96,17 @@ int DispenserBlockEntity::getRandomSlot()
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
 
-    unsigned int count = 0;
+    int count = 1;
     int selected = -1;
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
         if (!mItems[slot]->isEmpty())
         {
-            ++count;
-            if (Math::randomInt(static_cast<int>(count)) == 0)
+            if (gDispenserRandom.nextInt(count) == 0)
             {
                 selected = static_cast<int>(slot);
             }
+            ++count;
         }
     }
     return selected;
@@ -137,23 +139,18 @@ void DispenserBlockEntity::load(CompoundTag* tag)
     {
         ContainerHelper::loadAllItems(tag, mItems);
     }
-    if (mCustomName)
-    {
-        mCustomName->loadFromTag(tag);
-    }
+    mCustomName->loadFromTag(tag);
 }
 
-void DispenserBlockEntity::save(CompoundTag* tag)
+CompoundTag* DispenserBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     if (!trySaveLootTable(tag))
     {
         ContainerHelper::saveAllItems(tag, mItems);
     }
-    if (mCustomName)
-    {
-        mCustomName->saveToTag(tag);
-    }
+    mCustomName->saveToTag(tag);
+    return tag;
 }
 
 NonNullList<not_null_ptr<ItemInstance> > DispenserBlockEntity::getItems()
@@ -170,15 +167,18 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 {
     boost::shared_ptr<DispenserBlockEntity> result(new DispenserBlockEntity());
     BlockEntity::clone(result);
-    result->mItems = mItems;
-    if (mCustomName)
+    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+    for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
-        result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+        if (!mItems[slot]->isEmpty())
+        {
+            result->mItems[slot] = mItems[slot]->copy();
+        }
     }
     return result;
 }
 
 unsigned long long DispenserBlockEntity::GetType()
 {
-    return 0x003c002000000000ULL;
+    return 0x0000000003C00200ULL;
 }

@@ -42,12 +42,13 @@ void SkullBlockEntity::setRotation(int rotation)
     mRotation = rotation;
 }
 
-void SkullBlockEntity::save(CompoundTag* tag)
+CompoundTag* SkullBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putByte(L"SkullType", (unsigned char)mSkullType);
     tag->putByte(L"Rot", (unsigned char)mRotation);
     tag->putString(L"ExtraType", mExtraType);
+    return tag;
 }
 
 void SkullBlockEntity::load(CompoundTag* tag)
@@ -143,5 +144,5 @@ boost::shared_ptr<BlockEntity> SkullBlockEntity::clone()
 
 unsigned long long SkullBlockEntity::GetType()
 {
-    return 0x0120020700000000ULL;
+    return 0x01200207ULL;
 }

@@ -2,16 +2,11 @@
 
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
-
-class Items
-{
-public:
-    static Item* prismarineCrystals;
-};
 
 SeaLanternBlock::SeaLanternBlock(Material* material)
     : Block(material)

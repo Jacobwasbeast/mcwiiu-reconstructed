@@ -17,7 +17,7 @@ public:
 private:
     TextureAtlasSprite* mTopIcon;
     TextureAtlasSprite* mSideIcon;
-    TextureAtlasSprite* mBottomIcon;
+    TextureAtlasSprite* mFlippedSideIcon;
 };
 
 #endif

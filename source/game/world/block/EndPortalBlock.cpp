@@ -122,7 +122,7 @@ not_null_ptr<ItemInstance> EndPortalBlock::getCloneItemInstance(Level*, const Bl
 
 const MaterialColor* EndPortalBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return MaterialColor::NONE;
 }
 
 EBlockFaceShape EndPortalBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,

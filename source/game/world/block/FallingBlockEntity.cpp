@@ -7,18 +7,13 @@
 #include "game/data/Tag.hpp"
 #include "game/world/block/EntityDataSerializer.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 
 const EntityDataAccessor<BlockPos>* FallingBlockEntity::DATA_START_POS = NULL;
 static const unsigned long long ENTITY_TYPE_FALLING_BLOCK = 0x0000000008000009ULL;
-
-class EntityDataSerializers
-{
-public:
-    static EntityDataSerializer<BlockPos>* BLOCK_POS;
-};
 
 FallingBlockEntity::FallingBlockEntity(Level* level, double x, double y, double z, const BlockState* blockState)
     : Entity(level, true), mBlockState(blockState), mTime(0), mDropItem(true), mHurtsEntities(false),
@@ -211,5 +206,5 @@ void FallingBlockEntity::create(Level* level)
 
 unsigned long long FallingBlockEntity::GetType()
 {
-    return 0x0800000900000000ULL;
+    return 0x0000000008000009ULL;
 }

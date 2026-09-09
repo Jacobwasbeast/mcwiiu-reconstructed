@@ -47,11 +47,12 @@ void LockableContainerBlockEntity::load(CompoundTag* tag)
     mLockKeyCode = LockCode::fromTag(tag);
 }
 
-void LockableContainerBlockEntity::save(CompoundTag* tag)
+CompoundTag* LockableContainerBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     if (mLockKeyCode != NULL)
     {
         mLockKeyCode->addTag(tag);
     }
+    return tag;
 }

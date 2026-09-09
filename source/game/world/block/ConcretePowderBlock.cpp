@@ -12,6 +12,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
@@ -47,9 +48,10 @@ ConcretePowderBlock::~ConcretePowderBlock()
 
 void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState)
 {
-    if (replacedState->getMaterial() == Material::WATER)
+    if (replacedState->getMaterial()->isLiquid())
     {
-        level->setBlock(pos, getBlockState(state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
+        level->setBlock(pos, Blocks::concrete->getBlockState(
+            state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
     }
 }
 
@@ -60,7 +62,8 @@ unsigned int ConcretePowderBlock::tryTouchWater(Level* level, const BlockPos& po
         const Direction* direction = *it;
         if (direction != Direction::DOWN && level->getBlockState(pos.relative(direction))->getMaterial() == Material::WATER)
         {
-            level->setBlock(pos, getBlockState(state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
+            level->setBlock(pos, Blocks::concrete->getBlockState(
+                state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), 3, false);
             return 1;
         }
     }

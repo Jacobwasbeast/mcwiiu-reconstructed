@@ -35,6 +35,8 @@
 #include "game/client/render/TextureAtlasSprite.hpp"
 
 AbstractProperty<bool>* DispenserBlock::TRIGGERED = NULL;
+BehaviorRegistry DispenserBlock::DISPENSER_REGISTRY(new DefaultDispenseItemBehavior());
+DirectionProperty* DispenserBlock::FACING = NULL;
 
 DispenserBlock::DispenserBlock()
     : BaseEntityBlock(Material::STONE), mRandom()
@@ -124,10 +126,10 @@ bool DispenserBlock::use(Level* level, const BlockPos& pos, const BlockState*,
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        boost::shared_ptr<DispenserBlockEntity> dispenser = boost::dynamic_pointer_cast<DispenserBlockEntity>(entity);
-        if (dispenser)
+        if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
         {
-            player->openContainer(boost::static_pointer_cast<Container>(dispenser));
+            player->openContainer(boost::static_pointer_cast<Container>(
+                boost::static_pointer_cast<DispenserBlockEntity>(entity)));
         }
     }
     return true;
@@ -208,10 +210,11 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
     level->setBlock(pos, state->setBoxedValue(FACING, &boxed), 2, false);
     if (itemInstance->hasCustomHoverName())
     {
-        boost::shared_ptr<DispenserBlockEntity> dispenser =
-            boost::dynamic_pointer_cast<DispenserBlockEntity>(level->getBlockEntity(pos));
-        if (dispenser)
+        boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
+        if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
         {
+            boost::shared_ptr<DispenserBlockEntity> dispenser =
+                boost::static_pointer_cast<DispenserBlockEntity>(entity);
             dispenser->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
                                      itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
@@ -220,11 +223,11 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
 
 void DispenserBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    boost::shared_ptr<DispenserBlockEntity> dispenser =
-        boost::dynamic_pointer_cast<DispenserBlockEntity>(level->getBlockEntity(pos));
-    if (dispenser)
+    boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
+    if ((entity->GetType() & 0x0000000003C00200ULL) == 0x0000000003C00200ULL)
     {
-        Containers::dropContents(level, pos, boost::static_pointer_cast<Container>(dispenser));
+        Containers::dropContents(level, pos, boost::static_pointer_cast<Container>(
+            boost::static_pointer_cast<DispenserBlockEntity>(entity)));
         level->updateNeighbourForOutputSignal(pos, this);
     }
     BaseEntityBlock::onRemove(level, pos, state);

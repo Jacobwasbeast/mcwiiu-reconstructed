@@ -109,7 +109,7 @@ void SignBlockEntity::tick()
     BlockEntity::tick();
 }
 
-void SignBlockEntity::save(CompoundTag* tag)
+CompoundTag* SignBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     tag->putString(L"Text1", mMessages[0]);
@@ -121,6 +121,7 @@ void SignBlockEntity::save(CompoundTag* tag)
     tag->putBoolean(L"CreatedByRestrictedPlayer", mCreatedByRestrictedPlayer);
     tag->putInt(L"CreatedByHost", mCreatedByHostPlayer);
     tag->putString(L"uuid", mCreatedPlayer);
+    return tag;
 }
 
 void SignBlockEntity::setLevelForLoading(Level* level)
@@ -266,5 +267,5 @@ bool SignBlockEntity::getTextCacheEnabled()
 
 unsigned long long SignBlockEntity::GetType()
 {
-    return 0x0100020200000000ULL;
+    return 0x0000000001000202ULL;
 }

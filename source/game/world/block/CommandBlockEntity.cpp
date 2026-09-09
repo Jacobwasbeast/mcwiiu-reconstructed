@@ -110,13 +110,14 @@ unsigned char CommandBlockEntity::isAutomatic()
     return mAutomatic;
 }
 
-void CommandBlockEntity::save(CompoundTag* tag)
+CompoundTag* CommandBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mCommandBlock->save(tag);
     tag->putBoolean(L"powered", isPowered() != 0);
     tag->putBoolean(L"conditionMet", wasConditionMet() != 0);
     tag->putBoolean(L"auto", isAutomatic() != 0);
+    return tag;
 }
 
 void CommandBlockEntity::setAutomatic(bool automatic)
@@ -135,10 +136,9 @@ void CommandBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> CommandBlockEntity::getUpdatePacket()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
+    CompoundTag* tag = save(new CompoundTag());
     int dimension = mLevel->mDimension->getType()->getId();
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 2, dimension, tag));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 2, dimension, tag));
 }
 
 bool CommandBlockEntity::onlyOpCanSetNbt()
@@ -149,31 +149,33 @@ bool CommandBlockEntity::onlyOpCanSetNbt()
 unsigned int CommandBlockEntity::getMode()
 {
     Block* block = getBlock();
-    if (block == Blocks::repeating_command_block)
+    if (block != Blocks::command_block)
     {
-        return CommandBlock::REPEAT;
-    }
-    if (block == Blocks::command_block)
-    {
-        return CommandBlock::IMPULSE;
+        if (block == Blocks::repeating_command_block)
+        {
+            return 1;
+        }
+        if (block == Blocks::chain_command_block)
+        {
+            return 0;
+        }
     }
     return 2;
 }
 
 unsigned char CommandBlockEntity::isConditional()
 {
-    const BlockState* state = mLevel->getBlockState(mPos);
-    Block* block = state->getBlock();
-    if (CommandBlock::isCommandBlock(block))
+    const BlockState* state = mLevel->getBlockState(getBlockPos());
+    if (!CommandBlock::isCommandBlock(state->getBlock()))
     {
-        return (block->convertBlockStateToLegacyData(state) & 8) != 0;
+        return 0;
     }
-    return 0;
+    return state->getValue(CommandBlock::CONDITIONAL);
 }
 
 void CommandBlockEntity::clearRemoved()
 {
-    mData = 0;
+    mBlock = NULL;
     BlockEntity::clearRemoved();
 }
 
@@ -212,5 +214,5 @@ void CommandBlockEntity::updateNamedPosition(const std::wstring& name, const std
 
 unsigned long long CommandBlockEntity::GetType()
 {
-    return 0x0100020900000000ULL;
+    return 0x0000000001000209ULL;
 }

@@ -13,10 +13,12 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
 
+static const AABB* gDiodeShape = NULL;
+
 DiodeBlock::DiodeBlock(bool on) : HorizontalDirectionalBlock(Material::DECORATION), mOn(on) {}
 DiodeBlock::~DiodeBlock() {}
 
-const AABB* DiodeBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* DiodeBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return gDiodeShape; }
 bool DiodeBlock::isCubeShaped(const BlockState*) { return false; }
 
 bool DiodeBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -71,7 +73,7 @@ int DiodeBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
 
 void DiodeBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (canSurvive(level, pos, state))
+    if (canSurvive(level, pos, NULL))
     {
         checkTickOnNeighbor(level, pos, state);
         return;
@@ -96,7 +98,7 @@ void DiodeBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, const Bl
 bool DiodeBlock::isLocked(LevelSource*, const BlockPos&, const BlockState*) { return false; }
 bool DiodeBlock::shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return getInputSignal(level, pos, state) > -0.0625f;
+    return getInputSignal(level, pos, state) > 0;
 }
 
 int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockState* state)
@@ -151,9 +153,9 @@ const BlockState* DiodeBlock::getStateForPlacement(Level*, const BlockPos& pos, 
     return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
-void DiodeBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
+void DiodeBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
 {
-    if (mOn) level->blockUpdated(pos, this, true);
+    if (shouldTurnOn(level, pos, state)) level->addToTickNextTick(pos, this, 1);
 }
 
 void DiodeBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -187,7 +189,8 @@ int DiodeBlock::getOutputSignal(LevelSource*, const BlockPos&, const BlockState*
 
 bool DiodeBlock::isDiode(const BlockState* state)
 {
-    return Blocks::unpowered_repeater->isMatching(state->getBlock()) || Blocks::powered_repeater->isMatching(state->getBlock());
+    return static_cast<DiodeBlock*>(Blocks::unpowered_repeater)->isSameDiode(state)
+        || static_cast<DiodeBlock*>(Blocks::unpowered_comparator)->isSameDiode(state);
 }
 
 bool DiodeBlock::isSameDiode(const BlockState* state)
@@ -219,8 +222,8 @@ EBlockRenderShape DiodeBlock::getRenderShape(const BlockState*)
 
 TextureAtlasSprite* DiodeBlock::getTexture(const Direction* direction, const BlockState*)
 {
-    if (direction == Direction::UP) return mIcon;
     if (direction == Direction::DOWN)
-        return (mOn ? Blocks::powered_repeater : Blocks::unpowered_repeater)->getTexture(direction);
-    return Blocks::stone->getTexture(Direction::UP);
+        return (mOn ? Blocks::redstone_torch : Blocks::unlit_redstone_torch)->getTexture(direction);
+    if (direction == Direction::UP) return mIcon;
+    return Blocks::stone_slab->getTexture(Direction::UP);
 }

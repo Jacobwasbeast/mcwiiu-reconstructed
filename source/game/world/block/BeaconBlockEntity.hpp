@@ -96,7 +96,7 @@ public:
     virtual CompoundTag* getUpdateTag();
     virtual double getViewDistance();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual bool triggerEvent(int id, int param);
     void setBeamDirection(eBEAM_DIRECTION direction);
     void setBeamLength(int length);

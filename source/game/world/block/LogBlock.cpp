@@ -3,11 +3,13 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/core/Direction.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/client/audio/SoundType.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -17,8 +19,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-extern Item* ItemInstance_getItem(const ItemInstance* itemInstance) __asm__("getItem__12ItemInstanceCFv");
 
 LogBlock::LogAxis* LogBlock::X = NULL;
 LogBlock::LogAxis* LogBlock::Y = NULL;
@@ -163,7 +163,7 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    unsigned int id = Item::getId(ItemInstance_getItem(tooltipData.m_pItemInstance.get()));
+    unsigned int id = Item::getId(tooltipData.m_pItemInstance->getItem());
     if ((id == 0x102 || id == 0x10f || id == 0x113 || id == 0x117 || id == 0x11e) && !tooltipData.m_bCanPlace && !Minecraft::InMiniGame((EMiniGameId)15, true)) return 0x2c6a27a9;
     return Block::GetInteractTooltip(tooltipData);
 }

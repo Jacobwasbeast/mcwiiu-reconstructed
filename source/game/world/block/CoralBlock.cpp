@@ -204,3 +204,8 @@ int CoralBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     return state->getValue(CORAL_TYPE) | 8;
 }
+
+bool CoralBlock::isValidAuxValue(int auxValue)
+{
+    return auxValue >= 0 && auxValue < 13;
+}

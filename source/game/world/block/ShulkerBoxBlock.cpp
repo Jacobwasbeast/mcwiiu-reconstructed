@@ -5,8 +5,12 @@
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/core/HtmlString.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/StringFormat.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/Container.hpp"
+#include "game/item/ContainerHelper.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/NonNullList.hpp"
@@ -51,7 +55,10 @@ bool ShulkerBoxBlock::isSolidRender(const BlockState*) const { return false; }
 bool ShulkerBoxBlock::isViewBlocking(const BlockState*) { return true; }
 bool ShulkerBoxBlock::isCubeShaped(const BlockState*) { return false; }
 bool ShulkerBoxBlock::hasCustomBreakingProgress(const BlockState*) { return true; }
-EBlockRenderShape ShulkerBoxBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_ENTITY; }
+EBlockRenderShape ShulkerBoxBlock::getRenderShape(const BlockState*)
+{
+    return static_cast<EBlockRenderShape>(0x16);
+}
 
 bool ShulkerBoxBlock::isEntityOnChest(Level* level, const AABB* box)
 {
@@ -75,10 +82,10 @@ bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* s
     if (box->getAnimationStatus() == 0)
     {
         AABB* bounds = box->getBoundingBox(state);
-        AABB* expanded = bounds->expand(0.5, 0.5, 0.5)->contract(0.5, 0.5, 0.5)->move(pos);
+        BlockPos adjacent = pos.relative(direction);
+        AABB* expanded = bounds->expand(0.5, 0.5, 0.5)->contract(0.5, 0.5, 0.5)->move(adjacent);
         if (level->hasBlockCubes(expanded) || isEntityOnChest(level, expanded))
             return true;
-        (void)facing;
     }
     player->openContainer(boost::static_pointer_cast<Container>(box));
     return true;
@@ -159,6 +166,51 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                       std::vector<HtmlString>* lines, bool advanced)
 {
     Block::appendHoverText(itemInstance, player, lines, advanced);
+
+    CompoundTag* tag = itemInstance->getTag();
+    if (tag == NULL || !tag->contains(L"BlockEntityTag", 10))
+        return;
+
+    CompoundTag* blockEntityTag = tag->getCompound(L"BlockEntityTag");
+    if (blockEntityTag->contains(L"LootTable", 8))
+    {
+        lines->push_back(HtmlString(L"???????",
+                                    eMinecraftColour_NOTSET, false, false, 0));
+    }
+
+    if (!blockEntityTag->contains(L"Items", 9))
+        return;
+
+    NonNullList<not_null_ptr<ItemInstance> > items =
+        NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
+    ContainerHelper::loadAllItems(blockEntityTag, items);
+
+    int displayedItems = 0;
+    int totalItems = 0;
+    for (unsigned int index = 0; index < items.size(); ++index)
+    {
+        if (!items[index]->isEmpty())
+        {
+            ++totalItems;
+            if (displayedItems < 5)
+            {
+                ++displayedItems;
+                std::wstring itemText =
+                    formatwstr(L"%ls x%d", items[index]->getHoverName().c_str(),
+                               items[index]->getCount());
+                lines->push_back(HtmlString(itemText, eMinecraftColour_NOTSET,
+                                            false, false, 0));
+            }
+        }
+    }
+
+    if (totalItems - displayedItems > 0)
+    {
+        std::wstring moreText = L10N::GetString(0xfcb7d502);
+        replaceAll(moreText, moreText, L"%s", L"%d");
+        moreText = formatwstr(moreText.c_str(), totalItems - displayedItems);
+        lines->push_back(HtmlString(moreText, eMinecraftColour_NOTSET, true, false, 0));
+    }
 }
 
 EPistonPushReaction ShulkerBoxBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_DESTROY; }

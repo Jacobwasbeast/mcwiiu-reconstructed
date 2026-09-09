@@ -141,5 +141,5 @@ boost::shared_ptr<BlockEntity> EnderChestBlockEntity::clone()
 
 unsigned long long EnderChestBlockEntity::GetType()
 {
-    return 0x120020800000000ULL;
+    return 0x0000000001200208ULL;
 }

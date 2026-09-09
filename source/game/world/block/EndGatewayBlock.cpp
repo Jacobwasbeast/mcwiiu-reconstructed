@@ -103,7 +103,7 @@ not_null_ptr<ItemInstance> EndGatewayBlock::getCloneItemInstance(Level*, const B
 
 const MaterialColor* EndGatewayBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return MaterialColor::NONE;
 }
 
 EBlockFaceShape EndGatewayBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)

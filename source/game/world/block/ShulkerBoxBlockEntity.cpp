@@ -1,4 +1,10 @@
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
+#include "game/world/block/ShulkerBoxBlock.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/Level.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/MoverType.hpp"
 
 #include <algorithm>
 
@@ -230,6 +236,40 @@ AABB* ShulkerBoxBlockEntity::getTopBoundingBox(const Direction* direction)
 
 void ShulkerBoxBlockEntity::moveCollidedEntities()
 {
+    if (mLevel == NULL)
+        return;
+    const BlockState* state = mLevel->getBlockState(mPos);
+    if (state == NULL)
+        return;
+    const Direction* direction = state->getValue(DirectionalBlock::FACING_PROPERTY);
+    AABB* box = getTopBoundingBox(direction)->move(mPos);
+    std::vector<boost::shared_ptr<Entity> > entities;
+    mLevel->getEntities(boost::shared_ptr<Entity>(), box, &entities);
+    Direction::Axis* axis = direction->getAxis();
+    const int step = direction->getAxisDirection()->getStep();
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        if (!entity || entity->mRemoved || entity->getPistonPushReaction() == 3)
+            continue;
+        double dx = 0.0;
+        double dy = 0.0;
+        double dz = 0.0;
+        const AABB* entityBox = entity->mBoundingBox;
+        if (entityBox == NULL)
+            continue;
+        const double offset = 1.0349999666;
+        if (axis->getId() == Direction::Axis::eAxis_X)
+            dx = step > 0 ? box->mMaxX - entityBox->mMinX + offset : entityBox->mMaxX - box->mMinX + offset;
+        else if (axis->getId() == Direction::Axis::eAxis_Y)
+            dy = step > 0 ? box->mMaxY - entityBox->mMinY + offset : entityBox->mMaxY - box->mMinY + offset;
+        else
+            dz = step > 0 ? box->mMaxZ - entityBox->mMinZ + offset : entityBox->mMaxZ - box->mMinZ + offset;
+        dx *= step;
+        dy *= step;
+        dz *= step;
+        entity->move(eMoverType_ShulkerBox, dx, dy, dz, false);
+    }
 }
 
 void ShulkerBoxBlockEntity::updateAnimation()
@@ -307,10 +347,11 @@ void ShulkerBoxBlockEntity::load(CompoundTag* tag)
     loadFromTag(tag);
 }
 
-void ShulkerBoxBlockEntity::save(CompoundTag* tag)
+CompoundTag* ShulkerBoxBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     saveToTag(tag);
+    return tag;
 }
 
 NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxBlockEntity::getItems()

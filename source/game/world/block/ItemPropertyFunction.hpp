@@ -11,5 +11,5 @@ class LivingEntity;
 class ItemPropertyFunction
 {
 public:
-    virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity) const = 0;
+    virtual float call(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity) = 0;
 };

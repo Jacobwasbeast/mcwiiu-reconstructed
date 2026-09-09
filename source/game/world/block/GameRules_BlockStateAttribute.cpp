@@ -1,6 +1,7 @@
 #include "game/world/block/GameRules_BlockStateAttribute.hpp"
 
 #include "game/core/IGameRuleAttribute.hpp"
+#include "game/util/StringUtils.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -11,8 +12,6 @@
 std::string formatstr(const char* format, ...);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 
-template<typename T>
-std::wstring toString(T value);
 
 template<typename T>
 T fromString(const std::wstring& text);

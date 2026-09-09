@@ -10,13 +10,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
-
-class SeaGrass
-{
-public:
-    static bool trySpawnSeaGrass(bool checkOnly, Level* level, Random* random,
-                                 const BlockPos& pos, const BlockState* state);
-};
+#include "game/core/SeaGrass.hpp"
 
 GravelBlock::GravelBlock()
     : FallingBlock()

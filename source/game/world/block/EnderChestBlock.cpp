@@ -121,7 +121,7 @@ bool EnderChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, 
 {
     boost::shared_ptr<PlayerEnderChestContainer> inventory = player->getEnderChestInventory();
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (!clientSide && blockEntity && blockEntity->GetType() == 0x120020800000000ULL
+    if (!clientSide && blockEntity && blockEntity->GetType() == 0x1200208ULL
         && !ChestBlock::isChestBlockedAt(level, pos))
     {
         boost::shared_ptr<EnderChestBlockEntity> chest =

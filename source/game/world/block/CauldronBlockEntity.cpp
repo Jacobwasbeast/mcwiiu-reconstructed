@@ -13,6 +13,7 @@
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 CauldronBlockEntity::CauldronBlockEntity()
     : BlockEntity(), Container(), mPotionId(), mPotionType(Potion::NORMAL), mHasCustomColor(false),
@@ -105,7 +106,11 @@ int CauldronBlockEntity::getMaxStackSize() { return 64; }
 
 bool CauldronBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    return mLevel != NULL && player.get() != NULL;
+    if (mLevel->getBlockEntity(mPos) != shared_from_this())
+    {
+        return false;
+    }
+    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
 }
 
 void CauldronBlockEntity::startOpen(boost::shared_ptr<Player> player) {}
@@ -221,21 +226,25 @@ void CauldronBlockEntity::load(CompoundTag* tag)
 void CauldronBlockEntity::loadFromPacket(Level* level, const BlockPos& pos, CompoundTag* tag)
 {
     load(tag);
-    setLevel(level);
-    setPosition(pos);
+    if (level->getBlockId(pos.x, pos.y, pos.z) == 118)
+    {
+        int data = level->getBlockData(pos.x, pos.y, pos.z);
+        level->setData(pos, data, 2, true);
+    }
 }
 
-void CauldronBlockEntity::save(CompoundTag* tag)
+CompoundTag* CauldronBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
-    ContainerHelper::saveAllItems(tag, mItems);
     mCustomName->saveToTag(tag);
+    ContainerHelper::saveAllItems(tag, mItems);
     tag->putString(L"PotionId", mPotionId);
     tag->putShort(L"PotionType", static_cast<short>(mPotionType));
     if (mHasCustomColor)
     {
         tag->putInt(L"CustomColor", mCustomColor);
     }
+    return tag;
 }
 
 void CauldronBlockEntity::tick() { BlockEntity::tick(); }
@@ -265,4 +274,4 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
 }
 
 void CauldronBlockEntity::setChanged() { BlockEntity::setChanged(); }
-unsigned long long CauldronBlockEntity::GetType() { return 0x0100021100000000ULL; }
+unsigned long long CauldronBlockEntity::GetType() { return 0x0000000001000211ULL; }

@@ -10,11 +10,13 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/FlowerBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -88,13 +90,27 @@ void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& p
         const BlockState* state = level->getBlockState(candidate);
         if (state->getBlock() != this)
             continue;
+
+        Block* block;
+        const BlockState* generatedState;
         if (random->nextInt(8) != 0)
         {
-            level->setBlock(candidate, Blocks::tallgrass->defaultBlockState(), 2, false);
+            block = Blocks::tallgrass;
+            generatedState = block->defaultBlockState();
         }
         else
         {
-            level->setBlock(candidate, Blocks::yellow_flower->defaultBlockState(), 2, false);
+            FlowerBlock::Flower* flower = level->getBiome(candidate)->getRandomFlower(*random, candidate);
+            block = flower->getCategory()->getBlock();
+
+            TypedBoxed<FlowerBlock::Flower*> boxedFlower(flower);
+            generatedState = block->defaultBlockState()->setBoxedValue(
+                static_cast<FlowerBlock*>(block)->getFlowerProperty(), &boxedFlower);
+        }
+
+        if (block->canSurvive(level, candidate, generatedState))
+        {
+            level->setBlock(candidate, generatedState, 3, false);
         }
     }
 }

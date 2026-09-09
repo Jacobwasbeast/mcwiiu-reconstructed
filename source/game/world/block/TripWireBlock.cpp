@@ -173,8 +173,49 @@ int TripWireBlock::convertBlockStateToLegacyData(const BlockState* state)
     return data;
 }
 
-const BlockState* TripWireBlock::rotate(const BlockState* state, Rotation*) { return state; }
-const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror*) { return state; }
+const BlockState* TripWireBlock::rotate(const BlockState* state, Rotation* rotation)
+{
+    const Direction* directions[4] = { Direction::NORTH, Direction::EAST,
+                                       Direction::SOUTH, Direction::WEST };
+    AbstractProperty<bool>* properties[4] = { NORTH, EAST, SOUTH, WEST };
+    const BlockState* result = state;
+    for (int i = 0; i < 4; ++i)
+    {
+        TypedBoxed<bool> value(state->getValue(properties[i]));
+        const Direction* destination = rotation->rotate(directions[i]);
+        for (int j = 0; j < 4; ++j)
+        {
+            if (directions[j] == destination)
+            {
+                result = result->setBoxedValue(properties[j], &value);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
+{
+    const Direction* directions[4] = { Direction::NORTH, Direction::EAST,
+                                       Direction::SOUTH, Direction::WEST };
+    AbstractProperty<bool>* properties[4] = { NORTH, EAST, SOUTH, WEST };
+    const BlockState* result = state;
+    for (int i = 0; i < 4; ++i)
+    {
+        TypedBoxed<bool> value(state->getValue(properties[i]));
+        const Direction* destination = mirror->mirror(directions[i]);
+        for (int j = 0; j < 4; ++j)
+        {
+            if (directions[j] == destination)
+            {
+                result = result->setBoxedValue(properties[j], &value);
+                break;
+            }
+        }
+    }
+    return result;
+}
 
 BlockStateDefinition* TripWireBlock::createBlockStateDefinition()
 {

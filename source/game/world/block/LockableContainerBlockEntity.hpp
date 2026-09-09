@@ -21,7 +21,7 @@ public:
     virtual LockCode* getLockKeyCode();
     virtual void unlock();
     virtual void load(CompoundTag* tag);
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
 
 protected:
     LockCode* mLockKeyCode;

@@ -129,7 +129,7 @@ not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const 
 {
     int skullType = 0;
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == 0x0120020700000000ULL)
+    if (entity && entity->GetType() == 0x01200207ULL)
     {
         boost::shared_ptr<SkullBlockEntity> skull = boost::dynamic_pointer_cast<SkullBlockEntity>(entity);
         if (skull)
@@ -159,7 +159,7 @@ void SkullBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* s
     if (!level->mIsClientSide && !state->getValue(WATERLOGGED))
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity && entity->GetType() == 0x0120020700000000ULL)
+        if (entity && entity->GetType() == 0x01200207ULL)
             Block::popResource(level, pos, getCloneItemInstance(level, pos, state));
     }
     BaseEntityBlock::onRemove(level, pos, state);

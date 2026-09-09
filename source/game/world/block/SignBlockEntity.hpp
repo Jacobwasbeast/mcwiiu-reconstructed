@@ -30,7 +30,7 @@ public:
     bool wasCreatedByHostPlayer();
     void setCreatedByHostPlayer(bool host);
     virtual void tick();
-    virtual void save(CompoundTag* tag);
+    virtual CompoundTag* save(CompoundTag* tag);
     virtual void setLevelForLoading(Level* level);
     virtual void load(CompoundTag* tag);
     virtual boost::shared_ptr<Packet> getUpdatePacket();
