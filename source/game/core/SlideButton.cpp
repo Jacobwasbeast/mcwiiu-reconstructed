@@ -39,8 +39,7 @@ void SlideButton::renderBg(Minecraft* minecraft, int mouseX, int mouseY)
         }
 
         minecraft->mOptions->set(mOption, mValue);
-        mMessage.assign(minecraft->mOptions->getMessage(mOption), 0,
-                        static_cast<std::wstring::size_type>(-1));
+        mMessage = minecraft->mOptions->getMessage(mOption);
     }
 
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -69,8 +68,7 @@ bool SlideButton::clicked(Minecraft* minecraft, int mouseX, int mouseY)
     }
 
     minecraft->mOptions->set(mOption, mValue);
-    mMessage.assign(minecraft->mOptions->getMessage(mOption), 0,
-                    static_cast<std::wstring::size_type>(-1));
+    mMessage = minecraft->mOptions->getMessage(mOption);
     mSliding = true;
     return true;
 }

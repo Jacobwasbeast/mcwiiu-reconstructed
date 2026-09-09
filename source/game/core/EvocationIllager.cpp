@@ -126,7 +126,7 @@ void EvocationIllager::EvokerWololoSpellGoal::tick()
 bool EvocationIllager::EvokerWololoSpellGoal::canUse()
 {
     EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
-    if (evoker->getTarget() || evoker->isCastingSpell() || mSpellCastingTickCount > evoker->mTickCount)
+    if (evoker->getTarget() || evoker->isCastingSpell() || mNextAttackTickCount > evoker->mTickCount)
         return false;
     if (!evoker->mLevel->getGameRules()->getBoolean(1))
         return false;

@@ -12,6 +12,7 @@
 class Block;
 class BlockPos;
 class CompoundTag;
+class CraftingContainer;
 class DamageSource;
 class DataFixerUpper;
 class DifficultyInstance;
@@ -71,11 +72,10 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    int mColorData;
-    boost::shared_ptr<void> mContainer;
-    boost::shared_ptr<void> mCraftingContainer;
+    AbstractContainerMenu* mContainer;
+    boost::shared_ptr<CraftingContainer> mCraftingContainer;
     int mEatAnimationTick;
-    boost::shared_ptr<Goal> mEatBlockGoal;
+    Goal* mEatBlockGoal;
 };
 
 #endif

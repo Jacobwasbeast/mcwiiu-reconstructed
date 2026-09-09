@@ -129,7 +129,7 @@ uint32_t IScoreboardLayout::getTitleIcon(int, const EScoreboardType&)
 
 std::wstring IScoreboardLayout::GetRowLabel(int, const StatsUID&, const EScoreboardType&)
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 uint32_t IScoreboardLayout::getNumberOfColumns()
@@ -139,5 +139,5 @@ uint32_t IScoreboardLayout::getNumberOfColumns()
 
 std::wstring IScoreboardLayout::GetCustomProgressDetails(const StatsUID&, int&)
 {
-    return std::wstring();
+    return std::wstring(L"");
 }

@@ -1,24 +1,37 @@
 #include "game/core/BubbleColumnSegment.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/LiquidBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-#include "game/util/Random.hpp"
 
-static Property* gBubbleColumnSegmentDrag = NULL;
+static AbstractProperty<bool>* DRAG =
+    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"drag"));
+
+static const int BLOCK_ID_AIR = 0;
+static const int BLOCK_ID_WATER = 9;
+static const int BLOCK_ID_SOUL_SAND = 88;
+static const int BLOCK_ID_MAGMA = 213;
+static const int BLOCK_ID_BUBBLE_COLUMN_SEGMENT = 272;
 
 BubbleColumnSegment::BubbleColumnSegment(Material* material)
-    : Block(material),
-      mUnknown(0)
+    : Block(material)
 {
     TypedBoxed<bool> drag(true);
     DerivedInit();
-    registerDefaultState(defaultBlockState()->setBoxedValue(gBubbleColumnSegmentDrag, &drag));
+    registerDefaultState(defaultBlockState()->setBoxedValue(DRAG, &drag));
 }
 
 BubbleColumnSegment::~BubbleColumnSegment()
@@ -43,61 +56,106 @@ bool BubbleColumnSegment::isSolidRender(const BlockState* state) const
 void BubbleColumnSegment::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                        const boost::shared_ptr<Entity>& entity)
 {
-    const BlockState* aboveState = level->getBlockState(pos.above());
-    if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::bubble_column_segment)
+    const BlockState* aboveState = level->getBlockState(entity->mTickCache, pos.above());
+    if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR)
     {
-        entity->onInsideBubbleColumn(getFlowDownward(state));
+        entity->onAboveBubbleCol(state->getValue(DRAG));
+
+        if (!level->mIsClientSide && level->mRandom->nextInt(4) == 0)
+        {
+            ServerLevel* serverLevel = static_cast<ServerLevel*>(level);
+            for (int i = 0; i < 2; ++i)
+            {
+                serverLevel->sendParticles(PARTICLE_SPLASH,
+                                           (double)((float)pos.x + level->mRandom->nextFloat()),
+                                           (double)(pos.y + 1),
+                                           (double)((float)pos.z + level->mRandom->nextFloat()),
+                                           1, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(),
+                                           0.0, 0.0, 0.0);
+                serverLevel->sendParticles(PARTICLE_BUBBLE,
+                                           (double)((float)pos.x + level->mRandom->nextFloat()),
+                                           (double)(pos.y + 1),
+                                           (double)((float)pos.z + level->mRandom->nextFloat()),
+                                           1, 0.0, 0.01, 0.0, 0.2, arrayWithLength<int>(),
+                                           0.0, 0.0, 0.0);
+            }
+        }
+    }
+    else
+    {
+        entity->onInsideBubbleColumn(state->getValue(DRAG));
     }
 }
 
 void BubbleColumnSegment::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    level->neighborChanged(pos, this, pos);
+    level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
 bool BubbleColumnSegment::getFlowDownward(const BlockState* state)
 {
-    if (state->getBlock() == Blocks::WATER)
+    if (state->getBlock() == Blocks::soul_sand)
+    {
         return false;
+    }
+
     if (state->getBlock() == Blocks::bubble_column_segment)
-        return static_cast<const TypedBoxed<bool>*>(state->getBoxedValue(gBubbleColumnSegmentDrag))->getValue();
+    {
+        return state->getValue(DRAG);
+    }
+
     return true;
 }
 
 bool BubbleColumnSegment::isValidBubbleColumnLocation(Level* level, const BlockPos& pos)
 {
-    const BlockState* state = level->getBlockState(pos);
-    const BlockState* above = level->getBlockState(pos.above());
-    if (state->getBlock() == Blocks::WATER && above->getBlock() == Blocks::AIR)
+    BlockPos above = pos.above();
+    int id = level->getBlockId(pos.x, pos.y, pos.z);
+
+    if (id == BLOCK_ID_WATER)
+    {
+        if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_AIR)
+        {
+            const BlockState* state = level->getBlockState(pos);
+            if (state->getMaterial() == Material::WATER && state->getValue(LiquidBlock::LEVEL) != 0)
+            {
+                return false;
+            }
+        }
+    }
+    else if (id != BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
+    {
         return true;
-    if (state->getBlock() != Blocks::bubble_column_segment)
-        return true;
-    return level->getBlockState(pos.west())->getBlock() != NULL
-        && level->getBlockState(pos.east())->getBlock() != NULL
-        && level->getBlockState(pos.north())->getBlock() != NULL
-        && level->getBlockState(pos.south())->getBlock() != NULL;
+    }
+
+    return level->getBlockId(pos.x - 1, pos.y, pos.z) != BLOCK_ID_AIR
+        && level->getBlockId(pos.x + 1, pos.y, pos.z) != BLOCK_ID_AIR
+        && level->getBlockId(pos.x, pos.y, pos.z - 1) != BLOCK_ID_AIR
+        && level->getBlockId(pos.x, pos.y, pos.z + 1) != BLOCK_ID_AIR;
 }
 
 bool BubbleColumnSegment::addBubbleColumnSegment(Level* level, const BlockPos& pos)
 {
     BlockPos above = pos.above();
-    if (level->getBlockState(above)->getBlock() != Blocks::WATER
-        && level->getBlockState(above)->getBlock() != Blocks::bubble_column_segment
-        && !level->getBlockState(above)->getBlock()->mayReplaceWithPlace(level, above))
-        return false;
-    if (!isValidBubbleColumnLocation(level, above))
-        return false;
-    TypedBoxed<bool> drag(getFlowDownward(level->getBlockState(pos)));
-    const BlockState* bubble = Blocks::bubble_column_segment->defaultBlockState()->setBoxedValue(gBubbleColumnSegmentDrag, &drag);
-    level->setBlock(above, bubble, 2, false);
-    level->setExtraBlock(above, Blocks::bubble_column_segment->defaultBlockState(), 2, false);
-    return true;
+    if (level->getBlockId(above.x, above.y, above.z) != BLOCK_ID_BUBBLE_COLUMN_SEGMENT
+        && level->isEmptyWaterBlock(above) && isValidBubbleColumnLocation(level, above))
+    {
+        const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
+        TypedBoxed<bool> drag(getFlowDownward(level->getBlockState(pos)));
+        level->setBlock(above, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
+        level->setExtraBlock(above, Blocks::FLOWING_WATER->defaultBlockState(), 2, false);
+        return true;
+    }
+
+    return false;
 }
 
 void BubbleColumnSegment::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (isValidBubbleColumnLocation(level, pos))
+    if (canSurvive(level, pos, state))
+    {
         addBubbleColumnSegment(level, pos);
+    }
     else
     {
         level->setBlockAndUpdate(pos, Blocks::WATER->defaultBlockState());
@@ -107,9 +165,18 @@ void BubbleColumnSegment::tick(Level* level, const BlockPos& pos, const BlockSta
 
 void BubbleColumnSegment::RectifyBubbleFlow(Level* level, const BlockPos& pos, bool down)
 {
-    TypedBoxed<bool> drag(down);
-    const BlockState* state = Blocks::bubble_column_segment->defaultBlockState()->setBoxedValue(gBubbleColumnSegmentDrag, &drag);
-    level->setBlockAndUpdate(pos, state);
+    if (getFlowDownward(level->getBlockState(pos)) != down)
+    {
+        const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
+        TypedBoxed<bool> drag(down);
+        level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
+
+        BlockPos above = pos.above();
+        if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
+        {
+            RectifyBubbleFlow(level, above, down);
+        }
+    }
 }
 
 int BubbleColumnSegment::getTickDelay(Level* level)
@@ -119,43 +186,91 @@ int BubbleColumnSegment::getTickDelay(Level* level)
 
 void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    const BlockPos above = pos.above();
-    const BlockState* aboveState = level->getBlockState(above);
-    if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::bubble_column_segment)
+    if (!state->getValue(DRAG))
     {
-        if (random->nextInt(4) == 0)
-            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, pos.x + random->nextFloat(), pos.y + 1.0,
-                                            pos.z + random->nextFloat(), 0.0, 0.98, 0.0,
-                                            arrayWithLength<int>(0, true));
+        const BlockState* aboveState = level->getBlockState(pos.above());
+        if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR
+            || level->mRandom->nextInt(4) == 0)
+        {
+            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE, pos.x + 0.5, (double)pos.y,
+                                            pos.z + 0.5, 0.0, 0.04, 0.0, arrayWithLength<int>());
+            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE,
+                                            (double)((float)pos.x + random->nextFloat()),
+                                            (double)((float)pos.y + random->nextFloat()),
+                                            (double)((float)pos.z + random->nextFloat()),
+                                            0.0, 0.04, 0.0, arrayWithLength<int>());
+        }
+
         if (random->nextInt(200) == 0)
-            level->addAlwaysVisibleParticle(ePARTICLE_BUBBLE_POP, pos.x, pos.y + 1.0, pos.z,
-                                            0.0, 0.0, 0.0, arrayWithLength<int>(0, true));
+        {
+            level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
+                                  SoundEvents::BUBBLE_COLUMN_UPWARDS_AMBIENT,
+                                  SoundSource::eSoundSource_Blocks,
+                                  0.2f + random->nextFloat() * 0.2f,
+                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
+        }
+    }
+    else
+    {
+        const BlockState* aboveState = level->getBlockState(pos.above());
+        if (aboveState->getBlock() == Blocks::WATER || aboveState->getBlock() == Blocks::AIR
+            || level->mRandom->nextInt(3) == 0)
+        {
+            level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8,
+                                            pos.z + 0.3, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+
+        if (random->nextInt(200) == 0)
+        {
+            level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
+                                  SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_AMBIENT,
+                                  SoundSource::eSoundSource_Blocks,
+                                  0.2f + random->nextFloat() * 0.2f,
+                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
+        }
     }
 }
 
 void BubbleColumnSegment::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                           Block* block, const BlockPos& fromPos)
 {
-    level->neighborChanged(pos, this, pos);
+    level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
 bool BubbleColumnSegment::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const BlockState* below = level->getBlockState(pos.below());
-    if (below->getBlock() != Blocks::WATER && below->getBlock() != Blocks::bubble_column_segment
-        && below->getBlock() != Blocks::soul_sand)
-        return false;
-    if (isValidBubbleColumnLocation(level, pos))
+    BlockPos below = pos.below();
+    int belowId = level->getBlockId(below.x, below.y, below.z);
+    bool supported = belowId == BLOCK_ID_BUBBLE_COLUMN_SEGMENT || belowId == BLOCK_ID_MAGMA
+                     || belowId == BLOCK_ID_SOUL_SAND;
+    bool valid = isValidBubbleColumnLocation(level, pos);
+
+    if (supported && valid)
     {
-        if (below->getBlock() == Blocks::WATER)
-            RectifyBubbleFlow(level, pos, getFlowDownward(below));
-        else if (getFlowDownward(below) != getFlowDownward(state))
+        if (belowId == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
         {
-            TypedBoxed<bool> drag(below->getBlock() == Blocks::soul_sand);
-            level->setBlock(pos, Blocks::bubble_column_segment->defaultBlockState()->setBoxedValue(gBubbleColumnSegmentDrag, &drag), 2, false);
+            RectifyBubbleFlow(level, pos, getFlowDownward(level->getBlockState(below)));
         }
+        else
+        {
+            bool down = belowId == BLOCK_ID_MAGMA;
+            if (down != getFlowDownward(level->getBlockState(pos)))
+            {
+                const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState();
+                TypedBoxed<bool> drag(down);
+                level->setBlock(pos, bubbleState->setBoxedValue(DRAG, &drag), 2, false);
+            }
+
+            BlockPos above = pos.above();
+            if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
+            {
+                RectifyBubbleFlow(level, above, down);
+            }
+        }
+
         return true;
     }
+
     return false;
 }
 
@@ -203,12 +318,12 @@ EBlockRenderShape BubbleColumnSegment::getRenderShape(const BlockState* state)
 const BlockState* BubbleColumnSegment::getBlockState(int data)
 {
     TypedBoxed<bool> drag(data != 0);
-    return defaultBlockState()->setBoxedValue(gBubbleColumnSegmentDrag, &drag);
+    return defaultBlockState()->setBoxedValue(DRAG, &drag);
 }
 
 int BubbleColumnSegment::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return getFlowDownward(state) ? 1 : 0;
+    return state->getValue(DRAG);
 }
 
 bool BubbleColumnSegment::canContainLiquid(const BlockState* state) const
@@ -228,8 +343,6 @@ EPistonPushReaction BubbleColumnSegment::getPistonPushReaction(const BlockState*
 
 BlockStateDefinition* BubbleColumnSegment::createBlockStateDefinition()
 {
-    if (gBubbleColumnSegmentDrag == NULL)
-        gBubbleColumnSegmentDrag = BooleanProperty::create(L"drag");
-    const Property* properties[1] = { gBubbleColumnSegmentDrag };
+    static const Property* properties[1] = { DRAG };
     return new BlockStateDefinition(this, properties, 1);
 }

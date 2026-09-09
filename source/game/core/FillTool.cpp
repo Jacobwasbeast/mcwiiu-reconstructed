@@ -11,7 +11,7 @@ FillTool::FillTool(ConsoleSchematicFile* schematic)
       mFillData(0), mReplaceOnlyData(0), mReplaceOnlyDataMask(-1), mFillDataMask(0),
       mDimension(0), mReplaceOnly(false), mHasPointB(false), mZDiameter(3),
       mBrushStrength(2.0f), mEnabled(false), mSurfaceBrush(false), mLevel(NULL),
-      mSchematic(schematic), mBounds(AABB::newPermanent(0.0, 0.0, 0.0, 3.0, 6.0, 2.0)),
+      mSchematic(schematic), mBounds(AABB::newPermanent(0.0, 0.0, 0.0, 3.0, 3.0, 3.0)),
       mMode(1), mBrushBlock(NULL), mBrushData(0), mUseBrush(false), mUseSurface(false),
       mFallbackBlock(NULL), mX0(0), mY0(0), mZ0(0), mX1(0), mY1(0), mZ1(0),
       mFlags(0), mMaxBlocks(0), mMinY(0), mProgress(0), mFinished(false),

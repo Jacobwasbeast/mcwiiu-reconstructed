@@ -4,6 +4,11 @@
 #include "game/minigame/TutorialTask.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+ProcedureCompoundTask::ProcedureCompoundTask(Tutorial* tutorial)
+    : TutorialTask(tutorial, -1, false, NULL, false, true, false), tasks()
+{
+}
+
 ProcedureCompoundTask::~ProcedureCompoundTask()
 {
     for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)

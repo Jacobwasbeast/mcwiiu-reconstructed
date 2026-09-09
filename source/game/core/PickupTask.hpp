@@ -26,7 +26,7 @@ public:
 
 private:
     Item** items;
-    unsigned int itemCount;
+    int itemCount;
     unsigned int requiredCount;
     int auxValue;
     MobEffect* effect;

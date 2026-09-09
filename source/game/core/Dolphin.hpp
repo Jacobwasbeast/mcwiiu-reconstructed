@@ -30,8 +30,8 @@ public:
     virtual unsigned int getMaxAirSupply();
     virtual double getEyeHeight();
     virtual unsigned int getAmbientSoundInterval();
-    virtual unsigned int getMaxHeadXRot();
-    virtual unsigned int getMaxHeadYRot();
+    virtual int getMaxHeadXRot();
+    virtual int getMaxHeadYRot();
     virtual void aiStep();
     virtual void tick();
     virtual bool isPushedByWater();

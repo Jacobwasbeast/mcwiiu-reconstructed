@@ -3,7 +3,9 @@
 
 #include <string>
 
-class IdsStringBuilder
+#include "game/core/StringBuilderCore.hpp"
+
+class IdsStringBuilder : public StringBuilderCore
 {
 public:
     explicit IdsStringBuilder(int id);

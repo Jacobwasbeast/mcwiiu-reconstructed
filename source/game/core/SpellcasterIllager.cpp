@@ -1,8 +1,7 @@
 #include "game/core/SpellcasterIllager.hpp"
 
-#include <cmath>
-
 #include "game/client/render/ParticleType.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
@@ -21,7 +20,7 @@ SpellcasterIllager::IllagerSpell* gSpell4 = new SpellcasterIllager::IllagerSpell
 SpellcasterIllager::IllagerSpell* gSpell5 = new SpellcasterIllager::IllagerSpell(5, 0.1, 0.1, 0.2);
 
 SpellcasterIllager::SpellcasterIllager(Level* level)
-    : AbstractIllager(level), mSpellTicks(0), mCurrentSpell(NULL)
+    : AbstractIllager(level), mSpellTicks(0), mCurrentSpell(gSpell0)
 {
 }
 
@@ -56,11 +55,11 @@ void SpellcasterIllager::addAdditonalSaveData(CompoundTag* tag)
 
 bool SpellcasterIllager::isCastingSpell()
 {
-    if (mLevel != NULL && mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
     {
         return getEntityData()->get(DATA_ID) != 0;
     }
-    return mSpellTicks != 0;
+    return mSpellTicks > 0;
 }
 
 int SpellcasterIllager::getArmPose()
@@ -68,24 +67,19 @@ int SpellcasterIllager::getArmPose()
     return isCastingSpell() ? ILLAGER_ARM_POSE_SPELLCASTING : ILLAGER_ARM_POSE_CROSSED;
 }
 
-int SpellcasterIllager::getSpellCastingTime()
-{
-    return mSpellTicks;
-}
-
 void SpellcasterIllager::setIsCastingSpell(const IllagerSpell* spell)
 {
     mCurrentSpell = spell;
-    getEntityData()->set(DATA_ID, spell == NULL ? (unsigned char)0 : (unsigned char)spell->mId, true);
+    getEntityData()->set(DATA_ID, (unsigned char)spell->mId, true);
 }
 
-SpellcasterIllager::IllagerSpell* SpellcasterIllager::getCurrentSpell()
+const SpellcasterIllager::IllagerSpell* SpellcasterIllager::getCurrentSpell()
 {
-    if (mLevel != NULL && mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
-        return IllagerSpell::byId(getEntityData()->get(DATA_ID));
+        return mCurrentSpell;
     }
-    return const_cast<IllagerSpell*>(mCurrentSpell);
+    return IllagerSpell::byId(getEntityData()->get(DATA_ID));
 }
 
 void SpellcasterIllager::customServerAiStep()
@@ -96,24 +90,23 @@ void SpellcasterIllager::customServerAiStep()
 void SpellcasterIllager::tick()
 {
     Monster::tick();
-    if (mLevel == NULL || !mLevel->mIsClientSide || !isCastingSpell())
+    if (mLevel->mIsClientSide && isCastingSpell())
     {
-        return;
+        const IllagerSpell* spell = getCurrentSpell();
+        float angle = mYBodyRot * 0.017453292f
+                      + Mth::cos((float)mTickCount * 0.6662f) * 0.25f;
+        double xOffset = (double)Mth::cos(angle) * 0.6;
+        double zOffset = (double)Mth::sin(angle) * 0.6;
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + xOffset, mY + 1.8, mZ + zOffset,
+                            spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX - xOffset, mY + 1.8, mZ - zOffset,
+                            spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
     }
+}
 
-    IllagerSpell* spell = IllagerSpell::byId(getEntityData()->get(DATA_ID));
-    if (spell == NULL)
-    {
-        return;
-    }
-
-    float angle = mTickCount * 0.0174532924f + mXRot * 0.0174532924f;
-    double xOffset = std::cos(angle) * 0.6;
-    double zOffset = std::sin(angle) * 0.6;
-    mLevel->addParticle(PARTICLE_MOB_SPELL, mX + xOffset, mY + 1.8, mZ + zOffset,
-                        spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
-    mLevel->addParticle(PARTICLE_MOB_SPELL, mX - xOffset, mY + 1.8, mZ - zOffset,
-                        spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
+int SpellcasterIllager::getSpellCastingTime()
+{
+    return mSpellTicks;
 }
 
 SpellcasterIllager::IllagerSpell::IllagerSpell(int id, double x, double y, double z)
@@ -132,7 +125,7 @@ SpellcasterIllager::IllagerSpell* SpellcasterIllager::IllagerSpell::byId(int id)
 }
 
 SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(SpellcasterIllager* spellcaster)
-    : Goal(), mSpellcaster(spellcaster), mSpellWarmup(0), mSpellCastingTickCount(0)
+    : Goal(), mSpellcaster(spellcaster), mSpellWarmup(0), mNextAttackTickCount(0)
 {
     setRequiredControlFlags(3);
 }
@@ -143,9 +136,8 @@ SpellcasterIllager::SpellcasterUseSpellGoal::~SpellcasterUseSpellGoal()
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    return target != NULL && !mSpellcaster->isCastingSpell()
-        && mSpellCastingTickCount <= mSpellcaster->mTickCount;
+    return mSpellcaster->getTarget() != NULL && !mSpellcaster->isCastingSpell()
+        && mNextAttackTickCount <= mSpellcaster->mTickCount;
 }
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canContinueToUse()
@@ -162,8 +154,8 @@ bool SpellcasterIllager::SpellcasterUseSpellGoal::canInterrupt()
 void SpellcasterIllager::SpellcasterUseSpellGoal::start()
 {
     mSpellWarmup = getCastWarmupTime();
-    mSpellcaster->mSpellTicks = getCastingTime() + getCastingInterval();
-    mSpellCastingTickCount = mSpellcaster->mTickCount + getCastingInterval();
+    mSpellcaster->mSpellTicks = getCastWarmupTime() + getCastingTime();
+    mNextAttackTickCount = mSpellcaster->mTickCount + getCastingInterval();
     mSpellcaster->getNavigation()->stop();
 }
 
@@ -171,15 +163,16 @@ void SpellcasterIllager::SpellcasterUseSpellGoal::stop()
 {
     Goal::stop();
     mSpellcaster->mSpellTicks = 0;
-    mSpellcaster->setIsCastingSpell(NULL);
+    mSpellcaster->setIsCastingSpell(gSpell0);
 }
 
 void SpellcasterIllager::SpellcasterUseSpellGoal::tick()
 {
-    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    if (target != NULL)
+    if (mSpellcaster->getTarget() != NULL)
     {
-        static_cast<LookControl*>(mSpellcaster->getLookControl())->setLookAt(target, 30.0f, 30.0f);
+        mSpellcaster->getLookControl()->setLookAt(mSpellcaster->getTarget(),
+                                                  (float)mSpellcaster->getMaxHeadYRot(),
+                                                  (float)mSpellcaster->getMaxHeadXRot());
     }
 
     if (mSpellWarmup > 0 && --mSpellWarmup == 0)
@@ -195,6 +188,7 @@ void SpellcasterIllager::SpellcasterUseSpellGoal::tick()
     if (mSpellcaster->mSpellTicks > 0 && --mSpellcaster->mSpellTicks == 0)
     {
         performSpellCasting();
+        mSpellcaster->playSound(mSpellcaster->getCastingSoundEvent(), 1.0f, 1.0f);
     }
 }
 

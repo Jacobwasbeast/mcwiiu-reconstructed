@@ -68,7 +68,7 @@ std::wstring MG04ScoreboardLayout::getLabel5(const StatsUID&)
 
 std::wstring MG04ScoreboardLayout::getLabel6(const StatsUID&)
 {
-    return L"px = 0";
+    return L"";
 }
 
 std::wstring MG04ScoreboardLayout::getLabel7(const StatsUID&)

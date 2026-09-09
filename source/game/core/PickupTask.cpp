@@ -1,8 +1,10 @@
 #include "game/core/PickupTask.hpp"
 
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/world/block/Blocks.hpp"
 
@@ -25,7 +27,6 @@ PickupTask::PickupTask(Item** items, unsigned int itemCount, unsigned int requir
 
 PickupTask::~PickupTask()
 {
-    delete[] items;
 }
 
 unsigned int PickupTask::hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item)
@@ -44,8 +45,7 @@ unsigned int PickupTask::hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item)
 void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
                         unsigned int exactCount)
 {
-    bool countWood = false;
-    unsigned int i;
+    int i;
 
     for (i = 0; i < this->itemCount; ++i)
     {
@@ -54,34 +54,40 @@ void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
 
         if (items[i] == Items::potion && effect != NULL)
         {
-            if (PotionUtils::hasEffect(item, effect))
-                completed = true;
+            std::vector<MobEffectInstance*>& effects =
+                PotionUtils::getPotion(item->getTag())->getEffects();
+            std::vector<MobEffectInstance*>::iterator effectInstance;
+
+            for (effectInstance = effects.begin(); effectInstance != effects.end(); ++effectInstance)
+            {
+                if ((*effectInstance)->getEffect() == effect)
+                    completed = true;
+            }
         }
         else if (hasPickedUpWoodBlock(item) && auxValue == -1)
         {
             pickedUpCounts[i] = itemCount;
-            countWood = true;
-        }
-        else if (auxValue == -1 || itemCount < requiredCount)
-        {
-            if (auxValue != item->getAuxValue() || exactCount < requiredCount)
-                continue;
-            completed = true;
         }
         else
         {
+            if (auxValue != -1 || itemCount < requiredCount)
+            {
+                if (auxValue != item->getAuxValue() || exactCount < requiredCount)
+                    continue;
+            }
+
             completed = true;
         }
     }
 
     if (hasPickedUpWoodBlock(item) && auxValue == -1)
-        countWood = true;
-
-    if (countWood)
     {
         unsigned int total = 0;
-        for (i = 0; i < pickedUpCounts.size(); ++i)
-            total += pickedUpCounts[i];
+        std::vector<unsigned int>::iterator count;
+
+        for (count = pickedUpCounts.begin(); count != pickedUpCounts.end(); ++count)
+            total += *count;
+
         if (total >= requiredCount)
             completed = true;
     }

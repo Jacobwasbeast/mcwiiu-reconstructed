@@ -68,6 +68,11 @@ int FindNextFileA(int, _WIN32_FIND_DATAA*)
     return 0;
 }
 
+int MoveFileA(const char*, const char*)
+{
+    return 0;
+}
+
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
 static const unsigned int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;

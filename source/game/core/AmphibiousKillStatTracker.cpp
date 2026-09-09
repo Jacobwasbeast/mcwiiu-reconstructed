@@ -2,7 +2,7 @@
 #include "game/core/DamageEvent.hpp"
 
 AmphibiousKillStatTracker::AmphibiousKillStatTracker(const StatsUID& statsUID)
-    : StatTracker<int>(statsUID, 0)
+    : StatTracker<unsigned int>(statsUID, 0)
 {
 }
 

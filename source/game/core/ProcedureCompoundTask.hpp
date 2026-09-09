@@ -13,6 +13,7 @@ class Level;
 class ProcedureCompoundTask : public TutorialTask
 {
 public:
+    ProcedureCompoundTask(Tutorial* tutorial);
     virtual ~ProcedureCompoundTask();
 
     void AddTask(TutorialTask* task);

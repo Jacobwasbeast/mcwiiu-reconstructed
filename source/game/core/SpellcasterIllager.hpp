@@ -37,8 +37,8 @@ public:
         virtual void stop();
         virtual void tick();
         virtual std::wstring getName();
-        virtual int getCastWarmupTime();
         virtual void performSpellCasting() = 0;
+        virtual int getCastWarmupTime();
         virtual int getCastingTime() = 0;
         virtual int getCastingInterval() = 0;
         virtual const SoundEvent* getSpellPrepareSound() = 0;
@@ -47,7 +47,7 @@ public:
     protected:
         SpellcasterIllager* mSpellcaster;
         int mSpellWarmup;
-        int mSpellCastingTickCount;
+        int mNextAttackTickCount;
     };
 
     explicit SpellcasterIllager(Level* level);
@@ -59,8 +59,9 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     bool isCastingSpell();
     virtual int getArmPose();
+    virtual const SoundEvent* getCastingSoundEvent() = 0;
     void setIsCastingSpell(const IllagerSpell* spell);
-    IllagerSpell* getCurrentSpell();
+    const IllagerSpell* getCurrentSpell();
     virtual void customServerAiStep();
     virtual void tick();
     int getSpellCastingTime();

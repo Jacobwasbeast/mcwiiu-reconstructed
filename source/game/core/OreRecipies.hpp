@@ -3,17 +3,30 @@
 
 #include <vector>
 
-class Block;
 class Recipes;
 
 class OreRecipies
 {
+private:
+    struct Object
+    {
+        Object(void* object, int auxValue, int flags)
+            : object(object), auxValue(auxValue), flags(flags)
+        {
+        }
+
+        void* object;
+        int value;
+        int auxValue;
+        int flags;
+    };
+
 public:
     void _init();
     void addRecipes(Recipes* recipes);
 
 private:
-    std::vector<void*> blockPairs[9];
+    std::vector<Object*> blockPairs[9];
 };
 
 #endif

@@ -33,7 +33,11 @@ private:
     std::wstring mValue;
     int mMaxLength;
     int mTickCount;
+
+public:
     bool mFocused;
+
+private:
     bool mActive;
     Screen* mScreen;
 };

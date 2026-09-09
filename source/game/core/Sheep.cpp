@@ -13,7 +13,20 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/entity/ai/BreedGoal.hpp"
+#include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/FollowParentGoal.hpp"
+#include "game/entity/ai/GoalSelector.hpp"
+#include "game/entity/ai/PanicGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
+#include "game/entity/ai/TemptGoal.hpp"
+#include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/item/CraftingContainer.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/EatBlockGoal.hpp"
+#include "game/world/generation/LookAtPlayerGoal.hpp"
+#include "game/world/generation/Player.hpp"
 
 const DyeColor* gSheepWhite = NULL;
 const DyeColor* gSheepOrange = NULL;
@@ -31,17 +44,18 @@ const SoundEvent* gSheepDeathSound = NULL;
 static const EntityDataAccessor<unsigned char>* gSheepSheared;
 static boost::unordered_map<const DyeColor*, arrayWithLength<const float> > gSheepColors;
 
-Sheep::Sheep(Level* level) : Animal(level), mColorData(0), mContainer(), mCraftingContainer(), mEatAnimationTick(0), mEatBlockGoal()
+Sheep::Sheep(Level* level) : Animal(level), mContainer(NULL), mCraftingContainer(), mEatBlockGoal(NULL)
 {
+    fjDerivedCtorCalls();
     setSize(0.9f, 1.3f);
-    registerGoals();
-    registerAttributes();
+    mEatAnimationTick = 0;
+    mContainer = new SheepContainer();
+    mCraftingContainer.reset(new CraftingContainer(mContainer, 2, 1));
 }
 
 Sheep::~Sheep()
 {
-    mCraftingContainer.reset();
-    mContainer.reset();
+    delete mContainer;
 }
 
 void Sheep::create(Level* level)
@@ -78,25 +92,40 @@ unsigned long long Sheep::staticCtor()
 
 void Sheep::registerGoals()
 {
-    mEatBlockGoal.reset(new EatBlockGoal(this));
+    mEatBlockGoal = new EatBlockGoal(this);
+
+    mGoalSelector.addGoal(0, new FloatGoal(this), true);
+    mGoalSelector.addGoal(1, new PanicGoal(this, 1.25), true);
+    mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
+
+    static Item* temptItemsData[1] = { Items::wheat };
+    arrayWithLength<Item*> temptItems;
+    temptItems.data = temptItemsData;
+    temptItems.length = 1;
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, temptItems, false, arrayWithLength<int>()),
+                          true);
+
+    mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.1), true);
+    mGoalSelector.addGoal(5, mEatBlockGoal, true);
+    mGoalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(7, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
+    mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
 }
 
 void Sheep::customServerAiStep()
 {
-    if (mEatBlockGoal)
-    {
-        mEatAnimationTick = static_cast<EatBlockGoal*>(mEatBlockGoal.get())->getEatAnimationTick();
-    }
+    mEatAnimationTick = static_cast<EatBlockGoal*>(mEatBlockGoal)->getEatAnimationTick();
     Animal::customServerAiStep();
 }
 
 void Sheep::aiStep()
 {
-    if (mLevel != NULL && !mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
     {
-        if (mEatAnimationTick > 0)
+        mEatAnimationTick = mEatAnimationTick - 1;
+        if (mEatAnimationTick < 0)
         {
-            --mEatAnimationTick;
+            mEatAnimationTick = 0;
         }
     }
     Animal::aiStep();
@@ -105,15 +134,14 @@ void Sheep::aiStep()
 void Sheep::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(8.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23000000417232513);
 }
 
 void Sheep::defineSynchedData()
 {
     Animal::defineSynchedData();
-    if (mEntityData != NULL && gSheepSheared != NULL)
-    {
-        mEntityData->createDateItem(gSheepSheared, static_cast<unsigned char>(0));
-    }
+    getEntityData()->createDateItem(gSheepSheared, static_cast<unsigned char>(0));
 }
 
 const void* Sheep::getDefaultLootTable()
@@ -123,6 +151,12 @@ const void* Sheep::getDefaultLootTable()
 
 void Sheep::handleEntityEvent(unsigned char event, int data)
 {
+    if (event == 10)
+    {
+        mEatAnimationTick = 40;
+        return;
+    }
+
     Animal::handleEntityEvent(event, data);
 }
 
@@ -174,7 +208,7 @@ bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
 
 void Sheep::addDataWalkers(DataFixerUpper* fixer)
 {
-    Animal::addDataWalkers(fixer);
+    Mob::addDataWalkers(fixer, 0x000000002D680002ULL);
 }
 
 void Sheep::addAdditonalSaveData(CompoundTag* tag)
@@ -271,5 +305,5 @@ Sheep::SheepContainer::~SheepContainer()
 
 bool Sheep::SheepContainer::stillValid(boost::shared_ptr<Player> player)
 {
-    return true;
+    return false;
 }

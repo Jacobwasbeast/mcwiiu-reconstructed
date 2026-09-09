@@ -25,7 +25,20 @@ public:
     public:
         Type(int id = 0) : mId(id) {}
         std::wstring getName() const;
+
+        static const Type* RIDEABLE;
+        static const Type* CHEST;
+        static const Type* FURNACE;
+        static const Type* TNT;
+        static const Type* SPAWNER;
+        static const Type* HOPPER;
+        static const Type* COMMAND_BLOCK;
+        static const Type* VALUES[7];
+
         int mId;
+
+    private:
+        static std::wstring NAMES[7];
     };
 
     Minecart(Level* level);

@@ -6,6 +6,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/ui/UIString.hpp"
+
 class INetworkPlayer;
 class ItemInstance;
 class StatsUID;
@@ -31,12 +33,12 @@ public:
 
     virtual void Init(int) = 0;
     virtual bool showLifeSpanProgress() = 0;
-    virtual std::wstring getLabel2(const StatsUID&) = 0;
-    virtual std::wstring getLabel3(const StatsUID&) = 0;
-    virtual std::wstring getLabel4(const StatsUID&) = 0;
-    virtual std::wstring getLabel5(const StatsUID&) = 0;
-    virtual std::wstring getLabel6(const StatsUID&) = 0;
-    virtual std::wstring getLabel7(const StatsUID&) = 0;
+    virtual UIString getLabel2(const StatsUID&) = 0;
+    virtual UIString getLabel3(const StatsUID&) = 0;
+    virtual UIString getLabel4(const StatsUID&) = 0;
+    virtual UIString getLabel5(const StatsUID&) = 0;
+    virtual UIString getLabel6(const StatsUID&) = 0;
+    virtual UIString getLabel7(const StatsUID&) = 0;
     virtual uint32_t getStatIcon2(const EScoreboardType&) = 0;
     virtual uint32_t getStatIcon3(const EScoreboardType&) = 0;
     virtual uint32_t getStatIcon4(const EScoreboardType&) = 0;

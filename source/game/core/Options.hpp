@@ -27,6 +27,25 @@ public:
         static Option* getItem(int id);
         int getId() const;
 
+        static const Option* music;
+        static const Option* sound;
+        static const Option* invertMouse;
+        static const Option* sensitivity;
+        static const Option* renderDistance;
+        static const Option* viewBobbing;
+        static const Option* anaglyph;
+        static const Option* advancedOpengl;
+        static const Option* framerateLimit;
+        static const Option* difficulty;
+        static const Option* graphics;
+        static const Option* ambientOcclusion;
+        static const Option* guiScale;
+        static const Option* fov;
+        static const Option* gamma;
+        static const Option* renderClouds;
+        static const Option* particles;
+        static const Option* autoJump;
+
     private:
         bool mProgress;
         bool mBoolean;
@@ -96,13 +115,21 @@ private:
     int mRenderDebug;
     bool mShowInfoBars;
     int mShowChunkInfoMap;
+
+public:
     std::wstring mLastServer;
+
+private:
     bool mScrollHotbar;
     bool mUnknownFlag4;
     bool mUnknownFlag5;
     float mHotbarScroll;
     float mUnknownScale2;
+
+public:
     int mGuiScale;
+
+private:
     int mParticles;
     float mFov;
     float mGamma;

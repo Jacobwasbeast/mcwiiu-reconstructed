@@ -5,7 +5,7 @@
 
 class DamageEvent;
 
-class AmphibiousKillStatTracker : public StatTracker<int>
+class AmphibiousKillStatTracker : public StatTracker<unsigned int>
 {
 public:
     AmphibiousKillStatTracker(const StatsUID& statsUID);

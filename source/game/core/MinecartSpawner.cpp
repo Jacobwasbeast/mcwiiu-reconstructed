@@ -62,12 +62,12 @@ void MinecartSpawner::addAdditonalSaveData(CompoundTag* tag)
 
 void MinecartSpawner::handleEntityEvent(unsigned char event, int data)
 {
-    mSpawner->onEventTriggered(data);
+    mSpawner->onEventTriggered(event);
 }
 
 void MinecartSpawner::tick()
 {
-    PIXBeginNamedEvent(4.5f, "Minecart spawner tick");
+    PIXBeginNamedEvent(0.0f, "Minecart spawner tick");
     Minecart::tick();
     mSpawner->tick();
     PIXEndNamedEvent();
@@ -94,7 +94,7 @@ MinecartSpawner::MinecartMobSpawner::~MinecartMobSpawner()
 
 void MinecartSpawner::MinecartMobSpawner::broadcastEvent(int event)
 {
-    getLevel()->broadcastEntityEvent(mMinecart->shared_from_this(), (unsigned char)event, 0);
+    mMinecart->mLevel->broadcastEntityEvent(mMinecart->shared_from_this(), (unsigned char)event, 0);
 }
 
 Level* MinecartSpawner::MinecartMobSpawner::getLevel()

@@ -20,6 +20,34 @@ const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_TIME = NULL;
 const EntityDataAccessor<int>* Minecart::DATA_ID_HURT_DIR = NULL;
 const EntityDataAccessor<bool>* Minecart::DATA_ID_CUSTOM_DISPLAY = NULL;
 
+std::wstring Minecart::Type::NAMES[7] = {
+    L"MinecartRideable",
+    L"MinecartChest",
+    L"MinecartFurnace",
+    L"MinecartTNT",
+    L"MinecartSpawner",
+    L"MinecartHopper",
+    L"MinecartCommandBlock"
+};
+
+const Minecart::Type* Minecart::Type::RIDEABLE = new Minecart::Type(0);
+const Minecart::Type* Minecart::Type::CHEST = new Minecart::Type(1);
+const Minecart::Type* Minecart::Type::FURNACE = new Minecart::Type(2);
+const Minecart::Type* Minecart::Type::TNT = new Minecart::Type(3);
+const Minecart::Type* Minecart::Type::SPAWNER = new Minecart::Type(4);
+const Minecart::Type* Minecart::Type::HOPPER = new Minecart::Type(5);
+const Minecart::Type* Minecart::Type::COMMAND_BLOCK = new Minecart::Type(6);
+
+const Minecart::Type* Minecart::Type::VALUES[7] = {
+    Minecart::Type::RIDEABLE,
+    Minecart::Type::CHEST,
+    Minecart::Type::FURNACE,
+    Minecart::Type::TNT,
+    Minecart::Type::SPAWNER,
+    Minecart::Type::HOPPER,
+    Minecart::Type::COMMAND_BLOCK
+};
+
 Minecart::Minecart(Level* level) : Entity(level, true)
 {
     _init();
@@ -383,15 +411,5 @@ unsigned long long Minecart::GetType()
 
 std::wstring Minecart::Type::getName() const
 {
-    switch (mId)
-    {
-    case 0: return L"rideable";
-    case 1: return L"chest";
-    case 2: return L"furnace";
-    case 3: return L"tnt";
-    case 4: return L"spawner";
-    case 5: return L"hopper";
-    case 6: return L"command_block";
-    default: return std::wstring();
-    }
+    return NAMES[mId];
 }

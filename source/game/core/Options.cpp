@@ -72,6 +72,25 @@ Options::Option items[18] = {
 };
 }
 
+const Options::Option* Options::Option::music = &::items[0];
+const Options::Option* Options::Option::sound = &::items[1];
+const Options::Option* Options::Option::invertMouse = &::items[2];
+const Options::Option* Options::Option::sensitivity = &::items[3];
+const Options::Option* Options::Option::renderDistance = &::items[4];
+const Options::Option* Options::Option::viewBobbing = &::items[5];
+const Options::Option* Options::Option::anaglyph = &::items[6];
+const Options::Option* Options::Option::advancedOpengl = &::items[7];
+const Options::Option* Options::Option::framerateLimit = &::items[8];
+const Options::Option* Options::Option::difficulty = &::items[9];
+const Options::Option* Options::Option::graphics = &::items[10];
+const Options::Option* Options::Option::ambientOcclusion = &::items[11];
+const Options::Option* Options::Option::guiScale = &::items[12];
+const Options::Option* Options::Option::fov = &::items[13];
+const Options::Option* Options::Option::gamma = &::items[14];
+const Options::Option* Options::Option::renderClouds = &::items[15];
+const Options::Option* Options::Option::particles = &::items[16];
+const Options::Option* Options::Option::autoJump = &::items[17];
+
 Options::Option::Option(const std::wstring& captionId, bool progress, bool boolean)
     : mProgress(progress), mBoolean(boolean)
 {
