@@ -122,8 +122,8 @@ public:
     bool removeWhenFarAway();
     void checkDespawn();
     virtual void customServerAiStep();
-    int getMaxHeadXRot();
-    int getMaxHeadYRot();
+    virtual int getMaxHeadXRot();
+    virtual int getMaxHeadYRot();
     float rotlerp(float from, float to, float max);
     void lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot);
     bool checkSpawnRules();

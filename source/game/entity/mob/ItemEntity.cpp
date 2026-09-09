@@ -339,3 +339,8 @@ unsigned long long ItemEntity::GetType()
 {
     return 0x0800000aULL;
 }
+
+int ItemEntity::getAge()
+{
+    return mAge;
+}
