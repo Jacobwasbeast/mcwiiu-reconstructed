@@ -24,6 +24,7 @@ public:
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     bool holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemInstance, unsigned long long type);
     virtual void defineSynchedData();
+    virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner) = 0;
     virtual int getAge();
     virtual void ageUp(int amount, bool forced);
     virtual void ageUp(int amount);

@@ -17,8 +17,7 @@ public:
     virtual void onLookAtEntity(boost::shared_ptr<Entity> entity);
 
 private:
-    int mState;
-    int entityType;
+    unsigned long long entityType;
     int horseDescriptionId;
     int donkeyDescriptionId;
     int muleDescriptionId;

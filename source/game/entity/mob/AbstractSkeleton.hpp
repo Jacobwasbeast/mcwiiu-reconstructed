@@ -55,7 +55,7 @@ public:
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                             const std::wstring& dataString);
-    boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
+    virtual boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance);
     virtual double getEyeHeight();

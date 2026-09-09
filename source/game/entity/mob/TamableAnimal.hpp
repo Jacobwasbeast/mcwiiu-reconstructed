@@ -23,8 +23,6 @@ class TamableAnimal : public Animal, public OwnableEntity
 public:
     TamableAnimal(Level* level);
     virtual ~TamableAnimal();
-    virtual std::wstring getOwnerUUID();
-    virtual boost::shared_ptr<LivingEntity> getOwner();
     static void staticCtor();
     virtual void fjDerivedCtorCalls();
     virtual void defineSynchedData();
@@ -34,15 +32,17 @@ public:
     virtual void spawnTamingParticles(bool success);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual bool isTame();
-    void setTame(bool tame);
+    virtual void setTame(bool tame);
     virtual void reassessTameGoals();
     virtual bool removeWhenFarAway();
-    bool isSitting();
-    void setSitting(bool sitting);
-    void setOwnerUUID(const std::wstring& uuid);
+    virtual bool isSitting();
+    virtual void setSitting(bool sitting);
+    virtual std::wstring getOwnerUUID();
+    virtual void setOwnerUUID(const std::wstring& uuid);
     virtual void tame(boost::shared_ptr<Player> player);
-    bool isOwnedBy(boost::shared_ptr<LivingEntity> entity);
-    SitGoal* getSitGoal();
+    virtual boost::shared_ptr<LivingEntity> getOwner();
+    virtual bool isOwnedBy(boost::shared_ptr<LivingEntity> entity);
+    virtual SitGoal* getSitGoal();
     virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> owner, boost::shared_ptr<LivingEntity> target);
     virtual Team* getTeam();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);

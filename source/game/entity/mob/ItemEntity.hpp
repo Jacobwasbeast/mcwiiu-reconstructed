@@ -65,7 +65,9 @@ private:
     int mHealth;
     std::wstring mThrower;
     std::wstring mOwner;
+public:
     float mBobOffs;
+private:
     not_null_ptr<ItemInstance> mItem;
     static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;
 };

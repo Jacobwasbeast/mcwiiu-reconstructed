@@ -78,23 +78,23 @@ void Skeleton::die(const DamageSource* source)
 {
     AbstractSkeleton::die(source);
 
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && attacker->GetType() == 0x5D540041ULL)
+    if (source->getEntity() && source->getEntity()->GetType() == 0x5D540041ULL)
     {
-        boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(attacker);
-        if (creeper->canDropMobsSkull())
+        boost::shared_ptr<Creeper> creeper =
+            boost::static_pointer_cast<Creeper>(source->getEntity());
+        if (creeper->isPowered() && creeper->canDropMobsSkull())
         {
             creeper->increaseDroppedSkulls();
-            spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0)), 3.0f);
+            spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0)), 0.0f);
         }
     }
 }
 
 boost::shared_ptr<TippableArrow> Skeleton::getArrow(float distanceFactor)
 {
-    not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::MAINHAND);
+    not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::OFFHAND);
     boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (item->getItem() == Items::tippedArrow && arrow && arrow->GetType() == ENTITY_TYPE_TIPPABLE_ARROW)
+    if (item->getItem() == Items::tippedArrow && arrow->GetType() == ENTITY_TYPE_TIPPABLE_ARROW)
         arrow->setEffectsFromItem(item);
     return arrow;
 }

@@ -31,8 +31,10 @@ AgableMob::~AgableMob()
 
 void AgableMob::staticCtor()
 {
-    DATA_BABY_ID = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
-    DATA_BABY_ID_2 = SynchedEntityData::defineId(0, 0x000000000D600000ULL, EntityDataSerializers::BOOLEAN);
+    DATA_BABY_ID = SynchedEntityData::defineId(0x000000000D600000ULL, 0x000000000D400000ULL,
+                                               EntityDataSerializers::BOOLEAN);
+    DATA_BABY_ID_2 = SynchedEntityData::defineId(0x000000000D600000ULL, 0x000000000D400000ULL,
+                                                 EntityDataSerializers::BOOLEAN);
 }
 
 bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -99,28 +101,23 @@ bool AgableMob::holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemIns
 void AgableMob::defineSynchedData()
 {
     Mob::defineSynchedData();
-    if (mEntityData && DATA_BABY_ID)
-    {
-        mEntityData->createDateItem(DATA_BABY_ID, false);
-    }
-    if (mEntityData && DATA_BABY_ID_2)
-    {
-        mEntityData->createDateItem(DATA_BABY_ID_2, false);
-    }
+    mEntityData->createDateItem(DATA_BABY_ID, false);
+    mEntityData->createDateItem(DATA_BABY_ID_2, false);
 }
 
 int AgableMob::getAge()
 {
-    if (mLevel && mLevel->mIsClientSide)
+    if (mLevel == NULL || mLevel->mIsClientSide)
     {
-        if (mEntityData && DATA_BABY_ID_2 && mEntityData->get(DATA_BABY_ID_2))
+        if (mEntityData->get(DATA_BABY_ID_2))
         {
             return 1;
         }
-        if (mEntityData && DATA_BABY_ID && mEntityData->get(DATA_BABY_ID))
+        if (mEntityData->get(DATA_BABY_ID))
         {
             return -1;
         }
+        return 0;
     }
     return mAge;
 }
@@ -129,10 +126,13 @@ void AgableMob::ageUp(int amount, bool forced)
 {
     int oldAge = getAge();
     int age = oldAge + amount * 20;
-    if (age > 0 && oldAge < 0)
+    if (age > 0)
     {
         age = 0;
-        grewUp();
+        if (oldAge < 0)
+        {
+            grewUp();
+        }
     }
     setAge(age);
     if (forced)
@@ -156,19 +156,13 @@ void AgableMob::ageUp(int amount)
 
 void AgableMob::setAge(int age)
 {
-    if (!mLevel || !mLevel->mIsClientSide)
+    if (mLevel == NULL || !mLevel->mIsClientSide)
     {
-        if (mEntityData && DATA_BABY_ID)
-        {
-            mEntityData->set(DATA_BABY_ID, age < 0, true);
-        }
-        if (mEntityData && DATA_BABY_ID_2)
-        {
-            mEntityData->set(DATA_BABY_ID_2, age > 0, true);
-        }
+        mEntityData->set(DATA_BABY_ID, age < 0, true);
+        mEntityData->set(DATA_BABY_ID_2, age > 0, true);
     }
     mAge = age;
-    updateSize(getAge() < 0);
+    updateSize(isBaby());
 }
 
 void AgableMob::addAdditonalSaveData(CompoundTag* tag)
@@ -187,25 +181,25 @@ void AgableMob::readAdditionalSaveData(CompoundTag* tag)
 
 void AgableMob::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (DATA_BABY_ID && accessor->getId() == DATA_BABY_ID->getId())
+    if (accessor->getId() == DATA_BABY_ID->getId())
     {
-        updateSize(getAge() < 0);
+        updateSize(isBaby());
     }
 }
 
 void AgableMob::aiStep()
 {
     Mob::aiStep();
-    if (mLevel && !mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
         int age = getAge();
         if (age < 0)
         {
+            setAge(age + 1);
             if (age + 1 == 0)
             {
                 grewUp();
             }
-            setAge(age + 1);
         }
         else if (age > 0)
         {

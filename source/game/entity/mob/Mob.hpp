@@ -87,15 +87,15 @@ public:
     virtual LookControl* getLookControl();
     virtual MoveControl* getMoveControl();
     void* getJumpControl();
-    PathNavigation* getNavigation();
+    virtual PathNavigation* getNavigation();
     Sensing* getSensing();
-    boost::shared_ptr<LivingEntity> getTarget();
+    virtual boost::shared_ptr<LivingEntity> getTarget();
     void setTarget(boost::shared_ptr<LivingEntity> target);
     virtual void setLevel(Level* level);
     bool canAttackType(unsigned long long type);
     void ate();
     unsigned int getAmbientSoundInterval();
-    void playAmbientSound();
+    virtual void playAmbientSound();
     void playHurtSound(const DamageSource* source);
     void resetAmbientSoundTime();
     int getExperienceReward(boost::shared_ptr<Player> player);

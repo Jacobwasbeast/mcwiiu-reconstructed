@@ -42,11 +42,11 @@ public:
     void usePlayerItem(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> itemInstance);
     bool AgeUpBaby(const boost::shared_ptr<Player>& player, not_null_ptr<ItemInstance> itemInstance);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
-    void setInLove(boost::shared_ptr<Player> player);
+    virtual void setInLove(boost::shared_ptr<Player> player);
     boost::shared_ptr<Player> getLoveCause();
     bool isInLove();
     void resetLove();
-    bool canMate(const boost::shared_ptr<Animal>& other);
+    virtual bool canMate(const boost::shared_ptr<Animal>& other);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     bool isDespawnProtected() const;

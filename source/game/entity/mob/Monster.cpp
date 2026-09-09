@@ -111,7 +111,9 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
         damage += (float)EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
         knockback = EnchantmentHelper::getKnockbackBonus(attacker, livingTarget);
     }
-    bool hurtTarget = target->hurt(static_cast<const DamageSource*>(DamageSource::CreateMobAttack(attacker).get()), damage);
+    EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
+    bool hurtTarget = target->hurt(source, damage);
+    delete source;
     if (!hurtTarget)
         return false;
     if (knockback > 0 && livingTarget)

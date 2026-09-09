@@ -7,7 +7,10 @@
 #include "game/entity/mob/OwnableEntity.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/item/SimpleContainer.hpp"
+#include "game/network/net_minecraft_world__ContainerListener.hpp"
 
+class Attribute;
 class Block;
 class BlockPos;
 class CompoundTag;
@@ -24,7 +27,7 @@ class ItemInstance;
 class AgableMob;
 template <class T> class EntityDataAccessor;
 
-class AbstractHorse : public Animal, public OwnableEntity
+class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public OwnableEntity
 {
 public:
     AbstractHorse(Level* level);
@@ -49,7 +52,7 @@ public:
     virtual void fjDerivedCtorCalls();
     virtual void registerGoals();
     virtual void defineSynchedData();
-    bool isTamed();
+    virtual bool isTamed();
     void setOwnerUUID(const std::wstring& uuid);
     virtual double getFoalScale() const;
     virtual void updateSize(bool baby);
@@ -75,8 +78,8 @@ public:
     virtual int getInventorySize();
     virtual void createInventory();
     virtual void updateEquipment();
-    boost::shared_ptr<Entity> getClosestMommy(const boost::shared_ptr<Entity>& entity, double distance);
-    virtual double getCustomJump();
+    boost::shared_ptr<AbstractHorse> getClosestMommy(const boost::shared_ptr<Entity>& entity, double distance);
+    double getCustomJump();
     virtual const SoundEvent* getJumpSound();
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
@@ -90,19 +93,19 @@ public:
     virtual int getMaxTemper() const;
     virtual float getSoundVolume();
     virtual int getAmbientSoundInterval();
-    virtual void openInventory(const boost::shared_ptr<Player>& player);
+    void openInventory(const boost::shared_ptr<Player>& player);
     int CheckAndSetInLove(boost::shared_ptr<Player> player);
-    int handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
+    virtual int handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item);
     void doPlayerRide(const boost::shared_ptr<Player>& player);
     virtual bool isImmobile();
     virtual bool isFood(const not_null_ptr<ItemInstance>& item);
     void moveTail();
     virtual void die(const DamageSource* source);
     virtual void aiStep();
-    boost::shared_ptr<Entity> followMommy();
-    bool canEatGrass() const;
+    virtual void followMommy();
+    virtual bool canEatGrass() const;
     virtual void tick();
-    boost::shared_ptr<Entity> makeMad();
+    virtual void makeMad();
     bool tameWithName(const boost::shared_ptr<Player>& player);
     virtual void travel(float x, float y, float z);
     virtual void updateModelAnimation();
@@ -115,12 +118,12 @@ public:
     double generateRandomMaxHealth();
     double generateRandomJumpStrength();
     double generateRandomSpeed();
-    void setOffspringAttributes(const boost::shared_ptr<AgableMob>& first, const boost::shared_ptr<AbstractHorse>& second);
+    void setOffspringAttributes(const boost::shared_ptr<AgableMob>& other, const boost::shared_ptr<AbstractHorse>& offspring);
     virtual bool canBeControlledByRider();
     double getEatAnim(float partialTick) const;
     double getStandAnim(float partialTick) const;
     double getMouthAnim(float partialTick) const;
-    virtual void spawnTamingParticles(bool success);
+    void spawnTamingParticles(bool success);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual bool onLadder();
@@ -136,18 +139,27 @@ public:
 protected:
     static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
     static const EntityDataAccessor<std::wstring>* DATA_OWNER_UUID;
-    int mFlags;
-    bool mJumping;
-    bool mStanding;
-    bool mEating;
-    bool mBred;
-    bool mSaddled;
-    bool mTamed;
-    int mTemper;
+    static Attribute* JUMP_STRENGTH;
+
+    int mEatingCounter;
+    int mMouthCounter;
+    int mStandCounter;
     int mTailCounter;
+    int mSprintCounter;
+    unsigned long long mLastAngrySoundTime;
+    bool mJumping;
+    boost::shared_ptr<SimpleContainer> mInventory;
+    int mTemper;
     float mJumpRidingScale;
-    std::wstring mOwnerUUID;
-    boost::shared_ptr<Container> mInventory;
+    bool mAllowStandSliding;
+    float mEatAnim;
+    float mEatAnimO;
+    float mStandAnim;
+    float mStandAnimO;
+    float mMouthAnim;
+    float mMouthAnimO;
+    bool mCanGallop;
+    int mGallopSoundCounter;
     Goal* mPanicGoal;
     Goal* mFloatGoal;
     Goal* mWaterAvoidingRandomStrollGoal;
