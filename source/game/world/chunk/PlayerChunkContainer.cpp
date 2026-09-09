@@ -5,8 +5,13 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/entity/mob/EntityTracker.hpp"
+#include "game/network/BlockRegionUpdatePacket.hpp"
+#include "game/network/ClientboundBlockUpdatePacket.hpp"
+#include "game/network/ClientboundChunkBlocksUpdatePacket.hpp"
 #include "game/network/ChunkVisibilityPacket.hpp"
 #include "game/network/Packet.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
@@ -17,48 +22,6 @@
 #define private public
 #include "game/world/chunk/PlayerChunkMap.hpp"
 #undef private
-
-class ClientboundBlockUpdatePacket : public Packet
-{
-public:
-    ClientboundBlockUpdatePacket(Level* level, const BlockPos& pos);
-    virtual int getPacketId();
-    virtual void read(DataInputStream* input);
-    virtual void write(DataOutputStream* output);
-};
-
-class BlockRegionUpdatePacket : public Packet
-{
-public:
-    BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
-                            Level* level, bool hasBlockChanges,
-                            const std::vector<short>& blockChanges);
-    virtual int getPacketId();
-    virtual void read(DataInputStream* input);
-    virtual void write(DataOutputStream* output);
-};
-
-class ClientboundChunkBlocksUpdatePacket : public Packet
-{
-public:
-    ClientboundChunkBlocksUpdatePacket(int x, int z, arrayWithLength<short> changes,
-                                       unsigned char count, Level* level);
-    virtual int getPacketId();
-    virtual void read(DataInputStream* input);
-    virtual void write(DataOutputStream* output);
-};
-
-class ServerGamePacketListenerImpl
-{
-public:
-    void send(boost::shared_ptr<Packet> packet);
-};
-
-class EntityTracker
-{
-public:
-    void playerLoadedChunk(boost::shared_ptr<ServerPlayer> player, LevelChunk* chunk);
-};
 
 PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z)
     : mMap(map), mPlayers(), mPos(x, z), mBlockChanges(new unsigned short[64]()),
@@ -197,7 +160,7 @@ void PlayerChunkContainer::broadcastChanges(bool force)
         std::vector<short> positions;
         boost::shared_ptr<Packet> packet(new BlockRegionUpdatePacket(
             mPos.x * 16 + mMinX, minY, mPos.z * 16 + mMinZ,
-            width, height, depth, level, false, positions));
+            width, height, depth, level, false, &positions));
         broadcast(packet);
 
         ServerLevel* serverLevel = static_cast<ServerLevel*>(level);

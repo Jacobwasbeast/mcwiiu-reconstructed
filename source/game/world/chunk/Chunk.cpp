@@ -1,21 +1,11 @@
 #include "game/world/chunk/Chunk.hpp"
 
 #include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/LevelRenderer.hpp"
 #include "game/core/Culler.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
-
-class LevelRenderer
-{
-public:
-    static unsigned long long getGlobalIndexForChunk(int x, int z, int dimension, Level* level);
-    unsigned char incGlobalChunkRefCount(int x, int z, int dimension, Level* level);
-    unsigned char decGlobalChunkRefCount(int x, int z, int dimension, Level* level);
-    void setGlobalChunkFlag(int x, int z, int dimension, Level* level, unsigned char mask, unsigned char value);
-    unsigned long long setGlobalChunkFlags(int x, int z, int dimension, Level* level, unsigned char flags);
-    void clearGlobalChunkFlag(int x, int z, int dimension, Level* level, unsigned char mask, unsigned char value);
-};
 
 void PIXSetMarkerDeprecated(float colour, const char* name, ...);
 
@@ -121,6 +111,16 @@ void Chunk::translateToPos()
 unsigned int Chunk::elementToBlockId(unsigned short element)
 {
     return (element >> 4) & 0xffff;
+}
+
+bool Chunk::isEmpty()
+{
+    return mEmpty != 0;
+}
+
+void Chunk::setDirty()
+{
+    mDirty = 1;
 }
 
 void Chunk::makeCopyForRebuild(Chunk* source)

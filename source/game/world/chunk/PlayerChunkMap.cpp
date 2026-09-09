@@ -206,7 +206,7 @@ bool PlayerChunkMap::isPlayerIn(boost::shared_ptr<ServerPlayer> player, int x, i
 
 int PlayerChunkMap::convertChunkRangeToBlock(int range)
 {
-    return range << 4;
+    return (range << 4) - 0x10;
 }
 
 void PlayerChunkMap::setRadius(int radius)

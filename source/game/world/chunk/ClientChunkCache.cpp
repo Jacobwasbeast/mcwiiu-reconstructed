@@ -94,8 +94,18 @@ void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockC
         m_loadedChunks.push_back(replacement);
 }
 
-int ClientChunkCache::StorageThreadProc(void*)
+int ClientChunkCache::StorageThreadProc(void* argument)
 {
+    ClientChunkCache* cache = static_cast<ClientChunkCache*>(argument);
+    if (!cache)
+        return 0;
+    while (!cache->m_stopThread)
+    {
+        if (!cache->m_queuedActions.empty())
+            cache->BlockUntilSafeToChangeSaveData(true);
+        else
+            break;
+    }
     return 0;
 }
 
@@ -110,14 +120,33 @@ void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* sto
     m_initialized = true;
 }
 
-uint64_t ClientChunkCache::BlockUntilSafeToChangeSaveData(bool)
+uint64_t ClientChunkCache::BlockUntilSafeToChangeSaveData(bool block)
 {
-    return 0;
+    if (!m_storage)
+        return 0;
+    while (!m_queuedActions.empty())
+    {
+        QueuedAction action = m_queuedActions.front();
+        m_queuedActions.erase(m_queuedActions.begin());
+        if (action.action == 0)
+        {
+            reLoad(action.x, action.z, action.changes);
+            delete action.changes;
+        }
+        if (!block)
+            break;
+    }
+    return static_cast<uint64_t>(m_queuedActions.size());
 }
 
 LevelChunk* ClientChunkCache::getChunkIfLoaded(int x, int z)
 {
-    const unsigned int index = static_cast<unsigned int>((z & 15) * 16 + (x & 15));
+    const int diameter = 2 * m_chunkRadius;
+    const int localX = x + m_chunkRadius;
+    const int localZ = z + m_chunkRadius;
+    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
+        return 0;
+    const unsigned int index = static_cast<unsigned int>(localZ * diameter + localX);
     if (index >= m_chunks.size())
         return 0;
     LevelChunk* chunk = m_chunks[index];
@@ -181,7 +210,12 @@ void ClientChunkCache::drop(int x, int z, bool force)
         m_loadedChunks.push_back(chunk);
         return;
     }
-    const unsigned int index = static_cast<unsigned int>((z & 15) * 16 + (x & 15));
+    const int diameter = 2 * m_chunkRadius;
+    const int localX = x + m_chunkRadius;
+    const int localZ = z + m_chunkRadius;
+    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
+        return;
+    const unsigned int index = static_cast<unsigned int>(localZ * diameter + localX);
     if (index < m_chunks.size())
         m_chunks[index] = 0;
     for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
@@ -209,7 +243,12 @@ LevelChunk* ClientChunkCache::create(int x, int z)
     LevelChunk* chunk = load(x, z, 0);
     if (!chunk)
         chunk = new LevelChunk(m_level, x, z);
-    const unsigned int index = static_cast<unsigned int>((z & 15) * 16 + (x & 15));
+    const int diameter = 2 * m_chunkRadius;
+    const int localX = x + m_chunkRadius;
+    const int localZ = z + m_chunkRadius;
+    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
+        return 0;
+    const unsigned int index = static_cast<unsigned int>(localZ * diameter + localX);
     if (index >= m_chunks.size())
         m_chunks.resize(index + 1, static_cast<LevelChunk*>(0));
     m_chunks[index] = chunk;
@@ -251,9 +290,9 @@ std::wstring ClientChunkCache::gatherStats()
     return std::wstring(L"MultiplayerChunkCache_") + std::wstring();
 }
 
-std::vector<Mob*> ClientChunkCache::getMobsAt(MobCategory*, const BlockPos&)
+std::vector<Biome::MobSpawnerData*> ClientChunkCache::getMobsAt(MobCategory*, const BlockPos&)
 {
-    return std::vector<Mob*>();
+    return std::vector<Biome::MobSpawnerData*>();
 }
 
 BlockPos* ClientChunkCache::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)
@@ -272,7 +311,12 @@ void ClientChunkCache::recreateLogicStructuresForChunk(LevelChunk*, int, int)
 
 void ClientChunkCache::dataReceived(int x, int z)
 {
-    const unsigned int index = static_cast<unsigned int>((z & 15) * 16 + (x & 15));
+    const int diameter = 2 * m_chunkRadius;
+    const int localX = x + m_chunkRadius;
+    const int localZ = z + m_chunkRadius;
+    if (localX < 0 || localX >= diameter || localZ < 0 || localZ >= diameter)
+        return;
+    const unsigned int index = static_cast<unsigned int>(localZ * diameter + localX);
     if (index >= m_received.size())
         m_received.resize(index + 1, static_cast<unsigned char>(0));
     m_received[index] = 1;

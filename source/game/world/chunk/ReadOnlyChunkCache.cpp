@@ -78,9 +78,9 @@ std::wstring ReadOnlyChunkCache::gatherStats()
     return L"ReadOnlyChunkCache";
 }
 
-std::vector<Mob*> ReadOnlyChunkCache::getMobsAt(MobCategory*, const BlockPos&)
+std::vector<Biome::MobSpawnerData*> ReadOnlyChunkCache::getMobsAt(MobCategory*, const BlockPos&)
 {
-    return std::vector<Mob*>();
+    return std::vector<Biome::MobSpawnerData*>();
 }
 
 BlockPos* ReadOnlyChunkCache::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)

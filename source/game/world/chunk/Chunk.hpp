@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_CHUNK_CHUNK_HPP
 #define GAME_WORLD_CHUNK_CHUNK_HPP
 
+#include <cstddef>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
@@ -16,12 +17,30 @@ class Level;
 
 struct IntKeyHash
 {
-    std::size_t operator()(int value) const;
+    std::size_t operator()(int value) const
+    {
+        unsigned int hash = static_cast<unsigned int>(value);
+        hash ^= (hash >> 20) ^ (hash >> 12);
+        return hash ^ (hash >> 7) ^ (hash >> 4);
+    }
+};
+
+struct IntKeyHash2
+{
+    std::size_t operator()(int value) const
+    {
+        unsigned int hash = static_cast<unsigned int>(value);
+        hash ^= (hash >> 20) ^ (hash >> 12);
+        return hash ^ (hash >> 7) ^ (hash >> 4);
+    }
 };
 
 struct IntKeyEq
 {
-    bool operator()(int first, int second) const;
+    bool operator()(int first, int second) const
+    {
+        return first == second;
+    }
 };
 
 typedef boost::unordered_map<int, std::vector<boost::shared_ptr<BlockEntity> >, IntKeyHash, IntKeyEq> ChunkBlockEntityMap;

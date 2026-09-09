@@ -60,7 +60,7 @@ public:
     virtual void tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
-    virtual std::vector<Mob*> getMobsAt(MobCategory* category, const BlockPos& pos);
+    virtual std::vector<Biome::MobSpawnerData*> getMobsAt(MobCategory* category, const BlockPos& pos);
     virtual BlockPos* findNearestMapFeature(Level* level, const std::wstring& feature,
                                              const BlockPos& pos, bool takeBlock);
     virtual int getLoadedChunks();

@@ -363,6 +363,18 @@ void LevelChunk::SetInvalid(bool invalid)
 {
     mInvalid = invalid;
 }
+bool LevelChunk::isInvalid() const
+{
+    return mInvalid;
+}
+void LevelChunk::getEntityReadLock()
+{
+    EnterCriticalSection(&sLevelChunkEntityMutex);
+}
+void LevelChunk::releaseEntityReadLock()
+{
+    LeaveCriticalSection(&sLevelChunkEntityMutex);
+}
 bool LevelChunk::hasLightingBeenDropped()
 {
     return mSkyLight == NULL && mBlockLight == NULL;

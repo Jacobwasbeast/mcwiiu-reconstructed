@@ -7,9 +7,18 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 
+static long long signedProduct32(int lhs, int rhs)
+{
+    unsigned int bits = static_cast<unsigned int>(lhs) * static_cast<unsigned int>(rhs);
+    return (bits & 0x80000000U) != 0
+        ? static_cast<long long>(bits) - 0x100000000LL
+        : static_cast<long long>(bits);
+}
+
 WaterLevelChunk::WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
     : LevelChunk(level, primer, x, z)
 {
+    setUnsaved(true);
 }
 
 WaterLevelChunk::~WaterLevelChunk()
@@ -159,10 +168,10 @@ int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 Random WaterLevelChunk::getRandom(long long seed)
 {
     long long levelSeed = level->getSeed();
-    long long mixedSeed = levelSeed + (long long)(x * x) * 0x4c1906LL +
-                          (long long)x * 0x5ac0dbLL +
-                          (long long)(z * z) * 0x4307a7LL +
-                          (long long)z * 0x5f24fLL;
+    long long mixedSeed = levelSeed + signedProduct32(x, x) * 0x4c1906LL +
+                          signedProduct32(x, 0x5ac0db) +
+                          signedProduct32(z, z) * 0x4307a7LL +
+                          signedProduct32(z, 0x5f24f);
     return Random(mixedSeed ^ seed);
 }
 
