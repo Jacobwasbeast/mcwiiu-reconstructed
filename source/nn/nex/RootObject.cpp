@@ -7,10 +7,6 @@ namespace nn
 namespace nex
 {
 
-RootObject::~RootObject()
-{
-}
-
 void* RootObject::operator new(std::size_t size)
 {
     return MemoryManager::Allocate(static_cast<unsigned int>(size));

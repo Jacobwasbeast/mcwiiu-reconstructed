@@ -11,8 +11,6 @@ namespace nex
 class RootObject
 {
 public:
-    virtual ~RootObject();
-
     static void* operator new(std::size_t size);
     static void operator delete(void* memory);
     static void* operator new[](std::size_t size);

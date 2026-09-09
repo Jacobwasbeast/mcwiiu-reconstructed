@@ -1,27 +1,23 @@
 #include "nn/nex/ThreadVariableRoot.hpp"
 
+#include "nn/nex/ObjectThreadRoot.hpp"
+#include "nn/nex/ThreadVariableList.hpp"
+
 namespace nn
 {
 namespace nex
 {
 
-class ObjectThreadRoot
-{
-public:
-    static std::uint32_t GetCurrentThreadID();
-};
-
 ThreadVariableRoot::ThreadVariableRoot()
-    : m_threadVariableState(0)
-    , m_threadVariableValue(0)
-    , m_variableOwner(0)
-    , m_next(0)
+    : m_next(0)
     , m_previous(0)
 {
+    ThreadVariableList::GetInstanceRef()->AddVariable(this);
 }
 
 ThreadVariableRoot::~ThreadVariableRoot()
 {
+    ThreadVariableList::GetInstanceRef()->RemoveVariable(this);
 }
 
 void ThreadVariableRoot::ResetValues()

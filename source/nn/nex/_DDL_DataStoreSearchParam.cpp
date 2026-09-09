@@ -1,0 +1,321 @@
+#include "nn/nex/_DDL_DataStoreSearchParam.hpp"
+
+#include "nn/nex/DDLSerialization.hpp"
+#include "nn/nex/Message.hpp"
+
+namespace nn
+{
+namespace nex
+{
+
+namespace
+{
+
+const std::uint8_t SEARCH_PARAM_MAX_STRUCTURE_VERSION = 3;
+const unsigned int SIZE_FIELD_LENGTH = 4;
+
+}
+
+_DDL_DataStoreSearchParam::_DDL_DataStoreSearchParam()
+    : m_OwnerIds(),
+      m_DestinationIds(),
+      m_CreatedAfter(),
+      m_CreatedBefore(),
+      m_UpdatedAfter(),
+      m_UpdatedBefore(),
+      m_Tags(),
+      m_ResultRange(),
+      m_DataTypes()
+{
+    m_uiStructureVersion = 3;
+}
+
+_DDL_DataStoreSearchParam::~_DDL_DataStoreSearchParam()
+{
+}
+
+void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearchParam& rSource)
+{
+    const bool bCompactFormat = pMessage->IsCompactFormat();
+    unsigned int uiSizePosition = 0;
+
+    if (!bCompactFormat)
+    {
+        const std::uint8_t uiVersion = rSource.m_uiStructureVersion;
+        const std::uint8_t uiMaxVersion = SEARCH_PARAM_MAX_STRUCTURE_VERSION;
+
+        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+
+        uiSizePosition = pMessage->GetLength();
+
+        const std::uint32_t uiSize = 0;
+
+        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+    }
+
+    pMessage->Append(&rSource.m_uiSearchTarget, 1, 1);
+    _Type_qvector<_Type_uint32>::Add(pMessage, rSource.m_OwnerIds);
+    pMessage->Append(&rSource.m_uiOwnerType, 1, 1);
+    _Type_qvector<_Type_uint32>::Add(pMessage, rSource.m_DestinationIds);
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiDataType), 2, 1);
+
+    const std::uint64_t uiCreatedAfter = rSource.m_CreatedAfter;
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCreatedAfter), 8, 1);
+
+    const std::uint64_t uiCreatedBefore = rSource.m_CreatedBefore;
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCreatedBefore), 8, 1);
+
+    const std::uint64_t uiUpdatedAfter = rSource.m_UpdatedAfter;
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiUpdatedAfter), 8, 1);
+
+    const std::uint64_t uiUpdatedBefore = rSource.m_UpdatedBefore;
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiUpdatedBefore), 8, 1);
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiReferDataId), 4, 1);
+    _Type_qvector<_Type_string>::Add(pMessage, rSource.m_Tags);
+    pMessage->Append(&rSource.m_uiResultOrderColumn, 1, 1);
+    pMessage->Append(&rSource.m_uiResultOrder, 1, 1);
+    _DDL_ResultRange::Add(pMessage, rSource.m_ResultRange);
+    pMessage->Append(&rSource.m_uiResultOption, 1, 1);
+    pMessage->Append(
+        reinterpret_cast<const unsigned char*>(&rSource.m_uiMinimalRatingFrequency), 4, 1);
+
+    if (bCompactFormat)
+    {
+        return;
+    }
+
+    if (rSource.m_uiStructureVersion != 0)
+    {
+        *pMessage << rSource.m_bUseCache;
+
+        if (rSource.m_uiStructureVersion > 1)
+        {
+            *pMessage << rSource.m_bTotalCountEnabled;
+
+            if (rSource.m_uiStructureVersion > 2)
+            {
+                _Type_qvector<_Type_uint16>::Add(pMessage, rSource.m_DataTypes);
+            }
+        }
+    }
+
+    const unsigned int uiEndPosition = pMessage->GetLength();
+
+    pMessage->SetLength(uiSizePosition);
+
+    const std::int32_t iSize =
+        static_cast<std::int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+
+    pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
+    pMessage->SetLength(uiEndPosition);
+}
+
+void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
+    _DDL_DataStoreSearchParam* pDestination)
+{
+    pDestination->m_uiStructureVersion = 0;
+
+    const bool bCompactFormat = pMessage->IsCompactFormat();
+    std::uint32_t uiSize = 0;
+
+    if (!bCompactFormat)
+    {
+        pMessage->ExtractPrimitive(&pDestination->m_uiStructureVersion);
+
+        if (pMessage->HasError())
+        {
+            return;
+        }
+
+        pMessage->ExtractPrimitive(&uiSize);
+
+        if (pMessage->HasError())
+        {
+            return;
+        }
+    }
+
+    const unsigned int uiStartPosition = pMessage->GetPosition();
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiSearchTarget);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    _Type_qvector<_Type_uint32>::Extract(pMessage, &pDestination->m_OwnerIds);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiOwnerType);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    _Type_qvector<_Type_uint32>::Extract(pMessage, &pDestination->m_DestinationIds);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiDataType);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    std::uint64_t uiCreatedAfter = 0;
+
+    pMessage->ExtractPrimitive(&uiCreatedAfter);
+    pDestination->m_CreatedAfter = DateTime(uiCreatedAfter);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    std::uint64_t uiCreatedBefore = 0;
+
+    pMessage->ExtractPrimitive(&uiCreatedBefore);
+    pDestination->m_CreatedBefore = DateTime(uiCreatedBefore);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    std::uint64_t uiUpdatedAfter = 0;
+
+    pMessage->ExtractPrimitive(&uiUpdatedAfter);
+    pDestination->m_UpdatedAfter = DateTime(uiUpdatedAfter);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    std::uint64_t uiUpdatedBefore = 0;
+
+    pMessage->ExtractPrimitive(&uiUpdatedBefore);
+    pDestination->m_UpdatedBefore = DateTime(uiUpdatedBefore);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiReferDataId);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    _Type_qvector<_Type_string>::Extract(pMessage, &pDestination->m_Tags);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiResultOrderColumn);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiResultOrder);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    _DDL_ResultRange::Extract(pMessage, &pDestination->m_ResultRange);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiResultOption);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    pMessage->ExtractPrimitive(&pDestination->m_uiMinimalRatingFrequency);
+
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    if (pDestination->m_uiStructureVersion != 0)
+    {
+        *pMessage >> pDestination->m_bUseCache;
+
+        if (pMessage->HasError())
+        {
+            return;
+        }
+
+        if (pDestination->m_uiStructureVersion > 1)
+        {
+            *pMessage >> pDestination->m_bTotalCountEnabled;
+
+            if (pMessage->HasError())
+            {
+                return;
+            }
+
+            if (pDestination->m_uiStructureVersion > 2)
+            {
+                _Type_qvector<_Type_uint16>::Extract(pMessage, &pDestination->m_DataTypes);
+
+                if (pMessage->HasError())
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    if (bCompactFormat)
+    {
+        return;
+    }
+
+    const unsigned int uiEndPosition = uiStartPosition + uiSize;
+
+    if (pMessage->GetPosition() <= uiEndPosition && uiEndPosition <= pMessage->GetLength())
+    {
+        pMessage->SetPosition(uiEndPosition);
+        return;
+    }
+
+    pMessage->SetError();
+}
+
+}
+}

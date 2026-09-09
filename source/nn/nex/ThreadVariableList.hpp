@@ -3,19 +3,21 @@
 
 #include <cstdint>
 
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/RootObject.hpp"
+
 namespace nn
 {
 namespace nex
 {
 
 class ThreadVariableRoot;
-class CriticalSection;
 
-class ThreadVariableList
+class ThreadVariableList : public RootObject
 {
 public:
     ThreadVariableList();
-    ~ThreadVariableList();
+    virtual ~ThreadVariableList();
 
     void AddVariable(ThreadVariableRoot* variable);
     static ThreadVariableList* GetInstanceRef();
@@ -28,8 +30,7 @@ private:
     ThreadVariableRoot* m_first;
     ThreadVariableRoot* m_last;
     std::uint32_t m_count;
-    CriticalSection* m_criticalSection;
-    bool m_initialized;
+    ForcedCriticalSection m_criticalSection;
 };
 
 }

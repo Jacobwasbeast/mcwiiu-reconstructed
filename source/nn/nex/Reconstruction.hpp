@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+#include "nn/nex/ConnectivityManager.hpp"
 #include "nn/nex/ProviderSupport.hpp"
 #include "nn/nex/ServiceClient.hpp"
 #include "nn/nex/GlobalVariables.hpp"
@@ -31,13 +32,6 @@ class MatchmakeExtensionProtocolClient : public ClientProtocol
 public:
     explicit MatchmakeExtensionProtocolClient(unsigned short protocolId);
     virtual ~MatchmakeExtensionProtocolClient();
-};
-
-class ConnectivityManager
-{
-public:
-    static ConnectivityManager* GetInstanceWithoutNetworkCheck();
-    void OnStartNATSession(CallContext* context);
 };
 
 class MatchmakeExtensionClient : public MatchMakingClient

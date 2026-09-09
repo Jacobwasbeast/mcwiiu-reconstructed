@@ -1,0 +1,97 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLE_HPP
+#define LEGACY_CONSOLE_WIIU_NN_NEX_THREADVARIABLE_HPP
+
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <utility>
+
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/MemAllocator.hpp"
+#include "nn/nex/ThreadVariableRoot.hpp"
+
+namespace nn
+{
+namespace nex
+{
+
+template <typename T>
+class ThreadVariable : public ThreadVariableRoot
+{
+public:
+    typedef std::map<std::uint32_t, T, std::less<std::uint32_t>,
+                     MemAllocator<std::pair<const std::uint32_t, T> > > ValueMap;
+
+    explicit ThreadVariable(const T& defaultValue)
+        : ThreadVariableRoot()
+        , m_defaultValue(defaultValue)
+        , m_criticalSection(1)
+        , m_values()
+    {
+        m_values[GetThreadID()] = defaultValue;
+    }
+
+    virtual ~ThreadVariable()
+    {
+        ResetValues();
+    }
+
+    T& GetRef()
+    {
+        m_criticalSection.Enter();
+
+        typename ValueMap::iterator value = m_values.find(GetThreadID());
+        if (value == m_values.end())
+        {
+            m_values[GetThreadID()] = m_defaultValue;
+            T& created = m_values[GetThreadID()];
+            m_criticalSection.Leave();
+            return created;
+        }
+
+        m_criticalSection.Leave();
+        return value->second;
+    }
+
+    virtual void ResetValues()
+    {
+        m_criticalSection.Enter();
+
+        while (m_values.size() != 0)
+            m_values.erase(m_values.begin());
+
+        m_criticalSection.Leave();
+    }
+
+    virtual void ClearValue()
+    {
+        m_criticalSection.Enter();
+
+        typename ValueMap::iterator value = m_values.find(GetThreadID());
+        if (value != m_values.end())
+            m_values.erase(value);
+
+        m_criticalSection.Leave();
+    }
+
+    virtual void ClearValue(std::uint32_t threadId)
+    {
+        m_criticalSection.Enter();
+
+        typename ValueMap::iterator value = m_values.find(threadId);
+        if (value != m_values.end())
+            m_values.erase(value);
+
+        m_criticalSection.Leave();
+    }
+
+private:
+    T m_defaultValue;
+    ForcedCriticalSection m_criticalSection;
+    ValueMap m_values;
+};
+
+}
+}
+
+#endif

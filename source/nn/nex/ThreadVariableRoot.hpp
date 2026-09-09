@@ -3,12 +3,14 @@
 
 #include <cstdint>
 
+#include "nn/nex/RootObject.hpp"
+
 namespace nn
 {
 namespace nex
 {
 
-class ThreadVariableRoot
+class ThreadVariableRoot : public RootObject
 {
 public:
     ThreadVariableRoot();
@@ -18,13 +20,11 @@ public:
 
     virtual void ResetValues();
     virtual void ClearValue();
-    virtual void ClearValue(std::uint32_t value);
+    virtual void ClearValue(std::uint32_t threadId);
 
 protected:
     friend class ThreadVariableList;
-    std::uint32_t m_threadVariableState;
-    std::uint32_t m_threadVariableValue;
-    void* m_variableOwner;
+
     ThreadVariableRoot* m_next;
     ThreadVariableRoot* m_previous;
 };
