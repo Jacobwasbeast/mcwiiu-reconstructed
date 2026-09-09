@@ -11,12 +11,13 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/PortalBlock.hpp"
 
 FlintAndSteelItem::FlintAndSteelItem()
     : Item()
 {
-    mMaterialData = 1;
+    mMaxStackSize = 1;
     setMaxDamage(0x40);
 }
 
@@ -42,11 +43,9 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    const BlockState* state = level->getBlockState(firePos);
-
     if (!simulate)
     {
-        if (state->getBlock() == Blocks::AIR)
+        if (level->getBlockState(firePos)->getBlock()->mMaterial == Material::AIR)
         {
             if (static_cast<PortalBlock*>(Blocks::portal)->trySpawnPortal(level, firePos, false))
             {
@@ -65,9 +64,11 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
         return InteractionResult::eInteractionResult_Success;
     }
 
-    if (state->getBlock() == Blocks::AIR && Blocks::FIRE->mayPlace(level, firePos))
+    if (level->getBlockState(firePos)->getBlock()->mMaterial == Material::AIR
+        && Blocks::FIRE->mayPlace(level, firePos))
     {
         return InteractionResult::eInteractionResult_Success;
     }
+
     return InteractionResult::eInteractionResult_Fail;
 }

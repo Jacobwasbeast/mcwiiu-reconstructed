@@ -26,14 +26,15 @@ class BucketItem : public Item
 public:
     enum BucketFillType
     {
+        NONE = -1,
         EMPTY = 0,
-        WATER = 1,
+        MILK = 1,
         FISH = 2,
         SALMON = 3,
         PUFFER = 4,
         TROPICAL = 5,
-        LAVA = 8,
-        MILK = 10
+        WATER = 8,
+        LAVA = 10
     };
 
     explicit BucketItem(BucketFillType fillType);

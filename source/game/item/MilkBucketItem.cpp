@@ -64,8 +64,8 @@ InteractionResultHolder MilkBucketItem::use(Level* level,
                                             boost::shared_ptr<Player> player,
                                             InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     player->startUsingItem(hand);
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 

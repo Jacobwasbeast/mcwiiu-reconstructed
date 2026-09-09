@@ -1,18 +1,12 @@
 #include "game/item/SeedFoodItem.hpp"
 
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/core/Direction.hpp"
-
-class Player
-{
-public:
-    bool mayUseItemAt(const BlockPos& pos, const Direction* direction,
-                      not_null_ptr<ItemInstance> itemInstance);
-};
 
 SeedFoodItem::SeedFoodItem(int nutrition, float saturationModifier, Block* cropBlock, Block* soilBlock)
     : FoodItem(nutrition, saturationModifier, false), mCropBlock(cropBlock), mSoilBlock(soilBlock)

@@ -4,7 +4,6 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GenericStats.hpp"
-#include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/AbstractProperty.hpp"
@@ -76,43 +75,42 @@ InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> 
                                                        const Direction* direction, float hitX, float hitY, float hitZ,
                                                        bool simulate)
 {
+    if (direction != Direction::UP)
+    {
+        return InteractionResult::eInteractionResult_Fail;
+    }
+
     BlockPos placePos = pos;
-    const BlockState* state = level->getBlockState(placePos);
-    if (!state->getBlock()->mayReplaceWithPlace(level, placePos))
+    if (!level->getBlockState(placePos)->getBlock()->mayReplaceWithPlace(level, placePos))
     {
         placePos = placePos.relative(direction);
     }
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (!player->mayUseItemAt(placePos, direction, itemInstance)
-        || !level->mayPlace(mBlock, placePos, false, direction, boost::shared_ptr<Entity>()))
+    if (!player->mayUseItemAt(placePos, direction, itemInstance) ||
+        !mBlock->mayPlace(level, placePos))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
     if (!simulate)
     {
-        const Direction* facing = Direction::fromYRot((double)player->mYRot);
-        bool hingeRight = false;
-        int step = facing->getAxisDirection()->getStep();
-        if (step < 1)
-        {
-            if (step >= -1 && hitY <= 0.5f)
-            {
-                hingeRight = true;
-            }
-        }
-        else if (hitY > 0.5f)
-        {
-            hingeRight = true;
-        }
-        place(level, placePos, facing, mBlock, hingeRight);
-        const SoundType* soundType = mBlock->getSoundType();
-        player->awardStat(Stats::blockPlacedStats.data[Block::getId(mBlock)],
+        player->awardStat(gStats->get_blocksPlaced(Block::getId(mBlock)),
                           GenericStats::param_blocksPlaced(mBlock->getBlockState(itemInstance->getAuxValue()), 1));
+
+        const Direction* facing = Direction::fromYRot((double)player->mYRot);
+        int stepX = facing->getStepX();
+        int stepZ = facing->getStepZ();
+        bool hingeRight = (stepX < 0 && hitZ < 0.5f) || (stepX > 0 && hitZ > 0.5f) ||
+            (stepZ < 0 && hitX > 0.5f) || (stepZ > 0 && hitX < 0.5f);
+
+        place(level, placePos, facing, mBlock, hingeRight);
+
+        const SoundType* soundType = mBlock->getSoundType();
         level->playSound(player, placePos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
                          (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
         itemInstance->shrink(1);
     }
+
     return InteractionResult::eInteractionResult_Success;
 }

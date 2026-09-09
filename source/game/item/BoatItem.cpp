@@ -5,10 +5,12 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Boat.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/InteractionResult.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
@@ -158,7 +160,9 @@ InteractionResultHolder BoatItem::use(Level* level,
     {
         level->addEntity(boat);
     }
-    if (!playerEntity->isCreative())
+    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
+                      GenericStats::param_itemsUsed(player, itemInstance));
+    if (!player->mAbilities.mInstabuild)
     {
         itemInstance->shrink(1);
     }

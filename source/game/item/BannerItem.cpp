@@ -99,7 +99,7 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         }
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity.get() == NULL || blockEntity->GetType() != 0x0100020c00000000ULL)
+        if (blockEntity.get() == NULL || blockEntity->GetType() != 0x0100020cULL)
         {
             player->displayClientMessage((int)0xfdf65c18, true);
             return InteractionResult::eInteractionResult_Fail;

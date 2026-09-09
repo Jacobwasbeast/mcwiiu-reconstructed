@@ -20,6 +20,8 @@
 #include "game/core/GameMode.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 int BucketItem::getSchoolName(int a, int b, int c, int d)
 {
@@ -52,19 +54,22 @@ int BucketItem::getSchoolName(int a, int b, int c, int d)
 }
 
 BucketItem::BucketItem(BucketFillType fillType)
-    : Item(), mBlock(NULL), mFillType(fillType)
+    : Item(), mFillType(fillType)
 {
-    if (fillType == EMPTY || fillType == 0xffffffff)
+    mMaxStackSize = 1;
+
+    if (fillType == EMPTY || fillType == NONE)
     {
         mBlock = Blocks::AIR;
     }
     else if (fillType == LAVA)
     {
-        mBlock = Blocks::lava;
+        mBlock = Blocks::flowing_lava;
     }
-    else if (fillType == WATER || fillType == FISH || fillType == SALMON || fillType == PUFFER || fillType == TROPICAL)
+    else if (fillType == MILK || fillType == FISH || fillType == SALMON || fillType == PUFFER
+             || fillType == TROPICAL || fillType == WATER)
     {
-        mBlock = Blocks::WATER;
+        mBlock = Blocks::FLOWING_WATER;
     }
 }
 
@@ -244,19 +249,23 @@ not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance
 
 int BucketItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
 {
-    return mFillType == WATER ? 32 : 0;
+    return mFillType == MILK ? 32 : 0;
 }
 
 int BucketItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
-    return mFillType == WATER ? 2 : 0;
+    return mFillType == MILK ? 2 : 0;
 }
 
 unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (mFillType == WATER)
+    if (mFillType == MILK)
     {
         return 0x32374037U;
+    }
+    if (!TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand))
+    {
+        return 0xFFFFFFFFU;
     }
     if (isFishBucket())
     {

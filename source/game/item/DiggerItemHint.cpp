@@ -8,15 +8,17 @@
 
 DiggerItemHint::DiggerItemHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,
                                Item** items, unsigned int itemCount)
-    : TutorialHint(hint, tutorial, descriptionId, (eHintType)0, true, true, -1),
-      mItems(new Item*[itemCount]), mItemCount(itemCount)
+    : TutorialHint(hint, tutorial, descriptionId, (eHintType)0, true, true, -1)
 {
+    mItemCount = itemCount;
+    mItems = new Item*[mItemCount];
+
     for (unsigned int i = 0; i < mItemCount; ++i)
     {
         mItems[i] = items[i];
     }
 
-    tutorial->addMessage(descriptionId, true, 3);
+    tutorial->addMessage(0xe729d451, true, 3);
 }
 
 DiggerItemHint::~DiggerItemHint()
@@ -53,7 +55,7 @@ unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item,
         {
             if (item->getItem() == mItems[i])
             {
-                if ((entity->GetType() & 0x0d000000ULL) != 0x0d000000ULL)
+                if ((entity->GetType() & ENTITY_TYPE_MOB) != ENTITY_TYPE_MOB)
                 {
                     return 0xffffffffU;
                 }

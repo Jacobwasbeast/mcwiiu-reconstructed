@@ -9,8 +9,13 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 
-FishFoodItem::Type* gFishFoodTypes[4] = { 0, 0, 0, 0 };
-extern FishFoodItem::Type* gPufferfishFoodType;
+FishFoodItem::Type* gFishFoodTypes[4] = {
+    new FishFoodItem::Type(0, 0xFB51767E, 0x224B0B42, 0x692511AB, 0x51994487, 2, 0.6f, 5, 0.8f, L"fishRaw", L"fishCooked"),
+    new FishFoodItem::Type(1, 0x5619AFE4, 0x9ADFD818, 0x44A3F851, 0xE7AF7DDD, 2, 0.8f, 6, 1.0f, L"fish_salmon_raw", L"fish_salmon_cooked"),
+    new FishFoodItem::Type(2, 0x0B072C6C, 0xCC0E58F0, 1, 0.8f, L"fish_clownfish_raw"),
+    new FishFoodItem::Type(3, 0x60C4EC20, 0x1F16945C, 1, 0.8f, L"fish_pufferfish_raw")
+};
+FishFoodItem::Type* gPufferfishFoodType = gFishFoodTypes[3];
 
 FishFoodItem::FishFoodItem(bool cooked)
     : FoodItem(0, 0.0f, false), mCooked(cooked)
@@ -21,10 +26,11 @@ FishFoodItem::~FishFoodItem()
 {
 }
 
-FishFoodItem::Type::Type(int id, unsigned int name, unsigned int cookedName,
-                         unsigned int nutrition, unsigned int cookedNutrition,
-                         int description, float saturation, int cookedDescription,
-                         float cookedSaturation, const std::wstring& icon,
+FishFoodItem::Type::Type(int id, unsigned int name, int description,
+                         unsigned int cookedName, int cookedDescription,
+                         unsigned int nutrition, float saturation,
+                         unsigned int cookedNutrition, float cookedSaturation,
+                         const std::wstring& icon,
                          const std::wstring& cookedIcon)
     : mId(id), mName(name), mCookedName(cookedName), mRawNutrition(nutrition),
       mRawSaturation(saturation), mCookedNutrition(cookedNutrition),
@@ -34,10 +40,10 @@ FishFoodItem::Type::Type(int id, unsigned int name, unsigned int cookedName,
 {
 }
 
-FishFoodItem::Type::Type(int id, unsigned int name, unsigned int cookedName,
-                         int description, float saturation,
+FishFoodItem::Type::Type(int id, unsigned int name, int description,
+                         unsigned int nutrition, float saturation,
                          const std::wstring& icon)
-    : mId(id), mName(name), mCookedName(-1), mRawNutrition(0),
+    : mId(id), mName(name), mCookedName(-1), mRawNutrition(nutrition),
       mRawSaturation(saturation), mCookedNutrition(0), mCookedSaturation(0.0f),
       mCanBeCooked(0), mIcon(icon), mCookedIcon(L""), mRawIcon(0),
       mCookedIconValue(0), mDescription(description), mCookedDescription(-1)
@@ -46,7 +52,7 @@ FishFoodItem::Type::Type(int id, unsigned int name, unsigned int cookedName,
 
 FishFoodItem::Type* FishFoodItem::Type::getById(int id)
 {
-    if (id > 3)
+    if (id < 0 || id > 3)
     {
         return NULL;
     }

@@ -18,7 +18,7 @@ CraftTask::CraftTask(Item* item, int auxValue, int requiredCount, Tutorial* tuto
     auxValues[0] = auxValue;
 }
 
-CraftTask::CraftTask(Item** items, int* auxValues, int itemCount, int requiredCount,
+CraftTask::CraftTask(Item** inputItems, int* inputAuxValues, int itemCount, int requiredCount,
                      Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
                      std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
                      bool allowFade, bool repeatMessage)
@@ -29,12 +29,12 @@ CraftTask::CraftTask(Item** items, int* auxValues, int itemCount, int requiredCo
     this->itemCount = itemCount;
     this->requiredCount = requiredCount;
     craftedCount = 0;
-    items = new Item*[itemCount];
-    auxValues = new int[itemCount];
+    this->items = new Item*[itemCount];
+    this->auxValues = new int[itemCount];
     for (index = 0; index < itemCount; ++index)
     {
-        this->items[index] = items[index];
-        this->auxValues[index] = auxValues[index];
+        this->items[index] = inputItems[index];
+        this->auxValues[index] = inputAuxValues[index];
     }
 }
 

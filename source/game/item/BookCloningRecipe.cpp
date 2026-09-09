@@ -117,7 +117,7 @@ NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(bo
     unsigned int i;
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && dynamic_cast<WrittenBookItem*>(item->getItem()) != NULL)

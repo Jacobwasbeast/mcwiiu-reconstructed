@@ -51,7 +51,6 @@ InteractionResultHolder EggItem::use(Level* level,
         level->addEntity(egg);
     }
 
-    player->swing(hand);
     player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
 

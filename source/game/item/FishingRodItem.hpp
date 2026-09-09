@@ -20,12 +20,9 @@ public:
     class FishingRodItem_ItemPropertyFunction : public ItemPropertyFunction
     {
     public:
-        double call(not_null_ptr<ItemInstance> itemInstance,
-                    Level* level,
-                    boost::shared_ptr<LivingEntity> entity);
         virtual float call(not_null_ptr<ItemInstance> itemInstance,
                            Level* level,
-                           boost::shared_ptr<LivingEntity> entity) const;
+                           boost::shared_ptr<LivingEntity> entity);
     };
 
     FishingRodItem();

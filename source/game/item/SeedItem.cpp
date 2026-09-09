@@ -1,29 +1,11 @@
 #include "game/item/SeedItem.hpp"
 
 #include "game/item/ItemInstance.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class LivingEntity
-{
-public:
-    virtual not_null_ptr<ItemInstance> getItemInHand(InteractionHand::EInteractionHand hand);
-};
-
-class Player : public LivingEntity
-{
-public:
-    virtual bool mayUseItemAt(const BlockPos& pos, const Direction* direction,
-                              not_null_ptr<ItemInstance> itemInstance);
-};
-
-class Level
-{
-public:
-    const BlockState* getBlockState(const BlockPos& pos);
-    bool isEmptyBlock(const BlockPos& pos);
-    bool setBlock(const BlockPos& pos, const BlockState* state, int flags, bool forceUpdate);
-};
 
 SeedItem::SeedItem(Block* cropBlock, Block* soilBlock)
     : Item(), mCropBlock(cropBlock), mSoilBlock(soilBlock)

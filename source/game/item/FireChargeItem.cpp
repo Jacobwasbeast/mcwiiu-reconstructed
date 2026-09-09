@@ -12,6 +12,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
 FireChargeItem::FireChargeItem()
@@ -33,6 +34,11 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
                                                               float hitZ,
                                                               bool simulate)
 {
+    if (level->mIsClientSide && !simulate)
+    {
+        return InteractionResult::eInteractionResult_Success;
+    }
+
     BlockPos target = pos.relative(direction);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
@@ -41,10 +47,9 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    const BlockState* state = level->getBlockState(target);
     if (!simulate)
     {
-        if (state->getBlock() == Blocks::AIR)
+        if (level->getBlockState(target)->getMaterial() == Material::AIR)
         {
             level->playSound(boost::shared_ptr<Player>(),
                              target,
@@ -62,10 +67,12 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
         return InteractionResult::eInteractionResult_Success;
     }
 
-    if (state->getBlock() == Blocks::AIR && Blocks::FIRE->mayPlace(level, target))
+    if (level->getBlockState(target)->getBlock()->mMaterial == Material::AIR &&
+        Blocks::FIRE->mayPlace(level, target))
     {
         return InteractionResult::eInteractionResult_Success;
     }
+
     return InteractionResult::eInteractionResult_Fail;
 }
 

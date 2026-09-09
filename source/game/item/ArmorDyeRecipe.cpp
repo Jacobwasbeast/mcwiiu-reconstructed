@@ -1,7 +1,8 @@
-#include <algorithm>
-#include <vector>
-
 #include "game/item/ArmorDyeRecipe.hpp"
+
+#include <algorithm>
+#include <cstring>
+#include <vector>
 
 #include "game/core/DyeColor.hpp"
 #include "game/entity/mob/HorseArmorItem.hpp"
@@ -109,22 +110,22 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
             if (hasCustomColor)
             {
                 int color = itemType->getColor(armor, 0);
-                float colorRed = (float)((color >> 16) & 255) / 255.0f;
-                float colorGreen = (float)((color >> 8) & 255) / 255.0f;
-                float colorBlue = (float)(color & 255) / 255.0f;
-                red += (int)(colorRed * 255.0f);
-                green += (int)(colorGreen * 255.0f);
-                blue += (int)(colorBlue * 255.0f);
-                totalBrightness += (int)(std::max(colorRed, std::max(colorGreen, colorBlue)) * 255.0f);
+                float colorRed = static_cast<float>((color >> 16) & 255) / 255.0f;
+                float colorGreen = static_cast<float>((color >> 8) & 255) / 255.0f;
+                float colorBlue = static_cast<float>(color & 255) / 255.0f;
+                red += static_cast<int>(colorRed * 255.0f);
+                green += static_cast<int>(colorGreen * 255.0f);
+                blue += static_cast<int>(colorBlue * 255.0f);
+                totalBrightness += static_cast<int>(std::max(colorRed, std::max(colorGreen, colorBlue)) * 255.0f);
                 ++colorCount;
             }
         }
         else if (itemType == Items::dye)
         {
             arrayWithLength<const float> colors = DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
-            int colorRed = (int)(colors.data[0] * 255.0f);
-            int colorGreen = (int)(colors.data[1] * 255.0f);
-            int colorBlue = (int)(colors.data[2] * 255.0f);
+            int colorRed = static_cast<int>(colors.data[0] * 255.0f);
+            int colorGreen = static_cast<int>(colors.data[1] * 255.0f);
+            int colorBlue = static_cast<int>(colors.data[2] * 255.0f);
             int brightest = colorRed;
             if (colorGreen > brightest)
             {
@@ -154,11 +155,11 @@ not_null_ptr<ItemInstance> ArmorDyeRecipe::assembleDyedArmor(boost::shared_ptr<C
     red /= colorCount;
     green /= colorCount;
     blue /= colorCount;
-    float averageBrightness = (float)totalBrightness / (float)colorCount;
-    float brightest = (float)std::max(red, std::max(green, blue));
-    red = (int)((float)red * averageBrightness / brightest);
-    green = (int)((float)green * averageBrightness / brightest);
-    blue = (int)((float)blue * averageBrightness / brightest);
+    float averageBrightness = static_cast<float>(totalBrightness) / static_cast<float>(colorCount);
+    float brightest = static_cast<float>(std::max(red, std::max(green, blue)));
+    red = static_cast<int>(static_cast<float>(red) * averageBrightness / brightest);
+    green = static_cast<int>(static_cast<float>(green) * averageBrightness / brightest);
+    blue = static_cast<int>(static_cast<float>(blue) * averageBrightness / brightest);
     int color = (red << 16) | (green << 8) | blue;
 
     if (armorItem != NULL)
@@ -222,6 +223,13 @@ bool ArmorDyeRecipe::recipeRequires(int)
 
 void ArmorDyeRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 {
+    int* source = new int[9]();
+    int* itemIdsScratch = new int[9]();
+    int* itemCountsScratch = new int[9]();
+    int* auxValuesScratch = new int[9];
+    int* itemTagsScratch = new int[9]();
+    std::memset(auxValuesScratch, -1, 9 * sizeof(int));
+
     ingredientsRequired->numIngredients = 0;
     ingredientsRequired->requiresCraftingTable = 0;
     ingredientsRequired->itemIds = new int[0];
@@ -233,7 +241,18 @@ void ArmorDyeRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
     ingredientsRequired->available[1] = false;
     ingredientsRequired->available[2] = false;
     ingredientsRequired->available[3] = false;
-    ingredientsRequired->craftingGrid = new int[9]();
+    ingredientsRequired->craftingGrid = new int[9];
+    std::copy(source, source + 9, ingredientsRequired->craftingGrid);
+    ingredientsRequired->missingSlotMask[0] = 0;
+    ingredientsRequired->missingSlotMask[1] = 0;
+    ingredientsRequired->missingSlotMask[2] = 0;
+    ingredientsRequired->missingSlotMask[3] = 0;
+
+    delete[] itemIdsScratch;
+    delete[] itemCountsScratch;
+    delete[] auxValuesScratch;
+    delete[] itemTagsScratch;
+    delete[] source;
 }
 
 boost::shared_ptr<CraftingContainer> ArmorDyeRecipe::generateExpectedCraftSlots()

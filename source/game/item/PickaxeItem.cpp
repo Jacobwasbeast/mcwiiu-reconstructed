@@ -1,43 +1,9 @@
 #include "game/item/PickaxeItem.hpp"
 
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
-
-class Blocks
-{
-public:
-    static Block* activator_rail;
-    static Block* coal_ore;
-    static Block* cobblestone;
-    static Block* detector_rail;
-    static Block* diamond_block;
-    static Block* diamond_ore;
-    static Block* double_stone_slab;
-    static Block* golden_rail;
-    static Block* gold_block;
-    static Block* gold_ore;
-    static Block* ice;
-    static Block* iron_block;
-    static Block* iron_ore;
-    static Block* lapis_block;
-    static Block* lapis_ore;
-    static Block* lit_redstone_ore;
-    static Block* mossy_cobblestone;
-    static Block* netherrack;
-    static Block* packed_ice;
-    static Block* rail;
-    static Block* redstone_ore;
-    static Block* sandstone;
-    static Block* stone;
-    static Block* stone_slab;
-    static Block* stone_button;
-    static Block* stone_pressure_plate;
-    static Block* red_sandstone;
-    static Block* obsidian;
-    static Block* emerald_ore;
-    static Block* emerald_block;
-};
 
 static arrayWithLength<Block*> BLOCKS(26, false);
 
@@ -65,7 +31,6 @@ void PickaxeItem::staticCtor()
     BLOCKS.data[19] = Blocks::rail;
     BLOCKS.data[20] = Blocks::redstone_ore;
     BLOCKS.data[21] = Blocks::sandstone;
-    BLOCKS.data[21] = Blocks::red_sandstone;
     BLOCKS.data[22] = Blocks::stone;
     BLOCKS.data[23] = Blocks::stone_slab;
     BLOCKS.data[24] = Blocks::stone_button;

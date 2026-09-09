@@ -1,14 +1,8 @@
 #include "game/item/EnchantmentCostSlot.hpp"
 
+#include "game/core/DyeColor.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-
-class DyeColor
-{
-public:
-    static const DyeColor* BLUE;
-    static const DyeColor* byItemData(int itemData);
-};
 
 EnchantmentCostSlot::EnchantmentCostSlot(boost::shared_ptr<Container> container, int index, int x, int y)
     : Slot(container, index, x, y)

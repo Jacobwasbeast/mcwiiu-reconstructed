@@ -58,8 +58,10 @@ GameRuleDefinition* DistributeItemsRuleDefinition::addChild(ConsoleGameRules::EG
     return child;
 }
 
-void DistributeItemsRuleDefinition::getContainers(std::vector<boost::shared_ptr<Container> >* containers, Level* level, const std::vector<WorldPositionRuleDefinition*>& positions)
+std::vector<boost::shared_ptr<Container> > DistributeItemsRuleDefinition::getContainers(Level* level, const std::vector<WorldPositionRuleDefinition*>& positions)
 {
+    std::vector<boost::shared_ptr<Container> > containers;
+
     for (std::vector<WorldPositionRuleDefinition*>::const_iterator it = positions.begin(); it != positions.end(); ++it)
     {
         BlockPos position = DistributeItemsWorldPositionAccess::getPosition(*it);
@@ -67,16 +69,17 @@ void DistributeItemsRuleDefinition::getContainers(std::vector<boost::shared_ptr<
         boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(blockEntity);
         if (container)
         {
-            containers->push_back(container);
+            containers.push_back(container);
         }
     }
+
+    return containers;
 }
 
 bool DistributeItemsRuleDefinition::evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef)
 {
     (void)ruleset;
-    std::vector<boost::shared_ptr<Container> > containers;
-    getContainers(&containers, level, mPositions);
+    std::vector<boost::shared_ptr<Container> > containers = getContainers(level, mPositions);
     return miniGameDef.PopulateContainers(&containers, mLootGroup) != 0;
 }
 

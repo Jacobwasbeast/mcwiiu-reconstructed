@@ -102,6 +102,10 @@ BannerRecipes::BannerRecipes()
 {
 }
 
+BannerRecipes::~BannerRecipes()
+{
+}
+
 ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pattern)
 {
     ItemInstance* result = new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData());

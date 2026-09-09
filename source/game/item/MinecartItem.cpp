@@ -13,13 +13,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/DirectionProperty.hpp"
-
-class DispenserBlock
-{
-public:
-    static DirectionProperty* FACING;
-    static BehaviorRegistry DISPENSER_REGISTRY;
-};
+#include "game/world/block/DispenserBlock.hpp"
 
 MinecartItem::MinecartItem(const Minecart::Type* type)
     : mMinecartType(type)

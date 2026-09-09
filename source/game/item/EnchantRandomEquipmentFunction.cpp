@@ -4,14 +4,9 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-
-EnchantRandomEquipmentFunction::EnchantRandomEquipmentFunction(std::vector<LootItemCondition*>* conditions,
-                                                               float chance)
-    : LootItemFunction(conditions), chance(chance)
-{
-}
 
 EnchantRandomEquipmentFunction::~EnchantRandomEquipmentFunction()
 {
@@ -22,11 +17,11 @@ not_null_ptr<ItemInstance> EnchantRandomEquipmentFunction::apply(const not_null_
                                                                  LootTableContext& context)
 {
     boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
-    float specialMultiplier = (float)((Level*)context.mLevel)->getSpecialMultiplier(entity->mDimension);
+    double specialMultiplier = context.mLevel->getSpecialMultiplier(entity->mDimension);
 
-    if (random->nextFloat() < chance * specialMultiplier)
+    if (random->nextFloat() < static_cast<float>(chance * specialMultiplier))
     {
-        int level = (int)(5.0f + specialMultiplier * (float)random->nextInt(18));
+        int level = static_cast<int>(5.0 + specialMultiplier * static_cast<float>(random->nextInt(18)));
         EnchantmentHelper::enchantItem(random, itemInstance, level, true);
     }
 

@@ -27,11 +27,15 @@ not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<Ite
 
     if (result->isEmpty())
     {
-        return result;
+        return ItemInstance::EMPTY;
     }
+
+    Enchantment* enchantment;
 
     if (enchantments.empty())
     {
+        possibleEnchantments.clear();
+
         const boost::unordered_map<ResourceLocation,
                                    Enchantment*,
                                    boost::hash<ResourceLocation>,
@@ -45,20 +49,30 @@ not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<Ite
              it != registry.end();
              ++it)
         {
-            if (it->second != NULL && it->second->canEnchant(result))
+            if (result->getItem() == Items::book ||
+                (it->second != NULL && it->second->canEnchant(result)))
             {
                 possibleEnchantments.push_back(it->second);
             }
         }
+
+        if (possibleEnchantments.empty())
+        {
+            return result;
+        }
+
+        enchantment = possibleEnchantments.at(random->nextInt((int)possibleEnchantments.size()));
+    }
+    else
+    {
+        enchantment = enchantments.at(random->nextInt((int)enchantments.size()));
     }
 
-    std::vector<Enchantment*>& choices = enchantments.empty() ? possibleEnchantments : enchantments;
-    if (choices.empty())
+    if (enchantment == NULL)
     {
         return result;
     }
 
-    Enchantment* enchantment = choices.at(random->nextInt((int)choices.size()));
     int level = Mth::nextInt(random, enchantment->getMinLevel(), enchantment->getMaxLevel());
 
     if (result->getItem() == Items::book)

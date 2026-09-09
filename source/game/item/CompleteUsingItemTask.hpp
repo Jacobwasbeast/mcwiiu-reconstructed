@@ -18,7 +18,7 @@ public:
 
 private:
     Item** items;
-    unsigned int itemCount;
+    int itemCount;
 };
 
 #endif

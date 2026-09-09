@@ -5,10 +5,12 @@
 #include "game/core/L10N.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 SpawnEggItem::SpawnEggItem()
     : Item(), mOverlayIcon(NULL)
@@ -99,11 +101,12 @@ boost::shared_ptr<Mob> SpawnEggItem::getMob(Level* level, const ResourceLocation
         return boost::shared_ptr<Mob>();
     }
     boost::shared_ptr<Entity> entity = EntityIO::newEntity(entityType, level);
-    if (entity)
+    boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(entity);
+    if (mob)
     {
-        entity->setPos(x, y, z);
+        mob->setPos(x, y, z);
     }
-    return boost::shared_ptr<Mob>();
+    return mob;
 }
 
 void SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType,
@@ -113,7 +116,7 @@ void SpawnEggItem::spawnMobAt(Level* level, const ResourceLocation& entityType,
     boost::shared_ptr<Mob> mob = getMob(level, entityType, x, y, z, error, customName);
     if (mob && level != NULL)
     {
-        level->addEntity(boost::shared_ptr<Entity>());
+        level->addEntity(boost::static_pointer_cast<Entity>(mob));
     }
 }
 
@@ -123,8 +126,29 @@ void SpawnEggItem::updateCustomEntityTag(Level*, boost::shared_ptr<Player>,
 {
 }
 
-void SpawnEggItem::DisplaySpawnError(boost::shared_ptr<Player>, int)
+void SpawnEggItem::DisplaySpawnError(boost::shared_ptr<Player> player, int error)
 {
+    if (!player)
+        return;
+
+    uint32_t message = 0;
+    switch (error)
+    {
+    case 1: message = 0x9f8bffae; break;
+    case 2: message = 0x82460728; break;
+    case 3: message = 0xfab1deb6; break;
+    case 4: message = 0x70edc806; break;
+    case 5: message = 0x3e35b6e8; break;
+    case 7: message = 0xa82b5a66; break;
+    case 8: message = 0x16972fbf; break;
+    case 9: message = 0xb714e0e2; break;
+    case 10: message = 0x3dcd926b; break;
+    case 11: message = 0x60a3835d; break;
+    case 12: message = 0xd97fdba2; break;
+    default: return;
+    }
+
+    player->sendMessage(message, NULL, 0, NULL, 0);
 }
 
 InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Player> player,

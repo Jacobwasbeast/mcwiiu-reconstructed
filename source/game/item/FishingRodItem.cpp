@@ -110,12 +110,12 @@ TextureAtlasSprite* FishingRodItem::getEmptyIcon()
     return mEmptyIcon;
 }
 
-double FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
+float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
     not_null_ptr<ItemInstance> itemInstance,
     Level* level,
     boost::shared_ptr<LivingEntity> entity)
 {
-    double result = 0.0;
+    float result = 0.0f;
     if (entity)
     {
         not_null_ptr<ItemInstance> mainHandItem = entity->getMainHandItem();
@@ -132,17 +132,9 @@ double FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mFishing)
             {
-                result = 1.0;
+                result = 1.0f;
             }
         }
     }
     return result;
-}
-
-float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
-    not_null_ptr<ItemInstance> itemInstance,
-    Level* level,
-    boost::shared_ptr<LivingEntity> entity) const
-{
-    return static_cast<float>(const_cast<FishingRodItem_ItemPropertyFunction*>(this)->call(itemInstance, level, entity));
 }

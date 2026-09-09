@@ -17,6 +17,7 @@ class ListTag;
 class Minecraft;
 class Player;
 class ServerGamePacketListenerImpl;
+class MultiPlayerGameMode;
 
 class Inventory : public Container
 {
@@ -101,6 +102,7 @@ public:
 private:
     friend class Minecraft;
     friend class ServerGamePacketListenerImpl;
+    friend class MultiPlayerGameMode;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;

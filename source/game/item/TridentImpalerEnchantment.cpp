@@ -1,11 +1,7 @@
 #include "game/item/TridentImpalerEnchantment.hpp"
 
-#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantmentCategory.hpp"
-
-class LivingEntity : public Entity
-{
-};
 
 TridentImpalerEnchantment::TridentImpalerEnchantment(const Rarity* rarity,
                                                      arrayWithLength<const EquipmentSlot*> slots)

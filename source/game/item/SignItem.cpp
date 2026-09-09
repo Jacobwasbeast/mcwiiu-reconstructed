@@ -101,7 +101,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(signPos);
 
-        if (blockEntity && blockEntity->GetType() == 0x0100020200000000ULL)
+        if (blockEntity && blockEntity->GetType() == 0x01000202ULL)
         {
             if (BlockItem::updateCustomBlockEntityTag(level, player, signPos, itemInstance))
             {

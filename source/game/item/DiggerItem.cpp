@@ -29,7 +29,7 @@ DiggerItem::~DiggerItem()
 void DiggerItem::_init(float attackDamage, float attackSpeed, arrayWithLength<Block*> blocks)
 {
     mBlocks = blocks;
-    setMaxStackSize(1);
+    mMaxStackSize = 1;
     setMaxDamage(mTier->getUses());
     mSpeed = mTier->getSpeed();
     mAttackDamage = attackDamage + mTier->getAttackDamageBonus();

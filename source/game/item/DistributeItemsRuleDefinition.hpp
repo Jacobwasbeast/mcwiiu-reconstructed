@@ -21,7 +21,7 @@ public:
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
-    static void getContainers(std::vector<boost::shared_ptr<Container> >* containers, Level* level, const std::vector<WorldPositionRuleDefinition*>& positions);
+    static std::vector<boost::shared_ptr<Container> > getContainers(Level* level, const std::vector<WorldPositionRuleDefinition*>& positions);
     virtual bool evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef);
     std::wstring getId() const;
 

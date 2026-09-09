@@ -58,7 +58,7 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
                      SoundEvents::LINGERINGPOTION_THROW,
                      SoundSource::eSoundSource_Neutral,
                      0.5f,
-                     0.4f / (random->nextFloat() * 0.4f + 0.8f),
+                      0.4f / (Item::random->nextFloat() * 0.4f + 0.8f),
                      16.0f);
 
     if (!level->mIsClientSide)

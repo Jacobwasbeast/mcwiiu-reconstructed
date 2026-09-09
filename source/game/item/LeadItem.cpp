@@ -11,13 +11,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class LeashFenceKnotEntity : public Entity
-{
-public:
-    static boost::shared_ptr<LeashFenceKnotEntity> findKnotAt(Level* level, const BlockPos& pos);
-    static boost::shared_ptr<LeashFenceKnotEntity> createAndAddKnot(Level* level, const BlockPos& pos);
-};
+#include "game/entity/mob/LeashFenceKnotEntity.hpp"
 
 LeadItem::LeadItem()
     : Item()

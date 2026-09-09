@@ -5,6 +5,7 @@
 #include "game/core/LootTableContext.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/Level.hpp"
 
 LootItemRandomChanceWithSpecialModifierCondition::LootItemRandomChanceWithSpecialModifierCondition(float chanceValue)
@@ -16,7 +17,7 @@ bool LootItemRandomChanceWithSpecialModifierCondition::applies(Random* random, L
 {
     boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
     int dimension = entity->mDimension;
-    double multiplier = ((Level*)context.mLevel)->getSpecialMultiplier(dimension);
+    double multiplier = context.mLevel->getSpecialMultiplier(dimension);
 
     return static_cast<double>(random->nextFloat()) < static_cast<double>(chance) * multiplier;
 }

@@ -6,6 +6,7 @@
 #include "game/core/InteractionResult.hpp"
 #include "game/core/Pig.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
@@ -35,15 +36,23 @@ bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    bool ridingPig = false;
+
     if (player->isPassenger())
     {
+        ridingPig = player->getVehicle()->GetType() == 0x2D680003ULL;
+    }
+
+    if (ridingPig)
+    {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
-        if (pig && itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6
-            && pig->testboost())
+
+        if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->testboost())
         {
             return true;
         }
     }
+
     return false;
 }
 
@@ -62,20 +71,37 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
             itemInstance);
     }
 
-    if (TestUse(level, player, hand))
+    bool ridingPig = false;
+
+    if (player->isPassenger())
+    {
+        ridingPig = player->getVehicle()->GetType() == 0x2D680003ULL;
+    }
+
+    if (ridingPig)
     {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
-        if (pig && pig->boost())
+
+        if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->boost())
         {
             itemInstance->hurtAndBreak(7, player);
+
+            if (!itemInstance->isEmpty())
+            {
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                               itemInstance);
+            }
+
+            not_null_ptr<ItemInstance> replacement(new ItemInstance(Items::fishingRod));
+            replacement->setTag(itemInstance->getTag());
             return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                           itemInstance);
+                                           replacement);
         }
     }
 
     player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                       GenericStats::param_itemsUsed(player, itemInstance));
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass,
                                    itemInstance);
 }
 

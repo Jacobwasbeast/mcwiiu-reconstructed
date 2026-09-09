@@ -12,6 +12,13 @@
 #include "game/util/ResourceLocation.hpp"
 #include <cwchar>
 not_null_ptr<ItemInstance> ItemInstance::EMPTY;
+ItemInstance::ItemInstance()
+    : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
+      mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
+      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
+{
+}
+
 ItemInstance::ItemInstance(Block* block)
     : mCount(0), mPopTime(0), mItem(0), mTag(0), mEmptyCache(1),
       mAuxValue(0), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
@@ -46,10 +53,9 @@ ItemInstance::ItemInstance(Item* item, int count)
 {
 }
 ItemInstance::ItemInstance(Item* item, int count, int auxValue)
-    : mCount(count), mPopTime(0), mItem(item), mTag(0), mEmptyCache(0),
-      mAuxValue(auxValue), mUnknown(0), mFrame(), mCensorshipInfo(), mBreakBlock(0),
-      mCanBreak(0), mPlaceBlock(0), mCanPlace(0)
+    : mFrame(), mCensorshipInfo()
 {
+    _init(item, count, auxValue);
 }
 ItemInstance::ItemInstance(CompoundTag* tag)
     : mCount(0), mPopTime(0), mItem(0), mTag(tag), mEmptyCache(0),
@@ -100,17 +106,18 @@ updateEmptyCacheFlag();
 Item* ItemInstance::getItem() const {
  return mEmptyCache != 0 ? 0 : mItem;
 }
-void ItemInstance::_init(Item* item, int count, int auxValue) {
-mItem=item;
-mCount=count;
-mPopTime=0;
-mAuxValue=auxValue;
-mTag=0;
-mUnknown=0;
-mBreakBlock=0;
-mCanBreak=0;
-mCensorshipInfo.reset(new CensoredString(0xAD36B773, 0x62950B66));
-updateEmptyCacheFlag();
+void ItemInstance::_init(Item* item, int count, int auxValue)
+{
+    mItem = item;
+    mUnknown = 0;
+    mTag = 0;
+    mCount = count;
+    mPopTime = 0;
+    mAuxValue = auxValue;
+    mCensorshipInfo.reset(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66));
+    mCanBreak = 0;
+    mBreakBlock = 0;
+    updateEmptyCacheFlag();
 }
 void ItemInstance::addDataWalkers(DataFixerUpper* fixer) {
 if (fixer != 0) {
@@ -118,27 +125,37 @@ fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, 0);
 fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, 0);
 }
 }
-not_null_ptr<ItemInstance> ItemInstance::copy() const {
-ItemInstance* result = new ItemInstance(mItem, mCount, mAuxValue);
-if (mTag != 0) result->mTag = mTag->copy();
-return not_null_ptr<ItemInstance>(result);
+not_null_ptr<ItemInstance> ItemInstance::copy() const
+{
+    not_null_ptr<ItemInstance> result(new ItemInstance(mItem, mCount, mAuxValue));
+    if (mTag != 0)
+    {
+        result->mTag = mTag->copy();
+    }
+    return result;
 }
 void ItemInstance::grow(int amount) {
 mCount += amount;
 updateEmptyCacheFlag();
 }
-void ItemInstance::shrink(int amount) {
-mCount -= amount;
-if (mCount < 0) mCount=0;
-updateEmptyCacheFlag();
+void ItemInstance::shrink(int amount)
+{
+    grow(-amount);
 }
-not_null_ptr<ItemInstance> ItemInstance::split(int amount) {
-if (mCount < amount) amount = mCount;
-not_null_ptr<ItemInstance> result = copy();
-result->setCount(amount);
-shrink(amount);
-if (mCount < 1) mCount = 0;
-return result;
+not_null_ptr<ItemInstance> ItemInstance::split(int amount)
+{
+    if (mCount < amount)
+    {
+        amount = mCount;
+    }
+    not_null_ptr<ItemInstance> result = copy();
+    result->setCount(amount);
+    shrink(amount);
+    if (mCount < 1)
+    {
+        mCount = 0;
+    }
+    return result;
 }
 int ItemInstance::useOn(boost::shared_ptr<Player> player,
                         Level* level,
@@ -152,8 +169,7 @@ int ItemInstance::useOn(boost::shared_ptr<Player> player,
 return mItem != 0 ? mItem->useOn(player, level, pos, hand, direction, x, y, z, flag) == InteractionResult::eInteractionResult_Success : false;
 }
 float ItemInstance::getDestroySpeed(const BlockState* state) {
-not_null_ptr<ItemInstance> self;
-static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+not_null_ptr<ItemInstance> self(shared_from_this());
 return mItem != 0 ? mItem->getDestroySpeed(self, state) : 0.0f;
 }
 bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand) {
@@ -207,6 +223,7 @@ int ItemInstance::getAuxValue() const {
 return mAuxValue;
 }
 void ItemInstance::setAuxValue(int auxValue) {
+if (auxValue < 0) auxValue = 0;
 mAuxValue=auxValue;
 }
 int ItemInstance::getMaxDamage() {
@@ -230,7 +247,10 @@ bool ItemInstance::canDestroySpecial(const BlockState* state) {
 return mItem != 0 && mItem->canDestroySpecial(state);
 }
 bool ItemInstance::interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand) {
-return false;
+if (mItem == 0) return false;
+not_null_ptr<ItemInstance> self;
+static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+return mItem->interactEnemy(self, player, entity, hand);
 }
 ItemInstance* ItemInstance::copy_not_shared() const {
 ItemInstance* result = new ItemInstance(mItem, mCount, mAuxValue);
@@ -344,7 +364,8 @@ Tag* ItemInstance::getEnchantmentTags() {
 return mTag != 0 && mTag->contains(L"Enchantments", 9) ? mTag->get(L"Enchantments") : 0;
 }
 bool ItemInstance::wasCreatedByRestrictedPlayer() {
-return false;
+if (mTag == 0 || !mTag->contains(L"createdByRestricted")) return false;
+return mTag->getBoolean(L"createdByRestricted");
 }
 std::wstring ItemInstance::getHoverNameUnfiltered() {
 not_null_ptr<ItemInstance> self;
@@ -371,7 +392,8 @@ std::wstring ItemInstance::getOwnerUUID() {
 return std::wstring();
 }
 bool ItemInstance::wasCreatedOnHost() {
-return false;
+if (mTag == 0 || !mTag->contains(L"createdOnHost")) return true;
+return mTag->getByte(L"createdOnHost") == 1;
 }
 void ItemInstance::resetHoverName() {
 if (mTag != 0 && mTag->contains(L"display", 10)) {
@@ -485,5 +507,8 @@ bool ItemInstance::hasPotionStrengthBar() {
 return mItem != 0 && mAuxValue != 0;
 }
 int ItemInstance::GetPotionStrength() {
-return (mAuxValue >> 5) & 3;
+const unsigned int auxValue = static_cast<unsigned int>(mAuxValue);
+return ((auxValue & 0xf) != 0xc && (auxValue & 0xf) != 5)
+           ? static_cast<int>((auxValue >> 5) & 3)
+           : static_cast<int>((auxValue >> 5) & 1);
 }

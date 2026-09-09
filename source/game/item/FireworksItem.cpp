@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/L10N.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
@@ -17,8 +18,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
-
-std::wstring _toString(int value);
 
 FireworksItem::FireworksItem()
     : Item()

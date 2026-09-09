@@ -18,6 +18,7 @@ class Player;
 class ClientboundMapItemDataPacket;
 class MapItemSavedData : public SavedData
 {
+    friend class ItemFrame;
 public:
     using SavedData::setDirty;
 

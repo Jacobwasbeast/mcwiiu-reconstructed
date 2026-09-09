@@ -109,7 +109,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                          SoundEvents::TRIDENT_THROW,
                          SoundSource::eSoundSource_Players,
                          1.0f,
-                         1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
+                         1.0f / (player->getRandom()->nextFloat() * 0.4f + 1.2f) + 0.5f,
                          16.0f);
     }
     else

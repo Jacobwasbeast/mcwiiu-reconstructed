@@ -2,8 +2,10 @@
 
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/Potion.hpp"
 #include "game/item/PotionUtils.hpp"
@@ -35,6 +37,15 @@ AreaEffectCloud::~AreaEffectCloud()
 
 void AreaEffectCloud::staticCtor()
 {
+    const unsigned long long type = 0x000000000800000FULL;
+    const unsigned long long parent = 0x0000000008000000ULL;
+    DATA_RADIUS = SynchedEntityData::defineId<float>(type, parent, EntityDataSerializers::FLOAT);
+    DATA_COLOR = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
+    DATA_WAITING = SynchedEntityData::defineId<bool>(type, parent, EntityDataSerializers::BOOLEAN);
+    DATA_PARTICLE = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
+    DATA_PARTICLE_PARAM_1 = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
+    DATA_PARTICLE_PARAM_2 = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
+    DATA_PARTICLE_RATE = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
 }
 
 void AreaEffectCloud::setRadius(float radius)
@@ -134,6 +145,40 @@ void AreaEffectCloud::generateParticles()
 
 void AreaEffectCloud::suckInNearbyPlayers()
 {
+    if (mLevel == NULL || mBoundingBox == NULL)
+    {
+        return;
+    }
+
+    std::vector<boost::shared_ptr<Entity> > entities;
+    AABB* searchArea = mBoundingBox->grow(4.0, 4.0, 4.0);
+    mLevel->getEntities(boost::shared_ptr<Entity>(), searchArea, &entities);
+
+    const double radius = static_cast<double>(getRadius());
+    const boost::shared_ptr<LivingEntity> owner = getOwner();
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin();
+         it != entities.end(); ++it)
+    {
+        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+        if (!player || player->mRemoved || player == owner)
+        {
+            continue;
+        }
+
+        const double dx = player->mX - mX;
+        const double dy = (player->mY + player->mBbHeight) - mY;
+        const double dz = player->mZ - mZ;
+        const double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance <= 0.0 || distance >= radius)
+        {
+            continue;
+        }
+
+        const double strength = -0.05 * std::min(1.0, (radius - distance) * 0.25);
+        player->mXd += dx / distance * strength;
+        player->mYd += dy / distance * strength;
+        player->mZd += dz / distance * strength;
+    }
 }
 
 void AreaEffectCloud::defineSynchedData()
@@ -203,6 +248,11 @@ int AreaEffectCloud::getDuration()
 void AreaEffectCloud::setDuration(int duration)
 {
     mDuration = duration;
+}
+
+void AreaEffectCloud::setDurationOnUse(int duration)
+{
+    mDurationOnUse = duration;
 }
 
 void AreaEffectCloud::tick()

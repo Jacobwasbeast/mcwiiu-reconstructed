@@ -1,10 +1,5 @@
 #include "game/item/EnchantmentContainer.hpp"
-
-class EnchantmentMenu
-{
-public:
-    virtual void slotsChanged();
-};
+#include "game/ui/EnchantmentMenu.hpp"
 
 EnchantmentContainer::EnchantmentContainer(EnchantmentMenu* menu)
     : SimpleContainer(0xf4bd500f, std::wstring(L""), false, 2),

@@ -6,7 +6,7 @@
 #include "game/util/ResourceLocation.hpp"
 
 
-static const ResourceLocation COOKED_FISH_ID(L"cooked_fished");
+static const ResourceLocation COOKED_FISH_ID(L"cooked_fish");
 
 ItemCookedFishIdFix::~ItemCookedFishIdFix()
 {

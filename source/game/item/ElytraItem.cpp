@@ -10,19 +10,14 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/ElytraItem_ItemPropertyFunction.hpp"
-
-class DispenserBlock
-{
-public:
-    static BehaviorRegistry DISPENSER_REGISTRY;
-};
+#include "game/world/block/DispenserBlock.hpp"
 
 class ElytraItemPropertyFunction : public ElytraItem_ItemPropertyFunction
 {
 public:
     virtual float call(not_null_ptr<ItemInstance> itemInstance,
                        Level*,
-                       boost::shared_ptr<LivingEntity>) const
+                       boost::shared_ptr<LivingEntity>)
     {
         return ElytraItem::isFlyEnabled(itemInstance) ? 0.25f : 1.0f;
     }

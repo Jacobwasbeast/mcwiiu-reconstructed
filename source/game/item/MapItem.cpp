@@ -4,6 +4,7 @@
 #include <typeinfo>
 
 #include "game/core/IconRegister.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -12,8 +13,6 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
-
-std::wstring _toString(int value);
 
 MapItem::MapItem()
     : ComplexItem()

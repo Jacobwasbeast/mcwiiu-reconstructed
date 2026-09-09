@@ -6,15 +6,18 @@
 CompleteUsingItemTask::CompleteUsingItemTask(Tutorial* tutorial, int descriptionId,
                                              Item** items, unsigned int itemCount,
                                              bool preCompletionEnabled)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true),
-      items(new Item*[itemCount]), itemCount(itemCount)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true)
 {
+    this->items = new Item*[itemCount];
+
     unsigned int index = 0;
     while (index < itemCount)
     {
         this->items[index] = items[index];
         ++index;
     }
+
+    this->itemCount = itemCount;
 }
 
 CompleteUsingItemTask::~CompleteUsingItemTask()
@@ -31,7 +34,7 @@ void CompleteUsingItemTask::completeUsingItem(not_null_ptr<ItemInstance> item)
 {
     if ((hasBeenActivated() || isPreCompletionEnabled()) && itemCount > 0)
     {
-        unsigned int index = 0;
+        int index = 0;
         while (index < itemCount)
         {
             if (item->getItem() == items[index])

@@ -6,15 +6,23 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-#include "game/core/DyeColor.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+
 #include <vector>
 
-int TlsAlloc();
-void* TlsGetValue(int index);
-void TlsSetValue(int index, void* value);
+unsigned int TlsAlloc();
+int TlsSetValue(unsigned int index, void* pValue);
+void* TlsGetValue(unsigned int index);
 
-static int sThreadStorageTlsIndex = 0;
-static FireworksRecipe::ThreadStorage* sDefaultThreadStorage = NULL;
+static const int DYE_COLORS[16] = {
+    0x1E1B1B, 0xB3312C, 0x3B511A, 0x51301A,
+    0x253192, 0x7B2FBE, 0x287697, 0xABABAB,
+    0x434343, 0xD88198, 0x41CD34, 0xDECF2A,
+    0x6689D3, 0xC354CD, 0xEB8844, 0xF0F0F0
+};
+
+static unsigned int g_fireworksRecipeTlsIndex = 0;
+static FireworksRecipe::ThreadStorage* g_pDefaultThreadStorage = NULL;
 
 FireworksRecipe::ThreadStorage::ThreadStorage()
     : mResultItem(ItemInstance::EMPTY)
@@ -35,33 +43,28 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
                                             bool* hasGunpowder,
                                             bool* hasFireworkCharge)
 {
-    unsigned int i;
-    int paper = 0;
+    unsigned int slot;
     int gunpowder = 0;
     int charges = 0;
     int dyes = 0;
-    int glowstone = 0;
-    int diamonds = 0;
-    int fireCharges = 0;
-    int goldNuggets = 0;
-    int feathers = 0;
+    int paper = 0;
+    int effects = 0;
+    int shapes = 0;
 
     *hasPaper = false;
     *hasGunpowder = false;
     *hasFireworkCharge = false;
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
     {
-        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
         if (item->isEmpty())
         {
             continue;
         }
-        if (item->getItem() == Items::paper)
-        {
-            ++paper;
-        }
-        else if (item->getItem() == Items::gunpowder)
+
+        if (item->getItem() == Items::gunpowder)
         {
             ++gunpowder;
         }
@@ -73,121 +76,144 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
         {
             ++dyes;
         }
-        else if (item->getItem() == Items::glowstoneDust)
+        else if (item->getItem() == Items::paper)
         {
-            ++glowstone;
+            ++paper;
         }
-        else if (item->getItem() == Items::diamond)
+        else if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond)
         {
-            ++diamonds;
+            ++effects;
         }
-        else if (item->getItem() == Items::fireCharge)
+        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
+                 item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
         {
-            ++fireCharges;
+            ++shapes;
         }
-        else if (item->getItem() == Items::goldNugget)
+        else
         {
-            ++goldNuggets;
-        }
-        else if (item->getItem() == Items::feather)
-        {
-            ++feathers;
+            return;
         }
     }
 
-    *hasPaper = dyes == 0 && glowstone == 0 && diamonds == 0 && fireCharges == 0 &&
-        goldNuggets == 0 && feathers == 0;
-    *hasGunpowder = paper <= 1 && gunpowder == 0 && charges < 2 &&
-        glowstone == 0 && diamonds == 0 && fireCharges == 0 && goldNuggets == 0 && feathers == 0;
-    *hasFireworkCharge = paper == 0 && gunpowder == 0 && charges <= 1 &&
-        dyes == 0 && glowstone == 0 && diamonds == 0 && fireCharges == 0 && goldNuggets == 0 && feathers == 0;
+    if (gunpowder > 3 || paper > 1)
+    {
+        return;
+    }
+
+    if (effects + dyes + shapes == 0)
+    {
+        *hasPaper = true;
+    }
+
+    if (gunpowder > 1)
+    {
+        return;
+    }
+
+    if (paper == 0 && charges == 0 && shapes <= 1)
+    {
+        *hasGunpowder = true;
+    }
+
+    if (gunpowder != 0 || paper != 0 || charges > 1)
+    {
+        return;
+    }
+
+    *hasFireworkCharge = true;
 }
 
 bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item,
-                                        bool allowPaper,
-                                        bool allowGunpowder,
-                                        bool allowCharge)
+                                        bool hasPaper,
+                                        bool hasGunpowder,
+                                        bool hasFireworkCharge)
 {
-    if (!item || item->isEmpty())
+    if (item->getItem() == Items::gunpowder)
     {
-        return false;
+        return hasPaper || hasGunpowder;
     }
 
-    Item* type = item->getItem();
-    if (type == Items::paper)
+    if (item->getItem() == Items::fireworkCharge)
     {
-        return allowPaper;
+        return hasPaper || hasFireworkCharge;
     }
-    if (type == Items::gunpowder)
+
+    if (item->getItem() == Items::dye)
     {
-        return allowGunpowder;
+        return hasGunpowder || hasFireworkCharge;
     }
-    if (type == Items::fireworkCharge)
+
+    if (item->getItem() == Items::paper)
     {
-        return allowCharge;
+        return hasPaper;
     }
-    return type == Items::dye || type == Items::glowstoneDust || type == Items::diamond ||
-        type == Items::fireCharge || type == Items::goldNugget || type == Items::feather;
+
+    if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond ||
+        item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
+        item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
+    {
+        return hasGunpowder;
+    }
+
+    return false;
 }
 
 void FireworksRecipe::setResultItem(not_null_ptr<ItemInstance> item)
 {
-    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
-    storage->mResultItem = item;
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_fireworksRecipeTlsIndex));
+
+    pStorage->mResultItem = item;
 }
 
 void FireworksRecipe::CreateNewThreadStorage()
 {
-    ThreadStorage* storage = new ThreadStorage();
-    if (sDefaultThreadStorage == NULL)
+    ThreadStorage* pStorage = new ThreadStorage();
+
+    if (g_pDefaultThreadStorage == NULL)
     {
-        sThreadStorageTlsIndex = TlsAlloc();
-        sDefaultThreadStorage = storage;
+        g_fireworksRecipeTlsIndex = TlsAlloc();
+        g_pDefaultThreadStorage = pStorage;
     }
-    TlsSetValue(sThreadStorageTlsIndex, storage);
+
+    TlsSetValue(g_fireworksRecipeTlsIndex, pStorage);
 }
 
 void FireworksRecipe::UseDefaultThreadStorage()
 {
-    TlsSetValue(sThreadStorageTlsIndex, sDefaultThreadStorage);
+    TlsSetValue(g_fireworksRecipeTlsIndex, g_pDefaultThreadStorage);
 }
 
 void FireworksRecipe::ReleaseThreadStorage()
 {
-    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
-    if (storage != sDefaultThreadStorage)
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_fireworksRecipeTlsIndex));
+
+    if (pStorage != g_pDefaultThreadStorage)
     {
-        delete storage;
+        delete pStorage;
     }
 }
 
 bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    unsigned int i;
-    int paper = 0;
+    unsigned int slot;
     int gunpowder = 0;
     int charges = 0;
     int dyes = 0;
-    int glowstone = 0;
-    int diamonds = 0;
-    int fireCharges = 0;
-    int goldNuggets = 0;
-    int feathers = 0;
-    std::vector<int> colors;
-    unsigned char type = 0;
+    int paper = 0;
+    int effects = 0;
+    int shapes = 0;
+    int extras;
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
     {
-        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
         if (item->isEmpty())
         {
             continue;
         }
-        if (item->getItem() == Items::paper)
-        {
-            ++paper;
-        }
-        else if (item->getItem() == Items::gunpowder)
+
+        if (item->getItem() == Items::gunpowder)
         {
             ++gunpowder;
         }
@@ -198,116 +224,172 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
         else if (item->getItem() == Items::dye)
         {
             ++dyes;
-            switch (item->getAuxValue() & 15)
-            {
-            case 0: colors.push_back(15790320); break;
-            case 1: colors.push_back(14602026); break;
-            case 2: colors.push_back(11743532); break;
-            case 3: colors.push_back(15435844); break;
-            case 4: colors.push_back(8073150); break;
-            case 5: colors.push_back(14612849); break;
-            case 6: colors.push_back(4312372); break;
-            case 7: colors.push_back(4408131); break;
-            case 8: colors.push_back(3887386); break;
-            case 9: colors.push_back(14188952); break;
-            case 10: colors.push_back(4312372); break;
-            case 11: colors.push_back(6719955); break;
-            case 12: colors.push_back(12801229); break;
-            case 13: colors.push_back(15435844); break;
-            case 14: colors.push_back(16701501); break;
-            default: colors.push_back(1973019); break;
-            }
         }
-        else if (item->getItem() == Items::glowstoneDust)
+        else if (item->getItem() == Items::paper)
         {
-            ++glowstone;
+            ++paper;
         }
-        else if (item->getItem() == Items::diamond)
+        else if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond)
         {
-            ++diamonds;
+            ++effects;
         }
-        else if (item->getItem() == Items::fireCharge)
+        else if (item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
+                 item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
         {
-            ++fireCharges;
-            type = 1;
-        }
-        else if (item->getItem() == Items::goldNugget)
-        {
-            ++goldNuggets;
-            type = 2;
-        }
-        else if (item->getItem() == Items::feather)
-        {
-            ++feathers;
-            type = 3;
+            ++shapes;
         }
         else
         {
+            setResultItem(ItemInstance::EMPTY);
             return false;
         }
     }
 
-    if (paper == 1 && gunpowder >= 1 && gunpowder <= 3 && charges <= 3 &&
-        dyes == 0 && glowstone == 0 && diamonds == 0 && fireCharges == 0 &&
-        goldNuggets == 0 && feathers == 0)
+    extras = effects + dyes + shapes;
+
+    if (gunpowder > 3 || paper > 1)
     {
-        not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworks, 1, 0));
-        CompoundTag* tag = new CompoundTag();
-        ListTag* explosions = new ListTag(10);
-        tag->putByte(L"Flight", static_cast<unsigned char>(gunpowder));
-        for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+        setResultItem(ItemInstance::EMPTY);
+        return false;
+    }
+
+    if (gunpowder >= 1 && paper == 1 && extras == 0)
+    {
+        not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworks, 3));
+        CompoundTag* fireworks = new CompoundTag();
+
+        if (charges > 0)
         {
-            not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-            if (item->isEmpty() || item->getItem() != Items::fireworkCharge)
+            ListTag* explosions = new ListTag();
+
+            for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
             {
-                continue;
-            }
-            if (item->hasTag())
-            {
-                CompoundTag* explosion = item->getTag()->getCompound(L"Explosion");
-                if (explosion != NULL)
+                not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
+                if (item->getItem() == Items::fireworkCharge && item->hasTag() &&
+                    item->getTag()->contains(L"Explosion", 10))
                 {
-                    explosions->add(explosion->copy());
+                    explosions->add(item->getTag()->getCompound(L"Explosion")->copy());
                 }
             }
+
+            fireworks->put(L"Explosions", explosions);
         }
-        tag->put(L"Explosions", explosions);
+
+        fireworks->putByte(L"Flight", static_cast<unsigned char>(gunpowder));
+
+        CompoundTag* tag = new CompoundTag();
+        tag->put(L"Fireworks", fireworks);
         result->setTag(tag);
         setResultItem(result);
         return true;
     }
 
-    if (paper != 0 || gunpowder != 1 || charges != 0 || dyes < 1 ||
-        glowstone > 1 || diamonds > 1 || fireCharges > 1 || goldNuggets > 1 || feathers > 1 ||
-        glowstone + diamonds + fireCharges + goldNuggets + feathers > 1)
+    if (gunpowder == 1 && paper == 0 && charges == 0 && dyes >= 1 && shapes <= 1)
     {
-        return false;
+        not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworkCharge));
+        std::vector<int> colors;
+        CompoundTag* tag = new CompoundTag();
+        CompoundTag* explosion = new CompoundTag();
+        unsigned char shape = 0;
+
+        for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
+        {
+            not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
+            if (item->isEmpty())
+            {
+                continue;
+            }
+
+            if (item->getItem() == Items::dye)
+            {
+                colors.push_back(DYE_COLORS[item->getAuxValue() & 15]);
+            }
+            else if (item->getItem() == Items::glowstoneDust)
+            {
+                explosion->putBoolean(L"Flicker", true);
+            }
+            else if (item->getItem() == Items::diamond)
+            {
+                explosion->putBoolean(L"Trail", true);
+            }
+            else if (item->getItem() == Items::fireCharge)
+            {
+                shape = 1;
+            }
+            else if (item->getItem() == Items::feather)
+            {
+                shape = 4;
+            }
+            else if (item->getItem() == Items::goldNugget)
+            {
+                shape = 2;
+            }
+            else if (item->getItem() == Items::skull)
+            {
+                shape = 3;
+            }
+        }
+
+        arrayWithLength<int> explosionColors(colors);
+        explosion->putIntArray(L"Colors", explosionColors);
+        explosion->putByte(L"Type", shape);
+        tag->put(L"Explosion", explosion);
+        result->setTag(tag);
+        setResultItem(result);
+        return true;
     }
 
-    not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworkCharge, 1, 0));
-    CompoundTag* tag = new CompoundTag();
-    CompoundTag* explosion = new CompoundTag();
-    arrayWithLength<int> colorArray(colors);
-    explosion->putIntArray(L"Colors", colorArray);
-    explosion->putByte(L"Type", type);
-    if (glowstone != 0)
+    if (gunpowder == 0 && paper == 0 && charges == 1 && dyes >= 1 && dyes == extras)
     {
-        explosion->putBoolean(L"Flicker", true);
+        not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
+        std::vector<int> colors;
+
+        for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
+        {
+            not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
+            if (item->isEmpty())
+            {
+                continue;
+            }
+
+            if (item->getItem() == Items::dye)
+            {
+                colors.push_back(DYE_COLORS[item->getAuxValue() & 15]);
+            }
+            else if (item->getItem() == Items::fireworkCharge)
+            {
+                result = item->copy();
+                result->setCount(1);
+            }
+        }
+
+        arrayWithLength<int> fadeColors(colors);
+
+        if (!result->isEmpty() && result->hasTag())
+        {
+            CompoundTag* explosion = result->getTag()->getCompound(L"Explosion");
+
+            if (explosion != NULL)
+            {
+                explosion->putIntArray(L"FadeColors", fadeColors);
+                setResultItem(result);
+                return true;
+            }
+        }
     }
-    if (diamonds != 0)
-    {
-        explosion->putBoolean(L"Trail", true);
-    }
-    tag->put(L"Explosion", explosion);
-    result->setTag(tag);
-    setResultItem(result);
-    return true;
+
+    setResultItem(ItemInstance::EMPTY);
+    return false;
 }
 
 not_null_ptr<ItemInstance> FireworksRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
-    return storage->mResultItem->copy();
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_fireworksRecipeTlsIndex));
+
+    return pStorage->mResultItem->copy();
 }
 
 int FireworksRecipe::size()
@@ -317,8 +399,9 @@ int FireworksRecipe::size()
 
 ItemInstance* FireworksRecipe::getResultItem()
 {
-    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sThreadStorageTlsIndex));
-    return storage->mResultItem.get();
+    ThreadStorage* pStorage = static_cast<ThreadStorage*>(TlsGetValue(g_fireworksRecipeTlsIndex));
+
+    return pStorage->mResultItem.get();
 }
 
 ItemInstance* FireworksRecipe::getIngredientItem(int column, int row)
@@ -328,18 +411,21 @@ ItemInstance* FireworksRecipe::getIngredientItem(int column, int row)
 
 NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    unsigned int i;
-    NonNullList<not_null_ptr<ItemInstance> > result =
+    unsigned int slot;
+    NonNullList<not_null_ptr<ItemInstance> > remaining =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+
+    for (slot = 0; slot < remaining.size(); ++slot)
     {
-        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
+        not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
+
+        if (item->getItem()->hasCraftingRemainingItem())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            remaining[slot] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
         }
     }
-    return result;
+
+    return remaining;
 }
 
 boost::shared_ptr<CraftingContainer> FireworksRecipe::generateExpectedCraftSlots()

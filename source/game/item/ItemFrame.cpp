@@ -9,10 +9,16 @@
 #include "game/core/DataWalker.hpp"
 #include "game/item/ItemDataWalker.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/MapItem.hpp"
+#include "game/item/MapItemSavedData.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/Minecraft.hpp"
 
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ItemFrame::DATA_ITEM = NULL;
@@ -232,12 +238,54 @@ void ItemFrame::readAdditionalSaveData(CompoundTag* tag)
 
 boost::shared_ptr<ItemFrame> ItemFrame::fjGetItemFrameForPos(Level* level, const BlockPos& pos)
 {
+    if (level == NULL)
+        return boost::shared_ptr<ItemFrame>();
+    AABB area(pos.x - 1.0, pos.y - 1.0, pos.z - 1.0,
+              pos.x + 2.0, pos.y + 2.0, pos.z + 2.0);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        level->getEntitiesOfClass(typeid(ItemFrame), &area);
+    if (entities == NULL)
+        return boost::shared_ptr<ItemFrame>();
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end(); ++it)
+    {
+        boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(*it);
+        if (frame && frame->getPos().equals(pos))
+            return frame;
+    }
     return boost::shared_ptr<ItemFrame>();
 }
 
 bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)
 {
-    return false;
+    if (!player || mLevel == NULL || mLevel->mDimension == NULL ||
+        !mLevel->mDimension->isNaturalDimension() ||
+        getItem()->isEmpty() || getItem()->getItem() != Items::filledMap)
+        return false;
+
+    const Direction* direction = getDirection();
+    if (direction == NULL)
+        return false;
+    BlockPos adjacentPos = getPos().relative(direction->getCounterClockWise(), 0);
+    adjacentPos = adjacentPos.relative(Direction::UP, 0);
+    boost::shared_ptr<ItemFrame> adjacent = fjGetItemFrameForPos(mLevel, adjacentPos);
+    if (!adjacent || adjacent->getDirection() != direction ||
+        adjacent->getItem()->isEmpty() || adjacent->getItem()->getItem() != Items::filledMap)
+        return false;
+
+    MapItem* map = static_cast<MapItem*>(adjacent->getItem()->getItem());
+    boost::shared_ptr<MapItemSavedData> data = map->getSavedData(adjacent->getItem(), mLevel);
+    if (!data || data->mDimension != 0 || data->mScale != 3 ||
+        !data->fjIsCompletelyExplored())
+        return false;
+
+    const int mapCenterX = data->mXCenter;
+    const int mapCenterZ = data->mZCenter;
+    (void)mapCenterX;
+    (void)mapCenterZ;
+
+    player->awardStat(GenericStats::mapRoom(), GenericStats::param_noArgs());
+    return true;
 }
 
 bool ItemFrame::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -285,5 +333,5 @@ int ItemFrame::getAnalogOutput()
 
 unsigned long long ItemFrame::GetType()
 {
-    return 0x0a08000200000000ULL;
+    return 0x000000000A080002ULL;
 }

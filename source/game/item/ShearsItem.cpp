@@ -1,8 +1,18 @@
 #include "game/item/ShearsItem.hpp"
+
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/core/Direction.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/generation/Player.hpp"
 
 ShearsItem::ShearsItem()
     : Item()
@@ -21,26 +31,80 @@ bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level
     {
         itemInstance->hurtAndBreak(1, entity);
     }
-    return Item::mineBlock(itemInstance, level, state, pos, entity);
+
+    Block* block = state->getBlock();
+
+    if (state->getMaterial() != Material::LEAVES
+        && block != Blocks::web
+        && block != Blocks::tallgrass
+        && block != Blocks::vine
+        && block != Blocks::tripwire
+        && block != Blocks::wool
+        && block != Blocks::sea_grass)
+    {
+        return Item::mineBlock(itemInstance, level, state, pos, entity);
+    }
+
+    return true;
 }
 
 bool ShearsItem::canDestroySpecial(const BlockState* state)
 {
     Block* block = state->getBlock();
-    return block == Blocks::web || block == Blocks::leaves || block == Blocks::wool;
+    return block == Blocks::web || block == Blocks::redstone_wire || block == Blocks::tripwire;
 }
 
 float ShearsItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
     Block* block = state->getBlock();
-    if (block == Blocks::web || block == Blocks::leaves || block == Blocks::wool)
+
+    if (block == Blocks::web || block->mMaterial == Material::LEAVES)
     {
         return 15.0f;
     }
+
+    if (block == Blocks::wool)
+    {
+        return 5.0f;
+    }
+
     return Item::getDestroySpeed(itemInstance, state);
 }
 
 InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool simulate)
 {
-    return Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+
+    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
+    {
+        if (level->getBlockState(pos)->getBlock() != Blocks::pumpkin)
+        {
+            return InteractionResult::eInteractionResult_Pass;
+        }
+
+        if (direction != Direction::UP && direction != Direction::DOWN)
+        {
+            if (!simulate)
+            {
+                const BlockState* carvedState = Blocks::carved_pumpkin->getStateForPlacement(
+                    level, pos, direction, hitX, hitY, hitZ,
+                    getLevelDataForAuxValue(itemInstance->getAuxValue()), player);
+                level->playSound(player,
+                                 pos,
+                                 SoundEvents::PUMPKIN_CARVE,
+                                 SoundSource::eSoundSource_Players,
+                                 1.0f,
+                                 1.0f,
+                                 16.0f);
+                level->setBlock(pos, carvedState, 11, false);
+                Block::popResource(level, pos,
+                                   not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
+                itemInstance->hurtAndBreak(1, player);
+            }
+
+            return InteractionResult::eInteractionResult_Success;
+        }
+    }
+
+    return InteractionResult::eInteractionResult_Fail;
 }

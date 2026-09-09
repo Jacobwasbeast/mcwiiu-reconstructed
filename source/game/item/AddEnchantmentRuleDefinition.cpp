@@ -2,17 +2,11 @@
 
 #include "game/core/GameRules_IntAttribute.hpp"
 #include "game/item/EnchantedBookItem.hpp"
+#include "game/item/Enchantment.hpp"
 #include "game/item/EnchantmentInstance.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-
-class Enchantment
-{
-public:
-    static Enchantment* byId(int id);
-    bool canEnchant(not_null_ptr<ItemInstance> itemInstance);
-};
 
 AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition()
     : GameRuleDefinition()

@@ -7,7 +7,6 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/ItemPropertyFunction.hpp"
 
-class Direction;
 class Entity;
 class IconRegister;
 class ItemFrame;
@@ -21,12 +20,9 @@ public:
     class CompassItem_ItemPropertyFunction : public ItemPropertyFunction
     {
     public:
-        double call(not_null_ptr<ItemInstance> itemInstance,
-                    Level* level,
-                    boost::shared_ptr<LivingEntity> entity);
         virtual float call(not_null_ptr<ItemInstance> itemInstance,
                            Level* level,
-                           boost::shared_ptr<LivingEntity> entity) const;
+                           boost::shared_ptr<LivingEntity> entity);
 
     private:
         double getFrameRotation(boost::shared_ptr<ItemFrame> frame);

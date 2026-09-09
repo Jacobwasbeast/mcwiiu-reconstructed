@@ -29,9 +29,9 @@ public:
                                       bool* hasGunpowder,
                                       bool* hasFireworkCharge);
     static bool isValidIngredient(not_null_ptr<ItemInstance> item,
-                                  bool allowPaper,
-                                  bool allowGunpowder,
-                                  bool allowCharge);
+                                  bool hasPaper,
+                                  bool hasGunpowder,
+                                  bool hasFireworkCharge);
     void setResultItem(not_null_ptr<ItemInstance> item);
     static void CreateNewThreadStorage();
     static void UseDefaultThreadStorage();

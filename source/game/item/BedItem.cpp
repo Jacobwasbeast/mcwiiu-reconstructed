@@ -3,17 +3,20 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
-#include "game/core/Stats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BedBlock.hpp"
+#include "game/world/block/BedBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
 
@@ -46,49 +49,100 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
                                                        float hitZ,
                                                        bool simulate)
 {
-    if (direction == Direction::DOWN)
+    if (direction != Direction::UP)
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    BlockPos footPos = pos.relative(direction);
+    BlockPos footPos = pos;
+    Block* block = level->getBlockState(footPos)->getBlock();
+    bool footReplaceable = block->mayReplaceWithPlace(level, footPos);
+
+    if (!footReplaceable)
+    {
+        footPos = footPos.above();
+    }
+
+    double quadrant = (double)(player->mYRot * 4.0f / 360.0f) + 0.5;
+    int index = (int)quadrant;
+
+    if (quadrant < (double)index)
+    {
+        index--;
+    }
+
+    const Direction* facing = Direction::from2DDataValue(index & 3);
+    BlockPos headPos = footPos.relative(facing);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (!player->mayUseItemAt(footPos, direction, itemInstance)
-        || !level->mayPlace(Blocks::bed, footPos, false, direction, boost::shared_ptr<Entity>()))
+        || !player->mayUseItemAt(headPos, direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    const Direction* facing = Direction::fromYRot((double)player->mYRot);
-    BlockPos headPos = footPos.relative(facing);
+    const BlockState* headState = level->getBlockState(headPos);
+    bool headReplaceable = headState->getBlock()->mayReplaceWithPlace(level, headPos);
+    bool footFree = level->isEmptyBlock(footPos) || level->isEmptyWaterBlock(footPos) || footReplaceable;
+    bool headFree = level->isEmptyBlock(headPos) || level->isEmptyWaterBlock(headPos) || headReplaceable;
 
-    if (!level->mayPlace(Blocks::bed, headPos, false, direction, boost::shared_ptr<Entity>()))
+    if (!footFree || !headFree)
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!level->mIsClientSide && !simulate)
+    if (!level->getBlockState(footPos.below())->isTopSolidBlocking()
+        || !level->getBlockState(headPos.below())->isTopSolidBlocking())
     {
-        TypedBoxed<const Direction*> facingValue(facing);
+        return InteractionResult::eInteractionResult_Fail;
+    }
+
+    if (!simulate && !level->mIsClientSide)
+    {
         TypedBoxed<bool> occupiedValue(false);
-        TypedBoxed<const BedBlock::Part*> footValue(BedBlock::PART->getUnboxedValue(L"foot"));
-        TypedBoxed<const BedBlock::Part*> headValue(BedBlock::PART->getUnboxedValue(L"head"));
         const BlockState* footState = Blocks::bed->defaultBlockState()->setBoxedValue(
-            HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
-        footState = footState->setBoxedValue(BedBlock::OCCUPIED, &occupiedValue);
+            BedBlock::OCCUPIED, &occupiedValue);
+        TypedBoxed<const Direction*> facingValue(facing);
+        footState = footState->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
+        TypedBoxed<const BedBlock::Part*> footValue(BedBlock::PART->getUnboxedValue(L"foot"));
         footState = footState->setBoxedValue(BedBlock::PART, &footValue);
-        const BlockState* headState = footState->setBoxedValue(BedBlock::PART, &headValue);
         level->setBlock(footPos, footState, 11, false);
-        level->setBlock(headPos, headState, 11, false);
 
-        const SoundType* soundType = Blocks::bed->getSoundType();
-        player->awardStat(Stats::blockPlacedStats.data[Block::getId(Blocks::bed)],
-                          GenericStats::param_blocksPlaced(Blocks::bed->getBlockState(itemInstance->getAuxValue()), 1));
-        level->playSound(player, footPos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+        TypedBoxed<const BedBlock::Part*> headValue(BedBlock::PART->getUnboxedValue(L"head"));
+        level->setBlock(headPos, footState->setBoxedValue(BedBlock::PART, &headValue), 11, false);
+
+        player->awardStat(gStats->get_blocksPlaced(Block::getId(Blocks::bed)),
+                          GenericStats::param_blocksPlaced(headState, 1));
+
+        const SoundType* soundType = footState->getBlock()->getSoundType();
+        level->playSound(boost::shared_ptr<Player>(),
+                         footPos,
+                         soundType->getPlaceSound(),
+                         SoundSource::eSoundSource_Blocks,
                          (soundType->getVolume() + 1.0f) * 0.5f,
                          soundType->getPitch() * 0.8f,
                          16.0f);
+
+        boost::shared_ptr<BlockEntity> headEntity = level->getBlockEntity(headPos);
+
+        if (headEntity->GetType() == 0x01000210ULL)
+        {
+            boost::static_pointer_cast<BedBlockEntity>(headEntity)->setItemValues(itemInstance);
+            boost::static_pointer_cast<BedBlockEntity>(headEntity)->setColor(
+                DyeColor::byBlockData(itemInstance->getAuxValue()));
+        }
+
+        boost::shared_ptr<BlockEntity> footEntity = level->getBlockEntity(footPos);
+
+        if (footEntity->GetType() == 0x01000210ULL)
+        {
+            boost::static_pointer_cast<BedBlockEntity>(footEntity)->setItemValues(itemInstance);
+            boost::static_pointer_cast<BedBlockEntity>(footEntity)->setColor(
+                DyeColor::byBlockData(itemInstance->getAuxValue()));
+        }
+
+        level->blockUpdated(footPos, block, false);
+        level->blockUpdated(headPos, headState->getBlock(), false);
         itemInstance->shrink(1);
     }
 
