@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/RabbitModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -11,7 +11,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class RabbitRenderer : public RabbitModel
+class RabbitRenderer : public MobRenderer
 {
 public:
     RabbitRenderer(EntityRenderDispatcher* dispatcher);

@@ -5,23 +5,13 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/ArmorStand.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/Level.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/CustomHeadLayer.hpp"
 #include "game/world/generation/ElytraLayer.hpp"
 #include "game/world/generation/ItemInHandLayer.hpp"
-
-class Level
-{
-public:
-    long long getGameTime();
-};
-
-class ArmorStand : public Entity
-{
-public:
-    virtual bool isMarker();
-};
 
 ArmorStandRenderer::ArmorStandRenderer(EntityRenderDispatcher* dispatcher)
     : LivingEntityRenderer(dispatcher, new ArmorStandModel(0.0f, ModelDefinition()), 0.0f)

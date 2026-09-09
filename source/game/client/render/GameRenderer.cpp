@@ -1,18 +1,36 @@
 #include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/MapRenderer.hpp"
+#include "game/core/Options.hpp"
+#include "game/core/GameType.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/core/HitResult.hpp"
+#include "game/core/FloatBuffer.hpp"
+#include "game/core/MemoryTracker.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/world/generation/AbstractClientPlayer.hpp"
 
 #include <cstring>
 
 GameRenderer::GameRenderer(Minecraft* minecraft, ResourceManager* resourceManager)
-    : mMinecraft(minecraft), mResourceManager(resourceManager), mRandom(), mFov(), mFog(), mCamera(), mZoom(), mView(), mLight()
+    : mMinecraft(minecraft), mResourceManager(resourceManager),
+      mMapRenderer(new MapRenderer(minecraft->mFont, minecraft->mOptions, minecraft->mTextures)),
+      mRandom(), mFov(), mFog(), mCamera(), mZoom(), mView(), mLight(), mBuffer(NULL), mRenderBlockOutline(true)
 {
     std::memset(mPrefix, 0, sizeof(mPrefix));
     std::memset(mRandomTail, 0, sizeof(mRandomTail));
     std::memset(mData, 0, sizeof(mData));
+    mBuffer = MemoryTracker::createFloatBuffer(16);
 }
 
 GameRenderer::~GameRenderer()
 {
-    return;
+    delete mMapRenderer;
 }
 
 void GameRenderer::renderNameTagInWorld(Font*, const std::wstring&, float, float, float, int, float, float, bool, bool, int, float)
@@ -86,7 +104,8 @@ void GameRenderer::tickLightTexture()
 
 AbstractClientPlayer* GameRenderer::getCamera()
 {
-    return 0;
+    boost::shared_ptr<Entity> camera = Minecraft::GetInstance()->getCameraEntity();
+    return dynamic_cast<AbstractClientPlayer*>(camera.get());
 }
 
 void GameRenderer::tickRain()
@@ -214,9 +233,14 @@ void GameRenderer::setupClearColor(float)
     return;
 }
 
-unsigned int GameRenderer::getBuffer(float, float, float, float)
+FloatBuffer* GameRenderer::getBuffer(float x, float y, float z, float w)
 {
-    return 0;
+    mBuffer->clear();
+    mBuffer->put(x);
+    mBuffer->put(y);
+    mBuffer->put(z);
+    mBuffer->put(w);
+    return mBuffer->flip();
 }
 
 void GameRenderer::resetFogColor(bool)
@@ -281,7 +305,34 @@ void GameRenderer::render(float, long long, bool)
 
 int GameRenderer::shouldRenderBlockOutline()
 {
-    return 0;
+    if (!mRenderBlockOutline || mMinecraft == NULL ||
+        (mMinecraft->mOptions != NULL && mMinecraft->mOptions->mHideGui))
+        return 0;
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+    if (!camera)
+        return 0;
+    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(camera);
+    if (mMinecraft->mGameMode != NULL &&
+        mMinecraft->mGameMode->GetGameType() == GameType::SPECTATOR)
+        return 0;
+    if (player && player->mAbilities.mFlying)
+        return 0;
+    if (mMinecraft->mHitResult == NULL || mMinecraft->mHitResult->mType != HitResult::BLOCK ||
+        mMinecraft->mLevel == NULL)
+        return 0;
+    BlockPos pos = mMinecraft->mHitResult->getBlockPos();
+    Block* block = mMinecraft->mLevel->getBlock(pos);
+    if (block == NULL)
+        return 0;
+    if (player && player->mInventory != NULL) {
+        not_null_ptr<ItemInstance> held = player->mInventory->getSelected();
+        ItemInstance* item = held.get();
+        if (item != NULL && !item->isEmpty() &&
+            (item->hasAdventureModeBreakTagForBlock(block) ||
+             item->hasAdventureModePlaceTagForBlock(block)))
+            return 1;
+    }
+    return 1;
 }
 
 void GameRenderer::resetData()
@@ -291,7 +342,7 @@ void GameRenderer::resetData()
 
 MapRenderer* GameRenderer::getMapRenderer()
 {
-    return 0;
+    return mMapRenderer;
 }
 
 void GameRenderer::AddForDelete(SparseLightStorage*)

@@ -4,7 +4,7 @@
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/ParticleProvider.hpp"
 
-const long long PARTICLE_TYPE_FALLING_DUST = 0x0008022A00000000LL;
+const long long PARTICLE_TYPE_FALLING_DUST = 0x000000000008022ALL;
 
 class FallingDustParticle : public Particle
 {

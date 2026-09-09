@@ -5,13 +5,8 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/TurtleModel.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/core/Turtle.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-class Turtle : public LivingEntity
-{
-public:
-    virtual bool isLayingEgg();
-};
 
 static ResourceLocation TURTLE_LOCATION;
 

@@ -41,7 +41,7 @@ void WakeParticle::tick()
 
 uint64_t WakeParticle::GetType()
 {
-    return 0x0008021300000000LL;
+    return 0x0000000000080213ULL;
 }
 
 Particle* WakeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

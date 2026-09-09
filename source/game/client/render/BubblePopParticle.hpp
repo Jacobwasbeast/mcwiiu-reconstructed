@@ -6,7 +6,7 @@
 
 class Level;
 
-const long long PARTICLE_TYPE_BUBBLE_POP = 0x0008022D00000000LL;
+const long long PARTICLE_TYPE_BUBBLE_POP = 0x000000000008022DLL;
 
 class BubblePopParticle : public Particle
 {

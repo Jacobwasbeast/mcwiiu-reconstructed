@@ -43,7 +43,7 @@ void SuspendedTownParticle::move(double xa, double ya, double za)
 
 uint64_t SuspendedTownParticle::GetType()
 {
-    return 0x0008021A00000000LL;
+    return 0x000000000008021AULL;
 }
 
 Particle* SuspendedTownParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -2,6 +2,7 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/WitherSkull.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -63,6 +64,10 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 
 const ResourceLocation* WitherSkullRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
+    boost::shared_ptr<WitherSkull> skull = boost::static_pointer_cast<WitherSkull>(entity);
+    if (skull->isDangerous())
+        return &WITHER_SKULL_INVULNERABLE_LOCATION;
+
     return &WITHER_SKULL_LOCATION;
 }
 

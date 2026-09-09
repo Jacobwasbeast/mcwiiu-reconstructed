@@ -15,6 +15,11 @@ ParticleEngine::ParticleList::ParticleList()
 {
 }
 
+ParticleEngine::ParticleList::~ParticleList()
+{
+    delete[] particles;
+}
+
 void ParticleEngine::ParticleList::ClearParticles()
 {
     unsigned int count = particleCount;

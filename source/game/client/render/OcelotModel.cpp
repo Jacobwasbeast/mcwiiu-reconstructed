@@ -44,6 +44,40 @@ void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefiniti
         mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
         mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
     }
+    else
+    {
+        mHead = new ModelPartSkin(this, 0, 0, NULL);
+        mHead->addBox(-2.0f, -3.0f, -2.0f, 5, 4, 5, 0.0f);
+        mHead->setPos(0.0f, 15.0f, -9.0f);
+
+        mBody = new ModelPartSkin(this, 20, 0, NULL);
+        mBody->addBox(-2.0f, -2.0f, -3.0f, 4, 16, 6, 0.0f);
+        mBody->setPos(0.0f, 12.0f, -10.0f);
+
+        mTail1 = new ModelPartSkin(this, 0, 9, NULL);
+        mTail1->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mTail1->setPos(0.0f, 15.0f, 0.0f);
+
+        mTail2 = new ModelPartSkin(this, 4, 9, NULL);
+        mTail2->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mTail2->setPos(0.0f, 20.0f, 7.0f);
+
+        mBackLegL = new ModelPartSkin(this, 8, 13, NULL);
+        mBackLegL->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mBackLegL->setPos(-2.0f, 16.0f, 7.0f);
+
+        mBackLegR = new ModelPartSkin(this, 8, 13, NULL);
+        mBackLegR->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mBackLegR->setPos(2.0f, 16.0f, 7.0f);
+
+        mFrontLegL = new ModelPartSkin(this, 8, 13, NULL);
+        mFrontLegL->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mFrontLegL->setPos(-2.0f, 16.0f, -5.0f);
+
+        mFrontLegR = new ModelPartSkin(this, 8, 13, NULL);
+        mFrontLegR->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mFrontLegR->setPos(2.0f, 16.0f, -5.0f);
+    }
 
     compileSkinnedDrawlist();
     Tesselator::getInstance()->getBuilder()->useDefaultShaders();

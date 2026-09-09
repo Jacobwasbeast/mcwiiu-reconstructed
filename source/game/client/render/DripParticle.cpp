@@ -14,17 +14,17 @@
 
 DripParticle::DripParticle(Level* level, double x, double y, double z, Material* material)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
-    , material(material)
-    , delay(40)
 {
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
         material == Material::WATER ? eMinecraftColour_Particle_DripWater
                                     : eMinecraftColour_Particle_DripLavaStart);
-    rCol = (float)((double)((colour >> 16) & 255) / 255.0);
-    gCol = (float)((double)((colour >> 8) & 255) / 255.0);
-    bCol = (float)((double)(colour & 255) / 255.0);
+    rCol = (float)((colour >> 16) & 255) / 255.0f;
+    gCol = (float)((colour >> 8) & 255) / 255.0f;
+    bCol = (float)(colour & 255) / 255.0f;
     setMiscTex(113);
     setSize(0.01f, 0.01f);
+    this->material = material;
+    delay = 40;
     gravity = 0.06f;
     lifetime = (int)(64.0 / (random.nextDouble() * 0.8 + 0.2));
     xd = 0.0;
@@ -47,7 +47,7 @@ float DripParticle::getBrightness(float partialTicks)
 {
     if (material == Material::WATER)
         return Particle::getBrightness(partialTicks);
-    return 10.0f;
+    return 1.0f;
 }
 
 void DripParticle::tick()
@@ -60,9 +60,9 @@ void DripParticle::tick()
     {
         unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
             eMinecraftColour_Particle_DripWater);
-        rCol = (float)((double)((colour >> 16) & 255) / 255.0);
-        gCol = (float)((double)((colour >> 8) & 255) / 255.0);
-        bCol = (float)((double)(colour & 255) / 255.0);
+        rCol = (float)((colour >> 16) & 255) / 255.0f;
+        gCol = (float)((colour >> 8) & 255) / 255.0f;
+        bCol = (float)(colour & 255) / 255.0f;
     }
     else
     {
@@ -70,24 +70,22 @@ void DripParticle::tick()
             eMinecraftColour_Particle_DripLavaStart);
         unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(
             eMinecraftColour_Particle_DripLavaEnd);
-        float fraction = (float)(40 - delay) / 40.0f;
-        rCol = (float)(((double)((start >> 16) & 255) -
-                        ((double)((start >> 16) & 255) - (double)((end >> 16) & 255)) * fraction) / 255.0);
-        gCol = (float)(((double)((start >> 8) & 255) -
-                        ((double)((start >> 8) & 255) - (double)((end >> 8) & 255)) * fraction) / 255.0);
-        bCol = (float)(((double)(start & 255) -
-                        ((double)(start & 255) - (double)(end & 255)) * fraction) / 255.0);
+        float startRed = (float)((start >> 16) & 255) / 255.0f;
+        float startGreen = (float)((start >> 8) & 255) / 255.0f;
+        float startBlue = (float)(start & 255) / 255.0f;
+        float endRed = (float)((end >> 16) & 255) / 255.0f;
+        float endGreen = (float)((end >> 8) & 255) / 255.0f;
+        float endBlue = (float)(end & 255) / 255.0f;
+        float age = (float)(40 - delay);
+        rCol = startRed - (startRed - endRed) / 40.0f * age;
+        gCol = startGreen - (startGreen - endGreen) / 40.0f * age;
+        bCol = startBlue - (startBlue - endBlue) / 40.0f * age;
     }
 
-    int currentDelay = delay--;
     yd -= gravity;
-    if (currentDelay < 1)
+    if (delay-- < 1)
     {
         setMiscTex(112);
-        move(xd, yd, zd);
-        xd *= 0.98;
-        yd *= 0.98;
-        zd *= 0.98;
     }
     else
     {
@@ -95,14 +93,13 @@ void DripParticle::tick()
         yd *= 0.02;
         zd *= 0.02;
         setMiscTex(113);
-        move(xd, yd, zd);
-        xd *= 0.98;
-        yd *= 0.98;
-        zd *= 0.98;
     }
+    move(xd, yd, zd);
+    xd *= 0.98;
+    yd *= 0.98;
+    zd *= 0.98;
 
-    int currentLifetime = lifetime--;
-    if (currentLifetime < 1)
+    if (lifetime-- < 1)
         remove();
 
     if (onGround)
@@ -141,7 +138,7 @@ void DripParticle::tick()
 
 uint64_t DripParticle::GetType()
 {
-    return 0x0008021b00000000LL;
+    return 0x000000000008021BULL;
 }
 
 Particle* DripParticle::LavaProvider::createParticle(ePARTICLE_TYPE type, Level* level,

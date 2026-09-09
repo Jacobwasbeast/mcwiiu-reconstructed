@@ -96,13 +96,13 @@ TexturePackRepository::TexturePackIdNames* TexturePackRepository::getTexturePack
 
 bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forceReload)
 {
-    theApp.SetRequiredTexturePackID(packId);
+    gApp.SetRequiredTexturePackID(packId);
     boost::unordered_map<unsigned int, TexturePack*>::iterator iterator = m_texturePacksById.find(packId);
     if (iterator == m_texturePacksById.end())
     {
         if (selectSkin(defaultTexturePack))
         {
-            theApp.StartReloadingTexturePack();
+            gApp.StartReloadingTexturePack();
         }
         return false;
     }
@@ -113,7 +113,7 @@ bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forc
         selectSkin(texturePack);
         if (texturePack->hasData())
         {
-            theApp.StartReloadingTexturePack();
+            gApp.StartReloadingTexturePack();
             return true;
         }
         texturePack->loadData();

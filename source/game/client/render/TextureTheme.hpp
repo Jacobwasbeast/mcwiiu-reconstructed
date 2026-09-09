@@ -31,7 +31,6 @@ public:
     };
 
     TextureTheme();
-    virtual ~TextureTheme();
     void addAsset(unsigned int minimumWidth, BufferedImage* image)
     {
         mAssets.addAsset(minimumWidth, image);

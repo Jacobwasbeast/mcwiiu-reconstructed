@@ -1,6 +1,7 @@
 #ifndef GAME_CLIENT_RENDER_FIREWORKSPARTICLES_FIREWORKSSTARTER_HPP
 #define GAME_CLIENT_RENDER_FIREWORKSPARTICLES_FIREWORKSSTARTER_HPP
 
+#include "game/client/render/FireworksParticles__FireworksSparkParticle.hpp"
 #include "game/client/render/Particle.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/array2DWithLength.hpp"
@@ -11,10 +12,7 @@ class ParticleEngine;
 class Entity;
 class ListTag;
 
-class FireworksParticles
-{
-public:
-class FireworksStarter : public Particle
+class FireworksParticles::FireworksStarter : public Particle
 {
 public:
     FireworksStarter(Level* level, double x, double y, double z,
@@ -44,7 +42,6 @@ private:
     ParticleEngine* particleEngine;
     ListTag* explosions;
     bool twinkle;
-};
 };
 
 #endif

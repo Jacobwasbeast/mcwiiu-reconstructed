@@ -24,7 +24,7 @@ TerrainDustParticle::~TerrainDustParticle()
 
 uint64_t TerrainDustParticle::GetType()
 {
-    return 0x0008021100000000LL;
+    return 0x0000000000080211ULL;
 }
 
 Particle* TerrainDustParticle::Provider::createParticle(ePARTICLE_TYPE type,

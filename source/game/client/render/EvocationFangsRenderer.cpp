@@ -3,14 +3,9 @@
 #include "game/client/render/EvocationFangsModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/EvocationFangs.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-class EvocationFangs : public Entity
-{
-public:
-    double getAnimationProgress(float partialTicks) const;
-};
 
 EvocationFangsRenderer::EvocationFangsRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)

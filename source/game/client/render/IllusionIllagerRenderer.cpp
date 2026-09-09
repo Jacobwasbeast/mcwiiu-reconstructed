@@ -6,24 +6,14 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/IllusionIllager.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/SpellcasterIllager.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-
-class SpellcasterIllager : public LivingEntity
-{
-public:
-    bool isCastingSpell();
-};
-
-class IllusionIllager : public SpellcasterIllager
-{
-public:
-    arrayWithLength<Vec3*> getIllusionOffsets(float partialTick);
-};
 
 static ResourceLocation illusionIllagerLocation;
 

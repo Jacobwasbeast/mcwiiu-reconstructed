@@ -73,7 +73,7 @@ void CritParticle::_init(Level* level, double x, double y, double z,
 
 uint64_t CritParticle::GetType()
 {
-    return 0x0008021400000000LL;
+    return 0x0000000000080214ULL;
 }
 
 Particle* CritParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

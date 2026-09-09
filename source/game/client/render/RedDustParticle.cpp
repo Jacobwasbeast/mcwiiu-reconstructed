@@ -83,7 +83,7 @@ void RedDustParticle::tick()
 
 uint64_t RedDustParticle::GetType()
 {
-    return 0x0008020B00000000LL;
+    return 0x000000000008020BULL;
 }
 
 Particle* RedDustParticle::Provider::createParticle(ePARTICLE_TYPE type,

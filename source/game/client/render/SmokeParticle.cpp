@@ -75,7 +75,7 @@ void SmokeParticle::tick()
 
 uint64_t SmokeParticle::GetType()
 {
-    return 0x0008020c00000000LL;
+    return 0x000000000008020CULL;
 }
 
 Particle* SmokeParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z,

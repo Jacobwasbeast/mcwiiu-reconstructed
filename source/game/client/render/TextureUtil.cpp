@@ -1,6 +1,7 @@
 #include "game/client/render/TextureUtil.hpp"
 
 #include <cstring>
+#include <stb_image.h>
 #include <zlib.h>
 
 #include "game/core/GlStateManager.hpp"
@@ -13,16 +14,6 @@ class IntBuffer;
 class Minecraft;
 class StbiFile;
 
-struct stbi_io_callbacks
-{
-    int (*read)(void* user, char* data, int size);
-    void (*skip)(void* user, int count);
-    int (*eof)(void* user);
-};
-
-unsigned char* stbi_load_from_memory(const unsigned char* buffer, int length, int* width, int* height, int* components, int requestedComponents);
-unsigned char* stbi_load_from_callbacks(const stbi_io_callbacks* callbacks, void* user, int* width, int* height, int* components, int requestedComponents);
-void stbi_image_free(void* retvalFromStbiLoad);
 int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);

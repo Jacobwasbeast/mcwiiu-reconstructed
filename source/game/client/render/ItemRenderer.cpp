@@ -35,25 +35,65 @@ ItemColors* ItemRenderer::getItemColors()
 void ItemRenderer::renderFoilLayer(Tesselator*)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    GlStateManager::depthFunc(2); GlStateManager::disableLighting(); GlStateManager::enableBlend(); GlStateManager::blendFunc(2, 1);
-    if (minecraft != NULL && minecraft->getTextureManager() != NULL) minecraft->getTextureManager()->bindTexture(&gItemRendererTexture);
-    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F); GlStateManager::matrixMode(2); GlStateManager::pushMatrix(); GlStateManager::scalef(0.125F, 0.125F, 0.125F);
-    GlStateManager::translatef((float)(std::fmod((double)Minecraft::currentTimeMillis(), 3000.0) / 8.0), 0.0F, 0.0F); GlStateManager::rotatef(-50.0F, 0.0F, 0.0F, 1.0F); GlStateManager::popMatrix();
-    GlStateManager::pushMatrix(); GlStateManager::scalef(0.125F, 0.125F, 0.125F); GlStateManager::translatef((float)-(std::fmod((double)Minecraft::currentTimeMillis(), 4873.0) / 8.0), 0.0F, 0.0F); GlStateManager::rotatef(10.0F, 0.0F, 0.0F, 1.0F); GlStateManager::popMatrix();
-    GlStateManager::matrixMode(0); GlStateManager::disableBlend(); GlStateManager::enableLighting(); GlStateManager::depthFunc(3);
+    GlStateManager::depthFunc(2);
+    GlStateManager::disableLighting();
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(2, 1);
+    if (minecraft != NULL && minecraft->getTextureManager() != NULL)
+        minecraft->getTextureManager()->bindTexture(&gItemRendererTexture);
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    GlStateManager::matrixMode(2);
+    GlStateManager::pushMatrix();
+    GlStateManager::scalef(0.125F, 0.125F, 0.125F);
+    GlStateManager::translatef(
+        (float)(std::fmod((double)Minecraft::currentTimeMillis(), 3000.0) / 8.0), 0.0F, 0.0F);
+    GlStateManager::rotatef(-50.0F, 0.0F, 0.0F, 1.0F);
+    GlStateManager::popMatrix();
+    GlStateManager::pushMatrix();
+    GlStateManager::scalef(0.125F, 0.125F, 0.125F);
+    GlStateManager::translatef(
+        (float)-(std::fmod((double)Minecraft::currentTimeMillis(), 4873.0) / 8.0), 0.0F, 0.0F);
+    GlStateManager::rotatef(10.0F, 0.0F, 0.0F, 1.0F);
+    GlStateManager::popMatrix();
+    GlStateManager::matrixMode(0);
+    GlStateManager::disableBlend();
+    GlStateManager::enableLighting();
+    GlStateManager::depthFunc(3);
 }
 
 void ItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float, float)
 {
-    boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(entity); not_null_ptr<ItemInstance> item = itemEntity->getItem();
-    if (item->isEmpty() || item->getItem() == NULL) return; mRandom->setSeed(187L);
+    boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(entity);
+    not_null_ptr<ItemInstance> item = itemEntity->getItem();
+    if (item->isEmpty() || item->getItem() == NULL)
+        return;
+    mRandom->setSeed(187L);
     int count = item->getCount() > 40 ? 5 : item->getCount() > 20 ? 4 : item->getCount() > 5 ? 3 : item->getCount() > 1 ? 2 : 1;
-    TextureAtlasSprite* sprite = item->getItem()->getIcon(item); if (sprite == NULL) return;
-    GlStateManager::pushMatrix(); GlStateManager::translatef((float)x, (float)y, (float)z); GlStateManager::enableRescaleNormal(); GlStateManager::scalef(0.5F, 0.5F, 0.5F); bindTexture(entity);
-    if (mItemFrameEnabled) { GlStateManager::scalef(1.25F, 1.25F, 1.25F); GlStateManager::translatef(0.0F, -0.05F, 0.0F); GlStateManager::disableLighting(); }
-    int color = mItemColors->getColor(item, 0); GlStateManager::color4f((float)((color >> 16) & 255) / 255.0F, (float)((color >> 8) & 255) / 255.0F, (float)(color & 255) / 255.0F, 1.0F);
-    renderItemBillboard(itemEntity, sprite, count, 1.0F, 1.0F, 1.0F, 1.0F); if (item->hasFoil()) renderFoilLayer(Tesselator::getInstance());
-    if (mItemFrameEnabled) GlStateManager::enableLighting(); GlStateManager::disableRescaleNormal(); GlStateManager::popMatrix();
+    TextureAtlasSprite* sprite = item->getItem()->getIcon(item);
+    if (sprite == NULL)
+        return;
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::enableRescaleNormal();
+    GlStateManager::scalef(0.5F, 0.5F, 0.5F);
+    bindTexture(entity);
+    if (mItemFrameEnabled)
+    {
+        GlStateManager::scalef(1.25F, 1.25F, 1.25F);
+        GlStateManager::translatef(0.0F, -0.05F, 0.0F);
+        GlStateManager::disableLighting();
+    }
+    int color = mItemColors->getColor(item, 0);
+    GlStateManager::color4f((float)((color >> 16) & 255) / 255.0F,
+                            (float)((color >> 8) & 255) / 255.0F,
+                            (float)(color & 255) / 255.0F, 1.0F);
+    renderItemBillboard(itemEntity, sprite, count, 1.0F, 1.0F, 1.0F, 1.0F);
+    if (item->hasFoil())
+        renderFoilLayer(Tesselator::getInstance());
+    if (mItemFrameEnabled)
+        GlStateManager::enableLighting();
+    GlStateManager::disableRescaleNormal();
+    GlStateManager::popMatrix();
 }
 
 const ResourceLocation* ItemRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -104,7 +144,15 @@ void ItemRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity>& entity, Te
 
 void ItemRenderer::setupGuiItem(float x, float y, float width, float height, bool lighting)
 {
-    GlStateManager::translatef(x, y, mDepth + 100.0F); GlStateManager::scalef(width, height, 1.0F); GlStateManager::translatef(8.0F, 8.0F, 0.0F); GlStateManager::scalef(1.0F, -1.0F, 1.0F); GlStateManager::scalef(16.0F, 16.0F, 16.0F); if (lighting) GlStateManager::enableLighting(); else GlStateManager::disableLighting();
+    GlStateManager::translatef(x, y, mDepth + 100.0F);
+    GlStateManager::scalef(width, height, 1.0F);
+    GlStateManager::translatef(8.0F, 8.0F, 0.0F);
+    GlStateManager::scalef(1.0F, -1.0F, 1.0F);
+    GlStateManager::scalef(16.0F, 16.0F, 16.0F);
+    if (lighting)
+        GlStateManager::enableLighting();
+    else
+        GlStateManager::disableLighting();
 }
 
 bool ItemRenderer::isGui3d(not_null_ptr<ItemInstance>)
@@ -114,12 +162,18 @@ bool ItemRenderer::isGui3d(not_null_ptr<ItemInstance>)
 
 void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::shared_ptr<LivingEntity>, ItemTransforms::TransformType, float, bool, TextureAtlasSprite* sprite)
 {
-    if (sprite == NULL && item->getItem() != NULL) sprite = item->getItem()->getIcon(item); if (sprite != NULL) blit(0.0F, 0.0F, sprite, 1.0F, 1.0F);
+    if (sprite == NULL && item->getItem() != NULL)
+        sprite = item->getItem()->getIcon(item);
+    if (sprite != NULL)
+        blit(0.0F, 0.0F, sprite, 1.0F, 1.0F);
 }
 
 void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float rotation, float alpha, bool flat, TextureAtlasSprite* sprite)
 {
-    setupGuiItem(x, y, scale, scale, !flat); GlStateManager::rotatef(rotation, 0.0F, 0.0F, 1.0F); renderStatic(item, boost::shared_ptr<LivingEntity>(), ItemTransforms::GUI, 0.0F, false, sprite); GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
+    setupGuiItem(x, y, scale, scale, !flat);
+    GlStateManager::rotatef(rotation, 0.0F, 0.0F, 1.0F);
+    renderStatic(item, boost::shared_ptr<LivingEntity>(), ItemTransforms::GUI, 0.0F, false, sprite);
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
 }
 
 void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha)
@@ -132,9 +186,22 @@ void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, int x, int y)
     renderGuiItem(item, (float)x, (float)y, 1.0F, 1.0F);
 }
 
-void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha, float partialTick, bool flat, bool decorations, bool overlay, TextureAtlasSprite* sprite)
+void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item,
+                                         float x,
+                                         float y,
+                                         float scale,
+                                         float alpha,
+                                         float partialTick,
+                                         bool flat,
+                                         bool decorations,
+                                         bool overlay,
+                                         TextureAtlasSprite* sprite)
 {
-    renderGuiItem(item, x, y, scale, partialTick, alpha, flat, sprite); if (decorations) renderGuiItemDecorations(NULL, item, (int)x, (int)y, scale); if (overlay) renderGuiItemDecorations(NULL, item, (int)x, (int)y, std::wstring(), -1, scale);
+    renderGuiItem(item, x, y, scale, partialTick, alpha, flat, sprite);
+    if (decorations)
+        renderGuiItemDecorations(NULL, item, (int)x, (int)y, scale);
+    if (overlay)
+        renderGuiItemDecorations(NULL, item, (int)x, (int)y, std::wstring(), -1, scale);
 }
 
 void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha, bool flat)

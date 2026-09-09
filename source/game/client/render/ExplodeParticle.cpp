@@ -30,7 +30,7 @@ ExplodeParticle::~ExplodeParticle()
 
 uint64_t ExplodeParticle::GetType()
 {
-    return 0x0008020400000000LL;
+    return 0x0000000000080204ULL;
 }
 
 void ExplodeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

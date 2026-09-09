@@ -1,12 +1,7 @@
 #include "game/client/render/SpellParticle.hpp"
 
 #include "game/util/Math.hpp"
-
-class Level
-{
-public:
-    Random* mRandom;
-};
+#include "game/world/Level.hpp"
 
 SpellParticle::SpellParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
@@ -76,7 +71,7 @@ void SpellParticle::setBaseTex(int texture)
 
 uint64_t SpellParticle::GetType()
 {
-    return 0x0008021d00000000LL;
+    return 0x000000000008021DULL;
 }
 
 Particle* SpellParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

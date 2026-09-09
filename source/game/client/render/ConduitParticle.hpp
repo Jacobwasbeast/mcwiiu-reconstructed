@@ -4,7 +4,7 @@
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/ParticleProvider.hpp"
 
-const long long PARTICLE_TYPE_CONDUIT = 0x0008022F00000000LL;
+const long long PARTICLE_TYPE_CONDUIT = 0x000000000008022FLL;
 
 class ConduitParticle : public Particle
 {

@@ -4,9 +4,7 @@
 #include "game/client/render/FishModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/TexturePack.hpp"
-#define private public
 #include "game/core/Pufferfish.hpp"
-#undef private
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 

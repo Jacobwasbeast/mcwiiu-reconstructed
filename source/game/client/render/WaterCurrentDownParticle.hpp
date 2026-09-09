@@ -4,7 +4,7 @@
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/ParticleProvider.hpp"
 
-const long long PARTICLE_TYPE_CURRENT_DOWN = 0x0008022E00000000LL;
+const long long PARTICLE_TYPE_CURRENT_DOWN = 0x000000000008022ELL;
 
 class WaterCurrentDownParticle : public Particle
 {

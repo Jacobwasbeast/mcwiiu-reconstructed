@@ -2,49 +2,14 @@
 
 #include <cmath>
 
+#include "game/client/render/FireworksParticles__FireworksSparkParticle.hpp"
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/util/Random.hpp"
-
-class StarterSparkParticle : public Particle
-{
-public:
-    StarterSparkParticle(Level* level, double x, double y, double z,
-                         double xa, double ya, double za)
-        : Particle(level, x, y, z, xa, ya, za), trail(false), flicker(false)
-    {
-        setAlpha(0.9900000095367432f);
-        lifetime = random.nextInt(12) + 48;
-    }
-
-    virtual uint64_t GetType()
-    {
-        return 0x8022100000000LL;
-    }
-
-    void setColorValue(int color)
-    {
-        setColor((float)((color >> 16) & 255) / 255.0f,
-                 (float)((color >> 8) & 255) / 255.0f,
-                 (float)(color & 255) / 255.0f);
-    }
-
-    void setTrail(bool value)
-    {
-        trail = value;
-    }
-
-    void setFlicker(bool value)
-    {
-        flicker = value;
-    }
-
-private:
-    bool trail;
-    bool flicker;
-};
 
 FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, double y, double z,
                                    double xa, double ya, double za,
@@ -88,7 +53,12 @@ void FireworksParticles::FireworksStarter::render(BufferBuilder* buffer, const b
 
 bool FireworksParticles::FireworksStarter::isFarAwayFromCamera()
 {
-    return false;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != NULL && minecraft->getCameraEntity())
+    {
+        return !(minecraft->getCameraEntity()->distanceToSqr(x, y, z) < 256.0);
+    }
+    return true;
 }
 
 void FireworksParticles::FireworksStarter::createParticle(double px, double py, double pz,
@@ -97,13 +67,14 @@ void FireworksParticles::FireworksStarter::createParticle(double px, double py, 
                                       arrayWithLength<int> fadeColors,
                                       bool trail, bool flicker)
 {
-    StarterSparkParticle* particle = new StarterSparkParticle(level, px, py, pz, xa, ya, za);
+    FireworksParticles::FireworksSparkParticle* particle =
+        new FireworksParticles::FireworksSparkParticle(level, px, py, pz, xa, ya, za, particleEngine);
     particle->setTrail(trail);
     particle->setFlicker(flicker);
-    particle->setColorValue(colors.data[random.nextInt(colors.length)]);
+    particle->setColor(colors.data[random.nextInt(colors.length)]);
     if (fadeColors.length != 0)
     {
-        (void)fadeColors.data[random.nextInt(fadeColors.length)];
+        particle->setFadeColor(fadeColors.data[random.nextInt(fadeColors.length)]);
     }
     particleEngine->add(particle);
 }
@@ -120,17 +91,19 @@ void FireworksParticles::FireworksStarter::createParticleBall(double scale, int 
         {
             for (int z = -radius; z <= radius; ++z)
             {
-                if (x * x + y * y + z * z <= radius * radius)
-                {
-                    double dx = (double)x + random.nextDouble() * spread - random.nextDouble() * spread;
-                    double dy = (double)y + random.nextDouble() * spread - random.nextDouble() * spread;
-                    double dz = (double)z + random.nextDouble() * spread - random.nextDouble() * spread;
-                    double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-                    double velocity = random.nextGaussian() * 0.05 + distance / scale;
-                    createParticle(this->x, this->y, this->z,
-                                   dx / velocity, dy / velocity, dz / velocity,
-                                   colors, fadeColors, trail, flicker);
-                }
+                double dx = random.nextDouble();
+                dx = (double)x + (dx - random.nextDouble()) * spread;
+                double dy = random.nextDouble();
+                dy = (double)y + (dy - random.nextDouble()) * spread;
+                double dz = random.nextDouble();
+                dz = (double)z + (dz - random.nextDouble()) * spread;
+                double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+                double velocity = random.nextGaussian() * 0.05 + distance / scale;
+                createParticle(this->x, this->y, this->z,
+                               dx / velocity, dy / velocity, dz / velocity,
+                               colors, fadeColors, trail, flicker);
+                if (x != -radius && x != radius && y != -radius && y != radius)
+                    z += radius * 2 - 1;
             }
         }
     }
@@ -142,39 +115,34 @@ void FireworksParticles::FireworksStarter::createParticleShape(double scale,
                                            arrayWithLength<int> fadeColors,
                                            bool trail, bool flicker, bool keepShape)
 {
-    if (shape.length == 0)
+    double firstX = shape.data[0]->data[0];
+    double firstY = shape.data[0]->data[1];
+    createParticle(x, y, z, firstX * scale, firstY * scale, 0.0,
+                   colors, fadeColors, trail, flicker);
+    float initialAngle = random.nextFloat() * 3.1415927F;
+    double rotationStep = keepShape ? 0.034 : 0.34;
+    for (int plane = 0; plane < 3; ++plane)
     {
-        return;
-    }
-    for (unsigned int i = 0; i < shape.length; ++i)
-    {
-        if (shape.data[i] == NULL || shape.data[i]->length < 2)
+        double angle = (double)((float)plane * 3.1415927F) * rotationStep + initialAngle;
+        double previousX = firstX;
+        double previousY = firstY;
+        for (unsigned int point = 1; point < shape.length; ++point)
         {
-            continue;
-        }
-        double x0 = shape.data[i]->data[0];
-        double y0 = shape.data[i]->data[1];
-        for (unsigned int j = 1; j < shape.data[i]->length; ++j)
-        {
-            double x1 = shape.data[i]->data[j * 2];
-            double y1 = shape.data[i]->data[j * 2 + 1];
-            double dx = (x1 - x0) * scale;
-            double dy = (y1 - y0) * scale;
-            double distance = std::sqrt(dx * dx + dy * dy);
-            int steps = (int)(distance / 0.25) + 1;
-            for (int k = 0; k < steps; ++k)
+            double nextX = shape.data[point]->data[0];
+            double nextY = shape.data[point]->data[1];
+            for (double fraction = 0.25; fraction <= 1.0; fraction += 0.25)
             {
-                double t = (double)k / (double)steps;
-                double angle = ((double)i + random.nextFloat() * 0.25) * 0.5;
-                double velocity = keepShape ? 1.0 : 0.95;
-                createParticle(this->x, this->y, this->z,
-                               (x0 + (x1 - x0) * t) * velocity * std::cos(angle),
-                               (y0 + (y1 - y0) * t) * velocity,
-                               (x0 + (x1 - x0) * t) * velocity * std::sin(angle),
-                               colors, fadeColors, trail, flicker);
+                double horizontal = ((nextX - previousX) * fraction + previousX) * scale;
+                double vertical = ((nextY - previousY) * fraction + previousY) * scale;
+                for (double side = -1.0; side <= 1.0; side += 2.0)
+                {
+                    createParticle(x, y, z, horizontal * std::cos(angle) * side,
+                                   vertical, horizontal * std::sin(angle) * side,
+                                   colors, fadeColors, trail, flicker);
+                }
             }
-            x0 = x1;
-            y0 = y1;
+            previousX = nextX;
+            previousY = nextY;
         }
     }
 }
@@ -235,5 +203,5 @@ int FireworksParticles::FireworksStarter::getParticleTexture()
 
 uint64_t FireworksParticles::FireworksStarter::GetType()
 {
-    return 0x8022000000000LL;
+    return 0x0000000000080220ULL;
 }

@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/SilverfishModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -12,7 +12,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class SilverfishRenderer : public SilverfishModel
+class SilverfishRenderer : public MobRenderer
 {
 public:
     SilverfishRenderer(EntityRenderDispatcher* dispatcher);

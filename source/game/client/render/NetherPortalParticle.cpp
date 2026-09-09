@@ -102,7 +102,7 @@ void NetherPortalParticle::move(double xa, double ya, double za)
 
 uint64_t NetherPortalParticle::GetType()
 {
-    return 0x0008020A00000000ULL;
+    return 0x000000000008020AULL;
 }
 
 Particle* NetherPortalParticle::Provider::createParticle(ePARTICLE_TYPE type,

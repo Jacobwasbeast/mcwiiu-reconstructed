@@ -12,7 +12,7 @@ class BufferBuilder;
 class Entity;
 class Level;
 
-const long long PARTICLE_TYPE_TERRAIN = 0x0008021000000000LL;
+const long long PARTICLE_TYPE_TERRAIN = 0x0000000000080210LL;
 
 class TerrainParticle : public Particle
 {

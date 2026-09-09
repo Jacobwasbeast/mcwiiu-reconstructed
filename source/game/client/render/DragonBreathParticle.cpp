@@ -35,10 +35,11 @@ void DragonBreathParticle::init(Level* level, double x, double y, double z,
     rCol = (float)((endRed - startRed) * Math::random() + startRed);
     gCol = (float)((endGreen - startGreen) * Math::random() + startGreen);
     bCol = (float)((endBlue - startBlue) * Math::random() + startBlue);
-    baseAlpha = alpha * 0.75f * scale;
-    alpha = baseAlpha;
-    lifetime = (int)((double)((float)(20.0 / (random.nextDouble() * 0.8 + 0.2))) * scale);
+    baseSize = size * 0.75f * scale;
+    size = baseSize;
+    hasPhysics = true;
     hasHitGround = false;
+    lifetime = (int)((double)((float)(20.0 / (random.nextDouble() * 0.8 + 0.2))) * scale);
 }
 
 void DragonBreathParticle::render(BufferBuilder* buffer,
@@ -50,9 +51,8 @@ void DragonBreathParticle::render(BufferBuilder* buffer,
                                   float xa2,
                                   float za2)
 {
-    float brightness = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
-                                  0.0f, 1.0f);
-    alpha = baseAlpha * brightness;
+    size = baseSize * Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
+                                 0.0f, 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -72,26 +72,21 @@ void DragonBreathParticle::tick()
 
     setMiscTex((age * 3) / lifetime + 5);
 
-    if (!onGround)
+    if (onGround)
     {
-        if (hasHitGround)
-            yd += 0.002;
-        move(xd, yd, zd);
-    }
-    else
-    {
-        yd = 0.002;
+        yd = 0.0;
         hasHitGround = true;
-        move(xd, yd, zd);
     }
+    if (hasHitGround)
+        yd += 0.002;
+    move(xd, yd, zd);
 
-    if (y != yo)
+    if (y == yo)
     {
         xd *= 1.1;
         zd *= 1.1;
     }
     xd *= 0.9599999785423279;
-    yd *= 0.9599999785423279;
     zd *= 0.9599999785423279;
     if (hasHitGround)
         yd *= 0.9599999785423279;
@@ -111,7 +106,7 @@ float DragonBreathParticle::getBrightness(float partialTicks)
 
 uint64_t DragonBreathParticle::GetType()
 {
-    return 0x0008021e00000000LL;
+    return 0x000000000008021EULL;
 }
 
 Particle* DragonBreathParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

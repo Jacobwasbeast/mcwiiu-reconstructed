@@ -34,16 +34,18 @@ void SnowShovelParticle::render(BufferBuilder* buffer,
 
 void SnowShovelParticle::tick()
 {
+    const int oldAge = age;
+    const int currentLifetime = lifetime;
     xo = x;
     yo = y;
     zo = z;
-    ++age;
-    if (age >= lifetime)
+    age = oldAge + 1;
+    if (currentLifetime <= oldAge)
     {
         remove();
     }
 
-    setMiscTex(7 - (age << 3) / lifetime);
+    setMiscTex(7 - (age << 3) / currentLifetime);
     yd -= 0.03;
     move(xd, yd, zd);
     xd *= 0.99;
@@ -74,7 +76,7 @@ void SnowShovelParticle::init(Level* level, double x, double y, double z,
 
 uint64_t SnowShovelParticle::GetType()
 {
-    return 0x0008020d00000000LL;
+    return 0x000000000008020DULL;
 }
 
 Particle* SnowShovelParticle::Provider::createParticle(ePARTICLE_TYPE type,

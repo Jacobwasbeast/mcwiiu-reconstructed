@@ -56,7 +56,7 @@ void DefaultTexturePack::loadCustomModels()
 
     if (!file.exists())
     {
-        theApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed ", 191);
     }
     else
     {

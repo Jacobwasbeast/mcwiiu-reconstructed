@@ -42,23 +42,23 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
 {
     GlStateManager::enableLighting();
 
-    (*this)[0x0100020200000000ULL] = new SignRenderer();
-    (*this)[0x0120020100000000ULL] = new MobSpawnerRenderer();
-    (*this)[0x0120020500000000ULL] = new PistonHeadRenderer();
-    (*this)[0x01E0020100000000ULL] = new ChestRenderer();
-    (*this)[0x0120020800000000ULL] = new EnderChestRenderer();
-    (*this)[0x0120020600000000ULL] = new EnchantTableRenderer();
-    (*this)[0x0130020000000000ULL] = new TheEndPortalRenderer();
-    (*this)[0x0130020100000000ULL] = new TheEndGatewayRenderer();
-    (*this)[0x0120020700000000ULL] = new SkullBlockRenderer();
-    (*this)[0x01E0020200000000ULL] = NULL;
-    (*this)[0x01E0020400000000ULL] = new BeaconRenderer();
-    (*this)[0x0100020C00000000ULL] = new BannerRenderer();
+    (*this)[0x01000202ULL] = new SignRenderer();
+    (*this)[0x01200201ULL] = new MobSpawnerRenderer();
+    (*this)[0x01200205ULL] = new PistonHeadRenderer();
+    (*this)[0x01E00201ULL] = new ChestRenderer();
+    (*this)[0x01200208ULL] = new EnderChestRenderer();
+    (*this)[0x01200206ULL] = new EnchantTableRenderer();
+    (*this)[0x01300200ULL] = new TheEndPortalRenderer();
+    (*this)[0x01300201ULL] = new TheEndGatewayRenderer();
+    (*this)[0x01200207ULL] = new SkullBlockRenderer();
+    (*this)[0x01E00202ULL] = NULL;
+    (*this)[0x01E00204ULL] = new BeaconRenderer();
+    (*this)[0x0100020CULL] = new BannerRenderer();
     ModelDefinition shulkerModelDefinition;
-    (*this)[0x0120020F00000000ULL] =
+    (*this)[0x0120020FULL] =
         new ShulkerBoxRenderer(new ShulkerModel(shulkerModelDefinition));
-    (*this)[0x0100021000000000ULL] = new BedRenderer();
-    (*this)[0x0120021200000000ULL] = new ConduitRenderer();
+    (*this)[0x01000210ULL] = new BedRenderer();
+    (*this)[0x01200212ULL] = new ConduitRenderer();
 
     GlStateManager::disableLighting();
     for (iterator it = begin(); it != end(); ++it)
@@ -138,7 +138,7 @@ void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font
     mX = (camera->mX - camera->mXOld) * partialTicks + camera->mXOld;
     mY = (camera->mY - camera->mYOld) * partialTicks + camera->mYOld;
     mZ = (camera->mZ - camera->mZOld) * partialTicks + camera->mZOld;
-    static_cast<SignRenderer*>((*this)[0x0100020200000000ULL])->tick();
+    static_cast<SignRenderer*>((*this)[0x01000202ULL])->tick();
 }
 
 void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
@@ -149,7 +149,7 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     if (renderer != NULL)
     {
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureCustomBeacons()
-            && blockEntity->GetType() == 0x01E0020400000000ULL)
+            && blockEntity->GetType() == 0x01E00204ULL)
         {
             static_cast<BeaconRenderer*>(renderer)->renderSpecialBeamDirection(
                 blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha,

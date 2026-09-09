@@ -84,7 +84,7 @@ void PlayerCloudParticle::tick()
 
 uint64_t PlayerCloudParticle::GetType()
 {
-    return 0x0008021800000000ULL;
+    return 0x0000000000080218ULL;
 }
 
 Particle* PlayerCloudParticle::Provider::createParticle(ePARTICLE_TYPE type,

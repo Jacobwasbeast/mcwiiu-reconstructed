@@ -52,7 +52,7 @@ int HugeExplosionSeedParticle::getParticleTexture()
 
 uint64_t HugeExplosionSeedParticle::GetType()
 {
-    return 0x0008021700000000ULL;
+    return 0x0000000000080217ULL;
 }
 
 Particle* HugeExplosionSeedParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

@@ -108,7 +108,7 @@ int BubbleParticle::getRawBr()
 
 float BubbleParticle::getBrightness(float partialTicks)
 {
-    return level->getBrightness(BlockPos(x, y, z));
+    return level->mDimension->getBrightnessRamp()[getRawBr()];
 }
 
 int BubbleParticle::getLightColor(float partialTicks)
@@ -128,7 +128,7 @@ int BubbleParticle::getLightColor(float partialTicks)
 
 uint64_t BubbleParticle::GetType()
 {
-    return 0x0008020300000000LL;
+    return 0x0000000000080203ULL;
 }
 
 Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type,

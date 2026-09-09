@@ -160,7 +160,7 @@ double ViewportCuller::_max(double x, double y, double z)
 {
     if (x > y)
     {
-        return x > z ? z : x;
+        return x > z ? x : z;
     }
 
     return z > y ? z : y;

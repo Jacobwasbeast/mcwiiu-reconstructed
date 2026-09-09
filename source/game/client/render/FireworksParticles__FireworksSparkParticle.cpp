@@ -66,5 +66,5 @@ void FireworksParticles::FireworksSparkParticle::tick()
 
 uint64_t FireworksParticles::FireworksSparkParticle::GetType()
 {
-    return 0x8022100000000LL;
+    return 0x0000000000080221ULL;
 }

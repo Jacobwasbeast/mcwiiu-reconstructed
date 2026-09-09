@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/SnowManModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -11,7 +11,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class SnowManRenderer : public SnowManModel
+class SnowManRenderer : public MobRenderer
 {
 public:
     SnowManRenderer(EntityRenderDispatcher* dispatcher);

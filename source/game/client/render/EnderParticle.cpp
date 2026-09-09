@@ -24,7 +24,8 @@ EnderParticle::~EnderParticle() {}
 void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    alpha = scale * (1.0f - (progress * progress - 1.0f));
+    float inverseProgress = 1.0f - progress;
+    alpha = scale * -(inverseProgress * inverseProgress - 1.0f);
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 int EnderParticle::getLightColor(float partialTicks)
@@ -40,6 +41,7 @@ float EnderParticle::getBrightness(float partialTicks)
 {
     float progress = (float)age / (float)lifetime;
     float t = progress * progress;
+    t *= t;
     return (float)(Particle::getBrightness(partialTicks) * (1.0f - t) + t);
 }
 void EnderParticle::tick()
@@ -51,7 +53,7 @@ void EnderParticle::tick()
     x = xd * curve + originX;
     y = yd * curve + originY + vertical;
     z = zd * curve + originZ;
-    if (age >= lifetime) remove();
+    if (age - 1 >= lifetime) remove();
 }
 void EnderParticle::move(double xa, double ya, double za)
 {
@@ -59,7 +61,7 @@ void EnderParticle::move(double xa, double ya, double za)
     setBoundingBox(box->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
-uint64_t EnderParticle::GetType() { return 0x0008021f00000000LL; }
+uint64_t EnderParticle::GetType() { return 0x000000000008021FULL; }
 Particle* EnderParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
 {
     return new EnderParticle(level, x, y, z, xa, ya, za);

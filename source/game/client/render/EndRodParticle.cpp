@@ -25,7 +25,7 @@ void EndRodParticle::move(double xa, double ya, double za)
 
 uint64_t EndRodParticle::GetType()
 {
-    return 0x0008022900000000ULL;
+    return 0x0000000000080229ULL;
 }
 
 Particle* EndRodParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

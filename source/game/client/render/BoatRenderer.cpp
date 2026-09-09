@@ -16,7 +16,14 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation BOAT_TEXTURES[6];
+static ResourceLocation BOAT_TEXTURES[6] = {
+    ResourceLocation((_TEXTURE_NAME)149),
+    ResourceLocation((_TEXTURE_NAME)150),
+    ResourceLocation((_TEXTURE_NAME)151),
+    ResourceLocation((_TEXTURE_NAME)152),
+    ResourceLocation((_TEXTURE_NAME)153),
+    ResourceLocation((_TEXTURE_NAME)154)
+};
 
 BoatRenderer::BoatRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
@@ -40,20 +47,22 @@ void BoatRenderer::setupRotation(boost::shared_ptr<Entity> entity, float yaw, fl
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
     float hurtTime = (float)((double)boat->getHurtTime() - (double)partialTick);
     float damage = (float)(boat->getDamage() - (double)partialTick);
+    if (damage < 0.0F)
+        damage = 0.0F;
     if (hurtTime > 0.0F)
     {
-        GlStateManager::rotatef(std::sin(hurtTime) * hurtTime * damage / 10.0F,
+        GlStateManager::rotatef(std::sin(hurtTime) * hurtTime * damage / 10.0F * boat->getHurtDir(),
                                 1.0F, 0.0F, 0.0F);
     }
-    float bubbleAngle = boat->getBubbleAngle(partialTick);
-    if (!Mth::equal(bubbleAngle, 0.0F))
-        GlStateManager::rotatef(bubbleAngle, 1.0F, 0.0F, 1.0F);
+    if (!Mth::equal(boat->getBubbleAngle(partialTick), 0.0F))
+        GlStateManager::rotatef(boat->getBubbleAngle(partialTick), 1.0F, 0.0F, 1.0F);
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
 }
 
 void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                           float yaw, float partialTick)
 {
+    boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
     GlStateManager::pushMatrix();
     setupTranslation(x, y, z);
     setupRotation(entity, yaw, partialTick);
@@ -61,8 +70,7 @@ void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     if (mSolidRender)
     {
         GlStateManager::enableColorMaterial();
-        getTeamColor(entity);
-        GlStateManager::setupSolidRenderingTextureCombine(0);
+        GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
     mModel->render(entity, partialTick, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, true);
     if (mSolidRender)
@@ -74,9 +82,11 @@ void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (!mSolidRender)
     {
-        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
-        if (boat->GetType() == ENTITY_TYPE_BOAT)
-            renderSecondPass(entity, x, y, z, yaw, partialTick);
+        if (entity->GetType() == ENTITY_TYPE_BOAT)
+        {
+            boost::shared_ptr<Boat> leashedBoat = boost::static_pointer_cast<Boat>(entity);
+            renderLeash(leashedBoat, x, y, z, yaw, partialTick);
+        }
     }
 }
 
@@ -114,39 +124,64 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     boost::shared_ptr<Entity> holder = boat->getLeashHolder();
     if (!holder)
         return;
-    double boatX = lerp(boat->mXo, boat->mX, partialTick);
-    double boatY = lerp(boat->mYo, boat->mY, partialTick) - boat->mBbHeight;
-    double boatZ = lerp(boat->mZo, boat->mZ, partialTick);
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    y -= boat->mBbHeight;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    const double radians = (double)0.01745329238474369F;
+    double holderYaw = lerp(holder->mYRotO, holder->mYRot, partialTick * 0.5F) * radians;
+    double holderPitch = lerp(holder->mXRotO, holder->mXRot, partialTick * 0.5F) * radians;
+    double cosYaw = std::cos(holderYaw);
+    double sinYaw = std::sin(holderYaw);
+    double sinPitch = std::sin(holderPitch);
+    if ((holder->GetType() & 0x0A080000ULL) == 0x0A080000ULL)
+    {
+        sinYaw = 0.0;
+        sinPitch = -1.0;
+        cosYaw = 0.0;
+    }
+    double cosPitch = std::cos(holderPitch);
     double holderX = lerp(holder->mXo, holder->mX, partialTick);
-    double holderY = lerp(holder->mYo, holder->mY, partialTick) + holder->getEyeHeight();
+    double holderY = lerp(holder->mYo + holder->getEyeHeight() * 0.7,
+                         holder->mY + holder->getEyeHeight() * 0.7, partialTick);
     double holderZ = lerp(holder->mZo, holder->mZ, partialTick);
-    double dx = holderX - boatX;
-    double dy = holderY - boatY;
-    double dz = holderZ - boatZ;
-    double length = std::sqrt(dx * dx + dy * dy + dz * dz);
-    if (length == 0.0)
-        return;
+    double boatX = lerp(boat->mXo, boat->mX, partialTick);
+    double boatY = lerp(boat->mYo, boat->mY, partialTick);
+    double boatZ = lerp(boat->mZo, boat->mZ, partialTick);
+    double dx = (float)((holderX - cosYaw * 0.7 - sinYaw * 0.5 * cosPitch) - (boatX + cosYaw));
+    double dy = (float)((holderY - sinPitch * 0.5 - 0.25) - boatY);
+    double dz = (float)((holderZ - sinYaw * 0.7 + cosYaw * 0.5 * cosPitch) - (boatZ + sinYaw));
     GlStateManager::disableTexture();
     GlStateManager::disableLighting();
     GlStateManager::disableCull();
     unsigned int startColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Leash_Light_Colour);
     unsigned int endColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Leash_Dark_Colour);
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->begin(1);
-    for (int i = 0; i <= 24; ++i)
+    for (int strip = 0; strip < 2; ++strip)
     {
-        double t = (double)i / 24.0;
-        double px = x + dx * t;
-        double py = y + dy * t;
-        double pz = z + dz * t;
-        unsigned int colour = (i & 1) == 0 ? startColour : endColour;
-        builder->color((float)((colour >> 16) & 255) / 255.0F,
-                       (float)((colour >> 8) & 255) / 255.0F,
-                       (float)(colour & 255) / 255.0F, 1.0F);
-        builder->vertex((float)px, (float)py, (float)pz);
-        builder->vertex((float)(px + 0.025), (float)(py + 0.025), (float)(pz + 0.025));
+        builder->begin(1);
+        for (int i = 0; i <= 24; ++i)
+        {
+            double t = (float)i / 24.0F;
+            double px = x + dx * t;
+            double py = dy * (float)(t * t + t) * 0.5 + y +
+                        (double)((24.0F - (float)i) / 18.0F + 0.125F);
+            double pz = z + dz * t;
+            unsigned int colour = (i & 1) == 0 ? endColour : startColour;
+            builder->color((float)((colour >> 16) & 255) / 255.0F,
+                           (float)((colour >> 8) & 255) / 255.0F,
+                           (float)(colour & 255) / 255.0F, 1.0F);
+            if (strip == 0)
+            {
+                builder->vertex((float)px, (float)py, (float)pz);
+                builder->vertex((float)(px + 0.025), (float)(py + 0.025), (float)pz);
+            }
+            else
+            {
+                builder->vertex((float)px, (float)(py + 0.025), (float)pz);
+                builder->vertex((float)(px + 0.025), (float)py, (float)(pz + 0.025));
+            }
+        }
+        builder->end();
     }
-    builder->end();
     GlStateManager::enableLighting();
     GlStateManager::enableTexture();
     GlStateManager::enableCull();
@@ -158,10 +193,10 @@ bool BoatRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culle
     if (EntityRenderer::shouldRender(entity, culler, x, y, z))
         return true;
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
-    if (!boat || !boat->hasPlayerPassenger())
+    if (!boat || !boat->isLeashed())
         return false;
-    boost::shared_ptr<Entity> passenger = boat->getControllingPassenger();
-    return passenger && culler->isVisible(passenger->getBoundingBoxForCulling());
+    boost::shared_ptr<Entity> holder = boat->getLeashHolder();
+    return holder && culler->isVisible(holder->getBoundingBoxForCulling());
 }
 
 Model* BoatRenderer::createModel(const ModelDefinition& definition)

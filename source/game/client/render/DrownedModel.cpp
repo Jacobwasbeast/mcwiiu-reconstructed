@@ -166,7 +166,7 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         swimming = drowned->getSwimAmount(limbSwingAmount) != 0.0f;
     }
 
-    float swimAmount = swimming;
+    float swimAmount = (float)swimming;
 
     float swing = Mth::sin(mAttackTime * 3.1415927410125732f);
     float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);

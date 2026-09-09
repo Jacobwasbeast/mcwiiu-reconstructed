@@ -2,11 +2,16 @@
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/Model.hpp"
+#include "game/client/render/SnowManModel.hpp"
+#include "game/world/generation/SnowManHeadLayer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-SnowManRenderer::SnowManRenderer(EntityRenderDispatcher*)
-    : SnowManModel(ModelDefinition())
+static ResourceLocation SNOWMAN_LOCATION;
+
+SnowManRenderer::SnowManRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new SnowManModel(ModelDefinition()), 0.5f)
 {
+    addLayer(new SnowManHeadLayer(this));
 }
 
 SnowManRenderer::~SnowManRenderer()
@@ -15,13 +20,12 @@ SnowManRenderer::~SnowManRenderer()
 
 const ResourceLocation* SnowManRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location;
-    return &location;
+    return &SNOWMAN_LOCATION;
 }
 
 Model* SnowManRenderer::getModel()
 {
-    return this;
+    return LivingEntityRenderer::getModel();
 }
 
 Model* SnowManRenderer::createModel(const ModelDefinition& definition)

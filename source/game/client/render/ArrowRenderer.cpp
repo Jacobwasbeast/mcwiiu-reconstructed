@@ -40,15 +40,15 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
 
     float yRotDelta = yRot - yRotO;
     if (yRotDelta < -180.0F)
-        yRotDelta += 360.0F;
+        yRotDelta = (yRot + 360.0F) - yRotO;
     else if (yRotDelta > 180.0F)
-        yRotDelta -= 360.0F;
+        yRotDelta = (yRot - 360.0F) - yRotO;
 
     float xRotDelta = xRot - xRotO;
     if (xRotDelta < -180.0F)
-        xRotDelta += 360.0F;
+        xRotDelta = (xRot + 360.0F) - xRotO;
     else if (xRotDelta > 180.0F)
-        xRotDelta -= 360.0F;
+        xRotDelta = (xRot - 360.0F) - xRotO;
 
     GlStateManager::translatef((float)x, (float)y, (float)z);
     GlStateManager::rotatef(yRotO + yRotDelta * partialTick - 90.0F,

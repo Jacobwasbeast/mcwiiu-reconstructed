@@ -5,16 +5,11 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class Textures
-{
-public:
-    void bindTexture(const ResourceLocation* location);
-};
 
 static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)3);
 
@@ -88,7 +83,7 @@ int FootstepParticle::getParticleTexture()
 
 uint64_t FootstepParticle::GetType()
 {
-    return 0x0008020600000000LL;
+    return 0x0000000000080206ULL;
 }
 
 Particle* FootstepParticle::Provider::createParticle(ePARTICLE_TYPE type,

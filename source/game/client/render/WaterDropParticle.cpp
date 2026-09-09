@@ -64,7 +64,7 @@ void WaterDropParticle::tick()
 
 uint64_t WaterDropParticle::GetType()
 {
-    return 0x0008021200000000LL;
+    return 0x0000000000080212ULL;
 }
 
 Particle* WaterDropParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

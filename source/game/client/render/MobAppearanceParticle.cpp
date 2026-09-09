@@ -3,28 +3,12 @@
 #include <cmath>
 
 #include "game/core/GlStateManager.hpp"
+#include "game/core/ElderGuardian.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffects.hpp"
-
-class EntityRenderDispatcher
-{
-public:
-    void setPosition(double x, double y, double z);
-    void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
-                float yaw, float partialTicks, bool renderShadow, bool renderName,
-                bool renderFire, bool renderLeash);
-};
-
-class ElderGuardian : public LivingEntity
-{
-public:
-    ElderGuardian(Level* level);
-    void setGhost();
-    virtual not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
-    virtual const HumanoidArm* getMainArm();
-};
 
 MobAppearanceParticle::MobAppearanceParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0), guardian(NULL), guardianReference()
@@ -114,7 +98,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
 
 uint64_t MobAppearanceParticle::GetType()
 {
-    return 0x0008022700000000LL;
+    return 0x0000000000080227ULL;
 }
 
 Particle* MobAppearanceParticle::Provider::createParticle(ePARTICLE_TYPE,

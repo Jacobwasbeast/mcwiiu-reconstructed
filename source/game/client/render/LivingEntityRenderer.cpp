@@ -6,6 +6,7 @@
 #include "game/client/render/RenderLayer.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 
 double lerp(double from, double to, double amount)
 {
@@ -125,8 +126,17 @@ void LivingEntityRenderer::setupForTexturePack(TexturePack* pack)
     }
 }
 
-void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>&, float, float, float, float, float, float)
+void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
+                                       float limbSwingAmount, float ageInTicks, float netHeadYaw,
+                                       float headPitch, float scale)
 {
+    if (!entity || mModel == NULL)
+        return;
+
+    boost::shared_ptr<Entity> baseEntity = boost::static_pointer_cast<Entity>(entity);
+    mModel->prepareMobModel(entity, limbSwing, limbSwingAmount, ageInTicks);
+    mModel->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                   scale, true);
 }
 
 bool LivingEntityRenderer::isVisible(boost::shared_ptr<LivingEntity>&)
@@ -149,9 +159,9 @@ float LivingEntityRenderer::getAttackAnim(boost::shared_ptr<LivingEntity>&, floa
     return mModel == NULL ? 0.0F : mModel->mAttackTime;
 }
 
-double LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>&, float)
+double LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    return 0.0F;
+    return entity->mOBob + (entity->mBob - entity->mOBob) * partialTicks;
 }
 
 void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,

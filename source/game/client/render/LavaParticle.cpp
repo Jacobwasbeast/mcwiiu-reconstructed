@@ -78,7 +78,7 @@ void LavaParticle::tick()
 
 uint64_t LavaParticle::GetType()
 {
-    return 0x0008020800000000ULL;
+    return 0x0000000000080208ULL;
 }
 
 Particle* LavaParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

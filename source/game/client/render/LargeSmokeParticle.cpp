@@ -12,7 +12,7 @@ LargeSmokeParticle::~LargeSmokeParticle()
 
 uint64_t LargeSmokeParticle::GetType()
 {
-    return 0x0008022600000000LL;
+    return 0x0000000000080226ULL;
 }
 
 Particle* LargeSmokeParticle::Provider::createParticle(ePARTICLE_TYPE type,

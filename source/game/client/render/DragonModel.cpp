@@ -5,10 +5,13 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/EnderDragon.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/MaterialShaders.hpp"
+#include "game/world/block/MaterialTable.hpp"
 
 DragonModel::DragonModel(const ModelDefinition& modelDefinition)
 {
@@ -104,7 +107,8 @@ DragonModel::DragonModel(const ModelDefinition& modelDefinition)
             mWing1YRot = mWing1->mYRot;
         }
 
-        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_EnderDragon);
+        MaterialShaders shaders = Minecraft::GetInstance()->getMaterialTable()->getMaterialShadersFor(eMinecraftEntityMaterial_EnderDragon);
+        builder->setVertexAndPixelShader(C4JRender::eVertexType_Default, shaders.mPixelShaderType);
 
         mHead->compile(0.0625f);
 
@@ -486,7 +490,7 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
         y += Mth::sin(mTail[i]->mXRot) * 10.0f * (float)tailSide;
         z -= Mth::cos(mTail[i]->mYRot) * Mth::cos(mTail[i]->mXRot) * 10.0f * (float)tailSide;
-        x -= Mth::sin(mTail[i]->mYRot) * Mth::cos(mTail[i]->mXRot) * 10.0f * (float)tailSide;
+        x -= Mth::sin(mTail[i]->mYRot) * Mth::cos(mTail[i]->mXRot) * 10.0f;
 
         mTail[i]->render(scale, useDisplayList, false);
     }

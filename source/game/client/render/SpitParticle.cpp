@@ -12,7 +12,7 @@ SpitParticle::~SpitParticle()
 
 uint64_t SpitParticle::GetType()
 {
-    return 0x0008022c00000000ULL;
+    return 0x000000000008022CULL;
 }
 
 void SpitParticle::tick()

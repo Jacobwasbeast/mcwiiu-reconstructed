@@ -6,9 +6,10 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Fish.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-FishModel::FishModel(const ModelDefinition& modelDefinition, int fishType, int variant)
+FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishType fishType, int variant)
     : Model(),
       mPart0(NULL), mPart1(NULL), mPart2(NULL), mPart3(NULL), mPart4(NULL), mPart5(NULL),
       mPart6(NULL), mPart7(NULL), mPart8(NULL), mPart9(NULL), mPart10(NULL), mPart11(NULL),
@@ -119,38 +120,54 @@ void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
                        bool useDisplayList)
 {
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
-    if (mPart0 != NULL)
+    boost::shared_ptr<Fish> fish = boost::static_pointer_cast<Fish>(entity);
+    const float fishLimbSwing = Mth::Lerp(fish->mSwimRotationOld, fish->mSwimRotation, 0.05f);
+    setupAnim(fishLimbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
+              _SkinAdjustments());
+    if (!fish->mSwimFlag)
     {
         mPart0->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
     }
-    callSkinnedDrawlist();
+    else
+    {
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(fish->mSwimSpeed, fish->mSwimSpeed, fish->mSwimSpeed);
+        GlStateManager::translatef(0.0f, static_cast<float>(fish->mSwimTicks) * scale, 0.0f);
+        mPart0->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
+    }
 }
 
 void FishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                           float headPitch, float scale, boost::shared_ptr<Entity> entity,
                           _SkinAdjustments skinAdjustments)
 {
-    float animation = Mth::cos(limbSwing * 0.01745329238474369f * mAnimationScale);
+    const float animation = Mth::cos(limbSwing * 0.01745329238474369f * mAnimationScale);
     if (mFishType == FishRenderer::FISH_TYPE_COD)
     {
-        if (mPart1 != NULL) mPart1->mYRot = animation * -25.75f;
-        if (mPart0 != NULL) mPart0->mYRot = animation * -11.5f;
-        if (mPart2 != NULL) mPart2->mYRot = animation * -21.75f;
+        const float value = animation * -25.75f;
+        mPart4->mYRot = animation * 4.0f;
+        mPart0->mYRot = animation + animation;
+        mPart1->mYRot = value;
     }
     else if (mFishType == FishRenderer::FISH_TYPE_PUFFERFISH)
     {
-        if (mPart0 != NULL) mPart0->mYRot = animation * -5.75f;
+        mPart1->mYRot = animation * -5.75f;
     }
     else if (mFishType == FishRenderer::FISH_TYPE_SALMON)
     {
-        if (mPart0 != NULL) mPart0->mYRot = animation * -80.0f;
-        if (mPart2 != NULL) mPart2->mYRot = animation * -21.75f;
+        const float value = animation * -40.0f;
+        mPart0->mYRot = animation * 4.0f;
+        mPart3->mYRot = animation * -21.75f;
+        mPart1->mYRot = value;
     }
     else
     {
-        if (mPart0 != NULL) mPart0->mYRot = animation * -25.75f;
-        if (mPart1 != NULL) mPart1->mYRot = animation * -21.75f;
+        const float value = animation * -25.75f;
+        mPart0->mYRot = animation + animation;
+        mPart1->mYRot = value;
     }
 }
 

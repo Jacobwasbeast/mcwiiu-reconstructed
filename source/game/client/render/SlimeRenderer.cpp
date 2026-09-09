@@ -5,18 +5,10 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/SlimeModel.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Slime.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/SlimeOuterLayer.hpp"
-
-class Slime : public LivingEntity
-{
-public:
-    virtual int getSize();
-
-    float mSquish;
-    float mOldSquish;
-};
 
 static ResourceLocation SLIME_LOCATION;
 
@@ -49,7 +41,7 @@ void SlimeRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partial
 
     boost::shared_ptr<Slime> slime = boost::static_pointer_cast<Slime>(entity);
     float size = static_cast<float>(slime->getSize());
-    float squish = slime->mOldSquish + (slime->mSquish - slime->mOldSquish) * partialTicks;
+    float squish = slime->mSquishO + (slime->mSquish - slime->mSquishO) * partialTicks;
     float scale = 1.0f / (squish / (size * 0.5f + 1.0f) + 1.0f);
     float scaledSize = scale * size;
 

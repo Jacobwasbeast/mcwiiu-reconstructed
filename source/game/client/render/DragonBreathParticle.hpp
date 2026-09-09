@@ -37,7 +37,7 @@ public:
     };
 
 private:
-    float baseAlpha;
+    float baseSize;
     bool hasHitGround;
 };
 

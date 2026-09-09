@@ -35,7 +35,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
                              float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                              bool bUseDisplayList)
 {
-    if (blockEntity->GetType() != 0x0120021200000000ULL)
+    if (blockEntity->GetType() != 0x01200212ULL)
     {
         return;
     }

@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/client/render/CowModel.hpp"
+#include "game/client/render/MobRenderer.hpp"
 
 class Entity;
 class EntityRenderDispatcher;
@@ -11,7 +11,7 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
-class MushroomCowRenderer : public CowModel
+class MushroomCowRenderer : public MobRenderer
 {
 public:
     MushroomCowRenderer(EntityRenderDispatcher* dispatcher);

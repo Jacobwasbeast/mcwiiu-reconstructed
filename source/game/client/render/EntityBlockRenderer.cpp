@@ -16,9 +16,6 @@
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
 #include "game/world/block/SkullBlockEntity.hpp"
 
-extern BlockEntityRenderDispatcher* gBlockEntityRenderDispatcher;
-extern SkullBlockRenderer* gSkullBlockRenderer;
-
 EntityBlockRenderer* EntityBlockRenderer::instance = NULL;
 
 EntityBlockRenderer::EntityBlockRenderer()
@@ -41,22 +38,23 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     if (itemType == Items::banner)
     {
         mBannerBlockEntity->setItemValues(item, false);
-        gBlockEntityRenderDispatcher->render(mBannerBlockEntity, 0.0, 0.0, 0.0,
+        BlockEntityRenderDispatcher::instance->render(mBannerBlockEntity, 0.0, 0.0, 0.0,
                                              partialTicks, true, 1.0F, true);
     }
     else if (itemType == Items::bed)
     {
         mBedBlockEntity->setItemValues(item);
-        gBlockEntityRenderDispatcher->render(mBedBlockEntity, 0.0, 0.0, 0.0,
+        BlockEntityRenderDispatcher::instance->render(mBedBlockEntity, 0.0, 0.0, 0.0,
                                              partialTicks, true, 1.0F, true);
     }
     else if (itemType == Items::skull)
     {
-        if (gSkullBlockRenderer != NULL)
+        if (BlockEntityRenderDispatcher::instance != NULL &&
+            BlockEntityRenderDispatcher::instance->getRenderer(0x01200207ULL) != NULL)
         {
             GlStateManager::pushMatrix();
             GlStateManager::disableCull();
-            gSkullBlockRenderer->renderSkull(0.0F, 0.0F, 0.0F, NULL, 180.0F,
+            static_cast<SkullBlockRenderer*>(BlockEntityRenderDispatcher::instance->getRenderer(0x01200207ULL))->renderSkull(0.0F, 0.0F, 0.0F, NULL, 180.0F,
                                               0.0F, item->getAuxValue(), -1, 0.5F,
                                               bUseDisplayList);
             GlStateManager::enableCull();
@@ -65,19 +63,19 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     }
     else if (itemType == Item::byBlock(Blocks::ender_chest))
     {
-        gBlockEntityRenderDispatcher->render(mEnderChestBlockEntity, 0.0, 0.0, 0.0,
+        BlockEntityRenderDispatcher::instance->render(mEnderChestBlockEntity, 0.0, 0.0, 0.0,
                                              partialTicks, bTranslucent, 1.0F,
                                              bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::trapped_chest))
     {
-        gBlockEntityRenderDispatcher->render(mTrappedChestBlockEntity, 0.0, 0.0, 0.0,
+        BlockEntityRenderDispatcher::instance->render(mTrappedChestBlockEntity, 0.0, 0.0, 0.0,
                                              partialTicks, bTranslucent, 1.0F,
                                              bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::conduit))
     {
-        gBlockEntityRenderDispatcher->render(mConduitBlockEntity, 0.0, 0.0, 0.0,
+        BlockEntityRenderDispatcher::instance->render(mConduitBlockEntity, 0.0, 0.0, 0.0,
                                              partialTicks, bTranslucent, 1.0F,
                                              bUseDisplayList);
     }
@@ -121,7 +119,7 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
 
         if (color == NULL)
         {
-            gBlockEntityRenderDispatcher->render(mChestBlockEntity, 0.0, 0.0, 0.0,
+            BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0,
                                                  partialTicks, bTranslucent, 1.0F,
                                                  bUseDisplayList);
         }
@@ -129,7 +127,7 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
         {
             ShulkerBoxBlockEntity shulkerBoxEntity(color);
             *mShulkerBoxBlockEntity = shulkerBoxEntity;
-            gBlockEntityRenderDispatcher->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0,
+            BlockEntityRenderDispatcher::instance->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0,
                                                  partialTicks, bTranslucent, 1.0F,
                                                  bUseDisplayList);
         }

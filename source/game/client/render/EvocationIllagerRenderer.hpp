@@ -4,10 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/MobRenderer.hpp"
-
-#define private protected
 #include "game/world/generation/ItemInHandLayer.hpp"
-#undef private
 
 class Entity;
 class EntityRenderDispatcher;

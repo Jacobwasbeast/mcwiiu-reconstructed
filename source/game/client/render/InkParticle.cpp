@@ -75,7 +75,7 @@ void InkParticle::tick()
 
 uint64_t InkParticle::GetType()
 {
-    return 0x0008020300000000LL;
+    return 0x0000000000080203ULL;
 }
 
 Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

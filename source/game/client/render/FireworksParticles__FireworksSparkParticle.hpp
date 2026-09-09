@@ -15,6 +15,10 @@ class ParticleEngine;
 class FireworksParticles
 {
 public:
+    class FireworksSparkParticle;
+    class FireworksStarter;
+    class Provider;
+
     class FireworksSparkParticle : public SimpleAnimatedParticle
     {
     public:

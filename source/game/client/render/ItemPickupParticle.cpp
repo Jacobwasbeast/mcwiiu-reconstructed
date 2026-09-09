@@ -30,7 +30,7 @@ ItemPickupParticle::~ItemPickupParticle()
 
 uint64_t ItemPickupParticle::GetType()
 {
-    return 0x0008022500000000LL;
+    return 0x0000000000080225ULL;
 }
 
 void ItemPickupParticle::tick()

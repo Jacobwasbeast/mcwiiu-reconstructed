@@ -10,14 +10,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
-
-class Mob : public Entity
-{
-public:
-    virtual bool isCustomNameVisible();
-    virtual bool isLeashed();
-    virtual boost::shared_ptr<Entity> getLeashHolder();
-};
+#include "game/entity/mob/Mob.hpp"
 
 MobRenderer::MobRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
     : LivingEntityRenderer(dispatcher, model, shadowRadius)

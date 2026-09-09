@@ -1,10 +1,11 @@
 #include "game/client/render/SilverfishRenderer.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/SilverfishModel.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-SilverfishRenderer::SilverfishRenderer(EntityRenderDispatcher*)
-    : SilverfishModel(ModelDefinition())
+SilverfishRenderer::SilverfishRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new SilverfishModel(ModelDefinition()), 0.3F)
 {
 }
 

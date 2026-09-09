@@ -22,7 +22,7 @@ FishRenderer::~FishRenderer()
 Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {
     if (entity->GetType() == 0x000000000D502003ULL)
-        return getModel(entity);
+        return LivingEntityRenderer::getModel(entity);
     return mModel;
 }
 

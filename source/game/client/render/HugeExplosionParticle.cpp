@@ -103,7 +103,7 @@ int HugeExplosionParticle::getParticleTexture()
 
 uint64_t HugeExplosionParticle::GetType()
 {
-    return 0x0000000000080216LL;
+    return 0x0000000000080216ULL;
 }
 
 Particle* HugeExplosionParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,

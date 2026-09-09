@@ -24,7 +24,7 @@ SplashParticle::~SplashParticle()
 
 uint64_t SplashParticle::GetType()
 {
-    return 0x0008020e00000000LL;
+    return 0x000000000008020EULL;
 }
 
 Particle* SplashParticle::Provider::createParticle(ePARTICLE_TYPE type,

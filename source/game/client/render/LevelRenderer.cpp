@@ -27,11 +27,13 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/Player.hpp"
 
-extern unsigned int gChunkDimensionSizes[2];
-extern unsigned int gChunkDimensionBases[2];
-extern int gEndChunkOriginX;
-extern int gEndChunkOriginZ;
-extern unsigned int gEndChunkData;
+unsigned int gChunkDimensionSizes[2] = { 0x19000, 0x1a900 };
+unsigned int gChunkDimensionBases[2] = { 0, 0x19000 };
+static const int gEndChunkCenterX = 0;
+static const int gEndChunkCenterZ = 0;
+static const int gEndChunkOuterX = 0;
+static const int gEndChunkOuterZ = 25;
+static const unsigned int gEndChunkData = 0x1a900;
 
 int getChunkIndex(int dimension, int x, int y, int z)
 {
@@ -57,20 +59,20 @@ int getChunkIndex(int dimension, int x, int y, int z)
         if (dimension != 2)
             return -1;
 
-        xOffset = (unsigned int)((x + 9) - gEndChunkOriginX);
-        zOffset = (unsigned int)((z + 9) - gEndChunkOriginZ);
+        xOffset = (unsigned int)((x + 9) - gEndChunkCenterX);
+        zOffset = (unsigned int)((z + 9) - gEndChunkCenterZ);
         if (xOffset < 0x12 && y < 16 && zOffset < 0x12)
             return (int)(gEndChunkData + xOffset * 0x120 + zOffset * 16 + y);
 
-        xOffset = (unsigned int)((x + 6) - gEndChunkOriginX);
-        zOffset = (unsigned int)((z + 6) - gEndChunkOriginZ);
+        xOffset = (unsigned int)((x + 6) - gEndChunkOuterX);
+        zOffset = (unsigned int)((z + 6) - gEndChunkOuterZ);
         if (xOffset < 0xc && y < 16 && zOffset < 0xc)
             return (int)(gEndChunkData + xOffset * 0xc0 + zOffset * 16 + y + 0x1440);
     }
     return -1;
 }
 
-extern unsigned int gGlobalChunkCount;
+unsigned int gGlobalChunkCount = 0x1c640;
 
 LevelRenderer::DestroyedBlockManager::RecentBlock::RecentBlock(const BlockPos& blockPos, Level* sourceLevel)
     : pos(blockPos), level(sourceLevel), ticks(20), remove(false)

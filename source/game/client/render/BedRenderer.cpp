@@ -11,7 +11,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BedBlockEntity.hpp"
 
-static ResourceLocation BED_TEXTURE((_TEXTURE_NAME)51);
+static ResourceLocation BED_TEXTURE((_TEXTURE_NAME)207);
 
 BedRenderer::BedRenderer()
 {
@@ -28,18 +28,6 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
                          float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                          bool bUseDisplayList)
 {
-    boost::shared_ptr<BedBlockEntity> bed = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
-    unsigned int direction = 0;
-    int colour = 0;
-
-    if (bed->getLevel() != NULL)
-    {
-        if (!bed->isHeadPiece())
-            return;
-        direction = (unsigned int)(bed->getData() & 3);
-    }
-    colour = bed->getColor()->getBedColor();
-
     if (mModel->modelVersion() != mModelVersion)
     {
         delete mModel;
@@ -47,68 +35,88 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
         mModelVersion = mModel->modelVersion();
     }
 
+    boost::shared_ptr<BedBlockEntity> bed = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
+    unsigned int direction = 0;
+    const DyeColor* colour = bed->getColor();
+    if (bed->getLevel() != NULL)
+    {
+        if (!bed->isHeadPiece())
+            return;
+        direction = (unsigned int)(bed->getData() & 3);
+    }
+
+    bindTexture(&BED_TEXTURE);
     GlStateManager::pushMatrix();
 
-    float xOffset = 0.5625F;
-    float zOffset = 0.5625F;
-    float rotation = 0.5625F;
+    float xOffset = 0.0F;
+    float zOffset = 0.0F;
+    float rotation = 0.0F;
     const float ninetyDegrees = 90.0F;
     const float unit = 1.0F;
 
     if (mModel->hasOverriddenParts())
     {
-        xOffset = 0.0F;
-        zOffset = 0.5625F;
-        rotation = 0.5625F;
-        if (direction == Direction::WEST->get2DDataValue())
+        if (direction == Direction::NORTH->get2DDataValue())
+        {
+            xOffset = 0.0F;
+            zOffset = 0.5F;
+            rotation = 0.0F;
+        }
+        else if (direction == Direction::SOUTH->get2DDataValue())
         {
             xOffset = 1.0F;
-            zOffset = 0.0F;
+            zOffset = 0.5F;
             rotation = 180.0F;
         }
-        else if (direction == Direction::NORTH->get2DDataValue())
+        else if (direction == Direction::WEST->get2DDataValue())
         {
-            xOffset = 1.0F;
-            zOffset = 0.0F;
+            xOffset = 0.5F;
+            zOffset = 1.0F;
             rotation = -90.0F;
         }
         else if (direction == Direction::EAST->get2DDataValue())
         {
+            xOffset = 0.5F;
             zOffset = 0.0F;
             rotation = 90.0F;
         }
     }
     else
     {
-        xOffset = 0.5625F;
-        zOffset = 0.5625F;
-        rotation = 0.5625F;
-        if (direction == Direction::WEST->get2DDataValue())
+        if (direction == Direction::NORTH->get2DDataValue())
+        {
+            xOffset = 0.0F;
+            zOffset = 0.0F;
+            rotation = 0.0F;
+        }
+        else if (direction == Direction::SOUTH->get2DDataValue())
         {
             xOffset = 1.0F;
             zOffset = 1.0F;
             rotation = 180.0F;
         }
-        else if (direction == Direction::NORTH->get2DDataValue())
+        else if (direction == Direction::WEST->get2DDataValue())
         {
-            xOffset = 1.0F;
+            xOffset = 0.0F;
+            zOffset = 1.0F;
             rotation = -90.0F;
         }
         else if (direction == Direction::EAST->get2DDataValue())
         {
-            zOffset = 1.0F;
+            xOffset = 1.0F;
+            zOffset = 0.0F;
             rotation = 90.0F;
         }
     }
 
-    bindTexture(&BED_TEXTURE);
+    GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x + xOffset, (float)y + 0.5625F, (float)z + zOffset);
     GlStateManager::rotatef(ninetyDegrees, unit, 0.0F, 0.0F);
     GlStateManager::rotatef(rotation, 0.0F, 0.0F, unit);
     GlStateManager::enableRescaleNormal();
     GlStateManager::pushMatrix();
 
-    unsigned int colourValue = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)colour);
+    unsigned int colourValue = Minecraft::GetInstance()->getColourTable()->getColour(colour->getBedColor());
     GlStateManager::color4f((float)((colourValue >> 16) & 0xff) / 255.0F,
                             (float)((colourValue >> 8) & 0xff) / 255.0F,
                             (float)(colourValue & 0xff) / 255.0F, alpha);
@@ -118,12 +126,12 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
     GlStateManager::matrixMode(2);
     GlStateManager::loadIdentity();
-    GlStateManager::translatef(0.5625F, 0.0F, 0.5625F);
+    GlStateManager::translatef(0.0F, 0.5F, 0.0F);
     GlStateManager::matrixMode(0);
     mModel->render(bUseDisplayList);
     GlStateManager::matrixMode(2);
     GlStateManager::loadIdentity();
-    GlStateManager::translatef(0.5625F, 0.0F, 0.5625F);
+    GlStateManager::translatef(0.0F, 0.0F, 0.0F);
     GlStateManager::matrixMode(0);
     GlStateManager::popMatrix();
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, alpha);
@@ -142,13 +150,12 @@ void BedRenderer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    std::wstring modelName = mDefaultModel->getName();
-    if (!pTexturePack->HasCustomModel(modelName))
+    if (!pTexturePack->HasCustomModel(mDefaultModel->getName()))
     {
         mModel = mDefaultModel;
     }
     else
     {
-        mModel = new BedModel(*pTexturePack->GetCustomModel(modelName));
+        mModel = new BedModel(*pTexturePack->GetCustomModel(mDefaultModel->getName()));
     }
 }

@@ -35,6 +35,7 @@ enum IconShaderType
 struct D3DXIMAGE_INFO;
 struct _XSOCIAL_PREVIEWIMAGE;
 struct FFLStoreData;
+struct MEMHeapHeader;
 struct _GX2ContextState;
 struct _GX2VertexShader;
 struct _GX2PixelShader;
@@ -478,7 +479,7 @@ public:
                          C4JRender::ePrimitiveType primitiveType);
     bool InitFFL();
     void ShutdownFFL();
-    int CreateMiiIconTexture(FFLDataSource dataSource, FFLStoreData* storeData, int index, int* texture);
+    void* CreateMiiIconTexture(FFLDataSource dataSource, FFLStoreData* storeData, int index, int* texture);
     void FreeMiiIconTexture(int texture, void* memory);
     void DeleteInternalBuffer(int slot);
 
@@ -557,8 +558,8 @@ private:
     int mNumRetiredCommandBuffers;
     int mCommandBufferVertsDrawn;
     int mCommandBufferVertsDrawnLastFrame;
-    void* mMEM1Heap;
-    void* mBucketHeap;
+    MEMHeapHeader* mMEM1Heap;
+    MEMHeapHeader* mBucketHeap;
     void* mReservedMEM1;
     bool mScreenGrabRequested;
     float mColour[4];

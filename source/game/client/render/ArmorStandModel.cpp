@@ -90,7 +90,13 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
         mArmorStandRightArm->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
         mArmorStandRightArm->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;
 
-        mArmorStandBase->mXRot = -(entity->mYRot * degreesToRadians);
+        mArmorStandLeftArm->mXRot = (float)armorStand->getBodyPose()->x * degreesToRadians;
+        mArmorStandLeftArm->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
+        mArmorStandLeftArm->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;
+
+        mArmorStandBase->mXRot = 0.0f;
+        mArmorStandBase->mYRot = -(entity->mYRot * degreesToRadians);
+        mArmorStandBase->mZRot = 0.0f;
     }
 }
 

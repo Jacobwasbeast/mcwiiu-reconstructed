@@ -7,8 +7,8 @@
 
 static ResourceLocation RABBIT_TEXTURES[8];
 
-RabbitRenderer::RabbitRenderer(EntityRenderDispatcher*)
-    : RabbitModel(ModelDefinition())
+RabbitRenderer::RabbitRenderer(EntityRenderDispatcher* dispatcher)
+    : MobRenderer(dispatcher, new RabbitModel(ModelDefinition()), 0.3f)
 {
 }
 

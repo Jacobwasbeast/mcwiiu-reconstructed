@@ -1,6 +1,7 @@
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/client/render/Texture.hpp"
 #include "game/core/BufferedReader.hpp"
+#include "game/core/ByteBuffer.hpp"
 #include <sstream>
 #include <cstdlib>
 
@@ -72,9 +73,36 @@ unsigned int TextureAtlasSprite::getSourceWidth() const { return mSource ? mSour
 unsigned int TextureAtlasSprite::getSourceHeight() const { return mSource ? mSource->getHeight() : 32; }
 
 void TextureAtlasSprite::uploadInterpolatedFrame() {
- if(!mSource || !mOwnTexture || !mAnimationFrames || mAnimationFrames->empty()){ if(mSource&&mOwnTexture)mSource->blit(mX,mY,mOwnTexture,mRotated); return; }
- std::pair<int,int> cur=(*mAnimationFrames)[mFrame]; std::pair<int,int> next=(*mAnimationFrames)[(mFrame+1)%mAnimationFrames->size()];
- Texture* a=getFrame(cur.first); Texture* b=getFrame(next.first); if(!a||!b){mSource->blit(mX,mY,mOwnTexture,mRotated);return;} mSource->blit(mX,mY,mOwnTexture,mRotated);
+ if (!mSource || !mOwnTexture || !mAnimationFrames || mAnimationFrames->empty()) {
+  if (mSource && mOwnTexture) mSource->blit(mX, mY, mOwnTexture, mRotated);
+  return;
+ }
+ const std::pair<int,int>& cur = (*mAnimationFrames)[mFrame];
+ const std::pair<int,int>& next = (*mAnimationFrames)[(mFrame + 1) % mAnimationFrames->size()];
+ Texture* first = getFrame(cur.first);
+ Texture* second = getFrame(next.first);
+ ByteBuffer* firstData = first ? reinterpret_cast<ByteBuffer*>(first->getData(0)) : NULL;
+ ByteBuffer* secondData = second ? reinterpret_cast<ByteBuffer*>(second->getData(0)) : NULL;
+ ByteBuffer* outputData = reinterpret_cast<ByteBuffer*>(mOwnTexture->getData(0));
+ if (!firstData || !secondData || !outputData || cur.second <= 0) {
+  mSource->blit(mX, mY, mOwnTexture, mRotated);
+  return;
+ }
+ const int width = static_cast<int>(mOwnTexture->getWidth());
+ const int height = static_cast<int>(mOwnTexture->getHeight());
+ const int frameTime = mFrameTime < cur.second ? mFrameTime : cur.second;
+ const int firstWeight = 256 - (frameTime * 256 / cur.second);
+ const int secondWeight = 256 - firstWeight;
+ unsigned char* a = firstData->getBuffer();
+ unsigned char* b = secondData->getBuffer();
+ unsigned char* out = outputData->getBuffer();
+ for (int i = 0; i < width * height; ++i) {
+  const int offset = i * 4;
+  out[offset] = a[offset];
+  for (int channel = 1; channel < 4; ++channel)
+   out[offset + channel] = static_cast<unsigned char>((a[offset + channel] * firstWeight + b[offset + channel] * secondWeight) >> 8);
+ }
+ mSource->blit(mX, mY, mOwnTexture, mRotated);
 }
 void TextureAtlasSprite::cycleFrames() {
  if(!mAnimationFrames){ if(mFrames&&!mFrames->empty()){mFrame=(mFrame+1)%mFrames->size();mSource->blit(mX,mY,(*mFrames)[mFrame],mRotated);} return; }

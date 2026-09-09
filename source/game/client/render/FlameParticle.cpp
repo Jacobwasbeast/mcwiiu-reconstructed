@@ -80,7 +80,7 @@ void FlameParticle::tick()
 
 uint64_t FlameParticle::GetType()
 {
-    return 0x0008020500000000LL;
+    return 0x0000000000080205ULL;
 }
 
 Particle* FlameParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

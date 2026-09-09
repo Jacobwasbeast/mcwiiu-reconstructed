@@ -44,7 +44,7 @@ void SuspendedParticle::tick()
 
 uint64_t SuspendedParticle::GetType()
 {
-    return 0x0008021900000000LL;
+    return 0x0000000000080219ULL;
 }
 
 Particle* SuspendedParticle::Provider::createParticle(ePARTICLE_TYPE type,

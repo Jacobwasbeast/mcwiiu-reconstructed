@@ -87,7 +87,7 @@ void BreakingItemParticle::_init(Item* item, int meta)
 
 uint64_t BreakingItemParticle::GetType()
 {
-    return 0x0008020200000000LL;
+    return 0x0000000000080202ULL;
 }
 
 Particle* BreakingItemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

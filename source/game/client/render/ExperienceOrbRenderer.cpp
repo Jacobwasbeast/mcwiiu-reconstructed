@@ -5,17 +5,12 @@
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/ExperienceOrb.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
-
-class ExperienceOrb : public Entity
-{
-public:
-    unsigned char getIcon();
-};
 
 static ResourceLocation sExperienceOrbTexture;
 

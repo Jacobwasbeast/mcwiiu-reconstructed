@@ -59,6 +59,6 @@ void FireworksOverlayParticle::render(BufferBuilder* buffer,
 
 uint64_t FireworksOverlayParticle::GetType()
 {
-    return 0x8022200000000LL;
+    return 0x0000000000080222ULL;
 }
 }

@@ -6,23 +6,11 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/core/Painting.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/BlockPos.hpp"
-
-class Level
-{
-public:
-    int getLightColor(const BlockPos& pos, int lightValue, int cacheIndex);
-};
-
-class Painting : public Entity
-{
-public:
-    BlockPos getPos();
-    virtual int getWidth();
-    virtual int getHeight();
-};
+#include "game/world/Level.hpp"
 
 PaintingRenderer::PaintingRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher), mRandom(new Random())

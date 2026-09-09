@@ -60,7 +60,7 @@ void ChestRefillParticle::_init(Level* level, double x, double y, double z,
 
 uint64_t ChestRefillParticle::GetType()
 {
-    return 0x0008020100000000LL;
+    return 0x0000000000080201ULL;
 }
 
 Particle* ChestRefillParticle::Provider::createParticle(ePARTICLE_TYPE type,

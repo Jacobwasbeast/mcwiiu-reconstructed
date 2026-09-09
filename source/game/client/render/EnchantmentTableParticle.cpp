@@ -79,7 +79,7 @@ void EnchantmentTableParticle::tick()
 
 uint64_t EnchantmentTableParticle::GetType()
 {
-    return 0x0008021c00000000LL;
+    return 0x000000000008021CULL;
 }
 
 Particle* EnchantmentTableParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

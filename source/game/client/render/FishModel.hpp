@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/FishRenderer.hpp"
 
 class Entity;
 class LivingEntity;
@@ -15,7 +16,7 @@ class ModelPartSkin;
 class FishModel : public Model
 {
 public:
-    FishModel(const ModelDefinition& modelDefinition, int fishType, int variant);
+    FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishType fishType, int variant);
     virtual ~FishModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
@@ -50,7 +51,7 @@ private:
     ModelPartSkin* mPart18;
     ModelPartSkin* mPart19;
     ModelPartSkin* mPart20;
-    int mFishType;
+    FishRenderer::FishType mFishType;
     int mVariant;
     unsigned int : 32;
     float mAnimationScale;

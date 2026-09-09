@@ -29,6 +29,7 @@ class LevelChunk;
 class ElementStorage;
 class CompressedBlockStorage;
 class SparseDataStorage;
+class FloatBuffer;
 
 class GameRenderer
 {
@@ -81,7 +82,7 @@ public:
     void getTargetFogColor(const BlockPos&, float&, float&, float&);
     double modifyFogDistance(const BlockPos&, float, float);
     void setupClearColor(float);
-    unsigned int getBuffer(float, float, float, float);
+    FloatBuffer* getBuffer(float, float, float, float);
     void resetFogColor(bool);
     void setupFog(int, float);
     void prepareAndRenderClouds(LevelRenderer*, float, int, double, double, double);
@@ -130,6 +131,7 @@ private:
     unsigned char mPrefix[48];
     Minecraft* mMinecraft;
     ResourceManager* mResourceManager;
+    MapRenderer* mMapRenderer;
     Random mRandom;
     unsigned char mRandomTail[24];
     SmoothFloat mFov;
@@ -139,6 +141,8 @@ private:
     SmoothFloat mView;
     SmoothFloat mLight;
     unsigned char mData[8752];
+    FloatBuffer* mBuffer;
+    bool mRenderBlockOutline;
 };
 
 #endif

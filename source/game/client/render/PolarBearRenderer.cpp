@@ -16,9 +16,8 @@ PolarBearRenderer::~PolarBearRenderer()
 {
 }
 
-const ResourceLocation* PolarBearRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
+const ResourceLocation* PolarBearRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    (void)entity;
     return &POLAR_BEAR_LOCATION;
 }
 

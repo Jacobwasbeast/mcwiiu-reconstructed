@@ -14,12 +14,11 @@ SheepModel::SheepModel(const ModelDefinition& modelDefinition)
     if (!modelDefinition.DoesOverrideModel())
     {
         delete mHead;
-        delete mBody;
-
         mHead = new ModelPartSkin(this, 0, 0, NULL);
         mHead->addBox(-3.0f, -4.0f, -6.0f, 6, 6, 8, 0.0f);
         mHead->setPos(0.0f, 6.0f, -8.0f);
 
+        delete mBody;
         mBody = new ModelPartSkin(this, 28, 8, NULL);
         mBody->addBox(-4.0f, -10.0f, -7.0f, 8, 16, 6, 0.0f);
         mBody->setPos(0.0f, 5.0f, 2.0f);
@@ -46,7 +45,7 @@ void SheepModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float 
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
     boost::shared_ptr<Sheep> sheep = boost::dynamic_pointer_cast<Sheep>(entity);
-    mHead->mX = 9.0f * sheep->getHeadEatPositionScale(partialTicks) + 6.0f;
+    mHead->mY = 9.0f * sheep->getHeadEatPositionScale(partialTicks) + 6.0f;
     mHeadEatAngleScale = sheep->getHeadEatAngleScale(partialTicks);
 }
 

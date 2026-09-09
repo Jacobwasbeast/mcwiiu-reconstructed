@@ -10,7 +10,7 @@
 #include "game/world/generation/VillagerGolem.hpp"
 #include "game/world/generation/VillagerGolemFlowerLayer.hpp"
 
-static ResourceLocation VILLAGER_GOLEM_LOCATION;
+static ResourceLocation sTextureLocation;
 
 VillagerGolemRenderer::VillagerGolemRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new VillagerGolemModel(0.0F, -7.0F, ModelDefinition()), 0.5F)
@@ -24,7 +24,7 @@ VillagerGolemRenderer::~VillagerGolemRenderer()
 
 const ResourceLocation* VillagerGolemRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    return &VILLAGER_GOLEM_LOCATION;
+    return &sTextureLocation;
 }
 
 Model* VillagerGolemRenderer::createModel(const ModelDefinition& definition)

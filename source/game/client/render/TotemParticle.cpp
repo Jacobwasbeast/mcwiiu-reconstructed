@@ -32,7 +32,7 @@ TotemParticle::~TotemParticle()
 
 uint64_t TotemParticle::GetType()
 {
-    return 0x0008022b00000000ULL;
+    return 0x000000000008022BULL;
 }
 
 Particle* TotemParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

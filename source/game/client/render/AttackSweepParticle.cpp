@@ -7,12 +7,12 @@
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)3);
+static ResourceLocation PARTICLES_LOCATION((_TEXTURE_NAME)52);
 
 AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
                                          double x, double y, double z,
                                          double xa, double ya, double za)
-    : Particle(level, x, y, z, xa, ya, za)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
     , textures(textures)
 {
     quadSize = (float)(-(xa * 0.5 - 1.0));
@@ -40,7 +40,7 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
     {
         textures->bindTexture(&PARTICLES_LOCATION);
 
-        float u0 = (float)(frame - (frame & 3)) * 0.25f;
+        float u0 = (float)(frame % 4) * 0.25f;
         float u1 = (float)(frame / 2) * 0.5f;
         float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
         float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
@@ -48,7 +48,7 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
         float halfHeight = ya * quadSize * 0.5f;
         float width = xa2 * quadSize;
         float depth = za2 * quadSize;
-        float left = py - xa * quadSize;
+        float left = px - xa * quadSize;
         float back = pz - za * quadSize;
 
         GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -56,10 +56,12 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
         Lighting::turnOff();
         buffer->begin(3);
         buffer->color(rCol, gCol, bCol);
-        buffer->vertexUV(left - width, px - halfHeight, back - depth, u0 + 0.25f, u1 + 0.5f);
-        buffer->vertexUV(left + width, px + halfHeight, back + depth, u0 + 0.25f, u1);
-        buffer->vertexUV(py + width, px + halfHeight, pz + depth, u0, u1);
-        buffer->vertexUV(py - width, px - halfHeight, pz - depth, u0, u1 + 0.5f);
+        buffer->vertexUV(left - width, py - halfHeight, back - depth, u0 + 0.24975f, u1 + 0.4995f);
+        buffer->vertexUV(left + width, py + halfHeight, back + depth, u0 + 0.24975f, u1);
+        buffer->vertexUV(px + xa * quadSize + width, py + halfHeight,
+                         pz + za * quadSize + depth, u0, u1);
+        buffer->vertexUV(px + xa * quadSize - width, py - halfHeight,
+                         pz + za * quadSize - depth, u0, u1 + 0.4995f);
         buffer->end();
         GlStateManager::enableLighting();
     }
@@ -87,7 +89,7 @@ int AttackSweepParticle::getParticleTexture()
 
 uint64_t AttackSweepParticle::GetType()
 {
-    return 0x0008022800000000ULL;
+    return 0x0000000000080228ULL;
 }
 
 Particle* AttackSweepParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level,

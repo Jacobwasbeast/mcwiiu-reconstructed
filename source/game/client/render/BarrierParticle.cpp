@@ -60,7 +60,7 @@ void BarrierParticle::render(BufferBuilder* buffer,
 
 uint64_t BarrierParticle::GetType()
 {
-    return 0x0008022300000000LL;
+    return 0x0000000000080223ULL;
 }
 
 Particle* BarrierParticle::Provider::createParticle(ePARTICLE_TYPE type,

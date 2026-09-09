@@ -30,7 +30,6 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
 
-extern DLCManager g_DLCManager;
 extern CStorage* gStorage;
 
 void Sleep(unsigned int milliseconds);
@@ -108,7 +107,7 @@ std::wstring DLCTexturePack::getResource(const std::wstring& fileName)
 
 DLCPack* DLCTexturePack::getDLCPack()
 {
-    return m_loadedPack;
+    return m_dlcPack;
 }
 
 std::wstring DLCTexturePack::getDesc1()
@@ -288,7 +287,7 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
         {
             std::wstring fullDataPath = gApp.getFilePath(
                 pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK\\");
-            bool loaded = g_DLCManager.readDLCDataFile(numItemsAdded, fullDataPath,
+            bool loaded = gApp.mDLCManager.readDLCDataFile(numItemsAdded, fullDataPath,
                                                        pack->m_loadedPack,
                                                        pack->m_dlcPack->GetPackId(), false);
             if (loaded)
@@ -454,7 +453,7 @@ void DLCTexturePack::unloadUI()
     if (m_uiLoaded)
         setHasAudio(false);
     AbstractTexturePack::unloadUI();
-    g_DLCManager.removePack(m_loadedPack);
+    gApp.mDLCManager.removePack(m_loadedPack);
     m_loadedPack = NULL;
     delete m_archiveFile;
     m_archiveFile = NULL;
