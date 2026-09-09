@@ -13,6 +13,8 @@ public:
     Result ConvertToStationIndex(StationIndex*, std::uint64_t) const;
     Result m_transportStatus;
     ProtocolManager m_protocolManager;
+    unsigned short m_stationNum;
+    Result m_connectionError;
     StationIdTable* m_stationIdTable;
 };
 extern Transport* g_piaTransport;

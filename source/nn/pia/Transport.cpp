@@ -2,7 +2,8 @@
 namespace nn { namespace pia { namespace transport {
 Transport* g_piaTransport = 0;
 Transport::Transport()
-    : m_transportStatus(0), m_stationIdTable(0)
+    : m_transportStatus(static_cast<Result>(0x10c08)), m_stationNum(0),
+      m_connectionError(0), m_stationIdTable(0)
 {
 }
 

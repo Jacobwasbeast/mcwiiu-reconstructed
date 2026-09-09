@@ -13,7 +13,15 @@ class NetworkFactory
 public:
     NetworkFactory();
     virtual ~NetworkFactory();
+    virtual unsigned int GetMaxStationNum() const = 0;
+    virtual unsigned int GetHeaderSize() const = 0;
+    virtual unsigned int GetMtuSizeMax() const = 0;
+    virtual unsigned int GetMtuSizeMin() const = 0;
+    virtual int GetDefaultRttInitialPulseInterval() const = 0;
+    virtual bool IsClientRelayConnectionPermitted() const;
+    virtual bool IsStarConnection() const;
     virtual unsigned int IsSupportedProtocol(unsigned char protocolType) const;
+    virtual bool IsBitRateCheckPermitted() const;
 };
 
 }

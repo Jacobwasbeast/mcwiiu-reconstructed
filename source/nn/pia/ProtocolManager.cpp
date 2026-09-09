@@ -32,6 +32,56 @@ void ProtocolManager::Initialize(NetworkFactory* networkFactory)
     m_started = 0;
 }
 
+Result ProtocolManager::Startup(PacketHandler* packetHandler)
+{
+    if (packetHandler == 0)
+        return static_cast<Result>(0x10c07);
+    if (m_started != 0)
+        return static_cast<Result>(0x10c08);
+
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = reinterpret_cast<Protocol*>(
+            reinterpret_cast<char*>(node) - m_nodeOffset);
+        protocol->mStationPacketHandler =
+            reinterpret_cast<unsigned int>(packetHandler);
+    }
+    m_started = 1;
+    return 0;
+}
+
+Result ProtocolManager::StartupProtocols()
+{
+    if (m_started == 0)
+        return static_cast<Result>(0x10c08);
+
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = reinterpret_cast<Protocol*>(
+            reinterpret_cast<char*>(node) - m_nodeOffset);
+        const Result result = protocol->Startup();
+        if (result != 0)
+        {
+            CleanupProtocols();
+            return result;
+        }
+    }
+    return 0;
+}
+
+void ProtocolManager::CleanupProtocols()
+{
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = reinterpret_cast<Protocol*>(
+            reinterpret_cast<char*>(node) - m_nodeOffset);
+        protocol->Cleanup();
+    }
+}
+
 ProtocolId ProtocolManager::CreateProtocolImpl(Protocol* protocol, ProtocolId id)
 {
     const unsigned short value = static_cast<unsigned short>(id);

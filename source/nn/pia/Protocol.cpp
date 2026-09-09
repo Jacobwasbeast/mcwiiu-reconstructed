@@ -45,6 +45,16 @@ unsigned short Protocol::GetProtocolType() const
     return 0;
 }
 
+Result Protocol::StartupWithStationAddress(const common::StationAddress&)
+{
+    return 0;
+}
+
+Result Protocol::Startup()
+{
+    return 0;
+}
+
 void Protocol::SetPort(unsigned char port)
 {
     const unsigned short type = GetProtocolType();
@@ -64,6 +74,16 @@ void Protocol::Cleanup()
 {
 }
 
+Result Protocol::Dispatch()
+{
+    return 0;
+}
+
+Result Protocol::UpdateProtocolEvent(const ProtocolEvent&)
+{
+    return 0;
+}
+
 unsigned int Protocol::IsProtocolFilteringEnabled() const
 {
     return 1;
@@ -76,6 +96,15 @@ UnreliableProtocol::UnreliableProtocol()
 
 UnreliableProtocol::~UnreliableProtocol()
 {
+}
+
+void UnreliableProtocol::Trace(unsigned long long) const
+{
+}
+
+unsigned short UnreliableProtocol::GetProtocolType() const
+{
+    return cProtocolType;
 }
 
 unsigned int UnreliableProtocol::Initialize(unsigned int count)

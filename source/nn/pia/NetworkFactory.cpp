@@ -15,6 +15,21 @@ NetworkFactory::~NetworkFactory()
 {
 }
 
+bool NetworkFactory::IsClientRelayConnectionPermitted() const
+{
+    return false;
+}
+
+bool NetworkFactory::IsStarConnection() const
+{
+    return false;
+}
+
+bool NetworkFactory::IsBitRateCheckPermitted() const
+{
+    return false;
+}
+
 unsigned int NetworkFactory::IsSupportedProtocol(unsigned char protocolType) const
 {
     if (protocolType < 100)
