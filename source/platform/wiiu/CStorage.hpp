@@ -96,7 +96,7 @@ public:
     virtual int EnoughSpaceForAMinSaveGame();
     virtual int GetSaveState();
     virtual int GetSavesInfo(int, SavesInfoCallback, void*, const char*);
-    virtual int ReturnSavesInfo();
+    virtual SAVE_DETAILS* ReturnSavesInfo();
     virtual unsigned long long ClearSavesInfo();
     virtual int LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int), void*);
     virtual int LoadSaveData(SAVE_INFO*, LoadCallback, void*);

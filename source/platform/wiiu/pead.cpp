@@ -1190,6 +1190,7 @@ void Mutex::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 void Mutex::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 
 long long TickSpan::toNanoSeconds() const { return OSTicksToNanoseconds(mTicks); }
+void TickSpan::setNanoSeconds(long long nanoSeconds) { mTicks = OSNanosecondsToTicks(nanoSeconds); }
 
 pead::Event::Event(bool manualReset) : IDisposer() { initialize(manualReset); }
 Event::~Event() {}

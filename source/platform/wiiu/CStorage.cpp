@@ -779,7 +779,7 @@ int CStorage::GetSavesInfo(int, SavesInfoCallback callback, void* context, const
     }
     return 0;
 }
-int CStorage::ReturnSavesInfo() { return m_savesInfoAvailable ? (int)(uintptr_t)m_savesInfo : 0; }
+SAVE_DETAILS* CStorage::ReturnSavesInfo() { return m_savesInfoAvailable ? m_savesInfo : NULL; }
 unsigned long long CStorage::ClearSavesInfo()
 {
     m_savesInfoAvailable = false;

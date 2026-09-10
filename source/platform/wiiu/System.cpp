@@ -51,7 +51,7 @@ uint64_t System::processTimeInMilliSecs()
     return processTime(eTimeGranularity_MilliSecs);
 }
 
-unsigned int System::processTimeInNanoSecs()
+uint64_t System::processTimeInNanoSecs()
 {
     return processTime(eTimeGranularity_NanoSecs);
 }

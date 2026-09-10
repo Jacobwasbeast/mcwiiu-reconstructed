@@ -8,6 +8,7 @@
 #include "game/core/System.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
 #include "nn/nex/DataStoreClientInterface.hpp"
@@ -42,6 +43,7 @@ static bool s_nexInitialised;
 static unsigned int s_errorHandlingState;
 static unsigned int s_errorHandlingResult;
 static nn::nex::NotificationEventHandler* s_matchmakeNotificationHandler;
+static bool s_piaSessionStarted;
 
 unsigned int GetTickCount();
 
@@ -780,7 +782,17 @@ void NQRNetworkManager_WiiU::UpdateMatchmakingAttributes()
 
 bool NQRNetworkManager_WiiU::Pia_StartupSession()
 {
-    m_receiving = true;
+    static const nn::pia::transport::Station::IdentificationToken s_friendToken = { "Friend" };
+    nn::pia::transport::Station::IdentificationToken token = s_friendToken;
+    char* name = gProfile->GetNetworkAccountID();
+    nn::pia::Result result = NQRNetworkManager_WiiU_Pia_StartupSession__FPQ5_2nn3pia9transport7Station19IdentificationTokenPc(&token, name);
+    if (result != 0)
+    {
+        SetLastNetworkError(result);
+        return false;
+    }
+    nn::pia::session::g_piaSession->SetSyncClockPulseInterval(1000);
+    s_piaSessionStarted = true;
     return true;
 }
 
