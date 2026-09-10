@@ -128,7 +128,7 @@ void CreateWorldScreen::keyPressed(wchar_t key, int action)
 {
     EditBox* edit = mNameEdit->mFocused ? mNameEdit : mSeedEdit;
     edit->keyPressed(key, action);
-    if (action == 13)
+    if (key == 13)
     {
         buttonClicked(mButtons[0]);
     }
