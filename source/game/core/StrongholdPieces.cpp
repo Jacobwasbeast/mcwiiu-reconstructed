@@ -196,9 +196,9 @@ static T* createStrongholdPiece(std::vector<StructurePiece*>* pieces, Random& ra
                                 int x, int y, int z, const Direction* direction, int depth)
 {
     BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 7, direction);
-    StartPiece* start = NULL;
+    StrongholdPieces::StartPiece* start = NULL;
     if (pieces != NULL && !pieces->empty())
-        start = static_cast<StartPiece*>(pieces->front());
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
     if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
         StructurePiece::findCollisionPiece(pieces, box) != NULL)
     {
@@ -387,7 +387,17 @@ StrongholdPieces::PrisonHall* StrongholdPieces::PrisonHall::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<PrisonHall>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 9, 5, 11, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new PrisonHall(depth, random, box, direction);
 }
 
 StrongholdPieces::RoomCrossing* StrongholdPieces::RoomCrossing::createPiece(
