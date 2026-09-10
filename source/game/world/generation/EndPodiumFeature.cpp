@@ -12,6 +12,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 
+const BlockPos EndPodiumFeature::END_PODIUM_LOCATION(0, 62, 0);
+
 EndPodiumFeature::EndPodiumFeature(bool active)
     : Feature(false),
       mActive(active)

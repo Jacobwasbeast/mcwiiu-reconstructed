@@ -39,10 +39,10 @@ protected:
     Model* mModelArmorInner;
     Model* mModelArmor;
     LivingEntityRenderer* mRenderer;
+    float mAlpha;
     float mRed;
     float mGreen;
     float mBlue;
-    float mAlpha;
     bool mColorSet;
 };
 

@@ -75,7 +75,7 @@ bool Player::PreventsMeFromSleeping::apply(boost::shared_ptr<Entity> entity) con
     return entity.get() != mPlayer.get();
 }
 
-Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities(), mField0x738(NULL), m_0x784(0), m_0x798(0), mSuid(StatsUID::EMPTY_SUID())
+Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities(), mField0x738(NULL), mXuid(0), m_0x798(0), mSuid(StatsUID::EMPTY_SUID())
 {
     mName = name;
     mIsGuest = false;
@@ -83,7 +83,7 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
 
 StatsUID Player::getSUID()
 {
-    if (mSuid == StatsUID::EMPTY_SUID()) mSuid = StatsUID(m_0x784);
+    if (mSuid == StatsUID::EMPTY_SUID()) mSuid = StatsUID(mXuid);
     return mSuid;
 }
 
@@ -176,9 +176,9 @@ void Player::handleEntityEvent(uint8_t event, int32_t data)
     if (event == 9) {
         completeUsingItem();
     } else if (event == 22) {
-        mField0x760 = 1;
+        mReducedDebugInfo = 1;
     } else if (event == 23) {
-        mField0x760 = 0;
+        mReducedDebugInfo = 0;
     } else {
         LivingEntity::handleEntityEvent(event, data);
     }
@@ -667,7 +667,7 @@ uint32_t Player::isModelPartShown(const PlayerModelPart*)
 
 uint8_t Player::isReducedDebugInfo()
 {
-    return mField0x760 != 0;
+    return mReducedDebugInfo != 0;
 }
 
 bool Player::isAlwaysExperienceDropper()
@@ -695,7 +695,7 @@ double Player::getAttackStrengthScale(float)
     return 1.0;
 }
 
-uint8_t Player::mayBuild()
+bool Player::mayBuild()
 {
     return mAbilities.mMayBuild;
 }
@@ -742,12 +742,12 @@ void Player::openCommandBlock(uint32_t)
 {
 }
 
-uint32_t Player::openTrading(uint32_t, std::wstring*, int32_t)
+int Player::openTrading(boost::shared_ptr<Merchant>, const std::wstring&, int)
 {
     return 0;
 }
 
-uint32_t Player::openContainer(boost::shared_ptr<Container>)
+int Player::openContainer(boost::shared_ptr<Container>)
 {
     return 0;
 }
@@ -757,12 +757,12 @@ int Player::openHorseInventory(boost::shared_ptr<AbstractHorse>, boost::shared_p
     return 0;
 }
 
-uint32_t Player::startBlockInteraction(InteractionObject*)
+int Player::startBlockInteraction(InteractionObject&)
 {
     return 0;
 }
 
-void Player::openItemInstanceGui(not_null_ptr<ItemInstance>, uint32_t)
+void Player::openItemInstanceGui(not_null_ptr<ItemInstance>, InteractionHand::EInteractionHand)
 {
 }
 
@@ -815,13 +815,12 @@ uint32_t Player::GetModelTypeFromTextureId(int32_t value)
 void Player::AdvanceTimerAchievement(int32_t index, int32_t amount)
 {
     if (amount < 1) return;
-    int32_t* timers = &mField0x860;
-    timers[index] += amount;
+    mTimerAchievementTicks[index] += amount;
 }
 
 void Player::SetPowerupTicks(int32_t powerup, int32_t ticks)
 {
-    (&mField0x830)[powerup] = ticks;
+    mPowerupTicks[powerup] = ticks;
 }
 
 void Player::isStarving()
@@ -980,10 +979,10 @@ bool Player::isImmobile()
 uint64_t Player::CheckTimerAchievements()
 {
     if (mLevel == NULL || mLevel->mIsClientSide) return 0;
-    if (mField0x85d == 0 && ++mField0x860 > 72000) {
+    if (mField0x85d == 0 && ++mTimerAchievementTicks[0] > 72000) {
         AwardTimerAchievement(0);
     }
-    if (mField0x85e == 0 && ++mField0x864 > 24000) {
+    if (mField0x85e == 0 && ++mTimerAchievementTicks[1] > 24000) {
         AwardTimerAchievement(1);
     }
     return 0;
@@ -1130,7 +1129,7 @@ void Player::calculateFlapping()
 
 uint32_t Player::CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup)
 {
-    int32_t& ticks = (&mField0x830)[powerup];
+    int32_t& ticks = mPowerupTicks[powerup];
     if (ticks <= 0) return 0;
     --ticks;
     return 1;
@@ -1180,18 +1179,18 @@ void Player::giveExperienceLevels(int32_t levels)
         mExperienceProgress = 0.0f;
     }
 
-    if (levels > 0 && mExperienceLevel % 5 == 0 && mTickCount - mField0x75c > 100) {
+    if (levels > 0 && mExperienceLevel % 5 == 0 && mTickCount - mLastLevelUpTime > 100) {
         float volume = mExperienceLevel > 30 ? 1.0f : static_cast<float>(mExperienceLevel) / 30.0f;
         mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
                           SoundEvents::EXPERIENCE_ORB_PICKUP, getSoundSource(),
                           volume * 0.75f, 1.0f, 16.0f);
-        mField0x75c = mTickCount;
+        mLastLevelUpTime = mTickCount;
     }
 }
 
 void Player::setXuid(PlayerUID xuid)
 {
-    m_0x784 = xuid;
+    mXuid = xuid;
     if ((xuid.flags & 0x20000000) != 0 || mIsGuest) setName(xuid.toString());
 }
 
@@ -1202,7 +1201,7 @@ Scoreboard* Player::GetScoreboard()
 
 Team* Player::getTeam()
 {
-    PlayerUID uid = m_0x784 == PlayerUID(0) ? m_0x798 : m_0x784;
+    PlayerUID uid = mXuid == PlayerUID(0) ? m_0x798 : mXuid;
     return GetScoreboard()->getPlayersTeam(uid);
 }
 
@@ -1211,7 +1210,7 @@ double Player::getSleepRotation()
     if (mField0x6c4 == NULL) return 0.0;
     const BlockState* state = mLevel->getBlockState(*mField0x6c4);
     if (state->getBlock() != Blocks::bed) return 0.0;
-    int direction = state->getValue(HorizontalDirectionalBlock::FACING)->get3DDataValue();
+    int direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get3DDataValue();
     if (direction == 2) return 270.0;
     if (direction == 3) return 90.0;
     if (direction == 5) return 180.0;
@@ -1278,7 +1277,7 @@ void Player::setMainArm(const HumanoidArm* arm)
 void Player::ResetTimerAchievement(int32_t index)
 {
     if (mLevel != NULL && mLevel->mIsClientSide) return;
-    (&mField0x860)[index] = 0;
+    mTimerAchievementTicks[index] = 0;
 }
 
 uint64_t Player::setRespawnPosition(BlockPos* position, bool forced)
@@ -1928,9 +1927,10 @@ uint64_t Player::attack(boost::shared_ptr<Entity> entity)
     float strength = static_cast<float>(getAttackStrengthScale(0.5f));
     float damage = attackDamage == NULL ? 1.0f : static_cast<float>(attackDamage->getValue());
     damage *= 0.2f + strength * strength * 0.8f;
-    boost::shared_ptr<EntityDamageSource> source =
+    EntityDamageSource* source =
         DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(shared_from_this()));
-    bool damaged = entity->hurt(source.get(), damage);
+    bool damaged = entity->hurt(source, damage);
+    delete source;
     if (damaged) {
         boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
         not_null_ptr<ItemInstance> item = getMainHandItem();

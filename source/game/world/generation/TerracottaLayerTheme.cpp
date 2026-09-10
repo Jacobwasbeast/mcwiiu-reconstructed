@@ -88,7 +88,7 @@ void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, 
             Block* block = getColour(colour);
             TypedBoxed<const Direction*> directionValue(direction);
             const BlockState* state = block->defaultBlockState()->setBoxedValue(
-                HorizontalDirectionalBlock::FACING_PROPERTY, &directionValue);
+                HorizontalDirectionalBlock::FACING, &directionValue);
             Vec3i position(x, 0, z);
             int y;
             for (y = 0; y < transaction->mSize.y; ++y)

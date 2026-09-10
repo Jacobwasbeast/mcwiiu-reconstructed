@@ -15,7 +15,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation sWitherArmorLocation;
+static ResourceLocation WITHER_ARMOR_LOCATION;
 
 WitherArmorLayer::WitherArmorLayer(WitherBossRenderer* renderer)
     : mRenderer(renderer)
@@ -35,38 +35,36 @@ void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
                               bool bUseDisplayList)
 {
     boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
+    boost::shared_ptr<Entity> renderEntity = wither;
 
-    if (!wither->isPowered() || wither->IsSpawning())
+    if (wither->isPowered() && !wither->IsSpawning())
     {
-        return;
+        GlStateManager::depthMask(!wither->isInvisible());
+        mRenderer->bindTexture(&WITHER_ARMOR_LOCATION);
+        GlStateManager::matrixMode(2);
+        GlStateManager::loadIdentity();
+
+        float textureOffset = (float)wither->mTickCount + partialTicks;
+        GlStateManager::translatef(Mth::cos(textureOffset * 0.02f) * 3.0f,
+                                   textureOffset * 0.01f, 0.0f);
+
+        GlStateManager::matrixMode(0);
+        GlStateManager::enableBlend();
+        GlStateManager::color4f(0.5f, 0.5f, 0.5f, 1.0f);
+        GlStateManager::disableLighting();
+        GlStateManager::blendFunc(1, 1);
+
+        mModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
+        mModel->copyPropertiesFrom(mRenderer->getModel());
+        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                       headPitch, scale, bUseDisplayList);
+
+        GlStateManager::matrixMode(2);
+        GlStateManager::loadIdentity();
+        GlStateManager::matrixMode(0);
+        GlStateManager::enableLighting();
+        GlStateManager::disableBlend();
     }
-
-    GlStateManager::depthMask(!wither->isInvisible());
-    mRenderer->bindTexture(&sWitherArmorLocation);
-    GlStateManager::matrixMode(5890);
-    GlStateManager::loadIdentity();
-
-    float textureOffset = (float)wither->mTickCount + partialTicks;
-    GlStateManager::translatef(Mth::cos(textureOffset * 0.07f) * 3.0f,
-                                textureOffset * 0.01f, 256.0f);
-
-    GlStateManager::matrixMode(5888);
-    GlStateManager::enableBlend();
-    GlStateManager::color4f(0.5f, 0.5f, 0.5f, 1.0f);
-    GlStateManager::disableLighting();
-    GlStateManager::blendFunc(1, 1);
-
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    mModel->copyPropertiesFrom(mRenderer->getModel());
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
-
-    GlStateManager::matrixMode(5890);
-    GlStateManager::loadIdentity();
-    GlStateManager::matrixMode(5888);
-    GlStateManager::enableLighting();
-    GlStateManager::disableBlend();
-    GlStateManager::depthMask(true);
 }
 
 bool WitherArmorLayer::colorsOnDamage()
@@ -77,22 +75,25 @@ bool WitherArmorLayer::colorsOnDamage()
 void WitherArmorLayer::setupForTexturePack(TexturePack* pTexturePack)
 {
     if (mOriginalModel == NULL)
+    {
         mOriginalModel = mModel;
+    }
 
     if (mModel != mOriginalModel)
     {
         if (mModel != NULL)
+        {
             delete mModel;
+        }
         mModel = NULL;
     }
 
-    std::wstring modelName = L"witherBoss";
-    if (!pTexturePack->HasCustomModel(modelName))
+    if (!pTexturePack->HasCustomModel(L"witherBoss"))
     {
         mModel = mOriginalModel;
     }
     else
     {
-        mModel = new WitherBossModel(0.5f, *pTexturePack->GetCustomModel(modelName));
+        mModel = new WitherBossModel(0.5f, *pTexturePack->GetCustomModel(L"witherBoss"));
     }
 }

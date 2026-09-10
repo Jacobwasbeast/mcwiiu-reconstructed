@@ -38,7 +38,7 @@ void WolfCollarLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         arrayWithLength<const float> colours = collarColor->getTextureDiffuseColors();
         GlStateManager::color3f(colours.data[0], colours.data[1], colours.data[2]);
 
-        boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+        boost::shared_ptr<Entity> renderEntity = wolf;
         mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
                                        netHeadYaw, headPitch, scale, bUseDisplayList);
     }

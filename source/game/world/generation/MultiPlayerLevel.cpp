@@ -5,6 +5,7 @@
 
 #include "game/client/audio/MinecartSoundInstance.hpp"
 #include "game/client/audio/SoundEngine.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/FireworksParticles__FireworksStarter.hpp"
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/core/ClientScoreboard.hpp"
@@ -12,6 +13,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/Minecart.hpp"
 #include "game/core/Options.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/MockedLevelStorage.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -24,7 +26,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/chunk/ClientChunkCache.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 MultiPlayerLevel::MultiPlayerLevel(boost::shared_ptr<LevelStorage> levelStorage,
@@ -200,14 +205,15 @@ void MultiPlayerLevel::tick()
 void MultiPlayerLevel::clearResetRegion(int minX, int minY, int minZ,
                                         int maxX, int maxY, int maxZ)
 {
-    for (std::vector<ResetInfo>::iterator it = mResetInfos.begin(); it != mResetInfos.end();)
+    for (unsigned int i = 0; i < mResetInfos.size(); ++i)
     {
-        const BlockPos& pos = it->pos;
-        if (pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY &&
-            pos.z >= minZ && pos.z <= maxZ)
-            it = mResetInfos.erase(it);
-        else
-            ++it;
+        std::vector<ResetInfo>::iterator it = mResetInfos.begin() + i;
+        if (minX <= it->pos.x && minY <= it->pos.y && minZ <= it->pos.z &&
+            it->pos.x <= maxX && it->pos.y <= maxY && it->pos.z <= maxZ)
+        {
+            mResetInfos.erase(it);
+            --i;
+        }
     }
 }
 
@@ -229,16 +235,13 @@ ChunkSource* MultiPlayerLevel::getChunkSource()
 
 bool MultiPlayerLevel::hasChunk(int x, int z, bool allowEmpty)
 {
-    if (allowEmpty)
-        return true;
-    LevelChunk* chunk = mClientChunkCache->getOrCreateChunk(x, z, false);
-    return chunk != NULL && !chunk->isEmpty();
+    return allowEmpty || !getChunkSource()->getOrCreateChunk(x, z, false)->isEmpty();
 }
 
 bool MultiPlayerLevel::hasChunksAt(int minX, int minY, int minZ,
                                    int maxX, int maxY, int maxZ, bool allowEmpty)
 {
-    return allowEmpty || Level::hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, false);
+    return allowEmpty || Level::hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, allowEmpty);
 }
 
 LevelChunk* MultiPlayerLevel::getChunkIfHasChunk(int x, int z, bool allowEmpty)
@@ -254,7 +257,23 @@ void MultiPlayerLevel::tickBlocks()
 {
     if (mAmbientSoundTime > 0)
         --mAmbientSoundTime;
+
+    mChunksToPoll.clear();
+
+    PIXBeginNamedEvent(0.0f, "Ticking blocks (multiplayer)");
+    PIXBeginNamedEvent(0.0f, "buildAndPrepareChunksToPoll");
     Level::tickBlocks();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Ticking client side blocks");
+    for (int i = 0; i < mChunksToPoll.end(); ++i)
+    {
+        ChunkPos pos = mChunksToPoll.get(i);
+        LevelChunk* chunk = getChunk(pos.x, pos.z);
+        tickClientSideBlocks(pos.x * 16, pos.z * 16, chunk);
+    }
+    PIXEndNamedEvent();
+    PIXEndNamedEvent();
 }
 
 void MultiPlayerLevel::ReloadChunk(int x, int z,
@@ -270,7 +289,7 @@ void MultiPlayerLevel::setChunkVisible(int x, int z, bool visible, bool force)
         if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
             !CGameNetworkManager::sInstance.IsHost() && !hasChunk(x, z, false))
             ReloadChunk(x, z, new std::vector<LevelChunk::BlockChange>(), false);
-        mClientChunkCache->getOrCreateChunk(x, z, false);
+        mClientChunkCache->create(x, z);
     }
     else
     {
@@ -295,7 +314,9 @@ bool MultiPlayerLevel::addEntity(boost::shared_ptr<Entity> entity)
 
 void MultiPlayerLevel::removeEntity(boost::shared_ptr<Entity> entity)
 {
-    mPendingEntityAdditions.erase(entity);
+    EntitySet::iterator pending = mPendingEntityAdditions.find(entity);
+    if (pending != mPendingEntityAdditions.end())
+        mPendingEntityAdditions.erase(pending);
     Level::removeEntity(entity);
     mTrackedEntities.erase(entity);
 }
@@ -303,7 +324,9 @@ void MultiPlayerLevel::removeEntity(boost::shared_ptr<Entity> entity)
 void MultiPlayerLevel::entityAdded(boost::shared_ptr<Entity> entity)
 {
     Level::entityAdded(entity);
-    mPendingEntityAdditions.erase(entity);
+    EntitySet::iterator pending = mPendingEntityAdditions.find(entity);
+    if (pending != mPendingEntityAdditions.end())
+        mPendingEntityAdditions.erase(pending);
 }
 
 void MultiPlayerLevel::entityRemoved(boost::shared_ptr<Entity> entity)
@@ -311,7 +334,7 @@ void MultiPlayerLevel::entityRemoved(boost::shared_ptr<Entity> entity)
     Level::entityRemoved(entity);
     if (mTrackedEntities.find(entity) != mTrackedEntities.end())
     {
-        entity->remove();
+        entity->stopCurrentLerp();
         mPendingEntityAdditions.insert(entity);
     }
 }
@@ -330,6 +353,12 @@ void MultiPlayerLevel::putEntity(int id, boost::shared_ptr<Entity> entity)
 
 boost::shared_ptr<Entity> MultiPlayerLevel::getEntity(int id)
 {
+    for (int i = 0; i < 4; ++i)
+    {
+        if (mMinecraft->mLocalPlayers[i] && mMinecraft->mLocalPlayers[i]->getId() == id)
+            return mMinecraft->mLocalPlayers[i];
+    }
+
     EntityMap::iterator found = mEntitiesById.find(id);
     if (found == mEntitiesById.end())
         return boost::shared_ptr<Entity>();
@@ -338,24 +367,36 @@ boost::shared_ptr<Entity> MultiPlayerLevel::getEntity(int id)
 
 boost::shared_ptr<Entity> MultiPlayerLevel::removeEntity(int id)
 {
+    boost::shared_ptr<Entity> entity;
     EntityMap::iterator found = mEntitiesById.find(id);
-    if (found == mEntitiesById.end())
-        return boost::shared_ptr<Entity>();
-    boost::shared_ptr<Entity> entity = found->second;
-    mEntitiesById.erase(found);
-    mPendingEntityAdditions.erase(entity);
-    removeEntity(entity);
+    if (found != mEntitiesById.end())
+    {
+        entity = found->second;
+        mEntitiesById.erase(found);
+        mTrackedEntities.erase(entity);
+        removeEntity(entity);
+    }
     return entity;
 }
 
 void MultiPlayerLevel::removeEntities(std::vector<boost::shared_ptr<Entity> >* entities)
 {
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+    while (it != entities->end())
     {
-        mPendingEntityAdditions.erase(*it);
-        mTrackedEntities.erase(*it);
-        mEntitiesById.erase((*it)->getId());
+        boost::shared_ptr<Entity> entity = *it;
+        if ((entity->GetType() & 0x0c800000ULL) == 0x0c800000ULL)
+        {
+            it = entities->erase(it);
+        }
+        else
+        {
+            EntitySet::iterator pending = mPendingEntityAdditions.find(entity);
+            if (pending != mPendingEntityAdditions.end())
+                mPendingEntityAdditions.erase(pending);
+            mTrackedEntities.erase(entity);
+            ++it;
+        }
     }
     Level::removeEntities(entities);
 }
@@ -371,12 +412,23 @@ bool MultiPlayerLevel::doSetBlockAndData(const BlockPos& pos, const BlockState* 
 {
     clearResetRegion(pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
     const BlockState* oldState = getBlockState(pos);
-    bool changed = setBlockAndUpdate(pos, state);
+
+    bool liquidFlowChange =
+        (oldState->getBlock() == Blocks::FLOWING_WATER && state->getBlock() == Blocks::WATER) ||
+        (oldState->getBlock() == Blocks::WATER && state->getBlock() == Blocks::FLOWING_WATER) ||
+        (oldState->getBlock() == Blocks::flowing_lava && state->getBlock() == Blocks::lava) ||
+        (oldState->getBlock() == Blocks::lava && state->getBlock() == Blocks::lava) ||
+        (oldState->getBlock() == Blocks::lava && state->getBlock() == Blocks::flowing_lava);
+
+    bool changed = false;
     if (extraState != NULL)
-        changed = setExtraBlock(pos, extraState, 3, false) || changed;
+        changed = setExtraBlock(pos, extraState, 3, false);
+    changed = setBlockAndUpdate(pos, state) || changed;
+
     if (!changed && !CGameNetworkManager::sInstance.IsHost())
         return false;
-    if (CGameNetworkManager::sInstance.IsHost() && oldState != state)
+
+    if (CGameNetworkManager::sInstance.IsHost() && !liquidFlowChange)
     {
         sendBlockUpdated(pos, oldState, state, 3, true);
         blockUpdated(pos, state->getBlock(), true);
@@ -410,7 +462,7 @@ void MultiPlayerLevel::tickWeather(bool)
 
 int MultiPlayerLevel::getChunkPollRange()
 {
-    return getFogDistance();
+    return mMinecraft->mOptions->mViewDistance;
 }
 
 void MultiPlayerLevel::tickClientSideBlocks(int x, int z, LevelChunk* chunk)
@@ -418,19 +470,42 @@ void MultiPlayerLevel::tickClientSideBlocks(int x, int z, LevelChunk* chunk)
     Level::tickClientSideBlocks(x, z, chunk);
     if (mAmbientSoundTime != 0)
         return;
-    int localX = mRandom->nextInt(16);
-    int localY = mRandom->nextInt(128);
-    int localZ = mRandom->nextInt(16);
-    BlockPos pos(x + localX, localY, z + localZ);
-    if (getDaytimeRawBrightness(pos) <= mRandom->nextInt(8))
+
+    mRandValue = mRandValue * 3 + mAddend;
+    int value = mRandValue >> 2;
+    int localX = value & 15;
+    int localY = (value >> 16) & 127;
+    int localZ = (value >> 8) & 15;
+    BlockPos pos(localX, localY, localZ);
+    if (chunk->getBlock(pos)->mMaterial != Material::AIR)
+        return;
+    if (getDaytimeRawBrightness(pos) > mRandom->nextInt(8))
+        return;
+    if (chunk->getBrightness(LightLayer::SKY, pos) > 0)
+        return;
+
+    double soundX = localX + x + 0.5;
+    double soundY = localY + 0.5;
+    double soundZ = localZ + z + 0.5;
+    boost::shared_ptr<Player> player = getNearestPlayer(soundX, soundY, soundZ, 8.0, false, -1.0);
+    Player* nearest = player.get();
+    if (nearest != NULL && nearest->distanceToSqr(soundX, soundY, soundZ) > 4.0)
+    {
+        playLocalSound(soundX, soundY, soundZ, SoundEvents::AMBIENT_CAVE,
+                       SoundSource::eSoundSource_Ambient, 0.7f,
+                       mRandom->nextFloat() * 0.2f + 0.8f, false, 16.0f);
         mAmbientSoundTime = mRandom->nextInt(12000) + 6000;
+    }
 }
 
 void MultiPlayerLevel::playSound(boost::shared_ptr<Player> player, double x, double y, double z,
                                  const SoundEvent* sound, SoundSource::ESoundSource source,
                                  float volume, float pitch, float range)
 {
-    if (player)
+    if ((mMinecraft->mLocalPlayers[0] && player == mMinecraft->mLocalPlayers[0]) ||
+        (mMinecraft->mLocalPlayers[1] && player == mMinecraft->mLocalPlayers[1]) ||
+        (mMinecraft->mLocalPlayers[2] && player == mMinecraft->mLocalPlayers[2]) ||
+        (mMinecraft->mLocalPlayers[3] && player == mMinecraft->mLocalPlayers[3]))
         playLocalSound(x, y, z, sound, source, volume, pitch, false, range);
 }
 

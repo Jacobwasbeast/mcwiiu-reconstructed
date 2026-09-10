@@ -24,7 +24,7 @@ struct PlayerUID
     };
     unsigned int flags;
 
-    PlayerUID(int uid);
+    PlayerUID(int uid = 0);
     PlayerUID(ACTUuid uuid, bool onlineAccount, bool drcController);
     PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool drcController);
     PlayerUID(std::wstring uidString);

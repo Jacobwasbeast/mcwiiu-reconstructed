@@ -232,12 +232,12 @@ const SoundEvent* ZombieVillager::getStepSound()
     return SoundEvents::ZOMBIE_VILLAGER_STEP;
 }
 
-const void* ZombieVillager::getDefaultLootTable()
+ResourceLocation* ZombieVillager::getDefaultLootTable()
 {
     return &BuiltInLootTables::ZOMBIE_VILLAGER;
 }
 
-const void* ZombieVillager::getDefaultGearTable()
+ResourceLocation* ZombieVillager::getDefaultGearTable()
 {
     return NULL;
 }

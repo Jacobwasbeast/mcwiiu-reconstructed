@@ -8,6 +8,7 @@
 #include "game/core/Direction.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/item/PlaceContainerRuleDefinition.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -122,20 +123,24 @@ void ConsoleGenerateStructure::addAttribute(const std::wstring& name, const std:
 
 bool ConsoleGenerateStructure::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    for (std::vector<GameRuleDefinition*>::iterator it = mActions.begin();
-         it != mActions.end(); ++it)
+    if (level->mDimension->getType() == DimensionType::getById(mDimension))
     {
-        GameRuleDefinition* action = *it;
-        int actionType = static_cast<int>(action->getActionType());
-        if (actionType == 4)
-            static_cast<XboxStructureActionGenerateBox*>(action)->generateBoxInLevel(this, level, box);
-        else if (actionType == 5)
-            static_cast<XboxStructureActionPlaceBlock*>(action)->placeBlockInLevel(this, level, box);
-        else if (actionType == 6)
-            static_cast<PlaceContainerRuleDefinition*>(action)->placeContainerInChunk(this, level, box);
-        else if (actionType == 7)
-            static_cast<XboxStructureActionPlaceSpawner*>(action)->placeSpawnerInLevel(this, level, box);
+        for (std::vector<GameRuleDefinition*>::iterator it = mActions.begin();
+             it != mActions.end(); ++it)
+        {
+            GameRuleDefinition* action = *it;
+            int actionType = static_cast<int>(action->getActionType());
+            if (actionType == 4)
+                static_cast<XboxStructureActionGenerateBox*>(action)->generateBoxInLevel(this, level, box);
+            else if (actionType == 5)
+                static_cast<XboxStructureActionPlaceBlock*>(action)->placeBlockInLevel(this, level, box);
+            else if (actionType == 6)
+                static_cast<PlaceContainerRuleDefinition*>(action)->placeContainerInChunk(this, level, box);
+            else if (actionType == 7)
+                static_cast<XboxStructureActionPlaceSpawner*>(action)->placeSpawnerInLevel(this, level, box);
+        }
     }
+
     return false;
 }
 

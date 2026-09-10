@@ -26,10 +26,8 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    float mField0x1d8;
-    unsigned char mField0x1dc;
     unsigned char mField0x878;
-    unsigned char mPadding0x879[7];
+    int mField0x87c;
     float mField0x880;
     const GameType* mGameType;
 };

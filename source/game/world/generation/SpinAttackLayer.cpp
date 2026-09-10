@@ -12,18 +12,14 @@
 static ResourceLocation SPIN_ATTACK_LOCATION;
 
 SpinAttackLayer::SpinAttackLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer), mModel(NULL)
+    : mRenderer(renderer)
 {
-    ModelDefinition modelDefinition;
-    mModel = new SpinAttackModel(modelDefinition);
+    mModel = new SpinAttackModel(ModelDefinition());
 }
 
 SpinAttackLayer::~SpinAttackLayer()
 {
-    if (mModel != NULL)
-    {
-        delete mModel;
-    }
+    delete mModel;
 }
 
 void SpinAttackLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
@@ -31,14 +27,13 @@ void SpinAttackLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
                              float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
-    if (!entity->getSharedFlag(4))
+    if (!entity->getDamageNearbyMobs())
     {
         return;
     }
 
     mRenderer->bindTexture(&SPIN_ATTACK_LOCATION);
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    mModel->renderSpin(renderEntity, ageInTicks, scale, bUseDisplayList);
+    mModel->renderSpin(entity, ageInTicks, scale, bUseDisplayList);
 }
 
 bool SpinAttackLayer::colorsOnDamage()

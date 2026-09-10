@@ -26,7 +26,7 @@ public:
 private:
     SlimeRenderer* mRenderer;
     Model* mModel;
-    Model* mDefaultModel;
+    Model* mOriginalModel;
 };
 
 #endif

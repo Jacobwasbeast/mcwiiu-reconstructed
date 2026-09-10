@@ -11,13 +11,13 @@ class Random;
 class HellSpringFeature : public Feature
 {
 public:
-    HellSpringFeature(Block* block, bool requiresBlock);
+    HellSpringFeature(Block* block, bool insideRock);
     virtual ~HellSpringFeature();
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 
 private:
     Block* mBlock;
-    bool mRequiresBlock;
+    bool mInsideRock;
 };
 
 #endif

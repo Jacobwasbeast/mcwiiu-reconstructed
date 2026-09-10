@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -9,9 +10,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
 
 GroundBushFeature::GroundBushFeature(const BlockState* trunkState,
                                      const BlockState* leafState)
@@ -30,15 +28,17 @@ bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& orig
     PIXBeginNamedEvent(0.0f, "Placing GroundBushFeature");
 
     BlockPos position = origin;
-    while ((level->getBlockState(position)->getMaterial() == Material::AIR ||
-            level->getBlockState(position)->getMaterial() == Material::PLANT) &&
+    const BlockState* state = level->getBlockState(position);
+    while ((state->getMaterial() == Material::AIR ||
+            state->getMaterial() == Material::LEAVES) &&
            position.y > 0)
     {
         position = position.below();
+        state = level->getBlockState(position);
     }
 
     Block* ground = level->getBlockState(position)->getBlock();
-    if (ground == Blocks::grass || ground == Blocks::dirt)
+    if (ground == Blocks::dirt || ground == Blocks::grass)
     {
         position = position.above();
         setBlock(level, position, mTrunkState, 0);
@@ -56,7 +56,7 @@ bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& orig
                     {
                         BlockPos leafPos(x, y, z);
                         const Material* material = level->getBlockState(leafPos)->getMaterial();
-                        if (material == Material::AIR || material == Material::PLANT)
+                        if (material == Material::AIR || material == Material::LEAVES)
                         {
                             setBlock(level, leafPos, mLeafState, 0);
                         }

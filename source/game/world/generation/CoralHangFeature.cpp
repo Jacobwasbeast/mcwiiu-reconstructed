@@ -10,9 +10,9 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-extern Property* CoralFanHang_PROPERTY_1;
-extern Property* CoralFanHang_PROPERTY_2;
-extern Property* CoralFanHang_PROPERTY_3;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
+extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
 
 CoralHangFeature::CoralHangFeature()
     : Feature(false)
@@ -26,7 +26,7 @@ CoralHangFeature::~CoralHangFeature()
 bool CoralHangFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    return block == Blocks::AIR || block == Blocks::stone;
+    return block == Blocks::coral_block || block == Blocks::stone;
 }
 
 const Direction* CoralHangFeature::randomDirection(Level* level, Random& random,
@@ -88,12 +88,12 @@ bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origi
             && level->isUnderWater(target, 266, 0))
         {
             const BlockState* state = Blocks::coral_fan_hang->defaultBlockState();
-            TypedBoxed<int> firstValue(random.nextInt(CoralFanHang_PROPERTY_1->getValueCount()));
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_1, &firstValue);
-            TypedBoxed<bool> secondValue(random.nextBoolean());
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_2, &secondValue);
-            TypedBoxed<int> thirdValue(turnFacingIntoint(direction));
-            state = state->setBoxedValue(CoralFanHang_PROPERTY_3, &thirdValue);
+            TypedBoxed<int> variant(random.nextInt(CoralFanHang_PROPERTY_1->getValueCount()));
+            state = state->setBoxedValue(CoralFanHang_PROPERTY_1, &variant);
+            TypedBoxed<bool> dead(random.nextBoolean());
+            state = state->setBoxedValue(CoralFanHang_PROPERTY_3, &dead);
+            TypedBoxed<int> facing(turnFacingIntoint(direction));
+            state = state->setBoxedValue(CoralFanHang_PROPERTY_2, &facing);
             if (!level->reallyHasChunkAt(target))
             {
                 return true;

@@ -68,7 +68,7 @@ void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,
 
 bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
-    int height = random.nextInt(4) + mTreeType;
+    int height = random.nextInt(4) + mBaseHeight;
     BlockPos cursor = pos;
     while (level->getBlock(cursor.below()) == Blocks::WATER)
     {

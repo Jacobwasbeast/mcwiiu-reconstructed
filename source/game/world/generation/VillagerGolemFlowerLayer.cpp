@@ -4,6 +4,7 @@
 
 #include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/ModelPart.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/client/render/VillagerGolemModel.hpp"
 #include "game/client/render/VillagerGolemRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -13,8 +14,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
-
-static ResourceLocation FLOWER_LOCATION((_TEXTURE_NAME)241);
 
 VillagerGolemFlowerLayer::VillagerGolemFlowerLayer(VillagerGolemRenderer* renderer)
     : mRenderer(renderer)
@@ -43,13 +42,13 @@ void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, f
                             1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(-0.6875f, 1.25f, -0.9375f);
     GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
-    GlStateManager::scalef(0.8f, -0.8f, -0.2f);
+    GlStateManager::scalef(0.8f, -0.8f, 0.8f);
 
     int lightColor = golem->getLightColor();
     GlStateManager::multiTexCoord2f(static_cast<float>(lightColor % 65536),
-                                     static_cast<float>(lightColor / 65536));
+                                    static_cast<float>(lightColor / 65536));
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    mRenderer->bindTexture(&FLOWER_LOCATION);
+    mRenderer->bindTexture(&BLOCKS_LOCATION);
 
     const BlockState* flowerState = Blocks::red_flower->defaultBlockState();
     Minecraft::GetInstance()->getBlockRenderer()->renderSingleBlock(flowerState, 1.0f, 1.0f, true);

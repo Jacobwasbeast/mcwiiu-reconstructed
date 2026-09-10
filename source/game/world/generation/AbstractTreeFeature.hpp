@@ -13,7 +13,7 @@ class Random;
 class AbstractTreeFeature : public Feature
 {
 public:
-    AbstractTreeFeature(bool doBlockNotify, int treeType, const BlockState* trunkState,
+    AbstractTreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState,
                         const BlockState* leafState, bool hasVines);
     virtual ~AbstractTreeFeature();
 
@@ -25,7 +25,7 @@ public:
     bool placeTrunk(Level* level, const BlockPos& pos, Random& random, int height);
 
 protected:
-    int mTreeType;
+    int mBaseHeight;
     bool mHasVines;
     const BlockState* mTrunkState;
     const BlockState* mLeafState;

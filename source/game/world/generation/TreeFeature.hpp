@@ -15,7 +15,7 @@ class TreeFeature : public AbstractTreeFeature
 {
 public:
     TreeFeature(bool doBlockNotify);
-    TreeFeature(bool doBlockNotify, int treeType, const BlockState* trunkState,
+    TreeFeature(bool doBlockNotify, int baseHeight, const BlockState* trunkState,
                 const BlockState* leafState, bool hasVines);
     virtual ~TreeFeature();
 

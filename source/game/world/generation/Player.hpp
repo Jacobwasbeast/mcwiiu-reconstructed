@@ -10,6 +10,7 @@
 #include "game/core/StatsUID.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/item/NonNullList.hpp"
 #include "game/item/ItemCooldowns.hpp"
 #include "game/item/PowerupItems.hpp"
 #include "game/world/block/Predicate.hpp"
@@ -30,6 +31,7 @@ class Inventory;
 class PlayerEnderChestContainer;
 class SignBlockEntity;
 class ItemEntity;
+class Merchant;
 class MultiPlayerGameMode;
 
 
@@ -122,14 +124,12 @@ struct Player : LivingEntity {
     AbstractContainerMenu* mInventoryMenu;
     AbstractContainerMenu* mContainerMenu;
     FoodData mFoodData;
-    uint8_t mPadding0x61c[4];
+    int32_t mField0x61c;
     float mPrevCameraYaw;
     float mCameraYaw;
     int32_t mTakeXpDelay;
-    uint8_t mPadding0x62c[28];
-    int32_t mField0x648;
+    std::wstring mSkinLocation;
     std::wstring mCapeLocation;
-    int32_t mField0x668;
     int32_t mField0x66c;
     double mPrevChasingPosX;
     double mPrevChasingPosY;
@@ -138,19 +138,16 @@ struct Player : LivingEntity {
     double mChasingPosY;
     double mChasingPosZ;
     std::wstring mDisplayName;
-    uint8_t mPadding0x6bc[4];
     uint8_t mField0x6c0;
-    uint8_t mPadding0x6c1[3];
     BlockPos* mField0x6c4;
     int32_t mField0x6c8;
     int32_t mField0x6cc;
     float mField0x6d0;
-    int32_t mField0x6d4;
+    float mField0x6d4;
     float mField0x6d8;
     int32_t mField0x6dc;
     BlockPos* mField0x6e0;
     uint8_t mField0x6e4;
-    uint8_t mPadding0x6e5[3];
     int32_t mField0x6e8;
     int32_t mField0x6ec;
     int32_t mField0x6f0;
@@ -166,62 +163,47 @@ struct Player : LivingEntity {
     float mExperienceProgress;
     boost::shared_ptr<FishingHook> mFishing;
     int32_t mEnchantmentSeed;
-    uint8_t mPadding0x734[4];
+    float mField0x734;
     ItemCooldowns* mField0x738;
+    int32_t mLastLevelUpTime;
     std::wstring mName;
-    int32_t mField0x75c;
-    uint8_t mField0x760;
-    uint8_t mPadding0x761[3];
-    int32_t mField0x764;
-    uint32_t mField0x768;
-    uint32_t mField0x76c;
-    int32_t mField0x770;
-    uint32_t mField0x774;
-    uint32_t mField0x778;
+    uint8_t mReducedDebugInfo;
+    not_null_ptr<ItemInstance> mField0x764;
+    NonNullList<not_null_ptr<ItemInstance> > mField0x76c;
     CameraController* mField0x77c;
     bool mField0x780;
     uint8_t mField0x781;
     uint8_t mField0x782;
-    uint8_t mPadding0x783[1];
-    PlayerUID m_0x784;
+    PlayerUID mXuid;
     PlayerUID m_0x798;
     StatsUID mSuid;
-    uint8_t mPadding0x7c0[4];
+    int32_t mField0x7c0;
     bool mShowOnMaps;
     bool mIsGuest;
-    uint8_t mPadding0x7c6[18];
+    NonNullList<not_null_ptr<ItemInstance> > mField0x7c8;
     uint32_t mField0x7d8;
     int32_t mField0x7dc;
     int32_t mField0x7e0;
     int32_t mPlayerIndex;
     unsigned int mDebugOptions;
     uint8_t mField0x7ec;
-    uint8_t mPadding0x7ed[3];
     int32_t mField0x7f0;
     int32_t mField0x7f4;
     uint8_t mField0x7f8;
-    uint8_t mPadding0x7f9[3];
     uint32_t mField0x7fc;
     std::vector<ModelPart*>* mAdditionalModelParts;
     uint8_t mField0x804;
     uint8_t mField0x805;
-    uint8_t mPadding0x806[2];
     int32_t mField0x808;
     boost::shared_ptr<Entity> mCamera;
     bool mField0x814;
     bool mField0x815;
-    uint8_t mPadding0x816[2];
     double mField0x818;
     double mField0x820;
     int32_t mField0x828;
     uint8_t mField0x82c;
-    uint8_t mPadding0x82d[3];
-    int32_t mField0x830;
-    int32_t mField0x834;
-    int32_t mField0x838;
-    uint8_t mPadding0x83b[1];
+    int32_t mPowerupTicks[3];
     uint8_t mField0x83c;
-    uint8_t mPadding0x83d[3];
     float mFlap;
     float mFlapSpeed;
     float mOFlapSpeed;
@@ -232,9 +214,7 @@ struct Player : LivingEntity {
     uint8_t mField0x85c;
     uint8_t mField0x85d;
     uint8_t mField0x85e;
-    uint8_t mPadding0x85f[1];
-    int32_t mField0x860;
-    int32_t mField0x864;
+    int32_t mTimerAchievementTicks[2];
 
 
     Player(Level* , const std::wstring& );
@@ -280,7 +260,7 @@ struct Player : LivingEntity {
     void handleEntityEvent(uint8_t , int32_t );
     bool isImmobile();
     void onChangedBlock(const BlockPos& );
-    void closeContainer();
+    virtual void closeContainer();
     void prepareCustomTextures();
     void checkRidingStatistiscs(double , double , double );
     void rideTick();
@@ -331,11 +311,11 @@ struct Player : LivingEntity {
     void openTextEdit(boost::shared_ptr<SignBlockEntity> );
     void openMinecartCommandBlock(uint32_t );
     void openCommandBlock(uint32_t );
-    uint32_t openTrading(uint32_t , std::wstring* , int32_t );
-    uint32_t openContainer(boost::shared_ptr<Container> );
+    virtual int openTrading(boost::shared_ptr<Merchant> , const std::wstring& , int );
+    virtual int openContainer(boost::shared_ptr<Container> );
     virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> , boost::shared_ptr<Container> );
-    uint32_t startBlockInteraction(InteractionObject* );
-    void openItemInstanceGui(not_null_ptr<ItemInstance> , uint32_t );
+    virtual int startBlockInteraction(InteractionObject& );
+    virtual void openItemInstanceGui(not_null_ptr<ItemInstance> , InteractionHand::EInteractionHand );
     uint32_t interactOn(boost::shared_ptr<Entity> , InteractionHand::EInteractionHand );
     double getRidingHeight();
     void stopRiding();
@@ -386,7 +366,7 @@ struct Player : LivingEntity {
     FoodData* getFoodData();
     uint32_t canEat(bool );
     uint32_t isHurt();
-    uint8_t mayBuild();
+    virtual bool mayBuild();
     uint32_t mayUseItemAt(const BlockPos& , const Direction* , not_null_ptr<ItemInstance> );
     int32_t getExperienceReward(boost::shared_ptr<Player> );
     bool isAlwaysExperienceDropper();

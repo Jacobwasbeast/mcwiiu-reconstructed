@@ -1,13 +1,11 @@
 #include "game/world/generation/CanAttackPlayerPredicate.hpp"
 
-#include "game/core/AttributeInstance.hpp"
+#include "game/entity/ai/TargetGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
-#include "game/entity/mob/SharedMonsterAttributes.hpp"
-#include "game/world/generation/Player.hpp"
 #include "game/world/generation/MobNearestPlayerTargetGoal.hpp"
-#include "game/entity/ai/TargetGoal.hpp"
+#include "game/world/generation/Player.hpp"
 
 CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* goal)
     : mGoal(goal)
@@ -17,30 +15,41 @@ CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* g
 bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
     if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+    {
         return false;
+    }
 
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-    if (!player || player->mAbilities.mInvulnerable)
+    if (player->mAbilities.mInvulnerable)
+    {
         return false;
+    }
 
     double followDistance = mGoal->getFollowDistance();
+
     if (entity->isSneaking())
-        followDistance *= 0.8;
+    {
+        followDistance *= 0.8f;
+    }
 
     if (entity->isInvisible())
     {
-        boost::shared_ptr<LivingEntity> livingEntity = boost::dynamic_pointer_cast<LivingEntity>(entity);
-        double attributeValue = livingEntity->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->getValue();
-        if (attributeValue < 0.1)
-            attributeValue = 0.1;
-        followDistance *= (float)(attributeValue * 0.7);
+        float armorCoverage = boost::dynamic_pointer_cast<Player>(entity)->getArmorCoverPercentage();
+        if (armorCoverage < 0.1f)
+        {
+            armorCoverage = 0.1f;
+        }
+
+        followDistance *= (double)(0.7f * armorCoverage);
     }
 
-    if (mGoal->mMob->distanceTo(entity) > followDistance)
+    if (entity->distanceTo(mGoal->mMob->shared_from_this()) > followDistance)
+    {
         return false;
+    }
 
-    boost::shared_ptr<LivingEntity> livingEntity = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    return TargetGoal::canAttack(mGoal->mMob, livingEntity, false, true);
+    return TargetGoal::canAttack(mGoal->mMob, boost::dynamic_pointer_cast<LivingEntity>(entity),
+                                 false, true);
 }
 
 CanAttackPlayerPredicate::~CanAttackPlayerPredicate()

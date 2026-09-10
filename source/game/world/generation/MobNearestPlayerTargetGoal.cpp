@@ -2,13 +2,16 @@
 
 #include <algorithm>
 #include <typeinfo>
-
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/server/ServerPlayerGameMode.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
@@ -26,48 +29,65 @@ double MobNearestPlayerTargetGoal::getFollowDistance()
 {
     AttributeInstance* attribute = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     if (attribute == NULL)
+    {
         return 16.0;
+    }
+
     return attribute->getValue();
 }
 
 bool MobNearestPlayerTargetGoal::canUse()
 {
     double followDistance = getFollowDistance();
-    AABB* searchArea = mMob->mBoundingBox->grow(followDistance, 4.0, followDistance);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(Player), searchArea,
-                                         &mTargetSelector, false);
-    if (entities == NULL || entities->empty())
-    {
-        delete entities;
-        return false;
-    }
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
+        typeid(Player), mMob->mBoundingBox->grow(followDistance, 4.0, followDistance),
+        &mTargetSelector, false);
 
     std::sort(entities->begin(), entities->end(), mSorter);
-    mTarget = boost::dynamic_pointer_cast<LivingEntity>((*entities)[0]);
+
+    if (!entities->empty())
+    {
+        mTarget = boost::dynamic_pointer_cast<LivingEntity>(entities->at(0));
+        delete entities;
+        return true;
+    }
+
     delete entities;
-    return !!mTarget;
+    return false;
 }
 
 bool MobNearestPlayerTargetGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (!target || !target->isAlive())
-        return false;
-
-    boost::shared_ptr<LivingEntity> lastHurtByMob = mMob->getLastHurtByMob();
-    if (!lastHurtByMob || target->getLastHurtByMob() != lastHurtByMob)
+    if (!target)
     {
-        double distance = getFollowDistance();
-        if (mMob->distanceToSqr(target) > distance * distance)
-            return false;
-
-        if (target->GetType() == 0x000000000C800001ULL && target->isCreative())
-            return false;
-
-        return true;
+        return false;
     }
-    return false;
+
+    if (!target->isAlive())
+    {
+        return false;
+    }
+
+    Team* team = mMob->getTeam();
+    if (team != NULL && target->getTeam() == team)
+    {
+        return false;
+    }
+
+    double followDistance = getFollowDistance();
+    if (mMob->distanceToSqr(target) > followDistance * followDistance)
+    {
+        return false;
+    }
+
+    if (target->GetType() == 0x000000000C800001ULL
+        && boost::static_pointer_cast<ServerPlayer>(target)->mGameMode->isCreative())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void MobNearestPlayerTargetGoal::start()

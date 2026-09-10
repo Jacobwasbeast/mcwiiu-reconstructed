@@ -816,7 +816,7 @@ void Villager::overrideOffers(MerchantRecipeList*)
 void Villager::notifyTrade(MerchantRecipe* recipe)
 {
     recipe->increaseUses();
-    mAmbientSoundTime = -(int)getAmbientSoundInterval();
+    mAmbientSoundTime = -getAmbientSoundInterval();
     playSound(SoundEvents::VILLAGER_YES, getSoundVolume(), getVoicePitch());
     int experience = mRandom->nextInt(4) + 3;
 
@@ -854,9 +854,9 @@ void Villager::notifyTrade(MerchantRecipe* recipe)
 
 void Villager::notifyTradeUpdated(const not_null_ptr<ItemInstance>& item)
 {
-    if (!mLevel->mIsClientSide && mAmbientSoundTime > 20 - (int)getAmbientSoundInterval())
+    if (!mLevel->mIsClientSide && mAmbientSoundTime > 20 - getAmbientSoundInterval())
     {
-        mAmbientSoundTime = -(int)getAmbientSoundInterval();
+        mAmbientSoundTime = -getAmbientSoundInterval();
 
         if (item->isEmpty())
         {
@@ -1436,7 +1436,7 @@ void Villager::setWillingToBreed(bool willing)
     mWillingToBreed = willing;
 }
 
-const void* Villager::getDefaultLootTable()
+ResourceLocation* Villager::getDefaultLootTable()
 {
     return &BuiltInLootTables::VILLAGER;
 }

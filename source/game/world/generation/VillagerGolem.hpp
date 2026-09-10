@@ -49,7 +49,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     unsigned int getOfferFlowerTick();
     virtual void die(const DamageSource* source);
     virtual bool hurt(const DamageSource* source, float damage);

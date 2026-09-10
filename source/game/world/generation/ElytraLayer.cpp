@@ -14,6 +14,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/AbstractArmorLayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 static ResourceLocation ELYTRA_LOCATION;
 
@@ -31,10 +32,13 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
                          float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
                          float scale, bool bUseDisplayList)
 {
-    not_null_ptr<ItemInstance> item = entity->getItemSlot(EquipmentSlot::CHEST);
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    not_null_ptr<ItemInstance> item = player->getItemSlot(EquipmentSlot::CHEST);
 
     if (item->getItem() != Items::elytra)
+    {
         return;
+    }
 
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::enableBlend();
@@ -42,12 +46,13 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
     mRenderer->bindTexture(&ELYTRA_LOCATION);
     GlStateManager::pushMatrix();
 
-    mElytraModel->copyPropertiesFrom(mRenderer->getModel());
+    GlStateManager::translatef(0.0f, 0.0f, 0.125f);
+
+    boost::shared_ptr<Entity> renderEntity = entity;
     mElytraModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                            boost::static_pointer_cast<Entity>(entity), _SkinAdjustments());
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount,
-                         ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
+                            renderEntity, _SkinAdjustments());
+    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                         headPitch, scale, bUseDisplayList);
 
     if (item->isEnchanted())
     {

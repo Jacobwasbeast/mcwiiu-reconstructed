@@ -25,11 +25,11 @@ public:
         DataContainer(std::wstring name, LivingEntityRenderer* renderer, Model* model,
                       ResourceLocation texture, unsigned long long entityType);
 
-        std::wstring name;
-        LivingEntityRenderer* renderer;
-        Model* model;
-        ResourceLocation texture;
-        unsigned long long entityType;
+        std::wstring mName;
+        LivingEntityRenderer* mRenderer;
+        Model* mModel;
+        ResourceLocation mTexture;
+        unsigned long long mEntityType;
     };
 
     EntityRidingShoulderLayer(EntityRenderDispatcher* dispatcher);
@@ -50,18 +50,18 @@ public:
                         bool left, bool useDisplayList);
 
 private:
-    EntityRenderDispatcher* dispatcher;
-    LivingEntityRenderer* leftRenderer;
-    Model* leftModel;
-    ResourceLocation leftTexture;
-    std::wstring leftName;
-    unsigned long long leftEntityType;
-    LivingEntityRenderer* rightRenderer;
-    Model* rightModel;
-    ResourceLocation rightTexture;
-    std::wstring rightName;
-    unsigned long long rightEntityType;
-    boost::shared_ptr<ParrotRenderer> parrotRenderer;
+    EntityRenderDispatcher* mDispatcher;
+    LivingEntityRenderer* mLeftRenderer;
+    Model* mLeftModel;
+    ResourceLocation mLeftTexture;
+    std::wstring mLeftName;
+    unsigned long long mLeftEntityType;
+    LivingEntityRenderer* mRightRenderer;
+    Model* mRightModel;
+    ResourceLocation mRightTexture;
+    std::wstring mRightName;
+    unsigned long long mRightEntityType;
+    ParrotRenderer* mParrotRenderer;
 };
 
 #endif

@@ -12,13 +12,11 @@ RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
 {
     fjDerivedCtorCalls();
     mField0x6d4 = 0.25f;
-    mField0x1dc = 1;
-    mField0x1d8 = 1.0f;
+    mNoPhysics = true;
+    mMaxUpStep = 1.0f;
     setViewScale(10.0);
     mField0x878 = 0;
     mField0x880 = 1.034999966621399f;
-    mField0x6d8 = 1.0f;
-    mField0x6dc = 1;
 }
 
 RemotePlayer::~RemotePlayer()

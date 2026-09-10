@@ -12,11 +12,11 @@
 #include "game/entity/mob/LivingEntity.hpp"
 
 SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
+    : mRenderer(renderer)
 {
-    mRenderer = renderer;
     ModelDefinition modelDefinition;
     mModel = new SlimeModel(0, modelDefinition);
-    mDefaultModel = NULL;
+    mOriginalModel = NULL;
 }
 
 SlimeOuterLayer::~SlimeOuterLayer()
@@ -28,33 +28,31 @@ void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
                              float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
-    if (entity->isInvisible())
+    if (!entity->isInvisible())
     {
-        return;
-    }
+        bool cull = mModel->hasOverriddenParts();
+        if (cull)
+        {
+            GlStateManager::enableCull();
+            GlStateManager::cullFace(1);
+        }
 
-    bool cull = mModel->hasOverriddenParts();
-    if (cull)
-    {
-        GlStateManager::enableCull();
-        GlStateManager::cullFace(1);
-    }
+        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        GlStateManager::enableNormalize();
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
 
-    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    GlStateManager::enableNormalize();
-    GlStateManager::enableBlend();
-    GlStateManager::blendFunc(4, 5);
+        boost::shared_ptr<Entity> renderEntity = entity;
+        mModel->copyPropertiesFrom(mRenderer->getModel());
+        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                       headPitch, scale, bUseDisplayList);
 
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    mModel->copyPropertiesFrom(mRenderer->getModel(entity));
-    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                   headPitch, scale, bUseDisplayList);
-
-    GlStateManager::disableBlend();
-    GlStateManager::disableNormalize();
-    if (cull)
-    {
-        GlStateManager::disableCull();
+        GlStateManager::disableBlend();
+        GlStateManager::disableNormalize();
+        if (cull)
+        {
+            GlStateManager::disableCull();
+        }
     }
 }
 
@@ -65,28 +63,26 @@ bool SlimeOuterLayer::colorsOnDamage()
 
 void SlimeOuterLayer::setupForTexturePack(TexturePack* pTexturePack)
 {
-    Model* model = mModel;
-    if (mDefaultModel == NULL)
+    if (mOriginalModel == NULL)
     {
-        mDefaultModel = model;
+        mOriginalModel = mModel;
     }
 
-    if (model != mDefaultModel)
+    if (mModel != mOriginalModel)
     {
-        if (model != NULL)
+        if (mModel != NULL)
         {
-            delete model;
+            delete mModel;
         }
         mModel = NULL;
     }
 
-    const std::wstring modelName = L"slime_armor";
-    if (!pTexturePack->HasCustomModel(modelName))
+    if (!pTexturePack->HasCustomModel(L"slime_armor"))
     {
-        mModel = mDefaultModel;
+        mModel = mOriginalModel;
     }
     else
     {
-        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(modelName));
+        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(L"slime_armor"));
     }
 }

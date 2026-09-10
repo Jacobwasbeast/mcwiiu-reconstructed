@@ -4,8 +4,11 @@
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Predicates.hpp"
+#include "game/world/generation/Player.hpp"
 
 LookAtPlayerGoal::LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance)
     : mMob(mob), mLookAt(), mLookDistance(lookDistance), mLookTime(0), mProbability(0.02f),
@@ -29,46 +32,78 @@ LookAtPlayerGoal::~LookAtPlayerGoal()
 bool LookAtPlayerGoal::canUse()
 {
     if (mMob->getRandom()->nextFloat() >= mProbability)
+    {
         return false;
+    }
 
-    mLookAt = mMob->mLevel->getClosestEntityOfClass(
-        *mLookAtType, mMob->mBoundingBox->grow(mLookDistance, mLookDistance, mLookDistance),
-        mMob->shared_from_this());
+    if (mMob->getTarget())
+    {
+        mLookAt = mMob->getTarget();
+    }
 
-    return mLookAt.get() != NULL;
+    if (*mLookAtType == typeid(Player))
+    {
+        Predicate<boost::shared_ptr<Entity> >* notRiding =
+            EntitySelector::notRiding(boost::static_pointer_cast<Mob>(mMob->shared_from_this()));
+        const Predicate<boost::shared_ptr<Entity> >* selectors[2] = { EntitySelector::NO_SPECTATORS, notRiding };
+        Predicate<boost::shared_ptr<Entity> >* selector = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
+            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, selectors, 2);
+
+        mLookAt = mMob->mLevel->getNearestPlayerPredicate(mMob->mX, mMob->mY, mMob->mZ,
+                                                          (double)mLookDistance, selector);
+
+        delete notRiding;
+        delete selector;
+    }
+    else
+    {
+        mLookAt = mMob->mLevel->getClosestEntityOfClass(
+            *mLookAtType,
+            mMob->mBoundingBox->grow((double)mLookDistance, 3.0, (double)mLookDistance),
+            mMob->shared_from_this());
+    }
+
+    return mLookAt.lock().get() != NULL;
 }
 
 bool LookAtPlayerGoal::canContinueToUse()
 {
-    if (mLookAt.get() == NULL)
+    if (!mLookAt.lock() || !mLookAt.lock()->isAlive())
+    {
         return false;
-    if (!mLookAt->isAlive())
+    }
+
+    if (mMob->distanceToSqr(mLookAt.lock()) > (double)(mLookDistance * mLookDistance))
+    {
         return false;
-    if (mMob->distanceToSqr(mLookAt) > static_cast<double>(mLookDistance * mLookDistance))
+    }
+
+    if (mMob->hasPassenger(mLookAt.lock()))
+    {
         return false;
+    }
+
     return mLookTime > 0;
 }
 
 void LookAtPlayerGoal::start()
 {
-    mLookTime = 40 + mMob->getRandom()->nextInt(40);
+    mLookTime = mMob->getRandom()->nextInt(40) + 40;
 }
 
 void LookAtPlayerGoal::stop()
 {
     mLookAt.reset();
-    mLookTime = 0;
 }
 
 void LookAtPlayerGoal::tick()
 {
+    mMob->getLookControl()->setLookAt(mLookAt.lock()->mX,
+                                      mLookAt.lock()->mY + mLookAt.lock()->getEyeHeight(),
+                                      mLookAt.lock()->mZ,
+                                      (float)mMob->getMaxHeadYRot(),
+                                      (float)mMob->getMaxHeadXRot());
     --mLookTime;
-    if (mLookAt.get() != NULL)
-    {
-        static_cast<LookControl*>(mMob->getLookControl())->setLookAt(
-            mLookAt->mX, mLookAt->mY + mLookAt->getEyeHeight(), mLookAt->mZ,
-            static_cast<float>(mMob->getMaxHeadYRot()), static_cast<float>(mMob->getMaxHeadXRot()));
-    }
 }
 
 std::wstring LookAtPlayerGoal::getName()
@@ -78,9 +113,7 @@ std::wstring LookAtPlayerGoal::getName()
 
 bool LookAtPlayerGoal::LookAtPlayerGoalEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if (!EntitySelector::NO_SPECTATORS->apply(entity))
-        return false;
-    return entity->isAlive();
+    return EntitySelector::NO_SPECTATORS->apply(entity) && EntitySelector::ENTITY_STILL_ALIVE->apply(entity);
 }
 
 LookAtPlayerGoal::LookAtPlayerGoalEntitySelector::~LookAtPlayerGoalEntitySelector()

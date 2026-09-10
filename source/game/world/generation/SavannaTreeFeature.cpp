@@ -59,7 +59,7 @@ void SavannaTreeFeature::placeLeafAt(Level* level, const BlockPos& pos)
 bool SavannaTreeFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     PIXBeginNamedEvent(0.0f, "SavannaTreeFeature::place");
-    int height = random.nextInt(3) + random.nextInt(3) + mTreeType;
+    int height = random.nextInt(3) + random.nextInt(3) + mBaseHeight;
     if (origin.y <= 0 || origin.y + height + 1 >= 256)
     {
         PIXEndNamedEvent();

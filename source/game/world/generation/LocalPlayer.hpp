@@ -36,6 +36,7 @@ class ItemInstance;
 class MobEffectInstance;
 class MultiPlayerGameMode;
 struct TelemetryDamageSource;
+class PlayerRenderer;
 
 class LocalPlayer : public AbstractClientPlayer
 {
@@ -161,6 +162,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class PlayerRenderer;
 
     unsigned char mReserved0x850[0x28];
     ClientPacketListener* mPacketListener;
@@ -180,7 +182,10 @@ private:
     unsigned char mReserved0x8c8[4];
     int mSprinting;
     int mThirdPersonViewTimer;
-    unsigned char mReserved0x8d0[0x28];
+    unsigned char mReserved0x8d0[0x18];
+    float mFallFlyYaw;
+    float mFallFlyYawOld;
+    unsigned char mReserved0x8f0[0x08];
     bool mItemUsePending;
     unsigned char mReserved0x8f9[3];
     InteractionHand::EInteractionHand mUsedItemHand;

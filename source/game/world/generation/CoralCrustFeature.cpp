@@ -15,11 +15,11 @@
 #include "game/world/generation/StructureTemplate.hpp"
 
 extern Property* CoralBlock_PROPERTY_1;
-extern Property* CoralFan_PROPERTY_1;
-extern Property* CoralFan_PROPERTY_2;
-extern Property* CoralFanHang_PROPERTY_1;
-extern Property* CoralFanHang_PROPERTY_2;
-extern Property* CoralFanHang_PROPERTY_3;
+extern AbstractProperty<int>* CoralFan_PROPERTY_1;
+extern AbstractProperty<int>* CoralFan_PROPERTY_2;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
+extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
 
 CoralCrustFeature::~CoralCrustFeature() {}
 
@@ -113,7 +113,7 @@ void CoralCrustFeature::placeTopDecorations(Level* level, const BlockPos& pos, R
 bool CoralCrustFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    return block == Blocks::AIR || block == Blocks::stone;
+    return block == Blocks::coral_block || block == Blocks::stone;
 }
 
 const Direction* CoralCrustFeature::randomDirectionExcept(Random& random, const Direction* except) const

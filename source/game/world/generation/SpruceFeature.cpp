@@ -44,7 +44,7 @@ void SpruceFeature::staticCtor()
 
 bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
-    const int height = random.nextInt(4) + mTreeType;
+    const int height = random.nextInt(4) + mBaseHeight;
     const int foliageStart = height - (random.nextInt(2) + 1);
     const int foliageRadius = random.nextInt(2) + 2;
 

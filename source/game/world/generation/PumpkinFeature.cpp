@@ -30,7 +30,7 @@ bool PumpkinFeature::place(Level* level, Random& random, const BlockPos& origin)
                 Direction::Plane::HORIZONTAL->getRandomDirection(random));
             level->setBlock(position,
                             Blocks::pumpkin->defaultBlockState()->setBoxedValue(
-                                HorizontalDirectionalBlock::FACING, &facing),
+                                HorizontalDirectionalBlock::FACING_PROPERTY, &facing),
                             2, false);
         }
     }

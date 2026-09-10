@@ -9,14 +9,20 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BooleanProperty.hpp"
+#include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/LogBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/OldLogBlock.hpp"
+#include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/VineBlock.hpp"
 
-AbstractTreeFeature::AbstractTreeFeature(bool doBlockNotify, int treeType,
+AbstractTreeFeature::AbstractTreeFeature(bool doBlockNotify, int baseHeight,
                                          const BlockState* trunkState,
                                          const BlockState* leafState, bool hasVines)
     : Feature(doBlockNotify),
-      mTreeType(treeType),
+      mBaseHeight(baseHeight),
       mHasVines(hasVines),
       mTrunkState(trunkState),
       mLeafState(leafState)
@@ -29,12 +35,11 @@ AbstractTreeFeature::~AbstractTreeFeature()
 
 bool AbstractTreeFeature::isFree(Block* block)
 {
-    const BlockState* state = block->defaultBlockState();
-    Block* stateBlock = state->getBlock();
-    return stateBlock == Blocks::AIR || stateBlock == Blocks::leaves ||
-           stateBlock == Blocks::leaves2 || block == Blocks::WATER ||
-           block == Blocks::FLOWING_WATER || block == Blocks::snow_layer ||
-           block == Blocks::vine;
+    Material* material = block->defaultBlockState()->getMaterial();
+    return material == Material::AIR || material == Material::LEAVES ||
+           block == Blocks::grass || block == Blocks::dirt ||
+           block == Blocks::log || block == Blocks::log2 ||
+           block == Blocks::sapling || block == Blocks::vine;
 }
 
 void AbstractTreeFeature::postPlaceTree(Level*, Random&, const BlockPos&)
@@ -43,8 +48,7 @@ void AbstractTreeFeature::postPlaceTree(Level*, Random&, const BlockPos&)
 
 void AbstractTreeFeature::setDirtAt(Level* level, const BlockPos& pos)
 {
-    const BlockState* state = level->getBlockState(pos);
-    if (state->getBlock() != Blocks::dirt)
+    if (level->getBlockState(pos)->getBlock() != Blocks::dirt)
     {
         setBlock(level, pos, Blocks::dirt->defaultBlockState(), 0);
     }
@@ -53,26 +57,29 @@ void AbstractTreeFeature::setDirtAt(Level* level, const BlockPos& pos)
 void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
                                            Random& random, int length)
 {
-    MutableBlockPos cursor(pos);
+    MutableBlockPos start(pos.x, pos.y, pos.z);
     const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(random);
-    cursor.move(direction, random.nextInt(2) + 2);
-    int height = level->getHeightmap(cursor.x, cursor.z);
     int remaining = length - 2;
-    if (height > pos.y + 1 || remaining <= 0)
+    BlockPos moved = *start.move(direction, random.nextInt(2) + 2);
+
+    int height = level->getHeightmap(moved.x, moved.z);
+    if (height > pos.y + 1)
     {
         return;
     }
 
-    cursor.setY(height);
+    MutableBlockPos cursor(start);
+    cursor.set(moved.x, height, moved.z);
+
     int unsupported = 0;
     for (int i = 0; i < remaining; ++i)
     {
-        cursor.move(direction);
-        Block* block = level->getBlock(cursor);
-        if (!isFree(block))
+        cursor.move(direction, 1);
+        if (level->getBlockState(cursor)->getMaterial() != Material::AIR)
         {
             return;
         }
+
         if (!level->isSolidBlockingBlockInLoadedChunk(cursor.below(), false))
         {
             ++unsupported;
@@ -87,33 +94,29 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
         }
     }
 
-    cursor.setY(height);
-    const Direction::Axis* axis = direction->getAxis();
-    for (int i = 0; i < remaining / 2; ++i)
+    cursor.set(moved.x, height, moved.z);
+    for (int i = 0; i < remaining; ++i)
     {
-        cursor.move(direction);
-        const BlockState* trunkState = mTrunkState;
-        setBlock(level, cursor, trunkState, 0);
-        if (random.nextInt(10) == 0 && isFree(level->getBlock(cursor.above())))
+        cursor.move(direction, 1);
+
+        LogBlock::LogAxis* logAxis = direction->getAxis()->getId() == Direction::Axis::eAxis_X ?
+                LogBlock::X : LogBlock::Z;
+        TypedBoxed<LogBlock::LogAxis*> axisValue(logAxis);
+        setBlock(level, cursor, mTrunkState->setBoxedValue(LogBlock::AXIS, &axisValue), 0);
+
+        if (random.nextInt(10) == 0 &&
+            level->getBlockState(cursor.above())->getMaterial() == Material::AIR)
         {
-            setBlock(level, cursor.above(), random.nextFloat() >= 0.5f ?
-                    Blocks::leaves->defaultBlockState() : Blocks::leaves2->defaultBlockState(), 0);
-        }
-        cursor.move(direction);
-        trunkState = mTrunkState;
-        setBlock(level, cursor, trunkState, 0);
-        if (random.nextInt(10) == 0 && isFree(level->getBlock(cursor.above())))
-        {
-            setBlock(level, cursor.above(), random.nextFloat() >= 0.5f ?
-                    Blocks::leaves->defaultBlockState() : Blocks::leaves2->defaultBlockState(), 0);
+            if (random.nextFloat() >= 0.5f)
+            {
+                setBlock(level, cursor.above(), Blocks::red_mushroom->defaultBlockState(), 0);
+            }
+            else
+            {
+                setBlock(level, cursor.above(), Blocks::brown_mushroom->defaultBlockState(), 0);
+            }
         }
     }
-    if ((remaining & 1) != 0)
-    {
-        cursor.move(direction);
-        setBlock(level, cursor, mTrunkState, 0);
-    }
-    (void)axis;
 }
 
 void AbstractTreeFeature::addVine(Level* level, const BlockPos& pos,
@@ -128,49 +131,64 @@ bool AbstractTreeFeature::placeTrunk(Level* level, const BlockPos& pos,
                                      Random& random, int height)
 {
     bool fallen = random.nextInt(80) == 0;
-    float chance = 0.0f;
-    if (mTrunkState != NULL && mTrunkState->getBlock() != Blocks::AIR)
+
+    float vineChance = 0.0f;
+    if (mTrunkState->getValue(OldLogBlock::VARIANT) != PlanksBlock::Variant::BIRCH)
     {
         if (fallen)
         {
-            chance = 0.75f;
-            placeFallenTrunk(level, pos, random, height);
-            height = 1;
+            vineChance = 0.75f;
         }
         else if (mHasVines)
         {
-            chance = 1.0f / 3.0f;
+            vineChance = 1.0f / 3.0f;
         }
         else if (random.nextInt(12) == 0)
         {
-            chance = 1.0f;
+            vineChance = 1.0f;
         }
     }
-    else if (fallen)
+
+    if (fallen)
     {
         placeFallenTrunk(level, pos, random, height);
         height = 1;
     }
 
-    for (int y = 0; y < height; ++y)
+    for (int i = 0; i < height; ++i)
     {
-        BlockPos trunkPos = pos.above(y);
-        if (isFree(level->getBlock(trunkPos)))
+        Material* material = level->getBlockState(pos.above(i))->getMaterial();
+        if (material == Material::AIR || material == Material::LEAVES ||
+            material == Material::REPLACEABLE_PLANT || material == Material::DIRT ||
+            material == Material::GRASS)
         {
-            setBlock(level, trunkPos, mTrunkState, 0);
-            if (chance > 0.0f)
+            setBlock(level, pos.above(i), mTrunkState, 0);
+
+            if (vineChance != 0.0f)
             {
-                BlockPos side;
-                side = pos.offset(-1, y, 0);
-                if (level->getBlock(side) != NULL && random.nextFloat() < chance) addVine(level, side, NULL);
-                side = pos.offset(1, y, 0);
-                if (level->getBlock(side) != NULL && random.nextFloat() < chance) addVine(level, side, NULL);
-                side = pos.offset(0, y, -1);
-                if (level->getBlock(side) != NULL && random.nextFloat() < chance) addVine(level, side, NULL);
-                side = pos.offset(0, y, 1);
-                if (level->getBlock(side) != NULL && random.nextFloat() < chance) addVine(level, side, NULL);
+                if (random.nextFloat() < vineChance && level->isEmptyBlock(pos.offset(-1, i, 0)))
+                {
+                    addVine(level, pos.offset(-1, i, 0),
+                            static_cast<const BooleanProperty*>(VineBlock::EAST));
+                }
+                if (random.nextFloat() < vineChance && level->isEmptyBlock(pos.offset(1, i, 0)))
+                {
+                    addVine(level, pos.offset(1, i, 0),
+                            static_cast<const BooleanProperty*>(VineBlock::WEST));
+                }
+                if (random.nextFloat() < vineChance && level->isEmptyBlock(pos.offset(0, i, -1)))
+                {
+                    addVine(level, pos.offset(0, i, -1),
+                            static_cast<const BooleanProperty*>(VineBlock::SOUTH));
+                }
+                if (random.nextFloat() < vineChance && level->isEmptyBlock(pos.offset(0, i, 1)))
+                {
+                    addVine(level, pos.offset(0, i, 1),
+                            static_cast<const BooleanProperty*>(VineBlock::NORTH));
+                }
             }
         }
     }
+
     return !fallen;
 }

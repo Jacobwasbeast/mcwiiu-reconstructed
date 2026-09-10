@@ -6,12 +6,13 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 
-MegaTreeFeature::MegaTreeFeature(bool doBlockNotify, int treeType, int height,
+MegaTreeFeature::MegaTreeFeature(bool doBlockNotify, int baseHeight, int extraRandomHeight,
                                  const BlockState* trunkState,
                                  const BlockState* leafState)
-    : AbstractTreeFeature(doBlockNotify, treeType, trunkState, leafState, false),
-      mHeight(height)
+    : AbstractTreeFeature(doBlockNotify, baseHeight, trunkState, leafState, false),
+      mExtraRandomHeight(extraRandomHeight)
 {
 }
 
@@ -21,10 +22,10 @@ MegaTreeFeature::~MegaTreeFeature()
 
 int MegaTreeFeature::calcTreeHeigth(Random& random)
 {
-    int height = random.nextInt(3) + mTreeType;
-    if (mHeight > 1)
+    int height = random.nextInt(3) + mBaseHeight;
+    if (mExtraRandomHeight > 1)
     {
-        height += random.nextInt();
+        height += random.nextInt(mExtraRandomHeight);
     }
     return height;
 }
@@ -36,29 +37,31 @@ bool MegaTreeFeature::checkIsFree(Level* level, const BlockPos& pos, int height)
         return false;
     }
 
+    bool free = true;
     for (int y = 0; y <= height + 1; ++y)
     {
-        int radius = y < 2 ? 1 : 2;
-        for (int x = -radius; x <= radius; ++x)
+        int radius = y == 0 ? 1 : 2;
+        for (int x = -radius; x <= radius && free; ++x)
         {
-            for (int z = -radius; z <= radius; ++z)
+            for (int z = -radius; z <= radius && free; ++z)
             {
-                BlockPos checkPos = pos.offset(x, y, z);
-                if (!isFree(level->getBlockState(checkPos)->getBlock()))
+                if (pos.y + y < 0 || pos.y + y >= 256
+                    || !isFree(level->getBlockState(pos.offset(x, y, z))->getBlock()))
                 {
-                    return false;
+                    free = false;
                 }
             }
         }
     }
-    return true;
+
+    return free;
 }
 
 bool MegaTreeFeature::makeDirtFloor(const BlockPos& pos, Level* level)
 {
     BlockPos below = pos.below();
     Block* block = level->getBlockState(below)->getBlock();
-    if ((block == Blocks::grass || block == Blocks::dirt) && mTreeType > 1)
+    if ((block == Blocks::grass || block == Blocks::dirt) && pos.y > 1)
     {
         setDirtAt(level, below);
         setDirtAt(level, below.east());
@@ -83,14 +86,12 @@ void MegaTreeFeature::placeDoubleTrunkLeaves(Level* level, const BlockPos& pos, 
         {
             int x1 = x - 1;
             int z1 = z - 1;
-            if (x * x + z * z <= radiusSquared ||
-                x1 * x1 + z1 * z1 <= radiusSquared ||
-                x * x + z1 * z1 <= radiusSquared ||
-                x1 * x1 + z * z <= radiusSquared)
+            if (x * x + z * z <= radiusSquared || x1 * x1 + z1 * z1 <= radiusSquared
+                || x * x + z1 * z1 <= radiusSquared || x1 * x1 + z * z <= radiusSquared)
             {
                 BlockPos leafPos = pos.offset(x, 0, z);
-                Block* block = level->getBlockState(leafPos)->getBlock();
-                if (block == Blocks::leaves || block == Blocks::leaves2)
+                Material* material = level->getBlockState(leafPos)->getMaterial();
+                if (material == Material::AIR || material == Material::LEAVES)
                 {
                     setBlock(level, leafPos, mLeafState, 0);
                 }
@@ -109,8 +110,8 @@ void MegaTreeFeature::placeSingleTrunkLeaves(Level* level, const BlockPos& pos, 
             if (x * x + z * z <= radiusSquared)
             {
                 BlockPos leafPos = pos.offset(x, 0, z);
-                Block* block = level->getBlockState(leafPos)->getBlock();
-                if (block == Blocks::leaves || block == Blocks::leaves2)
+                Material* material = level->getBlockState(leafPos)->getMaterial();
+                if (material == Material::AIR || material == Material::LEAVES)
                 {
                     setBlock(level, leafPos, mLeafState, 0);
                 }

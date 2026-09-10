@@ -181,9 +181,9 @@ void StructureFeature::restoreSavedData(Level* levelToRestore)
     }
 
     CompoundTag* tags = mSavedData->getFullTag();
-    boost::unordered_map<std::wstring, Tag*>& entries = tags->getAllTagsMap();
-    for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries.begin();
-         it != entries.end(); ++it)
+    boost::unordered_map<std::wstring, Tag*>* entries = tags->getAllTagsMap();
+    for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries->begin();
+         it != entries->end(); ++it)
     {
         if (it->second->getId() == 7)
         {

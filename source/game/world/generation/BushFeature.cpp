@@ -18,31 +18,16 @@ BushFeature::~BushFeature()
 
 bool BushFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    for (int attempt = 0; attempt < 32; ++attempt)
+    for (int attempt = 0; attempt < 64; ++attempt)
     {
-        const BlockPos first = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                             random.nextInt(4) - random.nextInt(4),
-                                             random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(first)
-            && (!level->mDimension->isHasCeiling() || first.y < 127)
-            && mBush->canSurvive(level, first, mBush->defaultBlockState()))
+        const BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
+                                                random.nextInt(4) - random.nextInt(4),
+                                                random.nextInt(8) - random.nextInt(8));
+        if (level->isEmptyBlock(position)
+            && (!level->mDimension->isHasCeiling() || position.y < 127)
+            && mBush->canSurvive(level, position, mBush->defaultBlockState()))
         {
-            level->setBlock(first, mBush->defaultBlockState(), 2, false);
-        }
-
-        const BlockPos second = origin.offset(random.nextInt(8) - random.nextInt(8),
-                                              random.nextInt(4) - random.nextInt(4),
-                                              random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(second))
-        {
-            if (level->mDimension->isHasCeiling() && second.y >= 127)
-            {
-                continue;
-            }
-            if (mBush->canSurvive(level, second, mBush->defaultBlockState()))
-            {
-                level->setBlock(second, mBush->defaultBlockState(), 2, false);
-            }
+            level->setBlock(position, mBush->defaultBlockState(), 2, false);
         }
     }
 

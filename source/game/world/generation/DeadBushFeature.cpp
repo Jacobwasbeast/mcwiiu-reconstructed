@@ -19,20 +19,21 @@ DeadBushFeature::~DeadBushFeature()
 
 bool DeadBushFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    BlockPos position = origin;
-    while ((level->getBlockState(position)->getMaterial() == Material::AIR
-            || level->getBlockState(position)->getMaterial() == Material::PLANT)
-           && position.y >= 1)
+    BlockPos pos = origin;
+    for (const BlockState* state = level->getBlockState(pos);
+         (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES) && pos.y > 0;
+         state = level->getBlockState(pos))
     {
-        position = position.below();
+        pos = pos.below();
     }
 
-    for (int attempt = 0; attempt < 2; ++attempt)
+    for (int i = 0; i < 4; ++i)
     {
-        const BlockPos target = position.offset(random.nextInt(8) - random.nextInt(8),
-                                                random.nextInt(4) - random.nextInt(4),
-                                                random.nextInt(8) - random.nextInt(8));
-        if (level->isEmptyBlock(target) && Blocks::deadbush->mayPlace(level, target))
+        BlockPos target = pos.offset(random.nextInt(8) - random.nextInt(8),
+                                     random.nextInt(4) - random.nextInt(4),
+                                     random.nextInt(8) - random.nextInt(8));
+        if (level->isEmptyBlock(target)
+            && Blocks::deadbush->canSurvive(level, target, Blocks::deadbush->defaultBlockState()))
         {
             level->setBlock(target, Blocks::deadbush->defaultBlockState(), 2, false);
         }

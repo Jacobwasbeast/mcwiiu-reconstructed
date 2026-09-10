@@ -24,7 +24,7 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 
-    if (!g_pApp->isXuidDeadmau5(player->m_0x784) || player->isInvisible())
+    if (!g_pApp->isXuidDeadmau5(player->mXuid) || player->isInvisible())
         return;
 
     PlayerModel* model = mRenderer->getModel();

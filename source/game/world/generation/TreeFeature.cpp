@@ -44,10 +44,10 @@ TreeFeature::TreeFeature(bool doBlockNotify)
 {
 }
 
-TreeFeature::TreeFeature(bool doBlockNotify, int treeType,
+TreeFeature::TreeFeature(bool doBlockNotify, int baseHeight,
                          const BlockState* trunkState,
                          const BlockState* leafState, bool hasVines)
-    : AbstractTreeFeature(doBlockNotify, treeType, trunkState, leafState, hasVines)
+    : AbstractTreeFeature(doBlockNotify, baseHeight, trunkState, leafState, hasVines)
 {
 }
 
@@ -149,7 +149,7 @@ void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos,
 bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
     PIXBeginNamedEvent(0.0f, "TreeFeature::place");
-    const int height = random.nextInt(3) + mTreeType;
+    const int height = random.nextInt(3) + mBaseHeight;
     if (!prepareSpawn(level, pos, height) ||
         !placeTrunk(level, pos, random, height))
     {

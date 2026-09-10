@@ -4,8 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-#include "game/world/block/BlockPos.hpp"
-
+class BlockPos;
 class Level;
 class Village;
 class Vec3;
@@ -27,7 +26,9 @@ private:
     int mSiegeCount;
     int mNextSpawnTime;
     boost::weak_ptr<Village> mVillage;
-    BlockPos mSpawnPos;
+    int mSpawnX;
+    int mSpawnY;
+    int mSpawnZ;
 };
 
 #endif

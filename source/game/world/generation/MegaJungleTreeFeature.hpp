@@ -12,7 +12,7 @@ class Random;
 class MegaJungleTreeFeature : public MegaTreeFeature
 {
 public:
-    MegaJungleTreeFeature(bool doBlockNotify, int treeType, int height,
+    MegaJungleTreeFeature(bool doBlockNotify, int baseHeight, int extraRandomHeight,
                           const BlockState* trunkState, const BlockState* leafState);
     virtual ~MegaJungleTreeFeature();
 

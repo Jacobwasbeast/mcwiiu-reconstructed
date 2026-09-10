@@ -38,7 +38,7 @@ bool PineFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
     PIXBeginNamedEvent(0.0f, "PineFeature::place");
 
-    const int height = random.nextInt(5) + mTreeType;
+    const int height = random.nextInt(5) + mBaseHeight;
     const int leafStart = height - random.nextInt(2) - 3;
     const int leafRadius = random.nextInt(height - leafStart + 1) + 1;
 

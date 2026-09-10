@@ -1,5 +1,7 @@
 #include "game/world/generation/IceSpikeFeature.hpp"
 
+#include <cstdlib>
+
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -15,124 +17,101 @@ IceSpikeFeature::~IceSpikeFeature()
 
 bool IceSpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    BlockPos position = origin;
-    while (level->isEmptyBlock(position) && position.y > 2)
+    BlockPos pos = origin;
+    while (level->isEmptyBlock(pos) && pos.y > 2)
     {
-        position = position.below();
+        pos = pos.below();
     }
 
-    if (level->getBlockState(position)->getBlock() != Blocks::snow)
+    if (level->getBlockState(pos)->getBlock() != Blocks::snow)
     {
         return false;
     }
 
-    position = position.above(random.nextInt(4));
+    pos = pos.above(random.nextInt(4));
     int height = random.nextInt(4) + 7;
-    int width = (height >> 2) + random.nextInt(2);
+    int width = height / 4 + random.nextInt(2);
 
     if (width > 1 && random.nextInt(60) == 0)
     {
-        position = position.above(random.nextInt(30) + 10);
+        pos = pos.above(random.nextInt(30) + 10);
     }
-
-    const float edgeInset = 0.25f;
-    const float edgeChance = 0.75f;
 
     for (int y = 0; y < height; ++y)
     {
-        const float radius = (1.0f - static_cast<float>(y) / static_cast<float>(height)) * static_cast<float>(width);
-        int extent = static_cast<int>(radius);
-        if (static_cast<float>(extent) < radius)
-        {
-            ++extent;
-        }
+        float radius = (1.0f - (float)y / (float)height) * (float)width;
+        int extent = Mth::ceil(radius);
 
         for (int x = -extent; x <= extent; ++x)
         {
+            float dx = (float)Mth::abs(x) - 0.25f;
+
             for (int z = -extent; z <= extent; ++z)
             {
-                const float distanceX = static_cast<float>(Mth::abs(x)) - edgeInset;
-                const float distanceZ = static_cast<float>(Mth::abs(z)) - edgeInset;
-                if (!((x == 0 && z == 0) || distanceX * distanceX + distanceZ * distanceZ <= radius * radius))
+                float dz = (float)Mth::abs(z) - 0.25f;
+                if (((x == 0 && z == 0) || dx * dx + dz * dz <= radius * radius)
+                    && ((x != -extent && x != extent && z != -extent && z != extent)
+                        || random.nextFloat() <= 0.75f))
                 {
-                    continue;
-                }
-
-                if (x != -extent && x != extent && z != -extent && z != extent)
-                {
-                    if (random.nextFloat() > edgeChance)
+                    const BlockState* state = level->getBlockState(pos.offset(x, y, z));
+                    if (state->getMaterial() == Material::AIR || state->getBlock() == Blocks::dirt
+                        || state->getBlock() == Blocks::snow || state->getBlock() == Blocks::ice)
                     {
-                        continue;
+                        setBlock(level, pos.offset(x, y, z), Blocks::packed_ice->defaultBlockState(), 0);
                     }
-                }
 
-                BlockPos target = position.offset(x, y, z);
-                const BlockState* state = level->getBlockState(target);
-                Block* block = state->getBlock();
-                if (state->getMaterial() == Material::AIR || block == Blocks::AIR
-                    || block == Blocks::dirt || block == Blocks::snow || block == Blocks::ice)
-                {
-                    level->setBlock(target, Blocks::packed_ice->defaultBlockState(), 0, false);
-                }
-
-                if (y != 0 && width > 1)
-                {
-                    target = position.offset(x, y - 1, z);
-                    state = level->getBlockState(target);
-                    block = state->getBlock();
-                    if (state->getMaterial() == Material::AIR || block == Blocks::AIR
-                        || block == Blocks::dirt || block == Blocks::snow || block == Blocks::ice)
+                    if (y != 0 && extent > 1)
                     {
-                        level->setBlock(target, Blocks::packed_ice->defaultBlockState(), 0, false);
+                        state = level->getBlockState(pos.offset(x, -y, z));
+                        if (state->getMaterial() == Material::AIR || state->getBlock() == Blocks::dirt
+                            || state->getBlock() == Blocks::snow || state->getBlock() == Blocks::ice)
+                        {
+                            setBlock(level, pos.offset(x, -y, z), Blocks::packed_ice->defaultBlockState(), 0);
+                        }
                     }
                 }
             }
         }
     }
 
-    int baseRadius = width - 1;
-    if (baseRadius < 0)
+    int flare = width - 1;
+    if (flare < 0)
     {
-        baseRadius = 0;
+        flare = 0;
     }
-    if (baseRadius > 1)
+    else if (flare > 1)
     {
-        baseRadius = 1;
+        flare = 1;
     }
 
-    for (int x = -baseRadius; x <= baseRadius; ++x)
+    for (int x = -flare; x <= flare; ++x)
     {
-        for (int z = -baseRadius; z <= baseRadius; ++z)
+        for (int z = -flare; z <= flare; ++z)
         {
-            const int distance = Mth::abs(x) == 1 && Mth::abs(z) == 1 ? 1 : 0;
-            BlockPos target = position.offset(x, -1, z);
+            BlockPos target = pos.offset(x, -1, z);
             int remaining = 50;
-            if (distance == 1)
+            if (std::abs(x) == 1 && std::abs(z) == 1)
             {
                 remaining = random.nextInt(5);
             }
 
-            while (remaining > 0)
+            while (target.y > 50)
             {
                 const BlockState* state = level->getBlockState(target);
-                Block* block = state->getBlock();
-                if (state->getMaterial() == Material::AIR || block == Blocks::AIR
-                    || block == Blocks::dirt || block == Blocks::snow || block == Blocks::ice
-                    || block == Blocks::packed_ice)
-                {
-                    level->setBlock(target, Blocks::packed_ice->defaultBlockState(), 0, false);
-                    target = target.below();
-                }
-                else
+                if (state->getMaterial() != Material::AIR && state->getBlock() != Blocks::dirt
+                    && state->getBlock() != Blocks::snow && state->getBlock() != Blocks::ice
+                    && state->getBlock() != Blocks::packed_ice)
                 {
                     break;
                 }
 
+                setBlock(level, target, Blocks::packed_ice->defaultBlockState(), 0);
+                target = target.below();
                 --remaining;
-                if (remaining < 1)
+                if (remaining <= 0)
                 {
-                    remaining = random.nextInt(5);
                     target = target.below(random.nextInt(5) + 1);
+                    remaining = random.nextInt(5);
                 }
             }
         }

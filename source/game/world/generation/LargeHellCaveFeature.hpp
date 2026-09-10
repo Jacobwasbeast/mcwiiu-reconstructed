@@ -12,7 +12,7 @@ public:
 
 protected:
     void addTunnel(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z,
-                   float yaw, float pitch, float width, int start, int length, double verticalScale);
+                   float width, float yaw, float pitch, int start, int end, double verticalScale);
     void addRoom(long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z);
 };
 

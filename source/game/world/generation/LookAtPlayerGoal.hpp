@@ -2,6 +2,7 @@
 #define GAME_WORLD_GENERATION_LOOKATPLAYERGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 #include <typeinfo>
 
@@ -35,7 +36,7 @@ private:
     Mob* mMob;
 
 protected:
-    boost::shared_ptr<Entity> mLookAt;
+    boost::weak_ptr<Entity> mLookAt;
 
 private:
     float mLookDistance;

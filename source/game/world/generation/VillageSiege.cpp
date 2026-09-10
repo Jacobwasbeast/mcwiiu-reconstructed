@@ -1,20 +1,24 @@
 #include "game/world/generation/VillageSiege.hpp"
 
-#include <boost/shared_ptr.hpp>
+#include <string>
+#include <vector>
 
 #include "game/core/Mth.hpp"
-#include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/NaturalMobSpawner.hpp"
+#include "game/entity/mob/Zombie.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/generation/Village.hpp"
 #include "game/world/generation/Villages.hpp"
-#include "game/world/generation/Player.hpp"
 
 VillageSiege::VillageSiege(Level* level)
-    : mLevel(level), mHasSetupSiege(false), mSiegeState(-1), mSiegeCount(0), mNextSpawnTime(0), mVillage(), mSpawnPos()
+    : mLevel(level), mHasSetupSiege(false), mSiegeState(-1), mSiegeCount(0), mNextSpawnTime(0),
+      mVillage(), mSpawnX(0), mSpawnY(0), mSpawnZ(0)
 {
 }
 
@@ -22,65 +26,89 @@ Vec3* VillageSiege::findRandomSpawnPos(const BlockPos& pos)
 {
     boost::shared_ptr<Village> village = mVillage.lock();
     if (!village)
+    {
         return NULL;
+    }
 
     for (int attempt = 0; attempt < 10; ++attempt)
     {
-        BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8,
-                                        mLevel->mRandom->nextInt(6) - 3,
-                                        mLevel->mRandom->nextInt(16) - 8);
-        if (village->isInside(candidate) &&
-            NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_DEFAULT,
-                                                  mLevel, candidate, 10, 10))
+        const BlockPos candidate = pos.offset(mLevel->mRandom->nextInt(16) - 8,
+                                              mLevel->mRandom->nextInt(6) - 3,
+                                              mLevel->mRandom->nextInt(16) - 8);
+        if (village->isInside(candidate)
+            && NaturalMobSpawner::isSpawnPositionOk(Mob::SPAWN_PLACEMENT_TYPE_DEFAULT, mLevel,
+                                                    candidate, 10, 10))
         {
-            return Vec3::newTemp((double)candidate.x,
-                                  (double)candidate.y,
-                                  (double)candidate.z);
+            return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);
         }
     }
+
     return NULL;
 }
 
 bool VillageSiege::tryToSetupSiege()
 {
-    BlockPos playerPos;
-    std::vector<boost::shared_ptr<Player> >* players = mLevel->getPlayers(0, NULL);
+    MutableBlockPos spawnPos(mSpawnX, mSpawnY, mSpawnZ);
 
-    std::vector<boost::shared_ptr<Player> >::iterator it = players->begin();
-    for (; it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mLevel->mPlayers.begin();
+         it != mLevel->mPlayers.end(); ++it)
     {
-        if (!*it || (*it)->isSpectator())
+        if ((*it)->isSpectator())
+        {
             continue;
+        }
 
-        playerPos = BlockPos(boost::static_pointer_cast<Entity>(*it));
-        Villages* villages = (Villages*)mLevel->getVillages().get();
-        boost::shared_ptr<Village> village = villages->getClosestVillage(playerPos, 1);
+        boost::shared_ptr<Village> village =
+            mLevel->getVillages()->getClosestVillage(BlockPos(*it), 1);
+        mVillage = village;
+
         if (!village)
+        {
             continue;
-        if (village->getDoorCount() < 10 || village->getStableAge() < 20 || village->getPopulationSize() < 20)
+        }
+
+        if (village->getDoorCount() < 10)
+        {
             continue;
+        }
+
+        if (village->getStableAge() < 20)
+        {
+            continue;
+        }
+
+        if (village->getPopulationSize() < 20)
+        {
+            continue;
+        }
 
         const BlockPos* center = village->getCenter();
-        float radius = (float)village->getRadius();
-        mVillage = village;
+        const int centerX = center->x;
+        const int centerY = center->y;
+        const int centerZ = center->z;
+        const float radius = (float)village->getRadius();
+
         for (int attempt = 0; attempt < 10; ++attempt)
         {
-            float angle = mLevel->mRandom->nextFloat() * 6.2831855f;
-            mSpawnPos = BlockPos(center->x + (int)(Mth::cos(angle) * radius * 0.9f),
-                                 center->y,
-                                 center->z + (int)(Mth::sin(angle) * radius * 0.9f));
+            const float angle = mLevel->mRandom->nextFloat() * 6.2831855f;
+            mSpawnX = centerX + (int)((double)(Mth::cos(angle) * radius) * 0.9);
+            mSpawnY = centerY;
+            mSpawnZ = centerZ + (int)((double)(Mth::sin(angle) * radius) * 0.9);
+            spawnPos.set(mSpawnX, mSpawnY, mSpawnZ);
+
             bool insideOtherVillage = false;
-            std::vector<boost::shared_ptr<Village> >* allVillages = villages->getVillages();
-            std::vector<boost::shared_ptr<Village> >::iterator villageIt = allVillages->begin();
-            for (; villageIt != allVillages->end(); ++villageIt)
+            std::vector<boost::shared_ptr<Village> >* villages = mLevel->getVillages()->getVillages();
+            for (std::vector<boost::shared_ptr<Village> >::iterator villageIt = villages->begin();
+                 villageIt != villages->end(); ++villageIt)
             {
-                if (*villageIt != village && (*villageIt)->isInside(mSpawnPos))
+                if (*villageIt != village && (*villageIt)->isInside(spawnPos))
                 {
                     insideOtherVillage = true;
                     break;
                 }
             }
-            if (!insideOtherVillage && findRandomSpawnPos(mSpawnPos))
+
+            if (!insideOtherVillage && findRandomSpawnPos(spawnPos) != NULL)
             {
                 mNextSpawnTime = 0;
                 mSiegeCount = 20;
@@ -88,21 +116,33 @@ bool VillageSiege::tryToSetupSiege()
             }
         }
     }
+
     return false;
 }
 
 bool VillageSiege::trySpawn()
 {
-    Vec3* spawn = findRandomSpawnPos(mSpawnPos);
-    if (!spawn)
+    Vec3* spawnPos = findRandomSpawnPos(BlockPos(mSpawnX, mSpawnY, mSpawnZ));
+    if (spawnPos == NULL)
+    {
         return false;
+    }
 
-    boost::shared_ptr<Entity> entity = EntityIO::newEntity(ENTITY_TYPE_ZOMBIE, mLevel);
-    DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(entity));
-    boost::static_pointer_cast<Mob>(entity)->finalizeMobSpawn(difficulty, NULL, std::wstring());
-    entity->moveTo(spawn->x, spawn->y, spawn->z,
+    boost::shared_ptr<Zombie> zombie(new Zombie(mLevel));
+    zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL,
+                             std::wstring(L""));
+    zombie->moveTo(spawnPos->x, spawnPos->y, spawnPos->z,
                    mLevel->mRandom->nextFloat() * 360.0f, 0.0f);
-    mLevel->addEntity(entity);
+    mLevel->addEntity(zombie);
+
+    boost::shared_ptr<Village> village = mVillage.lock();
+    if (!village)
+    {
+        return false;
+    }
+
+    const BlockPos center = *village->getCenter();
+    zombie->restrictTo(center, village->getRadius());
     return true;
 }
 
@@ -113,23 +153,35 @@ void VillageSiege::tick()
         mSiegeState = 0;
         return;
     }
+
     if (mSiegeState == 2)
+    {
         return;
+    }
 
     if (mSiegeState == 0)
     {
-        float time = mLevel->getTimeOfDay(0.0f);
-        if (time < 0.5f || time > 0.501f)
+        const float timeOfDay = mLevel->getTimeOfDay(0.0f);
+        if (timeOfDay < 0.5 || timeOfDay > 0.501)
+        {
             return;
+        }
+
         mSiegeState = mLevel->mRandom->nextInt(10) == 0 ? 1 : 2;
         mHasSetupSiege = false;
         if (mSiegeState == 2)
+        {
             return;
+        }
     }
-    else if (!mHasSetupSiege)
+
+    if (!mHasSetupSiege)
     {
         if (!tryToSetupSiege())
+        {
             return;
+        }
+
         mHasSetupSiege = true;
     }
 
@@ -138,12 +190,15 @@ void VillageSiege::tick()
         --mNextSpawnTime;
         return;
     }
+
     mNextSpawnTime = 2;
+
     if (mSiegeCount < 1)
     {
         mSiegeState = 2;
         return;
     }
+
     trySpawn();
     --mSiegeCount;
 }

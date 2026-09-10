@@ -27,10 +27,11 @@ void VillagerInteractGoal::start()
     InteractGoal::start();
 
     mInteractionDelay = 0;
-    if (mVillager->hasExcessFood() && mLookAt &&
-        mLookAt->GetType() == ENTITY_TYPE_VILLAGER)
+    if (mVillager->hasExcessFood() && mLookAt.lock() &&
+        mLookAt.lock()->GetType() == ENTITY_TYPE_VILLAGER)
     {
-        boost::shared_ptr<Villager> villager = boost::dynamic_pointer_cast<Villager>(mLookAt);
+        boost::shared_ptr<Villager> villager =
+            boost::dynamic_pointer_cast<Villager>(mLookAt.lock());
         if (villager->wantsMoreFood())
             mInteractionDelay = 10;
     }

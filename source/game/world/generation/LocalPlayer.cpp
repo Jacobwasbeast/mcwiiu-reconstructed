@@ -47,6 +47,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int pla
       mLastSentZ(0.0), mLastSentYRot(0.0f), mLastSentXRot(0.0f),
       mPositionSendCounter(0), mPreviousOnGround(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
       mSprinting(false), mThirdPersonViewTimer(0),
+      mFallFlyYaw(0.0f), mFallFlyYawOld(0.0f),
       mHandsBusy(false), mItemUsePending(false),
       mUsedItemHand(InteractionHand::eInteractionHand_MainHand),
       mAutoJumpEnabled(true), mAutoJumpTime(0), mViewport(0), mButtonsDown(0),

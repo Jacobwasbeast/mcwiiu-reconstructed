@@ -16,10 +16,7 @@
 #include "game/world/generation/LayerTheme.hpp"
 #include "game/world/generation/VoidLayerTheme.hpp"
 #include "game/util/AABB.hpp"
-
-template <class T>
-T* randomUsableElement(Random& random, std::vector<T*>& definitions,
-                       const LayerMetadata& metadata);
+#include "game/world/LayerGenerationRuleDefinition.hpp"
 
 LayerGenerationRuleDefinition::LayerGenerationRuleDefinition()
 {

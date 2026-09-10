@@ -6,9 +6,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 
-HellSpringFeature::HellSpringFeature(Block* block, bool requiresBlock)
-    : Feature(false), mBlock(block), mRequiresBlock(requiresBlock)
+HellSpringFeature::HellSpringFeature(Block* block, bool insideRock)
+    : Feature(false), mBlock(block), mInsideRock(insideRock)
 {
 }
 
@@ -23,46 +24,62 @@ bool HellSpringFeature::place(Level* level, Random& random, const BlockPos& orig
         return false;
     }
 
-    const BlockState* originState = level->getBlockState(origin);
-    Block* originBlock = originState->getBlock();
-    if (originBlock->mFullBlock && originBlock != Blocks::netherrack)
+    if (level->getBlockState(origin)->getBlock()->mMaterial != Material::AIR
+        && level->getBlockState(origin)->getBlock() != Blocks::netherrack)
     {
         return false;
     }
 
-    int netherrackNeighbours = 0;
-    int emptyNeighbours = 0;
-    const BlockPos neighbours[5] =
+    int rockSides = 0;
+    if (level->getBlockState(origin.west())->getBlock() == Blocks::netherrack)
     {
-        origin.west(), origin.east(), origin.north(), origin.south(), origin.below()
-    };
-
-    for (int i = 0; i < 5; ++i)
+        ++rockSides;
+    }
+    if (level->getBlockState(origin.east())->getBlock() == Blocks::netherrack)
     {
-        if (level->getBlockState(neighbours[i])->getBlock() == Blocks::netherrack)
-        {
-            ++netherrackNeighbours;
-        }
-        if (level->isEmptyBlock(neighbours[i]))
-        {
-            ++emptyNeighbours;
-        }
+        ++rockSides;
+    }
+    if (level->getBlockState(origin.north())->getBlock() == Blocks::netherrack)
+    {
+        ++rockSides;
+    }
+    if (level->getBlockState(origin.south())->getBlock() == Blocks::netherrack)
+    {
+        ++rockSides;
+    }
+    if (level->getBlockState(origin.below())->getBlock() == Blocks::netherrack)
+    {
+        ++rockSides;
     }
 
-    if (!mRequiresBlock && netherrackNeighbours == 4)
+    int emptySides = 0;
+    if (level->isEmptyBlock(origin.west()))
     {
-        if (emptyNeighbours != 1)
-        {
-            return false;
-        }
+        ++emptySides;
     }
-    else if (netherrackNeighbours != 5)
+    if (level->isEmptyBlock(origin.east()))
     {
-        return false;
+        ++emptySides;
+    }
+    if (level->isEmptyBlock(origin.north()))
+    {
+        ++emptySides;
+    }
+    if (level->isEmptyBlock(origin.south()))
+    {
+        ++emptySides;
+    }
+    if (level->isEmptyBlock(origin.below()))
+    {
+        ++emptySides;
     }
 
-    const BlockState* state = mBlock->defaultBlockState();
-    level->setBlock(origin, state, 2, false);
-    level->instaTick(origin, state, random);
+    if ((!mInsideRock && rockSides == 4 && emptySides == 1) || rockSides == 5)
+    {
+        const BlockState* state = mBlock->defaultBlockState();
+        level->setBlock(origin, state, 2, false);
+        level->instaTick(origin, state, random);
+    }
+
     return true;
 }

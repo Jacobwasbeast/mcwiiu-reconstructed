@@ -48,7 +48,7 @@ void BirchFeature::staticCtor()
 bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     PIXBeginNamedEvent(0.0f, "BirchFeature::place");
-    int height = random.nextInt(3) + mTreeType;
+    int height = random.nextInt(3) + mBaseHeight;
     if (mTallBirch)
     {
         height += random.nextInt(7);

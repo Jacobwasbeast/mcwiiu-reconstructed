@@ -260,7 +260,7 @@ boost::shared_ptr<ServerPlayer> PlayerList::getPlayer(PlayerUID uid)
          it != mPlayers.end(); ++it)
     {
         BOOST_ASSERT(*it);
-        if ((*it)->m_0x784 == uid || (*it)->m_0x798 == uid)
+        if ((*it)->mXuid == uid || (*it)->m_0x798 == uid)
             return *it;
     }
     return boost::shared_ptr<ServerPlayer>();

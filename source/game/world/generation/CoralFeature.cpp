@@ -6,6 +6,12 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/CoralBlock.hpp"
+#include "game/world/block/Property.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
 
 CoralFeature::CoralFeature() : Feature(false) {}
 CoralFeature::~CoralFeature() {}
@@ -44,18 +50,55 @@ bool CoralFeature::_setBlockOnSolid(Level* level, const BlockPos& pos, const Blo
     Feature::setBlock(level, pos, state, 0); return true;
 }
 
-void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& pos, const BlockState* state, float chance, int distance, bool inverted)
+void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& pos,
+                                  const BlockState* state, float chance, int distance,
+                                  bool inverted)
 {
-    const BlockPos p[4] = {pos.east(distance), pos.west(distance), pos.south(distance), pos.north(distance)};
-    if (!_setBlock(level, pos, state, state->mElementId)) return;
-    int i; for (i = 0; i < 4; ++i) if (random.nextFloat() < chance && !_setBlockOnSolid(level, p[i], state, state->mElementId)) return;
+    const int data =
+        state->getValue(static_cast<AbstractProperty<int>*>(CoralBlock_PROPERTY_1));
+    if (!_setBlock(level, pos, state, data))
+    {
+        return;
+    }
+
+    const BlockPos arms[4] = { BlockPos(pos.x + distance, pos.y, pos.z),
+                               BlockPos(pos.x - distance, pos.y, pos.z),
+                               BlockPos(pos.x, pos.y, pos.z + distance),
+                               BlockPos(pos.x, pos.y, pos.z - distance) };
+    for (int i = 0; i < 4; ++i)
+    {
+        const float roll = random.nextFloat();
+        if (inverted ? roll < chance : chance < roll)
+        {
+            if (!_setBlockOnSolid(level, arms[i], state, data))
+            {
+                return;
+            }
+        }
+    }
 }
 
-void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& pos, const BlockState* state, float chance, int distance, bool inverted)
+void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& pos,
+                                const BlockState* state, float chance, int distance,
+                                bool inverted)
 {
-    const BlockPos p[4] = {pos.offset(distance, 0, distance), pos.offset(-distance, 0, distance), pos.offset(distance, 0, -distance), pos.offset(-distance, 0, -distance)};
-    if (!_setBlock(level, pos, state, state->mElementId)) return;
-    int i; for (i = 0; i < 4; ++i) if (random.nextFloat() < chance && !_setBlockOnSolid(level, p[i], state, state->mElementId)) return;
+    const int data =
+        state->getValue(static_cast<AbstractProperty<int>*>(CoralBlock_PROPERTY_1));
+    const BlockPos corners[4] = { BlockPos(pos.x + distance, pos.y, pos.z + distance),
+                                  BlockPos(pos.x - distance, pos.y, pos.z + distance),
+                                  BlockPos(pos.x - distance, pos.y, pos.z + distance),
+                                  BlockPos(pos.x + distance, pos.y, pos.z - distance) };
+    for (int i = 0; i < 4; ++i)
+    {
+        const float roll = random.nextFloat();
+        if (inverted ? roll < chance : chance < roll)
+        {
+            if (!_setBlockOnSolid(level, corners[i], state, data))
+            {
+                return;
+            }
+        }
+    }
 }
 
 void CoralFeature::_buildPlantArm(Level* level, Random& random, const BlockPos& pos, const BlockState* state, std::vector<BlockPos>& positions, std::vector<std::pair<BlockPos, const Direction*> >& sides, const Direction* direction, bool inverted)
@@ -109,19 +152,27 @@ void CoralFeature::_placeTopDecorations(Level* level, const BlockPos& pos, Rando
     BlockPos p = pos.above(); if (level->isEmptyWaterBlock(p) && random.nextInt(5) == 0) Feature::setBlock(level, p, Blocks::coral_fan->defaultBlockState(), 0);
 }
 
-bool CoralFeature::_canPlaceHangOn(Level* level, const BlockPos& pos) { Block* b = level->getBlock(pos); return b == Blocks::AIR || b == Blocks::stone; }
+bool CoralFeature::_canPlaceHangOn(Level* level, const BlockPos& pos)
+{
+    Block* block = level->getBlock(pos);
+    return block == Blocks::coral_block || block == Blocks::stone;
+}
 int CoralFeature::_turnFacingIntoint(const Direction* d) { if (d == Direction::NORTH) return 2; if (d == Direction::EAST) return 1; if (d == Direction::SOUTH) return 3; return 0; }
 const BlockState* CoralFeature::_setCoralHangData(int facing, int variant, int type)
 {
-    if (type == 0)
+    if (type != 0 && type != 1)
     {
-        return Blocks::coral_fan_hang->defaultBlockState();
+        TypedBoxed<int> facingValue(facing);
+        return Blocks::coral_fan_hang3->defaultBlockState()->setBoxedValue(
+            CoralFanHang_PROPERTY_2, &facingValue);
     }
-    if (type == 1)
-    {
-        return Blocks::coral_fan_hang2->defaultBlockState();
-    }
-    return Blocks::coral_fan_hang3->defaultBlockState();
+
+    const BlockState* state = type == 0 ? Blocks::coral_fan_hang->defaultBlockState()
+                                        : Blocks::coral_fan_hang2->defaultBlockState();
+    TypedBoxed<int> variantValue(variant);
+    state = state->setBoxedValue(CoralFanHang_PROPERTY_1, &variantValue);
+    TypedBoxed<int> facingValue(facing);
+    return state->setBoxedValue(CoralFanHang_PROPERTY_2, &facingValue);
 }
 
 void CoralFeature::_placeSideDecorations(Level* level, const BlockPos& pos, Random& random, const Direction* direction)

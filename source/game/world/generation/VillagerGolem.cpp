@@ -242,7 +242,7 @@ void VillagerGolem::playStepSound(const BlockPos&, Block*)
     playSound(SoundEvents::IRONGOLEM_STEP, 1.0f, 1.0f);
 }
 
-const void* VillagerGolem::getDefaultLootTable()
+ResourceLocation* VillagerGolem::getDefaultLootTable()
 {
     return &BuiltInLootTables::IRON_GOLEM;
 }

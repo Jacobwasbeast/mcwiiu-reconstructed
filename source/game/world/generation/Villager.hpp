@@ -172,7 +172,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void pickUpItem(boost::shared_ptr<ItemEntity> itemEntity);
     virtual bool removeWhenFarAway();
     virtual void customServerAiStep();

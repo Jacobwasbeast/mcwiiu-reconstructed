@@ -7,8 +7,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/Villager.hpp"
 
-class Player;
-
 TradeWithPlayerGoal::TradeWithPlayerGoal(Villager* villager)
     : Goal(), mVillager(villager)
 {
@@ -43,7 +41,7 @@ bool TradeWithPlayerGoal::canUse()
     {
         return false;
     }
-    return true;
+    return tradingPlayer->mContainerMenu != NULL;
 }
 
 void TradeWithPlayerGoal::start()
