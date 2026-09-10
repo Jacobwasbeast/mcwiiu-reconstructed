@@ -143,7 +143,7 @@ public:
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual SoundSource::ESoundSource getSoundSource();
     virtual bool hurt(const DamageSource* source, float damage);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     bool isTemptingItem(Item* item);
     int getRandomRabbitType();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);

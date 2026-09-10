@@ -383,7 +383,7 @@ bool Rabbit::hurt(const DamageSource* source, float damage)
     return Animal::hurt(source, damage);
 }
 
-const void* Rabbit::getDefaultLootTable()
+ResourceLocation* Rabbit::getDefaultLootTable()
 {
     return &BuiltInLootTables::RABBIT;
 }
