@@ -3578,7 +3578,7 @@ void Level::updateSleepingPlayerList()
 {
 }
 
-void* Level::getLootTables()
+LootTables* Level::getLootTables()
 {
     return mLootTables;
 }
@@ -4687,24 +4687,12 @@ bool Level::hasBlockCubes(const AABB* box)
 
 bool Level::containsAnyBlocks(AABB* box)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     for (int x = minX; x <= maxX; ++x)
     {
         for (int y = minY; y <= maxY; ++y)
@@ -4724,24 +4712,12 @@ bool Level::containsAnyBlocks(AABB* box)
 
 bool Level::containsAnyLiquid(AABB* box)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     for (int x = minX; x < maxX; ++x)
     {
         for (int y = minY; y < maxY; ++y)
@@ -4761,24 +4737,12 @@ bool Level::containsAnyLiquid(AABB* box)
 
 bool Level::containsAnysolidBlocking(AABB* box)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     for (int x = minX; x < maxX; ++x)
     {
         for (int y = minY; y < maxY; ++y)
@@ -4798,29 +4762,17 @@ bool Level::containsAnysolidBlocking(AABB* box)
 
 bool Level::containsAnyLiquid_NoLoad(AABB* box)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
+    for (int x = minX; x < maxX; ++x)
     {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
-    for (int x = minX; x <= maxX; ++x)
-    {
-        for (int y = minY; y <= maxY; ++y)
+        for (int y = minY; y < maxY; ++y)
         {
-            for (int z = minZ; z <= maxZ; ++z)
+            for (int z = minZ; z < maxZ; ++z)
             {
                 BlockPos pos(x, y, z);
                 if (!hasChunkAt(pos) || getLiquidBlockState(pos)->getMaterial()->isLiquid())
@@ -4835,24 +4787,12 @@ bool Level::containsAnyLiquid_NoLoad(AABB* box)
 
 bool Level::containsFireBlock(AABB* box)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     if (!hasChunksAt(minX, minY, minZ, maxX, maxY, maxZ, true))
     {
         return false;
@@ -4876,9 +4816,9 @@ bool Level::containsFireBlock(AABB* box)
 
 bool Level::containsFireBlock(Entity* entity, AABB* box)
 {
-    int minX = Mth::floor(box->mMinX), maxX = Mth::floor(box->mMaxX + 1.0);
-    int minY = std::max(0, Mth::floor(box->mMinY)), maxY = std::min(256, Mth::floor(box->mMaxY + 1.0));
-    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::floor(box->mMaxZ + 1.0);
+    int minX = Mth::floor(box->mMinX), maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY), maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
 
     if (!entity->mTickCache.mCacheChanged && entity->mFireCacheMinX == minX
         && entity->mFireCacheMinY == minY && entity->mFireCacheMinZ == minZ
@@ -4917,24 +4857,12 @@ bool Level::containsFireBlock(Entity* entity, AABB* box)
 
 bool Level::containsMaterial(AABB* box, Material* material)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     for (int x = minX; x < maxX; ++x)
     {
         for (int y = minY; y < maxY; ++y)
@@ -4953,9 +4881,9 @@ bool Level::containsMaterial(AABB* box, Material* material)
 
 bool Level::isInLava(Entity* entity, AABB* box)
 {
-    int minX = Mth::floor(box->mMinX), maxX = Mth::floor(box->mMaxX + 1.0);
-    int minY = std::max(0, Mth::floor(box->mMinY)), maxY = std::min(256, Mth::floor(box->mMaxY + 1.0));
-    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::floor(box->mMaxZ + 1.0);
+    int minX = Mth::floor(box->mMinX), maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY), maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ), maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
 
     if (!entity->mTickCache.mCacheChanged && entity->mLavaCacheMinX == minX
         && entity->mLavaCacheMinY == minY && entity->mLavaCacheMinZ == minZ
@@ -4988,24 +4916,12 @@ bool Level::isInLava(Entity* entity, AABB* box)
 
 bool Level::containsLiquid(AABB* box, Material* material)
 {
-    int minX = Mth::fastFloor(box->mMinX);
-    int minY = Mth::fastFloor(box->mMinY);
-    int minZ = Mth::fastFloor(box->mMinZ);
-    int maxX = static_cast<int>(box->mMaxX);
-    int maxY = static_cast<int>(box->mMaxY);
-    int maxZ = static_cast<int>(box->mMaxZ);
-    if (static_cast<float>(maxX) < static_cast<float>(box->mMaxX))
-    {
-        ++maxX;
-    }
-    if (static_cast<float>(maxY) < static_cast<float>(box->mMaxY))
-    {
-        ++maxY;
-    }
-    if (static_cast<float>(maxZ) < static_cast<float>(box->mMaxZ))
-    {
-        ++maxZ;
-    }
+    int minX = Mth::floor(box->mMinX);
+    int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    int minY = Mth::floor(box->mMinY);
+    int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    int minZ = Mth::floor(box->mMinZ);
+    int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
     for (int x = minX; x < maxX; ++x)
     {
         for (int y = minY; y < maxY; ++y)

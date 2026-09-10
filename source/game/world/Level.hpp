@@ -29,6 +29,7 @@
 
 class LevelStorage;
 class LevelData;
+class LootTables;
 class Dimension;
 class LevelChunk;
 class ChunkSource;
@@ -97,8 +98,8 @@ public:
     LevelChunk* getChunkAt(const BlockPos& pos);
     bool hasChunkAt(const BlockPos& pos, bool allowEmpty);
     bool hasChunkAt(const BlockPos& pos);
-    Biome* getBiome(const BlockPos& pos);
-    BiomeSource* getBiomeSource();
+    virtual Biome* getBiome(const BlockPos& pos);
+    virtual BiomeSource* getBiomeSource();
     virtual void initializeLevel(LevelSettings* settings);
     virtual MinecraftServer* getServer();
     void setSpawnPos(const BlockPos& pos);
@@ -108,7 +109,7 @@ public:
     bool isInWorldBounds(const BlockPos& pos);
     bool isInWorldBounds(int x, int y, int z);
     bool isOutsideBuildHeight(const BlockPos& pos);
-    bool isEmptyBlock(const BlockPos& pos);
+    virtual bool isEmptyBlock(const BlockPos& pos);
     bool isEmptyWaterBlock(const BlockPos& pos);
     bool hasChunksAt(const BlockPos& pos, int radius, bool allowEmpty);
     bool hasChunksAt(const BlockPos& pos, int radius);
@@ -181,9 +182,9 @@ public:
     int getLightColor(const BlockPos& pos, int lightValue, int cacheIndex);
     float getBrightness(const BlockPos& pos, int lightValue);
     float getBrightness(const BlockPos& pos);
-    const BlockState* getBlockState(const BlockPos& pos);
-    const BlockState* getBlockState(EntityTickCache& tickCache, const BlockPos& pos);
-    const BlockState* getBlockState(LevelChunk* chunk, EntityTickCache& tickCache, const BlockPos& pos);
+    virtual const BlockState* getBlockState(const BlockPos& pos);
+    virtual const BlockState* getBlockState(EntityTickCache& tickCache, const BlockPos& pos);
+    virtual const BlockState* getBlockState(LevelChunk* chunk, EntityTickCache& tickCache, const BlockPos& pos);
     int getBlockId(int x, int y, int z);
     int getBlockId(EntityTickCache& tickCache, int x, int y, int z);
     unsigned short getElement(EntityTickCache& tickCache, int x, int y, int z);
@@ -197,8 +198,8 @@ public:
     void getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock);
     Block* getLiquidBlock(const BlockPos& pos);
     const BlockState* getLiquidBlockState(const BlockPos& pos);
-    const BlockState* getExtraBlockState(const BlockPos& pos);
-    int getBlockData(int x, int y, int z);
+    virtual const BlockState* getExtraBlockState(const BlockPos& pos);
+    virtual int getBlockData(int x, int y, int z);
     int getExtraBlockData(int x, int y, int z);
     Block* getBlock(const BlockPos& pos);
     bool isSolidRender(const BlockPos& pos);
@@ -296,7 +297,7 @@ public:
     bool extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos, const Direction* direction);
     void gatherChunkSourceStats();
     boost::shared_ptr<BlockEntity> getPendingBlockEntityAt(const BlockPos& pos);
-    boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos);
+    virtual boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos);
     void setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
     void removeBlockEntity(const BlockPos& pos);
     void markForRemoval(boost::shared_ptr<BlockEntity> entity);
@@ -379,7 +380,7 @@ public:
     boost::shared_ptr<Villages> getVillages();
     double getSpecialMultiplier(int type);
     virtual void sendPacketToServer(boost::shared_ptr<Packet> packet);
-    void* getLootTables();
+    LootTables* getLootTables();
     virtual BlockPos* findNearestMapFeature(const std::wstring& feature, const BlockPos& pos, bool findUnexplored);
     int getAuxValueForMap(PlayerUID uid, int dimension, const BlockPos& pos, int scale);
     LevelChunk* getCacheChunkDirect(int x, int z);
@@ -448,6 +449,7 @@ public:
                                                           double angle);
 private:
     int mSeaLevel;
+protected:
     OSFastMutex mEntityMutex;
     std::vector<boost::shared_ptr<Entity> > mEntities;
     std::vector<boost::shared_ptr<Entity> > mEntitiesToRemove;
@@ -469,9 +471,7 @@ private:
     bool mForceTimeUpdate;
 protected:
     int mRandValue;
-private:
-    void* mLootTables;
-protected:
+    LootTables* mLootTables;
     int mAddend;
 private:
     float mOldRainLevel;
@@ -490,7 +490,7 @@ private:
 public:
     std::vector<LevelListener*> mListeners;
 
-private:
+protected:
     ChunkSource* mChunkSource;
     boost::shared_ptr<LevelStorage> mLevelStorage;
     LevelData* mLevelData;
