@@ -11,7 +11,7 @@
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
-    : mPath(0), mMob(mob), mLevel(level), mTick(0), mSpeedModifier(1.0), mTargetPos(0), mMaxDistance(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mLastStuckCheckTimeHigh(0), mTimeoutCachedNode(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mRecomputePathTime(0), mLastRecomputeTime(0), mTargetPath(0), mPathFinder(0)
+    : mPath(0), mMob(mob), mLevel(level), mTick(0), mSpeedModifier(1.0), mTargetPos(0), mMaxDistance(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mLastStuckCheckTimeHigh(0), mTimeoutCachedNode(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPath(0), mPathFinder(0)
 {
 }
 
@@ -43,7 +43,7 @@ bool PathNavigation::hasDelayedRecomputation() { return mHasDelayedRecomputation
 
 void PathNavigation::recomputePath()
 {
-    if (mLevel->getGameTime() - mLastRecomputeTime < 20) mHasDelayedRecomputation = true;
+    if (mLevel->getGameTime() - mLastRecomputeTime < 21) mHasDelayedRecomputation = true;
     else if (mTargetPos != 0)
     {
         delete mPath;

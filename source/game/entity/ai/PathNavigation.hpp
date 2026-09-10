@@ -33,8 +33,7 @@ public:
     bool mIsRiverFollowing;
     float mMaxDistanceToWaypoint;
     bool mHasDelayedRecomputation;
-    int mRecomputePathTime;
-    int mLastRecomputeTime;
+    long long mLastRecomputeTime;
     Path* mTargetPath;
     PathFinder* mPathFinder;
 
