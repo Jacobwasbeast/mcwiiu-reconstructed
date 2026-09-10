@@ -494,7 +494,16 @@ void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading() { mServerIsWaiting
 bool ClientMasterGameMode::ServerIsWaitingOnUsLoading() { return mServerIsWaitingOnChunkLoading; }
 void ClientMasterGameMode::RecievedBRUP() { if (mBRUPsRemaining > 0) --mBRUPsRemaining; }
 void ClientMasterGameMode::SetBRUPSToWaitOn(int count) { mBRUPCount = count; mBRUPsRemaining = count; }
-bool ClientMasterGameMode::IsValidStateForItemUse() const { return !IsWaitingToStart() && !IsRoundStarting() && !IsRoundRestarting() && GetGameModeState() != 4; }
+bool ClientMasterGameMode::IsValidStateForItemUse() const
+{
+    if (IsWaitingToStart())
+        return false;
+    if (IsRoundStarting())
+        return false;
+    if (IsRoundRestarting())
+        return false;
+    return mGameModeState != 4;
+}
 unsigned int ClientMasterGameMode::GetGameModeState() const { return mGameModeState; }
 MultiPlayerLevel* ClientMasterGameMode::GeneratorTargetLevel() const { return Minecraft::GetInstance()->mLevels[0]; }
 Scoreboard* ClientMasterGameMode::getScoreboard() { return Minecraft::GetInstance()->mLevel->GetClientScoreboard(); }

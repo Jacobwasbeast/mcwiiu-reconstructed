@@ -44,7 +44,10 @@ void Uniform::setMat3x4(float a,float b,float c,float d,float e,float f,float g,
     mFloatBuffer->position(0); float v[12]={a,b,c,d,e,f,g,h,i,j,k,l};
     for(int n=0;n<12;n++) mFloatBuffer->put(n,v[n]); markDirty();
 }
-void Uniform::setMat4x2(float a,float b,float c,float d,float e,float f,float g,float h){setMat2x4(a,b,c,d,e,f,g,h);}
+void Uniform::setMat4x2(float a,float b,float c,float d,float e,float f,float g,float h){
+    mFloatBuffer->position(0); float v[8]={a,b,c,d,e,f,g,h};
+    for(int i=0;i<8;i++) mFloatBuffer->put(i,v[i]); markDirty();
+}
 void Uniform::setMat4x3(float a,float b,float c,float d,float e,float f,float g,float h,float i,float j,float k,float l){setMat3x4(a,b,c,d,e,f,g,h,i,j,k,l);}
 void Uniform::setMat4x4(float a,float b,float c,float d,float e,float f,float g,float h,float i,float j,float k,float l,float m,float n,float o,float p){
     mFloatBuffer->position(0); float v[16]={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p};

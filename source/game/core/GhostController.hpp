@@ -87,7 +87,7 @@ public:
   void AddLoadedGhostRecord(int, void*, unsigned int);
   static void LoadGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int LoadGhostRecordOp(int);
-  static void SaveGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
+  static int SaveGhostHeader_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int SaveGhostHeaderOp(int);
   static void SaveGhostRecord_Callback(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
   unsigned int SaveGhostRecordOp(int, GhostRecord*);

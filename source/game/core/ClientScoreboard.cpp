@@ -398,7 +398,15 @@ int ClientScoreboard::GetTotalTrapsSetOff(const StatsUID& suid)
 
 int ClientScoreboard::GetTotalJumps(const StatsUID& suid)
 {
-    return GetTotalLifeSpan(suid);
+    PlayerStats* player = GetPlayerStats(suid);
+    int total = 0;
+    if (player != NULL && !player->mRoundStats.empty())
+    {
+        PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
+        for (; it != player->mRoundStats.end(); ++it)
+            total += it->second.mLapsCompleted;
+    }
+    return total;
 }
 
 const unsigned short* ClientScoreboard::GetVotesGiven(const StatsUID& suid, int round)

@@ -264,7 +264,8 @@ unsigned int GhostController::LoadGhostRecordOp(int track)
     mSaveHeaderStatus = 1;
     return 1;
 }
-void GhostController::SaveGhostHeader_Callback(void* context,int,C4JStorage::eGeneralData_Callback_Status,int){
+int GhostController::SaveGhostHeader_Callback(void* context,int,C4JStorage::eGeneralData_Callback_Status,int)
+{
     GhostController* controller = static_cast<GhostController*>(context);
     void* buffer = controller->mSaveHeaderBuffer;
     if (buffer != NULL) {
@@ -272,6 +273,7 @@ void GhostController::SaveGhostHeader_Callback(void* context,int,C4JStorage::eGe
         controller->mSaveHeaderBuffer = NULL;
     }
     controller->mSaveHeaderStatus = 6;
+    return 0;
 }
 unsigned int GhostController::SaveGhostHeaderOp(int track)
 {
@@ -342,7 +344,74 @@ void GhostController::tick()
 }
 bool GhostController::canBeDeleted(){return mDone;}
 void GhostController::setDone(){mDone=true;}
-unsigned int GhostController::finaliseRecording(int i,bool){if(i>=0&&i<4){setRecordingActive(i,false);return mRecording[i]?1:0;}return 0;}
+unsigned int GhostController::finaliseRecording(int i, bool promoteScore)
+{
+    if (i < 0 || i >= 4)
+        return 0;
+
+    setRecordingActive(i, false);
+
+    GhostRecord* recording = mRecording[i];
+    GhostRecord* loaded = mLoaded[i];
+    unsigned int result = 0;
+    GhostRecord* recordToAdd = NULL;
+    bool skipPromote = false;
+
+    if (!promoteScore || recording != NULL) {
+        loaded = mLoaded[i];
+        if (loaded != NULL) {
+            if (recording != NULL) {
+                const bool recordingIsBetter =
+                    recording->mElapsedHigh <= loaded->mElapsedHigh &&
+                    (recording->mElapsedHigh < loaded->mElapsedHigh ||
+                     recording->mElapsedLow < loaded->mElapsedLow);
+                if (recordingIsBetter) {
+                    delete loaded;
+                    mLoaded[i] = NULL;
+                    recording = mRecording[i];
+                    AddGhostRecord(i, recording, false);
+                    mRecording[i] = NULL;
+                    return 1;
+                }
+            }
+            if (!promoteScore) {
+                recordToAdd = loaded;
+                skipPromote = true;
+            }
+        }
+        if (!skipPromote) {
+            result = 1;
+            if (recording != NULL) {
+                loaded = mLoaded[i];
+                if (loaded != NULL) {
+                    delete loaded;
+                    mLoaded[i] = NULL;
+                    recording = mRecording[i];
+                }
+                AddGhostRecord(i, recording, false);
+                mRecording[i] = NULL;
+                return 1;
+            }
+        }
+    } else {
+        loaded = mLoaded[i];
+        recordToAdd = NULL;
+        if (loaded != NULL) {
+            delete loaded;
+            mLoaded[i] = NULL;
+        }
+    }
+
+    if (!mRecordingSlotFlags1[i]) {
+        mLoaded[i] = NULL;
+        AddGhostRecord(i, recordToAdd, false);
+    }
+    if (mRecording[i] != NULL) {
+        delete mRecording[i];
+        mRecording[i] = NULL;
+    }
+    return result;
+}
 int GhostController::RecordTime(int track, int key, unsigned int time)
 {
     if (track < 0 || track >= 4)

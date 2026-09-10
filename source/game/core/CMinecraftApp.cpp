@@ -1297,6 +1297,14 @@ bool CMinecraftApp::IsConsoleChatCensored()
 }
 uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+    {
+        const boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer =
+            minecraft->mLocalPlayers[playerIndex];
+        if (localPlayer && localPlayer->getStringUUID() == uuid)
+            return 1;
+    }
     return 0;
 }
 uint8_t CMinecraftApp::GetTutorialMode(PlayerUID uid)
