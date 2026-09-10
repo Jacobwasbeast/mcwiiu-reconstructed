@@ -938,9 +938,40 @@ MinecraftServer* ServerLevel::getServer()
 
 uint64_t ServerLevel::setTimeAndAdjustBlockTicks(uint32_t first, int32_t second, uint32_t third)
 {
-    (void)second;
-    (void)third;
-    setGameTime(static_cast<long long>(first));
+    (void)first;
+    const long long oldDayTime = getDayTime();
+    const unsigned int oldDayTimeLow = static_cast<unsigned int>(oldDayTime);
+    const int oldDayTimeHigh = static_cast<int>(oldDayTime >> 32);
+    const unsigned int deltaLow = third - oldDayTimeLow;
+    const int deltaHigh = second - (oldDayTimeHigh + (third < oldDayTimeLow ? 1 : 0));
+
+    std::vector<TickNextTickData> adjustedTicks;
+    EnterCriticalSection(&tickNextTickMutex);
+    for (std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator it = tickNextTickList.begin();
+         it != tickNextTickList.end(); ++it)
+    {
+        TickNextTickData data = *it;
+        const unsigned int triggerLow = static_cast<unsigned int>(data.triggerTick);
+        const int triggerHigh = static_cast<int>(data.triggerTick >> 32);
+        const unsigned int newTriggerLow = triggerLow + deltaLow;
+        const int newTriggerHigh = triggerHigh + deltaHigh +
+            (newTriggerLow < triggerLow ? 1 : 0);
+        data.triggerTick = (static_cast<long long>(newTriggerHigh) << 32) |
+            static_cast<unsigned int>(newTriggerLow);
+        adjustedTicks.push_back(data);
+    }
+    tickNextTickList.clear();
+    tickNextTickSet.clear();
+    for (std::vector<TickNextTickData>::iterator it = adjustedTicks.begin(); it != adjustedTicks.end(); ++it)
+    {
+        tickNextTickList.insert(*it);
+        tickNextTickSet.insert(*it);
+    }
+    LeaveCriticalSection(&tickNextTickMutex);
+
+    const long long newGameTime = (static_cast<long long>(second) << 32) |
+        static_cast<unsigned int>(third);
+    setGameTime(newGameTime);
     return 1;
 }
 

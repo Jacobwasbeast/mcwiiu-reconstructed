@@ -6,6 +6,11 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/util/AABB.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/Level.hpp"
+#include "game/item/Inventory.hpp"
 
 ServerPlayerGameMode::ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode)
     : GameMode(), mLevel(level), mPlayer(NULL), mDestroying(false), mDestroyProgress(0),
@@ -39,7 +44,27 @@ boost::shared_ptr<ServerPlayer> ServerPlayerGameMode::getServerPlayer() const
 {
     return boost::static_pointer_cast<ServerPlayer>(mPlayer);
 }
-int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos) { mPreviousDestroyPos = pos; return 0; }
+int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
+{
+    mPreviousDestroyPos = pos;
+    boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
+    if (!serverPlayer || mLevel == 0)
+        return 0;
+
+    boost::shared_ptr<Player> player = serverPlayer;
+    not_null_ptr<ItemInstance> item = player->mInventory->getSelected();
+    const BlockState* state = mLevel->getBlockState(pos);
+    Block* block = state->getBlock();
+
+    int result = block->playerWillDestroy(mLevel, pos, state, player) ? 1 : 0;
+    if (result == 0 && player->canDestroy(state))
+    {
+        boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(pos);
+        block->playerDestroy(mLevel, player, pos, state, blockEntity, item);
+        result = 1;
+    }
+    return result;
+}
 int ServerPlayerGameMode::destroyBlock(const BlockPos& pos) { return superDestroyBlock(pos); }
 void ServerPlayerGameMode::stopDestroyBlock(const BlockPos& pos) { mPreviousDestroyPos = pos; mDestroying = false; }
 void ServerPlayerGameMode::abortDestroyBlock() { mDestroying = false; mDestroyProgress = 0; }

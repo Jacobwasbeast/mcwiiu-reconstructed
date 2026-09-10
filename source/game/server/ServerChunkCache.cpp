@@ -4,8 +4,27 @@
 #include "game/world/chunk/ChunkStorage.hpp"
 #include "game/world/chunk/EmptyLevelChunk.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/chunk/OldChunkStorage.hpp"
+#include "game/core/Compression.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "platform/wiiu/C4JEvent.hpp"
 #include <cstdint>
 #include <sstream>
+
+extern void instructionSynchronize();
+
+namespace
+{
+struct ServerChunkCacheSaveContext
+{
+    ServerChunkCache* cache;
+    LevelChunk* chunk;
+    bool saveEntities;
+    bool useDefaultThreadStorage;
+    C4JEvent* notifyEvent;
+    ChunkStorage* storage;
+};
+}
 
 ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator)
     : m_level(level), m_storage(storage), m_generator(generator), m_chunks(0), m_unloadedChunks(), m_emptyChunk(0),
@@ -315,8 +334,58 @@ LevelChunk* ServerChunkCache::getChunkAt(const BlockPos& pos)
     return getChunk(pos.x >> 4, pos.z >> 4);
 }
 
-unsigned int ServerChunkCache::runSaveThreadProc(void*)
+unsigned int ServerChunkCache::runSaveThreadProc(void* data)
 {
+    ServerChunkCacheSaveContext* context = static_cast<ServerChunkCacheSaveContext*>(data);
+    if (context == 0)
+        return 0;
+
+    if (!context->useDefaultThreadStorage)
+    {
+        Compression::CreateNewThreadStorage();
+        OldChunkStorage::CreateNewThreadStorage();
+        if (context->storage != 0)
+            context->storage->WaitIfTooManyQueuedChunks();
+    }
+    else
+    {
+        Compression::UseDefaultThreadStorage();
+        OldChunkStorage::UseDefaultThreadStorage();
+        if (context->storage != 0)
+            context->storage->WaitIfTooManyQueuedChunks();
+    }
+
+    if (context->chunk != 0)
+    {
+        const float pixColour = 1.035f;
+        do
+        {
+            if (context->saveEntities)
+            {
+                PIXBeginNamedEvent(pixColour, "Saving entities");
+                context->cache->saveEntities(context->chunk);
+                PIXEndNamedEvent();
+            }
+            PIXBeginNamedEvent(pixColour, "Saving chunk");
+            context->cache->save(context->chunk);
+            context->chunk->setUnsaved(false);
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(pixColour, "Notifying and waiting for next chunk");
+            if (context->notifyEvent != 0)
+                context->notifyEvent->Set();
+            if (context->storage != 0)
+                context->storage->WaitIfTooManyQueuedChunks();
+            PIXEndNamedEvent();
+        }
+        while (context->chunk != 0);
+    }
+
+    if (!context->useDefaultThreadStorage)
+    {
+        Compression::ReleaseThreadStorage();
+        OldChunkStorage::ReleaseThreadStorage();
+    }
+    instructionSynchronize();
     return 0;
 }
 
