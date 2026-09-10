@@ -230,12 +230,14 @@ bool HangingEntity::repositionEntityAfterLoad()
 void HangingEntity::setPos(double x, double y, double z)
 {
     BlockPos old = mPos;
-    Entity::setPos(x, y, z);
+    mX = x;
+    mY = y;
+    mZ = z;
     mPos = BlockPos(x, y, z);
     if (!mPos.equals(old))
     {
         recalculateBoundingBox();
-        mFirstTick = true;
+        mHasImpulse = true;
     }
 }
 

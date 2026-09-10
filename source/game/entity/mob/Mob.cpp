@@ -32,6 +32,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
@@ -547,7 +548,10 @@ bool Mob::checkSpawnRules()
 
 bool Mob::checkSpawnObstruction()
 {
-    return true;
+    if (!mLevel->isUnobstructed(mBoundingBox, shared_from_this()))
+        return false;
+    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
+           !mLevel->containsAnyLiquid_NoLoad(mBoundingBox);
 }
 
 float Mob::getSizeScale()
@@ -690,6 +694,8 @@ bool Mob::startRiding(boost::shared_ptr<Entity> entity, bool force)
 
 unsigned int Mob::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
+    if (isLeashedToPlayer(holder.m_pPlayer))
+        return 0x551269b5U;
     return Entity::GetInteractTooltip(holder);
 }
 
