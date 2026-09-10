@@ -11,7 +11,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-static ResourceLocation PARROT_LOCATIONS[5] = {
+ResourceLocation PARROT_LOCATIONS[5] = {
     ResourceLocation((_TEXTURE_NAME)202),
     ResourceLocation((_TEXTURE_NAME)203),
     ResourceLocation((_TEXTURE_NAME)204),

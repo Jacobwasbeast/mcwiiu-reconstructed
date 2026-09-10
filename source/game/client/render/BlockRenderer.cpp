@@ -8,6 +8,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -18,7 +19,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/ChorusPlantBlock.hpp"
+#include "game/world/block/CommandBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/util/Random.hpp"
 
 BlockRenderer::BlockRenderer(BlockColors* blockColors)
     : mBlockColors(blockColors), mLevelSource(NULL), mBrightnessCache()
@@ -1224,8 +1228,11 @@ void BlockRenderer::renderAllFaces(const BlockState* state)
 
 void BlockRenderer::tesselateEndRod(const BlockState* state, float x, float y, float z)
 {
-    tesselateEndRodCenter(state, x, y, z);
-    tesselateEndRodBase(state, x, y, z);
+    setShape(0.4375f, 0.0f, 0.4375f, 0.5625f, 1.0f, 0.5625f);
+    renderAllFaces(state);
+    setShape(0.375f, 0.0f, 0.375f, 0.625f, 0.0625f, 0.625f);
+    renderAllFaces(state);
+    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
 }
 
 bool BlockRenderer::tesselateSlimeBlockInWorld(const BlockState* state, const BlockPos& pos)
@@ -1846,8 +1853,78 @@ bool BlockRenderer::tesselateChorusFlowerInWorld(const BlockState* state, const 
 
 bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(state->getShape(mLevelSource, pos));
+    ChorusPlantBlock* plant = static_cast<ChorusPlantBlock*>(state->getBlock());
+    const BlockState* actualState = plant->fillVirtualBlockStateProperties(state, mLevelSource, pos);
+
+    long long levelSeed = mMinecraft->mLevel->getSeed();
+    long long mixedSeed = levelSeed + ((static_cast<long long>(pos.x) * pos.y + pos.y) * pos.z + pos.z);
+    Random random(mixedSeed);
+    int variantGate = random.nextInt(5);
+
+    setShape(plant->getVerticalShape(actualState, mLevelSource, pos));
     bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
+    rendered = true;
+
+    const BlockState* northNeighbor = mLevelSource->getBlockState(pos.north());
+    if (northNeighbor->getBlock() == plant || northNeighbor->getBlock() == Blocks::AIR)
+    {
+        setShape(plant->getHorizontalShape(actualState, Direction::NORTH));
+        rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    }
+
+    const BlockState* southNeighbor = mLevelSource->getBlockState(pos.south());
+    if (southNeighbor->getBlock() == plant || southNeighbor->getBlock() == Blocks::AIR)
+    {
+        setShape(plant->getHorizontalShape(actualState, Direction::SOUTH));
+        rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    }
+
+    const BlockState* westNeighbor = mLevelSource->getBlockState(pos.west());
+    if (westNeighbor->getBlock() == plant || westNeighbor->getBlock() == Blocks::AIR)
+    {
+        setShape(plant->getHorizontalShape(actualState, Direction::WEST));
+        rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    }
+
+    const BlockState* eastNeighbor = mLevelSource->getBlockState(pos.east());
+    if (eastNeighbor->getBlock() == plant || eastNeighbor->getBlock() == Blocks::AIR)
+    {
+        setShape(plant->getHorizontalShape(actualState, Direction::EAST));
+        rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+    }
+
+    if (variantGate > 1)
+    {
+        int northNodule = random.nextInt(3);
+        int southNodule = random.nextInt(3);
+        int westNodule = random.nextInt(3);
+        int eastNodule = random.nextInt(3);
+
+        if (northNeighbor->getBlock() != plant && northNeighbor->getBlock() != Blocks::AIR)
+        {
+            setShape(plant->getRandomNoduleShape(northNodule == 1, actualState, Direction::NORTH));
+            rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+        }
+
+        if (southNeighbor->getBlock() != plant && southNeighbor->getBlock() != Blocks::AIR)
+        {
+            setShape(plant->getRandomNoduleShape(southNodule == 1, actualState, Direction::SOUTH));
+            rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+        }
+
+        if (westNeighbor->getBlock() != plant && westNeighbor->getBlock() != Blocks::AIR)
+        {
+            setShape(plant->getRandomNoduleShape(westNodule == 1, actualState, Direction::WEST));
+            rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+        }
+
+        if (eastNeighbor->getBlock() != plant && eastNeighbor->getBlock() != Blocks::AIR)
+        {
+            setShape(plant->getRandomNoduleShape(eastNodule == 1, actualState, Direction::EAST));
+            rendered = tesselateBlockInWorld(state, pos, 0x3f) || rendered;
+        }
+    }
+
     setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
     return rendered;
 }
@@ -1889,8 +1966,61 @@ bool BlockRenderer::tessellateSeaPickleInWorld(const BlockState* state, const Bl
 
 bool BlockRenderer::tesselateCommandBlockInWorld(const BlockState* state, const BlockPos& pos)
 {
-    mFaceRotation0 = mFaceRotation1 = 1;
-    bool rendered = tesselateBlockInWorld(state, pos);
-    mFaceRotation0 = mFaceRotation1 = 0;
+    unsigned int direction = state->getValue(CommandBlock::FACING)->get3DDataValue();
+    bool rendered;
+
+    switch (direction)
+    {
+    case Direction::eDirection_Down:
+        mFaceRotation4 = 3;
+        mFaceRotation5 = 3;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    case Direction::eDirection_Up:
+        mFaceRotation4 = 3;
+        mFaceTransform0 = 1;
+        mFaceTransform1 = 1;
+        mFaceTransform2 = 1;
+        mFaceTransform3 = 1;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    case Direction::eDirection_North:
+        mFaceRotation2 = 2;
+        mFaceRotation3 = 1;
+        mFaceRotation4 = 3;
+        mFaceRotation5 = 3;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    case Direction::eDirection_South:
+        mFaceRotation2 = 1;
+        mFaceRotation3 = 2;
+        mFaceRotation4 = 0;
+        mFaceRotation5 = 0;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    case Direction::eDirection_West:
+        mFaceRotation0 = 2;
+        mFaceRotation1 = 1;
+        mFaceRotation4 = 1;
+        mFaceRotation5 = 2;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    case Direction::eDirection_East:
+        mFaceRotation0 = 5;
+        mFaceRotation1 = 2;
+        mFaceRotation4 = 2;
+        mFaceRotation5 = 1;
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    default:
+        rendered = tesselateBlockInWorld(state, pos);
+        break;
+    }
+
+    for (int i = 0; i < 6; ++i)
+    {
+        (&mFaceRotation0)[i] = 0;
+        (&mFaceTransform0)[i] = 0;
+    }
     return rendered;
 }

@@ -83,5 +83,8 @@ Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* leve
                                                 double xa, double ya, double za,
                                                 arrayWithLength<int> params)
 {
-    return new InkParticle(level, x, y, z, xa, ya, za, params);
+    arrayWithLength<int> localParams;
+    localParams.data = params.data;
+    localParams.length = params.length;
+    return new InkParticle(level, x, y, z, xa, ya, za, localParams);
 }

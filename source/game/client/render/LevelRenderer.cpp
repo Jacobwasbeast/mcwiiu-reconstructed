@@ -27,11 +27,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/client/render/ParticleEngine.hpp"
+#include "game/core/Gui.hpp"
+#include "game/item/RecordItem.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/LeafBlock.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
 static const unsigned int gChunkDimensionSizes[2] = { 80, 20 };
 
@@ -1723,3 +1727,107 @@ unsigned char LevelRenderer::decGlobalChunkRefCount(int x, int y, int z, Level* 
 void LevelRenderer::playerRemoved(boost::shared_ptr<Entity> player)
 {
 }
+
+void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing)
+{
+    if (sound != NULL)
+    {
+        RecordItem* record = RecordItem::getBySound(sound);
+        if (record != NULL)
+        {
+            std::wstring name = record->getDisplayName();
+            if (mMinecraft != NULL && mMinecraft->mGui != NULL)
+            {
+                mMinecraft->mGui->setNowPlaying(name);
+            }
+        }
+    }
+}
+
+void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
+{
+    if (mMinecraft == NULL || level == NULL) return;
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+    if (!camera || mMinecraft->mParticleEngine == NULL) return;
+    int particleSetting = calculateParticleLevel(level, overrideLimiter);
+    if (particleSetting > 1) return;
+    double maxDist = force ? (1024.0 * 1024.0) : (32.0 * 32.0);
+    double dx = camera->mX - x;
+    double dy = camera->mY - y;
+    double dz = camera->mZ - z;
+    if (dx * dx + dy * dy + dz * dz > maxDist) return;
+    mMinecraft->mParticleEngine->createParticle(type, x, y, z, xa, ya, za, params, level);
+}
+
+void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
+{
+    if (!entity) return;
+    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+    if (player)
+    {
+        player->prepareCustomTextures();
+    }
+}
+
+void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
+{
+}
+
+void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)
+{
+    levelEvent(boost::shared_ptr<Player>(), type, pos, data);
+}
+
+void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)
+{
+    if (mMinecraft == NULL) return;
+    Level* level = mMinecraft->mLevel;
+    if (level == NULL) return;
+    Random* random = level->mRandom;
+
+    switch (type)
+    {
+    case 2000:
+    {
+        int dir = data % 6;
+        double xa = 0.0, ya = 0.0, za = 0.0;
+        if (dir == 0) ya = -0.1;
+        else if (dir == 1) ya = 0.1;
+        else if (dir == 2) za = -0.1;
+        else if (dir == 3) za = 0.1;
+        else if (dir == 4) xa = -0.1;
+        else if (dir == 5) xa = 0.1;
+        for (int i = 0; i < 10; ++i)
+        {
+            double px = pos.x + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
+            double py = pos.y + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
+            double pz = pos.z + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
+            addParticle(level, ePARTICLE_SMOKE, false, px, py, pz, xa, ya, za, arrayWithLength<int>());
+        }
+        break;
+    }
+    case 2001:
+    {
+        Block* block = Block::byId(data & 0xFFF);
+        if (block != NULL)
+        {
+            for (int i = 0; i < 10; ++i)
+            {
+                double px = pos.x + (random ? random->nextDouble() : 0.5);
+                double py = pos.y + (random ? random->nextDouble() : 0.5);
+                double pz = pos.z + (random ? random->nextDouble() : 0.5);
+                double xa = (px - (pos.x + 0.5)) * 4.0;
+                double ya = (py - (pos.y + 0.5)) * 4.0;
+                double za = (pz - (pos.z + 0.5)) * 4.0;
+                arrayWithLength<int> p(1, false);
+                p.data[0] = data;
+                addParticle(level, ePARTICLE_BLOCK_CRACK, false, px, py, pz, xa, ya, za, p);
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+

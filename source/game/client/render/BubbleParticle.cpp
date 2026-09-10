@@ -141,5 +141,8 @@ Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                    double za,
                                                    arrayWithLength<int> params)
 {
-    return new BubbleParticle(level, x, y, z, xa, ya, za, params);
+    arrayWithLength<int> localParams;
+    localParams.data = params.data;
+    localParams.length = params.length;
+    return new BubbleParticle(level, x, y, z, xa, ya, za, localParams);
 }

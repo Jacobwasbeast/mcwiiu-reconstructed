@@ -15,6 +15,8 @@ class Parrot;
 class Player;
 class ResourceLocation;
 
+extern ResourceLocation PARROT_LOCATIONS[5];
+
 class ParrotRenderer : public MobRenderer
 {
 public:
