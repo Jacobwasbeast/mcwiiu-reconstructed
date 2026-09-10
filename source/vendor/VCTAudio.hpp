@@ -72,6 +72,16 @@ long long VCTi_GetAudioFrameTicks();
 unsigned int VCT_GetAudioFrameLength();
 unsigned int VCT_GetAudioDataSize();
 
+void VCT_ResetVAD();
+unsigned int VCT_GetVADReleaseTime();
+unsigned char VCT_GetVADActivity();
+unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsigned char* pStatus);
+void vct_init_vad();
+unsigned short VCT_GetVADActiveGain();
+unsigned short VCT_GetVADInactiveGain();
+unsigned int VCT_GetVADClampGain();
+unsigned int VCT_IsEnableVADInvalidation();
+
 bool vct_is_adpcm(VCTCodec codec);
 bool vct_is_opus(VCTCodec codec);
 void init_adpcm_state();

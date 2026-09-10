@@ -3,16 +3,7 @@
 
 #include <stdint.h>
 
-namespace nn
-{
-namespace pia
-{
-namespace transport
-{
-typedef unsigned short ProtocolId;
-}
-}
-}
+#include "nn/pia/Reconstruction.hpp"
 
 class __N_32_transport_PacketAnalysisData_cpp_3279541b
 {

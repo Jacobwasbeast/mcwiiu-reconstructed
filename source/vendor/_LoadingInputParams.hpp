@@ -8,10 +8,9 @@ class _LoadingInputParams
 public:
     _LoadingInputParams();
 
-private:
-    int32_t m_firstParameter;
-    int32_t m_secondParameter;
-    int32_t m_thirdParameter;
+    void* (*m_firstParameter)(void*);
+    void* m_secondParameter;
+    void* m_thirdParameter;
     int32_t m_selectedIndex;
     int32_t m_fifthParameter;
     int32_t m_sixthParameter;

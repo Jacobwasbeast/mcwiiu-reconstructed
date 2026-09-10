@@ -1,12 +1,15 @@
 #include "vendor/__N_28_transport_PacketAnalyzer_cpp_ff43370f.hpp"
 
-static uint64_t* s_packetAnalyzerTime = 0;
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Time.hpp"
 
 uint64_t __N_28_transport_PacketAnalyzer_cpp_ff43370f::getTime()
 {
-    if (s_packetAnalyzerTime != 0)
+    if (nn::pia::transport::g_piaTransport == 0)
     {
-        return *s_packetAnalyzerTime;
+        nn::pia::common::Time time;
+        time.SetNow();
+        return time.m_tick;
     }
-    return 0;
+    return nn::pia::transport::g_piaTransport->m_time.m_tick;
 }

@@ -1,8 +1,7 @@
 #include "vendor/_NetworkGameInitData.hpp"
 
 _NetworkGameInitData::_NetworkGameInitData()
-    : m_value0(0)
-    , m_value1(0)
+    : m_seed(0)
     , m_value2(0)
     , m_value3(0)
     , m_value4(0)
