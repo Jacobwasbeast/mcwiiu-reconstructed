@@ -10,6 +10,7 @@
 static StrongholdPieces::SmoothStoneSelector* sStrongholdStoneSelector = NULL;
 static std::list<StrongholdPieces::PieceWeight*> sStrongholdPieceWeights;
 static unsigned int sStrongholdWeightTotal;
+static StrongholdPieces::EPieceClass sForcedPieceClass = StrongholdPieces::ePieceClass_None;
 
 StrongholdPieces::PieceWeight::PieceWeight(EPieceClass value, int maximum, int chance)
     : pieceClass(value), maxCount(maximum), count(0), frequency(chance)
@@ -97,7 +98,27 @@ StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(St
 
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
 {
-    return generateSmallDoorChildForward(start, pieces, random, x, z);
+    const Direction* direction = getOrientation();
+    if (direction == NULL)
+        return NULL;
+    unsigned int axis = direction->get3DDataValue();
+    if (axis <= 1)
+        return NULL;
+    BoundingBox* box = getBoundingBox();
+    if (box == NULL)
+        return NULL;
+    int depth = getGenDepth();
+    if (axis < 4)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            box->x1 + 1, box->y0 + x, box->z0 + z, Direction::EAST, depth);
+    }
+    if (axis < 6)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            box->x0 + z, box->y0 + x, box->z1 + 1, Direction::SOUTH, depth);
+    }
+    return NULL;
 }
 
 void StrongholdPieces::resetPieces()
@@ -174,9 +195,52 @@ StructurePiece* StrongholdPieces::findAndCreatePieceFactory(EPieceClass pieceCla
 
 StructurePiece* StrongholdPieces::generatePieceFromSmallDoor(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
 {
-    if (start == NULL || pieces == NULL || depth > 50) return NULL;
-    return findAndCreatePieceFactory(static_cast<EPieceClass>(random.nextInt(11)), pieces,
-                                     random, x, y, z, direction, depth);
+    if (!updatePieceWeight())
+        return NULL;
+    if (sForcedPieceClass != ePieceClass_None)
+    {
+        EPieceClass forced = sForcedPieceClass;
+        sForcedPieceClass = ePieceClass_None;
+        StructurePiece* piece = findAndCreatePieceFactory(forced, pieces, random, x, y, z, direction, depth);
+        if (piece != NULL)
+        {
+            sForcedPieceClass = ePieceClass_None;
+            return piece;
+        }
+    }
+    for (int attempt = 0; attempt < 5; ++attempt)
+    {
+        int choice = random.nextInt(sStrongholdWeightTotal);
+        for (std::list<PieceWeight*>::iterator it = sStrongholdPieceWeights.begin();
+             it != sStrongholdPieceWeights.end(); ++it)
+        {
+            PieceWeight* weight = *it;
+            choice -= weight->maxCount;
+            if (choice < 0)
+            {
+                if (!weight->doPlace(depth) || weight == start->mLastPieceWeight)
+                    break;
+                StructurePiece* piece = findAndCreatePieceFactory(weight->pieceClass, pieces, random,
+                                                                  x, y, z, direction, depth);
+                if (piece != NULL)
+                {
+                    start->mLastPieceWeight = weight;
+                    ++weight->count;
+                    if (!weight->isValid())
+                        sStrongholdPieceWeights.remove(weight);
+                    return piece;
+                }
+            }
+        }
+    }
+    BoundingBox* box = FillerCorridor::findPieceBox(pieces, random, x, y, z, direction);
+    if (box != NULL)
+    {
+        if (box->getYSpan() > 1)
+            return new FillerCorridor(depth, random, box, direction);
+        delete box;
+    }
+    return NULL;
 }
 
 StructurePiece* StrongholdPieces::generateAndAddPiece(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z, const Direction* direction, int depth)
@@ -339,13 +403,35 @@ BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(
     std::vector<StructurePiece*>* pieces, Random&, int x, int y, int z,
     const Direction* direction)
 {
-    BoundingBox* box = BoundingBox::orientBox(x, y, z, 0, 0, 0, 5, 5, 7, direction);
-    if (StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 4, direction);
+    StructurePiece* collision = StructurePiece::findCollisionPiece(pieces, box);
+    if (collision != NULL)
     {
-        delete box;
-        return NULL;
+        BoundingBox* collisionBox = collision->getBoundingBox();
+        if (collisionBox->y0 == box->y0)
+        {
+            delete box;
+            box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 2, direction);
+            collisionBox = collision->getBoundingBox();
+            if (!collisionBox->intersects(box))
+                return box;
+            delete box;
+            box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 1, direction);
+            collisionBox = collision->getBoundingBox();
+            if (!collisionBox->intersects(box))
+                return box;
+            delete box;
+            box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 0, direction);
+            collisionBox = collision->getBoundingBox();
+            if (!collisionBox->intersects(box))
+            {
+                delete box;
+                return BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 1, direction);
+            }
+        }
     }
-    return box;
+    delete box;
+    return NULL;
 }
 
 StrongholdPieces::ChestCorridor* StrongholdPieces::ChestCorridor::createPiece(
@@ -359,28 +445,74 @@ StrongholdPieces::FiveCrossing* StrongholdPieces::FiveCrossing::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<FiveCrossing>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -3, 0, 10, 9, 11, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new FiveCrossing(depth, random, box, direction);
 }
 
 StrongholdPieces::LeftTurn* StrongholdPieces::LeftTurn::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<LeftTurn>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 5, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new LeftTurn(depth, random, box, direction);
 }
 
 StrongholdPieces::Library* StrongholdPieces::Library::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<Library>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 14, 11, 15, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 14, 6, 15, direction);
+        if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+            StructurePiece::findCollisionPiece(pieces, box) != NULL)
+        {
+            delete box;
+            return NULL;
+        }
+    }
+    return new Library(depth, random, box, direction);
 }
 
 StrongholdPieces::PortalRoom* StrongholdPieces::PortalRoom::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<PortalRoom>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 11, 8, 16, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new PortalRoom(depth, random, box, direction);
 }
 
 StrongholdPieces::PrisonHall* StrongholdPieces::PrisonHall::createPiece(
@@ -404,14 +536,34 @@ StrongholdPieces::RoomCrossing* StrongholdPieces::RoomCrossing::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<RoomCrossing>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -4, -1, 0, 11, 7, 11, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new RoomCrossing(depth, random, box, direction);
 }
 
 StrongholdPieces::StairsDown* StrongholdPieces::StairsDown::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<StairsDown>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -7, 0, 5, 11, 5, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new StairsDown(depth, random, box, direction);
 }
 
 StrongholdPieces::Straight* StrongholdPieces::Straight::createPiece(
@@ -425,7 +577,17 @@ StrongholdPieces::StraightStairsDown* StrongholdPieces::StraightStairsDown::crea
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<StraightStairsDown>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -7, 0, 5, 11, 8, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new StraightStairsDown(depth, random, box, direction);
 }
 
 #define STRONGHOLD_PIECE_METHODS(name, type) \
@@ -519,7 +681,7 @@ bool StrongholdPieces::RightTurn::postProcess(Level* level, Random& random, Boun
 StructurePiece* StrongholdPieces::RightTurn::Create() { return new RightTurn(); }
 EStructurePiece StrongholdPieces::RightTurn::GetType() { return eStructurePiece_RightTurn; }
 
-StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level) : StairsDown(depth, random, BoundingBox::orientBox(x, 0, z, 0, 0, 0, 5, 5, 7, NULL), NULL), mPortalRoom(NULL), mLevel(level) { }
+StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level) : StairsDown(depth, random, BoundingBox::orientBox(x, 0, z, 0, 0, 0, 5, 5, 7, NULL), NULL), mPortalRoom(NULL), mLevel(level), mLastPieceWeight(NULL) { }
 StrongholdPieces::StartPiece::~StartPiece() { }
 BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 {

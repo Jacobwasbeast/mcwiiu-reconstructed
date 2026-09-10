@@ -14,6 +14,7 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "game/core/GameType.hpp"
 #include "game/util/Random.hpp"
@@ -130,7 +131,7 @@ CMinecraftApp::CMinecraftApp()
       mAppTime(0.0f), mFrameTime(0.0f), mPerformanceCounterScale(0.0f),
       mDLCInstallProcessCompleted(false), mDLCInstallPending(false), mDLCInstallCount(0),
       mDLCInstallIndex(0), mAutosaveTime(0),
-      mNewDLCAvailable(false), mExtraGameData(0),
+      mNewDLCAvailable(false), mDLCOffersRetrievedValue(0), mExtraGameData(0),
       mCorruptSaveDeleted(false), mResetNether(false), mResetEnd(false),
       mRequiredTexturePackID(0), mFirstMiniGameType(static_cast<EMiniGameId>(0))
 {
@@ -141,6 +142,8 @@ CMinecraftApp::CMinecraftApp()
     InitializeCriticalSection(&mMemoryTPDMutex);
     InitializeCriticalSection(&mAdditionalModelPartsMutex);
     InitializeCriticalSection(&mAdditionalSkinBoxesMutex);
+    InitializeCriticalSection(&mDLCRetrieveMutex);
+    InitializeCriticalSection(&mDLCDownloadQueueMutex);
     std::fill(mBanListCheck, mBanListCheck + 4, false);
     std::fill(mOpacityTimer, mOpacityTimer + 4, 0);
     std::fill(mOptionsCallbackStatus, mOptionsCallbackStatus + 4, 0);
@@ -1361,6 +1364,46 @@ uint32_t CMinecraftApp::IsLocalMultiplayerAvailable()
 }
 uint64_t CMinecraftApp::NotificationsCallback(void* context, unsigned int notification, unsigned int value)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    NOTIFICATION* entry = new NOTIFICATION();
+    entry->type = notification;
+    entry->value = value;
+
+    if (notification == 1)
+    {
+        if (app->GetGameStarted() != 0 && CGameNetworkManager::sInstance.IsInSession())
+        {
+            Minecraft* minecraft = Minecraft::GetInstance();
+            for (int player = 0; player < 4; ++player)
+            {
+                if (!gProfile->IsSignedIn(player) && minecraft->mLocalPlayers[player] != NULL &&
+                    !gConsoleUIController.IsPauseMenuDisplayed(player) &&
+                    !gConsoleUIController.IsSceneInStack(player, static_cast<EUIScene>(0x30)))
+                {
+                    gConsoleUIController.CloseUIScenes(player, false);
+                    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(5), NULL,
+                                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+                    if (player == 3)
+                    {
+                        app->mNotifications.push_back(entry);
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    else if (notification != 2)
+    {
+        app->mNotifications.push_back(entry);
+        return 0;
+    }
+    else
+    {
+        app->ClearDLCInstalled();
+        gConsoleUIController.HandleDLCInstalled(gStorage->GetMountedDLCIndex());
+    }
+
+    app->mNotifications.push_back(entry);
     return 0;
 }
 void CMinecraftApp::SetLiveLinkRequired(bool firstArgument)
@@ -1812,7 +1855,51 @@ uint32_t CMinecraftApp::DLCOffersReturned(uint32_t firstArgument, uint32_t secon
 }
 uint32_t CMinecraftApp::RetrieveNextDLCContent()
 {
-    return 0;
+    if (gProfile == NULL)
+        return 1;
+
+    const int primaryPad = gProfile->GetPrimaryPad();
+    if (primaryPad == -1 || gProfile->GetLiveConnectionStatus() == 0)
+        return 1;
+
+    EnterCriticalSection(&mDLCRetrieveMutex);
+
+    for (std::vector<_DLCRequest*>::iterator it = mDLCDownloadQueue.begin();
+         it != mDLCDownloadQueue.end(); ++it)
+    {
+        if ((*it)->mStatus == 1)
+        {
+            LeaveCriticalSection(&mDLCRetrieveMutex);
+            return 1;
+        }
+    }
+
+    std::vector<_DLCRequest*>::iterator it = mDLCDownloadQueue.begin();
+    while (it != mDLCDownloadQueue.end() && (*it)->mStatus != 0)
+        ++it;
+
+    if (it == mDLCDownloadQueue.end())
+    {
+        LeaveCriticalSection(&mDLCRetrieveMutex);
+        return 0;
+    }
+
+    _DLCRequest* request = *it;
+    if (gStorage == NULL)
+    {
+        LeaveCriticalSection(&mDLCRetrieveMutex);
+        return 1;
+    }
+
+    const int result = gStorage->GetDLCOffers(
+        primaryPad,
+        reinterpret_cast<CStorage::DLCStatusCallback>(DLCOffersReturned),
+        this,
+        request->mContentId);
+
+    request->mStatus = (result == 5) ? 1U : 2U;
+    LeaveCriticalSection(&mDLCRetrieveMutex);
+    return 1;
 }
 void CMinecraftApp::SetCorruptSaveDeleted(bool firstArgument)
 {
@@ -1899,6 +1986,208 @@ void CMinecraftApp::GetFileFromTPD(eTPDFileType type, unsigned char* source, uns
 }
 void CMinecraftApp::getLocale(std::vector<std::wstring>& locale)
 {
+    extern unsigned int XGetLanguage();
+    extern int XGetLocale();
+
+    std::vector<int> localeIds;
+    const unsigned int language = XGetLanguage();
+    bool finalizeEarly = false;
+
+    if (language < 0xF1)
+    {
+        switch (language)
+        {
+        case 0:
+            break;
+        case 1:
+        {
+            unsigned int localeValue = static_cast<unsigned int>(XGetLocale());
+            if (localeValue < 0x18)
+            {
+                if (localeValue != 1 && localeValue != 5 && localeValue != 9)
+                {
+                    if (localeValue < 0xE)
+                        break;
+                    if (localeValue > 0x12)
+                    {
+                        localeIds.push_back(1);
+                        localeIds.push_back(0);
+                        finalizeEarly = true;
+                        break;
+                    }
+                }
+            }
+            else if (localeValue != 0x18 &&
+                (localeValue < 0x1C ||
+                 ((localeValue > 0x1E && localeValue != 0x23) &&
+                  (localeValue < 0x29 || localeValue > 0x2B))))
+            {
+                break;
+            }
+            if (!finalizeEarly)
+                localeIds.push_back(2);
+            break;
+        }
+        case 2:
+            localeIds.push_back(7);
+            break;
+        case 3:
+        {
+            const int localeValue = XGetLocale();
+            if (localeValue == 2)
+                localeIds.push_back(9);
+            else if (localeValue == 0x21)
+                localeIds.push_back(0x26);
+            else
+            {
+                localeIds.push_back(8);
+                break;
+            }
+            localeIds.push_back(8);
+            break;
+        }
+        case 4:
+        {
+            const int localeValue = XGetLocale();
+            if (localeValue == 3)
+                localeIds.push_back(0x24);
+            else if (localeValue == 5)
+                localeIds.push_back(0xB);
+            else if (localeValue == 0x21)
+                localeIds.push_back(0x25);
+            else
+            {
+                localeIds.push_back(10);
+                break;
+            }
+            localeIds.push_back(10);
+            break;
+        }
+        case 5:
+        {
+            const unsigned int localeValue = static_cast<unsigned int>(XGetLocale());
+            if (localeValue < 0x24)
+            {
+                if (localeValue != 6 && localeValue != 8 && localeValue != 0x16)
+                {
+                    localeIds.push_back(0xC);
+                    break;
+                }
+                localeIds.push_back(0x1D);
+                localeIds.push_back(0xD);
+            }
+            else if (localeValue == 0x24 || localeValue == 0x28 || localeValue == 0xF0)
+            {
+                localeIds.push_back(0x1D);
+                localeIds.push_back(0xD);
+            }
+            localeIds.push_back(0xC);
+            break;
+        }
+        case 6:
+            localeIds.push_back(0xE);
+            break;
+        case 7:
+            localeIds.push_back(0xF);
+            break;
+        case 8:
+        {
+            const int localeValue = XGetLocale();
+            if (localeValue == 0xF)
+            {
+                localeIds.push_back(0x20);
+                localeIds.push_back(0x21);
+            }
+            else if (localeValue == 0x22)
+            {
+                localeIds.push_back(0x21);
+                localeIds.push_back(0x20);
+            }
+            else
+            {
+                localeIds.push_back(0x3D);
+                localeIds.push_back(0x1C);
+                break;
+            }
+            localeIds.push_back(0x3D);
+            localeIds.push_back(0x1C);
+            break;
+        }
+        case 9:
+            if (XGetLocale() == 4)
+                localeIds.push_back(0x11);
+            localeIds.push_back(0x10);
+            break;
+        case 10:
+            break;
+        case 0xB:
+            localeIds.push_back(0x18);
+            break;
+        case 0xC:
+            localeIds.push_back(0x12);
+            break;
+        case 0xD:
+            localeIds.push_back(0x15);
+            localeIds.push_back(0x37);
+            break;
+        case 0xE:
+            localeIds.push_back(0x19);
+            break;
+        case 0xF:
+            localeIds.push_back(0x27);
+            localeIds.push_back(0x17);
+            localeIds.push_back(0x3A);
+            break;
+        case 0x10:
+            if (XGetLocale() == 3)
+                localeIds.push_back(0x22);
+            localeIds.push_back(0x13);
+            break;
+        case 0x11:
+            localeIds.push_back(0x3C);
+            break;
+        default:
+            break;
+        }
+    }
+    else if (language < 0xF2)
+    {
+        localeIds.push_back(0x14);
+    }
+    else if (language == 0xF2)
+    {
+        localeIds.push_back(0x1A);
+        localeIds.push_back(0x39);
+        localeIds.push_back(0x28);
+        localeIds.push_back(2);
+    }
+    else if (language < 0xF4)
+    {
+        localeIds.push_back(0x16);
+        localeIds.push_back(0x23);
+    }
+    else if (language == 0xF4)
+    {
+        localeIds.push_back(0x38);
+        localeIds.push_back(0x31);
+    }
+    else
+    {
+        localeIds.push_back(1);
+        localeIds.push_back(0);
+        finalizeEarly = true;
+    }
+
+    if (!finalizeEarly)
+    {
+        localeIds.push_back(1);
+        localeIds.push_back(0);
+    }
+
+    for (size_t index = 0; index < localeIds.size(); ++index)
+    {
+        locale.push_back(mLocaleToString[localeIds[index]]);
+    }
 }
 void CMinecraftApp::SetFirstMiniGameType(EMiniGameId type)
 {
@@ -1910,6 +2199,25 @@ EMiniGameId CMinecraftApp::GetFirstMiniGameType()
 }
 void CMinecraftApp::ProcessFakePadValueA()
 {
+    int wordBase = 0;
+    for (int pad = 0; pad < 4; ++pad)
+    {
+        unsigned int high = mFakePadPending[wordBase + 2];
+        unsigned int low = mFakePadPending[wordBase + 3];
+        for (int bit = 0; bit < 64; ++bit)
+        {
+            bool set = bit < 32 ? (low & (1u << bit)) != 0
+                                  : (high & (1u << (bit - 32))) != 0;
+            if (set)
+            {
+                g_pInput->SetFakePadValue(pad, static_cast<unsigned char>(bit));
+                g_pInput->SetGameJoypadMaps(pad, 0x20, 0);
+            }
+        }
+        mFakePadPending[wordBase + 2] = 0;
+        mFakePadPending[wordBase + 3] = 0;
+        wordBase += 2;
+    }
 }
 uint32_t CMinecraftApp::IsVoiceChatEnabled()
 {

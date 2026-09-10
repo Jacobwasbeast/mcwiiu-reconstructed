@@ -1,9 +1,11 @@
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ClientVoteables.hpp"
 #include "game/core/ClientScoreboard.hpp"
+#include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/System.hpp"
 #include "game/core/Team.hpp"
 #include "game/core/GhostController.hpp"
 #include "game/client/audio/SoundEngine.hpp"
@@ -18,6 +20,7 @@
 #include "game/world/LevelRuleset.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include <algorithm>
 
 void Sleep(unsigned int milliseconds);
@@ -522,7 +525,40 @@ void ClientMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>& playe
 
 void ClientMasterGameMode::ResetMapDistances() { CommonMasterGameMode::ResetMapDistances(); mPlayerProgress.clear(); mLastCheckpoints.clear(); }
 int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint) { return CheckpointIDtoSequenceID(checkpoint); }
-void ClientMasterGameMode::SetLocalRoundTimeStart(long long value) { mLocalRoundTimeStart = value; }
+void ClientMasterGameMode::SetLocalRoundTimeStart(long long value)
+{
+    mLocalRoundTimeStart = System::processTimeInMilliSecs() - value;
+    if (value != 0)
+        return;
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    GhostController* ghosts = minecraft->GetGhostController();
+    if (ghosts == NULL)
+        return;
+
+    int ghostSlot = 0;
+    for (int pair = 0; pair < 2; ++pair)
+    {
+        for (int sub = 0; sub < 2; ++sub)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                minecraft->mLocalPlayers[pair * 2 + sub];
+            boost::shared_ptr<Player> player = localPlayer;
+            if (player != NULL && !player->isSpectator())
+            {
+                if (ghosts->mRecordingActive[ghostSlot])
+                    ghosts->stopRecording(ghostSlot);
+                Vec3* pos = Vec3::newTemp(player->mX, player->mY, player->mZ);
+                ghosts->startRecording(ghostSlot, pos);
+            }
+            ++ghostSlot;
+        }
+    }
+
+    const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
+    if (miniGame != NULL && miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        ghosts->startPlayback();
+}
 void ClientMasterGameMode::SetLocalRoundTimeStartOverride(long long value) { mLocalRoundTimeStart = value; }
 unsigned long long ClientMasterGameMode::GetLocalRoundTimeStart() const { return static_cast<unsigned long long>(mLocalRoundTimeStart); }
 AABB* ClientMasterGameMode::GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player) { return player->getSweptVolume(); }

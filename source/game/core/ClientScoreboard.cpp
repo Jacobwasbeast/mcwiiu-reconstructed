@@ -477,7 +477,29 @@ std::wstring ClientScoreboard::GetWinnerName(int round)
 
 bool ClientScoreboard::IsOverallWinner(const StatsUID& suid)
 {
-    return GetRoundsWon(suid) > 0;
+    if (mPlayerStats.empty())
+        return suid == StatsUID::EMPTY_SUID();
+
+    StatsUID winner = StatsUID::EMPTY_SUID();
+    int bestWins = 0;
+    PlayerStatsMap::iterator it = mPlayerStats.begin();
+    for (; it != mPlayerStats.end(); ++it)
+    {
+        if (it->second == NULL || it->second->mRoundStats.empty())
+            continue;
+
+        const int wins = GetRoundsWon(it->first);
+        if (wins < bestWins)
+            continue;
+        if (wins <= bestWins)
+        {
+            winner = StatsUID::EMPTY_SUID();
+            continue;
+        }
+        winner = it->first;
+        bestWins = wins;
+    }
+    return suid == winner;
 }
 
 bool ClientScoreboard::GlideHasOverallWinner()

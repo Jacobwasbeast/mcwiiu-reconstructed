@@ -254,8 +254,12 @@ NetherBridgePieces::BridgeEndFiller::BridgeEndFiller(int d,Random&,BoundingBox* 
 StructurePiece* NetherBridgePieces::BridgeEndFiller::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, -3, 0, 5, 10, 8, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -332,8 +336,12 @@ NetherBridgePieces::CastleCorridorStairsPiece::CastleCorridorStairsPiece(int d,R
 StructurePiece* NetherBridgePieces::CastleCorridorStairsPiece::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, -7, 0, 5, 14, 10, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -383,8 +391,12 @@ NetherBridgePieces::CastleCorridorTBalconyPiece::CastleCorridorTBalconyPiece(
 StructurePiece* NetherBridgePieces::CastleCorridorTBalconyPiece::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -3, 0, 0, 9, 7, 9, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -402,8 +414,12 @@ NetherBridgePieces::CastleEntrance::CastleEntrance(int d,Random&,BoundingBox* b,
 StructurePiece* NetherBridgePieces::CastleEntrance::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -5, -3, 0, 13, 14, 13, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -427,8 +443,12 @@ NetherBridgePieces::CastleSmallCorridorCrossingPiece::CastleSmallCorridorCrossin
 StructurePiece* NetherBridgePieces::CastleSmallCorridorCrossingPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, 0, 0, 5, 7, 5, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -463,8 +483,12 @@ NetherBridgePieces::CastleSmallCorridorPiece::CastleSmallCorridorPiece(int d,Ran
 StructurePiece* NetherBridgePieces::CastleSmallCorridorPiece::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, 0, 0, 5, 7, 5, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -499,8 +523,12 @@ NetherBridgePieces::CastleStalkRoom::CastleStalkRoom(int d,Random&,BoundingBox* 
 StructurePiece* NetherBridgePieces::CastleStalkRoom::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -5, -3, 0, 13, 14, 13, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -518,8 +546,12 @@ NetherBridgePieces::RoomCrossing::RoomCrossing(int d,Random&,BoundingBox* b,cons
 StructurePiece* NetherBridgePieces::RoomCrossing::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -2, 0, 0, 7, 9, 7, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -537,8 +569,12 @@ NetherBridgePieces::StairsRoom::StairsRoom(int d,Random&,BoundingBox* b,const Di
 StructurePiece* NetherBridgePieces::StairsRoom::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -2, 0, 0, 7, 11, 7, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -589,8 +625,12 @@ NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::CastleSmallCorridorLeftTur
 StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, 0, 0, 5, 7, 5, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -614,8 +654,12 @@ NetherBridgePieces::CastleSmallCorridorRightTurnPiece::CastleSmallCorridorRightT
 StructurePiece* NetherBridgePieces::CastleSmallCorridorRightTurnPiece::createPiece(
     std::vector<StructurePiece*>* p, Random& r, int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, 0, 0, 5, 7, 5, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;
@@ -633,8 +677,12 @@ NetherBridgePieces::MonsterThrone::MonsterThrone(int d,Random&,BoundingBox* b,co
 StructurePiece* NetherBridgePieces::MonsterThrone::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -2, 0, 0, 7, 8, 9, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;

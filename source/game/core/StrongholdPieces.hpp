@@ -311,6 +311,7 @@ public:
         virtual EStructurePiece GetType();
         StructurePiece* mPortalRoom;
         Level* mLevel;
+        PieceWeight* mLastPieceWeight;
         std::vector<StructurePiece*> mPendingChildren;
     };
 

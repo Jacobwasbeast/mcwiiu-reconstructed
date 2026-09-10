@@ -18,6 +18,12 @@ unsigned int hash_value(const PlayerUID& uid);
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "game/core/CriticalSection.hpp"
+struct NOTIFICATION
+{
+    unsigned int type;
+    unsigned int value;
+};
+
 class LevelGenerationOptions;
 class LevelChunk;
 class Level;
@@ -411,6 +417,12 @@ public:
                                        unsigned int usersMask, unsigned int changedMask, bool identityChanged);
 
 private:
+    struct _DLCRequest
+    {
+        unsigned int mContentId;
+        unsigned int mStatus;
+    };
+
     struct XuiActionData
     {
         unsigned int action;
@@ -460,12 +472,17 @@ private:
     bool mNewDLCAvailable;
     PngTagData mCurrentImageTextData;
     GameRuleManager mGameRuleManager;
+    std::vector<_DLCRequest*> mDLCDownloadQueue;
+    OSFastMutex mDLCRetrieveMutex;
+    unsigned int mDLCOffersRetrievedValue;
+    OSFastMutex mDLCDownloadQueueMutex;
     bool mCorruptSaveDeleted;
     bool mResetNether;
     bool mResetEnd;
     unsigned int mRequiredTexturePackID;
     unsigned int mOptionsCallbackStatus[4];
     EMiniGameId mFirstMiniGameType;
+    unsigned int mFakePadPending[10];
     unsigned char mPlayerIds[8];
     unsigned int mPlayerPrivileges[8];
     unsigned char mPlayerGameTypes[8];
@@ -483,6 +500,7 @@ private:
     boost::unordered_map<int, std::wstring> mLocaleToString;
     boost::unordered_map<std::wstring, int> mStringToLocale;
     PlayerUID mCachedSignInUIDs[4];
+    std::vector<NOTIFICATION*> mNotifications;
     static unsigned int sPreviousSignInUsersMask;
 };
 extern CConsoleMinecraftApp gApp;
