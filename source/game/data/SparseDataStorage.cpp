@@ -1,12 +1,16 @@
 #include "game/data/SparseDataStorage.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XLockFreeStack.hpp"
 #include <string.h>
 #include <vector>
 
+void* XMemCpy(void* destination, const void* source, unsigned int size);
+
 static int sPendingDeleteList;
 static XLockFreeStack<unsigned char> sPendingDeleteLists[3];
+static OSFastMutex sCompressLock;
 
 void SparseDataStorage::Array256_1Bit::init()
 {
@@ -191,8 +195,164 @@ unsigned int SparseDataStorage::tryUpdateDataAndCount(PlaneOffsets* p, int size)
     }
     return 0;
 }
-void SparseDataStorage::staticCtor() {}
-unsigned int SparseDataStorage::compress() { return getPlaneOffsetsDataSize(); }
+void SparseDataStorage::staticCtor()
+{
+    InitializeCriticalSection(&sCompressLock);
+}
+
+unsigned int SparseDataStorage::compress()
+{
+    EnterCriticalSection(&sCompressLock);
+
+    PlaneOffsets* sourceOffsets = getPlaneOffsets();
+    unsigned int currentSize = getPlaneOffsetsDataSize();
+    if (currentSize < 0x3f80)
+    {
+        LeaveCriticalSection(&sCompressLock);
+        return currentSize;
+    }
+
+    unsigned short localOffsets[128];
+    memcpy(localOffsets, sourceOffsets->offsets, sizeof(localOffsets));
+
+    char uniqueValues[16];
+    int payloadSize = 0;
+    int plane = 0;
+
+    for (int group = 0; group < 0x40; ++group)
+    {
+        unsigned short* firstEntry = &localOffsets[plane];
+        unsigned short* secondEntry = &localOffsets[plane + 1];
+        int valueCount = (int)sourceOffsets->getValuesInPlane(plane, uniqueValues);
+
+        if (valueCount < 5)
+        {
+            if (valueCount > 2)
+            {
+                *firstEntry = (*firstEntry & 0x3fff) | 0x8000;
+                payloadSize += 0x44;
+                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
+            }
+            else if (valueCount < 2)
+            {
+                *firstEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
+                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
+            }
+            else
+            {
+                *firstEntry = (*firstEntry & 0x3fff) | 0x4000;
+                payloadSize += 0x24;
+                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
+                if (valueCount > 4)
+                {
+                    payloadSize += 0x80;
+                    *secondEntry = *secondEntry | 0xc000;
+                    plane += 2;
+                    continue;
+                }
+            }
+
+            if (valueCount < 3)
+            {
+                if (valueCount < 2)
+                    *secondEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
+                else
+                {
+                    payloadSize += 0x24;
+                    *secondEntry = (*secondEntry & 0x3fff) | 0x4000;
+                }
+            }
+            else
+            {
+                payloadSize += 0x44;
+                *secondEntry = (*secondEntry & 0x3fff) | 0x8000;
+            }
+        }
+        else
+        {
+            *firstEntry = *firstEntry | 0xc000;
+            payloadSize += 0x80;
+            valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
+            if (valueCount < 5)
+            {
+                if (valueCount < 3)
+                {
+                    if (valueCount < 2)
+                        *secondEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
+                    else
+                    {
+                        payloadSize += 0x24;
+                        *secondEntry = (*secondEntry & 0x3fff) | 0x4000;
+                    }
+                }
+                else
+                {
+                    payloadSize += 0x44;
+                    *secondEntry = (*secondEntry & 0x3fff) | 0x8000;
+                }
+            }
+            else
+            {
+                payloadSize += 0x80;
+                *secondEntry = *secondEntry | 0xc000;
+            }
+        }
+
+        plane += 2;
+    }
+
+    unsigned int newSize = payloadSize + 0x100;
+    if (newSize != currentSize)
+    {
+        PlaneOffsets* destination = allocatePlaneOffsets(newSize);
+        unsigned char* dataCursor = (unsigned char*)destination + 0x100;
+        XMemCpy(destination, localOffsets, 0x100);
+
+        plane = 0;
+        for (int group = 0; group < 0x40; ++group)
+        {
+            destination->initPlane(plane, dataCursor);
+            for (int index = 0; index < 0x100; index += 8)
+            {
+                destination->setData(plane, index, (int)(unsigned char)sourceOffsets->getData(plane, index));
+                destination->setData(plane, index + 1, (int)(unsigned char)sourceOffsets->getData(plane, index + 1));
+                destination->setData(plane, index + 2, (int)(unsigned char)sourceOffsets->getData(plane, index + 2));
+                destination->setData(plane, index + 3, (int)(unsigned char)sourceOffsets->getData(plane, index + 3));
+                destination->setData(plane, index + 4, (int)(unsigned char)sourceOffsets->getData(plane, index + 4));
+                destination->setData(plane, index + 5, (int)(unsigned char)sourceOffsets->getData(plane, index + 5));
+                destination->setData(plane, index + 6, (int)(unsigned char)sourceOffsets->getData(plane, index + 6));
+                destination->setData(plane, index + 7, (int)(unsigned char)sourceOffsets->getData(plane, index + 7));
+            }
+
+            int firstPlaneSize = destination->getDataSize(plane);
+            destination->initPlane(plane + 1, dataCursor + firstPlaneSize);
+            for (int index = 0; index < 0x100; index += 8)
+            {
+                destination->setData(plane + 1, index, (int)(unsigned char)sourceOffsets->getData(plane + 1, index));
+                destination->setData(plane + 1, index + 1, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 1));
+                destination->setData(plane + 1, index + 2, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 2));
+                destination->setData(plane + 1, index + 3, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 3));
+                destination->setData(plane + 1, index + 4, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 4));
+                destination->setData(plane + 1, index + 5, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 5));
+                destination->setData(plane + 1, index + 6, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 6));
+                destination->setData(plane + 1, index + 7, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 7));
+            }
+
+            int secondPlaneSize = destination->getDataSize(plane + 1);
+            dataCursor += firstPlaneSize + secondPlaneSize;
+            plane += 2;
+        }
+
+        if (tryUpdateDataAndCount(destination, (int)newSize) == 0)
+            queueForDelete((unsigned char*)destination, (int)newSize);
+
+        LeaveCriticalSection(&sCompressLock);
+        return newSize;
+    }
+
+    LeaveCriticalSection(&sCompressLock);
+    return currentSize;
+}
 void SparseDataStorage::tick()
 {
     XLockFreeStack<unsigned char>& pending = sPendingDeleteLists[(sPendingDeleteList + 1) % 3];
