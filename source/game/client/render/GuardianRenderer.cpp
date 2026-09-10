@@ -11,13 +11,14 @@
 #include "game/core/Culler.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Guardian.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/Level.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/util/Vec3.hpp"
 
-static ResourceLocation GUARDIAN_LOCATION;
-static ResourceLocation GUARDIAN_BEAM_LOCATION;
+static ResourceLocation GUARDIAN_LOCATION((_TEXTURE_NAME)125);
+static ResourceLocation GUARDIAN_BEAM_LOCATION((_TEXTURE_NAME)127);
 
 GuardianRenderer::GuardianRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new GuardianModel(ModelDefinition()), 0.5f)
@@ -30,9 +31,9 @@ GuardianRenderer::~GuardianRenderer()
 
 Vec3* GuardianRenderer::getPosition(boost::shared_ptr<Entity>& entity, double yOffset, float partialTicks)
 {
-    return Vec3::newTemp((entity->mX - entity->mXOld) * partialTicks + entity->mXOld,
-                         (entity->mY - entity->mYOld) * partialTicks + entity->mYOld + yOffset,
-                         (entity->mZ - entity->mZOld) * partialTicks + entity->mZOld);
+    return Vec3::newTemp(entity->mXOld + (entity->mX - entity->mXOld) * partialTicks,
+                         yOffset + entity->mYOld + (entity->mY - entity->mYOld) * partialTicks,
+                         entity->mZOld + (entity->mZ - entity->mZOld) * partialTicks);
 }
 
 bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
@@ -49,8 +50,9 @@ bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* c
     if (!target)
         return false;
 
+    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(guardian);
     Vec3* targetPosition = getPosition(target, (double)target->mBbHeight * 0.5, 1.0f);
-    Vec3* guardianPosition = getPosition(entity, guardian->getEyeHeight(), 1.0f);
+    Vec3* guardianPosition = getPosition(entity, living->getEyeHeight(), 1.0f);
     return culler->isVisible(AABB::minmax(guardianPosition->x, guardianPosition->y, guardianPosition->z,
                                            targetPosition->x, targetPosition->y, targetPosition->z));
 }
@@ -86,7 +88,7 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     Vec3* source = getPosition(target, (double)target->mBbHeight * 0.5, partialTick);
     Vec3* destination = getPosition(entity, guardianEyeHeight, partialTick);
     Vec3* direction = source->subtract(destination);
-    double length = direction->length() + 1.875;
+    double length = direction->length() + 1.0;
     direction->normalize();
     float degrees = 57.2957764f;
     float xAngle = (float)std::acos(direction->y);
@@ -115,27 +117,27 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     const double radius = 0.2;
     double x0 = std::cos(time + 3.1415927410125732) * radius;
     double z0 = std::sin(time + 3.1415927410125732) * radius;
-    double x2 = std::cos(time) * radius;
-    double z2 = std::sin(time) * radius;
-    double x1 = std::cos(time + 4.71238911151886) * radius;
-    double z1 = std::sin(time + 4.71238911151886) * radius;
-    double x3 = std::cos(time + 1.5707963705062866) * radius;
-    double z3 = std::sin(time + 1.5707963705062866) * radius;
+    double x1 = std::cos(time) * radius;
+    double z1 = std::sin(time) * radius;
+    double x2 = std::cos(time + 1.5707963705062866) * radius;
+    double z2 = std::sin(time + 1.5707963705062866) * radius;
+    double x3 = std::cos(time + 4.71238911151886) * radius;
+    double z3 = std::sin(time + 4.71238911151886) * radius;
     const double v = length * 2.5 - 1.0;
     const float width = 0.4999f;
-    builder->vertexUV(x0, (float)length, z0, width, v);
-    builder->vertexUV(x0, 0.0f, z0, width, -1.0f);
-    builder->vertexUV(x2, 0.0f, z2, -1.0f, -1.0f);
-    builder->vertexUV(x2, (float)length, z2, -1.0f, v);
-    builder->vertexUV(x1, (float)length, z1, width, v);
-    builder->vertexUV(x1, 0.0f, z1, width, -1.0f);
-    builder->vertexUV(x3, 0.0f, z3, -1.0f, -1.0f);
-    builder->vertexUV(x3, (float)length, z3, -1.0f, v);
+    builder->vertexUV((float)x0, (float)length, (float)z0, width, (float)v);
+    builder->vertexUV((float)x0, 0.0f, (float)z0, width, -1.0f);
+    builder->vertexUV((float)x1, 0.0f, (float)z1, 0.0f, -1.0f);
+    builder->vertexUV((float)x1, (float)length, (float)z1, 0.0f, (float)v);
+    builder->vertexUV((float)x2, (float)length, (float)z2, width, (float)v);
+    builder->vertexUV((float)x2, 0.0f, (float)z2, width, -1.0f);
+    builder->vertexUV((float)x3, 0.0f, (float)z3, 0.0f, -1.0f);
+    builder->vertexUV((float)x3, (float)length, (float)z3, 0.0f, (float)v);
     float frameV = (guardian->mTickCount & 1) == 0 ? 0.5f : 0.0f;
-    builder->vertexUV(guardianX0, (float)length, guardianZ0, 0.5f, frameV + 0.5f);
-    builder->vertexUV(guardianX1, (float)length, guardianZ1, 1.0f, frameV + 0.5f);
-    builder->vertexUV(guardianX3, (float)length, guardianZ3, 1.0f, frameV);
-    builder->vertexUV(guardianX2, (float)length, guardianZ2, 0.5f, frameV);
+    builder->vertexUV((float)guardianX0, (float)length, (float)guardianZ0, 0.5f, frameV + 0.5f);
+    builder->vertexUV((float)guardianX1, (float)length, (float)guardianZ1, 1.0f, frameV + 0.5f);
+    builder->vertexUV((float)guardianX3, (float)length, (float)guardianZ3, 1.0f, frameV);
+    builder->vertexUV((float)guardianX2, (float)length, (float)guardianZ2, 0.5f, frameV);
     builder->end();
     GlStateManager::popMatrix();
 }

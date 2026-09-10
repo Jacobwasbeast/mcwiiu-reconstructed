@@ -11,6 +11,11 @@
 #include "game/client/render/TextureAtlasSprite.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/AbstractClientPlayer.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
     : mMinecraft(minecraft), mMainHandItem(), mOffHandItem(), mMainHandHeight(0.0f), mOffHandHeight(0.0f),
@@ -43,14 +48,23 @@ void ItemInHandRenderer::Reset()
 void ItemInHandRenderer::renderItem(boost::shared_ptr<LivingEntity> entity, not_null_ptr<ItemInstance> item,
                                     ItemTransforms::TransformType transform, bool leftHand, int, bool gui3d)
 {
-    if (!item || item->isEmpty()) return;
+    if (item->isEmpty())
+    {
+        return;
+    }
     Block* block = Block::byItem(item->getItem());
     GlStateManager::pushMatrix();
-    if (Block::getId(block) == 218) GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-    bool previousGui3d = mItemRenderer->mIsGui3d;
+    if (Block::getId(block) == 218)
+    {
+        if (mMinecraft->mPlayer->GetThirdPersonView(false) == 0)
+        {
+            GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+        }
+    }
+    bool wasGui3d = mItemRenderer->mIsGui3d;
     mItemRenderer->mIsGui3d = gui3d;
     mItemRenderer->renderStatic(item, entity, transform, 1.0f, leftHand, 0);
-    mItemRenderer->mIsGui3d = previousGui3d;
+    mItemRenderer->mIsGui3d = wasGui3d;
     GlStateManager::popMatrix();
 }
 
@@ -70,7 +84,9 @@ void ItemInHandRenderer::enableLight(float x, float y)
 
 void ItemInHandRenderer::setLightValue(boost::shared_ptr<AbstractClientPlayer> player)
 {
-    if (player) GlStateManager::multiTexCoord2f(0.0f, 0.0f);
+    int light = mMinecraft->mLevel->getLightColor(
+        BlockPos(player->mX, player->mY + player->getEyeHeight(), player->mZ), 0, -1);
+    GlStateManager::multiTexCoord2f((float)(light & 0xFFFF), (float)(light >> 16));
 }
 
 void ItemInHandRenderer::setPlayerBob(boost::shared_ptr<LocalPlayer> player, float partialTick)
@@ -80,9 +96,10 @@ void ItemInHandRenderer::setPlayerBob(boost::shared_ptr<LocalPlayer> player, flo
     GlStateManager::rotatef(partialTick, 0.0f, 1.0f, 0.0f);
 }
 
-float ItemInHandRenderer::calculateMapTilt(float value)
+float ItemInHandRenderer::calculateMapTilt(float xRot)
 {
-    return Mth::clamp(value, -1.0f, 1.0f);
+    float tilt = Mth::clamp(1.1f - xRot / 45.0f, 0.0f, 1.0f);
+    return -std::cos(tilt * 3.1415927f) * 0.5f + 0.5f;
 }
 
 void ItemInHandRenderer::renderMapHand(const HumanoidArm* arm)
@@ -92,10 +109,16 @@ void ItemInHandRenderer::renderMapHand(const HumanoidArm* arm)
 
 void ItemInHandRenderer::renderMapHands()
 {
-    GlStateManager::disableCull();
-    renderMapHand(HumanoidArm::RIGHT);
-    renderMapHand(HumanoidArm::LEFT);
-    GlStateManager::enableCull();
+    if (!mMinecraft->mPlayer->isInvisible())
+    {
+        GlStateManager::disableCull();
+        GlStateManager::pushMatrix();
+        GlStateManager::rotatef(90.0f, 0.0f, 1.0f, 0.0f);
+        renderMapHand(HumanoidArm::RIGHT);
+        renderMapHand(HumanoidArm::LEFT);
+        GlStateManager::popMatrix();
+        GlStateManager::enableCull();
+    }
 }
 
 void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const HumanoidArm* arm)
@@ -133,35 +156,39 @@ void ItemInHandRenderer::renderTwoHandedMap(float partialTick, float equipProgre
     renderMap(mMainHandItem, 0);
 }
 
-void ItemInHandRenderer::applyEatTransform(float value, const HumanoidArm* arm, not_null_ptr<ItemInstance> item)
+void ItemInHandRenderer::applyEatTransform(float partialTick, const HumanoidArm* arm, not_null_ptr<ItemInstance> item)
 {
-    float remaining = (float)item->getUseDuration() - value + 1.0f;
-    float useProgress = remaining / (float)item->getUseDuration();
-    float bob = Mth::cos(remaining * 0.25f * 3.1415927f);
-    float y = useProgress < 0.8f ? std::fabs(bob * 0.1f) : 0.0f;
-    GlStateManager::translatef(0.0f, y, 0.0f);
+    float remainingTicks = (float)mMinecraft->mPlayer->getUseItemRemainingTicks() - partialTick + 1.0f;
+    float useProgress = remainingTicks / (float)item->getUseDuration();
+    float bob = 0.0f;
+    if (useProgress < 0.8f)
+    {
+        bob = std::fabs(Mth::cos(remainingTicks * 0.25f * 3.1415927f) * 0.1f);
+    }
+    GlStateManager::translatef(0.0f, bob, 0.0f);
     float pull = 1.0f - std::pow(useProgress, 27.0f);
-    float side = arm == HumanoidArm::RIGHT ? 1.0f : -1.0f;
-    GlStateManager::translatef(pull * 0.6f * side, pull * -0.5f, 0.0f);
-    GlStateManager::rotatef(side * pull * 90.0f, 0.0f, 1.0f, 0.0f);
+    int side = arm == HumanoidArm::RIGHT ? 1 : -1;
+    GlStateManager::translatef(pull * 0.6f * (float)side, pull * -0.5f, pull * 0.0f);
+    GlStateManager::rotatef((float)side * pull * 90.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(pull * 10.0f, 1.0f, 0.0f, 0.0f);
-    GlStateManager::rotatef(side * pull * 30.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef((float)side * pull * 30.0f, 0.0f, 0.0f, 1.0f);
 }
 
-void ItemInHandRenderer::applyItemArmAttackTransform(const HumanoidArm* arm, float value)
+void ItemInHandRenderer::applyItemArmAttackTransform(const HumanoidArm* arm, float swingProgress)
 {
-    float side = arm == HumanoidArm::LEFT ? -1.0f : 1.0f;
-    float swing = Mth::sin(value * value * 3.1415927f);
-    float recovery = Mth::sin(Mth::sqrt(value) * 3.1415927f);
-    GlStateManager::rotatef(side * (swing * 20.0f + 45.0f), 1.0f, 0.0f, 0.0f);
-    GlStateManager::rotatef(side * recovery * 20.0f, 0.0f, 0.0f, 1.0f);
-    GlStateManager::rotatef(recovery * -20.0f, 0.0f, 1.0f, 0.0f);
+    int side = arm == HumanoidArm::RIGHT ? 1 : -1;
+    float swing = Mth::sin(swingProgress * swingProgress * 3.1415927f);
+    GlStateManager::rotatef((float)side * (45.0f + swing * -20.0f), 0.0f, 1.0f, 0.0f);
+    float swingRoot = Mth::sin(Mth::sqrt(swingProgress) * 3.1415927f);
+    GlStateManager::rotatef((float)side * swingRoot * -20.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(swingRoot * -80.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef((float)side * -45.0f, 0.0f, 1.0f, 0.0f);
 }
 
-void ItemInHandRenderer::applyItemArmTransform(const HumanoidArm* arm, float value)
+void ItemInHandRenderer::applyItemArmTransform(const HumanoidArm* arm, float equipProgress)
 {
-    float side = arm == HumanoidArm::LEFT ? -1.0f : 1.0f;
-    GlStateManager::translatef(side * 0.56f, value * -0.4f, -0.72f);
+    int side = arm == HumanoidArm::RIGHT ? 1 : -1;
+    GlStateManager::translatef((float)side * 0.56f, -0.52f + equipProgress * -0.6f, -0.72f);
 }
 
 void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player, float equip,
@@ -232,18 +259,18 @@ void ItemInHandRenderer::renderScreenEffect(float partialTick)
     renderWater(partialTick);
 }
 
-void ItemInHandRenderer::CalculateNewHandHeights(bool instant)
+void ItemInHandRenderer::CalculateNewHandHeights(bool compareTags)
 {
-    if (instant)
-    {
-        mMainHandHeight = mMainHandHeightOld;
-        mOffHandHeight = mOffHandHeightOld;
-    }
-    else
-    {
-        mMainHandHeight += (mMainHandHeightOld - mMainHandHeight) * 0.4f;
-        mOffHandHeight += (mOffHandHeightOld - mOffHandHeight) * 0.4f;
-    }
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mPlayer;
+    not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
+    not_null_ptr<ItemInstance> offHandItem = player->getOffhandItem();
+    float attackStrength = (float)player->getAttackStrengthScale(1.0f);
+    float mainHandTarget = ItemInstance::matches(mMainHandItem, mainHandItem, compareTags)
+                               ? attackStrength * attackStrength * attackStrength
+                               : 0.0f;
+    mMainHandHeight += Mth::clamp(mainHandTarget - mMainHandHeight, -0.4f, 0.4f);
+    float offHandTarget = ItemInstance::matches(mOffHandItem, offHandItem, compareTags) ? 1.0f : 0.0f;
+    mOffHandHeight += Mth::clamp(offHandTarget - mOffHandHeight, -0.4f, 0.4f);
 }
 
 void ItemInHandRenderer::tick()
@@ -254,6 +281,12 @@ void ItemInHandRenderer::tick()
 
 void ItemInHandRenderer::itemUsed(InteractionHand::EInteractionHand hand)
 {
-    if (hand == InteractionHand::eInteractionHand_MainHand) mMainHandHeightOld = 0.0f;
-    else mOffHandHeightOld = 0.0f;
+    if (hand == InteractionHand::eInteractionHand_MainHand)
+    {
+        mMainHandHeight = 0.0f;
+    }
+    else
+    {
+        mOffHandHeight = 0.0f;
+    }
 }

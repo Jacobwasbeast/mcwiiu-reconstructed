@@ -475,9 +475,9 @@ unsigned int DLCTexturePack::getDLCParentPackId()
     return m_dlcPack->GetParentPackId();
 }
 
-void DLCTexturePack::getDLCInfoParentPack()
+DLCPack* DLCTexturePack::getDLCInfoParentPack()
 {
-    m_dlcPack->GetParentPack();
+    return m_dlcPack->GetParentPack();
 }
 
 unsigned int DLCTexturePack::getDLCSubPackId()

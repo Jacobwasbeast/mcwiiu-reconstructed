@@ -9,6 +9,7 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/Tesselator.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/client/render/VillagerModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
@@ -26,7 +27,6 @@ static ResourceLocation LIBRARIAN_LOCATION((_TEXTURE_NAME)64);
 static ResourceLocation PRIEST_LOCATION((_TEXTURE_NAME)65);
 static ResourceLocation SMITH_LOCATION((_TEXTURE_NAME)66);
 static ResourceLocation BUTCHER_LOCATION((_TEXTURE_NAME)67);
-static ResourceLocation ITEM_LOCATION((_TEXTURE_NAME)240);
 
 VillagerRenderer::VillagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new VillagerModel(0.0F, ModelDefinition()), 0.5F)

@@ -14,10 +14,10 @@
 #include "game/world/generation/EnderEyesLayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static ResourceLocation ENDERMAN_LOCATION;
+static ResourceLocation ENDERMAN_LOCATION((_TEXTURE_NAME)49);
 
 EndermanRenderer::EndermanRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new EndermanModel(0.5F, ModelDefinition()), 1.0F)
+    : MobRenderer(dispatcher, new EndermanModel(0.0F, ModelDefinition()), 0.5F)
 {
     mEyesLayer = new EnderEyesLayer(this);
     addLayer(mEyesLayer);
@@ -36,7 +36,7 @@ void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     model->mCarrying = enderman->getCarryingBlock() != NULL;
     model->mCreepy = enderman->isCreepy();
 
-    if (model->mCreepy)
+    if (enderman->isCreepy())
     {
         const double offset = 0.02;
         x += mRandom.nextGaussian() * offset;
@@ -74,22 +74,31 @@ void EndermanRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, floa
     bool translucent = false;
     if (!isVisible(entity))
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
-        if (entity->isInvisibleTo(player))
-            return;
-        translucent = true;
-        GlStateManager::setProfile();
+        if (!entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer))
+        {
+            translucent = true;
+        }
     }
 
-    Model* model = getModel(entity);
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+    boost::shared_ptr<Entity> renderEntity = entity;
+    if (!bindTexture(renderEntity))
+    {
+        return;
+    }
 
     if (translucent)
+    {
+        GlStateManager::setProfile();
+    }
+    getModel(entity)->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                             headPitch, scale, true);
+    if (translucent)
+    {
         GlStateManager::unsetProfile();
+    }
 }
 
 Model* EndermanRenderer::createModel(const ModelDefinition& definition)
 {
-    return new EndermanModel(0.5F, definition);
+    return new EndermanModel(0.0F, definition);
 }

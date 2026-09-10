@@ -55,8 +55,8 @@ private:
     not_null_ptr<ItemInstance> mMainHandItem;
     not_null_ptr<ItemInstance> mOffHandItem;
     float mMainHandHeight;
-    float mOffHandHeight;
     float mMainHandHeightOld;
+    float mOffHandHeight;
     float mOffHandHeightOld;
     EntityRenderDispatcher* mEntityRenderDispatcher;
     ItemRenderer* mItemRenderer;

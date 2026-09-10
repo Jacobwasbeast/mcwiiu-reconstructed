@@ -50,7 +50,7 @@ public:
     virtual void unloadAudio();
     virtual ArchiveFile* getArchiveFile();
     virtual unsigned int getDLCParentPackId();
-    virtual void getDLCInfoParentPack();
+    virtual DLCPack* getDLCInfoParentPack();
     virtual unsigned int getDLCSubPackId();
     int GetDLCDeviceID();
 

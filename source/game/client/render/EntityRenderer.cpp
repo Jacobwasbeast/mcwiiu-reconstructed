@@ -353,7 +353,7 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        if (g_pApp->isXuidDeadmau5(player->m_0x784))
+        if (g_pApp->isXuidDeadmau5(player->mXuid))
             nameOffset = -10;
         displayName = name;
     }
