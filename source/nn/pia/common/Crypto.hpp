@@ -10,7 +10,15 @@ class Crypto
 public:
     typedef unsigned int Mode;
 
-    class Setting;
+    class Setting
+    {
+    public:
+        Mode m_mode;
+        const void* m_iv;
+        unsigned int m_ivLength;
+        const void* m_key;
+        unsigned int m_keyLength;
+    };
 
     static Result Encrypt(void* destination, const void* source, unsigned int size,
                           void* signature, unsigned int signatureSize,

@@ -9,6 +9,7 @@ public:
     Time() : m_tick(0) {}
 
     bool operator<=(const Time& other) const { return m_tick <= other.m_tick; }
+    bool operator<(const Time& other) const { return m_tick < other.m_tick; }
 
     void SetNow();
     static Time Create(unsigned long long tick);
