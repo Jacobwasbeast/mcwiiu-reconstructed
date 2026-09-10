@@ -25,18 +25,17 @@ public:
     virtual ~CauldronBlockEntity();
 
     static BlockEntity* create();
-    virtual std::wstring getName();
-    virtual std::wstring getCustomName();
-    virtual bool hasCustomName();
-    virtual std::wstring getDisplayName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
     virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
+    virtual std::wstring getName();
+    virtual std::wstring getCustomName();
+    virtual bool hasCustomName();
     virtual int getMaxStackSize();
     virtual bool stillValid(boost::shared_ptr<Player> player);
+    virtual unsigned int getContainerSize();
+    virtual bool isEmpty();
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
@@ -45,6 +44,7 @@ public:
     virtual int getContainerDataCount();
     virtual void clearContent();
 
+    virtual std::wstring getDisplayName();
     std::wstring getPotionId() const;
     void setPotionId(const std::wstring& potionId);
     void setCustomColor(const int& color);

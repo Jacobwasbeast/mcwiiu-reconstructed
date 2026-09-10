@@ -49,7 +49,7 @@ boost::shared_ptr<BlockEntity> EnderChestBlock::newBlockEntity(Level*, int data)
 
 void EnderChestBlock::blockStaticCtor()
 {
-    FACING = HorizontalDirectionalBlock::FACING;
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 const AABB* EnderChestBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)

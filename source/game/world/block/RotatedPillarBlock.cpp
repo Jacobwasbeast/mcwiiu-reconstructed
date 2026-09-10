@@ -19,7 +19,7 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty = NULL;
+EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty = NULL;
 
 void RotatedPillarBlock::blockStaticCtor()
 {

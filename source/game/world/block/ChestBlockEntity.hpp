@@ -30,42 +30,46 @@ public:
 
     static BlockEntity* create();
     void _init(bool large);
-    virtual std::wstring getName();
-    virtual std::wstring getCustomName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
-    virtual int getMaxStackSize();
-    virtual void setChanged();
+
     virtual bool stillValid(boost::shared_ptr<Player> player);
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
+    virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
+    virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
+    virtual unsigned int getContainerSize();
+    virtual bool isEmpty();
+    virtual std::wstring getName();
+    virtual std::wstring getCustomName();
+    virtual int getMaxStackSize();
+    virtual void heyImYourNeighbor(boost::shared_ptr<ChestBlockEntity> neighbour, const Direction* direction);
+    virtual void checkNeighbors();
+    virtual int getType();
     virtual int getTypeId(bool large);
-    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
+
+    virtual void setChanged();
     virtual void load(CompoundTag* tag);
     virtual CompoundTag* save(CompoundTag* tag);
     virtual void clearCache();
-    void heyImYourNeighbor(boost::shared_ptr<ChestBlockEntity> neighbour, const Direction* direction);
-    boost::shared_ptr<ChestBlockEntity> getNeighbour();
-    void removeNeighbour();
-    bool isSameChest(const BlockPos& position);
-    boost::shared_ptr<ChestBlockEntity> findAndGreetChestEntity(const Direction* direction);
-    virtual void checkNeighbors();
-    void tickRefilledAnimation();
     virtual void tick();
     virtual bool triggerEvent(int id, int param);
     virtual void setRemoved();
-    virtual int getType();
-    NonNullList<not_null_ptr<ItemInstance> > getItems();
-    void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     virtual boost::shared_ptr<BlockEntity> clone();
-    void startRefilledAnimation();
     virtual CompoundTag* getUpdateTagForPistonMovement();
     virtual std::wstring getDisplayName();
     virtual unsigned long long GetType();
 
+    static void addDataWalkers(DataFixerUpper* fixer);
+    boost::shared_ptr<ChestBlockEntity> getNeighbour();
+    void removeNeighbour();
+    bool isSameChest(const BlockPos& position);
+    boost::shared_ptr<ChestBlockEntity> findAndGreetChestEntity(const Direction* direction);
+    void tickRefilledAnimation();
+    void startRefilledAnimation();
+
 private:
+    NonNullList<not_null_ptr<ItemInstance> > mItems;
     bool mLarge;
     int mRefilledAnimationTicks;
     bool mNeighborsChecked;

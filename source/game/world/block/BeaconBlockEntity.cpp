@@ -47,7 +47,7 @@ unsigned int BeaconBlockEntity::BeaconBeamSection::getHeight()
 }
 
 BeaconBlockEntity::BeaconBlockEntity()
-    : LockableContainerBlockEntity(), WorldlyContainer(), InteractionObject(),
+    : LockableContainerBlockEntity(), WorldlyContainer(),
       mBeamSections(), mItem(), mName(new CensoredString()), mPrimaryPower(NULL),
       mSecondaryPower(NULL), mLevels(0), mNextClientSideUpdate(0), mLastCheckY(-1),
       mClientSideScale(0.0F), mActive(false), mBeamDirection(0), mBeamLength(0)

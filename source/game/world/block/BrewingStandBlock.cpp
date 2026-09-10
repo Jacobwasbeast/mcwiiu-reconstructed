@@ -94,7 +94,7 @@ bool BrewingStandBlock::use(Level* level, const BlockPos& pos, const BlockState*
     boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
         boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity);
     if (brewingStand.get() != NULL)
-        player->startBlockInteraction(static_cast<InteractionObject*>(static_cast<LockableContainer*>(brewingStand.get())));
+        player->openContainer(brewingStand);
     return true;
 }
 

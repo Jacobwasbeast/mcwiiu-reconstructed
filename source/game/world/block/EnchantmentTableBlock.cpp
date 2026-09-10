@@ -116,7 +116,7 @@ bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockSt
         boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity);
     if (table.get() != NULL)
     {
-        player->startBlockInteraction(table.get());
+        player->startBlockInteraction(*table);
     }
     return true;
 }

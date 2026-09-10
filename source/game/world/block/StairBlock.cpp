@@ -1,9 +1,11 @@
 #include "game/world/block/StairBlock.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/HitResult.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/core/Explosion.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -13,12 +15,16 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include <typeinfo>
+#include <vector>
 #include <boost/unordered_set.hpp>
 
+static DirectionProperty* gStairFacing = NULL;
 EnumProperty<StairBlock::Half*>* StairBlock::HALF = NULL;
 EnumProperty<StairBlock::Shape*>* StairBlock::SHAPE = NULL;
 static const AABB* gStairTopSlabAABB = AABB::newPermanent(0.0, 0.5, 0.0, 1.0, 1.0, 1.0);
@@ -41,12 +47,14 @@ static const AABB* gStairBottomSouthWestAABB = AABB::newPermanent(0.0, 0.0, 0.5,
 static const AABB* gStairBottomSouthEastAABB = AABB::newPermanent(0.5, 0.0, 0.5, 1.0, 0.5, 1.0);
 static StairBlock::Half* gStairTop = new StairBlock::Half(L"top");
 static StairBlock::Half* gStairBottom = new StairBlock::Half(L"bottom");
+static StairBlock::Half* gStairHalfValues[2] = { gStairTop, gStairBottom };
 static StairBlock::Shape* gStairStraight = new StairBlock::Shape(L"straight", 0);
 static StairBlock::Shape* gStairInnerLeft = new StairBlock::Shape(L"inner_left", 1);
 static StairBlock::Shape* gStairInnerRight = new StairBlock::Shape(L"inner_right", 2);
 static StairBlock::Shape* gStairOuterLeft = new StairBlock::Shape(L"outer_left", 3);
 static StairBlock::Shape* gStairOuterRight = new StairBlock::Shape(L"outer_right", 4);
-static AbstractProperty<const Direction*>* gStairFacing = NULL;
+static StairBlock::Shape* gStairShapeValues[5] = { gStairStraight, gStairInnerLeft, gStairInnerRight, gStairOuterLeft,
+                                                   gStairOuterRight };
 
 StairBlock::Half::Half(const std::wstring& name)
     : mName(name)
@@ -93,41 +101,47 @@ std::wstring StairBlock::Shape::getSerializedName() const
 
 void StairBlock::blockStaticCtor()
 {
+    gStairFacing = HorizontalDirectionalBlock::FACING_PROPERTY;
+
     boost::unordered_set<Half*> halves;
-    halves.insert(gStairTop);
-    halves.insert(gStairBottom);
+    halves.insert(gStairHalfValues[0]);
+    halves.insert(gStairHalfValues[1]);
+    HALF = EnumProperty<Half*>::create(L"half", typeid(Half), halves, Predicates<Half*>::alwaysTrue);
 
     boost::unordered_set<Shape*> shapes;
-    shapes.insert(gStairStraight);
-    shapes.insert(gStairInnerLeft);
-    shapes.insert(gStairInnerRight);
-    shapes.insert(gStairOuterLeft);
-    shapes.insert(gStairOuterRight);
-
-    boost::unordered_set<const Direction*> directions;
-    directions.insert(Direction::NORTH);
-    directions.insert(Direction::SOUTH);
-    directions.insert(Direction::WEST);
-    directions.insert(Direction::EAST);
-
-    Predicates<Half*>::ConstantPredicate halfFilter(true);
-    Predicates<Shape*>::ConstantPredicate shapeFilter(true);
-    Predicates<const Direction*>::ConstantPredicate directionFilter(true);
-    HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves, &halfFilter);
-    SHAPE = EnumProperty<Shape*>::create(L"shape", typeid(Shape*), shapes, &shapeFilter);
-    gStairFacing = static_cast<AbstractProperty<const Direction*>*>(EnumProperty<const Direction*>::create(L"facing", typeid(const Direction*), directions, &directionFilter));
+    shapes.insert(gStairShapeValues[0]);
+    shapes.insert(gStairShapeValues[1]);
+    shapes.insert(gStairShapeValues[2]);
+    shapes.insert(gStairShapeValues[3]);
+    shapes.insert(gStairShapeValues[4]);
+    SHAPE = EnumProperty<Shape*>::create(L"shape", typeid(Shape), shapes, Predicates<Shape*>::alwaysTrue);
 }
 
 StairBlock::StairBlock(const BlockState* modelState)
-    : Block(modelState == NULL || modelState->getBlock() == NULL ? NULL : modelState->getBlock()->getCraftingMaterial()), mModelBlock(NULL), mModelState(modelState), mIsModelState(false), mShapeState(0)
+    : Block(modelState->getBlock()->getCraftingMaterial())
 {
+    mBlockType = static_cast<EBlockType>(7);
     DerivedInit();
-    if (mModelState != NULL)
-    {
-        mModelBlock = mModelState->getBlock();
-    }
+
+    const BlockState* state = mStateDefinition->any();
+    TypedBoxed<const Direction*> facing(Direction::NORTH);
+    state = state->setBoxedValue(gStairFacing, &facing);
+    TypedBoxed<Half*> half(gStairBottom);
+    state = state->setBoxedValue(HALF, &half);
+    TypedBoxed<Shape*> shape(gStairStraight);
+    state = state->setBoxedValue(SHAPE, &shape);
+    registerDefaultState(state);
+
+    mModelBlock = modelState->getBlock();
+    mModelState = modelState;
+    mIsModelState = false;
+    mShapeState = 0;
+    setDestroyTime(mModelBlock->mDestroyTime);
+    setExplodeable(mModelBlock->mExplosionResistance / 3.0f);
+    setSoundType(mModelBlock->mSoundType);
     setLightBlock(255);
 }
+
 StairBlock::~StairBlock()
 {
 }
@@ -197,20 +211,34 @@ const AABB* StairBlock::getCornerAABB(const BlockState* state)
     }
 }
 
-EBlockFaceShape StairBlock::getBlockFaceShape(LevelSource*, const BlockState* state, const BlockPos&, const Direction* direction)
+EBlockFaceShape StairBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
 {
-    if (direction == Direction::UP)
+    const BlockState* actual = fillVirtualBlockStateProperties(state, levelSource, pos);
+    if (direction->getAxis() == Direction::Axis::Y)
     {
-        return state->getValue(HALF) == gStairTop ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
+        return (direction == Direction::UP) == (actual->getValue(HALF) == gStairTop) ? BLOCK_FACE_SOLID
+                                                                                     : BLOCK_FACE_UNDEFINED;
     }
 
-    if (direction == Direction::DOWN)
+    Shape* shape = actual->getValue(SHAPE);
+    if (shape->getId() == 3 || shape->getId() == 4)
     {
-        return state->getValue(HALF) == gStairTop ? BLOCK_FACE_UNDEFINED : BLOCK_FACE_SOLID;
+        return BLOCK_FACE_UNDEFINED;
     }
 
-    const Shape* shape = state->getValue(SHAPE);
-    return shape == gStairOuterLeft || shape == gStairOuterRight ? BLOCK_FACE_UNDEFINED : BLOCK_FACE_SOLID;
+    const Direction* facing = actual->getValue(gStairFacing);
+    switch (shape->getId())
+    {
+    case 1:
+        return facing == direction || facing == direction->getClockWise() ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
+    case 2:
+        return facing == direction || facing == direction->getCounterClockWise() ? BLOCK_FACE_SOLID
+                                                                                 : BLOCK_FACE_UNDEFINED;
+    case 0:
+        return facing == direction ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
+    default:
+        return BLOCK_FACE_UNDEFINED;
+    }
 }
 
 int StairBlock::getSpawnResourcesAuxValue(const BlockState*)
@@ -353,10 +381,17 @@ void StairBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* st
     mModelState->neighborChanged(level, pos, Blocks::AIR, pos);
     mModelBlock->onPlace(level, pos, state);
 }
-bool StairBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool client)
+
+bool StairBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool client)
 {
-    return Block::use(level, pos, state, player, hand, direction, x, y, z, client);
+    if (client)
+    {
+        return false;
+    }
+
+    return mModelBlock->use(level, pos, mModelState, player, hand, Direction::DOWN, 0.0f, 0.0f, 0.0f, false);
 }
+
 void StairBlock::wasExploded(Level* level, const BlockPos& pos, Explosion* explosion)
 {
     mModelBlock->wasExploded(level, pos, explosion);
@@ -372,67 +407,241 @@ const MaterialColor* StairBlock::getMapColor(const BlockState*, LevelSource* sou
     return mModelBlock->getMapColor(mModelState, source, pos);
 }
 
-const BlockState* StairBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction, float, float hitY, float, int, boost::shared_ptr<LivingEntity>)
+const BlockState* StairBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    TypedBoxed<const Direction*> facing(direction == Direction::DOWN ? Direction::NORTH : direction->getOpposite());
-    TypedBoxed<Half*> half(hitY > 0.5f ? gStairBottom : gStairTop);
-    const BlockState* state = defaultBlockState()->setBoxedValue(gStairFacing, &facing);
-    return state->setBoxedValue(HALF, &half);
+    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
+    TypedBoxed<const Direction*> facing(placer->getDirection());
+    state = state->setBoxedValue(gStairFacing, &facing);
+    TypedBoxed<Shape*> shape(gStairStraight);
+    state = state->setBoxedValue(SHAPE, &shape);
+
+    if (direction != Direction::DOWN && (direction == Direction::UP || hitY <= 0.5))
+    {
+        TypedBoxed<Half*> bottom(gStairBottom);
+        return state->setBoxedValue(HALF, &bottom);
+    }
+
+    TypedBoxed<Half*> top(gStairTop);
+    return state->setBoxedValue(HALF, &top);
 }
+
 bool StairBlock::_neighboringBlockCheckForCreatingBarrierInDirection(LevelSource* source, const BlockPos& pos, const BlockState* state, const Direction* direction) const
 {
     const BlockState* neighbor = source->getBlockState(pos);
-    return neighbor != NULL && neighbor->getBlock() == state->getBlock() && neighbor->getValue(gStairFacing) == direction;
+    if (state->getBlock() == neighbor->getBlock())
+    {
+        if (neighbor->getValue(gStairFacing) == direction)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
+
 bool StairBlock::liquidCanFlowIntoFromDirection(LevelSource* source, const BlockPos& pos, const Direction* direction) const
 {
     const BlockState* state = source->getBlockState(pos);
-    if (state == NULL)
-    {
-        return true;
-    }
-
     if (direction == Direction::UP || direction == Direction::DOWN)
     {
-        return false;
+        return direction != (state->getValue(HALF) == gStairTop ? Direction::UP : Direction::DOWN);
     }
 
-    return !_neighboringBlockCheckForCreatingBarrierInDirection(source, pos.relative(direction), state, direction);
+    switch (state->getValue(gStairFacing)->get3DDataValue())
+    {
+    case 2:
+        if (direction == Direction::NORTH)
+        {
+            return false;
+        }
+
+        if (direction == Direction::EAST
+            && _neighboringBlockCheckForCreatingBarrierInDirection(source, pos.south(), state, Direction::EAST))
+        {
+            return false;
+        }
+
+        if (direction != Direction::WEST)
+        {
+            return true;
+        }
+
+        return !_neighboringBlockCheckForCreatingBarrierInDirection(source, pos.south(), state, Direction::WEST);
+    case 3:
+        if (direction == Direction::SOUTH)
+        {
+            return false;
+        }
+
+        if (direction == Direction::EAST
+            && _neighboringBlockCheckForCreatingBarrierInDirection(source, pos.north(), state, Direction::EAST))
+        {
+            return false;
+        }
+
+        if (direction != Direction::WEST)
+        {
+            return true;
+        }
+
+        return !_neighboringBlockCheckForCreatingBarrierInDirection(source, pos.north(), state, Direction::WEST);
+    case 4:
+        if (direction == Direction::WEST)
+        {
+            return false;
+        }
+
+        if (direction == Direction::NORTH
+            && _neighboringBlockCheckForCreatingBarrierInDirection(source, pos.east(), state, Direction::NORTH))
+        {
+            return false;
+        }
+
+        if (direction != Direction::SOUTH)
+        {
+            return true;
+        }
+
+        return !_neighboringBlockCheckForCreatingBarrierInDirection(source, pos.east(), state, Direction::SOUTH);
+    case 5:
+        if (direction == Direction::EAST)
+        {
+            return false;
+        }
+
+        if (direction == Direction::NORTH
+            && _neighboringBlockCheckForCreatingBarrierInDirection(source, pos.west(), state, Direction::NORTH))
+        {
+            return false;
+        }
+
+        if (direction != Direction::SOUTH)
+        {
+            return true;
+        }
+
+        return !_neighboringBlockCheckForCreatingBarrierInDirection(source, pos.west(), state, Direction::SOUTH);
+    default:
+        return false;
+    }
 }
+
 HitResult* StairBlock::clip(const BlockState* state, Level* level, const BlockPos& pos, Vec3* from, Vec3* to)
 {
-    return Block::clip(state, level, pos, from, to);
+    std::vector<HitResult*> hits;
+    const arrayWithLength<const AABB*>* shapes
+        = getShapes(fillVirtualBlockStateProperties(state, level, pos), level, pos);
+    for (unsigned int i = 0; i < shapes->length; ++i)
+    {
+        if (shapes->data[i] != NULL)
+        {
+            hits.push_back(Block::clip(pos, from, to, shapes->data[i]));
+        }
+    }
+
+    HitResult* furthest = NULL;
+    double furthestDistance = 0.0;
+    for (std::vector<HitResult*>::iterator it = hits.begin(); it != hits.end(); ++it)
+    {
+        if (*it != NULL)
+        {
+            double distance = (*it)->mLocation->distanceToSqr(to);
+            if (distance > furthestDistance)
+            {
+                furthestDistance = distance;
+                furthest = *it;
+            }
+        }
+    }
+
+    return furthest;
 }
 
 const BlockState* StairBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data & 3));
+    const BlockState* state = defaultBlockState();
     TypedBoxed<Half*> half((data & 4) != 0 ? gStairTop : gStairBottom);
-    const BlockState* state = defaultBlockState()->setBoxedValue(gStairFacing, &facing);
-    return state->setBoxedValue(HALF, &half);
+    state = state->setBoxedValue(HALF, &half);
+    TypedBoxed<const Direction*> facing(Direction::from3DDataValue(5 - (data & 3)));
+    return state->setBoxedValue(gStairFacing, &facing);
 }
+
 int StairBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gStairFacing)->get2DDataValue() | (state->getValue(HALF) == gStairTop ? 4 : 0);
+    int data = 0;
+    if (state->getValue(HALF) == gStairTop)
+    {
+        data = 4;
+    }
+
+    return data | (5 - state->getValue(gStairFacing)->get3DDataValue());
 }
 
 bool StairBlock::isStairs(const BlockState* state)
 {
-    return state != NULL && state->getBlock() != NULL && dynamic_cast<const StairBlock*>(state->getBlock()) != NULL;
+    Block* block = state->getBlock();
+    return block != NULL && dynamic_cast<StairBlock*>(block) != NULL;
 }
 
 bool StairBlock::canTakeShape(const BlockState* state, LevelSource* source, const BlockPos& pos, const Direction* direction)
 {
-    return isStairs(state) && getStairsShape(state, source, pos) != NULL && state->getValue(gStairFacing) == direction;
+    const BlockState* neighbor = source->getBlockState(pos.relative(direction));
+    bool matches = false;
+    if (isStairs(neighbor))
+    {
+        if (neighbor->getValue(gStairFacing) == state->getValue(gStairFacing))
+        {
+            if (neighbor->getValue(HALF) == state->getValue(HALF))
+            {
+                matches = true;
+            }
+        }
+    }
+
+    return !matches;
 }
-const StairBlock::Shape* StairBlock::getStairsShape(const BlockState* state, LevelSource* source, const BlockPos& pos)
+
+StairBlock::Shape* StairBlock::getStairsShape(const BlockState* state, LevelSource* source, const BlockPos& pos)
 {
-    const BlockState* neighbor = source->getBlockState(pos);
-    return isStairs(neighbor) ? neighbor->getValue(SHAPE) : NULL;
+    const Direction* facing = state->getValue(gStairFacing);
+    const BlockState* front = source->getBlockState(pos.relative(facing));
+    if (isStairs(front) && state->getValue(HALF) == front->getValue(HALF))
+    {
+        const Direction* frontFacing = front->getValue(gStairFacing);
+        if (frontFacing->getAxis() != state->getValue(gStairFacing)->getAxis()
+            && canTakeShape(state, source, pos, frontFacing->getOpposite()))
+        {
+            if (frontFacing == facing->getCounterClockWise())
+            {
+                return gStairOuterLeft;
+            }
+
+            return gStairOuterRight;
+        }
+    }
+
+    const BlockState* back = source->getBlockState(pos.relative(facing->getOpposite()));
+    if (isStairs(back) && state->getValue(HALF) == back->getValue(HALF))
+    {
+        const Direction* backFacing = back->getValue(gStairFacing);
+        if (backFacing->getAxis() != state->getValue(gStairFacing)->getAxis()
+            && canTakeShape(state, source, pos, backFacing))
+        {
+            if (backFacing == facing->getCounterClockWise())
+            {
+                return gStairInnerLeft;
+            }
+
+            return gStairInnerRight;
+        }
+    }
+
+    return gStairStraight;
 }
+
 const BlockState* StairBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* source, const BlockPos& pos)
 {
-    TypedBoxed<const Shape*> shape(getStairsShape(state, source, pos));
+    TypedBoxed<Shape*> shape(getStairsShape(state, source, pos));
     return state->setBoxedValue(SHAPE, &shape);
 }
 
@@ -443,6 +652,7 @@ bool StairBlock::isStairs(int data)
         || data == 0x9c || (data >= 0xa3 && data <= 0xa4)
         || data == 0xb4 || data == 0xcb;
 }
+
 const BlockState* StairBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     TypedBoxed<const Direction*> value(rotation->rotate(state->getValue(gStairFacing)));
@@ -451,12 +661,81 @@ const BlockState* StairBlock::rotate(const BlockState* state, Rotation* rotation
 
 const BlockState* StairBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(gStairFacing)));
+    const Direction* facing = state->getValue(gStairFacing);
+    Shape* shape = state->getValue(SHAPE);
+    if (mirror->getType() == Mirror::eTYPE_LeftRight)
+    {
+        if (facing->getAxis() == Direction::Axis::Z)
+        {
+            if (shape == gStairInnerLeft)
+            {
+                TypedBoxed<Shape*> value(gStairInnerRight);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairInnerRight)
+            {
+                TypedBoxed<Shape*> value(gStairInnerLeft);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairOuterLeft)
+            {
+                TypedBoxed<Shape*> value(gStairOuterRight);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            const BlockState* rotated = rotate(state, Rotation::CLOCKWISE_180);
+            if (shape != gStairOuterRight)
+            {
+                return rotated;
+            }
+
+            TypedBoxed<Shape*> value(gStairOuterLeft);
+            return rotated->setBoxedValue(SHAPE, &value);
+        }
+    }
+    else if (mirror->getType() == Mirror::eTYPE_FrontBack)
+    {
+        if (facing->getAxis() == Direction::Axis::X)
+        {
+            if (shape == gStairInnerLeft)
+            {
+                TypedBoxed<Shape*> value(gStairInnerLeft);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairInnerRight)
+            {
+                TypedBoxed<Shape*> value(gStairInnerRight);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairOuterLeft)
+            {
+                TypedBoxed<Shape*> value(gStairOuterRight);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairOuterRight)
+            {
+                TypedBoxed<Shape*> value(gStairOuterLeft);
+                return rotate(state, Rotation::CLOCKWISE_180)->setBoxedValue(SHAPE, &value);
+            }
+
+            if (shape == gStairStraight)
+            {
+                return rotate(state, Rotation::CLOCKWISE_180);
+            }
+        }
+    }
+
+    return Block::mirror(state, mirror);
 }
 
 BlockStateDefinition* StairBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gStairFacing, HALF, SHAPE };
+    static const Property* properties[] = { gStairFacing, HALF, SHAPE };
     return new BlockStateDefinition(this, properties, 3);
 }
 

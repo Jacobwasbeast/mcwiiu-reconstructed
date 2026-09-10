@@ -7,7 +7,7 @@
 #include "game/ui/FurnaceMenu.hpp"
 
 FurnaceBlockEntity::FurnaceBlockEntity()
-    : LockableContainerBlockEntity(), WorldlyContainer(), InteractionObject(),
+    : LockableContainerBlockEntity(), WorldlyContainer(),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, not_null_ptr<ItemInstance>())),
       mOpeners(), mOpenersThisTick(), mLitTime(0), mLitDuration(0),
       mCookingProgress(0), mCookingTotalTime(0),

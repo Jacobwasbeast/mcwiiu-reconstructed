@@ -84,7 +84,7 @@ DoorBlock::~DoorBlock() {}
 
 void DoorBlock::blockStaticCtor()
 {
-    FACING = HorizontalDirectionalBlock::FACING;
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
     boost::unordered_set<HingeSide*> hinges;
     hinges.insert(LEFT);
     hinges.insert(RIGHT);

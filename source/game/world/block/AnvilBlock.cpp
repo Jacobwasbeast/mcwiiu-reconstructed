@@ -64,7 +64,7 @@ AnvilBlock::~AnvilBlock()
 
 void AnvilBlock::blockStaticCtor()
 {
-    FACING = HorizontalDirectionalBlock::FACING;
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 bool AnvilBlock::isCubeShaped(const BlockState*)
@@ -100,7 +100,7 @@ bool AnvilBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost
     if (!level->mIsClientSide)
     {
         Anvil anvil(level, pos);
-        player->startBlockInteraction(&anvil);
+        player->startBlockInteraction(anvil);
     }
     return true;
 }

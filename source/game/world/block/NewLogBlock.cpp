@@ -19,7 +19,7 @@
 
 EnumProperty<PlanksBlock::Variant*>* NewLogBlock::VARIANT = NULL;
 
-bool newleaf_predicate__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value)
+bool newleaf_predicate(PlanksBlock::Variant* value)
 {
     return value->getData() > 3;
 }
@@ -27,23 +27,23 @@ bool newleaf_predicate__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value)
 void NewLogBlock::blockStaticCtor()
 {
     boost::unordered_set<PlanksBlock::Variant*> values;
-    values.insert(PlanksBlock::Variant::byData(0));
-    values.insert(PlanksBlock::Variant::byData(1));
-    values.insert(PlanksBlock::Variant::byData(2));
-    values.insert(PlanksBlock::Variant::byData(3));
-    values.insert(PlanksBlock::Variant::byData(4));
-    values.insert(PlanksBlock::Variant::byData(5));
+    values.insert(PlanksBlock::Variant::OAK);
+    values.insert(PlanksBlock::Variant::SPRUCE);
+    values.insert(PlanksBlock::Variant::BIRCH);
+    values.insert(PlanksBlock::Variant::JUNGLE);
+    values.insert(PlanksBlock::Variant::ACACIA);
+    values.insert(PlanksBlock::Variant::DARK_OAK);
     VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
         L"variant", typeid(PlanksBlock::Variant*), values,
         new Predicates<PlanksBlock::Variant*>::FunctionPredicate(
-            newleaf_predicate__FPQ2_11PlanksBlock7Variant));
+            newleaf_predicate));
 }
 
 NewLogBlock::NewLogBlock()
     : LogBlock()
 {
     DerivedInit();
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(4));
+    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::ACACIA);
     const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
     TypedBoxed<LogAxis*> axis(Y);
     registerDefaultState(state->setBoxedValue(AXIS, &axis));
@@ -62,7 +62,7 @@ const MaterialColor* NewLogBlock::getMapColor(const BlockState* state, LevelSour
     }
     if (variant->getData() == 5)
     {
-        return variant->getMaterialColor();
+        return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
     }
     return MaterialColor::STONE;
 }

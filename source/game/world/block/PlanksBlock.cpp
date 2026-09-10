@@ -25,7 +25,7 @@ PlanksBlock::Variant* PlanksBlock::Variant::ACACIA =
 PlanksBlock::Variant* PlanksBlock::Variant::DARK_OAK =
     new PlanksBlock::Variant(5, L"dark_oak", 0x0458BC59, MaterialColor::COLOR_BROWN);
 
-static PlanksBlock::Variant* gPlankVariants[6] = {
+PlanksBlock::Variant* gPlankVariants[6] = {
     PlanksBlock::Variant::OAK,
     PlanksBlock::Variant::SPRUCE,
     PlanksBlock::Variant::BIRCH,

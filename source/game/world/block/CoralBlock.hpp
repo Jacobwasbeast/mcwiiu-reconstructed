@@ -12,6 +12,8 @@ class Level;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class CoralBlock : public Block
 {
 public:
@@ -43,7 +45,7 @@ private:
     TextureAtlasSprite* mIcons[10];
 };
 
-extern Property* CoralBlock_PROPERTY_1;
-extern Property* CoralBlock_PROPERTY_2;
+extern AbstractProperty<int>* CoralBlock_PROPERTY_1;
+extern AbstractProperty<bool>* CoralBlock_PROPERTY_2;
 
 #endif

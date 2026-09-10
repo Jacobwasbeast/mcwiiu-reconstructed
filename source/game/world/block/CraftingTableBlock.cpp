@@ -40,7 +40,7 @@ bool CraftingTableBlock::use(Level* level, const BlockPos& pos, const BlockState
     }
 
     CraftingTable table(level, pos);
-    player->startBlockInteraction(&table);
+    player->startBlockInteraction(table);
     return true;
 }
 

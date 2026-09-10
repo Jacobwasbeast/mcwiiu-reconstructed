@@ -20,8 +20,8 @@
 
 static AbstractProperty<int>* CORAL_TYPE = NULL;
 static AbstractProperty<bool>* CORAL_DEAD = NULL;
-Property* CoralBlock_PROPERTY_1 = NULL;
-Property* CoralBlock_PROPERTY_2 = NULL;
+AbstractProperty<int>* CoralBlock_PROPERTY_1 = NULL;
+AbstractProperty<bool>* CoralBlock_PROPERTY_2 = NULL;
 
 namespace
 {

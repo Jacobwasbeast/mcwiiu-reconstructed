@@ -1,20 +1,20 @@
 #include "game/world/block/RandomizableLockableContainerBlockEntity.hpp"
 
-#include <cwchar>
-
-#include "game/data/CompoundTag.hpp"
 #include "game/core/LootTable.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/LootTables.hpp"
+#include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/ContainerHelper.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
-
-class ServerLevel;
+#include "game/world/generation/Player.hpp"
 
 RandomizableLockableContainerBlockEntity::RandomizableLockableContainerBlockEntity()
     : LockableContainerBlockEntity()
-    , mItems()
     , mLootTable(NULL)
     , mLootTableSeed(0)
     , mCustomName(new CensoredString())
@@ -25,81 +25,62 @@ RandomizableLockableContainerBlockEntity::~RandomizableLockableContainerBlockEnt
 {
 }
 
-bool RandomizableLockableContainerBlockEntity::hasCustomName()
+ResourceLocation* RandomizableLockableContainerBlockEntity::getLootTable()
 {
-    return mCustomName && !mCustomName->raw().empty() && mCustomName->checkParentalFilter();
+    return mLootTable;
 }
 
-void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shared_ptr<Player>& player)
+long long RandomizableLockableContainerBlockEntity::getLootTableSeed()
 {
-    if (mLootTable == NULL || getLevel() == NULL)
-    {
-        return;
-    }
-    LootTables* lootTables = static_cast<LootTables*>(getLevel()->getLootTables());
-    LootTable* lootTable = lootTables == NULL ? NULL : lootTables->get(mLootTable);
-    mLootTable = NULL;
-    if (lootTable == NULL)
-    {
-        return;
-    }
-    Random random;
-    if (mLootTableSeed != 0)
-    {
-        random = Random(mLootTableSeed);
-    }
-    boost::shared_ptr<Entity> thisEntity;
-    LootTableContext context(0.0f, (ServerLevel*)getLevel(), lootTables,
-                             thisEntity, player, NULL);
-    lootTable->fill(this, &random, context);
+    return mLootTableSeed;
+}
+
+bool RandomizableLockableContainerBlockEntity::hasCustomName()
+{
+    return !mCustomName->raw().empty() && mCustomName->checkParentalFilter() != 0;
 }
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::getItem(unsigned int slot)
 {
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
-    if (slot >= mItems.size())
-    {
-        return not_null_ptr<ItemInstance>();
-    }
-    return mItems[slot];
+    return getItems()[slot];
 }
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItem(unsigned int slot, int count)
 {
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
-    if (slot >= mItems.size())
+    not_null_ptr<ItemInstance> item =
+        ContainerHelper::removeItem(getItems(), slot, static_cast<unsigned int>(count));
+    if (!item->isEmpty())
     {
-        return not_null_ptr<ItemInstance>();
+        static_cast<Container*>(this)->setChanged();
     }
-    return ContainerHelper::removeItem(mItems, slot, static_cast<unsigned int>(count));
+    return item;
 }
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItemNoUpdate(int slot)
 {
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
-    if (slot < 0 || static_cast<unsigned int>(slot) >= mItems.size())
-    {
-        return not_null_ptr<ItemInstance>();
-    }
-    return ContainerHelper::takeItem(mItems, static_cast<unsigned int>(slot));
+    return ContainerHelper::takeItem(getItems(), static_cast<unsigned int>(slot));
 }
 
 void RandomizableLockableContainerBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<Player> player;
     unpackLootTable(player);
-    if (slot < mItems.size())
-    {
-        mItems[slot] = itemInstance;
-    }
+    getItems()[slot] = itemInstance;
 }
 
 bool RandomizableLockableContainerBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    return player.get() != NULL && getLevel() != NULL;
+    if (mLevel->getBlockEntity(mPos) != shared_from_this())
+    {
+        return false;
+    }
+    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
 }
 
 void RandomizableLockableContainerBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -131,29 +112,54 @@ int RandomizableLockableContainerBlockEntity::getContainerDataCount()
 
 void RandomizableLockableContainerBlockEntity::clearContent()
 {
-    for (unsigned int slot = 0; slot < mItems.size(); ++slot)
+    boost::shared_ptr<Player> player;
+    unpackLootTable(player);
+    NonNullList<not_null_ptr<ItemInstance> > items = getItems();
+    not_null_ptr<ItemInstance> empty;
+    for (unsigned int slot = 0; slot < items.size(); ++slot)
     {
-        mItems[slot] = not_null_ptr<ItemInstance>();
+        items[slot] = empty;
     }
 }
 
 InteractionObject::NameData RandomizableLockableContainerBlockEntity::GetNetworkNameData()
 {
-    if (mCustomName)
+    return InteractionObject::NameData(mCustomName->raw(), mCustomName->getUUID(),
+                                       mCustomName->isUUIDLocal(), mCustomName->isChatCensored());
+}
+
+void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shared_ptr<Player>& player)
+{
+    if (mLootTable == NULL)
     {
-        return InteractionObject::NameData(mCustomName->raw(), L"", true, false);
+        return;
     }
-    return InteractionObject::NameData(std::wstring(), L"", true, false);
-}
+    if (mLevel == NULL)
+    {
+        return;
+    }
 
-ResourceLocation* RandomizableLockableContainerBlockEntity::getLootTable()
-{
-    return mLootTable;
-}
+    LootTable* lootTable =
+        static_cast<LootTables*>(mLevel->getLootTables())->get(mLootTable);
+    if (lootTable == NULL)
+    {
+        return;
+    }
+    mLootTable = NULL;
 
-long long RandomizableLockableContainerBlockEntity::getLootTableSeed()
-{
-    return mLootTableSeed;
+    Random* random = mLootTableSeed == 0 ? new Random() : new Random(mLootTableSeed);
+
+    float luck = 0.0f;
+    if (player)
+    {
+        luck = player->getLuck();
+    }
+
+    LootTableContext context(luck, static_cast<ServerLevel*>(mLevel),
+                             static_cast<LootTables*>(mLevel->getLootTables()),
+                             boost::shared_ptr<Entity>(), player, NULL);
+    lootTable->fill(this, random, context);
+    delete random;
 }
 
 void RandomizableLockableContainerBlockEntity::setLootTable(ResourceLocation* lootTable, long long seed)
@@ -164,49 +170,41 @@ void RandomizableLockableContainerBlockEntity::setLootTable(ResourceLocation* lo
 
 bool RandomizableLockableContainerBlockEntity::tryLoadLootTable(CompoundTag* tag)
 {
-    if (tag == NULL)
+    if (tag != NULL && tag->contains(std::wstring(L"LootTable"), 8))
     {
-        return false;
+        mLootTable = new ResourceLocation(tag->getString(std::wstring(L"LootTable")));
+        mLootTableSeed = tag->getLong(std::wstring(L"LootTableSeed"));
+        return true;
     }
-    const std::wstring lootTableKey(L"LootTable");
-    if (!tag->contains(lootTableKey, 8))
-    {
-        return false;
-    }
-    mLootTable = new ResourceLocation(tag->getString(lootTableKey));
-    mLootTableSeed = tag->getLong(std::wstring(L"LootTableSeed"));
-    return true;
+    return false;
 }
 
 bool RandomizableLockableContainerBlockEntity::trySaveLootTable(CompoundTag* tag)
 {
-    if (tag == NULL || mLootTable == NULL)
+    if (tag != NULL && mLootTable != NULL)
     {
-        return false;
+        tag->putString(std::wstring(L"LootTable"), mLootTable->toString());
+        if (mLootTableSeed != 0)
+        {
+            tag->putLong(std::wstring(L"LootTableSeed"), mLootTableSeed);
+        }
+        return true;
     }
-    tag->putString(std::wstring(L"LootTable"), mLootTable->toString());
-    if (mLootTableSeed != 0)
-    {
-        tag->putLong(std::wstring(L"LootTableSeed"), mLootTableSeed);
-    }
-    return true;
+    return false;
 }
 
 void RandomizableLockableContainerBlockEntity::setCustomName(const std::wstring& name,
-                                                               const std::wstring& uuid,
-                                                               bool chatCensored,
-                                                               bool uuidLocal)
+                                                             const std::wstring& uuid,
+                                                             bool chatCensored,
+                                                             bool uuidLocal)
 {
-    if (mCustomName)
-    {
-        mCustomName->set(name, uuid, chatCensored, uuidLocal);
-    }
+    mCustomName->set(name, uuid, chatCensored, uuidLocal);
 }
 
 void RandomizableLockableContainerBlockEntity::operator=(const RandomizableLockableContainerBlockEntity& other)
 {
     BlockEntity::operator=(other);
-    mItems = other.mItems;
+    mLockKeyCode = other.mLockKeyCode;
     mLootTable = other.mLootTable;
     mLootTableSeed = other.mLootTableSeed;
     mCustomName = other.mCustomName;

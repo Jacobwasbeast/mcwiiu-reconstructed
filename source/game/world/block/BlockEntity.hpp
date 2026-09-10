@@ -21,12 +21,9 @@ public:
     typedef BlockEntity* (*Creator)();
 
     BlockEntity();
-    virtual ~BlockEntity();
 
     virtual unsigned long long GetType() = 0;
-    virtual void setRenderRemoveStage(unsigned char stage);
-    virtual void upgradeRenderRemoveStage();
-    virtual bool shouldRemoveForRender();
+    virtual ~BlockEntity();
     virtual Level* getLevel();
     virtual void setLevel(Level* level);
     virtual bool hasLevel();
@@ -54,7 +51,11 @@ public:
     virtual std::wstring getDisplayName();
     virtual void rotate(Rotation* rotation);
     virtual void mirror(Mirror* mirror);
+    virtual boost::shared_ptr<BlockEntity> clone() = 0;
 
+    void setRenderRemoveStage(unsigned char stage);
+    void upgradeRenderRemoveStage();
+    bool shouldRemoveForRender();
     CompoundTag* saveMetadata(CompoundTag* tag);
     void clone(boost::shared_ptr<BlockEntity> other);
     void operator=(const BlockEntity& other);
@@ -65,7 +66,7 @@ public:
     static boost::shared_ptr<BlockEntity> loadStatic(Level* level, CompoundTag* tag);
 
     bool mRemoved;
-    bool mRenderRemoveStage;
+    unsigned char mRenderRemoveStage;
     Level* mLevel;
     BlockPos mPos;
     int mData;

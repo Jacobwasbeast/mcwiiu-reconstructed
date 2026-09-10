@@ -36,7 +36,7 @@ PumpkinBlock::PumpkinBlock()
 {
     DerivedInit();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing));
     setTicking(true);
 }
 
@@ -48,7 +48,7 @@ void PumpkinBlock::getOrCreateSnowGolemFull()
 {
     if (mSnowGolemFullPattern == NULL)
     {
-        std::wstring rows[3] = { L"^", L"#", L"#" };
+        static std::wstring rows[3] = { L"^", L"#", L"#" };
         mSnowGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
             ->where(L'^', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::carved_pumpkin)))
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
@@ -68,11 +68,11 @@ void PumpkinBlock::getOrCreateIronGolemFull()
 {
     if (mIronGolemFullPattern == NULL)
     {
-        std::wstring rows[3] = { L"~^~", L"###", L"~#~" };
+        static std::wstring rows[3] = { L"~^~", L"###", L"~#~" };
         mIronGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
             ->where(L'^', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::carved_pumpkin)))
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
-            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::METAL)))
+            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
             ->build(NULL, NULL);
     }
 }
@@ -81,7 +81,7 @@ void PumpkinBlock::getOrCreateSnowGolemBase()
 {
     if (mSnowGolemBasePattern == NULL)
     {
-        std::wstring rows[3] = { L" ", L"#", L"#" };
+        static std::wstring rows[3] = { L" ", L"#", L"#" };
         mSnowGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
             ->build(NULL, NULL);
@@ -92,10 +92,10 @@ void PumpkinBlock::getOrCreateIronGolemBase()
 {
     if (mIronGolemBasePattern == NULL)
     {
-        std::wstring rows[3] = { L"~ ~", L"###", L"~#~" };
+        static std::wstring rows[3] = { L"~ ~", L"###", L"~#~" };
         mIronGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
             ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
-            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::METAL)))
+            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
             ->build(NULL, NULL);
     }
 }
@@ -221,35 +221,35 @@ bool PumpkinBlock::mayPlace(Level* level, const BlockPos& pos)
 
 const BlockState* PumpkinBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING)));
+    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* PumpkinBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
     TypedBoxed<const Direction*> facing(placer->getDirection()->getOpposite());
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 const BlockState* PumpkinBlock::getBlockState(int data)
 {
     TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 int PumpkinBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING)->get2DDataValue();
+    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
 }
 
 BlockStateDefinition* PumpkinBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HorizontalDirectionalBlock::FACING };
+    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -258,7 +258,7 @@ TextureAtlasSprite* PumpkinBlock::getTexture(const Direction* direction, const B
     if (direction == Direction::UP || direction == Direction::DOWN)
         return mTopIcon;
     if ((this == Blocks::carved_pumpkin || this == Blocks::lit_pumpkin)
-        && direction == state->getValue(HorizontalDirectionalBlock::FACING))
+        && direction == state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY))
         return mFaceIcon;
     return mIcon;
 }

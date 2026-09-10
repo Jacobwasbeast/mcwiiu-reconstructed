@@ -17,8 +17,8 @@ public:
 
     virtual std::wstring getDisplayName();
     virtual bool isLocked();
-    virtual void setLocked(LockCode* lockCode);
     virtual LockCode* getLockKeyCode();
+    virtual void setLocked(LockCode* lockCode);
     virtual void unlock();
     virtual void load(CompoundTag* tag);
     virtual CompoundTag* save(CompoundTag* tag);

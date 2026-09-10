@@ -25,8 +25,7 @@ class Packet;
 class Player;
 
 class ShulkerBoxBlockEntity : public RandomizableLockableContainerBlockEntity,
-                              public WorldlyContainer,
-                              public InteractionObject
+                              public WorldlyContainer
 {
 public:
     ShulkerBoxBlockEntity(const DyeColor* color);
@@ -35,24 +34,26 @@ public:
 
     static BlockEntity* create();
     void _init(const DyeColor* color);
-    virtual std::wstring getName();
-    virtual std::wstring getCustomName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
-    virtual int getMaxStackSize();
-    virtual void setChanged();
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual void clearContent();
+    virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
+    virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
+    virtual unsigned int getContainerSize();
+    virtual int getMaxStackSize();
     virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
                                                boost::shared_ptr<Player> player);
     virtual int getTypeId(bool large);
+    virtual std::wstring getName();
+    virtual std::wstring getCustomName();
+    virtual bool isEmpty();
     virtual arrayWithLength<int> getSlotsForFace(const Direction* face);
     virtual bool canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
                                          const Direction* face);
     virtual bool canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
                                         const Direction* face);
 
+    virtual void setChanged();
     int getAnimationStatus();
     void setDestroyedByCreativePlayer(bool value);
     bool isCleared();
@@ -71,8 +72,6 @@ public:
     void loadFromTag(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual CompoundTag* save(CompoundTag* tag);
-    virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
-    virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     const DyeColor* getColor();
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual boost::shared_ptr<BlockEntity> clone();
@@ -80,6 +79,7 @@ public:
     void operator=(const ShulkerBoxBlockEntity& other);
 
 private:
+    NonNullList<not_null_ptr<ItemInstance> > mItems;
     bool mCleared;
     int mOpenCount;
     int mAnimationStatus;

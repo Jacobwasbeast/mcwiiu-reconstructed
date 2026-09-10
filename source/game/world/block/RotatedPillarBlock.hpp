@@ -15,6 +15,8 @@ class Rotation;
 class TextureAtlasSprite;
 class LivingEntity;
 
+template <class T> class EnumProperty;
+
 class RotatedPillarBlock : public Block
 {
 public:
@@ -40,5 +42,7 @@ public:
 protected:
     TextureAtlasSprite* mTopTexture;
 };
+
+extern EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty;
 
 #endif

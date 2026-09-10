@@ -5,6 +5,7 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/CompoundContainer.hpp"
+#include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"

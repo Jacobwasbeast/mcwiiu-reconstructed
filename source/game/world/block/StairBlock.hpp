@@ -50,7 +50,7 @@ public:
     bool _neighboringBlockCheckForCreatingBarrierInDirection(LevelSource*, const BlockPos&, const BlockState*, const Direction*) const;
     virtual bool liquidCanFlowIntoFromDirection(LevelSource*, const BlockPos&, const Direction*) const; virtual HitResult* clip(const BlockState*, Level*, const BlockPos&, Vec3*, Vec3*);
     virtual const BlockState* getBlockState(int); virtual int convertBlockStateToLegacyData(const BlockState*);
-    static bool isStairs(const BlockState*); static bool canTakeShape(const BlockState*, LevelSource*, const BlockPos&, const Direction*); static const Shape* getStairsShape(const BlockState*, LevelSource*, const BlockPos&);
+    static bool isStairs(const BlockState*); static bool canTakeShape(const BlockState*, LevelSource*, const BlockPos&, const Direction*); static Shape* getStairsShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState*, LevelSource*, const BlockPos&); static bool isStairs(int);
     virtual const BlockState* rotate(const BlockState*, Rotation*); virtual const BlockState* mirror(const BlockState*, Mirror*); virtual BlockStateDefinition* createBlockStateDefinition();
     virtual TextureAtlasSprite* getTexture(const Direction*, const BlockState*); virtual void registerIcons(IconRegister*); virtual EBlockRenderShape getRenderShape(const BlockState*);

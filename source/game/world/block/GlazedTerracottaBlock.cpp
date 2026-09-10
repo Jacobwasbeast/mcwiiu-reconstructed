@@ -28,13 +28,13 @@ GlazedTerracottaBlock::~GlazedTerracottaBlock()
 
 const BlockState* GlazedTerracottaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 const BlockState* GlazedTerracottaBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING)));
+    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*,
@@ -44,18 +44,18 @@ const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const Bloc
     const BlockState* state = defaultBlockState();
     const Direction* facing = placer->getDirection()->getOpposite();
     TypedBoxed<const Direction*> boxedFacing(facing);
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING, &boxedFacing);
+    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &boxedFacing);
 }
 
 int GlazedTerracottaBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING)->get2DDataValue();
+    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
 }
 
 const BlockState* GlazedTerracottaBlock::getBlockState(int data)
 {
     TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 EPistonPushReaction GlazedTerracottaBlock::getPistonPushReaction(const BlockState*)
@@ -72,6 +72,6 @@ BlockStateDefinition* GlazedTerracottaBlock::createBlockStateDefinition()
 {
     static const Property* properties[1] = { NULL };
     if (properties[0] == NULL)
-        properties[0] = HorizontalDirectionalBlock::FACING;
+        properties[0] = HorizontalDirectionalBlock::FACING_PROPERTY;
     return new BlockStateDefinition(this, properties, 1);
 }

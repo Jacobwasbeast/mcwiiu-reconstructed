@@ -29,11 +29,11 @@ public:
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual not_null_ptr<ItemInstance> getSilkTouchItemInstance(const BlockState* state);
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
-    virtual PlanksBlock::Variant* getWoodType(const BlockState* state);
+    virtual int getWoodType(const BlockState* state);
 };
 
 extern Property* OldLogBlock_VARIANT;
 
-bool oldlog_filter__FPQ2_11PlanksBlock7Variant(PlanksBlock::Variant* value);
+bool oldlog_filter(PlanksBlock::Variant* value);
 
 #endif

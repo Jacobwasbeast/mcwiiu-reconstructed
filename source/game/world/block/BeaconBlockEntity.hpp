@@ -19,7 +19,7 @@ class Inventory;
 class Level;
 class MobEffect;
 
-class BeaconBlockEntity : public LockableContainerBlockEntity, public WorldlyContainer, public InteractionObject
+class BeaconBlockEntity : public LockableContainerBlockEntity, public WorldlyContainer
 {
 public:
     enum eBEAM_DIRECTION
@@ -52,33 +52,33 @@ public:
     virtual ~BeaconBlockEntity();
     virtual unsigned long long GetType();
 
-    virtual std::wstring getName();
-    virtual std::wstring getCustomName();
-    virtual bool hasCustomName();
     virtual unsigned int getContainerSize();
     virtual bool isEmpty();
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
     virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
+    virtual std::wstring getName();
+    virtual std::wstring getCustomName();
+    virtual bool hasCustomName();
     virtual int getMaxStackSize();
-    virtual void setChanged();
     virtual bool stillValid(boost::shared_ptr<Player> player);
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
+    virtual int getTypeId(bool large);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
     virtual int getContainerData(int id);
-    int getValidEffectById(int id);
     virtual void setContainerData(int id, int value);
     virtual int getContainerDataCount();
     virtual void clearContent();
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player);
-    virtual int getTypeId(bool large);
-    virtual InteractionObject::NameData GetNetworkNameData();
     virtual arrayWithLength<int> getSlotsForFace(const Direction* face);
     virtual bool canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face);
     virtual bool canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face);
+    virtual InteractionObject::NameData GetNetworkNameData();
 
+    virtual void setChanged();
+    int getValidEffectById(int id);
     void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
     int getBeamDirection();
     void updateShapeForGlide();

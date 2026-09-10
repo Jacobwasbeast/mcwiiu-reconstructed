@@ -5,7 +5,7 @@
 
 LockableContainerBlockEntity::LockableContainerBlockEntity()
 {
-    mLockKeyCode = NULL;
+    mLockKeyCode = LockCode::NO_LOCK;
 }
 
 LockableContainerBlockEntity::~LockableContainerBlockEntity()
@@ -26,19 +26,19 @@ bool LockableContainerBlockEntity::isLocked()
     return mLockKeyCode != NULL && !mLockKeyCode->isEmpty();
 }
 
-void LockableContainerBlockEntity::setLocked(LockCode* lockCode)
-{
-    mLockKeyCode = lockCode;
-}
-
 LockCode* LockableContainerBlockEntity::getLockKeyCode()
 {
     return mLockKeyCode;
 }
 
+void LockableContainerBlockEntity::setLocked(LockCode* lockCode)
+{
+    mLockKeyCode = lockCode;
+}
+
 void LockableContainerBlockEntity::unlock()
 {
-    mLockKeyCode = NULL;
+    mLockKeyCode = LockCode::NO_LOCK;
 }
 
 void LockableContainerBlockEntity::load(CompoundTag* tag)

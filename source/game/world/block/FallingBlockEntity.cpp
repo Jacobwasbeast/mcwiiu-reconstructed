@@ -224,8 +224,8 @@ void FallingBlockEntity::tick()
                             if (blockEntity != NULL)
                             {
                                 CompoundTag* blockEntityTag = blockEntity->save(new CompoundTag());
-                                boost::unordered_map<std::wstring, Tag*>& tags = mBlockEntityData->getAllTagsMap();
-                                for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags.begin(); it != tags.end(); ++it)
+                                boost::unordered_map<std::wstring, Tag*>* tags = mBlockEntityData->getAllTagsMap();
+                                for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin(); it != tags->end(); ++it)
                                 {
                                     if (it->first.compare(L"x") != 0 && it->first.compare(L"y") != 0
                                         && it->first.compare(L"z") != 0)
@@ -233,6 +233,7 @@ void FallingBlockEntity::tick()
                                         blockEntityTag->put(it->first, it->second->copy());
                                     }
                                 }
+                                delete tags;
                                 blockEntity->load(blockEntityTag);
                                 blockEntity->setChanged();
                             }

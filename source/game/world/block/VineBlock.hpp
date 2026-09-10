@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_VINEBLOCK_HPP
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 
 template <class T> class AbstractProperty;
 
@@ -19,11 +20,11 @@ class Rotation;
 class VineBlock : public Block
 {
 public:
-    static AbstractProperty<bool>* UP;
-    static AbstractProperty<bool>* NORTH;
-    static AbstractProperty<bool>* SOUTH;
-    static AbstractProperty<bool>* WEST;
-    static AbstractProperty<bool>* EAST;
+    static BooleanProperty* UP;
+    static BooleanProperty* NORTH;
+    static BooleanProperty* SOUTH;
+    static BooleanProperty* WEST;
+    static BooleanProperty* EAST;
 
     VineBlock();
     virtual ~VineBlock();

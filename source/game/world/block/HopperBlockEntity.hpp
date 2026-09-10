@@ -28,27 +28,37 @@ public:
     virtual ~HopperBlockEntity();
 
     static BlockEntity* create();
-    virtual std::wstring getName();
-    virtual std::wstring getCustomName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
+
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> itemInstance);
+    virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
+    virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
+    virtual unsigned int getContainerSize();
+    virtual std::wstring getName();
+    virtual std::wstring getCustomName();
     virtual int getMaxStackSize();
-    virtual void setChanged();
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
-    virtual int getTypeId(bool large);
-    virtual Level* getLevel();
+    virtual bool tryMoveItems();
+    virtual bool isEmpty();
+    virtual bool ejectItems();
+    virtual boost::shared_ptr<Container> getAttachedContainer();
     virtual double getLevelX();
     virtual double getLevelY();
     virtual double getLevelZ();
-    static void addDataWalkers(DataFixerUpper* fixer);
+    virtual void setCooldown(int cooldown);
+    virtual bool isOnCooldown();
+    virtual bool isOnCustomCooldown();
+    virtual int getTypeId(bool large);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
+                                               boost::shared_ptr<Player> player);
+
+    virtual Level* getLevel();
+    virtual void setChanged();
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual void load(CompoundTag* tag);
     virtual CompoundTag* save(CompoundTag* tag);
     virtual void tick();
 
+    static void addDataWalkers(DataFixerUpper* fixer);
     bool inventoryEmpty();
     bool inventoryFull();
     static std::vector<boost::shared_ptr<Entity> >* getItemsAtAndAbove(Level* level, double x, double y, double z);
@@ -64,19 +74,12 @@ public:
     static bool tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction);
     static bool addItem(Container* source, Container* destination, const boost::shared_ptr<ItemEntity>& entity);
     static bool suckInItems(Hopper* hopper);
-    bool tryMoveItems();
     static bool isFullContainer(boost::shared_ptr<Container> container, const Direction* direction);
-    bool ejectItems();
-    boost::shared_ptr<Container> getAttachedContainer();
-    void setCooldown(int cooldown);
-    virtual bool isOnCooldown();
-    bool isOnCustomCooldown();
-    virtual NonNullList<not_null_ptr<ItemInstance> > getItems();
-    virtual void setItems(NonNullList<not_null_ptr<ItemInstance> > items);
     virtual std::wstring getDisplayName();
     virtual unsigned long long GetType();
 
 private:
+    NonNullList<not_null_ptr<ItemInstance> > mItems;
     int mCooldown;
     int mTransferCooldown;
     bool mEnabled;

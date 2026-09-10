@@ -19,11 +19,11 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-AbstractProperty<bool>* VineBlock::UP = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"up"));
-AbstractProperty<bool>* VineBlock::NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
-AbstractProperty<bool>* VineBlock::SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
-AbstractProperty<bool>* VineBlock::WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
-AbstractProperty<bool>* VineBlock::EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
+BooleanProperty* VineBlock::UP = static_cast<BooleanProperty*>(BooleanProperty::create(L"up"));
+BooleanProperty* VineBlock::NORTH = static_cast<BooleanProperty*>(BooleanProperty::create(L"north"));
+BooleanProperty* VineBlock::SOUTH = static_cast<BooleanProperty*>(BooleanProperty::create(L"south"));
+BooleanProperty* VineBlock::WEST = static_cast<BooleanProperty*>(BooleanProperty::create(L"west"));
+BooleanProperty* VineBlock::EAST = static_cast<BooleanProperty*>(BooleanProperty::create(L"east"));
 
 static const AABB* VINE_UP = AABB::newPermanent(0.0, 0.9375, 0.0, 1.0, 1.0, 1.0);
 static const AABB* VINE_NORTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.0625);

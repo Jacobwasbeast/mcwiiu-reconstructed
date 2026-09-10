@@ -4,6 +4,8 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/MappedRegistry.hpp"
 #include "game/world/block/FurnaceBlockEntity.hpp"
@@ -42,8 +44,9 @@ namespace
 }
 
 BlockEntity::BlockEntity()
-    : mRemoved(false), mRenderRemoveStage(0), mLevel(NULL), mPos(), mData(-1), mBlock(NULL)
+    : mRemoved(false), mRenderRemoveStage(0), mLevel(NULL), mData(-1), mBlock(NULL)
 {
+    mPos = BlockPos::ZERO;
 }
 
 BlockEntity::~BlockEntity()
@@ -117,14 +120,14 @@ void BlockEntity::tick()
 
 void BlockEntity::setLevelForLoading(Level* level)
 {
-    mLevel = level;
 }
 
 int BlockEntity::getData()
 {
-    if (mData == -1 && mLevel != NULL)
+    if (mData == -1)
     {
-        mData = getBlock() == NULL ? 0 : 0;
+        const BlockState* state = mLevel->getBlockState(mPos);
+        mData = state->getBlock()->convertBlockStateToLegacyData(state);
     }
     return mData;
 }
@@ -138,8 +141,13 @@ void BlockEntity::setChanged()
 {
     if (mLevel != NULL)
     {
-        mData = getData();
+        const BlockState* state = mLevel->getBlockState(mPos);
+        mData = state->getBlock()->convertBlockStateToLegacyData(state);
         mLevel->blockEntityChanged(mPos, shared_from_this());
+        if (getBlock() != Blocks::AIR)
+        {
+            mLevel->updateNeighbourForOutputSignal(mPos, getBlock());
+        }
     }
 }
 
@@ -163,6 +171,10 @@ BlockPos BlockEntity::getBlockPos()
 
 Block* BlockEntity::getBlock()
 {
+    if (mBlock == NULL && mLevel != NULL)
+    {
+        mBlock = mLevel->getBlockState(mPos)->getBlock();
+    }
     return mBlock;
 }
 
@@ -220,15 +232,11 @@ bool BlockEntity::onlyOpCanSetNbt()
 
 std::wstring BlockEntity::getDisplayName()
 {
-    return std::wstring();
+    return L"";
 }
 
 void BlockEntity::clone(boost::shared_ptr<BlockEntity> other)
 {
-    if (!other)
-    {
-        return;
-    }
     other->mLevel = mLevel;
     other->mPos = mPos;
     other->mData = mData;
@@ -277,8 +285,9 @@ void BlockEntity::staticCtor()
 
 void BlockEntity::Register(int id, Creator creator, unsigned long long type, const std::wstring& name)
 {
-    gCreators[name] = creator;
-    gTypes.registerMapping(id, ResourceLocation(name), type);
+    ResourceLocation location(name);
+    gCreators.insert(CreatorMap::value_type(location.toString(), creator));
+    gTypes.registerMapping(id, location, type);
 }
 
 ResourceLocation BlockEntity::getKey(unsigned long long type)
@@ -288,17 +297,17 @@ ResourceLocation BlockEntity::getKey(unsigned long long type)
 
 boost::shared_ptr<BlockEntity> BlockEntity::loadStatic(Level* level, CompoundTag* tag)
 {
+    boost::shared_ptr<BlockEntity> entity;
     const std::wstring name = tag->getString(L"id");
-    CreatorMap::const_iterator it = gCreators.find(name);
-    if (it == gCreators.end() || it->second == NULL)
+    CreatorMap::iterator it = gCreators.find(name);
+    if (it != gCreators.end())
     {
-        return boost::shared_ptr<BlockEntity>();
-    }
-    boost::shared_ptr<BlockEntity> entity(it->second());
-    if (entity)
-    {
-        entity->setLevelForLoading(level);
-        entity->load(tag);
+        entity = boost::shared_ptr<BlockEntity>(it->second());
+        if (entity)
+        {
+            entity->setLevelForLoading(level);
+            entity->load(tag);
+        }
     }
     return entity;
 }

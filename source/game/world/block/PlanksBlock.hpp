@@ -60,4 +60,6 @@ public:
     TextureAtlasSprite* mIcons[6];
 };
 
+extern PlanksBlock::Variant* gPlankVariants[6];
+
 #endif

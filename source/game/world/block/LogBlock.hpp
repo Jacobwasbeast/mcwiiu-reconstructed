@@ -64,6 +64,7 @@ public:
     virtual TextureAtlasSprite* getTopTexture(const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual Direction::Axis* getAxis(const BlockState* state);
+    virtual int getWoodType(const BlockState* state) = 0;
 
 private:
     TextureAtlasSprite* mTypeTextures[6];
