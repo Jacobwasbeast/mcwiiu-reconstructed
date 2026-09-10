@@ -7,6 +7,29 @@
 #include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/util/Random.hpp"
 
+struct EndSpikeData
+{
+    int posX;
+    int posZ;
+    int centerX;
+    int centerZ;
+    int radius;
+    int height;
+    bool guarded;
+};
+
+static const EndSpikeData spikeData[8] =
+{
+    { 32, -16, 40, 0, 2, 12, false },
+    { 16, 16, 28, 28, 2, 15, false },
+    { -16, 32, 0, 40, 2, 18, false },
+    { -32, 16, -28, 28, 3, 21, false },
+    { -48, -16, -40, 0, 3, 24, false },
+    { -32, -32, -28, -28, 3, 27, false },
+    { -16, -48, 0, -40, 4, 30, true },
+    { 16, -32, 28, -28, 4, 33, true }
+};
+
 TheEndBiomeDecorator::TheEndBiomeDecorator()
     : BiomeDecorator(),
       spikeGen(new SpikeFeature()),
@@ -22,60 +45,47 @@ void TheEndBiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
 {
     decorateOres(level, random);
 
-    static const int spikeData[4][7] =
+    for (int i = 0; i < 8; ++i)
     {
-        { 32, -16, 40, 0, 2, 12, 0 },
-        { 16, 16, 28, 28, 2, 15, 0 },
-        { -16, 32, 0, 40, 2, 18, 0 },
-        { -32, 16, -28, 28, 3, 21, 0 }
-    };
-
-    for (int i = 0; i < 4; ++i)
-    {
-        if (position.x == spikeData[i][0] && position.z == spikeData[i][1])
+        if (position.x == spikeData[i].posX && position.z == spikeData[i].posZ)
         {
-            SpikeFeature::EndSpike spike(spikeData[i][2], spikeData[i][3],
-                                         spikeData[i][4], spikeData[i][5],
-                                         spikeData[i][6] != 0);
+            SpikeFeature::EndSpike spike(spikeData[i].centerX, spikeData[i].centerZ,
+                                         spikeData[i].radius,
+                                         spikeData[i].height
+                                             + EndPodiumFeature::END_PODIUM_LOCATION.y,
+                                         spikeData[i].guarded);
             spikeGen->setSpike(&spike);
             spikeGen->place(level, *random,
-                            BlockPos(spikeData[i][2], spikeData[i][5], spikeData[i][3]));
+                            BlockPos(spikeData[i].centerX,
+                                     EndPodiumFeature::END_PODIUM_LOCATION.y,
+                                     spikeData[i].centerZ));
         }
     }
 
-    if (position.x == 0 && position.z == 0 && level != NULL
-        && level->mDimension != NULL)
+    if (position.x == 0 && position.z == 0)
     {
         TheEndDimension* dimension = dynamic_cast<TheEndDimension*>(level->mDimension);
-        if (dimension != NULL && dimension->getDragonFight() != NULL)
+        if (dimension != NULL)
         {
             dimension->getDragonFight()->createNewDragon();
         }
     }
 }
 
-std::vector<SpikeFeature::EndSpike>* TheEndBiomeDecorator::getSpikesForLevel(Level* level)
+arrayWithLength<SpikeFeature::EndSpike> TheEndBiomeDecorator::getSpikesForLevel(Level* level)
 {
     (void)level;
-    static const int spikeData[8][5] =
-    {
-        { 40, 0, 2, 12, 0 },
-        { 28, 28, 2, 15, 0 },
-        { 0, 40, 2, 18, 0 },
-        { -28, 28, 3, 21, 0 },
-        { -40, 0, 3, 24, 0 },
-        { -40, -40, 3, 27, 0 },
-        { 0, -40, 4, 30, 1 },
-        { -32, -28, 4, 33, 1 }
-    };
 
-    std::vector<SpikeFeature::EndSpike>* spikes =
-        new std::vector<SpikeFeature::EndSpike>(8);
+    arrayWithLength<SpikeFeature::EndSpike> spikes(8, true);
     for (int i = 0; i < 8; ++i)
     {
-        (*spikes)[i] = SpikeFeature::EndSpike(
-            spikeData[i][0], spikeData[i][1], spikeData[i][2],
-            spikeData[i][3], spikeData[i][4] != 0);
+        SpikeFeature::EndSpike spike(spikeData[i].centerX, spikeData[i].centerZ,
+                                     spikeData[i].radius,
+                                     spikeData[i].height
+                                         + EndPodiumFeature::END_PODIUM_LOCATION.y,
+                                     spikeData[i].guarded);
+        spikes.data[i] = spike;
+        spike = SpikeFeature::EndSpike();
     }
     return spikes;
 }
