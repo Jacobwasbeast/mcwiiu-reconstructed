@@ -1,6 +1,7 @@
 #include "game/minigame/Tutorial.hpp"
 
 #include "game/core/GameModeConstraints.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/minigame/TutorialHint.hpp"
 #include "game/minigame/TutorialMessage.hpp"
 #include "game/minigame/TutorialTask.hpp"
@@ -416,16 +417,43 @@ void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected
 
 unsigned int Tutorial::onCrafted(not_null_ptr<ItemInstance> item)
 {
+    for (int state = 0; state < 44; ++state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+             it != stateTasks[state].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onCrafted(item);
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::onEquip(not_null_ptr<ItemInstance> item)
 {
+    for (int state = 0; state < 44; ++state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+             it != stateTasks[state].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onEquip(item);
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
 {
+    for (int state = 0; state < 44; ++state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+             it != stateTasks[state].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onTakeFromAnvil(item);
+        }
+    }
     return 0xffffffffU;
 }
 
@@ -463,6 +491,24 @@ unsigned int Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
 
 unsigned int Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
 {
+    if (currentState == 0)
+    {
+        unsigned long long type = entity->GetType();
+        if (type == 0x8000008ULL)
+        {
+            changeTutorialState(static_cast<eTutorial_State>(6), NULL);
+        }
+        else if (type == 0xa800001ULL)
+        {
+            changeTutorialState(static_cast<eTutorial_State>(5), NULL);
+        }
+    }
+    for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+         it != stateTasks[currentState].end(); ++it)
+    {
+        if (*it != NULL)
+            (*it)->onRideEntity(entity);
+    }
     return 0xffffffffU;
 }
 
