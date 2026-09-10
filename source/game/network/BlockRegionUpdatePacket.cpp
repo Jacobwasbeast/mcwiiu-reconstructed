@@ -52,7 +52,7 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
             MemSect(0);
         }
 
-        if (rawData.data == NULL)
+        if (rawData.length == 0)
         {
             mSize = 0;
             mData.data = NULL;
@@ -170,7 +170,7 @@ void BlockRegionUpdatePacket::write(DataOutputStream* output)
     output->writeByte(static_cast<unsigned char>((mDepth - 1) & 0xff));
     output->writeInt(mSize | (mDimension << 30));
     output->write(mData, 0, mSize);
-    char changeCount = mChanges->empty() ? 0 : (char)mChanges->size();
+    char changeCount = (char)mChanges->size();
     output->writeUnsignedShort((unsigned short)changeCount);
     for (std::vector<LevelChunk::BlockChange>::const_iterator it = mChanges->begin();
          it != mChanges->end(); ++it)

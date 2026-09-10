@@ -7,23 +7,46 @@
 #include "game/world/generation/Player.hpp"
 
 ClientboundAddPlayerPacket::ClientboundAddPlayerPacket()
-    : mEntityId(0xffffffff), mPlayerId(0), mName(L""), mX(0), mY(0), mZ(0), myRot(0), mxRot(0),
-      mProfileId(0), mPlayerIndex(0), mSkinId(0), mCapeId(0), mPlayerPrivilege(0),
-      mGameType(GameType::NOT_SET), mEntityData(), mUnpackedData(NULL)
+    : mPlayerId(0), mProfileId(0)
 {
+    mEntityId = 0xffffffff;
+    mName = L"";
+    mX = 0;
+    mY = 0;
+    mZ = 0;
+    myRot = 0;
+    mxRot = 0;
+    mPlayerId = 0;
+    mPlayerIndex = 0;
+    mSkinId = 0;
+    mCapeId = 0;
+    mPlayerPrivilege = 0;
+    mGameType = GameType::NOT_SET;
+    mUnpackedData = NULL;
 }
 
 ClientboundAddPlayerPacket::ClientboundAddPlayerPacket(boost::shared_ptr<Player> player, PlayerUID playerId,
                                                        PlayerUID profileId, int x, int y, int z,
                                                        int yRot, int xRot, int yHeadRot)
-    : mEntityId(player->getId()), mPlayerId(playerId), mName(player->getName()), mX(x), mY(y), mZ(z),
-      myRot((unsigned char)yRot), mxRot((unsigned char)xRot), mProfileId(profileId),
-      mPlayerIndex((unsigned char)player->mPlayerIndex), mSkinId(player->mField0x7dc),
-      mCapeId(player->mField0x7e0),
-      mPlayerPrivilege(player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All)),
-      myHeadRot((unsigned char)yHeadRot), mGameType(player->GetGameType()),
-      mEntityData(player->getEntityData()), mUnpackedData(NULL)
+    : mPlayerId(0), mProfileId(0)
 {
+    mEntityId = player->getId();
+    mName = player->getName();
+    mX = x;
+    mY = y;
+    mZ = z;
+    myRot = (unsigned char)yRot;
+    mxRot = (unsigned char)xRot;
+    myHeadRot = (unsigned char)yHeadRot;
+    mPlayerId = playerId;
+    mProfileId = profileId;
+    mPlayerIndex = (unsigned char)player->mPlayerIndex;
+    mSkinId = player->mField0x7dc;
+    mCapeId = player->mField0x7e0;
+    mPlayerPrivilege = player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
+    mGameType = player->GetGameType();
+    mEntityData = player->getEntityData();
+    mUnpackedData = NULL;
 }
 
 ClientboundAddPlayerPacket::~ClientboundAddPlayerPacket()

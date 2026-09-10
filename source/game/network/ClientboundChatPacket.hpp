@@ -30,7 +30,8 @@ public:
         eChatPacketMessage_SpawnpointNotValid = 105,
         eChatPacketMessage_GameModeSuccessSelf = 109,
         eChatPacketMessage_GameModeSuccessOther = 110,
-        eChatPacketMessage_GameModeChanged = 111
+        eChatPacketMessage_GameModeChanged = 111,
+        eChatPacketMessage_ContainerLocked = 156
     };
 
     ClientboundChatPacket();
@@ -55,6 +56,7 @@ public:
 
 private:
     friend class ClientPacketListener;
+    friend struct ServerPlayer;
     EChatPacketMessage message;
 };
 
