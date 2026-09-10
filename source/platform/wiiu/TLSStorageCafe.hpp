@@ -12,7 +12,6 @@ public:
     unsigned int SetValue(unsigned int index, void* value);
 
 private:
-    static __thread void* m_values[64];
     static TLSStorageCafe* m_instance;
 };
 

@@ -6,6 +6,9 @@
 
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include "platform/wiiu/CafeThreadLocal.hpp"
+
+#include <coreinit/thread.h>
 
 extern "C" void *MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
 extern "C" void MEMFreeToDefaultHeap(void *block);
@@ -23,24 +26,30 @@ static unsigned char *s_writeBuffer = 0;
 static OSFastMutex s_commandBlockMutex;
 static std::map<int, FSCmdBlock *> s_commandBlocks;
 static int s_nextCommandBlockId = 1;
-static __thread int s_commandBlockId;
+static std::map<OSThread*, int> s_commandBlockIds;
+
+static int& currentCommandBlockId()
+{
+    return CafeThreadLocal::slot(s_commandBlockIds);
+}
 
 struct _OVERLAPPED;
 
 FSCmdBlock *GetCommandBlock()
 {
     EnterCriticalSection(&s_commandBlockMutex);
-    if (s_commandBlockId == 0)
+    int& commandBlockId = currentCommandBlockId();
+    if (commandBlockId == 0)
     {
-        s_commandBlockId = s_nextCommandBlockId++;
+        commandBlockId = s_nextCommandBlockId++;
     }
 
-    std::map<int, FSCmdBlock *>::iterator it = s_commandBlocks.find(s_commandBlockId);
+    std::map<int, FSCmdBlock *>::iterator it = s_commandBlocks.find(commandBlockId);
     if (it == s_commandBlocks.end())
     {
         FSCmdBlock *commandBlock = static_cast<FSCmdBlock *>(std::malloc(sizeof(FSCmdBlock)));
         FSInitCmdBlock(commandBlock);
-        s_commandBlocks[s_commandBlockId] = commandBlock;
+        s_commandBlocks[commandBlockId] = commandBlock;
         LeaveCriticalSection(&s_commandBlockMutex);
         return commandBlock;
     }

@@ -4,6 +4,10 @@
 #include "platform/wiiu/FFLiCoordinate.hpp"
 #include "platform/wiiu/FFLiUtilShader.hpp"
 #include "platform/wiiu/WiiU_GX2.hpp"
+#include "platform/wiiu/CafeThreadLocal.hpp"
+
+#include <coreinit/thread.h>
+#include <map>
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
 #include <coreinit/memfrmheap.h>
@@ -721,7 +725,15 @@ void FinalizeIconShader__Fv()
 
 static Renderer sRenderer;
 
-__thread Renderer::Context* Renderer::tlsContext;
+namespace
+{
+std::map<OSThread*, Renderer::Context*> s_rendererTlsContexts;
+
+Renderer::Context*& currentRendererContext()
+{
+    return CafeThreadLocal::slot(s_rendererTlsContexts);
+}
+}
 
 Renderer::Renderer()
 {
@@ -740,7 +752,7 @@ void Renderer::UpdateGamma(unsigned short gamma)
 
 void Renderer::InitialiseContext(bool bReset)
 {
-    tlsContext = new Context(this);
+    currentRendererContext() = new Context(this);
 }
 
 void Renderer::InitialiseContext()
@@ -750,7 +762,7 @@ void Renderer::InitialiseContext()
 
 Renderer::Context& Renderer::getContext()
 {
-    return *tlsContext;
+    return *currentRendererContext();
 }
 
 void Renderer::SetupShaders()

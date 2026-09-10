@@ -13,7 +13,7 @@ static std::vector<C4JThreadImpl*> s_threads;
 static OSMutex s_threadMutex;
 static OSMutex s_createMutex;
 static OSThread* s_mainThread = NULL;
-static __thread uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
+static uint32_t s_specialThreadIDForFS_MilesStreamThread = 0;
 static const unsigned int s_processorAffinity[3] = { 0x01020400u, 0x1211100Fu, 0x0E000000u };
 static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
 

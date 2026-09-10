@@ -1,8 +1,13 @@
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
-static unsigned int s_tlsAllocated[64];
+#include "platform/wiiu/CafeThreadLocal.hpp"
 
-__thread void* TLSStorageCafe::m_values[64];
+#include <coreinit/thread.h>
+#include <map>
+
+static unsigned int s_tlsAllocated[64];
+static std::map<OSThread*, void*> s_threadValues[64];
+
 TLSStorageCafe* TLSStorageCafe::m_instance = 0;
 
 TLSStorageCafe::TLSStorageCafe()
@@ -11,7 +16,6 @@ TLSStorageCafe::TLSStorageCafe()
     for (index = 0; index < 64; ++index)
     {
         s_tlsAllocated[index] = 0;
-        m_values[index] = 0;
     }
 }
 
@@ -22,7 +26,6 @@ int TLSStorageCafe::Alloc()
     {
         if (s_tlsAllocated[index] == 0)
         {
-            m_values[index] = 0;
             s_tlsAllocated[index] = 1;
             return (int)index;
         }
@@ -43,7 +46,6 @@ void TLSStorageCafe::Free(unsigned int index)
 {
     if (s_tlsAllocated[index] != 0)
     {
-        m_values[index] = 0;
         s_tlsAllocated[index] = 0;
     }
 }
@@ -54,7 +56,7 @@ unsigned int TLSStorageCafe::GetValue(unsigned int index)
     {
         return 0;
     }
-    return (unsigned int)m_values[index];
+    return (unsigned int)CafeThreadLocal::slot(s_threadValues[index]);
 }
 
 unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
@@ -63,7 +65,7 @@ unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
     {
         return 0;
     }
-    m_values[index] = value;
+    CafeThreadLocal::slot(s_threadValues[index]) = value;
     return 1;
 }
 
