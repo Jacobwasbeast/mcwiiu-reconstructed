@@ -1510,11 +1510,50 @@ void ConsoleUIController::PlayUISFX(const SoundEvent* soundEvent)
 
 bool ConsoleUIController::TouchBoxHit(UIScene* scene, int x, int y)
 {
-    m_touchX = x;
-    m_touchY = y;
-    m_lastTouchElement = m_touchElement;
+    int groupId = 0;
+    int layerId = 0;
+    for (int groupIndex = 0; groupIndex < 6; ++groupIndex) {
+        UIGroup* group = m_groups[groupIndex];
+        if (group == 0)
+            continue;
+        for (int layerIndex = 0; layerIndex < 8; ++layerIndex) {
+            if (group->m_layers[layerIndex] == scene->m_layer) {
+                groupId = group->m_group;
+                layerId = layerIndex;
+                goto foundTouchBoxBucket;
+            }
+        }
+    }
+foundTouchBoxBucket:
+    const int sceneId = scene->getSceneType();
+    if (x == 0xc && y == 0x2c4) {
+        x = m_touchX;
+        y = m_touchY;
+    } else {
+        m_touchX = x;
+        m_touchY = y;
+    }
+    EnterCriticalSection(&m_touchMutex);
+    std::vector<UIELEMENT*>& touchBoxes = m_touchBoxes[groupId][layerId][sceneId];
+    for (std::vector<UIELEMENT*>::iterator it = touchBoxes.begin(); it != touchBoxes.end(); ++it) {
+        UIELEMENT* element = *it;
+        if (element == 0 || element->control == 0)
+            continue;
+        if (!element->control->getVisible())
+            continue;
+        if (element->left > x || x > element->right)
+            continue;
+        if (element->top > y || y > element->bottom)
+            continue;
+        if (!m_touchHeld)
+            m_lastTouchElement = element;
+        m_touchElement = element;
+        LeaveCriticalSection(&m_touchMutex);
+        return true;
+    }
+    LeaveCriticalSection(&m_touchMutex);
     m_touchElement = 0;
-    return scene != 0;
+    return false;
 }
 
 void ConsoleUIController::TouchBoxesClear(UIScene* scene)

@@ -183,7 +183,6 @@ unsigned long long StatsCounter::save(int, bool, unsigned char* data)
 
 void StatsCounter::writeStats()
 {
-    mLeaderboardPending.clear();
 }
 
 void StatsCounter::flushLeaderboards()

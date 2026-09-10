@@ -10,6 +10,7 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/core/HtmlString.hpp"
+#include "game/core/StringFormat.hpp"
 #include "game/core/Voteable.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -145,7 +146,28 @@ void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlis
 }
 
 void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text) { text.clear(); }
-void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& text) { text.clear(); }
+void ClientMasterGameMode::GetCurrentVariantVotesText(std::vector<HtmlString>& text)
+{
+    text.clear();
+    Voteable* voteable = mVoteables->getVoteable(0);
+    boost::unordered_map<int, int> totals = voteable->getTotalledVotes();
+    MiniGameDef* definition =
+        MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(GetNextGameMode()), true);
+    int count = static_cast<int>(definition->GetGameVariantCount()) - 2;
+    if (definition->IsCustomGame())
+        count = definition->GetLootSetCount();
+    for (int i = 0; i < count; ++i)
+    {
+        const std::wstring label = definition->GetLootSetText(i);
+        boost::unordered_map<int, int>::const_iterator it = totals.find(i);
+        if (it == totals.end())
+            text.push_back(HtmlString(formatwstr(L"%ls : 0", label.c_str()),
+                                      static_cast<eMinecraftColour>(0), false, false, 0));
+        else
+            text.push_back(HtmlString(formatwstr(L"%ls : %d", label.c_str(), it->second),
+                                      static_cast<eMinecraftColour>(0), false, false, 0));
+    }
+}
 
 void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bool vote)
 {
@@ -355,13 +377,24 @@ void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket>
 void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale) { UpdateGeneratorSeed(seed, scale); }
 bool ClientMasterGameMode::IsWaitingToStart() const { return GetGameModeState() == 5; }
 bool ClientMasterGameMode::IsRoundStarting() const { return GetGameModeState() == 6; }
-bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const { return IsWaitingToStart() || IsRoundStarting() || GetGameModeState() == 3 || GetGameModeState() == 4; }
+bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
+{
+    if (!IsWaitingToStart() && !IsRoundStarting() && mGameModeState != 3 && mGameModeState != 4)
+        return false;
+    return true;
+}
 bool ClientMasterGameMode::IsRoundEnding() const { return GetGameModeState() == 9; }
 bool ClientMasterGameMode::IsRoundPlaying() const { return GetGameModeState() == 7; }
 bool ClientMasterGameMode::IsInScoringState() const { return Minecraft::InMiniGame(static_cast<EMiniGameId>(4), true) && GetGameModeState() == 8; }
 bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= 4; }
 bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= 6 && GetGameModeState() <= 10; }
-bool ClientMasterGameMode::IsInTrasitionFromLobby() { return GetGameModeState() == 0 || GetGameModeState() == 3 || GetGameModeState() == 4; }
+bool ClientMasterGameMode::IsInTrasitionFromLobby()
+{
+    const unsigned int state = mGameModeState;
+    if ((state != 0) && ((state < 3) || (state > 4)))
+        return false;
+    return true;
+}
 bool ClientMasterGameMode::CheckLocalChunksLoaded() { return mLocalChunksLoaded; }
 void ClientMasterGameMode::FireGameRoundStats()
 {

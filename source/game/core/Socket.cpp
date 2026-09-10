@@ -149,28 +149,32 @@ INetworkPlayer* Socket::getPlayer(){return CGameNetworkManager::sInstance.GetPla
 void Socket::setPlayer(INetworkPlayer* p){mPlayerId=p?p->GetSmallId():0;}
 void Socket::Initialise(ServerConnection* c)
 {
-    sConnection=c;
-    if (!gLocalMutexesInitialised)
+    sConnection = c;
+    if (gLocalMutexesInitialised)
     {
-        InitializeCriticalSection(&gLocalMutexes[0]);
-        InitializeCriticalSection(&gLocalMutexes[1]);
-        gLocalInputStreams[0]=new SocketInputStreamLocal(0);
-        gLocalInputStreams[1]=new SocketInputStreamLocal(1);
-        gLocalOutputStreams[0]=new SocketOutputStreamLocal(0);
-        gLocalOutputStreams[1]=new SocketOutputStreamLocal(1);
-        gLocalMutexesInitialised=true;
+        if (TryEnterCriticalSection(&gLocalMutexes[0]))
+        {
+            gLocalQueues[0].clear();
+            LeaveCriticalSection(&gLocalMutexes[0]);
+        }
+        gLocalOutputStreams[0]->mOpen = true;
+        gLocalInputStreams[0]->mOpen = true;
+        if (TryEnterCriticalSection(&gLocalMutexes[1]))
+        {
+            gLocalQueues[1].clear();
+            LeaveCriticalSection(&gLocalMutexes[1]);
+        }
+        gLocalOutputStreams[1]->mOpen = true;
+        gLocalInputStreams[1]->mOpen = true;
+        return;
     }
-    for (int i=0; i<2; ++i)
-    {
-        gLocalInputStreams[i]->mOpen=true;
-        gLocalOutputStreams[i]->mOpen=true;
-    }
-    for (int i=0; i<2; ++i)
-    {
-        EnterCriticalSection(&gLocalMutexes[i]);
-        gLocalQueues[i].clear();
-        LeaveCriticalSection(&gLocalMutexes[i]);
-    }
+    gLocalMutexesInitialised = true;
+    InitializeCriticalSection(&gLocalMutexes[0]);
+    gLocalOutputStreams[0] = new SocketOutputStreamLocal(0);
+    gLocalInputStreams[0] = new SocketInputStreamLocal(0);
+    InitializeCriticalSection(&gLocalMutexes[1]);
+    gLocalOutputStreams[1] = new SocketOutputStreamLocal(1);
+    gLocalInputStreams[1] = new SocketInputStreamLocal(1);
 }
 unsigned int Socket::getRemoteSocketAddress(){return 0;}
 void Socket::pushDataToQueue(const unsigned char* d,unsigned int n,bool b)

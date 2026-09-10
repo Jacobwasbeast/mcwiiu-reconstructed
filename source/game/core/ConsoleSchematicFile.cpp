@@ -284,7 +284,239 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
 
 void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithLength<unsigned char>* out, int& count, int x, int y, int z, int width, int height, int depth)
 {
-    count=0; if(out==0) return; while(count<(int)in.length && count<(int)out->length) { out->data[count]=in.data[count]; ++count; }
+    bool hasLowY = false;
+    bool hasHighY = false;
+    int lowYEnd = height;
+    if (y < 0x80)
+    {
+        if (height > 0x80)
+        {
+            lowYEnd = 0x80;
+        }
+        hasLowY = true;
+    }
+
+    unsigned int highY = y;
+    if (height > 0x7f)
+    {
+        if (y < 0x80)
+        {
+            highY = 0x80;
+        }
+        height = height - 0x80;
+        hasHighY = true;
+        highY = highY - 0x80;
+    }
+
+    bool swapLowNibbles = hasLowY && (y & 1) != 0;
+    bool swapHighNibbles = hasHighY && (highY & 1) != 0;
+    bool oddLowSpan = hasLowY && ((lowYEnd - y) & 1) != 0;
+
+    int xRemaining = width - x;
+    if (x < width)
+    {
+        unsigned int xIndex = x << 11;
+        unsigned char* source = in.data;
+        do
+        {
+            if (z < depth)
+            {
+                unsigned int highYRemaining = height - highY;
+                unsigned int lowYRemaining = lowYEnd - y;
+                unsigned int zIndex = z << 7;
+                int zRemaining = depth - z;
+                do
+                {
+                    bool extractHigh = false;
+                    if (hasLowY)
+                    {
+                        int dataIndex = (int)((xIndex | zIndex | (unsigned int)y) >> 1);
+                        unsigned int yRemaining = lowYRemaining;
+                        if (yRemaining > 1)
+                        {
+                            int outIndex = count;
+                            unsigned char* packed = source + dataIndex - 1;
+                            if (swapLowNibbles)
+                            {
+                                do
+                                {
+                                    out->data[outIndex] = (unsigned char)((packed[2] << 4) | (packed[1] >> 4));
+                                    dataIndex = dataIndex + 1;
+                                    yRemaining = yRemaining - 2;
+                                    outIndex = count + 1;
+                                    count = outIndex;
+                                    packed = packed + 1;
+                                }
+                                while (yRemaining > 1);
+                            }
+                            else
+                            {
+                                do
+                                {
+                                    packed = packed + 1;
+                                    out->data[outIndex] = *packed;
+                                    yRemaining = yRemaining - 2;
+                                    dataIndex = dataIndex + 1;
+                                    outIndex = count + 1;
+                                    count = outIndex;
+                                }
+                                while (yRemaining > 1);
+                            }
+                        }
+                        if (yRemaining == 0)
+                        {
+                            extractHigh = hasHighY;
+                        }
+                        else
+                        {
+                            if (swapLowNibbles)
+                            {
+                                out->data[count] = source[dataIndex] >> 4;
+                            }
+                            else
+                            {
+                                out->data[count] = source[dataIndex] & 0xf;
+                            }
+                            if (hasHighY)
+                            {
+                                extractHigh = true;
+                            }
+                            else
+                            {
+                                ++count;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        extractHigh = hasHighY;
+                    }
+
+                    if (extractHigh)
+                    {
+                        int dataIndex = (int)((xIndex | zIndex | highY) + 0x8000) >> 1;
+                        if (oddLowSpan)
+                        {
+                            int outIndex = count;
+                            unsigned char* outData = out->data;
+                            if (swapHighNibbles)
+                            {
+                                outData[outIndex] = (unsigned char)((source[dataIndex] & 0xf0) | (outData[outIndex] & 0xf));
+                                dataIndex = dataIndex + 1;
+                                outIndex = count + 1;
+                                count = outIndex;
+                            }
+                            else
+                            {
+                                outData[outIndex] = (unsigned char)((source[dataIndex] << 4) | (outData[outIndex] & 0xf));
+                                outIndex = count + 1;
+                                count = outIndex;
+                            }
+                            unsigned int yRemaining = highYRemaining - 1;
+                            if (yRemaining > 1)
+                            {
+                                unsigned char* packed = source + dataIndex - 1;
+                                if (swapHighNibbles)
+                                {
+                                    do
+                                    {
+                                        packed = packed + 1;
+                                        yRemaining = yRemaining - 2;
+                                        out->data[outIndex] = *packed;
+                                        dataIndex = dataIndex + 1;
+                                        outIndex = count + 1;
+                                        count = outIndex;
+                                    }
+                                    while (yRemaining > 1);
+                                }
+                                else
+                                {
+                                    do
+                                    {
+                                        out->data[outIndex] = (unsigned char)((packed[1] >> 4) | (packed[2] << 4));
+                                        yRemaining = yRemaining - 2;
+                                        dataIndex = dataIndex + 1;
+                                        outIndex = count + 1;
+                                        count = outIndex;
+                                        packed = packed + 1;
+                                    }
+                                    while (yRemaining > 1);
+                                }
+                            }
+                            if (yRemaining != 0)
+                            {
+                                if (swapHighNibbles)
+                                {
+                                    out->data[outIndex] = source[dataIndex] & 0xf;
+                                    ++count;
+                                }
+                                else
+                                {
+                                    out->data[outIndex] = source[dataIndex] >> 4;
+                                    ++count;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            unsigned int yRemaining = highYRemaining;
+                            if (highYRemaining > 1)
+                            {
+                                int outIndex = count;
+                                unsigned char* packed = source + dataIndex - 1;
+                                if (swapHighNibbles)
+                                {
+                                    do
+                                    {
+                                        yRemaining = yRemaining - 2;
+                                        out->data[outIndex] = (unsigned char)((packed[2] << 4) | (packed[1] >> 4));
+                                        dataIndex = dataIndex + 1;
+                                        outIndex = count + 1;
+                                        count = outIndex;
+                                        packed = packed + 1;
+                                    }
+                                    while (yRemaining > 1);
+                                }
+                                else
+                                {
+                                    do
+                                    {
+                                        packed = packed + 1;
+                                        out->data[outIndex] = *packed;
+                                        yRemaining = yRemaining - 2;
+                                        dataIndex = dataIndex + 1;
+                                        outIndex = count + 1;
+                                        count = outIndex;
+                                    }
+                                    while (yRemaining > 1);
+                                }
+                            }
+                            if (yRemaining != 0)
+                            {
+                                if (!swapHighNibbles)
+                                {
+                                    out->data[count] = source[dataIndex] & 0xf;
+                                    ++count;
+                                }
+                                else
+                                {
+                                    out->data[count] = source[dataIndex] >> 4;
+                                    ++count;
+                                }
+                            }
+                        }
+                    }
+
+                    zRemaining = zRemaining - 1;
+                    zIndex = zIndex + 0x80;
+                }
+                while (zRemaining != 0);
+            }
+            xRemaining = xRemaining - 1;
+            xIndex = xIndex + 0x800;
+        }
+        while (xRemaining != 0);
+    }
 }
 
 void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z, int width, int height, int depth, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, arrayWithLength<unsigned char>* data, arrayWithLength<unsigned char>* extraData)

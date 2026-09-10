@@ -41,6 +41,9 @@ public:
     void SetIgnoreInput(bool);
     uint32_t getActiveTab();
     static void RenableInput(void*, int, int);
+    virtual void AddCreateListButton(const std::wstring& label, int id) = 0;
+    virtual void SetCreateListIcon(int index, unsigned char* data, unsigned int size,
+                                   const std::wstring& name) = 0;
 private:
     uint32_t m_state0;
     uint32_t m_state4;

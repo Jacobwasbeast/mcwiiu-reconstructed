@@ -286,8 +286,12 @@ NetherBridgePieces::BridgeStraight::BridgeStraight(int d,Random&,BoundingBox* b,
 StructurePiece* NetherBridgePieces::BridgeStraight::createPiece(std::vector<StructurePiece*>* p, Random& r,
     int x, int y, int z, const Direction* o, int d)
 {
-    BoundingBox* b = BoundingBox::orientBox(x, y, z, 0, -1, 0, 5, 10, 19, o);
-    if (b == NULL || StructurePiece::findCollisionPiece(p, b) != NULL)
+    BoundingBox* b = BoundingBox::orientBox(x, y, z, -1, -3, 0, 5, 10, 19, o);
+    StartPiece* start = NULL;
+    if (p != NULL && !p->empty())
+        start = static_cast<StartPiece*>((*p)[0]);
+    if (b == NULL || !NetherBridgePiece::isOkBox(b, start) ||
+        StructurePiece::findCollisionPiece(p, b) != NULL)
     {
         delete b;
         return NULL;

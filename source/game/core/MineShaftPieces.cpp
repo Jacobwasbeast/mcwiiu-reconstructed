@@ -198,8 +198,40 @@ BoundingBox* MineShaftPieces::MineShaftCrossing::findCrossing(std::vector<Struct
                                                               Random& random, int x, int y, int z,
                                                               const Direction* direction)
 {
-    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, 0, -1, 5, 3, 5, direction);
-    if (box != NULL && StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    BoundingBox* box = new BoundingBox(x, y, z, x, y + 2, z);
+    if (random.nextInt(4) == 0)
+        box->y1 += 4;
+
+    int dir = direction->get3DDataValue();
+    if (dir > 2)
+    {
+        if (dir == 3)
+        {
+            box->x1 = x + 3;
+            box->z1 = z + 4;
+            box->x0 = x - 1;
+        }
+        else if (dir < 5)
+        {
+            box->z1 = z + 3;
+            box->z0 = z - 1;
+            box->x0 = x - 4;
+        }
+        else if (dir == 5)
+        {
+            box->x1 = x + 4;
+            box->z1 = z + 3;
+            box->z0 = z - 1;
+        }
+    }
+    else
+    {
+        box->x1 = x + 3;
+        box->z0 = z - 4;
+        box->x0 = x - 1;
+    }
+
+    if (StructurePiece::findCollisionPiece(pieces, box) != NULL)
     {
         delete box;
         return NULL;
@@ -355,8 +387,33 @@ BoundingBox* MineShaftPieces::MineShaftStairs::findStairs(std::vector<StructureP
                                                           Random& random, int x, int y, int z,
                                                           const Direction* direction)
 {
-    BoundingBox* box = BoundingBox::orientBox(x, y - 5, z, 0, 0, 0, 3, 8, 3, direction);
-    if (box != NULL && StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    BoundingBox* box = new BoundingBox(x, y - 5, z, x, y + 2, z);
+    int dir = direction->get3DDataValue();
+    if (dir > 2)
+    {
+        if (dir == 3)
+        {
+            box->x1 = x + 2;
+            box->z1 = z + 8;
+        }
+        else if (dir < 5)
+        {
+            box->x0 = x - 8;
+            box->z1 = z + 2;
+        }
+        else if (dir == 5)
+        {
+            box->x1 = x + 8;
+            box->z1 = z + 2;
+        }
+    }
+    else
+    {
+        box->x1 = x + 2;
+        box->z0 = z - 8;
+    }
+
+    if (StructurePiece::findCollisionPiece(pieces, box) != NULL)
     {
         delete box;
         return NULL;

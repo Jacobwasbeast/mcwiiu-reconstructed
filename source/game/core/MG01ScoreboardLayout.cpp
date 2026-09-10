@@ -20,25 +20,95 @@ MG01ScoreboardLayout::~MG01ScoreboardLayout()
 {
 }
 
+namespace
+{
+int playerInfoInt(const PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
+}
+}
+
 unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first->voiceStatus == 0 && second->voiceStatus != 0)
+    const char* firstBytes = reinterpret_cast<const char*>(first);
+    const char* secondBytes = reinterpret_cast<const char*>(second);
+
+    if (firstBytes[0x38] == 0)
     {
-        return 0;
+        if (secondBytes[0x38] != 0)
+        {
+            return 0;
+        }
     }
-    if (first->voiceStatus != 0 && second->voiceStatus == 0)
+    else if (secondBytes[0x38] == 0)
     {
         return 1;
     }
-    if (first->smallId != second->smallId)
+
+    int firstValue = playerInfoInt(first, 0x24);
+    int secondValue = playerInfoInt(second, 0x24);
+    if (firstValue > secondValue)
     {
-        return first->smallId > second->smallId;
+        return 1;
     }
-    if (first->colour != second->colour)
+    if (firstValue < secondValue)
     {
-        return first->colour > second->colour;
+        return 0;
     }
-    return first->name > second->name;
+
+    firstValue = playerInfoInt(first, 0x28);
+    secondValue = playerInfoInt(second, 0x28);
+    if (firstValue > secondValue)
+    {
+        return 1;
+    }
+    if (firstValue < secondValue)
+    {
+        return 0;
+    }
+
+    firstValue = playerInfoInt(first, 0x2c);
+    secondValue = playerInfoInt(second, 0x2c);
+    if (firstValue > secondValue)
+    {
+        return 1;
+    }
+    if (firstValue < secondValue)
+    {
+        return 0;
+    }
+
+    firstValue = playerInfoInt(first, 0x30);
+    secondValue = playerInfoInt(second, 0x30);
+    if (firstValue > secondValue)
+    {
+        return 1;
+    }
+    if (firstValue < secondValue)
+    {
+        return 0;
+    }
+
+    firstValue = playerInfoInt(first, 0x34);
+    secondValue = playerInfoInt(second, 0x34);
+    if (secondValue > firstValue)
+    {
+        return 1;
+    }
+    if (secondValue < firstValue)
+    {
+        return 0;
+    }
+
+    if (firstBytes[0x39] == 0)
+    {
+        return 0;
+    }
+    if (secondBytes[0x39] != 0)
+    {
+        return 0;
+    }
+    return 1;
 }
 
 void MG01ScoreboardLayout::Init(int value)

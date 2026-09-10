@@ -246,7 +246,18 @@ bool Boat::canAddPassenger(boost::shared_ptr<Entity> entity) { return getPasseng
 boost::shared_ptr<Entity> Boat::getControllingPassenger() { return Entity::getControllingPassenger(); }
 void Boat::setInput(bool left, bool right, bool forward, bool backward) { mInputLeft = left; mInputRight = right; mInputForward = forward; mInputBackward = backward; }
 bool Boat::canBeLeashed(const boost::shared_ptr<Player>& player) { return !isLeashed(); }
-bool Boat::hasPlayerPassenger() { return getPassengers()->size() != 0; }
+bool Boat::hasPlayerPassenger()
+{
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    for (std::vector<boost::weak_ptr<Entity> >::const_iterator it = passengers->begin();
+         it != passengers->end(); ++it)
+    {
+        boost::shared_ptr<Entity> passenger = it->lock();
+        if (passenger && (passenger->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+            return true;
+    }
+    return false;
+}
 void Boat::tickLeash() { Entity::tickLeash(); }
 unsigned long long Boat::GetType() { return ENTITY_TYPE_BOAT; }
 void Boat::create(Level* level) { new Boat(level); }

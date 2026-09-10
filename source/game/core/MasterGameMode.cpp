@@ -1,15 +1,25 @@
 #include "game/core/MasterGameMode.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/System.hpp"
+#include "game/core/Voteable.hpp"
+#include "game/core/Voteables.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/minigame/GameRuleDefinition.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/block/BlockRemover.hpp"
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include "game/client/render/TexturePackRepository.hpp"
+
+extern void instructionSynchronize();
 
 typedef boost::unordered_map<MasterGameMode::ETimerID, MasterGameMode::_TimerInfo> TimerMap;
 
@@ -150,7 +160,173 @@ bool MasterGameMode::AreLevelChunksLoaded()
 
 void MasterGameMode::ChooseNextGameRules(bool advancePlaylist)
 {
-    mPlaylistDirty = true;
+    LevelGenerationOptions* selectedOptions = 0;
+    LevelRules::LevelRulesetGroup* selectedGroup = 0;
+    int totalVotes = 0;
+
+    Voteable* voteable = mVoteables->getVoteable(0);
+    int winningVote = voteable->getWinningVote(totalVotes);
+    if (winningVote != -1)
+    {
+        for (std::vector<LevelRules::LevelRulesetGroup*>::iterator playlistIt = mPlaylist.begin();
+             playlistIt != mPlaylist.end(); ++playlistIt)
+        {
+            LevelRules::LevelRulesetGroup* group = *playlistIt;
+            if (static_cast<short>(LevelGenerationOptions::GetMapSizeFromUniqueId(winningVote)) == -1)
+            {
+                if (!group->rulesets.empty() &&
+                    group->rulesets.front()->getThemeId() ==
+                        LevelGenerationOptions::GetThemeFromUniqueId(winningVote))
+                {
+                    selectedGroup = group;
+                    break;
+                }
+            }
+            else if (!group->rulesets.empty())
+            {
+                for (std::vector<LevelRuleset*>::iterator rulesetIt = group->rulesets.begin();
+                     rulesetIt != group->rulesets.end(); ++rulesetIt)
+                {
+                    LevelGenerationOptions* options = (*rulesetIt)->getGenerationOptions();
+                    if (options->getUniqueId() == static_cast<unsigned int>(winningVote))
+                    {
+                        selectedOptions = options;
+                        selectedGroup = group;
+                        break;
+                    }
+                }
+                if (selectedGroup != 0)
+                    break;
+            }
+        }
+
+        if (selectedGroup != 0)
+        {
+            std::deque<LevelRules::LevelRulesetGroup*>::iterator found =
+                std::find(mRuleGroups.begin(), mRuleGroups.end(), selectedGroup);
+            const int targetIndex = mCurrentPlaylistEntry + mCurrentRuleIndex;
+            if (found != mRuleGroups.end())
+            {
+                const int foundIndex = static_cast<int>(found - mRuleGroups.begin());
+                if (foundIndex != targetIndex)
+                {
+                    mShuffledRuleGroups.push_back(selectedGroup);
+                    mRuleGroups.erase(found);
+                }
+            }
+        }
+    }
+
+    if (selectedGroup == 0)
+    {
+        selectedGroup = mRuleGroups.front();
+        if (!advancePlaylist)
+        {
+            mShuffledRuleGroups.push_back(mRuleGroups.front());
+            mRuleGroups.pop_front();
+        }
+    }
+
+    if (mCurrentRuleIndex == 0)
+    {
+        mRuleGroups.insert(mRuleGroups.begin() + mCurrentPlaylistEntry,
+                           mShuffledRuleGroups.begin(), mShuffledRuleGroups.end());
+        mShuffledRuleGroups.clear();
+    }
+
+    if (selectedOptions != 0)
+    {
+        mCurrentLevelGenOptions = selectedOptions;
+        SyncNextLevelGen();
+        return;
+    }
+
+    int mapSizeIndex = 2;
+    const MiniGameDef* miniGame = GetMiniGame();
+    unsigned int mapSizeOverride = miniGame->GetMapSizeOverride();
+    if (mapSizeOverride == 0)
+    {
+        unsigned int playerCount = GetPlayerCount(false, false);
+        if (playerCount < 9)
+            mapSizeIndex = 1;
+        playerCount = GetPlayerCount(false, false);
+        miniGame = GetMiniGame();
+        if (miniGame->GetMaxPlayersForSmallMaps() >= playerCount)
+            mapSizeIndex = 0;
+    }
+    else
+    {
+        mapSizeIndex = static_cast<int>(mapSizeOverride) - 1;
+    }
+
+    std::vector<LevelRuleset*>::iterator rulesetIt = selectedGroup->rulesets.begin();
+    if (rulesetIt == selectedGroup->rulesets.end())
+        goto select_fallback;
+
+    while (true)
+    {
+        LevelGenerationOptions* options = (*rulesetIt)->getGenerationOptions();
+        if (options == 0)
+            goto next_ruleset;
+        if (options->getMapSize() != static_cast<unsigned int>(mapSizeIndex))
+            goto next_ruleset;
+        options = (*rulesetIt)->getGenerationOptions();
+        if (options == 0)
+            goto select_fallback;
+        mCurrentLevelGenOptions = options;
+        SyncNextLevelGen();
+        return;
+
+    next_ruleset:
+        ++rulesetIt;
+        if (rulesetIt == selectedGroup->rulesets.end())
+            goto select_fallback;
+    }
+
+select_fallback:
+    do
+    {
+        while (mapSizeIndex != 2)
+        {
+            if (mapSizeIndex != 1)
+            {
+                selectedOptions = selectedGroup->rulesets.front()->getGenerationOptions();
+                if (selectedOptions == 0)
+                    return;
+                mCurrentLevelGenOptions = selectedOptions;
+                SyncNextLevelGen();
+                return;
+            }
+            rulesetIt = selectedGroup->rulesets.begin();
+            mapSizeIndex = 0;
+            if (rulesetIt != selectedGroup->rulesets.end())
+                goto select_search;
+        }
+        rulesetIt = selectedGroup->rulesets.begin();
+        mapSizeIndex = 1;
+    }
+    while (rulesetIt == selectedGroup->rulesets.end());
+
+select_search:
+    while (true)
+    {
+        selectedOptions = (*rulesetIt)->getGenerationOptions();
+        if (selectedOptions == 0)
+            goto select_next_ruleset;
+        if (selectedOptions->getMapSize() != static_cast<unsigned int>(mapSizeIndex))
+            goto select_next_ruleset;
+        selectedOptions = (*rulesetIt)->getGenerationOptions();
+        if (selectedOptions == 0)
+            goto select_fallback;
+        mCurrentLevelGenOptions = selectedOptions;
+        SyncNextLevelGen();
+        return;
+
+    select_next_ruleset:
+        ++rulesetIt;
+        if (rulesetIt == selectedGroup->rulesets.end())
+            goto select_fallback;
+    }
 }
 
 void MasterGameMode::UpdateClientState(boost::shared_ptr<ServerPlayer> player)
@@ -256,7 +432,43 @@ void MasterGameMode::OnTimerCountdown(ETimerID timer, MasterGameMode* gameMode, 
 
 void MasterGameMode::PopulateChests()
 {
-    mPlaylistDirty = true;
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    if (ruleset == 0)
+        return;
+
+    GameRuleDefinition* definition = ruleset->getRuleByType(
+        static_cast<ConsoleGameRules::EGameRuleType>(30));
+    if (definition == 0)
+        return;
+
+    ServerLevel* level = gMinecraftServer->getLevel(0);
+
+    std::vector<GameRuleDefinition*> children;
+    definition->getChildren(&children, static_cast<ConsoleGameRules::EGameRuleType>(6));
+    for (std::vector<GameRuleDefinition*>::iterator it = children.begin();
+         it != children.end(); ++it)
+    {
+        const MiniGameDef* miniGame = GetMiniGame();
+        (*it)->evaluateRule(level, ruleset, *miniGame);
+    }
+
+    children.clear();
+    definition->getChildren(&children, static_cast<ConsoleGameRules::EGameRuleType>(14));
+    for (std::vector<GameRuleDefinition*>::iterator it = children.begin();
+         it != children.end(); ++it)
+    {
+        const MiniGameDef* miniGame = GetMiniGame();
+        (*it)->evaluateRule(level, ruleset, *miniGame);
+    }
+
+    children.clear();
+    definition->getChildren(&children, static_cast<ConsoleGameRules::EGameRuleType>(32));
+    for (std::vector<GameRuleDefinition*>::iterator it = children.begin();
+         it != children.end(); ++it)
+    {
+        const MiniGameDef* miniGame = GetMiniGame();
+        (*it)->evaluateRule(level, ruleset, *miniGame);
+    }
 }
 
 int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
@@ -313,7 +525,22 @@ void MasterGameMode::SetLockPlayerPositions(bool locked)
 
 void MasterGameMode::UpdateGeneratorSeed()
 {
-    mPlaylistDirty = true;
+    Random random;
+    const long long seed = random.nextLong();
+
+    int scaledPlayerCount = GetPlayerCount(false, false);
+    if (scaledPlayerCount > 16)
+        scaledPlayerCount = 16;
+    if (scaledPlayerCount < 4)
+        scaledPlayerCount = 4;
+
+    const float scaleRatio =
+        sqrtf(static_cast<float>(static_cast<double>(scaledPlayerCount))) / sqrtf(16.0f);
+    const MiniGameDef* miniGame = GetMiniGame();
+    const float scale = static_cast<float>(miniGame->GetLayerScale(scaleRatio));
+
+    CommonMasterGameMode::UpdateGeneratorSeed(seed, scale);
+    instructionSynchronize();
 }
 
 int MasterGameMode::GeneratorSpawn() const
@@ -747,9 +974,53 @@ void MasterGameMode::ResetPlayer(boost::shared_ptr<ServerPlayer> player)
 
 void MasterGameMode::ReduceShowdownTime(int amount, int minimum)
 {
-    mShowdownReduction += amount;
-    if (mShowdownTime - mShowdownReduction < minimum)
-        mShowdownReduction = mShowdownTime - minimum;
+    bool timerAdjusted = false;
+    int remaining = 0;
+
+    if (HasTimer(eTimerID_RoundLimit))
+    {
+        remaining = GetTimerRemainingTime(eTimerID_RoundLimit);
+        if (minimum < remaining)
+        {
+            if (remaining - amount < minimum)
+            {
+                amount = remaining - minimum;
+                RestartTimer(eTimerID_RoundLimit, minimum);
+                timerAdjusted = true;
+            }
+            else
+            {
+                RestartTimer(eTimerID_RoundLimit, remaining - amount);
+                timerAdjusted = true;
+            }
+        }
+    }
+
+    if (HasTimer(eTimerID_Tutorial))
+    {
+        remaining = GetTimerRemainingTime(eTimerID_Tutorial);
+        if (minimum < remaining)
+        {
+            if (remaining - amount < minimum)
+            {
+                amount = remaining - minimum;
+                RestartTimer(eTimerID_Tutorial, minimum);
+                timerAdjusted = true;
+            }
+            else
+            {
+                RestartTimer(eTimerID_Tutorial, remaining - amount);
+                timerAdjusted = true;
+            }
+        }
+    }
+
+    if ((mRoundTimeOffset != 0 || mPausedRoundTime != 0) && timerAdjusted)
+    {
+        const unsigned int low = static_cast<unsigned int>(mPausedRoundTime);
+        mPausedRoundTime = static_cast<int>(low - amount);
+        mRoundTimeOffset -= static_cast<int>((amount >> 31) + static_cast<unsigned int>(low < static_cast<unsigned int>(amount)));
+    }
 }
 
 void MasterGameMode::SetDefaults(LaunchMoreOptionsMenuInitData& data)
@@ -784,9 +1055,11 @@ std::wstring MasterGameMode::GetValueText(EMiniGameId miniGame, eCustomGameModeH
 
 void MasterGameMode::UpdateRulePlayList(std::vector<LevelRules::LevelRulesetGroup*>* playlist)
 {
-    if (playlist != 0)
-        mPlaylist = *playlist;
-    mPlaylistDirty = true;
+    mPlaylist.insert(mPlaylist.end(), playlist->begin(), playlist->end());
+    std::sort(mPlaylist.begin(), mPlaylist.end(), LevelRules::LevelRulesetGroup::SortMapRules);
+    mRuleGroups.clear();
+    mShuffledRuleGroups.clear();
+    mShuffledRuleGroups.insert(mShuffledRuleGroups.end(), mPlaylist.begin(), mPlaylist.end());
 }
 
 void MasterGameMode::SetPlayerReady(unsigned int playerIndex, bool ready)
@@ -806,10 +1079,27 @@ bool MasterGameMode::IsChunkWithinLobbyRegionOfRoundLevel(int chunkX, int chunkZ
 
 void MasterGameMode::GetMaxActiveBounds(int& minimumX, int& minimumZ, int& maximumX, int& maximumZ)
 {
-    minimumX = -mChunkHistory;
-    minimumZ = -mChunkHistory;
-    maximumX = mChunkHistory;
-    maximumZ = mChunkHistory;
+    if (!mTeamAreas.empty())
+    {
+        std::vector<AABB*>::const_iterator it = mTeamAreas.begin();
+        const AABB* bounds = *it;
+        minimumX = static_cast<int>(bounds->mMinX);
+        minimumZ = static_cast<int>(bounds->mMinZ);
+        maximumX = static_cast<int>(bounds->mMaxX);
+        maximumZ = static_cast<int>(bounds->mMaxZ);
+        for (++it; it != mTeamAreas.end(); ++it)
+        {
+            bounds = *it;
+            if (static_cast<int>(bounds->mMinX) < minimumX)
+                minimumX = static_cast<int>(bounds->mMinX);
+            if (static_cast<int>(bounds->mMinZ) < minimumZ)
+                minimumZ = static_cast<int>(bounds->mMinZ);
+            if (maximumX < static_cast<int>(bounds->mMaxX))
+                maximumX = static_cast<int>(bounds->mMaxX);
+            if (maximumZ < static_cast<int>(bounds->mMaxZ))
+                maximumZ = static_cast<int>(bounds->mMaxZ);
+        }
+    }
 }
 
 void MasterGameMode::BlockDestroyedAt(const BlockPos& position)

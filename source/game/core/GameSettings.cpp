@@ -414,7 +414,35 @@ void GameSettings::ApplyGameSettingsChanged(int profile)
     ActionGameSettings(profile, (eGameSetting)0);
     ActionGameSettings(profile, (eGameSetting)1);
     ActionGameSettings(profile, (eGameSetting)2);
-    ClearGameSettingsChangedFlag(profile);
+    ActionGameSettings(profile, (eGameSetting)3);
+    ActionGameSettings(profile, (eGameSetting)4);
+    ActionGameSettings(profile, (eGameSetting)6);
+    ActionGameSettings(profile, (eGameSetting)7);
+    ActionGameSettings(profile, (eGameSetting)8);
+    ActionGameSettings(profile, (eGameSetting)9);
+    ActionGameSettings(profile, (eGameSetting)10);
+    ActionGameSettings(profile, (eGameSetting)0xb);
+    ActionGameSettings(profile, (eGameSetting)0xc);
+    ActionGameSettings(profile, (eGameSetting)5);
+    ActionGameSettings(profile, (eGameSetting)0xe);
+    ActionGameSettings(profile, (eGameSetting)0xf);
+    ActionGameSettings(profile, (eGameSetting)0x10);
+    ActionGameSettings(profile, (eGameSetting)0x11);
+    ActionGameSettings(profile, (eGameSetting)0x12);
+    ActionGameSettings(profile, (eGameSetting)0x17);
+    ActionGameSettings(profile, (eGameSetting)0x18);
+    ActionGameSettings(profile, (eGameSetting)0x19);
+    ActionGameSettings(profile, (eGameSetting)0x1a);
+    ActionGameSettings(profile, (eGameSetting)0x1b);
+    ActionGameSettings(profile, (eGameSetting)0x1c);
+    ActionGameSettings(profile, (eGameSetting)0x1d);
+    ActionGameSettings(profile, (eGameSetting)0x1e);
+    ActionGameSettings(profile, (eGameSetting)0x26);
+    ActionGameSettings(profile, (eGameSetting)0x27);
+    ActionGameSettings(profile, (eGameSetting)0x28);
+    ActionGameSettings(profile, (eGameSetting)0x2a);
+    ActionGameSettings(profile, (eGameSetting)0x2b);
+    ActionGameSettings(profile, (eGameSetting)0x29);
 }
 
 void GameSettings::CheckGameSettingsChanged(bool changed, int profile)

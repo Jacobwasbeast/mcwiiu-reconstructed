@@ -54,7 +54,24 @@ void OceanMonumentPieces::OceanMonumentPiece::generateDefaultFloor(Level* level,
 void OceanMonumentPieces::OceanMonumentPiece::generateBoxOnFillOnly(Level* level, BoundingBox* box, int x0, int y0, int z0, int x1, int y1, int z1, const BlockState* state) {
     generateBox(level, box, x0, y0, z0, x1, y1, z1, state, state, true);
     }
-bool OceanMonumentPieces::OceanMonumentPiece::chunkIntersects(BoundingBox* box, int x0, int z0, int x1, int z1) { return box != NULL && box->intersects(x0, z0, x1, z1); }
+bool OceanMonumentPieces::OceanMonumentPiece::chunkIntersects(BoundingBox* box, int x0, int z0, int x1, int z1)
+{
+    int worldX0 = getWorldX(x0, z0);
+    int worldZ0 = getWorldZ(x0, z0);
+    int worldX1 = getWorldX(x1, z1);
+    int worldZ1 = getWorldZ(x1, z1);
+    int minX = worldX0;
+    if (worldX1 < worldX0)
+        minX = worldX1;
+    int minZ = worldZ0;
+    if (worldZ1 < worldZ0)
+        minZ = worldZ1;
+    if (worldX0 < worldX1)
+        worldX0 = worldX1;
+    if (worldZ1 < worldZ0)
+        worldZ1 = worldZ0;
+    return box->intersects(minX, minZ, worldX0, worldZ1);
+}
 bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingBox* box, int x, int y, int z) { if (level == NULL || box == NULL) return false; if (x < 0 || y < 0 || z < 0) return true; return true; }
 OceanMonumentPieces::MonumentRoomFitter::~MonumentRoomFitter() {}
 OceanMonumentPieces::FitSimpleRoom::~FitSimpleRoom() {}

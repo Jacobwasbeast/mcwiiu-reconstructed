@@ -6,6 +6,7 @@
 #include "game/item/MerchantRecipe.hpp"
 #include "game/item/MerchantRecipeList.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/Villager.hpp"
 
 ClientSideMerchant::ClientSideMerchant(boost::shared_ptr<Player> player, const std::wstring& name)
     : mPosition(), mContainer(NULL), mTradingPlayer(player), mOffers(new MerchantRecipeList()), mName(name), mVillager()
@@ -68,7 +69,7 @@ void ClientSideMerchant::setVillager(boost::shared_ptr<Villager> villager)
 
 bool ClientSideMerchant::isAvailableToTrade()
 {
-    return mVillager != boost::shared_ptr<Villager>();
+    return !mVillager || mVillager->isAvailableToTrade();
 }
 
 Level* ClientSideMerchant::getLevel()

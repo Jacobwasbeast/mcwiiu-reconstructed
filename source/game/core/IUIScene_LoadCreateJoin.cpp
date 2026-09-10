@@ -8,6 +8,10 @@
 #include "game/core/Minecraft.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
+#include "game/core/StringFormat.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+
+extern CMinecraftApp* g_pApp;
 
 IUIScene_LoadCreateJoin::IUIScene_LoadCreateJoin()
     : m_state0(0), m_state4(0), m_userIndex(0), m_state10(0), m_state14(0), m_ignoreInput(0),
@@ -71,8 +75,16 @@ uint64_t IUIScene_LoadCreateJoin::AddMatchmakingButton(std::wstring label, int i
 
 uint64_t IUIScene_LoadCreateJoin::AddGameModeButton(std::wstring label, int id, std::wstring description)
 {
-    m_buttonIds.push_back(id);
-    return m_buttonIds.size();
+    AddCreateListButton(label, id);
+    std::wstring path = formatwstr(L"Graphics\\%ls.png", description.c_str());
+    if (g_pApp->hasArchiveFile(path, false))
+    {
+        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(path, false);
+        if (file.data != 0 && file.length != 0)
+            SetCreateListIcon(m_state2c, file.data, file.length, description);
+    }
+    ++m_state2c;
+    return 0;
 }
 
 void IUIScene_LoadCreateJoin::AddDefaultButtons()

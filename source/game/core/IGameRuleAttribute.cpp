@@ -1,5 +1,7 @@
 #include "game/core/IGameRuleAttribute.hpp"
 
+#include <cwchar>
+
 static const wchar_t* sAttributeNames[] =
 {
     L"descriptionName",
@@ -95,8 +97,6 @@ static const wchar_t* sAttributeNames[] =
     L"string_IDS"
 };
 
-static const int sAttributeNameCount = sizeof(sAttributeNames) / sizeof(sAttributeNames[0]);
-
 IGameRuleAttribute::IGameRuleAttribute()
     : mOptional(false),
       mHasValue(false)
@@ -109,13 +109,66 @@ IGameRuleAttribute::~IGameRuleAttribute()
 
 int IGameRuleAttribute::attributeIdFromName(const std::wstring& name)
 {
-    for (int id = 0; id < sAttributeNameCount; ++id)
+    int remaining = 13;
+    int id = 0;
+    const wchar_t** names = sAttributeNames;
+
+    do
     {
-        if (name == sAttributeNames[id])
+        const wchar_t* candidate = names[0];
+        size_t len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
         {
             return id;
         }
+
+        candidate = names[1];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 1;
+        }
+
+        candidate = names[2];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 2;
+        }
+
+        candidate = names[3];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 3;
+        }
+
+        candidate = names[4];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 4;
+        }
+
+        candidate = names[5];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 5;
+        }
+
+        candidate = names[6];
+        len = wcslen(candidate);
+        if (name.compare(0, name.size(), candidate, len) == 0)
+        {
+            return id + 6;
+        }
+
+        remaining--;
+        id += 7;
+        names += 7;
     }
+    while (remaining != 0);
 
     return -1;
 }

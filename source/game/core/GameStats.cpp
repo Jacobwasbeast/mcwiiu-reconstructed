@@ -9,7 +9,11 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/Math.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/PlayerList.hpp"
 
 GameStats::GameStats()
     : mPlayerCount(0), mRoundStartTime(0), mCurrentRound(0), mRoundEndTime(0), mRoundTime(0), mRoundWinner(), mFirstPlace(), mSecondPlace(), mThirdPlace(), mFarthestCheckpointReached(0), mLandingRecorded(false)
@@ -102,17 +106,131 @@ void GameStats::AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer
         best->getRoundStats(mCurrentRound)->mWon = true;
 }
 bool GameStats::SORT_MG02_STATS(PlayerStats* first, PlayerStats* second) { return first < second; }
-PlayerStats* GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats, unsigned int index) { return index < stats.size() ? stats[index] : 0; }
+
+namespace
+{
+unsigned int mg03SortCurrentRound()
+{
+    if (gMinecraftServer == 0 || gMinecraftServer->mMasterGameMode == 0)
+        return 0;
+    return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(gMinecraftServer->mMasterGameMode) + 0x178);
+}
+}
+
+boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats, unsigned int index)
+{
+    if (stats.empty() || index >= stats.size())
+        return boost::shared_ptr<ServerPlayer>();
+
+    PlayerStats* playerStats = stats[index];
+    if (playerStats == 0 || gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
+        return boost::shared_ptr<ServerPlayer>();
+
+    return gMinecraftServer->getPlayers()->getPlayerFromStatsUID(*reinterpret_cast<StatsUID*>(playerStats));
+}
+
 void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >*)
 {
 }
-bool GameStats::SORT_MG03_STATS_FALLBACK(PlayerStats* first, PlayerStats* second) { return first < second; }
-bool GameStats::SORT_MG03_STATS_POINTS(PlayerStats* first, PlayerStats* second) { return first < second; }
-bool GameStats::SORT_MG03_STATS_TIME(PlayerStats* first, PlayerStats* second) { return first < second; }
-bool GameStats::SORT_MG03_STATS_POINTS_CURRENT_ROUND(PlayerStats* first, PlayerStats* second) { return first < second; }
-bool GameStats::SORT_MG03_STATS_TIME_CURRENT_ROUND(PlayerStats* first, PlayerStats* second) { return first < second; }
-void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer> >*)
+
+bool GameStats::SORT_MG03_STATS_FALLBACK(PlayerStats* first, PlayerStats* second)
 {
+    if (first->getBestLifeSpan(0, 0) != second->getBestLifeSpan(0, 0))
+        return first->getBestLifeSpan(0, 0) < second->getBestLifeSpan(0, 0);
+    if (first->getBestPoints(1, 0) != second->getBestPoints(1, 0))
+        return second->getBestPoints(1, 0) < first->getBestPoints(1, 0);
+    if (first->getTotalRoundsWon() != second->getTotalRoundsWon())
+        return second->getTotalRoundsWon() < first->getTotalRoundsWon();
+    if (first->getTotalDeaths() != second->getTotalDeaths())
+        return first->getTotalDeaths() < second->getTotalDeaths();
+    return first < second;
+}
+
+bool GameStats::SORT_MG03_STATS_POINTS(PlayerStats* first, PlayerStats* second)
+{
+    if (first->getBestPoints(1, 1) != second->getBestPoints(1, 1))
+        return second->getBestPoints(1, 1) < first->getBestPoints(1, 1);
+    return SORT_MG03_STATS_FALLBACK(first, second);
+}
+
+bool GameStats::SORT_MG03_STATS_TIME(PlayerStats* first, PlayerStats* second)
+{
+    if (first->getBestLifeSpan(0, 1) != second->getBestLifeSpan(0, 1))
+        return first->getBestLifeSpan(0, 1) < second->getBestLifeSpan(0, 1);
+    return SORT_MG03_STATS_FALLBACK(first, second);
+}
+
+bool GameStats::SORT_MG03_STATS_POINTS_CURRENT_ROUND(PlayerStats* first, PlayerStats* second)
+{
+    const unsigned int round = mg03SortCurrentRound();
+    if (first->getReachedEnd(round) != second->getReachedEnd(round))
+        return first->getReachedEnd(round) != 0;
+    if (first->getPoints(round) != second->getPoints(round))
+        return second->getPoints(round) < first->getPoints(round);
+    return SORT_MG03_STATS_FALLBACK(first, second);
+}
+
+bool GameStats::SORT_MG03_STATS_TIME_CURRENT_ROUND(PlayerStats* first, PlayerStats* second)
+{
+    const unsigned int round = mg03SortCurrentRound();
+    if (first->getReachedEnd(round) != second->getReachedEnd(round))
+        return first->getReachedEnd(round) != 0;
+    if (first->getLifeSpan(round) != second->getLifeSpan(round))
+        return first->getLifeSpan(round) < second->getLifeSpan(round);
+    return SORT_MG03_STATS_FALLBACK(first, second);
+}
+
+void GameStats::AwardMG03Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
+{
+    mRoundWinner.reset();
+
+    if (players == 0)
+        return;
+
+    std::vector<PlayerStats*> statsVec;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin();
+         it != players->end(); ++it)
+    {
+        if (!*it)
+            continue;
+        PlayerStats* stats = GetPlayerStats((*it)->getSUID());
+        if (stats != 0)
+            statsVec.push_back(stats);
+    }
+
+    if (statsVec.empty())
+        return;
+
+    const unsigned int variant = Minecraft::GetInstance()->GetMiniGame()->GetGameVariant();
+    if (variant == 1)
+        std::sort(statsVec.begin(), statsVec.end(), SORT_MG03_STATS_POINTS);
+    else
+        std::sort(statsVec.begin(), statsVec.end(), SORT_MG03_STATS_TIME);
+
+    mFirstPlace = getPlayerFromStatsVec(statsVec, 0);
+    mSecondPlace = getPlayerFromStatsVec(statsVec, 1);
+    mThirdPlace = getPlayerFromStatsVec(statsVec, 2);
+    mRoundWinner = mFirstPlace;
+
+    PlayerStats::RoundStats* winnerRound = statsVec[0]->getRoundStats(mCurrentRound);
+    if (winnerRound != 0)
+        winnerRound->mActive = true;
+
+    if (variant == 1)
+        std::sort(statsVec.begin(), statsVec.end(), SORT_MG03_STATS_POINTS_CURRENT_ROUND);
+    else
+        std::sort(statsVec.begin(), statsVec.end(), SORT_MG03_STATS_TIME_CURRENT_ROUND);
+
+    const int playerCount = static_cast<int>(statsVec.size());
+    for (int i = 0; i < playerCount; ++i)
+    {
+        PlayerStats::RoundStats* round = statsVec[i]->getRoundStats(mCurrentRound);
+        if (round != 0)
+        {
+            round->mCheckpointPadding[0] = i;
+            round->mCheckpointPadding[1] = playerCount;
+        }
+    }
 }
 void GameStats::AwardMG04Medals(const std::vector<boost::shared_ptr<ServerPlayer> >*)
 {
@@ -232,9 +350,10 @@ unsigned int GameStats::RecordSecondaryTargetReached(const StatsUID& uid, const 
             return 0;
 
     ++round->mSecondaryTargets;
-    round->mMedals.push_back(target);
-    round->mTotalTime += points;
-    round->mTimeSpent[static_cast<int>(size)]++;
+    round->mMedalNames.push_back(target);
+    round->mBonusPoints += points;
+    round->mLastPointsAdded = points;
+    ++round->mTimeSpent[static_cast<int>(size)];
     return 1;
 }
 void GameStats::TakeTimestamp(const StatsUID& uid, eTimeSpentCategory category, bool start) {

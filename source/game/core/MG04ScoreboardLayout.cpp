@@ -22,29 +22,49 @@ MG04ScoreboardLayout::~MG04ScoreboardLayout()
 {
 }
 
+namespace
+{
+int playerInfoInt(const PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
+}
+}
+
 bool MG04ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first == 0)
+    int firstScore =
+        playerInfoInt(first, 0x34) + playerInfoInt(first, 0x3c) + playerInfoInt(first, 0x40) * 2;
+    int secondScore =
+        playerInfoInt(second, 0x34) + playerInfoInt(second, 0x3c) + playerInfoInt(second, 0x40) * 2;
+    if (firstScore != secondScore)
     {
-        return second != 0;
+        return secondScore < firstScore;
     }
-    if (second == 0)
+    if (playerInfoInt(first, 0x40) != playerInfoInt(second, 0x40))
+    {
+        return playerInfoInt(second, 0x40) < playerInfoInt(first, 0x40);
+    }
+    if (playerInfoInt(first, 0x3c) != playerInfoInt(second, 0x3c))
+    {
+        return playerInfoInt(second, 0x3c) < playerInfoInt(first, 0x3c);
+    }
+    int firstValue =
+        playerInfoInt(first, 0x24) + playerInfoInt(first, 0x2c) + playerInfoInt(first, 0x30) * 2;
+    int secondValue =
+        playerInfoInt(second, 0x24) + playerInfoInt(second, 0x2c) + playerInfoInt(second, 0x30) * 2;
+    if (firstValue != secondValue)
+    {
+        return secondValue < firstValue;
+    }
+    if (playerInfoInt(first, 0x30) != playerInfoInt(second, 0x30))
+    {
+        return playerInfoInt(second, 0x30) < playerInfoInt(first, 0x30);
+    }
+    if (playerInfoInt(first, 0x2c) == playerInfoInt(second, 0x2c))
     {
         return false;
     }
-    if (first->voiceStatus != second->voiceStatus)
-    {
-        return first->voiceStatus > second->voiceStatus;
-    }
-    if (first->colour != second->colour)
-    {
-        return first->colour > second->colour;
-    }
-    if (first->smallId != second->smallId)
-    {
-        return first->smallId > second->smallId;
-    }
-    return first->name > second->name;
+    return playerInfoInt(second, 0x2c) < playerInfoInt(first, 0x2c);
 }
 
 void MG04ScoreboardLayout::Init(int value)

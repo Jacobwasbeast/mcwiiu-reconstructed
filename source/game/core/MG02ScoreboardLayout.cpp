@@ -24,19 +24,73 @@ MG02ScoreboardLayout::~MG02ScoreboardLayout()
 {
 }
 
+namespace
+{
+int playerInfoInt(const PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
+}
+
+unsigned int playerInfoUint(const PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(info) + offset);
+}
+}
+
 bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first == 0)
-        return second != 0;
-    if (second == 0)
+    const char* firstBytes = reinterpret_cast<const char*>(first);
+    const char* secondBytes = reinterpret_cast<const char*>(second);
+
+    if (firstBytes[0x28] == 0)
+    {
+        if (secondBytes[0x28] != 0)
+        {
+            return false;
+        }
+    }
+    else if (secondBytes[0x28] == 0)
+    {
+        return true;
+    }
+
+    if (playerInfoInt(second, 0x40) < playerInfoInt(first, 0x40))
+    {
+        return true;
+    }
+    if (playerInfoInt(second, 0x40) > playerInfoInt(first, 0x40))
+    {
         return false;
-    if (first->voiceStatus != second->voiceStatus)
-        return first->voiceStatus != 0;
-    if (first->colour != second->colour)
-        return first->colour < second->colour;
-    if (first->smallId != second->smallId)
-        return first->smallId < second->smallId;
-    return first->name < second->name;
+    }
+
+    if (playerInfoUint(first, 0x2c) > playerInfoUint(second, 0x2c))
+    {
+        return true;
+    }
+    if (playerInfoUint(first, 0x2c) < playerInfoUint(second, 0x2c))
+    {
+        return false;
+    }
+
+    if (playerInfoUint(first, 0x30) > playerInfoUint(second, 0x30))
+    {
+        return true;
+    }
+    if (playerInfoUint(first, 0x30) < playerInfoUint(second, 0x30))
+    {
+        return false;
+    }
+
+    if (playerInfoUint(second, 0x34) < playerInfoUint(first, 0x34))
+    {
+        return true;
+    }
+    if (playerInfoUint(second, 0x34) > playerInfoUint(first, 0x34))
+    {
+        return false;
+    }
+
+    return playerInfoInt(first, 0x24) > playerInfoInt(second, 0x24);
 }
 
 void MG02ScoreboardLayout::Init(int value)

@@ -362,7 +362,11 @@ int ClientScoreboard::GetTotalBlocksDestroyed(const StatsUID& suid)
 {
     PlayerStats* player = GetPlayerStats(suid);
     int total = 0;
-    if (player != NULL) for (PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin(); it != player->mRoundStats.end(); ++it) total += it->second.mBlocksMined;
+    if (player != NULL)
+    {
+        PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
+        for (; it != player->mRoundStats.end(); ++it) total += it->second.mBlocksMined;
+    }
     return total;
 }
 
@@ -370,13 +374,26 @@ int ClientScoreboard::GetTotalDistanceTravelled(const StatsUID& suid)
 {
     PlayerStats* player = GetPlayerStats(suid);
     int total = 0;
-    if (player != NULL) for (PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin(); it != player->mRoundStats.end(); ++it) total += (int)it->second.mDistanceTravelled;
+    if (player != NULL)
+    {
+        PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
+        for (; it != player->mRoundStats.end(); ++it)
+            total += (int)it->second.mDistanceTravelled;
+    }
     return total;
 }
 
 int ClientScoreboard::GetTotalTrapsSetOff(const StatsUID& suid)
 {
-    return GetTotalBlocksDestroyed(suid);
+    PlayerStats* player = GetPlayerStats(suid);
+    int total = 0;
+    if (player != NULL && !player->mRoundStats.empty())
+    {
+        PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
+        for (; it != player->mRoundStats.end(); ++it)
+            total += it->second.mLastCheckpointId;
+    }
+    return total;
 }
 
 int ClientScoreboard::GetTotalJumps(const StatsUID& suid)

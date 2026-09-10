@@ -33,6 +33,8 @@ public:
   std::vector<GhostRecordSample> samples;
   bool hasRecording;
   Vec3 startPos;
+  int mElapsedHigh;
+  unsigned int mElapsedLow;
   int time;
   int score;
   GhostRecord(Vec3*);
@@ -103,9 +105,15 @@ public:
   bool mSaving;
   bool mDone;
   bool mPlayback;
+  int mLastTickHigh;
+  unsigned int mLastTickLow;
+  int mPlaybackTimeHigh;
+  unsigned int mPlaybackTimeLow;
   GhostRecord* mRecording[4];
   GhostRecord* mLoaded[4];
  bool mRecordingActive[4];
+ bool mRecordingSlotFlags1[4];
+ bool mRecordingSlotFlags2[4];
   void* mSaveHeaderBuffer;
   int mSaveHeaderStatus;
   std::map<int, TrackHeader> mTrackHeaders[4];

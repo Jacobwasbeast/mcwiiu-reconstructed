@@ -381,17 +381,19 @@ void Compression::VitaVirtualDecompress(void* pDest, unsigned int* pDestSize, vo
         }
         else
         {
-            ++inputOffset;
+            unsigned char runLengthByte = pInput[inputOffset + 1];
 
-            unsigned int runLength = pInput[inputOffset];
+            inputOffset += 2;
 
-            if (runLength != 0)
+            if (runLengthByte != 0)
             {
+                unsigned int blockCount = runLengthByte >> 3;
+                unsigned int remainder = runLengthByte & 7;
+                unsigned int runLength = blockCount * 8 + remainder;
+
                 memset(pOutput + outputSize, 0, runLength);
                 outputSize += runLength;
             }
-
-            ++inputOffset;
         }
     }
 

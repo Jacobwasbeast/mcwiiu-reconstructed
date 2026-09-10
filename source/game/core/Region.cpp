@@ -7,6 +7,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
+#include "game/world/block/LeafBlock.hpp"
 
 namespace
 {
@@ -171,7 +172,36 @@ unsigned short Region::getExtraElement(int x, int y, int z) { LevelChunk* c = ge
 void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement) { *element = getElement(x, y, z); *extraElement = getExtraElement(x, y, z); }
 Block* Region::getBlock(const BlockPos& pos) { return Block::byId(getBlockId(pos.x, pos.y, pos.z)); }
 void Region::getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock) { *block = getBlock(pos); *extraBlock = getExtraBlock(pos); }
-bool Region::isSolidRender(const BlockPos& pos) { return getBlock(pos)->isSolidRender(getBlockState(pos)); }
+bool Region::isSolidRender(const BlockPos& pos)
+{
+    const BlockState* state = getBlockState(pos);
+
+    if (state == NULL)
+    {
+        return false;
+    }
+
+    if (!LeafBlock::isLeaves(state->getBlock()))
+    {
+        return state->getBlock()->isSolidRender(state);
+    }
+
+    int xOffsets[6] = { 1, -1, 0, 0, 0, 0 };
+    int yOffsets[6] = { 0, 0, 1, -1, 0, 0 };
+    int zOffsets[6] = { 0, 0, 0, 0, 1, -1 };
+
+    for (int i = 0; i < 6; ++i)
+    {
+        const BlockState* neighbour = mLevel->getBlockState(pos.offset(xOffsets[i], yOffsets[i], zOffsets[i]));
+
+        if (!LeafBlock::isLeaves(neighbour->getBlock()) || !neighbour->isSolidRender())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
 Biome* Region::getBiome(const BlockPos& pos) { LevelChunk* c = getChunk(pos.x >> 4, pos.z >> 4); return c == NULL ? NULL : c->getBiome(pos, getBiomeSource()); }
 BiomeSource* Region::getBiomeSource() { return mLevel->getBiomeSource(); }
 int Region::getMaxBuildHeight() { return 256; }

@@ -403,6 +403,13 @@ public:
     void SetTickTMSDLCFiles(bool value);
     void SetFakePadValue(int p1, unsigned char p2);
 
+    static int GetPlayerUIDIdentityField(const PlayerUID& uid);
+    static void SetPlayerUIDIdentityField(PlayerUID& uid, int value);
+    static void SyncCachedPlayerUID(CMinecraftApp* app, int player);
+    static bool HasActiveLocalPlayer(int player);
+    static void HandleSignInPlayerSlot(CMinecraftApp* app, unsigned int player, unsigned int primaryPad,
+                                       unsigned int usersMask, unsigned int changedMask, bool identityChanged);
+
 private:
     struct XuiActionData
     {
@@ -441,6 +448,8 @@ private:
     float mAppTime;
     float mFrameTime;
     float mPerformanceCounterScale;
+    unsigned int mTipRotationIndex;
+    _TipData mTipData[5];
     bool mDLCInstallProcessCompleted;
     bool mDLCInstallPending;
     unsigned int mDLCInstallCount;
@@ -473,6 +482,8 @@ private:
     unsigned int mExtraGameData;
     boost::unordered_map<int, std::wstring> mLocaleToString;
     boost::unordered_map<std::wstring, int> mStringToLocale;
+    PlayerUID mCachedSignInUIDs[4];
+    static unsigned int sPreviousSignInUsersMask;
 };
 extern CConsoleMinecraftApp gApp;
 extern CMinecraftApp* g_pApp;

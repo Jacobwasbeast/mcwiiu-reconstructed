@@ -1,10 +1,18 @@
 #include "game/core/CMinecraftApp.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/L10N.hpp"
+#include "game/client/audio/ConsoleSoundEngine.hpp"
+#include "game/client/audio/SoundEngine.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "game/core/GameType.hpp"
@@ -31,9 +39,42 @@ unsigned int GetTickCount();
 
 static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
 static boost::unordered_map<PlayerUID, MOJJANG_DATA*> g_mojangData;
+unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
+static TIPSTRUCT sGeneralTips[] = {
+    {0, 0xE4D51ED8}, {0, 0x56DC8E13}, {0, 0x30DA13AA}, {0, 0xA2E182E5}, {0, 0xEEE677B7},
+    {0, 0xC8E3FD4E}, {0, 0xDAC3C5F9}, {0, 0xB4C14B90}, {0, 0x19F43D28}, {0, 0x3FF6B791},
+    {0, 0x65F931FA}, {0, 0x8BFBAC63}, {0, 0xB1FE26CC}, {0, 0xD800A135}, {0, 0xFE031B9E},
+    {0, 0x24059607}, {0, 0xE9E069E0}, {0, 0x0FE2E449}, {0, 0x0A78FA5B}, {0, 0xBE740589},
+    {0, 0x98718B20}, {0, 0xA282E3FF}, {0, 0x7C806996}, {0, 0x567DEF2D}, {0, 0x307B74C4},
+    {0, 0x3A8CCDA3}, {0, 0x148A533A}, {0, 0xF9FD6E2A}, {0, 0x1FFFE893}, {0, 0xADF87958},
+    {0, 0xD3FAF3C1}, {0, 0x920757CE}, {0, 0xB809D237}, {0, 0x6C04DD65}, {0, 0xC9E99AE2},
+    {0, 0xEFEC154B}, {0, 0xEA822B5D}, {0, 0xC47FB0F4}, {0, 0x3687202F}, {0, 0x1084A5C6},
+    {0, 0x527841B9}, {0, 0x2C75C750}, {0, 0x9E7D368B}, {0, 0x787ABC22}, {0, 0x1A95FEA5},
+    {0, 0xF493843C}, {0, 0xDA069F2C}
+};
+static TIPSTRUCT sAlternateTips[] = {
+    {0, 0x39F3BCDA}, {0, 0x13F14271}, {0, 0xEDEEC808}, {0, 0xF80020E7}, {0, 0xABFB2C15},
+    {0, 0x85F8B1AC}, {0, 0x2FE263FB}, {0, 0x09DFE992}, {0, 0x22D3FFFA}, {0, 0x48D67A63},
+    {0, 0xD6CF0B28}, {0, 0xFCD18591}, {0, 0xBADDE99E}, {0, 0xE0E06407}, {0, 0x6ED8F4CC},
+    {0, 0x94DB6F35}, {0, 0xF2C02CB2}, {0, 0x18C2A71B}, {0, 0x520926A9}, {0, 0x2C06AC40},
+    {0, 0x9E0E1B7B}, {0, 0x780BA112}, {0, 0xEA13104D}, {0, 0xC41095E4}
+};
+static TIPSTRUCT sMiniGameTips1[] = {
+    {0, 0x6F523BBE}, {0, 0xA85A4173}, {0, 0x8257C70A}, {0, 0xE0684AD1},
+    {0, 0x88938BD8}, {0, 0x3440F824}
+};
+static TIPSTRUCT sMiniGameTips2[] = {
+    {0, 0xDBA695E0}, {0, 0x4DAE051B}, {0, 0x27AB8AB2}, {0, 0x99B2F9ED},
+    {0, 0x73B07F84}, {0, 0xE5B7EEBF}, {0, 0xBFB57456}, {0, 0x31BCE391}
+};
+static TIPSTRUCT sMiniGameTipsOther[] = {
+    {0, 0x87A99AF1}, {0, 0xADAC155A}, {0, 0xD3AE8FC3}, {0, 0xF9B10A2C}, {0, 0x1FB38495},
+    {0, 0x45B5FEFE}, {0, 0x31934D40}, {0, 0x5795C7A9}, {0, 0x7222ACB9}, {0, 0x4C203250},
+    {0, 0xBE27A18B}, {0, 0x98252722}, {0, 0x0A2C965D}
+};
 
 uint32_t DeviceFullErrorReturn__FPv(void* context)
 {
@@ -62,7 +103,7 @@ CMinecraftApp::_TipData::_TipData() : m_index(0), m_count(0), m_tips(0) {}
 CMinecraftApp::_TipData::_TipData(TIPSTRUCT* tips, unsigned int count)
     : m_index(0), m_count(count), m_tips(tips)
 {
-    unsigned int first = tips == 0 ? 1 : 0;
+    unsigned int first = tips == sGeneralTips ? 1 : 0;
     for (unsigned int index = first; index < count; ++index)
         tips[index].sortValue = sTipRandom.nextInt();
     if (count > 1)
@@ -106,6 +147,8 @@ CMinecraftApp::CMinecraftApp()
     std::fill(mPlayerIds, mPlayerIds + 8, 0);
     std::fill(mPlayerPrivileges, mPlayerPrivileges + 8, 0);
     std::fill(mPlayerGameTypes, mPlayerGameTypes + 8, 0);
+    for (int player = 0; player < 4; ++player)
+        mCachedSignInUIDs[player] = PlayerUID(0);
 }
 CMinecraftApp::~CMinecraftApp()
 {
@@ -342,8 +385,192 @@ uint8_t CMinecraftApp::GetLiveLinkRequired()
 {
     return mLiveLinkRequired;
 }
+int CMinecraftApp::GetPlayerUIDIdentityField(const PlayerUID& uid)
+{
+    int value = 0;
+    std::memcpy(&value, reinterpret_cast<const unsigned char*>(&uid) + 0x14, sizeof(value));
+    return value;
+}
+
+void CMinecraftApp::SetPlayerUIDIdentityField(PlayerUID& uid, int value)
+{
+    std::memcpy(reinterpret_cast<unsigned char*>(&uid) + 0x14, &value, sizeof(value));
+}
+
+void CMinecraftApp::SyncCachedPlayerUID(CMinecraftApp* app, int player)
+{
+    if (gProfile->IsSignedIn(player))
+    {
+        gProfile->GetXUID(player, &app->mCachedSignInUIDs[player], true);
+        return;
+    }
+    app->mCachedSignInUIDs[player] = PlayerUID(0);
+    SetPlayerUIDIdentityField(app->mCachedSignInUIDs[player], 0);
+}
+
+bool CMinecraftApp::HasActiveLocalPlayer(int player)
+{
+    CGameNetworkManager& network = CGameNetworkManager::sInstance;
+    if (network.GetLocalPlayerByUserIndex(player) != NULL)
+        return true;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    return minecraft != NULL && minecraft->mLocalPlayers[player].get() != NULL;
+}
+
+void CMinecraftApp::HandleSignInPlayerSlot(CMinecraftApp* app, unsigned int player, unsigned int primaryPad,
+                                           unsigned int usersMask, unsigned int changedMask, bool identityChanged)
+{
+    if (player == primaryPad)
+        return;
+
+    const unsigned int playerBit = 1u << (player & 0x3f);
+    if (identityChanged && GetPlayerUIDIdentityField(app->mCachedSignInUIDs[player]) != 0 &&
+        CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(static_cast<int>(player)) != NULL)
+    {
+        app->SetAction(static_cast<int>(player), static_cast<eXuiAction>(0xb), NULL);
+        return;
+    }
+
+    if ((changedMask & playerBit) != playerBit)
+        return;
+
+    PlayerUID signedInUid(0);
+    if ((usersMask & playerBit) != 0)
+    {
+        gProfile->GetXUID(static_cast<int>(player), &signedInUid, true);
+        if (gProfile->AreXUIDSEqual(signedInUid, app->mCachedSignInUIDs[player]))
+            return;
+    }
+
+    app->InvalidateBannedList(static_cast<int>(player));
+    if (HasActiveLocalPlayer(static_cast<int>(player)))
+        app->SetAction(static_cast<int>(player), static_cast<eXuiAction>(0xb), NULL);
+}
+
+void CMinecraftApp::ClearSignInChangeUsersMask()
+{
+    sPreviousSignInUsersMask = 0;
+}
+
 uint64_t CMinecraftApp::SignInChangeCallback(void* context, bool signedIn, unsigned int userIndex)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    const int primaryPad = gProfile->GetPrimaryPad();
+    const unsigned int usersMask = userIndex;
+
+    if (primaryPad != -1)
+    {
+        if (gProfile->GetLockedProfile() == -1)
+        {
+            app->InvalidateBannedList(primaryPad);
+            if (gStorage != NULL)
+                gStorage->CheckForProfileUpdatesRequired();
+            app->ClearAndResetDLCDownloadQueue();
+            app->ClearDLCInstalled();
+        }
+        else if (((usersMask & (1u << (primaryPad & 0x3f))) == 0) || signedIn)
+        {
+            app->SetAction(primaryPad, static_cast<eXuiAction>(8), NULL);
+            app->InvalidateBannedList(primaryPad);
+            if (gStorage != NULL)
+                gStorage->CheckForProfileUpdatesRequired();
+            app->ClearAndResetDLCDownloadQueue();
+            app->ClearDLCInstalled();
+        }
+        else
+        {
+            const unsigned int changedMask = usersMask ^ sPreviousSignInUsersMask;
+            CGameNetworkManager& network = CGameNetworkManager::sInstance;
+
+            if (!network.IsInSession())
+            {
+                if (app->GetLiveLinkRequired() != 0 && !gProfile->AllowedToPlayMultiplayer(primaryPad))
+                    app->SetAction(primaryPad, static_cast<eXuiAction>(0x10), NULL);
+            }
+            else
+            {
+                bool identityChanged = false;
+                for (int player = 0; player < 4; ++player)
+                {
+                    int currentIdentity = 0;
+                    if (gProfile->IsSignedIn(player))
+                    {
+                        PlayerUID currentUid(0);
+                        gProfile->GetXUID(player, &currentUid, true);
+                        currentIdentity = GetPlayerUIDIdentityField(currentUid);
+                    }
+                    const int cachedIdentity = GetPlayerUIDIdentityField(app->mCachedSignInUIDs[player]);
+                    if (cachedIdentity != 0 && currentIdentity != 0 && cachedIdentity != currentIdentity)
+                        identityChanged = true;
+                }
+
+                int playerThreeIdentity = 0;
+                if (gProfile->IsSignedIn(3))
+                {
+                    PlayerUID playerThreeUid(0);
+                    gProfile->GetXUID(3, &playerThreeUid, true);
+                    playerThreeIdentity = GetPlayerUIDIdentityField(playerThreeUid);
+                }
+
+                const int cachedPlayerThreeIdentity = GetPlayerUIDIdentityField(app->mCachedSignInUIDs[3]);
+                if ((cachedPlayerThreeIdentity == 0 || playerThreeIdentity == 0 ||
+                     cachedPlayerThreeIdentity == playerThreeIdentity))
+                {
+                    if (identityChanged)
+                    {
+                        int messageParameter = static_cast<int>(0xb9a1bf4d);
+                        gConsoleUIController.RequestErrorMessage(static_cast<int>(0xdad07967),
+                                                                 static_cast<int>(0x4eec6392),
+                                                                 &messageParameter, 1,
+                                                                 static_cast<unsigned int>(primaryPad),
+                                                                 NULL, NULL, NULL, true);
+                    }
+                }
+                else
+                {
+                    identityChanged = true;
+                    int messageParameter = static_cast<int>(0xb9a1bf4d);
+                    gConsoleUIController.RequestErrorMessage(static_cast<int>(0xdad07967),
+                                                             static_cast<int>(0x4eec6392),
+                                                             &messageParameter, 1,
+                                                             static_cast<unsigned int>(primaryPad),
+                                                             NULL, NULL, NULL, true);
+                }
+
+                const bool needsLiveLinkAction =
+                    !gProfile->AllowedToPlayMultiplayer(primaryPad) && !network.IsLocalGame();
+
+                for (unsigned int player = 0; player < 4; player += 2)
+                    HandleSignInPlayerSlot(app, player, static_cast<unsigned int>(primaryPad),
+                                           usersMask, changedMask, identityChanged);
+                for (unsigned int player = 1; player < 4; player += 2)
+                    HandleSignInPlayerSlot(app, player, static_cast<unsigned int>(primaryPad),
+                                           usersMask, changedMask, identityChanged);
+
+                if (needsLiveLinkAction)
+                    app->SetAction(primaryPad, static_cast<eXuiAction>(0x10), NULL);
+
+                network.HandleSignInChange();
+            }
+
+            if (gStorage != NULL)
+            {
+                for (int player = 0; player < 4; ++player)
+                {
+                    if (primaryPad == player)
+                        continue;
+                    const unsigned int playerBit = 1u << (player & 0x3f);
+                    if ((changedMask & playerBit) != 0 && (usersMask & playerBit) != 0)
+                        gStorage->ReadFromProfile(player, 0);
+                }
+            }
+        }
+    }
+
+    sPreviousSignInUsersMask = usersMask;
+    for (int player = 0; player < 4; ++player)
+        SyncCachedPlayerUID(app, player);
+
     return 0;
 }
 void CMinecraftApp::ProfileReadErrorCallback(void* context)
@@ -401,6 +628,15 @@ int CMinecraftApp::TipsSortFunction(const void* firstTip, const void* secondTip)
 }
 void CMinecraftApp::InitialiseTips()
 {
+    if (!gProfile->IsFullVersion())
+        sGeneralTips[0].tipId = 0xAD79941;
+    std::memset(mTipData, 0, sizeof(mTipData));
+    mTipData[0] = _TipData(sGeneralTips, sizeof(sGeneralTips) / sizeof(sGeneralTips[0]));
+    mTipData[1] = _TipData(sAlternateTips, sizeof(sAlternateTips) / sizeof(sAlternateTips[0]));
+    mTipData[2] = _TipData(sMiniGameTips1, sizeof(sMiniGameTips1) / sizeof(sMiniGameTips1[0]));
+    mTipData[3] = _TipData(sMiniGameTips2, sizeof(sMiniGameTips2) / sizeof(sMiniGameTips2[0]));
+    mTipData[4] = _TipData(sMiniGameTipsOther, sizeof(sMiniGameTipsOther) / sizeof(sMiniGameTipsOther[0]));
+    mTipRotationIndex = 0;
 }
 void CMinecraftApp::SetAppPaused(bool firstArgument)
 {
@@ -571,6 +807,170 @@ uint32_t CMinecraftApp::TexturePackDialogReturned(void* context, int button, C4J
 }
 void CMinecraftApp::SetupMiniGameMusic()
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    unsigned int packId = minecraft->mTexturePackRepository->getSelectedId();
+    ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
+    const unsigned int themeId = masterGameMode->GetCurrentThemeId();
+    const bool waitingForMusicStart = masterGameMode->IsWaitingForMusicStartEvent();
+    const MiniGameDef* miniGame = minecraft->GetMiniGame();
+    SoundEngine* soundEngine = minecraft->mSoundEngine;
+
+    const int miniGameId = miniGame->GetId();
+    unsigned int playMiniGameId = static_cast<unsigned int>(miniGameId);
+
+    if (miniGameId == static_cast<int>(eMiniGameId_Battle))
+    {
+        if (packId < 0x806U)
+        {
+            if (packId == 0U)
+            {
+                if (themeId == 0x11U)
+                {
+                    soundEngine->SetStreamingSounds(
+                        0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29,
+                        0x2a, 0x2a, 0x3e, 0x44, 0x57);
+                }
+                else
+                {
+                    soundEngine->SetStreamingSounds(
+                        0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f, 0x20, 0x29,
+                        0x2a, 0x2a, 0x3e, 0x44, 0x57);
+                }
+            }
+            else if (packId == 0x801U)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x51, 0x53, 0x20, 0x29, 0x2a,
+                    0x2a, 0x3e, 0x44, 0x57);
+            }
+            else if (packId == 0x803U)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x45, 0x47, 0x20, 0x29, 0x2a,
+                    0x2a, 0x3e, 0x44, 0x57);
+            }
+            else
+            {
+                playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+                goto play_streaming;
+            }
+        }
+        else if (packId == 0x806U || packId == 0x1000806U)
+        {
+            soundEngine->SetStreamingSounds(
+                0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x48, 0x4c, 0x20, 0x29, 0x2a,
+                0x2a, 0x3e, 0x44, 0x57);
+        }
+        else if (packId == 0x808U || packId == 0x1000808U)
+        {
+            soundEngine->SetStreamingSounds(
+                0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x4d, 0x50, 0x20, 0x29, 0x2a,
+                0x2a, 0x3e, 0x44, 0x57);
+        }
+        else
+        {
+            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+            goto play_streaming;
+        }
+
+        playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+    }
+    else if (miniGameId == static_cast<int>(eMiniGameId_Glide))
+    {
+        if (packId == 0U)
+        {
+            if (themeId < 10U)
+            {
+                if (1U < themeId)
+                {
+                    if (3U < themeId)
+                    {
+                        if (themeId != 4U && themeId != 6U)
+                        {
+                            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+                            goto play_streaming;
+                        }
+                        soundEngine->SetStreamingSounds(
+                            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20,
+                            0x29, 0x2d, 0x30, 0x3e, 0x44, 0x57);
+                    }
+                    else
+                    {
+                        soundEngine->SetStreamingSounds(
+                            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20,
+                            0x29, 0x2a, 0x2c, 0x3e, 0x44, 0x57);
+                    }
+                }
+            }
+            else if (themeId < 0xbU)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29,
+                    0x2d, 0x30, 0x3e, 0x44, 0x57);
+            }
+            else if (themeId == 0xbU)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29,
+                    0x31, 0x33, 0x3e, 0x44, 0x57);
+            }
+            else if (themeId == 0xcU)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29,
+                    0x34, 0x36, 0x3e, 0x44, 0x57);
+            }
+            else if (themeId == 0xfU)
+            {
+                soundEngine->SetStreamingSounds(
+                    0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29,
+                    0x3a, 0x3b, 0x3e, 0x44, 0x57);
+            }
+            else
+            {
+                playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+                goto play_streaming;
+            }
+            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+        }
+        else if (packId == 0x801U)
+        {
+            soundEngine->SetStreamingSounds(
+                0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29, 0x37,
+                0x39, 0x3e, 0x44, 0x57);
+            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+        }
+        else if (packId == 0x803U)
+        {
+            soundEngine->SetStreamingSounds(
+                0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x54, 0x56, 0x20, 0x29, 0x3c,
+                0x3d, 0x3e, 0x44, 0x57);
+            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+        }
+        else
+        {
+            playMiniGameId = static_cast<unsigned int>(miniGame->GetId());
+        }
+    }
+
+play_streaming:
+    if (playMiniGameId != 0U)
+    {
+        if (playMiniGameId < 4U)
+        {
+            soundEngine->playStreaming(NULL, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, false, waitingForMusicStart,
+                                       ConsoleSoundEngine::eAudioDelayType_None);
+            return;
+        }
+        if (playMiniGameId != static_cast<unsigned int>(eMiniGameId_Build))
+        {
+            soundEngine->playStreaming(NULL, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, false, false,
+                                       ConsoleSoundEngine::eAudioDelayType_Random);
+            return;
+        }
+    }
+    soundEngine->playStreaming(NULL, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, false, false,
+                               ConsoleSoundEngine::eAudioDelayType_None);
 }
 uint32_t CMinecraftApp::GameModeTransitionThreadProc(void* context)
 {
@@ -578,6 +978,30 @@ uint32_t CMinecraftApp::GameModeTransitionThreadProc(void* context)
 }
 uint64_t CMinecraftApp::GameModeTransitionComplete(void* context)
 {
+    gConsoleUIController.setCleanupOnReload(false);
+    gConsoleUIController.CloseUIScenes(0xff, false);
+
+    const int primaryPad = gProfile->GetPrimaryPad();
+    if (g_pApp->GetXuiAction(primaryPad) != 3 &&
+        !CGameNetworkManager::sInstance.IsLeavingGame() &&
+        context == reinterpret_cast<void*>(1))
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        int playerIndex = 0;
+        for (int group = 0; group < 2; ++group)
+        {
+            for (int slot = 0; slot < 2; ++slot)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[playerIndex];
+                if (localPlayer)
+                {
+                    localPlayer->SetWaitingForScoreboard(true);
+                    g_pApp->SetAction(playerIndex, static_cast<eXuiAction>(7), NULL);
+                }
+                ++playerIndex;
+            }
+        }
+    }
     return 0;
 }
 void CMinecraftApp::SetTMSAction(int32_t firstArgument, uint32_t secondArgument)
