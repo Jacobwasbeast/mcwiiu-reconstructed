@@ -41,8 +41,8 @@ void SavedDataStorage::loadAuxValues()
             DataInputStream stream(&saveFileStream);
             CompoundTag* tag = NbtIo::read(&stream);
             stream.close();
-            boost::unordered_map<std::wstring, Tag*>& tags = tag->getAllTagsMap();
-            for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags.begin(); it != tags.end(); ++it)
+            boost::unordered_map<std::wstring, Tag*>* tags = tag->getAllTagsMap();
+            for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin(); it != tags->end(); ++it)
             {
                 ShortTag* shortTag = dynamic_cast<ShortTag*>(it->second);
                 if (shortTag != NULL)

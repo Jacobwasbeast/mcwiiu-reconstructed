@@ -38,7 +38,7 @@ public:
     virtual bool requiresConversion(ConsoleSaveFile* saveFile, const std::wstring& levelId);
     virtual bool convertLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, ProgressListener* progressListener);
 
-private:
+protected:
     static void deleteRecursive(std::vector<File*>* files);
 
     File mBaseDir;

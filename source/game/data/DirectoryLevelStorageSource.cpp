@@ -109,8 +109,7 @@ void DirectoryLevelStorageSource::deleteLevel(const std::wstring& levelId)
 
 boost::shared_ptr<LevelStorage> DirectoryLevelStorageSource::selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing)
 {
-    File level(mBaseDir, levelId);
-    return boost::shared_ptr<LevelStorage>(new DirectoryLevelStorage(saveFile, level, levelId, bCreateIfMissing, mFixer));
+    return boost::shared_ptr<LevelStorage>(new DirectoryLevelStorage(saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
 }
 
 bool DirectoryLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile, const std::wstring& levelId)

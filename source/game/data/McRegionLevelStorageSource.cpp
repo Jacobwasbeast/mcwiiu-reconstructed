@@ -6,23 +6,10 @@
 #include "game/data/McRegionLevelStorage.hpp"
 #include "game/network/ProgressListener.hpp"
 #include "game/util/Math.hpp"
-
-static void eraseFoldersRecursive(std::vector<File*>* files)
-{
-    std::vector<File*>::iterator it;
-    for (it = files->begin(); it != files->end(); ++it)
-    {
-        File* file = *it;
-        if (file->isDirectory())
-        {
-            eraseFoldersRecursive(file->listFiles());
-        }
-        file->_delete();
-    }
-}
+#include "game/world/LevelData.hpp"
 
 McRegionLevelStorageSource::McRegionLevelStorageSource(File file, DataFixerUpper* fixer)
-    : DirectoryLevelStorageSource(file, fixer), mFixer(fixer)
+    : DirectoryLevelStorageSource(file, fixer)
 {
 }
 
@@ -47,21 +34,40 @@ void McRegionLevelStorageSource::clearAll()
 boost::shared_ptr<LevelStorage> McRegionLevelStorageSource::selectLevel(
     ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing)
 {
-    File level(levelId);
     return boost::shared_ptr<LevelStorage>(new McRegionLevelStorage(
-        saveFile, level, levelId, bCreateIfMissing, mFixer));
+        saveFile, mBaseDir, levelId, bCreateIfMissing, mFixer));
 }
 
 bool McRegionLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile,
                                                const std::wstring& levelId)
 {
-    return saveFile != 0 && !levelId.empty() && saveFile->getSizeOnDisk() != 0;
+    LevelData* levelData = getDataTagFor(saveFile, levelId);
+    if (levelData != 0)
+    {
+        if (levelData->getVersion() == 0)
+        {
+            delete levelData;
+            return true;
+        }
+        delete levelData;
+    }
+    return false;
 }
 
 bool McRegionLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile,
                                                     const std::wstring& levelId)
 {
-    return saveFile != 0 && !levelId.empty() && saveFile->getSizeOnDisk() != 0;
+    LevelData* levelData = getDataTagFor(saveFile, levelId);
+    if (levelData != 0)
+    {
+        if (levelData->getVersion() == 0)
+        {
+            delete levelData;
+            return true;
+        }
+        delete levelData;
+    }
+    return false;
 }
 
 bool McRegionLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile,
@@ -78,9 +84,9 @@ void McRegionLevelStorageSource::eraseFolders(std::vector<File*>* folders, int c
     for (it = folders->begin(); it != folders->end(); ++it)
     {
         File* folder = *it;
-        eraseFoldersRecursive(folder->listFiles());
+        deleteRecursive(folder->listFiles());
         folder->_delete();
         ++current;
-        progressListener->progressStage(Math::round(100.0 * current / total));
+        progressListener->progressStagePercentage(Math::round(100.0 * current / total));
     }
 }

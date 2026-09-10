@@ -48,7 +48,7 @@ void DirectoryLevelStorage::save(boost::shared_ptr<Player> player)
 {
     if (!player)
         return;
-    PlayerUID uid = player->m_0x784;
+    PlayerUID uid = player->mXuid;
     if (uid == PlayerUID(0)) {
         dontSaveMapMappingForPlayer(uid);
         return;
@@ -89,7 +89,7 @@ CompoundTag* DirectoryLevelStorage::load(boost::shared_ptr<Player> player)
 {
     if (!player)
         return 0;
-    CompoundTag* tag = loadPlayerDataTag(player->m_0x784);
+    CompoundTag* tag = loadPlayerDataTag(player->mXuid);
     if (tag != 0) {
         if (mFixer)
             tag = mFixer->updateData(static_cast<DataFixTypes::EDataFixTypes>(1), tag);

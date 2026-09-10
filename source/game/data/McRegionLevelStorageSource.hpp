@@ -35,12 +35,10 @@ public:
                               ProgressListener* progressListener);
 
 private:
-    static void eraseFolders(std::vector<File*>* folders, int current, int total,
-                             ProgressListener* progressListener);
+    void eraseFolders(std::vector<File*>* folders, int current, int total,
+                      ProgressListener* progressListener);
     void convertRegions(File& regionFile, std::vector<ChunkFile*>* chunks, int current,
                         int total, ProgressListener* progressListener);
-
-    DataFixerUpper* mFixer;
 };
 
 #endif
