@@ -150,8 +150,8 @@ public:
     virtual void handleBlockRegionUpdate(boost::shared_ptr<BlockRegionUpdatePacket> packet);
     virtual void handleBlockUpdate(boost::shared_ptr<ClientboundBlockUpdatePacket> packet);
     virtual void handleDisconnect(boost::shared_ptr<DisconnectPacket> packet);
-    static uint32_t ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult);
-    static uint32_t HostDisconnectReturned(void* context, int result, C4JStorage::EMessageResult messageResult);
+    static int ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult);
+    static int HostDisconnectReturned(void* context, int result, C4JStorage::EMessageResult messageResult);
     virtual void onDisconnect(DisconnectPacket::eDisconnectReason reason, void* userData);
     void sendAndDisconnect(boost::shared_ptr<Packet> packet);
     virtual void handleTakeItemEntity(boost::shared_ptr<ClientboundTakeItemEntityPacket> packet);

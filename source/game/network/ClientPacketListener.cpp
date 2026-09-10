@@ -47,6 +47,10 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "game/core/DLCPack.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
+#include "game/client/render/TexturePack.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/item/Inventory.hpp"
@@ -91,6 +95,18 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/minigame/Tutorial.hpp"
+#include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/CauldronBlockEntity.hpp"
+#include "game/world/block/ConduitBlockEntity.hpp"
+
+namespace
+{
+    bool blockEntityTypeMatches(BlockEntity* entity, unsigned long long expectedType)
+    {
+        return entity != NULL && entity->GetType() == expectedType;
+    }
+}
 
 ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket, int playerId)
     : m_closed(false), m_connection(0), mRemoteAddress(L""), m_socketOpen(false),
@@ -113,8 +129,94 @@ ClientPacketListener::~ClientPacketListener()
     DeleteCriticalSection(&m_mutex);
 }
 
-void ClientPacketListener::handleBlockEntityDataInternal(boost::shared_ptr<ClientboundBlockEntityDataPacket> packet, Level* level)
+void ClientPacketListener::handleBlockEntityDataInternal(
+    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet, Level* level)
 {
+    if (level == NULL || packet == NULL)
+    {
+        return;
+    }
+
+    BlockPos pos = packet->getPos();
+    if (!level->hasChunkAt(pos))
+    {
+        return;
+    }
+
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    if (blockEntity == NULL)
+    {
+        return;
+    }
+
+    const int type = packet->getType();
+    CompoundTag* tag = packet->getTag();
+
+    if (type == 0xc)
+    {
+        if (blockEntityTypeMatches(blockEntity.get(), 0x1000211ULL))
+        {
+            boost::shared_ptr<CauldronBlockEntity> cauldron =
+                boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
+            cauldron->loadFromPacket(level, pos, tag);
+        }
+        return;
+    }
+
+    if (type == 0xd)
+    {
+        if (blockEntityTypeMatches(blockEntity.get(), 0x1200212ULL))
+        {
+            boost::shared_ptr<ConduitBlockEntity> conduit =
+                boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
+            conduit->loadFromPacket(level, pos, tag);
+        }
+        return;
+    }
+
+    bool loadTag = false;
+    switch (type)
+    {
+    case 0:
+        break;
+    case 1:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1200201ULL);
+        break;
+    case 2:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1000209ULL);
+        break;
+    case 3:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1e00204ULL);
+        break;
+    case 4:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1200207ULL);
+        break;
+    case 5:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x100020dULL);
+        break;
+    case 6:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x100020cULL);
+        break;
+    case 8:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1300201ULL);
+        break;
+    case 9:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1000202ULL);
+        break;
+    case 10:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x120020fULL);
+        break;
+    case 11:
+        loadTag = blockEntityTypeMatches(blockEntity.get(), 0x1000210ULL);
+        break;
+    default:
+        break;
+    }
+
+    if (loadTag)
+    {
+        blockEntity->load(tag);
+    }
 }
 
 uint8_t ClientPacketListener::isStarted() { return m_started ? 1 : 0; }
@@ -372,13 +474,39 @@ void ClientPacketListener::handleDisconnect(boost::shared_ptr<DisconnectPacket> 
     g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(3), (void*)1);
 }
 
-uint32_t ClientPacketListener::ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
+int ClientPacketListener::ExitGameAndSaveReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
 {
+    if (messageResult == static_cast<C4JStorage::EMessageResult>(5))
+        gApp.SetAction(result, static_cast<eXuiAction>(1), NULL);
     return 0;
 }
 
-uint32_t ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
+int ClientPacketListener::HostDisconnectReturned(void* context, int result, C4JStorage::EMessageResult messageResult)
 {
+    TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+    if (selected != TexturePackRepository::defaultTexturePack)
+    {
+        DLCPack* pack = selected->getDLCPack();
+        if (pack != NULL && !pack->hasPurchasedPack())
+        {
+            gApp.SetAction(result, static_cast<eXuiAction>(3), NULL);
+            return 0;
+        }
+    }
+
+    bool saveExists = false;
+    gStorage->DoesSaveExist(&saveExists);
+    if (!saveExists)
+    {
+        gApp.SetAction(result, static_cast<eXuiAction>(3), NULL);
+    }
+    else
+    {
+        int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+        gConsoleUIController.RequestAlertMessage(
+            0x3143fcab, static_cast<int>(0xd66b8839), parameters, 2, gApp.GetPrimaryUserIndex(),
+            ExitGameAndSaveReturned, NULL, NULL, true);
+    }
     return 0;
 }
 
@@ -648,7 +776,19 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
                                       !g_pApp->IsConsoleChatCensored(), false, false);
 }
 
-uint32_t ClientPacketListener::isLocalPlayer(int entityId) { return entityId == m_playerId ? 1 : 0; }
+uint32_t ClientPacketListener::isLocalPlayer(int entityId)
+{
+    if (m_minecraft == NULL)
+        return 0;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = m_minecraft->mLocalPlayers[i];
+        if (localPlayer != NULL && localPlayer->getId() == entityId)
+            return 1;
+    }
+    return 0;
+}
 void ClientPacketListener::handleAnimate(boost::shared_ptr<ClientboundAnimatePacket> packet)
 {
 }

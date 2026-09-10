@@ -8,6 +8,7 @@
 
 class Connection;
 class MinecraftServer;
+class Packet;
 class Socket;
 
 class ServerConnectionListener : public PacketListener
@@ -37,6 +38,8 @@ private:
     std::wstring m_name;
     unsigned int m_tickCount;
     bool m_disconnected;
+    int m_pendingPacketKind;
+    boost::shared_ptr<Packet> m_pendingPacket;
 };
 
 #endif

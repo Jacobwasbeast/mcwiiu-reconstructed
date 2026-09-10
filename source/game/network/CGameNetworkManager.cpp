@@ -22,6 +22,10 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/client/audio/SoundEngine.hpp"
+#include "game/client/audio/ConsoleSoundEngine.hpp"
+#include "game/ui/UIScene_PauseMenu.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/data/ElementStorage.hpp"
 #include "game/core/Compression.hpp"
@@ -33,8 +37,12 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/util/phys__Vec2.hpp"
+#include "game/core/GameRuleManager.hpp"
+#include "game/network/DisconnectPacket.hpp"
 
 extern "C" int shutdown(int socket, int how);
+extern GameRuleManager g_GameRuleManager;
+extern ConsoleUIController gConsoleUIController;
 extern "C" int close(int socket);
 void SetThreadName(unsigned int threadId, const char* name);
 
@@ -234,8 +242,109 @@ void CGameNetworkManager::SendInviteGUI(int i) { if (m_platform) m_platform->Sen
 void CGameNetworkManager::ResetLeavingGame() { m_platform->ResetLeavingGame(); }
 bool CGameNetworkManager::AlreadyInSession(const FriendPresence* p) { return m_platform && m_platform->AlreadyInSession(p); }
 bool CGameNetworkManager::IsNetworkThreadRunning() { return m_networkThreadRunning; }
-void* CGameNetworkManager::RunNetworkGameThreadProc(void* data) { sInstance._RunNetworkGame(data); return 0; }
-void* CGameNetworkManager::ExitAndJoinFromInviteThreadProc(void*) { sInstance.LeaveGame(false); return 0; }
+void* CGameNetworkManager::RunNetworkGameThreadProc(void* data)
+{
+    AABB::UseDefaultThreadStorage();
+    Vec3::UseDefaultThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    Block::CreateNewThreadStorage();
+    IntCache::CreateNewThreadStorage();
+    FireworksRecipe::UseDefaultThreadStorage();
+    ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_NetworkGame);
+    LevelChunk::CreateNewThreadStorage();
+
+    sInstance.m_networkThreadRunning = true;
+    const bool runResult = sInstance._RunNetworkGame(data);
+    sInstance.m_networkThreadRunning = false;
+
+    if (!runResult)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
+        while (true)
+        {
+            if (!selected->isLoadingData())
+            {
+                if (!minecraft->mTexturePackRepository->needsUIUpdate() &&
+                    !gConsoleUIController.IsReloadingSkin())
+                {
+                    gConsoleUIController.CleanUpSkinReload();
+                    if (gApp.GetDisconnectReason() == 0)
+                    {
+                        gApp.SetDisconnectReason(
+                            static_cast<DisconnectPacket::eDisconnectReason>(0x11));
+                    }
+                    if (gMinecraftServer == 0)
+                    {
+                        g_GameRuleManager.unloadCurrentGameRules();
+                    }
+                    Block::ReleaseThreadStorage();
+                    return reinterpret_cast<void*>(static_cast<intptr_t>(-1));
+                }
+            }
+            C4JThread::Sleep(1);
+        }
+    }
+
+    while (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
+        if (!mode->IsInTrasitionFromLobby())
+        {
+            break;
+        }
+        C4JThread::Sleep(5);
+    }
+
+    Block::ReleaseThreadStorage();
+    IntCache::ReleaseThreadStorage();
+    ElementStorage::ReleaseThreadStorage();
+    LevelChunk::ReleaseThreadStorage();
+    return 0;
+}
+void* CGameNetworkManager::ExitAndJoinFromInviteThreadProc(void* data)
+{
+    AABB::UseDefaultThreadStorage();
+    Vec3::UseDefaultThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    UIScene_PauseMenu::_ExitWorld(NULL);
+    while (sInstance.IsInSession())
+        C4JThread::Sleep(1);
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    TexturePackRepository* repository = minecraft->mTexturePackRepository;
+    TexturePack* previousSelected = repository->getSelected();
+    previousSelected->unloadAudio();
+    repository->selectTexturePackById(0, false);
+    const bool loading = previousSelected->isLoadingData();
+    SoundEngine* soundEngine = minecraft->mSoundEngine;
+    if (!loading)
+    {
+        TexturePackRepository::defaultTexturePack->loadData();
+        soundEngine->SetStreamingSounds(
+            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a,
+            0x2a, 0x3e, 0x44, 0x57);
+        soundEngine->playStreaming(NULL, 0.f, 0.f, 0.f, 1.f, 1.f, false, false,
+                                   ConsoleSoundEngine::eAudioDelayType_None);
+    }
+    else
+    {
+        soundEngine->SetStreamingSounds(
+            0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18, 0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a,
+            0x2a, 0x3e, 0x44, 0x57);
+        soundEngine->playStreaming(NULL, 0.f, 0.f, 0.f, 1.f, 1.f, false, false,
+                                   ConsoleSoundEngine::eAudioDelayType_None);
+        TexturePackRepository::defaultTexturePack->loadData();
+    }
+
+    const int user = gApp.GetPrimaryUserIndex();
+    while (gApp.GetXuiAction(user) != 0)
+        C4JThread::Sleep(1);
+
+    const int player = *static_cast<int*>(data);
+    gApp.SetAction(player, static_cast<eXuiAction>(0x17), data);
+    return NULL;
+}
 int CGameNetworkManager::TryToConnectOnline(int (*cb)(void*,bool,int), void* d, bool p) { if (m_platform) m_platform->TryToConnectOnline(cb,d,p); return 0; }
 bool CGameNetworkManager::_LeaveGame() { return sInstance.LeaveGame(false); }
 void* CGameNetworkManager::ChangeSessionTypeThreadProc(void*) { sInstance.LeaveGame(false); return 0; }

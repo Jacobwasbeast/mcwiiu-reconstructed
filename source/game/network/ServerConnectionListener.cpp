@@ -9,7 +9,8 @@
 #include "game/core/HumanoidArm.hpp"
 
 ServerConnectionListener::ServerConnectionListener(MinecraftServer* server, Socket* socket, const std::wstring& name)
-    : PacketListener(), m_connection(new Connection(socket, name, this)), m_server(server), m_name(name), m_tickCount(0), m_disconnected(false)
+    : PacketListener(), m_connection(new Connection(socket, name, this)), m_server(server), m_name(name), m_tickCount(0), m_disconnected(false),
+      m_pendingPacketKind(0), m_pendingPacket()
 {
 }
 
@@ -31,11 +32,24 @@ void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason re
 
 void ServerConnectionListener::tick()
 {
-    if (m_connection != 0)
-        m_connection->tick();
+    if (m_pendingPacketKind != 0)
+    {
+        boost::shared_ptr<Packet> packet = m_pendingPacket;
+        m_pendingPacketKind = 0;
+        m_pendingPacket.reset();
+        if (packet)
+            send(packet);
+    }
+
+    unsigned int previousTickCount = m_tickCount;
     ++m_tickCount;
-    if (m_tickCount == 600)
-        disconnect(DisconnectPacket::eDisconnectReason(3));
+    if (previousTickCount != 600)
+    {
+        if (m_connection != 0)
+            m_connection->tick();
+        return;
+    }
+    disconnect(DisconnectPacket::eDisconnectReason(3));
 }
 
 void ServerConnectionListener::sendPreLoginResponse()
