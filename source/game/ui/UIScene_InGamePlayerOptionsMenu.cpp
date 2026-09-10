@@ -154,7 +154,7 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_smallId);
     if (player != 0)
         m_gamertag.init(UIString(player->GetDisplayName()));
-    addPlayerOptions(this, m_sceneType);
+    addPlayerOptions(this, m_playerId);
     if (m_movie != 0)
     {
         fuiRenderNode* root = m_movie->getRootNode();
@@ -166,7 +166,7 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
         }
     }
     addTimer(0, 100);
-    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_sceneType, OnPlayerChanged, this);
+    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -221,14 +221,14 @@ unsigned int UIScene_InGamePlayerOptionsMenu::mapElementsAndNames()
 
 void UIScene_InGamePlayerOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_InGamePlayerOptionsMenu::handleReload()
 {
     m_playerOptions.clearList();
-    addPlayerOptions(this, m_sceneType);
+    addPlayerOptions(this, m_playerId);
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -241,7 +241,7 @@ std::wstring UIScene_InGamePlayerOptionsMenu::getMoviePath()
 void UIScene_InGamePlayerOptionsMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                                   bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action <= 3)
         return;
     if (action < 10 || action == 0x14)
@@ -287,7 +287,7 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int, int action, bool repeat, 
     const unsigned int gameType = m_playerOptions.GetSliderValue(0xb);
     if (gameType != g_pApp->GetPlayerGameType(m_smallId))
     {
-        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (connection != 0)
             connection->send(GameModeCommand::preparePacket(player->GetUID(), static_cast<unsigned char>(gameType)));
     }
@@ -300,7 +300,7 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int, int action, bool repeat, 
 
 void UIScene_InGamePlayerOptionsMenu::handleDestroy()
 {
-    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_sceneType, OnPlayerChanged, this);
+    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
 }
 
 void UIScene_InGamePlayerOptionsMenu::handlePress(int, int second)
@@ -312,14 +312,14 @@ void UIScene_InGamePlayerOptionsMenu::handlePress(int, int second)
         int parameters[2] = { (int)0xb9a1bf4d, (int)0x4fcbc7e7 };
         gConsoleUIController.RequestAlertMessage(0x628f8b32,
             Minecraft::InMiniGame(static_cast<EMiniGameId>(0xf), true) ? 0x2cf43e54 : 0xb5f4b25,
-            parameters, 2, m_sceneType,
+            parameters, 2, m_playerId,
             (int (*)(void*, int, C4JStorage::EMessageResult))IUIScene_PlayerList::KickPlayerReturned,
             data, 0, true);
     }
     else if (second == 0xc)
     {
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_smallId);
-        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (player != 0 && connection != 0)
             connection->send(SetSpawnpointCommand::preparePacket(player->GetUID()));
     }
@@ -349,7 +349,7 @@ void UIScene_InGamePlayerOptionsMenu::tick()
     {
         if (!gConsoleUIController.IsSceneInStack(0xff, static_cast<EUIScene>(0x4b)))
             m_navigatingBack = false;
-        gConsoleUIController.NavigateBack(m_sceneType, false, static_cast<EUIScene>(0x53),
+        gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0x53),
                                           static_cast<EUILayer>(8));
     }
 }

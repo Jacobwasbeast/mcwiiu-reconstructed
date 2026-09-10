@@ -59,7 +59,7 @@ unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
 
 void UIScene_SignEntryMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_resolution, (int)0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -78,7 +78,7 @@ void UIScene_SignEntryMenu::tick()
         m_sign->SetMessage(i, line);
     }
     m_sign->setChanged();
-    gConsoleUIController.CloseUIScenes(m_resolution, false);
+    gConsoleUIController.CloseUIScenes(m_playerId, false);
 }
 
 std::wstring UIScene_SignEntryMenu::getMoviePath()
@@ -140,7 +140,7 @@ void UIScene_SignEntryMenu::handlePress(int first, int)
         m_selectedLine = first;
         m_keyboardActive = true;
         if (g_pInput->RequestKeyboard(L10N::GetString(0x3121eb00),
-                                      m_lineInputs[m_selectedLine].getLabel(), m_resolution, 0xf,
+                                      m_lineInputs[m_selectedLine].getLabel(), m_playerId, 0xf,
                                       KeyboardCompleteCallback, this,
                                       static_cast<C_4JInput::EKeyboardMode>(3)) != 0)
             m_keyboardActive = false;

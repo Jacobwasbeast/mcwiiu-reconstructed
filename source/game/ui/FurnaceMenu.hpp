@@ -19,7 +19,7 @@ public:
     virtual void broadcastChanges();
     virtual void setData(int id, int value);
     virtual bool stillValid(boost::shared_ptr<Player> player);
-    unsigned int GetInvSlotStart();
+    int GetInvSlotStart();
     void fjCheckAchievements(const boost::shared_ptr<Player>& player,
                              const not_null_ptr<ItemInstance>& item);
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
@@ -29,10 +29,10 @@ public:
 
 private:
     boost::shared_ptr<Container> mContainer;
-    int mLitTime;
-    int mLitDuration;
     int mCookingProgress;
     int mCookingTotalTime;
+    int mLitTime;
+    int mLitDuration;
 };
 
 #endif

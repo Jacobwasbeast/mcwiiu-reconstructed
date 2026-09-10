@@ -13,6 +13,7 @@ class LaunchMoreOptionsMenuInitData
 public:
     LaunchMoreOptionsMenuInitData();
 
+    friend class IUIScene_StartGame;
     friend class MiniGameDef;
     friend class UIScene_LoadMenu;
     friend class UIScene_InGameSettingsListMenu;
@@ -41,6 +42,7 @@ private:
     bool mFlag14;
     bool mFlag15;
     bool mFlag16;
+    bool mFlag17;
     int mValue18;
     int mValue1C;
     std::wstring mDisplayName;

@@ -1,8 +1,10 @@
 #include "game/ui/IUIScene_CraftingMenu.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/GameModeConstraints.hpp"
@@ -21,23 +23,29 @@
 #include "game/world/generation/Player.hpp"
 
 IUIScene_CraftingMenu::IUIScene_CraftingMenu()
-    : m_horizontalSlot(0),
-      m_verticalColumn(1),
-      m_recipePage(0),
-      m_currentGroup(0),
-      m_groupMap(0),
-      m_selectedCustomIngredient(-1),
-      m_inventoryItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY)),
-      m_customRecipeValid(false),
-      m_tooltipPlayer(0),
-      m_tooltipState(0),
-      m_descriptionState(0),
-      m_currentTab(0)
 {
-    std::fill(&m_recipeTable[0][0], &m_recipeTable[0][0] + 600, 0);
+    m_currentTab = 0;
+    m_horizontalSlot = 0;
+    m_verticalColumn = 1;
+    for (int group = 0; group < 12; ++group)
+    {
+        m_recipeTable[group][0] = 0;
+        m_recipeTable[group][1] = 0;
+    }
+    std::memset(m_recipeTable, 0, sizeof(m_recipeTable));
+    m_recipePage = 0;
     m_verticalSlots[0] = 0;
+    m_currentGroup = 0;
     m_verticalSlots[1] = 1;
     m_verticalSlots[2] = 2;
+    m_inventoryItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY);
+    m_tooltipState = 0;
+    m_selectedCustomIngredient = -1;
+    m_tooltipPlayer = 0;
+    m_customRecipeValid = false;
+    m_ingredientCount = 0;
+    m_baseRecipeItem = ItemInstance::EMPTY;
+    m_accumulatedItem = ItemInstance::EMPTY;
     m_craftingContainer = boost::shared_ptr<CraftingContainer>(new CraftingContainer(0, 3, 3));
 }
 
@@ -104,33 +112,36 @@ int IUIScene_CraftingMenu::getCurrentVSlotCount()
         return (int)m_inventoryRecipes.size();
     if (isDuplicateItem())
         return (int)m_duplicateRecipes.size();
-    if (m_currentTab == 2)
+    if (isCustomRecipe())
     {
-        if (m_currentGroup == 0)
-            return (int)m_customRecipes[m_horizontalSlot].size();
-        if (m_currentGroup == 1)
+        if (m_currentTab == 2)
+        {
+            if (m_currentGroup == 0)
+                return (int)m_customRecipes[m_horizontalSlot].size();
+            if (m_currentGroup == 1)
+                return m_horizontalSlot == 0 ? (int)m_recipeIngredients.size() :
+                                               (int)m_customRecipes[0].size();
+            return m_horizontalSlot == 0 ? 1 : (int)m_recipeIngredients.size();
+        }
+        if (m_currentTab == 3)
             return m_horizontalSlot == 0 ? (int)m_recipeIngredients.size() :
-                                           (int)m_customRecipes[0].size();
-        return m_horizontalSlot == 0 ? 1 : (int)m_recipeIngredients.size();
+                                           (int)m_customRecipeIngredients.size();
     }
-    if (m_currentTab == 3)
-        return m_horizontalSlot == 0 ? (int)m_recipeIngredients.size() :
-                                       (int)m_customRecipeIngredients.size();
     return GetRecipeCount(m_horizontalSlot);
 }
 
 bool IUIScene_CraftingMenu::isItemSelected(int itemId)
 {
-    if (!m_player || !m_player->mInventory || getCurrentVSlotCount() == 0)
+    if (!m_player || !m_player->mInventory)
         return false;
     Recipe::INGREDIENTS_REQUIRED* ingredients =
         Recipes::getInstance()->getRecipeIngredientsArray((Recipes::ERecipeCategory)m_currentTab);
-    int recipe = GetRecipeId(m_horizontalSlot, getCurrentVSlotCount() > 1 ?
-                             m_verticalSlots[m_verticalColumn] : 0);
-    if (ingredients == 0 || ingredients[recipe].recipe == 0)
+    int count = getCurrentVSlotCount();
+    if (count == 0)
         return false;
-    ItemInstance* result = ingredients[recipe].recipe->getResultItem();
-    return result != 0 && Item::VALIDgetId(result->getItem()) == itemId;
+    int recipe = GetRecipeId(m_horizontalSlot,
+                             count > 1 ? m_verticalSlots[m_verticalColumn] : 0);
+    return Item::VALIDgetId(ingredients[recipe].recipe->getResultItem()->getItem()) == itemId;
 }
 
 not_null_ptr<ItemInstance> IUIScene_CraftingMenu::GetBaseItemSlot(int column, int slot, bool& enabled)
@@ -295,9 +306,9 @@ bool IUIScene_CraftingMenu::canAddMoreStacks()
     if (isSpinnerGroup() &&
         ((!isInventoryItem() && !isDuplicateItem()) || (!isInventoryItem() && isDuplicateItem())))
         return true;
-    if (m_baseRecipeItem->isEmpty())
+    if (m_accumulatedItem->isEmpty())
         return false;
-    return BannerBlockEntity::getPatternCount(m_baseRecipeItem) < 6;
+    return BannerBlockEntity::getPatternCount(m_accumulatedItem) < 6;
 }
 
 void IUIScene_CraftingMenu::UpdateHorizontalSlots()
@@ -384,10 +395,29 @@ void IUIScene_CraftingMenu::DisplayIngredients()
 
 bool IUIScene_CraftingMenu::canAddCustomRecipeIngredient(not_null_ptr<ItemInstance> item)
 {
-    if (!item || item->isEmpty() || m_customRecipeIngredients.size() >= 9)
+    if (item->isEmpty())
         return false;
-    int index = GetCustomIngredientIndex(item);
-    return index >= 0 && isValidCustomRecipeIngredient(index, item);
+    if (!m_customRecipeValid)
+        return false;
+    if (m_currentTab == 2 && m_currentGroup == 1 && m_horizontalSlot == 0)
+        return false;
+    if (m_currentTab == 3)
+    {
+        if (m_currentGroup == 0)
+        {
+            if (m_horizontalSlot == 0)
+                return false;
+        }
+        else if (m_currentGroup == 1)
+        {
+            if (m_horizontalSlot == 0)
+                return false;
+            if (m_horizontalSlot == 1)
+                return false;
+        }
+    }
+    unsigned int maximum = m_craftingMode == 0 ? 4 : 9;
+    return (unsigned int)((int)m_stackedRecipeCounts.size() + m_ingredientCount) < maximum;
 }
 
 void IUIScene_CraftingMenu::UpdateTooltips()
@@ -460,17 +490,43 @@ int IUIScene_CraftingMenu::getCurrentVSlotMax()
 
 const wchar_t* IUIScene_CraftingMenu::GetGroupNameText(int group)
 {
-    static const unsigned int normalNames[7] =
-        { 0xe6a4f105, 0xa00b4cf0, 0xef31f329, 0xf187db6d,
-          0x89f72b83, 0x415962d0, 0xac698282 };
-    static const unsigned int customNames[6] =
-        { 0, 0x133e5cd4, 0xb35ee68b, 0xdd9417ba, 0xf8e4117f, 0x8078384b };
+    if (m_currentTab == 1)
+    {
+        switch ((unsigned int)group)
+        {
+        case 1:
+            return L10N::GetString((int)0x133e5cd4u);
+        case 2:
+            return L10N::GetString((int)0xb35ee68bu);
+        case 3:
+            return L10N::GetString((int)0xdd9417bau);
+        case 4:
+            return L10N::GetString((int)0xf8e4117fu);
+        case 5:
+            return L10N::GetString((int)0x8078384bu);
+        default:
+            return L"";
+        }
+    }
     if (m_currentTab == 2 || m_currentTab == 3)
         return L"";
-    if (m_currentTab == 1)
-        return group >= 0 && group < 6 && customNames[group] != 0 ?
-               L10N::GetString((int)customNames[group]) : L"";
-    return group >= 0 && group < 7 ? L10N::GetString((int)normalNames[group]) : L"";
+    switch ((unsigned int)group)
+    {
+    case 0:
+        return L10N::GetString((int)0xe6a4f105u);
+    case 1:
+        return L10N::GetString((int)0xa00b4cf0u);
+    case 2:
+        return L10N::GetString((int)0xef31f329u);
+    case 3:
+        return L10N::GetString((int)0xf187db6du);
+    case 4:
+        return L10N::GetString((int)0x89f72b83u);
+    case 5:
+        return L10N::GetString((int)0x415962d0u);
+    default:
+        return L10N::GetString((int)0xac698282u);
+    }
 }
 
 void IUIScene_CraftingMenu::refreshAllSlots()
@@ -486,12 +542,17 @@ void IUIScene_CraftingMenu::refreshAllSlots()
 
 void IUIScene_CraftingMenu::ClearCustomRecipeIngredients()
 {
-    m_customRecipeIngredients.clear();
-    m_recipeIngredients.clear();
-    m_selectedCustomIngredient = -1;
-    m_customRecipeValid = false;
-    UpdateMaintainedInventory();
-    DisplayCustomRecipeIngredients(-1);
+    if (m_stackedRecipeCounts.empty())
+        return;
+    m_stackedRecipeCounts.clear();
+    for (int slot = 0; slot < 9; ++slot)
+        m_inventoryItems[slot] = ItemInstance::EMPTY;
+    if (isCustomRecipe())
+    {
+        DisplayCustomRecipeIngredients(GetRecipeId(-1, -1));
+        return;
+    }
+    setIngredientSlotHighlighted(-1);
 }
 
 void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item)
@@ -531,10 +592,17 @@ void IUIScene_CraftingMenu::UpdateTabs(bool force)
 
 void IUIScene_CraftingMenu::UpdateHTab()
 {
+    m_customRecipeSlots[2] = 0;
+    m_customRecipeSlots[1] = 0;
+    m_customRecipeSlots[0] = 0;
     ClearCustomRecipeIngredients();
-    m_horizontalSlot = 0;
+    if (m_currentTab == 3)
+        refreshBaseItemSlots(ItemInstance::EMPTY);
+    showTabHighlight(m_currentGroup, true);
+    if (!isCustomRecipe() && GetRecipeCount(m_horizontalSlot) > 0)
+        setShowCraftHSlot(m_horizontalSlot, true);
     m_verticalColumn = 1;
-    refreshBaseItemSlots(ItemInstance::EMPTY);
+    m_horizontalSlot = 0;
     UpdateTabs(false);
     refreshAllSlots();
 }
@@ -613,29 +681,32 @@ void IUIScene_CraftingMenu::CraftCurrentItem()
 
 void IUIScene_CraftingMenu::UpdateVTab()
 {
-    m_customRecipeSlots[0] = 0;
-    m_customRecipeSlots[1] = 0;
     m_customRecipeSlots[2] = 0;
+    m_customRecipeSlots[1] = 0;
+    m_customRecipeSlots[0] = 0;
     ClearCustomRecipeIngredients();
     showTabHighlight(m_currentGroup, false);
     m_currentGroup = 0;
     refreshBaseItemSlots(ItemInstance::EMPTY);
-    m_customIngredientCounts.clear();
-    m_baseRecipeIngredients.clear();
-    m_horizontalSlot = 0;
+    if (!isCustomRecipe() && GetRecipeCount(m_horizontalSlot) > 0)
+        setShowCraftHSlot(m_horizontalSlot, true);
     m_verticalColumn = 1;
+    m_horizontalSlot = 0;
     UpdateTabs(false);
     refreshAllSlots();
+    if (m_currentTab == 2)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[getPad()]->getTutorial();
+        if (tutorial != 0)
+            tutorial->changeTutorialState((eTutorial_State)36, NULL);
+    }
 }
 
 void IUIScene_CraftingMenu::NavTabUp()
 {
     if (!isCustomRecipe() && GetRecipeCount(m_horizontalSlot) > 0)
-        showTabHighlight(m_horizontalSlot, false);
-    if (m_currentTab == 0)
-        m_currentTab = 3;
-    else
-        --m_currentTab;
+        setShowCraftHSlot(m_horizontalSlot, true);
+    m_currentTab = m_currentTab == 0 ? 3 : m_currentTab - 1;
     UpdateVTab();
     UpdateTooltips();
 }
@@ -643,8 +714,8 @@ void IUIScene_CraftingMenu::NavTabUp()
 void IUIScene_CraftingMenu::NavTabDown()
 {
     if (!isCustomRecipe() && GetRecipeCount(m_horizontalSlot) > 0)
-        showTabHighlight(m_horizontalSlot, false);
-    m_currentTab = m_currentTab == 3 ? 0 : m_currentTab + 1;
+        setShowCraftHSlot(m_horizontalSlot, true);
+    m_currentTab = m_currentTab < 3 ? m_currentTab + 1 : 0;
     UpdateVTab();
     UpdateTooltips();
 }
@@ -652,17 +723,21 @@ void IUIScene_CraftingMenu::NavTabDown()
 void IUIScene_CraftingMenu::ItemScrollRight()
 {
     int previous = m_horizontalSlot;
-    m_horizontalSlot = m_horizontalSlot + 1 >= m_horizontalSlotCount ? 0 : m_horizontalSlot + 1;
+    int slot = previous + 1;
+    if (m_horizontalSlotCount <= slot)
+        slot = 0;
+    m_horizontalSlot = slot;
     m_verticalColumn = 1;
     m_verticalSlots[0] = getCurrentVSlotMax();
-    m_verticalSlots[1] = 0;
     m_verticalSlots[2] = 1;
-    if (isCustomRecipe())
-        m_verticalSlots[1] = m_customRecipeSlots[m_horizontalSlot];
+    m_verticalSlots[1] = 0;
+    if (m_currentTab == 2 || m_currentTab == 3)
+        m_verticalSlots[1] = m_customRecipeSlots[slot];
     UpdateVerticalSlots();
     UpdateHighlight();
     if (!isCustomRecipe() && GetRecipeCount(previous) > 0)
-        showTabHighlight(previous, false);
+        setShowCraftHSlot(previous, true);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
 }
 
 void IUIScene_CraftingMenu::ItemScrollLeft()
@@ -670,45 +745,86 @@ void IUIScene_CraftingMenu::ItemScrollLeft()
     if (m_horizontalSlotCount == 0)
         return;
     int previous = m_horizontalSlot;
-    m_horizontalSlot = m_horizontalSlot == 0 ? m_horizontalSlotCount - 1 : m_horizontalSlot - 1;
+    int slot = (previous == 0 ? m_horizontalSlotCount : previous) - 1;
+    m_horizontalSlot = slot;
     m_verticalColumn = 1;
     m_verticalSlots[0] = getCurrentVSlotMax();
-    m_verticalSlots[1] = 0;
     m_verticalSlots[2] = 1;
-    if (isCustomRecipe())
-        m_verticalSlots[1] = m_customRecipeSlots[m_horizontalSlot];
+    m_verticalSlots[1] = 0;
+    if (m_currentTab == 2 || m_currentTab == 3)
+        m_verticalSlots[1] = m_customRecipeSlots[slot];
     UpdateVerticalSlots();
     UpdateHighlight();
     if (!isCustomRecipe() && GetRecipeCount(previous) > 0)
-        showTabHighlight(previous, false);
+        setShowCraftHSlot(previous, true);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
 }
 
 void IUIScene_CraftingMenu::ItemScrollUp()
 {
+    bool singleColumn = m_compactInventory || isSpinnerGroup() ||
+                        (!gRenderer->IsHiDef() && !gRenderer->IsWidescreen());
     int count = getCurrentVSlotCount();
     if (count < 2)
         return;
-    if (m_compactInventory || isSpinnerGroup())
-        m_verticalSlots[1] = m_verticalSlots[1] == 0 ? count - 1 : m_verticalSlots[1] - 1;
-    else if (m_verticalColumn == 0)
-        m_verticalSlots[0] = m_verticalSlots[0] == 0 ? count - 1 : m_verticalSlots[0] - 1;
-    else
+    if (singleColumn)
+    {
+        if (m_verticalSlots[1] == 0)
+            m_verticalSlots[1] = getCurrentVSlotMax();
+        else
+            --m_verticalSlots[1];
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
+    else if (count > 2 && m_verticalColumn == 0)
+    {
+        int top = m_verticalSlots[0];
+        m_verticalSlots[2] = m_verticalSlots[1];
+        m_verticalSlots[1] = top;
+        if (top == 0)
+            m_verticalSlots[0] = getCurrentVSlotMax();
+        else
+            m_verticalSlots[0] = top - 1;
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
+    else if (count > 2 || m_verticalColumn != 1)
+    {
         --m_verticalColumn;
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
     UpdateVerticalSlots();
     UpdateHighlight();
 }
 
 void IUIScene_CraftingMenu::ItemScrollDown()
 {
+    bool singleColumn = m_compactInventory || isSpinnerGroup() ||
+                        (!gRenderer->IsHiDef() && !gRenderer->IsWidescreen());
     int count = getCurrentVSlotCount();
     if (count < 2)
         return;
-    if (m_compactInventory || isSpinnerGroup())
-        m_verticalSlots[1] = m_verticalSlots[1] == count - 1 ? 0 : m_verticalSlots[1] + 1;
-    else if (m_verticalColumn == 2)
-        m_verticalSlots[2] = m_verticalSlots[2] == count - 1 ? 0 : m_verticalSlots[2] + 1;
-    else
+    if (singleColumn)
+    {
+        if (m_verticalSlots[1] == getCurrentVSlotMax())
+            m_verticalSlots[1] = 0;
+        else
+            ++m_verticalSlots[1];
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
+    else if (count > 2 && m_verticalColumn == 2)
+    {
+        m_verticalSlots[0] = m_verticalSlots[1];
+        m_verticalSlots[1] = m_verticalSlots[2];
+        if (m_verticalSlots[2] == getCurrentVSlotMax())
+            m_verticalSlots[2] = 0;
+        else
+            ++m_verticalSlots[2];
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
+    else if (count > 2 || m_verticalColumn != count)
+    {
         ++m_verticalColumn;
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
     UpdateVerticalSlots();
     UpdateHighlight();
 }
@@ -789,8 +905,7 @@ void IUIScene_CraftingMenu::Init(_CraftingPanelScreenInput* input)
     m_craftingMode = input->craftingMode;
     m_compactInventory = input->compactInventory;
     m_maintainedInventory = boost::shared_ptr<Inventory>(new Inventory(m_player.get()));
-    if (m_player && m_player->mInventory)
-        m_maintainedInventory->replaceWith_NONRECURSIVE(m_player->mInventory);
+    m_maintainedInventory->replaceWith_NONRECURSIVE(m_player->mInventory);
     m_inventoryMenu = new InventoryMenu(m_maintainedInventory, false, m_player.get());
     m_inventoryStart = 9;
     m_inventoryEnd = 36;

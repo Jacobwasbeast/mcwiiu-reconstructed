@@ -166,11 +166,13 @@ void UIScene_AvatarSelectMenu::handleFocusChange(int focus, int childFocus)
 
 void UIScene_AvatarSelectMenu::handleInitFocus(int, int) {}
 
-void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int, int, int, int y, bool, bool repeat, bool)
+void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
+                                               int touchBox, bool repeat, bool released,
+                                               bool pressed)
 {
-    if (repeat && y > 2 && y < 6 && m_activeTab != y - 3)
+    if (repeat && touchBox > 2 && touchBox < 6 && m_activeTab != touchBox - 3)
     {
-        m_activeTab = y - 3;
+        m_activeTab = touchBox - 3;
         updateTooltips();
         SelectTab(m_activeTab);
     }

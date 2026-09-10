@@ -96,7 +96,7 @@ std::wstring UIScene_TradingMenu::getMoviePath()
 
 void UIScene_TradingMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_resolution, (int)0x80cf40eb, 0x4f6bcf5e, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, (int)0x80cf40eb, 0x4f6bcf5e, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -214,9 +214,9 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
 void UIScene_TradingMenu::handleInput(int, int action, bool repeat, bool released,
                                       bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (released)
-        handled = handleKeyDown(m_resolution, action, repeat) != 0;
+        handled = handleKeyDown(m_playerId, action, repeat) != 0;
 }
 
 void UIScene_TradingMenu::customDraw(const char* name, fuiRect* rect)
@@ -270,7 +270,7 @@ void UIScene_TradingMenu::customDraw(const char* name, fuiRect* rect)
 
     if (item->isEmpty())
         return;
-    customDrawSlotControlFui(rect, m_resolution, item, 1.0f, true, true, false);
+    customDrawSlotControlFui(rect, m_playerId, item, 1.0f, true, true, false);
 }
 
 void UIScene_TradingMenu::handleInventoryUpdated(void*)

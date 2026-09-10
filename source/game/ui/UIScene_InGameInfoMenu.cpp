@@ -270,7 +270,7 @@ void UIScene_InGameInfoMenu::tick()
 
 int UIScene_InGameInfoMenu::GetPad()
 {
-    return m_resolution;
+    return m_playerId;
 }
 
 int UIScene_InGameInfoMenu::getSceneType()

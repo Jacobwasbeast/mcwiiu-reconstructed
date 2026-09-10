@@ -53,7 +53,7 @@ public:
 
 private:
     boost::shared_ptr<Container> mContainer;
-    int mIngredientSlot;
+    Slot* mIngredientSlot;
     int mLastBrewTime;
     int mLastFuel;
 };

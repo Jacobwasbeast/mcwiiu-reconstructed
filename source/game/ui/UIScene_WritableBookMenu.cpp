@@ -204,7 +204,7 @@ void UIScene_WritableBookMenu::updateTooltips()
         right = 0x1269f5be;
     int tooltips[16] = {m_bookIsSigned ? 0x8d6323ed : -1, 0x4f6bcf5e, -1, -1, -1, -1,
                         left, right, -1, -1, -1, -1, -1, -1, -1, -1};
-    gConsoleUIController.SetTooltips(m_resolution, tooltips, false, false);
+    gConsoleUIController.SetTooltips(m_playerId, tooltips, false, false);
 }
 
 void UIScene_WritableBookMenu::OnStopSigning()

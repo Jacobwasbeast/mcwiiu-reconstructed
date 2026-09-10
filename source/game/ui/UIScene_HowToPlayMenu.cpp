@@ -45,7 +45,7 @@ UIScene_HowToPlayMenu::~UIScene_HowToPlayMenu()
 
 void UIScene_HowToPlayMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -55,14 +55,14 @@ void UIScene_HowToPlayMenu::updateComponents()
     bool showSecond = true;
     if (Minecraft::GetInstance()->mPendingLevelChange == 0)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
     }
     else
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
         showSecond = g_pApp->GetLocalPlayerCount() == 1;
     }
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), showSecond);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showSecond);
 }
 
 void UIScene_HowToPlayMenu::handleReload()
@@ -97,7 +97,7 @@ std::wstring UIScene_HowToPlayMenu::getMoviePath()
 void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                         bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action < 4)
         return;
     if (action > 5)
@@ -134,7 +134,7 @@ void UIScene_HowToPlayMenu::handlePress(int first, int second)
         static_cast<EUIScene>(27), static_cast<EUIScene>(28), static_cast<EUIScene>(29),
         static_cast<EUIScene>(30), static_cast<EUIScene>(31), static_cast<EUIScene>(32)
     };
-    gConsoleUIController.NavigateToScene(m_sceneType, scenes[second], 0,
+    gConsoleUIController.NavigateToScene(m_playerId, scenes[second], 0,
                                          static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 

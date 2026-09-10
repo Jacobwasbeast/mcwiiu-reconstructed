@@ -9,6 +9,7 @@
 #include "game/ui/UIControl_HTMLLabel.hpp"
 #include "game/ui/UIControl_Label.hpp"
 #include "game/ui/UIControl_SlotList.hpp"
+#include "game/ui/UIControl_Touch.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 class ItemInstance;
@@ -42,7 +43,7 @@ public:
     virtual void handleDestroy();
     virtual void handleReload();
     virtual void handleTouchBoxRebuild();
-    virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int player, int touchX, int touchY, int control, bool repeat, bool released, bool pressed);
 
     virtual int getPad();
     void hideAllHSlots();
@@ -94,19 +95,36 @@ private:
     AbstractContainerMenu* m_openMenu;
     bool m_touchDragging;
     bool m_inventoryUpdatesDeferred;
-    UIControl m_horizontalTab[5];
-    UIControl_SlotList m_horizontalSlots;
-    UIControl_SlotList m_verticalSlots[6];
-    UIControl_SlotList m_ingredientSlots[2];
-    UIControl_SlotList m_inventorySlots[6];
-    UIControl_SlotList m_previewSlots;
-    UIControl_SlotList m_outputSlots;
-    UIControl_HTMLLabel m_description;
-    UIControl_HTMLLabel m_descriptionTop;
-    UIControl_Label m_spinnerTitle;
-    UIControl_Label m_groupText;
+    UIControl m_mainPanel;
+    UIControl m_descriptionPanel;
+    UIControl m_craftingSelector;
+    UIControl m_slotSelector2;
+    UIControl m_slotSelector3;
+    UIControl_SlotList m_craftingHSlots;
+    UIControl_SlotList m_crafting1VSlot;
+    UIControl_SlotList m_crafting2VSlots[2];
+    UIControl_SlotList m_crafting3VSlots[3];
+    UIControl_SlotList m_ingredientsLayout;
+    UIControl_SlotList m_ingredientsLayoutSmall;
+    UIControl_SlotList m_craftingOutput;
+    UIControl_SlotList m_ingredientSlots[5];
+    UIControl_SlotList m_previewSlot;
+    UIControl_SlotList m_doubleSpinnerSlots[2];
+    UIControl_SlotList m_tripleSpinnerSlots[3];
+    UIControl_SlotList m_inventory;
+    UIControl_SlotList m_hotBar;
+    UIControl_Label m_ingredientDescriptions[5];
+    UIControl_HTMLLabel m_descriptionText;
+    UIControl_HTMLLabel m_descriptionTextTop;
+    UIControl_Label m_groupName;
     UIControl_Label m_itemName;
-    UIControl_Label m_itemText[4];
+    UIControl_Label m_inventoryLabel;
+    UIControl_Label m_ingredientsLabel;
+    UIControl_Label m_previewLabel;
+    UIControl_Label m_spinnerTitle;
+    UIControl_Touch m_touchPanels[13];
+    int m_touchScrollY;
+    int m_lastPanelDisplay;
 };
 
 #endif

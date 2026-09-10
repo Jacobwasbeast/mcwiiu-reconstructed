@@ -168,8 +168,8 @@ void UIScene_BiomePreviewMenu::updateTooltips()
 
 void UIScene_BiomePreviewMenu::updateComponents()
 {
-    m_layer->showComponent(m_sceneType, (EUIScene)0x42, true);
-    m_layer->showComponent(m_sceneType, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, (EUIScene)0x42, true);
+    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
 }
 
 std::wstring UIScene_BiomePreviewMenu::getMoviePath()

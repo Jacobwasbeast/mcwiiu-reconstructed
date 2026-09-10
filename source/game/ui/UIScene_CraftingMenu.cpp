@@ -1,12 +1,24 @@
 #include "game/ui/UIScene_CraftingMenu.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/DyeColor.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/Slot.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/FJ_CraftingMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRect.hpp"
+#include "game/world/block/Blocks.hpp"
+
+#include <cstdio>
 
 UIScene_CraftingMenu::_SlotInfo::_SlotInfo() : item(), displayValue(0x1f), visible(true)
 {
@@ -20,6 +32,8 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), IUIScene_CraftingMenu(), m_touchDragging(false),
       m_inventoryUpdatesDeferred(true)
 {
+    m_tabsDirty = false;
+    m_lastPanelDisplay = -1;
     IUIScene_CraftingMenu::Init(static_cast<_CraftingPanelScreenInput*>(data));
     initialiseMovie();
     addTimer(1, 100);
@@ -31,49 +45,185 @@ UIScene_CraftingMenu::~UIScene_CraftingMenu()
 
 std::wstring UIScene_CraftingMenu::getMoviePath()
 {
-    if (g_pApp != 0 && g_pApp->GetLocalPlayerCount() >= 2)
-        return L"CraftingMenuSplit";
-    return L"CraftingMenu";
+    if (gApp.GetLocalPlayerCount() < 2)
+    {
+        m_compactInventory = false;
+        return L"CraftingMenu";
+    }
+    m_compactInventory = true;
+    return L"CraftingMenuSplit";
 }
 
 unsigned int UIScene_CraftingMenu::mapElementsAndNames()
 {
-    UIScene::mapElementsAndNames();
+    fuiRenderNode* root = m_movie->getRootNode();
+    m_mainPanel.setupControl(this, root, "MainPanel");
+    m_controls.push_back(&m_mainPanel);
+
+    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
+    m_descriptionPanel.setupControl(this, panel, "DescriptionPanel");
+    m_controls.push_back(&m_descriptionPanel);
+    m_descriptionTextTop.setupControl(this, panel, "DescriptionTextTop");
+    m_controls.push_back(&m_descriptionTextTop);
+    m_craftingHSlots.setupControl(this, panel, "CraftingHSlots");
+    m_controls.push_back(&m_craftingHSlots);
+    m_spinnerTitle.setupControl(this, panel, "SpinnerTitle");
+    m_controls.push_back(&m_spinnerTitle);
+    m_doubleSpinnerSlots[0].setupControl(this, panel, "Slot2_1");
+    m_controls.push_back(&m_doubleSpinnerSlots[0]);
+    m_doubleSpinnerSlots[1].setupControl(this, panel, "Slot2_2");
+    m_controls.push_back(&m_doubleSpinnerSlots[1]);
+    m_tripleSpinnerSlots[0].setupControl(this, panel, "Slot3_1");
+    m_controls.push_back(&m_tripleSpinnerSlots[0]);
+    m_tripleSpinnerSlots[1].setupControl(this, panel, "Slot3_2");
+    m_controls.push_back(&m_tripleSpinnerSlots[1]);
+    m_tripleSpinnerSlots[2].setupControl(this, panel, "Slot3_3");
+    m_controls.push_back(&m_tripleSpinnerSlots[2]);
+
+    m_slotSelector3.setupControl(this, panel, "SlotSelector3");
+    m_controls.push_back(&m_slotSelector3);
+    fuiRenderNode* selector3 = m_slotSelector3.getFuiRenderNode();
+    m_crafting3VSlots[0].setupControl(this, selector3, "Crafting3VSlot1");
+    m_controls.push_back(&m_crafting3VSlots[0]);
+    m_crafting3VSlots[1].setupControl(this, selector3, "Crafting3VSlot2");
+    m_controls.push_back(&m_crafting3VSlots[1]);
+    m_crafting3VSlots[2].setupControl(this, selector3, "Crafting3VSlot3");
+    m_controls.push_back(&m_crafting3VSlots[2]);
+
+    m_slotSelector2.setupControl(this, panel, "SlotSelector2");
+    m_controls.push_back(&m_slotSelector2);
+    fuiRenderNode* selector2 = m_slotSelector2.getFuiRenderNode();
+    m_crafting2VSlots[0].setupControl(this, selector2, "Crafting2VSlot1");
+    m_controls.push_back(&m_crafting2VSlots[0]);
+    m_crafting2VSlots[1].setupControl(this, selector2, "Crafting2VSlot2");
+    m_controls.push_back(&m_crafting2VSlots[1]);
+
+    m_craftingSelector.setupControl(this, panel, "CraftingSelector");
+    m_controls.push_back(&m_craftingSelector);
+    fuiRenderNode* selector1 = m_craftingSelector.getFuiRenderNode();
+    m_crafting1VSlot.setupControl(this, selector1, "Crafting1VSlot1");
+    m_controls.push_back(&m_crafting1VSlot);
+
+    m_previewLabel.setupControl(this, panel, "PreviewLabel");
+    m_controls.push_back(&m_previewLabel);
+    m_ingredientsLayout.setupControl(this, panel, "IngredientsLayout");
+    m_controls.push_back(&m_ingredientsLayout);
+    m_ingredientsLayoutSmall.setupControl(this, panel, "IngredientsLayout_Small");
+    m_controls.push_back(&m_ingredientsLayoutSmall);
+    m_craftingOutput.setupControl(this, panel, "CraftingOutput");
+    m_controls.push_back(&m_craftingOutput);
+    m_ingredientSlots[0].setupControl(this, panel, "Ingredient1");
+    m_controls.push_back(&m_ingredientSlots[0]);
+    m_ingredientSlots[1].setupControl(this, panel, "Ingredient2");
+    m_controls.push_back(&m_ingredientSlots[1]);
+    m_ingredientSlots[2].setupControl(this, panel, "Ingredient3");
+    m_controls.push_back(&m_ingredientSlots[2]);
+    m_ingredientSlots[3].setupControl(this, panel, "Ingredient4");
+    m_controls.push_back(&m_ingredientSlots[3]);
+    m_ingredientSlots[4].setupControl(this, panel, "Ingredient5");
+    m_controls.push_back(&m_ingredientSlots[4]);
+    m_ingredientDescriptions[0].setupControl(this, panel, "Ingredient1Desc");
+    m_controls.push_back(&m_ingredientDescriptions[0]);
+    m_ingredientDescriptions[1].setupControl(this, panel, "Ingredient2Desc");
+    m_controls.push_back(&m_ingredientDescriptions[1]);
+    m_ingredientDescriptions[2].setupControl(this, panel, "Ingredient3Desc");
+    m_controls.push_back(&m_ingredientDescriptions[2]);
+    m_ingredientDescriptions[3].setupControl(this, panel, "Ingredient4Desc");
+    m_controls.push_back(&m_ingredientDescriptions[3]);
+    m_ingredientDescriptions[4].setupControl(this, panel, "Ingredient5Desc");
+    m_controls.push_back(&m_ingredientDescriptions[4]);
+    m_previewSlot.setupControl(this, panel, "PreviewSlot");
+    m_controls.push_back(&m_previewSlot);
+    m_ingredientsLabel.setupControl(this, panel, "IngredientsLabel");
+    m_controls.push_back(&m_ingredientsLabel);
+    m_descriptionText.setupControl(this, panel, "DescriptionText");
+    m_controls.push_back(&m_descriptionText);
+    m_inventory.setupControl(this, panel, "Inventory");
+    m_controls.push_back(&m_inventory);
+    m_hotBar.setupControl(this, panel, "HotBar");
+    m_controls.push_back(&m_hotBar);
+    m_groupName.setupControl(this, panel, "GroupName");
+    m_controls.push_back(&m_groupName);
+    m_itemName.setupControl(this, panel, "ItemName");
+    m_controls.push_back(&m_itemName);
+    m_inventoryLabel.setupControl(this, panel, "InventoryLabel");
+    m_controls.push_back(&m_inventoryLabel);
+    m_touchPanels[0].setupControl(this, panel, "TouchPanel_0");
+    m_controls.push_back(&m_touchPanels[0]);
+    m_touchPanels[1].setupControl(this, panel, "TouchPanel_1");
+    m_controls.push_back(&m_touchPanels[1]);
+    m_touchPanels[2].setupControl(this, panel, "TouchPanel_2");
+    m_controls.push_back(&m_touchPanels[2]);
+    m_touchPanels[3].setupControl(this, panel, "TouchPanel_3");
+    m_controls.push_back(&m_touchPanels[3]);
+    m_touchPanels[4].setupControl(this, panel, "TouchPanel_4");
+    m_controls.push_back(&m_touchPanels[4]);
+    m_touchPanels[5].setupControl(this, panel, "TouchPanel_5");
+    m_controls.push_back(&m_touchPanels[5]);
+    m_touchPanels[6].setupControl(this, panel, "TouchPanel_6");
+    m_controls.push_back(&m_touchPanels[6]);
+    m_touchPanels[7].setupControl(this, panel, "TouchPanel_V_0");
+    m_controls.push_back(&m_touchPanels[7]);
+    m_touchPanels[8].setupControl(this, panel, "TouchPanel_V_1");
+    m_controls.push_back(&m_touchPanels[8]);
+    m_touchPanels[9].setupControl(this, panel, "TouchPanel_V_2");
+    m_controls.push_back(&m_touchPanels[9]);
+    m_touchPanels[10].setupControl(this, panel, "TouchPanel_V_3");
+    m_controls.push_back(&m_touchPanels[10]);
+    m_touchPanels[11].setupControl(this, panel, "TouchPanel_V_4");
+    m_controls.push_back(&m_touchPanels[11]);
+    m_touchPanels[12].setupControl(this, panel, "TouchPanel_CraftingHSlots");
+    m_controls.push_back(&m_touchPanels[12]);
     return 1;
 }
 
 int UIScene_CraftingMenu::getSceneType()
 {
+    if (m_craftingMode != 1)
+        return 6;
     return 7;
 }
 
 int UIScene_CraftingMenu::getPad()
 {
-    return m_sceneType;
+    return m_playerId;
 }
 
 void UIScene_CraftingMenu::hideAllHSlots()
 {
-    for (int i = 0; i < 5; ++i)
-        m_horizontalTab[i].setVisible(false);
+    for (int i = 0; i < 12; ++i)
+    {
+        m_horizontalSlotItems[i].item = ItemInstance::EMPTY;
+        m_horizontalSlotItems[i].displayValue = 0x1f;
+        m_horizontalSlotItems[i].visible = false;
+    }
 }
 
 void UIScene_CraftingMenu::hideAllVSlots()
 {
-    for (int i = 0; i < 6; ++i)
-        m_verticalSlots[i].setVisible(false);
+    for (int i = 0; i < 3; ++i)
+    {
+        m_verticalSlotItems[i].item = ItemInstance::EMPTY;
+        m_verticalSlotItems[i].displayValue = 0x1f;
+        m_verticalSlotItems[i].visible = false;
+    }
 }
 
 void UIScene_CraftingMenu::hideAllIngredientsSlots()
 {
-    for (int i = 0; i < 2; ++i)
-        m_ingredientSlots[i].setVisible(false);
+    for (int i = 0; i < m_ingredientCount; ++i)
+    {
+        m_ingredientDescriptionItems[i].item = ItemInstance::EMPTY;
+        m_ingredientDescriptionItems[i].displayValue = 0x1f;
+        m_ingredientDescriptionItems[i].visible = false;
+        SetItemDescription(i, L"");
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->ShowIngredient(i, false);
+    }
 }
 
 void UIScene_CraftingMenu::SetItemDescription(int index, const wchar_t* text)
 {
-    if (index >= 0 && index < 4)
-        m_itemText[index].setLabel(UIString(text), false, false);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemDescription(index, text);
 }
 
 void UIScene_CraftingMenu::setCraftHSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
@@ -106,7 +256,7 @@ void UIScene_CraftingMenu::setCraftingOutputSlotItem(int, not_null_ptr<ItemInsta
 
 void UIScene_CraftingMenu::setCraftingOutputSlotRedBox(bool show)
 {
-    m_outputSlots.showSlotRedBox(0, show);
+    m_craftingOutput.showSlotRedBox(0, show);
 }
 
 void UIScene_CraftingMenu::setIngredientSlotItem(int, int index, not_null_ptr<ItemInstance> item)
@@ -118,18 +268,26 @@ void UIScene_CraftingMenu::setIngredientSlotItem(int, int index, not_null_ptr<It
 
 void UIScene_CraftingMenu::setIngredientSlotRedBox(int index, bool show)
 {
-    if (index >= 0 && index < 2)
-        m_ingredientSlots[index].showSlotRedBox(0, show);
+    m_ingredientsLayout.showSlotRedBox(index, show);
 }
 
 void UIScene_CraftingMenu::setIngredientSlotHighlighted(int index)
 {
-    m_ingredientSlots[0].setHighlightSlot(index);
+    m_ingredientsLayout.setHighlightSlot(index);
 }
 
 void UIScene_CraftingMenu::setInventorySlotHighlighted(int index)
 {
-    m_inventorySlots[0].setHighlightSlot(index);
+    if (index >= 9 && index < 37)
+    {
+        m_inventory.setHighlightSlot(index - 9);
+        m_hotBar.setHighlightSlot(-1);
+    }
+    else
+    {
+        m_inventory.setHighlightSlot(-1);
+        m_hotBar.setHighlightSlot(index < 10 ? index : -1);
+    }
 }
 
 void UIScene_CraftingMenu::setIngredientDescriptionItem(int, int index, not_null_ptr<ItemInstance> item)
@@ -143,7 +301,7 @@ void UIScene_CraftingMenu::setIngredientDescriptionItem(int, int index, not_null
 
 void UIScene_CraftingMenu::setIngredientDescriptionRedBox(int index, bool show)
 {
-    setIngredientSlotRedBox(index, show);
+    m_ingredientSlots[index].showSlotRedBox(0, show);
 }
 
 void UIScene_CraftingMenu::setIngredientDescriptionText(int index, const wchar_t* text)
@@ -160,19 +318,18 @@ void UIScene_CraftingMenu::setPreviewSlotItem(int, not_null_ptr<ItemInstance> it
 
 void UIScene_CraftingMenu::setShowCraftHSlot(int index, bool show)
 {
-    if (index >= 0 && index < 5)
-        m_horizontalTab[index].setVisible(show);
+    m_horizontalSlotItems[index].visible = show;
 }
 
 void UIScene_CraftingMenu::showTabHighlight(int index, bool show)
 {
-    if (index >= 0 && index < 5)
-        m_horizontalTab[index].setFocus(show);
+    if (show)
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetActiveTab(index, m_currentTab);
 }
 
 void UIScene_CraftingMenu::setHTabEnabled(int index, bool enabled)
 {
-    setShowCraftHSlot(index, enabled);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->EnableTab(index, enabled);
 }
 
 void UIScene_CraftingMenu::setSpinnerTitle(const wchar_t* text)
@@ -182,22 +339,22 @@ void UIScene_CraftingMenu::setSpinnerTitle(const wchar_t* text)
 
 void UIScene_CraftingMenu::setGroupText(const wchar_t* text)
 {
-    m_groupText.setLabel(UIString(text), false, false);
+    m_groupName.setLabel(UIString(text), false, false);
 }
 
 void UIScene_CraftingMenu::setDescriptionText(const wchar_t* text)
 {
-    m_description.setLabel(UIString(text), false, false);
+    m_descriptionText.setLabel(UIString(text), false, false);
 }
 
 void UIScene_CraftingMenu::setDescriptionTextTop(const wchar_t* text)
 {
-    m_descriptionTop.setLabel(UIString(text), false, false);
+    m_descriptionTextTop.setLabel(UIString(text), false, false);
 }
 
 void UIScene_CraftingMenu::SetItemName(const wchar_t* text)
 {
-    m_itemName.setLabel(UIString(text), false, false);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemName(text);
 }
 
 void UIScene_CraftingMenu::setItemText(const wchar_t* text)
@@ -217,8 +374,14 @@ void UIScene_CraftingMenu::updateHighlightAndScrollPositions()
 {
     int vertical = 0;
     if (IUIScene_CraftingMenu::getCurrentVSlotCount() == 2)
-        vertical = 1;
-    else if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
+    {
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
+            m_horizontalSlot, 1);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
+            m_verticalColumn);
+        return;
+    }
+    if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
         vertical = 2;
     static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
         m_horizontalSlot, vertical);
@@ -226,32 +389,33 @@ void UIScene_CraftingMenu::updateHighlightAndScrollPositions()
         m_verticalColumn);
 }
 
-void UIScene_CraftingMenu::updateVSlotPositions(int first, int second)
+void UIScene_CraftingMenu::updateVSlotPositions(int, int)
 {
-    if (first >= 0 && first < 6)
-        m_verticalSlots[first].setHighlightSlot(second);
 }
 
-void UIScene_CraftingMenu::UpdateMultiPanel(bool show)
+void UIScene_CraftingMenu::UpdateMultiPanel(bool force)
 {
-    m_description.setVisible(show);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->showPanelDisplay(m_tooltipPlayer);
+    if (force || m_lastPanelDisplay != m_tooltipPlayer)
+    {
+        gConsoleUIController.TouchBoxRebuild(this);
+        m_lastPanelDisplay = m_tooltipPlayer;
+    }
 }
 
 void UIScene_CraftingMenu::ShowDescriptionPanel(bool show)
 {
-    UpdateMultiPanel(show);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->ShowDescriptionPanel(show);
 }
 
 void UIScene_CraftingMenu::ShowSuperCraftingSlots(int count)
 {
-    for (int i = 0; i < 6; ++i)
-        m_verticalSlots[i].setVisible(i < count);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->ShowSuperCraftingSlots(count);
 }
 
 void UIScene_CraftingMenu::SetCraftingMenu(int category, int item, bool enabled)
 {
-    setShowCraftHSlot(category, enabled);
-    updateVSlotPositions(category, item);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetCraftingMenu(category, item, enabled);
 }
 
 void UIScene_CraftingMenu::SetHTabItem(int index, not_null_ptr<ItemInstance> item)
@@ -266,8 +430,64 @@ void UIScene_CraftingMenu::handleDestroy()
 
 void UIScene_CraftingMenu::handleReload()
 {
-    m_horizontalSlots.addSlots(0, 6);
-    m_previewSlots.addSlots(0, 6);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->InitCraftingMenu(m_craftingMode);
+    if (m_craftingMode == 0)
+        m_ingredientsLayout = m_ingredientsLayoutSmall;
+
+    m_inventory.addSlots(0, 27);
+    m_hotBar.addSlots(27, 9);
+    m_previewSlot.addSlots(55, 1);
+    m_doubleSpinnerSlots[0].addSlots(56, 1);
+    m_doubleSpinnerSlots[1].addSlots(57, 1);
+    m_tripleSpinnerSlots[0].addSlots(56, 1);
+    m_tripleSpinnerSlots[1].addSlots(57, 1);
+    m_tripleSpinnerSlots[2].addSlots(58, 1);
+    m_ingredientSlots[0].addSlot(36);
+    m_ingredientSlots[1].addSlot(37);
+    m_ingredientSlots[2].addSlot(38);
+    m_ingredientSlots[3].addSlot(39);
+    m_ingredientSlots[4].addSlot(40);
+    m_craftingOutput.addSlot(41);
+    m_ingredientsLayout.addSlots(42, m_lastRecipe);
+    m_crafting3VSlots[0].addSlot(52);
+    m_crafting3VSlots[1].addSlot(53);
+    m_crafting3VSlots[2].addSlot(54);
+    m_crafting2VSlots[0].addSlot(53);
+    m_crafting2VSlots[1].addSlot(52);
+    m_crafting1VSlot.addSlot(52);
+    m_craftingHSlots.addSlots(59, 12);
+
+    SetCraftingMenu(m_groupPage, 4, m_currentTab == 1);
+    showTabHighlight(m_currentGroup, true);
+
+    bool spinner = IUIScene_CraftingMenu::isSpinnerGroup();
+    int superSlots = 0;
+    if (spinner)
+    {
+        superSlots = 2;
+        if (m_craftingMode == 1)
+            superSlots = 3;
+    }
+    ShowSuperCraftingSlots(superSlots);
+    ShowDescriptionPanel(spinner);
+    IUIScene_CraftingMenu::UpdateTabs(false);
+
+    int panel = m_tooltipPlayer;
+    m_tooltipPlayer = (panel == 0);
+    UpdateMultiPanel(false);
+    m_tooltipPlayer = panel;
+    UpdateMultiPanel(false);
+
+    m_horizontalSlot = 0;
+    m_verticalColumn = 1;
+    m_verticalSlots[0] = IUIScene_CraftingMenu::getCurrentVSlotMax();
+    m_verticalSlots[1] = 0;
+    m_verticalSlots[2] = 1;
+    IUIScene_CraftingMenu::UpdateHorizontalSlots();
+    IUIScene_CraftingMenu::UpdateVerticalSlots();
+    IUIScene_CraftingMenu::UpdateHighlight();
+    showTabHighlight(0, false);
+    showTabHighlight(m_currentGroup, true);
 }
 
 void UIScene_CraftingMenu::handleTimerComplete(int timerId)
@@ -288,11 +508,152 @@ void UIScene_CraftingMenu::handleTimerComplete(int timerId)
 
 UIControl* UIScene_CraftingMenu::GetMainPanel()
 {
-    return &m_horizontalTab[0];
+    return &m_mainPanel;
 }
 
-void UIScene_CraftingMenu::customDraw(const char*, fuiRect*)
+void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (!minecraft->mLocalPlayers[m_playerId] || minecraft->mGameModes[m_playerId] == 0)
+        return;
+
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    int index = -1;
+    bool fromInventorySlot = false;
+    bool drawDecorations = true;
+    float partialTick = 1.0f;
+
+    std::sscanf(name, "slot_%d", &index);
+    if (index == -1)
+    {
+        std::sscanf(name, "TabH_%d", &index);
+        if (index == -1)
+        {
+            std::sscanf(name, "TabV_%d", &index);
+            if (index != -1)
+            {
+                if (index == 1)
+                    item = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::crafting_table, 1, 0));
+                else if (index == 2)
+                    item = not_null_ptr<ItemInstance>(
+                        new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData()));
+                else if (index == 3)
+                    item = not_null_ptr<ItemInstance>(new ItemInstance(Items::fireworks, 1));
+                else if (index == 4)
+                    item = not_null_ptr<ItemInstance>(
+                        new ItemInstance(Items::dye, 1, DyeColor::CYAN->getItemData()));
+            }
+        }
+        else if (m_currentTab >= 1 && m_currentTab <= 3)
+            item = m_tabItems[index - 1];
+    }
+    else if (index >= 0 && index < 27)
+    {
+        item = m_inventoryMenu->getSlot(index + m_inventoryStart)->getItem();
+        fromInventorySlot = true;
+    }
+    else if (index >= 27 && index < 36)
+    {
+        item = m_inventoryMenu->getSlot(index - 27 + m_inventoryEnd)->getItem();
+        fromInventorySlot = true;
+    }
+    else if (index >= 52 && index < 55)
+    {
+        drawDecorations = false;
+        if (m_verticalSlotItems[index - 52].visible)
+        {
+            item = m_verticalSlotItems[index - 52].item;
+            partialTick = static_cast<float>(m_verticalSlotItems[index - 52].displayValue) / 31.0f;
+        }
+    }
+    else if (index >= 59 && index < 71)
+    {
+        drawDecorations = false;
+        if (m_horizontalSlotItems[index - 59].visible)
+        {
+            item = m_horizontalSlotItems[index - 59].item;
+            partialTick = static_cast<float>(m_horizontalSlotItems[index - 59].displayValue) / 31.0f;
+        }
+    }
+    else if (index >= 42 && index < m_lastRecipe + 42)
+    {
+        if (m_ingredientSlotItems[index - 42].visible)
+        {
+            item = m_ingredientSlotItems[index - 42].item;
+            partialTick = static_cast<float>(m_ingredientSlotItems[index - 42].displayValue) / 31.0f;
+        }
+    }
+    else if (index >= 36 && index < 41)
+    {
+        if (m_ingredientDescriptionItems[index - 36].visible)
+        {
+            item = m_ingredientDescriptionItems[index - 36].item;
+            partialTick =
+                static_cast<float>(m_ingredientDescriptionItems[index - 36].displayValue) / 31.0f;
+        }
+    }
+    else if (index == 51)
+    {
+        if (m_previewSlotItem.visible)
+        {
+            item = m_previewSlotItem.item;
+            partialTick = static_cast<float>(m_previewSlotItem.displayValue) / 31.0f;
+        }
+    }
+    else if (index == 41)
+    {
+        if (m_outputSlotItem.visible)
+        {
+            item = m_outputSlotItem.item;
+            partialTick = static_cast<float>(m_outputSlotItem.displayValue) / 31.0f;
+        }
+    }
+    else if (index == 55)
+    {
+        drawDecorations = false;
+        item = m_accumulatedItem;
+    }
+    else if (index == 56)
+    {
+        drawDecorations = false;
+        if (m_horizontalSlotItems[0].visible)
+        {
+            item = m_horizontalSlotItems[0].item;
+            partialTick = static_cast<float>(m_horizontalSlotItems[0].displayValue) / 31.0f;
+        }
+    }
+    else if (index == 57)
+    {
+        drawDecorations = false;
+        if (m_horizontalSlotItems[1].visible)
+        {
+            item = m_horizontalSlotItems[1].item;
+            partialTick = static_cast<float>(m_horizontalSlotItems[1].displayValue) / 31.0f;
+        }
+    }
+    else if (index == 58)
+    {
+        drawDecorations = false;
+        if (m_horizontalSlotItems[2].visible)
+        {
+            item = m_horizontalSlotItems[2].item;
+            partialTick = static_cast<float>(m_horizontalSlotItems[2].displayValue) / 31.0f;
+        }
+    }
+
+    if (item->isEmpty())
+        return;
+
+    if (!fromInventorySlot)
+    {
+        if (item->getItem() == Items::clock || item->getItem() == Items::compass)
+            item->setAuxValue(255);
+        else if ((item->getAuxValue() & 0xFF) == 0xFF)
+            item->setAuxValue(0);
+    }
+
+    customDrawSlotControlFui(rect, m_playerId, item, partialTick,
+                             item->getItem()->isFoil(item), drawDecorations, false);
 }
 
 void UIScene_CraftingMenu::handleTouchBoxRebuild()
@@ -300,20 +661,181 @@ void UIScene_CraftingMenu::handleTouchBoxRebuild()
     addTimer(0, 100);
 }
 
-void UIScene_CraftingMenu::handleTouchInput(unsigned int, int, int, int, bool, bool, bool)
+void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY, int control,
+                                            bool repeat, bool released, bool pressed)
 {
+    if (repeat)
+    {
+        if (control == 12)
+            m_touchScrollY = touchY;
+
+        if (!IUIScene_CraftingMenu::isSpinnerGroup())
+        {
+            const float px = static_cast<float>(touchX);
+            const float rowX =
+                static_cast<float>(m_mainPanel.getXPos() + m_craftingHSlots.getXPos());
+            if (rowX + m_craftingHSlots.getHeight() * m_horizontalSlot < px &&
+                px < rowX + m_craftingHSlots.getHeight() * (m_horizontalSlot + 1))
+            {
+                m_touchDragging = true;
+                return;
+            }
+        }
+        else
+        {
+            const float px = static_cast<float>(touchX);
+            UIControl_SlotList& column = IUIScene_CraftingMenu::getNumSpinnerSlots() == 3
+                                             ? m_tripleSpinnerSlots[m_horizontalSlot]
+                                             : m_doubleSpinnerSlots[m_horizontalSlot];
+            const float columnX = static_cast<float>(m_mainPanel.getXPos() + column.getXPos());
+            if (columnX < px && px < columnX + column.getHeight())
+            {
+                m_touchDragging = true;
+                return;
+            }
+        }
+
+        m_touchDragging = false;
+        return;
+    }
+
+    if (released)
+    {
+        if (control == 12 && m_touchDragging)
+        {
+            const float py = static_cast<float>(touchY);
+            if (static_cast<float>(m_touchScrollY) + m_craftingHSlots.getHeight() <= py)
+            {
+                IUIScene_CraftingMenu::ItemScrollDown();
+                m_touchScrollY = touchY;
+                return;
+            }
+            if (py <= static_cast<float>(m_touchScrollY) - m_craftingHSlots.getHeight())
+            {
+                IUIScene_CraftingMenu::ItemScrollUp();
+                m_touchScrollY = touchY;
+                return;
+            }
+        }
+        return;
+    }
+
+    if (!pressed)
+        return;
+
+    if (control >= 0 && control < 7)
+    {
+        m_currentGroup = control;
+        IUIScene_CraftingMenu::UpdateHTab();
+        return;
+    }
+
+    if (control >= 7 && control < 12)
+    {
+        m_currentTab = control - 7;
+        IUIScene_CraftingMenu::UpdateVTab();
+        return;
+    }
+
+    if (control != 12)
+        return;
+
+    int column;
+    float py;
+    if (!IUIScene_CraftingMenu::isSpinnerGroup())
+    {
+        column = static_cast<int>(
+            (static_cast<float>(touchX) - m_craftingHSlots.getXPos() - m_mainPanel.getXPos()) /
+            m_craftingHSlots.getHeight());
+        py = static_cast<float>(touchY);
+    }
+    else
+    {
+        const float px = static_cast<float>(touchX);
+        column = -1;
+        if (IUIScene_CraftingMenu::getNumSpinnerSlots() == 3)
+        {
+            const float firstX =
+                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos());
+            const float secondX =
+                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos());
+            const float thirdX =
+                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos());
+            if (firstX < px && px <= firstX + m_tripleSpinnerSlots[0].getWidth())
+                column = 0;
+            else if (secondX < px && px <= secondX + m_tripleSpinnerSlots[1].getWidth())
+                column = 1;
+            else if (thirdX < px && px <= thirdX + m_tripleSpinnerSlots[2].getWidth())
+                column = 2;
+        }
+        else
+        {
+            const float firstX =
+                static_cast<float>(m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos());
+            const float secondX =
+                static_cast<float>(m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos());
+            if (firstX < px && px <= firstX + m_doubleSpinnerSlots[0].getWidth())
+                column = 0;
+            else if (secondX < px && px <= secondX + m_doubleSpinnerSlots[1].getWidth())
+                column = 1;
+        }
+
+        if (column == -1)
+            column = m_horizontalSlot;
+        py = static_cast<float>(touchY);
+    }
+
+    const float rowY = static_cast<float>(m_mainPanel.getYPos() + m_craftingHSlots.getYPos());
+    if (rowY < py && py < rowY + m_craftingHSlots.getHeight())
+    {
+        const int previous = m_horizontalSlot;
+        if (previous != column)
+        {
+            if (column < m_horizontalSlotCount)
+                m_horizontalSlot = column;
+            else
+                m_horizontalSlot = 0;
+            m_verticalColumn = 1;
+            m_verticalSlots[0] = IUIScene_CraftingMenu::getCurrentVSlotMax();
+            m_verticalSlots[1] = 0;
+            m_verticalSlots[2] = 1;
+            IUIScene_CraftingMenu::UpdateVerticalSlots();
+            IUIScene_CraftingMenu::UpdateHighlight();
+            if (m_recipeTable[previous][0] > 0)
+                setShowCraftHSlot(previous, true);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+            return;
+        }
+    }
+
+    int rows = 0;
+    if (!IUIScene_CraftingMenu::isSpinnerGroup())
+    {
+        if (IUIScene_CraftingMenu::getCurrentVSlotCount() == 2)
+            rows = 1;
+        else if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
+            rows = 2;
+    }
+
+    if (rows != 0 && rowY + m_craftingHSlots.getHeight() < py)
+        m_verticalColumn = 2;
+    else if (rows >= 2 && py < rowY)
+        m_verticalColumn = 0;
+    else
+        m_verticalColumn = 1;
+    IUIScene_CraftingMenu::UpdateHighlight();
 }
 
 void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action == 14 || action == 15)
     {
         sendInputToMovie(action, repeat, released, pressed);
         return;
     }
     if (released)
-        handled = IUIScene_CraftingMenu::handleKeyDown(m_sceneType, action, repeat);
+        handled = IUIScene_CraftingMenu::handleKeyDown(m_playerId, action, repeat);
 }
 
 bool UIScene_CraftingMenu::allowRepeat(int action)
@@ -327,10 +849,12 @@ void UIScene_CraftingMenu::handleInventoryUpdated(void*)
         IUIScene_CraftingMenu::HandleInventoryUpdated();
 }
 
-void UIScene_CraftingMenu::HandleMessage(EUIMessage message, void* data)
+void UIScene_CraftingMenu::HandleMessage(EUIMessage message, void*)
 {
-    if (message == 0)
-        handleInventoryUpdated(data);
+    if (message != 0)
+        return;
+    if (!m_inventoryUpdatesDeferred)
+        IUIScene_CraftingMenu::HandleInventoryUpdated();
 }
 
 void UIScene_CraftingMenu::updateTooltips()

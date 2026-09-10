@@ -25,7 +25,7 @@ UIScene_InventoryMenu::UIScene_InventoryMenu(int type, void* data, UILayer* laye
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
     m_effectDurations = new int[MobEffect::GetEffectCount() + 1];
-    const bool classicCrafting = GameSettings::GetGameSettings(m_resolution, static_cast<eGameSetting>(0x20)) != 0 &&
+    const bool classicCrafting = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x20)) != 0 &&
         g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0;
     m_sceneInterface->m_inventorySmall = classicCrafting;
     SetClassicCrafting(classicCrafting);
@@ -156,7 +156,7 @@ void UIScene_InventoryMenu::updateEffectsDisplay()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft == 0) return;
-    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(m_resolution);
+    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(m_playerId);
     if (!player) return;
     std::vector<MobEffectInstance*>* effects = player->getActiveEffects();
     if (effects == 0) return;
@@ -211,7 +211,7 @@ std::wstring UIScene_InventoryMenu::getMoviePath()
 void UIScene_InventoryMenu::handleReload()
 {
     SetClassicCrafting(getSubSceneType() != 0);
-    m_sceneInterface->Initialize(true, m_sceneInterface->m_containerId, m_sceneInterface->m_menu, false, m_resolution,
+    m_sceneInterface->Initialize(true, m_sceneInterface->m_containerId, m_sceneInterface->m_menu, false, m_playerId,
         static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(10), static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(getSubSceneType() ? 16 : 14), m_sceneInterface->m_inventorySmall != 0);
     m_armorList.addSlots(5, 4); m_shieldList.addSlots(45, 1);
     if (getSubSceneType()) { m_craftingList.addSlots(1, 4); m_resultList.addSlots(0, 1); }

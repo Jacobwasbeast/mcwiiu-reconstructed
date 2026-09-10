@@ -89,7 +89,7 @@ void UIScene_LoadMenu::UpdateDescriptionText()
     if (id == static_cast<unsigned int>(-1) || id == static_cast<unsigned int>(-2))
         return;
     if (g_pApp != NULL)
-        m_description.setLabel(UIString(g_pApp->FormatHTMLString(m_sceneType,
+        m_description.setLabel(UIString(g_pApp->FormatHTMLString(m_playerId,
                                             std::wstring(L""), -1)), false, true);
 }
 
@@ -153,15 +153,15 @@ void UIScene_LoadMenu::updateTooltips()
 {
     int tooltips[16] = { static_cast<int>(0x8d6323ed), 0x04f6bcf5, -1, -1, -1, -1, -1, -1,
                          -1, -1, -1, -1, -1, -1, -1, -1 };
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_sceneType), tooltips, false, false);
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), tooltips, false, false);
 }
 
 void UIScene_LoadMenu::updateComponents()
 {
     if (m_layer != NULL)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), m_publicGamesAllowed);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), m_publicGamesAllowed);
     }
 }
 
@@ -193,7 +193,7 @@ void UIScene_LoadMenu::tick()
     if (m_loadRequested)
     {
         m_loadRequested = false;
-        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x4c), NULL,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x4c), NULL,
                                               static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     }
 }
@@ -213,7 +213,7 @@ void UIScene_LoadMenu::handleReload()
 void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool released,
                                    bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (m_loaded)
         return;
     if (action == 0x15 && released)
@@ -252,7 +252,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
                 }
             }
         }
-        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x2b), initData,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x2b), initData,
                                               static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
@@ -264,7 +264,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
     }
     if (first == 0xd)
     {
-        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x3f), initData,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x3f), initData,
                                               static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
@@ -278,7 +278,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
             MasterGameMode::SetDefaults(*initData);
 
         if (m_customGame && m_gameMode == 1 &&
-            GameSettings::GetBattleMiniGameMapSelection(m_sceneType) != 0)
+            GameSettings::GetBattleMiniGameMapSelection(m_playerId) != 0)
         {
             std::vector<LevelRules::LevelRulesetGroup*>& groups = initData->mLevelRulesetGroups;
             std::vector<LevelRules::LevelRulesetGroup*>::iterator group = groups.begin();
@@ -300,7 +300,7 @@ void UIScene_LoadMenu::handlePress(int first, int second)
                 int messageParameter = static_cast<int>(0xb9a1bf4d);
                 gConsoleUIController.RequestAlertMessage(
                     static_cast<int>(0xac598f61), static_cast<int>(0xb9bf8844),
-                    &messageParameter, 1, static_cast<unsigned int>(m_sceneType), 0, NULL, NULL,
+                    &messageParameter, 1, static_cast<unsigned int>(m_playerId), 0, NULL, NULL,
                     true);
                 return;
             }

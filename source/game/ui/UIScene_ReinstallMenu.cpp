@@ -35,7 +35,7 @@ unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
 
 void UIScene_ReinstallMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_resolution, (int)0x8d6323ed, 0x4f6bcf5e, 0x21c0a77d,
+    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e, 0x21c0a77d,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, false, false);
 }
@@ -45,13 +45,13 @@ void UIScene_ReinstallMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mPendingLevelChange == 0)
     {
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), true);
     }
     else
     {
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), false);
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
     }
 }
 
@@ -65,7 +65,7 @@ std::wstring UIScene_ReinstallMenu::getMoviePath()
 void UIScene_ReinstallMenu::handleInput(int, int action, bool repeat, bool released,
                                         bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action > 3)
     {
         if (action < 6 || action == 0x14)

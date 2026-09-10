@@ -20,16 +20,16 @@ UIScene_AbstractContainerMenu::UIScene_AbstractContainerMenu(int type, UILayer* 
 {
     m_controlFocus = -1;
     m_updatePending = false;
-    gConsoleUIController.OverrideSFX(m_resolution, 0, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 20, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 2, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 3, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 11, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 10, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 7, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 6, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 4, true);
-    gConsoleUIController.OverrideSFX(m_resolution, 5, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 0, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 20, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 2, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 3, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 11, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 10, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 7, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 6, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 4, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 5, true);
 }
 
 UIScene_AbstractContainerMenu::~UIScene_AbstractContainerMenu()
@@ -134,16 +134,16 @@ unsigned int UIScene_AbstractContainerMenu::mapElementsAndNames()
 
 void UIScene_AbstractContainerMenu::handleDestroy()
 {
-    gConsoleUIController.OverrideSFX(m_resolution, 0, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 20, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 2, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 3, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 11, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 10, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 7, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 6, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 4, false);
-    gConsoleUIController.OverrideSFX(m_resolution, 5, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 0, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 20, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 2, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 3, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 11, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 10, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 7, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 6, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 4, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 5, false);
 }
 
 void UIScene_AbstractContainerMenu::tick()
@@ -170,11 +170,10 @@ void UIScene_AbstractContainerMenu::render(int width, int height, C4JRender::eVi
     if (m_updatePending)
     {
         m_slotDrawCount = static_cast<int>(GetBaseSlotCount());
-        AbstractContainerMenu::ItemList* items = m_menu->getItems();
-        for (unsigned int slot = 0; slot < items->size(); ++slot)
+        unsigned int slotCount = static_cast<unsigned int>(m_menu->m_slots.size());
+        for (unsigned int slot = 0; slot < slotCount; ++slot)
         {
-            Slot* menuSlot = m_menu->getSlot(static_cast<int>(slot));
-            if (menuSlot != 0 && menuSlot->hasItem())
+            if (m_menu->getSlot(static_cast<int>(slot))->hasItem())
                 ++m_slotDrawCount;
         }
     }
@@ -190,7 +189,7 @@ void UIScene_AbstractContainerMenu::customDraw(const char* name, fuiRect* rect)
 
     not_null_ptr<ItemInstance> item;
     if (slot == -1)
-        item = m_menu->GetQuickCraftItem(m_resolution, -1);
+        item = m_menu->GetQuickCraftItem(m_playerId, -1);
     else
     {
         Slot* menuSlot = m_menu->getSlot(slot);
@@ -200,16 +199,16 @@ void UIScene_AbstractContainerMenu::customDraw(const char* name, fuiRect* rect)
     }
 
     if (!item->isEmpty())
-        customDrawSlotControlFui(rect, m_resolution, item, 0.5f, false, true, false);
+        customDrawSlotControlFui(rect, m_playerId, item, 0.5f, false, true, false);
 }
 
 void UIScene_AbstractContainerMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                                 bool& handled)
 {
     if (!m_updatePending)
-        gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (!m_updatePending && released)
-        handled = handleKeyDown(m_resolution, action, repeat) != 0;
+        handled = handleKeyDown(m_playerId, action, repeat) != 0;
 }
 
 bool UIScene_AbstractContainerMenu::doesSectionTreeHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection)
@@ -219,7 +218,7 @@ bool UIScene_AbstractContainerMenu::doesSectionTreeHaveFocus(IUIScene_AbstractCo
 
 int UIScene_AbstractContainerMenu::getPad()
 {
-    return m_resolution;
+    return m_playerId;
 }
 
 UIControl* UIScene_AbstractContainerMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection)

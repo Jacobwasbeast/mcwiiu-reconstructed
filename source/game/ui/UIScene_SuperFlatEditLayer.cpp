@@ -3,11 +3,15 @@
 #include <cmath>
 
 #include "game/core/ConsoleUIController.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_SuperFlatEditLayerMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/SuperflatMenu.hpp"
+#include "game/util/Math.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 
 UIScene_SuperFlatEditLayer::UIScene_SuperFlatEditLayer(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), m_unknownC8(0), m_pointerScale(0.0f), m_unknownD0(0),
@@ -280,10 +284,61 @@ void UIScene_SuperFlatEditLayer::customDraw(const char* name, fuiRect* rect)
     UIScene::customDraw(name, rect);
 }
 
-void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int, int, int x, int y, bool, bool, bool pressed)
+void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int touchX, int touchY,
+                                                  int touchBox, bool repeat, bool released,
+                                                  bool pressed)
 {
-    _UIVec2D point = { static_cast<float>(x), static_cast<float>(y) }; setNewPointerPos(point);
-    if (pressed && getComponentByLocation(point) == 0) { m_layer.setBlockState(m_layer.getBlockState()); updateLayerButtons(); }
+    if (touchBox == 4)
+    {
+        if (!repeat && !released)
+        {
+            if (!pressed) return;
+            int slotId = getSlotId(m_pointerPosition);
+            not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+            if (!item->isEmpty())
+            {
+                Block* block = Block::byItem(item->getItem());
+                const BlockState* state = block->getBlockState(item->getAuxValue());
+                m_layer.setBlockState(state);
+                doSnap(m_pointerPosition, ESnap_None);
+                updateLayerButtons();
+            }
+            else
+            {
+                m_layer.setBlockState(Blocks::AIR->defaultBlockState());
+                doSnap(m_pointerPosition, ESnap_None);
+                updateLayerButtons();
+            }
+        }
+        else
+        {
+            setNewPointerPos(static_cast<float>(touchX) - m_mainPanel.getXPos(),
+                             static_cast<float>(touchY) - m_mainPanel.getYPos());
+        }
+    }
+
+    if (released && touchBox == 3)
+    {
+        float relY = (static_cast<float>(touchY) - m_sliderTouch.getYPos() - m_mainPanel.getYPos()) / m_sliderTouch.getHeight();
+        if (relY <= 1.0f)
+        {
+            if (relY < 0.0f)
+                relY = 0.0f;
+            m_scrollPage = Math::round(relY * 4.0f);
+        }
+        else
+        {
+            m_scrollPage = Math::round(1.0f * 4.0f);
+        }
+        updateScrollCurrentPage(m_scrollPage);
+        int comp = getComponentByLocation(m_pointerPosition);
+        if (comp == 0)
+        {
+            int slotId = getSlotId(m_pointerPosition);
+            not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+            SetPointerText(item);
+        }
+    }
 }
 
 UIControl* UIScene_SuperFlatEditLayer::GetMainPanel() { return &m_mainPanel; }

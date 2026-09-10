@@ -96,7 +96,7 @@ int BrewingStandMenu::FuelSlot::getMaxStackSize()
 BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
                                    boost::shared_ptr<Container> container)
     : mContainer(container),
-      mIngredientSlot(0),
+      mIngredientSlot(NULL),
       mLastBrewTime(0),
       mLastFuel(0)
 {

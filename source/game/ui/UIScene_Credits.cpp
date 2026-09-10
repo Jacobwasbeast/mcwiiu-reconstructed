@@ -103,13 +103,13 @@ void UIScene_Credits::setNextLabel(const std::wstring& text, ECreditTextTypes ty
 
 void UIScene_Credits::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_resolution, -1, 0x4f6bcf5e, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, -1, 0x4f6bcf5e, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_Credits::updateComponents()
 {
-    if (m_layer != NULL) m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), true);
+    if (m_layer != NULL) m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), true);
 }
 
 void UIScene_Credits::handleReload()
@@ -155,7 +155,7 @@ std::wstring UIScene_Credits::getMoviePath()
 void UIScene_Credits::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                                   bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(playerId, m_resolution, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action > 3 && (action < 6 || action == 20))
     {
         sendInputToMovie(action, repeat, released, pressed);

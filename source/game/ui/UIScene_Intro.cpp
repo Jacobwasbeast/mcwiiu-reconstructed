@@ -41,7 +41,7 @@ std::wstring UIScene_Intro::getMoviePath()
 void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool released, bool pressed,
                                 bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action != 20 || m_inputHandled)
         return;
 

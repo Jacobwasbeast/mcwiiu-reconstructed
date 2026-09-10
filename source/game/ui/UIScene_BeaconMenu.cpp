@@ -50,7 +50,7 @@ UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
                    static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38),
                    static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x43), false);
         m_activatorSlot.addSlots(0, 1);
-        m_activatorList.addSlots(static_cast<unsigned int>(m_menu->getItems()->size()), 4);
+        m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
         delete sceneData;
     }
 }
@@ -486,7 +486,7 @@ void UIScene_BeaconMenu::handleReload()
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x38),
                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x43), false);
     m_activatorSlot.addSlots(0, 1);
-    m_activatorList.addSlots(static_cast<unsigned int>(m_menu->getItems()->size()), 4);
+    m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
 }
 
 void UIScene_BeaconMenu::SetConfirmButtonEnabled(bool enabled)

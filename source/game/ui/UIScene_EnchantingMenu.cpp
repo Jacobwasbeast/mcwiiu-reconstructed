@@ -58,7 +58,7 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* la
                                      static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x28), false);
         m_ingredientSlot.addSlots(0, 1);
         m_lapisSlot.addSlots(1, 1);
-        g_pApp->SetRichPresenceContext(m_resolution, 10);
+        g_pApp->SetRichPresenceContext(m_playerId, 10);
     }
 }
 
@@ -170,8 +170,8 @@ void UIScene_EnchantingMenu::handleOtherClicked(int button,
     if (section < 0x25 || section > 0x27) return;
     const int enchantment = getSectionStartOffset(section);
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0 || minecraft->mGameModes[m_resolution] == 0) return;
-    minecraft->mGameModes[m_resolution]->handleInventoryButtonClick(m_containerId, enchantment + button);
+    if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
+    minecraft->mGameModes[m_playerId]->handleInventoryButtonClick(m_containerId, enchantment + button);
 }
 
 int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -297,7 +297,7 @@ UIControl* UIScene_EnchantingMenu::controlForSection(
 void UIScene_EnchantingMenu::customDraw(const char* name, fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0 || minecraft->mGameModes[m_resolution] == 0) return;
+    if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
     if (std::strcmp(name, "EnchantmentBook") == 0)
     {
         m_enchantmentBook.render(rect);

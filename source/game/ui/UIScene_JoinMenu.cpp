@@ -69,7 +69,7 @@ void UIScene_JoinMenu::friendSessionUpdated(bool updated, void* data)
     UIScene_JoinMenu* scene = static_cast<UIScene_JoinMenu*>(data);
     if (scene == NULL)
         return;
-    gConsoleUIController.NavigateBack(scene->m_resolution, false, static_cast<EUIScene>(0x53),
+    gConsoleUIController.NavigateBack(scene->m_playerId, false, static_cast<EUIScene>(0x53),
                                       static_cast<EUILayer>(8));
     if (updated)
         scene->m_friendSessionUpdated = true;
@@ -125,7 +125,7 @@ int UIScene_JoinMenu::ErrorDialogReturned(void* data, int, C4JStorage::EMessageR
 {
     UIScene_JoinMenu* scene = static_cast<UIScene_JoinMenu*>(data);
     if (scene != NULL)
-        gConsoleUIController.NavigateBack(scene->m_resolution, false,
+        gConsoleUIController.NavigateBack(scene->m_playerId, false,
                                           static_cast<EUIScene>(0x53),
                                           static_cast<EUILayer>(8));
     return 0;
@@ -134,7 +134,7 @@ void UIScene_JoinMenu::tick()
 {
     if (!m_initialised)
     {
-        gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x4c), NULL,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x4c), NULL,
                                              static_cast<EUILayer>(6),
                                              static_cast<EUIGroup>(7));
         CGameNetworkManager::sInstance.GetFullFriendSessionInfo(
@@ -210,7 +210,7 @@ void UIScene_JoinMenu::tick()
         m_error = false;
         int parameter = 0xb9a1bf4d;
         gConsoleUIController.RequestErrorMessage(
-            0x386c3a1a, 0xaab2b6dd, &parameter, 1, m_resolution,
+            0x386c3a1a, 0xaab2b6dd, &parameter, 1, m_playerId,
             ErrorDialogReturned, this, NULL, true);
     }
     UIScene::tick();
@@ -223,8 +223,8 @@ void UIScene_JoinMenu::updateTooltips()
 }
 void UIScene_JoinMenu::updateComponents()
 {
-    m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), true);
-    m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), true);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), true);
 }
 std::wstring UIScene_JoinMenu::getMoviePath()
 {
@@ -234,7 +234,7 @@ void UIScene_JoinMenu::handleInput(int, int action, bool repeat, bool released, 
 {
     if (m_joining)
         return;
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action < 4 || (action > 5 && action < 8))
         return;
     if (action > 9 && action != 0x14)
@@ -333,7 +333,7 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
     }
     if (result == 1)
     {
-        gConsoleUIController.NavigateBack(scene->m_resolution, false,
+        gConsoleUIController.NavigateBack(scene->m_playerId, false,
                                           static_cast<EUIScene>(0x53),
                                           static_cast<EUILayer>(8));
         return;
@@ -353,7 +353,7 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
         gConsoleUIController.NavigateToHomeMenu(false);
         return;
     }
-    gConsoleUIController.NavigateBack(scene->m_resolution, false,
+    gConsoleUIController.NavigateBack(scene->m_playerId, false,
                                       static_cast<EUIScene>(0x53),
                                       static_cast<EUILayer>(8));
 }
@@ -392,7 +392,7 @@ void UIScene_JoinMenu::StartSharedLaunchFlow()
     {
         int parameters[2] = { 0x1a65d275, 0x7a458ed2 };
         gConsoleUIController.RequestAlertMessage(
-            0x337f2cfc, 0x6f86265b, parameters, 2, m_resolution,
+            0x337f2cfc, 0x6f86265b, parameters, 2, m_playerId,
             WiiUDRCWarningReturned, this, NULL, true);
         return;
     }

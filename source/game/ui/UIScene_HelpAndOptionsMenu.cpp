@@ -27,11 +27,11 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int sceneType, void*, UIL
     removeControl(&m_buttonUpsell, false);
     removeControl(&m_button6, false);
     removeControl(&m_button7, false);
-    if (m_sceneType != Minecraft::GetInstance()->mLocalPlayerIdx || !m_unknownFlag)
+    if (m_playerId != Minecraft::GetInstance()->mLocalPlayerIdx || !m_unknownFlag)
         removeControl(&m_button6, false);
     if (g_pApp->GetLocalPlayerCount() > 1) {
         removeControl(&m_button5, false);
-        if (m_sceneType != Minecraft::GetInstance()->mLocalPlayerIdx)
+        if (m_playerId != Minecraft::GetInstance()->mLocalPlayerIdx)
             removeControl(&m_button6, false);
     }
     if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && !g_pApp->DebugArtToolsOn())
@@ -56,7 +56,7 @@ unsigned int UIScene_HelpAndOptionsMenu::mapElementsAndNames()
 
 void UIScene_HelpAndOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -65,13 +65,13 @@ void UIScene_HelpAndOptionsMenu::updateComponents()
     Minecraft* minecraft = Minecraft::GetInstance();
     bool showSecond = false;
     if (minecraft->mPendingLevelChange == 0) {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
         showSecond = true;
     } else {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
         showSecond = g_pApp->GetLocalPlayerCount() == 1;
     }
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), showSecond);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showSecond);
 }
 
 std::wstring UIScene_HelpAndOptionsMenu::getMoviePath()
@@ -83,11 +83,11 @@ void UIScene_HelpAndOptionsMenu::handleReload()
 {
     removeControl(&m_button7, false);
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (m_sceneType != minecraft->mLocalPlayerIdx || minecraft->mPendingLevelChange != 0)
+    if (m_playerId != minecraft->mLocalPlayerIdx || minecraft->mPendingLevelChange != 0)
         removeControl(&m_button6, false);
     if (g_pApp->GetLocalPlayerCount() > 1) {
         removeControl(&m_button5, false);
-        if (m_sceneType != minecraft->mLocalPlayerIdx)
+        if (m_playerId != minecraft->mLocalPlayerIdx)
             removeControl(&m_button6, false);
     }
     if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
@@ -98,7 +98,7 @@ void UIScene_HelpAndOptionsMenu::handleReload()
 
 void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action > 3) {
         if (action > 5 && action == 0x14 && pressed)
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
@@ -121,7 +121,7 @@ void UIScene_HelpAndOptionsMenu::handlePress(int first, int)
         static_cast<EUIScene>(0x15), static_cast<EUIScene>(0x17), static_cast<EUIScene>(0x19),
         static_cast<EUIScene>(0x0d)
     };
-    gConsoleUIController.NavigateToScene(m_sceneType, scenes[first], 0, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    gConsoleUIController.NavigateToScene(m_playerId, scenes[first], 0, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 
 int UIScene_HelpAndOptionsMenu::getSceneType() { return 15; }

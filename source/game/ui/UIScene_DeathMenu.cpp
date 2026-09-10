@@ -78,9 +78,9 @@ UIScene_DeathMenu::~UIScene_DeathMenu()
     if (gameMode != NULL && gameMode->IsRoundRestarting() && hasTimer(0))
         handleTimerComplete(0);
 
-    if (minecraft != NULL && minecraft->mGameModes[m_resolution] != NULL)
+    if (minecraft != NULL && minecraft->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[m_resolution]->getTutorial();
+        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(true);
     }
@@ -106,7 +106,7 @@ void UIScene_DeathMenu::handleTimerComplete(int timerId)
 {
     if (timerId == 0)
     {
-        g_pApp->SetAction(m_resolution, static_cast<eXuiAction>(6), NULL);
+        g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(6), NULL);
         killTimer(0);
     }
     else if (timerId != 1)
@@ -121,7 +121,7 @@ void UIScene_DeathMenu::updateTooltips()
     int tooltip = 0x8d6323ed;
     if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) != 0)
         tooltip = -1;
-    gConsoleUIController.SetTooltips(m_resolution, tooltip, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -159,15 +159,15 @@ void UIScene_DeathMenu::handlePress(int, int action)
     if (action == 0)
     {
         m_deathMenuActive = true;
-        g_pApp->SetAction(m_resolution, static_cast<eXuiAction>(6), NULL);
+        g_pApp->SetAction(m_playerId, static_cast<eXuiAction>(6), NULL);
     }
     else if (action == 1)
     {
         telemetryManagerInstance->RecordLevelExit(
-            m_resolution, static_cast<ESen_LevelExitStatus>(3));
+            m_playerId, static_cast<ESen_LevelExitStatus>(3));
         unsigned int callbackId = GetCallbackUniqueId();
         UIScene_PauseMenu::OpenExitGameDialog(
-            m_resolution, reinterpret_cast<void*>(callbackId),
+            m_playerId, reinterpret_cast<void*>(callbackId),
             UIScene_PauseMenu::ExitGameDialogReturned,
             UIScene_PauseMenu::ExitGameSaveDialogReturned,
             static_cast<UIScene_PauseMenu::EOpenExitGameDialog>(0));

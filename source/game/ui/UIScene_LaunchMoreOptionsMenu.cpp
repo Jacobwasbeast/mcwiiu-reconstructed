@@ -107,7 +107,7 @@ unsigned int UIScene_LaunchMoreOptionsMenu::mapElementsAndNames()
 
 void UIScene_LaunchMoreOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -115,8 +115,8 @@ void UIScene_LaunchMoreOptionsMenu::updateComponents()
 {
     if (m_layer != NULL)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
     }
 }
 
@@ -150,7 +150,7 @@ int UIScene_LaunchMoreOptionsMenu::HandleRequestKeyboard()
     if (g_pInput == NULL)
         return 0;
     const wchar_t* title = L10N::GetString(0xa60b975e);
-    if (g_pInput->RequestKeyboard(title, m_seed.c_str(), m_sceneType, 0x3c,
+    if (g_pInput->RequestKeyboard(title, m_seed.c_str(), m_playerId, 0x3c,
                                   KeyboardCompleteSeedCallback, this,
                                   C_4JInput::EKeyboardMode_0) != 0)
         m_keyboardActive = false;

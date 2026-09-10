@@ -149,7 +149,7 @@ void UIComponent_PressStartToPlay::showSaveIcon(bool show)
 {
     m_showSaveIcon = show;
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie() &&
-        GameSettings::GetGameSettings(m_resolution, static_cast<eGameSetting>(0x27)))
+        GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x27)))
         m_saveIcon.setVisible(show);
 }
 
@@ -296,7 +296,7 @@ std::wstring UIComponent_PressStartToPlay::getMoviePath()
 
 void UIComponent_PressStartToPlay::handleReload()
 {
-    bool saveVisible = m_showSaveIcon && GameSettings::GetGameSettings(m_resolution, static_cast<eGameSetting>(0x27));
+    bool saveVisible = m_showSaveIcon && GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x27));
     m_saveIcon.setVisible(saveVisible);
     m_trialTimerLabel.setVisible(m_showAutosaveTimer);
     m_trialTimerLabel.setLabel(UIString(m_autosaveTimer), false, false);

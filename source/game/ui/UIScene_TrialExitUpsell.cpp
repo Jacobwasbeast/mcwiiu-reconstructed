@@ -29,7 +29,7 @@ std::wstring UIScene_TrialExitUpsell::getMoviePath()
 void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat, bool released,
                                           bool pressed, bool&)
 {
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action == 20)
     {
         if (pressed)

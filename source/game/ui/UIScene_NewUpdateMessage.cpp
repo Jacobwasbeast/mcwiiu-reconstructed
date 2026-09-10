@@ -23,7 +23,7 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
 
     std::wstring text(L10N::GetString(static_cast<int>(0x31bf39b5)));
     text += L"\r\n";
-    text = gApp.FormatHTMLString(m_resolution, text, -1);
+    text = gApp.FormatHTMLString(m_playerId, text, -1);
 
     std::vector<std::wstring> lines;
     std::wstring::size_type start = 0;
@@ -78,20 +78,20 @@ void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool re
 {
     if (!m_ignoreInput)
     {
-        gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
         if (action < 8)
         {
             if (action == 1)
             {
                 unsigned int value = GameSettings::GetGameSettings(
-                    m_resolution, static_cast<eGameSetting>(0x16));
+                    m_playerId, static_cast<eGameSetting>(0x16));
                 if (value > 0)
                     --value;
-                GameSettings::SetGameSettings(m_resolution, static_cast<eGameSetting>(0x16),
+                GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x16),
                                               static_cast<unsigned char>(value));
-                GameSettings::SetGameSettings(m_resolution, static_cast<eGameSetting>(0x25), 1);
-                GameSettings::CheckGameSettingsChanged(true, m_resolution);
-                gConsoleUIController.NavigateBack(m_resolution, false, static_cast<EUIScene>(0),
+                GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x25), 1);
+                GameSettings::CheckGameSettingsChanged(true, m_playerId);
+                gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0),
                                                    static_cast<EUILayer>(0x53));
                 return;
             }
@@ -112,13 +112,13 @@ void UIScene_NewUpdateMessage::handlePress(int, int second)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
         unsigned int value = GameSettings::GetGameSettings(
-            m_resolution, static_cast<eGameSetting>(0x16));
+            m_playerId, static_cast<eGameSetting>(0x16));
         if (value > 0)
             --value;
-        GameSettings::SetGameSettings(m_resolution, static_cast<eGameSetting>(0x16),
+        GameSettings::SetGameSettings(m_playerId, static_cast<eGameSetting>(0x16),
                                       static_cast<unsigned char>(value));
-        GameSettings::CheckGameSettingsChanged(true, m_resolution);
-        gConsoleUIController.NavigateBack(m_resolution, false, static_cast<EUIScene>(0),
+        GameSettings::CheckGameSettingsChanged(true, m_playerId);
+        gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0),
                                            static_cast<EUILayer>(0x53));
     }
 }

@@ -35,7 +35,7 @@ UIScene_LanguageSelector::~UIScene_LanguageSelector()
 
 void UIScene_LanguageSelector::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_sceneType), 0x8d6323ed,
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), 0x8d6323ed,
                                      0x4f6bcf5e, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, false, false);
 }
@@ -45,16 +45,16 @@ void UIScene_LanguageSelector::updateComponents()
     bool showSplitScreen = false;
     if (Minecraft::GetInstance()->mLevel == NULL)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(66), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(66), true);
         showSplitScreen = true;
     }
     else
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(66), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(66), false);
         if (g_pApp->GetLocalPlayerCount() == 1)
             showSplitScreen = true;
     }
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(67), showSplitScreen);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(67), showSplitScreen);
 }
 
 void UIScene_LanguageSelector::handleReload()
@@ -84,7 +84,7 @@ std::wstring UIScene_LanguageSelector::getMoviePath()
 void UIScene_LanguageSelector::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                            bool&)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action < 4)
         return;
     if (action > 5)
@@ -110,9 +110,9 @@ void UIScene_LanguageSelector::handlePress(int first, int index)
     if (first == 0)
     {
         gConsoleUIController.PlayUISFX(0);
-        GameSettings::SetMinecraftLanguage(m_sceneType, languages[index]);
-        GameSettings::SetMinecraftLocale(m_sceneType, static_cast<unsigned char>(locales[index]));
-        GameSettings::CheckGameSettingsChanged(true, m_sceneType);
+        GameSettings::SetMinecraftLanguage(m_playerId, languages[index]);
+        GameSettings::SetMinecraftLocale(m_playerId, static_cast<unsigned char>(locales[index]));
+        GameSettings::CheckGameSettingsChanged(true, m_playerId);
     }
 }
 

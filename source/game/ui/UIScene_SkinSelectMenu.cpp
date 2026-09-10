@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -352,12 +353,59 @@ void UIScene_SkinSelectMenu::HandleDLCLicenseChange()
     handleSkinIndexChanged();
 }
 
-void UIScene_SkinSelectMenu::handleTouchInput(unsigned int player, int, int x, int, bool, bool released, bool pressed)
+void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX, int touchY,
+                                              int touchBox, bool repeat, bool released,
+                                              bool pressed)
 {
-    if (pressed && released)
-        InputActionOK(player);
-    else if (pressed)
-        m_packButtonX = x;
+    if (!repeat)
+    {
+        if (!released)
+        {
+            if (pressed && touchBox == 10 && !m_inputPending)
+            {
+                InputActionOK(playerId);
+            }
+        }
+        else if (touchBox == 10)
+        {
+            if (touchX < m_packButtonX - 50)
+            {
+                if (!m_skinChanging && !m_inputPending)
+                {
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+                    m_skinIndex = getNextSkinIndex(m_skinIndex);
+                    m_skinChanging = true;
+                    m_characterFacing = true;
+                    m_characterPreviews[0].SetFacing(UIControl_PlayerSkinPreview::eFacingLeft, true);
+                    m_characterPreviews[1].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
+                    sendInputToMovie(7, false, true, false);
+                    m_inputPending = true;
+                    return;
+                }
+            }
+            else if (touchX > m_packButtonX + 50)
+            {
+                if (!m_skinChanging && !m_inputPending)
+                {
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+                    m_skinIndex = getPreviousSkinIndex(m_skinIndex);
+                    m_skinChanging = true;
+                    m_characterFacing = true;
+                    m_characterPreviews[0].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, true);
+                    m_characterPreviews[4].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
+                    sendInputToMovie(6, false, true, false);
+                    m_inputPending = true;
+                    return;
+                }
+            }
+        }
+    }
+    else if (touchBox == 10 && (m_packTypeId != 1 || GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0))
+    {
+        m_packButtonX = touchX;
+        m_inputPending = false;
+        return;
+    }
 }
 
 void UIScene_SkinSelectMenu::handleReload()

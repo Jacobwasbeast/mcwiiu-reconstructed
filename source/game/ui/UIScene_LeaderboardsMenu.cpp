@@ -184,21 +184,21 @@ int UIScene_LeaderboardsMenu::ExitLeaderboards(void* context, int button,
 
 void UIScene_LeaderboardsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_sceneType), -1, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, 0x4f6bcf5e,
         0x4990ea8c, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0);
 }
 
 void UIScene_LeaderboardsMenu::updateComponents()
 {
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), !g_pApp->GetGameStarted());
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), false);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), !g_pApp->GetGameStarted());
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
 }
 
 void UIScene_LeaderboardsMenu::handleTimerComplete(int timerId)
 {
     if (timerId == 0 && g_pApp->DLCInstallPending() == 0)
         gConsoleUIController.RequestErrorMessage(0xf1c0f3d9, 0, NULL, 0,
-                                                  m_sceneType, ExitLeaderboards, this, 0, true);
+                                                  m_playerId, ExitLeaderboards, this, 0, true);
 }
 
 std::wstring UIScene_LeaderboardsMenu::getMoviePath()

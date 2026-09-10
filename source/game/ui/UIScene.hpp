@@ -39,8 +39,7 @@ public:
     {
     };
 
-    UIScene(int sceneType, UILayer* layer);
-    virtual ~UIScene();
+    UIScene(int playerId, UILayer* layer);
 
     virtual void reloadMovie(bool force);
     virtual bool needsReloaded();
@@ -51,13 +50,14 @@ public:
     virtual double getSafeZoneHalfWidth();
     virtual std::wstring getMoviePath() = 0;
     virtual unsigned int mapElementsAndNames();
+    virtual ~UIScene();
     virtual int getSceneType() = 0;
     virtual unsigned int getSubSceneType() const;
     virtual void tick();
     virtual void SetFocusToElement(int focus);
     virtual void handleTimerComplete(int timerId);
     virtual bool stealsFocus();
-    virtual bool hasFocus(int sceneType);
+    virtual bool hasFocus(int playerId);
     virtual void updateTooltips();
     virtual void updateComponents();
     virtual void handleGainFocus(bool hadFocus);
@@ -92,8 +92,8 @@ public:
     virtual void HandleMessage(EUIMessage message, void* data);
     virtual void HandleSaveDeviceRemoved(int deviceIndex);
     virtual void handleUnlockFullVersion();
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
-                                  bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
+                                  bool repeat, bool released, bool pressed);
     virtual bool isReadyToDelete();
 
     static void customDrawFui(void* context, const char* name, fuiRect* rect);
@@ -151,7 +151,7 @@ protected:
     bool m_tickedLastFrame;
     UIScene* m_backScene;
     unsigned int m_callbackId;
-    int m_resolution;
+    int m_movieResolution;
     bool m_reloading;
     bool m_hasGainedFocus;
     int m_stageWidth;
@@ -161,7 +161,7 @@ protected:
     std::vector<UIControl*> m_controls;
     UILayer* m_layer;
     bool m_hasFocus;
-    int m_sceneType;
+    int m_playerId;
     bool m_hasTicked;
     bool m_slotDrawPending;
     bool m_updatePending;

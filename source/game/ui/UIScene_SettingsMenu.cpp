@@ -30,7 +30,7 @@ UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
 
     removeControl(&m_buttons[2], false);
 
-    if (gProfile->GetPrimaryPad() != m_resolution)
+    if (gProfile->GetPrimaryPad() != m_playerId)
     {
         removeControl(&m_buttons[1], destroyControls);
         if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ||
@@ -39,7 +39,7 @@ UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
             removeControl(&m_buttons[4], destroyControls);
     }
 
-    m_language = GameSettings::GetMinecraftLanguage(m_resolution);
+    m_language = GameSettings::GetMinecraftLanguage(m_playerId);
     doHorizontalResizeCheck();
     g_pApp->GetLocalPlayerCount();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -72,7 +72,7 @@ unsigned int UIScene_SettingsMenu::mapElementsAndNames()
 
 void UIScene_SettingsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_resolution, (int)0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips(m_playerId, (int)0x8d6323ed, 0x4f6bcf5e,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -82,14 +82,14 @@ void UIScene_SettingsMenu::updateComponents()
     bool showComponents = true;
     if (Minecraft::GetInstance()->mPendingLevelChange != 0)
     {
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), false);
         showComponents = g_pApp->GetLocalPlayerCount() == 1;
     }
     else
     {
-        m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
     }
-    m_layer->showComponent(m_resolution, static_cast<EUIScene>(0x43), showComponents);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), showComponents);
 }
 
 void UIScene_SettingsMenu::handleReload()
@@ -97,7 +97,7 @@ void UIScene_SettingsMenu::handleReload()
     bool destroyControls = Minecraft::GetInstance()->mPendingLevelChange == 0;
     removeControl(&m_buttons[2], destroyControls);
 
-    if (gProfile->GetPrimaryPad() != m_resolution)
+    if (gProfile->GetPrimaryPad() != m_playerId)
     {
         removeControl(&m_buttons[1], destroyControls);
         if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true) ||
@@ -106,7 +106,7 @@ void UIScene_SettingsMenu::handleReload()
             removeControl(&m_buttons[4], destroyControls);
     }
 
-    m_language = GameSettings::GetMinecraftLanguage(m_resolution);
+    m_language = GameSettings::GetMinecraftLanguage(m_playerId);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
 }
@@ -121,7 +121,7 @@ std::wstring UIScene_SettingsMenu::getMoviePath()
 void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                        bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action > 3)
     {
         if (action < 6 || action == 0x14)
@@ -137,10 +137,10 @@ void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bo
 void UIScene_SettingsMenu::tick()
 {
     UIScene::tick();
-    if (gConsoleUIController.GetTopScene(m_resolution, static_cast<EUILayer>(6),
+    if (gConsoleUIController.GetTopScene(m_playerId, static_cast<EUILayer>(6),
                                          static_cast<EUIGroup>(7)) == this)
     {
-        unsigned char language = GameSettings::GetMinecraftLanguage(m_resolution);
+        unsigned char language = GameSettings::GetMinecraftLanguage(m_playerId);
         if (m_language != language)
         {
             m_language = language;
@@ -157,7 +157,7 @@ int UIScene_SettingsMenu::ResetDefaultsDialogReturned(
     if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
     {
         GameSettings::SetDefaultGameOptions(
-            gStorage->GetDashboardProfileSettings(scene->m_resolution), scene->m_resolution, true);
+            gStorage->GetDashboardProfileSettings(scene->m_playerId), scene->m_playerId, true);
         GameSettings::CheckGameSettingsChanged(true, button);
     }
     return 0;
@@ -171,9 +171,9 @@ void UIScene_SettingsMenu::handlePress(int, int action)
         if (action < 5)
         {
             int* data = new int[2];
-            data[0] = m_resolution;
+            data[0] = m_playerId;
             data[1] = 2;
-            gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x13), data,
+            gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
                                                  static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
             return;
         }
@@ -183,25 +183,25 @@ void UIScene_SettingsMenu::handlePress(int, int action)
                 return;
             int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
             gConsoleUIController.RequestAlertMessage(
-                0x13efeffb, 0x5694645e, parameters, 2, m_resolution,
+                0x13efeffb, 0x5694645e, parameters, 2, m_playerId,
                 ResetDefaultsDialogReturned,
                 (void*)static_cast<unsigned long>(GetCallbackUniqueId()), NULL,
                 true);
             return;
         }
         int* data = new int[2];
-        data[0] = m_resolution;
+        data[0] = m_playerId;
         data[1] = 3;
-        gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x13), data,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
     if (action == 0)
     {
         int* data = new int[2];
-        data[0] = m_resolution;
+        data[0] = m_playerId;
         data[1] = 0;
-        gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x13), data,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         resetHorizontalResizeCheck();
         return;
@@ -209,9 +209,9 @@ void UIScene_SettingsMenu::handlePress(int, int action)
     if (action != 1)
         return;
     int* data = new int[2];
-    data[0] = m_resolution;
+    data[0] = m_playerId;
     data[1] = 1;
-    gConsoleUIController.NavigateToScene(m_resolution, static_cast<EUIScene>(0x13), data,
+    gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x13), data,
                                          static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 

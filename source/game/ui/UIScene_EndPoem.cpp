@@ -31,7 +31,7 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
     m_text += L10N::GetString(0x69414293);
     m_text += L10N::GetString(0x433ec82a);
     m_text += L" ";
-    gApp.FormatHTMLString(m_resolution, m_text, static_cast<int>(0xff000000));
+    gApp.FormatHTMLString(m_playerId, m_text, static_cast<int>(0xff000000));
 
     Minecraft* minecraft = Minecraft::GetInstance();
     std::wstring playerName;
@@ -111,7 +111,7 @@ void UIScene_EndPoem::updateNoise()
 void UIScene_EndPoem::updateTooltips()
 {
     int tooltip = m_finished ? -1 : static_cast<int>(0x8ad40344);
-    gConsoleUIController.SetTooltips(m_resolution, -1, tooltip, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, -1, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, true);
 }
 

@@ -146,7 +146,7 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
     m_page = static_cast<int>(page);
     const wchar_t* title = L10N::GetString(0x18d8ea9);
     std::wstring text(title == NULL ? L"" : title);
-    gApp.FormatHTMLString(m_resolution, text, m_controlFocus);
+    gApp.FormatHTMLString(m_playerId, text, m_controlFocus);
     stripWhitespaceForHtml(text, true);
     m_dynamicHtmlText.addText(text, true);
     if (m_movie != NULL && m_movie->getRootNode() != NULL)

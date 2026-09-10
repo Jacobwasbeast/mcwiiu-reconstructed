@@ -113,7 +113,7 @@ void UIScene_MapSelectMenu::updateTooltips()
 
 void UIScene_MapSelectMenu::updateComponents()
 {
-    m_layer->showComponent(m_sceneType, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
 }
 
 void UIScene_MapSelectMenu::UpdateMapInfo()
@@ -180,7 +180,7 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
         cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance());
         DLC_INFO* info = dlcInfo->GetDLCInfoForPackID(pack->GetPackId());
         int contentType = info == NULL ? 0 : info->ContentType;
-        tryPurchaseDlc(m_sceneType, handled, (eDLCContentType)contentType);
+        tryPurchaseDlc(m_playerId, handled, (eDLCContentType)contentType);
     }
     return purchased ? 1 : 0;
 }
@@ -188,7 +188,7 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
 void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                         bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action == 2 || action == 3)
     {
         if (released || !pressed)
@@ -215,10 +215,10 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
                 selection |= 1U << (m_levelRuleGroups.at(i)->rulesets.at(0)->getGenerationOptions()->getThemeId() & 0x1f);
         m_mapSelection = selection;
         if (m_miniGameType == 1)
-            GameSettings::SetBattleMiniGameMapSelection(m_sceneType, selection);
+            GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
         else if (m_miniGameType == 3)
-            GameSettings::SetGlideMiniGameMapSelection(m_sceneType, selection);
-        GameSettings::CheckGameSettingsChanged(true, m_sceneType);
+            GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
+        GameSettings::CheckGameSettingsChanged(true, m_playerId);
         navigateBack();
         handled = true;
         return;

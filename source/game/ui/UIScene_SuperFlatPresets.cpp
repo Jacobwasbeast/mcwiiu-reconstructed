@@ -185,7 +185,7 @@ int UIScene_SuperFlatPresets::LoadConfirmMessageCallback(void* data, int, C4JSto
     if (result == static_cast<C4JStorage::EMessageResult>(4))
     {
         scene->m_generator.setEqualTo(scene->GetSuperflatConfig(scene->m_selectedPreset));
-        gConsoleUIController.NavigateBack(scene->m_sceneType, false, static_cast<EUIScene>(0x53),
+        gConsoleUIController.NavigateBack(scene->m_playerId, false, static_cast<EUIScene>(0x53),
                                            static_cast<EUILayer>(8));
     }
     return 0;
@@ -199,14 +199,14 @@ void UIScene_SuperFlatPresets::HandlePresetListPress(int function)
         int parameters[2] = { static_cast<int>(0xB9A1BF4Du), static_cast<int>(0x4FCBC7E7u) };
         m_selectedPreset = selection;
         gConsoleUIController.RequestAlertMessage(0x853396D1, 0xCD41C121, parameters, 2,
-                                                  m_sceneType, LoadConfirmMessageCallback, this, 0, true);
+                                                  m_playerId, LoadConfirmMessageCallback, this, 0, true);
     }
 }
 
 void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                            bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action > 1 && action < 4)
     {
         if (!released)

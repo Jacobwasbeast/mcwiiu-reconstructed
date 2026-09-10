@@ -65,8 +65,8 @@ void UIScene_CreateWorldMenu::updateComponents()
 {
     if (m_layer != NULL)
     {
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x42), true);
-        m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), false);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x42), true);
+        m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
     }
 }
 
@@ -83,7 +83,7 @@ void UIScene_CreateWorldMenu::tick()
 
 UIControl* UIScene_CreateWorldMenu::GetMainPanel()
 {
-    return &m_startButton;
+    return &m_mainPanel;
 }
 
 std::wstring UIScene_CreateWorldMenu::getMoviePath()
@@ -148,13 +148,13 @@ void UIScene_CreateWorldMenu::handlePress(int first, int second)
     {
         m_keyboardActive = true;
         if (g_pInput != NULL && g_pInput->RequestKeyboard(L10N::GetString(0xb0b877e6),
-                                                            m_worldName.c_str(), m_sceneType, 0x19,
+                                                            m_worldName.c_str(), m_playerId, 0x19,
                                                             KeyboardCompleteWorldNameCallback, this,
                                                             C_4JInput::EKeyboardMode_0) != 0)
             m_keyboardActive = false;
     }
     else if (first == 3)
-        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x2b),
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x2b),
                                              &m_onlineCheckbox, static_cast<EUILayer>(6),
                                              static_cast<EUIGroup>(7));
     else if (first == 4)

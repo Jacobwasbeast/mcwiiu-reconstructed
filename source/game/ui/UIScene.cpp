@@ -29,12 +29,12 @@ std::wstring _toString(T value);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 
-UIScene::UIScene(int sceneType, UILayer* layer)
+UIScene::UIScene(int playerId, UILayer* layer)
     : m_moviePath(L""), m_movie(0), m_movieLoaded(false), m_itemRenderer(0),
       m_controlFocus(-1), m_controlChildFocus(0), m_opacity(1.0f), m_opacityInitialised(false),
       m_visible(true), m_tickedLastFrame(false), m_backScene(0), m_callbackId(0),
       m_reloading(false), m_hasGainedFocus(false), m_layer(layer), m_hasFocus(false),
-      m_sceneType(sceneType), m_hasTicked(false), m_slotDrawPending(false), m_updatePending(true),
+      m_playerId(playerId), m_hasTicked(false), m_slotDrawPending(false), m_updatePending(true),
       m_slotDrawCount(0)
 {
 }
@@ -191,15 +191,15 @@ bool UIScene::stealsFocus()
     return true;
 }
 
-bool UIScene::hasFocus(int sceneType)
+bool UIScene::hasFocus(int playerId)
 {
-    return m_hasFocus && sceneType == m_sceneType;
+    return m_hasFocus && playerId == m_playerId;
 }
 
 void UIScene::updateTooltips()
 {
     if (!gConsoleUIController.IsReloadingSkin()) {
-        gConsoleUIController.SetTooltips(m_sceneType, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, false, false);
     }
 }
@@ -383,7 +383,7 @@ void UIScene::tickTimers()
 void UIScene::navigateBack()
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-    gConsoleUIController.NavigateBack(m_sceneType, false, static_cast<EUIScene>(0x53),
+    gConsoleUIController.NavigateBack(m_playerId, false, static_cast<EUIScene>(0x53),
                                       static_cast<EUILayer>(8));
 }
 
@@ -418,10 +418,10 @@ void UIScene::loadMovie()
     std::wstring path = getMoviePath();
     if (gRenderer->IsWidescreen()) {
         path.append(L"720.fui");
-        m_resolution = 1;
+        m_movieResolution = 1;
     } else {
         path.append(L"480.fui");
-        m_resolution = 2;
+        m_movieResolution = 2;
     }
 
     ConsoleUIController::_CachedMovieData& movieData =

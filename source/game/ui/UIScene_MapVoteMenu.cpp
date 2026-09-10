@@ -74,7 +74,7 @@ void UIScene_MapVoteMenu::InitForMap()
             name += L" Huge";
         else if (g_pApp->DebugArtToolsOn() && size == 0)
             name += L" Small";
-        bool checked = mode->GetMapVote(m_resolution, playlist[i].uniqueId) != 0;
+        bool checked = mode->GetMapVote(m_playerId, playlist[i].uniqueId) != 0;
         if (checked)
             m_selectedVote = (int)i;
         m_mapList.AddNewItem(name, (int)i, checked, texture);
@@ -98,7 +98,7 @@ void UIScene_MapVoteMenu::InitForVariant()
     {
         std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
         std::wstring label = definition->GetLootSetText(i);
-        bool checked = mode->GetMapVote(m_resolution, i) != 0;
+        bool checked = mode->GetMapVote(m_playerId, i) != 0;
         if (checked)
             m_selectedVote = i;
         m_mapList.AddNewItem(label, i, checked, icon);
@@ -117,7 +117,7 @@ void UIScene_MapVoteMenu::InitForTheme()
     {
         std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
         std::wstring label = L"";
-        bool checked = mode->GetMapVote(m_resolution, i) != 0;
+        bool checked = mode->GetMapVote(m_playerId, i) != 0;
         if (checked)
             m_selectedVote = (int)i;
         m_mapList.AddNewItem(label, (int)i, checked, icon);
@@ -140,14 +140,14 @@ void UIScene_MapVoteMenu::Init()
 
 void UIScene_MapVoteMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips((unsigned int)m_resolution, 0x8d6323ed, 0x4f6bcf5e,
+    gConsoleUIController.SetTooltips((unsigned int)m_playerId, 0x8d6323ed, 0x4f6bcf5e,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, false, false);
 }
 
 void UIScene_MapVoteMenu::updateComponents()
 {
-    m_layer->showComponent(m_resolution, (EUIScene)0x43, false);
+    m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
 }
 
 void UIScene_MapVoteMenu::handleReload()
@@ -245,16 +245,16 @@ void UIScene_MapVoteMenu::handlePress(int, int selection)
     if (m_selectedVote == selection)
     {
         m_selectedVote = -1;
-        Minecraft::GetInstance()->GetClientMasterGameMode()->SetMapVote(m_resolution, m_mapIds[selection], true);
+        Minecraft::GetInstance()->GetClientMasterGameMode()->SetMapVote(m_playerId, m_mapIds[selection], true);
         return;
     }
     m_previousSelection = m_selectedVote;
     m_selectedVote = selection;
     ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
     if (m_votableType == 2)
-        mode->SetBuildOffThemeVote(m_resolution, m_mapIds[selection], 1);
+        mode->SetBuildOffThemeVote(m_playerId, m_mapIds[selection], 1);
     else
-        mode->SetMapVote(m_resolution, m_mapIds[selection], false);
+        mode->SetMapVote(m_playerId, m_mapIds[selection], false);
 }
 
 void UIScene_MapVoteMenu::handleFocusChange(int, int childFocus)

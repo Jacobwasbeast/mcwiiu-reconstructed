@@ -40,6 +40,8 @@ class AbstractContainerMenu
 {
     friend class ServerGamePacketListenerImpl;
     friend class ServerPlayer;
+    friend class UIScene_AbstractContainerMenu;
+    friend class UIScene_BeaconMenu;
 
 public:
     typedef std::vector<not_null_ptr<ItemInstance> > ItemList;
@@ -48,7 +50,7 @@ public:
 
     AbstractContainerMenu();
     virtual ~AbstractContainerMenu();
-    int addSlot(Slot* slot);
+    Slot* addSlot(Slot* slot);
     virtual void addSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual void removeSlotListener(net_minecraft_world_inventory::ContainerListener* listener);
     virtual ItemList* getItems();
@@ -59,39 +61,40 @@ public:
     virtual Slot* getSlotFor(boost::shared_ptr<Container> container, int index);
     virtual Slot* getSlot(int index);
     virtual ItemList getAllItems(int start, int count);
-    virtual ItemList takeAll(boost::shared_ptr<Player> player, int start, int count, int mode);
+    virtual ItemList takeAll(boost::shared_ptr<Player> player, int button, int start, int count);
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     static int getQuickcraftHeader(int flags);
     void resetQuickCraft();
     static int getQuickcraftType(int flags);
     static bool isValidQuickcraftType(int type, boost::shared_ptr<Player> player);
     static bool canItemQuickReplace(Slot* slot, not_null_ptr<ItemInstance> item, bool stacking);
-    virtual bool canDragTo(Slot* slot);
-    static int getQuickCraftSlotCount(SlotSet* slots, int mode, not_null_ptr<ItemInstance> item, int slotCount);
+    bool canDragTo(Slot* slot);
+    static void getQuickCraftSlotCount(SlotSet* slots, int mode, not_null_ptr<ItemInstance> item, int slotCount);
     virtual not_null_ptr<ItemInstance> clicked(int slot, int button, ClickType::eClickType type, boost::shared_ptr<Player> player);
     virtual bool mayCombine(Slot* slot, not_null_ptr<ItemInstance> item);
     virtual bool canTakeItemForPickAll(not_null_ptr<ItemInstance> item, Slot* slot);
+    virtual bool doQuickMoveLoop() { return true; }
     virtual void clearContainer(boost::shared_ptr<Player> player, Level* level, boost::shared_ptr<Container> container);
     virtual void removed(boost::shared_ptr<Player> player);
     virtual void slotsChanged();
+    bool isPauseScreen();
     void setItem(unsigned int index, not_null_ptr<ItemInstance> item);
     void setAll(NonNullList<not_null_ptr<ItemInstance> > items);
     virtual void setData(int id, int value);
+    virtual bool stillValid(boost::shared_ptr<Player> player) = 0;
     int backup(boost::shared_ptr<Inventory> inventory);
     bool isSynched(boost::shared_ptr<Player> player);
     void setSynched(boost::shared_ptr<Player> player, bool value);
     static bool stackAsdAsd(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
-    int moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool allowEmpty, bool checkMax);
+    int moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty);
     virtual bool isOverrideResultClick(int slot, int button);
     static int getQuickcraftMask(int header, int type);
     static int getRedstoneSignalFromContainer(boost::shared_ptr<Container> container);
     static int getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity);
     virtual bool isValidIngredient(not_null_ptr<ItemInstance> item, int slot);
-    virtual not_null_ptr<ItemInstance> GetQuickCraftItem(int slot, int button);
-    virtual bool IsSmallInventory();
+    not_null_ptr<ItemInstance> GetQuickCraftItem(int playerIndex, int slotIndex);
+    bool IsSmallInventory();
     static bool matches(AbstractContainerMenu* first, AbstractContainerMenu* second);
-    virtual bool doQuickMoveLoop();
-    virtual bool isPauseScreen();
 
 protected:
     ItemList m_items;

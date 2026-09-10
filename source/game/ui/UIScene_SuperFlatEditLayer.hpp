@@ -81,8 +81,8 @@ public:
     virtual void handlePress(int first, int second);
     virtual void handleSliderMove(int id, int value);
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat,
-                                  bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
+                                  bool repeat, bool released, bool pressed);
     virtual UIControl* GetMainPanel();
     virtual void SetFocusToElement(int focus);
     virtual std::wstring getMoviePath();

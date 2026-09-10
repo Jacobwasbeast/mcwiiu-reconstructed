@@ -230,7 +230,7 @@ void UIScene_HUD::handleReload()
     UIScene::handleReload();
 }
 
-unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_sceneType); }
+unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }
 void UIScene_HUD::SetOpacity(float opacity) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAlpha(opacity); }
 void UIScene_HUD::SetVisible(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowHealth(visible); }
 unsigned char UIScene_HUD::GetHudLoading() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHudLoading(); }
@@ -373,7 +373,7 @@ void UIScene_HUD::handleGameTick()
         return;
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    const int playerId = m_resolution;
+    const int playerId = m_playerId;
     if (minecraft->mLocalPlayers[playerId] && minecraft->mGameModes[playerId])
     {
         m_layer->showComponent(playerId, static_cast<EUIScene>(0x31), true);

@@ -37,14 +37,14 @@ public:
     virtual void handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleInitFocus(int focus, int childFocus);
-    virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat, bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox, bool repeat, bool released, bool pressed);
     virtual UIControl* GetMainPanel();
     virtual void tick();
-    void SelectTab(int tab);
     virtual std::wstring getMoviePath();
     virtual void handlePress(int first, int second);
     virtual int getSceneType();
-    unsigned int GetPad();
+    virtual unsigned int GetPad();
+    virtual void SelectTab(int tab);
     void AddMiiItem(TabControls& controls, MiiDataEntry* mii);
     void AddMiiItems();
     void Initialise();

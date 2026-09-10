@@ -146,7 +146,7 @@ void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType vi
 void UIComponent_Chat::handleTimerComplete(int timerId)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    int player = m_resolution;
+    int player = m_playerId;
     if (minecraft->mLocalPlayers[player].get() == NULL)
     {
         for (int i = 0; i < 10; ++i)

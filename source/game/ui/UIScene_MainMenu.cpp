@@ -109,8 +109,8 @@ void UIScene_MainMenu::updateTooltips()
 void UIScene_MainMenu::updateComponents()
 {
     if (m_layer != NULL) {
-        m_layer->showComponent(m_sceneType, s_componentDRC, true);
-        m_layer->showComponent(m_sceneType, s_componentTV, true);
+        m_layer->showComponent(m_playerId, s_componentDRC, true);
+        m_layer->showComponent(m_playerId, s_componentTV, true);
     }
 }
 

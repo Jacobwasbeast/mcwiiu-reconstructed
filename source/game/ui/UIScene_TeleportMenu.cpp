@@ -25,7 +25,7 @@ UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* l
     m_title.init(UIString(L10N::GetString(m_splitScreen ? 0xdd235a1d : 0x4296e646)));
     m_playerList.init(0);
 
-    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_sceneType);
+    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     for (int i = 0; i < playerCount; ++i)
     {
@@ -37,8 +37,8 @@ UIScene_TeleportMenu::UIScene_TeleportMenu(int sceneType, void* data, UILayer* l
             m_playerList.addItem(info->name, info->colour, info->voiceStatus, true);
         }
     }
-    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_sceneType, OnPlayerChanged, this);
-    m_layer->addComponent(m_sceneType, static_cast<EUIScene>(0x48), 0);
+    CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
+    m_layer->addComponent(m_playerId, static_cast<EUIScene>(0x48), 0);
     updateTooltips();
     gConsoleUIController.HidePressStart();
 }
@@ -68,7 +68,7 @@ UIScene_TeleportMenu::_PlayerInfo* UIScene_TeleportMenu::BuildPlayerInfo(INetwor
     info->voiceStatus = 0;
     if (player->HasVoice())
     {
-        if (player->IsMutedByLocalUser(m_sceneType))
+        if (player->IsMutedByLocalUser(m_playerId))
             info->voiceStatus = 3;
         else
             info->voiceStatus = player->IsTalking() ? 2 : 1;
@@ -103,7 +103,7 @@ void UIScene_TeleportMenu::OnPlayerChanged(void* context, INetworkPlayer* player
 
 void UIScene_TeleportMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -112,7 +112,7 @@ void UIScene_TeleportMenu::handleReload()
     for (std::vector<_PlayerInfo*>::iterator it = m_playerInfo.begin(); it != m_playerInfo.end(); ++it)
         delete *it;
     m_playerInfo.clear();
-    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_sceneType);
+    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     for (int i = 0; i < playerCount; ++i)
     {
@@ -131,7 +131,7 @@ void UIScene_TeleportMenu::handleReload()
 void UIScene_TeleportMenu::tick()
 {
     UIScene::tick();
-    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_sceneType);
+    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     unsigned int item = 0;
     for (int playerIndex = 0; item < m_playerInfo.size(); ++playerIndex, ++item)
     {
@@ -167,7 +167,7 @@ std::wstring UIScene_TeleportMenu::getMoviePath()
 void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool released, bool pressed,
                                        bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action <= 3 || (action >= 6 && action < 8))
         return;
     if ((action <= 9 || action == 0x14))
@@ -186,7 +186,7 @@ void UIScene_TeleportMenu::handleGainFocus(bool hadFocus)
 {
     UIScene::handleGainFocus(hadFocus);
     if (hadFocus)
-        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_sceneType, OnPlayerChanged, this);
+        CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
 }
 
 void UIScene_TeleportMenu::handlePress(int controlId, int itemIndex)
@@ -194,8 +194,8 @@ void UIScene_TeleportMenu::handlePress(int controlId, int itemIndex)
     if (controlId != 0)
         return;
     INetworkPlayer* target = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_playerInfo[itemIndex]->smallId);
-    INetworkPlayer* local = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_sceneType);
-    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+    INetworkPlayer* local = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
+    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
     if (m_splitScreen)
         connection->send(TeleportCommand::preparePacket(local->GetUID(), target->GetUID()));
     else
@@ -204,8 +204,8 @@ void UIScene_TeleportMenu::handlePress(int controlId, int itemIndex)
 
 void UIScene_TeleportMenu::handleDestroy()
 {
-    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_sceneType, OnPlayerChanged, this);
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x48), false);
+    CGameNetworkManager::sInstance.UnRegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x48), false);
 }
 
 int UIScene_TeleportMenu::getSceneType()

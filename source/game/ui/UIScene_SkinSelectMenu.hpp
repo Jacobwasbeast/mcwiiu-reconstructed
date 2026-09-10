@@ -37,8 +37,8 @@ public:
     virtual void HandleDLCMountingComplete();
     virtual void HandleDLCInstalled();
     virtual void HandleDLCLicenseChange();
-    virtual void handleTouchInput(unsigned int player, int action, int x, int y, bool repeat,
-                                  bool released, bool pressed);
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
+                                  bool repeat, bool released, bool pressed);
     virtual int getSceneType();
 
     void setCharacterLocked(bool locked);

@@ -87,7 +87,7 @@ void UIScene_InGameSaveManagementMenu::GetSaveInfo()
     m_saveTimer.setVisible(true);
     m_saveInfo = (void*)(uintptr_t)gStorage->ReturnSavesInfo();
     if (m_saveInfo == NULL)
-        gStorage->GetSavesInfo(m_sceneType, NULL, this, "save");
+        gStorage->GetSavesInfo(m_playerId, NULL, this, "save");
 }
 
 void UIScene_InGameSaveManagementMenu::Initialise()
@@ -119,7 +119,7 @@ unsigned int UIScene_InGameSaveManagementMenu::mapElementsAndNames()
 void UIScene_InGameSaveManagementMenu::updateTooltips()
 {
     int tooltip = (m_saveInfoReady && m_saveCount > 0) ? (int)0x0e3265e5 : -1;
-    gConsoleUIController.SetTooltips((unsigned int)m_sceneType, tooltip, (int)0xaed18de8,
+    gConsoleUIController.SetTooltips((unsigned int)m_playerId, tooltip, (int)0xaed18de8,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, false, m_layer->IsFullscreenGroup());
 }
@@ -146,7 +146,7 @@ void UIScene_InGameSaveManagementMenu::handleInput(int playerId, int action, boo
 {
     if (m_deletePending || !m_saveInfoReady)
         return;
-    gConsoleUIController.AnimateKeyPress((unsigned int)m_sceneType, action, repeat, released,
+    gConsoleUIController.AnimateKeyPress((unsigned int)m_playerId, action, repeat, released,
                                          pressed);
     if (action < 4 || (action > 5 && action < 8))
         return;
@@ -176,7 +176,7 @@ void UIScene_InGameSaveManagementMenu::handleInitFocus(int, int)
 
 bool UIScene_InGameSaveManagementMenu::hasFocus(int sceneType)
 {
-    return m_hasFocus && (sceneType == m_sceneType || m_sceneType == 0xff);
+    return m_hasFocus && (sceneType == m_playerId || m_playerId == 0xff);
 }
 
 unsigned int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* context,
@@ -306,7 +306,7 @@ void UIScene_InGameSaveManagementMenu::handlePress(int first, int)
         m_deletePending = true;
         int parameters[2] = { (int)0x4fcbc7e7, (int)0xb9a1bf4d };
         gConsoleUIController.RequestErrorMessage(0x0e3265e5, (int)0xc2cd9559, parameters, 2,
-                                                  (unsigned int)m_sceneType,
+                                                  (unsigned int)m_playerId,
                                                   (int (*)(void*, int, C4JStorage::EMessageResult))DeleteSaveDialogReturned,
                                                   this, NULL, true);
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);

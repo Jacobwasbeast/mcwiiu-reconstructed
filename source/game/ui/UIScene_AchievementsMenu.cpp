@@ -104,7 +104,7 @@ void UIScene_AchievementsMenu::registerTexture(int achievement)
 
 void UIScene_AchievementsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_sceneType), -1, 0xe21d8023, 0xae01f627,
+    gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), -1, 0xe21d8023, 0xae01f627,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -144,7 +144,7 @@ int UIScene_AchievementsMenu::getSceneType()
 
 void UIScene_AchievementsMenu::updateComponents()
 {
-    m_layer->showComponent(m_sceneType, static_cast<EUIScene>(0x43), false);
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
 }
 
 std::wstring UIScene_AchievementsMenu::getMoviePath()
@@ -155,7 +155,7 @@ std::wstring UIScene_AchievementsMenu::getMoviePath()
 void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                            bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (pressed) {
         if (action == 2) {
             m_updateDetails = true;

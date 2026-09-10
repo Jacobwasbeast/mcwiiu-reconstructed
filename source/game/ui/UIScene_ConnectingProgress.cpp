@@ -45,7 +45,7 @@ UIScene_ConnectingProgress::UIScene_ConnectingProgress(int type, void* data, UIL
         m_removePlayerCallback = progressData->callback;
         m_removePlayerCallbackData = progressData->callbackData;
         m_miniGameId = progressData->miniGameId;
-        m_resolution = progressData->miniGameId;
+        m_playerId = progressData->miniGameId;
 
         const wchar_t* title = progressData->title == -1
                                    ? L""
@@ -202,7 +202,7 @@ void UIScene_ConnectingProgress::tryRemovePlayer()
 void UIScene_ConnectingProgress::removeLocalPlayer()
 {
     m_removePlayer = false;
-    Minecraft::GetInstance()->removeLocalPlayerIdx(m_resolution);
+    Minecraft::GetInstance()->removeLocalPlayerIdx(m_playerId);
 }
 
 void UIScene_ConnectingProgress::tick()
@@ -241,7 +241,7 @@ void UIScene_ConnectingProgress::handleReload()
 void UIScene_ConnectingProgress::updateTooltips()
 {
     int tooltip = m_miniGame ? static_cast<int>(0x23ec13a6) : -1;
-    gConsoleUIController.SetTooltips(m_resolution, -1, tooltip, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, -1, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -296,7 +296,7 @@ void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repe
     }
     else
     {
-        gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
         if (action < 4)
         {
             return;

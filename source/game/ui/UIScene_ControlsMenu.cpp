@@ -26,8 +26,8 @@ UIScene_ControlsMenu::~UIScene_ControlsMenu()
 {
     if (m_flags[2])
     {
-        GameSettings::CheckGameSettingsChanged(true, m_resolution);
-        GameSettings::ActionGameSettings(m_resolution, (eGameSetting)0x29);
+        GameSettings::CheckGameSettingsChanged(true, m_playerId);
+        GameSettings::ActionGameSettings(m_playerId, (eGameSetting)0x29);
     }
 }
 
@@ -57,7 +57,7 @@ void UIScene_ControlsMenu::SetControlsHelp(int player, int control, std::wstring
 
 void UIScene_ControlsMenu::Init(int player)
 {
-    m_resolution = player;
+    m_playerId = player;
     m_flags[7] = 0;
     m_flags[1] = 0;
     m_flags[2] = 0;
@@ -81,13 +81,13 @@ void UIScene_ControlsMenu::updateTooltips()
 {
     if (m_flags[5])
     {
-        gConsoleUIController.SetTooltips(m_resolution, 0, -1, -1, -1, -1, -1, -1, -1, -1,
+        gConsoleUIController.SetTooltips(m_playerId, 0, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, true, false);
     }
     else if (m_controls.getItemCount() > 0)
     {
         int tooltip = m_controls.IsEnabled(m_controls.getCurrentSelection()) ? 0x8d6323ed : -1;
-        gConsoleUIController.SetTooltips(m_resolution, tooltip, 0x4f6bcf5e, -1, -1, -1, -1,
+        gConsoleUIController.SetTooltips(m_playerId, tooltip, 0x4f6bcf5e, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, true, false);
     }
 }
@@ -95,7 +95,7 @@ void UIScene_ControlsMenu::updateTooltips()
 void UIScene_ControlsMenu::updateComponents()
 {
     if (m_layer)
-        m_layer->showComponent(m_resolution, (EUIScene)0x43, false);
+        m_layer->showComponent(m_playerId, (EUIScene)0x43, false);
 }
 
 unsigned char UIScene_ControlsMenu::GetControlsAction(EControl control)
@@ -104,9 +104,9 @@ unsigned char UIScene_ControlsMenu::GetControlsAction(EControl control)
     if (id < 3 || id > 0x1d)
         return '=';
     if (id == 3)
-        return GameSettings::GetGameSettings(m_resolution, (eGameSetting)9) ? 0x1b : 0x1d;
+        return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1b : 0x1d;
     if (id == 4)
-        return GameSettings::GetGameSettings(m_resolution, (eGameSetting)9) ? 0x1d : 0x1b;
+        return GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) ? 0x1d : 0x1b;
     static const unsigned char actions[] = "ControlsMultiList";
     return actions[id + 0xf];
 }
@@ -115,7 +115,7 @@ std::wstring UIScene_ControlsMenu::GetControlsString(EControl control, bool& map
 {
     unsigned char action = GetControlsAction(control);
     if (action < 0x3d)
-        return GetControlsString(m_resolution, (EControllerActions)action, mapped);
+        return GetControlsString(m_playerId, (EControllerActions)action, mapped);
     mapped = false;
     return std::wstring();
 }
@@ -138,10 +138,10 @@ unsigned int UIScene_ControlsMenu::ResetControlsWarningDialogReturned(void* cont
     {
         if (result == static_cast<C4JStorage::EMessageResult>(4))
         {
-            GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_resolution),
-                                             scene->m_resolution, true);
+            GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_playerId),
+                                             scene->m_playerId, true);
             GameSettings::CheckGameSettingsChanged(true, button);
-            scene->UpdateControls(scene->m_resolution);
+            scene->UpdateControls(scene->m_playerId);
         }
         else if (result == static_cast<C4JStorage::EMessageResult>(5) ||
                  result == static_cast<C4JStorage::EMessageResult>(3))
@@ -171,11 +171,11 @@ void UIScene_ControlsMenu::tick()
 {
     if (m_flags[7])
     {
-        CheckMapping(m_resolution);
+        CheckMapping(m_playerId);
         m_flags[7] = 0;
     }
     if (m_flags[1])
-        UpdateControls(m_resolution);
+        UpdateControls(m_playerId);
     UIScene::tick();
 }
 
@@ -188,12 +188,12 @@ void UIScene_ControlsMenu::handleCheckboxElementToggled(int first, int second, b
 {
     gConsoleUIController.PlayUISFX(0);
     if (second == 1)
-        GameSettings::SetGameSettings(m_resolution, (eGameSetting)8, checked);
+        GameSettings::SetGameSettings(m_playerId, (eGameSetting)8, checked);
     else if (second == 2)
     {
-        if ((GameSettings::GetGameSettings(m_resolution, (eGameSetting)9) != 0) != checked)
+        if ((GameSettings::GetGameSettings(m_playerId, (eGameSetting)9) != 0) != checked)
             m_flags[1] = 1;
-        GameSettings::SetGameSettings(m_resolution, (eGameSetting)9, checked);
+        GameSettings::SetGameSettings(m_playerId, (eGameSetting)9, checked);
     }
 }
 
@@ -204,10 +204,10 @@ unsigned int UIScene_ControlsMenu::ResetDefaultsDialogReturned(void* context, in
         gConsoleUIController.GetSceneFromCallbackId((unsigned int)context));
     if (scene != NULL && result == static_cast<C4JStorage::EMessageResult>(5))
     {
-        GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_resolution),
-                                         scene->m_resolution, true);
+        GameSettings::SetDefaultControls(gStorage->GetDashboardProfileSettings(scene->m_playerId),
+                                         scene->m_playerId, true);
         GameSettings::CheckGameSettingsChanged(true, button);
-        scene->UpdateControls(scene->m_resolution);
+        scene->UpdateControls(scene->m_playerId);
     }
     return 0;
 }
@@ -229,7 +229,7 @@ unsigned int UIScene_ControlsMenu::ControlsWarningDialogReturned(void* context, 
 
 void UIScene_ControlsMenu::handleReload()
 {
-    Init(m_resolution);
+    Init(m_playerId);
 }
 
 unsigned int UIScene_ControlsMenu::CheckControls(int player, EControl control)
@@ -275,7 +275,7 @@ void UIScene_ControlsMenu::handleInput(int player, int action, bool repeat, bool
         HandleButtonEdit(player, action, repeat, released, pressed);
         return;
     }
-    gConsoleUIController.AnimateKeyPress(m_resolution, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action < 4 || (action > 9 && action < 0xe) || (action > 0xf && action != 0x14 && action != 0x15))
         return;
     if (action == 0x14)

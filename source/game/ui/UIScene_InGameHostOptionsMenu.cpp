@@ -110,7 +110,7 @@ void UIScene_InGameHostOptionsMenu::Init()
         delete players;
     }
     if (level != 0 && g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0 &&
-        Player::getPlayerGamePrivilege(g_pApp->GetPlayerPrivileges(static_cast<unsigned char>(m_sceneType)),
+        Player::getPlayerGamePrivilege(g_pApp->GetPlayerPrivileges(static_cast<unsigned char>(m_playerId)),
                                        static_cast<Player::EPlayerGamePrivileges>(0x10)) != 0 &&
         hasMultiplePlayers)
     {
@@ -128,7 +128,7 @@ void UIScene_InGameHostOptionsMenu::Init()
 
 void UIScene_InGameHostOptionsMenu::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(m_sceneType, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
+    gConsoleUIController.SetTooltips(m_playerId, 0x8d6323ed, 0x4f6bcf5e, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -147,7 +147,7 @@ std::wstring UIScene_InGameHostOptionsMenu::getMoviePath()
 void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                                 bool pressed, bool& handled)
 {
-    gConsoleUIController.AnimateKeyPress(m_sceneType, action, repeat, released, pressed);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
     if (action <= 3)
         return;
     if (action < 10 || action == 0x14)
@@ -172,7 +172,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
         int difficulty = static_cast<int>(m_hostOptions.GetSliderValue(0xf));
         if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0)) != difficulty)
         {
-            ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+            ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             if (connection != 0)
             {
                 connection->send(GameDifficultyCommand::preparePacket(difficulty));
@@ -182,7 +182,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
         unsigned int gameType = static_cast<unsigned int>(m_hostOptions.GetSliderValue(0x10));
         if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(6)) != gameType)
         {
-            ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+            ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             if (connection != 0)
             {
                 arrayWithLength<unsigned char> data(1, false);
@@ -198,7 +198,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
             unsigned int weather = m_hostOptions.GetSliderValue(0x11);
             if (level->getWeatherState() != weather)
             {
-                ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+                ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
                 if (connection != 0)
                     connection->send(WeatherCommand::preparePacket(static_cast<unsigned char>(weather)));
             }
@@ -209,7 +209,7 @@ void UIScene_InGameHostOptionsMenu::handleInput(int playerId, int action, bool r
     g_pApp->SetGameHostOption(options, static_cast<eGameHostOption>(0x1d), m_hostOptions.GetCheckboxValue(8));
     if (settingsChanged || options != g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x20)))
     {
-        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (connection != 0)
             connection->send(boost::shared_ptr<Packet>(new ServerSettingsChangedPacket(1, options)));
     }
@@ -227,13 +227,13 @@ void UIScene_InGameHostOptionsMenu::handlePress(int, int second)
     {
         struct SceneData { int player; bool value; char padding[3]; };
         SceneData* data = new SceneData;
-        data->player = m_sceneType;
+        data->player = m_playerId;
         data->value = second == 10;
-        gConsoleUIController.NavigateToScene(m_sceneType, static_cast<EUIScene>(0x34), data,
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x34), data,
                                              static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
         return;
     }
-    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_sceneType);
+    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
     if (connection == 0)
         return;
     if (second == 0xc)
