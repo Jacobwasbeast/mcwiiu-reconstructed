@@ -156,15 +156,15 @@ private:
     int gameModeId;
     int playerIdleTimeout;
     ProgressRenderer* progressRenderer;
-    LevelStorageSource* levelStorage;
+    bool stopping;
     std::vector<postProcessRequest> postProcessRequests;
+    LevelStorageSource* levelStorage;
     int postProcessState;
     OSFastMutex postProcessLock;
     C4JEventImpl* postProcessEvent;
     bool serverPaused;
     bool forceGameType;
     bool suspending;
-    bool stopping;
     long long lastServerTime;
     bool postProcessing;
     bool suspended;

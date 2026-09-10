@@ -66,6 +66,8 @@ private:
     ChunkStorage* m_storage;
     ChunkGenerator* m_generator;
     std::vector<LevelChunk*> m_chunks;
+    std::vector<LevelChunk*> m_unloadedChunks;
+    LevelChunk* m_emptyChunk;
     std::vector<LevelChunk*> m_loadedChunks;
     std::deque<LevelChunk*> m_toSave;
     int m_xCenter;

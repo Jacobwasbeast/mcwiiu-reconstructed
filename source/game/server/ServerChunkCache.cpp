@@ -2,20 +2,26 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 #include "game/world/chunk/ChunkStorage.hpp"
+#include "game/world/chunk/EmptyLevelChunk.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include <cstdint>
 #include <sstream>
 
 ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator)
-    : m_level(level), m_storage(storage), m_generator(generator), m_chunks(0), m_loadedChunks(), m_toSave(),
-      m_xCenter(0), m_zCenter(0), m_width(32), m_depth(32), m_saveAll(false), m_boundFunction(0), m_boundData(0)
+    : m_level(level), m_storage(storage), m_generator(generator), m_chunks(0), m_unloadedChunks(), m_emptyChunk(0),
+      m_loadedChunks(), m_toSave(), m_xCenter(0), m_zCenter(0), m_width(32), m_depth(32), m_saveAll(false),
+      m_boundFunction(0), m_boundData(0)
 {
     m_chunks.resize(m_width * m_depth, 0);
+    m_unloadedChunks.resize(m_width * m_depth, 0);
+    m_emptyChunk = new EmptyLevelChunk(level, 0, 0);
 }
 
 ServerChunkCache::~ServerChunkCache()
 {
     dropAll();
+    delete m_emptyChunk;
+    m_emptyChunk = 0;
 }
 
 int ServerChunkCache::computeIdx(int x, int z)
@@ -82,18 +88,40 @@ LevelChunk* ServerChunkCache::getChunkIfLoaded(int x, int z)
 
 LevelChunk* ServerChunkCache::getChunkIfLoadedOrInvalid(int x, int z)
 {
-    return getChunkIfLoaded(x, z);
+    if (!inBounds(x, z))
+        return reinterpret_cast<LevelChunk*>(m_storage);
+    return m_chunks[computeIdx(x, z)];
 }
 
 LevelChunk* ServerChunkCache::getChunkIfHasChunk(int x, int z)
 {
-    return getChunkIfLoaded(x, z);
+    if (!inBounds(x, z))
+        return reinterpret_cast<LevelChunk*>(m_storage);
+    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
+    if (chunk != 0 && !chunk->isInvalid())
+        return chunk;
+    return 0;
 }
 
 LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
 {
-    if (inBounds(x, z))
-        m_chunks[computeIdx(x, z)] = chunk;
+    if (!m_storage)
+        return 0;
+    const int index = computeIdx(x, z);
+    if (!chunk)
+    {
+        chunk = m_chunks[index];
+        m_chunks[index] = 0;
+    }
+    if (!chunk || chunk->isInvalid())
+    {
+        chunk = m_storage->load(m_level, x, z, chunk);
+        if (!chunk)
+            return 0;
+    }
+    chunk->setLastSaveTime(m_level->getGameTime());
+    if (m_generator)
+        m_generator->postProcessLoadedChunk(chunk, x, z);
     return chunk;
 }
 
@@ -162,7 +190,10 @@ int ServerChunkCache::getLoadedChunksCount()
 
 bool ServerChunkCache::hasChunk(int x, int z)
 {
-    return getChunkIfLoaded(x, z) != 0;
+    if (!inBounds(x, z))
+        return true;
+    LevelChunk* chunk = m_chunks[computeIdx(x, z)];
+    return chunk != 0 && !chunk->isInvalid();
 }
 
 bool ServerChunkCache::isChunkGeneratedAt(int x, int z)
@@ -192,7 +223,17 @@ LevelChunk* ServerChunkCache::getChunk(int x, int z)
 
 LevelChunk* ServerChunkCache::getChunkLoadedOrUnloaded(int x, int z)
 {
-    return getChunkIfLoaded(x, z);
+    if (!inBounds(x, z))
+        return m_emptyChunk;
+    const int index = computeIdx(x, z);
+    LevelChunk* chunk = m_chunks[index];
+    if (chunk == 0)
+        chunk = m_unloadedChunks[index];
+    if (chunk != 0 && !chunk->isInvalid())
+        return chunk;
+    if (m_level->isFindingSpawn() || m_saveAll)
+        return create(x, z);
+    return m_emptyChunk;
 }
 
 void ServerChunkCache::saveEntities(LevelChunk* chunk)

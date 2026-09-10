@@ -19,7 +19,23 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
 #include "game/data/LevelStorage.hpp"
+#include "game/data/ElementStorage.hpp"
 #include "game/core/FileEntry.hpp"
+#include "game/core/Compression.hpp"
+#include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/ShutdownManager.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/util/phys__Vec2.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+
+extern void Sleep(unsigned int milliseconds);
+extern void instructionSynchronize();
 
 MinecraftServer* gMinecraftServer = 0;
 
@@ -85,7 +101,76 @@ void MinecraftServer::setDifficulty(const Difficulty* difficulty)
             setLevelDifficulty(mLevels.data[i], difficulty);
 }
 
-unsigned int MinecraftServer::runPostUpdate(void*) { return 0; }
+unsigned int MinecraftServer::runPostUpdate(void* argument)
+{
+    MinecraftServer* server = static_cast<MinecraftServer*>(argument);
+
+    ShutdownManager::HasStarted(ShutdownManager::eThreadId_ServerPostUpdate);
+    Entity::useSmallIds();
+    IntCache::CreateNewThreadStorage();
+    AABB::CreateNewThreadStorage();
+    Vec3::CreateNewThreadStorage();
+    phys::Vec2::CreateNewThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    Level::enableLightingCache();
+    Block::CreateNewThreadStorage();
+    LevelChunk::CreateNewThreadStorage();
+    ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_ServerPostUpdate);
+
+    bool stoppingFlag;
+    do
+    {
+        EnterCriticalSection(&server->postProcessLock);
+        if (server->postProcessRequests.empty())
+        {
+            LeaveCriticalSection(&server->postProcessLock);
+            Sleep(1);
+            stoppingFlag = server->stopping;
+        }
+        else
+        {
+            postProcessRequest request = server->postProcessRequests.back();
+            server->postProcessRequests.pop_back();
+            LeaveCriticalSection(&server->postProcessLock);
+            PIXBeginNamedEvent(0.0f, "Post processing");
+            LevelChunk* chunk = request.source->getChunk(request.x, request.z);
+            if (chunk != 0)
+                chunk->doPostProcess(request.source, request.generator);
+            PIXEndNamedEvent();
+            Sleep(1);
+            stoppingFlag = server->stopping;
+        }
+    }
+    while (!stoppingFlag && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ServerPostUpdate));
+
+    while (true)
+    {
+        EnterCriticalSection(&server->postProcessLock);
+        if (server->postProcessRequests.empty()
+            || !ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ServerPostUpdate))
+            break;
+
+        postProcessRequest request = server->postProcessRequests.back();
+        server->postProcessRequests.pop_back();
+        LeaveCriticalSection(&server->postProcessLock);
+        LevelChunk* chunk = request.source->getChunk(request.x, request.z);
+        if (chunk != 0)
+            chunk->doPostProcess(request.source, request.generator);
+    }
+    LeaveCriticalSection(&server->postProcessLock);
+
+    Block::ReleaseThreadStorage();
+    IntCache::ReleaseThreadStorage();
+    AABB::ReleaseThreadStorage();
+    Vec3::ReleaseThreadStorage();
+    phys::Vec2::ReleaseThreadStorage();
+    Level::destroyLightingCache();
+    ElementStorage::ReleaseThreadStorage();
+    LevelChunk::ReleaseThreadStorage();
+    ShutdownManager::HasFinished(ShutdownManager::eThreadId_ServerPostUpdate);
+    instructionSynchronize();
+    return 0;
+}
 void MinecraftServer::postProcessTerminate(ProgressRenderer*) { postProcessRequests.clear(); }
 ServerLevel* MinecraftServer::getLevel(int dimension)
 {

@@ -406,7 +406,11 @@ uint32_t ServerPlayer::startRiding(boost::shared_ptr<Entity>* parameterOne)
 
 void ServerPlayer::stopRiding()
 {
+    boost::shared_ptr<Entity> vehicleBefore = getVehicle();
     Player::stopRiding();
+    boost::shared_ptr<Entity> vehicleAfter = getVehicle();
+    if (vehicleBefore.get() != vehicleAfter.get() && mConnection)
+        mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
 }
 
 void ServerPlayer::stopRidingBeforeTeleport()

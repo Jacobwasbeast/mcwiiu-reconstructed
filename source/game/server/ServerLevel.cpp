@@ -96,7 +96,7 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
 }
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), saving(false), serverScoreboard(0), weatherTick(0)
+    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0)
 {
     InitializeCriticalSection(&tickNextTickMutex);
 }
@@ -252,7 +252,16 @@ void ServerLevel::postConstruct()
 
 uint32_t ServerLevel::allPlayersAreSleeping()
 {
-    return allPlayersSleeping ? 1U : 0U;
+    if (!allPlayersSleeping || mIsClientSide)
+        return 0;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        if ((*it)->isSpectator())
+            continue;
+        if (!(*it)->isSleepingLongEnough())
+            return 0;
+    }
+    return 1;
 }
 
 uint64_t ServerLevel::stopWeather()
@@ -264,6 +273,13 @@ uint64_t ServerLevel::stopWeather()
 uint64_t ServerLevel::awakenAllPlayers()
 {
     allPlayersSleeping = false;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        if ((*it)->isSleeping())
+            (*it)->stopSleepInBed(false, false, true);
+    }
+    if (getGameRules()->getBoolean(18))
+        stopWeather();
     return 1;
 }
 
@@ -320,7 +336,29 @@ bool ServerLevel::canMobSpawnAt(MobCategory* first, Biome::MobSpawnerData* secon
 
 void ServerLevel::updateSleepingPlayerList()
 {
+    mField0x2cc = false;
+    if (mPlayers.empty())
+    {
+        allPlayersSleeping = false;
+        return;
+    }
+
+    uint32_t awakeCount = 0;
+    uint32_t sleepCount = 0;
     allPlayersSleeping = false;
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
+    {
+        if ((*it)->isSpectator())
+            awakeCount++;
+        else if ((*it)->isSleeping())
+        {
+            sleepCount++;
+            mField0x2cc = true;
+        }
+    }
+
+    if (sleepCount > 0 && (static_cast<uint32_t>(mPlayers.size()) - awakeCount) <= sleepCount)
+        allPlayersSleeping = true;
 }
 
 void ServerLevel::validateSpawn()
@@ -626,52 +664,53 @@ std::vector<TickNextTickData>* ServerLevel::fetchTicksInArea(BoundingBox* box, b
     {
         if (pass == 0)
         {
-            std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator it = tickNextTickList.begin();
-            while (it != tickNextTickList.end())
+            for (std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator it = tickNextTickList.begin();
+                 it != tickNextTickList.end(); ++it)
             {
                 TickNextTickData data = *it;
-                if (data.pos.x >= box->x0 && data.pos.x < box->x1
-                    && data.pos.z >= box->z0 && data.pos.z < box->z1)
+                if (data.pos.x < box->x0 || box->x1 <= data.pos.x
+                    || data.pos.z < box->z0 || box->z1 <= data.pos.z)
                 {
-                    if (removeTicks)
-                    {
-                        tickNextTickSet.erase(data);
-                    }
-                    else
-                    {
-                        ++it;
-                    }
-                    ticks->push_back(data);
+                    continue;
                 }
-                else
+                if (removeTicks)
                 {
-                    ++it;
+                    tickNextTickSet.erase(data);
                 }
+                ticks->push_back(data);
             }
         }
         else
         {
-            std::vector<TickNextTickData>::iterator it = toBeTicked.begin();
-            while (it != toBeTicked.end())
+            if (removeTicks)
             {
-                TickNextTickData data = *it;
-                if (data.pos.x >= box->x0 && data.pos.x < box->x1
-                    && data.pos.z >= box->z0 && data.pos.z < box->z1)
+                for (std::vector<TickNextTickData>::iterator it = toBeTicked.begin(); it != toBeTicked.end();)
                 {
-                    if (removeTicks)
-                    {
-                        tickNextTickList.erase(data);
-                        it = toBeTicked.erase(it);
-                    }
-                    else
+                    TickNextTickData data = *it;
+                    if (data.pos.x < box->x0 || box->x1 <= data.pos.x
+                        || data.pos.z < box->z0 || box->z1 <= data.pos.z)
                     {
                         ++it;
+                        continue;
                     }
+                    std::pair<std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator,
+                              std::set<TickNextTickData, TickNextTickDataKeyCompare>::iterator> range =
+                        tickNextTickList.equal_range(data);
+                    tickNextTickList.erase(range.first, range.second);
+                    it = toBeTicked.erase(it);
                     ticks->push_back(data);
                 }
-                else
+            }
+            else
+            {
+                for (std::vector<TickNextTickData>::iterator it = toBeTicked.begin(); it != toBeTicked.end(); ++it)
                 {
-                    ++it;
+                    TickNextTickData data = *it;
+                    if (data.pos.x >= box->x0 && data.pos.x < box->x1
+                        && data.pos.z >= box->z0 && data.pos.z < box->z1)
+                    {
+                        ticks->push_back(data);
+                    }
                 }
             }
         }

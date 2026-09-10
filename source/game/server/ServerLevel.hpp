@@ -87,6 +87,7 @@ public:
  int32_t blockEntityCount;
  int32_t villageSiegeTick;
  int32_t enderCrystalCount;
+ bool mField0x2cc;
  bool saving;
  ServerScoreboard* serverScoreboard;
  int32_t weatherTick;
