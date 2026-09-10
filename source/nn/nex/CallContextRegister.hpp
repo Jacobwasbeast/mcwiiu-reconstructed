@@ -15,7 +15,9 @@ namespace nex
 {
 
 class CallContext;
-class Job;
+class PeriodicJob;
+
+extern int g_checkExpiredCallsPeriod;
 
 class CallContextRegister : public SystemComponent
 {
@@ -56,7 +58,7 @@ private:
     CallContextMap m_callContexts;
     AssociatedIdMap m_associatedIds;
     unsigned int m_uiNextCallId;
-    Job* m_pCheckExpiredCallsJob;
+    PeriodicJob* m_pCheckExpiredCallsJob;
 };
 
 }

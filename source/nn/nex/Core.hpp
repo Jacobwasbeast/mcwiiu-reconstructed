@@ -77,6 +77,11 @@ public:
         return m_pScheduler;
     }
 
+    CallContextRegister* GetCallContextRegister() const
+    {
+        return m_pCallContextRegister;
+    }
+
     SystemComponents* GetSystemComponents() const
     {
         return m_pSystemComponents;

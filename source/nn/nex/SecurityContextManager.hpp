@@ -64,7 +64,7 @@ public:
     static unsigned int StaticGetCurrentCID();
 
 private:
-    mutable ThreadVariable<SecurityContextList> m_securityContexts;
+    ThreadVariable<SecurityContextList> m_securityContexts;
 };
 
 }

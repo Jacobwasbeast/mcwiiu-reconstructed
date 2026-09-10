@@ -2,14 +2,25 @@
 
 #include <cwchar>
 
+#include "nn/nex/CallContext.hpp"
 #include "nn/nex/Core.hpp"
+#include "nn/nex/DebugString.hpp"
 #include "nn/nex/Job.hpp"
+#include "nn/nex/MethodCallJob.hpp"
+#include "nn/nex/PeriodicJob.hpp"
 #include "nn/nex/Scheduler.hpp"
+#include "nn/nex/String.hpp"
+#include "nn/nex/Time.hpp"
 
 namespace nn
 {
 namespace nex
 {
+
+int g_checkExpiredCallsPeriod = 0;
+
+const int CALL_CONTEXT_RESULT_CONNECTION_LOST = static_cast<int>(0x80010004u);
+const int CALL_CONTEXT_RESULT_TIMEOUT = static_cast<int>(0x8001000Bu);
 
 CallContextRegister::CallContextRegister()
     : SystemComponent(String(L"CallContextRegister"))
@@ -18,6 +29,20 @@ CallContextRegister::CallContextRegister()
     , m_uiNextCallId(1)
     , m_pCheckExpiredCallsJob(0)
 {
+}
+
+CallContextRegister::~CallContextRegister()
+{
+    if (!g_fatalState)
+    {
+        qResult result;
+
+        for (CallContextMap::iterator callContext = m_callContexts.begin();
+             callContext != m_callContexts.end(); ++callContext)
+        {
+            callContext->second->SetStateImpl(CallContext::CallCanceled, result, true);
+        }
+    }
 }
 
 const wchar_t* CallContextRegister::GetType() const
@@ -91,9 +116,114 @@ void CallContextRegister::GetAssociatedId(unsigned int uiCallId,
         pAssociatedIds->push_back(associatedId->second);
 }
 
+void CallContextRegister::CancelCallContexts(void* pConnection, unsigned int uiConnectionId)
+{
+    qVector<unsigned int> associatedIds;
+
+    for (CallContextMap::iterator callContext = m_callContexts.begin();
+         callContext != m_callContexts.end(); ++callContext)
+    {
+        CallContext* pCallContext = callContext->second;
+
+        if (pCallContext->m_state != CallContext::CallInProgress)
+            continue;
+
+        if (pCallContext->m_pDependentConnection != pConnection
+            && (uiConnectionId == 0 || pCallContext->m_uiDependentConnectionId != uiConnectionId))
+            continue;
+
+        qVector<unsigned int> callAssociatedIds;
+
+        Core::GetInstance()->GetCallContextRegister()->GetAssociatedId(
+            pCallContext->m_uiCallId, &callAssociatedIds);
+
+        associatedIds.insert(
+            associatedIds.end(), callAssociatedIds.begin(), callAssociatedIds.end());
+
+        pCallContext->SignalFailure(qResult(CALL_CONTEXT_RESULT_CONNECTION_LOST));
+    }
+
+    for (qVector<unsigned int>::iterator associatedId = associatedIds.begin();
+         associatedId != associatedIds.end(); ++associatedId)
+    {
+        CallContext* pCallContext =
+            Core::GetInstance()->GetCallContextRegister()->GetCallContext(*associatedId);
+
+        if (pCallContext != 0)
+            pCallContext->Cancel(CallContext::CallCanceled);
+    }
+}
+
+void CallContextRegister::CancelExpiredCalls()
+{
+    Time currentTime(Time::GetTime());
+
+    qVector<unsigned int> associatedIds;
+
+    for (CallContextMap::iterator callContext = m_callContexts.begin();
+         callContext != m_callContexts.end(); ++callContext)
+    {
+        CallContext* pCallContext = callContext->second;
+
+        if (pCallContext->m_state != CallContext::CallInProgress)
+            continue;
+
+        if (pCallContext->m_expirationTime == 0)
+            continue;
+
+        if (!(pCallContext->m_expirationTime < currentTime))
+            continue;
+
+        qVector<unsigned int> callAssociatedIds;
+
+        Core::GetInstance()->GetCallContextRegister()->GetAssociatedId(
+            pCallContext->m_uiCallId, &callAssociatedIds);
+
+        associatedIds.insert(
+            associatedIds.end(), callAssociatedIds.begin(), callAssociatedIds.end());
+
+        pCallContext->SignalFailure(qResult(CALL_CONTEXT_RESULT_TIMEOUT));
+    }
+
+    for (qVector<unsigned int>::iterator associatedId = associatedIds.begin();
+         associatedId != associatedIds.end(); ++associatedId)
+    {
+        CallContext* pCallContext =
+            Core::GetInstance()->GetCallContextRegister()->GetCallContext(*associatedId);
+
+        if (pCallContext != 0)
+            pCallContext->Cancel(CallContext::CallCanceled);
+    }
+}
+
 void CallContextRegister::CheckExpiredCalls(int)
 {
     CancelExpiredCalls();
+}
+
+void CallContextRegister::Trace(unsigned long long)
+{
+    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    pScheduler->GetCriticalSection().Enter();
+
+    for (CallContextMap::iterator callContext = m_callContexts.begin();
+         callContext != m_callContexts.end(); ++callContext)
+    {
+    }
+
+    pScheduler->GetCriticalSection().Leave();
+}
+
+void CallContextRegister::Start()
+{
+    m_pCheckExpiredCallsJob = new MethodCallJob<CallContextRegister, int, PeriodicJob>(
+        Job::JOB_TYPE_0, String(L"CallContextRegister::CheckExpiredCalls"),
+        &CallContextRegister::CheckExpiredCalls, this);
+
+    m_pCheckExpiredCallsJob->SetPeriod(g_checkExpiredCallsPeriod);
+    m_pCheckExpiredCallsJob->AddRef();
+
+    Core::GetInstance()->GetScheduler()->Queue(m_pCheckExpiredCallsJob, false);
 }
 
 void CallContextRegister::Stop()

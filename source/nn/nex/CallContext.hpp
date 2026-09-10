@@ -1,15 +1,30 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_CALLCONTEXT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CALLCONTEXT_HPP
 
-#include <cstdint>
+#include <list>
 
+#include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/RefCountedObject.hpp"
+#include "nn/nex/Time.hpp"
+#include "nn/nex/UserContext.hpp"
 #include "nn/nex/qResult.hpp"
+#include "nn/nex/qVector.hpp"
 
 namespace nn
 {
 namespace nex
 {
+
+class CallContextRegister;
+
+class CallbackRoot : public RootObject
+{
+public:
+    virtual ~CallbackRoot();
+
+    virtual void Call();
+    virtual void CallObjectMethod() = 0;
+};
 
 class CallContext : public RefCountedObject
 {
@@ -23,20 +38,90 @@ public:
         CallCanceled = 4
     };
 
+    typedef void (*CompletionCallback)(CallContext* pCallContext, const UserContext* pUserContext);
+
     CallContext();
     virtual ~CallContext();
 
-    std::uint8_t Wait(std::uint32_t timeout);
-    State GetState() const;
-    const qResult& GetResult() const;
+    bool Wait(unsigned int uiTimeout);
+
+    State GetState() const
+    {
+        return m_state;
+    }
+
+    const qResult& GetResult() const
+    {
+        return m_result;
+    }
+
+    static const wchar_t* GetStateString(State state);
+
+    bool IsRegistered() const;
+    void Register();
+    void Unregister();
+
+    bool Reset();
+    bool InitiateCall();
+    bool InitiateSpecialCall();
+
+    void SignalSuccess(qResult result);
+    void SignalFailure(qResult result);
+    void SignalCompletion(qResult result);
+
+    bool Cancel(State state);
+
+    void SetDependentConnection(void* pConnection, unsigned int uiConnectionId);
+
+    void SetFlag(unsigned int uiFlag);
+    void ClearFlag(unsigned int uiFlag);
+    bool FlagIsSet(unsigned int uiFlag) const;
+
+    void SetUserContext(unsigned int uiIndex, const UserContext& rUserContext);
+    UserContext GetUserContext(unsigned int uiIndex) const;
+
+    void RegisterCompletionCallback(
+        CompletionCallback cbCallback, const UserContext& rUserContext, bool bAppend);
+    void RegisterCompletionCallback(CallbackRoot* pCallback, bool bOnSuccessOnly, bool bAppend);
+    void RegisterCancellationCallback(CallbackRoot* pCallback);
 
 protected:
-    static bool PreventBlockCallCallback(RootObject* object, std::uint32_t value);
-    virtual void BeginTransition(State state, const qResult& result, bool publishResult);
+    virtual bool FlagsAreValid() const;
+    virtual void BeginTransition(State state, qResult result, bool bPublishResult);
+    virtual void ProcessCallCompletion();
+
+    void SetStateImpl(State state, qResult result, bool bPublishResult);
+    bool CancelImpl(State state);
+    bool SetCallInProgressState();
+
+    static bool TransitionIsValid(State currentState, State newState);
+
+private:
+    friend class CallContextRegister;
+
+    class InternalData
+    {
+    public:
+        CompletionCallback m_cbCallback;
+        UserContext m_userContext;
+    };
+
+    typedef std::list<InternalData, MemAllocator<InternalData> > CompletionCallbackList;
+
+    unsigned int m_uiFlags;
     State m_state;
-    std::uint32_t m_flags;
+    CompletionCallbackList m_completionCallbacks;
+    qVector<UserContext> m_userContexts;
     qResult m_result;
+    unsigned int m_uiCallId;
+    void* m_pDependentConnection;
+    unsigned int m_uiDependentConnectionId;
+    CallbackRoot* m_pCancellationCallback;
+    Time m_expirationTime;
 };
+
+void InvokeCallbackOnSuccess(CallContext* pCallContext, const UserContext* pUserContext);
+void InvokeCallbackOnCompletion(CallContext* pCallContext, const UserContext* pUserContext);
 
 }
 }

@@ -53,6 +53,30 @@ public:
         return value->second;
     }
 
+    T& GetRef() const
+    {
+        m_criticalSection.Enter();
+
+        typename ValueMap::iterator value = m_values.find(GetThreadID());
+        if (value == m_values.end())
+        {
+            m_values[GetThreadID()] = m_defaultValue;
+            T& created = m_values[GetThreadID()];
+            m_criticalSection.Leave();
+            return created;
+        }
+
+        m_criticalSection.Leave();
+        return value->second;
+    }
+
+    void SetValue(const T& value)
+    {
+        m_criticalSection.Enter();
+        m_values[GetThreadID()] = value;
+        m_criticalSection.Leave();
+    }
+
     virtual void ResetValues()
     {
         m_criticalSection.Enter();
@@ -87,8 +111,8 @@ public:
 
 private:
     T m_defaultValue;
-    ForcedCriticalSection m_criticalSection;
-    ValueMap m_values;
+    mutable ForcedCriticalSection m_criticalSection;
+    mutable ValueMap m_values;
 };
 
 }

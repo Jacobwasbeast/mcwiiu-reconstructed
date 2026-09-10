@@ -82,6 +82,7 @@ protected:
 
 private:
     friend class DefaultChainPolicy<Job*>;
+    friend class PeriodicJob;
     friend class Scheduler;
 
     Job* m_pNext;
