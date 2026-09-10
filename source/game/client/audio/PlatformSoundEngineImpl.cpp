@@ -32,23 +32,22 @@ struct _MILESSOUNDINSTANCEINFO
     int iActive;
 };
 
-typedef int (*RIB_MAIN_FUNC)(unsigned int uiProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
+#include "vendor/MilesRib.hpp"
 
 extern "C" void AXInit();
 extern "C" void MIXInit();
 
-extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, void* pUserData, void* pRegisterCallback, void* pUnregisterCallback);
-extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_FUNC pMain, const char* pLibraryName);
+extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle, RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface, RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
 
 unsigned int file_open_callback(const char* pFileName, unsigned int* puiFileHandle);
 void file_close_callback(unsigned int uiFileHandle);
-void file_seek_callback(unsigned int uiFileHandle, int iOffset, unsigned int uiType);
+int file_seek_callback(unsigned int uiFileHandle, int iOffset, unsigned int uiType);
 int file_read_callback(unsigned int uiFileHandle, void* pBuffer, unsigned int uiBytes);
 
 extern "C" void AIL_startup();
 extern "C" void AIL_shutdown();
 extern "C" const char* AIL_last_error();
-extern "C" void AIL_set_file_callbacks(unsigned int (*pOpen)(const char*, unsigned int*), void (*pClose)(unsigned int), void (*pSeek)(unsigned int, int, unsigned int), int (*pRead)(unsigned int, void*, unsigned int));
+extern "C" void AIL_set_file_callbacks(unsigned int (*pOpen)(const char*, unsigned int*), void (*pClose)(unsigned int), int (*pSeek)(unsigned int, int, unsigned int), int (*pRead)(unsigned int, void*, unsigned int));
 extern "C" unsigned int AIL_output_ax(int iDevice);
 extern "C" _DIG_DRIVER* AIL_open_generic_digital_driver(unsigned int uiFrequency, int iBits, int iChannels, unsigned int uiFlags, unsigned int uiProvider);
 extern "C" void AIL_close_digital_driver(_DIG_DRIVER* pDriver);
