@@ -10,11 +10,51 @@ class PacketHandler;
 class ResendingMessageManager
 {
 public:
-    Result Startup(PacketHandler* packetHandler, bool isRelay);
+    enum { cWorkBufferSize = 0x584 };
 
+    ResendingMessageManager();
+    ~ResendingMessageManager();
+    static Result CreateInstance();
+    static void DestroyInstance();
+    Result Initialize(unsigned int entryNum);
+    void Finalize();
+    Result Startup(PacketHandler* packetHandler, bool isRelay);
+    void Cleanup();
+    Result Dispatch();
+    Result SetSendMessageCommon(unsigned int* ackId, const unsigned char* message,
+                                unsigned int messageSize, ProtocolId protocolId,
+                                bool isRelay, long long timeout, unsigned int* index);
+    Result SetSendMessageByStationAddress(unsigned int* ackId, const unsigned char* message,
+                                          unsigned int messageSize,
+                                          const common::StationAddress& stationAddress,
+                                          ProtocolId protocolId, long long timeout);
+    Result SetSendMessageByStationIndex(unsigned int* ackId, const unsigned char* message,
+                                        unsigned int messageSize, StationIndex stationIndex,
+                                        ProtocolId protocolId, bool isRelay,
+                                        long long timeout);
+    bool CheckNowResending(unsigned int ackId) const;
+    unsigned int ExtractAckIdFromMessage(const unsigned char* message,
+                                         unsigned int messageSize) const;
+    void StopResending(unsigned int ackId);
+    void Trace(unsigned long long value) const;
+
+    unsigned long long* m_stationIds;
+    unsigned long long* m_timeouts;
+    unsigned int* m_ackIds;
+    unsigned char** m_messages;
+    unsigned int* m_messageSizes;
+    unsigned int* m_field14;
+    unsigned char* m_field18;
+    unsigned short* m_field1c;
+    unsigned int* m_field20;
     PacketHandler* m_packetHandler;
     bool m_isRelay;
+    unsigned int m_field2c;
+    unsigned char m_workBuffer[cWorkBufferSize];
+    unsigned int m_entryNum;
 };
+
+extern ResendingMessageManager* g_piaResendingMessageManager;
 
 }}}
 

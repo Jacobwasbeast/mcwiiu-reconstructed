@@ -44,6 +44,11 @@ public:
                    const common::CryptoSetting* cryptoSetting);
 
     static StationConnectionInfoTable* GetStationConnectionInfoTable();
+
+    unsigned int m_localStationIndex;
+    unsigned long long m_localStationId;
+    unsigned int m_localStationBitmap;
+    unsigned int m_keepAliveStationBitmap;
 };
 
 }}}

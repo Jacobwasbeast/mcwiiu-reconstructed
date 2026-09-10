@@ -36,6 +36,8 @@ public:
                    unsigned long long* stationId,
                    const RelayRouteManager* relayRouteManager,
                    const common::CryptoSetting* cryptoSetting);
+
+    const RelayRouteManager* m_relayRouteManager;
 };
 
 }}}
