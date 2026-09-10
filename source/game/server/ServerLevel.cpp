@@ -37,6 +37,9 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
+#include "game/server/DerivedServerLevel.hpp"
+#include "game/data/SavedDataStorage.hpp"
+#include "game/network/ClientboundLevelParticlesPacket.hpp"
 
 extern void instructionSynchronize();
 
@@ -719,10 +722,9 @@ uint64_t ServerLevel::generateBonusItemsNearSpawn()
     return 1;
 }
 
-uint64_t ServerLevel::setInitialSpawn(LevelSettings* first)
+void ServerLevel::setInitialSpawn(LevelSettings* first)
 {
     initializeLevel(first);
-    return 1;
 }
 
 uint64_t ServerLevel::Suspend()
@@ -749,9 +751,28 @@ void ServerLevel::addEntities(std::vector<boost::shared_ptr<Entity> >* first)
         addEntity(*it);
 }
 
-uint64_t ServerLevel::saveLevelData()
+void ServerLevel::saveLevelData()
 {
-    return getLevelData() != 0 ? 1U : 0U;
+    checkSession();
+    if (server != NULL)
+    {
+        for (unsigned int i = 0; i < server->mLevels.length; ++i)
+        {
+            DerivedServerLevel* derived = dynamic_cast<DerivedServerLevel*>(server->mLevels.data[i]);
+            if (derived != NULL)
+            {
+                derived->saveDimensionData();
+            }
+        }
+    }
+    if (mLevelStorage)
+    {
+        mLevelStorage->saveLevelData(mLevelData, &mPlayers);
+    }
+    if (mSavedDataStorage)
+    {
+        mSavedDataStorage->save();
+    }
 }
 
 uint64_t ServerLevel::entityAddedExtra(boost::shared_ptr<Entity> first)
@@ -884,32 +905,50 @@ uint64_t ServerLevel::setTimeAndAdjustBlockTicks(uint32_t first, int32_t second,
     return 1;
 }
 
-void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> first, bool second, uint32_t third)
+void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> player, bool longDistance, boost::shared_ptr<ClientboundLevelParticlesPacket> packet)
 {
-    (void)first; (void)second; (void)third;
+    if (!player || !packet)
+        return;
+    BlockPos pos = player->getCommandSenderBlockPosition();
+    double distSqr = pos.distSqr(packet->getX(), packet->getY(), packet->getZ());
+    if (distSqr <= 1024.0 || (longDistance && distSqr <= 262144.0))
+    {
+        player->mConnection->send(packet);
+    }
 }
 
-uint64_t ServerLevel::sendParticles(double first, double second, double third, double fourth, double fifth, double sixth, double seventh, uint32_t eighth, uint32_t ninth, uint32_t tenth, uint32_t eleventh)
+void ServerLevel::sendParticles(const ParticleType* type, bool longDistance, double x, double y, double z, int count, double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params)
 {
-    (void)first; (void)second; (void)third; (void)fourth; (void)fifth; (void)sixth; (void)seventh; (void)eighth; (void)ninth; (void)tenth; (void)eleventh;
-    return 1;
+    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(
+        new ClientboundLevelParticlesPacket(type, longDistance, (float)x, (float)y, (float)z, (float)xDist, (float)yDist, (float)zDist, (float)maxSpeed, count, params));
+    for (size_t i = 0; i < mPlayers.size(); ++i)
+    {
+        boost::shared_ptr<ServerPlayer> player = boost::dynamic_pointer_cast<ServerPlayer>(mPlayers[i]);
+        sendParticles(player, longDistance, packet);
+    }
 }
 
-uint64_t ServerLevel::sendParticles(uint32_t first, uint32_t second, uint32_t third)
+void ServerLevel::sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params)
 {
-    (void)first; (void)second; (void)third;
-    return 1;
+    sendParticles(type, false, x, y, z, count, xDist, yDist, zDist, maxSpeed, params);
 }
 
 void ServerLevel::sendParticles(const ParticleType* type, double x, double y, double z, int count, double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params, double xAux, double yAux, double zAux)
 {
-    (void)type; (void)x; (void)y; (void)z; (void)count; (void)xDist; (void)yDist; (void)zDist; (void)maxSpeed; (void)params; (void)xAux; (void)yAux; (void)zAux;
+    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(
+        new ClientboundLevelParticlesPacket(type, false, (float)x, (float)y, (float)z, (float)xDist, (float)yDist, (float)zDist, (float)maxSpeed, count, params, (float)xAux, (float)yAux, (float)zAux));
+    for (size_t i = 0; i < mPlayers.size(); ++i)
+    {
+        boost::shared_ptr<ServerPlayer> player = boost::dynamic_pointer_cast<ServerPlayer>(mPlayers[i]);
+        sendParticles(player, false, packet);
+    }
 }
 
-uint64_t ServerLevel::sendParticles(double first, double second, double third, double fourth, double fifth, double sixth, double seventh, uint32_t eighth, uint32_t ninth, uint32_t tenth, uint32_t eleventh, uint32_t twelfth)
+void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> player, const ParticleType* type, bool longDistance, double x, double y, double z, int count, double xDist, double yDist, double zDist, double maxSpeed, arrayWithLength<int> params)
 {
-    (void)first; (void)second; (void)third; (void)fourth; (void)fifth; (void)sixth; (void)seventh; (void)eighth; (void)ninth; (void)tenth; (void)eleventh; (void)twelfth;
-    return 1;
+    boost::shared_ptr<ClientboundLevelParticlesPacket> packet(
+        new ClientboundLevelParticlesPacket(type, longDistance, (float)x, (float)y, (float)z, (float)xDist, (float)yDist, (float)zDist, (float)maxSpeed, count, params));
+    sendParticles(player, longDistance, packet);
 }
 
 void ServerLevel::getEntityByUUID(uint32_t first, uint32_t second)

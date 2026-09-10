@@ -9,6 +9,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
+#include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -22,6 +23,7 @@ class DataFixerUpper;
 class GameType;
 class InteractionObject;
 class Level;
+class Merchant;
 class MinecraftServer;
 class MobEffectInstance;
 class ServerGamePacketListenerImpl;
@@ -47,7 +49,7 @@ struct ServerGamePacketListenerImpl;
 struct ServerLevel;
 struct ServerPlayerGameMode;
 struct Stat;
-struct ServerPlayer : Player {
+struct ServerPlayer : Player, net_minecraft_world_inventory::ContainerListener {
     
        
     boost::shared_ptr<ServerGamePacketListenerImpl> mConnection;
@@ -94,6 +96,7 @@ struct ServerPlayer : Player {
     int32_t mType;
     bool mDisconnected;
     uint8_t mPadding8[3];
+    int32_t mContainerCounter;
 
     
     ServerPlayer(MinecraftServer* parameterOne, ServerLevel* parameterTwo, const std::wstring& parameterThree, ServerPlayerGameMode* parameterFour);   
@@ -102,10 +105,10 @@ struct ServerPlayer : Player {
     void sendMessage(uint32_t parameterOne, int32_t* parameterTwo, uint32_t parameterThree, std::wstring* parameterFour, uint32_t parameterFive);   
     uint32_t hasPermission(uint32_t parameterOne);   
     BlockPos getCommandSenderBlockPosition();   
-    void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);   
-    void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);   
-    uint64_t setContainerData(AbstractContainerMenu* parameterOne, int32_t parameterTwo, int32_t parameterThree);   
-    uint64_t setAllContainerData(AbstractContainerMenu* parameterOne, boost::shared_ptr<Container>* parameterTwo);   
+    virtual void refreshContainer(AbstractContainerMenu* menu, std::vector<not_null_ptr<ItemInstance> >* items);
+    virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
+    virtual void setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value);
+    virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
     uint64_t flagEntitiesToBeRemoved(uint32_t* parameterOne, bool* parameterTwo);   
     static int32_t getFlagIndexForChunk(ChunkPos* parameterOne, int32_t parameterTwo);   
     void disconnect();   
@@ -154,14 +157,14 @@ struct ServerPlayer : Player {
     uint64_t doCheckFallDamage(double parameterOne, bool parameterTwo);   
     void nextContainerCounter();   
     void openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne);
-    uint32_t startBlockInteraction(InteractionObject* parameterOne);   
-    uint32_t openFireworks(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree);   
-    uint32_t openContainer(boost::shared_ptr<Container>* parameterOne);   
-    uint32_t openTrading(uint32_t parameterOne, std::wstring* parameterTwo, int32_t parameterThree);   
-    uint32_t openHorseInventory(uint32_t parameterOne, boost::shared_ptr<Container>* parameterTwo);   
-    void openItemInstanceGui(not_null_ptr_ItemInstance* parameterOne, uint32_t parameterTwo);   
-    void doCloseContainer();   
-    void closeContainer();   
+    virtual int startBlockInteraction(InteractionObject& interaction);
+    virtual int openFireworks(int32_t x, int32_t y, int32_t z);
+    virtual int openContainer(boost::shared_ptr<Container> container);
+    virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int entityId);
+    virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container);
+    virtual void openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand);
+    void doCloseContainer();
+    virtual void closeContainer();
     void broadcastCarriedItem();   
     void setPlayerInput(float parameterOne, float parameterTwo, bool parameterThree, bool parameterFour);   
     void awardStat(Stat* stat, arrayWithLength<unsigned char> parameters);   

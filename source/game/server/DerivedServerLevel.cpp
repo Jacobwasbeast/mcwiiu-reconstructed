@@ -22,7 +22,8 @@ DerivedServerLevel::DerivedServerLevel(MinecraftServer* server, boost::shared_pt
 DerivedServerLevel::~DerivedServerLevel()
 {
     delete mBorderListener;
-    setSavedDataStorage(0);
+    setSavedDataStorage(NULL);
+    serverScoreboard = NULL;
 }
 
 void DerivedServerLevel::saveLevelData()
@@ -31,12 +32,11 @@ void DerivedServerLevel::saveLevelData()
 
 void DerivedServerLevel::postConstruct()
 {
-    SavedDataStorage* storage = mLevel->getSavedDataStorage();
-    setSavedDataStorage(storage);
-    mLevel->GetServerScoreboard();
-    mLevel->getLootTables();
+    setSavedDataStorage(mLevel->getSavedDataStorage());
+    serverScoreboard = mLevel->GetServerScoreboard();
 
     std::wstring id = Villages::getFileId(mDimension);
+    SavedDataStorage* storage = getSavedDataStorage();
     boost::shared_ptr<SavedData> saved = storage->get(typeid(Villages), id);
     boost::shared_ptr<Villages> villages = boost::dynamic_pointer_cast<Villages>(saved);
     if (!villages)

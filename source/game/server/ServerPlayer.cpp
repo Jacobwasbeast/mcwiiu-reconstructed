@@ -12,9 +12,34 @@
 #include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
 #include "game/network/ClientboundRemoveEntitiesPacket.hpp"
 #include "game/network/ClientboundContainerClosePacket.hpp"
+#include "game/network/ClientboundContainerOpenPacket.hpp"
+#include "game/network/ClientboundCustomPayloadPacket.hpp"
+#include "game/network/ClientboundSoundPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
+#include "game/ui/ChestMenu.hpp"
+#include "game/ui/CraftingMenu.hpp"
+#include "game/ui/FireworksMenu.hpp"
+#include "game/ui/HorseInventoryMenu.hpp"
+#include "game/ui/MerchantMenu.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/LockableContainer.hpp"
+#include "game/item/MerchantContainer.hpp"
+#include "game/item/MerchantRecipeList.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/PlayerEnderChestContainer.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/core/InteractionObject.hpp"
+#include "game/core/LockCode.hpp"
+#include "game/core/Merchant.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/client/render/LevelRenderer.hpp"
 #include "game/core/System.hpp"
 #include "game/core/GameType.hpp"
@@ -62,7 +87,7 @@ ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const st
       mChunkIndex(0), mChunkFlags(0), mLastActionTime(0.0f), mDimensionChangeDelay(0), mSpectatorState(0), mExperienceLevel(0),
       mExperienceTotal(0), mLastTick(0), mRemoveEntityCount(0), mRespawnDimension(0), mEntitiesToRemove(0), mLevitationSourceY(NULL), mChangingDimension(0),
       mSpawnInvulnerableTime(0), mPvpState(0), mViewDistanceModifier(0), mIsChangingQuantityOnly(false), latency(0), mFallFlying(0),
-      mRespawnState(false), mChangedDimension(0), mTeleportPending(0), mCameraEntity(0), mType(0)
+      mRespawnState(false), mChangedDimension(0), mTeleportPending(0), mCameraEntity(0), mType(0), mContainerCounter(0)
 {
     mDisconnected = false;
 }
@@ -103,22 +128,18 @@ void ServerPlayer::slotChanged(AbstractContainerMenu* menu, int32_t slot, not_nu
     mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(menu->m_containerId, slot, item)));
 }
 
-uint64_t ServerPlayer::setContainerData(AbstractContainerMenu* parameterOne, int32_t parameterTwo, int32_t parameterThree)
+void ServerPlayer::setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value)
 {
-    if (mConnection != NULL && parameterOne != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(parameterOne->m_containerId, parameterTwo, parameterThree)));
-    return 0;
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(menu->m_containerId, dataIndex, value)));
 }
 
-uint64_t ServerPlayer::setAllContainerData(AbstractContainerMenu* parameterOne, boost::shared_ptr<Container>* parameterTwo)
+void ServerPlayer::setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container)
 {
-    Container& container = **parameterTwo;
-    for (int index = 0; index < container.getContainerDataCount(); ++index)
+    for (int index = 0; index < container->getContainerDataCount(); ++index)
     {
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket(
-            parameterOne->m_containerId, index, container.getContainerData(index))));
+            menu->m_containerId, index, container->getContainerData(index))));
     }
-    return 0;
 }
 
 uint64_t ServerPlayer::flagEntitiesToBeRemoved(uint32_t* parameterOne, bool* parameterTwo)
@@ -418,6 +439,7 @@ uint64_t ServerPlayer::doCheckFallDamage(double parameterOne, bool parameterTwo)
 
 void ServerPlayer::nextContainerCounter()
 {
+    mContainerCounter = mContainerCounter % 100 + 1;
 }
 
 void ServerPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne)
@@ -425,46 +447,192 @@ void ServerPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> parameterOne)
     Player::openTextEdit(parameterOne);
 }
 
-uint32_t ServerPlayer::startBlockInteraction(InteractionObject* parameterOne)
+int ServerPlayer::startBlockInteraction(InteractionObject& interaction)
 {
-    return 0;
+    if (mContainerMenu == mInventoryMenu)
+    {
+        nextContainerCounter();
+
+        InteractionObject::NameData nameData = interaction.GetNetworkNameData();
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+            mContainerCounter, interaction.getTypeId(false), nameData)));
+
+        mContainerMenu = interaction.createMenu(mInventory,
+                                                boost::dynamic_pointer_cast<Player>(shared_from_this()));
+        mContainerMenu->m_containerId = mContainerCounter;
+        mContainerMenu->addSlotListener(this);
+    }
+    return 1;
 }
 
-uint32_t ServerPlayer::openFireworks(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree)
+int ServerPlayer::openFireworks(int32_t x, int32_t y, int32_t z)
 {
-    return 0;
+    if (mContainerMenu == mInventoryMenu)
+        return 1;
+
+    if (mContainerMenu == NULL)
+        return 1;
+
+    if (dynamic_cast<CraftingMenu*>(mContainerMenu) == NULL)
+        return 1;
+
+    closeContainer();
+    nextContainerCounter();
+
+    InteractionObject::NameData nameData(std::wstring(L""), std::wstring(L""), true, false);
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+        mContainerCounter, 12, nameData, 9, 0)));
+
+    mContainerMenu = new FireworksMenu(mInventory, mLevel, BlockPos(x, y, z));
+    mContainerMenu->m_containerId = mContainerCounter;
+    mContainerMenu->addSlotListener(this);
+    return 1;
 }
 
-uint32_t ServerPlayer::openContainer(boost::shared_ptr<Container>* parameterOne)
-{
-    return 0;
-}
-
-uint32_t ServerPlayer::openTrading(uint32_t parameterOne, std::wstring* parameterTwo, int32_t parameterThree)
+int ServerPlayer::openContainer(boost::shared_ptr<Container> container)
 {
     if (mContainerMenu != mInventoryMenu)
+        return 1;
+
+    boost::shared_ptr<LockableContainer> lockable = boost::dynamic_pointer_cast<LockableContainer>(container);
+    if (lockable != NULL && lockable->isLocked() && !canUnlock(lockable->getLockKeyCode()) && !isSpectator())
+    {
+        boost::shared_ptr<ClientboundChatPacket> chatPacket(new ClientboundChatPacket());
+        chatPacket->message = ClientboundChatPacket::eChatPacketMessage_ContainerLocked;
+        chatPacket->strings.push_back(container->getDisplayName());
+        mConnection->send(chatPacket);
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+            SoundEvents::CHEST_LOCKED, SoundSource::eSoundSource_Blocks, mX, mY, mZ, 1.0f, 1.0f)));
         return 0;
-    return 0;
+    }
+
+    nextContainerCounter();
+
+    boost::shared_ptr<InteractionObject> interaction = boost::dynamic_pointer_cast<InteractionObject>(container);
+    if (interaction != NULL)
+    {
+        InteractionObject::NameData nameData = interaction->GetNetworkNameData();
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+            mContainerCounter, interaction->getTypeId(false), nameData, container->getContainerSize())));
+
+        mContainerMenu = interaction->createMenu(mInventory,
+                                                 boost::static_pointer_cast<Player>(shared_from_this()));
+    }
+    else
+    {
+        boost::shared_ptr<PlayerEnderChestContainer> enderChest =
+            boost::dynamic_pointer_cast<PlayerEnderChestContainer>(container);
+        if (enderChest != NULL)
+        {
+            InteractionObject::NameData nameData = enderChest->GetNetworkNameData();
+            mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+                mContainerCounter, 15, nameData, container->getContainerSize())));
+        }
+        else
+        {
+            InteractionObject::NameData nameData(container->getDisplayName(), std::wstring(L""), true, false);
+            mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+                mContainerCounter, 0, nameData, container->getContainerSize())));
+        }
+
+        mContainerMenu = new ChestMenu(mInventory, container,
+                                       boost::static_pointer_cast<Player>(shared_from_this()));
+    }
+
+    mContainerMenu->m_containerId = mContainerCounter;
+    mContainerMenu->addSlotListener(this);
+    return 1;
 }
 
-uint32_t ServerPlayer::openHorseInventory(uint32_t parameterOne, boost::shared_ptr<Container>* parameterTwo)
+int ServerPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int entityId)
 {
-    return 0;
+    if (mContainerMenu != mInventoryMenu)
+        return 1;
+
+    nextContainerCounter();
+
+    MerchantMenu* menu = new MerchantMenu(mInventory, merchant, mLevel);
+    mContainerMenu = menu;
+    mContainerMenu->m_containerId = mContainerCounter;
+    mContainerMenu->addSlotListener(this);
+
+    boost::shared_ptr<MerchantContainer> tradeContainer = menu->getTradeContainer();
+
+    InteractionObject::NameData nameData(name.empty() ? std::wstring(L"") : name,
+                                         std::wstring(L""), true, false);
+
+    boost::shared_ptr<Entity> entity = mLevel->getEntity(entityId);
+    if (entity != NULL)
+    {
+        nameData = InteractionObject::NameData(name.empty() ? std::wstring(L"") : name,
+                                               entity->getOwnerUUID(),
+                                               entity->wasNamedOnHost(),
+                                               entity->wasNamedByRestrictedPlayer());
+    }
+
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+        mContainerCounter, 6, nameData, tradeContainer->getContainerSize(), entityId)));
+
+    MerchantRecipeList* offers = merchant->getOffers(boost::dynamic_pointer_cast<Player>(shared_from_this()));
+    if (offers != NULL)
+    {
+        ByteArrayOutputStream bytes;
+        DataOutputStream output(&bytes);
+        output.writeInt(mContainerCounter);
+        offers->writeToStream(&output);
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket(
+            std::wstring(L"MC|TrList"), bytes.toByteArray())));
+    }
+
+    return 1;
 }
 
-void ServerPlayer::openItemInstanceGui(not_null_ptr_ItemInstance* parameterOne, uint32_t parameterTwo)
+int ServerPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container)
 {
+    if (mContainerMenu != mInventoryMenu)
+        doCloseContainer();
+
+    nextContainerCounter();
+
+    InteractionObject::NameData nameData(horse->getCustomName(), horse->getOwnerUUID(),
+                                         horse->wasNamedOnHost(), horse->wasNamedByRestrictedPlayer());
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket(
+        mContainerCounter, 11, nameData, container->getContainerSize(), horse->getId())));
+
+    mContainerMenu = new HorseInventoryMenu(mInventory, container, horse,
+                                            boost::dynamic_pointer_cast<Player>(shared_from_this()));
+    mContainerMenu->m_containerId = mContainerCounter;
+    mContainerMenu->addSlotListener(this);
+    return 1;
+}
+
+void ServerPlayer::openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand)
+{
+    if (item->getItem() != Items::writtenBook)
+        return;
+
+    ByteArrayOutputStream bytes;
+    DataOutputStream output(&bytes);
+    output.write(static_cast<unsigned int>(hand));
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket(
+        std::wstring(L"MC|BOpen"), bytes.toByteArray())));
 }
 
 void ServerPlayer::doCloseContainer()
 {
-    if (mConnection != NULL && mContainerMenu != NULL)
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerClosePacket(mContainerMenu->m_containerId)));
+    mContainerMenu->removed(boost::static_pointer_cast<Player>(shared_from_this()));
+
+    if (mContainerMenu != mInventoryMenu)
+        delete mContainerMenu;
+
+    mContainerMenu = mInventoryMenu;
+    refreshContainer(mContainerMenu);
 }
 
 void ServerPlayer::closeContainer()
 {
-    Player::closeContainer();
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerClosePacket(mContainerMenu->m_containerId)));
+    doCloseContainer();
 }
 
 void ServerPlayer::broadcastCarriedItem()
