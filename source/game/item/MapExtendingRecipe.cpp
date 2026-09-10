@@ -36,18 +36,13 @@ void MapExtendingRecipe::StaticCtor()
 
 bool MapExtendingRecipe::isExplorationMap(const boost::shared_ptr<MapItemSavedData>& data)
 {
-    if (!data)
-    {
-        return false;
-    }
-
     boost::unordered_map<int, MapDecoration>::const_iterator it;
     for (it = data->mDecorations.begin(); it != data->mDecorations.end(); ++it)
     {
         const MapDecoration::Type* type = it->second.getType();
-        if (type == &MapDecoration::Type::TYPES[5] ||
-            type == &MapDecoration::Type::TYPES[6] ||
-            type == &MapDecoration::Type::TYPES[7])
+        if (type == &MapDecoration::Type::TYPES[14] ||
+            type == &MapDecoration::Type::TYPES[15] ||
+            type == &MapDecoration::Type::TYPES[20])
         {
             return true;
         }
@@ -64,17 +59,12 @@ bool MapExtendingRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCo
 
     not_null_ptr<ItemInstance> map = ItemInstance::EMPTY;
     unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < craftingContainer->getContainerSize() && map->isEmpty(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (item->isEmpty())
-        {
-            continue;
-        }
         if (item->getItem() == Items::filledMap)
         {
             map = item;
-            break;
         }
     }
 
@@ -97,18 +87,18 @@ bool MapExtendingRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCo
 
 not_null_ptr<ItemInstance> MapExtendingRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    not_null_ptr<ItemInstance> result;
+    not_null_ptr<ItemInstance> map = ItemInstance::EMPTY;
     unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < craftingContainer->getContainerSize() && map->isEmpty(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && item->getItem() == Items::filledMap)
+        if (item->getItem() == Items::filledMap)
         {
-            result = item->copy();
-            break;
+            map = item;
         }
     }
 
+    not_null_ptr<ItemInstance> result = map->copy();
     result->setCount(1);
     if (result->getTag() == NULL)
     {

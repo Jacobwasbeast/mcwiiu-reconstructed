@@ -81,7 +81,7 @@ public:
 
     Item();
 
-    virtual boost::shared_ptr<ItemInstance> getDefaultInstance();
+    virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual bool verifyTagAfterLoad(CompoundTag* tag);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual ~Item();

@@ -51,7 +51,7 @@ std::wstring Inventory::getName()
 
 std::wstring Inventory::getCustomName()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool Inventory::hasCustomName()
@@ -318,7 +318,7 @@ int Inventory::addResource(int slot, not_null_ptr<ItemInstance> item)
 
 int Inventory::addResource(not_null_ptr<ItemInstance> item)
 {
-    GameMode* gameMode = (GameMode*)m_player->GetGameMode();
+    GameMode* gameMode = m_player->GetGameMode();
     if (gameMode != NULL)
     {
         gameMode->RecordItem(item);

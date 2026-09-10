@@ -822,9 +822,9 @@ HitResult* Item::getPlayerPOVHitResult(Level* level, boost::shared_ptr<Player> p
     return level->clip(from, to, useLiquids, !useLiquids, false, false, NULL, false);
 }
 
-boost::shared_ptr<ItemInstance> Item::getDefaultInstance()
+not_null_ptr<ItemInstance> Item::getDefaultInstance()
 {
-    return boost::shared_ptr<ItemInstance>(new ItemInstance(this));
+    return not_null_ptr<ItemInstance>(new ItemInstance(this));
 }
 
 bool Item::verifyTagAfterLoad(CompoundTag* tag)

@@ -16,7 +16,7 @@ public:
     PotionItem();
     virtual ~PotionItem();
 
-    virtual boost::shared_ptr<ItemInstance> getDefaultInstance();
+    virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                        Level* level,
                                                        boost::shared_ptr<LivingEntity> entity);

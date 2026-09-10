@@ -1,5 +1,7 @@
 #include "game/item/FoodItem.hpp"
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
 #include "game/core/FoodData.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/Minecraft.hpp"
@@ -42,22 +44,50 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
                                                      Level* level,
                                                      boost::shared_ptr<LivingEntity> entity)
 {
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(itemInstance->getItem())),
-                      GenericStats::param_itemsUsed(player, itemInstance));
-    if (itemInstance->getItem() == Items::rottenFlesh && player->getFoodData()->getFoodLevel() == 0)
+    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
-        player->awardStat(GenericStats::ironBelly(), GenericStats::param_ironBelly());
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(itemInstance->getItem())),
+                          GenericStats::param_itemsUsed(player, itemInstance));
+        if (itemInstance->getItem() == Items::rottenFlesh && player->getFoodData()->getFoodLevel() == 0)
+        {
+            player->awardStat(GenericStats::ironBelly(), GenericStats::param_ironBelly());
+        }
+        player->SetLastAteKelp(itemInstance->getItem() == Items::kelp);
     }
-    player->SetLastAteKelp(itemInstance->getItem() == Items::kelp);
+
     if (!level->mIsClientSide)
     {
-        player->getFoodData()->eat(this, itemInstance);
-        if (!player->mAbilities.mInstabuild)
+        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+            player->getFoodData()->eat(this, itemInstance);
+            level->playSound(boost::shared_ptr<Player>(),
+                             player->mX,
+                             player->mY,
+                             player->mZ,
+                             SoundEvents::PLAYER_BURP,
+                             SoundSource::eSoundSource_Players,
+                             0.5f,
+                             level->mRandom->nextFloat() * 0.1f + 0.9f,
+                             16.0f);
+        }
+
+        bool consume = true;
+        if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+            if (player->mAbilities.mInstabuild)
+            {
+                consume = false;
+            }
+        }
+        if (consume)
         {
             itemInstance->shrink(1);
         }
     }
+
     return itemInstance;
 }
 
@@ -65,7 +95,7 @@ void FoodItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* leve
 {
     if (!level->mIsClientSide && mEatEffect != NULL && level->mRandom->nextFloat() < mEffectProbability)
     {
-        player->addEffect(new MobEffectInstance(mEatEffect), player);
+        player->addEffect(new MobEffectInstance(mEatEffect), boost::shared_ptr<Entity>());
     }
 }
 
@@ -97,8 +127,7 @@ bool FoodItem::canEat(boost::shared_ptr<Player> player)
 
 unsigned int FoodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return canEat(boost::static_pointer_cast<Player>(tooltipData.m_pPlayer))
-        ? 0xD26C6DB5u : 0xFFFFFFFFu;
+    return canEat(tooltipData.m_pPlayer) ? 0xD26C6DB5u : 0xFFFFFFFFu;
 }
 
 int FoodItem::getNutrition(not_null_ptr<ItemInstance> itemInstance)

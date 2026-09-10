@@ -29,51 +29,41 @@ public:
     class GetDamageProtectionIteration : public EnchantmentIterationMethod
     {
     public:
-        GetDamageProtectionIteration(int* protection, const DamageSource* source);
         virtual ~GetDamageProtectionIteration();
         virtual void doEnchantment(Enchantment* enchantment, int level);
-    private:
-        int* mProtection;
+
+        int mProtection;
         const DamageSource* mSource;
     };
 
     class GetDamageBonusIteration : public EnchantmentIterationMethod
     {
     public:
-        GetDamageBonusIteration(float* bonus, const boost::shared_ptr<LivingEntity>& target);
         virtual ~GetDamageBonusIteration();
         virtual void doEnchantment(Enchantment* enchantment, int level);
-    private:
-        float* mBonus;
+
+        float mBonus;
         boost::shared_ptr<LivingEntity> mTarget;
     };
 
     class DoPostHurtIteration : public EnchantmentIterationMethod
     {
     public:
-        DoPostHurtIteration(const boost::shared_ptr<LivingEntity>& target,
-                            const boost::shared_ptr<Entity>& attacker,
-                            int level);
         virtual ~DoPostHurtIteration();
         virtual void doEnchantment(Enchantment* enchantment, int level);
-    private:
+
         boost::shared_ptr<LivingEntity> mTarget;
         boost::shared_ptr<Entity> mAttacker;
-        int mLevel;
     };
 
     class DoPostDamageIteration : public EnchantmentIterationMethod
     {
     public:
-        DoPostDamageIteration(const boost::shared_ptr<LivingEntity>& attacker,
-                              const boost::shared_ptr<Entity>& target,
-                              int level);
         virtual ~DoPostDamageIteration();
         virtual void doEnchantment(Enchantment* enchantment, int level);
-    private:
+
         boost::shared_ptr<LivingEntity> mAttacker;
         boost::shared_ptr<Entity> mTarget;
-        int mLevel;
     };
 
     static int getItemEnchantmentLevel(const Enchantment* enchantment, const not_null_ptr<ItemInstance>& item);

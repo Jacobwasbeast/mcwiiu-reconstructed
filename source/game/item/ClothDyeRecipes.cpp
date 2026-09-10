@@ -6,6 +6,8 @@
 #include "game/item/Items.hpp"
 #include "game/item/Recipes.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/FlowerBlock.hpp"
 
 void ClothDyeRecipes::addRecipes(Recipes* recipes)
 {
@@ -22,7 +24,7 @@ void ClothDyeRecipes::addRecipes(Recipes* recipes)
         recipes->addShapedRecipe(new ItemInstance(Blocks::stained_hardened_clay, 8, inverseColor), L"sssczczg",
             L"###", L"#X#", L"###",
             0x23, new ItemInstance(Blocks::hardened_clay), 0x58, new ItemInstance(Items::dye, 1, color), 0x44);
-        recipes->addShapelessRecipe(new ItemInstance(Blocks::stained_hardened_clay, 8, inverseColor), L"zzzzzzzzzg",
+        recipes->addShapelessRecipe(new ItemInstance(Blocks::concrete_powder, 8, inverseColor), L"zzzzzzzzzg",
             new ItemInstance(Items::dye, 1, color), new ItemInstance(Blocks::gravel), new ItemInstance(Blocks::gravel),
             new ItemInstance(Blocks::gravel), new ItemInstance(Blocks::gravel), new ItemInstance(Blocks::sand),
             new ItemInstance(Blocks::sand), new ItemInstance(Blocks::sand), new ItemInstance(Blocks::sand), 0x44);
@@ -34,9 +36,9 @@ void ClothDyeRecipes::addRecipes(Recipes* recipes)
     }
 
     recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::YELLOW->getItemData()), L"zg",
-        new ItemInstance(Blocks::yellow_flower, 1, 0), 0x44);
+        new ItemInstance(Blocks::yellow_flower, 1, FlowerBlock::Flower::FLOWERS[0]->getData()), 0x44);
     recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()), L"zg",
-        new ItemInstance(Blocks::red_flower, 1, 0), 0x44);
+        new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[1]->getData()), 0x44);
     recipes->addShapelessRecipe(new ItemInstance(Items::dye, 3, DyeColor::WHITE->getItemData()), L"ig", Items::bone, 0x44);
     recipes->addShapelessRecipe(new ItemInstance(Items::dye, 9, DyeColor::WHITE->getItemData()), L"tg", Blocks::bone_block, 0x44);
 
@@ -79,20 +81,20 @@ void ClothDyeRecipes::addRecipes(Recipes* recipes)
         new ItemInstance(Items::dye, 1, DyeColor::BLUE->getItemData()),
         new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()),
         new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()),
-        new ItemInstance(Items::dye, 1, DyeColor::WHITE->getItemData()), 0x44);
+        new ItemInstance(Items::dye, 1, DyeColor::WHITE->getItemData()), L"D");
 
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::LIGHT_BLUE->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 1), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::MAGENTA->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 2), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 3), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 4), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::ORANGE->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 5), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 6), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::PINK->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 7), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, 8), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::YELLOW->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, 0), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::MAGENTA->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, 1), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::RED->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, 4), 0x44);
-    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::PINK->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, 5), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::LIGHT_BLUE->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[2]->getData()), L"D");
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::MAGENTA->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[3]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[4]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[5]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::ORANGE->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[6]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[7]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::PINK->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[8]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::SILVER->getItemData()), L"zg", new ItemInstance(Blocks::red_flower, 1, FlowerBlock::Flower::FLOWERS[9]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::YELLOW->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, DoublePlantBlock::VARIANTS[0]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::MAGENTA->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, DoublePlantBlock::VARIANTS[1]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::RED->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, DoublePlantBlock::VARIANTS[4]->getData()), 0x44);
+    recipes->addShapelessRecipe(new ItemInstance(Items::dye, 2, DyeColor::PINK->getItemData()), L"zg", new ItemInstance(Blocks::double_plant, 1, DoublePlantBlock::VARIANTS[5]->getData()), 0x44);
     recipes->addShapelessRecipe(new ItemInstance(Items::dye, 1, DyeColor::RED->getItemData()), L"ig", Items::beetroot, 0x44);
     for (color = 0; color < 16; ++color)
     {

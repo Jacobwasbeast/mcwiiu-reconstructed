@@ -118,7 +118,7 @@ boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::share
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writePlayerUID(player->m_0x784);
+    stream.writePlayerUID(player->mXuid);
     stream.writeInt(itemId);
     stream.writeInt(count);
     stream.writeInt(data);

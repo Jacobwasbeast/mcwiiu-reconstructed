@@ -35,7 +35,7 @@ uint32_t PotionItem::getPotionType() const
     return 0;
 }
 
-boost::shared_ptr<ItemInstance> PotionItem::getDefaultInstance()
+not_null_ptr<ItemInstance> PotionItem::getDefaultInstance()
 {
     return PotionUtils::setPotion(Item::getDefaultInstance(), Potions::WATER);
 }

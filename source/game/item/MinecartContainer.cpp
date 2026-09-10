@@ -209,7 +209,7 @@ void MinecartContainer::setLocked(LockCode* lockCode)
 
 LockCode* MinecartContainer::getLockKeyCode()
 {
-    return NULL;
+    return LockCode::NO_LOCK;
 }
 
 void MinecartContainer::unlock()

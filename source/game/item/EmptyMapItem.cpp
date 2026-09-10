@@ -22,7 +22,7 @@ InteractionResultHolder EmptyMapItem::use(Level* level,
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    MapItem::setupNewMap(player->m_0x784, level, player->mDimension,
+    MapItem::setupNewMap(player->mXuid, level, player->mDimension,
                          player->mX, player->mZ, 3, true, false);
     itemInstance->shrink(1);
 

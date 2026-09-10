@@ -39,7 +39,7 @@ not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemIns
 
             if (entity->isPassenger())
             {
-                entity->stopRiding();
+                entity->stopRidingBeforeTeleport();
             }
 
             if (entity->randomTeleport(x, y, z))

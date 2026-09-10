@@ -33,6 +33,8 @@ class AttributeModifier;
 
 class ItemInstance : public boost::enable_shared_from_this<ItemInstance>
 {
+    friend class AbstractContainerMenu;
+
 public:
     ItemInstance();
     explicit ItemInstance(Block* block);

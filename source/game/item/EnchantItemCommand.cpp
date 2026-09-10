@@ -109,7 +109,7 @@ boost::shared_ptr<GameCommandPacket> EnchantItemCommand::preparePacket(
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writePlayerUID(player->m_0x784);
+    stream.writePlayerUID(player->mXuid);
     stream.writeInt(enchantmentId);
     stream.writeInt(level);
 

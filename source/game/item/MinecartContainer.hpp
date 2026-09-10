@@ -13,13 +13,14 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/LockableContainer.hpp"
 #include "game/item/NonNullList.hpp"
+#include "game/item/RandomizableContainer.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/ResourceLocation.hpp"
 
 class Player;
 
-class MinecartContainer : public Minecart, public LockableContainer
+class MinecartContainer : public Minecart, public LockableContainer, public RandomizableContainer
 {
 public:
     MinecartContainer(Level* level, double x, double y, double z);

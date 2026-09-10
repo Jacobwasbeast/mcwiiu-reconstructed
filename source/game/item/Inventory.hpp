@@ -104,6 +104,7 @@ private:
     friend class ServerGamePacketListenerImpl;
     friend class MultiPlayerGameMode;
     friend class Gui;
+    friend class FurnaceMenu;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;

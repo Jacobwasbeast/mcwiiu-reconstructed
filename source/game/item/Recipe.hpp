@@ -67,6 +67,7 @@ public:
     virtual bool displayInSimpleCrafting();
 
 protected:
+    int mField0x0;
     int mBaseItemType;
     int mAchievementId;
     bool mDisplayInSimpleCrafting;
