@@ -13,6 +13,7 @@
 #include "game/data/ShortTag.hpp"
 #include "game/data/StringTag.hpp"
 
+#include <new>
 #include <ostream>
 #include <string>
 
@@ -93,9 +94,19 @@ Tag* Tag::newTag(unsigned char id)
     case 7:
         return new ByteArrayTag();
     case 8:
-        return new StringTag();
+    {
+        void* mem = operator new(0x24);
+        if (mem == NULL)
+            return NULL;
+        return new (mem) StringTag();
+    }
     case 9:
-        return new ListTag(0);
+    {
+        void* mem = operator new(0x18);
+        if (mem == NULL)
+            return NULL;
+        return new (mem) ListTag(0);
+    }
     case 10:
         return new CompoundTag();
     case 11:
