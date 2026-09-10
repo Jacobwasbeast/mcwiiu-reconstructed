@@ -11,9 +11,10 @@ namespace pia
 namespace common
 {
 
+PayloadSizeManager* g_payloadSizeManager = 0;
+
 namespace
 {
-PayloadSizeManager* g_payloadSizeManager = 0;
 void* g_payloadSizeManagerStorage = 0;
 }
 

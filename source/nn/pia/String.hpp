@@ -31,6 +31,11 @@ public:
     unsigned int GetStringLength() const;
     bool IsSameString(const String& other) const;
     bool operator==(const String& other) const;
+    String& operator=(const String& other)
+    {
+        Copy(other);
+        return *this;
+    }
 
 protected:
     String()
@@ -52,6 +57,17 @@ public:
     virtual ~FixedString();
     virtual void Clear();
     virtual Result SetString(const void* text, unsigned int length, EncodingType encoding);
+
+    FixedString& operator=(const String& other)
+    {
+        Copy(other);
+        return *this;
+    }
+    FixedString& operator=(const FixedString& other)
+    {
+        Copy(other);
+        return *this;
+    }
 
 private:
     char m_buffer[LengthT * 4 + 1];

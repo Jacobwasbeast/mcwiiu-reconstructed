@@ -20,6 +20,11 @@ unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
 
+void serializeU16(unsigned char* buffer, unsigned short value);
+void serializeU32(unsigned char* buffer, unsigned int value);
+unsigned short deserializeU16(const unsigned char* buffer);
+unsigned int deserializeU32(const unsigned char* buffer);
+
 }
 }
 }

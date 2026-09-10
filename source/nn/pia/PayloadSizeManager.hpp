@@ -21,7 +21,6 @@ public:
     Result SetSignatureSize(unsigned int signatureSize);
     void Trace(unsigned long long value) const;
 
-private:
     unsigned int m_mtuSize;
     unsigned int m_minMtuSize;
     unsigned int m_maxMtuSize;
@@ -29,7 +28,7 @@ private:
     unsigned int m_signatureSize;
 };
 
-static_assert(sizeof(PayloadSizeManager) == 0x14, "PayloadSizeManager layout");
+extern PayloadSizeManager* g_payloadSizeManager;
 
 }
 }

@@ -100,6 +100,32 @@ unsigned char IsInSetupMode()
     return g_commonInSetup;
 }
 
+void serializeU16(unsigned char* buffer, unsigned short value)
+{
+    buffer[0] = static_cast<unsigned char>(value >> 8);
+    buffer[1] = static_cast<unsigned char>(value);
+}
+
+void serializeU32(unsigned char* buffer, unsigned int value)
+{
+    buffer[0] = static_cast<unsigned char>(value >> 24);
+    buffer[1] = static_cast<unsigned char>(value >> 16);
+    buffer[2] = static_cast<unsigned char>(value >> 8);
+    buffer[3] = static_cast<unsigned char>(value);
+}
+
+unsigned short deserializeU16(const unsigned char* buffer)
+{
+    return static_cast<unsigned short>((static_cast<unsigned int>(buffer[0]) << 8) | buffer[1]);
+}
+
+unsigned int deserializeU32(const unsigned char* buffer)
+{
+    return (static_cast<unsigned int>(buffer[0]) << 24) |
+           (static_cast<unsigned int>(buffer[1]) << 16) |
+           (static_cast<unsigned int>(buffer[2]) << 8) | buffer[3];
+}
+
 }
 }
 }
