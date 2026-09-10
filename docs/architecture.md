@@ -52,6 +52,18 @@ transport (`transport`, `RendezVous`, `chat`, `crypto`), and small
 SDK-facing structures. They are kept apart so that game code is never
 mistaken for library code.
 
+## `source/nn/` - NEX and Pia library internals
+
+`nn/nex/` and `nn/pia/` (with `chat`, `common`, `inet`, `session` and
+`transport` beneath it) hold the reconstructed internals of Nintendo's NEX
+and Pia online libraries, which the title links statically and calls from
+the platform backend and the vendor code. They are the same category as
+`source/vendor/`: reconstructed from the symbols and structure the build
+exposes, kept apart from the game so the boundary stays explicit, and to be
+replaced by a maintained upstream if one ever becomes available. Includes
+are spelled from the `source/` root, for example
+`#include "nn/nex/Buffer.hpp"`.
+
 ## `source/nex.h` and `source/nn/pia.h` - SDK interface headers
 
 The platform backend and the vendor internals call into Nintendo's NEX and
