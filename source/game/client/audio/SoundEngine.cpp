@@ -1,13 +1,34 @@
 #include "game/client/audio/SoundEngine.hpp"
-#include "game/client/audio/SoundEvent.hpp"
-#include <algorithm>
-#include <cstring>
+#include "game/client/audio/PlatformSoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundInstance.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include <algorithm>
+#include <cstring>
+
+extern CMinecraftApp* g_pApp;
+
+namespace {
+
+unsigned char playerByteAt(const MultiplayerLocalPlayer* player, unsigned int offset)
+{
+    return *reinterpret_cast<const unsigned char*>(reinterpret_cast<const char*>(player) + offset);
+}
+
+boost::shared_ptr<MultiplayerLocalPlayer>& musicPlayerSlot(Minecraft* minecraft, int index)
+{
+    return reinterpret_cast<boost::shared_ptr<MultiplayerLocalPlayer>*>(
+        reinterpret_cast<char*>(minecraft) + 0x44)[index];
+}
+
+} // namespace
 
 SoundEngine::SoundEngine()
-    : m_listenerEnabled(0), m_musicListenerEnabled(0), m_thirdListenerEnabled(0), m_random(new Random()), m_musicDistance(0.0f), m_trackCount(0), m_musicEventStarted(0), m_musicVolume(0.0f), m_effectVolume(0.0f), m_musicType(0), m_musicFade(0.0f), m_musicTrack(-1), m_musicState(0), m_currentTrack(-1), m_platformSoundEngine(0), m_platformState(0), m_trackUsed(0), m_trackData(0), m_streamingCount(0)
+    : m_listenerEnabled(0), m_musicListenerEnabled(0), m_thirdListenerEnabled(0), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0), m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(0.0f), m_streamingPitch(0.0f), m_musicEventStarted(0), m_musicField15c(0), m_musicField160(0), m_musicState(0), m_musicNameDataA(0), m_musicNameDataB(0), m_musicNameCapacity(7), m_currentTrack(-1), m_platformSoundEngine(0), m_platformState(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
 {
     std::memset(m_statePadding, 0, sizeof(m_statePadding));
     std::memset(m_currentTrackPadding, 0, sizeof(m_currentTrackPadding));
@@ -45,17 +66,27 @@ void SoundEngine::SetStreamingSounds(int a, int b, int c, int d, int e, int f, i
 {
     const int values[19] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, count };
     std::memcpy(m_streamingSoundIds, values, sizeof(values));
-    m_streamingCount = count;
     delete[] m_trackUsed;
     delete[] static_cast<int*>(m_trackData);
-    m_trackUsed = count > 0 ? new unsigned char[count] : 0;
-    m_trackData = count > 0 ? new int[count * 2] : 0;
-    BuildTrackList(0, count - 1, false);
+    m_trackUsed = new unsigned char[count];
+    std::memset(m_trackUsed, 0, count);
+    m_trackData = new int[count * 2];
+    std::memset(m_trackData, 0, (count - 1) * 8 + 1);
+    m_streamingTrackIndex = -1;
+    BuildTrackList(a, b, false);
+    BuildTrackList(c, d, false);
+    BuildTrackList(e, f, false);
+    BuildTrackList(g, h, false);
+    BuildTrackList(i, j, false);
+    BuildTrackList(k, l, false);
+    BuildTrackList(m, n, false);
+    BuildTrackList(o, p, false);
+    BuildTrackList(q, r, true);
 }
 
 int SoundEngine::GetNextTrack(int first, int last)
 {
-    if (first > last || first < 0 || last >= m_streamingCount || m_trackUsed == 0)
+    if (first > last || first < 0 || last >= m_streamingSoundIds[18] || m_trackUsed == 0)
         return -1;
     int selected = first;
     while (selected <= last && m_trackUsed[selected] != 0)
@@ -68,8 +99,8 @@ int SoundEngine::GetNextTrack(int first, int last)
 
 void SoundEngine::SetMusicID(eMusicType type)
 {
-    m_musicType = static_cast<int>(type);
-    m_musicTrack = GetNextTrack(0, m_streamingCount - 1);
+    (void)type;
+    m_musicTrack = GetNextTrack(0, m_streamingSoundIds[18] - 1);
 }
 
 void SoundEngine::destroy()
@@ -81,26 +112,189 @@ void SoundEngine::shutdown()
     m_platformSoundEngine = 0;
 }
 
-void SoundEngine::play(const SoundEvent*, float, float, float, float, float, SoundInstance* instance)
+void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float volume, float pitch,
+                       SoundInstance* instance)
 {
-    if (instance != 0)
-        ConsoleSoundEngine::play(instance);
+    if (sound == 0)
+        return;
+
+    char eventPath[272];
+    std::strcpy(eventPath, "Minecraft/");
+    {
+        char* convertedPath = ConvertSoundPathToName(sound->getName(), false);
+        std::strcat(eventPath, convertedPath);
+        delete[] convertedPath;
+    }
+
+    struct PlaySoundData
+    {
+        float x;
+        float y;
+        float z;
+        float volume;
+        float pitch;
+        const SoundEvent* soundEvent;
+        SoundInstance* instance;
+        unsigned char activeFlag;
+        unsigned char reserved;
+        unsigned char drcOutput;
+        unsigned char padding;
+    } data;
+
+    data.x = x;
+    data.y = y;
+    data.z = z;
+    data.volume = volume;
+    data.pitch = pitch;
+    data.soundEvent = sound;
+    data.instance = instance;
+    data.activeFlag = 1;
+    data.reserved = 0;
+    data.drcOutput = 0;
+    data.padding = 0;
+
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+
+    if (instance == 0)
+    {
+        data.drcOutput = 1;
+        platform->startSound(&data, 0x20, eventPath);
+        data.drcOutput = 0;
+        platform->startSound(&data, 0x20, eventPath);
+    }
+    else
+    {
+        instance->setSIState(SoundInstance::eSoundState_Pending);
+        data.drcOutput = instance->drcClone;
+        instance->pendingTicks = 0;
+        platform->startSound(&data, 0x20, eventPath);
+    }
 }
 
-bool SoundEngine::GetMusicToPlay()
+unsigned char SoundEngine::GetMusicToPlay()
 {
-    return m_musicEventStarted != 0;
+    static const unsigned char kMiniGameMusicById[] = {0, 6, 7, 8, 9};
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    bool noPlayers = true;
+    bool anyAlive = false;
+    bool anyDead = false;
+    int selectedSlot = 0;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer>& slot = musicPlayerSlot(minecraft, i);
+        if (!slot)
+            continue;
+
+        noPlayers = false;
+        selectedSlot = i;
+        int viewportState = slot->mViewport;
+        if (viewportState == 1)
+            anyAlive = true;
+        else if (viewportState == -1)
+            anyDead = true;
+    }
+
+    if (anyAlive)
+        return 4;
+    if (anyDead)
+        return 0;
+    if (noPlayers)
+    {
+        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)) != 0)
+            return 6;
+        return 2;
+    }
+
+    boost::shared_ptr<MultiplayerLocalPlayer> selected = musicPlayerSlot(minecraft, selectedSlot);
+    MultiplayerLocalPlayer* player = selected.get();
+    if (player == 0 || playerByteAt(player, 0x70f) == 0 || playerByteAt(player, 0x70e) == 0)
+    {
+        const MiniGameDef* miniGame = minecraft->GetMiniGame();
+        unsigned int id = miniGame->GetId();
+        if (id == 0 || id > 4)
+            return 10;
+        return kMiniGameMusicById[id];
+    }
+
+    return 5;
 }
 
 void SoundEngine::SetMusicID(const std::wstring& name)
 {
-    m_musicTrack = static_cast<int>(name.size());
+    static const wchar_t* kRecordNames[] = {
+        L"11", L"13", L"blocks", L"cat", L"chirp", L"far",
+        L"mall", L"mellohi", L"stal", L"strad", L"where_are_we_now", L"ward",
+    };
+
+    char* convertedPath = ConvertSoundPathToName(name, true);
+    const int baseTrack = m_streamingSoundIds[18];
+    m_musicTrack = baseTrack;
+
+    for (int i = 0; i < 12; ++i)
+    {
+        char* recordPath = ConvertSoundPathToName(kRecordNames[i], true);
+        if (std::strcmp(convertedPath, recordPath) == 0)
+        {
+            m_musicTrack = i + baseTrack;
+            delete[] recordPath;
+            break;
+        }
+        delete[] recordPath;
+    }
+
+    delete[] convertedPath;
 }
 
-void SoundEngine::playStreaming(const SoundEvent* sound, float, float, float, float, float, bool, bool, ConsoleSoundEngine::eAudioDelayType)
+void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float z, float volume, float pitch,
+                                bool checkPosition, bool waitForMusicStartEvent,
+                                ConsoleSoundEngine::eAudioDelayType delayType)
 {
-    if (sound != 0)
+    if (sound != NULL || !waitForMusicStartEvent || m_musicEventStarted == 0 ||
+        (m_streamingX == x && m_streamingY == y && m_streamingZ == z))
+    {
+        m_streamingVolume = volume;
+        m_streamingPitch = pitch;
+        m_streamingY = y;
+        m_streamingX = x;
+        m_streamingZ = z;
+
+        if (m_musicPlayState == 6)
+        {
+            m_musicDelayReset = 200;
+            m_musicPlayState = 1;
+        }
+        else if (m_musicPlayState == 3)
+        {
+            m_musicPlayState = 4;
+        }
+
+        if (sound == NULL)
+        {
+            m_musicEventStarted = 0;
+            if (delayType == ConsoleSoundEngine::eAudioDelayType_None)
+                m_musicDelayTicks = 0;
+            else if (delayType == ConsoleSoundEngine::eAudioDelayType_Random)
+                m_musicDelayTicks = m_random->nextInt(0xe10) + 600;
+            else if (delayType > ConsoleSoundEngine::eAudioDelayType_ShortRound)
+            {
+                m_musicActive = checkPosition ? 1 : 0;
+                SetMusicID(static_cast<eMusicType>(GetMusicToPlay()));
+                return;
+            }
+            else
+                m_musicDelayTicks = 0x3c;
+
+            m_musicActive = checkPosition ? 1 : 0;
+            SetMusicID(static_cast<eMusicType>(GetMusicToPlay()));
+            return;
+        }
+
         m_musicEventStarted = 1;
+        SetMusicID(sound->getName());
+        m_musicDelayTicks = 0;
+    }
 }
 
 void SoundEngine::playUI(const SoundEvent* sound, float volume, float pitch)
@@ -201,7 +395,7 @@ char* SoundEngine::ConvertSoundPathToName(const std::wstring& path, bool replace
 
 void SoundEngine::FlagMusicEventStart()
 {
-    m_musicEventStarted = 0;
+    m_musicActive = 0;
 }
 
 void SoundEngine::updateSoundEffectVolume(float volume)

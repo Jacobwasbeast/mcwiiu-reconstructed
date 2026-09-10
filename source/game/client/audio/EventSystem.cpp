@@ -13,15 +13,15 @@ extern int AIL_stricmp(const char* first, const char* second);
 extern int AIL_find_marker_in_list(int markerList, const char* markerName, int* markerType);
 extern int strtoi__FPCcPPCc(const char* value, const char** end);
 extern int Var_LookupWithContext__FP11EventSystem6HandlePCciPv(EventSystem* eventSystem,
-                                                                EventSystem::Handle handle,
+                                                                EventSystem::Handle* handle,
                                                                 const char* name,
                                                                 int flags,
-                                                                void* value);
+                                                                int* value);
 
 int FindMarker__FP11EventSystemP13SoundInstanceiPCcPiT5(EventSystem* eventSystem,
                                                           SoundInstance* soundInstance,
                                                           int markerList,
-                                                          const char* markerName,
+                                                          char* markerName,
                                                           int* markerIndex,
                                                           int* markerType)
 {
@@ -66,7 +66,7 @@ int FindMarker__FP11EventSystemP13SoundInstanceiPCcPiT5(EventSystem* eventSystem
             handle = eventSystem->m_handle;
         }
 
-        return Var_LookupWithContext__FP11EventSystem6HandlePCciPv(eventSystem, handle,
+        return Var_LookupWithContext__FP11EventSystem6HandlePCciPv(eventSystem, &handle,
                                                                     markerName, 0,
                                                                     markerIndex);
     }

@@ -14,7 +14,7 @@ public:
  int GetNextTrack(int,int); void SetMusicID(eMusicType);
  virtual void destroy(); virtual void shutdown();
  virtual void play(const SoundEvent*,float,float,float,float,float,SoundInstance*);
- bool GetMusicToPlay(); void SetMusicID(const std::wstring&);
+ unsigned char GetMusicToPlay(); void SetMusicID(const std::wstring&);
  virtual void playStreaming(const SoundEvent*,float,float,float,float,float,bool,bool,ConsoleSoundEngine::eAudioDelayType);
  virtual void playUI(const SoundEvent*,float,float); void updateMusicVolume(float);
  static unsigned int OpenStreamThreadProc(void*); double getDistanceScaler(AudioInfo*);
@@ -29,10 +29,11 @@ private:
  unsigned char m_musicListenerEnabled; float m_musicX,m_musicY,m_musicZ,m_musicForwardX,m_musicForwardY,m_musicForwardZ;
  unsigned char m_thirdListenerEnabled; float m_thirdX,m_thirdY,m_thirdZ,m_thirdForwardX,m_thirdForwardY;
  double m_listenerDistanceX; double m_listenerDistanceY; double m_listenerDistanceZ; double m_listenerDistanceW; float m_listenerDistanceScale;
- Random* m_random; float m_musicDistance; int m_trackCount; unsigned char m_musicEventStarted;
- float m_musicVolume,m_effectVolume; int m_musicType; float m_musicFade; int m_musicTrack; short m_musicState; unsigned char m_statePadding[14];
- unsigned char m_musicActive; unsigned char m_musicActivePadding[3]; int m_musicValueA; int m_musicValueB; int m_musicValueC; int m_musicValueD; int m_musicValueE; int m_musicValueF; int m_musicValueG; int m_musicValueH; int m_musicValueI;
+ Random* m_random; int m_musicTrack; int m_musicDelayTicks; unsigned char m_musicActive; unsigned char m_musicActivePadding[3];
+ int m_musicPlayState; int m_musicPlayAux; int m_musicDelayReset; float m_streamingX,m_streamingY,m_streamingZ; float m_streamingVolume,m_streamingPitch; unsigned char m_streamingPadding[4];
+ unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3]; int m_musicField15c; int m_musicField160; short m_musicState; unsigned char m_statePadding[14];
+ int m_musicNameDataA; int m_musicNameDataB; int m_musicNameCapacity;
  void* m_platformSoundEngine; unsigned char m_platformPadding[188]; int m_currentTrack; unsigned char m_currentTrackPadding[24];
- void* m_platformState; unsigned char m_platformStatePadding[40]; int m_streamingSoundIds[19]; unsigned char* m_trackUsed; void* m_trackData; int m_streamingCount;
+ void* m_platformState; unsigned char m_platformStatePadding[40]; int m_streamingSoundIds[19]; unsigned char* m_trackUsed; void* m_trackData; int m_streamingTrackIndex;
 };
 #endif
