@@ -483,8 +483,6 @@ public:
     void FreeMiiIconTexture(int texture, void* memory);
     void DeleteInternalBuffer(int slot);
 
-    static __thread Context* tlsContext;
-
 private:
     friend class CommandBuffer;
 
