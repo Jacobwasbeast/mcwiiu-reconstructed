@@ -347,7 +347,7 @@ public:
     unsigned char CurrentHostOptionVersion() const;
     unsigned int HostOption_Time(eCustomGameModeHostOption option, unsigned int index) const;
     std::wstring GetValueText(eCustomGameModeHostOption option, int value) const;
-    static int getComparisonImageForGameMode(EMiniGameId id);
+    static std::wstring getComparisonImageForGameMode(EMiniGameId id);
     static std::wstring GetVariantIconPath(EMiniGameId id, unsigned int variant);
     void SetHostOption(eCustomGameModeHostOption option, unsigned int value) const;
     unsigned int HostOption_Time(eCustomGameModeHostOption option) const;
@@ -417,7 +417,7 @@ public:
     unsigned int CalculateHostingMatchmakingData(LaunchMoreOptionsMenuInitData* data, unsigned int** values) const;
     std::wstring GetMapSizeOverrideText(int value) const;
     std::wstring getTextureName() const;
-    int getIcon() const;
+    std::wstring getIcon() const;
     static void SetPlayerSettings(const MiniGamePlayerSettings& settings);
     static void GetPlayerSettings(MiniGamePlayerSettings& settings);
     static MiniGameDef* GetCustomGameModeReferenceById(EMiniGameId id);

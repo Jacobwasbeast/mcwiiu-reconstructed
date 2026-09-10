@@ -163,7 +163,7 @@ double GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue
         total += getRoundValue(*playerStats->getRoundStats(round));
     }
 
-    return (double)total;
+    return (float)total;
 }
 
 GameMedal::Condition::Condition(float target, EOperator op, bool bestOnly)

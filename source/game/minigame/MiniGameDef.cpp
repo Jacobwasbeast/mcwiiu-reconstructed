@@ -985,14 +985,18 @@ std::wstring MiniGameDef::GetValueText(eCustomGameModeHostOption option, int val
     return text.str();
 }
 
-int MiniGameDef::getComparisonImageForGameMode(EMiniGameId id)
+std::wstring MiniGameDef::getComparisonImageForGameMode(EMiniGameId id)
 {
     switch (id)
     {
-    case eMiniGameId_Battle: return 1;
-    case eMiniGameId_Tumble: return 2;
-    case eMiniGameId_Glide: return 3;
-    default: return 0;
+    case eMiniGameId_Battle:
+        return std::wstring(L"Graphics\\GameModeGraphics\\BattleModeScreen.png");
+    case eMiniGameId_Tumble:
+        return std::wstring(L"Graphics\\GameModeGraphics\\MG02Screen.png");
+    case eMiniGameId_Glide:
+        return std::wstring(L"Graphics\\GameModeGraphics\\MG03Screen.png");
+    default:
+        return std::wstring(L"Graphics\\MinecraftBrokenIcon.png");
     }
 }
 
@@ -1248,7 +1252,10 @@ std::wstring MiniGameDef::GetMapSizeOverrideText(int value) const
 }
 
 std::wstring MiniGameDef::getTextureName() const { return mTextureName; }
-int MiniGameDef::getIcon() const { return getComparisonImageForGameMode(mId); }
+std::wstring MiniGameDef::getIcon() const
+{
+    return std::wstring(L"Graphics\\") + getTextureName() + L".png";
+}
 
 bool MiniGameDef::HasFeatureLookBack() const { return mId == eMiniGameId_Glide; }
 bool MiniGameDef::HasFeatureStartCameraAnimation() const { return mId == eMiniGameId_Tumble; }

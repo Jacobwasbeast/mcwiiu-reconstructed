@@ -1,6 +1,9 @@
 #include "game/minigame/ApplySchematicRuleDefinition.hpp"
 
+#include <cmath>
+
 #include "game/core/ConsoleSchematicFile.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Dimension.hpp"
@@ -9,12 +12,6 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
-
-template<typename T>
-std::wstring _toString(T value);
-
-template<typename T>
-T _fromString(const std::wstring& value);
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -77,7 +74,7 @@ void ApplySchematicRuleDefinition::updateLocationBox()
 
 void ApplySchematicRuleDefinition::processSchematic(AABB* chunkBox, LevelChunk* chunk)
 {
-    if (mComplete || chunk->getLevel()->mDimension->getType() != DimensionType::getById(mDimension))
+    if (mComplete || chunk->level->mDimension->getType() != DimensionType::getById(mDimension))
     {
         return;
     }
@@ -125,7 +122,7 @@ void ApplySchematicRuleDefinition::processSchematic(AABB* chunkBox, LevelChunk* 
 
 void ApplySchematicRuleDefinition::processSchematicLighting(AABB* chunkBox, LevelChunk* chunk)
 {
-    if (mComplete || chunk->getLevel()->mDimension->getType() != DimensionType::getById(mDimension))
+    if (mComplete || chunk->level->mDimension->getType() != DimensionType::getById(mDimension))
     {
         return;
     }
@@ -226,18 +223,36 @@ void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const 
     }
     if (name == L"x")
     {
-        mOrigin->x = static_cast<double>(_fromString<int>(value));
+        double x = static_cast<double>(_fromString<int>(value));
+        if (static_cast<int>(fabs(x)) & 1)
+        {
+            x -= 1.0;
+        }
+        mOrigin->x = x;
         return;
     }
     if (name == L"y")
     {
-        int y = _fromString<int>(value);
-        mOrigin->y = y < 0 ? 0.0 : static_cast<double>(y);
+        double y = static_cast<double>(_fromString<int>(value));
+        if (static_cast<int>(fabs(y)) & 1)
+        {
+            y -= 1.0;
+        }
+        if (y < 0.0)
+        {
+            y = 0.0;
+        }
+        mOrigin->y = y;
         return;
     }
     if (name == L"z")
     {
-        mOrigin->z = static_cast<double>(_fromString<int>(value));
+        double z = static_cast<double>(_fromString<int>(value));
+        if (static_cast<int>(fabs(z)) & 1)
+        {
+            z -= 1.0;
+        }
+        mOrigin->z = z;
         return;
     }
     if (name == L"rot")
