@@ -113,7 +113,7 @@ void Guardian::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     LivingEntity::onSyncedDataUpdated(accessor);
 }
 
-unsigned int Guardian::getAmbientSoundInterval()
+int Guardian::getAmbientSoundInterval()
 {
     return 160;
 }
@@ -175,7 +175,7 @@ double Guardian::getSpikesAnimation(float partialTicks)
     return mSpikesAnimationOld + (mSpikesAnimation - mSpikesAnimationOld) * partialTicks;
 }
 
-const void* Guardian::getDefaultLootTable()
+ResourceLocation* Guardian::getDefaultLootTable()
 {
     return &BuiltInLootTables::GUARDIAN;
 }

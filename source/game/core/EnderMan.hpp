@@ -94,7 +94,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual void dropEquipment(bool wasRecentlyHit, int lootingModifier);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool hurt(const DamageSource* source, float damage);
     static void create(Level* level);
     virtual unsigned long long GetType();

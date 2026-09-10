@@ -33,7 +33,7 @@ public:
     virtual void defineSynchedData();
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);

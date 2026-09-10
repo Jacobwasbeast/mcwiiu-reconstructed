@@ -17,6 +17,8 @@ public:
 
     static LockCode* fromTag(CompoundTag* tag);
 
+    static LockCode* NO_LOCK;
+
 private:
     std::wstring mKey;
 };

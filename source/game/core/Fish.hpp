@@ -33,7 +33,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual float getSoundVolume();
     virtual bool makeStepSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual int getExperienceReward(boost::shared_ptr<Player> player);
     virtual bool checkSpawnRules();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,

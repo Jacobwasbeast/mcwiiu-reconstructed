@@ -34,4 +34,8 @@ public:
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
 };
 
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;
+extern AbstractProperty<int>* CoralFanHang_PROPERTY_2;
+extern AbstractProperty<bool>* CoralFanHang_PROPERTY_3;
+
 #endif

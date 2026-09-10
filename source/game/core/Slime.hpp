@@ -104,7 +104,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual float getSoundVolume();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool checkSpawnRules();
     virtual int getMaxHeadXRot();
     virtual void jumpFromGround();

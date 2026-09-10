@@ -12,6 +12,8 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Recipes.hpp"
+#include "game/item/SwordItem.hpp"
+#include "game/item/TridentItem.hpp"
 #include "game/minigame/GrantPermissionsRuleDefinition.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
@@ -22,8 +24,6 @@
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-#include "game/world/block/StructureVoidBlock.hpp"
-#include "game/world/block/TintedBlockItem.hpp"
 #include "game/world/generation/Player.hpp"
 
 GameMode::GameMode()
@@ -71,47 +71,49 @@ bool GameMode::MayDestroy(const BlockPos& pos)
     if (isSpectator() && !Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
         return false;
 
-    boost::shared_ptr<Player> player = GetPlayer();
     if (isCreative())
     {
-        not_null_ptr<ItemInstance> selected = player->mInventory->getSelected();
-        Item* item = selected->getItem();
-        if (dynamic_cast<TintedBlockItem*>(item) != NULL
-            || dynamic_cast<StructureVoidBlock*>(item) != NULL)
+        if (dynamic_cast<SwordItem*>(GetPlayer()->getMainHandItem()->getItem()) != NULL
+            || dynamic_cast<TridentItem*>(GetPlayer()->getMainHandItem()->getItem()) != NULL)
             return false;
     }
 
     if (Minecraft::InMiniGame((EMiniGameId)15, true))
     {
-        const MiniGameDef* miniGame = GetMiniGame();
-        Level* level = GetLevel();
         LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
         LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
-        if (ruleset != NULL)
-        {
-            GrantPermissionsRuleDefinition* permissions =
-                dynamic_cast<GrantPermissionsRuleDefinition*>(
-                    ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
-            if (permissions != NULL && permissions->canDestroy(player, level, ruleset, pos))
-                return !miniGame->EditActionsDisabled();
-        }
-        return miniGame->MayDestroy(Block::getId(level->getBlockState(pos)->getBlock())) != 0;
+        GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
+            static_cast<GrantPermissionsRuleDefinition*>(
+                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+        const MiniGameDef* miniGame = GetMiniGame();
+        if (permissions != NULL
+            && permissions->canDestroy(GetPlayer(), GetLevel(),
+                                       gApp.getLevelGenerationOptions()->getRequiredGameRules(),
+                                       pos))
+            return !miniGame->EditActionsDisabled();
+        return miniGame->MayDestroy(Block::getId(GetLevel()->getBlock(pos))) != 0;
     }
 
+    boost::shared_ptr<Player> player = GetPlayer();
     if (!mGameType->isBlockPlacingRestricted())
         return true;
-    if (isSpectator())
+    if (mGameType == GameType::SPECTATOR)
         return false;
     if (player->mayBuild())
         return true;
 
-    Block* block = GetLevel()->getBlockState(pos)->getBlock();
-    not_null_ptr<ItemInstance> selected = player->mInventory->getSelected();
+    Block* block = GetLevel()->getBlock(pos);
+    not_null_ptr<ItemInstance> selected = player->getMainHandItem();
     if (!selected->isEmpty())
-        return selected->hasAdventureModeBreakTagForBlock(block);
-    if (isAdventure() && (block == Blocks::BARRIER || block == Blocks::STRUCTURE_BLOCK))
-        return false;
-    return block->mMaterial->isDestroyedByHand();
+    {
+        if (selected->hasAdventureModeBreakTagForBlock(block))
+            return true;
+    }
+    else if (!isAdventure() || (block != Blocks::chorus_flower && block != Blocks::chorus_plant))
+    {
+        return block->mMaterial->isDestroyedByHand();
+    }
+    return false;
 }
 
 bool GameMode::MayPlace(const BlockPos& pos, Block* block)
@@ -129,14 +131,13 @@ bool GameMode::MayPlace(const BlockPos& pos, BlockItem* item)
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
-    if (ruleset != NULL)
-    {
-        GrantPermissionsRuleDefinition* permissions =
-            dynamic_cast<GrantPermissionsRuleDefinition*>(
-                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
-        if (permissions != NULL && permissions->canPlace(GetPlayer(), GetLevel(), ruleset, pos))
-            return true;
-    }
+    GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
+        static_cast<GrantPermissionsRuleDefinition*>(
+            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+    if (permissions != NULL
+        && permissions->canPlace(GetPlayer(), GetLevel(),
+                                 gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
+        return true;
     return GetMiniGame()->MayPlace(Block::getId(item->getBlock())) != 0;
 }
 
@@ -149,14 +150,13 @@ bool GameMode::MayUse(const BlockPos& pos, Item* item)
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     LevelRuleset* ruleset = options == NULL ? NULL : options->getRequiredGameRules();
-    if (ruleset != NULL)
-    {
-        GrantPermissionsRuleDefinition* permissions =
-            dynamic_cast<GrantPermissionsRuleDefinition*>(
-                ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
-        if (permissions != NULL && permissions->canUse(GetPlayer(), GetLevel(), ruleset, pos))
-            return true;
-    }
+    GrantPermissionsRuleDefinition* permissions = ruleset == NULL ? NULL :
+        static_cast<GrantPermissionsRuleDefinition*>(
+            ruleset->getRuleByType(static_cast<ConsoleGameRules::EGameRuleType>(36)));
+    if (permissions != NULL
+        && permissions->canUse(GetPlayer(), GetLevel(),
+                               gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
+        return true;
     return GetMiniGame()->MayUse(Item::getId(item)) != 0;
 }
 

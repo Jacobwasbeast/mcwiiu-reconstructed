@@ -177,7 +177,7 @@ void SnowMan::aiStep()
     }
 }
 
-const void* SnowMan::getDefaultLootTable()
+ResourceLocation* SnowMan::getDefaultLootTable()
 {
     return &BuiltInLootTables::SNOWMAN;
 }

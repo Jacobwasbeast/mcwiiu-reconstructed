@@ -46,7 +46,7 @@ double Giant::getWalkTargetValue(const BlockPos& pos)
     return (double)((float)mLevel->getBrightness(pos) - 0.5f);
 }
 
-const void* Giant::getDefaultLootTable()
+ResourceLocation* Giant::getDefaultLootTable()
 {
     return &BuiltInLootTables::GIANT;
 }

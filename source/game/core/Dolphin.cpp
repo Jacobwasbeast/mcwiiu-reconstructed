@@ -48,7 +48,7 @@ MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
 
 unsigned int Dolphin::getMaxAirSupply() { return 4800; }
 double Dolphin::getEyeHeight() { return 1.2; }
-unsigned int Dolphin::getAmbientSoundInterval() { return 120; }
+int Dolphin::getAmbientSoundInterval() { return 120; }
 int Dolphin::getMaxHeadXRot() { return 1; }
 int Dolphin::getMaxHeadYRot() { return 1; }
 
@@ -108,7 +108,7 @@ bool Dolphin::checkSpawnRules()
 }
 
 bool Dolphin::canBeLeashed(const boost::shared_ptr<Player>&) { return false; }
-const void* Dolphin::getDefaultLootTable() { return &BuiltInLootTables::DOLPHIN; }
+ResourceLocation* Dolphin::getDefaultLootTable() { return &BuiltInLootTables::DOLPHIN; }
 
 bool Dolphin::doHurtTarget(boost::shared_ptr<Entity> target)
 {

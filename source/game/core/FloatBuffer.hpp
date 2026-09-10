@@ -6,6 +6,7 @@
 
 class FloatBuffer : public Buffer
 {
+    friend class Camera;
 public:
     FloatBuffer(unsigned int capacity);
     FloatBuffer(unsigned int capacity, float* data);

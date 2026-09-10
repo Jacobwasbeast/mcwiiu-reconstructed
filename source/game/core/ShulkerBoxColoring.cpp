@@ -1,11 +1,11 @@
 #include "game/core/ShulkerBoxColoring.hpp"
 
+#include "game/core/DyeColor.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/CraftingContainer.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
-#include "game/core/DyeColor.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/ShulkerBoxBlock.hpp"
 
@@ -51,8 +51,8 @@ bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingCo
 
 not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    not_null_ptr<ItemInstance> shulkerBox;
-    int dye = 0;
+    not_null_ptr<ItemInstance> shulkerBox = ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> dye = ItemInstance::EMPTY;
     unsigned int slot;
 
     for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
@@ -62,18 +62,18 @@ not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<Crafti
         {
             continue;
         }
-        if (item->getItem() == Items::dye)
-        {
-            dye = item->getAuxValue();
-        }
-        else if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
         {
             shulkerBox = item;
+        }
+        else if (item->getItem() == Items::dye)
+        {
+            dye = item;
         }
     }
 
     not_null_ptr<ItemInstance> result =
-        ShulkerBoxBlock::getColoredItemInstance(DyeColor::byItemData(dye));
+        ShulkerBoxBlock::getColoredItemInstance(DyeColor::byItemData(dye->getAuxValue()));
     if (shulkerBox->hasTag())
     {
         result->setTag(shulkerBox->getTag()->copy());

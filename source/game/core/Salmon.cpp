@@ -119,7 +119,7 @@ void Salmon::registerAttributes()
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.2);
 }
 
-const void* Salmon::getDefaultLootTable()
+ResourceLocation* Salmon::getDefaultLootTable()
 {
     if (getSalmonScale() == LARGE)
         return &BuiltInLootTables::SALMON_LARGE;

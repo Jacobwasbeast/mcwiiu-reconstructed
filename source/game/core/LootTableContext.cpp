@@ -7,13 +7,13 @@ LootTableContext::LootTableContext(float luck, ServerLevel* level, LootTables* l
                                    boost::shared_ptr<Entity> thisEntity,
                                    boost::shared_ptr<Player> killerEntity,
                                    const DamageSource* damageSource)
-    : mLuck(luck)
-    , mLevel(level)
-    , mLootTables(lootTables)
-    , mThisEntity(thisEntity)
-    , mKillerEntity(killerEntity)
-    , mDamageSource(damageSource)
 {
+    mLuck = luck;
+    mLevel = level;
+    mLootTables = lootTables;
+    mThisEntity = thisEntity;
+    mKillerEntity = killerEntity;
+    mDamageSource = damageSource;
 }
 
 bool LootTableContext::addVisitedTable(LootTable* lootTable)

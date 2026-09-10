@@ -30,7 +30,7 @@ public:
     virtual std::wstring getDisplayName();
     void setVillager(boost::shared_ptr<Villager> villager);
     virtual bool isAvailableToTrade();
-    virtual int getLevel();
+    virtual Level* getLevel();
     virtual BlockPos getPosition();
     MerchantContainer* getContainer();
 

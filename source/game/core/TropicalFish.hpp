@@ -43,7 +43,7 @@ public:
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
                                            MobGroupData* data,
                                            const std::wstring& name);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 
     int getVariant();

@@ -145,7 +145,7 @@ FlyingPathNavigation* Phantom::createNavigation(Level* level)
 const SoundEvent* Phantom::getAmbientSound() { return SoundEvents::PHANTOM_AMBIENT; }
 const SoundEvent* Phantom::getHurtSound(const DamageSource*) { return SoundEvents::PHANTOM_HURT; }
 const SoundEvent* Phantom::getDeathSound() { return SoundEvents::PHANTOM_DEATH; }
-const void* Phantom::getDefaultLootTable() { return &BuiltInLootTables::PHANTOM; }
+ResourceLocation* Phantom::getDefaultLootTable() { return &BuiltInLootTables::PHANTOM; }
 unsigned long long Phantom::GetType() { return ENTITY_TYPE_PHANTOM; }
 
 bool Phantom::PlayerSelector::apply(boost::shared_ptr<Player> player) const

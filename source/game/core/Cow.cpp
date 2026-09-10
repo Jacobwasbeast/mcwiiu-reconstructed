@@ -83,7 +83,7 @@ float Cow::getSoundVolume()
     return 0.4f;
 }
 
-const void* Cow::getDefaultLootTable()
+ResourceLocation* Cow::getDefaultLootTable()
 {
     return &BuiltInLootTables::COW;
 }

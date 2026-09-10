@@ -45,7 +45,7 @@ public:
     virtual void travel(float xxa, float yya, float zza);
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool removeWhenFarAway();
     virtual bool canBeControlledByRider();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,

@@ -95,7 +95,7 @@ CConsoleMinecraftApp::CConsoleMinecraftApp() : CMinecraftApp()
 }
 CConsoleMinecraftApp::~CConsoleMinecraftApp() { }
 bool CConsoleMinecraftApp::IsAmericanSKU() { return m_productSKU == 1; }
-uint32_t CConsoleMinecraftApp::GetCommerceInstance() { return (uint32_t)(uintptr_t)m_commerce; }
+cCommerceNintendoWiiU* CConsoleMinecraftApp::GetCommerceInstance() { return m_commerce; }
 void CConsoleMinecraftApp::RequestToBackground() { s_requestBackground = 1; }
 uint8_t CConsoleMinecraftApp::ReadyToBackground() { return (uint8_t)(s_requestBackground ^ 1); }
 uint8_t CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
@@ -237,7 +237,7 @@ void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage
     }
     Callback_SaveGameIncompleteMessageBoxReturned(context, 0, C4JStorage::EMessageResult_3);
 }
-uint32_t CConsoleMinecraftApp::GetDLCInfoInstance() { return (uint32_t)(uintptr_t)m_dlcInfo; }
+cNintendoDLCInfo* CConsoleMinecraftApp::GetDLCInfoInstance() { return m_dlcInfo; }
 void CConsoleMinecraftApp::HandleDLCLicenseChange(std::wstring& packName)
 {
     DLCPack* pack = gApp.mDLCManager.getPack(packName);

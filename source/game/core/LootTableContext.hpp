@@ -6,11 +6,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
+#include "game/server/ServerLevel.hpp"
+
 class DamageSource;
 class Entity;
 class LootTable;
 class LootTables;
-class ServerLevel;
 class Player;
 
 class LootTableContext
@@ -21,6 +22,31 @@ public:
         THIS = 0,
         DIRECT_KILLER = 1,
         KILLER = 2
+    };
+
+    class Builder
+    {
+    public:
+        Builder(ServerLevel* level)
+        {
+            mLevel = level;
+        }
+
+        LootTableContext build()
+        {
+            return LootTableContext(mLuck,
+                                    mLevel,
+                                    mLevel->getLootTables(),
+                                    mThisEntity.lock(),
+                                    mKillerEntity.lock(),
+                                    mDamageSource);
+        }
+
+        ServerLevel* mLevel;
+        float mLuck;
+        boost::weak_ptr<Entity> mThisEntity;
+        boost::weak_ptr<Player> mKillerEntity;
+        const DamageSource* mDamageSource;
     };
 
     LootTableContext(float luck, ServerLevel* level, LootTables* lootTables,

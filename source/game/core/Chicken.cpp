@@ -145,7 +145,7 @@ void Chicken::playStepSound(const BlockPos&, Block*)
     playSound(SoundEvents::CHICKEN_STEP, 0.15f, 1.0f);
 }
 
-const void* Chicken::getDefaultLootTable()
+ResourceLocation* Chicken::getDefaultLootTable()
 {
     return &BuiltInLootTables::CHICKEN;
 }

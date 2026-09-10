@@ -28,7 +28,7 @@ const SoundEvent* Golem::getDeathSound()
     return NULL;
 }
 
-unsigned int Golem::getAmbientSoundInterval()
+int Golem::getAmbientSoundInterval()
 {
     return 120;
 }

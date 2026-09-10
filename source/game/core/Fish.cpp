@@ -117,7 +117,7 @@ bool Fish::makeStepSound()
     return true;
 }
 
-const void* Fish::getDefaultLootTable()
+ResourceLocation* Fish::getDefaultLootTable()
 {
     return &BuiltInLootTables::ENTITY_FISH;
 }

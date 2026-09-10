@@ -50,7 +50,7 @@ void EvocationIllager::addAdditonalSaveData(CompoundTag* tag)
     SpellcasterIllager::addAdditonalSaveData(tag);
     tag->putInt(L"SpellTicks", getSpellCastingTime());
 }
-const void* EvocationIllager::getDefaultLootTable() { return &BuiltInLootTables::EVOCATION_ILLAGER; }
+ResourceLocation* EvocationIllager::getDefaultLootTable() { return &BuiltInLootTables::EVOCATION_ILLAGER; }
 void EvocationIllager::customServerAiStep() { SpellcasterIllager::customServerAiStep(); }
 void EvocationIllager::tick() { SpellcasterIllager::tick(); }
 bool EvocationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)

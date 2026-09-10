@@ -25,6 +25,7 @@ public:
     static float sqrt(float value);
     static float sqrt(double value);
     static int floor(float value);
+    static int floor(double value);
     static int ceil(float value);
     static long long lfloor(double value);
     static int absFloor(double value);
@@ -111,6 +112,12 @@ inline int Mth::floor(float value)
 {
     int truncated = (int)value;
     return value < (float)truncated ? truncated - 1 : truncated;
+}
+
+inline int Mth::floor(double value)
+{
+    int truncated = (int)value;
+    return value < (double)truncated ? truncated - 1 : truncated;
 }
 
 inline int Mth::ceil(float value)

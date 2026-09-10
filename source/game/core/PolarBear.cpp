@@ -106,7 +106,7 @@ void PolarBear::playWarningSound()
     }
 }
 
-const void* PolarBear::getDefaultLootTable()
+ResourceLocation* PolarBear::getDefaultLootTable()
 {
     return &BuiltInLootTables::POLAR_BEAR;
 }

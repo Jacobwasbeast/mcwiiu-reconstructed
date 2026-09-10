@@ -5,7 +5,7 @@
 
 #include "game/world/block/BlockPos.hpp"
 
-class Block;
+class BlockState;
 class Entity;
 class Level;
 class LivingEntity;
@@ -18,7 +18,7 @@ public:
     static void prepare(boost::shared_ptr<Player> player, bool secondPass);
     static Vec3* getCameraPos(boost::shared_ptr<Entity> entity, double partialTick);
     static BlockPos getCameraBlockPos(boost::shared_ptr<LivingEntity> entity, double partialTick);
-    static Block* getBlockAt(Level* level, boost::shared_ptr<Entity> entity, float partialTick);
+    static const BlockState* getBlockAt(Level* level, boost::shared_ptr<Entity> entity, float partialTick);
     static void UpdatePlayerOffsets(boost::shared_ptr<Player> player);
 };
 

@@ -10,8 +10,8 @@
 #include "game/world/block/Iterator.hpp"
 
 DirectionalDegrade::DirectionalDegrade()
+    : mDirection(5)
 {
-    mDirection = 5;
 }
 
 DirectionalDegrade::~DirectionalDegrade()
@@ -67,9 +67,11 @@ void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
     if (mBlocks.empty())
     {
         Iterator<BlockPos*>* iterator = layerCache->iterator();
+        BlockPos* position = iterator->next();
         while (iterator->hasNext())
         {
-            mBlocks.push_back(*iterator->next());
+            mBlocks.push_back(*position);
+            iterator->next();
         }
         delete iterator;
 

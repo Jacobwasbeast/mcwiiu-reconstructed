@@ -86,7 +86,7 @@ public:
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual float getSoundVolume();
     virtual bool checkSpawnRules();
     virtual int getMaxSpawnClusterSize();

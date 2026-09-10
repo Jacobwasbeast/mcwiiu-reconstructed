@@ -123,7 +123,7 @@ double CaveSpider::getEyeHeight()
     return 0.45f;
 }
 
-const void* CaveSpider::getDefaultLootTable()
+ResourceLocation* CaveSpider::getDefaultLootTable()
 {
     return &BuiltInLootTables::CAVE_SPIDER;
 }

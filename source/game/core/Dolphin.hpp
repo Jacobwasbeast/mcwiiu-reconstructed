@@ -29,7 +29,7 @@ public:
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
     virtual unsigned int getMaxAirSupply();
     virtual double getEyeHeight();
-    virtual unsigned int getAmbientSoundInterval();
+    virtual int getAmbientSoundInterval();
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
     virtual void aiStep();
@@ -38,7 +38,7 @@ public:
     virtual bool isInSpawnableOcean();
     virtual bool checkSpawnRules();
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual void drop(const not_null_ptr<ItemInstance>& item);

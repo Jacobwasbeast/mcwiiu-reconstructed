@@ -21,10 +21,11 @@
 #include "game/world/generation/VillagerGolem.hpp"
 
 VindicationIllager::VindicationIllager(Level* level)
-    : AbstractIllager(level), mJohnny(false)
+    : AbstractIllager(level)
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
+    mJohnny = false;
     mCategories |= 0xc;
 }
 
@@ -81,12 +82,12 @@ EMobType VindicationIllager::getMobType()
     return MOB_TYPE_ILLAGER;
 }
 
-const void* VindicationIllager::getDefaultLootTable()
+ResourceLocation* VindicationIllager::getDefaultLootTable()
 {
     return &BuiltInLootTables::VINDICATION_ILLAGER;
 }
 
-const void* VindicationIllager::getDefaultGearTable()
+ResourceLocation* VindicationIllager::getDefaultGearTable()
 {
     return &BuiltInLootTables::VINDICATOR_GEAR;
 }
@@ -141,15 +142,13 @@ bool VindicationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
     if (Entity::isAlliedTo(entity))
         return true;
 
-    if (!entity || (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
-        return false;
+    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER)
+    {
+        return getTeam() == NULL && entity->getTeam() == NULL;
+    }
 
-    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-    if (living->getMobType() != MOB_TYPE_ILLAGER)
-        return false;
-
-    Team* team = getTeam();
-    return team == NULL ? living->getTeam() == NULL : false;
+    return false;
 }
 
 void VindicationIllager::setCustomName(const std::wstring& name,
@@ -186,9 +185,8 @@ VindicationIllager::LIVING_ENTITY_SELECTOR::~LIVING_ENTITY_SELECTOR()
 
 bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity> entity) const
 {
-    if (!entity || (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
-        return false;
-    return boost::static_pointer_cast<LivingEntity>(entity)->isAlive();
+    return (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        && boost::static_pointer_cast<LivingEntity>(entity)->isAlive();
 }
 
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* illager)

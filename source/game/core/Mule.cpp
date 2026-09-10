@@ -30,7 +30,7 @@ void Mule::addDataWalkers(DataFixerUpper* fixer)
     AbstractChestedHorse::addDataWalkers(fixer, 0x2d698002ULL);
 }
 
-const void* Mule::getDefaultLootTable()
+ResourceLocation* Mule::getDefaultLootTable()
 {
     return &BuiltInLootTables::MULE;
 }

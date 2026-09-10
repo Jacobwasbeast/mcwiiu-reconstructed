@@ -40,8 +40,8 @@ public:
     virtual float getWaterSlowDown();
     virtual void travel(float xxa, float yya, float zza);
     virtual not_null_ptr<ItemInstance> getSkull();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual DrownedPathNavigation* createNavigation(Level* level);
     virtual unsigned long long GetType();

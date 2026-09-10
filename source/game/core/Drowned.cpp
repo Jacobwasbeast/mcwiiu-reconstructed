@@ -237,12 +237,12 @@ not_null_ptr<ItemInstance> Drowned::getSkull()
     return ItemInstance::EMPTY;
 }
 
-const void* Drowned::getDefaultLootTable()
+ResourceLocation* Drowned::getDefaultLootTable()
 {
     return &BuiltInLootTables::DROWNED;
 }
 
-const void* Drowned::getDefaultGearTable()
+ResourceLocation* Drowned::getDefaultGearTable()
 {
     return mRandom->nextFloat() < 0.85f ? &BuiltInLootTables::DROWNED_RANGED_EQUIPMENT
                                         : &BuiltInLootTables::DROWNED_EQUIPMENT;

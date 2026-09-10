@@ -210,7 +210,7 @@ const SoundEvent* Wolf::getDeathSound() { return SoundEvents::WOLF_DEATH; }
 
 float Wolf::getSoundVolume() { return 0.4000000059604645f; }
 
-const void* Wolf::getDefaultLootTable() { return &BuiltInLootTables::WOLF; }
+ResourceLocation* Wolf::getDefaultLootTable() { return &BuiltInLootTables::WOLF; }
 
 void Wolf::aiStep()
 {

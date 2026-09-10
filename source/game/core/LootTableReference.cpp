@@ -24,11 +24,13 @@ uint32_t LootTableReference::_createItem(std::vector<not_null_ptr<ItemInstance> 
     LootTable* lootTable = context.mLootTables->get(&mLootTable);
     if (lootTable != NULL)
     {
-        std::vector<not_null_ptr<ItemInstance> > randomItems =
+        std::vector<not_null_ptr<ItemInstance> >* randomItems =
             lootTable->getRandomItems(random, context);
-        if (randomItems.size() > 0)
+        if (!randomItems->empty())
         {
-            items->insert(items->end(), randomItems.begin(), randomItems.end());
+            items->insert(items->end(), randomItems->begin(), randomItems->end());
+            randomItems->clear();
+            delete randomItems;
             return 1;
         }
     }

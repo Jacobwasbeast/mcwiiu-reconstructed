@@ -31,7 +31,7 @@ public:
     virtual float getSoundVolume();
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,
                              InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);

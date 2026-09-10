@@ -18,7 +18,7 @@ public:
     virtual double getEyeHeight();
     virtual void registerAttributes();
     virtual double getWalkTargetValue(const BlockPos& pos);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 };
 

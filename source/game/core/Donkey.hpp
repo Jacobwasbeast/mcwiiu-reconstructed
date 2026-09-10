@@ -19,7 +19,7 @@ public:
     Donkey(Level* level);
     virtual ~Donkey();
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);

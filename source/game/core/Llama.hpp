@@ -90,7 +90,7 @@ public:
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual void playChestEquipsSound();
     virtual void makeMad();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual int getInventoryColumns();
     virtual bool wearsArmor();
     virtual bool isArmor(const not_null_ptr<ItemInstance>& item);

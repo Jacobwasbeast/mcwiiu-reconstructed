@@ -61,7 +61,7 @@ public:
     virtual void registerAttributes();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
     virtual void defineSynchedData();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual AABB* getBoundingBoxForCulling();
     virtual void aiStep();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);

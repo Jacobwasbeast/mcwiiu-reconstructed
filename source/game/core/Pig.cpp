@@ -223,7 +223,7 @@ unsigned int Pig::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     return tooltip;
 }
 
-const void* Pig::getDefaultLootTable() { return &BuiltInLootTables::PIG; }
+ResourceLocation* Pig::getDefaultLootTable() { return &BuiltInLootTables::PIG; }
 
 void Pig::thunderHit(const LightningBolt* lightning)
 {

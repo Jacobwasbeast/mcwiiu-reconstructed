@@ -378,7 +378,7 @@ int Turtle::getAmbientSoundInterval()
     return 200;
 }
 
-const void* Turtle::getDefaultLootTable()
+ResourceLocation* Turtle::getDefaultLootTable()
 {
     return &BuiltInLootTables::SEA_TURTLE;
 }

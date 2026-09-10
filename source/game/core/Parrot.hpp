@@ -85,7 +85,7 @@ public:
     virtual void defineSynchedData();
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 
     float mFlap;

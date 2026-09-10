@@ -25,7 +25,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getFlopSound();
     virtual void customServerAiStep();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 };
 

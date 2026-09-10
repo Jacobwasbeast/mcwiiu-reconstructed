@@ -75,7 +75,7 @@ public:
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual const SoundEvent* getSwimSound();
     virtual int getAmbientSoundInterval();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 
 private:

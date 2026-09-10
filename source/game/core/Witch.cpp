@@ -253,7 +253,7 @@ float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
     return result;
 }
 
-const void* Witch::getDefaultLootTable()
+ResourceLocation* Witch::getDefaultLootTable()
 {
     return &BuiltInLootTables::WITCH;
 }

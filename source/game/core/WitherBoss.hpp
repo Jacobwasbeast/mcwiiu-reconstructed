@@ -6,6 +6,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/entity/mob/Monster.hpp"
+#include "game/entity/mob/RangedAttackMob.hpp"
+#include "game/entity/mob/BossMob.hpp"
 #include "game/entity/ai/Goal.hpp"
 
 class AABB;
@@ -23,16 +25,20 @@ class MobGroupData;
 class ServerBossEvent;
 class ServerPlayer;
 class SoundEvent;
+class Vec3;
+template <class T> class EntityDataAccessor;
 
-class WitherBoss : public Monster
+class WitherBoss : public Monster, public RangedAttackMob, public BossMob
 {
 public:
-    static const EntityDataAccessor<int>* DATA_INT_0;
-    static const EntityDataAccessor<int>* DATA_INT_1;
-    static const EntityDataAccessor<int>* DATA_INT_2;
+    static const EntityDataAccessor<int>* DATA_TARGET_A;
+    static const EntityDataAccessor<int>* DATA_TARGET_B;
+    static const EntityDataAccessor<int>* DATA_TARGET_C;
+    static const EntityDataAccessor<int>* DATA_TARGETS[3];
     static const EntityDataAccessor<int>* DATA_INVULNERABLE_TICKS;
     static const EntityDataAccessor<bool>* DATA_AERIAL_ATTACK;
     static const EntityDataAccessor<bool>* DATA_CHARGE_ATTACKING;
+
     class WitherDoNothingGoal : public Goal
     {
     public:
@@ -49,7 +55,7 @@ public:
     virtual ~WitherBoss();
     static void create(Level* level);
     virtual std::wstring getDisplayName();
-    virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float damage);
+    virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
     virtual bool isAggressive();
     virtual void setAggressive(bool aggressive);
     static bool canDestroy(Block* block);
@@ -64,7 +70,7 @@ public:
     int getInvulnerableTicks();
     void setInvulnerableTicks(int ticks);
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    void readAdditionContructionTag(CompoundTag* tag);
+    virtual void readAdditionContructionTag(CompoundTag* tag);
     virtual CompoundTag* getAdditionContructionTag();
     int getAlternativeTarget(int head);
     bool isPowered();
@@ -72,10 +78,10 @@ public:
     bool IsChargeAttacking();
     bool canShoot();
     virtual void aiStep();
-    bool makeInvulnerable();
+    virtual void makeInvulnerable();
     virtual void makeStuckInWeb();
-    void startSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
-    void stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
+    virtual void startSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
+    virtual void stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
     std::map<boost::shared_ptr<ServerPlayer>, int>& getPlayerParty();
     virtual int getArmorValue();
     void changePhase();
@@ -91,13 +97,13 @@ public:
     virtual void die(const DamageSource* source);
     virtual void handleEntityEvent(unsigned char event, int data);
     double getOverlayAlpha();
-    virtual double getSwellAmount(float partialTicks) const;
+    double getSwellAmount(float partialTicks) const;
     bool wantsToMove();
     void setWantsToMove(bool wantsToMove);
     void setIsPathing(bool pathing);
     void setShotDelay(int delay);
     virtual void heal(float amount);
-    bool canFly();
+    virtual bool canFly();
     virtual boost::shared_ptr<LivingEntity> getTarget();
     bool IsSpawning() const;
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString);
@@ -106,47 +112,65 @@ public:
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    bool destroyBlocks(Level* level, const AABB* box, int y);
+    void destroyBlocks(Level* level, const AABB* box, int expansion);
     virtual void customServerAiStep();
     virtual void dropDeathLoot(bool hitByPlayer, int lootingLevel);
     virtual void checkDespawn();
     virtual bool canRide(boost::shared_ptr<Entity> entity);
     virtual bool canChangeDimensions();
-    double getHeadX(int head);
-    double getHeadY(int head);
-    double getHeadZ(int head);
-    float rotlerp(float from, float to, float max);
-    void performRangedAttack(int head, boost::shared_ptr<LivingEntity> target);
-    void performRangedAttack(int head, double x, double y, double z, bool charged);
+    virtual double getHeadX(int head);
+    virtual double getHeadY(int head);
+    virtual double getHeadZ(int head);
+    virtual float rotlerp(float from, float to, float maxDelta);
+    virtual void performRangedAttack(int head, boost::shared_ptr<LivingEntity> target);
+    virtual void performRangedAttack(int head, double x, double y, double z, bool charged);
     virtual float getMaxHealth();
     virtual float getHealth();
-    virtual unsigned int getDimension();
+    virtual int getDimension();
     virtual unsigned long long GetType();
 
 private:
-    float mHeadRotations[3];
+    int mMaxShieldHealth;
+    float mXRotHeads[2];
+    float mYRotHeads[2];
+    float mXRotOHeads[2];
+    float mYRotOHeads[2];
+    DamageSource* mLastDamageSource;
+    int mPhase;
+    int mShotDelay;
+    int mStunTicks;
+    int mDyingFrames;
+    int mDeathFlapInterval;
+    float mOverlayAlpha;
     float mSwellAmount;
     float mOldSwellAmount;
-    int mAlternativeTargets[3];
-    int mNextHeadUpdate[3];
-    int mIdleHeadUpdates[3];
-    int mInvulnerableTicks;
-    int mDestroyBlocksTick;
-    int mShotDelay;
-    int mPhase;
-    int mDyingFrames;
-    float mOverlayAlpha;
-    int mShieldHealth;
-    int mMaxHealth;
-    int mSpawningFrames;
+    int mChargeWindupTicks;
+    bool mCharging;
+    int mAttackCooldown;
     int mFirerate;
-    bool mAerialAttack;
+    int mAttackDelay;
+    float mAttackRange;
+    int mSpawningFrames;
+    bool mDiving;
+    int mReloadTicks;
+    Vec3* mChargeDirection;
     bool mWantsToMove;
+    int mChargeTicks;
+    int mTargetTrackingTicks;
+    int mShieldHealth;
+    int mShotCount;
+    int mReloadDuration;
+    bool mSkipReload;
+    int mMaxHealth;
+    int mLastHealthInterval;
+    float mSpawnSpin;
+    int mNextHeadUpdate[2];
+    int mIdleHeadUpdates[2];
+    int mDestroyBlocksTick;
+    int mHalfHealth;
+    int mHealthInterval;
     bool mIsPathing;
-    bool mPowered;
-    bool mSpawning;
     ServerBossEvent* mBossEvent;
-    DamageSource* mLastDamageSource;
 };
 
 #endif

@@ -88,7 +88,7 @@ MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& diffic
     return Mob::finalizeMobSpawn(difficulty, data, dataString);
 }
 void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-const void* IllusionIllager::getDefaultLootTable() { return &ILLUSION_ILLAGER_LOOT_TABLE; }
+ResourceLocation* IllusionIllager::getDefaultLootTable() { return &ILLUSION_ILLAGER_LOOT_TABLE; }
 AABB* IllusionIllager::getBoundingBoxForCulling() { return Entity::getBoundingBoxForCulling()->grow(3.0, 0.0, 3.0); }
 
 void IllusionIllager::aiStep()

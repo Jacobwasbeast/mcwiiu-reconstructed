@@ -99,7 +99,7 @@ void Ghast::registerAttributes()
 const SoundEvent* Ghast::getAmbientSound() { return SoundEvents::GHAST_AMBIENT; }
 const SoundEvent* Ghast::getHurtSound(const DamageSource*) { return SoundEvents::GHAST_HURT; }
 const SoundEvent* Ghast::getDeathSound() { return SoundEvents::GHAST_DEATH; }
-const void* Ghast::getDefaultLootTable() { return &BuiltInLootTables::GHAST; }
+ResourceLocation* Ghast::getDefaultLootTable() { return &BuiltInLootTables::GHAST; }
 float Ghast::getSoundVolume() { return 0.5f; }
 
 bool Ghast::checkSpawnRules()

@@ -32,7 +32,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void registerGoals();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual bool isPowered();
 

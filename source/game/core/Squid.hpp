@@ -45,7 +45,7 @@ public:
     virtual float getSoundVolume();
     virtual bool makeStepSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void aiStep();
     virtual void travel(float xa, float ya, float za);
     virtual bool checkSpawnRules();

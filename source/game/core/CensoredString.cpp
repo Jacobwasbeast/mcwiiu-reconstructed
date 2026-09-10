@@ -13,21 +13,21 @@ static const std::wstring& EmptyCensoredString()
 
 CensoredString::CensoredString()
     : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(NULL, -1, -1);
 }
 
 CensoredString::CensoredString(int firstId, int secondId)
     : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(NULL, firstId, secondId);
 }
 
 CensoredString::CensoredString(TickAction* action, int firstId, int secondId)
     : boost::enable_shared_from_this<CensoredString>(), m_useLocalization(false), m_flags(0), m_pendingId(0), m_censoredId(0),
-      m_pending(), m_censored(), m_colour(NULL), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
+      m_pending(), m_censored(), m_tickAction(NULL), m_uuid(), m_chatCensored(false), m_uuidLocal(true)
 {
     _init(action, firstId, secondId);
 }

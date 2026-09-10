@@ -154,7 +154,7 @@ void Sheep::defineSynchedData()
     mEntityData->createDateItem(gSheepSheared, static_cast<unsigned char>(0));
 }
 
-const void* Sheep::getDefaultLootTable()
+ResourceLocation* Sheep::getDefaultLootTable()
 {
     return &BuiltInLootTables::SHEEP;
 }

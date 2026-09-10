@@ -100,7 +100,7 @@ void Squid::playStepSound(const BlockPos&, Block*)
 {
 }
 
-const void* Squid::getDefaultLootTable()
+ResourceLocation* Squid::getDefaultLootTable()
 {
     return &BuiltInLootTables::SQUID;
 }

@@ -112,9 +112,9 @@ boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMobAttack(const boos
     return result;
 }
 
-boost::shared_ptr<EntityDamageSource> DamageSource::CreatePlayerAttack(boost::shared_ptr<Player> player)
+EntityDamageSource* DamageSource::CreatePlayerAttack(boost::shared_ptr<Player> player)
 {
-    return boost::shared_ptr<EntityDamageSource>(new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(eDamageMsgId_PlayerAttack), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3c), player));
+    return new EntityDamageSource(static_cast<ClientboundChatPacket::EChatPacketMessage>(eDamageMsgId_PlayerAttack), static_cast<ClientboundChatPacket::EChatPacketMessage>(0x3c), player);
 }
 
 void DamageSource::setIsFireProjectile() { fireProjectile = true; }

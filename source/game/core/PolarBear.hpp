@@ -86,7 +86,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     void playWarningSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void defineSynchedData();
     bool isStanding();
     virtual void tick();

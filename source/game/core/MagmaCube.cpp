@@ -82,7 +82,7 @@ boost::shared_ptr<Slime> MagmaCube::createChild()
     return boost::shared_ptr<Slime>(new MagmaCube(mLevel));
 }
 
-const void* MagmaCube::getDefaultLootTable()
+ResourceLocation* MagmaCube::getDefaultLootTable()
 {
     return isTiny() ? NULL : &BuiltInLootTables::MAGMA_CUBE;
 }

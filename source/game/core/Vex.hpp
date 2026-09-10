@@ -94,8 +94,8 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty,
                                            MobGroupData* data,

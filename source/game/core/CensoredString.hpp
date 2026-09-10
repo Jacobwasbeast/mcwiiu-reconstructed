@@ -9,8 +9,6 @@
 #include "game/core/TickAction.hpp"
 #include "game/data/CompoundTag.hpp"
 
-class DyeColor;
-
 class CensoredString : public boost::enable_shared_from_this<CensoredString>
 {
 public:
@@ -35,6 +33,10 @@ public:
     void _update(const std::wstring& value);
     int compare(const std::wstring& value);
 
+    const std::wstring& getUUID() { return m_uuid; }
+    bool isUUIDLocal() { return m_uuidLocal; }
+    bool isChatCensored() { return m_chatCensored; }
+
 private:
     bool m_useLocalization;
     unsigned char m_stateBytes[47];
@@ -43,7 +45,6 @@ private:
     int m_censoredId;
     std::wstring m_pending;
     std::wstring m_censored;
-    DyeColor* m_colour;
     TickAction* m_tickAction;
     std::wstring m_uuid;
     bool m_chatCensored;

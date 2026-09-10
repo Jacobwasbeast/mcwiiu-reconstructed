@@ -136,7 +136,7 @@ public:
     virtual void push(boost::shared_ptr<Entity> entity);
     virtual double getPickRadius();
     virtual bool hasValidInterpolationPositions();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual const DyeColor* getColor();
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned long long GetType();

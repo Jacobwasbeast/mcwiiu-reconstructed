@@ -15,12 +15,12 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
-#include "game/world/block/BlockState.hpp"
 
 static const EntityDataAccessor<bool>* sWitherSkullDangerous = NULL;
 
 WitherSkull::WitherSkull(Level* level) : Fireball(level)
 {
+    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 
@@ -28,6 +28,7 @@ WitherSkull::WitherSkull(Level* level, boost::shared_ptr<LivingEntity> owner,
                          double xd, double yd, double zd)
     : Fireball(level, owner, xd, yd, zd)
 {
+    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 
@@ -35,6 +36,7 @@ WitherSkull::WitherSkull(Level* level, double x, double y, double z,
                          double xd, double yd, double zd)
     : Fireball(level, x, y, z, xd, yd, zd)
 {
+    fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
 
@@ -62,7 +64,7 @@ bool WitherSkull::isOnFire()
 float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
     float resistance = Entity::getBlockExplosionResistance(explosion, level, pos);
-    Block* block = level->getBlockState(pos)->getBlock();
+    Block* block = level->getBlock(pos);
     if (isDangerous() && WitherBoss::canDestroy(block) && resistance < 0.8f)
         resistance = 0.8f;
     return resistance;

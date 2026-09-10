@@ -267,7 +267,7 @@ float Creeper::getSwelling(float partialTicks)
     return ((float)mOldSwell + (float)(mSwell - mOldSwell) * partialTicks) / (float)(mMaxSwell - 2);
 }
 
-const void* Creeper::getDefaultLootTable() { return &BuiltInLootTables::CREEPER; }
+ResourceLocation* Creeper::getDefaultLootTable() { return &BuiltInLootTables::CREEPER; }
 
 void Creeper::thunderHit(const LightningBolt* lightning)
 {

@@ -6,7 +6,7 @@
 Slot::Slot(boost::shared_ptr<Container> container, int index, int x, int y)
     : mSlot(index),
       mContainer(container),
-      mRemoveCount(0),
+      mIndex(0),
       mX(x),
       mY(y)
 {
@@ -28,7 +28,6 @@ void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItem, not_null_ptr<ItemIns
 
 void Slot::onQuickCraft(not_null_ptr<ItemInstance> item, int count)
 {
-    mRemoveCount += count;
 }
 
 void Slot::onSwapCraft(int count)

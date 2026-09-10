@@ -47,7 +47,7 @@ public:
     virtual void aiStep();
     virtual void customServerAiStep();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool isCharged();
     virtual bool isOnFire();
     virtual void dropDeathLoot(bool hitByPlayer, int lootingLevel);

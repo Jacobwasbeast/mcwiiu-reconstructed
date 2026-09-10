@@ -46,7 +46,7 @@ public:
     virtual void aiStep();
     virtual void registerAttributes();
     virtual void defineSynchedData();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void handleEntityEvent(unsigned char event, int data);
     double getHeadEatPositionScale(float partialTick);
     double getHeadEatAngleScale(float partialTick);

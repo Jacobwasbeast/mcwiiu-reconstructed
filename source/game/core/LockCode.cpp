@@ -2,7 +2,8 @@
 
 #include "game/data/CompoundTag.hpp"
 
-static LockCode* NO_LOCK = new LockCode(L"");
+LockCode* LockCode::NO_LOCK = new LockCode(L"");
+
 static const std::wstring LOCK_TAG = L"Lock";
 
 LockCode::LockCode(const std::wstring& key)
@@ -41,5 +42,5 @@ LockCode* LockCode::fromTag(CompoundTag* tag)
         return new LockCode(tag->getString(LOCK_TAG));
     }
 
-    return NO_LOCK;
+    return LockCode::NO_LOCK;
 }

@@ -34,7 +34,7 @@ public:
     virtual void aiStep();
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual float getDamageAfterMagicAbsorb(const DamageSource* source, float damage);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual double getEyeHeight();
     virtual unsigned long long GetType();
     static void DEATH_LOOT();

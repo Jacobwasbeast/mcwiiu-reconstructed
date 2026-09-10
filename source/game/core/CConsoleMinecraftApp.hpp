@@ -18,7 +18,7 @@ public:
     CConsoleMinecraftApp();
     virtual ~CConsoleMinecraftApp();
     bool IsAmericanSKU();
-    uint32_t GetCommerceInstance();
+    cCommerceNintendoWiiU* GetCommerceInstance();
     static void RequestToBackground();
     static uint8_t ReadyToBackground();
     uint8_t GetDRCIconEnabled();
@@ -35,7 +35,7 @@ public:
     void SetNoSpaceForSaveQuota(bool);
     static int Callback_SaveGameIncompleteMessageBoxReturned(void*, int, C4JStorage::EMessageResult);
     static void Callback_SaveGameIncomplete(void*, C4JStorage::ESaveIncompleteType);
-    uint32_t GetDLCInfoInstance();
+    cNintendoDLCInfo* GetDLCInfoInstance();
     void HandleDLCLicenseChange(std::wstring&);
     void SetDRCIconEnabled(bool);
     void SetRichPresenceContext(int, int);

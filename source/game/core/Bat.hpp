@@ -38,7 +38,7 @@ public:
     virtual void pushEntities();
     virtual void doPush(boost::shared_ptr<Entity> entity);
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void customServerAiStep();
     virtual bool checkSpawnRules();
     virtual bool isResting();

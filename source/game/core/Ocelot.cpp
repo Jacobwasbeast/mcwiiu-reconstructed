@@ -259,7 +259,7 @@ bool Ocelot::hurt(const DamageSource* source, float damage)
     return Animal::hurt(source, damage);
 }
 
-const void* Ocelot::getDefaultLootTable()
+ResourceLocation* Ocelot::getDefaultLootTable()
 {
     return &BuiltInLootTables::OCELOT;
 }

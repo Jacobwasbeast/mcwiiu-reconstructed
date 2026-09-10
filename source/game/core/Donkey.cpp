@@ -26,7 +26,7 @@ void Donkey::addDataWalkers(DataFixerUpper* fixer)
     AbstractChestedHorse::addDataWalkers(fixer, 0x2d698001ULL);
 }
 
-const void* Donkey::getDefaultLootTable()
+ResourceLocation* Donkey::getDefaultLootTable()
 {
     return &BuiltInLootTables::DONKEY;
 }

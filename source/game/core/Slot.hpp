@@ -13,11 +13,13 @@ class Player;
 
 class Slot
 {
+    friend class AbstractContainerMenu;
+
 public:
     Slot(boost::shared_ptr<Container> container, int index, int x, int y);
     virtual ~Slot();
 
-    virtual void onQuickCraft(not_null_ptr<ItemInstance> oldItem,
+    void onQuickCraft(not_null_ptr<ItemInstance> oldItem,
                               not_null_ptr<ItemInstance> newItem);
     virtual void onQuickCraft(not_null_ptr<ItemInstance> item, int count);
     virtual void onSwapCraft(int count);
@@ -44,7 +46,7 @@ public:
 protected:
     int mSlot;
     boost::shared_ptr<Container> mContainer;
-    int mRemoveCount;
+    int mIndex;
     int mX;
     int mY;
 };

@@ -1,49 +1,38 @@
 #include "game/core/Camera.hpp"
 
 #include <cmath>
+#include <cstring>
 
 #include "game/core/CameraController.hpp"
 #include "game/core/FloatBuffer.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/MemoryTracker.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Vec3.hpp"
-#include "game/world/LevelSource.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 
-extern FloatBuffer* gCameraModelViewMatrix;
-extern FloatBuffer* gCameraProjectionMatrix;
-extern float gCameraOffsetsX[8];
-extern float gCameraOffsetsY[8];
-extern float gCameraOffsetsZ[8];
-extern float gCameraPositionX;
-extern float gCameraPositionY;
-extern float gCameraPositionZ;
-extern float gCameraForwardX;
-extern float gCameraForwardY;
-extern float gCameraForwardZ;
-extern float gCameraRightX;
-extern float gCameraRightY;
-extern float gCameraRightZ;
-extern float gCameraUpX;
-extern float gCameraUpY;
-extern float gCameraUpZ;
+FloatBuffer* gCameraModelViewMatrix = MemoryTracker::createFloatBuffer(16);
+FloatBuffer* gCameraProjectionMatrix = MemoryTracker::createFloatBuffer(16);
+float gCameraPositionX = 0.0f;
+float gCameraPositionY = 0.0f;
+float gCameraPositionZ = 0.0f;
+float gCameraXOff = 0.0f;
+float gCameraYOff = 0.0f;
+float gCameraZOff = 0.0f;
+float gCameraYOff2 = 0.0f;
+float gCameraXOff2 = 0.0f;
+float gCameraOffsetsX[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+float gCameraOffsetsY[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+float gCameraOffsetsZ[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-extern void ASM_MTX44Concat(float* first, float* second, float* result);
-extern void C_MTX44Inverse(float* matrix, float* inverse);
-
-extern CameraController* cameraGetController(Player* player) __asm("GetCameraController__6PlayerFv");
-extern int cameraGetThirdPersonView(Player* player, bool includeCamera) __asm("GetThirdPersonView__6PlayerFb");
-
-static Vec3* cameraPosition(Entity* entity, double partialTick)
-{
-    return Vec3::newTemp(
-        (entity->mX - entity->mXOld) * partialTick + entity->mXOld + gCameraPositionX,
-        (entity->mY - entity->mYOld) * partialTick + entity->mYOld + gCameraPositionY,
-        (entity->mZ - entity->mZOld) * partialTick + entity->mZOld + gCameraPositionZ);
-}
+extern "C" void ASM_MTX44Concat(float* first, float* second, float* result);
+extern "C" void C_MTX44Inverse(float* matrix, float* inverse);
 
 void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
 {
@@ -54,97 +43,84 @@ void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
     float projection[16];
     float combined[16];
     float inverse[16];
-    int index;
-    for (index = 0; index < 16; ++index)
-    {
-        modelView[index] = gCameraModelViewMatrix->get(index);
-        projection[index] = gCameraProjectionMatrix->get(index);
-    }
+    std::memcpy(modelView, gCameraModelViewMatrix->mBuffer, sizeof(modelView));
+    std::memcpy(projection, gCameraProjectionMatrix->mBuffer, sizeof(projection));
     ASM_MTX44Concat(modelView, projection, combined);
     C_MTX44Inverse(combined, inverse);
     gCameraPositionX = inverse[12] / inverse[15];
     gCameraPositionY = inverse[13] / inverse[15];
     gCameraPositionZ = inverse[14] / inverse[15];
 
-    Entity* entity = (Entity*)player.get();
-    float xRotation = entity->mXRot;
-    float yRotation = entity->mYRot;
-    CameraController* controller = cameraGetController(player.get());
-    if (controller != NULL && cameraGetThirdPersonView(player.get(), false) == 3)
+    CameraController* controller = player->GetCameraController();
+    float xRotation = player->mXRot;
+    float yRotation = player->mYRot;
+    if (controller != NULL && player->GetThirdPersonView(false) == 3)
     {
-        Vec3* rotation = controller->getCurrentRot();
-        xRotation += (float)rotation->x;
-        yRotation += (float)rotation->y;
+        xRotation += (float)controller->getCurrentRot()->x;
+        yRotation += (float)controller->getCurrentRot()->y;
     }
 
-    float degreesToRadians = 0.01745329238474369f;
-    float yaw = yRotation * degreesToRadians;
-    float pitch = xRotation * degreesToRadians;
     float side = (float)(secondPass ? -1 : 1);
-    float cosYaw = cosf(yaw);
-    float sinYaw = sinf(yaw);
-    float cosPitch = cosf(pitch);
-    float sinPitch = sinf(pitch);
+    float yaw = yRotation * 0.01745329238474369f;
+    float pitch = xRotation * 0.01745329238474369f;
 
-    gCameraForwardX = cosYaw * cosPitch * side;
-    gCameraForwardY = -sinPitch * side;
-    gCameraForwardZ = sinYaw * cosPitch * side;
-    gCameraRightX = sinYaw * side;
-    gCameraRightY = 0.0f;
-    gCameraRightZ = cosYaw * side;
-    gCameraUpX = -sinPitch * cosYaw * side;
-    gCameraUpY = -cosPitch * side;
-    gCameraUpZ = -sinPitch * sinYaw * side;
-    UpdatePlayerOffsets(player);
+    gCameraXOff = cosf(yaw) * side;
+    gCameraZOff = sinf(yaw) * side;
+    gCameraYOff2 = -gCameraZOff * sinf(pitch) * side;
+    gCameraXOff2 = gCameraXOff * sinf(pitch) * side;
+    gCameraYOff = cosf(pitch);
+
+    MultiplayerLocalPlayer* localPlayer = dynamic_cast<MultiplayerLocalPlayer*>(player.get());
+    gCameraOffsetsX[localPlayer->mUserIndex] = gCameraPositionX;
+    gCameraOffsetsY[localPlayer->mUserIndex] = gCameraPositionY;
+    gCameraOffsetsZ[localPlayer->mUserIndex] = gCameraPositionZ;
 }
 
 Vec3* Camera::getCameraPos(boost::shared_ptr<Entity> entity, double partialTick)
 {
-    return cameraPosition(entity.get(), partialTick);
+    return Vec3::newTemp(
+        (entity->mX - entity->mXOld) * partialTick + entity->mXOld + gCameraPositionX,
+        (entity->mY - entity->mYOld) * partialTick + entity->mYOld + gCameraPositionY,
+        (entity->mZ - entity->mZOld) * partialTick + entity->mZOld + gCameraPositionZ);
 }
 
 BlockPos Camera::getCameraBlockPos(boost::shared_ptr<LivingEntity> entity, double partialTick)
 {
-    const boost::shared_ptr<Entity>& base = (const boost::shared_ptr<Entity>&)entity;
-    return BlockPos(getCameraPos(base, partialTick));
+    return BlockPos(getCameraPos(entity, partialTick));
 }
 
-Block* Camera::getBlockAt(Level* level, boost::shared_ptr<Entity> entity, float partialTick)
+const BlockState* Camera::getBlockAt(Level* level, boost::shared_ptr<Entity> entity, float partialTick)
 {
-    LevelSource* levelSource = (LevelSource*)level;
     Vec3* position = getCameraPos(entity, partialTick);
     BlockPos blockPos(position);
-    const BlockState* state = levelSource->getBlockState(blockPos);
-    unsigned short extraElement = levelSource->getExtraElement(blockPos.x, blockPos.y, blockPos.z);
+    const BlockState* state = level->getBlockState(blockPos);
+    unsigned short extraElement = level->getExtraElement(blockPos.x, blockPos.y, blockPos.z);
     if (extraElement != 0)
     {
         state = Block::getStateByElementId(extraElement);
     }
 
-    Block* block = state->getBlock();
-    float height = 0.0f;
-    if (state->getMaterial()->isLiquid() && block->isLiquidBlock())
+    if (state->getMaterial()->isLiquid())
     {
-        const BlockState* liquidState = levelSource->getLiquidBlockState(blockPos);
-        if (liquidState != NULL && liquidState->getBlock() == block)
+        float height = 0.0f;
+        if (state->getBlock()->isLiquidBlock())
         {
-            height = (float)(LiquidBlock::getHeightFromData(
-                levelSource->getBlockData(blockPos.x, blockPos.y, blockPos.z)) - 0.1111111119389534);
+            height = (float)(LiquidBlock::getHeightFromData(state->getValue(LiquidBlock::LEVEL))
+                             - 0.1111111119389534);
+        }
+
+        if ((float)(blockPos.y + 1) - height <= position->y)
+        {
+            state = level->getBlockState(blockPos.above());
         }
     }
-
-    if ((float)(blockPos.y + 1) - height <= position->y)
-    {
-        block = levelSource->getBlock(blockPos.above());
-    }
-    return block;
+    return state;
 }
 
 void Camera::UpdatePlayerOffsets(boost::shared_ptr<Player> player)
 {
-    Entity* entity = (Entity*)player.get();
-    int dimension = entity->mDimension;
-    gCameraPositionX = gCameraOffsetsX[dimension];
-    gCameraPositionY = gCameraOffsetsY[dimension];
-    gCameraPositionZ = gCameraOffsetsZ[dimension];
+    MultiplayerLocalPlayer* localPlayer = dynamic_cast<MultiplayerLocalPlayer*>(player.get());
+    gCameraPositionX = gCameraOffsetsX[localPlayer->mUserIndex];
+    gCameraPositionY = gCameraOffsetsY[localPlayer->mUserIndex];
+    gCameraPositionZ = gCameraOffsetsZ[localPlayer->mUserIndex];
 }

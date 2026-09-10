@@ -31,7 +31,7 @@ public:
     static uint64_t processTimeInSeconds();
     static uint64_t processTimeInMilliSecs();
     static unsigned int processTimeInMicroSecs();
-    static unsigned int processTimeInNanoSecs();
+    static uint64_t processTimeInNanoSecs();
     static uint64_t currentRealTimeMillis();
     static uint64_t currentUnixEpochTimeSeconds();
     static void ReverseUSHORT(unsigned short* value);

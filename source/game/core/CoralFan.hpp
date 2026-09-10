@@ -14,6 +14,8 @@ class MaterialColor;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class CoralFan : public Bush
 {
 public:
@@ -53,5 +55,8 @@ protected:
     TextureAtlasSprite* mIcons[5];
     TextureAtlasSprite* mDeadIcons[5];
 };
+
+extern AbstractProperty<int>* CoralFan_PROPERTY_1;
+extern AbstractProperty<int>* CoralFan_PROPERTY_2;
 
 #endif

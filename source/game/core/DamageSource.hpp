@@ -54,7 +54,7 @@ public:
     static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
     DamageSource* setProjectile();
     static boost::shared_ptr<DamageSource> CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
-    static boost::shared_ptr<EntityDamageSource> CreatePlayerAttack(boost::shared_ptr<Player> player);
+    static EntityDamageSource* CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
     static boost::shared_ptr<DamageSource> CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
     static boost::shared_ptr<DamageSource> CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner);

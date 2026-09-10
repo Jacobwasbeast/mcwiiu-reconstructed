@@ -48,7 +48,7 @@ public:
     virtual float getSoundVolume();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual bool hurt(const DamageSource* source, float damage);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isFood(const not_null_ptr<ItemInstance>& item);

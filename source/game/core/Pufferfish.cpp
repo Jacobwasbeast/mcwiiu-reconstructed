@@ -175,7 +175,7 @@ const SoundEvent* Pufferfish::getDeathSound()
     return SoundEvents::PUFFERFISH_DEATH;
 }
 
-const void* Pufferfish::getDefaultLootTable()
+ResourceLocation* Pufferfish::getDefaultLootTable()
 {
     return &BuiltInLootTables::PUFFERFISH;
 }

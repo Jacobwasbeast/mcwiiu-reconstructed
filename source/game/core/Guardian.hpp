@@ -86,7 +86,7 @@ public:
     bool hasActiveAttackTarget();
     boost::shared_ptr<Entity> getActiveAttackTarget();
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
-    virtual unsigned int getAmbientSoundInterval();
+    virtual int getAmbientSoundInterval();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
@@ -98,7 +98,7 @@ public:
     virtual void aiStep();
     double getTailAnimation(float partialTicks);
     double getSpikesAnimation(float partialTicks);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool isDarkEnoughToSpawn();
     virtual bool checkSpawnObstruction();
     virtual bool checkSpawnRules();

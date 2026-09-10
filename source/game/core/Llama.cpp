@@ -170,7 +170,7 @@ void Llama::makeMad()
         playSound(sound, getSoundVolume(), getVoicePitch());
     }
 }
-const void* Llama::getDefaultLootTable() { return &BuiltInLootTables::LLAMA; }
+ResourceLocation* Llama::getDefaultLootTable() { return &BuiltInLootTables::LLAMA; }
 int Llama::getInventoryColumns() { return getStrength(); }
 bool Llama::wearsArmor() { return true; }
 bool Llama::isArmor(const not_null_ptr<ItemInstance>& item) { return !item->isEmpty() && item->getItem() == Item::byBlock(NULL); }

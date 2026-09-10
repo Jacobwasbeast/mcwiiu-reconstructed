@@ -68,7 +68,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool onLadder();
     virtual void makeStuckInWeb();
     virtual EMobType getMobType();

@@ -71,13 +71,9 @@ bool ClientSideMerchant::isAvailableToTrade()
     return mVillager != boost::shared_ptr<Villager>();
 }
 
-int ClientSideMerchant::getLevel()
+Level* ClientSideMerchant::getLevel()
 {
-    if (!mTradingPlayer)
-    {
-        return 0;
-    }
-    return static_cast<int>(reinterpret_cast<uintptr_t>(mTradingPlayer->mLevel));
+    return mTradingPlayer->mLevel;
 }
 
 BlockPos ClientSideMerchant::getPosition()

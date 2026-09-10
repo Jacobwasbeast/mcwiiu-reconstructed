@@ -21,9 +21,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-extern AbstractProperty<int>* CoralFan_PROPERTY_1;
-extern AbstractProperty<int>* CoralFan_PROPERTY_2;
-
 AbstractProperty<int>* CoralFan_PROPERTY_1 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"variant", 0, 4));
 AbstractProperty<int>* CoralFan_PROPERTY_2 = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"direction", 0, 1));
 

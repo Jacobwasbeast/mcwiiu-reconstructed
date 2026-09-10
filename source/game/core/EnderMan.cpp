@@ -218,7 +218,7 @@ void EnderMan::dropEquipment(bool wasRecentlyHit, int lootingModifier)
     Monster::dropEquipment(wasRecentlyHit, lootingModifier);
     setCarryingBlock(NULL);
 }
-const void* EnderMan::getDefaultLootTable() { return &BuiltInLootTables::ENDERMAN; }
+ResourceLocation* EnderMan::getDefaultLootTable() { return &BuiltInLootTables::ENDERMAN; }
 
 bool EnderMan::hurt(const DamageSource* source, float damage)
 {

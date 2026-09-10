@@ -270,7 +270,7 @@ double Bat::getEyeHeight()
     return (double)(mBbHeight * 0.5f);
 }
 
-const void* Bat::getDefaultLootTable()
+ResourceLocation* Bat::getDefaultLootTable()
 {
     return &BuiltInLootTables::BAT;
 }

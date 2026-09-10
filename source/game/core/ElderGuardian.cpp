@@ -46,7 +46,7 @@ void ElderGuardian::addDataWalkers(DataFixerUpper* fixer)
     Mob::addDataWalkers(fixer, 0x5D544001ULL);
 }
 
-const void* ElderGuardian::getDefaultLootTable()
+ResourceLocation* ElderGuardian::getDefaultLootTable()
 {
     return &BuiltInLootTables::ELDER_GUARDIAN;
 }

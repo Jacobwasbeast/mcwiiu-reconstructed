@@ -239,7 +239,7 @@ const SoundEvent* Slime::getSquishSound()
     return isTiny() ? SoundEvents::SMALL_SLIME_SQUISH : SoundEvents::SLIME_SQUISH;
 }
 
-const void* Slime::getDefaultLootTable()
+ResourceLocation* Slime::getDefaultLootTable()
 {
     return isTiny() ? NULL : &BuiltInLootTables::SLIME;
 }

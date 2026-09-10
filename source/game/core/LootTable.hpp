@@ -17,9 +17,9 @@ public:
     LootTable(std::vector<LootPool*>* pools);
     LootTable();
 
-    std::vector<not_null_ptr<ItemInstance> > getRandomItems(Random* random,
-                                                             LootTableContext& context);
-    std::vector<int> getAvailableSlots(Container* container, Random* random);
+    std::vector<not_null_ptr<ItemInstance> >* getRandomItems(Random* random,
+                                                              LootTableContext& context);
+    std::vector<int>* getAvailableSlots(Container* container, Random* random);
     void shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* items,
                               int maxSize,
                               Random* random);

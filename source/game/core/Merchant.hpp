@@ -9,6 +9,7 @@
 
 class ItemInstance;
 class BlockPos;
+class Level;
 class MerchantRecipe;
 class MerchantRecipeList;
 class Player;
@@ -25,7 +26,7 @@ public:
     virtual void notifyTradeUpdated(const not_null_ptr<ItemInstance>& item) = 0;
     virtual std::wstring getDisplayName() = 0;
     virtual bool isAvailableToTrade() = 0;
-    virtual int getLevel() = 0;
+    virtual Level* getLevel() = 0;
     virtual BlockPos getPosition() = 0;
 };
 

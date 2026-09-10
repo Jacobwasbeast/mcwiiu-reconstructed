@@ -98,7 +98,7 @@ void Endermite::playStepSound(const BlockPos&, Block*)
     playSound(SoundEvents::ENDERMITE_STEP, 0.15f, 1.0f);
 }
 
-const void* Endermite::getDefaultLootTable()
+ResourceLocation* Endermite::getDefaultLootTable()
 {
     return &BuiltInLootTables::ENDERMITE;
 }

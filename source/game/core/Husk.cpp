@@ -67,7 +67,7 @@ const SoundEvent* Husk::getStepSound()
     return SoundEvents::HUSK_STEP;
 }
 
-const void* Husk::getDefaultLootTable()
+ResourceLocation* Husk::getDefaultLootTable()
 {
     return &BuiltInLootTables::HUSK;
 }

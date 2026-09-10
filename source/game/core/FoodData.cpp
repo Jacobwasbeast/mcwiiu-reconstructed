@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 
+#include "game/core/DamageSource.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/FoodConstants.hpp"
 #include "game/core/GameRules.hpp"
@@ -26,7 +27,7 @@ void FoodData::eat(int foodLevelValue, float saturationModifier)
         newFoodLevel = maxFood;
     float newSaturation = saturationLevel + saturationModifier * static_cast<float>(foodLevelValue) * 2.0f;
     const float foodLevelAsFloat = static_cast<float>(newFoodLevel);
-    if (newSaturation - foodLevelAsFloat < 0.0f)
+    if (newSaturation > foodLevelAsFloat)
         newSaturation = foodLevelAsFloat;
     foodLevel = newFoodLevel;
     saturationLevel = newSaturation;
@@ -123,7 +124,7 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
             if ((health > 10.0f || difficulty == Difficulty::HARD) &&
                 (health > 1.0f && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)) &&
                 !Minecraft::InMiniGame(eMiniGameId_Tumble, true))
-                player->hurt(NULL, 1.0f);
+                player->hurt(DamageSource::STARVE, 1.0f);
         }
     }
     foodTickTimer = 0;

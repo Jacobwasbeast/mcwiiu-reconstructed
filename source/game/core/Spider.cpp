@@ -109,7 +109,7 @@ void Spider::playStepSound(const BlockPos&, Block*)
     playSound(SoundEvents::SPIDER_STEP, 0.15f, 1.0f);
 }
 
-const void* Spider::getDefaultLootTable() { return &BuiltInLootTables::SPIDER; }
+ResourceLocation* Spider::getDefaultLootTable() { return &BuiltInLootTables::SPIDER; }
 bool Spider::onLadder() { return isClimbing(); }
 void Spider::makeStuckInWeb() { }
 EMobType Spider::getMobType() { return MOB_TYPE_ARTHROPOD; }

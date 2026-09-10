@@ -74,7 +74,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual void customServerAiStep();
     virtual void tick();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);

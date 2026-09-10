@@ -13,10 +13,10 @@
 
 RepairResultSlot::RepairResultSlot(AnvilMenu* menu, const BlockPos& position,
                                    boost::shared_ptr<Container> container, int index, int x, int y)
-    : Slot(container, index, x, y),
-      mMenu(menu),
-      mPosition(position)
+    : Slot(container, index, x, y)
 {
+    mMenu = menu;
+    mPosition = position;
 }
 
 RepairResultSlot::~RepairResultSlot()
@@ -30,8 +30,7 @@ bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 
 bool RepairResultSlot::mayPickup(boost::shared_ptr<Player> player)
 {
-    if (mMenu->mRepairCost > 0 && !player->mAbilities.mInstabuild &&
-        player->mExperienceLevel < mMenu->mRepairCost)
+    if (!player->mAbilities.mInstabuild && player->mExperienceLevel < mMenu->mRepairCost)
     {
         return false;
     }

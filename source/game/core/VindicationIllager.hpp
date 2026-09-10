@@ -46,8 +46,8 @@ public:
     virtual void registerAttributes();
     virtual void defineSynchedData();
     virtual EMobType getMobType();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     bool isAgressive();
     void setAggressive(bool aggressive);
     virtual void addAdditonalSaveData(CompoundTag* tag);

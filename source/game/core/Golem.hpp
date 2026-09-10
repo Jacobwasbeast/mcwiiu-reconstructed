@@ -16,7 +16,7 @@ public:
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    virtual unsigned int getAmbientSoundInterval();
+    virtual int getAmbientSoundInterval();
     virtual bool removeWhenFarAway();
 };
 

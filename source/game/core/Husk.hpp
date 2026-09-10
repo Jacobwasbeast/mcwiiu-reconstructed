@@ -21,7 +21,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getStepSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual not_null_ptr<ItemInstance> getSkull();
     virtual void finishConversion();

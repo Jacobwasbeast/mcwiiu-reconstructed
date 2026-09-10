@@ -26,7 +26,7 @@ public:
     virtual float getBrightness();
     virtual const void* getParticleType();
     virtual boost::shared_ptr<Slime> createChild();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool isOnFire();
     virtual bool breathesLava();
     virtual int getJumpDelay();

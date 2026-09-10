@@ -51,12 +51,12 @@ void Stray::registerGoals()
     mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Player), 6.0f, 1.0, 1.2), true);
 }
 
-const void* Stray::getDefaultLootTable()
+ResourceLocation* Stray::getDefaultLootTable()
 {
     return &BuiltInLootTables::STRAY;
 }
 
-const void* Stray::getDefaultGearTable()
+ResourceLocation* Stray::getDefaultGearTable()
 {
     return &BuiltInLootTables::SKELETON_GEAR;
 }

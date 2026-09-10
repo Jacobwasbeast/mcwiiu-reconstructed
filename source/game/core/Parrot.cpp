@@ -356,7 +356,7 @@ void Parrot::readAdditionalSaveData(CompoundTag* tag)
     setVariant(tag->getInt(L"Variant"));
 }
 
-const void* Parrot::getDefaultLootTable()
+ResourceLocation* Parrot::getDefaultLootTable()
 {
     return &BuiltInLootTables::PARROT;
 }

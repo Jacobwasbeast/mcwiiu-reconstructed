@@ -167,7 +167,7 @@ void Blaze::causeFallDamage(float, float)
 {
 }
 
-const void* Blaze::getDefaultLootTable()
+ResourceLocation* Blaze::getDefaultLootTable()
 {
     return &BuiltInLootTables::BLAZE;
 }

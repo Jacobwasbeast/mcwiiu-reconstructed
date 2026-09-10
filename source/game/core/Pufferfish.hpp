@@ -38,7 +38,7 @@ public:
     virtual const SoundEvent* getFlopSound() const;
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
     static void addDataWalkers(DataFixerUpper* fixer);
 

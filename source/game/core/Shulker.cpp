@@ -432,7 +432,7 @@ bool Shulker::hasValidInterpolationPositions()
     return mOldAttachPosition != NULL && getAttachPosition() != NULL;
 }
 
-const void* Shulker::getDefaultLootTable()
+ResourceLocation* Shulker::getDefaultLootTable()
 {
     return &BuiltInLootTables::SHULKER;
 }

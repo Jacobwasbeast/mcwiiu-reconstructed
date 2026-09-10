@@ -206,12 +206,12 @@ const SoundEvent* Vex::getHurtSound(const DamageSource*)
     return SoundEvents::VEX_HURT;
 }
 
-const void* Vex::getDefaultLootTable()
+ResourceLocation* Vex::getDefaultLootTable()
 {
     return &BuiltInLootTables::VEX;
 }
 
-const void* Vex::getDefaultGearTable()
+ResourceLocation* Vex::getDefaultGearTable()
 {
     return &BuiltInLootTables::VEX_GEAR;
 }

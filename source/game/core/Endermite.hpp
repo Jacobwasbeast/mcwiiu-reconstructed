@@ -32,7 +32,7 @@ public:
     virtual void aiStep();
     virtual void registerGoals();
     virtual const SoundEvent* getAmbientSound();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool checkSpawnRules();
     virtual bool isDarkEnoughToSpawn();
 

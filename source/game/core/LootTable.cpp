@@ -12,18 +12,17 @@ LootTable::LootTable(std::vector<LootPool*>* pools)
 {
 }
 
-std::vector<not_null_ptr<ItemInstance> > LootTable::getRandomItems(Random* random,
-                                                                    LootTableContext& context)
+std::vector<not_null_ptr<ItemInstance> >* LootTable::getRandomItems(Random* random,
+                                                                     LootTableContext& context)
 {
-    std::vector<not_null_ptr<ItemInstance> > items;
+    std::vector<not_null_ptr<ItemInstance> >* items =
+        new std::vector<not_null_ptr<ItemInstance> >();
 
     if (mPools != NULL && context.addVisitedTable(this))
     {
-        for (std::vector<LootPool*>::iterator it = mPools->begin();
-             it != mPools->end();
-             ++it)
+        for (unsigned int index = 0; index < mPools->size(); ++index)
         {
-            (*it)->addRandomItems(&items, random, context);
+            mPools->at(index)->addRandomItems(items, random, context);
         }
         context.removeVisitedTable(this);
     }
@@ -31,20 +30,20 @@ std::vector<not_null_ptr<ItemInstance> > LootTable::getRandomItems(Random* rando
     return items;
 }
 
-std::vector<int> LootTable::getAvailableSlots(Container* container, Random* random)
+std::vector<int>* LootTable::getAvailableSlots(Container* container, Random* random)
 {
-    std::vector<int> slots;
+    std::vector<int>* slots = new std::vector<int>();
 
     for (unsigned int slot = 0; slot < container->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> item = container->getItem(slot);
         if (item->isEmpty())
         {
-            slots.push_back((int)slot);
+            slots->push_back((int)slot);
         }
     }
 
-    Mth::shuffle(&slots, *random);
+    Mth::shuffle(slots, *random);
     return slots;
 }
 
@@ -118,28 +117,32 @@ void LootTable::fill(Container* container, Random* random, LootTableContext& con
         return;
     }
 
-    std::vector<not_null_ptr<ItemInstance> > items = getRandomItems(random, context);
-    std::vector<int> slots = getAvailableSlots(container, random);
-    shuffleAndSplitItems(&items, (int)slots.size(), random);
+    std::vector<not_null_ptr<ItemInstance> >* items = getRandomItems(random, context);
+    std::vector<int>* slots = getAvailableSlots(container, random);
+    shuffleAndSplitItems(items, (int)slots->size(), random);
 
-    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items.begin();
-         it != items.end();
+    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
+         it != items->end();
          ++it)
     {
-        if (slots.empty())
+        not_null_ptr<ItemInstance> item = *it;
+
+        if (slots->empty())
         {
             return;
         }
 
-        int slot = slots.back();
-        if (!(*it)->isEmpty())
+        if (!item->isEmpty())
         {
-            container->setItem((unsigned int)slot, *it);
+            container->setItem((unsigned int)slots->back(), item);
         }
         else
         {
-            container->setItem((unsigned int)slot, ItemInstance::EMPTY);
+            container->setItem((unsigned int)slots->back(), ItemInstance::EMPTY);
         }
-        slots.pop_back();
+        slots->pop_back();
     }
+
+    delete items;
+    delete slots;
 }

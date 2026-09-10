@@ -35,7 +35,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);
     virtual void readAdditionalSaveData(CompoundTag* tag);
