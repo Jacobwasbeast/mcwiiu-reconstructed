@@ -186,7 +186,7 @@ void McRegionChunkStorage::flush()
 
 void McRegionChunkStorage::addWalkers(DataFixerUpper* fixer)
 {
-    fixer->addWalker(DataFixTypes::eDataFixTypes_Chunk, (DataWalker*)new LEVELDATA_DataWalker());
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Chunk, new LEVELDATA_DataWalker());
     fixer->addWalker(DataFixTypes::eDataFixTypes_Chunk, new ENTITIESONLY_DataWalker());
 }
 
