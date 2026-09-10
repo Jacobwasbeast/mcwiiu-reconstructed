@@ -12,11 +12,9 @@ TippedArrowItem::~TippedArrowItem()
 {
 }
 
-boost::shared_ptr<ItemInstance> TippedArrowItem::getDefaultInstance()
+not_null_ptr<ItemInstance> TippedArrowItem::getDefaultInstance()
 {
-    boost::shared_ptr<ItemInstance> itemInstance = Item::getDefaultInstance();
-    PotionUtils::setPotion(itemInstance, Potions::EMPTY);
-    return itemInstance;
+    return PotionUtils::setPotion(Item::getDefaultInstance(), Potions::EMPTY);
 }
 
 boost::shared_ptr<Arrow> TippedArrowItem::createArrow(Level* level,

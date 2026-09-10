@@ -52,10 +52,10 @@ ThrowableProjectile::~ThrowableProjectile()
 void ThrowableProjectile::shoot(double x, double y, double z, float velocity, float inaccuracy)
 {
     double length = std::sqrt(x * x + y * y + z * z);
-    double spread = 0.007499999832361937 * inaccuracy;
-    x = (x / length + mRandom->nextGaussian() * spread) * velocity;
-    y = (y / length + mRandom->nextGaussian() * spread) * velocity;
-    z = (z / length + mRandom->nextGaussian() * spread) * velocity;
+    double spread = 0.007499999832361937;
+    x = (x / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
+    y = (y / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
+    z = (z / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
     mXd = x;
     mYd = y;
     mZd = z;
@@ -130,7 +130,7 @@ void ThrowableProjectile::lerpMotion(double xd, double yd, double zd)
     mXd = xd;
     mYd = yd;
     mZd = zd;
-    if (mXRot == 0.0f && mYRot == 0.0f)
+    if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
         mYRot = (float)(std::atan2(xd, zd) * 57.2957763671875);
@@ -153,7 +153,7 @@ void ThrowableProjectile::tick()
     HitResult* hitResult = NULL;
     if (mInGround)
     {
-        Block* block = mLevel->getBlock(BlockPos(mXTile, mYTile, mZTile));
+        Block* block = mLevel->getBlockState(BlockPos(mXTile, mYTile, mZTile))->getBlock();
         if (block == mInTile)
         {
             ++mLife;
@@ -206,17 +206,17 @@ void ThrowableProjectile::tick()
     {
         boost::shared_ptr<Entity> hitEntity;
         double nearestDistance = 0.0;
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
+            shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0, 1.0, 1.0), NULL);
         boost::shared_ptr<LivingEntity> owner = getOwner();
         bool shorterHitbox = Minecraft::GetInstance()->GetMiniGame()->HasFeatureShorterHitbox();
-        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(
-            shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
 
         for (unsigned int i = 0; i < entities->size(); ++i)
         {
             boost::shared_ptr<Entity> entity = entities->at(i);
             if (!entity->isPickable())
                 continue;
-            if (owner && (entity == owner || entity == owner->getRootVehicle()) && mFlightTime < 5)
+            if (owner && (entity == owner || entity == owner->getVehicle()) && mFlightTime < 5)
                 continue;
 
             AABB* hitbox = shorterHitbox
@@ -245,7 +245,7 @@ void ThrowableProjectile::tick()
     if (hitResult != NULL)
     {
         if (hitResult->mType == HitResult::BLOCK
-            && mLevel->getBlock(hitResult->getBlockPos()) == Blocks::portal)
+            && mLevel->getBlockState(hitResult->getBlockPos())->getBlock() == Blocks::portal)
             handleInsidePortal(hitResult->getBlockPos());
         else
             onHit(hitResult);
@@ -290,7 +290,7 @@ void ThrowableProjectile::tick()
 
 double ThrowableProjectile::getGravity()
 {
-    return 0.03;
+    return 0.029999999329447746;
 }
 
 void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)
@@ -304,7 +304,7 @@ void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)
     tag->putByte(L"inGround", (unsigned char)mInGround);
     if (mOwnerName.empty() && mOwner
         && (mOwner->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
-        mOwnerName = mOwner->getDisplayName();
+        mOwnerName = mOwner->getName();
     tag->putString(L"ownerName", mOwnerName.empty() ? L"" : mOwnerName);
 }
 

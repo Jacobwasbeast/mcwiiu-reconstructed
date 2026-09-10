@@ -8,7 +8,6 @@
 #include "game/core/HitResult.hpp"
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
-#include "game/entity/ai/EntitySelector.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -23,11 +22,18 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/generation/Player.hpp"
 
-static void sanitizePositionAndVelocity(Entity* entity);
+bool sArrowTargetsPredicatesFunc(boost::shared_ptr<Entity> entity)
+{
+    return entity->isPickable();
+}
 
-static void sanitizePositionAndVelocity(Entity* entity)
+static Predicate<boost::shared_ptr<Entity> >* sArrowTargetsPredicates =
+    new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(sArrowTargetsPredicatesFunc);
+
+void fjSanitisePosAndVel(Entity* entity)
 {
     entity->mX = std::floor(entity->mX * 32.0) * 0.03125;
     entity->mY = std::floor(entity->mY * 32.0) * 0.03125;
@@ -115,7 +121,7 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     mLife = 0;
     mXRot = static_cast<float>(std::atan2(y, horizontal) * 57.2957763671875);
     mXRotO = mXRot;
-    sanitizePositionAndVelocity(this);
+    fjSanitisePosAndVel(this);
 }
 
 void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot,
@@ -130,7 +136,7 @@ void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> 
     mZd += entity->mZd;
     if (!entity->mOnGround)
         mYd += entity->mYd;
-    sanitizePositionAndVelocity(this);
+    fjSanitisePosAndVel(this);
 }
 
 void AbstractRotatedItemProjectile::setFlag(int flag, bool value)
@@ -195,7 +201,7 @@ void AbstractRotatedItemProjectile::doPostHurtEffects(
 boost::shared_ptr<Entity> AbstractRotatedItemProjectile::findHitEntity(Vec3* from, Vec3* to)
 {
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(),
-        mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), EntitySelector::NO_SPECTATORS, NULL);
+        mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), sArrowTargetsPredicates, NULL);
     boost::shared_ptr<Entity> hitEntity;
     double nearestDistance = 0.0;
     for (unsigned int i = 0; i < entities->size(); ++i)

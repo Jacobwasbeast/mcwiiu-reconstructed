@@ -21,6 +21,8 @@ class SoundEvent;
 class TntBlock;
 class Vec3;
 
+void fjSanitisePosAndVel(Entity* entity);
+
 class AbstractRotatedItemProjectile : public Entity, public Projectile
 {
 public:

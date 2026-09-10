@@ -22,7 +22,7 @@ class TippedArrowItem : public Item
 public:
     virtual ~TippedArrowItem();
 
-    virtual boost::shared_ptr<ItemInstance> getDefaultInstance();
+    virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual boost::shared_ptr<Arrow> createArrow(Level* level,
                                                   not_null_ptr<ItemInstance> itemInstance,
                                                   boost::shared_ptr<LivingEntity> entity);

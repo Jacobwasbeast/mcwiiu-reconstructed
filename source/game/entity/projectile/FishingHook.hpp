@@ -33,7 +33,7 @@ public:
     virtual bool makeStepSound();
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void handleEntityEvent(unsigned char event, int data);
-    int shouldStopFishing();
+    bool shouldStopFishing();
     void updateRotation();
     void setHookedEntity();
     void checkCollision();
@@ -50,13 +50,14 @@ public:
 
 private:
     bool mInGround;
-    int mLife;
+    int mTicksInGround;
     boost::shared_ptr<Player> mOwner;
-    int mNibble;
-    int mTimeUntilLured;
-    int mTimeUntilHooked;
+    int mTicksInAir;
+    int mTicksCatchable;
+    int mTicksCaughtDelay;
+    int mTicksCatchableDelay;
     float mFishAngle;
-    int mOpenWater;
+    int mCurrentState;
     int mLuck;
     int mLureSpeed;
     boost::shared_ptr<Entity> mHookedIn;
