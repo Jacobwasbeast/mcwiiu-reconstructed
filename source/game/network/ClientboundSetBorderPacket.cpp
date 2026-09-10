@@ -55,7 +55,17 @@ void ClientboundSetBorderPacket::applyChanges(WorldBorder* border) {
     if (type == SET_SIZE) border->setSize(newSize);
     else if (type == LERP_SIZE) border->lerpSizeBetween(oldSize, newSize, lerpTime);
     else if (type == SET_CENTER) border->setCenter(centerX, centerZ);
-    else if (type == INITIALIZE) { border->setCenter(centerX, centerZ); border->setSize(newSize); border->setAbsoluteMaxSize(absoluteMaxSize); border->setWarningBlocks(warningBlocks); border->setWarningTime(warningTime); }
+    else if (type == INITIALIZE) {
+        border->setCenter(centerX, centerZ);
+        if (lerpTime > 0) {
+            border->lerpSizeBetween(oldSize, newSize, lerpTime);
+        } else {
+            border->setSize(newSize);
+        }
+        border->setAbsoluteMaxSize(absoluteMaxSize);
+        border->setWarningBlocks(warningBlocks);
+        border->setWarningTime(warningTime);
+    }
     else if (type == SET_WARNING_TIME) border->setWarningTime(warningTime);
     else if (type == SET_WARNING_BLOCKS) border->setWarningBlocks(warningBlocks);
 }

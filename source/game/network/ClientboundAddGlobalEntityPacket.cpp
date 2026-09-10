@@ -33,7 +33,7 @@ int ClientboundAddGlobalEntityPacket::getPacketId()
 void ClientboundAddGlobalEntityPacket::read(DataInputStream* input)
 {
     mId = input->readInt();
-    mType = input->readInt();
+    mType = input->readByte();
     mX = input->readInt();
     mY = input->readInt();
     mZ = input->readInt();
