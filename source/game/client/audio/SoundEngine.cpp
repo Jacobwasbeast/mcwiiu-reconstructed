@@ -8,6 +8,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 extern CMinecraftApp* g_pApp;
@@ -23,6 +24,35 @@ boost::shared_ptr<MultiplayerLocalPlayer>& musicPlayerSlot(Minecraft* minecraft,
 {
     return reinterpret_cast<boost::shared_ptr<MultiplayerLocalPlayer>*>(
         reinterpret_cast<char*>(minecraft) + 0x44)[index];
+}
+
+struct MilesSoundBuffer
+{
+    float x;
+    float y;
+    float z;
+    float distance;
+    float pitch;
+    float field14;
+    unsigned char is3D;
+    unsigned char pad15[3];
+    SoundInstance* instance;
+};
+
+float absDelta(float a, float b)
+{
+    const float delta = a - b;
+    return delta < 0.0f ? -delta : delta;
+}
+
+unsigned char soundEngineByteAt(const SoundEngine* engine, unsigned int offset)
+{
+    return *reinterpret_cast<const unsigned char*>(reinterpret_cast<const char*>(engine) + offset);
+}
+
+float soundEngineFloatAt(const SoundEngine* engine, unsigned int offset)
+{
+    return *reinterpret_cast<const float*>(reinterpret_cast<const char*>(engine) + offset);
 }
 
 } // namespace
@@ -321,10 +351,126 @@ double SoundEngine::getDistanceScaler(AudioInfo* info)
     return scalar;
 }
 
-void SoundEngine::UpdateSound(void*, void*, bool* active, int, float*, float*, float*, float*)
+void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, int soundType, float* outX,
+                              float* outY, float* outZ, float* outVolume)
 {
-    if (active != 0)
-        *active = true;
+    SoundEngine* engine = static_cast<SoundEngine*>(userData);
+    const bool hasInstance = soundData != 0;
+    MilesSoundBuffer* buffer = static_cast<MilesSoundBuffer*>(
+        hasInstance ? soundData : reinterpret_cast<void*>(&engine->m_streamingX));
+
+    SoundInstance* instance = buffer->instance;
+    if (instance != 0)
+    {
+        if (soundType == 0)
+            instance->setSIState(SoundInstance::eSoundState_Starting);
+        else if (soundType == 1)
+        {
+            instance->setSIState(SoundInstance::eSoundState_Playing);
+            buffer->x = instance->getX();
+            buffer->y = instance->getY();
+            buffer->z = instance->getZ();
+            buffer->distance = instance->getVolume();
+            buffer->pitch = instance->getPitch();
+        }
+        else if (soundType == 2)
+            instance->setSIState(SoundInstance::eSoundState_Complete);
+    }
+
+    double distance = buffer->distance;
+    const double minDistance = 1.0;
+    if (distance > minDistance)
+    {
+        buffer->distance = static_cast<float>(minDistance);
+        distance = minDistance;
+    }
+
+    ConsoleSoundEngine* consoleEngine = static_cast<ConsoleSoundEngine*>(engine);
+    const double masterVolume = hasInstance ? consoleEngine->getMasterSoundEffectVolume()
+                                            : consoleEngine->getMasterMusicVolume();
+    *outVolume = static_cast<float>(distance * masterVolume);
+    *is3DOut = buffer->is3D != 0;
+
+    if (buffer->is3D == 0)
+        return;
+
+    const int listenerMode = *reinterpret_cast<const int*>(&engine->m_listenerDistanceScale);
+    if (listenerMode < 2)
+    {
+        *outX = buffer->x;
+        *outY = buffer->y;
+        *outZ = -buffer->z;
+        return;
+    }
+
+    const float defaultCoord = 0.0f;
+    float bestSum = 10000.0f;
+    float bestDx = defaultCoord;
+    float bestDy = defaultCoord;
+    float bestDz = defaultCoord;
+
+    if (engine->m_listenerEnabled != 0)
+    {
+        const float dx = absDelta(engine->m_listenerX, buffer->x);
+        const float dy = absDelta(engine->m_listenerY, buffer->y);
+        const float dz = absDelta(engine->m_listenerZ, buffer->z);
+        const float sum = dx + dy + dz;
+        if (sum < bestSum)
+        {
+            bestSum = sum;
+            bestDx = dx;
+            bestDy = dy;
+            bestDz = dz;
+        }
+    }
+
+    if (engine->m_musicListenerEnabled != 0)
+    {
+        const float dx = absDelta(engine->m_musicX, buffer->x);
+        const float dy = absDelta(engine->m_musicY, buffer->y);
+        const float dz = absDelta(engine->m_musicZ, buffer->z);
+        const float sum = dx + dy + dz;
+        if (sum < bestSum)
+        {
+            bestSum = sum;
+            bestDx = dx;
+            bestDy = dy;
+            bestDz = dz;
+        }
+    }
+
+    if (engine->m_thirdListenerEnabled != 0)
+    {
+        const float dx = absDelta(engine->m_thirdX, buffer->x);
+        const float dy = absDelta(engine->m_thirdY, buffer->y);
+        const float dz = absDelta(engine->m_thirdZ, buffer->z);
+        const float sum = dx + dy + dz;
+        if (sum < bestSum)
+        {
+            bestSum = sum;
+            bestDx = dx;
+            bestDy = dy;
+            bestDz = dz;
+        }
+    }
+
+    if (soundEngineByteAt(engine, 0x104) != 0)
+    {
+        const float dx = absDelta(soundEngineFloatAt(engine, 0x108), buffer->x);
+        const float dy = absDelta(soundEngineFloatAt(engine, 0x10c), buffer->y);
+        const float dz = absDelta(soundEngineFloatAt(engine, 0x110), buffer->z);
+        const float sum = dx + dy + dz;
+        if (sum < bestSum)
+        {
+            bestDx = dx;
+            bestDy = dy;
+            bestDz = dz;
+        }
+    }
+
+    *outX = defaultCoord;
+    *outY = defaultCoord;
+    *outZ = sqrtf(bestDx * bestDx + bestDy * bestDy + bestDz * bestDz);
 }
 
 void SoundEngine::ConfigureSound(void*, void*, bool*, float* distance, float*, float*, float*, float*, float*)
