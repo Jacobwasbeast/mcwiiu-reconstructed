@@ -13,12 +13,16 @@
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/EndGatewayFeature.hpp"
 #include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/world/generation/SpikeFeature.hpp"
 #include "game/world/biome/TheEndBiomeDecorator.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
+#include "game/core/System.hpp"
 
 EndDragonFight::EndDragonFight(ServerLevel* levelValue, CompoundTag* data)
     : dragonEvent(new ServerBossEvent(0x5157A755, L"Dragon", BossEvent::PINK, BossEvent::PROGRESS)),
@@ -233,7 +237,33 @@ BlockPos EndDragonFight::getGatewayPosition(int index)
 
 bool EndDragonFight::hasExitPortal()
 {
-    return exitPortalFound && exitPortalLocation != 0;
+    static const unsigned long long END_PORTAL_BLOCK_ENTITY_TYPE = 0x01300200ULL;
+
+    for (int chunkX = -8; chunkX < 9; ++chunkX)
+    {
+        for (int chunkZ = -8; chunkZ < 9; ++chunkZ)
+        {
+            LevelChunk* chunk = level->getChunk(chunkX, chunkZ);
+            if (chunk == NULL)
+                continue;
+
+            LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
+            if (blockEntities->empty())
+                continue;
+
+            for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin();
+                 it != blockEntities->end(); ++it)
+            {
+                boost::shared_ptr<BlockEntity> blockEntity = it->second;
+                if (blockEntity.get() != NULL
+                    && (blockEntity->GetType() & END_PORTAL_BLOCK_ENTITY_TYPE) == END_PORTAL_BLOCK_ENTITY_TYPE)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 void EndDragonFight::updatePlayers()
@@ -252,7 +282,23 @@ void EndDragonFight::updatePlayers()
 
 void EndDragonFight::ensureArenaLoaded()
 {
-    level->getChunkAt(BlockPos(0, 75, 0));
+    System::processTimeInMilliSecs();
+    ChunkSource* chunkSource = level->getChunkSource();
+    for (int chunkX = -8; chunkX < 9; ++chunkX)
+    {
+        int chunkZ = -8;
+        for (int band = 0; band < 2; ++band)
+        {
+            for (int i = 0; i < 8; ++i)
+            {
+                level->reallyHasChunk(chunkX, chunkZ);
+                chunkSource->getOrCreateChunk(chunkX, chunkZ, false);
+                ++chunkZ;
+            }
+        }
+        level->reallyHasChunk(chunkX, chunkZ);
+        chunkSource->getOrCreateChunk(chunkX, chunkZ, false);
+    }
 }
 
 void EndDragonFight::createNewDragon()

@@ -14,7 +14,13 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
+#include "game/util/AABB.hpp"
+#include "game/core/Mth.hpp"
+#include "game/client/render/ParticleType.hpp"
 
 EnderDragon::EnderDragon(Level* level)
     : Mob(level), mOpenSet(NULL), mPath(NULL), mDragonFight(NULL), mRandom(new Random()),
@@ -61,7 +67,31 @@ unsigned int EnderDragon::findClosestNode() { return 0; }
 double EnderDragon::getHeadYRotDiff(float) { return 0.0; }
 Vec3* EnderDragon::getHeadLookVector(float) { return NULL; }
 
-Path* EnderDragon::reconstruct_path(Node*, Node*) { return NULL; }
+Path* EnderDragon::reconstruct_path(Node*, Node* end)
+{
+    unsigned int count = 1;
+    for (Node* node = end->cameFrom; node != NULL; node = node->cameFrom)
+    {
+        ++count;
+    }
+
+    Node** nodes = new Node*[count];
+    unsigned int index = count - 1;
+    nodes[index] = end;
+    for (Node* node = end->cameFrom; node != NULL; node = node->cameFrom)
+    {
+        --index;
+        nodes[index] = node;
+    }
+
+    arrayWithLength<Node*> nodeArray(count, false);
+    nodeArray.data = nodes;
+    nodeArray.length = count;
+
+    Path* path = new Path(nodeArray);
+    delete[] nodes;
+    return path;
+}
 Path* EnderDragon::findPath(int, int, Node*) { return NULL; }
 
 void EnderDragon::navigateToNextPathNode()
@@ -201,7 +231,79 @@ double EnderDragon::rotWrap(double angle)
 bool EnderDragon::checkCrystals() { return mNearbyCrystal != 0; }
 void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >*) {}
 bool EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >*) { return false; }
-bool EnderDragon::checkWalls(AABB*) { return false; }
+namespace
+{
+bool isCheckWallsExcludedBlock(Block* block)
+{
+    return block == Blocks::bedrock
+        || block == Blocks::obsidian
+        || block == Blocks::end_stone
+        || block == Blocks::end_portal
+        || block == Blocks::end_portal_frame
+        || block == Blocks::command_block
+        || block == Blocks::BARRIER
+        || block == Blocks::repeating_command_block
+        || block == Blocks::chain_command_block
+        || block == Blocks::iron_bars
+        || block == Blocks::end_gateway;
+}
+}
+
+bool EnderDragon::checkWalls(AABB* box)
+{
+    if (box == NULL || mLevel == NULL)
+        return false;
+
+    const int minX = Mth::floor(box->mMinX);
+    const int minY = Mth::floor(box->mMinY);
+    const int minZ = Mth::floor(box->mMinZ);
+    const int maxX = Mth::floor(box->mMaxX);
+    const int maxY = Mth::floor(box->mMaxY);
+    const int maxZ = Mth::floor(box->mMaxZ);
+
+    bool hitWall = false;
+    bool foundDestructible = false;
+    const bool mobGriefing = mLevel->getGameRules()->getBoolean(1);
+
+    for (int x = minX; x <= maxX; ++x)
+    {
+        for (int y = minY; y <= maxY; ++y)
+        {
+            for (int z = minZ; z <= maxZ; ++z)
+            {
+                const BlockPos pos(x, y, z);
+                const BlockState* state = mLevel->getBlockState(pos);
+                Material* material = state->getMaterial();
+                if (material == Material::AIR || material == Material::FIRE)
+                    continue;
+
+                Block* block = state->getBlock();
+                if (mobGriefing && !isCheckWallsExcludedBlock(block))
+                {
+                    bool destructible = true;
+                    if (!mLevel->isEmptyBlock(pos) && !foundDestructible)
+                        destructible = false;
+                    if (destructible)
+                        foundDestructible = true;
+                }
+                else
+                {
+                    hitWall = true;
+                }
+            }
+        }
+    }
+
+    if (foundDestructible)
+    {
+        const double px = box->mMinX + mRandom->nextFloat() * (box->mMaxX - box->mMinX);
+        const double py = box->mMinY + mRandom->nextFloat() * (box->mMaxY - box->mMinY);
+        const double pz = box->mMinZ + mRandom->nextFloat() * (box->mMaxZ - box->mMinZ);
+        mLevel->addParticle(PARTICLE_LARGE_EXPLODE, px, py, pz, 128.0, 128.0, 128.0, arrayWithLength<int>());
+    }
+
+    return hitWall;
+}
 void EnderDragon::aiStep() { Mob::aiStep(); }
 ResourceLocation* EnderDragon::getDefaultLootTable() { return NULL; }
 bool EnderDragon::hurt(const DamageSource* source, float amount) { return LivingEntity::hurt(source, amount); }
@@ -239,9 +341,7 @@ double EnderDragon::getHeadPartYOffset(int part, arrayWithLength<double> first, 
 
 double EnderDragon::getHeadPartYRotDiff(int, arrayWithLength<double> first, arrayWithLength<double> second)
 {
-    if (first.data == NULL || second.data == NULL)
-        return 0.0;
-    return rotWrap(second.data[0] - first.data[0]);
+    return second.data[0] - first.data[0];
 }
 
 unsigned int EnderDragon::GetInteractTooltip(const EntityTooltipDataHolder&) { return 0xffffffffU; }
