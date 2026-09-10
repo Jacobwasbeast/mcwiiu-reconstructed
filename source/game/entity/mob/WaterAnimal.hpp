@@ -19,7 +19,7 @@ public:
     virtual bool isWaterMob();
     virtual bool checkSpawnRules();
     virtual bool checkSpawnObstruction();
-    virtual unsigned int getAmbientSoundInterval();
+    virtual int getAmbientSoundInterval();
     virtual bool removeWhenFarAway();
     virtual int getExperienceReward(boost::shared_ptr<Player> player);
     virtual WaterBoundPathNavigation* createNavigation(Level* level);

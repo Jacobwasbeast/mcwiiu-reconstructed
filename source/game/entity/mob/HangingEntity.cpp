@@ -159,8 +159,10 @@ bool HangingEntity::skipAttackInteraction(boost::shared_ptr<Entity> entity)
         return false;
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    boost::shared_ptr<EntityDamageSource> source = DamageSource::CreatePlayerAttack(player);
-    return hurt(source.get(), 0.0f);
+    EntityDamageSource* source = DamageSource::CreatePlayerAttack(player);
+    bool skipped = hurt(source, 0.0f);
+    delete source;
+    return skipped;
 }
 
 const Direction* HangingEntity::getDirection()

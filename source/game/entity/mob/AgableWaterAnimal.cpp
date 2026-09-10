@@ -49,7 +49,7 @@ bool AgableWaterAnimal::checkSpawnObstruction()
     return mLevel->isUnobstructed(mBoundingBox, shared_from_this());
 }
 
-unsigned int AgableWaterAnimal::getAmbientSoundInterval()
+int AgableWaterAnimal::getAmbientSoundInterval()
 {
     return 120;
 }

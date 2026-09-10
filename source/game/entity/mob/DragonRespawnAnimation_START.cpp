@@ -4,9 +4,6 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-class DragonRespawnAnimation;
-extern DragonRespawnAnimation* g_preparingToSummonPillars;
-
 void DragonRespawnAnimation_START::tick(ServerLevel* level,
     EndDragonFight* dragonFight,
     std::vector<boost::shared_ptr<EnderCrystal> >* crystals, int tick,
@@ -21,5 +18,5 @@ void DragonRespawnAnimation_START::tick(ServerLevel* level,
         ++it;
     }
 
-    dragonFight->setRespawnStage(g_preparingToSummonPillars);
+    dragonFight->setRespawnStage(DragonRespawnAnimation::PREPARING_TO_SUMMON_PILLARS);
 }

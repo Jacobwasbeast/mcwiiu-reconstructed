@@ -37,7 +37,7 @@ void DragonRespawnAnimation_SUMMONING_DRAGON::tick(ServerLevel* level,
         return;
     }
 
-    dragonFight->setRespawnStage(NULL);
+    dragonFight->setRespawnStage(DragonRespawnAnimation::END);
     dragonFight->resetSpikeCrystals();
 
     std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = crystals->begin();

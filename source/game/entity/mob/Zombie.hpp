@@ -68,8 +68,8 @@ public:
     virtual const SoundEvent* getStepSound();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual EMobType getMobType();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void addAdditonalSaveData(CompoundTag* tag);

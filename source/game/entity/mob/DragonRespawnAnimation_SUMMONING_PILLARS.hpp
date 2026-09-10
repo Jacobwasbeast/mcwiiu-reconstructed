@@ -1,15 +1,9 @@
 #ifndef GAME_ENTITY_MOB_DRAGONRESPAWNANIMATION_SUMMONING_PILLARS_HPP
 #define GAME_ENTITY_MOB_DRAGONRESPAWNANIMATION_SUMMONING_PILLARS_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <vector>
+#include "game/entity/mob/DragonRespawnAnimation.hpp"
 
-class BlockPos;
-class EndDragonFight;
-class EnderCrystal;
-class ServerLevel;
-
-class DragonRespawnAnimation_SUMMONING_PILLARS
+class DragonRespawnAnimation_SUMMONING_PILLARS : public DragonRespawnAnimation
 {
 public:
     virtual void tick(ServerLevel* level, EndDragonFight* dragonFight,

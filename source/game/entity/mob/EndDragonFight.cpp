@@ -6,11 +6,15 @@
 
 #include "game/util/AABB.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/data/IntTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/entity/mob/DragonRespawnAnimation.hpp"
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/generation/EndGatewayFeature.hpp"
 #include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/world/generation/SpikeFeature.hpp"
@@ -83,15 +87,10 @@ int EndDragonFight::getCrystalsAlive()
 
 void EndDragonFight::resetSpikeCrystals()
 {
-    std::vector<SpikeFeature::EndSpike>* spikes = TheEndBiomeDecorator::getSpikesForLevel(level);
-    if (spikes == 0)
+    arrayWithLength<SpikeFeature::EndSpike> spikes = TheEndBiomeDecorator::getSpikesForLevel(level);
+    for (unsigned int i = 0; i < spikes.length; ++i)
     {
-        return;
-    }
-    std::vector<SpikeFeature::EndSpike>::iterator spike;
-    for (spike = spikes->begin(); spike != spikes->end(); ++spike)
-    {
-        AABB* box = spike->getTopBoundingBox();
+        AABB* box = spikes.data[i].getTopBoundingBox();
         std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
         std::vector<boost::shared_ptr<Entity> >::iterator entity;
         for (entity = entities->begin(); entity != entities->end(); ++entity)
@@ -104,7 +103,7 @@ void EndDragonFight::resetSpikeCrystals()
         }
         delete entities;
     }
-    delete spikes;
+    delete[] spikes.data;
 }
 
 void EndDragonFight::spawnExitPortal(bool active)
@@ -112,35 +111,29 @@ void EndDragonFight::spawnExitPortal(bool active)
     EndPodiumFeature podium(active);
     if (exitPortalLocation == 0)
     {
-        exitPortalLocation = new BlockPos(0, level->getSeaLevel(), 0);
-        while (exitPortalLocation->y > level->getSeaLevel() &&
-               level->getBlockState(*exitPortalLocation) == 0)
+        exitPortalLocation = new BlockPos(EndPodiumFeature::END_PODIUM_LOCATION);
+        while (level->getBlockState(*exitPortalLocation)->getBlock() == Blocks::bedrock &&
+               exitPortalLocation->y > level->getSeaLevel())
         {
             *exitPortalLocation = exitPortalLocation->below();
         }
     }
     Random random;
     podium.place(level, random, *exitPortalLocation);
-    exitPortalFound = true;
 }
 
 void EndDragonFight::updateCrystalCount()
 {
     crystalsAlive = 0;
-    std::vector<SpikeFeature::EndSpike>* spikes = TheEndBiomeDecorator::getSpikesForLevel(level);
-    if (spikes == 0)
+    arrayWithLength<SpikeFeature::EndSpike> spikes = TheEndBiomeDecorator::getSpikesForLevel(level);
+    for (unsigned int i = 0; i < spikes.length; ++i)
     {
-        return;
-    }
-    std::vector<SpikeFeature::EndSpike>::iterator spike;
-    for (spike = spikes->begin(); spike != spikes->end(); ++spike)
-    {
-        AABB* box = spike->getTopBoundingBox();
+        AABB* box = spikes.data[i].getTopBoundingBox();
         std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(EnderCrystal), box);
         crystalsAlive += static_cast<int>(entities->size());
         delete entities;
     }
-    delete spikes;
+    delete[] spikes.data;
 }
 
 void EndDragonFight::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const DamageSource* source)
@@ -290,12 +283,21 @@ void EndDragonFight::tick()
 
 void EndDragonFight::setRespawnStage(DragonRespawnAnimation* stage)
 {
-    respawnStage = stage;
     respawnTime = 0;
-    if (stage == 0)
+    if (stage == DragonRespawnAnimation::END)
     {
+        dragonKilled = false;
+        respawnStage = 0;
         createNewDragon();
+        std::vector<boost::shared_ptr<ServerPlayer> > players = dragonEvent->getPlayers();
+        std::vector<boost::shared_ptr<ServerPlayer> >::iterator player;
+        for (player = players.begin(); player != players.end(); ++player)
+        {
+            (*player)->awardStat(GenericStats::theEndAgain(), GenericStats::param_theEndAgain());
+        }
+        return;
     }
+    respawnStage = stage;
 }
 
 void EndDragonFight::spawnNewGateway(const BlockPos& pos, int index)

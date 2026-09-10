@@ -1,12 +1,17 @@
 #include "game/entity/mob/TamableAnimal.hpp"
 
+#include "game/core/CombatTracker.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/SitGoal.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/client/render/ParticleType.hpp"
+#include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/server/ServerPlayer.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/Player.hpp"
@@ -30,15 +35,22 @@ std::wstring TamableAnimal::getOwnerUUID()
 
 boost::shared_ptr<LivingEntity> TamableAnimal::getOwner()
 {
-    if (!isTame()) return boost::shared_ptr<LivingEntity>();
+    if (!isTame())
+    {
+        return boost::shared_ptr<LivingEntity>();
+    }
+
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(getOwnerUUID());
+
     return boost::static_pointer_cast<LivingEntity>(player);
 }
 
 void TamableAnimal::staticCtor()
 {
-    DATA_FLAGS = SynchedEntityData::defineId(0, 0x000000000D6C0000ULL, EntityDataSerializers::BYTE);
-    DATA_OWNER_UUID = SynchedEntityData::defineId(0, 0x000000000D6C0000ULL, EntityDataSerializers::STRING);
+    DATA_FLAGS = SynchedEntityData::defineId(0x000000000D6C0000ULL, 0x000000000D680000ULL,
+                                             EntityDataSerializers::BYTE);
+    DATA_OWNER_UUID = SynchedEntityData::defineId(0x000000000D6C0000ULL, 0x000000000D680000ULL,
+                                                  EntityDataSerializers::STRING);
 }
 
 void TamableAnimal::fjDerivedCtorCalls()
@@ -57,15 +69,26 @@ void TamableAnimal::defineSynchedData()
 void TamableAnimal::addAdditonalSaveData(CompoundTag* tag)
 {
     Animal::addAdditonalSaveData(tag);
-    if (isTame()) tag->putString(L"OwnerUUID", getOwnerUUID());
+    if (isTame())
+    {
+        tag->putString(L"OwnerUUID", getOwnerUUID());
+    }
+
     tag->putBoolean(L"Sitting", isSitting());
 }
 
 void TamableAnimal::readAdditionalSaveData(CompoundTag* tag)
 {
     Animal::readAdditionalSaveData(tag);
-    if (tag->contains(L"OwnerUUID")) setOwnerUUID(tag->getString(L"OwnerUUID"));
-    else if (tag->contains(L"Owner")) setOwnerUUID(tag->getString(L"Owner"));
+    if (tag->contains(L"OwnerUUID"))
+    {
+        setOwnerUUID(tag->getString(L"OwnerUUID"));
+    }
+    else if (tag->contains(L"Owner"))
+    {
+        setOwnerUUID(tag->getString(L"Owner"));
+    }
+
     setTame(!getOwnerUUID().empty());
     setSitting(tag->getBoolean(L"Sitting"));
 }
@@ -94,7 +117,18 @@ void TamableAnimal::spawnTamingParticles(bool success)
 
 void TamableAnimal::handleEntityEvent(unsigned char event, int data)
 {
-    Animal::handleEntityEvent(event, data);
+    if (event == 6)
+    {
+        spawnTamingParticles(false);
+    }
+    else if (event == 7)
+    {
+        spawnTamingParticles(true);
+    }
+    else
+    {
+        Animal::handleEntityEvent(event, data);
+    }
 }
 
 bool TamableAnimal::isTame()
@@ -165,12 +199,24 @@ Team* TamableAnimal::getTeam()
 bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (owner != NULL && owner->is(entity)) return true;
+
+    if (owner != NULL && owner->is(entity))
+    {
+        return true;
+    }
+
     return owner != NULL ? owner->isAlliedTo(entity) : Entity::isAlliedTo(entity);
 }
 
 void TamableAnimal::die(const DamageSource* source)
 {
+    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(11) && hasCustomName() &&
+        getOwner() != NULL && getOwner()->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    {
+        boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
+            getCombatTracker()->getDeathMessagePacket());
+    }
+
     LivingEntity::die(source);
 }
 

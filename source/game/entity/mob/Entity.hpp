@@ -191,7 +191,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag) = 0;
     virtual void readAdditionContructionTag(CompoundTag* tag) {}
     virtual CompoundTag* getAdditionContructionTag() { return NULL; }
-    virtual void spawnAtLocation(Item* item, int count);
+    virtual boost::shared_ptr<ItemEntity> spawnAtLocation(Item* item, int count);
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(Item* item, int count, float yOffset);
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset);
     virtual bool isAlive();

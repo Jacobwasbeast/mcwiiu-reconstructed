@@ -80,7 +80,7 @@ const SoundEvent* ZombieHorse::getHurtSound(const DamageSource* source)
     return SoundEvents::ZOMBIE_HORSE_HURT;
 }
 
-const void* ZombieHorse::getDefaultLootTable()
+ResourceLocation* ZombieHorse::getDefaultLootTable()
 {
     return &BuiltInLootTables::ZOMBIE_HORSE;
 }

@@ -2875,9 +2875,9 @@ bool Entity::repositionEntityAfterLoad()
     return true;
 }
 
-void Entity::spawnAtLocation(Item* item, int count)
+boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(Item* item, int count)
 {
-    spawnAtLocation(item, count, 0.0f);
+    return spawnAtLocation(item, count, 0.0f);
 }
 
 boost::shared_ptr<ItemEntity> Entity::spawnAtLocation(Item* item, int count, float yOffset)
@@ -3539,7 +3539,7 @@ Team* Entity::getTeam()
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-    return mLevel->GetScoreboard()->getPlayersTeam(player->m_0x784);
+    return mLevel->GetScoreboard()->getPlayersTeam(player->mXuid);
 }
 
 bool Entity::isAlliedTo(boost::shared_ptr<Entity> entity)

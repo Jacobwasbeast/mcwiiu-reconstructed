@@ -220,12 +220,12 @@ EMobType Zombie::getMobType()
     return MOB_TYPE_UNDEAD;
 }
 
-const void* Zombie::getDefaultLootTable()
+ResourceLocation* Zombie::getDefaultLootTable()
 {
     return &BuiltInLootTables::ZOMBIE_EQUIPMENT;
 }
 
-const void* Zombie::getDefaultGearTable()
+ResourceLocation* Zombie::getDefaultGearTable()
 {
     return &BuiltInLootTables::ZOMBIE_EQUIPMENT;
 }

@@ -1,5 +1,6 @@
 #include "game/entity/mob/Horse.hpp"
 
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/HorseArmorItem.hpp"
@@ -10,7 +11,6 @@
 #include "game/client/audio/SoundEvents.hpp"
 
 const EntityDataAccessor<int>* Horse::DATA_VARIANT = NULL;
-static unsigned char HorseLootTableStorage;
 
 Horse::HorseGroupData::HorseGroupData(int variant) : MobGroupData(), mVariant(variant) { }
 Horse::HorseGroupData::~HorseGroupData() { }
@@ -178,7 +178,7 @@ const SoundEvent* Horse::getAmbientSound() { AbstractHorse::getAmbientSound(); r
 const SoundEvent* Horse::getDeathSound() { AbstractHorse::getDeathSound(); return SoundEvents::HORSE_DEATH; }
 const SoundEvent* Horse::getHurtSound(const DamageSource* source) { AbstractHorse::getHurtSound(source); return SoundEvents::HORSE_HURT; }
 const SoundEvent* Horse::getAngrySound() { AbstractHorse::getAngrySound(); return SoundEvents::HORSE_ANGRY; }
-const void* Horse::getDefaultLootTable() { return &HorseLootTableStorage; }
+ResourceLocation* Horse::getDefaultLootTable() { return &BuiltInLootTables::HORSE; }
 
 bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {

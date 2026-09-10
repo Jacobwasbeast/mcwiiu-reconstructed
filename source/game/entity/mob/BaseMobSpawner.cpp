@@ -15,7 +15,7 @@
 #include "game/world/chunk/OldChunkStorage.hpp"
 
 BaseMobSpawner::BaseMobSpawner()
-    : mDelay(20), mSpawnPotentials(), mNextSpawnData(new SpawnData()), mSpin(0.05), moSpin(0.05),
+    : mDelay(20), mSpawnPotentials(), mNextSpawnData(new SpawnData()), mSpin(0.0), moSpin(0.0),
       mMinSpawnDelay(200), mMaxSpawnDelay(800), mSpawnCount(4), mDisplayEntity(),
       mMaxNearbyEntities(6), mRequiredPlayerRange(16), mSpawnRange(4)
 {
@@ -242,8 +242,6 @@ int BaseMobSpawner::onEventTriggered(int event)
 
 void BaseMobSpawner::setNextSpawnData(SpawnData* data)
 {
-    if (data == mNextSpawnData)
-        return;
     if (std::find(mSpawnPotentials.begin(), mSpawnPotentials.end(), mNextSpawnData) == mSpawnPotentials.end())
         delete mNextSpawnData;
     mNextSpawnData = data;

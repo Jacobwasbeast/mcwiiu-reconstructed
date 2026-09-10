@@ -56,7 +56,7 @@ bool WaterAnimal::checkSpawnObstruction()
     return mLevel->isUnobstructed(mBoundingBox, shared_from_this());
 }
 
-unsigned int WaterAnimal::getAmbientSoundInterval()
+int WaterAnimal::getAmbientSoundInterval()
 {
     return 120;
 }

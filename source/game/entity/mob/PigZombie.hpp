@@ -47,8 +47,8 @@ public:
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,
                              InteractionHand::EInteractionHand hand);
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);

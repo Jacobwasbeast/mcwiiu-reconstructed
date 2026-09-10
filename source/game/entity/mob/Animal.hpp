@@ -7,6 +7,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
 
+class Block;
 class BlockPos;
 class CompoundTag;
 class DamageSource;
@@ -53,17 +54,14 @@ public:
     virtual void dropLeash(bool dropLeash, bool suppressDrops);
     virtual boost::shared_ptr<Entity> changeDimension(int dimension);
 protected:
-    int mType;
+    Block* mWalkTargetBlock;
     std::wstring mLoveCause;
-    int mLoveCausePresent;
-    int mInLove;
-    int mLoveCauseId;
     bool mDespawnProtected;
     short mMinX;
     short mMaxX;
     short mMinZ;
     short mMaxZ;
-    int mRandomSeed;
+    int mBreedCooldown;
     static const EntityDataAccessor<int>* DATA_IN_LOVE;
     static const EntityDataAccessor<int>* DATA_IN_LOVE_TIME;
 };

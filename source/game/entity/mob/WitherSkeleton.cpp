@@ -119,12 +119,12 @@ void WitherSkeleton::tick()
     }
 }
 
-const void* WitherSkeleton::getDefaultLootTable()
+ResourceLocation* WitherSkeleton::getDefaultLootTable()
 {
     return &BuiltInLootTables::WITHER_SKELETON;
 }
 
-const void* WitherSkeleton::getDefaultGearTable()
+ResourceLocation* WitherSkeleton::getDefaultGearTable()
 {
     return &BuiltInLootTables::WITHER_SKELETON_GEAR;
 }

@@ -160,12 +160,12 @@ const SoundEvent* PigZombie::getDeathSound()
     return SoundEvents::ZOMBIE_PIG_DEATH;
 }
 
-const void* PigZombie::getDefaultLootTable()
+ResourceLocation* PigZombie::getDefaultLootTable()
 {
     return &BuiltInLootTables::ZOMBIE_PIGMAN;
 }
 
-const void* PigZombie::getDefaultGearTable()
+ResourceLocation* PigZombie::getDefaultGearTable()
 {
     return &BuiltInLootTables::ZOMBIE_PIGMAN_GEAR;
 }

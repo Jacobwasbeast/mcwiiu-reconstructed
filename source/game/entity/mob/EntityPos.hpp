@@ -11,7 +11,7 @@ public:
     EntityPos(double x, double y, double z, float yRot, float xRot);
     EntityPos(double x, double y, double z);
     EntityPos(float yRot, float xRot);
-    static EntityPos lerp(boost::shared_ptr<Entity> entity, float partialTicks);
+    EntityPos lerp(boost::shared_ptr<Entity> entity, float partialTicks);
 
     double mX;
     double mY;

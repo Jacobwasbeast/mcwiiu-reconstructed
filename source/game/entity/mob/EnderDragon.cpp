@@ -203,7 +203,7 @@ void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >*) {}
 bool EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >*) { return false; }
 bool EnderDragon::checkWalls(AABB*) { return false; }
 void EnderDragon::aiStep() { Mob::aiStep(); }
-const void* EnderDragon::getDefaultLootTable() { return NULL; }
+ResourceLocation* EnderDragon::getDefaultLootTable() { return NULL; }
 bool EnderDragon::hurt(const DamageSource* source, float amount) { return LivingEntity::hurt(source, amount); }
 void EnderDragon::reallyHurt(const DamageSource* source, float amount) { LivingEntity::actuallyHurt(source, amount); }
 void EnderDragon::kill() { LivingEntity::kill(); }

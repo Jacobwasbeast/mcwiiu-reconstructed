@@ -18,6 +18,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/SimpleContainer.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 

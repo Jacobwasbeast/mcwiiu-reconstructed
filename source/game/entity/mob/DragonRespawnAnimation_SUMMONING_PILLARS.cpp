@@ -9,13 +9,11 @@
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/biome/TheEndBiomeDecorator.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/SpikeFeature.hpp"
-
-class DragonRespawnAnimation;
-extern DragonRespawnAnimation* g_summoningDragon;
 
 void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
     EndDragonFight* dragonFight,
@@ -24,12 +22,12 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
 {
     if (tick % 40 == 0 || tick % 40 == 39)
     {
-        std::vector<SpikeFeature::EndSpike>* spikes =
+        arrayWithLength<SpikeFeature::EndSpike> spikes =
             TheEndBiomeDecorator::getSpikesForLevel(level);
 
-        if (tick / 40 < static_cast<int>(spikes->size()))
+        if (tick / 40 < static_cast<int>(spikes.length))
         {
-            SpikeFeature::EndSpike& spike = (*spikes)[tick / 40];
+            SpikeFeature::EndSpike& spike = spikes.data[tick / 40];
 
             if (tick % 40 == 0)
             {
@@ -90,8 +88,8 @@ void DragonRespawnAnimation_SUMMONING_PILLARS::tick(ServerLevel* level,
         }
         else if (tick % 40 == 0)
         {
-            dragonFight->setRespawnStage(g_summoningDragon);
+            dragonFight->setRespawnStage(DragonRespawnAnimation::SUMMONING_DRAGON);
         }
-        delete spikes;
+        delete[] spikes.data;
     }
 }

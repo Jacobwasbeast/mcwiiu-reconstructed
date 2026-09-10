@@ -78,7 +78,7 @@ public:
     bool hurt(std::vector<boost::shared_ptr<Entity> >* entities);
     bool checkWalls(AABB* box);
     virtual void aiStep();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual bool hurt(const DamageSource* source, float amount);
     virtual void reallyHurt(const DamageSource* source, float amount);
     virtual void kill();

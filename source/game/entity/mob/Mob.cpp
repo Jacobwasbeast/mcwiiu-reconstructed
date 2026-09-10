@@ -7,6 +7,9 @@
 #include "game/core/BodyControl.hpp"
 #include "game/core/CensoredString.hpp"
 #include "game/core/JumpControl.hpp"
+#include "game/core/LootTable.hpp"
+#include "game/core/LootTableContext.hpp"
+#include "game/core/LootTables.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/ai/LookControl.hpp"
@@ -22,12 +25,14 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/Items.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
 
@@ -210,7 +215,7 @@ void Mob::ate()
 {
 }
 
-unsigned int Mob::getAmbientSoundInterval()
+int Mob::getAmbientSoundInterval()
 {
     return 80;
 }
@@ -231,7 +236,7 @@ void Mob::playHurtSound(const DamageSource*)
 
 void Mob::resetAmbientSoundTime()
 {
-    mAmbientSoundTime = -static_cast<int>(getAmbientSoundInterval());
+    mAmbientSoundTime = -getAmbientSoundInterval();
 }
 
 int Mob::getExperienceReward(boost::shared_ptr<Player>)
@@ -354,19 +359,57 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
     LivingEntity::readAdditionalSaveData(tag);
 }
 
-const void* Mob::getDefaultLootTable()
+ResourceLocation* Mob::getDefaultLootTable()
 {
     return NULL;
 }
 
-const void* Mob::getDefaultGearTable()
+ResourceLocation* Mob::getDefaultGearTable()
 {
     return NULL;
 }
 
 void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSource* source)
 {
-    LivingEntity::dropAllDeathLoot(hitByPlayer, lootingLevel, source);
+    ResourceLocation* lootTableLocation = mLootTable;
+    if (lootTableLocation == NULL)
+    {
+        lootTableLocation = getDefaultLootTable();
+    }
+    if (lootTableLocation == NULL)
+    {
+        LivingEntity::dropAllDeathLoot(hitByPlayer, lootingLevel, source);
+        return;
+    }
+
+    ServerLevel* level = static_cast<ServerLevel*>(mLevel);
+    LootTable* lootTable = level->getLootTables()->get(lootTableLocation);
+    mLootTable = NULL;
+
+    LootTableContext::Builder* builder = new LootTableContext::Builder(level);
+    builder->mThisEntity = shared_from_this();
+    builder->mDamageSource = source;
+    if (hitByPlayer && mLastHurtByPlayer)
+    {
+        builder->mKillerEntity = mLastHurtByPlayer;
+        builder->mLuck = (float)mLastHurtByPlayer->getLuck();
+    }
+
+    Random seededRandom(mLootTableSeed);
+    LootTableContext context = builder->build();
+    Random* random = mLootTableSeed == 0 ? mRandom : &seededRandom;
+
+    std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(random, context);
+    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
+         it != items->end();
+         ++it)
+    {
+        spawnAtLocation(*it, 0.0f);
+    }
+
+    dropEquipment(hitByPlayer, lootingLevel);
+    delete items;
+    delete builder;
 }
 
 void Mob::setZza(float)

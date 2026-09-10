@@ -125,7 +125,7 @@ double SkeletonHorse::getRideHeight()
     return Entity::getRideHeight() - 0.1875;
 }
 
-const void* SkeletonHorse::getDefaultLootTable()
+ResourceLocation* SkeletonHorse::getDefaultLootTable()
 {
     return &BuiltInLootTables::SKELETON_HORSE;
 }

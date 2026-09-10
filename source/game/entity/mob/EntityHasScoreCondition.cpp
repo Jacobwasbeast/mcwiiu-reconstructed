@@ -4,6 +4,7 @@
 
 #include "game/core/Scoreboard.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/Level.hpp"
 
 bool EntityHasScoreCondition::hasScore(const boost::shared_ptr<Entity>& entity,
                                        Scoreboard* scoreboard,
@@ -21,7 +22,7 @@ bool EntityHasScoreCondition::applies(Random* random, LootTableContext& context)
         return false;
     }
 
-    Scoreboard* scoreboard = NULL;
+    Scoreboard* scoreboard = entity->mLevel->GetScoreboard();
     boost::unordered_map<std::wstring, RandomValueBounds>::const_iterator it = scores.begin();
     while (it != scores.end())
     {

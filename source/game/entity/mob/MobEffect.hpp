@@ -33,9 +33,9 @@ public:
     MobEffect(bool harmful, eMinecraftColour color);
     virtual ~MobEffect();
 
-    void setIcon(EMobEffectIcon icon);
-    void setDescriptionId(int descriptionId);
-    void setDurationModifier(double durationModifier);
+    MobEffect* setIcon(EMobEffectIcon icon);
+    MobEffect* setDescriptionId(int descriptionId);
+    MobEffect* setDurationModifier(double durationModifier);
     static void staticCtor();
     static unsigned int GetEffectCount();
     static MobEffect* byId(int id);
@@ -54,7 +54,7 @@ public:
     unsigned int getIcon() const;
     bool isHarmful() const;
     virtual double getDurationModifier() const;
-    virtual void setBeneficial();
+    virtual MobEffect* setBeneficial();
     virtual bool isBeneficial() const;
     virtual eMinecraftColour getColor() const;
     virtual MobEffect* addAttributeModifier(Attribute* attribute, eMODIFIER_ID id,

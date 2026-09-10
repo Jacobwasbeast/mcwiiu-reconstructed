@@ -1,15 +1,9 @@
 #ifndef GAME_ENTITY_MOB_DRAGONRESPAWNANIMATION_START_HPP
 #define GAME_ENTITY_MOB_DRAGONRESPAWNANIMATION_START_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <vector>
+#include "game/entity/mob/DragonRespawnAnimation.hpp"
 
-class BlockPos;
-class EndDragonFight;
-class EnderCrystal;
-class ServerLevel;
-
-class DragonRespawnAnimation_START
+class DragonRespawnAnimation_START : public DragonRespawnAnimation
 {
 public:
     virtual void tick(ServerLevel* level, EndDragonFight* dragonFight,

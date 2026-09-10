@@ -34,7 +34,7 @@ public:
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual EMobType getMobType();
     virtual double getRideHeight();
-    virtual const void* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultLootTable();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isTamed();
     bool isTrap();

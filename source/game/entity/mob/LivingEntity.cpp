@@ -939,7 +939,7 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
         std::wstring teamName = tag->getString(std::wstring(L"Team"));
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
 
-        mLevel->GetScoreboard()->addPlayerToTeam(player->m_0x784,
+        mLevel->GetScoreboard()->addPlayerToTeam(player->mXuid,
                                                  mLevel->GetScoreboard()->getPlayerTeam(teamName));
     }
 
@@ -4052,8 +4052,7 @@ Team* LivingEntity::getTeam()
 {
     if (GetType() == ENTITY_TYPE_PLAYER)
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
-        return mLevel->GetScoreboard()->getPlayersTeam(player->m_0x784);
+        return mLevel->GetScoreboard()->getPlayersTeam(static_cast<Player*>(this)->mXuid);
     }
 
     return NULL;

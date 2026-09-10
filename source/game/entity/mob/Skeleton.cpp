@@ -44,12 +44,12 @@ void Skeleton::registerGoals()
     mGoalSelector.addGoal(4, new AvoidEntityGoal(this, typeid(Creeper), 6.0f, 1.0, 1.2), true);
 }
 
-const void* Skeleton::getDefaultLootTable()
+ResourceLocation* Skeleton::getDefaultLootTable()
 {
     return &BuiltInLootTables::SKELETON;
 }
 
-const void* Skeleton::getDefaultGearTable()
+ResourceLocation* Skeleton::getDefaultGearTable()
 {
     return &BuiltInLootTables::SKELETON_GEAR;
 }

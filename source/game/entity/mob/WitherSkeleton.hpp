@@ -31,8 +31,8 @@ public:
     boost::shared_ptr<WitherBoss> getWitherParent();
     virtual void die(const DamageSource* source);
     virtual void tick();
-    virtual const void* getDefaultLootTable();
-    virtual const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

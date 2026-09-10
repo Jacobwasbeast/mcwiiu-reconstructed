@@ -90,11 +90,11 @@ public:
     virtual PathNavigation* getNavigation();
     Sensing* getSensing();
     virtual boost::shared_ptr<LivingEntity> getTarget();
-    void setTarget(boost::shared_ptr<LivingEntity> target);
+    virtual void setTarget(boost::shared_ptr<LivingEntity> target);
     virtual void setLevel(Level* level);
     bool canAttackType(unsigned long long type);
     void ate();
-    unsigned int getAmbientSoundInterval();
+    virtual int getAmbientSoundInterval();
     virtual void playAmbientSound();
     void playHurtSound(const DamageSource* source);
     void resetAmbientSoundTime();
@@ -111,8 +111,8 @@ public:
     void setCanPickUpLoot(bool canPickUp);
     void setPersistenceRequired(bool required);
     bool isPersistenceRequired();
-    const void* getDefaultLootTable();
-    const void* getDefaultGearTable();
+    virtual ResourceLocation* getDefaultLootTable();
+    virtual ResourceLocation* getDefaultGearTable();
     void setZza(float zza);
     void setYya(float yya);
     void setXxa(float xxa);
