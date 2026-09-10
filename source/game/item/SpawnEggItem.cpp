@@ -1,5 +1,6 @@
 #include "game/item/SpawnEggItem.hpp"
 
+#include "game/core/Difficulty.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
@@ -73,7 +74,13 @@ bool SpawnEggItem::canSpawn(const ResourceLocation& entityType, Level* level, in
     {
         *error = 0;
     }
-    if (level == NULL || !EntityIO::isValidEntityType(entityType))
+    if (level == NULL)
+    {
+        return false;
+    }
+
+    boost::shared_ptr<Entity> entity = EntityIO::newEntity(entityType, level);
+    if (!entity)
     {
         if (error != NULL)
         {
@@ -81,14 +88,175 @@ bool SpawnEggItem::canSpawn(const ResourceLocation& entityType, Level* level, in
         }
         return false;
     }
-    if (!level->canCreateMore(EntityIO::byString(entityType.toString()), 0))
+
+    const unsigned long long type = entity->GetType();
+    const bool peaceful = level->getDifficulty() == Difficulty::PEACEFUL;
+
+    if (type == 0x000000005D540049ULL)
     {
-        if (error != NULL)
+        if (peaceful)
         {
-            *error = 2;
+            if (error != NULL)
+            {
+                *error = 12;
+            }
+            return false;
         }
-        return false;
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 10;
+            }
+            return false;
+        }
+        return true;
     }
+    if (type == ENTITY_TYPE_DOLPHIN)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 9;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == ENTITY_TYPE_SHULKER)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 7;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == 0x000000001D000101ULL)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 3;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == 0x000000002D6A0001ULL)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 5;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == ENTITY_TYPE_VILLAGER)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 8;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == 0x000000000D6C0002ULL)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 4;
+            }
+            return false;
+        }
+        return true;
+    }
+    if (type == 0x000000000D680004ULL)
+    {
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 2;
+            }
+            return false;
+        }
+        return true;
+    }
+    if ((type & 0x000000000D502000ULL) == 0x000000000D502000ULL)
+    {
+        if ((type & 0x40000000ULL) != 0 && type != ENTITY_TYPE_SHULKER && peaceful)
+        {
+            if (error != NULL)
+            {
+                *error = 12;
+            }
+            return false;
+        }
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 11;
+            }
+            return false;
+        }
+        return true;
+    }
+    if ((type & 0x20000000ULL) == 0x20000000ULL)
+    {
+        if ((type & 0x40000000ULL) != 0 && type != ENTITY_TYPE_SHULKER && peaceful)
+        {
+            if (error != NULL)
+            {
+                *error = 12;
+            }
+            return false;
+        }
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 1;
+            }
+            return false;
+        }
+        return true;
+    }
+    if ((type & 0x40000000ULL) == 0x40000000ULL)
+    {
+        if (peaceful)
+        {
+            if (error != NULL)
+            {
+                *error = 12;
+            }
+            return false;
+        }
+        if (!level->canCreateMore(type, 0))
+        {
+            if (error != NULL)
+            {
+                *error = 2;
+            }
+            return false;
+        }
+        return true;
+    }
+
     return true;
 }
 
