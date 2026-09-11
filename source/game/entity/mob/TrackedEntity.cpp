@@ -4,11 +4,38 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/ExperienceOrb.hpp"
+#include "game/core/Minecart.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/Painting.hpp"
 #include "game/entity/mob/EntityTracker.hpp"
+#include "game/entity/mob/LeashFenceKnotEntity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/FireworksRocketEntity.hpp"
+#include "game/entity/projectile/Arrow.hpp"
+#include "game/entity/projectile/Fireball.hpp"
+#include "game/entity/projectile/FishingHook.hpp"
+#include "game/entity/projectile/SpectralArrow.hpp"
+#include "game/item/AreaEffectCloud.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemFrame.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/not_null_ptr.hpp"
+#include "game/item/ThrownPotion.hpp"
+#include "game/network/ClientboundAddEntityPacket.hpp"
+#include "game/network/ClientboundAddExperienceOrbPacket.hpp"
+#include "game/network/ClientboundAddMobPacket.hpp"
+#include "game/network/ClientboundAddPaintingPacket.hpp"
+#include "game/network/ClientboundAddPlayerPacket.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/FallingBlockEntity.hpp"
+#include "game/core/Direction.hpp"
 
 TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int updateInterval, int maxRange, bool sendVelocityUpdates)
     : mEntity(entity), mRange(range), mUpdateInterval(updateInterval), mMaxRange(maxRange),
@@ -45,9 +72,278 @@ bool TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<
     return mEntity->broadcastToPlayer(player);
 }
 
+namespace
+{
+int encodeFireballPower(double power)
+{
+    double clamped = std::max(-4.0, std::min(4.0, power));
+    return (int)((clamped + 4.0) * 65535.0 / 8.0 - 32768.0);
+}
+
+boost::shared_ptr<ClientboundAddEntityPacket> makeFireballPacket(
+    boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int x, int y, int z,
+    boost::shared_ptr<Fireball> fireball)
+{
+    boost::shared_ptr<ClientboundAddEntityPacket> packet(
+        new ClientboundAddEntityPacket(entity, type, data, yRot, xRot, x, y, z));
+    packet->setXa(encodeFireballPower(fireball->mPowerX));
+    packet->setYa(encodeFireballPower(fireball->mPowerY));
+    packet->setZa(encodeFireballPower(fireball->mPowerZ));
+    return packet;
+}
+}
+
 boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 {
-    return boost::shared_ptr<Packet>();
+    if (!mEntity)
+    {
+        return boost::shared_ptr<Packet>();
+    }
+
+    const int yRot = (int)mXRot;
+    const int xRot = (int)mYRot;
+    const int headRot = (int)mZRot;
+    unsigned long long entityType = mEntity->GetType();
+    unsigned int entityTypeHigh = (unsigned int)(entityType >> 32);
+    unsigned int entityTypeLow = (unsigned int)entityType;
+
+    if (entityType == ENTITY_TYPE_SERVER_PLAYER)
+    {
+        boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(mEntity);
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddPlayerPacket(player, player->mXuid, player->m_0x798, mXLoc, mYLoc, mZLoc,
+                                           yRot, xRot, headRot));
+    }
+
+    boost::shared_ptr<PathfinderMob> creature = boost::dynamic_pointer_cast<PathfinderMob>(mEntity);
+    if (creature || entityType == ENTITY_TYPE_SHULKER)
+    {
+        int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddMobPacket(boost::static_pointer_cast<LivingEntity>(mEntity), yRot, xRot, mXLoc,
+                                        mYLoc, mZLoc, yHeadRot, mEntity->getAdditionContructionTag()));
+    }
+
+    if (entityType == 0x000000000A080001ULL)
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddPaintingPacket(boost::static_pointer_cast<Painting>(mEntity)));
+    }
+
+    if (entityType == 0x000000000800000AULL)
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(mEntity, 2, 1));
+    }
+
+    if ((entityType & ENTITY_TYPE_MINECART) == ENTITY_TYPE_MINECART)
+    {
+        boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(mEntity);
+        int displayData = Block::getIdWithData(minecart->getDisplayBlockState());
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 10, displayData, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (entityType == ENTITY_TYPE_BOAT)
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 1, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8000003, entityTypeHigh, entityTypeLow))
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddExperienceOrbPacket(boost::static_pointer_cast<ExperienceOrb>(mEntity), yRot, xRot,
+                                                  mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0xd000005, entityTypeHigh, entityTypeLow))
+    {
+        int yHeadRot = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddMobPacket(boost::static_pointer_cast<LivingEntity>(mEntity), yRot, xRot, mXLoc,
+                                        mYLoc, mZLoc, yHeadRot));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x88000006, entityTypeHigh, entityTypeLow))
+    {
+        boost::shared_ptr<FishingHook> hook = boost::static_pointer_cast<FishingHook>(mEntity);
+        boost::shared_ptr<Player> owner = hook->getOwner();
+        int data = owner ? owner->getId() : mEntity->getId();
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x5a, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a020001, entityTypeHigh, entityTypeLow))
+    {
+        boost::shared_ptr<SpectralArrow> arrow = boost::static_pointer_cast<SpectralArrow>(mEntity);
+        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x5b, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a020002, entityTypeHigh, entityTypeLow))
+    {
+        boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(mEntity);
+        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x3c, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200006, entityTypeHigh, entityTypeLow))
+    {
+        boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(mEntity);
+        int data = arrow->mOwner ? arrow->mOwner->getId() + 1 : mEntity->getId() + 1;
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x5e, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200001, entityTypeHigh, entityTypeLow))
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x3d, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x88000012, entityTypeHigh, entityTypeLow))
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x44, 0, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (eTYPE_DERIVED_FROM__FULT1(0, 0x8a200004, entityTypeHigh, entityTypeLow))
+    {
+        boost::shared_ptr<ThrownPotion> potion = boost::static_pointer_cast<ThrownPotion>(mEntity);
+        not_null_ptr<ItemInstance> item = potion->getItem();
+        int data = Item::getId(item->getItem());
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x49, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (entityType == 0x000000008A200005ULL)
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x4b, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (entityType == 0x000000008A200003ULL)
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x41, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (entityType == 0x0000000088000004ULL)
+    {
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x48, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if (entityType == 0x0000000088000005ULL)
+    {
+        boost::shared_ptr<FireworksRocketEntity> rocket =
+            boost::static_pointer_cast<FireworksRocketEntity>(mEntity);
+        boost::shared_ptr<LivingEntity> owner = rocket->getOwner();
+        int data = owner ? owner->getId() : 0;
+        return boost::shared_ptr<Packet>(
+            new ClientboundAddEntityPacket(mEntity, 0x4c, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+    }
+
+    if ((entityType & 0x000000008A400000ULL) != 0x000000008A400000ULL)
+    {
+        if (entityType == 0x0000000008000010ULL)
+        {
+            return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket(
+                mEntity, 0x43, 0, yRot, xRot, (int)mEntity->mX, (int)mEntity->mY, (int)mEntity->mZ));
+        }
+
+        if (entityType == 0x000000008A200002ULL)
+        {
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x3e, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == 0x0000000008000011ULL)
+        {
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x4f, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == ENTITY_TYPE_PRIMED_TNT)
+        {
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x32, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == 0x000000000800000EULL)
+        {
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x33, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == ENTITY_TYPE_LEASH_FENCE_KNOT)
+        {
+            boost::shared_ptr<FallingBlockEntity> fallingBlock =
+                boost::static_pointer_cast<FallingBlockEntity>(mEntity);
+            int data = Block::getIdWithData(fallingBlock->getBlock());
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x46, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == ENTITY_TYPE_ARMOR_STAND)
+        {
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x4e, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == 0x000000000A080002ULL)
+        {
+            boost::shared_ptr<ItemFrame> frame = boost::static_pointer_cast<ItemFrame>(mEntity);
+            int data = frame->getDirection()->get2DDataValue();
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x47, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == 0x000000000A080003ULL)
+        {
+            boost::shared_ptr<LeashFenceKnotEntity> knot =
+                boost::static_pointer_cast<LeashFenceKnotEntity>(mEntity);
+            BlockPos pos = knot->getPos();
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 0x4d, 0, pos, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        if (entityType == 0x000000000800000FULL)
+        {
+            boost::shared_ptr<AreaEffectCloud> cloud = boost::static_pointer_cast<AreaEffectCloud>(mEntity);
+            boost::shared_ptr<LivingEntity> owner = cloud->getOwner();
+            int data = owner ? owner->getId() + 1 : mEntity->getId() + 1;
+            return boost::shared_ptr<Packet>(
+                new ClientboundAddEntityPacket(mEntity, 3, data, yRot, xRot, mXLoc, mYLoc, mZLoc));
+        }
+
+        return boost::shared_ptr<Packet>();
+    }
+
+    boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(mEntity);
+    int packetType = 0x3f;
+    if (entityType == 0x000000008A400004ULL)
+    {
+        packetType = 0x40;
+    }
+    else if (entityType == 0x000000008A400001ULL)
+    {
+        packetType = 0x5d;
+    }
+    else if (entityType == 0x000000008A400002ULL)
+    {
+        packetType = 0x42;
+    }
+
+    int data = 0;
+    if (fireball->mOwner)
+    {
+        data = fireball->mOwner->getId();
+    }
+
+    return makeFireballPacket(mEntity, packetType, data, yRot, xRot, mXLoc, mYLoc, mZLoc, fireball);
 }
 
 bool TrackedEntity::ShouldSendEntityDataOnContruction(boost::shared_ptr<Entity> entity)

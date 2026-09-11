@@ -4,6 +4,7 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/item/ItemDataWalker.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/item/Inventory.hpp"
@@ -12,6 +13,7 @@
 #include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
 #include <typeinfo>
@@ -85,7 +87,8 @@ void ItemEntity::setDefaultPickUpDelay()
 
 void ItemEntity::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
-    ItemInstance::addDataWalkers(dataFixerUpper);
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity,
+                              new ItemDataWalker(0x0800000aULL, L"Item"));
 }
 
 void ItemEntity::staticCtor()
@@ -173,7 +176,18 @@ void ItemEntity::setShortLifeTime()
 
 bool ItemEntity::updateInWaterState()
 {
-    return Entity::updateInWaterState();
+    bool inWater = mLevel->checkAndHandleWater(mBoundingBox, Material::WATER, shared_from_this());
+    if (!inWater)
+    {
+        mIsInWater = false;
+    }
+    else
+    {
+        if (!mIsInWater && !mFirstTick)
+            doWaterSplashEffect();
+        mIsInWater = true;
+    }
+    return mIsInWater;
 }
 
 void ItemEntity::burn(int damage)

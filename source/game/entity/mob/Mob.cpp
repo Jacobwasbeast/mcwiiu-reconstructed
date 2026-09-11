@@ -19,6 +19,9 @@
 #include "game/core/LootTables.hpp"
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/FloatTag.hpp"
+#include "game/data/ListTag.hpp"
+#include "game/entity/mob/HangingEntity.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/LookControl.hpp"
@@ -27,6 +30,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/core/Sensing.hpp"
 #include "game/item/ArmorItem.hpp"
@@ -38,12 +42,49 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+
+namespace
+{
+not_null_ptr<ItemInstance> sMobEquipmentItems[4][5];
+bool sMobEquipmentItemsInitialized = false;
+
+void initMobEquipmentItems()
+{
+    if (sMobEquipmentItemsInitialized)
+        return;
+    sMobEquipmentItemsInitialized = true;
+
+    Item* headItems[5] = {Items::leatherHelmet, Items::goldenHelmet, Items::chainmailHelmet,
+                          Items::ironHelmet, Items::diamondHelmet};
+    Item* chestItems[5] = {Items::leatherChestplate, Items::goldenChestplate,
+                           Items::chainmailChestplate, Items::ironChestplate,
+                           Items::diamondChestplate};
+    Item* legsItems[5] = {Items::leatherLeggings, Items::goldenLeggings, Items::chainmailLeggings,
+                          Items::ironLeggings, Items::diamondLeggings};
+    Item* feetItems[5] = {Items::leatherBoots, Items::goldenBoots, Items::chainmailBoots,
+                          Items::ironBoots, Items::diamondBoots};
+
+    for (int tier = 0; tier < 5; ++tier)
+    {
+        sMobEquipmentItems[0][tier] = not_null_ptr<ItemInstance>(new ItemInstance(feetItems[tier]));
+        sMobEquipmentItems[1][tier] = not_null_ptr<ItemInstance>(new ItemInstance(legsItems[tier]));
+        sMobEquipmentItems[2][tier] = not_null_ptr<ItemInstance>(new ItemInstance(chestItems[tier]));
+        sMobEquipmentItems[3][tier] = not_null_ptr<ItemInstance>(new ItemInstance(headItems[tier]));
+    }
+}
+}
 
 const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
 
@@ -138,6 +179,7 @@ void Mob::_init()
 void Mob::registerAttributes()
 {
     LivingEntity::registerAttributes();
+    getAttributes()->registerAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(2.75);
 }
 
 void Mob::fjDerivedCtorCalls()
@@ -217,11 +259,15 @@ void Mob::setTarget(boost::shared_ptr<LivingEntity> target)
 void Mob::setLevel(Level* level)
 {
     Entity::setLevel(level);
+    if (mNavigation != NULL)
+        mNavigation->setLevel(level);
+    mGoalSelector.setLevel(level);
+    mTargetSelector.setLevel(level);
 }
 
-bool Mob::canAttackType(unsigned long long)
+bool Mob::canAttackType(unsigned long long type)
 {
-    return true;
+    return type != 0x5D0000C1ULL;
 }
 
 void Mob::ate()
@@ -243,6 +289,17 @@ void Mob::playAmbientSound()
 void Mob::baseTick()
 {
     LivingEntity::baseTick();
+    if (!isAlive())
+        return;
+
+    int roll = mRandom->nextInt(1000);
+    int soundTime = mAmbientSoundTime;
+    ++mAmbientSoundTime;
+    if (roll < soundTime)
+    {
+        playAmbientSound();
+        resetAmbientSoundTime();
+    }
 }
 
 void Mob::playHurtSound(const DamageSource*)
@@ -257,7 +314,26 @@ void Mob::resetAmbientSoundTime()
 
 int Mob::getExperienceReward(boost::shared_ptr<Player>)
 {
-    return 0;
+    int reward = mExperienceReward;
+    if (reward <= 0)
+        return reward;
+
+    const float dropChanceLimit = 1.0f;
+
+    if (!mArmorItems[0]->isEmpty() && mArmorDropChances[0] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+    if (!mArmorItems[1]->isEmpty() && mArmorDropChances[1] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+    if (!mArmorItems[2]->isEmpty() && mArmorDropChances[2] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+    if (!mArmorItems[3]->isEmpty() && mArmorDropChances[3] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+    if (!mHandItems[0]->isEmpty() && mHandDropChances[0] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+    if (!mHandItems[1]->isEmpty() && mHandDropChances[1] <= dropChanceLimit)
+        reward += mRandom->nextInt(3) + 1;
+
+    return reward;
 }
 
 void Mob::spawnAnim()
@@ -292,6 +368,11 @@ void Mob::spawnAnim()
 
 void Mob::handleEntityEvent(unsigned char event, int data)
 {
+    if (event == 20)
+    {
+        spawnAnim();
+        return;
+    }
     LivingEntity::handleEntityEvent(event, data);
 }
 
@@ -302,7 +383,40 @@ void Mob::setLeader(bool leader)
 
 void Mob::tick()
 {
+    PIXBeginNamedEvent(4.5f, "Mob tick");
     LivingEntity::tick();
+    if (!mLevel->mIsClientSide)
+    {
+        tickLeash();
+        if (mTickCount % 5 == 0)
+        {
+            boost::shared_ptr<Entity> controllingPassenger = getControllingPassenger();
+            bool hasNonMobPassenger = !Entity::instanceof(controllingPassenger, ENTITY_TYPE_MOB);
+            boost::shared_ptr<Entity> vehicle = getVehicle();
+            bool vehicleIsBoat = Entity::instanceof(vehicle, ENTITY_TYPE_BOAT);
+            mGoalSelector.setControlFlag(1, hasNonMobPassenger);
+            mGoalSelector.setControlFlag(4, hasNonMobPassenger && !vehicleIsBoat);
+            mGoalSelector.setControlFlag(2, hasNonMobPassenger);
+        }
+        if (mLeader)
+        {
+            if (mRandom->nextInt(200) == 1)
+            {
+                AABB* searchBox = mBoundingBox->grow(2.5, 2.5, 2.5);
+                std::vector<boost::shared_ptr<Entity> >* entities =
+                    mLevel->getEntitiesOfClass(typeid(*this), searchBox);
+                if (entities->size() < 2)
+                {
+                    setLeader(false);
+                    mFlockSize = 0;
+                }
+                delete entities;
+            }
+        }
+        if (isVehicle() && isUnderLiquid(Material::WATER))
+            underwaterEjectRider();
+    }
+    PIXEndNamedEvent();
 }
 
 float Mob::tickHeadTurn(float, float headTurnDelta)
@@ -384,6 +498,83 @@ bool Mob::isLeftHanded()
 void Mob::addAdditonalSaveData(CompoundTag* tag)
 {
     LivingEntity::addAdditonalSaveData(tag);
+
+    tag->putBoolean(L"CanPickUpLoot", canPickUpLoot());
+    tag->putBoolean(L"PersistenceRequired", mPersistenceRequired);
+
+    ListTag* armorItems = new ListTag(0);
+    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
+    {
+        CompoundTag* itemTag = new CompoundTag();
+        if (!mArmorItems[i]->isEmpty())
+            mArmorItems[i]->save(itemTag);
+        armorItems->add(itemTag);
+    }
+    tag->put(L"ArmorItems", armorItems);
+
+    ListTag* handItems = new ListTag(0);
+    for (unsigned int i = 0; i < mHandItems.size(); ++i)
+    {
+        CompoundTag* itemTag = new CompoundTag();
+        if (!mHandItems[i]->isEmpty())
+            mHandItems[i]->save(itemTag);
+        handItems->add(itemTag);
+    }
+    tag->put(L"HandItems", handItems);
+
+    ListTag* armorDropChances = new ListTag(0);
+    for (unsigned int i = 0; i < 4; ++i)
+        armorDropChances->add(new FloatTag(mArmorDropChances[i]));
+    tag->put(L"ArmorDropChances", armorDropChances);
+
+    ListTag* handDropChances = new ListTag(0);
+    for (unsigned int i = 0; i < 2; ++i)
+        handDropChances->add(new FloatTag(mHandDropChances[i]));
+    tag->put(L"HandDropChances", handDropChances);
+
+    tag->putBoolean(L"Leashed", mLeashed);
+
+    boost::shared_ptr<Entity> leashHolder = getLeashHolder();
+    if (leashHolder)
+    {
+        CompoundTag* leashTag = new CompoundTag();
+        unsigned long long holderType = leashHolder->GetType();
+
+        if ((holderType & 0x0C000000ULL) == 0x0C000000ULL)
+        {
+            leashTag->putString(L"UUID", leashHolder->getUUID());
+        }
+        else if ((holderType & 0x0A080000ULL) == 0x0A080000ULL)
+        {
+            boost::shared_ptr<HangingEntity> hanging =
+                boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
+            BlockPos pos = hanging->getPos();
+            leashTag->putInt(L"X", pos.x);
+            leashTag->putInt(L"Y", pos.y);
+            leashTag->putInt(L"Z", pos.z);
+        }
+
+        tag->put(L"Leash", leashTag);
+    }
+
+    tag->putBoolean(L"LeftHanded", isLeftHanded());
+
+    if (mLootTable != NULL)
+    {
+        tag->putString(L"DeathLootTable", mLootTable->toString());
+        if (mLootTableSeed != 0)
+            tag->putLong(L"DeathLootTableSeed", mLootTableSeed);
+    }
+
+    if (isNoAi())
+        tag->putBoolean(L"NoAI", true);
+
+    if (mLootTable != NULL)
+    {
+        tag->putString(L"DeathLootTable", mLootTable->toString());
+        if (mLootTableSeed != 0)
+            tag->putLong(L"DeathLootTableSeed", mLootTableSeed);
+    }
 }
 
 void Mob::setPersistenceRequired(bool required)
@@ -399,6 +590,62 @@ bool Mob::isPersistenceRequired()
 void Mob::readAdditionalSaveData(CompoundTag* tag)
 {
     LivingEntity::readAdditionalSaveData(tag);
+
+    if (tag->contains(L"CanPickUpLoot", 1))
+        setCanPickUpLoot(tag->getBoolean(L"CanPickUpLoot"));
+
+    setPersistenceRequired(tag->getBoolean(L"PersistenceRequired"));
+
+    if (tag->contains(L"ArmorItems", 9))
+    {
+        ListTag* items = tag->getList(L"ArmorItems", 10);
+        for (int i = 0; i < 4; ++i)
+            mArmorItems[i] = not_null_ptr<ItemInstance>(new ItemInstance(items->getCompound(i)));
+    }
+
+    if (tag->contains(L"HandItems", 9))
+    {
+        ListTag* items = tag->getList(L"HandItems", 10);
+        for (int i = 0; i < 2; ++i)
+            mHandItems[i] = not_null_ptr<ItemInstance>(new ItemInstance(items->getCompound(i)));
+    }
+
+    if (tag->contains(L"ArmorDropChances", 9))
+    {
+        ListTag* chances = tag->getList(L"ArmorDropChances", 5);
+        for (int i = 0; i < chances->size(); ++i)
+            mArmorDropChances[i] = chances->getFloat(i);
+    }
+
+    if (tag->contains(L"HandDropChances", 9))
+    {
+        ListTag* chances = tag->getList(L"HandDropChances", 5);
+        for (int i = 0; i < chances->size(); ++i)
+            mHandDropChances[i] = chances->getFloat(i);
+    }
+
+    mLeashed = tag->getBoolean(L"Leashed");
+    if (mLeashed && tag->contains(L"Leash", 10))
+    {
+        delete mLeashInfoTag;
+        mLeashInfoTag = tag->getCompound(L"Leash")->copy();
+    }
+
+    setLeftHanded(tag->getBoolean(L"LeftHanded"));
+
+    if (tag->contains(L"DeathLootTable", 8))
+    {
+        mLootTable = new ResourceLocation(tag->getString(L"DeathLootTable"));
+        mLootTableSeed = tag->getLong(L"DeathLootTableSeed");
+    }
+
+    setNoAi(tag->getBoolean(L"NoAI"));
+
+    if (tag->contains(L"DeathLootTable"))
+    {
+        mLootTable = new ResourceLocation(tag->getString(L"DeathLootTable"));
+        mLootTableSeed = tag->getLong(L"DeathLootTableSeed");
+    }
 }
 
 ResourceLocation* Mob::getDefaultLootTable()
@@ -469,6 +716,7 @@ void Mob::setXxa(float)
 void Mob::setSpeed(float speed)
 {
     LivingEntity::setSpeed(speed);
+    mMoveSpeed = speed;
 }
 
 void Mob::aiStep()
@@ -553,7 +801,7 @@ bool Mob::canHoldItem(not_null_ptr<ItemInstance>)
 
 bool Mob::removeWhenFarAway()
 {
-    return !isPersistenceRequired();
+    return !hasCustomName();
 }
 
 void Mob::checkDespawn()
@@ -659,7 +907,9 @@ void Mob::lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxH
 
 bool Mob::checkSpawnRules()
 {
-    return true;
+    BlockPos below(BlockPos(this).below());
+    const BlockState* state = mLevel->getBlockState(below);
+    return state->isValidSpawn(shared_from_this());
 }
 
 bool Mob::checkSpawnObstruction()
@@ -687,7 +937,15 @@ int Mob::getMaxSpawnClusterSize()
 
 int Mob::getMaxFallDistance()
 {
-    return 3;
+    if (!getVehicle())
+        return 3;
+
+    int fallDistance = (int)-(getMaxHealth() * 0.33f - getHealth());
+    int difficultyAdjustment = 12 - mLevel->getDifficulty()->getId() * 4;
+    fallDistance -= difficultyAdjustment;
+    if (fallDistance < 0)
+        fallDistance = 0;
+    return fallDistance + 3;
 }
 
 std::vector<boost::shared_ptr<ItemInstance> >* Mob::getHandSlots()
@@ -731,9 +989,24 @@ not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot* slot)
     return ItemInstance::EMPTY;
 }
 
-not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot*, int)
+not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot* slot, int tier)
 {
-    return not_null_ptr<ItemInstance>();
+    initMobEquipmentItems();
+
+    int slotIndex = -1;
+    if (slot == EquipmentSlot::FEET)
+        slotIndex = 0;
+    else if (slot == EquipmentSlot::LEGS)
+        slotIndex = 1;
+    else if (slot == EquipmentSlot::CHEST)
+        slotIndex = 2;
+    else if (slot == EquipmentSlot::HEAD)
+        slotIndex = 3;
+
+    if (slotIndex < 0 || tier < 0 || tier > 4)
+        return not_null_ptr<ItemInstance>();
+
+    return sMobEquipmentItems[slotIndex][tier];
 }
 
 void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
@@ -859,6 +1132,10 @@ void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficu
 
 MobGroupData* Mob::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)
 {
+    if (mRandom->nextFloat() < 0.05f)
+        setPersistenceRequired(true);
+    else
+        setPersistenceRequired(false);
     return data;
 }
 
@@ -930,7 +1207,18 @@ unsigned int Mob::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
 bool Mob::shouldRender(double distance)
 {
-    return Entity::shouldRenderAtSqrDistance(distance * distance);
+    AABB* box = mBoundingBox;
+    int minX = Mth::floor(box->mMinX);
+    int minY = Mth::floor(box->mMinY);
+    int minZ = Mth::floor(box->mMinZ);
+    int maxX = Mth::floor(box->mMaxX);
+    int maxY = Mth::floor(box->mMaxY);
+    int maxZ = Mth::floor(box->mMaxZ);
+
+    if (!mLevel->reallyHasChunksAt(BlockPos(minX, minY, minZ), BlockPos(maxX, maxY, maxZ)))
+        return false;
+
+    return Entity::shouldRender(distance);
 }
 
 bool Mob::isValidSlotForItem(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)

@@ -954,9 +954,10 @@ bool AbstractHorse::canParent()
     return !isPassenger() && isTamed() && !isBaby() && getHealth() >= getMaxHealth() && isInLove();
 }
 
-boost::shared_ptr<AgableMob> AbstractHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
+boost::shared_ptr<AgableMob> AbstractHorse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
-    return boost::shared_ptr<AgableMob>();
+    boost::shared_ptr<AgableMob> offspring;
+    return offspring;
 }
 
 double AbstractHorse::generateRandomMaxHealth()

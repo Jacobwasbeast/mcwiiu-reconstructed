@@ -26,6 +26,14 @@
 #include "game/util/AABB.hpp"
 #include "game/core/Mth.hpp"
 #include "game/client/render/ParticleType.hpp"
+#include "game/core/EnderCrystal.hpp"
+#include "game/core/ExperienceOrb.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+
+#include <limits>
+#include <typeinfo>
+
+static const EntityDataAccessor<int>* DATA_DRAGON_PHASE = NULL;
 
 EnderDragon::EnderDragon(Level* level)
     : Mob(level), mOpenSet(NULL), mPath(NULL), mDragonFight(NULL), mRandom(new Random()),
@@ -56,7 +64,7 @@ Level* EnderDragon::getLevel() { return Entity::getCommandSenderWorld(); }
 
 unsigned int EnderDragon::getSynchedAction()
 {
-    return static_cast<unsigned int>(mDragonPhase);
+    return static_cast<unsigned int>(getEntityData()->get(DATA_DRAGON_PHASE));
 }
 
 int EnderDragon::setSynchedAction(EEnderdragonAction action, bool force)
@@ -68,9 +76,165 @@ int EnderDragon::setSynchedAction(EEnderdragonAction action, bool force)
 }
 
 unsigned int EnderDragon::findClosestNode(double, double, double) { return 0; }
-unsigned int EnderDragon::findClosestNode() { return 0; }
+
+namespace
+{
+
+struct DragonNodeList
+{
+    Node** nodes;
+    int count;
+};
+
+static Node* makeDragonPathNode(Level* level, float step, unsigned int index, unsigned int indexSubtract,
+                                float angleBase, double radius, int yOffset)
+{
+    const float angle = step * static_cast<float>(static_cast<int>(index - indexSubtract)) + angleBase;
+    const float doubled = angle + angle;
+    const int x = static_cast<int>(radius * static_cast<double>(Mth::cos(doubled)));
+    const int z = static_cast<int>(radius * static_cast<double>(Mth::sin(doubled)));
+    BlockPos probe(x, 0, z);
+    const BlockPos top = level->getTopSolidBlockPos(probe);
+    const int minY = level->getSeaLevel() + 10;
+    int y = top.y + yOffset;
+    if (y < minY)
+        y = minY;
+    return new Node(x, y, z);
+}
+
+static void storeDragonPathNode(DragonNodeList* nodeList, int slotOffset, Node* node)
+{
+    nodeList->nodes[slotOffset / 4] = node;
+}
+
+} // namespace
+
+unsigned int EnderDragon::findClosestNode()
+{
+    DragonNodeList* nodeList =
+        *reinterpret_cast<DragonNodeList**>(reinterpret_cast<char*>(this) + 0xdb0);
+    if (nodeList != NULL && nodeList->nodes[0] == NULL)
+    {
+        Level* level = mLevel;
+        const float angleBase = -3.1415927410125732f;
+        const float innerStep = 0.2617993950843811f;
+        const float middleStep = 0.39269909262657166f;
+        const float outerStep = 0.7853981852531433f;
+        const double innerRadius = 60.0;
+        const double middleRadius = 40.0;
+        const double outerRadius = 20.0;
+
+        unsigned int ringCounter = 1;
+        unsigned int angleIndex = 0;
+        int slotOffset = 4;
+        int iterations = 12;
+
+        do
+        {
+            while (angleIndex > 11)
+            {
+                if (angleIndex > 19)
+                {
+                    storeDragonPathNode(
+                        nodeList, slotOffset - 4,
+                        makeDragonPathNode(level, outerStep, angleIndex, 20, angleBase, outerRadius, 5));
+                    goto storeSecondNode;
+                }
+                storeDragonPathNode(
+                    nodeList, slotOffset - 4,
+                    makeDragonPathNode(level, middleStep, angleIndex, 12, angleBase, middleRadius, 15));
+                goto storeSecondNode;
+            }
+
+            storeDragonPathNode(
+                nodeList, slotOffset - 4,
+                makeDragonPathNode(level, innerStep, angleIndex, 0, angleBase, innerRadius, 5));
+
+        storeSecondNode:
+            if (ringCounter < 12)
+            {
+                storeDragonPathNode(
+                    nodeList, slotOffset,
+                    makeDragonPathNode(level, innerStep, angleIndex + 1, 0, angleBase, innerRadius, 5));
+                slotOffset += 8;
+                --iterations;
+                angleIndex += 2;
+                ringCounter += 2;
+                if (iterations == 0)
+                    goto initializeConnections;
+                continue;
+            }
+
+            if (ringCounter < 20)
+            {
+                storeDragonPathNode(
+                    nodeList, slotOffset,
+                    makeDragonPathNode(level, middleStep, angleIndex, 11, angleBase, middleRadius, 15));
+            }
+            else
+            {
+                storeDragonPathNode(
+                    nodeList, slotOffset,
+                    makeDragonPathNode(level, outerStep, angleIndex, 19, angleBase, outerRadius, 5));
+            }
+
+            ringCounter += 2;
+            angleIndex += 2;
+            --iterations;
+            slotOffset += 8;
+        } while (iterations != 0);
+
+    initializeConnections:
+        static const int nodeConnections[] = {
+            0x1802, 0x2005, 0x200a, 0x4014, 0x8028, 0x8050, 0x100a0, 0x20140, 0x20280, 0x40500,
+            0x80a00, 0x80401, 0x182001, 0x305006, 0x20a008, 0x614030, 0x428040, 0xc50180,
+            0x8a0200, 0x941c00, 0xe83000, 0xd0e000, 0xb38000, 0x7e0000};
+        for (unsigned int i = 0; i < sizeof(nodeConnections) / sizeof(nodeConnections[0]); ++i)
+        {
+            *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0xdb4 + static_cast<int>(i * 4)) =
+                nodeConnections[i];
+        }
+    }
+
+    return findClosestNode(mX, mY, mZ);
+}
 double EnderDragon::getHeadYRotDiff(float) { return 0.0; }
-Vec3* EnderDragon::getHeadLookVector(float) { return NULL; }
+
+Vec3* EnderDragon::getHeadLookVector(float partialTicks)
+{
+    const EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
+    if (action == ACTION_3 || action == ACTION_4)
+    {
+        const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
+        double distance = std::sqrt(distanceToSqr(0.0, static_cast<double>(top.y), 0.0));
+        float scale = static_cast<float>(distance) * 0.25f;
+        if (scale < 1.0f)
+            scale = 1.0f;
+
+        const float savedYRot = mYRot;
+        const float savedXRot = mXRot;
+        mXRot = -((6.0f / scale) * 1.5f * 5.0f);
+        mYRot = savedYRot + static_cast<float>(getHeadYRotDiff(partialTicks));
+        Vec3* result = getViewVector(partialTicks);
+        mXRot = savedXRot;
+        mYRot = savedYRot;
+        return result;
+    }
+
+    if (action == ACTION_5 || action == ACTION_6 || action == ACTION_7)
+    {
+        const float savedYRot = mYRot;
+        const float savedXRot = mXRot;
+        mXRot = -45.0f;
+        mYRot = savedYRot + static_cast<float>(getHeadYRotDiff(partialTicks));
+        Vec3* result = getViewVector(partialTicks);
+        mXRot = savedXRot;
+        mYRot = savedYRot;
+        return result;
+    }
+
+    return getViewVector(partialTicks);
+}
 
 Path* EnderDragon::reconstruct_path(Node*, Node* end)
 {
@@ -97,7 +261,178 @@ Path* EnderDragon::reconstruct_path(Node*, Node* end)
     delete[] nodes;
     return path;
 }
-Path* EnderDragon::findPath(int, int, Node*) { return NULL; }
+Path* EnderDragon::findPath(int start, int end, Node* target)
+{
+    DragonNodeList* nodeList =
+        *reinterpret_cast<DragonNodeList**>(reinterpret_cast<char*>(this) + 0xdb0);
+    if (nodeList == NULL || mOpenSet == NULL)
+        return NULL;
+
+    Node** nodes = nodeList->nodes;
+    const float resetCost = 0.0f;
+    for (int group = 0; group < 3; ++group)
+    {
+        for (int slot = 0; slot < 8; ++slot)
+        {
+            Node* node = nodes[group * 8 + slot];
+            if (node == NULL)
+                continue;
+            node->cameFrom = NULL;
+            node->heapIdx = -1;
+            node->g = resetCost;
+            node->h = resetCost;
+            node->f = resetCost;
+            node->closed = false;
+        }
+    }
+
+    Node* startNode = nodes[start];
+    Node* endNode = nodes[end];
+    if (startNode == NULL || endNode == NULL)
+        return NULL;
+
+    startNode->g = resetCost;
+    const double startDistance = startNode->distanceTo(endNode);
+    startNode->h = static_cast<float>(startDistance);
+    startNode->f = static_cast<float>(startDistance);
+
+    mOpenSet->clear();
+    mOpenSet->insert(startNode);
+
+    unsigned int connectionStart = 0;
+    if (mDragonFight != NULL && mDragonFight->getCrystalsAlive() == 0)
+        connectionStart = 12;
+
+    int* nodeConnections =
+        reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0xdb4);
+    Node* bestNode = startNode;
+
+    while (!mOpenSet->isEmpty())
+    {
+        Node* current = mOpenSet->pop();
+        if (current->equals(endNode))
+        {
+            if (target != NULL)
+                target->cameFrom = endNode;
+            return reconstruct_path(startNode, target != NULL ? target : endNode);
+        }
+
+        if (current->distanceTo(endNode) < bestNode->distanceTo(endNode))
+            bestNode = current;
+
+        current->closed = true;
+
+        int nodeIndex = -1;
+        for (int base = 0; base < 24 && nodeIndex < 0; base += 8)
+        {
+            for (int offset = 0; offset < 8; ++offset)
+            {
+                if (nodes[base + offset] == current)
+                {
+                    nodeIndex = base + offset;
+                    break;
+                }
+            }
+        }
+
+        if (nodeIndex >= 0 && connectionStart + 1 < 24)
+        {
+            const unsigned int mask = nodeConnections[nodeIndex];
+            unsigned int bitIndex = connectionStart;
+            unsigned int pairCount = (24 - connectionStart) >> 1;
+            int neighborSlot = static_cast<int>(connectionStart) * 4 + 4;
+            while (pairCount > 0)
+            {
+                if ((mask & (1u << (bitIndex & 0x3f))) != 0)
+                {
+                    Node* neighbor = nodes[(neighborSlot - 4) >> 2];
+                    if (neighbor != NULL && !neighbor->closed)
+                    {
+                        const float newG =
+                            current->g + static_cast<float>(current->distanceTo(neighbor));
+                        if (!neighbor->inOpenSet() || newG < neighbor->g)
+                        {
+                            neighbor->g = newG;
+                            neighbor->cameFrom = current;
+                            neighbor->h = static_cast<float>(neighbor->distanceTo(endNode));
+                            neighbor->f = neighbor->g + neighbor->h;
+                            if (neighbor->inOpenSet())
+                                mOpenSet->changeCost(neighbor, neighbor->f);
+                            else
+                                mOpenSet->insert(neighbor);
+                        }
+                    }
+                }
+
+                ++bitIndex;
+                if ((mask & (1u << (bitIndex & 0x3f))) != 0)
+                {
+                    Node* neighbor = nodes[neighborSlot >> 2];
+                    if (neighbor != NULL && !neighbor->closed)
+                    {
+                        const float newG =
+                            current->g + static_cast<float>(current->distanceTo(neighbor));
+                        if (!neighbor->inOpenSet() || newG < neighbor->g)
+                        {
+                            neighbor->g = newG;
+                            neighbor->cameFrom = current;
+                            neighbor->h = static_cast<float>(neighbor->distanceTo(endNode));
+                            neighbor->f = neighbor->g + neighbor->h;
+                            if (neighbor->inOpenSet())
+                                mOpenSet->changeCost(neighbor, neighbor->f);
+                            else
+                                mOpenSet->insert(neighbor);
+                        }
+                    }
+                }
+
+                neighborSlot += 8;
+                --pairCount;
+                bitIndex++;
+            }
+        }
+        else if (nodeIndex >= 0)
+        {
+            const unsigned int mask = nodeConnections[nodeIndex];
+            unsigned int remaining = 24 - connectionStart;
+            unsigned int neighborIndex = connectionStart;
+            while (remaining > 0)
+            {
+                if ((mask & (1u << (neighborIndex & 0x3f))) != 0)
+                {
+                    Node* neighbor = nodes[neighborIndex];
+                    if (neighbor != NULL && !neighbor->closed)
+                    {
+                        const float newG =
+                            current->g + static_cast<float>(current->distanceTo(neighbor));
+                        if (!neighbor->inOpenSet() || newG < neighbor->g)
+                        {
+                            neighbor->g = newG;
+                            neighbor->cameFrom = current;
+                            neighbor->h = static_cast<float>(neighbor->distanceTo(endNode));
+                            neighbor->f = neighbor->g + neighbor->h;
+                            if (neighbor->inOpenSet())
+                                mOpenSet->changeCost(neighbor, neighbor->f);
+                            else
+                                mOpenSet->insert(neighbor);
+                        }
+                    }
+                }
+                --remaining;
+                ++neighborIndex;
+            }
+        }
+    }
+
+    if (bestNode != startNode)
+    {
+        if (target != NULL)
+            target->cameFrom = bestNode;
+        return reconstruct_path(startNode, target != NULL ? target : bestNode);
+    }
+
+    return NULL;
+}
 
 void EnderDragon::navigateToNextPathNode()
 {
@@ -233,11 +568,19 @@ void EnderDragon::addDataWalkers(DataFixerUpper* fixer)
 
 void EnderDragon::staticCtor()
 {
-    SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_ENDER_DRAGON, ENTITY_TYPE_MOB,
-                                               EntityDataSerializers::BYTE);
+    DATA_DRAGON_PHASE = SynchedEntityData::defineId<int>(ENTITY_TYPE_ENDER_DRAGON, ENTITY_TYPE_MOB,
+                                                         EntityDataSerializers::INT);
 }
-void EnderDragon::registerAttributes() { Mob::registerAttributes(); }
-void EnderDragon::defineSynchedData() { Mob::defineSynchedData(); }
+void EnderDragon::registerAttributes()
+{
+    Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(200.0);
+}
+void EnderDragon::defineSynchedData()
+{
+    Mob::defineSynchedData();
+    getEntityData()->createDateItem(DATA_DRAGON_PHASE, 0);
+}
 bool EnderDragon::canRide(boost::shared_ptr<Entity>) { return false; }
 
 void EnderDragon::getLatencyPos(arrayWithLength<double> positions, int index, float)
@@ -251,12 +594,36 @@ void EnderDragon::getLatencyPos(arrayWithLength<double> positions, int index, fl
 
 double EnderDragon::getTilt(float partialTicks)
 {
-    return static_cast<double>(partialTicks) * 0.0;
+    double pos5[3];
+    double pos10[3];
+    arrayWithLength<double> array5(3, false);
+    arrayWithLength<double> array10(3, false);
+    array5.data = pos5;
+    array10.data = pos10;
+    array5.length = 3;
+    array10.length = 3;
+    getLatencyPos(array5, 5, partialTicks);
+    getLatencyPos(array10, 10, partialTicks);
+    return static_cast<double>(static_cast<float>((pos5[1] - pos10[1]) * 10.0));
 }
 
 double EnderDragon::getHeadYOffset(float partialTicks)
 {
-    return getHeadPartYOffset(0, arrayWithLength<double>(), arrayWithLength<double>()) + partialTicks * 0.0;
+    const EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
+    if (action == ACTION_5 || action == ACTION_6 || action == ACTION_7)
+        return -1.0;
+
+    double headPos[3];
+    double tailPos[3];
+    arrayWithLength<double> headArray(3, false);
+    arrayWithLength<double> tailArray(3, false);
+    headArray.data = headPos;
+    tailArray.data = tailPos;
+    headArray.length = 3;
+    tailArray.length = 3;
+    getLatencyPos(headArray, 5, 1.0f);
+    getLatencyPos(tailArray, 0, 1.0f);
+    return tailPos[1] - headPos[1];
 }
 
 double EnderDragon::rotWrap(double angle)
@@ -266,7 +633,63 @@ double EnderDragon::rotWrap(double angle)
     return angle;
 }
 
-bool EnderDragon::checkCrystals() { return mNearbyCrystal != 0; }
+bool EnderDragon::checkCrystals()
+{
+    if (mBeamTarget != 0)
+    {
+        if (!mBeamTarget->showsBottom())
+        {
+            if (mTicksSinceDeath == (mTicksSinceDeath / 10) * 10)
+            {
+                if (getHealth() < getMaxHealth())
+                    setHealth(getHealth() + 1.0f);
+            }
+        }
+        else
+        {
+            mBeamTarget.reset();
+        }
+    }
+
+    if (mRandom->nextInt(10) != 0)
+        return mBeamTarget != 0;
+
+    if (mLevel == NULL || mBoundingBox == NULL)
+        return mBeamTarget != 0;
+
+    AABB* searchBox = mBoundingBox->grow(32.0, 32.0, 32.0);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(typeid(EnderCrystal), searchBox);
+    delete searchBox;
+
+    boost::shared_ptr<EnderCrystal> closest;
+    double closestDistance = std::numeric_limits<double>::max();
+
+    if (entities != NULL)
+    {
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
+        {
+            boost::shared_ptr<EnderCrystal> crystal =
+                boost::dynamic_pointer_cast<EnderCrystal>(*it);
+            if (crystal == 0)
+                continue;
+
+            const double distance = distanceToSqr(crystal);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = crystal;
+            }
+        }
+        delete entities;
+    }
+
+    if (closest != 0)
+        mBeamTarget = closest;
+
+    return mBeamTarget != 0;
+}
 void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >* entities)
 {
     if (entities == NULL || mParts.empty() || mParts[0] == 0)
@@ -368,9 +791,97 @@ void EnderDragon::aiStep() { Mob::aiStep(); }
 ResourceLocation* EnderDragon::getDefaultLootTable() { return NULL; }
 bool EnderDragon::hurt(const DamageSource* source, float amount) { return LivingEntity::hurt(source, amount); }
 void EnderDragon::reallyHurt(const DamageSource* source, float amount) { LivingEntity::actuallyHurt(source, amount); }
-void EnderDragon::kill() { LivingEntity::kill(); }
-void EnderDragon::dropExperience(int experience) { mTicksSinceDeath += experience > 0 ? 0 : 0; }
-void EnderDragon::tickDeath() { ++mDeathTime; }
+void EnderDragon::kill()
+{
+    remove();
+    if (mDragonFight != NULL)
+    {
+        boost::shared_ptr<EnderDragon> self =
+            boost::static_pointer_cast<EnderDragon>(shared_from_this());
+        mDragonFight->updateDragon(self);
+        mDragonFight->setDragonKilled(self);
+    }
+}
+
+void EnderDragon::dropExperience(int experience)
+{
+    while (experience > 0)
+    {
+        const int orbValue = ExperienceOrb::getExperienceValue(experience);
+        experience -= orbValue;
+        boost::shared_ptr<ExperienceOrb> orb(
+            new ExperienceOrb(mLevel, mX, mY, mZ, orbValue));
+        mLevel->addEntity(boost::static_pointer_cast<Entity>(orb));
+    }
+}
+
+void EnderDragon::tickDeath()
+{
+    const EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
+    if (action != ACTION_5 && action != ACTION_6 && action != ACTION_7)
+    {
+        if (mLevel != NULL && !mLevel->mIsClientSide)
+            LivingEntity::tickDeath();
+        return;
+    }
+
+    if (mDragonFight != NULL)
+    {
+        boost::shared_ptr<EnderDragon> self =
+            boost::static_pointer_cast<EnderDragon>(shared_from_this());
+        mDragonFight->updateDragon(self);
+    }
+
+    const int prevDeathTime = mDeathTime;
+    ++mDeathTime;
+
+    if (mLevel != NULL && (unsigned)(prevDeathTime - 0xB3) < 0x15U)
+    {
+        const float spread = 8.0f;
+        const double px = mX + (double)((mRandom->nextFloat() - 0.5f) * spread);
+        const double py = mY + (double)((mRandom->nextFloat() - 0.5f) * 4.0f) + 2.0;
+        const double pz = mZ + (double)((mRandom->nextFloat() - 0.5f) * spread);
+        mLevel->addParticle(PARTICLE_DRAGON_BREATH, px, py, pz, 0.0, 128.0, 128.0,
+                            arrayWithLength<int>());
+    }
+
+    const bool doExpDrop = mLevel != NULL && mLevel->getGameRules()->getBoolean(4);
+    unsigned int totalExp = 500U;
+    if (mDragonFight != NULL && !mDragonFight->hasPreviouslyKilledDragon())
+        totalExp = 12000U;
+
+    if (mLevel != NULL && !mLevel->mIsClientSide)
+    {
+        if (mDeathTime > 150)
+        {
+            if (mDeathTime % 5 == 0 && doExpDrop)
+                dropExperience(static_cast<int>((float)totalExp * 0.05f));
+        }
+        if (mDeathTime == 1)
+        {
+            BlockPos pos(shared_from_this());
+            mLevel->globalLevelEvent(0x404, pos, 0);
+        }
+    }
+
+    makeStepSound();
+
+    mFlapTime += 20.0f;
+    mOldFlapTime = mFlapTime;
+
+    if (mDeathTime == 200 && mLevel != NULL && !mLevel->mIsClientSide)
+    {
+        if (doExpDrop)
+            dropExperience(static_cast<int>((float)totalExp * 0.9f));
+        if (mDragonFight != NULL)
+        {
+            boost::shared_ptr<EnderDragon> self =
+                boost::static_pointer_cast<EnderDragon>(shared_from_this());
+            mDragonFight->setDragonKilled(self);
+        }
+        kill();
+    }
+}
 void EnderDragon::checkDespawn() {}
 std::vector<boost::shared_ptr<Entity> >* EnderDragon::getSubEntities() { return &mParts; }
 bool EnderDragon::isPickable() { return false; }

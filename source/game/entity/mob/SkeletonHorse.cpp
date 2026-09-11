@@ -6,12 +6,17 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/ai/GoalSelector.hpp"
+#include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/core/InteractionHand.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/SpawnEggItem.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
 
 SkeletonHorse::SkeletonHorse(Level* level)
     : AbstractHorse(level), mSkeletonTrapGoal(this), mTrap(false), mTrapTime(0)
@@ -56,6 +61,9 @@ void SkeletonHorse::registerAttributes()
 void SkeletonHorse::registerGoals()
 {
     AbstractHorse::registerGoals();
+    mGoalSelector.removeGoal(mFloatGoal);
+    mGoalSelector.removeGoal(mWaterAvoidingRandomStrollGoal);
+    mGoalSelector.addGoal(6, new SinkInWaterRandomStrollGoal(this, 0.7), true);
 }
 
 void SkeletonHorse::playUnderwaterSound(const BlockPos& pos, Block* block)
@@ -201,9 +209,84 @@ bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
     return true;
 }
 
-unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& holder)
+unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    return AgableMob::GetInteractTooltip(holder);
+    if (!tooltipData.m_bAllowedToInteract)
+        return 0xffffffffU;
+
+    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
+    unsigned int itemId = Item::getId(item->getItem());
+    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == 453;
+    boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
+                                     (Player*)tooltipData.m_pPlayer.get());
+
+    if (itemId == 420)
+    {
+        if (isLeashedToPlayer(player))
+            return 0x551269b5U;
+        if (isLeashed())
+            return 0xffffffffU;
+        return 0xa1b34a96U;
+    }
+
+    if (itemId == 383)
+    {
+        if (SpawnEggItem::fjGetType(item) == GetType())
+            return 0x4c36cd96U;
+        if (isLeashedToPlayer(player))
+            return 0x551269b5U;
+        return 0xffffffffU;
+    }
+
+    if (isLeashedToPlayer(player))
+        return 0x551269b5U;
+
+    if (itemId == 421)
+    {
+        if (!player->isSneaking() || !isTamed())
+        {
+            if (!item->hasCustomHoverName())
+                return 0xffffffffU;
+            if (hasCustomName() && item->getHoverName() == getCustomName())
+                return 0xffffffffU;
+            return 0x5592c692U;
+        }
+        if (!item->hasCustomHoverName())
+        {
+            if (getPassengers()->empty())
+                return 0x497adcf0U;
+            return 0xffffffffU;
+        }
+        if (hasCustomName() && item->getHoverName() == getCustomName())
+            return 0xffffffffU;
+        return 0x5592c692U;
+    }
+
+    if (isBaby())
+        return 0xffffffffU;
+
+    bool openInventory = true;
+    if (!player->isSneaking())
+    {
+        if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+            openInventory = false;
+    }
+    else if (isVehicle())
+    {
+        if (!mobInteract(player, InteractionHand::eInteractionHand_MainHand))
+        {
+            if ((itemId != 329 || isSaddled()) && (!wearsArmor() || !horseArmor))
+                openInventory = false;
+        }
+    }
+
+    if (openInventory)
+        return 0x41590ad1U;
+
+    if (getPassengers()->empty())
+        return 0x497adcf0U;
+
+    return 0xffffffffU;
 }
 
 unsigned long long SkeletonHorse::GetType()

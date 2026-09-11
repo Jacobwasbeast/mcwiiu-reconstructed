@@ -17,6 +17,9 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/CMinecraftApp.hpp"
+
+uint32_t gHangingEntityRenderCount = 0;
 
 HangingEntity::HangingEntity(Level* level)
     : Entity(level, true), mTickCounter(0), mPos(), mDirection(NULL)
@@ -271,7 +274,9 @@ void HangingEntity::thunderHit(const LightningBolt* lightningBolt)
 
 bool HangingEntity::shouldRender(double distanceSqr)
 {
-    return Entity::shouldRender(distanceSqr);
+    if (gHangingEntityRenderCount < 100 / g_pApp->GetLocalPlayerCount())
+        return Entity::shouldRender(distanceSqr);
+    return false;
 }
 
 bool HangingEntity::shouldRenderAtSqrDistance(double distanceSqr)

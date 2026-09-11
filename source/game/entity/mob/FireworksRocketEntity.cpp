@@ -4,11 +4,13 @@
 #include <cstdlib>
 #include <string>
 
+#include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/item/ItemDataWalker.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/world/Level.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -80,7 +82,7 @@ void FireworksRocketEntity::staticCtor()
 
 bool FireworksRocketEntity::isAttachedToEntity()
 {
-    return getSharedFlag(31);
+    return !getSharedFlag(31);
 }
 
 bool FireworksRocketEntity::shouldRenderAtSqrDistance(double distanceSqr)
@@ -184,14 +186,26 @@ void FireworksRocketEntity::setExplosionColourToPipColour(CompoundTag* tag)
 
 void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == 17)
-    {
-        dealExplosionDamage();
-    }
-    else
+    if (event != 17)
     {
         Entity::handleEntityEvent(event, data);
+        return;
     }
+
+    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
+    CompoundTag* fireworksTag = NULL;
+
+    if (!item->isEmpty())
+    {
+        fireworksTag = static_cast<CompoundTag*>(item->getTagElement(std::wstring(L"Fireworks")));
+        if (fireworksTag != NULL
+            && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+        {
+            setExplosionColourToPipColour(fireworksTag);
+        }
+    }
+
+    mLevel->createFireworks(mX, mY, mZ, mXd, mYd, mZd, fireworksTag);
 }
 
 void FireworksRocketEntity::addDataWalkers(DataFixerUpper* fixer)
@@ -224,7 +238,11 @@ boost::shared_ptr<LivingEntity> FireworksRocketEntity::getOwner() const
 
 void FireworksRocketEntity::updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ)
 {
-    Entity::updateDeltaAfterMove(block, x, y, z, movedX, movedY, movedZ);
+    if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks()
+        || !mHasDirectionalData)
+    {
+        Entity::updateDeltaAfterMove(block, x, y, z, movedX, movedY, movedZ);
+    }
 }
 
 void FireworksRocketEntity::defineSynchedData()

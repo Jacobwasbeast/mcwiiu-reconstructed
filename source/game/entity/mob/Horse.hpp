@@ -24,6 +24,7 @@ class Horse : public AbstractHorse
 {
 public:
     static const EntityDataAccessor<int>* DATA_VARIANT;
+    static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ARMOR;
 
     class HorseGroupData : public MobGroupData
     {

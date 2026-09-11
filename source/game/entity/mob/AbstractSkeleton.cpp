@@ -24,6 +24,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
 
@@ -174,6 +175,28 @@ void AbstractSkeleton::rideTick()
 void AbstractSkeleton::die(const DamageSource* source)
 {
     LivingEntity::die(source);
+
+    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
+    if (!directEntity)
+        return;
+
+    boost::shared_ptr<Entity> entity = source->getEntity();
+    if (!entity)
+        return;
+
+    if ((directEntity->GetType() & 0x8a020000ULL) != 0x8a020000ULL)
+        return;
+
+    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+        return;
+
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    const double dx = player->mX - mX;
+    const double dz = player->mZ - mZ;
+    if (dx * dx + dz * dz < 2500.0)
+        return;
+
+    player->awardStat(GenericStats::snipeSkeleton(), GenericStats::param_snipeSkeleton());
 }
 
 void AbstractSkeleton::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
