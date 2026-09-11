@@ -4,6 +4,7 @@
 #include "game/core/Node.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
+#include "game/core/AttributeInstance.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/Level.hpp"
@@ -38,7 +39,10 @@ void PathNavigation::stop()
 
 PathFinder* PathNavigation::getPathFinder() { return mPathFinder; }
 void PathNavigation::setSpeedModifier(double speed) { mSpeedModifier = speed; }
-double PathNavigation::getMaxDist() { return mMob->mBbWidth; }
+double PathNavigation::getMaxDist()
+{
+    return (double)(float)reinterpret_cast<AttributeInstance*>(mTargetPos)->getValue();
+}
 bool PathNavigation::hasDelayedRecomputation() { return mHasDelayedRecomputation; }
 
 void PathNavigation::recomputePath()

@@ -2,7 +2,11 @@
 
 Goal::Goal()
 {
-    mRequiredControlFlags = 0;
+    Goal* obj = this;
+    if (obj != NULL || (obj = static_cast<Goal*>(operator new(8)), obj != NULL))
+    {
+        obj->mRequiredControlFlags = 0;
+    }
 }
 
 Goal::~Goal()
