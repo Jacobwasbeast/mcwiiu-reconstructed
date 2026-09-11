@@ -12,6 +12,7 @@
 #include <cstring>
 
 extern CMinecraftApp* g_pApp;
+extern void SetSpecialThreadIDForFS_MilesStreamThread__Fv();
 
 namespace {
 
@@ -340,7 +341,11 @@ void SoundEngine::updateMusicVolume(float volume)
 
 unsigned int SoundEngine::OpenStreamThreadProc(void* value)
 {
-    return value == 0 ? static_cast<unsigned int>(-1) : 0U;
+    SetSpecialThreadIDForFS_MilesStreamThread__Fv();
+    SoundEngine* engine = static_cast<SoundEngine*>(value);
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(engine->m_platformSoundEngine);
+    const bool started = platform->startStream(reinterpret_cast<char*>(engine) + 0x188, ConfigureSound);
+    return started ? 0U : static_cast<unsigned int>(-1);
 }
 
 double SoundEngine::getDistanceScaler(AudioInfo* info)
@@ -491,7 +496,9 @@ void SoundEngine::playMusicTick()
 
 void SoundEngine::init(Options*)
 {
-    m_platformSoundEngine = this;
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    platform->init(0, 0);
+    *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x184) = 0;
 }
 
 bool SoundEngine::RouteToDRC(void*, void* value)
