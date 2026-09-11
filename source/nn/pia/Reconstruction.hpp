@@ -9,8 +9,26 @@
 namespace nn { namespace pia {
 
 typedef int Result;
+typedef short StationIndex;
 
-namespace common { class StationAddress; }
+namespace common {
+
+class StationAddress;
+
+class Watermark
+{
+public:
+    void SetName(const char* name);
+    void Update(long long value);
+};
+
+class WatermarkManager
+{
+public:
+    Watermark* GetWatermark(int index);
+};
+
+}
 
 namespace transport {
 
@@ -69,6 +87,49 @@ private:
     ReceivedDataContainer* m_receivedDataContainer;
 };
 
+class ReliableSlidingWindow;
+class StationManager;
+
+extern common::WatermarkManager* g_piaWatermarkManager;
+extern StationManager* g_piaStationManager;
+
+class ReliableProtocol : public Protocol
+{
+public:
+    enum { cProtocolType = 0x7c };
+
+    ReliableProtocol();
+    virtual ~ReliableProtocol();
+    virtual void Trace(unsigned long long value) const;
+    virtual unsigned short GetProtocolType() const;
+    virtual Result StartupWithStationAddress(const common::StationAddress& address);
+    virtual void CleanupWithStationAddress();
+    virtual Result UpdateProtocolEvent(const ProtocolEvent& event);
+
+    void Finalize();
+    Result Initialize(unsigned int a1, unsigned int a2);
+    ReliableSlidingWindow* GetSlidingWindow(StationIndex stationIndex);
+    const ReliableSlidingWindow* GetSlidingWindow(StationIndex stationIndex) const;
+    Result Send(StationIndex stationIndex, const void* data, unsigned int size);
+    Result Send(unsigned long long stationId, const void* data, unsigned int size);
+    void SendToAll(const void* data, unsigned int size);
+    Result Receive(unsigned long long* stationId, void* buffer, unsigned int* size, unsigned int bufferSize);
+    bool IsInCommunication(StationIndex stationIndex) const;
+    bool IsInCommunication(unsigned long long stationId) const;
+    void SetThroughputLimit(unsigned int limit);
+    static void RegisterResendTimeCallback(int (*callback)(int, int), int arg);
+
+private:
+    int m_field14;
+    unsigned int m_field18;
+    unsigned int m_field1c;
+    unsigned int m_field20;
+    unsigned char* m_field24;
+    unsigned int m_field28;
+    unsigned int m_field2c;
+    unsigned int m_field30;
+};
+
 class ProtocolManager
 {
 public:
@@ -91,6 +152,44 @@ private:
 };
 extern ProtocolManager* g_piaProtocolManager;
 
-}}}
+}
+
+namespace session {
+
+class SessionSearchCriteria
+{
+public:
+    SessionSearchCriteria();
+    virtual ~SessionSearchCriteria();
+    Result SetResultRange(unsigned int offset, unsigned int size);
+
+    unsigned int m_field00;
+    unsigned int m_field04;
+    int m_field08;
+    int m_field0c;
+};
+
+class SessionStationInfo
+{
+public:
+    enum StationInfoRole
+    {
+        cStationInfoRole_Invalid = 0
+    };
+
+    SessionStationInfo();
+    ~SessionStationInfo();
+    StationInfoRole GetRole() const;
+    void SetRole(StationInfoRole role);
+    void Clear();
+    static unsigned int GetSerializedSize();
+
+    unsigned int m_field00;
+    int m_role;
+};
+
+}
+
+}}
 
 #endif
