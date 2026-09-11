@@ -329,8 +329,9 @@ void Rabbit::registerAttributes()
     Mob::registerAttributes();
 }
 
-void Rabbit::addDataWalkers(DataFixerUpper*)
+void Rabbit::addDataWalkers(DataFixerUpper* fixer)
 {
+    Mob::addDataWalkers(fixer, 0x2d680005ULL);
 }
 
 void Rabbit::addAdditonalSaveData(CompoundTag* tag)
