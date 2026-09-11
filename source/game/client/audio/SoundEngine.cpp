@@ -344,8 +344,8 @@ unsigned int SoundEngine::OpenStreamThreadProc(void* value)
     SetSpecialThreadIDForFS_MilesStreamThread__Fv();
     SoundEngine* engine = static_cast<SoundEngine*>(value);
     PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(engine->m_platformSoundEngine);
-    const bool started = platform->startStream(reinterpret_cast<char*>(engine) + 0x188, ConfigureSound);
-    return started ? 0U : static_cast<unsigned int>(-1);
+    platform->startStream(reinterpret_cast<char*>(engine) + 0x188, ConfigureSound);
+    return 0U;
 }
 
 double SoundEngine::getDistanceScaler(AudioInfo* info)
