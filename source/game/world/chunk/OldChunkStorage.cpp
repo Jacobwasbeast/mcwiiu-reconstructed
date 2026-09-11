@@ -274,6 +274,8 @@ LevelChunk* OldChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
 
 void OldChunkStorage::save(Level* level, LevelChunk* chunk)
 {
+    (void)level;
+    (void)chunk;
 }
 
 bool OldChunkStorage::saveEntities(LevelChunk* chunk, Level* level, CompoundTag* tag)
@@ -459,4 +461,6 @@ void OldChunkStorage::flush()
 
 void OldChunkStorage::saveEntities(Level* level, LevelChunk* chunk)
 {
+    (void)level;
+    (void)chunk;
 }

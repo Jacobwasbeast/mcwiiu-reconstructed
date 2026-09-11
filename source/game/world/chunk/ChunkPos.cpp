@@ -28,14 +28,14 @@ std::size_t ChunkPos::hashCode() const
     return hasher(asLong(x, z));
 }
 
-double ChunkPos::distanceToSqr(boost::shared_ptr<Entity> entity)
+double ChunkPos::distanceToSqr(boost::shared_ptr<Entity> entity) const
 {
     double dx = static_cast<double>((x << 4) + 8) - entity->mX;
     double dz = static_cast<double>((z << 4) + 8) - entity->mZ;
     return dx * dx + dz * dz;
 }
 
-double ChunkPos::distanceToSqr(double x, double z)
+double ChunkPos::distanceToSqr(double x, double z) const
 {
     double dz2 = static_cast<double>((this->z << 4) + 8) - z;
     double dx2 = static_cast<double>((this->x << 4) + 8) - x;
