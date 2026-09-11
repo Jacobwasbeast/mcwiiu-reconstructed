@@ -1,14 +1,77 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
 #include <algorithm>
+#include <cstdlib>
+#include <cstring>
 #include <cwctype>
+
+#include "game/client/render/C4JRender.hpp"
+#include "game/client/render/Renderer.hpp"
+#include "game/ui/fui.hpp"
+#include "game/ui/fuiBitmap.hpp"
+
+extern Renderer* gRenderer;
 
 fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData()
     : currentCharacter(0), lineNumber(0), fontSize(0.0f), colour(0xffffffff), x(0.0f), y(0.0f),
       lineHeight(0.0f), width(0.0f), alignment(0), flags(0), scale(1.0f), texture(0), html(false),
       bold(false), fontIndex(0), clipping(false), shadow(false), firstLine(0), lastLine(0),
-      lineStart(0), lineEnd(0), glyphCount(0), imageCount(0)
+      lineStart(0), lineEnd(0), glyphCount(0), imageCount(0), imageData(&m_imageStorage)
 {
+}
+
+fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData(const RenderStringStateData& other)
+    : currentCharacter(other.currentCharacter), lineNumber(other.lineNumber), fontSize(other.fontSize),
+      colour(other.colour), x(other.x), y(other.y), lineHeight(other.lineHeight), width(other.width),
+      alignment(other.alignment), flags(other.flags), scale(other.scale), texture(other.texture),
+      html(other.html), bold(other.bold), fontIndex(other.fontIndex), clipping(other.clipping),
+      shadow(other.shadow), firstLine(other.firstLine), lastLine(other.lastLine), lineStart(other.lineStart),
+      lineEnd(other.lineEnd), glyphCount(other.glyphCount), imageCount(other.imageCount),
+      boldVerts(other.boldVerts), imageData(&m_imageStorage), m_imageStorage(other.m_imageStorage)
+{
+    fontVerts[0] = other.fontVerts[0];
+    fontVerts[1] = other.fontVerts[1];
+    fontVerts[2] = other.fontVerts[2];
+    fontVerts[3] = other.fontVerts[3];
+    std::memcpy(reserved, other.reserved, sizeof(reserved));
+}
+
+fuiRenderNodeEditText::RenderStringStateData& fuiRenderNodeEditText::RenderStringStateData::operator=(const RenderStringStateData& other)
+{
+    if (this == &other)
+        return *this;
+    currentCharacter = other.currentCharacter;
+    lineNumber = other.lineNumber;
+    fontSize = other.fontSize;
+    colour = other.colour;
+    x = other.x;
+    y = other.y;
+    lineHeight = other.lineHeight;
+    width = other.width;
+    alignment = other.alignment;
+    flags = other.flags;
+    scale = other.scale;
+    texture = other.texture;
+    html = other.html;
+    bold = other.bold;
+    fontIndex = other.fontIndex;
+    clipping = other.clipping;
+    shadow = other.shadow;
+    firstLine = other.firstLine;
+    lastLine = other.lastLine;
+    lineStart = other.lineStart;
+    lineEnd = other.lineEnd;
+    glyphCount = other.glyphCount;
+    imageCount = other.imageCount;
+    fontVerts[0] = other.fontVerts[0];
+    fontVerts[1] = other.fontVerts[1];
+    fontVerts[2] = other.fontVerts[2];
+    fontVerts[3] = other.fontVerts[3];
+    boldVerts = other.boldVerts;
+    m_imageStorage = other.m_imageStorage;
+    imageData = &m_imageStorage;
+    std::memcpy(reserved, other.reserved, sizeof(reserved));
+    return *this;
 }
 
 void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* font, float fontSizeValue, float spacing)
@@ -38,7 +101,8 @@ void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* font, float 
     fontVerts[1].clear();
     fontVerts[2].clear();
     fontVerts[3].clear();
-    imageData.clear();
+    boldVerts.clear();
+    imageData->clear();
 }
 
 fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNode* node, fuiObject* object,
@@ -179,16 +243,58 @@ std::wstring fuiRenderNodeEditText::getHtmlTagAttribute(const std::wstring& tag,
 
 bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringStateData& state)
 {
-    std::wstring width = getHtmlTagAttribute(tag, L"width");
-    std::wstring height = getHtmlTagAttribute(tag, L"height");
-    HtmlImageDrawData image;
-    image.x = state.x;
-    image.y = state.y;
-    image.width = width.empty() ? 0.0f : static_cast<float>(std::wcstod(width.c_str(), NULL));
-    image.height = height.empty() ? 0.0f : static_cast<float>(std::wcstod(height.c_str(), NULL));
-    state.imageData.push_back(image);
-    ++state.imageCount;
-    state.x += image.width;
+    std::wstring widthAttribute = getHtmlTagAttribute(tag, L"width");
+    std::wstring heightAttribute = getHtmlTagAttribute(tag, L"height");
+    std::wstring srcAttribute = getHtmlTagAttribute(tag, L"src");
+    float width = widthAttribute.empty() ? 0.0f : static_cast<float>(std::wcstod(widthAttribute.c_str(), NULL));
+    float height = heightAttribute.empty() ? 0.0f : static_cast<float>(std::wcstod(heightAttribute.c_str(), NULL));
+    char symbolName[128];
+    std::wcstombs(symbolName, srcAttribute.c_str(), sizeof(symbolName) - 1);
+    symbolName[sizeof(symbolName) - 1] = '\0';
+    fuiFile* file = NULL;
+    int bitmap = gFui->findBitmapFromSymbol(symbolName, &file);
+    if (bitmap != 0)
+    {
+        float left = state.x + 8.0f;
+        float top = state.y;
+        float right = left + width;
+        float bottom = top + height;
+        HtmlImageDrawData image;
+        image.symbolName.assign(symbolName);
+        image.quad[0].x = left;
+        image.quad[0].y = top;
+        image.quad[0].u = 0.0f;
+        image.quad[0].v = 0.0f;
+        image.quad[0].colour = 0xffffffff;
+        image.quad[1].x = right;
+        image.quad[1].y = bottom;
+        image.quad[1].u = 1.0f;
+        image.quad[1].v = 1.0f;
+        image.quad[1].colour = 0xffffffff;
+        image.quad[2].x = left;
+        image.quad[2].y = bottom;
+        image.quad[2].u = 0.0f;
+        image.quad[2].v = 1.0f;
+        image.quad[2].colour = 0xffffffff;
+        image.quad[3].x = right;
+        image.quad[3].y = top;
+        image.quad[3].u = 1.0f;
+        image.quad[3].v = 0.0f;
+        image.quad[3].colour = 0xffffffff;
+        image.quad[4].x = left;
+        image.quad[4].y = top;
+        image.quad[4].u = 0.0f;
+        image.quad[4].v = 0.0f;
+        image.quad[4].colour = 0xffffffff;
+        image.quad[5].x = right;
+        image.quad[5].y = bottom;
+        image.quad[5].u = 1.0f;
+        image.quad[5].v = 1.0f;
+        image.quad[5].colour = 0xffffffff;
+        state.imageData->push_back(image);
+        ++state.imageCount;
+    }
+    state.x += width + 16.0f;
     return true;
 }
 
@@ -335,7 +441,64 @@ void fuiRenderNodeEditText::DrawFontVerts(RenderStringStateData&, std::vector<fu
 
 void fuiRenderNodeEditText::DrawRenderData(RenderStringStateData& state)
 {
-    state.imageCount = 0;
+    if (!state.clipping)
+    {
+        gRenderer->StateSetAlphaFunc(4, 0.003921568859368563f);
+        gRenderer->StateSetAlphaTestEnable(true);
+    }
+    else
+    {
+        gRenderer->StateSetStencil(5, gFui->getCurrentStencilMask(), 0xff, 0);
+    }
+
+    if (!state.boldVerts.empty())
+    {
+        gRenderer->TextureBind(m_boldFont->getTextureIndex(m_glyphScale, 0));
+        DrawFontVerts(state, &state.boldVerts);
+    }
+    if (!state.fontVerts[0].empty())
+    {
+        gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 0));
+        DrawFontVerts(state, &state.fontVerts[0]);
+    }
+    if (!state.fontVerts[1].empty())
+    {
+        gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 1));
+        DrawFontVerts(state, &state.fontVerts[1]);
+    }
+    if (!state.fontVerts[2].empty())
+    {
+        gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 2));
+        DrawFontVerts(state, &state.fontVerts[2]);
+    }
+    if (!state.fontVerts[3].empty())
+    {
+        gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 3));
+        DrawFontVerts(state, &state.fontVerts[3]);
+    }
+
+    gRenderer->StateSetStencil(7, 0, 0, 0);
+    gRenderer->StateSetDepthTestEnable(false);
+    gRenderer->StateSetDepthMask(false);
+    gRenderer->StateSetDepthFunc(3);
+    gRenderer->StateSetAlphaTestEnable(false);
+
+    std::vector<HtmlImageDrawData>::iterator it;
+    for (it = state.imageData->begin(); it != state.imageData->end(); ++it)
+    {
+        fuiFile* file = NULL;
+        int bitmap = gFui->findBitmapFromSymbol(it->symbolName.c_str(), &file);
+        if (bitmap != 0)
+        {
+            fuiBitmap* bitmapPtr = reinterpret_cast<fuiBitmap*>(bitmap);
+            file->initialiseRenderTexture(bitmapPtr, false);
+            gRenderer->TextureBind(bitmapPtr->textureId);
+            gRenderer->TextureSetParam(1, 1);
+            gRenderer->TextureSetParam(2, 1);
+            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, &(*it), C4JRender::eVertexType_ColouredUI,
+                                    C4JRender::ePixelShaderType_UIColourAdd, NULL);
+        }
+    }
 }
 
 void fuiRenderNodeEditText::renderString(const std::wstring& text, float x, float y, fuiFontSet* font, float size, unsigned int colour)

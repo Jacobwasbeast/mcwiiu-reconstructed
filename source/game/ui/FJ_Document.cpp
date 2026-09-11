@@ -343,16 +343,23 @@ void FJ_Document::DoHorizontalResizeCheck()
 
 void FJ_Document::ResetHorizontalResizeCheck()
 {
-    m_horizontalResize = 0;
-    m_horizontalOffset = 0;
+    for (int i = 0; i < m_root->getNumChildren(); ++i)
+    {
+        FJ_FuiNode* child = m_root->getChildAt(i);
+        FJ_Base* base = child == NULL ? NULL : child->asFJ_Base();
+        if (base != NULL)
+            base->ResetResizing();
+    }
 }
 
 void FJ_Document::SlideLeft()
 {
-    m_horizontalOffset -= 1;
+    if (getChildByName(std::string("MainPanel")) != NULL)
+        gotoAndPlay(std::string("Slide_Left"));
 }
 
 void FJ_Document::SlideRight()
 {
-    m_horizontalOffset += 1;
+    if (getChildByName(std::string("MainPanel")) != NULL)
+        gotoAndPlay(std::string("Slide_Right"));
 }

@@ -48,67 +48,89 @@ void MenuBuilder::ITEM_AUX(Block* block, const AbstractProperty<T>* property, T 
 void MenuBuilder::ITEM_AUX__tm__26_PQ2_11QuartzBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__26_PQ2_11PlanksBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__23_PQ2_9DirtBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__29_PQ2_14StoneSlabBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__32_PQ2_17NewStoneSlabBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__34_PQ2_19PrismarineSlabBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__29_PQ2_14TallGrassBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__25_PQ2_11FlowerBlock6Flower(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__31_PQ2_16DoublePlantBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__32_PQ2_17HugeMushroomBlock7Variant(
     Block* block, const AbstractProperty<unsigned int>* property, unsigned int value)
 {
-    ITEM_AUX<unsigned int>(block, property, value);
+    TypedBoxed<unsigned int> boxed(value);
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::ITEM_AUX__tm__2_b(Block* block, const AbstractProperty<bool>* property,
                                     unsigned char value)
 {
-    ITEM_AUX<bool>(block, property, value != 0);
+    TypedBoxed<bool> boxed(static_cast<bool>(value));
+    const BlockState* state = block->defaultBlockState()->setBoxedValue(property, &boxed);
+    ITEM_BLOCKSTATE(state);
 }
 
 void MenuBuilder::BANNER(const DyeColor* color, const BannerPattern* pattern)

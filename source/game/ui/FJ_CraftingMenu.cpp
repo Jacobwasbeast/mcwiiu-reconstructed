@@ -2,6 +2,7 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
 
 namespace {
 
@@ -160,8 +161,15 @@ void FJ_CraftingMenu::SetCraftingMenu(int category, int item, bool enabled) {
     showPanelDisplay(enabled ? 1 : 0);
 }
 
-void FJ_CraftingMenu::SetSafeZone(int top, int bottom, int left, int right) {
+void FJ_CraftingMenu::SetSafeZone(int top, int bottom, int left, int right)
+{
     FJ_Document::SetSafeZone(top, bottom, left, right);
+
+    const double stageHeight = getStage()->getStageHeight();
+    if (stageHeight != 360.0 && stageHeight != 540.0)
+        return;
+
+    setX(-static_cast<float>(top) - 176.0f);
 }
 
 void FJ_CraftingMenu::SelectVerticalItem(int index) {

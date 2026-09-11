@@ -4,6 +4,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/System.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FullScreenProgress.hpp"
@@ -255,7 +256,11 @@ void UIScene_ConnectingProgress::handleGainFocus(bool hadFocus)
 
 void UIScene_ConnectingProgress::handleLoseFocus()
 {
-    killTimer(0);
+    const int timerId = 0;
+    m_timers[timerId];
+    System::processTimeInMilliSecs();
+    m_timers[timerId];
+    killTimer(timerId);
 }
 
 void UIScene_ConnectingProgress::handleTimerComplete(int timerId)

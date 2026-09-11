@@ -23,16 +23,16 @@ class fuiRenderNodeEditText : public fuiRenderNode
 public:
     struct HtmlImageDrawData
     {
-        float x;
-        float y;
-        float width;
-        float height;
+        fuiFontSet::FontVert quad[6];
+        std::string symbolName;
     };
 
     class RenderStringStateData
     {
     public:
         RenderStringStateData();
+        RenderStringStateData(const RenderStringStateData& other);
+        RenderStringStateData& operator=(const RenderStringStateData& other);
         void init(fuiFontSet* font, float fontSize, float lineSpacing);
 
         int currentCharacter;
@@ -59,8 +59,12 @@ public:
         int glyphCount;
         int imageCount;
         std::vector<fuiFontSet::FontVert> fontVerts[4];
-        std::vector<HtmlImageDrawData> imageData;
+        std::vector<fuiFontSet::FontVert> boldVerts;
+        std::vector<HtmlImageDrawData>* imageData;
         unsigned char reserved[84];
+
+    private:
+        std::vector<HtmlImageDrawData> m_imageStorage;
     };
 
     fuiRenderNodeEditText(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, unsigned char, fuiRGBA*, unsigned char, bool, fuiFile*);

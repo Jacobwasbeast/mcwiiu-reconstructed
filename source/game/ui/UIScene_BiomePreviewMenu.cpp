@@ -12,8 +12,11 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/client/render/Renderer.hpp"
+#include "game/core/CMinecraftApp.hpp"
 
 extern ConsoleUIController gConsoleUIController;
+extern CMinecraftApp* g_pApp;
 
 UIScene_BiomePreviewMenu::CustomImage::CustomImage()
     : mTextureLoaded(0), mPadding(), mImage(), mTexture(0), mTextureData(0), mTextureDataSize(0)
@@ -207,9 +210,33 @@ bool UIScene_BiomePreviewMenu::isOverComponent(UIControl& control, float x, floa
 
 void UIScene_BiomePreviewMenu::onMouseTick()
 {
-    float x, y, width, height;
-    dmouse(x, y, width, height);
-    setNewPointerPos(x, y);
+    float dx, dy, dirX, dirY;
+    dmouse(dx, dy, dirX, dirY);
+    if ((dirX != 0.0f || dirY != 0.0f) &&
+        isOverComponent(mBiomeMap.mImage, mNavigatorWidth, mNavigatorHeight))
+    {
+        float scale = 1.0f;
+        float moveX = dx * dx * dirX * 0.6f;
+        float moveY = dy * dy * dirY * 0.6f;
+        _UIVec2D pos;
+        pos.x = mNavigatorWidth + mPointerX;
+        pos.y = mNavigatorHeight + mPointerY;
+        if (!gRenderer->IsWidescreen() || g_pApp->GetLocalPlayerCount() > 1)
+            scale = 0.6f;
+        moveX *= scale;
+        moveY *= scale;
+        pos.x += moveX;
+        pos.y -= moveY;
+        if (pos.x < mPointerWidth)
+            pos.x = mPointerWidth;
+        if (pos.x > mPointerHeight)
+            pos.x = mPointerHeight;
+        if (pos.y < mMapWidth)
+            pos.y = mMapWidth;
+        if (pos.y > mMapHeight)
+            pos.y = mMapHeight;
+        setNewPointerPos(pos);
+    }
 }
 
 void UIScene_BiomePreviewMenu::UpdatePreviewImage(const arrayWithLength<unsigned char>& pixels,

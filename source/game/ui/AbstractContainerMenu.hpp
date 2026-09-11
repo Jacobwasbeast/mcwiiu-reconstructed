@@ -43,6 +43,7 @@ class AbstractContainerMenu
     friend class ServerPlayer;
     friend class UIScene_AbstractContainerMenu;
     friend class UIScene_BeaconMenu;
+    friend class UIScene_CraftingMenu;
 
 public:
     typedef std::vector<not_null_ptr<ItemInstance> > ItemList;

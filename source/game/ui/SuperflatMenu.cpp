@@ -207,7 +207,9 @@ SuperflatMenu::Mapping::Sub::~Sub()
 
 void SuperflatMenu::Mapping::Sub::setEnabled(bool enabled)
 {
-    mEnabled = enabled;
+    mActive = enabled;
+    mMapping->mList->EnableItem(*reinterpret_cast<const int*>(reinterpret_cast<const char*>(this)),
+                                enabled, true);
 }
 
 void SuperflatMenu::Mapping::Sub::update()
@@ -219,10 +221,14 @@ void SuperflatMenu::Mapping::Sub::update()
 void SuperflatMenu::Mapping::Sub::setPosition(int position)
 {
     mPosition = position;
+    mMapping->mList->SetSliderValue(*reinterpret_cast<const int*>(reinterpret_cast<const char*>(this)),
+                                    position, true);
 }
 
 int SuperflatMenu::Mapping::Sub::getPosition()
 {
+    mPosition = static_cast<int>(mMapping->mList->GetSliderValue(
+        *reinterpret_cast<const int*>(reinterpret_cast<const char*>(this))));
     return mPosition;
 }
 

@@ -1,10 +1,15 @@
 #include "game/ui/UIComponent_Tooltips.hpp"
+
+#include "game/client/render/C4JRender.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
-#include "game/core/Minecraft.hpp"
 #include "game/ui/FJ_ToolTips.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "platform/wiiu/CInput.hpp"
 
 UIComponent_Tooltips::_TooltipValues::_TooltipValues()
     : m_enabled(false), m_textId(-1), m_text(), m_type(-1), m_subtype(-1),
@@ -124,16 +129,121 @@ void UIComponent_Tooltips::tick()
 
 void UIComponent_Tooltips::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    if (m_tooltipsEnabled)
+    if (g_pApp->GetPrimaryUserIndex() != -1)
+    {
+        if (gConsoleUIController.GetMenuDisplayed(m_playerId) == 0)
+        {
+            if (GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x11)) == 0)
+                return;
+            if (GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x17)) == 0)
+                return;
+        }
+    }
+
+    if (!m_splitTooltips)
+    {
         UIScene::render(width, height, viewport);
+        return;
+    }
+
+    int screenWidth = 0;
+    int screenHeight = 0;
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                             screenWidth, screenHeight);
+
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_BottomHalf:
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+        break;
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopRightQuarter:
+        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f), 0);
+        break;
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(screenHeight * 0.5f));
+        break;
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gConsoleUIController.setupRenderPosition(static_cast<int>(screenWidth * 0.5f),
+                                                 static_cast<int>(screenHeight * 0.5f));
+        break;
+    default:
+        gConsoleUIController.setupRenderPosition(0, 0);
+        break;
+    }
+
+    if (viewport == C4JRender::eViewportType_FullScreen)
+    {
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(height));
+    }
+    else if (viewport < C4JRender::eViewportType_LeftHalf)
+    {
+        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
+                     static_cast<float>(screenWidth), static_cast<float>(height));
+    }
+    else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
+    {
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(screenHeight));
+    }
+    else if (static_cast<int>(viewport) > C4JRender::eViewportType_BottomRightQuarter)
+    {
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
+                     static_cast<float>(height));
+    }
+    else
+    {
+        gFui->render(m_movie, 0.0f, static_cast<float>(m_stageWidth / 2),
+                     static_cast<float>(width), static_cast<float>(height));
+    }
 }
 
 void UIComponent_Tooltips::updateViewportTouchOffset()
 {
-    if (m_tooltipLayer != 0)
+    unsigned int viewport = m_tooltipLayer == 0 ? 0 : m_tooltipLayer->getViewport();
+    int screenWidth = 0;
+    int screenHeight = 0;
+    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
+                                             screenWidth, screenHeight);
+
+    if (viewport < 5)
     {
-        m_tooltipLayer->getViewport();
+        if (viewport == 1)
+        {
+            gConsoleUIController.updateViewportTouchOffset(
+                0, -static_cast<int>(screenHeight * 0.5f));
+            return;
+        }
+        if (viewport != 4)
+        {
+            gConsoleUIController.updateViewportTouchOffset(0, 0);
+            return;
+        }
     }
+    else
+    {
+        if (viewport < 6)
+        {
+            gConsoleUIController.updateViewportTouchOffset(
+                0, -static_cast<int>(screenHeight * 0.5f));
+            return;
+        }
+        if (viewport == 6)
+        {
+            gConsoleUIController.updateViewportTouchOffset(
+                static_cast<int>(screenWidth * 0.5f),
+                -static_cast<int>(screenHeight * 0.5f));
+            return;
+        }
+        if (viewport != 8)
+        {
+            gConsoleUIController.updateViewportTouchOffset(0, 0);
+            return;
+        }
+    }
+
+    gConsoleUIController.updateViewportTouchOffset(static_cast<int>(screenWidth * 0.5f), 0);
 }
 
 unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int player, int index)
@@ -213,7 +323,43 @@ unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
 
 void UIComponent_Tooltips::UpdateControllerType(int controllerType)
 {
-    m_controllerType = controllerType;
+    const int previousType = m_controllerType;
+    bool notify = false;
+
+    if (g_pInput->IsPadConnected(4) == 0)
+    {
+        if (g_pInput->IsPadClassicController(controllerType) == 0)
+        {
+            m_controllerType = 0;
+            notify = previousType != 0;
+        }
+        else
+        {
+            m_controllerType = 2;
+            notify = previousType != 2;
+        }
+    }
+    else if (g_pInput->IsPadDRCController(controllerType) != 0 || controllerType == 4)
+    {
+        m_controllerType = 1;
+        notify = previousType != 1;
+    }
+    else if (g_pInput->IsPadClassicController(controllerType) == 0)
+    {
+        m_controllerType = 0;
+        notify = previousType != 0;
+    }
+    else
+    {
+        m_controllerType = 2;
+        notify = previousType != 2;
+    }
+
+    if (notify)
+    {
+        static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())
+            ->UpdateControllerType(m_controllerType);
+    }
 }
 
 void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)

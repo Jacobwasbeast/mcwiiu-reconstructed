@@ -14,6 +14,7 @@
 #include "game/core/FoodData.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/GhostController.hpp"
+#include "game/core/Gui.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -74,6 +75,11 @@ bool GetSplitScreenDamageFlag(LocalPlayer* player)
     return *reinterpret_cast<bool*>(reinterpret_cast<char*>(player) + 0x9b4);
 }
 
+bool GetLocalPlayerAltHudSizeFlag(MultiplayerLocalPlayer* player)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(player) + 0x908) != 0;
+}
+
 }
 
 UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
@@ -120,7 +126,89 @@ bool UIScene_HUD::HideMainHUD()
 
 unsigned int UIScene_HUD::mapElementsAndNames()
 {
-    return 0;
+    fuiRenderNode* root = m_movie->getRootNode();
+
+    m_messageLabels[0].setupControl(this, root, std::string("Label1"));
+    m_controls.push_back(&m_messageLabels[0]);
+    m_messageLabels[1].setupControl(this, root, std::string("Label2"));
+    m_controls.push_back(&m_messageLabels[1]);
+    m_messageLabels[2].setupControl(this, root, std::string("Label3"));
+    m_controls.push_back(&m_messageLabels[2]);
+    m_messageLabels[3].setupControl(this, root, std::string("Label4"));
+    m_controls.push_back(&m_messageLabels[3]);
+    m_messageLabels[4].setupControl(this, root, std::string("Label5"));
+    m_controls.push_back(&m_messageLabels[4]);
+    m_messageLabels[5].setupControl(this, root, std::string("Label6"));
+    m_controls.push_back(&m_messageLabels[5]);
+    m_messageLabels[6].setupControl(this, root, std::string("Label7"));
+    m_controls.push_back(&m_messageLabels[6]);
+    m_messageLabels[7].setupControl(this, root, std::string("Label8"));
+    m_controls.push_back(&m_messageLabels[7]);
+    m_messageLabels[8].setupControl(this, root, std::string("Label9"));
+    m_controls.push_back(&m_messageLabels[8]);
+    m_messageLabels[9].setupControl(this, root, std::string("Label10"));
+    m_controls.push_back(&m_messageLabels[9]);
+
+    m_messageControls[0].setupControl(this, root, std::string("Label1Background"));
+    m_controls.push_back(&m_messageControls[0]);
+    m_messageControls[1].setupControl(this, root, std::string("Label2Background"));
+    m_controls.push_back(&m_messageControls[1]);
+    m_messageControls[2].setupControl(this, root, std::string("Label3Background"));
+    m_controls.push_back(&m_messageControls[2]);
+    m_messageControls[3].setupControl(this, root, std::string("Label4Background"));
+    m_controls.push_back(&m_messageControls[3]);
+    m_messageControls[4].setupControl(this, root, std::string("Label5Background"));
+    m_controls.push_back(&m_messageControls[4]);
+    m_messageControls[5].setupControl(this, root, std::string("Label6Background"));
+    m_controls.push_back(&m_messageControls[5]);
+    m_messageControls[6].setupControl(this, root, std::string("Label7Background"));
+    m_controls.push_back(&m_messageControls[6]);
+    m_messageControls[7].setupControl(this, root, std::string("Label8Background"));
+    m_controls.push_back(&m_messageControls[7]);
+    m_messageControls[8].setupControl(this, root, std::string("Label9Background"));
+    m_controls.push_back(&m_messageControls[8]);
+    m_messageControls[9].setupControl(this, root, std::string("Label10Background"));
+    m_controls.push_back(&m_messageControls[9]);
+
+    m_selectedLabel.setupControl(this, root, std::string("Jukebox"));
+    m_controls.push_back(&m_selectedLabel);
+
+    if (m_splitScreen)
+    {
+        m_displayName.setupControl(this, root, std::string("LabelGamertag"));
+        m_controls.push_back(&m_displayName);
+    }
+
+    m_healthLabel.setupControl(this, root, std::string("ScoreLabel"));
+    m_controls.push_back(&m_healthLabel);
+    m_hudComponent.setupControl(this, root, std::string("ScoreIcon"));
+    m_controls.push_back(&m_hudComponent);
+    m_foodLabel.setupControl(this, root, std::string("SpeedLabel"));
+    m_controls.push_back(&m_foodLabel);
+    m_armourLabel.setupControl(this, root, std::string("TimeLabel"));
+    m_controls.push_back(&m_armourLabel);
+
+    m_positionLabels[0].setupControl(this, root, std::string("PositionOne"));
+    m_controls.push_back(&m_positionLabels[0]);
+    m_positionLabels[1].setupControl(this, root, std::string("PositionTwo"));
+    m_controls.push_back(&m_positionLabels[1]);
+    m_positionLabels[2].setupControl(this, root, std::string("PositionThree"));
+    m_controls.push_back(&m_positionLabels[2]);
+
+    m_positionControls[0].setupControl(this, root, std::string("Gold"));
+    m_controls.push_back(&m_positionControls[0]);
+    m_positionControls[1].setupControl(this, root, std::string("Silver"));
+    m_controls.push_back(&m_positionControls[1]);
+    m_positionControls[2].setupControl(this, root, std::string("Bronze"));
+    m_controls.push_back(&m_positionControls[2]);
+
+    m_effectLabel.setupControl(this, root, std::string("WrongWayLabel"));
+    m_controls.push_back(&m_effectLabel);
+
+    m_splashLabel.setupControl(this, root, std::string("RoundNumber"));
+    m_controls.push_back(&m_splashLabel);
+
+    return 1;
 }
 
 void UIScene_HUD::ShowArmorIcons(int armour, bool visible)
@@ -331,8 +419,67 @@ void UIScene_HUD::InitMainHUD()
 void UIScene_HUD::SetTooltipsEnabled(bool enabled) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTooltipsEnabled(enabled); }
 void UIScene_HUD::handleReload()
 {
+    m_hudSize = -1;
+    m_air = 10;
+    m_airVisible = true;
+    m_armourVisible = true;
+    m_foodVisible = true;
+    m_selectedLabelTicks = 0;
+    m_healthVisible = true;
+    m_displayNameText.clear();
+    m_displayFlag = true;
+    m_hudGameMode = -1;
     m_quickSelectVisible = true;
-    UIScene::handleReload();
+    m_ridingHorse = true;
+    m_animatedSplashVisible = true;
+    m_cachedLabel.clear();
+    m_animatedSplashText.clear();
+    m_displayNameVisible = true;
+    m_scoreIcon = 0;
+    m_animatedSplashIcon = -1;
+    m_checkpointsInitialised = false;
+
+    if (m_splitScreen)
+        m_displayName.setVisible(true);
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+
+    SetSelectedLabel(std::wstring());
+
+    m_messageLabels[0].init(UIString(L""));
+    m_messageLabels[1].init(UIString(L""));
+    m_messageLabels[2].init(UIString(L""));
+    m_messageLabels[3].init(UIString(L""));
+    m_messageLabels[4].init(UIString(L""));
+    m_messageLabels[5].init(UIString(L""));
+    m_messageLabels[6].init(UIString(L""));
+    m_messageLabels[7].init(UIString(L""));
+    m_messageLabels[8].init(UIString(L""));
+    m_messageLabels[9].init(UIString(L""));
+    m_selectedLabel.init(UIString(L""));
+
+    const unsigned int playerId = getPad();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerId];
+
+    if (player != 0 && GetLocalPlayerAltHudSizeFlag(player.get()))
+        SetHudSize(GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x1c)));
+    else
+        SetHudSize(GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x1b)));
+
+    wchar_t* profileName = gProfile->GetMiiName(playerId);
+    SetDisplayName(std::wstring(profileName));
+
+    repositionHud();
+    minecraft->mGui->clearSingleMessages();
+
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        InitMainHUD();
+
+    bool tooltipsEnabled = true;
+    if (!gConsoleUIController.GetMenuDisplayed(playerId) &&
+        GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x11)) == 0)
+        tooltipsEnabled = false;
+    SetTooltipsEnabled(tooltipsEnabled);
 }
 
 unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }

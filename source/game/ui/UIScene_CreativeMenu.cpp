@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
@@ -51,15 +52,13 @@ UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int 
     if (extraGroups != 0 && extraCount > 0)
         m_extraGroups.assign(extraGroups, extraGroups + extraCount);
     int ordinaryTotal = 0;
-    const auto count = [&ordinaryTotal](const std::vector<ECreative_Inventory_Groups>& groups)
-    {
-        for (ECreative_Inventory_Groups group : groups)
-            ordinaryTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
-    };
-    count(m_groups);
+    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_groups.begin();
+         it != m_groups.end(); ++it)
+        ordinaryTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
     int extraTotal = 0;
-    for (ECreative_Inventory_Groups group : m_extraGroups)
-        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
+    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_extraGroups.begin();
+         it != m_extraGroups.end(); ++it)
+        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
     const int ordinarySlots = std::max(1, 50 - extraTotal);
     m_pageCount = ordinaryTotal > 0 ? (ordinaryTotal + ordinarySlots - 1) / ordinarySlots : 0;
 }
@@ -75,30 +74,39 @@ void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, in
         return;
     unsigned int emitted = 0;
     const unsigned int pageStart = offset;
-    const auto emit = [&emitted, menu](const std::vector<ECreative_Inventory_Groups>& groups,
-                                       unsigned int skip)
-    {
-        for (ECreative_Inventory_Groups group : groups)
-        {
-            for (const ItemBuilder* item : UIScene_CreativeMenu::s_groupItems[group])
-            {
-                if (skip != 0) { --skip; continue; }
-                if (emitted >= 50) return;
-                menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance(item->item)));
-            }
-        }
-    };
+
     if (page >= 0 && page < static_cast<int>(m_specialGroups.size()))
     {
         const ECreative_Inventory_Groups group = m_specialGroups[page];
-        const std::vector<ECreative_Inventory_Groups> selected(1, group);
-        emit(selected, 0);
+        const std::vector<const ItemBuilder*>& specialItems = UIScene_CreativeMenu::s_groupItems[group];
+        for (std::vector<const ItemBuilder*>::const_iterator itemIt = specialItems.begin();
+             itemIt != specialItems.end(); ++itemIt)
+        {
+            if (emitted >= 50)
+                break;
+            menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance((*itemIt)->item)));
+        }
     }
     int extraTotal = 0;
-    for (ECreative_Inventory_Groups group : m_extraGroups)
-        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[group].size());
+    for (std::vector<ECreative_Inventory_Groups>::const_iterator groupIt = m_extraGroups.begin();
+         groupIt != m_extraGroups.end(); ++groupIt)
+        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*groupIt].size());
     const unsigned int ordinarySlots = static_cast<unsigned int>(std::max(1, 50 - extraTotal));
-    emit(m_groups, pageStart * ordinarySlots);
+
+    unsigned int skip = pageStart * ordinarySlots;
+    bool full = false;
+    for (std::vector<ECreative_Inventory_Groups>::const_iterator groupIt = m_groups.begin();
+         !full && groupIt != m_groups.end(); ++groupIt)
+    {
+        const std::vector<const ItemBuilder*>& items = UIScene_CreativeMenu::s_groupItems[*groupIt];
+        for (std::vector<const ItemBuilder*>::const_iterator itemIt = items.begin();
+             itemIt != items.end(); ++itemIt)
+        {
+            if (skip != 0) { --skip; continue; }
+            if (emitted >= 50) { full = true; break; }
+            menu->setItem(++emitted, not_null_ptr<ItemInstance>(new ItemInstance((*itemIt)->item)));
+        }
+    }
     while (emitted < 50)
         menu->setItem(emitted++, not_null_ptr<ItemInstance>(new ItemInstance(*ItemInstance::EMPTY)));
 }
@@ -291,10 +299,42 @@ void UIScene_CreativeMenu::handleAdditionalKeyPress(int key)
     switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
 }
 
-int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance>, int& slot)
+int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot)
 {
-    slot = -1;
-    return 0;
+    int menuSlot = 50;
+    int relativeSlot = 0;
+    for (int remaining = 9; remaining > 0; --remaining, ++menuSlot, ++relativeSlot)
+    {
+        not_null_ptr<ItemInstance> slotItem = m_containerMenu->getSlot(menuSlot)->getItem();
+        if (!slotItem->isEmpty() && slotItem->sameItemWithTags(item, 0) &&
+            slotItem->getCount() + item->getCount() <= item->getMaxStackSize())
+        {
+            slot = relativeSlot;
+            return 1;
+        }
+    }
+
+    int groupsRemaining = 3;
+    menuSlot = 50;
+    int emptySlot = menuSlot;
+    while (true)
+    {
+        emptySlot = menuSlot;
+        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
+            break;
+        emptySlot = menuSlot + 1;
+        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
+            break;
+        emptySlot = menuSlot + 2;
+        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
+            break;
+        groupsRemaining--;
+        menuSlot += 3;
+        if (groupsRemaining == 0)
+            return 0;
+    }
+    slot = emptySlot - 50;
+    return 1;
 }
 
 void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
@@ -347,27 +387,31 @@ unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMe
     return 0;
 }
 
+namespace
+{
+    void AddCreativeBlock(MenuBuilder& builder, Block* block)
+    {
+        builder.ITEM_BLOCKSTATE(block->defaultBlockState());
+    }
+
+    void AddCreativeBlockItem(MenuBuilder& builder, Block* block, int aux)
+    {
+        builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, aux)));
+    }
+}
+
 void UIScene_CreativeMenu::staticCtor()
 {
     MenuBuilder builder;
     builder.mItems = &s_groupItems[0];
 
-    const auto addBlock = [&builder](Block* block)
-    {
-        builder.ITEM_BLOCKSTATE(block->defaultBlockState());
-    };
-    const auto addBlockItem = [&builder](Block* block, int aux)
-    {
-        builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, aux)));
-    };
-
-    addBlock(Blocks::stone);
-    addBlock(Blocks::grass);
-    addBlock(Blocks::grass_path);
-    addBlock(Blocks::dirt);
-    addBlock(Blocks::cobblestone);
-    addBlock(Blocks::sand);
-    addBlock(Blocks::sandstone);
+    AddCreativeBlock(builder, Blocks::stone);
+    AddCreativeBlock(builder, Blocks::grass);
+    AddCreativeBlock(builder, Blocks::grass_path);
+    AddCreativeBlock(builder, Blocks::dirt);
+    AddCreativeBlock(builder, Blocks::cobblestone);
+    AddCreativeBlock(builder, Blocks::sand);
+    AddCreativeBlock(builder, Blocks::sandstone);
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::ironDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::spruceDoor, 1, 0)));
@@ -375,37 +419,71 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::jungleDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::acaciaDoor, 1, 0)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::darkOakDoor, 1, 0)));
-    for (Block* stairs : {Blocks::oak_stairs, Blocks::spruce_stairs, Blocks::jungle_stairs,
-                          Blocks::acacia_stairs, Blocks::stone_stairs, Blocks::brick_stairs,
-                          Blocks::stone_brick_stairs, Blocks::nether_brick_stairs,
-                          Blocks::red_sandstone_stairs, Blocks::quartz_stairs,
-                          Blocks::purpur_stairs, Blocks::prismarine_stairs})
-        addBlockItem(stairs, 2);
-    for (const int aux : {15, 11, 3, 13, 5, 6, 2, 10, 12, 4, 0, 7})
-        addBlockItem(Blocks::stained_hardened_clay, aux);
+    {
+        Block* stairsBlocks[] = {
+            Blocks::oak_stairs, Blocks::spruce_stairs, Blocks::jungle_stairs,
+            Blocks::acacia_stairs, Blocks::stone_stairs, Blocks::brick_stairs,
+            Blocks::stone_brick_stairs, Blocks::nether_brick_stairs,
+            Blocks::red_sandstone_stairs, Blocks::quartz_stairs,
+            Blocks::purpur_stairs, Blocks::prismarine_stairs
+        };
+        const int numValues = sizeof(stairsBlocks) / sizeof(stairsBlocks[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, stairsBlocks[i], 2);
+    }
+    {
+        int auxValues[] = {15, 11, 3, 13, 5, 6, 2, 10, 12, 4, 0, 7};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::stained_hardened_clay, auxValues[i]);
+    }
     builder.mItems = &s_groupItems[1];
-    for (const int aux : {9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7})
-        addBlockItem(Blocks::stained_glass, aux);
-    for (const int aux : {15, 11, 3, 9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7})
-        addBlockItem(Blocks::stained_glass_pane, aux);
-    for (const int aux : {0, 0, 2, 3, 4})
-        addBlockItem(Blocks::coral, aux);
-    for (const int aux : {0, 0, 2, 3, 4})
-        addBlockItem(Blocks::coral_fan, aux);
-    for (const int aux : {0, 0, 2, 3, 4})
-        addBlockItem(Blocks::coral_fan_dead, aux);
-    for (const int aux : {0, 0, 2, 3, 4, 8, 9, 10, 11, 12})
-        addBlockItem(Blocks::coral_block, aux);
-    addBlockItem(Blocks::piston, 5);
-    addBlockItem(Blocks::sticky_piston, 5);
-    addBlockItem(Blocks::stone_button, 4);
-    addBlockItem(Blocks::wooden_button, 4);
-    addBlockItem(Blocks::acacia_button, 4);
-    addBlockItem(Blocks::birch_button, 4);
-    addBlockItem(Blocks::dark_oak_button, 4);
-    addBlockItem(Blocks::jungle_button, 4);
-    addBlockItem(Blocks::spruce_button, 4);
-    addBlockItem(Blocks::redstone_torch, 5);
+    {
+        int auxValues[] = {9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::stained_glass, auxValues[i]);
+    }
+    {
+        int auxValues[] = {15, 11, 3, 9, 13, 5, 6, 2, 10, 14, 12, 0, 4, 0, 8, 7};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::stained_glass_pane, auxValues[i]);
+    }
+    {
+        int auxValues[] = {0, 0, 2, 3, 4};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::coral, auxValues[i]);
+    }
+    {
+        int auxValues[] = {0, 0, 2, 3, 4};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::coral_fan, auxValues[i]);
+    }
+    {
+        int auxValues[] = {0, 0, 2, 3, 4};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::coral_fan_dead, auxValues[i]);
+    }
+    {
+        int auxValues[] = {0, 0, 2, 3, 4, 8, 9, 10, 11, 12};
+        const int numValues = sizeof(auxValues) / sizeof(auxValues[0]);
+        for (int i = 0; i < numValues; ++i)
+            AddCreativeBlockItem(builder, Blocks::coral_block, auxValues[i]);
+    }
+    AddCreativeBlockItem(builder, Blocks::piston, 5);
+    AddCreativeBlockItem(builder, Blocks::sticky_piston, 5);
+    AddCreativeBlockItem(builder, Blocks::stone_button, 4);
+    AddCreativeBlockItem(builder, Blocks::wooden_button, 4);
+    AddCreativeBlockItem(builder, Blocks::acacia_button, 4);
+    AddCreativeBlockItem(builder, Blocks::birch_button, 4);
+    AddCreativeBlockItem(builder, Blocks::dark_oak_button, 4);
+    AddCreativeBlockItem(builder, Blocks::jungle_button, 4);
+    AddCreativeBlockItem(builder, Blocks::spruce_button, 4);
+    AddCreativeBlockItem(builder, Blocks::redstone_torch, 5);
     builder.mItems = &s_groupItems[8];
     builder.POTION(Items::potion, Potions::WATER);
     builder.POTION(Items::potion, Potions::AWKWARD);
@@ -507,12 +585,65 @@ UIControl* UIScene_CreativeMenu::getSection(IUIScene_AbstractContainerMenu::ESce
 
 void UIScene_CreativeMenu::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    UIScene_AbstractContainerMenu::handleInput(playerId, action, repeat, released, pressed, handled);
+    if (released)
+        return;
+
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    if (action < 0x5804)
+    {
+        UIScene_AbstractContainerMenu::handleInput(playerId, action, false, released, pressed, handled);
+        return;
+    }
+    if (action < 0x5806)
+    {
+        if (!pressed)
+            return;
+        const int direction = action == 0x5804 ? 1 : -1;
+        int tab = m_currentTab + direction + 8;
+        tab -= ((tab >> 31) & 7) + tab & 0xfffffff8;
+        switchTab(static_cast<ECreativeInventoryTabs>(tab));
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+        return;
+    }
+    if (action == 0x5806)
+    {
+        if (!pressed)
+            return;
+        int nextPage = m_tabCurrentPages[m_currentTab] + 1;
+        if (nextPage >= static_cast<int>(s_tabSpecs[m_currentTab]->getPageCount()))
+            nextPage = 0;
+        m_tabCurrentPages[m_currentTab] = nextPage;
+        switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
+        return;
+    }
+    UIScene_AbstractContainerMenu::handleInput(playerId, action, false, released, pressed, handled);
 }
 
-void UIScene_CreativeMenu::handleTouchInput(unsigned int playerId, int action, int x, int y, bool repeat, bool released, bool pressed)
+void UIScene_CreativeMenu::handleTouchInput(unsigned int, int action, int, int y, bool, bool released, bool pressed)
 {
-    UIScene::handleTouchInput(playerId, action, x, y, repeat, released, pressed);
+    if (pressed && action < 8)
+    {
+        switchTab(static_cast<ECreativeInventoryTabs>(action));
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    }
+    if (released && action == 8)
+    {
+        TabSpec* spec = s_tabSpecs[m_currentTab];
+        if (spec->getPageCount() > 1)
+        {
+            float fraction = static_cast<float>(
+                (static_cast<double>(y) - m_containerList.getYPos() - m_mainPanel.getYPos()) /
+                m_containerList.getHeight());
+            if (fraction > 1.0f)
+                fraction = 1.0f;
+            else if (fraction < 0.0f)
+                fraction = 0.0f;
+            const int pageCount = static_cast<int>(spec->getPageCount());
+            m_tabCurrentPages[m_currentTab] =
+                Math::round(fraction * static_cast<float>(pageCount - 1));
+            switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
+        }
+    }
 }
 
 UIControl* UIScene_CreativeMenu::GetMainPanel()

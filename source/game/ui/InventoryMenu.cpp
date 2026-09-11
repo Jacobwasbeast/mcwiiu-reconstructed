@@ -8,10 +8,10 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ResultContainer.hpp"
 
-static const EquipmentSlot* gInventoryMenuFeet = NULL;
+static const EquipmentSlot* gInventoryMenuHead = NULL;
 static const EquipmentSlot* gInventoryMenuLegs = NULL;
 static const EquipmentSlot* gInventoryMenuChest = NULL;
-static const EquipmentSlot* gInventoryMenuHead = NULL;
+static const EquipmentSlot* gInventoryMenuFeet = NULL;
 
 InventoryMenu::InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player)
     : mPlayer(player), mActive(active)
@@ -25,10 +25,10 @@ InventoryMenu::~InventoryMenu()
 
 void InventoryMenu::staticCtor()
 {
-    gInventoryMenuFeet = EquipmentSlot::FEET;
+    gInventoryMenuHead = EquipmentSlot::HEAD;
     gInventoryMenuLegs = EquipmentSlot::LEGS;
     gInventoryMenuChest = EquipmentSlot::CHEST;
-    gInventoryMenuHead = EquipmentSlot::HEAD;
+    gInventoryMenuFeet = EquipmentSlot::FEET;
 }
 
 void InventoryMenu::_init(boost::shared_ptr<Inventory> inventory, bool active)
@@ -49,10 +49,10 @@ void InventoryMenu::_init(boost::shared_ptr<Inventory> inventory, bool active)
         }
     }
 
-    addSlot(new ArmorSlot(EquipmentSlot::HEAD, inventory, 39, 62, 8));
-    addSlot(new ArmorSlot(EquipmentSlot::CHEST, inventory, 38, 62, 26));
-    addSlot(new ArmorSlot(EquipmentSlot::LEGS, inventory, 37, 62, 44));
-    addSlot(new ArmorSlot(EquipmentSlot::FEET, inventory, 36, 62, 62));
+    addSlot(new ArmorSlot(gInventoryMenuHead, inventory, 39, 62, 8));
+    addSlot(new ArmorSlot(gInventoryMenuChest, inventory, 38, 62, 26));
+    addSlot(new ArmorSlot(gInventoryMenuLegs, inventory, 37, 62, 44));
+    addSlot(new ArmorSlot(gInventoryMenuFeet, inventory, 36, 62, 62));
 
     for (row = 0; row < 3; ++row)
     {

@@ -6,8 +6,10 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
@@ -19,6 +21,10 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/generation/LevelGenerators.hpp"
+#include "vendor/_LoadingInputParams.hpp"
+#include "vendor/_NetworkGameInitData.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
@@ -29,6 +35,17 @@ namespace
     static const EUIScene s_componentDRC = static_cast<EUIScene>(0x42);
     static const EUIScene s_componentTV = static_cast<EUIScene>(0x43);
     static unsigned int s_nextScene;
+
+    struct FullscreenProgressState
+    {
+        bool showConfirmation;
+        bool unknownState1;
+        bool unknownState2;
+        bool showTip;
+        int closeMode;
+        int playerId;
+        EUIScene backScene;
+    };
 }
 
 UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
@@ -187,6 +204,21 @@ void UIScene_MainMenu::RunPlayGameOffline(int playerId)
 
 void UIScene_MainMenu::RunLeaderboards(int playerId)
 {
+    int messageParameter = 0xb9a1bf4d;
+    if (gProfile->IsGuest(playerId))
+    {
+        gConsoleUIController.RequestErrorMessage(0xe6bf122, 0x8ba9896f, &messageParameter, 1, 0xff,
+                                                 NULL, NULL, NULL, true);
+        return;
+    }
+    if (!gProfile->IsSignedInLive(playerId))
+    {
+        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &messageParameter, 1, 0xff,
+                                                 NULL, NULL, NULL, true);
+        return;
+    }
+    gProfile->SetLockedProfile(playerId);
+    gProfile->QuerySigninStatus();
     proceedToScene(playerId, static_cast<EUIScene>(0x16));
 }
 
@@ -288,7 +320,57 @@ int UIScene_MainMenu::MiniGamesUnlock_Returned(void* context, int playerId,
 
 void UIScene_MainMenu::LoadTrial()
 {
-    gApp.SetDRCCheckPlayerCountEnabled(true);
+    boost::shared_ptr<Player> nullPlayer;
+    gApp.SetTutorialMode(true, nullPlayer);
+    gApp.ClearTerrainFeaturePosition();
+    gStorage->ResetSaveData();
+    gProfile->StartTrialGame();
+    gStorage->SetSaveDisabled(true);
+    gApp.SetGameHostOption(static_cast<eGameHostOption>(0x17), 0);
+    gApp.SetGameHostOption(static_cast<eGameHostOption>(0x16), 1);
+    gApp.SetGameHostOption(static_cast<eGameHostOption>(6), GameType::SURVIVAL->getId());
+    gStorage->SetSaveTitle(L"Tutorial");
+    gApp.SetAutosaveTimerTime();
+    CGameNetworkManager::sInstance.HostGame(0, false, true, 0, static_cast<EMiniGameId>(0xf), 0, 0);
+    CGameNetworkManager::sInstance.FakeLocalPlayerJoined();
+
+    _NetworkGameInitData* initData = new _NetworkGameInitData();
+    initData->m_seed = 0;
+    initData->m_value2 = 0;
+    initData->m_value3 = gApp.GetGameHostOption(static_cast<eGameHostOption>(5)) |
+                         gApp.GetGameHostOption(static_cast<eGameHostOption>(0x16));
+    initData->m_value9 = gApp.GetGameHostOption(static_cast<eGameHostOption>(6));
+    initData->m_value5 = 0;
+
+    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators()->getLevelGenerators();
+    for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
+         it != generators->end(); ++it)
+    {
+        if ((*it)->isTutorial())
+        {
+            initData->m_value5 = *it;
+            break;
+        }
+    }
+
+    _LoadingInputParams* loadingParams = new _LoadingInputParams();
+    loadingParams->m_firstParameter = &CGameNetworkManager::RunNetworkGameThreadProc;
+    loadingParams->m_secondParameter = initData;
+
+    FullscreenProgressState* state = new FullscreenProgressState();
+    state->showConfirmation = false;
+    state->backScene = static_cast<EUIScene>(0x53);
+    state->showTip = true;
+    state->unknownState1 = true;
+    state->unknownState2 = true;
+    state->closeMode = 3;
+    loadingParams->m_thirdParameter = state;
+    state->playerId = gProfile->GetPrimaryPad();
+
+    gConsoleUIController.ShowTrialTimer(true);
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
+                                         loadingParams, static_cast<EUILayer>(6),
+                                         static_cast<EUIGroup>(7));
 }
 
 void UIScene_MainMenu::RunPlayGame(int playerId)

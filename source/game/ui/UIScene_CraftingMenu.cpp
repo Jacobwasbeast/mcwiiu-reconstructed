@@ -8,6 +8,9 @@
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Slot.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -425,7 +428,31 @@ void UIScene_CraftingMenu::SetHTabItem(int index, not_null_ptr<ItemInstance> ite
 
 void UIScene_CraftingMenu::handleDestroy()
 {
-    UIScene::handleDestroy();
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mLocalPlayers[m_playerId].get() != 0)
+    {
+        MultiPlayerGameMode* gameMode = minecraft->mGameModes[m_playerId];
+        if (gameMode != 0)
+        {
+            Tutorial* tutorial = gameMode->getTutorial();
+            if (tutorial != 0)
+                tutorial->changeTutorialState((eTutorial_State)m_tooltipState, 0);
+        }
+    }
+    if (minecraft->mGameModes[m_playerId] != 0)
+    {
+        boost::shared_ptr<Player> player = minecraft->mGameModes[m_playerId]->GetPlayer();
+        if (player->mContainerMenu->m_containerId == m_inventoryMenu->m_containerId)
+            player->closeContainer();
+    }
+    gConsoleUIController.OverrideSFX(m_playerId, 0, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 20, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 11, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 10, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 7, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 6, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 4, false);
+    gConsoleUIController.OverrideSFX(m_playerId, 5, false);
 }
 
 void UIScene_CraftingMenu::handleReload()

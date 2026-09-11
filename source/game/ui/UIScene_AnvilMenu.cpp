@@ -1,9 +1,11 @@
 #include "game/ui/UIScene_AnvilMenu.hpp"
 
+#include "game/client/render/Font.hpp"
 #include "game/core/CensoredString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/ui/AnvilMenu.hpp"
 #include "game/ui/FJ_AnvilMenu.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -219,7 +221,24 @@ int UIScene_AnvilMenu::KeyboardCompleteCallback(void* data, bool accepted)
 void UIScene_AnvilMenu::handleEditNamePressed()
 {
     m_editingName = true;
-    setEditNameEditable(true);
+    AnvilMenu* menu = m_anvilMenu != 0 ? m_anvilMenu : static_cast<AnvilMenu*>(m_menu);
+    not_null_ptr<ItemInstance> item = menu->getSlot(0)->getItem();
+    if (item->getItem() != Items::air && item->getItem() != Items::paper)
+    {
+        g_pInput->RequestKeyboard(L10N::GetString(0xbdc6c1eb), m_editName.getLabel(), m_playerId, 0x1e,
+                                  KeyboardCompleteCallback,
+                                  reinterpret_cast<void*>(GetCallbackUniqueId()),
+                                  C_4JInput::EKeyboardMode_0);
+        m_editingName = false;
+        return;
+    }
+    std::wstring label(m_editName.getLabel());
+    std::wstring sanitized = Minecraft::GetInstance()->mFont->sanitize(label, true);
+    g_pInput->RequestKeyboard(L10N::GetString(0xbdc6c1eb), sanitized.c_str(), m_playerId, 0x1e,
+                              KeyboardCompleteCallback,
+                              reinterpret_cast<void*>(GetCallbackUniqueId()),
+                              static_cast<C_4JInput::EKeyboardMode>(3));
+    m_editingName = false;
 }
 
 void UIScene_AnvilMenu::handleOtherClicked(int, IUIScene_AbstractContainerMenu::ESceneSection section,

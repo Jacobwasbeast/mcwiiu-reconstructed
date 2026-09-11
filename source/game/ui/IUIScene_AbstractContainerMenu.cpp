@@ -4,6 +4,8 @@
 
 #include "game/core/Minecraft.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/core/Slot.hpp"
@@ -203,9 +205,11 @@ int IUIScene_AbstractContainerMenu::getCurrentIndex(ESceneSection section)
 
 void IUIScene_AbstractContainerMenu::slotClicked(int slot, int button, ClickType::eClickType clickType)
 {
-    m_selectedSlot = slot;
-    m_pointerButton = button;
-    m_lastInput = (int)clickType;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int playerIndex = getPad();
+    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(playerIndex);
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[playerIndex];
+    gameMode->handleInventoryMouseClick(m_containerId, slot, button, clickType, player);
 }
 
 void IUIScene_AbstractContainerMenu::handleQuickCraft()

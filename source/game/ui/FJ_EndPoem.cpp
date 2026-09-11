@@ -6,6 +6,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_Base.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
@@ -29,8 +30,7 @@ unsigned int FJ_EndPoem::getType()
 
 void FJ_EndPoem::RequestNextLabel(int label)
 {
-    currentLabel = label;
-    waitingForLabel = true;
+    getRoot()->m_pCallbackScene->handleRequestMoreData(label, false);
 }
 
 void FJ_EndPoem::UpdateTileBackground()

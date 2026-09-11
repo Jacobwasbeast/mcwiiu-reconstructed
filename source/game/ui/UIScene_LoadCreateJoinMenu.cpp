@@ -4,11 +4,32 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/IUIScene_LoadCreateJoin.hpp"
 #include "game/ui/FJ_LoadCreateJoinMenu.hpp"
+#include "game/ui/UIControl_SaveList.hpp"
 #include "game/ui/UILayer.hpp"
+#include "vendor/_LoadingInputParams.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
+
+namespace
+{
+unsigned char& baseIgnoreInput(IUIScene_LoadCreateJoin* scene)
+{
+    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(scene) + 0x20);
+}
+
+char*& baseSaveDataBase(IUIScene_LoadCreateJoin* scene)
+{
+    return *reinterpret_cast<char**>(reinterpret_cast<char*>(scene) + 0xc);
+}
+
+int& baseSaveDataIndex(IUIScene_LoadCreateJoin* scene)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(scene) + 0x2c);
+}
+}
 
 UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int sceneType, void*, UILayer* layer)
     : IUIScene_LoadCreateJoin(), m_scene(sceneType, layer), m_selectedLoad(0), m_selectedCreate(0),
@@ -66,9 +87,30 @@ void UIScene_LoadCreateJoinMenu::requestNextThumbnail()
     m_loadThumbnailPending = 0;
 }
 
-void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool)
+void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool all)
 {
-    m_loadThumbnailPending = 0;
+    if (baseIgnoreInput(this) != 0)
+        return;
+    if (g_pApp->DebugSettingsOn() != 0 && g_pApp->GetLoadSavesFromFolderEnabled() != 0)
+        return;
+
+    int count = static_cast<int>(m_loadList.getItemCount());
+    for (int index = 0; index < count; ++index, count = static_cast<int>(m_loadList.getItemCount()))
+    {
+        if (!(all || index < static_cast<int>(m_thumbnailIndex) ||
+              static_cast<int>(m_thumbnailIndex) + 0x15 <= index))
+            continue;
+
+        std::wstring thumbnailName = getThumbnailName(index);
+        if (*reinterpret_cast<int*>(baseSaveDataBase(this) + baseSaveDataIndex(this) * 300 + 4) == 0)
+            continue;
+
+        if (m_scene.hasRegisteredSubstitutionTexture(thumbnailName))
+        {
+            m_scene.unregisterSubstitutionTexture(thumbnailName, false);
+            reinterpret_cast<UIControl_SaveList&>(m_loadList).setTextureName(index, std::wstring());
+        }
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::tick()
@@ -444,9 +486,42 @@ void UIScene_LoadCreateJoinMenu::CancelSaveUploadCallback(void* context)
         menu->m_saveOperationPending = 0;
 }
 
+namespace
+{
+struct FullscreenProgressState
+{
+    bool showConfirmation;
+    bool unknownState1;
+    bool unknownState2;
+    bool showTip;
+    int closeMode;
+    int playerId;
+    EUIScene backScene;
+};
+}
+
 void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()
 {
-    m_saveOperationPending = 1;
+    _LoadingInputParams* params = new _LoadingInputParams();
+    params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&UploadNintendoLanSaveThreadProc);
+    params->m_secondParameter = this;
+
+    FullscreenProgressState* progressState = new FullscreenProgressState();
+    progressState->showConfirmation = false;
+    progressState->unknownState1 = true;
+    progressState->unknownState2 = true;
+    progressState->showTip = true;
+    progressState->closeMode = 6;
+    progressState->playerId = 0;
+    progressState->backScene = static_cast<EUIScene>(0x53);
+    params->m_thirdParameter = progressState;
+
+    params->m_selectedIndex = static_cast<int32_t>(0xe21d8023u);
+    params->m_fifthParameter = reinterpret_cast<int32_t>(&CancelSaveUploadCallback);
+    params->m_seventhParameter = reinterpret_cast<int32_t>(this);
+
+    gConsoleUIController.NavigateToScene(m_player, static_cast<EUIScene>(4), params,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 
 void UIScene_LoadCreateJoinMenu::SaveTransferDialogReturned(void* context, int,

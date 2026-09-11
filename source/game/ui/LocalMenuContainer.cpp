@@ -81,12 +81,10 @@ bool LocalMenuContainer::stillValid(boost::shared_ptr<Player> player)
 
 void LocalMenuContainer::startOpen(boost::shared_ptr<Player> player)
 {
-    (void)player;
 }
 
 void LocalMenuContainer::stopOpen(boost::shared_ptr<Player> player)
 {
-    (void)player;
 }
 
 bool LocalMenuContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)

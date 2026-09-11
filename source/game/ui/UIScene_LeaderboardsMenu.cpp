@@ -9,6 +9,8 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
@@ -22,6 +24,7 @@ struct LeaderboardDescriptor
 };
 
 static std::vector<LeaderboardDescriptor> gLeaderboardDescriptors[4];
+static int gLeaderboardIconIds[28];
 
 UIScene_LeaderboardsMenu::UIScene_LeaderboardsMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_leaderboardInterface(g_pLeaderboardManager), m_leaderboardId(0),
@@ -259,8 +262,14 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
 
 void UIScene_LeaderboardsMenu::customDraw(const char* name, fuiRect* rect)
 {
-    if (name == NULL || rect == NULL)
+    int slot = -1;
+    std::sscanf(name, "slot_%d", &slot);
+    if (slot == -1)
         return;
+
+    int iconId = gLeaderboardIconIds[m_leaderboardIndex * 7 + slot];
+    not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(iconId), 1, 0));
+    customDrawSlotControlFui(rect, m_playerId, item, 0.0f, false, false, false);
 }
 
 void UIScene_LeaderboardsMenu::handleSelectionChanged(int selection)

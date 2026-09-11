@@ -16,8 +16,10 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIControl_CheckBox.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
@@ -95,13 +97,165 @@ void UIScene_LoadMenu::UpdateDescriptionText()
 
 void UIScene_LoadMenu::_initCustom()
 {
-    if (m_movie == NULL)
-        return;
-    m_customOptions = true;
-    m_list.EnableItem(0x11, true, true);
-    m_list.EnableItem(0x12, true, true);
-    m_list.EnableItem(0x13, true, true);
-    UpdateDescriptionText();
+    LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
+
+    static_cast<FJ_LoadMenu*>(m_movie->getRootNode()->getFuiNode())->InitCustomLoadMenu();
+    m_createdMode.removeUINodeRef();
+    m_texturePackList.removeUINodeRef();
+    m_gameModeSlider.removeUINodeRef();
+    m_onlineGameCheckBox.removeUINodeRef();
+    m_texturePackButton.removeUINodeRef();
+    m_playButton.removeUINodeRef();
+    m_difficultySlider.removeUINodeRef();
+    m_texturePackName.removeUINodeRef();
+    m_texturePackIcon.removeUINodeRef();
+
+    MiniGameDef* game = GetMiniGame();
+    m_gameName.init(UIString(L10N::GetString(static_cast<int>(game->GetName()))));
+    std::wstring textureName = game->getTextureName();
+    m_levelIcon.setTextureName(textureName, true);
+    m_description.init(UIString(L""));
+
+    if (initData->mFlag56)
+    {
+        MiniGameDef* mode = MiniGameDef::GetCustomGameModeById(
+            static_cast<EMiniGameId>(initData->mValue5C), true);
+        mode->SetDefaultMatchmakingSearchData(initData->mFlag57, initData);
+        m_list.init(7);
+        if (mode->HasTeamGameOption())
+        {
+            bool teamChecked = initData->mPlayerSettings.Get(eCustomGameModeHostOption_IsTeams) != 0;
+            m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0xef2a2f6a))), 9,
+                                  teamChecked);
+        }
+
+        bool allowOnlineExtras = initData->mFlag0 && m_onlineEnabled;
+        bool signedInLive = gProfile->IsSignedInLive(m_playerId);
+        if (!signedInLive)
+            allowOnlineExtras = false;
+        if (initData->mFlag17)
+            allowOnlineExtras = false;
+
+        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x2c692b72))), 5,
+                              allowOnlineExtras);
+        m_list.EnableItem(5, m_onlineEnabled, true);
+
+        bool publicChecked = initData->mFlag58 && m_allowPublicGames;
+        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x3fc1a0bd))), 10,
+                              publicChecked);
+
+        bool resetNetherChecked = initData->mFlag2 && allowOnlineExtras;
+        m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x4d7ec0cc))), 0xb,
+                              resetNetherChecked);
+
+        game = GetMiniGame();
+        if (game->GetId() == 3 && initData->mFlag56)
+        {
+            m_list.AddNewCheckbox(std::wstring(L10N::GetString(static_cast<int>(0x2e1306d9))), 0x15,
+                                  initData->mFlag68);
+        }
+
+        game = GetMiniGame();
+        if (game->HasMultipleMaps() && initData->mValue5C != 2)
+        {
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0x88c46bf1))), 0xd, true);
+            m_list.EnableItem(0xd, true, true);
+        }
+
+        game = GetMiniGame();
+        if (game->HasGameVariants())
+        {
+            int value = initData->mValue64;
+            m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
+                                      eCustomGameModeHostOption_ModeVariant,
+                                      static_cast<EMiniGameId>(initData->mValue5C), true);
+            m_sizeLogic.AddTo(m_list, value);
+            int clamped = value - 1;
+            if (clamped < 0)
+                clamped = 0;
+            initData->mPlayerSettings.Set(eCustomGameModeHostOption_GameVariant, clamped);
+        }
+
+        game = GetMiniGame();
+        if (game->GetId() != 3)
+        {
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0xbe1d5b9e))), 3, true);
+            m_list.EnableItem(3, true, true);
+        }
+
+        AddVariantButtons(true);
+
+        bool enableTen = allowOnlineExtras && m_allowPublicGames;
+        m_list.EnableItem(10, enableTen, true);
+
+        bool enableEleven = allowOnlineExtras && !initData->mFlag58;
+        m_list.EnableItem(0xb, enableEleven, true);
+
+        bool checkTen = allowOnlineExtras && initData->mFlag58 && m_allowPublicGames;
+        m_list.SetCheckboxValue(10, checkTen, true);
+
+        bool checkEleven = allowOnlineExtras && !initData->mFlag58 && initData->mFlag2;
+        m_list.SetCheckboxValue(0xb, checkEleven, true);
+    }
+
+    if (initData->mFlag57)
+    {
+        MiniGameDef* mode = MiniGameDef::GetCustomGameModeById(
+            static_cast<EMiniGameId>(initData->mValue5C), true);
+        mode->SetDefaultMatchmakingSearchData(initData->mFlag57, initData);
+
+        game = GetMiniGame();
+        if (game->HasGameVariants())
+        {
+            int value = initData->mValue64;
+            m_sizeLogic = SliderLogic(0x10, static_cast<int>(0x5bd476fb),
+                                      eCustomGameModeHostOption_ModeVariant,
+                                      static_cast<EMiniGameId>(initData->mValue5C), false);
+            m_sizeLogic.AddTo(m_list, value);
+            int clamped = value - 1;
+            if (clamped < 0)
+                clamped = 0;
+            initData->mPlayerSettings.Set(eCustomGameModeHostOption_GameVariant, clamped);
+        }
+
+        game = GetMiniGame();
+        if (game->GetId() != 3 && initData->mValue5C != 2)
+        {
+            m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(0xbe1d5b9e))), 3, true);
+        }
+
+        AddVariantButtons(false);
+    }
+
+    if (!initData->mFlag56)
+    {
+        if (!initData->mFlag57)
+        {
+            int count = static_cast<int>(m_list.getItemCount());
+            m_list.setCurrentSelection(count - 1, false, true);
+            UpdateDescriptionText();
+            static_cast<FJ_LoadMenu*>(m_movie->getRootNode()->getFuiNode())
+                ->RescaleCustomLoadMenu(false);
+        }
+        else
+        {
+            int index = m_list.getListIndex(0x11);
+            m_list.setCurrentSelection(index, false, true);
+            m_childFocus = 17.0;
+            UpdateDescriptionText();
+            static_cast<FJ_LoadMenu*>(m_movie->getRootNode()->getFuiNode())
+                ->RescaleCustomLoadMenu(false);
+        }
+    }
+    else
+    {
+        int index = m_list.getListIndex(0x12);
+        m_list.setCurrentSelection(index, false, true);
+        m_childFocus = 18.0;
+        UpdateDescriptionText();
+        static_cast<FJ_LoadMenu*>(m_movie->getRootNode()->getFuiNode())
+            ->RescaleCustomLoadMenu(false);
+    }
 }
 
 uint32_t UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data,
