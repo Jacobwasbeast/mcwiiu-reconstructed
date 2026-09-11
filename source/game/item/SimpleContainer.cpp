@@ -229,5 +229,5 @@ not_null_ptr<ItemInstance> SimpleContainer::addItem(not_null_ptr<ItemInstance> i
 void SimpleContainer::setCustomName(const std::wstring& name)
 {
     mHasCustomName = true;
-    mName = name;
+    mName.assign(name, 0, 0xffffffff);
 }

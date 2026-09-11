@@ -18,7 +18,9 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameMode.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/network/CGameNetworkManager.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -166,9 +168,201 @@ InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player
     return TestUse(level, player, hand) ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Fail;
 }
 
+namespace
+{
+bool isPickableBucketEntity_apply(boost::shared_ptr<Entity> entity)
+{
+    return isPickable_apply(entity);
+}
+
+Predicate<boost::shared_ptr<Entity> >* getBucketPickEntityPredicate()
+{
+    static Predicate<boost::shared_ptr<Entity> >* sPickPredicate = NULL;
+    if (sPickPredicate == NULL)
+    {
+        static Predicates<boost::shared_ptr<Entity> >::FunctionPredicate sIsPickablePredicate(
+            isPickableBucketEntity_apply);
+        static const Predicate<boost::shared_ptr<Entity> >* sPredicates[2] = {
+            Predicates<boost::shared_ptr<Entity> >::alwaysTrue, &sIsPickablePredicate};
+        sPickPredicate = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
+            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, sPredicates, 2);
+    }
+    return sPickPredicate;
+}
+
+void deleteBucketHitResult(HitResult* hit)
+{
+    if (hit != NULL)
+    {
+        delete hit;
+    }
+}
+}
+
 HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player, Level* level, const HitResult* result)
 {
-    return const_cast<HitResult*>(result);
+    static const double kPickDistanceCompare = 3.0;
+    static const double kCreativePickRange = 6.0;
+    static const double kNoHitDistance = 0.0;
+    static const float kPartialTick = 1.0f;
+
+    if (result == NULL)
+    {
+        return NULL;
+    }
+
+    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameMode;
+    const double pickRange = gameMode->getPickRange();
+    Player* playerRaw = player.get();
+    const double eyeHeight = playerRaw->getEyeHeight();
+    Vec3* eyePosition = Vec3::newTemp(playerRaw->mX, playerRaw->mY + eyeHeight, playerRaw->mZ);
+
+    double entityReach = kCreativePickRange;
+    double blockHitDistance = kPickDistanceCompare;
+    if (!gameMode->hasFarPickRange())
+    {
+        blockHitDistance = eyePosition->distanceTo(result->mLocation);
+        entityReach = pickRange;
+    }
+    else
+    {
+        blockHitDistance = eyePosition->distanceTo(result->mLocation);
+    }
+
+    Vec3* viewVector = playerRaw->getViewVector(kPartialTick);
+    AABB* searchBox = playerRaw->mBoundingBox->expand(viewVector->x * entityReach,
+                                                      viewVector->y * entityReach,
+                                                      viewVector->z * entityReach)
+                          ->grow(1.0);
+
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        level->getEntities(player, searchBox, getBucketPickEntityPredicate(), NULL);
+
+    Vec3* rayEnd = Vec3::newTemp(eyePosition->x + viewVector->x * entityReach,
+                                 eyePosition->y + viewVector->y * entityReach,
+                                 eyePosition->z + viewVector->z * entityReach);
+
+    Entity* closestEntity = NULL;
+    boost::shared_ptr<Entity> closestEntityShared;
+    HitResult* closestClipHit = NULL;
+    double closestDistance = kNoHitDistance;
+
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Entity> candidate = *it;
+        Entity* candidateRaw = candidate.get();
+        if (candidateRaw == NULL)
+        {
+            continue;
+        }
+
+        AABB* grownBox = candidateRaw->mBoundingBox->grow(candidateRaw->getPickRadius());
+        HitResult* clipHit = grownBox->clip(eyePosition, rayEnd);
+        if (!grownBox->contains(eyePosition))
+        {
+            if (clipHit == NULL)
+            {
+                continue;
+            }
+
+            const double hitDistance = eyePosition->distanceTo(clipHit->mLocation);
+            if (hitDistance < closestDistance || closestDistance == kNoHitDistance)
+            {
+                if (candidateRaw->getId() == playerRaw->getId() && hitDistance != kNoHitDistance)
+                {
+                    delete clipHit;
+                    continue;
+                }
+
+                if (closestClipHit != NULL)
+                {
+                    delete closestClipHit;
+                }
+                closestEntity = candidateRaw;
+                closestEntityShared = candidate;
+                closestClipHit = clipHit;
+                closestDistance = hitDistance;
+            }
+            else
+            {
+                delete clipHit;
+            }
+        }
+        else if (kNoHitDistance <= closestDistance)
+        {
+            if (candidateRaw->getId() == playerRaw->getId() && closestDistance != kNoHitDistance)
+            {
+                if (clipHit != NULL)
+                {
+                    delete clipHit;
+                }
+                continue;
+            }
+
+            if (clipHit != NULL)
+            {
+                delete clipHit;
+            }
+            if (closestClipHit != NULL)
+            {
+                delete closestClipHit;
+            }
+            closestEntity = candidateRaw;
+            closestEntityShared = candidate;
+            closestClipHit = new HitResult(Vec3::newTemp(eyePosition->x, eyePosition->y, eyePosition->z), NULL);
+            closestDistance = kNoHitDistance;
+        }
+        else if (clipHit != NULL)
+        {
+            delete clipHit;
+        }
+    }
+
+    delete entities;
+
+    HitResult* output = const_cast<HitResult*>(result);
+    if (closestEntity != NULL && closestClipHit != NULL)
+    {
+        Vec3* closestHitLocation = closestClipHit->mLocation;
+        if (gameMode->hasFarPickRange() || pickRange <= kPickDistanceCompare
+            || eyePosition->distanceTo(closestHitLocation) <= kPickDistanceCompare)
+        {
+            if (closestDistance < blockHitDistance)
+            {
+                deleteBucketHitResult(output);
+                closestClipHit->mLocation = NULL;
+                delete closestClipHit;
+                output = new HitResult(closestEntityShared, closestHitLocation);
+                closestClipHit = NULL;
+            }
+            else
+            {
+                deleteBucketHitResult(output);
+                closestClipHit->mLocation = NULL;
+                delete closestClipHit;
+                output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
+                delete closestHitLocation;
+                closestClipHit = NULL;
+            }
+        }
+        else
+        {
+            deleteBucketHitResult(output);
+            closestClipHit->mLocation = NULL;
+            delete closestClipHit;
+            output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
+            delete closestHitLocation;
+            closestClipHit = NULL;
+        }
+    }
+
+    if (closestClipHit != NULL)
+    {
+        delete closestClipHit;
+    }
+
+    return output;
 }
 
 HitResult* BucketItem::GetPlayerHitResult(boost::shared_ptr<Player> player, Level* level, bool useLiquids)

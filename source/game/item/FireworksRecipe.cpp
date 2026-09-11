@@ -430,7 +430,14 @@ NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boos
 
 boost::shared_ptr<CraftingContainer> FireworksRecipe::generateExpectedCraftSlots()
 {
-    return boost::shared_ptr<CraftingContainer>();
+    boost::shared_ptr<CraftingContainer> result;
+    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
+    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
+    {
+        storage[0] = 0;
+        storage[1] = 0;
+    }
+    return result;
 }
 
 Recipe::_eGroupType FireworksRecipe::getGroup()

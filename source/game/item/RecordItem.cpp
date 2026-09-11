@@ -1,9 +1,19 @@
 #include "game/item/RecordItem.hpp"
 
+#include <boost/unordered_map.hpp>
+
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/JukeboxBlock.hpp"
+#include "game/world/generation/Player.hpp"
+
+static boost::unordered_map<const SoundEvent*, RecordItem*> sBySound;
 
 RecordItem::RecordItem(const std::wstring& name, int recordId, const SoundEvent* sound)
     : Item(), mRecordId(recordId), mSound(sound)
@@ -15,8 +25,40 @@ RecordItem::~RecordItem()
 {
 }
 
-InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player>, Level*, const BlockPos&, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
+InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player> player,
+                                                        Level* level,
+                                                        const BlockPos& pos,
+                                                        InteractionHand::EInteractionHand hand,
+                                                        const Direction*,
+                                                        float,
+                                                        float,
+                                                        float,
+                                                        bool simulate)
 {
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
+    if (block != Blocks::jukebox)
+    {
+        return InteractionResult::eInteractionResult_Pass;
+    }
+
+    JukeboxBlock* jukebox = static_cast<JukeboxBlock*>(block);
+    if (jukebox->TestUse(level, pos, state, player))
+    {
+        return InteractionResult::eInteractionResult_Pass;
+    }
+
+    if (!simulate && !level->mIsClientSide)
+    {
+        not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+        jukebox->setRecord(level, pos, state, itemInstance);
+        level->levelEvent(boost::shared_ptr<Player>(), 1010, pos, Item::getId(this));
+        player->awardStat(GenericStats::musicToMyEars(),
+                          GenericStats::param_musicToMyEars(
+                              Item::VALIDgetId(itemInstance->getItem())));
+        itemInstance->shrink(1);
+    }
+
     return InteractionResult::eInteractionResult_Success;
 }
 
@@ -38,7 +80,9 @@ const Rarity* RecordItem::getRarity(not_null_ptr<ItemInstance>)
 
 RecordItem* RecordItem::getBySound(const SoundEvent* sound)
 {
-    (void)sound;
+    boost::unordered_map<const SoundEvent*, RecordItem*>::const_iterator it = sBySound.find(sound);
+    if (it != sBySound.end())
+        return it->second;
     return 0;
 }
 

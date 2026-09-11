@@ -5,7 +5,9 @@
 #include "game/core/IconRegister.hpp"
 #include "game/core/L10N.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityIO.hpp"
+#include "game/util/AABB.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -63,9 +65,27 @@ std::wstring SpawnEggItem::getName(not_null_ptr<ItemInstance> itemInstance)
     return name;
 }
 
-double SpawnEggItem::getYOffset(Level*, const BlockPos&)
+double SpawnEggItem::getYOffset(Level* level, const BlockPos& pos)
 {
-    return 0.125;
+    double yOffset = 0.0;
+    AABB* box = AABB::newPermanent(pos)->expand(0.0, -1.0, 0.0);
+    boost::shared_ptr<Entity> emptyEntity;
+    std::vector<AABB*>* collisions =
+        level->getCollisionAABBs(emptyEntity, box, false, false, false);
+    if (collisions != NULL && !collisions->empty())
+    {
+        double maxY = box->mMinY;
+        for (std::vector<AABB*>::iterator it = collisions->begin(); it != collisions->end(); ++it)
+        {
+            AABB* collision = *it;
+            if (collision->mMaxY > maxY)
+            {
+                maxY = collision->mMaxY;
+            }
+        }
+        yOffset = maxY - (double)pos.y;
+    }
+    return yOffset;
 }
 
 bool SpawnEggItem::canSpawn(const ResourceLocation& entityType, Level* level, int* error)

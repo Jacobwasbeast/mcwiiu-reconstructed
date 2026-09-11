@@ -199,7 +199,7 @@ int ItemInstance::getMaxStackSize() {
 return mItem != 0 ? mItem->getMaxStackSize() : 64;
 }
 bool ItemInstance::hasTag() {
-return mTag != 0;
+return mEmptyCache == 0 && mTag != 0;
 }
 CompoundTag* ItemInstance::getTag() {
 return mTag;
@@ -281,7 +281,22 @@ bool ItemInstance::isSameIgnoreDurability(const not_null_ptr<ItemInstance>& firs
 return first->sameItemIgnoreDurability(second);
 }
 bool ItemInstance::sameItemWithTags(const not_null_ptr<ItemInstance>& other, std::vector<std::wstring>* tags) {
-return matches(other, true);
+if (mItem != other->mItem) {
+return false;
+}
+if (mAuxValue != other->mAuxValue) {
+return false;
+}
+if (mTag == 0) {
+if (other->mTag != 0) {
+return false;
+}
+return true;
+}
+if (tags == 0) {
+return mTag->equals(other->mTag);
+}
+return mTag->equalsWithException(other->mTag, tags);
 }
 bool ItemInstance::sameItem_not_shared(ItemInstance* other) {
 return other != 0 && mItem == other->mItem && mAuxValue == other->mAuxValue;
@@ -345,6 +360,7 @@ mItem->releaseUsing(self, level, entity, duration);
 }
 }
 void ItemInstance::setTag(CompoundTag* tag) {
+if (mTag != 0) delete mTag;
 mTag=tag;
 }
 void ItemInstance::addTagElement(std::wstring name, Tag* tag) {
@@ -458,7 +474,7 @@ bool ItemInstance::mayBePlacedInAdventureMode() {
 return mItem != 0 && mItem->mayBePlacedInAdventureMode();
 }
 bool ItemInstance::isFramed() {
-return mFrame.get() != 0;
+return mFrame.use_count() > 0;
 }
 void ItemInstance::setFramed(boost::shared_ptr<ItemFrame> frame) {
 mFrame=frame;

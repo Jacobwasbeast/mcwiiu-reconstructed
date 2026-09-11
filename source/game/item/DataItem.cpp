@@ -1,8 +1,12 @@
 #include "game/item/DataItem.hpp"
 
 DataItem::DataItem()
-    : mDirty(true)
 {
+    DataItem* obj = this;
+    if (obj != NULL || (obj = static_cast<DataItem*>(operator new(8)), obj != NULL))
+    {
+        obj->mDirty = true;
+    }
 }
 
 DataItem::~DataItem()

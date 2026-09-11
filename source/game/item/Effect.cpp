@@ -2,6 +2,7 @@
 
 #include "game/core/GlStateManager.hpp"
 #include "game/core/ProgramManager.hpp"
+#include "game/core/Uniform.hpp"
 
 Effect::Effect(ResourceManager* resourceManager, const std::wstring& name)
     : mName(name), mDirty(true)
@@ -52,7 +53,8 @@ Uniform* Effect::safeGetUniform(const std::wstring& name)
     Uniform* uniform = getUniform(name);
     if (uniform != 0)
         return uniform;
-    return 0;
+    static char sDefaultUniform[sizeof(Uniform)] = {};
+    return reinterpret_cast<Uniform*>(sDefaultUniform);
 }
 
 void Effect::updateLocations()

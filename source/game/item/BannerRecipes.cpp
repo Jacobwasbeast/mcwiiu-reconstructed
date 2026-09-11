@@ -379,7 +379,14 @@ void BannerRecipes::BannerAddPatternRecipe::recipeRequires(INGREDIENTS_REQUIRED*
 
 boost::shared_ptr<CraftingContainer> BannerRecipes::BannerAddPatternRecipe::generateExpectedCraftSlots()
 {
-    return boost::shared_ptr<CraftingContainer>();
+    boost::shared_ptr<CraftingContainer> result;
+    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
+    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
+    {
+        storage[0] = 0;
+        storage[1] = 0;
+    }
+    return result;
 }
 
 BannerRecipes::BannerDuplicateRecipe::~BannerDuplicateRecipe()
@@ -471,5 +478,12 @@ void BannerRecipes::BannerDuplicateRecipe::recipeRequires(INGREDIENTS_REQUIRED* 
 
 boost::shared_ptr<CraftingContainer> BannerRecipes::BannerDuplicateRecipe::generateExpectedCraftSlots()
 {
-    return boost::shared_ptr<CraftingContainer>();
+    boost::shared_ptr<CraftingContainer> result;
+    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
+    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
+    {
+        storage[0] = 0;
+        storage[1] = 0;
+    }
+    return result;
 }
