@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -169,6 +170,7 @@ void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf)
 
 void ItemFrame::playPlacementSound()
 {
+    playSound(SoundEvents::ITEMFRAME_PLACE, 1.0f, 1.0f);
 }
 
 void ItemFrame::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
