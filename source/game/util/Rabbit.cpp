@@ -3,10 +3,16 @@
 #include <cmath>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/core/BuiltInLootTables.hpp"
+#include "game/core/Path.hpp"
+#include "game/core/Wolf.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/BreedGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/NearestAttackableTargetGoal.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/ai/TemptGoal.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -17,13 +23,17 @@
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/CropBlock.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+
+static const EntityDataAccessor<int>* DATA_RABBIT_TYPE = NULL;
 
 Rabbit::EvilRabbitAttackGoal::EvilRabbitAttackGoal(Rabbit* rabbit)
     : MeleeAttackGoal(rabbit, 1.4, true)
@@ -196,10 +206,8 @@ void Rabbit::create(Level* level)
 
 void Rabbit::staticCtor()
 {
-    static const EntityDataAccessor<int>* rabbitType = NULL;
-    rabbitType = SynchedEntityData::defineId<int>(0x2d680005ULL, 0x0d680000ULL,
-                                                   EntityDataSerializers::INT);
-    (void)rabbitType;
+    DATA_RABBIT_TYPE = SynchedEntityData::defineId<int>(0x2d680005ULL, 0x0d680000ULL,
+                                                          EntityDataSerializers::INT);
 }
 
 void Rabbit::setSpeedModifier(double speedModifier)
@@ -225,7 +233,19 @@ void Rabbit::registerGoals()
 
 float Rabbit::getJumpPower()
 {
-    return 0.5;
+    if (!mHorizontalCollision &&
+        (!static_cast<MoveControl*>(getMoveControl())->hasWanted() ||
+         static_cast<MoveControl*>(getMoveControl())->getWantedY() <= mY + 0.5))
+    {
+        Path* path = getNavigation()->getPath();
+        if (path != NULL && path->getIndex() < path->getSize())
+        {
+            Vec3* pos = path->currentPos(shared_from_this());
+            if (mY + 0.5 < pos->y) return 0.5f;
+        }
+        return static_cast<MoveControl*>(getMoveControl())->getSpeedModifier() > 0.6 ? 0.3f : 0.2f;
+    }
+    return 0.5f;
 }
 
 void Rabbit::jumpFromGround()
@@ -343,7 +363,18 @@ void Rabbit::addAdditonalSaveData(CompoundTag* tag)
 
 void Rabbit::setRabbitType(int type)
 {
-    mRabbitType = type;
+    if (type == 99)
+    {
+        mGoalSelector.addGoal(4, new EvilRabbitAttackGoal(this), true);
+        mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
+        mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
+        mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Wolf), true, false, false), true);
+        if (!hasCustomName())
+        {
+            setCustomName(L"entity.KillerBunny.name", L"", false);
+        }
+    }
+    getEntityData()->set(DATA_RABBIT_TYPE, type, true);
 }
 
 void Rabbit::readAdditionalSaveData(CompoundTag* tag)
@@ -433,6 +464,22 @@ MobGroupData* Rabbit::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 
 void Rabbit::eatCarrot()
 {
+    CropBlock* carrots = static_cast<CropBlock*>(Blocks::carrots);
+    const BlockState* state = carrots->getStateForAge(carrots->getMaxAge());
+    int particleData = Block::getIdWithData(state);
+    arrayWithLength<int> particleParams(&particleData, 1);
+
+    double randomX = (double)mRandom->nextFloat();
+    double randomY = (double)mRandom->nextFloat();
+    double randomZ = (double)mRandom->nextFloat();
+    double width = (double)mBbWidth;
+
+    mLevel->addParticle(PARTICLE_BLOCK_DUST,
+                         (mX + (double)((float)(randomX * width) + (float)(randomX * width))) - width,
+                         mY + 0.5 + (double)(float)(randomY * (double)mBbHeight),
+                         (mZ + (double)((float)(randomZ * width) + (float)(randomZ * width))) - width,
+                         0.0, 0.0, 0.0,
+                         particleParams);
     mMoreCarrotTicks = 40;
 }
 
