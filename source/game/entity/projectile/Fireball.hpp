@@ -14,9 +14,12 @@ class HitResult;
 class Level;
 class LivingEntity;
 class ParticleType;
+class TrackedEntity;
 
 class Fireball : public Entity
 {
+    friend class TrackedEntity;
+
 public:
     Fireball(Level* level);
     Fireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
@@ -47,6 +50,8 @@ protected:
     boost::shared_ptr<LivingEntity> mOwner;
     int mLife;
     int mUnknown;
+
+public:
     double mPowerX;
     double mPowerY;
     double mPowerZ;
