@@ -120,6 +120,7 @@ public:
     arrayWithLength<ServerLevel*> mLevels;
     PlayerList* mPlayers;
     int mLoginComparisonValue;
+    int getGameModeId() const { return gameModeId; }
 
 private:
     ConsoleSchematicFile* schematicFiles[8];

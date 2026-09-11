@@ -17,6 +17,7 @@
 #include "game/network/ClientboundSoundPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/ChestMenu.hpp"
 #include "game/ui/CraftingMenu.hpp"
@@ -56,7 +57,20 @@
 #include "game/data/DataFixer.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/DataFixTypes.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/network/BlockRegionUpdatePacket.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/Connection.hpp"
+#include "game/minigame/EMiniGameId.hpp"
+#include "game/world/block/BlockEntity.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/client/render/LevelRenderer.hpp"
+#include <algorithm>
 #include <cstring>
+#include <limits>
+#include <vector>
 
 namespace
 {
@@ -187,11 +201,166 @@ void ServerPlayer::doTickA()
 
 uint64_t ServerPlayer::broadcast(boost::shared_ptr<BlockEntity>* parameterOne, bool parameterTwo)
 {
+    if (parameterOne == NULL || !*parameterOne)
+        return 0;
+    boost::shared_ptr<Packet> packet = (*parameterOne)->getUpdatePacket();
+    if (!packet || mConnection == NULL)
+        return 0;
+    if (parameterTwo)
+        mConnection->queueSend(packet);
+    else
+        mConnection->send(packet);
     return 0;
 }
 
 void ServerPlayer::doChunkSendingTick(bool parameterOne, bool parameterTwo)
 {
+    if (mLoadedChunks.empty() || mConnection == NULL || mServer == NULL || mLevel == NULL)
+        return;
+
+    bool forceImmediateResend = false;
+    ChunkPos closestChunk(0, 0);
+    bool foundClosest = false;
+    double closestDistance = std::numeric_limits<double>::max();
+
+    for (std::list<ChunkPos>::iterator it = mLoadedChunks.begin(); it != mLoadedChunks.end();)
+    {
+        const ChunkPos chunkPos = *it;
+        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+        {
+            MasterGameMode* gameMode = mServer->mMasterGameMode;
+            if (mShowOnMaps && gameMode != NULL &&
+                !MasterGameMode::IsChunkWithinActiveBounds(gameMode, chunkPos.x, chunkPos.z))
+            {
+                it = mLoadedChunks.erase(it);
+                continue;
+            }
+        }
+
+        if (!mLevel->isChunkFinalised(chunkPos.x, chunkPos.z))
+        {
+            ++it;
+            continue;
+        }
+
+        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && mServer->mMasterGameMode != NULL &&
+            mServer->mMasterGameMode->IsChunkWithinLobbyRegionOfRoundLevel(chunkPos.x, chunkPos.z))
+        {
+            ++it;
+            continue;
+        }
+
+        if (parameterTwo && Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+            mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() == 0)
+        {
+            ++it;
+            continue;
+        }
+
+        const double distance = chunkPos.distanceToSqr(mX, mZ);
+        if (!foundClosest || distance < closestDistance)
+        {
+            closestChunk = chunkPos;
+            closestDistance = distance;
+            foundClosest = true;
+        }
+        ++it;
+    }
+
+    if (!foundClosest)
+        return;
+
+    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) && mServer->mMasterGameMode != NULL)
+    {
+        if (mServer->mMasterGameMode->GetChunkHistory() == 0)
+            forceImmediateResend = true;
+        else
+            parameterOne = true;
+    }
+
+    if (!mConnection->isLocal())
+    {
+        if (!parameterOne)
+        {
+            INetworkPlayer* sendPlayer = mConnection->getNetworkPlayer();
+            if (sendPlayer == NULL ||
+                !MinecraftServer::chunkPacketManagement_CanSendTo(sendPlayer))
+                return;
+
+            Connection* connection = mConnection->getConnection();
+            if (connection != NULL && connection->countDelayedPackets() > 3)
+                return;
+
+            INetworkPlayer* hostPlayer = CGameNetworkManager::sInstance.GetHostPlayer();
+            if (hostPlayer != NULL && hostPlayer->GetSinglePlayerOutstandingAckCount() > 3)
+                return;
+        }
+
+        INetworkPlayer* sendPlayer = mConnection->getNetworkPlayer();
+        if (sendPlayer != NULL)
+            MinecraftServer::chunkPacketManagement_DidSendTo(sendPlayer);
+    }
+
+    ServerLevel* serverLevel = mServer->getLevel(mDimension);
+    if (serverLevel == NULL)
+        return;
+
+    const int flagIndex = getFlagIndexForChunk(&closestChunk, serverLevel->mDimension->getType()->getId());
+    INetworkPlayer* networkPlayer = mConnection->getNetworkPlayer();
+    if (networkPlayer != NULL &&
+        CGameNetworkManager::sInstance.SystemFlagGet(networkPlayer, flagIndex) &&
+        !mConnection->isLocal())
+    {
+        mLoadedChunks.remove(closestChunk);
+        return;
+    }
+
+    LevelChunk* chunk = serverLevel->getChunk(closestChunk.x, closestChunk.z);
+    if (chunk != NULL && chunk->getHasGapsToCheck() && serverLevel->mDimension->isHasSkyLight())
+        chunk->recheckGaps(false);
+
+    if (!mConnection->isLocal())
+        mLoadedChunks.remove(closestChunk);
+
+    boost::shared_ptr<Packet> packet;
+    if (parameterTwo && Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+        mServer->mMasterGameMode != NULL && mServer->mMasterGameMode->GetChunkHistory() != 0)
+    {
+        packet.reset(new BlockRegionUpdatePacket(
+            closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, true, NULL));
+    }
+    else
+    {
+        packet.reset(new BlockRegionUpdatePacket(
+            closestChunk.x << 4, 0, closestChunk.z << 4, 16, 256, 16, serverLevel, false, NULL));
+    }
+
+    if (parameterOne || !packet->isAync())
+        mConnection->send(packet);
+    else
+        mConnection->queueSend(packet);
+
+    if (networkPlayer != NULL)
+        CGameNetworkManager::sInstance.SystemFlagSet(networkPlayer, flagIndex);
+
+    const int regionMinX = closestChunk.x * 16;
+    const int regionMinZ = closestChunk.z * 16;
+    std::vector<boost::shared_ptr<BlockEntity> >* blockEntities =
+        serverLevel->getBlockEntitiesInRegion(regionMinX, 0, regionMinZ,
+                                              regionMinX + 16, 256, regionMinZ + 16);
+    if (blockEntities != NULL)
+    {
+        for (size_t entityIndex = 0; entityIndex < blockEntities->size(); ++entityIndex)
+        {
+            boost::shared_ptr<BlockEntity> entity = (*blockEntities)[entityIndex];
+            const bool queueBlockEntity = !mConnection->isLocal() && !parameterOne;
+            broadcast(&entity, queueBlockEntity);
+        }
+        delete blockEntities;
+    }
+
+    if (!parameterTwo && forceImmediateResend)
+        doChunkSendingTick(true, true);
 }
 
 uint64_t ServerPlayer::doTickB()
@@ -212,6 +381,8 @@ void ServerPlayer::doTick(bool parameterOne, bool parameterTwo, bool parameterTh
 
 void ServerPlayer::initMenu()
 {
+    if (mInventoryMenu != NULL)
+        mInventoryMenu->addSlotListener(this);
 }
 
 uint64_t ServerPlayer::SpectatePlayerChange(uint32_t parameterOne, int32_t parameterTwo)
@@ -253,6 +424,11 @@ uint64_t ServerPlayer::markAttributesDirty()
 
 void ServerPlayer::refreshContainer(AbstractContainerMenu* parameterOne)
 {
+    if (parameterOne == NULL)
+        return;
+    AbstractContainerMenu::ItemList* items = parameterOne->getItems();
+    refreshContainer(parameterOne, items);
+    delete items;
 }
 
 void ServerPlayer::resetSentInfo()
@@ -268,6 +444,39 @@ int32_t ServerPlayer::getFlagIndexForChunk(int32_t parameterOne, int32_t paramet
 
 void ServerPlayer::resetChunkFlagsOutsideArea(int32_t parameterOne, int32_t parameterTwo, int32_t parameterThree, int32_t parameterFour, int32_t parameterFive)
 {
+    if (mConnection == NULL || parameterOne >= parameterThree || parameterTwo >= parameterFour)
+        return;
+
+    const int width = parameterFour - parameterTwo;
+    const int height = parameterThree - parameterOne;
+    std::vector<unsigned char> snapshot(static_cast<size_t>(width) * static_cast<size_t>(height), 0);
+    INetworkPlayer* networkPlayer = mConnection->getNetworkPlayer();
+    if (networkPlayer == NULL)
+        return;
+
+    for (int x = parameterOne; x < parameterThree; ++x)
+    {
+        for (int z = parameterTwo; z < parameterFour; ++z)
+        {
+            const int flagIndex = getFlagIndexForChunk(x, z, parameterFive);
+            snapshot[(x - parameterOne) * width + (z - parameterTwo)] =
+                static_cast<unsigned char>(CGameNetworkManager::sInstance.SystemFlagGet(networkPlayer, flagIndex));
+        }
+    }
+
+    CGameNetworkManager::sInstance.SystemFlagClearAll(networkPlayer);
+    for (int x = parameterOne; x < parameterThree; ++x)
+    {
+        for (int z = parameterTwo; z < parameterFour; ++z)
+        {
+            const unsigned char value = snapshot[(x - parameterOne) * width + (z - parameterTwo)];
+            if (value != 0)
+            {
+                const int flagIndex = getFlagIndexForChunk(x, z, parameterFive);
+                CGameNetworkManager::sInstance.SystemFlagSet(networkPlayer, flagIndex);
+            }
+        }
+    }
 }
 
 void ServerPlayer::readAdditionalSaveData(CompoundTag* parameterOne)

@@ -34,6 +34,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/data/ElementStorage.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/chunk/PlayerChunkMap.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
@@ -722,10 +723,14 @@ std::vector<TickNextTickData>* ServerLevel::fetchTicksInArea(BoundingBox* box, b
 
 void ServerLevel::isAnimalsAllowed()
 {
+    if (server != NULL)
+        server->isAnimals();
 }
 
 void ServerLevel::isNpcsAllowed()
 {
+    if (server != NULL)
+        server->isNpcsEnabled();
 }
 
 void ServerLevel::tick(boost::shared_ptr<Entity> first, bool second)
@@ -1089,6 +1094,9 @@ bool ServerLevel::explodeNextEnderCrystal()
 
 void ServerLevel::flagEntitiesToBeRemoved(uint32_t* first, bool* second)
 {
+    if (chunkMap == NULL)
+        return;
+    chunkMap->flagEntitiesToBeRemoved(reinterpret_cast<unsigned int*>(first), second);
 }
 
 Scoreboard* ServerLevel::GetScoreboard()
