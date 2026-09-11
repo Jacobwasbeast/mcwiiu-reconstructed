@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
+#include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/Font.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
@@ -681,6 +682,79 @@ void LevelRenderer::resortChunks(int x, int y, int z, int dimension)
     nonStackDirtyChunksAdded();
 
     LeaveCriticalSection(&mChunkMutex);
+}
+
+void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
+{
+    if (dimension < 0 || dimension >= 4)
+        return;
+
+    EnterCriticalSection(&mLevelMutex);
+
+    Level* oldLevel = mLevels[dimension];
+    if (oldLevel != 0)
+    {
+        int oldReferences = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (mLevels[i] == oldLevel)
+                ++oldReferences;
+        }
+        if (oldReferences == 1)
+            oldLevel->removeListener(this);
+    }
+
+    mLevels[dimension] = level;
+    mLastSortX[dimension] = -9999.0;
+    mLastSortY[dimension] = -9999.0;
+    mLastSortZ[dimension] = -9999.0;
+
+    if (mBlockRenderers[dimension] != 0)
+    {
+        delete mBlockRenderers[dimension];
+        mBlockRenderers[dimension] = 0;
+    }
+
+    if (level != 0)
+        mBlockRenderers[dimension] = new BlockRenderer(level);
+
+    if (level == 0)
+    {
+        if (mClipChunks[dimension].data != 0)
+        {
+            for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
+            {
+                mClipChunks[dimension].data[index].mChunk->_delete();
+                delete mClipChunks[dimension].data[index].mChunk;
+            }
+            delete[] mClipChunks[dimension].data;
+            mClipChunks[dimension].data = 0;
+            mClipChunks[dimension].length = 0;
+        }
+
+        if (mMinecraft != 0 && mMinecraft->mLevel != 0
+            && dimension == getDimensionIndexFromId(mMinecraft->mLevel->mDimension->getType()->getId()))
+        {
+            EnterCriticalSection(&mBlockEntityMutex);
+            mBlockEntities.clear();
+            LeaveCriticalSection(&mBlockEntityMutex);
+        }
+
+        LeaveCriticalSection(&mLevelMutex);
+        return;
+    }
+
+    int newReferences = 0;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (mLevels[i] == level)
+            ++newReferences;
+    }
+    if (newReferences == 1)
+        level->addListener(this);
+
+    LeaveCriticalSection(&mLevelMutex);
+    allChanged(dimension);
 }
 
 void LevelRenderer::allChanged(int dimension)
@@ -1771,6 +1845,17 @@ void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
 
 void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
 {
+    if (!entity)
+        return;
+    if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+        return;
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    if (!player)
+        return;
+    if (!player->mSkinLocation.empty())
+        mTextures->removeMemTexture(player->mSkinLocation);
+    if (!player->mCapeLocation.empty())
+        mTextures->removeMemTexture(player->mCapeLocation);
 }
 
 void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)

@@ -8,6 +8,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/GrassColor.hpp"
 #include "game/core/MemoryTracker.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/client/render/MemTextureProcessor.hpp"
 #include "game/client/render/MemTexture.hpp"
@@ -23,6 +24,24 @@ static int sIndexedTextures[256];
 ResourceLocation BLOCKS_LOCATION((_TEXTURE_NAME)241);
 ResourceLocation ITEM_LOCATION((_TEXTURE_NAME)240);
 static bool sTextureMipmap = true;
+
+namespace
+{
+struct MemTextureFields
+{
+    BufferedImage* m_image;
+    int m_referenceCount;
+    int m_textureId;
+    bool m_loaded;
+    int m_textureFormat;
+    bool m_textureReady;
+};
+
+MemTextureFields& memTextureFields(MemTexture* texture)
+{
+    return *reinterpret_cast<MemTextureFields*>(texture);
+}
+}
 
 Textures::Textures(TexturePackRepository* texturePackRepository, Options* options)
     : mOptions(options), mTexturePackRepository(texturePackRepository), mMissingImage(NULL),
@@ -394,7 +413,66 @@ void Textures::removeMemTexture(const std::wstring& name)
 
 void Textures::tick(bool force, bool unused, bool reload)
 {
-    if (reload) reloadAll();
+    boost::unordered_map<std::wstring, MemTexture*>::iterator it;
+
+    if (unused != mReloading)
+    {
+        mReloading = unused;
+        if (!mMemTextures.empty())
+        {
+            for (it = mMemTextures.begin(); it != mMemTextures.end(); ++it)
+            {
+                if (it->second != NULL)
+                {
+                    memTextureFields(it->second).m_textureReady = mReloading;
+                }
+            }
+        }
+    }
+    MemSect(0x16);
+
+    if (reload)
+    {
+        if (!force)
+        {
+            MemSect(0);
+            return;
+        }
+        if (mBlocks != NULL) mBlocks->cycleAnimationFrames();
+        if (mItems != NULL) mItems->cycleAnimationFrames();
+    }
+
+    EnterCriticalSection(&mMutex);
+    if (mMemTextures.empty())
+    {
+        LeaveCriticalSection(&mMutex);
+    }
+    else
+    {
+        it = mMemTextures.begin();
+        while (it != mMemTextures.end())
+        {
+            MemTexture* texture = it->second;
+            for (;;)
+            {
+                if (texture == NULL) break;
+                MemTextureFields& fields = memTextureFields(texture);
+                if (fields.m_textureReady) break;
+                fields.m_textureFormat = fields.m_textureFormat + 1;
+                if (fields.m_textureFormat <= 20) break;
+                if (fields.m_textureId >= 0) releaseTexture(fields.m_textureId);
+                delete texture;
+                it = mMemTextures.erase(it);
+                if (it == mMemTextures.end()) goto leave_mutex;
+                texture = it->second;
+            }
+            ++it;
+        }
+leave_mutex:
+        LeaveCriticalSection(&mMutex);
+    }
+
+    MemSect(0);
 }
 
 void Textures::freeStitch()

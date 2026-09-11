@@ -20,6 +20,11 @@ static ResourceLocation SKULL_TEXTURE_3;
 static ResourceLocation SKULL_TEXTURE_4;
 static ResourceLocation SKULL_TEXTURE_5;
 
+namespace
+{
+    SkullBlockRenderer* g_0x104CBE84 = NULL;
+}
+
 SkullBlockRenderer::SkullBlockRenderer()
     : mCreeperModel(NULL), mDragonModel(NULL), mActiveCreeperModel(NULL), mActiveDragonModel(NULL)
 {
@@ -177,6 +182,7 @@ void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
 void SkullBlockRenderer::init(BlockEntityRenderDispatcher* pDispatcher)
 {
     BlockEntityRenderer::init(pDispatcher);
+    g_0x104CBE84 = this;
 }
 
 void SkullBlockRenderer::dragonJawCheck()

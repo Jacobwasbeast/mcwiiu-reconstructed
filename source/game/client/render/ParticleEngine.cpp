@@ -1,7 +1,13 @@
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/client/render/Particle.hpp"
 #include "game/client/render/TerrainParticle.hpp"
+#include "game/client/render/Tesselator.hpp"
+#include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/TrackingEmitter.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -248,7 +254,54 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
 
 void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTick, int layer)
 {
-    render(entity, partialTick, layer);
+    Particle::setXOffset((entity->mXo - entity->mX) * partialTick + entity->mX);
+    Particle::setYOffset((entity->mYo - entity->mY) * partialTick + entity->mY);
+    Particle::setZOffset((entity->mZo - entity->mZ) * partialTick + entity->mZ);
+
+    Vec3* viewDirection = entity->getViewVector(partialTick);
+    Particle::setCamerViewDirection(viewDirection);
+
+    float degToRad = 0.01745329238474369f;
+    float cosYaw = Mth::cos(entity->mYRot * degToRad);
+    float sinYaw = Mth::sin(entity->mYRot * degToRad);
+    float sinPitch = Mth::sin(entity->mXRot * degToRad);
+    float cosPitch = Mth::cos(entity->mXRot * degToRad);
+
+    const DimensionType* dimensionType = level->mDimension->getType();
+    int textureType = 0;
+    if (dimensionType != DimensionType::OVERWORLD)
+    {
+        textureType = 2;
+        if (dimensionType == DimensionType::NETHER)
+        {
+            textureType = 1;
+        }
+    }
+
+    if (layer != 0)
+    {
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
+        GlStateManager::alphaFunc(4, 0.003921568859368563f);
+    }
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    ParticleList& list = particles[textureType * 10 + layer];
+    if (!list.empty())
+    {
+        Tesselator::getInstance();
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        for (unsigned int i = 0; i < list.size(); ++i)
+        {
+            Particle* particle = list.at(i);
+            particle->render(builder, entity, partialTick, cosYaw, cosPitch, sinYaw,
+                -sinYaw * sinPitch, cosYaw * sinPitch);
+        }
+        GlStateManager::disableBlend();
+        GlStateManager::depthMask(true);
+        GlStateManager::alphaFunc(4, 0.10000000149011612f);
+    }
 }
 
 void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)

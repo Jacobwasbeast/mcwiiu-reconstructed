@@ -19,8 +19,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/ChorusFlowerBlock.hpp"
 #include "game/world/block/ChorusPlantBlock.hpp"
 #include "game/world/block/CommandBlock.hpp"
+#include "game/world/block/DoorBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/util/Random.hpp"
 
@@ -1615,7 +1617,170 @@ bool BlockRenderer::tesselateLadderInWorld(const BlockState* state, const BlockP
 
 bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos& pos)
 {
-    return tesselateTrapDoorInWorld(state, pos);
+    if (state->getValue(DoorBlock::HALF) == DoorBlock::UPPER)
+    {
+        if (mLevelSource->getBlockState(pos.below())->getBlock() != state->getBlock())
+            return false;
+    }
+    else if (mLevelSource->getBlockState(pos.above())->getBlock() != state->getBlock())
+    {
+        return false;
+    }
+
+    Block* block = state->getBlock();
+    bool rightHinge = state->getValue(DoorBlock::HINGE) == DoorBlock::RIGHT;
+    const Direction* facing = state->getValue(DoorBlock::FACING);
+    unsigned int direction = facing->get3DDataValue();
+    bool open = state->getValue(DoorBlock::OPEN);
+    bool rendered;
+
+    auto resetFaceState = [&]()
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            (&mFaceRotation0)[i] = 0;
+            (&mFaceTransform0)[i] = 0;
+        }
+    };
+
+    auto renderDoor = [&]() -> bool
+    {
+        setShape(block->getShape(state, mLevelSource, pos));
+        rendered = tesselateBlockInWorld(state, pos);
+        resetFaceState();
+        return rendered;
+    };
+
+    if (!open)
+    {
+        int* transformA = NULL;
+        int* transformB = NULL;
+        int rotation4Alt = 0;
+        int rotation4Value = 0;
+
+        if (direction == Direction::eDirection_North || direction == Direction::eDirection_South)
+        {
+            transformA = &mFaceTransform2;
+            rotation4Value = 3;
+            transformB = &mFaceTransform3;
+            mFaceRotation3 = 3;
+        }
+        if (direction == Direction::eDirection_West || direction == Direction::eDirection_East)
+        {
+            transformA = &mFaceTransform0;
+            transformB = &mFaceTransform1;
+            rotation4Alt = 2;
+            rotation4Value = 1;
+            mFaceRotation1 = 3;
+        }
+
+        direction = facing->get3DDataValue();
+        if (direction > Direction::eDirection_Up)
+        {
+            if (direction == Direction::eDirection_North)
+            {
+                mFaceRotation4 = rotation4Alt;
+                if (rightHinge)
+                {
+                    *transformA = 2;
+                    *transformB = 3;
+                    mFaceTransform4 = 2;
+                    return renderDoor();
+                }
+                *transformB = 1;
+                return renderDoor();
+            }
+            if (direction > Direction::eDirection_South)
+            {
+                if (direction == Direction::eDirection_West)
+                {
+                    mFaceRotation4 = rotation4Alt;
+                    if (rightHinge)
+                    {
+                        *transformA = 2;
+                        *transformB = 3;
+                        mFaceTransform4 = 2;
+                        return renderDoor();
+                    }
+                    *transformB = 1;
+                    return renderDoor();
+                }
+                if (direction != Direction::eDirection_East)
+                    return renderDoor();
+            }
+            mFaceRotation4 = rotation4Value;
+            if (rightHinge)
+            {
+                *transformB = 1;
+                mFaceTransform4 = 2;
+                return renderDoor();
+            }
+            *transformA = 2;
+            *transformB = 3;
+        }
+    }
+    else if (direction > Direction::eDirection_Up)
+    {
+        if (direction > Direction::eDirection_South)
+        {
+            if (direction > Direction::eDirection_East)
+                return renderDoor();
+
+            if (rightHinge)
+            {
+                mFaceTransform2 = 2;
+                mFaceTransform3 = 1;
+                mFaceRotation3 = 3;
+                mFaceTransform4 = 1;
+                if (facing->get3DDataValue() == Direction::eDirection_West)
+                {
+                    mFaceRotation4 = 3;
+                    return renderDoor();
+                }
+            }
+            else
+            {
+                mFaceTransform2 = 3;
+                mFaceRotation2 = 3;
+                mFaceTransform4 = 3;
+                if (facing->get3DDataValue() != Direction::eDirection_West)
+                {
+                    mFaceRotation4 = 3;
+                    return renderDoor();
+                }
+            }
+            mFaceRotation4 = 0;
+            return renderDoor();
+        }
+
+        if (rightHinge)
+        {
+            mFaceTransform0 = 2;
+            mFaceTransform1 = 1;
+            mFaceRotation1 = 3;
+            mFaceTransform4 = 1;
+            if (direction != Direction::eDirection_North)
+            {
+                mFaceRotation4 = 1;
+                return renderDoor();
+            }
+        }
+        else
+        {
+            mFaceTransform4 = 3;
+            mFaceTransform0 = 3;
+            mFaceRotation0 = 3;
+            if (direction == Direction::eDirection_North)
+            {
+                mFaceRotation4 = 1;
+                return renderDoor();
+            }
+        }
+        mFaceRotation4 = 2;
+        return renderDoor();
+    }
+
+    return renderDoor();
 }
 
 bool BlockRenderer::tesselateRailInWorld(const BlockState* state, const BlockPos& pos)
@@ -1628,10 +1793,19 @@ bool BlockRenderer::tesselateRailInWorld(const BlockState* state, const BlockPos
 
 bool BlockRenderer::tesselateStairsInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(state->getShape(mLevelSource, pos));
-    bool rendered = tesselateBlockInWorld(state, pos);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    Block* block = state->getBlock();
+    const arrayWithLength<const AABB*>* shapes = block->getShapes(state, mLevelSource, pos);
+
+    for (unsigned int i = 0; i < shapes->length; i++)
+    {
+        if (shapes->data[i] != NULL)
+        {
+            setShape(shapes->data[i]);
+            tesselateBlockInWorld(state, pos);
+        }
+    }
+
+    return true;
 }
 
 bool BlockRenderer::tesselateEggInWorld(const BlockState* state, const BlockPos& pos)
@@ -1845,10 +2019,38 @@ bool BlockRenderer::tesselateHopperInWorld(const BlockState* state, const BlockP
 
 bool BlockRenderer::tesselateChorusFlowerInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(state->getShape(mLevelSource, pos));
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    ChorusFlowerBlock* flower = static_cast<ChorusFlowerBlock*>(state->getBlock());
+
+    mRenderAllFaces = true;
+
+    flower->setCulledFace(0);
+    setShape(ChorusFlowerBlock::getDownShape());
+    bool renderedDown = tesselateBlockInWorld(state, pos);
+
+    setShape(ChorusFlowerBlock::getUpShape());
+    flower->setCulledFace(Direction::UP);
+    bool renderedUp = tesselateBlockInWorld(state, pos);
+
+    setShape(ChorusFlowerBlock::getNorthShape());
+    flower->setCulledFace(Direction::NORTH);
+    bool renderedNorth = tesselateBlockInWorld(state, pos);
+
+    setShape(ChorusFlowerBlock::getSouthShape());
+    flower->setCulledFace(Direction::SOUTH);
+    bool renderedSouth = tesselateBlockInWorld(state, pos);
+
+    setShape(ChorusFlowerBlock::getEastShape());
+    flower->setCulledFace(Direction::EAST);
+    bool renderedEast = tesselateBlockInWorld(state, pos);
+
+    setShape(ChorusFlowerBlock::getWestShape());
+    flower->setCulledFace(Direction::WEST);
+    bool renderedWest = tesselateBlockInWorld(state, pos);
+
+    flower->setCulledFace(0);
+    mRenderAllFaces = false;
+
+    return renderedDown | renderedUp | renderedNorth | renderedSouth | renderedEast | renderedWest;
 }
 
 bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const BlockPos& pos)

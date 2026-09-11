@@ -1,8 +1,23 @@
 #include "game/client/render/Texture.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/ByteBuffer.hpp"
 #include "game/core/Buffer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include <cstring>
+
+namespace {
+
+bool& textureGpuSynced(Texture* texture)
+{
+    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(texture) + 0x56);
+}
+
+bool& textureGpuAllocated(Texture* texture)
+{
+    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(texture) + 0x84);
+}
+
+}
 
 Texture::Texture(const std::wstring& name, int type, int width, int height, int format, int filter,
                  int wrap, int target, BufferedImage* image, bool mipmap)
@@ -122,13 +137,40 @@ void Texture::transferFromImage(BufferedImage* image)
 
 void Texture::updateOnGPU()
 {
-    unsigned int i;
-    if (m_data[0] == NULL) return;
-    for (i = 0; i < m_mipLevels && i < 10; ++i) {
-        if (m_data[i] != NULL) {
-            m_data[i]->flip();
-            GlStateManager::texImage2D(m_target, (int)i, m_format, m_width >> i, m_height >> i, 0, m_format, 5121, m_data[i]);
+    unsigned int level;
+
+    m_data[0]->flip();
+    if (m_hasMipmaps && m_mipLevels > 1) {
+        for (level = 1; level < m_mipLevels; ++level) {
+            if (m_data[level] == NULL)
+                break;
+            m_data[level]->flip();
         }
+    }
+    if (!textureGpuAllocated(this)) {
+        gRenderer->TextureSetTextureLevels((int)m_mipLevels);
+        gRenderer->TextureData(m_width, m_height, m_data[0]->getBuffer(), 0, C4JRender::eTextureFormat_RGBA8);
+        if (m_hasMipmaps && m_mipLevels > 1) {
+            for (level = 1; level < m_mipLevels; ++level) {
+                if (m_data[level] == NULL)
+                    break;
+                gRenderer->TextureData(m_width >> level, m_height >> level, m_data[level]->getBuffer(), (int)level,
+                                       C4JRender::eTextureFormat_RGBA8);
+            }
+        }
+        textureGpuSynced(this) = true;
+        textureGpuAllocated(this) = true;
+    } else {
+        gRenderer->TextureDataUpdate(0, 0, m_width, m_height, m_data[0]->getBuffer(), 0);
+        if (m_hasMipmaps && gRenderer->TextureGetTextureLevels() > 1 && m_mipLevels > 1) {
+            for (level = 1; level < m_mipLevels; ++level) {
+                if (m_data[level] == NULL)
+                    break;
+                gRenderer->TextureDataUpdate(0, 0, m_width >> level, m_height >> level, m_data[level]->getBuffer(),
+                                             (int)level);
+            }
+        }
+        textureGpuSynced(this) = true;
     }
     m_dirty = false;
 }

@@ -4,6 +4,7 @@
 
 #include "game/client/render/DrownedModel.hpp"
 #include "game/client/render/LivingEntityRenderer.hpp"
+#include "game/core/Drowned.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -41,5 +42,6 @@ const ResourceLocation* DrownedRenderer::getTextureLocation(boost::shared_ptr<En
 void DrownedRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
                                      float rotationYaw, float partialTicks)
 {
+    boost::shared_ptr<Drowned> drowned = boost::static_pointer_cast<Drowned>(entity);
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
 }
