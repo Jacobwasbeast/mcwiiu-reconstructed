@@ -244,7 +244,7 @@ std::wstring HopperBlock::getTileItemIconName()
 
 EBlockRenderShape HopperBlock::getRenderShape(const BlockState* state)
 {
-    return BLOCK_RENDER_ENTITY;
+    return static_cast<EBlockRenderShape>(38);
 }
 
 bool HopperBlock::canProvideSupport(const BlockState* state, const Direction* direction,

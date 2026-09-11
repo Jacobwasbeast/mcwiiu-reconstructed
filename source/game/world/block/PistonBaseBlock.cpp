@@ -310,6 +310,6 @@ void PistonBaseBlock::registerIcons(IconRegister* iconRegister)
     mBottomIcon = iconRegister->registerIcon(L"piston_bottom");
 }
 
-EBlockRenderShape PistonBaseBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_ENTITY; }
+EBlockRenderShape PistonBaseBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(16); }
 
 bool PistonBaseBlock::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType) { return true; }

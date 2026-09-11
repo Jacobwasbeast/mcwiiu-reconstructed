@@ -196,8 +196,10 @@ not_null_ptr<ItemInstance> FlowerPotBlock::getCloneItemInstance(Level* level, co
                                 : entity->getPlantItemInstance();
 }
 
-void FlowerPotBlock::CanSurvive(const BlockState*)
+void FlowerPotBlock::CanSurvive(const BlockState* state)
 {
+    if (state != NULL)
+        (void)state->isTopSolidBlocking();
 }
 
 void FlowerPotBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,

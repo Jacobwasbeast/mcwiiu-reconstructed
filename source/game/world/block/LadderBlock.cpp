@@ -141,5 +141,5 @@ EBlockFaceShape LadderBlock::getBlockFaceShape(LevelSource*, const BlockState*, 
 
 EBlockRenderShape LadderBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_INVISIBLE;
+    return static_cast<EBlockRenderShape>(8);
 }

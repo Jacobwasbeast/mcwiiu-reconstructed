@@ -124,7 +124,7 @@ bool NoteBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& po
 
 EBlockRenderShape NoteBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_INVISIBLE;
+    return BLOCK_RENDER_MODEL;
 }
 
 void NoteBlock::blockStaticCtor()

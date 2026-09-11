@@ -237,7 +237,7 @@ void BaseRailBlock::onRemove(Level* level, const BlockPos& pos, const BlockState
 
 EBlockRenderShape BaseRailBlock::getRenderShape(const BlockState*)
 {
-    return BLOCK_RENDER_INVISIBLE;
+    return static_cast<EBlockRenderShape>(9);
 }
 
 BaseRailBlock::Rail::Rail(Level* level, const BlockPos& pos, const BlockState* state)
