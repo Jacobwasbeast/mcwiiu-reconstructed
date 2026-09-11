@@ -8,10 +8,8 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include "platform/wiiu/CafeThreadLocal.hpp"
 
+#include <coreinit/memdefaultheap.h>
 #include <coreinit/thread.h>
-
-extern "C" void *MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
-extern "C" void MEMFreeToDefaultHeap(void *block);
 
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();

@@ -8,27 +8,32 @@
 #include "game/core/PIXNamedEvents.hpp"
 
 #include <coreinit/messagequeue.h>
+#include <coreinit/thread.h>
 
 extern "C" int ProcUIProcessMessages(int count);
 extern "C" void ShutdownAndExit();
 extern "C" void ReleaseCallback();
+extern void InitializeCriticalSection(OSFastMutex*);
+extern void EnterCriticalSection(OSFastMutex*);
+extern void LeaveCriticalSection(OSFastMutex*);
 void Sleep(unsigned int milliseconds);
 
 extern CInput* g_pInput;
 extern Renderer* gRenderer;
 extern CConsoleMinecraftApp gApp;
+extern unsigned char s_altMainOKToRun;
+extern unsigned char s_altMainPending;
+extern unsigned char s_altMainExit;
+extern OSMessageQueue gMainMessageQueue;
+extern OSMessage gMainMessageBuffer;
 
-static OSMessageQueue s_altMainQueue;
-static OSMessage s_altMainMessage;
 static OSFastMutex s_altMainMutex;
-static unsigned char s_altMainReady;
-static unsigned char s_altMainExit;
 static unsigned char s_altMainStopRequested;
 
 void altMain()
 {
-    s_altMainReady = 1;
-    OSSendMessage(&s_altMainQueue, &s_altMainMessage, OS_MESSAGE_FLAGS_NONE);
+    s_altMainPending = 1;
+    OSSendMessage(&gMainMessageQueue, &gMainMessageBuffer, OS_MESSAGE_FLAGS_NONE);
 }
 
 void altMainStop()
@@ -39,19 +44,18 @@ void altMainStop()
 void waitForAltMainThreadToComplete()
 {
     while (s_altMainStopRequested != 0)
-    {
         Sleep(10);
-    }
 }
 
 int altMainThread(int, void*)
 {
+    InitializeCriticalSection(&s_altMainMutex);
     if (s_altMainExit == 0)
     {
         do
         {
-            OSReceiveMessage(&s_altMainQueue, &s_altMainMessage, OS_MESSAGE_FLAGS_BLOCKING);
-            while (s_altMainReady == 0)
+            OSReceiveMessage(&gMainMessageQueue, &gMainMessageBuffer, OS_MESSAGE_FLAGS_BLOCKING);
+            while (s_altMainOKToRun == 0)
             {
                 Sleep(10);
             }
@@ -59,7 +63,8 @@ int altMainThread(int, void*)
             EnterCriticalSection(&s_altMainMutex);
             s_altMainStopRequested = 1;
             Sleep(200);
-            s_altMainReady = 0;
+            s_altMainPending = 0;
+            s_altMainOKToRun = 0;
 
             while (s_altMainStopRequested != 0)
             {

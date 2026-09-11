@@ -1655,7 +1655,10 @@ void Renderer::AcquiredForeground()
 {
     mForegroundAcquired = true;
     OSMemoryBarrier();
-    Initialise(false);
+    if (mContextState == 0)
+        Initialise(true);
+    else
+        Initialise(false);
 }
 
 void Renderer::WiiUWaitDrawDone()

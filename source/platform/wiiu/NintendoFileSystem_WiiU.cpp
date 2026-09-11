@@ -3,13 +3,12 @@
 #include <coreinit/filesystem.h>
 
 #include "platform/wiiu/WiiU_FileCache.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
 extern void getFinalFilePath(char (&path)[256], const char* fileName);
 extern void* GetCommandBlock();
-
-static void* s_fileSystemClient = 0;
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
                void* securityAttributes, unsigned int creationDisposition,
@@ -44,7 +43,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
             }
         }
 
-        FSOpenFile(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+        FSOpenFile(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
                    path, mode, &file, static_cast<FSErrorFlag>(8));
         if (file != static_cast<FSFileHandle>(-1))
             WiiU_FileCache::CreateFileCache(static_cast<int>(file));
@@ -62,7 +61,7 @@ bool CreateDirectoryA(const char* pathName, void* securityAttributes)
     char path[256];
     getFinalFilePath(path, pathName);
     void* commandBlock = GetCommandBlock();
-    FSStatus result = FSMakeDir(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+    FSStatus result = FSMakeDir(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
                                 path, FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
@@ -72,7 +71,7 @@ int CloseDir(int* directory)
 {
     setAltMainOKToRun();
     void* commandBlock = GetCommandBlock();
-    FSStatus result = FSCloseDir(static_cast<FSClient*>(s_fileSystemClient), static_cast<FSCmdBlock*>(commandBlock),
+    FSStatus result = FSCloseDir(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
                                  static_cast<FSDirectoryHandle>(*directory), FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result;

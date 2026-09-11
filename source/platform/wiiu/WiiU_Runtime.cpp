@@ -2,6 +2,7 @@
 #include <new>
 
 #include <coreinit/filesystem.h>
+#include <coreinit/memdefaultheap.h>
 #include <coreinit/systeminfo.h>
 #include <coreinit/time.h>
 
@@ -12,6 +13,21 @@ static FSClient* sFileSystemClient = 0;
 
 extern void altMain();
 extern void altMainStop();
+
+extern "C" void* memalign(size_t alignment, size_t size)
+{
+    if (alignment <= 0)
+        alignment = 8;
+    if (size == 0)
+        size = 1;
+    return MEMAllocFromDefaultHeapEx((unsigned int)size, (int)alignment);
+}
+
+extern "C" void* _memalign_r(void* reent, size_t alignment, size_t size)
+{
+    (void)reent;
+    return memalign(alignment, size);
+}
 
 FSClient* GetWiiUFileSystemClient()
 {
@@ -34,20 +50,20 @@ static void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     else
     {
         (void)FSGetLastErrorCodeForViewer(client);
-        altMain();
     }
 }
 
 extern "C" void WiiUInitialise()
 {
     FSInit();
-    sFileSystemClient = static_cast<FSClient*>(std::malloc(sizeof(FSClient)));
+    sFileSystemClient = static_cast<FSClient*>(std::malloc(0x1700));
     if (sFileSystemClient != 0)
     {
         FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
         FSStateChangeParams notification = {stateChangeCallback, 0, 0};
         FSSetStateChangeNotification(sFileSystemClient, &notification);
         WiiUFileCacheInitialise();
+        altMainStop();
     }
 }
 

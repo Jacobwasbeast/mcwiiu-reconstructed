@@ -263,11 +263,13 @@ static void SetTimeValue(CInput::TIME_VALUE& value, unsigned long long time)
     value.low = static_cast<unsigned int>(time);
 }
 
-CInput* g_pInput = 0;
+static CInput s_bootInput;
+CInput* g_pInput = &s_bootInput;
 
 CInput::CInput()
 {
     s_inputInstance = this;
+    g_pInput = this;
     joypadMapsReady = 0;
     menuDisplayed[0] = 0;
     menuDisplayed[1] = 0;
@@ -281,6 +283,8 @@ CInput::CInput()
     initialRepeatDelay = 0.5f;
     repeatDelay = 0.8f;
     circleCrossSwapped = 0;
+    for (int pad = 0; pad < 4; ++pad)
+        padRemap[pad] = -1;
     KeyboardOnCreate();
     ErrorViewerOnCreate();
 }
@@ -1742,6 +1746,11 @@ void CInput::TickErrorViewer()
 void CInput::DebugPrintf(const char*, ...)
 {
 }
+
+CInput::~CInput()
+{
+}
+
 void CInput::JOYPAD::setConnected(bool connected)
 {
     if (this->connected != connected)

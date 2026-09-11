@@ -54,7 +54,6 @@ void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     {
         gRenderer->BeginConditionalSurvey(0);
         g_pInput->RequestErrorViewer(1, static_cast<unsigned int>(FSGetLastErrorCodeForViewer(client)), NULL, NULL);
-        altMain();
         return;
     }
     gRenderer->EndConditionalSurvey();
@@ -1309,7 +1308,8 @@ void CStorage::InitSaveGame(unsigned int, const wchar_t*, const char*, int, bool
 
     unsigned char slot = nn::act::GetSlotNo();
     int result = SAVEInitSaveDir(slot);
-    *exists = result == -12;
+    if (exists != 0)
+        *exists = result == -12;
 }
 void CStorage::SetDefaultImages(unsigned char* image, unsigned int imageSize, unsigned char* thumbnail,
                                 unsigned int thumbnailSize)
