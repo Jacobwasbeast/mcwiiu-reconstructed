@@ -74,10 +74,7 @@ void ClientboundSetPassengersPacket::handle(PacketListener* listener)
 
 arrayWithLength<int> ClientboundSetPassengersPacket::getPassengers()
 {
-    arrayWithLength<int> values;
-    values.data = mPassengers;
-    values.length = mPassengerCount;
-    return values;
+    return *reinterpret_cast<arrayWithLength<int>*>(&mPassengers);
 }
 
 int ClientboundSetPassengersPacket::getVehicle()

@@ -66,7 +66,10 @@ std::wstring ServerboundCustomPayloadPacket::getIdentifier()
 
 arrayWithLength<unsigned char> ServerboundCustomPayloadPacket::getData()
 {
-    return data;
+    arrayWithLength<unsigned char> result;
+    result.data = *reinterpret_cast<unsigned char**>(reinterpret_cast<char*>(this) + 0x38);
+    result.length = *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(this) + 0x3c);
+    return result;
 }
 
 boost::shared_ptr<Packet> ServerboundCustomPayloadPacket::create()

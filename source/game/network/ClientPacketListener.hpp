@@ -127,7 +127,7 @@ public:
     bool IsPrimaryPlayer();
     void displayPrivilegeChanges(boost::shared_ptr<MultiplayerLocalPlayer> player, uint32_t changes);
     virtual void handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
-    uint32_t getEntity(int entityId);
+    boost::shared_ptr<Entity> getEntity(int entityId);
     boost::shared_ptr<Entity> resolveEntity(int entityId);
     void checkDeferredEntityLinkPackets(int entityId);
     virtual void handleAddEntity(boost::shared_ptr<ClientboundAddEntityPacket> packet);

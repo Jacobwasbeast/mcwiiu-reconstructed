@@ -39,12 +39,27 @@
 #include "game/util/phys__Vec2.hpp"
 #include "game/core/GameRuleManager.hpp"
 #include "game/network/DisconnectPacket.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/util/Random.hpp"
+#include "game/core/System.hpp"
+#include "game/core/File.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/world/block/CompressedBlockStorage.hpp"
+#include "game/data/SparseLightStorage.hpp"
+#include "game/data/SparseDataStorage.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/NQRNetworkManager.hpp"
+#include "vendor/_NetworkGameInitData.hpp"
+
+#include <sysapp/args.h>
 
 extern "C" int shutdown(int socket, int how);
 extern GameRuleManager g_GameRuleManager;
 extern ConsoleUIController gConsoleUIController;
 extern "C" int close(int socket);
 void SetThreadName(unsigned int threadId, const char* name);
+void closeSocketForLockedProfile__Fv();
 
 CGameNetworkManager CGameNetworkManager::sInstance;
 
@@ -114,7 +129,7 @@ bool CGameNetworkManager::TickInvitePending()
 }
 void CGameNetworkManager::DoWork() { if (m_platform) m_platform->DoWork(); TickInvitePending(); }
 bool CGameNetworkManager::IsHost() { return m_platform && m_platform->IsHost(); }
-void* CGameNetworkManager::ServerThreadProc(void* data)
+int CGameNetworkManager::ServerThreadProc(void* data)
 {
     unsigned int* parameters = static_cast<unsigned int*>(data);
     unsigned int seed = 0;
@@ -170,8 +185,376 @@ int CGameNetworkManager::GetJoiningReadyPercentage() { return m_platform ? m_pla
 bool CGameNetworkManager::IsLeavingGame() { return m_platform && m_platform->IsLeavingGame(); }
 int CGameNetworkManager::GetPlayerCount() { return m_platform ? m_platform->GetPlayerCount() : 0; }
 bool CGameNetworkManager::IsLocalGame() { return m_platform->IsLocalGame(); }
-bool CGameNetworkManager::StartNetworkGame(Minecraft*, void*) { return _RunNetworkGame(0); }
-bool CGameNetworkManager::_RunNetworkGame(void*) { return m_platform != 0; }
+bool CGameNetworkManager::StartNetworkGame(Minecraft* minecraft, void* data)
+{
+    _NetworkGameInitData* initData = static_cast<_NetworkGameInitData*>(data);
+    if (initData != 0 && initData->m_value5 != 0)
+    {
+        gApp.setLevelGenerationOptions(initData->m_value5);
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        if (options == 0)
+        {
+            closeSocketForLockedProfile__Fv();
+            return false;
+        }
+        if (!options->hasLevelSeed())
+        {
+            Random random(System::processTimeInNanoSecs());
+            initData->m_seed = random.nextLong();
+        }
+        else
+        {
+            initData->m_seed = options->getLevelSeed();
+        }
+        if (options->isLocal())
+        {
+            bool hasBaseSave = false;
+            if (options->requiresBaseSave() && !options->getBaseSavePath().empty())
+            {
+                hasBaseSave = true;
+            }
+            if (hasBaseSave)
+            {
+                const unsigned int texturePackId = options->getTexturePackId();
+                if (!options->isTutorial())
+                {
+                    if (texturePackId == 0)
+                    {
+                        std::wstring root = options->getBaseSaveRoot();
+                        std::wstring path = options->getBaseSavePath();
+                        std::wstring combined = root;
+                        combined.append(path);
+                        options->setBaseSaveData(File(combined));
+                    }
+                    else
+                    {
+                        std::wstring path = options->getBaseSavePath();
+                        std::wstring root = options->getBaseSaveRoot();
+                        std::wstring filePath =
+                            gApp.getFilePath(texturePackId, path, true, root);
+                        options->setBaseSaveData(File(filePath));
+                    }
+                }
+                else
+                {
+                    std::wstring path = options->getBaseSavePath();
+                    std::wstring root = options->getBaseSaveRoot();
+                    std::wstring filePath = gApp.getFilePath(4, path, true, root);
+                    options->setBaseSaveData(File(filePath));
+                }
+            }
+        }
+    }
+
+    ServerStoppedCreate(false);
+    if (!IsHost())
+    {
+        Socket::Initialise(0);
+    }
+    else
+    {
+        ServerStoppedCreate(true);
+        ServerReadyCreate(true);
+        C4JThreadImpl* serverThread =
+            new C4JThreadImpl(ServerThreadProc, initData, "Server", 0x100000);
+        serverThread->SetProcessor(0);
+        serverThread->Run();
+        serverThread->SetDeleteOnExit(true);
+        ServerReadyWait();
+        ServerReadyDestroy();
+    }
+
+    if (!IsReadyToPlayOrIdle())
+    {
+        ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
+        do
+        {
+            progressRenderer->progressStage(CorrectErrorIDS(0xaebf0574));
+            progressRenderer->progressStagePercentage(GetJoiningReadyPercentage());
+            C4JThread::Sleep(10);
+        } while (!IsReadyToPlayOrIdle());
+        progressRenderer->progressStagePercentage(100);
+    }
+
+    if (!IsInSession())
+    {
+        MinecraftServer::HaltServer(false);
+        closeSocketForLockedProfile__Fv();
+        return false;
+    }
+
+    while (!gApp.DLCInstallProcessCompleted() && gApp.DLCInstallPending() && !IsLeavingGame())
+    {
+        C4JThread::Sleep(10);
+    }
+    if (IsLeavingGame())
+    {
+        MinecraftServer::HaltServer(false);
+        closeSocketForLockedProfile__Fv();
+        return false;
+    }
+
+    ClientPacketListener* primaryListener = 0;
+    if (!IsHost())
+    {
+        INetworkPlayer* localPlayer = GetLocalPlayerByUserIndex(gProfile->GetPrimaryPad());
+        Socket* socket = localPlayer != 0 ? localPlayer->GetSocket() : 0;
+        if (socket == 0)
+        {
+            MinecraftServer::HaltServer(false);
+            return false;
+        }
+        primaryListener = new ClientPacketListener(minecraft, socket, -1);
+    }
+    else
+    {
+        primaryListener = new ClientPacketListener(minecraft, 0, -1);
+    }
+
+    const int primaryPad = gProfile->GetPrimaryPad();
+    std::wstring onlineName = convStringToWstring(gProfile->GetGamertag(primaryPad));
+    boost::shared_ptr<Packet> preLoginPacket(new ServerboundPreLoginPacket(onlineName));
+    primaryListener->send(preLoginPacket);
+
+    TexturePack* selectedTexturePack = 0;
+    if (!IsHost())
+    {
+        minecraft->mProgressRenderer->progressStage(0xc52fb168);
+        selectedTexturePack = minecraft->mTexturePackRepository->getSelected();
+    }
+    else
+    {
+        gConsoleUIController.StartReloadSkinThread();
+        selectedTexturePack = minecraft->mTexturePackRepository->getSelected();
+    }
+
+    while (true)
+    {
+        do
+        {
+            primaryListener->tick();
+            CompressedBlockStorage::tick();
+            SparseLightStorage::tick();
+            SparseDataStorage::tick();
+            C4JThread::Sleep(50);
+            if (IsInSession() && !primaryListener->isStarted() && !primaryListener->isClosed() &&
+                !IsLeavingGame())
+            {
+                continue;
+            }
+        } while (selectedTexturePack->isLoadingData());
+
+        if (!minecraft->mTexturePackRepository->needsUIUpdate() &&
+            !gConsoleUIController.IsReloadingSkin())
+        {
+            break;
+        }
+    }
+    gConsoleUIController.CleanUpSkinReload();
+
+    if (IsLeavingGame() || !IsInSession())
+    {
+        primaryListener->close();
+    }
+
+    if (!primaryListener->isStarted() || primaryListener->isClosed())
+    {
+        if (primaryListener->isClosed() || !IsInSession())
+        {
+            MinecraftServer::HaltServer(false);
+            return false;
+        }
+        if (IsLeavingGame())
+        {
+            MinecraftServer::HaltServer(false);
+            return false;
+        }
+    }
+    else
+    {
+        EnterCriticalSection(&m_connectionsMutex);
+        m_connections.push_back(primaryListener);
+        LeaveCriticalSection(&m_connectionsMutex);
+
+        const int hostPad = gProfile->GetPrimaryPad();
+        const int playerCount = GetPlayerCount();
+        const bool localGame = IsLocalGame();
+        if (playerCount < 2)
+        {
+            if (localGame)
+            {
+                gProfile->SetRichPresenceContextValue(hostPad, 5, 0);
+            }
+            else
+            {
+                gProfile->SetRichPresenceContextValue(hostPad, 4, 0);
+            }
+        }
+        else if (localGame)
+        {
+            gProfile->SetRichPresenceContextValue(hostPad, 3, 0);
+        }
+        else
+        {
+            gProfile->SetRichPresenceContextValue(hostPad, 2, 0);
+        }
+
+        for (int userIndex = 0; userIndex < 4; ++userIndex)
+        {
+            if (userIndex == gProfile->GetPrimaryPad())
+            {
+                continue;
+            }
+            if (GetLocalPlayerByUserIndex(userIndex) == 0 || gProfile->IsGuest(userIndex))
+            {
+                INetworkPlayer* player = GetLocalPlayerByUserIndex(userIndex);
+                Socket* socket = player != 0 ? player->GetSocket() : 0;
+                if (socket != 0)
+                {
+                    if (!socket->close(false))
+                    {
+                        socket->close(true);
+                    }
+                }
+                continue;
+            }
+
+            INetworkPlayer* player = GetLocalPlayerByUserIndex(userIndex);
+            Socket* socket = player != 0 ? player->GetSocket() : 0;
+            if (player == 0 || socket == 0)
+            {
+                continue;
+            }
+
+            ClientPacketListener* listener = new ClientPacketListener(minecraft, socket, userIndex);
+            if (listener == 0)
+            {
+                continue;
+            }
+
+            minecraft->addPendingLocalConnection(userIndex, listener);
+            Socket::addIncomingSocket(socket);
+            std::wstring playerName = convStringToWstring(gProfile->GetGamertag(userIndex));
+            boost::shared_ptr<Packet> playerPreLogin(new ServerboundPreLoginPacket(playerName));
+            listener->send(playerPreLogin);
+
+            EnterCriticalSection(&m_connectionsMutex);
+            m_connections.push_back(listener);
+            LeaveCriticalSection(&m_connectionsMutex);
+
+            while (true)
+            {
+                EnterCriticalSection(&m_connectionsMutex);
+                for (std::vector<ClientPacketListener*>::iterator it = m_connections.begin();
+                     it != m_connections.end(); ++it)
+                {
+                    if (*it != 0)
+                    {
+                        (*it)->tick();
+                    }
+                }
+                LeaveCriticalSection(&m_connectionsMutex);
+                CompressedBlockStorage::tick();
+                SparseLightStorage::tick();
+                SparseDataStorage::tick();
+                C4JThread::Sleep(50);
+                if (!IsInSession() || listener->isStarted() || listener->isClosed() || IsLeavingGame())
+                {
+                    break;
+                }
+            }
+
+            if (IsLeavingGame() || !IsInSession())
+            {
+                break;
+            }
+
+            if (!gProfile->IsGuest(userIndex) || listener->isClosed())
+            {
+                if (listener->isClosed())
+                {
+                    EnterCriticalSection(&m_connectionsMutex);
+                    for (std::vector<ClientPacketListener*>::iterator it = m_connections.begin();
+                         it != m_connections.end(); ++it)
+                    {
+                        if (*it == listener)
+                        {
+                            delete *it;
+                            m_connections.erase(it);
+                            break;
+                        }
+                    }
+                    LeaveCriticalSection(&m_connectionsMutex);
+                }
+                else
+                {
+                    gApp.SetRichPresenceContext(userIndex, 0);
+                    if (IsLocalGame())
+                    {
+                        gProfile->SetRichPresenceContextValue(userIndex, 3, 0);
+                    }
+                    else
+                    {
+                        gProfile->SetRichPresenceContextValue(userIndex, 2, 0);
+                    }
+                }
+            }
+        }
+
+        gApp.SetGameMode(static_cast<eGameMode>(1));
+    }
+
+    if (!IsLeavingGame() && IsInSession())
+    {
+        return true;
+    }
+
+    EnterCriticalSection(&m_connectionsMutex);
+    for (std::vector<ClientPacketListener*>::iterator it = m_connections.begin();
+         it != m_connections.end(); ++it)
+    {
+        if (*it != 0)
+        {
+            (*it)->close();
+        }
+    }
+    LeaveCriticalSection(&m_connectionsMutex);
+    MinecraftServer::HaltServer(false);
+    return false;
+}
+bool CGameNetworkManager::_RunNetworkGame(void* data)
+{
+    const bool isHost = IsHost();
+    Minecraft* minecraft = Minecraft::GetInstance();
+    bool result = StartNetworkGame(minecraft, data);
+    if (!result)
+    {
+        return false;
+    }
+
+    if (isHost)
+    {
+        result = m_platform->_StartGame();
+        if (!result)
+        {
+            gApp.SetAction(GetPrimaryPad(), static_cast<eXuiAction>(3), reinterpret_cast<void*>(1));
+            return true;
+        }
+    }
+
+    if (IsLeavingGame())
+    {
+        return false;
+    }
+
+    gApp.SetGameStarted(true);
+    if (!gProfile->IsFullVersion())
+    {
+        gConsoleUIController.SetTrialTimerLimitSecs(0x960u);
+        gApp.SetTrialTimerStart();
+    }
+    return result;
+}
 int CGameNetworkManager::GetOnlinePlayerCount() { return m_platform ? m_platform->GetOnlinePlayerCount() : 0; }
 bool CGameNetworkManager::AddLocalPlayerByUserIndex(int index) { return m_platform && m_platform->AddLocalPlayerByUserIndex(index); }
 bool CGameNetworkManager::RemoveLocalPlayerByUserIndex(int index) { return m_platform && m_platform->RemoveLocalPlayerByUserIndex(index); }
@@ -477,7 +860,20 @@ void CGameNetworkManager::WiiU_AcquiredForeground()
     MasterGameMode::ResetLobbyTimerAfterSuspend();
 }
 void CGameNetworkManager::WiiU_ReleaseCallback() { NintendoVoiceChat_WiiU::ReleaseCallback(); }
-void CGameNetworkManager::WiiU_SetBootFromFriendList() { gApp.setIgnoreMainMenuInputDuringInvite(true); }
+void CGameNetworkManager::WiiU_SetBootFromFriendList()
+{
+    SYSArgDataBlock args[2] = {};
+    args[0].id = SYS_ARG_ID_JOIN_PID;
+    args[1].id = SYS_ARG_ID_END;
+
+    SYSCallerInfo callerInfo = {};
+    if (SYSGetArguments(args, &callerInfo) == 0 && args[0].type == SYS_ARG_TYPE_UINT32)
+    {
+        g_bSafeToRespondToGameBootInvite = true;
+        g_iGameBootInviteUserIndex = static_cast<int>(args[0].uint32);
+        gApp.setIgnoreMainMenuInputDuringInvite(true);
+    }
+}
 bool CGameNetworkManager::IsUGCRestricted(int userIndex)
 {
     bool explicitUser = userIndex != 0xff;

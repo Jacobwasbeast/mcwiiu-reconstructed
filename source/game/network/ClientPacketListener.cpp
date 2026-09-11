@@ -407,7 +407,7 @@ INetworkPlayer* ClientPacketListener::getNetworkPlayer()
 
 bool ClientPacketListener::IsPrimaryPlayer()
 {
-    return m_playerId == 0;
+    return m_playerId == CGameNetworkManager::sInstance.GetPrimaryPad();
 }
 
 void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<MultiplayerLocalPlayer> player, uint32_t changes)
@@ -642,7 +642,26 @@ boost::shared_ptr<Entity> ClientPacketListener::resolveEntity(int entityId)
     return level->getEntity(entityId);
 }
 
-uint32_t ClientPacketListener::getEntity(int entityId) { return 0; }
+boost::shared_ptr<Entity> ClientPacketListener::getEntity(int entityId)
+{
+    if (m_minecraft != 0)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            boost::shared_ptr<Entity> localPlayer = m_minecraft->mLocalPlayers[i];
+            if (localPlayer != 0 && localPlayer->getId() == entityId)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer>& current = m_minecraft->mLocalPlayers[m_playerId];
+                if (current == 0 || current->getId() != entityId)
+                    return boost::shared_ptr<Entity>();
+                return current;
+            }
+        }
+    }
+    if (m_level == 0)
+        return boost::shared_ptr<Entity>();
+    return m_level->getEntity(entityId);
+}
 void ClientPacketListener::checkDeferredEntityLinkPackets(int entityId)
 {
     EnterCriticalSection(&s_deferredLinkMutex);

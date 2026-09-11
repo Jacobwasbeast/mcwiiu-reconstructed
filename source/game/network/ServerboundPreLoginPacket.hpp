@@ -11,9 +11,11 @@
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
+class ServerConnectionListener;
 
 class ServerboundPreLoginPacket : public Packet, public boost::enable_shared_from_this<ServerboundPreLoginPacket>
 {
+    friend class ServerConnectionListener;
 public:
     ServerboundPreLoginPacket();
     ServerboundPreLoginPacket(const std::wstring& name);

@@ -76,7 +76,10 @@ int ClientboundAwardStatPacket::getCount()
 
 arrayWithLength<unsigned char> ClientboundAwardStatPacket::getParamData()
 {
-    return paramData;
+    arrayWithLength<unsigned char> result;
+    result.data = paramData.data;
+    result.length = paramData.length;
+    return result;
 }
 
 boost::shared_ptr<Packet> ClientboundAwardStatPacket::create()

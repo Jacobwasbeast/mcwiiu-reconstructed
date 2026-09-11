@@ -14,6 +14,7 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientboundPreLoginPacket.hpp"
+#include "game/network/ServerboundPreLoginPacket.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/LevelData.hpp"
 #include <cstring>
@@ -148,8 +149,16 @@ void ServerConnectionListener::sendPreLoginResponse()
     send(boost::shared_ptr<Packet>(packet));
 }
 
-void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket>)
+void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket> packet)
 {
+    if (packet->protocolVersion != 0x881)
+    {
+        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
+            packet->protocolVersion < 0x882 ? 0x0F : 0x0E));
+        return;
+    }
+
+    m_name = packet->name;
     sendPreLoginResponse();
 }
 

@@ -41,7 +41,7 @@ public:
     bool TickInvitePending();
     void DoWork();
     bool IsHost();
-    static void* ServerThreadProc(void* data);
+    static int ServerThreadProc(void* data);
     void ServerReadyWait();
     void ServerReadyDestroy();
     bool IsReadyToPlayOrIdle();

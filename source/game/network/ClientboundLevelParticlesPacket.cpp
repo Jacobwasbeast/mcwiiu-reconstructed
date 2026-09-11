@@ -210,7 +210,10 @@ bool ClientboundLevelParticlesPacket::isOverrideLimiter()
 
 arrayWithLength<int> ClientboundLevelParticlesPacket::getParams()
 {
-    return params;
+    arrayWithLength<int> result;
+    result.data = params.data;
+    result.length = params.length;
+    return result;
 }
 
 float ClientboundLevelParticlesPacket::getXAux()
