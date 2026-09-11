@@ -2,16 +2,25 @@
 
 ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path)
 {
-    mSaveFile = saveFile;
-    mFileEntry = saveFile->createFile(path);
-    mSaveFile->setFilePointer(mFileEntry, 0, NULL, 0);
+    ConsoleSaveFileInputStream* obj = this;
+    if (obj != NULL || (obj = static_cast<ConsoleSaveFileInputStream*>(operator new(0xc)), obj != NULL))
+    {
+        obj->mSaveFile = saveFile;
+        FileEntry* fileEntry = saveFile->createFile(path);
+        obj->mFileEntry = fileEntry;
+        saveFile->setFilePointer(fileEntry, 0, NULL, 0);
+    }
 }
 
 ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
 {
-    mFileEntry = fileEntry;
-    mSaveFile = saveFile;
-    saveFile->setFilePointer(fileEntry, 0, NULL, 0);
+    ConsoleSaveFileInputStream* obj = this;
+    if (obj != NULL || (obj = static_cast<ConsoleSaveFileInputStream*>(operator new(0xc)), obj != NULL))
+    {
+        obj->mFileEntry = fileEntry;
+        obj->mSaveFile = saveFile;
+        saveFile->setFilePointer(fileEntry, 0, NULL, 0);
+    }
 }
 
 ConsoleSaveFileInputStream::~ConsoleSaveFileInputStream()
