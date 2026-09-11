@@ -94,5 +94,8 @@ IntArrayTag* IntArrayTag::copy()
 
 arrayWithLength<int> IntArrayTag::getAsIntArray()
 {
-    return mData;
+    arrayWithLength<int> result;
+    result.data = mData.data;
+    result.length = mData.length;
+    return result;
 }

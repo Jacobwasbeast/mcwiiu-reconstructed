@@ -38,6 +38,10 @@ static const wchar_t* const TAG_TYPE_NAMES[NUM_TAG_TYPES + 1] =
 
 Tag::Tag()
 {
+    Tag* obj = this;
+    if (obj != NULL || (obj = static_cast<Tag*>(operator new(4)), obj != NULL))
+    {
+    }
 }
 
 Tag::~Tag()

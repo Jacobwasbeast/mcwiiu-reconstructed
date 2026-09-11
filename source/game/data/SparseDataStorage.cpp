@@ -3,6 +3,7 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/XLockFreeStack.hpp"
+#include <cstdlib>
 #include <string.h>
 #include <vector>
 
@@ -11,6 +12,7 @@ void* XMemCpy(void* destination, const void* source, unsigned int size);
 static int sPendingDeleteList;
 static XLockFreeStack<unsigned char> sPendingDeleteLists[3];
 static OSFastMutex sCompressLock;
+static int sAllocatedBytes;
 
 void SparseDataStorage::Array256_1Bit::init()
 {
@@ -129,7 +131,8 @@ unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, char (&values)[
 
 SparseDataStorage::PlaneOffsets* SparseDataStorage::allocatePlaneOffsets(unsigned int size)
 {
-    return static_cast<PlaneOffsets*>(static_cast<void*>(new unsigned char[size]));
+    sAllocatedBytes += size;
+    return static_cast<PlaneOffsets*>(malloc(size));
 }
 void SparseDataStorage::freePlaneOffsets(PlaneOffsets* offsets, int)
 {

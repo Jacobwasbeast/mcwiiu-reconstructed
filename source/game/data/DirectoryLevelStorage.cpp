@@ -5,8 +5,11 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/System.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/DoubleTag.hpp"
+#include "game/data/ListTag.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
 #include "game/data/ConsoleSaveFileInputStream.hpp"
 #include "game/data/ConsoleSaveFileOutputStream.hpp"
@@ -259,17 +262,44 @@ int DirectoryLevelStorage::getAuxValueForMap(PlayerUID uid, int dimension, int x
 
 void DirectoryLevelStorage::resetPlayerPositionsInDimension(int dimension)
 {
-    (void)dimension;
+    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(mPlayersPrefix);
+    if (!files)
+        return;
+    for (std::vector<FileEntry*>::iterator it = files->begin(); it != files->end(); ++it)
+    {
+        FileEntry* entry = *it;
+        ConsoleSaveFileInputStream input(mSaveFile, entry);
+        CompoundTag* tag = NbtIo::readCompressed(&input);
+        if (!tag)
+            continue;
+        bool dimensionMatches = false;
+        if (tag->contains(L"Dimension"))
+        {
+            if (tag->getInt(L"Dimension") == dimension)
+                dimensionMatches = true;
+        }
+        if (dimensionMatches && tag->contains(L"Pos"))
+        {
+            ListTag* pos = tag->getList(L"Pos", 6);
+            pos->set(1, new DoubleTag(1.7976931348623157e+308));
+            ConsoleSaveFileOutputStream output(mSaveFile, entry);
+            NbtIo::writeCompressed(tag, &output);
+        }
+        delete tag;
+    }
+    delete files;
 }
 
 void DirectoryLevelStorage::resetNetherPlayerPositions()
 {
-    resetPlayerPositionsInDimension(-1);
+    if (gApp.GetResetNether() != 0)
+        resetPlayerPositionsInDimension(-1);
 }
 
 void DirectoryLevelStorage::resetEndPlayerPositions()
 {
-    resetPlayerPositionsInDimension(1);
+    if (gApp.GetResetEnd() != 0)
+        resetPlayerPositionsInDimension(1);
 }
 
 void DirectoryLevelStorage::PlayerMappings::writeMappings(DataOutputStream* output)
