@@ -16,6 +16,7 @@ class ServerConnectionListener;
 
 class ClientboundLoginPacket : public Packet, public boost::enable_shared_from_this<ClientboundLoginPacket>
 {
+    friend class ClientPacketListener;
     friend class ServerConnectionListener;
 public:
     ClientboundLoginPacket();

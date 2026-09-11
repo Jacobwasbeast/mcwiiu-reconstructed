@@ -35,6 +35,7 @@ public:
     double getKnockbackX();
     double getKnockbackY();
     double getKnockbackZ();
+    bool isKnockbackOnly();
 
     static boost::shared_ptr<Packet> create();
 

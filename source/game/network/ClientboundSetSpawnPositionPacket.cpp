@@ -14,5 +14,6 @@ int ClientboundSetSpawnPositionPacket::getEstimatedSize() { return 12; }
 bool ClientboundSetSpawnPositionPacket::canBeInvalidated() { return true; }
 bool ClientboundSetSpawnPositionPacket::isInvalidatedBy(boost::shared_ptr<Packet>) { return true; }
 bool ClientboundSetSpawnPositionPacket::isAync() { return false; }
+BlockPos ClientboundSetSpawnPositionPacket::getPos() { return mPos; }
 int ClientboundSetSpawnPositionPacket::getPacketId() { return 6; }
 boost::shared_ptr<Packet> ClientboundSetSpawnPositionPacket::create() { return boost::shared_ptr<Packet>(new ClientboundSetSpawnPositionPacket()); }

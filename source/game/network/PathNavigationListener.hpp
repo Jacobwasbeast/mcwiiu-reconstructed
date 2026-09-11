@@ -23,7 +23,6 @@ public:
     virtual void setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level);
     virtual void allChanged();
     virtual void playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing);
-    virtual void playSoundToAllPlayers(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range);
     virtual void playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range);
     virtual void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
     virtual void addParticle(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, bool force, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params);
@@ -33,7 +32,6 @@ public:
     virtual void globalLevelEvent(int type, const BlockPos& pos, int data);
     virtual void levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data);
     virtual void destroyBlockProgress(int breakerId, const BlockPos& pos, int progress);
-    virtual void invalidateChunksOutsideArea(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ);
 
 private:
     std::vector<PathNavigation*> mPathNavigations;

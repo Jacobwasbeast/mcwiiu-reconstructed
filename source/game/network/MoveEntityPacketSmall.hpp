@@ -14,6 +14,7 @@ namespace Rot {}
 
 class MoveEntityPacketSmall : public Packet, public boost::enable_shared_from_this<MoveEntityPacketSmall>
 {
+    friend class ClientPacketListener;
 public:
     MoveEntityPacketSmall();
     explicit MoveEntityPacketSmall(int entityId);

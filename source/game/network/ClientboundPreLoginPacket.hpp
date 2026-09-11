@@ -35,6 +35,7 @@ public:
 private:
     friend class CPlatformNetworkManagerNintendo;
     friend class FakeClientPacketListener;
+    friend class ClientPacketListener;
 
     PlayerUID* mPlayers;
     unsigned int mPlayerCount;

@@ -27,6 +27,8 @@ public:
 
     static boost::shared_ptr<Packet> create();
 
+    friend class ClientPacketListener;
+
 private:
     static int PositionSortFunction(const void* first, const void* second);
 

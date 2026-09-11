@@ -19,6 +19,8 @@ class Player;
 
 class ClientboundAddPlayerPacket : public Packet, public boost::enable_shared_from_this<ClientboundAddPlayerPacket>
 {
+    friend class ClientPacketListener;
+
 public:
     ClientboundAddPlayerPacket();
     ClientboundAddPlayerPacket(boost::shared_ptr<Player> player, PlayerUID playerId, PlayerUID profileId,

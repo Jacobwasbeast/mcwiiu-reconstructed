@@ -135,6 +135,11 @@ double ClientboundExplodePacket::getKnockbackZ()
     return knockbackZ;
 }
 
+bool ClientboundExplodePacket::isKnockbackOnly()
+{
+    return knockbackOnly;
+}
+
 int ClientboundExplodePacket::getPacketId()
 {
     return 60;

@@ -51,3 +51,7 @@ int XZPacket::getPacketId()
 {
     return 166;
 }
+
+char XZPacket::getMode() { return mMode; }
+int XZPacket::getX() { return mX; }
+int XZPacket::getZ() { return mZ; }

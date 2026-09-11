@@ -1,12 +1,25 @@
 #include "game/network/ServerConnectionListener.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/network/Connection.hpp"
 #include "game/network/ClientboundLoginPacket.hpp"
 #include "game/network/DisconnectPacket.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/ClientboundPreLoginPacket.hpp"
+#include "game/network/INetworkPlayer.hpp"
+#include "game/world/LevelData.hpp"
+#include <cstring>
+#include <vector>
+
+extern CMinecraftApp* g_pApp;
 
 ServerConnectionListener::ServerConnectionListener(MinecraftServer* server, Socket* socket, const std::wstring& name)
     : PacketListener(), m_connection(new Connection(socket, name, this)), m_server(server), m_name(name), m_tickCount(0), m_disconnected(false),
@@ -54,6 +67,85 @@ void ServerConnectionListener::tick()
 
 void ServerConnectionListener::sendPreLoginResponse()
 {
+    if (m_connection == NULL || m_server == NULL || m_server->getPlayers() == NULL)
+        return;
+
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = m_server->getPlayers()->getPlayers();
+    if (players == NULL)
+        return;
+
+    std::vector<PlayerUID> onlinePlayers;
+    unsigned char guestFlags = 0;
+    unsigned int hostPlayerIndex = 0;
+    unsigned int playerIndex = 0;
+    const PlayerUID emptyUid(0);
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
+         it != players->end(); ++it, ++playerIndex)
+    {
+        boost::shared_ptr<ServerPlayer> serverPlayer = *it;
+        if (!serverPlayer || serverPlayer->mConnection == NULL)
+            continue;
+
+        ServerGamePacketListenerImpl* listener = serverPlayer->mConnection.get();
+        INetworkPlayer* networkPlayer = listener->getNetworkPlayer();
+        if (networkPlayer == NULL)
+            continue;
+
+        const PlayerUID playerUid = networkPlayer->GetUID();
+        if (playerUid == emptyUid)
+            continue;
+
+        if (listener->isGuest())
+            guestFlags = static_cast<unsigned char>(guestFlags | (1U << (playerIndex & 0x3fU)));
+
+        onlinePlayers.push_back(playerUid);
+        if (networkPlayer->IsLocal())
+            hostPlayerIndex = playerIndex;
+    }
+
+    std::wstring worldName;
+    ServerLevel* level = m_server->getLevel(0);
+    if (level != NULL && level->getLevelData() != NULL)
+        worldName = level->getLevelData()->getLevelName();
+
+    char uniqueMapName[16];
+    std::memset(uniqueMapName, 0, sizeof(uniqueMapName));
+
+    PlayerUID* playerUidArray = NULL;
+    if (!onlinePlayers.empty())
+    {
+        playerUidArray = new PlayerUID[onlinePlayers.size()];
+        for (size_t index = 0; index < onlinePlayers.size(); ++index)
+            playerUidArray[index] = onlinePlayers[index];
+    }
+
+    const unsigned int hostOption = g_pApp != NULL
+        ? g_pApp->GetGameHostOption(eGameHostOption_32) : 0;
+    unsigned int maxPlayers = CGameNetworkManager::sInstance.GetMaxPlayers();
+    const MiniGameDef* miniGame = Minecraft::GetInstance() != NULL
+        ? Minecraft::GetInstance()->GetMiniGame() : NULL;
+    if (miniGame != NULL)
+        maxPlayers = miniGame->GetHostOption(static_cast<eCustomGameModeHostOption>(10));
+
+    const bool matchmakingEnabled = CGameNetworkManager::sInstance.IsMatchmakingEnabled();
+    const EMiniGameId miniGameId = miniGame != NULL
+        ? static_cast<EMiniGameId>(miniGame->GetId()) : eMiniGameId_Any;
+
+    ClientboundPreLoginPacket* packet = new ClientboundPreLoginPacket(
+        worldName,
+        playerUidArray,
+        static_cast<unsigned int>(onlinePlayers.size()),
+        guestFlags,
+        static_cast<unsigned int>(m_server->mLoginComparisonValue),
+        uniqueMapName,
+        hostOption,
+        maxPlayers,
+        static_cast<unsigned char>(hostPlayerIndex),
+        static_cast<unsigned int>(m_server->getGameModeId()),
+        matchmakingEnabled,
+        miniGameId);
+    send(boost::shared_ptr<Packet>(packet));
 }
 
 void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket>)

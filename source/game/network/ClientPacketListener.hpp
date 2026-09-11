@@ -102,6 +102,7 @@ class PlayerReadyPacket;
 class ClientboundPowerupPacket;
 class VotePacket;
 class MultiplayerLocalPlayer;
+class Entity;
 class Packet;
 class ClientPacketListener : public PacketListener
 {
@@ -110,9 +111,8 @@ public:
     {
     public:
         DeferredEntityLinkPacket(boost::shared_ptr<ClientboundSetEntityLinkPacket> packet);
-        int entityId;
-        int linkId;
-        int linkType;
+        unsigned int mTick;
+        boost::shared_ptr<ClientboundSetEntityLinkPacket> mPacket;
     };
 
     ClientPacketListener(Minecraft* minecraft, Socket* socket, int playerId);
@@ -128,6 +128,7 @@ public:
     void displayPrivilegeChanges(boost::shared_ptr<MultiplayerLocalPlayer> player, uint32_t changes);
     virtual void handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet);
     uint32_t getEntity(int entityId);
+    boost::shared_ptr<Entity> resolveEntity(int entityId);
     void checkDeferredEntityLinkPackets(int entityId);
     virtual void handleAddEntity(boost::shared_ptr<ClientboundAddEntityPacket> packet);
     virtual void handleAddExperienceOrb(boost::shared_ptr<ClientboundAddExperienceOrbPacket> packet);
@@ -228,6 +229,8 @@ public:
     virtual void handlePowerup(boost::shared_ptr<ClientboundPowerupPacket> packet);
     virtual void handleVote(boost::shared_ptr<VotePacket> packet);
     static void staticCtor();
+    static OSFastMutex s_deferredLinkMutex;
+    static std::vector<DeferredEntityLinkPacket> s_deferredLinks;
 
 private:
     bool m_closed;
@@ -245,7 +248,6 @@ private:
     int m_playerId;
     Random m_random;
     void* m_savedDataStorage;
-    std::vector<DeferredEntityLinkPacket> m_deferredLinks;
 };
 
 #endif

@@ -25,6 +25,7 @@ public:
     virtual bool isInvalidatedBy(boost::shared_ptr<Packet> packet);
     virtual bool isAync();
     virtual int getPacketId();
+    BlockPos getPos();
     static boost::shared_ptr<Packet> create();
 private:
     BlockPos mPos;

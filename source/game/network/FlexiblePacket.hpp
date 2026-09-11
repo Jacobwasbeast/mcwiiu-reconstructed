@@ -19,6 +19,9 @@ public:
     virtual void write(DataOutputStream* output);
     virtual int getEstimatedSize();
 
+    int getFirstInt() const { return ints.empty() ? 0 : ints[0]; }
+    bool hasInts() const { return !ints.empty(); }
+
 protected:
     std::vector<std::wstring> strings;
     std::vector<int> ints;

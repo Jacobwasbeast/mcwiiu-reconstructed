@@ -25,6 +25,10 @@ public:
     virtual int getEstimatedSize();
     virtual int getPacketId();
 
+    char getMode();
+    int getX();
+    int getZ();
+
 private:
     char mMode;
     int mX;

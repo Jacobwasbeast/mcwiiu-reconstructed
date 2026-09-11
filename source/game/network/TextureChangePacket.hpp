@@ -18,6 +18,7 @@ class TextureChangePacket : public Packet,
                             public boost::enable_shared_from_this<TextureChangePacket>
 {
     friend class ServerGamePacketListenerImpl;
+    friend class ClientPacketListener;
 
 public:
     enum ETextureChangeType

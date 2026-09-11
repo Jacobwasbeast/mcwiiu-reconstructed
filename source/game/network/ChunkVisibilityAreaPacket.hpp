@@ -23,6 +23,8 @@ public:
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
 
+    friend class ClientPacketListener;
+
 private:
     int minX;
     int minZ;

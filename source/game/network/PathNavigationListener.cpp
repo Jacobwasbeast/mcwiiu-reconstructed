@@ -83,7 +83,6 @@ void PathNavigationListener::blockLightChanged(const BlockPos&) {}
 void PathNavigationListener::setBlocksDirty(int, int, int, int, int, int, Level*) {}
 void PathNavigationListener::allChanged() {}
 void PathNavigationListener::playStreamingMusic(const SoundEvent*, const BlockPos&, bool) {}
-void PathNavigationListener::playSoundToAllPlayers(const SoundEvent*, SoundSource::ESoundSource, double, double, double, float, float, float) {}
 void PathNavigationListener::playSound(boost::shared_ptr<Player>, const SoundEvent*, SoundSource::ESoundSource, double, double, double, float, float, float) {}
 void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
 void PathNavigationListener::addParticle(Level*, ePARTICLE_TYPE, bool, bool, double, double, double, double, double, double, arrayWithLength<int>) {}
@@ -91,4 +90,3 @@ void PathNavigationListener::playerRemoved(boost::shared_ptr<Entity>) {}
 void PathNavigationListener::globalLevelEvent(int, const BlockPos&, int) {}
 void PathNavigationListener::levelEvent(boost::shared_ptr<Player>, int, const BlockPos&, int) {}
 void PathNavigationListener::destroyBlockProgress(int, const BlockPos&, int) {}
-void PathNavigationListener::invalidateChunksOutsideArea(int, int, int, int) {}
