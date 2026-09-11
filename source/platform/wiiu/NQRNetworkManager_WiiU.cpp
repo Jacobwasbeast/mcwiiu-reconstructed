@@ -612,11 +612,41 @@ void NQRNetworkManager_WiiU::Pia_SignalLeaveSession()
     m_leaveRequested = true;
 }
 
-void NQRNetworkManager_WiiU::Pia_SessionCallback(int, unsigned long long stationId, void* context)
+void NQRNetworkManager_WiiU::Pia_SessionCallback(int eventType, unsigned long long stationId, void*)
 {
-    NQRNetworkManager_WiiU* manager = static_cast<NQRNetworkManager_WiiU*>(context);
-    if (manager != NULL)
-        manager->AddConnectedStation(stationId);
+    if (eventType == 0)
+    {
+        unsigned char hostKnown = *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(s_networkManager) + 0xd9);
+        unsigned long long localStationId = *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(nn::pia::session::g_piaSession) + 0x78);
+        *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(s_networkManager) + 0xe0) = localStationId;
+        unsigned long long hostStationId = *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(nn::pia::session::g_piaSession) + 0x80);
+        *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(s_networkManager) + 0xe8) = hostStationId;
+        *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(s_networkManager) + 0xda) = 1;
+        if (hostKnown == 0)
+        {
+            s_networkManager->AddConnectedStation(hostStationId);
+            return;
+        }
+        if (stationId != localStationId)
+        {
+            s_networkManager->AddConnectedStation(stationId);
+            return;
+        }
+    }
+    else if (eventType == 1)
+    {
+        if (*reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(s_networkManager) + 0xd9) == 0)
+        {
+            if (stationId == *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(s_networkManager) + 0xe8))
+                s_networkManager->Pia_SignalLeaveSession();
+        }
+        else if (stationId != *reinterpret_cast<unsigned long long*>(reinterpret_cast<char*>(s_networkManager) + 0xe0))
+        {
+            s_networkManager->RemoveRemotePlayersAndSync(stationId, 15);
+            s_networkManager->RemoveConnectedStation(stationId);
+            return;
+        }
+    }
 }
 
 bool NQRNetworkManager_WiiU::NexFacadeLogin(unsigned int principalId)

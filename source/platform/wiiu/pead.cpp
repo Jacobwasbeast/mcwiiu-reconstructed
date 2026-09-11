@@ -25,6 +25,7 @@ TextStreamFormat sTextFormat;
 HeapMgr* sHeapMgr;
 ThreadMgr* sThreadMgr;
 IDelegate1<const PrintConfig::PrintEventArg&>* sFinalPrintCallback;
+IDelegate1<const HeapMgr::AllocFailedCallbackArg*>* sAllocFailedCallback;
 std::vector<Heap*> sHeaps;
 
 template <typename T>
@@ -1069,7 +1070,42 @@ void ExpHeap::destroy()
     if (owned) { if (parent) parent->free(storage); else ::free(storage); }
 }
 unsigned int ExpHeap::adjust() { int adjusted = mDirection == cHeapDirection_Forward ? adjustBack_() : adjustFront_(); return adjusted < 0 ? 0 : static_cast<unsigned int>(adjusted); }
-void* ExpHeap::tryAlloc(unsigned int size, int alignment) { if (size < 4) size = 4; return alignment < 0 ? allocFromTail_(size, alignment) : allocFromHead_(size, alignment); }
+void* ExpHeap::tryAlloc(unsigned int size, int alignment)
+{
+    unsigned int allocSize = size < 4 ? 4 : size;
+    if (allocSize >= mSize)
+    {
+        if (sAllocFailedCallback)
+        {
+            HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
+            sAllocFailedCallback->invoke(&arg);
+        }
+        return 0;
+    }
+    unsigned int absAlignment = alignment < 0 ? static_cast<unsigned int>(-alignment) : static_cast<unsigned int>(alignment);
+    if ((absAlignment - 1) & absAlignment)
+    {
+        if (sAllocFailedCallback)
+        {
+            HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
+            sAllocFailedCallback->invoke(&arg);
+        }
+        return 0;
+    }
+    unsigned int roundedSize = (allocSize + 3) & 0xfffffffcu;
+    int effective = alignment * static_cast<int>(mDirection);
+    void* result;
+    if (effective < 0)
+        result = -effective < 5 ? allocFromTail_(roundedSize) : allocFromTail_(roundedSize, effective);
+    else
+        result = effective < 5 ? allocFromHead_(roundedSize) : allocFromHead_(roundedSize, effective);
+    if (!result && sAllocFailedCallback)
+    {
+        HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
+        sAllocFailedCallback->invoke(&arg);
+    }
+    return result;
+}
 void ExpHeap::removeFreeBlock_(MemBlock* block) { if (block->previous) block->previous->next = block->next; else mFreeHead = block->next; if (block->next) block->next->previous = block->previous; else mFreeTail = block->previous; }
 void ExpHeap::removeUseBlock_(MemBlock* block) { if (block->previous) block->previous->next = block->next; else mUseHead = block->next; if (block->next) block->next->previous = block->previous; else mUseTail = block->previous; }
 void ExpHeap::free(void* address)

@@ -5,11 +5,7 @@
 
 extern void FFLiTempSetShaderMode(int shaderMode);
 extern void FFLiTempSetContextState(const _GX2ContextState* state);
-extern void FFLiInvalidateColorBuffer(_GX2ColorBuffer* buffer);
 extern void FFLiInvalidateTexture(_GX2Texture* texture);
-extern void FFLiSetupColorBufferForBC1(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
-extern void FFLiSetupColorBufferForBC3(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
-extern unsigned int FFLiCalculateUnitTextureResolution(unsigned int resolution, unsigned int level);
 extern "C" void GX2SetTargetChannelMasks(unsigned int, unsigned int, unsigned int, unsigned int,
                                      unsigned int, unsigned int, unsigned int, unsigned int);
 extern "C" void GX2SetAlphaTest(int, unsigned int, float);
@@ -24,6 +20,33 @@ extern "C" void GX2SetColorBuffer(_GX2ColorBuffer*, unsigned int);
 extern "C" void GX2CalcSurfaceSizeAndAlignment(_GX2Surface*);
 extern "C" void GX2InitTextureRegs(_GX2Texture*);
 extern void instructionSynchronize();
+
+extern void FFLiInvalidateColorBuffer__FP15_GX2ColorBuffer(_GX2ColorBuffer* buffer);
+extern void FFLiSetupColorBufferForBC1__FP15_GX2ColorBufferP11_GX2TextureUi(
+    _GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
+extern void FFLiSetupColorBufferForBC3__FP15_GX2ColorBufferP11_GX2TextureUi(
+    _GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level);
+extern unsigned int FFLiCalculateUnitTextureResolution__FUiT1(unsigned int resolution, unsigned int level);
+
+void FFLiInvalidateColorBuffer(_GX2ColorBuffer* buffer)
+{
+    FFLiInvalidateColorBuffer__FP15_GX2ColorBuffer(buffer);
+}
+
+void FFLiSetupColorBufferForBC1(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level)
+{
+    FFLiSetupColorBufferForBC1__FP15_GX2ColorBufferP11_GX2TextureUi(buffer, texture, level);
+}
+
+void FFLiSetupColorBufferForBC3(_GX2ColorBuffer* buffer, _GX2Texture* texture, unsigned int level)
+{
+    FFLiSetupColorBufferForBC3__FP15_GX2ColorBufferP11_GX2TextureUi(buffer, texture, level);
+}
+
+unsigned int FFLiCalculateUnitTextureResolution(unsigned int resolution, unsigned int level)
+{
+    return FFLiCalculateUnitTextureResolution__FUiT1(resolution, level);
+}
 
 template <class Descriptor>
 unsigned int FFLiCompressorImpl<Descriptor>::GetBufferSize(const void* shaderData, unsigned int shaderIndex)

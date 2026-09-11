@@ -333,6 +333,19 @@ void ASM_MTX44Concat(const _Mat44* left, const _Mat44* right, _Mat44* result)
     ASM_MTX44Concat(left->value, right->value, result->value);
 }
 
+void ASM_MTX44Concat(float* left, float* right, float* result) asm("ASM_MTX44Concat");
+void ASM_MTX44Concat(float* left, float* right, float* result)
+{
+    ASM_MTX44Concat(reinterpret_cast<const float (*)[4]>(left), reinterpret_cast<const float (*)[4]>(right),
+                    reinterpret_cast<float (*)[4]>(result));
+}
+
+int C_MTX44Inverse(float* source, float* destination) asm("C_MTX44Inverse");
+int C_MTX44Inverse(float* source, float* destination)
+{
+    return C_MTX44Inverse(reinterpret_cast<const float (*)[4]>(source), reinterpret_cast<float (*)[4]>(destination));
+}
+
 void ASM_MTX44Identity(float (*matrix)[4])
 {
     memset(matrix, 0, sizeof(float) * 16);

@@ -310,6 +310,9 @@ private:
     bool m_online;
     int m_sessionId;
     bool m_matchmaking;
+    bool m_hostStationIdCached;
+    unsigned long long m_cachedHostStationId;
+    unsigned long long m_cachedJointSessionHostStationId;
     OSFastMutex m_playerMutex;
     PlayerSyncData m_roomPlayers[8];
     std::vector<NQRNetworkPlayer*> m_unconnectedPlayers;

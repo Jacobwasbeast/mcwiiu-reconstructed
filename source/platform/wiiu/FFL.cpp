@@ -19,12 +19,64 @@
 #include "platform/wiiu/FFLiDatabaseDefault.hpp"
 #include "platform/wiiu/FFLiStoreDataCFL.hpp"
 #include "vendor/__N_20_FFLiRawMaskParts_cpp_7c9651f3.hpp"
+#include "vendor/__N_15_FFLiRawMask_cpp_1637d14a.hpp"
+#include "platform/wiiu/FFLiCompressorParam.hpp"
 
 #include <sysapp/title.h>
 #include <string.h>
 
 extern void instructionSynchronize();
 extern void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44*, _Mat34*, unsigned short, unsigned short);
+extern void C_MTXOrtho(float (*matrix)[4], float top, float bottom, float left, float right,
+                        float nearDistance, float farDistance);
+extern "C" void GX2SetAlphaTest(int, unsigned int, float);
+extern "C" void GX2SetColorControl(unsigned int, unsigned char, int, int);
+extern "C" void GX2SetDepthOnlyControl(int, int, unsigned int);
+extern "C" void GX2SetCullOnlyControl(unsigned int, int, int);
+extern "C" void GX2SetBlendControl(unsigned int, unsigned int, unsigned int, unsigned int, int,
+                               unsigned int, unsigned int, unsigned int);
+const void* FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+    uint32_t* size, const void* resource, uint32_t parts, uint32_t element);
+void FFLiSetupRenderTexture__FP17FFLiRenderTexturePC8FFLColorPvUi17_GX2SurfaceFormatPC18FFLiShaderCallback(
+    FFLiRenderTexture* texture, const FFLColor* clearColor, void* depthBuffer,
+    uint32_t depthSize, uint32_t format, const FFLShaderCallback* callback);
+void FFLiInvalidatePartsTextures__FP17FFLiPartsTextures(FFLiPartsTextures* textures);
+void FFLiInvalidateRawMask__FP20FFLiRawMaskDrawParam(void* drawParam);
+void FFLiDrawRawMask__FPC20FFLiRawMaskDrawParamPC18FFLiShaderCallback(
+    const void* drawParam, const FFLShaderCallback* callback);
+void FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+    void* drawParam, const FFLiRawMaskPartsDesc* description, const _Mat44* matrix,
+    FFLiBufferAllocator* allocator);
+void FFLiInitDrawParamRawMaskPartsFill__FP25FFLiRawMaskPartsDrawParamP19FFLiBufferAllocator(
+    void* drawParam, FFLiBufferAllocator* allocator);
+
+enum FFLAttributeBufferType
+{
+    FFLAttributeBufferTypePosition = 0,
+    FFLAttributeBufferTypeNormal = 1,
+    FFLAttributeBufferTypeColor = 2,
+    FFLAttributeBufferTypeTexCoord = 3,
+    FFLAttributeBufferTypeTangent = 4
+};
+
+class __N_13_FFLiShape_cpp_fe662c08
+{
+public:
+    static uint8_t GetElementType(FFLAttributeBufferType type);
+    static uint32_t GetStride(FFLAttributeBufferType type, unsigned int stride);
+    static void EndianSwap(void* data, unsigned int size);
+    static void AdjustAttribute(FFLVec4* value, unsigned int count, float scaleX, float scaleY, float scaleZ, const FFLVec3* offset, bool flip, const FFLiCoordinate* coordinate);
+    static void AdjustAttributeWithoutScale(FFLiSnorm10_10_10_2* value, unsigned int count, bool flip, const FFLiCoordinate* coordinate);
+    static void AdjustAttributeWithoutScale(FFLiSnorm8_8_8_8* value, unsigned int count, bool flip, const FFLiCoordinate* coordinate);
+    static void AdjustAttribute(FFLVec3* value, unsigned int count, float scaleX, float scaleY, float scaleZ, const FFLVec3* offset, bool flip, const FFLiCoordinate* coordinate);
+};
+
+static int32_t FFLiReadCharInfoValue(const FFLiCharInfo* info, uint32_t offset)
+{
+    int32_t value;
+    memcpy(&value, info->data + offset, sizeof(value));
+    return value;
+}
 
 static FFLiDefaultShader sDefaultShader;
 static void* sDefaultShaderWork;
@@ -624,8 +676,64 @@ void FFLiRenderFacelineTexture__FP17FFLiRenderTexturePC12FFLiCharInfoUiP29FFLiFa
     FFLiFacelineTextureTempObject* object, const FFLShaderCallback* callback,
     FFLiCopySurface* copySurface, FFLiCompressorImpl<FFLiCompressorDescBC1>* compressor)
 {
-    (void)texture; (void)info; (void)resolution; (void)object;
-    (void)callback; (void)copySurface; (void)compressor;
+    (void)resolution;
+
+    const int32_t beardType = FFLiReadCharInfoValue(info, 0x7c);
+
+    __N_23_FFLiFacelineTexture_cpp_cff65387::InvalidateDrawParam(&object->faceline.drawParam);
+    __N_23_FFLiFacelineTexture_cpp_cff65387::InvalidateDrawParam(&object->make.drawParam);
+    __N_23_FFLiFacelineTexture_cpp_cff65387::InvalidateDrawParam(&object->beard.drawParam);
+    FFLiInvalidateTexture__FP11_GX2Texture(object->faceline.texture);
+    FFLiInvalidateTexture__FP11_GX2Texture(object->make.texture);
+    if (beardType > 3) {
+        FFLiInvalidateTexture__FP11_GX2Texture(object->beard.texture);
+    }
+
+    FFLiRenderTexture* const sharedRenderTexture = object->renderTexture;
+    const FFLColor* clearColor = FFLiGetSrgbFetchFacelineColor__Fi(FFLiReadCharInfoValue(info, 8));
+
+    FFLiShaderCallback shader;
+    shader.Set(callback);
+
+    GX2SetAlphaTest(0, 7, 0.0f);
+    GX2SetColorControl(0xcc, 0xff, 0, 1);
+    GX2SetDepthOnlyControl(0, 0, 1);
+    GX2SetCullOnlyControl(1, 0, 0);
+    GX2SetBlendControl(0, 4, 5, 0, 1, 1, 1, 3);
+
+    FFLiRenderTexture* target;
+    if (sharedRenderTexture == 0) {
+        target = texture;
+    } else {
+        target = sharedRenderTexture;
+    }
+    FFLiInvalidateRenderTexture__FP17FFLiRenderTexture(target);
+    FFLiSetupRenderTexture__FP17FFLiRenderTexturePC8FFLColorPvUi17_GX2SurfaceFormatPC18FFLiShaderCallback(
+        target, clearColor, 0, 0, 0x1a, callback);
+    shader.CallDraw(object->make.drawParam);
+    shader.CallDraw(object->faceline.drawParam);
+
+    if (object->beard.texture != 0) {
+        shader.CallDraw(object->beard.drawParam);
+    }
+
+    if (target->texture.surface.numMips > 1) {
+        copySurface->Begin();
+        for (uint32_t level = 0; level + 1 < target->texture.surface.numMips; ++level) {
+            copySurface->Execute(&target->texture.surface, level + 1, &target->texture.surface, level);
+        }
+    }
+
+    shader.CallSetContextState();
+    FFLiFlushRenderTexture__FP17FFLiRenderTexture(target);
+
+    if (sharedRenderTexture != 0) {
+        FFLiInvalidateTexture__FP11_GX2Texture(&texture->texture);
+        object->compressorParam->SetTexture(&sharedRenderTexture->texture);
+        compressor->CompressImpl(&texture->texture, &sharedRenderTexture->texture, object->compressorParam);
+        FFLiFlushRenderTexture__FP17FFLiRenderTexture(texture);
+        shader.CallSetContextState();
+    }
 }
 
 unsigned int FFLiGetIconBufferSize__FPC14FFLIconSetting(const FFLIconSetting* setting)
@@ -727,7 +835,45 @@ void FFLiRenderMaskTextures__FP16FFLiMaskTexturesP26FFLiMaskTexturesTempObjectPC
     const FFLShaderCallback* callback, FFLiCopySurface* copySurface,
     FFLiCompressorImpl<FFLiCompressorDescBC3>* compressor)
 {
-    (void)textures; (void)object; (void)callback; (void)copySurface; (void)compressor;
+    const FFLColor clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+    const bool sharedRenderTexture = object->renderTexture == 0;
+
+    FFLiShaderCallback shader;
+    shader.Set(callback);
+
+    FFLiInvalidatePartsTextures__FP17FFLiPartsTextures(&object->partsTextures);
+
+    for (uint32_t i = 0; i < 19; ++i) {
+        if (textures->textures[i] == 0 || object->rawMasks[i] == 0) continue;
+
+        FFLiInvalidateRawMask__FP20FFLiRawMaskDrawParam(object->rawMasks[i]);
+
+        FFLiRenderTexture* target = sharedRenderTexture ? textures->textures[i] : object->renderTexture;
+        FFLiInvalidateRenderTexture__FP17FFLiRenderTexture(target);
+        FFLiSetupRenderTexture__FP17FFLiRenderTexturePC8FFLColorPvUi17_GX2SurfaceFormatPC18FFLiShaderCallback(
+            target, &clearColor, 0, 0, 0x1a, callback);
+        FFLiDrawRawMask__FPC20FFLiRawMaskDrawParamPC18FFLiShaderCallback(object->rawMasks[i], callback);
+
+        if (target->texture.surface.numMips > 1) {
+            copySurface->Begin();
+            for (uint32_t level = 0; level + 1 < target->texture.surface.numMips; ++level) {
+                copySurface->Execute(&target->texture.surface, level + 1, &target->texture.surface, level);
+            }
+        }
+
+        shader.CallSetContextState();
+        FFLiFlushRenderTexture__FP17FFLiRenderTexture(target);
+
+        if (!sharedRenderTexture) {
+            FFLiRenderTexture* destination = textures->textures[i];
+            FFLiCompressorParam* compressorParam = object->compressorParams[i];
+            FFLiInvalidateTexture__FP11_GX2Texture(&destination->texture);
+            compressorParam->SetTexture(&target->texture);
+            compressor->CompressImpl(&destination->texture, &target->texture, compressorParam);
+            FFLiFlushRenderTexture__FP17FFLiRenderTexture(destination);
+            shader.CallSetContextState();
+        }
+    }
 }
 
 void FFLiMiiDataCoreRFL2CharInfo__FP12FFLiCharInfoRC18FFLiMiiDataCoreRFLPCUsb(
@@ -862,9 +1008,69 @@ void FFLiInitDrawParamRawMask__FP20FFLiRawMaskDrawParamPC12FFLiCharInfoiN23PC22F
     void* drawParam, const FFLiCharInfo* info, int rotation, int eyeAdjust,
     int mouthAdjust, const void* textureDesc, FFLiBufferAllocator* allocator)
 {
-    memset(drawParam, 0, 0x300);
-    (void)info; (void)rotation; (void)eyeAdjust; (void)mouthAdjust;
-    (void)textureDesc; (void)allocator;
+    __N_15_FFLiRawMask_cpp_1637d14a::RawMasks rawMasks;
+    __N_15_FFLiRawMask_cpp_1637d14a::CalcRawMask(&rawMasks, info, rotation, eyeAdjust, mouthAdjust);
+
+    _Mat44 matrix;
+    const float extent = static_cast<float>(rotation);
+    C_MTXOrtho(matrix.value, 0.0f, extent, 0.0f, extent, -200.0f, 200.0f);
+
+    uint8_t* base = static_cast<uint8_t*>(drawParam);
+    const void* const* textures = static_cast<const void* const*>(textureDesc);
+
+    FFLiInitModulateMustache__FP16FFLModulateParamiRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x244),
+        FFLiReadCharInfoValue(info, 0x80), *static_cast<const _GX2Texture*>(textures[5]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x208, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 30), &matrix, allocator);
+
+    FFLiInitModulateMustache__FP16FFLModulateParamiRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x2ac),
+        FFLiReadCharInfoValue(info, 0x80), *static_cast<const _GX2Texture*>(textures[6]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x270, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 36), &matrix, allocator);
+
+    FFLiInitModulateMouth__FP16FFLModulateParamiRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x1dc),
+        FFLiReadCharInfoValue(info, 0x68), *static_cast<const _GX2Texture*>(textures[4]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x1a0, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 24), &matrix, allocator);
+
+    FFLiInitModulateEyebrow__FP16FFLModulateParamiRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x10c),
+        FFLiReadCharInfoValue(info, 0x40), *static_cast<const _GX2Texture*>(textures[2]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0xd0, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 12), &matrix, allocator);
+
+    FFLiInitModulateEyebrow__FP16FFLModulateParamiRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x174),
+        FFLiReadCharInfoValue(info, 0x40), *static_cast<const _GX2Texture*>(textures[3]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x138, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 18), &matrix, allocator);
+
+    FFLiInitModulateEye__FP16FFLModulateParamiT2RC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x3c),
+        FFLiReadCharInfoValue(info, 0x24), FFLiReadCharInfoValue(info, 0x20),
+        *static_cast<const _GX2Texture*>(textures[0]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 0), &matrix, allocator);
+
+    FFLiInitModulateEye__FP16FFLModulateParamiT2RC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0xa4),
+        FFLiReadCharInfoValue(info, 0x24), FFLiReadCharInfoValue(info, 0x20),
+        *static_cast<const _GX2Texture*>(textures[1]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x68, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 6), &matrix, allocator);
+
+    FFLiInitModulateMole__FP16FFLModulateParamRC11_GX2Texture(
+        reinterpret_cast<FFLModulateParam*>(base + 0x314),
+        *static_cast<const _GX2Texture*>(textures[7]));
+    FFLiInitDrawParamRawMaskParts__FP25FFLiRawMaskPartsDrawParamPC20FFLiRawMaskPartsDescPC6_Mat44P19FFLiBufferAllocator(
+        base + 0x2d8, reinterpret_cast<const FFLiRawMaskPartsDesc*>(rawMasks.values + 42), &matrix, allocator);
+
+    FFLiInitModulateFill__FP16FFLModulateParam(reinterpret_cast<FFLModulateParam*>(base + 0x37c));
+    FFLiInitDrawParamRawMaskPartsFill__FP25FFLiRawMaskPartsDrawParamP19FFLiBufferAllocator(
+        base + 0x340, allocator);
 }
 
 void FFLiInvalidateRawMask__FP20FFLiRawMaskDrawParam(void* drawParam)
@@ -975,9 +1181,66 @@ int FFLiLoadShape__FP12FFLDrawParamP14FFLBoundingBoxP13FFLiCharModel18FFLiShapeP
     uint32_t parts, unsigned short index, FFLiResourceLoader* loader,
     FFLiBufferAllocator* allocator)
 {
-    (void)drawParam; (void)bounds; (void)model; (void)parts; (void)index;
-    (void)loader; (void)allocator;
-    return 0;
+    const FFLiShapePartsType shapeParts = static_cast<FFLiShapePartsType>(parts);
+    uint32_t size = loader->GetShapeAlignedMaxSize(shapeParts);
+    void* resource = reinterpret_cast<void*>(allocator->Allocate(size, 0x40));
+    int result = static_cast<int>(loader->LoadShape(resource, &size, shapeParts, index));
+    if (result != 0) return result;
+
+    if (size == 0) {
+        memset(drawParam, 0, sizeof(FFLDrawParam));
+        float nanValue;
+        uint32_t nanBits = 0x7fc00000u;
+        memcpy(&nanValue, &nanBits, sizeof(nanValue));
+        bounds->minX = bounds->minY = bounds->minZ = nanValue;
+        bounds->maxX = bounds->maxY = bounds->maxZ = nanValue;
+        return result;
+    }
+
+    for (uint32_t i = 0; i < 5; ++i) {
+        FFLAttributeBuffer& attribute = drawParam->attributes.attributes[i];
+        uint8_t elementType = __N_13_FFLiShape_cpp_fe662c08::GetElementType(static_cast<FFLAttributeBufferType>(i));
+        attribute.buffer = const_cast<void*>(
+            FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+                &attribute.size, resource, parts, elementType));
+        attribute.stride = __N_13_FFLiShape_cpp_fe662c08::GetStride(
+            static_cast<FFLAttributeBufferType>(i), attribute.size);
+    }
+
+    drawParam->primitive.indexBuffer = const_cast<void*>(
+        FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+            &drawParam->primitive.indexCount, resource, parts, 5));
+    drawParam->primitive.vertexCount = 4;
+    drawParam->primitive.primitiveType = 4;
+
+    if (parts == 8) {
+        uint32_t auxSize = 0;
+        const float* aux = reinterpret_cast<const float*>(
+            FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+                &auxSize, resource, parts, 6));
+        model->transformedParts[2].x = aux[3]; model->transformedParts[2].y = aux[4]; model->transformedParts[2].z = aux[5];
+        model->transformedParts[3].x = aux[0]; model->transformedParts[3].y = aux[1]; model->transformedParts[3].z = aux[2];
+        model->transformedParts[4].x = aux[9]; model->transformedParts[4].y = aux[10]; model->transformedParts[4].z = aux[11];
+        model->transformedParts[5].x = aux[6]; model->transformedParts[5].y = aux[7]; model->transformedParts[5].z = aux[8];
+        model->transformedParts[6].x = aux[15]; model->transformedParts[6].y = aux[16]; model->transformedParts[6].z = aux[17];
+        model->transformedParts[7].x = aux[12]; model->transformedParts[7].y = aux[13]; model->transformedParts[7].z = aux[14];
+    } else if (parts == 3) {
+        uint32_t auxSize = 0;
+        const float* aux = reinterpret_cast<const float*>(
+            FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+                &auxSize, resource, parts, 7));
+        model->faceOffset.x = aux[6]; model->faceOffset.y = aux[7]; model->faceOffset.z = aux[8];
+        model->commonOffset.x = aux[0]; model->commonOffset.y = aux[1]; model->commonOffset.z = aux[2];
+        model->transformedParts[0].x = aux[3]; model->transformedParts[0].y = aux[4]; model->transformedParts[0].z = aux[5];
+        model->transformedParts[1].x = aux[0]; model->transformedParts[1].y = aux[1]; model->transformedParts[1].z = aux[2];
+    }
+
+    uint32_t boundsSize = 0;
+    const void* boundsData = FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
+        &boundsSize, resource, parts, 8);
+    memcpy(bounds, boundsData, sizeof(FFLBoundingBox));
+
+    return result;
 }
 
 void FFLiAdjustShape__FP12FFLDrawParamP14FFLBoundingBoxfT3PC7FFLVec3bPC14FFLiCoordinate18FFLiShapePartsTypeT6(
@@ -985,8 +1248,41 @@ void FFLiAdjustShape__FP12FFLDrawParamP14FFLBoundingBoxfT3PC7FFLVec3bPC14FFLiCoo
     const FFLVec3* offset, bool flip, const FFLiCoordinate* coordinate,
     uint32_t parts, bool adjust)
 {
-    (void)drawParam; (void)bounds; (void)scaleX; (void)scaleY; (void)offset;
-    (void)flip; (void)coordinate; (void)parts; (void)adjust;
+    float scaleZ = (scaleX + scaleY) * 0.5f;
+    if (adjust && (parts == 6 || parts == 7) && scaleZ > 1.1f) scaleZ = 1.1f;
+
+    __N_13_FFLiShape_cpp_fe662c08::AdjustAttribute(
+        reinterpret_cast<FFLVec4*>(drawParam->attributes.attributes[0].buffer),
+        drawParam->attributes.attributes[0].size >> 4,
+        scaleX, scaleY, scaleZ, offset, flip, coordinate);
+
+    __N_13_FFLiShape_cpp_fe662c08::AdjustAttributeWithoutScale(
+        reinterpret_cast<FFLiSnorm10_10_10_2*>(drawParam->attributes.attributes[2].buffer),
+        drawParam->attributes.attributes[2].size >> 2, flip, coordinate);
+
+    __N_13_FFLiShape_cpp_fe662c08::AdjustAttributeWithoutScale(
+        reinterpret_cast<FFLiSnorm8_8_8_8*>(drawParam->attributes.attributes[3].buffer),
+        drawParam->attributes.attributes[3].size >> 2, flip, coordinate);
+
+    uint32_t minXBits;
+    memcpy(&minXBits, &bounds->minX, sizeof(minXBits));
+    if ((minXBits << 1) < 0xff000001u) {
+        __N_13_FFLiShape_cpp_fe662c08::AdjustAttribute(
+            reinterpret_cast<FFLVec3*>(bounds), 2, scaleX, scaleY, scaleZ, offset, flip, coordinate);
+    }
+
+    for (uint32_t i = 0; i < 5; ++i) {
+        FFLAttributeBuffer& attribute = drawParam->attributes.attributes[i];
+        if (attribute.buffer != 0)
+            __N_13_FFLiShape_cpp_fe662c08::EndianSwap(attribute.buffer, attribute.size);
+    }
+
+    if (drawParam->primitive.indexBuffer != 0) {
+        __N_13_FFLiShape_cpp_fe662c08::EndianSwap(
+            drawParam->primitive.indexBuffer, drawParam->primitive.indexCount << 1);
+    }
+
+    instructionSynchronize();
 }
 
 void FFLiInvalidateShape__FP12FFLDrawParam(FFLDrawParam* drawParam)

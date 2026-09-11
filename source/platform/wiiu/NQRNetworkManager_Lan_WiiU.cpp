@@ -5,10 +5,17 @@
 #include <cwchar>
 
 #include "game/core/System.hpp"
+#include "nn/pia/Reconstruction.hpp"
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/lan/LanFacade.hpp"
+#include "nn/pia/lan/LanSupport.hpp"
+#include "nn/pia/session/Session.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+
+void AssertPiaError(nn::pia::Result& result);
 
 static NQRNetworkManager_Lan_WiiU* s_networkManager;
 static int (*s_connectCallback)(void*, bool, int);
@@ -17,6 +24,7 @@ static bool s_cancelConnect;
 static bool s_appSuspended;
 static bool s_handlingBootInvite;
 static bool s_initialiseAfterOnline;
+static bool s_sessionDisconnectPending;
 
 unsigned int GetTickCount();
 extern "C" int socket_lib_init();
@@ -176,7 +184,8 @@ NQRNetworkManager_Lan_WiiU::NQRNetworkManager_Lan_WiiU(INQRNetworkManagerListene
       m_listener(listener), m_internalState(eNQRNetworkManagerInternalState_Uninitialised),
       m_state(eNQRNetworkManagerState_Uninitialised), m_initialised(false), m_host(false),
       m_receiving(false), m_searchCriteria(NULL), m_lastNetworkError(0), m_applicationConnected(false), m_online(false),
-      m_sessionId(0), m_matchmaking(false), m_roomPlayerMask(0), m_roomSessionData(0), m_friendSearchBusy(false),
+      m_sessionId(0), m_matchmaking(false), m_hostStationIdCached(false), m_cachedHostStationId(0),
+      m_cachedJointSessionHostStationId(0), m_roomPlayerMask(0), m_roomSessionData(0), m_friendSearchBusy(false),
       m_friendPresenceCount(0), m_nextSmallId(0),
       m_nexContext(NULL), m_nexAsyncProcess(eNEXAsyncProcess_None), m_pendingSessionId(0),
       m_pendingUserMask(0), m_maxPlayers(8), m_gameMode(0), m_externalData(NULL),
@@ -442,7 +451,14 @@ void NQRNetworkManager_Lan_WiiU::Pia_InitializeCommon(unsigned char*, unsigned i
 
 void NQRNetworkManager_Lan_WiiU::Lan_InitializePiaLan()
 {
-    m_online = true;
+    nn::pia::Result result = nn::pia::lan::Initialize();
+    AssertPiaError(result);
+    result = nn::pia::lan::BeginSetup();
+    AssertPiaError(result);
+    result = nn::pia::lan::LanFacade::CreateInstance();
+    AssertPiaError(result);
+    result = nn::pia::lan::EndSetup();
+    AssertPiaError(result);
 }
 
 void NQRNetworkManager_Lan_WiiU::Pia_InitializeSession(const void*)
@@ -481,11 +497,43 @@ void NQRNetworkManager_Lan_WiiU::Pia_SignalLeaveSession()
     m_leaveRequested = true;
 }
 
-void NQRNetworkManager_Lan_WiiU::Pia_SessionCallback(int, unsigned long long stationId, void* context)
+void NQRNetworkManager_Lan_WiiU::Pia_SessionCallback(int eventType, unsigned long long stationId, void*)
 {
-    NQRNetworkManager_Lan_WiiU* manager = static_cast<NQRNetworkManager_Lan_WiiU*>(context);
-    if (manager != NULL)
-        manager->AddConnectedStation(stationId);
+    if (eventType == 0)
+    {
+        bool hostKnown = s_networkManager->m_host;
+        unsigned long long hostStationId = nn::pia::session::g_piaSession->m_hostStationId;
+        unsigned long long jointSessionHostStationId = nn::pia::session::g_piaSession->m_jointSessionHostStationId;
+        s_networkManager->m_cachedHostStationId = hostStationId;
+        s_networkManager->m_cachedJointSessionHostStationId = jointSessionHostStationId;
+        s_networkManager->m_hostStationIdCached = true;
+
+        if (!hostKnown)
+        {
+            s_networkManager->AddConnectedStation(stationId);
+            return;
+        }
+        if (stationId != hostStationId)
+            s_networkManager->AddConnectedStation(stationId);
+    }
+    else if (eventType == 1)
+    {
+        if (!s_networkManager->m_host)
+        {
+            if (stationId == s_networkManager->m_cachedJointSessionHostStationId &&
+                s_networkManager->m_internalState != eNQRNetworkManagerInternalState_LeavingRoom &&
+                !s_sessionDisconnectPending)
+            {
+                s_networkManager->SetState(eNQRNetworkManagerInternalState_LeavingRoom);
+                s_networkManager->Pia_SignalLeaveSession();
+            }
+        }
+        else if (stationId != s_networkManager->m_cachedHostStationId)
+        {
+            s_networkManager->RemoveRemotePlayersAndSync(stationId, 0xf);
+            s_networkManager->RemoveConnectedStation(stationId);
+        }
+    }
 }
 
 
@@ -579,8 +627,20 @@ void NQRNetworkManager_Lan_WiiU::Net_GetLocalAddress(unsigned int* address, unsi
 
 bool NQRNetworkManager_Lan_WiiU::Lan_StartupPiaLan()
 {
-    m_applicationConnected = true;
-    return true;
+    if (nn::pia::lan::LanFacade::GetInstance() == NULL)
+        return false;
+
+    unsigned int address;
+    unsigned int subnetMask;
+    Net_GetLocalAddress(&address, &subnetMask);
+
+    nn::pia::lan::LanFacade::LanNetworkSetting setting;
+    setting.m_field00 = address;
+    setting.m_field04 = subnetMask;
+    setting.m_field08 = 0;
+
+    nn::pia::Result result = nn::pia::lan::LanFacade::GetInstance()->Bind(setting);
+    return result == 0;
 }
 
 void NQRNetworkManager_Lan_WiiU::UpdateApplicationConnected()
