@@ -3,10 +3,15 @@
 
 #include <cmath>
 
+#include "game/data/DataFixerUpper.hpp"
 #include "game/core/BinaryHeap.hpp"
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MultiEntityMobPart.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -100,7 +105,29 @@ void EnderDragon::navigateToNextPathNode()
         mPath->next();
 }
 
-void EnderDragon::strafeAttackTarget() {}
+void EnderDragon::strafeAttackTarget()
+{
+    const unsigned int startNode = findClosestNode();
+    if (mTarget == 0)
+        return;
+    const unsigned int endNode = findClosestNode(mTarget->mX, mTarget->mY, mTarget->mZ);
+    const double dx = mTarget->mX - mX;
+    const double dz = mTarget->mZ - mZ;
+    double distance = std::sqrt(dx * dx + dz * dz);
+    distance = distance / 80.0 + 10.0;
+    if (distance > 10.0)
+        distance = 10.0;
+    const double targetY = mTarget->mY + distance;
+    Node targetNode(static_cast<int>(mTarget->mX), static_cast<int>(targetY), static_cast<int>(mTarget->mZ));
+    if (mPath != NULL)
+        delete mPath;
+    mPath = findPath(static_cast<int>(startNode), static_cast<int>(endNode), &targetNode);
+    if (mPath != NULL)
+    {
+        mPath->next();
+        navigateToNextPathNode();
+    }
+}
 unsigned int EnderDragon::findNewTarget()
 {
     if (mLevel == NULL)
@@ -116,7 +143,10 @@ unsigned int EnderDragon::findNewTarget()
     return mHasTarget ? 1U : 0U;
 }
 bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart>, const DamageSource*, float) { return false; }
-void EnderDragon::GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart>, const EntityTooltipDataHolder&) {}
+void EnderDragon::GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart>, const EntityTooltipDataHolder& holder)
+{
+    GetInteractTooltip(holder);
+}
 void EnderDragon::AddParts()
 {
     boost::shared_ptr<MultiEntityMob> parent =
@@ -196,8 +226,16 @@ void EnderDragon::_init()
     mBeamTarget.reset();
 }
 
-void EnderDragon::addDataWalkers(DataFixerUpper*) {}
-void EnderDragon::staticCtor() {}
+void EnderDragon::addDataWalkers(DataFixerUpper* fixer)
+{
+    Mob::addDataWalkers(fixer, 0x0d000005ULL);
+}
+
+void EnderDragon::staticCtor()
+{
+    SynchedEntityData::defineId<unsigned char>(ENTITY_TYPE_ENDER_DRAGON, ENTITY_TYPE_MOB,
+                                               EntityDataSerializers::BYTE);
+}
 void EnderDragon::registerAttributes() { Mob::registerAttributes(); }
 void EnderDragon::defineSynchedData() { Mob::defineSynchedData(); }
 bool EnderDragon::canRide(boost::shared_ptr<Entity>) { return false; }
@@ -229,7 +267,29 @@ double EnderDragon::rotWrap(double angle)
 }
 
 bool EnderDragon::checkCrystals() { return mNearbyCrystal != 0; }
-void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >*) {}
+void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >* entities)
+{
+    if (entities == NULL || mParts.empty() || mParts[0] == 0)
+        return;
+    boost::shared_ptr<Entity> head = mParts[0];
+    const double headX = head->mX;
+    const double headZ = head->mZ;
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        if (!entity || (entity->GetType() & 0x0C000000ULL) != 0x0C000000ULL)
+            continue;
+        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
+        if (!living)
+            continue;
+        const double dx = living->mX - headX;
+        const double dz = living->mZ - headZ;
+        const double distSq = dx * dx + dz * dz;
+        if (distSq <= 0.0)
+            continue;
+        living->knockback(shared_from_this(), 0.2f, (dx / distSq) * 4.0, (dz / distSq) * 4.0);
+    }
+}
 bool EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >*) { return false; }
 namespace
 {

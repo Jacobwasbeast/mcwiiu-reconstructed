@@ -1,8 +1,15 @@
 #include "game/entity/mob/Mob.hpp"
 
+#include <cmath>
+#include <typeinfo>
+
+#include "game/client/render/ParticleType.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/BodyControl.hpp"
 #include "game/core/CensoredString.hpp"
@@ -10,8 +17,10 @@
 #include "game/core/LootTable.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/LootTables.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
+#include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
@@ -30,6 +39,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
@@ -146,8 +156,9 @@ void Mob::registerGoals()
 {
 }
 
-void Mob::createNavigation(Level*)
+void Mob::createNavigation(Level* level)
 {
+    mNavigation = new GroundPathNavigation(this, level, true);
 }
 
 float Mob::getPathfindingMalus(const BlockPathTypes* type)
@@ -165,6 +176,7 @@ void Mob::setPathfindingMalus(const BlockPathTypes* type, float malus)
 
 void Mob::createBodyControl()
 {
+    mBodyControl = new BodyControl(this);
 }
 
 LookControl* Mob::getLookControl()
@@ -223,6 +235,9 @@ int Mob::getAmbientSoundInterval()
 
 void Mob::playAmbientSound()
 {
+    const SoundEvent* sound = getAmbientSound();
+    if (sound != NULL)
+        playSound(sound, getSoundVolume(), getVoicePitch());
 }
 
 void Mob::baseTick()
@@ -247,6 +262,32 @@ int Mob::getExperienceReward(boost::shared_ptr<Player>)
 
 void Mob::spawnAnim()
 {
+    if (!mLevel->mIsClientSide)
+    {
+        mLevel->broadcastEntityEvent(shared_from_this(), 20, 0);
+        return;
+    }
+
+    for (int i = 0; i < 10; ++i)
+    {
+        double gx = mRandom->nextGaussian();
+        double gy = mRandom->nextGaussian();
+        double gz = mRandom->nextGaussian();
+        double px = mX + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
+        double py = mY + mRandom->nextFloat() * (double)mBbHeight;
+        double pz = mZ + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
+        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, gx * 0.02, gy * 0.02, gz * 0.02,
+                            arrayWithLength<int>());
+
+        gx = mRandom->nextGaussian();
+        gy = mRandom->nextGaussian();
+        gz = mRandom->nextGaussian();
+        px = mX + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
+        py = mY + mRandom->nextFloat() * (double)mBbHeight;
+        pz = mZ + (mRandom->nextFloat() * mBbWidth + mRandom->nextFloat() * mBbWidth) - mBbWidth;
+        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, gx * 0.02, gy * 0.02, gz * 0.02,
+                            arrayWithLength<int>());
+    }
 }
 
 void Mob::handleEntityEvent(unsigned char event, int data)
@@ -432,6 +473,32 @@ void Mob::setSpeed(float speed)
 
 void Mob::aiStep()
 {
+    LivingEntity::aiStep();
+
+    if (mLevel->mIsClientSide || !canPickUpLoot() || isNoAi())
+        return;
+
+    if (!mLevel->getGameRules()->getBoolean(1))
+        return;
+
+    AABB* searchBox = mBoundingBox->grow(1.0, 0.25, 1.0);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end();
+         ++it)
+    {
+        boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(*it);
+        if (itemEntity->mRemoved)
+            continue;
+        not_null_ptr<ItemInstance> item = itemEntity->getItem();
+        if (item->isEmpty())
+            continue;
+        if (itemEntity->hasPickUpDelay())
+            continue;
+        pickUpItem(itemEntity);
+    }
+    delete entities;
 }
 
 const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> item)
@@ -481,7 +548,7 @@ void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
 
 bool Mob::canHoldItem(not_null_ptr<ItemInstance>)
 {
-    return false;
+    return true;
 }
 
 bool Mob::removeWhenFarAway()
@@ -491,6 +558,29 @@ bool Mob::removeWhenFarAway()
 
 void Mob::checkDespawn()
 {
+    if (isPersistenceRequired())
+        return;
+
+    boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 128.0, -1.0);
+    if (!player)
+        return;
+
+    double distSq = distanceToSqr(player);
+    if (removeWhenFarAway() && distSq > 16384.0)
+    {
+        remove();
+        return;
+    }
+
+    const double closeDistSq = 1024.0;
+    if (mNoActionTime >= 601 && mRandom->nextInt(800) == 0 && distSq > closeDistSq && removeWhenFarAway())
+    {
+        remove();
+        return;
+    }
+
+    if (distSq < closeDistSq)
+        mNoActionTime = 0;
 }
 
 void Mob::serverAiStep()
@@ -537,8 +627,34 @@ float Mob::rotlerp(float from, float to, float max)
     return from + delta;
 }
 
-void Mob::lookAt(boost::shared_ptr<Entity>, float, float)
+void Mob::lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxHeadYRot)
 {
+    if (!entity)
+        return;
+
+    double dx = entity->mX - mX;
+    double dz = entity->mZ - mZ;
+    double dy;
+
+    if ((entity->GetType() & 0x0C000000ULL) == 0x0C000000ULL)
+    {
+        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
+        if (living)
+            dy = (living->mY + living->getEyeHeight()) - (mY + getEyeHeight());
+        else
+            dy = entity->mY - mY;
+    }
+    else
+    {
+        dy = (entity->mBoundingBox->mMinY + entity->mBoundingBox->mMaxY) * 0.5 - (mY + getEyeHeight());
+    }
+
+    double dist = Mth::sqrt(dx * dx + dz * dz);
+    const double radToDeg = 57.2957763671875;
+    float targetBodyRot = (float)(atan2(dz, dx) * radToDeg) - 90.0f;
+    float targetHeadRot = (float)(atan2(dy, dist) * radToDeg);
+    mYBodyRot = rotlerp(mYBodyRot, targetBodyRot, maxHeadXRot);
+    mYHeadRot = rotlerp(mYHeadRot, -targetHeadRot, maxHeadYRot);
 }
 
 bool Mob::checkSpawnRules()
@@ -620,12 +736,125 @@ not_null_ptr<ItemInstance> Mob::getEquipmentForSlot(const EquipmentSlot*, int)
     return not_null_ptr<ItemInstance>();
 }
 
-void Mob::populateDefaultEquipmentSlots(const DifficultyInstance&)
+void Mob::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 {
+    ResourceLocation* gearTable = getDefaultGearTable();
+    if (gearTable != NULL)
+    {
+        LootTable* lootTable = BuiltInLootTables::getLootTable(gearTable);
+        if (lootTable == NULL)
+            return;
+
+        ServerLevel* serverLevel = static_cast<ServerLevel*>(mLevel);
+        LootTableContext::Builder builder(serverLevel);
+        builder.mThisEntity = shared_from_this();
+        LootTableContext context = builder.build();
+
+        std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);
+        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
+             it != items->end();
+             ++it)
+        {
+            not_null_ptr<ItemInstance> item = *it;
+            if (item.get() == NULL)
+                continue;
+
+            Item* heldItem = item->getItem();
+            ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
+            if (armorItem != NULL)
+            {
+                setItemSlot(armorItem->getSlot(), item);
+            }
+            else if (heldItem != NULL && heldItem->allowOffhand())
+            {
+                setItemSlot(EquipmentSlot::OFFHAND, item);
+            }
+            else
+            {
+                setItemSlot(EquipmentSlot::MAINHAND, item);
+            }
+        }
+        delete items;
+        return;
+    }
+
+    float specialMultiplier = difficulty.getSpecialMultiplier();
+    if (mRandom->nextFloat() >= 0.15f * specialMultiplier)
+        return;
+
+    int tier = mRandom->nextInt(2);
+    if (mLevel->getDifficulty() == Difficulty::HARD)
+    {
+        if (mRandom->nextFloat() < 0.8999999761581421f)
+            ++tier;
+    }
+    else if (mRandom->nextFloat() < 0.25f)
+    {
+        ++tier;
+    }
+
+    if (mRandom->nextFloat() < 0.095f)
+        ++tier;
+    if (mRandom->nextFloat() < 0.095f)
+        ++tier;
+
+    float stopChance = mLevel->getDifficulty() == Difficulty::HARD ? 0.8999999761581421f : 0.25f;
+    bool firstArmorSlot = true;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        const EquipmentSlot* slot = EquipmentSlot::SLOTS[i];
+        if (slot->getType() != EquipmentSlot::ARMOR)
+            continue;
+
+        if (!firstArmorSlot && mRandom->nextFloat() < stopChance)
+            break;
+
+        firstArmorSlot = false;
+
+        not_null_ptr<ItemInstance> equipped = getItemSlot(slot);
+        if (!equipped->isEmpty())
+            continue;
+
+        not_null_ptr<ItemInstance> equipment = getEquipmentForSlot(slot, tier);
+        if (equipment.get() == NULL)
+            continue;
+
+        setItemSlot(slot, equipment);
+    }
 }
 
-void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance&)
+void Mob::populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty)
 {
+    float specialMultiplier = difficulty.getSpecialMultiplier();
+
+    not_null_ptr<ItemInstance> mainHand = getMainHandItem();
+    if (!mainHand->isEmpty() && mRandom->nextFloat() < 0.25f * specialMultiplier)
+    {
+        mainHand = EnchantmentHelper::enchantItem(
+            mRandom, mainHand,
+            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 0.5f), false);
+        setItemSlot(EquipmentSlot::MAINHAND, mainHand);
+    }
+
+    for (int i = 0; i < 6; ++i)
+    {
+        const EquipmentSlot* slot = EquipmentSlot::SLOTS[i];
+        if (slot->getType() != EquipmentSlot::ARMOR)
+            continue;
+
+        not_null_ptr<ItemInstance> item = getItemSlot(slot);
+        if (item->isEmpty())
+            continue;
+
+        if (mRandom->nextFloat() >= 0.5f * specialMultiplier)
+            continue;
+
+        item = EnchantmentHelper::enchantItem(
+            mRandom, item,
+            (int)(specialMultiplier * (float)mRandom->nextInt(18) + 0.5f), false);
+        setItemSlot(slot, item);
+    }
 }
 
 MobGroupData* Mob::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)

@@ -89,4 +89,8 @@ void HangingEntityItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                         boost::shared_ptr<Player> player,
                                         std::vector<HtmlString>* lines, bool advanced)
 {
+    (void)itemInstance;
+    (void)player;
+    (void)lines;
+    (void)advanced;
 }
