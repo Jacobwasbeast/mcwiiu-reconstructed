@@ -83,6 +83,7 @@ void Screen::setSize(int width, int height)
 
 void Screen::init()
 {
+    return;
 }
 
 void Screen::updateEvents()

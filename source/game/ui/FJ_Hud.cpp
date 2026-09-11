@@ -191,7 +191,11 @@ void FJ_Hud::SetTooltipsEnabled(bool enabled)
     RepositionHud(static_cast<int>(getWidth()), static_cast<int>(getHeight()));
 }
 void FJ_Hud::ShowOffhandSlot(bool visible) { FJ_FuiNode* node = getChildByName("offhandSlot"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::SetIsRightHanded(bool) { }
+void FJ_Hud::SetIsRightHanded(bool rightHanded)
+{
+    m_rightHanded = rightHanded;
+    SetupOffhandSlot();
+}
 void FJ_Hud::ShowDirectionalDamage(int, int, float alpha) { SetAlpha(alpha); }
 void FJ_Hud::SetHudGameMode(int gameMode) { m_gameMode = gameMode; }
 void FJ_Hud::SetPosition(int, const std::wstring&, bool visible) { setVisible(visible); }

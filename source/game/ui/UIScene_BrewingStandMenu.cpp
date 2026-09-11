@@ -205,7 +205,7 @@ int UIScene_BrewingStandMenu::getSectionStartOffset(
     if (section == 0x2c) return 3;
     if (section == 0x2d) return 4;
     if (section == 0x2e) return 5;
-    return 14;
+    return 0;
 }
 
 unsigned int UIScene_BrewingStandMenu::mapElementsAndNames()

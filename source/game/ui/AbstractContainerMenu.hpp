@@ -38,6 +38,7 @@ struct _PlayerKeyEq
 
 class AbstractContainerMenu
 {
+    friend class ClientPacketListener;
     friend class ServerGamePacketListenerImpl;
     friend class ServerPlayer;
     friend class UIScene_AbstractContainerMenu;
