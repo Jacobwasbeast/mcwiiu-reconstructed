@@ -4,20 +4,35 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/EntityBlock.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/biome/BiomeSource.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/CompressedBlockStorage.hpp"
 #include "game/data/SparseDataStorage.hpp"
+#include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/client/render/GameRenderer.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include <cstring>
 
 unsigned int TlsAlloc();
 bool TlsSetValue(unsigned int, void*);
 void* TlsGetValue(unsigned int);
+
+void PIXBeginNamedEvent(float colour, const char* name, ...);
+void PIXEndNamedEvent();
+
+extern MinecraftServer* gMinecraftServer;
+extern CMinecraftApp* g_pApp;
 
 static unsigned int sLevelChunkThreadStorage = TlsAlloc();
 static OSFastMutex sLevelChunkLightingMutex;
@@ -240,7 +255,35 @@ arrayWithLength<unsigned char> LevelChunk::getRawData()
 }
 void LevelChunk::setFromRawData(arrayWithLength<unsigned char> data)
 {
-    mElements->setFromRawData(data.data, data.length);
+    unsigned int elementBytes = *(unsigned int*)data.data;
+    mElements->setFromRawData(data.data + 12, elementBytes);
+    unsigned char* cursor = data.data + 12 + elementBytes;
+    unsigned short blockLightBytes = *(unsigned short*)(data.data + 4);
+    if (mBlockLight == NULL)
+        mBlockLight = new SparseLightStorage(false);
+    mBlockLight->setFromRawData(cursor, blockLightBytes);
+    cursor += blockLightBytes;
+    unsigned short blockLightUpperBytes = *(unsigned short*)(data.data + 6);
+    if (mBlockLightUpper == NULL)
+        mBlockLightUpper = new SparseLightStorage(false, true);
+    mBlockLightUpper->setFromRawData(cursor, blockLightUpperBytes);
+    cursor += blockLightUpperBytes;
+    unsigned short skyLightBytes = *(unsigned short*)(data.data + 8);
+    if (mSkyLight == NULL)
+        mSkyLight = new SparseLightStorage(true);
+    mSkyLight->setFromRawData(cursor, skyLightBytes);
+    cursor += skyLightBytes;
+    unsigned short skyLightUpperBytes = *(unsigned short*)(data.data + 10);
+    if (mSkyLightUpper == NULL)
+        mSkyLightUpper = new SparseLightStorage(true, true);
+    mSkyLightUpper->setFromRawData(cursor, skyLightUpperBytes);
+    cursor += skyLightUpperBytes;
+    std::memcpy(mBiomes.data, cursor, 0x100);
+    recalcHeightmapOnly();
+    for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+        it->second->clearCache();
+    mChunkFlags = 0x400;
+    mPostProcess = true;
 }
 void LevelChunk::getDataData(arrayWithLength<unsigned char> data)
 {
@@ -341,7 +384,36 @@ unsigned int LevelChunk::getBiomePresentFlag()
 }
 void LevelChunk::reSyncLighting()
 {
-    mLightPopulated = 1;
+    EnterCriticalSection(&sLevelChunkLightingMutex);
+    if (!isEmpty())
+    {
+        const DimensionType* dimensionType = level->mDimension->getType();
+        ServerLevel* otherLevel = gMinecraftServer->getLevel(dimensionType->getId());
+        ChunkSource* chunkSource = otherLevel->getChunkSource();
+        LevelChunk* otherChunk = chunkSource->getChunkLoadedOrUnloaded(x, z);
+        if (!otherChunk->isEmpty())
+        {
+            GameRenderer::AddForDelete(mSkyLight);
+            mSkyLight = new SparseLightStorage(otherChunk->mSkyLight);
+            GameRenderer::FinishedReassigning();
+            GameRenderer::AddForDelete(mBlockLight);
+            mBlockLight = new SparseLightStorage(otherChunk->mBlockLight);
+            GameRenderer::FinishedReassigning();
+            GameRenderer::AddForDelete(mSkyLightUpper);
+            mSkyLightUpper = new SparseLightStorage(otherChunk->mSkyLightUpper);
+            GameRenderer::FinishedReassigning();
+            GameRenderer::AddForDelete(mBlockLightUpper);
+            mBlockLightUpper = new SparseLightStorage(otherChunk->mBlockLightUpper);
+            GameRenderer::FinishedReassigning();
+            GameRenderer::AddForDelete(mElements);
+            mElements = new ElementStorage(level->mIsClientSide, otherChunk->mElements);
+            GameRenderer::FinishedReassigning();
+            level->setBlocksDirty(BlockPos(x * 16 - 1, 0, z * 16 - 1), BlockPos(x * 16 + 16, 256, z * 16 + 16));
+            LeaveCriticalSection(&sLevelChunkLightingMutex);
+            return;
+        }
+    }
+    LeaveCriticalSection(&sLevelChunkLightingMutex);
 }
 bool LevelChunk::reSyncLightingNearby()
 {
@@ -362,6 +434,21 @@ void LevelChunk::dropLighting()
 void LevelChunk::SetInvalid(bool invalid)
 {
     mInvalid = invalid;
+    if (invalid)
+    {
+        EnterCriticalSection(&sLevelChunkEntityMutex);
+        for (int i = 0; i < mEntitySectionCount; ++i)
+            mEntitySections[i]->clear();
+        LeaveCriticalSection(&sLevelChunkEntityMutex);
+        EnterCriticalSection(&sLevelChunkPostProcessMutex);
+        for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+            level->markForRemoval(it->second);
+        mBlockEntityMap.clear();
+        LeaveCriticalSection(&sLevelChunkPostProcessMutex);
+        delete mPendingBlockEntityTag;
+        mPendingBlockEntityTag = NULL;
+        mUnloaded = true;
+    }
 }
 bool LevelChunk::isInvalid() const
 {
@@ -521,22 +608,73 @@ void LevelChunk::lightGap(int x, int y, int z)
 }
 void LevelChunk::recheckGaps(bool onlyOne)
 {
-    if (!mHasGapsToCheck)
-        return;
-    for (int localZ = 0; localZ < 16; ++localZ)
-        for (int localX = 0; localX < 16; ++localX)
+    if (!isEmpty())
+    {
+        int minPos = (level->mDimension->getXZSize() * -16) >> 1;
+        int maxPos = ((level->mDimension->getXZSize() << 4) >> 1) - 1;
+        if (level->hasChunksAt(BlockPos(x * 16 + 8, 128, z * 16 + 8), 16))
         {
-            int index = (localX >> 1) | (localZ << 3);
-            unsigned char mask = (unsigned char)(1 << ((localX & 1) << 2));
-            if ((mBiomeFlags[index] & mask) != 0)
+            for (int localX = 0; localX < 16; ++localX)
             {
-                mBiomeFlags[index] &= (unsigned char)~mask;
-                lightGap(x * 16 + localX, getHeightmap(localX, localZ), z * 16 + localZ);
-                if (onlyOne)
-                    return;
+                for (int localZ = 0; localZ < 16; ++localZ)
+                {
+                    int index = (localX >> 1) | (localZ << 3);
+                    unsigned char mask = (unsigned char)(1 << ((localX & 1) << 2));
+                    unsigned char flags = mBiomeFlags[index];
+                    if (onlyOne || (flags & mask) != 0)
+                    {
+                        mBiomeFlags[index] = (unsigned char)(flags & ~mask);
+                        unsigned char height = getHeightmap(localX, localZ);
+                        int worldX = x * 16 + localX;
+                        int worldZ = z * 16 + localZ;
+                        BlockPos pos(worldX, 0, worldZ);
+                        int minHeight = level->getHeightmapPos(pos).y;
+                        int westX = worldX - 1;
+                        if (minPos <= westX)
+                        {
+                            int westHeight = level->getHeightmapPos(pos.west()).y;
+                            if (westHeight < minHeight)
+                                minHeight = westHeight;
+                        }
+                        int eastX = worldX + 1;
+                        if (eastX <= maxPos)
+                        {
+                            int eastHeight = level->getHeightmapPos(pos.east()).y;
+                            if (eastHeight < minHeight)
+                                minHeight = eastHeight;
+                        }
+                        int northZ = worldZ - 1;
+                        if (minPos <= northZ)
+                        {
+                            int northHeight = level->getHeightmapPos(pos.north()).y;
+                            if (northHeight < minHeight)
+                                minHeight = northHeight;
+                        }
+                        int southZ = worldZ + 1;
+                        if (southZ <= maxPos)
+                        {
+                            int southHeight = level->getHeightmapPos(pos.south()).y;
+                            if (southHeight < minHeight)
+                                minHeight = southHeight;
+                        }
+                        lightGap(worldX, worldZ, minHeight);
+                        if (!onlyOne)
+                        {
+                            if (minPos <= westX)
+                                lightGap(westX, worldZ, height);
+                            if (eastX <= maxPos)
+                                lightGap(eastX, worldZ, height);
+                            if (minPos <= northZ)
+                                lightGap(worldX, northZ, height);
+                            if (southZ <= maxPos)
+                                lightGap(worldX, southZ, height);
+                        }
+                        mHasGapsToCheck = false;
+                    }
+                }
             }
         }
-    mHasGapsToCheck = false;
+    }
 }
 void LevelChunk::recalcHeight(int localX, int y, int localZ)
 {
@@ -751,7 +889,12 @@ bool LevelChunk::isSkyLit(const BlockPos& pos)
 }
 boost::shared_ptr<BlockEntity> LevelChunk::createBlockEntity(const BlockPos& pos)
 {
-    return boost::shared_ptr<BlockEntity>();
+    const BlockState* state = getBlockState(pos);
+    Block* block = state->getBlock();
+    if (!block->mBlockEntity)
+        return boost::shared_ptr<BlockEntity>();
+    EntityBlock* entityBlock = dynamic_cast<EntityBlock*>(block);
+    return entityBlock->newBlockEntity(level, state->getBlock()->convertBlockStateToLegacyData(state));
 }
 boost::shared_ptr<BlockEntity> LevelChunk::getBlockEntity(const BlockPos& pos, EntityCreationType type)
 {
@@ -984,7 +1127,27 @@ void LevelChunk::postProcess()
 }
 void LevelChunk::flagPostProcessComplete(short value)
 {
-    mPostProcess = value != 0;
+    mChunkFlags |= (unsigned short)value;
+    if ((mChunkFlags & 0x1e) == 0x1e)
+    {
+        PIXBeginNamedEvent(0.0f, "Compressing lighting blocks");
+        mElements->removeCompressionHeadroom();
+        if (!isLowerBlockLightStorageCompressed())
+            compressLighting();
+        PIXEndNamedEvent();
+    }
+    if (mChunkFlags == 0x3fe)
+    {
+        g_pApp->processSchematicsLighting(this);
+        PIXBeginNamedEvent(0.0f, "Recheck gaps");
+        if (level->mDimension->getType() != DimensionType::NETHER)
+            recheckGaps(true);
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0f, "Light lava (this)");
+        lightLava();
+        PIXEndNamedEvent();
+        mChunkFlags |= 0x400;
+    }
 }
 void LevelChunk::doPostProcess(ChunkSource* source, ChunkGenerator* generator)
 {
@@ -1109,8 +1272,61 @@ void LevelChunk::setCheckAllLight()
 }
 bool LevelChunk::postProcessAt(int x, int z)
 {
-    mPostProcess = 1;
-    return true;
+    PIXBeginNamedEvent(0.0f, "LevelChunk::postProcessAt %d,%d", x, z);
+    MutableBlockPos pos(this->x * 16 + x, 0, this->z * 16 + z);
+    int y = getHighestSectionPosition() + 15;
+    bool foundLight = false;
+    bool belowLimit = false;
+    PIXBeginNamedEvent(0.0f, "Checking full height");
+    for (;;)
+    {
+        int seaLevel = level->getSeaLevel();
+        if (y <= seaLevel && (y < 1 || belowLimit))
+        {
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Checking light emissions");
+            for (int checkY = pos.y; checkY > 0; --checkY)
+            {
+                pos.y = checkY;
+                Block* block = getBlock(pos);
+                const BlockState* state = block->defaultBlockState();
+                if (state->getBlock()->getLightEmission(state) > 0)
+                    level->checkLight(pos, false, false);
+            }
+            PIXEndNamedEvent();
+            PIXEndNamedEvent();
+            return true;
+        }
+        PIXBeginNamedEvent(0.0f, "Checking at y %d", y);
+        pos.y = y;
+        int lightBlock = getBlockLightBlock(pos);
+        if (lightBlock == 0xff && y < 0x3f)
+            belowLimit = true;
+        if (foundLight)
+        {
+            if (lightBlock == 0)
+            {
+                PIXBeginNamedEvent(0.0f, "First check light");
+                if (!level->checkLight(pos, false, false))
+                {
+                    PIXEndNamedEvent();
+                    PIXEndNamedEvent();
+                    PIXEndNamedEvent();
+                    PIXEndNamedEvent();
+                    return false;
+                }
+                PIXEndNamedEvent();
+            }
+            PIXEndNamedEvent();
+        }
+        else
+        {
+            if (lightBlock >= 1)
+                foundLight = true;
+            PIXEndNamedEvent();
+        }
+        --y;
+    }
 }
 Level* LevelChunk::getLevel()
 {

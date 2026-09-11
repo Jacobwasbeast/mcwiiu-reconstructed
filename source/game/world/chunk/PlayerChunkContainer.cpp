@@ -61,7 +61,7 @@ void PlayerChunkContainer::add(boost::shared_ptr<ServerPlayer> player, bool send
     player->mTrackedChunks.insert(mPos);
 
     ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
-    ((ServerChunkCache*)level->chunkSource)->dontDrop(mPos.x, mPos.z);
+    static_cast<ServerChunkCache*>(level->getChunkSource())->dontDrop(mPos.x, mPos.z);
 }
 
 bool PlayerChunkContainer::hasPlayer(boost::shared_ptr<ServerPlayer> player)
@@ -98,7 +98,7 @@ void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool s
     {
         updateInhabitedTime();
         ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
-        ((ServerChunkCache*)level->chunkSource)->drop(mPos.x, mPos.z);
+        static_cast<ServerChunkCache*>(level->getChunkSource())->drop(mPos.x, mPos.z);
     }
     if (send && player && player->mConnection != NULL)
         player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityPacket(mPos.x, mPos.z, false, false)));

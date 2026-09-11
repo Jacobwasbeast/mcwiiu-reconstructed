@@ -68,9 +68,6 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     int originChunkX = size / 2 - centreChunkX;
     int originChunkZ = size / 2 - centreChunkZ;
 
-    float cellWidth = width / (float)size;
-    float cellHeight = height / (float)size;
-
     for (int column = 0; column < size; column++)
     {
         bufferBuilder->begin(3);
@@ -85,27 +82,20 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
             if ((!chunk->isReady() || chunk->isEmpty()) &&
                 !sServerChunkSource->reallyHasChunk(chunkX, chunkZ))
             {
-                RenderQuad((float)column * cellWidth, (float)row * cellHeight, cellWidth, cellHeight,
-                           chunk->isEmpty() ? CHUNK_STATUS_COLOUR_EMPTY : CHUNK_STATUS_COLOUR_MISSING,
-                           bufferBuilder);
+                chunk->isEmpty();
             }
 
             int blockX = chunkX * 16;
             int blockZ = chunkZ * 16;
 
-            unsigned int colour = CHUNK_STATUS_COLOUR_NOT_BUILT;
             for (int section = 0; section < CHUNK_INFO_MAP_SECTION_COUNT; section++)
             {
                 if ((sLevelRenderer->getGlobalChunkFlags(blockX, section * 16, blockZ, sLevel) &
                      CHUNK_FLAG_BUILT) != 0)
                 {
-                    colour = CHUNK_STATUS_COLOUR_BUILT;
                     break;
                 }
             }
-
-            RenderQuad((float)column * cellWidth, (float)row * cellHeight, cellWidth, cellHeight,
-                       colour, bufferBuilder);
         }
 
         bufferBuilder->end();
@@ -117,24 +107,15 @@ void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float widt
     int xzSize = sLevel->mDimension->getXZSize();
     int halfXZSize = xzSize / 2;
 
-    int maxMemoryAllocated = 0;
     for (int column = 0; column < xzSize; column++)
     {
         int chunkX = column - halfXZSize;
 
         for (int row = 0; row < xzSize; row++)
         {
-            int memoryAllocated =
-                sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
-            if (memoryAllocated > maxMemoryAllocated)
-            {
-                maxMemoryAllocated = memoryAllocated;
-            }
+            sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
         }
     }
-
-    float cellWidth = width / (float)xzSize;
-    float cellHeight = height / (float)xzSize;
 
     for (int column = 0; column < xzSize; column++)
     {
@@ -144,17 +125,7 @@ void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float widt
 
         for (int row = 0; row < xzSize; row++)
         {
-            int memoryAllocated =
-                sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
-
-            unsigned int heat = 0;
-            if (maxMemoryAllocated > 0)
-            {
-                heat = (unsigned int)(memoryAllocated * 255 / maxMemoryAllocated);
-            }
-
-            RenderQuad((float)column * cellWidth, (float)row * cellHeight, cellWidth, cellHeight,
-                       0xFF000000 | (heat << 16) | ((255 - heat) << 8), bufferBuilder);
+            sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
         }
 
         bufferBuilder->end();

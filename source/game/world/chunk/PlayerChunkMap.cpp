@@ -2,6 +2,10 @@
 
 #include <algorithm>
 
+#include "game/core/Mth.hpp"
+#include "game/server/ServerPlayer.hpp"
+#include "game/world/chunk/PlayerChunkContainer.hpp"
+
 PlayerChunkMap::PlayerChunkMap(ServerLevel* level, int viewDistance, int radius)
     : mTicksUntilNextUpdate(0), mLevel(NULL), mViewDistance(viewDistance), mRadius(radius),
       mLastUpdate(0), mShouldDropChunks(false), mPauseBlockUpdatePackets(false)
@@ -73,8 +77,55 @@ bool PlayerChunkMap::shouldActuallyDropChunks()
 
 void PlayerChunkMap::setViewDistance(int distance)
 {
-    mViewDistance = distance;
-    mRadius = distance;
+    int newRadius = Mth::clamp(distance, 3, 15);
+    if (newRadius != mRadius)
+    {
+        PlayerVector players(mPlayers);
+        if (!players.empty())
+        {
+            PlayerVector::iterator it = players.begin();
+            if (newRadius - mRadius > 0)
+            {
+                while (it != players.end())
+                {
+                    boost::shared_ptr<ServerPlayer> player = *it;
+                    int chunkX = static_cast<int32_t>(player->mX) >> 4;
+                    int chunkZ = static_cast<int32_t>(player->mZ) >> 4;
+                    for (int x = chunkX - newRadius; x <= chunkX + newRadius; ++x)
+                    {
+                        for (int z = chunkZ - newRadius; z <= chunkZ + newRadius; ++z)
+                        {
+                            PlayerChunkContainer* chunk = getOrCreateChunk(x, z);
+                            if (!chunk->hasPlayer(player))
+                                chunk->add(player, true);
+                        }
+                    }
+                    ++it;
+                }
+                mRadius = newRadius;
+                return;
+            }
+            while (it != players.end())
+            {
+                boost::shared_ptr<ServerPlayer> player = *it;
+                int chunkX = static_cast<int32_t>(player->mX) >> 4;
+                int chunkZ = static_cast<int32_t>(player->mZ) >> 4;
+                for (int x = chunkX - mRadius; x <= chunkX + mRadius; ++x)
+                {
+                    for (int z = chunkZ - mRadius; z <= chunkZ + mRadius; ++z)
+                    {
+                        if (!chunkInRange(x, z, chunkX, chunkZ))
+                        {
+                            PlayerChunkContainer* chunk = getOrCreateChunk(x, z);
+                            chunk->remove(player, true);
+                        }
+                    }
+                }
+                ++it;
+            }
+        }
+        mRadius = newRadius;
+    }
 }
 
 void PlayerChunkMap::tick()
