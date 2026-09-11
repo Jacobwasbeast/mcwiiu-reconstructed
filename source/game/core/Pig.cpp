@@ -7,6 +7,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
+#include "game/core/EquipmentSlot.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/LightningBolt.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -19,6 +20,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/PigZombie.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
@@ -227,7 +229,23 @@ ResourceLocation* Pig::getDefaultLootTable() { return &BuiltInLootTables::PIG; }
 
 void Pig::thunderHit(const LightningBolt* lightning)
 {
-    Animal::thunderHit(lightning);
+    if (mLevel->mIsClientSide)
+        return;
+
+    boost::shared_ptr<PigZombie> pigZombie(new PigZombie(mLevel));
+    pigZombie->setItemSlot(EquipmentSlot::MAINHAND,
+                           not_null_ptr<ItemInstance>(new ItemInstance(Items::goldenSword)));
+    pigZombie->moveTo(mX, mY, mZ, mYRot, mXRot);
+    pigZombie->setNoAi(isNoAi());
+
+    if (hasCustomName())
+    {
+        pigZombie->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
+        pigZombie->setCustomNameVisible(isCustomNameVisible());
+    }
+
+    mLevel->addEntity(pigZombie);
+    remove();
 }
 
 void Pig::causeFallDamage(float fallDistance, float damageMultiplier)

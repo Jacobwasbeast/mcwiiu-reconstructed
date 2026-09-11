@@ -64,24 +64,37 @@ GameRuleManager::GameRuleManager()
 
 void GameRuleManager::unloadCurrentGameRules()
 {
-    if (mGameRuleDefinitions != NULL)
+    LevelRuleset* definitions = mGameRuleDefinitions;
+    if (definitions != NULL)
     {
-        if (mLevelGenerationOptions->isFromSave())
+        LevelGenerationOptions* options = mLevelGenerationOptions;
+        if (options != NULL && options->isFromSave())
         {
-            mLevelRules->removeLevelRule(mGameRuleDefinitions);
-            delete mGameRuleDefinitions;
+            mLevelRules->removeLevelRule(definitions);
+            if (mGameRuleDefinitions != NULL)
+            {
+                delete mGameRuleDefinitions;
+            }
         }
     }
-    if (mLevelGenerationOptions != NULL)
+    LevelGenerationOptions* options = mLevelGenerationOptions;
+    if (options != NULL)
     {
-        if (mLevelGenerationOptions->isFromSave())
+        if (options->isFromSave())
         {
-            mLevelGenerators->removeLevelGenerator(mLevelGenerationOptions);
-            delete mLevelGenerationOptions;
+            mLevelGenerators->removeLevelGenerator(options);
+            options = mLevelGenerationOptions;
+            if (options != NULL)
+            {
+                delete options;
+                mLevelGenerationOptions = NULL;
+                mGameRuleDefinitions = NULL;
+                return;
+            }
         }
-        else if (mLevelGenerationOptions->isFromDLC())
+        else if (options->isFromDLC())
         {
-            mLevelGenerationOptions->reset_finish();
+            options->reset_finish();
         }
     }
     mLevelGenerationOptions = NULL;
@@ -512,12 +525,20 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
 
 void GameRuleManager::processSchematics(LevelChunk* chunk)
 {
-    if (mLevelGenerationOptions != NULL) mLevelGenerationOptions->processSchematics(chunk);
+    LevelGenerationOptions* options = getLevelGenerationOptions();
+    if (options != NULL)
+    {
+        options->processSchematics(chunk);
+    }
 }
 
 void GameRuleManager::processSchematicsLighting(LevelChunk* chunk)
 {
-    if (mLevelGenerationOptions != NULL) mLevelGenerationOptions->processSchematicsLighting(chunk);
+    LevelGenerationOptions* options = getLevelGenerationOptions();
+    if (options != NULL)
+    {
+        options->processSchematicsLighting(chunk);
+    }
 }
 
 unsigned int GameRuleManager::loadGameRulesPack(File* file)

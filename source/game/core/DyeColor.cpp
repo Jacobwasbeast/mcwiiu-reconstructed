@@ -144,7 +144,10 @@ int DyeColor::getTextureDiffuseColor() const
 
 arrayWithLength<const float> DyeColor::getTextureDiffuseColors() const
 {
-    return textureDiffuseColors;
+    arrayWithLength<const float> result;
+    result.data = textureDiffuseColors.data;
+    result.length = textureDiffuseColors.length;
+    return result;
 }
 
 eMinecraftColour DyeColor::getShulkerColor() const

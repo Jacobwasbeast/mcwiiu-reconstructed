@@ -8,15 +8,19 @@
 #include "game/core/DifficultyInstance.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
+#include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Material.hpp"
 
 const EntityDataAccessor<int>* Guardian::DATA_ID_ATTACK_TARGET = NULL;
 
@@ -69,11 +73,15 @@ void Guardian::registerGoals()
 void Guardian::registerAttributes()
 {
     Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(16.0);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(30.0);
 }
 
 void Guardian::createNavigation(Level* level)
 {
-    Mob::createNavigation(level);
+    mNavigation = new WaterBoundPathNavigation(this, level, true, false);
 }
 
 void Guardian::defineSynchedData()
@@ -111,6 +119,8 @@ boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
 void Guardian::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     LivingEntity::onSyncedDataUpdated(accessor);
+    if (accessor == DATA_ID_ATTACK_TARGET)
+        mCachedAttackTarget = boost::shared_ptr<LivingEntity>();
 }
 
 int Guardian::getAmbientSoundInterval()
@@ -150,6 +160,10 @@ double Guardian::getEyeHeight()
 
 double Guardian::getWalkTargetValue(const BlockPos& pos)
 {
+    if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER)
+    {
+        return (double)(float)(mLevel->getSeaLevel() + 9.5f);
+    }
     return Monster::getWalkTargetValue(pos);
 }
 
@@ -187,7 +201,9 @@ bool Guardian::isDarkEnoughToSpawn()
 
 bool Guardian::checkSpawnObstruction()
 {
-    return Monster::checkSpawnObstruction();
+    if (!mLevel->isUnobstructed(mBoundingBox, shared_from_this()))
+        return false;
+    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
 }
 
 bool Guardian::checkSpawnRules()
@@ -201,6 +217,27 @@ bool Guardian::checkSpawnRules()
 
 bool Guardian::hurt(const DamageSource* source, float damage)
 {
+    if (!mLevel->mIsClientSide && !source->isMagic())
+    {
+        boost::shared_ptr<Entity> entity = source->getEntity();
+        if (entity != NULL
+            && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        {
+            if (!source->isExplosion())
+            {
+                boost::shared_ptr<LivingEntity> attacker =
+                    boost::dynamic_pointer_cast<LivingEntity>(entity);
+                if (attacker != NULL)
+                {
+                    boost::shared_ptr<EntityDamageSource> thornsSource =
+                        DamageSource::CreateThorns(shared_from_this());
+                    attacker->hurt(thornsSource.get(), 2.0f);
+                }
+            }
+        }
+    }
+    if (mRandomStrollGoal != NULL)
+        mRandomStrollGoal->trigger();
     return Monster::hurt(source, damage);
 }
 

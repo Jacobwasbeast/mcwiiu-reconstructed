@@ -1,5 +1,7 @@
 #include "game/core/MG04ScoreboardLayout.hpp"
 
+#include <algorithm>
+#include <cstring>
 #include <sstream>
 
 #include "game/core/ClientScoreboard.hpp"
@@ -10,7 +12,9 @@
 #include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/AbstractClientPlayer.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
@@ -27,6 +31,11 @@ namespace
 int playerInfoInt(const PlayerInfo* info, unsigned int offset)
 {
     return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(info) + offset);
+}
+
+int& playerInfoIntMut(PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset);
 }
 }
 
@@ -71,6 +80,23 @@ void MG04ScoreboardLayout::Init(int value)
 {
     m_localPlayerIdx = value;
     ClearPlayersInfo();
+
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+        Minecraft::GetInstance()->mLocalPlayers[value];
+
+    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    for (int index = 0; index < playerCount; ++index)
+    {
+        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
+        if (networkPlayer != 0)
+        {
+            PlayerInfo* info = CreatePlayerInfo();
+            BuildPlayerInfo(networkPlayer, info);
+            m_players.push_back(info);
+        }
+    }
+
+    std::sort(m_players.begin(), m_players.end(), SORTBYSCORE);
 }
 
 UIString MG04ScoreboardLayout::getLabel2(const StatsUID& uid)
@@ -203,7 +229,20 @@ unsigned char MG04ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 
 void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
 {
+    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     IScoreboardLayout::BuildPlayerInfo(player, info);
+
+    const std::wstring playerName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer =
+        Minecraft::GetInstance()->GetLocalPlayerByName(playerName);
+
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+
+    memcpy(reinterpret_cast<char*>(info) + 0x24, scoreboard->GetVotesGiven(uid, -1), 16);
+    memcpy(reinterpret_cast<char*>(info) + 0x34, scoreboard->GetVotesReceived(uid, -1), 16);
+    playerInfoIntMut(info, 0x44) = scoreboard->GetBlocksPlaced(uid, -1);
+    playerInfoIntMut(info, 0x48) = scoreboard->GetBlocksDestroyed(uid, -1);
 }
 
 PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()

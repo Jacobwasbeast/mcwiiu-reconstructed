@@ -1,6 +1,8 @@
 #include "game/core/MineShaftPieces.hpp"
 
+#include "game/core/MinecartChest.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
+#include "game/world/block/BaseRailBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
@@ -225,7 +227,30 @@ void MineShaftPieces::MineShaftCorridor::addChildren(StructurePiece* startPiece,
 bool MineShaftPieces::MineShaftCorridor::createChest(Level* level, BoundingBox* box, Random& random,
                                                       int x, int y, int z, ResourceLocation* lootTable)
 {
-    return StructurePiece::createChest(level, box, random, x, y, z, lootTable);
+    if (level->countInstanceOf(0xA800000ULL, false, NULL, NULL) >= 100)
+        return false;
+
+    BlockPos position(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
+    if (!box->isInside(position))
+        return false;
+
+    if (level->getBlockState(position)->getMaterial() != Material::AIR)
+        return false;
+
+    if (level->getBlockState(position.below())->getMaterial() == Material::AIR)
+        return false;
+
+    TypedBoxed<BaseRailBlock::RailShape*> shape(
+        random.nextBoolean() ? gRailShapes[1] : gRailShapes[0]);
+    const BlockState* railState = Blocks::rail->defaultBlockState()->setBoxedValue(
+        static_cast<BaseRailBlock*>(Blocks::rail)->getShapeProperty(), &shape);
+    placeBlock(level, railState, x, y, z, box);
+
+    boost::shared_ptr<MinecartChest> minecart(new MinecartChest(
+        level, (double)position.x + 0.5, (double)position.y + 0.5, (double)position.z + 0.5));
+    minecart->setLootTable(lootTable, random.nextLong());
+    level->addEntity(minecart);
+    return true;
 }
 
 void MineShaftPieces::MineShaftCorridor::placeSupport(Level* level, BoundingBox* box, int x0, int y0,

@@ -2,8 +2,11 @@
 
 #include "game/core/Stat.hpp"
 #include "game/core/Stats.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 #include <cstring>
+
+extern CProfile* gProfile;
 
 namespace
 {
@@ -183,6 +186,8 @@ unsigned long long StatsCounter::save(int, bool, unsigned char* data)
 
 void StatsCounter::writeStats()
 {
+    if (gProfile != NULL)
+        (void)gProfile->IsFullVersion();
 }
 
 void StatsCounter::flushLeaderboards()
@@ -248,7 +253,57 @@ void StatsCounter::parse(void* data)
 
 void StatsCounter::parseOld(unsigned short, void* data)
 {
-    parse(data);
+    unsigned char* cursor = static_cast<unsigned char*>(data) + 0xcc;
+    std::vector<Stat*>::const_iterator it;
+    for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
+    {
+        Stat* stat = *it;
+        if (!stat->isAchievement())
+        {
+            if (isLargeStat(stat))
+            {
+                unsigned int a, b, c, d;
+                std::memcpy(&a, cursor, 4);
+                std::memcpy(&b, cursor + 4, 4);
+                std::memcpy(&c, cursor + 8, 4);
+                std::memcpy(&d, cursor + 12, 4);
+                if (a != 0 || b != 0 || c != 0 || d != 0)
+                {
+                    boost::unordered_map<unsigned int, unsigned int> values;
+                    putValues(values, a, b, c, d);
+                    insert(std::make_pair(stat, values));
+                }
+                cursor += 16;
+            }
+            else
+            {
+                unsigned short a, b, c, d;
+                std::memcpy(&a, cursor, 2);
+                std::memcpy(&b, cursor + 2, 2);
+                std::memcpy(&c, cursor + 4, 2);
+                std::memcpy(&d, cursor + 6, 2);
+                if (a != 0 || b != 0 || c != 0 || d != 0)
+                {
+                    boost::unordered_map<unsigned int, unsigned int> values;
+                    putValues(values, a, b, c, d);
+                    insert(std::make_pair(stat, values));
+                }
+                cursor += 8;
+            }
+        }
+        else
+        {
+            unsigned short a;
+            std::memcpy(&a, cursor, 2);
+            if (a != 0)
+            {
+                boost::unordered_map<unsigned int, unsigned int> values;
+                putValues(values, a, 0, 0, 0);
+                insert(std::make_pair(stat, values));
+            }
+            cursor += 2;
+        }
+    }
 }
 
 void StatsCounter::clear()

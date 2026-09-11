@@ -214,7 +214,11 @@ boost::shared_ptr<EntityDamageSource> DamageSource::CreateExplosion(const boost:
 }
 
 boost::shared_ptr<Entity> DamageSource::getDirectEntity() const { return getEntity(); }
-boost::shared_ptr<Entity> DamageSource::getEntity() const { return boost::shared_ptr<Entity>(); }
+
+boost::shared_ptr<Entity> DamageSource::getEntity() const
+{
+    return boost::shared_ptr<Entity>();
+}
 bool DamageSource::isProjectile() const { return projectile; }
 bool DamageSource::isExplosion() const { return explosion; }
 bool DamageSource::isFireProjectile() const { return fireProjectile; }

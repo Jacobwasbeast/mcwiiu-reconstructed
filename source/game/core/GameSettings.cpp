@@ -665,7 +665,11 @@ uint64_t GameSettings::GetGameSettings(eGameSetting setting) { return (uint64_t)
 uint32_t GameSettings::GetGameSettingsDebugMask(int, bool) { return 0; }
 uint32_t GameSettings::IsDebugSettingEnabled(eDebugSetting, int) { return 0; }
 void GameSettings::SetGameSettingsDebugMask(int, unsigned int) { }
-uint32_t GameSettings::GetLoggingMask() { return GetGameSettingsDebugMask(0, false); }
+uint32_t GameSettings::GetLoggingMask()
+{
+    int profile = g_pApp->GetPrimaryUserIndex();
+    return gGameSettings[profile]->mUnknownA0;
+}
 void GameSettings::SetSpecialTutorialCompletionFlag(int profile, int flag)
 {
     GameSettings* s = settings(profile);

@@ -17,6 +17,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/Monster.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/entity/projectile/TippableArrow.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -162,7 +163,10 @@ void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target
 
 boost::shared_ptr<TippableArrow> IllusionIllager::getArrow(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    return boost::shared_ptr<TippableArrow>();
+    boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, owner));
+    arrow->setEnchantmentEffectsFromEntity(owner, distanceFactor);
+    return arrow;
 }
 
 IllusionIllager::IllusionistBlindnessSpellGoal::IllusionistBlindnessSpellGoal(IllusionIllager* illager)

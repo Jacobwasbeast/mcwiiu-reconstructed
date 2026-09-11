@@ -37,6 +37,7 @@ not_null_ptr<ItemInstance> ResultSlot::remove(int count)
 void ResultSlot::onQuickCraft(not_null_ptr<ItemInstance> item, int count)
 {
     mRemoveCount += count;
+    checkTakeAchievements(item);
 }
 
 void ResultSlot::onSwapCraft(int count)

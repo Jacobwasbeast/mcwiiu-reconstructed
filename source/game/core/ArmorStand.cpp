@@ -2,7 +2,9 @@
 
 #include <cmath>
 
+#include "game/core/Direction.hpp"
 #include "game/core/EquipmentSlot.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/DataWalker.hpp"
 #include "game/core/DamageSource.hpp"
@@ -14,6 +16,7 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
+#include "game/item/Items.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
@@ -522,6 +525,9 @@ void ArmorStand::showBreakingParticles()
 }
 void ArmorStand::brokenByPlayer()
 {
+    not_null_ptr<ItemInstance> armorStandItem(new ItemInstance(Items::armorStand));
+    BlockPos pos(shared_from_this());
+    Block::popResource(mLevel, pos, armorStandItem);
     brokenByAnything();
 }
 bool ArmorStand::hurt(const DamageSource* source, float damage)
@@ -671,7 +677,10 @@ Vec3* ArmorStand::getRightArmPose() { return armorStandPoseForIndex(getPoseIndex
 Vec3* ArmorStand::getLeftLegPose() { return armorStandPoseForIndex(getPoseIndex()).leftLeg; }
 Vec3* ArmorStand::getRightLegPose() { return armorStandPoseForIndex(getPoseIndex()).rightLeg; }
 Vec3* ArmorStand::getRightItemPose() { return armorStandPoseForIndex(getPoseIndex()).rightItem; }
-bool ArmorStand::isPickable() { return !mRemoved; }
+bool ArmorStand::isPickable()
+{
+    return LivingEntity::isPickable() && !isMarker();
+}
 const HumanoidArm* ArmorStand::getMainArm() { return HumanoidArm::RIGHT; }
 float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
 {
@@ -727,11 +736,63 @@ void ArmorStand::updateBoundingBox(bool marker)
         setSize(0.5f, 1.975f);
     }
 }
-void ArmorStand::tick() { LivingEntity::tick(); }
+void ArmorStand::tick()
+{
+    PIXBeginNamedEvent(0.0f, "Armor stand tick");
+    if (!mLevel->mIsClientSide)
+    {
+        BlockPos blockPos(getPos(0.0f));
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        bool poseUpdated = false;
+        for (int i = 0; i < directions.length; ++i)
+        {
+            const Direction* direction = directions.data[i];
+            if (!direction->getAxis()->isVertical())
+            {
+                if (updatePoseForSignal(blockPos.below(), direction))
+                {
+                    poseUpdated = true;
+                    break;
+                }
+            }
+        }
+        if (!poseUpdated)
+        {
+            mLastSignal = 0;
+        }
+    }
+    LivingEntity::tick();
+    bool marker = isMarker();
+    if (mWasMarker != marker)
+    {
+        updateBoundingBox(marker);
+        mBlocksBuilding = !marker;
+    }
+    mWasMarker = marker;
+    PIXEndNamedEvent();
+}
 const SoundEvent* ArmorStand::getHurtSound(const DamageSource*) { return SoundEvents::ARMORSTAND_HIT; }
 const SoundEvent* ArmorStand::getDeathSound() { return SoundEvents::ARMORSTAND_BREAK; }
 const SoundEvent* ArmorStand::getFallDamageSound(int) { return SoundEvents::ARMORSTAND_FALL; }
-void ArmorStand::setSize(float width, float height) { Entity::setSize(width, height); }
+void ArmorStand::setSize(float width, float height)
+{
+    double x = mX;
+    double y = mY;
+    double z = mZ;
+    if (isMarker())
+    {
+        Entity::setSize(width * 0.0f, height * 0.0f);
+    }
+    else if (isBaby())
+    {
+        Entity::setSize(width * 0.5f, height * 0.5f);
+    }
+    else
+    {
+        Entity::setSize(width, height);
+    }
+    setPos(x, y, z);
+}
 void ArmorStand::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
@@ -743,7 +804,22 @@ void ArmorStand::defineSynchedData()
 void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
 void ArmorStand::pushEntities()
 {
-    LivingEntity::pushEntities();
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntities(shared_from_this(), mBoundingBox, NULL, NULL);
+
+    if (entities == NULL || entities->empty())
+    {
+        return;
+    }
+
+    for (unsigned int i = 0; i < entities->size(); ++i)
+    {
+        boost::shared_ptr<Entity> entity = entities->at(i);
+        if (distanceToSqr(entity) <= 0.2)
+        {
+            entity->push(shared_from_this());
+        }
+    }
 }
 void ArmorStand::updateInvisibilityStatus() { setInvisible(mInvisible); }
 bool ArmorStand::generatesBubbles() { return false; }

@@ -95,7 +95,8 @@ int DLCSkinFile::getAdditionalBoxesCount()
 
 _SkinAdjustments* DLCSkinFile::getSkinAdjustments()
 {
-    return &mSkinAdjustments;
+    _SkinAdjustments adjustments = mSkinAdjustments;
+    return &adjustments;
 }
 
 bool DLCSkinFile::isFree()

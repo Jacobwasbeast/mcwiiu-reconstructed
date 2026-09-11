@@ -43,6 +43,7 @@ std::wstring filenametowstring(const char* filename)
 }
 
 unsigned int GetFileAttributesA(const char* fileName);
+void getFinalFilePath(char (&path)[256], const char* fileName);
 int DeleteFileA(const char* fileName);
 int CreateDirectoryA(const char* pathName, void* securityAttributes);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
@@ -144,8 +145,10 @@ std::wstring File::ext() const
 bool File::exists() const
 {
     char filename[256];
-
-    return GetFileAttributesA(wstringtofilename(getPath(), filename)) != INVALID_FILE_ATTRIBUTES;
+    char path[256];
+    wstringtofilename(getPath(), filename);
+    getFinalFilePath(path, filename);
+    return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
 }
 
 bool File::isDirectory() const

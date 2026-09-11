@@ -1,5 +1,6 @@
 #include "game/core/SeaGrass.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -61,7 +62,18 @@ const MaterialColor* SeaGrass::getMapColor(const BlockState* s, LevelSource* l, 
 Item* SeaGrass::getResource(const BlockState*, Random*, int) { return NULL; }
 const BlockState* SeaGrass::getBlockState(int data) { TypedBoxed<int> type(data); return defaultBlockState()->setBoxedValue(SEAGRASS_TYPE, &type); }
 int SeaGrass::convertBlockStateToLegacyData(const BlockState* s) { return s->getValue(SEAGRASS_TYPE); }
-unsigned int SeaGrass::GetInteractTooltip(const BlockTooltipDataHolder& h) { return Block::GetInteractTooltip(h); }
+unsigned int SeaGrass::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
+{
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x15f
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+        && tooltipData.m_pBlockState->getBlock() == this
+        && tooltipData.m_pBlockState->getValue(SEAGRASS_TYPE) == 0)
+    {
+        return 0x9F5FDC40u;
+    }
+    return Block::GetInteractTooltip(tooltipData);
+}
 EBlockOffsetType SeaGrass::getOffsetType() { return BLOCK_OFFSET_XZ; }
 const AABB* SeaGrass::getShape(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
 void SeaGrass::neighborChanged(const BlockState* s, Level* l, const BlockPos& p, Block*, const BlockPos&)

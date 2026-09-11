@@ -28,6 +28,8 @@ void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItem, not_null_ptr<ItemIns
 
 void Slot::onQuickCraft(not_null_ptr<ItemInstance> item, int count)
 {
+    (void)item;
+    (void)count;
 }
 
 void Slot::onSwapCraft(int count)

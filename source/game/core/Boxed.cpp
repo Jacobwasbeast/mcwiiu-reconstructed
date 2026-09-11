@@ -26,15 +26,15 @@ bool Boxed::isA(const std::type_info& type) const
 
 bool Boxed::operator!=(const Boxed* value) const
 {
-    return !(*this == value);
+    return !operator==(value);
 }
 
 bool Boxed::operator==(Boxed* value) const
 {
-    return *this == static_cast<const Boxed*>(value);
+    return operator==(static_cast<const Boxed*>(value));
 }
 
 bool Boxed::operator!=(Boxed* value) const
 {
-    return !(*this == static_cast<const Boxed*>(value));
+    return !operator==(static_cast<const Boxed*>(value));
 }

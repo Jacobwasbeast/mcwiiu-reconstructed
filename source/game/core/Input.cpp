@@ -11,19 +11,19 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 
 Input::Input()
-    : mMoveStrafe(0.0f),
-      mMoveForward(0.0f),
-      mWasJumping(false),
-      mJumping(false),
-      mSneaking(false),
-      mUp(false),
-      mDown(false),
-      mLeft(false),
-      mRight(false),
-      mSwimming(false),
-      mMovementReady(false),
-      mLookReady(false)
 {
+    mMoveStrafe = 0.0f;
+    mMoveForward = 0.0f;
+    mWasJumping = false;
+    mJumping = false;
+    mSneaking = false;
+    mUp = false;
+    mDown = false;
+    mLeft = false;
+    mRight = false;
+    mSwimming = false;
+    mMovementReady = false;
+    mLookReady = false;
 }
 
 Input::~Input()

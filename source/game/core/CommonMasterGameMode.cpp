@@ -1,12 +1,20 @@
 #include "game/core/CommonMasterGameMode.hpp"
 #include <algorithm>
 #include <cmath>
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/ConditionConnective.hpp"
+#include "game/core/GameMode.hpp"
+#include "game/core/GameCondition.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
 #include "game/minigame/PowerupRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Scoreboard.hpp"
+#include "game/world/generation/Player.hpp"
+#include "game/world/generation/PlayersEnteredVolumeCondition.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -14,6 +22,8 @@
 #include "game/world/generation/MapGenerator.hpp"
 #include "game/core/Voteable.hpp"
 #include "game/core/Voteables.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 
 CommonMasterGameMode* CommonMasterGameMode::GetMasterOrClient()
 {
@@ -126,7 +136,14 @@ std::wstring CommonMasterGameMode::getThemeWordEnglish(int id)
     const wchar_t* value = mEnglishStringTable == NULL ? NULL : mEnglishStringTable->getString(id);
     return value == NULL ? std::wstring() : std::wstring(value);
 }
-LevelGenerationOptions* CommonMasterGameMode::getRoundLevelGenOptions() const { return mCurrentLevelGenOptions; }
+LevelGenerationOptions* CommonMasterGameMode::getRoundLevelGenOptions() const
+{
+    if (mCurrentLevelGenOptions != NULL && !mCurrentLevelGenOptions->isGameModeLobby())
+        return mCurrentLevelGenOptions;
+    if (mNextLevelGenOptions != NULL && !mNextLevelGenOptions->isGameModeLobby())
+        return mNextLevelGenOptions;
+    return gApp.getLevelGenerationOptions();
+}
 unsigned int CommonMasterGameMode::CheckpointIDtoSequenceID(int id) const
 {
     return id < 0 || static_cast<unsigned int>(id) >= mCheckpoints.size() || mCheckpoints[id] == NULL ? 0 : mCheckpoints[id]->getSequenceID();
@@ -169,12 +186,104 @@ void CommonMasterGameMode::CacheMapDistance()
 }
 void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player>, const std::vector<CheckpointRuleDefinition*>*, const std::vector<AABB*>*) { ++mCurrentCheckpoint; }
 void CommonMasterGameMode::CheckProgress(const std::vector<boost::shared_ptr<Player> >& players) { CheckCheckpoints(players); CheckTargets(players); CheckPowerups(players); }
-void CommonMasterGameMode::OnLapCompleted(const boost::shared_ptr<Player>&) { ++mCurrentCheckpoint; }
+void CommonMasterGameMode::OnLapCompleted(const boost::shared_ptr<Player>& player)
+{
+    if (player.get() == NULL)
+        return;
+
+    GameMode* gameMode = player->GetGameMode();
+    if (gameMode != NULL)
+    {
+        gameMode->RecordLastCheckpoint(-1, -1, false, false, true);
+        gameMode->RecordLapCompleted();
+    }
+}
 void CommonMasterGameMode::CheckCheckpoints(const std::vector<boost::shared_ptr<Player> >& players) { CheckIntersectsNamedAreas(players, mCheckpoints, 0); }
-void CommonMasterGameMode::CheckTargets(const std::vector<boost::shared_ptr<Player> >&) { mPrimaryTargetActive = true; }
-void CommonMasterGameMode::CheckPowerups(const std::vector<boost::shared_ptr<Player> >&) { mBuildOffVotes = false; }
-void CommonMasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>&, unsigned int checkpoint, CheckpointRuleDefinition*) { mCurrentCheckpoint = checkpoint; }
-void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>&, unsigned int, TargetAreaRuleDefinition*) { mPrimaryTargetActive = true; }
+void CommonMasterGameMode::CheckTargets(const std::vector<boost::shared_ptr<Player> >& players)
+{
+    std::vector<TargetAreaRuleDefinition*> targetAreas;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options != NULL)
+    {
+        LevelRuleset* rules = options->getRequiredGameRules();
+        if (rules != NULL)
+            rules->getTargetAreas(&targetAreas);
+    }
+    CheckIntersectsNamedAreas(players, targetAreas, 0);
+}
+void CommonMasterGameMode::CheckPowerups(const std::vector<boost::shared_ptr<Player> >& players)
+{
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == NULL || !miniGame->ArePowerupsActive())
+        return;
+
+    std::vector<PowerupRuleDefinition*> powerups;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options != NULL)
+    {
+        LevelRuleset* rules = options->getRequiredGameRules();
+        if (rules != NULL)
+            rules->getPowerups(&powerups);
+    }
+    CheckIntersectsNamedAreas(players, powerups, 0);
+}
+void CommonMasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>& player, unsigned int checkpoint, CheckpointRuleDefinition* rule)
+{
+    if (player.get() == NULL)
+        return;
+
+    GameMode* gameMode = player->GetGameMode();
+    if (gameMode != NULL)
+        gameMode->RecordLastCheckpoint(checkpoint, rule->getSequenceID(), rule->hasSpawnPoint(), rule->hasSpawnPoint(), false);
+}
+void CommonMasterGameMode::OnTargetEnter(const boost::shared_ptr<Player>& player, unsigned int target, TargetAreaRuleDefinition* rule)
+{
+    const MiniGameDef* miniGame = GetMiniGame();
+    bool usingPrimaryTargetAreas = false;
+
+    if (miniGame != NULL)
+    {
+        GameCondition* endConditions = reinterpret_cast<GameCondition*>(static_cast<uintptr_t>(miniGame->GetEndConditions()));
+        if (endConditions != NULL)
+        {
+            ConditionConnective* connective = dynamic_cast<ConditionConnective*>(endConditions);
+            if (connective != NULL)
+            {
+                const std::vector<GameCondition*>& conditions =
+                    *reinterpret_cast<const std::vector<GameCondition*>*>(reinterpret_cast<const char*>(connective) + 8);
+                for (std::vector<GameCondition*>::const_iterator it = conditions.begin(); it != conditions.end(); ++it)
+                {
+                    PlayersEnteredVolumeCondition* volumeCondition = dynamic_cast<PlayersEnteredVolumeCondition*>(*it);
+                    if (volumeCondition != NULL && volumeCondition->IsUsingPrimaryTargetAreas())
+                    {
+                        usingPrimaryTargetAreas = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    Scoreboard* scoreboard = getScoreboard();
+    const StatsUID suid = player->getSUID();
+
+    if (!scoreboard->GetEndZoneEntered(suid, -1))
+    {
+        if (!player->GetGameMode()->isSpectator())
+        {
+            if (!rule->mPrimary && usingPrimaryTargetAreas)
+            {
+                if (miniGame != NULL && miniGame->ArePointsActive())
+                    OnSecondaryTargetEnter(player, rule);
+            }
+            else if (rule->mLaps <= scoreboard->GetLapsCompleted(suid, -1))
+            {
+                if (scoreboard->GetLastCheckpointSequenceID(suid, -1) == static_cast<int>(mCurrentCheckpoint))
+                    OnPrimaryTargetEnter(player, rule);
+            }
+        }
+    }
+}
 void CommonMasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int, PowerupRuleDefinition* rule)
 {
     rule->GiveRandomPowerup(player);

@@ -20,7 +20,7 @@ void GameRules_StringAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = value;
+    mValue->assign(value, 0, std::wstring::npos);
 }
 
 void GameRules_StringAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)

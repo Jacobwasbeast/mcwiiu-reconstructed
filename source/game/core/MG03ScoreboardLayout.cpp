@@ -2,14 +2,21 @@
 
 #include <algorithm>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ClientScoreboard.hpp"
-#include "game/core/StatsUID.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/StatsUID.hpp"
+#include "game/core/System.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/AbstractClientPlayer.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType)
@@ -36,6 +43,21 @@ unsigned int playerInfoUint(const PlayerInfo* info, unsigned int offset)
 double playerInfoDouble(const PlayerInfo* info, unsigned int offset)
 {
     return *reinterpret_cast<const double*>(reinterpret_cast<const char*>(info) + offset);
+}
+
+void setPlayerInfoByte(PlayerInfo* info, unsigned int offset, unsigned char value)
+{
+    reinterpret_cast<unsigned char*>(info)[offset] = value;
+}
+
+void setPlayerInfoInt(PlayerInfo* info, unsigned int offset, int value)
+{
+    *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset) = value;
+}
+
+void setPlayerInfoDouble(PlayerInfo* info, unsigned int offset, double value)
+{
+    *reinterpret_cast<double*>(reinterpret_cast<char*>(info) + offset) = value;
 }
 }
 
@@ -249,6 +271,24 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
 
 boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
 {
+    if (type != EScoreboardType_Scoreboard || column == -1)
+    {
+        return boost::shared_ptr<ItemInstance>();
+    }
+
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame->ArePointsActive())
+    {
+        if (column == 4)
+        {
+            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        }
+    }
+    else if (column == 2)
+    {
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+    }
+
     return boost::shared_ptr<ItemInstance>();
 }
 
@@ -260,6 +300,104 @@ unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
 {
     IScoreboardLayout::BuildPlayerInfo(player, info);
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    const std::wstring& playerName = player->GetDisplayName();
+    boost::shared_ptr<AbstractClientPlayer> localPlayer = minecraft->GetLocalPlayerByName(playerName);
+
+    bool isLocalPlayerActive = false;
+    if (localPlayer != 0 && localPlayer->isAlive())
+    {
+        isLocalPlayerActive = true;
+    }
+
+    const MiniGameDef* miniGame = minecraft->GetMiniGame();
+    ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+    ClientScoreboard* scoreboard =
+        minecraft->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
+
+    int round = -1;
+    int lifespan = 0;
+    int points = 0;
+    int secondaryTargets = 0;
+    bool endZoneEntered = false;
+    double mapTraversed = 100.0;
+
+    const bool useBestStats =
+        m_localPlayerIdx == 1 || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
+
+    if (miniGame->ArePointsActive())
+    {
+        if (useBestStats)
+        {
+            points = scoreboard->GetBestPoints(uid, &round);
+            lifespan = scoreboard->GetLifeSpan(uid, round);
+            secondaryTargets = scoreboard->GetSecondaryTargets(uid, round);
+            endZoneEntered = scoreboard->GetEndZoneEntered(uid, round);
+            mapTraversed = scoreboard->GetPercentageOfMapTraversed(uid, round);
+        }
+        else
+        {
+            points = scoreboard->GetPoints(uid, -1);
+            endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+            if (!endZoneEntered)
+            {
+                lifespan = static_cast<int>(System::processTimeInMilliSecs() - gameMode->GetLocalRoundTimeStart());
+                if (gameMode->IsInLobbyState() || !scoreboard->HasStats(uid))
+                {
+                    lifespan = 0;
+                }
+                secondaryTargets = scoreboard->GetSecondaryTargets(uid, -1);
+                endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+                mapTraversed = scoreboard->GetPercentageOfMapTraversed(uid, -1);
+            }
+            else
+            {
+                lifespan = scoreboard->GetLifeSpan(uid, -1);
+                secondaryTargets = scoreboard->GetSecondaryTargets(uid, -1);
+                endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+            }
+        }
+    }
+    else if (useBestStats)
+    {
+        lifespan = scoreboard->GetBestLifeSpan(uid, &round);
+        endZoneEntered = scoreboard->GetEndZoneEntered(uid, round);
+        mapTraversed = scoreboard->GetPercentageOfMapTraversed(uid, round);
+    }
+    else
+    {
+        endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+        if (!endZoneEntered)
+        {
+            lifespan = static_cast<int>(System::processTimeInMilliSecs() - gameMode->GetLocalRoundTimeStart());
+            if (gameMode->IsInLobbyState() || !scoreboard->HasStats(uid))
+            {
+                lifespan = 0;
+            }
+            endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+            mapTraversed = scoreboard->GetPercentageOfMapTraversed(uid, -1);
+        }
+        else
+        {
+            lifespan = scoreboard->GetLifeSpan(uid, -1);
+            endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+        }
+    }
+
+    const unsigned char highlight = (isLocalPlayerActive && !endZoneEntered) ? 1 : 0;
+    setPlayerInfoByte(info, 0x38, highlight);
+    setPlayerInfoByte(info, 0x39, static_cast<unsigned char>(endZoneEntered));
+    setPlayerInfoInt(info, 0x30, lifespan >> 31);
+    setPlayerInfoInt(info, 0x28, points);
+    setPlayerInfoInt(info, 0x24, secondaryTargets);
+    setPlayerInfoDouble(info, 0x40, mapTraversed);
+    setPlayerInfoInt(info, 0x34, lifespan);
+
+    MultiPlayerGameMode* localGameMode = minecraft->mLocalPlayers[m_localPlayerIdx]->GetLocalGameMode();
+    setPlayerInfoByte(info, 0x3a, static_cast<unsigned char>(localGameMode->IsTeamInvite(playerName)));
+    info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }
 
 PlayerInfo* MG03ScoreboardLayout::CreatePlayerInfo()

@@ -29,7 +29,9 @@ extern CStorage* gStorage;
 static unsigned char s_requestBackground = 0;
 static unsigned char s_signInRequested = 0;
 
-static unsigned char s_altMainOKToRun = 0;
+unsigned char s_altMainOKToRun = 0;
+unsigned char s_altMainPending = 0;
+unsigned char s_altMainExit = 0;
 
 
 extern wchar_t* GetRichPresenceStringFromId(int);
@@ -120,7 +122,7 @@ void CConsoleMinecraftApp::InitialiseDLCInfo() { m_dlcInfo = new cNintendoDLCInf
 uint32_t CConsoleMinecraftApp::ReadProductCodes()
 {
     unsigned int bytesRead = 0;
-    int handle = CreateFileA("WiiU_WiiUProductCodes.bin", 0x80000000U, 0, 0, 3, 0x80, 0);
+    int handle = CreateFileA("WiiU/WiiUProductCodes.bin", 0x80000000U, 0, 0, 3, 0x80, 0);
     if (handle == -1)
         return 0;
 

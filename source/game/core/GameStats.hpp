@@ -140,6 +140,7 @@ private:
     boost::shared_ptr<ServerPlayer> mThirdPlace;
     unsigned int mFarthestCheckpointReached;
     bool mLandingRecorded;
+    std::wstring mWinningThemeChoice;
 };
 
 #endif

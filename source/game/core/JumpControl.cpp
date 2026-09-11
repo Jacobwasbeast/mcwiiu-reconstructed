@@ -3,8 +3,13 @@
 #include "game/entity/mob/Mob.hpp"
 
 JumpControl::JumpControl(Mob* mob)
-    : mMob(mob), mJump(false)
 {
+    JumpControl* obj = this;
+    if (obj != NULL || (obj = static_cast<JumpControl*>(operator new(0xc)), obj != NULL))
+    {
+        obj->mMob = mob;
+        obj->mJump = false;
+    }
 }
 
 JumpControl::~JumpControl()

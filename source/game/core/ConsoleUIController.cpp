@@ -7,6 +7,7 @@
 
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvent.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferedImage.hpp"
@@ -286,6 +287,7 @@ void ConsoleUIController::renderScenes()
 
 void ConsoleUIController::render()
 {
+    gRenderer->CBuffDeferredModeEnd();
     renderScenes();
 }
 

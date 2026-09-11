@@ -15,9 +15,13 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
+#include "game/core/Difficulty.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelType.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -246,7 +250,34 @@ ResourceLocation* Slime::getDefaultLootTable()
 
 bool Slime::checkSpawnRules()
 {
-    return Mob::checkSpawnRules();
+    int x = static_cast<int>(mX);
+    if (mX < static_cast<double>(x))
+        --x;
+    int z = static_cast<int>(mZ);
+    if (mZ < static_cast<double>(z))
+        --z;
+    BlockPos pos(x, 0, z);
+    LevelChunk* chunk = mLevel->getChunkAt(pos);
+    if ((mLevel->getLevelData()->getGeneratorType() != LevelType::FLAT || mRandom->nextInt(4) == 1) &&
+        mLevel->getDifficulty() != Difficulty::PEACEFUL)
+    {
+        Biome* biome = mLevel->getBiome(pos);
+        if (biome == Biome::SWAMPLAND && mY > 50.0 && mY < 70.0 && mRandom->nextFloat() < 0.5f)
+        {
+            if (mRandom->nextFloat() < mLevel->getMoonBrightness())
+            {
+                BlockPos entityPos(this);
+                if (mLevel->getRawBrightness(entityPos) <= mRandom->nextInt(8))
+                    return Mob::checkSpawnRules();
+            }
+        }
+        if (mRandom->nextInt(10) == 0)
+        {
+            if (mY < 40.0 && (chunk->getBiomePresentFlag() & 4) != 0)
+                return Mob::checkSpawnRules();
+        }
+    }
+    return false;
 }
 
 float Slime::getSoundVolume()

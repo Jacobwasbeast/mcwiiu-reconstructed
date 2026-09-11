@@ -11,7 +11,9 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/world/generation/AbstractClientPlayer.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
@@ -34,6 +36,16 @@ int playerInfoInt(const PlayerInfo* info, unsigned int offset)
 unsigned int playerInfoUint(const PlayerInfo* info, unsigned int offset)
 {
     return *reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(info) + offset);
+}
+
+unsigned char& playerInfoByte(PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(info) + offset);
+}
+
+int& playerInfoIntMut(PlayerInfo* info, unsigned int offset)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(info) + offset);
 }
 }
 
@@ -97,6 +109,20 @@ void MG02ScoreboardLayout::Init(int value)
 {
     m_localPlayerIdx = value;
     ClearPlayersInfo();
+
+    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    for (int index = 0; index < playerCount; ++index)
+    {
+        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
+        if (networkPlayer != 0)
+        {
+            PlayerInfo* info = CreatePlayerInfo();
+            BuildPlayerInfo(networkPlayer, info);
+            m_players.push_back(info);
+        }
+    }
+
+    std::sort(m_players.begin(), m_players.end(), SORTBYSCORE);
 }
 
 unsigned int MG02ScoreboardLayout::getNumberOfColumns()
@@ -222,6 +248,30 @@ unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
 {
     IScoreboardLayout::BuildPlayerInfo(player, info);
+
+    const std::wstring playerName(player->GetOnlineName());
+    boost::shared_ptr<AbstractClientPlayer> localPlayer =
+        Minecraft::GetInstance()->GetLocalPlayerByName(playerName);
+
+    unsigned char priorityFlag = 0;
+    if (localPlayer != 0 && localPlayer->isAlive() && !localPlayer->isSpectator())
+    {
+        priorityFlag = 1;
+    }
+    playerInfoByte(info, 0x28) = priorityFlag;
+
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
+
+    playerInfoIntMut(info, 0x30) = scoreboard->GetTotalBlocksDestroyed(uid);
+    playerInfoByte(info, 0x29) = scoreboard->GetSurvived(uid, -1);
+    playerInfoIntMut(info, 0x34) = scoreboard->GetTotalDistanceTravelled(uid);
+    playerInfoIntMut(info, 0x24) = scoreboard->GetTotalLifeSpan(uid);
+    playerInfoIntMut(info, 0x3c) = scoreboard->GetTotalJumps(uid);
+    playerInfoIntMut(info, 0x38) = scoreboard->GetTotalTrapsSetOff(uid);
+    playerInfoIntMut(info, 0x2c) = scoreboard->GetRoundsWon(uid);
+    playerInfoIntMut(info, 0x40) = scoreboard->GetDeaths(uid, -1);
 }
 
 PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()

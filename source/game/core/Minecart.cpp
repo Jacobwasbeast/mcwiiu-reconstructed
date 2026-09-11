@@ -8,8 +8,11 @@
 #include "game/core/MinecartRideable.hpp"
 #include "game/core/MinecartSpawner.hpp"
 #include "game/core/MinecartTNT.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
@@ -164,7 +167,14 @@ AABB* Minecart::getCollideBox()
 
 AABB* Minecart::getBoundingBoxForCulling()
 {
-    return mBoundingBox;
+    if (!hasCustomDisplay())
+    {
+        return AABB::newTemp(mBoundingBox);
+    }
+
+    const int offset = getDisplayOffset();
+    const double growAmount = (double)Mth::abs(offset) * 0.0625;
+    return mBoundingBox->grow(growAmount);
 }
 
 bool Minecart::isPushable(boost::shared_ptr<Entity> entity)
@@ -190,6 +200,17 @@ bool Minecart::hurt(const DamageSource* source, float damage)
 void Minecart::destroy(const DamageSource* source)
 {
     remove();
+    if (!mLevel->getGameRules()->getBoolean(6))
+    {
+        return;
+    }
+
+    not_null_ptr<ItemInstance> item(new ItemInstance(Items::minecart, 1));
+    if (hasCustomName())
+    {
+        item->setHoverName(getCustomName());
+    }
+    spawnAtLocation(item, 0.25f);
 }
 
 void Minecart::animateHurt()
@@ -205,7 +226,12 @@ bool Minecart::isPickable()
 
 const Direction* Minecart::getMotionDirection()
 {
-    return Entity::getDirection();
+    const Direction* direction = getDirection();
+    if (mDamageDirection != 0)
+    {
+        return direction->getOpposite()->getClockWise();
+    }
+    return direction->getClockWise();
 }
 
 void Minecart::onAboveBubbleCol(bool down)
@@ -244,7 +270,20 @@ void Minecart::activateMinecart(int x, int y, int z, bool powered)
 
 void Minecart::comeOffTrack()
 {
-    mNoPhysics = true;
+    const double maxSpeed = getMaxSpeed();
+    mXd = Mth::clamp(mXd, -maxSpeed, maxSpeed);
+    mZd = Mth::clamp(mZd, -maxSpeed, maxSpeed);
+    if (mOnGround)
+    {
+        mXd *= 0.5;
+        mZd *= 0.5;
+    }
+    lerpMotion(mXd, mYd, mZd);
+    if (!mOnGround && !mCustomDisplay)
+    {
+        mXd *= 0.949999988079071;
+        mZd *= 0.949999988079071;
+    }
 }
 
 void Minecart::moveAlongTrack(const BlockPos& pos, const BlockState* state)
@@ -350,22 +389,22 @@ float Minecart::getDamage()
 
 void Minecart::setHurtTime(int hurtTime)
 {
-    mLerpSteps = hurtTime;
+    getEntityData()->set(DATA_ID_HURT_TIME, hurtTime, true);
 }
 
 int Minecart::getHurtTime()
 {
-    return mLerpSteps;
+    return getEntityData()->get(DATA_ID_HURT_TIME);
 }
 
 void Minecart::setHurtDir(int hurtDir)
 {
-    mDisplayOffset = hurtDir;
+    getEntityData()->set(DATA_ID_HURT_DIR, hurtDir, true);
 }
 
 int Minecart::getHurtDir()
 {
-    return mDisplayOffset;
+    return getEntityData()->get(DATA_ID_HURT_DIR);
 }
 
 const BlockState* Minecart::getDisplayBlockState()
@@ -402,12 +441,12 @@ void Minecart::setDisplayOffset(int offset)
 
 bool Minecart::hasCustomDisplay()
 {
-    return mCustomDisplay != 0;
+    return getEntityData()->get(DATA_ID_CUSTOM_DISPLAY);
 }
 
 void Minecart::setCustomDisplay(bool customDisplay)
 {
-    mCustomDisplay = customDisplay ? 1 : 0;
+    getEntityData()->set(DATA_ID_CUSTOM_DISPLAY, customDisplay, true);
 }
 
 unsigned int Minecart::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)

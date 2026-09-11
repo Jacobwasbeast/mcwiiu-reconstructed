@@ -2,14 +2,27 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
+#include "platform/wiiu/cCommerceNintendoWiiU.hpp"
+#include "game/core/ArchiveFile.hpp"
+#include "game/core/File.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/client/render/EntityRenderDispatcher.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/client/render/PlayerRenderer.hpp"
+#include "game/client/render/PlayerModel.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/world/generation/Player.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "vendor/SKIN_BOX.hpp"
+#include <sstream>
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/L10N.hpp"
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
+#include "game/client/render/TexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -17,10 +30,41 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "game/core/GameType.hpp"
+#include "game/core/Compression.hpp"
+#include "game/core/GameModeTransitionParams.hpp"
+#include "game/core/GhostController.hpp"
 #include "game/util/Random.hpp"
+#include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/data/ElementStorage.hpp"
+#include "game/item/FireworksRecipe.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/util/phys__Vec2.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/core/Achievement.hpp"
+#include "game/core/CTelemetryManager.hpp"
+#include "game/core/DLCPack.hpp"
+#include "game/core/GameModeOptions.hpp"
+#include "game/core/GameRuleManager.hpp"
+#include "game/core/Gui.hpp"
+#include "game/core/Stat.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/cDLCInfo.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/item/Container.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/core/Merchant.hpp"
+#include "game/ui/UIScene_PauseMenu.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/SignBlockEntity.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
+#include "platform/wiiu/PlayerUID.hpp"
+#include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -28,6 +72,9 @@
 #include <cstdlib>
 #include <map>
 #include <sstream>
+#include <vector>
+
+void Sleep(unsigned int milliseconds);
 
 struct _LARGE_INTEGER
 {
@@ -44,6 +91,166 @@ unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random sTipRandom;
+static bool s_pendingDlcInstallTip;
+
+extern CTelemetryManager gTelemetryManager;
+
+namespace
+{
+unsigned int s_dlcMountIndex = 0;
+unsigned int s_dlcMountErrorCount = 0;
+
+struct BANNEDLISTDATA
+{
+    PlayerUID playerUid;
+    char levelId[14];
+    char padding[2];
+};
+
+struct ContainerMenuInitData
+{
+    boost::shared_ptr<Container> inventory;
+    boost::shared_ptr<Container> container;
+    int player;
+    bool splitscreen;
+};
+
+struct HorseMenuInitData
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Container> container;
+    boost::shared_ptr<AbstractHorse> horse;
+    int player;
+    bool splitscreen;
+};
+
+struct InventoryContainerMenuInitData
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Container> container;
+    int player;
+    bool splitscreen;
+};
+
+struct ContainerPairMenuInitData
+{
+    boost::shared_ptr<Container> inventory;
+    boost::shared_ptr<Container> container;
+    int player;
+    bool splitscreen;
+};
+
+struct TradingMenuInitData
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Merchant> merchant;
+    Level* level;
+    int player;
+    bool splitscreen;
+};
+
+struct SignEntryMenuInitData
+{
+    boost::shared_ptr<SignBlockEntity> sign;
+    int player;
+};
+
+struct LocalPlayerMenuInitData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool creative;
+    int player;
+    bool splitscreen;
+};
+
+struct EnchantingMenuInitData
+{
+    boost::shared_ptr<Inventory> inventory;
+    Level* level;
+    int x;
+    int y;
+    int z;
+    int playerIndex;
+    bool splitscreen;
+    std::wstring name;
+};
+
+struct FireworksMenuInitData
+{
+    boost::shared_ptr<LocalPlayer> localPlayer;
+    bool splitscreen;
+    int player;
+    int x;
+    int y;
+    int z;
+    unsigned char flag;
+};
+
+struct RepairingMenuInitData
+{
+    boost::shared_ptr<Inventory> inventory;
+    Level* level;
+    int x;
+    int y;
+    int z;
+    int player;
+    bool splitscreen;
+};
+
+struct WritingBookMenuInitData
+{
+    boost::shared_ptr<ItemInstance> item;
+    int player;
+    bool signing;
+};
+
+std::vector<BANNEDLISTDATA*>& BannedLevelListAt(CMinecraftApp* app, int player)
+{
+    std::vector<BANNEDLISTDATA*>** lists =
+        reinterpret_cast<std::vector<BANNEDLISTDATA*>**>(reinterpret_cast<char*>(app) + 0x1ac);
+    return *lists[player];
+}
+
+int DisconnectMessageForReason(unsigned int reason)
+{
+    switch (reason)
+    {
+    case 7: return 0xad3e1729;
+    case 8: return 0xf3a95051;
+    case 0xe: return 0xb59cada7;
+    case 0xf: return 0xce44990b;
+    case 0x14: return 0xfb7f0496;
+    case 0x15: return 0x4d669d55;
+    default: return 0x10f4b2d5;
+    }
+}
+
+bool IsLicenseExemptTexturePack(const std::wstring& folderName)
+{
+    static const wchar_t* kNames[] = {
+        L"Battle & Beasts", L"Battle & Beasts 2", L"Festive", L"Fantasy_Texture_Pack",
+        L"City_Texture_Pack", L"Natural_Texture_Pack", L"Mario"
+    };
+    for (int i = 0; i < 7; ++i)
+    {
+        if (folderName == kNames[i])
+            return true;
+    }
+    return false;
+}
+}
+
+static PlayerUID GetTutorialPlayerUid(const Player* player)
+{
+    if (player == NULL)
+        return PlayerUID(0);
+    const char* base = reinterpret_cast<const char*>(player);
+    PlayerUID primary;
+    PlayerUID alternate;
+    std::memcpy(&primary, base + 0x784, sizeof(PlayerUID));
+    std::memcpy(&alternate, base + 0x798, sizeof(PlayerUID));
+    return primary != PlayerUID(0) ? primary : alternate;
+}
 static TIPSTRUCT sGeneralTips[] = {
     {0, 0xE4D51ED8}, {0, 0x56DC8E13}, {0, 0x30DA13AA}, {0, 0xA2E182E5}, {0, 0xEEE677B7},
     {0, 0xC8E3FD4E}, {0, 0xDAC3C5F9}, {0, 0xB4C14B90}, {0, 0x19F43D28}, {0, 0x3FF6B791},
@@ -133,9 +340,11 @@ CMinecraftApp::CMinecraftApp()
       mDLCInstallIndex(0), mAutosaveTime(0),
       mNewDLCAvailable(false), mDLCOffersRetrievedValue(0), mExtraGameData(0),
       mCorruptSaveDeleted(false), mResetNether(false), mResetEnd(false),
-      mRequiredTexturePackID(0), mFirstMiniGameType(static_cast<EMiniGameId>(0))
+      mRequiredTexturePackID(0), mFirstMiniGameType(static_cast<EMiniGameId>(0)),
+      mMediaArchive(NULL), mSaveNotificationCount(0), mDLCDownloadQueueResetFlag(false)
 {
     InitializeCriticalSection(&mPendingActionsMutex);
+    InitializeCriticalSection(&mSaveNotificationMutex);
     InitializeCriticalSection(&mActionMutex);
     InitializeCriticalSection(&mTerrainFeaturePositionsMutex);
     InitializeCriticalSection(&mMemoryTextureMutex);
@@ -150,11 +359,25 @@ CMinecraftApp::CMinecraftApp()
     std::fill(mPlayerIds, mPlayerIds + 8, 0);
     std::fill(mPlayerPrivileges, mPlayerPrivileges + 8, 0);
     std::fill(mPlayerGameTypes, mPlayerGameTypes + 8, 0);
+    std::fill(mBanListRead, mBanListRead + 4, false);
+    std::fill(mBanListBuffers, mBanListBuffers + 4, static_cast<unsigned char*>(NULL));
+    std::memset(mUniqueMapName, 0, sizeof(mUniqueMapName));
     for (int player = 0; player < 4; ++player)
         mCachedSignInUIDs[player] = PlayerUID(0);
 }
 CMinecraftApp::~CMinecraftApp()
 {
+    delete mMediaArchive;
+    mMediaArchive = NULL;
+    for (int player = 0; player < 4; ++player)
+    {
+        if (mBanListBuffers[player] != NULL)
+        {
+            delete[] mBanListBuffers[player];
+            mBanListBuffers[player] = NULL;
+        }
+    }
+    DeleteCriticalSection(&mSaveNotificationMutex);
     DeleteCriticalSection(&mActionMutex);
     DeleteCriticalSection(&mPendingActionsMutex);
     DeleteCriticalSection(&mTerrainFeaturePositionsMutex);
@@ -256,14 +479,44 @@ uint8_t CMinecraftApp::GetLocalPlayerCount()
 }
 void CMinecraftApp::loadMediaArchive()
 {
+    std::wstring path = L"Common/Media/MediaWiiU.arc";
+    File file(path);
+    if (!file.exists())
+        return;
+    delete mMediaArchive;
+    mMediaArchive = new ArchiveFile(file);
 }
 arrayWithLength<unsigned char> CMinecraftApp::getArchiveFile(const std::wstring& firstArgument, bool secondArgument)
 {
+    if (secondArgument == 0)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
+        {
+            TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
+            if (selected != 0 && selected->hasData() && selected->getArchiveFile() != 0 &&
+                selected->getArchiveFile()->hasFile(firstArgument))
+                return selected->getArchiveFile()->getFile(firstArgument);
+        }
+    }
+    if (mMediaArchive != 0 && mMediaArchive->hasFile(firstArgument))
+        return mMediaArchive->getFile(firstArgument);
     return arrayWithLength<unsigned char>();
 }
 bool CMinecraftApp::hasArchiveFile(const std::wstring& firstArgument, bool secondArgument)
 {
-    return false;
+    if (secondArgument == 0)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
+        {
+            TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
+            if (selected != 0 && selected->getArchiveFile() != 0 &&
+                selected->getArchiveFile()->hasFile(firstArgument))
+                return true;
+        }
+    }
+    return mMediaArchive != 0 && mMediaArchive->hasFile(firstArgument);
 }
 void CMinecraftApp::InitTime()
 {
@@ -321,48 +574,46 @@ bool CMinecraftApp::isValidStateTransition(eXuiAction current, eXuiAction next)
 }
 void CMinecraftApp::SetActionInternal(int player, eXuiAction action, void* param)
 {
-    if (player < 0 || player >= 4) return;
-    EnterCriticalSection(&mPendingActionsMutex);
-    if (action == eXuiAction_0)
+    if (static_cast<unsigned int>(player) >= 4U)
+        return;
+
+    const unsigned int actionValue = static_cast<unsigned int>(action);
+    unsigned int& currentAction = mXuiActions[player].action;
+    void*& currentParam = mXuiActions[player].param;
+
+    if ((IsActionPending(player, action) == 0 ||
+         (actionValue != 0x10U && actionValue != 3U && actionValue != 8U)) &&
+        (currentAction != 0x19U || actionValue != 0x26U) &&
+        (currentAction == 0U || actionValue != 7U) &&
+        (currentAction != 0x11U || actionValue != 0x10U))
     {
-        if (!mPendingActions[player].empty())
+        if (actionValue == 0U)
         {
-            mXuiActions[player] = mPendingActions[player].front();
-            mPendingActions[player].erase(mPendingActions[player].begin());
+            std::vector<XuiActionData>& pending = mPendingActions[player];
+            if (!pending.empty())
+            {
+                EnterCriticalSection(&mPendingActionsMutex);
+                currentAction = pending.front().action;
+                currentParam = pending.front().param;
+                pending.erase(pending.begin());
+                LeaveCriticalSection(&mPendingActionsMutex);
+                return;
+            }
         }
-        else
+        else if (currentAction != 0U &&
+                 !isValidStateTransition(static_cast<eXuiAction>(currentAction), action))
         {
-            mXuiActions[player].action = 0;
-            mXuiActions[player].param = param;
+            EnterCriticalSection(&mPendingActionsMutex);
+            XuiActionData entry;
+            entry.action = actionValue;
+            entry.param = param;
+            mPendingActions[player].push_back(entry);
+            LeaveCriticalSection(&mPendingActionsMutex);
+            return;
         }
-        LeaveCriticalSection(&mPendingActionsMutex);
-        return;
+        currentAction = actionValue;
+        currentParam = param;
     }
-    const unsigned int current = mXuiActions[player].action;
-    bool duplicate = current == static_cast<unsigned int>(action);
-    for (std::vector<XuiActionData>::const_iterator it = mPendingActions[player].begin();
-         !duplicate && it != mPendingActions[player].end(); ++it)
-        duplicate = it->action == static_cast<unsigned int>(action);
-    if ((duplicate && action != static_cast<eXuiAction>(0x10) &&
-         action != static_cast<eXuiAction>(3) && action != static_cast<eXuiAction>(8)) ||
-        (current == 0x19U && action == static_cast<eXuiAction>(0x26)) ||
-        (current == 0U && action == static_cast<eXuiAction>(7)) ||
-        (current == 0x11U && action == static_cast<eXuiAction>(0x10)))
-    {
-        LeaveCriticalSection(&mPendingActionsMutex);
-        return;
-    }
-    if (current != 0 &&
-        !isValidStateTransition(static_cast<eXuiAction>(current), action))
-    {
-        XuiActionData pending = { static_cast<unsigned int>(action), param };
-        mPendingActions[player].push_back(pending);
-        LeaveCriticalSection(&mPendingActionsMutex);
-        return;
-    }
-    mXuiActions[player].action = static_cast<unsigned int>(action);
-    mXuiActions[player].param = param;
-    LeaveCriticalSection(&mPendingActionsMutex);
 }
 void CMinecraftApp::SetAction(int player, eXuiAction action, void* param)
 {
@@ -376,9 +627,26 @@ void CMinecraftApp::SetBanListCheck(int32_t firstArgument, bool secondArgument)
 }
 void CMinecraftApp::InvalidateBannedList(int32_t firstArgument)
 {
+    if (firstArgument < 0 || firstArgument >= 4 || !mBanListRead[firstArgument])
+        return;
+    mBanListRead[firstArgument] = false;
+    SetBanListCheck(firstArgument, false);
+    mBanListEntries[firstArgument].clear();
+    if (mBanListBuffers[firstArgument] != NULL)
+    {
+        delete[] mBanListBuffers[firstArgument];
+        mBanListBuffers[firstArgument] = NULL;
+    }
 }
 void CMinecraftApp::ClearAndResetDLCDownloadQueue()
 {
+    EnterCriticalSection(&mDLCDownloadQueueMutex);
+    for (std::vector<_DLCRequest*>::iterator it = mDLCDownloadQueue.begin();
+         it != mDLCDownloadQueue.end(); ++it)
+        delete *it;
+    mDLCDownloadQueue.clear();
+    mDLCDownloadQueueResetFlag = true;
+    LeaveCriticalSection(&mDLCDownloadQueueMutex);
 }
 void CMinecraftApp::ClearDLCInstalled()
 {
@@ -595,9 +863,42 @@ uint32_t CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned
 }
 void CMinecraftApp::EnterSaveNotificationSection()
 {
+    EnterCriticalSection(&mSaveNotificationMutex);
+    const int previousCount = mSaveNotificationCount;
+    ++mSaveNotificationCount;
+    if (previousCount == 0 &&
+        CGameNetworkManager::sInstance.IsInSession() &&
+        !CGameNetworkManager::sInstance.IsLeavingGame() &&
+        gMinecraftServer != NULL)
+    {
+        gMinecraftServer->broadcastStartSavingPacket();
+        if (CGameNetworkManager::sInstance.IsLocalGame() &&
+            CGameNetworkManager::sInstance.GetPlayerCount() == 1)
+        {
+            SetXuiServerAction(GetPrimaryUserIndex(), static_cast<eXuiServerAction>(5),
+                               reinterpret_cast<void*>(1));
+        }
+    }
+    LeaveCriticalSection(&mSaveNotificationMutex);
 }
 void CMinecraftApp::LeaveSaveNotificationSection()
 {
+    EnterCriticalSection(&mSaveNotificationMutex);
+    mSaveNotificationCount = mSaveNotificationCount - 1;
+    if (mSaveNotificationCount == 0 &&
+        CGameNetworkManager::sInstance.IsInSession() &&
+        !CGameNetworkManager::sInstance.IsLeavingGame() &&
+        gMinecraftServer != NULL)
+    {
+        gMinecraftServer->broadcastStopSavingPacket();
+        if (CGameNetworkManager::sInstance.IsLocalGame() &&
+            CGameNetworkManager::sInstance.GetPlayerCount() == 1)
+        {
+            SetXuiServerAction(GetPrimaryUserIndex(), static_cast<eXuiServerAction>(5),
+                               reinterpret_cast<void*>(0));
+        }
+    }
+    LeaveCriticalSection(&mSaveNotificationMutex);
 }
 uint8_t CMinecraftApp::GetGameStarted()
 {
@@ -659,6 +960,28 @@ uint32_t CMinecraftApp::GetTMSAction(int32_t firstArgument)
 }
 uint32_t CMinecraftApp::EthernetDisconnectReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mPlayer == NULL)
+    {
+        gConsoleUIController.NavigateToHomeMenu(false);
+        cCommerceNintendoWiiU* commerce = gApp.GetCommerceInstance();
+        if (commerce != NULL)
+        {
+            commerce->SetNetworkConnected(false);
+            commerce->ClearShoppingCatalogRetrieved();
+        }
+        if (button == 0xff)
+            button = gProfile->GetPrimaryPad();
+        g_pApp->SetAction(button, static_cast<eXuiAction>(0x13), NULL);
+    }
+    else
+    {
+        g_pApp->SetAction(minecraft->mPlayer->mUserIndex, static_cast<eXuiAction>(0x12), NULL);
+    }
+
+    ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+    if (gameMode != NULL)
+        gameMode->OnExitedGame();
     return 0;
 }
 uint32_t CMinecraftApp::BannedLevelDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -720,6 +1043,73 @@ void CMinecraftApp::SetReallyChangingSessionType(bool firstArgument)
 }
 uint32_t CMinecraftApp::SignoutExitWorldThreadProc(void* context)
 {
+    AABB::UseDefaultThreadStorage();
+    Vec3::UseDefaultThreadStorage();
+    Compression::UseDefaultThreadStorage();
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int dimension = -1;
+    const bool isClient = minecraft->isClientSide();
+    const bool inSession = CGameNetworkManager::sInstance.IsInSession();
+
+    if (!isClient && !inSession)
+    {
+        if (context == NULL)
+            goto waitForSessionEnd;
+
+        if (minecraft->mGui != NULL)
+            minecraft->mGui->displayClientMessage(DisconnectMessageForReason(g_pApp->GetDisconnectReason()), 0);
+
+        if (!CGameNetworkManager::sInstance.IsInSession())
+            goto waitForSessionEnd;
+    }
+    else
+    {
+        if (context == NULL)
+        {
+            if (minecraft->mGui != NULL)
+                minecraft->mGui->displayClientMessage(0x3e0b4895, 0);
+
+            for (int playerIndex = 0; playerIndex < 2; ++playerIndex)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[playerIndex];
+                if (localPlayer)
+                    localPlayer->SetWaitingForScoreboard(true);
+            }
+        }
+        else
+        {
+            if (minecraft->mGui != NULL)
+                minecraft->mGui->displayClientMessage(DisconnectMessageForReason(g_pApp->GetDisconnectReason()), 0);
+
+            boost::shared_ptr<MultiplayerLocalPlayer>& firstPlayer = minecraft->mLocalPlayers[0];
+            if (firstPlayer)
+                firstPlayer->SetWaitingForScoreboard(false);
+
+            boost::shared_ptr<MultiplayerLocalPlayer>& secondPlayer = minecraft->mLocalPlayers[1];
+            if (secondPlayer)
+            {
+                secondPlayer->SetWaitingForScoreboard(false);
+                MinecraftServer::HaltServer(true);
+                CGameNetworkManager::sInstance.LeaveGame(false);
+                goto waitForSessionEnd;
+            }
+        }
+
+        MinecraftServer::HaltServer(true);
+        CGameNetworkManager::sInstance.LeaveGame(false);
+    }
+
+waitForSessionEnd:
+    while (CGameNetworkManager::sInstance.IsInSession())
+        Sleep(1);
+
+    while (gConsoleUIController.IsReloadingSkin())
+        Sleep(1);
+
+    boost::shared_ptr<Player> emptyPlayer;
+    minecraft->setLevel(NULL, dimension, emptyPlayer, false, true);
+    g_GameRuleManager.unloadCurrentGameRules();
     return 0;
 }
 uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -742,6 +1132,27 @@ uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStor
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+        if (selected != TexturePackRepository::defaultTexturePack)
+        {
+            DLCPack* pack = selected->getDLCPack();
+            if (pack != NULL && !pack->hasPurchasedPack())
+            {
+                int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+                gConsoleUIController.RequestAlertMessage(
+                    static_cast<int>(0x3bb3096e), static_cast<int>(0xd52c2e3), parameters, 2,
+                    static_cast<unsigned int>(button),
+                    UIScene_PauseMenu::WarningTrialTexturePackReturned, context, NULL, true);
+                return 0;
+            }
+        }
+
+        gApp.setIgnoreMainMenuInputDuringInvite(true);
+        g_pApp->SetChangingSessionType(true);
+        g_pApp->SetAction(button, static_cast<eXuiAction>(0x16), NULL);
+    }
     return 0;
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -750,6 +1161,49 @@ uint32_t CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, 
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
+        if (selected != TexturePackRepository::defaultTexturePack)
+        {
+            DLCPack* pack = selected->getDLCPack();
+            if (pack != NULL && !pack->hasPurchasedPack())
+            {
+                int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+                gConsoleUIController.RequestAlertMessage(
+                    static_cast<int>(0x3bb3096e), static_cast<int>(0xd52c2e3), parameters, 2,
+                    static_cast<unsigned int>(button),
+                    UIScene_PauseMenu::WarningTrialTexturePackReturned, context, NULL, true);
+                return 0;
+            }
+        }
+
+        bool saveExists = false;
+        gStorage->DoesSaveExist(&saveExists);
+        if (!saveExists)
+        {
+            gApp.setIgnoreMainMenuInputDuringInvite(true);
+            g_pApp->SetChangingSessionType(true);
+            g_pApp->SetAction(button, static_cast<eXuiAction>(0x16), NULL);
+        }
+        else
+        {
+            int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+            gConsoleUIController.RequestErrorMessage(
+                static_cast<int>(0x3143fcab), static_cast<int>(0xd66b8839), parameters, 2,
+                static_cast<unsigned int>(gProfile->GetPrimaryPad()),
+                ExitAndJoinFromInviteAndSaveReturned, context, NULL, true);
+        }
+    }
+    else if (result == static_cast<C4JStorage::EMessageResult>(6))
+    {
+        int parameters[2] = { static_cast<int>(0x4fcbc7e7), static_cast<int>(0xb9a1bf4d) };
+        gConsoleUIController.RequestErrorMessage(
+            static_cast<int>(0xa3d4a110), static_cast<int>(0xbb7e4722), parameters, 2,
+            static_cast<unsigned int>(gProfile->GetPrimaryPad()),
+            ExitAndJoinFromInviteDeclineSaveReturned, context, NULL, true);
+    }
     return 0;
 }
 void CMinecraftApp::SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const
@@ -768,9 +1222,17 @@ void CMinecraftApp::SetExtraGameData(unsigned int& options, eGameExtraData type,
 }
 void CMinecraftApp::SetExtraGameData(eGameExtraData type, unsigned int value)
 {
+    SetExtraGameData(mExtraGameData, type, value);
 }
 void CMinecraftApp::SetTutorialMode(bool tutorial, const boost::shared_ptr<Player>& player)
 {
+    if (!player)
+    {
+        SetExtraGameData(static_cast<eGameExtraData>(1), tutorial ? 1U : 0U);
+        mTutorialModes[PlayerUID(0)] = tutorial;
+        return;
+    }
+    mTutorialModes[GetTutorialPlayerUid(player.get())] = tutorial;
 }
 uint32_t CMinecraftApp::GetXuiAction(int32_t firstArgument)
 {
@@ -778,6 +1240,38 @@ uint32_t CMinecraftApp::GetXuiAction(int32_t firstArgument)
 }
 uint32_t CMinecraftApp::RemoteSaveThreadProc(void* context)
 {
+    (void)context;
+
+    AABB::UseDefaultThreadStorage();
+    Vec3::UseDefaultThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    FireworksRecipe::UseDefaultThreadStorage();
+    ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_RemoteSave);
+    Block::CreateNewThreadStorage();
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
+    progressRenderer->progressStartNoAbort(static_cast<int>(0x5aaa2e05));
+    progressRenderer->progressStage(-1);
+    progressRenderer->progressStagePercentage(0);
+
+    while (g_pApp->GetGameStarted() == 0)
+    {
+        const int player = gProfile->GetPrimaryPad();
+        if (g_pApp->GetXuiAction(player) != 0x1cU)
+            break;
+        minecraft->tickAllConnections();
+        Sleep(100);
+    }
+
+    const int player = gProfile->GetPrimaryPad();
+    if (g_pApp->GetXuiAction(player) != 0x1cU)
+        return 0x4c7U;
+
+    g_pApp->SetAction(player, static_cast<eXuiAction>(0), NULL);
+    gConsoleUIController.UpdatePlayerBasePositions();
+    Block::ReleaseThreadStorage();
+    ElementStorage::ReleaseThreadStorage();
     return 0;
 }
 int CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -977,6 +1471,191 @@ play_streaming:
 }
 uint32_t CMinecraftApp::GameModeTransitionThreadProc(void* context)
 {
+    GameModeTransitionParams* params = static_cast<GameModeTransitionParams*>(context);
+    const unsigned int texturePackId = params->mTexturePackId;
+    const bool waitForRoundStart = params->mWaitForRoundStart;
+    delete params;
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    g_pApp->SetGameStarted(false);
+    minecraft->mGameRenderer->DisableUpdateThread(3);
+
+    AABB::UseDefaultThreadStorage();
+    Vec3::UseDefaultThreadStorage();
+    phys::Vec2::UseDefaultThreadStorage();
+    Compression::UseDefaultThreadStorage();
+    Block::CreateNewThreadStorage();
+    FireworksRecipe::UseDefaultThreadStorage();
+    ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_GameModeTransition);
+
+    ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
+    std::wstring transitionOverride = masterGameMode->GetTransitionTextOverride();
+
+    std::vector<std::wstring> progressStrings;
+    if (!transitionOverride.empty())
+        progressStrings.push_back(transitionOverride);
+    progressStrings.push_back(L10N::GetString(0xbc34c612));
+    progressStrings.push_back(L"TPACK");
+
+    ProgressRenderer* progressRenderer = minecraft->mProgressRenderer;
+    progressRenderer->progressStartNoAbort(progressStrings[0]);
+    progressRenderer->progressStage(progressStrings[1]);
+
+    progressRenderer->progressStagePercentage(0);
+    Sleep(100);
+    progressRenderer->progressStagePercentage(10);
+
+    TexturePackRepository* texturePackRepository = minecraft->mTexturePackRepository;
+    TexturePack* previousPack = texturePackRepository->getSelected();
+    TexturePack* previousPackWithData = NULL;
+    if (previousPack != NULL && previousPack->hasData())
+        previousPackWithData = previousPack;
+
+    progressRenderer->progressStagePercentage(20);
+
+    if (texturePackRepository->selectTexturePackById(texturePackId, false))
+    {
+        SetupMiniGameMusic();
+        if (previousPackWithData != NULL)
+        {
+            previousPackWithData->loadData();
+            if (gStorage != NULL)
+                gStorage->UnmountInstalledDLC("TPACK");
+        }
+        else if (previousPack != TexturePackRepository::defaultTexturePack)
+        {
+            if (gStorage != NULL)
+                gStorage->UnmountInstalledDLC("TPACK");
+        }
+    }
+
+    int progress = 30;
+    int progressAccumulator = 0;
+    bool exitWaitLoop = false;
+    bool setGameStartedWhenReady = true;
+
+    for (;;)
+    {
+        if (waitForRoundStart && !exitWaitLoop &&
+            CGameNetworkManager::sInstance.IsInSession() &&
+            !CGameNetworkManager::sInstance.IsLeavingGame())
+        {
+            for (;;)
+            {
+                masterGameMode->IsRoundStarting();
+                gConsoleUIController.IsExpectingOrReloadingSkin();
+                CGameNetworkManager::sInstance.IsInSession();
+                minecraft->tickAllConnections();
+                if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+                {
+                    GhostController* ghostController = minecraft->GetGhostController();
+                    if (ghostController != NULL)
+                        ghostController->tick();
+                }
+                Sleep(100);
+                progressAccumulator = (progressAccumulator + 100) % 1000;
+                if (progressAccumulator == 0 && progress < 90)
+                {
+                    progress += 10;
+                    progressRenderer->progressStagePercentage(progress);
+                }
+
+                if (exitWaitLoop)
+                    break;
+
+                if (!masterGameMode->IsRoundStarting() &&
+                    !masterGameMode->ServerIsWaitingOnUsLoading())
+                {
+                    if (!g_pApp->IsActionPending(0, static_cast<eXuiAction>(3)) &&
+                        (!g_pApp->IsActionPending(0, static_cast<eXuiAction>(0x10)) ||
+                         CGameNetworkManager::sInstance.IsLocalGame()))
+                    {
+                        break;
+                    }
+                    setGameStartedWhenReady = false;
+                    exitWaitLoop = true;
+                }
+                else
+                {
+                    exitWaitLoop = true;
+                }
+
+                if (!gConsoleUIController.IsExpectingOrReloadingSkin())
+                    goto complete_transition;
+            }
+            continue;
+        }
+
+        if (!gConsoleUIController.IsExpectingOrReloadingSkin())
+            goto complete_transition;
+
+        masterGameMode->IsRoundStarting();
+        gConsoleUIController.IsExpectingOrReloadingSkin();
+        CGameNetworkManager::sInstance.IsInSession();
+        minecraft->tickAllConnections();
+        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
+        {
+            GhostController* ghostController = minecraft->GetGhostController();
+            if (ghostController != NULL)
+                ghostController->tick();
+        }
+        Sleep(100);
+        progressAccumulator = (progressAccumulator + 100) % 1000;
+        if (progressAccumulator == 0 && progress < 90)
+        {
+            progress += 10;
+            progressRenderer->progressStagePercentage(progress);
+        }
+    }
+
+complete_transition:
+    progressRenderer->progressStagePercentage(90);
+
+    if (!CGameNetworkManager::sInstance.IsHost())
+    {
+        const int primaryPad = gProfile->GetPrimaryPad();
+        if (!gProfile->IsSignedIn(primaryPad))
+            setGameStartedWhenReady = false;
+    }
+
+    if (CGameNetworkManager::sInstance.IsInSession() &&
+        !CGameNetworkManager::sInstance.IsLeavingGame() &&
+        setGameStartedWhenReady)
+    {
+        g_pApp->SetGameStarted(true);
+    }
+
+    minecraft->mGameRenderer->EnableUpdateThread(3);
+    g_pApp->SetAction(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(0), NULL);
+
+    if (g_pApp->GetGameStarted() == 0 || !waitForRoundStart)
+        goto cleanup;
+
+    for (;;)
+    {
+        if (!CGameNetworkManager::sInstance.IsInSession() ||
+            CGameNetworkManager::sInstance.IsLeavingGame())
+        {
+            goto cleanup;
+        }
+        Sleep(100);
+        if (masterGameMode->IsRoundStarting() ||
+            g_pApp->IsActionPending(0, static_cast<eXuiAction>(3)))
+        {
+            goto cleanup;
+        }
+        if (g_pApp->IsActionPending(0, static_cast<eXuiAction>(0x10)) &&
+            !CGameNetworkManager::sInstance.IsLocalGame())
+        {
+            Block::ReleaseThreadStorage();
+            ElementStorage::ReleaseThreadStorage();
+            return 0;
+        }
+    }
+
+cleanup:
+    Block::ReleaseThreadStorage();
+    ElementStorage::ReleaseThreadStorage();
     return 0;
 }
 uint64_t CMinecraftApp::GameModeTransitionComplete(void* context)
@@ -1089,10 +1768,86 @@ std::wstring CMinecraftApp::getFilePath(unsigned int firstArgument, std::wstring
 }
 uint64_t CMinecraftApp::HandleDLC(DLCPack* pack)
 {
+    unsigned int numItemsAdded = 0;
+    std::vector<std::string> files;
+    gStorage->GetMountedDLCFileList("DLCDrive", files);
+    if (!files.empty())
+    {
+        for (std::vector<std::string>::const_iterator fileIt = files.begin(); fileIt != files.end(); ++fileIt)
+        {
+            const std::string& filePath = *fileIt;
+            File file(convStringToWstring(filePath));
+            const std::wstring fileName = file.getName();
+            const unsigned int packId = mDLCManager.retrievePackIDFromDLCDataFile(filePath);
+            DLC_INFO* info = static_cast<CConsoleMinecraftApp*>(this)->GetDLCInfoInstance()->GetDLCInfoForPackID(packId);
+            if (info == NULL || info->PackType != 5)
+            {
+                const unsigned int license = info != NULL ? info->PackID : 0;
+                mDLCManager.readDLCDataFile(numItemsAdded, filePath, pack, license, false);
+            }
+            else
+            {
+                const std::wstring tpack(L"tpack");
+                const std::wstring dataPath = getFilePath(info->PackID, fileName, false, tpack);
+                File packFile(dataPath);
+                if (!packFile.exists())
+                    mDLCManager.readDLCDataFile(numItemsAdded, filePath, pack, info->PackID, false);
+                else
+                    mDLCManager.readDLCDataFile(numItemsAdded, dataPath, pack, info->PackID, false);
+            }
+        }
+    }
+
+    if (numItemsAdded == 0)
+        mDLCManager.removePack(pack);
+
     return 0;
 }
 int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+    if (contentType != 0)
+    {
+        ++s_dlcMountErrorCount;
+        ++s_dlcMountIndex;
+        app->MountNextDLC(result);
+        return 0;
+    }
+
+    CONTENT_DATA* content = reinterpret_cast<CONTENT_DATA*>(gStorage->GetDLC(s_dlcMountIndex));
+    const std::wstring folderName = convStringToWstring(std::string(content->name));
+    DLCPack* existingPack = app->mDLCManager.getPack(folderName);
+    cNintendoDLCInfo* dlcInfo = static_cast<CConsoleMinecraftApp*>(app)->GetDLCInfoInstance();
+
+    if (existingPack != NULL && !existingPack->IsCorrupt())
+    {
+        DLC_INFO* info = dlcInfo->GetDLCInfoForPackFolderName(folderName.c_str());
+        const unsigned int licenseMask = info != NULL ? 1U : 0U;
+        existingPack->SetDLCMountIndex(s_dlcMountIndex);
+        existingPack->SetDLCDeviceID(content->index);
+        existingPack->updateLicenseMask(licenseMask);
+        gStorage->UnmountInstalledDLC(NULL);
+    }
+    else
+    {
+        if (existingPack != NULL)
+            app->mDLCManager.removePack(existingPack);
+
+        DLC_INFO* info = dlcInfo->GetDLCInfoForPackFolderName(folderName.c_str());
+        unsigned int licenseMask = info != NULL ? 1U : 0U;
+        if (IsLicenseExemptTexturePack(folderName))
+            licenseMask = 1U;
+
+        DLCPack* pack = new DLCPack(folderName, licenseMask);
+        pack->SetDLCMountIndex(s_dlcMountIndex);
+        pack->SetDLCDeviceID(content->index);
+        app->mDLCManager.addPack(pack);
+        app->HandleDLC(pack);
+        gStorage->UnmountInstalledDLC(NULL);
+    }
+
+    ++s_dlcMountIndex;
+    app->MountNextDLC(result);
     return 0;
 }
 void CMinecraftApp::MountNextDLC(int32_t firstArgument)
@@ -1220,59 +1975,200 @@ void CMinecraftApp::HandleButtonPresses()
 }
 uint64_t CMinecraftApp::LoadInventoryMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, bool creative)
 {
+    LocalPlayerMenuInitData* data = new LocalPlayerMenuInitData();
+    data->localPlayer = localPlayer;
+    data->creative = creative;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0xb), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadCreativeMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, bool creative)
 {
+    LocalPlayerMenuInitData* data = new LocalPlayerMenuInitData();
+    data->localPlayer = localPlayer;
+    data->creative = creative;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x2a), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadEnchantingMenu(int player, boost::shared_ptr<Inventory> inventory, int x, int y, int z, Level* level, const std::wstring& name)
 {
+    EnchantingMenuInitData* data = new EnchantingMenuInitData();
+    data->inventory = inventory;
+    data->level = level;
+    data->x = x;
+    data->y = y;
+    data->z = z;
+    data->playerIndex = player;
+    data->name = name;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x2e), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadFurnaceMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
+    InventoryContainerMenuInitData* data = new InventoryContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(8), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadBrewingStandMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
+    InventoryContainerMenuInitData* data = new InventoryContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x2f), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadContainerMenu(int player, boost::shared_ptr<Container> inventory, boost::shared_ptr<Container> container)
 {
+    ContainerMenuInitData* data = new ContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    EUIScene scene = static_cast<EUIScene>(9);
+    if (data->splitscreen && container->getContainerSize() >= 0x1c)
+        scene = static_cast<EUIScene>(10);
+
+    gConsoleUIController.NavigateToScene(player, scene, data, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadTrapMenu(int player, boost::shared_ptr<Container> inventory, boost::shared_ptr<Container> container)
 {
+    ContainerPairMenuInitData* data = new ContainerPairMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0xc), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint32_t CMinecraftApp::LoadCrafting2x2Menu(int player, boost::shared_ptr<LocalPlayer> localPlayer)
 {
-    return 0;
+    if (GameSettings::GetGameSettings(player, static_cast<eGameSetting>(0x20)) != 0)
+        return static_cast<uint32_t>(LoadInventoryMenu(player, localPlayer, false));
+
+    char* data = new char[0x20];
+    std::memset(data, 0, 0x20);
+    new (data) boost::shared_ptr<LocalPlayer>(localPlayer);
+    *reinterpret_cast<int*>(data + 8) = 0;
+    *reinterpret_cast<unsigned char*>(data + 12) = GetLocalPlayerCount() > 1 ? 1 : 0;
+    *reinterpret_cast<int*>(data + 16) = player;
+
+    return gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(6), data,
+                                                static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
 }
 uint64_t CMinecraftApp::LoadCrafting3x3Menu(int player, boost::shared_ptr<LocalPlayer> localPlayer, int x, int y, int z)
 {
+    char* data = new char[0x20];
+    std::memset(data, 0, 0x20);
+    new (data) boost::shared_ptr<LocalPlayer>(localPlayer);
+
+    const bool splitscreen = GetLocalPlayerCount() > 1;
+    EUIScene scene;
+    if (GameSettings::GetGameSettings(player, static_cast<eGameSetting>(0x20)) == 0)
+    {
+        *reinterpret_cast<int*>(data + 8) = 1;
+        *reinterpret_cast<unsigned char*>(data + 12) = splitscreen ? 1 : 0;
+        *reinterpret_cast<int*>(data + 16) = player;
+        *reinterpret_cast<int*>(data + 20) = x;
+        *reinterpret_cast<int*>(data + 24) = y;
+        *reinterpret_cast<int*>(data + 28) = z;
+        scene = static_cast<EUIScene>(7);
+    }
+    else
+    {
+        *reinterpret_cast<unsigned char*>(data + 8) = splitscreen ? 1 : 0;
+        *reinterpret_cast<int*>(data + 12) = player;
+        *reinterpret_cast<int*>(data + 16) = x;
+        *reinterpret_cast<int*>(data + 20) = y;
+        *reinterpret_cast<int*>(data + 24) = z;
+        data[28] = 0;
+        scene = static_cast<EUIScene>(0x38);
+    }
+
+    gConsoleUIController.NavigateToScene(player, scene, data, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadFireworksMenu(int player, boost::shared_ptr<LocalPlayer> localPlayer, int x, int y, int z)
 {
+    FireworksMenuInitData* data = new FireworksMenuInitData();
+    data->localPlayer = localPlayer;
+    data->flag = 1;
+    data->player = player;
+    data->x = x;
+    data->y = y;
+    data->z = z;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x38), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint32_t CMinecraftApp::LoadSignEntryMenu(int player, boost::shared_ptr<SignBlockEntity> sign)
 {
-    return 0;
+    SignEntryMenuInitData* data = new SignEntryMenuInitData();
+    data->sign = sign;
+    data->player = player;
+
+    const uint32_t result = gConsoleUIController.NavigateToScene(
+        player, static_cast<EUIScene>(0x1d), data, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    delete data;
+    return result;
 }
 uint64_t CMinecraftApp::LoadRepairingMenu(int player, boost::shared_ptr<Inventory> inventory, Level* level, int x, int y, int z)
 {
+    RepairingMenuInitData* data = new RepairingMenuInitData();
+    data->inventory = inventory;
+    data->level = level;
+    data->x = x;
+    data->y = y;
+    data->z = z;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x33), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadTradingMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant, Level* level, const std::wstring& name)
 {
+    TradingMenuInitData* data = new TradingMenuInitData();
+    data->inventory = inventory;
+    data->merchant = merchant;
+    data->level = level;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x32), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint32_t CMinecraftApp::LoadShulkerBoxMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
-    return 0;
+    boost::shared_ptr<Container> inventoryContainer(inventory, static_cast<Container*>(inventory.get()));
+    return static_cast<uint32_t>(LoadContainerMenu(player, inventoryContainer, container));
 }
 uint64_t CMinecraftApp::LoadHopperMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
@@ -1284,15 +2180,40 @@ uint32_t CMinecraftApp::LoadHopperMenu(int player, boost::shared_ptr<Inventory> 
 }
 uint64_t CMinecraftApp::LoadHorseMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container, boost::shared_ptr<AbstractHorse> horse)
 {
+    HorseMenuInitData* data = new HorseMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->horse = horse;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x37), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint64_t CMinecraftApp::LoadBeaconMenu(int player, boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Container> container)
 {
+    InventoryContainerMenuInitData* data = new InventoryContainerMenuInitData();
+    data->inventory = inventory;
+    data->container = container;
+    data->player = player;
+    data->splitscreen = GetLocalPlayerCount() > 1;
+
+    gConsoleUIController.NavigateToScene(player, static_cast<EUIScene>(0x36), data,
+                                         static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
     return 0;
 }
 uint32_t CMinecraftApp::LoadWritingBookMenu(int player, not_null_ptr<ItemInstance> item, bool signing)
 {
-    return 0;
+    WritingBookMenuInitData* data = new WritingBookMenuInitData();
+    data->item = item;
+    data->player = player;
+    data->signing = signing;
+
+    const uint32_t result = gConsoleUIController.NavigateToScene(
+        player, static_cast<EUIScene>(0x3d), data, static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    delete data;
+    return result;
 }
 bool CMinecraftApp::IsConsoleChatCensored()
 {
@@ -1360,6 +2281,14 @@ void CMinecraftApp::TickOpacityTimer(int32_t firstArgument)
 }
 uint32_t CMinecraftApp::IsLocalMultiplayerAvailable()
 {
+    unsigned int availableSlots = 0;
+    for (int player = 0; player < 4; ++player)
+    {
+        if (g_pInput->IsPadConnected(player) != 0 || gProfile->IsSignedIn(player))
+            ++availableSlots;
+    }
+    if (g_pInput->IsLocalMultiplayerAvailable() != 0 && availableSlots > 1)
+        return 1;
     return 0;
 }
 uint64_t CMinecraftApp::NotificationsCallback(void* context, unsigned int notification, unsigned int value)
@@ -1442,6 +2371,8 @@ uint32_t CMinecraftApp::DebugInputCallback(void* context)
 }
 void CMinecraftApp::SetDebugSequence(const char* sequence)
 {
+    if (g_pInput != NULL)
+        g_pInput->SetDebugSequence(sequence, reinterpret_cast<CInput::InputCallback>(DebugInputCallback), this);
 }
 uint8_t CMinecraftApp::DLCInstallPending()
 {
@@ -1463,7 +2394,9 @@ void CMinecraftApp::ExitGame()
 }
 bool CMinecraftApp::isXuidNotch(PlayerUID uid)
 {
-    return false;
+    if (mPrimaryPlayerUID == PlayerUID(0) || uid == PlayerUID(0))
+        return false;
+    return gProfile->AreXUIDSEqual(uid, mPrimaryPlayerUID);
 }
 bool CMinecraftApp::isXuidDeadmau5(PlayerUID uid)
 {
@@ -1471,9 +2404,40 @@ bool CMinecraftApp::isXuidDeadmau5(PlayerUID uid)
 }
 void CMinecraftApp::AddMemoryTextureFile(const std::wstring& path, unsigned char* data, unsigned int size)
 {
+    EnterCriticalSection(&mMemoryTextureMutex);
+    boost::unordered_map<std::wstring, MEMDATA*>::iterator found = mMemoryTextureFiles.find(path);
+    if (found == mMemoryTextureFiles.end())
+    {
+        MEMDATA* entry = new MEMDATA();
+        entry->data = data;
+        entry->size = size;
+        entry->refCount = 1;
+        mMemoryTextureFiles[path] = entry;
+    }
+    else
+    {
+        MEMDATA* entry = found->second;
+        if (entry->size == 0 && size != 0)
+        {
+            if (entry->data != NULL)
+                delete[] entry->data;
+            entry->data = data;
+            entry->size = size;
+        }
+        ++entry->refCount;
+    }
+    LeaveCriticalSection(&mMemoryTextureMutex);
 }
 void CMinecraftApp::GetMemFileDetails(const std::wstring& firstArgument, unsigned char** secondArgument, unsigned int* thirdArgument)
 {
+    EnterCriticalSection(&mMemoryTextureMutex);
+    boost::unordered_map<std::wstring, MEMDATA*>::iterator found = mMemoryTextureFiles.find(firstArgument);
+    if (found != mMemoryTextureFiles.end())
+    {
+        *secondArgument = found->second->data;
+        *thirdArgument = found->second->size;
+    }
+    LeaveCriticalSection(&mMemoryTextureMutex);
 }
 bool CMinecraftApp::IsFileInMemoryTextures(const std::wstring& path)
 {
@@ -1484,6 +2448,14 @@ bool CMinecraftApp::IsFileInMemoryTextures(const std::wstring& path)
 }
 void CMinecraftApp::GetTPD(int type, unsigned char** data, unsigned int* size)
 {
+    EnterCriticalSection(&mMemoryTPDMutex);
+    boost::unordered_map<int, MEMDATA*>::iterator found = mMemoryTPDFiles.find(type);
+    if (found != mMemoryTPDFiles.end())
+    {
+        *data = found->second->data;
+        *size = found->second->size;
+    }
+    LeaveCriticalSection(&mMemoryTPDMutex);
 }
 bool CMinecraftApp::DefaultCapeExists()
 {
@@ -1491,13 +2463,61 @@ bool CMinecraftApp::DefaultCapeExists()
 }
 uint64_t CMinecraftApp::RemoveLevelFromBannedLevelList(int player, PlayerUID uid, char* levelId)
 {
+    std::vector<BANNEDLISTDATA*>& bannedList = BannedLevelListAt(this, player);
+    for (std::vector<BANNEDLISTDATA*>::iterator it = bannedList.begin(); it != bannedList.end();)
+    {
+        BANNEDLISTDATA* entry = *it;
+        if (entry == NULL)
+        {
+            ++it;
+            continue;
+        }
+
+        if (!IsEqualXUID(entry->playerUid, uid) || std::strcmp(entry->levelId, levelId) != 0)
+        {
+            ++it;
+            continue;
+        }
+
+        gTelemetryManager.RecordUnBanLevel(player);
+        it = bannedList.erase(it);
+    }
+
+    if (mBanListBuffers[player] != NULL)
+    {
+        delete[] mBanListBuffers[player];
+        mBanListBuffers[player] = NULL;
+    }
+
+    if (!bannedList.empty())
+    {
+        const size_t bufferSize = bannedList.size() * sizeof(BANNEDLISTDATA);
+        mBanListBuffers[player] = new unsigned char[bufferSize];
+        for (size_t i = 0; i < bannedList.size(); ++i)
+            std::memcpy(mBanListBuffers[player] + i * sizeof(BANNEDLISTDATA), bannedList[i], sizeof(BANNEDLISTDATA));
+    }
+
     return 0;
 }
 void CMinecraftApp::SetUniqueMapName(char* name)
 {
+    std::memcpy(mUniqueMapName, name, sizeof(mUniqueMapName));
 }
 uint64_t CMinecraftApp::getArchiveFileSize(const std::wstring& path)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != NULL && minecraft->mTexturePackRepository != NULL)
+    {
+        TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
+        if (selected != NULL && selected->hasValidData())
+        {
+            ArchiveFile* archive = selected->getArchiveFile();
+            if (archive != NULL && archive->hasFile(path))
+                return archive->getFileSize(path);
+        }
+    }
+    if (mMediaArchive != NULL)
+        return mMediaArchive->getFileSize(path);
     return 0;
 }
 void CMinecraftApp::SetTrialTimerStart()
@@ -1511,6 +2531,28 @@ double CMinecraftApp::getTrialTimer()
 }
 uint32_t CMinecraftApp::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(4) && gProfile->IsValidPlayer(button))
+    {
+        if (!gProfile->IsSignedInLive(button))
+        {
+            int parameter = static_cast<int>(0xb9a1bf4d);
+            gConsoleUIController.RequestErrorMessage(
+                static_cast<int>(0x8a21894b), static_cast<int>(0xc34c0b77), &parameter, 1,
+                static_cast<unsigned int>(button), NULL, NULL, NULL, true);
+        }
+        else
+        {
+            DLCPack* pack = Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getDLCPack();
+            unsigned int packId = pack->GetPackId();
+            if (!gApp.GetCommerceInstance()->OwnsBundleContainingPack(packId))
+            {
+                int parameter = static_cast<int>(0xb9a1bf4d);
+                gConsoleUIController.RequestErrorMessage(
+                    static_cast<int>(0x9da04a9e), static_cast<int>(0xcba57cf3), &parameter, 1,
+                    static_cast<unsigned int>(button), NULL, NULL, NULL, true);
+            }
+        }
+    }
     return 0;
 }
 uint32_t CMinecraftApp::tipFiltered(int32_t firstArgument)
@@ -1519,7 +2561,26 @@ uint32_t CMinecraftApp::tipFiltered(int32_t firstArgument)
 }
 uint32_t CMinecraftApp::GetNextTip(bool firstArgument, EMiniGameId secondArgument)
 {
-    return 0;
+    if (s_pendingDlcInstallTip && gProfile->GetSignedInUsersMask() != 0)
+    {
+        s_pendingDlcInstallTip = false;
+        if (DLCInstallProcessCompleted() == 0 ||
+            mDLCManager.getPackCount(static_cast<DLCManager::EDLCType>(0)) == 0)
+        {
+            return 0x64a70fa4U;
+        }
+    }
+
+    if (!firstArgument)
+    {
+        mTipRotationIndex = (mTipRotationIndex + 1) % 3;
+        return mTipData[mTipRotationIndex == 2 ? 3 : mTipRotationIndex].getNextTip();
+    }
+    if (secondArgument == static_cast<EMiniGameId>(1))
+        return mTipData[2].getNextTip();
+    if (secondArgument == static_cast<EMiniGameId>(2))
+        return mTipData[3].getNextTip();
+    return mTipData[4].getNextTip();
 }
 unsigned int CMinecraftApp::GetHTMLColour(eMinecraftColour colour)
 {
@@ -1673,10 +2734,67 @@ uint8_t CMinecraftApp::GetResetEnd()
 }
 uint32_t CMinecraftApp::CanRecordStatsAndAchievements(Stat* stat, arrayWithLength<unsigned char> players)
 {
-    return 0;
+    (void)players;
+
+    bool tutorialMode = false;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != NULL && minecraft->isTutorial())
+        tutorialMode = true;
+
+    const bool customGame =
+        minecraft != NULL && minecraft->GetMiniGame() != NULL && minecraft->GetMiniGame()->IsCustomGame();
+    bool allowAchievementRange = true;
+    if (stat != NULL && stat->isAchievement())
+    {
+        const unsigned int achievementId = static_cast<Achievement*>(stat)->getAchievementID();
+        if (achievementId > 0x3b &&
+            (achievementId < 0x42 || (achievementId > 0x4c && achievementId < 0x54)))
+        {
+            allowAchievementRange = false;
+            if (!customGame)
+            {
+                if (!CGameNetworkManager::sInstance.IsInPublicJoinableGame() &&
+                    minecraft != NULL && minecraft->GetMiniGame() != NULL &&
+                    minecraft->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
+                {
+                    goto hostOptionCheck;
+                }
+            }
+            allowAchievementRange = true;
+        }
+    }
+
+hostOptionCheck:
+    if ((GetGameHostOption(static_cast<eGameHostOption>(10)) != 0 ||
+         GetGameHostOption(static_cast<eGameHostOption>(0x12)) != 0 ||
+         GetGameHostOption(static_cast<eGameHostOption>(0x11)) != 0 ||
+         GetGameHostOption(static_cast<eGameHostOption>(0x10)) != 0 ||
+         GetGameHostOption(static_cast<eGameHostOption>(0x17)) != 0 ||
+         (GetGameHostOption(static_cast<eGameHostOption>(0x18)) == 0 &&
+          (GetGameHostOption(static_cast<eGameHostOption>(0x19)) != 0 ||
+           GetGameHostOption(static_cast<eGameHostOption>(0x1a)) == 0)) ||
+         (GetGameHostOption(static_cast<eGameHostOption>(0x15)) == 0 &&
+          GetGameHostOption(static_cast<eGameHostOption>(0x1e)) == 0 && !tutorialMode)) &&
+        (GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0 || !allowAchievementRange))
+    {
+        return 0;
+    }
+
+    return 1;
 }
 void CMinecraftApp::SetBaseSaveName(const std::wstring& name)
 {
+    if (name.empty())
+    {
+        mCurrentImageTextData.flags &= ~0x40000000U;
+        std::memset(mCurrentImageTextData.values, 0, sizeof(mCurrentImageTextData.values));
+        return;
+    }
+    mCurrentImageTextData.flags |= 0x40000000U;
+    std::memset(mCurrentImageTextData.values, 0, sizeof(mCurrentImageTextData.values));
+    char* destination = reinterpret_cast<char*>(mCurrentImageTextData.values);
+    char* source = CStorage::wstringtochararray(name);
+    std::strncpy(destination, source, 0x14);
 }
 void CMinecraftApp::SetCurrentImageTextData(const PngTagData* data)
 {
@@ -1693,8 +2811,148 @@ void CMinecraftApp::CurrentImageTextData(PngTagData* data)
     data->flags |= 0x10000000;
     data->values[6] = Minecraft::GetInstance()->getCurrentTexturePackId();
 }
+static bool ParseImageTextHexValue(const char* text, unsigned int* value)
+{
+    std::istringstream stream(text);
+    stream >> std::hex >> *value;
+    return !stream.fail();
+}
+
 void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int size, PngTagData* data)
 {
+    std::memset(data, 0, sizeof(PngTagData));
+    const char* cursor = reinterpret_cast<const char*>(image);
+    const char* end = cursor + size;
+
+    while (cursor < end)
+    {
+        char key[80];
+        std::memset(key, 0, sizeof(key));
+        char* keyOut = key;
+        unsigned int keyLength = 0;
+        while (*cursor != '\0' && cursor < end && keyLength < 0x4fU)
+        {
+            *keyOut++ = *cursor++;
+            ++keyLength;
+        }
+        if (cursor >= end)
+            break;
+        ++cursor;
+
+        if (std::strcmp(key, "4J_SEED") == 0)
+        {
+            char seedText[23];
+            std::memset(seedText, 0, sizeof(seedText));
+            std::strncpy(seedText, cursor, 0x16);
+            const char* seedEnd = seedText;
+            while (*seedEnd != '\0')
+                ++seedEnd;
+            const unsigned int seedLength = static_cast<unsigned int>(seedEnd - seedText);
+            if (seedLength > 0x16U)
+            {
+                cursor += 0x17;
+            }
+            else
+            {
+                cursor += seedLength + 1;
+            }
+            data->flags |= 0x80000000U;
+            const long long seed = std::strtoll(seedText, NULL, 10);
+            data->width = static_cast<unsigned int>(static_cast<unsigned long long>(seed) >> 32);
+            data->height = static_cast<unsigned int>(seed);
+        }
+        else if (std::strcmp(key, "4J_HOSTOPTIONS") == 0)
+        {
+            char valueText[12];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 8U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x20000000U;
+            ParseImageTextHexValue(valueText, &data->values[5]);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (std::strcmp(key, "4J_TEXTUREPACK") == 0)
+        {
+            char valueText[12];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 8U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x10000000U;
+            ParseImageTextHexValue(valueText, &data->values[6]);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (std::strcmp(key, "4J_EXTRADATA") == 0)
+        {
+            char valueText[12];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 8U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x08000000U;
+            ParseImageTextHexValue(valueText, &data->values[7]);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (std::strcmp(key, "4J_EXPLOREDCHUNKS") == 0)
+        {
+            char valueText[41];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 0x28U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x04000000U;
+            std::sscanf(valueText, "%08x%08x%08x%08x%08x",
+                        &data->values[8], &data->values[9], &data->values[10],
+                        &data->values[11], &data->values[12]);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (std::strcmp(key, "4J_BASESAVENAME") == 0)
+        {
+            char valueText[21];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 0x14U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x40000000U;
+            char* destination = reinterpret_cast<char*>(data->values);
+            std::strncpy(destination, valueText, 0x14);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (std::strcmp(key, "4J_#LOADS") == 0)
+        {
+            char valueText[12];
+            std::memset(valueText, 0, sizeof(valueText));
+            unsigned int valueLength = 0;
+            while (*cursor != '\0' && cursor < end && valueLength < 8U)
+            {
+                valueText[valueLength++] = *cursor++;
+            }
+            data->flags |= 0x02000000U;
+            ParseImageTextHexValue(valueText, &data->dataSize);
+            if (cursor < end)
+                ++cursor;
+        }
+        else if (cursor < end)
+        {
+            ++cursor;
+        }
+    }
 }
 void CMinecraftApp::GetImageTextData(const unsigned char* image, unsigned int size, PngTagData* data)
 {
@@ -1911,6 +3169,42 @@ uint8_t CMinecraftApp::GetCorruptSaveDeleted()
 }
 void CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes, unsigned int count, _SkinAdjustments adjustments)
 {
+    const EPlayerModelType modelType = static_cast<EPlayerModelType>(
+        Player::GetModelTypeFromAnimBitmask(adjustments.mAnimFlags));
+    Minecraft* minecraft = Minecraft::GetInstance();
+    PlayerModel* model = NULL;
+    if (minecraft != NULL)
+    {
+        EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
+        if (dispatcher != NULL)
+        {
+            PlayerRenderer* renderer = dispatcher->getPlayerRenderer(modelType);
+            if (renderer != NULL)
+                model = renderer->getModel();
+        }
+    }
+
+    std::vector<ModelPart*>* modelParts = new std::vector<ModelPart*>();
+    std::vector<SKIN_BOX*>* skinBoxes = new std::vector<SKIN_BOX*>();
+
+    if (model != NULL && count != 0)
+    {
+        for (unsigned int index = 0; index < count; ++index)
+        {
+            SKIN_BOX* box = boxes + index;
+            model->SetSkinAdjustments(adjustments);
+            ModelPart* part = model->AddOrRetrievePart(box, skinId);
+            modelParts->push_back(part);
+            skinBoxes->push_back(box);
+        }
+    }
+
+    EnterCriticalSection(&mAdditionalModelPartsMutex);
+    EnterCriticalSection(&mAdditionalSkinBoxesMutex);
+    mAdditionalModelParts[skinId] = modelParts;
+    mAdditionalSkinBoxes[skinId] = skinBoxes;
+    LeaveCriticalSection(&mAdditionalSkinBoxesMutex);
+    LeaveCriticalSection(&mAdditionalModelPartsMutex);
 }
 std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, std::vector<SKIN_BOX*>* boxes, _SkinAdjustments adjustments)
 {

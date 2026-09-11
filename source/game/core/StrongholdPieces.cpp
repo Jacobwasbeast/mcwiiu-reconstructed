@@ -93,7 +93,27 @@ StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward
 
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildLeft(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
 {
-    return generateSmallDoorChildForward(start, pieces, random, x, z);
+    const Direction* direction = getOrientation();
+    if (direction == NULL)
+        return NULL;
+    unsigned int axis = direction->get3DDataValue();
+    if (axis <= 1)
+        return NULL;
+    BoundingBox* box = getBoundingBox();
+    if (box == NULL)
+        return NULL;
+    int depth = getGenDepth();
+    if (axis < 4)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            box->x0 - 1, box->y0 + x, box->z0 + z, Direction::WEST, depth);
+    }
+    if (axis < 6)
+    {
+        return StrongholdPieces::generateAndAddPiece(start, pieces, random,
+            box->x0 + z, box->y0 + x, box->z0 - 1, Direction::SOUTH, depth);
+    }
+    return NULL;
 }
 
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildRight(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
@@ -438,7 +458,17 @@ StrongholdPieces::ChestCorridor* StrongholdPieces::ChestCorridor::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<ChestCorridor>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 7, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new ChestCorridor(depth, random, box, direction);
 }
 
 StrongholdPieces::FiveCrossing* StrongholdPieces::FiveCrossing::createPiece(
@@ -570,7 +600,17 @@ StrongholdPieces::Straight* StrongholdPieces::Straight::createPiece(
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
     const Direction* direction, int depth)
 {
-    return createStrongholdPiece<Straight>(pieces, random, x, y, z, direction, depth);
+    BoundingBox* box = BoundingBox::orientBox(x, y, z, -1, -1, 0, 5, 5, 7, direction);
+    StrongholdPieces::StartPiece* start = NULL;
+    if (pieces != NULL && !pieces->empty())
+        start = static_cast<StrongholdPieces::StartPiece*>(pieces->front());
+    if (!StrongholdPieces::StrongholdPiece::isOkBox(box, start) ||
+        StructurePiece::findCollisionPiece(pieces, box) != NULL)
+    {
+        delete box;
+        return NULL;
+    }
+    return new Straight(depth, random, box, direction);
 }
 
 StrongholdPieces::StraightStairsDown* StrongholdPieces::StraightStairsDown::createPiece(
@@ -598,15 +638,131 @@ bool StrongholdPieces::name::postProcess(Level* level, Random&, BoundingBox* box
 StructurePiece* StrongholdPieces::name::Create() { return new StrongholdPieces::name(); } \
 EStructurePiece StrongholdPieces::name::GetType() { return type; }
 
-STRONGHOLD_PIECE_METHODS(ChestCorridor, eStructurePiece_ChestCorridor)
-STRONGHOLD_PIECE_METHODS(FiveCrossing, eStructurePiece_FiveCrossing)
-STRONGHOLD_PIECE_METHODS(LeftTurn, eStructurePiece_LeftTurn)
+void StrongholdPieces::ChestCorridor::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::ChestCorridor::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::ChestCorridor::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
+}
+bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::ChestCorridor::Create() { return new StrongholdPieces::ChestCorridor(); }
+EStructurePiece StrongholdPieces::ChestCorridor::GetType() { return eStructurePiece_ChestCorridor; }
+void StrongholdPieces::FiveCrossing::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::FiveCrossing::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::FiveCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    int leftOffset = 3;
+    int rightOffset = 5;
+    const Direction* orientation = getOrientation();
+    if (orientation == Direction::WEST || orientation == Direction::SOUTH)
+    {
+        leftOffset = 5;
+        rightOffset = 3;
+    }
+    StartPiece* startPiece = static_cast<StartPiece*>(start);
+    generateSmallDoorChildForward(startPiece, pieces, random, 5, 1);
+    unsigned char* doorFlags = reinterpret_cast<unsigned char*>(this) + 0x20;
+    if (doorFlags[0] != 0)
+        generateSmallDoorChildLeft(startPiece, pieces, random, leftOffset, 1);
+    if (doorFlags[1] != 0)
+        generateSmallDoorChildLeft(startPiece, pieces, random, rightOffset, 7);
+    if (doorFlags[2] != 0)
+        generateSmallDoorChildRight(startPiece, pieces, random, leftOffset, 1);
+    if (doorFlags[3] != 0)
+        generateSmallDoorChildRight(startPiece, pieces, random, rightOffset, 7);
+}
+bool StrongholdPieces::FiveCrossing::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::FiveCrossing::Create() { return new StrongholdPieces::FiveCrossing(); }
+EStructurePiece StrongholdPieces::FiveCrossing::GetType() { return eStructurePiece_FiveCrossing; }
+void StrongholdPieces::LeftTurn::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::LeftTurn::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::LeftTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    const Direction* orientation = getOrientation();
+    StartPiece* startPiece = static_cast<StartPiece*>(start);
+    if (orientation == Direction::NORTH || orientation == Direction::SOUTH)
+        generateSmallDoorChildLeft(startPiece, pieces, random, 1, 1);
+    else
+        generateSmallDoorChildRight(startPiece, pieces, random, 1, 1);
+}
+bool StrongholdPieces::LeftTurn::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::LeftTurn::Create() { return new StrongholdPieces::LeftTurn(); }
+EStructurePiece StrongholdPieces::LeftTurn::GetType() { return eStructurePiece_LeftTurn; }
 STRONGHOLD_PIECE_METHODS(Library, eStructurePiece_Library)
-STRONGHOLD_PIECE_METHODS(PrisonHall, eStructurePiece_PrisonHall)
-STRONGHOLD_PIECE_METHODS(RoomCrossing, eStructurePiece_StrongholdRoomCrossing)
-STRONGHOLD_PIECE_METHODS(StairsDown, eStructurePiece_StairsDown)
-STRONGHOLD_PIECE_METHODS(Straight, eStructurePiece_Straight)
-STRONGHOLD_PIECE_METHODS(StraightStairsDown, eStructurePiece_StraightStairsDown)
+void StrongholdPieces::PrisonHall::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::PrisonHall::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::PrisonHall::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
+}
+bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::PrisonHall::Create() { return new StrongholdPieces::PrisonHall(); }
+EStructurePiece StrongholdPieces::PrisonHall::GetType() { return eStructurePiece_PrisonHall; }
+void StrongholdPieces::RoomCrossing::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::RoomCrossing::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::RoomCrossing::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    StartPiece* startPiece = static_cast<StartPiece*>(start);
+    generateSmallDoorChildForward(startPiece, pieces, random, 1, 4);
+    generateSmallDoorChildLeft(startPiece, pieces, random, 1, 4);
+    generateSmallDoorChildRight(startPiece, pieces, random, 1, 4);
+}
+bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::RoomCrossing::Create() { return new StrongholdPieces::RoomCrossing(); }
+EStructurePiece StrongholdPieces::RoomCrossing::GetType() { return eStructurePiece_StrongholdRoomCrossing; }
+void StrongholdPieces::StairsDown::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::StairsDown::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::StairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    if (mFlag)
+        sForcedPieceClass = ePieceClass_FiveCrossing;
+    const Direction* orientation = getOrientation();
+    if (orientation == NULL)
+        return;
+    unsigned int axis = orientation->get3DDataValue();
+    if (axis <= 1)
+        return;
+    BoundingBox* box = getBoundingBox();
+    if (box == NULL)
+        return;
+    int depth = getGenDepth();
+    StartPiece* startPiece = static_cast<StartPiece*>(start);
+    if (axis == 2)
+        generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 1, box->z0 - 1, orientation, depth);
+    else if (axis < 4)
+        generateAndAddPiece(startPiece, pieces, random, box->x0 + 1, box->y0 + 1, box->z1 + 1, orientation, depth);
+    else if (axis == 4)
+        generateAndAddPiece(startPiece, pieces, random, box->x0 - 1, box->y0 + 1, box->z0 + 1, orientation, depth);
+    else if (axis == 5)
+        generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0 + 1, box->z0 + 1, orientation, depth);
+}
+bool StrongholdPieces::StairsDown::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::StairsDown::Create() { return new StrongholdPieces::StairsDown(); }
+EStructurePiece StrongholdPieces::StairsDown::GetType() { return eStructurePiece_StairsDown; }
+void StrongholdPieces::Straight::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::Straight::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::Straight::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    StartPiece* startPiece = static_cast<StartPiece*>(start);
+    generateSmallDoorChildForward(startPiece, pieces, random, 1, 1);
+    unsigned char* doorFlags = reinterpret_cast<unsigned char*>(this) + 0x20;
+    if (doorFlags[0] != 0)
+        generateSmallDoorChildLeft(startPiece, pieces, random, 1, 2);
+    if (doorFlags[1] != 0)
+        generateSmallDoorChildRight(startPiece, pieces, random, 1, 2);
+}
+bool StrongholdPieces::Straight::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::Straight::Create() { return new StrongholdPieces::Straight(); }
+EStructurePiece StrongholdPieces::Straight::GetType() { return eStructurePiece_Straight; }
+void StrongholdPieces::StraightStairsDown::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::StraightStairsDown::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::StraightStairsDown::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
+{
+    generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
+}
+bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+StructurePiece* StrongholdPieces::StraightStairsDown::Create() { return new StrongholdPieces::StraightStairsDown(); }
+EStructurePiece StrongholdPieces::StraightStairsDown::GetType() { return eStructurePiece_StraightStairsDown; }
 
 void StrongholdPieces::PortalRoom::addAdditionalSaveData(DataOutputStream* output)
 {

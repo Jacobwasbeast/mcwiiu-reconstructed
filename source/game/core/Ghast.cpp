@@ -8,7 +8,9 @@
 #include "game/core/GenericStats.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
 #include "game/util/AABB.hpp"
@@ -37,7 +39,7 @@ void Ghast::create(Level* level)
 
 void Ghast::staticCtor()
 {
-    DATA_CHARGING = NULL;
+    DATA_CHARGING = SynchedEntityData::defineId<bool>(0, 0x5D0000C1ULL, EntityDataSerializers::BOOLEAN);
 }
 
 void Ghast::_init()
@@ -48,7 +50,10 @@ void Ghast::_init()
 
 void Ghast::registerGoals()
 {
-    Mob::registerGoals();
+    mGoalSelector.addGoal(5, new RandomFloatAroundGoal(this), true);
+    mGoalSelector.addGoal(7, new GhastLookGoal(this), true);
+    mGoalSelector.addGoal(7, new GhastShootFireballGoal(this), true);
+    mTargetSelector.addGoal(1, new MobNearestPlayerTargetGoal(this), true);
 }
 
 bool Ghast::isCharging()
@@ -94,6 +99,8 @@ void Ghast::defineSynchedData()
 void Ghast::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(100.0);
 }
 
 const SoundEvent* Ghast::getAmbientSound() { return SoundEvents::GHAST_AMBIENT; }

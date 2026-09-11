@@ -6,8 +6,11 @@
 #include "game/core/L10N.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/client/render/Tesselator.hpp"
+#include "game/client/render/ItemRenderer.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/generation/Player.hpp"
 
 Gui::Gui(Minecraft* minecraft)
     : mItemRenderer(0),
@@ -110,9 +113,29 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
 
 void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
 {
-    if (mItemRenderer == 0 || playerIndex < 0 || playerIndex >= 4) {
+    not_null_ptr<ItemInstance> item =
+        mMinecraft->mPlayer->mInventory->getItem(static_cast<unsigned int>(playerIndex));
+    if (item->isEmpty()) {
         return;
     }
+
+    const int popTime = item->getPopTime();
+    const float popRemaining = static_cast<float>(popTime) - partialTick;
+    if (0.0f < popRemaining) {
+        const float popScale = popRemaining / 5.0f + 1.0f;
+        GlStateManager::pushMatrix();
+        GlStateManager::translatef(static_cast<float>(x + 8), static_cast<float>(y + 12), 0.0f);
+        GlStateManager::scalef(1.0f / popScale, (popScale + 1.0f) * 0.5f, 1.0f);
+        GlStateManager::translatef(static_cast<float>(-(x + 8)), static_cast<float>(-(y + 12)), 0.0f);
+    }
+
+    mItemRenderer->renderAndDecorateItem(item, x, y);
+
+    if (0.0f < popRemaining) {
+        GlStateManager::popMatrix();
+    }
+
+    mItemRenderer->renderGuiItemDecorations(mMinecraft->mFont, item, x, y, 1.0f);
 }
 
 void Gui::tick()

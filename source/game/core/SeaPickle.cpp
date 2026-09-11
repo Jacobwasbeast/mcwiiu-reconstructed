@@ -1,7 +1,10 @@
 #include "game/core/SeaPickle.hpp"
 
 #include "game/core/Direction.hpp"
+#include "game/core/DyeColor.hpp"
+#include "game/core/InteractionResult.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
@@ -12,6 +15,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/CoralBlock.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 #include "game/world/block/IntegerProperty.hpp"
@@ -185,6 +189,19 @@ int SeaPickle::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 351)
+    {
+        int pickles = tooltipData.m_pBlockState->getValue(SeaPickle_PICKLES);
+        const BlockState* belowState = tooltipData.m_pLevel->getBlockState(tooltipData.m_blockPos.below());
+        if (belowState->getBlock() == Blocks::WATER
+            && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+            && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+            && !belowState->getValue(CoralBlock_PROPERTY_2)
+            && pickles < 3)
+        {
+            return 0x9f5fdc40u;
+        }
+    }
     return Block::GetInteractTooltip(tooltipData);
 }
 
@@ -241,7 +258,35 @@ void SeaPickle::neighborChanged(const BlockState* state, Level* level, const Blo
 
 void SeaPickle::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
+    if (level->mIsClientSide)
+        return;
+
     checkAlive(level, pos, state);
+
+    if (level->getBlockState(pos)->getBlock() != this)
+        return;
+
+    const BlockState* currentState = level->getBlockState(pos);
+    int pickles = currentState->getValue(SeaPickle_PICKLES);
+    bool waterlogged = currentState->getValue(SEA_PICKLE_WATERLOGGED);
+    bool underwater = level->isUnderWater(pos, 0x10f, 0);
+
+    if (waterlogged && underwater)
+    {
+        TypedBoxed<int> count(pickles);
+        TypedBoxed<bool> logged(true);
+        const BlockState* newState = defaultBlockState()->setBoxedValue(SeaPickle_PICKLES, &count);
+        newState = newState->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
+        level->setBlock(pos, newState, 3, false);
+    }
+    else if (!waterlogged && !underwater)
+    {
+        TypedBoxed<int> count(pickles);
+        TypedBoxed<bool> logged(false);
+        const BlockState* newState = defaultBlockState()->setBoxedValue(SeaPickle_PICKLES, &count);
+        newState = newState->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
+        level->setBlock(pos, newState, 3, false);
+    }
 }
 
 bool SeaPickle::canProvideSupport(const BlockState*, const Direction*, EBlockSupportType)

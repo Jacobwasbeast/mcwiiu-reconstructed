@@ -1,27 +1,65 @@
 #include "game/core/ClientMasterGameMode.hpp"
-#include "game/core/ClientVoteables.hpp"
-#include "game/core/ClientScoreboard.hpp"
-#include "game/core/CommonMasterGameMode.hpp"
-#include "game/core/ConsoleUIController.hpp"
-#include "game/core/Minecraft.hpp"
-#include "game/core/CMinecraftApp.hpp"
-#include "game/core/System.hpp"
-#include "game/core/Team.hpp"
-#include "game/core/GhostController.hpp"
+
+#include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/SoundEvents.hpp"
-#include "game/minigame/MiniGameDef.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/core/CameraController.hpp"
+#include "game/core/ClientScoreboard.hpp"
+#include "game/core/ClientVoteables.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/ConsoleUIController.hpp"
+#include "game/core/GameModeOptions.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/GhostController.hpp"
 #include "game/core/HtmlString.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/RegionFileCache.hpp"
 #include "game/core/StringFormat.hpp"
+#include "game/core/System.hpp"
+#include "game/core/Team.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/core/Voteable.hpp"
+#include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/minigame/EMiniGameId.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/minigame/TargetAreaRuleDefinition.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/GameModePacket.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
-#include "game/minigame/TargetAreaRuleDefinition.hpp"
-#include "game/world/generation/Player.hpp"
+#include "game/world/generation/GhostPlayer.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
+#include "vendor/_LoadingInputParams.hpp"
 #include <algorithm>
+
+class CProfile
+{
+public:
+    int GetPrimaryPad();
+};
+extern CProfile* gProfile;
+
+namespace
+{
+struct FullscreenProgressState
+{
+    bool showConfirmation;
+    bool unknownState1;
+    bool unknownState2;
+    bool showTip;
+    int closeMode;
+    int playerId;
+    EUIScene backScene;
+};
+}
 
 void Sleep(unsigned int milliseconds);
 
@@ -94,10 +132,171 @@ void ClientMasterGameMode::PlaySound(const SoundEvent* sound, float volume, floa
     Minecraft::GetInstance()->mSoundEngine->playUI(sound, volume, pitch);
 }
 
-void ClientMasterGameMode::OnRoundPlay() { mGameModeState = 7; }
-void ClientMasterGameMode::OnRoundEnding() { mGameModeState = 9; }
-void ClientMasterGameMode::OnRoundWaitingToStart() { mGameModeState = 5; mPlayerProgress.clear(); }
-void ClientMasterGameMode::OnRoundStart() { mGameModeState = 6; }
+void ClientMasterGameMode::OnRoundWaitingToStart()
+{
+    mPlayerProgress.clear();
+}
+
+void ClientMasterGameMode::OnRoundStart()
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+        boost::shared_ptr<Player> player = localPlayer;
+        if (!player)
+        {
+            mPlayerReady[playerIndex] = false;
+            continue;
+        }
+
+        player->mInventory->m_selected = 0;
+        mPlayerReady[playerIndex] = true;
+    }
+
+    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
+    if (miniGame != NULL && miniGame->GetId() == static_cast<int>(eMiniGameId_Tumble))
+    {
+        miniGame->SetDisabledEditActions(true);
+        static_cast<ConsoleSoundEngine*>(minecraft->mSoundEngine)->LimitMusicVolume();
+    }
+
+    ResetMapDistances();
+
+    if (miniGame != NULL && miniGame->HasFeatureStartCameraAnimation())
+    {
+        Random random;
+        for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+            boost::shared_ptr<Player> player = localPlayer;
+            if (!player)
+                continue;
+
+            CameraController* controller = new CameraController(3);
+            if (random.nextBoolean())
+            {
+                controller->addNode(0.0, 0.0, -25.0, 35.0, 180.0, 0.0, 176.0f);
+                controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
+            }
+            else
+            {
+                controller->addNode(0.0, 0.0, -25.0, 35.0, -180.0, 0.0, 176.0f);
+                controller->addNode(0.0, 0.0, -15.0, 35.0, 0.0, 0.0, 150.0f);
+            }
+            controller->attachToPlayer(player, true);
+        }
+    }
+}
+
+void ClientMasterGameMode::OnRoundPlay()
+{
+    mLocalRoundTimeStart = System::processTimeInMilliSecs();
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
+    minecraft->mSoundEngine->FlagMusicEventStart();
+
+    if (miniGame == NULL)
+        return;
+
+    const int miniGameId = miniGame->GetId();
+    if (miniGameId != 0)
+    {
+        if (miniGameId != 1)
+        {
+            if (miniGameId < 3)
+            {
+                miniGame->SetDisabledEditActions(false);
+                static_cast<ConsoleSoundEngine*>(minecraft->mSoundEngine)->RemoveMusicVolumeLimit();
+                const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+                PlaySound(SoundEvents::MG02_GAME_START, static_cast<float>(sound.Volume()), 1.0f);
+                return;
+            }
+            if (miniGameId == 3)
+            {
+                const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+                PlaySound(SoundEvents::MG03_COUNTDOWN_ZERO, static_cast<float>(sound.Volume()), 1.0f);
+
+                GhostController* ghosts = minecraft->GetGhostController();
+                if (ghosts != NULL)
+                {
+                    int ghostSlot = 0;
+                    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+                    {
+                        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                            minecraft->mLocalPlayers[playerIndex];
+                        boost::shared_ptr<Player> player = localPlayer;
+                        if (player != NULL && !player->isSpectator())
+                        {
+                            Vec3* pos = player->getPos(1.0f);
+                            ghosts->startRecording(ghostSlot, pos);
+                        }
+                        ++ghostSlot;
+                    }
+                    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+                        ghosts->startPlayback();
+                }
+                return;
+            }
+            if (miniGameId != 4)
+                return;
+        }
+
+        const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+        PlaySound(SoundEvents::MG01_GAME_START, static_cast<float>(sound.Volume()), 1.0f);
+    }
+}
+
+void ClientMasterGameMode::OnRoundEnding()
+{
+    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
+    if (miniGame != NULL)
+    {
+        const int miniGameId = miniGame->GetId();
+        if (miniGameId == 1 || miniGameId == 4)
+        {
+            const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
+            PlaySound(SoundEvents::MG01_CELEBRATION, static_cast<float>(sound.Volume()), 1.0f);
+        }
+        else if (miniGameId == 2)
+        {
+            miniGame->SetDisabledEditActions(false);
+            const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
+            PlaySound(SoundEvents::MG02_GAME_END, static_cast<float>(sound.Volume()), 1.0f);
+        }
+    }
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    ClientScoreboard* scoreboard = minecraft->mLevel->GetClientScoreboard();
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+        boost::shared_ptr<Player> player = localPlayer;
+        if (!player)
+            continue;
+
+        const StatsUID suid = player->getSUID();
+        if (!scoreboard->IsWinner(suid, -1))
+        {
+            gConsoleUIController.CloseUIScenes(playerIndex, true);
+            if (Minecraft::InMiniGame(static_cast<EMiniGameId>(eMiniGameId_Battle), true))
+                ++mStrings[player->getDisplayName()];
+        }
+        else if (Minecraft::InMiniGame(static_cast<EMiniGameId>(eMiniGameId_Battle), true) &&
+                 CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+        {
+            player->awardStat(GenericStats::theStudent(), GenericStats::param_theStudent());
+            const unsigned int winCount = ++mStrings[player->getDisplayName()];
+            if (winCount > 2)
+                player->awardStat(GenericStats::hasBecomeTheMaster(),
+                                  GenericStats::param_hasBecomeTheMaster());
+        }
+    }
+
+    if (telemetryManagerInstance != NULL)
+        telemetryManagerInstance->RecordGameModeRoundFinished();
+}
 
 void ClientMasterGameMode::OnRoundEndingToLobby()
 {
@@ -105,7 +304,100 @@ void ClientMasterGameMode::OnRoundEndingToLobby()
     mLocalRoundTimeStart = 0;
 }
 
-void ClientMasterGameMode::OnStateChange(EGameModeState state) { mGameModeState = static_cast<unsigned int>(state); }
+void ClientMasterGameMode::OnStateChange(EGameModeState state)
+{
+    const unsigned int previousState = mGameModeState;
+    const unsigned int nextState = static_cast<unsigned int>(state);
+    if (previousState == nextState)
+        return;
+
+    mGameModeState = nextState;
+    if (previousState == 0)
+    {
+        ResetMapDistances();
+        if (!CGameNetworkManager::sInstance.IsHost())
+            CMinecraftApp::SetupMiniGameMusic();
+        return;
+    }
+
+    switch (state)
+    {
+    case static_cast<EGameModeState>(0):
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        minecraft->SetGhostController(NULL);
+        MiniGameDef* definition =
+            MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(eMiniGameId_Any), true);
+        if (definition != NULL)
+            minecraft->SetupMiniGameInstance(*definition, 0);
+        mStrings.clear();
+        Reset();
+        return;
+    }
+    case static_cast<EGameModeState>(2):
+        if (previousState == 9)
+            OnRoundEndingToLobby();
+        return;
+    case static_cast<EGameModeState>(3):
+    {
+        MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(Minecraft::GetInstance()->mLevel);
+        ClientScoreboard* scoreboard = level->GetClientScoreboard();
+        scoreboard->mNextTeamIndex = 0;
+        Voteable* voteable = mVoteables->getVoteable(0);
+        if (voteable != NULL)
+            voteable->clearVotes();
+        return;
+    }
+    case static_cast<EGameModeState>(5):
+        OnRoundWaitingToStart();
+        return;
+    case static_cast<EGameModeState>(6):
+        OnRoundStart();
+        return;
+    case static_cast<EGameModeState>(7):
+        OnRoundPlay();
+        return;
+    case static_cast<EGameModeState>(9):
+        OnRoundEnding();
+        return;
+    case static_cast<EGameModeState>(10):
+    {
+        CleanUpMapGenerator();
+        gConsoleUIController.CloseAllPlayersScenes(true);
+        gConsoleUIController.HideAllGameUIElements();
+
+        _LoadingInputParams* params = new _LoadingInputParams();
+        params->m_firstParameter = WaitForNextState;
+        params->m_secondParameter = this;
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        if (miniGame != NULL)
+            params->m_timeout = miniGame->GetId();
+
+        FullscreenProgressState* progressState = new FullscreenProgressState();
+        progressState->showConfirmation = false;
+        progressState->unknownState1 = true;
+        progressState->unknownState2 = true;
+        progressState->showTip = true;
+        progressState->closeMode = 3;
+        progressState->playerId = 0;
+        progressState->backScene = static_cast<EUIScene>(0x53);
+        params->m_thirdParameter = progressState;
+
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), static_cast<EUIScene>(4),
+                                             params, static_cast<EUILayer>(6),
+                                             static_cast<EUIGroup>(7));
+
+        const long long now = System::processTimeInMilliSecs();
+        mLoadedChunkCount = static_cast<int>(now >> 32);
+        mLastChunkLoadProgress = static_cast<int>(now);
+        mLocalChunksLoaded = false;
+        mServerIsWaitingOnChunkLoading = false;
+        return;
+    }
+    default:
+        return;
+    }
+}
 
 void ClientMasterGameMode::OnExitedGame()
 {
@@ -376,8 +668,53 @@ void ClientMasterGameMode::DoGraceTickSound(int tick, const MiniGameDef::SoundSp
     }
 }
 
-void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket>) { }
-void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale) { UpdateGeneratorSeed(seed, scale); }
+void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket> packet)
+{
+    if (!packet)
+        return;
+    const unsigned int messageId = static_cast<unsigned int>(packet->getMessage());
+    const int tick = packet->getFirstInt();
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == NULL)
+        return;
+    if (messageId < 0x80U)
+    {
+        if (messageId == 0x7aU)
+        {
+            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundLimitTimer));
+            return;
+        }
+        if (messageId != 0x7cU)
+        {
+            if (messageId != 0x7eU)
+                return;
+            DoRoundStartTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundStartTimer));
+            OnRoundStartTimerTick(tick);
+            return;
+        }
+    }
+    else
+    {
+        if (messageId < 0x81U)
+        {
+            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_LobbyTimer));
+            return;
+        }
+        if (messageId != 0x81U)
+        {
+            if (messageId != 0x86U)
+                return;
+            DoLobbyTickSound(tick, miniGame->getSoundSpec(EGameModeSound_RoundLimitTimer));
+            return;
+        }
+    }
+    DoGraceTickSound(packet->hasInts() ? tick : 0, miniGame->getSoundSpec(EGameModeSound_GraceTimer));
+}
+void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
+{
+    UpdateGeneratorSeed(seed, scale);
+    ResetMapDistances();
+}
 bool ClientMasterGameMode::IsWaitingToStart() const { return GetGameModeState() == 5; }
 bool ClientMasterGameMode::IsRoundStarting() const { return GetGameModeState() == 6; }
 bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
@@ -398,7 +735,56 @@ bool ClientMasterGameMode::IsInTrasitionFromLobby()
         return false;
     return true;
 }
-bool ClientMasterGameMode::CheckLocalChunksLoaded() { return mLocalChunksLoaded; }
+bool ClientMasterGameMode::CheckLocalChunksLoaded()
+{
+    Minecraft* minecraft = Minecraft::GetInstance();
+    Level* level = minecraft->getLevel(0);
+    bool allLoaded = true;
+
+    mChunkLoadProgress = 0;
+    for (std::vector<AABB*>::const_iterator areaIt = mTeamAreas.begin();
+         areaIt != mTeamAreas.end() && allLoaded; ++areaIt)
+    {
+        const AABB* area = *areaIt;
+        if (area == NULL)
+            continue;
+
+        const int minChunkX = static_cast<int>(area->mMinX);
+        const int maxChunkX = static_cast<int>(area->mMaxX);
+        const int minChunkZ = static_cast<int>(area->mMinZ);
+        const int maxChunkZ = static_cast<int>(area->mMaxZ);
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX && allLoaded; ++chunkX)
+        {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
+            {
+                if (!level->reallyHasChunk(chunkX, chunkZ))
+                {
+                    allLoaded = false;
+                    break;
+                }
+                ++mChunkLoadProgress;
+            }
+        }
+    }
+
+    if (!allLoaded || mBRUPsRemaining >= 1)
+        return false;
+
+    const boost::shared_ptr<GameModePacket> packet =
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(6),
+                               boost::shared_ptr<GameModePacket::Data>(
+                                   new GameModePacket::EmptyData()));
+    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+        if (localPlayer != NULL && localPlayer->mPacketListener != NULL)
+            localPlayer->mPacketListener->send(packet);
+    }
+
+    mServerIsWaitingOnChunkLoading = false;
+    return true;
+}
 void ClientMasterGameMode::FireGameRoundStats()
 {
     if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true))
@@ -442,8 +828,130 @@ void ClientMasterGameMode::FireGameRoundStats()
             scoreboard->SetPersonalBest(uid, -1);
     }
 }
-void ClientMasterGameMode::updateProgressRenderer() { }
-void ClientMasterGameMode::Tick() { CheckLocalChunksLoaded(); updateProgressRenderer(); }
+void ClientMasterGameMode::updateProgressRenderer()
+{
+    ProgressRenderer* renderer = Minecraft::GetInstance()->mProgressRenderer;
+    if (renderer == NULL)
+        return;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == NULL)
+        return;
+    if (miniGame->GetId() == 1)
+    {
+        int progress = 0;
+        AABB* area = GetLayerAABB(0);
+        if (area != NULL)
+        {
+            const int volume = static_cast<int>((area->mMaxX - area->mMinX) * (area->mMaxY - area->mMinY) * (area->mMaxZ - area->mMinZ));
+            if (volume > 0)
+            {
+                progress = (mChunkLoadProgress * 100) / volume;
+                if (progress > 99)
+                {
+                    renderer->progressStage(0xd56bcda0);
+                    renderer->progressStagePercentage(99);
+                    return;
+                }
+            }
+        }
+        renderer->progressStage(0xebb9a246);
+        renderer->progressStagePercentage(progress);
+        return;
+    }
+    if (miniGame->GetId() != 2)
+        return;
+    const int layerCount = static_cast<int>(GetLayerCount());
+    if (mLocalRoundTimeStart == 0 && mLastChunkLoadProgress == 0x7fffffff)
+    {
+        renderer->progressStage(0xd5ac1bc8);
+        renderer->progressStagePercentage(0);
+        return;
+    }
+    const long long now = System::processTimeInMilliSecs();
+    unsigned int progress = static_cast<unsigned int>(((now - mLocalRoundTimeStart) * 100) / (layerCount * 1500 + 1500));
+    if (progress < 100U)
+    {
+        renderer->progressStage(0xd5ac1bc8);
+        int display = static_cast<int>(progress);
+        if (display < 0)
+            display = 0;
+        if (display > 80)
+            display = 80;
+        renderer->progressStagePercentage(display);
+        return;
+    }
+    renderer->progressStage(0xebb9a246);
+    int display = static_cast<int>(progress);
+    if (display > 100)
+        display = 100;
+    display = (display * 80) / 100;
+    renderer->progressStagePercentage(display);
+}
+void ClientMasterGameMode::Tick()
+{
+    CommonMasterGameMode::Tick();
+
+    if (mNewLevelDataPending && mCurrentLevelGenOptions != NULL &&
+        mCurrentLevelGenOptions->hasBaseSaveData())
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(minecraft->getLevel(0));
+        level->BlockUntilSafeToChangeSaveData(false);
+        level->refreshFromLevelGen();
+        gRegionFileCache._clear();
+        mNewLevelDataPending = false;
+    }
+
+    if (mServerIsWaitingOnChunkLoading && CheckLocalChunksLoaded())
+        mLocalChunksLoaded = true;
+
+    const unsigned int state = mGameModeState;
+    if (state > 6)
+    {
+        if (state == 7)
+        {
+            Minecraft* minecraft = Minecraft::GetInstance();
+            CheckProgress(minecraft->mLevel->mPlayers);
+            CheckCheckpoints(minecraft->mLevel->mPlayers);
+
+            GhostController* ghosts = minecraft->GetGhostController();
+            if (ghosts != NULL)
+            {
+                const std::vector<boost::shared_ptr<Player> > ghostPlayers = ghosts->getPlayers();
+                CheckCheckpoints(ghostPlayers);
+                CheckProgress(ghostPlayers);
+
+                const std::vector<boost::shared_ptr<GhostPlayer> > ghostEntities =
+                    ghosts->getGhostPlayers();
+                for (std::vector<boost::shared_ptr<GhostPlayer> >::const_iterator it =
+                         ghostEntities.begin();
+                     it != ghostEntities.end(); ++it)
+                {
+                    const boost::shared_ptr<GhostPlayer>& ghost = *it;
+                    if (!ghost)
+                        continue;
+                    ghost->mXOld = ghost->mX;
+                    ghost->mYOld = ghost->mY;
+                    ghost->mZOld = ghost->mZ;
+                }
+            }
+        }
+        else if (state > 9)
+        {
+            if (state == 10)
+                updateProgressRenderer();
+            return;
+        }
+
+        FireGameRoundStats();
+        if (state == 9)
+        {
+            GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
+            if (ghosts != NULL)
+                ghosts->stopPlayback();
+        }
+    }
+}
 bool ClientMasterGameMode::isNewLevelDataPending() { return mNewLevelDataPending; }
 bool ClientMasterGameMode::isWaitingToTransition() { return !mTransitions.empty() && IsInActiveRoundState(); }
 
@@ -524,7 +1032,52 @@ void ClientMasterGameMode::OnProgressMade(const boost::shared_ptr<Player>& playe
 }
 
 void ClientMasterGameMode::ResetMapDistances() { CommonMasterGameMode::ResetMapDistances(); mPlayerProgress.clear(); mLastCheckpoints.clear(); }
-int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint) { return CheckpointIDtoSequenceID(checkpoint); }
+int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint)
+{
+    int spawnableIndex = 0;
+    int lastSequenceId = -1;
+
+    if (g_pApp == NULL)
+        return spawnableIndex;
+
+    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    if (options == NULL)
+        return spawnableIndex;
+
+    LevelRuleset* rules = options->getRequiredGameRules();
+    if (rules == NULL)
+        return spawnableIndex;
+
+    std::vector<CheckpointRuleDefinition*>* checkpoints = rules->getCheckpoints();
+    if (checkpoints == NULL)
+        return spawnableIndex;
+
+    int checkpointIndex = 0;
+    for (std::vector<CheckpointRuleDefinition*>::const_iterator it = checkpoints->begin();
+         it != checkpoints->end(); ++it, ++checkpointIndex)
+    {
+        CheckpointRuleDefinition* rule = *it;
+        if (rule != NULL && rule->hasSpawnPoint())
+        {
+            if (checkpointIndex == checkpoint)
+            {
+                const int sequenceId = rule->getSequenceID();
+                if (lastSequenceId == sequenceId)
+                    return spawnableIndex - 2;
+                break;
+            }
+
+            const int sequenceId = rule->getSequenceID();
+            if (lastSequenceId != sequenceId)
+            {
+                ++spawnableIndex;
+                lastSequenceId = sequenceId;
+            }
+        }
+    }
+
+    return spawnableIndex;
+}
 void ClientMasterGameMode::SetLocalRoundTimeStart(long long value)
 {
     mLocalRoundTimeStart = System::processTimeInMilliSecs() - value;

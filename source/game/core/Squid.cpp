@@ -10,6 +10,8 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/item/Item.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -64,6 +66,7 @@ void Squid::registerGoals()
 void Squid::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
 }
 
 double Squid::getEyeHeight()
@@ -189,7 +192,7 @@ void Squid::aiStep()
 
 void Squid::travel(float xa, float ya, float za)
 {
-    LivingEntity::travel(xa, ya, za);
+    move(eMoverType_Self, mXd, mYd, mZd, false);
 }
 
 bool Squid::checkSpawnRules()
@@ -257,6 +260,10 @@ bool Squid::hurt(const DamageSource* source, float damage)
 
 unsigned int Squid::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
+    if (Item::getId(holder.m_pItemInstance->getItem()) == 0x1A4 && !isLeashed())
+    {
+        return 0xA1B34A96U;
+    }
     return Mob::GetInteractTooltip(holder);
 }
 

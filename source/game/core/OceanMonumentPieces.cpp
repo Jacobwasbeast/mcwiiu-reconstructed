@@ -178,7 +178,10 @@ bool OceanMonumentPieces::OceanMonumentEntryRoom::postProcess(Level* l, Random& 
         generateWaterBox(l, b, 6, 1, 3, 7, 2, 4, false);
     return true;
 }
-void OceanMonumentPieces::OceanMonumentEntryRoom::Create() {}
+void OceanMonumentPieces::OceanMonumentEntryRoom::Create()
+{
+    new OceanMonumentEntryRoom();
+}
 EStructurePiece OceanMonumentPieces::OceanMonumentEntryRoom::GetType() {
     return eStructurePiece_OceanMonumentEntryRoom;
     }
@@ -190,7 +193,12 @@ bool OceanMonumentPieces::OceanMonumentPenthouse::postProcess(Level* l, Random& 
     generateDefaultFloor(l, b, 0, 0, true);
     return true;
    
-} void OceanMonumentPieces::OceanMonumentPenthouse::Create() {} EStructurePiece OceanMonumentPieces::OceanMonumentPenthouse::GetType() {
+}
+void OceanMonumentPieces::OceanMonumentPenthouse::Create()
+{
+    new OceanMonumentPenthouse();
+}
+EStructurePiece OceanMonumentPieces::OceanMonumentPenthouse::GetType() {
     return eStructurePiece_OceanMonumentPenthouse;
     }
 OceanMonumentPieces::OceanMonumentWingRoom::OceanMonumentWingRoom(const Direction* o, BoundingBox* b, int i) : OceanMonumentPiece(o, b) {
@@ -249,6 +257,11 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& r, int x, int z,
     generateUpperWall(l, r, b);
     return true;
    
-} void OceanMonumentPieces::MonumentBuilding::Create() {} EStructurePiece OceanMonumentPieces::MonumentBuilding::GetType() {
+}
+void OceanMonumentPieces::MonumentBuilding::Create()
+{
+    new MonumentBuilding();
+}
+EStructurePiece OceanMonumentPieces::MonumentBuilding::GetType() {
     return eStructurePiece_MonumentBuilding;
     }

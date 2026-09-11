@@ -20,6 +20,8 @@
 #include "game/world/generation/Player.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
+#include "game/core/EquipmentSlot.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 
 const EntityDataAccessor<unsigned char>* Vex::DATA_FLAGS = NULL;
 
@@ -97,6 +99,8 @@ void Vex::registerGoals()
 void Vex::registerAttributes()
 {
     Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(14.0);
+    getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4.0);
 }
 
 void Vex::defineSynchedData()
@@ -168,12 +172,17 @@ void Vex::setBoundOrigin(BlockPos* origin)
 
 bool Vex::getVexFlag(int flag)
 {
-    return getSharedFlag(flag);
+    return (mEntityData->get(DATA_FLAGS) & flag) != 0;
 }
 
 void Vex::setVexFlag(int flag, bool value)
 {
-    setSharedFlag(flag, value);
+    unsigned char flags = mEntityData->get(DATA_FLAGS);
+    if (value)
+        flags = static_cast<unsigned char>(flags | flag);
+    else
+        flags = static_cast<unsigned char>(flags & ~flag);
+    mEntityData->set(DATA_FLAGS, flags, true);
 }
 
 bool Vex::isCharging()
@@ -237,6 +246,7 @@ MobGroupData* Vex::finalizeMobSpawn(const DifficultyInstance& difficulty,
 void Vex::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
 {
     Mob::populateDefaultEquipmentSlots(difficulty);
+    setDropChance(EquipmentSlot::MAINHAND, 1.65f);
 }
 
 unsigned long long Vex::GetType()

@@ -152,6 +152,9 @@ bool Dolphin::isItemABribingFish(not_null_ptr<ItemInstance> item)
 
 unsigned int Dolphin::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
+    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
+    if (!item->isEmpty() && isItemABribingFish(item))
+        return 0x82f8d90fU;
     return AgableMob::GetInteractTooltip(tooltipData);
 }
 

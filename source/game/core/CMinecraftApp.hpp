@@ -24,6 +24,7 @@ struct NOTIFICATION
     unsigned int value;
 };
 
+class ArchiveFile;
 class LevelGenerationOptions;
 class LevelChunk;
 class Level;
@@ -47,7 +48,12 @@ class Stat;
 class DLCPack;
 class ModelPart;
 struct SKIN_BOX;
-struct MEMDATA;
+struct MEMDATA
+{
+    unsigned char* data;
+    unsigned int size;
+    unsigned char refCount;
+};
 struct MOJJANG_DATA;
 struct FEATURE_DATA
 {
@@ -479,6 +485,15 @@ private:
     bool mCorruptSaveDeleted;
     bool mResetNether;
     bool mResetEnd;
+    ArchiveFile* mMediaArchive;
+    OSFastMutex mSaveNotificationMutex;
+    int mSaveNotificationCount;
+    bool mBanListRead[4];
+    std::vector<NOTIFICATION*> mBanListEntries[4];
+    unsigned char* mBanListBuffers[4];
+    boost::unordered_map<PlayerUID, bool> mTutorialModes;
+    char mUniqueMapName[14];
+    bool mDLCDownloadQueueResetFlag;
     unsigned int mRequiredTexturePackID;
     unsigned int mOptionsCallbackStatus[4];
     EMiniGameId mFirstMiniGameType;

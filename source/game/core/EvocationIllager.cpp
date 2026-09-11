@@ -15,6 +15,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/Monster.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
@@ -41,7 +42,13 @@ void EvocationIllager::registerGoals()
     mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Mob), 8.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
 }
-void EvocationIllager::registerAttributes() { Monster::registerAttributes(); }
+void EvocationIllager::registerAttributes()
+{
+    Monster::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(24.0);
+}
 void EvocationIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
 void EvocationIllager::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, 0x5D541841ULL); }
 void EvocationIllager::readAdditionalSaveData(CompoundTag* tag) { SpellcasterIllager::readAdditionalSaveData(tag); }
@@ -96,7 +103,21 @@ void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
 
 EvocationIllager::EvokerSummonSpellGoal::EvokerSummonSpellGoal(EvocationIllager* evoker) : SpellcasterUseSpellGoal(evoker) {}
 EvocationIllager::EvokerSummonSpellGoal::~EvokerSummonSpellGoal() {}
-bool EvocationIllager::EvokerSummonSpellGoal::canUse() { return SpellcasterUseSpellGoal::canUse(); }
+bool EvocationIllager::EvokerSummonSpellGoal::canUse()
+{
+    if (!SpellcasterUseSpellGoal::canUse())
+        return false;
+    EvocationIllager* evoker = static_cast<EvocationIllager*>(mSpellcaster);
+    AABB* area = evoker->mBoundingBox->grow(2.75);
+    std::vector<boost::shared_ptr<Entity> >* vexes =
+        evoker->mLevel->getEntitiesOfClass(typeid(Vex), area);
+    int count = 0;
+    if (vexes != NULL)
+        count = (int)vexes->size();
+    delete area;
+    delete vexes;
+    return count < evoker->mRandom->nextInt(8) + 1;
+}
 std::wstring EvocationIllager::EvokerSummonSpellGoal::getName() { return L"Evoker Summon Spell"; }
 int EvocationIllager::EvokerSummonSpellGoal::getCastingTime() { return 100; }
 int EvocationIllager::EvokerSummonSpellGoal::getCastingInterval() { return 340; }

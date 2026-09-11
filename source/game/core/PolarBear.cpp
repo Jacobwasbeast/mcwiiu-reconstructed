@@ -318,6 +318,10 @@ PolarBear::PolarBearPanicGoal::~PolarBearPanicGoal()
 
 bool PolarBear::PolarBearPanicGoal::canUse()
 {
-    if (mMob->getTarget() == NULL && !mMob->isOnFire()) return false;
+    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
+    if (target.get() == NULL && !mMob->isOnFire())
+    {
+        return false;
+    }
     return PanicGoal::canUse();
 }

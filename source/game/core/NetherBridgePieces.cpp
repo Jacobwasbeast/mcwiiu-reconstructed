@@ -1,6 +1,7 @@
 #include "game/core/NetherBridgePieces.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
@@ -88,7 +89,19 @@ StructurePiece* NetherBridgePieces::findAndCreateBridgePieceFactory(PieceWeight*
 NetherBridgePieces::NetherBridgePiece::NetherBridgePiece(int n):StructurePiece(n) {}
 NetherBridgePieces::NetherBridgePiece::NetherBridgePiece():StructurePiece() {}
 NetherBridgePieces::NetherBridgePiece::~NetherBridgePiece() {}
-bool NetherBridgePieces::NetherBridgePiece::isOkBox(BoundingBox* b, StartPiece*) { return b != NULL; }
+bool NetherBridgePieces::NetherBridgePiece::isOkBox(BoundingBox* box, StartPiece* start)
+{
+    if (box == NULL)
+        return false;
+    Level* level = *reinterpret_cast<Level**>(reinterpret_cast<char*>(start) + 0x20);
+    LevelData* levelData = level->getLevelData();
+    int half = (levelData->getXZSize() / levelData->getHellScale() << 4) >> 1;
+    int lower = 1 - half;
+    int upper = half - 1;
+    if (upper <= box->z1)
+        return false;
+    return box->x1 < upper && lower < box->z0 && lower < box->x0 && box->y0 > 10;
+}
 void NetherBridgePieces::NetherBridgePiece::readAdditionalSaveData(DataInputStream*, StructureManager*) {}
 void NetherBridgePieces::NetherBridgePiece::addAdditionalSaveData(DataOutputStream*) {}
 int NetherBridgePieces::NetherBridgePiece::updatePieceWeight(std::list<PieceWeight*>* weights) {
@@ -306,7 +319,10 @@ StructurePiece* NetherBridgePieces::BridgeStraight::createPiece(std::vector<Stru
     }
     return new BridgeStraight(d, r, b, o);
 }
-void NetherBridgePieces::BridgeStraight::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::BridgeStraight::addChildren(StructurePiece* s,std::vector<StructurePiece*>* p,Random& r)
+{
+    generateChildForward((StartPiece*)s,p,r,1,3,false);
+}
 bool NetherBridgePieces::BridgeStraight::postProcess(Level* level, Random&, BoundingBox* box)
 {
     const BlockState* brick = netherBricks();
@@ -348,7 +364,10 @@ StructurePiece* NetherBridgePieces::CastleCorridorStairsPiece::createPiece(std::
     }
     return new CastleCorridorStairsPiece(d, r, b, o);
 }
-void NetherBridgePieces::CastleCorridorStairsPiece::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::CastleCorridorStairsPiece::addChildren(StructurePiece* s,std::vector<StructurePiece*>* p,Random& r)
+{
+    generateChildForward((StartPiece*)s,p,r,1,0,true);
+}
 bool NetherBridgePieces::CastleCorridorStairsPiece::postProcess(Level* level, Random&, BoundingBox* box)
 {
     const BlockState* brick = netherBricks();
@@ -426,7 +445,10 @@ StructurePiece* NetherBridgePieces::CastleEntrance::createPiece(std::vector<Stru
     }
     return new CastleEntrance(d, r, b, o);
 }
-void NetherBridgePieces::CastleEntrance::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::CastleEntrance::addChildren(StructurePiece* s,std::vector<StructurePiece*>* p,Random& r)
+{
+    generateChildForward((StartPiece*)s,p,r,5,3,true);
+}
 bool NetherBridgePieces::CastleEntrance::postProcess(Level* level,Random&,BoundingBox* box)
 { return buildNetherRoom(this, level, box, 7, 8, 7); }
 StructurePiece* NetherBridgePieces::CastleEntrance::Create(){return new CastleEntrance();}
@@ -495,7 +517,10 @@ StructurePiece* NetherBridgePieces::CastleSmallCorridorPiece::createPiece(std::v
     }
     return new CastleSmallCorridorPiece(d, r, b, o);
 }
-void NetherBridgePieces::CastleSmallCorridorPiece::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::CastleSmallCorridorPiece::addChildren(StructurePiece* s,std::vector<StructurePiece*>* p,Random& r)
+{
+    generateChildForward((StartPiece*)s,p,r,1,0,true);
+}
 bool NetherBridgePieces::CastleSmallCorridorPiece::postProcess(Level* level,Random&,BoundingBox* box)
 {
     const BlockState* brick = netherBricks();
@@ -581,7 +606,19 @@ StructurePiece* NetherBridgePieces::StairsRoom::createPiece(std::vector<Structur
     }
     return new StairsRoom(d, r, b, o);
 }
-void NetherBridgePieces::StairsRoom::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::StairsRoom::addChildren(StructurePiece* s, std::vector<StructurePiece*>* p, Random& r)
+{
+    if (getOrientation() == NULL || getOrientation()->get3DDataValue() <= 1)
+        return;
+    const unsigned int dir = getOrientation()->get3DDataValue();
+    BoundingBox* b = getBoundingBox();
+    if (b == NULL)
+        return;
+    if (dir < 4)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x1 + 1, b->y0 + 6, b->z0 + 2, Direction::EAST, getGenDepth(), false);
+    else if (dir < 6)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x0 + 2, b->y0 + 6, b->z1 + 1, Direction::WEST, getGenDepth(), false);
+}
 bool NetherBridgePieces::StairsRoom::postProcess(Level* level,Random&,BoundingBox* box)
 {
     const BlockState* brick = netherBricks();
@@ -637,7 +674,19 @@ StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::createPiec
     }
     return new CastleSmallCorridorLeftTurnPiece(d, r, b, o);
 }
-void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::addChildren(StructurePiece* s, std::vector<StructurePiece*>* p, Random& r)
+{
+    if (getOrientation() == NULL || getOrientation()->get3DDataValue() <= 1)
+        return;
+    const unsigned int dir = getOrientation()->get3DDataValue();
+    BoundingBox* b = getBoundingBox();
+    if (b == NULL)
+        return;
+    if (dir < 4)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x0 - 1, b->y0, b->z0 + 1, Direction::WEST, getGenDepth(), true);
+    else if (dir < 6)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x0 + 1, b->y0, b->z0 - 1, Direction::NORTH, getGenDepth(), true);
+}
 bool NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::postProcess(Level* level,Random&,BoundingBox* box)
 { return buildNetherRoom(this, level, box, 4, 6, 4); }
 StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::Create(){return new CastleSmallCorridorLeftTurnPiece();}
@@ -666,7 +715,19 @@ StructurePiece* NetherBridgePieces::CastleSmallCorridorRightTurnPiece::createPie
     }
     return new CastleSmallCorridorRightTurnPiece(d, r, b, o);
 }
-void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::addChildren(StructurePiece*,std::vector<StructurePiece*>*,Random&) {}
+void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::addChildren(StructurePiece* s, std::vector<StructurePiece*>* p, Random& r)
+{
+    if (getOrientation() == NULL || getOrientation()->get3DDataValue() <= 1)
+        return;
+    const unsigned int dir = getOrientation()->get3DDataValue();
+    BoundingBox* b = getBoundingBox();
+    if (b == NULL)
+        return;
+    if (dir < 4)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x1 + 1, b->y0, b->z0 + 1, Direction::EAST, getGenDepth(), true);
+    else if (dir < 6)
+        generateAndAddPiece((StartPiece*)s, p, r, b->x0 + 1, b->y0, b->z1 + 1, Direction::SOUTH, getGenDepth(), true);
+}
 bool NetherBridgePieces::CastleSmallCorridorRightTurnPiece::postProcess(Level* level,Random&,BoundingBox* box)
 { return buildNetherRoom(this, level, box, 4, 6, 4); }
 StructurePiece* NetherBridgePieces::CastleSmallCorridorRightTurnPiece::Create(){return new CastleSmallCorridorRightTurnPiece();}
@@ -732,13 +793,25 @@ bool NetherBridgePieces::MonsterThrone::postProcess(Level* level,Random&,Boundin
 StructurePiece* NetherBridgePieces::MonsterThrone::Create(){return new MonsterThrone();}
 EStructurePiece NetherBridgePieces::MonsterThrone::GetType(){return eStructurePiece_MonsterThrone;}
 
-void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::readAdditionalSaveData(DataInputStream* i,StructureManager* m){NetherBridgePiece::readAdditionalSaveData(i,m);}
+void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::readAdditionalSaveData(DataInputStream* input, StructureManager*)
+{
+    mState[0] = input->readByte();
+}
 void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
-void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::readAdditionalSaveData(DataInputStream* i,StructureManager* m){NetherBridgePiece::readAdditionalSaveData(i,m);}
+void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::readAdditionalSaveData(DataInputStream* input, StructureManager*)
+{
+    mState[0] = input->readByte();
+}
 void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
-void NetherBridgePieces::MonsterThrone::readAdditionalSaveData(DataInputStream* i,StructureManager* m){NetherBridgePiece::readAdditionalSaveData(i,m);}
+void NetherBridgePieces::MonsterThrone::readAdditionalSaveData(DataInputStream* input, StructureManager*)
+{
+    mHasSpawner = input->readByte() != 0;
+}
 void NetherBridgePieces::MonsterThrone::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
-void NetherBridgePieces::BridgeEndFiller::readAdditionalSaveData(DataInputStream* i,StructureManager* m){NetherBridgePiece::readAdditionalSaveData(i,m);}
+void NetherBridgePieces::BridgeEndFiller::readAdditionalSaveData(DataInputStream* input, StructureManager*)
+{
+    *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x1c) = input->readInt();
+}
 void NetherBridgePieces::BridgeEndFiller::addAdditionalSaveData(DataOutputStream* o){NetherBridgePiece::addAdditionalSaveData(o);}
 NetherBridgePieces::StartPiece::StartPiece(Random&,int,int,Level*):BridgeCrossing(){mPreviousPieceWeight=0;mPreviousPieceDepth=0;}
 NetherBridgePieces::StartPiece::~StartPiece(){}

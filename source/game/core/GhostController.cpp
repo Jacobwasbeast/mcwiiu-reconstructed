@@ -141,7 +141,17 @@ void GhostController::createGhostPlayers()
     for (int i = 0; i < 4; ++i)
         mGhostPlayers.push_back(boost::shared_ptr<GhostPlayer>(new GhostPlayer(level, getGhostPlayerName(i))));
 }
-void GhostController::startPlayback(){mPlayback=true;createGhostPlayers();}
+void GhostController::startPlayback()
+{
+    mRecordingActive[0] = mLoaded[0] != NULL;
+    mRecordingActive[1] = mLoaded[1] != NULL;
+    mRecordingActive[2] = mLoaded[2] != NULL;
+    mRecordingActive[3] = mLoaded[3] != NULL;
+    const uint64_t now = System::processTimeInMilliSecs();
+    mLastTickHigh = static_cast<int>(now >> 32);
+    mLastTickLow = static_cast<unsigned int>(now);
+    createGhostPlayers();
+}
 boost::shared_ptr<GhostPlayer> GhostController::getGhostPlayer(int i){return i>=0 && i<(int)mGhostPlayers.size()?mGhostPlayers[i]:boost::shared_ptr<GhostPlayer>();}
 std::vector<boost::shared_ptr<GhostPlayer> > GhostController::getGhostPlayers(){return mGhostPlayers;}
 std::vector<boost::shared_ptr<Player> > GhostController::getPlayers(){return std::vector<boost::shared_ptr<Player> >();}
@@ -461,4 +471,9 @@ int GhostController::RecordScore(int track, int key, unsigned short score, unsig
         SaveGhostHeader(track);
     return changed ? 1 : 0;
 }
-void GhostController::DisableSaving(void*,int,C4JStorage::EMessageResult){}
+void GhostController::DisableSaving(void* context, int, C4JStorage::EMessageResult)
+{
+    GhostController* controller = static_cast<GhostController*>(context);
+    if (controller != NULL)
+        controller->mSaving = false;
+}

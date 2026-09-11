@@ -5,6 +5,7 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/DifficultyInstance.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/FlyingPathNavigation.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -40,6 +41,16 @@ boost::unordered_map<unsigned long long, const SoundEvent*> gImitatedSounds;
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/LeafBlock.hpp"
+#include "game/world/block/LogBlock.hpp"
+#include "game/ui/EntityTooltipDataHolder.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/ai/SitGoal.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 
 const EntityDataAccessor<int>* Parrot::DATA_VARIANT = NULL;
 
@@ -231,7 +242,66 @@ bool Parrot::isPartyParrot()
 
 bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    return TamableAnimal::interact(player, hand);
+    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+    bool feedingTameFood = isTameFood(item);
+
+    if (!isTame() && feedingTameFood)
+    {
+        if (!player->mAbilities.mInstabuild)
+            item->shrink(1);
+
+        if (!isSilent())
+        {
+            mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::PARROT_EAT,
+                              getSoundSource(), 1.0f, (float)getPitch(mRandom), 16.0f);
+        }
+
+        if (!mLevel->mIsClientSide)
+        {
+            if (mRandom->nextInt(10) == 0)
+            {
+                tame(player);
+                spawnTamingParticles(true);
+                mLevel->broadcastEntityEvent(shared_from_this(), 7, 0);
+            }
+            else
+            {
+                spawnTamingParticles(false);
+                mLevel->broadcastEntityEvent(shared_from_this(), 6, 0);
+            }
+        }
+
+        return true;
+    }
+
+    if (item->getItem() == Items::cookie)
+    {
+        if (!player->mAbilities.mInstabuild)
+            item->shrink(1);
+
+        addEffect(new MobEffectInstance(MobEffects::POISON, 900), boost::shared_ptr<Entity>());
+
+        if (player->isCreative() || !isInvulnerable())
+            hurt(DamageSource::CreatePlayerAttack(player), 3.4028234663852886e+38f);
+
+        return true;
+    }
+
+    if (!mLevel->mIsClientSide && !isFlying() && isTame() && isOwnedBy(player))
+    {
+        bool renaming = false;
+        if (Item::getId(item->getItem()) == 421 && !isPassenger() && item->hasCustomHoverName())
+        {
+            if (!hasCustomName() || item->getHoverName() != getCustomName())
+                renaming = true;
+        }
+
+        if (!renaming && !isLeashedToPlayer(player)
+            && (item->isEmpty() || item->getItem() != Items::spawnEgg))
+            getSitGoal()->wantToSit(!isSitting());
+    }
+
+    return Animal::mobInteract(player, hand);
 }
 
 bool Parrot::isFood(const not_null_ptr<ItemInstance>& itemInstance)
@@ -241,7 +311,17 @@ bool Parrot::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 
 bool Parrot::checkSpawnRules()
 {
-    return Mob::checkSpawnRules();
+    BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
+    Block* block = mLevel->getBlockState(pos.below())->getBlock();
+    if (block != NULL && dynamic_cast<LeafBlock*>(block) != NULL)
+        return true;
+    if (block == Blocks::grass)
+        return true;
+    if (block != NULL && dynamic_cast<LogBlock*>(block) != NULL)
+        return true;
+    if (block == Blocks::AIR && mLevel->getDaytimeRawBrightness(pos) >= 9 && Animal::checkSpawnRules())
+        return true;
+    return false;
 }
 
 void Parrot::causeFallDamage(float, float)
@@ -255,7 +335,59 @@ bool Parrot::isTameFood(const not_null_ptr<ItemInstance>& itemInstance)
 
 unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    return Animal::GetInteractTooltip(holder);
+    if (isLeashedToPlayer(holder.m_pPlayer))
+        return 0x551269B5U;
+
+    not_null_ptr<ItemInstance> item = holder.m_pItemInstance;
+    if (item->getItem() == NULL)
+        return 0xffffffffU;
+
+    boost::shared_ptr<Player> player(holder.m_pPlayer,
+                                     (Player*)holder.m_pPlayer.get());
+
+    if (!isBaby())
+    {
+        if (Item::getId(item->getItem()) == 421)
+        {
+            if (item->hasCustomHoverName())
+            {
+                bool showRename = true;
+                if (isTame())
+                {
+                    if (hasCustomName() && item->getHoverName() == getCustomName())
+                        showRename = false;
+                }
+                if (showRename)
+                    return 0x5592C692U;
+            }
+
+            if (!isOwnedBy(player))
+                return 0xffffffffU;
+            if (isSitting())
+                return 0xE1122504U;
+            if (!isPassenger())
+                return 0x3102263BU;
+            return 0xffffffffU;
+        }
+    }
+
+    if (!isTame())
+    {
+        if (isTameFood(item) && getPassengers()->empty())
+            return 0x95CFA728U;
+        return 0xffffffffU;
+    }
+
+    if (Item::getId(item->getItem()) == 420 && !isLeashed())
+        return 0xA1B34A96U;
+
+    if (!isOwnedBy(player))
+        return 0xffffffffU;
+    if (isSitting())
+        return 0xE1122504U;
+    if (!isPassenger())
+        return 0x3102263BU;
+    return 0xffffffffU;
 }
 
 void Parrot::checkFallDamage(double, bool, Block*, const BlockPos&)
@@ -294,6 +426,7 @@ const SoundEvent* Parrot::getDeathSound()
 
 void Parrot::playStepSound(const BlockPos&, Block*)
 {
+    playSound(SoundEvents::PARROT_STEP, 0.15000000596046448f, 1.0f);
 }
 
 float Parrot::playFlySound(float volume)
