@@ -7,6 +7,8 @@
 
 class TargetAreaRuleDefinition : public NamedAreaRuleDefinition
 {
+    friend class CommonMasterGameMode;
+
 public:
     TargetAreaRuleDefinition();
 

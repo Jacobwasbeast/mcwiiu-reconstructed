@@ -1,7 +1,16 @@
 #include "game/minigame/Tutorial.hpp"
 
+#include "game/core/ChoiceTask.hpp"
 #include "game/core/GameModeConstraints.hpp"
+#include "game/core/InfoTask.hpp"
+#include "game/core/ProcedureCompoundTask.hpp"
+#include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/HorseChoiceTask.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/minigame/TutorialHint.hpp"
 #include "game/minigame/TutorialMessage.hpp"
 #include "game/minigame/TutorialTask.hpp"
@@ -98,18 +107,19 @@ void Tutorial::isHintCompleted(eTutorial_Hint hint)
 
 void Tutorial::addHint(eTutorial_State state, TutorialHint* hint)
 {
-    if (hint != NULL && state == (eTutorial_State)0)
-        return;
+    stateHints[state].push_back(hint);
 }
 
 unsigned int Tutorial::addHintIfIncomplete(eTutorial_State state, TutorialHint* hint)
 {
-    if (hint == NULL)
+    int hintId = *reinterpret_cast<int*>(reinterpret_cast<char*>(hint) + 0xc);
+    if (getCompleted(hintId) == 0)
     {
-        return 0xffffffffU;
+        addHint(state, hint);
+        return 0;
     }
-    addHint(state, hint);
-    return 0xffffffffU;
+    delete hint;
+    return 0;
 }
 
 unsigned int Tutorial::AddHints()
@@ -200,8 +210,242 @@ void Tutorial::addTask(eTutorial_State state, TutorialTask* task)
 
 unsigned int Tutorial::AddTasks(bool enabledValue)
 {
-    return enabledValue ? 1U : 0U;
+    ProcedureCompoundTask* compound_0;
+    ProcedureCompoundTask* compound_1;
+    ProcedureCompoundTask* compound_2;
+    ProcedureCompoundTask* compound_3;
+    ProcedureCompoundTask* compound_4;
+    ProcedureCompoundTask* compound_5;
+    ProcedureCompoundTask* compound_6;
+    ProcedureCompoundTask* compound_7;
+    ProcedureCompoundTask* compound_9;
+    ProcedureCompoundTask* compound_10;
+    ProcedureCompoundTask* compound_11;
+    if (!enabledValue && isStateCompleted(static_cast<eTutorial_State>(1)))
+        goto check_state_0xE;
+    create_state_1:
+    compound_0 = new ProcedureCompoundTask(this);
+    compound_0->AddTask(new ChoiceTask(this, 0xB77FC340, 0x9E1E8969, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x4)));
+    compound_0->AddTask(new InfoTask(this, 0xC18416E0, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_0->AddTask(new InfoTask(this, 0x99B85F72, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_0->AddTask(new InfoTask(this, 0x1A28A6CA, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_0->AddTask(new InfoTask(this, 0xEC1649D5, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(1), compound_0);
+    if (!enabledValue)
+        goto check_state_0xE;
+    create_state_0xE:
+    compound_1 = new ProcedureCompoundTask(this);
+    compound_1->AddTask(new ChoiceTask(this, 0x25598D4, 0x46859B85, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x14)));
+    compound_1->AddTask(new InfoTask(this, 0x11BE3D54, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_1->AddTask(new InfoTask(this, 0x5F3FE8A6, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_1->AddTask(new InfoTask(this, 0x94985DDE, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_1->AddTask(new InfoTask(this, 0x3F6BE86, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_1->AddTask(new InfoTask(this, 0x893A28E1, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0xE), compound_1);
+    if (!enabledValue)
+        goto check_state_2;
+    create_state_2:
+    compound_2 = new ProcedureCompoundTask(this);
+    compound_2->AddTask(new ChoiceTask(this, 0x9A252193, 0x7F0C21BA, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x5)));
+    compound_2->AddTask(new InfoTask(this, 0x27A2B969, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_2->AddTask(new InfoTask(this, 0xA42613B4, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_2->AddTask(new InfoTask(this, 0x723936AB, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_2->AddTask(new InfoTask(this, 0x1F10DDC2, 0xA0D0169C, false, 2, static_cast<ETelemetryChallenges>(0x0)));
+    compound_2->AddTask(new InfoTask(this, 0xB135E36, 0xFC8730E4, false, 2, static_cast<ETelemetryChallenges>(0x0)));
+    compound_2->AddTask(new InfoTask(this, 0x3AF6EF3E, 0xAF244F78, false, 2, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(2), compound_2);
+    if (!enabledValue)
+        goto check_state_4;
+    create_state_4:
+    compound_3 = new ProcedureCompoundTask(this);
+    compound_3->AddTask(new ChoiceTask(this, 0x6CE6D19, 0x4C0CF470, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x6)));
+    compound_3->AddTask(new InfoTask(this, 0x9BB6558D, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_3->AddTask(new InfoTask(this, 0xC6B63D93, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_3->AddTask(new InfoTask(this, 0x5466C434, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(4), compound_3);
+    if (!enabledValue)
+        goto check_state_0x12;
+    create_state_0x12:
+    compound_4 = new ProcedureCompoundTask(this);
+    compound_4->AddTask(new ChoiceTask(this, 0x9253A77, 0x9E500506, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0xF)));
+    compound_4->AddTask(new InfoTask(this, 0x96BEBCB3, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_4->AddTask(new InfoTask(this, 0xAED3450F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_4->AddTask(new InfoTask(this, 0xC02F0030, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_4->AddTask(new InfoTask(this, 0xFB48ACEA, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_4->AddTask(new InfoTask(this, 0xFCFE0427, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x12), compound_4);
+    if (!enabledValue)
+        goto check_state_0x14;
+    create_state_0x14:
+    compound_5 = new ProcedureCompoundTask(this);
+    compound_5->AddTask(new ChoiceTask(this, 0x18A28D4E, 0x690D3FD7, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x15)));
+    compound_5->AddTask(new InfoTask(this, 0xD1EDBF15, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_5->AddTask(new InfoTask(this, 0xCA85FE57, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_5->AddTask(new InfoTask(this, 0x244CF0FE, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_5->AddTask(new InfoTask(this, 0x731167E6, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_5->AddTask(new InfoTask(this, 0x697EA620, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x14), compound_5);
+    if (!enabledValue)
+        goto check_state_0x1B;
+    create_state_0x1B:
+    compound_6 = new ProcedureCompoundTask(this);
+    compound_6->AddTask(new ChoiceTask(this, 0xD381DD9, 0x645B6F8, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x2E)));
+    compound_6->AddTask(new InfoTask(this, 0xC9DE21A, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x4F577027, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x5E84B4A1, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x87DCC839, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x190AE839, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x67CD9B1F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_6->AddTask(new InfoTask(this, 0x51ED81D1, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1B), compound_6);
+    if (!enabledValue)
+        goto check_state_0x19;
+    create_state_0x19:
+    compound_7 = new ProcedureCompoundTask(this);
+    compound_7->AddTask(new ChoiceTask(this, 0x821611E6, 0x789B40B7, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x30)));
+    compound_7->AddTask(new InfoTask(this, 0x54091CCD, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_7->AddTask(new InfoTask(this, 0xB7242ECF, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_7->AddTask(new InfoTask(this, 0x7C03162F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_7->AddTask(new InfoTask(this, 0x7B8B7B8F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_7->AddTask(new InfoTask(this, 0x4896FB7B, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x19), compound_7);
+    if (!enabledValue)
+        goto check_state_0x1D;
+    create_state_0x1D:
+    addTask(static_cast<eTutorial_State>(0x1D), new HorseChoiceTask(this, 0x4DCDE902, 0x80BBE3E3, 0xDB419510, 0xE9B948F4, 0x7595B01B, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0x32)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0x8DFE2C47, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0xCE6D12A7, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0xFB9D6DB1, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0x86C858BB, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0x32AEB3B, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0xD0B71241, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0xB916B23D, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1D), new InfoTask(this, 0x3ED848DD, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    if (!enabledValue)
+        goto check_state_0x1E;
+    create_state_0x1E:
+    compound_9 = new ProcedureCompoundTask(this);
+    compound_9->AddTask(new ChoiceTask(this, 0x7C8AEDB6, 0xEB9A80F7, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x33)));
+    compound_9->AddTask(new InfoTask(this, 0xE4582E6F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_9->AddTask(new InfoTask(this, 0xAC55BC2F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_9->AddTask(new InfoTask(this, 0xAD1032A9, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x1E), compound_9);
+    if (!enabledValue)
+        goto check_state_0x24;
+    create_state_0x24:
+    compound_10 = new ProcedureCompoundTask(this);
+    compound_10->AddTask(new ChoiceTask(this, 0xECBB7BAC, 0xB0ED8A95, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x35)));
+    compound_10->AddTask(new InfoTask(this, 0x8C159652, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0xFE1D058D, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0x22299E7D, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0xE44F42D0, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0x13FD0693, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0x859377B3, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0xD0C84AA4, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0x36518124, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_10->AddTask(new InfoTask(this, 0x306CF96D, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x24), compound_10);
+    if (!enabledValue)
+        goto check_state_0x22;
+    create_state_0x22:
+    compound_11 = new ProcedureCompoundTask(this);
+    compound_11->AddTask(new ChoiceTask(this, 0x6FF43521, 0xBA245C8, true, 0, 1, static_cast<eTutorial_CompletionAction>(1), static_cast<ETelemetryChallenges>(0x37)));
+    compound_11->AddTask(new InfoTask(this, 0x934C3015, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_11->AddTask(new InfoTask(this, 0xF87CF280, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    compound_11->AddTask(new InfoTask(this, 0xC6447326, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0x22), compound_11);
+    if (!enabledValue)
+        goto check_state_5;
+    create_state_5:
+    addTask(static_cast<eTutorial_State>(5), new ChoiceTask(this, 0x97628A42, 0x16DFAE83, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0x8)));
+    addTask(static_cast<eTutorial_State>(5), new InfoTask(this, 0x6D8D73AC, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(5), new InfoTask(this, 0xF965D585, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(5), new InfoTask(this, 0x5C8E319F, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    if (!enabledValue)
+        goto check_state_6;
+    create_state_6:
+    addTask(static_cast<eTutorial_State>(6), new ChoiceTask(this, 0x25C06AF9, 0x811A4288, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0x9)));
+    addTask(static_cast<eTutorial_State>(6), new InfoTask(this, 0xE6A88FAF, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    if (!enabledValue)
+        goto check_state_7;
+    create_state_7:
+    addTask(static_cast<eTutorial_State>(7), new ChoiceTask(this, 0x2C532B5D, 0x1B284F34, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0x7)));
+    addTask(static_cast<eTutorial_State>(7), new InfoTask(this, 0xC7681D23, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(7), new InfoTask(this, 0x4F274F92, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(7), new InfoTask(this, 0x314B8DCE, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    if (!enabledValue)
+        goto check_state_8;
+    create_state_8:
+    addTask(static_cast<eTutorial_State>(8), new InfoTask(this, 0xAD017F4C, 0x3F9463F, true, 0x3A, static_cast<ETelemetryChallenges>(0x0)));
+    if (!enabledValue)
+        goto check_state_9;
+    goto add_state_9;
+    check_state_0xE:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0xE)))
+        goto create_state_0xE;
+    check_state_2:
+    if (!isStateCompleted(static_cast<eTutorial_State>(2)))
+        goto create_state_2;
+    check_state_4:
+    if (!isStateCompleted(static_cast<eTutorial_State>(4)))
+        goto create_state_4;
+    check_state_0x12:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x12)))
+        goto create_state_0x12;
+    check_state_0x14:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x14)))
+        goto create_state_0x14;
+    check_state_0x1B:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x1B)))
+        goto create_state_0x1B;
+    check_state_0x19:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x19)))
+        goto create_state_0x19;
+    check_state_0x1D:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x1D)))
+        goto create_state_0x1D;
+    check_state_0x1E:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x1E)))
+        goto create_state_0x1E;
+    check_state_0x24:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x24)))
+        goto create_state_0x24;
+    check_state_0x22:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0x22)))
+        goto create_state_0x22;
+    check_state_5:
+    if (!isStateCompleted(static_cast<eTutorial_State>(5)))
+        goto create_state_5;
+    check_state_6:
+    if (!isStateCompleted(static_cast<eTutorial_State>(6)))
+        goto create_state_6;
+    check_state_7:
+    if (!isStateCompleted(static_cast<eTutorial_State>(7)))
+        goto create_state_7;
+    check_state_8:
+    if (!isStateCompleted(static_cast<eTutorial_State>(8)))
+        goto create_state_8;
+    check_state_9:
+    if (!isStateCompleted(static_cast<eTutorial_State>(9)))
+        goto add_state_9;
+    goto add_state_f;
+    add_state_9:
+    addTask(static_cast<eTutorial_State>(9), new ChoiceTask(this, 0xA76E95BA, 0x2C631D03, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0xA)));
+    addTask(static_cast<eTutorial_State>(9), new InfoTask(this, 0x54D286F0, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(9), new InfoTask(this, 0xA62DA153, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    if (enabledValue)
+        return 0;
+    add_state_f:
+    if (!isStateCompleted(static_cast<eTutorial_State>(0xf)))
+    {
+    addTask(static_cast<eTutorial_State>(0xF), new ChoiceTask(this, 0x82BFAADD, 0x2B6F086C, true, 0, 1, static_cast<eTutorial_CompletionAction>(2), static_cast<ETelemetryChallenges>(0xD)));
+    addTask(static_cast<eTutorial_State>(0xF), new InfoTask(this, 0x67613737, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0xF), new InfoTask(this, 0xD756C6A6, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    addTask(static_cast<eTutorial_State>(0xF), new InfoTask(this, 0x642C1BB4, 0x3F9463F, true, 0, static_cast<ETelemetryChallenges>(0x0)));
+    }
+    return 0;
 }
+
 
 unsigned int Tutorial::setMessage(PopupMessageDetails* details)
 {
@@ -380,21 +624,82 @@ unsigned int Tutorial::completeUsingItem(not_null_ptr<ItemInstance> item)
 
 unsigned int Tutorial::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
+    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+         it != stateHints[currentState].end(); ++it)
+    {
+        TutorialHint* hint = *it;
+        if (hint == NULL)
+            continue;
+        int result = hint->startDestroyBlock(item, state);
+        if (result != -1)
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = result;
+            setMessage(hint, details);
+            return 0;
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::destroyBlock(Block* block)
 {
+    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+         it != stateHints[currentState].end(); ++it)
+    {
+        TutorialHint* hint = *it;
+        if (hint == NULL)
+            continue;
+        int result = static_cast<int>(hint->destroyBlock(block));
+        if (result != -1)
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = result;
+            setMessage(hint, details);
+            return 0;
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity)
 {
+    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+         it != stateHints[currentState].end(); ++it)
+    {
+        TutorialHint* hint = *it;
+        if (hint == NULL)
+            continue;
+        not_null_ptr<ItemInstance> selected = player->mInventory->getSelected();
+        int result = hint->attack(selected, entity);
+        if (result != -1)
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = result;
+            setMessage(hint, details);
+            return 0;
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::itemDamaged(not_null_ptr<ItemInstance> item)
 {
+    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+         it != stateHints[currentState].end(); ++it)
+    {
+        TutorialHint* hint = *it;
+        if (hint == NULL)
+            continue;
+        int result = hint->itemDamaged(item);
+        if (result != -1)
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = result;
+            setMessage(hint, details);
+            return 0;
+        }
+    }
     return 0xffffffffU;
 }
 
@@ -409,9 +714,20 @@ void Tutorial::handleUIInput(int input)
 
 void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected)
 {
-    if (!selected)
+    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+         it != stateHints[currentState].end(); ++it)
     {
-        popupPending = false;
+        TutorialHint* hint = *it;
+        if (hint == NULL)
+            continue;
+        int result = hint->createItemSelected(item, selected);
+        if (result != -1)
+        {
+            PopupMessageDetails* details = new PopupMessageDetails();
+            details->titleId = result;
+            setMessage(hint, details);
+            return;
+        }
     }
 }
 
@@ -460,19 +776,73 @@ unsigned int Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
 unsigned int Tutorial::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
                                unsigned int exactCount)
 {
+    if (!enabled)
+    {
+        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+             it != stateHints[currentState].end(); ++it)
+        {
+            if (*it != NULL && (*it)->onTake(item) != 0)
+                break;
+        }
+    }
+    for (int state = 0; state < 22; ++state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+             it != stateTasks[state].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onTake(item, itemCount, exactCount);
+        }
+        for (std::vector<TutorialHint*>::iterator it = stateHints[state].begin();
+             it != stateHints[state].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onTake(item);
+        }
+    }
     return 0xffffffffU;
 }
 
 unsigned int Tutorial::onSelectedItemChanged(not_null_ptr<ItemInstance> item)
 {
-    return 0xffffffffU;
+    if (isSelectedItemState() == 0)
+        return 0;
+    if (item.get() == NULL || item->isEmpty())
+    {
+        changeTutorialState(static_cast<eTutorial_State>(0), NULL);
+        return 0;
+    }
+    Item* itemType = item->getItem();
+    if (itemType == Items::fishingRod)
+    {
+        changeTutorialState(static_cast<eTutorial_State>(7), NULL);
+        return 0;
+    }
+    if (itemType == Items::carrotOnAStick)
+    {
+        changeTutorialState(static_cast<eTutorial_State>(8), NULL);
+        return 0;
+    }
+    changeTutorialState(static_cast<eTutorial_State>(0), NULL);
+    return 0;
 }
 
 void Tutorial::onLookAt(const BlockState* state)
 {
-    if (state == NULL)
+    if (!enabled)
     {
-        popupPending = false;
+        bool handled = false;
+        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+             it != stateHints[currentState].end(); ++it)
+        {
+            if (*it != NULL && (*it)->onLookAt(state) != 0)
+            {
+                handled = true;
+                break;
+            }
+        }
+        if (!handled && currentState == 0 && state != NULL && state->getBlock() == Blocks::bed)
+            changeTutorialState(static_cast<eTutorial_State>(9), NULL);
     }
 }
 
@@ -486,6 +856,39 @@ void Tutorial::onLookAtSkull(Level* level, const BlockPos& pos, const BlockState
 
 unsigned int Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
+    if (!enabled)
+    {
+        bool hintHandled = false;
+        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+             it != stateHints[currentState].end(); ++it)
+        {
+            if (*it != NULL && (*it)->onLookAtEntity(entity) != 0)
+            {
+                hintHandled = true;
+                break;
+            }
+        }
+        if (!hintHandled && currentState == 0 && entity.get() != NULL)
+        {
+            unsigned long long entityType = entity->GetType();
+            if ((entityType & 0x0D690000ULL) == 0x0D690000ULL
+                && entityType != 0x000000002D690002ULL
+                && entityType != 0x000000002D690003ULL
+                && (!splitScreen || hintShown))
+            {
+                boost::shared_ptr<AbstractHorse> horse =
+                    boost::static_pointer_cast<AbstractHorse>(entity);
+                if (!horse->isTamed())
+                    changeTutorialState(static_cast<eTutorial_State>(0x1D), NULL);
+            }
+        }
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+             it != stateTasks[currentState].end(); ++it)
+        {
+            if (*it != NULL)
+                (*it)->onLookAtEntity(entity);
+        }
+    }
     return 0xffffffffU;
 }
 

@@ -712,10 +712,20 @@ void MiniGameDef::StaticCtor()
 
 MiniGameDef* MiniGameDef::GetCustomGameModeById(EMiniGameId id, bool) { return GetCustomGameModeReferenceById(id); }
 
-unsigned int MiniGameDef::GetHostOption(eCustomGameModeHostOption option) const { return mPlayerSettings.Get(option); }
+unsigned int MiniGameDef::GetHostOption(eCustomGameModeHostOption option) const
+{
+    MiniGamePlayerSettings settings;
+    GetPlayerSettings(settings);
+    return settings.Get(option);
+}
 unsigned int MiniGameDef::GetRoundCount() const { return GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0 ? mPlayerSettings.mRoundCount : 1; }
 int MiniGameDef::GetFinalRoundIndex() const { return GetRoundCount() - 1; }
-unsigned int MiniGameDef::GetGameVariant() const { return mPlayerSettings.Get(eCustomGameModeHostOption_GameVariant); }
+unsigned int MiniGameDef::GetGameVariant() const
+{
+    MiniGamePlayerSettings settings;
+    GetPlayerSettings(settings);
+    return settings.Get(eCustomGameModeHostOption_GameVariant);
+}
 bool MiniGameDef::HostOption_Bool(eCustomGameModeHostOption, unsigned int index) const { return index != 0; }
 bool MiniGameDef::HostOption_Bool(eCustomGameModeHostOption option) const { return HostOption_Bool(option, GetHostOption(option)); }
 bool MiniGameDef::ArePointsActive() const { return HostOption_Bool(eCustomGameModeHostOption_PointsActive); }

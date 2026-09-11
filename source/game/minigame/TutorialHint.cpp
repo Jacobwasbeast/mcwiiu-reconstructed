@@ -1,6 +1,9 @@
 #include "game/minigame/TutorialHint.hpp"
 
+#include "game/core/Minecraft.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, int description,
                            eHintType hintType, bool repeatMessage, bool allowFadeValue,
@@ -98,6 +101,15 @@ unsigned int TutorialHint::onGameModeChange(eTutorial_GameMode gameMode)
 
 int TutorialHint::tick()
 {
+    if (type == (eHintType)8)
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        MultiplayerLocalPlayer* player = minecraft->mLocalPlayers[tutorial->playerId].get();
+        if (player->isUnderLiquid(Material::WATER) && !player->PositionLocked())
+        {
+            return descriptionId;
+        }
+    }
     return -1;
 }
 
