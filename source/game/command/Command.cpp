@@ -72,7 +72,9 @@ std::wstring Command::convertToPlayerName(boost::shared_ptr<CommandSender> sende
 
 std::wstring Command::convertToEntityName(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
 {
-    return convertToPlayer(sender, entityName)->getName();
+    boost::shared_ptr<ServerPlayer> entity = convertToPlayer(sender, entityName);
+
+    return entity->getName();
 }
 
 boost::shared_ptr<Entity> Command::convertToEntity(boost::shared_ptr<CommandSender> sender, std::wstring entityName)

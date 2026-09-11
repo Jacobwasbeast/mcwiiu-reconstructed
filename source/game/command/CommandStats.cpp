@@ -26,8 +26,19 @@ void __T9()
 CommandStats::CommandStats() : m_objectiveNames(0), m_entityNames(0) {}
 CommandStats::~CommandStats() {}
 
-void CommandStats::setCommandStats(MinecraftServer*, boost::shared_ptr<CommandSender>, CommandStatType, int) {}
-void CommandStats::setCommandStats(boost::shared_ptr<CommandSender>, CommandStatType, int) {}
+void CommandStats::setCommandStats(MinecraftServer*, boost::shared_ptr<CommandSender> sender, CommandStatType type, int value)
+{
+    (void)sender;
+    (void)type;
+    (void)value;
+}
+
+void CommandStats::setCommandStats(boost::shared_ptr<CommandSender> sender, CommandStatType type, int value)
+{
+    (void)sender;
+    (void)type;
+    (void)value;
+}
 
 void CommandStats::unsetStatsSetting(CommandStats* stats, CommandStatType type)
 {
