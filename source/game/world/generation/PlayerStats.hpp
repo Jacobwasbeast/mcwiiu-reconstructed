@@ -188,6 +188,7 @@ public:
 
 private:
     friend class DamageSourceMedal;
+    friend class GameStats;
 
     UntypedStatTracker* mDamageTakenBySource[15];
     UntypedStatTracker* mWeaponDamage[2];

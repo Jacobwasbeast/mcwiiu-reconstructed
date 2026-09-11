@@ -595,6 +595,11 @@ void MultiPlayerLevel::MustQueueBlockEntityDataPackets()
     mClientChunkCache->mustQueueBlockEntityDataPackets();
 }
 
+bool MultiPlayerLevel::shouldQueueBlockEntityDataPackets()
+{
+    return mClientChunkCache != 0 && mClientChunkCache->mustQueueBlockEntityDataPackets();
+}
+
 void MultiPlayerLevel::QueueBlockEntityDataPacket(
     const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
 {

@@ -1,20 +1,28 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 
+#include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
+#include "game/core/Scoreboard.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/core/TeamInvite.hpp"
 #include "game/core/System.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/network/ClientboundSoundPacket.hpp"
+#include "game/network/DebugOptionsPacket.hpp"
 #include "game/network/GameModePacket.hpp"
+#include "game/network/ServerboundContainerButtonClickPacket.hpp"
+#include "game/network/ServerboundCustomPayloadPacket.hpp"
 #include "game/network/ServerboundPlayerActionPacket.hpp"
 #include "game/network/ServerboundSetCarriedItemPacket.hpp"
+#include "game/network/ServerboundSetCreativeModeSlotPacket.hpp"
 #include "game/core/Direction.hpp"
 
 MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* connection, int,
@@ -110,7 +118,16 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::interactAt(
     return InteractionResult::eInteractionResult_Pass;
 }
 bool MultiPlayerGameMode::hasInfiniteItems() { return isCreative(); }
-void MultiPlayerGameMode::handlePickItem(const boost::shared_ptr<ItemInstance>&) {}
+void MultiPlayerGameMode::handlePickItem(const boost::shared_ptr<ItemInstance>& item)
+{
+    if (!item || !mConnection)
+        return;
+    ByteArrayOutputStream bytes;
+    DataOutputStream output(&bytes);
+    output.writeItem(not_null_ptr<ItemInstance>(item));
+    mConnection->send(boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
+        std::wstring(L"MC|PickItem"), bytes.toByteArray())));
+}
 bool MultiPlayerGameMode::isInputAllowed(int mapping) { return mGameModeConstraints == 0 || mGameModeConstraints->isInputAllowed(mapping); }
 bool MultiPlayerGameMode::destroyBlock(const BlockPos& pos) { return _destroyBlock(pos); }
 void MultiPlayerGameMode::creativeDestroyBlock(Minecraft*, MultiPlayerGameMode* mode, const BlockPos& pos, const Direction*) { if (mode != 0) mode->_destroyBlock(pos); }
@@ -179,7 +196,13 @@ void MultiPlayerGameMode::MakeSpectateSound()
         sound, SoundSource::eSoundSource_Master, player->mX, player->mY, player->mZ, 0.5f, 0.0f)));
 }
 bool MultiPlayerGameMode::isCutScene() { return false; }
-void MultiPlayerGameMode::Follow(bool, bool) {}
+void MultiPlayerGameMode::Follow(bool follow, bool immediate)
+{
+    if (!mConnection)
+        return;
+    GameModePacket::FollowData data(follow, immediate);
+    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0), data));
+}
 void MultiPlayerGameMode::StartSpectating()
 {
     if (!mConnection)
@@ -198,15 +221,41 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos&) { mDestroying = false; 
 double MultiPlayerGameMode::getPickRange() { return hasFarPickRange() ? 5.0 : 4.5; }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleTakeAllInvenetory(int, int, int, int, boost::shared_ptr<Player>) { return boost::shared_ptr<ItemInstance>(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleInventoryMouseClick(int, int, int, ClickType::eClickType, boost::shared_ptr<Player>) { return boost::shared_ptr<ItemInstance>(); }
-void MultiPlayerGameMode::handleInventoryButtonClick(int, int) {}
-void MultiPlayerGameMode::handleCreativeModeItemAdd(not_null_ptr<ItemInstance>, int) {}
-void MultiPlayerGameMode::handleCreativeModeItemDrop(not_null_ptr<ItemInstance>) {}
+void MultiPlayerGameMode::handleInventoryButtonClick(int containerId, int button)
+{
+    if (!mConnection)
+        return;
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ServerboundContainerButtonClickPacket(containerId, button)));
+}
+
+void MultiPlayerGameMode::handleCreativeModeItemAdd(not_null_ptr<ItemInstance> item, int slot)
+{
+    if (!isCreative() || !mConnection)
+        return;
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ServerboundSetCreativeModeSlotPacket(slot, item)));
+}
+
+void MultiPlayerGameMode::handleCreativeModeItemDrop(not_null_ptr<ItemInstance> item)
+{
+    if (!isCreative() || !mConnection || !item || item->isEmpty())
+        return;
+    mConnection->send(boost::shared_ptr<Packet>(
+        new ServerboundSetCreativeModeSlotPacket(-1, item)));
+}
 bool MultiPlayerGameMode::hasExperience() { return false; }
 bool MultiPlayerGameMode::hasFarPickRange() { return isCreative(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleCraftItem(int, int, boost::shared_ptr<Player>) { return boost::shared_ptr<ItemInstance>(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleStackedCraftItem(std::vector<std::pair<int, int> >&, int, boost::shared_ptr<Player>) { return boost::shared_ptr<ItemInstance>(); }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleCustomCraftItem(std::vector<int>&, boost::shared_ptr<Player>) { return boost::shared_ptr<ItemInstance>(); }
-void MultiPlayerGameMode::handleDebugOptions(unsigned int, boost::shared_ptr<Player>) {}
+void MultiPlayerGameMode::handleDebugOptions(unsigned int option, boost::shared_ptr<Player> player)
+{
+    if (!player || !mConnection)
+        return;
+    player->mDebugOptions = option;
+    mConnection->send(boost::shared_ptr<Packet>(new DebugOptionsPacket(option)));
+}
 const MiniGameDef* MultiPlayerGameMode::GetMiniGame() { return mMinecraft == 0 ? 0 : mMinecraft->GetMiniGame(); }
 Level* MultiPlayerGameMode::GetLevel()
 {
@@ -250,7 +299,14 @@ std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteFrom(std::
 }
 
 bool MultiPlayerGameMode::IsTeamInvite(std::wstring playerName) { return FindTeamInviteFrom(playerName) != mTeamInvites.end(); }
-void MultiPlayerGameMode::SendTeamInvite(std::wstring) {}
+void MultiPlayerGameMode::SendTeamInvite(std::wstring playerName)
+{
+    if (isSpectator() || !mConnection)
+        return;
+    GameModePacket::SendTeamInviteData data;
+    data.playerName = playerName;
+    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(8), data));
+}
 std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteTo(std::wstring playerName)
 {
     std::vector<TeamInvite*>::iterator it = mTeamInvites.begin();
@@ -260,6 +316,25 @@ std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteTo(std::ws
 }
 bool MultiPlayerGameMode::CanSendInvite(std::wstring, PlayerUID) { return !isSpectator(); }
 bool MultiPlayerGameMode::CanLeaveTeam(PlayerUID) { return !isSpectator(); }
-void MultiPlayerGameMode::AcceptTeamInvite(std::wstring) {}
-void MultiPlayerGameMode::LeaveTeam() {}
+void MultiPlayerGameMode::AcceptTeamInvite(std::wstring playerName)
+{
+    if (!mConnection)
+        return;
+    std::vector<TeamInvite*>::iterator it = FindTeamInviteFrom(playerName);
+    if (it == mTeamInvites.end() || *it == NULL)
+        return;
+    GameModePacket::TeamIDData data((*it)->m_uTeamID);
+    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0xB), data));
+}
+
+void MultiPlayerGameMode::LeaveTeam()
+{
+    if (isSpectator() || !mConnection)
+        return;
+    boost::shared_ptr<Player> player = GetLocalPlayer();
+    if (!player || !player->getTeam())
+        return;
+    GameModePacket::EmptyData data;
+    mConnection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x10), data));
+}
 bool MultiPlayerGameMode::RecordLastCheckpoint(int, int, bool, bool, bool) { return false; }

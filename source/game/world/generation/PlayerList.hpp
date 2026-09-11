@@ -124,7 +124,7 @@ private:
     std::vector<unsigned char> mPlayersToKick;
     std::vector<unsigned char> mListenersToClose;
     bool mAllowCheatsForAllPlayers;
-    bool mOverrideGameMode;
+    GameType* mOverrideGameMode;
     int mUnknownState;
     boost::shared_ptr<LevelStorage> mLevelStorage;
 };

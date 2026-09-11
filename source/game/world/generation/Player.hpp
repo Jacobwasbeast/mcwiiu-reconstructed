@@ -138,6 +138,13 @@ struct Player : LivingEntity {
     double mChasingPosY;
     double mChasingPosZ;
     std::wstring mDisplayName;
+    int16_t mField0x6a4;
+    int16_t mField0x6a6;
+    int32_t mField0x6ac;
+    int32_t mField0x6b0;
+    int32_t mField0x6b4;
+    int32_t mField0x6b8;
+    int32_t mField0x6bc;
     uint8_t mField0x6c0;
     BlockPos* mField0x6c4;
     int32_t mField0x6c8;
@@ -215,6 +222,8 @@ struct Player : LivingEntity {
     uint8_t mField0x85d;
     uint8_t mField0x85e;
     int32_t mTimerAchievementTicks[2];
+    int32_t mField0x868;
+    int32_t mField0x86c;
 
 
     Player(Level* , const std::wstring& );

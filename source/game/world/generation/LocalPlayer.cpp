@@ -17,8 +17,10 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/CTelemetryManager.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -37,6 +39,16 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerboundPlayerCommandPacket.hpp"
+#include "game/network/ServerboundClientCommandPacket.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
+#include "game/ui/AnvilMenu.hpp"
+#include "game/ui/BrewingStandMenu.hpp"
+#include "game/ui/EnchantmentMenu.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -391,6 +403,57 @@ void LocalPlayer::SetWaitingForScoreboard(bool waiting)
 
 void LocalPlayer::updateRichPresence()
 {
+    if (mUserIndex == -1)
+        return;
+
+    not_null_ptr<ItemInstance> selected = mInventory->getSelected();
+    if (!selected->isEmpty())
+    {
+        Item* item = selected->getItem();
+        if (item != NULL)
+        {
+            if (Item::getId(item) == 346)
+            {
+                g_pApp->SetRichPresenceContext(mUserIndex, 4);
+                return;
+            }
+            if (Item::getId(item) == 358)
+            {
+                g_pApp->SetRichPresenceContext(mUserIndex, 9);
+                return;
+            }
+        }
+    }
+
+    if (mContainerMenu != NULL && mContainerMenu != mInventoryMenu)
+    {
+        if (dynamic_cast<EnchantmentMenu*>(mContainerMenu) != NULL)
+        {
+            g_pApp->SetRichPresenceContext(mUserIndex, 2);
+            return;
+        }
+        if (dynamic_cast<BrewingStandMenu*>(mContainerMenu) != NULL)
+        {
+            g_pApp->SetRichPresenceContext(mUserIndex, 3);
+            return;
+        }
+        if (dynamic_cast<AnvilMenu*>(mContainerMenu) != NULL)
+        {
+            g_pApp->SetRichPresenceContext(mUserIndex, 1);
+            return;
+        }
+    }
+
+    if (mDimension == -1)
+    {
+        g_pApp->SetRichPresenceContext(mUserIndex, 7);
+        return;
+    }
+
+    int context = 0;
+    if (mMinecraft != NULL && mMinecraft->isTutorial())
+        context = 8;
+    g_pApp->SetRichPresenceContext(mUserIndex, context);
 }
 
 void LocalPlayer::ResetPercentageTraversed()
@@ -420,6 +483,79 @@ int LocalPlayer::getIndicatorSegment(float value, float maxValue)
 
 void LocalPlayer::updateProximityIndicator()
 {
+    if (gApp.GetFirstMiniGameType() != static_cast<EMiniGameId>(3))
+        return;
+
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options == NULL)
+        return;
+
+    LevelRuleset* rules = options->getRequiredGameRules();
+    if (rules == NULL)
+        return;
+
+    for (int segment = 0; segment < 12; ++segment)
+        mReserved0x9ac[segment] = 0;
+
+    if (mBoundingBox == NULL)
+        return;
+
+    Vec3* position = getPos(1.0f);
+    AABB* probe = mBoundingBox->grow(2.0);
+    boost::shared_ptr<Entity> self = boost::static_pointer_cast<Entity>(shared_from_this());
+    std::vector<AABB*>* collisions =
+        mLevel->getCollisionAABBs(self, probe, true, false, false);
+    if (collisions != NULL && !collisions->empty() && position != NULL)
+    {
+        AABB* closestBox = NULL;
+        double closestDistance = 0.0;
+        for (size_t index = 0; index < collisions->size(); ++index)
+        {
+            AABB* box = (*collisions)[index];
+            if (box == NULL)
+                continue;
+            const double distance = position->distanceTo(static_cast<AABB*>(box));
+            if (closestBox == NULL || distance <= closestDistance)
+            {
+                closestBox = box;
+                closestDistance = distance;
+            }
+        }
+        if (closestBox != NULL && position != NULL)
+        {
+            Vec3* center = closestBox->getCenter();
+            Vec3* direction = Vec3::newTemp(position->x - center->x, 0.0,
+                                            position->z - center->z);
+            direction->normalize();
+            const int segment = getIndicatorSegment(static_cast<float>(direction->x),
+                                                    static_cast<float>(direction->z));
+            if (segment >= 0 && segment < 12)
+                mReserved0x9ac[segment] = 1;
+        }
+    }
+
+    if (CGameNetworkManager::sInstance.GetPlayerCount() > 1 && position != NULL)
+    {
+        std::vector<boost::shared_ptr<Player> >* nearby =
+            mLevel->getNearbyPlayers(self, 3.0);
+        if (nearby != NULL)
+        {
+            for (size_t index = 0; index < nearby->size(); ++index)
+            {
+                boost::shared_ptr<Player> player = (*nearby)[index];
+                if (!player)
+                    continue;
+                Vec3* direction = Vec3::newTemp(position->x - player->mX, 0.0,
+                                                position->z - player->mZ);
+                direction->normalize();
+                const int segment = getIndicatorSegment(static_cast<float>(direction->x),
+                                                        static_cast<float>(direction->z));
+                if (segment >= 0 && segment < 12)
+                    mReserved0x9ac[segment] = 1;
+            }
+            delete nearby;
+        }
+    }
 }
 
 bool LocalPlayer::isControlledCamera()
@@ -483,6 +619,11 @@ bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
 
 void LocalPlayer::respawn()
 {
+    if (mPacketListener == NULL)
+        return;
+    boost::shared_ptr<Packet> packet(new ServerboundClientCommandPacket(
+        ServerboundClientCommandPacket::PERFORM_RESPAWN));
+    mPacketListener->send(packet);
 }
 
 void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
@@ -837,6 +978,13 @@ double LocalPlayer::getUnderwaterVisionClarity()
 
 void LocalPlayer::DoAutoAttackOnTouch(boost::shared_ptr<Entity> entity)
 {
+    if (mMinecraft == NULL || mUserIndex < 0 || !entity)
+        return;
+    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
+    if (gameMode == NULL)
+        return;
+    boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
+    gameMode->attack(self, entity);
 }
 
 double LocalPlayer::GetPercentageTraversed() const
