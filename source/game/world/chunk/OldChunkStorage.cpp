@@ -26,7 +26,7 @@
 #include "game/world/chunk/LevelChunk.hpp"
 
 extern unsigned int TlsAlloc();
-extern void TlsSetValue(unsigned int key, void* value);
+extern int TlsSetValue(unsigned int key, void* value);
 extern void* TlsGetValue(unsigned int key);
 
 static unsigned int gOldChunkStorageTlsKey = 0;

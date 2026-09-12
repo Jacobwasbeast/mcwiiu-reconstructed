@@ -25,7 +25,7 @@
 #include <cstring>
 
 unsigned int TlsAlloc();
-bool TlsSetValue(unsigned int, void*);
+int TlsSetValue(unsigned int, void*);
 void* TlsGetValue(unsigned int);
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
