@@ -15,7 +15,11 @@ class DataOutputStream;
 class PacketListener;
 class TeamInvite;
 
-enum EGameModeState
+// Enumerator shortfall: only one value is declared, so the range is [0,1],
+// but the code casts 2. The remaining enumerators still need recovering from
+// evidence; the underlying type makes the existing casts well-formed without
+// inventing names.
+enum EGameModeState : int
 {
     EGameModeStateDefault = 0
 };

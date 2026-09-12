@@ -4,7 +4,7 @@
 #include <string>
 
 class IQNetPlayer;
-class PlayerUID;
+struct PlayerUID;
 class Socket;
 
 class INetworkPlayer

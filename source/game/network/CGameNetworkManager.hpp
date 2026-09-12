@@ -13,7 +13,7 @@
 class ClientPacketListener;
 class ClientboundPreLoginPacket;
 class C4JEventImpl;
-class FriendSessionInfo;
+struct FriendSessionInfo;
 class GameSessionData;
 class Minecraft;
 

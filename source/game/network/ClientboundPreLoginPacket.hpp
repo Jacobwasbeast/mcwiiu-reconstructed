@@ -14,7 +14,7 @@ class DataInputStream;
 class DataOutputStream;
 class FakeClientPacketListener;
 class PacketListener;
-class PlayerUID;
+struct PlayerUID;
 
 class ClientboundPreLoginPacket : public Packet, public boost::enable_shared_from_this<ClientboundPreLoginPacket>
 {
