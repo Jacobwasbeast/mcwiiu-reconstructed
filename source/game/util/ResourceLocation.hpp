@@ -8,7 +8,9 @@
 
 #include "game/world/biome/arrayWithLength.hpp"
 
-enum _TEXTURE_NAME {};
+enum _TEXTURE_NAME : int
+{
+};
 
 class ResourceLocation {
 public:

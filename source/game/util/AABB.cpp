@@ -9,7 +9,7 @@
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
-void TlsSetValue(unsigned int index, void* value);
+int TlsSetValue(unsigned int index, void* value);
 
 static const int TEMP_POOL_SIZE = 1024;
 
