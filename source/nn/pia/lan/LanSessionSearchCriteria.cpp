@@ -25,7 +25,7 @@ LanSessionSearchCriteria::LanSessionSearchCriteria()
         m_attributeFlags[index] = 0;
     }
 
-    m_field04 = 100;
+    m_resultRangeSize = 100;
 }
 
 LanSessionSearchCriteria::~LanSessionSearchCriteria()
