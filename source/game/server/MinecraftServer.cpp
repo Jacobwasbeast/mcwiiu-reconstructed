@@ -1,13 +1,26 @@
 #include "game/server/MinecraftServer.hpp"
 
+#include <cstdlib>
 #include <ctime>
 #include <algorithm>
 
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/EServerSetting.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/GameRuleManager.hpp"
+#include "game/core/GameSettings.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Settings.hpp"
+#include "game/core/Socket.hpp"
 #include "game/core/System.hpp"
+#include "game/client/render/ProgressRenderer.hpp"
+#include "game/entity/mob/EntityTracker.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/ClientboundSetTimePacket.hpp"
+#include "game/network/Packet.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/network/ServerConnection.hpp"
@@ -15,8 +28,15 @@
 #include "game/network/ClientboundGameEventPacket.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
+#include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRules.hpp"
+#include "game/world/LevelType.hpp"
+#include "game/world/biome/BiomeSource.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "vendor/_NetworkGameInitData.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
 #include "game/data/LevelStorage.hpp"
 #include "game/data/ElementStorage.hpp"
@@ -25,6 +45,11 @@
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/ShutdownManager.hpp"
+#include "game/core/CTelemetryManager.hpp"
+#include "game/client/render/GameRenderer.hpp"
+#include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
+#include "game/data/SparseLightStorage.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -34,10 +59,19 @@
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 
+extern CConsoleMinecraftApp gApp;
+
 extern void Sleep(unsigned int milliseconds);
 extern void instructionSynchronize();
+extern void PIXAddNamedCounter(float colour, const char* name, ...);
+extern const DimensionType* DAT_104dcb14;
 
 MinecraftServer* gMinecraftServer = 0;
+
+static bool sHaltForceFlag = false;
+static bool sHaltRequested = false;
+extern CStorage* gStorage;
+extern CTelemetryManager gTelemetryManager;
 
 MinecraftServer::MinecraftServer()
     : mConnection(0), mSettings(0), mPlayers(0), mLoginComparisonValue(0), tickCount(0), running(true), levelLoaded(false), shuttingDown(false), saving(false), networkTick(0), progressNameLength(0), progressNameCapacity(0), progressValue(0), commandDispatcher(0), consoleInputIndex(0), consoleInputCount(0), animals(true), npcsEnabled(true), pvpAllowed(true), flightAllowed(false), serverFlags(0), statusMessageLength(0), statusMessageCapacity(0), maxBuildHeight(256), difficulty(0), levelType(0), defaultGameType(GameType::SURVIVAL), gameModeId(0), playerIdleTimeout(0), progressRenderer(0), levelStorage(0), postProcessState(0), postProcessEvent(0), serverPaused(false), forceGameType(false), suspending(false), stopping(false), lastServerTime(0), postProcessing(false), suspended(false), shutdownFlags(0), mMasterGameMode(0)
@@ -216,7 +250,124 @@ void MinecraftServer::endProgress()
     progressValue = 0;
 }
 bool MinecraftServer::loadLevel(LevelStorageSource*, const std::wstring&, long long, LevelType*, _NetworkGameInitData*) { return true; }
-bool MinecraftServer::initServer(long long, _NetworkGameInitData*, unsigned int, bool) { running = true; return true; }
+
+bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData, unsigned int, bool dedicated)
+{
+    mSettings = new Settings();
+    setFlightAllowed(true);
+
+    mConnection = new ServerConnection(this);
+    Socket::Initialise(mConnection);
+
+    while (LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions())
+    {
+        if (generationOptions->hasLoadedData())
+            break;
+        Sleep(1);
+    }
+
+    if (LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions())
+        generationOptions->ready();
+
+    LevelRuleset* gameRuleDefinitions = gApp.getGameRuleDefinitions();
+    LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions();
+    if (gameRuleDefinitions == 0 || initData == 0 || initData->m_value5 == 0
+        || generationOptions == 0 || !generationOptions->isGameModeLobby())
+    {
+        mMasterGameMode = 0;
+        mPlayers = new PlayerList(this, 0);
+        setPlayers(mPlayers);
+        setAnimals(mSettings->getBoolean(eServerSetting_SpawnAnimals, true));
+        setNpcsEnabled(mSettings->getBoolean(eServerSetting_SpawnNpcs, true));
+        setPvpAllowed(mSettings->getBoolean(
+            eServerSetting_Pvp,
+            gApp.GetGameHostOption(static_cast<eGameHostOption>(0xb)) != 0));
+    }
+    else
+    {
+        mMasterGameMode = new MasterGameMode(&initData->m_ruleGroups);
+        mMasterGameMode->SetupServerSettings(mSettings);
+        mPlayers = new PlayerList(this, mMasterGameMode);
+        setPlayers(mPlayers);
+        setAnimals(mSettings->getBoolean(eServerSetting_SpawnAnimals, true));
+        setNpcsEnabled(mSettings->getBoolean(eServerSetting_SpawnNpcs, true));
+        setPvpAllowed(mSettings->getBoolean(
+            eServerSetting_Pvp,
+            gApp.GetGameHostOption(static_cast<eGameHostOption>(0xb)) != 0));
+    }
+
+    std::wstring levelName = mSettings->getString(eServerSetting_LevelName, L"world");
+
+    std::wstring levelTypeDefault = L"flat";
+    if ((generationOptions == 0 || !generationOptions->getuseFlatWorld())
+        && gApp.GetGameHostOption(static_cast<eGameHostOption>(7)) == 0)
+    {
+        levelTypeDefault = L"default";
+    }
+    std::wstring levelTypeName = mSettings->getString(eServerSetting_LevelType, levelTypeDefault);
+
+    LevelType* resolvedLevelType = LevelType::getLevelType(levelTypeName);
+    LevelType* seedLevelType = 0;
+    if (initData != 0)
+        seedLevelType = *reinterpret_cast<LevelType**>(reinterpret_cast<char*>(initData) + 0x50);
+    if (seedLevelType == 0)
+    {
+        seedLevelType = resolvedLevelType;
+        if (seedLevelType == 0)
+            seedLevelType = LevelType::DEFAULT;
+    }
+
+    ProgressRenderer* progressRenderer = Minecraft::GetInstance()->mProgressRenderer;
+    if (progressRenderer != 0)
+        progressRenderer->progressStage(static_cast<int>(0xf990f518u));
+
+    if (dedicated)
+        BiomeSource::findSeed(seedLevelType);
+
+    int buildHeight = mSettings->getInt(eServerSetting_MaxBuildHeight, 0x100);
+    setMaxBuildHeight(buildHeight);
+    buildHeight = getMaxBuildHeight() + 8;
+    setMaxBuildHeight(((buildHeight >> 4) + ((buildHeight < 0 && (buildHeight & 0xf) != 0) ? 1 : 0)) * 0x10);
+    setMaxBuildHeight(Mth::clamp(getMaxBuildHeight(), 0x40, 0x100));
+
+    if (*(reinterpret_cast<char*>(initData) + 0x54) != 0)
+    {
+        typedef int (*FnE4)(void*);
+        typedef void (*FnC4)(void*, int*);
+
+        int storageProbe = 0;
+        void* storageVTable = *reinterpret_cast<void**>(gStorage);
+        reinterpret_cast<FnC4>(*reinterpret_cast<void**>(reinterpret_cast<char*>(storageVTable) + 0xc4))(gStorage, &storageProbe);
+
+        void* profileVTable = *reinterpret_cast<void**>(gProfile);
+        int profileFirst = reinterpret_cast<FnE4>(*reinterpret_cast<void**>(reinterpret_cast<char*>(profileVTable) + 0xe4))(gProfile);
+        int profileSlot = reinterpret_cast<FnE4>(*reinterpret_cast<void**>(reinterpret_cast<char*>(profileVTable) + 0xe4))(gProfile);
+
+        unsigned int difficultySetting = GameSettings::GetGameSettings(profileSlot, static_cast<eGameSetting>(3));
+        unsigned int localPlayerCount = gApp.GetLocalPlayerCount();
+        int onlinePlayerCount = CGameNetworkManager::sInstance.GetOnlinePlayerCount();
+
+        gTelemetryManager.RecordLevelResume(profileFirst, static_cast<ESen_FriendOrMatch>(1),
+            static_cast<ESen_CompeteOrCoop>(3), difficultySetting, localPlayerCount, onlinePlayerCount, 0);
+    }
+
+    levelType = resolvedLevelType;
+    levelLoaded = loadLevel(0, levelName, seed, levelType, initData);
+
+    if (initData != 0)
+    {
+        void** buffer = *reinterpret_cast<void***>(reinterpret_cast<char*>(initData) + 8);
+        if (buffer != 0)
+        {
+            std::free(*buffer);
+            buffer[1] = 0;
+            *buffer = 0;
+        }
+    }
+
+    CGameNetworkManager::sInstance.ServerReady();
+    return levelLoaded;
+}
 
 void MinecraftServer::saveAllChunks()
 {
@@ -226,7 +377,86 @@ void MinecraftServer::saveAllChunks()
             mLevels.data[i]->saveToDisc(0, true);
 }
 
-void MinecraftServer::stopServer(bool) { running = false; serverPaused = false; }
+void MinecraftServer::stopServer(bool save)
+{
+    Minecraft::GetInstance()->mGameRenderer->DisableUpdateThread(0);
+    mConnection->stop();
+
+    if (!sHaltForceFlag)
+    {
+        void* profileVTable = *reinterpret_cast<void**>(gProfile);
+        typedef int (*Fn0xE4)(void*);
+        int call1Result = reinterpret_cast<Fn0xE4>(*reinterpret_cast<void**>(reinterpret_cast<char*>(profileVTable) + 0xe4))(gProfile);
+        typedef int (*Fn0x24)(void*, int);
+        int call2Result = reinterpret_cast<Fn0x24>(*reinterpret_cast<void**>(reinterpret_cast<char*>(profileVTable) + 0x24))(gProfile, call1Result);
+
+        if (call2Result != 0 && postProcessing)
+        {
+            typedef int (*Fn0x11C)(void*);
+            int call3Result = reinterpret_cast<Fn0x11C>(*reinterpret_cast<void**>(reinterpret_cast<char*>(*reinterpret_cast<void**>(gProfile)) + 0x11c))(gProfile);
+            if (call3Result != 0)
+            {
+                void* storageVTable = *reinterpret_cast<void**>(gStorage);
+                typedef int (*Fn0x64)(void*);
+                int call4Result = reinterpret_cast<Fn0x64>(*reinterpret_cast<void**>(reinterpret_cast<char*>(storageVTable) + 100))(gStorage);
+                if (call4Result == 0 && save)
+                {
+                    if (mPlayers != 0)
+                    {
+                        mPlayers->saveAll(reinterpret_cast<ProgressListener*>(Minecraft::GetInstance()->mProgressRenderer), true);
+                        mPlayers->removeAll();
+                    }
+                    saveAllChunks();
+                    saveGameRules();
+                    g_GameRuleManager.unloadCurrentGameRules();
+                    ServerLevel* level0 = mLevels.data[0];
+                    if (level0 != 0)
+                        level0->saveToDisc(reinterpret_cast<ProgressListener*>(Minecraft::GetInstance()->mProgressRenderer), false);
+                }
+            }
+        }
+    }
+
+    sHaltForceFlag = false;
+    sHaltRequested = false;
+
+    if (mMasterGameMode != 0)
+    {
+        void* secondary = *reinterpret_cast<void**>(reinterpret_cast<char*>(mMasterGameMode) + 0x124);
+        typedef void (*FnSecondary0x24)(MasterGameMode*);
+        reinterpret_cast<FnSecondary0x24>(*reinterpret_cast<void**>(reinterpret_cast<char*>(secondary) + 0x24))(mMasterGameMode);
+        if (mMasterGameMode != 0)
+        {
+            secondary = *reinterpret_cast<void**>(reinterpret_cast<char*>(mMasterGameMode) + 0x124);
+            typedef void (*FnSecondary0xC)(void*, int);
+            reinterpret_cast<FnSecondary0xC>(*reinterpret_cast<void**>(reinterpret_cast<char*>(secondary) + 0xc))(mMasterGameMode, 3);
+        }
+        mMasterGameMode = 0;
+    }
+
+    delete mConnection;
+    mConnection = 0;
+    delete mPlayers;
+    unsigned int levelCount = mLevels.length;
+    mPlayers = 0;
+    for (unsigned int i = 0; i < levelCount; ++i)
+    {
+        if (mLevels.data[i] != 0)
+        {
+            delete mLevels.data[i];
+            mLevels.data[i] = 0;
+        }
+    }
+
+    delete mSettings;
+    mSettings = 0;
+
+    SparseLightStorage::tick();
+    SparseLightStorage::tick();
+    SparseLightStorage::tick();
+
+    CGameNetworkManager::sInstance.ServerStopped();
+}
 PlayerList* MinecraftServer::getPlayers() { return mPlayers; }
 void MinecraftServer::setDefaultGameMode(const GameType* value) { defaultGameType = value; }
 const GameType* MinecraftServer::getDefaultGameType() { return defaultGameType; }
@@ -258,7 +488,77 @@ void MinecraftServer::getCurrentTimeMillis() { System::processTimeInMilliSecs();
 int MinecraftServer::getSpawnRadius(ServerLevel* level) { return level == 0 ? 10 : level->getGameRules()->getInt(15); }
 void MinecraftServer::halt() { running = false; }
 void MinecraftServer::fjSetServerPaused(bool value) { serverPaused = value; }
-void MinecraftServer::tick() { if (running) chunkPacketManagement_PreTick(); }
+void MinecraftServer::tick()
+{
+    AABB::resetPool();
+    Vec3::resetPool();
+
+    ++tickCount;
+
+    const float pixColor = 3.0f;
+    for (unsigned int levelIndex = 0; levelIndex < mLevels.length; ++levelIndex)
+    {
+        ServerLevel* level = mLevels.data[levelIndex];
+        if (level == 0)
+            continue;
+
+        if (tickCount % 20 == 0)
+        {
+            GameRules* gameRules = level->getGameRules();
+            if (gameRules->getBoolean(8) || level->ShouldForceTimeUpdate())
+            {
+                const long long gameTime = level->getGameTime();
+                const long long dayTime = level->getDayTime();
+                const bool daylightCycle = gameRules->getBoolean(8);
+                boost::shared_ptr<Packet> packet(new ClientboundSetTimePacket(
+                    gameTime, dayTime, daylightCycle));
+                mPlayers->broadcastAll(
+                    packet,
+                    level->mDimension->getType()->getId());
+            }
+        }
+
+        PIXBeginNamedEvent(pixColor, "Level tick %d", levelIndex);
+        level->tick();
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(pixColor, "Entity tick %d", levelIndex);
+        if (mPlayers->getPlayerCount(level) > 0 || level->hasEntitiesToRemove())
+        {
+            unsigned long long entityTickStart = System::processTimeInMilliSecs();
+            level->tickEntities();
+            unsigned long long entityTickEnd = System::processTimeInMilliSecs();
+            if (level->mDimension->getType() == DAT_104dcb14)
+                PIXAddNamedCounter(static_cast<float>(entityTickEnd - entityTickStart), "Tick entities");
+        }
+        PIXEndNamedEvent();
+
+        PIXBeginNamedEvent(pixColor, "Entity tracker tick");
+        EntityTracker* tracker = level->getTracker();
+        if (tracker != 0)
+            tracker->tick(boost::shared_ptr<ServerPlayer>());
+        PIXEndNamedEvent();
+    }
+
+    Entity::tickExtraWandering();
+
+    PIXBeginNamedEvent(pixColor, "Connection tick");
+    if (mConnection != 0)
+        mConnection->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(pixColor, "Players tick");
+    if (mPlayers != 0)
+        mPlayers->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(pixColor, "Game Mode tick");
+    if (mMasterGameMode != 0)
+        mMasterGameMode->Tick();
+    PIXEndNamedEvent();
+
+    instructionSynchronize();
+}
 void MinecraftServer::chunkPacketManagement_PreTick()
 {
     if (mConnection == 0)

@@ -140,8 +140,8 @@ struct ServerPlayer : Player, net_minecraft_world_inventory::ContainerListener {
     uint64_t die(DamageSource* parameterOne);   
     int32_t hurt(uint64_t parameterOne, float parameterTwo);   
     void isPvpAllowed();
-    uint32_t canHarmPlayer(boost::shared_ptr<Player>* parameterOne);   
-    int32_t canHarmPlayer(std::wstring* parameterOne);   
+    uint32_t canHarmPlayer(boost::shared_ptr<Player> parameterOne);
+    int32_t canHarmPlayer(std::wstring parameterOne);
     virtual void addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo);   
     uint64_t changeDimension(uint32_t parameterOne, int32_t parameterTwo);   
     uint32_t broadcastToPlayer(boost::shared_ptr<ServerPlayer>* parameterOne);   
@@ -199,7 +199,7 @@ struct ServerPlayer : Player, net_minecraft_world_inventory::ContainerListener {
     void SetCamera(boost::shared_ptr<Entity> parameterOne);   
     const GameType* GetGameType();
     ServerPlayerGameMode* GetGameMode();   
-    uint64_t OnEquipArmor(not_null_ptr_ItemInstance* parameterOne);   
+    void OnEquipArmor(not_null_ptr<ItemInstance> item);
     int32_t checkTotemDeathProtection(DamageSource* parameterOne);   
     uint64_t GetType();   
     void getStats();

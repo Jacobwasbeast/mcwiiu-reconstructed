@@ -72,7 +72,6 @@ public:
  MinecraftServer* server;
  EntityTracker* tracker;
  PlayerChunkMap* chunkMap;
- void* chunkSource;
  int32_t emptyTime;
  OSFastMutex tickNextTickMutex;
  std::set<TickNextTickData, TickNextTickDataKeyCompare> tickNextTickList;
@@ -98,7 +97,7 @@ public:
  ~ServerLevel(); 
  bool AllPlayersAreSleeping(); 
  EntityTracker* getTracker(); 
- void getChunkSource();
+ ChunkSource* getChunkSource();
  std::vector<boost::shared_ptr<BlockEntity> >* getBlockEntitiesInRegion(int32_t first, int32_t second, int32_t third, int32_t fourth, int32_t fifth, int32_t sixth); 
  PlayerChunkMap* getChunkMap(); 
  BlockPos* getDimensionSpecificSpawn();

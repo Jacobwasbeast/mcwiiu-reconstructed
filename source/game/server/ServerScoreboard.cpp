@@ -2,10 +2,12 @@
 
 #include "game/core/GameStats.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/network/ClientboundSetPlayerTeamPacket.hpp"
 #include "game/network/ScoreboardPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/generation/PlayerList.hpp"
 
 ServerScoreboard::ServerScoreboard(MinecraftServer* server)
     : Scoreboard(), mServer(server), mPlayerStats()
@@ -130,6 +132,8 @@ void ServerScoreboard::addPlayerToTeam(PlayerUID uid, PlayerTeam* pTeam)
 void ServerScoreboard::onTeamAdded(PlayerTeam* pTeam)
 {
     Scoreboard::onTeamAdded(pTeam);
+    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 0));
+    mServer->getPlayers()->broadcastAll(packet);
 }
 
 void ServerScoreboard::onTeamChanged(PlayerTeam* pTeam)
@@ -140,11 +144,14 @@ void ServerScoreboard::onTeamChanged(PlayerTeam* pTeam)
 void ServerScoreboard::onTeamRemoved(PlayerTeam* pTeam)
 {
     Scoreboard::onTeamRemoved(pTeam);
+    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 1));
+    mServer->getPlayers()->broadcastAll(packet);
 }
 
 void ServerScoreboard::syncTeamChanges(PlayerTeam* pTeam)
 {
-    Scoreboard::syncTeamChanges(pTeam);
+    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 2));
+    mServer->getPlayers()->broadcastAll(packet);
 }
 
 int ServerScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)

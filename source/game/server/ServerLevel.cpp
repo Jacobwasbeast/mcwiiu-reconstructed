@@ -40,7 +40,17 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/server/DerivedServerLevel.hpp"
 #include "game/data/SavedDataStorage.hpp"
+#include "game/core/LootTables.hpp"
 #include "game/network/ClientboundLevelParticlesPacket.hpp"
+#include "game/network/ClientboundEntityEventPacket.hpp"
+#include "game/world/generation/Villages.hpp"
+#include "game/world/generation/BonusChestFeature.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/entity/mob/EntityTracker.hpp"
+
+#include <cstring>
+#include <typeinfo>
 
 extern void instructionSynchronize();
 
@@ -97,7 +107,7 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
 }
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), chunkSource(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0)
+    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0)
 {
     InitializeCriticalSection(&tickNextTickMutex);
 }
@@ -116,14 +126,28 @@ EntityTracker* ServerLevel::getTracker()
     return tracker;
 }
 
-void ServerLevel::getChunkSource()
+ChunkSource* ServerLevel::getChunkSource()
 {
+    return Level::getChunkSource();
 }
 
 std::vector<boost::shared_ptr<BlockEntity> >* ServerLevel::getBlockEntitiesInRegion(int32_t first, int32_t second, int32_t third, int32_t fourth, int32_t fifth, int32_t sixth)
 {
-    (void)first; (void)second; (void)third; (void)fourth; (void)fifth; (void)sixth;
-    return 0;
+    std::vector<boost::shared_ptr<BlockEntity> >* result = new std::vector<boost::shared_ptr<BlockEntity> >();
+    for (std::vector<boost::shared_ptr<BlockEntity> >::iterator it = mBlockEntities.begin();
+         it != mBlockEntities.end(); ++it)
+    {
+        boost::shared_ptr<BlockEntity> entity = *it;
+        if (!entity)
+            continue;
+        BlockPos pos = entity->getBlockPos();
+        if (first <= pos.x && second <= pos.y && third <= pos.z
+            && pos.x < fourth && pos.y < fifth && pos.z < sixth)
+        {
+            result->push_back(entity);
+        }
+    }
+    return result;
 }
 
 PlayerChunkMap* ServerLevel::getChunkMap()
@@ -248,7 +272,24 @@ ChunkSource* ServerLevel::createChunkSource()
 
 void ServerLevel::postConstruct()
 {
-    Level::postConstruct();
+    setSavedDataStorage(new SavedDataStorage(mLevelStorage.get()));
+
+    std::wstring id = Villages::getFileId(mDimension);
+    SavedDataStorage* storage = getSavedDataStorage();
+    boost::shared_ptr<SavedData> saved = storage->get(typeid(Villages), id);
+    boost::shared_ptr<Villages> villages = boost::static_pointer_cast<Villages>(saved);
+    if (!villages)
+    {
+        villages.reset(new Villages(this));
+        storage->set(id, villages);
+    }
+    else
+    {
+        villages->setLevel(this);
+    }
+    mVillages = villages;
+    serverScoreboard = new ServerScoreboard(server);
+    mLootTables = new LootTables();
 }
 
 uint32_t ServerLevel::allPlayersAreSleeping()
@@ -287,8 +328,9 @@ uint64_t ServerLevel::awakenAllPlayers()
 void ServerLevel::save(bool first, ProgressListener* second, bool third)
 {
     saving = true;
-    if (chunkSource)
-        static_cast<ServerChunkCache*>(chunkSource)->save(first, second);
+    ChunkSource* source = getChunkSource();
+    if (source)
+        source->save(first, second);
     saving = false;
     (void)third;
 }
@@ -364,17 +406,42 @@ void ServerLevel::updateSleepingPlayerList()
 
 void ServerLevel::validateSpawn()
 {
-    Level::validateSpawn();
+    if (mLevelData->getYSpawn() < 1)
+        mLevelData->setYSpawn(getSeaLevel() + 1);
+
+    int spawnX = mLevelData->getXSpawn();
+    int spawnZ = mLevelData->getZSpawn();
+    const BlockState* state = getTopBlockState(BlockPos(spawnX, 0, spawnZ));
+    Block* block = state != NULL ? state->getBlock() : NULL;
+    if (block == NULL)
+    {
+        int attempts = 0;
+        do
+        {
+            spawnX += mRandom->nextInt(8) - mRandom->nextInt(8);
+            spawnZ += mRandom->nextInt(8) - mRandom->nextInt(8);
+            ++attempts;
+            if (attempts == 10000)
+                break;
+            state = getTopBlockState(BlockPos(spawnX, 0, spawnZ));
+            block = state != NULL ? state->getBlock() : NULL;
+        }
+        while (block == NULL);
+    }
+
+    mLevelData->setXSpawn(spawnX);
+    mLevelData->setZSpawn(spawnZ);
 }
 
 bool ServerLevel::hasChunk(int32_t first, int32_t second, bool third)
 {
-    return chunkSource != 0 && static_cast<ServerChunkCache*>(chunkSource)->hasChunk(first, second);
+    ChunkSource* source = getChunkSource();
+    return source != 0 && source->hasChunk(first, second);
 }
 
 LevelChunk* ServerLevel::getChunkIfHasChunk(int32_t first, int32_t second, bool third)
 {
-    return Level::getChunkSource()->getChunkIfHasChunk(first, second);
+    return getChunkSource()->getChunkIfHasChunk(first, second);
 }
 
 void ServerLevel::findLightingTargetAround(BlockPos* first)
@@ -758,12 +825,54 @@ void ServerLevel::initializeLevel(LevelSettings* first)
 
 void ServerLevel::setupDebugLevel()
 {
-    validateSpawn();
+    mLevelData->setGenerateMapFeatures(false);
+    mLevelData->setAllowCommands(true);
+    mLevelData->setRaining(false);
+    mLevelData->setThundering(false);
+    mLevelData->setClearWeatherTime(1000000000);
+    mLevelData->setDayTime(6000);
+    mLevelData->setGameType(GameType::SPECTATOR);
+    mLevelData->setHardcore(false);
+    mLevelData->setDifficulty(Difficulty::PEACEFUL);
+    getGameRules()->set(8, false);
 }
 
 uint64_t ServerLevel::generateBonusItemsNearSpawn()
 {
-    return 1;
+    int spawnX = mLevelData->getXSpawn();
+    int spawnZ = mLevelData->getZSpawn();
+    for (int dx = -20; dx <= 20; ++dx)
+    {
+        for (int dz = -20; dz <= 20; ++dz)
+        {
+            BlockPos surface = getTopSolidBlockPos(BlockPos(spawnX + dx, 0, spawnZ + dz));
+            BlockPos below = surface.below();
+            if (getBlockId(below.x, below.y, below.z) != 0)
+                continue;
+
+            boost::shared_ptr<BlockEntity> blockEntity = getBlockEntity(below);
+            boost::shared_ptr<ChestBlockEntity> chest =
+                boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+            if (chest != NULL && chest->getLootTable() != NULL)
+                return 0;
+        }
+    }
+
+    BonusChestFeature* feature = new BonusChestFeature();
+    int attempt = 0;
+    for (int tries = 8; tries > 0; --tries)
+    {
+        int x = spawnX + mRandom->nextInt(6) - mRandom->nextInt(6);
+        int z = spawnZ + mRandom->nextInt(6) - mRandom->nextInt(6);
+        BlockPos placePos = getTopSolidBlockPos(BlockPos(x, 0, z)).above();
+        if (feature->place(this, *mRandom, placePos, attempt == 15))
+            break;
+        if (feature->place(this, *mRandom, placePos, attempt == 14))
+            break;
+        attempt += 2;
+    }
+    delete feature;
+    return 0;
 }
 
 void ServerLevel::setInitialSpawn(LevelSettings* first)
@@ -847,7 +956,10 @@ void ServerLevel::entityRemoved(boost::shared_ptr<Entity> first)
 
 uint64_t ServerLevel::getEntity(uint32_t first, uint32_t second)
 {
-    return 0;
+    (void)second;
+    uint64_t result = 0;
+    new (&result) boost::shared_ptr<Entity>(Level::getEntity(static_cast<int>(first)));
+    return result;
 }
 
 bool ServerLevel::addGlobalEntity(boost::shared_ptr<Entity> first)
@@ -857,7 +969,8 @@ bool ServerLevel::addGlobalEntity(boost::shared_ptr<Entity> first)
 
 void ServerLevel::broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third)
 {
-    (void)first; (void)second; (void)third;
+    boost::shared_ptr<Packet> packet(new ClientboundEntityEventPacket(first, second, third));
+    getTracker()->broadcastAndSend(first, packet);
 }
 
 boost::shared_ptr<Explosion> ServerLevel::explode(boost::shared_ptr<Entity> entity, double x, double y, double z, float radius, bool fire, bool smoke, bool blockInteraction, bool particles, bool sounds, float damageMultiplier)
@@ -1028,14 +1141,24 @@ void ServerLevel::sendParticles(boost::shared_ptr<ServerPlayer> player, const Pa
 
 void ServerLevel::getEntityByUUID(uint32_t first, uint32_t second)
 {
-    (void)first; (void)second;
+    boost::shared_ptr<Entity>* out =
+        reinterpret_cast<boost::shared_ptr<Entity>*>(static_cast<uintptr_t>(first));
+    const std::wstring* uuid =
+        reinterpret_cast<const std::wstring*>(static_cast<uintptr_t>(second));
+    if (out == NULL || uuid == NULL)
+        return;
+
+    boost::unordered_map<std::wstring, boost::shared_ptr<Entity> >::iterator it =
+        entitiesByUuid.find(*uuid);
+    *out = it != entitiesByUuid.end() ? it->second : boost::shared_ptr<Entity>();
 }
 
 uint64_t ServerLevel::findNearestMapFeature(std::wstring* first, BlockPos* second, bool third)
 {
-    if (!chunkSource || !first || !second)
+    ChunkSource* source = getChunkSource();
+    if (!source || !first || !second)
         return 0;
-    return static_cast<ServerChunkCache*>(chunkSource)->findNearestMapFeature(this, *first, *second, third) ? 1U : 0U;
+    return source->findNearestMapFeature(this, *first, *second, third) ? 1U : 0U;
 }
 
 boost::shared_ptr<ServerPlayer> ServerLevel::getPlayer(const PlayerUID& playerUID) const
@@ -1111,8 +1234,9 @@ ServerScoreboard* ServerLevel::GetServerScoreboard()
 
 uint64_t ServerLevel::invalidateChunksOutsideArea(int32_t first, int32_t second, int32_t third, int32_t fourth)
 {
-    if (chunkSource != 0)
-        static_cast<ServerChunkCache*>(chunkSource)->invalidateChunksOutsideArea(first, second, third, fourth);
+    ChunkSource* source = getChunkSource();
+    if (source != 0)
+        static_cast<ServerChunkCache*>(source)->invalidateChunksOutsideArea(first, second, third, fourth);
     return 0;
 }
 

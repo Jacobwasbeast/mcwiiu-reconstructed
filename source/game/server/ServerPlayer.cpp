@@ -1,6 +1,7 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/ResultSlot.hpp"
+#include "game/item/ArmorItem.hpp"
 #include "game/core/Stat.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/network/ClientboundAwardStatPacket.hpp"
@@ -26,6 +27,7 @@
 #include "game/ui/MerchantMenu.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -67,6 +69,18 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/client/render/LevelRenderer.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/L10N.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/projectile/Arrow.hpp"
+#include "game/item/Item.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/minigame/MiniGameDef.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/FenceBlock.hpp"
+#include "game/world/block/FireBlock.hpp"
+#include "game/world/block/WallBlock.hpp"
+#include "game/world/generation/PlayerList.hpp"
 #include <algorithm>
 #include <cstring>
 #include <limits>
@@ -93,6 +107,159 @@ public:
         return tag;
     }
 };
+
+static void sendClientChatPacket(ServerPlayer* player, const std::wstring& text,
+                                 ClientboundChatPacket::EChatPacketMessage message, int entityType)
+{
+    if (player == NULL || player->mConnection == NULL)
+        return;
+    boost::shared_ptr<ClientboundChatPacket> packet(new ClientboundChatPacket(text, message, entityType));
+    player->mConnection->send(boost::static_pointer_cast<Packet>(packet));
+}
+
+static void broadcastClientChatPacket(MinecraftServer* server, const std::wstring& text,
+                                      ClientboundChatPacket::EChatPacketMessage message)
+{
+    if (server == NULL)
+        return;
+    PlayerList* playerList = server->getPlayers();
+    if (playerList == NULL)
+        return;
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+    if (players == NULL)
+        return;
+    for (size_t i = 0; i < players->size(); ++i)
+    {
+        boost::shared_ptr<ServerPlayer> player = (*players)[i];
+        if (player == NULL)
+            continue;
+        sendClientChatPacket(player.get(), text, message, 0x14);
+    }
+}
+
+static void setPvpStateFromDamageSource(ServerPlayer* player, const DamageSource* source)
+{
+    if (player == NULL || source == NULL)
+        return;
+
+    if (source == DamageSource::FALL)
+        player->mPvpState = 0x19;
+    else if (source == DamageSource::IN_FIRE || source == DamageSource::ON_FIRE)
+        player->mPvpState = 0x1b;
+    else if (source == DamageSource::LAVA)
+        player->mPvpState = 0x1a;
+    else if (source == DamageSource::DROWN)
+        player->mPvpState = 0x1c;
+    else if (source == DamageSource::IN_WALL)
+        player->mPvpState = 0x1d;
+    else if (source->getMsgId() == static_cast<ClientboundChatPacket::EChatPacketMessage>(24) ||
+             source == DamageSource::CREATIVE_PLAYER)
+        player->mPvpState = 0x1e;
+    else if (source == DamageSource::CACTUS)
+        player->mPvpState = 0x1f;
+    else
+    {
+        const EntityDamageSource* entitySource = dynamic_cast<const EntityDamageSource*>(source);
+        if (entitySource == NULL)
+            return;
+
+        boost::shared_ptr<Entity> attacker = entitySource->getEntity();
+        if (attacker == NULL)
+            return;
+
+        const unsigned long long entityType = attacker->GetType();
+        if (entityType == 0x5D540049ULL)
+            player->mPvpState = 0x46;
+        else if (entityType == 0xD602001ULL)
+            player->mPvpState = 0x53;
+        else if (entityType == 0x5D541041ULL)
+            player->mPvpState = 0x52;
+        else if (entityType == 0x5D541841ULL || entityType == 0x8000011ULL)
+            player->mPvpState = 0x51;
+        else if (entityType == 0x88000012ULL || entityType == 0x2D698003ULL)
+            player->mPvpState = 0x50;
+        else if (entityType == 0x4D580043ULL || entityType == 0x8000010ULL)
+            player->mPvpState = 0x4b;
+        else if (entityType == 0x2D680006ULL)
+            player->mPvpState = 0x4a;
+        else if (entityType == 0x8A400000ULL)
+            player->mPvpState = 0x29;
+        else if (entityType == 0xC800001ULL || entityType == 0xC800000ULL)
+            player->mPvpState = 0x21;
+        else if (entityType == 0x5D540441ULL)
+            player->mPvpState = 0x26;
+        else if (entityType == 0x800000BULL)
+            player->mPvpState = 0x22;
+        else if (entityType == 0xB000001ULL)
+            player->mPvpState = 0x45;
+        else if (entityType == 0x2D680005ULL)
+            player->mPvpState = 0x49;
+        else if (entityType == 0x4D54004BULL)
+            player->mPvpState = 0x48;
+        else if (entityType == 0x5D544000ULL)
+            player->mPvpState = 0x47;
+        else if (entityType == 0xD000005ULL)
+            player->mPvpState = 0x44;
+        else if (entityType == 0x5D540044ULL)
+            player->mPvpState = 0x43;
+        else if (entityType == 0x5D540047ULL)
+            player->mPvpState = 0x42;
+        else if (entityType == 0x5D108001ULL)
+            player->mPvpState = 0x41;
+        else if (entityType == 0x5D540045ULL)
+            player->mPvpState = 0x40;
+        else if (entityType == 0x5D540043ULL)
+            player->mPvpState = 0x3f;
+        else if (entityType == 0x5D540046ULL)
+            player->mPvpState = 0x3e;
+        else if (entityType == 0x5D108000ULL)
+            player->mPvpState = 0x28;
+        else if (entityType == 0x5D0000C1ULL)
+            player->mPvpState = 0x29;
+        else if (entityType == 0x5D550041ULL)
+            player->mPvpState = 0x2a;
+        else if (entityType == 0x5D550044ULL || entityType == 0x5D550043ULL || entityType == 0x5D550040ULL)
+            player->mPvpState = 0x25;
+        else if (entityType == 0x5D560041ULL)
+            player->mPvpState = 0x3d;
+        else if (entityType == 0x5D560040ULL)
+            player->mPvpState = 0x27;
+        else if (entityType == 0x5D540443ULL || entityType == 0x5D540442ULL || entityType == 0x5D540441ULL)
+            player->mPvpState = 0x26;
+        else if (entityType == 0x5D540041ULL)
+            player->mPvpState = 0x23;
+        else if (entityType == 0x2D580001ULL)
+            player->mPvpState = 0x3c;
+        else if (entityType == 0xD580002ULL)
+            player->mPvpState = 0x3b;
+        else if (entityType == 0xD6C0002ULL)
+            player->mPvpState = 0x24;
+        else if ((entityType & 0xC800000ULL) == 0xC800000ULL)
+        {
+            player->mPvpState = 0x20;
+            boost::shared_ptr<Player> attackerPlayer = boost::dynamic_pointer_cast<Player>(attacker);
+            if (attackerPlayer != NULL && attackerPlayer->mInventory != NULL)
+            {
+                not_null_ptr<ItemInstance> carried = attackerPlayer->mInventory->getCarried();
+                if (carried != NULL && !carried->isEmpty() && carried->getItem() != NULL)
+                    Item::getId(carried->getItem());
+            }
+        }
+        else if ((entityType & 0x8A020000ULL) == 0x8A020000ULL)
+        {
+            boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(attacker);
+            if (arrow != NULL && arrow->mOwner != NULL)
+            {
+                if ((arrow->mOwner->GetType() & 0xC800000ULL) == 0xC800000ULL)
+                    player->mPvpState = 0x21;
+                else if (arrow->mOwner->GetType() == 0x5D540441ULL)
+                    player->mPvpState = 0x26;
+            }
+        }
+        else
+            player->mPvpState = 0x54;
+    }
+}
 }
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
@@ -387,6 +554,49 @@ void ServerPlayer::initMenu()
 
 uint64_t ServerPlayer::SpectatePlayerChange(uint32_t parameterOne, int32_t parameterTwo)
 {
+    std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = gMinecraftServer->getPlayers()->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> > candidates;
+    int32_t currentIndex = -1;
+
+    for (size_t index = 0; index < allPlayers->size(); ++index)
+    {
+        if (index >= mLevel->mPlayers.size() || !mLevel->mPlayers[index])
+            continue;
+        if (mLevel->mPlayers[index]->isSpectator())
+            continue;
+
+        boost::shared_ptr<ServerPlayer> candidate = (*allPlayers)[index];
+        candidates.push_back(candidate);
+        if (candidate.get() == GetCamera().get())
+            currentIndex = static_cast<int32_t>(candidates.size()) - 1;
+    }
+
+    boost::shared_ptr<ServerPlayer> target;
+    if (!candidates.empty())
+    {
+        int32_t count = static_cast<int32_t>(candidates.size());
+        int32_t newIndex;
+        if (currentIndex == -1)
+        {
+            newIndex = parameterTwo != 0 ? -1 : 0;
+        }
+        else if (parameterTwo == 0)
+        {
+            newIndex = currentIndex + 1;
+        }
+        else
+        {
+            newIndex = currentIndex - 1;
+        }
+        newIndex = ((newIndex % count) + count) % count;
+
+        target = candidates[newIndex];
+        std::wstring name = target->getName();
+        int32_t messageParams[2] = { newIndex + 1, count };
+        sendMessage(0x9a, messageParams, 2, &name, 1);
+    }
+
+    SetCamera(target);
     return 0;
 }
 
@@ -398,6 +608,18 @@ void ServerPlayer::updateClientsCameras()
 
 uint64_t ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* parameterOne, boost::shared_ptr<ServerPlayer>* parameterTwo)
 {
+    if (mCamera && mCamera->getId() == (*parameterOne)->getId())
+    {
+        if (!(*parameterTwo)->isSpectator())
+        {
+            SetCamera(*parameterTwo);
+        }
+        else
+        {
+            SpectatePlayerChange(0, 0);
+        }
+        updateClientsCameras();
+    }
     return 0;
 }
 
@@ -534,9 +756,62 @@ uint64_t ServerPlayer::die(DamageSource* parameterOne)
 
 int32_t ServerPlayer::hurt(uint64_t parameterOne, float parameterTwo)
 {
-    if (mChangingDimension)
+    const DamageSource* source = reinterpret_cast<const DamageSource*>(static_cast<uintptr_t>(parameterOne));
+
+    if (isChangingDimension())
         return 0;
-    return 0;
+
+    if (mServer != NULL && !mServer->isPvpAllowed() && Minecraft::InMiniGame(static_cast<EMiniGameId>(1), false) &&
+        mSpawnInvulnerableTime > 0 && source != NULL &&
+        source->getMsgId() != static_cast<ClientboundChatPacket::EChatPacketMessage>(24) &&
+        source != DamageSource::CREATIVE_PLAYER)
+        return 0;
+
+    if (source != NULL)
+    {
+        const EntityDamageSource* entitySource = dynamic_cast<const EntityDamageSource*>(source);
+        if (entitySource != NULL)
+        {
+            boost::shared_ptr<Entity> attacker = entitySource->getEntity();
+            if (attacker != NULL)
+            {
+                if ((attacker->GetType() & 0xC800000ULL) == 0xC800000ULL)
+                {
+                    boost::shared_ptr<Player> attackerPlayer = boost::static_pointer_cast<Player>(attacker);
+                    if (!canHarmPlayer(attackerPlayer))
+                        return 0;
+                }
+
+                if ((attacker->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+                {
+                    Minecraft* minecraft = Minecraft::GetInstance();
+                    if (minecraft != NULL && minecraft->GetMiniGame() != NULL &&
+                        !minecraft->GetMiniGame()->HasFeatureArrowCanKnockback())
+                    {
+                        boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(attacker);
+                        if (arrow != NULL && arrow->mOwner != NULL &&
+                            (arrow->mOwner->GetType() & 0xC800000ULL) == 0xC800000ULL)
+                        {
+                            boost::shared_ptr<Player> ownerPlayer =
+                                boost::dynamic_pointer_cast<Player>(arrow->mOwner);
+                            if (ownerPlayer != NULL && !canHarmPlayer(ownerPlayer))
+                                return 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!Player::hurt(source, parameterTwo))
+        return 0;
+
+    if (source != NULL)
+    {
+        setPvpStateFromDamageSource(this, source);
+        source->sendDamageIndicatorUpdate(boost::static_pointer_cast<ServerPlayer>(shared_from_this()));
+    }
+    return 1;
 }
 
 void ServerPlayer::isPvpAllowed()
@@ -545,19 +820,19 @@ void ServerPlayer::isPvpAllowed()
         mServer->isPvpAllowed();
 }
 
-uint32_t ServerPlayer::canHarmPlayer(boost::shared_ptr<Player>* parameterOne)
+uint32_t ServerPlayer::canHarmPlayer(boost::shared_ptr<Player> parameterOne)
 {
     if (parameterOne == NULL || mServer == NULL || !mServer->isPvpAllowed() ||
         !isAllowedToAttackPlayers())
         return 0;
-    return Player::canHarmPlayer(*parameterOne);
+    return Player::canHarmPlayer(parameterOne);
 }
 
-int32_t ServerPlayer::canHarmPlayer(std::wstring* parameterOne)
+int32_t ServerPlayer::canHarmPlayer(std::wstring parameterOne)
 {
-    if (parameterOne == NULL || mServer == NULL || !mServer->isPvpAllowed())
+    if (mServer == NULL || !mServer->isPvpAllowed())
         return 0;
-    return Player::canHarmPlayer(*parameterOne);
+    return Player::canHarmPlayer(parameterOne);
 }
 
 void ServerPlayer::addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo)
@@ -586,7 +861,15 @@ uint64_t ServerPlayer::changeDimension(uint32_t parameterOne, int32_t parameterT
 
 uint32_t ServerPlayer::broadcastToPlayer(boost::shared_ptr<ServerPlayer>* parameterOne)
 {
-    return 0;
+    if ((*parameterOne)->isSpectator())
+    {
+        return GetCamera().get() == this;
+    }
+    if (isSpectator())
+    {
+        return 0;
+    }
+    return Entity::broadcastToPlayer(*parameterOne);
 }
 
 uint64_t ServerPlayer::take(boost::shared_ptr<Entity>* parameterOne, int32_t parameterTwo)
@@ -646,7 +929,22 @@ void ServerPlayer::checkFallDamage(double parameterOne, bool parameterTwo, Block
 
 uint64_t ServerPlayer::doCheckFallDamage(double parameterOne, bool parameterTwo)
 {
-    checkFallDamage(parameterOne, parameterTwo, NULL, NULL);
+    BlockPos pos(mX, mY - 0.2, mZ);
+    Block* block = mLevel->getBlock(pos);
+    if (block == Blocks::AIR)
+    {
+        BlockPos belowPos = pos.below();
+        Block* belowBlock = mLevel->getBlock(belowPos);
+        if (belowBlock != NULL &&
+            (dynamic_cast<FireBlock*>(belowBlock) != NULL ||
+             dynamic_cast<WallBlock*>(belowBlock) != NULL ||
+             dynamic_cast<FenceBlock*>(belowBlock) != NULL))
+        {
+            pos = belowPos;
+            block = belowBlock;
+        }
+    }
+    LivingEntity::checkFallDamage(parameterOne, parameterTwo, block, pos);
     return 0;
 }
 
@@ -891,7 +1189,64 @@ uint8_t ServerPlayer::hasDisconnected()
 
 void ServerPlayer::displayClientMessage(int32_t parameterOne, bool parameterTwo)
 {
-    Player::displayClientMessage(parameterOne, parameterTwo);
+    const std::wstring localizedText(L10N::GetString(parameterOne));
+    ClientboundChatPacket::EChatPacketMessage packetMessage =
+        ClientboundChatPacket::eChatPacketMessage_Text;
+    bool broadcast = false;
+
+    switch (parameterOne)
+    {
+    case 0x00FE5875: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x54); broadcast = true; break;
+    case 0x16972FBF: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4d); broadcast = true; break;
+    case 0x16C81B7F:
+        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(4), -1);
+        return;
+    case 0x1E0D17D0: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x48); broadcast = true; break;
+    case 0x1EE681BA: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4e); broadcast = true; break;
+    case 0x3221ECE8: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x56); broadcast = true; break;
+    case 0x3DCD926B: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5e); broadcast = true; break;
+    case 0x3E35B6E8: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x49); broadcast = true; break;
+    case 0x56C64197:
+        broadcastClientChatPacket(mServer, localizedText, static_cast<ClientboundChatPacket::EChatPacketMessage>(6));
+        return;
+    case 0x60A3835D: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5f); broadcast = true; break;
+    case 0x6E3A65E3: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x45); broadcast = true; break;
+    case 0x70EDC806: packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4a); broadcast = true; break;
+    case static_cast<int32_t>(0x82460728): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x47); broadcast = true; break;
+    case static_cast<int32_t>(0x8ECD701E): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4f); broadcast = true; break;
+    case static_cast<int32_t>(0x99326383): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x53); broadcast = true; break;
+    case static_cast<int32_t>(0x9F8BFFAE): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x46); broadcast = true; break;
+    case static_cast<int32_t>(0xA82B5A66): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x4c); broadcast = true; break;
+    case static_cast<int32_t>(0xB2145884): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x57); broadcast = true; break;
+    case static_cast<int32_t>(0xB399BD15): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x52); broadcast = true; break;
+    case static_cast<int32_t>(0xB604AAFF): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x58); broadcast = true; break;
+    case static_cast<int32_t>(0xB714E0E2): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5d); broadcast = true; break;
+    case static_cast<int32_t>(0xC952E8B9): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5b); broadcast = true; break;
+    case static_cast<int32_t>(0xD08616D9):
+        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+        return;
+    case static_cast<int32_t>(0xD3560061): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x44); broadcast = true; break;
+    case static_cast<int32_t>(0xD97FDBA2): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x50); broadcast = true; break;
+    case static_cast<int32_t>(0xE08B6A47):
+        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+        return;
+    case static_cast<int32_t>(0xEC344E3D): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x55); broadcast = true; break;
+    case static_cast<int32_t>(0xEF12CC40): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5c); broadcast = true; break;
+    case static_cast<int32_t>(0xF084EC0C):
+        sendClientChatPacket(this, std::wstring(), static_cast<ClientboundChatPacket::EChatPacketMessage>(1), -1);
+        return;
+    case static_cast<int32_t>(0xFAB1DEB6): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x59); broadcast = true; break;
+    case static_cast<int32_t>(0xFAB38114):
+        sendClientChatPacket(this, localizedText, static_cast<ClientboundChatPacket::EChatPacketMessage>(7),
+                             parameterTwo ? 1 : 0);
+        return;
+    case static_cast<int32_t>(0xFDF65C18): packetMessage = static_cast<ClientboundChatPacket::EChatPacketMessage>(0x5a); broadcast = true; break;
+    default:
+        return;
+    }
+
+    if (broadcast)
+        broadcastClientChatPacket(mServer, localizedText, packetMessage);
 }
 
 void ServerPlayer::completeUsingItem()
@@ -901,6 +1256,66 @@ void ServerPlayer::completeUsingItem()
 
 uint64_t ServerPlayer::restoreFrom(boost::shared_ptr<Player>* parameterOne, bool parameterTwo)
 {
+    if (parameterOne == NULL || parameterOne->get() == NULL)
+        return 0;
+
+    Player* const oldPlayer = parameterOne->get();
+
+    const bool copyInventory = parameterTwo
+        || (mLevel != NULL && mLevel->getGameRules()->getBoolean(2))
+        || !oldPlayer->isSpectator();
+
+    if (copyInventory)
+    {
+        if (mInventory != NULL && oldPlayer->mInventory != NULL)
+            mInventory->replaceWith(oldPlayer->mInventory);
+    }
+
+    if (parameterTwo)
+    {
+        setHealth(oldPlayer->getHealth());
+        mFoodData = oldPlayer->mFoodData;
+        mExperienceLevel = oldPlayer->mExperienceLevel;
+        mTotalExperience = oldPlayer->mTotalExperience;
+        mExperienceProgress = oldPlayer->mExperienceProgress;
+        setScore(static_cast<int32_t>(oldPlayer->getScore()));
+    }
+    else if (copyInventory)
+    {
+        mExperienceLevel = oldPlayer->mExperienceLevel;
+        mTotalExperience = oldPlayer->mTotalExperience;
+        mExperienceProgress = oldPlayer->mExperienceProgress;
+        setScore(static_cast<int32_t>(oldPlayer->getScore()));
+    }
+
+    mEnchantmentSeed = oldPlayer->mEnchantmentSeed;
+    mEnderChestInventory = oldPlayer->mEnderChestInventory;
+
+    if (mEntityData != NULL && oldPlayer->mEntityData != NULL)
+        mEntityData->set(Entity::DATA_SHARED_FLAGS_ID,
+                         oldPlayer->mEntityData->get(Entity::DATA_SHARED_FLAGS_ID), true);
+
+    *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x8f4) = -1.0f;
+    *reinterpret_cast<int32_t*>(reinterpret_cast<char*>(this) + 0x8f8) = -1;
+    *reinterpret_cast<int32_t*>(reinterpret_cast<char*>(this) + 0x900) = -1;
+
+    const boost::shared_ptr<ServerPlayer> oldServerPlayer =
+        boost::dynamic_pointer_cast<ServerPlayer>(*parameterOne);
+    if (oldServerPlayer != NULL)
+    {
+        mSentEntityIds = oldServerPlayer->mSentEntityIds;
+        if (mGameMode != NULL && oldServerPlayer->mGameMode != NULL)
+            mGameMode->RestoreFromOld(oldServerPlayer->mGameMode);
+    }
+
+    CompoundTag* leftShoulder = oldPlayer->getShoulderEntityLeft();
+    if (leftShoulder != NULL)
+        setShoulderEntityLeft(leftShoulder->copy());
+
+    CompoundTag* rightShoulder = oldPlayer->getShoulderEntityRight();
+    if (rightShoulder != NULL)
+        setShoulderEntityRight(rightShoulder->copy());
+
     return 0;
 }
 
@@ -1079,14 +1494,35 @@ ServerPlayerGameMode* ServerPlayer::GetGameMode()
     return mGameMode;
 }
 
-uint64_t ServerPlayer::OnEquipArmor(not_null_ptr_ItemInstance* parameterOne)
+void ServerPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
 {
-    return 0;
+    const SoundEvent* sound = SoundEvents::ARMOR_EQUIP_GENERIC;
+    Item* heldItem = item->getItem();
+    ArmorItem* armorItem = dynamic_cast<ArmorItem*>(heldItem);
+    if (armorItem != NULL)
+    {
+        sound = armorItem->getMaterial()->getEquipSound();
+    }
+    else if (heldItem == Items::elytra)
+    {
+        sound = SoundEvents::ARMOR_EQUIP_LEATHER;
+    }
+
+    mConnection->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+        sound, SoundSource::eSoundSource_Neutral, mX, mY, mZ, 1.0f, 1.0f)));
 }
 
 int32_t ServerPlayer::checkTotemDeathProtection(DamageSource* parameterOne)
 {
-    return 0;
+    int32_t result = LivingEntity::checkTotemDeathProtection(parameterOne);
+    if (result == 0)
+        return 0;
+
+    boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
+    not_null_ptr<ItemInstance> totemInstance(new ItemInstance(Items::totemOfUndying));
+    awardStat(gStats->get_itemsUsed(Item::VALIDgetId(Items::totemOfUndying)),
+              GenericStats::param_itemsUsed(self, totemInstance));
+    return result;
 }
 
 uint64_t ServerPlayer::GetType()
