@@ -21,6 +21,7 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 
 AbstractProperty<int>* SeaPickle_PICKLES = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"pickles", 1, 4));
 static AbstractProperty<bool>* SEA_PICKLE_WATERLOGGED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"waterlogged"));
@@ -263,28 +264,27 @@ void SeaPickle::tick(Level* level, const BlockPos& pos, const BlockState* state,
 
     checkAlive(level, pos, state);
 
-    if (level->getBlockState(pos)->getBlock() != this)
+    if (level->getBlock(pos) != this)
         return;
 
-    const BlockState* currentState = level->getBlockState(pos);
-    int pickles = currentState->getValue(SeaPickle_PICKLES);
-    bool waterlogged = currentState->getValue(SEA_PICKLE_WATERLOGGED);
+    int pickles = state->getValue(SeaPickle_PICKLES);
+    bool waterlogged = state->getValue(SEA_PICKLE_WATERLOGGED);
     bool underwater = level->isUnderWater(pos, 0x10f, 0);
 
     if (waterlogged && underwater)
     {
+        TypedBoxed<bool> logged(false);
+        const BlockState* newState = defaultBlockState()->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
         TypedBoxed<int> count(pickles);
-        TypedBoxed<bool> logged(true);
-        const BlockState* newState = defaultBlockState()->setBoxedValue(SeaPickle_PICKLES, &count);
-        newState = newState->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
+        newState = newState->setBoxedValue(SeaPickle_PICKLES, &count);
         level->setBlock(pos, newState, 3, false);
     }
     else if (!waterlogged && !underwater)
     {
+        TypedBoxed<bool> logged(true);
+        const BlockState* newState = defaultBlockState()->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
         TypedBoxed<int> count(pickles);
-        TypedBoxed<bool> logged(false);
-        const BlockState* newState = defaultBlockState()->setBoxedValue(SeaPickle_PICKLES, &count);
-        newState = newState->setBoxedValue(SEA_PICKLE_WATERLOGGED, &logged);
+        newState = newState->setBoxedValue(SeaPickle_PICKLES, &count);
         level->setBlock(pos, newState, 3, false);
     }
 }

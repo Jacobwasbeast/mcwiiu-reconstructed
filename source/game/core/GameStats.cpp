@@ -79,8 +79,6 @@ unsigned int GameStats::GetShortestLifespan(unsigned int round) const
     unsigned int shortest = 0x7fffffffU;
     for (StatsMap::const_iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
     {
-        if (it->second == 0)
-            continue;
         const unsigned int lifespan = static_cast<unsigned int>(it->second->getLifeSpan(round));
         if (lifespan < shortest)
             shortest = lifespan;
@@ -815,17 +813,14 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
 
 void GameStats::AddPlayerStats(const boost::shared_ptr<ServerPlayer>& player)
 {
-    if (!player)
+    if (mPlayerStats.find(player->getSUID()) != mPlayerStats.end())
         return;
 
-    const StatsUID uid = player->getSUID();
-    if (mPlayerStats.find(uid) != mPlayerStats.end())
-        return;
-
-    PlayerStats* stats = new PlayerStats(uid);
+    PlayerStats* stats = new PlayerStats(player->getSUID());
     stats->getRoundStats(mCurrentRound);
     stats->mName.assign(player->getDisplayName());
-    mPlayerStats[uid] = stats;
+    stats->mStatsUID = player->getSUID();
+    mPlayerStats[player->getSUID()] = stats;
 }
 void GameStats::AddPlayers(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
@@ -1341,12 +1336,7 @@ unsigned char GameStats::GetEndZoneEntered(const StatsUID& uid)
 boost::shared_ptr<ServerPlayer> GameStats::GetLeadingPlayer()
 {
     PlayerList* players = serverPlayers();
-    if (players == 0)
-        return boost::shared_ptr<ServerPlayer>();
-
     std::vector<boost::shared_ptr<ServerPlayer> >* playerList = players->getPlayers();
-    if (playerList == 0)
-        return boost::shared_ptr<ServerPlayer>();
 
     double bestProgress = -1.0;
     boost::shared_ptr<ServerPlayer> bestPlayer;
@@ -1354,17 +1344,11 @@ boost::shared_ptr<ServerPlayer> GameStats::GetLeadingPlayer()
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = playerList->begin();
          it != playerList->end(); ++it)
     {
-        if (!*it)
-            continue;
-
         PlayerStats* stats = GetPlayerStats((*it)->getSUID());
         if (stats == 0)
             continue;
 
         PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
-        if (round == 0)
-            continue;
-
         const double progress = round->mCurrentTime;
         if (bestProgress < progress || !bestPlayer)
         {

@@ -22,6 +22,7 @@
 #include "game/entity/ai/RunAroundLikeCrazyGoal.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/item/Item.hpp"
@@ -195,7 +196,11 @@ void Llama::registerGoals()
     mTargetSelector.addGoal(1, new LlamaHurtByTargetGoal(this), true);
     mTargetSelector.addGoal(2, new LlamaDefendTargetGoal(this), true);
 }
-void Llama::registerAttributes() { AbstractChestedHorse::registerAttributes(); }
+void Llama::registerAttributes()
+{
+    AbstractChestedHorse::registerAttributes();
+    getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(40.0);
+}
 void Llama::defineSynchedData()
 {
     AbstractChestedHorse::defineSynchedData();
@@ -282,7 +287,12 @@ int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_
 
     return flag;
 }
-bool Llama::isImmobile() { return AbstractHorse::isImmobile(); }
+bool Llama::isImmobile()
+{
+    if (getHealth() > 0.0f && !isEating())
+        return false;
+    return true;
+}
 MobGroupData* Llama::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     MobGroupData* result = AbstractHorse::finalizeMobSpawn(difficulty, data, name);
@@ -310,7 +320,11 @@ void Llama::playStepSound(const BlockPos&, Block*)
 {
     playSound(SoundEvents::LLAMA_STEP, 0.15f, 1.0f);
 }
-void Llama::playChestEquipsSound() { AbstractChestedHorse::playChestEquipsSound(); }
+void Llama::playChestEquipsSound()
+{
+    playSound(SoundEvents::DONKEY_CHEST, 1.0f,
+              1.0f + (getRandom()->nextFloat() - getRandom()->nextFloat()) * 0.2f);
+}
 void Llama::makeMad()
 {
     const SoundEvent* sound = getAngrySound();
@@ -371,7 +385,7 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
         {
             if (player->isSneaking()
                 && (!player->isVehicle()
-                    || mobInteract(player, InteractionHand::MAIN_HAND)))
+                    || mobInteract(player, InteractionHand::eInteractionHand_MainHand)))
             {
                 return getPassengers()->empty() ? 0x497adcf0U : 0xffffffffU;
             }

@@ -3,6 +3,8 @@
 #include <vector>
 
 #include "game/core/AttributeModifier.hpp"
+#include "game/entity/mob/SharedMonsterAttributes.hpp"
+#include "game/item/Item.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/DamageSource.hpp"
@@ -53,6 +55,7 @@ bool Shulker::ShulkerAttackGoal::canUse()
 void Shulker::ShulkerAttackGoal::start()
 {
     mAttackTime = 20;
+    mShulker->setRawPeekAmount(100);
 }
 
 void Shulker::ShulkerAttackGoal::stop()
@@ -284,6 +287,7 @@ void Shulker::defineSynchedData()
 void Shulker::registerAttributes()
 {
     Mob::registerAttributes();
+    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(30.0);
 }
 
 BodyControl* Shulker::createBodyControl()
@@ -587,7 +591,7 @@ void Shulker::tick()
         if (pushAmount > 0.0)
         {
             std::vector<boost::shared_ptr<Entity> > entities;
-            mLevel->getEntities(shared_from_this(), mBoundingBox, &entities, NULL);
+            mLevel->getEntities(shared_from_this(), mBoundingBox, &entities);
             for (unsigned int i = 0; i < entities.size(); ++i)
             {
                 boost::shared_ptr<Entity> entity = entities[i];
@@ -601,6 +605,11 @@ void Shulker::tick()
 
 void Shulker::move(MoverType type, double xa, double ya, double za, bool onGround)
 {
+    if (type == eMoverType_ShulkerBox)
+    {
+        teleportSomewhere();
+        return;
+    }
     Entity::move(type, xa, ya, za, onGround);
 }
 
@@ -652,6 +661,12 @@ bool Shulker::teleportSomewhere()
 void Shulker::aiStep()
 {
     Mob::aiStep();
+    mXd = 0.0;
+    mYd = 0.0;
+    mZd = 0.0;
+    mYHeadRot = 180.0f;
+    mYBodyRot = 180.0f;
+    mYHeadRotO = 180.0f;
 }
 
 void Shulker::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -712,6 +727,12 @@ const Direction* Shulker::getAttachFace()
 
 BlockPos* Shulker::getAttachPosition()
 {
+    if (mEntityData == NULL)
+        return mAttachPosition;
+
+    if (mAttachPosition == NULL)
+        mAttachPosition = new BlockPos(mEntityData->get(DATA_ATTACH_POSITION));
+
     return mAttachPosition;
 }
 
@@ -798,7 +819,9 @@ void Shulker::setColor(const DyeColor* color)
 
 unsigned int Shulker::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    return Mob::GetInteractTooltip(holder);
+    if (Item::getId(holder.m_pItemInstance->getItem()) != 0x17f)
+        return Mob::GetInteractTooltip(holder);
+    return 0xffffffffU;
 }
 
 unsigned long long Shulker::GetType()

@@ -192,8 +192,8 @@ public:
     static uint32_t TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result);
-    static uint32_t ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
-    static uint32_t ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result);
     static uint32_t ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     void SetExtraGameData(unsigned int& options, eGameExtraData type, unsigned int value) const;
     void SetExtraGameData(eGameExtraData type, unsigned int value);

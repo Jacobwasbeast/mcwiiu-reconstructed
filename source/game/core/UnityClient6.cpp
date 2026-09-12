@@ -3,3 +3,4 @@
 #include <new>
 
 CTelemetryManager* telemetryManagerInstance = new (std::nothrow) CTelemetryManager();
+CTelemetryManager& gTelemetryManager = *telemetryManagerInstance;

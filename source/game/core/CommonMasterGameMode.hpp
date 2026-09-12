@@ -15,6 +15,7 @@ class LevelGenerationOptions;
 class MapGenerator;
 class MiniGameDef;
 class Player;
+class PlayersEnteredVolumeCondition;
 class PowerupRuleDefinition;
 class Scoreboard;
 class ServerGamePacketListenerImpl;
@@ -25,6 +26,7 @@ class Voteables;
 class ClientPacketListener;
 class CommonMasterGameMode
 {
+    friend class PlayersEnteredVolumeCondition;
     friend class ServerGamePacketListenerImpl;
 public:
     CommonMasterGameMode();
@@ -92,7 +94,9 @@ private:
     unsigned int mState;
     unsigned int mNextState;
     float mGeneratorSeedScale;
+protected:
     MapGenerator* mMapGenerator;
+private:
     OSFastMutex mGeneratorMutex;
 protected:
     std::vector<AABB*> mTeamAreas;
@@ -106,9 +110,13 @@ private:
     std::vector<double> mCheckpointDistances;
     std::vector<double> mLayerDistances;
     std::vector<AABB*> mLayerAreas;
+protected:
     std::vector<CheckpointRuleDefinition*> mCheckpoints;
+private:
     unsigned int mCheckpointCount;
+protected:
     unsigned int mCurrentCheckpoint;
+private:
     double mTotalDistance;
     bool mDistancesCached;
     bool mPrimaryTargetActive;

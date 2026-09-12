@@ -110,9 +110,9 @@ private:
     Minecraft* mMinecraft;
     File mOptionsFile;
     int mDifficulty;
-    bool mHideGui;
 
 public:
+    bool mHideGui;
     int mThirdPersonView;
 
 private:

@@ -21,6 +21,7 @@
 #include "game/core/Team.hpp"
 #include "game/core/UnityClient6.hpp"
 #include "game/core/Voteable.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -40,13 +41,6 @@
 #include "vendor/_LoadingInputParams.hpp"
 #include <algorithm>
 
-class CProfile
-{
-public:
-    int GetPrimaryPad();
-};
-extern CProfile* gProfile;
-
 namespace
 {
 struct FullscreenProgressState
@@ -63,7 +57,7 @@ struct FullscreenProgressState
 
 void Sleep(unsigned int milliseconds);
 
-unsigned int WaitForNextState(void* context)
+void* WaitForNextState(void* context)
 {
     ClientMasterGameMode* gameMode = static_cast<ClientMasterGameMode*>(context);
     while (gameMode->IsRoundRestarting())
@@ -771,15 +765,15 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
     if (!allLoaded || mBRUPsRemaining >= 1)
         return false;
 
-    const boost::shared_ptr<GameModePacket> packet =
-        GameModePacket::Create(static_cast<GameModePacket::EMessage>(6),
-                               boost::shared_ptr<GameModePacket::Data>(
-                                   new GameModePacket::EmptyData()));
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-        if (localPlayer != NULL && localPlayer->mPacketListener != NULL)
-            localPlayer->mPacketListener->send(packet);
+        ClientPacketListener* connection = minecraft->getConnection(playerIndex);
+        if (localPlayer != NULL && connection != NULL)
+        {
+            GameModePacket::EmptyData emptyData;
+            connection->send(GameModePacket::Create(static_cast<GameModePacket::EMessage>(6), emptyData));
+        }
     }
 
     mServerIsWaitingOnChunkLoading = false;

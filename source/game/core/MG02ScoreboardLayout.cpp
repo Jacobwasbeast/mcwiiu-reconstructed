@@ -111,6 +111,8 @@ void MG02ScoreboardLayout::Init(int value)
     ClearPlayersInfo();
 
     const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[value];
+
     for (int index = 0; index < playerCount; ++index)
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);

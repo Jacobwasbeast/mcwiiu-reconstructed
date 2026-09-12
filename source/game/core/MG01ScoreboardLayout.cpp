@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ClientScoreboard.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
@@ -181,7 +182,7 @@ unsigned int MG01ScoreboardLayout::getNumberOfColumns()
     return 3;
 }
 
-boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type)
+boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot, const EScoreboardType& type)
 {
     if (column == -1)
     {

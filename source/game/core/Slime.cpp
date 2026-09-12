@@ -18,6 +18,7 @@
 #include "game/core/Difficulty.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/LevelType.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/BlockPos.hpp"

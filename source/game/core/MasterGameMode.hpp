@@ -93,6 +93,7 @@ public:
     class ChestRefillInfo
     {
     public:
+        ChestRefillInfo();
         ChestRefillInfo(const ChestRefillInfo& other);
         float distance;
         float weight;
@@ -139,7 +140,7 @@ public:
     void RestartTimer(ETimerID timer, int duration);
     void TickTimers();
     void SyncNextLevelGen();
-    void OnGameModeChange(boost::shared_ptr<ServerPlayer> player);
+    bool OnGameModeChange(boost::shared_ptr<ServerPlayer> player);
     void CheckTutorialUpdate();
     bool IsInKillBox(boost::shared_ptr<Entity> entity);
     bool AreLevelChunksLoaded();
@@ -281,6 +282,7 @@ public:
 private:
     friend class CheckpointCommand;
     friend class GameMedal;
+    friend class PlayersEnteredVolumeCondition;
     friend class ServerPlayerGameMode;
     friend class ServerScoreboard;
 

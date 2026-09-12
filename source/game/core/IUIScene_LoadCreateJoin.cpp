@@ -253,10 +253,10 @@ void IUIScene_LoadCreateJoin::_updateTooltips()
     else
         tooltip4 = 0x0aec93217;
 
-    if (m_state78 != 0 && menu->GetPad() != 0)
-        tooltip3 = m_state7c != 0 ? 0x051758df1 : 0x060f9906e;
+    if (m_state1e != 0 && menu->getSubSceneType() != 0)
+        tooltip3 = m_state1f != 0 ? 0x060f9906e : 0x051758df1;
 
-    if (gProfile->IsSignedInLive(gProfile->GetPrimaryPad()) && gStorage->GetSaveDisabled() == 0)
+    if (gProfile->IsSignedInLive(gProfile->GetPrimaryPad()) && gStorage->GetSaveDisabled() != 0)
         menu->DoesLoadListHaveFocus();
 
     gConsoleUIController.SetTooltips(0, 0x8d6323ed, 0x4f6bcf5e, tooltip3, tooltip4, -1, -1, -1, -1,
@@ -277,7 +277,7 @@ void IUIScene_LoadCreateJoin::handleTimer(int timer)
         return;
     if (signedLive == 0)
     {
-        m_state78 = 0;
+        m_state1e = 0;
         menu->handleReload();
         menu->ShowSaveListTimer(false);
         menu->ShowJoinListTimer(true);
@@ -453,8 +453,9 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
     m_state28 = 2;
 }
 
-void IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result)
+int IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result)
 {
+    return 0;
 }
 
 void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)

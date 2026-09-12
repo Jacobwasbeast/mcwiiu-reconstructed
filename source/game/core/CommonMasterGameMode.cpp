@@ -1,7 +1,7 @@
 #include "game/core/CommonMasterGameMode.hpp"
 #include <algorithm>
 #include <cmath>
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConditionConnective.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/GameCondition.hpp"

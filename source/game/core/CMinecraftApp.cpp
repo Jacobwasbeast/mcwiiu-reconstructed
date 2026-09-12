@@ -48,6 +48,8 @@
 #include "game/core/Achievement.hpp"
 #include "game/core/CTelemetryManager.hpp"
 #include "game/core/DLCPack.hpp"
+#include "game/core/IUIScene_DLCUpsell.hpp"
+#include "game/core/MOJJANG_DATA.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/GameRuleManager.hpp"
 #include "game/core/Gui.hpp"
@@ -922,6 +924,16 @@ void CMinecraftApp::InitGameSettings()
 }
 uint64_t CMinecraftApp::UpsellReturnedCallback(void* context, eUpsellType type, eUpsellResponse response, int userIndex)
 {
+    ESen_UpsellOutcome outcome;
+    if (response == static_cast<eUpsellResponse>(1))
+        outcome = static_cast<ESen_UpsellOutcome>(3);
+    else if (response == static_cast<eUpsellResponse>(2))
+        outcome = static_cast<ESen_UpsellOutcome>(1);
+    else
+        outcome = static_cast<ESen_UpsellOutcome>(2);
+
+    const int playerId = gProfile->GetPrimaryPad();
+    gTelemetryManager.RecordUpsellResponded(playerId, static_cast<ESen_UpsellID>(1), 1, outcome);
     return 0;
 }
 int CMinecraftApp::TipsSortFunction(const void* firstTip, const void* secondTip)
@@ -1009,6 +1021,18 @@ uint8_t CMinecraftApp::GetChangingSessionType()
 }
 uint32_t CMinecraftApp::UnlockFullSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        const int userIndex = minecraft->mPlayer->mUserIndex;
+        if (gProfile->IsSignedInLive(userIndex))
+            gProfile->DisplayFullVersionPurchase(false, userIndex, 1);
+    }
+    else
+    {
+        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+                                              static_cast<ESen_UpsellOutcome>(2));
+    }
     return 0;
 }
 void CMinecraftApp::SetAutosaveTimerTime()
@@ -1027,6 +1051,24 @@ uint32_t CMinecraftApp::GetXuiServerAction(int32_t firstArgument)
 }
 uint32_t CMinecraftApp::UnlockFullExitReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int userIndex = minecraft->mPlayer->mUserIndex;
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        if (gProfile->IsSignedInLive(userIndex))
+        {
+            gProfile->DisplayFullVersionPurchase(false, userIndex, 1);
+            app->SetAction(userIndex, static_cast<eXuiAction>(5), NULL);
+        }
+    }
+    else
+    {
+        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+                                              static_cast<ESen_UpsellOutcome>(2));
+        app->SetAction(userIndex, static_cast<eXuiAction>(5), NULL);
+    }
     return 0;
 }
 void CMinecraftApp::SetChangingSessionType(bool firstArgument)
@@ -1114,10 +1156,37 @@ waitForSessionEnd:
 }
 uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int userIndex = minecraft->mPlayer->mUserIndex;
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
+
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        if (!gProfile->IsSignedInLive(userIndex))
+            app->SetAction(userIndex, static_cast<eXuiAction>(0xe), NULL);
+        else
+            gProfile->DisplayFullVersionPurchase(false, userIndex, 1);
+    }
+    else
+    {
+        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+                                              static_cast<ESen_UpsellOutcome>(2));
+        app->SetAction(userIndex, static_cast<eXuiAction>(0xe), NULL);
+    }
     return 0;
 }
 uint32_t CMinecraftApp::UnlockFullInviteReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        if (gProfile->GetLiveConnectionStatus() != 0)
+            gProfile->DisplayFullVersionPurchase(false, button, 1);
+    }
+    else
+    {
+        gTelemetryManager.RecordUpsellResponded(button, static_cast<ESen_UpsellID>(1), 1,
+                                              static_cast<ESen_UpsellOutcome>(2));
+    }
     return 0;
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStorage::EMessageResult result)
@@ -1130,7 +1199,7 @@ uint32_t CMinecraftApp::ExitAndJoinFromInvite(void* context, int button, C4JStor
     }
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
@@ -1155,8 +1224,14 @@ uint32_t CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int 
     }
     return 0;
 }
-uint32_t CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
+int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        if (gMinecraftServer != NULL)
+            *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(gMinecraftServer) + 0x148) = 0;
+        g_pApp->SetAction(button, static_cast<eXuiAction>(0x16), NULL);
+    }
     return 0;
 }
 uint32_t CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -2362,6 +2437,8 @@ uint8_t CMinecraftApp::DebugUIFocussed()
 void CMinecraftApp::SetDebugUIFocussed(bool focussed)
 {
     mDebugUIFocussed = focussed;
+    const int playerId = gProfile->GetPrimaryPad();
+    gConsoleUIController.SetMenuDisplayed(playerId, focussed);
 }
 uint32_t CMinecraftApp::DebugInputCallback(void* context)
 {
@@ -2384,6 +2461,13 @@ void CMinecraftApp::SetNewDLCAvailable(bool firstArgument)
 }
 uint64_t CMinecraftApp::UpsellDLC(uint32_t firstArgument, uint32_t secondArgument, uint32_t thirdArgument, uint32_t fourthArgument)
 {
+    const int userIndex = static_cast<int>(firstArgument);
+    if (gProfile->GetLiveConnectionStatus() != 0 && !gProfile->IsSignedInLive(userIndex))
+    {
+        IUIScene_DLCUpsell* scene =
+            reinterpret_cast<IUIScene_DLCUpsell*>(static_cast<uintptr_t>(fourthArgument));
+        scene->ShowNotOnlineDialog(userIndex);
+    }
     return 0;
 }
 void CMinecraftApp::StoreLaunchData()
@@ -2400,7 +2484,10 @@ bool CMinecraftApp::isXuidNotch(PlayerUID uid)
 }
 bool CMinecraftApp::isXuidDeadmau5(PlayerUID uid)
 {
-    return 0;
+    boost::unordered_map<PlayerUID, MOJJANG_DATA*>::const_iterator found = g_mojangData.find(uid);
+    if (found != g_mojangData.end() && found->second != NULL && found->second->field0 == 5)
+        return true;
+    return false;
 }
 void CMinecraftApp::AddMemoryTextureFile(const std::wstring& path, unsigned char* data, unsigned int size)
 {
@@ -2459,7 +2546,12 @@ void CMinecraftApp::GetTPD(int type, unsigned char** data, unsigned int* size)
 }
 bool CMinecraftApp::DefaultCapeExists()
 {
-    return false;
+    static const wchar_t kSpecialCapePath[] = L"Special_Cape.png";
+    const std::wstring path(kSpecialCapePath, wcslen(kSpecialCapePath));
+    EnterCriticalSection(&mMemoryTextureMutex);
+    const bool exists = mMemoryTextureFiles.find(path) != mMemoryTextureFiles.end();
+    LeaveCriticalSection(&mMemoryTextureMutex);
+    return exists;
 }
 uint64_t CMinecraftApp::RemoveLevelFromBannedLevelList(int player, PlayerUID uid, char* levelId)
 {
@@ -3109,6 +3201,19 @@ std::wstring CMinecraftApp::getEntityName(uint64_t firstArgument, int32_t second
 }
 uint32_t CMinecraftApp::DLCOffersReturned(uint32_t firstArgument, uint32_t secondArgument, uint32_t thirdArgument, int32_t fourthArgument)
 {
+    CMinecraftApp* app = reinterpret_cast<CMinecraftApp*>(static_cast<uintptr_t>(firstArgument));
+    EnterCriticalSection(&app->mDLCRetrieveMutex);
+    for (std::vector<_DLCRequest*>::iterator it = app->mDLCDownloadQueue.begin();
+         it != app->mDLCDownloadQueue.end(); ++it)
+    {
+        if ((*it)->mContentId == thirdArgument)
+        {
+            (*it)->mStatus = 2U;
+            app->mDLCOffersRetrievedValue = secondArgument;
+            break;
+        }
+    }
+    LeaveCriticalSection(&app->mDLCRetrieveMutex);
     return 0;
 }
 uint32_t CMinecraftApp::RetrieveNextDLCContent()
@@ -3542,8 +3647,6 @@ void CMinecraftApp::HandleXuiActions()
 }
 void CMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 {
-    if (message == 0)
-        return;
 }
 void CMinecraftApp::SetSkinAdjustments(uint32_t id, _SkinAdjustments value)
 {

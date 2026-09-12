@@ -9,6 +9,7 @@
 #include "game/core/MinecartSpawner.hpp"
 #include "game/core/MinecartTNT.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -18,6 +19,7 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -210,7 +212,7 @@ void Minecart::destroy(const DamageSource* source)
     {
         item->setHoverName(getCustomName());
     }
-    spawnAtLocation(item, 0.25f);
+    spawnAtLocation(item, 0.0f);
 }
 
 void Minecart::animateHurt()

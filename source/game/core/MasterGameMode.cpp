@@ -9,22 +9,44 @@
 #include "game/util/Vec3.hpp"
 #include "game/util/GameModeUtilities.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
+#include "game/minigame/KillboxRuleDefinition.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
+#include "game/minigame/TargetAreaRuleDefinition.hpp"
+#include "game/minigame/WorldPositionRuleDefinition.hpp"
+#include "game/core/ClientMasterGameMode.hpp"
+#include "game/item/DistributeItemsRuleDefinition.hpp"
+#include "game/item/Items.hpp"
+#include "game/core/Scoreboard.hpp"
+#include "game/core/Team.hpp"
+#include "game/world/generation/PlayerTeam.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/GameModePacket.hpp"
 #include "game/network/ClientboundMGPlayerSettingsUpdatePacket.hpp"
 #include "game/network/PlayerReadyPacket.hpp"
+#include "game/network/ClientboundChatPacket.hpp"
+#include "game/network/ClientboundPlayerAbilitiesPacket.hpp"
+#include "game/network/MapSelectInfoPacket.hpp"
+#include "game/network/ServerGamePacketListenerImpl.hpp"
+#include "game/network/ClientboundSoundPacket.hpp"
+#include "game/client/audio/SoundEvents.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerScoreboard.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
+#include "game/core/GameCondition.hpp"
+#include "game/core/ConditionConnective.hpp"
+#include "game/world/generation/PlayersCondition.hpp"
+#include "game/world/generation/MapGenerator.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/block/BlockRemover.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
 #include "game/item/Container.hpp"
+#include "game/item/Inventory.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/PowerupItems.hpp"
@@ -52,6 +74,11 @@
 #include "game/server/ServerPlayerGameMode.hpp"
 #include "game/world/chunk/MinigamePlayerChunkMap.hpp"
 #include "game/world/generation/TumbleGenerator.hpp"
+#include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/DataOutputStream.hpp"
+#include "game/core/FoodConstants.hpp"
+#include "game/core/FoodData.hpp"
+#include "game/data/StringTable.hpp"
 
 extern void instructionSynchronize();
 
@@ -74,6 +101,23 @@ static const std::wstring& ChestLootGroup(const MasterGameMode::ChestRefillInfo&
 {
     return reinterpret_cast<const ChestRefillWiiULayout&>(info).lootGroup;
 }
+
+struct WorldPositionWiiULayout
+{
+    char prefix[0x64];
+    int x;
+    int y;
+    int z;
+};
+
+static BlockPos WorldPositionFromRule(const WorldPositionRuleDefinition* position)
+{
+    const WorldPositionWiiULayout& layout =
+        reinterpret_cast<const WorldPositionWiiULayout&>(*position);
+    return BlockPos(layout.x, layout.y, layout.z);
+}
+
+static const std::wstring kSpectatorTeamName;
 
 static bool StringsEqualIgnoreCase(const std::wstring& first, const std::wstring& second)
 {
@@ -133,12 +177,212 @@ static arrayWithLength<unsigned char>& WiiUSpawnDistributionData(MasterGameMode*
         reinterpret_cast<char*>(gameMode) + 0x240);
 }
 
+static arrayWithLength<unsigned char>& WiiUAlternateSpawnDistributionData(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<arrayWithLength<unsigned char>*>(
+        reinterpret_cast<char*>(gameMode) + 0x248);
+}
+
+static int& WiiULoadingPlayerCount(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(gameMode) + 0x2d8);
+}
+
+struct MasterGameModeWiiUBroadcastChatState
+{
+    unsigned long long lastBroadcastTime;
+    int lastChatMessage;
+};
+
+static MasterGameModeWiiUBroadcastChatState& WiiUBroadcastChatState(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<MasterGameModeWiiUBroadcastChatState*>(
+        reinterpret_cast<char*>(gameMode) + 0x308);
+}
+
+static std::vector<int>& WiiUBuildOffThemeIds(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<std::vector<int>*>(reinterpret_cast<char*>(gameMode) + 0xac);
+}
+
+static arrayWithLength<unsigned char>& WiiUPlaylistSyncData(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<arrayWithLength<unsigned char>*>(
+        reinterpret_cast<char*>(gameMode) + 0x1f0);
+}
+
+static unsigned int GameStatsCurrentRound(GameStats& gameStats)
+{
+    return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(&gameStats) + 8);
+}
+
+static StringTable*& WiiUEnglishStringTable(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<StringTable**>(reinterpret_cast<char*>(gameMode) + 0xc);
+}
+
+static EGameModeState TranslateInternalGameModeState(MasterGameMode::EInternalGameModeState state)
+{
+    switch (state)
+    {
+    case MasterGameMode::eInternalGameModeState_WaitingToStart:
+        return static_cast<EGameModeState>(5);
+    case MasterGameMode::eInternalGameModeState_RoundStarting:
+        return static_cast<EGameModeState>(6);
+    case MasterGameMode::eInternalGameModeState_RoundPlaying:
+        return static_cast<EGameModeState>(7);
+    case MasterGameMode::eInternalGameModeState_Showdown:
+        return static_cast<EGameModeState>(3);
+    case MasterGameMode::eInternalGameModeState_RoundEnding:
+        return static_cast<EGameModeState>(9);
+    case MasterGameMode::eInternalGameModeState_PostGame:
+        return static_cast<EGameModeState>(10);
+    case MasterGameMode::eInternalGameModeState_ReturningToLobby:
+        return static_cast<EGameModeState>(2);
+    case MasterGameMode::eInternalGameModeState_Lobby:
+    default:
+        return static_cast<EGameModeState>(0);
+    }
+}
+
+static void ClearSpawnDistributionSlot(arrayWithLength<unsigned char>& distribution,
+                                       unsigned char playerIndex)
+{
+    if (distribution.data == 0 || distribution.length == 0)
+        return;
+
+    for (unsigned int index = 0; index < distribution.length; ++index)
+    {
+        if (distribution.data[index] == playerIndex)
+            distribution.data[index] = 0xff;
+    }
+}
+
+static const SoundEvent* SelectFinishLineSound(unsigned int finishers,
+                                               bool scoreVariant,
+                                               const boost::shared_ptr<ServerPlayer>& winner,
+                                               GameStats& gameStats)
+{
+    const SoundEvent* sound = SoundEvents::MG03_FINISH_LINE;
+    if (winner == 0)
+        return sound;
+
+    const unsigned int round = GameStatsCurrentRound(gameStats);
+    const StatsUID suid = winner->getSUID();
+    PlayerStats* winnerStats = gameStats.GetPlayerStats(suid);
+    if (winnerStats == 0)
+        return sound;
+
+    if (scoreVariant)
+    {
+        PlayerStats::RoundStats* roundStats = winnerStats->getRoundStats(round);
+        if (roundStats == 0)
+            return sound;
+
+        const unsigned int playerScore =
+            static_cast<unsigned int>(roundStats->mPoints + roundStats->mBonusPoints);
+        const unsigned int highestScore = gameStats.GetHighestScoringPlayerScore();
+        const bool bestScore = playerScore >= highestScore && finishers != 0;
+
+        if (bestScore)
+        {
+            if (finishers == 1)
+                sound = SoundEvents::MG03_FINISH_LINE_1ST_BEST_SCORE;
+            else if (finishers < 3)
+                sound = SoundEvents::MG03_FINISH_LINE_2ND_BEST_SCORE;
+            else if (finishers != 3)
+                sound = SoundEvents::MG03_FINISH_LINE_3RD_BEST_SCORE;
+        }
+        else if (finishers == 1)
+            sound = SoundEvents::MG03_FINISH_LINE_1ST;
+        else if (finishers < 3)
+            sound = SoundEvents::MG03_FINISH_LINE_2ND;
+        else if (finishers == 3)
+            sound = SoundEvents::MG03_FINISH_LINE_3RD;
+    }
+    else
+    {
+        const unsigned int playerTime =
+            static_cast<unsigned int>(winnerStats->getLifeSpan(round));
+        const unsigned int fastestTime = gameStats.GetFastestPlayerTime();
+        const bool bestTime = playerTime <= fastestTime && finishers != 0;
+
+        if (bestTime)
+        {
+            if (finishers == 1)
+                sound = SoundEvents::MG03_FINISH_LINE_1ST_BEST_TIME;
+            else if (finishers < 3)
+                sound = SoundEvents::MG03_FINISH_LINE_2ND_BEST_TIME;
+            else if (finishers == 3)
+                sound = SoundEvents::MG03_FINISH_LINE_3RD_BEST_TIME;
+        }
+        else if (finishers == 1)
+            sound = SoundEvents::MG03_FINISH_LINE_1ST;
+        else if (finishers < 3)
+            sound = SoundEvents::MG03_FINISH_LINE_2ND;
+        else if (finishers == 3)
+            sound = SoundEvents::MG03_FINISH_LINE_3RD;
+    }
+
+    return sound;
+}
+
 static void BroadcastGameModePacket(GameModePacket::EMessage message,
                                     const GameModePacket::Data& data)
 {
     if (gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
         return;
     gMinecraftServer->getPlayers()->broadcastAll(GameModePacket::Create(message, data));
+}
+
+static bool& WiiUBattleLootSetChosen(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x168);
+}
+
+static bool& WiiUPlayersInvulnerable(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x161);
+}
+
+static bool& WiiUAchievementExploitStopped(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<bool*>(reinterpret_cast<char*>(gameMode) + 0x174);
+}
+
+static int& WiiUTutorialLastPlayerCount(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(gameMode) + 0x2f8);
+}
+
+static int& WiiULayerBlocksDestroyed(MasterGameMode* gameMode)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(gameMode) + 0x2ec);
+}
+
+static std::vector<GameCondition*>& ConditionConnectiveConditions(ConditionConnective* connective)
+{
+    return *reinterpret_cast<std::vector<GameCondition*>*>(reinterpret_cast<char*>(connective) + 8);
+}
+
+static int& GhostControllerLastTickHigh(GhostController* controller)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(controller) + 0x68);
+}
+
+static unsigned int& GhostControllerLastTickLow(GhostController* controller)
+{
+    return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(controller) + 0x6c);
+}
+
+static int& GhostControllerPlaybackTimeHigh(GhostController* controller)
+{
+    return *reinterpret_cast<int*>(reinterpret_cast<char*>(controller) + 0x70);
+}
+
+static unsigned int& GhostControllerPlaybackTimeLow(GhostController* controller)
+{
+    return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(controller) + 0x74);
 }
 
 } // namespace
@@ -203,12 +447,65 @@ void MasterGameMode::StaticCtor()
 
 void MasterGameMode::GeneratePlaylistSyncInfo()
 {
-    mPlaylistDirty = true;
+    ByteArrayOutputStream byteStream;
+    DataOutputStream stream(&byteStream);
+
+    const EMiniGameId miniGameType = gApp.GetFirstMiniGameType();
+    if (miniGameType == eMiniGameId_Battle || miniGameType == eMiniGameId_Glide)
+    {
+        StringTable localTable;
+        int totalRulesetCount = 0;
+        for (std::deque<LevelRules::LevelRulesetGroup*>::iterator groupIt = mRuleGroups.begin();
+             groupIt != mRuleGroups.end(); ++groupIt)
+            totalRulesetCount += static_cast<int>((*groupIt)->rulesets.size());
+        stream.writeInt(totalRulesetCount);
+
+        std::wstring worldNameKey(L"Active");
+        for (std::deque<LevelRules::LevelRulesetGroup*>::iterator groupIt = mRuleGroups.begin();
+             groupIt != mRuleGroups.end(); ++groupIt)
+        {
+            LevelRules::LevelRulesetGroup* group = *groupIt;
+            for (std::vector<LevelRuleset*>::iterator rulesetIt = group->rulesets.begin();
+                 rulesetIt != group->rulesets.end(); ++rulesetIt)
+            {
+                LevelRuleset* ruleset = *rulesetIt;
+                LevelGenerationOptions* options = ruleset->getGenerationOptions();
+                stream.writeInt(static_cast<int>(options->getUniqueId()));
+                worldNameKey = options->getWorldNameKey();
+                stream.writeUTF(worldNameKey);
+                options = ruleset->getGenerationOptions();
+                stream.writeInt(static_cast<int>(options->getTexturePackId()));
+                options = ruleset->getGenerationOptions();
+                options->copyStringToTable(worldNameKey, &localTable);
+            }
+        }
+        localTable.write(&stream);
+    }
+    else if (miniGameType == eMiniGameId_Build)
+    {
+        Random random;
+        std::vector<int> themeIds = WiiUEnglishStringTable(this)->getRandomStringIds(5, &random);
+        stream.writeInt(static_cast<int>(themeIds.size()));
+        for (std::vector<int>::iterator idIt = themeIds.begin(); idIt != themeIds.end(); ++idIt)
+            stream.writeInt(*idIt);
+        WiiUBuildOffThemeIds(this) = themeIds;
+    }
+
+    WiiUPlaylistSyncData(this) = byteStream.toByteArray();
 }
 
 void MasterGameMode::ResetReadyStates(bool allPlayers)
 {
-    mPlaylistDirty = true;
+    for (unsigned int index = 0; index < 8; ++index)
+    {
+        mPlayerReady[index] = allPlayers;
+        if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+        {
+            boost::shared_ptr<Packet> readyPacket(
+                new PlayerReadyPacket(index, allPlayers));
+            gMinecraftServer->getPlayers()->broadcastAll(readyPacket);
+        }
+    }
 }
 
 void MasterGameMode::ResetLastKnownPosition(int playerIndex)
@@ -218,7 +515,32 @@ void MasterGameMode::ResetLastKnownPosition(int playerIndex)
 
 int MasterGameMode::GetMinimumPlayersToStart()
 {
-    return mMinimumPlayers;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame->GetHostOption(static_cast<eCustomGameModeHostOption>(0xe)))
+        return 1;
+
+    int result = 0;
+    unsigned int miniGameId = miniGame->GetId();
+    if (miniGameId == eMiniGameId_Lobby)
+        miniGameId = GetNextGameMode();
+
+    if (miniGameId != 0 && miniGameId != static_cast<unsigned int>(eMiniGameId_Any))
+    {
+        const MiniGameDef* customMode =
+            MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(miniGameId), true);
+        GameCondition* startConditions =
+            reinterpret_cast<GameCondition*>(customMode->GetStartConditions());
+        ConditionConnective* connective = dynamic_cast<ConditionConnective*>(startConditions);
+        if (connective != 0 && ConditionConnectiveConditions(connective).size() == 1)
+        {
+            PlayersCondition* playersCondition =
+                dynamic_cast<PlayersCondition*>(ConditionConnectiveConditions(connective)[0]);
+            if (playersCondition != 0)
+                result = playersCondition->GetValue(this);
+        }
+    }
+
+    return result;
 }
 
 MasterGameMode::EInternalGameModeState MasterGameMode::GetState()
@@ -255,17 +577,58 @@ void MasterGameMode::TickTimers()
 
 void MasterGameMode::SyncNextLevelGen()
 {
-    mPlaylistDirty = true;
+    if (mCurrentLevelGenOptions == 0)
+        return;
+
+    LevelRuleset* ruleset = mCurrentLevelGenOptions->getRequiredGameRules();
+    const MiniGameDef* miniGame =
+        MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(ruleset->getRuleType()), true);
+    const unsigned int miniGameId = miniGame->GetId();
+    const unsigned int uniqueId = mCurrentLevelGenOptions->getUniqueId();
+
+    GameModePacket::ChangeCustomGameMode data(miniGameId, uniqueId);
+    boost::shared_ptr<Packet> packet(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x12), data));
+    if (gMinecraftServer != 0)
+        gMinecraftServer->getPlayers()->broadcastAll(packet);
 }
 
-void MasterGameMode::OnGameModeChange(boost::shared_ptr<ServerPlayer> player)
+bool MasterGameMode::OnGameModeChange(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    if (player->mConnection == 0)
+        return false;
+
+    boost::shared_ptr<Packet> packet(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x15), mTutorialData));
+    player->mConnection->send(packet);
+    return true;
 }
 
 void MasterGameMode::CheckTutorialUpdate()
 {
-    mPlaylistDirty = true;
+    PlayerList* playerList = gMinecraftServer->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+
+    if (!mTutorialDirty)
+    {
+        if (static_cast<int>(players->size()) == WiiUTutorialLastPlayerCount(this))
+            return;
+    }
+
+    WiiUTutorialLastPlayerCount(this) = static_cast<int>(players->size());
+    if (WiiUTutorialLastPlayerCount(this) > 0)
+    {
+        SyncNextLevelGen();
+        players = playerList->getPlayers();
+    }
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (OnGameModeChange(player))
+            mTutorialDirty = false;
+    }
 }
 
 bool MasterGameMode::IsInKillBox(boost::shared_ptr<Entity> entity)
@@ -451,7 +814,20 @@ select_search:
 
 void MasterGameMode::UpdateClientState(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    const EGameModeState wireState = TranslateInternalGameModeState(GetState());
+    GameModePacket::StateChangeData stateData(wireState);
+    boost::shared_ptr<Packet> packet(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x17), stateData));
+
+    if (player == 0)
+    {
+        PlayerList* players = gMinecraftServer != 0 ? gMinecraftServer->getPlayers() : 0;
+        players->broadcastAll(packet);
+    }
+    else
+    {
+        player->mConnection->send(packet);
+    }
 }
 
 void MasterGameMode::SetState(EInternalGameModeState state)
@@ -469,7 +845,37 @@ void MasterGameMode::sendTutorialUpdate(eTutorial_GameMode tutorial)
 
 void MasterGameMode::BroadcastChat(int message, std::vector<int>& arguments)
 {
-    mPlaylistDirty = true;
+    if (message == 0)
+        return;
+
+    const unsigned long long now = System::processTimeInMilliSecs();
+    MasterGameModeWiiUBroadcastChatState& chatState = WiiUBroadcastChatState(this);
+    if (message == chatState.lastChatMessage)
+    {
+        const unsigned long long elapsed = now - chatState.lastBroadcastTime;
+        if (elapsed < 501ULL)
+            return;
+    }
+
+    const unsigned int argumentCount = static_cast<unsigned int>(arguments.size());
+    int* packedArguments = 0;
+    if (argumentCount != 0)
+    {
+        packedArguments = new int[argumentCount];
+        for (unsigned int index = 0; index < argumentCount; ++index)
+            packedArguments[index] = arguments[index];
+    }
+
+    boost::shared_ptr<Packet> chatPacket(
+        new ClientboundChatPacket(static_cast<ClientboundChatPacket::EChatPacketMessage>(message),
+                                  packedArguments, argumentCount, 0, 0));
+    delete[] packedArguments;
+
+    if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+        gMinecraftServer->getPlayers()->broadcastAll(chatPacket);
+
+    chatState.lastBroadcastTime = now;
+    chatState.lastChatMessage = message;
 }
 
 void MasterGameMode::CompleteTimer(ETimerID timer)
@@ -485,7 +891,59 @@ void MasterGameMode::CompleteTimer(ETimerID timer)
 
 void MasterGameMode::CheckReadyStates()
 {
-    mPlaylistDirty = true;
+    unsigned int readyCount = 0;
+    for (unsigned int index = 0; index < 8; ++index)
+    {
+        if (mPlayerReady[index])
+            ++readyCount;
+    }
+
+    const unsigned int minimumPlayers = GetMinimumPlayersToStart();
+    const unsigned int playerCount = GetPlayerCount(false, false);
+    if (playerCount < minimumPlayers)
+    {
+        std::vector<int> arguments;
+        arguments.push_back(static_cast<int>(minimumPlayers - playerCount));
+        BroadcastChat(0x87, arguments);
+    }
+
+    unsigned int requiredReadyCount = playerCount;
+    if (!GetMiniGame()->CanAutoStart())
+    {
+        const unsigned int scaled =
+            static_cast<unsigned int>(ceilf(static_cast<float>(playerCount) * 0.5f));
+        requiredReadyCount = scaled > minimumPlayers ? scaled : minimumPlayers;
+    }
+
+    if (readyCount < requiredReadyCount)
+    {
+        if (!GetMiniGame()->CanAutoStart())
+        {
+            std::vector<int> arguments;
+            arguments.push_back(static_cast<int>(requiredReadyCount - readyCount));
+            BroadcastChat(0x88, arguments);
+            if (GetState() == eInternalGameModeState_WaitingToStart)
+            {
+                KillTimer(eTimerID_WaitingToStart);
+                SetState(eInternalGameModeState_RoundStarting);
+            }
+        }
+    }
+    else
+    {
+        if (!GetMiniGame()->CanAutoStart())
+        {
+            if (GetState() == eInternalGameModeState_RoundStarting)
+                SetState(eInternalGameModeState_WaitingToStart);
+        }
+        else if (GetState() == eInternalGameModeState_WaitingToStart)
+        {
+            const unsigned int currentPlayerCount = GetPlayerCount(false, false);
+            const unsigned int currentMinimum = GetMinimumPlayersToStart();
+            if (currentMinimum <= currentPlayerCount)
+                CompleteTimer(eTimerID_WaitingToStart);
+        }
+    }
 }
 
 void MasterGameMode::OnGameChange(MasterGameMode* gameMode, void* context)
@@ -593,32 +1051,202 @@ void MasterGameMode::PopulateChests()
 
 int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
 {
-    return mInternalState;
+    if (definition.GetId() == eMiniGameId_Tumble)
+    {
+        if (central && definition.HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+        {
+            int winningVote = 0;
+            Voteable* variantVote = mVoteables->getVoteable(0);
+            if (variantVote->getWinningVote(winningVote) == -1)
+            {
+                const unsigned int variant = definition.GetGameVariant();
+                const unsigned int variantCount = definition.GetGameVariantCount();
+                definition.SetHostOption(eCustomGameModeHostOption_GameVariant,
+                                         (variant + 1) % (variantCount - 2));
+            }
+            else
+            {
+                variantVote = mVoteables->getVoteable(0);
+                variantVote->getWinningVote(winningVote);
+                definition.SetHostOption(eCustomGameModeHostOption_GameVariant,
+                                         static_cast<unsigned int>(winningVote));
+            }
+        }
+
+        if (definition.HasGameVariants() &&
+            !CGameNetworkManager::sInstance.IsInPublicJoinableGame() &&
+            CGameNetworkManager::sInstance.IsHost())
+        {
+            int themeVote = 0;
+            Voteable* variantVote = mVoteables->getVoteable(0);
+            if (variantVote->getWinningVote(themeVote) != -1)
+            {
+                definition.SetHostOption(eCustomGameModeHostOption_GameVariant,
+                                         static_cast<unsigned int>(themeVote));
+                return themeVote;
+            }
+        }
+
+        if (!definition.IsCustomGame())
+            return static_cast<int>(definition.GetGameVariant());
+    }
+    else if (definition.GetId() == eMiniGameId_Battle)
+    {
+        const int lootSetId = definition.GetLootSetId();
+        if (!WiiUBattleLootSetChosen(this) && lootSetId != 5)
+            return lootSetId;
+
+        WiiUBattleLootSetChosen(this) = true;
+        Random random;
+        return random.nextInt(5);
+    }
+
+    return definition.GetLootSetId();
 }
 
 int MasterGameMode::GetTeamCount()
 {
-    return mActiveTeamCount;
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    if (miniGame->GetId() == eMiniGameId_Build && mCurrentLevelGenOptions != 0)
+    {
+        std::vector<AABB*> teamAreas;
+        LevelRuleset* ruleset = mCurrentLevelGenOptions->getRequiredGameRules();
+        ruleset->getNamedAreas(0xff, &teamAreas);
+        return static_cast<int>(teamAreas.size());
+    }
+
+    miniGame = Minecraft::GetInstance()->GetMiniGame();
+    return static_cast<int>(miniGame->GetTeamCount());
 }
 
 void MasterGameMode::SetupTeams()
 {
-    mPlaylistDirty = true;
+    ServerLevel* level = gMinecraftServer != 0 ? gMinecraftServer->getLevel(0) : 0;
+    ServerScoreboard* scoreboard = level->GetServerScoreboard();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    const EMiniGameId miniGameId = static_cast<EMiniGameId>(miniGame->GetId());
+    const bool hideDeathMessages = miniGameId == eMiniGameId_Tumble || miniGameId == eMiniGameId_Glide;
+
+    for (int teamIndex = GetTeamCount(); teamIndex != 0; --teamIndex)
+    {
+        wchar_t nameBuffer[0x20];
+        swprintf(nameBuffer, 0x20, L"%d", teamIndex);
+        const std::wstring teamName(nameBuffer);
+
+        PlayerTeam* team = scoreboard->getPlayerTeam(teamName);
+        if (team == 0)
+            team = scoreboard->addPlayerTeam(teamName);
+
+        if (team != 0)
+        {
+            team->setAllowFriendlyFire(true);
+            team->setNameTagVisibility(Team::HIDE_FOR_OTHER_TEAMS);
+            team->setDeathMessageVisibility(hideDeathMessages ? Team::NEVER : Team::ALWAYS);
+            team->setSeeFriendlyInvisibles(false);
+            team->syncChanges();
+        }
+    }
+
+    if (scoreboard->getPlayerTeam(kSpectatorTeamName) == 0)
+    {
+        PlayerTeam* spectatorTeam = scoreboard->addPlayerTeam(kSpectatorTeamName);
+        spectatorTeam->setNameTagVisibility(Team::HIDE_FOR_OTHER_TEAMS);
+        spectatorTeam->setDeathMessageVisibility(hideDeathMessages ? Team::NEVER : Team::ALWAYS);
+        spectatorTeam->setSeeFriendlyInvisibles(false);
+        spectatorTeam->syncChanges();
+    }
 }
 
 void MasterGameMode::SelectNewGameRules()
 {
-    mPlaylistDirty = true;
+    ChooseNextGameRules(false);
+    if (mCurrentLevelGenOptions == 0)
+        return;
+
+    mCurrentLevelGenOptions->loadBaseSaveData();
+    LevelRuleset* ruleset = mCurrentLevelGenOptions->getRequiredGameRules();
+    const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
+        static_cast<EMiniGameId>(ruleset->getRuleType()), true);
+    const int lootSet = ChooseItemSet(*miniGame, true);
+    miniGame->SetLootSet(lootSet);
+    SetupMiniGameInstance(*miniGame, 0);
+    SetupTeams();
+
+    if (miniGame->GetId() != eMiniGameId_Build)
+        return;
+
+    int selectedTheme = 0;
+    Voteable* voteable = mVoteables->getVoteable(3);
+    if (voteable->getWinningVote(selectedTheme) == -1)
+    {
+        std::vector<int>& themeIds = WiiUBuildOffThemeIds(this);
+        const int themeCount = static_cast<int>(themeIds.size());
+        if (themeCount == 1)
+            selectedTheme = themeIds.front();
+        else if (themeCount > 1)
+            selectedTheme = themeIds.at(mRandom.nextInt(themeCount - 1));
+    }
+
+    setChosenThemeWordId(selectedTheme);
+    clearBuildOffVotes();
+    GeneratePlaylistSyncInfo();
+
+    if (gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
+        return;
+
+    arrayWithLength<unsigned char> syncData = WiiUPlaylistSyncData(this);
+    boost::shared_ptr<Packet> mapPacket(
+        new MapSelectInfoPacket(syncData, false));
+    gMinecraftServer->getPlayers()->broadcastAll(mapPacket);
 }
 
 void MasterGameMode::GetKillBoxes(LevelGenerationOptions* options, std::vector<KillboxRuleDefinition*>& killboxes)
 {
-    mPlaylistDirty = true;
+    LevelRuleset* ruleset = options->getRequiredGameRules();
+    ruleset->getKillboxes(&killboxes);
+
+    std::vector<AABB*> areas;
+    ruleset = options->getRequiredGameRules();
+    ruleset->getNamedAreas(0x10000000, &areas);
+
+    for (std::vector<AABB*>::iterator areaIt = areas.begin(); areaIt != areas.end(); ++areaIt)
+        killboxes.push_back(new KillboxRuleDefinition(*areaIt));
 }
 
 void MasterGameMode::ResetPlayers()
 {
-    mPlaylistDirty = true;
+    PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->getPlayers() : 0;
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+
+        if (player->mInventory != 0)
+            player->mInventory->setCarried(ItemInstance::EMPTY);
+
+        player->getFoodData()->setExhaustion(0.0f);
+
+        const MiniGameDef* miniGame = GetMiniGame();
+        const MiniGameDef::FoodBalance* foodBalance = miniGame->GetFoodBalance();
+        const unsigned int foodLevel = foodBalance->mMaxFoodEnabled
+            ? static_cast<unsigned int>(foodBalance->mMaxFood)
+            : FoodConstants::MaxFood();
+        player->getFoodData()->setFoodLevel(static_cast<int>(foodLevel));
+
+        miniGame = GetMiniGame();
+        foodBalance = miniGame->GetFoodBalance();
+        const double saturation = foodBalance->mMaxSaturationEnabled
+            ? static_cast<double>(foodBalance->mMaxSaturation)
+            : FoodConstants::MaxSaturation();
+        player->getFoodData()->setSaturation(static_cast<float>(saturation));
+    }
+
+    memset(WiiUSpawnDistributionData(this).data, 0xff, WiiUSpawnDistributionData(this).length);
+    memset(WiiUAlternateSpawnDistributionData(this).data, 0xff,
+           WiiUAlternateSpawnDistributionData(this).length);
+    instructionSynchronize();
 }
 
 bool MasterGameMode::IsChunkWithinActiveBounds(void* context, int chunkX, int chunkZ)
@@ -629,7 +1257,76 @@ bool MasterGameMode::IsChunkWithinActiveBounds(void* context, int chunkX, int ch
 
 void MasterGameMode::GenerateChestRefillInfo()
 {
-    mPlaylistDirty = true;
+    const MiniGameDef* miniGame = GetMiniGame();
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    ServerLevel* level = gMinecraftServer != 0 ? gMinecraftServer->getLevel(0) : 0;
+    if (miniGame == 0 || ruleset == 0 || level == 0)
+        return;
+
+    const std::wstring centralLootGroup = miniGame->getCentralLootGroup();
+    const std::wstring outerLootGroup = miniGame->getOuterLootGroup();
+    const std::wstring hvLootGroup = miniGame->getHVLootGroup();
+
+    GameRuleDefinition* compoundRule = ruleset->getRuleByType(
+        static_cast<ConsoleGameRules::EGameRuleType>(30));
+    if (compoundRule == 0)
+        return;
+
+    for (std::vector<ChestRefillInfo>::iterator chestIt = mChestRefills.begin();
+         chestIt != mChestRefills.end(); ++chestIt)
+        ChestLootGroup(*chestIt).clear();
+    mChestRefills.clear();
+
+    std::vector<GameRuleDefinition*> distributeRules;
+    compoundRule->getChildren(&distributeRules,
+                                static_cast<ConsoleGameRules::EGameRuleType>(14));
+
+    const std::wstring startItems(L"StartItems");
+    const std::wstring hvItems(L"HVItems");
+    const std::wstring outerItems(L"OuterItems");
+
+    for (std::vector<GameRuleDefinition*>::iterator ruleIt = distributeRules.begin();
+         ruleIt != distributeRules.end(); ++ruleIt)
+    {
+        DistributeItemsRuleDefinition* distributeRule =
+            dynamic_cast<DistributeItemsRuleDefinition*>(*ruleIt);
+        if (distributeRule == 0)
+            continue;
+
+        const std::wstring& ruleId = distributeRule->getId();
+        const std::wstring* assignedLootGroup = 0;
+        if (StringsEqualIgnoreCase(ruleId, startItems))
+            assignedLootGroup = &centralLootGroup;
+        else if (StringsEqualIgnoreCase(ruleId, hvItems))
+            assignedLootGroup = &hvLootGroup;
+        else if (StringsEqualIgnoreCase(ruleId, outerItems))
+            assignedLootGroup = &outerLootGroup;
+        else
+            continue;
+
+        std::vector<GameRuleDefinition*> positionRules;
+        distributeRule->getChildren(&positionRules);
+        for (std::vector<GameRuleDefinition*>::iterator positionIt = positionRules.begin();
+             positionIt != positionRules.end(); ++positionIt)
+        {
+            WorldPositionRuleDefinition* positionRule =
+                dynamic_cast<WorldPositionRuleDefinition*>(*positionIt);
+            if (positionRule == 0)
+                continue;
+
+            const BlockPos position = WorldPositionFromRule(positionRule);
+            ChestRefillInfo info;
+            info.distance = -1.0f;
+            info.weight = 0.0f;
+            info.x = position.x;
+            info.y = static_cast<short>(position.y);
+            info.z = position.z;
+            ChestLootGroup(info) = *assignedLootGroup;
+            mChestRefills.push_back(info);
+        }
+    }
+
+    instructionSynchronize();
 }
 
 bool MasterGameMode::LoadNewGameRules()
@@ -640,7 +1337,23 @@ bool MasterGameMode::LoadNewGameRules()
 
 void MasterGameMode::SetLockPlayerPositions(bool locked)
 {
-    mLockPlayerPositions = locked;
+    GameModePacket::LockPlayerLocation data(locked);
+    boost::shared_ptr<Packet> packet(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x13), data));
+    if (gMinecraftServer != 0)
+        gMinecraftServer->getPlayers()->broadcastAll(packet);
+
+    if (gMinecraftServer == 0)
+        return;
+
+    PlayerList* playerList = gMinecraftServer->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        player->SetPositionLocked(locked);
+    }
 }
 
 void MasterGameMode::UpdateGeneratorSeed()
@@ -901,42 +1614,192 @@ void MasterGameMode::SetGameMode(const GameType* gameType)
 
 void MasterGameMode::ResetPlayersFlyingState(std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
-    mPlaylistDirty = true;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        player->stopFallFlying();
+    }
+
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == 0 || !miniGame->HasFeatureElytraFlyingOnSpawn())
+        return;
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+
+        AABB* jumpOffPoint = 0;
+        LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions();
+        if (generationOptions != 0)
+        {
+            LevelRuleset* ruleset = generationOptions->getRequiredGameRules();
+            if (ruleset != 0)
+                jumpOffPoint = ruleset->getNamedArea(L"JumpOffPoint");
+        }
+
+        bool startFlying = true;
+        if (jumpOffPoint != 0)
+        {
+            Vec3* position = player->getPos(1.0f);
+            startFlying = !jumpOffPoint->containsIncludingLowerBound(position);
+        }
+
+        if (startFlying)
+        {
+            player->startFallFlying();
+            player->SetGlideCollisionDamage(true);
+        }
+    }
+
+    instructionSynchronize();
 }
 
 void MasterGameMode::ResetPlayerHealths(std::vector<boost::shared_ptr<ServerPlayer> >* players, float health)
 {
-    mPlaylistDirty = true;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (health < 0.0f)
+            player->setHealth(player->getMaxHealth());
+        else
+            player->setHealth(health);
+    }
+    instructionSynchronize();
 }
 
 void MasterGameMode::SetPlayerAbilities(boost::shared_ptr<ServerPlayer> player, const Abilities* abilities)
 {
-    mPlaylistDirty = true;
+    if (!player->isSpectator())
+    {
+        player->mAbilities = *abilities;
+        player->onUpdateAbilities();
+    }
 }
 
 void MasterGameMode::SetPlayersAbilities(std::vector<boost::shared_ptr<ServerPlayer> >* players, const Abilities* abilities)
 {
-    mPlaylistDirty = true;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        SetPlayerAbilities(player, abilities);
+    }
 }
 
 void MasterGameMode::UpdatePlayersAbilities(std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
-    mPlaylistDirty = true;
+    const MiniGameDef* miniGame = GetMiniGame();
+    const Abilities abilities = miniGame->getPlayerAbilities();
+    const unsigned int miniGameId = miniGame->GetId();
+
+    if (miniGameId == eMiniGameId_Tumble)
+        ResetPlayerHealths(players, 1.0f);
+    else if (miniGameId == eMiniGameId_Glide)
+        ResetPlayerHealths(players, 3.0f);
+    else
+        ResetPlayerHealths(players, -1.0f);
+
+    SetPlayersAbilities(players, &abilities);
 }
 
-bool MasterGameMode::ShouldRemoveArmourPiece(int slot)
+bool MasterGameMode::ShouldRemoveArmourPiece(int itemId)
 {
-    return slot >= 0 && slot < 4;
+    if (itemId != 0x18d && itemId != 0x56)
+        return true;
+    return false;
 }
 
 void MasterGameMode::EmptyPlayerInventory(std::vector<boost::shared_ptr<ServerPlayer> >* players, bool includeArmour)
 {
-    mPlaylistDirty = true;
+    if (players == 0)
+        return;
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (player == 0 || player->mInventory == 0)
+            continue;
+
+        Inventory* inventory = player->mInventory.get();
+        if (includeArmour)
+        {
+            inventory->dropAll();
+            continue;
+        }
+
+        for (unsigned int slot = 0; slot < 36; ++slot)
+            inventory->setItem(slot, ItemInstance::EMPTY);
+
+        for (unsigned int armorSlot = 0; armorSlot < 4; ++armorSlot)
+        {
+            not_null_ptr<ItemInstance> armorItem = inventory->getArmor(armorSlot);
+            if (armorItem->isEmpty())
+                continue;
+
+            if (ShouldRemoveArmourPiece(Item::getId(armorItem->getItem())))
+                inventory->setItem(100 + armorSlot, ItemInstance::EMPTY);
+        }
+
+        inventory->setCarried(ItemInstance::EMPTY);
+    }
 }
 
 void MasterGameMode::ResetPlayersEquipmentAndInventory(std::vector<boost::shared_ptr<ServerPlayer> >* players)
 {
-    mPlaylistDirty = true;
+    if (players == 0)
+        return;
+
+    EmptyPlayerInventory(players, false);
+
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame != 0)
+    {
+        const std::wstring lootGroup = miniGame->getCentralLootGroup();
+        if (miniGame->HasLootGroup(lootGroup))
+        {
+            std::vector<boost::shared_ptr<Container> > containers;
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+                 playerIt != players->end(); ++playerIt)
+            {
+                boost::shared_ptr<ServerPlayer> player = *playerIt;
+                if (player == 0 || player->mInventory == 0)
+                    continue;
+                containers.push_back(
+                    boost::static_pointer_cast<Container>(player->mInventory));
+            }
+
+            miniGame->PopulateContainers(&containers, lootGroup);
+            miniGame->EquipPlayers(players);
+        }
+    }
+
+    if (mRoundTimeOffset == 0 && mPausedRoundTime == 0)
+        return;
+
+    if (miniGame == 0 || miniGame->GetId() != eMiniGameId_Tumble)
+        return;
+
+    if (miniGame->GetGameVariant() != 0)
+    {
+        if (!miniGame->IsCustomGame())
+            return;
+        if (miniGame->GetLootSetId() != 0)
+            return;
+    }
+
+    not_null_ptr<ItemInstance> elytraItem(new ItemInstance(Items::elytra));
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (player == 0)
+            continue;
+        player->setItemSlot(EquipmentSlot::CHEST, elytraItem);
+    }
 }
 
 void MasterGameMode::PreparePlayersForGamemode(std::vector<boost::shared_ptr<ServerPlayer> >* players)
@@ -951,12 +1814,41 @@ void MasterGameMode::ResetGameRules()
 
 void MasterGameMode::SetPlayerInvulnerable(boost::shared_ptr<ServerPlayer> player, bool invulnerable)
 {
-    mPlaylistDirty = true;
+    if (player == 0)
+        return;
+
+    bool applyInvulnerable = true;
+    if (!invulnerable)
+    {
+        const Abilities abilities = GetMiniGame()->getPlayerAbilities();
+        if (!abilities.mInvulnerable)
+            applyInvulnerable = false;
+    }
+
+    player->mAbilities.mInvulnerable = applyInvulnerable;
+    player->onUpdateAbilities();
+
+    if (gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
+        return;
+
+    gMinecraftServer->getPlayers()->broadcastAll(
+        boost::shared_ptr<Packet>(
+            new ClientboundPlayerAbilitiesPacket(&player->mAbilities, player->getId())));
 }
 
 void MasterGameMode::SetPlayersInvulnerable(bool invulnerable)
 {
-    mPlaylistDirty = true;
+    WiiUPlayersInvulnerable(this) = invulnerable;
+
+    PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->getPlayers() : 0;
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (!player->isSpectator())
+            SetPlayerInvulnerable(player, invulnerable);
+    }
 }
 
 void MasterGameMode::OnRefillChestTimer(MasterGameMode* gameMode, void* context)
@@ -1097,8 +1989,14 @@ void MasterGameMode::OnRefillChestTimer(MasterGameMode* gameMode, void* context)
 
 void MasterGameMode::OnGracePeriodEnd(MasterGameMode* gameMode, void* context)
 {
-    if (gameMode != 0)
-        gameMode->SetPlayersInvulnerable(false);
+    boost::shared_ptr<Packet> chatPacket(
+        new ClientboundChatPacket(
+            static_cast<ClientboundChatPacket::EChatPacketMessage>(0x7c), -1));
+
+    if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+        gMinecraftServer->getPlayers()->broadcastAll(chatPacket);
+
+    gameMode->SetPlayersInvulnerable(false);
 }
 
 bool MasterGameMode::StartTimer(ETimerID timer, CountdownInfo* countdown, int duration)
@@ -1126,7 +2024,12 @@ void MasterGameMode::OnGameStart(MasterGameMode* gameMode, void* context)
 
 void MasterGameMode::SetLastKnownPosition(boost::shared_ptr<Player> player)
 {
-    mPlaylistDirty = true;
+    const int playerIndex = player->mPlayerIndex;
+    Vec3* position = player->getPos(1.0f);
+    if (mLastKnownPositions[playerIndex] == 0)
+        mLastKnownPositions[playerIndex] = Vec3::newPermanent(position->x, position->y, position->z);
+    else
+        mLastKnownPositions[playerIndex]->set(position);
 }
 
 void MasterGameMode::UpdateClientsCameras(boost::shared_ptr<ServerPlayer> player)
@@ -1222,12 +2125,13 @@ void MasterGameMode::Tick_Round_Playing()
                 {
                     do
                     {
-                        if (!mCheckpoints.empty() && checkpointIndex < mCheckpoints.size() &&
-                            mCheckpoints[checkpointIndex] != 0 && gMinecraftServer != 0)
+                        std::vector<CheckpointRuleDefinition*>& checkpoints = mCheckpoints;
+                        if (!checkpoints.empty() && checkpointIndex < checkpoints.size() &&
+                            checkpoints[checkpointIndex] != 0 && gMinecraftServer != 0)
                         {
                             ServerLevel* level = gMinecraftServer->getLevel(0);
                             if (level != 0)
-                                mCheckpoints[checkpointIndex]->processBeacons(level);
+                                checkpoints[checkpointIndex]->processBeacons(level);
                         }
                         ++checkpointIndex;
                     } while (checkpointIndex < mGameStats.GetFarthestCheckpointReached() + 3);
@@ -1315,12 +2219,92 @@ int MasterGameMode::GetShowdownTime()
 
 void MasterGameMode::StartRoundEndTimer()
 {
-    mPlaylistDirty = true;
+    if (GetShowdownTime() != 0)
+        return;
+
+    CountdownInfo* countdown = new CountdownInfo();
+    countdown->message = 0x7a;
+
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    const MiniGameDef::TimerSpec timerSpec = miniGame->getTimerSpec(eTimerID_RoundLimit);
+    const int totalDuration = static_cast<int>(timerSpec.TotalDurationS());
+
+    std::vector<boost::shared_ptr<ServerPlayer> > glidePlayers = GetGlidePlayers();
+    const int reduction = static_cast<int>(glidePlayers.size());
+
+    const int reductionSeconds = Mth::clamp(((4 - reduction) * totalDuration) / 3, 0, (totalDuration * 2) / 3);
+
+    const int amount = reductionSeconds * 1000;
+    const unsigned int low = static_cast<unsigned int>(mPausedRoundTime);
+    mPausedRoundTime = static_cast<int>(low - amount);
+    mRoundTimeOffset -= static_cast<int>((amount >> 31) + static_cast<unsigned int>(low < static_cast<unsigned int>(amount)));
+
+    StartTimer(eTimerID_RoundLimit, countdown, totalDuration - reductionSeconds);
 }
 
 void MasterGameMode::OnShowdownStart()
 {
-    mPlaylistDirty = true;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame != 0 && miniGame->GetId() == eMiniGameId_Tumble)
+    {
+        bool giveShowdownItem = true;
+        if (miniGame->GetGameVariant() != 0)
+            giveShowdownItem = miniGame->IsCustomGame() && miniGame->GetLootSetId() == 0;
+
+        if (giveShowdownItem && gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+        {
+            std::vector<boost::shared_ptr<ServerPlayer> >* players =
+                gMinecraftServer->getPlayers()->getPlayers();
+            if (players != 0)
+            {
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+                     playerIt != players->end(); ++playerIt)
+                {
+                    boost::shared_ptr<ServerPlayer> player = *playerIt;
+                    if (player == 0 || player->mInventory == 0)
+                        continue;
+
+                    not_null_ptr<ItemInstance> item(new ItemInstance(Items::snowball, 1));
+                    player->setSlot(player->mInventory->m_selected, item);
+                }
+            }
+        }
+    }
+
+    if (gMinecraftServer != 0)
+    {
+        ServerLevel* level = gMinecraftServer->getLevel(0);
+        if (level != 0)
+        {
+            Scoreboard* scoreboard = level->GetScoreboard();
+            if (scoreboard != 0)
+            {
+                std::vector<PlayerTeam*>* teams = scoreboard->getPlayerTeams();
+                if (teams != 0)
+                {
+                    for (std::vector<PlayerTeam*>::iterator teamIt = teams->begin();
+                         teamIt != teams->end(); ++teamIt)
+                    {
+                        PlayerTeam* team = *teamIt;
+                        if (team == 0)
+                            continue;
+                        if (team->getName().compare(kSpectatorTeamName) != 0)
+                        {
+                            team->setNameTagVisibility(Team::ALWAYS);
+                            team->syncChanges();
+                        }
+                    }
+                    delete teams;
+                }
+            }
+        }
+    }
+
+    GameModePacket::EmptyData emptyData;
+    BroadcastGameModePacket(static_cast<GameModePacket::EMessage>(0x16), emptyData);
+
+    if (miniGame != 0 && miniGame->GetId() == eMiniGameId_Glide)
+        StartRoundEndTimer();
 }
 
 std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
@@ -1688,17 +2672,105 @@ void MasterGameMode::PlaceSpectators(std::vector<boost::shared_ptr<ServerPlayer>
 
 void MasterGameMode::OnSpawn(boost::shared_ptr<ServerPlayer> player, boost::shared_ptr<ServerPlayer> owner, bool joining)
 {
-    mPlaylistDirty = true;
+    if (player == 0)
+        return;
+
+    if (!IsInRound())
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> > players;
+        players.push_back(player);
+        PlacePlayers(&players, false, false);
+        UpdateClientsCameras(player);
+        return;
+    }
+
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    bool spawnedAsSpectator = false;
+    if (ruleset != 0)
+    {
+        const MiniGameDef* miniGame = GetMiniGame();
+        const unsigned int livesPerRound =
+            miniGame != 0 ? miniGame->GetLivesPerRound() : 0;
+        if (livesPerRound != 0)
+        {
+            const unsigned int deaths = player->mGameMode != 0
+                ? player->mGameMode->GetDeaths() : 0;
+            if (livesPerRound <= deaths)
+            {
+                if (gMinecraftServer != 0)
+                {
+                    ServerLevel* level = gMinecraftServer->getLevel(0);
+                    if (level != 0)
+                    {
+                        Scoreboard* scoreboard = level->GetScoreboard();
+                        if (scoreboard != 0)
+                            scoreboard->removePlayerFromTeam(player->getSUID());
+                    }
+                }
+
+                std::vector<boost::shared_ptr<ServerPlayer> > spectators;
+                spectators.push_back(player);
+                PlaceSpectators(&spectators);
+                spawnedAsSpectator = true;
+            }
+        }
+
+        if (!spawnedAsSpectator)
+        {
+            std::vector<boost::shared_ptr<ServerPlayer> > players;
+            players.push_back(player);
+            PlacePlayers(&players, false, true);
+            ResetPlayersFlyingState(&players);
+            ResetPlayersEquipmentAndInventory(&players);
+        }
+    }
+
+    player->removeAllEffects();
+
+    boost::shared_ptr<ServerPlayer> roundWinner = GetRoundWinner();
+    if (roundWinner != 0 && player != roundWinner)
+        player->setGameMode(const_cast<GameType*>(GameType::SPECTATOR));
+
+    UpdateClientsCameras(player);
 }
 
 void MasterGameMode::OnSpawned(boost::shared_ptr<ServerPlayer> player, bool joining)
 {
-    mPlaylistDirty = true;
+    if (!IsInRound())
+        return;
+
+    if (gApp.getGameRuleDefinitions() != 0)
+    {
+        const MiniGameDef* miniGame = GetMiniGame();
+        const unsigned int livesPerRound = miniGame->GetLivesPerRound();
+        bool grantAbilities = true;
+        if (livesPerRound != 0)
+        {
+            const unsigned int deaths =
+                player->mGameMode != 0 ? player->mGameMode->GetDeaths() : 0;
+            grantAbilities = livesPerRound > deaths;
+        }
+        if (grantAbilities)
+        {
+            std::vector<boost::shared_ptr<ServerPlayer> > players;
+            players.push_back(player);
+            UpdatePlayersAbilities(&players);
+        }
+    }
+
+    boost::shared_ptr<ServerPlayer> roundWinner = GetRoundWinner();
+    if (roundWinner != 0 && player != roundWinner)
+    {
+        player->setGameMode(const_cast<GameType*>(GameType::SPECTATOR));
+        UpdateClientsCameras(player);
+    }
 }
 
 void MasterGameMode::SendPlaylistInfo(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    arrayWithLength<unsigned char> syncData = WiiUPlaylistSyncData(this);
+    boost::shared_ptr<Packet> mapPacket(new MapSelectInfoPacket(syncData, false));
+    player->mConnection->send(mapPacket);
 }
 
 void MasterGameMode::SetLockPlayerPosition(boost::shared_ptr<ServerPlayer> player, bool locked)
@@ -1843,8 +2915,9 @@ void MasterGameMode::OnJoin(boost::shared_ptr<ServerPlayer> player)
 
     UpdateClientsCameras(player);
 
-    for (std::vector<CheckpointRuleDefinition*>::iterator checkpointIt = mCheckpoints.begin();
-         checkpointIt != mCheckpoints.end(); ++checkpointIt)
+    std::vector<CheckpointRuleDefinition*>& checkpoints = mCheckpoints;
+    for (std::vector<CheckpointRuleDefinition*>::iterator checkpointIt = checkpoints.begin();
+         checkpointIt != checkpoints.end(); ++checkpointIt)
     {
         if (*checkpointIt == 0 || gMinecraftServer == 0)
             continue;
@@ -1883,37 +2956,309 @@ void MasterGameMode::OnJoin(boost::shared_ptr<ServerPlayer> player)
 
 void MasterGameMode::OnFollow(boost::shared_ptr<ServerPlayer> player, bool started, bool force)
 {
-    mPlaylistDirty = true;
+    if (!started)
+    {
+        if (player->IsSpectatingOtherPlayer())
+            player->StopSpectatingPlayer();
+    }
+    else
+    {
+        uint32_t changed = 0;
+        player->SpectatePlayerChange(reinterpret_cast<uint32_t>(&changed), static_cast<int32_t>(force));
+        if (changed == 0)
+            player->StopSpectatingPlayer();
+    }
+
+    UpdateClientsCameras(player);
 }
 
 void MasterGameMode::OnLeave(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    if (player == 0)
+        return;
+
+    const unsigned char playerIndex = static_cast<unsigned char>(player->mPlayerIndex);
+    ClearSpawnDistributionSlot(WiiUSpawnDistributionData(this), playerIndex);
+    ClearSpawnDistributionSlot(WiiUAlternateSpawnDistributionData(this), playerIndex);
+
+    int& loadingPlayerCount = WiiULoadingPlayerCount(this);
+    if (loadingPlayerCount > 0)
+        --loadingPlayerCount;
+
+    if (gMinecraftServer != 0)
+    {
+        ServerLevel* level = gMinecraftServer->getLevel(0);
+        if (level != 0)
+        {
+            Scoreboard* scoreboard = level->GetServerScoreboard();
+            if (scoreboard != 0)
+                scoreboard->removePlayerFromTeam(player->getSUID());
+        }
+    }
+
+    const StatsUID suid = player->getSUID();
+    if (mGameStats.GetPlayerStats(suid) != 0)
+    {
+        ServerLevel* playerLevel = player->getLevel();
+        if (playerLevel != 0)
+        {
+            ServerScoreboard* scoreboard = playerLevel->GetServerScoreboard();
+            if (scoreboard != 0)
+            {
+                scoreboard->OnPlayerStatsChanged(
+                    suid, static_cast<int>(mGameStats.GetDeathCount(suid)));
+            }
+        }
+    }
+
+    if (playerIndex < 8)
+        mPlayerReady[playerIndex] = false;
+
+    if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+    {
+        boost::shared_ptr<Packet> readyPacket(
+            new PlayerReadyPacket(static_cast<unsigned int>(playerIndex), false));
+        gMinecraftServer->getPlayers()->broadcastAll(readyPacket);
+    }
+
+    if (mVoteables != 0)
+    {
+        mVoteables->getVoteable(0)->setIncludedVotesAndSync(
+            static_cast<int>(playerIndex), static_cast<char>(-1));
+        mVoteables->getVoteable(1)->setIncludedVotesAndSync(
+            static_cast<int>(playerIndex), static_cast<int>(playerIndex), static_cast<char>(-1));
+        if (Minecraft::InMiniGame(eMiniGameId_Build, true))
+        {
+            mVoteables->getVoteable(2)->setIncludedVotesAndSync(
+                static_cast<int>(playerIndex), static_cast<int>(playerIndex), static_cast<char>(-1));
+            mVoteables->getVoteable(3)->setIncludedVotesAndSync(
+                static_cast<int>(playerIndex), static_cast<char>(-1));
+        }
+    }
+
+    mGameStats.RemovePlayerStats(player);
+
+    if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* players =
+            gMinecraftServer->getPlayers()->getPlayers();
+        if (players != 0)
+        {
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+                 playerIt != players->end(); ++playerIt)
+            {
+                boost::shared_ptr<ServerPlayer> otherPlayer = *playerIt;
+                if (otherPlayer == 0 || otherPlayer == player)
+                    continue;
+
+                boost::shared_ptr<Entity> camera = otherPlayer->GetCamera();
+                if (camera == player)
+                    OnFollow(otherPlayer, true, false);
+            }
+        }
+    }
 }
 
 void MasterGameMode::OnDeath(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    if (player == 0)
+        return;
+
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame != 0 && miniGame->GetLivesPerRound() != 0)
+    {
+        const unsigned int deaths =
+            player->mGameMode != 0 ? player->mGameMode->GetDeaths() : 0;
+        int remainingLives = static_cast<int>(miniGame->GetLivesPerRound()) -
+                             static_cast<int>(deaths);
+        if (remainingLives < 1)
+        {
+            if (player->mGameMode != 0)
+                player->mGameMode->OnDeath(player);
+            player->setGameMode(const_cast<GameType*>(GameType::SPECTATOR));
+        }
+        else
+            player->sendMessage(0x79, &remainingLives, 1, 0, 0);
+    }
+
+    if (miniGame != 0 && miniGame->GetId() == eMiniGameId_Glide)
+    {
+        ServerLevel* level = player->getLevel();
+        if (level != 0)
+        {
+            ServerScoreboard* scoreboard = level->GetServerScoreboard();
+            if (scoreboard != 0)
+                scoreboard->ResetPlayerScores();
+        }
+    }
+
+    GameModePacket::SoundPositionData soundData(
+        static_cast<float>(player->mX),
+        static_cast<float>(player->mY),
+        static_cast<float>(player->mZ));
+    BroadcastGameModePacket(static_cast<GameModePacket::EMessage>(0x18), soundData);
+
+    if (player->mInventory != 0)
+        player->mInventory->pickSlot(0);
+    player->removeAllEffects();
+    UpdateClientsCameras(player);
 }
 
 void MasterGameMode::StopAchievementExploit(const std::wstring& playerName)
 {
-    mPlaylistDirty = true;
+    if (gMinecraftServer == 0)
+        return;
+
+    PlayerList* playerList = gMinecraftServer->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
+
+    int validPlayerCount = 0;
+    bool matchedExploiterName = false;
+    bool checkedFirstPlayer = false;
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (!player->isAlive())
+            continue;
+        if (player->isSpectator())
+            continue;
+
+        ++validPlayerCount;
+        if (!checkedFirstPlayer)
+        {
+            checkedFirstPlayer = true;
+            if (player->getDisplayName().compare(playerName) == 0)
+                matchedExploiterName = true;
+        }
+    }
+
+    if (matchedExploiterName && validPlayerCount == 2)
+        WiiUAchievementExploitStopped(this) = true;
 }
 
 void MasterGameMode::OnKickReqested(int playerIndex, int reason)
 {
-    mPlaylistDirty = true;
+    if (mVoteables == 0)
+        return;
+
+    const int voteCount = mVoteables->getVoteable(1)->getTotalledVotes()[reason];
+
+    INetworkPlayer* voterPlayer = getNetworkPlayerFromIndex(playerIndex);
+    INetworkPlayer* targetPlayer = getNetworkPlayerFromIndex(reason);
+
+    int cappedPlayerCount = GetPlayerCount(false, false) - 1;
+    if (cappedPlayerCount > 3)
+        cappedPlayerCount = 3;
+
+    if (voterPlayer != 0 && targetPlayer != 0)
+    {
+        std::wstring stringParams[2];
+        stringParams[0] = voterPlayer->GetDisplayName();
+        stringParams[1] = targetPlayer->GetDisplayName();
+        int intParams[2];
+        intParams[0] = voteCount;
+        intParams[1] = cappedPlayerCount;
+
+        boost::shared_ptr<Packet> chatPacket(
+            new ClientboundChatPacket(
+                static_cast<ClientboundChatPacket::EChatPacketMessage>(11),
+                intParams, 2, stringParams, 2));
+
+        if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+            gMinecraftServer->getPlayers()->broadcastAll(chatPacket);
+    }
+
+    if (cappedPlayerCount <= voteCount)
+    {
+        if (targetPlayer != 0)
+        {
+            const wchar_t* targetName = targetPlayer->GetOnlineName();
+            if (targetName != 0)
+                StopAchievementExploit(std::wstring(targetName));
+
+            if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+                gMinecraftServer->getPlayers()->kickPlayerByShortId(targetPlayer->GetSmallId());
+        }
+
+        mVoteables->getVoteable(1)->setIncludedVotesAndSync(
+            reason, reason, static_cast<char>(-1));
+    }
 }
 
 void MasterGameMode::OnStartSpectating(boost::shared_ptr<ServerPlayer> player)
 {
-    mPlaylistDirty = true;
+    player->setGameMode(const_cast<GameType*>(GameType::SPECTATOR));
+
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
+    {
+        boost::shared_ptr<ServerPlayer> trailingPlayer = mGameStats.GetTrailingPlayer(player);
+        if (trailingPlayer != 0)
+        {
+            player->SetCamera(trailingPlayer);
+            UpdateClientsCameras(player);
+        }
+    }
 }
 
 void MasterGameMode::OnServerResume(long long suspendedTime)
 {
-    mPlaylistDirty = true;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame->GetId() != eMiniGameId_Glide && miniGame->GetId() != eMiniGameId_Lobby)
+        return;
+
+    miniGame = GetMiniGame();
+    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
+        return;
+
+    if (IsRoundPlaying())
+    {
+        mGameStats.increasePlayerRoundStartTimeMs(suspendedTime);
+        mRoundStartTime += static_cast<unsigned long long>(suspendedTime);
+    }
+    else if (HasTimer(eTimerID_RoundStart))
+    {
+        RestartTimer(eTimerID_RoundStart,
+                     GetTimerRemainingTime(eTimerID_RoundStart) + static_cast<int>(suspendedTime));
+    }
+
+    GhostController* ghostController = Minecraft::GetInstance()->GetGhostController();
+    if (ghostController != 0)
+    {
+        const long long lastTick =
+            (static_cast<long long>(GhostControllerLastTickHigh(ghostController)) << 32) |
+            static_cast<unsigned int>(GhostControllerLastTickLow(ghostController));
+        const long long newLastTick = lastTick + suspendedTime;
+        GhostControllerLastTickHigh(ghostController) = static_cast<int>(newLastTick >> 32);
+        GhostControllerLastTickLow(ghostController) = static_cast<unsigned int>(newLastTick);
+
+        const long long playbackTime =
+            (static_cast<long long>(GhostControllerPlaybackTimeHigh(ghostController)) << 32) |
+            static_cast<unsigned int>(GhostControllerPlaybackTimeLow(ghostController));
+        const long long newPlaybackTime = playbackTime + suspendedTime;
+        GhostControllerPlaybackTimeHigh(ghostController) = static_cast<int>(newPlaybackTime >> 32);
+        GhostControllerPlaybackTimeLow(ghostController) = static_cast<unsigned int>(newPlaybackTime);
+    }
+
+    Minecraft::GetInstance()->GetClientMasterGameMode()->SetLocalRoundTimeStartOverride(mGameStats.GetStartTime());
+
+    if (HasTimer(eTimerID_GameEnd))
+    {
+        RestartTimer(eTimerID_GameEnd,
+                     GetTimerRemainingTime(eTimerID_GameEnd) + static_cast<int>(suspendedTime));
+    }
+
+    if (HasTimer(eTimerID_ChestRefill))
+    {
+        RestartTimer(eTimerID_ChestRefill,
+                     GetTimerRemainingTime(eTimerID_ChestRefill) + static_cast<int>(suspendedTime));
+    }
+
+    std::vector<boost::shared_ptr<ServerPlayer> > roundPlayers = GetPlayers(true, false);
+    std::vector<boost::shared_ptr<Player> > players(roundPlayers.begin(), roundPlayers.end());
+    CheckTargets(players);
+    CheckCheckpoints(players);
 }
 
 void MasterGameMode::PlayerFinishedLoadingLocally()
@@ -1949,7 +3294,16 @@ int MasterGameMode::GetPostGameTime()
 
 int MasterGameMode::GetMaxKills()
 {
-    return mInternalState;
+    unsigned int maxKills = 0;
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        const unsigned int kills = (*playerIt)->GetGameMode()->GetKills();
+        if (maxKills < kills)
+            maxKills = kills;
+    }
+    return static_cast<int>(maxKills);
 }
 
 int MasterGameMode::GetActiveTeamCount()
@@ -1978,7 +3332,15 @@ unsigned int MasterGameMode::GetLastCheckpointID(const StatsUID& uid)
 
 void MasterGameMode::CatchUpCheckpointCheck(boost::shared_ptr<ServerPlayer> player, AABB* sweptVolume)
 {
-    mPlaylistDirty = true;
+    for (unsigned int index = 0; index < mCheckpoints.size(); ++index)
+    {
+        AABB* checkpointArea = mCheckpoints[index]->getArea();
+        if (checkpointArea->intersects(sweptVolume->mMinX, sweptVolume->mMinY, sweptVolume->mMinZ,
+                                        sweptVolume->mMaxX, sweptVolume->mMaxY, sweptVolume->mMaxZ))
+        {
+            OnCheckpointEnter(player, index, mCheckpoints[index]);
+        }
+    }
 }
 
 void MasterGameMode::KillTimers()
@@ -1989,7 +3351,39 @@ void MasterGameMode::KillTimers()
 
 void MasterGameMode::PositionPlayersInSpectatorLobby()
 {
-    mPlaylistDirty = true;
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
+    if (ruleset == 0)
+        return;
+
+    AABB* spectatorSpawn = ruleset->getNamedArea(L"SpectatorSpawn");
+    if (gMinecraftServer == 0 || gMinecraftServer->getPlayers() == 0)
+        return;
+
+    std::vector<boost::shared_ptr<ServerPlayer> >* players =
+        gMinecraftServer->getPlayers()->getPlayers();
+    if (players == 0)
+        return;
+
+    if (spectatorSpawn != 0)
+    {
+        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+             playerIt != players->end(); ++playerIt)
+            GameModeUtilities::SpawnWithinArea(*playerIt, spectatorSpawn);
+        return;
+    }
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
+         playerIt != players->end(); ++playerIt)
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (player == 0)
+            continue;
+
+        ruleset->postProcessPlayer(player);
+        if (player->mConnection != 0)
+            player->mConnection->teleport(player->mX, player->mY, player->mZ,
+                                          player->mXRot, player->mYRot, true, true);
+    }
 }
 
 void MasterGameMode::ResetPlayer(boost::shared_ptr<ServerPlayer> player)
@@ -2129,7 +3523,27 @@ void MasterGameMode::GetMaxActiveBounds(int& minimumX, int& minimumZ, int& maxim
 
 void MasterGameMode::BlockDestroyedAt(const BlockPos& position)
 {
-    mPlaylistDirty = true;
+    if (mMapGenerator == 0 || GetState() != static_cast<EInternalGameModeState>(0xa))
+        return;
+
+    AABB* layerArea = mMapGenerator->GetLayerBB(static_cast<unsigned int>(mSpawnLayerIndex));
+    if (layerArea == 0 || !layerArea->contains(position))
+        return;
+
+    const int destroyedCount = WiiULayerBlocksDestroyed(this);
+    WiiULayerBlocksDestroyed(this) = destroyedCount + 1;
+
+    const int blockLimit = static_cast<int>(
+        mMapGenerator->GetBlockCountOnLayer(static_cast<unsigned int>(mSpawnLayerIndex)));
+    if (blockLimit < destroyedCount + 11)
+    {
+        ++mSpawnLayerIndex;
+        WiiULayerBlocksDestroyed(this) = 0;
+
+        const unsigned int layerCount = static_cast<unsigned int>(mMapGenerator->GetNumberOfLayers());
+        if (layerCount <= static_cast<unsigned int>(mSpawnLayerIndex))
+            mSpawnLayerIndex = static_cast<int>(layerCount) - 1;
+    }
 }
 
 void MasterGameMode::ResetSpawnLayers()
@@ -2163,6 +3577,12 @@ void MasterGameMode::setChosenThemeWordId(int wordId)
 {
     mChosenThemeWordId = wordId;
     CommonMasterGameMode::setChosenThemeWordId(wordId);
+
+    GameModePacket::UpdateThemeGameModeData data(wordId);
+    boost::shared_ptr<Packet> packet(
+        GameModePacket::Create(static_cast<GameModePacket::EMessage>(0x1a), data));
+    if (gMinecraftServer != 0)
+        gMinecraftServer->getPlayers()->broadcastAll(packet);
 }
 
 bool MasterGameMode::IsRoundPlaying() const
@@ -2182,23 +3602,86 @@ void MasterGameMode::OnCheckpointEnter(const boost::shared_ptr<Player>& player, 
 
 void MasterGameMode::PlayReachedEndSFX(const std::vector<boost::shared_ptr<ServerPlayer> >& players, boost::shared_ptr<ServerPlayer> winner)
 {
-    mPlaylistDirty = true;
+    (void)players;
+    const MiniGameDef* miniGame = GetMiniGame();
+    if (miniGame == 0 || !miniGame->HasFeatureFinishLineSoundEffect())
+        return;
+
+    unsigned int finishers = 0;
+    if (gMinecraftServer != 0 && gMinecraftServer->getPlayers() != 0)
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* activePlayers =
+            gMinecraftServer->getPlayers()->getPlayers();
+        if (activePlayers != 0)
+        {
+            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt =
+                     activePlayers->begin();
+                 playerIt != activePlayers->end(); ++playerIt)
+            {
+                boost::shared_ptr<ServerPlayer> activePlayer = *playerIt;
+                if (activePlayer == 0)
+                    continue;
+
+                const StatsUID suid = activePlayer->getSUID();
+                if (mGameStats.GetPlayerStats(suid) != 0 &&
+                    mGameStats.GetEndZoneEntered(suid) != 0)
+                {
+                    ++finishers;
+                }
+            }
+        }
+    }
+
+    const bool scoreVariant = miniGame->GetGameVariant() != 0;
+    const SoundEvent* sound =
+        SelectFinishLineSound(finishers, scoreVariant, winner, mGameStats);
+    if (winner == 0 || sound == 0 || gMinecraftServer == 0 ||
+        gMinecraftServer->getPlayers() == 0)
+    {
+        return;
+    }
+
+    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
+        ClientboundSoundPacket::eSoundInstances_Default, sound, 1.0f, 1.0f, false,
+        winner->getId()));
+    gMinecraftServer->getPlayers()->broadcast(
+        winner, winner->mX, winner->mY, winner->mZ, 30.0, winner->mDimension, packet);
 }
 
 void MasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule)
 {
-    mPlaylistDirty = true;
+    std::vector<boost::shared_ptr<ServerPlayer> > players = GetPlayers(true, false);
+    boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
+    if (mGameStats.RecordEndZoneEntered(serverPlayer->getSUID()) != 0)
+    {
+        ReduceShowdownTime(60000, 30000);
+        mLastKnownPositionPlayers.push_back(serverPlayer->getSUID());
+        PlayReachedEndSFX(players, serverPlayer);
+    }
 }
 
 void MasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* rule)
 {
-    mPlaylistDirty = true;
+    boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
+    ServerPlayerGameMode* gameMode = serverPlayer->GetGameMode();
+    if (gameMode != 0)
+    {
+        if (gameMode->RecordSecondaryTargetReached(
+                rule->getName(), rule->getPointValue(),
+                static_cast<GlideRingGenerator::eGlideRingSize>(rule->getSize())))
+        {
+            mLastKnownPositionPlayers.push_back(serverPlayer->getSUID());
+        }
+    }
 }
 
 void MasterGameMode::OnPowerupEnter(const boost::shared_ptr<Player>& player, unsigned int powerup, PowerupRuleDefinition* rule)
 {
     mPlaylistDirty = true;
 }
+
+MasterGameMode::ChestRefillInfo::ChestRefillInfo()
+{}
 
 MasterGameMode::ChestRefillInfo::ChestRefillInfo(const ChestRefillInfo& other)
     : distance(other.distance), weight(other.weight), x(other.x), y(other.y), z(other.z), itemSet(other.itemSet), minimumPlayers(other.minimumPlayers), maximumPlayers(other.maximumPlayers), refillCount(other.refillCount), refillInterval(other.refillInterval), nextRefill(other.nextRefill), region(other.region), chestIndex(other.chestIndex), lootGroup(other.lootGroup)

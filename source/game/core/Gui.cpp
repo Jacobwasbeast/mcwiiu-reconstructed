@@ -8,8 +8,10 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/ItemRenderer.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 Gui::Gui(Minecraft* minecraft)

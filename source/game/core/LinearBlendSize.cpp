@@ -1,5 +1,7 @@
 #include "game/core/LinearBlendSize.hpp"
 
+#include <cstddef>
+
 #include "game/util/Random.hpp"
 
 LinearBlendSize::LinearBlendSize(unsigned int minSize, unsigned int maxSize)

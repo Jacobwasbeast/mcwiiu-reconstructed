@@ -35,7 +35,7 @@ public:
     void LoadGameMode(EMiniGameId);
     void HandleLoadListPress(int);
     void HandleNewListPress(int, int);
-    static void TexturePackDialogReturned(void*, int, C4JStorage::EMessageResult);
+    static int TexturePackDialogReturned(void*, int, C4JStorage::EMessageResult);
     void CheckAndJoinGame(int);
     void HandleGamesListPressed(int);
     void SetIgnoreInput(bool);

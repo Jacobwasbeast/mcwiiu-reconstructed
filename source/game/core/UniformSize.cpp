@@ -1,4 +1,5 @@
 #include "game/core/UniformSize.hpp"
+#include <cstddef>
 
 UniformSize::UniformSize(unsigned int size)
 {

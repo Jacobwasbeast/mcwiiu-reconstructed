@@ -271,7 +271,7 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
 
 boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
 {
-    if (type != EScoreboardType_Scoreboard || column == -1)
+    if (type != EScoreboardType_Scoreboard || row == -1)
     {
         return boost::shared_ptr<ItemInstance>();
     }
@@ -279,12 +279,12 @@ boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, in
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (miniGame->ArePointsActive())
     {
-        if (column == 4)
+        if (row == 4)
         {
             return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
         }
     }
-    else if (column == 2)
+    else if (row == 2)
     {
         return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
     }
