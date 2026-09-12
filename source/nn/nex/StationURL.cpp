@@ -859,8 +859,13 @@ void StationURL::Format()
                 iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L";");
             }
 
+            // %ls takes a wchar_t*, and these are nn::nex::String objects. Passing
+            // a non-trivial type through varargs is undefined behaviour; GCC
+            // allowed it, clang rejects it. String has operator const wchar_t*,
+            // so the conversion is explicit rather than a c_str() call.
             iLength += std::swprintf(&buffer[iLength], URL_BUFFER_LENGTH, L"%ls%ls%ls",
-                itFragment->first, L"=", itFragment->second);
+                static_cast<const wchar_t*>(itFragment->first), L"=",
+                static_cast<const wchar_t*>(itFragment->second));
             bNeedSeparator = true;
         }
     }

@@ -12,17 +12,17 @@ namespace nex
 class NATProperties : public RootObject
 {
 public:
-    enum MappingProperties
-    {
-    };
+    enum MappingProperties : int
+{
+};
 
-    enum FilteringProperties
-    {
-    };
+    enum FilteringProperties : int
+{
+};
 
-    enum PortIncreaseProperties
-    {
-    };
+    enum PortIncreaseProperties : int
+{
+};
 
     struct AllProperties
     {

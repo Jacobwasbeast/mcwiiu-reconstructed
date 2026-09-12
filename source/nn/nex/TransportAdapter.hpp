@@ -21,9 +21,9 @@ class qProtectedList;
 class TransportAdapter : public RootObject
 {
 public:
-    enum ETransportMode
-    {
-    };
+    enum ETransportMode : int
+{
+};
 
     TransportAdapter();
     virtual ~TransportAdapter();
