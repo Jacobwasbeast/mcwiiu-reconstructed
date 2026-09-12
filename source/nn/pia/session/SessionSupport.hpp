@@ -8,6 +8,9 @@ namespace nn { namespace pia { namespace session {
 unsigned char IsInitialized();
 unsigned char IsDuringSetup();
 void EmbedModuleInfo();
+Result Initialize();
+Result BeginSetup();
+Result EndSetup();
 
 }}}
 

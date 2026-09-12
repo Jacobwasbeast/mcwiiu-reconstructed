@@ -2,10 +2,12 @@
 
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
+#include "nn/pia/session/JoinSessionJob.hpp"
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/SessionStatusCheckJob.hpp"
 #include "nn/pia/session/SessionSupport.hpp"
+#include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -114,6 +116,69 @@ void Session::SetSyncClockPulseInterval(int interval)
 {
     if (g_piaMesh != 0)
         g_piaMesh->SetSyncClockPulseInterval(interval);
+}
+
+void Session::ResetInternalAsyncState()
+{
+    if (m_asyncOperationState != 0 && m_callContext.m_state != common::CallContext::cStateInProgress)
+    {
+        m_callContext.Reset();
+        m_asyncOperationState = 0;
+    }
+}
+
+Result Session::JoinSessionAsync(const JoinSessionSetting* setting)
+{
+    if (setting == 0)
+        return static_cast<Result>(0x10c07);
+    if (m_callContext.m_state == common::CallContext::cStateInProgress)
+        return static_cast<Result>(0x10c08);
+    if (m_startupState != 1)
+        return static_cast<Result>(0x10c08);
+    if (m_joinSessionJobRunning)
+        return static_cast<Result>(0x10c08);
+
+    ResetInternalAsyncState();
+    Result result = m_joinSessionJob->Startup(&m_callContext, setting);
+    if (result == 0)
+    {
+        m_joinSessionJob->Ready(false);
+        m_asyncOperationState = 4;
+    }
+    return result;
+}
+
+Result Session::UpdateSessionSettingAsync(const UpdateSessionSetting* setting)
+{
+    IMatchmakeSession* matchmakeSession = m_matchmakeSession[m_currentSessionIndex];
+    unsigned int sessionId = m_sessionId[m_currentSessionIndex];
+    Result result = UpdateSessionSettingAsyncCore(sessionId, matchmakeSession, setting, false);
+    if (result == 0)
+        m_asyncOperationState = 0x11;
+    return result;
+}
+
+Result Session::UpdateSessionSettingAsyncCore(unsigned int sessionId,
+                                              IMatchmakeSession* matchmakeSession,
+                                              const UpdateSessionSetting* setting,
+                                              bool isJointSession)
+{
+    if (m_callContext.m_state == common::CallContext::cStateInProgress)
+        return static_cast<Result>(0x10c08);
+    if (m_startupState != 1)
+        return static_cast<Result>(0x10c08);
+    if (m_updateSessionSettingJob->IsRunning())
+        return static_cast<Result>(0x10c08);
+
+    ResetInternalAsyncState();
+    if (m_updateSessionSettingJob == 0)
+        return static_cast<Result>(0x10c08);
+
+    Result result = m_updateSessionSettingJob->Startup(
+        &m_callContext, sessionId, matchmakeSession, setting, isJointSession);
+    if (result == 0)
+        m_updateSessionSettingJob->Ready(false);
+    return result;
 }
 
 }}}

@@ -3,6 +3,7 @@
 
 #include "nn/pia.h"
 #include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/transport/Station.hpp"
 
 namespace nn { namespace pia { namespace common { class Job; }}}
@@ -10,9 +11,13 @@ namespace nn { namespace pia { namespace common { class Job; }}}
 namespace nn { namespace pia { namespace session {
 
 class IMatchmakeSession;
+class JoinSessionJob;
+class JoinSessionSetting;
 class JointSessionJob;
 class MeshLayerController;
 class SessionStatusCheckJob;
+class UpdateSessionSetting;
+class UpdateSessionSettingJob;
 
 class Session
 {
@@ -43,9 +48,22 @@ public:
     static bool SessionJoiningApprovalCallback(
         const transport::Station::IdentificationToken* identificationToken);
 
+    void ResetInternalAsyncState();
+    Result JoinSessionAsync(const JoinSessionSetting* setting);
+    Result UpdateSessionSettingAsync(const UpdateSessionSetting* setting);
+    Result UpdateSessionSettingAsyncCore(unsigned int sessionId,
+                                         IMatchmakeSession* matchmakeSession,
+                                         const UpdateSessionSetting* setting,
+                                         bool isJointSession);
+
     MeshLayerController* m_meshLayerController;
     SessionStatusCheckJob* m_sessionStatusCheckJob;
     JointSessionJob* m_jointSessionJob;
+    JoinSessionJob* m_joinSessionJob;
+    UpdateSessionSettingJob* m_updateSessionSettingJob;
+    common::CallContext m_callContext;
+    bool m_joinSessionJobRunning;
+    unsigned int m_asyncOperationState;
     JoiningApprovalCallback m_joiningApprovalCallback;
     unsigned int m_startupState;
     unsigned int m_matchmakeStatus;
