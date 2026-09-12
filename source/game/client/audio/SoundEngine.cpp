@@ -1,5 +1,6 @@
 #include "game/client/audio/SoundEngine.hpp"
 #include "game/client/audio/PlatformSoundEngine.hpp"
+#include "game/client/audio/PlatformSoundEngineImpl.hpp"
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundInstance.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -9,6 +10,7 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 extern CMinecraftApp* g_pApp;
@@ -59,79 +61,160 @@ float soundEngineFloatAt(const SoundEngine* engine, unsigned int offset)
 } // namespace
 
 SoundEngine::SoundEngine()
-    : m_listenerEnabled(0), m_musicListenerEnabled(0), m_thirdListenerEnabled(0), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0), m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(0.0f), m_streamingPitch(0.0f), m_musicEventStarted(0), m_musicField15c(0), m_musicField160(0), m_musicState(0), m_musicNameDataA(0), m_musicNameDataB(0), m_musicNameCapacity(7), m_currentTrack(-1), m_platformSoundEngine(0), m_platformState(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
+    : m_listenerEnabled(0), m_listenerX(0.0f), m_listenerY(0.0f), m_listenerZ(0.0f), m_listenerForwardX(0.0f), m_listenerForwardY(0.0f), m_listenerForwardZ(0.0f), m_musicListenerEnabled(0), m_thirdListenerEnabled(0), m_listenerDistanceScale(0.0f), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0), m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(1.0f), m_streamingPitch(1.0f), m_musicEventStarted(0), m_musicField15c(0), m_musicField160(0), m_musicState(0), m_musicNameDataA(0), m_musicNameDataB(0), m_musicNameCapacity(7), m_currentTrack(-1), m_platformSoundEngine(0), m_platformState(0), m_trackCount(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
 {
     std::memset(m_statePadding, 0, sizeof(m_statePadding));
     std::memset(m_currentTrackPadding, 0, sizeof(m_currentTrackPadding));
     std::memset(m_platformPadding, 0, sizeof(m_platformPadding));
     std::memset(m_platformStatePadding, 0, sizeof(m_platformStatePadding));
-    std::memset(m_streamingSoundIds, 0, sizeof(m_streamingSoundIds));
     SetStreamingSounds(0, 11, 12, 15, 16, 17, 18, 23, 24, 27, 28, 31, 32, 41, 42, 42, 62, 68, 87);
     SetMusicID(eMusicType_End);
+    m_platformSoundEngine = new PlatformSoundEngineImpl();
 }
 
 SoundEngine::~SoundEngine()
 {
     delete m_random;
     delete[] m_trackUsed;
-    delete[] static_cast<int*>(m_trackData);
+    delete[] m_trackData;
 }
 
 int SoundEngine::TracksSortFunction(const void* left, const void* right)
 {
-    return *static_cast<const int*>(left) - *static_cast<const int*>(right);
+    return static_cast<const SoundTrack*>(left)->sortKey - static_cast<const SoundTrack*>(right)->sortKey;
 }
 
-void SoundEngine::BuildTrackList(int first, int last, bool preserve)
+void SoundEngine::BuildTrackList(int first, int last, bool keepFirstTrack)
 {
-    if (first > last || m_trackUsed == 0)
+    if (first <= last)
+    {
+        for (int track = first; track <= last; ++track)
+        {
+            m_trackUsed[track] = 0;
+            m_trackData[track].sortKey = m_random->nextInt(100000);
+            m_trackData[track].trackIndex = track;
+        }
+    }
+
+    if (first == last)
         return;
-    int i;
-    for (i = first; i <= last; ++i)
-        m_trackUsed[i] = 0;
-    if (!preserve)
-        std::sort(m_streamingSoundIds + first, m_streamingSoundIds + last + 1);
+
+    if (keepFirstTrack)
+    {
+        std::qsort(m_trackData + first + 1, last - first, sizeof(SoundTrack), TracksSortFunction);
+        return;
+    }
+
+    std::qsort(m_trackData + first, (last - first) + 1, sizeof(SoundTrack), TracksSortFunction);
+
+    if (m_streamingTrackIndex != -1 && m_trackData[first].trackIndex == m_streamingTrackIndex)
+    {
+        const int displaced = m_trackData[first + 1].trackIndex;
+        m_trackData[first + 1].trackIndex = m_trackData[first].trackIndex;
+        m_trackData[first].trackIndex = displaced;
+    }
 }
 
-void SoundEngine::SetStreamingSounds(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int count)
+void SoundEngine::SetStreamingSounds(int first1, int last1, int first2, int last2, int first3, int last3,
+                                     int first4, int last4, int first5, int last5, int first6, int last6,
+                                     int first7, int last7, int first8, int last8, int first9, int last9,
+                                     int trackCount)
 {
-    const int values[19] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, count };
-    std::memcpy(m_streamingSoundIds, values, sizeof(values));
+    m_trackRanges[0] = first1;
+    m_trackRanges[1] = last1;
+    m_trackRanges[2] = first2;
+    m_trackRanges[3] = last2;
+    m_trackRanges[4] = first3;
+    m_trackRanges[5] = last3;
+    m_trackRanges[6] = first4;
+    m_trackRanges[7] = last4;
+    m_trackRanges[8] = first5;
+    m_trackRanges[9] = last5;
+    m_trackRanges[10] = first6;
+    m_trackRanges[11] = last6;
+    m_trackRanges[12] = first7;
+    m_trackRanges[13] = last7;
+    m_trackRanges[14] = first8;
+    m_trackRanges[15] = last8;
+    m_trackRanges[16] = first9;
+    m_trackRanges[17] = last9;
+    m_trackCount = trackCount;
+
     delete[] m_trackUsed;
-    delete[] static_cast<int*>(m_trackData);
-    m_trackUsed = new unsigned char[count];
-    std::memset(m_trackUsed, 0, count);
-    m_trackData = new int[count * 2];
-    std::memset(m_trackData, 0, (count - 1) * 8 + 1);
+    m_trackUsed = new unsigned char[trackCount];
+    std::memset(m_trackUsed, 0, trackCount);
+
+    delete[] m_trackData;
+    m_trackData = new SoundTrack[trackCount];
+    std::memset(m_trackData, 0, (trackCount - 1) * sizeof(SoundTrack) + 1);
+
     m_streamingTrackIndex = -1;
-    BuildTrackList(a, b, false);
-    BuildTrackList(c, d, false);
-    BuildTrackList(e, f, false);
-    BuildTrackList(g, h, false);
-    BuildTrackList(i, j, false);
-    BuildTrackList(k, l, false);
-    BuildTrackList(m, n, false);
-    BuildTrackList(o, p, false);
-    BuildTrackList(q, r, true);
+
+    BuildTrackList(first1, last1, false);
+    BuildTrackList(first2, last2, false);
+    BuildTrackList(first3, last3, false);
+    BuildTrackList(first4, last4, false);
+    BuildTrackList(first5, last5, false);
+    BuildTrackList(first6, last6, false);
+    BuildTrackList(first7, last7, false);
+    BuildTrackList(first8, last8, false);
+    BuildTrackList(first9, last9, true);
 }
 
 int SoundEngine::GetNextTrack(int first, int last)
 {
-    if (first > last || first < 0 || last >= m_streamingSoundIds[18] || m_trackUsed == 0)
-        return -1;
-    int selected = first;
-    while (selected <= last && m_trackUsed[selected] != 0)
-        ++selected;
-    if (selected > last)
-        selected = first;
-    m_trackUsed[selected] = 1;
-    return m_streamingSoundIds[selected];
+    const int rangeSize = (last - first) + 1;
+    int usedCount = 0;
+    bool picked = false;
+    int chosen = m_trackData[first].trackIndex;
+    bool rebuild = true;
+
+    if (first <= last)
+    {
+        for (int track = last; track >= first; --track)
+        {
+            if (m_trackUsed[track] != 0)
+            {
+                ++usedCount;
+            }
+            else if (!picked)
+            {
+                picked = true;
+                chosen = m_trackData[track].trackIndex;
+                m_trackUsed[track] = 1;
+            }
+        }
+
+        if (usedCount != 0 && usedCount != rangeSize)
+            rebuild = false;
+    }
+
+    if (rebuild)
+    {
+        BuildTrackList(first, last, false);
+        chosen = m_trackData[first].trackIndex;
+        m_trackUsed[first] = 1;
+    }
+
+    m_streamingTrackIndex = m_trackData[chosen].trackIndex;
+    return m_streamingTrackIndex;
 }
 
 void SoundEngine::SetMusicID(eMusicType type)
 {
-    (void)type;
-    m_musicTrack = GetNextTrack(0, m_streamingSoundIds[18] - 1);
+    switch (type)
+    {
+    case eMusicType_Overworld:
+        m_musicTrack = GetNextTrack(m_trackRanges[2], m_trackRanges[3]);
+        return;
+    case eMusicType_End:
+        m_musicTrack = GetNextTrack(m_trackRanges[8], m_trackRanges[9]);
+        return;
+    default:
+        break;
+    }
+
+    m_musicTrack = GetNextTrack(m_trackRanges[0], m_trackRanges[1]);
 }
 
 void SoundEngine::destroy()
@@ -260,7 +343,7 @@ void SoundEngine::SetMusicID(const std::wstring& name)
     };
 
     char* convertedPath = ConvertSoundPathToName(name, true);
-    const int baseTrack = m_streamingSoundIds[18];
+    const int baseTrack = m_trackCount;
     m_musicTrack = baseTrack;
 
     for (int i = 0; i < 12; ++i)

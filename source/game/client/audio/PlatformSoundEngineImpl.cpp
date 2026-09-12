@@ -39,10 +39,7 @@ extern "C" void MIXInit();
 
 extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, RIB_ALLOC_PROVIDER_HANDLE_CALLBACK pAllocProviderHandle, RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface, RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface);
 
-unsigned int file_open_callback(const char* pFileName, unsigned int* puiFileHandle);
-void file_close_callback(unsigned int uiFileHandle);
-int file_seek_callback(unsigned int uiFileHandle, int iOffset, unsigned int uiType);
-int file_read_callback(unsigned int uiFileHandle, void* pBuffer, unsigned int uiBytes);
+#include "platform/wiiu/WiiUMilesFileSystem.hpp"
 
 extern "C" void AIL_startup();
 extern "C" void AIL_shutdown();
@@ -80,8 +77,7 @@ extern "C" int MilesEnumerateSoundInstances(SoundBank* pSoundBank, unsigned int*
 
 static char szSoundPath[] = "WiiU/Sound/";
 
-extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int uiSize, int iAlignment);
-extern "C" void MEMFreeToDefaultHeap(void* pBlock);
+#include <coreinit/memdefaultheap.h>
 
 extern "C" void* platform_alloc(unsigned int uiSize)
 {

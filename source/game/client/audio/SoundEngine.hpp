@@ -5,6 +5,7 @@
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 class File; class Options; class Random; class SoundEvent; class SoundInstance; class MultiplayerLocalPlayer;
 struct AudioInfo { float distance; SoundEvent* soundEvent; };
+struct SoundTrack { int sortKey; int trackIndex; };
 class SoundEngine : public ConsoleSoundEngine {
 public:
  enum eMusicType { eMusicType_Overworld, eMusicType_Nether, eMusicType_End, eMusicType_Menu };
@@ -34,6 +35,6 @@ private:
  unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3]; int m_musicField15c; int m_musicField160; short m_musicState; unsigned char m_statePadding[14];
  int m_musicNameDataA; int m_musicNameDataB; int m_musicNameCapacity;
  void* m_platformSoundEngine; unsigned char m_platformPadding[188]; int m_currentTrack; unsigned char m_currentTrackPadding[24];
- void* m_platformState; unsigned char m_platformStatePadding[40]; int m_streamingSoundIds[19]; unsigned char* m_trackUsed; void* m_trackData; int m_streamingTrackIndex;
+ void* m_platformState; unsigned char m_platformStatePadding[40]; int m_trackRanges[18]; int m_trackCount; unsigned char* m_trackUsed; SoundTrack* m_trackData; int m_streamingTrackIndex;
 };
 #endif
