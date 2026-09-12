@@ -20,7 +20,7 @@ class EndDragonFight;
 class EnderCrystal;
 class EntityTooltipDataHolder;
 class Level;
-class Node;
+struct Node;
 class Path;
 class MultiEntityMobPart;
 class SoundEvent;

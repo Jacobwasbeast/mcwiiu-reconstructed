@@ -84,7 +84,7 @@ class ServerPlayer;
 
 unsigned int TlsAlloc();
 void* TlsGetValue(unsigned int index);
-void TlsSetValue(unsigned int index, void* value);
+int TlsSetValue(unsigned int index, void* value);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 void MemSect(int section);
