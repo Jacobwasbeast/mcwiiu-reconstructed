@@ -36,7 +36,7 @@ struct MilesFile
     unsigned int uSize;
 };
 
-void TlsSetValue(int iIndex, void* pValue);
+int TlsSetValue(int iIndex, void* pValue);
 void* TlsGetValue(int iIndex);
 
 extern "C" int Platform_OpenFile(MilesFile* pFile, const char* pFileName);

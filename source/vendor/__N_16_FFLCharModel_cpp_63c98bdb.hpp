@@ -1,7 +1,7 @@
 #ifndef SOURCE_VENDOR___N_16_FFLCHARMODEL_CPP_63C98BDB_HPP
 #define SOURCE_VENDOR___N_16_FFLCHARMODEL_CPP_63C98BDB_HPP
 
-class FFLCharModel;
+struct FFLCharModel;
 
 class __N_16_FFLCharModel_cpp_63c98bdb
 {
