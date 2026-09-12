@@ -1192,11 +1192,11 @@ double LocalPlayer::getUnderwaterVisionClarity()
     if (current >= 5.0f)
     {
         if (current < 10.0f)
-            value = Mth::Lerp(0.6, 1.0, (current - 5.0f) / 5.0f);
+            value = Mth::Lerp(0.6, 1.0, static_cast<double>((current - 5.0f) / 5.0f));
     }
     else
     {
-        value = Mth::Lerp(3.0, 0.6, current / 5.0f);
+        value = Mth::Lerp(3.0, 0.6, static_cast<double>(current / 5.0f));
     }
     mWaterVisionClarityTarget = static_cast<float>(value);
     mWaterVisionClarityO = current;

@@ -34,4 +34,16 @@ private:
     LayerMetadata::eFilter mFilter;
 };
 
+// LayerAttributeRuleDefinition.cpp defines an explicit specialisation of this
+// constructor, and FilterRuleDefinition.cpp explicitly instantiates the generic
+// template for the same type. C++ requires the specialisation to be declared
+// before any instantiation of it; without this declaration the instantiation
+// silently generates a second definition. GCC tolerated the resulting ODR
+// violation, so the RPX has always linked -- lld rejects it as a duplicate
+// symbol, which is how it was found.
+class LayerFill;
+template <>
+FilterRuleDefinition<LayerFill*>::FilterRuleDefinition(
+    FilterRuleDefinition<LayerFill*>::CreateChildFunc createChild);
+
 #endif

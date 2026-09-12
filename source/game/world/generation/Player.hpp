@@ -37,24 +37,24 @@ class MultiPlayerGameMode;
 
 
 
-struct Achievement;
-struct Block;
-struct BlockPos;
-struct BlockState;
-struct CameraController;
-struct CompoundTag;
-struct DamageSource;
-struct DataFixerUpper;
-struct Direction;
-struct EquipmentSlot;
-struct GameType;
-struct HumanoidArm;
-struct InteractionObject;
-struct Level;
-struct LockCode;
-struct PlayerModelPart;
+class Achievement;
+class Block;
+class BlockPos;
+class BlockState;
+class CameraController;
+class CompoundTag;
+class DamageSource;
+class DataFixerUpper;
+class Direction;
+class EquipmentSlot;
+class GameType;
+class HumanoidArm;
+class InteractionObject;
+class Level;
+class LockCode;
+class PlayerModelPart;
 struct PlayerUID;
-struct Stat;
+class Stat;
 class Scoreboard;
 struct arr_unsigned_char;
 struct not_null_ptr_ItemInstance;
@@ -64,7 +64,8 @@ struct sp_LivingEntity;
 struct sp_Player;
 
 
-struct Player : LivingEntity {
+class Player : public LivingEntity {
+public:
 
     friend class MultiPlayerGameMode;
     friend class ServerGamePacketListenerImpl;
