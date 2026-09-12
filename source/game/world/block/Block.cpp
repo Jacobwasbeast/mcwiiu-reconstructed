@@ -223,7 +223,7 @@
 #include "game/core/HitResult.hpp"
 
 unsigned int TlsAlloc();
-void TlsSetValue(unsigned int index, void* value);
+int TlsSetValue(unsigned int index, void* value);
 
 void createItem__FPC10BlockState(not_null_ptr<ItemInstance>* item, const BlockState* state);
 
