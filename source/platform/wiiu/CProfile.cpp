@@ -895,7 +895,12 @@ void CProfile::RichPresenceInit(int, int titleId)
 
 const wchar_t* CProfile::getStringFromID(int stringId)
 {
-    return mGetStringHandler(stringId);
+    // The original (0x034105C0) calls the pointer at this+0x4ac, and
+    // SetRichPresenceGetStringCallback (0x03411C34) is what writes +0x4ac.
+    // SetGetStringFunc writes +0x248, a different member -- and it has no
+    // callers anywhere in the tree, so mGetStringHandler is always NULL.
+    // Calling it here branched to address 0 out of SetPresenceString.
+    return mRichPresenceStringHandler(stringId);
 }
 
 void CProfile::CreatePresenceString(int quadrant, std::wstring& text)

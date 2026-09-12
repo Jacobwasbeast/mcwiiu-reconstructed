@@ -7,7 +7,7 @@
 typedef unsigned char FFLGender;
 struct FFLCreateID;
 class FFLiAllocator;
-struct FFLiMiddleDB;
+class FFLiMiddleDB;
 
 class FFLiDatabaseFileHidden
 {

@@ -14,7 +14,7 @@ class FFLiFsClient;
 class FFLiFileWriteBuffer;
 class FFLiSystemContext;
 struct FFLiStoreDataCFL;
-struct FFLiMiddleDB;
+class FFLiMiddleDB;
 
 class FFLiDatabaseManager
 {

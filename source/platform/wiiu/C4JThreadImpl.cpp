@@ -39,7 +39,14 @@ void EnterCriticalSection(void* mutex)
 
 void instructionSynchronize()
 {
+#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
     __asm__ volatile("isync" ::: "memory");
+#else
+    // isync is a PowerPC instruction. The host has coherent caches and no
+    // self-modifying code here, so a compiler barrier is the honest
+    // equivalent; the PowerPC path is unchanged.
+    __atomic_signal_fence(__ATOMIC_SEQ_CST);
+#endif
 }
 
 uint64_t InterlockedCompareExchangeRelease64(volatile long long* destination,

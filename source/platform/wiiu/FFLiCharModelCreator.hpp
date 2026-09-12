@@ -108,7 +108,7 @@ struct FFLiMaskTextures
 };
 
 struct FFLiRawMaskDrawParam;
-struct FFLiCompressorParam;
+class FFLiCompressorParam;
 
 struct FFLiPartsTextures
 {

@@ -8,7 +8,7 @@ typedef unsigned char FFLAge;
 typedef unsigned char FFLRace;
 
 struct FFLiCharInfo;
-struct FFLiMiddleDB;
+class FFLiMiddleDB;
 
 class FFLiDatabaseRandom
 {
