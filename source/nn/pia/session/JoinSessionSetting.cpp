@@ -20,6 +20,10 @@ void JoinSessionSetting::Reset()
     m_maxParticipantNum = 0;
 }
 
+void JoinSessionSetting::Trace(unsigned long long) const
+{
+}
+
 const ISessionInfo* JoinSessionSetting::GetSessionInfoPtr() const
 {
     return m_sessionInfo;
