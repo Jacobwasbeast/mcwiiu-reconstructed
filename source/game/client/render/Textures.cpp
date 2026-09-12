@@ -438,8 +438,8 @@ void Textures::tick(bool force, bool unused, bool reload)
             MemSect(0);
             return;
         }
-        if (mBlocks != NULL) mBlocks->cycleAnimationFrames();
-        if (mItems != NULL) mItems->cycleAnimationFrames();
+        mBlocks->cycleAnimationFrames();
+        mItems->cycleAnimationFrames();
     }
 
     EnterCriticalSection(&mMutex);

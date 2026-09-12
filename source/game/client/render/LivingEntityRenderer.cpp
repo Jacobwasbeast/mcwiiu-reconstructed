@@ -8,13 +8,16 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Options.hpp"
 #include "game/core/Team.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
@@ -211,7 +214,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
 
     if (!mSolidRender)
     {
-        bool overlay = setupOverlayColor(living, partialTick);
+        bool overlay = setupOverlayColor(living, partialTick, true);
         renderModel(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
         if (overlay)
             teardownOverlayColor();
@@ -253,7 +256,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         GlStateManager::setupSolidRenderingTextureCombine((int)teamColor);
         if (!mItemFrame)
         {
-            bool overlay = setupOverlayColor(living, partialTick);
+            bool overlay = setupOverlayColor(living, partialTick, true);
             renderModel(living, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
             if (overlay)
                 teardownOverlayColor();

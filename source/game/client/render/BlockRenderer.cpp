@@ -1634,23 +1634,6 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
     bool open = state->getValue(DoorBlock::OPEN);
     bool rendered;
 
-    auto resetFaceState = [&]()
-    {
-        for (int i = 0; i < 6; ++i)
-        {
-            (&mFaceRotation0)[i] = 0;
-            (&mFaceTransform0)[i] = 0;
-        }
-    };
-
-    auto renderDoor = [&]() -> bool
-    {
-        setShape(block->getShape(state, mLevelSource, pos));
-        rendered = tesselateBlockInWorld(state, pos);
-        resetFaceState();
-        return rendered;
-    };
-
     if (!open)
     {
         int* transformA = NULL;
@@ -1685,10 +1668,14 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
                     *transformA = 2;
                     *transformB = 3;
                     mFaceTransform4 = 2;
-                    return renderDoor();
+                    setShape(block->getShape(state, mLevelSource, pos));
+                    rendered = tesselateBlockInWorld(state, pos);
+                    goto resetAndReturn;
                 }
                 *transformB = 1;
-                return renderDoor();
+                setShape(block->getShape(state, mLevelSource, pos));
+                rendered = tesselateBlockInWorld(state, pos);
+                goto resetAndReturn;
             }
             if (direction > Direction::eDirection_South)
             {
@@ -1700,20 +1687,30 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
                         *transformA = 2;
                         *transformB = 3;
                         mFaceTransform4 = 2;
-                        return renderDoor();
+                        setShape(block->getShape(state, mLevelSource, pos));
+                        rendered = tesselateBlockInWorld(state, pos);
+                        goto resetAndReturn;
                     }
                     *transformB = 1;
-                    return renderDoor();
+                    setShape(block->getShape(state, mLevelSource, pos));
+                    rendered = tesselateBlockInWorld(state, pos);
+                    goto resetAndReturn;
                 }
                 if (direction != Direction::eDirection_East)
-                    return renderDoor();
+                {
+                    setShape(block->getShape(state, mLevelSource, pos));
+                    rendered = tesselateBlockInWorld(state, pos);
+                    goto resetAndReturn;
+                }
             }
             mFaceRotation4 = rotation4Value;
             if (rightHinge)
             {
                 *transformB = 1;
                 mFaceTransform4 = 2;
-                return renderDoor();
+                setShape(block->getShape(state, mLevelSource, pos));
+                rendered = tesselateBlockInWorld(state, pos);
+                goto resetAndReturn;
             }
             *transformA = 2;
             *transformB = 3;
@@ -1724,7 +1721,11 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
         if (direction > Direction::eDirection_South)
         {
             if (direction > Direction::eDirection_East)
-                return renderDoor();
+            {
+                setShape(block->getShape(state, mLevelSource, pos));
+                rendered = tesselateBlockInWorld(state, pos);
+                goto resetAndReturn;
+            }
 
             if (rightHinge)
             {
@@ -1735,7 +1736,9 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
                 if (facing->get3DDataValue() == Direction::eDirection_West)
                 {
                     mFaceRotation4 = 3;
-                    return renderDoor();
+                    setShape(block->getShape(state, mLevelSource, pos));
+                    rendered = tesselateBlockInWorld(state, pos);
+                    goto resetAndReturn;
                 }
             }
             else
@@ -1746,11 +1749,15 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
                 if (facing->get3DDataValue() != Direction::eDirection_West)
                 {
                     mFaceRotation4 = 3;
-                    return renderDoor();
+                    setShape(block->getShape(state, mLevelSource, pos));
+                    rendered = tesselateBlockInWorld(state, pos);
+                    goto resetAndReturn;
                 }
             }
             mFaceRotation4 = 0;
-            return renderDoor();
+            setShape(block->getShape(state, mLevelSource, pos));
+            rendered = tesselateBlockInWorld(state, pos);
+            goto resetAndReturn;
         }
 
         if (rightHinge)
@@ -1762,7 +1769,9 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
             if (direction != Direction::eDirection_North)
             {
                 mFaceRotation4 = 1;
-                return renderDoor();
+                setShape(block->getShape(state, mLevelSource, pos));
+                rendered = tesselateBlockInWorld(state, pos);
+                goto resetAndReturn;
             }
         }
         else
@@ -1773,14 +1782,27 @@ bool BlockRenderer::tesselateDoorInWorld(const BlockState* state, const BlockPos
             if (direction == Direction::eDirection_North)
             {
                 mFaceRotation4 = 1;
-                return renderDoor();
+                setShape(block->getShape(state, mLevelSource, pos));
+                rendered = tesselateBlockInWorld(state, pos);
+                goto resetAndReturn;
             }
         }
         mFaceRotation4 = 2;
-        return renderDoor();
+        setShape(block->getShape(state, mLevelSource, pos));
+        rendered = tesselateBlockInWorld(state, pos);
+        goto resetAndReturn;
     }
 
-    return renderDoor();
+    setShape(block->getShape(state, mLevelSource, pos));
+    rendered = tesselateBlockInWorld(state, pos);
+
+resetAndReturn:
+    for (int i = 0; i < 6; ++i)
+    {
+        (&mFaceRotation0)[i] = 0;
+        (&mFaceTransform0)[i] = 0;
+    }
+    return rendered;
 }
 
 bool BlockRenderer::tesselateRailInWorld(const BlockState* state, const BlockPos& pos)

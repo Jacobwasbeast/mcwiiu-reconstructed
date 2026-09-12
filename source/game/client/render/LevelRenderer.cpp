@@ -11,32 +11,43 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/Frustum.hpp"
+#include "game/core/FrustumCuller.hpp"
+#include "game/core/FrustumData.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/Lighting.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Options.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/client/render/ParticleEngine.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/Gui.hpp"
 #include "game/item/RecordItem.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/LeafBlock.hpp"
+#include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 static const unsigned int gChunkDimensionSizes[2] = { 80, 20 };
 
@@ -49,6 +60,8 @@ int gEndOuterChunkZ;
 LevelRenderer* gLevelRenderer;
 
 static boost::unordered_map<int, int> gDisplayListLengths;
+
+extern void instructionSynchronize();
 
 int getChunkIndex(int dimension, int x, int y, int z)
 {
@@ -916,6 +929,28 @@ bool LevelRenderer::isGlobalIndexInSameDimension(int index, Level* level)
     return dimensionIndex == (index < gChunkDimensionBases[3] ? 2 : -1);
 }
 
+bool LevelRenderer::shouldEntityGlow(boost::shared_ptr<Entity> entity, boost::shared_ptr<Entity> camera, Culler* culler)
+{
+    bool cameraIsSleeping = false;
+
+    if ((camera->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    {
+        cameraIsSleeping = boost::static_pointer_cast<LivingEntity>(camera)->isSleeping();
+    }
+
+    if (entity != camera
+        || *reinterpret_cast<int*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0xdc) != 0
+        || cameraIsSleeping)
+    {
+        if (entity->isGlowing())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void LevelRenderer::setupDestroyState()
 {
     GlStateManager::blendFuncSeparate(8, 2, 1, 0);
@@ -1032,6 +1067,70 @@ unsigned int LevelRenderer::clippedByCameraInsideAreas(ClipChunk* chunk)
     return clipped;
 }
 
+int LevelRenderer::renderChunks(int first, int count, int layer, double partialTick)
+{
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+
+    mMinecraft->mGameRenderer->turnOnLightLayer(partialTick);
+
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+
+    double camX = (camera->mX - camera->mXo) * partialTick + camera->mXo;
+    double camY = (camera->mY - camera->mYo) * partialTick + camera->mYo;
+    double camZ = (camera->mZ - camera->mZo) * partialTick + camera->mZo;
+
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef(-(float)camX, -(float)camY, -(float)camZ);
+
+    if (layer == 2)
+    {
+        unsigned int waterColor = Biome::OCEAN->getWaterColor();
+        float alpha = (float)((waterColor >> 24) & 0xff) / 255.0f;
+        gRenderer->StateSetVertexAlpha(alpha);
+    }
+
+    bool running = true;
+    unsigned int mask = (unsigned int)(4 << (layer & 0x3f)) & 0xff;
+
+    setupCameraInsideAreas(camera);
+
+    std::vector<unsigned int> visibleChunks;
+    visibleChunks.reserve(mClipChunks[userIndex].length);
+
+    ClipChunk* chunks = mClipChunks[userIndex].data;
+    int visibleCount = 0;
+
+    for (unsigned int index = 0; index < mClipChunks[userIndex].length; ++index)
+    {
+        ClipChunk* chunk = &chunks[index];
+
+        if (chunk->mVisible && chunk->mGlobalIndex != -1 &&
+            (mask & mGlobalChunkFlags[chunk->mGlobalIndex]) != mask &&
+            clippedByCameraInsideAreas(chunk) == 0)
+        {
+            unsigned int bucket = getBucketMask(camX, camY, camZ, chunk);
+            visibleChunks.push_back((unsigned int)chunk->mGlobalIndex | (bucket << 24));
+            ++visibleCount;
+        }
+    }
+
+    for (std::vector<unsigned int>::iterator entry = visibleChunks.begin(); entry != visibleChunks.end(); ++entry)
+    {
+        int displayList = (int)(*entry & 0xffffff) * 3 + layer + mDisplayList;
+        unsigned char layerMask = (unsigned char)(*entry >> 24);
+
+        if (gRenderer->CBuffCall(displayList, running, layerMask))
+        {
+            running = false;
+        }
+    }
+
+    GlStateManager::popMatrix();
+    mMinecraft->mGameRenderer->turnOffLightLayer(partialTick);
+
+    return visibleCount;
+}
+
 void LevelRenderer::render(boost::shared_ptr<Entity> camera, int layer, double partialTick, bool sort)
 {
     int dimension = mMinecraft->mPlayer->mUserIndex;
@@ -1067,6 +1166,246 @@ void LevelRenderer::render(boost::shared_ptr<Entity> camera, int layer, double p
     Lighting::turnOff();
 
     renderChunks(0, mClipChunks[dimension].length, layer, partialTick);
+}
+
+void LevelRenderer::renderSky(float partialTick)
+{
+    if (mMinecraft->mLevel->mDimension->getType() == DimensionType::THE_END)
+    {
+        GlStateManager::disableFog();
+        GlStateManager::disableAlphaTest();
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
+        Lighting::turnOff();
+        GlStateManager::depthMask(false);
+
+        static ResourceLocation sEndSkyLocation;
+        mTextures->bindTexture(&sEndSkyLocation);
+
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        builder->setMipmapEnable(false);
+
+        static const float sVoidBoxRotations[6][4] =
+        {
+            { 0.0f, 0.0f, 0.0f, 0.0f },
+            { 90.0f, 1.0f, 0.0f, 0.0f },
+            { -90.0f, 1.0f, 0.0f, 0.0f },
+            { 180.0f, 1.0f, 0.0f, 0.0f },
+            { 90.0f, 0.0f, 0.0f, 1.0f },
+            { -90.0f, 0.0f, 0.0f, 1.0f },
+        };
+
+        for (int face = 0; face < 6; ++face)
+        {
+            GlStateManager::pushMatrix();
+
+            if (face != 0)
+            {
+                GlStateManager::rotatef(sVoidBoxRotations[face][0], sVoidBoxRotations[face][1],
+                                        sVoidBoxRotations[face][2], sVoidBoxRotations[face][3]);
+            }
+
+            builder->begin();
+            builder->color(0x282828);
+            builder->vertexUV(-100.0f, -100.0f, -100.0f, 0.0f, 0.0f);
+            builder->vertexUV(-100.0f, -100.0f, 100.0f, 0.0f, 16.0f);
+            builder->vertexUV(100.0f, -100.0f, 100.0f, 16.0f, 16.0f);
+            builder->vertexUV(100.0f, -100.0f, -100.0f, 16.0f, 0.0f);
+            builder->end();
+
+            GlStateManager::popMatrix();
+        }
+
+        builder->setMipmapEnable(true);
+        GlStateManager::depthMask(true);
+        GlStateManager::enableTexture();
+        GlStateManager::enableAlphaTest();
+        return;
+    }
+
+    bool biomeNotNatural = false;
+
+    if (mMinecraft->mPlayer)
+    {
+        Biome* biome = mMinecraft->mLevel->getBiome(BlockPos(mMinecraft->mPlayer));
+
+        if (!biome->isNatural())
+        {
+            biomeNotNatural = true;
+        }
+    }
+
+    if (!mMinecraft->mLevel->mDimension->isNaturalDimension() || biomeNotNatural)
+    {
+        return;
+    }
+
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+    Level* level = mLevels[userIndex];
+
+    if (!level->getGameRules()->getBoolean(8))
+    {
+        partialTick = 0.0f;
+    }
+
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+    Vec3* skyColor = level->getSkyColor(camera, partialTick);
+    float red = (float)skyColor->x;
+    float green = (float)skyColor->y;
+    float blue = (float)skyColor->z;
+
+    if (mMinecraft->mOptions->getBooleanValue(Options::Option::anaglyph))
+    {
+        float red30 = red * 30.0f;
+        float newBlue = (blue * 70.0f + red30) / 100.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + red30)) / 100.0f;
+        float newGreen = (green * 70.0f + red30) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+
+    GlStateManager::color3f(red, green, blue);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    GlStateManager::depthMask(false);
+    GlStateManager::enableFog();
+    GlStateManager::color3f(red, green, blue);
+    GlStateManager::callList(mSkyList);
+    GlStateManager::disableFog();
+    GlStateManager::disableAlphaTest();
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
+
+    Dimension* dimension = level->mDimension;
+    float* sunriseColors = dimension->getSunriseColor((float)level->getTimeOfDay(partialTick), partialTick);
+
+    if (sunriseColors != 0)
+    {
+        GlStateManager::disableTexture();
+        GlStateManager::shadeModel(0);
+        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        GlStateManager::pushMatrix();
+        GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+        float faceAngle = (Mth::sin(level->getSunAngle(partialTick)) >= 0.0f) ? 0.0f : 180.0f;
+        GlStateManager::rotatef(faceAngle, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(90.0f, 0.0f, 0.0f, 1.0f);
+
+        float sunriseR = sunriseColors[0];
+        float sunriseG = sunriseColors[1];
+        float sunriseB = sunriseColors[2];
+
+        if (mMinecraft->mOptions->getBooleanValue(Options::Option::anaglyph))
+        {
+            float r30 = sunriseR * 30.0f;
+            float newB = (sunriseB * 70.0f + r30) / 100.0f;
+            float newG = (sunriseG * 70.0f + r30) / 100.0f;
+            float newR = (sunriseB * 11.0f + (sunriseG * 59.0f + r30)) / 100.0f;
+            sunriseR = newR;
+            sunriseG = newG;
+            sunriseB = newB;
+        }
+
+        builder->begin(2);
+        builder->color(sunriseR, sunriseG, sunriseB, sunriseColors[3]);
+        builder->vertex(0.0f, 100.0f, 0.0f);
+        builder->color(sunriseColors[0], sunriseColors[1], sunriseColors[2], 0.0f);
+
+        for (int segment = 0; segment <= 16; ++segment)
+        {
+            float angle = (float)segment * 3.14159274f / 8.0f;
+            float sinA = Mth::sin(angle);
+            float cosA = Mth::cos(angle);
+            builder->vertex(sinA * 120.0f, cosA * 120.0f, -(cosA * 40.0f * sunriseColors[3]));
+        }
+
+        builder->end();
+        GlStateManager::popMatrix();
+        GlStateManager::shadeModel(0);
+    }
+
+    float sunAngleDegrees = (float)(level->getSunAngle(partialTick) * 57.2957763671875);
+    float moonAngleDegrees = fmodf(sunAngleDegrees + 180.0f, 360.0f);
+
+    GlStateManager::enableTexture();
+    GlStateManager::blendFunc(4, 1);
+    GlStateManager::pushMatrix();
+
+    float rainLevel = level->getRainLevel(partialTick);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f - rainLevel);
+    GlStateManager::translatef(0.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(level->getTimeOfDay(partialTick) * 360.0f, 1.0f, 0.0f, 0.0f);
+
+    static ResourceLocation sSunLocation;
+    static ResourceLocation sMoonPhasesLocation;
+
+    if (sunAngleDegrees <= 125.0f || 235.0f <= sunAngleDegrees)
+    {
+        MemSect(0x1f);
+        mTextures->bindTexture(&sSunLocation);
+        MemSect(0);
+
+        builder->begin();
+        builder->vertexUV(-30.0f, 100.0f, -30.0f, 1.0f, 1.0f);
+        builder->vertexUV(30.0f, 100.0f, -30.0f, 0.0f, 1.0f);
+        builder->vertexUV(30.0f, 100.0f, 30.0f, 0.0f, 0.0f);
+        builder->vertexUV(-30.0f, 100.0f, 30.0f, 1.0f, 0.0f);
+        builder->end();
+    }
+
+    if (moonAngleDegrees <= 125.0f || 235.0f <= moonAngleDegrees)
+    {
+        mTextures->bindTexture(&sMoonPhasesLocation);
+
+        int moonPhase = level->getMoonPhase();
+        int column = moonPhase & 3;
+        int row = (moonPhase >> 2) % 2;
+        float u0 = (float)column * 0.25f;
+        float u1 = (float)(column + 1) * 0.25f;
+        float v0 = (float)row * 0.5f;
+        float v1 = (float)(row + 1) * 0.5f;
+
+        builder->begin();
+        builder->vertexUV(-20.0f, -100.0f, 20.0f, u1, v1);
+        builder->vertexUV(20.0f, -100.0f, 20.0f, u0, v1);
+        builder->vertexUV(20.0f, -100.0f, -20.0f, u0, v0);
+        builder->vertexUV(-20.0f, -100.0f, -20.0f, u1, v0);
+        builder->end();
+    }
+
+    GlStateManager::disableTexture();
+
+    float starBrightness = level->getStarBrightness(partialTick) * (1.0f - rainLevel);
+
+    if (starBrightness > 0.0f)
+    {
+        GlStateManager::color4f(starBrightness, starBrightness, starBrightness, starBrightness);
+        GlStateManager::callList(mStarList);
+    }
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::disableBlend();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::enableFog();
+    GlStateManager::popMatrix();
+    GlStateManager::disableTexture();
+    GlStateManager::color3f(0.0f, 0.0f, 0.0f);
+
+    if (!dimension->hasGround())
+    {
+        GlStateManager::color3f(red, green, blue);
+        GlStateManager::enableTexture();
+        GlStateManager::depthMask(true);
+    }
+    else
+    {
+        GlStateManager::color3f(red * 0.2f + 0.04f, green * 0.2f + 0.04f, blue * 0.6f + 0.1f);
+        GlStateManager::enableTexture();
+        GlStateManager::depthMask(true);
+    }
 }
 
 void LevelRenderer::renderHaloRing(float partialTick)
@@ -1121,6 +1460,324 @@ void LevelRenderer::renderHaloRing(float partialTick)
     GlStateManager::fogEnd(fogEnd);
 }
 
+void LevelRenderer::renderAdvancedClouds(float partialTick, int pass, double x, double y, double z)
+{
+    static float sCloudDriftDelta = 0.0f;
+    static float sCloudDriftAccum = 0.0f;
+    static float sCloudPrevTime = -1.0f;
+    static bool sCloudDriftLatched = false;
+    static ResourceLocation sAdvancedCloudsLocation;
+
+    GlStateManager::multiTexCoord2f(0.0f, 0.0f);
+    gRenderer->StateSetEnableViewportClipPlanes(true);
+
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+    Level* level = mLevels[userIndex];
+
+    float currentTime = (float)mRenderTick + partialTick;
+
+    if (sCloudDriftDelta != 0.0f)
+    {
+        sCloudDriftAccum = sCloudDriftAccum + sCloudDriftDelta;
+    }
+
+    double driftAccum = (double)sCloudDriftAccum;
+    double cellX;
+    double cellZ;
+
+    if (!sCloudDriftLatched)
+    {
+        if (sCloudPrevTime != -1.0f)
+        {
+            sCloudDriftAccum = (float)(driftAccum + ((double)currentTime - (double)sCloudPrevTime));
+            driftAccum = (double)sCloudDriftAccum;
+            sCloudPrevTime = -1.0f;
+        }
+
+        cellZ = z / 12.0 + 0.33000001311302185;
+        cellX = (((double)currentTime - driftAccum) * 1.2399998903274536 + x) / 12.0;
+    }
+    else
+    {
+        if (sCloudPrevTime == -1.0f)
+        {
+            sCloudPrevTime = currentTime;
+        }
+
+        cellZ = z / 12.0 + 0.33000001311302185;
+        cellX = (((double)sCloudPrevTime - driftAccum) * 1.2399998903274536 + x) / 12.0;
+    }
+
+    double cloudRelativeY = level->mDimension->getCloudHeight();
+    cloudRelativeY = (double)(float)(cloudRelativeY - (double)(float)y) + 0.33000001311302185;
+
+    int sectorX = (int)Mth::lfloor(cellX * (1.0 / 2048.0));
+    int sectorZ = (int)Mth::lfloor(cellZ * (1.0 / 2048.0));
+    cellX -= (double)(sectorX << 11);
+    cellZ -= (double)(sectorZ << 11);
+
+    bool cameraInCloudBand = (-5.0 < cloudRelativeY) && (cloudRelativeY <= 5.0);
+
+    if (cameraInCloudBand)
+    {
+        GlStateManager::disableCull();
+    }
+    else
+    {
+        GlStateManager::enableCull();
+    }
+
+    MemSect(0x1f);
+    mTextures->bindTexture(&sAdvancedCloudsLocation);
+    MemSect(0);
+
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
+
+    Vec3* cloudColor = level->getCloudColor(partialTick);
+    float red = (float)cloudColor->x;
+    float green = (float)cloudColor->y;
+    float blue = (float)cloudColor->z;
+    float alpha = 1.0f;
+
+    if (mMinecraft->mOptions->getBooleanValue(Options::Option::anaglyph))
+    {
+        float red30 = red * 30.0f;
+        float newBlue = (blue * 70.0f + red30) / 100.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + red30)) / 100.0f;
+        float newGreen = (green * 70.0f + red30) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+
+    long long cellAnchorX = Mth::lfloor(cellX);
+    long long cellAnchorZ = Mth::lfloor(cellZ);
+    float fracX = (float)(cellX - (double)cellAnchorX);
+    float fracZ = (float)(cellZ - (double)cellAnchorZ);
+
+    float wrapAnchorX = (float)cellAnchorX * (1.0f / 256.0f);
+    float wrapAnchorZ = (float)cellAnchorZ * (1.0f / 256.0f);
+
+    while (wrapAnchorX < 1.0f)
+    {
+        wrapAnchorX = wrapAnchorX + 1.0f;
+    }
+
+    while (wrapAnchorZ < 1.0f)
+    {
+        wrapAnchorZ = wrapAnchorZ + 1.0f;
+    }
+
+    int gridRadius = 3;
+
+    if (activePlayers() > 2)
+    {
+        gridRadius = 2;
+    }
+
+    GlStateManager::scalef(12.0f, 1.0f, 12.0f);
+    FrustumData* frustum = Frustum::getFrustum();
+
+    int gridMin = 1 - gridRadius;
+
+    for (int blendPass = 0; blendPass < 2; ++blendPass)
+    {
+        if (blendPass == 0)
+        {
+            GlStateManager::blendFunc(0, 1);
+        }
+        else
+        {
+            GlStateManager::blendFunc(4, 5);
+        }
+
+        if (gridMin <= gridRadius)
+        {
+            for (int cellRow = gridMin; cellRow <= gridRadius; ++cellRow)
+            {
+                float rowWorld = (float)(cellRow * 8);
+
+                for (int cellCol = gridMin; cellCol <= gridRadius; ++cellCol)
+                {
+                    float colWorld = (float)(cellCol * 8);
+                    double boxX = (double)(rowWorld - fracX);
+                    double boxZ = (double)(colWorld - fracZ);
+
+                    if (frustum->cubeInFrustum(boxX, cloudRelativeY, boxZ,
+                                                boxX + 8.0, cloudRelativeY + 4.0, boxZ + 8.0))
+                    {
+                        GlStateManager::matrixMode(2);
+                        GlStateManager::loadIdentity();
+                        GlStateManager::translatef(rowWorld * (1.0f / 256.0f) + wrapAnchorX,
+                                                    colWorld * (1.0f / 256.0f) + wrapAnchorZ, 0.0f);
+                        GlStateManager::matrixMode(0);
+                        GlStateManager::pushMatrix();
+                        GlStateManager::translatef((float)boxX, (float)cloudRelativeY, (float)boxZ);
+                        GlStateManager::color4f(red, green, blue, alpha);
+
+                        if (!cameraInCloudBand)
+                        {
+                            GlStateManager::callList(mCloudLists + 6);
+                        }
+                        else
+                        {
+                            GlStateManager::callList(mCloudLists + 0);
+                            GlStateManager::callList(mCloudLists + 1);
+
+                            if (cellRow >= 0)
+                            {
+                                if (cellRow < 2)
+                                {
+                                    GlStateManager::translatef(0.0009765625f, 0.0f, 0.0f);
+                                    GlStateManager::callList(mCloudLists + 2);
+                                    GlStateManager::translatef(-0.0009765625f, 0.0f, 0.0f);
+                                    GlStateManager::callList(mCloudLists + 3);
+                                }
+                                else
+                                {
+                                    GlStateManager::callList(mCloudLists + 2);
+                                }
+                            }
+                            else
+                            {
+                                GlStateManager::callList(mCloudLists + 3);
+                            }
+
+                            if (cellCol >= 0)
+                            {
+                                if (cellCol < 2)
+                                {
+                                    GlStateManager::translatef(0.0f, 0.0f, 0.0009765625f);
+                                    GlStateManager::callList(mCloudLists + 4);
+                                    GlStateManager::translatef(0.0f, 0.0f, -0.0009765625f);
+                                    GlStateManager::callList(mCloudLists + 5);
+                                }
+                                else
+                                {
+                                    GlStateManager::callList(mCloudLists + 4);
+                                }
+                            }
+                            else
+                            {
+                                GlStateManager::callList(mCloudLists + 5);
+                            }
+                        }
+
+                        GlStateManager::popMatrix();
+                        GlStateManager::matrixMode(2);
+                        GlStateManager::loadIdentity();
+                        GlStateManager::matrixMode(0);
+                    }
+                }
+            }
+        }
+    }
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::disableBlend();
+    GlStateManager::enableCull();
+
+    gRenderer->StateSetEnableViewportClipPlanes(false);
+    instructionSynchronize();
+}
+
+void LevelRenderer::renderClouds(float partialTick, int pass, double x, double y, double z)
+{
+    if (!GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), (eGameSetting)0x12))
+    {
+        return;
+    }
+
+    bool biomeNotNatural = false;
+
+    if (mMinecraft->mPlayer)
+    {
+        Biome* biome = mMinecraft->mLevel->getBiome(BlockPos(mMinecraft->mPlayer));
+
+        if (!biome->isNatural())
+        {
+            biomeNotNatural = true;
+        }
+    }
+
+    if (!mMinecraft->mLevel->mDimension->isNaturalDimension() || biomeNotNatural)
+    {
+        return;
+    }
+
+    if (mMinecraft->mOptions->mFancyGraphics)
+    {
+        renderAdvancedClouds(partialTick, pass, x, y, z);
+        return;
+    }
+
+    GlStateManager::disableCull();
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    static ResourceLocation sCloudsLocation;
+    mTextures->bindTexture(&sCloudsLocation);
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
+
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+    Level* level = mLevels[userIndex];
+    Vec3* cloudColor = level->getCloudColor(partialTick);
+    float red = (float)cloudColor->x;
+    float green = (float)cloudColor->y;
+    float blue = (float)cloudColor->z;
+
+    if (mMinecraft->mOptions->getBooleanValue(Options::Option::anaglyph))
+    {
+        float red30 = red * 30.0f;
+        float newBlue = (blue * 70.0f + red30) / 100.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + red30)) / 100.0f;
+        float newGreen = (green * 70.0f + red30) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+
+    x = ((float)mRenderTick + partialTick) * 1.2399999f + x;
+
+    int gridX = Mth::lfloor(x * 0.75);
+    int gridZ = Mth::lfloor(z * 0.75);
+    float localX = (float)((x - (double)(gridX << 11)) * 0.75);
+    float localZ = (float)((z - (double)(gridZ << 11)) * 0.75);
+    float cloudY = (float)(level->mDimension->getCloudHeight() - (double)(float)y + 0.33f);
+
+    builder->begin();
+    builder->color(red, green, blue, 0.8f);
+
+    for (int cellX = 0; cellX < 16; ++cellX)
+    {
+        float x0 = -256.0f + (float)cellX * 32.0f;
+        float x1 = x0 + 32.0f;
+        float u0 = x0 * 0.00048828125f + localX;
+        float u1 = x1 * 0.00048828125f + localX;
+
+        for (int cellZ = 0; cellZ < 16; ++cellZ)
+        {
+            float z0 = -256.0f + (float)cellZ * 32.0f;
+            float z1 = z0 + 32.0f;
+            float v0 = z0 * 0.00048828125f + localZ;
+            float v1 = z1 * 0.00048828125f + localZ;
+
+            builder->vertexUV(x0, cloudY, z0, u0, v0);
+            builder->vertexUV(x1, cloudY, z0, u1, v0);
+            builder->vertexUV(x1, cloudY, z1, u1, v1);
+            builder->vertexUV(x0, cloudY, z1, u0, v1);
+        }
+    }
+
+    builder->end();
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::disableBlend();
+    GlStateManager::enableCull();
+}
+
 bool LevelRenderer::isInCloud(double x, double y, double z, float partialTick)
 {
     return false;
@@ -1153,6 +1810,94 @@ bool LevelRenderer::getGlobalChunkFlag(int x, int y, int z, Level* level, unsign
     }
 
     return (bits & mGlobalChunkFlags[index]) == bits;
+}
+
+static ResourceLocation sHitOverlayLocation;
+
+void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult* hit, int pass, not_null_ptr<ItemInstance> item, float partialTick)
+{
+    GlStateManager::enableBlend();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::blendFunc(4, 1);
+
+    float phase = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, (phase * 0.20000000298023224f + 0.4000000059604645f) * 0.5f);
+
+    if (pass != 0)
+    {
+        if (!item->isEmpty())
+        {
+            GlStateManager::blendFunc(4, 5);
+
+            float phase1 = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
+            float rgb = phase1 * 0.20000000298023224f + 0.800000011920929f;
+
+            float phase2 = sinf((float)((double)Minecraft::currentTimeMillis() / 200.0));
+            float alpha = phase2 * 0.20000000298023224f + 0.5f;
+
+            GlStateManager::color4f(rgb, rgb, rgb, alpha);
+            mTextures->bindTexture(&sHitOverlayLocation);
+        }
+    }
+
+    GlStateManager::disableBlend();
+    GlStateManager::disableAlphaTest();
+}
+
+void LevelRenderer::renderDestroyAnimation(Tesselator* tesselator, boost::shared_ptr<Player> player, float partialTick)
+{
+    double camX = (player->mX - player->mXo) * partialTick + player->mXo;
+    double camY = (player->mY - player->mYo) * partialTick + player->mYo;
+    double camZ = (player->mZ - player->mZo) * partialTick + player->mZo;
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+
+    if (mDestroyingBlocks.empty())
+    {
+        return;
+    }
+
+    BufferBuilder* builder = tesselator->getBuilder();
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(8, 2);
+    mTextures->bindTexture(&sHitOverlayLocation);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f);
+    GlStateManager::pushMatrix();
+    GlStateManager::disableAlphaTest();
+    GlStateManager::polygonOffset(-3.0f, -3.0f);
+    GlStateManager::enablePolygonOffset();
+    GlStateManager::enableAlphaTest();
+    builder->begin();
+    builder->offset(-(float)camX, -(float)camY, -(float)camZ);
+    builder->noColor();
+
+    for (boost::unordered_map<int, BlockDestructionProgress*>::iterator entry = mDestroyingBlocks.begin();
+         entry != mDestroyingBlocks.end(); ++entry)
+    {
+        BlockDestructionProgress* progress = entry->second;
+        BlockPos pos = progress->getPos();
+        double dx = (double)pos.x - camX;
+        double dy = (double)pos.y - camY;
+        double dz = (double)pos.z - camZ;
+
+        if (dx * dx + dy * dy + dz * dz < 1024.0)
+        {
+            const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+            state->getBlock();
+
+            mBlockRenderers[userIndex]->tesselateInWorldFixedTexture(
+                mMinecraft->mLevel->getBlockState(pos), pos, mDestroyStages[progress->getProgress()]);
+        }
+    }
+
+    builder->end();
+    builder->offset(0.0f, 0.0f, 0.0f);
+    GlStateManager::disableAlphaTest();
+    GlStateManager::polygonOffset(0.0f, 0.0f);
+    GlStateManager::disablePolygonOffset();
+    GlStateManager::enableAlphaTest();
+    GlStateManager::depthMask(true);
+    GlStateManager::popMatrix();
+    GlStateManager::disableBlend();
 }
 
 void LevelRenderer::renderLineBox(const AABB* box, int color)
@@ -1188,6 +1933,39 @@ void LevelRenderer::renderLineBox(const AABB* box, int color)
     builder->vertex((float)box->mMinX, (float)box->mMinY, (float)box->mMaxZ);
     builder->vertex((float)box->mMinX, (float)box->mMaxY, (float)box->mMaxZ);
     builder->end();
+}
+
+void LevelRenderer::renderHitOutline(boost::shared_ptr<Player> player, const HitResult* hit, int pass, float partialTick)
+{
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+
+    if (pass == 0 && hit->mType == HitResult::BLOCK &&
+        GameSettings::GetGameSettings(userIndex, (eGameSetting)0x17))
+    {
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
+        GlStateManager::color4f(0.0f, 0.0f, 0.0f, 0.4000000059604645f);
+        GlStateManager::lineWidth(2.0f);
+        GlStateManager::disableTexture();
+        GlStateManager::depthMask(false);
+
+        const BlockState* state = mMinecraft->mLevel->getBlockState(hit->getBlockPos());
+        Block* block = state->getBlock();
+
+        double camX = (player->mX - player->mXo) * partialTick + player->mXo;
+        double camY = (player->mY - player->mYo) * partialTick + player->mYo;
+        double camZ = (player->mZ - player->mZo) * partialTick + player->mZo;
+
+        AABB* box = block->getOutlineAABB(state, mLevels[userIndex], hit->getBlockPos())
+                        ->grow(0.0020000000949949026, 0.0020000000949949026, 0.0020000000949949026)
+                        ->move(-camX, -camY, -camZ);
+
+        renderLineBox(box, 0xffffff);
+
+        GlStateManager::depthMask(true);
+        GlStateManager::enableTexture();
+        GlStateManager::disableBlend();
+    }
 }
 
 void LevelRenderer::renderColoredLineBox(const AABB* box, int color, bool splitLargeFaces)
@@ -1611,6 +2389,54 @@ void LevelRenderer::blockLightChanged(const BlockPos& pos)
 void LevelRenderer::setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level)
 {
     setDirty(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1, level);
+}
+
+void LevelRenderer::cull(Culler* culler, float partialTick)
+{
+    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+    int userIndex = boost::static_pointer_cast<LocalPlayer>(cameraEntity)->mUserIndex;
+
+    FrustumCuller* frustumCuller = reinterpret_cast<FrustumCuller*>(culler);
+    double xOffset = -frustumCuller->xOffset;
+    double yOffset = -frustumCuller->yOffset;
+    double zOffset = -frustumCuller->zOffset;
+    float** frustum = frustumCuller->frustumData->frustum;
+
+    float planes[24];
+
+    for (int i = 0; i < 6; ++i)
+    {
+        float* plane = frustum[i];
+        planes[i * 4 + 0] = plane[0];
+        planes[i * 4 + 1] = plane[1];
+        planes[i * 4 + 2] = plane[2];
+        planes[i * 4 + 3] = (float)((double)plane[2] * zOffset + (double)plane[1] * yOffset +
+                                    (double)plane[0] * xOffset + (double)plane[3]);
+    }
+
+    ClipChunk* chunks = mClipChunks[userIndex].data;
+    unsigned int count = mClipChunks[userIndex].length;
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        ClipChunk* chunk = &chunks[i];
+
+        if (chunk->mGlobalIndex == -1)
+        {
+            chunk->mVisible = false;
+            continue;
+        }
+
+        unsigned char flags = mGlobalChunkFlags[chunk->mGlobalIndex];
+
+        if ((flags & 1) == 0 || (flags & 0x1c) == 0x1c)
+        {
+            chunk->mVisible = false;
+            continue;
+        }
+
+        chunk->mVisible = clip(&chunk->mMinX, planes);
+    }
 }
 
 void LevelRenderer::playSound(boost::shared_ptr<Player> player, const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch, float range)

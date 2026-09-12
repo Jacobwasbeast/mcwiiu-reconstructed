@@ -152,8 +152,6 @@ void Texture::updateOnGPU()
         gRenderer->TextureData(m_width, m_height, m_data[0]->getBuffer(), 0, C4JRender::eTextureFormat_RGBA8);
         if (m_hasMipmaps && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
-                if (m_data[level] == NULL)
-                    break;
                 gRenderer->TextureData(m_width >> level, m_height >> level, m_data[level]->getBuffer(), (int)level,
                                        C4JRender::eTextureFormat_RGBA8);
             }
@@ -164,8 +162,6 @@ void Texture::updateOnGPU()
         gRenderer->TextureDataUpdate(0, 0, m_width, m_height, m_data[0]->getBuffer(), 0);
         if (m_hasMipmaps && gRenderer->TextureGetTextureLevels() > 1 && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
-                if (m_data[level] == NULL)
-                    break;
                 gRenderer->TextureDataUpdate(0, 0, m_width >> level, m_height >> level, m_data[level]->getBuffer(),
                                              (int)level);
             }
