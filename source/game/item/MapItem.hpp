@@ -11,7 +11,7 @@ class ItemInstance;
 class Level;
 class MapItemSavedData;
 class Player;
-class PlayerUID;
+struct PlayerUID;
 class Entity;
 class Packet;
 class TextureAtlasSprite;
