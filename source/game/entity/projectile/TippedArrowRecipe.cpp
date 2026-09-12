@@ -67,7 +67,7 @@ void TippedArrowRecipe::addRecipes(Recipes* recipes)
         not_null_ptr<ItemInstance> ingredient = PotionUtils::setPotion(
             not_null_ptr<ItemInstance>(new ItemInstance(Items::lingeringPotion)), *potion);
 
-        recipes->addShapedRecipe(result->copy_not_shared(), L"|||", L"|o|", L"|||",
+        recipes->addShapedRecipe(result->copy_not_shared(), L"sssciczg", L"|||", L"|o|", L"|||",
             L'|', Items::arrow, L'o', ingredient->copy_not_shared(), 0x54);
     }
 }
