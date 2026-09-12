@@ -55,7 +55,7 @@ class HitResult;
 class BlockEntity;
 class CompoundTag;
 class Packet;
-class PlayerUID;
+struct PlayerUID;
 class LevelGenerationOptions;
 class LevelType;
 class LevelSource;
