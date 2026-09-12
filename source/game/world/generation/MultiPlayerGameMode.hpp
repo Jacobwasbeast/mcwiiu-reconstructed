@@ -138,6 +138,7 @@ public:
 
 private:
     BlockPos mDestroyBlockPos;
+    not_null_ptr<ItemInstance> mDestroyItem;
     float mDestroyProgress;
     short mDestroyTicks;
     ClientPacketListener* mConnection;

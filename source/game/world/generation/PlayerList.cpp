@@ -9,12 +9,17 @@
 #include "game/core/MasterGameMode.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/core/Scoreboard.hpp"
+#include "game/network/ClientboundGameEventPacket.hpp"
 #include "game/network/ClientboundSetCarriedItemPacket.hpp"
 #include "game/network/ClientboundSetPlayerTeamPacket.hpp"
+#include "game/network/ClientboundSetSpawnPositionPacket.hpp"
+#include "game/network/ClientboundSetTimePacket.hpp"
+#include "game/network/ServerConnectionListener.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayerGameMode.hpp"
 #include "game/server/ServerScoreboard.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/PlayerChunkMap.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
@@ -290,16 +295,34 @@ void PlayerList::updateEntireScoreboard(ServerScoreboard* scoreboard,
     }
 }
 
-void PlayerList::sendLevelInfo(boost::shared_ptr<ServerPlayer> player, ServerLevel*)
+void PlayerList::sendLevelInfo(boost::shared_ptr<ServerPlayer> player, ServerLevel* level)
 {
-    if (player)
-        player->resetSentInfo();
+    const long long gameTime = level->getGameTime();
+    const long long dayTime = level->getDayTime();
+    GameRules* gameRules = level->getGameRules();
+    const bool daylightCycle = gameRules->getBoolean(8);
+    player->mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundSetTimePacket(gameTime, dayTime, daylightCycle)));
+    if (level->isRaining())
+    {
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(1, 0.0f)));
+    }
+    else
+    {
+        player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(2, 0.0f)));
+    }
+    player->mConnection->send(boost::shared_ptr<Packet>(
+        new ClientboundSetSpawnPositionPacket(level->getSharedSpawnPos())));
 }
 
-void PlayerList::changeDimension(boost::shared_ptr<ServerPlayer> player, ServerLevel*)
+void PlayerList::changeDimension(boost::shared_ptr<ServerPlayer> player, ServerLevel* level)
 {
-    if (player)
-        player->resetSentInfo();
+    ServerLevel* newLevel = player->getLevel();
+    if (level != NULL)
+        level->getChunkMap()->remove(player);
+    newLevel->getChunkMap()->add(player);
+    newLevel->getChunkSource()->create(static_cast<int>(player->mX) >> 4,
+                                              static_cast<int>(player->mZ) >> 4);
 }
 
 void PlayerList::add(boost::shared_ptr<ServerPlayer> player)
@@ -334,11 +357,21 @@ void PlayerList::move(boost::shared_ptr<ServerPlayer> player)
         level->getChunkMap()->move(player);
 }
 
-boost::shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(ServerConnectionListener*,
-                                                              const std::wstring&,
-                                                              PlayerUID, PlayerUID)
+boost::shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(ServerConnectionListener* listener,
+                                                              const std::wstring& name,
+                                                              PlayerUID uid, PlayerUID oldUid)
 {
-    return boost::shared_ptr<ServerPlayer>();
+    if (getMaxPlayers() <= static_cast<int>(mPlayers.size()))
+    {
+        listener->disconnect(DisconnectPacket::eDisconnectReason_GameFull);
+        return boost::shared_ptr<ServerPlayer>();
+    }
+    ServerPlayerGameMode* gameMode = new ServerPlayerGameMode(mServer->getLevel(0), mGameMode);
+    boost::shared_ptr<ServerPlayer> newPlayer(
+        new ServerPlayer(mServer, mServer->getLevel(0), name, gameMode));
+    newPlayer->setXuid(uid);
+    newPlayer->m_0x798 = oldUid;
+    return newPlayer;
 }
 
 std::vector<boost::shared_ptr<ServerPlayer> >* PlayerList::getPlayers()

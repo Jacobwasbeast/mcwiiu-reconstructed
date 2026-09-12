@@ -18,6 +18,7 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/MOJJANG_DATA.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/CameraController.hpp"
 #include "game/core/LockCode.hpp"
@@ -1455,6 +1456,33 @@ void Player::setCustomSkin(uint32_t skin)
 uint64_t Player::setCustomCape(uint32_t cape)
 {
     mField0x7e0 = cape;
+    if (cape == 0)
+    {
+        MOJJANG_DATA* data = g_pApp->GetMojangDataForXuid(m_0x798);
+        if (data == NULL)
+        {
+            if (g_pApp->DefaultCapeExists())
+                mCapeLocation = L"Special_Cape.png";
+            else
+                mCapeLocation = L"";
+        }
+        else
+        {
+            if (data->capePath[0] != 0)
+            {
+                mCapeLocation = data->capePath;
+                return cape;
+            }
+            if (g_pApp->DefaultCapeExists())
+                mCapeLocation = L"Special_Cape.png";
+            else
+                mCapeLocation = L"";
+        }
+    }
+    else
+    {
+        mCapeLocation = getCapePathFromId(cape);
+    }
     return cape;
 }
 

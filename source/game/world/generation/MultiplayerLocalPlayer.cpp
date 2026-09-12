@@ -3,9 +3,13 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/CTelemetryManager.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/core/Stat.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/ServerboundClientCommandPacket.hpp"
+#include "game/network/ServerboundPlayerCommandPacket.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 
 MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener)
@@ -77,7 +81,11 @@ void MultiplayerLocalPlayer::reallyDrop(boost::shared_ptr<ItemEntity> item)
 
 void MultiplayerLocalPlayer::respawn()
 {
-    m_receivedRespawn = true;
+    if (mPacketListener == NULL)
+        return;
+    boost::shared_ptr<Packet> packet(new ServerboundClientCommandPacket(
+        ServerboundClientCommandPacket::PERFORM_RESPAWN));
+    mPacketListener->send(packet);
 }
 
 void MultiplayerLocalPlayer::actuallyHurt(const DamageSource* source, float damage)
@@ -165,7 +173,10 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
 
 void MultiplayerLocalPlayer::StopSleeping()
 {
-    stopSleepInBed(true, false, false);
+    boost::shared_ptr<Entity> entity = shared_from_this();
+    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
+        entity, ServerboundPlayerCommandPacket::STOP_SLEEPING));
+    mPacketListener->send(packet);
 }
 
 void MultiplayerLocalPlayer::setAndBroadcastCustomSkin(unsigned int skin)

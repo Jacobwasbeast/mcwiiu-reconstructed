@@ -1,6 +1,7 @@
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
 #include "game/network/ClientPacketListener.hpp"
+#include "game/network/ServerboundChatPacket.hpp"
 #include "game/network/ServerboundMovePlayerPacket.hpp"
 #include "game/network/ServerboundPlayerAbilitiesPacket.hpp"
 #include "game/core/Minecraft.hpp"
@@ -23,6 +24,11 @@
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/CTelemetryManager.hpp"
+#include "game/core/UnityClient6.hpp"
+#include "game/core/DamageSource.hpp"
+#include "game/core/HitResult.hpp"
+#include "game/client/render/ParticleEngine.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -57,7 +63,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int pla
     : AbstractClientPlayer(level, user != 0 ? user->name : std::wstring()),
       mPacketListener(0), mPermissionLevel(0), mLastSentX(0.0), mLastSentY(0.0),
       mLastSentZ(0.0), mLastSentYRot(0.0f), mLastSentXRot(0.0f),
-      mPositionSendCounter(0), mPreviousOnGround(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
+      mPositionSendCounter(0), mPreviousOnGround(false), mHealthInitialized(false), mInput(0), mMinecraft(minecraft), mIdleTicks(0),
       mSprinting(false), mThirdPersonViewTimer(0),
       mFallFlyYaw(0.0f), mFallFlyYawOld(0.0f),
       mHandsBusy(false), mItemUsePending(false),
@@ -105,6 +111,48 @@ Vec3* LocalPlayer::getViewVector(float partialTick)
 
 bool LocalPlayer::isInWall()
 {
+    if (mField0x6c0 || mNoPhysics)
+    {
+        return false;
+    }
+
+    if (!mTickCache.mCacheChanged &&
+        mInWallCacheX == mX && mInWallCacheY == mY && mInWallCacheZ == mZ &&
+        mInWallCacheYRot == mYRot && mInWallCacheXRot == mXRot &&
+        mGameMode == mThirdPersonView)
+    {
+        return mInWallCacheResult;
+    }
+
+    mGameMode = mThirdPersonView;
+    mInWallCacheYRot = mYRot;
+    mInWallCacheXRot = mXRot;
+    mInWallCacheX = mX;
+    mInWallCacheY = mY;
+    mInWallCacheZ = mZ;
+
+    double eyeHeight = getEyeHeight();
+
+    for (int i = 0; i < 8; ++i)
+    {
+        double y = mY + eyeHeight + (double)(((i & 1) != 0 ? 0.5f : -0.5f) * 0.1f);
+        double x = mX + (double)(((i & 2) != 0 ? 0.5f : -0.5f) * mBbWidth * 0.8f);
+        double z = mZ + (double)(((i & 4) != 0 ? 0.5f : -0.5f) * mBbWidth * 0.8f);
+
+        BlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
+        const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+        if (state->isSolid())
+        {
+            if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
+                g_pApp->ShouldCollideWith(state->getBlock()))
+            {
+                mInWallCacheResult = true;
+                return true;
+            }
+        }
+    }
+
+    mInWallCacheResult = false;
     return false;
 }
 
@@ -213,12 +261,35 @@ int LocalPlayer::openContainer(boost::shared_ptr<Container> container)
 
 int LocalPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container)
 {
-    return 0;
+    const int result = (int)g_pApp->LoadHorseMenu(mPlayerIndex, mInventory, container, horse);
+    if (result != 0)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+    return result;
 }
 
 int LocalPlayer::startBlockInteraction(InteractionObject& interaction)
 {
-    return 0;
+    int result;
+    if (interaction.getTypeId(false) == 1)
+    {
+        boost::shared_ptr<LocalPlayer> self = boost::dynamic_pointer_cast<LocalPlayer>(shared_from_this());
+        result = (int)g_pApp->LoadCrafting3x3Menu(mPlayerIndex, self, (int)mX, (int)mY, (int)mZ);
+    }
+    else if (interaction.getTypeId(false) == 4)
+    {
+        result = (int)g_pApp->LoadEnchantingMenu(mPlayerIndex, mInventory, (int)mX, (int)mY, (int)mZ, mLevel, interaction.getDisplayName());
+    }
+    else if (interaction.getTypeId(false) == 0x13)
+    {
+        result = (int)g_pApp->LoadRepairingMenu(mPlayerIndex, mInventory, mLevel, (int)mX, (int)mY, (int)mZ);
+    }
+    else
+    {
+        return 0;
+    }
+    if (result != 0)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+    return result;
 }
 
 void LocalPlayer::openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand)
@@ -393,7 +464,57 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
 
 unsigned long long LocalPlayer::handleMouseDown(int button, bool pressed)
 {
-    return (unsigned long long)(button + (pressed ? 1 : 0));
+    if (button == 0 && pressed)
+    {
+        GetLocalGameMode()->OnMouseDown();
+    }
+
+    if (isSpectator())
+    {
+        if (!Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
+        {
+            return 0;
+        }
+    }
+
+    if (!isSleeping() || mLevel == 0 || !mLevel->mIsClientSide)
+    {
+        if (!pressed)
+        {
+            mDestroyTicks = 0;
+        }
+
+        if (button != 0 || mDestroyTicks < 1)
+        {
+            if (pressed)
+            {
+                HitResult* hitResult = mMinecraft->mHitResult;
+                if (hitResult == 0 || hitResult->mType != HitResult::BLOCK || button != 0)
+                {
+                    mMinecraft->mGameMode->stopDestroyBlock();
+                    return 0;
+                }
+
+                if (!isUsingItem())
+                {
+                    BlockPos pos = hitResult->getBlockPos();
+                    if (!doesLevelAllowBlockToBreak(pos))
+                    {
+                        return 0;
+                    }
+                    if (!mMinecraft->mGameMode->continueDestroyBlock(pos, hitResult->mDirection))
+                    {
+                        return 0;
+                    }
+                    mMinecraft->mParticleEngine->crack(pos, hitResult->mDirection);
+                    swing(InteractionHand::eInteractionHand_MainHand);
+                    return 0;
+                }
+            }
+            mMinecraft->mGameMode->stopDestroyBlock();
+        }
+    }
+    return 0;
 }
 
 void LocalPlayer::SetWaitingForScoreboard(bool waiting)
@@ -473,6 +594,15 @@ bool LocalPlayer::isInvisible()
 
 bool LocalPlayer::canMoveOrBeMovedFromTo(double a, double b, double c, double d, double e, double f, Vec3* result)
 {
+    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
+    GameModeConstraints* constraints = gameMode->getGameModeConstraints();
+    if (!constraints->canMoveToPosition(a, b, c, d, e, f, result))
+        return false;
+    if (!g_pApp->DebugDevToolsOn() && mLevel->mIsClientSide)
+    {
+        if (!mLevel->reallyHasChunk((int)std::floor(d * 0.0625), (int)std::floor(f * 0.0625)))
+            return false;
+    }
     return true;
 }
 
@@ -609,7 +739,9 @@ unsigned long long LocalPlayer::sendPosition()
 
 unsigned long long LocalPlayer::chat(const std::wstring& message)
 {
-    return (unsigned long long)message.size();
+    boost::shared_ptr<Packet> packet(new ServerboundChatPacket(message));
+    mPacketListener->send(packet);
+    return 0;
 }
 
 bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
@@ -646,7 +778,51 @@ void LocalPlayer::clientSideCloseContainer()
 
 void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 {
-    mDamageTaken = amount;
+    float health;
+
+    if (!mHealthInitialized)
+    {
+        setHealth(amount);
+        mHealthInitialized = true;
+        health = getHealth();
+    }
+    else
+    {
+        float oldHealth = getHealth();
+        float delta = oldHealth - amount;
+
+        if (delta > 0.0f)
+        {
+            mLastHurt = delta;
+            getHealth();
+            setHealth(amount);
+            mInvulnerableTime = mInvulnerableDuration;
+            actuallyHurt(DamageSource::GENERIC, delta);
+            mHurtDuration = 10;
+            mHurtTime = 10;
+        }
+        else
+        {
+            setHealth(amount);
+            if (delta < 0.0f)
+            {
+                mInvulnerableTime = mInvulnerableDuration / 2;
+            }
+        }
+
+        health = getHealth();
+    }
+
+    if (health <= 0.0f)
+    {
+        gTelemetryManager.RecordPlayerDiedOrFailed(mUserIndex, (int)mX, (int)mY, (int)mZ, 0,
+                                                    source.playerWeaponId, source.causeOfDeathId,
+                                                    source.challenges);
+        if (gConsoleUIController.GetMenuDisplayed(mUserIndex))
+        {
+            gConsoleUIController.CloseUIScenes(mUserIndex, false);
+        }
+    }
 }
 
 void LocalPlayer::onUpdateAbilities()
@@ -685,6 +861,10 @@ unsigned long long LocalPlayer::sendRidingJump()
 
 unsigned long long LocalPlayer::sendOpenInventory()
 {
+    boost::shared_ptr<Entity> entity = shared_from_this();
+    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
+        entity, ServerboundPlayerCommandPacket::OPEN_INVENTORY));
+    mPacketListener->send(packet);
     return 0;
 }
 
@@ -710,6 +890,53 @@ unsigned int LocalPlayer::freeAt(const BlockPos& pos)
 
 bool LocalPlayer::checkInBlock(double x, double y, double z)
 {
+    if (!mNoPhysics)
+    {
+        BlockPos pos(x, y, z);
+        x -= pos.x;
+        z -= pos.z;
+        unsigned int free;
+        if (std::fabs(mBoundingBox->mMinY - mBoundingBox->mMaxY) <= 1.0)
+            free = freeAt(pos);
+        else
+            free = freeAtAndAbove(pos);
+        if (!free)
+        {
+            int direction = -1;
+            double best = 9999.0;
+            if (freeAtAndAbove(pos.west()) && x < best)
+            {
+                direction = 0;
+                best = x;
+            }
+            if (freeAtAndAbove(pos.east()) && (1.0 - x) < best)
+            {
+                direction = 1;
+                best = 1.0 - x;
+            }
+            if (freeAtAndAbove(pos.north()) && z < best)
+            {
+                direction = 4;
+                best = z;
+            }
+            if (freeAtAndAbove(pos.south()) && best > 1.0 - z)
+            {
+                mZd = 0.1;
+            }
+            else if (direction == 0)
+            {
+                mXd = -0.1;
+            }
+            else if (direction == 1)
+            {
+                mXd = 0.1;
+            }
+            else if (direction == 4)
+            {
+                mZd = -0.1;
+            }
+        }
+    }
     return false;
 }
 

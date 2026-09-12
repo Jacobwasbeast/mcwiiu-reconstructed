@@ -165,7 +165,11 @@ private:
     friend class PlayerRenderer;
 
     unsigned char mReserved0x850[0x28];
+
+protected:
     ClientPacketListener* mPacketListener;
+
+private:
     int mPermissionLevel;
     double mLastSentX;
     double mLastSentY;
@@ -174,7 +178,9 @@ private:
     float mLastSentXRot;
     int mPositionSendCounter;
     bool mPreviousOnGround;
-    unsigned char mReserved0x8a1[0x0f];
+    unsigned char mReserved0x8a1[0xb];
+    bool mHealthInitialized;
+    unsigned char mReserved0x8ad[3];
     Input* mInput;
     Minecraft* mMinecraft;
     unsigned char mReserved0x8b8[0xc];

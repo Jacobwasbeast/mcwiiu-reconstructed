@@ -5,10 +5,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/GameStats.hpp"
-#define private public
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/MasterGameMode.hpp"
-#undef private
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
 #include "game/minigame/MiniGameDef.hpp"
