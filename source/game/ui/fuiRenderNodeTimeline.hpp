@@ -6,7 +6,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-class fuiFile;
+struct fuiFile;
 
 struct fuiRenderNodeRemoved
 {

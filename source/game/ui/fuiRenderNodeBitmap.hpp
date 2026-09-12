@@ -3,7 +3,7 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-class fuiFile;
+struct fuiFile;
 
 class fuiRenderNodeBitmap : public fuiRenderNode
 {

@@ -10,7 +10,7 @@
 
 class EntityRenderer;
 class PlayerModel;
-class fuiRect;
+struct fuiRect;
 
 class UIControl_PlayerSkinPreview : public UIControl
 {

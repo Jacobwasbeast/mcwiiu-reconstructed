@@ -9,7 +9,7 @@
 class FJ_FuiNode;
 class FJ_Factory;
 class fui;
-class fuiFile;
+struct fuiFile;
 class fuiRenderNodeStage;
 
 class fuiRenderNode

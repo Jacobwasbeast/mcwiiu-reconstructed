@@ -10,7 +10,29 @@
 #include "game/util/Math.hpp"
 
 extern std::string g_toolTipLabels[][2];
-extern std::string g_toolTipControllerSuffix;
+std::string g_toolTipLabels[16][2] = {
+    {"Button_A", "Button_A_Animated"},
+    {"Button_B", "Button_B_Animated"},
+    {"Button_X", "Button_X_Animated"},
+    {"Button_Y", "Button_Y_Animated"},
+    {"Button_LeftTrigger", "Button_LeftTrigger_Animated"},
+    {"Button_RightTrigger", "Button_RightTrigger_Animated"},
+    {"Button_LeftBumper", "Button_LeftBumper_Animated"},
+    {"Button_RightBumper", "Button_RightBumper_Animated"},
+    {"Button_LStick", "Button_LStick_Animated"},
+    {"Button_RStick", "Button_RStick_Animated"},
+    {"Button_SystemSelect", "Button_SystemSelect_Animated"},
+    {"Button_DpadLeft", "Button_Select_Animated"},
+    {"Button_DpadRight", "Button_Select_Animated"},
+    {"Button_DpadUp", "Button_Select_Animated"},
+    {"Button_DpadDown", "Button_Select_Animated"},
+    {"Button_LeftStick", "Button_LeftStick_Animated"}
+};
+// Proved from __sti___16_UnityClient1_cpp_a78c0041, which constructs the
+// std::string global at 0x104F22F4 from the literal at 0x102EB8C0.
+// FJ_ToolTip::SetType (0x02B15810) reads it through the usual inlined
+// c_str(): capacity at +0x1c, inline buffer at +4, heap pointer at +0x14.
+std::string g_toolTipControllerSuffix("_CTRL_");
 
 FJ_ToolTip::FJ_ToolTip(fuiRenderNode* renderNode)
     : FJ_Base(renderNode), m_controllerType(0), m_primaryType(-1), m_secondaryType(-1)

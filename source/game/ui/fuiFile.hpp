@@ -4,22 +4,22 @@
 #include "game/ui/fuiFileHeader.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-class fuiBitmap;
-class fuiEdittext;
-class fuiFontName;
-class fuiImportAsset;
-class fuiReference;
+struct fuiBitmap;
+struct fuiEdittext;
+struct fuiFontName;
+struct fuiImportAsset;
+struct fuiReference;
 class fuiRenderNode;
 class fuiRenderNodeStage;
-class fuiShape;
-class fuiShapeComponent;
-class fuiSymbol;
-class fuiTimeline;
-class fuiTimelineAction;
-class fuiTimelineEvent;
-class fuiTimelineEventName;
-class fuiTimelineFrame;
-class fuiVert;
+struct fuiShape;
+struct fuiShapeComponent;
+struct fuiSymbol;
+struct fuiTimeline;
+struct fuiTimelineAction;
+struct fuiTimelineEvent;
+struct fuiTimelineEventName;
+struct fuiTimelineFrame;
+struct fuiVert;
 struct fuiRect;
 
 struct fuiFile

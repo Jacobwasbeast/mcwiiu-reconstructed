@@ -4,10 +4,21 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_DynamicHtmlText.hpp"
 #include "game/ui/FJ_Event.hpp"
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_HtmlText.hpp"
+#include "game/ui/FJ_Label.hpp"
+#include "game/ui/FJ_Label_Blink.hpp"
+#include "game/ui/FJ_List.hpp"
+#include "game/ui/FJ_List2D.hpp"
+#include "game/ui/FJ_List_MenuButton.hpp"
+#include "game/ui/FJ_TextInput.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiSymbol.hpp"
 #include "game/ui/fuiTimeline.hpp"
 #include "game/ui/fuiTimelineAction.hpp"
 #include "game/ui/fuiTimelineEvent.hpp"
@@ -147,19 +158,174 @@ void fuiRenderNodeTimeline::depthSort()
 
 void fuiRenderNodeTimeline::handleConstruction()
 {
-    if (m_node != 0 || m_file == 0 || m_object == 0)
-        return;
-    fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
-    m_node = FJ_FuiNode::Create(this);
-    if (timeline->timelineActionCount != 0)
+    FJ_FuiNode* created;
+    if (static_cast<int>(m_object->symbolIndex) == -1)
     {
-        for (unsigned int i = 0; i < timeline->timelineActionCount; ++i)
-        {
-            fuiTimelineAction& action = m_file->timelineActionData[timeline->timelineActionIndex + i];
-            addFrameAction(action.frameIndex, static_cast<eFrameActionType>(action.actionType),
-                           action.actionType == 1 ? std::string("true") : std::string(action.actionValue));
-        }
+        created = FJ_Factory::createObject("", this, false, 0);
     }
+    else
+    {
+        created = FJ_Factory::createObject(
+            m_file->symbolData[static_cast<int>(m_object->symbolIndex)].name, this, false, 0);
+    }
+
+    fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
+    fuiTimelineAction* action = m_file->timelineActionData + timeline->timelineActionIndex;
+    m_node = created;
+
+    if (timeline->timelineActionCount == 0)
+        return;
+
+    unsigned int index = 0;
+    do
+    {
+        unsigned char type = action->actionType;
+        fuiRenderNode* target = 0;
+        if (type > 0x1d)
+        {
+            if (type == 0x1e)
+            {
+                std::string value;
+                value.assign("", 0);
+                addFrameAction(action->frameIndex, eFrameActionType_Stop, value);
+            }
+            else if (type < 0x20)
+            {
+                std::string value;
+                value.assign(action->actionValue, std::strlen(action->actionValue));
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStopLabel, value);
+            }
+            else if (type == 0x20)
+            {
+                std::string value;
+                value.assign(action->actionValue, std::strlen(action->actionValue));
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndPlay, value);
+            }
+            else if (type == 0x21)
+            {
+                std::string value;
+                value.assign(action->actionValue, std::strlen(action->actionValue));
+                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStop, value);
+            }
+            else
+            {
+                target = findNode(action->targetName);
+            }
+        }
+        else
+        {
+            target = findNode(action->targetName);
+        }
+
+        if (target != 0)
+        {
+            FJ_FuiNode* node = target->getFuiNode();
+            if (node != 0)
+            {
+                switch (type)
+                {
+                case 4:
+                {
+                    FJ_Base* base = node->asFJ_Base();
+                    if (base != 0)
+                        base->setTabIndex(std::atoi(action->actionValue));
+                    break;
+                }
+                case 5:
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                {
+                    FJ_Label* label = node->asFJ_Label();
+                    if (label == 0)
+                    {
+                        FJ_List_MenuButton* menuButton = node->asFJ_List_MenuButton();
+                        if (menuButton == 0)
+                        {
+                            FJ_Label_Blink* blink = node->asFJ_Label_Blink();
+                            if (blink != 0)
+                                blink->setAction(type, action->actionValue);
+                        }
+                        else
+                        {
+                            menuButton->setAction(type, action->actionValue);
+                        }
+                    }
+                    else
+                    {
+                        label->setAction(type, action->actionValue);
+                    }
+                    break;
+                }
+                case 10:
+                case 0xb:
+                case 0xc:
+                case 0xd:
+                case 0x1d:
+                {
+                    FJ_List* list = node->asFJ_List();
+                    if (list != 0)
+                        list->setAction(type, action->actionValue);
+                    FJ_List2D* list2d = node->asFJ_List2D();
+                    if (list2d != 0)
+                        list2d->setAction(type, action->actionValue);
+                    break;
+                }
+                case 0x13:
+                {
+                    if (node->isFJ_HtmlText())
+                    {
+                        FJ_HtmlText* html = node->asFJ_HtmlText();
+                        html->m_bUseScrollRect = std::strcmp(action->actionValue, "true") == 0;
+                    }
+                    break;
+                }
+                case 0x14:
+                {
+                    if (node->isFJ_HtmlText())
+                    {
+                        FJ_HtmlText* html = node->asFJ_HtmlText();
+                        html->m_bNoBackground = std::strcmp(action->actionValue, "true") == 0;
+                    }
+                    break;
+                }
+                case 0x15:
+                {
+                    if (node->isFJ_DynamicHtmlText())
+                    {
+                        FJ_DynamicHtmlText* dynamicText = node->asFJ_DynamicHtmlText();
+                        dynamicText->m_iTopMargin = std::atoi(action->actionValue);
+                    }
+                    break;
+                }
+                case 0x16:
+                {
+                    if (node->isFJ_TextInput())
+                    {
+                        FJ_TextInput* textInput = node->asFJ_TextInput();
+                        textInput->SetCharLimit(std::atoi(action->actionValue));
+                    }
+                    break;
+                }
+                case 0x17:
+                {
+                    if (node->isFJ_DynamicHtmlText())
+                    {
+                        FJ_DynamicHtmlText* dynamicText = node->asFJ_DynamicHtmlText();
+                        dynamicText->m_iCharacterHeight = std::atoi(action->actionValue);
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+        }
+
+        ++index;
+        ++action;
+    } while (index < timeline->timelineActionCount);
 }
 
 int fuiRenderNodeTimeline::getFrame(const char* name)

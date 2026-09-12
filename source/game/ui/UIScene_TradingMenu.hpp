@@ -14,7 +14,7 @@
 class MerchantMenu;
 class MerchantRecipe;
 class UILayer;
-class fuiRect;
+struct fuiRect;
 class ItemInstance;
 class HtmlString;
 

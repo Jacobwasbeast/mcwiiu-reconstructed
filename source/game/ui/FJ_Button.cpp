@@ -106,8 +106,7 @@ void FJ_Button::keyDownHandler(FJ_Event* event)
     {
         ChangeState(3);
         m_buttonPressed = true;
-        FJ_Event press(eFJEventType_Press, true, false);
-        dispatchEvent(&press);
+        dispatchEvent(new FJ_Event(eFJEventType_Press, true, false));
         if (m_keyDownDelegate != 0)
             m_keyDownDelegate(m_keyDownDelegateNode, m_id);
     }

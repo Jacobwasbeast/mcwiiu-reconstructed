@@ -18,7 +18,7 @@ class INetworkPlayer;
 class MultiplayerLocalPlayer;
 class StatsUID;
 class UILayer;
-class fuiRect;
+struct fuiRect;
 
 class UIScene_GameModeScoreboardMenu : public IUIScene_PlayerList, public UIScene
 {

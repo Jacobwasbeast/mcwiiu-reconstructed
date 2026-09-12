@@ -8,7 +8,7 @@
 #include "game/ui/fuiRect.hpp"
 
 class FJ_Event;
-class FJ_EventListener;
+struct FJ_EventListener;
 class FJ_FuiNodeStage;
 class UIScene;
 class fuiRenderNode;

@@ -24,15 +24,13 @@ void FJ_FuiNodeStage::setFocus(FJ_FuiNode* pNode)
 {
     if (m_pFocus != pNode && m_pFocus != NULL)
     {
-        FJ_FocusEvent event(false, false, false);
-        m_pFocus->dispatchEvent(&event);
+        m_pFocus->dispatchEvent(new FJ_FocusEvent(false, false, false));
     }
 
     m_pFocus = pNode;
     if (pNode != NULL)
     {
-        FJ_FocusEvent event(false, true, false);
-        pNode->dispatchEvent(&event);
+        pNode->dispatchEvent(new FJ_FocusEvent(false, true, false));
     }
 }
 

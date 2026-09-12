@@ -7,6 +7,10 @@
 #include "game/ui/UIScene_PauseMenu.hpp"
 #include "game/ui/UIScene_CraftingMenu.hpp"
 
+// TEMPORARY boot tracing; remove once the boot reaches the title screen.
+extern "C" void OSReport(const char*, ...);
+#define LAYER_TRACE(step) OSReport("[boot][layer_trace] %s\n", step)
+
 UILayer::UILayer(UIGroup* group) : m_focusChanged(false), m_menuDisplayed(false), m_fullscreen(false), m_viewportChanged(false), m_reloadPending(false), m_inputHandled(false), m_group(group) {}
 void UILayer::getRenderDimensions(int& width, int& height) { width = 0; height = 0; }
 UIScene* UILayer::addComponent(int, EUIScene scene, void*) {
@@ -68,9 +72,11 @@ bool UILayer::updateFocusState(bool requestFocus) {
 void UILayer::closeAllScenes() { while(!m_scenes.empty()) removeScene(m_scenes.back()); }
 bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
 {
+    LAYER_TRACE("NavigateToScene entered");
     UIScene* created = NULL;
     switch (static_cast<int>(scene))
     {
+    LAYER_TRACE("switching on scene");
     case 1: created = new UIScene_Intro(0, data, this); break;
     case 2: created = new UIScene_SaveMessage(0, data, this); break;
     case 3: created = new UIScene_MainMenu(0, data, this); break;
@@ -80,12 +86,16 @@ bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
     case 7: created = new UIScene_CraftingMenu(0, data, this); break;
     default: return false;
     }
+    LAYER_TRACE("scene CONSTRUCTED");
     if (created == NULL)
         return false;
     if (!m_scenes.empty())
         created->setBackScene(m_scenes.back());
+    LAYER_TRACE("backScene set");
     m_scenes.push_back(created);
+    LAYER_TRACE("pushed to stack");
     updateFocusState(false);
+    LAYER_TRACE("focus state updated");
     created->handleInitFocus(player, 0);
     return true;
 }

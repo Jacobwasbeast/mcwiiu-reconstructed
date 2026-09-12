@@ -54,8 +54,7 @@ void FJ_CheckBox::SetCheckBox(bool checked)
     FJ_FuiNode* parent = getObjListParent();
     if (parent == NULL)
     {
-        FJ_Event toggle(eFJEventType_CheckboxToggled, true, false);
-        dispatchEvent(&toggle);
+        dispatchEvent(new FJ_Event(eFJEventType_CheckboxToggled, true, false));
     }
     else if (parent->isFJ_List())
     {
@@ -169,8 +168,7 @@ void FJ_CheckBox::Init(const std::wstring& name, int id, bool checked)
         setScaleY(1.0f);
     InitBase(name, id);
     UpdateCheckBox();
-    FJ_Event initEvent(eFJEventType_CheckboxInit, true, false);
-    dispatchEvent(&initEvent);
+    dispatchEvent(new FJ_Event(eFJEventType_CheckboxInit, true, false));
     addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
 }
 

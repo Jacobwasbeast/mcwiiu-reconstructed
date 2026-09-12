@@ -10,15 +10,23 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
+// TEMPORARY boot tracing; remove once the boot reaches the title screen.
+extern "C" void OSReport(const char*, ...);
+#define INTRO_TRACE(step) OSReport("[boot][intro_trace] %s\n", step)
+
 uint8_t g_introRunning = 0;
 
 UIScene_Intro::UIScene_Intro(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
 {
+    INTRO_TRACE("ctor entered");
     initialiseMovie();
+    INTRO_TRACE("initialiseMovie done");
     m_introFocus = false;
     m_inputHandled = false;
+    INTRO_TRACE("flags set");
     setIntroPlatform();
+    INTRO_TRACE("setIntroPlatform done");
     m_touchControl.init(0);
 }
 

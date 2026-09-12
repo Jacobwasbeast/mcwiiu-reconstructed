@@ -111,8 +111,7 @@ void FJ_TexturePackList::focusOutHandler(FJ_Event*)
     if (m_selectedSlot != m_focusSlot) {
         m_selectedSlot = m_focusSlot;
         if (getRoot() != 0) {
-            FJ_Event event(eFJEventType_FocusChangeUser, true, false);
-            getRoot()->dispatchEvent(&event);
+            getRoot()->dispatchEvent(new FJ_Event(eFJEventType_FocusChangeUser, true, false));
         }
     }
     GotoSelectedSlot();

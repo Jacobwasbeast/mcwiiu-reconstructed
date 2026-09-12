@@ -79,8 +79,7 @@ void FJ_List::HighlightItem(int index, bool fromTouch)
     if (index < 0 || static_cast<unsigned int>(index) >= m_items.size()) return;
     m_highlightFromTouch = fromTouch;
     getStage()->setFocus(m_items[static_cast<unsigned int>(index)]);
-    FJ_Event event(eFJEventType_FocusChangeUser, true, false);
-    dispatchEvent(&event);
+    dispatchEvent(new FJ_Event(eFJEventType_FocusChangeUser, true, false));
 }
 
 void FJ_List::HandlePageUpDownNavigation(bool up)

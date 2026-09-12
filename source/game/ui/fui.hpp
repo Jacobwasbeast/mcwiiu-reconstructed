@@ -13,7 +13,7 @@
 #include "game/ui/fuiMatrix.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 
-class fuiBitmap;
+struct fuiBitmap;
 class fuiBitmapFont;
 class fuiRenderNode;
 class fuiRenderNodeTimeline;

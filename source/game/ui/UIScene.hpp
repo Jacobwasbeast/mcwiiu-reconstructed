@@ -16,7 +16,7 @@ class ItemRenderer;
 class UIControl;
 class UIControl_Base;
 class UILayer;
-class fuiFile;
+struct fuiFile;
 
 enum EUIMessage
 {

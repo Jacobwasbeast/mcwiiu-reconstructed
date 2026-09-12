@@ -90,8 +90,7 @@ void fuiRenderNode::handleAddedToStage()
 {
     if (m_node != 0)
     {
-        FJ_Event event(eFJEventType_Init, false, false);
-        m_node->dispatchEvent(&event);
+        m_node->dispatchEvent(new FJ_Event(eFJEventType_Init, false, false));
     }
 }
 
