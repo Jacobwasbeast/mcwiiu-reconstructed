@@ -10,7 +10,7 @@ class BufferedImage;
 class LayeredColorMaskTexture;
 class ResourceLocation;
 class Stitcher;
-class Texture;
+struct Texture;
 class TexturePack;
 
 class TextureManager

@@ -2,7 +2,7 @@
 #define GAME_CLIENT_RENDER_TEXTUREATLASSprite_HPP
 #include <string>
 #include <vector>
-class Texture;
+struct Texture;
 class BufferedReader;
 class TextureAtlasSprite {
 public:

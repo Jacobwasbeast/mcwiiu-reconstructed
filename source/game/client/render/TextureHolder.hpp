@@ -3,7 +3,7 @@
 
 #include <string>
 
-class Texture;
+struct Texture;
 
 class TextureHolder
 {

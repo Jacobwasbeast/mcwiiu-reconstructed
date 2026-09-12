@@ -1,22 +1,27 @@
 #include "game/client/render/LevelRenderer.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
+#include "game/client/render/BlockRenderDispatcher.hpp"
 #include "game/client/render/BlockRenderer.hpp"
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Font.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/Frustum.hpp"
 #include "game/core/FrustumCuller.hpp"
 #include "game/core/FrustumData.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/InfoBarManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/MemSect.hpp"
 #include "game/core/MemoryTracker.hpp"
@@ -36,6 +41,10 @@
 #include "game/world/LevelRuleset.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/ChestBlockEntity.hpp"
+#include "game/world/block/PistonMovingBlockEntity.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 #include "game/client/render/ParticleEngine.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/core/Gui.hpp"
@@ -972,6 +981,293 @@ void LevelRenderer::restoreDestroyState()
     GlStateManager::enableAlphaTest();
     GlStateManager::depthMask(true);
     GlStateManager::popMatrix();
+}
+
+void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* culler, float partialTick)
+{
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+
+    PIXBeginNamedEvent(0.0f, "Prepare");
+
+    boost::shared_ptr<Entity> blockEntityDispatcherCamera = mMinecraft->getCameraEntity();
+    BlockEntityRenderDispatcher::instance->prepare(mLevels[userIndex], mTextures, mMinecraft->mFont,
+        blockEntityDispatcherCamera, mMinecraft->mHitResult, partialTick);
+
+    mMinecraft->getBlockRenderer()->prepare(mLevels[userIndex]);
+
+    boost::shared_ptr<Entity> entityDispatcherCamera = mMinecraft->getCameraEntity();
+    mEntityRenderDispatcher->prepare(mLevels[userIndex], mMinecraft->mFont, entityDispatcherCamera,
+        mMinecraft->mCameraEntity, mMinecraft->mOptions, partialTick);
+
+    PIXEndNamedEvent();
+
+    if (mSkippedFrames > 0)
+    {
+        --mSkippedFrames;
+        return;
+    }
+
+    mCountEntitiesTotal = 0;
+    mCountEntitiesRendered = 0;
+    mCountEntitiesHidden = 0;
+
+    double camX = (camera->mX - camera->mXo) * partialTick + camera->mXo;
+    double camY = (camera->mY - camera->mYo) * partialTick + camera->mYo;
+    double camZ = (camera->mZ - camera->mZo) * partialTick + camera->mZo;
+
+    boost::shared_ptr<Entity> positionDispatcherCamera = mMinecraft->getCameraEntity();
+    double dispatcherX = (positionDispatcherCamera->mX - positionDispatcherCamera->mXOld) * partialTick +
+        positionDispatcherCamera->mXOld;
+    double dispatcherY = (positionDispatcherCamera->mY - positionDispatcherCamera->mYOld) * partialTick +
+        positionDispatcherCamera->mYOld;
+    double dispatcherZ = (positionDispatcherCamera->mZ - positionDispatcherCamera->mZOld) * partialTick +
+        positionDispatcherCamera->mZOld;
+    BlockEntityRenderDispatcher::xOff = dispatcherX;
+    BlockEntityRenderDispatcher::yOff = dispatcherY;
+    BlockEntityRenderDispatcher::zOff = dispatcherZ;
+    mEntityRenderDispatcher->setPosition(dispatcherX, dispatcherY, dispatcherZ);
+
+    mMinecraft->mGameRenderer->turnOnLightLayer(partialTick);
+
+    std::vector<boost::shared_ptr<Entity> > allEntities = mLevels[userIndex]->getAllEntities();
+    mCountEntitiesTotal = (int)allEntities.size();
+
+    PIXBeginNamedEvent(0.0f, "Sort entities by distance for rendering");
+
+    std::vector<std::pair<int, double> > sortedIndices;
+    sortedIndices.reserve(allEntities.size());
+    for (unsigned int entityIndex = 0; entityIndex < allEntities.size(); ++entityIndex)
+    {
+        boost::shared_ptr<Entity>& sortEntity = allEntities[entityIndex];
+        double dx = camX - sortEntity->mX;
+        double dy = camY - sortEntity->mY;
+        double dz = camZ - sortEntity->mZ;
+        sortedIndices.push_back(std::pair<int, double>((int)entityIndex, dx * dx + dy * dy + dz * dz));
+    }
+    std::sort(sortedIndices.begin(), sortedIndices.end(), &LevelRenderer::sortEntDisFunc);
+
+    PIXEndNamedEvent();
+
+    // NOTE: the original also renders Level::mGlobalEntities here, inside a
+    // "Render %d global entities" PIX region, using the same
+    // entity->shouldRender(camX, camY, camZ) check as below. That field is
+    // private on Level with no accessor and Level.hpp is not an owned path,
+    // so this pass cannot reach it without widening access control (an
+    // existing, actively-tracked defect elsewhere in this tree that this
+    // pass will not add to). Left unresolved; needs a root packet owning
+    // Level.hpp to add a friend declaration or accessor.
+
+    InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
+    PIXBeginNamedEvent(0.0f, "Render %d entities", (int)sortedIndices.size());
+
+    std::vector<boost::shared_ptr<Entity> > glowingEntities;
+    std::vector<boost::shared_ptr<Entity> > secondPassEntities;
+
+    for (unsigned int sortIndex = 0; sortIndex < sortedIndices.size(); ++sortIndex)
+    {
+        boost::shared_ptr<Entity>& entity = allEntities[sortedIndices[sortIndex].first];
+        double entityDistanceSqr = sortedIndices[sortIndex].second;
+
+        PIXBeginNamedEvent(0.0f, "shouldRender");
+        bool renderable = mEntityRenderDispatcher->shouldRender(entity, culler, entityDistanceSqr);
+        if (!renderable)
+        {
+            if (entity->hasIndirectPassenger(mMinecraft->mPlayer))
+            {
+                renderable = true;
+            }
+            else if (entity->hasPassenger(ENTITY_TYPE_PLAYER))
+            {
+                renderable = true;
+            }
+        }
+        PIXEndNamedEvent();
+
+        if (!renderable)
+        {
+            continue;
+        }
+
+        boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
+        if (entity == cameraEntity)
+        {
+            bool skip = true;
+            if (mMinecraft->mPlayer->GetThirdPersonView(false) != 0)
+            {
+                skip = false;
+            }
+            else if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            {
+                if (boost::static_pointer_cast<LivingEntity>(entity)->isSleeping())
+                {
+                    skip = false;
+                }
+            }
+
+            if (skip)
+            {
+                continue;
+            }
+        }
+
+        if (!(0.0 <= entity->mY && entity->mY < 256.0))
+        {
+            BlockPos entityBlockPos((int)floor(entity->mX), 0, (int)floor(entity->mZ));
+            if (!mLevels[userIndex]->hasChunkAt(entityBlockPos))
+            {
+                continue;
+            }
+        }
+
+        ++mCountEntitiesRendered;
+        mEntityRenderDispatcher->render(entity, partialTick, false);
+
+        if (shouldEntityGlow(entity, mMinecraft->getCameraEntity(), culler))
+        {
+            glowingEntities.push_back(entity);
+        }
+
+        if (mEntityRenderDispatcher->hasSecondPass(entity))
+        {
+            secondPassEntities.push_back(entity);
+        }
+    }
+
+    for (unsigned int secondPassIndex = 0; secondPassIndex < secondPassEntities.size(); ++secondPassIndex)
+    {
+        mEntityRenderDispatcher->renderSecondPass(secondPassEntities[secondPassIndex], partialTick);
+    }
+
+    PIXEndNamedEvent();
+    InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Entities);
+    Lighting::turnOn();
+
+    EnterCriticalSection(&mBlockEntityMutex);
+    PIXBeginNamedEvent(0.0f, "Render %d block entities", (int)mBlockEntities.size());
+    InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_BlockEntities);
+
+    std::vector<boost::shared_ptr<BlockEntity> > deferredBlockEntities;
+
+    for (ChunkBlockEntityMap::iterator bucketIt = mBlockEntities.begin(); bucketIt != mBlockEntities.end(); ++bucketIt)
+    {
+        if (!isGlobalIndexInSameDimension(bucketIt->first, mLevels[userIndex]))
+        {
+            continue;
+        }
+
+        std::vector<boost::shared_ptr<BlockEntity> >& bucket = bucketIt->second;
+        for (unsigned int bucketIndex = 0; bucketIndex < bucket.size(); ++bucketIndex)
+        {
+            boost::shared_ptr<BlockEntity>& blockEntity = bucket[bucketIndex];
+
+            if (blockEntity->GetType() == 0x1200205ULL)
+            {
+                boost::shared_ptr<PistonMovingBlockEntity> pistonEntity =
+                    boost::static_pointer_cast<PistonMovingBlockEntity>(blockEntity);
+                if (pistonEntity->getBlockState()->getBlock() == Blocks::slime)
+                {
+                    deferredBlockEntities.push_back(blockEntity);
+                    continue;
+                }
+            }
+
+            BlockEntityRenderDispatcher::instance->render(blockEntity, partialTick);
+        }
+    }
+
+    for (unsigned int deferredIndex = 0; deferredIndex < deferredBlockEntities.size(); ++deferredIndex)
+    {
+        BlockEntityRenderDispatcher::instance->render(deferredBlockEntities[deferredIndex], partialTick);
+    }
+
+    InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_BlockEntities);
+    PIXEndNamedEvent();
+
+    EnterCriticalSection(&mRenderableBlockEntityMutex);
+    PIXBeginNamedEvent(0.0f, "Render %d global block entities", (int)mRenderableBlockEntities.size());
+
+    for (boost::unordered_set<boost::shared_ptr<BlockEntity> >::iterator renderableIt = mRenderableBlockEntities.begin();
+         renderableIt != mRenderableBlockEntities.end(); ++renderableIt)
+    {
+        BlockEntityRenderDispatcher::instance->render(*renderableIt, partialTick, -1, true);
+    }
+
+    PIXEndNamedEvent();
+    LeaveCriticalSection(&mRenderableBlockEntityMutex);
+
+    PIXBeginNamedEvent(0.0f, "Clear out block entities");
+
+    for (ChunkBlockEntityMap::iterator bucketIt = mBlockEntities.begin(); bucketIt != mBlockEntities.end(); ++bucketIt)
+    {
+        std::vector<boost::shared_ptr<BlockEntity> >& bucket = bucketIt->second;
+        for (unsigned int bucketIndex = 0; bucketIndex < bucket.size(); )
+        {
+            if (bucket[bucketIndex]->shouldRemoveForRender())
+            {
+                bucket[bucketIndex]->setRenderRemoveStage(0);
+                bucket.erase(bucket.begin() + bucketIndex);
+            }
+            else
+            {
+                ++bucketIndex;
+            }
+        }
+    }
+
+    setupDestroyState();
+
+    for (boost::unordered_map<int, BlockDestructionProgress*>::iterator progressIt = mDestroyingBlocks.begin();
+         progressIt != mDestroyingBlocks.end(); ++progressIt)
+    {
+        BlockDestructionProgress* progress = progressIt->second;
+        BlockPos destroyPos = progress->getPos();
+        LevelChunk* destroyChunk = mLevels[userIndex]->getChunkAt(destroyPos);
+        boost::shared_ptr<BlockEntity> destroyBlockEntity =
+            destroyChunk->getBlockEntity(destroyPos, (LevelChunk::EntityCreationType)2);
+
+        if (!destroyBlockEntity)
+        {
+            continue;
+        }
+
+        if (destroyBlockEntity->GetType() == 0x1e00201ULL)
+        {
+            boost::shared_ptr<ChestBlockEntity> chestEntity =
+                boost::static_pointer_cast<ChestBlockEntity>(destroyBlockEntity);
+            boost::shared_ptr<ChestBlockEntity> neighbourChest = chestEntity->mWestNeighbour.lock();
+
+            if (neighbourChest)
+            {
+                destroyPos = destroyPos.relative(Direction::WEST);
+                destroyBlockEntity = mLevels[userIndex]->getBlockEntity(destroyPos);
+            }
+            else
+            {
+                neighbourChest = chestEntity->mNorthNeighbour.lock();
+                if (neighbourChest)
+                {
+                    destroyPos = destroyPos.relative(Direction::NORTH);
+                    destroyBlockEntity = mLevels[userIndex]->getBlockEntity(destroyPos);
+                }
+            }
+        }
+
+        // NOTE: the original gates the actual crack-overlay render behind one
+        // more virtual call, on the BlockState at destroyPos (raw offset
+        // +0x6c off *that* BlockState's own vtable), whose target could not
+        // be safely named -- see return notes for why. destroyBlockEntity
+        // (redirected to the connected chest neighbour above when
+        // applicable, exactly like the original) is left fully resolved and
+        // ready for whichever worker closes that last call; this pass does
+        // not fabricate it and does not render here.
+    }
+
+    restoreDestroyState();
+
+    PIXEndNamedEvent();
+    LeaveCriticalSection(&mBlockEntityMutex);
+
+    mMinecraft->mGameRenderer->turnOffLightLayer(partialTick);
 }
 
 unsigned int LevelRenderer::getBucketMask(double x, double y, double z, ClipChunk* chunk)
