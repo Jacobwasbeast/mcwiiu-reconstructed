@@ -5,10 +5,19 @@
 
 namespace nn { namespace pia { namespace transport {
 
+class Station;
+
 class StationManager
 {
 public:
+    enum { cStationNumMax = 32 };
+
     void* GetStation(const common::StationAddress& address);
+
+private:
+    unsigned char m_pad00[0x28];
+    unsigned int m_stationNum;
+    Station* m_stations[cStationNumMax];
 };
 
 }}}
