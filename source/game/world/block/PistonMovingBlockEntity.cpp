@@ -11,6 +11,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/PistonBaseBlock.hpp"
+#include "game/world/block/PistonHeadBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 static const Direction* gPistonNoClipDirection = NULL;
 PistonMovingBlockEntity::PistonMovingBlockEntity(const BlockState* state, const Direction* direction, bool extending, bool source, CompoundTag* lastTick)
     : BlockEntity(), mMovedState(state), mDirection(direction), mExtending(extending), mSourcePiston(source), mLastTick(lastTick), mProgress(0.0f), mLastProgress(0.0f)
@@ -121,6 +125,18 @@ double PistonMovingBlockEntity::getZOff(float partialTick)
 }
 const BlockState* PistonMovingBlockEntity::getCollisionRelatedBlockState()
 {
+    if (!isExtending() && isSourcePiston())
+    {
+        const BlockState* headState = Blocks::piston_head->defaultBlockState();
+        TypedBoxed<PistonHeadBlock::PistonType*> pistonType(
+            mMovedState->getBlock() == Blocks::sticky_piston ? pistonTypeSticky : pistonTypeNormal);
+        headState = headState->setBoxedValue(
+            static_cast<const Property*>(PistonHeadBlock::TYPE), &pistonType);
+        TypedBoxed<const Direction*> facing(mMovedState->getValue(PistonBaseBlock::FACING));
+        headState = headState->setBoxedValue(
+            static_cast<const Property*>(PistonHeadBlock::FACING), &facing);
+        return headState;
+    }
     return mMovedState;
 }
 AABB* PistonMovingBlockEntity::getAABB(LevelSource* source, const BlockPos& pos, float partialTick)

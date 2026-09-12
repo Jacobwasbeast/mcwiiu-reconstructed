@@ -14,11 +14,14 @@
 #include "game/core/DataWalker.hpp"
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemListDataWalker.hpp"
+#include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/ShulkerBoxMenu.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 
 ShulkerBoxBlockEntity::ShulkerBoxBlockEntity(const DyeColor* color)
     : RandomizableLockableContainerBlockEntity()
@@ -369,7 +372,7 @@ const DyeColor* ShulkerBoxBlockEntity::getColor()
 
 boost::shared_ptr<Packet> ShulkerBoxBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 10, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()

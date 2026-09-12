@@ -8,9 +8,16 @@
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/item/Inventory.hpp"
+#include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/util/AABB.hpp"
 #include "game/ui/BeaconMenu.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 
 namespace
 {
@@ -48,7 +55,7 @@ unsigned int BeaconBlockEntity::BeaconBeamSection::getHeight()
 
 BeaconBlockEntity::BeaconBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
-      mBeamSections(), mItem(), mName(new CensoredString()), mPrimaryPower(NULL),
+      mBeamSections(), mItem(), mLastBeamBlockCount(0), mName(new CensoredString()), mPrimaryPower(NULL),
       mSecondaryPower(NULL), mLevels(0), mNextClientSideUpdate(0), mLastCheckY(-1),
       mClientSideScale(0.0F), mActive(false), mBeamDirection(0), mBeamLength(0)
 {
@@ -183,7 +190,20 @@ int BeaconBlockEntity::getValidEffectById(int id)
 
 void BeaconBlockEntity::setContainerData(int id, int value)
 {
-    if (id == 0) mLevels = value;
+    if (id == 0)
+    {
+        mLevels = value;
+        return;
+    }
+    if (id == 1)
+    {
+        mPrimaryPower = (MobEffect*)getValidEffectById(value);
+        return;
+    }
+    if (id == 2)
+    {
+        mSecondaryPower = (MobEffect*)getValidEffectById(value);
+    }
 }
 
 int BeaconBlockEntity::getContainerDataCount()
@@ -246,7 +266,44 @@ void BeaconBlockEntity::updateShapeForGlide()
 
 bool BeaconBlockEntity::NeedsRebuild()
 {
-    return mLastCheckY < 0;
+    short colorCounts[16];
+    for (int i = 0; i < 16; ++i)
+    {
+        colorCounts[i] = 0;
+    }
+    short blockCount = 0;
+    for (int y = mPos.y + 1; y < mLevel->getHeight(); ++y)
+    {
+        BlockPos pos(mPos.x, y, mPos.z);
+        const BlockState* state = mLevel->getBlockState(pos);
+        Block* block = state->getBlock();
+        if (block != Blocks::AIR && block != Blocks::glass)
+        {
+            ++blockCount;
+            if (block == Blocks::stained_glass || block == Blocks::stained_glass_pane)
+            {
+                int color = block->getSpawnResourcesAuxValue(state);
+                ++colorCounts[color];
+            }
+        }
+    }
+
+    bool colorsChanged = false;
+    for (int i = 0; i < 16; ++i)
+    {
+        if (colorCounts[i] != mBeamColorCounts[i])
+        {
+            colorsChanged = true;
+            mBeamColorCounts[i] = colorCounts[i];
+        }
+    }
+
+    if (blockCount != mLastBeamBlockCount)
+    {
+        mLastBeamBlockCount = blockCount;
+        return true;
+    }
+    return colorsChanged;
 }
 
 void BeaconBlockEntity::updateShape()
@@ -309,8 +366,6 @@ void BeaconBlockEntity::AddEffect(int level, int slot, MobEffect* effect)
 void BeaconBlockEntity::staticCtor()
 {
     for (int i = 0; i < 12; ++i) sBeaconEffects[i] = NULL;
-    for (int i = 0; i < 6; ++i) sBeaconEffectOrder[i] = NULL;
-    sBeaconEffectCount = 0;
     AddEffect(0, 0, MobEffects::MOVEMENT_SPEED);
     AddEffect(0, 1, MobEffects::DIG_SPEED);
     AddEffect(1, 0, MobEffects::DAMAGE_RESISTANCE);
@@ -331,12 +386,41 @@ std::vector<BeaconBlockEntity::BeaconBeamSection>* BeaconBlockEntity::getBeamSec
 
 double BeaconBlockEntity::getAndUpdateClientSideScale()
 {
-    return mClientSideScale;
+    if (!mActive)
+    {
+        return 0.0;
+    }
+    int elapsed = (int)(mLevel->getGameTime() - mNextClientSideUpdate);
+    mNextClientSideUpdate = mLevel->getGameTime();
+    double scale;
+    if (elapsed < 2)
+    {
+        scale = (double)(mClientSideScale + 0.025F);
+    }
+    else
+    {
+        float decayed = mClientSideScale - (float)elapsed / 40.0F;
+        if ((double)decayed < 0.0)
+        {
+            decayed = 0.0F;
+        }
+        scale = (double)(decayed + 0.025F);
+    }
+    if (scale <= 1.0)
+    {
+        mClientSideScale = (float)scale;
+        return scale;
+    }
+    scale = 1.0;
+    mClientSideScale = (float)scale;
+    return scale;
 }
 
 boost::shared_ptr<Packet> BeaconBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>();
+    int dimension = mLevel->mDimension->getType()->getId();
+    CompoundTag* tag = getUpdateTag();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 3, dimension, tag));
 }
 
 CompoundTag* BeaconBlockEntity::getUpdateTag()

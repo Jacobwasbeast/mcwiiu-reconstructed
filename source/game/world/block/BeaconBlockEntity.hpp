@@ -113,6 +113,8 @@ public:
 private:
     std::vector<BeaconBeamSection> mBeamSections;
     not_null_ptr<ItemInstance> mItem;
+    short mLastBeamBlockCount;
+    short mBeamColorCounts[16];
     boost::shared_ptr<CensoredString> mName;
     MobEffect* mPrimaryPower;
     MobEffect* mSecondaryPower;

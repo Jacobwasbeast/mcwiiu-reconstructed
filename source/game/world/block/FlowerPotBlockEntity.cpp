@@ -4,6 +4,10 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
+#include "game/world/Level.hpp"
 
 FlowerPotBlockEntity::FlowerPotBlockEntity(Item* item, int data)
     : BlockEntity(), mPlantItem(item), mItemData(data)
@@ -67,7 +71,9 @@ void FlowerPotBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> FlowerPotBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>();
+    CompoundTag* tag = new CompoundTag();
+    save(tag);
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 5, mLevel->mDimension->getType()->getId(), tag));
 }
 
 CompoundTag* FlowerPotBlockEntity::getUpdateTag()

@@ -43,7 +43,16 @@ public:
             MUSHROOM_BROWN = 10,
             DEAD_BUSH = 11,
             FERN = 12,
-            GRASS = 13
+            GRASS = 13,
+            BLUE_ORCHID = 14,
+            ALLIUM = 15,
+            HOUSTONIA = 16,
+            RED_TULIP = 17,
+            ORANGE_TULIP = 18,
+            WHITE_TULIP = 19,
+            PINK_TULIP = 20,
+            OXEYE_DAISY = 21,
+            CACTUS = 22
         };
 
         Contents(EContents contents, const std::wstring& name);

@@ -2,8 +2,11 @@
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/world/block/BedBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/util/AABB.hpp"
@@ -20,6 +23,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelSource.hpp"
 #include "game/world/generation/Player.hpp"
 
 #include <typeinfo>
@@ -78,6 +82,15 @@ void BedBlock::blockStaticCtor()
 
 const MaterialColor* BedBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
+    if (state->getValue(PART) == &gBedFoot)
+    {
+        boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
+        if (blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
+        {
+            boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
+            return MaterialColor::getDyeMaterial(bedEntity->getColor());
+        }
+    }
     return MaterialColor::getDyeMaterial(DyeColor::WHITE);
 }
 
@@ -232,7 +245,19 @@ EBlockRenderShape BedBlock::getRenderShape(const BlockState*)
 
 not_null_ptr<ItemInstance> BedBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>();
+    BlockPos targetPos(pos);
+    if (state->getValue(PART) == &gBedFoot)
+    {
+        targetPos = pos.relative(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+    }
+    const DyeColor* color = DyeColor::WHITE;
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(targetPos);
+    if (blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
+    {
+        boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
+        color = bedEntity->getColor();
+    }
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::bed, 1, color->getBlockData()));
 }
 
 bool BedBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)

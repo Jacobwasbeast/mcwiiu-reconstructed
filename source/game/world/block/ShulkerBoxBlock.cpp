@@ -283,8 +283,21 @@ const BlockState* ShulkerBoxBlock::mirror(const BlockState* state, Mirror* mirro
     return rotate(state, mirror->getRotation(state->getValue(DirectionalBlock::FACING_PROPERTY)));
 }
 
-EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
+EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
+                                                   const BlockPos& pos, const Direction* direction)
 {
+    const BlockState* virtualState = fillVirtualBlockStateProperties(state, levelSource, pos);
+    const Direction* facing = virtualState->getValue(DirectionalBlock::FACING_PROPERTY);
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(levelSource->getBlockEntity(pos));
+    if (box.get() != NULL)
+    {
+        int animationStatus = box->getAnimationStatus();
+        if (animationStatus == 0 ||
+            (animationStatus == 2 && (facing == direction->getOpposite() || facing == direction)))
+        {
+            return BLOCK_FACE_SOLID;
+        }
+    }
     return BLOCK_FACE_UNDEFINED;
 }
 
