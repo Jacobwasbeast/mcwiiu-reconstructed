@@ -4,7 +4,7 @@
 #include "game/core/System.hpp"
 #include <cstring>
 static unsigned int gRegionFileThreadStorageIndex=0;
-void* TlsGetValue(unsigned int index); void TlsSetValue(unsigned int index,void* value);
+void* TlsGetValue(unsigned int index); int TlsSetValue(unsigned int index,void* value);
 RegionFile::RegionFile(ConsoleSaveFile* saveFile,File* file)
  :mFileEntry(NULL),mFile(file),mSaveFile(saveFile),mOffsets(new unsigned int[1024]),
   mTimestamps(new unsigned int[1024]),mUsedSectors(new std::vector<unsigned int>()),

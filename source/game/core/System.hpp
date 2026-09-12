@@ -6,7 +6,7 @@
 
 #include "game/world/biome/arrayWithLength.hpp"
 
-class Node;
+struct Node;
 class Biome;
 
 class System

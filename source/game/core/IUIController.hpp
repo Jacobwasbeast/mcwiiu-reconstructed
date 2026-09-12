@@ -10,7 +10,7 @@
 
 class SoundEvent;
 class Tutorial;
-struct _TutorialPopupInfo;
+class _TutorialPopupInfo;
 enum EControllerActions : int;
 
 class IUIController

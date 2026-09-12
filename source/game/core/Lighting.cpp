@@ -32,13 +32,13 @@ void Lighting::turnOn()
     GlStateManager::colorMaterial(2, 0);
 
     Vec3* frontLight = Vec3::newTemp(0.2f, 1.0f, -0.7f)->normalize();
-    GlStateManager::light(8, 1, getBuffer(frontLight->x, frontLight->y, frontLight->z, 0.0f));
+    GlStateManager::light(8, 1, getBuffer(frontLight->x, frontLight->y, frontLight->z, 0.0));
     GlStateManager::light(8, 3, getBuffer(0.6f, 0.6f, 0.6f, 1.0f));
     GlStateManager::light(8, 2, getBuffer(0.0f, 0.0f, 0.0f, 1.0f));
     GlStateManager::light(8, 4, getBuffer(0.0f, 0.0f, 0.0f, 1.0f));
 
     Vec3* backLight = Vec3::newTemp(-0.2f, 1.0f, 0.7f)->normalize();
-    GlStateManager::light(9, 1, getBuffer(backLight->x, backLight->y, backLight->z, 0.0f));
+    GlStateManager::light(9, 1, getBuffer(backLight->x, backLight->y, backLight->z, 0.0));
     GlStateManager::light(9, 3, getBuffer(0.6f, 0.6f, 0.6f, 1.0f));
     GlStateManager::light(9, 2, getBuffer(0.0f, 0.0f, 0.0f, 1.0f));
     GlStateManager::light(9, 4, getBuffer(0.0f, 0.0f, 0.0f, 1.0f));

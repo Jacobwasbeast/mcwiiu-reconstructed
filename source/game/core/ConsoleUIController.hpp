@@ -18,7 +18,7 @@ class UIScene;
 class UIScene_HUD;
 class UIGroup;
 class Tutorial;
-struct _TutorialPopupInfo;
+class _TutorialPopupInfo;
 struct _CustomDrawData;
 
 class ConsoleUIController : public IUIController
@@ -310,6 +310,7 @@ private:
     int m_touchY;
     bool m_rebuildingTouchBoxes;
     unsigned char m_unknownFD61[3];
+    int m_skinScenes[11];
     int m_resolution;
     int m_requestedResolution;
     unsigned int m_resolutionDisableFlags;

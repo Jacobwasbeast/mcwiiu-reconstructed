@@ -8,7 +8,7 @@
 #include "platform/wiiu/C4JStorage.hpp"
 class File;
 class LevelGenerationOptions;
-class FriendSessionInfo;
+struct FriendSessionInfo;
 struct SAVE_DETAILS;
 class IUIScene_LoadCreateJoin
 {

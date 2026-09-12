@@ -48,6 +48,10 @@
 #include "platform/wiiu/UIComponent_WiiUDRC.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
+// TEMPORARY boot tracing; remove once the boot reaches the title screen.
+extern "C" void OSReport(const char*, ...);
+#define UI_TRACE(step) OSReport("[boot][ui] %s\n", step)
+
 unsigned int XGetLanguage();
 unsigned int GetTickCount();
 void PIXBeginNamedEvent(float colour, const char* name, ...);
@@ -70,7 +74,7 @@ ConsoleUIController::ConsoleUIController()
       m_pendingFont(EFont_Bitmap), m_cleanupOnReload(false), m_autoCleanupOnReload(true),
       m_fontChangePending(false), m_unknown43B(0), m_font(0), m_oldFont(0),
       m_bitmapFont(0), m_bitmapFontAlt(0), m_touchHeld(false), m_touchX(0), m_touchY(0),
-      m_rebuildingTouchBoxes(false), m_resolution(0), m_requestedResolution(0),
+      m_rebuildingTouchBoxes(false), m_skinScenes(), m_resolution(0), m_requestedResolution(0),
       m_resolutionDisableFlags(0), m_lastInputTime(0), m_trialTimerLimit(0),
       m_trialTimerValue(0), m_trialTimerTick(0), m_autosaveTimerTick(0),
       m_selectedPlayer(0), m_selectedX(0), m_selectedY(0), m_selectedItemVisible(false),
@@ -135,23 +139,31 @@ void ConsoleUIController::preInit(int width, int height)
 
 void ConsoleUIController::postInit()
 {
+    UI_TRACE("postInit: entered");
     gFui->setCustomTextureFn(TextureSubstitutionCreateCallbackFui,
                              TextureSubstitutionDestroyCallbackFui, this);
+    UI_TRACE("postInit: customTextureFn set");
     SetupFont();
+    UI_TRACE("postInit: SetupFont done");
     loadSkins();
+    UI_TRACE("postInit: loadSkins DONE");
     m_groups[0] = new UIGroup((EUIGroup)0, -1);
     m_groups[1] = new UIGroup((EUIGroup)1, -1);
     m_groups[2] = new UIGroup((EUIGroup)2, 0);
     m_groups[3] = new UIGroup((EUIGroup)3, 1);
     m_groups[4] = new UIGroup((EUIGroup)4, 2);
     m_groups[5] = new UIGroup((EUIGroup)5, 3);
+    UI_TRACE("postInit: groups built");
     NavigateToScene(0, (EUIScene)1, 0, (EUILayer)6, (EUIGroup)7);
 }
 
 void ConsoleUIController::init(int width, int height)
 {
+    UI_TRACE("init: entered");
     gFui->setScreenSize((float)width, (float)height);
+    UI_TRACE("init: screen size set");
     preInit(width, height);
+    UI_TRACE("init: preInit done");
     postInit();
 }
 
@@ -253,20 +265,35 @@ void ConsoleUIController::SetupFont()
     LeaveCriticalSection(&m_fontMutex);
 }
 
-int ConsoleUIController::loadSkin(const std::wstring& name, const std::wstring& path, int texture)
+int ConsoleUIController::loadSkin(const std::wstring& name, const std::wstring& path, int fileIndex)
 {
-    int loaded = Minecraft::GetInstance()->getTextureManager()->loadMemTexture(name, path);
-    if (loaded == -1)
-        loaded = texture;
-    registerSubstitutionTexture(name, loaded);
-    return loaded;
+    (void)path;
+    int scene = 0;
+    if (name.size() != 0 && gApp.hasArchiveFile(name, false)) {
+        arrayWithLength<unsigned char> bytes = gApp.getArchiveFile(name, false);
+        scene = gFui->load(bytes, false, fileIndex);
+        delete[] bytes.data;
+    }
+    return scene;
 }
 
 void ConsoleUIController::loadSkins()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    minecraft->getTextureManager()->reloadAll();
-    m_skinThreadExpected = false;
+    std::wstring platformSkin = L"";
+    platformSkin = L"skinWiiU.fui";
+    if (m_screenHeight >= 1080.0f) {
+        m_skinScenes[0] = loadSkin(platformSkin, L"platformskinHD.fui", 0);
+    } else {
+        m_skinScenes[0] = loadSkin(platformSkin, L"platformskin.fui", 0);
+    }
+    m_skinScenes[1] = loadSkin(L"skinGraphics.fui", L"skinGraphics.fui", 0);
+    m_skinScenes[2] = loadSkin(L"skinGraphicsHud.fui", L"skinGraphicsHud.fui", 0);
+    m_skinScenes[3] = loadSkin(L"skinGraphicsInGame.fui", L"skinGraphicsInGame.fui", 0);
+    m_skinScenes[5] = loadSkin(L"skinGraphicsLabels.fui", L"skinGraphicsLabels.fui", 0);
+    m_skinScenes[6] = loadSkin(L"skinLabels.fui", L"skinLabels.fui", 0);
+    m_skinScenes[7] = loadSkin(L"skinInGame.fui", L"skinInGame.fui", 0);
+    m_skinScenes[8] = loadSkin(L"skinHud.fui", L"skinHud.fui", 0);
+    m_skinScenes[10] = loadSkin(L"skin.fui", L"skin.fui", 0);
 }
 
 void ConsoleUIController::renderScenes()

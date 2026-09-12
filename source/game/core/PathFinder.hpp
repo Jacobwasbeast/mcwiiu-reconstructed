@@ -8,7 +8,7 @@ class BlockPos;
 class Entity;
 class LevelSource;
 class Mob;
-class Node;
+struct Node;
 class NodeEvaluator;
 class Path;
 

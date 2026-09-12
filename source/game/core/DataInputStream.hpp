@@ -13,7 +13,7 @@
 class BlockPos;
 class CompoundTag;
 class ItemInstance;
-class PlayerUID;
+struct PlayerUID;
 
 class DataInputStream : public InputStream, public DataInput
 {

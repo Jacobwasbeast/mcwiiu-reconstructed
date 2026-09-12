@@ -24,7 +24,7 @@
 void replaceAll(std::wstring& result, const std::wstring& source, const std::wstring& search, const std::wstring& replacement);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 unsigned int TlsAlloc();
-void TlsSetValue(unsigned int index, void* value);
+int TlsSetValue(unsigned int index, void* value);
 void* TlsGetValue(unsigned int index);
 bool pathCmp(DLCFile* file);
 unsigned int g_pathCompareTlsIndex = TlsAlloc();

@@ -4,7 +4,7 @@
 #include <string>
 
 template <class T> class arrayWithLength;
-class PlayerUID;
+struct PlayerUID;
 
 class DataOutput
 {
