@@ -18,14 +18,31 @@ class StationAddress;
 class Watermark
 {
 public:
+    enum { cNameLengthMax = 63 };
+
+    Watermark();
     void SetName(const char* name);
+    void Reset();
     void Update(long long value);
+
+private:
+    long long m_minimum;
+    long long m_maximum;
+    long long m_current;
+    unsigned long long m_updateCount;
+    bool m_enabled;
+    char m_name[cNameLengthMax + 1];
 };
 
 class WatermarkManager
 {
 public:
+    enum { cWatermarkNum = 10 };
+
     Watermark* GetWatermark(int index);
+
+private:
+    Watermark m_watermarks[cWatermarkNum];
 };
 
 }
@@ -161,12 +178,15 @@ class SessionSearchCriteria
 public:
     SessionSearchCriteria();
     virtual ~SessionSearchCriteria();
-    Result SetResultRange(unsigned int offset, unsigned int size);
+    virtual Result SetResultRange(unsigned int offset, unsigned int size);
+    virtual void Reset();
+    unsigned int GetResultRangeOffset() const;
+    unsigned int GetResultRangeSize() const;
+    int GetKeyType() const;
 
-    unsigned int m_field00;
-    unsigned int m_field04;
-    int m_field08;
-    int m_field0c;
+    unsigned int m_resultRangeOffset;
+    unsigned int m_resultRangeSize;
+    int m_keyType;
 };
 
 class SessionStationInfo
@@ -178,14 +198,13 @@ public:
     };
 
     SessionStationInfo();
-    ~SessionStationInfo();
+    virtual ~SessionStationInfo();
+    virtual void Clear();
     StationInfoRole GetRole() const;
     void SetRole(StationInfoRole role);
-    void Clear();
     static unsigned int GetSerializedSize();
 
-    unsigned int m_field00;
-    int m_role;
+    StationInfoRole m_role;
 };
 
 }
