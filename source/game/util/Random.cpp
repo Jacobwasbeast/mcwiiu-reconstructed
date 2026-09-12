@@ -1,16 +1,8 @@
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "game/util/Random.hpp"
 
 #include <math.h>
 
-union _LARGE_INTEGER {
-    struct {
-        unsigned int HighPart;
-        unsigned int LowPart;
-    } u;
-    long long QuadPart;
-};
-
-int QueryPerformanceCounter(_LARGE_INTEGER* count);
 
 Random::Random() {
     _LARGE_INTEGER counter;
