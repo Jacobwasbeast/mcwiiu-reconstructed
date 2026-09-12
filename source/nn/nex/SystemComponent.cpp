@@ -2,6 +2,12 @@
 
 #include <cwchar>
 
+#include "nn/nex/Scheduler.hpp"
+#include "nn/nex/SpinTest.hpp"
+
+bool WaitForTerminatedStatePreventBlockCallCallback(
+    nn::nex::RootObject* pObject, unsigned int uiTimeout);
+
 namespace nn
 {
 namespace nex
@@ -216,6 +222,34 @@ void SystemComponent::DecrementInUseCount(const wchar_t*)
     SetState(m_uiState == STATE_IN_USE ? STATE_READY : STATE_TERMINATING, false);
 }
 
+qResult SystemComponent::WaitForTerminatedState(unsigned int uiTimeout)
+{
+    Terminate();
+
+    qResult result;
+
+    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout,
+            &WaitForTerminatedStatePreventBlockCallCallback, this, &result))
+        return result;
+
+    SpinTest spinTest(10, uiTimeout);
+
+    spinTest.LeaveOnTimeout();
+
+    while (TestState() != STATE_TERMINATED
+        && spinTest.SpinOnce(
+               L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
+               339, L"TestState()!=Terminated")
+            != 0)
+    {
+    }
+
+    if (TestState() == STATE_TERMINATED)
+        return qResult(0x10001);
+
+    return qResult(static_cast<int>(0x8001000B));
+}
+
 SystemComponent::Use::Use(SystemComponent* pComponent, const wchar_t* pReason)
     : m_pComponent(pComponent)
     , m_pReason(pReason)
@@ -230,4 +264,11 @@ SystemComponent::Use::~Use()
 }
 
 }
+}
+
+bool WaitForTerminatedStatePreventBlockCallCallback(
+    nn::nex::RootObject* pObject, unsigned int uiTimeout)
+{
+    return static_cast<bool>(
+        static_cast<nn::nex::SystemComponent*>(pObject)->WaitForTerminatedState(uiTimeout));
 }

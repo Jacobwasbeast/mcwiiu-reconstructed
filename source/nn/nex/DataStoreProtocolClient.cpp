@@ -2,6 +2,8 @@
 
 #include "nn/nex/Message.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
+#include "nn/nex/ProtocolRegistry.hpp"
+#include "nn/nex/RVClientCore.hpp"
 #include "nn/nex/_DDL_DataStoreSearchResult.hpp"
 
 namespace nn
@@ -19,6 +21,17 @@ const unsigned int METHOD_ID_COUNT = 47;
 
 ProtoReturnFunction s_ProtoReturn[METHOD_ID_COUNT];
 
+}
+
+DataStoreProtocolClient::DataStoreProtocolClient(unsigned short uiProtocolID)
+    : ClientProtocol(1)
+{
+    if (uiProtocolID == 0)
+        return;
+
+    SetProtocolID(uiProtocolID);
+    RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
+        uiProtocolID, new DataStoreProtocolClient(0));
 }
 
 DataStoreProtocolClient::~DataStoreProtocolClient()

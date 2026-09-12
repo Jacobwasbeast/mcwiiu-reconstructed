@@ -1,9 +1,15 @@
 #include "nn/nex/ServiceClient.hpp"
 
+#include "nn/nex/ClientProtocol.hpp"
+#include "nn/nex/Core.hpp"
 #include "nn/nex/Credentials.hpp"
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/EndPoint.hpp"
 #include "nn/nex/Protocol.hpp"
+#include "nn/nex/ProtocolCallContext.hpp"
+#include "nn/nex/ProtocolRegistry.hpp"
 #include "nn/nex/RVClientCore.hpp"
+#include "nn/nex/Scheduler.hpp"
 
 namespace nn
 {
@@ -39,6 +45,43 @@ bool ServiceClient::Unbind()
 
 void ServiceClient::ConnectionStateHasChanged()
 {
+}
+
+bool ServiceClient::IsConnected() const
+{
+    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    pScheduler->GetCriticalSection().Enter();
+
+    if (m_pCredentials == 0)
+    {
+        pScheduler->GetCriticalSection().Leave();
+        return false;
+    }
+
+    EndPoint* pConnection = GetConnection(11);
+    const bool bConnected = pConnection != 0 && pConnection->IsConnected();
+
+    pScheduler->GetCriticalSection().Leave();
+    return bConnected;
+}
+
+bool ServiceClient::SetDependentRvConnection(ProtocolCallContext* pCallContext) const
+{
+    Credentials* pCredentials = pCallContext->GetCredentials();
+    if (pCredentials == 0)
+        pCredentials = m_pCredentials;
+
+    if (pCredentials != 0)
+    {
+        EndPoint* pConnection = pCredentials->GetConnection(11);
+        if (pConnection != 0)
+        {
+            pCallContext->SetDependentConnection(pConnection, pConnection->GetConnectionID());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool ServiceClient::IsFaulty() const
@@ -88,6 +131,20 @@ void ServiceClient::RegisterProtocol(Protocol* pProtocol)
 void ServiceClient::RegisterExtraProtocol(Protocol* pProtocol)
 {
     RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
+}
+
+void ServiceClient::RegisterExtraProtocol(Protocol* pProtocol, unsigned short uiProtocolID)
+{
+    ClientProtocol* pClientProtocol = static_cast<ClientProtocol*>(pProtocol);
+
+    pClientProtocol->SetDefaultCredentials(m_pCredentials);
+    pClientProtocol->SetProtocolID(uiProtocolID);
+    GetProtocolRegistry()->RegisterProtocol(uiProtocolID, pClientProtocol->CreateResponder());
+}
+
+ProtocolRegistry* ServiceClient::GetProtocolRegistry() const
+{
+    return RVClientCore::AcquireInstance()->GetProtocolRegistry();
 }
 
 bool ServiceClient::UnregisterProtocol(Protocol*)
