@@ -59,6 +59,11 @@ void SetSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sender, arra
 
         logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_SpawnpointNotValid, NULL, 0, stringParams, 1);
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> SetSpawnpointCommand::preparePacket(PlayerUID uid)

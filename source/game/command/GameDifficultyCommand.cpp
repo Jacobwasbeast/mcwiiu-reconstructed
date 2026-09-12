@@ -33,6 +33,11 @@ void GameDifficultyCommand::execute(boost::shared_ptr<CommandSender> sender, arr
 
     int intParams[1] = { difficulty };
     logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)100, intParams, 1, NULL, 0);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> GameDifficultyCommand::preparePacket(int difficulty)

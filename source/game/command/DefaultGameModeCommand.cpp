@@ -60,6 +60,11 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
     int intParams[1] = { gameType };
     logAdminAction(sender, (ClientboundChatPacket::EChatPacketMessage)101,
                    intParams, 1, NULL, 0);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> DefaultGameModeCommand::preparePacket(unsigned char gameType)

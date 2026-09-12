@@ -147,6 +147,11 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
         player->ResetThermalVariables();
         gameMode->ResetLastKnownPosition(player->mPlayerIndex);
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> CheckpointCommand::preparePacket(const StatsUID& uid, int checkpoint)

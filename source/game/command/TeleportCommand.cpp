@@ -83,6 +83,11 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
                                           source->mYRot, source->mXRot, true, true);
         }
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> TeleportCommand::preparePacket(PlayerUID source, PlayerUID target)

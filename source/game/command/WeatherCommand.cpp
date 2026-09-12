@@ -71,6 +71,11 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
     }
 
     level->tickWeather(true);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> WeatherCommand::preparePacket(unsigned char mode)

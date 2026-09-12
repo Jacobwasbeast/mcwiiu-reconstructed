@@ -35,6 +35,11 @@ void TimeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLeng
     int intParams[1] = { (int)time };
 
     logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_TimeSuccess, intParams, 1, NULL, 0);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 void TimeCommand::doSetTime(boost::shared_ptr<CommandSender> sender, long long time)

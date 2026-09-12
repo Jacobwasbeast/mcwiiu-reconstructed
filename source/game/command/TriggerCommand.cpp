@@ -23,6 +23,11 @@ void TriggerCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> TriggerCommand::preparePacket(unsigned char objectiveIndex)

@@ -60,6 +60,11 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, 1, stringParams, 1);
         }
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> GameModeCommand::preparePacket(PlayerUID uid, unsigned char gameMode)
