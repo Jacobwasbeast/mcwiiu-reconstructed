@@ -7,11 +7,19 @@
 class ConsoleGameRules
 {
 public:
-    enum EGameRuleType
+    // Fixed underlying type, not invented enumerators. These enums are declared
+    // empty, so their value range is [0,1] and every
+    // static_cast<EGameRuleType>(0x11) in the tree is out of range -- which GCC
+    // tolerates but clang rejects outright in a case label. 102 distinct values
+    // are cast to EGameRuleType across source/, and naming all 102 would be
+    // fabricating 102 facts. Declaring the underlying type asserts nothing about
+    // names and makes the existing casts well-formed. The real enumerators still
+    // need recovering from evidence.
+    enum EGameRuleType : int
     {
     };
 
-    enum EGameRuleAttr
+    enum EGameRuleAttr : int
     {
     };
 };
