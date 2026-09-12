@@ -33,23 +33,24 @@ class Stat;
 class BlockEntity;
 class Container;
 
-struct AbstractContainerMenu;
-struct Block;
-struct BlockPos;
-struct ChunkPos;
-struct CompoundTag;
-struct DamageSource;
-struct DataFixerUpper;
-struct GameType;
-struct InteractionObject;
-struct Level;
-struct MinecraftServer;
-struct MobEffectInstance;
-struct ServerGamePacketListenerImpl;
-struct ServerLevel;
-struct ServerPlayerGameMode;
-struct Stat;
-struct ServerPlayer : Player, net_minecraft_world_inventory::ContainerListener {
+class AbstractContainerMenu;
+class Block;
+class BlockPos;
+class ChunkPos;
+class CompoundTag;
+class DamageSource;
+class DataFixerUpper;
+class GameType;
+class InteractionObject;
+class Level;
+class MinecraftServer;
+class MobEffectInstance;
+class ServerGamePacketListenerImpl;
+class ServerLevel;
+class ServerPlayerGameMode;
+class Stat;
+class ServerPlayer : public Player, public net_minecraft_world_inventory::ContainerListener {
+public:
     
        
     boost::shared_ptr<ServerGamePacketListenerImpl> mConnection;

@@ -30,7 +30,7 @@ class ServerConnection;
 class ServerLevel;
 class Settings;
 class ConsoleInputSource;
-struct _NetworkGameInitData;
+class _NetworkGameInitData;
 
 class MinecraftServer
 {

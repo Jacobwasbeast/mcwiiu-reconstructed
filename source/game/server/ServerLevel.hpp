@@ -27,19 +27,19 @@ class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressL
 
 
 
-struct Block;
-struct BlockEventData;
-struct BlockPos;
-struct BlockState;
-struct BoundingBox;
-struct LevelChunk;
-struct LevelData;
-struct LevelSettings;
-struct MinecraftServer;
-struct MobCategory;
-struct PlayerChunkMap;
-struct PortalForcer;
-struct ProgressListener;
+class Block;
+class BlockEventData;
+class BlockPos;
+class BlockState;
+class BoundingBox;
+class LevelChunk;
+class LevelData;
+class LevelSettings;
+class MinecraftServer;
+class MobCategory;
+class PlayerChunkMap;
+class PortalForcer;
+class ProgressListener;
 
 struct TickNextTickDataKeyCompare
 {
