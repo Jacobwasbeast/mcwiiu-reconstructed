@@ -8,7 +8,7 @@
 class Entity;
 class Level;
 class Mob;
-class Node;
+struct Node;
 class Path;
 class PathFinder;
 
