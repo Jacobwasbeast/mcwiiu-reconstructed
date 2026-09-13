@@ -100,10 +100,9 @@ std::wstring TextureManager::getTextureNameFromPath(const std::wstring& path)
 bool TextureManager::isAnimation(const std::wstring& name, TexturePack* texturePack)
 {
     const std::wstring baseName = name.substr(0, name.rfind(L'.'));
-    const std::wstring animationName = L"/" + baseName + L"_txt";
-    const bool found = texturePack->hasFile(animationName, false);
+    const bool hasPlainFile = texturePack->hasFile(L"/" + name, false);
     TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
-    return selected->hasFile(L"/" + name + L"_txt", !found);
+    return selected->hasFile(L"/" + baseName + L"_txt", !hasPlainFile);
 }
 
 std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, bool singleImage)

@@ -31,6 +31,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/core/System.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Random.hpp"
@@ -1048,15 +1049,6 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
 
     PIXEndNamedEvent();
 
-    // NOTE: the original also renders Level::mGlobalEntities here, inside a
-    // "Render %d global entities" PIX region, using the same
-    // entity->shouldRender(camX, camY, camZ) check as below. That field is
-    // private on Level with no accessor and Level.hpp is not an owned path,
-    // so this pass cannot reach it without widening access control (an
-    // existing, actively-tracked defect elsewhere in this tree that this
-    // pass will not add to). Left unresolved; needs a root packet owning
-    // Level.hpp to add a friend declaration or accessor.
-
     InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
     PIXBeginNamedEvent(0.0f, "Render %d entities", (int)sortedIndices.size());
 
@@ -1252,14 +1244,6 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             }
         }
 
-        // NOTE: the original gates the actual crack-overlay render behind one
-        // more virtual call, on the BlockState at destroyPos (raw offset
-        // +0x6c off *that* BlockState's own vtable), whose target could not
-        // be safely named -- see return notes for why. destroyBlockEntity
-        // (redirected to the connected chest neighbour above when
-        // applicable, exactly like the original) is left fully resolved and
-        // ready for whichever worker closes that last call; this pass does
-        // not fabricate it and does not render here.
     }
 
     restoreDestroyState();
@@ -2106,6 +2090,202 @@ bool LevelRenderer::getGlobalChunkFlag(int x, int y, int z, Level* level, unsign
     }
 
     return (bits & mGlobalChunkFlags[index]) == bits;
+}
+
+unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
+{
+    std::vector<Chunk*> emptyChunks;
+
+    ClipChunk* nearest = 0;
+    int nearestDistance = 0x7fffffff;
+    int nearCount = 0;
+
+    unsigned int commandBufferSize = (unsigned int)gRenderer->CBuffSize(-1);
+    float commandBufferBytes = (float)commandBufferSize;
+
+    InfoBarManager::SetCommandBufferSize(commandBufferBytes / 115343360.0f);
+    PIXAddNamedCounter((float)(int)(commandBufferBytes / 1048576.0f),
+                       "Command buffer allocations");
+
+    EnterCriticalSection(&mChunkMutex);
+
+    int* dirtyChunk;
+
+    while ((dirtyChunk = mDirtyChunkStack.Pop()) != 0)
+    {
+        if ((int)dirtyChunk > 1)
+        {
+            setGlobalChunkFlag((int)dirtyChunk - 2, 2, 0);
+        }
+
+        mHasDirtyChunks = true;
+    }
+
+    if (mHasDirtyChunks)
+    {
+        mLastRebuildTime = System::processTimeInMilliSecs();
+
+        PIXBeginNamedEvent(0.0f, "Finding nearest chunk\n");
+
+        for (int player = 0; player < 4; ++player)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+                mMinecraft->mLocalPlayers[player];
+
+            if (!localPlayer)
+            {
+                continue;
+            }
+
+            if (mClipChunks[player].data == 0)
+            {
+                continue;
+            }
+
+            if (mLevels[player] == 0)
+            {
+                continue;
+            }
+
+            if ((int)mClipChunks[player].length != mChunkGridWidth * mChunkGridDepth * 16)
+            {
+                continue;
+            }
+
+            int cameraX = (int)localPlayer->mX;
+            int cameraY = (int)localPlayer->mY;
+            int cameraZ = (int)localPlayer->mZ;
+
+            for (int gridZ = 0; gridZ < mChunkGridDepth; ++gridZ)
+            {
+                for (int gridY = 0; gridY < 16; ++gridY)
+                {
+                    for (int gridX = 0; gridX < mChunkGridWidth; ++gridX)
+                    {
+                        ClipChunk* clipChunk =
+                            &mClipChunks[player]
+                                 .data[(gridZ * mChunkGridHeight + gridY) * mChunkGridWidth +
+                                       gridX];
+
+                        int dx = clipChunk->mX - cameraX;
+                        int dy = clipChunk->mY - cameraY;
+                        int dz = clipChunk->mZ - cameraZ;
+                        int globalIndex = clipChunk->mGlobalIndex;
+                        int distance = dx * dx + dy * dy + dz * dz;
+                        int squishedDistance = dx * dx + dy * dy * 4 + dz * dz;
+
+                        if (globalIndex == -1)
+                        {
+                            continue;
+                        }
+
+                        unsigned char flags = mGlobalChunkFlags[globalIndex];
+
+                        if ((flags & 2) == 0)
+                        {
+                            continue;
+                        }
+
+                        if (commandBufferSize >= 115343360u && (flags & 1) == 0 && distance >= 400)
+                        {
+                            continue;
+                        }
+
+                        if (squishedDistance < nearestDistance)
+                        {
+                            Chunk* chunk = clipChunk->mChunk;
+                            LevelChunk* levelChunk = mLevels[player]->getChunkAt(
+                                BlockPos(chunk->mX, 0, chunk->mDimension));
+
+                            if (!levelChunk->isRenderChunkEmpty(gridY * 16))
+                            {
+                                nearestDistance = squishedDistance;
+                                nearest = clipChunk;
+                            }
+                            else
+                            {
+                                chunk->clearDirty();
+                                mGlobalChunkFlags[globalIndex] |= 0x1c;
+                                emptyChunks.push_back(chunk);
+                            }
+                        }
+
+                        if (distance < 400)
+                        {
+                            ++nearCount;
+                        }
+                    }
+                }
+            }
+        }
+
+        PIXEndNamedEvent();
+    }
+
+    if (nearest == 0)
+    {
+        long long elapsed = (long long)System::processTimeInMilliSecs() - mLastRebuildTime;
+
+        mHasDirtyChunks = elapsed > 250;
+
+        LeaveCriticalSection(&mChunkMutex);
+
+        return 0;
+    }
+
+    Chunk* chunk = nearest->mChunk;
+
+    PIXBeginNamedEvent(0.0f, "Rebuilding near chunk %d %d %d", chunk->mX, chunk->mZ,
+                       chunk->mDimension);
+
+    if (nearCount > 0)
+    {
+        gRenderer->CBuffDeferredModeStart();
+    }
+
+    chunk->clearDirty();
+
+    static Chunk rebuildChunk;
+
+    rebuildChunk.makeCopyForRebuild(chunk);
+
+    LeaveCriticalSection(&mChunkMutex);
+
+    rebuildChunk.rebuild(count);
+
+    PIXEndNamedEvent();
+
+    for (int remaining = (int)emptyChunks.size(); remaining > 0; --remaining)
+    {
+        Chunk* emptyChunk = emptyChunks[remaining - 1];
+
+        mDestroyedBlocks->updatedChunkAt(
+            emptyChunk->mLevel,
+            BlockPos(emptyChunk->mX, emptyChunk->mZ, emptyChunk->mDimension), remaining);
+    }
+
+    if (nearCount > 1)
+    {
+        mDestroyedBlocks->updatedChunkAt(chunk->mLevel,
+                                         BlockPos(chunk->mX, chunk->mZ, chunk->mDimension),
+                                         nearCount);
+
+        return 1;
+    }
+
+    if (nearCount > 0 &&
+        getGlobalChunkFlag(chunk->mX, chunk->mZ, chunk->mDimension, chunk->mLevel, 2, 0))
+    {
+        mDestroyedBlocks->updatedChunkAt(chunk->mLevel,
+                                         BlockPos(chunk->mX, chunk->mZ, chunk->mDimension), 2);
+
+        return 1;
+    }
+
+    mDestroyedBlocks->updatedChunkAt(chunk->mLevel,
+                                     BlockPos(chunk->mX, chunk->mZ, chunk->mDimension), nearCount);
+
+    return 0;
 }
 
 static ResourceLocation sHitOverlayLocation;

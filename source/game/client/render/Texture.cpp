@@ -1,5 +1,6 @@
 #include "game/client/render/Texture.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/client/render/TextureManager.hpp"
 #include "game/core/ByteBuffer.hpp"
 #include "game/core/Buffer.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -15,6 +16,99 @@ bool& textureGpuSynced(Texture* texture)
 bool& textureGpuAllocated(Texture* texture)
 {
     return *reinterpret_cast<bool*>(reinterpret_cast<char*>(texture) + 0x84);
+}
+
+void texturePackedByteOrder(int target, unsigned int order[4])
+{
+    order[0] = 3;
+    if (target == 1)
+    {
+        order[1] = 2;
+        order[2] = 1;
+        order[3] = 0;
+    }
+    else
+    {
+        order[1] = 0;
+        order[2] = 1;
+        order[3] = 2;
+    }
+}
+
+void texturePackArgbPixels(const int* pixels, unsigned int count, const unsigned int order[4], unsigned char* bytes)
+{
+    unsigned int i;
+    for (i = 0; i < count; ++i)
+    {
+        unsigned int argb = (unsigned int)pixels[i];
+        bytes[i * 4 + order[0]] = (unsigned char)(argb >> 24);
+        bytes[i * 4 + order[1]] = (unsigned char)(argb >> 16);
+        bytes[i * 4 + order[2]] = (unsigned char)(argb >> 8);
+        bytes[i * 4 + order[3]] = (unsigned char)argb;
+    }
+}
+
+unsigned int textureAverageChannel(unsigned char a, unsigned char b, unsigned char c, unsigned char d)
+{
+    return (unsigned int)(((unsigned int)a + b + c + d) >> 2);
+}
+
+unsigned int texturePackedArgb(const unsigned char* pixel, const unsigned int order[4])
+{
+    return ((unsigned int)pixel[order[0]] << 24) | ((unsigned int)pixel[0] << 16) |
+           ((unsigned int)pixel[1] << 8) | (unsigned int)pixel[2];
+}
+
+void textureGenerateMipLevel(ByteBuffer* previous, unsigned int previousWidth, unsigned char* levelBytes,
+                              unsigned int levelWidth, unsigned int levelHeight, const unsigned int order[4])
+{
+    unsigned char* previousBuffer = previous->getBuffer();
+    unsigned int y;
+    for (y = 0; y < levelHeight; ++y)
+    {
+        unsigned int x;
+        for (x = 0; x < levelWidth; ++x)
+        {
+            const unsigned int topLeft = ((y * 2) * previousWidth + x * 2) * 4;
+            const unsigned int topRight = topLeft + 4;
+            const unsigned int bottomLeft = topLeft + previousWidth * 4;
+            const unsigned int bottomRight = bottomLeft + 4;
+            const unsigned char* pTopLeft = previousBuffer + topLeft;
+            const unsigned char* pTopRight = previousBuffer + topRight;
+            const unsigned char* pBottomLeft = previousBuffer + bottomLeft;
+            const unsigned char* pBottomRight = previousBuffer + bottomRight;
+            const unsigned char alphaTopLeft = pTopLeft[order[0]];
+            const unsigned char alphaTopRight = pTopRight[order[0]];
+            const unsigned char alphaBottomLeft = pBottomLeft[order[0]];
+            const unsigned char alphaBottomRight = pBottomRight[order[0]];
+            const unsigned int dst = (y * levelWidth + x) * 4;
+            const bool uniform = (alphaTopLeft == 0 || alphaTopLeft == 0xff) &&
+                                  (alphaTopRight == 0 || alphaTopRight == 0xff) &&
+                                  (alphaBottomLeft == 0 || alphaBottomLeft == 0xff) &&
+                                  (alphaBottomRight == 0 || alphaBottomRight == 0xff);
+            if (uniform)
+            {
+                levelBytes[dst + order[0]] = (unsigned char)textureAverageChannel(alphaTopLeft, alphaTopRight, alphaBottomLeft, alphaBottomRight);
+                levelBytes[dst + order[1]] = (unsigned char)textureAverageChannel(pTopLeft[0], pTopRight[0], pBottomLeft[0], pBottomRight[0]);
+                levelBytes[dst + order[2]] = (unsigned char)textureAverageChannel(pTopLeft[1], pTopRight[1], pBottomLeft[1], pBottomRight[1]);
+                levelBytes[dst + order[3]] = (unsigned char)textureAverageChannel(pTopLeft[2], pTopRight[2], pBottomLeft[2], pBottomRight[2]);
+            }
+            else
+            {
+                const unsigned int argbTopLeft = texturePackedArgb(pTopLeft, order);
+                const unsigned int argbTopRight = texturePackedArgb(pTopRight, order);
+                const unsigned int argbBottomLeft = texturePackedArgb(pBottomLeft, order);
+                const unsigned int argbBottomRight = texturePackedArgb(pBottomRight, order);
+                const unsigned int top = Texture::crispBlend((int)argbTopLeft, (int)argbTopRight);
+                const unsigned int bottom = Texture::crispBlend((int)argbBottomLeft, (int)argbBottomRight);
+                const unsigned int blended = Texture::crispBlend((int)top, (int)bottom);
+                levelBytes[dst + order[0]] = (unsigned char)(blended >> 24);
+                levelBytes[dst + order[1]] = (unsigned char)(blended >> 16);
+                levelBytes[dst + order[2]] = (unsigned char)(blended >> 8);
+                levelBytes[dst + order[3]] = (unsigned char)blended;
+            }
+        }
+    }
 }
 
 }
@@ -92,6 +186,7 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     m_hasMipmaps = mipmap || m_mipLevels > 1;
     m_rect->width = width;
     m_rect->height = height;
+    m_managerId = TextureManager::getInstance()->createTextureID();
     if (type == 2) m_glId = (unsigned int)-1;
     else m_glId = (unsigned int)GlStateManager::genTexture();
     GlStateManager::bindTexture((int)m_glId);
@@ -99,7 +194,11 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     GlStateManager::texParameteri(m_target, 2, wrap);
     GlStateManager::texParameteri(m_target, 3, filter);
     GlStateManager::texParameteri(m_target, 4, filter);
-    if (image != NULL) transferFromImage(image);
+    if (image != NULL)
+    {
+        transferFromImage(image);
+        if (type != 2) updateOnGPU();
+    }
 }
 
 unsigned int Texture::crispBlend(int first, int second)
@@ -122,15 +221,49 @@ unsigned int Texture::crispBlend(int first, int second)
 void Texture::transferFromImage(BufferedImage* image)
 {
     if (image == NULL || image->getWidth() > (unsigned int)m_width || image->getHeight() > (unsigned int)m_height) return;
+
+    unsigned int order[4];
+    texturePackedByteOrder(m_target, order);
+
     unsigned int count = (unsigned int)(m_width * m_height);
     arrayWithLength<unsigned char> bytes(count * 4, false);
     arrayWithLength<int> pixels(count, false);
     image->getRGB(0, 0, (unsigned int)m_width, m_height, pixels, 0, m_width, 0);
-    std::memcpy(bytes.data, pixels.data, count * 4);
+    texturePackArgbPixels(pixels.data, count, order, bytes.data);
     delete m_data[0];
     m_data[0] = ByteBuffer::allocateDirect((int)(count * 4));
     m_data[0]->put(bytes);
+    m_data[0]->position(0);
     m_data[0]->limit(count * 4);
+
+    if (m_hasMipmaps || image->getData(1) != NULL)
+    {
+        m_hasMipmaps = true;
+        unsigned int level;
+        for (level = 1; level <= 4; ++level)
+        {
+            unsigned int levelWidth = (unsigned int)m_width >> level;
+            unsigned int levelHeight = (unsigned int)m_height >> level;
+            unsigned int levelCount = levelWidth * levelHeight;
+            arrayWithLength<unsigned char> levelBytes(levelCount * 4, false);
+            int* providedData = image->getData((int)level);
+            if (providedData == NULL)
+            {
+                unsigned int previousWidth = (unsigned int)m_width >> (level - 1);
+                textureGenerateMipLevel(m_data[level - 1], previousWidth, levelBytes.data, levelWidth, levelHeight, order);
+            }
+            else
+            {
+                texturePackArgbPixels(providedData, levelCount, order, levelBytes.data);
+            }
+            delete m_data[level];
+            m_data[level] = ByteBuffer::allocateDirect((int)(levelCount * 4));
+            m_data[level]->put(levelBytes);
+            m_data[level]->position(0);
+            m_data[level]->limit(levelCount * 4);
+        }
+    }
+
     m_dirty = true;
     if (m_immediateUpdate) updateOnGPU();
 }

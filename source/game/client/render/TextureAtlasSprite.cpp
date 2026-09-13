@@ -8,7 +8,12 @@
 TextureAtlasSprite::TextureAtlasSprite(const std::wstring& name,const std::wstring& parent,float u0,float u1,float v0,float v1,float du,float dv)
  : mName(name),mParent(parent),mSource(0),mFrames(0),mOwnTexture(0),mAnimationFrames(0),mFlags(0),mInterpolated(false),mRotated(false),mX(0),mY(0),mWidth(0),mHeight(0),mU0(u0),mU1(u1),mV0(v0),mV1(v1),mUOffset(du),mVOffset(dv),mUScale(1.0f),mVScale(1.0f),mFrame(0),mFrameTime(0) {}
 
-TextureAtlasSprite::~TextureAtlasSprite() { freeFrameTextures(); delete mAnimationFrames; mAnimationFrames=0; }
+TextureAtlasSprite::~TextureAtlasSprite() {
+ if (mFrames) {
+  for (std::vector<Texture*>::iterator i = mFrames->begin(); i != mFrames->end(); ++i) delete *i;
+  delete mFrames;
+ }
+}
 
 TextureAtlasSprite* TextureAtlasSprite::create(const std::wstring& name) {
  if (name==L"clock") return new TextureAtlasSprite(name,L"",0,0,0,0,256,256);
@@ -20,9 +25,8 @@ void TextureAtlasSprite::initUVs(float u0,float u1,float v0,float v1) { mU0=u0; 
 
 void TextureAtlasSprite::init(Texture* source,std::vector<Texture*>* frames,int x,int y,int width,int height,bool rotated) {
  mSource=source; mFrames=frames; mX=x; mY=y; mWidth=width; mHeight=height; mRotated=rotated; mFrame=-1;
- const float border=0.001f;
- mU0=(float)x/(float)source->getWidth()+border; mU1=(float)(x+width)/(float)source->getWidth()-border;
- mV0=(float)y/(float)source->getHeight()+border; mV1=(float)(y+height)/(float)source->getHeight()-border;
+ mU0=(float)x/(float)source->getWidth(); mU1=(float)(x+width)/(float)source->getWidth();
+ mV0=(float)y/(float)source->getHeight(); mV1=(float)(y+height)/(float)source->getHeight();
  mUScale=(float)width*0.0625f; mVScale=(float)height*0.0625f;
  delete mOwnTexture; mOwnTexture=0;
  mOwnTexture=new Texture(mName,2,width,height,source->getWidth(),source->getHeight(),0,0,0,0,false);

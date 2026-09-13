@@ -31,4 +31,7 @@ private:
     float* m_glyphAdvances;
 };
 
+extern SFontData g_mojangles7FontData;
+extern SFontData g_mojangles11FontData;
+
 #endif

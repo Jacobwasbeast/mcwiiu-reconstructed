@@ -77,6 +77,11 @@ void DefaultTexturePack::loadCustomModels()
                 std::wstring modelName = input.readUTF();
                 m_customModels[modelName].readModel(&input, version);
             }
+            byteStream.mBuffer.data = NULL;
+            byteStream.mBuffer.length = 0;
+            byteStream.mCount = 0;
+            byteStream.mMark = 0;
+            byteStream.mPosition = 0;
         }
 
     }

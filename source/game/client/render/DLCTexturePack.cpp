@@ -252,6 +252,11 @@ void DLCTexturePack::loadCustomModels()
         std::wstring name = stream.readUTF();
         m_customModels[name].readModel(&stream, version);
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 void DLCTexturePack::loadBehaviours()
@@ -265,6 +270,11 @@ void DLCTexturePack::loadBehaviours()
     int count = stream.readInt();
     for (int i = 0; i < count; ++i)
         RiderPositionOverrides::ReadOverrides(&stream);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, unsigned int licenseMask)

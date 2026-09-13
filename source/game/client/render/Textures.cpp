@@ -89,24 +89,36 @@ bool Textures::IsOriginalImage(_TEXTURE_NAME textureName, const std::wstring& na
 
 BufferedImage* Textures::readImage(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    std::wstring resource = L"res/" + name;
-    TexturePack* selected = mTexturePackRepository->getSelected();
-    TexturePack* defaultPack = TexturePackRepository::defaultTexturePack;
+    MemSect(32);
+    bool titleUpdate = IsTUImage(textureName, name);
+    std::wstring path = L"";
     bool useSelected = false;
-    if (selected != defaultPack)
+    if (mTexturePackRepository->getSelected() != TexturePackRepository::defaultTexturePack)
     {
-        useSelected = selected->hasFile(resource, false);
+        std::wstring resource = L"res/" + name;
+        useSelected = mTexturePackRepository->getSelected()->hasFile(resource, false);
     }
+    BufferedImage* image;
     if (useSelected)
     {
-        std::wstring path = selected->getPath(false, "");
-        return selected->getImageResource(resource, IsTUImage(textureName, name), false, path);
+        path = mTexturePackRepository->getSelected()->getPath(titleUpdate, NULL);
+        image = mTexturePackRepository->getSelected()->getImageResource(name, false, titleUpdate, path);
     }
-    if (!IsOriginalImage(textureName, name) && !IsTUImage(textureName, name))
+    else
     {
-        resource = L"1.2.2/" + name;
+        TexturePack* defaultPack = TexturePackRepository::defaultTexturePack;
+        path = defaultPack->getPath(titleUpdate, NULL);
+        if (!IsOriginalImage(textureName, name) && !titleUpdate)
+        {
+            image = defaultPack->getImageResource(L"1_2_2/" + name, false, false, path);
+        }
+        else
+        {
+            image = defaultPack->getImageResource(name, false, titleUpdate, path);
+        }
     }
-    return defaultPack->getImageResource(resource, IsTUImage(textureName, name), false, L"res/" + name);
+    MemSect(0);
+    return image;
 }
 
 void Textures::setTextureFormat(const std::wstring& name)
@@ -161,7 +173,14 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     arrayWithLength<int> pixels = loadTexturePixels(image);
     ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)(pixels.length * 4));
     arrayWithLength<unsigned char> bytes((unsigned int)(pixels.length * 4), true);
-    std::memcpy(bytes.data, pixels.data, bytes.length);
+    for (unsigned int i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
+    {
+        unsigned int value = (unsigned int)pixels.data[i];
+        bytes.data[i * 4] = (unsigned char)(value >> 16);
+        bytes.data[i * 4 + 1] = (unsigned char)(value >> 8);
+        bytes.data[i * 4 + 2] = (unsigned char)value;
+        bytes.data[i * 4 + 3] = (unsigned char)(value >> 24);
+    }
     buffer->put(bytes);
     buffer->position(0);
     buffer->limit(bytes.length);

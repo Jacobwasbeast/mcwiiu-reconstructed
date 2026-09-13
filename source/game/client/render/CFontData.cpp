@@ -64,6 +64,20 @@ static unsigned short g_glyphUnicodes[460] =
     0x0000, 0x0000, 0x0000, 0x0000
 };
 
+SFontData g_mojangles7FontData =
+{
+    "Mojangles7", L"/font/Mojangles_7.png", 460, g_glyphUnicodes,
+    190, 264, 23, 20, 8, 13,
+    0.538461566f, 0.615384638f, 0.100000001f, 5
+};
+
+SFontData g_mojangles11FontData =
+{
+    "Mojangles11", L"/font/Mojangles_11.png", 460, g_glyphUnicodes,
+    305, 348, 23, 20, 13, 17,
+    0.647058845f, 0.352941185f, 0.0769230798f, 7
+};
+
  CFontData::CFontData()
     : m_fontData(NULL), m_glyphWidths(NULL), m_glyphPixels(NULL), m_glyphAdvances(NULL)
 {
