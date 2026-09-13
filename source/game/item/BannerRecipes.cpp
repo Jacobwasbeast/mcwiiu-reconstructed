@@ -7,6 +7,7 @@
 #include "game/core/DyeColor.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/item/BannerItem.hpp"
 #include "game/item/CraftingContainer.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -69,17 +70,6 @@ static const BannerPatternDefinition* getPatternDefinition(const BannerPattern* 
     return NULL;
 }
 
-static ItemInstance* makeBanner(const DyeColor* color, ListTag* patterns)
-{
-    ItemInstance* banner = new ItemInstance(Items::banner, 1, color->getItemData());
-    if (patterns != NULL && !patterns->isEmpty())
-    {
-        CompoundTag* tag = static_cast<CompoundTag*>(banner->getOrCreateTagElement(L"BlockEntityTag"));
-        tag->put(L"Patterns", patterns->copy());
-    }
-    return banner;
-}
-
 static void getBannerPatterns(std::vector<const BannerPattern*>& patterns)
 {
     static const wchar_t* names[] =
@@ -129,31 +119,26 @@ ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pat
 
 void BannerRecipes::addRecipes(Recipes* recipes)
 {
-    const DyeColor* colors[] =
-    {
-        DyeColor::WHITE, DyeColor::ORANGE, DyeColor::MAGENTA, DyeColor::LIGHT_BLUE,
-        DyeColor::YELLOW, DyeColor::LIME, DyeColor::PINK, DyeColor::GRAY,
-        DyeColor::SILVER, DyeColor::CYAN, DyeColor::PURPLE, DyeColor::BLUE,
-        DyeColor::BROWN, DyeColor::GREEN, DyeColor::RED, DyeColor::BLACK
-    };
     unsigned int i;
-    for (i = 0; i < sizeof(colors) / sizeof(colors[0]); ++i)
+    std::vector<const DyeColor*>::const_iterator colorIt;
+    for (colorIt = DyeColor::COLORS.begin(); colorIt != DyeColor::COLORS.end(); ++colorIt)
     {
-        ItemInstance* result = makeBanner(colors[i], NULL);
-        BannerBlockEntity::addTags(result, colors[i]->getItemData(), NULL);
-        ItemInstance* wool = new ItemInstance(Blocks::wool, 1, colors[i]->getBlockData());
-        Recipe* recipe = recipes->addShapedRecipe(result, L"sssczcig", L"###", L"###", L" # ", L'#', wool, L'|', Items::stick, 0x44);
+        const DyeColor* color = *colorIt;
+        ItemInstance* result = BannerItem::makeBanner(color, NULL);
+        BannerBlockEntity::addTags(result, color->getItemData(), NULL);
+        ItemInstance* wool = new ItemInstance(Blocks::wool, 1, color->getBlockData());
+        Recipe* recipe = recipes->addShapedRecipe(result, L"sssczcig", L"###", L"###", L" | ", L'#', wool, L'|', Items::stick, 0x44);
         recipe->mDisplayInSimpleCrafting = false;
 
-        result = makeBanner(colors[i], NULL);
-        BannerBlockEntity::addTags(result, colors[i]->getItemData(), NULL);
-        wool = new ItemInstance(Blocks::wool, 1, colors[i]->getBlockData());
+        result = BannerItem::makeBanner(color, NULL);
+        BannerBlockEntity::addTags(result, color->getItemData(), NULL);
+        wool = new ItemInstance(Blocks::wool, 1, color->getBlockData());
         const BannerPattern* base = BannerPattern::byHash(L"b");
-        recipes->addShapedRecipe(result, 1, L"sssczcibg", L"###", L"###", L" # ", L'#', wool, L'|', Items::stick, base->getAtlasIndex(), base->getCraftingMenuTab());
+        recipes->addShapedRecipe(result, 1, L"sssczcibg", L"###", L"###", L" | ", L'#', wool, L'|', Items::stick, base->getAtlasIndex(), base->getCraftingMenuTab());
 
-        result = makeBanner(colors[i], NULL);
-        BannerBlockEntity::addTags(result, colors[i]->getItemData(), NULL);
-        recipes->addShapedRecipe(result, 1, L"sczbg", L"##", L'#', makeBanner(colors[i], NULL), 999, base->getCraftingMenuTab());
+        result = BannerItem::makeBanner(color, NULL);
+        BannerBlockEntity::addTags(result, color->getItemData(), NULL);
+        recipes->addShapedRecipe(result, 1, L"sczbg", L"##", L'#', BannerItem::makeBanner(color, NULL), 999, base->getCraftingMenuTab());
     }
 
     BannerDuplicateRecipe* duplicateRecipe = new BannerDuplicateRecipe();
@@ -175,10 +160,10 @@ void BannerRecipes::addRecipes(Recipes* recipes)
         std::wstring hashname = pattern->getHashname();
         if (pattern->hasPatternItem())
         {
-            for (i = 0; i < sizeof(colors) / sizeof(colors[0]); ++i)
+            for (i = 0; i < 16; ++i)
             {
-                ItemInstance* result = createOutputItem(colors[i]->getItemData(), hashname);
-                recipes->addShapelessRecipe(result, 1, L"zzzbg", makeBanner(DyeColor::WHITE, NULL), pattern->getPatternItem(), new ItemInstance(Items::dye, 1, colors[i]->getItemData()), pattern->getAtlasIndex(), pattern->getCraftingMenuTab());
+                ItemInstance* result = createOutputItem(static_cast<int>(i), hashname);
+                recipes->addShapelessRecipe(result, 1, L"zzzbg", BannerItem::makeBanner(DyeColor::WHITE, NULL), pattern->getPatternItem(), new ItemInstance(Items::dye, 1, static_cast<int>(i)), pattern->getAtlasIndex(), pattern->getCraftingMenuTab());
             }
         }
         else
@@ -186,10 +171,10 @@ void BannerRecipes::addRecipes(Recipes* recipes)
             const BannerPatternDefinition* definition = getPatternDefinition(pattern);
             if (definition == NULL)
                 continue;
-            for (i = 0; i < sizeof(colors) / sizeof(colors[0]); ++i)
+            for (i = 0; i < 16; ++i)
             {
-                ItemInstance* result = createOutputItem(colors[i]->getItemData(), hashname);
-                recipes->addShapedRecipe(result, 1, L"sssczczbg", definition->rows[0], definition->rows[1], definition->rows[2], L'#', new ItemInstance(Items::dye, 1, colors[i]->getItemData()), L'*', makeBanner(DyeColor::WHITE, NULL), pattern->getAtlasIndex(), pattern->getCraftingMenuTab());
+                ItemInstance* result = createOutputItem(static_cast<int>(i), hashname);
+                recipes->addShapedRecipe(result, 1, L"sssczczbg", definition->rows[0], definition->rows[1], definition->rows[2], L'#', new ItemInstance(Items::dye, 1, static_cast<int>(i)), L'*', BannerItem::makeBanner(DyeColor::WHITE, NULL), pattern->getAtlasIndex(), pattern->getCraftingMenuTab());
             }
         }
     }

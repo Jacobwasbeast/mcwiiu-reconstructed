@@ -105,6 +105,7 @@ private:
     friend class MultiPlayerGameMode;
     friend class Gui;
     friend class FurnaceMenu;
+    friend class EnchantmentMenu;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;

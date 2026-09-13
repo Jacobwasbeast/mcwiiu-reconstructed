@@ -106,6 +106,11 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
         logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_Text, intParams, 1, stringParams, 2);
     }
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::shared_ptr<Player> player, int itemId, int count, int data, const std::wstring& playerName)
