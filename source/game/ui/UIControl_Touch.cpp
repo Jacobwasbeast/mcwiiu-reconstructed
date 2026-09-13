@@ -24,9 +24,9 @@ void UIControl_Touch::setupControl(UIScene* scene, fuiRenderNode* node, const st
 
 void UIControl_Touch::init(int controlType)
 {
+    int layerId = m_scene != 0 ? m_scene->m_layer->m_layerId : 0;
     m_controlType = static_cast<UIControl::eUIControlType>(controlType);
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 2 || sceneType == 4 || sceneType == 6 || sceneType == 7) {
+    if (layerId == 2 || layerId == 4 || layerId == 6 || layerId == 7) {
         gConsoleUIController.TouchBoxAdd(this, m_scene);
     }
 }

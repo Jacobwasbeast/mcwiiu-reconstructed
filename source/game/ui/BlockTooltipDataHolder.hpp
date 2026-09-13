@@ -22,8 +22,8 @@ public:
     BlockPos m_blockPos;
     InteractionResult::EInteractionResult m_eInteractionResult;
     bool m_bUseItem;
-    bool m_bCanPlace;
     bool m_bCanDestroy;
+    bool m_bCanPlace;
     bool m_bIsInside;
 
     BlockTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer,

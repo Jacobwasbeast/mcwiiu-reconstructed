@@ -67,22 +67,23 @@ FJ_LeaderboardEntry::~FJ_LeaderboardEntry()
 {
 }
 
+FJ_LeaderboardEntry* FJ_LeaderboardEntry::Create(fuiRenderNode* pRenderNode)
+{
+    return new FJ_LeaderboardEntry(pRenderNode);
+}
+
 void FJ_LeaderboardEntry::Init(int count, int firstValue, int spacing, int offset)
 {
     int i;
-    int position = firstValue + offset;
-    int value = firstValue + spacing + offset;
     for (i = 0; i < 7; ++i)
     {
-        if (i * 2 >= count)
+        if (i >= count)
             m_columnText[i]->setVisibility(false);
         else
         {
-            m_columnText[i]->setX((float)value);
+            m_columnText[i]->setX((float)(firstValue + offset + i * spacing));
             m_columnText[i]->setVisibility(true);
         }
-        value += spacing * 2;
-        position += spacing * 2;
     }
     m_numColumns = count;
     m_firstValuePosition = (firstValue * 2 + offset * 2 + spacing * (count - 1)) / 2;

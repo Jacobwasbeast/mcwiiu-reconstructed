@@ -3,7 +3,7 @@
 FJ_Label_Book_Normal::FJ_Label_Book_Normal(fuiRenderNode* renderNode)
     : FJ_Label(renderNode)
 {
-    m_labelTooWide = true;
+    m_multilineWrap = true;
 }
 
 FJ_Label_Book_Normal::~FJ_Label_Book_Normal()

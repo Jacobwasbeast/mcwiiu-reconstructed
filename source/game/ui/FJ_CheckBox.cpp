@@ -91,6 +91,16 @@ uint8_t FJ_CheckBox::getChecked()
     return m_checked ? 1 : 0;
 }
 
+uint8_t FJ_CheckBox::getEnabled()
+{
+    return m_enabled ? 1 : 0;
+}
+
+uint32_t FJ_CheckBox::getCurrentState()
+{
+    return static_cast<uint32_t>(m_currentState);
+}
+
 uint32_t FJ_CheckBox::getOldWidth()
 {
     return static_cast<uint32_t>(m_oldWidth);

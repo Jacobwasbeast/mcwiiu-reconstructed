@@ -10,7 +10,6 @@ TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_p
     int column;
 
     m_container = container;
-    m_playerInventory = playerInventory;
 
     for (row = 0; row < 3; ++row)
     {
@@ -24,16 +23,13 @@ TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_p
     {
         for (column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(m_playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
         }
     }
 
-    for (row = 0; row < 3; ++row)
+    for (column = 0; column < 9; ++column)
     {
-        for (column = 0; column < 3; ++column)
-        {
-            addSlot(new Slot(m_playerInventory, row * 3 + column, 8 + row * 54 + column * 18, 142));
-        }
+        addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
     }
 }
 
@@ -65,7 +61,7 @@ not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> pl
             return ItemInstance::EMPTY;
         }
 
-        if (item->isEmpty())
+        if (item->getCount() == 0)
         {
             slot->set(ItemInstance::EMPTY);
         }

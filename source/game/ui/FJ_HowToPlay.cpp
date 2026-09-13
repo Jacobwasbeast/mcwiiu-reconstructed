@@ -237,8 +237,7 @@ void FJ_HowToPlay::InitScene()
     m_page = -1;
     m_dynamicHtmlTextName.assign("DynamicHtmlText");
     m_dynamicHtmlText = getChildByName(m_dynamicHtmlTextName);
-    if (m_dynamicHtmlText != NULL)
-        m_dynamicHtmlText->setHeight(0.0f);
+    m_dynamicHtmlText->setX(0.0f);
     m_pages.clear();
     m_pages.push_back(L"");
     LoadHowToPlayPage(this, 0, m_pages);
@@ -257,6 +256,10 @@ unsigned int FJ_HowToPlay::getType()
 
 void FJ_HowToPlay::SetSafeZone(int iLeft, int iTop, int iRight, int iBottom)
 {
+    FJ_FuiNodeStage* stage = getStage();
+    double stageHeight = stage->getStageHeight();
+    if (stageHeight != 360.0 && stageHeight != 540.0)
+        return;
     setX((float)iRight - 176.0f);
     setY((float)iLeft - 176.0f);
 }

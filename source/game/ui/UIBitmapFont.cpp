@@ -9,7 +9,7 @@
 UIBitmapFont::UIBitmapFont(SFontData& fontData)
     : UIAbstractBitmapFont(fontData.fontName)
 {
-    BufferedImage image(fontData.textureFileName, true, true, L"buckets_");
+    BufferedImage image(fontData.textureFileName, true, true, L"");
     m_numGlyphs = fontData.numGlyphs;
     m_fontData = new CFontData(fontData, image.getData());
 }

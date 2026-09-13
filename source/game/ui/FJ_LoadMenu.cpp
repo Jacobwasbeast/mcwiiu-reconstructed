@@ -76,7 +76,6 @@ void FJ_LoadMenu::InitCustomLoadMenu()
     m_iconY = static_cast<int>(icon->getY());
     mainPanel->removeChild(icon, true);
     hideAndRemove(mainPanel, "TexturePackName");
-    hideAndRemove(mainPanel, "MultiList");
 
     multiList->setTabIndex(1);
     SetFocus(-1);

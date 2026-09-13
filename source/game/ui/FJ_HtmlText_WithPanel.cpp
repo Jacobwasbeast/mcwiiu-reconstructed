@@ -11,6 +11,7 @@
 FJ_HtmlText_WithPanel::FJ_HtmlText_WithPanel(fuiRenderNode* renderNode)
     : FJ_HtmlText(renderNode)
 {
+    m_panelOffset = 20;
     m_panelNode = NULL;
 }
 
@@ -68,6 +69,8 @@ void FJ_HtmlText_WithPanel::Init(const std::wstring& label)
     m_pText->setWidth(width - static_cast<float>(m_panelOffset * 2));
     m_pText->setHeight(height - (m_pUpArrow->getHeight() * 1.4f + static_cast<float>(m_panelOffset)));
     static_cast<fuiRenderNodeEditText*>(m_pText)->setAutoSize(TextFieldAutoSizeLeft);
+    static_cast<fuiRenderNodeEditText*>(m_pText)->m_wordWrap = true;
+    static_cast<fuiRenderNodeEditText*>(m_pText)->m_multiline = true;
 
     m_fScrollBottom = m_fScrollBottom - m_fScrollTop;
     m_iWidth = 0;

@@ -5,8 +5,8 @@
 
 struct fuiShapeComponent : public fuiFillStyle
 {
-    unsigned int vertexCount;
     unsigned int vertexOffset;
+    unsigned int vertexCount;
 
     void EndianSwap();
     static void EndianSwap(void* pData);

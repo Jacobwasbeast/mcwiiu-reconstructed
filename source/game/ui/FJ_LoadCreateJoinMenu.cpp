@@ -180,11 +180,12 @@ void FJ_LoadCreateJoinMenu::SetMatchesAvailable(bool available)
 
 void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
 {
-    FJ_FuiNode* loadList = getChildByName("LoadGame.LoadGameList");
-    FJ_FuiNode* saveSizeBar = loadList->getChildByName("SaveSizeBar");
+    FJ_FuiNode* loadGame = getChildByName("LoadGame");
+    FJ_FuiNode* saveSizeBar = loadGame->getChildByName("SaveSizeBar");
     if (saveSizeBar != NULL)
         saveSizeBar->setVisible(show);
 
+    FJ_FuiNode* loadList = getChildByName("LoadGame.LoadGameList");
     FJ_FuiNode* loadListRecess = getChildByName("LoadGame.LoadGameListRecessPanel");
     FJ_FuiNode* loadTimer = getChildByName("LoadGame.LoadGameTimer");
     if (!show)

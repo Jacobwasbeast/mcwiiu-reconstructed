@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/unordered_map.hpp>
+
 #include "game/ui/UIScene.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/UIControl_CheckboxButtonList.hpp"
@@ -15,6 +17,7 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/ui/SuperflatMenu.hpp"
 
 class FlatLayerInfo;
 class SoundEvent;
@@ -97,13 +100,13 @@ public:
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleGainFocus(bool hadFocus);
     virtual void customDraw(const char* name, fuiRect* rect);
-    unsigned int SetSelectedLayer(int index);
+    void SetSelectedLayer(int index);
     void DeleteLayer();
     void WritePropertyChanges(int index);
     void PlaySound(const SoundEvent* sound);
-    unsigned int OpenPresetsDialog();
-    unsigned int OpenEditLayerDialog(bool insert);
-    unsigned int OpenMaxHeightDialog();
+    void OpenPresetsDialog();
+    void OpenEditLayerDialog(bool insert);
+    void OpenMaxHeightDialog();
     virtual std::wstring getMoviePath();
     virtual int getSceneType();
     void InsertNewLayer();
@@ -111,37 +114,33 @@ public:
 
 private:
     std::vector<TickAction*> m_tickActions;
+    UIControl_Touch m_layersTouch;
+    UIControl_Touch m_biomesTouch;
+    UIControl_Touch m_propertiesTouch;
     int m_activeTab;
-    int m_selectedLayer;
-    int m_selectedBiome;
-    int m_selectedParam;
     UIControl_Label m_layersTab;
     UIControl m_layersPanel;
     UIControl_LayerIconButtonList m_layersList;
-    UIControl_Touch m_layersTouch;
     UIControl_Label m_layersHelpTitle;
     UIControl_HTMLLabel m_layersHelp;
     UIControl m_layersTimer;
     UIControl_Label m_biomesTab;
     UIControl m_biomesPanel;
     UIControl_CheckboxButtonList m_biomesList;
-    UIControl_Touch m_biomesTouch;
     UIControl_Label m_biomesHelpTitle;
     UIControl_HTMLLabel m_biomesHelp;
     UIControl m_biomesTimer;
     UIControl_Label m_propertiesTab;
     UIControl m_propertiesPanel;
     UIControl_MultiList m_propertiesList;
-    UIControl_Touch m_propertiesTouch;
     UIControl_Label m_propertiesHelpTitle;
     UIControl_HTMLLabel m_propertiesHelp;
     UIControl m_propertiesTimer;
     bool m_generating;
     bool m_editingLayer;
-    int m_currentPanel;
     int m_pendingSelection;
-    std::vector<int> m_paramParents;
-    std::vector<int> m_paramMappings;
+    boost::unordered_map<int, SuperflatMenu::Mapping*> m_paramMappings;
+    bool m_presetsFlag;
     SuperflatConfig* m_config;
     FlatGeneratorInfo m_generatorInfo;
     void* m_initData;

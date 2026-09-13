@@ -5,8 +5,8 @@ void Swap4Bytes(unsigned int& value);
 void fuiShapeComponent::EndianSwap()
 {
     fuiFillStyle::EndianSwap();
-    Swap4Bytes(vertexCount);
     Swap4Bytes(vertexOffset);
+    Swap4Bytes(vertexCount);
 }
 
 void fuiShapeComponent::EndianSwap(void* pData)

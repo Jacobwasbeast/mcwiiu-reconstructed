@@ -10,7 +10,6 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-// TEMPORARY boot tracing; remove once the boot reaches the title screen.
 extern "C" void OSReport(const char*, ...);
 #define INTRO_TRACE(step) OSReport("[boot][intro_trace] %s\n", step)
 

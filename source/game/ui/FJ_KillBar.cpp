@@ -26,11 +26,11 @@ void FJ_KillBar::Init(const std::wstring& label)
 
 void FJ_KillBar::SetLabel(const std::wstring& label)
 {
-    m_textContainerChanged = true;
     m_textContainerVisible = true;
-    m_textChanged = false;
-    m_centered = true;
-    m_labelTooWide = false;
+    m_textContainerChanged = true;
+    m_manualWrap = false;
+    m_htmlText = true;
+    m_textOnly = false;
     FJ_Base::SetLabel(label);
 }
 

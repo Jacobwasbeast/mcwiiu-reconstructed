@@ -52,8 +52,8 @@ protected:
     UIControl_SlotList m_inventoryList;
     UIControl_Cursor m_cursor;
     UIControl_Label m_inventoryLabel;
-    UIControl_Label m_hotbarLabel;
-    UIControl m_backgroundPanel;
+    UIControl_SlotList m_hotbarLabel;
+    UIControl_Label m_backgroundPanel;
 };
 
 #endif

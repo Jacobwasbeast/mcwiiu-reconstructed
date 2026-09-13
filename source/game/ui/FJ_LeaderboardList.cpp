@@ -84,12 +84,16 @@ void FJ_LeaderboardList::addHeader()
 {
     if (m_header != NULL)
         return;
-    const char* symbol = m_small ? "fourj_listClasses_FJ_LeaderboardHeaderSmall" : "fourj_listClasses_FJ_LeaderboardHeader";
+    const char* symbol = m_small ? "fourj.listClasses.FJ_LeaderboardHeaderSmall"
+                                  : "fourj.listClasses.FJ_LeaderboardHeaderNormal";
     m_header = static_cast<FJ_LeaderboardHeader*>(FJ_Factory::createObject(symbol, m_pRenderNode, true, NULL));
     m_header->setWidth(getWidth());
     m_header->Init(m_numColumns, getParent(), static_cast<int>(getX()), static_cast<int>(getY()));
     m_header->SetupHeaders(m_rankTitle, m_gamertagTitle);
-    addChild(m_header);
+    int offset = Math::round((getWidth() - m_header->getWidth()) * 0.5f);
+    m_header->setX(getX() + static_cast<float>(offset));
+    m_header->setY(getY());
+    getParent()->addChild(m_header);
     m_header->SetupSlot(0, m_columnIcons[0]);
     m_header->SetupSlot(1, m_columnIcons[1]);
     m_header->SetupSlot(2, m_columnIcons[2]);
@@ -101,17 +105,22 @@ void FJ_LeaderboardList::addHeader()
 
 void FJ_LeaderboardList::HandleScrollListArrows(bool add)
 {
-    unsigned int count = static_cast<unsigned int>(m_entries.size());
-    if (add && count >= static_cast<unsigned int>(m_visibleEntries) && m_upArrow->getParent() == NULL)
+    if (add)
     {
-        getParent()->addChild(m_upArrow);
-        getParent()->addChild(m_downArrow);
-        m_upArrow->setX(-m_upArrow->getWidth());
-        m_upArrow->setY(getY() + getHeight());
-        m_downArrow->setX(getWidth());
-        m_downArrow->setY(getY() + getHeight());
-        m_upArrow->ChangeState(0);
-        m_downArrow->ChangeState(3);
+        unsigned int count = static_cast<unsigned int>(m_entries.size());
+        if (static_cast<unsigned int>(m_visibleEntries) <= count && m_upArrow->getParent() == NULL)
+        {
+            getParent()->addChild(m_upArrow);
+            getParent()->addChild(m_downArrow);
+            FJ_FuiNode* lastEntry = m_entries.back();
+            float rightEdge = lastEntry->getX() + lastEntry->getWidth();
+            m_upArrow->setX(rightEdge - m_upArrow->getWidth() * 1.5f);
+            m_upArrow->setY(lastEntry->getY() + lastEntry->getHeight() + m_upArrow->getHeight() * 0.5f);
+            m_downArrow->setX(rightEdge - m_downArrow->getWidth() * 0.5f);
+            m_downArrow->setY(m_upArrow->getY());
+            m_upArrow->ChangeState(0);
+            m_downArrow->ChangeState(3);
+        }
     }
     m_upArrow->setVisible(m_firstEntry > 0 && m_requestSize > m_visibleEntries);
     m_downArrow->setVisible(m_firstEntry < m_requestSize - m_visibleEntries);
@@ -119,10 +128,14 @@ void FJ_LeaderboardList::HandleScrollListArrows(bool add)
 
 void FJ_LeaderboardList::addNewItem(int index)
 {
-    const char* symbol = m_small ? "fourj_listClasses_FJ_LeaderboardEntrySmall" : "fourj_listClasses_FJ_LeaderboardEntryNormal";
+    const char* symbol = m_small ? "fourj.listClasses.FJ_LeaderboardEntrySmall"
+                                  : "fourj.listClasses.FJ_LeaderboardEntryNormal";
     FJ_LeaderboardEntry* entry = static_cast<FJ_LeaderboardEntry*>(FJ_Factory::createObject(symbol, m_pRenderNode, true, NULL));
     entry->setWidth(getWidth());
-    entry->setY(getY() + static_cast<float>(index) * entry->getHeight() + static_cast<float>(m_header->getHeight()));
+    int offset = Math::round((getWidth() - entry->getWidth()) * 0.5f);
+    entry->setX(getX() + static_cast<float>(offset));
+    entry->setY((entry->getHeight() + static_cast<float>(m_entrySpacing)) * static_cast<float>(index) +
+                (getY() + m_header->getHeight()) + static_cast<float>(m_entrySpacing));
     entry->Init(m_numColumns, m_header->getFirstEntryPos(), m_header->getEntrySpacing(), m_header->getIconHolderHalfWidth());
     m_entries.push_back(entry);
     getParent()->addChild(entry);
@@ -151,16 +164,73 @@ void FJ_LeaderboardList::UpdateVisibleLeaderboard()
 uint64_t FJ_LeaderboardList::NavigateLeaderboard(bool down, bool page)
 {
     if (m_entries.empty())
-        return 0;
-    unsigned int count = static_cast<unsigned int>(m_entries.size());
-    int next = down ? m_highlightEntry + (page ? count - 1 : 1) : m_highlightEntry - (page ? count - 1 : 1);
-    if (next >= 0 && next < static_cast<int>(count))
-        m_highlightEntry = next;
-    else if (down && m_firstEntry < m_requestSize - m_visibleEntries)
-        m_firstEntry = std::min(m_requestSize - m_visibleEntries, m_firstEntry + (page ? m_visibleEntries : 1));
-    else if (!down && m_firstEntry > 0)
-        m_firstEntry = std::max(0, m_firstEntry - (page ? m_visibleEntries : 1));
-    UpdateVisibleLeaderboard();
+        return (uint64_t)(uintptr_t)this << 32;
+    int count = static_cast<int>(m_entries.size());
+    bool firstEntryChanged = false;
+
+    if (!down)
+    {
+        int newHighlight = page ? ((m_highlightEntry < count - 1) ? count - 1 : count)
+                                 : m_highlightEntry + 1;
+        if (newHighlight >= 0 && newHighlight < count)
+        {
+            m_highlightEntry = newHighlight;
+        }
+        else
+        {
+            int maxFirst = m_requestSize - m_visibleEntries;
+            firstEntryChanged = (m_firstEntry != maxFirst);
+            m_highlightEntry = count - 1;
+            if (m_visibleEntries < m_requestSize)
+            {
+                int newFirst = page ? (m_firstEntry + m_visibleEntries) : (m_firstEntry + 1);
+                if (page && newFirst + m_visibleEntries > m_requestSize)
+                    newFirst = maxFirst;
+                if (newFirst + m_visibleEntries > m_requestSize)
+                {
+                    m_firstEntry = maxFirst;
+                }
+                else
+                {
+                    m_firstEntry = newFirst;
+                    if (newFirst + count - 1 > m_requestSize - 1)
+                        RequestData(true);
+                    UpdateVisibleLeaderboard();
+                    if (m_downArrow != NULL)
+                        m_downArrow->ChangeState(4);
+                }
+            }
+        }
+    }
+    else
+    {
+        int newHighlight = page ? ((m_highlightEntry > 0) ? 0 : -1) : m_highlightEntry - 1;
+        if (newHighlight >= 0)
+        {
+            m_highlightEntry = newHighlight;
+        }
+        else
+        {
+            firstEntryChanged = (m_firstEntry != 0);
+            m_highlightEntry = 0;
+            if (m_visibleEntries < m_requestSize)
+            {
+                int newFirst = page ? (m_firstEntry - m_visibleEntries) : (m_firstEntry - 1);
+                if (newFirst < 0)
+                    newFirst = 0;
+                m_firstEntry = newFirst;
+                if (newFirst < m_numColumns)
+                    RequestData(false);
+                UpdateVisibleLeaderboard();
+                if (m_upArrow != NULL)
+                    m_upArrow->ChangeState(1);
+            }
+        }
+    }
+
+    if (firstEntryChanged)
+        UpdateVisibleLeaderboard();
+
     HandleScrollListArrows(false);
     return (uint64_t)(uintptr_t)this << 32;
 }
@@ -247,23 +317,96 @@ uint64_t FJ_LeaderboardList::TouchHighlightEntry(int index)
 
 uint64_t FJ_LeaderboardList::SetTouchFocus(int x, int y, bool down)
 {
+    (void)x;
     if (!down)
     {
-        unsigned int i;
-        for (i = 0; i < m_entries.size(); ++i)
-            if (y >= m_entries[i]->getY() && y < m_entries[i]->getY() + m_entries[i]->getHeight())
+        unsigned int index = 0;
+        for (std::vector<FJ_FuiNode*>::iterator it = m_entries.begin(); it != m_entries.end(); ++it, ++index)
+        {
+            if (y >= (*it)->getY() && y < (*it)->getY() + (*it)->getHeight())
             {
-                TouchHighlightEntry(static_cast<int>(i));
-                break;
+                m_touchEntry = static_cast<int>(index);
+                TouchHighlightEntry(static_cast<int>(index));
+                m_touchY = y;
+                return (uint64_t)(uintptr_t)this << 32;
             }
+        }
         m_touchY = y;
+        return (uint64_t)(uintptr_t)this << 32;
     }
-    else if (!m_entries.empty() && m_requestSize > static_cast<int>(m_entries.size()))
+
+    if (m_entries.empty())
     {
-        int delta = static_cast<int>((std::abs(y - m_touchY)) / (m_entries[0]->getHeight() + m_entrySpacing));
-        if (delta > 0)
-            m_firstEntry = std::max(0, std::min(m_requestSize - m_visibleEntries, m_firstEntry + (y > m_touchY ? delta : -delta)));
-        UpdateVisibleLeaderboard();
+        HandleScrollListArrows(false);
+        return (uint64_t)(uintptr_t)this << 32;
+    }
+
+    float rowHeight = m_entries[0]->getHeight() + static_cast<float>(m_entrySpacing);
+    if (y > m_touchY)
+    {
+        int rows = static_cast<int>(static_cast<float>(y - m_touchY) / rowHeight);
+        if (rows >= 1)
+        {
+            int oldFirst = m_firstEntry;
+            int newFirst = oldFirst - rows;
+            if (newFirst < 0)
+                newFirst = 0;
+            m_firstEntry = newFirst;
+            if (oldFirst != newFirst)
+            {
+                if (newFirst < m_numColumns)
+                    RequestData(false);
+                UpdateVisibleLeaderboard();
+                if (m_upArrow != NULL)
+                    m_upArrow->ChangeState(1);
+                int highlight = m_highlightEntry + rows;
+                if (highlight < 0 || highlight >= static_cast<int>(m_entries.size()))
+                    highlight = static_cast<int>(m_entries.size()) - 1;
+                m_highlightEntry = highlight;
+                getStage()->setFocus(m_entries[highlight]);
+            }
+            m_touchY = y;
+        }
+        else
+        {
+            HandleScrollListArrows(false);
+        }
+    }
+    else if (y < m_touchY)
+    {
+        int rows = static_cast<int>(static_cast<float>(m_touchY - y) / rowHeight);
+        if (rows >= 1)
+        {
+            int oldFirst = m_firstEntry;
+            int newFirst = oldFirst + rows;
+            int maxFirst = m_requestSize - m_visibleEntries;
+            if (newFirst > maxFirst)
+                newFirst = maxFirst;
+            m_firstEntry = newFirst;
+            if (oldFirst != newFirst)
+            {
+                if (static_cast<unsigned int>(newFirst + static_cast<int>(m_entries.size()) - 1) >
+                    static_cast<unsigned int>(m_requestSize))
+                    RequestData(true);
+                UpdateVisibleLeaderboard();
+                if (m_downArrow != NULL)
+                    m_downArrow->ChangeState(4);
+                int highlight = m_highlightEntry - rows;
+                if (highlight < 0)
+                    highlight = 0;
+                m_highlightEntry = highlight;
+                getStage()->setFocus(m_entries[highlight]);
+            }
+            m_touchY = y;
+        }
+        else
+        {
+            HandleScrollListArrows(false);
+        }
+    }
+    else
+    {
+        HandleScrollListArrows(false);
     }
     return (uint64_t)(uintptr_t)this << 32;
 }

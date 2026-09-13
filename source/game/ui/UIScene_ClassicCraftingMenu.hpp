@@ -8,12 +8,6 @@
 #include "game/ui/UIControl_SlotList.hpp"
 
 class UILayer;
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_ClassicCraftingMenu : public UIScene_AbstractContainerMenu
 {
 public:

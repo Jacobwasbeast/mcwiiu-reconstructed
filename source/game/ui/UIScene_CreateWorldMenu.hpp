@@ -42,11 +42,7 @@ private:
     UIControl_Button m_playButton;
     UIControl_TextInput m_worldNameInput;
     UIControl_BitmapIcon m_worldIcon;
-    UIControl_Slider m_gameModeSlider;
-    UIControl_CheckBox m_onlineCheckbox;
-    std::wstring m_worldName;
     bool m_keyboardActive;
-    void* m_callbackData;
 };
 
 #endif

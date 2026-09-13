@@ -3,22 +3,23 @@
 
 #include <string>
 
+#include "game/ui/UIScene_AbstractContainerMenu.hpp"
+#include "game/ui/IUIScene_AbstractContainerMenu.hpp"
+
 class UILayer;
 class CommandBlockEntity;
 
-class UIScene_CommandBlockMenu {
+class UIScene_CommandBlockMenu : public UIScene_AbstractContainerMenu {
 public:
     UIScene_CommandBlockMenu(int type, void* data, UILayer* layer);
-    ~UIScene_CommandBlockMenu();
-    std::wstring getMoviePath();
+    virtual ~UIScene_CommandBlockMenu();
+    virtual std::wstring getMoviePath();
     void Initialise(CommandBlockEntity* commandBlock);
     void ConfirmButtonClicked();
 
 private:
-    void* m_data;
-    int m_type;
     CommandBlockEntity* m_commandBlock;
-    UILayer* m_layer;
+    IUIScene_AbstractContainerMenu* m_sceneInterface;
 };
 
 #endif

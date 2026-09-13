@@ -24,7 +24,6 @@ public:
 
 private:
     boost::shared_ptr<Container> m_container;
-    boost::shared_ptr<Container> m_playerInventory;
     int m_numRows;
 };
 

@@ -15,12 +15,6 @@ class FurnaceMenu;
 class Inventory;
 class UILayer;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_FurnaceMenu : public UIScene_AbstractContainerMenu
 {
 public:

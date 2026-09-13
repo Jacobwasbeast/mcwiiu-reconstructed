@@ -84,30 +84,41 @@ not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<
         moved = moveItemStackTo(item, horseSize + 27, (int)m_slots.size(),
                                 false, true, true) != 0;
         if (!moved)
-            moved = moveItemStackTo(item, horseSize, horseSize + 27,
-                                    false, true, true) != 0;
+            moved = moveItemStackTo(item, horseSize, (int)m_slots.size(),
+                                    true, true, true) != 0;
     }
     else
     {
         Slot* armorSlot = getSlot(1);
-        if (armorSlot->mayPlace(item) && !armorSlot->hasItem())
-            moved = moveItemStackTo(item, 1, 2, false, true, true) != 0;
-        Slot* saddleSlot = getSlot(0);
-        if (!moved && saddleSlot->mayPlace(item) && !saddleSlot->hasItem())
-            moved = moveItemStackTo(item, 0, 1, false, true, true) != 0;
-
-        if (!moved)
+        if (armorSlot->mayPlace(item))
         {
-            int playerInventoryEnd = horseSize + 27;
-            int playerSlotsEnd = horseSize + 36;
-            if (index >= playerInventoryEnd && index < playerSlotsEnd)
-                moved = moveItemStackTo(item, horseSize, playerInventoryEnd,
-                                        false, true, true) != 0;
-            else if (index >= horseSize && index < playerInventoryEnd)
-                moved = moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd,
-                                        false, true, true) != 0;
+            if (!armorSlot->hasItem())
+                moved = moveItemStackTo(item, 1, 2, false, true, true) != 0;
+        }
+        else
+        {
+            Slot* saddleSlot = getSlot(0);
+            if (saddleSlot->mayPlace(item))
+            {
+                moved = moveItemStackTo(item, 0, 1, false, true, true) != 0;
+            }
             else
-                moved = false;
+            {
+                if (horseSize > 2)
+                    moved = moveItemStackTo(item, 2, horseSize, false, true, true) != 0;
+
+                if (!moved)
+                {
+                    int playerInventoryEnd = horseSize + 27;
+                    int playerSlotsEnd = horseSize + 36;
+                    if (index >= playerInventoryEnd && index < playerSlotsEnd)
+                        moved = moveItemStackTo(item, horseSize, playerInventoryEnd,
+                                                false, true, true) != 0;
+                    else if (index >= horseSize && index < playerInventoryEnd)
+                        moved = moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd,
+                                                false, true, true) != 0;
+                }
+            }
         }
     }
 

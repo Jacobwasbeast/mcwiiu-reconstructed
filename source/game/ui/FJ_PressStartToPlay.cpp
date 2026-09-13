@@ -19,9 +19,9 @@ FJ_PressStartToPlay::FJ_PressStartToPlay(fuiRenderNode* renderNode)
       m_achievementToastX(0)
 {
     std::string name("MainPanel");
-    m_mainPanel = getChildByName(name);
-    if (m_mainPanel != 0)
+    if (getChildByName(name) != 0)
     {
+        m_mainPanel = getChildByName(name)->asMovieClip();
         std::string quadrant("ControllerQuadrant");
         const char* controllers[] = { "Controller1", "Controller2", "Controller3", "Controller4" };
         int i;
@@ -226,40 +226,32 @@ void FJ_PressStartToPlay::ShowController(int controller, bool show)
         int i;
         for (i = 0; i < 4; ++i)
         {
-            FJ_FuiNode* group = m_mainPanel->getChildByName(quadrant);
-            if (group != 0)
-            {
-                group = group->getChildAt(0);
-                if (group != 0)
-                {
-                    FJ_FuiNode* node = group->getChildByName(std::string(names[i]));
-                    if (node != 0)
-                    {
-                        node->setVisible(false);
-                    }
-                }
-            }
+            FJ_FuiNode* node =
+                m_mainPanel->getChildByName(quadrant)->getChildAt(0)->getChildByName(std::string(names[i]));
+            node->setVisible(false);
         }
-        FJ_FuiNode* selectedGroup = m_mainPanel->getChildByName(std::string("ControllerQuadrant"))->getChildAt(0);
-        FJ_FuiNode* selected = selectedGroup->getChildByName(std::string(names[controller < 0 || controller > 2 ? 3 : controller]));
+
+        FJ_FuiNode* selected = m_mainPanel->getChildByName(quadrant)
+                                   ->getChildAt(0)
+                                   ->getChildByName(std::string(
+                                       names[controller < 0 || controller > 2 ? 3 : controller]));
+        selected->setVisible(true);
+
+        FJ_FuiNode* group = m_mainPanel->getChildByName(quadrant)->getChildAt(0);
         if (show)
         {
-            selected->gotoAndPlay(std::string("Play"));
+            group->gotoAndPlay(std::string("Play"));
         }
         else
         {
-            selected->gotoAndStop(std::string("Stop"));
+            group->gotoAndStop(std::string("Stop"));
         }
+
         FJ_FuiNode* label = m_mainPanel->getChildByName(std::string("PressStartLabel"));
-        FJ_FuiNode* background = m_mainPanel->getChildByName(std::string("BackgroundPanel"));
-        if (label != 0 && background != 0)
-        {
-            FJ_FuiNode* panel = background->getChildAt(0);
-            if (panel != 0)
-            {
-                panel->setY(static_cast<float>(Math::round((label->getHeight() - background->getHeight()) * 0.5f)));
-            }
-        }
+        float panelHeight =
+            m_mainPanel->getChildByName(std::string("BackgroundPanel"))->getChildAt(0)->getHeight();
+        float labelHeight = m_mainPanel->getChildByName(std::string("PressStartLabel"))->getHeight();
+        label->setY(static_cast<float>(Math::round((panelHeight - labelHeight) * 0.5f)));
     }
 }
 
@@ -269,10 +261,7 @@ void FJ_PressStartToPlay::HideChestRefillAnimation()
     if (animation != 0)
     {
         FJ_FuiNode* movie = FJ_FuiNode::asMovieClip(animation->getChildAt(0));
-        if (movie != 0)
-        {
-            movie->setVisible(false);
-        }
+        movie->setVisible(false);
     }
 }
 

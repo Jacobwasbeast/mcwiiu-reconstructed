@@ -137,17 +137,17 @@ protected:
     std::vector<std::pair<int, int> > m_customIngredientCounts;
     not_null_ptr<ItemInstance> m_accumulatedItem;
     std::vector<std::pair<int, int> > m_baseRecipeIngredients;
-    bool m_hasPaper;
+    int m_hasPaper;
     bool m_hasGunpowder;
     std::vector<std::pair<not_null_ptr<ItemInstance>, bool> > m_customRecipes[3];
     std::vector<std::pair<not_null_ptr<ItemInstance>, bool> > m_customRecipeIngredients;
     std::vector<not_null_ptr<ItemInstance> > m_recipeIngredients;
     NonNullList<not_null_ptr<ItemInstance> > m_inventoryItems;
     int m_customRecipeSlots[3];
-    bool m_customRecipeValid;
+    int m_customRecipeValid;
     std::vector<int> m_stackedRecipeCounts;
     int m_inventoryStart;
-    int m_inventoryEnd;
+    bool m_inventoryEnd;
     boost::shared_ptr<Inventory> m_maintainedInventory;
     AbstractContainerMenu* m_inventoryMenu;
     int m_horizontalSlotCount;
@@ -155,11 +155,11 @@ protected:
     int m_tooltipPlayer;
     int m_tooltipState;
     int m_ingredientCount;
-    bool m_tabsDirty;
-    bool m_compactInventory;
+    int m_tabsDirty;
+    int m_compactInventory;
     wchar_t m_ingredientDescriptionText[128][5];
-    int m_currentTab;
     int m_lastTab;
+    int m_currentTab;
 };
 
 #endif

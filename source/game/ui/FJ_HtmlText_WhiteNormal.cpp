@@ -18,8 +18,8 @@ void FJ_HtmlText_WhiteNormal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
     fuiRenderNode* textField = textContainer->getChildAt(0)->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
-    m_textField = textField;
-    addChild(m_textField);
+    m_pText = textField;
+    addChild(m_pText);
     removeChild(textContainer, true);
 }
 

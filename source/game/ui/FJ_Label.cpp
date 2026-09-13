@@ -10,7 +10,7 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
 FJ_Label::FJ_Label(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_textAlignment(eTextAlignment_Center), m_multiline(false),
+    : FJ_Base(renderNode), m_textAlignment(eTextAlignment_Left), m_multiline(false),
       m_wordWrap(false), m_useEllipsis(false), m_manualWordWrap(false)
 {
 }
@@ -31,7 +31,7 @@ void FJ_Label::SetTextAlignment(ETextAlignment alignment)
 
 void FJ_Label::setUseHtmlText(bool useHtmlText)
 {
-    m_centered = useHtmlText;
+    m_htmlText = useHtmlText;
 }
 
 unsigned int FJ_Label::getType()
@@ -49,18 +49,18 @@ void FJ_Label::ResetLabel()
 {
     m_objectWidth = -1.0f;
     m_objectHeight = -1.0f;
-    m_isLabel = false;
+    m_initialised = false;
     m_newWidth = static_cast<int>(getWidth());
 }
 
 void FJ_Label::SetLabel(const std::wstring& label)
 {
     FJ_Base::SetLabelAlignment(static_cast<int>(m_textAlignment));
-    m_textChanged = m_manualWordWrap;
-    m_textContainerChanged = m_wordWrap;
+    m_manualWrap = m_manualWordWrap;
+    m_textContainerVisible = m_wordWrap;
     m_textOnly = m_useEllipsis;
-    m_textContainerVisible = m_multiline;
-    m_isLabel = true;
+    m_textContainerChanged = m_multiline;
+    m_initialised = true;
     FJ_Base::SetLabel(label);
 }
 

@@ -12,6 +12,6 @@ void FJ_Label_Book::Init(const std::wstring& label)
 void FJ_Label_Book::SetLabel(const std::wstring& label)
 {
     FJ_Base::SetLabelAlignment(m_textAlignment);
-    m_labelTooWide = true;
+    m_initialised = true;
     FJ_Label::SetLabel(label);
 }

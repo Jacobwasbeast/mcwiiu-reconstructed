@@ -51,7 +51,7 @@ not_null_ptr<ItemInstance> HopperMenu::quickMoveStack(boost::shared_ptr<Player> 
                                     (int)m_slots.size(), false, true, true) != 0;
             if (!moved) {
                 moved = moveItemStackTo(item, (int)containerSize,
-                                        (int)m_slots.size() - 9, true, true, true) != 0;
+                                        (int)m_slots.size(), true, true, true) != 0;
             }
         } else {
             moved = moveItemStackTo(item, 0, (int)containerSize,

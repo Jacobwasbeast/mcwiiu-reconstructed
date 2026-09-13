@@ -15,12 +15,6 @@ class Inventory;
 class UILayer;
 class BrewingStandMenu;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_BrewingStandMenu : public UIScene_AbstractContainerMenu
 {
 public:

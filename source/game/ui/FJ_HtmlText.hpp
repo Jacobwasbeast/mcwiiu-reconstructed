@@ -62,7 +62,7 @@ public:
     virtual void setX(float x);
     virtual void setY(float y);
     virtual void setHeight(float height);
-    void Init(const std::wstring& label);
+    virtual void Init(const std::wstring& label);
     uint64_t GetScrollDistance();
     virtual void SetLabel(const std::wstring& label);
     uint64_t GetNumberOfLines();

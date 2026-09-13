@@ -36,6 +36,7 @@ struct fuiFontIndirection
 class fui
 {
     friend class fuiRenderNode;
+    friend class fuiRenderNodeEditText;
 
 private:
     struct ColorState

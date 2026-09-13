@@ -10,12 +10,6 @@
 
 class UILayer;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_HopperMenu : public UIScene_AbstractContainerMenu
 {
 public:

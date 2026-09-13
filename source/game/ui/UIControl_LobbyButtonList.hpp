@@ -3,10 +3,12 @@
 
 #include <string>
 
+#include "game/ui/UIControl_ButtonList.hpp"
+
 class UIScene;
 class fuiRenderNode;
 
-class UIControl_LobbyButtonList
+class UIControl_LobbyButtonList : public UIControl_ButtonList
 {
 public:
     virtual ~UIControl_LobbyButtonList();
@@ -17,7 +19,6 @@ public:
     void showTick(int item, bool show);
 
 private:
-    int m_controlType;
     std::wstring m_label;
     bool m_host;
     int m_playerIcon;

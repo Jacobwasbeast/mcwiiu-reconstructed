@@ -71,16 +71,49 @@ void UIScene_LoadMenu::AddVariantButtons(bool alternate)
 void UIScene_LoadMenu::UpdateIfPublicGamesAllowed()
 {
     m_publicGamesAllowed = true;
+    LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
     if (!m_customGame && !m_battleGame)
         return;
-    MiniGameDef* game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(m_gameMode), true);
-    if (game == NULL || !game->IsCRCValid())
+    MiniGameDef* game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(0), true);
+    if (!game->IsCRCValid())
     {
         m_publicGamesAllowed = false;
-        m_allowPublicGames = false;
+        initData->mFlag58 = false;
         return;
     }
-    m_allowPublicGames = m_publicGamesAllowed;
+    if (m_publicGamesAllowed)
+    {
+        game = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(initData->mValue5C), true);
+        if (!game->IsCRCValid())
+        {
+            m_publicGamesAllowed = false;
+            initData->mFlag58 = false;
+            return;
+        }
+        if (m_publicGamesAllowed)
+        {
+            if (m_levelGenerationOptions != NULL)
+                m_publicGamesAllowed = m_levelGenerationOptions->isCRCValid();
+
+            if (m_publicGamesAllowed)
+            {
+                std::vector<LevelRules::LevelRulesetGroup*>::iterator group =
+                    initData->mLevelRulesetGroups.begin();
+                while (group != initData->mLevelRulesetGroups.end() && m_publicGamesAllowed)
+                {
+                    LevelRules::LevelRulesetGroup* current = *group;
+                    std::vector<LevelRuleset*>::iterator ruleset = current->rulesets.begin();
+                    while (ruleset != current->rulesets.end() && m_publicGamesAllowed)
+                    {
+                        m_publicGamesAllowed = (*ruleset)->getGenerationOptions()->isCRCValid();
+                        ++ruleset;
+                    }
+                    ++group;
+                }
+            }
+        }
+    }
+    initData->mFlag58 = false;
 }
 
 void UIScene_LoadMenu::UpdateDescriptionText()
@@ -525,13 +558,26 @@ void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)
 
 void UIScene_LoadMenu::handleGainFocus(bool hadFocus)
 {
-    if (hadFocus && !m_customGame)
-        m_allowPublicGames = m_publicGamesAllowed;
-    if (!m_customGame && !m_battleGame)
+    LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
+    if (hadFocus && !initData->mFlag56)
+        getLoadMenuOnlineCheckbox(this)->setChecked(initData->mFlag0);
+    if (!initData->mFlag56 && !initData->mFlag57)
         return;
     UpdateIfPublicGamesAllowed();
-    if (!m_customOptions)
-        m_list.EnableItem(10, m_allowPublicGames && m_publicGamesAllowed, true);
+    if (initData->mFlag56)
+    {
+        bool allowOnlineExtras = initData->mFlag0 && m_onlineEnabled;
+        if (!gProfile->IsSignedInLive(m_playerId))
+            allowOnlineExtras = false;
+        if (initData->mFlag17)
+            allowOnlineExtras = false;
+        if (!initData->mFlag68)
+        {
+            m_list.EnableItem(10, allowOnlineExtras && m_publicGamesAllowed, true);
+            m_list.SetCheckboxValue(
+                10, initData->mFlag0 && initData->mFlag58 && m_publicGamesAllowed, true);
+        }
+    }
 }
 
 void UIScene_LoadMenu::handleFocusChange(int focus, int childFocus)
@@ -599,10 +645,27 @@ uint32_t UIScene_LoadMenu::CheckUpdateTheEndReturned(void* context, int,
 
 void UIScene_LoadMenu::checkStateAndStartGame()
 {
-    if (m_resetNether && m_resetNetherPending)
+    LaunchMoreOptionsMenuInitData* initData = getLoadMenuInitData(this);
+    if (initData->mFlagD && m_resetNetherPending)
+    {
+        int parameters[2] = { static_cast<int>(0x9405ecf0), static_cast<int>(0xc13fdfc6) };
+        gConsoleUIController.RequestAlertMessage(
+            static_cast<int>(0xe5d1250e), static_cast<int>(0x79240783), parameters, 2,
+            static_cast<unsigned int>(m_playerId),
+            reinterpret_cast<int (*)(void*, int, C4JStorage::EMessageResult)>(CheckResetNetherReturned),
+            reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
-    if (m_updateEnd && m_updateEndPending)
+    }
+    if (initData->mFlagE && m_updateEndPending)
+    {
+        int parameters[2] = { static_cast<int>(0x9dcd2f11), static_cast<int>(0xd75a3077) };
+        gConsoleUIController.RequestAlertMessage(
+            static_cast<int>(0x50d08380), static_cast<int>(0x6fdf0a5d), parameters, 2,
+            static_cast<unsigned int>(m_playerId),
+            reinterpret_cast<int (*)(void*, int, C4JStorage::EMessageResult)>(CheckUpdateTheEndReturned),
+            reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;
+    }
     m_resetNetherPending = true;
     m_updateEndPending = true;
     LaunchGame();

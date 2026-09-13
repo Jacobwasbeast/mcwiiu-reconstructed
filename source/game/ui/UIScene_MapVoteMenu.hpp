@@ -41,7 +41,8 @@ private:
     std::wstring m_defaultTexture;
     int m_selectedVote;
     int m_previousSelection;
-    bool m_updateVoteInfo;
+    int m_updateVoteInfo;
+    std::wstring m_voteTallyText;
     UIControl_CheckboxButtonList m_mapList;
     UIControl_Label m_mapListTitle;
     UIControl_Label m_mapTitle;

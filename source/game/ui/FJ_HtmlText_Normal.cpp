@@ -13,9 +13,8 @@ void FJ_HtmlText_Normal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0);
-    fuiRenderNode* textField = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
-    m_textField = textField;
-    addChild(m_textField);
+    m_pText = textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
+    addChild(m_pText);
     removeChild(textContainer, true);
 }
 

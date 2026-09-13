@@ -14,6 +14,8 @@
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 
+static unsigned int s_avatarSelectSignInMask = 0;
+
 UIScene_AvatarSelectMenu::TabControls::TabControls()
     : UIControl(), m_list(), m_title(), m_timer(), m_miis()
 {
@@ -57,7 +59,10 @@ UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILay
     }
 }
 
-UIScene_AvatarSelectMenu::~UIScene_AvatarSelectMenu() {}
+UIScene_AvatarSelectMenu::~UIScene_AvatarSelectMenu()
+{
+    s_avatarSelectSignInMask &= ~(1 << m_choice);
+}
 
 unsigned int UIScene_AvatarSelectMenu::mapElementsAndNames()
 {

@@ -110,10 +110,12 @@ void FJ_HtmlText::UpdateScrolling(FJ_Event*)
         FJ_FuiNodeStage* stage = getStage();
         if (stage != NULL) stage->removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
         if (!isVisible()) {
-            m_pText->setX(m_iWidth);
-            m_pText->setY(m_fWidth);
-            m_pText->setWidth(m_fScrollTop);
-            m_pText->setHeight(m_fScrollBottom);
+            fuiRect scrollRect;
+            scrollRect.xMin = static_cast<float>(m_iWidth);
+            scrollRect.xMax = m_fWidth;
+            scrollRect.yMin = m_fScrollTop;
+            scrollRect.yMax = m_fScrollBottom;
+            m_pText->setScrollRect(scrollRect);
             return;
         }
         static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
@@ -138,17 +140,21 @@ void FJ_HtmlText::UpdateScrolling(FJ_Event*)
             m_fScrollTop = target;
             m_fScrollBottom += target - newPosition;
             m_scrollDirection = 0;
-            m_pText->setX(m_iWidth);
-            m_pText->setY(m_fWidth);
-            m_pText->setWidth(m_fScrollTop);
-            m_pText->setHeight(m_fScrollBottom);
+            fuiRect scrollRect;
+            scrollRect.xMin = static_cast<float>(m_iWidth);
+            scrollRect.xMax = m_fWidth;
+            scrollRect.yMin = m_fScrollTop;
+            scrollRect.yMax = m_fScrollBottom;
+            m_pText->setScrollRect(scrollRect);
             return;
         }
     }
-    m_pText->setX(m_iWidth);
-    m_pText->setY(m_fWidth);
-    m_pText->setWidth(m_fScrollTop);
-    m_pText->setHeight(m_fScrollBottom);
+    fuiRect scrollRect;
+    scrollRect.xMin = static_cast<float>(m_iWidth);
+    scrollRect.xMax = m_fWidth;
+    scrollRect.yMin = m_fScrollTop;
+    scrollRect.yMax = m_fScrollBottom;
+    m_pText->setScrollRect(scrollRect);
 }
 
 void FJ_HtmlText::_UpdateScrolling(FJ_FuiNode* node, FJ_Event* event)
@@ -314,17 +320,34 @@ void FJ_HtmlText::Init(const std::wstring& label)
         m_iRealHeight = static_cast<int>(background->getHeight() * getScaleY());
         removeChild(background, true);
     }
+
+    removeChild(m_pText, false);
+    getParent()->addChild(m_pText);
     m_pText->setX(getX());
     m_pText->setY(getY());
     m_pText->setWidth(width);
-    m_pText->setHeight(height - static_cast<float>(m_bNoBackground ? 0 : static_cast<int>(m_pUpArrow->getHeight())));
-    static_cast<fuiRenderNodeEditText*>(m_pText->asEditText())->setAutoSize(static_cast<TextFieldAutoSize>(1));
+    const float availableHeight = height - static_cast<float>(m_bNoBackground ? 0 : static_cast<int>(m_pUpArrow->getHeight()));
+    m_pText->setHeight(availableHeight);
+    fuiRenderNodeEditText* text = static_cast<fuiRenderNodeEditText*>(m_pText->asEditText());
+    text->setAutoSize(TextFieldAutoSizeLeft);
+    text->m_wordWrap = true;
+    text->m_multiline = true;
     m_scrollDirection = m_bUseScrollRect ? 1 : 0;
+    m_bScrollingEnabled = m_bUseScrollRect;
     m_iWidth = 0;
     m_fWidth = width;
     m_fScrollTop = 0.0f;
-    m_fScrollBottom = height - static_cast<float>(m_bNoBackground ? 0 : static_cast<int>(m_pUpArrow->getHeight()));
-    static_cast<fuiRenderNodeEditText*>(m_pText->asEditText())->setHTMLText(label);
+    m_fScrollBottom = availableHeight;
+    if (m_bUseScrollRect)
+    {
+        fuiRect scrollRect;
+        scrollRect.xMin = 0.0f;
+        scrollRect.xMax = width;
+        scrollRect.yMin = 0.0f;
+        scrollRect.yMax = availableHeight;
+        m_pText->setScrollRect(scrollRect);
+    }
+    SetLabel(label);
     HandleScrollListArrows(true);
 }
 
@@ -348,15 +371,17 @@ uint64_t FJ_HtmlText::GetScrollDistance()
 void FJ_HtmlText::SetLabel(const std::wstring& label)
 {
     std::wstring value = label;
-    if (label == L"HtmlText") value = L" ";
+    if (label.empty()) value = L" ";
     static_cast<fuiRenderNodeEditText*>(m_pText->asEditText())->setHTMLText(value);
     if (m_bScrollingEnabled) {
-        m_fScrollTop = 0.0f;
         m_fScrollBottom = m_fScrollBottom - m_fScrollTop;
-        m_pText->setX(m_iWidth);
-        m_pText->setY(m_fWidth);
-        m_pText->setWidth(m_fScrollTop);
-        m_pText->setHeight(m_fScrollBottom);
+        m_fScrollTop = 0.0f;
+        fuiRect scrollRect;
+        scrollRect.xMin = static_cast<float>(m_iWidth);
+        scrollRect.xMax = m_fWidth;
+        scrollRect.yMin = m_fScrollTop;
+        scrollRect.yMax = m_fScrollBottom;
+        m_pText->setScrollRect(scrollRect);
     }
     HandleScrollListArrows(false);
     GetScrollDistance();

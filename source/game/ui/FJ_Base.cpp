@@ -9,32 +9,32 @@
 FJ_Base::FJ_Base(fuiRenderNode* renderNode) : FJ_FuiNode(renderNode)
 {
     m_isLabel = true;
-    m_textContainerVisible = false;
     m_textContainerChanged = false;
-    m_textChanged = false;
-    m_centered = false;
-    m_textOnly = false;
-    m_lineCount = 0;
+    m_textContainerVisible = false;
     m_manualWrap = false;
-    m_labelTooWide = false;
-    m_resizing = false;
-    m_widthChanged = false;
-    m_heightChanged = false;
-    m_labelWidth = 0;
-    m_textWidth = 0;
-    m_textHeight = 0;
+    m_centerBiasX = 0.0f;
+    m_objectWidth = -1.0f;
     m_id = -1;
+    m_htmlText = false;
+    m_initialised = false;
     m_labelAlignment = 0;
-    m_objectWidth = 0.0f;
+    m_resizing = false;
+    m_textChanged = false;
+    m_labelTooWide = false;
+    m_labelOverflowResolved = false;
     m_objectHeight = -1.0f;
-    m_textScale = -1.0f;
-    m_wrapWidth = 0;
-    m_wrapHeight = false;
-    m_preScaleWidth = 0;
-    m_maxLabelWidth = -1;
     m_newWidth = static_cast<int>(getWidth());
-    m_oldWidth = static_cast<int>(getWidth());
+    m_wrapWidth = 0;
+    m_textOnly = false;
+    m_multilineWrap = false;
+    m_preScaleWidth = static_cast<int>(getWidth());
+    m_manualWrapFits = false;
+    m_lineCount = 0;
+    m_multilineWrapFits = false;
+    m_ellipsisWidthOverride = 0;
+    m_maxLabelWidth = -1;
     m_objListParent = 0;
+    m_autoGrowHeight = false;
     m_listId = 0;
     CorrectPixelPosition();
 }
@@ -92,11 +92,11 @@ uint64_t FJ_Base::CorrectPixelPosition()
     return 0;
 }
 
-void FJ_Base::InitBase(const std::wstring&, int id)
+void FJ_Base::InitBase(const std::wstring& name, int id)
 {
-    m_isLabel = true;
+    m_initialised = true;
     m_id = id;
-    setVisible(true);
+    SetLabel(name);
 }
 
 fuiRenderNodeEditText* FJ_Base::GetTextField()
@@ -126,12 +126,11 @@ fuiRenderNodeEditText* FJ_Base::GetTextField()
 void FJ_Base::CheckLabelWidth(const std::wstring& label)
 {
     fuiRenderNodeEditText* field = GetTextField();
-    if (field != 0)
-    {
-        field->setText(label);
-        m_maxLabelWidth = static_cast<int>(field->getWidth());
-        field->setText(std::wstring(L" "));
-    }
+    field->setText(label);
+    int width = static_cast<int>(field->getWidth());
+    if (m_maxLabelWidth < width)
+        m_maxLabelWidth = width;
+    field->setText(std::wstring(L" "));
 }
 
 void FJ_Base::SetLabelAlignment(int alignment) { m_labelAlignment = alignment; }
@@ -150,7 +149,7 @@ uint64_t FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEdit
     float total = offset + measured;
     if (total <= static_cast<float>(limit))
     {
-        m_labelTooWide = true;
+        m_manualWrapFits = true;
         return 0;
     }
     const std::wstring source = field->getText();
@@ -229,6 +228,7 @@ uint64_t FJ_Base::DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditTe
         limit = static_cast<float>(m_wrapWidth);
     }
     m_lineCount = 0;
+    m_lineWidths.clear();
     float measured = field->getWidth();
     if (offset + measured <= limit)
         return 0;
@@ -279,10 +279,10 @@ uint64_t FJ_Base::DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* 
         offset = static_cast<int>(container->getX() * getScaleX());
         limitWidth = m_wrapWidth;
     }
-    if (m_wrapWidth > 0)
+    if (m_ellipsisWidthOverride > 0)
     {
         suffixAllowance = 0;
-        limitWidth = m_wrapWidth;
+        limitWidth = m_ellipsisWidthOverride;
     }
     if (static_cast<float>(limitWidth) < static_cast<float>(offset) + field->getWidth() + static_cast<float>(suffixAllowance))
     {
@@ -306,9 +306,131 @@ uint64_t FJ_Base::DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* 
 void FJ_Base::SetLabel(const std::wstring& label)
 {
     m_label = label;
-    CheckLabelWidth(label);
+    FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer"));
     fuiRenderNodeEditText* field = GetTextField();
-    if (field != 0) DoManualWordWrapCheck(0, field);
+    if (field == 0)
+        return;
+    if (!m_initialised)
+    {
+        field->setText(std::wstring(L"Not Initialised!"));
+        return;
+    }
+    if (m_objectWidth == -1.0f)
+    {
+        fuiRect rect = getRect(this);
+        m_objectWidth = getWidth() + rect.xMin + rect.xMin;
+    }
+    if (m_objectHeight == -1.0f)
+    {
+        fuiRect rect = getRect(this);
+        m_objectHeight = getHeight() + rect.yMin + rect.yMin;
+    }
+    field->m_wordWrap = m_textContainerVisible;
+    field->m_multiline = m_textContainerChanged;
+    if (!m_htmlText)
+        field->setText(m_label);
+    else
+        field->setHTMLText(m_label);
+    if (container != 0)
+    {
+        container->setScaleX(1.0f);
+        container->setScaleY(1.0f);
+    }
+    field->setScaleX(1.0f / getScaleX());
+    field->setScaleY(1.0f / getScaleY());
+    if (!m_manualWrap)
+    {
+        if (m_multilineWrap)
+            DoMultilineWordWrap(container, field);
+    }
+    else if (!m_multilineWrap)
+    {
+        float heightBefore = field->getHeight();
+        DoManualWordWrapCheck(container, field);
+        float heightAfter = field->getHeight();
+        if (m_autoGrowHeight && static_cast<int>(heightBefore) < static_cast<int>(heightAfter))
+            SetNewObjectHeight(static_cast<int>(getHeight() + (heightAfter - heightBefore)));
+        if (!m_manualWrap && m_multilineWrap)
+            DoMultilineWordWrap(container, field);
+    }
+    if (!m_textOnly)
+    {
+        bool fits = m_manualWrapFits && m_multilineWrapFits;
+        if (!m_resizing && !fits)
+            GetLabelTooWide(field);
+    }
+    else
+    {
+        DoEllipsisCheck(container, field);
+    }
+    if (m_labelOverflowResolved)
+    {
+        field->setAutoSize(TextFieldAutoSizeCenter);
+        field->setWidth(static_cast<float>(m_ellipsisWidth));
+        std::wstring current = field->getText();
+        field->setText(std::wstring(L"\n") + current);
+    }
+    else if (m_isLabel)
+    {
+        field->setAutoSize(TextFieldAutoSizeLeft);
+    }
+    if (m_textContainerVisible)
+        field->setWidth(m_objectWidth);
+    switch (m_labelAlignment)
+    {
+    case 2:
+        if (container != 0)
+        {
+            container->setX(0.0f);
+            container->setY(0.0f);
+        }
+        if (field->m_alignment != 2)
+        {
+            float x = Math::round((m_objectWidth / getScaleX() - field->getWidth()) * 0.5f + m_centerBiasX);
+            field->setX(x);
+            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+            field->setY(y);
+        }
+        break;
+    case 3:
+        if (container != 0)
+        {
+            container->setX(0.0f);
+            container->setY(0.0f);
+        }
+        {
+            float x = Math::round(m_objectWidth / getScaleX() - field->getWidth());
+            field->setX(x);
+            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+            field->setY(y);
+        }
+        break;
+    case 1:
+        if (container != 0)
+            container->setY(0.0f);
+        field->setX(0.0f);
+        {
+            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+            field->setY(y);
+        }
+        break;
+    case 4:
+        if (container != 0)
+            container->setY(0.0f);
+        field->setX(Math::round(field->getX()));
+        {
+            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+            field->setY(y);
+        }
+        break;
+    default:
+        if (m_isLabel)
+        {
+            field->setX(0.0f);
+            field->setY(0.0f);
+        }
+        break;
+    }
 }
 
 int FJ_Base::GetLabel() { return (int)(intptr_t)&m_label; }
@@ -316,19 +438,22 @@ int FJ_Base::GetLabel() { return (int)(intptr_t)&m_label; }
 void FJ_Base::SetTextOnly(const std::wstring& text)
 {
     fuiRenderNodeEditText* field = GetTextField();
-    if (field != 0) field->setText(text.empty() ? std::wstring(L" ") : text);
+    field->setText(text.empty() ? std::wstring(L" ") : text);
 }
 
 void FJ_Base::GetLabelTooWide(fuiRenderNodeEditText* field)
 {
-    float measured = field->getWidth();
-    int required = m_maxLabelWidth > static_cast<int>(measured) ? m_maxLabelWidth : static_cast<int>(measured);
+    int required = m_maxLabelWidth;
+    int fieldWidth = static_cast<int>(field->m_textWidth);
+    if (required < fieldWidth) required = fieldWidth;
+    int width = static_cast<int>(getWidth());
+    if (m_newWidth < width) m_newWidth = width;
     if (m_newWidth < required) m_newWidth = required;
-    if (!m_labelTooWide && getWidth() < static_cast<float>(m_maxLabelWidth))
+    if (!m_labelOverflowResolved && getWidth() < static_cast<float>(required))
     {
+        m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8f);
         m_labelTooWide = true;
-        m_manualWrap = true;
-        m_wrapWidth = static_cast<int>(m_objectWidth * 0.8f);
+        m_labelOverflowResolved = true;
     }
 }
 
@@ -341,8 +466,9 @@ void FJ_Base::SetNewObjectWidth(int width)
         m_preScaleWidth = width;
         fuiRect rect = getRect(this);
         m_labelTooWide = false;
-        m_manualWrap = false;
+        m_labelOverflowResolved = false;
         m_objectWidth = getWidth() + rect.xMin + rect.xMin;
+        SetLabel(m_label);
     }
 }
 
@@ -355,6 +481,7 @@ void FJ_Base::SetNewObjectHeight(int height)
         setHeight(static_cast<float>(height));
         fuiRect rect = getRect(this);
         m_objectHeight = getHeight() + rect.yMin + rect.yMin;
+        SetLabel(m_label);
     }
 }
 

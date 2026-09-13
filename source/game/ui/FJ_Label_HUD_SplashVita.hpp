@@ -10,6 +10,7 @@ class fuiRenderNode;
 
 class FJ_Label_HUD_SplashVita : public FJ_Label
 {
+    friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_Label_HUD_SplashVita(fuiRenderNode* renderNode);
     virtual ~FJ_Label_HUD_SplashVita();

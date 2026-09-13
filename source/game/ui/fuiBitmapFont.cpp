@@ -13,9 +13,10 @@ fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphCha
     : fuiFontSet(fontData.fontName.c_str()), UIBitmapFont(fontData),
       m_textureIndex(0), m_registered(false), m_missingGlyphChar(missingGlyphChar)
 {
-    BufferedImage image(fontData.textureFileName, true, true, L"buckets_");
+    BufferedImage image(fontData.textureFileName, true, true, L"");
 
     m_textureIndex = static_cast<unsigned int>(gRenderer->TextureCreate());
+    fui::EndianSwapImageData(image.getData(), image.getWidth() * image.getHeight());
     gRenderer->TextureBind(static_cast<int>(m_textureIndex));
     gRenderer->TextureSetTextureLevels(1);
     gRenderer->TextureData(static_cast<int>(image.getWidth()), static_cast<int>(image.getHeight()), image.getData(), 0,
@@ -38,7 +39,7 @@ float fuiBitmapFont::getGlyphScale(float fontSize)
     }
 
     float scale = 1.0f;
-    while ((scale + 0.5f) * (1.0f / static_cast<float>(getFontData()->getFontData().glyphHeight)) < fontSize)
+    while ((scale + 0.5f) * (1.0f / getFontData()->getFontData().glyphWidthScale) < fontSize)
     {
         scale += 1.0f;
     }
@@ -76,7 +77,7 @@ float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, flo
     CFontData* fontData = getFontData();
     const unsigned short glyphId = fontData->getGlyphId(codepoint);
     const float glyphScale = getGlyphScale(fontSize);
-    const float right = x + static_cast<float>(fontData->getWidth(glyphId)) * glyphScale;
+    const float right = x + static_cast<float>(getFontData()->getFontData().glyphWidth) * glyphScale;
     const float bottom = y + static_cast<float>(getFontData()->getFontData().glyphHeight) * glyphScale;
 
     float texX;
@@ -105,6 +106,7 @@ float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, flo
     verts[0].push_back(vert);
 
     vert.x = x;
+    vert.u = texX;
     verts[0].push_back(vert);
 
     return static_cast<float>(fontData->getWidth(glyphId)) * glyphScale;

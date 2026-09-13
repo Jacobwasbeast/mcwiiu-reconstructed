@@ -36,9 +36,9 @@ void UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std
     UIControl_Base::setupControl(scene, node, name);
 }
 
-void UIControl_List::GetTopItem()
+unsigned int UIControl_List::GetTopItem()
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List()->GetTopItem();
+    return m_fuiRenderNode->getFuiNode()->asFJ_List()->GetTopItem();
 }
 
 void UIControl_List::setCurrentSelection(int selection, bool update, bool immediate)

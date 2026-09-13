@@ -276,6 +276,7 @@
 #include "game/ui/FJ_UpsellButton_Normal.hpp"
 #include "game/ui/FJ_UpsellButton_Small.hpp"
 #include "game/ui/FJ_panel9Grid_16Fade.hpp"
+#include "platform/wiiu/FJ_WiiUDRC.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -841,6 +842,8 @@ void FJ_Factory::initialise()
         reinterpret_cast<FJ_FactoryFunction>(&FJ_Panel9GridFade::Create)));
     g_fuiNodeFactories.insert(std::make_pair(std::string("FJ_PanelRecessFade"),
         reinterpret_cast<FJ_FactoryFunction>(&FJ_PanelRecessFade::Create)));
+    g_fuiNodeFactories.insert(std::make_pair(std::string("WiiUDRC"),
+        reinterpret_cast<FJ_FactoryFunction>(&FJ_WiiUDRC::Create)));
 }
 
 FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNode,
@@ -859,20 +862,6 @@ FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNo
     if (separator != NULL)
         factoryName = separator + 1;
 
-    // The original (0x02BD40E0) DOES discard a dotless lookup: after find(),
-    // at L_02bd4200 it compares the post-backward-scan pointer against the
-    // symbol start and clears the result when they are equal. That rule is
-    // deliberately not reproduced here yet, because this permissive form
-    // cannot break a lookup the original would have satisfied, whereas
-    // restoring it without knowing whether the real .fui symbol is
-    // "fourj.Intro" or a bare "Intro" risks re-breaking the boot. Settle it
-    // against the FUI symbol table in a packet that owns it.
-    //
-    // The keys themselves are not derived from class names: the original
-    // copies 278 prebuilt std::string globals, and the 81 screen roots are
-    // keyed on the bare FUI symbol ("Intro" -> FJ_Intro::Create), while the
-    // rest keep the FJ_ prefix. "FullscreenProgress" even maps to
-    // FJ_FullScreenProgress, with a different capital S.
     FJ_FactoryMap::iterator factory = g_fuiNodeFactories.find(std::string(factoryName, end - factoryName));
 
     if (!createFromSymbol)

@@ -3,6 +3,9 @@
 #include <math.h>
 #include <string.h>
 
+#include "game/client/render/C4JRender.hpp"
+#include "game/client/render/Renderer.hpp"
+
 
 extern "C"
 {
@@ -300,7 +303,9 @@ int fuiTTFFontSet::FontSizeData::getTextureIndex()
 {
     if (m_textureIndex == -1)
     {
-        m_textureIndex = 0;
+        m_textureIndex = gRenderer->TextureCreate();
+        gRenderer->TextureBind(m_textureIndex);
+        gRenderer->TextureData(m_textureWidth, m_textureHeight, m_textureData, 0, C4JRender::eTextureFormat_RGBA8);
     }
 
     return m_textureIndex;
@@ -544,6 +549,8 @@ void fuiTTFFontSet::FontSizeData::uploadTextureData()
 {
     if (m_textureDirty)
     {
+        gRenderer->TextureBind(getTextureIndex());
+        gRenderer->TextureDataUpdate(0, 0, m_textureWidth, m_textureHeight, m_textureData, 0);
         m_textureDirty = false;
     }
 }

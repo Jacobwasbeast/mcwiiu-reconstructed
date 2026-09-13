@@ -91,39 +91,107 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int dx = 0;
-    if (section == 0x21)
+    switch (static_cast<int>(section))
     {
+    case 0x21:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+        {
+            if (*x > 2) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+            else if (*x > 1) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            else target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(*x > 2 ? 0x27 : 0x24);
-    }
-    else if (section == 0x22)
-    {
+        {
+            if (m_inventorySmall == 0)
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            else if (*x > 2)
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
+            else if (*x > 1)
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            else
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        }
+        break;
+    case 0x22:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(*x > 2 ? 0x27 : 0x24);
-    }
-    else if (section == 0x23 || section == 0x24)
-    {
+        {
+            if (*x > 2) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
+            else if (*x > 1) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+            else target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        }
+        break;
+    case 0x23:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            target = m_inventorySmall != 0 ?
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+        break;
+    case 0x24:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(m_inventorySmall ? 0x21 : 0x22);
-            dx = section == 0x24 ? -2 : 0;
+            target = m_inventorySmall != 0 ?
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            dx = -2;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
-    }
-    else if (section == 0x25 || section == 0x26 || section == 0x27)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            dx = -2;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+        break;
+    case 0x25:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x26);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21);
+            dx = -7;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        break;
+    case 0x26:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x27);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x25);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        break;
+    case 0x27:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = m_inventorySmall != 0 ?
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x21) :
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x22);
+            dx = -7;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x26);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x24);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x23);
+        break;
+    default:
+        break;
     }
     static_cast<IUIScene_AbstractContainerMenu*>(this)->updateSlotPosition(section, target, state, x, y, dx, 0);
     return target;
@@ -297,15 +365,16 @@ UIControl* UIScene_EnchantingMenu::controlForSection(
 void UIScene_EnchantingMenu::customDraw(const char* name, fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
+    if (minecraft->mLocalPlayers[m_playerId] == 0 || minecraft->mGameModes[m_playerId] == 0)
+        return;
     if (std::strcmp(name, "EnchantmentBook") == 0)
     {
         m_enchantmentBook.render(rect);
         return;
     }
     int button = 0;
-    if (std::sscanf(name, "slot_Button%d", &button) == 1)
-        UIScene_AbstractContainerMenu::customDraw(name, rect);
+    std::sscanf(name, "slot_Button%d", &button);
+    UIScene_AbstractContainerMenu::customDraw(name, rect);
 }
 
 void UIScene_EnchantingMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)

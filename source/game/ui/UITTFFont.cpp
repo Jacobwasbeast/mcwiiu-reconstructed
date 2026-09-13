@@ -7,8 +7,8 @@ struct _OVERLAPPED;
 
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern unsigned int GetFileSize(int, unsigned int*);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
-extern int CloseHandle(int);
+extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
+extern void CloseHandle(int);
 
 UITTFFont::UITTFFont(const std::string& fontName, const std::string& fontFile, int missingGlyph)
 {

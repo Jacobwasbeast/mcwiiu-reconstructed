@@ -28,15 +28,15 @@ public:
     unsigned char GetControlsAction(EControl control);
     std::wstring GetControlsString(EControl control, bool& mapped);
     void UpdateControls(int player);
-    static unsigned int ResetControlsWarningDialogReturned(void* context, int button,
+    static int ResetControlsWarningDialogReturned(void* context, int button,
                                                             C4JStorage::EMessageResult result);
     unsigned int CheckMapping(int player);
     virtual void tick();
     virtual std::wstring getMoviePath();
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);
-    static unsigned int ResetDefaultsDialogReturned(void* context, int button,
+    static int ResetDefaultsDialogReturned(void* context, int button,
                                                      C4JStorage::EMessageResult result);
-    static unsigned int ControlsWarningDialogReturned(void* context, int button,
+    static int ControlsWarningDialogReturned(void* context, int button,
                                                       C4JStorage::EMessageResult result);
     virtual void handleReload();
     unsigned int CheckControls(int player, EControl control);

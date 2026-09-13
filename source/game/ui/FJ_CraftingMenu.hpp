@@ -37,17 +37,18 @@ public:
     static void _UpdateTabs(FJ_FuiNode* node, FJ_Event* event);
 
 private:
-    FJ_FuiNode* m_root;
-    FJ_FuiNode* m_panel;
-    FJ_FuiNode* m_description;
-    FJ_FuiNode* m_selector;
-    FJ_FuiNode* m_ingredientNodes[5];
+    int m_craftingType;
+    FJ_FuiNode* m_slot2Items[2];
+    FJ_FuiNode* m_slot3Items[3];
+    int m_horizontalTabCount;
+    int m_verticalTabCount;
+    int m_panelMode;
     int m_panelType;
     int m_activeTab;
     int m_activeSubtab;
-    int m_verticalItem;
     int m_selectorStep;
     bool m_ingredients[5];
+    int m_descriptionBaseY;
 };
 
 #endif

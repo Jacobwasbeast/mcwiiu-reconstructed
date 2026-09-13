@@ -1,6 +1,7 @@
 #ifndef GAME_UI_IUISCENE_ABSTRACTCONTAINERMENU_HPP
 #define GAME_UI_IUISCENE_ABSTRACTCONTAINERMENU_HPP
 
+#include "game/ui/UIVec2D.hpp"
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
@@ -12,7 +13,6 @@ class Container;
 class HtmlString;
 class ItemInstance;
 class Slot;
-struct _UIVec2D;
 
 class IUIScene_AbstractContainerMenu
 {
@@ -45,7 +45,7 @@ public:
     };
 
     AbstractContainerMenu* m_menu;
-    unsigned char m_initialized;
+    unsigned char m_smallInventoryRequested;
     unsigned char m_takeAllEnabled;
     unsigned char m_quickCraftDisabled;
     int m_containerId;
@@ -66,7 +66,8 @@ public:
     int m_dragEnd;
     int m_quickCraftRemaining;
     int m_quickCraftSlots;
-    unsigned char m_inputState[8];
+    int m_firstSection;
+    int m_lastSection;
     int m_pointerX;
     int m_pointerY;
     int m_pointerSection;
@@ -75,7 +76,6 @@ public:
     int m_pointerItem;
     int m_pointerFlags;
     int m_lastInput;
-    unsigned char m_inventorySmall;
     int m_dragSection;
     int m_dragSlot;
     int m_dragButton;
@@ -84,7 +84,10 @@ public:
     int m_hoverSlot;
     int m_hoverX;
     int m_hoverY;
-    int m_hoverFlags;
+    unsigned char m_hoverFlags;
+    Slot* m_lastHoveredSlot;
+    unsigned char m_inventorySmall;
+    unsigned char m_touchEnabled;
 
     IUIScene_AbstractContainerMenu();
     virtual bool IsSectionSlotList(ESceneSection section);

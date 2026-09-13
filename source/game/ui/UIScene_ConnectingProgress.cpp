@@ -1,17 +1,21 @@
 #include "game/ui/UIScene_ConnectingProgress.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/System.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/DisconnectPacket.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FullScreenProgress.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 namespace
 {
@@ -263,19 +267,60 @@ void UIScene_ConnectingProgress::handleLoseFocus()
     killTimer(timerId);
 }
 
-void UIScene_ConnectingProgress::handleTimerComplete(int timerId)
+void UIScene_ConnectingProgress::handleTimerComplete(int)
 {
-    if (timerId != 0)
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int playerId = m_playerId;
+
+    if (!minecraft->mConnectionFailed[playerId])
     {
+        if (CGameNetworkManager::sInstance.IsInSession())
+        {
+            return;
+        }
+    }
+
+    unsigned int messageId;
+    switch (minecraft->mDisconnectReasons[playerId])
+    {
+    case DisconnectPacket::eDisconnectReason_Quit:                messageId = 0x5b106d79; break;
+    case DisconnectPacket::eDisconnectReason_LoginTimeout:        messageId = 0x434f7b7f; break;
+    case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:    messageId = 0xad3e1729; break;
+    case DisconnectPacket::eDisconnectReason_Kicked:              messageId = 0xf3a95051; break;
+    case DisconnectPacket::eDisconnectReason_GameFull:            messageId = 0x03e66bb8; break;
+    case DisconnectPacket::eDisconnectReason_HostOutOfDate:       messageId = 0xa7ad9cb5; break;
+    case DisconnectPacket::eDisconnectReason_ClientOutOfDate:     messageId = 0x0b9944ce; break;
+    case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:  messageId = 0xfb7f0496; break;
+    case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer: messageId = 0x4d669d55; break;
+    case DisconnectPacket::eDisconnectReason_AgeRestricted:       messageId = 0x06be0331; break;
+    case DisconnectPacket::eDisconnectReason_StorageError:        messageId = 0x171f5298; break;
+    case DisconnectPacket::eDisconnectReason_ContentNotOwned:     messageId = 0xa63d3bec; break;
+    default:                                                      messageId = 0x665e892b; break;
+    }
+
+    if (playerId != gProfile->GetPrimaryPad() && CGameNetworkManager::sInstance.IsInSession())
+    {
+        ShowConfirmationButton(true);
+        m_cancelled = true;
+        m_confirmationLabel.setLabel(UIString(L10N::GetString(0x4bb9d6ae)), false, false);
+        m_titleLabel.setLabel(UIString(L10N::GetString(messageId)), false, false);
+        m_titleLabel.setVisible(true);
+        m_progressControl.setVisible(false);
         return;
     }
 
-    ShowConfirmationButton(true);
-    m_confirmationVisible = true;
-    m_confirmationLabel.setLabel(UIString(L10N::GetString(0x4bb9d6ae)), false, false);
-    m_progressControl.setLabel(UIString(L10N::GetString(0x665e892b)), false, false);
-    m_progressControl.setVisible(true);
-    m_timerControl.setVisible(false);
+    if (!m_cancelled)
+    {
+        int parameter = static_cast<int>(0xb9a1bf4d);
+        gConsoleUIController.RequestErrorMessage(0x4bb9d6ae, messageId, &parameter, 1,
+                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+        gApp.SetAction(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(3), NULL);
+    }
+    else
+    {
+        gApp.SetDisconnectReason(static_cast<DisconnectPacket::eDisconnectReason>(0x21));
+        gApp.SetAction(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(3), NULL);
+    }
 }
 
 std::wstring UIScene_ConnectingProgress::getMoviePath()

@@ -223,31 +223,34 @@ void UIComponent_PressStartToPlay::ShowAchievementToast(const Toast& toast)
 int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* data, unsigned int size)
 {
     AvatarRequest* request = static_cast<AvatarRequest*>(context);
-    if (request != 0 && data == 0 && size != 0)
+    UIComponent_PressStartToPlay* scene = request->scene;
+    int achievement = request->achievement;
+    int player = request->player;
+    delete request;
+
+    if (data == 0 && size != 0)
     {
-        request->scene->m_player = request->player;
-        request->scene->m_achievement = request->achievement;
-        request->scene->registerTexture(request->achievement);
+        scene->m_player = player;
+        scene->m_achievement = achievement;
+        scene->registerTexture(player);
         wchar_t suffix[32];
-        std::swprintf(suffix, 32, L"%d", request->player);
+        std::swprintf(suffix, 32, L"%d", achievement);
         std::wstring texture(L"PlayerIcon");
         texture += suffix;
-        request->scene->registerSubstitutionTexture(texture, 0, size, true);
-        AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(request->achievement);
+        scene->registerSubstitutionTexture(texture, 0, size, true);
+        AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(player);
         Toast toast;
         toast.title = L10N::GetString(info->title);
-        toast.description = L10N::GetString(0x4523129e);
-        replaceAll(toast.description, toast.description, L"__CONTROLLER_VK_X__",
-                   L"__CONTROLLER_VK_Y__");
-        gApp.FormatHTMLString(request->player, toast.description, -1);
+        std::wstring description = L10N::GetString(0x4523129e);
+        replaceAll(description, description, L"__CONTROLLER_VK_X__", L"__CONTROLLER_VK_Y__");
+        toast.description = gApp.FormatHTMLString(achievement, description, -1);
         toast.gamerPic = texture;
         toast.achievementIcon = info->icon;
-        if (!request->scene->m_achievementToastShowing)
-            request->scene->ShowAchievementToast(toast);
+        if (!scene->m_achievementToastShowing)
+            scene->ShowAchievementToast(toast);
         else
-            request->scene->m_achievementToasts.push_back(toast);
+            scene->m_achievementToasts.push_back(toast);
     }
-    delete request;
     return 0;
 }
 

@@ -63,7 +63,7 @@ unsigned int UIScene_BrewingStandMenu::getSectionColumns(
     if (section < static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29) ||
         section > static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f))
         return 0;
-    static const unsigned char columns[7] = { 1, 1, 1, 1, 1, 9, 9 };
+    static const unsigned char columns[7] = { 9, 9, 1, 1, 1, 1, 1 };
     return columns[static_cast<int>(section) - 0x29];
 }
 
@@ -84,27 +84,42 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int dx = 0;
-    if (section == 0x29 && state == IUIScene_AbstractContainerMenu::ETapState_Up)
+    switch (static_cast<int>(section))
     {
-        if (m_sceneInterface->m_inventorySmall == 0)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
-        else if (*x > 1)
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b + (*x - 2));
-        else
-            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
-    }
-    else if (section == 0x2a && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-    {
-        m_sceneInterface->updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29), state, x, y, 0, 0);
-        return 0x29;
-    }
-    else if (section == 0x2a && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b + (*x - 2));
-        if (*x <= 1) target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
-    }
-    else if (section >= 0x2b && section <= 0x2d)
-    {
+    case 0x29:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            if (*x > 1)
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e);
+            else
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (m_sceneInterface->m_inventorySmall == 0)
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
+            else if (*x > 1)
+                target = *x < 4 ? static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b) :
+                         *x < 5 ? static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2c) :
+                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2d);
+            else
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
+        }
+        break;
+    case 0x2a:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (*x > 1)
+                target = *x < 4 ? static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b) :
+                         *x < 5 ? static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2c) :
+                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2d);
+            else
+                target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
+        }
+        break;
+    case 0x2b:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e);
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
@@ -112,11 +127,44 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
             target = m_sceneInterface->m_inventorySmall != 0 ?
                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29) :
                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
-            dx = -(static_cast<int>(section) - 0x28);
+            dx = -3;
         }
-    }
-    else if (section == 0x2e)
-    {
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2d);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2c);
+        break;
+    case 0x2c:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = m_sceneInterface->m_inventorySmall != 0 ?
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29) :
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
+            dx = -4;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2d);
+        break;
+    case 0x2d:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = m_sceneInterface->m_inventorySmall != 0 ?
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29) :
+                static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
+            dx = -5;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2c);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2b);
+        break;
+    case 0x2e:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29);
@@ -127,15 +175,18 @@ unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2f);
-    }
-    else if (section == 0x2f)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up ||
-            state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        break;
+    case 0x2f:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x29);
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2a);
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
                  state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x2e);
+        break;
+    default:
+        break;
     }
     m_sceneInterface->updateSlotPosition(section, target, state, x, y, dx, 0);
     return target;
@@ -146,11 +197,11 @@ void UIScene_BrewingStandMenu::GetPositionOfSection(
 {
     if (position == 0) return;
     UIControl* control = 0;
-    if (section == 0x29) control = static_cast<UIControl*>(&m_ingredientSlot);
-    else if (section == 0x2a) control = static_cast<UIControl*>(&m_brewingPlate);
+    if (section == 0x29) control = static_cast<UIControl*>(&m_hotbarList);
+    else if (section == 0x2a) control = static_cast<UIControl*>(&m_inventoryList);
     else if (section >= 0x2b && section <= 0x2d) control = static_cast<UIControl*>(&m_bottleSlots[section - 0x2b]);
-    else if (section == 0x2e) control = static_cast<UIControl*>(&m_hotbarList);
-    else if (section == 0x2f) control = static_cast<UIControl*>(&m_inventoryList);
+    else if (section == 0x2e) control = static_cast<UIControl*>(&m_ingredientSlot);
+    else if (section == 0x2f) control = static_cast<UIControl*>(&m_brewingPlate);
     if (control != 0)
     {
         position->x = static_cast<float>(control->getXPos());
@@ -163,11 +214,11 @@ void UIScene_BrewingStandMenu::GetItemScreenData(
     _UIVec2D* position, _UIVec2D* size)
 {
     UIControl* control = 0;
-    if (section == 0x29) control = static_cast<UIControl*>(&m_ingredientSlot);
-    else if (section == 0x2a) control = static_cast<UIControl*>(&m_brewingPlate);
+    if (section == 0x29) control = static_cast<UIControl*>(&m_hotbarList);
+    else if (section == 0x2a) control = static_cast<UIControl*>(&m_inventoryList);
     else if (section >= 0x2b && section <= 0x2d) control = static_cast<UIControl*>(&m_bottleSlots[section - 0x2b]);
-    else if (section == 0x2e) control = static_cast<UIControl*>(&m_hotbarList);
-    else if (section == 0x2f) control = static_cast<UIControl*>(&m_inventoryList);
+    else if (section == 0x2e) control = static_cast<UIControl*>(&m_ingredientSlot);
+    else if (section == 0x2f) control = static_cast<UIControl*>(&m_brewingPlate);
     const unsigned int columns = getSectionColumns(section);
     const unsigned int rows = getSectionRows(section);
     if (control != 0 && position != 0 && size != 0 && columns != 0 && rows != 0)
@@ -188,12 +239,18 @@ void UIScene_BrewingStandMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     if (!wrap) return;
-    if (section >= 0x2b && section <= 0x2d)
-        m_bottleSlots[section - 0x2b].setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-    else if (section == 0x2e)
-        m_hotbarList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-    else if (section == 0x2f)
-        m_inventoryList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    const int columns = static_cast<int>(getSectionColumns(section));
+    switch (static_cast<int>(section))
+    {
+    case 0x29: m_hotbarList.setHighlightSlot(direction * columns + slot); break;
+    case 0x2a: m_inventoryList.setHighlightSlot(direction * columns + slot); break;
+    case 0x2b: m_bottleSlots[0].setHighlightSlot(direction * columns + slot); break;
+    case 0x2c: m_bottleSlots[1].setHighlightSlot(direction * columns + slot); break;
+    case 0x2d: m_bottleSlots[2].setHighlightSlot(direction * columns + slot); break;
+    case 0x2e: m_ingredientSlot.setHighlightSlot(direction * columns + slot); break;
+    case 0x2f: m_brewingPlate.setHighlightSlot(direction * columns + slot); break;
+    default: break;
+    }
 }
 
 int UIScene_BrewingStandMenu::getSectionStartOffset(

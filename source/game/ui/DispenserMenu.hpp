@@ -18,7 +18,6 @@ public:
 
 private:
     boost::shared_ptr<Container> m_dispenser;
-    boost::shared_ptr<Container> m_playerInventory;
 };
 
 #endif

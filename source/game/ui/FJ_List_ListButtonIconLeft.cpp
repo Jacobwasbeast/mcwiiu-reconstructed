@@ -23,12 +23,12 @@ void FJ_List_ListButtonIconLeft::addNewItem(const std::wstring& label, int id,
     const char* objectName;
     if (m_checkboxTick)
         objectName = m_useLayerIcon
-            ? "fourj.Buttons.FJ_ListButtonIconLeft_Small"
-            : "fourj.Buttons.FJ_ListButtonIconX2Left_Small";
+            ? "fourj.Buttons.FJ_ListButtonIconX2Left_Small"
+            : "fourj.Buttons.FJ_ListButtonIconLeft_Small";
     else
         objectName = m_useLayerIcon
-            ? "fourj.Buttons.FJ_ListButtonIconLeft_Normal"
-            : "fourj.Buttons.FJ_ListButtonIconX2Left_Normal";
+            ? "fourj.Buttons.FJ_ListButtonIconX2Left_Normal"
+            : "fourj.Buttons.FJ_ListButtonIconLeft_Normal";
 
     FJ_ListButtonIconLeft* item = static_cast<FJ_ListButtonIconLeft*>(
         FJ_Factory::createObject(objectName, m_pRenderNode, true, NULL));
@@ -37,7 +37,7 @@ void FJ_List_ListButtonIconLeft::addNewItem(const std::wstring& label, int id,
     item->SetSlotID(m_id, m_useIggyIcons);
 
     if (m_useIggyIcons)
-        item->SetTextureName(L"fourj.Button", textureName1);
+        item->SetTextureName(L"", textureName1);
     else
         item->SetTextureName(textureName, textureName1);
 }

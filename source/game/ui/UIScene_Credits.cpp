@@ -175,3 +175,11 @@ int UIScene_Credits::getSceneType()
 {
     return 23;
 }
+
+void UIScene_Credits::setLogoLanguage(int language)
+{
+    if (m_movie == NULL || m_movie->getRootNode() == NULL) return;
+    FJ_CreditsMenu* menu = static_cast<FJ_CreditsMenu*>(
+        m_movie->getRootNode()->getFuiNode()->asFJ_Document());
+    if (menu != NULL) menu->SetLogoLanguage(language);
+}

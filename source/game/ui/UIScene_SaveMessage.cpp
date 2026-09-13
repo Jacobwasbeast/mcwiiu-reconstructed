@@ -11,6 +11,8 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
 
 UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer* layer)
@@ -43,17 +45,14 @@ UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer*
         }
     }
 
-    if (gApp.DLCInstallProcessCompleted())
+    for (int pad = 0; pad < 4; ++pad)
     {
-        gApp.StartInstallDLCProcess(0);
-    }
-    else if (gApp.DLCInstallPending())
-    {
-        gApp.StartInstallDLCProcess(1);
-    }
-    else
-    {
-        gApp.StartInstallDLCProcess(0);
+        bool padInUse = g_pInput->IsPadConnected(pad) != 0 || gProfile->IsSignedIn(pad);
+        if (padInUse && !gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending())
+        {
+            gApp.StartInstallDLCProcess(pad);
+            break;
+        }
     }
     m_saveComplete = false;
     gConsoleUIController.TouchBoxRebuild(this);

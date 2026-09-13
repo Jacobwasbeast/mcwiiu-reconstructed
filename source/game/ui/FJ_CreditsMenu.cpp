@@ -210,6 +210,11 @@ void FJ_CreditsMenu::AddImage(int image, bool requestNext)
     }
 }
 
+void FJ_CreditsMenu::SetLogoLanguage(int language)
+{
+    m_logoLanguage = language;
+}
+
 unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool requestNext)
 {
     m_requestingLabel = requestNext;

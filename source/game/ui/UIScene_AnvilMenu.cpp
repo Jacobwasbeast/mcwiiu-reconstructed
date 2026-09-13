@@ -1,7 +1,11 @@
 #include "game/ui/UIScene_AnvilMenu.hpp"
 
+#include <cstring>
+
 #include "game/client/render/Font.hpp"
 #include "game/core/CensoredString.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -10,9 +14,12 @@
 #include "game/ui/FJ_AnvilMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 extern CInput* g_pInput;
+extern CMinecraftApp* g_pApp;
+extern ConsoleUIController gConsoleUIController;
 
 UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void*, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_anvilMenu(0),
@@ -212,9 +219,25 @@ void UIScene_AnvilMenu::addPendingNameChange(const PendingNameInfo& info)
 
 int UIScene_AnvilMenu::KeyboardCompleteCallback(void* data, bool accepted)
 {
-    UIScene_AnvilMenu* scene = static_cast<UIScene_AnvilMenu*>(data);
-    if (scene != 0 && accepted)
-        scene->updateItemName();
+    unsigned int callbackId = static_cast<unsigned int>(reinterpret_cast<unsigned long>(data));
+    UIScene_AnvilMenu* scene =
+        static_cast<UIScene_AnvilMenu*>(gConsoleUIController.GetSceneFromCallbackId(callbackId));
+    if (scene == 0)
+        return 0;
+
+    scene->m_editingName = false;
+    if (!accepted)
+        return 0;
+
+    PendingNameInfo info;
+    info.itemName = Minecraft::GetInstance()->mLocalPlayers[scene->m_playerId]->getUUID();
+
+    wchar_t buffer[128];
+    std::memset(buffer, 0, sizeof(buffer));
+    g_pInput->GetText(buffer, 0x7f);
+    info.name.assign(buffer, wcslen(buffer));
+
+    scene->addPendingNameChange(info);
     return 0;
 }
 
@@ -278,15 +301,26 @@ void UIScene_AnvilMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::E
         list->setHighlightSlot(slot + direction * columns);
 }
 
-void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu*,
+void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu* container,
                                            std::vector<not_null_ptr<ItemInstance> >*)
 {
-    updateItemName();
+    slotChanged(container, 0, container->getSlot(0)->getItem());
 }
 
-void UIScene_AnvilMenu::slotChanged(AbstractContainerMenu*, int, not_null_ptr<ItemInstance>)
+void UIScene_AnvilMenu::slotChanged(AbstractContainerMenu*, int slot, not_null_ptr<ItemInstance> item)
 {
-    updateItemName();
+    if (slot != 0)
+        return;
+
+    if (!item->isEmpty())
+    {
+        m_itemName->set(item->getHoverNameUnfiltered(), item->getOwnerUUID(),
+                         item->wasCreatedByRestrictedPlayer(), item->wasCreatedOnHost());
+    }
+    else
+    {
+        m_itemName->set(std::wstring(), std::wstring(), false, true);
+    }
 }
 
 void UIScene_AnvilMenu::setContainerData(AbstractContainerMenu*, int, int)
@@ -305,12 +339,19 @@ void UIScene_AnvilMenu::setCostLabel(const std::wstring& label, bool safe)
 unsigned int UIScene_AnvilMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
+    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
+    m_ingredientSlot.setupControl(this, panel, "Ingredient"); m_controls.push_back(&m_ingredientSlot);
+    m_ingredientSlot2.setupControl(this, panel, "Ingredient2"); m_controls.push_back(&m_ingredientSlot2);
+    m_resultSlot.setupControl(this, panel, "Result"); m_controls.push_back(&m_resultSlot);
+    m_anvilLabel.setupControl(this, panel, "AnvilText"); m_controls.push_back(&m_anvilLabel);
+    m_editName.setupControl(this, panel, "AnvilTextInput"); m_controls.push_back(&m_editName);
     return 1;
 }
 
 std::wstring UIScene_AnvilMenu::getMoviePath()
 {
-    return L"AnvilMenu";
+    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"AnvilMenu") : std::wstring(L"AnvilMenuSplit");
 }
 
 void UIScene_AnvilMenu::handleReload()

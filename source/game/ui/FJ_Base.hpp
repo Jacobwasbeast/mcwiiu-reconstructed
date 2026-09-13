@@ -11,6 +11,11 @@ class fuiRenderNodeEditText;
 
 class FJ_Base : public FJ_FuiNode
 {
+    friend class FJ_Document;
+    friend class FJ_MessageBox;
+    friend class FJ_List;
+    friend class FJ_List2D;
+    friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_Base(fuiRenderNode* renderNode);
     virtual ~FJ_Base();
@@ -45,37 +50,34 @@ public:
     virtual void HandleCharInput(unsigned int character);
     virtual uint32_t getType();
 protected:
-    std::wstring m_name;
-    std::wstring m_textContainerLabel;
-    std::wstring m_textContainerText;
-    std::wstring m_ellipsisText;
-    std::wstring m_wrappedText;
-    int m_labelWidth;
-    int m_textWidth;
-    int m_textHeight;
+    std::string m_navLinkName[4];
     int m_id;
     int m_labelAlignment;
     bool m_isLabel;
-    bool m_textContainerVisible;
     bool m_textContainerChanged;
-    bool m_textChanged;
-    bool m_centered;
-    bool m_textOnly;
+    bool m_textContainerVisible;
+    bool m_manualWrap;
+    bool m_htmlText;
+    bool m_multilineWrap;
     int m_lineCount;
     std::vector<int> m_lineWidths;
-    bool m_manualWrap;
-    bool m_labelTooWide;
-    bool m_resizing;
+    bool m_manualWrapFits;
+    bool m_multilineWrapFits;
+    bool m_autoGrowHeight;
     std::wstring m_label;
-    int m_newWidth;
-    int m_oldWidth;
+    float m_centerBiasX;
     float m_objectWidth;
     float m_objectHeight;
-    float m_textScale;
-    bool m_widthChanged;
-    bool m_heightChanged;
+    bool m_initialised;
+    bool m_resizing;
+    bool m_textChanged;
+    bool m_labelTooWide;
+    bool m_labelOverflowResolved;
+    int m_newWidth;
+    int m_ellipsisWidth;
+    bool m_textOnly;
+    int m_ellipsisWidthOverride;
     int m_wrapWidth;
-    bool m_wrapHeight;
     int m_preScaleWidth;
     int m_maxLabelWidth;
     std::vector<FJ_FuiNode*> m_objects;

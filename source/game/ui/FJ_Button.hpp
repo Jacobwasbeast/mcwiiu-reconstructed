@@ -10,6 +10,9 @@ class FJ_FuiNode;
 class fuiRenderNode;
 class fuiRenderNodeEditText;
 
+typedef void FJ_ButtonKeyDownDelegateFn(FJ_FuiNode*, int);
+typedef void FJ_ButtonUpdateLabelDelegateFn(FJ_FuiNode*);
+
 class FJ_Button : public FJ_Base
 {
 public:
@@ -31,7 +34,7 @@ public:
     void HideUntilInit();
     void HandleUpdateLabel(FJ_Event* event);
     static void _HandleUpdateLabel(FJ_FuiNode* node, FJ_Event* event);
-    void Init(const std::wstring& name, int id);
+    virtual void Init(const std::wstring& name, int id);
     void SetKeyDownDelegate(void (*delegate)(FJ_FuiNode*, int), FJ_FuiNode* node);
     fuiRenderNodeEditText* GetSecondaryTextField();
     void SetSecondaryText(const std::wstring& text, bool html, bool autoSize);
@@ -51,7 +54,7 @@ private:
     bool m_showOutline;
     bool m_enabled;
     int m_currentState;
-    void (*m_keyDownDelegate)(FJ_FuiNode*, int);
+    FJ_ButtonKeyDownDelegateFn* m_keyDownDelegate;
     FJ_FuiNode* m_keyDownDelegateNode;
     bool m_focused;
     bool m_hiddenUntilInit;
@@ -59,7 +62,7 @@ private:
     std::wstring m_secondaryText;
     float m_secondaryWidth;
     float m_secondaryX;
-    void (*m_updateLabelDelegate)(FJ_FuiNode*);
+    FJ_ButtonUpdateLabelDelegateFn* m_updateLabelDelegate;
     bool m_secondaryHtml;
     bool m_secondaryAutoSize;
 };

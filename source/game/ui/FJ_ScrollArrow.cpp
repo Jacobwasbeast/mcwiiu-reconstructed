@@ -7,11 +7,11 @@ namespace
     std::string g_scrollArrowStates[6] =
     {
         "Visible_A",
+        "Animating_A",
+        "AnimatingLoop_A",
         "Visible_B",
-        "Disabled_A",
-        "Disabled_B",
-        "Invisible_A",
-        "Invisible_B"
+        "Animating_B",
+        "AnimatingLoop_B"
     };
 }
 

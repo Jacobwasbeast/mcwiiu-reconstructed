@@ -27,17 +27,17 @@ void UIControl_MinecraftHorse::render(fuiRect* rect)
     float width = rect->xMax - rect->xMin;
     float height = rect->yMax - rect->yMin;
     float aspect = mScreenWidth / mScreenHeight;
-    float scale = -(width / aspect * 0.7099999785423279f);
+    float scale = (width / aspect) * 0.7099999785423279f;
 
     GlStateManager::enableRescaleNormal();
     GlStateManager::enableColorMaterial();
     GlStateManager::pushMatrix();
     GlStateManager::translatef(width * 0.5f, height - height / 7.5f, 50.0f);
-    GlStateManager::scalef(scale, -scale, scale);
-    GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::scalef(-scale, scale, scale);
+    GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
     Lighting::turnOn();
     GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(20.0f, 1.0f, 0.0f, 0.0f);
 
     GlStateManager::popMatrix();
     Lighting::turnOff();

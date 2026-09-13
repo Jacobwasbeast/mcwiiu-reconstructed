@@ -2,6 +2,7 @@
 #include "game/ui/FJ_ComponentLogo.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 
 UIComponent_Logo::UIComponent_Logo(int sceneType, void* callback, UILayer* layer) : UIScene(sceneType, layer)
 {
@@ -12,15 +13,13 @@ UIComponent_Logo::UIComponent_Logo(int sceneType, void* callback, UILayer* layer
 UIComponent_Logo::~UIComponent_Logo() {}
 void UIComponent_Logo::setLogoLanguage(int language)
 {
-    if (m_movie != 0 && m_movie->getRootNode() != 0)
-    {
-        FJ_ComponentLogo* logo = (FJ_ComponentLogo*)m_movie->getRootNode();
-        logo->SetLogoLanguage(language);
-    }
+    FJ_ComponentLogo* logo = static_cast<FJ_ComponentLogo*>(m_movie->getRootNode()->getFuiNode());
+    logo->SetLogoLanguage(language);
 }
 std::wstring UIComponent_Logo::getMoviePath()
 {
-    if (m_layer != 0 && m_layer->getViewport() > 0 && m_layer->getViewport() <= 8)
+    unsigned int viewport = m_layer->getViewport();
+    if (viewport > 0 && viewport <= 8)
         return L"ComponentLogoSplit";
     return L"ComponentLogo";
 }

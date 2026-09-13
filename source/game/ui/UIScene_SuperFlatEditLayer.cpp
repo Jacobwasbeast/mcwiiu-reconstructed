@@ -3,8 +3,10 @@
 #include <cmath>
 
 #include "game/core/ConsoleUIController.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_SuperFlatEditLayerMenu.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
 #include "game/ui/UILayer.hpp"
@@ -135,13 +137,108 @@ unsigned int UIScene_SuperFlatEditLayer::switchFocus(UIControl* control)
 
 void UIScene_SuperFlatEditLayer::setNewPointerPos(float x, float y)
 {
-    m_pointerPosition.x = x;
-    m_pointerPosition.y = y;
-    m_cursor.setVisible(true);
-    updateTooltips();
+    int component = getComponentByLocation(x, y);
+    if (component == 0)
+    {
+        int slotId = getSlotId(x, y);
+        bool changed = getComponentByLocation(m_pointerPosition) != 0 ||
+                       slotId != getSlotId(m_pointerPosition);
+        if (changed)
+        {
+            m_slotList.setHighlightSlot(slotId % 50);
+            not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+            SetPointerText(item);
+            switchFocus(0);
+        }
+        m_cursor.setVisible(true);
+        m_pointerPosition.x = x;
+        m_pointerPosition.y = y;
+        if (!changed)
+            return;
+        updateTooltips();
+    }
+    else if (component == 1)
+    {
+        SetPointerText(m_customBlocks->item(0));
+        unsigned int changed = switchFocus(&m_heightSlider);
+        m_cursor.setVisible(false);
+        m_pointerPosition.x = x;
+        m_pointerPosition.y = y;
+        if (changed == 0)
+            return;
+        updateTooltips();
+    }
+    else if (component != 2)
+    {
+        SetPointerText(m_customBlocks->item(0));
+        switchFocus(0);
+        m_cursor.setVisible(false);
+        m_pointerPosition.y = y;
+        m_pointerPosition.x = x;
+        updateTooltips();
+    }
+    else
+    {
+        SetPointerText(m_customBlocks->item(0));
+        unsigned int changed = switchFocus(&m_confirmButton);
+        m_cursor.setVisible(false);
+        m_pointerPosition.x = x;
+        m_pointerPosition.y = y;
+        if (changed == 0)
+            return;
+        updateTooltips();
+    }
 }
 
-void UIScene_SuperFlatEditLayer::setNewPointerPos(const _UIVec2D& point) { setNewPointerPos(point.x, point.y); }
+void UIScene_SuperFlatEditLayer::setNewPointerPos(const _UIVec2D& point)
+{
+    float x = point.x;
+    float y = point.y;
+    int component = getComponentByLocation(x, y);
+    if (component == 0)
+    {
+        int slot = getSlotId(x, y);
+        int oldComponent = getComponentByLocation(m_pointerPosition);
+        bool changed = false;
+        if (oldComponent != 0 || slot != getSlotId(m_pointerPosition))
+        {
+            m_slotList.setHighlightSlot(slot % 50);
+            SetPointerText(m_customBlocks->item(slot));
+            switchFocus(0);
+            changed = true;
+        }
+        m_cursor.setVisible(true);
+        m_pointerPosition = point;
+        if (!changed)
+            return;
+    }
+    else if (component == 1)
+    {
+        SetPointerText(ItemInstance::EMPTY);
+        unsigned int result = switchFocus(&m_heightSlider);
+        m_cursor.setVisible(false);
+        m_pointerPosition = point;
+        if (result == 0)
+            return;
+    }
+    else if (component == 2)
+    {
+        SetPointerText(ItemInstance::EMPTY);
+        unsigned int result = switchFocus(&m_confirmButton);
+        m_cursor.setVisible(false);
+        m_pointerPosition = point;
+        if (result == 0)
+            return;
+    }
+    else
+    {
+        SetPointerText(ItemInstance::EMPTY);
+        switchFocus(0);
+        m_cursor.setVisible(false);
+        m_pointerPosition = point;
+    }
+    updateTooltips();
+}
 
 void UIScene_SuperFlatEditLayer::_init()
 {
@@ -217,15 +314,97 @@ int UIScene_SuperFlatEditLayer::getNextSlot(int slot, ESnap snap)
 
 void UIScene_SuperFlatEditLayer::doSnap(const _UIVec2D& point, ESnap snap)
 {
-    int component = getComponentByLocation(point);
-    if (component == 0) { float x, y; slotCentre(snap == ESnap_None ? getSlotId(point) : getNextSlot(getSlotId(point), snap), x, y); setNewPointerPos(x, y); }
-    else if (component == 1) { float x, y; componentCentre(m_heightSlider, x, y); setNewPointerPos(x, y); }
-    else { float x, y; componentCentre(m_confirmButton, x, y); setNewPointerPos(x, y); }
+    float x = point.x;
+    float y = point.y;
+    int component = getComponentByLocation(x, y);
+    if (component == 0)
+    {
+        int slot = getSlotId(x, y);
+        if (snap == ESnap_None)
+        {
+            slotCentre(slot, x, y);
+            setNewPointerPos(x, y);
+            return;
+        }
+        if (onRow(slot, 0) && snap == ESnap_Left)
+        {
+            componentCentre(m_confirmButton, x, y);
+            setNewPointerPos(x, y);
+            return;
+        }
+        if (!onRow(slot, 4) || snap != ESnap_Right)
+        {
+            slot = getNextSlot(slot, snap);
+            slotCentre(slot, x, y);
+            setNewPointerPos(x, y);
+            return;
+        }
+    }
+    else if (component == 1)
+    {
+        if (snap != ESnap_None)
+        {
+            if (snap == ESnap_Left)
+            {
+                slotCentre(0x2d, x, y);
+                setNewPointerPos(x, y);
+                return;
+            }
+            if (snap == ESnap_Right)
+            {
+                componentCentre(m_confirmButton, x, y);
+                setNewPointerPos(x, y);
+                return;
+            }
+            componentCentre(m_heightSlider, x, y);
+            if (snap > ESnap_Down)
+            {
+                setNewPointerPos(x, y);
+                return;
+            }
+            if (!SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(m_layer.getId()))
+            {
+                m_heightSlider.MoveSliderValue(snap == ESnap_Down ? 1 : -1);
+                handleSliderMove(1, m_heightSlider.getCurrentValue());
+                setNewPointerPos(x, y);
+                return;
+            }
+            setNewPointerPos(x, y);
+            return;
+        }
+    }
+    else if (component == 2)
+    {
+        if (snap != ESnap_Left)
+        {
+            if (snap == ESnap_Right)
+            {
+                slotCentre(5, x, y);
+                setNewPointerPos(x, y);
+                return;
+            }
+            componentCentre(m_confirmButton, x, y);
+            setNewPointerPos(x, y);
+            return;
+        }
+    }
+    else
+    {
+        setNewPointerPos(x, y);
+        return;
+    }
+    componentCentre(m_heightSlider, x, y);
+    setNewPointerPos(x, y);
 }
 
 void UIScene_SuperFlatEditLayer::setNewPointerPos(UIControl* control)
 {
-    if (control != 0) { float x, y; componentCentre(*control, x, y); setNewPointerPos(x, y); }
+    if (control != 0)
+    {
+        float x = control->getXPos() + control->getWidth() * 0.5f;
+        float y = control->getYPos() + control->getHeight() * 0.5f;
+        setNewPointerPos(x, y);
+    }
 }
 
 void UIScene_SuperFlatEditLayer::onMouseTick()
@@ -246,7 +425,18 @@ void UIScene_SuperFlatEditLayer::onMouseTick()
         if (m_focusedControl != &m_confirmButton) switchFocus(&m_confirmButton);
     }
 }
-void UIScene_SuperFlatEditLayer::tick() { UIScene::tick(); onMouseTick(); }
+void UIScene_SuperFlatEditLayer::tick()
+{
+    UIScene::tick();
+    onMouseTick();
+    int width = 0;
+    int height = 0;
+    UIScene::m_layer->getRenderDimensions(width, height);
+    if (width == 1280 && height == 480)
+        width = 640;
+    gFui->dispatchMouseMoveEvent(m_movie, m_pointerPosition.x * static_cast<float>(width) / static_cast<float>(m_stageWidth),
+                                 m_pointerPosition.y * static_cast<float>(height) / static_cast<float>(m_stageHeight));
+}
 void UIScene_SuperFlatEditLayer::handleReload() { _init(); }
 
 void UIScene_SuperFlatEditLayer::exit(EExit result)
@@ -270,11 +460,102 @@ int UIScene_SuperFlatEditLayer::getSnap(int action) const { return action > 3 &&
 
 void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    if (action < 4) { sendInputToMovie(action, repeat, released, pressed); return; }
-    if (action >= 4 && action < 8 && pressed && m_unknownD4 == 0) { m_unknownC8 = getSnap(action); return; }
-    if (action == 14 && pressed) { m_scrollPage = modulo(m_scrollPage + (repeat ? 1 : -1), 6); updateScrollCurrentPage(m_scrollPage); handled = true; return; }
-    if (action == 20 && pressed) { exit(EExit_Save); handled = true; return; }
-    if (action == 21 && pressed) { exit(EExit_Cancel); handled = true; return; }
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    if (action < 15)
+    {
+        if (action < 4)
+        {
+            sendInputToMovie(action, repeat, released, pressed);
+            return;
+        }
+        if (action < 8)
+        {
+            if (!released)
+                return;
+            if (m_unknownD4 != 0)
+                return;
+            m_unknownC8 = getSnap(action);
+            return;
+        }
+        if (action != 14)
+        {
+            sendInputToMovie(action, repeat, released, pressed);
+            return;
+        }
+        if (!released)
+            return;
+        m_scrollPage = m_scrollPage - 1;
+        if (m_scrollPage < 0)
+            m_scrollPage = 0;
+        updateScrollCurrentPage(m_scrollPage);
+        if (getComponentByLocation(m_pointerPosition) == 0)
+        {
+            int slotId = getSlotId(m_pointerPosition);
+            not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+            SetPointerText(item);
+        }
+    }
+    else if (action == 15)
+    {
+        if (!released)
+            return;
+        m_scrollPage = m_scrollPage + 1;
+        if (m_scrollPage > 4)
+            m_scrollPage = 4;
+        updateScrollCurrentPage(m_scrollPage);
+        if (getComponentByLocation(m_pointerPosition) == 0)
+        {
+            int slotId = getSlotId(m_pointerPosition);
+            not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+            SetPointerText(item);
+            handled = true;
+            return;
+        }
+    }
+    else
+    {
+        if (action != 0x14)
+        {
+            if (action == 0x15)
+            {
+                if (!released)
+                    return;
+                exit(EExit_Cancel);
+                handled = true;
+                return;
+            }
+            sendInputToMovie(action, repeat, released, pressed);
+            return;
+        }
+        if (!released)
+            return;
+        int component = getComponentByLocation(m_pointerPosition);
+        if (component != 0)
+        {
+            if (component == 2)
+            {
+                exit(EExit_Save);
+                handled = true;
+                return;
+            }
+            handled = true;
+            return;
+        }
+        int slotId = getSlotId(m_pointerPosition);
+        not_null_ptr<ItemInstance> item = m_customBlocks->item(slotId);
+        int itemId = 0;
+        int auxValue = 0;
+        if (!item->isEmpty())
+        {
+            itemId = Item::getId(item->getItem());
+            auxValue = item->getAuxValue();
+        }
+        Block* block = Block::byId(itemId);
+        const BlockState* state = block->getBlockState(auxValue);
+        m_layer.setBlockState(state);
+        updateLayerButtons();
+    }
+    handled = true;
 }
 
 void UIScene_SuperFlatEditLayer::handlePress(int, int) { }

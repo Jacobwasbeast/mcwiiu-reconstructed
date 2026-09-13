@@ -10,7 +10,7 @@
 #include "game/world/generation/Player.hpp"
 
 MerchantMenu::MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant, Level* level)
-    : AbstractContainerMenu(), mInventory(inventory), mTradeContainer(), mMerchant(merchant), mLevel(level)
+    : AbstractContainerMenu(), mMerchant(merchant), mTradeContainer(), mLevel(level)
 {
     boost::shared_ptr<Player> player = merchant ? merchant->getTradingPlayer() : boost::shared_ptr<Player>();
     mTradeContainer.reset(new MerchantContainer(player, merchant));
@@ -56,7 +56,7 @@ void MerchantMenu::setSelectionHint(int hint)
 
 bool MerchantMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    return mInventory->stillValid(player);
+    return mMerchant->getTradingPlayer() == player;
 }
 
 not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
@@ -83,7 +83,7 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
         {
             return empty;
         }
-        slot->onQuickCraft(item, original);
+        slot->onQuickCraft(original, item);
     }
     else if (index == 0 || index == 1)
     {
@@ -125,7 +125,7 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
 void MerchantMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (mLevel != NULL && !mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
         not_null_ptr<ItemInstance> first = mTradeContainer->getItem(0);
         if (!first->isEmpty())

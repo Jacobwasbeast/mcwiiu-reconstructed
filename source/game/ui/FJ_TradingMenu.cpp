@@ -3,6 +3,7 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_HtmlTextPanel.hpp"
 #include "game/ui/FJ_ScrollArrowH.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
@@ -106,15 +107,13 @@ void FJ_TradingMenu::PositionOfferDescription()
 {
     FJ_FuiNode* offer = child(this, "MainPanel.OfferDescription");
     FJ_FuiNode* selector = child(this, "MainPanel.TradingSelector");
-    if (offer == 0 || selector == 0)
-        return;
 
     const float y = selector->getY() + (selector->getHeight() - offer->getHeight()) * 0.5f;
     float x;
     if (m_selectorSlot < (m_visibleSlots / 2 + (m_visibleSlots < 0 && (m_visibleSlots & 1) != 0)))
         x = selector->getX() + selector->getWidth() * 1.1f;
     else
-        x = selector->getX() - offer->getWidth() + selector->getWidth() * 0.1f;
+        x = selector->getX() - offer->getWidth() - selector->getWidth() * 0.1f;
     offer->setX(static_cast<float>(Math::round(x)));
     offer->setY(static_cast<float>(Math::round(y)));
 }
@@ -155,8 +154,8 @@ void FJ_TradingMenu::SetSelectorSlot(int slot)
 void FJ_TradingMenu::SetOfferDescription(const std::wstring& description)
 {
     FJ_FuiNode* offer = child(this, "MainPanel.OfferDescription");
-    if (offer != 0 && !description.empty())
-        offer->setVisible(true);
+    if (offer != 0)
+        offer->asFJ_HtmlTextPanel()->SetLabel(description);
     PositionOfferDescription();
 }
 

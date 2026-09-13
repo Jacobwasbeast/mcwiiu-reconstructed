@@ -11,6 +11,7 @@
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/item/not_null_ptr.hpp"
 
+class Merchant;
 class MerchantMenu;
 class MerchantRecipe;
 class UILayer;
@@ -56,13 +57,14 @@ public:
 private:
     bool m_scrollRightShown;
     bool m_scrollLeftShown;
+    MerchantMenu* m_merchantMenuPtr;
     boost::shared_ptr<MerchantMenu> m_merchantMenu;
     std::vector<std::pair<MerchantRecipe*, int> > m_trades;
     int m_tradeCount;
     int m_tradeRow;
     int m_tradeOffset;
-    int m_tradeState;
-    int m_tradeFocus;
+    bool m_tradeFocusSet;
+    int m_tutorialHintValue;
     UIControl m_mainPanel;
     UIControl_SlotList m_tradingBar;
     UIControl_SlotList m_request1;

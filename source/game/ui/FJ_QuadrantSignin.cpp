@@ -26,14 +26,18 @@ void FJ_QuadrantSignin::ShowControllerTimer(int controller, bool visible)
 }
 void FJ_QuadrantSignin::SetControllerStatus(int controller, int status, int frame)
 {
-    if (controller < 0 || controller >= 4 || mControllers[controller] == 0) return;
-    mControllers[controller]->gotoAndStop(status == 0 ? "StopO" : "StopX");
+    static const char* const stateNames[] = { "ConnectController", "PressToJoin", "PlayerDetails" };
+    mControllers[controller]->gotoAndStop(stateNames[status]);
     FJ_FuiNode* controllers = mControllers[controller]->getChildByName("Controllers");
-    if (controllers != 0)
+    controllers->getChildAt(0)->gotoAndStop(frame + 1);
+
+    if (status == 1)
     {
-        FJ_FuiNode* button = controllers->getChildAt(0);
-        if (button != 0) button->gotoAndStop(frame + 1);
+        FJ_FuiNode* graphic = mControllers[controller]->getChildByName("ButtonGraphic");
+        graphic->gotoAndStop(mABSwap ? "StopX" : "StopO");
     }
+
+    ShowControllerTimer(controller, false);
 }
 void FJ_QuadrantSignin::ShowTimerAnimation(FJ_Event* event)
 {
@@ -65,9 +69,8 @@ void FJ_QuadrantSignin::SetABSwap(bool swap)
     mABSwap = swap;
     for (int i = 0; i < 4; ++i)
     {
-        if (mControllers[i] == 0) continue;
         FJ_FuiNode* graphic = mControllers[i]->getChildByName("ButtonGraphic");
-        if (graphic != 0) graphic->gotoAndStop(swap ? "StopX" : "StopO");
+        graphic->gotoAndStop(swap ? "StopX" : "StopO");
     }
 }
 void FJ_QuadrantSignin::JoinButtonPressed(int controller)

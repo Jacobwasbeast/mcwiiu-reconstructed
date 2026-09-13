@@ -20,12 +20,11 @@ UIControl_PlayerSkinPreview::UIControl_PlayerSkinPreview()
     Minecraft* minecraft = Minecraft::GetInstance();
     ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
     mUnknown50 = 0;
-    mUnknown54 = 0.0f;
-    mUnknown58 = 0.0f;
+    mUnknown54 = 1.0f;
+    mUnknown58 = 1.0f;
     mTexturePath = L"default";
     mTextureName = 0;
     mCapePath = L"default";
-    mAdditionalModelParts = NULL;
     mWidth = 0.0f;
     mHeight = 0.0f;
     mWidthScale = 0.0f;
@@ -34,22 +33,21 @@ UIControl_PlayerSkinPreview::UIControl_PlayerSkinPreview()
     mPitch = 0;
     mInitialRotation = 0;
     mFacingRotation = 0;
+    mUnknown110 = 0.0f;
     mPreviousRotation = 0.0f;
     mCurrentRotation = 0.0f;
     mTargetRotation = 0.0f;
-    mAnimationRotation = 0.0f;
     mCapeVisible = false;
     mFacingLeft = false;
-    mAnimating = false;
     mAnimationTicks = 0;
-    mAnimatingFacing = false;
+    mAnimating = false;
     mAnimationAngle = 0.0f;
     mAnimation = 0;
-    mModelParts = NULL;
+    mAdditionalModelParts = NULL;
     mRotating = false;
     mRotateBack = false;
     mRotateForward = false;
-    mHasModelParts = false;
+    mRotateBackward = false;
     mWidth = (float)minecraft->mWidth;
     mHeight = (float)minecraft->mHeight;
     mWidthScale = (float)calculator.getWidth();
@@ -92,19 +90,69 @@ void UIControl_PlayerSkinPreview::tick()
             mPitch = -22;
         }
     }
+    bool turningLeft;
     if (mRotateForward)
     {
-        mRotation -= 4;
-        if (mRotation < -179) mRotation = 180;
-    }
-    if (mCapeVisible)
-    {
-        ++mAnimationAngle;
-        if ((int)mAnimationAngle % 4 == 0)
+        mRotation += 4;
+        if (mRotation > 179)
         {
-            if (mRotation < 45) mFacingLeft = true;
-            else if (mRotation >= 45) mFacingLeft = false;
-            mRotation += mFacingLeft ? 4 : -4;
+            mRotation = -180;
+            return;
+        }
+    }
+    else if (mRotateBackward)
+    {
+        mRotation -= 4;
+        if (mRotation < -179)
+        {
+            mRotation = 180;
+            return;
+        }
+    }
+    if (!mCapeVisible)
+    {
+        return;
+    }
+    ++mCapeSwingTicks;
+    if ((mCapeSwingTicks & 3) != 0)
+    {
+        return;
+    }
+    if (mRotation < 45)
+    {
+        if (mRotation < -44)
+        {
+            mFacingLeft = true;
+            turningLeft = true;
+        }
+        else if (mFacingLeft)
+        {
+            turningLeft = true;
+        }
+        else
+        {
+            turningLeft = false;
+        }
+    }
+    else
+    {
+        mFacingLeft = false;
+        turningLeft = false;
+    }
+    if (turningLeft)
+    {
+        mRotation += 4;
+        if (mRotation > 179)
+        {
+            mRotation = -180;
+        }
+    }
+    else
+    {
+        mRotation -= 4;
+        if (mRotation < -179)
+        {
+            mRotation = 180;
         }
     }
 }

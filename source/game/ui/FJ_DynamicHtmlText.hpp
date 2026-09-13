@@ -25,7 +25,6 @@ public:
     int m_iUnknown;
     int m_iCharacterHeight;
     int m_iContentHeight;
-    int m_iCurrentScroll;
     fuiRect m_scrollRect;
     FJ_ScrollArrow* m_pUpArrow;
     FJ_ScrollArrow* m_pDownArrow;

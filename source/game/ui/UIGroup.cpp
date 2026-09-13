@@ -1,10 +1,12 @@
 #include "game/ui/UIGroup.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/core/MemoryTracker.hpp"
+#include "game/ui/UIComponent_Tooltips.hpp"
 
 UIGroup::UIGroup(EUIGroup group, int player)
     : m_component(0), m_componentSecondary(0), m_componentTertiary(0),
-      m_componentQuaternary(0), m_unknown30(0), m_viewportType(0),
+      m_componentQuaternary(0), m_drcComponent(0), m_viewportType(0),
       m_group((int)group), m_player(player), m_menuDisplayed(0), m_pauseMenuDisplayed(false),
       m_containerMenuDisplayed(false), m_ignoreAutosaveMenuDisplayed(false),
       m_ignorePlayerJoinMenuDisplayed(false), m_stackState5(0),
@@ -14,7 +16,11 @@ UIGroup::UIGroup(EUIGroup group, int player)
     m_unknown45[0] = 0;
     m_unknown45[1] = 0;
     m_unknown45[2] = 0;
-    for (i = 0; i < 8; ++i) m_layers[i] = new UILayer(this);
+    for (i = 0; i < 8; ++i)
+    {
+        m_layers[i] = new UILayer(this);
+        m_layers[i]->m_layerId = i;
+    }
     if (m_group == 0 || m_group == 1) m_component = m_layers[1]->addComponent(0, (EUIScene)0x46, 0);
     else m_component = m_layers[1]->addComponent(m_player, (EUIScene)0x46, 0);
     if (m_group == 0) {
@@ -100,7 +106,7 @@ void UIGroup::_UpdateFocusState()
 
 void UIGroup::tick()
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
     {
         for (int i = 0; i < 8; ++i)
             m_layers[i]->tick();
@@ -114,6 +120,11 @@ void UIGroup::render()
     int height = 0;
     int layer;
     int firstLayer = 0;
+
+    if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
+    {
+        return;
+    }
 
     if (m_group != 0)
     {
@@ -135,9 +146,12 @@ void UIGroup::render()
         firstLayer = layer + 1;
     }
 
-    for (layer = firstLayer - 1; layer >= 0; --layer)
+    for (layer = firstLayer; layer >= 0; --layer)
     {
-        m_layers[layer]->render(width, height, (C4JRender::eViewportType)m_viewportType);
+        if (layer < 8)
+        {
+            m_layers[layer]->render(width, height, (C4JRender::eViewportType)m_viewportType);
+        }
     }
 }
 int UIGroup::hidesLowerScenes()
@@ -180,8 +194,13 @@ int UIGroup::NavigateBack(int player, EUIScene scene, EUILayer layer)
 {
     int result = 0;
     for (int i = 0; i < 8; ++i)
-        if (static_cast<int>(layer) >= 8 || i == static_cast<int>(layer))
-            result = m_layers[i]->NavigateBack(player, scene) || result;
+    {
+        if (static_cast<int>(layer) < 8 && i != static_cast<int>(layer))
+            continue;
+        result = m_layers[i]->NavigateBack(player, scene);
+        if (result)
+            break;
+    }
     updateStackStates();
     return result;
 }
@@ -213,9 +232,14 @@ unsigned char UIGroup::GetMenuDisplayed()
 
 void UIGroup::handleInput(int player, int action, bool repeat, bool released, bool pressed, bool& handled)
 {
-    if (m_player < 0)
-        for (int i = 0; i < 8 && !handled; ++i)
-            m_layers[i]->handleInput(player, action, repeat, released, pressed, handled);
+    if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
+        return;
+    for (int i = 0; i < 8; ++i)
+    {
+        m_layers[i]->handleInput(player, action, repeat, released, pressed, handled);
+        if (handled)
+            return;
+    }
 }
 
 UIScene* UIGroup::getCurrentScene(int player)
@@ -291,6 +315,9 @@ UIScene* UIGroup::FindScene(EUIScene scene)
 void UIGroup::ClearTooltips()
 {
     UIScene* scene = GetTopScene(static_cast<EUILayer>(2));
-    if (scene != 0)
-        scene->handleTouchBoxRebuild();
+    if (scene == 0)
+    {
+        static_cast<UIComponent_Tooltips*>(m_component)->SetTooltips(
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false);
+    }
 }

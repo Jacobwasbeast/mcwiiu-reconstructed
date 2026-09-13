@@ -6,6 +6,8 @@
 enum EUIGroup { EUIGroup_Unknown = 0 };
 enum EUILayer { EUILayer_Unknown = 0 };
 
+class UIComponent_WiiUDRC;
+
 class UIGroup
 {
     friend class ConsoleUIController;
@@ -55,7 +57,7 @@ private:
     UIScene* m_componentSecondary;
     UIScene* m_componentTertiary;
     UIScene* m_componentQuaternary;
-    int m_unknown30;
+    UIComponent_WiiUDRC* m_drcComponent;
     int m_viewportType;
     int m_group;
     int m_player;

@@ -34,7 +34,7 @@ struct SYSTEMTIME
     unsigned short milliseconds;
 };
 
-void FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
+unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
 
 SelectWorldScreen::SelectWorldScreen(Screen* parent)
     : Screen(), mParent(parent), mTitle(L"Select_world"), mSelecting(false), mSelectedWorld(0),

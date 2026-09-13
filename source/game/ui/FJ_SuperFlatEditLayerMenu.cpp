@@ -2,32 +2,44 @@
 
 #include <string>
 
+#include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_SuperFlatEditLayerMenu::FJ_SuperFlatEditLayerMenu(fuiRenderNode* renderNode)
     : FJ_AbstractContainerDocument(renderNode), mSlotID(0), mScrollUp(NULL), mScrollDown(NULL),
       mScrollTop(0), mScrollBottom(0)
 {
     FJ_FuiNode* scrollBar = getChildByName(std::string("MainPanel.Scrollbar"));
+    FJ_FuiNode* button = scrollBar->getChildByName(std::string("ScrollBarButton"));
+    FJ_FuiNode* track = scrollBar->getChildByName(std::string("ScrollBarTrack"));
     if (scrollBar != NULL)
     {
-        mScrollUp = new FJ_ScrollArrow(renderNode);
-        mScrollDown = new FJ_ScrollArrow(renderNode);
+        mScrollUp = static_cast<FJ_ScrollArrow*>(
+            FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
+        mScrollDown = static_cast<FJ_ScrollArrow*>(
+            FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
         scrollBar->addChild(mScrollUp);
         scrollBar->addChild(mScrollDown);
+        FJ_FuiNode* movie = FJ_FuiNode::asMovieClip(scrollBar);
+        FJ_FuiNode* upArrow = movie->getChildByName(std::string("ScrollUpArrow"));
+        mScrollUp->setX(upArrow->getX());
+        mScrollUp->setY(upArrow->getY());
+        FJ_FuiNode* downArrow = movie->getChildByName(std::string("ScrollDownArrow"));
+        mScrollDown->setX(downArrow->getX());
+        mScrollDown->setY(downArrow->getY());
+        movie->removeChild(upArrow, true);
+        movie->removeChild(downArrow, true);
         mScrollUp->ChangeState(0);
         mScrollDown->ChangeState(3);
-        mScrollUp->setVisible(false);
-        mScrollDown->setVisible(false);
-        FJ_FuiNode* track = scrollBar->getChildByName(std::string("ScrollBarTrack"));
-        FJ_FuiNode* button = scrollBar->getChildByName(std::string("ScrollBarButton"));
-        if (track != NULL && button != NULL)
-        {
-            mScrollTop = (int)button->getY();
-            mScrollBottom = (int)(track->getY() + track->getHeight() - button->getHeight());
-        }
+        mSlotID = 0;
+        float trackY = track->getY();
+        float buttonY = button->getY();
+        mScrollTop = (int)buttonY;
+        mScrollBottom = (int)((trackY - buttonY) + (trackY + track->getHeight()) - button->getHeight());
     }
     SetSlotID();
 }
@@ -39,13 +51,19 @@ FJ_SuperFlatEditLayerMenu::~FJ_SuperFlatEditLayerMenu()
 void FJ_SuperFlatEditLayerMenu::SetSlotID()
 {
     FJ_FuiNode* panel = getChildByName(std::string("MainPanel"));
-    if (panel != NULL)
+    FJ_FuiNode* slotControl = FJ_FuiNode::asMovieClip(panel->getChildByName(std::string("SlotControl")));
+    if (slotControl != NULL)
     {
-        FJ_FuiNode* slotControl = panel->getChildByName(std::string("SlotControl"));
-        if (slotControl != NULL)
-        {
-            slotControl->setVisible(true);
-        }
+        fuiRect rect;
+        rect.xMin = slotControl->getX();
+        rect.yMin = slotControl->getY();
+        rect.xMax = rect.xMin + slotControl->getWidth() / getScaleX();
+        rect.yMax = rect.yMin + slotControl->getHeight();
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
+            getStage()->m_pRenderNode, &rect, "iggy_layerslot_0");
+        renderNode->setAlpha(0.25f);
+        panel->removeChild(slotControl, true);
+        panel->addChild(new FJ_FuiNode(renderNode));
     }
 }
 
@@ -61,34 +79,69 @@ unsigned int FJ_SuperFlatEditLayerMenu::getType()
 
 void FJ_SuperFlatEditLayerMenu::SetScrollBar(int count, int position)
 {
-    if (mScrollUp == NULL || mScrollDown == NULL)
+    FJ_FuiNode* scrollBar = getChildByName(std::string("MainPanel.Scrollbar"));
+    FJ_FuiNode* button = scrollBar->getChildByName(std::string("ScrollBarButton"));
+    if (scrollBar == NULL)
     {
         return;
     }
-    if (count <= 1)
+    int last = count - 1;
+    int clamped = last;
+    if (position < count)
     {
+        clamped = position;
+        if (position < 0)
+        {
+            clamped = 0;
+        }
+    }
+    if (count == 1)
+    {
+        scrollBar->setAlpha(0.5f);
         mScrollUp->setVisible(false);
         mScrollDown->setVisible(false);
-        mSlotID = 0;
-        return;
     }
-    if (position < 0)
+    else
     {
-        position = 0;
+        scrollBar->setAlpha(1.0f);
+        button->setVisible(true);
+        if (count > 1)
+        {
+            if (mSlotID < clamped)
+            {
+                if (clamped > 0)
+                {
+                    mScrollDown->setVisible(true);
+                    mScrollDown->ChangeState(4);
+                }
+                mScrollUp->setVisible(true);
+            }
+            else if (clamped < mSlotID)
+            {
+                if (clamped < last)
+                {
+                    mScrollUp->setVisible(true);
+                    mScrollUp->ChangeState(1);
+                }
+                mScrollDown->setVisible(true);
+            }
+        }
     }
-    if (position >= count)
+    if (clamped == last)
     {
-        position = count - 1;
+        mScrollDown->setVisible(false);
     }
-    mScrollUp->setVisible(position > 0);
-    mScrollDown->setVisible(position + 1 < count);
-    if (position > 0)
+    if (clamped == 0)
     {
-        mScrollUp->ChangeState(position + 1 < count ? 1 : 0);
+        mScrollUp->setVisible(false);
     }
-    if (position + 1 < count)
+    if (count < 2)
     {
-        mScrollDown->ChangeState(position > 0 ? 4 : 3);
+        button->setY((float)mScrollTop);
     }
-    mSlotID = position;
+    else
+    {
+        button->setY((float)(mScrollBottom - mScrollTop) * ((float)clamped / (float)last) + (float)mScrollTop);
+    }
+    mSlotID = clamped;
 }

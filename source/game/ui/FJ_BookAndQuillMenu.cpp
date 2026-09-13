@@ -167,8 +167,6 @@ void FJ_BookAndQuillMenu::SetFontSizeOverride(int)
 
 std::wstring FJ_BookAndQuillMenu::GetPageText(bool secondPage)
 {
-    if (m_label == NULL || m_label->GetTextField() == NULL)
-        return m_pageText;
     m_label->GetTextField()->getNumLines();
     return m_pageText;
 }
@@ -220,9 +218,9 @@ void FJ_BookAndQuillMenu::OnFocusChange(bool focused)
 
 void FJ_BookAndQuillMenu::DoHorizontalResizeCheck()
 {
-    FJ_FuiNode* root = getChildAt(0);
-    for (int i = 0; root != NULL && i < root->getNumChildren(); ++i) {
-        FJ_Base* base = root->getChildAt(i)->asFJ_Base();
+    for (int i = 0; m_pageNode != NULL && i < m_pageNode->getNumChildren(); ++i) {
+        FJ_FuiNode* child = m_pageNode->getChildAt(i);
+        FJ_Base* base = child != NULL ? child->asFJ_Base() : NULL;
         if (base != NULL && base->isFJ_Button() && base->getNewWidth() > 0)
             base->ResizingComplete();
     }

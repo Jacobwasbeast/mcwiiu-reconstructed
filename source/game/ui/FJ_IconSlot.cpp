@@ -106,3 +106,8 @@ void FJ_IconSlot::SetTextureName(const std::wstring& textureName)
 {
     m_pBitmapIcon->SetTextureName(textureName);
 }
+
+int FJ_IconSlot::getSlotId()
+{
+    return m_iSlotId;
+}

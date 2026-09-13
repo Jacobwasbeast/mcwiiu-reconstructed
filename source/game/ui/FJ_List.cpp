@@ -7,14 +7,16 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_ListButtonController.hpp"
 #include "game/ui/FJ_Button.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_ScrollArrow.hpp"
 #include "game/ui/FJ_Slider.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
 FJ_List::FJ_List(fuiRenderNode* renderNode)
     : FJ_Base(renderNode), m_checkboxTick(false), m_verticalSpacing(0),
-      m_action(), m_initialized(false), m_items(), m_vectorPadding(0),
+      m_action(), m_initialized(false), m_items(),
       m_activeItem(0), m_topItem(0), m_upArrow(0), m_downArrow(0),
       m_background(0), m_maxItemsVisibleUp(1), m_touchSize(0),
       m_keyDown(false), m_keyUp(false), m_touchFocusY(0), m_touchY(0),
@@ -119,9 +121,26 @@ int FJ_List::getINumButtons() { return static_cast<int>(m_items.size()); }
 
 void FJ_List::SetListFocus()
 {
-    if (m_activeItem < 0 || static_cast<unsigned int>(m_activeItem) >= m_items.size()) m_activeItem = 0;
-    if (m_items.empty()) return;
-    HighlightItem(m_activeItem, false);
+    FJ_FuiNodeStage* stage = getStage();
+    if (stage == 0 || stage->getFocus() != this)
+        return;
+
+    int index = m_activeItem;
+    if (m_initialized)
+    {
+        if (m_keyDown)
+            index = static_cast<int>(m_items.size()) - 1;
+        else if (m_keyUp)
+            index = 0;
+    }
+
+    if (!m_items.empty())
+    {
+        getStage()->setFocus(m_items[static_cast<unsigned int>(index)]);
+        dispatchEvent(new FJ_Event(eFJEventType_FocusChangeInit, true, false));
+    }
+    if (m_background != 0)
+        m_background->gotoAndPlay(std::string("FadeIn"));
 }
 
 void FJ_List::focusInHandler(FJ_Event*) { SetListFocus(); }
@@ -222,51 +241,113 @@ std::wstring FJ_List::GetItemLabel(int index)
 
 void FJ_List::HandleScrollListArrows(bool addArrows)
 {
-    if (m_upArrow == 0 || m_downArrow == 0) return;
-    if (addArrows && m_items.size() >= static_cast<unsigned int>(m_maxItemsVisibleUp) && m_upArrow->getParent() == 0)
+    if (addArrows && m_items.size() >= static_cast<unsigned int>(m_maxItemsVisibleUp) &&
+        m_upArrow->getParent() == 0)
     {
-        FJ_FuiNode* parent = getParent();
-        if (parent != 0)
-        {
-            parent->addChild(m_upArrow);
-            parent->addChild(m_downArrow);
-            UpdateScrollListArrows();
-            m_upArrow->ChangeState(0);
-            m_downArrow->ChangeState(3);
-        }
+        getParent()->addChild(m_upArrow);
+        getParent()->addChild(m_downArrow);
+        m_upArrow->setX(-(m_upArrow->getWidth() * 1.5f - (getX() + getWidth())));
+        m_upArrow->setY(-(m_upArrow->getHeight() * 0.5f - (getY() + getHeight())));
+        m_downArrow->setX(-(m_upArrow->getWidth() * 0.5f - (getX() + getWidth())));
+        m_downArrow->setY(m_upArrow->getY());
+        m_upArrow->ChangeState(0);
+        m_downArrow->ChangeState(3);
     }
-    if (m_upArrow != 0) m_upArrow->setVisible(m_topItem > 0);
-    if (m_downArrow != 0) m_downArrow->setVisible(m_topItem + m_maxItemsVisibleUp < static_cast<int>(m_items.size()));
+    m_upArrow->setVisible(m_topItem > 0);
+    m_downArrow->setVisible(m_topItem + m_maxItemsVisibleUp < static_cast<int>(m_items.size()));
 }
 
 uint64_t FJ_List::ScrollList(bool down, bool page, bool fromTouch)
 {
-    if (!fromTouch && m_highlightFromTouch)
+    bool skipLabelChecks = false;
+    if (!page)
     {
-        m_topItem = m_activeItem + m_maxItemsVisibleUp - static_cast<int>(m_items.size());
-        if (m_topItem < 0) m_topItem = m_activeItem;
-        m_highlightFromTouch = false;
+        if (m_highlightFromTouch)
+        {
+            int overflow = m_activeItem + m_maxItemsVisibleUp - static_cast<int>(m_items.size());
+            m_topItem = overflow < 1 ? m_activeItem : m_activeItem - overflow;
+            m_highlightFromTouch = false;
+            down = false;
+            skipLabelChecks = true;
+        }
+        else if (!down)
+        {
+            if (m_topItem + m_maxItemsVisibleUp <= m_activeItem)
+            {
+                GetMaxItemsVisibleUp();
+                m_topItem = m_activeItem + 1 - m_maxItemsVisibleUp;
+                if (m_downArrow != 0)
+                    m_downArrow->ChangeState(4);
+            }
+        }
+        else if (m_activeItem < m_topItem)
+        {
+            m_topItem = m_activeItem;
+            if (m_upArrow != 0)
+                m_upArrow->ChangeState(1);
+        }
     }
-    int amount = page ? m_maxItemsVisibleUp : 1;
-    if (amount < 1) amount = 1;
-    if (down) m_topItem += amount; else m_topItem -= amount;
-    if (m_topItem < 0) m_topItem = 0;
-    int last = static_cast<int>(m_items.size()) - m_maxItemsVisibleUp;
-    if (last >= 0 && m_topItem > last) m_topItem = last;
+    if (down && !skipLabelChecks && m_activeItem > 0 &&
+        m_items[static_cast<unsigned int>(m_activeItem - 1)]->isFJ_Label())
+    {
+        const int index = m_activeItem - 1;
+        if (GetItemLabel(index) != L" " && !m_items[static_cast<unsigned int>(index)]->isVisible())
+            --m_topItem;
+    }
+    if (!down && m_activeItem + 2 < static_cast<int>(m_items.size()) &&
+        m_items[static_cast<unsigned int>(m_activeItem + 1)]->isFJ_Label())
+    {
+        const int index = m_activeItem + 1;
+        if (GetItemLabel(index) != L" " && !m_items[static_cast<unsigned int>(index)]->isVisible())
+            ++m_topItem;
+    }
 
-    int y = static_cast<int>(getY());
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
+        float beforeTop = 0.0f;
+        float beforeItem = 0.0f;
+        for (unsigned int j = 0; j < m_items.size(); ++j)
+        {
+            const float height = static_cast<float>(GetListItemHeight(static_cast<int>(j)));
+            if (static_cast<int>(j) < m_topItem)
+                beforeTop += height + static_cast<float>(m_verticalSpacing);
+            if (static_cast<int>(j) < static_cast<int>(i))
+                beforeItem += height + static_cast<float>(m_verticalSpacing);
+        }
+        float visibleHeight = 0.0f;
+        bool reachedLimit = false;
+        for (unsigned int j = 0; j < m_items.size(); ++j)
+        {
+            if (static_cast<int>(j) < m_topItem)
+                continue;
+            visibleHeight += static_cast<float>(GetListItemHeight(static_cast<int>(j)));
+            m_maxItemsVisibleUp = static_cast<int>(j) - m_topItem;
+            if (visibleHeight > static_cast<float>(m_touchSize))
+            {
+                reachedLimit = true;
+                break;
+            }
+            visibleHeight += static_cast<float>(m_verticalSpacing);
+        }
+        if (!reachedLimit)
+            ++m_maxItemsVisibleUp;
         FJ_FuiNode* item = m_items[i];
-        item->setY(static_cast<float>(y));
-        const int itemHeight = Math::round(static_cast<float>(GetListItemHeight(static_cast<int>(i))));
-        const bool isVisible = static_cast<int>(i) >= m_topItem &&
-            static_cast<int>(i) < m_topItem + m_maxItemsVisibleUp;
-        item->setVisible(isVisible);
-        y += itemHeight + m_verticalSpacing;
+        fuiRect rect = item->getRect(item);
+        item->setY(static_cast<float>(Math::round(getY() + beforeItem - rect.yMin - beforeTop)));
+        item->setVisible(static_cast<int>(i) >= m_topItem &&
+            static_cast<int>(i) < m_topItem + m_maxItemsVisibleUp);
+        FJ_Base* base = item->asFJ_Base();
+        if (base != 0)
+        {
+            for (unsigned int child = 0; child < base->m_objects.size(); ++child)
+            {
+                base->m_objects[child]->setY(item->getY());
+                base->m_objects[child]->setVisible(item->isVisible());
+            }
+        }
     }
-    m_scrollChanged = true;
-    HandleScrollListArrows(false);
+    if (!page)
+        HandleScrollListArrows(false);
     return 0;
 }
 
@@ -288,17 +369,101 @@ int FJ_List::GetListHeight()
 
 uint64_t FJ_List::UpdateTouchSize()
 {
-    m_touchSize = GetListHeight();
+    FJ_FuiNode* background = getChildByName(std::string("ButtonListBackground"))->asMovieClip();
+    if (background != 0)
+    {
+        int height = GetListHeight() - m_verticalSpacing;
+        background->setHeight(static_cast<float>(Math::round(static_cast<float>(height) / getScaleY())));
+    }
     return 0;
 }
-int FJ_List::GetListWidth() { return static_cast<int>(getWidth()); }
+int FJ_List::GetListWidth()
+{
+    int result = static_cast<int>(getWidth());
+    for (unsigned int i = 0; i < m_items.size(); ++i)
+    {
+        FJ_FuiNode* item = m_items[i];
+        int itemWidth;
+        if (!item->isFJ_Slider())
+        {
+            itemWidth = Math::round(item->asFJ_Base()->getWidth());
+            int newWidth = item->asFJ_Base()->getNewWidth();
+            if (itemWidth < newWidth)
+                itemWidth = newWidth;
+        }
+        else
+        {
+            fuiRenderNodeEditText* textField = item->asFJ_Base()->GetTextField();
+            itemWidth = Math::round(textField->getWidth());
+            int oldWidth = item->asFJ_Base()->getOldWidth();
+            if (itemWidth < oldWidth)
+                itemWidth = static_cast<int>(item->asFJ_Base()->GetTextField()->getWidth() * 1.1f);
+        }
+        if (result < itemWidth)
+            result = itemWidth;
+    }
+    return result;
+}
 void FJ_List::SetNewObjectWidth(int width) { if (getWidth() < width) setWidth(static_cast<float>(width)); }
 
 void FJ_List::addNewListItem(FJ_Base* item, const std::wstring& label, int id)
 {
-    if (item == 0) return;
-    item->setListId(static_cast<int>(m_items.size())); item->setObjListParent(this); item->setId(id); item->SetLabel(label);
-    m_items.push_back(item); addChild(item); HandleScrollListArrows(true); UpdateTouchSize();
+    const int index = static_cast<int>(m_items.size());
+    item->setId(id);
+    item->setListId(index);
+    item->setObjListParent(this);
+    if (!item->isFJ_CheckBox())
+        item->setWidth(getWidth());
+    item->setPreScaleWidth(static_cast<int>(item->getWidth()));
+    if (!item->isFJ_CheckBox())
+    {
+        const float x = getX() + static_cast<float>(Math::round(
+            (getWidth() - item->getWidth()) * 0.5f));
+        item->setX(x);
+    }
+    else
+        item->setX(getX());
+    m_items.push_back(item);
+    if (index > 0)
+    {
+        FJ_Base* previous = m_items[static_cast<unsigned int>(index - 1)]->asFJ_Base();
+        previous->m_navLinkName[1] = item->getName();
+        item->m_navLinkName[0] = previous->getName();
+    }
+    item->m_navLinkName[1] = m_navLinkName[1];
+    item->m_navLinkName[2] = m_navLinkName[2];
+    item->m_navLinkName[3] = m_navLinkName[3];
+    if (index == 0)
+        item->m_navLinkName[0] = m_navLinkName[0];
+    (void)label;
+    item->addEventListener(eFJEventType_FocusIn, this, _ItemFocusInHandler, false);
+    getParent()->addChild(item);
+    if (m_initialized != 0)
+    {
+        if (m_navLinkName[0].empty() && m_navLinkName[1].empty())
+        {
+            item->m_navLinkName[1] = m_items[0]->getName();
+            m_items[0]->asFJ_Base()->m_navLinkName[0] = item->getName();
+        }
+        else
+            getParent()->addEventListener(eFJEventType_KeyUp, this, _ListKeyDownHandler, false);
+    }
+    if (index == m_activeItem)
+        SetListFocus();
+    ScrollList(false, true, false);
+    if (m_activeItem == 0 && !m_items.empty() && m_items[0]->isFJ_Label())
+    {
+        for (unsigned int i = 0; i < m_items.size(); ++i)
+        {
+            if (!m_items[i]->isFJ_Label())
+            {
+                m_activeItem = static_cast<int>(i);
+                SetListFocus();
+                break;
+            }
+        }
+    }
+    HandleScrollListArrows(true);
 }
 
 void FJ_List::removeAllItems()
@@ -341,7 +506,7 @@ uint64_t FJ_List::EnableItem(int index, bool enabled)
     {
         FJ_FuiNode* item = m_items[index];
         if (item->isFJ_Button()) item->asFJ_Button()->EnableButton(enabled);
-        else if (item->isFJ_CheckBox()) item->setVisible(enabled);
+        else if (item->isFJ_CheckBox()) item->asFJ_CheckBox()->EnableCheckBox(enabled);
         else if (item->isFJ_Slider()) item->asFJ_Slider()->EnableSlider(enabled);
     }
     return 0;
@@ -351,10 +516,74 @@ uint64_t FJ_List::SetTouchFocus(int x, int y, bool focus)
 {
     if (!focus)
     {
-        for (unsigned int i = 0; i < m_items.size(); ++i) if (y >= m_items[i]->getY() && y < m_items[i]->getY() + GetListItemHeight(static_cast<int>(i))) { m_touchItem=i; HighlightItem(static_cast<int>(i), false); break; }
+        for (unsigned int i = 0; i < m_items.size(); ++i)
+        {
+            if (m_items[i]->getY() < static_cast<float>(y) &&
+                static_cast<float>(y) < m_items[i]->getY() + static_cast<float>(GetListItemHeight(static_cast<int>(i))))
+            {
+                m_scrollChanged = false;
+                m_touchActive = false;
+                m_touchItem = static_cast<int>(i);
+                HighlightItem(static_cast<int>(i), false);
+                m_touchFocusY = y;
+                m_touchY = x;
+                return 0;
+            }
+        }
+        m_touchFocusY = y;
+        m_touchY = x;
+        return 0;
     }
-    else if (y != m_touchFocusY) ScrollList(y > m_touchFocusY, true, true);
-    m_touchFocusY = y; m_touchY = x;
+
+    if (!m_items.empty() && static_cast<unsigned int>(m_maxItemsVisibleUp) < m_items.size() && !m_touchActive)
+    {
+        if (m_touchFocusY < y)
+        {
+            int rows = static_cast<int>(static_cast<float>(y - m_touchFocusY) /
+                (static_cast<float>(GetListItemHeight(0)) + static_cast<float>(m_verticalSpacing)));
+            if (rows > 0)
+            {
+                int newTop = m_topItem - rows;
+                m_scrollChanged = true;
+                if (newTop < 0) newTop = 0;
+                m_topItem = newTop;
+                ScrollList(true, false, true);
+                m_touchFocusY = y;
+                if (m_upArrow != 0) m_upArrow->ChangeState(1);
+                int lastVisible = m_topItem + m_maxItemsVisibleUp;
+                if (lastVisible - 1 < m_activeItem)
+                    HighlightItem(lastVisible - 1, false);
+            }
+        }
+        else if (y < m_touchFocusY)
+        {
+            int rows = static_cast<int>(static_cast<float>(m_touchFocusY - y) /
+                (static_cast<float>(GetListItemHeight(0)) + static_cast<float>(m_verticalSpacing)));
+            if (rows > 0)
+            {
+                int newTop = m_topItem + rows;
+                m_scrollChanged = true;
+                if (m_items.size() <= static_cast<unsigned int>(newTop + m_maxItemsVisibleUp))
+                    newTop = static_cast<int>(m_items.size()) - m_maxItemsVisibleUp;
+                m_topItem = newTop;
+                ScrollList(false, false, true);
+                m_touchFocusY = y;
+                if (m_downArrow != 0) m_downArrow->ChangeState(4);
+                if (m_activeItem < m_topItem)
+                    HighlightItem(m_topItem, false);
+            }
+        }
+    }
+
+    if (!m_scrollChanged && !m_items.empty() && m_items[m_activeItem]->isFJ_Slider())
+    {
+        FJ_Slider* slider = m_items[m_activeItem]->asFJ_Slider();
+        if (slider->getEnabled() && (std::abs(x - m_touchY) > 50 || m_touchActive))
+        {
+            m_items[m_activeItem]->asFJ_Slider()->SetRelativeSliderPos(static_cast<float>(x) / getWidth());
+            m_touchActive = true;
+        }
+    }
     return 0;
 }
 
@@ -404,9 +633,9 @@ uint32_t FJ_List::GetTopItem() { return static_cast<uint32_t>(m_topItem); }
 
 uint64_t FJ_List::setAction(unsigned char action, char* value)
 {
-    if (action == 10) m_checkboxTick = std::string(value) == "CheckBoxTick";
+    if (action == 10) m_checkboxTick = std::string(value) == "true";
     else if (action == 11) m_verticalSpacing = std::atoi(value);
     else if (action == 12) m_action.assign(value);
-    else if (action == 13) m_initialized = std::string(value) == "CheckBoxTick";
+    else if (action == 13) m_initialized = std::string(value) == "true";
     return 0;
 }

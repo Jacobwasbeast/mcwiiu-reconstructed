@@ -76,7 +76,6 @@ private:
     bool m_initialized;
     unsigned char m_padding1[3];
     std::vector<FJ_FuiNode*> m_items;
-    uint32_t m_vectorPadding;
     int m_activeItem;
     int m_topItem;
     FJ_ScrollArrow* m_upArrow;

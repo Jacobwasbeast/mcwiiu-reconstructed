@@ -84,11 +84,29 @@ void FJ_LeaderboardHeader::SetupHeaders(std::wstring rank, std::wstring gamertag
 
 fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)
 {
-    static const char* normal[] = { "", "", "LeaderBoard_Icon_Fallen", "LeaderBoard_Icon_Walked", "LeaderBoard_Icon_Swam", "LeaderBoard_Icon_Zombie", "LeaderBoard_Icon_Killed", "LeaderBoard_Icon_Creeper", "LeaderBoard_Icon_Creeper", "LeaderBoard_Icon_Skeleton", "LeaderBoard_Icon_Spider", "LeaderBoard_Icon_SpiderJockey", "LeaderBoard_Icon_Slime", "LeaderBoard_Icon_Portal", "LeaderBoard_Icon_Score", "LeaderBoard_Icon_Time", "LeaderBoard_Icon_TotalRings", "LeaderBoard_Icon_Climbed" };
-    static const char* small[] = { "", "", "LeaderBoard_Icon_Fallen_Small", "LeaderBoard_Icon_Walked_Small", "LeaderBoard_Icon_Swam_Small", "LeaderBoard_Icon_Zombie_Small", "LeaderBoard_Icon_Killed_Small", "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Skeleton_Small", "LeaderBoard_Icon_Spider_Small", "LeaderBoard_Icon_SpiderJockey_Sm", "LeaderBoard_Icon_Slime_Small", "LeaderBoard_Icon_Portal_Small", "LeaderBoard_Icon_Score_Small", "LeaderBoard_Icon_Time_Small", "LeaderBoard_Icon_TotalRings_Smal", "LeaderBoard_Icon_Climbed_Small" };
-    if (type < 0 || type > 17)
-        type = 17;
-    return (fuiRenderNode*)gFui->createNodeFromSymbol(m_small ? small[type] : normal[type], m_pRenderNode);
+    static const char* normal[] = {
+        "", "", "LeaderBoard_Icon_Fallen", "LeaderBoard_Icon_Walked", "LeaderBoard_Icon_Swam",
+        "LeaderBoard_Icon_Zombie", "LeaderBoard_Icon_ZombiePigman", "LeaderBoard_Icon_Ghast",
+        "LeaderBoard_Icon_Creeper", "LeaderBoard_Icon_Skeleton", "LeaderBoard_Icon_Spider",
+        "LeaderBoard_Icon_SpiderJockey", "LeaderBoard_Icon_Slime", "LeaderBoard_Icon_Portal",
+        "LeaderBoard_Icon_Score", "LeaderBoard_Icon_Time", "LeaderBoard_Icon_TotalRings"
+    };
+    static const char* small[] = {
+        "", "", "LeaderBoard_Icon_Fallen_Small", "LeaderBoard_Icon_Walked_Small",
+        "LeaderBoard_Icon_Swam_Small", "LeaderBoard_Icon_Zombie_Small",
+        "LeaderBoard_Icon_ZombiePigman_Sm", "LeaderBoard_Icon_Ghast_Small",
+        "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Skeleton_Small",
+        "LeaderBoard_Icon_Spider_Small", "LeaderBoard_Icon_SpiderJockey_Sm",
+        "LeaderBoard_Icon_Slime_Small", "LeaderBoard_Icon_Portal_Small",
+        "LeaderBoard_Icon_Score_Small", "LeaderBoard_Icon_Time_Small",
+        "LeaderBoard_Icon_TotalRings_Smal"
+    };
+    const char* name;
+    if (type >= 0 && type <= 16)
+        name = m_small ? small[type] : normal[type];
+    else
+        name = m_small ? "LeaderBoard_Icon_Climbed_Small" : "LeaderBoard_Icon_Climbed";
+    return gFui->createNodeFromSymbol(name, m_pRenderNode);
 }
 
 void FJ_LeaderboardHeader::SetupSlot(int slot, int type)

@@ -17,12 +17,6 @@ class Player;
 class SimpleContainer;
 class UILayer;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_CreativeMenu : public UIScene_AbstractContainerMenu
 {
 public:
@@ -60,6 +54,8 @@ public:
                 ECreative_Inventory_Groups* specialGroups, int extraCount,
                 ECreative_Inventory_Groups* extraGroups);
         unsigned int getPageCount();
+        unsigned int getTitleStringId();
+        unsigned int getSpecialGroupCount();
         void populateMenu(AbstractContainerMenu* menu, int page, unsigned int offset);
         ~TabSpec();
 

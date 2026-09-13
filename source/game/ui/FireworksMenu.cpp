@@ -116,7 +116,7 @@ not_null_ptr<ItemInstance> FireworksMenu::quickMoveStack(boost::shared_ptr<Playe
             return ItemInstance::EMPTY;
     }
 
-    if (item->isEmpty())
+    if (item->getCount() == 0)
         slot->set(ItemInstance::EMPTY);
     else
         slot->setChanged();

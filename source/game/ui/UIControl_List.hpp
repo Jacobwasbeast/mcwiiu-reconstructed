@@ -82,7 +82,7 @@ public:
     virtual void clearList();
     virtual void removeItem(int item, bool immediate);
     void addElement(UIControl::eUIControlType type, int index);
-    void GetTopItem();
+    unsigned int GetTopItem();
     void setCurrentSelection(int selection, bool update, bool immediate);
     void updateChildFocus(int index);
     unsigned int getItemCount();

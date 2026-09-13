@@ -29,13 +29,13 @@ void UIControl_SpaceIndicatorBar::setSaveSize(long long size)
     m_saveSize = size;
     long long numerator = m_saveSize - m_startOffset;
     long long denominator = m_endOffset - m_startOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->setSaveGameSize((float)numerator / (float)denominator);
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setSaveGameSize((float)numerator / (float)denominator);
 }
 
 void UIControl_SpaceIndicatorBar::setSaveGameOffset(float offset)
 {
     m_saveGameOffset = offset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->setSaveGameOffset(offset);
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setSaveGameOffset(offset);
 }
 
 void UIControl_SpaceIndicatorBar::selectSave(int index)
@@ -53,7 +53,7 @@ void UIControl_SpaceIndicatorBar::setTotalSize(long long size)
 {
     long long numerator = m_totalSize - m_startOffset;
     long long denominator = m_endOffset - m_startOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->setTotalSize((float)numerator / (float)denominator);
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setTotalSize((float)numerator / (float)denominator);
 }
 
 void UIControl_SpaceIndicatorBar::reset()
@@ -77,17 +77,17 @@ void UIControl_SpaceIndicatorBar::addSave(long long size)
 void UIControl_SpaceIndicatorBar::init(UIString label, int controlId, long long startOffset, long long totalOffset)
 {
     m_label = label;
-    m_controlType = static_cast<UIControl::eUIControlType>(controlId);
+    m_controlId = controlId;
     m_startOffset = startOffset;
     m_endOffset = totalOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getRoot())->Init(label.getString());
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->Init(label.getString());
 }
 
 void UIControl_SpaceIndicatorBar::ReInit()
 {
     UIControl::ReInit();
     UIString label = m_label;
-    init(label, (int)m_controlType, m_startOffset, m_endOffset);
+    init(label, m_controlId, m_startOffset, m_endOffset);
     setSaveSize(m_saveSize);
     setTotalSize(m_totalSize);
     setSaveGameOffset(m_saveGameOffset);

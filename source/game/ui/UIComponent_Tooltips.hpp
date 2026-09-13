@@ -35,18 +35,18 @@ public:
     virtual std::wstring getMoviePath();
     virtual double getSafeZoneHalfWidth();
     virtual void updateSafeZone();
-    void _SetTooltip(int index, int type, int subtype, unsigned int button,
-                     const UIString& text, bool enabled);
+    void _SetTooltip(unsigned int index, int type, int subtype, const UIString& text,
+                     bool enabled, bool force);
     void _Relayout();
     virtual void tick();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void updateViewportTouchOffset();
-    unsigned int _SetTooltip(unsigned int player, int index);
+    unsigned int _SetTooltip(unsigned int index, int value);
     void SetTooltipText(unsigned int player, int index);
     void SetEnableTooltips(bool enabled);
     void ShowTooltip(unsigned int player, bool visible);
     unsigned int GetToolTipButton(unsigned int button);
-    unsigned int _SetTooltip(unsigned int player, int type, int subtype, int textId,
+    unsigned int _SetTooltip(unsigned int index, int type, int subtype, int textId,
                              bool& changed);
     unsigned int HandleToolTipButton(unsigned int player, EControllerActions action,
                                      unsigned int& button, int type);
@@ -61,7 +61,7 @@ public:
     virtual void handleReload();
     virtual void handleInput(int player, int action, bool repeat, bool released,
                              bool pressed, bool& handled);
-    virtual void handleTouchInput(unsigned int player, int action, int x, int y,
+    virtual void handleTouchInput(unsigned int playerId, int touchX, int touchY, int touchBox,
                                   bool repeat, bool released, bool pressed);
     virtual int getSceneType();
     virtual bool stealsFocus();

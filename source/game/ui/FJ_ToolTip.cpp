@@ -28,10 +28,6 @@ std::string g_toolTipLabels[16][2] = {
     {"Button_DpadDown", "Button_Select_Animated"},
     {"Button_LeftStick", "Button_LeftStick_Animated"}
 };
-// Proved from __sti___16_UnityClient1_cpp_a78c0041, which constructs the
-// std::string global at 0x104F22F4 from the literal at 0x102EB8C0.
-// FJ_ToolTip::SetType (0x02B15810) reads it through the usual inlined
-// c_str(): capacity at +0x1c, inline buffer at +4, heap pointer at +0x14.
 std::string g_toolTipControllerSuffix("_CTRL_");
 
 FJ_ToolTip::FJ_ToolTip(fuiRenderNode* renderNode)
@@ -95,7 +91,7 @@ void FJ_ToolTip::SetSecondaryText(const std::wstring& text)
         container->setY(0.0f);
 
     int x = Math::round((container->getWidth() / getScaleX() - field->getWidth()) * 0.5f
-                        + m_objectWidth);
+                        + m_centerBiasX);
     field->setX(static_cast<float>(x));
     int y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
     field->setY(static_cast<float>(y));

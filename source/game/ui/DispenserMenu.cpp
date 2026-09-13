@@ -6,7 +6,7 @@
 
 DispenserMenu::DispenserMenu(boost::shared_ptr<Container> playerInventory,
                              boost::shared_ptr<Container> dispenser)
-    : m_dispenser(dispenser), m_playerInventory(playerInventory)
+    : m_dispenser(dispenser)
 {
     int row;
     int column;
@@ -19,12 +19,12 @@ DispenserMenu::DispenserMenu(boost::shared_ptr<Container> playerInventory,
 
     for (row = 0; row < 3; ++row) {
         for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(m_playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
         }
     }
 
     for (column = 0; column < 9; ++column) {
-        addSlot(new Slot(m_playerInventory, column, 8 + column * 18, 142));
+        addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
     }
 }
 
@@ -47,20 +47,16 @@ not_null_ptr<ItemInstance> DispenserMenu::quickMoveStack(boost::shared_ptr<Playe
         result = item->copy();
         bool smallInventory = Minecraft::InMiniGame(eMiniGameId_Any, true)
             && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled();
-        int start = 0;
-        int end = 0;
 
         if (index < 9) {
-            start = smallInventory ? 36 : 9;
-            end = 45;
+            if (moveItemStackTo(item, smallInventory ? 36 : 9, 45, true, true, true) != 1) {
+                return ItemInstance::EMPTY;
+            }
         } else if (index < 45) {
-            start = 0;
-            end = 9;
+            if (moveItemStackTo(item, 0, 9, false, true, true) != 1) {
+                return ItemInstance::EMPTY;
+            }
         } else {
-            return ItemInstance::EMPTY;
-        }
-
-        if (moveItemStackTo(item, start, end, false, true, true) != 1) {
             return ItemInstance::EMPTY;
         }
 

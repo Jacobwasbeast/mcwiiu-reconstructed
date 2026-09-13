@@ -23,7 +23,6 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-// TEMPORARY boot tracing; remove once the boot reaches the title screen.
 extern "C" void OSReport(const char*, ...);
 #define SCENE_TRACE(step) OSReport("[boot][scene] %s\n", step)
 
@@ -746,6 +745,11 @@ void UIScene::setOpacity(float opacity)
 void UIScene::setVisible(bool visible)
 {
     m_visible = visible;
+}
+
+bool UIScene::isVisible()
+{
+    return m_visible;
 }
 
 bool UIScene::hasTimer(int timerId)

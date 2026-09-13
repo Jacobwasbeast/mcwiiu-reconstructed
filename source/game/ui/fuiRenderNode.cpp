@@ -3,17 +3,13 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNodeStage.hpp"
+#include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/client/render/Renderer.hpp"
 
 #include <cmath>
 #include <cstring>
 
 static unsigned int g_fuiOldScissor[4] = {0, 0, 0, 0};
-
-static void progogateBoundsFromChild(fuiRenderNode* timeline)
-{
-    timeline->generateGlobalMatrix();
-}
 
 static void setRendererMatrix(float* result, const fuiMatrix& matrix)
 {
@@ -127,8 +123,8 @@ void fuiRenderNode::pushMatrix(fuiMatrix& matrix)
     fuiMatrix::mul(matrix, gFui->m_matrixStack[gFui->m_matrixDepth - 1], gFui->m_matrixStack[gFui->m_matrixDepth]);
     float rendererMatrix[16];
     setRendererMatrix(rendererMatrix, matrix);
+    gRenderer->MatrixPush();
     gRenderer->MatrixMult(rendererMatrix);
-    gRenderer->Set_matrixDirty();
 }
 
 void fuiRenderNode::setScrollRectViewport()
@@ -209,7 +205,7 @@ void fuiRenderNode::progogateBounds()
     {
         fuiRenderNode* timeline = m_parent->asTimeline();
         if (timeline != 0)
-            progogateBoundsFromChild(timeline);
+        static_cast<fuiRenderNodeTimeline*>(timeline)->progogateBoundsFromChild();
     }
 }
 
@@ -347,6 +343,18 @@ void fuiRenderNode::pushFilterFlags()
 void fuiRenderNode::popFilterFlags()
 {
     --gFui->m_filterDepth;
+}
+
+void fuiRenderNode::setRendererColour()
+{
+    const fui::ColorState& colour = gFui->m_colorStack[gFui->m_colorDepth];
+    gRenderer->StateSetColour(colour.redMultiply, colour.greenMultiply, colour.blueMultiply, colour.alphaMultiply);
+    gRenderer->StateSetColourAdd(colour.redAdd, colour.greenAdd, colour.blueAdd, colour.alphaAdd);
+}
+
+unsigned char fuiRenderNode::getCurrentFilterFlags()
+{
+    return gFui->m_filterStack[gFui->m_filterDepth];
 }
 
 fuiRenderNode* fuiRenderNode::asEditText()

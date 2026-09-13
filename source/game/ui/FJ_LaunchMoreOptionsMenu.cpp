@@ -7,6 +7,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_HtmlText.hpp"
+#include "game/ui/FJ_Label.hpp"
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -18,27 +19,32 @@ static FJ_FuiNode* child(FJ_FuiNode* node, const char* name)
 
 static void clearText(FJ_FuiNode* node)
 {
-    node->asFJ_HtmlText()->SetLabel(L"");
+    node->asFJ_HtmlText()->Init(L"");
+}
+
+static void clearLabel(FJ_FuiNode* node)
+{
+    node->asFJ_Label()->SetLabel(L"");
 }
 
 static void setListPosition(FJ_FuiNode* list, FJ_FuiNode* background)
 {
-    background->getChildAt(0)->setY(static_cast<float>(list->asFJ_List()->GetListHeight())
-                                   + (list->getY() - background->getY()) * 2.0f);
+    background->getChildAt(0)->setHeight(static_cast<float>(list->asFJ_List()->GetListHeight())
+                                         + (list->getY() - background->getY()) * 2.0f);
 }
 
 static void setDescriptionPosition(FJ_FuiNode* description, FJ_FuiNode* background)
 {
-    description->setY(background->getChildAt(0)->getHeight()
-                      + (background->getY() - description->getY()) * 2.0f);
+    description->setHeight(background->getChildAt(0)->getHeight()
+                            + (background->getY() - description->getY()) * 2.0f);
 }
 
 static void setTextPanelPosition(FJ_FuiNode* textPanel, FJ_FuiNode* options,
                                  FJ_FuiNode* background)
 {
-    textPanel->getChildAt(0)->setY(background->getChildAt(0)->getHeight()
-                                  + (options->getY() + background->getY()
-                                     - textPanel->getY()) * 2.0f);
+    textPanel->getChildAt(0)->setHeight(background->getChildAt(0)->getHeight()
+                                       + (options->getY() + background->getY()
+                                          - textPanel->getY()) * 2.0f);
 }
 
 FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode)
@@ -134,11 +140,9 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
 
     bool world = tab != 0;
     gameOptions->setVisible(!world);
-    worldOptions->setVisible(world);
     gameList->setVisible(gameOptions->isVisible());
+    worldOptions->setVisible(world);
     worldList->setVisible(worldOptions->isVisible());
-    gameDescription->setVisible(gameOptions->isVisible());
-    worldDescription->setVisible(worldOptions->isVisible());
     gotoAndStop(world ? "WorldOptions" : "GameOptions");
 
     if (resize)
@@ -188,7 +192,7 @@ void FJ_LaunchMoreOptionsMenu::SetMenuType(int type)
 {
     m_menuType = type;
     m_activeTab = type == 0;
-    SetActiveTab(m_activeTab, false);
+    SetActiveTab(m_activeTab, true);
 }
 
 void FJ_LaunchMoreOptionsMenu::HideWorldTab()
@@ -208,8 +212,8 @@ void FJ_LaunchMoreOptionsMenu::HideWorldTab()
     worldList->asFJ_List()->removeAllItems();
     SetActiveTab(0, false);
     gotoAndStop("WorldOptions");
-    clearText(gameLabel);
-    clearText(worldLabel);
+    clearLabel(worldLabel);
+    clearLabel(gameLabel);
     m_worldTabHidden = true;
     gameLabel->setVisible(false);
     gameBack->setVisible(false);
@@ -217,6 +221,6 @@ void FJ_LaunchMoreOptionsMenu::HideWorldTab()
     worldOptions->setVisible(true);
     worldBackground->setVisible(false);
     worldList->setVisible(false);
-    gameDescription->setVisible(false);
     worldDescription->setVisible(false);
+    gameDescription->setVisible(false);
 }

@@ -10,10 +10,12 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Potions.hpp"
+#include "game/item/SimpleContainer.hpp"
 #include "game/core/Slot.hpp"
 #include "game/util/Math.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/FJ_CreativeMenu.hpp"
+#include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/MenuBuilder.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -55,17 +57,31 @@ UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int 
     for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_groups.begin();
          it != m_groups.end(); ++it)
         ordinaryTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
-    int extraTotal = 0;
-    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_extraGroups.begin();
-         it != m_extraGroups.end(); ++it)
-        extraTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
-    const int ordinarySlots = std::max(1, 50 - extraTotal);
+    int specialTotal = 0;
+    for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_specialGroups.begin();
+         it != m_specialGroups.end(); ++it)
+        specialTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
+    const int ordinarySlots = std::max(1, 50 - specialTotal);
     m_pageCount = ordinaryTotal > 0 ? (ordinaryTotal + ordinarySlots - 1) / ordinarySlots : 0;
 }
 
 unsigned int UIScene_CreativeMenu::TabSpec::getPageCount()
 {
     return static_cast<unsigned int>(m_pageCount);
+}
+
+unsigned int UIScene_CreativeMenu::TabSpec::getTitleStringId()
+{
+    return static_cast<unsigned int>(m_itemCount);
+}
+
+unsigned int UIScene_CreativeMenu::TabSpec::getSpecialGroupCount()
+{
+    return static_cast<unsigned int>(m_specialCount);
+}
+
+UIScene_CreativeMenu::TabSpec::~TabSpec()
+{
 }
 
 void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, int page, unsigned int offset)
@@ -115,6 +131,11 @@ UIScene_CreativeMenu::ItemPickerMenu::ItemPickerMenu(boost::shared_ptr<SimpleCon
                                                      boost::shared_ptr<Inventory> inventory)
     : m_container(container), m_inventory(inventory), m_selectedSlot(0), m_resultSlot(0)
 {
+    for (int i = 0; i < 50; ++i)
+        addSlot(new Slot(m_container, i, -1, -1));
+    for (int i = 0; i < 9; ++i)
+        addSlot(new Slot(m_inventory, i, -1, -1));
+    m_containerId = -2;
 }
 
 UIScene_CreativeMenu::ItemPickerMenu::~ItemPickerMenu()
@@ -191,9 +212,24 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
 void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     if (position == 0) return;
-    UIControl* control = getSection(section);
-    position->x = control == 0 ? 0.0f : control->getXPos();
-    position->y = control == 0 ? 0.0f : control->getYPos();
+
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15))
+    {
+        position->x = UIScene_AbstractContainerMenu::m_hotbarList.getXPos();
+        position->y = UIScene_AbstractContainerMenu::m_hotbarList.getYPos();
+    }
+    else if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16))
+    {
+        position->x = m_hotbarList.getXPos();
+        position->y = m_hotbarList.getYPos();
+    }
+    else if (section >= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x17) &&
+             section <= static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x1f))
+    {
+        UIControl_Touch& panel = m_touchPanels[section - 0x17];
+        position->x = panel.getXPos();
+        position->y = panel.getYPos();
+    }
 }
 
 void UIScene_CreativeMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
@@ -210,8 +246,23 @@ void UIScene_CreativeMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESc
 
 unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
 {
-    handleAdditionalKeyPress(key);
-    return value == 0 ? 0U : 1U;
+    if (value != 1)
+        return 0;
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    for (int index = 50; index < 59; ++index)
+    {
+        Slot* slot = m_sceneInterface->m_menu->getSlot(index);
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        if (!item->isEmpty())
+        {
+            not_null_ptr<ItemInstance> copy = item->copy();
+            slot->set(ItemInstance::EMPTY);
+            const int itemsSize = static_cast<int>(m_sceneInterface->m_menu->getItems()->size());
+            minecraft->mGameModes[key]->handleCreativeModeItemAdd(copy, (index - itemsSize) + 45);
+        }
+    }
+    return 1;
 }
 
 void UIScene_CreativeMenu::handleOutsideClicked(int playerId, int, int button)
@@ -243,7 +294,8 @@ void UIScene_CreativeMenu::handleOutsideClicked(int playerId, int, int button)
 
 void UIScene_CreativeMenu::updateTabHighlightAndText(ECreativeInventoryTabs tab)
 {
-    m_currentTab = static_cast<int>(tab);
+    fuiRenderNode* root = m_movie->getRootNode();
+    static_cast<FJ_CreativeMenu*>(root->getFuiNode()->asFJ_Document())->SetActiveTab(static_cast<int>(tab));
 }
 
 void UIScene_CreativeMenu::updateScrollCurrentPage(int page, int pageCount)
@@ -254,8 +306,13 @@ void UIScene_CreativeMenu::updateScrollCurrentPage(int page, int pageCount)
 
 void UIScene_CreativeMenu::switchTab(ECreativeInventoryTabs tab)
 {
+    if (static_cast<int>(tab) != m_currentTab)
+        updateTabHighlightAndText(tab);
+
+    TabSpec* spec = s_tabSpecs[tab];
     m_currentTab = static_cast<int>(tab);
-    updateScrollCurrentPage(m_tabCurrentPages[m_currentTab], m_tabPages[m_currentTab]);
+    updateScrollCurrentPage(m_tabCurrentPages[m_currentTab] + 1, spec->getPageCount());
+    spec->populateMenu(m_containerMenu, m_tabPages[m_currentTab], m_tabCurrentPages[m_currentTab]);
 }
 
 void UIScene_CreativeMenu::ScrollBar(_UIVec2D position)
@@ -292,11 +349,64 @@ void UIScene_CreativeMenu::handleOtherClicked(int button, IUIScene_AbstractConta
 
 void UIScene_CreativeMenu::handleAdditionalKeyPress(int key)
 {
-    if (m_currentTab < 0 || m_currentTab >= 8) return;
-    if (key == 8 || key == 10) ++m_tabCurrentPages[m_currentTab];
-    if (key == 14 && m_tabCurrentPages[m_currentTab] > 0) --m_tabCurrentPages[m_currentTab];
-    if (key == 15 && m_tabCurrentPages[m_currentTab] < m_tabPages[m_currentTab]) ++m_tabCurrentPages[m_currentTab];
-    switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
+    const int tab = m_currentTab;
+    if (key < 0xb)
+    {
+        if (key == 8)
+        {
+            const int nextGroup = m_tabPages[tab] + 1;
+            m_tabPages[tab] = nextGroup < static_cast<int>(s_tabSpecs[tab]->getSpecialGroupCount()) ? nextGroup : 0;
+            switchTab(static_cast<ECreativeInventoryTabs>(tab));
+            return;
+        }
+        if (key != 10)
+            return;
+    }
+    else
+    {
+        if (key != 0xb)
+        {
+            if (key == 0xe)
+            {
+                const int previousPage = m_tabCurrentPages[tab] - 1;
+                if (previousPage >= 0)
+                {
+                    m_tabCurrentPages[tab] = previousPage;
+                    switchTab(static_cast<ECreativeInventoryTabs>(tab));
+                    return;
+                }
+                m_tabCurrentPages[tab] = 0;
+                return;
+            }
+            if (key == 0xf)
+            {
+                const unsigned int pageCount = s_tabSpecs[tab]->getPageCount();
+                const unsigned int nextPage = static_cast<unsigned int>(m_tabCurrentPages[tab] + 1);
+                m_tabCurrentPages[tab] = static_cast<int>(nextPage);
+                if (nextPage < pageCount)
+                {
+                    switchTab(static_cast<ECreativeInventoryTabs>(tab));
+                    return;
+                }
+                m_tabCurrentPages[tab] = static_cast<int>(pageCount - 1);
+                return;
+            }
+            return;
+        }
+    }
+
+    const int direction = (key == 0xb) ? -1 : 1;
+    int newTab = tab + direction;
+    if (newTab >= 0)
+    {
+        if (newTab > 7)
+            newTab = 0;
+        switchTab(static_cast<ECreativeInventoryTabs>(newTab));
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+        return;
+    }
+    switchTab(static_cast<ECreativeInventoryTabs>(7));
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
 }
 
 int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot)
@@ -340,23 +450,51 @@ int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item,
 void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                  int slot, int button)
 {
-    Slot* source = m_sceneInterface->getSlot(section, slot);
-    if (source == 0 || !source->hasItem())
-        return;
-
+    int effectiveSlot = m_sceneInterface->getCurrentIndex(section);
     Minecraft* minecraft = Minecraft::GetInstance();
-    const int playerId = m_sceneInterface->getPad();
+
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16) && slot == 0)
+    {
+        const int playerId = getPad();
+        if (minecraft != 0 && playerId >= 0 && playerId < 4 && minecraft->mLocalPlayers[playerId])
+        {
+            Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
+            if (inventory != 0)
+            {
+                not_null_ptr<ItemInstance> carried = inventory->getCarried();
+                Slot* hotbarSlot = m_sceneInterface->m_menu->getSlot(effectiveSlot);
+                not_null_ptr<ItemInstance> heldItem = hotbarSlot->getItem();
+                if (!heldItem->isEmpty())
+                {
+                    not_null_ptr<ItemInstance> newCarried = heldItem->copy();
+                    inventory->setCarried(newCarried);
+                    if (button == 1)
+                        newCarried->setCount(newCarried->getMaxStackSize());
+
+                    int emptySlot = 0;
+                    if (getEmptyInventorySlot(carried, emptySlot))
+                        minecraft->mGameModes[playerId]->handleCreativeModeItemAdd(carried, emptySlot);
+                }
+            }
+        }
+
+        effectiveSlot = m_sceneInterface->getCurrentIndex(
+            static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15));
+        slot = 0;
+        button = 0;
+    }
+    else if (section != static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15))
+    {
+        return;
+    }
+
+    const int playerId = getPad();
     if (minecraft == 0 || playerId < 0 || playerId >= 4 || !minecraft->mLocalPlayers[playerId])
         return;
 
-    Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
-    if (inventory == 0)
-        return;
-
-    not_null_ptr<ItemInstance> item = source->getItem()->copy();
-    if (button == 1)
-        item->setCount(item->getMaxStackSize());
-    inventory->setCarried(item);
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerId];
+    m_sceneInterface->m_menu->clicked(effectiveSlot, slot,
+                                      static_cast<ClickType::eClickType>(button != 0), player);
 }
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -560,6 +698,22 @@ void UIScene_CreativeMenu::staticCtor()
 unsigned int UIScene_CreativeMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
+    fuiRenderNode* mainNode = GetMainPanel()->getFuiRenderNode();
+
+    for (int i = 0; i < 8; ++i)
+    {
+        std::string name("TouchPanel_");
+        name += static_cast<char>('0' + i);
+        m_touchPanels[i].setupControl(this, mainNode, name);
+        m_controls.push_back(&m_touchPanels[i]);
+    }
+    m_touchPanels[8].setupControl(this, mainNode, "TouchPanel_Slider");
+    m_controls.push_back(&m_touchPanels[8]);
+
+    m_hotbarList.setupControl(this, mainNode, "containerList");
+    m_controls.push_back(&m_hotbarList);
+
     return 1;
 }
 
@@ -570,10 +724,18 @@ std::wstring UIScene_CreativeMenu::getMoviePath()
 
 void UIScene_CreativeMenu::handleReload()
 {
-    if (m_sceneInterface != 0)
-        m_sceneInterface->Initialize(true, m_containerId, m_containerMenu, false, -1,
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
-                                     static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20), false);
+    m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, -1,
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20), false);
+
+    for (int i = 0; i < 50; ++i)
+        m_hotbarList.addSlot(i);
+    for (int i = 50; i < 59; ++i)
+        UIScene_AbstractContainerMenu::m_hotbarList.addSlot(i);
+
+    const int previousTab = m_currentTab;
+    m_currentTab = 8;
+    switchTab(static_cast<ECreativeInventoryTabs>(previousTab));
 }
 
 UIControl* UIScene_CreativeMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)

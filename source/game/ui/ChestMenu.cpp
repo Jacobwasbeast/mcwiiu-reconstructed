@@ -6,7 +6,7 @@
 ChestMenu::ChestMenu(boost::shared_ptr<Container> container,
                      boost::shared_ptr<Container> playerInventory,
                      boost::shared_ptr<Player> player)
-    : m_container(container), m_playerInventory(playerInventory),
+    : m_container(container),
       m_numRows((int)container->getContainerSize() / 9)
 {
     int row;
@@ -20,12 +20,12 @@ ChestMenu::ChestMenu(boost::shared_ptr<Container> container,
     }
     for (row = 0; row < 3; ++row) {
         for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(m_playerInventory, column + row * 9 + 9,
+            addSlot(new Slot(playerInventory, column + row * 9 + 9,
                              8 + column * 18, 18 + m_numRows * 18 + row * 18 + 13));
         }
     }
     for (column = 0; column < 9; ++column) {
-        addSlot(new Slot(m_playerInventory, column,
+        addSlot(new Slot(playerInventory, column,
                          8 + column * 18, 18 + m_numRows * 18 + 71));
     }
 }

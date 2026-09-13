@@ -1,17 +1,7 @@
 #include "game/ui/FJ_SaveMessage.hpp"
 
 #include "game/ui/FJ_FuiNode.hpp"
-
-namespace {
-
-FJ_FuiNode* findChild(FJ_FuiNode* node, const char* name) {
-    if (node == 0) {
-        return 0;
-    }
-    return node->getChildByName(std::string(name));
-}
-
-}
+#include "game/util/Math.hpp"
 
 FJ_SaveMessage::FJ_SaveMessage(fuiRenderNode* renderNode)
     : FJ_Document(renderNode) {
@@ -25,34 +15,25 @@ FJ_Document* FJ_SaveMessage::Create(fuiRenderNode* renderNode) {
 }
 
 void FJ_SaveMessage::AutoResize() {
-    FJ_FuiNode* description = findChild(this, "Description");
-    FJ_FuiNode* confirm = findChild(this, "Confirm");
-    FJ_FuiNode* background = findChild(this, "BackgroundPanel");
-    if (description == 0 || confirm == 0 || background == 0) {
-        return;
-    }
+    FJ_FuiNode* description = getChildByName(std::string("Description"))->asMovieClip();
+    FJ_FuiNode* confirm = getChildByName(std::string("Confirm"))->asMovieClip();
+    FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"))->asMovieClip();
 
     float descriptionBottom = description->getY() + description->getHeight();
-    float confirmHeight = confirm->getHeight();
-    float confirmY = descriptionBottom - confirm->getY();
-    float confirmOffset = confirmHeight * 0.5f + confirmY;
+    float confirmOffset = static_cast<float>(
+        Math::round(confirm->getHeight() * 0.5f + (descriptionBottom - confirm->getY())));
     confirm->setY(confirm->getY() + confirmOffset);
 
-    FJ_FuiNode* graphic = confirm->getChildAt(0);
-    if (graphic != 0) {
-        graphic->setY(graphic->getY() + confirmOffset);
-    }
+    FJ_FuiNode* graphic = background->getChildAt(0)->asMovieClip();
+    graphic->setHeight(graphic->getHeight() + confirmOffset);
 
     int count = getNumChildren();
+    float childOffset = static_cast<float>(Math::round(confirmOffset * 0.5f));
     int i;
     for (i = 0; i < count; ++i) {
         FJ_FuiNode* child = getChildAt(i);
-        if (child != 0) {
-            child->setY(child->getY() - confirmOffset * 0.5f);
-        }
+        child->setY(child->getY() - childOffset);
     }
-
-    background->setHeight(background->getHeight() + confirmOffset);
 }
 
 unsigned int FJ_SaveMessage::getType() {

@@ -68,9 +68,19 @@ public:
     static int ExitLeaderboards(void* context, int button, C4JStorage::EMessageResult result);
 
 private:
-    unsigned int m_unknown;
-    unsigned int m_leaderboardId;
+    unsigned int m_visibleRowCount;
     std::vector<LeaderboardEntry> m_entries;
+    unsigned int m_numStats;
+    int m_statsType;
+    int m_readType;
+    unsigned int m_leaderboardIndex;
+    int m_startRank;
+    int m_numRows;
+    unsigned int m_loadedRowCount;
+    int m_visibleStartRank;
+    int m_selectedEntry;
+    bool m_leaderboardPopulated;
+    bool m_statsIconsValid;
     LeaderboardInterface m_leaderboardInterface;
     UIControl_LeaderboardList m_leaderboardList;
     UIControl_Label m_filterLabel;
@@ -78,22 +88,11 @@ private:
     UIControl_Label m_entriesLabel;
     UIControl_Label m_infoLabel;
     UIControl m_tabNavigation;
-    std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
-    unsigned int m_numStats;
-    unsigned int m_leaderboardIndex;
-    int m_readType;
-    int m_statsType;
-    int m_startRank;
-    int m_numRows;
     int m_totalRows;
-    int m_selectedEntry;
+    unsigned int m_numScores;
+    LeaderboardManager::ReadScore* m_pReadScores;
     bool m_loading;
-    bool m_hasEntries;
-    bool m_titleIconsSet;
-    bool m_updatePending;
-    bool m_showInfo;
-    bool m_canRequestMore;
-    bool m_initialized;
+    std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
     unsigned int m_result;
 };
 

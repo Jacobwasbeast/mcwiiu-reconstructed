@@ -211,9 +211,10 @@ unsigned int UIComponent_TutorialPopup::mapElementsAndNames()
 
 std::wstring UIComponent_TutorialPopup::getMoviePath()
 {
-    if (m_layer != 0 && m_layer->getViewport() > 0 && m_layer->getViewport() <= 8)
-        return L"TutorialPopupSplit";
-    return L"TutorialPopup";
+    unsigned int viewport = m_layer->getViewport();
+    if (viewport == C4JRender::eViewportType_FullScreen || viewport > C4JRender::eViewportType_BottomRightQuarter)
+        return L"TutorialPopup";
+    return L"TutorialPopupSplit";
 }
 
 void UIComponent_TutorialPopup::handleReload()

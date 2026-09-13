@@ -6,6 +6,7 @@
 #include "game/ui/FJ_List_ListButtonScoreBoard.hpp"
 #include "game/ui/FJ_List_MenuButton.hpp"
 #include "game/ui/UIScene.hpp"
+#include "game/ui/UIString.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl_ButtonList::UIControl_ButtonList()

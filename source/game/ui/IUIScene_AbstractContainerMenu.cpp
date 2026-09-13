@@ -1,26 +1,32 @@
 #include "game/ui/IUIScene_AbstractContainerMenu.hpp"
 
+#include <algorithm>
 #include <cmath>
 
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/core/Slot.hpp"
 #include "game/core/HtmlString.hpp"
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
-    : m_menu(0), m_initialized(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
+    : m_menu(0), m_smallInventoryRequested(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
       m_containerId(0), m_touchX(0.0f), m_touchY(0.0f), m_sectionStart(0),
       m_sectionSize(0), m_sectionRows(0), m_sectionColumns(0), m_selectedSlot(0),
       m_activeTooltip(0), m_slotIndex(0), m_slotCount(0), m_currentIndex(0), m_dragStart(0),
-      m_dragEnd(0), m_quickCraftRemaining(0), m_quickCraftSlots(0), m_pointerX(0),
+      m_dragEnd(0), m_quickCraftRemaining(0), m_quickCraftSlots(0),
+      m_firstSection(0), m_lastSection(0), m_pointerX(0),
       m_pointerY(0), m_pointerSection(0), m_pointerSlot(0), m_pointerButton(0),
-      m_pointerItem(0), m_pointerFlags(0), m_lastInput(0), m_inventorySmall(0),
+      m_pointerItem(0), m_pointerFlags(0), m_lastInput(0),
       m_dragSection(0), m_dragSlot(0), m_dragButton(0), m_dragCount(0),
-      m_hoverSection(0), m_hoverSlot(0), m_hoverX(0), m_hoverY(0), m_hoverFlags(0)
+      m_hoverSection(0), m_hoverSlot(0), m_hoverX(0), m_hoverY(0), m_hoverFlags(0),
+      m_lastHoveredSlot(0), m_inventorySmall(0), m_touchEnabled(0)
 {
     m_tooltipButtons[0] = 0;
     m_tooltipButtons[1] = 0;
@@ -30,18 +36,14 @@ IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
     m_tooltipItems[1] = 0;
     m_tooltipItems[2] = 0;
     m_tooltipItems[3] = 0;
-    m_inputState[0] = 0;
-    m_inputState[1] = 0;
-    m_inputState[2] = 0;
-    m_inputState[3] = 0;
-    m_inputState[4] = 0;
-    m_inputState[5] = 0;
-    m_inputState[6] = 0;
-    m_inputState[7] = 0;
 }
 
 IUIScene_AbstractContainerMenu::~IUIScene_AbstractContainerMenu()
 {
+    if (m_smallInventoryRequested)
+    {
+        delete m_menu;
+    }
 }
 
 unsigned int IUIScene_AbstractContainerMenu::canTakeAll() const
@@ -138,14 +140,48 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
                                                  ESceneSection firstSection, ESceneSection lastSection,
                                                  bool touchEnabled)
 {
-    m_takeAllEnabled = takeAll ? 1 : 0;
-    m_containerId = containerId;
+    m_smallInventoryRequested = smallInventory ? 1 : 0;
     m_menu = menu;
-    m_inventorySmall = smallInventory ? 1 : 0;
-    m_slotIndex = slotIndex;
-    m_sectionStart = (int)firstSection;
-    m_sectionSize = (int)lastSection;
-    m_initialized = touchEnabled ? 1 : 0;
+
+    bool effectiveSmallInventory = false;
+    if (Minecraft::InMiniGame((EMiniGameId)15, true) && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
+        effectiveSmallInventory = true;
+    m_inventorySmall = effectiveSmallInventory ? 1 : 0;
+
+    menu->m_changed = false;
+    menu->m_remoteSlots.clear();
+
+    m_pointerX = -1;
+    m_pointerY = -1;
+    m_pointerSection = -1;
+    m_pointerSlot = -1;
+    m_pointerButton = -1;
+    m_pointerItem = -1;
+    m_pointerFlags = -1;
+    m_dragSection = -1;
+    m_dragSlot = -1;
+    m_dragButton = -1;
+    m_dragCount = -1;
+    m_hoverSection = -1;
+    m_hoverSlot = -1;
+    m_hoverY = -1;
+    m_hoverFlags = 0;
+
+    SetToolTip(EToolTipButton_Second, (EToolTipItem)1);
+    SetToolTip(EToolTipButton_First, EToolTipItem_None);
+    SetToolTip(EToolTipButton_Third, EToolTipItem_None);
+    SetToolTip(EToolTipButton_Fourth, EToolTipItem_None);
+
+    m_touchEnabled = touchEnabled ? 1 : 0;
+    m_currentIndex = 0;
+    m_dragEnd = (int)firstSection;
+    m_firstSection = (int)firstSection;
+    m_quickCraftSlots = 0;
+    m_dragStart = 0;
+    m_lastSection = (int)lastSection;
+    m_quickCraftRemaining = 0;
+
+    PlatformInitialize(takeAll, containerId, slotIndex);
 }
 
 std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot* slot)
@@ -207,16 +243,57 @@ void IUIScene_AbstractContainerMenu::slotClicked(int slot, int button, ClickType
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     int playerIndex = getPad();
-    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(playerIndex);
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerIndex];
     MultiPlayerGameMode* gameMode = minecraft->mGameModes[playerIndex];
-    gameMode->handleInventoryMouseClick(m_containerId, slot, button, clickType, player);
+    gameMode->handleInventoryMouseClick(m_menu->m_containerId, slot, button, clickType, player);
 }
 
 void IUIScene_AbstractContainerMenu::handleQuickCraft()
 {
-    if (!canQuickCraft()) return;
-    m_quickCraftSlots = 0;
-    m_quickCraftRemaining = 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int playerIndex = getPad();
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerIndex];
+
+    not_null_ptr<ItemInstance> carried;
+    if (player.get() != NULL)
+    {
+        carried = player->mInventory->getCarried();
+    }
+
+    if (!carried->isEmpty() && carried->getCount() > 1)
+    {
+        m_menu->m_changed = !m_menu->m_changed;
+        if (!m_menu->m_changed)
+        {
+            if (!m_menu->m_remoteSlots.empty())
+            {
+                int mask = AbstractContainerMenu::getQuickcraftMask(0, 0);
+                slotClicked(-999, mask, ClickType::eClickType_QuickCraft);
+                if (m_menu->m_remoteSlots.empty())
+                {
+                    mask = AbstractContainerMenu::getQuickcraftMask(2, 0);
+                    slotClicked(-999, mask, ClickType::eClickType_QuickCraft);
+                }
+                else
+                {
+                    AbstractContainerMenu::SlotSet::iterator it;
+                    for (it = m_menu->m_remoteSlots.begin(); it != m_menu->m_remoteSlots.end(); ++it)
+                    {
+                        std::vector<Slot*>::iterator found =
+                            std::find(m_menu->m_slots.begin(), m_menu->m_slots.end(), *it);
+                        int slotIndex = found != m_menu->m_slots.end()
+                                            ? (int)(found - m_menu->m_slots.begin())
+                                            : -1;
+                        mask = AbstractContainerMenu::getQuickcraftMask(1, 0);
+                        slotClicked(slotIndex, mask, ClickType::eClickType_QuickCraft);
+                    }
+                    mask = AbstractContainerMenu::getQuickcraftMask(2, 0);
+                    slotClicked(-999, mask, ClickType::eClickType_QuickCraft);
+                }
+            }
+            m_menu->m_remoteSlots.clear();
+        }
+    }
 }
 
 unsigned int IUIScene_AbstractContainerMenu::handleKeyDown(int key, int value, bool repeat)
@@ -259,6 +336,17 @@ void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section
 
 void IUIScene_AbstractContainerMenu::handleTakeAll(int button)
 {
+    int columns;
+    int rows;
+    GetSectionDimensions(static_cast<ESceneSection>(2), &columns, &rows);
+    int sectionStart = getSectionStartOffset(static_cast<ESceneSection>(2));
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    int playerIndex = getPad();
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerIndex];
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[playerIndex];
+    gameMode->handleTakeAllInvenetory(m_menu->m_containerId, button, sectionStart, rows * columns, player);
+
     handleSectionClick(static_cast<ESceneSection>(2));
 }
 

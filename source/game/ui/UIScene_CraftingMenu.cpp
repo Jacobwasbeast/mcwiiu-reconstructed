@@ -39,7 +39,88 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     m_lastPanelDisplay = -1;
     IUIScene_CraftingMenu::Init(static_cast<_CraftingPanelScreenInput*>(data));
     initialiseMovie();
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->InitCraftingMenu(m_craftingMode);
+    if (m_craftingMode == 0)
+        m_ingredientsLayout = m_ingredientsLayoutSmall;
+
+    SetItemDescription(0, L"");
+    SetItemDescription(1, L"");
+    SetItemDescription(2, L"");
+    SetItemDescription(3, L"");
+    m_descriptionTextTop.init(UIString(L""));
+    m_descriptionText.init(UIString(L""));
+    m_groupName.init(UIString(L""));
+    SetItemName(L"");
+    m_inventoryLabel.init(UIString(L10N::GetString((int)0x14630b9eu)));
+    m_ingredientsLabel.init(UIString(L10N::GetString((int)0xcb14bd42u)));
+    m_previewLabel.init(UIString(L10N::GetString((int)0xd047a3ceu)));
+    m_spinnerTitle.init(UIString(L10N::GetString((int)0x7f57b5e0u)));
+
+    if (m_craftingMode == 0)
+        m_openMenu = m_player->mInventoryMenu;
+
+    m_inventory.addSlots(0, 27);
+    m_hotBar.addSlots(27, 9);
+    m_previewSlot.addSlots(55, 1);
+    m_doubleSpinnerSlots[0].addSlots(56, 1);
+    m_doubleSpinnerSlots[1].addSlots(57, 1);
+    m_tripleSpinnerSlots[0].addSlots(56, 1);
+    m_tripleSpinnerSlots[1].addSlots(57, 1);
+    m_tripleSpinnerSlots[2].addSlots(58, 1);
+
+    if (m_craftingMode == 1)
+        m_lastRecipe = 9;
+    else
+        m_lastRecipe = 4;
+    m_horizontalSlotCount = 12;
+    gApp.SetRichPresenceContext(m_playerId, 5);
+    setGroupText(IUIScene_CraftingMenu::GetGroupNameText(IUIScene_CraftingMenu::getCurrentGroup()));
+
+    m_ingredientSlots[0].addSlot(36);
+    m_ingredientSlots[1].addSlot(37);
+    m_ingredientSlots[2].addSlot(38);
+    m_ingredientSlots[3].addSlot(39);
+    m_ingredientSlots[4].addSlot(40);
+    m_craftingOutput.addSlot(41);
+    m_ingredientsLayout.addSlots(42, m_lastRecipe);
+    m_crafting3VSlots[0].addSlot(52);
+    m_crafting3VSlots[1].addSlot(53);
+    m_crafting3VSlots[2].addSlot(54);
+    m_crafting2VSlots[0].addSlot(53);
+    m_crafting2VSlots[1].addSlot(52);
+    m_crafting1VSlot.addSlot(52);
+    m_craftingHSlots.addSlots(59, 12);
+
+    IUIScene_CraftingMenu::UpdateTabs(true);
+    IUIScene_CraftingMenu::CheckRecipesAvailable();
+    m_verticalSlots[0] = IUIScene_CraftingMenu::getCurrentVSlotMax();
+    m_verticalSlots[1] = 0;
+    m_verticalSlots[2] = 1;
+    IUIScene_CraftingMenu::UpdateHorizontalSlots();
+    IUIScene_CraftingMenu::UpdateVerticalSlots();
+    IUIScene_CraftingMenu::UpdateHighlight();
+
+    delete static_cast<_CraftingPanelScreenInput*>(data);
+
+    gConsoleUIController.OverrideSFX(m_playerId, 0, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 20, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 11, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 10, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 7, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 6, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 4, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 5, true);
+
+    for (int i = 0; i < 7; ++i)
+        m_tabItems[i] = ItemInstance::EMPTY;
+
+    IUIScene_CraftingMenu::UpdateTooltips();
     addTimer(1, 100);
+    for (int i = 0; i < 13; ++i)
+        m_touchPanels[i].init(i);
+    m_descriptionText.SetupTouch();
+    m_descriptionTextTop.SetupTouch();
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_CraftingMenu::~UIScene_CraftingMenu()

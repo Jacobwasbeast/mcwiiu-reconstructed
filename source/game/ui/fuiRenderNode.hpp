@@ -15,6 +15,8 @@ class fuiRenderNodeStage;
 class fuiRenderNode
 {
 	friend class fui;
+	friend class fuiRenderNodeTimeline;
+	friend class fuiRenderNodeCodeGenRect;
 	friend class FJ_Factory;
 
 protected:
@@ -95,6 +97,8 @@ public:
     void popColor();
     void pushFilterFlags();
     void popFilterFlags();
+    void setRendererColour();
+    unsigned char getCurrentFilterFlags();
     fuiRenderNode* asEditText();
     fuiRect getGlobalBounds() const;
     void setGlobalBounds(const fuiRect&);

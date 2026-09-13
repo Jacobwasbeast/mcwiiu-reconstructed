@@ -14,12 +14,12 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
     : UIScene(sceneType, layer), m_callback(0), m_callbackData(0), m_titleId(0),
       m_buttonCount(0), m_alert(false)
 {
-    ConsoleUIController::_QueuedMessageBoxData* data =
-        static_cast<ConsoleUIController::_QueuedMessageBoxData*>(sceneData);
+    ConsoleUIController::_MessageBoxData* data =
+        static_cast<ConsoleUIController::_MessageBoxData*>(sceneData);
     initialiseMovie();
     m_titleId = data->titleId;
     m_buttonCount = data->parameterCount;
-    m_alert = data->alert;
+    m_alert = data->blocking;
     m_callback = data->callback;
     m_callbackData = data->callbackData;
 
@@ -137,12 +137,12 @@ bool UIScene_MessageBox::hasFocus(int sceneType)
     return m_hasFocus;
 }
 
-void UIScene_MessageBox::handlePress(int first, int second)
+void UIScene_MessageBox::handlePress(int controlId, int)
 {
     unsigned char result = 3;
-    if (second < 4) {
+    if (static_cast<unsigned int>(controlId) < 4) {
         static const unsigned char results[4] = { 4, 5, 6, 7 };
-        result = results[second];
+        result = results[controlId];
     }
     navigateBack();
     if (m_callback != 0)

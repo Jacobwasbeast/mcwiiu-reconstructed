@@ -36,7 +36,7 @@ void UIControl_Label::init(UIString label)
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node->isFJ_Label())
     {
-        node->asFJ_Label()->SetLabel(label.getString());
+        node->asFJ_Label()->Init(label.getString());
         return;
     }
 
@@ -48,7 +48,7 @@ void UIControl_Label::init(UIString label)
 
     if (node->isFJ_HtmlText())
     {
-        node->asFJ_HtmlText()->SetLabel(label.getString());
+        node->asFJ_HtmlText()->Init(label.getString());
         return;
     }
 

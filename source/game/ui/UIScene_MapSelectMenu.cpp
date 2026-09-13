@@ -189,30 +189,58 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
                                         bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
-    if (action == 2 || action == 3)
+    if (action < 14)
     {
-        if (released || !pressed)
+        if (action < 2)
+            return;
+        if (action == 2)
+        {
+            if (!released || repeat)
+                return;
+            unsigned int i;
+            for (i = 0; i < m_mapList.getItemCount(); ++i)
+                if (checkHasPurchased((int)i, false) != 0)
+                    m_mapList.SetCheckbox((int)i, true);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+            return;
+        }
+        if (action != 3)
+        {
+            if (action > 5)
+                return;
+            sendInputToMovie(action, repeat, released, pressed);
+            return;
+        }
+        if (!released || repeat)
             return;
         unsigned int i;
         for (i = 0; i < m_mapList.getItemCount(); ++i)
             if (checkHasPurchased((int)i, false) != 0)
-                m_mapList.SetCheckbox((int)i, action == 2);
+                m_mapList.SetCheckbox((int)i, false);
         gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
         return;
     }
-    if (action == 20 && pressed && !released && checkHasPurchased((int)m_mapList.getCurrentSelection(), true) != 0)
+    if (action > 15)
     {
-        sendInputToMovie(action, repeat, released, pressed);
-        handled = true;
-        return;
-    }
-    if (action == 21 && pressed)
-    {
+        if (action == 20)
+        {
+            if (!released || repeat)
+                return;
+            if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
+                return;
+            sendInputToMovie(20, false, released, pressed);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
+            return;
+        }
+        if (action != 21)
+            return;
+        if (!released)
+            return;
         unsigned int selection = 0;
         unsigned int i;
         for (i = 0; i < m_mapList.getItemCount(); ++i)
             if (m_mapList.GetCheckbox((int)i) != 0)
-                selection |= 1U << (m_levelRuleGroups.at(i)->rulesets.at(0)->getGenerationOptions()->getThemeId() & 0x1f);
+                selection |= 1U << (m_levelRuleGroups.at(i)->rulesets.at(0)->getGenerationOptions()->getThemeId() & 0x3f);
         m_mapSelection = selection;
         if (m_miniGameType == 1)
             GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
@@ -223,8 +251,7 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool relea
         handled = true;
         return;
     }
-    if (action > 5)
-        sendInputToMovie(action, repeat, released, pressed);
+    sendInputToMovie(action, repeat, released, pressed);
 }
 
 void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)

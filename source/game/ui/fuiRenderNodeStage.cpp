@@ -8,11 +8,8 @@ fuiRenderNodeStage::fuiRenderNodeStage(fuiFile* file)
 
 fuiRenderNodeStage::~fuiRenderNodeStage()
 {
-    if (m_child != 0)
-    {
-        m_child->render(0, 0);
-        m_child->shutdown();
-    }
+    m_child->shutdown();
+    delete m_child;
 }
 
 void fuiRenderNodeStage::addChild(fuiRenderNode* child)

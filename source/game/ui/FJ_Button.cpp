@@ -3,6 +3,7 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
@@ -25,9 +26,9 @@ public:
     static void setTint(fuiRenderNode* node, float value)
     {
         FJ_ButtonRenderNodeAccess* access = static_cast<FJ_ButtonRenderNodeAccess*>(node);
+        access->m_redAdd = value;
         access->m_greenAdd = value;
         access->m_blueAdd = value;
-        access->m_alphaAdd = value;
     }
 };
 
@@ -58,12 +59,12 @@ void FJ_Button::setButtonPressed(bool pressed) { m_buttonPressed = pressed; }
 
 void FJ_Button::ChangeState(int state)
 {
-    m_currentState = state;
-    std::string& stateName = s_buttonStates[(m_enabled ? 0 : 4) + state];
+    std::string& stateName = s_buttonStates[state * 2 + (m_enabled ? 0 : 1)];
     if ((state == 0 || state == 3) && m_enabled)
         gotoAndPlay(stateName);
     else
         gotoAndStop(stateName);
+    m_currentState = state;
 }
 
 void FJ_Button::ToggleOutline(bool show)
@@ -102,7 +103,7 @@ void FJ_Button::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_Button::keyDownHandler(FJ_Event* event)
 {
-    if (m_enabled && !m_buttonPressed && event->m_pTarget == 0)
+    if (m_enabled && !m_buttonPressed && static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 0)
     {
         ChangeState(3);
         m_buttonPressed = true;
@@ -119,7 +120,7 @@ void FJ_Button::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_Button::keyUpHandler(FJ_Event* event)
 {
-    if (!m_buttonPressed || event->m_pTarget != 0)
+    if (!m_buttonPressed || static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode != 0)
         return;
     m_buttonPressed = false;
 }
@@ -184,14 +185,12 @@ void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoS
     FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer_2"));
     FJ_FuiNode* movieClip = container == 0 ? 0 : container->asMovieClip();
     fuiRenderNodeEditText* field = GetSecondaryTextField();
-    if (m_secondaryWidth < 0.0f && movieClip != 0)
+    if (m_secondaryWidth == -1.0f)
         m_secondaryWidth = movieClip->getWidth();
-    if (m_secondaryX < 0.0f && movieClip != 0)
+    if (m_secondaryX == -1.0f)
         m_secondaryX = -(movieClip->getX() + movieClip->getWidth()) * getScaleX() + m_objectWidth;
-    if (field == 0)
-        return;
     m_secondaryText = text.empty() ? std::wstring(L" ") : text;
-    if (html)
+    if (autoSize)
         field->setHTMLText(m_secondaryText);
     else
         field->setText(m_secondaryText);
@@ -202,9 +201,35 @@ void FJ_Button::SetSecondaryText(const std::wstring& text, bool html, bool autoS
     }
     field->setScaleX(1.0f / getScaleX());
     field->setScaleY(1.0f / getScaleY());
-    field->setAutoSize(autoSize ? TextFieldAutoSizeRight : TextFieldAutoSizeLeft);
+    field->setAutoSize(html ? TextFieldAutoSizeRight : TextFieldAutoSizeLeft);
     if (movieClip != 0)
+        movieClip->setY(0.0f);
+    if (!html)
+    {
+        field->setX(-static_cast<float>(Math::round((m_secondaryWidth / getScaleX() - field->getWidth()) * 0.5f + m_centerBiasX)));
+        field->setY(-static_cast<float>(Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f)));
+        return;
+    }
+    field->setX(-static_cast<float>(Math::round(m_secondaryWidth / getScaleX() - field->getWidth())));
+    if (!autoSize)
+    {
+        field->setY(-static_cast<float>(Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f)));
         movieClip->setX((m_objectWidth - m_secondaryWidth) / getScaleX() - m_secondaryX);
+    }
+    else
+    {
+        if (getStage()->getStageHeight() == 720.0)
+            field->setY(0.5f);
+        else if (getStage()->getStageHeight() == 360.0)
+            field->setY(0.5f);
+        else if (getStage()->getStageHeight() == 408.0)
+            field->setY(0.5f);
+        else if (getStage()->getStageHeight() == 480.0)
+            field->setY(0.5f);
+        else
+            field->setY(2.0f);
+        movieClip->setX((m_objectWidth - m_secondaryWidth) / getScaleX() - m_secondaryX);
+    }
 }
 
 void FJ_Button::UpdateLabel()
@@ -221,7 +246,7 @@ void FJ_Button::SetLabel(const std::wstring& label) { FJ_Base::SetLabel(label); 
 void FJ_Button::AdjustDisabledTint()
 {
     if (m_pRenderNode != 0)
-        FJ_ButtonRenderNodeAccess::setTint(m_pRenderNode, m_enabled ? 100.0f : 0.09803922f);
+        FJ_ButtonRenderNodeAccess::setTint(m_pRenderNode, m_enabled ? 0.0f : 0.09803922f);
 }
 
 void FJ_Button::EnableButton(bool enabled)
@@ -235,12 +260,20 @@ void FJ_Button::EnableButton(bool enabled)
 
 void FJ_Button::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    int width = static_cast<int>(textField->getWidth() * 1.26f);
-    if (m_newWidth < width)
-        m_newWidth = width;
-    if (!m_manualWrap && m_labelWidth < width && !m_manualWrap)
+    int widest = m_maxLabelWidth;
+    int fieldWidth = static_cast<int>(textField->getWidth());
+    if (widest < fieldWidth)
+        widest = fieldWidth;
+    int scaledWidth = static_cast<int>(static_cast<float>(widest) * 1.26f);
+    if (m_newWidth < scaledWidth)
+        m_newWidth = scaledWidth;
+    if (!m_labelTooWide && m_preScaleWidth < scaledWidth)
     {
-        m_manualWrap = true;
-        m_wrapWidth = static_cast<int>(m_objectWidth * 0.8f);
+        m_labelTooWide = true;
+        if (!m_labelOverflowResolved && m_preScaleWidth < static_cast<int>(static_cast<float>(widest) * 1.05f))
+        {
+            m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8f);
+            m_labelOverflowResolved = true;
+        }
     }
 }

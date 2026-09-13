@@ -2,42 +2,60 @@
 
 #include <cstring>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/DLCManager.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/IUIScene_LoadCreateJoin.hpp"
 #include "game/ui/FJ_LoadCreateJoinMenu.hpp"
 #include "game/ui/UIControl_SaveList.hpp"
 #include "game/ui/UILayer.hpp"
+#include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "vendor/_LoadingInputParams.hpp"
+#include "vendor/_SaveListDetails.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 
-namespace
-{
-unsigned char& baseIgnoreInput(IUIScene_LoadCreateJoin* scene)
-{
-    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(scene) + 0x20);
-}
-
-char*& baseSaveDataBase(IUIScene_LoadCreateJoin* scene)
-{
-    return *reinterpret_cast<char**>(reinterpret_cast<char*>(scene) + 0xc);
-}
-
-int& baseSaveDataIndex(IUIScene_LoadCreateJoin* scene)
-{
-    return *reinterpret_cast<int*>(reinterpret_cast<char*>(scene) + 0x2c);
-}
-}
-
-UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int sceneType, void*, UILayer* layer)
-    : IUIScene_LoadCreateJoin(), m_scene(sceneType, layer), m_selectedLoad(0), m_selectedCreate(0),
+UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int sceneType, void* data, UILayer* layer)
+    : IUIScene_LoadCreateJoin(), UIScene(sceneType, layer), m_selectedLoad(0), m_selectedCreate(0),
       m_selectedJoin(0), m_player(0), m_activeTab(0), m_matchesAvailable(0), m_hideLoadTab(0),
       m_loadThumbnailPending(0), m_createThumbnailPending(0), m_joinThumbnailPending(0),
-      m_saveOperationPending(0), m_subSceneType(0), m_saveDeviceRemoved(0), m_initialised(0),
-      m_focusChanged(0), m_thumbnailIndex(0), m_callbackId(0)
+      m_saveOperationPending(0), m_saveDeviceRemoved(0), m_initialised(0),
+      m_focusChanged(0), m_thumbnailIndex(0), m_callbackId(0), m_saveDetailsCount(0)
 {
+    const bool subScene = data != 0;
+    initialiseMovie();
+    g_pApp->SetLiveLinkRequired(true);
+    m_loadTimer.setVisible(true);
+    m_createTimer.setVisible(false);
+    m_joinTimer.setVisible(true);
+    gStorage->ClearSavesInfo();
+
+    FJ_LoadCreateJoinMenu* menu = static_cast<FJ_LoadCreateJoinMenu*>(
+        m_movie->getRootNode()->getFuiNode());
+    menu->ShowSaveSizeBar(!subScene);
+    m_loadList.init(0);
+    m_createList.init(1);
+    m_gamesList.init(2);
+    _init(subScene);
+    m_saveSizeBar.init(UIString(L""), 3, 0LL, 0x1e000000LL);
+    if (!subScene) {
+        m_loadTitle.init(UIString(0xe63a8eca));
+        m_createTitle.init(UIString(0x41716830));
+        m_joinTitle.init(UIString(0xa1b54cbe));
+    } else {
+        m_loadTitle.init(UIString(0x41716830));
+        m_createTitle.init(UIString(0xa1b54cbe));
+        m_joinTitle.init(UIString(0xdab3c895));
+    }
+    m_loadTouch.init(4);
+    m_createTouch.init(5);
+    m_joinTouch.init(6);
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_LoadCreateJoinMenu::~UIScene_LoadCreateJoinMenu()
@@ -51,45 +69,103 @@ std::wstring UIScene_LoadCreateJoinMenu::getMoviePath()
 
 unsigned int UIScene_LoadCreateJoinMenu::mapElementsAndNames()
 {
-    m_loadList.setupControl(&m_scene, 0, "LoadGameList");
-    m_createList.setupControl(&m_scene, 0, "NewGameList");
-    m_gamesList.setupControl(&m_scene, 0, "JoinGameGamesList");
-    m_loadTouch.setupControl(&m_scene, 0, "TouchTabLoad");
-    m_createTouch.setupControl(&m_scene, 0, "TouchTabCreate");
-    m_joinTouch.setupControl(&m_scene, 0, "TouchTabJoin");
-    m_loadTimer.setupControl(&m_scene, 0, "LoadGameTimer");
-    m_createTimer.setupControl(&m_scene, 0, "NewGameTimer");
-    m_joinTimer.setupControl(&m_scene, 0, "JoinGamesTimer");
-    m_loadTitle.setupControl(&m_scene, 0, "LoadGameTabTitle");
-    m_createTitle.setupControl(&m_scene, 0, "NewGameTabTitle");
-    m_joinTitle.setupControl(&m_scene, 0, "JoinGameTabTitle");
+    fuiRenderNode* root = m_movie->getRootNode();
+
+    m_loadTab.setupControl(this, root, "LoadGame");
+    m_controls.push_back(&m_loadTab);
+    fuiRenderNode* loadRoot = m_loadTab.getFuiRenderNode();
+    m_loadList.setupControl(this, loadRoot, "LoadGameList");
     m_controls.push_back(&m_loadList);
+    m_loadTimer.setupControl(this, loadRoot, "LoadGameTimer");
+    m_controls.push_back(&m_loadTimer);
+    m_saveSizeBar.setupControl(this, loadRoot, "SaveSizeBar");
+    m_controls.push_back(&m_saveSizeBar);
+    m_loadTouch.setupControl(this, loadRoot, "TouchTabLoad");
+    m_controls.push_back(&m_loadTouch);
+
+    m_createTab.setupControl(this, root, "NewGame");
+    m_controls.push_back(&m_createTab);
+    fuiRenderNode* createRoot = m_createTab.getFuiRenderNode();
+    m_createList.setupControl(this, createRoot, "NewGameList");
     m_controls.push_back(&m_createList);
+    m_createTimer.setupControl(this, createRoot, "NewGameTimer");
+    m_controls.push_back(&m_createTimer);
+    m_createTouch.setupControl(this, createRoot, "TouchTabCreate");
+    m_controls.push_back(&m_createTouch);
+
+    m_joinTab.setupControl(this, root, "JoinGame");
+    m_controls.push_back(&m_joinTab);
+    fuiRenderNode* joinRoot = m_joinTab.getFuiRenderNode();
+    m_gamesList.setupControl(this, joinRoot, "JoinGameGamesList");
     m_controls.push_back(&m_gamesList);
+    m_joinTimer.setupControl(this, joinRoot, "JoinGamesTimer");
+    m_controls.push_back(&m_joinTimer);
+    m_joinTouch.setupControl(this, joinRoot, "TouchTabJoin");
+    m_controls.push_back(&m_joinTouch);
+
+    m_loadTitle.setupControl(this, root, "LoadGameTabTitle");
+    m_controls.push_back(&m_loadTitle);
+    m_createTitle.setupControl(this, root, "NewGameTabTitle");
+    m_controls.push_back(&m_createTitle);
+    m_joinTitle.setupControl(this, root, "JoinGameTabTitle");
+    m_controls.push_back(&m_joinTitle);
     return 1;
 }
 
-std::wstring UIScene_LoadCreateJoinMenu::getThumbnailName(int)
+std::wstring UIScene_LoadCreateJoinMenu::getThumbnailName(int index)
 {
-    return std::wstring();
+    if (m_saveListDetails == 0 || index < 0 || index >= m_saveDetailsCount)
+        return std::wstring();
+    wchar_t name[33];
+    for (unsigned int i = 0; i < 32; ++i)
+        name[i] = static_cast<unsigned char>(m_saveListDetails[index].m_filename[i]);
+    name[32] = L'\0';
+    return std::wstring(name);
 }
 
-uint32_t UIScene_LoadCreateJoinMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char*, unsigned int)
+int UIScene_LoadCreateJoinMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size)
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
     if (menu != 0)
+    {
+        _SaveListDetails& details = menu->m_saveListDetails[menu->m_state2c];
+        if (data == 0 || size == 0)
+        {
+            details.m_thumbnail = 0;
+            details.m_thumbnailSize = 0;
+        }
+        else
+        {
+            details.m_thumbnail = new unsigned char[size];
+            std::memcpy(details.m_thumbnail, data, size);
+            details.m_thumbnailSize = size;
+        }
         menu->m_loadThumbnailPending = 1;
+    }
     return 0;
 }
 
 void UIScene_LoadCreateJoinMenu::requestNextThumbnail()
 {
-    m_loadThumbnailPending = 0;
+    if (m_state2c < static_cast<int>(m_loadList.getItemCount()) &&
+        m_state2c < static_cast<int>(m_thumbnailIndex) + 0x15)
+    {
+        SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
+        if (details != 0 && m_state2c < details->count)
+        {
+            int result = gStorage->LoadSaveDataThumbnail(&details->saves[m_state2c],
+                                                          &LoadSaveDataThumbnailReturned, this);
+            if (result == 0x15)
+                return;
+        }
+    }
+    m_state1a = 0;
+    m_state1c = 1;
 }
 
 void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool all)
 {
-    if (baseIgnoreInput(this) != 0)
+    if (m_customGame != 0)
         return;
     if (g_pApp->DebugSettingsOn() != 0 && g_pApp->GetLoadSavesFromFolderEnabled() != 0)
         return;
@@ -102,20 +178,141 @@ void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool all)
             continue;
 
         std::wstring thumbnailName = getThumbnailName(index);
-        if (*reinterpret_cast<int*>(baseSaveDataBase(this) + baseSaveDataIndex(this) * 300 + 4) == 0)
+        if (m_saveListDetails[m_state2c].m_thumbnail == 0)
             continue;
 
-        if (m_scene.hasRegisteredSubstitutionTexture(thumbnailName))
+        if (hasRegisteredSubstitutionTexture(thumbnailName))
         {
-            m_scene.unregisterSubstitutionTexture(thumbnailName, false);
-            reinterpret_cast<UIControl_SaveList&>(m_loadList).setTextureName(index, std::wstring());
+            unregisterSubstitutionTexture(thumbnailName, false);
+            m_loadList.setTextureName(index, std::wstring(L""));
         }
     }
 }
 
 void UIScene_LoadCreateJoinMenu::tick()
 {
-    m_scene.tick();
+    UIScene::tick();
+    if (m_state1d != 0 && m_state1a == 0)
+        navigateBack();
+    if (hasFocus(m_playerId))
+    {
+        EnterCriticalSection(&m_lock);
+        if (m_state7c != 0)
+        {
+            gConsoleUIController.NavigateToHomeMenu(false);
+            m_state7c = 0;
+        }
+        LeaveCriticalSection(&m_lock);
+        if (m_focusChanged != 0)
+        {
+            m_saveSizeBar.selectSave(DoesLoadListHaveFocus() ? m_state3c : -1);
+            m_focusChanged = 0;
+        }
+        if (m_state1b == 0)
+        {
+            m_saveDetails = gStorage->ReturnSavesInfo();
+            if (m_saveDetails != 0)
+            {
+                m_saveSizeBar.reset();
+                int savedCreateSelection = m_state44;
+                AddDefaultButtons();
+                m_state44 = savedCreateSelection;
+                if (m_activeTab == 1)
+                {
+                    m_createList.setCurrentSelection(m_state44, false, true);
+                    m_createList.updateChildFocus(m_state44);
+                }
+                m_state1b = 1;
+                UpdateGamesList();
+                if (m_customGame == 0)
+                {
+                    if (m_saveListDetails != 0)
+                    {
+                        for (int i = 0; i < m_saveDetailsCount; ++i)
+                        {
+                            std::wstring name = getThumbnailName(i);
+                            if (hasRegisteredSubstitutionTexture(name))
+                                unregisterSubstitutionTexture(name, false);
+                            delete[] m_saveListDetails[i].m_thumbnail;
+                        }
+                        delete[] m_saveListDetails;
+                    }
+                    m_saveDetailsCount = m_saveDetails->count;
+                    m_saveListDetails = m_saveDetailsCount > 0 ? new _SaveListDetails[m_saveDetailsCount] : 0;
+                    int savedLoadSelection = m_state3c;
+                    for (int i = 0; i < m_saveDetailsCount; ++i)
+                    {
+                        SAVE_INFO& save = m_saveDetails->saves[i];
+                        m_saveSizeBar.addSave(save.nandSize);
+                        wchar_t title[128];
+                        std::memset(title, 0, sizeof(title));
+                        std::memcpy(title, save.title, sizeof(title));
+                        m_loadList.addItem(std::wstring(title), std::wstring(L""));
+                        m_saveListDetails[i].m_value0 = i;
+                        std::memcpy(m_saveListDetails[i].m_title, save.title, sizeof(m_saveListDetails[i].m_title));
+                        std::memcpy(m_saveListDetails[i].m_filename, save.filename, sizeof(m_saveListDetails[i].m_filename));
+                    }
+                    m_state3c = savedLoadSelection;
+                    if (m_activeTab == 0)
+                    {
+                        m_loadList.setCurrentSelection(m_state3c, false, true);
+                        m_loadList.updateChildFocus(m_state3c);
+                    }
+                    ShowSaveListTimer(false);
+                    updateTooltips();
+                }
+                else
+                {
+                    m_state1a = 0;
+                    m_state1c = 1;
+                }
+            }
+        }
+        if (m_state1b != 0)
+        {
+            if (m_state1d == 0 && m_state1a == 0 && m_state1c == 0)
+            {
+                m_state1a = 1;
+                requestNextThumbnail();
+                _tick();
+                return;
+            }
+            if (m_loadThumbnailPending != 0)
+            {
+                m_loadThumbnailPending = 0;
+                if (m_state1d == 0)
+                {
+                    std::wstring name = getThumbnailName(m_state2c);
+                    if (m_saveListDetails[m_state2c].m_thumbnail != 0 &&
+                        !hasRegisteredSubstitutionTexture(name))
+                        registerSubstitutionTexture(name, m_saveListDetails[m_state2c].m_thumbnail, m_saveListDetails[m_state2c].m_thumbnailSize, false);
+                    m_loadList.setTextureName(m_state2c, name);
+                    ++m_state2c;
+                    requestNextThumbnail();
+                    _tick();
+                    return;
+                }
+                m_state1a = 0;
+                _tick();
+                return;
+            }
+        }
+        int itemCount = static_cast<int>(m_loadList.getItemCount());
+        if (itemCount > 0x15)
+        {
+            int top = static_cast<int>(m_loadList.GetTopItem()) - 7;
+            if (top < 0)
+                top = 0;
+            if (top != static_cast<int>(m_thumbnailIndex))
+            {
+                m_state2c = top;
+                m_loadThumbnailPending = 1;
+                m_thumbnailIndex = top;
+                cleanUpThumbNails(false);
+            }
+        }
+    }
+    _tick();
 }
 
 void UIScene_LoadCreateJoinMenu::handleTimerComplete(int timerId)
@@ -130,19 +327,43 @@ void UIScene_LoadCreateJoinMenu::updateTooltips()
 
 void UIScene_LoadCreateJoinMenu::updateComponents()
 {
-    if (m_scene.getSceneType() != 0)
-        m_scene.setVisible(true);
+    m_layer->showComponent(m_player, static_cast<EUIScene>(66), true);
+    m_layer->showComponent(m_player, static_cast<EUIScene>(67), false);
 }
 
-void UIScene_LoadCreateJoinMenu::handleGainFocus(bool)
+void UIScene_LoadCreateJoinMenu::handleGainFocus(bool hadFocus)
 {
-    m_scene.addTimer(0, 100);
-    m_initialised = 1;
+    UIScene::handleGainFocus(hadFocus);
+    addTimer(0, 100);
+    if (hadFocus)
+    {
+        g_pApp->SetLiveLinkRequired(true);
+        m_ignoreInput = 0;
+        m_state19 = (gProfile->IsSignedIn(m_playerId) &&
+                     gProfile->IsSignedInLive(m_playerId)) ? 1 : 0;
+        if (g_pApp->StartInstallDLCProcess(m_playerId) != 0 || g_pApp->DLCInstallPending() != 0)
+        {
+            m_ignoreInput = 1;
+            ClearLoadList();
+            ShowSaveListTimer(true);
+        }
+        if (m_state19 == 0)
+        {
+            handleReload();
+            ShowJoinListTimer(true);
+            ShowNoGamesLabel(false);
+        }
+        if (g_pApp->GetCorruptSaveDeleted() != 0)
+        {
+            m_state28 = 3;
+            g_pApp->SetCorruptSaveDeleted(false);
+        }
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::handleLoseFocus()
 {
-    m_scene.killTimer(0);
+    killTimer(0);
 }
 
 UIControl* UIScene_LoadCreateJoinMenu::GetMainPanel()
@@ -157,24 +378,33 @@ UIControl* UIScene_LoadCreateJoinMenu::GetMainPanel()
 void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                              bool pressed, bool& handled)
 {
-    if (m_saveOperationPending != 0)
+    if (m_ignoreInput != 0)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
-    if (released)
-        handled = handleKeyDown(playerId, action, repeat) != 0;
+    if (m_customGame == 0 && m_state1b == 0)
+        return;
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, released, pressed);
+    if (!released)
+        return;
+    if (action == 4 || action == 5 || action == 8 || action == 9 || action == 0x14)
+    {
+        if (action == 0x14)
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        sendInputToMovie(action, repeat, released, pressed);
+        handled = true;
+    }
     else
-        m_scene.sendInputToMovie(action, repeat, released, pressed);
+        handled = handleKeyDown(m_playerId, action, repeat) != 0;
 }
 
 void UIScene_LoadCreateJoinMenu::handleDestroy()
 {
-    m_scene.destroyMovie();
+    destroyMovie();
 }
 
 void UIScene_LoadCreateJoinMenu::handleReload()
 {
-    _init(m_subSceneType != 0);
-    m_scene.reloadMovie(true);
+    _init(m_customGame != 0);
+    reloadMovie(true);
 }
 
 void UIScene_LoadCreateJoinMenu::handlePress(int first, int second)
@@ -192,7 +422,7 @@ void UIScene_LoadCreateJoinMenu::handlePress(int first, int second)
     if (first == 1)
     {
         int child = second;
-        if (m_scene.getSceneType() == 0)
+        if (m_customGame == 0)
             --child;
         HandleNewListPress(second, child);
     }
@@ -220,7 +450,7 @@ void UIScene_LoadCreateJoinMenu::handleInitFocus(int, int)
 
 void UIScene_LoadCreateJoinMenu::HandleDLCMountingComplete()
 {
-    _init(m_subSceneType != 0);
+    _init(m_customGame != 0);
 }
 
 void UIScene_LoadCreateJoinMenu::HandleDLCInstalled()
@@ -230,19 +460,26 @@ void UIScene_LoadCreateJoinMenu::HandleDLCInstalled()
 
 void UIScene_LoadCreateJoinMenu::HandleSaveDeviceRemoved(int)
 {
-    if (m_subSceneType == 0)
+    if (m_customGame == 0)
         m_saveDeviceRemoved = 1;
 }
 
 void UIScene_LoadCreateJoinMenu::handleTouchInput(unsigned int playerId, int action, int x, int y,
                                                   bool repeat, bool released, bool pressed)
 {
-    m_scene.handleTouchInput(playerId, action, x, y, repeat, released, pressed);
+    UIScene::handleTouchInput(playerId, action, x, y, repeat, released, pressed);
 }
 
 void UIScene_LoadCreateJoinMenu::SelectTab(int tab)
 {
     m_activeTab = tab;
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
+    if (m_hideLoadTab != 0)
+        tab = tab == 0 ? 1 : 2;
+    FJ_LoadCreateJoinMenu* menu = static_cast<FJ_LoadCreateJoinMenu*>(
+        m_movie->getRootNode()->getFuiNode());
+    menu->SetActiveTab(tab);
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 void UIScene_LoadCreateJoinMenu::SetMatchesAvailable(bool available)
@@ -268,7 +505,7 @@ void UIScene_LoadCreateJoinMenu::AddLoadListButton(const std::wstring& label, in
 void UIScene_LoadCreateJoinMenu::SetLoadListIcon(int, unsigned char* data, unsigned int size,
                                                  const std::wstring& name)
 {
-    m_scene.registerSubstitutionTexture(name, data, size, false);
+    registerSubstitutionTexture(name, data, size, false);
 }
 
 void UIScene_LoadCreateJoinMenu::ScrollLoadListToSelection(unsigned int selection)
@@ -299,7 +536,7 @@ void UIScene_LoadCreateJoinMenu::SetLoadListEnabled(bool enabled)
 
 void UIScene_LoadCreateJoinMenu::AddCreateListButton(const std::wstring& label, int id)
 {
-    m_createList.addItem(label, id);
+    m_createList.addItem(label);
 }
 
 bool UIScene_LoadCreateJoinMenu::DoesCreateListHaveFocus()
@@ -310,7 +547,7 @@ bool UIScene_LoadCreateJoinMenu::DoesCreateListHaveFocus()
 void UIScene_LoadCreateJoinMenu::SetCreateListIcon(int, unsigned char* data, unsigned int size,
                                                    const std::wstring& name)
 {
-    m_scene.registerSubstitutionTexture(name, data, size, false);
+    registerSubstitutionTexture(name, data, size, false);
 }
 
 void UIScene_LoadCreateJoinMenu::ScrollCreateListToSelection(unsigned int selection)
@@ -334,9 +571,9 @@ bool UIScene_LoadCreateJoinMenu::AddJoinListButton(const std::wstring& label, in
                                                    const std::wstring& textureName1)
 {
     if (data != 0 && size != 0)
-        m_scene.registerSubstitutionTexture(textureName, data, size, false);
+        registerSubstitutionTexture(textureName, data, size, false);
     if (data1 != 0 && size1 != 0)
-        m_scene.registerSubstitutionTexture(textureName1, data1, size1, false);
+        registerSubstitutionTexture(textureName1, data1, size1, false);
     m_gamesList.AddNewItem(label, id, textureName1, textureName);
     return true;
 }
@@ -407,7 +644,23 @@ void UIScene_LoadCreateJoinMenu::DeleteSaveFile(int)
 
 void UIScene_LoadCreateJoinMenu::Initialise()
 {
-    m_initialised = 1;
+    m_state34 = 0;
+    m_state38 = 0;
+    m_state3c = 0;
+    m_state40 = 0;
+    m_state44 = 0;
+    if (!gProfile->IsFullVersion() || m_customGame != 0)
+    {
+        AddDefaultButtons();
+        m_ignoreInput = 0;
+    }
+    else
+    {
+        if (gStorage->GetSaveDisabled() == 0)
+            gStorage->EnoughSpaceForAMinSaveGame();
+        m_state28 = 1;
+    }
+    gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
 }
 
 bool UIScene_LoadCreateJoinMenu::DoesLoadListHaveFocus()
@@ -553,10 +806,10 @@ int UIScene_LoadCreateJoinMenu::getSceneType()
 
 unsigned int UIScene_LoadCreateJoinMenu::getSubSceneType() const
 {
-    return m_subSceneType;
+    return m_customGame;
 }
 
 int UIScene_LoadCreateJoinMenu::GetPad()
 {
-    return m_player;
+    return m_playerId;
 }

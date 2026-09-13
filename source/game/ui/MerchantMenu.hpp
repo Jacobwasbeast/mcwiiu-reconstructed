@@ -25,9 +25,8 @@ public:
     boost::shared_ptr<Merchant> getMerchant();
 
 private:
-    boost::shared_ptr<Inventory> mInventory;
-    boost::shared_ptr<MerchantContainer> mTradeContainer;
     boost::shared_ptr<Merchant> mMerchant;
+    boost::shared_ptr<MerchantContainer> mTradeContainer;
     Level* mLevel;
 };
 

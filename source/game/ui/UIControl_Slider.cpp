@@ -96,8 +96,18 @@ void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCo
 {
     m_possibleLabels.clear();
 
-    for (unsigned int i = 0; i < labelCount; ++i)
-        m_possibleLabels.push_back(std::wstring(labels[i]));
+    unsigned int groupCount = labelCount / 4;
+    unsigned int remainder = labelCount & 3;
+    unsigned int i;
+    for (i = 0; i < groupCount; ++i) {
+        wchar_t* group = labels[i * 4 + 1];
+        m_possibleLabels.push_back(std::wstring(group - 256));
+        m_possibleLabels.push_back(std::wstring(group));
+        m_possibleLabels.push_back(std::wstring(group + 256));
+        m_possibleLabels.push_back(std::wstring(group + 512));
+    }
+    for (i = 0; i < remainder; ++i)
+        m_possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
 
     UIControl_Base::setAllPossibleLabels(firstLabel, labelCount, labels);
 }

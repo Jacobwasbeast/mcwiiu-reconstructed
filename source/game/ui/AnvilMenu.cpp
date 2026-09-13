@@ -282,7 +282,7 @@ void AnvilMenu::setData(int id, int value)
 void AnvilMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (mLevel != NULL && !mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
         boost::shared_ptr<Container> input = mInputSlots;
         clearContainer(player, mLevel, input);
@@ -307,7 +307,6 @@ not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> p
         moved = moveItemStackTo(item, 3, (int)m_slots.size(), true, true, true) != 0;
         if (moved)
         {
-            player->OnTakeFromAnvil(copy);
             slot->onQuickCraft(item, copy);
         }
     }

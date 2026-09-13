@@ -4,6 +4,7 @@
 #include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_Button.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/FJ_List2D.hpp"
 #include "game/ui/UIScene.hpp"
@@ -14,6 +15,9 @@ FJ_Document::FJ_Document(fuiRenderNode* renderNode)
     : FJ_FuiNode(renderNode), m_safeZoneTop(0), m_safeZoneBottom(0), m_safeZoneLeft(0), m_safeZoneRight(0),
       m_root(this), m_focus(NULL), m_horizontalResize(0), m_horizontalOffset(0), m_focusChange(true)
 {
+    addEventListener(eFJEventType_Init, this, _init, false);
+    getStage()->addEventListener(eFJEventType_FocusChangeInit, this, _HandleOnFocusChangeInit, false);
+    getStage()->addEventListener(eFJEventType_FocusChangeUser, this, _HandleOnFocusChangeUser, false);
 }
 
 FJ_Document::~FJ_Document()
@@ -163,17 +167,43 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
 
     FJ_Base* base = stage->getFocus()->asFJ_Base();
 
-    const int code = static_cast<int>(event->m_eType);
-    if (code == 3 || code == 4 || code == 5 || code == 6)
+    const int code = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
+    if (code == 3)
     {
-        const char* names[] = {"FocusOut", "FocusIn", "FocusChangeInit", "FocusChangeUser"};
-        FJ_FuiNode* child = base->getChildByName(names[code - 3]);
-        if (child != NULL)
+        if (!base->m_navLinkName[0].empty() && m_root->getChildByName(base->m_navLinkName[0]) != NULL)
         {
+            FJ_FuiNode* child = m_root->getChildByName(base->m_navLinkName[0]);
             stage->setFocus(child);
             FJ_FuiNode* focus = stage->getFocus();
             if (focus->asFJ_Base()->getObjListParent() != NULL && focus->isFJ_Label())
-                dispatchEvent(event);
+                keyDownHandler(event);
+        }
+    }
+    else if (code == 4)
+    {
+        if (!base->m_navLinkName[1].empty() && m_root->getChildByName(base->m_navLinkName[1]) != NULL)
+        {
+            FJ_FuiNode* child = m_root->getChildByName(base->m_navLinkName[1]);
+            stage->setFocus(child);
+            FJ_FuiNode* focus = stage->getFocus();
+            if (focus->asFJ_Base()->getObjListParent() != NULL && focus->isFJ_Label())
+                keyDownHandler(event);
+        }
+    }
+    else if (code == 5)
+    {
+        if (!base->m_navLinkName[2].empty() && m_root->getChildByName(base->m_navLinkName[2]) != NULL)
+        {
+            FJ_FuiNode* child = m_root->getChildByName(base->m_navLinkName[2]);
+            stage->setFocus(child);
+        }
+    }
+    else if (code == 6)
+    {
+        if (!base->m_navLinkName[3].empty() && m_root->getChildByName(base->m_navLinkName[3]) != NULL)
+        {
+            FJ_FuiNode* child = m_root->getChildByName(base->m_navLinkName[3]);
+            stage->setFocus(child);
         }
     }
     else if (code == 1 || code == 2)
@@ -192,14 +222,14 @@ void FJ_Document::keyDownHandler(FJ_Event* event)
 
 void FJ_Document::OnFocusChange(bool focused)
 {
-    FJ_FuiNode* focus = getStage()->getFocus();
-    if (focus == NULL)
+    if (getStage()->getFocus() == NULL)
         return;
 
-    const bool changed = m_focus != focus;
-    m_focus = focus;
-    FJ_Base* base = focus->asFJ_Base();
-    if (base == NULL)
+    const bool changed = m_focus != getStage()->getFocus();
+    m_focus = getStage()->getFocus();
+
+    FJ_Base* base = getStage()->getFocus()->asFJ_Base();
+    if (m_pCallbackScene == NULL || base == NULL)
         return;
 
     FJ_FuiNode* parent = base->getObjListParent();
@@ -211,64 +241,221 @@ void FJ_Document::OnFocusChange(bool focused)
             m_horizontalOffset = id;
             m_horizontalResize = 0;
             if (focused)
-                m_pCallbackScene->handleFocusChange(id, 0);
-            else
-                m_pCallbackScene->handleInitFocus(id, 0);
+            {
+                m_pCallbackScene->_handleFocusChange(base->getId(), 0);
+                return;
+            }
+            m_pCallbackScene->_handleInitFocus(base->getId(), 0);
         }
         return;
     }
 
-    FJ_Base* parentBase = parent->asFJ_Base();
-    if (parentBase == NULL || (!parent->isFJ_List() && !parent->isFJ_List2D()))
-        return;
-
-    const int parentId = parentBase->getId();
-    const int childId = base->getId();
-    if (changed || parentId != m_horizontalResize || childId != m_horizontalOffset)
+    if (parent->isFJ_List())
     {
-        m_horizontalResize = parentId;
-        m_horizontalOffset = childId;
-        if (focused)
-            m_pCallbackScene->handleFocusChange(parentId, childId);
-        else
-            m_pCallbackScene->handleInitFocus(parentId, childId);
+        const int parentId = parent->asFJ_List()->getId();
+        const int childId = base->getId();
+        if (changed || parentId != m_horizontalResize || childId != m_horizontalOffset)
+        {
+            m_horizontalOffset = childId;
+            m_horizontalResize = parentId;
+            if (focused)
+            {
+                m_pCallbackScene->_handleFocusChange(parentId, childId);
+                return;
+            }
+            m_pCallbackScene->_handleInitFocus(parentId, childId);
+            return;
+        }
+    }
+    else if (parent->isFJ_List2D())
+    {
+        const int parentId = parent->asFJ_List2D()->getId();
+        const int childId = base->getId();
+        if (changed || parentId != m_horizontalResize || childId != m_horizontalOffset)
+        {
+            m_horizontalOffset = childId;
+            m_horizontalResize = parentId;
+            if (focused)
+            {
+                m_pCallbackScene->_handleFocusChange(parentId, childId);
+                return;
+            }
+            m_pCallbackScene->_handleInitFocus(parentId, childId);
+            return;
+        }
     }
 }
 
 FJ_FuiNode* FJ_Document::GetTopObject(FJ_FuiNode* node)
 {
-    FJ_FuiNode* top = node;
-    while (top != NULL && top->getParent() != NULL && top->getParent() != this)
+    int y = static_cast<int>(node->getY());
+    for (;;)
     {
-        top = top->getParent();
+        FJ_Base* base = node->asFJ_Base();
+        if (base->m_navLinkName[0].empty())
+            return node;
+        FJ_FuiNode* candidate = FJ_FuiNode::asMovieClip(m_root->getChildByName(base->m_navLinkName[0]));
+        FJ_Base* candidateBase = candidate->asFJ_Base();
+        if (base->m_navLinkName[0] == candidateBase->m_navLinkName[0])
+            return node;
+        if (candidate == NULL)
+            return node;
+        int candidateY = static_cast<int>(candidate->getY());
+        if (y < candidateY)
+            break;
+        y = static_cast<int>(candidate->getY());
+        node = candidate;
     }
-    return top;
+    return node;
 }
 
 void FJ_Document::RepositionItems(FJ_FuiNode* first, FJ_FuiNode* second, bool horizontal)
 {
-    if (first == NULL || second == NULL) return;
-    if (horizontal) second->setX(first->getX() + first->getWidth());
-    else second->setY(first->getY() + first->getHeight());
+    int prevY = 0;
+    int prevHeight = 0;
+    int bottomA = 0;
+    int bottomB = 0;
+    int shiftedCount = 0;
+    FJ_FuiNode* node = second;
+    for (;;)
+    {
+        bool hasListParent = false;
+        if (node->isFJ_Base() && node->asFJ_Base()->getObjListParent() != NULL)
+            hasListParent = true;
+
+        if (node->isFJ_List() || node->isFJ_List2D() || hasListParent)
+        {
+            node = FJ_FuiNode::asMovieClip(m_root->getChildByName(node->asFJ_Base()->m_navLinkName[1]));
+        }
+        else if (node == second)
+        {
+            prevHeight = Math::round(node->getHeight());
+            prevY = Math::round(node->getY());
+            node = FJ_FuiNode::asMovieClip(m_root->getChildByName(node->asFJ_Base()->m_navLinkName[1]));
+        }
+        else
+        {
+            const int curY = Math::round(node->getY());
+            const int shift = Math::round(second->getHeight() + static_cast<float>((curY - prevY) - prevHeight));
+            node->decY(static_cast<float>(shift));
+            bottomB = Math::round(node->getY() + node->getHeight());
+            prevHeight = Math::round(node->getHeight());
+            ++shiftedCount;
+            node = FJ_FuiNode::asMovieClip(m_root->getChildByName(node->asFJ_Base()->m_navLinkName[1]));
+            prevY = curY;
+        }
+
+        if (node == NULL || node == first)
+            break;
+        bottomA = Math::round(node->getY() + node->getHeight());
+    }
+
+    if (bottomA == 0 && bottomB == 0)
+    {
+        FJ_FuiNode* candidate = FJ_FuiNode::asMovieClip(m_root->getChildByName(second->asFJ_Base()->m_navLinkName[0]));
+        if (candidate != NULL)
+        {
+            bottomA = Math::round(second->getY() + second->getHeight());
+            bottomB = Math::round(candidate->getY() + candidate->getHeight());
+        }
+    }
+
+    if (shiftedCount < 1 && horizontal)
+        horizontal = false;
+
+    if (horizontal)
+    {
+        const float amount = static_cast<float>(bottomA - bottomB) * 0.5f;
+        int i = 0;
+        int count = m_root->getNumChildren();
+        while (i < count)
+        {
+            FJ_FuiNode* child = m_root->getChildAt(i);
+            if (!child->isFJ_HtmlText())
+            {
+                bool skip = child->isFJ_Base() && child->asFJ_Base()->getObjListParent() != NULL;
+                if (!skip)
+                {
+                    bool shouldMove = true;
+                    if (!child->isFJ_Base())
+                    {
+                        std::string name = child->getName();
+                        if (name != std::string("BackgroundPanel") && name != std::string("PlayerIcon"))
+                            shouldMove = false;
+                    }
+                    if (shouldMove)
+                        child->incY(static_cast<float>(Math::round(amount)));
+                }
+            }
+            ++i;
+            count = m_root->getNumChildren();
+        }
+    }
+
+    FJ_FuiNode* background = m_root->getChildByName(std::string("BackgroundPanel"));
+    if (background != NULL)
+    {
+        FJ_FuiNode* fill = background->getChildAt(0)->asMovieClip();
+        if (fill != NULL)
+            fill->decHeight(static_cast<float>(bottomA - bottomB));
+    }
 }
 
 void FJ_Document::FixNavigation(FJ_FuiNode* node)
 {
-    if (node != NULL && node->getTabIndex() < 0) node->setTabIndex(0);
+    FJ_Base* base = node->asFJ_Base();
+    if (!base->m_navLinkName[1].empty())
+    {
+        FJ_FuiNode* candidate = FJ_FuiNode::asMovieClip(m_root->getChildByName(base->m_navLinkName[1]));
+        if (candidate != NULL)
+        {
+            FJ_Base* candidateBase = candidate->asFJ_Base();
+            base = node->asFJ_Base();
+            candidateBase->m_navLinkName[0] = base->m_navLinkName[0];
+            if (getStage()->getFocus() == node)
+                getStage()->setFocus(candidate);
+            if (node->getTabIndex() == 1)
+            {
+                node->setTabIndex(2);
+                candidate->setTabIndex(1);
+            }
+        }
+    }
+    base = node->asFJ_Base();
+    if (!base->m_navLinkName[0].empty())
+    {
+        FJ_FuiNode* candidate = FJ_FuiNode::asMovieClip(m_root->getChildByName(base->m_navLinkName[0]));
+        if (candidate != NULL)
+        {
+            FJ_Base* candidateBase = candidate->asFJ_Base();
+            base = node->asFJ_Base();
+            candidateBase->m_navLinkName[1] = base->m_navLinkName[1];
+            if (getStage()->getFocus() == node)
+                getStage()->setFocus(candidate);
+            if (node->getTabIndex() == 1)
+                candidate->setTabIndex(1);
+        }
+    }
 }
 
 void FJ_Document::RemoveObject(const std::string& name, bool destroy)
 {
-    FJ_FuiNode* node = getChildByName(name);
-    if (node != NULL) removeChild(node, destroy);
+    FJ_FuiNode* node = FJ_FuiNode::asMovieClip(getChildByName(name));
+    if (node != NULL && node->isFJ_Base())
+    {
+        FJ_FuiNode* top = GetTopObject(node);
+        RepositionItems(top, node, destroy);
+        FixNavigation(node);
+        node->getParent()->removeChild(node, true);
+    }
 }
 
 void FJ_Document::DoHorizontalResizeCheck()
 {
     bool resized = false;
-    unsigned int widest = 0;
-    unsigned int left = 0;
-    unsigned int oldWidth = 0;
+    int widest = 0;
+    int left = 0;
+    int oldWidth = 0;
     FJ_FuiNode* backgroundMovie = getChildByName("BackgroundPanel");
     if (backgroundMovie != NULL)
         backgroundMovie = backgroundMovie->asMovieClip();
@@ -280,31 +467,30 @@ void FJ_Document::DoHorizontalResizeCheck()
         if (base == NULL)
             continue;
 
-        if (base->getNewWidth() > widest)
+        if (!base->m_manualWrapFits || !base->m_multilineWrapFits)
         {
-            widest = base->getNewWidth();
-            left = static_cast<unsigned int>(child->getX());
-            oldWidth = static_cast<unsigned int>(base->getOldWidth());
+            if (static_cast<int>(base->getNewWidth()) > widest)
+            {
+                widest = static_cast<int>(base->getNewWidth());
+                left = static_cast<int>(child->getX());
+                oldWidth = base->getOldWidth();
+            }
+            if (base->getLabelTooWide() != 0)
+                resized = true;
         }
-        if (base->getLabelTooWide() != 0)
-            resized = true;
     }
 
-    const float offset = static_cast<float>(widest - left);
     if (backgroundMovie != NULL &&
-        static_cast<float>(widest - left) + (static_cast<float>(left) - backgroundMovie->getX()) * 2.0F > backgroundMovie->getWidth())
+        static_cast<float>(widest) + (static_cast<float>(left) - backgroundMovie->getX()) * 2.0F > backgroundMovie->getWidth())
     {
-        const float innerWidth = backgroundMovie->getWidth() -
-                                 (static_cast<float>(left) - backgroundMovie->getX()) * 2.0F;
-        const float width = static_cast<float>(Math::round(backgroundMovie->getWidth() +
-                                                            static_cast<float>(widest) - innerWidth));
-        backgroundMovie->getChildAt(0)->setWidth(width);
-        backgroundMovie->decX(static_cast<float>(Math::round((static_cast<float>(widest) - innerWidth) * 0.5F)));
+        oldWidth = static_cast<int>(backgroundMovie->getWidth() -
+                                    (static_cast<float>(left) - backgroundMovie->getX()) * 2.0F);
         resized = true;
     }
 
     if (resized)
     {
+        const float offset = static_cast<float>(widest - oldWidth);
         for (int i = 0; i < m_root->getNumChildren(); ++i)
         {
             FJ_FuiNode* child = m_root->getChildAt(i);
@@ -317,19 +503,28 @@ void FJ_Document::DoHorizontalResizeCheck()
 
             FJ_FuiNode* parent = base->getObjListParent();
             if (parent == NULL)
-                child->decX(static_cast<float>(Math::round(static_cast<float>(widest - left) * 0.5F)));
+                child->decX(static_cast<float>(Math::round(offset * 0.5F)));
             else
                 child->setX(parent->getX());
         }
-    }
 
-    FJ_FuiNode* worldOptions = getChildByName("WorldOptionsBox");
-    FJ_FuiNode* worldMovie = worldOptions == NULL ? NULL : worldOptions->asMovieClip();
-    if (worldMovie != NULL && widest > left)
-    {
-        const float delta = static_cast<float>(widest - left);
-        worldMovie->incWidth(delta);
-        worldMovie->decX(static_cast<float>(Math::round(delta * 0.5F)));
+        if (backgroundMovie != NULL)
+        {
+            backgroundMovie->getChildAt(0)->setWidth(
+                static_cast<float>(Math::round(backgroundMovie->getWidth() +
+                                                static_cast<float>(widest) - oldWidth)));
+            backgroundMovie->decX(static_cast<float>(Math::round(
+                (static_cast<float>(widest) - oldWidth) * 0.5F)));
+        }
+
+        FJ_FuiNode* worldOptions = getChildByName("WorldOptionsBox");
+        FJ_FuiNode* worldMovie = worldOptions == NULL ? NULL : worldOptions->asMovieClip();
+        if (worldMovie != NULL)
+        {
+            const float delta = static_cast<float>(widest - oldWidth);
+            worldMovie->incWidth(delta);
+            worldMovie->decX(static_cast<float>(Math::round(delta * 0.5F)));
+        }
     }
 
     for (int i = 0; i < m_root->getNumChildren(); ++i)

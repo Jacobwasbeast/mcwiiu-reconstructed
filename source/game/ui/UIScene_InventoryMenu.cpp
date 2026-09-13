@@ -11,6 +11,7 @@
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/ui/FJ_InventoryMenu.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -20,15 +21,15 @@ extern CMinecraftApp* g_pApp;
 
 UIScene_InventoryMenu::UIScene_InventoryMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_sceneInterface(0), m_effectDurations(0),
-      m_armorList(), m_craftingList(), m_resultList(), m_shieldList(), m_playerControl(), m_craftingLabel()
+      m_armorList(), m_craftingList(), m_resultList(), m_shieldList(), m_playerControl(), m_craftingLabel(),
+      m_classicCrafting(false)
 {
     m_sceneInterface = static_cast<IUIScene_AbstractContainerMenu*>(static_cast<UIScene_AbstractContainerMenu*>(this));
     initialiseMovie();
     m_effectDurations = new int[MobEffect::GetEffectCount() + 1];
-    const bool classicCrafting = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x20)) != 0 &&
+    m_classicCrafting = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(0x20)) != 0 &&
         g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0;
-    m_sceneInterface->m_inventorySmall = classicCrafting;
-    SetClassicCrafting(classicCrafting);
+    SetClassicCrafting(m_classicCrafting);
     handleReload();
     updateEffectsDisplay();
     addTimer(10, 1000);
@@ -156,33 +157,50 @@ void UIScene_InventoryMenu::updateEffectsDisplay()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft == 0) return;
-    boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(m_playerId);
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[m_playerId];
     if (!player) return;
     std::vector<MobEffectInstance*>* effects = player->getActiveEffects();
     if (effects == 0) return;
-    int values[54];
+
+    FJ_InventoryMenu* document = static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode());
+    int* values = new int[effects->size() * 2];
     int count = 0;
     std::vector<MobEffectInstance*>::iterator effect;
-    FJ_InventoryMenu* document = static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode());
     for (effect = effects->begin(); effect != effects->end(); ++effect)
     {
         MobEffectInstance* instance = *effect;
         MobEffect* type = instance->getEffect();
         const int id = MobEffect::getId(type);
         const int duration = instance->getDuration();
-        if (id >= 0 && id <= static_cast<int>(MobEffect::GetEffectCount()) && m_effectDurations[id] <= duration)
+        if (m_effectDurations[id] <= duration)
         {
-            m_effectDurations[id] = duration;
-            if (type->hasIcon())
+            std::wstring displayName = L10N::GetString(instance->getDescriptionId());
+            const int amplifier = instance->getAmplifier();
+            if (amplifier > 0)
             {
-                std::wstring name = L10N::GetString(instance->getDescriptionId());
-                if (instance->getAmplifier() > 0) name += L" ";
-                if (count < 54) { values[count++] = type->getIcon(); values[count++] = duration / 20; }
-                document->AddEffect(type->getIcon(), name, duration / 20);
+                std::wstring suffix;
+                switch (amplifier)
+                {
+                case 1: suffix = std::wstring(L" ") + L10N::GetString(0xe0296084); break;
+                case 2: suffix = std::wstring(L" ") + L10N::GetString(0x5230cfbf); break;
+                case 3: suffix = std::wstring(L" ") + L10N::GetString(0x2c2e5556); break;
+                case 4: suffix = std::wstring(L" ") + L10N::GetString(0x6e21f149); break;
+                case 5: suffix = std::wstring(L" ") + L10N::GetString(0x481f76e0); break;
+                default: suffix = L10N::GetString(0x62bdaed); break;
+                }
+                displayName += suffix;
             }
+            document->AddEffect(type->hasIcon() ? type->getIcon() : 0, displayName, duration / 20);
         }
+        if (type->hasIcon())
+        {
+            values[count++] = type->getIcon();
+            values[count++] = duration / 20;
+        }
+        m_effectDurations[id] = duration;
     }
     document->UpdateEffects(count, values);
+    delete[] values;
 }
 
 unsigned int UIScene_InventoryMenu::getSubSceneType() const

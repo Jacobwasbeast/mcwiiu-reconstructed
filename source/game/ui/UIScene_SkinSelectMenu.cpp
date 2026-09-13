@@ -11,6 +11,7 @@
 #include "game/core/DLCPack.hpp"
 #include "game/core/DLCSkinFile.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/cDLCInfo.hpp"
 #include "game/ui/FJ_SkinSelect.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -20,12 +21,11 @@ extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* layer)
-    : UIScene(0x26, layer), m_dlcScene(static_cast<eDLCContentType>(1)), m_activePackId(0),
+    : UIScene(player, layer), m_dlcScene(static_cast<eDLCContentType>(1)), m_activePackId(0),
       m_packTypeId(0), m_skinIndex(0), m_selectedSkinId(0), m_skinBoxes(0),
       m_characterFacing(false), m_skinChanging(false), m_favouriteChanged(false),
       m_focusChanged(false), m_packChanged(true), m_dlcChanged(false),
-      m_hasSelectedPack(false), m_packButtonX(0), m_packButtonY(0), m_inputPending(false),
-      m_player(player)
+      m_hasSelectedPack(false), m_highlightedPackId(0), m_inputPending(false)
 {
     m_skinIndex = static_cast<int>(GameSettings::GetPlayerSkinId(player));
     m_selectedSkinId = m_skinIndex;
@@ -45,6 +45,46 @@ UIScene_SkinSelectMenu::~UIScene_SkinSelectMenu()
 unsigned int UIScene_SkinSelectMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
+    fuiRenderNode* root = m_movie->getRootNode();
+
+    m_touch.setupControl(this, root, std::string("TouchIggyCharacters"));
+    m_controls.push_back(&m_touch);
+
+    m_packName.setupControl(this, root, std::string("Pack_Name"));
+    m_controls.push_back(&m_packName);
+
+    m_packType.setupControl(this, root, std::string("Pack_Type"));
+    m_controls.push_back(&m_packType);
+
+    m_skinTitle1.setupControl(this, root, std::string("SkinTitle1"));
+    m_controls.push_back(&m_skinTitle1);
+
+    m_skinTitle2.setupControl(this, root, std::string("SkinTitle2"));
+    m_controls.push_back(&m_skinTitle2);
+
+    m_timer.setupControl(this, root, std::string("Timer"));
+    m_controls.push_back(&m_timer);
+
+    m_characterPanel.setupControl(this, root, std::string("IggyCharacters"));
+    m_controls.push_back(&m_characterPanel);
+
+    fuiRenderNode* panelNode = m_characterPanel.getFuiRenderNode();
+    static const char* const characterNames[7] = {
+        "iggy_Character0", "iggy_Character1", "iggy_Character2", "iggy_Character3",
+        "iggy_Character4", "iggy_Character5", "iggy_Character6"
+    };
+    for (int i = 0; i < 7; ++i)
+    {
+        m_characterPreviews[i].setupControl(this, panelNode, std::string(characterNames[i]));
+        m_controls.push_back(&m_characterPreviews[i]);
+    }
+
+    m_packIcon.setupControl(this, root, std::string("TexturePackIcon"));
+    m_controls.push_back(&m_packIcon);
+
+    m_skinButtonList.setupControl(this, root, std::string("SkinButtonList"));
+    m_controls.push_back(&m_skinButtonList);
+
     return 1;
 }
 
@@ -110,7 +150,7 @@ unsigned int UIScene_SkinSelectMenu::getNextSkinIndex(unsigned int index)
 {
     unsigned int count;
     if (m_packTypeId == 1)
-        count = GameSettings::GetPlayerFavoriteSkinsCount(m_player);
+        count = GameSettings::GetPlayerFavoriteSkinsCount(m_playerId);
     else if (m_activePackId != 0)
     {
         DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_activePackId);
@@ -126,7 +166,7 @@ int UIScene_SkinSelectMenu::getPreviousSkinIndex(unsigned int index)
     if (index != 0)
         return static_cast<int>(index - 1);
     if (m_packTypeId == 1)
-        return GameSettings::GetPlayerFavoriteSkinsCount(m_player) - 1;
+        return GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) - 1;
     if (m_activePackId != 0)
     {
         DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_activePackId);
@@ -138,7 +178,7 @@ int UIScene_SkinSelectMenu::getPreviousSkinIndex(unsigned int index)
 void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 {
     if (m_packTypeId == 1)
-        m_selectedSkinId = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_player, m_skinIndex));
+        m_selectedSkinId = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, m_skinIndex));
     else if (m_activePackId != 0)
         m_selectedSkinId = m_skinIndex;
     m_skinChanging = false;
@@ -146,8 +186,15 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 
 unsigned int UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
 {
+    if (packId <= 1)
+        return 0;
     DLCPack* pack = gApp.mDLCManager.getPackFromPackID(packId);
-    return pack != 0 && !pack->hasPurchasedPack() ? 1U : 0U;
+    cDLCInfo* dlcInfo = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance());
+    DLC_INFO* info = dlcInfo->GetDLCInfoForPackID(static_cast<unsigned int>(packId));
+    if (info != 0 && info->PackType == 4 &&
+        GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) == 0)
+        return pack != 0 && !pack->hasPurchasedPack() ? 1U : 0U;
+    return 0;
 }
 
 unsigned int UIScene_SkinSelectMenu::GetIsNewPack(int packId)
@@ -157,7 +204,18 @@ unsigned int UIScene_SkinSelectMenu::GetIsNewPack(int packId)
 
 bool UIScene_SkinSelectMenu::SORTNEWEST(int first, int second)
 {
-    return first < second;
+    static const int kNewestPackOrder[12] = { 0x22C, 0x224, 0x233, 0x222, 0x216, 0x225,
+                                              0x234, 0x207, 0x227, 0x4F9, 0x23C, 0x40E };
+    int firstPos = 0;
+    int secondPos = 0;
+    for (int i = 0; i < 12; ++i)
+    {
+        if (kNewestPackOrder[i] == first)
+            firstPos = i;
+        if (kNewestPackOrder[i] == second)
+            secondPos = i;
+    }
+    return firstPos < secondPos;
 }
 
 bool UIScene_SkinSelectMenu::SORTALPHABETICALLY(int first, int second)
@@ -185,16 +243,26 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 
 void UIScene_SkinSelectMenu::setPackLabel()
 {
-    std::wstring name = L"Default";
-    if (m_packTypeId == 1)
-        name = L"Favorites";
-    else if (m_packTypeId > 1)
+    if (m_packTypeId < 2)
+    {
+        if (m_packTypeId == 1)
+            m_packName.setLabel(UIString(0x70a431bd), false, false);
+        else
+            m_packName.setLabel(UIString(0xa6517d6b), false, false);
+    }
+    else
     {
         DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_packTypeId);
-        if (pack != 0)
-            name = pack->getLocalisedDisplayName();
+        m_packName.setLabel(UIString(pack->getLocalisedDisplayName()), false, false);
     }
-    m_packName.setLabel(UIString(name), false, false);
+
+    if (m_packTypeId > 1)
+    {
+        if (static_cast<unsigned int>(m_packTypeId - 0x400) < 0x400)
+            m_packType.setLabel(UIString(0x74a1ede8), false, false);
+        else
+            m_packType.setLabel(UIString(0x175adb3d), false, false);
+    }
 }
 
 void UIScene_SkinSelectMenu::updatePackDisplay()
@@ -226,7 +294,7 @@ unsigned int UIScene_SkinSelectMenu::IsFavoriteSkin(int player, int skin)
 {
     unsigned int count = GameSettings::GetPlayerFavoriteSkinsCount(player);
     for (unsigned int i = 0; i < count; ++i)
-        if (GameSettings::GetPlayerFavoriteSkin(player, i) == static_cast<unsigned int>(skin))
+        if (GameSettings::GetPlayerFavoriteSkin(m_playerId, i) == static_cast<unsigned int>(skin))
             return 1;
     return 0;
 }
@@ -270,7 +338,7 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
     setCharacterSelected(true);
 }
 
-unsigned int UIScene_SkinSelectMenu::ManageFavoritesReturned(void* context, int, C4JStorage::EMessageResult result)
+int UIScene_SkinSelectMenu::ManageFavoritesReturned(void* context, int, C4JStorage::EMessageResult result)
 {
     UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
     UIScene_SkinSelectMenu* scene = dynamic_cast<UIScene_SkinSelectMenu*>(callbackScene);
@@ -291,8 +359,53 @@ unsigned int UIScene_SkinSelectMenu::ManageFavoritesReturned(void* context, int,
 
 void UIScene_SkinSelectMenu::SetFavoriteSkin(int player, int skin)
 {
-    GameSettings::SetPlayerFavoriteSkin(player, m_skinIndex, static_cast<unsigned int>(skin));
-    m_favouriteChanged = true;
+    unsigned int count = GameSettings::GetPlayerFavoriteSkinsCount(player);
+    unsigned int slot = 0;
+    bool found = false;
+    if (count != 0)
+    {
+        int existing = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, 0));
+        while (existing != skin)
+        {
+            ++slot;
+            if (slot >= count)
+            {
+                break;
+            }
+            existing = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, slot));
+        }
+        found = slot < count;
+    }
+    if (found)
+    {
+        setCharacterFavourite(false);
+        for (unsigned int i = slot; i < count - 1; ++i)
+        {
+            unsigned int next = GameSettings::GetPlayerFavoriteSkin(player, i + 1);
+            GameSettings::SetPlayerFavoriteSkin(player, i, next);
+        }
+        GameSettings::SetPlayerFavoriteSkin(player, count - 1, static_cast<unsigned int>(-1));
+        if (GameSettings::GetPlayerFavoriteSkinsPos(player) == slot)
+        {
+            unsigned int newCount = GameSettings::GetPlayerFavoriteSkinsCount(player);
+            GameSettings::SetPlayerFavoriteSkinsPos(m_playerId, newCount);
+        }
+        return;
+    }
+    if (count == 10)
+    {
+        int messageParameters[2] = { static_cast<int>(0xb9a1bf4d), static_cast<int>(0x4fcbc7e7) };
+        gConsoleUIController.RequestAlertMessage(0x397a0127, 0x935a46d2, messageParameters, 2, player,
+                                                 ManageFavoritesReturned,
+                                                 reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
+        return;
+    }
+    setCharacterFavourite(true);
+    GameSettings::SetPlayerFavoriteSkin(player, count, static_cast<unsigned int>(skin));
+    if (m_selectedSkinId == skin)
+    {
+        GameSettings::SetPlayerFavoriteSkinsPos(m_playerId, count);
+    }
 }
 
 void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
@@ -300,12 +413,126 @@ void UIScene_SkinSelectMenu::InputActionFavorite(unsigned int player)
     SetFavoriteSkin(static_cast<int>(player), m_selectedSkinId);
 }
 
-void UIScene_SkinSelectMenu::handleInput(int player, int action, bool, bool, bool pressed, bool& handled)
+void UIScene_SkinSelectMenu::handleInput(int player, int action, bool repeat, bool released,
+                                         bool pressed, bool& handled)
 {
-    if (pressed && action == 10 && !m_skinChanging)
+    if (m_dlcScene.m_purchasePending)
     {
-        InputActionOK(static_cast<unsigned int>(player));
-        handled = true;
+        return;
+    }
+    switch (action)
+    {
+    case 3:
+        if (released)
+        {
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            InputActionFavorite(static_cast<unsigned int>(player));
+            handled = true;
+            return;
+        }
+        break;
+    case 4:
+    case 5:
+    case 8:
+    case 9:
+        if (released)
+        {
+            sendInputToMovie(action, repeat, released, pressed);
+            handled = true;
+            return;
+        }
+        break;
+    case 6:
+        if (released && !m_skinChanging)
+        {
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+            m_skinIndex = getNextSkinIndex(m_skinIndex);
+            m_skinChanging = true;
+            m_characterFacing = true;
+            m_characterPreviews[0].SetFacing(UIControl_PlayerSkinPreview::eFacingLeft, true);
+            m_characterPreviews[1].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
+            sendInputToMovie(7, repeat, released, pressed);
+            return;
+        }
+        break;
+    case 7:
+        if (released && !m_skinChanging)
+        {
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+            m_skinIndex = getPreviousSkinIndex(m_skinIndex);
+            m_characterFacing = true;
+            m_skinChanging = true;
+            m_characterPreviews[0].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, true);
+            m_characterPreviews[4].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, true);
+            sendInputToMovie(6, repeat, released, pressed);
+            return;
+        }
+        break;
+    case 0xd:
+        if (released)
+        {
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+            m_characterPreviews[0].mRotation = 0;
+            m_characterPreviews[0].mPitch = 0;
+            return;
+        }
+        break;
+    case 0xe:
+        if (released)
+        {
+            m_characterPreviews[0].CyclePreviousAnimation();
+            return;
+        }
+        break;
+    case 0xf:
+        if (released)
+        {
+            m_characterPreviews[0].CycleNextAnimation();
+        }
+    case 0x10:
+        if (released)
+        {
+            m_characterPreviews[0].mRotateForward = true;
+            return;
+        }
+        if (pressed)
+        {
+            m_characterPreviews[0].mRotateForward = false;
+            return;
+        }
+        break;
+    case 0x11:
+        if (released)
+        {
+            m_characterPreviews[0].mRotateBackward = true;
+            return;
+        }
+        if (pressed)
+        {
+            m_characterPreviews[0].mRotateBackward = false;
+            return;
+        }
+        break;
+    case 0x14:
+        if (released)
+        {
+            InputActionOK(static_cast<unsigned int>(player));
+            return;
+        }
+        break;
+    case 0x15:
+        if (released)
+        {
+            gConsoleUIController.AnimateKeyPress(player, action, repeat, released, pressed);
+            GameSettings::CheckGameSettingsChanged(true, player);
+            navigateBack();
+            return;
+        }
+        break;
+    default:
+        break;
     }
 }
 
@@ -333,15 +560,19 @@ void UIScene_SkinSelectMenu::customDraw(const char* name, fuiRect* rect)
 
 void UIScene_SkinSelectMenu::HandleDLCMountingComplete()
 {
-    m_dlcChanged = true;
-    GameSettings::ValidateFavoriteSkins(m_player);
+    m_characterPanel.setVisible(false);
+    m_timer.setVisible(true);
+    GameSettings::ValidateFavoriteSkins(m_playerId);
     setActivePackIndex();
+    m_dlcChanged = true;
     handlePackIndexChanged();
+    m_dlcScene.m_purchasePending = false;
+    gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
 }
 
 void UIScene_SkinSelectMenu::HandleDLCInstalled()
 {
-    if (g_pApp->StartInstallDLCProcess(m_player) == 0)
+    if (g_pApp->StartInstallDLCProcess(m_playerId) == 0)
         return;
     m_dlcChanged = true;
     m_timer.setVisible(true);
@@ -410,7 +641,30 @@ void UIScene_SkinSelectMenu::handleTouchInput(unsigned int playerId, int touchX,
 
 void UIScene_SkinSelectMenu::handleReload()
 {
+    m_dlcScene.m_purchasePending = false;
+    m_skinTitle1.init(UIString(L""));
+    m_skinTitle2.init(UIString(L""));
+    m_characterFacing = false;
+    m_dlcChanged = true;
+    m_highlightedPackId = 0;
+    int previousPackTypeId = m_packTypeId;
+    m_focusChanged = true;
+    m_hasSelectedPack = false;
+    if (gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin) != 0)
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackContainingSkin(m_skinName);
+        m_dlcScene.m_pack = pack;
+        m_activePackId = 0;
+        if (pack != 0)
+            m_activePackId = static_cast<int>(pack->GetPackId());
+    }
+    GameSettings::ValidateFavoriteSkins(m_playerId);
+    if (GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0)
+        m_packTypeId = 1;
     handlePackIndexChanged();
+    m_skinButtonList.updateChildFocus(previousPackTypeId);
+    handlePackIndexChanged();
+    m_skinButtonList.HighlightItem(static_cast<unsigned int>(previousPackTypeId), false);
 }
 
 void UIScene_SkinSelectMenu::handleFocusChange(int focus, int childFocus)

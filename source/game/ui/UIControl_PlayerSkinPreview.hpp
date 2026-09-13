@@ -10,11 +10,14 @@
 
 class EntityRenderer;
 class PlayerModel;
+class UIScene_SkinSelectMenu;
 struct fuiRect;
 
 class UIControl_PlayerSkinPreview : public UIControl
 {
 public:
+    friend class UIScene_SkinSelectMenu;
+
     enum ESkinPreviewFacing
     {
         eFacingFront,
@@ -44,7 +47,6 @@ private:
     int mTextureName;
     std::wstring mCapePath;
     _SkinAdjustments mSkinAdjustments;
-    std::vector<PlayerModel*>* mAdditionalModelParts;
     float mWidth;
     float mHeight;
     float mWidthScale;
@@ -53,22 +55,22 @@ private:
     int mPitch;
     int mInitialRotation;
     int mFacingRotation;
+    float mUnknown110;
     float mPreviousRotation;
     float mCurrentRotation;
     float mTargetRotation;
-    float mAnimationRotation;
     bool mCapeVisible;
     bool mFacingLeft;
-    bool mAnimating;
+    signed char mCapeSwingTicks;
     int mAnimationTicks;
-    bool mAnimatingFacing;
+    bool mAnimating;
     float mAnimationAngle;
     int mAnimation;
-    std::vector<PlayerModel*>* mModelParts;
+    std::vector<PlayerModel*>* mAdditionalModelParts;
     bool mRotating;
     bool mRotateBack;
     bool mRotateForward;
-    bool mHasModelParts;
+    bool mRotateBackward;
 };
 
 #endif

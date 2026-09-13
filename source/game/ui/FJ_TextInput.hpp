@@ -51,6 +51,7 @@ public:
 private:
     friend class FJ_DebugCreateSchematic;
     friend class FJ_DebugFillArea;
+    friend class fuiRenderNodeTimeline;
 
     int m_scrollWidth;
     int m_state;

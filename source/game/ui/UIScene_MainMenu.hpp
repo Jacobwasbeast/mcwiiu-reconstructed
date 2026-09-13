@@ -70,6 +70,7 @@ private:
     UIControl_Button m_button5;
     UIControl_Button m_button6;
     UIControl_Button m_button7;
+    UIControl_Button m_buttonUpsell;
     UIControl m_timer;
     bool m_loading;
     bool m_showUpsell;

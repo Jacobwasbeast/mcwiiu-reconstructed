@@ -13,25 +13,26 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/network/ClientPacketListener.hpp"
+#include "game/network/ServerboundSignUpdatePacket.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_sign(), m_selectedLine(0), m_confirmRequested(false),
       m_keyboardActive(false)
 {
-    if (data != NULL)
-        m_sign = *static_cast<boost::shared_ptr<SignBlockEntity>*>(data);
-
     initialiseMovie();
+    m_sign = *static_cast<boost::shared_ptr<SignBlockEntity>*>(data);
+
     m_confirmButton.init(UIString(L10N::GetString(0x6d2a309c)), 4);
     m_messageLabel.init(UIString(L10N::GetString(0x56c538)));
 
     for (int i = 0; i < 4; ++i)
-        m_lineInputs[i].init(UIString(L""), i);
+        m_lineInputs[i].init(UIString(m_sign->mMessages[i]), i);
 
-    if (layer != NULL)
-        layer->addComponent(type, static_cast<EUIScene>(0x48), NULL);
+    layer->addComponent(type, static_cast<EUIScene>(0x48), NULL);
 }
 
 UIScene_SignEntryMenu::~UIScene_SignEntryMenu()
@@ -78,6 +79,23 @@ void UIScene_SignEntryMenu::tick()
         m_sign->SetMessage(i, line);
     }
     m_sign->setChanged();
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mLevel->mIsClientSide)
+    {
+        if (minecraft->mLocalPlayers[m_playerId] != NULL)
+        {
+            ClientPacketListener* connection = minecraft->getConnection(m_playerId);
+            if (connection != NULL && connection->isStarted())
+            {
+                BlockPos pos = m_sign->getBlockPos();
+                bool censored = g_pApp->IsConsoleChatCensored();
+                connection->send(boost::shared_ptr<Packet>(
+                    new ServerboundSignUpdatePacket(pos, m_sign->mMessages, censored)));
+            }
+        }
+    }
+
     gConsoleUIController.CloseUIScenes(m_playerId, false);
 }
 

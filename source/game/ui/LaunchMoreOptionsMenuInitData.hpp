@@ -16,7 +16,11 @@ public:
     friend class IUIScene_StartGame;
     friend class MiniGameDef;
     friend class UIScene_LoadMenu;
+    friend class UIScene_LaunchMoreOptionsMenu;
+    friend class UIScene_MapSelectMenu;
+    friend class UIScene_BiomePreviewMenu;
     friend class UIScene_InGameSettingsListMenu;
+    friend class UIScene_CreateWorldMenu;
 
 private:
     bool mFlag0;
@@ -61,7 +65,13 @@ private:
     int mValue64;
     bool mFlag68;
     MiniGamePlayerSettings mPlayerSettings;
-    bool mFlagD4;
+    int mValueB8;
+    bool mFlagBC;
+    bool mFlagBD;
+    int mValueC0;
+    bool mFlagD0;
+    bool mFlagD2;
+    unsigned char mFlagD4;
     int mValueD8;
     int mValueDC;
     SuperflatConfig mSuperflatConfig;

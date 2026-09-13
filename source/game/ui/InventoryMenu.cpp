@@ -7,6 +7,7 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ResultContainer.hpp"
+#include "game/world/generation/Player.hpp"
 
 static const EquipmentSlot* gInventoryMenuHead = NULL;
 static const EquipmentSlot* gInventoryMenuLegs = NULL;
@@ -82,14 +83,8 @@ void InventoryMenu::slotsChanged()
 void InventoryMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (mCraftSlots)
-    {
-        mCraftSlots->clearContent();
-    }
-    if (mResultSlots)
-    {
-        mResultSlots->clearContent();
-    }
+    clearContainer(player, mPlayer->mLevel, mCraftSlots);
+    mResultSlots->setItem(0, ItemInstance::EMPTY);
 }
 
 bool InventoryMenu::stillValid(boost::shared_ptr<Player> player)

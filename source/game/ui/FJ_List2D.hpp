@@ -14,6 +14,8 @@ class fuiRenderNode;
 class FJ_List2D : public FJ_Base
 {
 private:
+    typedef void (*FJ_ScrollDelegateType)(FJ_FuiNode*);
+
     bool m_outline;
     int m_itemSpacing;
     std::vector<std::vector<FJ_FuiNode*> > m_items;
@@ -30,8 +32,8 @@ private:
     int m_touchX;
     int m_touchRow;
     bool m_touchFocus;
-    void (*m_scrollDelegate)(FJ_FuiNode*);
     FJ_FuiNode* m_scrollDelegateNode;
+    FJ_ScrollDelegateType m_scrollDelegate;
 
 public:
     explicit FJ_List2D(fuiRenderNode* renderNode);

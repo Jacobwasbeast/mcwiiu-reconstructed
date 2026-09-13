@@ -13,12 +13,6 @@
 class UILayer;
 class Container;
 class MobEffect;
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_BeaconMenu : public UIScene_AbstractContainerMenu
 {
 public:

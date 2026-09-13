@@ -186,7 +186,7 @@ void UIScene_FullscreenProgress::SetTipText(bool initial)
         m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
     unsigned int colour = gApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5));
     wchar_t formatted[64];
-    swprintf(formatted, 64, L"<font color=\"#%08x\"><p align=cen", colour);
+    swprintf(formatted, 64, L"<font color=\"#%08x\"><p align=center>", colour);
     std::wstring result(formatted);
     result += text;
     result += L"</p>";

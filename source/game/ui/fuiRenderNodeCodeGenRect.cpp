@@ -5,17 +5,9 @@
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/ui/fui.hpp"
+#include "game/ui/fuiFile.hpp"
 
 extern Renderer* gRenderer;
-
-struct fuiCodeGenRectVertex
-{
-    float x;
-    float y;
-    float z;
-    float u;
-    float v;
-};
 
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name,
                                                    unsigned int textureWidth, unsigned int textureHeight,
@@ -28,8 +20,8 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
     m_bounds.xMax = rect->xMax;
     m_bounds.yMin = rect->yMin;
     m_bounds.yMax = rect->yMax;
-    std::strncpy(mName, name, sizeof(mName) - 1);
-    mName[sizeof(mName) - 1] = 0;
+    std::strncpy(m_name, name, sizeof(m_name) - 1);
+    m_name[sizeof(m_name) - 1] = 0;
 }
 
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name)
@@ -40,54 +32,97 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
     m_bounds.xMax = rect->xMax;
     m_bounds.yMin = rect->yMin;
     m_bounds.yMax = rect->yMax;
-    std::strncpy(mName, name, sizeof(mName) - 1);
-    mName[sizeof(mName) - 1] = 0;
+    std::strncpy(m_name, name, sizeof(m_name) - 1);
+    m_name[sizeof(m_name) - 1] = 0;
 }
 
 fuiRenderNodeCodeGenRect::~fuiRenderNodeCodeGenRect()
 {
+    if (mTextureId >= 0)
+    {
+        if (!mCustomTexture)
+        {
+            gRenderer->TextureFree(mTextureId);
+        }
+        else if (!mTextureAlpha)
+        {
+            gFui->releaseCustomTexture(mTextureId);
+        }
+    }
 }
 
 void fuiRenderNodeCodeGenRect::gather(bool recurse)
 {
-    if (recurse)
-    {
-        progogateBounds();
-    }
+    (void)recurse;
 }
 
 void fuiRenderNodeCodeGenRect::preRender()
 {
-    generateGlobalMatrix();
 }
 
 void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
 {
+    (void)bounds;
+    (void)matrix;
     if (!isVisible())
+        return;
+
+    fuiRenderNode* root = getRoot();
+    fuiFile* rootFile = root == 0 ? 0 : root->m_file;
+    if (std::strncmp(m_name, "iggy_", 5) == 0 && rootFile != 0
+        && rootFile->customDrawCallback != 0)
     {
+        gRenderer->StateSetFaceCull(true);
+        gRenderer->StateSetFaceCullCW(true);
+        gRenderer->StateSetAlphaTestEnable(true);
+        gRenderer->StateSetDepthTestEnable(true);
+        gRenderer->StateSetDepthMask(true);
+        gRenderer->StateSetColour(1.0f, 1.0f, 1.0f, 1.0f);
+        pushMatrix();
+        rootFile->customDrawCallback(rootFile->customDrawContext, m_name + 5, &m_bounds);
+        popMatrix();
+        gRenderer->StateSetFaceCull(false);
+        gRenderer->StateSetBlendEnable(true);
+        gRenderer->StateSetBlendFunc(1, 5);
+        gRenderer->StateSetAlphaTestEnable(false);
+        gRenderer->StateSetDepthTestEnable(false);
+        gRenderer->StateSetDepthMask(false);
         return;
     }
+    if (std::strncmp(m_name, "iggy_", 5) == 0)
+        return;
+
     pushMatrix();
     pushColor();
     pushFilterFlags();
-    if (bounds != NULL)
+    const float width = m_bounds.xMax - m_bounds.xMin;
+    const float height = m_bounds.yMax - m_bounds.yMin;
+    const float right = m_bounds.xMin + width;
+    const float bottom = m_bounds.yMin + height;
+    float vertices[12] =
     {
-        bounds->xMin = m_bounds.xMin;
-        bounds->xMax = m_bounds.xMax;
-        bounds->yMin = m_bounds.yMin;
-        bounds->yMax = m_bounds.yMax;
+        m_bounds.xMin, m_bounds.yMin,
+        right, bottom,
+        m_bounds.xMin, bottom,
+        m_bounds.xMin, m_bounds.yMin,
+        right, m_bounds.yMin,
+        right, bottom
+    };
+    if (mTextureId == -1)
+    {
+        gRenderer->TextureBind(-1);
+        gRenderer->StateSetColour(1.0f, 0.0f, 0.0f, 0.0f);
+        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
+                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
-    fuiCodeGenRectVertex vertices[4];
-    vertices[0].x = m_bounds.xMin; vertices[0].y = m_bounds.yMin; vertices[0].z = 0.0f; vertices[0].u = 0.0f; vertices[0].v = 0.0f;
-    vertices[1].x = m_bounds.xMax; vertices[1].y = m_bounds.yMin; vertices[1].z = 0.0f; vertices[1].u = 1.0f; vertices[1].v = 0.0f;
-    vertices[2].x = m_bounds.xMax; vertices[2].y = m_bounds.yMax; vertices[2].z = 0.0f; vertices[2].u = 1.0f; vertices[2].v = 1.0f;
-    vertices[3].x = m_bounds.xMin; vertices[3].y = m_bounds.yMax; vertices[3].z = 0.0f; vertices[3].u = 0.0f; vertices[3].v = 1.0f;
-    if (gRenderer != NULL)
+    else
     {
         gRenderer->TextureBind(mTextureId);
-        gRenderer->StateSetTextureScaleUI(1.0f, 1.0f, 0.0f, 0.0f);
-        gRenderer->DrawVertices(C4JRender::ePrimitiveType_TriangleFan, 4, vertices,
-                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UI, NULL);
+        gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height,
+                                          -m_bounds.xMin / width, -m_bounds.yMin / height);
+        setRendererColour();
+        gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
+                                C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
     popFilterFlags();
     popColor();

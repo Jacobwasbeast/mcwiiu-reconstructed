@@ -8,15 +8,15 @@
 #include "game/core/IUIScene_LoadCreateJoin.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/UIControl.hpp"
-#include "game/ui/UIControl_ButtonList.hpp"
 #include "game/ui/UIControl_Label.hpp"
 #include "game/ui/UIControl_LeftIconButtonList.hpp"
+#include "game/ui/UIControl_SaveList.hpp"
 #include "game/ui/UIControl_SpaceIndicatorBar.hpp"
 #include "game/ui/UIControl_Touch.hpp"
 
 class UILayer;
 
-class UIScene_LoadCreateJoinMenu : public IUIScene_LoadCreateJoin
+class UIScene_LoadCreateJoinMenu : public IUIScene_LoadCreateJoin, public UIScene
 {
 public:
     UIScene_LoadCreateJoinMenu(int sceneType, void* data, UILayer* layer);
@@ -25,7 +25,7 @@ public:
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     std::wstring getThumbnailName(int index);
-    static uint32_t LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size);
+    static int LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size);
     void requestNextThumbnail();
     void cleanUpThumbNails(bool all);
     virtual void tick();
@@ -79,7 +79,7 @@ public:
     void ShowNoGamesLabel(bool show);
     static uint32_t DeleteSaveDataReturned(void* context, bool success);
     void DeleteSaveFile(int index);
-    void Initialise();
+    virtual void Initialise();
     bool DoesLoadListHaveFocus();
     bool DoesMashUpWorldHaveFocus();
     bool DoesGamesListHaveFocus();
@@ -102,26 +102,18 @@ public:
     void handleTexturePackDialogReturned(int userIndex, C4JStorage::EMessageResult result);
     virtual int getSceneType();
     virtual unsigned int getSubSceneType() const;
-    int GetPad();
+    virtual int GetPad();
     static void LoadSaveCallback(void* context, bool success);
 
 private:
-    class Scene : public UIScene
-    {
-    public:
-        Scene(int sceneType, UILayer* layer) : UIScene(sceneType, layer) {}
-        virtual std::wstring getMoviePath() { return std::wstring(); }
-        virtual int getSceneType() { return 27; }
-    };
-    Scene m_scene;
     UIControl_Touch m_loadTouch;
     UIControl_Touch m_createTouch;
     UIControl_Touch m_joinTouch;
     UIControl m_loadTab;
     UIControl m_createTab;
     UIControl m_joinTab;
-    UIControl_ButtonList m_loadList;
-    UIControl_ButtonList m_createList;
+    UIControl_SaveList m_loadList;
+    UIControl_SaveList m_createList;
     UIControl_LeftIconButtonList m_gamesList;
     UIControl_Label m_loadTitle;
     UIControl_Label m_createTitle;
@@ -141,13 +133,12 @@ private:
     unsigned char m_createThumbnailPending;
     unsigned char m_joinThumbnailPending;
     unsigned char m_saveOperationPending;
-    unsigned char m_subSceneType;
     unsigned char m_saveDeviceRemoved;
     unsigned char m_initialised;
     unsigned char m_focusChanged;
     unsigned int m_thumbnailIndex;
     unsigned int m_callbackId;
-    std::vector<UIControl*> m_controls;
+    int m_saveDetailsCount;
 };
 
 #endif

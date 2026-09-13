@@ -15,7 +15,7 @@ FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
     : FJ_Base(renderNode), m_outline(false), m_itemSpacing(0), m_items(), m_activeItem(0),
       m_upArrow(0), m_downArrow(0), m_visibleRows(1), m_itemsPerRow(1), m_activeRow(0),
       m_activeColumn(0), m_firstVisibleRow(0), m_listHeight(0), m_touchY(0), m_touchX(0),
-      m_touchRow(0), m_touchFocus(false), m_scrollDelegate(0), m_scrollDelegateNode(0)
+      m_touchRow(0), m_touchFocus(false), m_scrollDelegateNode(0), m_scrollDelegate(0)
 {
     m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
     m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_ScrollArrow::Create(renderNode));
@@ -103,10 +103,18 @@ FJ_FuiNode* FJ_List2D::getActiveItem()
 
 void FJ_List2D::SetListFocus()
 {
-    FJ_FuiNodeStage* stage = getStage();
-    if (stage == 0 || stage->getFocus() != this || m_items.empty())
-        return;
-    HighlightItem(m_activeItem);
+    if (getStage()->getFocus() == this)
+    {
+        int row = m_activeItem / m_itemsPerRow;
+        int column = m_activeItem - m_itemsPerRow * row;
+        if (!m_items.empty())
+        {
+            m_activeColumn = column;
+            m_activeRow = row;
+            getStage()->setFocus(m_items[row][column]);
+            dispatchEvent(new FJ_Event(eFJEventType_FocusChangeInit, true, false));
+        }
+    }
 }
 
 void FJ_List2D::focusInHandler(FJ_Event*)
@@ -176,22 +184,20 @@ void FJ_List2D::SetScrollDelegate(void (*delegate)(FJ_FuiNode*), FJ_FuiNode* nod
 
 void FJ_List2D::HandleScrollListArrows(bool addToStage)
 {
-    if (m_upArrow == 0 || m_downArrow == 0)
-        return;
-    if (addToStage && m_upArrow->getParent() == 0)
+    if (addToStage && m_items.size() >= static_cast<unsigned int>(m_visibleRows) &&
+        m_upArrow->getParent() == 0)
     {
-        FJ_FuiNode* parent = getParent();
-        if (parent != 0)
-        {
-            parent->addChild(m_upArrow);
-            parent->addChild(m_downArrow);
-        }
-        UpdateScrollListArrows();
+        getParent()->addChild(m_upArrow);
+        getParent()->addChild(m_downArrow);
+        m_upArrow->setX(-(m_upArrow->getWidth() * 1.5f - (getX() + getWidth())));
+        m_upArrow->setY(-(m_upArrow->getHeight() * 0.5f - (getY() + getHeight())));
+        m_downArrow->setX(-(m_upArrow->getWidth() * 0.5f - (getX() + getWidth())));
+        m_downArrow->setY(m_upArrow->getY());
         m_upArrow->ChangeState(0);
         m_downArrow->ChangeState(3);
     }
-    m_upArrow->ChangeState(m_firstVisibleRow > 0 ? 1 : 0);
-    m_downArrow->ChangeState(m_firstVisibleRow + m_visibleRows < static_cast<int>(m_items.size()) ? 1 : 0);
+    m_upArrow->setVisible(m_firstVisibleRow > 0);
+    m_downArrow->setVisible(m_firstVisibleRow + m_visibleRows < static_cast<int>(m_items.size()));
 }
 
 void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
@@ -280,8 +286,7 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
 
 void FJ_List2D::removeAllItems()
 {
-    bool hadFocus = getStage() != 0 && getStage()->getFocus() != 0;
-    FJ_FuiNode* parent = getParent();
+    bool hadFocus = false;
     unsigned int row;
     for (row = 0; row < m_items.size(); ++row)
     {
@@ -289,15 +294,16 @@ void FJ_List2D::removeAllItems()
         for (column = 0; column < m_items[row].size(); ++column)
         {
             FJ_FuiNode* node = m_items[row][column];
-            if (parent != 0 && node != 0)
-                parent->removeChild(node, true);
+            if (getStage()->getFocus() == node)
+                hadFocus = true;
+            getParent()->removeChild(node, true);
         }
     }
     m_items.clear();
-    m_activeItem = 0;
     m_firstVisibleRow = 0;
+    m_activeItem = 0;
     HandleScrollListArrows(false);
-    if (hadFocus && getStage() != 0)
+    if (hadFocus)
         getStage()->setFocus(this);
 }
 

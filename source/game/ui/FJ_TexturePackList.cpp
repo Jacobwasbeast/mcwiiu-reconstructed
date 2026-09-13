@@ -5,8 +5,10 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_ScrollArrowH.hpp"
 #include "game/ui/FJ_TexturePackList_Slot.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
@@ -16,15 +18,12 @@ FJ_TexturePackList::FJ_TexturePackList(fuiRenderNode* renderNode)
       m_visibleSlots(0), m_slotSpacing(0), m_leftArrow(0), m_rightArrow(0),
       m_selectorEnabled(true), m_touchX(0), m_touchSlot(0), m_touchMoved(false)
 {
-    FJ_FuiNode* slotArea = getChildByName(std::string("Slot Area"));
-    if (slotArea != 0)
-        m_slotArea = slotArea->asMovieClip();
-    if (m_slotArea != 0)
-        m_slotArea->setVisible(false);
+    m_slotArea = getChildByName(std::string("SlotArea"))->asMovieClip();
+    m_slotArea->setVisible(false);
     m_leftArrow = static_cast<FJ_ScrollArrowH*>(FJ_Factory::createObject(
-        "fourj_FJ_ScrollArrowH", renderNode, true, 0));
+        "fourj.FJ_ScrollArrowH", renderNode, true, 0));
     m_rightArrow = static_cast<FJ_ScrollArrowH*>(FJ_Factory::createObject(
-        "fourj_FJ_ScrollArrowH", renderNode, true, 0));
+        "fourj.FJ_ScrollArrowH", renderNode, true, 0));
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
     addEventListener(eFJEventType_KeyUp, this, _keyDownHandler, false);
@@ -39,8 +38,8 @@ FJ_TexturePackList::~FJ_TexturePackList()
 void FJ_TexturePackList::ChangeState(int state)
 {
     std::string current = currentLabel();
-    static const char* labels[4] = { "", "", "", "" };
-    if (state >= 0 && state < 4 && current != labels[state]) {
+    static const char* labels[2] = { "Unselected", "Selected" };
+    if (state >= 0 && state < 2 && current != labels[state]) {
         gotoAndPlay(std::string(labels[state]));
         m_state = state;
     }
@@ -61,9 +60,9 @@ void FJ_TexturePackList::HandleScrollListArrows(bool addArrows)
         if (parent != 0) {
             parent->addChild(m_leftArrow);
             parent->addChild(m_rightArrow);
-            m_leftArrow->setX(getX() + m_slotSpacing / 2.0f);
-            m_leftArrow->setY(getY() + getHeight() * 0.5f);
-            m_rightArrow->setX(getX() + getWidth() - m_slotSpacing / 2.0f);
+            m_leftArrow->setX(getX() + static_cast<float>(m_slotSpacing / 2));
+            m_leftArrow->setY(getY() + m_slotArea->getHeight() * 0.5f);
+            m_rightArrow->setX(getX() + getWidth() - static_cast<float>(m_slotSpacing / 2));
             m_rightArrow->setY(m_leftArrow->getY());
             m_leftArrow->ChangeState(0);
             m_rightArrow->ChangeState(2);
@@ -75,23 +74,31 @@ void FJ_TexturePackList::HandleScrollListArrows(bool addArrows)
         m_rightArrow->setVisible(m_topSlot + m_visibleSlots < static_cast<int>(count));
 }
 
-void FJ_TexturePackList::ScrollList(bool down, bool, bool fromTouch)
+void FJ_TexturePackList::ScrollList(bool down, bool page, bool fromTouch)
 {
-    if (!fromTouch) {
+    if (!page && !fromTouch) {
         if (m_selectedSlot < m_topSlot)
+        {
             m_topSlot = m_selectedSlot;
+            if (m_leftArrow != 0)
+                m_leftArrow->ChangeState(1);
+        }
         else if (m_selectedSlot >= m_topSlot + m_visibleSlots)
+        {
             m_topSlot = m_selectedSlot + 1 - m_visibleSlots;
+            if (m_rightArrow != 0)
+                m_rightArrow->ChangeState(3);
+        }
     }
     for (unsigned int i = 0; i < m_items.size(); ++i) {
         FJ_TexturePackList_Slot* slot = static_cast<FJ_TexturePackList_Slot*>(m_items[i]);
         slot->setX(getX() + static_cast<float>(static_cast<int>(i) - m_topSlot) *
-            (slot->getWidth() + static_cast<float>(m_slotSpacing)));
+            slot->getWidth() + static_cast<float>(m_slotSpacing));
         slot->setVisible(i >= static_cast<unsigned int>(m_topSlot) &&
             i < static_cast<unsigned int>(m_topSlot + m_visibleSlots));
         slot->SetSelected(static_cast<int>(i) == m_selectedSlot);
     }
-    if (!down)
+    if (!page)
         HandleScrollListArrows(false);
 }
 
@@ -137,9 +144,17 @@ void FJ_TexturePackList::NavigateList(bool down)
 
 void FJ_TexturePackList::keyDownHandler(FJ_Event* event)
 {
-    if (!m_selectorEnabled || event == 0) return;
-    if (event->m_eType == eFJEventType_KeyUp)
+    if (!m_selectorEnabled) return;
+    int keyCode = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
+    if (keyCode == 0) {
         m_focusSlot = m_selectedSlot;
+        getRoot()->m_pCallbackScene->handlePress(getId(), m_focusSlot);
+        keyCode = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
+    }
+    if (keyCode == 5)
+        NavigateList(false);
+    else if (keyCode == 6)
+        NavigateList(true);
 }
 void FJ_TexturePackList::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 {
@@ -196,15 +211,16 @@ void FJ_TexturePackList::addPack(int id, const std::wstring& name)
 {
     if (getParent() == 0) return;
     FJ_TexturePackList_Slot* slot = static_cast<FJ_TexturePackList_Slot*>(
-        FJ_Factory::createObject("fourj_listClasses_FJ_TexturePack", m_pRenderNode, true, 0));
+        FJ_Factory::createObject("fourj.listClasses.FJ_TexturePackList_Slot", m_pRenderNode, true, 0));
     if (slot == 0) return;
     slot->SetSlotID(id);
     slot->SetTextureName(name);
     if (m_visibleSlots == 0) {
-        m_visibleSlots = static_cast<int>(getWidth() / slot->getWidth()) - 1;
-        m_slotSpacing = Math::round((getWidth() - m_visibleSlots * slot->getWidth()) * 0.5f);
+        m_visibleSlots = static_cast<int>(getWidth() / slot->getWidth() - 1.0f);
+        m_slotSpacing = static_cast<int>(-(static_cast<float>(m_visibleSlots) * slot->getWidth() -
+            getWidth()) * 0.5f);
     }
-    slot->setY(getY() + Math::round((getHeight() - slot->getHeight()) * 0.5f));
+    slot->setY(getY() + Math::round((m_slotArea->getHeight() - slot->getHeight()) * 0.5f));
     m_items.push_back(slot);
     ScrollList(true, true, false);
     getParent()->addChild(slot);

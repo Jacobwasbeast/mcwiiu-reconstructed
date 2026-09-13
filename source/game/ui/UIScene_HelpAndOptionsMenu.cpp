@@ -5,10 +5,13 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
@@ -83,14 +86,18 @@ void UIScene_HelpAndOptionsMenu::handleReload()
 {
     removeControl(&m_button7, false);
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (m_playerId != minecraft->mLocalPlayerIdx || minecraft->mPendingLevelChange != 0)
+    if (m_playerId != gProfile->GetPrimaryPad() || minecraft->mPendingLevelChange != 0)
         removeControl(&m_button6, false);
     if (g_pApp->GetLocalPlayerCount() > 1) {
         removeControl(&m_button5, false);
-        if (m_playerId != minecraft->mLocalPlayerIdx)
+        if (gProfile->GetPrimaryPad() != m_playerId)
             removeControl(&m_button6, false);
     }
-    if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+    gProfile->IsFullVersion();
+    bool keepButton1 = gProfile->IsFullVersion() &&
+        Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true) &&
+        minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY;
+    if (!keepButton1)
         removeControl(&m_button1, false);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);

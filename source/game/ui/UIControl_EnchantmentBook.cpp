@@ -18,6 +18,7 @@
 
 UIControl_EnchantmentBook::UIControl_EnchantmentBook()
 {
+    m_controlId = 5;
     mBookModel = NULL;
     mBookTick = 0;
     mBookOpen = 0.0F;

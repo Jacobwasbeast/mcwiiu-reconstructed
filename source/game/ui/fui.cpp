@@ -17,7 +17,6 @@
 #include "game/ui/fuiTimelineAction.hpp"
 #include "game/ui/fuiTTFFontSet.hpp"
 
-// TEMPORARY boot tracing; remove once the boot reaches the title screen.
 extern "C" void OSReport(const char*, ...);
 #define FUI_TRACE(step) OSReport("[boot][fui] %s\n", step)
 

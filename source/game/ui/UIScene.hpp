@@ -26,6 +26,8 @@ enum EUIMessage
 class UIScene
 {
     friend class ConsoleUIController;
+    friend class UILayer;
+    friend class UIControl_Touch;
 
 public:
     struct _TimerInfo
@@ -131,6 +133,7 @@ public:
     unsigned int getControlFocus();
     void setOpacity(float opacity);
     void setVisible(bool visible);
+    bool isVisible();
     bool hasTimer(int timerId);
     bool canCacheSWF();
     void slideLeft();

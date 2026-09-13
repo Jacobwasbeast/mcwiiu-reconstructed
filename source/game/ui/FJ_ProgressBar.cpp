@@ -64,6 +64,11 @@ void FJ_ProgressBar::ShowBar(bool show)
         movieClip->setVisible(show);
 }
 
+float FJ_ProgressBar::getProgress()
+{
+    return m_progress;
+}
+
 void FJ_ProgressBar::setProgress(float progress)
 {
     if (progress > 1.0f)

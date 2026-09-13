@@ -7,162 +7,194 @@
 
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/core/TextUtil.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiBitmap.hpp"
+#include "game/ui/fuiEdittext.hpp"
+#include "game/ui/fuiFontName.hpp"
+#include "platform/wiiu/FFLiUtilShader.hpp"
 
 extern Renderer* gRenderer;
 
 fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData()
-    : currentCharacter(0), lineNumber(0), fontSize(0.0f), colour(0xffffffff), x(0.0f), y(0.0f),
-      lineHeight(0.0f), width(0.0f), alignment(0), flags(0), scale(1.0f), texture(0), html(false),
-      bold(false), fontIndex(0), clipping(false), shadow(false), firstLine(0), lastLine(0),
-      lineStart(0), lineEnd(0), glyphCount(0), imageCount(0), imageData(&m_imageStorage)
 {
 }
 
-fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData(const RenderStringStateData& other)
-    : currentCharacter(other.currentCharacter), lineNumber(other.lineNumber), fontSize(other.fontSize),
-      colour(other.colour), x(other.x), y(other.y), lineHeight(other.lineHeight), width(other.width),
-      alignment(other.alignment), flags(other.flags), scale(other.scale), texture(other.texture),
-      html(other.html), bold(other.bold), fontIndex(other.fontIndex), clipping(other.clipping),
-      shadow(other.shadow), firstLine(other.firstLine), lastLine(other.lastLine), lineStart(other.lineStart),
-      lineEnd(other.lineEnd), glyphCount(other.glyphCount), imageCount(other.imageCount),
-      boldVerts(other.boldVerts), imageData(&m_imageStorage), m_imageStorage(other.m_imageStorage)
+void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* fontSet, float size, float glyphScale)
 {
-    fontVerts[0] = other.fontVerts[0];
-    fontVerts[1] = other.fontVerts[1];
-    fontVerts[2] = other.fontVerts[2];
-    fontVerts[3] = other.fontVerts[3];
-    std::memcpy(reserved, other.reserved, sizeof(reserved));
-}
-
-fuiRenderNodeEditText::RenderStringStateData& fuiRenderNodeEditText::RenderStringStateData::operator=(const RenderStringStateData& other)
-{
-    if (this == &other)
-        return *this;
-    currentCharacter = other.currentCharacter;
-    lineNumber = other.lineNumber;
-    fontSize = other.fontSize;
-    colour = other.colour;
-    x = other.x;
-    y = other.y;
-    lineHeight = other.lineHeight;
-    width = other.width;
-    alignment = other.alignment;
-    flags = other.flags;
-    scale = other.scale;
-    texture = other.texture;
-    html = other.html;
-    bold = other.bold;
-    fontIndex = other.fontIndex;
-    clipping = other.clipping;
-    shadow = other.shadow;
-    firstLine = other.firstLine;
-    lastLine = other.lastLine;
-    lineStart = other.lineStart;
-    lineEnd = other.lineEnd;
-    glyphCount = other.glyphCount;
-    imageCount = other.imageCount;
-    fontVerts[0] = other.fontVerts[0];
-    fontVerts[1] = other.fontVerts[1];
-    fontVerts[2] = other.fontVerts[2];
-    fontVerts[3] = other.fontVerts[3];
-    boldVerts = other.boldVerts;
-    m_imageStorage = other.m_imageStorage;
-    imageData = &m_imageStorage;
-    std::memcpy(reserved, other.reserved, sizeof(reserved));
-    return *this;
-}
-
-void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* font, float fontSizeValue, float spacing)
-{
-    currentCharacter = 0;
+    font = fontSet;
+    fontSize = size;
+    lineStartX = glyphScale;
+    lineStartY = -glyphScale;
+    x = glyphScale;
+    y = -glyphScale;
+    maxX = 0.0f;
+    maxY = 0.0f;
     lineNumber = 0;
-    fontSize = fontSizeValue;
-    lineHeight = spacing;
-    x = 0.0f;
-    y = 0.0f;
-    width = 0.0f;
-    alignment = 0;
-    flags = 0;
-    scale = font == NULL ? 1.0f : font->getGlyphScale(fontSizeValue);
-    texture = 0;
-    html = false;
-    bold = false;
-    clipping = false;
+    currentCharacter = 0;
+    lineHeight = 0.0f;
+    firstLineHeight = 0.0f;
+    rgba.rgba = 0;
+    colour = 0;
     shadow = false;
-    firstLine = 0;
-    lastLine = 0;
-    lineStart = 0;
-    lineEnd = 0;
-    glyphCount = 0;
-    imageCount = 0;
-    fontVerts[0].clear();
-    fontVerts[1].clear();
-    fontVerts[2].clear();
-    fontVerts[3].clear();
-    boldVerts.clear();
-    imageData->clear();
+    measure = false;
+    boundaryCharacter = -1;
+    boundaryXMin = 0.0f;
+    boundaryXMax = 0.0f;
+    boundaryYMin = 0.0f;
+    boundaryYMax = 0.0f;
 }
 
 fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNode* node, fuiObject* object,
     unsigned int symbolIndex, unsigned char type, fuiRGBA* colour, unsigned char renderFlags, bool visible, fuiFile* file)
-    : fuiRenderNode(parent, node, object, symbolIndex, static_cast<eFuiObjectType>(type), renderFlags, colour, 0, visible, file),
+    : fuiRenderNode(parent, node, object, symbolIndex, eFuiObjectType_EditText, type, colour, renderFlags, visible, file),
       m_html(false), m_text(), m_scrollH(0.0f), m_alignment(0), m_wordWrap(false), m_multiline(false),
-      m_autoSize(TextFieldAutoSizeCenter), m_htmlAlignment(0), m_textWidth(0.0f), m_textHeight(0.0f),
-      m_numLines(0), m_lineWidths(), m_lineHeights(), m_font(NULL), m_glyphScale(1.0f),
+      m_autoSize(TextFieldAutoSizeNone), m_htmlAlignment(0), m_textWidth(0.0f), m_textHeight(0.0f),
+      m_lineWidths(), m_lineHeights(), m_font(NULL), m_boldFont(NULL), m_glyphScale(0.0f),
       m_colour(0), m_textSet(false), m_fieldWidth(0.0f), m_renderState(), m_htmlText(), m_wrappedText(),
-      m_attribute(), m_word(), m_dirty(true)
+      m_tag(), m_attribute(), m_word(), m_dirty(false)
 {
     InitializeCriticalSection(&m_lock);
+
+    fuiEdittext* editText = static_cast<fuiEdittext*>(object);
+    m_bounds.xMin = editText->bounds.xMin;
+    m_bounds.xMax = editText->bounds.xMax;
+    m_bounds.yMin = editText->bounds.yMin;
+    m_fieldWidth = editText->bounds.xMax - editText->bounds.xMin;
+    m_bounds.yMin = 0.0f;
+    m_bounds.yMax = editText->bounds.yMax - editText->bounds.yMin;
+
+    m_glyphScale = editText->fontScale != 0.0f ? editText->fontScale : 1.0f;
+
+    if (editText->align < 4)
+    {
+        static const unsigned char alignments[4] = { 0, 1, 2, 3 };
+        m_alignment = alignments[editText->align];
+    }
+
+    if (editText->text[0] != '\0')
+    {
+        wchar_t wide[1024];
+        std::mbstowcs(wide, editText->text, 1024);
+        const wchar_t* cursor = parseHTMLString(wide, NULL);
+        while (*cursor != L'\0')
+        {
+            m_text.insert(m_text.end(), *cursor);
+            cursor = parseHTMLString(cursor + 1, NULL);
+        }
+    }
+
+    m_font = NULL;
+    unsigned int fontNameCount = file->header.fontNameCount;
+    if (fontNameCount != 0)
+    {
+        unsigned int index = 0;
+        do
+        {
+            fuiFontName& fontName = file->fontNameData[index];
+            if (editText->fontId == fontName.fontId)
+            {
+                m_font = reinterpret_cast<fuiFontSet*>(gFui->getFont(fontName.name, false));
+                m_boldFont = reinterpret_cast<fuiFontSet*>(gFui->getFont(fontName.name, true));
+                if (m_font == NULL)
+                {
+                    m_font = reinterpret_cast<fuiFontSet*>(gFui->getDefaultFont(false));
+                    m_boldFont = reinterpret_cast<fuiFontSet*>(gFui->getDefaultFont(true));
+                }
+                fontNameCount = file->header.fontNameCount;
+            }
+            ++index;
+        } while (index < fontNameCount);
+    }
+    if (m_font == NULL)
+        m_font = reinterpret_cast<fuiFontSet*>(gFui->getDefaultFont(false));
+
+    m_html = false;
+    m_scrollH = 0.0f;
+    m_colour = editText->textColor.rgba;
+    m_wordWrap = editText->wordWrap != 0;
+    m_dirty = true;
+    m_textSet = false;
+    m_scrollRect.xMin = 0.0f;
+    m_scrollRect.xMax = 0.0f;
+    m_autoSize = TextFieldAutoSizeCenter;
+    m_scrollRect.yMin = 0.0f;
+    m_multiline = editText->multiline != 0;
+    m_htmlAlignment = 0;
+    m_scrollRect.yMax = 0.0f;
+    m_textWidth = getWidth();
+    m_textHeight = getHeight();
 }
 
 fuiRenderNodeEditText::~fuiRenderNodeEditText()
 {
+    DeleteCriticalSection(&m_lock);
 }
 
 const wchar_t* fuiRenderNodeEditText::getHtmlTag(const wchar_t* text, std::wstring* tag)
 {
+    if (*text == L'<')
+    {
+        std::wstring content;
+        const wchar_t* cursor = text;
+        for (;;)
+        {
+            ++cursor;
+            wchar_t c = *cursor;
+            if (c == L'\0')
+                break;
+            if (c == L'>')
+            {
+                ++cursor;
+                break;
+            }
+            content.push_back(c);
+        }
+        if (tag != NULL)
+            *tag = content;
+        while (*cursor == L' ')
+            ++cursor;
+        return cursor;
+    }
     if (tag != NULL)
         tag->clear();
-    if (text == NULL || *text != L'<')
-        return text;
-    const wchar_t* cursor = text + 1;
-    while (*cursor != L'\0' && *cursor != L'>')
-    {
-        if (tag != NULL)
-            tag->push_back(*cursor);
-        ++cursor;
-    }
-    if (*cursor == L'>')
-        ++cursor;
-    while (std::iswspace(*cursor))
-        ++cursor;
-    return cursor;
+    return text;
 }
 
 const wchar_t* fuiRenderNodeEditText::parseHTMLString(const wchar_t* text, std::wstring* result)
 {
-    if (result != NULL)
-        result->clear();
-    if (text == NULL)
+    if (result == NULL)
+    {
+        while (*text == L'<')
+            text = getHtmlTag(text, NULL);
         return text;
-    const wchar_t* cursor = text;
-    while (*cursor == L'<')
-        cursor = getHtmlTag(cursor, result);
-    if (result != NULL && *text != L'<')
-        *result = text;
-    return cursor;
+    }
+    if (*text == L'<')
+        return getHtmlTag(text, result);
+    result->assign(L"", 0);
+    return text;
 }
 
 const wchar_t* fuiRenderNodeEditText::prepStringPtr(const std::wstring& text) const
 {
-    return text.c_str();
+    const wchar_t* cursor = text.c_str();
+    if (m_html)
+    {
+        while (*cursor == L'<')
+            cursor = getHtmlTag(cursor, NULL);
+    }
+    return cursor;
 }
 
 const wchar_t* fuiRenderNodeEditText::incStringPtr(const wchar_t* text) const
 {
-    return text == NULL ? NULL : text + 1;
+    const wchar_t* cursor = text + 1;
+    if (m_html)
+    {
+        while (*cursor == L'<')
+            cursor = getHtmlTag(cursor, NULL);
+    }
+    return cursor;
 }
 
 float fuiRenderNodeEditText::getGlyphScale()
@@ -177,12 +209,17 @@ float fuiRenderNodeEditText::getRenderedGlyphHeight(wchar_t character)
 
 bool fuiRenderNodeEditText::useBitmapFont(unsigned short character, fuiFontSet* font)
 {
-    return font != NULL && font->isBitmapFont() && font->hasGlyph(character);
+    bool result = true;
+    if (!m_boldFont->hasGlyph(character) && font->hasGlyph(character))
+        result = false;
+    return result;
 }
 
 float fuiRenderNodeEditText::getRenderedGlyphWidth(wchar_t character, RenderStringStateData& state)
 {
-    return m_font == NULL ? state.fontSize : m_font->getRenderedGlyphWidth(static_cast<unsigned short>(character), state.fontSize);
+    if (useBitmapFont(static_cast<unsigned short>(character), state.font))
+        return m_boldFont->getRenderedGlyphWidth(static_cast<unsigned short>(character), state.fontSize);
+    return state.font->getRenderedGlyphWidth(static_cast<unsigned short>(character), state.fontSize);
 }
 
 float fuiRenderNodeEditText::getWordWidth(const std::wstring& word, RenderStringStateData& state)
@@ -196,49 +233,103 @@ float fuiRenderNodeEditText::getWordWidth(const std::wstring& word, RenderString
 
 void fuiRenderNodeEditText::setHtmlAlignPosition(RenderStringStateData& state)
 {
-    if (state.alignment == 1)
-        state.x = (getWidth() - state.width) * 0.5f;
-    else if (state.alignment == 2)
-        state.x = getWidth() - state.width;
+    float lineWidth = m_lineWidths[static_cast<std::vector<float>::size_type>(state.lineNumber)];
+    unsigned int alignment = m_alignment;
+    if (m_html && m_htmlAlignment != 0 && m_htmlAlignment < 4)
+    {
+        static const unsigned char htmlAlignments[4] = { 0, 0, 2, 1 };
+        alignment = htmlAlignments[m_htmlAlignment];
+    }
+    if (alignment == 0)
+    {
+        state.x = state.lineStartX;
+        return;
+    }
+    if (alignment == 1)
+    {
+        state.x = state.lineStartX + (m_fieldWidth - lineWidth);
+        return;
+    }
+    if (alignment != 2)
+        return;
+    state.x = (m_fieldWidth - lineWidth) * 0.5f + state.lineStartX;
 }
 
 void fuiRenderNodeEditText::newLine(RenderStringStateData& state)
 {
+    float lineEndX = state.x;
+    if (state.maxX < lineEndX)
+        state.maxX = lineEndX;
     ++state.lineNumber;
-    state.x = 0.0f;
+    if (!state.measure)
+    {
+        setHtmlAlignPosition(state);
+    }
+    else
+    {
+        float lineWidth = lineEndX - state.lineStartX;
+        state.x = state.lineStartX;
+        m_lineWidths.push_back(lineWidth);
+        m_lineHeights.push_back(state.lineHeight);
+    }
     state.y += state.lineHeight;
-    state.width = 0.0f;
-    setHtmlAlignPosition(state);
+    if (state.y > state.maxY)
+        state.maxY = state.y;
+    state.lineHeight = getRenderedGlyphHeight(m_text.c_str()[0]);
 }
 
 bool fuiRenderNodeEditText::isHtmlTagType(const std::wstring& tag, const std::wstring& type)
 {
-    return tag == type || tag == L"/" + type || tag.find(type) == 0;
+    if (tag.size() < type.size())
+        return false;
+    for (std::wstring::size_type i = 0; i < type.size(); ++i)
+    {
+        wchar_t c = tag[i];
+        if (c >= L'A' && c <= L'Z')
+            c = static_cast<wchar_t>(c + (L'a' - L'A'));
+        if (c != type[i])
+            return false;
+    }
+    return true;
 }
 
-bool fuiRenderNodeEditText::htmlFontColour(const std::wstring& tag, RenderStringStateData& state)
+void fuiRenderNodeEditText::htmlFontColour(const std::wstring& tag, RenderStringStateData& state)
 {
-    std::wstring value = getHtmlTagAttribute(tag, L"color");
-    if (value.empty())
-        return false;
-    state.colour = static_cast<int>(std::wcstol(value.c_str(), NULL, 16));
-    return true;
+    static const std::wstring prefix = L"font color=\"#";
+    std::wstring hex = tag.substr(prefix.size(), 8);
+    unsigned long rgb = std::wcstoul(hex.c_str(), NULL, 16);
+    state.colour = (static_cast<unsigned int>(rgb) << 8) | (state.rgba.rgba & 0xffu);
 }
 
 std::wstring fuiRenderNodeEditText::getHtmlTagAttribute(const std::wstring& tag, const std::wstring& attribute)
 {
     std::wstring key = attribute + L"=";
-    std::wstring::size_type position = tag.find(key);
-    if (position == std::wstring::npos)
-        return std::wstring();
-    position += key.size();
-    while (position < tag.size() && std::iswspace(tag[position]))
-        ++position;
-    wchar_t quote = position < tag.size() && (tag[position] == L'"' || tag[position] == L'\'') ? tag[position++] : 0;
-    std::wstring::size_type end = position;
-    while (end < tag.size() && ((quote != 0 && tag[end] != quote) || (quote == 0 && !std::iswspace(tag[end]))))
-        ++end;
-    return tag.substr(position, end - position);
+    std::wstring lowerTag = tag;
+    for (std::wstring::size_type i = 0; i < lowerTag.size(); ++i)
+    {
+        wchar_t c = lowerTag[i];
+        if (c >= L'A' && c <= L'Z')
+            lowerTag[i] = static_cast<wchar_t>(c + (L'a' - L'A'));
+    }
+
+    std::wstring value;
+    std::wstring::size_type position = lowerTag.find(key);
+    if (position != std::wstring::npos)
+    {
+        position += key.size();
+        if (position < tag.size() && tag[position] == L'"')
+        {
+            ++position;
+            while (position < tag.size() && tag[position] != L'"')
+                value.push_back(tag[position++]);
+        }
+        else
+        {
+            while (position < tag.size() && tag[position] != L'>')
+                value.push_back(tag[position++]);
+        }
+    }
+    return value;
 }
 
 bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringStateData& state)
@@ -291,8 +382,7 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
         image.quad[5].u = 1.0f;
         image.quad[5].v = 1.0f;
         image.quad[5].colour = 0xffffffff;
-        state.imageData->push_back(image);
-        ++state.imageCount;
+        state.activeImageData->push_back(image);
     }
     state.x += width + 16.0f;
     return true;
@@ -303,23 +393,62 @@ bool fuiRenderNodeEditText::checkForUnsupportedAttribute(const std::wstring& tag
     return tag.find(attribute) != std::wstring::npos;
 }
 
-bool fuiRenderNodeEditText::htmlParagraph(const std::wstring& tag, RenderStringStateData& state)
+bool fuiRenderNodeEditText::htmlParagraph(const std::wstring& tag, RenderStringStateData&)
 {
-    if (isHtmlTagType(tag, L"p"))
-        newLine(state);
+    std::wstring align = getHtmlTagAttribute(tag, L"align");
+    checkForUnsupportedAttribute(tag, L"class");
+    checkForUnsupportedAttribute(tag, L"id");
+    checkForUnsupportedAttribute(tag, L"style");
+    checkForUnsupportedAttribute(tag, L"title");
+
+    if (!align.empty())
+    {
+        for (std::wstring::size_type i = 0; i < align.size(); ++i)
+        {
+            wchar_t c = align[i];
+            if (c >= L'A' && c <= L'Z')
+                align[i] = static_cast<wchar_t>(c + (L'a' - L'A'));
+        }
+        if (align == L"left")
+            m_htmlAlignment = 1;
+        else if (align == L"right")
+            m_htmlAlignment = 3;
+        else if (align == L"center")
+            m_htmlAlignment = 2;
+    }
     return true;
 }
 
 bool fuiRenderNodeEditText::renderHtmlTag(const std::wstring& tag, RenderStringStateData& state)
 {
-    if (isHtmlTagType(tag, L"br"))
+    if (tag == L"br" || tag == L"BR" || tag == L"br /" || tag == L"BR /")
+    {
         newLine(state);
-    else if (isHtmlTagType(tag, L"img"))
-        htmlImage(tag, state);
-    else if (isHtmlTagType(tag, L"font"))
+        return true;
+    }
+    if (isHtmlTagType(tag, L"font color"))
+    {
         htmlFontColour(tag, state);
-    else if (isHtmlTagType(tag, L"p"))
-        htmlParagraph(tag, state);
+        return true;
+    }
+    if (isHtmlTagType(tag, L"img"))
+    {
+        htmlImage(tag, state);
+        return true;
+    }
+    if (!isHtmlTagType(tag, L"/font"))
+    {
+        if (isHtmlTagType(tag, L"p"))
+        {
+            htmlParagraph(tag, state);
+            return true;
+        }
+        if (!isHtmlTagType(tag, L"/p"))
+        {
+            if (!isHtmlTagType(tag, L"i"))
+                isHtmlTagType(tag, L"/i");
+        }
+    }
     return true;
 }
 
@@ -335,146 +464,309 @@ bool fuiRenderNodeEditText::isCJKPunctuationChar(wchar_t character)
 
 bool fuiRenderNodeEditText::endOfWord(wchar_t previous, wchar_t current)
 {
-    return std::iswspace(current) || isCJKChar(previous) != isCJKChar(current) || isCJKPunctuationChar(current);
+    bool result = false;
+    if (previous == 0 || previous == L' ' || previous == L'\t' ||
+        isNewLineChar__Fw(static_cast<uint16_t>(previous)) != 0 ||
+        (m_html && previous == L'<'))
+        result = true;
+    if (current == 0 || current == L' ' || current == L'\t' ||
+        isNewLineChar__Fw(static_cast<uint16_t>(current)) != 0 ||
+        (m_html && current == L'<') ||
+        (isCJKChar(current) && !isCJKPunctuationChar(current)))
+        result = true;
+    return result;
 }
 
-bool fuiRenderNodeEditText::getNextWord(const wchar_t* text, std::wstring* word, RenderStringStateData& state)
+const wchar_t* fuiRenderNodeEditText::getNextWord(const wchar_t* text, std::wstring* word, RenderStringStateData& state)
 {
-    if (word != NULL)
-        word->clear();
-    if (text == NULL || *text == L'\0')
-        return false;
+    wchar_t next = *text != L'\0' ? text[1] : L'\0';
+    float width = 0.0f;
+    m_word.clear();
+
     const wchar_t* cursor = text;
-    while (*cursor != L'\0')
+    wchar_t current = *cursor;
+    bool done;
+    for (;;)
     {
-        if (word != NULL)
-            word->push_back(*cursor);
-        if (cursor[1] == L'\0' || endOfWord(*cursor, cursor[1]))
-            break;
-        ++cursor;
+        if (current == 0xa0)
+        {
+            m_word.push_back(L' ');
+            cursor += 1;
+            current = *cursor;
+            done = endOfWord(0x41, current);
+        }
+        else if (std::wcsncmp(cursor, L"&nbsp;", 6) == 0)
+        {
+            m_word.push_back(L' ');
+            cursor += 6;
+            current = *cursor;
+            done = endOfWord(0x41, current);
+        }
+        else if (std::wcsncmp(cursor, L"&gt;", 4) == 0)
+        {
+            m_word.push_back(L'>');
+            current = cursor[4];
+            done = endOfWord(L'>', current);
+            cursor += 4;
+        }
+        else if (std::wcsncmp(cursor, L"&lt;", 4) != 0)
+        {
+            if (std::wcsncmp(cursor, L"&amp;", 5) == 0)
+            {
+                m_word.push_back(L'&');
+                cursor += 5;
+                current = *cursor;
+                done = endOfWord(L'&', current);
+            }
+            else
+            {
+                current = *cursor;
+                done = endOfWord(current, next);
+                m_word.push_back(current);
+                width += getRenderedGlyphWidth(*cursor, state);
+                float lookaheadWidth = 0.0f;
+                if (next != L'\0')
+                    lookaheadWidth = getRenderedGlyphWidth(next, state);
+                cursor += 1;
+                current = *cursor;
+                if (m_fieldWidth < width + lookaheadWidth)
+                    done = true;
+            }
+        }
+        else
+        {
+            m_word.push_back(L'<');
+            current = cursor[4];
+            done = endOfWord(L'<', current);
+            cursor += 4;
+        }
+
+        next = current != L'\0' ? cursor[1] : L'\0';
+        if (done)
+        {
+            *word = m_word;
+            return cursor;
+        }
     }
-    state.lineEnd = static_cast<int>(cursor - text) + 1;
-    return true;
 }
 
 void fuiRenderNodeEditText::increaseCurrentCharacter(int count, const wchar_t* text, RenderStringStateData& state)
 {
-    if (text != NULL)
-        state.currentCharacter += count < 0 ? 0 : count;
+    if (count == 0)
+        return;
+    do
+    {
+        if (state.currentCharacter == state.boundaryCharacter)
+        {
+            float glyphWidth = getRenderedGlyphWidth(*text, state);
+            float glyphHeight = getRenderedGlyphHeight(*text);
+            state.boundaryYMin = state.y;
+            state.boundaryXMin = state.x;
+            state.boundaryXMax = state.x + glyphWidth;
+            state.boundaryYMax = state.y + glyphHeight;
+        }
+        --count;
+        ++state.currentCharacter;
+        ++text;
+    } while (count != 0);
 }
 
-void fuiRenderNodeEditText::renderGlyph(unsigned short character, float x, float y, float size, unsigned int colour, RenderStringStateData& state)
+float fuiRenderNodeEditText::renderGlyph(unsigned short character, float, float y, float, unsigned int colour, RenderStringStateData& state)
 {
-    if (m_font != NULL)
-        m_font->renderGlyph(character, x, y, size, colour, state.fontVerts);
-    ++state.glyphCount;
+    if (useBitmapFont(character, state.font))
+        return m_boldFont->renderGlyph(character, state.x, y, state.fontSize, colour, *state.activeBitmapVerts);
+    fuiFontSet* font = state.font;
+    return font->renderGlyph(character, state.x, getGlyphScale() * 3.0f + y, state.fontSize, colour, *state.activeFontVerts);
 }
 
 bool fuiRenderNodeEditText::renderWord(std::wstring& word, RenderStringStateData& state)
 {
-    std::wstring::const_iterator it;
-    for (it = word.begin(); it != word.end(); ++it)
+    const wchar_t* cursor = word.c_str();
+    wchar_t character = *cursor;
+    while (character != L'\0')
     {
-        renderGlyph(static_cast<unsigned short>(*it), state.x, state.y, state.fontSize, static_cast<unsigned int>(state.colour), state);
-        state.x += getRenderedGlyphWidth(*it, state);
+        if (character == L'\t')
+            character = L' ';
+        if (!state.measure)
+        {
+            unsigned int colour = state.colour;
+            if (state.shadow)
+                colour = setRGBAOrder__FUi(m_color);
+            float lineHeight = m_lineHeights[static_cast<std::vector<float>::size_type>(state.lineNumber)];
+            float glyphHeight = getRenderedGlyphHeight(character);
+            float advance = renderGlyph(static_cast<unsigned short>(character), state.x,
+                                        (lineHeight - glyphHeight) * 0.5f + state.y, state.fontSize, colour, state);
+            increaseCurrentCharacter(1, cursor, state);
+            state.x += advance;
+        }
+        else
+        {
+            float advance = getRenderedGlyphWidth(character, state);
+            increaseCurrentCharacter(1, cursor, state);
+            state.x += advance;
+        }
+        ++cursor;
+        character = *cursor;
     }
-    state.width = std::max(state.width, state.x);
     return true;
 }
 
 void fuiRenderNodeEditText::renderString(const std::wstring& text, RenderStringStateData& state)
 {
+    m_tag.assign(L"", 0);
+    m_attribute.assign(L"", 0);
+    m_word.assign(L"", 0);
+
     const wchar_t* cursor = text.c_str();
+    if (!state.measure)
+        setHtmlAlignPosition(state);
+
     while (*cursor != L'\0')
     {
-        if (*cursor == L'<')
+        if (m_html)
+            cursor = getHtmlTag(cursor, &m_tag);
+        if (m_tag.size() != 0)
         {
-            std::wstring tag;
-            cursor = getHtmlTag(cursor, &tag);
-            renderHtmlTag(tag, state);
+            renderHtmlTag(m_tag, state);
             continue;
         }
-        if (*cursor == L'\n')
+        if (!state.measure && state.x == state.lineStartX)
+            setHtmlAlignPosition(state);
+
+        cursor = getNextWord(cursor, &m_word, state);
+        if (isNewLineChar__Fw(static_cast<uint16_t>(m_word.c_str()[0])) != 0)
         {
-            newLine(state);
-            ++cursor;
+            if (m_multiline || m_wordWrap || m_html)
+            {
+                increaseCurrentCharacter(static_cast<int>(m_word.size()), m_word.c_str(), state);
+                newLine(state);
+            }
             continue;
         }
-        renderGlyph(static_cast<unsigned short>(*cursor), state.x, state.y, state.fontSize, static_cast<unsigned int>(state.colour), state);
-        state.x += getRenderedGlyphWidth(*cursor, state);
-        state.width = std::max(state.width, state.x);
-        ++cursor;
+
+        float wordWidth = getWordWidth(m_word, state);
+        if (!m_wordWrap || (state.x - state.lineStartX) + wordWidth <= m_fieldWidth)
+        {
+            renderWord(m_word, state);
+            continue;
+        }
+
+        newLine(state);
+        if (m_word.c_str()[0] != L' ')
+            renderWord(m_word, state);
+        else
+            increaseCurrentCharacter(static_cast<int>(m_word.size()), m_word.c_str(), state);
     }
-    state.lastLine = state.lineNumber;
 }
 
 void fuiRenderNodeEditText::getRenderedStringWidthHeight(const std::wstring& text, fuiFontSet* font, float size, float& width, float& height)
 {
-    fuiFontSet* oldFont = m_font;
-    float oldSize = m_glyphScale;
-    m_font = font;
-    m_glyphScale = size;
-    RenderStringStateData state;
-    state.init(font, size, getRenderedGlyphHeight(L'M'));
-    renderString(text, state);
-    width = state.width;
-    height = state.lineNumber == 0 ? getRenderedGlyphHeight(L'M') : state.y + state.lineHeight;
-    m_font = oldFont;
-    m_glyphScale = oldSize;
+    EnterCriticalSection(&m_lock);
+    m_renderState.init(font, size, getGlyphScale());
+    m_renderState.font = font;
+    m_renderState.fontSize = size;
+
+    float glyphHeight = getRenderedGlyphHeight(text.c_str()[0]);
+    m_renderState.firstLineHeight = glyphHeight;
+    m_renderState.measure = true;
+    m_renderState.lineStartX = 0.0f;
+    m_renderState.lineStartY = 0.0f;
+    m_renderState.y = 0.0f;
+    m_renderState.lineHeight = glyphHeight;
+    m_lineWidths.clear();
+    m_lineHeights.clear();
+
+    renderString(text, m_renderState);
+    newLine(m_renderState);
+
+    width = m_renderState.maxX;
+    height = m_renderState.maxY;
+    m_numLines = static_cast<unsigned int>(m_lineWidths.size());
+    LeaveCriticalSection(&m_lock);
 }
 
 bool fuiRenderNodeEditText::clipBottom(const fuiFontSet::FontVert& vertex)
 {
-    return vertex.y <= getHeight();
+    const fuiMatrix& matrix = gFui->m_matrixStack[gFui->m_matrixDepth];
+    const float y = vertex.x * matrix.rotateSkew0 + vertex.y * matrix.scaleY + matrix.translateY;
+    return gFui->m_screenHeight < y;
 }
 
 bool fuiRenderNodeEditText::clipTop(const fuiFontSet::FontVert& vertex)
 {
-    return vertex.y >= 0.0f;
+    const fuiMatrix& matrix = gFui->m_matrixStack[gFui->m_matrixDepth];
+    const float y = vertex.x * matrix.rotateSkew0 + vertex.y * matrix.scaleY + matrix.translateY;
+    return y < 0.0f;
 }
 
 void fuiRenderNodeEditText::DrawFontVerts(RenderStringStateData&, std::vector<fuiFontSet::FontVert>* vertices)
 {
-    if (vertices != NULL)
-        vertices->clear();
+    unsigned int count = 0;
+    if (!vertices->empty())
+        count = static_cast<unsigned int>(vertices->size());
+
+    int drawn = 0;
+    unsigned int remaining = count >> 2;
+    while (remaining != 0)
+    {
+        unsigned int batch = remaining;
+        if (0x200 < static_cast<int>(remaining))
+            batch = 0x200;
+
+        int start = drawn * 4;
+        bool clipped = clipBottom(vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(start)));
+        drawn += static_cast<int>(batch);
+        if (!clipped && !clipTop(vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(drawn * 4 - 1))))
+        {
+            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Quads, static_cast<int>(batch * 4),
+                                    &vertices->at(static_cast<std::vector<fuiFontSet::FontVert>::size_type>(start)),
+                                    C4JRender::eVertexType_ColouredUI, C4JRender::ePixelShaderType_UI, NULL);
+        }
+        remaining -= batch;
+    }
 }
 
 void fuiRenderNodeEditText::DrawRenderData(RenderStringStateData& state)
 {
-    if (!state.clipping)
+    if (!state.shadow)
     {
         gRenderer->StateSetAlphaFunc(4, 0.003921568859368563f);
         gRenderer->StateSetAlphaTestEnable(true);
+        if ((gFui->m_filterStack[gFui->m_filterDepth] & 2) != 0)
+        {
+            gFui->incrementStencilMask();
+            gRenderer->StateSetStencil(7, gFui->getCurrentStencilMask(), 0, 0xff);
+        }
     }
     else
     {
         gRenderer->StateSetStencil(5, gFui->getCurrentStencilMask(), 0xff, 0);
     }
 
-    if (!state.boldVerts.empty())
+    if (!(*state.activeBitmapVerts)[0].empty())
     {
         gRenderer->TextureBind(m_boldFont->getTextureIndex(m_glyphScale, 0));
-        DrawFontVerts(state, &state.boldVerts);
+        DrawFontVerts(state, &(*state.activeBitmapVerts)[0]);
     }
-    if (!state.fontVerts[0].empty())
+    if (!(*state.activeFontVerts)[0].empty())
     {
         gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 0));
-        DrawFontVerts(state, &state.fontVerts[0]);
+        DrawFontVerts(state, &(*state.activeFontVerts)[0]);
     }
-    if (!state.fontVerts[1].empty())
+    if (!(*state.activeFontVerts)[1].empty())
     {
         gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 1));
-        DrawFontVerts(state, &state.fontVerts[1]);
+        DrawFontVerts(state, &(*state.activeFontVerts)[1]);
     }
-    if (!state.fontVerts[2].empty())
+    if (!(*state.activeFontVerts)[2].empty())
     {
         gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 2));
-        DrawFontVerts(state, &state.fontVerts[2]);
+        DrawFontVerts(state, &(*state.activeFontVerts)[2]);
     }
-    if (!state.fontVerts[3].empty())
+    if (!(*state.activeFontVerts)[3].empty())
     {
         gRenderer->TextureBind(m_font->getTextureIndex(m_glyphScale, 3));
-        DrawFontVerts(state, &state.fontVerts[3]);
+        DrawFontVerts(state, &(*state.activeFontVerts)[3]);
     }
 
     gRenderer->StateSetStencil(7, 0, 0, 0);
@@ -483,58 +775,144 @@ void fuiRenderNodeEditText::DrawRenderData(RenderStringStateData& state)
     gRenderer->StateSetDepthFunc(3);
     gRenderer->StateSetAlphaTestEnable(false);
 
-    std::vector<HtmlImageDrawData>::iterator it;
-    for (it = state.imageData->begin(); it != state.imageData->end(); ++it)
+    for (unsigned int index = 0; index < state.activeImageData->size(); ++index)
     {
+        HtmlImageDrawData& image = state.activeImageData->at(index);
         fuiFile* file = NULL;
-        int bitmap = gFui->findBitmapFromSymbol(it->symbolName.c_str(), &file);
+        int bitmap = gFui->findBitmapFromSymbol(image.symbolName.c_str(), &file);
         if (bitmap != 0)
         {
-            fuiBitmap* bitmapPtr = reinterpret_cast<fuiBitmap*>(bitmap);
-            file->initialiseRenderTexture(bitmapPtr, false);
-            gRenderer->TextureBind(bitmapPtr->textureId);
+            fuiBitmap* bitmapObject = reinterpret_cast<fuiBitmap*>(bitmap);
+            file->initialiseRenderTexture(bitmapObject, false);
+            gRenderer->TextureBind(bitmapObject->textureId);
             gRenderer->TextureSetParam(1, 1);
             gRenderer->TextureSetParam(2, 1);
-            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, &(*it), C4JRender::eVertexType_ColouredUI,
-                                    C4JRender::ePixelShaderType_UIColourAdd, NULL);
+            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, &image,
+                                    C4JRender::eVertexType_ColouredUI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
         }
     }
 }
 
 void fuiRenderNodeEditText::renderString(const std::wstring& text, float x, float y, fuiFontSet* font, float size, unsigned int colour)
 {
-    m_font = font;
-    m_glyphScale = size;
-    m_renderState.init(font, size, getRenderedGlyphHeight(L'M'));
-    m_renderState.x = x;
-    m_renderState.y = y;
-    m_renderState.colour = static_cast<int>(colour);
+    EnterCriticalSection(&m_lock);
+    if (!m_dirty)
+    {
+        m_renderState.shadow = false;
+        m_renderState.activeFontVerts = &m_renderState.fontGlyphVerts;
+        m_renderState.activeImageData = &m_renderState.imageDrawData;
+        m_renderState.activeBitmapVerts = &m_renderState.bitmapGlyphVerts;
+        DrawRenderData(m_renderState);
+        LeaveCriticalSection(&m_lock);
+        return;
+    }
+
+    m_renderState.init(font, size, getGlyphScale());
+    m_renderState.font = font;
+    m_renderState.fontSize = size;
+
+    float glyphHeight = getRenderedGlyphHeight(text.c_str()[0]);
+    m_renderState.lineHeight = glyphHeight;
+    m_renderState.firstLineHeight = glyphHeight;
+    m_renderState.lineStartX = 1.0f * getGlyphScale() + x;
+    float top = -1.0f * getGlyphScale() + y;
+    m_renderState.maxY = y;
+    m_renderState.rgba.rgba = colour;
+    m_renderState.measure = false;
+    m_renderState.maxX = x;
+    m_renderState.lineStartY = top;
+    m_renderState.y = top;
+    m_renderState.colour = m_renderState.rgba.rgba;
+    m_renderState.shadow = false;
+    m_renderState.x = m_renderState.lineStartX;
+
+    m_renderState.bitmapGlyphVerts[0].clear();
+    m_renderState.fontGlyphVerts[0].clear();
+    m_renderState.bitmapGlyphVerts[1].clear();
+    m_renderState.fontGlyphVerts[1].clear();
+    m_renderState.bitmapGlyphVerts[2].clear();
+    m_renderState.fontGlyphVerts[2].clear();
+    m_renderState.bitmapGlyphVerts[3].clear();
+    m_renderState.fontGlyphVerts[3].clear();
+    m_renderState.imageDrawData.clear();
+
+    m_renderState.activeImageData = &m_renderState.imageDrawData;
+    m_renderState.activeFontVerts = &m_renderState.fontGlyphVerts;
+    m_renderState.boundaryCharacter = -1;
+    m_renderState.activeBitmapVerts = &m_renderState.bitmapGlyphVerts;
+
     renderString(text, m_renderState);
     DrawRenderData(m_renderState);
+    LeaveCriticalSection(&m_lock);
 }
 
 void fuiRenderNodeEditText::renderStringShadow(const std::wstring& text, float x, float y, fuiFontSet* font, float size)
 {
-    renderString(text, x + 1.0f, y + 1.0f, font, size, 0xff000000);
+    EnterCriticalSection(&m_lock);
+    if (!m_dirty)
+    {
+        m_renderState.activeFontVerts = &m_renderState.shadowFontGlyphVerts;
+        m_renderState.activeBitmapVerts = &m_renderState.shadowBitmapGlyphVerts;
+        m_renderState.activeImageData = &m_renderState.shadowImageDrawData;
+        m_renderState.shadow = true;
+        DrawRenderData(m_renderState);
+        LeaveCriticalSection(&m_lock);
+        return;
+    }
+
+    m_renderState.init(font, size, getGlyphScale());
+    m_renderState.font = font;
+    m_renderState.fontSize = size;
+
+    float glyphHeight = getRenderedGlyphHeight(text.c_str()[0]);
+    m_renderState.firstLineHeight = glyphHeight;
+    m_renderState.lineHeight = glyphHeight;
+    m_renderState.lineStartX = 1.0f * getGlyphScale() + x;
+    float top = -1.0f * getGlyphScale() + y;
+    m_renderState.maxY = y;
+    m_renderState.measure = false;
+    m_renderState.shadow = true;
+    m_renderState.lineStartY = top;
+    m_renderState.y = top;
+    m_renderState.x = m_renderState.lineStartX;
+    m_renderState.maxX = x;
+
+    m_renderState.shadowBitmapGlyphVerts[0].clear();
+    m_renderState.shadowFontGlyphVerts[0].clear();
+    m_renderState.shadowBitmapGlyphVerts[1].clear();
+    m_renderState.shadowFontGlyphVerts[1].clear();
+    m_renderState.shadowBitmapGlyphVerts[2].clear();
+    m_renderState.shadowFontGlyphVerts[2].clear();
+    m_renderState.shadowBitmapGlyphVerts[3].clear();
+    m_renderState.shadowFontGlyphVerts[3].clear();
+    m_renderState.shadowImageDrawData.clear();
+
+    m_renderState.activeBitmapVerts = &m_renderState.shadowBitmapGlyphVerts;
+    m_renderState.activeImageData = &m_renderState.shadowImageDrawData;
+    m_renderState.activeFontVerts = &m_renderState.shadowFontGlyphVerts;
+
+    renderString(text, m_renderState);
+    DrawRenderData(m_renderState);
+    LeaveCriticalSection(&m_lock);
 }
 
 void fuiRenderNodeEditText::autoSizeBounds()
 {
     float width = 0.0f;
     float height = 0.0f;
-    getRenderedStringWidthHeight(m_text, m_font, m_glyphScale, width, height);
+    getRenderedStringWidthHeight(m_text, m_font, static_cast<fuiEdittext*>(m_object)->fontScale, width, height);
 
-    float bounds = -(getGlyphScale() - width);
-    if (m_textWidth != bounds || m_textHeight != height)
+    float left = -(1.0f * getGlyphScale() - width);
+    if (m_textWidth != left || m_textHeight != height)
     {
-        m_textWidth = bounds;
+        m_textWidth = left;
         m_textHeight = height;
         m_dirty = true;
     }
 
     if (m_autoSize == TextFieldAutoSizeLeft)
     {
-        m_bounds.xMax = m_bounds.xMin + (getGlyphScale() + width);
+        m_bounds.xMax = m_bounds.xMin + (1.0f * getGlyphScale() + width);
         m_bounds.yMax = height * 1.0436591f + m_bounds.yMin;
         progogateBounds();
     }
@@ -564,21 +942,56 @@ void fuiRenderNodeEditText::gather(bool)
 
 void fuiRenderNodeEditText::preRender()
 {
-    if (m_font != NULL)
-        m_font->preRender();
+    unsigned int frame = gFui->GetCurrentFrameCount();
+    if (frame != static_cast<unsigned int>(m_lastFrame + 1))
+        m_dirty = true;
+    m_lastFrame = static_cast<int>(frame);
+
+    if (isVisible() && m_text.size() != 0)
+    {
+        fuiEdittext* editText = static_cast<fuiEdittext*>(m_object);
+        const wchar_t* cursor = prepStringPtr(m_text);
+        while (*cursor != L'\0')
+        {
+            if (!useBitmapFont(static_cast<unsigned short>(*cursor), m_font))
+                m_font->loadGlyph(*cursor, editText->fontScale);
+            cursor = incStringPtr(cursor);
+        }
+    }
 }
 
-void fuiRenderNodeEditText::render(fuiRect* rect, fuiMatrix* matrix)
+void fuiRenderNodeEditText::render(fuiRect*, fuiMatrix*)
 {
-    if (m_dirty)
+    if (!isVisible())
+        return;
+    if (m_text.size() == 0)
+        return;
+
+    pushMatrix();
+    pushColor();
+    pushFilterFlags();
+    setScrollRectViewport();
+
+    const fui::ColorState& colourState = gFui->m_colorStack[gFui->m_colorDepth];
+    gRenderer->StateSetBlendFunc(1, 5);
+    gRenderer->StateSetColour(colourState.redMultiply, colourState.greenMultiply, colourState.blueMultiply,
+                              colourState.alphaMultiply);
+    gRenderer->StateSetColourAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    float left = m_bounds.xMin - m_scrollH;
+    float top = m_bounds.yMin;
+    renderString(m_text, left, top, m_font, m_glyphScale, m_colour);
+    if ((gFui->m_filterStack[gFui->m_filterDepth] & 2) != 0)
     {
-        RenderStringStateData state;
-        state.init(m_font, m_glyphScale, getGlyphScale());
-        renderString(m_html ? m_htmlText : m_text, state);
-        m_renderState = state;
-        m_dirty = false;
+        float offset = static_cast<float>(m_visible);
+        renderStringShadow(m_text, left + offset, top + offset, m_font, m_glyphScale);
     }
-    DrawRenderData(m_renderState);
+    m_dirty = false;
+
+    clearScrollRectViewport();
+    popFilterFlags();
+    popColor();
+    popMatrix();
 }
 
 const std::wstring& fuiRenderNodeEditText::getText()
@@ -588,9 +1001,13 @@ const std::wstring& fuiRenderNodeEditText::getText()
 
 void fuiRenderNodeEditText::setText(const std::wstring& text)
 {
-    m_text = text;
     m_html = false;
-    m_dirty = true;
+    if (m_text.compare(text) != 0)
+    {
+        m_text = text;
+        m_dirty = true;
+    }
+    m_textSet = true;
     autoSizeBounds();
 }
 
@@ -602,16 +1019,21 @@ void fuiRenderNodeEditText::appendText(const std::wstring& text)
 
 void fuiRenderNodeEditText::setHTMLText(const std::wstring& text)
 {
-    m_htmlText = text;
     m_html = true;
-    m_dirty = true;
+    m_textSet = true;
+    if (m_text.compare(text) != 0)
+    {
+        m_text = text;
+        m_dirty = true;
+        autoSizeBounds();
+    }
 }
 
 void fuiRenderNodeEditText::setAutoSize(int autoSize)
 {
     if (m_autoSize != static_cast<TextFieldAutoSize>(autoSize))
     {
-        if (m_html)
+        if (m_textSet)
         {
             autoSizeBounds();
             m_dirty = true;
@@ -622,13 +1044,35 @@ void fuiRenderNodeEditText::setAutoSize(int autoSize)
 
 std::pair<float, float> fuiRenderNodeEditText::getCharBoundaries(int index)
 {
-    if (index < 0 || static_cast<std::wstring::size_type>(index) >= m_text.size())
+    EnterCriticalSection(&m_lock);
+    if (m_text.size() == 0)
+    {
+        LeaveCriticalSection(&m_lock);
         return std::pair<float, float>(0.0f, 0.0f);
-    RenderStringStateData state;
-    state.init(m_font, m_glyphScale, getGlyphScale());
-    for (int i = 0; i < index; ++i)
-        state.x += getRenderedGlyphWidth(m_text[static_cast<std::wstring::size_type>(i)], state);
-    return std::pair<float, float>(state.x, getRenderedGlyphHeight(m_text[static_cast<std::wstring::size_type>(index)]));
+    }
+
+    fuiEdittext* editText = static_cast<fuiEdittext*>(m_object);
+    float size = editText->fontScale != 0.0f ? editText->fontScale : 1.0f;
+    m_renderState.init(m_font, size, getGlyphScale());
+    m_renderState.font = m_font;
+    m_renderState.fontSize = size;
+
+    float glyphHeight = getRenderedGlyphHeight(m_text[static_cast<std::wstring::size_type>(index)]);
+    m_renderState.firstLineHeight = glyphHeight;
+    m_renderState.lineHeight = glyphHeight;
+    m_renderState.measure = true;
+    m_renderState.boundaryCharacter = index;
+    m_lineWidths.clear();
+    m_lineHeights.clear();
+
+    renderString(m_text, m_renderState);
+    newLine(m_renderState);
+
+    float left = m_renderState.boundaryXMin;
+    float right = m_renderState.boundaryXMax;
+    m_numLines = static_cast<unsigned int>(m_lineWidths.size());
+    LeaveCriticalSection(&m_lock);
+    return std::pair<float, float>(left, right);
 }
 
 std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, fuiFontSet* font, float size, float width)
@@ -657,28 +1101,41 @@ std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, f
 
 void fuiRenderNodeEditText::setWidth(float width)
 {
-    if (fuiRenderNode::getWidth() != width)
-        m_dirty = true;
-    fuiRenderNode::setWidth(width);
+    float right = m_bounds.xMin + width;
+    if (right == m_bounds.xMax && m_fieldWidth == width)
+        return;
+    m_fieldWidth = width;
+    m_dirty = true;
+    m_bounds.xMax = right;
+    autoSizeBounds();
 }
 
 void fuiRenderNodeEditText::setHeight(float height)
 {
-    if (fuiRenderNode::getHeight() != height)
-        m_dirty = true;
-    fuiRenderNode::setHeight(height);
+    float bottom = m_bounds.yMin + height;
+    if (bottom == m_bounds.yMax)
+        return;
+    m_dirty = true;
+    m_bounds.yMax = bottom;
+    autoSizeBounds();
 }
 
 void fuiRenderNodeEditText::setX(float x)
 {
-    fuiRenderNode::setX(x);
-    m_dirty = true;
+    if (x != fuiRenderNode::getX())
+    {
+        fuiRenderNode::setX(x);
+        m_dirty = true;
+    }
 }
 
 void fuiRenderNodeEditText::setY(float y)
 {
-    fuiRenderNode::setY(y);
-    m_dirty = true;
+    if (y != fuiRenderNode::getY())
+    {
+        fuiRenderNode::setY(y);
+        m_dirty = true;
+    }
 }
 
 void fuiRenderNodeEditText::getParentSpaceBounds(fuiRect* rect)

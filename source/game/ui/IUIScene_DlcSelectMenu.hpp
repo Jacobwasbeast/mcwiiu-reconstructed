@@ -6,6 +6,7 @@
 #include "platform/wiiu/C4JStorage.hpp"
 
 class DLCPack;
+class UIScene_SkinSelectMenu;
 
 enum eDLCContentType
 {
@@ -15,6 +16,8 @@ enum eDLCContentType
 class IUIScene_DlcSelectMenu
 {
 public:
+    friend class UIScene_SkinSelectMenu;
+
     IUIScene_DlcSelectMenu(eDLCContentType contentType);
 
     void tick();

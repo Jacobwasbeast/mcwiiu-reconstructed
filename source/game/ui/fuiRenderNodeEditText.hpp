@@ -18,9 +18,17 @@ enum TextFieldAutoSize
     TextFieldAutoSizeRight = 3
 };
 
+class FJ_Base;
+class FJ_Slider;
+class FJ_TextInput;
+
 class fuiRenderNodeEditText : public fuiRenderNode
 {
 public:
+    friend class FJ_Base;
+    friend class FJ_Slider;
+    friend class FJ_TextInput;
+
     struct HtmlImageDrawData
     {
         fuiFontSet::FontVert quad[6];
@@ -31,40 +39,38 @@ public:
     {
     public:
         RenderStringStateData();
-        RenderStringStateData(const RenderStringStateData& other);
-        RenderStringStateData& operator=(const RenderStringStateData& other);
-        void init(fuiFontSet* font, float fontSize, float lineSpacing);
+        void init(fuiFontSet* font, float fontSize, float glyphScale);
 
-        int currentCharacter;
-        int lineNumber;
+        fuiFontSet* font;
         float fontSize;
-        int colour;
+        float lineStartX;
+        float lineStartY;
         float x;
         float y;
+        float maxX;
+        float maxY;
+        int lineNumber;
+        int currentCharacter;
         float lineHeight;
-        float width;
-        int alignment;
-        int flags;
-        float scale;
-        int texture;
-        bool html;
-        bool bold;
-        int fontIndex;
-        bool clipping;
+        float firstLineHeight;
+        fuiRGBA rgba;
+        unsigned int colour;
         bool shadow;
-        int firstLine;
-        int lastLine;
-        int lineStart;
-        int lineEnd;
-        int glyphCount;
-        int imageCount;
-        std::vector<fuiFontSet::FontVert> fontVerts[4];
-        std::vector<fuiFontSet::FontVert> boldVerts;
-        std::vector<HtmlImageDrawData>* imageData;
-        unsigned char reserved[84];
-
-    private:
-        std::vector<HtmlImageDrawData> m_imageStorage;
+        bool measure;
+        int boundaryCharacter;
+        float boundaryXMin;
+        float boundaryXMax;
+        float boundaryYMin;
+        float boundaryYMax;
+        std::vector<fuiFontSet::FontVert> bitmapGlyphVerts[4];
+        std::vector<fuiFontSet::FontVert> shadowBitmapGlyphVerts[4];
+        std::vector<fuiFontSet::FontVert> fontGlyphVerts[4];
+        std::vector<fuiFontSet::FontVert> shadowFontGlyphVerts[4];
+        std::vector<HtmlImageDrawData> imageDrawData;
+        std::vector<HtmlImageDrawData> shadowImageDrawData;
+        std::vector<fuiFontSet::FontVert> (*activeBitmapVerts)[4];
+        std::vector<fuiFontSet::FontVert> (*activeFontVerts)[4];
+        std::vector<HtmlImageDrawData>* activeImageData;
     };
 
     fuiRenderNodeEditText(fuiRenderNode*, fuiRenderNode*, fuiObject*, unsigned int, unsigned char, fuiRGBA*, unsigned char, bool, fuiFile*);
@@ -81,7 +87,7 @@ public:
     void setHtmlAlignPosition(RenderStringStateData&);
     void newLine(RenderStringStateData&);
     bool isHtmlTagType(const std::wstring&, const std::wstring&);
-    bool htmlFontColour(const std::wstring&, RenderStringStateData&);
+    void htmlFontColour(const std::wstring&, RenderStringStateData&);
     std::wstring getHtmlTagAttribute(const std::wstring&, const std::wstring&);
     bool htmlImage(const std::wstring&, RenderStringStateData&);
     bool checkForUnsupportedAttribute(const std::wstring&, const std::wstring&);
@@ -90,9 +96,9 @@ public:
     bool isCJKChar(wchar_t);
     bool isCJKPunctuationChar(wchar_t);
     bool endOfWord(wchar_t, wchar_t);
-    bool getNextWord(const wchar_t*, std::wstring*, RenderStringStateData&);
+    const wchar_t* getNextWord(const wchar_t*, std::wstring*, RenderStringStateData&);
     void increaseCurrentCharacter(int, const wchar_t*, RenderStringStateData&);
-    void renderGlyph(unsigned short, float, float, float, unsigned int, RenderStringStateData&);
+    float renderGlyph(unsigned short, float, float, float, unsigned int, RenderStringStateData&);
     bool renderWord(std::wstring&, RenderStringStateData&);
     void renderString(const std::wstring&, RenderStringStateData&);
     void getRenderedStringWidthHeight(const std::wstring&, fuiFontSet*, float, float&, float&);
@@ -153,6 +159,7 @@ private:
     RenderStringStateData m_renderState;
     std::wstring m_htmlText;
     std::wstring m_wrappedText;
+    std::wstring m_tag;
     std::wstring m_attribute;
     std::wstring m_word;
     bool m_dirty;

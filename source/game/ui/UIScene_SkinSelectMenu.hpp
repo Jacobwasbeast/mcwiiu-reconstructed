@@ -60,8 +60,8 @@ public:
     void updatePackDisplay();
     void handlePackIndexChanged();
     void InputActionOK(unsigned int player);
-    static unsigned int ManageFavoritesReturned(void* context, int player,
-                                                C4JStorage::EMessageResult result);
+    static int ManageFavoritesReturned(void* context, int player,
+                                       C4JStorage::EMessageResult result);
     void SetFavoriteSkin(int player, int skin);
     void InputActionFavorite(unsigned int player);
     unsigned int IsFavoriteSkin(int player, int skin);
@@ -96,10 +96,9 @@ private:
     bool m_packChanged;
     bool m_dlcChanged;
     bool m_hasSelectedPack;
+    int m_highlightedPackId;
     int m_packButtonX;
-    int m_packButtonY;
     bool m_inputPending;
-    int m_player;
 };
 
 #endif

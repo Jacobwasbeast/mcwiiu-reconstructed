@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <cwchar>
 #include <new>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -124,43 +125,137 @@ not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() co
     return instance;
 }
 
-UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void*, UILayer* layer)
+UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     : UIScene(playerId, layer), m_page(0), m_pageCount(0), m_container(), m_dynamicHtmlText(), m_labels(),
       m_enchantmentBook(), m_enchantmentBooks()
 {
     initialiseMovie();
-    m_labels[0].init(UIString(L10N::GetString(0x9f31c0ee)));
-    m_labels[1].init(UIString(std::wstring(L10N::GetString(0x14630b9e))));
-    m_labels[2].init(UIString(L10N::GetString(0x7d7816a1)));
-    m_labels[3].init(UIString(L10N::GetString(0x1b49a944)));
-    m_labels[4].init(UIString(std::wstring(L10N::GetString(0xfbc6e08))));
-    m_labels[5].init(UIString(L10N::GetString(0x68521aaf)));
+
+    std::wstring repeated(L10N::GetString(0x14630b9e));
+
+    m_labels[0].init(UIString(repeated));
+    m_labels[1].init(UIString(repeated));
+    m_labels[2].init(UIString(L10N::GetString(0x24fee045)));
+    m_labels[3].init(UIString(repeated));
+    m_labels[4].init(UIString(L10N::GetString(0x68521aaf)));
+    m_labels[5].init(UIString(L10N::GetString(0x9f31c0ee)));
+    m_labels[6].init(UIString(repeated));
+    m_labels[7].init(UIString(L10N::GetString(0x7d7816a1)));
+    m_labels[8].init(UIString(L10N::GetString(0x1b49a944)));
+    m_labels[9].init(UIString(L10N::GetString(0xe398f425)));
+    m_labels[10].init(UIString(repeated));
+    m_labels[11].init(UIString(L10N::GetString(0xfbc6e08)));
+    m_labels[12].init(UIString(L10N::GetString(0xf4bd500f)));
+    m_labels[13].init(UIString(repeated));
+    m_labels[14].init(UIString(L10N::GetString(0xdf516f15)));
+    m_labels[15].init(UIString(repeated));
+    m_labels[16].init(UIString(repeated));
+
+    {
+        std::wstring text(L10N::GetString(0xf3a668fd));
+        std::wstring::size_type pos = text.find(L"%d");
+        if (pos != std::wstring::npos)
+            text.replace(pos, 2, L"8");
+        m_labels[17].init(UIString(text));
+    }
+
+    m_labels[18].init(UIString(L10N::GetString(0xc60bb915)));
+    m_labels[19].init(UIString(repeated));
+    m_labels[20].init(UIString(L10N::GetString(0xf681ddf0)));
+    m_labels[21].init(UIString(L10N::GetString(0x3dbed919)));
+
+    {
+        std::wstring text(L10N::GetString(0x8c04d144));
+        std::wstring result;
+        replaceAll(result, text, L"_VILLAGER_TYPE_", L10N::GetString(0x869e763f));
+        text = result;
+        std::wstring::size_type pos = text.find(L"%s");
+        if (pos != std::wstring::npos)
+            text.replace(pos, 2, L10N::GetString(0x5ae2b631));
+        m_labels[22].init(UIString(text));
+    }
+
+    m_labels[23].init(UIString(L10N::GetString(0xb3c82373)));
+    m_labels[24].init(UIString(L10N::GetString(0x7b8c1d5d)));
+    m_labels[25].init(UIString(L10N::GetString(0x7c89fe37)));
+    m_labels[26].init(UIString(repeated));
+    m_labels[27].init(UIString(L10N::GetString(0x25cba5e1)));
+    m_labels[28].init(UIString(repeated));
+
+    m_pageCount = 0;
+    StartPage(static_cast<EHowToPlayPage>((reinterpret_cast<unsigned int>(data) >> 0x10) & 0xfff));
 }
 
 UIScene_HowToPlay::~UIScene_HowToPlay()
 {
 }
 
+namespace
+{
+    static const unsigned int kHowToPlayTitleHash[36] = {
+        0x018d8ea9, 0x8758a585, 0x0433e4c6, 0x8941a6ad, 0xcef2334f, 0x5ceac414,
+        0x82ed3e7d, 0xddf4faf7, 0x8e8b1966, 0x2913d7cd, 0xbc353d00, 0xe160391d,
+        0x58ef7c86, 0xb6ab3c0f, 0xc6ebf0ec, 0xc6f80b3d, 0x186eb58e, 0x5ece0eed,
+        0xfcf1d650, 0x59f9a3a9, 0x730761ed, 0xdd493e2f, 0x2ff78ffc, 0x23733dbb,
+        0xdd5bbbbe, 0xe146e1c3, 0xd3c04577, 0xaa5bd119, 0xad1e1a90, 0xc81b96aa,
+        0x93eac97a, 0xe91b67db, 0xbe472149, 0x580332f6, 0x24c276da, 0x8c55bd04
+    };
+
+    static const int kHowToPlayContentPage[36] = {
+        0x00, 0x01, 0x02, 0x03, 0x01, 0x02, 0x01, 0x04, 0x05, 0x06,
+        0x07, 0x17, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x15, 0x0e,
+        0x0f, 0x16, 0x18, 0x19, 0x01, 0x02, 0x1b, 0x1c, 0x10, 0x11,
+        0x01, 0x02, 0x01, 0x02, 0x01, 0x14
+    };
+}
+
 void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 {
     m_page = static_cast<int>(page);
-    const wchar_t* title = L10N::GetString(0x18d8ea9);
+
+    const wchar_t* title = L10N::GetString(static_cast<int>(kHowToPlayTitleHash[m_page]));
     std::wstring text(title == NULL ? L"" : title);
-    gApp.FormatHTMLString(m_playerId, text, m_controlFocus);
+    text = gApp.FormatHTMLString(m_playerId, text, -1);
+
+    replaceAll(text, text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(0x1350b613));
+    replaceAll(text, text, L"_BACK_BUTTON_", L10N::GetString(0x3d497286));
+    replaceAll(text, text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(0xbf244113));
+    replaceAll(text, text, L"_PLATFORM_NAME_", L10N::GetString(0xed3c4bfb));
+
+    if (!gConsoleUIController.UsingBitmapFont())
+    {
+        replaceAll(text, text, L"(C)", L"©");
+        replaceAll(text, text, L"®", L"(R)");
+        replaceAll(text, text, L"–", L"-");
+    }
+
     stripWhitespaceForHtml(text, true);
-    m_dynamicHtmlText.addText(text, true);
+
+    wchar_t colorTag[64];
+    std::swprintf(colorTag, 0x40, L"<font color=#%08x>",
+                  gApp.GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)));
+    std::wstring coloured(colorTag);
+    coloured += text;
+
+    std::vector<std::wstring> pages;
+    std::wstring::size_type start = 0;
+    std::wstring::size_type pos = coloured.find(L"\r\n");
+    while (pos != std::wstring::npos)
+    {
+        pages.push_back(coloured.substr(start, pos - start) + L" ");
+        start = pos + 2;
+        pos = coloured.find(L"\r\n", start);
+    }
+    pages.push_back(coloured.substr(start, coloured.length() - start));
+
     if (m_movie != NULL && m_movie->getRootNode() != NULL)
     {
         FJ_HowToPlay* node = dynamic_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode());
         if (node != NULL)
-        {
-            node->InitScene();
-            std::vector<std::wstring> pages;
-            pages.push_back(L"");
-            LoadHowToPlayPage(node, m_page, pages);
-            m_pageCount = static_cast<int>(pages.size());
-        }
+            LoadHowToPlayPage(node, kHowToPlayContentPage[m_page], pages);
     }
+
+    updateTooltips();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -170,11 +265,11 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
     if (root == NULL)
         return 0;
     static const char* const names[30] = {
-        "Label1_10", "Label2_10", "Label3_10", "Label4_10", "Label1_7", "Label2_7",
-        "Label1_4", "Label1_6", "Label2_6", "Label1_5", "Label1_11", "Label2_11",
-        "Label1_13", "Label2_13", "Label1_12", "Label2_12", "Label1_22", "Label2_22",
-        "Label3_22", "Label4_22", "Label1_21", "Label2_21", "Label3_21", "Label1_25",
-        "Label2_25", "Label1_27", "Label2_27", "Label1_28", "Label2_28"
+        "Label1_5", "Label2_6", "Label1_6", "Label2_7", "Label1_7", "Label3_10",
+        "Label4_10", "Label2_10", "Label1_10", "Label1_11", "Label2_11", "Label1_4",
+        "Label1_13", "Label2_13", "Label1_12", "Label2_12", "Label3_21", "Label2_21",
+        "Label1_21", "Label3_22", NULL, "Label4_22", "Label2_22", "Label1_22",
+        "Label1_25", "Label2_25", "Label1_27", "Label2_27", "Label1_28", "Label2_28"
     };
     m_dynamicHtmlText.setupControl(this, root, "DynamicHtmlText");
     m_container.setupControl(this, root, "HowToPlayContainer_13");
@@ -185,6 +280,8 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
     int i;
     for (i = 0; i < 30; ++i)
     {
+        if (names[i] == NULL)
+            continue;
         m_labels[i].setupControl(this, root, names[i]);
         m_controls.push_back(&m_labels[i]);
     }

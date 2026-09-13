@@ -16,22 +16,22 @@ FJ_ListButtonDLC::~FJ_ListButtonDLC()
 void FJ_ListButtonDLC::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_textChanged = true;
+    m_textOnly = true;
     m_tickNode->setScaleX(m_tickNode->getScaleX() / getScaleX());
     m_tickNode->setScaleY(m_tickNode->getScaleY() / getScaleY());
-    m_labelWidth = 0;
+    m_ellipsisWidthOverride = 0;
     FJ_Button::Init(name, id);
 }
 
 void FJ_ListButtonDLC::ShowTick(bool show)
 {
     m_tickNode->setVisible(show);
-    if (m_textChanged)
+    if (m_textOnly)
     {
         int width = 0;
         if (show)
             width = static_cast<int>(m_tickNode->getX() * getScaleX());
-        m_labelWidth = width;
+        m_ellipsisWidthOverride = width;
         SetLabel(m_label);
     }
 }

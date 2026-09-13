@@ -21,7 +21,7 @@
 #include <cwchar>
 
 std::wstring formatwstr(const wchar_t* format, ...);
-std::vector<Block*>* getPlacementRestrictedList();
+Block** getPlacementRestrictedList();
 long long getSpacingAndSeparationFromPercentage(int percentage, int spacing, int maximum);
 
 SuperflatMenu::SliderLabelBehaviour::SliderLabelBehaviour(int name, unsigned int minimum, unsigned int maximum)
@@ -477,6 +477,10 @@ SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()
 {
 }
 
+SuperflatMenu::CustomSuperflatBlocks::~CustomSuperflatBlocks()
+{
+}
+
 bool SuperflatMenu::CustomSuperflatBlocks::inlist(Block** list, Block* block)
 {
     if (list == NULL)
@@ -508,8 +512,7 @@ not_null_ptr<ItemInstance> SuperflatMenu::CustomSuperflatBlocks::item(int id) co
 
 bool SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(Block* block)
 {
-    std::vector<Block*>* list = getPlacementRestrictedList();
-    return list != NULL && std::find(list->begin(), list->end(), block) != list->end();
+    return inlist(getPlacementRestrictedList(), block);
 }
 
 bool SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(int id)
@@ -583,9 +586,6 @@ void SuperflatMenu::PresetCache::SetCachedPreset(int index, const SuperflatConfi
 
 SuperflatMenu::BiomeItem* SuperflatMenu::getBiomeInfoA()
 {
-    // The Wii U image initializes this descriptor table lazily.  Keep the
-    // table resident because callers retain the item handles between menu
-    // updates.
     static bool initialized = false;
     static BiomeItem items[21] = {};
     if (!initialized)
@@ -632,8 +632,6 @@ SuperflatMenu::BiomeItem* SuperflatMenu::getBiomeInfoA()
             items[16].id = 0x20;
             items[16].item = not_null_ptr<ItemInstance>(createItem(state));
         }
-        // Entry 20 is the image's raw FFFFFFFF sentinel and intentionally
-        // remains an empty descriptor.
     }
     return items;
 }

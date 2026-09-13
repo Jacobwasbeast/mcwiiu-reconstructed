@@ -1,6 +1,7 @@
 #ifndef GAME_UI_UISCENE_SUPERFLATEDITLAYER_HPP
 #define GAME_UI_UISCENE_SUPERFLATEDITLAYER_HPP
 
+#include "game/ui/UIVec2D.hpp"
 #include <string>
 
 #include "game/ui/UIScene.hpp"
@@ -19,12 +20,6 @@
 class ItemInstance;
 class UILayer;
 struct fuiRect;
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_SuperFlatEditLayer : public UIScene
 {
 public:

@@ -8,6 +8,7 @@ class fuiRenderNode;
 
 class FJ_ListButton : public FJ_Button
 {
+    friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_ListButton(fuiRenderNode* renderNode);
     virtual ~FJ_ListButton();

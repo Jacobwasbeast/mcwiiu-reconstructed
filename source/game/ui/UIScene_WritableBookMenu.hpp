@@ -50,10 +50,10 @@ public:
     int FormatAndDisplayText(EFormatTextType type);
     void SetFocusToBook(bool focus);
     void OnStopSigning();
-    static unsigned int ExitBookDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
+    static int ExitBookDialogReturned(void* context, int button, C4JStorage::EMessageResult result);
     unsigned int HandleCancel();
     bool GetBookHasFocus();
-    static unsigned int KeyboardCompleteCallback(void* context, bool success);
+    static int KeyboardCompleteCallback(void* context, bool success);
     void StoreBookText();
     void OnStartSigning();
     bool SaveChanges(bool signing);

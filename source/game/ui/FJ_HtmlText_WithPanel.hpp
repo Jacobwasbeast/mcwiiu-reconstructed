@@ -10,6 +10,7 @@ class fuiRenderNode;
 
 class FJ_HtmlText_WithPanel : public FJ_HtmlText
 {
+    friend class fuiRenderNodeTimeline;
 public:
     FJ_HtmlText_WithPanel(fuiRenderNode* renderNode);
     virtual ~FJ_HtmlText_WithPanel();
@@ -17,7 +18,7 @@ public:
     virtual unsigned int getType();
     virtual void setVisible(bool visible);
     virtual void setY(float y);
-    void Init(const std::wstring& label);
+    virtual void Init(const std::wstring& label);
 
 private:
     int m_panelOffset;

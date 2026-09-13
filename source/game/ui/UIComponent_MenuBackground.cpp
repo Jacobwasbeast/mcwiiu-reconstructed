@@ -22,10 +22,12 @@ std::wstring UIComponent_MenuBackground::getMoviePath()
         viewport > C4JRender::eViewportType_BottomRightQuarter)
     {
         m_splitScreen = false;
-        return L"MenuBackground";
     }
-    m_splitScreen = true;
-    return L"MenuBackgroundSplit";
+    else
+    {
+        m_splitScreen = true;
+    }
+    return L"MenuBackground";
 }
 
 void UIComponent_MenuBackground::render(int width, int height,

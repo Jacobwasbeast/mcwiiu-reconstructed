@@ -73,7 +73,7 @@ unsigned int UIScene_QuadrantSignin::mapElementsAndNames()
         m_accountTypeLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(accountTypes[i]));
         m_playerNumberLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(playerNumbers[i]));
         m_playerPictures[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string("PlayerPic"));
-        m_connectControllerLabels[i].setupControl(this, root, std::string(connectLabels[i]));
+        m_connectControllerLabels[i].setupControl(this, m_controllerControls[i].getFuiRenderNode(), std::string(connectLabels[i]));
         m_controls.push_back(&m_controllerControls[i]);
         m_controls.push_back(&m_pressLabels[i]);
         m_controls.push_back(&m_gamerTagLabels[i]);

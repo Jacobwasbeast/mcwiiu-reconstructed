@@ -53,40 +53,32 @@ void FJ_Label_Blink::EnableBlink(bool enable)
 
 void FJ_Label_Blink::SetLabel(const std::wstring& label)
 {
-    if (!m_widthChanged)
+    if (!m_initialised)
     {
         addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
     }
     FJ_Base::SetLabelAlignment(m_blinkAlignment);
-    m_textContainerChanged = false;
     m_textContainerVisible = false;
+    m_textContainerChanged = false;
     m_textOnly = false;
-    m_textChanged = false;
-    m_isLabel = true;
+    m_manualWrap = false;
+    m_initialised = true;
     FJ_Base::SetLabel(label);
 }
 
 void FJ_Label_Blink::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    float requiredWidth = static_cast<float>(m_oldWidth);
-    float textWidth = textField->getWidth();
-    if (requiredWidth <= textWidth)
+    float measured = textField->getWidth();
+    float required = static_cast<float>(m_maxLabelWidth) <= measured
+                         ? static_cast<float>(static_cast<int>(measured))
+                         : static_cast<float>(m_maxLabelWidth);
+    if (required <= getWidth())
     {
-        requiredWidth = textWidth;
+        required = getWidth();
     }
-    if (getWidth() < requiredWidth)
+    if (m_newWidth < static_cast<int>(required))
     {
-        int required = static_cast<int>(requiredWidth);
-        if (m_newWidth < required)
-        {
-            m_newWidth = required;
-        }
-        return;
-    }
-    int width = static_cast<int>(getWidth());
-    if (m_newWidth < width)
-    {
-        m_newWidth = width;
+        m_newWidth = static_cast<int>(required);
     }
 }
 

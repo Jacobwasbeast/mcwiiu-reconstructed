@@ -18,12 +18,6 @@ class CensoredString;
 class Container;
 class ItemInstance;
 class UILayer;
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu
 {
 public:

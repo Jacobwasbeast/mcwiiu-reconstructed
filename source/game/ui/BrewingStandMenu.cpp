@@ -1,11 +1,14 @@
 #include "game/ui/BrewingStandMenu.hpp"
 
+#include "game/core/GenericStats.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/PotionBrewing.hpp"
+#include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
+#include "game/world/generation/Player.hpp"
 
 BrewingStandMenu::PotionSlot::PotionSlot(boost::shared_ptr<Container> container, int index, int x, int y)
     : Slot(container, index, x, y)
@@ -36,7 +39,12 @@ int BrewingStandMenu::PotionSlot::getMaxStackSize()
 not_null_ptr<ItemInstance> BrewingStandMenu::PotionSlot::onTake(boost::shared_ptr<Player> player,
                                                                  not_null_ptr<ItemInstance> item)
 {
-    item->onCraftedBy(NULL, player, 1);
+    item->onCraftedBy(player->mLevel, player, 1);
+    Potion* potion = PotionUtils::getPotion(item);
+    if (potion != Potions::EMPTY && potion != Potions::WATER)
+    {
+        player->awardStat(GenericStats::potion(), GenericStats::param_potion());
+    }
     return Slot::onTake(player, item);
 }
 
@@ -170,77 +178,53 @@ bool BrewingStandMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> BrewingStandMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    not_null_ptr<ItemInstance> empty = ItemInstance::EMPTY;
-    Slot* source = getSlot(index);
+    Slot* source = m_slots.at(index);
     if (source == NULL || !source->hasItem())
-    {
-        return empty;
-    }
+        return ItemInstance::EMPTY;
+
     not_null_ptr<ItemInstance> item = source->getItem();
     not_null_ptr<ItemInstance> original = item->copy();
-    if (index == 3)
+
+    if (index < 5)
     {
         if (!moveItemStackTo(item, 5, (int)m_slots.size(), true, true, true))
-        {
-            return empty;
-        }
-    }
-    else if (index >= 0 && index < 5)
-    {
-        if (!moveItemStackTo(item, 5, (int)m_slots.size(), true, true, true))
-        {
-            return empty;
-        }
+            return ItemInstance::EMPTY;
+        source->onQuickCraft(item, original);
     }
     else if (PotionSlot::mayPlaceItem(item))
     {
         if (!moveItemStackTo(item, 0, 3, false, true, true))
+            return ItemInstance::EMPTY;
+    }
+    else if (!moveItemStackTo(item, 3, 4, false, true, true))
+    {
+        if (FuelSlot::mayPlaceItem(item))
         {
-            return empty;
+            if (!moveItemStackTo(item, 4, 5, false, true, true))
+                return ItemInstance::EMPTY;
+        }
+        else if (index - 5 < 27)
+        {
+            if (!moveItemStackTo(item, 32, (int)m_slots.size(), false, true, true))
+                return ItemInstance::EMPTY;
+        }
+        else if (index - 32 < 9)
+        {
+            if (!moveItemStackTo(item, 5, 32, false, true, true))
+                return ItemInstance::EMPTY;
+        }
+        else
+        {
+            return ItemInstance::EMPTY;
         }
     }
-    else if (PotionBrewing::isIngredient(item))
-    {
-        if (!moveItemStackTo(item, 3, 4, false, true, true))
-        {
-            return empty;
-        }
-    }
-    else if (FuelSlot::mayPlaceItem(item))
-    {
-        if (!moveItemStackTo(item, 4, 5, false, true, true))
-        {
-            return empty;
-        }
-    }
-    else if (index >= 5 && index < 32)
-    {
-        if (!moveItemStackTo(item, 32, (int)m_slots.size(), false, true, true))
-        {
-            return empty;
-        }
-    }
-    else if (index >= 32 && index < (int)m_slots.size() &&
-             !moveItemStackTo(item, 5, 32, false, true, true))
-    {
-        return empty;
-    }
-    else
-    {
-        return empty;
-    }
+
     if (item->isEmpty())
-    {
         source->set(ItemInstance::EMPTY);
-    }
     else
-    {
         source->setChanged();
-    }
     if (item->getCount() == original->getCount())
-    {
-        return empty;
-    }
+        return ItemInstance::EMPTY;
     source->onTake(player, item);
     return original;
 }

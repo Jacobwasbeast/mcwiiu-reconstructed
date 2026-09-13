@@ -18,8 +18,8 @@ FJ_ListButtonLobby::~FJ_ListButtonLobby()
 void FJ_ListButtonLobby::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_wrapHeight = 1;
-    m_preScaleWidth = static_cast<int>(m_readySlot->getX() * getScaleX());
+    m_textOnly = true;
+    m_ellipsisWidthOverride = static_cast<int>(m_readySlot->getX() * getScaleX());
     FJ_Button::Init(name, id);
 
     m_playerIcons->setScaleX(static_cast<float>(m_playerIcons->getScaleX() / getScaleX()));

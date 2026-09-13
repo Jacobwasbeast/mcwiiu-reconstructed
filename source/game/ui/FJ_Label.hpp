@@ -14,8 +14,9 @@ class FJ_Label : public FJ_Base
 public:
     enum ETextAlignment
     {
-        eTextAlignment_Left = 0,
-        eTextAlignment_Center = 1
+        eTextAlignment_Default = 0,
+        eTextAlignment_Left = 1,
+        eTextAlignment_Center = 2
     };
 
     explicit FJ_Label(fuiRenderNode* renderNode);

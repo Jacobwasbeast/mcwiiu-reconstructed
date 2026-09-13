@@ -244,23 +244,20 @@ void UIScene_FurnaceMenu::handleReload()
 
 void UIScene_FurnaceMenu::tick()
 {
-    if (m_container.get() != 0)
+    int value = m_container->getContainerData(1);
+    if (m_furnaceFire.getMax() != static_cast<unsigned int>(value))
     {
-        int value = m_container->getContainerData(1);
-        if (m_furnaceFire.getMax() != static_cast<unsigned int>(value))
-        {
-            m_furnaceFire.setMax(value);
-            m_furnaceFire.ReInit();
-        }
-        value = m_container->getContainerData(3);
-        if (m_furnaceArrow.getMax() != static_cast<unsigned int>(value))
-        {
-            m_furnaceArrow.setMax(value);
-            m_furnaceArrow.ReInit();
-        }
-        m_furnaceFire.setProgress(m_container->getContainerData(0));
-        m_furnaceArrow.setProgress(m_container->getContainerData(2));
+        m_furnaceFire.setMax(m_container->getContainerData(1));
+        m_furnaceFire.ReInit();
     }
+    value = m_container->getContainerData(3);
+    if (m_furnaceArrow.getMax() != static_cast<unsigned int>(value))
+    {
+        m_furnaceArrow.setMax(m_container->getContainerData(3));
+        m_furnaceArrow.ReInit();
+    }
+    m_furnaceFire.setProgress(m_container->getContainerData(0));
+    m_furnaceArrow.setProgress(m_container->getContainerData(2));
     UIScene_AbstractContainerMenu::tick();
 }
 

@@ -11,8 +11,8 @@ struct fuiFile;
 struct fuiRenderNodeRemoved
 {
     unsigned int depth;
-    unsigned int objectIndex;
-    fuiRenderNodeRemoved(unsigned int d, unsigned int i) : depth(d), objectIndex(i) {}
+    fuiObject* object;
+    fuiRenderNodeRemoved(unsigned int d, fuiObject* o) : depth(d), object(o) {}
 };
 
 class fuiRenderNodeTimeline : public fuiRenderNode
@@ -47,15 +47,14 @@ private:
     void handleConstruction();
     int getFrame(const char* name);
     void handleFrameTransition(int frame);
-    int getReferencedObject(fuiObject* object);
-    unsigned int createReferencedNode(fuiObject* object, unsigned int depth,
-                                      unsigned char renderFlags, fuiRGBA* color,
-                                      unsigned char clipDepth, bool visible);
+    fuiObject* getReferencedObject(fuiObject* object);
+    fuiRenderNode* createReferencedNode(fuiObject* object, unsigned int depth,
+                                        unsigned char renderFlags, fuiRGBA* color,
+                                        unsigned char clipDepth, bool visible);
     static bool depthComparison(const fuiRenderNode* first, const fuiRenderNode* second);
     void depthSort();
     void expandBoundsFromChild(fuiRect& bounds);
     void updateBoundsLocal();
-    void progogateBoundsFromChild();
     void updateBoundsTree();
 
 public:
@@ -76,6 +75,7 @@ public:
     virtual fuiRenderNode* getNodeFromPath(const char* path);
     int getNumChildren() { return static_cast<int>(m_children.size()); }
     fuiRenderNode* getChildAt(int index) { return m_children[index]; }
+    void progogateBoundsFromChild();
     std::string currentLabel();
     int currentFrame();
     void removeChild(fuiRenderNode* child, bool destroy);

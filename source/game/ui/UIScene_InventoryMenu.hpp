@@ -11,14 +11,8 @@
 
 class UILayer;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_InventoryMenu : public UIScene_AbstractContainerMenu,
-                              public IUIScene_AbstractContainerMenu
+                              public virtual IUIScene_AbstractContainerMenu
 {
 public:
     UIScene_InventoryMenu(int type, void* data, UILayer* layer);
@@ -50,6 +44,7 @@ private:
     UIControl_SlotList m_shieldList;
     UIControl_MinecraftPlayer m_playerControl;
     UIControl_Label m_craftingLabel;
+    bool m_classicCrafting;
 };
 
 #endif

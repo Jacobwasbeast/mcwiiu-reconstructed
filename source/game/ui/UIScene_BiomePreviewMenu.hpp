@@ -1,22 +1,19 @@
 #ifndef GAME_UI_UISCENE_BIOMEPREVIEWMENU_HPP
 #define GAME_UI_UISCENE_BIOMEPREVIEWMENU_HPP
 
+#include "game/ui/UIVec2D.hpp"
 #include <string>
 #include <vector>
 
 #include "game/ui/UIScene.hpp"
 #include "game/ui/UIControl.hpp"
-#include "game/ui/UIControl_Base.hpp"
 #include "game/ui/UIControl_BitmapIcon.hpp"
+#include "game/ui/UIControl_Cursor.hpp"
 #include "game/ui/UIControl_HTMLLabel.hpp"
 #include "game/ui/UIControl_Label.hpp"
 #include "game/world/biome/BiomeSource.hpp"
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
+class C4JThreadImpl;
 
 class UIScene_BiomePreviewMenu : public UIScene
 {
@@ -37,10 +34,10 @@ public:
 
     enum ENavDir
     {
-        NAV_UP,
-        NAV_DOWN,
         NAV_LEFT,
-        NAV_RIGHT
+        NAV_RIGHT,
+        NAV_UP,
+        NAV_DOWN
     };
 
     UIScene_BiomePreviewMenu(int type, void* data, UILayer* layer);
@@ -50,6 +47,7 @@ public:
     void setNewPointerPos(const _UIVec2D& position);
     void UpdatePixelCaches(int sectionX, int sectionZ, bool atVerticalEdge, bool atHorizontalEdge);
     static unsigned int UpdateRegenBiomes(void* data);
+    static C4JThreadImpl* s_regenThread;
 
     CustomImage* getImage(bool wholeMap);
     virtual unsigned int mapElementsAndNames();
@@ -86,8 +84,11 @@ private:
     UIControl_Label mCoordinatesLabel;
     UIControl_Label mFullMapLabel;
     UIControl_HTMLLabel mHelpLabel;
-    UIControl_Base mCursor;
+    UIControl_Cursor mCursor;
     BiomeSource::LayerOverrideSettings mOverrideSettings;
+    int mPreviewZoomLevel;
+    int mTargetZoomLevel;
+    bool mShouldStopRegen;
     bool mRegenerating;
     bool mUpdatePending;
     bool mZoomPending;

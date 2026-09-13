@@ -5,6 +5,9 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/DLCFile.hpp"
+#include "game/core/DLCManager.hpp"
+#include "game/core/DLCPack.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -19,7 +22,7 @@ extern ConsoleUIController gConsoleUIController;
 UIScene_MapVoteMenu::UIScene_MapVoteMenu(int type, void*, UILayer* layer)
     : UIScene(type, layer), m_splitScreen(type == 1), m_votableType(0), m_mapIds(),
       m_levelRuleGroups(), m_defaultTexture(L"MapSelectMenu"), m_selectedVote(-1),
-      m_previousSelection(-1), m_updateVoteInfo(false), m_mapList(), m_mapListTitle(),
+      m_previousSelection(-1), m_updateVoteInfo(false), m_voteTallyText(), m_mapList(), m_mapListTitle(),
       m_mapTitle(), m_mapDescription(), m_mapIcon()
 {
     initialiseMovie();
@@ -58,8 +61,8 @@ void UIScene_MapVoteMenu::InitForMap()
     if (Minecraft::GetMiniGameId() == 0 || Minecraft::GetMiniGameId() > 4)
         type = (LevelRules::ELevelRuleType)0;
     g_pApp->getLevelRules()->getRulesByType(type, &m_levelRuleGroups, false);
-    m_mapTitle.init(UIString(L10N::GetString(m_splitScreen ? 0xd5923bd8 : 0xbeee0712)));
-    m_mapDescription.init(UIString(L"MapSelect"));
+    m_mapTitle.init(UIString(L10N::GetString(m_splitScreen ? 0xc88f6bdb : 0x0e5d7959)));
+    m_mapDescription.init(UIString(L""));
     std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
     mode->GetUniquePlaylist(playlist);
     for (unsigned int i = 0; i < playlist.size(); ++i)
@@ -71,9 +74,9 @@ void UIScene_MapVoteMenu::InitForMap()
             name = playlist[i].name;
         int size = LevelGenerationOptions::GetMapSizeFromUniqueId(playlist[i].uniqueId);
         if (g_pApp->DebugArtToolsOn() && size == 2)
-            name += L" Huge";
+            name += L" (Huge)";
         else if (g_pApp->DebugArtToolsOn() && size == 0)
-            name += L" Small";
+            name += L" (Small)";
         bool checked = mode->GetMapVote(m_playerId, playlist[i].uniqueId) != 0;
         if (checked)
             m_selectedVote = (int)i;
@@ -97,6 +100,12 @@ void UIScene_MapVoteMenu::InitForVariant()
     for (int i = 0; i < count; ++i)
     {
         std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        if (g_pApp->hasArchiveFile(icon, false))
+        {
+            arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(icon, false);
+            if (file.data != 0 && file.length != 0)
+                registerSubstitutionTexture(icon, file.data, file.length, true);
+        }
         std::wstring label = definition->GetLootSetText(i);
         bool checked = mode->GetMapVote(m_playerId, i) != 0;
         if (checked)
@@ -116,6 +125,12 @@ void UIScene_MapVoteMenu::InitForTheme()
     for (unsigned int i = 0; i < 1; ++i)
     {
         std::wstring icon = MiniGameDef::GetVariantIconPath((EMiniGameId)mode->GetNextGameMode(), i);
+        if (g_pApp->hasArchiveFile(icon, false))
+        {
+            arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(icon, false);
+            if (file.data != 0 && file.length != 0)
+                registerSubstitutionTexture(icon, file.data, file.length, true);
+        }
         std::wstring label = L"";
         bool checked = mode->GetMapVote(m_playerId, i) != 0;
         if (checked)
@@ -164,6 +179,8 @@ void UIScene_MapVoteMenu::UpdateVotableInfo()
     if (m_votableType == 0)
     {
         LevelRules::ELevelRuleType type = (LevelRules::ELevelRuleType)Minecraft::GetMiniGameId();
+        if (Minecraft::GetMiniGameId() == 0 || Minecraft::GetMiniGameId() > 4)
+            type = (LevelRules::ELevelRuleType)0;
         LevelGenerationOptions* options = g_pApp->getLevelRules()->getLevelGenFromUniqueId(type, id);
         if (options == 0)
         {
@@ -181,18 +198,46 @@ void UIScene_MapVoteMenu::UpdateVotableInfo()
             m_mapDescription.setLabel(UIString(options->getWorldDescription()), false, false);
         }
         std::wstring image = options->getWorldPreviewImage();
-        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(image, true);
-        if (file.data != 0 && file.length != 0)
-            registerSubstitutionTexture(image, file.data, file.length, true);
-        else
+        DLCFile* file = options->getPack()->getFile(DLCManager::eDLCType_Texture, image, true, true);
+        if (file == 0)
+        {
             m_mapIcon.setTextureName(L"MapSel", true);
+            return;
+        }
+        unsigned int imageSize = 0;
+        unsigned char* imageData = file->getData(imageSize);
+        if (imageData == 0 || imageSize == 0)
+        {
+            m_mapIcon.setTextureName(L"MapSel", true);
+            return;
+        }
+        wchar_t textureName[64];
+        std::swprintf(textureName, 64, L"mapSelect_%08x", options->getUniqueId());
+        registerSubstitutionTexture(std::wstring(textureName), imageData, imageSize, false);
+        m_mapIcon.setTextureName(std::wstring(textureName), true);
     }
-    else if (m_votableType == 1 && m_splitScreen)
+    else if (m_votableType == 1)
     {
         MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(
             (EMiniGameId)Minecraft::GetInstance()->GetClientMasterGameMode()->GetNextGameMode(), true);
-        m_mapTitle.setLabel(UIString(definition->GetLootSetText(selection)), false, false);
-        m_mapDescription.setLabel(UIString(definition->GetLootSetDescription(selection)), false, false);
+        if (m_splitScreen)
+        {
+            m_mapTitle.setLabel(UIString(definition->GetLootSetText(selection)), false, false);
+            m_mapDescription.setLabel(UIString(definition->GetLootSetDescription(selection)), false, false);
+            if (selection == 0)
+                m_mapDescription.setLabel(UIString(L10N::GetString(0xea1ca730)), false, false);
+            else if (selection == 1)
+                m_mapDescription.setLabel(UIString(L10N::GetString(0x28850ed6)), false, false);
+        }
+    }
+    else
+    {
+        m_mapIcon.setTextureName(L"MapSel", true);
+        if (m_splitScreen)
+        {
+            m_mapTitle.setLabel(UIString(L"MapSel"), false, false);
+            m_mapDescription.setLabel(UIString(L"MapSel"), false, false);
+        }
     }
 }
 
@@ -204,7 +249,22 @@ void UIScene_MapVoteMenu::tick()
         m_previousSelection = -1;
     }
     if (!m_splitScreen)
-        UpdateVotableInfo();
+    {
+        std::vector<HtmlString> lines;
+        ClientMasterGameMode* mode = Minecraft::GetInstance()->GetClientMasterGameMode();
+        if (m_votableType == 0)
+            mode->GetCurrentMapVotesText(lines);
+        else if (m_votableType == 1)
+            mode->GetCurrentVariantVotesText(lines);
+        else if (m_votableType == 2)
+            mode->GetCurrentThemeVotesText(lines);
+        std::wstring text = HtmlString::Compose(&lines);
+        if (text.compare(m_voteTallyText) != 0)
+        {
+            m_mapDescription.setLabel(UIString(text), false, false);
+            m_voteTallyText = text;
+        }
+    }
     if (m_updateVoteInfo)
     {
         m_updateVoteInfo = false;

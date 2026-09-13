@@ -11,6 +11,7 @@ class fuiRenderNode;
 
 class FJ_SlotList : public FJ_FuiNode
 {
+    friend class fuiRenderNodeTimeline;
 private:
     int m_slotSize;
     bool m_slotVisible;

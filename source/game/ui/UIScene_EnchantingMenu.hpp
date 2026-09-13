@@ -14,12 +14,6 @@
 class EnchantmentMenu;
 class UILayer;
 
-struct _UIVec2D
-{
-    float x;
-    float y;
-};
-
 class UIScene_EnchantingMenu : public UIScene_AbstractContainerMenu
 {
 public:

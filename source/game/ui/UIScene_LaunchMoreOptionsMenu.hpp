@@ -48,6 +48,8 @@ public:
     virtual int getSceneType();
 
 private:
+    int m_focusedControlId;
+    int m_focusedItemId;
     SliderLogic m_worldSize;
     SliderLogic m_worldType;
     SliderLogic m_gameMode;
@@ -76,6 +78,7 @@ private:
     bool m_online;
     bool m_keyboardActive;
     int m_menuType;
+    bool m_requestKeyboard;
     bool m_updateCheats;
     bool m_updateOnline;
     std::wstring m_seed;

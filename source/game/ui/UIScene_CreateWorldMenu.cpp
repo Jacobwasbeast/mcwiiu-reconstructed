@@ -6,34 +6,56 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/GameType.hpp"
 #include "game/core/L10N.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILayer* layer)
     : IUIScene_StartGame(sceneType, data, layer, false), m_worldNameLabel(),
       m_moreOptionsButton(), m_playButton(), m_worldNameInput(), m_worldIcon(),
-      m_gameModeSlider(), m_onlineCheckbox(), m_worldName(), m_keyboardActive(false),
-      m_callbackData(data)
+      m_keyboardActive(false)
 {
     initialiseMovie();
     m_worldName.assign(L10N::GetString(0x860494ea));
+    m_playerId = sceneType;
     m_worldNameLabel.init(UIString(L10N::GetString(0x9db1d436)));
     m_worldNameInput.init(UIString(m_worldName), 0);
     m_worldNameInput.SetCharLimit(0x19);
     m_gameModeSlider.init(UIString(L10N::GetString(0x9ba782a6)), 1, 0,
-                          Difficulty::PEACEFUL->getId(), Difficulty::HARD->getId(), false, 10, 1);
+                          GameType::CREATIVE->getId(), GameType::SURVIVAL->getId(), false, 10, 1);
     m_moreOptionsButton.init(UIString(L10N::GetString(0xbe1d5b9e)), 3);
     m_playButton.init(UIString(L10N::GetString(0xb0b877e6)), 6);
-    m_onlineCheckbox.init(UIString(L10N::GetString(0x2c692b72)), 5, false);
-    SetEnablePlayGameButton(true);
-    if (layer != NULL)
-        layer->showComponent(sceneType, static_cast<EUIScene>(0x42), true);
+    m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
+    m_texturePackName.init(UIString(L""));
+    m_texturePackDescription.init(UIString(L""));
+    m_launchData.mFlag3 = true;
+    m_difficulty = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(3));
+    wchar_t difficultyLabel[256];
+    std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(0xd324428d),
+                  L10N::GetString(Difficulty::byId(m_difficulty)->getKey()));
+    m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3, m_difficulty, false, 10, 1);
+    bool initialChecked = m_launchData.mFlag0;
+    m_onlineGameCheckBox.SetEnable(true);
+    if (!gProfile->IsSignedIn(m_playerId))
+        m_onlineGameCheckBox.SetEnable(false);
+    if (m_launchData.mFlag17)
+    {
+        m_onlineGameCheckBox.SetEnable(false);
+        initialChecked = false;
+    }
+    m_onlineGameCheckBox.init(UIString(L10N::GetString(0x2c692b72)), 5,
+                              initialChecked);
+    _init();
+    if (data != NULL)
+        ::operator delete(data);
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_CreateWorldMenu::~UIScene_CreateWorldMenu()
@@ -45,13 +67,23 @@ unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
     IUIScene_StartGame::mapElementsAndNames();
     if (m_movie == NULL)
         return 0;
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* root = m_mainPanel.getFuiRenderNode();
     m_worldNameLabel.setupControl(this, root, std::string("WorldName"));
+    m_controls.push_back(&m_worldNameLabel);
     m_worldNameInput.setupControl(this, root, std::string("EditWorldName"));
+    m_controls.push_back(&m_worldNameInput);
+    m_texturePackList.setupControl(this, root, std::string("TexturePackSelector"));
+    m_controls.push_back(&m_texturePackList);
     m_gameModeSlider.setupControl(this, root, std::string("GameModeToggle"));
-    m_onlineCheckbox.setupControl(this, root, std::string("CheckboxOnline"));
+    m_controls.push_back(&m_gameModeSlider);
+    m_onlineGameCheckBox.setupControl(this, root, std::string("CheckboxOnline"));
+    m_controls.push_back(&m_onlineGameCheckBox);
     m_moreOptionsButton.setupControl(this, root, std::string("MoreOptions"));
+    m_controls.push_back(&m_moreOptionsButton);
     m_playButton.setupControl(this, root, std::string("NewWorld"));
+    m_controls.push_back(&m_playButton);
+    m_difficultySlider.setupControl(this, root, std::string("Difficulty"));
+    m_controls.push_back(&m_difficultySlider);
     return 1;
 }
 
@@ -94,7 +126,7 @@ std::wstring UIScene_CreateWorldMenu::getMoviePath()
 void UIScene_CreateWorldMenu::handleGainFocus(bool hadFocus)
 {
     if (hadFocus)
-        m_onlineCheckbox.setChecked(false);
+        m_onlineGameCheckBox.setChecked(false);
 }
 
 void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool released,
@@ -155,7 +187,7 @@ void UIScene_CreateWorldMenu::handlePress(int first, int second)
     }
     else if (first == 3)
         gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(0x2b),
-                                             &m_onlineCheckbox, static_cast<EUILayer>(6),
+                                             &m_launchData, static_cast<EUILayer>(6),
                                              static_cast<EUIGroup>(7));
     else if (first == 4)
         UpdateCurrentTexturePack(second);

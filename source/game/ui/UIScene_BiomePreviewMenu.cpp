@@ -8,15 +8,22 @@
 #include "game/core/HtmlString.hpp"
 #include "game/core/IntCache.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/world/biome/Biome.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
+
+C4JThreadImpl* UIScene_BiomePreviewMenu::s_regenThread = 0;
 
 UIScene_BiomePreviewMenu::CustomImage::CustomImage()
     : mTextureLoaded(0), mPadding(), mImage(), mTexture(0), mTextureData(0), mTextureDataSize(0)
@@ -34,15 +41,41 @@ UIScene_BiomePreviewMenu::CustomImage::~CustomImage()
 UIScene_BiomePreviewMenu::UIScene_BiomePreviewMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), mBiomeMap(), mNavigatorMap(), mMainPanel(), mTimer(), mScrollUp(),
       mScrollDown(), mScrollLeft(), mScrollRight(), mPlayableAreaLabel(), mCoordinatesLabel(),
-      mFullMapLabel(), mHelpLabel(), mCursor(), mOverrideSettings(), mRegenerating(false),
+      mFullMapLabel(), mHelpLabel(), mCursor(), mOverrideSettings(), mPreviewZoomLevel(0),
+      mTargetZoomLevel(0), mShouldStopRegen(false), mRegenerating(false),
       mUpdatePending(false), mZoomPending(false), mPad(0), mPointerX(0.0f), mPointerY(0.0f),
       mPointerWidth(0.0f), mPointerHeight(0.0f), mMapWidth(0.0f), mMapHeight(0.0f),
       mNavigatorWidth(0.0f), mNavigatorHeight(0.0f), mCriticalSection()
 {
+    initialiseMovie();
+    mHelpLabel.init(UIString(L""));
+    mFullMapLabel.init(UIString(L10N::GetString(0xb0507c4a)));
+    mPlayableAreaLabel.init(UIString(L""));
+    mCoordinatesLabel.init(UIString(L"0, 0"));
+    mTimer.setVisible(false);
+    mOverrideSettings.SetWidthInChunksToDisplay(0x36, 0);
+    mPreviewZoomLevel = mTargetZoomLevel = (int)mOverrideSettings.GetZoomLevel();
+    InitializeCriticalSection(&mCriticalSection);
+    s_regenThread = new C4JThreadImpl(reinterpret_cast<int (*)(void*)>(&UIScene_BiomePreviewMenu::UpdateRegenBiomes),
+                                       this, "Regenerating Section", 0);
+    s_regenThread->SetProcessor(0);
+    s_regenThread->Run();
 }
 
 UIScene_BiomePreviewMenu::~UIScene_BiomePreviewMenu()
 {
+    mShouldStopRegen = true;
+    if (s_regenThread != 0)
+    {
+        s_regenThread->WaitForCompletion(-1);
+        delete s_regenThread;
+        s_regenThread = 0;
+    }
+    DeleteCriticalSection(&mCriticalSection);
+    wchar_t biomeName[15];
+    swprintf(biomeName, 15, L"BiomePreview_%d", mPreviewZoomLevel);
+    gConsoleUIController.unregisterSubstitutionTexture(biomeName, true);
+    gConsoleUIController.unregisterSubstitutionTexture(L"NavigatorPreview", true);
 }
 
 void UIScene_BiomePreviewMenu::setNewPointerPos(float x, float y)
@@ -147,26 +180,48 @@ unsigned int UIScene_BiomePreviewMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
     mMainPanel.setupControl(this, root, "MainPanel");
-    mBiomeMap.mImage.setupControl(this, mMainPanel.getFuiRenderNode(), "BitmapBiomeMap");
-    mNavigatorMap.mImage.setupControl(this, mMainPanel.getFuiRenderNode(), "NavigatorBiomeMap");
-    mPlayableAreaLabel.setupControl(this, root, "PlayableAreaLabel");
-    mFullMapLabel.setupControl(this, root, "FullMapLabel");
-    mCoordinatesLabel.setupControl(this, root, "CoordinatesLabel");
-    mTimer.setupControl(this, root, "Timer");
-    mHelpLabel.setupControl(this, root, "Html_Help");
-    mCursor.setupControl(this, root, "cursor");
+    m_controls.push_back(&mMainPanel);
+
+    fuiRenderNode* panel = mMainPanel.getFuiRenderNode();
+    mBiomeMap.mImage.setupControl(this, panel, "BitmapBiomeMap");
+    m_controls.push_back(&mBiomeMap.mImage);
+    mNavigatorMap.mImage.setupControl(this, panel, "NavigatorBiomeMap");
+    m_controls.push_back(&mNavigatorMap.mImage);
+    mPlayableAreaLabel.setupControl(this, panel, "PlayableAreaLabel");
+    m_controls.push_back(&mPlayableAreaLabel);
+    mFullMapLabel.setupControl(this, panel, "FullMapLabel");
+    m_controls.push_back(&mFullMapLabel);
+    mCoordinatesLabel.setupControl(this, panel, "CoordinatesLabel");
+    m_controls.push_back(&mCoordinatesLabel);
+    mTimer.setupControl(this, panel, "Timer");
+    m_controls.push_back(&mTimer);
+    mHelpLabel.setupControl(this, panel, "Html_Help");
+    m_controls.push_back(&mHelpLabel);
+    mCursor.setupControl(this, panel, "cursor");
+    m_controls.push_back(&mCursor);
+    mScrollUp.setupControl(this, panel, "ScrollUp");
+    m_controls.push_back(&mScrollUp);
+    mScrollDown.setupControl(this, panel, "ScrollDown");
+    m_controls.push_back(&mScrollDown);
+    mScrollLeft.setupControl(this, panel, "ScrollLeft");
+    m_controls.push_back(&mScrollLeft);
+    mScrollRight.setupControl(this, panel, "ScrollRight");
+    m_controls.push_back(&mScrollRight);
     return 1;
 }
 
 void UIScene_BiomePreviewMenu::updateTooltips()
 {
-    int scale = (int)mOverrideSettings.GetGenerationScale();
     int zoom = (int)mOverrideSettings.GetZoomLevel();
+    int zoomTooltip = zoom == 1 ? -2 : zoom == 2 ? 0x5b2efac2 : -1;
+    int scaleTooltip = zoom < 2 ? 0x5b2efac2 : -1;
+    int scale = (int)mOverrideSettings.GetGenerationScale();
+    int scaleSlot6 = scale == 1 ? -2 : scale == 2 ? 0x7bc900dd : -1;
+    int scaleSlot7 = (scale == 0 || scale == 1) ? 0x7bc900dd : -1;
+
     gConsoleUIController.SetTooltips(0, 0xd8a6b805, 0xe21d8023, 0xd30e0a41, -1,
-                                     zoom == 0 ? -1 : zoom == 1 ? -2 : -1,
-                                     scale == 2 ? 0x5b2efac2 : -1,
-                                     scale == 1 ? -2 : scale == 2 ? 0x7bc900dd : -1,
-                                     0x7bc900dd, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+                                     zoomTooltip, scaleTooltip, scaleSlot6, scaleSlot7,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
 void UIScene_BiomePreviewMenu::updateComponents()
@@ -186,10 +241,16 @@ void UIScene_BiomePreviewMenu::customDraw(const char*, fuiRect*)
 
 void UIScene_BiomePreviewMenu::dmouse(float& x, float& y, float& width, float& height)
 {
-    x = mPointerX;
-    y = mPointerY;
-    width = mPointerWidth;
-    height = mPointerHeight;
+    double sensitivity = (double)GameSettings::GetGameSettings(m_playerId, (eGameSetting)5) / 100.0;
+    x = (float)(g_pInput->GetJoypadStick_Menu_RX(m_playerId) * sensitivity);
+    y = (float)(g_pInput->GetJoypadStick_Menu_RY(m_playerId) * sensitivity);
+    if (fabsf(x) < 0.01f)
+        width = 0.0f;
+    else
+        width = x / fabsf(x);
+    height = 0.0f;
+    if (fabsf(y) >= 0.01f)
+        height = y / fabsf(y);
 }
 
 void UIScene_BiomePreviewMenu::componentExtents(UIControl& control, float& left, float& top,
@@ -244,17 +305,39 @@ void UIScene_BiomePreviewMenu::UpdatePreviewImage(const arrayWithLength<unsigned
 {
     if (pixels.data == 0 || pixels.length == 0)
         return;
+    int imageWidth = mOverrideSettings.GetImageWidth();
+    std::wstring textureName = L"NavigatorPreview";
+    if (!wholeMap)
+    {
+        wchar_t nameBuf[15];
+        int zoomLevel = mTargetZoomLevel;
+        if (mTargetZoomLevel != mPreviewZoomLevel)
+        {
+            if (!mBiomeMap.mTextureLoaded)
+            {
+                mPreviewZoomLevel = zoomLevel;
+            }
+            else
+            {
+                wchar_t oldNameBuf[15];
+                swprintf(oldNameBuf, 15, L"BiomePreview_%d", mPreviewZoomLevel);
+                gConsoleUIController.unregisterSubstitutionTexture(oldNameBuf, true);
+                mBiomeMap.mTextureLoaded = false;
+                mBiomeMap.mTexture = GlStateManager::genTexture();
+                mPreviewZoomLevel = zoomLevel;
+            }
+        }
+        double scale = pow(2.0, (double)zoomLevel);
+        swprintf(nameBuf, 15, L"BiomePreview_%d", zoomLevel);
+        imageWidth = (int)((double)imageWidth / scale);
+        textureName = nameBuf;
+    }
     CustomImage* image = getImage(wholeMap);
     if (!image->mTextureLoaded)
     {
         image->mTextureLoaded = true;
-        gConsoleUIController.registerSubstitutionTexture(wholeMap ? L"NavigatorPreview" : L"BiomePreview",
-                                                         image->mTexture);
-        image->mImage.setTextureName(wholeMap ? L"NavigatorPreview" : L"BiomePreview", true);
-    }
-    else
-    {
-        image->mImage.tick();
+        gConsoleUIController.registerSubstitutionTexture(textureName.c_str(), image->mTexture);
+        image->mImage.setTextureName(textureName.c_str(), true);
     }
     if (!wholeMap)
         setNewPointerPos(mPointerX, mPointerY);
@@ -264,8 +347,34 @@ void UIScene_BiomePreviewMenu::tick()
 {
     UIScene::tick();
     onMouseTick();
-    if (!mRegenerating)
-        mUpdatePending = true;
+    int width = 0;
+    int height = 0;
+    m_layer->getRenderDimensions(width, height);
+    if (width == 0x500 && height == 0x1e0)
+        width = 0x280;
+    gFui->dispatchMouseMoveEvent(m_movie, mPointerX * (float)width / (float)m_stageWidth,
+                                 mPointerY * (float)height / (float)m_stageHeight);
+    if (mRegenerating && TryEnterCriticalSection(&mCriticalSection))
+    {
+        arrayWithLength<unsigned char> navigatorPixels;
+        navigatorPixels.data = mNavigatorMap.mTextureData;
+        navigatorPixels.length = mNavigatorMap.mTextureDataSize;
+        UpdatePreviewImage(navigatorPixels, true);
+        if (!mOverrideSettings.isZoomed() || mTargetZoomLevel == 0)
+        {
+            mTargetZoomLevel = 0;
+            UpdatePreviewImage(navigatorPixels, false);
+        }
+        else
+        {
+            arrayWithLength<unsigned char> biomePixels;
+            biomePixels.data = mBiomeMap.mTextureData;
+            biomePixels.length = mBiomeMap.mTextureDataSize;
+            UpdatePreviewImage(biomePixels, false);
+        }
+        mRegenerating = false;
+        LeaveCriticalSection(&mCriticalSection);
+    }
 }
 
 void UIScene_BiomePreviewMenu::updateMapNavigatorFromOverrideSettings()
@@ -283,8 +392,8 @@ void UIScene_BiomePreviewMenu::handleScale(bool increase)
         updateTooltips();
         EnterCriticalSection(&mCriticalSection);
         updateMapNavigatorFromOverrideSettings();
+        memset(mNavigatorMap.mTextureData, 0, mNavigatorMap.mTextureDataSize);
         mUpdatePending = true;
-        mRegenerating = true;
         LeaveCriticalSection(&mCriticalSection);
     }
 }
@@ -296,6 +405,7 @@ void UIScene_BiomePreviewMenu::handleZoom(bool zoomIn)
     LeaveCriticalSection(&mCriticalSection);
     if (changed)
     {
+        updateTooltips();
         updateMapNavigatorFromOverrideSettings();
         mZoomPending = true;
     }
@@ -304,38 +414,151 @@ void UIScene_BiomePreviewMenu::handleZoom(bool zoomIn)
 void UIScene_BiomePreviewMenu::handleNavigate(ENavDir direction)
 {
     arrayWithLength<unsigned char> pixels;
-    bool changed = false;
-    EnterCriticalSection(&mCriticalSection);
-    switch (direction)
+    pixels.data = mNavigatorMap.mTextureData;
+    pixels.length = mNavigatorMap.mTextureDataSize;
+    if (!mOverrideSettings.isZoomed())
     {
-    case NAV_UP: changed = mOverrideSettings.ScrollUp(pixels); break;
-    case NAV_DOWN: changed = mOverrideSettings.ScrollDown(pixels); break;
-    case NAV_LEFT: changed = mOverrideSettings.ScrollLeft(pixels); break;
-    case NAV_RIGHT: changed = mOverrideSettings.ScrollRight(pixels); break;
+        EnterCriticalSection(&mCriticalSection);
+        switch (direction)
+        {
+        case NAV_LEFT: mOverrideSettings.RegenerateLeft(pixels); break;
+        case NAV_RIGHT: mOverrideSettings.RegenerateRight(pixels); break;
+        case NAV_UP: mOverrideSettings.RegenerateUp(pixels); break;
+        case NAV_DOWN: mOverrideSettings.RegenerateDown(pixels); break;
+        }
+        LeaveCriticalSection(&mCriticalSection);
+        mUpdatePending = true;
     }
-    LeaveCriticalSection(&mCriticalSection);
-    if (changed)
-        UpdatePreviewImage(pixels, false);
+    else
+    {
+        bool changed = false;
+        EnterCriticalSection(&mCriticalSection);
+        switch (direction)
+        {
+        case NAV_LEFT: changed = mOverrideSettings.ScrollLeft(pixels); break;
+        case NAV_RIGHT: changed = mOverrideSettings.ScrollRight(pixels); break;
+        case NAV_UP: changed = mOverrideSettings.ScrollUp(pixels); break;
+        case NAV_DOWN: changed = mOverrideSettings.ScrollDown(pixels); break;
+        }
+        LeaveCriticalSection(&mCriticalSection);
+        mUpdatePending = true;
+        if (changed)
+        {
+            mZoomPending = true;
+            updateMapNavigatorFromOverrideSettings();
+        }
+    }
 }
 
 void UIScene_BiomePreviewMenu::handleInput(int playerId, int action, bool repeat, bool released,
                                             bool pressed, bool& handled)
 {
-    if (pressed)
-    {
-        if (action == 0x42) handleScale(true);
-        else if (action == 0x43) handleScale(false);
-        else if (action == 0x44) handleZoom(true);
-        else if (action == 0x45) handleZoom(false);
-        else if (action == 0x46) handleNavigate(NAV_UP);
-        else if (action == 0x47) handleNavigate(NAV_DOWN);
-        else if (action == 0x48) handleNavigate(NAV_LEFT);
-        else if (action == 0x49) handleNavigate(NAV_RIGHT);
-        else if (action == 0x4a) navigateBack();
-        else return;
-        handled = true;
-    }
     gConsoleUIController.AnimateKeyPress(playerId, action, repeat, released, pressed);
+    switch (action)
+    {
+    case 2:
+        if (released)
+        {
+            EnterCriticalSection(&mCriticalSection);
+            mOverrideSettings.GenerateNewSeed();
+            wchar_t seedText[64];
+            swprintf(seedText, 64, L"%lld", mOverrideSettings.GetSeed());
+            mPlayableAreaLabel.setLabel(UIString(seedText), false, false);
+            updateTooltips();
+            updateMapNavigatorFromOverrideSettings();
+            memset(mNavigatorMap.mTextureData, 0, mNavigatorMap.mTextureDataSize);
+            mUpdatePending = true;
+            LeaveCriticalSection(&mCriticalSection);
+            handled = true;
+        }
+        break;
+    case 4:
+        if (released)
+        {
+            handleNavigate(NAV_UP);
+            handled = true;
+        }
+        break;
+    case 5:
+        if (released)
+        {
+            handleNavigate(NAV_DOWN);
+            handled = true;
+        }
+        break;
+    case 6:
+        if (released)
+            handleNavigate(NAV_RIGHT);
+        handled = true;
+        break;
+    case 7:
+        if (released)
+        {
+            handleNavigate(NAV_LEFT);
+            handled = true;
+        }
+        break;
+    case 8:
+        if (!released)
+            return;
+        if (!repeat)
+        {
+            handleZoom(true);
+            handled = true;
+            return;
+        }
+        handled = true;
+        break;
+    case 9:
+        if (!released)
+            return;
+        if (!repeat)
+        {
+            handleZoom(false);
+            handled = true;
+            return;
+        }
+        handled = true;
+        break;
+    case 10:
+        if (!released)
+            return;
+        if (!repeat)
+        {
+            handleScale(true);
+            handled = true;
+            return;
+        }
+        handled = true;
+        break;
+    case 11:
+        if (!released)
+            return;
+        if (!repeat)
+        {
+            handleScale(false);
+            handled = true;
+            return;
+        }
+        handled = true;
+        break;
+    case 0x14:
+        if (released)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
+    case 0x15:
+        if (released)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 UIControl* UIScene_BiomePreviewMenu::GetMainPanel()
