@@ -6,6 +6,8 @@
 PlayerUID getPlayerUID(int playerIndex, bool includeOffline);
 unsigned int hash_value(const PlayerUID& uid);
 
+MiniGameOptionCache gMiniGameOptionCache;
+
 unsigned int MiniGameOptionCacheKeyHasher::operator()(const std::pair<PlayerUID, EMiniGameId>& key) const
 {
     return hash_value(key.first) ^ static_cast<unsigned int>(key.second);

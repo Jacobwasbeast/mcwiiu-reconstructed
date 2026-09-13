@@ -11,11 +11,13 @@
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
+#include "game/core/XmlParser.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Item.hpp"
 #include "game/network/ClientboundMGPlayerSettingsUpdatePacket.hpp"
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/util/GameModeUtilities.hpp"
+#include "game/world/block/Blocks.hpp"
 
 class Block;
 
@@ -27,7 +29,7 @@ static unsigned int sCrcTable[256];
 
 static Block* sBlackList[] = { NULL };
 static Block* sWhiteList[] = { NULL };
-static Block* sPlacementRestrictedList[] = { NULL };
+static Block* sPlacementRestrictedList[18] = { NULL };
 
 static bool sBlackListInitialised;
 static bool sWhiteListInitialised;
@@ -114,6 +116,23 @@ Block** getPlacementRestrictedList()
 {
     if (!sPlacementRestrictedListInitialised)
     {
+        sPlacementRestrictedList[0] = Blocks::torch;
+        sPlacementRestrictedList[1] = Blocks::redstone_torch;
+        sPlacementRestrictedList[2] = Blocks::wooden_pressure_plate;
+        sPlacementRestrictedList[3] = Blocks::acacia_pressure_plate;
+        sPlacementRestrictedList[4] = Blocks::birch_pressure_plate;
+        sPlacementRestrictedList[5] = Blocks::dark_oak_pressure_plate;
+        sPlacementRestrictedList[6] = Blocks::jungle_pressure_plate;
+        sPlacementRestrictedList[7] = Blocks::spruce_pressure_plate;
+        sPlacementRestrictedList[8] = Blocks::stone_pressure_plate;
+        sPlacementRestrictedList[9] = Blocks::heavy_weighted_pressure_plate;
+        sPlacementRestrictedList[10] = Blocks::light_weighted_pressure_plate;
+        sPlacementRestrictedList[11] = Blocks::rail;
+        sPlacementRestrictedList[12] = Blocks::golden_rail;
+        sPlacementRestrictedList[13] = Blocks::detector_rail;
+        sPlacementRestrictedList[14] = Blocks::activator_rail;
+        sPlacementRestrictedList[15] = Blocks::snow_layer;
+        sPlacementRestrictedList[16] = Blocks::carpet;
         sPlacementRestrictedListInitialised = true;
     }
     return sPlacementRestrictedList;
@@ -666,12 +685,8 @@ void MiniGameDef::setCRC(unsigned int crc) { mCrc = crc; }
 
 MiniGameDef* MiniGameDef::parseMiniGameDef(arrayWithLength<unsigned char> data)
 {
-    if (data.data == NULL || data.length == 0) return NULL;
-    std::wstring xml(data.length, L'\0');
-    for (unsigned int i = 0; i < data.length; ++i) xml[i] = data.data[i];
-    XmlObject object(xml);
-    MiniGameDef* result = parseMiniGameDef(&object);
-    if (result != NULL) result->setCRC(CRC(data.data, data.length));
+    MiniGameDef* result = parseMiniGameDef(XmlParser::readXml(data.data, data.length));
+    result->setCRC(CRC(data.data, data.length));
     return result;
 }
 

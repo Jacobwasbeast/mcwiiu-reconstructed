@@ -30,7 +30,7 @@ unsigned int IUIScene_MiniGames::GetVariantDesc(int index, bool alternate)
 void IUIScene_MiniGames::SetUpVariants()
 {
     MiniGameDef* miniGame = mOnlineRestricted->GetMiniGame();
-    int optionsCount = miniGame->GetOptionsCount(eCustomGameModeHostOption_GameVariant);
+    int optionsCount = miniGame->GetOptionsCount(eCustomGameModeHostOption_ModeVariant);
     unsigned int id = miniGame->GetId();
     if (id != 0)
     {
@@ -84,8 +84,8 @@ void IUIScene_MiniGames::SetUpVariants()
             }
             mVariants[1].mPlayLabel = 0x7ec1ad4c;
             mVariants[1].mDescription = 0xb6a97e24;
+            mVariants[1].mPlayLabelAlt = -1;
             mVariants[1].mDescriptionAlt = -1;
-            mVariants[2].mPlayLabelAlt = -1;
             return;
         }
         mVariants[0].mPlayLabel = -1;
