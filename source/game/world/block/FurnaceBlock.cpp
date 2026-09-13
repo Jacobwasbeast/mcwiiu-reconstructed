@@ -21,9 +21,10 @@
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/FurnaceBlockEntity.hpp"
+#include "game/world/block/Material.hpp"
 
 FurnaceBlock::FurnaceBlock(bool lit)
-    : BaseEntityBlock(NULL), mLit(lit), mTopIcon(NULL), mFrontIcon(NULL)
+    : BaseEntityBlock(Material::STONE), mLit(lit), mTopIcon(NULL), mFrontIcon(NULL)
 {
     mBlockEntity = true;
     DerivedInit();

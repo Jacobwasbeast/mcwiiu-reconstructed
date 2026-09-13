@@ -5,6 +5,7 @@
 GlassBlock::GlassBlock(Material* material, bool ignoreSimilarity)
     : HalfTransparentBlock(L"glass", material, ignoreSimilarity)
 {
+    DerivedInit();
 }
 
 GlassBlock::~GlassBlock()

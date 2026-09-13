@@ -70,15 +70,22 @@ void BannerBlockEntity::setItemValues(not_null_ptr<ItemInstance> item, bool useB
 
 ItemInstance* BannerBlockEntity::addTags(ItemInstance* item, int color, ListTag* patterns)
 {
-    addTags(not_null_ptr<ItemInstance>(item), color, patterns);
+    CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(L"BlockEntityTag"));
+    if (tag == NULL)
+    {
+        tag = new CompoundTag();
+        item->addTagElement(L"BlockEntityTag", tag);
+    }
+    if (!tag->contains(L"Base"))
+        tag->putInt(L"Base", color);
+    if (patterns != NULL)
+        tag->put(L"Patterns", patterns);
     return item;
 }
 
 void BannerBlockEntity::addTags(not_null_ptr<ItemInstance> item, int color, ListTag* patterns)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(L"BlockEntityTag"));
-    if (!tag->contains(L"Base")) tag->putInt(L"Base", color);
-    if (patterns != NULL) tag->put(L"Patterns", patterns);
+    addTags(item.get(), color, patterns);
 }
 
 not_null_ptr<ItemInstance> BannerBlockEntity::getItem()

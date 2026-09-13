@@ -30,7 +30,6 @@ static AbstractProperty<bool>* sLockedProperty = static_cast<AbstractProperty<bo
 
 RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
 {
-    ClearDerivedInit();
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
     TypedBoxed<const Direction*> facing(Direction::NORTH);

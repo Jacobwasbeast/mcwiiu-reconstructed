@@ -13,7 +13,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
-#include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -45,7 +45,7 @@ TripWireHookBlock::~TripWireHookBlock() {}
 
 void TripWireHookBlock::blockStaticCtor()
 {
-    FACING = DirectionalBlock::FACING;
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
     POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
     ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
     DISARMED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"disarmed"));

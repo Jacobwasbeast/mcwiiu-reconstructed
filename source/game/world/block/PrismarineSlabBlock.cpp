@@ -167,8 +167,14 @@ Boxed* PrismarineSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstan
 
 BlockStateDefinition* PrismarineSlabBlock::createBlockStateDefinition()
 {
-    const Property* properties[2] = { isFullSize() ? NULL : TYPE, VARIANT };
-    return new BlockStateDefinition(this, properties, isFullSize() ? 1 : 2);
+    if (isFullSize())
+    {
+        const Property* properties[] = { VARIANT };
+        return new BlockStateDefinition(this, properties, 1);
+    }
+
+    const Property* properties[] = { TYPE, VARIANT };
+    return new BlockStateDefinition(this, properties, 2);
 }
 
 TextureAtlasSprite* PrismarineSlabBlock::getTexture(const Direction* direction, const BlockState* state)

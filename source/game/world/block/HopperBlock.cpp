@@ -18,12 +18,14 @@
 #include "game/world/block/HopperBlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
 
 static DirectionProperty* HopperBlock_FACING = NULL;
 static Property* HopperBlock_ENABLED = NULL;
 
 HopperBlock::HopperBlock()
-    : BaseEntityBlock(NULL), mTopTexture(NULL), mSideTexture(NULL), mBottomTexture(NULL)
+    : BaseEntityBlock(Material::METAL, MaterialColor::STONE), mTopTexture(NULL), mSideTexture(NULL), mBottomTexture(NULL)
 {
     mBlockEntity = true;
     DerivedInit();

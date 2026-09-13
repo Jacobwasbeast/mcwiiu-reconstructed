@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
 #include <typeinfo>
@@ -75,7 +76,7 @@ void HalfSlabBlock::blockStaticCtor()
         values.insert(HALVES[i]);
     }
 
-    TYPE = EnumProperty<Half*>::create(name, typeid(Half), values, NULL);
+    TYPE = EnumProperty<Half*>::create(name, typeid(Half), values, Predicates<Half*>::alwaysTrue);
 }
 
 HalfSlabBlock::HalfSlabBlock(Material* material)

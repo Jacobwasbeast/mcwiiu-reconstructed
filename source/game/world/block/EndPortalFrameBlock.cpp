@@ -48,10 +48,11 @@ static Predicate<BlockInWorld*>* portalFramePredicate(const Direction* facing)
 }
 
 EndPortalFrameBlock::EndPortalFrameBlock()
-    : Block(Material::STONE, MaterialColor::STONE),
+    : Block(Material::STONE, MaterialColor::COLOR_GREEN),
       mTopIcon(NULL),
       mEyeIcon(NULL)
 {
+    DerivedInit();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
     TypedBoxed<bool> eye(false);
     registerDefaultState(

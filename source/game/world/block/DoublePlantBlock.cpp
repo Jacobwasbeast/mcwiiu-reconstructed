@@ -1,5 +1,9 @@
 #include "game/world/block/DoublePlantBlock.hpp"
 
+#include <typeinfo>
+
+#include <boost/unordered_set.hpp>
+
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/Item.hpp"
@@ -15,6 +19,7 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
 AbstractProperty<DoublePlantBlock::Variant*>* DoublePlantBlock::VARIANT = NULL;
@@ -88,6 +93,20 @@ void DoublePlantBlock::blockStaticCtor()
         VARIANTS[5] = new Variant(5, L"paeonia", 180, 180, NULL);
         gDoublePlantGrass = VARIANTS[2];
         gDoublePlantFern = VARIANTS[3];
+
+        boost::unordered_set<Variant*> variants;
+        for (int i = 0; i < 6; ++i)
+        {
+            variants.insert(VARIANTS[i]);
+        }
+        VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant*), variants,
+                                                 Predicates<Variant*>::alwaysTrue);
+
+        boost::unordered_set<Half*> halves;
+        halves.insert(HALVES[0]);
+        halves.insert(HALVES[1]);
+        HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves,
+                                           Predicates<Half*>::alwaysTrue);
     }
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
@@ -190,7 +209,7 @@ int DoublePlantBlock::convertBlockStateToLegacyData(const BlockState* state)
 unsigned int DoublePlantBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData) { return Block::GetInteractTooltip(tooltipData); }
 BlockStateDefinition* DoublePlantBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT, HALF, FACING };
+    const Property* properties[] = { HALF, VARIANT, FACING };
     return new BlockStateDefinition(this, properties, 3);
 }
 EBlockOffsetType DoublePlantBlock::getOffsetType() { return BLOCK_OFFSET_XZ; }

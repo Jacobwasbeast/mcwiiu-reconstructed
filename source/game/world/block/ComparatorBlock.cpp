@@ -24,12 +24,16 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/ComparatorBlockEntity.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static EnumProperty<ComparatorBlock::ComparatorMode*>* sModeProperty = NULL;
 static ComparatorBlock::ComparatorMode* sCompareMode = NULL;
 static ComparatorBlock::ComparatorMode* sSubtractMode = NULL;
+static AbstractProperty<bool>* sPoweredProperty =
+    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
 
 class ComparatorModePredicate : public Predicate<ComparatorBlock::ComparatorMode*>
 {
@@ -49,7 +53,21 @@ bool ComparatorBlock::EntitySelector::apply(boost::shared_ptr<Entity> entity) co
     return entity && entity->getDirection() == mDirection;
 }
 
-ComparatorBlock::ComparatorBlock(bool on) : DiodeBlock(on) {}
+ComparatorBlock::ComparatorBlock(bool on) : DiodeBlock(on)
+{
+    DerivedInit();
+
+    TypedBoxed<const Direction*> facing(Direction::NORTH);
+    TypedBoxed<bool> powered(false);
+    TypedBoxed<ComparatorMode*> mode(sCompareMode);
+
+    registerDefaultState(mStateDefinition->any()
+                             ->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing)
+                             ->setBoxedValue(sPoweredProperty, &powered)
+                             ->setBoxedValue(sModeProperty, &mode));
+
+    mBlockEntity = true;
+}
 ComparatorBlock::~ComparatorBlock() {}
 
 boost::shared_ptr<BlockEntity> ComparatorBlock::newBlockEntity(Level*, int)
@@ -226,8 +244,9 @@ const BlockState* ComparatorBlock::mirror(const BlockState* state, Mirror* mirro
 
 BlockStateDefinition* ComparatorBlock::createBlockStateDefinition()
 {
-    const Property* properties[2] = { HorizontalDirectionalBlock::FACING_PROPERTY, sModeProperty };
-    return new BlockStateDefinition(this, properties, 2);
+    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, sModeProperty,
+                                     sPoweredProperty };
+    return new BlockStateDefinition(this, properties, 3);
 }
 
 const BlockState* ComparatorBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)

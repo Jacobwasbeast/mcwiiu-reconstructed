@@ -2,9 +2,10 @@
 
 #include "game/item/Items.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/Material.hpp"
 
 BookshelfBlock::BookshelfBlock()
-    : Block(0)
+    : Block(Material::WOOD)
 {
     DerivedInit();
 }

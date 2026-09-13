@@ -10,6 +10,7 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Material.hpp"
 
 static StoneBrickBlock::Variant gStoneBrickVariant0(0, L"stonebrick", 0);
 static StoneBrickBlock::Variant gStoneBrickVariant1(1, L"mossy_stonebrick", 1);
@@ -70,7 +71,7 @@ void StoneBrickBlock::blockStaticCtor()
 }
 
 StoneBrickBlock::StoneBrickBlock()
-    : Block(NULL)
+    : Block(Material::STONE)
 {
     DerivedInit();
     TypedBoxed<Variant*> value(Variant::DEFAULT);

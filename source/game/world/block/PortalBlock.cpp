@@ -45,8 +45,9 @@ static const AABB* gPortalShapeZ = AABB::newPermanent(0.0, 0.0, 0.0, 0.001, 1.0,
 PortalBlock::PortalBlock()
     : HalfTransparentBlock(L"portal", Material::PORTAL, false)
 {
+    DerivedInit();
     TypedBoxed<Direction::Axis*> axis(Direction::Axis::X);
-    registerDefaultState(defaultBlockState()->setBoxedValue(gPortalAxis, &axis));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(gPortalAxis, &axis));
     setTicking(true);
 }
 

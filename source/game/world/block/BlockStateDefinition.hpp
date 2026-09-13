@@ -6,17 +6,18 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
-#include "game/world/block/BlockState.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/block/AbstractBlockState.hpp"
 
 class AABB; class Block; class BlockPos; class Boxed; class Direction; class Entity; class Level; class LevelSource; class Material; class MaterialColor; class Mirror; class Player; class Property; class Rotation; class Vec3; class HitResult;
 
 class BlockStateDefinition
 {
 public:
-    class BlockStateImpl : public BlockState
+    class BlockStateImpl : public AbstractBlockState
     {
     public:
-        BlockStateImpl(BlockStateDefinition* definition, unsigned short elementId);
+        BlockStateImpl(BlockStateDefinition* definition, unsigned short data);
         virtual bool triggerEvent(Level*, const BlockPos&, int, int) const;
         virtual void neighborChanged(Level*, const BlockPos&, Block*, const BlockPos&) const;
         bool valuesContainsKey(const Property*) const;
@@ -28,7 +29,6 @@ public:
         virtual Block* getBlock() const;
         virtual bool equals(const BlockState*);
         virtual int hashCode() const;
-        virtual std::wstring toString() const;
         virtual Material* getMaterial() const;
         virtual bool isSolid() const;
         virtual bool isValidSpawn(boost::shared_ptr<Entity>) const;
@@ -69,13 +69,12 @@ public:
         virtual Vec3* getOffset(LevelSource*, const BlockPos&) const;
         virtual bool isViewBlocking() const;
         virtual EBlockFaceShape getBlockFaceShape(LevelSource*, const BlockPos&, const Direction*) const;
-        virtual const BlockState* cycle(const Property*) const;
-        void populateNeighbours(boost::unordered_map<std::map<const Property*, Boxed*> , BlockStateImpl*>*);
-        void makeNeighbourValues(const Property*, Boxed*, boost::unordered_map<const Property*, Boxed*>&);
+
     public:
-        BlockStateDefinition* mDefinition;
         Block* mBlock;
-        boost::unordered_map<const Property*, Boxed*> mValues;
+        BlockStateDefinition* mDefinition;
+        unsigned short mData;
+        mutable const MaterialColor* mCachedMapColor;
     };
 
     explicit BlockStateDefinition(Block* block);
@@ -84,21 +83,22 @@ public:
     const std::vector<const BlockState*>& getPossibleBlockStates() const;
     Block* getBlock() const;
     const std::vector<const Property*>& getProperties() const;
-    std::vector<const std::vector<Boxed*>*> getPropertyValues();
+    std::vector<const std::vector<Boxed*>*>* getPropertyValues();
     void _init(Block*, const Property**, unsigned int);
     static std::wstring PROPERTY_TO_STRING_FUNCTION(const Property*);
     bool hasProperty(const Property*) const;
     Boxed* getPropertyValue(const Property*, unsigned short) const;
     BlockStateImpl* getNeighbour(const Property*, Boxed*, unsigned short) const;
-    const boost::unordered_map<const Property*, Boxed*>* getValues(unsigned short) const;
+    boost::unordered_map<const Property*, Boxed*>* getValues(unsigned short) const;
     std::wstring toString();
+
 private:
     Block* mBlock;
     std::vector<const Property*> mProperties;
-    std::vector<BlockStateImpl*> mStates;
+    arrayWithLength<BlockStateImpl*> mStates;
+    unsigned char* mBitOffsets;
+    unsigned short* mBitMasks;
     std::vector<const BlockState*> mPossibleStates;
-    std::vector<unsigned char> mBitOffsets;
-    std::vector<unsigned short> mBitMasks;
 };
 
 #endif

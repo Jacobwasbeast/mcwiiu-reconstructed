@@ -12,7 +12,7 @@
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
 
 MobSpawnerBlock::MobSpawnerBlock()
-    : BaseEntityBlock(NULL)
+    : BaseEntityBlock(Material::STONE)
 {
     DerivedInit();
 }

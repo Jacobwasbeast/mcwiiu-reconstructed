@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TallGrassBlock.hpp"
 
 #include <typeinfo>
@@ -83,7 +84,7 @@ void TallGrassBlock::blockStaticCtor()
         values.insert(VARIANTS[0]);
         values.insert(VARIANTS[1]);
         values.insert(VARIANTS[2]);
-        VARIANT = EnumProperty<Variant*>::create(L"type", typeid(Variant), values, NULL);
+        VARIANT = EnumProperty<Variant*>::create(L"type", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
         TallGrassBlock_VARIANT = VARIANT;
     }
 }

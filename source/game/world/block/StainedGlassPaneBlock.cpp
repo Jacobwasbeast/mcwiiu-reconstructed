@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
 #include <typeinfo>
@@ -36,7 +37,7 @@ void StainedGlassPaneBlock::blockStaticCtor()
         colors.insert(DyeColor::byBlockData(data));
     }
 
-    gStainedGlassPaneColor = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, NULL);
+    gStainedGlassPaneColor = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 StainedGlassPaneBlock::StainedGlassPaneBlock()

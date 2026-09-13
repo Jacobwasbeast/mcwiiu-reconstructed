@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/WoodSlabBlock.hpp"
 
 #include <typeinfo>
@@ -34,7 +35,7 @@ void WoodSlabBlock::blockStaticCtor()
     }
 
     gWoodSlabVariantProperty = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values, NULL);
+        L"variant", typeid(PlanksBlock::Variant*), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
 }
 
 WoodSlabBlock::WoodSlabBlock()

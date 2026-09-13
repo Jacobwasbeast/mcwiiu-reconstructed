@@ -18,16 +18,21 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+
+static AbstractProperty<int>* LEVEL = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"level", 0, 6));
 
 CauldronBlock::CauldronBlock()
-    : BaseEntityBlock(Material::METAL, MaterialColor::METAL),
+    : BaseEntityBlock(Material::METAL, MaterialColor::STONE),
       mInnerIcon(NULL),
       mTopIcon(NULL),
       mBottomIcon(NULL),
       mWaterIcon(NULL)
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any());
+    TypedBoxed<int> level(0);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(LEVEL, &level));
 }
 CauldronBlock::~CauldronBlock()
 {
@@ -146,13 +151,13 @@ int CauldronBlock::getAnalogOutputSignal(const BlockState* state, Level*, const 
 
 const BlockState* CauldronBlock::getBlockState(int data)
 {
-    if (mStateDefinition == NULL || mStateDefinition->getProperties().empty()) return defaultBlockState();
-    const Property* property = mStateDefinition->getProperties()[0];
-    return defaultBlockState()->setBoxedValue(property, mStateDefinition->getPropertyValue(property, (unsigned short)Mth::clamp(data, 0, 6)));
+    TypedBoxed<int> level(data);
+    return defaultBlockState()->setBoxedValue(LEVEL, &level);
 }
+
 int CauldronBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state == NULL ? 0 : state->mElementId;
+    return state->getValue(LEVEL);
 }
 
 unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& data)
@@ -167,7 +172,8 @@ bool CauldronBlock::canProvideSupport(const BlockState*, const Direction* direct
 
 BlockStateDefinition* CauldronBlock::createBlockStateDefinition()
 {
-    return new BlockStateDefinition(this);
+    const Property* properties[] = { LEVEL };
+    return new BlockStateDefinition(this, properties, 1);
 }
 
 bool CauldronBlock::isPathfindable(LevelSource*, const BlockPos&)

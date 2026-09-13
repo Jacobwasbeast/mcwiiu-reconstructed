@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TrapDoorBlock.hpp"
 
 #include <typeinfo>
@@ -63,7 +64,7 @@ void TrapDoorBlock::blockStaticCtor()
     boost::unordered_set<Half*> halves;
     halves.insert(BOTTOM);
     halves.insert(TOP);
-    HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves, NULL);
+    HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves, Predicates<Half*>::alwaysTrue);
     if (OPEN == NULL) OPEN = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"open"));
     if (FACING == NULL)
     {
@@ -72,7 +73,7 @@ void TrapDoorBlock::blockStaticCtor()
         directions.insert(Direction::SOUTH);
         directions.insert(Direction::WEST);
         directions.insert(Direction::EAST);
-        FACING = EnumProperty<const Direction*>::create(L"facing", typeid(const Direction*), directions, NULL);
+        FACING = EnumProperty<const Direction*>::create(L"facing", typeid(const Direction*), directions, Predicates<const Direction*>::alwaysTrue);
     }
 }
 

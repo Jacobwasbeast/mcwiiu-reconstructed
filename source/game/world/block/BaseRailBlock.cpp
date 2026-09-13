@@ -10,6 +10,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Material.hpp"
 
 static const AABB* gRailFlatAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 static const AABB* gRailAscendingAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
@@ -76,7 +77,7 @@ std::wstring BaseRailBlock::RailShape::getSerializedName() const
 }
 
 BaseRailBlock::BaseRailBlock(bool isPowered)
-    : Block(NULL), mIsPowered(isPowered)
+    : Block(Material::DECORATION), mIsPowered(isPowered)
 {
     mBlockType = EBLOCK_TYPE_RAIL;
     setThickness(0.07f);

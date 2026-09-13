@@ -13,11 +13,12 @@
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 
 static std::vector<const SoundEvent*> noteBlockInstruments;
 
 NoteBlock::NoteBlock()
-    : BaseEntityBlock(NULL), EntityBlock()
+    : BaseEntityBlock(Material::WOOD), EntityBlock()
 {
     DerivedInit();
 }

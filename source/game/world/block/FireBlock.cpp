@@ -13,6 +13,8 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/TypedBoxed.hpp"
 
 namespace
 {
@@ -48,17 +50,33 @@ namespace
 
     BooleanProperty* fireUp()
     {
-        static BooleanProperty* property = static_cast<BooleanProperty*>(BooleanProperty::create(L"up"));
+        static BooleanProperty* property = static_cast<BooleanProperty*>(BooleanProperty::create(L"upper"));
         return property;
     }
 }
 
 FireBlock::FireBlock()
-    : Block(NULL), mFlameOdds(), mBurnOdds(), mFireIcon(NULL), mFireIconAlt(NULL)
+    : Block(Material::FIRE), mFlameOdds(), mBurnOdds(), mFireIcon(NULL), mFireIconAlt(NULL)
 {
-    setTicking(true);
     mLightEmission = 15;
-    registerDefaultState(Block::defaultBlockState());
+    DerivedInit();
+
+    TypedBoxed<int> age(0);
+    TypedBoxed<bool> north(false);
+    TypedBoxed<bool> east(false);
+    TypedBoxed<bool> south(false);
+    TypedBoxed<bool> west(false);
+    TypedBoxed<bool> upper(false);
+
+    registerDefaultState(mStateDefinition->any()
+                             ->setBoxedValue(fireAge(), &age)
+                             ->setBoxedValue(fireNorth(), &north)
+                             ->setBoxedValue(fireEast(), &east)
+                             ->setBoxedValue(fireSouth(), &south)
+                             ->setBoxedValue(fireWest(), &west)
+                             ->setBoxedValue(fireUp(), &upper));
+
+    setTicking(true);
 }
 
 FireBlock::~FireBlock()

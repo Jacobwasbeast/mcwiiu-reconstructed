@@ -81,7 +81,7 @@ void CropBlock::DerivedInit()
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
     TypedBoxed<int> age(0);
-    registerDefaultState(state->setBoxedValue(AGE, &age));
+    registerDefaultState(state->setBoxedValue(getAgeProperty(), &age));
     setTicking(true);
 }
 

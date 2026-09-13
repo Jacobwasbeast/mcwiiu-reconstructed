@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/ConcretePowderBlock.hpp"
 
 #include <typeinfo>
@@ -27,7 +28,7 @@ void ConcretePowderBlock::blockStaticCtor()
     {
         colors.insert(DyeColor::byBlockData(i));
     }
-    gConcretePowderBlockColorProperty = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, NULL);
+    gConcretePowderBlockColorProperty = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 ConcretePowderBlock::ConcretePowderBlock()

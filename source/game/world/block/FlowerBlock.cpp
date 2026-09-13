@@ -21,14 +21,80 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] = { NULL };
-FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YELLOW_FLOWER_COUNT] = { NULL };
-FlowerBlock::Flower* FlowerBlock::Flower::RED_FLOWERS[FlowerBlock::Flower::RED_FLOWER_COUNT] = { NULL };
-FlowerBlock::Flower* FlowerBlock::Flower::DANDELION = NULL;
-FlowerBlock::Flower* FlowerBlock::Flower::POPPY = NULL;
+FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::YELLOW = new FlowerBlock::FlowerCategory();
+FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::RED = new FlowerBlock::FlowerCategory();
 
-FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::YELLOW = NULL;
-FlowerBlock::FlowerCategory* FlowerBlock::FlowerCategory::RED = NULL;
+FlowerBlock::Flower* FlowerBlock::Flower::DANDELION = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::YELLOW, 0, L"dandelion", 115721561, 1847906812,
+    L"flower_dandelion", FlowerBlock::Flower::FLOWER_DANDELION);
+
+FlowerBlock::Flower* FlowerBlock::Flower::POPPY = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 0, L"poppy", -1991483335, -651465812,
+    L"flower_rose", FlowerBlock::Flower::FLOWER_POPPY);
+
+static FlowerBlock::Flower* gBlueOrchid = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 1, L"blue_orchid", -1075794771, 65534745,
+    L"flower_blue_orchid", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
+
+static FlowerBlock::Flower* gAllium = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 2, L"allium", -459188977, 1381974082,
+    L"flower_alium", FlowerBlock::Flower::FLOWER_BLUE_ORCHID);
+
+static FlowerBlock::Flower* gHoustonia = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 3, L"houstonia", 151996011, -1874500818,
+    L"flower_houstonia", FlowerBlock::Flower::FLOWER_HOUSTONIA);
+
+static FlowerBlock::Flower* gRedTulip = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 4, L"red_tulip", -237699297, 1013643162,
+    L"flower_tulip_red", FlowerBlock::Flower::FLOWER_RED_TULIP);
+
+static FlowerBlock::Flower* gOrangeTulip = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 5, L"orange_tulip", -222227692, -1169810583,
+    L"flower_tulip_orange", FlowerBlock::Flower::FLOWER_ORANGE_TULIP);
+
+static FlowerBlock::Flower* gWhiteTulip = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 6, L"white_tulip", -727005853, -2136162442,
+    L"flower_tulip_white", FlowerBlock::Flower::FLOWER_WHITE_TULIP);
+
+static FlowerBlock::Flower* gPinkTulip = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 7, L"pink_tulip", 439136352, -152482691,
+    L"flower_tulip_pink", FlowerBlock::Flower::FLOWER_PINK_TULIP);
+
+static FlowerBlock::Flower* gOxeyeDaisy = new FlowerBlock::Flower(
+    FlowerBlock::FlowerCategory::RED, 8, L"oxeye_daisy", -1503237240, 484087620,
+    L"flower_oxeye_daisy", FlowerBlock::Flower::FLOWER_OXEYE_DAISY);
+
+FlowerBlock::Flower* FlowerBlock::Flower::FLOWERS[FlowerBlock::Flower::FLOWER_COUNT] =
+{
+    FlowerBlock::Flower::DANDELION,
+    FlowerBlock::Flower::POPPY,
+    gBlueOrchid,
+    gAllium,
+    gHoustonia,
+    gRedTulip,
+    gOrangeTulip,
+    gWhiteTulip,
+    gPinkTulip,
+    gOxeyeDaisy
+};
+
+FlowerBlock::Flower* FlowerBlock::Flower::YELLOW_FLOWERS[FlowerBlock::Flower::YELLOW_FLOWER_COUNT] =
+{
+    FlowerBlock::Flower::DANDELION
+};
+
+FlowerBlock::Flower* FlowerBlock::Flower::RED_FLOWERS[FlowerBlock::Flower::RED_FLOWER_COUNT] =
+{
+    FlowerBlock::Flower::POPPY,
+    gBlueOrchid,
+    gAllium,
+    gHoustonia,
+    gRedTulip,
+    gOrangeTulip,
+    gWhiteTulip,
+    gPinkTulip,
+    gOxeyeDaisy
+};
 
 FlowerBlock::Flower::Flower(FlowerCategory* category, int data, const std::wstring& name, int nameId,
                             int descriptionId, const std::wstring& iconName, EFlower id)

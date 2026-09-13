@@ -6,9 +6,10 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 
 SnowBlock::SnowBlock()
-    : Block(static_cast<Material*>(0))
+    : Block(Material::SNOW)
 {
     DerivedInit();
     setTicking(true);

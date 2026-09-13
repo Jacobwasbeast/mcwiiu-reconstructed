@@ -4,9 +4,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/Material.hpp"
 
 NetherBrickBlock::NetherBrickBlock()
-    : Block(0)
+    : Block(Material::STONE)
 {
     Block::DerivedInit();
 }

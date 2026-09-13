@@ -19,6 +19,8 @@ class EnumProperty : public AbstractProperty<T>
 public:
     static EnumProperty<T>* create(const std::wstring& name, const std::type_info& valueClass,
                                    const boost::unordered_set<T>& values, const Predicate<T>* filter);
+    static EnumProperty<T>* create(const std::wstring& name, const std::type_info& valueClass,
+                                   const std::vector<T>& values, const Predicate<T>* filter);
 
     virtual ~EnumProperty();
 
@@ -75,6 +77,23 @@ EnumProperty<T>* EnumProperty<T>::create(const std::wstring& name, const std::ty
     boost::unordered_set<T> allowedValues;
 
     for (typename boost::unordered_set<T>::const_iterator it = values.begin(); it != values.end(); ++it)
+    {
+        if (filter->apply(*it))
+        {
+            allowedValues.insert(*it);
+        }
+    }
+
+    return new EnumProperty<T>(name, valueClass, allowedValues);
+}
+
+template <class T>
+EnumProperty<T>* EnumProperty<T>::create(const std::wstring& name, const std::type_info& valueClass,
+                                         const std::vector<T>& values, const Predicate<T>* filter)
+{
+    boost::unordered_set<T> allowedValues;
+
+    for (typename std::vector<T>::const_iterator it = values.begin(); it != values.end(); ++it)
     {
         if (filter->apply(*it))
         {

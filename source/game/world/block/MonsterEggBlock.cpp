@@ -15,6 +15,7 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/StoneBrickBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/Material.hpp"
 
 static MonsterEggBlock::Variant gMonsterEggVariant0(0, L"stone", 0);
 static MonsterEggBlock::Variant gMonsterEggVariant1(1, L"cobblestone", 1);
@@ -102,7 +103,7 @@ void MonsterEggBlock::blockStaticCtor()
 }
 
 MonsterEggBlock::MonsterEggBlock()
-    : Block(NULL)
+    : Block(Material::CLAY)
 {
     DerivedInit();
     setDestroyTime(4.5f);

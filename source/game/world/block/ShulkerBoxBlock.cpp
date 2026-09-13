@@ -32,9 +32,11 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/item/Containers.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/world/block/MaterialColor.hpp"
 
 ShulkerBoxBlock::ShulkerBoxBlock(const DyeColor* color)
-    : BaseEntityBlock(NULL), mColor(color)
+    : BaseEntityBlock(Material::STONE, MaterialColor::NONE), mColor(color)
 {
     mBlockEntity = true;
     DerivedInit();

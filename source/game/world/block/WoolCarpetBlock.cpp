@@ -1,3 +1,4 @@
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/WoolCarpetBlock.hpp"
 
 #include <typeinfo>
@@ -30,7 +31,7 @@ void WoolCarpetBlock::blockStaticCtor()
     }
 
     gWoolCarpetColorProperty = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), colors, NULL);
+        L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 WoolCarpetBlock::WoolCarpetBlock()
