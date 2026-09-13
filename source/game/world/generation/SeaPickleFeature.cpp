@@ -6,10 +6,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-extern Property* SeaPickle_PICKLES;
+extern AbstractProperty<int>* SeaPickle_PICKLES;
 
 SeaPickleFeature::~SeaPickleFeature()
 {

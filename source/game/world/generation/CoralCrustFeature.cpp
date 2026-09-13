@@ -8,13 +8,14 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/StructureManager.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
-extern Property* CoralBlock_PROPERTY_1;
+extern AbstractProperty<int>* CoralBlock_PROPERTY_1;
 extern AbstractProperty<int>* CoralFan_PROPERTY_1;
 extern AbstractProperty<int>* CoralFan_PROPERTY_2;
 extern AbstractProperty<int>* CoralFanHang_PROPERTY_1;

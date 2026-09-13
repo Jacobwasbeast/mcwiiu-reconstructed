@@ -177,3 +177,7 @@ int WallGenerator::GetNumberOfLayers()
 void WallGenerator::GetLayerExtents(unsigned int, float*, float*)
 {
 }
+
+void WallGenerator::SetArea(Level*, BlockTransaction*, AABB*, const BlockState*)
+{
+}

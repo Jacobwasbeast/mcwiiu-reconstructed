@@ -53,16 +53,22 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
     PIXBeginNamedEvent(0.0f, "Prep");
 
     const float angle = random.nextFloat() * 3.1415927f;
-    const double x0 = origin.x + 8.0 + Mth::sin(angle) * mNumberOfBlocks * 0.125;
-    const double x1 = origin.x + 8.0 - Mth::sin(angle) * mNumberOfBlocks * 0.125;
-    const double z0 = origin.z + 8.0 + Mth::cos(angle) * mNumberOfBlocks * 0.125;
-    const double z1 = origin.z + 8.0 - Mth::cos(angle) * mNumberOfBlocks * 0.125;
+    const float xOffset = static_cast<float>(Mth::sin(angle))
+        * static_cast<float>(mNumberOfBlocks) * 0.125f;
+    const float zOffset = static_cast<float>(Mth::cos(angle))
+        * static_cast<float>(mNumberOfBlocks) * 0.125f;
+    const float centerX = static_cast<float>(origin.x + 8);
+    const float centerZ = static_cast<float>(origin.z + 8);
+    const double x0 = centerX + xOffset;
+    const double x1 = centerX - xOffset;
+    const double z0 = centerZ + zOffset;
+    const double z1 = centerZ - zOffset;
     const double y0 = origin.y + random.nextInt(3) - 2;
     const double y1 = origin.y + random.nextInt(3) - 2;
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "Level generation options");
-    const double radius = (mNumberOfBlocks * 0.0625 + 1.0) * 0.5;
+    const double radius = (2.0 * (mNumberOfBlocks * 0.0625) + 1.0) * 0.5;
     const double minYValue = std::min(y0, y1) - radius;
     const double maxYValue = std::max(y0, y1) + radius;
     const double minXValue = std::min(x0, x1) - radius;
@@ -97,7 +103,8 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         const double x = (x1 - x0) * progress + x0;
         const double y = (y1 - y0) * progress + y0;
         const double z = (z1 - z0) * progress + z0;
-        const double width = random.nextDouble() * mNumberOfBlocks * 0.0625;
+        const double width = (static_cast<float>(Mth::sin(progress * 3.1415927f) + 1.0f)
+            * random.nextDouble() * mNumberOfBlocks * 0.0625 + 1.0) * 0.5;
         const int lowerX = static_cast<int>(std::floor(x - width));
         const int upperX = static_cast<int>(std::floor(x + width));
         const int lowerY = static_cast<int>(std::floor(y - width));
@@ -105,15 +112,15 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         const int lowerZ = static_cast<int>(std::floor(z - width));
         const int upperZ = static_cast<int>(std::floor(z + width));
 
+        bool localIntersection = false;
         if (intersects)
         {
-            if (g_pApp->getLevelGenerationOptions()->checkIntersects(
-                    BlockPos(lowerX, lowerY, lowerZ), BlockPos(upperX, upperY, upperZ)))
-            {
-                continue;
-            }
+            localIntersection = g_pApp->getLevelGenerationOptions()->checkIntersects(
+                BlockPos(lowerX, lowerY, lowerZ), BlockPos(upperX, upperY, upperZ));
         }
-        else if (seaLevel < lowerY &&
+        if (localIntersection)
+            continue;
+        if (!localIntersection && seaLevel < y0 &&
                  level->getHeightmap(lowerX, lowerZ) < lowerY &&
                  level->getHeightmap(upperX, lowerZ) < lowerY &&
                  level->getHeightmap(lowerX, upperZ) < lowerY &&
@@ -125,22 +132,26 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         const int localXSize = upperX - lowerX + 1;
         const int localYSize = upperY - lowerY + 1;
         const int localZSize = upperZ - lowerZ + 1;
+        const int radiusSquared = static_cast<int>(width * width * 65536.0);
+        const int firstXDistance = static_cast<int>((lowerX + 0.5 - x) * 256.0);
+        const int firstYDistance = static_cast<int>((lowerY + 0.5 - y) * 256.0);
+        const int firstZDistance = static_cast<int>((lowerZ + 0.5 - z) * 256.0);
         for (int localX = 0; localX < localXSize; ++localX)
         {
-            const double dx = ((lowerX + localX) + 0.5 - x) / width;
-            for (int localZ = 0; localZ < localZSize; ++localZ)
+            const int dx = firstXDistance + localX * 256;
+            for (int localY = 0; localY < localYSize; ++localY)
             {
-                const double dz = ((lowerZ + localZ) + 0.5 - z) / width;
-                for (int localY = 0; localY < localYSize; ++localY)
+                const int dy = firstYDistance + localY * 256;
+                for (int localZ = 0; localZ < localZSize; ++localZ)
                 {
-                    const double dy = ((lowerY + localY) + 0.5 - y) / width;
-                    if (dx * dx + dy * dy + dz * dz >= 1.0)
+                    const int dz = firstZDistance + localZ * 256;
+                    if (dx * dx + dy * dy + dz * dz >= radiusSquared)
                     {
                         continue;
                     }
                     const int index = ((localX + lowerX - minX) * ySize +
-                                       (localZ + lowerZ - minZ)) * zSize +
-                                      localY + lowerY - minY;
+                                       (localY + lowerY - minY)) * zSize +
+                                      localZ + lowerZ - minZ;
                     const unsigned char bit = static_cast<unsigned char>(1 << (index & 7));
                     if ((mask[index >> 3] & bit) != 0)
                     {
@@ -151,6 +162,8 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
                     const int blockY = lowerY + localY;
                     const int blockZ = lowerZ + localZ;
                     const unsigned short element = level->getElement(blockX, blockY, blockZ);
+                    if ((element >> 4) == 0)
+                        continue;
                     Biome::BlockPair pair(static_cast<int>(element >> 4), static_cast<int>(element & 15));
                     if (mPredicate->apply(pair))
                     {

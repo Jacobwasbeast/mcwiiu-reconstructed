@@ -112,6 +112,11 @@ StructureStart* StructureFeatureIO::loadStaticStart(ByteArrayTag* tag, Level* le
                 if (type == eStructureStart_Village || type == eStructureStart_ScatteredFeature)
                 {
                     delete start;
+                    buffer.mBuffer.data = NULL;
+                    buffer.mBuffer.length = 0;
+                    buffer.mCount = 0;
+                    buffer.mMark = 0;
+                    buffer.mPosition = 0;
                     return NULL;
                 }
             }
@@ -120,6 +125,11 @@ StructureStart* StructureFeatureIO::loadStaticStart(ByteArrayTag* tag, Level* le
         }
     }
 
+    buffer.mBuffer.data = NULL;
+    buffer.mBuffer.length = 0;
+    buffer.mCount = 0;
+    buffer.mMark = 0;
+    buffer.mPosition = 0;
     return start;
 }
 

@@ -13,7 +13,7 @@ class Property;
 
 extern AbstractProperty<int>* CoralFan_PROPERTY_1;
 extern AbstractProperty<int>* CoralFan_PROPERTY_2;
-extern Property* Coral_VARIANT;
+extern AbstractProperty<int>* Coral_VARIANT;
 
 SeaAnemoneFeature::~SeaAnemoneFeature()
 {
