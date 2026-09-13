@@ -26,6 +26,7 @@ class ConsoleUIController : public IUIController
 public:
     enum EFont
     {
+        EFont_None = 0,
         EFont_Bitmap = 1,
         EFont_Japanese = 2,
         EFont_ChineseSimplified = 3,
@@ -63,7 +64,7 @@ public:
             : data(value), expiryTime(expiry) {}
     };
 
-    struct _QueuedMessageBoxData
+    struct _MessageBoxData
     {
         int titleId;
         int messageId;
@@ -74,14 +75,19 @@ public:
         void* callbackData;
         wchar_t* overrideText;
         unsigned int buttonFlags;
-        bool alert;
         bool blocking;
+
+        _MessageBoxData()
+            : titleId(0), messageId(0), messageParameters(0), parameterCount(0), userIndex(0),
+              callback(0), callbackData(0), overrideText(0), buttonFlags(0), blocking(false) {}
+    };
+
+    struct _QueuedMessageBoxData : _MessageBoxData
+    {
+        unsigned int queuedUserIndex;
         int type;
 
-        _QueuedMessageBoxData()
-            : titleId(0), messageId(0), messageParameters(0), parameterCount(0), userIndex(0),
-              callback(0), callbackData(0), overrideText(0), buttonFlags(0), alert(false),
-              blocking(false), type(0) {}
+        _QueuedMessageBoxData() : queuedUserIndex(0), type(0) {}
         ~_QueuedMessageBoxData() { delete[] messageParameters; }
     };
 
@@ -285,7 +291,7 @@ private:
     OSFastMutex m_renderMutex;
     OSFastMutex m_touchMutex;
     OSFastMutex m_skinMutex;
-    unsigned char m_unknown90[0x360];
+    int m_actionTimer[9][0x18];
     float m_screenWidth;
     float m_screenHeight;
     bool m_initialized;
@@ -304,6 +310,7 @@ private:
     fuiBitmapFont* m_bitmapFont;
     fuiBitmapFont* m_bitmapFontAlt;
     std::vector<UIELEMENT*> m_touchBoxes[6][8][0x53];
+    int m_touchHoldPad;
     bool m_touchHeld;
     unsigned char m_unknownFD55[3];
     int m_touchX;
@@ -314,6 +321,7 @@ private:
     int m_resolution;
     int m_requestedResolution;
     unsigned int m_resolutionDisableFlags;
+    bool m_homeMenuPending;
     unsigned int m_lastInputTime;
     unsigned int m_trialTimerLimit;
     unsigned int m_trialTimerValue;
@@ -347,6 +355,8 @@ private:
     UIELEMENT* m_touchElement;
     UIELEMENT* m_lastTouchElement;
     UIGroup* m_groups[6];
+    int m_lastUISFXTimeHigh;
+    unsigned int m_lastUISFXTimeLow;
     int m_pressStartPlaying;
     int m_pressStartBlocked;
     bool m_fullscreenMenuDisplayed;

@@ -297,7 +297,7 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
     {
         unsigned int packId = 0;
         std::wstringstream stream;
-        stream << std::hex << value.c_str();
+        stream << std::dec << value.c_str();
         stream >> packId;
         SetPackId(packId);
     }
@@ -309,7 +309,7 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
     {
         unsigned int version = 0;
         std::wstringstream stream;
-        stream << std::hex << value.c_str();
+        stream << std::dec << value.c_str();
         stream >> version;
         SetPackVersion(version);
     }

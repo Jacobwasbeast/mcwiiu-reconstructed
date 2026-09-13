@@ -131,6 +131,11 @@ void Socket::SocketOutputStreamNetwork::flush(){}
 Socket::Socket(bool b)
     : mLocal(true),mNetwork(true),mIndex(b?1:0),mPlayerId(0),mEvent(NULL),mOpen(true)
 {
+    if (!b)
+        sConnection->NewIncomingSocket(new Socket(true));
+    INetworkPlayer* hostPlayer = CGameNetworkManager::sInstance.GetHostPlayer();
+    if (hostPlayer != NULL)
+        mPlayerId = hostPlayer->GetSmallId();
     mInputStreams[0]=gLocalInputStreams[0]; mInputStreams[1]=gLocalInputStreams[1];
     mOutputStreams[0]=gLocalOutputStreams[0]; mOutputStreams[1]=gLocalOutputStreams[1];
     mInputClosed[0]=mInputClosed[1]=false;

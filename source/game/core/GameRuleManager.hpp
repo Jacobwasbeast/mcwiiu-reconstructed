@@ -63,6 +63,5 @@ private:
     LevelRuleset* mDebugGameRuleDefinitions;
 };
 
-extern GameRuleManager g_GameRuleManager;
 
 #endif

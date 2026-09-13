@@ -8,8 +8,8 @@
 template <class T>
 std::wstring _toString(T value);
 
-std::vector<Stat*>* Stat::stats = NULL;
-boost::unordered_map<int, Stat*>* Stat::statsById = NULL;
+std::vector<Stat*>* Stat::stats = new std::vector<Stat*>();
+boost::unordered_map<int, Stat*>* Stat::statsById = new boost::unordered_map<int, Stat*>();
 StatFormatter* Stat::defaultFormatter = NULL;
 StatFormatter* Stat::timeFormatter = NULL;
 StatFormatter* Stat::distanceFormatter = NULL;

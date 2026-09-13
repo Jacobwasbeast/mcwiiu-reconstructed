@@ -5,10 +5,9 @@
 #include "game/core/Uniform.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/client/render/Tesselator.hpp"
+#include "game/client/render/RenderTarget.hpp"
 
 template<typename T> std::wstring _toString(T value);
-int RenderTargetWidth(RenderTarget* target);
-int RenderTargetHeight(RenderTarget* target);
 
 PostPass::PostPass(ResourceManager* resourceManager, std::wstring name, RenderTarget* input, RenderTarget* output)
     : mInput(input), mOutput(output), mEffect(new Effect(resourceManager, name)), mOrthoMatrix(0)
@@ -63,10 +62,10 @@ Effect* PostPass::getEffect()
 
 void PostPass::process(float time)
 {
-    const int outputWidth = RenderTargetWidth(mOutput);
-    const int outputHeight = RenderTargetHeight(mOutput);
-    const int inputWidth = RenderTargetWidth(mInput);
-    const int inputHeight = RenderTargetHeight(mInput);
+    const int outputWidth = mOutput->renderWidth;
+    const int outputHeight = mOutput->renderHeight;
+    const int inputWidth = mInput->renderWidth;
+    const int inputHeight = mInput->renderHeight;
 
     prepareState();
     GlStateManager::viewport(0, 0, outputWidth, outputHeight);

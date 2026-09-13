@@ -735,6 +735,12 @@ void ColourTable::loadColoursFromData(unsigned char* data, unsigned int length)
             }
         }
     }
+
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 ColourTable::ColourTable(unsigned char* data, unsigned int length)

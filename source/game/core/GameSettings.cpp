@@ -10,6 +10,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CStorage.hpp"
+extern CStorage* gStorage;
 
 GameSettings* gGameSettings[4] = { NULL, NULL, NULL, NULL };
 unsigned char gDefaultActionMappings[4][25];
@@ -43,42 +45,34 @@ extern "C" void DefineActions()
         }
     }
 
-    static const unsigned char movementMasks[2][4] =
+    static const unsigned char movementMasks[2][2] =
     {
-        { 2, 2, 1, 1 },
-        { 1, 1, 2, 2 }
+        { 2, 1 },
+        { 1, 2 }
     };
     static const unsigned char actionIndices[4] = { 0, 0x14, 1, 0x15 };
     static const unsigned int actionMasks[32] =
     {
-        2, 8, 0x200400, 0x100800, 0x9000, 0x6000, 0x800000, 0x400000,
+        4, 8, 0x200400, 0x100800, 0x9000, 0x6000, 0x800000, 0x400000,
         0x40, 0x80, 0x10, 0x20, 0x20000, 0x10000, 0x80000, 0x40000,
         2, 0x200000, 0x100000, 0x8000, 0x4000, 0x80000, 0x40000, 0x20000,
         0x10000, 0x800000, 0x400000, 0x40, 0x80, 8, 0x10, 1
     };
     static const unsigned char actionMapIndices[32] =
     {
-        2, 3, 4, 5, 6, 7, 8, 9, 10, 0xb, 0x12, 0x13, 0xe, 0xf, 0x10, 0x11,
+        2, 3, 4, 5, 7, 6, 8, 9, 10, 0xb, 0x12, 0x13, 0xe, 0xf, 0x10, 0x11,
         0x20, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x21, 0x22,
         0x24, 0x23, 0x25, 0x16, 0x26
     };
 
     for (controller = 0; controller < 2; ++controller)
     {
-        if (g_pInput->IsPadDRCController(controller) == 0)
-        {
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[0], movementMasks[0][0]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[1], movementMasks[0][0]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[2], movementMasks[0][1]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[3], movementMasks[0][1]);
-        }
-        else
-        {
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[0], movementMasks[1][0]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[1], movementMasks[1][0]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[2], movementMasks[1][1]);
-            g_pInput->SetGameJoypadMaps(controller, actionIndices[3], movementMasks[1][1]);
-        }
+        const unsigned char* controllerMovementMasks =
+            movementMasks[g_pInput->IsCircleCrossSwapped() != 0 ? 1 : 0];
+        g_pInput->SetGameJoypadMaps(controller, actionIndices[0], controllerMovementMasks[0]);
+        g_pInput->SetGameJoypadMaps(controller, actionIndices[1], controllerMovementMasks[0]);
+        g_pInput->SetGameJoypadMaps(controller, actionIndices[2], controllerMovementMasks[1]);
+        g_pInput->SetGameJoypadMaps(controller, actionIndices[3], controllerMovementMasks[1]);
         for (action = 0; action < 32; ++action)
         {
             g_pInput->SetGameJoypadMaps(controller, actionMapIndices[action], actionMasks[action]);
@@ -119,6 +113,8 @@ static GameSettings* settings(int profile)
 
 uint32_t GameSettings::GetGameSettings(int profile, eGameSetting setting)
 {
+    if (profile == 255)
+        profile = gProfile->GetPrimaryPad();
     GameSettings* s = settings(profile); if (!s) return 0;
     switch ((int)setting) {
     case 0: return s->mYAxis; case 1: return s->mSensitivity; case 2: return s->mVibration;
@@ -128,7 +124,7 @@ uint32_t GameSettings::GetGameSettings(int profile, eGameSetting setting)
     case 10: return (s->mDebugMask >> 23) & 1; case 11: return (s->mOptionFlags >> 8) & 1;
     case 12: return (s->mOptionFlags >> 3) & 1; case 13: return (s->mOptionFlags >> 11) & 15;
     case 14: return (s->mOptionFlags >> 9) & 1; case 15: return (s->mOptionFlags >> 10) & 1;
-    case 16: return s->mLanguage; case 17: return s->mOptionFlags >> 15;
+    case 16: return s->mLocale; case 17: return s->mOptionFlags >> 15;
     case 18: return s->mDebugMask & 1; case 19: return (s->mDebugMask >> 1) & 1;
     case 20: return (s->mDebugMask >> 2) & 1; case 21: return (s->mDebugMask >> 3) & 1;
     case 22: return (s->mDebugMask >> 4) & 3; case 23: return (s->mDebugMask >> 7) & 1;
@@ -140,18 +136,27 @@ uint32_t GameSettings::GetGameSettings(int profile, eGameSetting setting)
     case 34: return (s->mDebugMask >> 20) & 1; case 35: return (s->mDebugMask >> 21) & 1;
     case 36: return (s->mDebugMask >> 24) & 3; case 37: return (s->mDebugMask >> 27) & 1;
     case 38: return (s->mDebugMask >> 28) & 1; case 39: return (s->mDebugMask >> 29) & 1;
-    case 40: return (s->mDebugMask >> 30) & 1; case 41: return s->mDebugMask >> 31;
+    case 40: return (s->mDebugMask >> 30) & 1; case 41: return 0;
     case 42: return (s->mDebugMask >> 22) & 1; case 43: return s->mDebugMask >> 31;
     case 44: return (s->mDebugMask >> 26) & 1; case 45: return s->mSkinFlags & 15;
     default: return 0;
     }
 }
-uint8_t GameSettings::GetActionMapping(int profile, int action) { return profile >= 0 && profile < 4 && action >= 0 && action < 25 ? gDefaultActionMappings[profile][action] : 0; }
+uint8_t GameSettings::GetActionMapping(int profile, int action)
+{
+    GameSettings* current = settings(profile);
+    if (current == NULL || action < 0 || action >= 25)
+    {
+        return 0;
+    }
+    return current->mActionMappings[action];
+}
 void GameSettings::SetActionMapping(int profile, int action, unsigned char value)
 {
-    if (profile >= 0 && profile < 4 && action >= 0 && action < 25)
+    GameSettings* current = settings(profile);
+    if (current != NULL && action >= 0 && action < 25)
     {
-        gDefaultActionMappings[profile][action] = value;
+        current->mActionMappings[action] = value;
     }
 }
 
@@ -182,54 +187,63 @@ uint32_t GameSettings::GetInputButton(unsigned int value)
 uint32_t GameSettings::GetActionVal(unsigned char value) { return GetInputButton(value & 15) | GetInputButton((value >> 4) & 255); }
 void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
 {
-    // These actions are emitted after a profile record is edited.  The
-    // original switch deliberately leaves the intervening action values
-    // untouched; preserve that behavior while applying the proven cases.
+    Minecraft* minecraft = Minecraft::GetInstance();
     switch (static_cast<int>(setting))
     {
     case 0:
-        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
-            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(0),
-                (static_cast<float>(settings(profile)->mYAxis) - 176.0f) / 100.0f);
+        if (profile == gProfile->GetPrimaryPad())
+            minecraft->mOptions->set(Options::Option::getItem(0),
+                static_cast<float>(settings(profile)->mYAxis) / 100.0f);
         return;
     case 1:
-        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
-            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(1),
-                (static_cast<float>(settings(profile)->mSensitivity) - 176.0f) / 100.0f);
+        if (profile == gProfile->GetPrimaryPad())
+            minecraft->mOptions->set(Options::Option::getItem(1),
+                static_cast<float>(settings(profile)->mSensitivity) / 100.0f);
         return;
     case 2:
-        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex() && gRenderer != NULL) {
-            GameSettings* current = settings(profile);
-            if (current != NULL) {
-                const float gamma = (static_cast<float>(current->mVibration) - 176.0f) * 327.68f;
-                gRenderer->UpdateGamma(static_cast<unsigned short>(static_cast<int>(gamma) & 0xffff));
-            }
+        if (profile == gProfile->GetPrimaryPad())
+        {
+            const float gamma = static_cast<float>(settings(profile)->mVibration) * 327.68f;
+            gRenderer->UpdateGamma(static_cast<unsigned short>(static_cast<int>(gamma) & 0xffff));
         }
         return;
     case 3:
-        if (g_pApp != NULL && profile == g_pApp->GetPrimaryUserIndex())
+        if (profile == gProfile->GetPrimaryPad())
         {
-            Minecraft* minecraft = Minecraft::GetInstance();
             minecraft->mOptions->toggle(Options::Option::getItem(9), settings(profile)->mOptionFlags & 3);
-            g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0), minecraft->mOptions->mViewDistance);
+            g_pApp->SetGameHostOption(static_cast<eGameHostOption>(0), GetGameSettings(profile, (eGameSetting)3));
         }
         return;
     case 4:
-        if (Minecraft::GetInstance() != NULL)
-            Minecraft::GetInstance()->mOptions->set(Options::Option::getItem(3),
-                (static_cast<float>(settings(profile)->mSwapSticks) - 176.0f) / 100.0f);
+        minecraft->mOptions->set(Options::Option::getItem(3),
+            static_cast<float>(settings(profile)->mSwapSticks) / 100.0f);
         return;
     case 9:
-        if (g_pInput != NULL) {
-            const GameSettings* current = settings(profile);
-            const bool drc = current != NULL && (current->mOptionFlags & 0x80) != 0;
-            const unsigned char first = drc ? 2 : 0;
-            const unsigned char second = drc ? 3 : 1;
-            g_pInput->SetGameJoypadMaps(profile, 0, first);
-            g_pInput->SetGameJoypadMaps(profile, 1, second);
-            g_pInput->SetGameJoypadMaps(profile, 2, drc ? 0 : 2);
-            g_pInput->SetGameJoypadMaps(profile, 3, drc ? 1 : 3);
+        {
+            const bool swapAnalogSticks = (settings(profile)->mOptionFlags & 0x80) != 0;
+            if (!swapAnalogSticks)
+            {
+                g_pInput->SetJoypadStickAxisMap(profile, 0, 0);
+                g_pInput->SetJoypadStickAxisMap(profile, 1, 1);
+                g_pInput->SetJoypadStickAxisMap(profile, 2, 2);
+                g_pInput->SetJoypadStickAxisMap(profile, 3, 3);
+                g_pInput->SetJoypadStickTriggerMap(profile, 0, 0);
+                g_pInput->SetJoypadStickTriggerMap(profile, 1, 1);
+            }
+            else
+            {
+                g_pInput->SetJoypadStickAxisMap(profile, 0, 2);
+                g_pInput->SetJoypadStickAxisMap(profile, 1, 3);
+                g_pInput->SetJoypadStickAxisMap(profile, 2, 0);
+                g_pInput->SetJoypadStickAxisMap(profile, 3, 1);
+                g_pInput->SetJoypadStickTriggerMap(profile, 0, 1);
+                g_pInput->SetJoypadStickTriggerMap(profile, 1, 0);
+            }
         }
+        return;
+    case 0xb:
+        if (profile == gProfile->GetPrimaryPad())
+            minecraft->updatePlayerViewportAssignments();
         return;
     case 0x10:
         gConsoleUIController.RefreshTooltips(static_cast<unsigned int>(profile));
@@ -242,27 +256,32 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
         }
         return;
     case 0x29:
-    {
-        const unsigned int group = GetGameSettings(profile, (eGameSetting)7);
-        if (group > 0 || GetGameSettings(profile, (eGameSetting)10) != 0)
         {
-            UpdateActionMapping(profile, static_cast<int>(group),
-                                GetGameSettings(profile, (eGameSetting)10) != 0);
-            SetGameSettings(profile, (eGameSetting)7, 0);
-            SetGameSettings(profile, (eGameSetting)10, 0);
+            const int group = static_cast<int>(GetGameSettings(profile, (eGameSetting)7));
+            const bool secondary = GetGameSettings(profile, (eGameSetting)10) != 0;
+            if (group > 0 || secondary)
+            {
+                UpdateActionMapping(profile, group, secondary);
+                SetGameSettings(profile, (eGameSetting)7, 0);
+                SetGameSettings(profile, (eGameSetting)10, 0);
+            }
+            for (int action = 0; action < 25; ++action)
+            {
+                g_pInput->SetGameJoypadMaps(profile, static_cast<unsigned char>(action + 0x20),
+                    GetActionVal(GetActionMapping(profile, action)));
+            }
         }
         return;
-    }
     case 0x0e:
         {
-            Minecraft* minecraft = Minecraft::GetInstance();
-            if (minecraft != NULL) {
-                for (unsigned int player = 0; player < 4; ++player) {
-                    if (minecraft->mLocalPlayers[player])
-                        gConsoleUIController.DisplayGamertag(player,
-                            minecraft->mLocalPlayers[player]->mViewport != 0);
-                }
-            }
+            if (minecraft->mLocalPlayers[0])
+                gConsoleUIController.DisplayGamertag(0, minecraft->mLocalPlayers[0]->mViewport != 0);
+            if (minecraft->mLocalPlayers[1])
+                gConsoleUIController.DisplayGamertag(1, minecraft->mLocalPlayers[1]->mViewport != 0);
+            if (minecraft->mLocalPlayers[2])
+                gConsoleUIController.DisplayGamertag(2, minecraft->mLocalPlayers[2]->mViewport != 0);
+            if (minecraft->mLocalPlayers[3])
+                gConsoleUIController.DisplayGamertag(3, minecraft->mLocalPlayers[3]->mViewport != 0);
         }
         return;
     default:
@@ -274,38 +293,91 @@ void GameSettings::SetGameSettings(int profile, eGameSetting setting, unsigned c
 {
     GameSettings* s = settings(profile);
     if (!s)
-    {
         return;
-    }
-    switch ((int)setting)
+
+    unsigned int mask = 0;
+    unsigned int shift = 0;
+    unsigned char* byteValue = NULL;
+    bool optionFlags = false;
+    switch (static_cast<int>(setting))
     {
-    case 0:
-        s->mYAxis = value;
-        break;
-    case 1:
-        s->mSensitivity = value;
-        break;
-    case 2:
-        s->mVibration = value;
-        break;
-    case 4:
-        s->mSwapSticks = value;
-        break;
-    case 5:
-        s->mLanguage = value;
-        break;
-    case 45:
-        s->mSkinFlags = (s->mSkinFlags & 0xf0) | (value & 15);
-        break;
-    default:
+    case 0: byteValue = &s->mYAxis; mask = 0xff; break;
+    case 1: byteValue = &s->mSensitivity; mask = 0xff; break;
+    case 2: byteValue = &s->mVibration; mask = 0xff; break;
+    case 3: optionFlags = true; mask = 3; break;
+    case 4: byteValue = &s->mSwapSticks; mask = 0xff; break;
+    case 5: byteValue = &s->mLanguage; mask = 0xff; break;
+    case 6: optionFlags = true; shift = 2; mask = 4; break;
+    case 7: optionFlags = true; shift = 4; mask = 0x30; break;
+    case 8: optionFlags = true; shift = 6; mask = 0x40; break;
+    case 9: optionFlags = true; shift = 7; mask = 0x80; break;
+    case 10: shift = 23; mask = 0x800000; break;
+    case 0xb: optionFlags = true; shift = 8; mask = 0x100; break;
+    case 0xc: optionFlags = true; shift = 3; mask = 8; break;
+    case 0xd: optionFlags = true; shift = 11; mask = 0x7800; break;
+    case 0xe: optionFlags = true; shift = 9; mask = 0x200; break;
+    case 0xf: optionFlags = true; shift = 10; mask = 0x400; break;
+    case 0x10: byteValue = &s->mLocale; mask = 0xff; break;
+    case 0x11: optionFlags = true; shift = 15; mask = 0x8000; break;
+    case 0x12: shift = 0; mask = 1; break;
+    case 0x13: shift = 1; mask = 2; break;
+    case 0x14: shift = 2; mask = 4; break;
+    case 0x15: shift = 3; mask = 8; break;
+    case 0x16: shift = 4; mask = 0x30; break;
+    case 0x17: shift = 7; mask = 0x80; break;
+    case 0x18: shift = 8; mask = 0x100; break;
+    case 0x19: shift = 9; mask = 0x200; break;
+    case 0x1a: shift = 10; mask = 0x400; break;
+    case 0x1b: shift = 11; mask = 0x1800; break;
+    case 0x1c: shift = 13; mask = 0x6000; break;
+    case 0x1d: shift = 15; mask = 0x8000; break;
+    case 0x1e: shift = 16; mask = 0x10000; break;
+    case 0x1f: shift = 17; mask = 0x20000; break;
+    case 0x20: shift = 18; mask = 0x40000; break;
+    case 0x21: shift = 19; mask = 0x80000; break;
+    case 0x22: shift = 20; mask = 0x100000; break;
+    case 0x23: shift = 21; mask = 0x200000; break;
+    case 0x24: shift = 24; mask = 0x3000000; break;
+    case 0x25: shift = 27; mask = 0x8000000; break;
+    case 0x26: shift = 28; mask = 0x10000000; break;
+    case 0x27: shift = 29; mask = 0x20000000; break;
+    case 0x28: shift = 30; mask = 0x40000000; break;
+    case 0x29: return;
+    case 0x2a: shift = 22; mask = 0x400000; break;
+    case 0x2b: shift = 31; mask = 0x80000000; break;
+    case 0x2c: shift = 26; mask = 0x4000000; break;
+    case 0x2d: byteValue = &s->mSkinFlags; mask = 0xf; break;
+    default: return;
+    }
+
+    if (byteValue != NULL)
     {
-        unsigned int bit = 1u << ((int)setting & 31);
-        s->mDebugMask = (s->mDebugMask & ~bit) | (value ? bit : 0);
-        break;
+        const unsigned int oldValue = *byteValue;
+        if ((mask & (oldValue ^ value)) == 0)
+            return;
+        *byteValue = static_cast<unsigned char>((oldValue & ~mask) | value);
     }
+    else if (optionFlags)
+    {
+        const unsigned int oldValue = s->mOptionFlags;
+        const unsigned int shifted = static_cast<unsigned int>(value) << shift;
+        if ((mask & (oldValue ^ (shifted & 0xffff))) == 0)
+            return;
+        s->mOptionFlags = static_cast<unsigned short>((oldValue & ~mask) | shifted);
     }
+    else
+    {
+        const unsigned int oldValue = s->mDebugMask;
+        const unsigned int shifted = static_cast<unsigned int>(value) << shift;
+        if ((mask & (oldValue ^ shifted)) == 0)
+            return;
+        s->mDebugMask = (oldValue & ~mask) | shifted;
+    }
+    if (static_cast<int>(setting) > 3 || profile == gProfile->GetPrimaryPad())
+        ActionGameSettings(profile, setting);
     SetSettingsChanged(profile);
 }
+
 uint8_t GameSettings::GetMinecraftLanguage(int profile)
 {
     GameSettings* s = settings(profile);
@@ -376,28 +448,104 @@ uint32_t GameSettings::OldProfileVersionCallback(void*, unsigned char* data, uns
     if (settings != NULL) settings->updateToLatestVersionFrom(version, profile);
     return 0;
 }
-void GameSettings::SetDefaultControls(C4JStorage::PROFILESETTINGS* values, int profile, bool)
+void GameSettings::SetDefaultControls(C4JStorage::PROFILESETTINGS* values, int profile, bool changed)
 {
-    if (values)
-    {
-        SetGameSettings(profile, (eGameSetting)0, (unsigned char)(values->values[0] != 0));
-        SetGameSettings(profile, (eGameSetting)1, (unsigned char)values->values[1]);
-        SetGameSettings(profile, (eGameSetting)2, (unsigned char)values->values[2]);
-    }
-}
+    SetGameSettings(profile, (eGameSetting)8,
+        static_cast<unsigned char>(values->values[0] != 0));
+    SetGameSettings(profile, (eGameSetting)9, values->flags);
 
-void GameSettings::SetDefaultGameOptions(C4JStorage::PROFILESETTINGS*, int profile, bool)
+    const int controller = g_pInput->IsPadDRCController(profile) != 0 ? 1 : 0;
+    for (int group = 0; group < 5; ++group)
+    {
+        const int firstAction = group * 5;
+        for (int slot = 0; slot < 5; ++slot)
+        {
+            const int action = firstAction + slot;
+            const unsigned char value = gDefaultActionMappings[controller][action];
+            SetActionMapping(profile, action, value);
+            g_pInput->SetGameJoypadMaps(
+                profile, static_cast<unsigned char>(0x20 + action), GetActionVal(value));
+        }
+    }
+    settings(profile)->mChanged = static_cast<unsigned char>(changed);
+}
+void GameSettings::SetDefaultGameOptions(C4JStorage::PROFILESETTINGS* values, int profile, bool changed)
 {
-    SetGameSettings(profile, (eGameSetting)0, 1);
-    SetGameSettings(profile, (eGameSetting)1, 1);
-    SetGameSettings(profile, (eGameSetting)2, 1);
+    SetGameSettings(profile, (eGameSetting)0, 100);
+    SetGameSettings(profile, (eGameSetting)1, 100);
+    SetGameSettings(profile, (eGameSetting)2, 0x32);
+
+    if (Minecraft::GetInstance()->mLevel == NULL)
+    {
+        SetGameSettings(profile, (eGameSetting)3, 1);
+    }
+
+    SetGameSettings(profile, (eGameSetting)4, 100);
+    SetGameSettings(profile, (eGameSetting)6, 1);
+    SetGameSettings(profile, (eGameSetting)7, 0);
+    SetGameSettings(profile, (eGameSetting)0xb, 0);
+    SetGameSettings(profile, (eGameSetting)0xc, 1);
+    SetGameSettings(profile, (eGameSetting)5, 100);
+    SetGameSettings(profile, (eGameSetting)0xe, 1);
+    SetGameSettings(profile, (eGameSetting)0xf, 1);
+    SetGameSettings(profile, (eGameSetting)0xd, 2);
+    SetGameSettings(profile, (eGameSetting)0x11, 1);
+    SetGameSettings(profile, (eGameSetting)0x10, 0x50);
+    SetGameSettings(profile, (eGameSetting)0x12, 1);
+    SetGameSettings(profile, (eGameSetting)0x13, 1);
+    SetGameSettings(profile, (eGameSetting)0x14, 0);
+    SetGameSettings(profile, (eGameSetting)0x15, 0);
+    SetGameSettings(profile, (eGameSetting)0x17, 1);
+    SetGameSettings(profile, (eGameSetting)0x18, 1);
+    SetGameSettings(profile, (eGameSetting)0x19, 1);
+    SetGameSettings(profile, (eGameSetting)0x1a, 1);
+    SetGameSettings(profile, (eGameSetting)0x1b, 1);
+    SetGameSettings(profile, (eGameSetting)0x1c, 2);
+    SetGameSettings(profile, (eGameSetting)0x1d, 1);
+
+    GameSettings* current = settings(profile);
+    for (int i = 0; i < 10; ++i)
+    {
+        current->mFavoriteSkins[i] = 0xffffffffu;
+    }
+    current->mFavoriteSkinsPos = 0;
+    current->mHiddenMashupWorlds = 0xffffffffu;
+
+    SetGameSettings(profile, (eGameSetting)0x1e, 0);
+    if (g_pApp->GetGameStarted() == 0)
+    {
+        current->mMinecraftLocale = 0;
+        current->mMinecraftLanguage = 0;
+    }
+
+    MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(1), true);
+    const MiniGamePlayerSettings playerSettings = miniGame->GetDefaultPlayerSettings();
+    current->mGameModeOptions = playerSettings.Get(eCustomGameModeHostOption_All);
+
+    SetGameSettings(profile, (eGameSetting)0x20, 0);
+    SetGameSettings(profile, (eGameSetting)0x21, 1);
+    SetGameSettings(profile, (eGameSetting)0x23, 1);
+    SetGameSettings(profile, (eGameSetting)0x22, 0);
+    current->mBattleMiniGameMap = 0xffffffffu;
+    SetGameSettings(profile, (eGameSetting)10, 0);
+    SetGameSettings(profile, (eGameSetting)0x24, 3);
+    SetGameSettings(profile, (eGameSetting)0x26, 1);
+    SetGameSettings(profile, (eGameSetting)0x27, 1);
+    SetGameSettings(profile, (eGameSetting)0x28, 0);
+    SetGameSettings(profile, (eGameSetting)0x2a, 1);
+    SetGameSettings(profile, (eGameSetting)0x2b, 1);
+    SetGameSettings(profile, (eGameSetting)0x2c, 0);
+    current->mSkinFlags = 9;
+    current->mGlideMiniGameMap = 0xffffffffu;
+    SetDefaultControls(values, profile, changed);
 }
 void GameSettings::InitGameSettings()
 {
-    int i;
-    for (i = 0; i < 4; ++i)
+    for (int profile = 0; profile < 4; ++profile)
     {
-        SetDefaultGameOptions(0, i, false);
+        gGameSettings[profile] = reinterpret_cast<GameSettings*>(gStorage->GetGameDefinedProfileData(profile));
+        *reinterpret_cast<unsigned char*>(gGameSettings[profile]) = 0;
+        SetDefaultGameOptions(gStorage->GetDashboardProfileSettings(profile), profile, false);
     }
 }
 

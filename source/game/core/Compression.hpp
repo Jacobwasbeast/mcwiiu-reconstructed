@@ -48,6 +48,8 @@ public:
 
     void SetDecompressionType(ESavePlatform platform);
 
+    friend class ConsoleSchematicFile;
+
 private:
     static int internalCompressRle(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);
     static int internalDecompressRle(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);

@@ -1,8 +1,8 @@
 #include "game/core/DLCGameRulesHeader.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
 #include "game/core/GameRuleManager.hpp"
 
-extern GameRuleManager g_GameRuleManager;
 
 DLCGameRulesHeader::DLCGameRulesHeader(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_GameRulesHeader, path),
@@ -102,5 +102,5 @@ void DLCGameRulesHeader::setGrfData(unsigned char* data, unsigned int size, Stri
         return;
 
     m_ready = true;
-    g_GameRuleManager.readRuleFile(m_levelGenerationOptions, data, size, stringTable);
+    gApp.mGameRuleManager.readRuleFile(m_levelGenerationOptions, data, size, stringTable);
 }

@@ -9,6 +9,7 @@ class DLCPack;
 
 class DLCFile
 {
+    friend class UIScene_SkinSelectMenu;
     friend class DLCPack;
 
 public:

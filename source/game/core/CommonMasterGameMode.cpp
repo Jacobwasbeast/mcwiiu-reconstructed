@@ -136,6 +136,10 @@ std::wstring CommonMasterGameMode::getThemeWordEnglish(int id)
     const wchar_t* value = mEnglishStringTable == NULL ? NULL : mEnglishStringTable->getString(id);
     return value == NULL ? std::wstring() : std::wstring(value);
 }
+LevelGenerationOptions* CommonMasterGameMode::getCurrentLevelGenOptions() const
+{
+    return mCurrentLevelGenOptions;
+}
 LevelGenerationOptions* CommonMasterGameMode::getRoundLevelGenOptions() const
 {
     if (mCurrentLevelGenOptions != NULL && !mCurrentLevelGenOptions->isGameModeLobby())

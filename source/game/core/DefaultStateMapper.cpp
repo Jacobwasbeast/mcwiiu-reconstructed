@@ -4,10 +4,7 @@
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 #include "game/world/block/BlockState.hpp"
 
-class Block;
-
-extern DefaultedMappedRegistry<ResourceLocation, Block*>* blockRegistry
-    __asm__("_ZN5Block12blockRegistryE");
+#include "game/world/block/Block.hpp"
 
 DefaultStateMapper::~DefaultStateMapper()
 {
@@ -15,6 +12,6 @@ DefaultStateMapper::~DefaultStateMapper()
 
 ModelResourceLocation* DefaultStateMapper::getLocation(const BlockState* state)
 {
-    return ModelResourceLocation::Make(blockRegistry->getKey(state->getBlock()),
+    return ModelResourceLocation::Make(Block::blockRegistry->getKey(state->getBlock()),
                                        getValuesString(state->getValues()));
 }

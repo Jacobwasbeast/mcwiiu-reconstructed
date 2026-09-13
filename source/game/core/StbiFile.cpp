@@ -11,7 +11,7 @@ struct _OVERLAPPED
     int hEvent;
 };
 
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
+unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
 int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
 
 static const unsigned int FILE_CURRENT = 1;

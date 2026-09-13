@@ -477,7 +477,9 @@ private:
     int mOpacityTimer[4];
     bool mNewDLCAvailable;
     PngTagData mCurrentImageTextData;
+public:
     GameRuleManager mGameRuleManager;
+private:
     std::vector<_DLCRequest*> mDLCDownloadQueue;
     OSFastMutex mDLCRetrieveMutex;
     unsigned int mDLCOffersRetrievedValue;
@@ -511,6 +513,8 @@ private:
     boost::unordered_map<unsigned int, std::vector<SKIN_BOX*>*> mAdditionalSkinBoxes;
     OSFastMutex mAdditionalModelPartsMutex;
     OSFastMutex mAdditionalSkinBoxesMutex;
+    boost::unordered_map<unsigned int, _SkinAdjustments> mSkinAdjustments;
+    OSFastMutex mSkinAdjustmentsMutex;
     unsigned int mExtraGameData;
     boost::unordered_map<int, std::wstring> mLocaleToString;
     boost::unordered_map<std::wstring, int> mStringToLocale;

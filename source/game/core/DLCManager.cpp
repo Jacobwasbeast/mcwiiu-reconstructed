@@ -5,6 +5,7 @@
 
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DLCFile.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/GameRuleManager.hpp"
@@ -13,7 +14,6 @@
 #include "game/client/render/TexturePackRepository.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-extern GameRuleManager g_GameRuleManager;
 extern CMinecraftApp* g_pApp;
 std::vector<std::wstring> g_dlcSkinNames;
 
@@ -32,8 +32,8 @@ char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
 
 int CreateFileA(const char* pFileName, unsigned int desiredAccess, unsigned int shareMode, void* pSecurityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int hTemplateFile);
 unsigned int GetFileSize(int hFile, unsigned int* pFileSizeHigh);
-int ReadFile(int hFile, void* pBuffer, unsigned int bytesToRead, unsigned int* pBytesRead, _OVERLAPPED* pOverlapped);
-int CloseHandle(int hFile);
+unsigned int ReadFile(int hFile, void* pBuffer, unsigned int bytesToRead, unsigned int* pBytesRead, _OVERLAPPED* pOverlapped);
+void CloseHandle(int hFile);
 unsigned int GetLastError();
 
 static const wchar_t* s_parameterNames[] =
@@ -506,7 +506,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
 
     if (pPack->getDLCItemsCount(eDLCType_GameRules) != 0 || pPack->getDLCItemsCount(eDLCType_GameRulesHeader) != 0)
     {
-        g_GameRuleManager.loadGameRules(pPack);
+        gApp.mGameRuleManager.loadGameRules(pPack);
     }
 
     pPack->getDLCItemsCount(eDLCType_Audio);

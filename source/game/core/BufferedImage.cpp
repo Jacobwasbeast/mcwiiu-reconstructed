@@ -1,11 +1,12 @@
 #include "game/core/BufferedImage.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/client/render/TextureUtil.hpp"
+#include "game/core/StringConversion.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
 
-extern int wstringtofilename(const std::wstring& value, char (&result)[256]);
+extern char* wstringtofilename(const std::wstring& value, char (&result)[256]);
 
 BufferedImage::BufferedImage(int mipLevels, int width, int height)
     : m_width((unsigned int)width), m_height((unsigned int)height), m_mipmapDisabled(0)
@@ -19,19 +20,51 @@ BufferedImage::BufferedImage(int mipLevels, int width, int height)
 BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
     : m_width(0), m_height(0), m_mipmapDisabled(0)
 {
+    std::wstring base = path;
+    if (base.empty())
+    {
+        base = useTitleUpdate ? L"Common\\res\\TitleUpdate\\" : L"Common\\";
+    }
+
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    m_mipmapDisabled = mipmapDisabled ? 1 : 0;
-    std::wstring file = path.empty() ? name : path + name;
-    char filename[256];
-    if (wstringtofilename(file, filename) == 0)
+    m_mipmapDisabled = 0;
+
+    const int levels = mipmapDisabled ? 1 : 10;
+    int level;
+    for (level = 0; level < levels; ++level)
     {
-        int* pixels = NULL;
+        std::wstring suffix;
+        if (level != 0)
+        {
+            suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
+        }
+
+        std::wstring file;
+        if (mipmapDisabled)
+        {
+            file = base + L"res" + name;
+        }
+        else
+        {
+            file = base + L"res" + name.substr(0, name.length() - 4) + suffix + L".png";
+        }
+
+        char filename[256];
+        char* resolved = wstringtofilename(file, filename);
         int width = 0;
         int height = 0;
-        if (TextureUtil::LoadTextureData(filename, &width, &height, &pixels) == 0)
+        if (TextureUtil::LoadTextureData(resolved, &width, &height, &m_data[level]) != 0)
         {
-            m_data[0] = pixels;
+            if (level == 0)
+            {
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load texture %ls", 0xc3,
+                                    convStringToWstring(std::string(resolved)).c_str());
+            }
+            return;
+        }
+        if (level == 0)
+        {
             m_width = (unsigned int)width;
             m_height = (unsigned int)height;
         }

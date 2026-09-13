@@ -286,3 +286,5 @@ unsigned int CTelemetryManager::GetAudioSettings(unsigned int playerId)
 
     return 3;
 }
+
+CTelemetryManager gTelemetryManager;

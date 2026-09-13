@@ -176,6 +176,11 @@ void SuperflatConfig::fromBlob(arrayWithLength<unsigned char> data)
             setOption(parameter, stream.readByte(), stream.readByte());
         }
     }
+    input.mBuffer.data = NULL;
+    input.mBuffer.length = 0;
+    input.mCount = 0;
+    input.mMark = 0;
+    input.mPosition = 0;
 }
 
 ByteArrayTag* SuperflatConfig::toTag()

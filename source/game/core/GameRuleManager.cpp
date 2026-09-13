@@ -25,8 +25,6 @@
 static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
 
-GameRuleManager g_GameRuleManager;
-
 static const wchar_t* gGameRuleTypeNames[77] = {
     L"", L"MapOptions", L"ApplySchematic", L"GenerateStructure", L"GenerateBox", L"PlaceBlock", L"PlaceContainer", L"PlaceSpawner",
     L"BiomeOverride", L"StartFeature", L"AddItem", L"AddEnchantment", L"WeighedTreasureItem", L"RandomItemSet", L"DistributeItems",
@@ -292,7 +290,7 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         ConsoleGameRules::EGameRuleType type = static_cast<ConsoleGameRules::EGameRuleType>(-1);
         boost::unordered_map<int, ConsoleGameRules::EGameRuleType>::iterator found = types.find(nameIndex);
         if (found != types.end()) type = found->second;
-        GameRuleDefinition* definition = NULL;
+            GameRuleDefinition* definition = NULL;
         if (type == static_cast<ConsoleGameRules::EGameRuleType>(1))
         {
             addLevelGenerationOptions(options);
@@ -318,6 +316,11 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         delete expandedBytes;
     }
     input.close();
+    bytes.mBuffer.data = NULL;
+    bytes.mBuffer.length = 0;
+    bytes.mCount = 0;
+    bytes.mMark = 0;
+    bytes.mPosition = 0;
     return 1;
 }
 
@@ -559,8 +562,8 @@ void GameRuleManager::loadDefaultGameRules()
 {
     std::vector<LevelGenerationOptions*>* options = mLevelGenerators->getLevelGenerators();
     unsigned int index = options->size();
-    std::wstring root(L"WiiU_Lobby_");
-    File file(root + L"Lobby_pck");
+    std::wstring root(L"WiiU/Lobby/");
+    File file(root + L"Lobby.pck");
     if (loadGameRulesPack(&file) != 0)
     {
         options->at(index)->setBaseSaveRoot(root);

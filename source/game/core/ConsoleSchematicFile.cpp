@@ -3,7 +3,11 @@
 #include <cstring>
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/data/DataFixTypes.hpp"
+#include "game/data/DataFixerUpper.hpp"
 #include "game/core/Painting.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/util/AABB.hpp"
@@ -160,60 +164,210 @@ void ConsoleSchematicFile::save_tags(DataOutputStream* output)
 
 void ConsoleSchematicFile::load(DataInputStream* input)
 {
-    if (input == 0)
+    if (input != 0)
     {
-        return;
-    }
+        delete[] mElements.data;
+        mElements.data = 0;
+        mElements.length = 0;
+        delete[] mExtraElements.data;
+        mExtraElements.data = 0;
+        mExtraElements.length = 0;
+        delete[] mData.data;
+        mData.length = 0;
+        mData.data = 0;
+        delete[] mExtraData.data;
+        mExtraData.length = 0;
+        mExtraData.data = 0;
 
-    int version = input->readInt();
-    unsigned char compression = input->readByte();
-    mWidth = input->readInt();
-    mHeight = input->readInt();
-    mDepth = input->readInt();
-    unsigned int elementCount = calculateFullElementSize(mWidth, mHeight, mDepth);
-    mElements.resize(elementCount);
-    mExtraElements.resize(elementCount);
-
-    unsigned int compressedSize = input->readInt();
-    arrayWithLength<unsigned char> compressed(compressedSize, false);
-    input->readFully(compressed);
-    unsigned int outputSize = elementCount * sizeof(unsigned short);
-    if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->DecompressRLE(mElements.data, &outputSize, compressed.data, compressed.length);
-    else
-        Compression::getCompression()->DecompressLZXRLE(mElements.data, &outputSize, compressed.data, compressed.length);
-    delete[] compressed.data;
-
-    compressedSize = input->readInt();
-    arrayWithLength<unsigned char> extraCompressed(compressedSize, false);
-    input->readFully(extraCompressed);
-    outputSize = elementCount * sizeof(unsigned short);
-    if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->DecompressRLE(mExtraElements.data, &outputSize, extraCompressed.data, extraCompressed.length);
-    else
-        Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &outputSize, extraCompressed.data, extraCompressed.length);
-    delete[] extraCompressed.data;
-
-    CompoundTag* tags = NbtIo::read(input);
-    mBlockEntities.clear();
-    mEntities.clear();
-    if (tags != 0)
-    {
-        ListTag* tileTags = tags->getList(L"TileEntities", 10);
-        for (int i = 0; i < tileTags->size(); ++i)
+        int version = input->readInt();
+        int compression = 2;
+        if (version > 1)
+            compression = input->readByte();
+        mWidth = input->readInt();
+        mHeight = input->readInt();
+        mDepth = input->readInt();
+        arrayWithLength<unsigned char> compressed(static_cast<unsigned int>(input->readInt()), true);
+        input->read(compressed);
+        Compression* compressor = Compression::getCompression();
+        if (version < 3)
         {
-            CompoundTag* tag = tileTags->getCompound(i)->copy();
-            mBlockEntities.push_back(std::make_pair(new BlockPos(tag->getInt(L"x"), tag->getInt(L"y"), tag->getInt(L"z")), tag));
+            unsigned int legacySize = calcFullDataSizeLegacy(mWidth, mHeight, mDepth);
+            arrayWithLength<unsigned char> data;
+            unsigned int count;
+            if (compression == 0)
+            {
+                data = compressed;
+                count = calculateFullElementSize(mWidth, mHeight, mDepth);
+            }
+            else
+            {
+                data = arrayWithLength<unsigned char>(legacySize, true);
+                mData = arrayWithLength<unsigned char>(legacySize, true);
+                if (compression == 1)
+                {
+                    compressor->DecompressRLE(data.data, &data.length, compressed.data, compressed.length);
+                }
+                else if (compression == 3)
+                {
+                    compressor->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                }
+                else
+                {
+                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    compressor->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                }
+                delete[] compressed.data;
+                count = calculateFullElementSize(mWidth, mHeight, mDepth);
+            }
+            mElements = arrayWithLength<unsigned short>(count, true);
+            mExtraElements = arrayWithLength<unsigned short>(count, true);
+            unsigned int ids = calcBlockIdsSizeLegacy(mWidth, mHeight, mDepth);
+            unsigned int nibble = ids;
+            int column = 0;
+            bool highNibble = true;
+            for (unsigned int i = 0; i < ids; ++i)
+            {
+                highNibble = !highNibble;
+                if (highNibble)
+                {
+                    mElements.data[i] = static_cast<unsigned short>(data.data[i] << 4 | data.data[nibble] >> 4);
+                    ++nibble;
+                }
+                else
+                {
+                    mElements.data[i] = static_cast<unsigned short>(data.data[i] << 4 | (data.data[nibble] & 0xf));
+                }
+                if (++column >= mHeight)
+                {
+                    column = 0;
+                    if ((mHeight & 1) != 0)
+                    {
+                        highNibble = true;
+                        ++nibble;
+                    }
+                }
+            }
+            delete[] data.data;
         }
-        ListTag* entityTags = tags->getList(L"Entities", 10);
-        for (int i = 0; i < entityTags->size(); ++i)
+        else
         {
-            CompoundTag* tag = entityTags->getCompound(i)->copy();
-            ListTag* position = tag->getList(L"Pos", 6);
-            mEntities.push_back(std::make_pair(Vec3::newPermanent(position->getDouble(0), position->getDouble(1), position->getDouble(2)), tag));
+            unsigned int count = calculateFullElementSize(mWidth, mHeight, mDepth);
+            if (compression == 0)
+            {
+                mElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(compressed.data), compressed.length);
+                arrayWithLength<unsigned char> extra(static_cast<unsigned int>(input->readInt()), true);
+                input->read(extra);
+                mExtraElements = arrayWithLength<unsigned short>(reinterpret_cast<unsigned short*>(extra.data), extra.length);
+            }
+            else
+            {
+                mElements = arrayWithLength<unsigned short>(count, true);
+                mExtraElements = arrayWithLength<unsigned short>(count, true);
+                mData = arrayWithLength<unsigned char>(count, true);
+                if (compression == 1)
+                {
+                    compressor->DecompressRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                }
+                else if (compression == 3)
+                {
+                    compressor->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                }
+                else
+                {
+                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    compressor->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                }
+                mElements.length >>= 1;
+                delete[] compressed.data;
+                arrayWithLength<unsigned char> extra(static_cast<unsigned int>(input->readInt()), true);
+                input->read(extra);
+                mExtraElements = arrayWithLength<unsigned short>(count, true);
+                if (compression == 1)
+                {
+                    compressor->DecompressRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                }
+                else if (compression == 3)
+                {
+                    compressor->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                }
+                else
+                {
+                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    compressor->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                }
+                mExtraElements.length >>= 1;
+                delete[] extra.data;
+            }
+        }
+        mBlockEntities.clear();
+
+        CompoundTag* tags = Minecraft::GetInstance()->getFixerUpper()->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(input));
+        ListTag* tileEntities = tags->getList(L"TileEntities", 10);
+        if (tileEntities != 0)
+        {
+            for (int i = 0; i < tileEntities->size(); ++i)
+            {
+                CompoundTag* tag = tileEntities->getCompound(i);
+                boost::shared_ptr<BlockEntity> blockEntity = BlockEntity::loadStatic(0, tag);
+                if (blockEntity)
+                {
+                    BlockPos* position = new BlockPos(tag->getInt(L"x"), tag->getInt(L"y"), tag->getInt(L"z"));
+                    mBlockEntities.push_back(std::make_pair(position, tag->copy()));
+                }
+            }
+        }
+        mEntities.clear();
+        ListTag* entities = tags->getList(L"Entities", 10);
+        if (entities != 0)
+        {
+            for (int i = 0; i < entities->size(); ++i)
+            {
+                CompoundTag* tag = entities->getCompound(i);
+                unsigned long long type = EntityIO::byString(tag->getString(L"id"));
+                ListTag* position = tag->getList(L"Pos", 6);
+                double x = position->getDouble(0);
+                double y = position->getDouble(1);
+                double z = position->getDouble(2);
+                if (type == 0xa080001ULL || type == 0xa080002ULL)
+                {
+                    x = tag->getInt(L"TileX");
+                    y = tag->getInt(L"TileY");
+                    z = tag->getInt(L"TileZ");
+                }
+                mEntities.push_back(std::make_pair(Vec3::newPermanent(x, y, z), tag->copy()));
+            }
+        }
+        mNamedPositions.clear();
+        ListTag* namedPositions = tags->getList(L"NamedPositions", 10);
+        if (namedPositions != 0)
+        {
+            for (int i = 0; i < namedPositions->size(); ++i)
+            {
+                CompoundTag* tag = namedPositions->getCompound(i);
+                int x = tag->getInt(L"X");
+                int y = tag->getInt(L"Y");
+                int z = tag->getInt(L"Z");
+                if (!tag->contains(L"X2"))
+                {
+                    std::string name = convWstringToString(tag->getString(L"Name"));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(name, BlockPos(x, y, z)));
+                }
+                else
+                {
+                    int x2 = tag->getInt(L"X2");
+                    int y2 = tag->getInt(L"Y2");
+                    int z2 = tag->getInt(L"Z2");
+                    std::string name = convWstringToString(tag->getString(L"Name"));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(name, BlockPos(x, y, z), BlockPos(x2, y2, z2)));
+                }
+            }
         }
         delete tags;
     }
+    mUndoReady = true;
 }
 
 void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arrayWithLength<unsigned short> in, ESchematicRotation rotation, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial)

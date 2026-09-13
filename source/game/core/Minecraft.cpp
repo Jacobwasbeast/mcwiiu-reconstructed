@@ -250,7 +250,7 @@ void MemSect(int section);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 void Sleep(unsigned int milliseconds);
-void XEnableGuestSignin(int enable);
+int XEnableGuestSignin(int enable);
 void MinecraftWorld_RunStaticCtors();
 void stripWhitespaceForHtml(std::wstring& text, bool collapse);
 std::wstring convStringToWstring(wchar_t* text);
@@ -506,8 +506,8 @@ void Minecraft::init()
     mAlternateFont =
         new Font(mOptions, L"font/alternate", mTextures, false, &UnityClient13TextureLocation_0x7B, 0x10, 0x10, 8, 8, NULL);
 
-    GrassColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(0), L"misc/grasscolor.png"));
-    FoliageColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(1), L"misc/foliagecolor.png"));
+    GrassColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(0), L"misc/grasscolor"));
+    FoliageColor::init(mTextures->loadTexturePixels(static_cast<_TEXTURE_NAME>(1), L"misc/foliagecolor"));
     Biome::generateColoursDebugOutput();
 
     mTerrainAtlas = new TextureAtlas(0, L"terrain", L"textures/blocks/", NULL, true);

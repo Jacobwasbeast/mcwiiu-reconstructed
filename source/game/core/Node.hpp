@@ -9,7 +9,7 @@ class BlockPos;
 class DataInputStream;
 class DataOutputStream;
 
-class Node
+struct Node
 {
 public:
     int x;

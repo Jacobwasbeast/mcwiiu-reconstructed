@@ -1,3 +1,4 @@
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CInput.hpp"
@@ -78,16 +79,8 @@
 
 void Sleep(unsigned int milliseconds);
 
-struct _LARGE_INTEGER
-{
-    long long QuadPart;
-};
-
-void QueryPerformanceCounter(_LARGE_INTEGER* value);
-void QueryPerformanceFrequency(_LARGE_INTEGER* value);
 unsigned int GetTickCount();
 
-static std::map<unsigned int, _SkinAdjustments> g_skinAdjustments;
 static boost::unordered_map<PlayerUID, MOJJANG_DATA*> g_mojangData;
 unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
@@ -99,8 +92,6 @@ extern CTelemetryManager gTelemetryManager;
 
 namespace
 {
-unsigned int s_dlcMountIndex = 0;
-unsigned int s_dlcMountErrorCount = 0;
 
 struct BANNEDLISTDATA
 {
@@ -353,9 +344,13 @@ CMinecraftApp::CMinecraftApp()
     InitializeCriticalSection(&mMemoryTPDMutex);
     InitializeCriticalSection(&mAdditionalModelPartsMutex);
     InitializeCriticalSection(&mAdditionalSkinBoxesMutex);
+    InitializeCriticalSection(&mSkinAdjustmentsMutex);
     InitializeCriticalSection(&mDLCRetrieveMutex);
     InitializeCriticalSection(&mDLCDownloadQueueMutex);
-    std::fill(mBanListCheck, mBanListCheck + 4, false);
+    SetBanListCheck(0, false);
+    SetBanListCheck(1, false);
+    SetBanListCheck(2, false);
+    SetBanListCheck(3, false);
     std::fill(mOpacityTimer, mOpacityTimer + 4, 0);
     std::fill(mOptionsCallbackStatus, mOptionsCallbackStatus + 4, 0);
     std::fill(mPlayerIds, mPlayerIds + 8, 0);
@@ -366,6 +361,7 @@ CMinecraftApp::CMinecraftApp()
     std::memset(mUniqueMapName, 0, sizeof(mUniqueMapName));
     for (int player = 0; player < 4; ++player)
         mCachedSignInUIDs[player] = PlayerUID(0);
+    LocaleAndLanguageInit();
 }
 CMinecraftApp::~CMinecraftApp()
 {
@@ -387,6 +383,7 @@ CMinecraftApp::~CMinecraftApp()
     DeleteCriticalSection(&mMemoryTPDMutex);
     DeleteCriticalSection(&mAdditionalModelPartsMutex);
     DeleteCriticalSection(&mAdditionalSkinBoxesMutex);
+    DeleteCriticalSection(&mSkinAdjustmentsMutex);
 }
 void CMinecraftApp::SetGameHostOption(unsigned int& options, eGameHostOption option, unsigned int value)
 {
@@ -482,11 +479,11 @@ uint8_t CMinecraftApp::GetLocalPlayerCount()
 void CMinecraftApp::loadMediaArchive()
 {
     std::wstring path = L"Common/Media/MediaWiiU.arc";
-    File file(path);
-    if (!file.exists())
-        return;
-    delete mMediaArchive;
-    mMediaArchive = new ArchiveFile(file);
+    if (!path.empty())
+    {
+        File file(path);
+        mMediaArchive = new ArchiveFile(file);
+    }
 }
 arrayWithLength<unsigned char> CMinecraftApp::getArchiveFile(const std::wstring& firstArgument, bool secondArgument)
 {
@@ -1151,7 +1148,7 @@ waitForSessionEnd:
 
     boost::shared_ptr<Player> emptyPlayer;
     minecraft->setLevel(NULL, dimension, emptyPlayer, false, true);
-    g_GameRuleManager.unloadCurrentGameRules();
+    gApp.mGameRuleManager.unloadCurrentGameRules();
     return 0;
 }
 uint32_t CMinecraftApp::TrialOverReturned(void* context, int button, C4JStorage::EMessageResult result)
@@ -1835,11 +1832,55 @@ std::wstring CMinecraftApp::getDLCFolderName(unsigned int dlcId)
 }
 std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, bool mounted, std::wstring suffix)
 {
-    return std::wstring();
+    std::wstring path = suffix;
+    if (create)
+    {
+        bool useDLCFolder;
+        if (contentType < 0x400)
+        {
+            if (contentType < 0x222)
+                useDLCFolder = (contentType == 4) || (contentType == 0x207) || (contentType == 0x216);
+            else
+                useDLCFolder = (contentType < 0x227) || (contentType == 0x22c) || (contentType == 0x230) || (contentType == 0x233);
+        }
+        else if (contentType < 0x4f4)
+        {
+            if (contentType <= 0x402)
+                useDLCFolder = true;
+            else if (contentType <= 0x404)
+                useDLCFolder = false;
+            else if (contentType <= 0x40a)
+                useDLCFolder = true;
+            else if (contentType == 0x40c)
+                useDLCFolder = true;
+            else if (contentType <= 0x40d)
+                useDLCFolder = false;
+            else if (contentType <= 0x40f)
+                useDLCFolder = true;
+            else
+                useDLCFolder = false;
+        }
+        else
+        {
+            useDLCFolder = (contentType <= 0x4f5) || (contentType == 0x4f9) || (contentType == 0x804) || (contentType == 0x812);
+        }
+
+        if (useDLCFolder)
+            path = getDLCFolderName(contentType);
+
+        File candidateFile(path);
+        if (!candidateFile.exists())
+            path = suffix;
+    }
+    return path + (mounted ? std::wstring(L"\\Data\\") : std::wstring(L"\\"));
 }
-std::wstring CMinecraftApp::getFilePath(unsigned int firstArgument, std::wstring secondArgument, bool thirdArgument, std::wstring fourthArgument)
+std::wstring CMinecraftApp::getFilePath(unsigned int contentType, std::wstring name, bool mounted, std::wstring suffix)
 {
-    return 0;
+    const std::wstring primary = getRootPath(contentType, true, mounted, suffix) + name;
+    File primaryFile(primary);
+    if (primaryFile.exists())
+        return primary;
+    return getRootPath(contentType, false, true, suffix) + name;
 }
 uint64_t CMinecraftApp::HandleDLC(DLCPack* pack)
 {
@@ -1883,23 +1924,22 @@ int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int co
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
     if (contentType != 0)
     {
-        ++s_dlcMountErrorCount;
-        ++s_dlcMountIndex;
+        ++app->mDLCManager.m_numCorruptPacks;
+        ++app->mDLCInstallIndex;
         app->MountNextDLC(result);
         return 0;
     }
 
-    CONTENT_DATA* content = reinterpret_cast<CONTENT_DATA*>(gStorage->GetDLC(s_dlcMountIndex));
-    const std::wstring folderName = convStringToWstring(std::string(content->name));
+    CONTENT_DATA content = *reinterpret_cast<CONTENT_DATA*>(gStorage->GetDLC(app->mDLCInstallIndex));
+    const std::wstring folderName = convStringToWstring(std::string(content.name));
     DLCPack* existingPack = app->mDLCManager.getPack(folderName);
     cNintendoDLCInfo* dlcInfo = static_cast<CConsoleMinecraftApp*>(app)->GetDLCInfoInstance();
 
     if (existingPack != NULL && !existingPack->IsCorrupt())
     {
-        DLC_INFO* info = dlcInfo->GetDLCInfoForPackFolderName(folderName.c_str());
-        const unsigned int licenseMask = info != NULL ? 1U : 0U;
-        existingPack->SetDLCMountIndex(s_dlcMountIndex);
-        existingPack->SetDLCDeviceID(content->index);
+        const unsigned int licenseMask = dlcInfo->GetDLCPurchased(content.name);
+        existingPack->SetDLCMountIndex(app->mDLCInstallIndex);
+        existingPack->SetDLCDeviceID(content.state);
         existingPack->updateLicenseMask(licenseMask);
         gStorage->UnmountInstalledDLC(NULL);
     }
@@ -1908,33 +1948,31 @@ int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int co
         if (existingPack != NULL)
             app->mDLCManager.removePack(existingPack);
 
-        DLC_INFO* info = dlcInfo->GetDLCInfoForPackFolderName(folderName.c_str());
-        unsigned int licenseMask = info != NULL ? 1U : 0U;
+        unsigned int licenseMask = dlcInfo->GetDLCPurchased(content.name);
         if (IsLicenseExemptTexturePack(folderName))
             licenseMask = 1U;
 
         DLCPack* pack = new DLCPack(folderName, licenseMask);
-        pack->SetDLCMountIndex(s_dlcMountIndex);
-        pack->SetDLCDeviceID(content->index);
+        pack->SetDLCMountIndex(app->mDLCInstallIndex);
+        pack->SetDLCDeviceID(content.state);
         app->mDLCManager.addPack(pack);
         app->HandleDLC(pack);
         gStorage->UnmountInstalledDLC(NULL);
     }
 
-    ++s_dlcMountIndex;
+    ++app->mDLCInstallIndex;
     app->MountNextDLC(result);
     return 0;
 }
 void CMinecraftApp::MountNextDLC(int32_t firstArgument)
 {
-    if (mDLCInstallIndex < mDLCInstallCount)
+    while (mDLCInstallIndex < mDLCInstallCount)
     {
         const int result = gStorage->MountInstalledDLC(firstArgument, mDLCInstallIndex,
                                                         DLCMountedCallback, this, NULL);
         if (result == 0x3e5)
             return;
         ++mDLCInstallIndex;
-        return;
     }
     mDLCInstallProcessCompleted = true;
     mDLCInstallPending = false;
@@ -3650,12 +3688,17 @@ void CMinecraftApp::FatalLoadError(const wchar_t* message, ...)
 }
 void CMinecraftApp::SetSkinAdjustments(uint32_t id, _SkinAdjustments value)
 {
-    g_skinAdjustments[id] = value;
+    EnterCriticalSection(&mSkinAdjustmentsMutex);
+    mSkinAdjustments[id] = value;
+    LeaveCriticalSection(&mSkinAdjustmentsMutex);
 }
 _SkinAdjustments CMinecraftApp::GetSkinAdjustments(uint32_t id)
 {
-    std::map<unsigned int, _SkinAdjustments>::const_iterator found = g_skinAdjustments.find(id);
-    if (found != g_skinAdjustments.end())
-        return found->second;
-    return _SkinAdjustments();
+    _SkinAdjustments result;
+    EnterCriticalSection(&mSkinAdjustmentsMutex);
+    boost::unordered_map<unsigned int, _SkinAdjustments>::const_iterator found = mSkinAdjustments.find(id);
+    if (found != mSkinAdjustments.end())
+        result = found->second;
+    LeaveCriticalSection(&mSkinAdjustmentsMutex);
+    return result;
 }

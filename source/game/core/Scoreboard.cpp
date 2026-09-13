@@ -768,6 +768,10 @@ void Scoreboard::PlayerStats::setRecord(eIntArgIndex index, int round, int value
     }
 }
 
+void Scoreboard::PlayerStats::setRecord(eInt64ArgIndex, int, long long)
+{
+}
+
 bool Scoreboard::PlayerStats::isRecordSame(PlayerStats* pOther, int record, int round, int life)
 {
     if (record == eRecord_SUID)

@@ -20,9 +20,9 @@ unsigned char g_fatalLoadErrorRequested = 0;
 unsigned char g_fatalLoadErrorReady = 0;
 unsigned char g_fatalLoadErrorActive = 0;
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
-extern int GetFileSize(int, unsigned int*);
-extern int CloseHandle(int);
+extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
+extern unsigned int GetFileSize(int, unsigned int*);
+extern void CloseHandle(int);
 extern ConsoleUIController gConsoleUIController;
 extern CStorage* gStorage;
 

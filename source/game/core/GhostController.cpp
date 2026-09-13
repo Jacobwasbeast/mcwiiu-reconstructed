@@ -215,6 +215,11 @@ void GhostController::LoadGhostHeader(int track, void* data, unsigned int length
         SetTrackHeader(track, stream.readUnsignedShort(), (unsigned int)stream.readInt(),
                        (unsigned short)stream.readUnsignedShort(), stream.readBoolean(),
                        stream.readBoolean(), false);
+    input.mBuffer.data = NULL;
+    input.mBuffer.length = 0;
+    input.mCount = 0;
+    input.mMark = 0;
+    input.mPosition = 0;
 }
 void GhostController::LoadGhostHeader_Callback(void* context,int track,C4JStorage::eGeneralData_Callback_Status status,int)
 {
@@ -260,6 +265,11 @@ void GhostController::AddLoadedGhostRecord(int track, void* data, unsigned int l
     }
     else
         delete record;
+    input.mBuffer.data = NULL;
+    input.mBuffer.length = 0;
+    input.mCount = 0;
+    input.mMark = 0;
+    input.mPosition = 0;
 }
 void GhostController::LoadGhostRecord_Callback(void* context,int,C4JStorage::eGeneralData_Callback_Status,int)
 {

@@ -17,9 +17,9 @@ struct _OVERLAPPED
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-int GetFileSize(int file, unsigned int* fileSizeHigh);
-int CloseHandle(int handle);
+unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
+unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
+void CloseHandle(int handle);
 
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int GENERIC_READ = 0x80000000;

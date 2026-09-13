@@ -9,7 +9,7 @@
 
 std::wstring convStringToWstring(const std::string& value);
 std::wstring convUtf8ToWstring(const char* value);
-void toUtf8(const std::wstring& value, char** data, unsigned int* length);
+void toUtf8(const std::wstring& value, char** data, unsigned int& length);
 
 unsigned int XmlParser::compare(char* first, char* second, unsigned int length)
 {
@@ -155,7 +155,7 @@ void XmlParser::writeXml(DataOutputStream* stream, XmlObject* object, bool forma
 {
     char* data = NULL;
     unsigned int length = 0;
-    toUtf8(std::wstring(L""), &data, &length);
+    toUtf8(std::wstring(L""), &data, length);
     --length;
     arrayWithLength<unsigned char> output;
     output.data = (unsigned char*)data;
@@ -169,7 +169,7 @@ void XmlParser::writeXml(DataOutputStream* stream, XmlObject* object, bool forma
         std::wstring text = child->xml()->toString(0, true);
         data = NULL;
         length = 0;
-        toUtf8(text, &data, &length);
+        toUtf8(text, &data, length);
         --length;
         output.data = (unsigned char*)data;
         output.length = length;

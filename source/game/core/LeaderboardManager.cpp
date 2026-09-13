@@ -2,7 +2,6 @@
 
 #include <string.h>
 
-LeaderboardManager* g_pLeaderboardManager = NULL;
 
 LeaderboardManager::LeaderboardManager()
     : m_uid(0)

@@ -104,6 +104,7 @@ public:
 
 private:
     friend class Minecraft;
+    friend class CMinecraftApp;
 
     std::vector<DLCPack*> m_packs;
     bool m_bCorruptDLCFound;

@@ -3,6 +3,7 @@
 #include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/RiderPositionOverrides.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -30,12 +31,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
-
-class ResourceLocation;
-namespace BuiltInLootTables
-{
-    extern ResourceLocation CHICKEN;
-}
 
 static Item* chickenFood[4];
 

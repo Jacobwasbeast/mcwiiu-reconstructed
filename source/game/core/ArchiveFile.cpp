@@ -8,11 +8,11 @@
 
 struct _OVERLAPPED;
 
-extern int wstringtofilename(const std::wstring&, char (&)[256]);
+extern char* wstringtofilename(const std::wstring&, char (&)[256]);
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern int SetFilePointer(int, long, int*, unsigned int);
-extern int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
-extern int CloseHandle(int);
+extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
+extern void CloseHandle(int);
 
 ArchiveFile::ArchiveFile(File file)
 {
@@ -38,6 +38,11 @@ ArchiveFile::ArchiveFile(unsigned char* data, unsigned int size)
     DataInputStream stream((InputStream*)&input);
     _readHeader(&stream);
     stream.close();
+    input.mBuffer.data = NULL;
+    input.mBuffer.length = 0;
+    input.mCount = 0;
+    input.mMark = 0;
+    input.mPosition = 0;
 }
 
 ArchiveFile::~ArchiveFile()
@@ -122,6 +127,11 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
         stream.close();
         arrayWithLength<unsigned char> decompressed(decompressedSize, true);
         Compression::getCompression()->Decompress(decompressed.data, &decompressedSize, result.data + 4, result.length - 4);
+        input.mBuffer.data = NULL;
+        input.mBuffer.length = 0;
+        input.mCount = 0;
+        input.mMark = 0;
+        input.mPosition = 0;
         delete[] result.data;
         result = decompressed;
         result.length = decompressedSize;

@@ -87,6 +87,7 @@ public:
     void ShowPatchAvailableError();
     void PatchAvailableDialogTick();
 private:
+    friend class ConsoleUIController;
     ImageFileBuffer m_saveThumbnail;
     unsigned char m_signInReserved[12];
     unsigned char m_signInResult;

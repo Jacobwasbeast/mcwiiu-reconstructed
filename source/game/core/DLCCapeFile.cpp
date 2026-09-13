@@ -1,6 +1,6 @@
 #include "game/core/DLCCapeFile.hpp"
 
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
 DLCCapeFile::DLCCapeFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Cape, path)
@@ -13,6 +13,5 @@ DLCCapeFile::~DLCCapeFile()
 
 void DLCCapeFile::addData(unsigned char* data, unsigned int size)
 {
-    CMinecraftApp* app = (CMinecraftApp*)0x10528dc0u;
-    app->AddMemoryTextureFile(m_path, data, size);
+    gApp.AddMemoryTextureFile(m_path, data, size);
 }

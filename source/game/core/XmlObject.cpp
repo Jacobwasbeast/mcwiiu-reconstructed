@@ -170,3 +170,8 @@ std::wstring XmlObject::toString(int indentation, bool formatted) const
     result += L">";
     return result;
 }
+
+const std::vector<XmlChild>& XmlObject::getChildrenRaw() const
+{
+    return mChildren;
+}
