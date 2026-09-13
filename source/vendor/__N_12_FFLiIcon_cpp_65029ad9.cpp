@@ -112,8 +112,8 @@ void* MakeIcon(_GX2Texture* texture, IconShaderType shaderType, FFLDataSource da
 
 extern void FFLSetExpression(FFLiCharModel& charModel, FFLExpression expression);
 extern unsigned int FFLiGetIconBufferSize(const FFLIconSetting* setting);
-extern unsigned int FFLiGetIconTempBufferSize(const FFLIconSetting* setting);
-extern unsigned int FFLiGetDepthBufferSizeRenderTexture(unsigned int width, unsigned int height);
+extern int FFLiGetIconTempBufferSize(const FFLIconSetting* setting);
+extern int FFLiGetDepthBufferSizeRenderTexture(unsigned int width, unsigned int height);
 extern FFLColor* FFLiGetFavoriteColor(int index);
 extern void FFLiInitRenderTexture(FFLiRenderTexture* texture, unsigned int width,
                                   unsigned int height, unsigned int format,

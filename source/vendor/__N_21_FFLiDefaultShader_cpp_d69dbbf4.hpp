@@ -25,11 +25,12 @@ struct FFLiDefaultShaderParam
     uint32_t matrix[16];
     uint32_t matrixView[16];
     uint32_t matrixNormal[12];
-    uint32_t identity[16];
     FFLiDefaultShaderLight light;
     FFLiDefaultShaderMaterial material[9];
     uint32_t rim[6];
 };
+
+struct _GX2ContextState;
 
 class __N_21_FFLiDefaultShader_cpp_d69dbbf4
 {
@@ -57,7 +58,10 @@ public:
     static FFLiDefaultShaderLight* GetLightParam(FFLiDefaultShaderParam* param);
     static FFLiDefaultShaderMaterial* GetMaterialParam(FFLiDefaultShaderParam* param, FFLDrawType type);
 
-    uint32_t m_prefix[4];
+    void* m_callbackData;
+    _GX2ContextState* m_contextState;
+    void (*m_drawCallback)(void*, const FFLiDefaultShaderDrawParam*);
+    void (*m_matrixCallback)(void*, const _Mat44*);
     _GX2VertexShader* m_vertexShader;
     _GX2PixelShader* m_pixelShader;
     FFLiUtilShader::FetchShader m_fetchShader;
@@ -102,6 +106,11 @@ static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelConst2) == 
 static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_pixelConst3) == 0x74, "layout");
 static_assert(offsetof(__N_21_FFLiDefaultShader_cpp_d69dbbf4, m_parameterStorage) == 0xa8, "layout");
 static_assert(sizeof(__N_21_FFLiDefaultShader_cpp_d69dbbf4) == 0x3a8, "layout");
+static_assert(offsetof(FFLiDefaultShaderParam, matrixNormal) == 0x80, "layout");
+static_assert(offsetof(FFLiDefaultShaderParam, light) == 0xb0, "layout");
+static_assert(offsetof(FFLiDefaultShaderParam, material) == 0xf0, "layout");
+static_assert(offsetof(FFLiDefaultShaderParam, rim) == 0x2e8, "layout");
+static_assert(sizeof(FFLiDefaultShaderParam) == 0x300, "layout");
 #endif
 
 typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;

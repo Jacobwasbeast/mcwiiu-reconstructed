@@ -3,9 +3,14 @@
 unsigned int FFLiIsNumberCharCode(unsigned short character);
 void FFLiCopyWcharT2U16(unsigned short* destination, unsigned int maximumLength, const wchar_t* source);
 
-int __N_15_FFLiMiiData_cpp_2f9c0036::RflToFaceLineAndMake(int value)
+const unsigned int* __N_15_FFLiMiiData_cpp_2f9c0036::RflToFaceLineAndMake(int value)
 {
-    return value * 8 + 0x1047325c;
+    static const unsigned int table[12][2] = {
+        { 0, 0 }, { 0, 1 }, { 0, 6 }, { 0, 9 },
+        { 5, 0 }, { 2, 0 }, { 3, 0 }, { 7, 0 },
+        { 8, 0 }, { 0, 10 }, { 9, 0 }, { 11, 0 }
+    };
+    return table[value];
 }
 
 unsigned int __N_15_FFLiMiiData_cpp_2f9c0036::VerifyNameFromRFL(unsigned short* name, int length, int maximumNumberCharacters)

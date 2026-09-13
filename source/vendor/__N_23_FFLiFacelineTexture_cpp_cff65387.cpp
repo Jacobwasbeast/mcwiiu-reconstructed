@@ -33,8 +33,8 @@ struct FFLDrawParam
 };
 
 extern int FFLiGetMipMapNum(int width, int height);
-extern uint32_t FFLiGetBufferRenderTexture(uint32_t width, uint32_t height,
-                                           uint32_t format, uint32_t mipCount);
+extern int FFLiGetBufferRenderTexture(uint32_t width, uint32_t height,
+                                      uint32_t format, uint32_t mipCount);
 extern uint32_t FFLiBugCanSwapSize(uint32_t size);
 extern uint32_t FFLiBugCanVgtFixedIndexSize(uint32_t size);
 extern void* FFLiBugVgtFixedIndexPtr(void* value);
@@ -69,7 +69,7 @@ uint32_t __N_23_FFLiFacelineTexture_cpp_cff65387::GetTextureBufferSize(
 int32_t __N_23_FFLiFacelineTexture_cpp_cff65387::GetDrawParamBufferSize()
 {
     FFLiBugCanSwapSize(8);
-    uint32_t indexSize = FFLiRoundUp(FFLiBugCanVgtFixedIndexSize(0), 0x20);
+    uint32_t indexSize = FFLiRoundUp(FFLiBugCanVgtFixedIndexSize(FFLiBugCanSwapSize(8)), 0x20);
     uint32_t attributeSize = FFLiRoundUp(FFLiBugCanSwapSize(0x40), 0x40);
     uint32_t primitiveSize = FFLiRoundUp(FFLiBugCanSwapSize(0x20), 0x40);
     return (int32_t)(indexSize + 0x40 + attributeSize + primitiveSize);
@@ -102,8 +102,8 @@ void __N_23_FFLiFacelineTexture_cpp_cff65387::InitPrimitive(
     primitive->vertexCount = 4;
     FFLiBugCanVgtFixedIndexSize(8);
     primitive->indexBuffer = FFLiBugVgtFixedIndexPtr(
-        (void*)Allocate(allocator, FFLiBugCanSwapSize(0), 0x20));
-    static const uint32_t indices[2] = { 0x00020003, 0x04040405 };
+        (void*)Allocate(allocator, FFLiBugCanSwapSize(FFLiBugCanVgtFixedIndexSize(8)), 0x20));
+    static const uint16_t indices[4] = { 0, 1, 2, 3 };
     memcpy(primitive->indexBuffer, indices, 8);
     EndianSwap(primitive->indexBuffer, 8);
 }
@@ -112,22 +112,25 @@ void __N_23_FFLiFacelineTexture_cpp_cff65387::InitAttributes(
     FFLAttributeBufferParam* attributes, uint32_t flags, FFLiBufferAllocator* allocator)
 {
     (void)flags;
-    static const uint32_t texcoord[16] = {
-        0x3f800000, 0xbf800000, 0x3f800000, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0, 0
+    static const float positions[16] = {
+        -1.0f, 1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f, 0.0f
     };
-    static const uint32_t color[8] = { 0, 0, 0x3f800000, 0, 0, 0, 0, 0 };
+    static const float texcoords[8] = {
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 1.0f, 1.0f
+    };
     attributes->attributes[0].size = 0x40;
     attributes->attributes[0].stride = 0x10;
-    attributes->attributes[0].buffer = (void*)Allocate(allocator, FFLiBugCanSwapSize(0), 0x40);
-    memcpy(attributes->attributes[0].buffer, texcoord, 0x40);
+    attributes->attributes[0].buffer = (void*)Allocate(allocator, FFLiBugCanSwapSize(0x40), 0x40);
+    memcpy(attributes->attributes[0].buffer, positions, 0x40);
     EndianSwap(attributes->attributes[0].buffer, 0x40);
     attributes->attributes[1].size = 0x20;
     attributes->attributes[1].stride = 8;
-    attributes->attributes[1].buffer = (void*)Allocate(allocator, FFLiBugCanSwapSize(0), 0x40);
-    memcpy(attributes->attributes[1].buffer, color, 0x20);
+    attributes->attributes[1].buffer = (void*)Allocate(allocator, FFLiBugCanSwapSize(0x20), 0x40);
+    memcpy(attributes->attributes[1].buffer, texcoords, 0x20);
     EndianSwap(attributes->attributes[1].buffer, 0x20);
     attributes->attributes[2].size = 0;
     attributes->attributes[2].stride = 0;

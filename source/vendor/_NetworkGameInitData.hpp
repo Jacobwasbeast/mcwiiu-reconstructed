@@ -7,6 +7,7 @@
 
 class LevelGenerationOptions;
 class SuperflatConfig;
+struct DiskSaveBuffer;
 
 class _NetworkGameInitData
 {
@@ -14,7 +15,7 @@ public:
     _NetworkGameInitData();
 
     long long m_seed;
-    int m_value2;
+    DiskSaveBuffer* m_value2;
     int m_value3;
     int m_value4;
     LevelGenerationOptions* m_value5;

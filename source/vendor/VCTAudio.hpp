@@ -64,6 +64,9 @@ struct VCTAudioInfo
     unsigned int m_Unknown5C;
 };
 
+extern unsigned char g_vctInitialized;
+extern unsigned int g_vctMode;
+
 bool VCT_IsInitialized();
 
 unsigned int VCTi_GetAudioFrameLength();

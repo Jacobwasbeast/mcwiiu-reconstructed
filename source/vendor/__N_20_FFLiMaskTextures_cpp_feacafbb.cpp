@@ -11,7 +11,8 @@ struct FFLiMaskTexturesTempObject
     void* rawMasks[19];
 };
 
-extern uint32_t FFLiGetBufferRenderTexture(uint32_t width, uint32_t height, uint32_t format);
+extern int FFLiGetBufferRenderTexture(uint32_t width, uint32_t height, uint32_t format,
+                                      uint32_t mipCount);
 extern int FFLiiGetEyeRotateOffset(int value);
 
 static int g_expressionParameters[19][5] =
@@ -34,11 +35,13 @@ int32_t __N_20_FFLiMaskTextures_cpp_feacafbb::ExpressionFlagCount(uint32_t expre
 }
 
 uint32_t __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureBufferSize(
-    uint32_t width, uint32_t height, bool compressed)
+    uint32_t resolution, uint32_t mipCount, bool compressed)
 {
     if (!compressed)
-        return FFLiGetBufferRenderTexture(width, height, 0x1a);
-    return FFLiCompressorImpl<FFLiCompressorDescBC3>::GetTextureBufferSize(width, width, height);
+        return static_cast<uint32_t>(
+            FFLiGetBufferRenderTexture(resolution, resolution, 0x1a, mipCount));
+    return FFLiCompressorImpl<FFLiCompressorDescBC3>::GetTextureBufferSize(
+        resolution, resolution, mipCount);
 }
 
 uint32_t __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureFormat(bool compressed, bool alpha)
@@ -48,10 +51,10 @@ uint32_t __N_20_FFLiMaskTextures_cpp_feacafbb::GetTextureFormat(bool compressed,
     return alpha ? 0x433 : 0x33;
 }
 
-void __N_20_FFLiMaskTextures_cpp_feacafbb::FFLiRenderTextureAllocate(
+FFLiRenderTexture* __N_20_FFLiMaskTextures_cpp_feacafbb::FFLiRenderTextureAllocate(
     FFLiBufferAllocator* allocator)
 {
-    allocator->Allocate(0x9c, 4);
+    return reinterpret_cast<FFLiRenderTexture*>(allocator->Allocate(0x9c, 4));
 }
 
 bool __N_20_FFLiMaskTextures_cpp_feacafbb::CanUseExpression(

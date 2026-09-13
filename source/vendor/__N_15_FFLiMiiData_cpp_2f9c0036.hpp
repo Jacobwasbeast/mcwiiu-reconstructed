@@ -11,7 +11,7 @@ enum FFLiBirthPlatform
 
 struct __N_15_FFLiMiiData_cpp_2f9c0036
 {
-    static int RflToFaceLineAndMake(int value);
+    static const unsigned int* RflToFaceLineAndMake(int value);
     static unsigned int VerifyNameFromRFL(unsigned short* name, int length, int maximumNumberCharacters);
     static unsigned int ReplaceNameFromRFL(unsigned short* name, int length, int maximumNumberCharacters);
     static bool IsBirthPlatformFeature(FFLiBirthPlatform platform);

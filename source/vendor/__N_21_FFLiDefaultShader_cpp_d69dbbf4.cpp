@@ -2,9 +2,10 @@
 #include "platform/wiiu/FFLiDefaultParams.hpp"
 
 #include <cstdlib>
+#include <cstring>
 #include <coreinit/debug.h>
 
-extern "C" void MEMFreeToDefaultHeap(void* block);
+#include <coreinit/memdefaultheap.h>
 
 void DestroyShader__FP11PlainShader(PlainShader* shader)
 {
@@ -58,7 +59,9 @@ extern "C" void GX2SetVertexSampler(const void* sampler, unsigned int unit);
 extern "C" void GX2SetPixelUniformReg(unsigned int offset, unsigned int count, const void* values);
 extern "C" void GX2SetVertexUniformReg(unsigned int offset, unsigned int count, const void* values);
 extern "C" void GX2SetVertexUniformBlock(unsigned int offset, unsigned int count, const void* values);
+extern "C" void GX2SetAttribBuffer(unsigned int index, unsigned int size, unsigned int stride, const void* buffer);
 extern "C" void GX2DrawEx(unsigned int mode, unsigned int count, unsigned int offset, unsigned int instances);
+extern "C" void GX2DrawIndexedEx(unsigned int mode, unsigned int count, unsigned int indexType, const void* indexBuffer, unsigned int baseVertex, unsigned int instances);
 extern "C" void GX2InitSampler(void* sampler, unsigned int clamp, unsigned int filter);
 void ASM_MTX44Identity(float (*matrix)[4]);
 void ASM_MTX44Transpose(const float (*source)[4], float (*destination)[4]);
@@ -106,7 +109,7 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulateMode(__N_21_FFLiDefault
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param)
 {
     BindTexture(shader, param);
-    if (param.mode == 0 || param.mode == 1 || param.mode == 2) SetupConstColor(shader->m_pixelConst1, *param.colorR);
+    if (param.mode == 0 || param.mode == 2 || (param.mode >= 3 && param.mode <= 5)) SetupConstColor(shader->m_pixelConst1, *param.colorR);
     if (param.mode == 2) {
         SetupConstColor(shader->m_pixelConst2, *param.colorG);
         SetupConstColor(shader->m_pixelConst3, *param.colorB);
@@ -117,13 +120,15 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupModulate(__N_21_FFLiDefaultShad
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiDefaultShaderDrawParam& param)
 {
     const unsigned int type = param.value[0x10];
-    if (type >= 9 && type <= 17) {
-    const uint32_t* material = shader->m_parameterStorage + type * 14;
+    if (type < 9 || type > 17) {
+        const uint32_t* material = shader->m_parameterStorage + 60 + type * 14;
+        uint32_t specularPower[4] = {material[12], 0, 0, 0};
+        uint32_t specularMode[4] = {param.value[0x0b] != 0 ? material[13] : 0, 0, 0, 0};
         GX2SetPixelUniformReg(shader->m_materialAmbient, 4, material);
-        GX2SetPixelUniformReg(shader->m_materialDiffuse, 4, material + 3);
-        GX2SetPixelUniformReg(shader->m_materialSpecular, 4, material + 6);
-        GX2SetPixelUniformReg(shader->m_materialSpecularPower, 4, material + 9);
-        GX2SetPixelUniformReg(shader->m_materialSpecularMode, 4, material + 10);
+        GX2SetPixelUniformReg(shader->m_materialDiffuse, 4, material + 4);
+        GX2SetPixelUniformReg(shader->m_materialSpecular, 4, material + 8);
+        GX2SetPixelUniformReg(shader->m_materialSpecularPower, 4, specularPower);
+        GX2SetPixelUniformReg(shader->m_materialSpecularMode, 4, specularMode);
     }
 }
 
@@ -134,12 +139,18 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::ShaderCallbackDraw(void* shader, con
     SetupModulate(object, *(const FFLModulateParam*)(&param->value[0xf]));
     SetupMaterial(object, *param);
     if (param->value[0x19] != 0) {
-        GX2SetVertexUniformReg(0, 4, param->value);
-        GX2SetVertexUniformReg(4, 4, param->value + 3);
-        GX2SetVertexUniformReg(8, 4, param->value + 6);
-        GX2SetVertexUniformReg(12, 4, param->value + 9);
-        GX2SetVertexUniformReg(16, 4, param->value + 12);
-        GX2DrawEx(param->value[0x16], param->value[0x17], param->value[0x18], param->value[0x19]);
+        GX2SetAttribBuffer(0, param->value[0], param->value[1],
+                           reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[2])));
+        GX2SetAttribBuffer(1, param->value[3], param->value[4],
+                           reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[5])));
+        GX2SetAttribBuffer(2, param->value[6], param->value[7],
+                           reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[8])));
+        GX2SetAttribBuffer(3, param->value[9], param->value[10],
+                           reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[11])));
+        GX2SetAttribBuffer(4, param->value[12], param->value[13],
+                           reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[14])));
+        GX2DrawIndexedEx(param->value[0x16], param->value[0x17], param->value[0x18],
+                         reinterpret_cast<const void*>(static_cast<uintptr_t>(param->value[0x19])), 0, 1);
     }
 }
 
@@ -165,31 +176,27 @@ void __N_21_FFLiDefaultShader_cpp_d69dbbf4::Identity(float (*matrix)[4])
 
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::InitLightParam(FFLiDefaultShaderLight* param)
 {
-    const uint32_t address = FFLiDefaultParams::GetLight();
-    const uint32_t* source = (const uint32_t*)(uintptr_t)address;
-    param->value[0] = source[0]; param->value[1] = source[1]; param->value[2] = source[2]; param->value[3] = source[3];
-    param->value[4] = source[4]; param->value[5] = source[5]; param->value[6] = source[6]; param->value[7] = source[7];
-    param->value[8] = source[8]; param->value[9] = source[9]; param->value[10] = source[10]; param->value[11] = source[11];
-    param->value[12] = source[12]; param->value[13] = source[13]; param->value[14] = source[14]; param->value[15] = source[15];
+    const unsigned char* source = FFLiDefaultParams::GetLight();
+    param->value[0] = source[0];
+    memcpy(param->value + 1, source + 4, 60);
 }
 
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::InitMaterialParam(FFLiDefaultShaderMaterial* param, FFLDrawType type)
 {
-    const uint32_t* source = (const uint32_t*)(uintptr_t)FFLiDefaultParams::GetMaterial(type);
-    uint32_t i;
-    for (i = 0; i < 14; ++i) param->value[i] = source[i];
+    const unsigned char* source = FFLiDefaultParams::GetMaterial(type);
+    memcpy(param->value, source, sizeof(param->value));
 }
 
 void __N_21_FFLiDefaultShader_cpp_d69dbbf4::InitParam(FFLiDefaultShaderParam* param)
 {
     ASM_MTX44Identity((float (*)[4])param->matrix);
     ASM_MTX44Identity((float (*)[4])param->matrixView);
-    Identity((float (*)[4])param->identity);
+    Identity((float (*)[4])param->matrixNormal);
     InitLightParam(&param->light);
     uint32_t i;
     for (i = 0; i < 9; ++i) InitMaterialParam(&param->material[i], i);
-    const uint32_t* rim = (const uint32_t*)(uintptr_t)FFLiDefaultParams::GetRim();
-    for (i = 0; i < 5; ++i) param->rim[i] = rim[i];
+    const unsigned char* rim = FFLiDefaultParams::GetRim();
+    memcpy(param->rim, rim, 20);
     param->rim[5] = 0;
 }
 

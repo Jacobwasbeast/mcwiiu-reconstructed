@@ -53,7 +53,6 @@ unsigned int g_vctTotalPlayTime = 0;
 int g_vctHpfFeedForward = 0;
 int g_vctHpfPrevious = 0;
 unsigned int g_vctConferenceClientCount = 0;
-unsigned char g_vctInitialized = 0;
 
 nn::pia::chat::Adpcm::State g_vctAdpcmState[2];
 unsigned short g_vctSendSequence = 0;
@@ -73,7 +72,6 @@ short g_vctReceiveMixBuffer[0x600];
 unsigned short g_vctLocalCid = 0;
 VCTSession* g_vctFreeSessions = 0;
 VCTSession* g_vctSessions = 0;
-unsigned int g_vctMode = 0;
 
 unsigned int sendSlotIndex()
 {
@@ -87,6 +85,8 @@ unsigned int timerClock()
 
 }
 
+unsigned char g_vctInitialized = 0;
+unsigned int g_vctMode = 0;
 
 bool VCT_IsInitialized()
 {

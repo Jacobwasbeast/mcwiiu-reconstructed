@@ -1,5 +1,9 @@
 #include "vendor/__N_16_chat_VctMain_cpp_2fb29e39.hpp"
 
+#include "vendor/VCTAudio.hpp"
+
+#include <coreinit/time.h>
+
 struct VCTResult
 {
     unsigned int status;
@@ -7,11 +11,9 @@ struct VCTResult
     unsigned int payload;
 };
 
-extern unsigned int g_vctAudioPacketCount;
-extern unsigned char g_vctAudioEnabled;
-extern unsigned int g_vctInitialized;
-extern void VCTi_BeginDataHandling();
-extern unsigned int vct_handle_audio(unsigned short connectionId, unsigned char *data, unsigned int dataSize);
+unsigned int g_vctAudioPacketCount = 0;
+
+extern unsigned int vct_handle_audio(unsigned short connectionId, unsigned char *data, unsigned int dataSize, long long receiveTick);
 
 int __N_16_chat_VctMain_cpp_2fb29e39::VCTi_HandleData(unsigned short connectionId, unsigned char *data, unsigned int dataSize, VCTResult *result)
 {
@@ -26,15 +28,15 @@ int __N_16_chat_VctMain_cpp_2fb29e39::VCTi_HandleData(unsigned short connectionI
         {
             return 2;
         }
-        if ((g_vctInitialized != 0) && (g_vctAudioEnabled != 0))
+        if ((g_vctMode != 0) && (g_vctInitialized != 0))
         {
             result->status = 0;
             result->payload = 0;
-            VCTi_BeginDataHandling();
+            const long long receiveTick = OSGetTime();
             if ((data[4] & 0xf0) == 0x40)
             {
                 ++g_vctAudioPacketCount;
-                vct_handle_audio(connectionId, data, dataSize);
+                vct_handle_audio(connectionId, data, dataSize, receiveTick);
                 return 0;
             }
         }

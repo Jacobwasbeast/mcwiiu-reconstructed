@@ -2,19 +2,13 @@
 #include "nn/nex/MemoryManager.hpp"
 
 extern "C" void checkPiaCoreToUse();
-extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
-extern "C" void MEMFreeToDefaultHeap(void* block);
-extern "C" void* MEMCreateExpHeapEx(void* address, unsigned int size, unsigned short flags);
-extern "C" void MEMDestroyExpHeap(void* heap);
-extern "C" void* MEMAllocFromExpHeapEx(void* heap, unsigned int size, int alignment);
-extern "C" unsigned int MEMGetSizeForMBlockExpHeap(void* block);
-extern "C" void MEMFreeToExpHeap(void* heap, void* block);
-extern "C" void MEMDumpHeap(void* heap);
+#include <coreinit/memdefaultheap.h>
+#include <coreinit/memexpheap.h>
 
 static unsigned int sRuntimeMemorySize = 0;
 static unsigned int sReservedMemorySize = 0;
 static void* sRuntimeMemory = 0;
-static void* sRuntimeHeap = 0;
+static MEMHeapHandle sRuntimeHeap = 0;
 static void* sReservedMemory = 0;
 static unsigned int sMemoryUsed = 0;
 static unsigned int sPeakMemoryUsed = 0;

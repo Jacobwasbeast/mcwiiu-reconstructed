@@ -5,8 +5,8 @@
 _SaveListDetails::_SaveListDetails()
 {
     m_value0 = 0;
-    m_value2 = 0;
-    m_value1 = 0;
-    std::memset(m_data, 0, 264);
-    std::memset(m_data + 264, 0, 8);
+    m_thumbnail = 0;
+    m_thumbnailSize = 0;
+    std::memset(m_title, 0, sizeof(m_title));
+    std::memset(m_filename, 0, sizeof(m_filename));
 }

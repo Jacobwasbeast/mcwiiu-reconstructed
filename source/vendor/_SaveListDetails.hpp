@@ -2,17 +2,17 @@
 #define SOURCE_VENDOR_SAVELISTDETAILS_HPP
 
 #include <stdint.h>
+#include <wchar.h>
 
 class _SaveListDetails
 {
 public:
     _SaveListDetails();
-
-private:
     uint32_t m_value0;
-    uint32_t m_value1;
-    uint32_t m_value2;
-    unsigned char m_data[288];
+    unsigned char* m_thumbnail;
+    uint32_t m_thumbnailSize;
+    wchar_t m_title[128];
+    char m_filename[32];
 };
 
 #endif
