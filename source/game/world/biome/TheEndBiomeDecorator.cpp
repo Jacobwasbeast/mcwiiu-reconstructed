@@ -49,12 +49,11 @@ void TheEndBiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
     {
         if (position.x == spikeData[i].posX && position.z == spikeData[i].posZ)
         {
-            SpikeFeature::EndSpike spike(spikeData[i].centerX, spikeData[i].centerZ,
-                                         spikeData[i].radius,
-                                         spikeData[i].height
-                                             + EndPodiumFeature::END_PODIUM_LOCATION.y,
-                                         spikeData[i].guarded);
-            spikeGen->setSpike(&spike);
+            SpikeFeature::EndSpike* spike = new SpikeFeature::EndSpike(
+                spikeData[i].centerX, spikeData[i].centerZ, spikeData[i].radius,
+                spikeData[i].height + EndPodiumFeature::END_PODIUM_LOCATION.y,
+                spikeData[i].guarded);
+            spikeGen->setSpike(spike);
             spikeGen->place(level, *random,
                             BlockPos(spikeData[i].centerX,
                                      EndPodiumFeature::END_PODIUM_LOCATION.y,
