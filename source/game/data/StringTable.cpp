@@ -1,6 +1,8 @@
 #include "game/data/StringTable.hpp"
+#include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
 
 #include <cstring>
@@ -35,8 +37,6 @@ StringTable::StringTable(arrayWithLength<unsigned char> data, bool localized, bo
 
 StringTable::~StringTable()
 {
-    delete m_strings;
-    delete m_stringsById;
     if (m_ownsData)
         delete[] m_data;
 }
@@ -45,51 +45,117 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
 {
     found = false;
     count = 0;
+    std::vector<std::wstring> locale;
+    if (g_pApp != NULL)
+        g_pApp->getLocale(locale);
+
     std::wstring selected;
-    if (m_languages.empty())
-        return selected;
-    boost::unordered_map<std::wstring, _LanguageData>::iterator it = m_languages.begin();
-    selected = it->first;
-    found = true;
+    std::vector<std::pair<std::wstring, int> >::iterator entry;
+    for (std::vector<std::wstring>::iterator wanted = locale.begin(); wanted != locale.end(); ++wanted)
+    {
+        count = 0;
+        for (entry = m_entries.begin(); entry != m_entries.end(); ++entry)
+        {
+            if (entry->first == *wanted)
+            {
+                found = true;
+                return entry->first;
+            }
+            count += entry->second;
+        }
+    }
+
+    count = 0;
     return selected;
 }
 
 std::wstring StringTable::ReadLanguageFromStream(DataInputStream* stream)
 {
-    int version = stream->readInt();
-    m_isLanguageTable = stream->readByte() != 0;
+    int format = stream->readInt();
+    m_isLanguageTable = false;
+    if (format > 0)
+        m_isLanguageTable = stream->readByte() != 0;
     std::wstring language = stream->readUTF();
     _LanguageData& data = m_languages[language];
     int count = stream->readInt();
-    int i;
-    for (i = 0; i < count; ++i)
-    {
-        std::wstring key = stream->readUTF();
-        std::wstring value = version < 2 ? stream->readUTF() : stream->readUTF();
-        data.strings[key] = value;
-        data.orderedStrings.push_back(key);
-    }
+    data.stringsById.clear();
+    data.strings.clear();
+    data.orderedStrings.clear();
     data.count = count;
+    for (int i = 0; i < count; ++i)
+    {
+        std::wstring key;
+        if (format > 0 && m_isLanguageTable && i < (int)m_ids.size())
+            key = L"";
+        else if (format > 0 && i < (int)m_keys.size())
+            key = m_keys[i];
+        else
+            key = stream->readUTF();
+        std::wstring value = stream->readUTF();
+        if (format > 0 && m_isLanguageTable && i < (int)m_ids.size())
+        {
+            data.stringsById[m_ids[i]] = value;
+        }
+        else
+        {
+            data.strings[key] = value;
+            data.orderedStrings.push_back(key);
+        }
+    }
     return language;
 }
 
 void StringTable::SelectLanguage(const std::wstring& language)
 {
-    _LanguageData& data = m_languages[language];
-    m_strings = &data.strings;
-    if (m_stringsById == NULL)
-        m_stringsById = new boost::unordered_map<int, std::wstring>();
+    boost::unordered_map<std::wstring, _LanguageData>::iterator it = m_languages.find(language);
+    if (it == m_languages.end())
+    {
+        m_strings = NULL;
+        return;
+    }
+    m_strings = &it->second.strings;
+    m_stringsById = &it->second.stringsById;
 }
 
 void StringTable::ReadAllFromStream(DataInputStream* stream)
 {
-    int count = stream->readInt();
-    int i;
-    for (i = 0; i < count; ++i)
-        ReadLanguageFromStream(stream);
+    int version = stream->readInt();
+    int languageCount = stream->readInt();
+    m_isLanguageTable = false;
+    m_ids.clear();
+    m_keys.clear();
+    m_entries.clear();
+    if (version == 2)
+    {
+        m_isLanguageTable = stream->readByte() != 0;
+        int count = stream->readInt();
+        for (int i = 0; i < count; ++i)
+        {
+            if (m_isLanguageTable)
+                m_ids.push_back(stream->readInt());
+            else
+                m_keys.push_back(stream->readUTF());
+        }
+    }
+    for (int i = 0; i < languageCount; ++i)
+    {
+        std::wstring language = stream->readUTF();
+        int size = stream->readInt();
+        m_entries.push_back(std::make_pair(language, size));
+    }
     bool found = false;
-    long long bytes = 0;
-    std::wstring language = FindLanguage(found, bytes);
+    long long offset = 0;
+    std::wstring language = FindLanguage(found, offset);
+    if (m_localized)
+    {
+        for (int i = 0; i < languageCount; ++i)
+            ReadLanguageFromStream(stream);
+    }
+    else if (found)
+    {
+        stream->skip(offset);
+        ReadLanguageFromStream(stream);
+    }
     if (found)
         SelectLanguage(language);
 }
@@ -97,24 +163,38 @@ void StringTable::ReadAllFromStream(DataInputStream* stream)
 void StringTable::ProcessStringTableData()
 {
     if (m_data == NULL || m_dataLength == 0)
+    {
+        bool found = false;
+        long long ignored = 0;
+        std::wstring language = FindLanguage(found, ignored);
+        if (found)
+            SelectLanguage(language);
         return;
-    arrayWithLength<unsigned char> input;
-    input.data = m_data;
-    input.length = m_dataLength;
+    }
+    m_strings = NULL;
     m_languages.clear();
     m_ids.clear();
     m_keys.clear();
-    DataInputStream* stream = NULL;
-    if (stream != NULL)
-        ReadAllFromStream(stream);
+    m_entries.clear();
+    m_stringsById = NULL;
+
+    unsigned char* copy = new unsigned char[m_dataLength];
+    std::memcpy(copy, m_data, m_dataLength);
+    arrayWithLength<unsigned char> input(copy, m_dataLength);
+    ByteArrayInputStream byteStream(input);
+    DataInputStream stream(&byteStream);
+    ReadAllFromStream(&stream);
+    stream.close();
 }
 
 void StringTable::ReloadStringTable()
 {
     if (!m_localized)
     {
-        if (m_strings != NULL) m_strings->clear();
-        if (m_stringsById != NULL) m_stringsById->clear();
+        if (m_strings != NULL)
+            m_strings->clear();
+        if (m_stringsById != NULL)
+            m_stringsById->clear();
     }
     ProcessStringTableData();
 }
@@ -200,6 +280,8 @@ void StringTable::write(DataOutputStream* stream)
 
 void StringTable::Reset()
 {
+    m_strings = NULL;
+    m_stringsById = NULL;
     m_languages.clear();
     m_ids.clear();
     m_keys.clear();

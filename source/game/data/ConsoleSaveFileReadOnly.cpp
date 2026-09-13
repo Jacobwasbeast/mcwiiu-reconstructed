@@ -7,7 +7,7 @@
 #include "game/world/LevelGenerationOptions.hpp"
 
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
-void VirtualFree(void* address, unsigned long size, unsigned int freeType);
+int VirtualFree(void* address, unsigned long size, unsigned int freeType);
 void __debugbreak();
 
 static void* sSaveData = NULL;

@@ -18,9 +18,9 @@ public:
         ThreadStorage();
         unsigned int mThreadId;
         unsigned int mReadLocks;
+        bool mHasTempData;
         bool mBlockReadLock;
         bool mDataLock;
-        bool mHasTempData;
         unsigned char* mTempData;
     };
     enum eHESThreadId

@@ -7,17 +7,21 @@
 
 #include <cstdlib>
 
-static ElementStorage::ThreadStorage* sElementThreadStorage = 0;
+extern unsigned int TlsAlloc();
+extern void* TlsGetValue(unsigned int index);
+extern int TlsSetValue(unsigned int index, void* value);
+
+static unsigned int sElementThreadStorageIndex = TlsAlloc();
 static unsigned int sMainThreadStorageCount = 0;
 static unsigned int sRenderThreadStorageCount = 0;
-static unsigned char sElementLocks[128][44];
-static unsigned char sThreadCountLock[44];
+static OSFastMutex sElementLocks[128];
+static OSFastMutex sThreadCountLock;
 extern void EnterCriticalSection(void* mutex);
 extern void LeaveCriticalSection(void* mutex);
 extern void InitializeCriticalSectionAndSpinCount(void* mutex, unsigned long spinCount);
 
 ElementStorage::ThreadStorage::ThreadStorage()
-    : mThreadId(0), mReadLocks(0), mBlockReadLock(false), mDataLock(false), mHasTempData(false), mTempData(0)
+    : mThreadId(0), mReadLocks(0), mHasTempData(false), mBlockReadLock(false), mDataLock(false), mTempData(0)
 {
 }
 
@@ -58,19 +62,19 @@ ElementStorage::~ElementStorage()
 
 int ElementStorage::getCriticalSectionIndex(bool mainThread)
 {
-    int value = std::rand() & ~63;
+    int value = std::rand() % 64;
     return mainThread ? value + 64 : value;
 }
 
 void ElementStorage::getWriteLock(int)
 {
-    EnterCriticalSection(sElementLocks[mCriticalSectionIndex]);
+    EnterCriticalSection(&sElementLocks[mCriticalSectionIndex]);
 }
 
 void ElementStorage::releaseWriteLock()
 {
     mFrameLastUpdated = (unsigned int)gRenderer->GetFramesSinceBoot();
-    LeaveCriticalSection(sElementLocks[mCriticalSectionIndex]);
+    LeaveCriticalSection(&sElementLocks[mCriticalSectionIndex]);
 }
 
 void ElementStorage::removeCompressionHeadroom()
@@ -82,27 +86,29 @@ void ElementStorage::removeCompressionHeadroom()
 
 bool ElementStorage::shouldLockForRead(ThreadStorage* storage)
 {
-    if (storage->mBlockReadLock &&
-        ((!storage->mDataLock || sMainThreadStorageCount < 2) && sRenderThreadStorageCount < 2))
+    if (storage->mHasTempData &&
+        ((!storage->mBlockReadLock || sMainThreadStorageCount < 2) && sRenderThreadStorageCount < 2))
         return false;
     return true;
 }
 
 void ElementStorage::getReadLock(int reason)
 {
-    if (sElementThreadStorage != 0 && shouldLockForRead(sElementThreadStorage))
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sElementThreadStorageIndex));
+    if (shouldLockForRead(storage))
     {
-        ++sElementThreadStorage->mReadLocks;
-        EnterCriticalSection(sElementLocks[mCriticalSectionIndex]);
+        ++storage->mReadLocks;
+        EnterCriticalSection(&sElementLocks[mCriticalSectionIndex]);
     }
 }
 
 void ElementStorage::releaseReadLock()
 {
-    if (sElementThreadStorage != 0 && sElementThreadStorage->mReadLocks != 0)
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sElementThreadStorageIndex));
+    if (storage->mReadLocks != 0)
     {
-        --sElementThreadStorage->mReadLocks;
-        LeaveCriticalSection(sElementLocks[mCriticalSectionIndex]);
+        --storage->mReadLocks;
+        LeaveCriticalSection(&sElementLocks[mCriticalSectionIndex]);
     }
 }
 
@@ -344,68 +350,68 @@ void ElementStorage::read(DataInputStream* in)
 
 void ElementStorage::CreateNewThreadStorage(eHESThreadId threadId)
 {
-    sElementThreadStorage = new ThreadStorage();
-    sElementThreadStorage->mThreadId = (unsigned int)threadId;
-    sElementThreadStorage->mBlockReadLock = threadId == (eHESThreadId)1 || threadId == (eHESThreadId)2;
-    sElementThreadStorage->mDataLock = threadId == (eHESThreadId)8 || threadId == (eHESThreadId)10 ||
+    ThreadStorage* storage = new ThreadStorage();
+    storage->mThreadId = (unsigned int)threadId;
+    storage->mBlockReadLock = threadId == (eHESThreadId)1 || threadId == (eHESThreadId)2;
+    storage->mDataLock = threadId == (eHESThreadId)8 || threadId == (eHESThreadId)10 ||
         (threadId >= (eHESThreadId)16 && threadId <= (eHESThreadId)18);
-    sElementThreadStorage->mHasTempData = sElementThreadStorage->mBlockReadLock || sElementThreadStorage->mDataLock;
-    if (sElementThreadStorage->mHasTempData)
-        sElementThreadStorage->mTempData = (unsigned char*)std::malloc(getRawDataMaxBytes());
-    if (sElementThreadStorage->mBlockReadLock)
+    storage->mHasTempData = storage->mBlockReadLock || storage->mDataLock;
+    TlsSetValue(sElementThreadStorageIndex, storage);
+    if (storage->mHasTempData)
+        storage->mTempData = (unsigned char*)std::malloc(getRawDataMaxBytes());
+    if (storage->mBlockReadLock)
     {
-        EnterCriticalSection(sThreadCountLock);
+        EnterCriticalSection(&sThreadCountLock);
         ++sMainThreadStorageCount;
-        LeaveCriticalSection(sThreadCountLock);
+        LeaveCriticalSection(&sThreadCountLock);
     }
-    if (sElementThreadStorage->mDataLock)
+    if (storage->mDataLock)
     {
-        EnterCriticalSection(sThreadCountLock);
+        EnterCriticalSection(&sThreadCountLock);
         ++sRenderThreadStorageCount;
-        LeaveCriticalSection(sThreadCountLock);
+        LeaveCriticalSection(&sThreadCountLock);
     }
 }
 
 void ElementStorage::ReleaseThreadStorage()
 {
-    if (sElementThreadStorage == 0)
-        return;
-    if (sElementThreadStorage->mBlockReadLock && sMainThreadStorageCount != 0)
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sElementThreadStorageIndex));
+    if (storage->mBlockReadLock)
     {
-        EnterCriticalSection(sThreadCountLock);
+        EnterCriticalSection(&sThreadCountLock);
         --sMainThreadStorageCount;
-        LeaveCriticalSection(sThreadCountLock);
+        LeaveCriticalSection(&sThreadCountLock);
     }
-    if (sElementThreadStorage->mDataLock && sRenderThreadStorageCount != 0)
+    if (storage->mDataLock)
     {
-        EnterCriticalSection(sThreadCountLock);
+        EnterCriticalSection(&sThreadCountLock);
         --sRenderThreadStorageCount;
-        LeaveCriticalSection(sThreadCountLock);
+        LeaveCriticalSection(&sThreadCountLock);
     }
-    std::free(sElementThreadStorage->mTempData);
-    delete sElementThreadStorage;
-    sElementThreadStorage = 0;
+    std::free(storage->mTempData);
+    delete storage;
 }
 
 void ElementStorage::staticCtor()
 {
     int i;
     for (i = 0; i < 128; ++i)
-        InitializeCriticalSectionAndSpinCount(sElementLocks[i], 0x1400);
-    InitializeCriticalSectionAndSpinCount(sThreadCountLock, 0x1400);
+        InitializeCriticalSectionAndSpinCount(&sElementLocks[i], 0x1400);
+    InitializeCriticalSectionAndSpinCount(&sThreadCountLock, 0x1400);
 }
 void ElementStorage::getReadLockUnconditional(int)
 {
-    EnterCriticalSection(sElementLocks[mCriticalSectionIndex]);
+    EnterCriticalSection(&sElementLocks[mCriticalSectionIndex]);
 }
 void ElementStorage::releaseReadLockUnconditional()
 {
-    LeaveCriticalSection(sElementLocks[mCriticalSectionIndex]);
+    LeaveCriticalSection(&sElementLocks[mCriticalSectionIndex]);
 }
 unsigned char* ElementStorage::getTempData()
 {
-    if (sElementThreadStorage != 0 && sElementThreadStorage->mTempData != 0)
-        return sElementThreadStorage->mTempData;
+    ThreadStorage* storage = static_cast<ThreadStorage*>(TlsGetValue(sElementThreadStorageIndex));
+    if (storage != 0 && storage->mTempData != 0)
+        return storage->mTempData;
     return HierarchicalElementStorage::getTempData();
 }
 unsigned char* ElementStorage::getAllocatedRawData()

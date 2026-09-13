@@ -1,3 +1,4 @@
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "game/data/ConsoleSaveFileOriginal.hpp"
 
 #include <cstring>
@@ -7,22 +8,13 @@
 #include "game/core/FileHeader.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
-struct _LARGE_INTEGER
-{
-    long long QuadPart;
-};
-
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
 #if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
-// The devkitPPC toolchain has no __debugbreak, so the title supplies its own.
-// On an MSVC target it is a compiler intrinsic and defining it is an error.
 void __debugbreak()
 {
 }
 #endif
-void QueryPerformanceFrequency(_LARGE_INTEGER* value);
-void QueryPerformanceCounter(_LARGE_INTEGER* value);
 void PIXBeginNamedEvent(float color, const char* format, ...);
 void PIXEndNamedEvent();
 

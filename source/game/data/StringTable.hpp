@@ -17,6 +17,7 @@ class StringTable
 public:
     struct _LanguageData
     {
+        boost::unordered_map<int, std::wstring> stringsById;
         boost::unordered_map<std::wstring, std::wstring> strings;
         std::vector<std::wstring> orderedStrings;
         int count;
