@@ -225,8 +225,6 @@
 unsigned int TlsAlloc();
 int TlsSetValue(unsigned int index, void* value);
 
-void createItem__FPC10BlockState(not_null_ptr<ItemInstance>* item, const BlockState* state);
-
 template <class T>
 std::wstring _toString(T value);
 
@@ -238,15 +236,9 @@ static const AABB* FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0
 static const float INDESTRUCTIBLE = -1.0f;
 unsigned int THREAD_STORAGE_INDEX = TlsAlloc();
 
-void createItem__FP5Block(not_null_ptr<ItemInstance>* item, Block* block)
+boost::shared_ptr<ItemInstance> createItem(Block* block)
 {
-    createItem__FPC10BlockState(item, block->defaultBlockState());
-}
-
-void createItem__FPC10BlockState(not_null_ptr<ItemInstance>* item, const BlockState* state)
-{
-    Block* block = state->getBlock();
-    *item = not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(state)));
+    return createItem(block->defaultBlockState());
 }
 
 Block::ThreadStorage::ThreadStorage()
