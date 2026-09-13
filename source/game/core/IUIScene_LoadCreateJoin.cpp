@@ -588,7 +588,7 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int key, int action, bool repeat
         if (!m_customGame && DoesLoadListHaveFocus() && GetLoadListSize() != 0)
         {
             m_ignoreInput = 1;
-            int parameters[5] = { 0xf96217da, 0x0e3265e5, 0x0e3265e5, 0, 0 };
+            int parameters[5] = { static_cast<int>(0xf96217da), 0x0e3265e5, 0x0e3265e5, 0, 0 };
             unsigned int parameterCount = 2;
             if (gApp.HasNoSpaceForSaveQuota() == 0)
             {
