@@ -26,6 +26,7 @@ enum FFLiShapePartsType
 
 class FFLiResourceManager
 {
+    friend class FFLiResourceLoader;
 private:
     FFLiResourceMultiHeader* m_headers;
     FFLiFsClient* m_client;

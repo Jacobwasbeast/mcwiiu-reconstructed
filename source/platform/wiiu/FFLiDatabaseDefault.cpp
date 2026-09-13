@@ -1,7 +1,7 @@
 #include "platform/wiiu/FFLiDatabaseDefault.hpp"
 #include "vendor/__N_23_FFLiDatabaseDefault_cpp_862bbafa.hpp"
 
-void FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination, const FFLiMiiDataCoreRFL& source, bool replaceName);
+int FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination, const FFLiMiiDataCoreRFL& source, bool replaceName);
 void FFLiClearCreatorNameFromOfficial(FFLiMiiDataOfficial* data);
 void FFLiMiiDataOfficial2CharInfo(FFLiCharInfo* charInfo, const FFLiMiiDataOfficial& data);
 bool FFLiIsSameMiiID(const FFLCreateID* first, const FFLCreateID* second);

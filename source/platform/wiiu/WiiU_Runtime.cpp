@@ -14,24 +14,6 @@ static FSClient* sFileSystemClient = 0;
 extern void altMain();
 extern void altMainStop();
 
-// Do not reintroduce a memalign/_memalign_r override that calls
-// MEMAllocFromDefaultHeapEx.
-//
-// That symbol is not a function: it is a function POINTER imported as data
-// from coreinit, and wut only installs it in __init_wut_defaultheap(), which
-// is the LAST of the three calls the loader makes through __preinit_user
-// (__init_wut_sbrk_heap, __init_wut_thread, __init_wut_defaultheap). wut's own
-// earlier init allocates, so overriding memalign sends that allocation through
-// a null pointer and branches to address zero before the title has made a
-// single HLE'd call. Cemu shows no crash, no exception and an empty log -- it
-// just sits on the loading screen forever, which is indistinguishable from a
-// hang in game logic and cost a full day of boot debugging.
-//
-// newlib's own memalign is backed by the sbrk heap, which __init_wut_sbrk_heap
-// has already given the whole of MEM2, so there is no capacity reason to route
-// aligned allocations to the default heap. If one is ever found, the override
-// must test the pointer for null and fall back until it is installed.
-
 FSClient* GetWiiUFileSystemClient()
 {
     return sFileSystemClient;
@@ -120,6 +102,7 @@ void GetLocalTime(SYSTEMTIME* systemTime)
     GetSystemTime(systemTime);
 }
 
+#if !defined(RECON_NATIVE)
 void* operator new(std::size_t size)
 {
     if (size == 0)
@@ -159,3 +142,4 @@ void operator delete[](void* address) noexcept
 {
     ::operator delete(address);
 }
+#endif

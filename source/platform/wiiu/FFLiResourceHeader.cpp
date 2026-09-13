@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-uint32_t FFLiCheckAlignPtr(const void* pointer, unsigned int alignment);
+bool FFLiCheckAlignPtr(const void* pointer, unsigned int alignment);
 
 static uint32_t FFLiSwapWord(uint32_t value)
 {

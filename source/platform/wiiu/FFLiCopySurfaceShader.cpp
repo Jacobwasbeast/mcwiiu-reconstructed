@@ -3,6 +3,28 @@
 #include "platform/wiiu/FFLiUtilShaderAllocator.hpp"
 #include <cstring>
 
+#include "platform/wiiu/FFLiCopySurfaceShader_CopySurfaceVertexProgram.inc"
+
+#include "platform/wiiu/FFLiCopySurfaceShader_CopySurfacePixelProgram.inc"
+
+static const char CopySurfaceTextureName[] = "s_texture";
+static const char CopySurfacePositionName[] = "a_position";
+static const char CopySurfaceTexCoordName[] = "a_texCoord";
+
+static _GX2AttribVar CopySurfaceVertexAttributes[2] = {
+    { CopySurfacePositionName, 9, 0, 0 },
+    { CopySurfaceTexCoordName, 9, 0, 1 }
+};
+
+static _GX2ShaderSampler CopySurfacePixelSamplers[1] = {
+    { CopySurfaceTextureName, 1, 0 }
+};
+
+#include "platform/wiiu/FFLiCopySurfaceShader_CopySurfaceVertexShader.inc"
+
+#include "platform/wiiu/FFLiCopySurfaceShader_CopySurfacePixelShader.inc"
+
+
 struct _GX2Sampler;
 extern "C" void GX2SetFetchShader(const FFLiUtilShader::FetchShader* fetchShader);
 extern "C" void GX2SetVertexShader(const _GX2VertexShader* shader);
@@ -18,8 +40,8 @@ FFLiCopySurfaceShader::FFLiCopySurfaceShader()
 {
     std::memset(&mFetchShader, 0, sizeof(mFetchShader));
     std::memset(mSampler, 0, sizeof(mSampler));
-    mVertexShader = (_GX2VertexShader*)0x104D1A74U;
-    mPixelShader = (_GX2PixelShader*)0x104D1BA8U;
+    mVertexShader = &CopySurfaceVertexShader;
+    mPixelShader = &CopySurfacePixelShader;
 }
 
 FFLiCopySurfaceShader::~FFLiCopySurfaceShader()
@@ -48,7 +70,7 @@ bool FFLiCopySurfaceShader::SetupCPU(FFLiBufferAllocator* allocator)
 
 void FFLiCopySurfaceShader::SetupGPU()
 {
-    FFLiInvalidateShader__FPvUi((void*)mFetchShader.program, mFetchShader.words[2]);
+    FFLiInvalidateShader__FPvUi(mFetchShader.program, mFetchShader.size);
     FFLiInvalidateShader__FPvUi(mVertexShader->program, mVertexShader->size);
     FFLiInvalidateShader__FPvUi(mPixelShader->program, mPixelShader->size);
 }

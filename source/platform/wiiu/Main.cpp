@@ -24,8 +24,11 @@
 #include "game/client/render/Textures.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "game/client/audio/SoundEngine.hpp"
+#include "game/core/LeaderboardManager.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "platform/wiiu/cCommerceNintendoWiiU.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 #include "platform/wiiu/WiiUFileSystemHelpers.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
@@ -91,14 +94,12 @@ unsigned int CallbackHomebuttonDenied(void*)
 
 OSMessageQueue gMainMessageQueue;
 OSMessage gMainMessageBuffer;
-static OSFastMutex gMainMutex;
+OSFastMutex gMainMutex;
+static int s_drcIconDelay = 0x78;
+static unsigned char s_trialTimerShown = 1;
 static OSThread gMainThread;
 static unsigned char gMainThreadStack[0x20000];
 
-// TEMPORARY boot tracing. Cemu surfaces OSReport as [OSConsole] lines, and
-// the title dies after UCOpen/UCClose without producing a PPC crash dump, so
-// these markers are the only way to see which boot step is last. Remove once
-// the boot reaches the title screen.
 #define BOOT_TRACE(step) OSReport("[boot] %s\n", step)
 
 int main()
@@ -119,14 +120,13 @@ int main()
     Compression::CreateNewThreadStorage();
     BOOT_TRACE("alt-main thread created");
     gRenderer->Initialise();
-    g_pInput->SetDeadzoneAndMovementRange(1, 0x3d, 0x17);
+    g_pInput->Initialise(1, 0x3d, 0x17);
 
     BOOT_TRACE("renderer initialised");
     DefineActions();
-    g_pInput->SetJoypadStickTriggerMap(0, 0, 0);
+    g_pInput->SetJoypadMapArraySetupComplete();
     g_pInput->SetKeyRepeatRate(0.5f, 0.8f);
     g_pInput->SetDeadzoneAndMovementRange(0, 20000, 0x7fff);
-    g_pInput->SetJoypadMapArraySetupComplete();
     BOOT_TRACE("input configured");
     ProcUIInitEx(SaveCallback, 0);
     ProcUIRegisterCallback(0, (unsigned int (*)(void*))CallbackAcquiredForeground, 0, 100);
@@ -153,7 +153,7 @@ int main()
         gProfile->SetPlayerListTitleID(0);
     BOOT_TRACE("sku resolved");
     L10N::loadStringTable();
-    g_pInput->DestroyKeyboard();
+    g_pInput->SetCircleCrossSwapped(true);
 
     BOOT_TRACE("string table loaded");
     int uiWidth = 640;
@@ -187,6 +187,7 @@ int main()
                        CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, &noSpaceForSaveQuota);
         gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
     }
+    gProfile->LoadAllMiiData();
     gProfile->SetSignInChangeCallback(
         (CProfile::SignInChangeHandler)CMinecraftApp::SignInChangeCallback, &gApp);
     gProfile->SetProfileReadErrorCallback(CMinecraftApp::ProfileReadErrorCallback, &gApp);
@@ -197,11 +198,11 @@ int main()
     {
         gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, s_profileGameData);
         gStorage->SetDefaultOptionsCallback(
-            (CStorage::DefaultOptionsCallback)CMinecraftApp::DefaultOptionsCallback, &gApp);
+            CMinecraftApp::DefaultOptionsCallback, &gApp);
         gStorage->SetOptionsDataCallback(
-            (CStorage::OptionsDataCallback)CMinecraftApp::OptionsDataCallback, &gApp);
+            CMinecraftApp::OptionsDataCallback, &gApp);
         gStorage->SetOldProfileVersionCallback(
-            (CStorage::OldProfileVersionCallback)GameSettings::OldProfileVersionCallback, &gApp);
+            GameSettings::OldProfileVersionCallback, &gApp);
         gStorage->SetCorruptSaveName(L"");
         gStorage->SetMaxSaves(99);
         gStorage->SetDefaultImages(thumbnail.data, thumbnail.length,
@@ -213,7 +214,7 @@ int main()
             delete[] thumbnail.data;
         gStorage->SetSaveTitle(L"Default Save");
         gStorage->SetOpenDirFn(OpenDir);
-        gStorage->SetReadDirFn((CStorage::DirectoryReadCallback)ReadDir);
+        gStorage->SetReadDirFn(ReadDir);
         gStorage->SetCloseDirFn(CloseDir);
         gStorage->SetDLCPackageRoot("DLCDrive");
     }
@@ -249,7 +250,9 @@ int main()
     Minecraft::main();
     Minecraft* minecraft = Minecraft::GetInstance();
     gApp.InitGameSettings();
+    gStorage->ReadFromProfile(0, 0);
     gApp.InitialiseTips();
+    g_pLeaderboardManager->OpenSession();
     CGameNetworkManager::sInstance.Initialise();
     CGameNetworkManager::sInstance.SetLocalGame(true);
     C_AOC::getInstance()->Init();
@@ -273,9 +276,10 @@ int main()
         if (processResult == 2)
             ReleaseCallback();
 
-        g_pInput->Tick();
+        gRenderer->StartFrame();
         gApp.UpdateTime();
         PIXBeginNamedEvent(timingColour, "Input manager tick");
+        g_pInput->Tick();
         PIXEndNamedEvent();
         HandleDRCStatusChanges();
         PIXBeginNamedEvent(timingColour, "Profile manager tick");
@@ -290,9 +294,24 @@ int main()
         PIXEndNamedEvent();
         CGameNetworkManager::sInstance.DoWork();
 
+        if (gApp.GetDRCOutputEnabled() == 0 && gApp.GetDRCIconEnabled() == 0 &&
+            CGameNetworkManager::sInstance.IsInGameplay() &&
+            gApp.GetDRCCheckPlayerCountEnabled() != 0 && gApp.GetLocalPlayerCount() == 1)
+        {
+            if (s_drcIconDelay != 0)
+                --s_drcIconDelay;
+            if (s_drcIconDelay == 0)
+                gApp.SetDRCIconEnabled(true);
+        }
+        else
+        {
+            s_drcIconDelay = 0x77;
+        }
+        g_pLeaderboardManager->Tick();
+
         if (gApp.GetGameStarted() == 0)
         {
-            minecraft->tickAllConnections();
+            minecraft->mSoundEngine->tick(NULL, 0.0f);
             minecraft->mTextures->tick(true, false, false);
             IntCache::Reset();
             if (gApp.GetReallyChangingSessionType() != 0)
@@ -306,14 +325,56 @@ int main()
                               gConsoleUIController.IsPauseMenuDisplayed(0));
         }
 
+        minecraft->mSoundEngine->playMusicTick();
+        gApp.GetCommerceInstance()->tick();
+        InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_UITick);
         gConsoleUIController.tick();
-        gRenderer->Tick();
+        InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_UITick);
+        gRenderer->ResetRenderState();
+        InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_UIRender);
         gConsoleUIController.render();
-        gRenderer->Present();
-        gConsoleUIController.CheckMenuDisplayed();
+        InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_UIRender);
         InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Frame);
+        PIXBeginNamedEvent(timingColour, "Frame present");
+        gRenderer->Present();
+        PIXEndNamedEvent();
+        gRenderer->Set_matrixDirty();
+        gConsoleUIController.CheckMenuDisplayed();
+        PIXBeginNamedEvent(timingColour, "Profile load check");
+        if (s_profileGameData[0] != 0)
+        {
+            for (int player = 0; player < 4; ++player)
+            {
+                if ((s_profileGameData[0] & (1u << player)) != 0)
+                {
+                    unsigned char* data = gStorage->GetGameDefinedProfileData(player);
+                    GameSettings::ClearGameSettingsChangedFlag(player);
+                    GameSettings::ApplyGameSettingsChanged(player);
+                    minecraft->mStats[player]->clear();
+                    minecraft->mStats[player]->parse(data);
+                }
+            }
+            s_profileGameData[0] = 0;
+        }
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(timingColour, "Network manager do work #2");
         CGameNetworkManager::sInstance.DoWork();
+        PIXEndNamedEvent();
         gApp.HandleXuiActions();
+        if (!gProfile->IsFullVersion())
+        {
+            if (gApp.GetGameStarted() != 0)
+            {
+                if (gApp.IsAppPaused() != 0)
+                    gApp.UpdateTrialPausedTimer();
+                gConsoleUIController.UpdateTrialTimer(gProfile->GetPrimaryPad());
+            }
+        }
+        else if (s_trialTimerShown != 0)
+        {
+            gConsoleUIController.ShowTrialTimer(false);
+            s_trialTimerShown = 0;
+        }
         Vec3::resetPool();
     }
 

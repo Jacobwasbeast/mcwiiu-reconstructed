@@ -6,7 +6,8 @@
 #include <cstdlib>
 #include <cstring>
 
-extern int ReadFile(int hFile, void* lpBuffer, unsigned int nNumberOfBytesToRead, unsigned int* lpNumberOfBytesRead, void* lpOverlapped);
+struct _OVERLAPPED;
+extern unsigned int ReadFile(int hFile, void* lpBuffer, unsigned int nNumberOfBytesToRead, unsigned int* lpNumberOfBytesRead, _OVERLAPPED* lpOverlapped);
 
 struct CFileHandle
 {
@@ -38,7 +39,7 @@ void InvalidePositionsForOtherHandles(CFileHandle* handle)
     LeaveCriticalSection(&sMutex);
 }
 
-int file_open_callback(const char* filename, unsigned int* handleOut)
+unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
 {
     if (sInitialized == 0)
     {
@@ -230,7 +231,7 @@ void file_close_callback(unsigned int handleVal)
     CloseHandle(fd);
 }
 
-int file_seek_callback(unsigned int handleVal, int offset, int origin)
+int file_seek_callback(unsigned int handleVal, int offset, unsigned int origin)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
     if (!handle)
@@ -291,7 +292,7 @@ int file_seek_callback(unsigned int handleVal, int offset, int origin)
     return handle->mCurrentPos;
 }
 
-int file_read_callback(unsigned int handleVal, void* buffer, int bytes)
+int file_read_callback(unsigned int handleVal, void* buffer, unsigned int bytes)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
     if (!handle)

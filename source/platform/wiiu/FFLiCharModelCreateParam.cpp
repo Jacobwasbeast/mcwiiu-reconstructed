@@ -6,11 +6,11 @@
 
 extern int FFLiGetBufferSizeFacelineTexture(uint32_t resolution, bool mipmap, bool useMipmap);
 extern int FFLiGetBufferSizeMaskTextures(uint32_t mask, uint32_t resolution, bool mipmap, bool useMipmap);
-extern int FFLiGetTextureMaxSizeWithAlign(const FFLiResourceManager* resourceManager,
+extern uint32_t FFLiGetTextureMaxSizeWithAlign(const FFLiResourceManager* resourceManager,
                                           FFLResourceType resourceType,
                                           FFLiTexturePartsType parts);
-extern uint32_t FFLiGetCompressBufferSizeFacelineTexture(uint32_t resolution, bool mipmap);
-extern uint32_t FFLiGetCompressBufferSizeMaskTexture(uint32_t resolution, bool mipmap);
+extern int FFLiGetCompressBufferSizeFacelineTexture(uint32_t resolution, bool mipmap);
+extern int FFLiGetCompressBufferSizeMaskTexture(uint32_t resolution, bool mipmap);
 extern int FFLiGetTempBufferSizeMaskTextures(uint32_t mask, uint32_t resolution, bool mipmap,
                                              bool useMipmap, const FFLiResourceManager* resourceManager,
                                              FFLResourceType resourceType);

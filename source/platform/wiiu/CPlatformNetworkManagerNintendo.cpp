@@ -617,7 +617,7 @@ void CPlatformNetworkManagerNintendo::_HostGame(int userIndexMask, unsigned char
     int primaryPad = m_gameNetworkManager->GetPrimaryPad();
     if (!m_matchmakingSession)
     {
-        m_networkManager->CreateAndJoinRoom(primaryPad, userIndexMask, &m_sessionData, sizeof(m_sessionData), 0, 0, IsPrivateGame(), (unsigned char)miniGameId);
+        m_networkManager->CreateAndJoinRoom(primaryPad, userIndexMask, &m_sessionData, sizeof(m_sessionData), 0, 0, IsLocalGame(), (unsigned char)miniGameId);
         return;
     }
 
@@ -625,7 +625,7 @@ void CPlatformNetworkManagerNintendo::_HostGame(int userIndexMask, unsigned char
         m_matchMakingData[index] = attributes[index];
     m_sessionMode = (unsigned char)miniGameId;
     UpdateMatchMakingData();
-    m_networkManager->CreateAndJoinRoom(primaryPad, userIndexMask, &m_sessionData, sizeof(m_sessionData), (int*)m_matchMakingData, 5, IsPrivateGame(), (unsigned char)miniGameId);
+    m_networkManager->CreateAndJoinRoom(primaryPad, userIndexMask, &m_sessionData, sizeof(m_sessionData), (int*)m_matchMakingData, 5, IsLocalGame(), (unsigned char)miniGameId);
 }
 
 bool CPlatformNetworkManagerNintendo::_StartGame()
@@ -705,7 +705,7 @@ void CPlatformNetworkManagerNintendo::SetSessionSubTexturePackId(int id) { m_ses
 void CPlatformNetworkManagerNintendo::SetSessionGameModeId(int id) { m_sessionData.m_gameModeId = id; }
 void CPlatformNetworkManagerNintendo::Notify(int, unsigned long) {}
 
-int CPlatformNetworkManagerNintendo::GetSessionList(int, int, bool)
+std::vector<FriendSessionInfo*>* CPlatformNetworkManagerNintendo::GetSessionList(int, int, bool)
 {
     std::vector<FriendSessionInfo*>* sessions = new std::vector<FriendSessionInfo*>();
     for (int index = 0; index < m_friendSearchCount; ++index)
@@ -742,7 +742,7 @@ int CPlatformNetworkManagerNintendo::GetSessionList(int, int, bool)
             delete info;
         }
     }
-    return (int)sessions;
+    return sessions;
 }
 
 bool CPlatformNetworkManagerNintendo::GetGameSessionInfo(int, unsigned int, FriendSessionInfo*) { return false; }

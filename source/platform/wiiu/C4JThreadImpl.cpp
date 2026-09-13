@@ -3,6 +3,7 @@
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/fastmutex.h>
 #include <coreinit/atomic64.h>
+#include <coreinit/atomic.h>
 #include <coreinit/mutex.h>
 #include <coreinit/thread.h>
 #include <coreinit/systeminfo.h>
@@ -42,22 +43,29 @@ void instructionSynchronize()
 #if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
     __asm__ volatile("isync" ::: "memory");
 #else
-    // isync is a PowerPC instruction. The host has coherent caches and no
-    // self-modifying code here, so a compiler barrier is the honest
-    // equivalent; the PowerPC path is unchanged.
     __atomic_signal_fence(__ATOMIC_SEQ_CST);
 #endif
 }
 
-uint64_t InterlockedCompareExchangeRelease64(volatile long long* destination,
-                                             long long exchange,
-                                             long long comparand)
+long long InterlockedCompareExchangeRelease64(volatile long long* destination,
+                                              long long exchange,
+                                              long long comparand)
 {
     uint64_t previous = 0;
     OSCompareAndSwapAtomicEx64(reinterpret_cast<volatile uint64_t*>(destination),
                                static_cast<uint64_t>(comparand),
                                static_cast<uint64_t>(exchange), &previous);
-    return previous;
+    return static_cast<long long>(previous);
+}
+
+long InterlockedCompareExchangeRelease(volatile long* destination,
+                                        long exchange, long comparand)
+{
+    uint32_t previous = 0;
+    OSCompareAndSwapAtomicEx(reinterpret_cast<volatile uint32_t*>(destination),
+                              static_cast<uint32_t>(comparand),
+                              static_cast<uint32_t>(exchange), &previous);
+    return static_cast<long>(previous);
 }
 
 typedef std::vector<C4JThreadImpl*> C4JThreadVector;
@@ -163,9 +171,9 @@ int C4JThreadImpl::entryPoint(int, void* argument)
     if (!thread->m_deleteOnExit)
     {
         C4JEventImpl* completionEvent = thread->m_completionEvent;
-        completionEvent->Clear();
         thread->m_completionEvent = NULL;
         thread->m_running = 0;
+        completionEvent->Set();
         delete completionEvent;
     }
     else

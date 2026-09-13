@@ -1,12 +1,15 @@
 #ifndef PLATFORM_WIIU_FFLIUTILSHADER_HPP
 #define PLATFORM_WIIU_FFLIUTILSHADER_HPP
 #include <stdint.h>
+struct _GX2AttribStream;
+class __N_21_FFLiDefaultShader_cpp_d69dbbf4;
+typedef __N_21_FFLiDefaultShader_cpp_d69dbbf4 FFLiDefaultShader;
 struct _GX2ShaderUniformVar { const char* name; unsigned int type; unsigned int count; unsigned int offset; int block; };
 struct _GX2ShaderUniformBlock { const char* name; unsigned int offset; unsigned int size; };
 struct _GX2ShaderSampler { const char* name; unsigned int type; unsigned int location; };
 struct _GX2UniformInitialValue { float value[4]; unsigned int offset; };
 struct _GX2LoopVar { unsigned int offset; unsigned int value; };
-struct _GX2AttribVar { const char* name; unsigned int type; unsigned int count; unsigned int location; };
+struct _GX2AttribVar { const char* name; unsigned int type; unsigned int count; int location; };
 struct _GX2RBuffer { unsigned int flags; unsigned int elemSize; unsigned int elemCount; void* buffer; };
 struct _GX2PixelShader { unsigned int words[41]; unsigned int size; void* program; unsigned int mode; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int initialValueCount; _GX2UniformInitialValue* initialValues; unsigned int loopVarCount; _GX2LoopVar* loopVars; unsigned int samplerCount; _GX2ShaderSampler* samplers; _GX2RBuffer gx2rBuffer; };
 struct _GX2VertexShader { unsigned int words[52]; unsigned int size; void* program; unsigned int mode; unsigned int uniformBlockCount; _GX2ShaderUniformBlock* uniformBlocks; unsigned int uniformVarCount; _GX2ShaderUniformVar* uniformVars; unsigned int initialValueCount; _GX2UniformInitialValue* initialValues; unsigned int loopVarCount; _GX2LoopVar* loopVars; unsigned int samplerCount; _GX2ShaderSampler* samplers; unsigned int attribVarCount; _GX2AttribVar* attribVars; unsigned int ringItemsize; unsigned int hasStreamOut; unsigned int streamOutStride[4]; _GX2RBuffer gx2rBuffer; };
@@ -26,7 +29,17 @@ class FFLiUtilShaderAllocator;
 class FFLiUtilShader
 {
 public:
-    struct FetchShader { unsigned int words[8]; void* program; };
+    struct FetchShader
+    {
+        unsigned int type;
+        unsigned int resources;
+        unsigned int size;
+        void* program;
+        unsigned int attribCount;
+        unsigned int numDivisors;
+        unsigned int divisors[2];
+        _GX2AttribStream* attributes;
+    };
     struct AttributeStreamDesc { const char* name; unsigned int offset; unsigned int buffer; unsigned int format; };
     struct CheckUniformBlockDesc { const char* name; unsigned int offset; unsigned int size; };
     static unsigned int GetProgramBufferSizeForFetch(unsigned int);
@@ -53,6 +66,9 @@ public:
     static bool CheckUniformBlock(const _GX2PixelShader*, unsigned int, const CheckUniformBlockDesc*, unsigned int);
     static bool CheckUniformBlock(const _GX2VertexShader*, unsigned int, const CheckUniformBlockDesc*, unsigned int);
 };
+extern unsigned int sIconShaderType;
+extern void* sIconDefaultShaderBuffer;
+extern FFLiDefaultShader sIconDefaultShader;
 struct PlainShader {
     unsigned int self;
     unsigned int contextState;
@@ -69,6 +85,7 @@ struct PlainShader {
     unsigned int pixelColor3;
     unsigned int pixelSampler;
 };
+extern PlainShader sIconExtShader;
 
 unsigned int setRGBAOrder__FUi(unsigned int);
 int InitDefaultShader__Fv();

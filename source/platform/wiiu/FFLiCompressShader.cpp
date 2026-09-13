@@ -67,7 +67,7 @@ bool FFLiCompressShader::SetupCPU(const void* shaderData, unsigned int shaderInd
 
 void FFLiCompressShader::SetupGPU()
 {
-    FFLiInvalidateShader__FPvUi((void*)mFetchShader.program, mFetchShader.words[2]);
+    FFLiInvalidateShader__FPvUi(mFetchShader.program, mFetchShader.size);
     FFLiInvalidateShader__FPvUi(mVertexShader->program, mVertexShader->size);
     FFLiInvalidateShader__FPvUi(mPixelShader->program, mPixelShader->size);
 }

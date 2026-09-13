@@ -11,8 +11,8 @@ extern void SetModulate__FP11PlainShaderPC16FFLModulateParam(PlainShader*, const
 
 struct _GX2ContextState;
 
-typedef void (*FFLShaderCallbackDrawFunction)(const FFLShaderCallback*, const FFLDrawParam*);
-typedef void (*FFLShaderCallbackMatrixFunction)(const FFLShaderCallback*, const _Mat44*);
+typedef void (*FFLShaderCallbackDrawFunction)(void*, const FFLDrawParam*);
+typedef void (*FFLShaderCallbackMatrixFunction)(void*, const _Mat44*);
 
 struct FFLShaderCallback
 {
@@ -47,7 +47,7 @@ void FFLiShaderCallback::CallSetMatrix(const _Mat44& matrix) const
 {
     if (IsExist())
     {
-        m_callback->setMatrix(m_callback, &matrix);
+        m_callback->setMatrix(m_callback->callbackData, &matrix);
     }
 }
 
@@ -55,7 +55,7 @@ void FFLiShaderCallback::CallDraw(const FFLDrawParam& drawParam) const
 {
     if (IsExist())
     {
-        m_callback->draw(m_callback, &drawParam);
+        m_callback->draw(m_callback->callbackData, &drawParam);
     }
 }
 

@@ -5,6 +5,7 @@
 
 class FFLiResourceLoaderBuffer : public FFLiResourceUncompressBuffer
 {
+    friend class FFLiResourceLoader;
 private:
     unsigned int mResourceBuffer;
 

@@ -18,7 +18,6 @@ namespace nn
 {
 namespace act
 {
-// WUT exports this original Wii U entry point but omits its C++ declaration.
 unsigned char GetSlotNoEx(const ACTUuid&) asm("GetSlotNoEx__Q2_2nn3actFRC7ACTUuid");
 }
 }
@@ -382,7 +381,11 @@ int CProfile::SignInUser(MiiDataEntry* mii, int pad)
     while (quadrant < 4 && mProfiles[quadrant].signedIn)
         ++quadrant;
     if (quadrant == 4)
+    {
+        if (mii != NULL)
+            SetSignInChange(true);
         return -1;
+    }
     PROFILE_DETAILS& profile = mProfiles[quadrant];
     profile.mii = mii;
     profile.signedIn = true;
@@ -400,7 +403,8 @@ int CProfile::SignInUser(MiiDataEntry* mii, int pad)
     }
     OnSignin(pad);
     g_pInput->LockPad(pad, quadrant);
-    SetSignInChange(mii != NULL);
+    if (mii != NULL)
+        SetSignInChange(true);
     return quadrant;
 }
 
@@ -895,11 +899,6 @@ void CProfile::RichPresenceInit(int, int titleId)
 
 const wchar_t* CProfile::getStringFromID(int stringId)
 {
-    // The original (0x034105C0) calls the pointer at this+0x4ac, and
-    // SetRichPresenceGetStringCallback (0x03411C34) is what writes +0x4ac.
-    // SetGetStringFunc writes +0x248, a different member -- and it has no
-    // callers anywhere in the tree, so mGetStringHandler is always NULL.
-    // Calling it here branched to address 0 out of SetPresenceString.
     return mRichPresenceStringHandler(stringId);
 }
 

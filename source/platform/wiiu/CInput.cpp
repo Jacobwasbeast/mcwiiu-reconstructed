@@ -151,8 +151,8 @@ static unsigned char s_predictStack[0x20000];
 static CInput* s_inputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
 
-static unsigned char s_xLanguage = 0xff;
-static unsigned char s_xLocale = 0xff;
+static unsigned int s_xLanguage = 0xff;
+static unsigned int s_xLocale = 0xff;
 
 extern "C" int _SCIReadSysConfig(const char* key, unsigned int type, unsigned int size, void* value)
 {
@@ -184,10 +184,8 @@ unsigned int XGetLanguage()
     unsigned int language = GameSettings::GetMinecraftLanguage(0);
     if (language != 0)
         return language;
-    if (s_xLanguage == 0xff && SCIGetCafeLanguage(&language) != 1)
+    if (s_xLanguage == 0xff && SCIGetCafeLanguage(&s_xLanguage) != 1)
         s_xLanguage = 0xff;
-    else if (s_xLanguage == 0xff)
-        s_xLanguage = static_cast<unsigned char>(language);
     if (s_xLanguage == 0)
         return 2;
     if (s_xLanguage < 2)
@@ -205,10 +203,8 @@ int XGetLocale()
     unsigned int locale = GameSettings::GetMinecraftLocale(0);
     if (locale != 0)
         return locale;
-    if (s_xLocale == 0xff && SCIGetCafeLanguage(&locale) != 1)
+    if (s_xLocale == 0xff && SCIGetCafeLanguage(&s_xLocale) != 1)
         s_xLocale = 0xff;
-    else if (s_xLocale == 0xff)
-        s_xLocale = static_cast<unsigned char>(locale);
     if (s_xLocale > 0xb)
         return 0x24;
     static const unsigned char localeMap[] = { 0x14, 0x24, 0x16, 0x0d, 0x13, 0x05,
@@ -807,19 +803,18 @@ bool CInput::RemapIpad(int& pad)
 }
 void CInput::SetGameJoypadMaps(int pad, unsigned char map, unsigned int value)
 {
-    if (RemapIpad(pad))
-    {
-        gameJoypadMaps[pad][map] = value;
-        alternateJoypadMaps[pad][map] = value;
-    }
+    RemapIpad(pad);
+    gameJoypadMaps[pad][map] = value;
+    alternateJoypadMaps[pad][map] = value;
 }
 unsigned int CInput::GetGameJoypadMaps(int pad, unsigned char map)
 {
+    int originalPad = pad;
     if (!RemapIpad(pad))
     {
         return 0;
     }
-    return IsPadClassicController(pad) ? alternateJoypadMaps[pad][map] : gameJoypadMaps[pad][map];
+    return IsPadClassicController(originalPad) ? alternateJoypadMaps[pad][map] : gameJoypadMaps[pad][map];
 }
 void CInput::SetJoypadMapArraySetupComplete()
 {

@@ -105,7 +105,7 @@ int _GFDRelocateBlockEx(void* descriptor, unsigned int unused,
         uint32_t* patch = relocationTable + (tag / sizeof(uint32_t)) + index;
         if (*patch != 0)
         {
-            uint32_t* target = reinterpret_cast<uint32_t*>(relocationBase + GFDCleanTag(*patch));
+            uint32_t* target = reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(relocationData) + GFDCleanTag(*patch));
             const int32_t value = static_cast<int32_t>(GFDCleanTag(*target));
             *target = static_cast<uint32_t>(value - static_cast<int32_t>(unused) +
                                             static_cast<int32_t>(relocationBase));
@@ -123,9 +123,7 @@ int _GFDRelocateBlock(unsigned int size, void* base)
     if (*reinterpret_cast<uint32_t*>(bytes + size - 0x0c) != 0)
         return 1;
     uint8_t* descriptor = bytes + size - 0x28;
-    uint32_t* table = reinterpret_cast<uint32_t*>(
-        bytes + GFDCleanTag(*reinterpret_cast<uint32_t*>(descriptor + 0x24)));
-    return _GFDRelocateBlockEx(descriptor, 0, reinterpret_cast<intptr_t>(base), table);
+    return _GFDRelocateBlockEx(descriptor, 0, reinterpret_cast<intptr_t>(base), base);
 }
 
 void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44* projection, _Mat34* view,

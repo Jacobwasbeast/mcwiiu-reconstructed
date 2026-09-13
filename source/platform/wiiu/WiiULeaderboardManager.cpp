@@ -1,5 +1,7 @@
 #include "platform/wiiu/WiiULeaderboardManager.hpp"
 
+LeaderboardManager* g_pLeaderboardManager = new WiiULeaderboardManager();
+
 WiiULeaderboardManager::WiiULeaderboardManager()
     : LeaderboardManager()
 {

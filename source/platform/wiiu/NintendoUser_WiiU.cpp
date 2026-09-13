@@ -1,7 +1,6 @@
 #include "platform/wiiu/NintendoUser_WiiU.hpp"
 
-extern "C" void* MEMAllocFromDefaultHeapEx(unsigned int size, int alignment);
-extern "C" void MEMFreeToDefaultHeap(void* block);
+#include <coreinit/memdefaultheap.h>
 
 int CoreUser_DynLoad_DefaultAlloc__FiT1PPv(int32_t size, int32_t alignment, void** result)
 {

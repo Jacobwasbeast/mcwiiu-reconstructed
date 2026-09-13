@@ -18,9 +18,9 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                void* securityAttributes, unsigned int creationDisposition,
                unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead,
+unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead,
              _OVERLAPPED* overlapped);
-int CloseHandle(int handle);
+void CloseHandle(int handle);
 
 cNintendoDLCInfo::cNintendoDLCInfo()
 {

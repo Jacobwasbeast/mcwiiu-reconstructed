@@ -1,8 +1,13 @@
 #ifndef PLATFORM_WIIU_PLATFORMTIMING_HPP
 #define PLATFORM_WIIU_PLATFORMTIMING_HPP
 
-struct _LARGE_INTEGER
+union _LARGE_INTEGER
 {
+    struct
+    {
+        unsigned int LowPart;
+        int HighPart;
+    } u;
     long long QuadPart;
 };
 

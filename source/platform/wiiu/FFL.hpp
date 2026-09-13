@@ -11,6 +11,7 @@
 #include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
 struct FFLCharModel { FFLiCharModel model; };
 struct FFLResourceDesc;
+struct FFLInitDesc;
 struct FFLShaderCallback;
 class FFLiShaderCallback;
 struct FFLStoreData;
@@ -91,8 +92,8 @@ int FFLiMiiDataCoreRFL2MiiDataCore(FFLiMiiDataCore* destination,
                                    bool replaceName);
 void FFLiClearCreatorNameFromOfficial(FFLiMiiDataOfficial* data);
 
-int FFLInitRes(void* work, FFLResourceDesc* resourceDesc);
-int FFLGetWorkSize(FFLResourceDesc* resourceDesc);
+int FFLInitRes(void* work, const FFLInitDesc* initDesc);
+int FFLGetWorkSize(const FFLInitDesc* initDesc);
 int FFLiGetBufferSizeFacelineTexture(uint32_t resolution, bool mipmap, bool useMipmap);
 
 int FFLiLoadShape(FFLDrawParam*, FFLBoundingBox*, FFLiCharModel*, FFLiShapePartsType,
@@ -120,7 +121,6 @@ void FFLiTempSetContextState(const _GX2ContextState*);
 void FFLiInitModulateShapeCap(FFLModulateParam*, int, const _GX2Texture&);
 void FFLiInitModulateShapeHair(FFLModulateParam*, int);
 void FFLiInitModulateShapeNose(FFLModulateParam*, int);
-int FFLiGetBufferRenderTexture(unsigned int, unsigned int, unsigned int);
 int FFLiGetBufferRenderTexture(unsigned int, unsigned int, unsigned int, unsigned int);
 int FFLiStoreDataCFLToCharInfo(FFLiCharInfo*, const FFLiStoreDataCFL&);
 unsigned int FFLiBugCanVgtFixedIndexSize(unsigned int);

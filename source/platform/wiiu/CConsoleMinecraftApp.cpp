@@ -27,7 +27,7 @@ extern unsigned char s_altMainExit;
 extern OSMessageQueue gMainMessageQueue;
 extern OSMessage gMainMessageBuffer;
 
-static OSFastMutex s_altMainMutex;
+extern OSFastMutex gMainMutex;
 static unsigned char s_altMainStopRequested;
 
 void altMain()
@@ -49,18 +49,18 @@ void waitForAltMainThreadToComplete()
 
 int altMainThread(int, void*)
 {
-    InitializeCriticalSection(&s_altMainMutex);
     if (s_altMainExit == 0)
     {
         do
         {
+            gRenderer->InitialiseContext();
             OSReceiveMessage(&gMainMessageQueue, &gMainMessageBuffer, OS_MESSAGE_FLAGS_BLOCKING);
             while (s_altMainOKToRun == 0)
             {
                 Sleep(10);
             }
 
-            EnterCriticalSection(&s_altMainMutex);
+            EnterCriticalSection(&gMainMutex);
             s_altMainStopRequested = 1;
             Sleep(200);
             s_altMainPending = 0;
@@ -72,9 +72,9 @@ int altMainThread(int, void*)
                 if (processResult == 3)
                 {
                     s_altMainExit = 1;
-                    LeaveCriticalSection(&s_altMainMutex);
+                    LeaveCriticalSection(&gMainMutex);
                     ShutdownAndExit();
-                    LeaveCriticalSection(&s_altMainMutex);
+                    LeaveCriticalSection(&gMainMutex);
                     break;
                 }
                 if (processResult == 2)
@@ -82,10 +82,11 @@ int altMainThread(int, void*)
                     ReleaseCallback();
                 }
 
-                g_pInput->Tick();
+                gRenderer->StartFrame();
                 gApp.UpdateTime();
 
                 PIXBeginNamedEvent(0.0f, "Input manager tick");
+                g_pInput->Tick();
                 PIXEndNamedEvent();
 
                 PIXBeginNamedEvent(0.0f, "Render manager tick");
@@ -96,14 +97,22 @@ int altMainThread(int, void*)
                 CGameNetworkManager::sInstance.DoWork();
                 PIXEndNamedEvent();
 
+                gRenderer->ResetRenderState();
+                const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                gRenderer->SetClearColour(clearColour);
+                gRenderer->Clear(3);
+                gRenderer->StartDRCFrame(false);
+                gRenderer->Clear(3);
+
                 PIXBeginNamedEvent(0.0f, "Frame present");
                 gRenderer->Present();
                 PIXEndNamedEvent();
 
+                gRenderer->Set_matrixDirty();
                 Vec3::resetPool();
             }
 
-            LeaveCriticalSection(&s_altMainMutex);
+            LeaveCriticalSection(&gMainMutex);
         }
         while (s_altMainExit == 0);
     }

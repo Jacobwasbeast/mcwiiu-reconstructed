@@ -1,16 +1,22 @@
 #include "platform/wiiu/FFLiDefaultParams.hpp"
 
-int32_t FFLiDefaultParams::GetMaterial(int32_t drawType)
+#include "platform/wiiu/FFLiDefaultParams_sLight.inc"
+
+#include "platform/wiiu/FFLiDefaultParams_sRim.inc"
+
+#include "platform/wiiu/FFLiDefaultParams_sMaterial.inc"
+
+const unsigned char* FFLiDefaultParams::GetMaterial(int32_t drawType)
 {
-    return drawType * 56 + 0x10474160;
+    return sMaterial + drawType * 56;
 }
 
-uint32_t FFLiDefaultParams::GetLight()
+const unsigned char* FFLiDefaultParams::GetLight()
 {
-    return 0x1047410C;
+    return sLight;
 }
 
-uint32_t FFLiDefaultParams::GetRim()
+const unsigned char* FFLiDefaultParams::GetRim()
 {
-    return 0x1047414C;
+    return sRim;
 }

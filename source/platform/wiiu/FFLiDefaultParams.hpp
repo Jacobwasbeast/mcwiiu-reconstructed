@@ -6,9 +6,9 @@
 class FFLiDefaultParams
 {
 public:
-    static int32_t GetMaterial(int32_t drawType);
-    static uint32_t GetLight();
-    static uint32_t GetRim();
+    static const unsigned char* GetMaterial(int32_t drawType);
+    static const unsigned char* GetLight();
+    static const unsigned char* GetRim();
 };
 
 #endif

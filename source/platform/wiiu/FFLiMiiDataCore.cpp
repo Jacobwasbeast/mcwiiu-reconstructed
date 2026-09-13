@@ -6,7 +6,7 @@ struct FFLiSwapEndianDesc
     unsigned int count;
 };
 
-void FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(void* data, const FFLiSwapEndianDesc* descriptions, unsigned int count);
+int FFLiSwapEndianGroup__FPvPC18FFLiSwapEndianDescUi(void* data, const FFLiSwapEndianDesc* descriptions, unsigned int count);
 
 static const FFLiSwapEndianDesc g_miiDataCoreSwapEndianDescriptions[7] =
 {

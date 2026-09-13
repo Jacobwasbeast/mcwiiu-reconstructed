@@ -2,12 +2,15 @@
 #include "platform/wiiu/FFLiFsCommand.hpp"
 #include "platform/wiiu/FFLiResourceUncompressBuffer.hpp"
 #include "vendor/__N_22_FFLiResourceLoader_cpp_4cb71113.hpp"
+#include <string.h>
 
 extern unsigned int FFLiRoundUp(unsigned int value, unsigned int alignment);
 bool FFLiResourceLoaderUncompress(void* destination, const void* source, FFLiResourceUncompressBuffer* buffer, const FFLiResourcePartsInfo& parts);
+extern const FFLiResourcePartsInfo* FFLiGetTextureResoucePartsInfos__FPUiP25FFLiResourceTextureHeader20FFLiTexturePartsType(unsigned int*, const void*, unsigned int);
+extern const FFLiResourcePartsInfo* FFLiGetShapeResoucePartsInfos__FPUiP23FFLiResourceShapeHeader18FFLiShapePartsType(unsigned int*, const void*, unsigned int);
 
 FFLiResourceLoader::FFLiResourceLoader(FFLiResourceManager* resourceManager, FFLiResourceLoaderBuffer* buffer, FFLResourceType resourceType)
-    : m_resourceManager(resourceManager), m_buffer(buffer), m_command(FFLiFsCommand::PlacementNew(0, 0)), m_file(0), m_resourceType(resourceType)
+    : m_resourceManager(resourceManager), m_buffer(buffer), m_command(FFLiFsCommand::PlacementNew(reinterpret_cast<FFLiFsCommandBuffer*>(buffer->mResourceBuffer), resourceManager->m_client)), m_file(m_command), m_resourceType(resourceType)
 {
 }
 
@@ -39,13 +42,13 @@ const FFLiResourceHeader* FFLiResourceLoader::Header() const
 uint32_t FFLiResourceLoader::GetTextureAlignedMaxSize(FFLiTexturePartsType parts) const
 {
     const FFLiResourceHeader* header = Header();
-    return header == 0 ? 0 : FFLiRoundUp(header->resourceWords[5 + static_cast<unsigned int>(parts)], 64);
+    return header == 0 ? 0 : FFLiRoundUp(header->resourceWords[2 + static_cast<unsigned int>(parts)], 64);
 }
 
 uint32_t FFLiResourceLoader::GetShapeAlignedMaxSize(FFLiShapePartsType parts) const
 {
     const FFLiResourceHeader* header = Header();
-    return header == 0 ? 0 : FFLiRoundUp(header->resourceWords[1284 + static_cast<unsigned int>(parts)], 64);
+    return header == 0 ? 0 : FFLiRoundUp(header->resourceWords[1281 + static_cast<unsigned int>(parts)], 64);
 }
 
 bool FFLiResourceLoader::IsCached() const
@@ -55,13 +58,11 @@ bool FFLiResourceLoader::IsCached() const
 
 uint32_t FFLiResourceLoader::GetPointerFromCache(void** destination, const FFLiResourcePartsInfo& parts)
 {
-    if (!IsCached() || destination == 0 || Header() == 0)
+    if (!IsCached())
     {
         return 5;
     }
-    *destination = const_cast<FFLiResourceHeader*>(Header());
-    if (&parts == 0)
-        return 5;
+    *destination = reinterpret_cast<unsigned char*>(const_cast<FFLiResourceHeader*>(m_resourceManager->HeaderFromCache(m_resourceType))) + parts.offset;
     return 0;
 }
 
@@ -72,6 +73,11 @@ uint32_t FFLiResourceLoader::LoadFromCache(void* destination, const FFLiResource
     if (result != 0)
     {
         return result;
+    }
+    if (parts.strategy == 5)
+    {
+        memcpy(destination, source, parts.uncompressedSize);
+        return 0;
     }
     if (!FFLiResourceLoaderUncompress(destination, source, m_buffer, parts))
     {
@@ -105,19 +111,20 @@ uint32_t FFLiResourceLoader::LoadFromFile(void* destination, const FFLiResourceP
     {
         return 9;
     }
-    if (!FFLiResourceLoaderUncompress(destination, (const void*)m_buffer->Buffer(), m_buffer, parts))
-    {
-        return 5;
-    }
-    return 0;
+    if (parts.strategy == 5)
+        return ReadWithPos(destination, parts.offset, parts.uncompressedSize) == 1 ? 0 : 9;
+    void* compressed = reinterpret_cast<void*>(m_buffer->Buffer());
+    if (ReadWithPos(compressed, parts.offset, parts.compressedSize) != 1)
+        return 9;
+    return FFLiResourceLoaderUncompress(destination, compressed, m_buffer, parts) ? 0 : 5;
 }
 
 uint32_t FFLiResourceLoader::Load(void* destination, unsigned int* size, const FFLiResourcePartsInfo& parts)
 {
     if (size != 0)
-    {
-        *size = 0;
-    }
+        *size = parts.uncompressedSize;
+    if (parts.uncompressedSize == 0)
+        return 0;
     if (IsCached())
     {
         return LoadFromCache(destination, parts);
@@ -127,37 +134,33 @@ uint32_t FFLiResourceLoader::Load(void* destination, unsigned int* size, const F
 
 uint32_t FFLiResourceLoader::LoadTexture(void* destination, unsigned int* size, FFLiTexturePartsType parts, unsigned int index)
 {
-    if (Header() == 0 || index >= GetTextureNum(parts))
-    {
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetTextureResoucePartsInfos__FPUiP25FFLiResourceTextureHeader20FFLiTexturePartsType(&count, Header()->resourceWords + 2, static_cast<unsigned int>(parts));
+    if (infos == 0 || index >= count)
         return 1;
-    }
-    if (destination == 0 && size == 0)
-        return 1;
-    return 1;
+    return Load(destination, size, infos[index]);
 }
 
 uint32_t FFLiResourceLoader::LoadShape(void* destination, unsigned int* size, FFLiShapePartsType parts, unsigned int index)
 {
-    if (Header() == 0 || index >= GetShapeNum(parts))
-    {
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetShapeResoucePartsInfos__FPUiP23FFLiResourceShapeHeader18FFLiShapePartsType(&count, Header()->resourceWords + 1281, static_cast<unsigned int>(parts));
+    if (infos == 0 || index >= count)
         return 1;
-    }
-    if (destination == 0 && size == 0)
-        return 1;
-    return 1;
+    return Load(destination, size, infos[index]);
 }
 
 uint32_t FFLiResourceLoader::GetPointerTextureByExpandCache(void** destination, unsigned int* size, FFLiTexturePartsType parts, unsigned int index)
 {
-    if (!IsExpand() || destination == 0 || index >= GetTextureNum(parts))
-    {
+    if (!IsExpand())
+        return 5;
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetTextureResoucePartsInfos__FPUiP25FFLiResourceTextureHeader20FFLiTexturePartsType(&count, Header()->resourceWords + 2, static_cast<unsigned int>(parts));
+    if (infos == 0 || index >= count)
         return 1;
-    }
     if (size != 0)
-    {
-        *size = GetTextureSize(parts, index);
-    }
-    return 5;
+        *size = infos[index].uncompressedSize;
+    return GetPointerFromCache(destination, infos[index]);
 }
 
 bool FFLiResourceLoader::IsValid() const
@@ -167,37 +170,39 @@ bool FFLiResourceLoader::IsValid() const
 
 uint32_t FFLiResourceLoader::GetPointerShapeByExpandCache(void** destination, unsigned int* size, FFLiShapePartsType parts, unsigned int index)
 {
-    if (!IsExpand() || destination == 0 || index >= GetShapeNum(parts))
-    {
+    if (!IsExpand())
+        return 5;
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetShapeResoucePartsInfos__FPUiP23FFLiResourceShapeHeader18FFLiShapePartsType(&count, Header()->resourceWords + 1281, static_cast<unsigned int>(parts));
+    if (infos == 0 || index >= count)
         return 1;
-    }
     if (size != 0)
-    {
-        *size = GetShapeSize(parts, index);
-    }
-    return 5;
+        *size = infos[index].uncompressedSize;
+    return GetPointerFromCache(destination, infos[index]);
 }
 
 uint32_t FFLiResourceLoader::GetTextureSize(FFLiTexturePartsType parts, unsigned int index) const
 {
-    const uint32_t count = GetTextureNum(parts);
-    return index < count ? GetTextureAlignedMaxSize(parts) : 0;
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetTextureResoucePartsInfos__FPUiP25FFLiResourceTextureHeader20FFLiTexturePartsType(&count, Header()->resourceWords + 2, static_cast<unsigned int>(parts));
+    return infos != 0 && index < count ? infos[index].uncompressedSize : 0;
 }
 
 uint32_t FFLiResourceLoader::GetShapeSize(FFLiShapePartsType parts, unsigned int index) const
 {
-    const uint32_t count = GetShapeNum(parts);
-    return index < count ? GetShapeAlignedMaxSize(parts) : 0;
+    unsigned int count;
+    const FFLiResourcePartsInfo* infos = FFLiGetShapeResoucePartsInfos__FPUiP23FFLiResourceShapeHeader18FFLiShapePartsType(&count, Header()->resourceWords + 1281, static_cast<unsigned int>(parts));
+    return infos != 0 && index < count ? infos[index].uncompressedSize : 0;
 }
 
 uint32_t FFLiResourceLoader::GetTextureNum(FFLiTexturePartsType parts) const
 {
-    const FFLiResourceHeader* header = Header();
-    return header == 0 ? 0 : header->resourceWords[4 + static_cast<unsigned int>(parts)];
+    unsigned int count;
+    return FFLiGetTextureResoucePartsInfos__FPUiP25FFLiResourceTextureHeader20FFLiTexturePartsType(&count, Header()->resourceWords + 2, static_cast<unsigned int>(parts)) != 0 ? count : 0;
 }
 
 uint32_t FFLiResourceLoader::GetShapeNum(FFLiShapePartsType parts) const
 {
-    const FFLiResourceHeader* header = Header();
-    return header == 0 ? 0 : header->resourceWords[1283 + static_cast<unsigned int>(parts)];
+    unsigned int count;
+    return FFLiGetShapeResoucePartsInfos__FPUiP23FFLiResourceShapeHeader18FFLiShapePartsType(&count, Header()->resourceWords + 1281, static_cast<unsigned int>(parts)) != 0 ? count : 0;
 }

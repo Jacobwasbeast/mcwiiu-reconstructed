@@ -3,6 +3,7 @@
 #include "platform/wiiu/FFLiManager.hpp"
 #include "platform/wiiu/FFLiCoordinate.hpp"
 #include "platform/wiiu/FFLiUtilShader.hpp"
+#include "vendor/__N_21_FFLiDefaultShader_cpp_d69dbbf4.hpp"
 #include "platform/wiiu/WiiU_GX2.hpp"
 #include "platform/wiiu/CafeThreadLocal.hpp"
 
@@ -22,7 +23,6 @@
 #include <math.h>
 
 struct _OVERLAPPED;
-struct FFLResourceDesc;
 
 struct D3DXIMAGE_INFO
 {
@@ -169,6 +169,8 @@ void ASM_MTX44Transpose(const float (*source)[4], float (*destination)[4]);
 void ASM_MTX44MultVecSR(const float (*matrix)[4], const _Vec3* source, _Vec3* destination);
 void ASM_VECNormalize(const _Vec3* source, _Vec3* destination)
 {
+#if defined(__POWERPC__)
+
     const float half = 0.5f;
     const float three = 3.0f;
     asm volatile(
@@ -191,6 +193,13 @@ void ASM_VECNormalize(const _Vec3* source, _Vec3* destination)
         :
         : [src] "b" (source), [dst] "b" (destination), [half] "m" (half), [three] "m" (three)
         : "fr1", "fr2", "fr3", "fr4", "fr5", "fr6", "fr7", "fr8", "fr9", "fr10", "memory");
+#else
+    const float lengthSquared = source->x * source->x + source->y * source->y + source->z * source->z;
+    const float scale = lengthSquared > 0.0f ? 1.0f / sqrtf(lengthSquared) : 0.0f;
+    destination->x = source->x * scale;
+    destination->y = source->y * scale;
+    destination->z = source->z * scale;
+#endif
 }
 
 void ASM_MTX44RotAxisRad(float (*matrix)[4], const _Vec3* axis, float radians)
@@ -365,6 +374,11 @@ void ASM_MTXIdentity(float (*matrix)[4])
 
 void ASM_MTX44Trans(float (*matrix)[4], float x, float y, float z)
 {
+    memset(matrix, 0, sizeof(float) * 16);
+    matrix[0][0] = 1.0f;
+    matrix[1][1] = 1.0f;
+    matrix[2][2] = 1.0f;
+    matrix[3][3] = 1.0f;
     matrix[0][3] = x;
     matrix[1][3] = y;
     matrix[2][3] = z;
@@ -487,8 +501,8 @@ void C_MTXPerspective(float (*matrix)[4], float fieldOfView, float aspect, float
     memset(matrix, 0, sizeof(float) * 16);
     matrix[0][0] = cotangent / aspect;
     matrix[1][1] = cotangent;
-    matrix[2][2] = -(farDistance + nearDistance) * reciprocalDepth;
-    matrix[2][3] = -(2.0f * farDistance * nearDistance) * reciprocalDepth;
+    matrix[2][2] = -farDistance * reciprocalDepth;
+    matrix[2][3] = -(farDistance * nearDistance) * reciprocalDepth;
     matrix[3][2] = -1.0f;
     matrix[3][3] = 0.0f;
 }
@@ -501,12 +515,11 @@ void C_MTXOrtho(float (*matrix)[4], float top, float bottom, float left, float r
     const float reciprocalDepth = 1.0f / (farDistance - nearDistance);
     memset(matrix, 0, sizeof(float) * 16);
     matrix[0][0] = 2.0f * reciprocalWidth;
+    matrix[0][3] = -(right + left) * reciprocalWidth;
     matrix[1][1] = 2.0f * reciprocalHeight;
-    matrix[2][2] = -2.0f * reciprocalDepth;
-    matrix[2][3] = -(farDistance + nearDistance) * reciprocalDepth;
-    matrix[3][0] = -(right + left) * reciprocalWidth;
-    matrix[3][1] = -(top + bottom) * reciprocalHeight;
-    matrix[3][2] = 0.0f;
+    matrix[1][3] = -(top + bottom) * reciprocalHeight;
+    matrix[2][2] = -reciprocalDepth;
+    matrix[2][3] = -farDistance * reciprocalDepth;
     matrix[3][3] = 1.0f;
 }
 
@@ -543,10 +556,10 @@ void C_MTXLookAt(_Mat34* matrix, const float* eye, const float* target, const fl
     matrix->value[2][3] = -(eye[0] * forward.x + eye[1] * forward.y + eye[2] * forward.z);
 }
 
-unsigned int FFLGetWorkSize(FFLResourceDesc* resourceDesc);
-int FFLInitRes(void* workMemory, FFLResourceDesc* resourceDesc);
+int FFLGetWorkSize(const FFLInitDesc* initDesc);
+int FFLInitRes(void* workMemory, const FFLInitDesc* initDesc);
 void FFLInitResGPUStep();
-void FFLExit();
+int FFLExit();
 void* MakeIcon(_GX2Texture* texture, IconShaderType shaderType, FFLDataSource dataSource, FFLStoreData* storeData,
              int index);
 
@@ -554,8 +567,8 @@ void user_write_data_init(void* buffer, int size);
 void user_write_data(png_struct_def* png, unsigned char* data, unsigned int size);
 void user_flush_data(png_struct_def* png);
 
-extern int FFLGetBufferSizeDefaultShader(const char* name);
-extern int FFLInitDefaultShader(void* shader, void* buffer, const char* name);
+extern int FFLGetBufferSizeDefaultShader(const void* shaderData);
+extern int FFLInitDefaultShader(void* shader, void* buffer, const void* shaderData);
 extern void FFLSetDefaultShader(void* shader);
 extern void FFLDestroyDefaultShader(void* shader);
 extern void InitShader__FP11PlainShaderPCv(PlainShader* shader, const void* data);
@@ -573,9 +586,9 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                 void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes,
                 int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
-int ReadFile(int file, void* buffer, unsigned int numberOfBytesToRead, unsigned int* numberOfBytesRead,
+unsigned int ReadFile(int file, void* buffer, unsigned int numberOfBytesToRead, unsigned int* numberOfBytesRead,
              _OVERLAPPED* overlapped);
-int CloseHandle(int handle);
+void CloseHandle(int handle);
 
 bool InputManager_IsShowingOnscreenKeyboard();
 bool InputManager_IsShowingErrorViewer();
@@ -625,15 +638,16 @@ static int sTotalCommandBufferBytes = 0;
 static unsigned long long sPreviousSubmitTimeStamp = 0;
 static unsigned long long sLastSubmitTimeStamp = 0;
 static void* sFFLWorkMemory = NULL;
-static FFLResourceDesc sFFLResourceDesc;
+static FFLInitDesc sFFLInitDesc = { 0, 0, 0, 0, 1 };
 static _GX2Sampler sMiiIconSampler;
 static unsigned char* sUserWriteDataStart;
 static unsigned char* sUserWriteDataCurrent;
 static unsigned char* sUserWriteDataEnd;
-static unsigned int sIconShaderType;
-static void* sIconDefaultShaderBuffer;
-static PlainShader sIconDefaultShader;
-static PlainShader sIconExtShader;
+unsigned int sIconShaderType;
+void* sIconDefaultShaderBuffer;
+FFLiDefaultShader sIconDefaultShader;
+PlainShader sIconExtShader;
+extern const unsigned char gFFLDefaultShaderData[4912];
 
 void user_write_data_init(void* buffer, int size)
 {
@@ -666,7 +680,7 @@ int InitIconShader__F14IconShaderType(IconShaderType shaderType)
     {
         if (sIconDefaultShaderBuffer == NULL)
         {
-            sIconDefaultShaderBuffer = malloc((size_t)FFLGetBufferSizeDefaultShader("Gfx2") + 0x100);
+            sIconDefaultShaderBuffer = malloc((size_t)FFLGetBufferSizeDefaultShader(gFFLDefaultShaderData) + 0x100);
             if (sIconDefaultShaderBuffer == NULL)
             {
                 OSPanic(__FILE__, 0x54, "Invalid pointer");
@@ -678,7 +692,7 @@ int InitIconShader__F14IconShaderType(IconShaderType shaderType)
         {
             OSPanic(__FILE__, 0x5a, "Invalid pointer");
         }
-        int result = FFLInitDefaultShader(&sIconDefaultShader, aligned, "Gfx2");
+        int result = FFLInitDefaultShader(&sIconDefaultShader, aligned, gFFLDefaultShaderData);
         if (result != 0)
         {
             OSPanic(__FILE__, 0x5d, "A default shader cannot be set up");
@@ -806,13 +820,13 @@ void Renderer::SetupShaders()
     mFetchShaders[9] = new _GX2FetchShader;
 
     mVertexShaders[0] = &gVertexShaderStandard;
-    mVertexShaders[1] = &gVertexShaderQuad;
-    mVertexShaders[2] = &gVertexShaderStandardLit;
-    mVertexShaders[3] = &gVertexShaderTerrain;
+    mVertexShaders[1] = &gVertexShaderTerrain;
+    mVertexShaders[2] = &gVertexShaderQuad;
+    mVertexShaders[3] = &gVertexShaderStandardLit;
     mVertexShaders[4] = &gVertexShaderPosition;
-    mVertexShaders[5] = &gVertexShaderPositionAlpha;
-    mVertexShaders[6] = &gVertexShaderPositionLerp;
-    mVertexShaders[7] = &gVertexShaderParticle;
+    mVertexShaders[5] = &gVertexShaderPositionLerp;
+    mVertexShaders[6] = &gVertexShaderParticle;
+    mVertexShaders[7] = &gVertexShaderPositionAlpha;
     mVertexShaders[8] = &gVertexShaderLayered;
     mVertexShaders[9] = &gVertexShaderLayeredLit;
 
@@ -3296,10 +3310,10 @@ void Renderer::DrawVertices(C4JRender::ePrimitiveType primitiveType, int numVert
 
 bool Renderer::InitFFL()
 {
-    unsigned int workSize = FFLGetWorkSize(&sFFLResourceDesc);
+    unsigned int workSize = FFLGetWorkSize(&sFFLInitDesc);
     sFFLWorkMemory = malloc(workSize);
 
-    if (FFLInitRes(sFFLWorkMemory, &sFFLResourceDesc) != 0)
+    if (FFLInitRes(sFFLWorkMemory, &sFFLInitDesc) != 0)
     {
         return false;
     }

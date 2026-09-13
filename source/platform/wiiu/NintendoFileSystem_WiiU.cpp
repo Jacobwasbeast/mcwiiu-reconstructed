@@ -8,7 +8,7 @@
 extern void setAltMainOKToRun();
 extern void waitForAltMainThreadToComplete();
 extern void getFinalFilePath(char (&path)[256], const char* fileName);
-extern void* GetCommandBlock();
+extern FSCmdBlock* GetCommandBlock();
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
                void* securityAttributes, unsigned int creationDisposition,
@@ -22,7 +22,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
     setAltMainOKToRun();
     char path[256];
     getFinalFilePath(path, fileName);
-    void* commandBlock = GetCommandBlock();
+    FSCmdBlock* commandBlock = GetCommandBlock();
     FSFileHandle file = static_cast<FSFileHandle>(-1);
 
     if (creationDisposition != 0)
@@ -43,8 +43,8 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
             }
         }
 
-        FSOpenFile(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
-                   path, mode, &file, static_cast<FSErrorFlag>(8));
+        FSOpenFile(GetWiiUFileSystemClient(), commandBlock, path, mode, &file,
+                   static_cast<FSErrorFlag>(8));
         if (file != static_cast<FSFileHandle>(-1))
             WiiU_FileCache::CreateFileCache(static_cast<int>(file));
     }
@@ -60,21 +60,21 @@ bool CreateDirectoryA(const char* pathName, void* securityAttributes)
     setAltMainOKToRun();
     char path[256];
     getFinalFilePath(path, pathName);
-    void* commandBlock = GetCommandBlock();
-    FSStatus result = FSMakeDir(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
-                                path, FS_ERROR_FLAG_NONE);
+    FSCmdBlock* commandBlock = GetCommandBlock();
+    FSStatus result = FSMakeDir(GetWiiUFileSystemClient(), commandBlock, path,
+                                FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
     return result == 0;
 }
 
-int CloseDir(int* directory)
+bool CloseDir(int* directory)
 {
     setAltMainOKToRun();
-    void* commandBlock = GetCommandBlock();
-    FSStatus result = FSCloseDir(GetWiiUFileSystemClient(), static_cast<FSCmdBlock*>(commandBlock),
+    FSCmdBlock* commandBlock = GetCommandBlock();
+    FSStatus result = FSCloseDir(GetWiiUFileSystemClient(), commandBlock,
                                  static_cast<FSDirectoryHandle>(*directory), FS_ERROR_FLAG_NONE);
     waitForAltMainThreadToComplete();
-    return result;
+    return result == 0;
 }
 
 void CloseHandle(int file)

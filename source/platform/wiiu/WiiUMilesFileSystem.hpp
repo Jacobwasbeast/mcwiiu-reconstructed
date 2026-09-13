@@ -4,9 +4,9 @@
 struct CFileHandle;
 
 void InvalidePositionsForOtherHandles(CFileHandle* handle);
-int file_open_callback(const char* filename, unsigned int* handleOut);
+unsigned int file_open_callback(const char* filename, unsigned int* handleOut);
 void file_close_callback(unsigned int handle);
-int file_seek_callback(unsigned int handle, int offset, int origin);
-int file_read_callback(unsigned int handle, void* buffer, int bytes);
+int file_seek_callback(unsigned int handle, int offset, unsigned int origin);
+int file_read_callback(unsigned int handle, void* buffer, unsigned int bytes);
 
 #endif

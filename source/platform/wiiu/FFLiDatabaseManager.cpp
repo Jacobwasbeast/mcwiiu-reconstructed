@@ -8,7 +8,7 @@
 
 int FFLiStoreDataCFLToCharInfo(FFLiCharInfo *charInfo, const FFLiStoreDataCFL &storeData);
 bool FFLiIsNullMiiID(const FFLCreateID *createId);
-int FFLiiVerifyCharInfo(const FFLiCharInfo *charInfo, int verifyName);
+bool FFLiiVerifyCharInfo(const FFLiCharInfo *charInfo, int verifyName);
 
 FFLiDatabaseManager::FFLiDatabaseManager(FFLiDatabaseFile *database, FFLiFileWriteBuffer *writeBuffer, FFLiSystemContext *systemContext, FFLiFsClient *client, FFLiAllocator *allocator)
     : m_systemContext(systemContext),

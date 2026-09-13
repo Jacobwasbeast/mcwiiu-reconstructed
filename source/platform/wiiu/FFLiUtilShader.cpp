@@ -2,28 +2,31 @@
 #include "platform/wiiu/FFLiCharModelCreator.hpp"
 #include "platform/wiiu/FFLiBufferAllocator.hpp"
 #include "platform/wiiu/FFLiUtilShaderAllocator.hpp"
+#include "vendor/__N_21_FFLiDefaultShader_cpp_d69dbbf4.hpp"
+#include "game/client/render/Renderer.hpp"
 #include <cstring>
 #include <cstdlib>
 extern unsigned int FFLiRoundUp(unsigned int,unsigned int);
 extern "C" unsigned int GX2CalcFetchShaderSizeEx(unsigned int,unsigned int,unsigned int);
-extern "C" void GX2InitFetchShaderEx(FFLiUtilShader::FetchShader*,unsigned int,unsigned int,void*,unsigned int,unsigned int);
+extern "C" void GX2InitFetchShaderEx(FFLiUtilShader::FetchShader*,void*,unsigned int,const _GX2AttribStream*,unsigned int,unsigned int);
 extern unsigned int GFDGetPixelShaderCount(const void*); extern unsigned int GFDGetPixelShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetPixelShaderProgramSize(unsigned int,const void*); extern int GFDGetPixelShader(_GX2PixelShader*,void*,unsigned int,const void*);
 extern unsigned int GFDGetVertexShaderCount(const void*); extern unsigned int GFDGetVertexShaderHeaderSize(unsigned int,const void*); extern unsigned int GFDGetVertexShaderProgramSize(unsigned int,const void*); extern int GFDGetVertexShader(_GX2VertexShader*,void*,unsigned int,const void*);
 extern void FFLiBugEndianSwap(void*,unsigned int); extern void FFLiInvalidateShader__FPvUi(void*,unsigned int);
-extern int FFLGetBufferSizeDefaultShader(const char*);
-extern int FFLInitDefaultShader(void*, void*, const char*);
+extern const unsigned char gFFLDefaultShaderData[];
+extern int FFLGetBufferSizeDefaultShader(const void*);
+extern int FFLInitDefaultShader(void*, void*, const void*);
 extern void FFLSetDefaultShader(void*);
 extern void FFLSetShaderCallback(void*);
 extern void FFLSetupInitCharModelDefaultShader(void*);
 extern void FFLGetIconMatrix(_Mat44*, _Mat34*, unsigned short, unsigned short);
 extern void FFLSetMatrixDefaultShader(void*, const _Mat44*, const _Mat34*);
-extern void FFLGetContextStateDefaultShader(void*);
+extern void* FFLGetContextStateDefaultShader(void*);
 extern void FFLSetupDrawDefaultShader(void*);
 extern void GetIconMatrix__FP6_Mat44P6_Mat34UsT3(_Mat44*, _Mat34*, unsigned short, unsigned short);
 extern void ASM_MTX34To44(const _Mat34*, _Mat44*);
 extern void ASM_MTX44Concat(const _Mat44*, const _Mat44*, _Mat44*);
 extern void ASM_MTX44Transpose(const _Mat44*, _Mat44*);
-extern "C" void GX2SetContextState();
+extern "C" void GX2SetContextState(void*);
 extern "C" void GX2SetFetchShader(const FFLiUtilShader::FetchShader*);
 extern "C" void GX2SetVertexShader(const _GX2VertexShader*);
 extern "C" void GX2SetPixelShader(const _GX2PixelShader*);
@@ -35,25 +38,25 @@ extern "C" void GX2SetPixelUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void GX2SetVertexUniformReg(unsigned int, unsigned int, const void*);
 extern "C" void OSPanic(const char*, unsigned int, const char*, ...);
 extern unsigned char ModulateModeToValue(unsigned int);
-static PlainShader gDefaultShader;
-static PlainShader gExtShader;
-static unsigned int gShaderType;
-
 unsigned int setRGBAOrder__FUi(unsigned int value) { return value; }
 
 int InitDefaultShader__Fv()
 {
-    static void* buffer;
-    if (buffer == 0) buffer = std::malloc((size_t)FFLGetBufferSizeDefaultShader("Gfx2") + 0x100);
-    void* aligned = (void*)(((uintptr_t)buffer + 0xffu) & ~((uintptr_t)0xffu));
-    int result = FFLInitDefaultShader(&gDefaultShader, aligned, "Gfx2");
+    if (sIconDefaultShaderBuffer == 0)
+    {
+        sIconDefaultShaderBuffer = std::malloc((size_t)FFLGetBufferSizeDefaultShader(gFFLDefaultShaderData) + 0x100);
+        if (sIconDefaultShaderBuffer == 0) OSPanic("FFLiUtilShader.cpp", 0x54, "Invalid pointer: %x", 0);
+    }
+    void* aligned = (void*)(((uintptr_t)sIconDefaultShaderBuffer + 0xffu) & ~((uintptr_t)0xffu));
+    if (aligned == 0) OSPanic("FFLiUtilShader.cpp", 0x5a, "Invalid pointer: %x", 0);
+    int result = FFLInitDefaultShader(&sIconDefaultShader, aligned, gFFLDefaultShaderData);
     if (result != 0) OSPanic("FFLiUtilShader.cpp", 0x5d, "A default shader cannot be set up");
-    FFLSetDefaultShader(&gDefaultShader);
-    gShaderType = 0;
+    FFLSetDefaultShader(&sIconDefaultShader);
+    sIconShaderType = 0;
     return result;
 }
 
-void InitExtShader__Fv() { gShaderType = 1; FFLSetShaderCallback(&gExtShader); }
+void InitExtShader__Fv() { sIconShaderType = 1; FFLSetShaderCallback(&sIconExtShader); }
 
 void InitVertexShader__FPP16_GX2VertexShaderPCv(_GX2VertexShader** out, const void* data)
 {
@@ -79,7 +82,7 @@ void InitFetchShader__FP11FetchShaderPC16_GX2VertexShader(FFLiUtilShader::FetchS
 {
     unsigned int size = GX2CalcFetchShaderSizeEx(2, 0, 0);
     fetch->program = std::malloc(size);
-    GX2InitFetchShaderEx(fetch, size, 2, fetch->program, 0, 0);
+    GX2InitFetchShaderEx(fetch, fetch->program, 2, 0, 0, 0);
     FFLiBugEndianSwap(fetch->program, size);
     (void)vertex;
 }
@@ -95,7 +98,7 @@ int InitPlainShader__FP11PlainShaderPCv(PlainShader* shader, const void* data)
 {
     shader->self = (unsigned int)(uintptr_t)shader;
     GX2SetupContextStateEx(&shader->contextState, 1);
-    GX2SetContextState();
+    GX2SetContextState(&shader->contextState);
     InitShader__FP11PlainShaderPCv(shader, data);
     GX2InitSampler(&shader->pixelSampler, 1, 1);
     return 1;
@@ -103,21 +106,27 @@ int InitPlainShader__FP11PlainShaderPCv(PlainShader* shader, const void* data)
 
 void SetupIconShaderForCreateModel__Fv()
 {
-    if (gShaderType == 0) FFLSetupInitCharModelDefaultShader(&gDefaultShader);
-    else if (gShaderType == 1) FFLSetShaderCallback(&gExtShader);
+    if (sIconShaderType == 0) FFLSetupInitCharModelDefaultShader(&sIconDefaultShader);
+    else if (sIconShaderType == 1) SetupExtShaderForCreateModel__Fv();
 }
 
-void SetupDefaultShaderForCreateModel__Fv() { FFLSetupInitCharModelDefaultShader(&gDefaultShader); }
-void SetupExtShaderForCreateModel__Fv() { FFLSetShaderCallback(&gExtShader); }
+void SetupDefaultShaderForCreateModel__Fv() { FFLSetupInitCharModelDefaultShader(&sIconDefaultShader); }
+void SetupExtShaderForCreateModel__Fv()
+{
+    FFLSetShaderCallback(&sIconExtShader);
+    GX2SetFetchShader(&sIconExtShader.fetchShader);
+    GX2SetVertexShader(sIconExtShader.vertexShader);
+    GX2SetPixelShader(sIconExtShader.pixelShader);
+}
 
 void SetupDefaultShaderForDrawTexture__FUsT1(unsigned short width, unsigned short height)
 {
     _Mat44 matrix; _Mat34 affine;
     FFLGetIconMatrix(&matrix, &affine, width, height);
-    FFLSetMatrixDefaultShader(&gDefaultShader, &matrix, &affine);
-    FFLGetContextStateDefaultShader(&gDefaultShader);
-    GX2SetContextState();
-    FFLSetupDrawDefaultShader(&gDefaultShader);
+    FFLSetMatrixDefaultShader(&sIconDefaultShader, &matrix, &affine);
+    void* contextState = FFLGetContextStateDefaultShader(&sIconDefaultShader);
+    GX2SetContextState(contextState);
+    FFLSetupDrawDefaultShader(&sIconDefaultShader);
 }
 
 void SetupExtShaderForDrawTexture__FUsT1(unsigned short width, unsigned short height)
@@ -126,14 +135,14 @@ void SetupExtShaderForDrawTexture__FUsT1(unsigned short width, unsigned short he
     GetIconMatrix__FP6_Mat44P6_Mat34UsT3(&matrix, &affine, width, height);
     ASM_MTX34To44(&affine, &transformed);
     ASM_MTX44Concat(&matrix, &transformed, &transformed);
-    FFLSetShaderCallback(&gExtShader);
-    SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(&gExtShader, &transformed);
+    FFLSetShaderCallback(&sIconExtShader);
+    SetMatrixPlainShader__FPC11PlainShaderPC6_Mat44(&sIconExtShader, &transformed);
 }
 
 void SetupIconShaderForDrawTexture__FUsT1(unsigned short width, unsigned short height)
 {
-    if (gShaderType == 0) SetupDefaultShaderForDrawTexture__FUsT1(width, height);
-    else if (gShaderType == 1) SetupExtShaderForDrawTexture__FUsT1(width, height);
+    if (sIconShaderType == 0) SetupDefaultShaderForDrawTexture__FUsT1(width, height);
+    else if (sIconShaderType == 1) SetupExtShaderForDrawTexture__FUsT1(width, height);
     else OSPanic("FFLiUtilShader.cpp", 0x61, "Invalid condition");
 }
 
@@ -212,23 +221,42 @@ int FFLiUtilShader::GetBufferSizeForFetch(unsigned int n)
     return GetProgramBufferSizeForFetch(n) + 0x100 + GetHeaderBufferSizeForFetch(n);
 }
 
-bool FFLiUtilShader::BuildShader(FetchShader* f,const _GX2VertexShader* s,FFLiUtilShaderAllocator* a,const AttributeStreamDesc* d,unsigned int n,bool inv)
+bool FFLiUtilShader::BuildShader(FetchShader* fetchShader, const _GX2VertexShader* vertexShader, FFLiUtilShaderAllocator* allocator, const AttributeStreamDesc* attributes, unsigned int attributeCount, bool invalidate)
 {
-    unsigned int z=GX2CalcFetchShaderSizeEx(n,0,0);
-    void* p=(void*)a->mProgramAllocator.Allocate(z,0x100);
-    f->program=(void*)a->mHeaderAllocator.Allocate(n<<5,4);
-    unsigned int i;
-    for(i=0;i<n;++i) {
-        unsigned int j;
-        for(j=0;j<s->uniformVarCount;++j) if(std::strcmp(s->uniformVars[j].name,d[i].name)==0) break;
-        if(j==s->uniformVarCount) return false;
-    }
-    GX2InitFetchShaderEx(f,z,n,p,0,0);
-    FFLiBugEndianSwap(p,z);
-    if (inv)
+    static const unsigned int formatMasks[20] = {
+        0x00040405, 0x00010405, 0x00040405, 0x00040405, 0x00010405,
+        0x00040405, 0x00040405, 0x00010405, 0x00010405, 0x00010205,
+        0x00010203, 0x00010203, 0x00010405, 0x00010405, 0x00010203,
+        0x00010203, 0x00010205, 0x00010205, 0x00010203, 0x00010203
+    };
+    unsigned int programSize = GX2CalcFetchShaderSizeEx(attributeCount, 0, 0);
+    void* program = (void*)allocator->mProgramAllocator.Allocate(programSize, 0x100);
+    fetchShader->attributes = (_GX2AttribStream*)allocator->mHeaderAllocator.Allocate(attributeCount * sizeof(_GX2AttribStream), 4);
+    unsigned int attributeIndex;
+    for (attributeIndex = 0; attributeIndex < attributeCount; ++attributeIndex)
     {
-        FFLiInvalidateShader__FPvUi((void*)f->words[3], f->words[2]);
+        unsigned int vertexAttributeIndex;
+        for (vertexAttributeIndex = 0; vertexAttributeIndex < vertexShader->attribVarCount; ++vertexAttributeIndex)
+        {
+            if (std::strcmp(vertexShader->attribVars[vertexAttributeIndex].name, attributes[attributeIndex].name) == 0)
+                break;
+        }
+        if (vertexAttributeIndex == vertexShader->attribVarCount || static_cast<int>(vertexShader->attribVars[vertexAttributeIndex].location) < 0)
+            return false;
+        _GX2AttribStream& stream = fetchShader->attributes[attributeIndex];
+        stream.location = vertexShader->attribVars[vertexAttributeIndex].location;
+        stream.buffer = attributes[attributeIndex].offset;
+        stream.offset = attributes[attributeIndex].buffer;
+        stream.format = attributes[attributeIndex].format;
+        stream.indexType = 0;
+        stream.aluDivisor = 0;
+        stream.destinationSelector = formatMasks[attributes[attributeIndex].format & 0xffu];
+        stream.endianSwap = 3;
     }
+    GX2InitFetchShaderEx(fetchShader, program, attributeCount, fetchShader->attributes, 0, 0);
+    FFLiBugEndianSwap(program, programSize);
+    if (invalidate)
+        FFLiInvalidateShader__FPvUi(fetchShader->program, fetchShader->size);
     return true;
 }
 
@@ -272,6 +300,8 @@ bool FFLiUtilShader::GetUniformLocation(unsigned int* o, const _GX2PixelShader* 
     {
         if (std::strcmp(s->uniformVars[i].name, n) == 0)
         {
+            if (static_cast<int>(s->uniformVars[i].offset) < 0)
+                return false;
             *o = s->uniformVars[i].offset;
             return true;
         }
@@ -285,6 +315,8 @@ bool FFLiUtilShader::GetUniformLocation(unsigned int* o, const _GX2VertexShader*
     {
         if (std::strcmp(s->uniformVars[i].name, n) == 0)
         {
+            if (static_cast<int>(s->uniformVars[i].offset) < 0)
+                return false;
             *o = s->uniformVars[i].offset;
             return true;
         }
@@ -324,6 +356,8 @@ bool FFLiUtilShader::GetSamplerLocation(unsigned int* o, const _GX2PixelShader* 
     {
         if (std::strcmp(s->samplers[i].name, n) == 0)
         {
+            if (static_cast<int>(s->samplers[i].location) < 0)
+                return false;
             *o = s->samplers[i].location;
             return true;
         }

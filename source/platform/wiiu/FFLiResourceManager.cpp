@@ -133,13 +133,13 @@ const FFLiResourceHeader* FFLiResourceManager::Header(FFLResourceType type) cons
 uint32_t FFLiResourceManager::GetTextureAlignedMaxSize(FFLResourceType type, FFLiTexturePartsType parts) const
 {
     const FFLiResourceHeader* header = Header(type);
-    return FFLiRoundUp(header->resourceWords[5 + static_cast<unsigned int>(parts)], 64);
+    return FFLiRoundUp(header->resourceWords[2 + static_cast<unsigned int>(parts)], 64);
 }
 
 uint32_t FFLiResourceManager::GetShapeAlignedMaxSize(FFLResourceType type, FFLiShapePartsType parts) const
 {
     const FFLiResourceHeader* header = Header(type);
-    return FFLiRoundUp(header->resourceWords[1284 + static_cast<unsigned int>(parts)], 64);
+    return FFLiRoundUp(header->resourceWords[1281 + static_cast<unsigned int>(parts)], 64);
 }
 
 bool FFLiResourceManager::IsValid(FFLResourceType type) const

@@ -49,9 +49,9 @@ class CStorage
 public:
     typedef int (*SavingMessageCallback)(void*, C4JStorage::ESavingMessage, int);
     typedef void (*IncompleteSaveCallback)(void*, C4JStorage::ESaveIncompleteType);
-    typedef int (*DefaultOptionsCallback)(void*, C4JStorage::PROFILESETTINGS*, int);
-    typedef int (*OptionsDataCallback)(void*, int, unsigned short, C4JStorage::eOptionsCallback);
-    typedef int (*OldProfileVersionCallback)(void*, unsigned char*, unsigned short, int);
+    typedef unsigned int (*DefaultOptionsCallback)(void*, C4JStorage::PROFILESETTINGS*, int);
+    typedef unsigned int (*OptionsDataCallback)(void*, int, unsigned short, C4JStorage::eOptionsCallback);
+    typedef unsigned int (*OldProfileVersionCallback)(void*, unsigned char*, unsigned short, int);
     typedef int (*GenericDataCallback)(void*, int, C4JStorage::eGeneralData_Callback_Status, int);
     typedef int (*SaveCallback)(void*, bool);
     typedef int (*LoadCallback)(void*, bool, bool);
@@ -59,9 +59,9 @@ public:
     typedef int (*RenameCallback)(void*, bool, C4JStorage::ESaveGameState);
     typedef int (*CopyCallback)(void*, bool, C4JStorage::ESaveGameState);
     typedef bool (*CopyProgressCallback)(void*, int);
-    typedef int (*DirectoryOpenCallback)(const char*, int*);
-    typedef int (*DirectoryReadCallback)(int*, FSDirEntry*);
-    typedef int (*DirectoryCloseCallback)(int*);
+    typedef bool (*DirectoryOpenCallback)(const char*, int*);
+    typedef bool (*DirectoryReadCallback)(int*, FSDirEntry*);
+    typedef bool (*DirectoryCloseCallback)(int*);
     typedef int (*DLCStatusCallback)(void*, int, unsigned int);
     typedef int (*InstalledDLCCallback)(void*, int, int);
     typedef int (*DLCMountCallback)(void*, int, unsigned int, unsigned int);

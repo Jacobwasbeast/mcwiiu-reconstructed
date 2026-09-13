@@ -29,11 +29,11 @@ void FFLiDatabaseFileAccessor::Init()
 
 int FFLiDatabaseFileAccessor::AfterConstruct(unsigned long long titleId)
 {
-    int result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathOfficial, 0x100, titleId, "db_FFL_ODB.dat");
+    int result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathOfficial, 0x100, titleId, "db/FFL_ODB.dat");
     if (result == 0)
-        result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathBackup, 0x100, titleId, "db_FFL_ODB_OLD.dat");
+        result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathBackup, 0x100, titleId, "db/FFL_ODB_OLD.dat");
     if (result == 0)
-        result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathHidden, 0x100, titleId, "db_FFL_HDB.dat");
+        result = __N_28_FFLiDatabaseFileAccessor_cpp_e6d0ab2a::GetDatabasePath(m_pathHidden, 0x100, titleId, "db/FFL_HDB.dat");
     if (result == 0) {
         m_pathsReady = 1;
     }

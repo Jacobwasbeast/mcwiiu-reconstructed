@@ -29,7 +29,7 @@ extern "C"
     int AOC_GetPurchaseInfo(int* piPurchased, unsigned long long ullTitleId, unsigned short* pusContentIndices, unsigned int uiContentCount, void* pWorkBuffer, unsigned int uiWorkBufferSize);
 }
 
-C_AOC* C_AOC::s_pInstance = NULL;
+C_AOC* C_AOC::s_pInstance = new C_AOC();
 
 C_AOC::C_AOC()
 {

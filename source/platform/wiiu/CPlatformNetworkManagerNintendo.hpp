@@ -109,7 +109,7 @@ public:
     virtual void SetSessionSubTexturePackId(int id);
     virtual void SetSessionGameModeId(int id);
     virtual void Notify(int notification, unsigned long param);
-    virtual int GetSessionList(int userIndex, int maxSessions, bool friendsOnly);
+    virtual std::vector<FriendSessionInfo*>* GetSessionList(int userIndex, int maxSessions, bool friendsOnly);
     virtual bool GetGameSessionInfo(int userIndex, unsigned int sessionId, FriendSessionInfo* info);
     virtual void SetSessionsUpdatedCallback(void (*callback)(void*), void* callbackData);
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* info, void (*callback)(bool, void*), void* callbackData);
