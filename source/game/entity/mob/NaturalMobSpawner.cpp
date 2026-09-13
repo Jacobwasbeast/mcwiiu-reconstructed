@@ -21,15 +21,12 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/System.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 
 void MemSect(int section);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-void PIXAddNamedCounter(const char* name);
-namespace System
-{
-    long long processTimeInMilliSecs();
-}
 
 NaturalMobSpawner::NaturalMobSpawner(int chunkRadius, ServerLevel* level)
     : mLastSpawnTime(0), mMinChunk(0), mMaxChunk(0), mLevel(level)
@@ -230,6 +227,13 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnFriendlies, b
             }
         }
     }
+
+    const long long spawnEnd = System::processTimeInMilliSecs();
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
+    {
+        PIXAddNamedCounter((float)(spawnEnd - now), "Mob spawning");
+    }
+
     return spawned;
 }
 

@@ -3,6 +3,7 @@
 #include "game/server/ServerPlayer.hpp"
 
 #include <cmath>
+#include <boost/assert.hpp>
 
 #include "game/util/AABB.hpp"
 #include "game/core/Direction.hpp"
@@ -303,13 +304,13 @@ void EndDragonFight::ensureArenaLoaded()
 
 void EndDragonFight::createNewDragon()
 {
+    level->getChunkAt(BlockPos(0, 128, 0));
     boost::shared_ptr<EnderDragon> dragon = EnderDragon::create(level);
-    if (dragon)
-    {
-        dragon->AddParts();
-        level->addEntity(dragon);
-        updateDragon(dragon);
-    }
+    BOOST_ASSERT(dragon);
+    dragon->AddParts();
+    dragon->moveTo(0.0, 128.0, 0.0, level->mRandom->nextFloat() * 360.0f, 0.0f);
+    level->addEntity(dragon);
+    dragonUUID = dragon->getUUID();
 }
 
 void EndDragonFight::tick()
