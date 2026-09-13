@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdint>
+#include <list>
 #include <set>
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/biome/Biome.hpp"
-class MinecraftServer; class PlayerChunkMap; class PortalForcer; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard; class Explosion;
+class MinecraftServer; class PlayerChunkMap; class PortalForcer; class NaturalMobSpawner; class VillageSiege; class ProgressListener; class BlockEventData; class Block; class BlockState; class LevelChunk; class BoundingBox; class MobCategory; class LevelSettings; class Entity; class EntityTracker; class Player; class ServerPlayer; class ServerScoreboard; class ClientboundLevelParticlesPacket; class BlockEntity; class PlayerUID; class LevelStorage; class Scoreboard; class Explosion;
 
 #ifndef GAME_SERVER_SERVERLEVEL_HPP
 #define GAME_SERVER_SERVERLEVEL_HPP
@@ -83,6 +84,8 @@ public:
  bool allPlayersSleeping;
  bool updatingBlocks;
  PortalForcer* portalForcer;
+ NaturalMobSpawner* naturalMobSpawner;
+ VillageSiege* villageSiege;
  int32_t blockEntityCount;
  int32_t villageSiegeTick;
  int32_t enderCrystalCount;
@@ -91,6 +94,15 @@ public:
  ServerScoreboard* serverScoreboard;
  int32_t weatherTick;
  std::vector<TickNextTickData> toBeTicked;
+ OSFastMutex entityLimitMutex;
+ uint32_t primedTntCount;
+ uint32_t fallingBlockCount;
+ uint32_t fireworksRocketCount;
+ std::list<boost::shared_ptr<Entity> > itemEntities;
+ std::list<boost::shared_ptr<Entity> > hangingEntities;
+ std::list<boost::shared_ptr<Entity> > arrowEntities;
+ std::list<boost::shared_ptr<Entity> > experienceOrbEntities;
+ std::list<boost::shared_ptr<Entity> > areaEffectCloudEntities;
 
  
  ServerLevel(MinecraftServer* first, boost::shared_ptr<LevelStorage> second, LevelData* third, int32_t fourth); 
@@ -144,12 +156,12 @@ public:
  virtual void setInitialSpawn(LevelSettings* first); 
  uint64_t Suspend(); 
  void saveToDisc(ProgressListener* first, bool second); 
- uint32_t removeDuplicateAndPendingEntity(boost::shared_ptr<Entity> first); 
+ bool removeDuplicateAndPendingEntity(const boost::shared_ptr<Entity>& entity);
  void addEntities(std::vector<boost::shared_ptr<Entity> >* first); 
  virtual void saveLevelData(); 
- uint64_t entityAddedExtra(boost::shared_ptr<Entity> first); 
+ void entityAddedExtra(boost::shared_ptr<Entity> entity);
  void entityAdded(boost::shared_ptr<Entity> first); 
- uint64_t entityRemovedExtra(boost::shared_ptr<Entity> first); 
+ void entityRemovedExtra(boost::shared_ptr<Entity> entity);
  void entityRemoved(boost::shared_ptr<Entity> first); 
  uint64_t getEntity(uint32_t first, uint32_t second); 
  bool addGlobalEntity(boost::shared_ptr<Entity> first); 

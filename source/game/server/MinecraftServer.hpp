@@ -18,6 +18,7 @@ class ChunkGenerator;
 class ChunkSource;
 class CommandDispatcher;
 class C4JEventImpl;
+class C4JThreadImpl;
 class FillTool;
 class Level;
 class LevelStorageSource;
@@ -57,7 +58,7 @@ public:
     bool getSpawnMonsters();
     void setLevelDifficulty(ServerLevel* level, const Difficulty* difficulty);
     void setDifficulty(const Difficulty* difficulty);
-    static unsigned int runPostUpdate(void* argument);
+    static int runPostUpdate(void* argument);
     void postProcessTerminate(ProgressRenderer* renderer);
     ServerLevel* getLevel(int dimension);
     void saveGameRules();
@@ -80,7 +81,7 @@ public:
     int getSpawnProtectionRadius();
     bool isUnderSpawnProtection(Level* level, const BlockPos& pos, boost::shared_ptr<Player> player);
     bool getForceGameType();
-    static void getCurrentTimeMillis();
+    static unsigned long long getCurrentTimeMillis();
     int getSpawnRadius(ServerLevel* level);
     void halt();
     void fjSetServerPaused(bool paused);
@@ -162,7 +163,7 @@ private:
     LevelStorageSource* levelStorage;
     int postProcessState;
     OSFastMutex postProcessLock;
-    C4JEventImpl* postProcessEvent;
+    C4JThreadImpl* postProcessThread;
     bool serverPaused;
     bool forceGameType;
     bool suspending;

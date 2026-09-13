@@ -2,6 +2,7 @@
 #define GAME_SERVER_SERVERCHUNKCache_HPP
 
 #include "game/world/chunk/ChunkSource.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/world/biome/Biome.hpp"
 #include <deque>
 #include <vector>
@@ -33,8 +34,8 @@ public:
     LevelChunk* load(int x, int z, LevelChunk* chunk);
     void updatePostProcessFlag(short index, int x, int z, int dx, int dz, LevelChunk* chunk);
     void updatePostProcessFlags(int x, int z);
-    int updateCacheAndPostProcess(int x, int z, LevelChunk* oldChunk, LevelChunk* newChunk, bool allowEmpty);
-    bool getChunkIfGenerated(int x, int z, bool allowEmpty);
+    LevelChunk* updateCacheAndPostProcess(int x, int z, LevelChunk* newChunk, LevelChunk* oldChunk, bool allowEmpty);
+    LevelChunk* getChunkIfGenerated(int x, int z, bool allowEmpty);
     virtual LevelChunk* getOrCreateChunk(int x, int z, bool allowEmpty);
     virtual int getLoadedChunksCount();
     virtual bool hasChunk(int x, int z);
@@ -62,6 +63,7 @@ public:
     virtual unsigned int getCache();
 
 private:
+    OSFastMutex m_mutex;
     ServerLevel* m_level;
     ChunkStorage* m_storage;
     ChunkGenerator* m_generator;
@@ -73,7 +75,7 @@ private:
     int m_xCenter;
     int m_zCenter;
     int m_width;
-    int m_depth;
+    int m_halfWidth;
     bool m_saveAll;
     bool (*m_boundFunction)(void*, int, int);
     void* m_boundData;

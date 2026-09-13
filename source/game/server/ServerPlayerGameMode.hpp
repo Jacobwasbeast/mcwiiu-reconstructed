@@ -21,7 +21,7 @@ class ServerPlayer;
 
 class ServerPlayerGameMode : public GameMode
 {
-    friend struct ServerPlayer;
+    friend class ServerPlayer;
 public:
     ServerPlayerGameMode(Level* level, MasterGameMode* masterGameMode);
     virtual ~ServerPlayerGameMode();

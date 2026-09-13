@@ -35,6 +35,11 @@
 #include "game/data/ElementStorage.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/chunk/PlayerChunkMap.hpp"
+#include "game/world/chunk/MinigamePlayerChunkMap.hpp"
+#include "game/entity/mob/NaturalMobSpawner.hpp"
+#include "game/world/generation/VillageSiege.hpp"
+#include "game/core/PortalForcer.hpp"
+#include "game/network/ServerLevelListener.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
@@ -107,9 +112,27 @@ bool queueBlockTick(ServerLevel* level, int x, int y, int z,
 }
 
 ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> storage, LevelData* data, int dimension)
-    : Level(storage, data, 0, false), server(server), tracker(0), chunkMap(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0)
+    : Level(storage, data, DimensionType::getById(dimension)->create(), false), server(server), tracker(0), chunkMap(0), emptyTime(0), tickNextTickSet(11), blockEventCount(0), allPlayersSleeping(false), updatingBlocks(false), portalForcer(0), naturalMobSpawner(0), villageSiege(0), blockEntityCount(0), villageSiegeTick(0), enderCrystalCount(0), mField0x2cc(false), saving(false), serverScoreboard(0), weatherTick(0), primedTntCount(0), fallingBlockCount(0), fireworksRocketCount(0)
 {
     InitializeCriticalSection(&tickNextTickMutex);
+    InitializeCriticalSection(&entityLimitMutex);
+    mDimension->init(this);
+    mChunkSource = createChunkSource();
+    server->setLevel(dimension, this);
+    addListener(new ServerLevelListener(server, this));
+    tracker = new EntityTracker(this);
+
+    const int viewDistance = server->getPlayers()->getViewDistance();
+    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true))
+        chunkMap = new MinigamePlayerChunkMap(this, dimension, viewDistance);
+    else
+        chunkMap = new PlayerChunkMap(this, dimension, viewDistance);
+
+    naturalMobSpawner = 0;
+    portalForcer = new PortalForcer(this);
+    villageSiege = new VillageSiege(this);
+    updateSkyBrightness();
+    prepareWeather();
 }
 
 ServerLevel::~ServerLevel()
@@ -891,9 +914,24 @@ void ServerLevel::saveToDisc(ProgressListener* first, bool second)
     save(second, first, true);
 }
 
-uint32_t ServerLevel::removeDuplicateAndPendingEntity(boost::shared_ptr<Entity> first)
+bool ServerLevel::removeDuplicateAndPendingEntity(const boost::shared_ptr<Entity>& entity)
 {
-    return first && !hasEntitiesToRemove() ? 1U : 0U;
+    if (entity->mRemoved)
+        return false;
+    const std::wstring uuid = entity->getUUID();
+    boost::unordered_map<std::wstring, boost::shared_ptr<Entity> >::iterator existing = entitiesByUuid.find(uuid);
+    if (existing != entitiesByUuid.end())
+    {
+        boost::shared_ptr<Entity> duplicate = existing->second;
+        std::vector<boost::shared_ptr<Entity> >::iterator pending =
+            std::find(mEntitiesToRemove.begin(), mEntitiesToRemove.end(), duplicate);
+        if (pending != mEntitiesToRemove.end())
+            mEntitiesToRemove.erase(pending);
+        else if ((entity->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+            return false;
+        Level::removeEntityImmediately(duplicate);
+    }
+    return true;
 }
 
 void ServerLevel::addEntities(std::vector<boost::shared_ptr<Entity> >* first)
@@ -928,30 +966,113 @@ void ServerLevel::saveLevelData()
     }
 }
 
-uint64_t ServerLevel::entityAddedExtra(boost::shared_ptr<Entity> first)
+void ServerLevel::entityAddedExtra(boost::shared_ptr<Entity> entity)
 {
-    if (first)
-        ++emptyTime;
-    return first ? 1U : 0U;
+    const unsigned long long type = entity->GetType();
+    std::list<boost::shared_ptr<Entity> >* category = NULL;
+    if (type == 0x0800000aULL)
+        category = &itemEntities;
+    else if ((type & 0x0a080000ULL) == 0x0a080000ULL)
+        category = &hangingEntities;
+    else if ((type & 0x8a020000ULL) == 0x8a020000ULL)
+        category = &arrowEntities;
+    else if (type == 0x08000003ULL)
+        category = &experienceOrbEntities;
+    else if (type == ENTITY_TYPE_PRIMED_TNT)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        ++primedTntCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x08000009ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        ++fallingBlockCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x88000005ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        ++fireworksRocketCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x0800000fULL)
+        category = &areaEffectCloudEntities;
+
+    if (category != NULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        category->push_back(entity);
+        LeaveCriticalSection(&entityLimitMutex);
+    }
 }
 
-void ServerLevel::entityAdded(boost::shared_ptr<Entity> first)
+void ServerLevel::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    if (first)
-        Level::entityAdded(first);
+    Level::entityAdded(entity);
+    mEntityMap[entity->getId()] = entity;
+    entitiesByUuid[entity->getUUID()] = entity;
+    std::vector<boost::shared_ptr<Entity> >* parts = entity->getSubEntities();
+    if (parts != NULL)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator part = parts->begin(); part != parts->end(); ++part)
+            mEntityMap[(*part)->getId()] = *part;
+    entityAddedExtra(entity);
 }
 
-uint64_t ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> first)
+void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
 {
-    if (first && emptyTime > 0)
-        --emptyTime;
-    return first ? 1U : 0U;
+    const unsigned long long type = entity->GetType();
+    std::list<boost::shared_ptr<Entity> >* category = NULL;
+    if (type == 0x0800000aULL)
+        category = &itemEntities;
+    else if ((type & 0x0a080000ULL) == 0x0a080000ULL)
+        category = &hangingEntities;
+    else if ((type & 0x8a020000ULL) == 0x8a020000ULL)
+        category = &arrowEntities;
+    else if (type == 0x08000003ULL)
+        category = &experienceOrbEntities;
+    else if (type == ENTITY_TYPE_PRIMED_TNT)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        --primedTntCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x08000009ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        --fallingBlockCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x88000005ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        --fireworksRocketCount;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x0800000fULL)
+        category = &areaEffectCloudEntities;
+
+    if (category != NULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator existing =
+            std::find(category->begin(), category->end(), entity);
+        if (existing != category->end())
+            category->erase(existing);
+        LeaveCriticalSection(&entityLimitMutex);
+    }
 }
 
-void ServerLevel::entityRemoved(boost::shared_ptr<Entity> first)
+void ServerLevel::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    if (first)
-        Level::entityRemoved(first);
+    Level::entityRemoved(entity);
+    mEntityMap.erase(entity->getId());
+    entitiesByUuid.erase(entity->getUUID());
+    std::vector<boost::shared_ptr<Entity> >* parts = entity->getSubEntities();
+    if (parts != NULL)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator part = parts->begin(); part != parts->end(); ++part)
+            mEntityMap.erase((*part)->getId());
+    entityRemovedExtra(entity);
 }
 
 uint64_t ServerLevel::getEntity(uint32_t first, uint32_t second)
@@ -1185,17 +1306,102 @@ uint32_t ServerLevel::setBlock(BlockPos* first, BlockState* second, int32_t thir
     return first && second && Level::setBlock(*first, second, third, fourth) ? 1U : 0U;
 }
 
-bool ServerLevel::addEntity(boost::shared_ptr<Entity> first)
+bool ServerLevel::addEntity(boost::shared_ptr<Entity> entity)
 {
-    if (!first || atEntityLimit(first))
+    if (!removeDuplicateAndPendingEntity(entity))
         return false;
-    entityAdded(first);
-    return true;
+
+    const unsigned long long type = entity->GetType();
+    std::list<boost::shared_ptr<Entity> >* category = NULL;
+    unsigned int limit = 0;
+    if (type == 0x0800000aULL)
+    {
+        category = &itemEntities;
+        limit = 200;
+    }
+    else if ((type & 0x0a080000ULL) == 0x0a080000ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        const bool full = hangingEntities.size() >= 400;
+        LeaveCriticalSection(&entityLimitMutex);
+        if (full)
+            return false;
+    }
+    else if ((type & 0x8a020000ULL) == 0x8a020000ULL)
+    {
+        category = &arrowEntities;
+        limit = 200;
+    }
+    else if (type == 0x08000003ULL)
+    {
+        category = &experienceOrbEntities;
+        limit = 50;
+    }
+    else if (type == 0x0800000fULL)
+    {
+        category = &areaEffectCloudEntities;
+        limit = 20;
+    }
+    if (category != NULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        if (category->size() >= limit)
+        {
+            boost::shared_ptr<Entity> oldest = category->front();
+            Level::removeEntityImmediately(oldest);
+        }
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    return Level::addEntity(entity);
 }
 
-bool ServerLevel::atEntityLimit(boost::shared_ptr<Entity> first)
+bool ServerLevel::atEntityLimit(boost::shared_ptr<Entity> entity)
 {
-    return !first || !first->isAlive();
+    const unsigned long long type = entity->GetType();
+    bool full = false;
+    if (type == 0x0800000aULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = itemEntities.size() >= 200;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if ((type & 0x0a080000ULL) == 0x0a080000ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = hangingEntities.size() >= 400;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if ((type & 0x8a020000ULL) == 0x8a020000ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = arrowEntities.size() >= 200;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == ENTITY_TYPE_PRIMED_TNT)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = primedTntCount >= 20;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x08000003ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = experienceOrbEntities.size() >= 50;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x88000005ULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = fireworksRocketCount >= 20;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    else if (type == 0x0800000fULL)
+    {
+        EnterCriticalSection(&entityLimitMutex);
+        full = areaEffectCloudEntities.size() >= 20;
+        LeaveCriticalSection(&entityLimitMutex);
+    }
+    return full;
 }
 
 bool ServerLevel::newPrimedTntAllowed()

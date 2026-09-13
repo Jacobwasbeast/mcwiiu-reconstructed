@@ -1,5 +1,7 @@
 #include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 #include "game/world/chunk/ChunkStorage.hpp"
 #include "game/world/chunk/EmptyLevelChunk.hpp"
@@ -12,6 +14,7 @@
 #include <sstream>
 
 extern void instructionSynchronize();
+extern long InterlockedCompareExchangeRelease(volatile long* destination, long exchange, long comparand);
 
 namespace
 {
@@ -28,11 +31,12 @@ struct ServerChunkCacheSaveContext
 
 ServerChunkCache::ServerChunkCache(ServerLevel* level, ChunkStorage* storage, ChunkGenerator* generator)
     : m_level(level), m_storage(storage), m_generator(generator), m_chunks(0), m_unloadedChunks(), m_emptyChunk(0),
-      m_loadedChunks(), m_toSave(), m_xCenter(0), m_zCenter(0), m_width(32), m_depth(32), m_saveAll(false),
+      m_loadedChunks(), m_toSave(), m_xCenter(0), m_zCenter(0), m_width(generator->mLevelSize), m_halfWidth(generator->mLevelSize / 2), m_saveAll(false),
       m_boundFunction(0), m_boundData(0)
 {
-    m_chunks.resize(m_width * m_depth, 0);
-    m_unloadedChunks.resize(m_width * m_depth, 0);
+    InitializeCriticalSectionAndSpinCount(&m_mutex, 4000);
+    m_chunks.resize(m_width * m_width, 0);
+    m_unloadedChunks.resize(m_width * m_width, 0);
     m_emptyChunk = new EmptyLevelChunk(level, 0, 0);
 }
 
@@ -45,14 +49,14 @@ ServerChunkCache::~ServerChunkCache()
 
 int ServerChunkCache::computeIdx(int x, int z)
 {
-    return (x + m_depth) * m_width + (z + m_depth);
+    return (x + m_halfWidth) * m_width + (z + m_halfWidth);
 }
 
 bool ServerChunkCache::inBounds(int x, int z)
 {
     if (m_boundFunction)
         return (*m_boundFunction)(m_boundData, x, z);
-    return x >= -m_width / 2 && x < m_width / 2 && z >= -m_depth / 2 && z < m_depth / 2;
+    return m_level->mDimension->containsChunk(x, z);
 }
 
 void ServerChunkCache::dontDrop(int x, int z)
@@ -94,28 +98,28 @@ void ServerChunkCache::dropAll()
 
 void ServerChunkCache::invalidateChunksOutsideArea(int minX, int minZ, int maxX, int maxZ)
 {
-    for (int x = -m_width / 2; x < m_width / 2; ++x)
-        for (int z = -m_depth / 2; z < m_depth / 2; ++z)
+    for (int x = -m_halfWidth; x < m_halfWidth; ++x)
+        for (int z = -m_halfWidth; z < m_halfWidth; ++z)
             if (x < minX || x > maxX || z < minZ || z > maxZ)
                 drop(x, z);
 }
 
 LevelChunk* ServerChunkCache::getChunkIfLoaded(int x, int z)
 {
-    return inBounds(x, z) ? m_chunks[computeIdx(x, z)] : 0;
+    return inBounds(x, z) ? m_chunks[computeIdx(x, z)] : m_emptyChunk;
 }
 
 LevelChunk* ServerChunkCache::getChunkIfLoadedOrInvalid(int x, int z)
 {
     if (!inBounds(x, z))
-        return reinterpret_cast<LevelChunk*>(m_storage);
+        return m_emptyChunk;
     return m_chunks[computeIdx(x, z)];
 }
 
 LevelChunk* ServerChunkCache::getChunkIfHasChunk(int x, int z)
 {
     if (!inBounds(x, z))
-        return reinterpret_cast<LevelChunk*>(m_storage);
+        return m_emptyChunk;
     LevelChunk* chunk = m_chunks[computeIdx(x, z)];
     if (chunk != 0 && !chunk->isInvalid())
         return chunk;
@@ -129,8 +133,8 @@ LevelChunk* ServerChunkCache::load(int x, int z, LevelChunk* chunk)
     const int index = computeIdx(x, z);
     if (!chunk)
     {
-        chunk = m_chunks[index];
-        m_chunks[index] = 0;
+        chunk = m_unloadedChunks[index];
+        m_unloadedChunks[index] = 0;
     }
     if (!chunk || chunk->isInvalid())
     {
@@ -150,8 +154,8 @@ void ServerChunkCache::updatePostProcessFlag(short index, int x, int z, int dx, 
     const int neighborZ = z + dz;
     if (!hasChunk(neighborX, neighborZ))
         return;
-    LevelChunk* neighbor = getChunkIfLoaded(neighborX, neighborZ);
-    if (neighbor == reinterpret_cast<LevelChunk*>(m_storage) ||
+    LevelChunk* neighbor = getChunk(neighborX, neighborZ);
+    if (neighbor == m_emptyChunk ||
         (neighbor != 0 && (neighbor->mChunkFlags & 2) != 0))
     {
         chunk->mChunkFlags |= static_cast<unsigned short>(index);
@@ -161,7 +165,7 @@ void ServerChunkCache::updatePostProcessFlag(short index, int x, int z, int dx, 
 void ServerChunkCache::updatePostProcessFlags(int x, int z)
 {
     LevelChunk* chunk = getChunk(x, z);
-    if (chunk != reinterpret_cast<LevelChunk*>(m_storage))
+    if (chunk != m_emptyChunk)
     {
         updatePostProcessFlag(8, x, z, 0, -1, chunk);
         updatePostProcessFlag(0x10, x, z, -1, -1, chunk);
@@ -186,14 +190,95 @@ void ServerChunkCache::updatePostProcessFlags(int x, int z)
     flagPostProcessComplete(0, x, z);
 }
 
-int ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk*, LevelChunk* newChunk, bool)
+LevelChunk* ServerChunkCache::updateCacheAndPostProcess(int x, int z, LevelChunk* newChunk,
+                                                            LevelChunk* oldChunk, bool allowEmpty)
 {
-    return load(x, z, newChunk) != 0;
+    if (!inBounds(x, z))
+        return m_emptyChunk;
+
+    const int index = computeIdx(x, z);
+    if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_chunks[index]),
+                                          reinterpret_cast<long>(newChunk),
+                                          reinterpret_cast<long>(oldChunk)) !=
+        reinterpret_cast<long>(oldChunk))
+    {
+        newChunk->unload(true, true);
+        delete newChunk;
+        return m_chunks[index];
+    }
+
+    EnterCriticalSection(&m_mutex);
+    m_generator->lightChunk(newChunk);
+    updatePostProcessFlags(x, z);
+    if (newChunk != oldChunk)
+        m_loadedChunks.push_back(newChunk);
+
+    if (!allowEmpty)
+    {
+        newChunk->checkPostProcess(this, m_generator);
+    }
+    else
+    {
+        if ((newChunk->mChunkFlags & 2) == 0 && hasChunk(x + 1, z + 1) &&
+            hasChunk(x, z + 1) && hasChunk(x + 1, z))
+            gMinecraftServer->addPostProcessRequest(this, m_generator, x, z);
+
+        if (hasChunk(x - 1, z) && (getChunkIfLoaded(x - 1, z)->mChunkFlags & 2) == 0 &&
+            hasChunk(x - 1, z + 1) && hasChunk(x, z + 1))
+            gMinecraftServer->addPostProcessRequest(this, m_generator, x - 1, z);
+
+        if (hasChunk(x, z - 1) && (getChunkIfLoaded(x, z - 1)->mChunkFlags & 2) == 0 &&
+            hasChunk(x + 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x + 1, z))
+            gMinecraftServer->addPostProcessRequest(this, m_generator, x, z - 1);
+
+        if (hasChunk(x - 1, z - 1) && (getChunkIfLoaded(x - 1, z - 1)->mChunkFlags & 2) == 0 &&
+            hasChunk(x - 1, z - 1) && hasChunk(x, z - 1) && hasChunk(x - 1, z))
+            gMinecraftServer->addPostProcessRequest(this, m_generator, x - 1, z - 1);
+    }
+
+    if (hasChunk(x - 1, z) && hasChunk(x - 2, z) && hasChunk(x - 1, z + 1) &&
+        hasChunk(x - 1, z - 1))
+        newChunk->checkChests(this, x - 1, z);
+    if (hasChunk(x, z + 1) && hasChunk(x, z + 2) && hasChunk(x - 1, z + 1) &&
+        hasChunk(x + 1, z + 1))
+        newChunk->checkChests(this, x, z + 1);
+    if (hasChunk(x + 1, z) && hasChunk(x + 2, z) && hasChunk(x + 1, z + 1) &&
+        hasChunk(x + 1, z - 1))
+        newChunk->checkChests(this, x + 1, z);
+    if (hasChunk(x, z - 1) && hasChunk(x, z - 2) && hasChunk(x - 1, z - 1) &&
+        hasChunk(x + 1, z - 1))
+        newChunk->checkChests(this, x, z - 1);
+    if (hasChunk(x - 1, z) && hasChunk(x + 1, z) && hasChunk(x, z - 1) &&
+        hasChunk(x, z + 1))
+        newChunk->checkChests(this, x, z);
+
+    LeaveCriticalSection(&m_mutex);
+    instructionSynchronize();
+    return newChunk;
 }
 
-bool ServerChunkCache::getChunkIfGenerated(int x, int z, bool)
+LevelChunk* ServerChunkCache::getChunkIfGenerated(int x, int z, bool allowEmpty)
 {
-    return getChunkIfLoadedOrInvalid(x, z) != 0;
+    if (!inBounds(x, z))
+        return m_emptyChunk;
+
+    const int index = computeIdx(x, z);
+    LevelChunk* loaded = m_chunks[index];
+    LevelChunk* chunk = getChunkIfLoadedOrInvalid(x, z);
+    if (chunk == 0 || chunk == m_emptyChunk || chunk->isInvalid())
+    {
+        EnterCriticalSection(&m_mutex);
+        chunk = load(x, z, chunk);
+        if (chunk != 0)
+        {
+            chunk->load(false);
+            LeaveCriticalSection(&m_mutex);
+            return updateCacheAndPostProcess(x, z, chunk, loaded, allowEmpty);
+        }
+        LeaveCriticalSection(&m_mutex);
+        return 0;
+    }
+    return chunk;
 }
 
 LevelChunk* ServerChunkCache::getOrCreateChunk(int x, int z, bool allowEmpty)
@@ -225,9 +310,30 @@ std::vector<LevelChunk*>& ServerChunkCache::getLoadedChunkList()
     return m_loadedChunks;
 }
 
-LevelChunk* ServerChunkCache::create(int x, int z, bool)
+LevelChunk* ServerChunkCache::create(int x, int z, bool allowEmpty)
 {
-    return getChunkIfLoaded(x, z);
+    if (!inBounds(x, z))
+        return m_emptyChunk;
+
+    const int index = computeIdx(x, z);
+    LevelChunk* oldChunk = m_chunks[index];
+    if (oldChunk != 0 && oldChunk->x == x && oldChunk->z == z
+        && !oldChunk->isInvalid())
+        return oldChunk;
+
+    EnterCriticalSection(&m_mutex);
+    LevelChunk* chunk = load(x, z, oldChunk);
+    if (chunk == 0)
+    {
+        if (m_generator == 0)
+            chunk = m_emptyChunk;
+        else
+            chunk = m_generator->createChunk(x, z);
+    }
+    if (chunk != 0)
+        chunk->load(false);
+    LeaveCriticalSection(&m_mutex);
+    return updateCacheAndPostProcess(x, z, chunk, oldChunk, allowEmpty);
 }
 
 LevelChunk* ServerChunkCache::create(int x, int z)
@@ -237,7 +343,15 @@ LevelChunk* ServerChunkCache::create(int x, int z)
 
 LevelChunk* ServerChunkCache::getChunk(int x, int z)
 {
-    return getOrCreateChunk(x, z, false);
+    if (inBounds(x, z))
+    {
+        LevelChunk* chunk = m_chunks[computeIdx(x, z)];
+        if (chunk != 0 && !chunk->isInvalid())
+            return chunk;
+        if (m_level->isFindingSpawn() || m_saveAll)
+            return create(x, z);
+    }
+    return m_emptyChunk;
 }
 
 LevelChunk* ServerChunkCache::getChunkLoadedOrUnloaded(int x, int z)
