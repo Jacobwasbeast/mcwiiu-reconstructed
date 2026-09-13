@@ -4,6 +4,7 @@
 #include <cwchar>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/client/render/Renderer.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -62,11 +63,10 @@ unsigned int UIScene_WritableBookMenu::mapElementsAndNames()
 
 void UIScene_WritableBookMenu::HandleFontSizeOverride()
 {
-    if (XGetLanguage() == 0x11 && !g_pApp->IsLocaleKorea())
+    if (XGetLanguage() == 0x11 && !gRenderer->IsWidescreen())
     {
         FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-        if (menu != 0)
-            menu->SetFontSizeOverride(11);
+        menu->SetFontSizeOverride(11);
     }
 }
 

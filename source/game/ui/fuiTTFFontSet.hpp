@@ -47,7 +47,7 @@ public:
         int m_y0;
         int m_x1;
         int m_y1;
-        unsigned long long m_lastUsed;
+        long long m_lastUsed;
     };
 
     class FontSizeData
@@ -86,7 +86,7 @@ public:
         int m_textureIndex;
         fuiTTFFontSet* m_fontSet;
         int m_ttfIndex;
-        unsigned long long m_glyphUseCounter;
+        long long m_glyphUseCounter;
         bool m_textureDirty;
     };
 

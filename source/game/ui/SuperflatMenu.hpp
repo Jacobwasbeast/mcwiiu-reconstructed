@@ -230,14 +230,8 @@ public:
         std::wstring getName() const;
         ~BiomeInfo();
         int mBiome;
-        int mUnused[2];
-        void* mName;
-    };
-    struct BiomeItem
-    {
-        int id;
-        int reserved;
-        not_null_ptr<ItemInstance> item;
+        int mDescription;
+        not_null_ptr<ItemInstance> mItem;
     };
     class PresetCache
     {
@@ -262,7 +256,7 @@ public:
         ~CustomSuperflatBlocks();
         int itemcount() const;
     };
-    static BiomeItem* getBiomeInfoA();
+    static BiomeInfo* getBiomeInfoA();
 };
 
 #endif

@@ -490,7 +490,7 @@ void fuiTTFFontSet::FontSizeData::loadGlyphImage(GlyphInfo* glyph)
         }
     }
 
-    unsigned long long oldestUse = m_glyphUseCounter;
+    long long oldestUse = m_glyphUseCounter;
     int slot = -1;
 
     for (int i = 0; i < m_maxGlyphs; i++)
@@ -514,7 +514,7 @@ void fuiTTFFontSet::FontSizeData::loadGlyphImage(GlyphInfo* glyph)
 
     if (evicted != NULL)
     {
-        evicted->m_lastUsed = (unsigned long long)-1;
+        evicted->m_lastUsed = -1;
         evicted->m_slot = -1;
     }
 

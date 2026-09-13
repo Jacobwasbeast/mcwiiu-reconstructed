@@ -118,7 +118,7 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
     if (m_focusedItemId == -1)
         return;
 
-    static const int descriptionIds[] = {
+    static const unsigned int descriptionIds[] = {
         0x1a93e279, 0x0f7151d3, 0x7b994768, 0x2df040b0, 0x2bdbddba, 0xf2e6dbcb,
         0xc85a085b, 0x8f41adb5, 0xa112a17c, 0xcb6d8de1, 0x30f1cb60, 0xc61e984d,
         0xe0163d88, 0xcf045afa, 0x03d32989, 0x544ad58e, 0xaf1fca77, 0x33b6226b,
@@ -131,11 +131,11 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
     const int index = m_focusedItemId;
     if (index < 0 || index >= static_cast<int>(sizeof(descriptionIds) / sizeof(descriptionIds[0])))
         return;
-    const int descriptionId = descriptionIds[index];
+    const unsigned int descriptionId = descriptionIds[index];
     std::wstring description;
-    if (descriptionId != -1 && descriptionId != -2)
-        description = g_pApp->FormatHTMLString(m_playerId, L10N::GetString(descriptionId), -1);
-    if (descriptionId == static_cast<int>(0xc36b9de0))
+    if (descriptionId != static_cast<unsigned int>(-1) && descriptionId != static_cast<unsigned int>(-2))
+        description = g_pApp->FormatHTMLString(m_playerId, L10N::GetString(static_cast<int>(descriptionId)), -1);
+    if (descriptionId == 0xc36b9de0u)
         description = replaceAll(description, L"{*DISABLES_ACHIEVEMENTS*}", L10N::GetString(0xbf244113));
     const bool hiDef = gRenderer->IsHiDef();
     if (!hiDef)
@@ -151,7 +151,7 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
         description = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(m_initData->mValue5C), true)->GetLootSetDescription(m_gameOptionsList.GetSliderValue(0x20));
     else if (index == 0x21)
         description = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(m_initData->mValue5C), true)->GetFoodBalanceIndexDescription(m_gameOptionsList.GetSliderValue(0x21));
-    if (descriptionId == static_cast<int>(0xc36b9de0))
+    if (descriptionId == 0xc36b9de0u)
         description = replaceAll(description, L"{*DISABLES_ACHIEVEMENTS*}", L10N::GetString(0xbf244113));
     wchar_t prefix[64];
     swprintf(prefix, 64, L"<font color=\"#%08x\">", g_pApp->GetHTMLColour(static_cast<eMinecraftColour>(0x1b5)));

@@ -8,12 +8,16 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/block/NewLogBlock.hpp"
+#include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/SandBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/FireBlock.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
 #include <algorithm>
@@ -465,7 +469,7 @@ void SuperflatMenu::MapWoodlandMansion::read(FlatGeneratorInfo& info)
 
 std::wstring SuperflatMenu::BiomeInfo::getName() const
 {
-    return std::wstring((const wchar_t*)mName);
+    return Biome::byId(mBiome)->getName(false);
 }
 
 SuperflatMenu::BiomeInfo::~BiomeInfo()
@@ -584,54 +588,67 @@ void SuperflatMenu::PresetCache::SetCachedPreset(int index, const SuperflatConfi
     cache[index] = config;
 }
 
-SuperflatMenu::BiomeItem* SuperflatMenu::getBiomeInfoA()
+SuperflatMenu::BiomeInfo* SuperflatMenu::getBiomeInfoA()
 {
     static bool initialized = false;
-    static BiomeItem items[21] = {};
+    static BiomeInfo items[22] =
+    {
+        { 1, static_cast<int>(0xe18c04c8u), not_null_ptr<ItemInstance>() },
+        { 35, static_cast<int>(0x70594c1du), not_null_ptr<ItemInstance>() },
+        { 37, static_cast<int>(0x512d43dbu), not_null_ptr<ItemInstance>() },
+        { 2, static_cast<int>(0xf440c270u), not_null_ptr<ItemInstance>() },
+        { 4, static_cast<int>(0xe2e84bd8u), not_null_ptr<ItemInstance>() },
+        { 29, static_cast<int>(0xa5e5b0f2u), not_null_ptr<ItemInstance>() },
+        { 21, static_cast<int>(0xcdc09066u), not_null_ptr<ItemInstance>() },
+        { 6, static_cast<int>(0xdccb0c5eu), not_null_ptr<ItemInstance>() },
+        { 3, static_cast<int>(0xb5196ce2u), not_null_ptr<ItemInstance>() },
+        { 0, static_cast<int>(0xb451512fu), not_null_ptr<ItemInstance>() },
+        { 40, static_cast<int>(0xdaccd491u), not_null_ptr<ItemInstance>() },
+        { 42, static_cast<int>(0x5ecebfe6u), not_null_ptr<ItemInstance>() },
+        { 44, static_cast<int>(0x40917b04u), not_null_ptr<ItemInstance>() },
+        { 46, static_cast<int>(0x84809552u), not_null_ptr<ItemInstance>() },
+        { 12, static_cast<int>(0xc36e4255u), not_null_ptr<ItemInstance>() },
+        { 30, static_cast<int>(0x54e18948u), not_null_ptr<ItemInstance>() },
+        { 5, static_cast<int>(0x970aa853u), not_null_ptr<ItemInstance>() },
+        { 32, static_cast<int>(0xb0f3c474u), not_null_ptr<ItemInstance>() },
+        { 14, static_cast<int>(0x64137d27u), not_null_ptr<ItemInstance>() },
+        { 8, static_cast<int>(0x36d871a9u), not_null_ptr<ItemInstance>() },
+        { 9, static_cast<int>(0x938424deu), not_null_ptr<ItemInstance>() },
+        { -1, -1, not_null_ptr<ItemInstance>() }
+    };
     if (!initialized)
     {
         initialized = true;
-        static const int blockIds[17] =
-        {
-            0x23, 0x25, 0x04, 0x1d, 0x06, 0x03, 0x00, 0x28,
-            0x2a, 0x2c, 0x2e, 0x0c, 0x1e, 0x05, 0x0e, 0x08, 0x09
-        };
-        static const unsigned int itemIndices[17] =
-        { 0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19 };
-        for (unsigned int i = 0; i < 17; ++i)
-        {
-            Block* block = Block::byId(blockIds[i]);
-            if (block != NULL)
-                items[itemIndices[i]].id = blockIds[i];
-                createItem__FP5Block(&items[itemIndices[i]].item, block);
-        }
-        Block* sand = Block::byId(0x02);
-        if (sand != NULL && SandBlock::TYPE != NULL && SandBlock::Variant::RED_SAND != NULL)
-        {
-            TypedBoxed<SandBlock::Variant*> value(SandBlock::Variant::RED_SAND);
-            const BlockState* state = sand->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(SandBlock::TYPE), &value);
-            items[2].id = 0x02;
-            items[2].item = not_null_ptr<ItemInstance>(createItem(state));
-        }
-        Block* planks = Block::byId(0x15);
-        if (planks != NULL && PlanksBlock::VARIANT != NULL && PlanksBlock::Variant::DARK_OAK != NULL)
-        {
-            TypedBoxed<PlanksBlock::Variant*> value(PlanksBlock::Variant::DARK_OAK);
-            const BlockState* state = planks->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(PlanksBlock::VARIANT), &value);
-            items[5].id = 0x15;
-            items[5].item = not_null_ptr<ItemInstance>(createItem(state));
-        }
-        Block* planksVariant = Block::byId(0x20);
-        if (planksVariant != NULL && PlanksBlock::VARIANT != NULL && PlanksBlock::Variant::SPRUCE != NULL)
-        {
-            TypedBoxed<PlanksBlock::Variant*> value(PlanksBlock::Variant::SPRUCE);
-            const BlockState* state = planksVariant->defaultBlockState()->setBoxedValue(
-                static_cast<const Property*>(PlanksBlock::VARIANT), &value);
-            items[16].id = 0x20;
-            items[16].item = not_null_ptr<ItemInstance>(createItem(state));
-        }
+        items[0].mItem = createItem(Blocks::grass);
+        items[1].mItem = createItem(Blocks::tallgrass);
+        TypedBoxed<SandBlock::Variant*> sandValue(SandBlock::Variant::RED_SAND);
+        items[2].mItem = not_null_ptr<ItemInstance>(createItem(
+            Blocks::sand->defaultBlockState()->setBoxedValue(
+                static_cast<const Property*>(SandBlock::TYPE), &sandValue)));
+        items[3].mItem = createItem(Blocks::sand);
+        items[4].mItem = createItem(Blocks::log);
+        TypedBoxed<PlanksBlock::Variant*> logValue(PlanksBlock::Variant::DARK_OAK);
+        items[5].mItem = not_null_ptr<ItemInstance>(createItem(
+            Blocks::log2->defaultBlockState()->setBoxedValue(
+                static_cast<const Property*>(NewLogBlock::VARIANT), &logValue)));
+        items[6].mItem = createItem(Blocks::cocoa);
+        items[7].mItem = createItem(Blocks::waterlily);
+        items[8].mItem = createItem(Blocks::stone);
+        items[9].mItem = createItem(Blocks::WATER);
+        items[10].mItem = createItem(Blocks::WATER);
+        items[11].mItem = createItem(Blocks::WATER);
+        items[12].mItem = createItem(Blocks::WATER);
+        items[13].mItem = createItem(Blocks::WATER);
+        items[14].mItem = createItem(Blocks::ice);
+        items[15].mItem = createItem(Blocks::snow_layer);
+        TypedBoxed<PlanksBlock::Variant*> leavesValue(PlanksBlock::Variant::SPRUCE);
+        items[16].mItem = not_null_ptr<ItemInstance>(createItem(
+            Blocks::leaves->defaultBlockState()->setBoxedValue(
+                static_cast<const Property*>(OldLeafBlock::VARIANT), &leavesValue)));
+        items[17].mItem = createItem(Blocks::log2);
+        items[18].mItem = createItem(Blocks::red_mushroom);
+        items[19].mItem = createItem(Blocks::netherrack);
+        items[20].mItem = createItem(Blocks::end_stone);
     }
     return items;
 }

@@ -90,11 +90,11 @@ unsigned int UIScene_SuperFlatMenu::mapElementsAndNames()
 
 void UIScene_SuperFlatMenu::PopulateBiomesList()
 {
-    SuperflatMenu::BiomeItem* biomes = SuperflatMenu::getBiomeInfoA();
+    SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
     int index = 0;
-    for (int i = 0; biomes[i].id >= 0; ++i)
+    for (int i = 0; biomes[i].mBiome >= 0; ++i)
     {
-        m_biomesList.AddNewItem(biomes[i].item->getDisplayName(), index, false, L"");
+        m_biomesList.AddNewItem(biomes[i].getName(), index, false, L"");
         ++index;
     }
 }
@@ -168,12 +168,12 @@ void UIScene_SuperFlatMenu::PopulateLayersList()
 
 void UIScene_SuperFlatMenu::UpdateBiomesList()
 {
-    SuperflatMenu::BiomeItem* biomes = SuperflatMenu::getBiomeInfoA();
+    SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
     int index = 0;
-    for (int i = 0; biomes[i].id >= 0; ++i)
+    for (int i = 0; biomes[i].mBiome >= 0; ++i)
     {
-        bool checked = biomes[i].id == m_generatorInfo.getBiome();
-        if (!checked && biomes[i].id == 0 && m_generatorInfo.getBiome() == 0x18)
+        bool checked = biomes[i].mBiome == m_generatorInfo.getBiome();
+        if (!checked && biomes[i].mBiome == 0 && m_generatorInfo.getBiome() == 0x18)
             checked = true;
         m_biomesList.SetCheckbox(index, checked);
         ++index;
@@ -303,10 +303,10 @@ void UIScene_SuperFlatMenu::UpdateLayersHelpText()
 
 void UIScene_SuperFlatMenu::UpdateBiomeHelpText()
 {
-    SuperflatMenu::BiomeItem* biomes = SuperflatMenu::getBiomeInfoA();
-    SuperflatMenu::BiomeItem& biome = biomes[m_biomesList.getCurrentSelection()];
-    m_biomesHelpTitle.setLabel(UIString(biome.item->getDisplayName()), false, false);
-    m_biomesHelp.setLabel(UIString(L10N::GetString(biome.reserved)), false, false);
+    SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
+    SuperflatMenu::BiomeInfo& biome = biomes[m_biomesList.getCurrentSelection()];
+    m_biomesHelpTitle.setLabel(UIString(biome.getName()), false, false);
+    m_biomesHelp.setLabel(UIString(L10N::GetString(biome.mDescription)), false, false);
 }
 
 void UIScene_SuperFlatMenu::UpdateParamHelpText()
@@ -564,8 +564,8 @@ int UIScene_SuperFlatMenu::CbLayerOperation(void* context, int button, C4JStorag
 
 void UIScene_SuperFlatMenu::ChangeBiome(int biome)
 {
-    SuperflatMenu::BiomeItem* biomes = SuperflatMenu::getBiomeInfoA();
-    m_generatorInfo.setBiome(biomes[biome].id);
+    SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
+    m_generatorInfo.setBiome(biomes[biome].mBiome);
     ExecuteOnTick(&UIScene_SuperFlatMenu::UpdateBiomesList);
 }
 
@@ -629,8 +629,8 @@ void UIScene_SuperFlatMenu::handleSelectionChanged(int selection)
 {
     if (m_activeTab == eTabBiomes)
     {
-        SuperflatMenu::BiomeItem* biomes = SuperflatMenu::getBiomeInfoA();
-        m_biomesHelpTitle.setLabel(UIString(biomes[selection].item->getDisplayName()), false, false);
+        SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
+        m_biomesHelp.setLabel(UIString(biomes[selection].mDescription), false, false);
         return;
     }
     if (m_activeTab == eTabProperties)

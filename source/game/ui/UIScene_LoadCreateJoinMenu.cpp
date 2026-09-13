@@ -499,7 +499,7 @@ bool UIScene_LoadCreateJoinMenu::GetHideLoadTab()
 
 void UIScene_LoadCreateJoinMenu::AddLoadListButton(const std::wstring& label, int id)
 {
-    m_loadList.addItem(label, id);
+    m_loadList.addItem(label);
 }
 
 void UIScene_LoadCreateJoinMenu::SetLoadListIcon(int, unsigned char* data, unsigned int size,
