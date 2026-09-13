@@ -54,8 +54,8 @@ mistaken for library code.
 
 ## `source/nn/` - NEX and Pia library internals
 
-`nn/nex/` and `nn/pia/` (with `chat`, `common`, `inet`, `session` and
-`transport` beneath it) hold the reconstructed internals of Nintendo's NEX
+`nn/nex/` and `nn/pia/` (with `chat`, `common`, `inet`, `lan`, `session`
+and `transport` beneath it) hold the reconstructed internals of Nintendo's NEX
 and Pia online libraries, which the title links statically and calls from
 the platform backend and the vendor code. They are the same category as
 `source/vendor/`: reconstructed from the symbols and structure the build
