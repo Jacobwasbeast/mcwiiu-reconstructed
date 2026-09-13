@@ -12,7 +12,7 @@ class LevelSettings { public:
  LevelType* getLevelType() const; bool getAllowCommands() const; bool isGenerateMapFeatures() const; int getCloudHeight() const;
  bool useNewSeaLevel() const; int getXZSize() const; int getHellScale() const; bool getModernEnd() const;
  unsigned char getBiomeScale() const; int getBiomeCentreXChunk() const; int getBiomeCentreZChunk() const;
- static void validateGameType(int); SuperflatConfig* getLevelTypeOptions() const;
+ static const GameType* validateGameType(int); SuperflatConfig* getLevelTypeOptions() const;
  private: long long mSeed; const GameType* mGameType; bool mGenerateMapFeatures; bool mHardcore; int mCloudHeight;
  bool mUseNewSeaLevel; LevelType* mLevelType; bool mAllowCommands; bool mStartingBonusItems; SuperflatConfig* mLevelTypeOptions;
  int mXZSize; int mHellScale; bool mModernEnd; unsigned char mBiomeScale; int mBiomeCentreXChunk; int mBiomeCentreZChunk;

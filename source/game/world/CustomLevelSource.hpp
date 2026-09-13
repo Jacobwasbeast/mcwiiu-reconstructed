@@ -39,7 +39,6 @@ public:
     bool isWater(const BlockPos& pos);
 
 private:
-    int mLevelSize;
     bool mGenerateStructures;
     StructureFeature* mStronghold;
     StructureFeature* mVillage;

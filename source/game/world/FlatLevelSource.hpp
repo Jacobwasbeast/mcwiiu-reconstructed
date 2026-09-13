@@ -42,7 +42,6 @@ public:
     virtual bool isFlat();
 
 private:
-    int mLevelSize;
     Level* mLevel;
     Random mRandom;
     Random mPopulationRandom;

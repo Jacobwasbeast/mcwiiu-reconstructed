@@ -6,6 +6,7 @@
 #include "game/entity/mob/MobCategory.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -17,16 +18,17 @@
 
 void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
 void XPhysicalFree(void* address);
-void XMemSet128(void* destination, int value, unsigned int count);
+void* XMemSet128(void* destination, int value, unsigned int count);
 
 NetherFlatLevelSource::NetherFlatLevelSource(Level* level, bool generateStructures, long long seed)
-    : mLevelHeight(static_cast<int>(std::ceil((static_cast<float>(level->getHeight()) - 176.0f) /
-                                             (static_cast<float>(level->getMaxBuildHeight()) - 176.0f)))),
-      mRandom(new Random()),
+    : mRandom(new Random()),
       mPopulationRandom(new Random(seed)),
       mGenerateStructures(generateStructures),
       mLevel(level)
 {
+    mLevelSize = static_cast<int>(std::ceil(
+        static_cast<float>(level->getLevelData()->getXZSize()) /
+        static_cast<float>(level->getLevelData()->getHellScale())));
 }
 
 NetherFlatLevelSource::~NetherFlatLevelSource()
@@ -63,7 +65,7 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
             int blockIndex = (x << 11) | (z << 7) | 127;
             for (int y = 127; y >= 0; --y, --blockIndex)
             {
-                const int depth = mLevelHeight / 2;
+                const int depth = mLevelSize / 2;
                 bool placed = false;
 
                 if (chunkX <= -depth)

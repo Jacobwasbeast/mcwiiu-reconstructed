@@ -23,7 +23,7 @@
 TheEndLevelSource::TheEndLevelSource(Level* level, bool generateStructures, long long seed,
                                      const BlockPos& origin)
 {
-    mLevelHeight = 128;
+    mLevelSize = 128;
     mEndCityFeature = new EndCityFeature(this);
     mRandom = new Random(seed);
     mPopulationRandom = new Random(seed);

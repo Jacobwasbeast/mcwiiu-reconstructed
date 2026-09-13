@@ -24,9 +24,7 @@
 #include "game/world/generation/OreFeature.hpp"
 
 NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long long seed)
-    : mLevelHeight(static_cast<int>(std::ceil((static_cast<float>(level->getHeight()) - 176.0f) /
-                                             (static_cast<float>(level->getMaxBuildHeight()) - 176.0f)))),
-      mRandom(),
+    : mRandom(),
       mPopulationRandom(seed),
       mGenerateStructures(generateStructures),
       mLevel(level),
@@ -49,6 +47,9 @@ NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long
       mNetherBridgeFeature(new NetherBridgeFeature()),
       mCaves(new LargeHellCaveFeature())
 {
+    mLevelSize = static_cast<int>(std::ceil(
+        static_cast<float>(level->getLevelData()->getXZSize()) /
+        static_cast<float>(level->getLevelData()->getHellScale())));
     mLevel->setSeaLevel(63);
 }
 
@@ -101,7 +102,7 @@ arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> va
                 const double vertical = static_cast<double>(y + iy) / static_cast<double>(ySize);
                 double value = lower.data[index] * (1.0 - vertical) + upper.data[index] * vertical;
                 value -= depth.data[index] * 0.5;
-                value += static_cast<double>(mLevelHeight - y) * 0.25;
+                value += static_cast<double>(mLevelSize - y) * 0.25;
                 values.data[index] = value;
             }
         }

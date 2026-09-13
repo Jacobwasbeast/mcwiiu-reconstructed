@@ -37,12 +37,14 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* highSize);
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-int CloseHandle(int file);
+unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
+void CloseHandle(int file);
 
 LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
 {
     mPack = pack;
+    mSource = eSrc_Unknown;
+    mGameRulesSource = NULL;
     mBaseSaveData = NULL;
     mBaseSaveDataSize = 0;
     mBaseSaveRoot = L"buckets_";
@@ -867,6 +869,11 @@ ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstri
     ConsoleSchematicFile* schematic = new ConsoleSchematicFile();
     schematic->load(&input);
     mSchematicFiles[name] = schematic;
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
     return schematic;
 }
 

@@ -38,7 +38,7 @@
 
 void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
 void XPhysicalFree(void* address);
-void XMemSet128(void* destination, int value, unsigned int count);
+void* XMemSet128(void* destination, int value, unsigned int count);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 

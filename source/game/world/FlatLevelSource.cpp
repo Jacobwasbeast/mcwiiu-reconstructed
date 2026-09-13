@@ -35,8 +35,7 @@ void XPhysicalFree(void* address);
 void* XMemCpy(void* destination, const void* source, unsigned int count);
 
 FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config)
-    : mLevelSize(level->getLevelData()->getXZSize()),
-      mLevel(level),
+    : mLevel(level),
       mRandom(seed),
       mPopulationRandom(seed),
       mCaves(NULL),
@@ -49,6 +48,7 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
       mElementIds(NULL),
       mElementIdCount(0)
 {
+    mLevelSize = level->getLevelData()->getXZSize();
     FlatGeneratorInfo generatorInfo(config);
 
     if (generateStructures)

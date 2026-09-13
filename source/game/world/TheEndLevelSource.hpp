@@ -45,7 +45,6 @@ public:
     bool isIslandChunk(int x, int z);
 
 private:
-    int mLevelHeight;
     Random* mRandom;
     Random* mPopulationRandom;
     PerlinNoise* mNoise1;

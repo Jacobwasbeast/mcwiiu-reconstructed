@@ -138,9 +138,9 @@ int LevelSettings::getBiomeCentreZChunk() const
     return mBiomeCentreZChunk;
 }
 
-void LevelSettings::validateGameType(int gameType)
+const GameType* LevelSettings::validateGameType(int gameType)
 {
-    GameType::byId(gameType);
+    return GameType::byId(gameType);
 }
 
 SuperflatConfig* LevelSettings::getLevelTypeOptions() const

@@ -31,7 +31,6 @@ public:
     virtual void lightChunk(LevelChunk* chunk);
 
 private:
-    int mLevelHeight;
     Random* mRandom;
     Random* mPopulationRandom;
     bool mGenerateStructures;

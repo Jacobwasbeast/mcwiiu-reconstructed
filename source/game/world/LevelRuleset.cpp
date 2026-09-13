@@ -45,7 +45,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                 unsigned int flagsAndAttributes, int templateFile);
 int WriteFile(int file, const void* buffer, unsigned int bytesToWrite,
               unsigned int* bytesWritten, _OVERLAPPED* overlapped);
-int CloseHandle(int handle);
+void CloseHandle(int handle);
 void __debugbreak();
 
 static const int INVALID_HANDLE_VALUE = -1;

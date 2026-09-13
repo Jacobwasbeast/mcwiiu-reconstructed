@@ -75,7 +75,7 @@ void* TlsGetValue(unsigned int index);
 int TlsSetValue(unsigned int index, void* value);
 void* XPhysicalAlloc(unsigned long size, unsigned long affinity, unsigned long alignment, unsigned int flags);
 void XPhysicalFree(void* memory);
-void XMemSet128(void* destination, int value, unsigned int size);
+void* XMemSet128(void* destination, int value, unsigned int size);
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
 void MemSect(int section);

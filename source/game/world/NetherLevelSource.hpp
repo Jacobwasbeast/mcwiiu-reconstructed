@@ -45,7 +45,6 @@ public:
     virtual bool isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos);
 
 private:
-    int mLevelHeight;
     Random mRandom;
     Random mPopulationRandom;
     bool mGenerateStructures;

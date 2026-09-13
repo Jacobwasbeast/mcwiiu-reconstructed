@@ -58,7 +58,6 @@ public:
     static void staticCtor();
 
 private:
-    int mLevelSize;
     Random mRandom;
     Random mPopulationRandom;
     PerlinNoise* mMinLimitNoise;
