@@ -598,13 +598,13 @@ void LevelChunk::lightGap(int x, int z, int fromY, int toY)
         setUnsaved(true);
     }
 }
-void LevelChunk::lightGap(int x, int y, int z)
+void LevelChunk::lightGap(int x, int z, int targetHeight)
 {
     int height = level->getHeightmapPos(BlockPos(x, 0, z)).y;
-    if (height < y)
-        lightGap(x, z, height, y + 1);
-    else if (y < height)
-        lightGap(x, z, y, height + 1);
+    if (height < targetHeight)
+        lightGap(x, z, height, targetHeight + 1);
+    else if (targetHeight < height)
+        lightGap(x, z, targetHeight, height + 1);
 }
 void LevelChunk::recheckGaps(bool onlyOne)
 {

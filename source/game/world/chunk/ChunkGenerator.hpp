@@ -14,6 +14,8 @@ class MobCategory;
 class ChunkGenerator
 {
 public:
+    int mLevelSize;
+
     virtual ~ChunkGenerator();
     virtual LevelChunk* createChunk(int chunkX, int chunkZ) = 0;
     virtual void postProcess(int chunkX, int chunkZ) = 0;
