@@ -75,7 +75,7 @@ public:
     bool IsInActiveCoopOrCompetitive(int userIndex);
     bool SessionHasSpace(unsigned int extraPlayers);
     bool SessionHasMii(int userIndex);
-    int GetSessionList(int userIndex, int maxSessions, bool friendsOnly);
+    std::vector<FriendSessionInfo*>* GetSessionList(int userIndex, int maxSessions, bool friendsOnly);
     bool GetGameSessionInfo(int userIndex, unsigned int sessionId, FriendSessionInfo* info);
     void SetSessionsUpdatedCallback(void (*callback)(void*), void* data);
     void GetFullFriendSessionInfo(FriendSessionInfo* info, void (*callback)(bool, void*), void* data);

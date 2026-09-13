@@ -55,7 +55,6 @@
 #include <sysapp/args.h>
 
 extern "C" int shutdown(int socket, int how);
-extern GameRuleManager g_GameRuleManager;
 extern ConsoleUIController gConsoleUIController;
 extern "C" int close(int socket);
 void SetThreadName(unsigned int threadId, const char* name);
@@ -131,23 +130,21 @@ void CGameNetworkManager::DoWork() { if (m_platform) m_platform->DoWork(); TickI
 bool CGameNetworkManager::IsHost() { return m_platform && m_platform->IsHost(); }
 int CGameNetworkManager::ServerThreadProc(void* data)
 {
-    unsigned int* parameters = static_cast<unsigned int*>(data);
-    unsigned int seed = 0;
-    void* argument = 0;
-    if (parameters != 0)
+    _NetworkGameInitData* initData = static_cast<_NetworkGameInitData*>(data);
+    long long seed = 0;
+    if (initData != 0)
     {
-        seed = parameters[0];
-        argument = reinterpret_cast<void*>(parameters[1]);
-        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), parameters[3]);
+        seed = initData->m_seed;
+        gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), initData->m_value3);
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        miniGame->SetHostOption(static_cast<eCustomGameModeHostOption>(10), parameters[4]);
-        if (parameters[5] != 0 &&
-            gApp.getLevelGenerationOptions()->getParentPackId() != parameters[6])
+        miniGame->SetHostOption(static_cast<eCustomGameModeHostOption>(10), initData->m_value4);
+        if (initData->m_value5 != 0 &&
+            initData->m_value5->getParentPackId() != initData->m_value6)
         {
             while (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() ||
                    gConsoleUIController.IsReloadingSkin())
                 C4JThread::Sleep(1);
-            gApp.getLevelGenerationOptions()->loadBaseSaveData();
+            initData->m_value5->loadBaseSaveData();
         }
     }
     SetThreadName(0xffffffff, "Minecraft Server thread");
@@ -163,7 +160,7 @@ int CGameNetworkManager::ServerThreadProc(void* data)
     FireworksRecipe::CreateNewThreadStorage();
     ElementStorage::CreateNewThreadStorage(static_cast<ElementStorage::eHESThreadId>(1));
     LevelChunk::CreateNewThreadStorage();
-    MinecraftServer::main(seed, argument);
+    MinecraftServer::main(seed, initData);
     AABB::ReleaseThreadStorage();
     Vec3::ReleaseThreadStorage();
     phys::Vec2::ReleaseThreadStorage();
@@ -600,7 +597,7 @@ bool CGameNetworkManager::IsInActiveCoopOrCompetitive(int)
 }
 bool CGameNetworkManager::SessionHasSpace(unsigned int n) { return m_platform && m_platform->SessionHasSpace(n); }
 bool CGameNetworkManager::SessionHasMii(int n) { return m_platform && m_platform->SessionHasMii(n); }
-int CGameNetworkManager::GetSessionList(int a, int b, bool c) { return m_platform ? m_platform->GetSessionList(a,b,c) : 0; }
+std::vector<FriendSessionInfo*>* CGameNetworkManager::GetSessionList(int a, int b, bool c) { return m_platform ? m_platform->GetSessionList(a,b,c) : 0; }
 bool CGameNetworkManager::GetGameSessionInfo(int a, unsigned int b, FriendSessionInfo* c) { return m_platform && m_platform->GetGameSessionInfo(a,b,c); }
 void CGameNetworkManager::SetSessionsUpdatedCallback(void (*cb)(void*), void* d) { if (m_platform) m_platform->SetSessionsUpdatedCallback(cb,d); }
 void CGameNetworkManager::GetFullFriendSessionInfo(FriendSessionInfo* a, void (*cb)(bool,void*), void* d) { if (m_platform) m_platform->GetFullFriendSessionInfo(a,cb,d); }
@@ -659,7 +656,7 @@ void* CGameNetworkManager::RunNetworkGameThreadProc(void* data)
                     }
                     if (gMinecraftServer == 0)
                     {
-                        g_GameRuleManager.unloadCurrentGameRules();
+                        gApp.mGameRuleManager.unloadCurrentGameRules();
                     }
                     Block::ReleaseThreadStorage();
                     return reinterpret_cast<void*>(static_cast<intptr_t>(-1));

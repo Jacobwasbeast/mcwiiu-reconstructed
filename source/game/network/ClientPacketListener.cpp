@@ -1,5 +1,7 @@
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/Connection.hpp"
+#include "game/core/Socket.hpp"
+#include "game/data/SavedDataMemoryStorage.hpp"
 #include "game/network/ClientboundRespawnPacket.hpp"
 #include "game/network/ClientboundSetTimePacket.hpp"
 #include "game/network/ClientboundSetCarriedItemPacket.hpp"
@@ -44,6 +46,7 @@
 #include "game/network/ClientboundChangeDifficultyPacket.hpp"
 #include "game/network/ServerSettingsChangedPacket.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/User.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -269,7 +272,12 @@ ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket,
       m_savedDataStorage(0)
 {
     InitializeCriticalSection(&m_mutex);
-    if (socket != 0)
+    m_savedDataStorage = new SavedDataMemoryStorage();
+    if (playerId < 0)
+        m_playerId = gProfile->GetPrimaryPad();
+    if (socket == 0)
+        socket = new Socket(false);
+    if (socket->mOpen)
     {
         m_socketOpen = true;
         m_connection = new Connection(socket, std::wstring(L"Client"), this);
@@ -1528,8 +1536,12 @@ void ClientPacketListener::handleEntityActionAtPosition(boost::shared_ptr<Client
 
 void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginPacket> packet)
 {
-    if (packet == 0)
-        return;
+    int friendCheckResult = 1;
+    int playCheckResult = 1;
+    int secondaryMessageVariant = 1;
+    int contentCheckResult = 1;
+    int restrictionResult = 0;
+
     CGameNetworkManager::sInstance.SetIsInPublicJoinableGame(packet->mHardcore);
     const bool publicJoinable = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
     if (!CGameNetworkManager::sInstance.IsHost())
@@ -1537,26 +1549,72 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
         gApp.SetExtraGameData(static_cast<eGameExtraData>(6), 0);
         gApp.SetGameHostOption(static_cast<eGameHostOption>(0x20), packet->mHostPlayer);
         CGameNetworkManager::sInstance.ClearInviteInfo();
+        if (gApp.GetTMSGlobalFileListRead() == 0)
+        {
+            const int action = gApp.GetTMSAction(gProfile->GetPrimaryPad());
+            if (action == 0)
+                gApp.SetTMSAction(gProfile->GetPrimaryPad(), 3);
+        }
     }
-    int friendCount = 0;
-    int canPlayCount = 0;
-    int cannotPlayCount = 0;
-    int blockedCount = 0;
-    int unknownCount = 0;
+
     CGameNetworkManager::sInstance.CheckFriendsCanPlay(
-        m_playerId, friendCount, packet, static_cast<int>(packet->mSeed), canPlayCount,
-        cannotPlayCount, blockedCount, unknownCount);
-    if (canPlayCount != 0 && cannotPlayCount == 0 && blockedCount == 0)
+        m_playerId, friendCheckResult, packet, publicJoinable, playCheckResult,
+        secondaryMessageVariant, contentCheckResult, restrictionResult);
+
+    if (playCheckResult != 0 && friendCheckResult != 0 && contentCheckResult != 0 && restrictionResult == 0)
     {
         if (IsPrimaryPlayer())
         {
             Minecraft* minecraft = Minecraft::GetInstance();
-            if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
-                minecraft->mTexturePackRepository->selectTexturePackById(packet->mSeed, false);
+            minecraft->mTexturePackRepository->selectTexturePackById(packet->mGameType, false);
         }
         if (!CGameNetworkManager::sInstance.IsHost())
-            gApp.SetFirstMiniGameType(packet->mMiniGameId);
+            m_minecraft->mProgressRenderer->progressStagePercentage(25);
+
+        PlayerUID onlineUid(0);
+        PlayerUID offlineUid(0);
+        if (gProfile->IsSignedInLive(m_playerId))
+            gProfile->GetXUID(m_playerId, &onlineUid, true);
+        gProfile->GetXUID(m_playerId, &offlineUid, false);
+
+        const bool friendsOnly = CGameNetworkManager::sInstance.IsFriendsOnlyUGC(m_playerId);
+        boost::shared_ptr<Packet> login(new ClientboundLoginPacket(
+            m_minecraft->mUser->name, 0x13c, offlineUid, onlineUid,
+            friendsOnly, packet->mSeed, GameSettings::GetPlayerSkinId(m_playerId),
+            GameSettings::GetPlayerCapeId(m_playerId), gProfile->IsGuest(m_playerId), false));
+        send(login);
+
+        if (!CGameNetworkManager::sInstance.IsHost())
+            m_minecraft->mProgressRenderer->progressStagePercentage(50);
+        m_minecraft->mGui->clearSingleMessages(m_playerId);
+        return;
     }
+
+    if (!IsPrimaryPlayer())
+    {
+        int parameter = 0xb9a1bf4d;
+        int title = secondaryMessageVariant ? 0x4d669d55 : static_cast<int>(0xf9885affu);
+        gConsoleUIController.RequestErrorMessage(0x85d6dc81, title, &parameter, 1,
+                                                 m_playerId, 0, 0, 0, true);
+        gApp.SetAction(m_playerId, static_cast<eXuiAction>(0xc), 0);
+        return;
+    }
+
+    DisconnectPacket::eDisconnectReason reason =
+        DisconnectPacket::eDisconnectReason_ConnectionClosed;
+    if (secondaryMessageVariant != 0)
+    {
+        if (contentCheckResult == 0)
+            reason = static_cast<DisconnectPacket::eDisconnectReason>(0x19);
+        else if (friendCheckResult != 0)
+            reason = static_cast<DisconnectPacket::eDisconnectReason>(restrictionResult != 0 ? 0x16 : 0x18);
+        else
+            reason = static_cast<DisconnectPacket::eDisconnectReason>(0x14);
+    }
+    else
+        reason = static_cast<DisconnectPacket::eDisconnectReason>(0x1b);
+    gApp.SetDisconnectReason(reason);
+    gApp.SetAction(gProfile->GetPrimaryPad(), static_cast<eXuiAction>(3), reinterpret_cast<void*>(1));
 }
 
 void ClientPacketListener::close()
@@ -2311,27 +2369,57 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
     DataInputStream input(&byteStream);
     const int containerId = input.readInt();
     if (!gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x32)))
+        byteStream.mBuffer.data = NULL;
+        byteStream.mBuffer.length = 0;
+        byteStream.mCount = 0;
+        byteStream.mMark = 0;
+        byteStream.mPosition = 0;
         return;
     boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
     if (player == 0 || player->mContainerMenu == 0 ||
         player->mContainerMenu->m_containerId != containerId)
+        byteStream.mBuffer.data = NULL;
+        byteStream.mBuffer.length = 0;
+        byteStream.mCount = 0;
+        byteStream.mMark = 0;
+        byteStream.mPosition = 0;
         return;
     void* scene = gConsoleUIController.GetTopScene(m_playerId, static_cast<EUILayer>(6),
                                                    static_cast<EUIGroup>(7));
     if (scene == 0)
+        byteStream.mBuffer.data = NULL;
+        byteStream.mBuffer.length = 0;
+        byteStream.mCount = 0;
+        byteStream.mMark = 0;
+        byteStream.mPosition = 0;
         return;
     UIScene_TradingMenu* tradingMenu = static_cast<UIScene_TradingMenu*>(scene);
     boost::shared_ptr<MerchantMenu> menu = tradingMenu->getMerchant();
     if (menu == 0)
+        byteStream.mBuffer.data = NULL;
+        byteStream.mBuffer.length = 0;
+        byteStream.mCount = 0;
+        byteStream.mMark = 0;
+        byteStream.mPosition = 0;
         return;
     boost::shared_ptr<Merchant> merchant = menu->getMerchant();
     boost::shared_ptr<ClientSideMerchant> clientMerchant =
         boost::dynamic_pointer_cast<ClientSideMerchant>(merchant);
     if (clientMerchant == 0)
+        byteStream.mBuffer.data = NULL;
+        byteStream.mBuffer.length = 0;
+        byteStream.mCount = 0;
+        byteStream.mMark = 0;
+        byteStream.mPosition = 0;
         return;
     MerchantRecipeList* offers = MerchantRecipeList::createFromStream(&input);
     if (offers != 0)
         clientMerchant->overrideOffers(offers);
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 }
 
 

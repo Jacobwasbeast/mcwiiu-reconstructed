@@ -2,6 +2,7 @@
 #define GAME_NETWORK_CPLATFORMNETWORKMANAGER_HPP
 
 #include <string>
+#include <vector>
 #include "game/minigame/EMiniGameId.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -106,7 +107,7 @@ public:
     virtual void SetSessionSubTexturePackId(int iSubTexturePackId) = 0;
     virtual void SetSessionGameModeId(int iGameModeId) = 0;
     virtual void Notify(int iNotification, unsigned long ulParam) = 0;
-    virtual int GetSessionList(int iUserIndex, int iMaxSessions, bool bFriendsOnly) = 0;
+    virtual std::vector<FriendSessionInfo*>* GetSessionList(int iUserIndex, int iMaxSessions, bool bFriendsOnly) = 0;
     virtual bool GetGameSessionInfo(int iUserIndex, unsigned int uiSessionId, FriendSessionInfo* pSessionInfo) = 0;
     virtual void SetSessionsUpdatedCallback(void (*pCallback)(void*), void* pCallbackData) = 0;
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* pSessionInfo, void (*pCallback)(bool, void*), void* pCallbackData) = 0;

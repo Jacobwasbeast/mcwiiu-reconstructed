@@ -95,11 +95,11 @@ void ClientboundPreLoginPacket::read(DataInputStream* input)
 void ClientboundPreLoginPacket::write(DataOutputStream* output)
 {
     unsigned int index;
-    output->write(2177);
+    output->writeShort(2177);
     Packet::writeUtf(mName, output);
     output->writeByte(mGameMode);
     output->writeInt(mSeed);
-    output->writeByte(mMaxPlayers);
+    output->writeByte(static_cast<unsigned char>(mPlayerCount));
     for (index = 0; index < mPlayerCount; ++index)
         output->writePlayerUID(mPlayers[index]);
     for (index = 0; index < 14; ++index)

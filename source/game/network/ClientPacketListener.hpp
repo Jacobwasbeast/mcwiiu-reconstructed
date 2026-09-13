@@ -15,6 +15,7 @@
 class Minecraft;
 class Level;
 class Connection;
+class SavedDataMemoryStorage;
 class ClientboundBlockEntityDataPacket;
 class ClientboundLoginPacket;
 class ClientboundAddEntityPacket;
@@ -247,7 +248,7 @@ private:
     bool m_started;
     int m_playerId;
     Random m_random;
-    void* m_savedDataStorage;
+    SavedDataMemoryStorage* m_savedDataStorage;
 };
 
 #endif

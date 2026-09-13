@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include "game/core/CriticalSection.hpp"
 #include "game/network/DisconnectPacket.hpp"
+class ByteArrayOutputStream;
 class DataInputStream;
 class DataOutputStream;
 class OutputStream;
@@ -45,6 +46,7 @@ private:
     DataInputStream* m_input;
     DataOutputStream* m_output;
     DataOutputStream* m_packetOutput;
+    ByteArrayOutputStream* m_packetBuffer;
     OutputStream* m_rawOutput;
     void* m_readThread;
     void* m_writeThread;

@@ -56,7 +56,7 @@ public:
 
 private:
     friend class ClientPacketListener;
-    friend struct ServerPlayer;
+    friend class ServerPlayer;
     EChatPacketMessage message;
 };
 

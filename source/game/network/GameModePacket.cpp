@@ -249,6 +249,11 @@ void GameModePacket::ChestRefill::WritePacket(boost::shared_ptr<GameModePacket> 
     }
 }
 
+GameModePacket::PlayerData::PlayerData()
+    : playerName()
+{
+}
+
 GameModePacket::PlayerData::PlayerData(std::wstring playerName)
     : playerName(playerName)
 {

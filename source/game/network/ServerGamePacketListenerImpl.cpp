@@ -930,6 +930,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
             mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, book);
     }
     input.close();
+    bytes.mBuffer.data = NULL;
+    bytes.mBuffer.length = 0;
+    bytes.mCount = 0;
+    bytes.mMark = 0;
+    bytes.mPosition = 0;
 }
 void ServerGamePacketListenerImpl::handleCraftItem(boost::shared_ptr<CraftItemPacket> packet)
 {
@@ -1232,6 +1237,11 @@ void ServerGamePacketListenerImpl::NameItemOnAnvil(
             input.close();
             if (name.length() < 31)
                 menu->setItemName(name, useName);
+            bytes.mBuffer.data = NULL;
+            bytes.mBuffer.length = 0;
+            bytes.mCount = 0;
+            bytes.mMark = 0;
+            bytes.mPosition = 0;
         }
         else
         {
