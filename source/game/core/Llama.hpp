@@ -3,6 +3,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/RangedAttackMob.hpp"
@@ -124,8 +125,8 @@ private:
     bool mDidSpit;
     int mStrength;
     int mVariant;
-    boost::shared_ptr<Llama> mCaravanHead;
-    boost::shared_ptr<Llama> mCaravanTail;
+    boost::weak_ptr<Llama> mCaravanHead;
+    boost::weak_ptr<Llama> mCaravanTail;
 };
 
 #endif

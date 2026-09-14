@@ -14,6 +14,7 @@ class Options
 public:
     friend class Minecraft;
     friend class GameRenderer;
+    friend class BlockRenderer;
 
     class Option
     {

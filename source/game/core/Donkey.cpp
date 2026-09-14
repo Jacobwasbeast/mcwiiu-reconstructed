@@ -91,44 +91,110 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     unsigned int itemId = Item::getId(item->getItem());
     bool horseArmor = itemId == 170 || itemId == 260 || itemId == 296 ||
                       itemId == 322 || itemId == 353 || itemId == 396;
+    bool loveFoodItem = itemId == 322 || itemId == 396;
     boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                      (Player*)tooltipData.m_pPlayer.get());
 
-    if (itemId == 383 && SpawnEggItem::fjGetType(item) == GetType())
+    if (itemId == 383)
     {
-        return 0x4c36cd96U;
+        if (SpawnEggItem::fjGetType(item) == GetType())
+        {
+            return 0x4c36cd96U;
+        }
+        if (isLeashedToPlayer(player))
+        {
+            return 0x551269b5U;
+        }
+        return 0xffffffffU;
     }
+
     if (isLeashedToPlayer(player))
     {
         return 0x551269b5U;
     }
-    if (itemId == 420 && !isLeashed())
+
+    if (itemId == 420)
     {
-        return 0xa1b34a96U;
-    }
-    if (itemId == 421 && (!player->isSneaking() || !isTamed()))
-    {
-        if (!item->hasCustomHoverName())
+        if (!isLeashed())
+        {
+            return 0xa1b34a96U;
+        }
+        if (!getPassengers()->empty() || !isTamed())
         {
             return 0xffffffffU;
         }
-        if (hasCustomName() && item->getHoverName() == getCustomName())
-        {
-            return 0xffffffffU;
-        }
-        return 0x5592c692U;
+        return 0x497adcf0U;
     }
 
-    if (isTamed())
+    if (itemId == 421 && (!player->isSneaking() || !isTamed()))
     {
-        if (player->isSneaking() || itemId == 329 && !isSaddled() || horseArmor)
+        if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
         {
-            return 0x41590ad1U;
+            return 0x5592c692U;
         }
-        if (getPassengers()->empty())
+        if (isTamed())
         {
-            return 0x497adcf0U;
+            if (getPassengers()->empty())
+            {
+                return 0x497adcf0U;
+            }
         }
+        return 0xffffffffU;
+    }
+
+    if (isBaby())
+    {
+        if (horseArmor)
+        {
+            return 0x82f8d90fU;
+        }
+        return 0xffffffffU;
+    }
+
+    if (!isTamed())
+    {
+        if (!item->isEmpty())
+        {
+            if (horseArmor && itemId != 170)
+            {
+                return 0x82f8d90fU;
+            }
+        }
+        else if (getPassengers()->empty())
+        {
+            return 0x95cfa728U;
+        }
+        return 0xffffffffU;
+    }
+
+    bool showMountTooltip = player->isSneaking() && (!isVehicle() || hasPassenger(player));
+    if (!showMountTooltip && itemId == 329 && !isSaddled())
+    {
+        showMountTooltip = true;
+    }
+    if (showMountTooltip)
+    {
+        return 0x41590ad1U;
+    }
+
+    if (itemId == 54 && !hasChest())
+    {
+        return 0x7b938f36U;
+    }
+
+    if (loveFoodItem && !isInLove() && getPassengers()->empty() && !isBreedCoolingDown())
+    {
+        return 0xb47a2ab6U;
+    }
+
+    if (horseArmor && getHealth() < getMaxHealth())
+    {
+        return 0x56b3f98dU;
+    }
+
+    if (getPassengers()->empty())
+    {
+        return 0x497adcf0U;
     }
     return 0xffffffffU;
 }

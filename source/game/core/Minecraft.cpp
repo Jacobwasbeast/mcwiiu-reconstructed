@@ -962,7 +962,7 @@ void Minecraft::updatePlayerViewportAssignments()
             }
         }
 
-        for (int quadrant = 3; quadrant >= 0; --quadrant)
+        for (int quadrant = 0; quadrant < 4; ++quadrant)
         {
             if (!quadrantUsed[quadrant])
                 mEmptyViewport = quadrant;
@@ -1214,7 +1214,6 @@ bool Minecraft::setLocalPlayerIdx(int playerIdx)
     mGameMode = mGameModes[playerIdx];
     mPlayer = mLocalPlayers[playerIdx];
     mCameraEntity = mLocalPlayers[playerIdx]->GetCamera();
-    mItemInHandRenderer = mLocalItemInHandRenderers[playerIdx];
     mLevel = getLevel(mLocalPlayers[playerIdx]->mDimension);
     mParticleEngine->setLevel(mLevel);
     return true;
@@ -2505,23 +2504,38 @@ void Minecraft::run_middle()
     LeaveCriticalSection(&mLevelLock);
 }
 
-void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool alive)
+void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool alive)
 {
     mGameRenderer->DisableUpdateThread(6);
-    mLevel->removeAllPendingEntityRemovals();
 
     boost::shared_ptr<MultiplayerLocalPlayer> oldPlayer = mLocalPlayers[playerIdx];
+    mLevel->validateSpawn();
+    mLevel->removeAllPendingEntityRemovals();
+    if (oldPlayer)
+        mLevel->removeEntity(oldPlayer);
+
     boost::shared_ptr<MultiplayerLocalPlayer> newPlayer;
     newPlayer = boost::static_pointer_cast<MultiplayerLocalPlayer>(
         mGameModes[playerIdx]->createPlayer(mLevel));
+    mPlayer = newPlayer;
 
     newPlayer->setName(convStringToWstring(gProfile->GetGamertag(playerIdx)));
-    if (oldPlayer)
+    if (alive)
         newPlayer->getEntityData()->assignValues(oldPlayer->getEntityData()->getAll());
 
     newPlayer->setSharedFlag(0, false);
-    if (gApp.getLevelGenerationOptions()->getRequiredGameRules() != NULL)
-        newPlayer->setSharedFlag(9, true);
+    if (InMiniGame(eMiniGameId_Glide, false) && gApp.getLevelGenerationOptions() != NULL)
+    {
+        LevelRuleset* ruleset = gApp.getLevelGenerationOptions()->getRequiredGameRules();
+        if (ruleset != NULL)
+        {
+            AABB* jumpOffArea = ruleset->getNamedArea(L"JumpOffPoint");
+            bool inJumpOffArea = jumpOffArea != NULL &&
+                                 jumpOffArea->containsIncludingLowerBound(newPlayer->getPos(1.0f));
+            if (!inJumpOffArea)
+                newPlayer->setSharedFlag(9, true);
+        }
+    }
 
     PlayerUID xuid(0);
     PlayerUID suid(0);
@@ -2530,16 +2544,16 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
     newPlayer->setXuid(xuid);
     newPlayer->mSuid = suid;
 
-    if (oldPlayer)
-    {
-        newPlayer->setCustomSkin(oldPlayer->mField0x7dc);
-        newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
-        newPlayer->setCustomCape(oldPlayer->mField0x7e0);
-        newPlayer->setPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21,
-                                          oldPlayer->getPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21));
-    }
+    if (oldPlayer->IsSpectatingOtherPlayer())
+        newPlayer->SetCamera(oldPlayer->GetCamera());
 
-    mLocalPlayers[playerIdx] = newPlayer;
+    newPlayer->setCustomSkin(oldPlayer->mField0x7dc);
+    newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
+    newPlayer->setCustomCape(oldPlayer->mField0x7e0);
+    newPlayer->setPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21,
+                                      oldPlayer->getPlayerGamePrivilege((Player::EPlayerGamePrivileges)0x21));
+    newPlayer->mDimension = dimension;
+    mCameraEntity = newPlayer;
 
     if (playerIdx == gProfile->GetPrimaryPad())
     {
@@ -2551,6 +2565,11 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
     {
         storeExtraLocalPlayer(playerIdx);
     }
+
+    oldPlayer->resetPos();
+    mLevel->addEntity(oldPlayer);
+
+    mGameModes[playerIdx]->initPlayer(newPlayer);
 
     if (InMiniGame(eMiniGameId_Glide, true) && CommonMasterGameMode::GetMiniGame()->IsCheckpointBasedSpawn())
     {
@@ -2573,24 +2592,27 @@ void Minecraft::respawnPlayer(int entityId, int playerIdx, int dimension, bool a
         }
     }
 
-    newPlayer->setId(entityId);
-    mGameModes[playerIdx]->initPlayer(newPlayer);
     mGameModes[playerIdx]->adjustPlayer(newPlayer);
+    newPlayer->setId(entityId);
 
-    if (!alive)
-        prepareLevel(dimension);
+    if (!mLevel->mIsClientSide)
+        prepareLevel((int)0xf5ba56aa);
 
-    if (gConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x30))
+    if (gConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x1f) ||
+        gApp.GetXuiAction(playerIdx) == 7)
     {
-        gConsoleUIController.NavigateBack(playerIdx, false, (EUIScene)0x30, (EUILayer)8);
-    }
-    else
-    {
-        gConsoleUIController.CloseUIScenes(playerIdx, false);
-        gConsoleUIController.UpdatePlayerBasePositions();
+        if (gConsoleUIController.IsSceneInStack(playerIdx, (EUIScene)0x30))
+        {
+            gConsoleUIController.NavigateBack(playerIdx, false, (EUIScene)0x30, (EUILayer)8);
+        }
+        else if (gApp.GetXuiAction(playerIdx) != 0xf)
+        {
+            gConsoleUIController.CloseUIScenes(playerIdx, false);
+            gConsoleUIController.UpdatePlayerBasePositions();
+        }
     }
 
-    newPlayer->SetWaitingForScoreboard(oldPlayer && oldPlayer->IsWaitingForScoreboard());
+    newPlayer->SetWaitingForScoreboard(oldPlayer->IsWaitingForScoreboard());
 
     if (mScreen != NULL)
         setScreen(NULL);

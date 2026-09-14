@@ -149,7 +149,7 @@ public:
     void removeLocalPlayerIdx(int playerIdx);
     bool setLocalPlayerIdx(int playerIdx);
     int getLocalPlayerIdx();
-    void respawnPlayer(int entityId, int playerIdx, int dimension, bool alive);
+    void respawnPlayer(int playerIdx, int dimension, int entityId, bool alive);
     void checkViewportAssignment(int playerCount);
     void updatePlayerViewportAssignments();
 

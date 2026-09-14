@@ -6,6 +6,16 @@
 #include "game/world/generation/StructureFeatureIO.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/ButtonBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/EndPortalFrameBlock.hpp"
+#include "game/world/block/LadderBlock.hpp"
+#include "game/world/block/StoneSlabBlock.hpp"
+#include "game/world/block/TorchBlock.hpp"
+#include "game/world/block/TypedBoxed.hpp"
+#include "game/world/block/BlockState.hpp"
 
 static StrongholdPieces::SmoothStoneSelector* sStrongholdStoneSelector = NULL;
 static std::list<StrongholdPieces::PieceWeight*> sStrongholdPieceWeights;
@@ -80,8 +90,57 @@ void StrongholdPieces::StrongholdPiece::readAdditionalSaveData(DataInputStream* 
 
 void StrongholdPieces::StrongholdPiece::generateSmallDoor(Level* level, Random&, BoundingBox* box, SmallDoorType type, int x, int y, int z)
 {
-    if (type == OPENING) generateAirBox(level, box, x, y, z, x + 2, y + 2, z);
-    else generateAirBox(level, box, x, y, z, x + 2, y + 1, z);
+    if (type == WOOD_DOOR)
+    {
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y + 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 1, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y + 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y, z, box);
+        placeBlock(level, Blocks::wooden_door->defaultBlockState(), x + 1, y, z, box);
+        TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
+        placeBlock(level, Blocks::wooden_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf),
+            x + 1, y + 1, z, box);
+        return;
+    }
+    if (type == GRATES)
+    {
+        placeBlock(level, Blocks::AIR->defaultBlockState(), x + 1, y, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), x + 1, y + 1, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x, y, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x, y + 1, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x, y + 2, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x + 1, y + 2, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x + 2, y + 2, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x + 2, y + 1, z, box);
+        placeBlock(level, Blocks::iron_bars->defaultBlockState(), x + 2, y, z, box);
+        return;
+    }
+    if (type == IRON_DOOR)
+    {
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y + 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 1, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y + 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y + 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), x + 2, y, z, box);
+        placeBlock(level, Blocks::iron_door->defaultBlockState(), x + 1, y, z, box);
+        TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
+        placeBlock(level, Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::HALF, &upperHalf),
+            x + 1, y + 1, z, box);
+        TypedBoxed<const Direction*> buttonNorth(Direction::NORTH);
+        placeBlock(level, Blocks::stone_button->defaultBlockState()->setBoxedValue(ButtonBlock::FACING, &buttonNorth),
+            x + 2, y + 1, z + 1, box);
+        TypedBoxed<const Direction*> buttonSouth(Direction::SOUTH);
+        placeBlock(level, Blocks::stone_button->defaultBlockState()->setBoxedValue(ButtonBlock::FACING, &buttonSouth),
+            x + 2, y + 1, z - 1, box);
+        return;
+    }
+    generateBox(level, box, x, y, z, x + 2, y + 2, z,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
 }
 
 StructurePiece* StrongholdPieces::StrongholdPiece::generateSmallDoorChildForward(StartPiece* start, std::vector<StructurePiece*>* pieces, Random& random, int x, int z)
@@ -304,10 +363,10 @@ StrongholdPieces::ChestCorridor::ChestCorridor(
 StrongholdPieces::ChestCorridor::~ChestCorridor() { }
 
 StrongholdPieces::FillerCorridor::FillerCorridor()
-    : StrongholdPiece(), mFlag(false), mData(0) { }
+    : StrongholdPiece(), mData(0) { }
 StrongholdPieces::FillerCorridor::FillerCorridor(
     int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mFlag(false), mData(random.nextInt(4))
+    : StrongholdPiece(depth), mData(random.nextInt(4))
 {
     setOrientation(direction);
     setBoundingBox(box);
@@ -315,10 +374,10 @@ StrongholdPieces::FillerCorridor::FillerCorridor(
 StrongholdPieces::FillerCorridor::~FillerCorridor() { }
 
 StrongholdPieces::FiveCrossing::FiveCrossing()
-    : StrongholdPiece(), mFlag(false), mData(0) { }
+    : StrongholdPiece(), mDoorFlags(), mData(0) { }
 StrongholdPieces::FiveCrossing::FiveCrossing(
     int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mFlag(false), mData(random.nextInt(4))
+    : StrongholdPiece(depth), mDoorFlags(), mData(random.nextInt(4))
 {
     setOrientation(direction);
     setBoundingBox(box);
@@ -370,10 +429,10 @@ StrongholdPieces::PrisonHall::PrisonHall(
 StrongholdPieces::PrisonHall::~PrisonHall() { }
 
 StrongholdPieces::RoomCrossing::RoomCrossing()
-    : StrongholdPiece(), mFlag(false), mData(0) { }
+    : StrongholdPiece(), mData(0) { }
 StrongholdPieces::RoomCrossing::RoomCrossing(
     int depth, Random& random, BoundingBox* box, const Direction* direction)
-    : StrongholdPiece(depth), mFlag(false), mData(random.nextInt(4))
+    : StrongholdPiece(depth), mData(random.nextInt(4))
 {
     setOrientation(direction);
     setBoundingBox(box);
@@ -644,7 +703,26 @@ void StrongholdPieces::ChestCorridor::addChildren(StructurePiece* start, std::ve
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
-bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::ChestCorridor::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 4, 6, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 1, 0);
+    generateSmallDoor(level, random, box, OPENING, 1, 1, 6);
+    generateBox(level, box, 3, 1, 2, 3, 1, 4,
+        Blocks::stonebrick->defaultBlockState(), Blocks::stonebrick->defaultBlockState(), false);
+    if (!mFlag)
+    {
+        BlockPos pos(getWorldX(3, 3), getWorldY(2), getWorldZ(3, 3));
+        if (box->isInside(pos))
+        {
+            mFlag = true;
+            setDirty();
+        }
+    }
+    return true;
+}
 StructurePiece* StrongholdPieces::ChestCorridor::Create() { return new StrongholdPieces::ChestCorridor(); }
 EStructurePiece StrongholdPieces::ChestCorridor::GetType() { return eStructurePiece_ChestCorridor; }
 void StrongholdPieces::FiveCrossing::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -661,17 +739,54 @@ void StrongholdPieces::FiveCrossing::addChildren(StructurePiece* start, std::vec
     }
     StartPiece* startPiece = static_cast<StartPiece*>(start);
     generateSmallDoorChildForward(startPiece, pieces, random, 5, 1);
-    unsigned char* doorFlags = reinterpret_cast<unsigned char*>(this) + 0x20;
-    if (doorFlags[0] != 0)
+    if (mDoorFlags[0])
         generateSmallDoorChildLeft(startPiece, pieces, random, leftOffset, 1);
-    if (doorFlags[1] != 0)
+    if (mDoorFlags[1])
         generateSmallDoorChildLeft(startPiece, pieces, random, rightOffset, 7);
-    if (doorFlags[2] != 0)
+    if (mDoorFlags[2])
         generateSmallDoorChildRight(startPiece, pieces, random, leftOffset, 1);
-    if (doorFlags[3] != 0)
+    if (mDoorFlags[3])
         generateSmallDoorChildRight(startPiece, pieces, random, rightOffset, 7);
 }
-bool StrongholdPieces::FiveCrossing::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::FiveCrossing::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 9, 8, 10, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 4, 3, 0);
+    if (mDoorFlags[0])
+        generateBox(level, box, 0, 3, 1, 0, 5, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    if (mDoorFlags[1])
+        generateBox(level, box, 9, 3, 1, 9, 5, 3,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    if (mDoorFlags[2])
+        generateBox(level, box, 0, 5, 7, 0, 7, 9,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    if (mDoorFlags[3])
+        generateBox(level, box, 9, 5, 7, 9, 7, 9,
+            Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    generateBox(level, box, 5, 1, 10, 7, 3, 10,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 1, 8, 2, 6, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 5, 4, 4, 9, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 8, 1, 5, 8, 4, 9, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 1, 4, 7, 3, 4, 9, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 1, 3, 5, 3, 3, 6, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 1, 4, 6, 3, 4, 6,
+        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 5, 1, 7, 7, 1, 8, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 5, 1, 9, 7, 1, 9,
+        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 7, 7, 2, 7,
+        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 4, 5, 7, 4, 5, 9,
+        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 7, 8, 5, 9,
+        Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
+    placeBlock(level, Blocks::torch->defaultBlockState(), 6, 5, 6, box);
+    return true;
+}
 StructurePiece* StrongholdPieces::FiveCrossing::Create() { return new StrongholdPieces::FiveCrossing(); }
 EStructurePiece StrongholdPieces::FiveCrossing::GetType() { return eStructurePiece_FiveCrossing; }
 void StrongholdPieces::LeftTurn::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -688,14 +803,190 @@ void StrongholdPieces::LeftTurn::addChildren(StructurePiece* start, std::vector<
 bool StrongholdPieces::LeftTurn::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
 StructurePiece* StrongholdPieces::LeftTurn::Create() { return new StrongholdPieces::LeftTurn(); }
 EStructurePiece StrongholdPieces::LeftTurn::GetType() { return eStructurePiece_LeftTurn; }
-STRONGHOLD_PIECE_METHODS(Library, eStructurePiece_Library)
+void StrongholdPieces::Library::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
+void StrongholdPieces::Library::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
+void StrongholdPieces::Library::addChildren(StructurePiece*, std::vector<StructurePiece*>*, Random&) { }
+bool StrongholdPieces::Library::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    bool tall = mFlag;
+    int height = tall ? 0xb : 6;
+    int z = 1;
+    generateBox(level, box, 0, 0, 0, 13, height - 1, 14, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 4, 1, 0);
+    generateMaybeBox(level, box, random, 0.07f, 2, 1, 1, 11, 4, 13,
+        Blocks::web->defaultBlockState(), Blocks::web->defaultBlockState(), false, false);
+
+pillarColumn:
+    generateBox(level, box, 1, 1, z, 1, 4, z,
+        Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+    generateBox(level, box, 12, 1, z, 12, 4, z,
+        Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+    {
+        placeBlock(level, Blocks::torch->defaultBlockState(), 2, 3, z, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 11, 3, z, box);
+    }
+    {
+        int savedZ = z;
+        if (tall)
+        {
+            generateBox(level, box, 1, 6, z, 1, 9, z,
+                Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+            generateBox(level, box, 12, 6, z, 12, 9, z,
+                Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        }
+        while ((z = savedZ + 1) < 14)
+        {
+            for (;;)
+            {
+                if ((savedZ & 3) == 0)
+                    goto pillarColumn;
+                generateBox(level, box, 1, 1, z, 1, 4, z,
+                    Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+                generateBox(level, box, 12, 1, z, 12, 4, z,
+                    Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+                if (tall)
+                    break;
+                ++z;
+                ++savedZ;
+                if (z > 13)
+                    goto afterColumns;
+            }
+            generateBox(level, box, 1, 6, z, 1, 9, z,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 12, 6, z, 12, 9, z,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            savedZ = z;
+        }
+    }
+afterColumns:
+    {
+        int count = 2;
+        int col = 3;
+        do
+        {
+            generateBox(level, box, 3, 1, col, 4, 3, col,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 6, 1, col, 7, 3, col,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 9, 1, col, 10, 3, col,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 3, 1, col + 2, 4, 3, col + 2,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 6, 1, col + 2, 7, 3, col + 2,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            generateBox(level, box, 9, 1, col + 2, 10, 3, col + 2,
+                Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+            --count;
+            col += 4;
+        } while (count != 0);
+        generateBox(level, box, 3, 1, col, 4, 3, col,
+            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+        generateBox(level, box, 6, 1, col, 7, 3, col,
+            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+        generateBox(level, box, 9, 1, col, 10, 3, col,
+            Blocks::bookshelf->defaultBlockState(), Blocks::bookshelf->defaultBlockState(), false);
+    }
+    if (tall)
+    {
+        generateBox(level, box, 1, 5, 1, 3, 5, 13,
+            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 10, 5, 1, 12, 5, 13,
+            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 4, 5, 1, 9, 5, 2,
+            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        generateBox(level, box, 4, 5, 12, 9, 5, 13,
+            Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 9, 5, 11, box);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 8, 5, 11, box);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 9, 5, 10, box);
+        generateBox(level, box, 3, 6, 2, 3, 6, 12,
+            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 10, 6, 2, 10, 6, 10,
+            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 4, 6, 2, 9, 6, 2,
+            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
+        generateBox(level, box, 4, 6, 12, 8, 6, 12,
+            Blocks::fence->defaultBlockState(), Blocks::fence->defaultBlockState(), false);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 9, 6, 11, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 8, 6, 11, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 9, 6, 10, box);
+        TypedBoxed<const Direction*> ladderSouth(Direction::SOUTH);
+        const BlockState* ladderState =
+            Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &ladderSouth);
+        placeBlock(level, ladderState, 10, 1, 13, box);
+        placeBlock(level, ladderState, 10, 2, 13, box);
+        placeBlock(level, ladderState, 10, 3, 13, box);
+        placeBlock(level, ladderState, 10, 4, 13, box);
+        placeBlock(level, ladderState, 10, 5, 13, box);
+        placeBlock(level, ladderState, 10, 6, 13, box);
+        placeBlock(level, ladderState, 10, 7, 13, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 6, 9, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 7, 9, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 6, 8, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 7, 8, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 6, 7, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 7, 7, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 5, 7, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 8, 7, 7, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 6, 7, 6, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 6, 7, 8, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 7, 7, 6, box);
+        placeBlock(level, Blocks::fence->defaultBlockState(), 7, 7, 8, box);
+        const BlockState* torchUpState = Blocks::torch->defaultBlockState();
+        placeBlock(level, torchUpState, 5, 8, 7, box);
+        placeBlock(level, torchUpState, 8, 8, 7, box);
+        placeBlock(level, torchUpState, 6, 8, 6, box);
+        placeBlock(level, torchUpState, 6, 8, 8, box);
+        placeBlock(level, torchUpState, 7, 8, 6, box);
+        placeBlock(level, torchUpState, 7, 8, 8, box);
+    }
+    if (tall)
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 12, 9, 1, box);
+    return true;
+}
+StructurePiece* StrongholdPieces::Library::Create() { return new StrongholdPieces::Library(); }
+EStructurePiece StrongholdPieces::Library::GetType() { return eStructurePiece_Library; }
 void StrongholdPieces::PrisonHall::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
 void StrongholdPieces::PrisonHall::readAdditionalSaveData(DataInputStream* input, StructureManager* manager) { StrongholdPiece::readAdditionalSaveData(input, manager); mData = input->readInt(); }
 void StrongholdPieces::PrisonHall::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
-bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 8, 4, 10, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 1, 0);
+    generateBox(level, box, 1, 1, 10, 3, 3, 10,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 1, 4, 3, 1, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 3, 4, 3, 3, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 7, 4, 3, 7, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 9, 4, 3, 9, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 4, 4, 3, 6,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 5, 1, 5, 7, 3, 5,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 2, box);
+    placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 8, box);
+
+    TypedBoxed<const Direction*> doorWest(Direction::WEST);
+    const BlockState* lowerDoor =
+        Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &doorWest);
+    TypedBoxed<const Direction*> doorWest2(Direction::WEST);
+    TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
+    const BlockState* upperDoor =
+        Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &doorWest2)
+            ->setBoxedValue(DoorBlock::HALF, &upperHalf);
+    placeBlock(level, lowerDoor, 4, 1, 2, box);
+    placeBlock(level, upperDoor, 4, 2, 2, box);
+    placeBlock(level, lowerDoor, 4, 1, 8, box);
+    placeBlock(level, upperDoor, 4, 2, 8, box);
+    return true;
+}
 StructurePiece* StrongholdPieces::PrisonHall::Create() { return new StrongholdPieces::PrisonHall(); }
 EStructurePiece StrongholdPieces::PrisonHall::GetType() { return eStructurePiece_PrisonHall; }
 void StrongholdPieces::RoomCrossing::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -707,7 +998,180 @@ void StrongholdPieces::RoomCrossing::addChildren(StructurePiece* start, std::vec
     generateSmallDoorChildLeft(startPiece, pieces, random, 1, 4);
     generateSmallDoorChildRight(startPiece, pieces, random, 1, 4);
 }
-bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 10, 6, 10, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 4, 1, 0);
+    generateBox(level, box, 4, 1, 10, 6, 3, 10,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    generateBox(level, box, 0, 1, 4, 0, 3, 6,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+    generateBox(level, box, 10, 1, 4, 10, 3, 6,
+        Blocks::AIR->defaultBlockState(), Blocks::AIR->defaultBlockState(), false);
+
+    if (mData == 0)
+    {
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 1, 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 2, 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 3, 5, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 4, 3, 5, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 6, 3, 5, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 5, 3, 4, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 5, 3, 6, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 4, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 5, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 6, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 6, 1, 4, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 6, 1, 5, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 6, 1, 6, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 5, 1, 4, box);
+        placeBlock(level, Blocks::stone_slab->defaultBlockState(), 5, 1, 6, box);
+    }
+    else if (mData == 1)
+    {
+        int b = 1;
+        int count = 2;
+        int a = 0;
+        int last = 0;
+        do
+        {
+            last = a;
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 1, last + 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 7, 1, last + 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), last + 3, 1, 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), last + 3, 1, 7, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 1, b + 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 7, 1, b + 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), b + 3, 1, 3, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), b + 3, 1, 7, box);
+            --count;
+            b += 2;
+            a = last + 2;
+        } while (count != 0);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 1, last + 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 7, 1, last + 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), last + 5, 1, 3, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), last + 5, 1, 7, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 1, 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 2, 5, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 3, 5, box);
+        placeBlock(level, Blocks::FLOWING_WATER->defaultBlockState(), 5, 4, 5, box);
+    }
+    else if (mData == 2)
+    {
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 2, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 2, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 3, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 3, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 7, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 7, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 8, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 8, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 1, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 2, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 2, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 3, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 3, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 7, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 7, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 8, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 8, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 1, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 9, 3, 9, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 1, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 1, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 3, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 5, 3, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 1, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 1, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 3, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 3, 5, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 1, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 1, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 1, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 1, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 2, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 2, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 2, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 2, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 3, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 3, 4, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 4, 3, 6, box);
+        placeBlock(level, Blocks::cobblestone->defaultBlockState(), 6, 3, 6, box);
+        placeBlock(level, Blocks::torch->defaultBlockState(), 5, 3, 5, box);
+
+        int count = 3;
+        unsigned int a = 0xffffffffu;
+        unsigned int b = 0xfffffffeu;
+        int z = 2;
+        int lastZ = 0;
+        do
+        {
+            lastZ = z;
+            placeBlock(level, Blocks::planks->defaultBlockState(), 2, 3, lastZ, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 3, 3, lastZ, box);
+            if (2 < b)
+            {
+                placeBlock(level, Blocks::planks->defaultBlockState(), 4, 3, lastZ, box);
+                placeBlock(level, Blocks::planks->defaultBlockState(), 5, 3, lastZ, box);
+                placeBlock(level, Blocks::planks->defaultBlockState(), 6, 3, lastZ, box);
+            }
+            placeBlock(level, Blocks::planks->defaultBlockState(), 7, 3, lastZ, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 8, 3, lastZ, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 2, 3, lastZ + 1, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 3, 3, lastZ + 1, box);
+            if (2 < a)
+            {
+                placeBlock(level, Blocks::planks->defaultBlockState(), 4, 3, lastZ + 1, box);
+                placeBlock(level, Blocks::planks->defaultBlockState(), 5, 3, lastZ + 1, box);
+                placeBlock(level, Blocks::planks->defaultBlockState(), 6, 3, lastZ + 1, box);
+            }
+            placeBlock(level, Blocks::planks->defaultBlockState(), 7, 3, lastZ + 1, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 8, 3, lastZ + 1, box);
+            a += 2;
+            --count;
+            z = lastZ + 2;
+            b += 2;
+        } while (count != 0);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 2, 3, z, box);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 3, 3, z, box);
+        if (2 < static_cast<unsigned int>(lastZ - 2))
+        {
+            placeBlock(level, Blocks::planks->defaultBlockState(), 4, 3, z, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 5, 3, z, box);
+            placeBlock(level, Blocks::planks->defaultBlockState(), 6, 3, z, box);
+        }
+        placeBlock(level, Blocks::planks->defaultBlockState(), 7, 3, z, box);
+        placeBlock(level, Blocks::planks->defaultBlockState(), 8, 3, z, box);
+
+        TypedBoxed<const Direction*> ladderWest(Direction::WEST);
+        const BlockState* ladderState =
+            Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &ladderWest);
+        placeBlock(level, ladderState, 9, 1, 3, box);
+        placeBlock(level, ladderState, 9, 2, 3, box);
+        placeBlock(level, ladderState, 9, 3, 3, box);
+    }
+    return true;
+}
 StructurePiece* StrongholdPieces::RoomCrossing::Create() { return new StrongholdPieces::RoomCrossing(); }
 EStructurePiece StrongholdPieces::RoomCrossing::GetType() { return eStructurePiece_StrongholdRoomCrossing; }
 void StrongholdPieces::StairsDown::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -736,7 +1200,26 @@ void StrongholdPieces::StairsDown::addChildren(StructurePiece* start, std::vecto
     else if (axis == 5)
         generateAndAddPiece(startPiece, pieces, random, box->x1 + 1, box->y0 + 1, box->z0 + 1, orientation, depth);
 }
-bool StrongholdPieces::StairsDown::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::StairsDown::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 10, 4, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 7, 0);
+    generateSmallDoor(level, random, box, OPENING, 1, 1, 4);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, 6, 1, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 5, 1, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 5, 2, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 4, 3, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, 4, 3, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 3, 3, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 3, 2, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 2, 1, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, 2, 1, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 1, 1, box);
+    placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 1, 2, box);
+    return true;
+}
 StructurePiece* StrongholdPieces::StairsDown::Create() { return new StrongholdPieces::StairsDown(); }
 EStructurePiece StrongholdPieces::StairsDown::GetType() { return eStructurePiece_StairsDown; }
 void StrongholdPieces::Straight::addAdditionalSaveData(DataOutputStream* output) { StrongholdPiece::addAdditionalSaveData(output); output->writeInt(mData); }
@@ -760,7 +1243,39 @@ void StrongholdPieces::StraightStairsDown::addChildren(StructurePiece* start, st
 {
     generateSmallDoorChildForward(static_cast<StartPiece*>(start), pieces, random, 1, 1);
 }
-bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random&, BoundingBox* box) { if (edgesLiquid(level, box)) return false; generateAirBox(level, box, 0, 0, 0, 4, 4, 6); return true; }
+bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random& random, BoundingBox* box)
+{
+    if (edgesLiquid(level, box))
+        return false;
+    generateBox(level, box, 0, 0, 0, 4, 10, 7, true, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, static_cast<SmallDoorType>(mSmallDoor), 1, 7, 0);
+    generateSmallDoor(level, random, box, OPENING, 1, 1, 7);
+
+    int firstY = 5;
+    int secondY = 4;
+    int count = 3;
+    int index = 0;
+    do
+    {
+        if (index < 5)
+        {
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, firstY, index + 1, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, firstY, index + 1, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, firstY, index + 1, box);
+        }
+        if (index + 1 < 5)
+        {
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, secondY, index + 2, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, secondY, index + 2, box);
+            placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, secondY, index + 2, box);
+        }
+        firstY -= 2;
+        secondY -= 2;
+        --count;
+        index += 2;
+    } while (count != 0);
+    return true;
+}
 StructurePiece* StrongholdPieces::StraightStairsDown::Create() { return new StrongholdPieces::StraightStairsDown(); }
 EStructurePiece StrongholdPieces::StraightStairsDown::GetType() { return eStructurePiece_StraightStairsDown; }
 
@@ -782,11 +1297,89 @@ void StrongholdPieces::PortalRoom::addChildren(StructurePiece* start, std::vecto
         static_cast<StartPiece*>(start)->mPortalRoom = this;
 }
 
-bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random&, BoundingBox* box)
+bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    if (edgesLiquid(level, box))
-        return false;
-    generateAirBox(level, box, 0, 0, 0, 4, 4, 6);
+    generateBox(level, box, 0, 0, 0, 10, 7, 15, false, random, sStrongholdStoneSelector);
+    generateSmallDoor(level, random, box, GRATES, 4, 1, 0);
+    generateBox(level, box, 9, 6, 1, 9, 6, 14, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 2, 6, 1, 8, 6, 2, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 2, 6, 14, 8, 6, 14, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 1, 1, 1, 2, 1, 4, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 8, 1, 1, 9, 1, 4, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 1, 1, 1, 1, 1, 3,
+        Blocks::flowing_lava->defaultBlockState(), Blocks::flowing_lava->defaultBlockState(), false);
+    generateBox(level, box, 3, 1, 8, 7, 1, 12, false, random, sStrongholdStoneSelector);
+    generateBox(level, box, 4, 1, 9, 6, 1, 11,
+        Blocks::flowing_lava->defaultBlockState(), Blocks::flowing_lava->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 3, 0, 4, 3,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 3, 10, 4, 3,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 5, 0, 4, 5,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 5, 10, 4, 5,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 7, 0, 4, 7,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 7, 10, 4, 7,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 9, 0, 4, 9,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 9, 10, 4, 9,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 11, 0, 4, 11,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 11, 10, 4, 11,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 13, 0, 4, 13,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 10, 3, 13, 10, 4, 13,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 2, 3, 15, 2, 4, 15,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 15, 4, 4, 15,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 6, 3, 15, 6, 4, 15,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+    generateBox(level, box, 8, 3, 15, 8, 4, 15,
+        Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
+
+    TypedBoxed<const Direction*> frameNorth(Direction::NORTH);
+    const BlockState* frameNorthState =
+        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameNorth);
+    TypedBoxed<const Direction*> frameSouth(Direction::SOUTH);
+    const BlockState* frameSouthState =
+        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameSouth);
+    TypedBoxed<const Direction*> frameEast(Direction::EAST);
+    const BlockState* frameEastState =
+        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameEast);
+    TypedBoxed<const Direction*> frameWest(Direction::WEST);
+    const BlockState* frameWestState =
+        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameWest);
+
+    placeBlock(level, frameNorthState, 4, 3, 8, box);
+    placeBlock(level, frameNorthState, 5, 3, 8, box);
+    placeBlock(level, frameNorthState, 6, 3, 8, box);
+    placeBlock(level, frameSouthState, 4, 3, 12, box);
+    placeBlock(level, frameSouthState, 5, 3, 12, box);
+    placeBlock(level, frameSouthState, 6, 3, 12, box);
+    placeBlock(level, frameEastState, 3, 3, 9, box);
+    placeBlock(level, frameEastState, 3, 3, 10, box);
+    placeBlock(level, frameEastState, 3, 3, 11, box);
+    placeBlock(level, frameWestState, 7, 3, 9, box);
+    placeBlock(level, frameWestState, 7, 3, 10, box);
+    placeBlock(level, frameWestState, 7, 3, 11, box);
+
+    if (!mFlag)
+    {
+        BlockPos pos(getWorldX(5, 6), getWorldY(3), getWorldZ(5, 6));
+        if (box->isInside(pos))
+        {
+            mFlag = true;
+            setDirty();
+            level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), 2, false);
+        }
+    }
     return true;
 }
 
@@ -808,8 +1401,36 @@ void StrongholdPieces::FillerCorridor::readAdditionalSaveData(
 
 bool StrongholdPieces::FillerCorridor::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    if (edgesLiquid(level, box)) return false;
-    generateAirBox(level, box, 0, 0, 0, 4, 4, 6);
+    if (edgesLiquid(level, box))
+        return false;
+    for (int z = 0; z < mData; ++z)
+    {
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 0, 0, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 0, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, 0, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 0, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 4, 0, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 0, 1, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 1, 1, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 2, 1, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 3, 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 4, 1, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 0, 2, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 1, 2, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 2, 2, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 3, 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 4, 2, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 0, 3, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 1, 3, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 2, 3, z, box);
+        placeBlock(level, Blocks::AIR->defaultBlockState(), 3, 3, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 4, 3, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 0, 4, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 1, 4, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 2, 4, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 3, 4, z, box);
+        placeBlock(level, Blocks::stonebrick->defaultBlockState(), 4, 4, z, box);
+    }
     return true;
 }
 

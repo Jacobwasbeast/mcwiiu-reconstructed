@@ -1,6 +1,7 @@
 #include "game/core/Mth.hpp"
 
 #include <math.h>
+#include <utility>
 
 #include "game/util/Random.hpp"
 
@@ -775,3 +776,6 @@ int Mth::hsvToRgb(float hue, float saturation, float value)
 
     return clamp((int)(red * 255.0f), 0, 255) << 16 | clamp((int)(green * 255.0f), 0, 255) << 8 | clamp((int)(blue * 255.0f), 0, 255);
 }
+
+template void Mth::shuffle<int>(std::vector<int>*, Random&);
+template void Mth::shuffle<std::pair<int, int> >(std::vector<std::pair<int, int> >*, Random&);

@@ -95,26 +95,47 @@ AABB* IllusionIllager::getBoundingBoxForCulling() { return Entity::getBoundingBo
 void IllusionIllager::aiStep()
 {
     Monster::aiStep();
-    if (mLevel != NULL && mLevel->mIsClientSide && isEffectiveAi())
+    if (mLevel->mIsClientSide && isInvisible())
     {
-        if (mTickCount % 1200 == 0 || mIllusionLevel == 1)
+        int nextLevel = mIllusionLevel - 1;
+        if (nextLevel < 0)
+            nextLevel = 0;
+        if (mTickCount % 1200 == 0 || mAttackStrengthTicker == 1)
         {
             mIllusionLevel = 3;
+            int roll = mRandom->nextInt(6);
+            double y = (roll > 4) ? (double)(roll - 4) : 0.0;
+            double z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            double x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition;
-            mDisguisedPosition = mDisguisedPositionO;
-            mDisguisedPositionO = Vec3::newPermanent(0.0, 0.0, 0.0);
+            mDisguisedPosition = mDisguisedPosition3;
+            mDisguisedPosition3 = Vec3::newPermanent(x, y, z);
+            roll = mRandom->nextInt(6);
+            y = (roll > 4) ? (double)(roll - 4) : 0.0;
+            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            delete mDisguisedPositionO;
+            mDisguisedPositionO = mDisguisedPosition3O;
+            mDisguisedPosition3O = Vec3::newPermanent(x, y, z);
+            roll = mRandom->nextInt(6);
+            y = (roll > 4) ? (double)(roll - 4) : 0.0;
+            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition2;
-            mDisguisedPosition2 = mDisguisedPosition2O;
-            mDisguisedPosition2O = Vec3::newPermanent(0.0, 0.0, 0.0);
-            delete mDisguisedPosition3;
-            mDisguisedPosition3 = mDisguisedPosition3O;
-            mDisguisedPosition3O = Vec3::newPermanent(0.0, 0.0, 0.0);
-            delete mDisguisedPosition4;
-            mDisguisedPosition4 = mDisguisedPosition4O;
-            mDisguisedPosition4O = Vec3::newPermanent(0.0, 0.0, 0.0);
+            mDisguisedPosition2 = mDisguisedPosition4;
+            mDisguisedPosition4 = Vec3::newPermanent(x, y, z);
+            roll = mRandom->nextInt(6);
+            y = (roll > 4) ? (double)(roll - 4) : 0.0;
+            z = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0 + (double)mRandom->nextInt(13)) * 0.5;
+            delete mDisguisedPosition2O;
+            mDisguisedPosition2O = mDisguisedPosition4O;
+            mDisguisedPosition4O = Vec3::newPermanent(x, y, z);
         }
-        else if (mIllusionLevel > 0)
-            --mIllusionLevel;
+        else
+        {
+            mIllusionLevel = nextLevel;
+        }
     }
 }
 
@@ -154,14 +175,11 @@ arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
 
 void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    if (target == NULL || mLevel == NULL)
-        return;
-    boost::shared_ptr<TippableArrow> arrow = getArrow(target, distanceFactor);
-    if (arrow != NULL)
-        setAggressive(true);
+    boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
+    mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
 }
 
-boost::shared_ptr<TippableArrow> IllusionIllager::getArrow(boost::shared_ptr<LivingEntity> target, float distanceFactor)
+boost::shared_ptr<TippableArrow> IllusionIllager::getArrow(float distanceFactor)
 {
     boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
     boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, owner));

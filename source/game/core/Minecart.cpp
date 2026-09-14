@@ -68,9 +68,9 @@ Minecart::Minecart(Level* level, double x, double y, double z) : Entity(level, t
 {
     _init();
     setPos(x, y, z);
-    mXOld = x;
-    mYOld = y;
-    mZOld = z;
+    mXd = 0.0;
+    mYd = 0.0;
+    mZd = 0.0;
     mXo = x;
     mYo = y;
     mZo = z;
@@ -82,12 +82,12 @@ Minecart::~Minecart()
 
 void Minecart::staticCtor()
 {
-    DATA_ID_DAMAGE = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
-    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
-    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<float>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
-    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
-    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
-    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(0x0a800000ULL, ENTITY_TYPE_MINECART, NULL);
+    DATA_ID_DAMAGE = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_DISPLAY_BLOCK = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_DISPLAY_OFFSET = SynchedEntityData::defineId<float>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_HURT_TIME = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_HURT_DIR = SynchedEntityData::defineId<int>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
+    DATA_ID_CUSTOM_DISPLAY = SynchedEntityData::defineId<bool>(ENTITY_TYPE_MINECART, 0x08000000ULL, NULL);
 }
 
 void Minecart::_init()
@@ -191,11 +191,19 @@ double Minecart::getRideHeight()
 
 bool Minecart::hurt(const DamageSource* source, float damage)
 {
-    if (mRemoved || isInvulnerableTo(source))
+    if (isInvulnerableTo(source))
     {
         return false;
     }
-    animateHurt();
+    setHurtDir(-getHurtDir());
+    setHurtTime(10);
+    markHurt();
+    setDamage(damage * 10.0f + getDamage());
+    if (getDamage() > 40.0f)
+    {
+        ejectPassengers();
+        destroy(source);
+    }
     return true;
 }
 
@@ -251,6 +259,14 @@ bool Minecart::shouldTick()
 
 void Minecart::tick()
 {
+    if (getHurtTime() > 0)
+    {
+        setHurtTime(getHurtTime() - 1);
+    }
+    if (getDamage() > 0.0f)
+    {
+        setDamage(getDamage() - 1.0f);
+    }
     baseTick();
     if (mLerpSteps > 0)
     {
@@ -338,9 +354,44 @@ void Minecart::readAdditionalSaveData(CompoundTag* tag)
 
 void Minecart::push(boost::shared_ptr<Entity> entity)
 {
-    if (isPushable(entity))
+    if (entity->mNoPhysics || mNoPhysics)
     {
-        Entity::push(entity);
+        return;
+    }
+    if (hasPassenger(entity))
+    {
+        return;
+    }
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin(); it != mPassengers.end(); ++it)
+    {
+        boost::shared_ptr<Entity> passenger = it->lock();
+        if (passenger && passenger->hasPassenger(entity))
+        {
+            return;
+        }
+    }
+
+    double dx = entity->mX - mX;
+    double dz = entity->mZ - mZ;
+    double distanceSq = dx * dx + dz * dz;
+    if (distanceSq < 0.0001)
+    {
+        return;
+    }
+    double distance = sqrt(distanceSq);
+    double factor = 1.0 / distance;
+    if (factor > 1.0)
+    {
+        factor = 1.0;
+    }
+    double pushScale = factor * 0.1 * (1.0 - mPushthrough) * 0.5;
+    double pushX = (dx / distance) * pushScale;
+    double pushZ = (dz / distance) * pushScale;
+
+    if ((entity->GetType() & 0x0a800000ULL) != 0x0a800000ULL)
+    {
+        Entity::push(-pushX, 0.0, -pushZ);
+        entity->Entity::push(pushX * 0.25, 0.0, pushZ * 0.25);
     }
 }
 

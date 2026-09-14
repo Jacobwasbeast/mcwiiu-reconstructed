@@ -160,7 +160,19 @@ int Llama::getVariant()
     int variant = getEntityData() != NULL && DATA_VARIANT != NULL ? getEntityData()->get(DATA_VARIANT) : mVariant;
     return variant < 0 ? 0 : (variant > 3 ? 3 : variant);
 }
-void Llama::addAdditonalSaveData(CompoundTag* tag) { AbstractChestedHorse::addAdditonalSaveData(tag); tag->putInt(L"Variant", getVariant()); tag->putInt(L"Strength", getStrength()); }
+void Llama::addAdditonalSaveData(CompoundTag* tag)
+{
+    AbstractChestedHorse::addAdditonalSaveData(tag);
+    tag->putInt(L"Variant", getVariant());
+    tag->putInt(L"Strength", getStrength());
+
+    not_null_ptr<ItemInstance> item = mInventory->getItem(1);
+    if (!item->isEmpty())
+    {
+        not_null_ptr<ItemInstance> decorItem = mInventory->getItem(1);
+        tag->put(L"DecorItem", decorItem->save(new CompoundTag()));
+    }
+}
 void Llama::setVariant(int variant)
 {
     mVariant = variant;
@@ -171,14 +183,13 @@ void Llama::setVariant(int variant)
 }
 void Llama::readAdditionalSaveData(CompoundTag* tag)
 {
+    setStrength(tag->getInt(L"Strength"));
     AbstractChestedHorse::readAdditionalSaveData(tag);
-    if (tag->contains(L"Variant"))
+    setVariant(tag->getInt(L"Variant"));
+    if (tag->contains(L"DecorItem", 10))
     {
-        setVariant(tag->getInt(L"Variant"));
-    }
-    if (tag->contains(L"Strength"))
-    {
-        setStrength(tag->getInt(L"Strength"));
+        not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"DecorItem")));
+        mInventory->setItem(1, item);
     }
 }
 void Llama::registerGoals()
@@ -208,7 +219,12 @@ void Llama::defineSynchedData()
     getEntityData()->createDateItem(DATA_SWAG, -1);
     getEntityData()->createDateItem(DATA_VARIANT, 0);
 }
-int Llama::getInventorySize() { return getStrength() * 3; }
+int Llama::getInventorySize()
+{
+    if (hasChest())
+        return getInventoryColumns() * 3 + 2;
+    return AbstractChestedHorse::getInventorySize();
+}
 void Llama::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
     if (!hasPassenger(passenger))
@@ -236,13 +252,13 @@ int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_
 
     if (food == Items::wheat)
     {
-        healAmount = 10.0f;
+        healAmount = 2.0f;
         growth = 10;
         temperGain = 3;
     }
     else if (food == Item::byBlock(Blocks::hay_block))
     {
-        healAmount = 20.0f;
+        healAmount = 10.0f;
         growth = 90;
         temperGain = 6;
         if (isTamed() && !isBaby())
@@ -445,7 +461,7 @@ void Llama::updateEquipment()
 int Llama::getMaxTemper() const { return 30; }
 bool Llama::canMate(const boost::shared_ptr<Animal>& other)
 {
-    if (other.get() == this)
+    if (other == shared_from_this())
         return false;
 
     if (other->GetType() == 0x000000002D698003ULL && canParent())
@@ -456,7 +472,30 @@ bool Llama::canMate(const boost::shared_ptr<Animal>& other)
 
     return false;
 }
-boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMob> partner) { return AbstractHorse::getBreedOffspring(partner); }
+boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
+{
+    boost::shared_ptr<Llama> baby(new Llama(mLevel));
+    AbstractHorse::setOffspringAttributes(partner, baby);
+
+    boost::shared_ptr<Llama> llamaPartner = boost::static_pointer_cast<Llama>(partner);
+    int maxStrength = getStrength();
+    int partnerStrength = llamaPartner->getStrength();
+    if (partnerStrength > maxStrength)
+        maxStrength = partnerStrength;
+
+    int strength = getRandom()->nextInt(maxStrength);
+    int newStrength = strength + 1;
+    if (getRandom()->nextFloat() < 0.03f)
+        newStrength = strength + 2;
+    baby->setStrength(newStrength);
+
+    if (getRandom()->nextBoolean())
+        baby->setVariant(getVariant());
+    else
+        baby->setVariant(llamaPartner->getVariant());
+
+    return baby;
+}
 void Llama::setDidSpit(bool didSpit) { mDidSpit = didSpit; }
 void Llama::causeFallDamage(float fallDistance, float damageMultiplier)
 {
@@ -494,18 +533,14 @@ void Llama::causeFallDamage(float fallDistance, float damageMultiplier)
 }
 void Llama::leaveCaravan()
 {
-    if (mCaravanHead)
-        mCaravanHead->mCaravanTail.reset();
-    if (mCaravanTail)
-        mCaravanTail->mCaravanHead.reset();
+    boost::shared_ptr<Llama> head = mCaravanHead.lock();
+    if (head)
+        head->mCaravanTail.reset();
     mCaravanHead.reset();
-    mCaravanTail.reset();
 }
 
 void Llama::joinCaravan(const boost::shared_ptr<Llama>& llama)
 {
-    if (!llama || llama.get() == this)
-        return;
     mCaravanHead = llama;
     llama->mCaravanTail = boost::static_pointer_cast<Llama>(shared_from_this());
 }
@@ -520,7 +555,7 @@ bool Llama::inCaravan()
     boost::weak_ptr<Llama> weakHead(mCaravanHead);
     return weakHead.lock().get() != NULL;
 }
-boost::shared_ptr<Llama> Llama::getCaravanHead() { return mCaravanHead; }
+boost::shared_ptr<Llama> Llama::getCaravanHead() { return mCaravanHead.lock(); }
 double Llama::followLeashSpeed() { return 2.0; }
 void Llama::followMommy()
 {

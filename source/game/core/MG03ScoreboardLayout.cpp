@@ -19,8 +19,9 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType)
+MG03ScoreboardLayout::MG03ScoreboardLayout(EScoreboardType type)
     : IScoreboardLayout()
+    , m_type(type)
 {
 }
 
@@ -132,8 +133,9 @@ unsigned int MG03ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
 
 void MG03ScoreboardLayout::Init(int value)
 {
-    m_localPlayerIdx = value;
+    m_userIndex = value;
     ClearPlayersInfo();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[value];
     const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     for (int index = 0; index < playerCount; ++index)
     {
@@ -185,7 +187,7 @@ UIString MG03ScoreboardLayout::getLabel4(const StatsUID& uid)
 UIString MG03ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (!scoreboard->HasStats(uid))
     {
@@ -314,7 +316,7 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     const MiniGameDef* miniGame = minecraft->GetMiniGame();
     ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
     ClientScoreboard* scoreboard =
-        minecraft->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        minecraft->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     int round = -1;
@@ -325,7 +327,7 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     double mapTraversed = 100.0;
 
     const bool useBestStats =
-        m_localPlayerIdx == 1 || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
+        m_type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
 
     if (miniGame->ArePointsActive())
     {
@@ -395,7 +397,7 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     setPlayerInfoDouble(info, 0x40, mapTraversed);
     setPlayerInfoInt(info, 0x34, lifespan);
 
-    MultiPlayerGameMode* localGameMode = minecraft->mLocalPlayers[m_localPlayerIdx]->GetLocalGameMode();
+    MultiPlayerGameMode* localGameMode = minecraft->mLocalPlayers[m_userIndex]->GetLocalGameMode();
     setPlayerInfoByte(info, 0x3a, static_cast<unsigned char>(localGameMode->IsTeamInvite(playerName)));
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }

@@ -38,16 +38,17 @@ ThrownTrident::ThrownTrident(Level* level, boost::shared_ptr<LivingEntity> owner
 }
 
 ThrownTrident::ThrownTrident(Level* level)
-    : AbstractRotatedItemProjectile(level), mTridentItem(new ItemInstance(Items::trident))
+    : AbstractRotatedItemProjectile(level)
 {
     _init();
+    mTridentItem = new ItemInstance(Items::trident);
 }
 
 ThrownTrident::ThrownTrident(Level* level, double x, double y, double z)
-    : AbstractRotatedItemProjectile(level, x, y, z),
-      mTridentItem(new ItemInstance(Items::trident))
+    : AbstractRotatedItemProjectile(level, x, y, z)
 {
     _init();
+    mTridentItem = new ItemInstance(Items::trident);
 }
 
 ThrownTrident::ThrownTrident(Level* level, not_null_ptr<ItemInstance> item,
@@ -161,13 +162,16 @@ const SoundEvent* ThrownTrident::getOnHitSound() const
 
 void ThrownTrident::onHitEntity(const HitResult* result)
 {
+    boost::shared_ptr<Entity> entity = result->mEntity;
     float damage = 8.0f;
-    boost::shared_ptr<LivingEntity> target;
-    if ((result->mEntity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
     {
-        target = boost::static_pointer_cast<LivingEntity>(result->mEntity);
         if (!mTridentItem->isEmpty())
+        {
+            boost::shared_ptr<LivingEntity> target =
+                boost::static_pointer_cast<LivingEntity>(entity);
             damage += static_cast<float>(EnchantmentHelper::getDamageBonus(mTridentItem, target));
+        }
     }
     boost::shared_ptr<ThrownTrident> trident =
         boost::static_pointer_cast<ThrownTrident>(shared_from_this());
@@ -176,17 +180,19 @@ void ThrownTrident::onHitEntity(const HitResult* result)
         : boost::static_pointer_cast<Entity>(trident);
     boost::shared_ptr<DamageSource> source = DamageSource::CreateTrident(trident, owner);
     mDealtDamage = true;
-    if (result->mEntity->hurt(source.get(), damage))
+    if (entity->hurt(source.get(), damage))
     {
-        if (target)
+        if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
         {
+            boost::shared_ptr<LivingEntity> target =
+                boost::static_pointer_cast<LivingEntity>(entity);
             if (mOwner &&
                 (mOwner->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
             {
                 EnchantmentHelper::doPostHurtEffects(target,
                     boost::static_pointer_cast<Entity>(mOwner));
                 EnchantmentHelper::doPostDamageEffects(
-                    boost::static_pointer_cast<LivingEntity>(mOwner), result->mEntity);
+                    boost::static_pointer_cast<LivingEntity>(mOwner), entity);
             }
             doPostHurtEffects(target);
         }
@@ -199,10 +205,11 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     mZd *= -0.01;
     mHasImpulse = true;
 
-    if (target && mLevel->isThundering() && !mTridentItem->isEmpty()
+    if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY
+        && mLevel->isThundering() && !mTridentItem->isEmpty()
         && EnchantmentHelper::hasChanneling(mTridentItem))
     {
-        BlockPos pos(result->mEntity);
+        BlockPos pos(entity);
         if (mLevel->canSeeSky(pos))
         {
             playSound(SoundEvents::TRIDENT_THUNDER, 1.0f, 1.0f);

@@ -290,10 +290,10 @@ public:
         StartPiece();
         virtual ~StartPiece();
         virtual EStructurePiece GetType();
-        std::vector<StructurePiece*> mPendingChildren;
-        std::list<PieceWeight*> mAvailablePieces;
         int mPreviousPieceWeight;
-        int mPreviousPieceDepth;
+        Level* mLevel;
+        std::list<PieceWeight*> mAvailablePieces;
+        std::vector<StructurePiece*> mPendingChildren;
     };
 };
 

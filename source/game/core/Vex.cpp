@@ -257,6 +257,7 @@ unsigned long long Vex::GetType()
 Vex::VexChargeAttackGoal::VexChargeAttackGoal(Vex* vex)
     : Goal(), mVex(vex)
 {
+    setRequiredControlFlags(1);
 }
 
 Vex::VexChargeAttackGoal::~VexChargeAttackGoal()
@@ -265,12 +266,14 @@ Vex::VexChargeAttackGoal::~VexChargeAttackGoal()
 
 bool Vex::VexChargeAttackGoal::canUse()
 {
-    return mVex->getTarget() && !mVex->isCharging();
+    return mVex->getTarget() && !mVex->mMoveControl->hasWanted() && mVex->mRandom->nextInt(7) == 0 &&
+           mVex->distanceToSqr(boost::static_pointer_cast<Entity>(mVex->getTarget())) > 4.0;
 }
 
 bool Vex::VexChargeAttackGoal::canContinueToUse()
 {
-    return mVex->getTarget() && mVex->isCharging();
+    return mVex->mMoveControl->hasWanted() && mVex->isCharging() && mVex->getTarget() &&
+           mVex->getTarget()->isAlive();
 }
 
 void Vex::VexChargeAttackGoal::start()

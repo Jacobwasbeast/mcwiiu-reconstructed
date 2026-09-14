@@ -298,6 +298,8 @@ private:
     unsigned char m_unknown3F9[3];
     int m_renderOffsetX;
     int m_renderOffsetY;
+    int m_lastViewport;
+    bool m_viewportPositionDirty;
     OSFastMutex m_fontMutex;
     int m_currentFont;
     EFont m_pendingFont;

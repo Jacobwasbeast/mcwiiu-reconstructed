@@ -78,7 +78,7 @@ bool MG04ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 
 void MG04ScoreboardLayout::Init(int value)
 {
-    m_localPlayerIdx = value;
+    m_userIndex = value;
     ClearPlayersInfo();
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
@@ -102,7 +102,7 @@ void MG04ScoreboardLayout::Init(int value)
 UIString MG04ScoreboardLayout::getLabel2(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int blocks = scoreboard->GetBlocksPlaced(uid, -1);
     std::wstring text(L"");
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
@@ -112,7 +112,7 @@ UIString MG04ScoreboardLayout::getLabel2(const StatsUID& uid)
 UIString MG04ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int blocks = scoreboard->GetBlocksDestroyed(uid, -1);
     std::wstring text(L10N::GetString(0x782d903f));
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
@@ -122,7 +122,7 @@ UIString MG04ScoreboardLayout::getLabel3(const StatsUID& uid)
 UIString MG04ScoreboardLayout::getLabel4(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int distance = scoreboard->GetTotalDistanceTravelled(uid);
     std::wstring text(L10N::GetString(0x2815dc90));
     text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
@@ -132,7 +132,7 @@ UIString MG04ScoreboardLayout::getLabel4(const StatsUID& uid)
 UIString MG04ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     if (scoreboard->IsOverallWinner(uid))
     {
         return UIString(0x9148f7e8);
@@ -237,7 +237,7 @@ void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
         Minecraft::GetInstance()->GetLocalPlayerByName(playerName);
 
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
 
     memcpy(reinterpret_cast<char*>(info) + 0x24, scoreboard->GetVotesGiven(uid, -1), 16);
     memcpy(reinterpret_cast<char*>(info) + 0x34, scoreboard->GetVotesReceived(uid, -1), 16);

@@ -8,15 +8,22 @@
 #include <vector>
 
 #include "game/core/Mth.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/not_null_ptr.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/entity/mob/Animal.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/LiquidBlock.hpp"
@@ -25,31 +32,6 @@
 namespace
 {
 const EntityDataAccessor<int>* sBoatDataHurtDir = 0;
-
-double& boatWaterLevel(Boat* boat)
-{
-    return *reinterpret_cast<double*>(reinterpret_cast<char*>(boat) + 0x398);
-}
-
-float& boatGroundFriction(Boat* boat)
-{
-    return *reinterpret_cast<float*>(reinterpret_cast<char*>(boat) + 0x3a0);
-}
-
-double& boatWaterScanBase(Boat* boat)
-{
-    return *reinterpret_cast<double*>(reinterpret_cast<char*>(boat) + 0x3b0);
-}
-
-unsigned char& boatBubbleColumnActive(Boat* boat)
-{
-    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(boat) + 0x3b8);
-}
-
-unsigned char& boatBubbleColumnDown(Boat* boat)
-{
-    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(boat) + 0x3b9);
-}
 
 int floorBlockCoord(double value)
 {
@@ -130,6 +112,8 @@ void Boat::staticCtor()
 void Boat::_init()
 {
     mStatus = 0;
+    mStatusO = 0;
+    mUnderwaterTicks = 0;
     mBubbleTime = 0;
     mHurtTime = 0;
     mHurtDir = 1;
@@ -196,7 +180,22 @@ Item* Boat::getDropItem()
         return Items::boat;
     }
 }
-bool Boat::hurt(const DamageSource* source, float damage) { setDamage(getDamage() + damage * 10.0f); return true; }
+bool Boat::hurt(const DamageSource* source, float damage)
+{
+    if (isInvulnerableTo(source))
+        return false;
+
+    setHurtDir(-getHurtDir());
+    setHurtTime(10);
+    setDamage(getDamage() + damage * 10.0f);
+    markHurt();
+
+    if (getDamage() > 40.0f && mLevel->getGameRules()->getBoolean(6))
+        spawnAtLocation(getDropItem(), 1, 0.0f);
+
+    remove();
+    return true;
+}
 int Boat::getBubbleTime()
 {
     return getEntityData()->get(DATA_BUBBLE_TIME);
@@ -210,8 +209,8 @@ void Boat::onAboveBubbleCol(bool down)
 {
     if (!mLevel->mIsClientSide)
     {
-        boatBubbleColumnActive(this) = 1;
-        boatBubbleColumnDown(this) = down ? 1 : 0;
+        mBubbleColumnActive = 1;
+        mBubbleColumnDown = down ? 1 : 0;
         if (getBubbleTime() == 0)
             setBubbleTime(60);
     }
@@ -326,7 +325,7 @@ double Boat::getGroundFriction()
 bool Boat::checkInWater()
 {
     AABB* box = mBoundingBox;
-    boatWaterLevel(this) = DBL_MAX;
+    mWaterLevel = DBL_MAX;
     const int minX = floorBlockCoord(box->mMinX);
     const int maxX = ceilBlockCoord(box->mMaxX);
     const int minY = floorBlockCoord(box->mMinY);
@@ -348,8 +347,8 @@ bool Boat::checkInWater()
 
                 const double liquidHeight =
                     LiquidBlock::getLiquidHeight(state, mLevel, pos);
-                if (liquidHeight < boatWaterLevel(this))
-                    boatWaterLevel(this) = liquidHeight;
+                if (liquidHeight < mWaterLevel)
+                    mWaterLevel = liquidHeight;
                 inWater = inWater || box->mMinY < liquidHeight;
             }
         }
@@ -362,7 +361,7 @@ int Boat::getStatus()
     int status = isUnderwater();
     if (status != 3)
     {
-        boatWaterLevel(this) =
+        mWaterLevel =
             *reinterpret_cast<double*>(reinterpret_cast<char*>(mLevel) + 0x20);
         return status;
     }
@@ -371,7 +370,7 @@ int Boat::getStatus()
     double friction = getGroundFriction();
     if (0.6 < friction)
     {
-        boatGroundFriction(this) = static_cast<float>(friction);
+        mGroundFriction = static_cast<float>(friction);
         return 4;
     }
     return 5;
@@ -433,7 +432,7 @@ double Boat::getWaterLevelAbove()
 {
     AABB* box = mBoundingBox;
     const int minY = floorBlockCoord(box->mMaxY);
-    const int maxY = ceilBlockCoord(box->mMaxY - boatWaterScanBase(this));
+    const int maxY = ceilBlockCoord(box->mMaxY - mWaterScanBase);
     const float initialHeight = 0.6f;
     BlockPos pos(0, 0, 0);
 
@@ -449,21 +448,87 @@ double Boat::getWaterLevelAbove()
 }
 void Boat::floatBoat()
 {
-    const double water = getWaterLevelAbove();
-    const double depth = water - mBoundingBox->mMinY;
-    if (depth > 0.0)
+    const double horizontalSpeed = Vec3::newTemp(mXd, 0.0, mZd)->length();
+    double rockSpeed = horizontalSpeed * 30.0 + 1.0;
+    if (mRandom->nextInt(30) == 0)
+        rockSpeed *= 10.0;
+    mRockPhase += 0.05 * rockSpeed;
+
+    BlockPos base(mX, mY, mZ);
+    Material* materialBase = mLevel->getBlockState(mTickCache, base)->getMaterial();
+    Material* materialBaseExtra = mLevel->getExtraBlockState(base)->getMaterial();
+    BlockPos aboveBase = base.above();
+    Material* materialAbove = mLevel->getBlockState(mTickCache, aboveBase)->getMaterial();
+    Material* materialAboveExtra = mLevel->getExtraBlockState(aboveBase)->getMaterial();
+
+    bool inWater = false;
+
+    if (materialBase == Material::WATER || materialBaseExtra == Material::WATER)
     {
-        const double buoyancy = depth > 1.0 ? 0.05 : depth * 0.05;
-        mYd += buoyancy;
-        mYd *= 0.9;
+        if (materialAbove == Material::AIR && !getIsSinking())
+        {
+            inWater = true;
+            mXd *= 0.9;
+            mZd *= 0.9;
+
+            const double bobY = getWaterLevelAbove() - (double)mBbHeight + 0.2;
+            setPos(mX, bobY + sin(mRockPhase) * 0.04, mZ);
+            mYd = 0.0;
+            return;
+        }
+        else if (materialAbove == Material::WATER || materialAboveExtra == Material::WATER)
+        {
+            inWater = true;
+            mXd *= 0.9;
+            mZd *= 0.9;
+        }
+    }
+    else if (materialBase == Material::BUBBLE_COLUMN && materialAbove == Material::BUBBLE_COLUMN)
+    {
         mXd *= 0.9;
         mZd *= 0.9;
+    }
+    else if (materialBase == Material::AIR || materialBase == Material::TOP_SNOW)
+    {
+        BlockPos below = base.below();
+        Material* materialBelow = mLevel->getBlockState(mTickCache, below)->getMaterial();
+        if (materialBelow != Material::WATER)
+            materialBelow = mLevel->getExtraBlockState(below)->getMaterial();
+
+        if (!mOnGround)
+        {
+            const float friction = (materialBelow == Material::WATER) ? 0.9f : 1.0f;
+            mXd *= friction;
+            mZd *= friction;
+            mGroundFriction = friction;
+        }
+        else
+        {
+            Block* belowBlock = mLevel->getBlock(below);
+            const float friction = belowBlock->mFriction;
+            mXd *= friction;
+            mZd *= friction;
+            mGroundFriction = friction;
+        }
+    }
+    else
+    {
+        mXd *= mGroundFriction;
+        mZd *= mGroundFriction;
+    }
+
+    if (getIsSinking())
+    {
+        const double bobY = getWaterLevelAbove() - (double)mBbHeight + 0.2;
+        setPos(mX, bobY + sin(mRockPhase) * 0.04, mZ);
+    }
+    else if (inWater)
+    {
+        mYd += 0.007;
     }
     else
     {
         mYd -= 0.04;
-        mXd *= 0.9;
-        mZd *= 0.9;
     }
 }
 void Boat::controlBoat()
@@ -489,7 +554,62 @@ void Boat::setIsSinking(bool sinking)
     getEntityData()->set(DATA_SINKING, sinking, true);
 }
 void Boat::tickBubbleColumn() { if (mBubbleTime > 0) --mBubbleTime; }
-void Boat::tick() { Entity::tick(); tickLerp(); tickBubbleColumn(); }
+void Boat::tick()
+{
+    mStatusO = mStatus;
+    mStatus = getStatus();
+    if (mStatus == 1 || mStatus == 2)
+        ++mUnderwaterTicks;
+    else
+        mUnderwaterTicks = 0;
+
+    if (!mLevel->mIsClientSide && (mUnderwaterTicks > 59 || getIsSinking()))
+        ejectPassengers();
+
+    if (getHurtTime() > 0)
+        setHurtTime(getHurtTime() - 1);
+    if (getDamage() > 0.0f)
+        setDamage(getDamage() - 1.0f);
+
+    mZo = mZ;
+    mXo = mX;
+    mYo = mY;
+
+    Entity::tick();
+    tickLerp();
+    tickLeash();
+
+    if (!isControlledByLocalInstance())
+    {
+        mXd = 0.0;
+        mYd = 0.0;
+        mZd = 0.0;
+    }
+    else
+    {
+        bool resetPaddles = true;
+        std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+        if (!passengers->empty())
+        {
+            boost::shared_ptr<Entity> firstPassenger = (*passengers)[0].lock();
+            if (firstPassenger && (firstPassenger->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+                resetPaddles = false;
+        }
+
+        if (resetPaddles)
+            setPaddleState(false, false);
+
+        floatBoat();
+
+        if (mLevel->mIsClientSide)
+            controlBoat();
+
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+    }
+
+    tickBubbleColumn();
+    checkInsideBlocks();
+}
 double Boat::getRowingTime(int paddle, float partialTicks) { return getPaddleState(paddle) ? partialTicks : 0.0; }
 void Boat::clampRotation(boost::shared_ptr<Entity> passenger)
 {
@@ -547,7 +667,17 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
 void Boat::onPassengerTurned(boost::shared_ptr<Entity> passenger) { Entity::onPassengerTurned(passenger); }
 void Boat::addAdditonalSaveData(CompoundTag* tag)
 {
-    tag->putInt(L"Type", (int)mType);
+    tag->putInt(L"Type", (int)getType());
+    tag->putBoolean(L"Leashed", mLeashed);
+
+    boost::shared_ptr<Entity> leashHolder = getLeashHolder();
+    if (leashHolder)
+    {
+        CompoundTag* leashTag = new CompoundTag();
+        if ((leashHolder->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+            leashTag->putString(L"UUID", leashHolder->getUUID());
+        tag->put(L"Leash", leashTag);
+    }
 }
 void Boat::setType(Type type)
 {
@@ -558,7 +688,41 @@ void Boat::readAdditionalSaveData(CompoundTag* tag)
     mType = (Type)Mth::clamp(tag->getInt(L"Type"), 0, 5);
 }
 bool Boat::testInteract(boost::shared_ptr<Player> player) { return getPassengers()->size() < 2; }
-bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand) { return testInteract(player); }
+bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
+{
+    not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);
+    if (itemInHand->getItem() == Items::lead)
+    {
+        if (!mLevel->mIsClientSide && isLeashedToPlayer(player))
+        {
+            dropLeash(true, true);
+            return true;
+        }
+        if (canBeLeashed(player))
+        {
+            setLeashedTo(player, true);
+            itemInHand->shrink(1);
+            return true;
+        }
+    }
+
+    if (player->isSneaking())
+        return false;
+
+    if (!mLevel->mIsClientSide)
+    {
+        if (mUnderwaterTicks < 60 && !getIsSinking())
+            player->startRiding(shared_from_this());
+
+        if (isLeashedToPlayer(player))
+        {
+            dropLeash(true, true);
+            return true;
+        }
+    }
+
+    return true;
+}
 unsigned int Boat::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     return tooltipData.m_bAllowedToInteract ? 0x3c2d9ad6U : 0xffffffffU;
@@ -569,13 +733,37 @@ unsigned int Boat::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 }
 void Boat::checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos)
 {
-    mFallDistance = (float)(mY - y);
-    if (onGround && mFallDistance > 3.0f)
+    mWaterScanBase = mYd;
+
+    if (isPassenger())
+        return;
+
+    if (block != NULL)
     {
-        playSound(SoundEvents::BOAT_PADDLE_LAND, 1.0f, 1.0f);
+        if (mFallDistance > 3.0f && mStatus == 4)
+        {
+            causeFallDamage(mFallDistance, 1.0f);
+            if (!mLevel->mIsClientSide && !mRemoved)
+            {
+                remove();
+                if (mLevel->getGameRules()->getBoolean(6))
+                {
+                    for (int i = 0; i < 3; ++i)
+                        spawnAtLocation(new ItemInstance(Item::byBlock(Blocks::planks), 1, getType()), 0.0f);
+                    spawnAtLocation(Items::stick, 1, 0.0f);
+                    spawnAtLocation(Items::stick, 1, 0.0f);
+                }
+            }
+        }
         mFallDistance = 0.0f;
     }
-    Entity::checkFallDamage(y, onGround, block, pos);
+    else
+    {
+        BlockPos below = BlockPos(this).below();
+        const BlockState* state = mLevel->getBlockState(mTickCache, below);
+        if (state->getMaterial() != Material::WATER && y < 0.0)
+            mFallDistance -= (float)y;
+    }
 }
 void Boat::setDamage(float damage)
 {

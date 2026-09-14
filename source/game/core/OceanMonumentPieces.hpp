@@ -167,7 +167,7 @@ void generateEntranceWall(Level*, Random&, BoundingBox*);
 void generateRoofPiece(Level*, Random&, BoundingBox*);
 void generateLowerWall(Level*, Random&, BoundingBox*);
 void generateMiddleWall(Level*, Random&, BoundingBox*);
-bool generateUpperWall(Level*, Random&, BoundingBox*);
+void generateUpperWall(Level*, Random&, BoundingBox*);
 virtual bool postProcess(Level*, Random&, BoundingBox*);
 static void Create();
 virtual EStructurePiece GetType();

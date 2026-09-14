@@ -96,7 +96,7 @@ void Pig::registerAttributes()
 bool Pig::canBeControlledByRider()
 {
     boost::shared_ptr<Entity> passenger = getControllingPassenger();
-    if (!passenger || !Entity::instanceof(passenger, ENTITY_TYPE_PLAYER))
+    if (!Entity::instanceof(passenger, ENTITY_TYPE_PLAYER))
         return false;
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(passenger);

@@ -43,7 +43,7 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     Item* item = itemInstance->getItem();
 
-    if (item == Items::bowl && !isBaby())
+    if (item == Items::bowl && getAge() >= 0)
     {
         itemInstance->shrink(1);
         if (!itemInstance->isEmpty())
@@ -59,20 +59,30 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
         return true;
     }
 
-    if (item == Items::shears && !isBaby())
+    if (item == Items::shears && getAge() >= 0)
     {
         if (mLevel->mIsClientSide)
             return true;
 
-        boost::shared_ptr<Entity> original = shared_from_this();
         remove();
 
         boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
-        cow->copyPosition(original);
+        if (isPassenger())
+            cow->startRiding(getVehicle(), true);
+        if (isLeashed())
+            cow->setLeashedTo(getLeashHolder(), true);
         mLevel->addEntity(cow);
+        cow->moveTo(mX, mY, mZ, mYRotO, mXRotO);
+        cow->setHealth(getHealth());
+        if (hasCustomName())
+            cow->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
 
         for (int i = 0; i < 5; ++i)
-            spawnAtLocation(Item::byBlock(Blocks::red_mushroom), 1, 0.0f);
+        {
+            not_null_ptr<ItemInstance> mushroom(new ItemInstance(Blocks::red_mushroom));
+            boost::shared_ptr<Entity> mushroomEntity(new ItemEntity(mLevel, mX, mY + mWalkDist, mZ, mushroom));
+            mLevel->addEntity(mushroomEntity);
+        }
 
         itemInstance->hurtAndBreak(1, player);
         playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.75f);
@@ -84,7 +94,7 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
 
 bool MushroomCow::checkSpawnRules()
 {
-    BlockPos pos(this);
+    BlockPos pos(shared_from_this());
     Block* block = mLevel->getBlockState(pos.below())->getBlock();
     if (block != Blocks::mycelium && block != Blocks::grass)
         return false;

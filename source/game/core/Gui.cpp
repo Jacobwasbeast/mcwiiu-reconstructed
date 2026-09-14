@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "game/core/BossHealthOverlay.hpp"
+#include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/client/render/Tesselator.hpp"
@@ -70,6 +71,7 @@ void Gui::renderPumpkin(int width, int height)
     GlStateManager::depthMask(true);
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void Gui::renderPortalOverlay(float portalTime, int width, int height)
@@ -110,7 +112,10 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
     if (hideGui) {
         return;
     }
-    renderVignette(partialTick, width, height);
+    if (Minecraft::useFancyGraphics()) {
+        mMinecraft->mPlayer->getBrightness();
+        renderVignette(partialTick, width, height);
+    }
 }
 
 void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
@@ -183,13 +188,14 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
     if (playerIndex < 0 || playerIndex >= 4) {
         return;
     }
-    if (!filtered || force) {
+    if (GameSettings::GetGameSettings(playerIndex, static_cast<eGameSetting>(overlay ? 0x1a : 0x26)) != 0 ||
+        force) {
         mMessages[playerIndex].push_back(GuiMessage(message));
         if (mMessages[playerIndex].size() > 50) {
             mMessages[playerIndex].erase(mMessages[playerIndex].begin());
         }
     }
-    if (overlay) {
+    if (overlay && filtered) {
         if (append) {
             mNowPlaying[playerIndex] += message;
         } else {

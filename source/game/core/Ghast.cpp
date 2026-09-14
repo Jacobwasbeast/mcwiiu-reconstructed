@@ -13,6 +13,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/ai/GoalSelector.hpp"
+#include "game/entity/projectile/LargeFireball.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -76,14 +77,12 @@ bool Ghast::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
     boost::shared_ptr<Entity> direct = source->getDirectEntity();
-    if (!direct)
-        return LivingEntity::hurt(source, damage);
-    if (direct->GetType() == 0x8A400003ULL)
+    if (direct && direct->GetType() == 0x8A400003ULL)
     {
         boost::shared_ptr<Entity> owner = source->getEntity();
         if (owner && (owner->GetType() & 0xC800000ULL) == 0xC800000ULL)
         {
-            LivingEntity::hurt(DamageSource::FALL, damage);
+            LivingEntity::hurt(source, 1000.0f);
             return true;
         }
     }
@@ -155,15 +154,15 @@ bool Ghast::GhastLookGoal::canUse() { return true; }
 void Ghast::GhastLookGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
-    if (target && mGhast->distanceToSqr(target) < 64.0)
+    if (target && mGhast->distanceToSqr(target) < 64.0 * 64.0)
     {
-        float angle = -(float)std::atan2(target->mY - mGhast->mY, target->mX - mGhast->mX) * 57.2957763671875f;
+        float angle = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * 57.2957763671875f;
         mGhast->mYRot = angle;
         mGhast->mYHeadRot = angle;
     }
     else
     {
-        float angle = -(float)std::atan2(mGhast->mZd, mGhast->mXd) * 57.2957763671875f;
+        float angle = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * 57.2957763671875f;
         mGhast->mYRot = angle;
         mGhast->mYHeadRot = angle;
     }
@@ -213,17 +212,40 @@ void Ghast::GhastShootFireballGoal::stop() { mGhast->setCharging(false); }
 void Ghast::GhastShootFireballGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
-    if (!target)
+    bool inRangeAndVisible = target->distanceToSqr(mGhast->shared_from_this()) < 64.0 * 64.0 && mGhast->canSee(target);
+    if (inRangeAndVisible)
+    {
+        ++mChargeTime;
+        if (mChargeTime == 10)
+            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), 1015, BlockPos(mGhast), 0);
+        if (mChargeTime == 20)
+        {
+            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), 1016, BlockPos(mGhast), 0);
+            Vec3* viewVector = mGhast->getViewVector(1.0f);
+            boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this());
+            double xd = target->mX - (mGhast->mX + viewVector->x * 4.0);
+            double yd = (target->mY + (double)(target->mBbHeight * 0.5f)) - (0.5 + (mGhast->mY + (double)(mGhast->mBbHeight * 0.5f)));
+            double zd = target->mZ - (mGhast->mZ + viewVector->z * 4.0);
+            LargeFireball* fireball = new LargeFireball(mGhast->mLevel, owner, xd, yd, zd);
+            fireball->mX = viewVector->x * 4.0 + mGhast->mX;
+            fireball->mY = mGhast->mY + (double)(mGhast->mBbHeight * 0.5f) + 0.5;
+            fireball->mZ = viewVector->z * 4.0 + mGhast->mZ;
+            mGhast->mLevel->addEntity(boost::shared_ptr<Entity>(fireball));
+            mChargeTime = -40;
+        }
+        mGhast->setCharging(mChargeTime > 10);
         return;
-    ++mChargeTime;
-    if (mChargeTime == 10)
-        mGhast->setCharging(true);
-    if (mChargeTime == 20)
-        mGhast->setCharging(false);
+    }
+    if (mChargeTime > 0)
+        --mChargeTime;
+    mGhast->setCharging(mChargeTime > 10);
 }
 std::wstring Ghast::GhastShootFireballGoal::getName() { return L"GhastShootFireball"; }
 
-Ghast::RandomFloatAroundGoal::RandomFloatAroundGoal(Ghast* ghast) : Goal(), mGhast(ghast) {}
+Ghast::RandomFloatAroundGoal::RandomFloatAroundGoal(Ghast* ghast) : Goal(), mGhast(ghast)
+{
+    setRequiredControlFlags(1);
+}
 Ghast::RandomFloatAroundGoal::~RandomFloatAroundGoal() {}
 bool Ghast::RandomFloatAroundGoal::canUse()
 {

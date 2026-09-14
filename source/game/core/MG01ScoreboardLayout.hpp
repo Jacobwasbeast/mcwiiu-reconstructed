@@ -7,7 +7,7 @@
 class MG01ScoreboardLayout : public IScoreboardLayout
 {
 private:
-    int m_localPlayerIdx;
+    EScoreboardType m_type;
 public:
     explicit MG01ScoreboardLayout(EScoreboardType type);
     virtual ~MG01ScoreboardLayout();

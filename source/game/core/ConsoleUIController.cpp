@@ -72,7 +72,8 @@ void PopupToast(void* context, int playerId, int achievementId, int imageId, int
 
 ConsoleUIController::ConsoleUIController()
     : m_debugConsole(0), m_unknown08(0), m_screenWidth(0.0f), m_screenHeight(0.0f),
-      m_initialized(false), m_renderOffsetX(0), m_renderOffsetY(0), m_currentFont(0),
+      m_initialized(false), m_renderOffsetX(0), m_renderOffsetY(0), m_lastViewport(-1),
+      m_viewportPositionDirty(true), m_currentFont(0),
       m_pendingFont(EFont_None), m_cleanupOnReload(false), m_autoCleanupOnReload(true),
       m_fontChangePending(false), m_unknown43B(0), m_font(0), m_oldFont(0),
       m_bitmapFont(0), m_bitmapFontAlt(0), m_touchHoldPad(0), m_touchHeld(false), m_touchX(0), m_touchY(0),
@@ -348,22 +349,54 @@ void ConsoleUIController::loadSkins()
 void ConsoleUIController::renderScenes()
 {
     PIXBeginNamedEvent(0.0f, "Rendering FUI scenes");
-    if (gApp.GetGameStarted() && !m_groups[1]->hidesLowerScenes()) {
-        m_groups[2]->render();
-        m_groups[3]->render();
-        m_groups[4]->render();
-        m_groups[5]->render();
+    if (!gApp.GetGameStarted())
+    {
+        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
+        m_groups[1]->render();
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
+        gRenderer->StartDRCFrame(GetDRCEnabled());
+        gFui->setScreenSize(854.0f, 480.0f);
+        if (!GetDRCEnabled())
+        {
+            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            gRenderer->SetClearColour(clearColour);
+            gRenderer->Clear(3);
+        }
     }
-    m_groups[1]->render();
-    gRenderer->StartDRCFrame(GetDRCEnabled());
-    gFui->setScreenSize(854.0f, 480.0f);
-    if (!GetDRCEnabled()) {
-        const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        gRenderer->SetClearColour(clearColour);
-        gRenderer->Clear(3);
+    else
+    {
+        if (!m_groups[1]->hidesLowerScenes())
+        {
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 2);
+            m_groups[2]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 3);
+            m_groups[3]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 4);
+            m_groups[4]->render();
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Rendering layer %d scenes", 5);
+            m_groups[5]->render();
+            PIXEndNamedEvent();
+        }
+        PIXBeginNamedEvent(0.0f, "Rendering fullscreen scenes");
+        m_groups[1]->render();
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0f, "Rendering DRC scenes");
+        gRenderer->StartDRCFrame(GetDRCEnabled());
+        gFui->setScreenSize(854.0f, 480.0f);
+        if (!GetDRCEnabled())
+        {
+            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            gRenderer->SetClearColour(clearColour);
+            gRenderer->Clear(3);
+        }
     }
     m_groups[0]->render();
     gFui->setScreenSize(1280.0f, 720.0f);
+    PIXEndNamedEvent();
     PIXEndNamedEvent();
 }
 
@@ -560,9 +593,41 @@ void ConsoleUIController::updateViewportTouchOffset(C4JRender::eViewportType vie
 
 void ConsoleUIController::setupRenderPosition(C4JRender::eViewportType viewport)
 {
-    updateViewportTouchOffset(viewport);
-    setupRenderPosition(m_touchOffsetX, m_touchOffsetY);
-    gFui->setOrigin((float)m_renderOffsetX, (float)m_renderOffsetY);
+    if (!m_viewportPositionDirty && m_lastViewport == (int)viewport)
+        return;
+    m_lastViewport = (int)viewport;
+    m_viewportPositionDirty = false;
+    int x = 0;
+    int y = 0;
+    switch ((int)viewport) {
+    case 1:
+        x = (int)(m_screenWidth * 0.25f);
+        break;
+    case 2:
+        x = (int)(m_screenWidth * 0.25f);
+        y = (int)(m_screenHeight * 0.5f);
+        break;
+    case 3:
+        y = (int)(m_screenHeight * 0.25f);
+        break;
+    case 4:
+        x = (int)(m_screenWidth * 0.5f);
+        y = (int)(m_screenHeight * 0.25f);
+        break;
+    case 6:
+        x = (int)(m_screenWidth * 0.5f);
+        break;
+    case 7:
+        y = (int)(m_screenHeight * 0.5f);
+        break;
+    case 8:
+        x = (int)(m_screenWidth * 0.5f);
+        y = (int)(m_screenHeight * 0.5f);
+        break;
+    }
+    m_renderOffsetX = x;
+    m_renderOffsetY = y;
+    gFui->setOrigin((float)x, (float)y);
 }
 
 void ConsoleUIController::setupCustomDrawGameState()
@@ -634,36 +699,82 @@ void ConsoleUIController::setFullscreenMenuDisplayed(bool displayed)
 bool ConsoleUIController::NavigateToScene(int playerId, EUIScene scene, void* sceneData,
                                           EUILayer layer, EUIGroup groupId)
 {
-    if (IsReloadingSkin())
-        return false;
-    int menuPlayer = 0xff;
-    if ((int)scene == 4) {
-        groupId = (EUIGroup)1;
-        layer = (EUILayer)4;
-    } else if ((int)scene == 0x1f) {
-        layer = (EUILayer)4;
-    } else if ((int)scene == 0x30) {
-        groupId = (EUIGroup)1;
-        layer = (EUILayer)6;
-    }
-    if ((int)groupId == 7) {
-        if (gApp.GetGameStarted() && static_cast<unsigned int>(playerId) < 4)
+    if (GetMenuDisplayed(playerId))
+    {
+        unsigned int sceneValue = (unsigned int)scene;
+        if (sceneValue < 0x2e)
         {
-            groupId = (EUIGroup)GetGroup(playerId);
-            menuPlayer = playerId;
+            if (4 < sceneValue &&
+                (sceneValue < 0xd || (0x1c < sceneValue && (sceneValue < 0x1f || sceneValue == 0x2a))))
+                return false;
         }
-        else {
-            groupId = (EUIGroup)1;
-            if (!gApp.GetGameStarted())
-                layer = (EUILayer)4;
+        else
+        {
+            if (sceneValue < 0x30)
+                return false;
+            if (0x31 < sceneValue)
+            {
+                if (sceneValue < 0x34)
+                    return false;
+                if (0x34 < sceneValue)
+                {
+                    if (sceneValue < 0x38)
+                        return false;
+                    if (0x3b < sceneValue && sceneValue < 0x3e)
+                        return false;
+                }
+            }
         }
     }
-    EnterCriticalSection(&m_renderMutex);
-    SetMenuDisplayed(menuPlayer, true);
-    bool navigated = m_groups[(int)groupId]->NavigateToScene(playerId, scene, sceneData, layer);
+
+    PerformanceTimer timer;
+    int menuPlayer = 0xff;
+    bool navigated;
+    if ((int)scene == 4)
+    {
+        groupId = (EUIGroup)1;
+        layer = (EUILayer)4;
+        EnterCriticalSection(&m_renderMutex);
+        SetMenuDisplayed(menuPlayer, true);
+        navigated = m_groups[1]->NavigateToScene(playerId, scene, sceneData, layer);
+    }
+    else if ((int)scene == 0x30)
+    {
+        groupId = (EUIGroup)1;
+        EnterCriticalSection(&m_renderMutex);
+        SetMenuDisplayed(menuPlayer, true);
+        navigated = m_groups[1]->NavigateToScene(playerId, scene, sceneData, (EUILayer)6);
+    }
+    else
+    {
+        if ((int)scene == 0x1f)
+            layer = (EUILayer)4;
+        if ((int)groupId == 7)
+        {
+            if (gApp.GetGameStarted())
+            {
+                if (playerId == 0xff || (unsigned int)playerId > 3)
+                    groupId = (EUIGroup)1;
+                else
+                {
+                    groupId = (EUIGroup)(playerId + 2);
+                    menuPlayer = playerId;
+                }
+            }
+            else
+            {
+                groupId = (EUIGroup)1;
+                layer = (EUILayer)4;
+            }
+        }
+        EnterCriticalSection(&m_renderMutex);
+        SetMenuDisplayed(menuPlayer, true);
+        navigated = m_groups[(int)groupId]->NavigateToScene(playerId, scene, sceneData, layer);
+    }
     if (navigated && (int)groupId == 1)
         setFullscreenMenuDisplayed(true);
     LeaveCriticalSection(&m_renderMutex);
+    timer.PrintElapsedTime(L"Navigate to scene");
     return navigated;
 }
 
@@ -744,17 +855,36 @@ void ConsoleUIController::LeaveCallbackIdCriticalSection()
 
 void ConsoleUIController::CloseUIScenes(int playerId, bool immediate)
 {
-    UIGroup* playerGroup = !gApp.GetGameStarted() && !immediate
-                               ? m_groups[1] : m_groups[GetGroup(playerId)];
-    EnterCriticalSection(&g_uiCriticalSection);
+    int groupIndex;
+    UIGroup* playerGroup;
+    if (!gApp.GetGameStarted() && !immediate)
+    {
+        groupIndex = 1;
+        EnterCriticalSection(&g_uiCriticalSection);
+        playerGroup = m_groups[1];
+    }
+    else
+    {
+        groupIndex = GetGroup(playerId);
+        EnterCriticalSection(&g_uiCriticalSection);
+        playerGroup = m_groups[groupIndex];
+    }
     playerGroup->closeAllScenes();
     playerGroup->ClearTooltips();
     Tooltips::ForceTooltipReload(playerId);
-    _TutorialPopupInfo popupInfo;
-    SetTutorialDescription(playerId, &popupInfo);
-    SetMenuDisplayed(playerId, false);
-    if (playerGroup == m_groups[1])
+    if (playerGroup->m_componentSecondary != 0)
+    {
+        _TutorialPopupInfo popupInfo;
+        static_cast<UIComponent_TutorialPopup*>(playerGroup->m_componentSecondary)
+            ->SetTutorialDescription(&popupInfo);
+    }
+    if (groupIndex == 1)
         setFullscreenMenuDisplayed(false);
+    bool sharedDisplayed = m_groups[1]->GetMenuDisplayed() != 0;
+    SetMenuDisplayed(0, sharedDisplayed || m_groups[2]->GetMenuDisplayed() != 0);
+    SetMenuDisplayed(1, sharedDisplayed || m_groups[3]->GetMenuDisplayed() != 0);
+    SetMenuDisplayed(2, sharedDisplayed || m_groups[4]->GetMenuDisplayed() != 0);
+    SetMenuDisplayed(3, sharedDisplayed || m_groups[5]->GetMenuDisplayed() != 0);
     LeaveCriticalSection(&g_uiCriticalSection);
 }
 
@@ -1438,11 +1568,21 @@ unsigned int ConsoleUIController::reloadSkinThreadProc(void* context)
 
 void ConsoleUIController::ReloadSkin()
 {
-    loadSkins();
-    for (int i = 0; i < 6; ++i)
-        if (m_groups[i] != 0)
-            m_groups[i]->ReloadAll();
-    m_skinThreadExpected = false;
+    m_groups[0]->DestroyAll();
+    m_groups[1]->DestroyAll();
+    m_groups[2]->DestroyAll();
+    m_groups[3]->DestroyAll();
+    m_groups[4]->DestroyAll();
+    m_groups[5]->DestroyAll();
+    for (int i = 0; i < 11; ++i)
+    {
+        if (m_skinScenes[i] != 0)
+        {
+            gFui->unloadScene((fuiFile*)m_skinScenes[i]);
+            m_skinScenes[i] = 0;
+        }
+    }
+    NavigateToScene(0, (EUIScene)0x4c, 0, (EUILayer)1, (EUIGroup)1);
 }
 
 void ConsoleUIController::StartReloadSkinThread()
@@ -1718,9 +1858,8 @@ void ConsoleUIController::SendTouchInput(unsigned int playerId, unsigned int act
 void ConsoleUIController::HandleTouchInput(unsigned int playerId, unsigned int action, bool repeat,
                                            bool released, bool pressed)
 {
-    if (!m_initialized || m_rebuildingTouchBoxes)
+    if (m_rebuildingTouchBoxes)
         return;
-    m_lastInputTime = GetTickCount();
     if (pressed)
         m_touchHeld = true;
     if (released)
@@ -1764,10 +1903,23 @@ void ConsoleUIController::HandleTouchInput(unsigned int playerId, unsigned int a
                 list->SetTouchFocus(x, y, m_touchHeld);
         }
     }
-    bool handled = false;
-    UIGroup* playerGroup = groupForPlayer((int)playerId, false);
-    if (playerGroup != 0)
-        playerGroup->handleInput((int)playerId, (int)action, repeat, released, pressed, handled);
+    if (m_lastTouchElement != 0 && m_lastTouchElement->control != 0)
+    {
+        UIControl* control = m_lastTouchElement->control;
+        const int x = m_touchX - m_lastTouchElement->left;
+        const int y = m_touchY - m_lastTouchElement->top;
+        bool triggered = false;
+        if (dynamic_cast<UIControl_TexturePackList*>(control) != 0)
+            triggered = static_cast<UIControl_TexturePackList*>(control)->CanTouchTrigger(x, y) != 0;
+        else if (dynamic_cast<UIControl_List*>(control) != 0)
+            triggered = static_cast<UIControl_List*>(control)->CanTouchTrigger(x, y);
+        else if (dynamic_cast<UIControl_GridList*>(control) != 0)
+            triggered = static_cast<UIControl_GridList*>(control)->CanTouchTrigger(x, y);
+        if (triggered)
+            pressed = true;
+    }
+    if (repeat || released || pressed)
+        SendTouchInput(playerId, action, repeat, released, pressed);
 }
 
 void ConsoleUIController::TouchBoxAdd(UIControl* control, UIScene* scene)
@@ -1781,11 +1933,51 @@ void ConsoleUIController::TouchBoxAdd(UIControl* control, UIScene* scene)
 void ConsoleUIController::TouchBoxAdd(UIControl* control, EUIGroup groupId, EUILayer layer,
                                       EUIScene scene, UIControl* parent)
 {
-    if (control == 0 || (int)groupId < 0 || (int)groupId >= 6 || m_groups[(int)groupId] == 0)
-        return;
-    UIScene* target = m_groups[(int)groupId]->FindScene(scene);
-    if (target != 0)
-        TouchBoxAdd(control, target);
+    UIELEMENT* elem = new UIELEMENT;
+    elem->control = control;
+    double width = control->getWidth();
+    double height = control->getHeight();
+    double parentX = 0.0;
+    double parentY = 0.0;
+    if (parent != 0)
+    {
+        parentX = parent->getXPos();
+        parentY = parent->getYPos();
+    }
+    if (dynamic_cast<UIControl_Slider*>(control) != 0)
+    {
+        width = static_cast<UIControl_Slider*>(control)->GetRealWidth();
+    }
+    else if (dynamic_cast<UIControl_TexturePackList*>(control) != 0)
+    {
+        height = static_cast<UIControl_TexturePackList*>(control)->GetRealHeight();
+    }
+    else if (dynamic_cast<UIControl_DynamicLabel*>(control) != 0)
+    {
+        UIControl_DynamicLabel* label = static_cast<UIControl_DynamicLabel*>(control);
+        width = label->GetRealWidth();
+        height = label->GetRealHeight();
+    }
+    else if (dynamic_cast<UIControl_HTMLLabel*>(control) != 0)
+    {
+        UIControl_HTMLLabel* label = static_cast<UIControl_HTMLLabel*>(control);
+        width = label->GetRealWidth();
+        height = label->GetRealHeight();
+    }
+    int left = (int)(control->getXPos() + parentX + m_touchOffsetX);
+    int top = (int)(control->getYPos() + parentY + m_touchOffsetY);
+    int right = (int)(control->getXPos() + width + parentX + m_touchOffsetX);
+    int bottom = (int)(control->getYPos() + height + parentY + m_touchOffsetY);
+    elem->left = left;
+    elem->top = top;
+    elem->right = right;
+    elem->bottom = bottom;
+    if (left != right && top != bottom)
+    {
+        EnterCriticalSection(&m_touchMutex);
+        m_touchBoxes[(int)groupId][(int)layer][(int)scene].push_back(elem);
+        LeaveCriticalSection(&m_touchMutex);
+    }
 }
 
 void ConsoleUIController::PlayUISFX(const SoundEvent* soundEvent)
@@ -1883,6 +2075,42 @@ void ConsoleUIController::TouchBoxRebuild(UIScene* scene)
 {
     m_rebuildingTouchBoxes = true;
     TouchBoxesClear(scene);
+    int groupId = 0;
+    int layerId = 0;
+    for (int groupIndex = 0; groupIndex < 6; ++groupIndex) {
+        UIGroup* group = m_groups[groupIndex];
+        if (group == 0)
+            continue;
+        for (int layerIndex = 0; layerIndex < 8; ++layerIndex) {
+            if (group->m_layers[layerIndex] == scene->m_layer) {
+                groupId = group->m_group;
+                layerId = layerIndex;
+                goto foundTouchBoxRebuildGroup;
+            }
+        }
+    }
+foundTouchBoxRebuildGroup:
+    {
+        const int sceneId = scene->getSceneType();
+        for (std::vector<UIControl*>::iterator it = scene->m_controls.begin();
+             it != scene->m_controls.end(); ++it)
+        {
+            UIControl* control = *it;
+            bool interactive = dynamic_cast<UIControl_CheckBox*>(control) != 0 ||
+                                dynamic_cast<UIControl_DynamicLabel*>(control) != 0 ||
+                                dynamic_cast<UIControl_HTMLLabel*>(control) != 0 ||
+                                dynamic_cast<UIControl_LeaderboardList*>(control) != 0 ||
+                                dynamic_cast<UIControl_Slider*>(control) != 0 ||
+                                dynamic_cast<UIControl_TexturePackList*>(control) != 0 ||
+                                dynamic_cast<UIControl_List*>(control) != 0 ||
+                                dynamic_cast<UIControl_GridList*>(control) != 0;
+            if (interactive && control->getVisible())
+            {
+                control->UpdateControl();
+                TouchBoxAdd(control, (EUIGroup)groupId, (EUILayer)layerId, (EUIScene)sceneId, 0);
+            }
+        }
+    }
     m_rebuildingTouchBoxes = false;
 }
 
@@ -1891,6 +2119,20 @@ void ConsoleUIController::NavigateToHomeMenu(bool immediate)
     CloseAllPlayersScenes(false);
     gApp.SetLiveLinkRequired(false);
     gApp.setIgnoreMainMenuInputDuringInvite(false);
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    minecraft->mTexturePackRepository->selectTexturePackById(0, false);
+    if (!immediate)
+    {
+        minecraft->mSoundEngine->SetStreamingSounds(0, 0xb, 0xc, 0xf, 0x10, 0x11, 0x12, 0x17, 0x18,
+                                                     0x1b, 0x1c, 0x1f, 0x20, 0x29, 0x2a, 0x2a, 0x3e,
+                                                     0x44, 0x57);
+    }
+    if (minecraft->mTexturePackRepository->needsUIUpdate())
+    {
+        m_homeMenuPending = true;
+        return;
+    }
     NavigateToScene(gProfile->GetPrimaryPad(), (EUIScene)3, 0, (EUILayer)6, (EUIGroup)7);
 }
 

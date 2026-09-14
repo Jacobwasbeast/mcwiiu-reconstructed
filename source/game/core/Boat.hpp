@@ -105,6 +105,14 @@ private:
     static const EntityDataAccessor<int>* DATA_BUBBLE_TIME;
     static const EntityDataAccessor<bool>* DATA_SINKING;
     int mStatus;
+    int mStatusO;
+    int mUnderwaterTicks;
+    double mWaterLevel;
+    float mGroundFriction;
+    double mWaterScanBase;
+    unsigned char mBubbleColumnActive;
+    unsigned char mBubbleColumnDown;
+    double mRockPhase;
     int mBubbleTime;
     int mHurtTime;
     int mHurtDir;

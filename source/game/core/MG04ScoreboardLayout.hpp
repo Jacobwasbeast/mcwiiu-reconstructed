@@ -6,8 +6,6 @@
 
 class MG04ScoreboardLayout : public IScoreboardLayout
 {
-private:
-    int m_localPlayerIdx;
 public:
     MG04ScoreboardLayout();
     virtual ~MG04ScoreboardLayout();

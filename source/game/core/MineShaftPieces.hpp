@@ -126,7 +126,7 @@ public:
     static StructurePiece* createRandomShaftPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                    int x, int y, int z, const Direction* direction,
                                                    int genDepth, MineShaftFeature::MineShaftType type);
-    static int generateAndAddPiece(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
+    static StructurePiece* generateAndAddPiece(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces,
                                    Random& random, int x, int y, int z, const Direction* direction,
                                    int genDepth);
     static void staticCtor();

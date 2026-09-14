@@ -51,12 +51,14 @@ extern std::vector<const GameMedal*> gGlideMedals;
 extern std::vector<const GameMedal*> gBuildMedals;
 
 GameStats::GameStats()
-    : mPlayerCount(0), mRoundStartTime(0), mCurrentRound(0), mRoundEndTime(0), mRoundTime(0), mRoundWinner(), mFirstPlace(), mSecondPlace(), mThirdPlace(), mFarthestCheckpointReached(0), mLandingRecorded(false), mWinningThemeChoice()
+    : mPlayerCount(0), mRoundStartTime(0), mCurrentRound(0), mRoundEndTime(0), mRoundTime(0), mPlayerStats(11), mRoundWinner(), mFirstPlace(), mSecondPlace(), mThirdPlace(), mFarthestCheckpointReached(0), mLandingRecorded(false), mWinningThemeChoice()
 {
 }
 
 GameStats::~GameStats()
 {
+    for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
+        delete it->second;
     mPlayerStats.clear();
 }
 
@@ -829,9 +831,36 @@ void GameStats::AddPlayers(const std::vector<boost::shared_ptr<ServerPlayer> >* 
             AddPlayerStats(*it);
 }
 void GameStats::RemovePlayerStats(const boost::shared_ptr<ServerPlayer>&) { if (mPlayerCount != 0) --mPlayerCount; }
-void GameStats::Clear() { mPlayerStats.clear(); mPlayerCount = 0; mRoundTime = 0; mFarthestCheckpointReached = 0; mLandingRecorded = false; }
+void GameStats::Clear()
+{
+    for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
+        delete it->second;
+    mPlayerStats.clear();
+    mPlayerCount = 0;
+    mRoundTime = 0;
+    mFarthestCheckpointReached = 0;
+    mLandingRecorded = false;
+}
 void GameStats::OnRoundStart() { mRoundStartTime = static_cast<unsigned int>(System::processTimeInMilliSecs()); mLandingRecorded = false; }
-void GameStats::OnRoundEnd() { mRoundEndTime = static_cast<unsigned int>(System::processTimeInMilliSecs()); }
+void GameStats::OnRoundEnd()
+{
+    mRoundWinner.reset();
+    ++mCurrentRound;
+
+    PlayerList* players = serverPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* playerList = players->getPlayers();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = playerList->begin();
+         it != playerList->end(); ++it)
+    {
+        PlayerStats* stats = GetPlayerStats((*it)->getSUID());
+        if (stats != 0)
+        {
+            const unsigned int deathCount = GetDeathCount((*it)->getSUID());
+            ServerScoreboard* scoreboard = (*it)->getLevel()->GetServerScoreboard();
+            scoreboard->OnPlayerStatsChanged((*it)->getSUID(), static_cast<int>(deathCount));
+        }
+    }
+}
 void GameStats::OnGameStart() { Clear(); OnRoundStart(); }
 void GameStats::OnGameEnd() { mRoundEndTime = static_cast<unsigned int>(System::processTimeInMilliSecs()); }
 
@@ -1255,12 +1284,23 @@ void GameStats::RecordThermalEntered(const StatsUID& uid) {
 }
 void GameStats::RecordProgress(const StatsUID& uid, double x, double y, double z, double progress) {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats != NULL) {
-        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
-        round->mProgressStats[0] = static_cast<int>(x);
-        round->mProgressStats[1] = static_cast<int>(y);
-        round->mProgressStats[2] = static_cast<int>(z);
-        round->mCurrentTime = progress;
+    if (stats == NULL)
+        return;
+
+    PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+    if (round->mCurrentTime == z)
+        return;
+
+    const double previous = round->mCurrentTime;
+    round->MedalTimestamp(3, z < previous, System::processTimeInMilliSecs());
+    round->mCurrentTime = z;
+
+    if (round->mTopSpeed < progress)
+        round->mTopSpeed = progress;
+
+    if (!round->mFinished) {
+        round->mFinished = true;
+        round->mRoundTime = static_cast<int>(System::processTimeInMilliSecs() - mRoundStartTime);
     }
 }
 void GameStats::RecordSpawnedAtCheckpoint(const StatsUID& uid, int checkpoint) {
@@ -1364,7 +1404,40 @@ boost::shared_ptr<ServerPlayer> GameStats::GetLeadingPlayer()
 
     return bestPlayer;
 }
-boost::shared_ptr<ServerPlayer> GameStats::GetTrailingPlayer(const boost::shared_ptr<ServerPlayer>& player) { return player; }
+boost::shared_ptr<ServerPlayer> GameStats::GetTrailingPlayer(const boost::shared_ptr<ServerPlayer>& player)
+{
+    PlayerList* players = serverPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* playerList = players->getPlayers();
+
+    double worstProgress = -1.0;
+    boost::shared_ptr<ServerPlayer> worstPlayer;
+
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = playerList->begin();
+         it != playerList->end(); ++it)
+    {
+        if (player && (*it)->mXuid == player->mXuid)
+            continue;
+
+        PlayerStats* stats = GetPlayerStats((*it)->getSUID());
+        if (stats == 0)
+            continue;
+
+        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+        const double progress = round->mCurrentTime;
+        if (progress < worstProgress || !worstPlayer)
+        {
+            worstPlayer = *it;
+            worstProgress = progress;
+        }
+        else if (worstPlayer->isSpectator() && !(*it)->isSpectator())
+        {
+            worstPlayer = *it;
+            worstProgress = progress;
+        }
+    }
+
+    return worstPlayer;
+}
 void GameStats::increasePlayerRoundStartTimeMs(long long milliseconds)
 {
     const uint32_t addLow = static_cast<uint32_t>(milliseconds);

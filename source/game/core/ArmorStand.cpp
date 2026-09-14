@@ -30,6 +30,7 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 const EntityDataAccessor<unsigned char>* ArmorStand::DATA_FLAGS = NULL;
 const EntityDataAccessor<int>* ArmorStand::DATA_POSE = NULL;
@@ -380,7 +381,7 @@ bool ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const Equipme
     {
         return false;
     }
-    if (equipped->isEmpty()
+    if (!equipped->isEmpty()
         && (mDisabledSlots & (1 << (slot->getFilterFlag() + 16))) != 0)
     {
         return false;
@@ -400,76 +401,106 @@ bool ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const Equipme
     }
 
     setItemSlot(slot, item);
-    if (player)
-    {
-        ((LivingEntity*)player.get())->setItemInHand(hand, equipped);
-    }
+    ((LivingEntity*)player.get())->setItemInHand(hand, equipped);
     return true;
 }
 bool ArmorStand::isShowArms() { return (mEntityData->get(DATA_FLAGS) & 4) != 0; }
 bool ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
                             InteractionHand::EInteractionHand hand)
 {
-    if (!player || hit == NULL || isMarker())
+    not_null_ptr<ItemInstance> heldItem = ((LivingEntity*)player.get())->getItemInHand(hand);
+
+    if (!player->isAllowedToInteract(shared_from_this()))
     {
+        return true;
+    }
+
+    if (player->isSneaking())
+    {
+        setPoseIndex((getPoseIndex() + 1) % 13);
         return false;
     }
-    not_null_ptr<ItemInstance> heldItem = ((LivingEntity*)player.get())->getItemInHand(hand);
-    return test_interactAt(player, hit, heldItem, hand);
+
+    if (isMarker())
+    {
+        return true;
+    }
+
+    if (heldItem->getItem() == Items::nameTag && heldItem->hasCustomHoverName())
+    {
+        return true;
+    }
+
+    if (!mLevel->mIsClientSide && !player->isSpectator())
+    {
+        const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(heldItem);
+        if (!heldItem->isEmpty())
+        {
+            if (isDisabled(equipmentSlot))
+            {
+                return true;
+            }
+            if (equipmentSlot->getType() == EquipmentSlot::HAND && !isShowArms())
+            {
+                return true;
+            }
+            swapItem(player, equipmentSlot, heldItem, hand);
+        }
+        else
+        {
+            const EquipmentSlot* clickedSlot = getClickedSlot(hit);
+            const EquipmentSlot* useSlot = isDisabled(clickedSlot) ? equipmentSlot : clickedSlot;
+            if (hasItemInSlot(useSlot))
+            {
+                swapItem(player, useSlot, heldItem, hand);
+            }
+        }
+    }
+
+    return false;
 }
 bool ArmorStand::test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
                                  not_null_ptr<ItemInstance> item,
                                  InteractionHand::EInteractionHand hand)
 {
-    if (!player || hit == NULL || isMarker())
+    if (!player->isAllowedToInteract(shared_from_this()))
     {
         return false;
     }
-
-    const EquipmentSlot* slot;
-    if (item->isEmpty())
-    {
-        slot = getClickedSlot(hit);
-        if (getItemSlot(slot)->isEmpty())
-        {
-            return false;
-        }
-    }
-    else
-    {
-        const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(item);
-        int slotIndex = equipmentSlot->getEIndex();
-        if (slotIndex < EquipmentSlot::eIndex_MainHand || slotIndex > EquipmentSlot::eIndex_Head)
-        {
-            slot = EquipmentSlot::MAINHAND;
-        }
-        else
-        {
-            slot = EquipmentSlot::SLOTS[slotIndex];
-        }
-    }
-
-    if (isDisabled(slot) || (slot->getType() == EquipmentSlot::HAND && !isShowArms()))
+    if (isMarker())
     {
         return false;
     }
-    return swapItem(player, slot, item, hand);
+    if (player->isSpectator())
+    {
+        return false;
+    }
+    if (player->isSneaking())
+    {
+        return true;
+    }
+
+    return false;
 }
 unsigned int ArmorStand::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (!tooltipData.m_bAllowedToInteract)
-    {
-        return 0xffffffffU;
-    }
-    if (!tooltipData.m_pItemInstance->isEmpty()
+    if (tooltipData.m_pItemInstance->getItem() == Items::nameTag
         && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
+        if (hasCustomName())
+        {
+            if (tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) == 0)
+            {
+                if (!tooltipData.m_pPlayer->isSneaking())
+                {
+                    return 0xffffffffU;
+                }
+                return 0x3c2d9ad6U;
+            }
+        }
         return 0x5592c692U;
     }
-    if (tooltipData.m_pPlayer && !tooltipData.m_pItemInstance->isEmpty())
-    {
-        return 0x3c2d9ad6U;
-    }
+
     return 0xffffffffU;
 }
 unsigned int ArmorStand::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
@@ -480,12 +511,12 @@ void ArmorStand::playBrokenSound() { playSound(SoundEvents::ARMORSTAND_BREAK, 1.
 void ArmorStand::brokenByAnything()
 {
     playBrokenSound();
-    BlockPos pos(this);
-    BlockPos dropPos = pos.above();
     for (std::size_t i = 0; i < mHandItems.size(); ++i)
     {
         if (!mHandItems[i]->isEmpty())
         {
+            BlockPos pos(this);
+            BlockPos dropPos = pos.above();
             Block::popResource(mLevel, dropPos, mHandItems[i]);
             mHandItems[i] = ItemInstance::EMPTY;
         }
@@ -494,6 +525,8 @@ void ArmorStand::brokenByAnything()
     {
         if (!mArmorItems[i]->isEmpty())
         {
+            BlockPos pos(this);
+            BlockPos dropPos = pos.above();
             Block::popResource(mLevel, dropPos, mArmorItems[i]);
             mArmorItems[i] = ItemInstance::EMPTY;
         }

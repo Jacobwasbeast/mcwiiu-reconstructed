@@ -7,6 +7,7 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/entity/ai/Goal.hpp"
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/RandomStrollGoal.hpp"
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -113,6 +114,19 @@ boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
     {
         return boost::shared_ptr<Entity>();
     }
+    if (!mLevel->mIsClientSide)
+    {
+        return getTarget();
+    }
+    if (mCachedAttackTarget != NULL)
+    {
+        return mCachedAttackTarget;
+    }
+    boost::shared_ptr<Entity> target = mLevel->getEntity(mEntityData->get(DATA_ID_ATTACK_TARGET));
+    if (target != NULL && (target->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+    {
+        mCachedAttackTarget = boost::static_pointer_cast<LivingEntity>(target);
+    }
     return mCachedAttackTarget;
 }
 
@@ -120,7 +134,10 @@ void Guardian::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     LivingEntity::onSyncedDataUpdated(accessor);
     if (accessor == DATA_ID_ATTACK_TARGET)
+    {
         mCachedAttackTarget = boost::shared_ptr<LivingEntity>();
+        mAttackTime = 0;
+    }
 }
 
 int Guardian::getAmbientSoundInterval()
@@ -176,6 +193,20 @@ void Guardian::aiStep()
 {
     mTailAnimationOld = mTailAnimation;
     mTailAnimation += (mRandom->nextFloat() - 0.5f) * 0.1f;
+
+    if (hasActiveAttackTarget())
+    {
+        if (mAttackTime < (int)getAttackDuration())
+        {
+            ++mAttackTime;
+        }
+        boost::shared_ptr<Entity> target = getActiveAttackTarget();
+        if (target != NULL)
+        {
+            getLookControl()->setLookAt(target, 90.0f, 90.0f);
+        }
+    }
+
     Monster::aiStep();
 }
 
@@ -210,29 +241,30 @@ bool Guardian::checkSpawnRules()
 {
     if (mRandom->nextInt(20) != 0)
     {
-        return false;
+        BlockPos pos(shared_from_this());
+        if (mLevel->canSeeSkyFromBelowWater(pos))
+        {
+            return false;
+        }
     }
     return Monster::checkSpawnRules();
 }
 
 bool Guardian::hurt(const DamageSource* source, float damage)
 {
-    if (!mLevel->mIsClientSide && !source->isMagic())
+    if (!isMoving() && !source->isMagic())
     {
-        boost::shared_ptr<Entity> entity = source->getEntity();
+        boost::shared_ptr<Entity> entity = source->getDirectEntity();
         if (entity != NULL
             && (entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
         {
+            boost::shared_ptr<LivingEntity> attacker =
+                boost::dynamic_pointer_cast<LivingEntity>(entity);
             if (!source->isExplosion())
             {
-                boost::shared_ptr<LivingEntity> attacker =
-                    boost::dynamic_pointer_cast<LivingEntity>(entity);
-                if (attacker != NULL)
-                {
-                    boost::shared_ptr<EntityDamageSource> thornsSource =
-                        DamageSource::CreateThorns(shared_from_this());
-                    attacker->hurt(thornsSource.get(), 2.0f);
-                }
+                boost::shared_ptr<EntityDamageSource> thornsSource =
+                    DamageSource::CreateThorns(shared_from_this());
+                attacker->hurt(thornsSource.get(), 2.0f);
             }
         }
     }
@@ -300,8 +332,11 @@ bool Guardian::GuardianAttackGoal::canContinueToUse()
 
 void Guardian::GuardianAttackGoal::start()
 {
-    mAttackTime = 0;
-    mGuardian->setActiveAttackTarget(0);
+    mAttackTime = -10;
+    mGuardian->getNavigation()->stop();
+    boost::shared_ptr<LivingEntity> target = mGuardian->getTarget();
+    mGuardian->getLookControl()->setLookAt(target, 90.0f, 90.0f);
+    mGuardian->mHasImpulse = true;
 }
 
 void Guardian::GuardianAttackGoal::stop()
@@ -321,19 +356,38 @@ void Guardian::GuardianAttackGoal::tick()
     {
         return;
     }
-    if (mGuardian->distanceToSqr(target) > 9.0)
+    mGuardian->getNavigation()->stop();
+    mGuardian->getLookControl()->setLookAt(target, 90.0f, 90.0f);
+    if (!mGuardian->canSee(target))
     {
-        mGuardian->lookAt(target, 90.0f, 90.0f);
+        mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
+        return;
     }
     ++mAttackTime;
-    if (mAttackTime == 1)
+    if (mAttackTime == 0)
     {
         mGuardian->setActiveAttackTarget(target->getId());
+        mGuardian->mLevel->broadcastEntityEvent(mGuardian->shared_from_this(), 0x15, 0);
+        return;
     }
-    if (mAttackTime > mGuardian->getAttackDuration())
+    if (mAttackTime >= (int)mGuardian->getAttackDuration())
     {
-        mAttackTime = 0;
-        mGuardian->setActiveAttackTarget(0);
+        float damage = 1.0f;
+        if (mGuardian->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        {
+            damage = 3.0f;
+        }
+        if (mElder)
+        {
+            damage += 2.0f;
+        }
+        boost::shared_ptr<DamageSource> indirectMagic =
+            DamageSource::CreateIndirectMagic(mGuardian->shared_from_this(), target, NULL);
+        EntityDamageSource* mobAttack = DamageSource::CreateMobAttack(target);
+        target->hurt(indirectMagic.get(), damage);
+        double attackDamage = mGuardian->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
+        target->hurt(mobAttack, (float)attackDamage);
+        mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
     }
 }
 
@@ -353,13 +407,12 @@ Guardian::GuardianAttackSelector::~GuardianAttackSelector()
 
 bool Guardian::GuardianAttackSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if (entity == NULL)
-    {
-        return false;
-    }
     unsigned long long type = entity->GetType();
-    return (type & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER ||
-           (type & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY;
+    if ((type & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER || type == 0xd502001ULL)
+    {
+        return entity->distanceToSqr(mGuardian->shared_from_this()) > 9.0;
+    }
+    return false;
 }
 
 Guardian::GuardianMoveControl::GuardianMoveControl(Guardian* guardian)
@@ -373,21 +426,54 @@ Guardian::GuardianMoveControl::~GuardianMoveControl()
 
 void Guardian::GuardianMoveControl::tick()
 {
-    if (!hasWanted())
+    if (mOperation == MOVE_TO && !mGuardian->getNavigation()->isDone())
     {
-        wait();
+        double dx = getWantedX() - mGuardian->mX;
+        double dy = getWantedY() - mGuardian->mY;
+        double dz = getWantedZ() - mGuardian->mZ;
+        double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
+        double angle = std::atan2(dz, dx);
+        float newYRot = rotlerp(mGuardian->mYRot,
+            (float)(angle * 57.29577951308232) - 90.0f, 30.0f);
+        mGuardian->setRot(newYRot, mGuardian->mXRot);
+
+        float speed = mGuardian->getSpeed();
+        double attributeSpeed = mGuardian->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
+        mGuardian->setSpeed((float)((getSpeedModifier() * attributeSpeed - speed) * 0.125 + speed));
+
+        int wiggle = mGuardian->mTickCount + mGuardian->getId();
+        double wag1 = std::sin((double)wiggle * 0.5) * 0.05;
+        float cosYRot = std::cos((double)mGuardian->mYRot * 57.29577951308232);
+        float sinYRot = std::sin((double)mGuardian->mYRot * 57.29577951308232);
+        mGuardian->mXd += wag1 * cosYRot;
+        mGuardian->mZd += wag1 * sinYRot;
+
+        double wag2 = std::sin((double)wiggle * 0.75) * 0.05 * (sinYRot + cosYRot) * 0.25 + mGuardian->mYd;
+        mGuardian->mYd = wag2;
+        float speed2 = mGuardian->getSpeed();
+        mGuardian->mYd = speed2 * (dy / distance) * 0.1 + wag2;
+
+        LookControl* lookControl = mGuardian->getLookControl();
+        double lookX = mGuardian->mX + (dx / distance) * 2.0;
+        double lookY = mGuardian->getEyeHeight() + mGuardian->mY + (dy / distance) / distance;
+        double lookZ = mGuardian->mZ + (dz / distance) * 2.0;
+        double wantedX = lookControl->getWantedX();
+        double wantedY = lookControl->getWantedY();
+        double wantedZ = lookControl->getWantedZ();
+        if (!lookControl->isHasWanted())
+        {
+            wantedX = lookX;
+            wantedY = lookY;
+            wantedZ = lookZ;
+        }
+        lookControl->setLookAt(
+            (lookX - wantedX) * 0.125 + wantedX,
+            (lookY - wantedY) * 0.125 + wantedY,
+            (lookZ - wantedZ) * 0.125 + wantedZ,
+            10.0f, 40.0f);
+        mGuardian->setMoving(true);
         return;
     }
-    double dx = getWantedX() - mGuardian->mX;
-    double dy = getWantedY() - mGuardian->mY;
-    double dz = getWantedZ() - mGuardian->mZ;
-    double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-    if (distance < 1.0)
-    {
-        wait();
-        return;
-    }
-    mGuardian->setSpeed((float)getSpeedModifier());
-    mGuardian->setRot(mGuardian->rotlerp(mGuardian->mYRot,
-        (float)(std::atan2(dz, dx) * 57.29577951308232) - 90.0f, 90.0f), mGuardian->mXRot);
+    mGuardian->setSpeed(0.0f);
+    mGuardian->setMoving(false);
 }

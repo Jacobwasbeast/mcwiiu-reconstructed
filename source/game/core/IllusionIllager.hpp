@@ -72,7 +72,7 @@ public:
     virtual int getArmPose();
     virtual unsigned long long GetType();
     arrayWithLength<Vec3*> getIllusionOffsets(float partialTick);
-    boost::shared_ptr<TippableArrow> getArrow(boost::shared_ptr<LivingEntity> target, float distanceFactor);
+    boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
 private:
     int mIllusionLevel;
     Vec3* mDisguisedPosition;

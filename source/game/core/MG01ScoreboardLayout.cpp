@@ -21,9 +21,10 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType)
+MG01ScoreboardLayout::MG01ScoreboardLayout(EScoreboardType type)
     : IScoreboardLayout()
 {
+    m_type = type;
 }
 
 MG01ScoreboardLayout::~MG01ScoreboardLayout()
@@ -152,7 +153,7 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
 
 void MG01ScoreboardLayout::Init(int value)
 {
-    m_localPlayerIdx = value;
+    m_userIndex = value;
     ClearPlayersInfo();
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
@@ -164,7 +165,7 @@ void MG01ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = CreatePlayerInfo();
+            PlayerInfo* info = new PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -192,7 +193,7 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
         }
 
         ClientScoreboard* scoreboard =
-            Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         const bool multiRoundOrMultiLife =
             miniGame->HasMultipleRounds() || miniGame->GetLivesPerRound() != 1;
@@ -247,7 +248,7 @@ UIString MG01ScoreboardLayout::getLabel2(const StatsUID&)
 UIString MG01ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
     int total = 0;
     for (int round = 0; round < rounds; ++round)
@@ -262,7 +263,7 @@ UIString MG01ScoreboardLayout::getLabel3(const StatsUID& uid)
 UIString MG01ScoreboardLayout::getLabel4(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
     int total = 0;
     for (int round = 0; round < rounds; ++round)
@@ -277,7 +278,7 @@ UIString MG01ScoreboardLayout::getLabel4(const StatsUID& uid)
 UIString MG01ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1
         && scoreboard->GetSurvived(uid, -1))
@@ -304,7 +305,7 @@ UIString MG01ScoreboardLayout::getLabel5(const StatsUID& uid)
 UIString MG01ScoreboardLayout::getLabel6(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1)
     {
@@ -326,7 +327,7 @@ UIString MG01ScoreboardLayout::getLabel6(const StatsUID& uid)
 UIString MG01ScoreboardLayout::getLabel7(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     if (!scoreboard->HasStats(uid))
     {
         return UIString(L"");
@@ -374,9 +375,36 @@ unsigned int MG01ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
     return 0xffffffffu;
 }
 
-std::wstring MG01ScoreboardLayout::GetRowLabel(int, const StatsUID&, const EScoreboardType&)
+std::wstring MG01ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
 {
-    return std::wstring();
+    if (column == static_cast<int>(getNumberOfColumns()) - 3)
+    {
+        ClientScoreboard* scoreboard =
+            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+        return _toString<int>(scoreboard->GetRoundsWon(uid));
+    }
+
+    if (column != static_cast<int>(getNumberOfColumns()) - 2)
+    {
+        return std::wstring();
+    }
+
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+    int total = 0;
+    if (type == EScoreboardType_Award)
+    {
+        const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
+        for (int round = 0; round < rounds; ++round)
+        {
+            total += scoreboard->GetKills(uid, round);
+        }
+    }
+    else
+    {
+        total = scoreboard->GetKills(uid, -1);
+    }
+    return _toString<int>(total);
 }
 
 void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
@@ -393,7 +421,7 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
 
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
 
     setPlayerInfoByte(info, 0x38, localFlag);
     setPlayerInfoInt(info, 0x24, scoreboard->GetRoundsWon(uid));
@@ -429,7 +457,7 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     }
 
     MultiPlayerGameMode* gameMode =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLocalGameMode();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
     setPlayerInfoByte(info, 0x3a,
                       gameMode != 0 && gameMode->IsTeamInvite(player->GetDisplayName()) ? 1 : 0);
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
@@ -447,8 +475,9 @@ PlayerInfo* MG01ScoreboardLayout::CreatePlayerInfo()
 
 void MG01ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = CreatePlayerInfo();
-    info->smallId = smallId;
+    PlayerInfo* info = new PlayerInfo();
+    INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
+    BuildPlayerInfo(networkPlayer, info);
     m_players.push_back(info);
 }
 

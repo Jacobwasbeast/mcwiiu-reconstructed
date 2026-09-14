@@ -1,7 +1,10 @@
 #include "game/core/OceanMonumentPieces.hpp"
 #include "game/core/BoundingBox.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/ElderGuardian.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Block.hpp"
 
@@ -72,7 +75,19 @@ bool OceanMonumentPieces::OceanMonumentPiece::chunkIntersects(BoundingBox* box, 
         worldZ1 = worldZ0;
     return box->intersects(minX, minZ, worldX0, worldZ1);
 }
-bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingBox* box, int x, int y, int z) { if (level == NULL || box == NULL) return false; if (x < 0 || y < 0 || z < 0) return true; return true; }
+bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingBox* box, int x, int y, int z)
+{
+    int worldX = getWorldX(x, z);
+    int worldY = getWorldY(y);
+    int worldZ = getWorldZ(x, z);
+    if (!box->isInside(BlockPos(worldX, worldY, worldZ)))
+        return false;
+    boost::shared_ptr<ElderGuardian> elder(new ElderGuardian(level));
+    elder->heal(elder->getMaxHealth());
+    elder->moveTo((double)worldX + 0.5, (double)worldY, (double)worldZ + 0.5, 0.0f, 0.0f);
+    level->addEntity(elder);
+    return true;
+}
 OceanMonumentPieces::MonumentRoomFitter::~MonumentRoomFitter() {}
 OceanMonumentPieces::FitSimpleRoom::~FitSimpleRoom() {}
 bool OceanMonumentPieces::FitSimpleRoom::fits(const boost::shared_ptr<RoomDefinition>& d) { return d && d->countOpenings() >= 1; }
@@ -134,7 +149,14 @@ bool OceanMonumentPieces::OceanMonumentDoubleYRoom::postProcess(Level* l, Random
 void OceanMonumentPieces::OceanMonumentDoubleYRoom::Create() { new OceanMonumentDoubleYRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentDoubleYRoom::GetType() { return eStructurePiece_OceanMonumentDoubleYRoom; }
 OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom() : OceanMonumentPiece(0) {}
-OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
+OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 1, 2, 2)
+{
+    fjKeepReference(mRoomDefinition->fjConnection(Direction::UP));
+    fjKeepReference(mRoomDefinition->fjConnection(Direction::UP)->fjConnection(Direction::UP));
+    fjKeepReference(mRoomDefinition->fjConnection(Direction::NORTH));
+    fjKeepReference(mRoomDefinition->fjConnection(Direction::NORTH)->fjConnection(Direction::UP));
+    fjKeepReference(mRoomDefinition->fjConnection(Direction::NORTH)->fjConnection(Direction::UP)->fjConnection(Direction::UP));
+}
 OceanMonumentPieces::OceanMonumentDoubleYZRoom::~OceanMonumentDoubleYZRoom() {}
 bool OceanMonumentPieces::OceanMonumentDoubleYZRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
 void OceanMonumentPieces::OceanMonumentDoubleYZRoom::Create() { new OceanMonumentDoubleYZRoom(); }
@@ -154,7 +176,22 @@ EStructurePiece OceanMonumentPieces::OceanMonumentSimpleRoom::GetType() { return
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::OceanMonumentSimpleTopRoom() : OceanMonumentPiece(0) {}
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::OceanMonumentSimpleTopRoom(const Direction* o, const boost::shared_ptr<RoomDefinition>& d, Random& r) : OceanMonumentPiece(1, o, d, 0, 0, 0) { if (r.nextInt(1) < 0) return; }
 OceanMonumentPieces::OceanMonumentSimpleTopRoom::~OceanMonumentSimpleTopRoom() {}
-bool OceanMonumentPieces::OceanMonumentSimpleTopRoom::postProcess(Level* l, Random& r, BoundingBox* b) { if (r.nextInt(1) < 0) return false; generateDefaultFloor(l, b, 0, 0, true); return true; }
+bool OceanMonumentPieces::OceanMonumentSimpleTopRoom::postProcess(Level* l, Random& r, BoundingBox* b)
+{
+    int row;
+    for (row = 0; row < 6; ++row)
+    {
+        int i;
+        for (i = 0; i < 6; ++i)
+        {
+            if (r.nextInt(3) != 0)
+                r.nextInt(4);
+        }
+    }
+    if (mRoomDefinition->mOpenings[Direction::SOUTH->get3DDataValue()])
+        generateWaterBox(l, b, 3, 1, 0, 4, 2, 0, false);
+    return true;
+}
 void OceanMonumentPieces::OceanMonumentSimpleTopRoom::Create() { new OceanMonumentSimpleTopRoom(); }
 EStructurePiece OceanMonumentPieces::OceanMonumentSimpleTopRoom::GetType() { return eStructurePiece_OceanMonumentSimpleTopRoom; }
 OceanMonumentPieces::OceanMonumentEntryRoom::OceanMonumentEntryRoom() : OceanMonumentPiece(0) {}
@@ -189,10 +226,9 @@ OceanMonumentPieces::OceanMonumentPenthouse::OceanMonumentPenthouse() : OceanMon
 OceanMonumentPieces::OceanMonumentPenthouse::OceanMonumentPenthouse(const Direction* o, BoundingBox* b) : OceanMonumentPiece(o, b) {}
 OceanMonumentPieces::OceanMonumentPenthouse::~OceanMonumentPenthouse() {}
 bool OceanMonumentPieces::OceanMonumentPenthouse::postProcess(Level* l, Random& r, BoundingBox* b) {
-    if (r.nextInt(1) < 0) return false;
-    generateDefaultFloor(l, b, 0, 0, true);
+    generateWaterBox(l, b, 6, -1, 3, 7, -1, 4, false);
+    spawnElder(l, b, 6, 1, 6);
     return true;
-   
 }
 void OceanMonumentPieces::OceanMonumentPenthouse::Create()
 {
@@ -221,11 +257,10 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& r, int x, int z,
     mRoomGraphSize = 75;
     return mRoomGraphSize;
    
-} void OceanMonumentPieces::MonumentBuilding::generateWing(bool q, int x, Level* l, Random& r, BoundingBox* b) {
-    if (q && x < 0) return;
-    if (x < 0 && r.nextInt(1) < 0) return;
-    generateWaterBox(l, b, 0, 0, 0, 10, 10, 20, true);
-   
+} void OceanMonumentPieces::MonumentBuilding::generateWing(bool wide, int x, Level* l, Random& r, BoundingBox* b) {
+    if (!chunkIntersects(b, x, 0, x + 23, 20))
+        return;
+    generateWaterBox(l, b, x, 1, 0, x + 24, 10, 20, false);
 } void OceanMonumentPieces::MonumentBuilding::generateEntranceArchs(Level* l, Random& r, BoundingBox* b) {
     if (r.nextInt(1) < 0) return;
     generateWaterBox(l, b, 0, 0, 0, 20, 8, 20, true);
@@ -239,24 +274,81 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& r, int x, int z,
     generateWaterBox(l, b, 0, 20, 0, 40, 20, 40, true);
    
 } void OceanMonumentPieces::MonumentBuilding::generateLowerWall(Level* l, Random& r, BoundingBox* b) {
-    if (r.nextInt(1) < 0) return;
-    generateWaterBox(l, b, 0, 0, 0, 40, 8, 40, true);
-   
+    if (chunkIntersects(b, 0, 21, 6, 58))
+    {
+        generateWaterBox(l, b, 0, 1, 21, 6, 7, 57, false);
+    }
+    if (chunkIntersects(b, 51, 21, 58, 58))
+    {
+        generateWaterBox(l, b, 51, 1, 21, 57, 7, 57, false);
+    }
+    if (chunkIntersects(b, 0, 51, 57, 57))
+    {
+        generateWaterBox(l, b, 7, 1, 51, 50, 10, 57, false);
+    }
 } void OceanMonumentPieces::MonumentBuilding::generateMiddleWall(Level* l, Random& r, BoundingBox* b) {
-    if (r.nextInt(1) < 0) return;
-    generateWaterBox(l, b, 0, 8, 0, 40, 16, 40, true);
-   
-} bool OceanMonumentPieces::MonumentBuilding::generateUpperWall(Level* l, Random& r, BoundingBox* b) {
-    if (r.nextInt(1) < 0) return false;
-    generateWaterBox(l, b, 0, 16, 0, 40, 24, 40, true);
-    return true;
-   
+    if (chunkIntersects(b, 7, 21, 13, 50))
+    {
+        generateWaterBox(l, b, 7, 1, 21, 13, 10, 50, false);
+    }
+    if (chunkIntersects(b, 44, 21, 50, 54))
+    {
+        generateWaterBox(l, b, 44, 1, 21, 50, 10, 50, false);
+    }
+    if (chunkIntersects(b, 8, 44, 49, 54))
+    {
+        generateWaterBox(l, b, 14, 1, 44, 43, 10, 50, false);
+    }
+} void OceanMonumentPieces::MonumentBuilding::generateUpperWall(Level* l, Random& r, BoundingBox* b) {
+    if (chunkIntersects(b, 14, 21, 20, 43))
+    {
+        generateWaterBox(l, b, 14, 1, 22, 20, 14, 43, false);
+    }
+    if (chunkIntersects(b, 37, 21, 43, 43))
+    {
+        generateWaterBox(l, b, 37, 1, 22, 43, 14, 43, false);
+    }
+    if (chunkIntersects(b, 15, 37, 42, 43))
+    {
+        generateWaterBox(l, b, 21, 1, 37, 36, 14, 43, false);
+    }
 } bool OceanMonumentPieces::MonumentBuilding::postProcess(Level* l, Random& r, BoundingBox* b) {
+    int seaLevel = l->getSeaLevel();
+    if (seaLevel < 64)
+        seaLevel = 64;
+    generateWaterBox(l, b, 0, 0, 0, 58, seaLevel - getBoundingBox()->y0, 58, false);
+    generateWing(false, 0, l, r, b);
+    generateWing(true, 33, l, r, b);
+    generateEntranceArchs(l, r, b);
+    generateEntranceWall(l, r, b);
+    generateRoofPiece(l, r, b);
     generateLowerWall(l, r, b);
     generateMiddleWall(l, r, b);
     generateUpperWall(l, r, b);
+    generateWaterBox(l, b, -1, 0, -1, 57, 23, 58, false);
+    generateWaterBox(l, b, 58, 0, -1, 58, 23, 58, false);
+    generateWaterBox(l, b, -2, 2, -2, -2, 23, 59, false);
+    generateWaterBox(l, b, 59, 2, -2, 59, 23, 59, false);
+    generateWaterBox(l, b, -1, 2, -2, 58, 23, -2, false);
+    generateWaterBox(l, b, -1, 2, 59, 58, 23, 59, false);
+    generateWaterBox(l, b, -3, 4, -3, -3, 23, 60, false);
+    generateWaterBox(l, b, 60, 4, -3, 60, 23, 60, false);
+    generateWaterBox(l, b, -2, 4, -3, 59, 23, -3, false);
+    generateWaterBox(l, b, -2, 4, 60, 59, 23, 60, false);
+    generateWaterBox(l, b, -4, 6, -4, -4, 23, 61, false);
+    generateWaterBox(l, b, 61, 6, -4, 61, 23, 61, false);
+    generateWaterBox(l, b, -3, 6, -4, 60, 23, -4, false);
+    generateWaterBox(l, b, -3, 6, 61, 60, 23, 61, false);
+    generateWaterBox(l, b, -5, 8, -5, -5, 23, 62, false);
+    generateWaterBox(l, b, 62, 8, -5, 62, 23, 62, false);
+    generateWaterBox(l, b, -4, 8, -5, 61, 23, -5, false);
+    generateWaterBox(l, b, -4, 8, 62, 61, 23, 62, false);
+    for (std::vector<OceanMonumentPiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
+    {
+        if ((*it)->getBoundingBox()->intersects(b))
+            (*it)->postProcess(l, r, b);
+    }
     return true;
-   
 }
 void OceanMonumentPieces::MonumentBuilding::Create()
 {

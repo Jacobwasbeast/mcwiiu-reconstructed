@@ -172,11 +172,12 @@ unsigned long long StatsCounter::save(int, bool, unsigned char* data)
         for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
         {
             boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::const_iterator statIt = find(*it);
+            bool large = isLargeStat(*it) != 0;
             if (statIt != end())
             {
-                copyValues(statIt->second, cursor, isLargeStat(*it) != 0);
-                cursor += isLargeStat(*it) ? 16 : 8;
+                copyValues(statIt->second, cursor, large);
             }
+            cursor += large ? 16 : 8;
         }
     }
     mSavePending = 0;

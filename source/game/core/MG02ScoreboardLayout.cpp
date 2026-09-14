@@ -107,7 +107,7 @@ bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 
 void MG02ScoreboardLayout::Init(int value)
 {
-    m_localPlayerIdx = value;
+    m_userIndex = value;
     ClearPlayersInfo();
 
     const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
@@ -139,7 +139,7 @@ unsigned int MG02ScoreboardLayout::getNumberOfColumns()
 UIString MG02ScoreboardLayout::getLabel2(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int blocks = scoreboard->GetTotalBlocksDestroyed(uid);
     std::wstring text(L10N::GetString(0x782d903f));
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
@@ -149,7 +149,7 @@ UIString MG02ScoreboardLayout::getLabel2(const StatsUID& uid)
 UIString MG02ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int jumps = scoreboard->GetTotalJumps(uid);
     std::wstring text(L10N::GetString(0xd6524620));
     text = replaceAll(text, L"{*JUMPS*}", _toString<unsigned int>(jumps));
@@ -159,7 +159,7 @@ UIString MG02ScoreboardLayout::getLabel3(const StatsUID& uid)
 UIString MG02ScoreboardLayout::getLabel4(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int distance = scoreboard->GetTotalDistanceTravelled(uid);
     std::wstring text(L10N::GetString(0x2815dc90));
     text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
@@ -169,7 +169,7 @@ UIString MG02ScoreboardLayout::getLabel4(const StatsUID& uid)
 UIString MG02ScoreboardLayout::getLabel5(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     if (scoreboard->IsOverallWinner(uid))
     {
         return UIString(0x9148f7e8);
@@ -206,13 +206,13 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, con
     if (row == 0)
     {
         ClientScoreboard* scoreboard =
-            Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
         return _toString<int>(scoreboard->GetRoundsWon(uid));
     }
     if (row == 1 && getNumberOfColumns() > 2)
     {
         ClientScoreboard* scoreboard =
-            Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
         return _toString<int>(scoreboard->GetDeaths(uid, -1));
     }
     return std::wstring(L"");
@@ -263,7 +263,7 @@ void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     playerInfoByte(info, 0x28) = priorityFlag;
 
     ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_localPlayerIdx]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     playerInfoIntMut(info, 0x30) = scoreboard->GetTotalBlocksDestroyed(uid);

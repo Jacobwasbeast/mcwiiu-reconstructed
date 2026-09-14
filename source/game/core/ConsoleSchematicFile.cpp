@@ -5,7 +5,12 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/client/render/GameRenderer.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/core/System.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/chunk/PlayerChunkMap.hpp"
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/Painting.hpp"
@@ -71,24 +76,154 @@ unsigned short ConsoleSchematicFile::rotateElementValue(unsigned short element, 
 
 void ConsoleSchematicFile::chunkCoordToSchematicCoord(AABB* box, int x, int z, ESchematicRotation rotation, ESchematicMirror mirror, int& sx, int& sz)
 {
-    sx = x - (int)box->mMinX;
-    sz = z - (int)box->mMinZ;
-    if (mirror == eSchematicMirror_LeftRight || mirror == eSchematicMirror_Both) sx = mWidth - sx - 1;
-    if (mirror == eSchematicMirror_FrontBack || mirror == eSchematicMirror_Both) sz = mDepth - sz - 1;
-    if (rotation == eSchematicRotation_90) { int t = sx; sx = sz; sz = mWidth - t - 1; }
-    else if (rotation == eSchematicRotation_180) { sx = mWidth - sx - 1; sz = mDepth - sz - 1; }
-    else if (rotation == eSchematicRotation_270) { int t = sx; sx = mDepth - sz - 1; sz = t; }
+    if (mirror == eSchematicMirror_None)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            sx = (int)std::floor(x - box->mMinX);
+            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            sx = (int)std::floor(box->mMaxX - 1.0 - x);
+            sz = (int)std::floor(z - box->mMinZ);
+        }
+        else
+        {
+            sx = (int)std::floor(x - box->mMinX);
+            sz = (int)std::floor(z - box->mMinZ);
+        }
+    }
+    else if (mirror == eSchematicMirror_LeftRight)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            sx = (int)std::floor(z - box->mMinZ);
+            sz = (int)std::floor(x - box->mMinX);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            sx = (int)std::floor(box->mMaxZ - 1.0 - z);
+            sz = (int)std::floor(box->mMaxX - 1.0 - x);
+        }
+        else
+        {
+            sx = (int)std::floor(z - box->mMinZ);
+            sz = (int)std::floor(box->mMaxX - 1.0 - x);
+        }
+    }
+    else if (mirror == eSchematicMirror_FrontBack)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            sx = (int)std::floor(box->mMaxX - 1.0 - x);
+            sz = (int)std::floor(z - box->mMinZ);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            sx = (int)std::floor(x - box->mMinX);
+            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
+        }
+        else
+        {
+            sx = (int)std::floor(box->mMaxX - 1.0 - x);
+            sz = (int)std::floor(box->mMaxZ - 1.0 - z);
+        }
+    }
+    else
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            sx = (int)std::floor(z - box->mMinZ);
+            sz = (int)std::floor(x - box->mMinX);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            sx = (int)std::floor(box->mMaxZ - 1.0 - z);
+            sz = (int)std::floor(x - box->mMinX);
+        }
+        else
+        {
+            sx = (int)std::floor(x - box->mMinX);
+            sz = (int)std::floor(z - box->mMinZ);
+        }
+    }
 }
 
 void ConsoleSchematicFile::schematicCoordToChunkCoord(AABB* box, double x, double z, ESchematicRotation rotation, ESchematicMirror mirror, double& cx, double& cz)
 {
-    cx = x + box->mMinX;
-    cz = z + box->mMinZ;
-    if (mirror == eSchematicMirror_LeftRight || mirror == eSchematicMirror_Both) cx = box->mMaxX - x;
-    if (mirror == eSchematicMirror_FrontBack || mirror == eSchematicMirror_Both) cz = box->mMaxZ - z;
-    if (rotation == eSchematicRotation_90) { double t = cx; cx = cz; cz = box->mMaxX - t; }
-    else if (rotation == eSchematicRotation_180) { cx = box->mMaxX - x; cz = box->mMaxZ - z; }
-    else if (rotation == eSchematicRotation_270) { double t = cx; cx = box->mMaxZ - cz; cz = t; }
+    if (mirror == eSchematicMirror_None)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            cx = std::floor(x + box->mMinX);
+            cz = std::floor(box->mMaxZ - 1.0 - z);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            cx = std::floor(box->mMaxX - 1.0 - x);
+            cz = std::floor(z + box->mMinZ);
+        }
+        else
+        {
+            cx = std::floor(x + box->mMinX);
+            cz = std::floor(z + box->mMinZ);
+        }
+    }
+    else if (mirror == eSchematicMirror_LeftRight)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            cx = std::floor(z + box->mMinX);
+            cz = std::floor(x + box->mMinZ);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            cx = std::floor(box->mMaxX - 1.0 - z);
+            cz = std::floor(box->mMaxZ - 1.0 - x);
+        }
+        else
+        {
+            cx = std::floor(box->mMaxX - 1.0 - z);
+            cz = std::floor(x + box->mMinZ);
+        }
+    }
+    else if (mirror == eSchematicMirror_FrontBack)
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            cx = std::floor(box->mMaxX - 1.0 - x);
+            cz = std::floor(z + box->mMinZ);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            cx = std::floor(x + box->mMinX);
+            cz = std::floor(box->mMaxZ - 1.0 - z);
+        }
+        else
+        {
+            cx = std::floor(box->mMaxX - 1.0 - x);
+            cz = std::floor(box->mMaxZ - 1.0 - z);
+        }
+    }
+    else
+    {
+        if (rotation == eSchematicRotation_90)
+        {
+            cx = std::floor(z + box->mMinX);
+            cz = std::floor(x + box->mMinZ);
+        }
+        else if (rotation == eSchematicRotation_270)
+        {
+            cx = std::floor(z + box->mMinX);
+            cz = std::floor(box->mMaxZ - 1.0 - x);
+        }
+        else
+        {
+            cx = std::floor(x + box->mMinX);
+            cz = std::floor(z + box->mMinZ);
+        }
+    }
 }
 
 const Direction* ConsoleSchematicFile::HandleRotation(const Direction* direction, ESchematicMirror mirror, ESchematicRotation rotation)
@@ -372,22 +507,116 @@ void ConsoleSchematicFile::load(DataInputStream* input)
 
 void ConsoleSchematicFile::setElements(arrayWithLength<unsigned short>& out, arrayWithLength<unsigned short> in, ESchematicRotation rotation, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial)
 {
+    bool hasLowY = false;
+    bool hasHighY = false;
+    int lowYEnd = y1;
+    if (y0 < 0x80)
+    {
+        if (y1 > 0x80)
+        {
+            lowYEnd = 0x80;
+        }
+        hasLowY = true;
+    }
+
+    int highYStart = y0;
+    int highYEnd = y1;
+    if (y1 > 0x7f)
+    {
+        if (y0 < 0x80)
+        {
+            highYStart = 0x80;
+        }
+        highYStart -= 0x80;
+        hasHighY = true;
+        highYEnd = y1 - 0x80;
+    }
+
+    PIXBeginNamedEvent(0.0f, "Applying block data");
     for (int x = x0; x < x1; ++x)
     {
         for (int z = z0; z < z1; ++z)
         {
-            for (int y = y0; y < y1; ++y)
+            if (mirror == eSchematicMirror_FrontBack)
             {
-                int sourceIndex = mirror == eSchematicMirror_FrontBack ? count-- : count++;
-                unsigned short element = in.data[sourceIndex];
-                unsigned int destinationIndex = (unsigned int)((x << 11) | (z << 7) | y);
-                if (destinationIndex < out.length && CanPasteBlock(element, includeAir, includeSpecial))
+                count += (y1 - y0) - 1;
+            }
+
+            if (hasLowY)
+            {
+                int lowCount = lowYEnd - y0;
+                if (mirror == eSchematicMirror_FrontBack)
                 {
-                    out.data[destinationIndex] = rotateElementValue(element, rotation);
+                    for (int y = y0; y < lowYEnd; ++y)
+                    {
+                        unsigned short element = in.data[count];
+                        if (CanPasteBlock(element, includeAir, includeSpecial))
+                        {
+                            out.data[(unsigned int)((x << 11) | (z << 7) | y)] = rotateElementValue(element, rotation);
+                        }
+                        --count;
+                    }
                 }
+                else if (includeAir && includeSpecial && rotation == eSchematicRotation_0)
+                {
+                    System::arraycopy(in, count, &out, (unsigned int)((x << 11) | (z << 7) | y0), lowCount);
+                    count += lowCount;
+                }
+                else
+                {
+                    for (int y = y0; y < lowYEnd; ++y)
+                    {
+                        unsigned short element = in.data[count];
+                        if (CanPasteBlock(element, includeAir, includeSpecial))
+                        {
+                            out.data[(unsigned int)((x << 11) | (z << 7) | y)] = rotateElementValue(element, rotation);
+                        }
+                        ++count;
+                    }
+                }
+            }
+
+            if (hasHighY)
+            {
+                int highCount = highYEnd - highYStart;
+                if (mirror == eSchematicMirror_FrontBack)
+                {
+                    for (int y = highYStart; y < highYEnd; ++y)
+                    {
+                        unsigned short element = in.data[count];
+                        if (CanPasteBlock(element, includeAir, includeSpecial))
+                        {
+                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(element, rotation);
+                        }
+                        --count;
+                    }
+                }
+                else if (includeAir && includeSpecial && rotation == eSchematicRotation_0)
+                {
+                    System::arraycopy(in, count, &out, (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000), highCount);
+                    count += highCount;
+                }
+                else
+                {
+                    for (int y = highYStart; y < highYEnd; ++y)
+                    {
+                        unsigned short element = in.data[count];
+                        if (CanPasteBlock(element, includeAir, includeSpecial))
+                        {
+                            out.data[(unsigned int)(((x << 11) | (z << 7) | y) + 0x8000)] = rotateElementValue(element, rotation);
+                        }
+                        ++count;
+                    }
+                }
+            }
+
+            if (mirror == eSchematicMirror_FrontBack)
+            {
+                count += y1 - y0;
             }
         }
     }
+    PIXEndNamedEvent();
 }
 
 void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destination, arrayWithLength<unsigned char> source, arrayWithLength<unsigned short> elements, int elementIndex, int sourceIndex, int destinationIndex, bool swapNibbles, bool includeAir, bool includeSpecial)
@@ -412,28 +641,155 @@ void ConsoleSchematicFile::pasteIntoArray(arrayWithLength<unsigned char>& destin
 
 void ConsoleSchematicFile::setData(arrayWithLength<unsigned char>& out, arrayWithLength<unsigned char> in, ESchematicMirror mirror, int x0, int y0, int z0, int x1, int y1, int z1, int& count, bool includeAir, bool includeSpecial, arrayWithLength<unsigned short> elements, int& index)
 {
-    bool swapNibbles = (y0 & 1) != 0;
+    bool hasLowY = false;
+    bool hasHighY = false;
+    int lowYEnd = y1;
+    if (y0 < 0x80)
+    {
+        if (y1 > 0x80)
+        {
+            lowYEnd = 0x80;
+        }
+        hasLowY = true;
+    }
+
+    int highYStart = y0;
+    int highYEnd = y1;
+    if (y1 > 0x7f)
+    {
+        if (y0 < 0x80)
+        {
+            highYStart = 0x80;
+        }
+        highYStart -= 0x80;
+        hasHighY = true;
+        highYEnd = y1 - 0x80;
+    }
+
+    PIXBeginNamedEvent(0.0f, "Applying Data data");
     for (int x = x0; x < x1; ++x)
     {
         for (int z = z0; z < z1; ++z)
         {
-            for (int y = y0; y < y1; y += 2)
+            if (mirror == eSchematicMirror_FrontBack)
             {
-                if (count >= 0 && count < (int)out.length && index >= 0 && index < (int)in.length)
+                index += (y1 - y0) - 1;
+            }
+
+            if (hasLowY)
+            {
+                if (mirror == eSchematicMirror_FrontBack)
                 {
-                    pasteIntoArray(out, in, elements, index * 2, index, count, swapNibbles, includeAir, includeSpecial);
+                    for (int y = y0; y < lowYEnd; y += 2)
+                    {
+                        unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
+                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        index -= 2;
+                        count += 2;
+                    }
                 }
-                ++count;
-                if (mirror == eSchematicMirror_FrontBack) --index;
-                else ++index;
+                else
+                {
+                    for (int y = y0; y < lowYEnd; y += 2)
+                    {
+                        unsigned int dest = (unsigned int)((x << 11) | (z << 7) | y) >> 1;
+                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        index += 2;
+                        count += 2;
+                    }
+                }
+            }
+
+            if (hasHighY)
+            {
+                if (mirror == eSchematicMirror_FrontBack)
+                {
+                    for (int y = highYStart; y < highYEnd; y += 2)
+                    {
+                        unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
+                        pasteIntoArray(out, in, elements, (index - 1) * 2, index - 1, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        index -= 2;
+                        count += 2;
+                    }
+                }
+                else
+                {
+                    for (int y = highYStart; y < highYEnd; y += 2)
+                    {
+                        unsigned int dest = (unsigned int)(((x << 11) | (z << 7) | y) + 0x8000) >> 1;
+                        pasteIntoArray(out, in, elements, index * 2, index, dest, (y & 1) != 0, includeAir, includeSpecial);
+                        index += 2;
+                        count += 2;
+                    }
+                }
+            }
+
+            if (mirror == eSchematicMirror_FrontBack)
+            {
+                index += y1 - y0;
             }
         }
     }
+    PIXEndNamedEvent();
 }
 
-void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, int x, int y, int z, int width, int height, int depth, int& count)
+void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, int x0, int y0, int z0, int x1, int y1, int z1, int& count)
 {
-    count = 0; if (chunk == 0 || elements == 0) return; for (int dx=0; dx<width; ++dx) for (int dy=0; dy<height; ++dy) for (int dz=0; dz<depth; ++dz) { unsigned int i=(unsigned int)((dx*height+dy)*depth+dz); if(i<elements->length) elements->data[i]=chunk->getElement(x+dx,y+dy,z+dz); ++count; }
+    bool hasLowY = false;
+    bool hasHighY = false;
+    int lowYEnd = y1;
+    if (y0 < 0x80)
+    {
+        if (y1 > 0x80)
+        {
+            lowYEnd = 0x80;
+        }
+        hasLowY = true;
+    }
+
+    int highYStart = y0;
+    int highYEnd = y1;
+    if (y1 > 0x7f)
+    {
+        if (y0 < 0x80)
+        {
+            highYStart = 0x80;
+        }
+        highYStart -= 0x80;
+        hasHighY = true;
+        highYEnd = y1 - 0x80;
+    }
+
+    arrayWithLength<unsigned short> elementsBuffer(0x10000, true);
+    arrayWithLength<unsigned short> extraBuffer(0x10000, true);
+    chunk->getElementRange(arrayWithLength<unsigned short>(elementsBuffer.data, elementsBuffer.length), arrayWithLength<unsigned short>(extraBuffer.data, extraBuffer.length), 0, 0x40);
+
+    count = 0;
+    for (int x = x0; x < x1; ++x)
+    {
+        for (int z = z0; z < z1; ++z)
+        {
+            if (hasLowY)
+            {
+                int lowCount = lowYEnd - y0;
+                unsigned int src = (unsigned int)((x << 11) | (z << 7) | y0);
+                System::arraycopy(elementsBuffer, src, elements, count, lowCount);
+                System::arraycopy(extraBuffer, src, extra, count, lowCount);
+                count += lowCount;
+            }
+            if (hasHighY)
+            {
+                int highCount = highYEnd - highYStart;
+                unsigned int src = (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000);
+                System::arraycopy(elementsBuffer, src, elements, count, highCount);
+                System::arraycopy(extraBuffer, src, extra, count, highCount);
+                count += highCount;
+            }
+        }
+    }
+
+    delete[] elementsBuffer.data;
+    delete[] extraBuffer.data;
 }
 
 void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithLength<unsigned char>* out, int& count, int x, int y, int z, int width, int height, int depth)
@@ -675,7 +1031,52 @@ void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithL
 
 void ConsoleSchematicFile::fillArraysFromLevel(Level* level, int x, int y, int z, int width, int height, int depth, arrayWithLength<unsigned short>* elements, arrayWithLength<unsigned short>* extra, arrayWithLength<unsigned char>* data, arrayWithLength<unsigned char>* extraData)
 {
-    if(level==0 || elements==0) return; for(int dx=0;dx<width;++dx) for(int dy=0;dy<height;++dy) for(int dz=0;dz<depth;++dz) { unsigned int i=(unsigned int)((dx*height+dy)*depth+dz); if(i<elements->length) elements->data[i]=level->getElement(x+dx,y+dy,z+dz); }
+    int yEnd = y + height;
+    int x1 = x + width;
+    int z1 = z + depth;
+
+    arrayWithLength<unsigned char> skyLight(0x8000, true);
+    arrayWithLength<unsigned char> extraSkyLight(0x8000, true);
+
+    int elementCount = 0;
+    int dataCount = 0;
+    int extraDataCount = 0;
+
+    for (int chunkX = x; chunkX < x1; chunkX = ((chunkX >> 4) << 4) + 16)
+    {
+        int lx0 = chunkX - ((chunkX >> 4) << 4);
+        if (lx0 < 0) lx0 = 0;
+        int lx1 = lx0 + 1;
+        if (lx1 > 16) lx1 = 16;
+
+        for (int chunkZ = z; chunkZ < z1; chunkZ = ((chunkZ >> 4) << 4) + 16)
+        {
+            int lz0 = chunkZ - ((chunkZ >> 4) << 4);
+            int lz1 = z1 - ((chunkZ >> 4) << 4);
+            if (lz0 < 0) lz0 = 0;
+            if (lz1 > 16) lz1 = 16;
+
+            LevelChunk* chunk = level->getChunk(chunkX >> 4, chunkZ >> 4);
+
+            if (elements != 0)
+            {
+                getElements(chunk, elements, extra, lx0, y, lz0, lx1, yEnd, lz1, elementCount);
+            }
+            if (extraData != 0)
+            {
+                chunk->getBlockLightData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length));
+                getData(arrayWithLength<unsigned char>(extraSkyLight.data, extraSkyLight.length), extraData, extraDataCount, lx0, y, lz0, lx1, yEnd, lz1);
+            }
+            if (data != 0)
+            {
+                chunk->getSkyLightData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length));
+                getData(arrayWithLength<unsigned char>(skyLight.data, skyLight.length), data, dataCount, lx0, y, lz0, lx1, yEnd, lz1);
+            }
+        }
+    }
+
+    delete[] skyLight.data;
+    delete[] extraSkyLight.data;
 }
 
 long long ConsoleSchematicFile::applyBlocksAndData(LevelChunk* chunk, PasteData* data)
@@ -784,9 +1185,44 @@ long long ConsoleSchematicFile::applyLighting(LevelChunk* chunk, AABB*, AABB* ar
     if (maxZ > chunkMinZ + 16) maxZ = chunkMinZ + 16;
 
     int volume = (maxX - minX) * (maxY - minY) * (maxZ - minZ);
-    chunk->recalcHeightmapOnly();
-    chunk->recalcBlockLights();
-    chunk->setUnsaved(true);
+
+    int startY = minY;
+    if (minX < maxX && minZ < maxZ)
+    {
+        for (int x = minX; x < maxX; ++x)
+        {
+            for (int z = minZ; z < maxZ; ++z)
+            {
+                int height = chunk->getHeightmap(x - chunkMinX, z - chunkMinZ);
+                if (height < startY)
+                {
+                    startY = chunk->getHeightmap(x - chunkMinX, z - chunkMinZ);
+                }
+            }
+        }
+    }
+
+    chunk->recalcHeightmap();
+
+    if (minX < maxX && minZ < maxZ)
+    {
+        for (int x = minX; x < maxX; ++x)
+        {
+            for (int y = startY; y < maxY; ++y)
+            {
+                for (int z = minZ; z < maxZ; ++z)
+                {
+                    BlockPos pos(x, y, z);
+                    if (y <= chunk->getHeightmap(x - chunkMinX, z - chunkMinZ))
+                    {
+                        chunk->level->checkLight(LightLayer::SKY, pos, true, false);
+                    }
+                    chunk->getBlock(BlockPos(x - chunkMinX, y, z - chunkMinZ));
+                }
+            }
+        }
+    }
+
     return volume;
 }
 
@@ -842,11 +1278,42 @@ void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchema
 }
 bool ConsoleSchematicFile::undoPrevious(Level* level)
 {
-    if (!mIncludeAir || mCopyArea == 0)
+    if (!mIncludeAir)
     {
         return false;
     }
+
+    Minecraft::GetInstance()->mGameRenderer->DisableUpdateThread(0);
+
+    int minX = (int)std::floor(mCopyArea->mMinX);
+    int maxX = (int)std::floor(mCopyArea->mMaxX);
+    int minY = (int)std::floor(mCopyArea->mMinY);
+    int maxY = (int)std::floor(mCopyArea->mMaxY);
+    int minZ = (int)std::floor(mCopyArea->mMinZ);
+    int maxZ = (int)std::floor(mCopyArea->mMaxZ);
+    for (int x = minX; x < maxX; ++x)
+    {
+        for (int y = minY; y < maxY; ++y)
+        {
+            for (int z = minZ; z < maxZ; ++z)
+            {
+                BlockPos pos(x, y, z);
+                level->getChunkAt(pos)->removeBlockEntity(pos);
+            }
+        }
+    }
+
+    AABB* bounds = AABB::newTemp(mCopyArea->mMinX, mCopyArea->mMinY, mCopyArea->mMinZ, mCopyArea->mMaxX, mCopyArea->mMaxY, mCopyArea->mMaxZ);
+    std::vector<boost::shared_ptr<Entity> > entities;
+    level->getEntities(boost::shared_ptr<Entity>(), bounds, &entities);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    {
+        level->removeEntity(*it);
+    }
+
     _applySchematicData(level, mCopyArea, eSchematicRotation_0, mUndoElements, mUndoExtraElements, mData, mExtraData, mUndoBlockEntities, mUndoEntities, mUndoNamedPositions, mUndoWidth, mUndoHeight, mUndoDepth, true, true, false);
+
+    Minecraft::GetInstance()->mGameRenderer->EnableUpdateThread(0);
     mIncludeAir = false;
     return true;
 }
@@ -879,10 +1346,11 @@ long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY,
 }
 void ConsoleSchematicFile::tick()
 {
-    if (!mHasCopy || mPasteData.mLevel == 0)
+    if (!mHasCopy)
     {
         return;
     }
+
     if (mPasteData.mCurrentChunkX > mPasteData.mMaxChunkX || mPasteData.mCurrentChunkZ > mPasteData.mMaxChunkZ)
     {
         mHasCopy = false;
@@ -890,14 +1358,28 @@ void ConsoleSchematicFile::tick()
     }
 
     LevelChunk* chunk = mPasteData.mLevel->getChunk(mPasteData.mCurrentChunkX, mPasteData.mCurrentChunkZ);
-    if (chunk != 0 && !chunk->isUnloaded())
+    if (!chunk->isEmpty())
     {
         double minX = mPasteData.mCurrentChunkX * 16.0;
         double minZ = mPasteData.mCurrentChunkZ * 16.0;
-        AABB* chunkArea = AABB::newTemp(minX, mPasteData.mArea->mMinY, minZ, minX + 16.0, mPasteData.mArea->mMaxY, minZ + 16.0);
+        AABB* chunkArea = AABB::newTemp(minX, 0.0, minZ, minX + 16.0, 255.0, minZ + 16.0);
         applyBlocksAndData(chunk, &mPasteData);
         applyLighting(chunk, chunkArea, mPasteData.mArea, mPasteData.mRotation);
         applyBlockEntities(chunk, chunkArea, &mPasteData, mPasteData.mLevel);
+
+        int minY = (int)std::floor(mPasteData.mArea->mMinY);
+        int maxY = (int)std::floor(mPasteData.mArea->mMaxY);
+        for (int x = (int)minX; x < (int)minX + 16; ++x)
+        {
+            for (int y = minY; y <= maxY && y < 0x100; ++y)
+            {
+                for (int z = (int)minZ; z < (int)minZ + 16; ++z)
+                {
+                    BlockPos pos(x, y, z);
+                    static_cast<ServerLevel*>(mPasteData.mLevel)->getChunkMap()->blockChanged(pos);
+                }
+            }
+        }
     }
 
     ++mPasteData.mCurrentChunkZ;
@@ -951,25 +1433,20 @@ void ConsoleSchematicFile::getBlockEntitiesInRegion(Level* level, int x0, int y0
 
 void ConsoleSchematicFile::getEntitiesInRegion(Level* level, int x0, int y0, int z0, int x1, int y1, int z1, std::vector<std::pair<Vec3*, CompoundTag*> >& result)
 {
-    AABB bounds((double)x0, (double)y0, (double)z0, (double)x1, (double)y1, (double)z1);
-    for (int chunkX = x0 >> 4; chunkX <= x1 >> 4; ++chunkX)
+    AABB* bounds = AABB::newTemp((double)x0, (double)y0, (double)z0, (double)x1, (double)y1, (double)z1);
+    std::vector<boost::shared_ptr<Entity> > entities;
+    level->getEntities(boost::shared_ptr<Entity>(), bounds, &entities);
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
-        for (int chunkZ = z0 >> 4; chunkZ <= z1 >> 4; ++chunkZ)
+        boost::shared_ptr<Entity> entity = *it;
+        CompoundTag* tag = new CompoundTag();
+        if (entity->save(tag))
         {
-            std::vector<boost::shared_ptr<Entity> > entities;
-            level->getChunk(chunkX, chunkZ)->getEntities(boost::shared_ptr<Entity>(), &bounds, entities, 0);
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+            if (tag->contains(L"UUID"))
             {
-                CompoundTag* tag = new CompoundTag();
-                if ((*it)->save(tag))
-                {
-                    result.push_back(std::make_pair(Vec3::newPermanent((*it)->mX - x0, (*it)->mY - y0, (*it)->mZ - z0), tag));
-                }
-                else
-                {
-                    delete tag;
-                }
+                tag->remove(L"UUID");
             }
+            result.push_back(std::make_pair(Vec3::newPermanent(entity->mX - x0, entity->mY - y0, entity->mZ - z0), tag));
         }
     }
 }
