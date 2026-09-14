@@ -26,6 +26,7 @@
 #include "game/network/ServerboundPlayerActionPacket.hpp"
 #include "game/network/ServerboundSetCarriedItemPacket.hpp"
 #include "game/network/ServerboundSetCreativeModeSlotPacket.hpp"
+#include "game/network/ServerboundUseItemPacket.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -126,11 +127,17 @@ bool MultiPlayerGameMode::hasMissTime()
 
 void MultiPlayerGameMode::attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity)
 {
-    if (!player || !entity)
-        return;
-    if (mTutorialsEnabled && mTutorial != NULL)
+    if (!mTutorial->tasksChecked && GetTutorialsEnabled())
         mTutorial->attack(player, entity);
-    player->attack(entity);
+
+    ensureHasSentCarriedItem();
+    mConnection->send(boost::shared_ptr<Packet>(new ServerboundInteractPacket(entity)));
+
+    if (!isSpectator())
+    {
+        player->attack(entity);
+        player->resetAttackStrengthTicker();
+    }
 }
 
 InteractionResult::EInteractionResult MultiPlayerGameMode::interact(
@@ -242,8 +249,6 @@ bool MultiPlayerGameMode::CanMakeSpectateSound()
 void MultiPlayerGameMode::MakeSpectateSound()
 {
     boost::shared_ptr<Player> player = GetLocalPlayer();
-    if (!player)
-        return;
     const unsigned long long entityType = player->GetSpectateEntity();
     const SoundEvent* sound = 0;
     if (entityType == 0x5D540048ULL)
@@ -288,8 +293,11 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItem(
     if (!player->isAllowedToUse(item))
         return InteractionResult::eInteractionResult_Pass;
 
+    InteractionResult::EInteractionResult result;
     if (!simulate)
     {
+        ensureHasSentCarriedItem();
+
         if (player->getCooldowns()->isOnCooldown(item->getItem()))
             return InteractionResult::eInteractionResult_Pass;
 
@@ -299,11 +307,18 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItem(
         if (item->getCount() != savedCount)
             player->setItemInHand(hand, item);
 
-        return InteractionResult::eInteractionResult_Success;
+        result = InteractionResult::eInteractionResult_Success;
+    }
+    else
+    {
+        bool canUse = item->TestUse(level, player, hand);
+        result = canUse ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Pass;
     }
 
-    bool canUse = item->TestUse(level, player, hand);
-    return canUse ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Pass;
+    if (!simulate && result != InteractionResult::eInteractionResult_Pass)
+        mConnection->send(boost::shared_ptr<Packet>(new ServerboundUseItemPacket(hand)));
+
+    return result;
 }
 void MultiPlayerGameMode::SetGameType(const GameType* gameType)
 {

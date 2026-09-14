@@ -26,7 +26,7 @@ void ScatteredFeaturePieces::loadStatic()
 }
 
 ScatteredFeaturePieces::ScatteredFeaturePiece::ScatteredFeaturePiece()
-    : StructurePiece(), mPlaceSettings(), mWidth(0), mHeight(0), mDepth(0), mGroundHeight(-1), mFirstBools(), mSecondBools(), mFirstInts(), mSecondInts()
+    : StructurePiece(), mPlaceSettings(), mWidth(0), mHeight(0), mDepth(0), mGroundHeight(0), mFirstBools(), mSecondBools(), mFirstInts(), mSecondInts()
 {
 }
 
@@ -121,8 +121,23 @@ void ScatteredFeaturePieces::DesertPyramidPiece::addAdditionalSaveData(DataOutpu
 void ScatteredFeaturePieces::DesertPyramidPiece::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
-    for (int i = 0; i < 4; ++i)
-        mTrap[i] = input->readBoolean();
+    if (StructureFeatureIO::getVersion() == 1)
+    {
+        if (mSecondBools.size() > 3)
+        {
+            mTrap[0] = mSecondBools[0];
+            mTrap[1] = mSecondBools[1];
+            mTrap[2] = mSecondBools[2];
+            mTrap[3] = mSecondBools[3];
+        }
+    }
+    else
+    {
+        mTrap[0] = input->readBoolean();
+        mTrap[1] = input->readBoolean();
+        mTrap[2] = input->readBoolean();
+        mTrap[3] = input->readBoolean();
+    }
 }
 
 bool ScatteredFeaturePieces::DesertPyramidPiece::postProcess(Level* level, Random& random, BoundingBox* box)

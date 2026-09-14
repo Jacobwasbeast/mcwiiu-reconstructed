@@ -367,21 +367,17 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
     Block* block = state->getBlock();
     if (mType == 1)
     {
-        if (block == Blocks::log)
+        if (block == Blocks::log) return Blocks::sandstone->defaultBlockState();
+        if (block == Blocks::log2) return Blocks::sandstone->defaultBlockState();
+        if (block == Blocks::cobblestone)
             return Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData());
-        if (block == Blocks::log2)
-            return Blocks::sandstone->defaultBlockState();
-        if (block == Blocks::cobblestone) return Blocks::sandstone->getBlockState(0);
         if (block == Blocks::planks)
-        {
-            TypedBoxed<SandStoneBlock::Variant*> variant(SandStoneBlock::SMOOTH);
-            return Blocks::sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, &variant);
-        }
+            return Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData());
         if (block == Blocks::oak_stairs)
             return villageStairState(Blocks::sandstone_stairs, state);
         if (block == Blocks::stone_brick_stairs)
             return villageStairState(Blocks::sandstone_stairs, state);
-        if (block == Blocks::grass_path) return Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData());
+        if (block == Blocks::grass_path) return Blocks::sandstone->defaultBlockState();
     }
     else if (mType == 2)
     {
@@ -760,7 +756,10 @@ void VillagePieces::SimpleHouse::addAdditionalSaveData(DataOutputStream* output)
 void VillagePieces::SimpleHouse::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)
 {
     VillagePiece::readAdditionalSaveData(input, manager);
-    mHasMadeDoor = input->readBoolean();
+    if (StructureFeatureIO::getVersion() == 1)
+        mHasMadeDoor = mFirstBools.empty() ? false : mFirstBools[0];
+    else
+        mHasMadeDoor = input->readBoolean();
 }
 BoundingBox* VillagePieces::SimpleHouse::findPieceBox(StartPiece* startPiece,
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
@@ -1049,8 +1048,16 @@ void VillagePieces::SmallHut::addAdditionalSaveData(DataOutputStream* output)
 void VillagePieces::SmallHut::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)
 {
     VillagePiece::readAdditionalSaveData(input, manager);
-    mVillagersSpawned = input->readInt();
-    mHasMadeDoor = input->readBoolean();
+    if (StructureFeatureIO::getVersion() == 1)
+    {
+        mVillagersSpawned = mFirstInts.empty() ? 0 : mFirstInts[0];
+        mHasMadeDoor = mFirstBools.empty() ? false : mFirstBools[0];
+    }
+    else
+    {
+        mVillagersSpawned = input->readInt();
+        mHasMadeDoor = input->readBoolean();
+    }
 }
 BoundingBox* VillagePieces::SmallHut::findPieceBox(StartPiece* startPiece,
     std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
@@ -1466,8 +1473,17 @@ void VillagePieces::Farmland::addAdditionalSaveData(DataOutputStream* output)
 void VillagePieces::Farmland::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)
 {
     VillagePiece::readAdditionalSaveData(input, manager);
-    mCropA = input->readInt();
-    mCropB = input->readInt();
+    if (StructureFeatureIO::getVersion() == 1)
+    {
+        bool haveTwo = mFirstInts.size() >= 2;
+        mCropA = haveTwo ? selectOldCrops(mFirstInts[0]) : 0;
+        mCropB = haveTwo ? selectOldCrops(mFirstInts[1]) : 0;
+    }
+    else
+    {
+        mCropA = input->readInt();
+        mCropB = input->readInt();
+    }
 }
 bool VillagePieces::Farmland::postProcess(Level* level, Random& random, BoundingBox* box)
 {
@@ -1539,15 +1555,30 @@ int VillagePieces::DoubleFarmland::selectOldCrops(int crop)
 }
 void VillagePieces::DoubleFarmland::addAdditionalSaveData(DataOutputStream* output)
 {
-    Farmland::addAdditionalSaveData(output);
+    VillagePiece::addAdditionalSaveData(output);
+    output->writeInt(mCropA);
+    output->writeInt(mCropB);
     output->writeInt(mCropC);
     output->writeInt(mCropD);
 }
 void VillagePieces::DoubleFarmland::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)
 {
-    Farmland::readAdditionalSaveData(input, manager);
-    mCropC = input->readInt();
-    mCropD = input->readInt();
+    VillagePiece::readAdditionalSaveData(input, manager);
+    if (StructureFeatureIO::getVersion() == 1)
+    {
+        bool haveFour = mFirstInts.size() >= 4;
+        mCropA = haveFour ? selectOldCrops(mFirstInts[0]) : 0;
+        mCropB = haveFour ? selectOldCrops(mFirstInts[1]) : 0;
+        mCropC = haveFour ? selectOldCrops(mFirstInts[2]) : 0;
+        mCropD = haveFour ? selectOldCrops(mFirstInts[3]) : 0;
+    }
+    else
+    {
+        mCropA = input->readInt();
+        mCropB = input->readInt();
+        mCropC = input->readInt();
+        mCropD = input->readInt();
+    }
 }
 bool VillagePieces::DoubleFarmland::postProcess(Level* level, Random& random, BoundingBox* box)
 {

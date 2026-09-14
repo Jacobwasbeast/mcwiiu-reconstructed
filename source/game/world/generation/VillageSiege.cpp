@@ -88,7 +88,8 @@ bool VillageSiege::tryToSetupSiege()
         const int centerZ = center->z;
         const float radius = (float)village->getRadius();
 
-        for (int attempt = 0; attempt < 10; ++attempt)
+        int attempt = 10;
+        for (;;)
         {
             const float angle = mLevel->mRandom->nextFloat() * 6.2831855f;
             mSpawnX = centerX + (int)((double)(Mth::cos(angle) * radius) * 0.9);
@@ -108,12 +109,23 @@ bool VillageSiege::tryToSetupSiege()
                 }
             }
 
-            if (!insideOtherVillage && findRandomSpawnPos(spawnPos) != NULL)
+            if (insideOtherVillage)
+            {
+                if (attempt != 1)
+                {
+                    --attempt;
+                    continue;
+                }
+                return false;
+            }
+
+            if (findRandomSpawnPos(spawnPos) != NULL)
             {
                 mNextSpawnTime = 0;
                 mSiegeCount = 20;
                 return true;
             }
+            break;
         }
     }
 
