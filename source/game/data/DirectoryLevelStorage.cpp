@@ -149,8 +149,9 @@ void DirectoryLevelStorage::saveMapIdLookup()
 
 void DirectoryLevelStorage::deleteMapFilesForPlayer(boost::shared_ptr<Player> player)
 {
-    if (!player)
-        return;
+    PlayerUID uid = player->mXuid;
+    if (uid != PlayerUID(0))
+        deleteMapFilesForPlayer(uid);
 }
 
 void DirectoryLevelStorage::saveAllCachedData()
@@ -200,9 +201,9 @@ ChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
 void DirectoryLevelStorage::saveLevelData(LevelData* levelData,
                                           std::vector<boost::shared_ptr<Player> >* players)
 {
-    if (!levelData || !mSaveFile)
-        return;
-    CompoundTag* tag = players == 0 ? levelData->createTag() : levelData->createTag(players);
+    CompoundTag* data = levelData->createTag(players);
+    CompoundTag* tag = new CompoundTag();
+    tag->put(L"Data", data);
     ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(L"level.dat"));
     NbtIo::writeCompressed(tag, &output);
     delete tag;
@@ -210,7 +211,12 @@ void DirectoryLevelStorage::saveLevelData(LevelData* levelData,
 
 void DirectoryLevelStorage::saveLevelData(LevelData* levelData)
 {
-    saveLevelData(levelData, 0);
+    CompoundTag* data = levelData->createTag();
+    CompoundTag* tag = new CompoundTag();
+    tag->put(L"Data", data);
+    ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(L"level.dat"));
+    NbtIo::writeCompressed(tag, &output);
+    delete tag;
 }
 
 PlayerIO* DirectoryLevelStorage::getPlayerIO()
@@ -231,7 +237,7 @@ File DirectoryLevelStorage::getFolder()
 
 ConsoleSavePath DirectoryLevelStorage::getDataFile(const std::wstring& name)
 {
-    return ConsoleSavePath(mDataPrefix + name);
+    return ConsoleSavePath(mDataPrefix + name + L".dat");
 }
 
 std::wstring DirectoryLevelStorage::getLevelId()
@@ -324,11 +330,9 @@ void DirectoryLevelStorage::PlayerMappings::addMapping(int mapId, int x, int z, 
 
 void DirectoryLevelStorage::PlayerMappings::readMappings(DataInputStream* input)
 {
-    if (!input)
-        return;
     int count = input->readInt();
     while (count-- > 0)
-        mMappings[input->readLong()] = input->readShort();
+        mMappings[input->readLong()] = (short)input->readInt();
 }
 
 bool DirectoryLevelStorage::PlayerMappings::getMapping(int& mapId, int x, int z, int dimension, int scale)
