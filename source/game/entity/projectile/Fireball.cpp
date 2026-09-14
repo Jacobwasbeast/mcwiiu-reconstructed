@@ -113,48 +113,46 @@ bool Fireball::shouldRenderAtSqrDistance(double distanceSqr)
 
 void Fireball::tick()
 {
-    if (mLevel == NULL || mLevel->mIsClientSide || mLevel->hasChunkAt(BlockPos(mX, mY, mZ)))
-    {
-        Entity::tick();
-        if (shouldBurn())
-        {
-            setSecondsOnFire(1);
-        }
-
-        std::vector<boost::shared_ptr<Entity> > ignoredEntities;
-        std::vector<unsigned long long> ignoredTypes;
-        if (mOwner)
-        {
-            ignoredEntities.push_back(boost::static_pointer_cast<Entity>(mOwner));
-        }
-        HitResult* hit = ProjectileUtil::forwardsRaycast(shared_from_this(), true, &ignoredEntities, &ignoredTypes);
-        if (hit != NULL)
-        {
-            onHit(hit);
-            delete hit;
-        }
-
-        mXo = mX;
-        mYo = mY;
-        mZo = mZ;
-        mX += mXd;
-        mY += mYd;
-        mZ += mZd;
-        ProjectileUtil::rotateTowardsMovement(shared_from_this(), 0.2f);
-
-        double inertia = getInertia();
-        mXd += mPowerX;
-        mYd += mPowerY;
-        mZd += mPowerZ;
-        mXd *= inertia;
-        mYd *= inertia;
-        mZd *= inertia;
-        setPos(mX, mY, mZ);
-    }
-    else
+    if (!mLevel->mIsClientSide && !mLevel->hasChunkAt(BlockPos(mX, mY, mZ)))
     {
         remove();
+        return;
     }
+
+    Entity::tick();
+    if (shouldBurn())
+    {
+        setSecondsOnFire(1);
+    }
+
+    std::vector<boost::shared_ptr<Entity> > ignoredEntities;
+    if (mOwner)
+    {
+        ignoredEntities.push_back(boost::static_pointer_cast<Entity>(mOwner));
+    }
+    HitResult* hit = ProjectileUtil::forwardsRaycast(shared_from_this(), true, &ignoredEntities, getEntityTypesToIgnoreCollisionsWith());
+    if (hit != NULL)
+    {
+        onHit(hit);
+        delete hit;
+    }
+
+    mXo = mX;
+    mYo = mY;
+    mZo = mZ;
+    mX += mXd;
+    mY += mYd;
+    mZ += mZd;
+    ProjectileUtil::rotateTowardsMovement(shared_from_this(), 0.2f);
+
+    double inertia = getInertia();
+    mXd += mPowerX;
+    mYd += mPowerY;
+    mZd += mPowerZ;
+    mXd *= inertia;
+    mYd *= inertia;
+    mZd *= inertia;
+    setPos(mX, mY, mZ);
 }
 
 double Fireball::getInertia()
@@ -220,12 +218,12 @@ bool Fireball::hurt(const DamageSource* source, float)
     Vec3* direction = direct->getLookAngle();
     if (direction != NULL)
     {
-        mXd = direction->x * 0.1;
-        mYd = direction->y * 0.1;
-        mZd = direction->z * 0.1;
-        mPowerX = mXd;
-        mPowerY = mYd;
-        mPowerZ = mZd;
+        mXd = direction->x;
+        mYd = direction->y;
+        mZd = direction->z;
+        mPowerX = direction->x * 0.1;
+        mPowerY = direction->y * 0.1;
+        mPowerZ = direction->z * 0.1;
     }
     boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(direct);
     if (owner)

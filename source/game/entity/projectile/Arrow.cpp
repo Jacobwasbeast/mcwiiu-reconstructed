@@ -91,11 +91,13 @@ void Arrow::onHitEntity(const HitResult* result)
 {
     double speed = Mth::sqrt(mXd * mXd + mYd * mYd + mZd * mZd);
     float difficulty = static_cast<float>(mLevel->getDifficulty()->getId());
-    float damage = static_cast<float>(speed * 2.0 + mRandom->nextFloat(0.0f, 0.5f)
-        + mRandom->nextGaussian() * 0.25 + (difficulty - 1.0f) * 0.11f);
+    float damage = static_cast<float>(mRandom->nextGaussian()) * 0.25f + (difficulty - 1.0f) * 0.11f;
+    damage = static_cast<float>(speed) * 0.97f + damage;
+    damage = mRandom->nextFloat(1.0f, 5.0f) + damage;
     if (isCritArrow())
-        damage = Mth::clamp(damage + mRandom->nextFloat(damage * 0.5f + 2.0f), 0.0f, 10.0f);
-    damage += static_cast<float>(mEnchantPower) * 0.5f + 0.5f;
+        damage = Mth::clamp(damage + mRandom->nextFloat(damage * 0.5f + 2.0f), 9.0f, 10.0f);
+    if (mEnchantPower > 0)
+        damage = damage * (static_cast<float>(mEnchantPower) * 0.25f + 1.25f);
 
     boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Entity>(mOwner);
     boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(shared_from_this());
@@ -103,7 +105,11 @@ void Arrow::onHitEntity(const HitResult* result)
     bool fire = miniGame != NULL && miniGame->HasFeatureArrowCanKnockback();
     boost::shared_ptr<DamageSource> source = DamageSource::CreateArrow(arrow, owner, fire);
 
-    if (!result->mEntity->hurt(source.get(), damage))
+    int wholeDamage = static_cast<int>(damage);
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
+        wholeDamage = 0;
+
+    if (!result->mEntity->hurt(source.get(), static_cast<float>(wholeDamage)))
     {
         mXd *= -0.1;
         mYd *= -0.1;

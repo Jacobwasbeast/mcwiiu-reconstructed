@@ -172,7 +172,7 @@ void TippableArrow::tick()
     else if (mInGround && !mEffects.empty() && mInGroundTime > 599)
     {
         mEffects.clear();
-        mPotion = NULL;
+        mPotion = Potions::EMPTY;
         updateColor();
     }
 }
@@ -234,7 +234,7 @@ void TippableArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& ent
             boost::shared_ptr<Entity>());
     }
     for (std::vector<MobEffectInstance*>::iterator it = mEffects.begin(); it != mEffects.end(); ++it)
-        entity->addEffect(new MobEffectInstance(**it), boost::shared_ptr<Entity>());
+        entity->addEffect(*it, boost::shared_ptr<Entity>());
 }
 
 not_null_ptr<ItemInstance> TippableArrow::getPickupItem()
@@ -261,7 +261,7 @@ not_null_ptr<ItemInstance> TippableArrow::getPickupItem()
 void TippableArrow::handleEntityEvent(unsigned char event, int data)
 {
     if (event == 0)
-        makeParticle(data);
+        makeParticle(20);
     else
         Entity::handleEntityEvent(event, data);
 }
