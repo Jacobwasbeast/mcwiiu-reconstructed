@@ -31,11 +31,10 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
 
     if (gMinecraftServer->getForceGameType())
     {
-        std::vector<boost::shared_ptr<ServerPlayer> >* players =
-            gMinecraftServer->getPlayers()->getPlayers();
-
-        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-             it != players->end(); ++it)
+        for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
+                 gMinecraftServer->getPlayers()->getPlayers()->begin();
+             it != gMinecraftServer->getPlayers()->getPlayers()->end();
+             ++it)
         {
             (*it)->setGameMode(const_cast<GameType*>(gameType));
 
