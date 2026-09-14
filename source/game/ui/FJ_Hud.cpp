@@ -15,6 +15,9 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cwchar>
+
+#include "game/ui/fuiRect.hpp"
 
 #include "game/ui/FJ_ExperienceBar.hpp"
 #include "game/ui/FJ_HorseJumpBar.hpp"
@@ -196,6 +199,139 @@ FJ_Hud::FJ_Hud(fuiRenderNode* pRenderNode)
     m_splashY = -1.0f;
     m_offhandEnabled = false;
     m_rightHanded = false;
+
+    hudField<short>(this, 0x46c) = 0;
+    hudInt(this, 0x30) = 0;
+    hudInt(this, 0x484) = 7;
+    hudInt(this, 0x4d4) = 7;
+    hudInt(this, 0x480) = 0;
+    hudField<short>(this, 0x4bc) = 0;
+    for (int flag = 0x40; flag <= 0x4b; ++flag)
+        hudByte(this, static_cast<size_t>(flag)) = 1;
+    hudInt(this, 0x4d0) = 0;
+    hudInt(this, 0x34) = 0;
+    hudInt(this, 0x38) = 0;
+    hudInt(this, 0x3c) = 0;
+
+    float stageHeight = getStage()->getStageHeight();
+    bool standardResolution = (stageHeight == 1080.0f) || (stageHeight == 540.0f);
+    hudByte(this, 0x20) = standardResolution;
+    if (standardResolution)
+    {
+        hudInt(this, 0x44c) = -1;
+        hudInt(this, 0x450) = -1;
+        hudInt(this, 0x24) = 10;
+        hudInt(this, 0x28) = 0x10;
+        hudByte(this, 0x384) = 1;
+        hudInt(this, 0x49c) = 0;
+        hudInt(this, 0x2c) = 0x10;
+        addEventListener(eFJEventType_InitHud, this, &_InitHud, false);
+        addEventListener(eFJEventType_Init, this, &_init, false);
+    }
+    else
+    {
+        hudInt(this, 0x24) = 8;
+        hudInt(this, 0x44c) = -1;
+        hudInt(this, 0x450) = -1;
+        hudInt(this, 0x28) = 8;
+        hudInt(this, 0x2c) = 0;
+        hudByte(this, 0x384) = 1;
+        hudInt(this, 0x49c) = 0;
+        addEventListener(eFJEventType_InitHud, this, &_InitHud, false);
+        addEventListener(eFJEventType_Init, this, &_init, false);
+    }
+
+    hudInt(this, 0x458) = static_cast<int>(getChildByName("Jukebox")->getHeight());
+    hudInt(this, 0x45c) = static_cast<int>(getChildByName("SelectedLabel")->getHeight());
+    hudInt(this, 0x488) = static_cast<int>(getChildByName("Label1")->getY());
+    hudInt(this, 0x48c) = static_cast<int>(getChildByName("SelectedLabel")->getWidth());
+    hudInt(this, 0x490) = static_cast<int>(getChildByName("Jukebox")->getWidth());
+    hudInt(this, 0x494) = static_cast<int>(getChildByName("AnimatedSplashText")->getWidth());
+    hudInt(this, 0x498) = static_cast<int>(getChildByName("WrongWayLabel")->getWidth());
+
+    hudByte(this, 0x4a0) = 0;
+    hudFloat(this, 0x4a4) = 1.0f;
+    hudByte(this, 0x4d9) = 1;
+    hudByte(this, 0x4da) = 0;
+    hudByte(this, 0x4ec) = 0;
+    setVisible(false);
+    hudByte(this, 0x4b0) = 1;
+    hudByte(this, 0x4d8) = 0;
+
+    hudNode(this, 0x24c) = NULL;
+    float safeZoneHeight = getStage()->getStageHeight();
+    if (safeZoneHeight == 720.0f || safeZoneHeight == 360.0f)
+        hudInt(this, 0x4ac) = 0x23;
+    else if (safeZoneHeight == 1080.0f || safeZoneHeight == 540.0f)
+        hudInt(this, 0x4ac) = 0x32;
+    else if (safeZoneHeight == 480.0f || safeZoneHeight == 408.0f)
+        hudInt(this, 0x4ac) = 0x20;
+    else
+        hudInt(this, 0x4ac) = 0x1e;
+
+    FJ_FuiNode* gamertagNode = getChildByName("Gamertag");
+    if (gamertagNode != NULL)
+    {
+        FJ_Label* gamertag = gamertagNode->asFJ_Label();
+        hudNode(this, 0x24c) = gamertag;
+        gamertag->SetLabel(std::wstring());
+    }
+
+    hudNode(this, 0x2a0) = getChildByName("WrongWayLabel")->asFJ_Label();
+    hudNode(this, 0x250) = getChildByName("GameModeSplash")->asFJ_Label();
+    hudNode(this, 0x258) = getChildByName("AnimatedSplash")->asMovieClip();
+    hudInt(this, 0x25c) = static_cast<int>(hudNode(this, 0x258)->getHeight());
+    hudNode(this, 0x258)->setVisible(false);
+    hudNode(this, 0x254) = getChildByName("AnimatedSplashText")->asFJ_Label();
+    hudByte(this, 0x4b1) = 0;
+    hudNode(this, 0x2a4) = getChildByName("RoundNumber")->asFJ_Label();
+    hudNode(this, 0x2a8) = getChildByName("TimeLabel")->asFJ_Label();
+    hudNode(this, 0x2ac) = getChildByName("TimeIcon")->asMovieClip();
+    hudNode(this, 0x2b0) = getChildByName("SpeedLabel")->asFJ_Label();
+    hudNode(this, 0x2b4) = getChildByName("SpeedIcon")->asMovieClip();
+    hudNode(this, 0x2b8) = getChildByName("ScoreLabel")->asFJ_Label();
+    hudNode(this, 0x2bc) = getChildByName("ScoreIcon")->asMovieClip();
+    hudNode(this, 0x2c0) = getChildByName("RaceProgress")->asMovieClip();
+    hudNode(this, 0x2c4) = hudNode(this, 0x2c0)->getChildByName("RaceBar")->asMovieClip();
+    hudNode(this, 0x2c8) = hudNode(this, 0x2c4)->getChildByName("GlideHealthBar")->asMovieClip();
+    hudNode(this, 0x2d8) = getChildByName("Pickup")->asMovieClip();
+
+    hudInt(this, 0x31c) = static_cast<int>(hudNode(this, 0x2bc)->getX());
+    hudInt(this, 0x320) = static_cast<int>(hudNode(this, 0x2a8)->getWidth());
+    hudInt(this, 0x324) = static_cast<int>(hudNode(this, 0x2b0)->getWidth());
+    hudInt(this, 0x4dc) = static_cast<int>(hudNode(this, 0x2c4)->getChildByName("Bar")->getHeight());
+    hudInt(this, 0x4e0) = static_cast<int>(hudNode(this, 0x2c4)->getChildByName("Bar")->getWidth());
+    hudInt(this, 0x4e4) = 0;
+    hudInt(this, 0x4e8) = -1;
+
+    hudNode(this, 0x328) = getChildByName("Gold")->asMovieClip();
+    hudNode(this, 0x32c) = getChildByName("Silver")->asMovieClip();
+    hudNode(this, 0x330) = getChildByName("Bronze")->asMovieClip();
+    hudNode(this, 0x334) = getChildByName("PositionOne")->asFJ_Label();
+    hudNode(this, 0x338) = getChildByName("PositionTwo")->asFJ_Label();
+    hudNode(this, 0x33c) = getChildByName("PositionThree")->asFJ_Label();
+
+    static_cast<FJ_Label*>(hudNode(this, 0x250))->SetLabel(std::wstring());
+
+    FJ_FuiNode* wrongWay = hudNode(this, 0x2a0);
+    if (wrongWay->isFJ_Label_HUD_SplashBig())
+        wrongWay->asFJ_Label_HUD_SplashBig()->SetLabel(std::wstring());
+    else if (wrongWay->isFJ_Label_HUD_Splash())
+        wrongWay->asFJ_Label_HUD_Splash()->SetLabel(std::wstring());
+
+    static_cast<FJ_Label*>(hudNode(this, 0x254))->SetLabel(std::wstring());
+    getChildByName("SelectedLabel.Label")->asFJ_Label()->SetLabel(std::wstring());
+    getChildByName("Jukebox")->asFJ_Label()->SetLabel(std::wstring());
+
+    static const char* const kLabelNames[10] =
+    {
+        "Label1", "Label2", "Label3", "Label4", "Label5",
+        "Label6", "Label7", "Label8", "Label9", "Label10"
+    };
+    for (int i = 0; i < 10; ++i)
+        getChildByName(kLabelNames[i])->asFJ_Label()->SetLabel(std::wstring());
+
+    init(NULL);
 }
 
 FJ_Hud::~FJ_Hud()
@@ -210,7 +346,40 @@ FJ_Hud* FJ_Hud::Create(fuiRenderNode* pRenderNode)
 
 unsigned int FJ_Hud::getType() { return 89; }
 
-void FJ_Hud::SetPlayerLevel(int level) { SetPosition(level, std::wstring(), level != 0); }
+void FJ_Hud::SetPlayerLevel(int level)
+{
+    FJ_LabelOutline* xpLabel = static_cast<FJ_LabelOutline*>(hudNode(this, 0x240));
+
+    bool visible;
+    if (level == 0)
+    {
+        xpLabel->SetLabel(std::wstring(L"X"));
+        visible = false;
+        hudInt(this, 0x39c) = 0;
+    }
+    else
+    {
+        wchar_t buffer[16];
+        swprintf(buffer, 16, L"%d", level);
+        xpLabel->SetLabel(std::wstring(buffer));
+        visible = hudNode(this, 0x1b4)->isVisible();
+        hudInt(this, 0x39c) = level;
+    }
+    xpLabel->setVisible(visible);
+
+    fuiRect rect = getRect(xpLabel);
+    int labelSpan = static_cast<int>(rect.xMin + rect.xMin + xpLabel->getWidth());
+    float x = static_cast<float>(Math::round(
+        static_cast<float>(hudInt(this, 0x4f0)) * 0.5f + hudNode(this, 0x58)->getX() -
+        static_cast<float>(labelSpan) * 0.5f));
+    xpLabel->setX(x);
+
+    float y = static_cast<float>(Math::round(
+        static_cast<float>(hudInt(this, 0x360)) * hudNode(this, 0x58)->getScaleY() * 0.5f +
+        hudNode(this, 0x104)->getY() * hudNode(this, 0x58)->getScaleY() +
+        hudNode(this, 0x58)->getY() - xpLabel->getHeight() * 0.5f - 1.0f));
+    xpLabel->setY(y);
+}
 void FJ_Hud::SetActiveSlot(int slot)
 {
     char slotName[64];
@@ -243,22 +412,106 @@ void FJ_Hud::SetArmour(int armour) { m_iTabIndex = armour; ShowArmour(armour > 0
 void FJ_Hud::SetRegenerationEffect(bool enabled) { ShowHealth(enabled); }
 void FJ_Hud::SetJukeBoxLabelPos()
 {
-    FJ_FuiNode* label = getChildByName("Jukebox");
-    FJ_FuiNodeStage* stage = getStage();
-    if (label == NULL || stage == NULL)
-        return;
+    FJ_FuiNode* jukebox = getChildByName("Jukebox");
 
-    const float y = label->getY() +
-        static_cast<float>(Math::round(label->getHeight() * 1.25f));
-    label->setX(static_cast<float>(Math::round(
-        stage->getStageWidth() - label->getWidth())));
-    label->setY(static_cast<float>(Math::round(y)));
+    if (hudInt(this, 0x49c) == 0)
+    {
+        FJ_FuiNode* selectedLabel = getChildByName("SelectedLabel");
+        jukebox->setY(static_cast<float>(Math::round(
+            selectedLabel->getY() - selectedLabel->getHeight() * 0.5f -
+            static_cast<float>(hudInt(this, 0x458)) * 0.5f)));
+    }
+    else if (hudInt(this, 0x460) == -1 || hudInt(this, 0x464) == -1)
+    {
+        jukebox->setY(static_cast<float>(hudInt(this, 0x30)));
+    }
+    else
+    {
+        jukebox->setY(static_cast<float>(hudInt(this, 0x30)) +
+            (getStage()->getStageHeight() - static_cast<float>(hudInt(this, 0x464))));
+        if (hudNode(this, 0x24c) != NULL)
+            getChildByName("Jukebox")->incY(hudNode(this, 0x24c)->getHeight());
+    }
 }
-void FJ_Hud::SetSelectedLabel(const std::wstring&, bool visible) { FJ_FuiNode* node = getChildByName("selectedLabel"); if (node != NULL) { node->setVisible(visible); } }
+void FJ_Hud::SetSelectedLabel(const std::wstring& label, bool visible)
+{
+    if (visible)
+    {
+        getChildByName("SelectedLabel.Label")->asFJ_Label()->SetLabel(label);
+        getChildByName("SelectedLabel")->gotoAndStop(std::string("On"));
+
+        if (hudInt(this, 0x460) != -1)
+        {
+            FJ_FuiNode* selectedLabel = getChildByName("SelectedLabel");
+            float x = static_cast<float>(Math::round(
+                static_cast<float>(hudInt(this, 0x460)) * 0.5f -
+                static_cast<float>(hudInt(this, 0x48c)) * 0.5f));
+            selectedLabel->setX(x);
+        }
+    }
+
+    FJ_FuiNode* selectedLabel = getChildByName("SelectedLabel");
+    float y = static_cast<float>(Math::round(
+        hudNode(this, 0x58)->getY() - selectedLabel->getHeight() * 0.5f -
+        static_cast<float>(hudInt(this, 0x45c))));
+    selectedLabel->setY(y);
+
+    if (!hudNode(this, 0x88)->isVisible() && !hudNode(this, 0x104)->isVisible() &&
+        !hudNode(this, 0x130)->isVisible())
+    {
+        float delta = static_cast<float>(Math::round(
+            static_cast<float>(hudInt(this, 0x360)) * hudNode(this, 0x58)->getScaleY() * 2.0f));
+        getChildByName("SelectedLabel")->incY(delta);
+    }
+    else if (hudNode(this, 0x188)->isVisible() && hudNode(this, 0x5c)->isVisible())
+    {
+        getChildByName("SelectedLabel")->decY(
+            hudNode(this, 0x5c)->getHeight() * hudNode(this, 0x58)->getScaleY());
+    }
+
+    SetJukeBoxLabelPos();
+}
 void FJ_Hud::SetHealthAbsorb(bool visible, int health) { SetHealth(health, visible, false, !visible); }
 void FJ_Hud::SetFoodSaturationLevel(int level) { m_iTabIndex = level; }
 void FJ_Hud::ShowExpBar(bool visible) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health) { ShowHorseHealth(riding); SetHorseHealth(health, showJump); }
+void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health)
+{
+    if (riding)
+    {
+        FJ_FuiNode** horseIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x8c);
+        for (int n = 0; n < 30; ++n)
+        {
+            FJ_FuiNode* icon = horseIcons[n];
+            icon->setVisible(health > 2 * n);
+            if (icon->isVisible())
+            {
+                int frame;
+                if (health < 2 * n + 1)
+                    frame = 1;
+                else if (health < 2 * n + 2)
+                    frame = 4;
+                else
+                    frame = 3;
+                icon->gotoAndStop(frame);
+            }
+        }
+    }
+
+    FJ_FuiNode* foodBar = hudNode(this, 0x130);
+    bool showFoodBar = !riding && hudNode(this, 0x104)->isVisible();
+    foodBar->setVisible(showFoodBar);
+    hudByte(this, 0x44) = foodBar->isVisible();
+
+    bool showExpBar = (!riding || !showJump) &&
+        hudNode(this, 0x104)->isVisible() && !hudNode(this, 0x1bc)->isVisible();
+    ShowExpBar(showExpBar);
+
+    hudNode(this, 0x1b8)->setVisible(riding && showJump);
+
+    hudByte(this, 0x386) = showJump;
+    hudInt(this, 0x388) = health;
+    hudByte(this, 0x385) = riding;
+}
 void FJ_Hud::SetHorseHealth(int health, bool highlight) { m_iTabIndex = health; ShowHorseHealth(health >= 0); ShowArmorBar(highlight); }
 void FJ_Hud::SetExpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setAlpha(progress); }
 void FJ_Hud::SetHorseJumpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("horseJumpBar"); if (node != NULL) node->setAlpha(progress); }
@@ -266,15 +519,38 @@ void FJ_Hud::ShowQuickSelect(bool visible) { FJ_FuiNode* node = getChildByName("
 void FJ_Hud::ShowCrosshair(bool visible) { FJ_FuiNode* node = getChildByName("crosshair"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::UpdateBossBarPositions()
 {
-    FJ_FuiNodeStage* stage = getStage();
-    if (stage == NULL)
+    int count = hudInt(this, 0x3a4);
+    if (count <= 0)
         return;
-    FJ_FuiNode* bars = getChildByName("BossBars");
-    if (bars == NULL)
-        return;
-    const float width = bars->getWidth();
-    const float x = static_cast<float>(Math::round((stage->getStageWidth() - width) * 0.5f));
-    bars->setX(x);
+
+    FJ_FuiNode** bossBars = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x3a8);
+    for (int i = 0; i < count; ++i)
+    {
+        FJ_FuiNode* bar = bossBars[i];
+        if (bar == NULL)
+            continue;
+
+        if (hudInt(this, 0x460) == -1 || hudInt(this, 0x464) == -1)
+        {
+            float x = static_cast<float>(Math::round(
+                getStage()->getStageWidth() * 0.5f - bar->getWidth() * 0.5f));
+            bar->setX(x);
+            float y = static_cast<float>(Math::round(
+                bar->getHeight() * static_cast<float>(i) + static_cast<float>(hudInt(this, 0x30))));
+            bar->setY(y);
+        }
+        else
+        {
+            float x = static_cast<float>(Math::round(
+                static_cast<float>(hudInt(this, 0x460) / 2) - bar->getWidth() * 0.5f));
+            bar->setX(x);
+            float y = static_cast<float>(Math::round(
+                bar->getHeight() * static_cast<float>(i) +
+                (static_cast<float>(hudInt(this, 0x30)) +
+                 (getStage()->getStageHeight() - static_cast<float>(hudInt(this, 0x464))))));
+            bar->setY(y);
+        }
+    }
 }
 void FJ_Hud::SetGamertag(const std::wstring& gamertag)
 {
@@ -510,7 +786,42 @@ void FJ_Hud::PositionIggySplash()
     m_iggySplash->setX(static_cast<float>(Math::round(x)));
     m_iggySplash->setY(static_cast<float>(Math::round(y)));
 }
-void FJ_Hud::RepositionHud(int width, int height) { setX((float)width); setY((float)height); }
+void FJ_Hud::RepositionHud(int width, int height)
+{
+    hudNode(this, 0x58)->setX(static_cast<float>(Math::round(
+        static_cast<float>(width) * 0.5f - static_cast<float>(hudInt(this, 0x4f0)) * 0.5f)));
+
+    hudNode(this, 0x2c0)->setX(static_cast<float>(Math::round(
+        static_cast<float>(width) * 0.5f - hudNode(this, 0x2c0)->getWidth() * 0.5f)));
+
+    hudInt(this, 0x460) = width;
+    hudInt(this, 0x464) = height;
+
+    getChildByName("Jukebox")->setX(static_cast<float>(Math::round(
+        static_cast<float>(width - hudInt(this, 0x490)) * 0.5f)));
+
+    getChildByName("SelectedLabel")->setX(static_cast<float>(Math::round(
+        static_cast<float>(width) * 0.5f - static_cast<float>(hudInt(this, 0x48c)) * 0.5f)));
+
+    FJ_FuiNode* crosshairContainer = hudNode(this, 0x50);
+    FJ_FuiNode* crosshair = crosshairContainer->getChildAt(0)->getChildByName("Crosshair")->asMovieClip();
+    crosshairContainer->setX(static_cast<float>(Math::round(
+        static_cast<float>(width / 2) - crosshairContainer->getWidth() * 0.5f)));
+    crosshairContainer->setY(static_cast<float>(Math::round(
+        getStage()->getStageHeight() - crosshair->getHeight() * 0.5f - static_cast<float>(height) * 0.5f)));
+
+    FJ_FuiNode* armourIcons = hudNode(this, 0x4c);
+    if (hudInt(this, 0x38) < 1)
+        armourIcons->setX(armourIcons->getWidth());
+    else
+        armourIcons->setX(static_cast<float>(hudInt(this, 0x38)));
+    armourIcons->setY(static_cast<float>(Math::round(
+        getStage()->getStageHeight() - armourIcons->getHeight() * 0.5f - static_cast<float>(height) * 0.5f)));
+
+    PositionGameModeComponents();
+    PositionIggySplash();
+    UpdateBossBarPositions();
+}
 void FJ_Hud::SetAlpha(float alpha)
 {
     hudNode(this, 0x58)->setAlpha(alpha);
@@ -1184,7 +1495,72 @@ void FJ_Hud::init(FJ_Event* event) { InitHud(event); }
 void FJ_Hud::_init(FJ_FuiNode*, FJ_Event*) { }
 int FJ_Hud::GetHotBarHeight() { return (int)getHeight(); }
 unsigned char FJ_Hud::GetHudLoading() { return 0; }
-void FJ_Hud::SetSafeZone(int left, int top, int right, int bottom) { setX((float)left); setY((float)top); setHeight((float)(bottom - top)); setWidth((float)(right - left)); }
+void FJ_Hud::SetSafeZone(int left, int top, int right, int bottom)
+{
+    hudInt(this, 0x30) = left;
+    hudInt(this, 0x34) = top;
+    hudInt(this, 0x38) = right;
+    hudInt(this, 0x3c) = bottom;
+
+    if (hudByte(this, 0x4b0) == 0)
+        top -= hudInt(this, 0x4ac);
+    hudInt(this, 0x4a8) = top;
+
+    if (hudByte(this, 0x4ec) == 0)
+    {
+        if (hudInt(this, 0x460) != -1 && hudInt(this, 0x464) != -1)
+        {
+            getChildByName("Jukebox")->setY(static_cast<float>(left) +
+                (getStage()->getStageHeight() - static_cast<float>(hudInt(this, 0x464))));
+            top = hudInt(this, 0x4a8);
+        }
+
+        hudNode(this, 0x58)->setY(static_cast<float>(hudInt(this, 0x454) - top));
+        SetupOffhandSlot();
+        right = hudInt(this, 0x38);
+    }
+
+    FJ_FuiNode* armourIcons = hudNode(this, 0x4c);
+    if (right < 1)
+        armourIcons->setX(armourIcons->getWidth());
+    else
+        armourIcons->setX(static_cast<float>(right));
+
+    float stageHeight = getStage()->getStageHeight();
+    float armourHeight = armourIcons->getHeight();
+    if (hudInt(this, 0x464) == -1)
+        armourIcons->setY(static_cast<float>(Math::round((stageHeight - armourHeight) * 0.5f)));
+    else
+        armourIcons->setY(static_cast<float>(Math::round(
+            stageHeight - armourHeight * 0.5f - static_cast<float>(hudInt(this, 0x464)) * 0.5f)));
+
+    getChildByName("Jukebox")->setY(static_cast<float>(hudInt(this, 0x488) - hudInt(this, 0x4a8)));
+
+    static const char* const kLabelNames[10] =
+    {
+        "Label1", "Label2", "Label3", "Label4", "Label5",
+        "Label6", "Label7", "Label8", "Label9", "Label10"
+    };
+    static const char* const kLabelBackgroundNames[10] =
+    {
+        "Label1Background", "Label2Background", "Label3Background", "Label4Background", "Label5Background",
+        "Label6Background", "Label7Background", "Label8Background", "Label9Background", "Label10Background"
+    };
+
+    FJ_FuiNode* label = getChildByName(kLabelNames[0]);
+    getChildByName(kLabelBackgroundNames[0])->setY(label->getY());
+    for (int i = 1; i < 10; ++i)
+    {
+        FJ_FuiNode* previousLabel = getChildByName(kLabelNames[i - 1]);
+        FJ_FuiNode* previousBackground = getChildByName(kLabelBackgroundNames[i - 1]);
+        FJ_FuiNode* currentLabel = getChildByName(kLabelNames[i]);
+        currentLabel->setY(previousLabel->getY() - previousBackground->getHeight());
+        getChildByName(kLabelBackgroundNames[i])->setY(currentLabel->getY());
+    }
+
+    PositionGameModeComponents();
+    PositionIggySplash();
+}
 void FJ_Hud::SetAnimatedSplashTexture(const std::wstring& texture)
 {
     FJ_FuiNode* node = getChildByName("AnimatedLogo.AnimatedLogoTexture");
@@ -1337,7 +1713,27 @@ void FJ_Hud::SetScoreIcon(int value)
 }
 void FJ_Hud::ShowScore(bool visible) { ShowQuickSelect(visible); }
 void FJ_Hud::ShowArmorBar(bool visible) { FJ_FuiNode* node = getChildByName("armorBar"); if (node != NULL) node->setVisible(visible); }
-void FJ_Hud::ShowArmorIcons(int armour, bool visible) { SetArmour(armour); ShowArmorBar(visible); }
+void FJ_Hud::ShowArmorIcons(int armour, bool visible)
+{
+    if (hudInt(this, 0x49c) != 1)
+        return;
+
+    const char* childName;
+    if (armour == 0)
+        childName = "Armor_Head";
+    else if (armour == 1)
+        childName = "Armor_Chest";
+    else if (armour < 3)
+        childName = "Armor_Legs";
+    else if (armour == 3)
+        childName = "Armor_Boots";
+    else
+        return;
+
+    FJ_FuiNode* icons = hudNode(this, 0x4c)->getChildAt(0)->getChildByName("Armor_Icons");
+    FJ_FuiNode* piece = icons->getChildByName(childName);
+    piece->setVisible(visible);
+}
 void FJ_Hud::SetControlAlpha(const std::string& control, float alpha) { FJ_FuiNode* node = getChildByName(control); if (node != NULL) node->setAlpha(alpha); }
 void FJ_Hud::SetWrongWayLabel(const std::wstring& label)
 {
@@ -1349,32 +1745,116 @@ unsigned int FJ_Hud::GetStatusEffectsYOffset() { return 0; }
 void FJ_Hud::HideSelectedLabel() { SetSelectedLabel(std::wstring(), false); }
 void FJ_Hud::UpdateStatusEffectTile(int activeCount, int slot, int effect, bool ambient, float alpha)
 {
-    if (slot < 0 || slot >= 27)
-        return;
-    for (int i = activeCount; i < 27; ++i)
+    static const int kEffectRemap[4] = { -1, 12, 9, 2 };
+
+    if (activeCount < 27)
     {
-        if (m_statusEffectTiles[i] != NULL)
+        for (int i = activeCount; i < 27; ++i)
         {
-            removeChild(m_statusEffectTiles[i], true);
-            m_statusEffectTiles[i] = NULL;
+            if (m_statusEffectTiles[i] != NULL)
+            {
+                removeChild(m_statusEffectTiles[i], true);
+                m_statusEffectTiles[i] = NULL;
+            }
         }
     }
-    FJ_MobEffect_Tile* tile = m_statusEffectTiles[slot];
-    if (tile == NULL)
+
+    hudInt(this, 0x3bc) = activeCount;
+    hudInt(this, 0x42c) = 0;
+    if (activeCount == 0)
+        return;
+
+    int remappedEffect = kEffectRemap[effect];
+    FJ_MobEffect_Tile* tile;
+    if (slot < activeCount && m_statusEffectTiles[slot] != NULL)
     {
-        if (getStage() != NULL && getStage()->getStageHeight() == 1080.0f)
-            tile = FJ_MobEffect_Tile_Normal::Create(m_pRenderNode);
-        else
-            tile = FJ_MobEffect_Tile_Small::Create(m_pRenderNode);
-        if (tile == NULL)
-            return;
-        tile->Init();
-        m_statusEffectTiles[slot] = tile;
+        tile = m_statusEffectTiles[slot];
         m_statusEffectAmbient[slot] = ambient;
-        addChild(tile);
     }
-    tile->SetupEffectType(effect + 2);
-    tile->SetEffectAlpha(alpha);
+    else
+    {
+        float stageHeight = getStage()->getStageHeight();
+        FJ_MobEffect_Tile* created;
+        if (stageHeight == 1080.0f || stageHeight == 720.0f)
+        {
+            if (hudInt(this, 0x460) != -1 && hudInt(this, 0x464) != -1)
+                created = FJ_MobEffect_Tile_Small::Create(m_pRenderNode);
+            else
+                created = FJ_MobEffect_Tile_Normal::Create(m_pRenderNode);
+        }
+        else
+        {
+            created = FJ_MobEffect_Tile_Small::Create(m_pRenderNode);
+        }
+        created->Init();
+        m_statusEffectTiles[slot] = created;
+        m_statusEffectAmbient[slot] = ambient;
+        addChild(created);
+        tile = created;
+    }
+
+    if (tile != NULL)
+    {
+        tile->SetupEffectType(remappedEffect + 2);
+        tile->SetEffectAlpha(alpha);
+    }
+
+    int nonAmbientCount = 0;
+    int ambientCount = 0;
+    int count = hudInt(this, 0x3bc);
+    for (int i = 0; i < count; ++i)
+    {
+        FJ_MobEffect_Tile* current = m_statusEffectTiles[i];
+        if (current == NULL)
+            continue;
+
+        float heightContribution = 0.0f;
+        if (hudNode(this, 0x24c) != NULL && current->isVisible() && hudInt(this, 0x480) != 0)
+        {
+            float gamertagStageHeight = getStage()->getStageHeight();
+            if (gamertagStageHeight == 1080.0f)
+                heightContribution = getHeight() * 1.25f;
+            else
+                heightContribution = hudNode(this, 0x24c)->getHeight() * 1.5f;
+        }
+
+        float widthOffset;
+        float heightForY = heightContribution;
+        if (!m_statusEffectAmbient[i])
+        {
+            widthOffset = static_cast<float>(nonAmbientCount) * current->getWidth();
+            heightForY = heightContribution + current->getHeight();
+            ++nonAmbientCount;
+        }
+        else
+        {
+            widthOffset = static_cast<float>(ambientCount) * current->getWidth();
+            ++ambientCount;
+        }
+
+        if (hudInt(this, 0x460) == -1 || hudInt(this, 0x464) == -1)
+        {
+            float stageWidth = getStage()->getStageWidth();
+            float x = static_cast<float>(Math::round(
+                (stageWidth - static_cast<float>(hudInt(this, 0x3c))) - current->getWidth() - widthOffset));
+            current->setX(x);
+            float y = static_cast<float>(Math::round(heightForY + static_cast<float>(hudInt(this, 0x30))));
+            current->setY(y);
+            int bottom = static_cast<int>(y) + static_cast<int>(current->getHeight());
+            if (hudInt(this, 0x42c) < bottom)
+                hudInt(this, 0x42c) = bottom;
+        }
+        else
+        {
+            float x = static_cast<float>(hudInt(this, 0x460) - hudInt(this, 0x3c)) -
+                current->getWidth() - widthOffset;
+            current->setX(x);
+            float stageHeight2 = getStage()->getStageHeight();
+            float y = (heightForY + static_cast<float>(hudInt(this, 0x30))) +
+                (stageHeight2 - static_cast<float>(hudInt(this, 0x464)));
+            current->setY(y);
+        }
+    }
 }
 void FJ_Hud::SetNumBossBars(int count)
 {

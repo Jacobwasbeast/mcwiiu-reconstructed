@@ -268,7 +268,7 @@ unsigned int UIScene_BeaconMenu::GetSectionAndSlotInDirection(
 void UIScene_BeaconMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
     UIControl* control = getSection(section);
-    if (control != 0 && position != 0)
+    if (control != 0)
     {
         position->x = static_cast<float>(control->getXPos());
         position->y = static_cast<float>(control->getYPos());

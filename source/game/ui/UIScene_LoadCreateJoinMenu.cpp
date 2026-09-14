@@ -8,6 +8,7 @@
 #include "game/core/DLCManager.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/IUIScene_LoadCreateJoin.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/FJ_LoadCreateJoinMenu.hpp"
 #include "game/ui/UIControl_SaveList.hpp"
 #include "game/ui/UILayer.hpp"
@@ -19,6 +20,20 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
+
+namespace
+{
+struct FullscreenProgressState
+{
+    bool showConfirmation;
+    bool unknownState1;
+    bool unknownState2;
+    bool showTip;
+    int closeMode;
+    int playerId;
+    EUIScene backScene;
+};
+}
 
 UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int sceneType, void* data, UILayer* layer)
     : IUIScene_LoadCreateJoin(), UIScene(sceneType, layer), m_selectedLoad(0), m_selectedCreate(0),
@@ -60,6 +75,14 @@ UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int sceneType, void* data
 
 UIScene_LoadCreateJoinMenu::~UIScene_LoadCreateJoinMenu()
 {
+    CGameNetworkManager::sInstance.SetSessionsUpdatedCallback(0, 0);
+    g_pApp->SetLiveLinkRequired(false);
+    if (m_saveListDetails != 0)
+    {
+        for (int i = 0; i < m_saveDetailsCount; ++i)
+            delete[] m_saveListDetails[i].m_thumbnail;
+        delete[] m_saveListDetails;
+    }
 }
 
 std::wstring UIScene_LoadCreateJoinMenu::getMoviePath()
@@ -333,7 +356,7 @@ void UIScene_LoadCreateJoinMenu::updateComponents()
 
 void UIScene_LoadCreateJoinMenu::handleGainFocus(bool hadFocus)
 {
-    UIScene::handleGainFocus(hadFocus);
+    updateTooltips();
     addTimer(0, 100);
     if (hadFocus)
     {
@@ -349,7 +372,7 @@ void UIScene_LoadCreateJoinMenu::handleGainFocus(bool hadFocus)
         }
         if (m_state19 == 0)
         {
-            handleReload();
+            ClearJoinList();
             ShowJoinListTimer(true);
             ShowNoGamesLabel(false);
         }
@@ -710,10 +733,35 @@ uint32_t UIScene_LoadCreateJoinMenu::CopySaveThreadProc(void* context)
     return CopySaveDataReturned(context, true, static_cast<C4JStorage::ESaveGameState>(0));
 }
 
-uint32_t UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int,
-                                                            C4JStorage::EMessageResult)
+uint32_t UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int userIndex,
+                                                            C4JStorage::EMessageResult result)
 {
-    return DeleteSaveDataReturned(context, true);
+    if (result == static_cast<C4JStorage::EMessageResult>(4))
+    {
+        UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
+        _LoadingInputParams* params = new _LoadingInputParams();
+        params->m_secondParameter = reinterpret_cast<void*>(menu->GetCallbackUniqueId());
+        params->m_isEnabled = true;
+        params->m_firstParameter = reinterpret_cast<void* (*)(void*)>(&CopySaveThreadProc);
+
+        FullscreenProgressState* progressState = new FullscreenProgressState();
+        progressState->showConfirmation = false;
+        progressState->unknownState1 = true;
+        progressState->unknownState2 = true;
+        progressState->showTip = true;
+        progressState->closeMode = 6;
+        progressState->playerId = 0;
+        progressState->backScene = static_cast<EUIScene>(0x53);
+        params->m_thirdParameter = progressState;
+
+        gConsoleUIController.NavigateToScene(userIndex, static_cast<EUIScene>(4), params,
+                                             static_cast<EUILayer>(6), static_cast<EUIGroup>(7));
+    }
+    else
+    {
+        static_cast<UIScene_LoadCreateJoinMenu*>(context)->m_ignoreInput = 0;
+    }
+    return 0;
 }
 
 uint32_t UIScene_LoadCreateJoinMenu::LoadSaveDataForUploadReturned(void* context, bool success, bool)
@@ -737,20 +785,6 @@ void UIScene_LoadCreateJoinMenu::CancelSaveUploadCallback(void* context)
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
     if (menu != 0)
         menu->m_saveOperationPending = 0;
-}
-
-namespace
-{
-struct FullscreenProgressState
-{
-    bool showConfirmation;
-    bool unknownState1;
-    bool unknownState2;
-    bool showTip;
-    int closeMode;
-    int playerId;
-    EUIScene backScene;
-};
 }
 
 void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()

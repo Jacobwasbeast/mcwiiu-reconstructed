@@ -106,14 +106,27 @@ void FJ_List::HandlePageUpDownNavigation(bool up)
 
 uint64_t FJ_List::LoseListFocus()
 {
-    FJ_FuiNodeStage* stage = getStage();
-    FJ_FuiNode* focus = stage == 0 ? 0 : stage->getFocus();
-    FJ_Base* focusedBase = focus == 0 ? 0 : focus->asFJ_Base();
-    bool belongsToList = focus != 0 &&
-        ((focusedBase == 0 && focus->isFJ_List() && focus != this) ||
-         (focusedBase != 0 && focusedBase->getObjListParent() != this));
-    if (belongsToList && m_background != 0)
-        m_background->gotoAndPlay(std::string("FadeOut"));
+    FJ_FuiNode* focus = getStage()->getFocus();
+    if (!focus->isFJ_Base())
+    {
+        if (focus->isFJ_List() && getStage()->getFocus() != this && m_background != 0)
+            m_background->gotoAndPlay(std::string("FadeOut"));
+    }
+    else
+    {
+        FJ_Base* focusedBase = focus->asFJ_Base();
+        if (focusedBase->getObjListParent() != 0)
+        {
+            if (focusedBase->getObjListParent() != this)
+            {
+                if (m_background != 0)
+                    m_background->gotoAndPlay(std::string("FadeOut"));
+                return 0;
+            }
+        }
+        if (focusedBase->getObjListParent() == 0 && m_background != 0)
+            m_background->gotoAndPlay(std::string("FadeOut"));
+    }
     return 0;
 }
 
@@ -121,8 +134,7 @@ int FJ_List::getINumButtons() { return static_cast<int>(m_items.size()); }
 
 void FJ_List::SetListFocus()
 {
-    FJ_FuiNodeStage* stage = getStage();
-    if (stage == 0 || stage->getFocus() != this)
+    if (getStage()->getFocus() != this)
         return;
 
     int index = m_activeItem;
@@ -599,7 +611,22 @@ uint32_t FJ_List::CanTouchTrigger(int, int y)
     for (unsigned int i = 0; i < m_items.size(); ++i) if (y >= m_items[i]->getY() && y < m_items[i]->getY() + GetListItemHeight(static_cast<int>(i))) return m_touchActive || static_cast<int>(i) == m_touchItem;
     return 0;
 }
-void FJ_List::FixNavigation(FJ_FuiNode* node) { if (node != 0 && node->getParent() == this) removeChild(node, false); }
+void FJ_List::FixNavigation(FJ_FuiNode* node)
+{
+    FJ_Base* nodeBase = node->asFJ_Base();
+    if (!nodeBase->m_navLinkName[1].empty())
+    {
+        FJ_FuiNode* next = getParent()->getChildByName(nodeBase->m_navLinkName[1]);
+        if (next != 0 && next->asMovieClip() != 0)
+            next->asFJ_Base()->m_navLinkName[0] = nodeBase->m_navLinkName[0];
+    }
+    if (!nodeBase->m_navLinkName[0].empty())
+    {
+        FJ_FuiNode* prev = getParent()->getChildByName(nodeBase->m_navLinkName[0]);
+        if (prev != 0 && prev->asMovieClip() != 0)
+            prev->asFJ_Base()->m_navLinkName[1] = nodeBase->m_navLinkName[1];
+    }
+}
 void FJ_List::RemoveItem(int index)
 {
     if (index < 0 || static_cast<unsigned int>(index) >= m_items.size())

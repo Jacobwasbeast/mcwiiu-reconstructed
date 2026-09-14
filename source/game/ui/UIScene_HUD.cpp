@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cwchar>
 #include <list>
 #include <utility>
@@ -328,12 +329,28 @@ void UIScene_HUD::updateSafeZone()
 
 std::wstring UIScene_HUD::getMoviePath()
 {
-    return std::wstring(L"hud");
+    const C4JRender::eViewportType viewport = m_layer->getViewport();
+    if (viewport == 0 || viewport > 8)
+    {
+        m_splitScreen = false;
+        return std::wstring(L"HUD");
+    }
+    m_splitScreen = true;
+    return std::wstring(L"HUDSplit");
 }
 
-void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
+void UIScene_HUD::customDraw(const char* name, fuiRect*)
 {
-    UIScene::customDraw(name, rect);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mLocalPlayers[getPad()] != 0 && minecraft->mGameModes[getPad()] != 0)
+    {
+        int slot = -1;
+        std::sscanf(name, "slot_%d", &slot);
+        int armorSlot = -1;
+        std::sscanf(name, "armor_slot_%d", &armorSlot);
+        int pickupSlot = -1;
+        std::sscanf(name, "pickup_slot_%d", &pickupSlot);
+    }
 }
 
 void UIScene_HUD::SetHudSize(int size)
@@ -527,7 +544,21 @@ int UIScene_HUD::GetHotBarHeight() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->
 void UIScene_HUD::ShowDirectionalDamage(int direction, int ticks, float alpha) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowDirectionalDamage(direction, ticks, alpha); }
 void UIScene_HUD::SetAnimatedSplashTexture(const std::wstring& texture) { if (getFJ_Hud() != 0) getFJ_Hud()->SetAnimatedSplashTexture(texture); }
 void UIScene_HUD::SetAnimatedSplashIcon(int icon) { std::wstring texture; if (icon == 2) texture = L"Graphics/GameModeGraphics/AwardIcon.png"; SetAnimatedSplashTexture(texture); }
-void UIScene_HUD::ShowAnimatedSplash(const std::wstring& label, bool visible, int icon) { if (icon >= 0) SetAnimatedSplashIcon(icon); if (getFJ_Hud() != 0) getFJ_Hud()->ShowAnimatedSplash(label, visible); }
+void UIScene_HUD::ShowAnimatedSplash(const std::wstring& label, bool visible, int icon)
+{
+    if (m_animatedSplashText != label || m_animatedSplashVisible != visible)
+    {
+        m_animatedSplashText = label;
+        m_animatedSplashVisible = visible;
+        if (icon >= 0 && m_animatedSplashIcon != icon)
+        {
+            SetAnimatedSplashIcon(icon);
+            m_animatedSplashIcon = icon;
+        }
+        if (getFJ_Hud() != 0)
+            getFJ_Hud()->ShowAnimatedSplash(label, visible);
+    }
+}
 void UIScene_HUD::SetIsRightHanded(bool rightHanded) { if (getFJ_Hud() != 0) getFJ_Hud()->SetIsRightHanded(rightHanded); }
 void UIScene_HUD::ShowOffhandSlot(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowOffhandSlot(visible); }
 void UIScene_HUD::SetScore(const std::wstring& score) { m_healthLabel.setLabel(UIString(score), false, false); }

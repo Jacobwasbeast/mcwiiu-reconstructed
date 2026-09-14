@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_CreativeMenu.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -61,8 +62,8 @@ UIScene_CreativeMenu::TabSpec::TabSpec(const wchar_t* title, int itemCount, int 
     for (std::vector<ECreative_Inventory_Groups>::const_iterator it = m_specialGroups.begin();
          it != m_specialGroups.end(); ++it)
         specialTotal += static_cast<int>(UIScene_CreativeMenu::s_groupItems[*it].size());
-    const int ordinarySlots = std::max(1, 50 - specialTotal);
-    m_pageCount = ordinaryTotal > 0 ? (ordinaryTotal + ordinarySlots - 1) / ordinarySlots : 0;
+    m_pageCount = static_cast<int>(
+        std::ceil(static_cast<float>(ordinaryTotal) / static_cast<float>(50 - specialTotal)));
 }
 
 unsigned int UIScene_CreativeMenu::TabSpec::getPageCount()
@@ -163,6 +164,8 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void*, UILayer* layer)
 {
     std::fill(m_tabPages, m_tabPages + 8, 0);
     std::fill(m_tabCurrentPages, m_tabCurrentPages + 8, 0);
+    for (int i = 0; i < 9; ++i)
+        m_touchPanels[i].init(i);
 }
 
 UIScene_CreativeMenu::~UIScene_CreativeMenu()
@@ -268,26 +271,19 @@ unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
 void UIScene_CreativeMenu::handleOutsideClicked(int playerId, int, int button)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0 || playerId < 0 || playerId >= 4 ||
-        !minecraft->mLocalPlayers[playerId] || minecraft->mGameModes[playerId] == 0)
-        return;
-
     Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
-    if (inventory == 0)
-        return;
-
     not_null_ptr<ItemInstance> carried = inventory->getCarried();
     if (carried->isEmpty())
         return;
 
     if (button == 0)
     {
-        minecraft->mGameModes[playerId]->handleCreativeModeItemDrop(carried);
+        minecraft->mGameModes[playerId]->handleCreativeModeItemDrop(inventory->getCarried());
         inventory->setCarried(ItemInstance::EMPTY);
     }
-    else if (button == 1)
+    if (button == 1)
     {
-        not_null_ptr<ItemInstance> one = carried->split(1);
+        not_null_ptr<ItemInstance> one = inventory->getCarried()->split(1);
         minecraft->mGameModes[playerId]->handleCreativeModeItemDrop(one);
     }
 }
@@ -456,27 +452,28 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x16) && slot == 0)
     {
         const int playerId = getPad();
-        if (minecraft != 0 && playerId >= 0 && playerId < 4 && minecraft->mLocalPlayers[playerId])
-        {
-            Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
-            if (inventory != 0)
-            {
-                not_null_ptr<ItemInstance> carried = inventory->getCarried();
-                Slot* hotbarSlot = m_sceneInterface->m_menu->getSlot(effectiveSlot);
-                not_null_ptr<ItemInstance> heldItem = hotbarSlot->getItem();
-                if (!heldItem->isEmpty())
-                {
-                    not_null_ptr<ItemInstance> newCarried = heldItem->copy();
-                    inventory->setCarried(newCarried);
-                    if (button == 1)
-                        newCarried->setCount(newCarried->getMaxStackSize());
+        Inventory* inventory = minecraft->mLocalPlayers[playerId]->mInventory.get();
+        Slot* hotbarSlot = m_sceneInterface->m_menu->getSlot(effectiveSlot);
+        not_null_ptr<ItemInstance> heldItem = hotbarSlot->getItem();
+        if (heldItem->isEmpty())
+            return;
 
-                    int emptySlot = 0;
-                    if (getEmptyInventorySlot(carried, emptySlot))
-                        minecraft->mGameModes[playerId]->handleCreativeModeItemAdd(carried, emptySlot);
-                }
-            }
-        }
+        not_null_ptr<ItemInstance> newCarried = heldItem->copy();
+        inventory->setCarried(newCarried);
+        newCarried = inventory->getCarried();
+        if (button == 1)
+            newCarried->setCount(newCarried->getMaxStackSize());
+
+        m_sceneInterface->m_dragEnd = static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15);
+        m_sceneInterface->m_dragStart = 5;
+
+        int emptySlot = 0;
+        if (!getEmptyInventorySlot(newCarried, emptySlot))
+            return;
+
+        m_sceneInterface->m_quickCraftRemaining = emptySlot;
+        m_sceneInterface->setSectionSelectedSlot(static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
+                                                  emptySlot, m_sceneInterface->m_quickCraftSlots, false);
 
         effectiveSlot = m_sceneInterface->getCurrentIndex(
             static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15));
@@ -489,12 +486,13 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
     }
 
     const int playerId = getPad();
-    if (minecraft == 0 || playerId < 0 || playerId >= 4 || !minecraft->mLocalPlayers[playerId])
-        return;
-
     boost::shared_ptr<Player> player = minecraft->mLocalPlayers[playerId];
     m_sceneInterface->m_menu->clicked(effectiveSlot, slot,
                                       static_cast<ClickType::eClickType>(button != 0), player);
+
+    const int itemsSize = static_cast<int>(m_sceneInterface->m_menu->getItems()->size());
+    minecraft->mGameModes[playerId]->handleCreativeModeItemAdd(
+        m_sceneInterface->m_menu->getSlot(effectiveSlot)->getItem(), (effectiveSlot - itemsSize) + 45);
 }
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -726,7 +724,8 @@ void UIScene_CreativeMenu::handleReload()
 {
     m_sceneInterface->Initialize(true, m_playerId, m_sceneInterface->m_menu, false, -1,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x15),
-                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20), false);
+                                 static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x20),
+                                 m_sceneInterface->m_touchEnabled != 0);
 
     for (int i = 0; i < 50; ++i)
         m_hotbarList.addSlot(i);

@@ -15,6 +15,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
 extern unsigned int XGetLanguage();
@@ -207,6 +208,7 @@ void UIScene_LeaderboardsMenu::RetrieveStats()
     m_loadedRowCount = m_numScores;
     if (m_visibleRowCount == 0)
     {
+        m_entries.clear();
         unsigned int newTotal;
         if (m_readType == LeaderboardManager::eReadType_Friends)
             newTotal = m_numScores;
@@ -326,10 +328,22 @@ void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
         if (m_levelRuleGroups.empty())
             g_pApp->getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Unknown,
                                                       &m_levelRuleGroups, false);
-        LevelGenerationOptions* options = g_pApp->getLevelRules()->getLevelGenFromUniqueId(
-            LevelRules::eLevelRuleType_Unknown, static_cast<int>(uniqueId));
-        if (options != NULL)
+        if (!m_levelRuleGroups.empty())
         {
+            std::vector<LevelRules::LevelRulesetGroup*>::iterator group = m_levelRuleGroups.begin();
+            LevelGenerationOptions* options = (*group)->rulesets.front()->getGenerationOptions();
+            unsigned int currentId = options->getUniqueId();
+            while (currentId != uniqueId)
+            {
+                ++group;
+                if (group == m_levelRuleGroups.end())
+                {
+                    m_leaderboardLabel.setLabel(UIString(label), false, false);
+                    return;
+                }
+                options = (*group)->rulesets.front()->getGenerationOptions();
+                currentId = options->getUniqueId();
+            }
             label = label + L" : " + options->getWorldName();
             m_leaderboardLabel.setLabel(UIString(label), false, false);
             return;
