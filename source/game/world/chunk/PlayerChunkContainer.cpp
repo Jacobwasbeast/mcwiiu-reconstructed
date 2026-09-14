@@ -49,6 +49,8 @@ void PlayerChunkContainer::add(boost::shared_ptr<ServerPlayer> player, bool send
     if (!player || hasPlayer(player))
         return;
 
+    player->mTrackedChunks.insert(mPos);
+
     if (send && player->mConnection != NULL)
         player->mConnection->send(boost::shared_ptr<Packet>(
             new ChunkVisibilityPacket(mPos.x, mPos.z, true, false)));
@@ -58,7 +60,7 @@ void PlayerChunkContainer::add(boost::shared_ptr<ServerPlayer> player, bool send
 
     mPlayers.push_back(player);
     sendToPlayer(player);
-    player->mTrackedChunks.insert(mPos);
+    player->mLoadedChunks.push_back(mPos);
 
     ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
     static_cast<ServerChunkCache*>(level->getChunkSource())->dontDrop(mPos.x, mPos.z);

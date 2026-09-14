@@ -4,6 +4,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/IdMapper.hpp"
+#include "game/world/block/Material.hpp"
 
 ChunkPrimer::ChunkPrimer(bool ownsElementIds, arrayWithLength<unsigned short> elementIds)
 {
@@ -140,9 +141,8 @@ int ChunkPrimer::getHighestSolidPos(int x, int z)
     for (int y = 127; y >= 0; y--)
     {
         Block* block = Block::byId(mElementIds.data[columnTop + y] >> 4);
-        const BlockState* state = block->defaultBlockState();
 
-        if (state->isSolidRender() && block != Blocks::AIR)
+        if (block->mMaterial->blocksMotion() && block->mMaterial != Material::LEAVES)
         {
             return y;
         }

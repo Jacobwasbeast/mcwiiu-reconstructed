@@ -5,6 +5,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/DataInputStream.hpp"
@@ -355,25 +356,66 @@ void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* st
 
 boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* level, double x, double y, double z, bool addToWorld)
 {
-    boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, level);
-    if (entity)
+    boost::shared_ptr<Entity> entity = loadStaticEntity(tag, level);
+    if (!entity)
+        return entity;
+
+    entity->moveTo(x, y, z, entity->mYRot, entity->mXRot);
+
+    if (addToWorld && !level->addEntity(entity))
+        return boost::shared_ptr<Entity>();
+
+    if (tag->contains(L"Passengers", 9))
     {
-        entity->setPos(x, y, z);
-        if (addToWorld)
-            addEntityToWorld(entity, level);
+        ListTag* passengers = tag->getList(L"Passengers", 10);
+        int i;
+        for (i = 0; i < passengers->size(); ++i)
+        {
+            boost::shared_ptr<Entity> passenger = loadEntity(passengers->getCompound(i), level, x, y, z, addToWorld);
+            if (passenger)
+                passenger->startRiding(entity, true);
+        }
     }
+
     return entity;
 }
 
 void OldChunkStorage::addEntityToWorld(boost::shared_ptr<Entity> entity, Level* level)
 {
-    if (entity)
-        level->addEntity(entity);
+    if (!level->addEntity(entity))
+        return;
+
+    if (entity->isVehicle())
+    {
+        std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
+        std::vector<boost::weak_ptr<Entity> >::iterator it;
+        for (it = passengers->begin(); it != passengers->end(); ++it)
+            addEntityToWorld(it->lock(), level);
+    }
 }
 
 boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* level, bool addToWorld)
 {
-    return loadEntity(tag, level, 0.0, 0.0, 0.0, addToWorld);
+    boost::shared_ptr<Entity> entity = loadStaticEntity(tag, level);
+    if (!entity)
+        return entity;
+
+    if (addToWorld && !level->addEntity(entity))
+        return boost::shared_ptr<Entity>();
+
+    if (tag->contains(L"Passengers", 9))
+    {
+        ListTag* passengers = tag->getList(L"Passengers", 10);
+        int i;
+        for (i = 0; i < passengers->size(); ++i)
+        {
+            boost::shared_ptr<Entity> passenger = loadEntity(passengers->getCompound(i), level, addToWorld);
+            if (passenger)
+                passenger->startRiding(entity, true);
+        }
+    }
+
+    return entity;
 }
 
 static void fixCauldronBlock(LevelChunk* chunk, int x, int y, int z)

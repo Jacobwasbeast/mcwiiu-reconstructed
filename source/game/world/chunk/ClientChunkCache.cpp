@@ -1,10 +1,22 @@
 #include "game/world/chunk/ClientChunkCache.hpp"
 
+#include "game/client/render/GameRenderer.hpp"
+#include "game/core/Compression.hpp"
+#include "game/core/System.hpp"
+#include "game/data/ElementStorage.hpp"
 #include "game/entity/mob/MobCategory.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ProgressListener.hpp"
+#include "game/util/AABB.hpp"
+#include "game/util/Vec3.hpp"
+#include "game/world/Dimension.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/ChunkStorage.hpp"
+#include "game/world/chunk/EmptyLevelChunk.hpp"
+#include "game/world/chunk/OldChunkStorage.hpp"
+#include "platform/wiiu/C4JThreadImpl.hpp"
 
 ClientChunkCache::QueuedAction::QueuedAction()
     : action(0), x(0), z(0), pos(0, 0), changes(0), packet()
@@ -43,17 +55,19 @@ ClientChunkCache::QueuedAction& ClientChunkCache::QueuedAction::operator=(const 
 }
 
 ClientChunkCache::ClientChunkCache(Level* level, ChunkStorage* storage)
-    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(storage), m_level(level), m_spawnPos(0, 0),
-      m_chunkRadius(0), m_initialized(false), m_stopThread(false), m_loadedChunks(),
-      m_queuedActions(), m_chunks(), m_received(), m_cache(0)
+    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(storage), m_level(level),
+      m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
+      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_cache(0),
+      m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
 {
     MultiPlayerChunkCacheInit(level, storage);
 }
 
 ClientChunkCache::ClientChunkCache(Level* level)
-    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(0), m_level(level), m_spawnPos(0, 0),
-      m_chunkRadius(0), m_initialized(false), m_stopThread(false), m_loadedChunks(),
-      m_queuedActions(), m_chunks(), m_received(), m_cache(0)
+    : m_emptyChunk(0), m_fallbackChunk(0), m_storage(0), m_level(level),
+      m_spawnPos(0, 0), m_chunkRadius(0), m_initialized(false), m_stopThread(false),
+      m_loadedChunks(), m_queuedActions(), m_chunks(), m_received(), m_unloadQueue(), m_cache(0),
+      m_storageThread(0), m_reloadPending(false), m_reloadX(0), m_reloadZ(0), m_reloadChanges(0), m_dimension(0)
 {
     MultiPlayerChunkCacheInit(level, 0);
 }
@@ -80,43 +94,108 @@ LevelChunk* ClientChunkCache::load(int x, int z, LevelChunk* chunk)
 
 void ClientChunkCache::reLoad(int x, int z, const std::vector<LevelChunk::BlockChange>* changes)
 {
-    LevelChunk* replacement = load(x, z, 0);
-    if (!replacement)
-        return;
     const unsigned int index = static_cast<unsigned int>((z + m_chunkRadius) * (2 * m_chunkRadius) + x + m_chunkRadius);
     if (index >= m_chunks.size())
         return;
+    EnterCriticalSection(&m_saveDataCriticalSection);
+    LevelChunk* replacement = load(x, z, 0);
+    if (!replacement)
+    {
+        LeaveCriticalSection(&m_saveDataCriticalSection);
+        return;
+    }
     LevelChunk* old = m_chunks[index];
     m_chunks[index] = replacement;
-    if (old && old != m_emptyChunk)
-        delete old;
+    if (old)
+    {
+        old->unload(true, false);
+        replacement->swapEntities(old);
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+        {
+            if (*it == old)
+            {
+                m_loadedChunks.erase(it);
+                break;
+            }
+        }
+        GameRenderer::AddForDelete(old);
+        GameRenderer::FinishedReassigning();
+    }
+    replacement->load(true);
+    replacement->recalcHeightmapOnly();
+    if (m_level)
+        m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
+    if (index < m_received.size())
+        m_received[index] = 1;
     if (changes)
-        m_loadedChunks.push_back(replacement);
+    {
+        for (std::vector<LevelChunk::BlockChange>::const_iterator it = changes->begin(); it != changes->end(); ++it)
+        {
+            replacement->setBlock(it->GetPos(), it->GetState());
+            replacement->setExtraBlock(it->GetPos(), it->GetExtraState());
+        }
+    }
+    m_loadedChunks.push_back(replacement);
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 int ClientChunkCache::StorageThreadProc(void* argument)
 {
     ClientChunkCache* cache = static_cast<ClientChunkCache*>(argument);
-    if (!cache)
-        return 0;
+    Compression::UseDefaultThreadStorage();
+    OldChunkStorage::UseDefaultThreadStorage();
+    AABB::CreateNewThreadStorage();
+    Vec3::CreateNewThreadStorage();
+    ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_ClientChunkStorage);
     while (!cache->m_stopThread)
     {
-        if (!cache->m_queuedActions.empty())
-            cache->BlockUntilSafeToChangeSaveData(true);
-        else
-            break;
+        for (;;)
+        {
+            EnterCriticalSection(&cache->m_threadCriticalSection);
+            if (!cache->m_reloadPending)
+                break;
+            const int x = cache->m_reloadX;
+            const int z = cache->m_reloadZ;
+            const std::vector<LevelChunk::BlockChange>* changes = cache->m_reloadChanges;
+            LeaveCriticalSection(&cache->m_threadCriticalSection);
+            cache->reLoad(x, z, changes);
+            delete changes;
+            cache->m_reloadChanges = 0;
+            cache->m_reloadPending = false;
+            if (cache->m_stopThread)
+            {
+                AABB::ReleaseThreadStorage();
+                Vec3::ReleaseThreadStorage();
+                ElementStorage::ReleaseThreadStorage();
+                return 0;
+            }
+        }
+        LeaveCriticalSection(&cache->m_threadCriticalSection);
+        C4JThreadImpl::Sleep(1);
     }
+    AABB::ReleaseThreadStorage();
+    Vec3::ReleaseThreadStorage();
+    ElementStorage::ReleaseThreadStorage();
     return 0;
 }
 
 void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* storage)
 {
     m_level = level;
+    m_dimension = level ? level->mDimension : 0;
     m_storage = storage;
     m_chunkRadius = 8;
-    m_emptyChunk = new LevelChunk(level, 0, 0);
+    m_emptyChunk = new EmptyLevelChunk(level, 0, 0);
     m_chunks.assign(256, static_cast<LevelChunk*>(0));
     m_received.assign(256, static_cast<unsigned char>(0));
+    if (storage)
+    {
+        InitializeCriticalSection(&m_threadCriticalSection);
+        m_storageThread = new C4JThreadImpl(&StorageThreadProc, this, "MultiPlayerChunkCache", 0x100000);
+        m_storageThread->SetProcessor(0);
+        m_storageThread->Run();
+    }
+    InitializeCriticalSectionAndSpinCount(&m_saveDataCriticalSection, 4000);
     m_initialized = true;
 }
 
@@ -185,19 +264,25 @@ bool ClientChunkCache::hasChunk(int x, int z)
 
 bool ClientChunkCache::reallyHasChunk(int x, int z)
 {
-    return getChunkIfLoaded(x, z) != 0;
+    const int diameter = 2 * m_chunkRadius;
+    const unsigned int index = static_cast<unsigned int>((z + m_chunkRadius) * diameter + x + m_chunkRadius);
+    if (index >= m_chunks.size() || !m_chunks[index])
+        return false;
+    return index < m_received.size() && m_received[index] != 0;
 }
 
 void ClientChunkCache::unqueueForReLoad(int x, int z)
 {
+    EnterCriticalSection(&m_saveDataCriticalSection);
     for (std::vector<QueuedAction>::iterator it = m_queuedActions.begin(); it != m_queuedActions.end(); ++it)
     {
         if (it->action == 0 && it->x == x && it->z == z)
         {
             m_queuedActions.erase(it);
-            return;
+            break;
         }
     }
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 void ClientChunkCache::drop(int x, int z, bool force)
@@ -240,9 +325,6 @@ uint64_t ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int max
 
 LevelChunk* ClientChunkCache::create(int x, int z)
 {
-    LevelChunk* chunk = load(x, z, 0);
-    if (!chunk)
-        chunk = new LevelChunk(m_level, x, z);
     const int diameter = 2 * m_chunkRadius;
     const int localX = x + m_chunkRadius;
     const int localZ = z + m_chunkRadius;
@@ -251,8 +333,25 @@ LevelChunk* ClientChunkCache::create(int x, int z)
     const unsigned int index = static_cast<unsigned int>(localZ * diameter + localX);
     if (index >= m_chunks.size())
         m_chunks.resize(index + 1, static_cast<LevelChunk*>(0));
-    m_chunks[index] = chunk;
-    m_loadedChunks.push_back(chunk);
+    LevelChunk* chunk = m_chunks[index];
+    if (!chunk)
+    {
+        EnterCriticalSection(&m_saveDataCriticalSection);
+        ChunkPrimer primer(true, arrayWithLength<unsigned short>());
+        chunk = new LevelChunk(m_level, &primer, x, z);
+        chunk->setSkyLightDataAllBright();
+        m_chunks[index] = chunk;
+        if (index < m_received.size())
+            m_received[index] = 1;
+        m_loadedChunks.push_back(chunk);
+        LeaveCriticalSection(&m_saveDataCriticalSection);
+    }
+    if (CGameNetworkManager::sInstance.IsHost() && !chunk->isEmpty())
+    {
+        chunk->recalcHeightmapOnly();
+        if (chunk->hasLightingBeenDropped())
+            chunk->reSyncLighting();
+    }
     return chunk;
 }
 
@@ -275,9 +374,31 @@ void ClientChunkCache::save(bool, ProgressListener*)
 
 void ClientChunkCache::tick()
 {
-    for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
-        if (*it)
-            (*it)->tick(false);
+    EnterCriticalSection(&m_saveDataCriticalSection);
+    for (int processed = 0; processed < 100 && !m_unloadQueue.empty(); ++processed)
+    {
+        LevelChunk* chunk = m_unloadQueue.front();
+        m_unloadQueue.pop_front();
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin(); it != m_loadedChunks.end(); ++it)
+        {
+            if (*it == chunk)
+            {
+                m_loadedChunks.erase(it);
+                break;
+            }
+        }
+    }
+    const uint64_t start = System::processTimeInMilliSecs();
+    std::vector<LevelChunk*>::iterator it = m_loadedChunks.begin();
+    for (; it != m_loadedChunks.end(); ++it)
+    {
+        if (static_cast<int64_t>(System::processTimeInMilliSecs() - start) > 4)
+            break;
+        (*it)->tick(false);
+    }
+    for (; it != m_loadedChunks.end(); ++it)
+        (*it)->tick(true);
+    LeaveCriticalSection(&m_saveDataCriticalSection);
 }
 
 bool ClientChunkCache::shouldSave()

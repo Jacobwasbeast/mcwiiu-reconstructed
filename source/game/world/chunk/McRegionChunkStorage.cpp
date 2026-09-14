@@ -50,6 +50,8 @@ McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
 
 McRegionChunkStorage::~McRegionChunkStorage()
 {
+    for (RegionDataMap::iterator it = mRegionData.begin(); it != mRegionData.end(); ++it)
+        delete[] it->second.data;
 }
 
 void McRegionChunkStorage::runSaveThreadProc(void*)

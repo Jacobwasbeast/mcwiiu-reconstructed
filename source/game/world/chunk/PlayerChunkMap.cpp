@@ -3,7 +3,11 @@
 #include <algorithm>
 
 #include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
+#include "game/core/System.hpp"
+#include "game/server/ServerChunkCache.hpp"
 #include "game/server/ServerPlayer.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/chunk/PlayerChunkContainer.hpp"
 
 PlayerChunkMap::PlayerChunkMap(ServerLevel* level, int viewDistance, int radius)
@@ -50,18 +54,50 @@ long long PlayerChunkMap::tickAddRequests(boost::shared_ptr<ServerPlayer> player
 {
     if (mAddRequests.empty())
         return 0;
+
+    int32_t playerX = static_cast<int32_t>(player->mX);
+    int32_t playerZ = static_cast<int32_t>(player->mZ);
+
+    if (!force)
+    {
+        RequestVector::iterator request = mAddRequests.begin();
+        while (request != mAddRequests.end())
+        {
+            if (request->player.get() == player.get())
+                return 0;
+            ++request;
+        }
+        return 0;
+    }
+
+    RequestVector::iterator best = mAddRequests.end();
+    bool haveBest = false;
+    int bestDistance = 0;
     RequestVector::iterator request = mAddRequests.begin();
     while (request != mAddRequests.end())
     {
-        if (force || request->player == player)
+        if (request->player.get() == player.get())
         {
-            request->player = player;
-            request = mAddRequests.erase(request);
+            int dx = (request->x * 16 + 8) - playerX;
+            int dz = (request->z * 16 + 8) - playerZ;
+            int distance = dx * dx + dz * dz;
+            if (!haveBest || distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = request;
+                haveBest = true;
+            }
         }
-        else
-            ++request;
+        ++request;
     }
-    return static_cast<long long>(mAddRequests.size());
+
+    if (haveBest)
+    {
+        PlayerChunkContainer* chunk = getOrCreateChunk(best->x, best->z);
+        chunk->add(player, best->add);
+        mAddRequests.erase(best);
+    }
+    return 0;
 }
 
 bool PlayerChunkMap::chunkInRange(int x, int z, int centerX, int centerZ)
@@ -130,17 +166,64 @@ void PlayerChunkMap::setViewDistance(int distance)
 
 void PlayerChunkMap::tick()
 {
-    ++mTicksUntilNextUpdate;
-    if (mPauseBlockUpdatePackets)
-        return;
-    ContainerVector::iterator it = mLoadedChunks.begin();
-    while (it != mLoadedChunks.end())
+    long long gameTime = mLevel->getGameTime();
+    long long elapsedSinceUpdate = gameTime - mLastUpdate;
+    if (elapsedSinceUpdate < 0 || elapsedSinceUpdate > 8000)
     {
-        if (*it == NULL)
-            it = mLoadedChunks.erase(it);
-        else
-            ++it;
+        mLastUpdate = gameTime;
+        ContainerVector::iterator inhabited = mBlockUpdates.begin();
+        while (inhabited != mBlockUpdates.end())
+        {
+            (*inhabited)->updateInhabitedTime();
+            ++inhabited;
+        }
     }
+
+    if (!mPauseBlockUpdatePackets)
+    {
+        ContainerVector::iterator it = mLoadedChunks.begin();
+        while (it != mLoadedChunks.end())
+        {
+            (*it)->broadcastChanges(true);
+            ++it;
+        }
+    }
+
+    mTicksUntilNextUpdate += 25;
+    if (mTicksUntilNextUpdate > 25)
+        mTicksUntilNextUpdate = 25;
+
+    PIXBeginNamedEvent(0.0f, "PlayerChunkMap tickAddRequests");
+    long long budget = mTicksUntilNextUpdate;
+    while (budget > 0)
+    {
+        uint64_t start = System::processTimeInMilliSecs();
+
+        RequestVector::iterator best = mAddRequests.end();
+        bool haveBest = false;
+        long long bestWait = 0;
+        RequestVector::iterator request = mAddRequests.begin();
+        while (request != mAddRequests.end())
+        {
+            long long wait = tickAddRequests(request->player, false);
+            if (!haveBest || bestWait < wait)
+            {
+                bestWait = wait;
+                best = request;
+                haveBest = true;
+            }
+            ++request;
+        }
+        if (!haveBest)
+            break;
+
+        tickAddRequests(best->player, true);
+
+        uint64_t end = System::processTimeInMilliSecs();
+        budget -= static_cast<long long>(end - start);
+        mTicksUntilNextUpdate = static_cast<int32_t>(budget);
+    }
+    PIXEndNamedEvent();
 }
 
 long long PlayerChunkMap::getKeyForChunk(int x, int z)
@@ -157,27 +240,49 @@ PlayerChunkContainer* PlayerChunkMap::getChunkIfLoaded(int x, int z)
 
 PlayerChunkContainer* PlayerChunkMap::getOrCreateChunk(int x, int z)
 {
-    return getChunkIfLoaded(x, z);
+    long long key = getKeyForChunk(x, z);
+    ContainerMap::iterator it = mChunks.find(key);
+    if (it != mChunks.end())
+        return it->second;
+    PlayerChunkContainer* chunk = new PlayerChunkContainer(this, x, z);
+    mChunks[key] = chunk;
+    mBlockUpdates.push_back(chunk);
+    return chunk;
 }
 
 PlayerChunkContainer* PlayerChunkMap::getChunkAndAddPlayer(int x, int z,
                                                             boost::shared_ptr<ServerPlayer> player,
                                                             bool send)
 {
-    PlayerChunkContainer* chunk = getOrCreateChunk(x, z);
-    if (chunk != NULL)
+    ContainerMap::iterator it = mChunks.find(getKeyForChunk(x, z));
+    if (it == mChunks.end())
+    {
         mAddRequests.push_back(PlayerChunkAddRequest(x, z, player, send));
-    return chunk;
+        return NULL;
+    }
+    it->second->add(player, send);
+    return it->second;
 }
 
 PlayerChunkContainer* PlayerChunkMap::getChunkAndRemovePlayer(int x, int z,
                                                                boost::shared_ptr<ServerPlayer> player,
                                                                bool send)
 {
-    PlayerChunkContainer* chunk = getChunkIfLoaded(x, z);
-    if (chunk != NULL)
-        mAddRequests.push_back(PlayerChunkAddRequest(x, z, player, !send));
-    return chunk;
+    RequestVector::iterator request = mAddRequests.begin();
+    while (request != mAddRequests.end())
+    {
+        if (request->x == x && request->z == z && request->player.get() == player.get())
+        {
+            mAddRequests.erase(request);
+            return NULL;
+        }
+        ++request;
+    }
+    ContainerMap::iterator it = mChunks.find(getKeyForChunk(x, z));
+    if (it == mChunks.end())
+        return NULL;
+    it->second->remove(player, send);
+    return it->second;
 }
 
 void PlayerChunkMap::broadcastBlockUpdate(boost::shared_ptr<Packet> packet, int x, int y, int z)
@@ -212,8 +317,10 @@ void PlayerChunkMap::prioritiseBlockChanges(int x, int y, int z)
 
 void PlayerChunkMap::add(boost::shared_ptr<ServerPlayer> player)
 {
-    if (std::find(mPlayers.begin(), mPlayers.end(), player) == mPlayers.end())
-        mPlayers.push_back(player);
+    int32_t chunkX = static_cast<int32_t>(player->mX) >> 4;
+    int32_t chunkZ = static_cast<int32_t>(player->mZ) >> 4;
+    static_cast<ServerChunkCache*>(getLevel()->getChunkSource())->dontDrop(chunkX, chunkZ);
+    mPlayers.push_back(player);
 }
 
 void PlayerChunkMap::remove(boost::shared_ptr<ServerPlayer> player)
@@ -262,8 +369,8 @@ int PlayerChunkMap::convertChunkRangeToBlock(int range)
 
 void PlayerChunkMap::setRadius(int radius)
 {
-    mRadius = radius;
-    mShouldDropChunks = radius < mViewDistance;
+    if (mRadius < radius)
+        mRadius = radius;
 }
 
 void PlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX, int maxZ)
@@ -278,8 +385,26 @@ void PlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX
 
 void PlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int maxZ)
 {
-    removeOutsideAreaForAllPlayers(minX, minZ, maxX, maxZ);
+    PlayerVector players(mPlayers);
+
+    mShouldDropChunks = true;
+    PlayerVector::iterator it = players.begin();
+    while (it != players.end())
+    {
+        removeOutsideArea(*it, minX, minZ, maxX, maxZ);
+        ++it;
+    }
     mShouldDropChunks = false;
+
+    int oldRadius = mRadius;
+    setRadius(3);
+    it = players.begin();
+    while (it != players.end())
+    {
+        add(*it);
+        ++it;
+    }
+    setRadius(oldRadius);
 }
 
 void PlayerChunkMap::PauseBlockUpdatePackets(bool pause)

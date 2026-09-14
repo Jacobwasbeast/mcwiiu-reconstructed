@@ -1,17 +1,21 @@
 #ifndef GAME_WORLD_CHUNK_CLIENTCHUNKCACHE_HPP
 #define GAME_WORLD_CHUNK_CLIENTCHUNKCACHE_HPP
 
+#include <deque>
 #include <string>
 #include <vector>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CriticalSection.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 
+class C4JThreadImpl;
 class ChunkStorage;
+class Dimension;
 class Level;
 
 class ClientChunkCache : public ChunkSource
@@ -84,7 +88,16 @@ private:
     std::vector<QueuedAction> m_queuedActions;
     std::vector<LevelChunk*> m_chunks;
     std::vector<unsigned char> m_received;
+    std::deque<LevelChunk*> m_unloadQueue;
     unsigned int m_cache;
+    C4JThreadImpl* m_storageThread;
+    OSFastMutex m_threadCriticalSection;
+    OSFastMutex m_saveDataCriticalSection;
+    bool m_reloadPending;
+    int m_reloadX;
+    int m_reloadZ;
+    const std::vector<LevelChunk::BlockChange>* m_reloadChanges;
+    Dimension* m_dimension;
 };
 
 #endif
