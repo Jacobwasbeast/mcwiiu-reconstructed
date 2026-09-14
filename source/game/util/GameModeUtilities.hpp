@@ -73,8 +73,8 @@ public:
                                                            double minX, double minZ,
                                                            double maxX, double maxZ);
     static int getNumberOfTeams(std::vector<boost::shared_ptr<ServerPlayer> >* players);
-    static bool spreadPositions(double distance, Level* level, Random* random, const AABB* area,
-                                std::vector<Position*>* positions, bool teams);
+    static int spreadPositions(double distance, Level* level, Random* random, const AABB* area,
+                               std::vector<Position*>* positions, bool teams);
     static double setPlayerPositions(std::vector<boost::shared_ptr<ServerPlayer> >* players,
                                      Level* level, std::vector<Position*>* positions,
                                      bool teams, TumbleGenerator* generator);

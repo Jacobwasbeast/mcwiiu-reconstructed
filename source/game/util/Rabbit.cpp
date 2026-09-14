@@ -5,17 +5,20 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/BuiltInLootTables.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/core/Path.hpp"
 #include "game/core/Wolf.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/ai/BreedGoal.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
 #include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/ai/TemptGoal.hpp"
 #include "game/entity/ai/WaterAvoidingRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityDamageSource.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -25,6 +28,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -173,16 +177,19 @@ bool Rabbit::RaidGardenGoal::canContinueToUse()
 void Rabbit::RaidGardenGoal::tick()
 {
     MoveToBlockGoal::tick();
+    mRabbit->getLookControl()->setLookAt(mBlockPos.x + 0.5, mBlockPos.y + 1.0, mBlockPos.z + 0.5,
+                                          10.0f, static_cast<float>(mRabbit->getMaxHeadXRot()));
     if (isReachedTarget())
     {
-        mReachedTarget = true;
-        mRabbit->eatCarrot();
+        mReachedTarget = false;
+        mNextStartTick = 10;
     }
 }
 
 bool Rabbit::RaidGardenGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
-    return level != NULL && level->getBlockState(pos)->getBlock() == Blocks::carrots;
+    return mHasTarget && !mReachedTarget &&
+           level->getBlockState(pos)->getBlock() == Blocks::farmland;
 }
 
 Rabbit::Rabbit(Level* level)
@@ -212,8 +219,10 @@ void Rabbit::staticCtor()
 
 void Rabbit::setSpeedModifier(double speedModifier)
 {
+    getNavigation()->setSpeedModifier(speedModifier);
     MoveControl* control = static_cast<MoveControl*>(getMoveControl());
-    if (control != NULL) control->setSpeedModifier(speedModifier);
+    control->setWantedPosition(control->getWantedX(), control->getWantedY(), control->getWantedZ(),
+                                speedModifier);
 }
 
 void Rabbit::registerGoals()
@@ -251,8 +260,10 @@ float Rabbit::getJumpPower()
 void Rabbit::jumpFromGround()
 {
     LivingEntity::jumpFromGround();
-    if (getMoveControl() != NULL && static_cast<MoveControl*>(getMoveControl())->getSpeedModifier() > 0.0)
-        moveRelative(0.0f, 0.0f, 0.1f, 0.0f);
+    if (static_cast<MoveControl*>(getMoveControl())->getSpeedModifier() > 0.0)
+    {
+        moveRelative(0.0f, 0.0f, 1.0f, 0.1f);
+    }
 }
 
 double Rabbit::getJumpCompletion(float partialTick)
@@ -401,7 +412,13 @@ const SoundEvent* Rabbit::getDeathSound()
 
 bool Rabbit::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    return LivingEntity::doHurtTarget(target);
+    boost::shared_ptr<LivingEntity> self = boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
+    EntityDamageSource* damageSource = DamageSource::CreateMobAttack(self);
+    if (getRabbitType() == 99)
+    {
+        target->hurt(damageSource, 8.0f);
+    }
+    return target->hurt(damageSource, 3.0f);
 }
 
 SoundSource::ESoundSource Rabbit::getSoundSource()
@@ -427,18 +444,34 @@ bool Rabbit::isTemptingItem(Item* item)
 
 int Rabbit::getRandomRabbitType()
 {
-    int value = mRandom->nextInt(100);
-    if (value < 5) return 4;
-    if (value < 50) return 0;
-    if (value < 90) return 2;
+    int type = mRandom->nextInt(100);
+    Biome* biome = mLevel->getBiome(BlockPos(shared_from_this()));
+    if (biome->isSnowCovered())
+    {
+        return type < 80 ? 1 : 3;
+    }
+    if (type < 50) return 0;
+    if (type < 90) return 2;
     return 5;
 }
 
 boost::shared_ptr<AgableMob> Rabbit::getBreedOffspring(boost::shared_ptr<AgableMob> parent)
 {
     boost::shared_ptr<Rabbit> child(new Rabbit(mLevel));
-    Rabbit* other = dynamic_cast<Rabbit*>(parent.get());
-    child->setRabbitType(mRandom->nextInt(20) == 0 && other != NULL ? other->getRabbitType() : getRandomRabbitType());
+    int type = getRandomRabbitType();
+    if (mRandom->nextInt(20) != 0)
+    {
+        if (parent->GetType() == 0x2d680005ULL && mRandom->nextBoolean())
+        {
+            boost::shared_ptr<Rabbit> other = boost::static_pointer_cast<Rabbit>(parent);
+            type = other->getRabbitType();
+        }
+        else
+        {
+            type = getRabbitType();
+        }
+    }
+    child->setRabbitType(type);
     return child;
 }
 
