@@ -406,3 +406,10 @@ void SynchedEntityData::assignValues(std::vector<DataItem*>* items)
 
     mIsDirty = true;
 }
+
+template void SynchedEntityData::createDateItem<not_null_ptr<ItemInstance> >(const EntityDataAccessor<not_null_ptr<ItemInstance> >*, not_null_ptr<ItemInstance>);
+
+template void SynchedEntityData::set<not_null_ptr<ItemInstance> >(const EntityDataAccessor<not_null_ptr<ItemInstance> >*, not_null_ptr<ItemInstance>, bool);
+template void SynchedEntityData::set<std::wstring>(const EntityDataAccessor<std::wstring>*, std::wstring, bool);
+
+template void SynchedEntityData::assignValue<not_null_ptr<ItemInstance> >(DataItem_Impl<not_null_ptr<ItemInstance> >*, DataItem_Impl<not_null_ptr<ItemInstance> >*);

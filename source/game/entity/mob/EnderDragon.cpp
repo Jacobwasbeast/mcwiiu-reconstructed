@@ -35,11 +35,23 @@
 
 static const EntityDataAccessor<int>* DATA_DRAGON_PHASE = NULL;
 
+namespace
+{
+
+struct DragonNodeList
+{
+    Node** nodes;
+    int count;
+};
+
+} // namespace
+
 EnderDragon::EnderDragon(Level* level)
-    : Mob(level), mOpenSet(NULL), mPath(NULL), mDragonFight(NULL), mRandom(new Random()),
+    : Mob(level), mOpenSet(NULL), mPath(NULL), mDragonFight(NULL),
       mDragonPhase(0), mTicksSinceDeath(0), mTarget(), mNearbyCrystal(0),
       mDragonKilled(false), mPreviouslyKilled(false), mHasTarget(false), mWasHurt(false),
       mHealth(200), mTargetX(0.0), mTargetY(0.0), mTargetZ(0.0),
+      mSittingDamageReceived(0), mHurtWhilePerched(false),
       mFlapTime(0.0f), mOldFlapTime(0.0f), mDeathTime(0), mBeamTarget()
 {
     _init();
@@ -49,7 +61,6 @@ EnderDragon::~EnderDragon()
 {
     delete mOpenSet;
     delete mPath;
-    delete mRandom;
 }
 
 std::wstring EnderDragon::getDisplayName()
@@ -79,12 +90,6 @@ unsigned int EnderDragon::findClosestNode(double, double, double) { return 0; }
 
 namespace
 {
-
-struct DragonNodeList
-{
-    Node** nodes;
-    int count;
-};
 
 static Node* makeDragonPathNode(Level* level, float step, unsigned int index, unsigned int indexSubtract,
                                 float angleBase, double radius, int yOffset)
@@ -477,7 +482,60 @@ unsigned int EnderDragon::findNewTarget()
         setSynchedAction(ACTION_NONE, false);
     return mHasTarget ? 1U : 0U;
 }
-bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart>, const DamageSource*, float) { return false; }
+bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount)
+{
+    if (part.get() != mHead.get())
+    {
+        float minAmount = 1.0f;
+        if ((amount - 1.0f) < 0.0f)
+            minAmount = amount;
+        amount = amount * 0.25f + minAmount;
+    }
+    if (amount < 0.01f)
+        return false;
+
+    bool isRealDamage = true;
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if (attacker != 0)
+    {
+        if ((attacker->GetType() & ENTITY_TYPE_PLAYER) != ENTITY_TYPE_PLAYER)
+            isRealDamage = source->isExplosion();
+    }
+    else
+    {
+        isRealDamage = source->isExplosion();
+    }
+
+    if (isRealDamage)
+    {
+        float healthBefore = getHealth();
+        LivingEntity::actuallyHurt(source, amount);
+        EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
+        if (getHealth() <= 0.0f && action != ACTION_5 && action != ACTION_6 && action != ACTION_7)
+        {
+            setHealth(1.0f);
+            if (setSynchedAction(ACTION_2, false) != 0)
+            {
+                while (mPath != NULL && !mPath->isDone())
+                    mPath->next();
+                findNewTarget();
+            }
+        }
+
+        action = static_cast<EEnderdragonAction>(getSynchedAction());
+        if (action == ACTION_5 || action == ACTION_6 || action == ACTION_7)
+        {
+            mSittingDamageReceived += static_cast<int>(healthBefore) - static_cast<int>(getHealth());
+            if (static_cast<float>(mSittingDamageReceived) > getMaxHealth() * 0.25f)
+            {
+                mSittingDamageReceived = 0;
+                setSynchedAction(ACTION_4, false);
+                mHurtWhilePerched = true;
+            }
+        }
+    }
+    return true;
+}
 void EnderDragon::GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart>, const EntityTooltipDataHolder& holder)
 {
     GetInteractTooltip(holder);
@@ -486,21 +544,24 @@ void EnderDragon::AddParts()
 {
     boost::shared_ptr<MultiEntityMob> parent =
         boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this());
-    const std::wstring headName = L"head";
-    const std::wstring neckName = L"neck";
-    const std::wstring bodyName = L"body";
-    const std::wstring tailName = L"tail";
-    boost::shared_ptr<MultiEntityMobPart> head(new MultiEntityMobPart(parent, headName, 6.0f, 6.0f));
-    boost::shared_ptr<MultiEntityMobPart> neck(new MultiEntityMobPart(parent, neckName, 6.0f, 6.0f));
-    boost::shared_ptr<MultiEntityMobPart> body(new MultiEntityMobPart(parent, bodyName, 8.0f, 8.0f));
-    mParts.push_back(boost::static_pointer_cast<Entity>(head));
-    mParts.push_back(boost::static_pointer_cast<Entity>(neck));
-    mParts.push_back(boost::static_pointer_cast<Entity>(body));
-    for (int i = 0; i < 5; ++i)
-    {
-        boost::shared_ptr<MultiEntityMobPart> tail(new MultiEntityMobPart(parent, tailName, 4.0f, 4.0f));
-        mParts.push_back(boost::static_pointer_cast<Entity>(tail));
-    }
+
+    mHead = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"head", 6.0f, 6.0f));
+    mNeck = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"neck", 6.0f, 6.0f));
+    mBody = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"body", 8.0f, 8.0f));
+    mTail1 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
+    mTail2 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
+    mTail3 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
+    mWing1 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"wing", 4.0f, 4.0f));
+    mWing2 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"wing", 4.0f, 4.0f));
+
+    mParts.push_back(boost::static_pointer_cast<Entity>(mHead));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mNeck));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mBody));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mTail1));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mTail2));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mTail3));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mWing1));
+    mParts.push_back(boost::static_pointer_cast<Entity>(mWing2));
 }
 void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const BlockPos& position, const DamageSource* source)
 {
@@ -549,16 +610,18 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
 
 void EnderDragon::_init()
 {
-    int i;
-    int j;
-    int k;
-    for (i = 0; i < 64; ++i)
-        for (j = 0; j < 3; ++j)
+    for (int i = 0; i < 64; ++i)
+        for (int j = 0; j < 3; ++j)
             mPosHistory[i][j] = 0.0;
-    for (k = 0; k < 8; ++k)
-        mDragonPhase = 0;
     mDeathTime = 0;
     mBeamTarget.reset();
+    setSynchedAction(ACTION_NONE, false);
+    mNearbyCrystal = -1;
+    mSittingDamageReceived = 0;
+    mHurtWhilePerched = false;
+
+    mOpenSet = new BinaryHeap();
+    mPath = NULL;
 }
 
 void EnderDragon::addDataWalkers(DataFixerUpper* fixer)
@@ -713,7 +776,21 @@ void EnderDragon::knockBack(std::vector<boost::shared_ptr<Entity> >* entities)
         living->knockback(shared_from_this(), 0.2f, (dx / distSq) * 4.0, (dz / distSq) * 4.0);
     }
 }
-bool EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >*) { return false; }
+void EnderDragon::hurt(std::vector<boost::shared_ptr<Entity> >* entities)
+{
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    {
+        boost::shared_ptr<Entity> entity = *it;
+        if ((entity->GetType() & 0x0C000000ULL) == 0x0C000000ULL)
+        {
+            boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(entity);
+            boost::shared_ptr<LivingEntity> self = boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
+            EntityDamageSource* source = DamageSource::CreateMobAttack(self);
+            target->hurt(source, 10.0f);
+            delete source;
+        }
+    }
+}
 namespace
 {
 bool isCheckWallsExcludedBlock(Block* block)

@@ -2860,14 +2860,33 @@ void Entity::load(CompoundTag* tag)
 
 bool Entity::shouldTick()
 {
-    if (mLevel->getNearestPlayerPredicate(mX, mY, mZ, 128.0, NULL))
+    double radius = mBoundingBox->getSize() * 48.0;
+
+    boost::shared_ptr<Entity> cachedNearby = mShouldTickNearbyCache.lock();
+    bool needsSearch = true;
+
+    if (cachedNearby && distanceToSqr(cachedNearby) <= radius * radius)
     {
-        return true;
+        needsSearch = false;
     }
 
-    mLastSentXRot++;
+    bool foundNearby = !needsSearch;
 
-    return mLastSentXRot % 3 == 0;
+    if (needsSearch)
+    {
+        boost::shared_ptr<Entity> nearest = mLevel->getNearestPlayerPredicate(mX, mY, mZ, radius, NULL);
+        mShouldTickNearbyCache = nearest;
+        foundNearby = (nearest != NULL);
+    }
+
+    mShouldTickCounter++;
+
+    if (!foundNearby && mShouldTickCounter % 3 != 0)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool Entity::repositionEntityAfterLoad()
@@ -3197,10 +3216,7 @@ void Entity::fjImmediateBroadcastPassengerPacket(const boost::shared_ptr<Entity>
     boost::shared_ptr<TrackedEntity> tracked =
         dynamic_cast<ServerLevel*>(mLevel)->getTracker()->getTracker(vehicle);
 
-    if (tracked)
-    {
-        tracked->broadcast(packet);
-    }
+    tracked->broadcast(packet);
 }
 
 void Entity::stopRidingBeforeTeleport()
@@ -3243,22 +3259,38 @@ void Entity::addPassenger(boost::shared_ptr<Entity> passenger)
 
 void Entity::removePassenger(boost::shared_ptr<Entity> passenger)
 {
-    if (passenger->getVehicle() == shared_from_this())
+    if (passenger)
     {
-        return;
+        passenger->getVehicle();
     }
 
     for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+         it != mPassengers.end(); )
     {
-        if (it->lock() == passenger)
+        if (it->lock())
         {
-            mPassengers.erase(it);
-            break;
+            ++it;
+        }
+        else
+        {
+            it = mPassengers.erase(it);
         }
     }
 
-    passenger->mBoardingCooldown = 60;
+    if (passenger)
+    {
+        for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
+             it != mPassengers.end(); ++it)
+        {
+            if (it->lock() == passenger)
+            {
+                mPassengers.erase(it);
+                break;
+            }
+        }
+
+        passenger->mBoardingCooldown = 60;
+    }
 }
 
 bool Entity::canAddPassenger(boost::shared_ptr<Entity> passenger)
@@ -4371,7 +4403,7 @@ boost::shared_ptr<Entity> Entity::getRootVehicle()
 {
     boost::shared_ptr<Entity> root = shared_from_this();
 
-    while (root->getVehicle())
+    while (root->isPassenger())
     {
         root = root->getVehicle();
     }
@@ -4580,7 +4612,7 @@ void Entity::dropLeash(bool broadcast, bool dropItem)
         dynamic_cast<ServerLevel*>(mLevel)->getTracker()->broadcast(
             shared_from_this(),
             boost::shared_ptr<ClientboundSetEntityLinkPacket>(
-                new ClientboundSetEntityLinkPacket(0, shared_from_this(),
+                new ClientboundSetEntityLinkPacket(shared_from_this(),
                                                    boost::shared_ptr<Entity>())));
     }
 }
@@ -4617,7 +4649,7 @@ void Entity::setLeashedTo(boost::shared_ptr<Entity> leashHolder, bool broadcast)
         serverLevel->getTracker()->broadcast(
             shared_from_this(),
             boost::shared_ptr<ClientboundSetEntityLinkPacket>(
-                new ClientboundSetEntityLinkPacket(0, shared_from_this(), leashHolder)));
+                new ClientboundSetEntityLinkPacket(2, shared_from_this(), leashHolder)));
     }
 
     if (isPassenger())

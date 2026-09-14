@@ -31,6 +31,7 @@
 #include "game/network/ClientboundAddPaintingPacket.hpp"
 #include "game/network/ClientboundAddPlayerPacket.hpp"
 #include "game/network/Packet.hpp"
+#include "game/network/ClientboundSetEntityDataPacket.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/block/Block.hpp"
@@ -45,9 +46,9 @@ TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int up
     mXLoc = EntityTracker::truncate(entity->mX);
     mYLoc = EntityTracker::truncate(entity->mY);
     mZLoc = EntityTracker::truncate(entity->mZ);
-    mXRot = entity->mXRot;
-    mYRot = entity->mYRot;
-    mZRot = entity->mYRot;
+    mXRot = Mth::floor(entity->mYRot * 256.0f / 360.0f);
+    mYRot = Mth::floor(entity->mXRot * 256.0f / 360.0f);
+    mZRot = Mth::floor(entity->getYHeadRot() * 256.0f / 360.0f);
 }
 
 bool TrackedEntity::canBySeenBy(boost::shared_ptr<ServerPlayer> player)
@@ -386,7 +387,7 @@ void TrackedEntity::updatePlayers(EntityTracker* tracker, std::vector<boost::sha
 
 void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
 {
-    if (!packet || !Packet::canSendToAnyClient(packet))
+    if (!packet)
     {
         return;
     }
@@ -402,6 +403,14 @@ void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
 void TrackedEntity::broadcastAndSend(boost::shared_ptr<Packet> packet)
 {
     broadcast(packet);
+    if (mEntity && mEntity->GetType() == ENTITY_TYPE_SERVER_PLAYER)
+    {
+        boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(mEntity);
+        if (player && player->mConnection)
+        {
+            player->mConnection->send(packet);
+        }
+    }
 }
 
 void TrackedEntity::sendDirtyEntityData()
@@ -413,7 +422,8 @@ void TrackedEntity::sendDirtyEntityData()
     boost::shared_ptr<SynchedEntityData> data = mEntity->getEntityData();
     if (data && data->isDirty())
     {
-        data->clearDirty();
+        boost::shared_ptr<Packet> packet(new ClientboundSetEntityDataPacket(mEntity->getId(), (int)mEntity->GetType(), data, false));
+        broadcastAndSend(packet);
     }
 }
 
@@ -469,7 +479,13 @@ void TrackedEntity::removePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
 
 void TrackedEntity::clear(boost::shared_ptr<ServerPlayer> player)
 {
-    removePlayer(NULL, player);
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it = mTrackedPlayers.find(player);
+    if (it != mTrackedPlayers.end())
+    {
+        mTrackedPlayers.erase(it);
+        mEntity->stopSeenByPlayer(player);
+        player->sendRemoveEntity(&mEntity);
+    }
 }
 
 boost::shared_ptr<Entity> TrackedEntity::getEntity()

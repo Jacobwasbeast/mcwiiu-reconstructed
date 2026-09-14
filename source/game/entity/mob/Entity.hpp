@@ -608,6 +608,8 @@ public:
     int mLeashRestoreTicks;
     _SkinAdjustments mSkinAdjustments;
     int mAutoSpinAttackTicks;
+    boost::weak_ptr<Entity> mShouldTickNearbyCache;
+    int mShouldTickCounter;
 };
 
 #endif

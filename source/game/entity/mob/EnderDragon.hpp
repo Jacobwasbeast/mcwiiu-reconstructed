@@ -75,7 +75,7 @@ public:
     double rotWrap(double angle);
     bool checkCrystals();
     void knockBack(std::vector<boost::shared_ptr<Entity> >* entities);
-    bool hurt(std::vector<boost::shared_ptr<Entity> >* entities);
+    void hurt(std::vector<boost::shared_ptr<Entity> >* entities);
     bool checkWalls(AABB* box);
     virtual void aiStep();
     virtual ResourceLocation* getDefaultLootTable();
@@ -110,7 +110,6 @@ private:
     BinaryHeap* mOpenSet;
     Path* mPath;
     EndDragonFight* mDragonFight;
-    Random* mRandom;
     int mDragonPhase;
     int mTicksSinceDeath;
     boost::shared_ptr<Entity> mTarget;
@@ -123,6 +122,16 @@ private:
     double mTargetX;
     double mTargetY;
     double mTargetZ;
+    boost::shared_ptr<MultiEntityMobPart> mHead;
+    boost::shared_ptr<MultiEntityMobPart> mNeck;
+    boost::shared_ptr<MultiEntityMobPart> mBody;
+    boost::shared_ptr<MultiEntityMobPart> mTail1;
+    boost::shared_ptr<MultiEntityMobPart> mTail2;
+    boost::shared_ptr<MultiEntityMobPart> mTail3;
+    boost::shared_ptr<MultiEntityMobPart> mWing1;
+    boost::shared_ptr<MultiEntityMobPart> mWing2;
+    int mSittingDamageReceived;
+    bool mHurtWhilePerched;
 };
 
 #endif

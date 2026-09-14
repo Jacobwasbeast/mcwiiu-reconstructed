@@ -30,7 +30,7 @@ unsigned int EntityTracker::truncate(double value)
 
 void EntityTracker::addEntity(boost::shared_ptr<Entity> entity, int range, int updateInterval, bool sendVelocityUpdates)
 {
-    boost::shared_ptr<TrackedEntity> tracker(new TrackedEntity(entity, range, updateInterval, mMaxRange, sendVelocityUpdates));
+    boost::shared_ptr<TrackedEntity> tracker(new TrackedEntity(entity, range, mMaxRange, updateInterval, sendVelocityUpdates));
     mTrackedEntities.insert(tracker);
     mEntityMap[entity->getId()] = tracker;
     tracker->updatePlayers(this, mLevel->getPlayers(0, NULL));
@@ -80,7 +80,7 @@ void EntityTracker::removeEntity(boost::shared_ptr<Entity> entity)
 
 void EntityTracker::removePlayer(boost::shared_ptr<Entity> entity)
 {
-    if (entity->GetType() == ENTITY_TYPE_PLAYER)
+    if (entity->GetType() == ENTITY_TYPE_SERVER_PLAYER)
     {
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(entity);
         for (boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > >::iterator it = mTrackedEntities.begin(); it != mTrackedEntities.end(); ++it)
