@@ -123,6 +123,8 @@
 #include "game/entity/mob/Mob.hpp"
 #include "game/core/Guardian.hpp"
 #include "game/core/Minecart.hpp"
+#include "game/core/PrimedTnt.hpp"
+#include "game/core/EnderCrystal.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/client/render/ItemPickupParticle.hpp"
@@ -259,6 +261,13 @@ namespace
     bool blockEntityTypeMatches(BlockEntity* entity, unsigned long long expectedType)
     {
         return entity != NULL && entity->GetType() == expectedType;
+    }
+
+    void replaceFirst(std::wstring& value, const std::wstring& key, const std::wstring& replacement)
+    {
+        const std::wstring::size_type pos = value.find(key);
+        if (pos != std::wstring::npos)
+            value.replace(pos, key.size(), replacement);
     }
 
 }
@@ -420,10 +429,9 @@ bool ClientPacketListener::IsPrimaryPlayer()
 
 void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<MultiplayerLocalPlayer> player, uint32_t changes)
 {
-    if (player == 0 || m_minecraft == 0 || m_minecraft->mGui == 0)
-        return;
+    const uint32_t userIndex = player->mUserIndex;
     const uint32_t oldPrivileges =
-        player->getPlayerGamePrivilege(static_cast<Player::EPlayerGamePrivileges>(0x21));
+        player->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
     for (uint32_t bit = 0; bit < 0x20; ++bit)
     {
         const uint32_t oldValue = Player::getPlayerGamePrivilege(
@@ -432,18 +440,41 @@ void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<Multiplayer
             changes, static_cast<Player::EPlayerGamePrivileges>(bit));
         if (oldValue == newValue)
             continue;
-        if (gApp.GetGameHostOption(static_cast<eGameHostOption>(0xc)) != 0)
-            continue;
+        const bool granted = oldValue == 0;
         std::wstring message;
-        if (bit < 3)
+        if (gApp.GetGameHostOption(eGameHostOption_12) == 0)
         {
-            if (oldValue < newValue)
-                message = L10N::GetString(static_cast<int>(0xBB86B9EC + bit));
-            else
-                message = L10N::GetString(static_cast<int>(0x80CBA202));
+            switch (bit)
+            {
+            case 0: message = L10N::GetString(granted ? 0xBB86B9EC : 0x80CBA202); break;
+            case 1: message = L10N::GetString(granted ? 0xF9B83295 : 0x590C0C53); break;
+            case 2: message = L10N::GetString(granted ? 0x8425EE2C : 0x7A302BC2); break;
+            case 3: message = L10N::GetString(granted ? 0xCFCD48CF : 0xD83F3EE9); break;
+            case 10: message = L10N::GetString(granted ? 0x3565EA42 : 0x332C0EFC); break;
+            case 11: message = L10N::GetString(granted ? 0x0FEF7A7A : 0x5CC73FE4); break;
+            case 12: message = L10N::GetString(granted ? 0x0359DA13 : 0xFEEB1CA5); break;
+            default: break;
+            }
+        }
+        if (bit == 4)
+            message = L10N::GetString(granted ? 0x453A2722 : 0xA5DE08DC);
+        if (gApp.GetGameHostOption(eGameHostOption_15) != 0)
+        {
+            switch (bit)
+            {
+            case 5: message = L10N::GetString(granted ? 0x0914B658 : 0xD4D6F596); break;
+            case 6: message = L10N::GetString(granted ? 0x0E58AD5D : 0x118BE14B); break;
+            case 7: message = L10N::GetString(granted ? 0x67448842 : 0x8A95FCFC); break;
+            case 8: message = L10N::GetString(granted ? 0x43E9FBD8 : 0x14C25F16); break;
+            case 13: message = L10N::GetString(granted ? 0xC94448B1 : 0xE2849697); break;
+            case 14: message = L10N::GetString(granted ? 0x02CA1EEB : 0xE40A892D); break;
+            case 15: message = L10N::GetString(granted ? 0xB2427456 : 0x25853DE8); break;
+            case 16: message = L10N::GetString(granted ? 0x986DB991 : 0xCA33A3F7); break;
+            default: break;
+            }
         }
         if (!message.empty())
-            m_minecraft->mGui->addMessage(message, player->mUserIndex, false, false, false, false);
+            m_minecraft->mGui->addMessage(message, userIndex, false, false, false, false);
     }
 }
 
@@ -718,15 +749,28 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
     case 66: entity.reset(new WitherSkull(level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa())); break;
     case 67: entity.reset(new ShulkerBullet(level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa())); break;
     case 68: entity.reset(new LlamaSpit(level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa())); break;
-    case 70: entity.reset(new FallingBlockEntity(level, x, y, z, Block::stateByIdWithData(packet->getData() & 0xffff))); packet->setData(0); break;
+    case 70: entity.reset(new FallingBlockEntity(level, x, y, z, Block::stateByIdWithData(packet->getData()))); packet->setData(0); break;
     case 71: entity.reset(new ItemFrame(level, BlockPos((int)x, (int)y, (int)z), Direction::from2DDataValue(packet->getData()))); packet->setData(0); break;
     case 73:
-        entity.reset(new ThrownPotion(level, x, y, z,
-            not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(packet->getData())))));
+    {
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        if (miniGame != 0 && miniGame->HasFeatureSplashLevitatePotions() && packet->getData() == 0x1b6)
+        {
+            entity.reset(new ThrownPotion(level, x, y, z, miniGame->getEquipmentForSlot(EquipmentSlot::eIndex_MainHand)));
+        }
+        else
+        {
+            entity.reset(new ThrownPotion(level, x, y, z,
+                not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(packet->getData())))));
+        }
+        packet->setData(0);
         break;
+    }
     case 1: entity.reset(new Boat(level, x, y, z)); break;
     case 2: entity.reset(new ItemEntity(level, x, y, z)); break;
     case 3: entity.reset(new AreaEffectCloud(level, x, y, z)); break;
+    case 50: entity.reset(new PrimedTnt(level, x, y, z, boost::shared_ptr<LivingEntity>())); break;
+    case 51: entity.reset(new EnderCrystal(level, x, y, z)); break;
     case 72: entity.reset(new EyeOfEnderSignal(level, x, y, z)); break;
     case 75: entity.reset(new ThrownExpBottle(level, x, y, z)); break;
     case 77: entity.reset(new LeashFenceKnotEntity(level, BlockPos((int)x, (int)y, (int)z))); break;
@@ -738,8 +782,7 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
     default: return;
     }
     entity->setId(packet->getId());
-    entity->setPos(x, y, z);
-    entity->setRot(packet->getyRot() * (360.0f / 256.0f), packet->getxRot() * (360.0f / 256.0f));
+    entity->absMoveTo(x, y, z, packet->getyRot() * (360.0f / 256.0f), packet->getxRot() * (360.0f / 256.0f));
     level->putEntity(packet->getId(), entity);
     checkDeferredEntityLinkPackets(entity->getId());
 }
@@ -1184,45 +1227,44 @@ void ClientPacketListener::sendAndDisconnect(boost::shared_ptr<Packet> packet)
 
 void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTakeItemEntityPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (m_level == 0)
         return;
     MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
     if (level == 0)
         return;
-    boost::shared_ptr<Entity> itemEntity = resolveEntity(packet->getItemId());
-    boost::shared_ptr<Entity> playerEntity = resolveEntity(packet->getPlayerId());
+    boost::shared_ptr<Entity> itemEntity = getEntity(packet->getItemId());
+    boost::shared_ptr<Entity> playerEntity = getEntity(packet->getPlayerId());
     boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(playerEntity);
-    bool foundLocal = false;
-    if (m_minecraft != 0)
+    for (int i = 0; i < 4; ++i)
     {
-        for (int i = 0; i < 4; ++i)
+        boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = m_minecraft->mLocalPlayers[i];
+        if (localPlayer != 0 && localPlayer->getId() == packet->getPlayerId())
         {
-            boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = m_minecraft->mLocalPlayers[i];
-            if (localPlayer != 0 && localPlayer->getId() == packet->getPlayerId())
-            {
-                playerEntity = localPlayer;
-                living = localPlayer;
-                foundLocal = true;
-                break;
-            }
+            living = localPlayer;
+            break;
         }
     }
-    if (foundLocal && living != 0 && itemEntity != 0 && m_minecraft != 0 && m_minecraft->mParticleEngine != 0)
+    if (living == 0)
+    {
+        level->removeEntity(packet->getItemId());
+        return;
+    }
+    if (itemEntity != 0)
     {
         boost::shared_ptr<ItemPickupParticle> particle(
-            new ItemPickupParticle(level, itemEntity, living, 0.5f));
+            new ItemPickupParticle(level, itemEntity, living, -0.5f));
         m_minecraft->mParticleEngine->add(particle.get());
-    }
-    if (itemEntity == 0)
         level->removeEntity(packet->getItemId());
+    }
 }
 
 std::wstring ClientPacketListener::GetDisplayNameByGamertag(std::wstring gamertag) { return gamertag; }
 void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_minecraft->mGui == 0 ||
-        m_playerId < 0 || m_playerId >= 4)
-        return;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && IsPrimaryPlayer())
+    {
+        m_minecraft->GetClientMasterGameMode()->OnChatPacket(packet);
+    }
 
     const int message = static_cast<int>(packet->getMessage());
     if (message == 12)
@@ -1232,12 +1274,6 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     }
 
     std::wstring text;
-    const auto replaceFirst = [](std::wstring& value, const std::wstring& key, const std::wstring& replacement)
-    {
-        const std::wstring::size_type pos = value.find(key);
-        if (pos != std::wstring::npos)
-            value.replace(pos, key.size(), replacement);
-    };
     if ((message == 0 || message == 18 || message == 38 || message == 41 || message == 75) &&
         !packet->strings.empty())
     {
@@ -1772,25 +1808,10 @@ void ClientPacketListener::handleDamageIndicator(boost::shared_ptr<ClientboundDa
 
 void ClientPacketListener::handleMiniGamePlayerSettingsUpdatePacket(boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0)
-        return;
     const MiniGamePlayerSettings& settings = packet->getSettings();
     MiniGameDef::SetPlayerSettings(settings);
-    const MiniGameDef* miniGame = m_minecraft->GetMiniGame();
-    if (miniGame == 0)
-        return;
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && m_minecraft->mGui != 0)
-    {
-        std::wstring message = L10N::GetString(static_cast<int>(0x3143fcab));
-        m_minecraft->mGui->addMessage(message, m_playerId, false, false, false, false);
-    }
-    if (gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x2a)))
-    {
-        void* scene = gConsoleUIController.GetTopScene(
-            m_playerId, static_cast<EUILayer>(6), static_cast<EUIGroup>(1));
-        if (scene != 0)
-            static_cast<UIScene_InGameSettingsListMenu*>(scene)->UpdateSettings(false);
-    }
+    GameSettings::SetPlayerSkin(m_playerId, GameSettings::GetPlayerSkinId(m_playerId), false);
+    GameSettings::SetPlayerCape(m_playerId, GameSettings::GetPlayerCapeId(m_playerId), false);
 }
 
 void ClientPacketListener::handleSetHealth(boost::shared_ptr<ClientboundSetHealthPacket> packet)
@@ -1824,7 +1845,7 @@ void ClientPacketListener::handleRespawn(boost::shared_ptr<ClientboundRespawnPac
 
     const int oldPlayer = m_minecraft->getLocalPlayerIdx();
     m_minecraft->setLocalPlayerIdx(m_playerId);
-    m_minecraft->respawnPlayer(packet->getDimension(), m_playerId, packet->getDimension(),
+    m_minecraft->respawnPlayer(m_playerId, packet->getDimension(), packet->getDimension(),
                                packet->shouldKeepOldEntityData());
     if (m_minecraft->mGameModes[m_playerId] != 0)
         m_minecraft->mGameModes[m_playerId]->setLocalMode(packet->getPlayerGameType());
@@ -2443,15 +2464,14 @@ void ClientPacketListener::handleTexture(boost::shared_ptr<TexturePacket> packet
 
 void ClientPacketListener::handleTextureAndGeometry(boost::shared_ptr<TextureAndGeometryPacket> packet)
 {
-    if (packet == 0)
+    if (packet->length == 0)
         return;
     gApp.AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
-    if (m_minecraft != 0)
-        m_minecraft->handleClientTextureReceived(packet->textureName);
-    if (packet->additionalBoxes != 0)
+    if (packet->additionalBoxCount != 0)
         gApp.SetAdditionalSkinBoxes(packet->geometryId, packet->additionalBoxes,
                                     packet->additionalBoxCount, packet->skinAdjustments);
     gApp.SetSkinAdjustments(packet->geometryId, packet->skinAdjustments);
+    Minecraft::GetInstance()->handleClientTextureReceived(packet->textureName);
 }
 
 void ClientPacketListener::handleUpdateProgress(boost::shared_ptr<UpdateProgressPacket> packet)
@@ -2463,12 +2483,15 @@ void ClientPacketListener::handleUpdateProgress(boost::shared_ptr<UpdateProgress
 
 void ClientPacketListener::handleTextureChange(boost::shared_ptr<TextureChangePacket> packet)
 {
-    if (packet == 0)
-        return;
-    boost::shared_ptr<Entity> entity = resolveEntity(packet->mEntityId);
+    boost::shared_ptr<Entity> entity = getEntity(packet->mEntityId);
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
     if (player == 0)
         return;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (m_minecraft->mLocalPlayers[i] != 0 && m_minecraft->mLocalPlayers[i]->getId() == packet->mEntityId)
+            return;
+    }
     if (packet->mChangeType == TextureChangePacket::eTextureChangeType_Skin)
     {
         const unsigned int skinId = CMinecraftApp::getSkinIdFromPath(packet->mTextureName);
@@ -2493,12 +2516,15 @@ void ClientPacketListener::handleTextureChange(boost::shared_ptr<TextureChangePa
 
 void ClientPacketListener::handleTextureAndGeometryChange(boost::shared_ptr<TextureAndGeometryChangePacket> packet)
 {
-    if (packet == 0)
-        return;
-    boost::shared_ptr<Entity> entity = resolveEntity(packet->entityId);
+    boost::shared_ptr<Entity> entity = getEntity(packet->entityId);
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
     if (player == 0)
         return;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (m_minecraft->mLocalPlayers[i] != 0 && m_minecraft->mLocalPlayers[i]->getId() == packet->entityId)
+            return;
+    }
     if (!gApp.IsFileInMemoryTextures(packet->geometryName))
     {
         if (m_minecraft != 0 && m_minecraft->addPendingClientTextureRequest(packet->geometryName))

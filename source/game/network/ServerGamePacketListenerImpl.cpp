@@ -109,7 +109,8 @@ ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(
       mPendingTeleportPosition(0), mTeleportId(0), mTeleportTime(0),
       mClientIsFloating(false), mAboveGroundTickCount(0),
       mClientVehicleIsFloating(false), mAboveGroundVehicleTickCount(0),
-      mReceivedMovePacketCount(0), mKnownMovePacketCount(0)
+      mReceivedMovePacketCount(0), mKnownMovePacketCount(0),
+      mUseAltLeaveMessage(false)
 {
     if (mConnection != 0)
         mConnection->setListener(this);
@@ -158,7 +159,8 @@ void ServerGamePacketListenerImpl::disconnect(DisconnectPacket::eDisconnectReaso
     mConnection->sendAndQuit();
     mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
         new ClientboundChatPacket(mPlayer->getName(),
-                                  static_cast<ClientboundChatPacket::EChatPacketMessage>(8), -1)));
+                                  static_cast<ClientboundChatPacket::EChatPacketMessage>(
+                                      mUseAltLeaveMessage ? 10 : 8), -1)));
     mServer->getPlayers()->remove(mPlayer);
     mDisconnected = true;
 }
@@ -241,11 +243,6 @@ void ServerGamePacketListenerImpl::tick()
 {
     if (mDisconnected)
         return;
-    if (mServer->IsServerPaused())
-    {
-        disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
-        return;
-    }
 
     resetPosition();
     mPlayer->doTick(false, false, false);
@@ -269,12 +266,55 @@ void ServerGamePacketListenerImpl::tick()
         mClientIsFloating = false;
     }
 
-    if (mChatSpamTickCount > 0)
-        --mChatSpamTickCount;
-    if (mDropSpamTickCount > 0)
-        --mDropSpamTickCount;
+    boost::shared_ptr<Entity> vehicle = mPlayer->getRootVehicle();
+    mLastVehicle = vehicle;
+    if (!vehicle || vehicle == mPlayer || vehicle->getControllingPassenger() != mPlayer)
+    {
+        mAboveGroundVehicleTickCount = 0;
+        mClientVehicleIsFloating = false;
+    }
+    else
+    {
+        mVehicleFirstGoodX = vehicle->mX;
+        mVehicleFirstGoodY = vehicle->mY;
+        mVehicleFirstGoodZ = vehicle->mZ;
+        mVehicleLastGoodX = vehicle->mX;
+        mVehicleLastGoodY = vehicle->mY;
+        mVehicleLastGoodZ = vehicle->mZ;
+
+        bool stillControllingVehicle = false;
+        if (mClientVehicleIsFloating)
+        {
+            boost::shared_ptr<Entity> checkVehicle = mPlayer->getRootVehicle();
+            if (checkVehicle->getControllingPassenger() == mPlayer)
+                stillControllingVehicle = true;
+        }
+
+        if (stillControllingVehicle)
+        {
+            ++mAboveGroundVehicleTickCount;
+            if (mAboveGroundVehicleTickCount > 80)
+            {
+                disconnect(DisconnectPacket::eDisconnectReason_KeepAliveTimeout);
+                return;
+            }
+        }
+        else
+        {
+            mAboveGroundVehicleTickCount = 0;
+            mClientVehicleIsFloating = false;
+        }
+    }
 
     mConnection->tick();
+
+    if (!mDisconnected)
+    {
+        if (mChatSpamTickCount > 0)
+            --mChatSpamTickCount;
+        if (mDropSpamTickCount > 0)
+            --mDropSpamTickCount;
+    }
 }
 
 bool ServerGamePacketListenerImpl::containsInvalidValues(boost::shared_ptr<ServerboundMoveVehiclePacket> packet)
@@ -378,36 +418,62 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
     case ServerboundPlayerActionPacket::START_DESTROY_BLOCK:
         if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
                                    pos.z + 0.5) <= 36.0 &&
-            pos.y < mServer->getMaxBuildHeight() &&
-            level->getWorldBorder()->isWithinBounds(pos))
+            pos.y < mServer->getMaxBuildHeight())
         {
-            if (mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection()))
-                mServer->getPlayers()->prioritiseBlockChanges(pos, mPlayer->mDimension);
+            if (level->getWorldBorder()->isWithinBounds(pos))
+            {
+                mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection());
+                return;
+            }
         }
-        else
+        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        return;
+    case ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK:
+        if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
+                                   pos.z + 0.5) <= 36.0 &&
+            pos.y < mServer->getMaxBuildHeight())
+        {
+            mPlayer->mGameMode->abortDestroyBlock();
+            return;
+        }
+        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        return;
+    case ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK:
+        if (mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5,
+                                   pos.z + 0.5) <= 36.0 &&
+            pos.y < mServer->getMaxBuildHeight())
+        {
+            mPlayer->mGameMode->stopDestroyBlock(pos);
+            mServer->getPlayers()->prioritiseBlockChanges(pos, mPlayer->mDimension);
+            return;
+        }
+        send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        return;
+    case ServerboundPlayerActionPacket::DROP_ALL_ITEMS:
+        if (mPlayer->isSpectator())
         {
             send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+            return;
         }
-        break;
-    case ServerboundPlayerActionPacket::ABORT_DESTROY_BLOCK:
-        mPlayer->mGameMode->abortDestroyBlock();
-        break;
-    case ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK:
-        mPlayer->mGameMode->stopDestroyBlock(pos);
-        break;
-    case ServerboundPlayerActionPacket::DROP_ALL_ITEMS:
-        if (!mPlayer->isSpectator())
-            mPlayer->drop(true);
+        mPlayer->drop(true);
         break;
     case ServerboundPlayerActionPacket::DROP_ITEM:
-        if (!mPlayer->isSpectator())
-            mPlayer->drop(false);
+        if (mPlayer->isSpectator())
+        {
+            send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+            return;
+        }
+        mPlayer->drop(false);
         break;
     case ServerboundPlayerActionPacket::RELEASE_USE_ITEM:
         mPlayer->releaseUsingItem(packet->getUseTime());
         break;
     case ServerboundPlayerActionPacket::SWAP_ITEM_WITH_OFFHAND:
-        if (!mPlayer->isSpectator())
+        if (mPlayer->isSpectator())
+        {
+            send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+            return;
+        }
         {
             not_null_ptr<ItemInstance> mainHand = mPlayer->getItemSlot(EquipmentSlot::MAINHAND);
             not_null_ptr<ItemInstance> offHand = mPlayer->getItemSlot(EquipmentSlot::OFFHAND);
@@ -649,7 +715,7 @@ void ServerGamePacketListenerImpl::handleClientCommand(boost::shared_ptr<Serverb
             mPlayer = mServer->getPlayers()->respawn(mPlayer, dimension, true);
             mPlayer->mFallFlying = false;
         }
-        else if (mPlayer->getHealth() <= 0.0f)
+        else if (mPlayer->getHealth() <= 0.01)
         {
             mPlayer = mServer->getPlayers()->respawn(mPlayer, 0, false);
         }
@@ -746,6 +812,7 @@ void ServerGamePacketListenerImpl::handleSignUpdate(boost::shared_ptr<Serverboun
     BlockPos pos = packet->getPos();
     if (level->hasChunkAt(pos))
     {
+        const BlockState* state = level->getBlockState(pos);
         boost::shared_ptr<SignBlockEntity> sign =
             boost::dynamic_pointer_cast<SignBlockEntity>(level->getBlockEntity(pos));
         if (sign)
@@ -755,6 +822,7 @@ void ServerGamePacketListenerImpl::handleSignUpdate(boost::shared_ptr<Serverboun
                 sign->SetMessage(line, lines[line]);
             sign->SetVerified(false);
             sign->setCreatedByRestrictedPlayer(packet->isCreatedByRestrictedPlayer());
+            level->sendBlockUpdated(pos, state, state, 3, true);
         }
     }
 }
@@ -1209,9 +1277,18 @@ void ServerGamePacketListenerImpl::onDisconnect(
     if (mDisconnected)
         return;
 
-    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
-        new ClientboundChatPacket(mPlayer->getName(),
-                                  static_cast<ClientboundChatPacket::EChatPacketMessage>(8), -1)));
+    if (mUseAltLeaveMessage)
+    {
+        mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
+            new ClientboundChatPacket(mPlayer->getName(),
+                                      static_cast<ClientboundChatPacket::EChatPacketMessage>(10), -1)));
+    }
+    else
+    {
+        mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
+            new ClientboundChatPacket(mPlayer->getName(),
+                                      static_cast<ClientboundChatPacket::EChatPacketMessage>(8), -1)));
+    }
     mPlayer->disconnect();
     mServer->getPlayers()->remove(mPlayer);
     mDisconnected = true;

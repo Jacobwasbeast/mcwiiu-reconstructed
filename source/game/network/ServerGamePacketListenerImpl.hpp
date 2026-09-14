@@ -178,6 +178,7 @@ private:
     int mKnownMovePacketCount;
     boost::unordered_map<int, short, IntKeyHash, IntKeyEq> mContainerType;
     std::vector<std::wstring> mNames;
+    bool mUseAltLeaveMessage;
 };
 
 INetworkPlayer* getNetworkPlayerFromIndex(int index);
