@@ -25,22 +25,18 @@ bool RepairItemRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
         if (!item->isEmpty())
         {
             items.push_back(item);
+            if (items.size() > 1)
+            {
+                if (items[0]->getItem() != item->getItem() ||
+                    items[0]->getCount() != 1 || item->getCount() != 1 ||
+                    !items[0]->getItem()->canBeDepleted())
+                {
+                    return false;
+                }
+            }
         }
     }
-
-    if (items.size() != 2)
-    {
-        return false;
-    }
-    if (items[0]->getItem() != items[1]->getItem())
-    {
-        return false;
-    }
-    if (items[0]->getCount() != 1 || items[1]->getCount() != 1)
-    {
-        return false;
-    }
-    return items[0]->getItem()->canBeDepleted();
+    return items.size() == 2;
 }
 
 not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
@@ -53,6 +49,15 @@ not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<Crafting
         if (!item->isEmpty())
         {
             items.push_back(item);
+            if (items.size() > 1)
+            {
+                if (items[0]->getItem() != item->getItem() ||
+                    items[0]->getCount() != 1 || item->getCount() != 1 ||
+                    !items[0]->getItem()->canBeDepleted())
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
         }
     }
 

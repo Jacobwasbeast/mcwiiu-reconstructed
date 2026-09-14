@@ -7,6 +7,8 @@
 #include "game/core/HitResult.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
@@ -116,13 +118,25 @@ void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_n
     {
         return;
     }
-    CompoundTag* tag = new CompoundTag();
     std::wstring key(L"FishBucket");
     if (itemInstance->hasTag())
     {
         itemInstance->getTag()->remove(key);
     }
-    entity->saveWithoutId(tag);
+    CompoundTag* tag = new CompoundTag();
+    entity->save(tag);
+    std::wstring customName = entity->getCustomName();
+    if (!customName.empty())
+    {
+        std::wstring customName2 = entity->getCustomName();
+        tag->putString(L"CustomName", customName2);
+        std::wstring ownerUUID = entity->getOwnerUUID();
+        tag->putString(L"OwnerUUID", ownerUUID);
+        bool restricted = entity->wasNamedByRestrictedPlayer();
+        tag->putBoolean(L"CreatedByRestrictedPlayer", restricted);
+        bool host = entity->wasNamedOnHost();
+        tag->putBoolean(L"CreatedOnHost", host);
+    }
     itemInstance->addTagElement(key, tag);
 }
 
@@ -132,13 +146,21 @@ not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstanc
                                                         boost::shared_ptr<Entity> entity)
 {
     not_null_ptr<ItemInstance> result(new ItemInstance(item));
-    if (entity)
+    if (item != Items::waterBucket && item != Items::lavaBucket)
     {
         addBucketEntitySaveData(entity, result);
     }
-    if (player && !player->mAbilities.mInstabuild)
+    if (!player->mAbilities.mInstabuild)
     {
         itemInstance->shrink(1);
+    }
+    if (!itemInstance->isEmpty())
+    {
+        if (!player->mInventory->add(result))
+        {
+            not_null_ptr<ItemInstance> dropped(new ItemInstance(item, 1, 0));
+            player->drop(dropped, false);
+        }
     }
     return result;
 }
@@ -367,7 +389,16 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
 
 HitResult* BucketItem::GetPlayerHitResult(boost::shared_ptr<Player> player, Level* level, bool useLiquids)
 {
-    return Item::getPlayerPOVHitResult(level, player, useLiquids);
+    static const float kPartialTick = 1.0f;
+
+    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameMode;
+    double pickRange = gameMode->getPickRange();
+    HitResult* result = player->pick(pickRange, kPartialTick);
+    if (useLiquids || result == NULL || result->mType == HitResult::MISS)
+    {
+        result = Item::getPlayerPOVHitResult(level, player, useLiquids);
+    }
+    return ScanForHitResultEntities(player, level, result);
 }
 
 bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
@@ -394,11 +425,22 @@ bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_
 {
     std::wstring key(L"FishBucket");
     CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(key));
-    if (tag == NULL || !entity)
+    if (tag == NULL)
     {
         return false;
     }
     entity->load(tag);
+    if (tag->contains(L"CustomName"))
+    {
+        std::wstring customName = tag->getString(L"CustomName");
+        std::wstring ownerUUID = tag->getString(L"OwnerUUID");
+        bool restricted = tag->getBoolean(L"CreatedByRestrictedPlayer");
+        bool host = tag->getBoolean(L"CreatedOnHost");
+        if (!isFishBucketNameCensored(customName, ownerUUID, restricted, host))
+        {
+            entity->setCustomName(customName, ownerUUID, restricted);
+        }
+    }
     return true;
 }
 
@@ -430,15 +472,38 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
 not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                        boost::shared_ptr<LivingEntity> entity)
 {
-    if (entity && !level->mIsClientSide)
+    if (mFillType == MILK)
     {
-        entity->removeAllEffects();
+        bool notInstabuild = false;
+        unsigned long long type = entity->GetType();
+        if ((static_cast<unsigned int>(type) & 0xc800000U) == 0xc800000U)
+        {
+            boost::shared_ptr<Player> asPlayer = boost::static_pointer_cast<Player>(entity);
+            if (!asPlayer->mAbilities.mInstabuild)
+            {
+                notInstabuild = true;
+            }
+        }
+        if (notInstabuild)
+        {
+            itemInstance->shrink(1);
+        }
+        if (!level->mIsClientSide)
+        {
+            entity->removeAllEffects();
+        }
+        type = entity->GetType();
+        if ((static_cast<unsigned int>(type) & 0xc800000U) == 0xc800000U)
+        {
+            boost::shared_ptr<Player> asPlayer = boost::static_pointer_cast<Player>(entity);
+            asPlayer->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)), GenericStats::param_itemsUsed(asPlayer, itemInstance));
+        }
     }
-    if (itemInstance->isEmpty())
+    if (!itemInstance->isEmpty())
     {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
+        return itemInstance;
     }
-    return itemInstance;
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
 }
 
 int BucketItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)

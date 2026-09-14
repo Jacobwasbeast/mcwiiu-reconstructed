@@ -23,7 +23,7 @@ SimpleContainer::~SimpleContainer()
 void SimpleContainer::_init(int id, const std::wstring& name, bool hasCustomName, int size)
 {
     mId = id;
-    mName = name;
+    mName.assign(name, 0, 0xffffffff);
     mHasCustomName = hasCustomName;
     mSize = size;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize((unsigned int)size, ItemInstance::EMPTY);
@@ -99,10 +99,6 @@ not_null_ptr<ItemInstance> SimpleContainer::removeItem(unsigned int slot, int co
 
 not_null_ptr<ItemInstance> SimpleContainer::removeItemNoUpdate(int slot)
 {
-    if (slot < 0 || slot >= mSize)
-    {
-        return ItemInstance::EMPTY;
-    }
     not_null_ptr<ItemInstance> result = mItems[(unsigned int)slot];
     if (!result->isEmpty())
     {
@@ -198,30 +194,43 @@ void SimpleContainer::removeListener(net_minecraft_world::ContainerListener* lis
 
 not_null_ptr<ItemInstance> SimpleContainer::addItem(not_null_ptr<ItemInstance> item)
 {
-    not_null_ptr<ItemInstance> remainder = item->copy_not_shared();
-    for (int i = 0; i < mSize && !remainder->isEmpty(); ++i)
+    not_null_ptr<ItemInstance> remainder = item->copy();
+    for (int i = 0; i < mSize; ++i)
     {
         not_null_ptr<ItemInstance> current = getItem((unsigned int)i);
         if (current->isEmpty())
         {
             setItem((unsigned int)i, remainder);
-            remainder = ItemInstance::EMPTY;
+            setChanged();
+            return ItemInstance::EMPTY;
         }
         else if (ItemInstance::isSame(current, remainder))
         {
-            int amount = getMaxStackSize() - current->getCount();
-            int count = remainder->getCount();
-            if (count > amount)
+            int amount = getMaxStackSize();
+            if (current->getMaxStackSize() < amount)
             {
-                count = amount;
+                amount = current->getMaxStackSize();
+            }
+            int count = remainder->getCount();
+            if (amount - current->getCount() < count)
+            {
+                count = amount - current->getCount();
             }
             if (count > 0)
             {
                 current->grow(count);
                 remainder->shrink(count);
-                setChanged();
+                if (remainder->isEmpty())
+                {
+                    setChanged();
+                    return ItemInstance::EMPTY;
+                }
             }
         }
+    }
+    if (remainder->getCount() != item->getCount())
+    {
+        setChanged();
     }
     return remainder;
 }

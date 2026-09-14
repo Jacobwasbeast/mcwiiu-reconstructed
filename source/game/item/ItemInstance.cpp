@@ -10,6 +10,9 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/item/EnchantmentHelper.hpp"
+#include "game/item/DigDurabilityEnchantment.hpp"
+#include "game/item/Enchantments.hpp"
 #include <cwchar>
 not_null_ptr<ItemInstance> ItemInstance::EMPTY;
 ItemInstance::ItemInstance()
@@ -230,9 +233,32 @@ int ItemInstance::getMaxDamage() {
 return mItem != 0 ? mItem->getMaxDamage() : 0;
 }
 bool ItemInstance::hurt(int amount, Random* random) {
-if (!isDamageableItem()) return false;
-mAuxValue += amount;
-return mAuxValue >= getMaxDamage();
+    if (!isDamageableItem()) {
+        return false;
+    }
+    if (amount > 0) {
+        not_null_ptr<ItemInstance> self;
+        static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+        int level = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::UNBREAKING, self);
+        int ignored = 0;
+        int i = 0;
+        if (level > 0 && amount > 0) {
+            do {
+                not_null_ptr<ItemInstance> item;
+                static_cast<boost::shared_ptr<ItemInstance>&>(item) = shared_from_this();
+                if (DigDurabilityEnchantment::shouldIgnoreDurabilityDrop(item, level, random)) {
+                    ++ignored;
+                }
+                ++i;
+            } while (i < amount);
+        }
+        amount -= ignored;
+        if (amount < 1) {
+            return false;
+        }
+    }
+    mAuxValue += amount;
+    return getMaxDamage() < mAuxValue;
 }
 void ItemInstance::hurtAndBreak(int amount, boost::shared_ptr<LivingEntity> entity) {
 hurt(amount, 0);
@@ -384,12 +410,37 @@ if (mTag == 0 || !mTag->contains(L"createdByRestricted")) return false;
 return mTag->getBoolean(L"createdByRestricted");
 }
 std::wstring ItemInstance::getHoverNameUnfiltered() {
-not_null_ptr<ItemInstance> self;
-static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-return mItem != 0 ? mItem->getName(self) : std::wstring();
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
+    if (display != 0) {
+        if (display->contains(L"Name")) {
+            return display->getString(L"Name");
+        }
+        if (display->contains(L"LocName", 3)) {
+            return L10N::GetString(display->getInt(L"LocName"));
+        }
+    }
+    not_null_ptr<ItemInstance> self;
+    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
+    return getItem()->getName(self);
 }
 std::wstring ItemInstance::getHoverName() {
-return getHoverNameUnfiltered();
+    if (isEmpty()) {
+        return std::wstring(L"[NULL]");
+    }
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
+    bool hasName = display != 0 && display->contains(L"Name", 8);
+    if (!hasName) {
+        return getHoverNameUnfiltered();
+    }
+    std::wstring name = display->getString(L"Name");
+    std::wstring ownerUUID = mTag->getString(L"ownerID");
+    bool restricted = wasCreatedByRestrictedPlayer();
+    bool createdOnHost = mTag->getByte(L"createdOnHost") != 0;
+    mCensorshipInfo->set(name, ownerUUID, restricted, createdOnHost);
+    if (mCensorshipInfo->checkParentalFilter() == 0) {
+        return getHoverNameUnfiltered();
+    }
+    return mCensorshipInfo->get();
 }
 void ItemInstance::setTranslatableName(int name) {
 CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(L"display"));

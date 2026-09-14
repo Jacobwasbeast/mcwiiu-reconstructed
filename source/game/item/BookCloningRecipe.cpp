@@ -125,6 +125,7 @@ NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(bo
             not_null_ptr<ItemInstance> copy = item->copy();
             copy->setCount(1);
             result[i] = copy;
+            break;
         }
     }
     return result;
