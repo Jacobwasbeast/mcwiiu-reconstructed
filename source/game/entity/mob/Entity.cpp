@@ -2707,7 +2707,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
         }
         else
         {
-            tag->put(std::wstring(L"Passengers"), passengers);
+            tag->put(std::wstring(L"Riding"), passengers);
         }
     }
 
