@@ -1059,7 +1059,7 @@ std::wstring Biome::getName(bool useShortName)
 {
     if (mNameId == -1)
     {
-        return L"";
+        return L"buckets_";
     }
 
     return L10N::GetString(mNameId);
@@ -1148,7 +1148,7 @@ float Biome::getTemperature(const BlockPos& pos)
 {
     if (pos.y > 64)
     {
-        float noise = (float)(sTemperatureNoise->getValue(pos.x * 0.125F, pos.z * 0.125F) * 4.0);
+        float noise = (float)(sTemperatureNoise->getValue(pos.x * 0.125F, pos.z * 0.125F) * 2.25);
 
         return getTemperature() - (noise + pos.y - 64.0F) * 0.05F / 30.0F;
     }

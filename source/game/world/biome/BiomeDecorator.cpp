@@ -190,8 +190,10 @@ void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, 
 
     for (int i = 0; i < count; ++i)
     {
-        BlockPos pos(position.x + random->nextInt(16), minY + random->nextInt(maxY - minY),
-                     position.z + random->nextInt(16));
+        int x = random->nextInt(16);
+        int y = minY + random->nextInt(maxY - minY);
+        int z = random->nextInt(16);
+        BlockPos pos(position.x + x, y, position.z + z);
         placeFeature(feature, level, random, pos);
     }
 }
@@ -201,9 +203,12 @@ void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int coun
 {
     for (int i = 0; i < count; ++i)
     {
-        BlockPos pos(position.x + random->nextInt(16),
-                     random->nextInt(radius) + random->nextInt(radius) + centreY - radius,
-                     position.z + random->nextInt(16));
+        int x = random->nextInt(16);
+        int y1 = random->nextInt(radius);
+        int y2 = random->nextInt(radius);
+        int z = random->nextInt(16);
+        int y = y1 + y2 + centreY - radius;
+        BlockPos pos(position.x + x, y, position.z + z);
         placeFeature(feature, level, random, pos);
     }
 }

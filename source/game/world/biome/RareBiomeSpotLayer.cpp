@@ -1,6 +1,7 @@
 #include "game/world/biome/RareBiomeSpotLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/world/biome/Biome.hpp"
 
 void PIXBeginNamedEvent(float colour, const char* name, ...);
 void PIXEndNamedEvent();
@@ -31,9 +32,9 @@ arrayWithLength<int> RareBiomeSpotLayer::getArea(int x, int z, int width, int he
 
             int parentBiomeId = parentArea.data[j + 1 + (i + 1) * (width + 2)];
 
-            if (nextRandom(57) == 0 && parentBiomeId == 1)
+            if (nextRandom(57) == 0 && parentBiomeId == Biome::PLAINS->id)
             {
-                area.data[j + i * width] = 129;
+                area.data[j + i * width] = Biome::SUNFLOWER_PLAINS->id;
             }
             else
             {

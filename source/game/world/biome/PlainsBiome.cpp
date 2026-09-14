@@ -97,7 +97,7 @@ void PlainsBiome::decorate(Level* level, Random& random, const BlockPos& pos)
     if (mIsSunflower)
     {
         sDoublePlantFeature->setNextPlantType(DoublePlantBlock::Variant::byData(0));
-        for (int i = 0; i < 6; ++i)
+        for (int i = 0; i < 10; ++i)
         {
             const int x = random.nextInt(16);
             const int z = random.nextInt(16);

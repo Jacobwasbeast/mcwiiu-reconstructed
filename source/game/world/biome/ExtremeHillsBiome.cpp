@@ -56,7 +56,10 @@ void ExtremeHillsBiome::decorate(Level* level, Random& random, const BlockPos& p
     int oreCount = random.nextInt(6) + 3;
     for (int i = 0; i < oreCount; ++i)
     {
-        BlockPos orePos = pos.offset(random.nextInt(16), random.nextInt(28) + 4, random.nextInt(16));
+        int x = random.nextInt(16);
+        int y = random.nextInt(28) + 4;
+        int z = random.nextInt(16);
+        BlockPos orePos = pos.offset(x, y, z);
         if (level->getBlockState(orePos)->getBlock() == Blocks::stone)
         {
             level->setBlock(orePos, Blocks::emerald_ore->defaultBlockState(), 2, false);
@@ -65,8 +68,10 @@ void ExtremeHillsBiome::decorate(Level* level, Random& random, const BlockPos& p
 
     for (int i = 0; i < 7; ++i)
     {
-        mMonsterEggFeature->place(
-            level, random, pos.offset(random.nextInt(16), random.nextInt(64), random.nextInt(16)));
+        int x = random.nextInt(16);
+        int y = random.nextInt(64);
+        int z = random.nextInt(16);
+        mMonsterEggFeature->place(level, random, pos.offset(x, y, z));
     }
 }
 
