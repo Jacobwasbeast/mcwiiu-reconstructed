@@ -2,29 +2,29 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_STATION_CONNECTION_INFO_TABLE_HPP
 
 #include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
-class Station;
-
-class StationConnectionInfoTable
+#pragma pack(push, 1)
+class StationConnectionInfoTable : public StationConnectionInfo
 {
 public:
     StationConnectionInfoTable();
     ~StationConnectionInfoTable();
-    static StationConnectionInfoTable* CreateInstance();
+    static Result CreateInstance();
     static void DestroyInstance();
     void Finalize();
-    void Initialize(unsigned int maxStations);
-    void AddToTable(const Station* station, const StationConnectionInfo& info);
-    int GetStationConnectionInfo(const Station* station, StationConnectionInfo* info) const;
-    int GetStationConnectionInfo(unsigned long long id, StationConnectionInfo* info) const;
+    Result Initialize(unsigned int count);
+    Result AddToTable(const Station* station, const StationConnectionInfo& info);
+    Result GetStationConnectionInfo(const Station* station, StationConnectionInfo* info) const;
+    Result GetStationConnectionInfo(unsigned long long principalId, StationConnectionInfo* info) const;
     Station* GetStation(const StationConnectionInfo& info) const;
     Station* GetStation(const StationLocation& location) const;
     Station* GetStation(const common::StationAddress& address) const;
-    Station* GetStation(unsigned int index) const;
-    Station* GetStation(unsigned long long id) const;
+    Station* GetStation(unsigned int stationIndex) const;
+    Station* GetStation(unsigned long long principalId) const;
     Station* GetReconnectingStation(const StationConnectionInfo& info) const;
     unsigned int GetStationIndexByPrincipalID(unsigned long long principalId) const;
     unsigned long long GetPrincipalIdByStation(const Station* station) const;
@@ -32,15 +32,20 @@ public:
     void ClearTable();
     void Trace(unsigned long long value) const;
 
-    StationConnectionInfo m_localStationConnectionInfo;
+    unsigned char m_baseLayoutPadding[0x78 - sizeof(StationConnectionInfo)];
     StationConnectionInfo m_hostStationConnectionInfo;
+    unsigned char m_hostLayoutPadding[0x78 - sizeof(StationConnectionInfo)];
     common::StationAddress m_hostStationAddress;
 
 private:
-    unsigned int m_scalarStorage[34];
-    common::CriticalSection m_criticalSection;
+    StationConnectionInfo* m_infos;
+    Station* m_stations[32];
+    unsigned int m_count;
+    mutable common::CriticalSection m_criticalSection;
 };
+#pragma pack(pop)
 
+static_assert(sizeof(StationConnectionInfoTable) == 432, "StationConnectionInfoTable layout");
 extern StationConnectionInfoTable* g_stationConnectionInfoTable;
 
 }}}

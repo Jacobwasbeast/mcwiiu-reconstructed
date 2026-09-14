@@ -9,7 +9,6 @@
 namespace nn { namespace pia { namespace transport {
 
 common::WatermarkManager* g_piaWatermarkManager = 0;
-StationManager* g_piaStationManager = 0;
 
 static int g_reliableProtocolSendFailCount = 0;
 static unsigned int g_reliableProtocolResendParam1 = 0;
