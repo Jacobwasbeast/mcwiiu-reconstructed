@@ -1084,24 +1084,53 @@ void NQRNetworkManager_WiiU::PollUnconnectedStations()
 
 bool NQRNetworkManager_WiiU::AddRemotePlayersAndSync(unsigned long long stationId, ClientJoinData& joinData, EJoinFailedReason* reason)
 {
-    if (!SessionHasSpace(1))
+    EnterCriticalSection(&m_playerMutex);
+
+    PlayerUID* playerUIDs[4] = { &joinData.playerUID0, &joinData.playerUID1, &joinData.playerUID2, &joinData.playerUID3 };
+    int incoming = 0;
+    for (int index = 0; index < 4; ++index)
+    {
+        if ((joinData.playerMask & (1u << index)) == 0)
+            continue;
+        ++incoming;
+        for (int existing = 0; existing < m_roomPlayerCount; ++existing)
+        {
+            PlayerSyncData& record = m_roomPlayers[existing];
+            if (static_cast<PlayerUID&>(record) == *playerUIDs[index] && (record.flags & 0x20000000u) == 0)
+            {
+                if (reason != NULL)
+                    *reason = eJoinFailedReason_Full;
+                LeaveCriticalSection(&m_playerMutex);
+                return false;
+            }
+        }
+    }
+
+    if (!SessionHasSpace(incoming))
     {
         if (reason != NULL)
-            *reason = eJoinFailedReason_Full;
+            *reason = eJoinFailedReason_None;
+        LeaveCriticalSection(&m_playerMutex);
         return false;
     }
-    AddConnectedStation(stationId);
-    PlayerUID* playerUIDs[4] = { &joinData.playerUID0, &joinData.playerUID1, &joinData.playerUID2, &joinData.playerUID3 };
+
     for (int index = 0; index < 4; ++index)
-        if ((joinData.playerMask & (1u << index)) != 0)
-        {
-            PlayerSyncData syncData;
-            static_cast<PlayerUID&>(syncData) = *playerUIDs[index];
-            std::strncpy(syncData.m_szNetworkName, joinData.onlineIds[index], sizeof(syncData.m_szNetworkName));
-            std::wcsncpy(syncData.m_szMiiName, joinData.displayNames[index], sizeof(syncData.m_szMiiName) / sizeof(wchar_t));
-            FindOrCreateNonNetworkPlayer(NQRNetworkPlayer::eNQRNetworkPlayerType_Remote, index, &syncData);
-        }
+    {
+        if ((joinData.playerMask & (1u << index)) == 0)
+            continue;
+        PlayerSyncData& record = m_roomPlayers[m_roomPlayerCount];
+        static_cast<PlayerUID&>(record) = *playerUIDs[index];
+        record.m_uiStationId = stationId;
+        record.m_uiLocalPlayerIndex = index;
+        record.m_uiSmallId = m_nextSmallId++;
+        std::wcscpy(record.m_szMiiName, joinData.displayNames[index]);
+        std::strncpy(record.m_szNetworkName, joinData.onlineIds[index], sizeof(record.m_szNetworkName));
+        ++m_roomPlayerCount;
+    }
+
+    MapRoomSlotPlayers(-1);
     SyncRoomData();
+    LeaveCriticalSection(&m_playerMutex);
     if (reason != NULL)
         *reason = eJoinFailedReason_None;
     return true;
@@ -1109,10 +1138,12 @@ bool NQRNetworkManager_WiiU::AddRemotePlayersAndSync(unsigned long long stationI
 
 void NQRNetworkManager_WiiU::SendJoinFailedData(unsigned long long stationId, unsigned int playerMask, EJoinFailedReason reason)
 {
+    if (m_localGame)
+        return;
     unsigned int packet[2];
     packet[0] = playerMask;
     packet[1] = static_cast<unsigned int>(reason);
-    RemoteDataSend(stationId, 2, packet, sizeof(packet));
+    RemoteDataSend(stationId, 0xfc, packet, sizeof(packet));
 }
 
 void NQRNetworkManager_WiiU::PollReceiveData()
@@ -1164,13 +1195,15 @@ void NQRNetworkManager_WiiU::TryToConnectOnline()
 
 void NQRNetworkManager_WiiU::TickFromThread()
 {
+    TickSendQueue();
     OnlineCheck();
+    FriendSearchTick();
     UpdateApplicationConnected();
     TickNexAsyncProcess();
+    PollUnconnectedStations();
     PollReceiveData();
-    TickSendQueue();
-    FriendSearchTick();
     ErrorHandlingTick();
+    NintendoVoiceChat_WiiU::Tick();
 }
 
 void NQRNetworkManager_WiiU::RunTickThread()
@@ -1464,10 +1497,21 @@ void NQRNetworkManager_WiiU::GetExtDataForRoom(unsigned int sessionId, void* ext
 
 bool NQRNetworkManager_WiiU::FindAndJoinRoom(int userIndexMask, unsigned int searchFlags, CMatchMakeSearchParam*, unsigned char gameMode)
 {
-    m_pendingUserMask = userIndexMask;
+    OSEnableHomeButtonMenu(0);
     m_gameMode = gameMode;
-    m_matchmaking = true;
-    m_browseRequested = (searchFlags & 15) != 0;
+    m_roomPlayerMask = static_cast<unsigned int>(userIndexMask);
+    m_receiving = true;
+    m_host = false;
+    m_localGame = false;
+    m_roomAttributeCount = 0;
+    if ((searchFlags & 1u) != 0)
+        ++m_roomAttributeCount;
+    if ((searchFlags & 2u) != 0)
+        ++m_roomAttributeCount;
+    if ((searchFlags & 4u) != 0)
+        ++m_roomAttributeCount;
+    if ((searchFlags & 8u) != 0)
+        ++m_roomAttributeCount;
     SetState(eNQRNetworkManagerInternalState_JoinSearchingMatchmakeSession);
     Pia_SignalBrowseSession();
     return true;
@@ -1540,14 +1584,39 @@ void NQRNetworkManager_WiiU::UpdateRemotePlay()
 
 bool NQRNetworkManager_WiiU::AddLocalPlayerByUserIndex(int userIndex)
 {
-    if (!SessionHasSpace(1) || GetLocalPlayerByUserIndex(userIndex) != NULL)
+    if (!m_host)
+    {
+        if (!SessionHasSpace(1))
+            return false;
+        const unsigned int bit = 1u << userIndex;
+        if ((m_roomPlayerMask & bit) != 0)
+            return false;
+        m_roomPlayerMask |= bit;
+        SendJoinData();
+        UpdateRemotePlay();
+        return true;
+    }
+
+    if (!SessionHasSpace(1))
         return false;
-    PlayerUID uid(0);
-    NQRNetworkPlayer::eNQRNetworkPlayerType type = m_players.empty() ? NQRNetworkPlayer::eNQRNetworkPlayerType_Host : NQRNetworkPlayer::eNQRNetworkPlayerType_Local;
-    NQRNetworkPlayer* player = new NQRNetworkPlayer(this, type, true, 0, userIndex, &uid, "", L"");
-    AddConnectedPlayer(player);
-    NetworkPlayerConnectionComplete(player);
-    NetworkPlayerSmallIdAllocated(player, static_cast<unsigned char>(++m_nextSmallId));
+
+    for (int index = 0; index < m_roomPlayerCount; ++index)
+    {
+        PlayerSyncData& existing = m_roomPlayers[index];
+        if (existing.m_uiStationId == m_localStationId && existing.m_uiLocalPlayerIndex == static_cast<unsigned int>(userIndex))
+            return false;
+    }
+
+    PlayerSyncData& record = m_roomPlayers[m_roomPlayerCount];
+    record.m_uiLocalPlayerIndex = userIndex;
+    record.m_uiStationId = m_localStationId;
+    record.m_uiSmallId = m_nextSmallId++;
+    const std::wstring miiName(gProfile->GetMiiName(userIndex));
+    const std::wstring displayName(gProfile->GetDisplayName(userIndex));
+    std::wcscpy(record.m_szMiiName, miiName.c_str());
+    std::wcstombs(record.m_szNetworkName, displayName.c_str(), 20);
+    ++m_roomPlayerCount;
+
     MapRoomSlotPlayers(-1);
     SyncRoomData();
     UpdateRemotePlay();
