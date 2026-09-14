@@ -137,6 +137,12 @@ ServerLevel::ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage
 
 ServerLevel::~ServerLevel()
 {
+    delete portalForcer;
+    delete naturalMobSpawner;
+    delete villageSiege;
+    delete serverScoreboard;
+    delete tracker;
+    delete chunkMap;
 }
 
 bool ServerLevel::AllPlayersAreSleeping()
@@ -1085,7 +1091,7 @@ uint64_t ServerLevel::getEntity(uint32_t first, uint32_t second)
 
 bool ServerLevel::addGlobalEntity(boost::shared_ptr<Entity> first)
 {
-    return first && Level::addGlobalEntity(first);
+    return Level::addGlobalEntity(first);
 }
 
 void ServerLevel::broadcastEntityEvent(boost::shared_ptr<Entity> first, uint8_t second, int32_t third)
