@@ -13,6 +13,7 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/DataWalker.hpp"
 #include "game/item/ContainerHelper.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
@@ -100,7 +101,7 @@ bool ShulkerBoxBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (mItems[i] && !mItems[i]->isEmpty())
+        if (!mItems[i]->isEmpty())
         {
             return false;
         }
@@ -148,8 +149,8 @@ void ShulkerBoxBlockEntity::clearContent()
 AbstractContainerMenu* ShulkerBoxBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
                                                           boost::shared_ptr<Player> player)
 {
-    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(shared_from_this());
-    return new ShulkerBoxMenu(container, container, player);
+    boost::shared_ptr<Container> container = boost::static_pointer_cast<ShulkerBoxBlockEntity>(shared_from_this());
+    return new ShulkerBoxMenu(inventory, container, player);
 }
 
 int ShulkerBoxBlockEntity::getTypeId(bool large)
@@ -232,7 +233,10 @@ AABB* ShulkerBoxBlockEntity::getBoundingBox(const BlockState* state)
 
 AABB* ShulkerBoxBlockEntity::getTopBoundingBox(const Direction* direction)
 {
-    return getBoundingBox(direction)->contract(0.0, 0.0, 0.0);
+    const Direction* opposite = direction->getOpposite();
+    return getBoundingBox(direction)->contract(-static_cast<double>(opposite->getStepX()),
+                                                -static_cast<double>(opposite->getStepY()),
+                                                -static_cast<double>(opposite->getStepZ()));
 }
 
 void ShulkerBoxBlockEntity::moveCollidedEntities()
@@ -377,14 +381,19 @@ boost::shared_ptr<Packet> ShulkerBoxBlockEntity::getUpdatePacket()
 
 boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
 {
-    boost::shared_ptr<ShulkerBoxBlockEntity> result(new ShulkerBoxBlockEntity(mColor));
-    result->mItems = mItems;
-    result->mOpenCount = mOpenCount;
+    boost::shared_ptr<ShulkerBoxBlockEntity> result(new ShulkerBoxBlockEntity());
+    for (unsigned int i = 0; i < mItems.size(); ++i)
+    {
+        result->mItems[i] = mItems[i]->copy();
+    }
     result->mCleared = mCleared;
+    result->mOpenCount = mOpenCount;
     result->mAnimationStatus = mAnimationStatus;
     result->mProgress = mProgress;
     result->mProgressOld = mProgressOld;
+    result->mColor = mColor;
     result->mDestroyedByCreativePlayer = mDestroyedByCreativePlayer;
+    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
     return result;
 }
 
@@ -396,8 +405,9 @@ unsigned long long ShulkerBoxBlockEntity::GetType()
 void ShulkerBoxBlockEntity::operator=(const ShulkerBoxBlockEntity& other)
 {
     RandomizableLockableContainerBlockEntity::operator=(other);
-    mOpenCount = other.mOpenCount;
+    mItems = other.mItems;
     mCleared = other.mCleared;
+    mOpenCount = other.mOpenCount;
     mAnimationStatus = other.mAnimationStatus;
     mProgress = other.mProgress;
     mProgressOld = other.mProgressOld;

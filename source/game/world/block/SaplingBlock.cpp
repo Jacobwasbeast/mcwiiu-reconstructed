@@ -21,6 +21,7 @@
 #include "game/world/generation/BigTreeFeature.hpp"
 #include "game/world/generation/BirchFeature.hpp"
 #include "game/world/generation/MegaJungleTreeFeature.hpp"
+#include "game/world/generation/MegaPineTreeFeature.hpp"
 #include "game/world/generation/RoofTreeFeature.hpp"
 #include "game/world/generation/SavannaTreeFeature.hpp"
 #include "game/world/generation/SpruceFeature.hpp"
@@ -69,18 +70,116 @@ bool SaplingBlock::isTwoByTwoSaplingOfType(Level* level, const BlockPos& pos, in
         && isSapling(level, pos.offset(x + 1, 0, z + 1), variant);
 }
 
-void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState* state, Random* random, bool)
+void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState* state, Random* random, bool bonemeal)
 {
-    int data = state->getValue(gSaplingVariant)->getData();
-    AbstractTreeFeature* feature;
-    if (data == 0) feature = random->nextInt(10) == 0 ? static_cast<AbstractTreeFeature*>(new BigTreeFeature(false)) : new TreeFeature(false);
-    else if (data == 1) feature = new SpruceFeature(false);
-    else if (data == 2) feature = new BirchFeature(false, false);
-    else if (data == 3) feature = new MegaJungleTreeFeature(false, 10, 20, Blocks::log->getBlockState(3), Blocks::leaves->getBlockState(3));
-    else if (data == 4) feature = new SavannaTreeFeature(false);
-    else feature = new RoofTreeFeature(false);
-    level->setBlock(pos, Blocks::AIR->defaultBlockState(), 4, false);
-    if (!feature->place(level, *random, pos)) level->setBlock(pos, state, 4, false);
+    PlanksBlock::Variant* variant = state->getValue(gSaplingVariant);
+    int data = variant->getData();
+    AbstractTreeFeature* feature = random->nextInt(10) == 0 ? static_cast<AbstractTreeFeature*>(new BigTreeFeature(false)) : new TreeFeature(false);
+    const BlockState* airState = Blocks::AIR->defaultBlockState();
+    int dx = 0;
+    int dz = 0;
+    bool mega = false;
+    if (data < 3)
+    {
+        if (data == 1)
+        {
+            bool found;
+            if (!bonemeal)
+            {
+                found = isTwoByTwoSaplingOfType(level, pos, 0, 0, variant);
+                if (!found) { dz = -1; found = isTwoByTwoSaplingOfType(level, pos, 0, -1, variant); }
+                if (!found) { dz = 0; dx = -1; found = isTwoByTwoSaplingOfType(level, pos, -1, 0, variant); }
+                if (!found) { dz = -1; found = isTwoByTwoSaplingOfType(level, pos, -1, -1, variant); }
+            }
+            else found = random->nextBoolean();
+            if (found)
+            {
+                delete feature;
+                feature = new MegaPineTreeFeature(false, random->nextBoolean());
+                mega = true;
+            }
+            else
+            {
+                delete feature;
+                feature = new SpruceFeature(false);
+            }
+        }
+        else if (data == 2)
+        {
+            delete feature;
+            feature = new BirchFeature(false, false);
+        }
+    }
+    else if (data > 3)
+    {
+        if (data == 4)
+        {
+            delete feature;
+            feature = new SavannaTreeFeature(false);
+        }
+        else
+        {
+            bool found = false;
+            if (!bonemeal)
+            {
+                int limit = 2;
+                for (dx = 0; limit > 0; --dx, --limit)
+                {
+                    dz = 0;
+                    if (isSapling(level, pos.offset(dx, 0, dz), variant) && isSapling(level, pos.offset(dx + 1, 0, dz), variant) && isSapling(level, pos.offset(dx, 0, dz + 1), variant) && isSapling(level, pos.offset(dx + 1, 0, dz + 1), variant)) { found = true; break; }
+                    dz = -1;
+                    if (isSapling(level, pos.offset(dx, 0, dz), variant) && isSapling(level, pos.offset(dx + 1, 0, dz), variant) && isSapling(level, pos.offset(dx, 0, dz + 1), variant) && isSapling(level, pos.offset(dx + 1, 0, dz + 1), variant)) { found = true; break; }
+                }
+                if (!found) { delete feature; return; }
+            }
+            delete feature;
+            feature = new RoofTreeFeature(false);
+            mega = true;
+        }
+    }
+    else
+    {
+        const BlockState* logState = Blocks::log->getBlockState(3);
+        const BlockState* leavesState = Blocks::leaves->getBlockState(3);
+        bool found;
+        if (!bonemeal)
+        {
+            found = isTwoByTwoSaplingOfType(level, pos, 0, 0, variant);
+            if (!found) { dz = -1; found = isTwoByTwoSaplingOfType(level, pos, 0, -1, variant); }
+            if (!found) { dz = 0; dx = -1; found = isTwoByTwoSaplingOfType(level, pos, -1, 0, variant); }
+            if (!found) { dz = -1; found = isTwoByTwoSaplingOfType(level, pos, -1, -1, variant); }
+        }
+        else found = random->nextBoolean();
+        if (found)
+        {
+            delete feature;
+            feature = new MegaJungleTreeFeature(false, 10, 20, logState, leavesState);
+            mega = true;
+        }
+        else
+        {
+            delete feature;
+            feature = new TreeFeature(false, random->nextInt(7) + 4, logState, leavesState, false);
+        }
+    }
+    BlockPos anchor = mega ? pos.offset(dx, 0, dz) : pos;
+    level->setBlock(anchor, airState, 4, false);
+    if (mega)
+    {
+        level->setBlock(pos.offset(dx + 1, 0, dz), airState, 4, false);
+        level->setBlock(pos.offset(dx, 0, dz + 1), airState, 4, false);
+        level->setBlock(pos.offset(dx + 1, 0, dz + 1), airState, 4, false);
+    }
+    if (!feature->place(level, *random, anchor))
+    {
+        level->setBlock(anchor, state, 4, false);
+        if (mega)
+        {
+            level->setBlock(pos.offset(dx + 1, 0, dz), state, 4, false);
+            level->setBlock(pos.offset(dx, 0, dz + 1), state, 4, false);
+            level->setBlock(pos.offset(dx + 1, 0, dz + 1), state, 4, false);
+        }
+    }
     delete feature;
 }
 
@@ -131,8 +230,7 @@ int SaplingBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 unsigned int SaplingBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    ItemInstance* item = tooltipData.m_pItemInstance.get();
-    if (item != NULL && Item::getId(item->getItem()) == 0x15F && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && DyeColor::byItemData(item->getAuxValue())->getBlockData() == 0) return 0x9F5FDC40u;
+    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == 0x15F && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0) return 0x9F5FDC40u;
     return Block::GetInteractTooltip(tooltipData);
 }
 

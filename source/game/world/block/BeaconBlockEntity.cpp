@@ -55,10 +55,14 @@ unsigned int BeaconBlockEntity::BeaconBeamSection::getHeight()
 
 BeaconBlockEntity::BeaconBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
-      mBeamSections(), mItem(), mLastBeamBlockCount(0), mName(new CensoredString()), mPrimaryPower(NULL),
+      mBeamSections(), mItem(), mLastBeamBlockCount(-1), mName(new CensoredString()), mPrimaryPower(NULL),
       mSecondaryPower(NULL), mLevels(0), mNextClientSideUpdate(0), mLastCheckY(-1),
       mClientSideScale(0.0F), mActive(false), mBeamDirection(0), mBeamLength(0)
 {
+    for (int i = 0; i < 16; ++i)
+    {
+        mBeamColorCounts[i] = 0;
+    }
 }
 
 BeaconBlockEntity::~BeaconBlockEntity()
@@ -101,17 +105,18 @@ not_null_ptr<ItemInstance> BeaconBlockEntity::getItem(unsigned int slot)
 
 not_null_ptr<ItemInstance> BeaconBlockEntity::removeItem(unsigned int slot, int count)
 {
-    if (slot != 0 || mItem == NULL || mItem->isEmpty() || count <= 0)
+    if (slot == 0 && !mItem->isEmpty())
     {
-        return ItemInstance::EMPTY;
+        int stackCount = mItem->getCount();
+        if (stackCount <= count)
+        {
+            not_null_ptr<ItemInstance> result = mItem;
+            mItem = ItemInstance::EMPTY;
+            return result;
+        }
+        mItem->split(count);
     }
-    not_null_ptr<ItemInstance> result = mItem->split(count);
-    if (mItem->isEmpty())
-    {
-        mItem = ItemInstance::EMPTY;
-    }
-    setChanged();
-    return result;
+    return ItemInstance::EMPTY;
 }
 
 not_null_ptr<ItemInstance> BeaconBlockEntity::removeItemNoUpdate(int slot)
@@ -150,10 +155,6 @@ void BeaconBlockEntity::setChanged()
 
 bool BeaconBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (player.get() == NULL || mLevel == NULL)
-    {
-        return false;
-    }
     Entity* entity = (Entity*)player.get();
     return entity->distanceAsIfHitscanned(mPos, *entity->mBoundingBox) <= 30.25;
 }
@@ -261,7 +262,27 @@ int BeaconBlockEntity::getBeamDirection()
 
 void BeaconBlockEntity::updateShapeForGlide()
 {
-    if (!mBeamSections.empty()) mBeamSections.back().setHeight(mBeamLength);
+    mLastCheckY = 0;
+    mBeamSections.clear();
+    mActive = true;
+    if (getBeamDirection() != eBEAM_DIRECTION_NONE)
+    {
+        float color[3] = { 1.0F, 1.0F, 1.0F };
+        mBeamSections.push_back(BeaconBeamSection(arrayWithLength<float>(color, 3)));
+        BeaconBeamSection& section = mBeamSections.back();
+        if (getBeamDirection() != eBEAM_DIRECTION_NEGATIVE_Y)
+        {
+            section.setHeight(mBeamLength);
+        }
+        else
+        {
+            section.setHeight(-mBeamLength);
+        }
+    }
+    else
+    {
+        mActive = false;
+    }
 }
 
 bool BeaconBlockEntity::NeedsRebuild()
@@ -345,15 +366,10 @@ void BeaconBlockEntity::checkValidity()
 boost::shared_ptr<BlockEntity> BeaconBlockEntity::clone()
 {
     boost::shared_ptr<BeaconBlockEntity> copy(new BeaconBlockEntity());
-    copy->mItem = mItem;
-    copy->mName = mName;
-    copy->mPrimaryPower = mPrimaryPower;
-    copy->mSecondaryPower = mSecondaryPower;
-    copy->mLevels = mLevels;
-    copy->mBeamSections = mBeamSections;
-    copy->mBeamDirection = mBeamDirection;
-    copy->mBeamLength = mBeamLength;
-    copy->BlockEntity::operator=(*this);
+    BlockEntity::clone(copy);
+    copy->mNextClientSideUpdate = mNextClientSideUpdate;
+    copy->mLastCheckY = mLastCheckY;
+    copy->mName->set(mName->raw(), mName->getUUID(), mName->isChatCensored(), mName->isUUIDLocal());
     return copy;
 }
 

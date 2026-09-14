@@ -84,7 +84,7 @@ bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* s
     if (box->getAnimationStatus() == 0)
     {
         AABB* bounds = box->getBoundingBox(state);
-        BlockPos adjacent = pos.relative(direction);
+        BlockPos adjacent = pos.relative(facing);
         AABB* expanded = bounds->expand(0.5, 0.5, 0.5)->contract(0.5, 0.5, 0.5)->move(adjacent);
         if (level->hasBlockCubes(expanded) || isEntityOnChest(level, expanded))
             return true;
@@ -119,13 +119,16 @@ const BlockState* ShulkerBoxBlock::getBlockState(int data)
     return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &boxed);
 }
 
-bool ShulkerBoxBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
+bool ShulkerBoxBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState*,
                                         boost::shared_ptr<Player> player)
 {
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
-    if (box.get() != NULL && player->isCreative())
-        box->setDestroyedByCreativePlayer(true);
-    return Block::playerWillDestroy(level, pos, state, player);
+    if (box.get() != NULL)
+    {
+        box->setDestroyedByCreativePlayer(player->isCreative());
+        box->unpackLootTable(player);
+    }
+    return false;
 }
 
 void ShulkerBoxBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
@@ -151,15 +154,24 @@ void ShulkerBoxBlock::setPlacedBy(Level* level, const BlockPos& pos, const Block
 void ShulkerBoxBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
-    if (box.get() != NULL && !box->isCleared() && box->shouldDrop())
+    if (box.get() != NULL)
     {
-        not_null_ptr<ItemInstance> item(new ItemInstance(this));
-        CompoundTag tag;
-        box->saveToTag(&tag);
-        item->addTagElement(L"BlockEntityTag", &tag);
-        Block::popResource(level, pos, item);
+        if (!box->isCleared() && box->shouldDrop())
+        {
+            not_null_ptr<ItemInstance> item(new ItemInstance(Item::byBlock(this)));
+            CompoundTag* rootTag = new CompoundTag();
+            CompoundTag* entityTag = new CompoundTag();
+            rootTag->put(L"BlockEntityTag", box->saveToTag(entityTag));
+            item->setTag(rootTag);
+            if (box->hasCustomName())
+            {
+                item->setHoverName(box->getCustomName());
+                box->setCustomName(L"", L"", false, true);
+            }
+            Block::popResource(level, pos, item);
+        }
+        level->removeBlockEntity(pos);
     }
-    level->removeBlockEntity(pos);
     BaseEntityBlock::onRemove(level, pos, state);
 }
 
@@ -231,8 +243,6 @@ bool ShulkerBoxBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
 int ShulkerBoxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
-    if (box.get() == NULL)
-        return 0;
     return AbstractContainerMenu::getRedstoneSignalFromContainer(boost::static_pointer_cast<Container>(box));
 }
 
@@ -240,12 +250,9 @@ not_null_ptr<ItemInstance> ShulkerBoxBlock::getCloneItemInstance(Level* level, c
 {
     not_null_ptr<ItemInstance> item = Block::getCloneItemInstance(level, pos, state);
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
-    if (box.get() != NULL)
-    {
-        CompoundTag tag;
-        box->saveToTag(&tag);
-        item->addTagElement(L"BlockEntityTag", &tag);
-    }
+    CompoundTag* tag = box->saveToTag(new CompoundTag());
+    if (!tag->isEmpty())
+        item->addTagElement(L"BlockEntityTag", tag);
     return item;
 }
 

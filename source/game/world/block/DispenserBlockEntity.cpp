@@ -167,7 +167,7 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 {
     boost::shared_ptr<DispenserBlockEntity> result(new DispenserBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
         if (!mItems[slot]->isEmpty())

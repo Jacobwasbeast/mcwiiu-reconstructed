@@ -172,8 +172,24 @@ AABB* PistonMovingBlockEntity::getMinMaxPiecesAABB(std::vector<AABB*>* pieces)
 }
 AABB* PistonMovingBlockEntity::getMovementArea(AABB* box, const Direction* direction, double distance)
 {
-    Vec3i normal = direction->getNormal();
-    return box->expand(normal.x * distance, normal.y * distance, normal.z * distance);
+    double signedDistance = distance * static_cast<double>(direction->getAxisDirection()->getStep());
+    double lo = signedDistance < 0.0 ? signedDistance : 0.0;
+    double hi = signedDistance < 0.0 ? 0.0 : signedDistance;
+    switch (direction->get3DDataValue())
+    {
+    case 0:
+        return AABB::newTemp(box->mMinX, box->mMinY + lo, box->mMinZ, box->mMaxX, box->mMinY + hi, box->mMaxZ);
+    case 1:
+        return AABB::newTemp(box->mMinX, box->mMaxY + lo, box->mMinZ, box->mMaxX, box->mMaxY + hi, box->mMaxZ);
+    case 2:
+        return AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ + lo, box->mMaxX, box->mMaxY, box->mMinZ + hi);
+    case 3:
+        return AABB::newTemp(box->mMinX, box->mMinY, box->mMaxZ + lo, box->mMaxX, box->mMaxY, box->mMaxZ + hi);
+    case 4:
+        return AABB::newTemp(box->mMinX + lo, box->mMinY, box->mMinZ, box->mMinX + hi, box->mMaxY, box->mMaxZ);
+    default:
+        return AABB::newTemp(box->mMaxX + lo, box->mMinY, box->mMinZ, box->mMaxX + hi, box->mMaxY, box->mMaxZ);
+    }
 }
 double PistonMovingBlockEntity::getDeltaX(AABB* box, const Direction* direction, AABB* other)
 {
@@ -355,9 +371,13 @@ void PistonMovingBlockEntity::addCollissionAABBs(Level* level, const BlockPos& p
 
 boost::shared_ptr<BlockEntity> PistonMovingBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new PistonMovingBlockEntity(mMovedState, mDirection, mExtending, mSourcePiston, mLastTick == NULL ? NULL : mLastTick->copy()));
+    boost::shared_ptr<BlockEntity> result(new PistonMovingBlockEntity());
     BlockEntity::clone(result);
     PistonMovingBlockEntity* copy = static_cast<PistonMovingBlockEntity*>(result.get());
+    copy->mMovedState = mMovedState;
+    copy->mDirection = mDirection;
+    copy->mExtending = mExtending;
+    copy->mSourcePiston = mSourcePiston;
     copy->mProgress = mProgress;
     copy->mLastProgress = mLastProgress;
     return result;

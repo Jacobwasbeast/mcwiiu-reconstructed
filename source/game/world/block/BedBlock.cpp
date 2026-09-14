@@ -225,7 +225,18 @@ BlockPos* BedBlock::findStandUpPosition(Level* level, const BlockPos& pos, int d
 
 void BedBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus)
 {
-    Block::spawnResources(level, pos, state, chance, lootBonus);
+    if (state->getValue(PART) == &gBedHead)
+    {
+        const DyeColor* color = DyeColor::WHITE;
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        if (blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
+        {
+            boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
+            color = bedEntity->getColor();
+        }
+        not_null_ptr<ItemInstance> item(new ItemInstance(Items::bed, 1, color->getBlockData()));
+        Block::popResource(level, pos, item);
+    }
 }
 
 EPistonPushReaction BedBlock::getPistonPushReaction(const BlockState* state)
@@ -267,7 +278,13 @@ bool BedBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockS
 
 void BedBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
 {
-    Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+    if (state->getValue(PART) == &gBedHead && blockEntity.get() != NULL && blockEntity->GetType() == 0x01000210ULL)
+    {
+        boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
+        Block::popResource(level, pos, bedEntity->getItem());
+        return;
+    }
+    Block::playerDestroy(level, player, pos, state, boost::shared_ptr<BlockEntity>(), tool);
 }
 
 void BedBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
