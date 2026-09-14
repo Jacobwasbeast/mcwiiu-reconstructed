@@ -38,7 +38,7 @@ bool FindMountGoal::canUse()
         return false;
 
     boost::shared_ptr<LivingEntity> attackTarget = mMob->getTarget();
-    if (mTargetNeeded && !attackTarget)
+    if (mTargetNeeded && (!attackTarget || mMob->isPassenger()))
         return false;
 
     if (mStartCounter < mStartDelay)

@@ -16,8 +16,8 @@
 #include "game/world/block/BlockPos.hpp"
 
 MakeLoveGoal::MakeLoveGoal(Villager* villager)
-    : mVillager(villager), mVillage(), mLevel(villager->mLevel),
-      mRunningTicks(0), mPartner()
+    : mVillager(villager), mPartner(), mLevel(villager->mLevel),
+      mRunningTicks(0), mVillage()
 {
     setRequiredControlFlags(3);
 }
@@ -31,7 +31,7 @@ bool MakeLoveGoal::villageNeedsMoreVillagers()
     if (!mVillage || !mVillage->isBreedTimerOk())
         return false;
 
-    return mVillage->getPopulationSize() < mVillage->getDoorCount() * 0.35;
+    return mVillage->getPopulationSize() < (int)(mVillage->getDoorCount() * 0.35);
 }
 
 bool MakeLoveGoal::canUse()
@@ -48,7 +48,7 @@ bool MakeLoveGoal::canUse()
 
     boost::shared_ptr<Entity> self = mVillager->shared_from_this();
     BlockPos position(self);
-    mVillage = villages->getClosestVillage(position, 32);
+    mVillage = villages->getClosestVillage(position, 0);
     if (!mVillage || !villageNeedsMoreVillagers()
         || !mVillager->isWillingToBreed(true))
         return false;
@@ -61,7 +61,7 @@ bool MakeLoveGoal::canUse()
         return false;
 
     mPartner = boost::dynamic_pointer_cast<Villager>(entity);
-    return mPartner && mPartner->isWillingToBreed(true);
+    return mPartner && mPartner->getAge() == 0 && mPartner->isWillingToBreed(true);
 }
 
 void MakeLoveGoal::start()
@@ -74,7 +74,6 @@ void MakeLoveGoal::stop()
 {
     mVillage.reset();
     mPartner.reset();
-    mRunningTicks = 0;
     mVillager->setInLove(false);
 }
 
@@ -86,26 +85,18 @@ bool MakeLoveGoal::canContinueToUse()
 
 void MakeLoveGoal::breed()
 {
-    if (!mVillage || !mPartner)
-        return;
-
-    mVillage->resetNoBreedTimer();
-    mVillager->setWillingToBreed(false);
-    mPartner->setWillingToBreed(false);
-    mVillager->setAge(6000);
     mPartner->setAge(6000);
+    mVillager->setAge(6000);
 
     if (!mLevel->canCreateMore(0x000000000D600001ULL, 1))
         return;
 
-    boost::shared_ptr<AgableMob> parent =
-        boost::dynamic_pointer_cast<AgableMob>(mVillager->shared_from_this());
-    boost::shared_ptr<AgableMob> child = mPartner->getBreedOffspring(parent);
+    boost::shared_ptr<AgableMob> child = mVillager->getBreedOffspring(mPartner);
     boost::shared_ptr<Villager> villager =
         boost::dynamic_pointer_cast<Villager>(child);
-    if (!villager)
-        return;
 
+    mPartner->setWillingToBreed(false);
+    mVillager->setWillingToBreed(false);
     villager->setAge(-24000);
     villager->setPos(mVillager->mX, mVillager->mY, mVillager->mZ);
     mLevel->addEntity(villager);
@@ -115,16 +106,15 @@ void MakeLoveGoal::breed()
 void MakeLoveGoal::tick()
 {
     --mRunningTicks;
-    if (!mPartner)
-        return;
 
-    mVillager->getLookControl()->setLookAt(mPartner, 10.0F, 10.0F);
+    mVillager->getLookControl()->setLookAt(mPartner, 10.0F, 30.0F);
     if (mVillager->distanceToSqr(mPartner) <= 2.25) {
         if (mRunningTicks == 0 && mPartner->isInLove())
             breed();
-    } else if (mVillager->getRandom()->nextInt(35) == 0) {
-        mVillager->getLookControl()->setLookAt(mPartner, 10.0F, 10.0F);
     }
+
+    if (mVillager->getRandom()->nextInt(35) == 0)
+        mLevel->broadcastEntityEvent(mVillager->shared_from_this(), 12, 0);
 }
 
 void MakeLoveGoal::setLevel(Level* level)

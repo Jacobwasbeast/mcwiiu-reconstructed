@@ -68,6 +68,23 @@ bool LlamaFollowCaravanGoal::canUse()
         }
     }
 
+    if (!closest)
+    {
+        for (it = llamas->begin(); it != llamas->end(); ++it)
+        {
+            boost::shared_ptr<Llama> candidate = boost::static_pointer_cast<Llama>(*it);
+            if (candidate->isLeashed() && !candidate->hasCaravanTail())
+            {
+                double distance = mLlama->distanceToSqr(*it);
+                if (distance <= closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = candidate;
+                }
+            }
+        }
+    }
+
     delete llamas;
 
     if (!closest || closestDistance < 4.0)
@@ -104,8 +121,8 @@ bool LlamaFollowCaravanGoal::canContinueToUse()
 
     boost::shared_ptr<Entity> leashHolder;
     int distance = 0;
-    if (mLlama->getCaravanHead()->isLeashed() && firstIsLeashed(mLlama, distance, leashHolder)
-        && !mLlama->isLeashed())
+    if (!mLlama->getCaravanHead()->isLeashed() || !firstIsLeashed(mLlama, distance, leashHolder)
+        || mLlama->isLeashed())
     {
         return false;
     }
@@ -121,6 +138,10 @@ bool LlamaFollowCaravanGoal::canContinueToUse()
         else if (mDistanceToStop < 1)
         {
             return false;
+        }
+        else
+        {
+            --mDistanceToStop;
         }
     }
     else if (mDistanceToStop > 0)

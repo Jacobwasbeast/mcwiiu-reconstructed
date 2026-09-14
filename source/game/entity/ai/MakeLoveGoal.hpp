@@ -28,10 +28,10 @@ public:
 
 private:
     Villager* mVillager;
-    boost::shared_ptr<Village> mVillage;
+    boost::shared_ptr<Villager> mPartner;
     Level* mLevel;
     int mRunningTicks;
-    boost::shared_ptr<Villager> mPartner;
+    boost::shared_ptr<Village> mVillage;
 };
 
 #endif

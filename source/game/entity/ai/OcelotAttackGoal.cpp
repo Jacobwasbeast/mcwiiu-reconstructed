@@ -16,7 +16,6 @@ OcelotAttackGoal::OcelotAttackGoal(Mob* mob)
       mValue(0.0f),
       mFlag(false)
 {
-    mTarget.reset();
     setRequiredControlFlags(3);
 }
 
