@@ -4,6 +4,7 @@
 #include "game/core/ByteBuffer.hpp"
 #include "game/core/Buffer.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/MemSect.hpp"
 #include <cstring>
 
 namespace {
@@ -220,21 +221,30 @@ unsigned int Texture::crispBlend(int first, int second)
 
 void Texture::transferFromImage(BufferedImage* image)
 {
-    if (image == NULL || image->getWidth() > (unsigned int)m_width || image->getHeight() > (unsigned int)m_height) return;
+    unsigned int imageWidth = image->getWidth();
+    unsigned int imageHeight = image->getHeight();
+    if (imageWidth > (unsigned int)m_width || imageHeight > (unsigned int)m_height) return;
 
     unsigned int order[4];
     texturePackedByteOrder(m_target, order);
 
     unsigned int count = (unsigned int)(m_width * m_height);
-    arrayWithLength<unsigned char> bytes(count * 4, false);
     arrayWithLength<int> pixels(count, false);
-    image->getRGB(0, 0, (unsigned int)m_width, m_height, pixels, 0, m_width, 0);
+    image->getRGB(0, 0, (unsigned int)m_width, m_height, pixels, 0, (int)imageWidth, 0);
+
+    arrayWithLength<unsigned char> bytes(count * 4, false);
     texturePackArgbPixels(pixels.data, count, order, bytes.data);
-    delete m_data[0];
+
+    int i;
+    for (i = 0; i < 10; ++i) { delete m_data[i]; m_data[i] = NULL; }
+
+    MemSect(0x33);
     m_data[0] = ByteBuffer::allocateDirect((int)(count * 4));
+    MemSect(0);
+    m_data[0]->clear();
     m_data[0]->put(bytes);
-    m_data[0]->position(0);
     m_data[0]->limit(count * 4);
+    delete[] bytes.data;
 
     if (m_hasMipmaps || image->getData(1) != NULL)
     {
@@ -256,16 +266,26 @@ void Texture::transferFromImage(BufferedImage* image)
             {
                 texturePackArgbPixels(providedData, levelCount, order, levelBytes.data);
             }
-            delete m_data[level];
+            MemSect(0x33);
             m_data[level] = ByteBuffer::allocateDirect((int)(levelCount * 4));
+            MemSect(0);
+            m_data[level]->clear();
             m_data[level]->put(levelBytes);
-            m_data[level]->position(0);
             m_data[level]->limit(levelCount * 4);
+            delete[] levelBytes.data;
         }
     }
 
-    m_dirty = true;
-    if (m_immediateUpdate) updateOnGPU();
+    delete[] pixels.data;
+
+    if (m_immediateUpdate)
+    {
+        updateOnGPU();
+    }
+    else
+    {
+        textureGpuSynced(this) = false;
+    }
 }
 
 void Texture::updateOnGPU()

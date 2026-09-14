@@ -92,21 +92,22 @@ void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, con
 
 void ParticleEngine::add(Particle* particle)
 {
-    if (particle == NULL)
-    {
-        return;
-    }
-
     int texture = particle->getParticleTexture();
+    Level* particleLevel = particle->getLevel();
+    const DimensionType* dimensionType = particleLevel->mDimension->getType();
     int textureType = 0;
-    if (level != NULL)
+    if (dimensionType != DimensionType::OVERWORLD)
     {
-        textureType = 0;
+        textureType = 2;
+        if (dimensionType == DimensionType::NETHER)
+        {
+            textureType = 1;
+        }
     }
     bool lit = particle->getAlpha() == 1.0;
-    int limit = texture == 0x80221 ? 2000 : (texture == 0x8021e ? 1000 : 0x4000);
-    ParticleList& list = particles[(textureType * 5 + texture) * 2 + (lit ? 1 : 0)];
-    if (texture == 0x80221)
+    unsigned long long type = particle->GetType();
+    int limit;
+    if (type == 0x80221)
     {
         if (particleCount >= 2000)
         {
@@ -114,23 +115,37 @@ void ParticleEngine::add(Particle* particle)
             return;
         }
         ++particleCount;
+        limit = 0x4000;
     }
-    if (list.size() >= static_cast<unsigned int>(limit))
+    else if (type == 0x8021e)
     {
-        if (texture != 0x8021e && !list.empty())
-        {
-            Particle* old = list.at(0);
-            if (old->getParticleTexture() == 0x80221)
-            {
-                --particleCount;
-            }
-            old->remove();
-            list.RemoveParticle(0);
-        }
-        else
+        limit = 1000;
+    }
+    else
+    {
+        limit = 0x4000;
+    }
+    if (particle->isSemiTransparent())
+    {
+        lit = false;
+    }
+    ParticleList& list = particles[(textureType * 5 + texture) * 2 + (lit ? 1 : 0)];
+    if (type == 0x8021e)
+    {
+        if (list.size() >= static_cast<unsigned int>(limit))
         {
             return;
         }
+    }
+    else if (list.size() >= static_cast<unsigned int>(limit))
+    {
+        Particle* old = list.at(0);
+        if (old->GetType() == 0x80221)
+        {
+            --particleCount;
+        }
+        old->remove();
+        list.RemoveParticle(0);
     }
     list.push_back(particle);
 }
@@ -207,10 +222,10 @@ void ParticleEngine::moveParticlesBetweenLists(ParticleList* first, ParticleList
 
 void ParticleEngine::tickTextureType(int textureType)
 {
-    for (int i = 0; i < 5; ++i)
+    for (int dimension = 0; dimension < 3; ++dimension)
     {
-        ParticleList& first = particles[textureType * 10 + i * 2];
-        ParticleList& second = particles[textureType * 10 + i * 2 + 1];
+        ParticleList& first = particles[dimension * 10 + textureType * 2];
+        ParticleList& second = particles[dimension * 10 + textureType * 2 + 1];
         tickParticleList(&first);
         tickParticleList(&second);
         moveParticlesBetweenLists(&first, &second);
@@ -352,7 +367,10 @@ void ParticleEngine::setLevel(Level* newLevel)
         }
         for (std::vector<TrackingEmitter*>::iterator it = trackingEmitters.begin(); it != trackingEmitters.end(); ++it)
         {
-            (*it)->remove();
+            if (*it != NULL)
+            {
+                (*it)->remove();
+            }
         }
         trackingEmitters.clear();
     }

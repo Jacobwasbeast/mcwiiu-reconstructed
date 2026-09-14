@@ -8,6 +8,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -22,8 +23,15 @@
 #include "game/world/block/ChorusFlowerBlock.hpp"
 #include "game/world/block/ChorusPlantBlock.hpp"
 #include "game/world/block/CommandBlock.hpp"
+#include "game/world/block/DirectionalBlock.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/core/Options.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/PistonBaseBlock.hpp"
+#include "game/world/block/StemBlock.hpp"
+#include "game/world/block/WallBlock.hpp"
 #include "game/util/Random.hpp"
 
 BlockRenderer::BlockRenderer(BlockColors* blockColors)
@@ -1359,14 +1367,128 @@ void BlockRenderer::renderCube(const BlockState* state, float alpha)
 
 void BlockRenderer::tesselateRowTexture(const BlockState* state, float x, float y, float z)
 {
-    tesselateCrossTexture(state, x, y, z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    TextureAtlasSprite* texture = getTexture(state, Direction::UP);
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+
+    float u0 = (float)texture->getU0(true);
+    float v0 = (float)texture->getV0(true);
+    float u1 = (float)texture->getU1(true);
+    float v1 = (float)texture->getV1(true);
+
+    float y1 = y + 1.0f;
+    float xNear = x + 0.25f;
+    float xFar = x + 0.75f;
+    float zNear = z + 0.25f;
+    float zFar = z + 0.75f;
+    float xEnd = x + 1.0f;
+    float zEnd = z + 1.0f;
+
+    builder->vertexUV(xNear, y1, z, u0, v0);
+    builder->vertexUV(xNear, y, z, u0, v1);
+    builder->vertexUV(xNear, y, zEnd, u1, v1);
+    builder->vertexUV(xNear, y1, zEnd, u1, v0);
+    builder->vertexUV(xNear, y1, zEnd, u0, v0);
+    builder->vertexUV(xNear, y, zEnd, u0, v1);
+    builder->vertexUV(xNear, y, z, u1, v1);
+    builder->vertexUV(xNear, y1, z, u1, v0);
+
+    builder->vertexUV(xFar, y1, zEnd, u0, v0);
+    builder->vertexUV(xFar, y, zEnd, u0, v1);
+    builder->vertexUV(xFar, y, z, u1, v1);
+    builder->vertexUV(xFar, y1, z, u1, v0);
+    builder->vertexUV(xFar, y1, z, u0, v0);
+    builder->vertexUV(xFar, y, z, u0, v1);
+    builder->vertexUV(xFar, y, zEnd, u1, v1);
+    builder->vertexUV(xFar, y1, zEnd, u1, v0);
+
+    builder->vertexUV(x, y1, zNear, u0, v0);
+    builder->vertexUV(x, y, zNear, u0, v1);
+    builder->vertexUV(xEnd, y, zNear, u1, v1);
+    builder->vertexUV(xEnd, y1, zNear, u1, v0);
+    builder->vertexUV(xEnd, y1, zNear, u0, v0);
+    builder->vertexUV(xEnd, y, zNear, u0, v1);
+    builder->vertexUV(x, y, zNear, u1, v1);
+    builder->vertexUV(x, y1, zNear, u1, v0);
+
+    builder->vertexUV(xEnd, y1, zFar, u0, v0);
+    builder->vertexUV(xEnd, y, zFar, u0, v1);
+    builder->vertexUV(x, y, zFar, u1, v1);
+    builder->vertexUV(x, y1, zFar, u1, v0);
+    builder->vertexUV(x, y1, zFar, u0, v0);
+    builder->vertexUV(x, y, zFar, u0, v1);
+    builder->vertexUV(xEnd, y, zFar, u1, v1);
+    builder->vertexUV(xEnd, y1, zFar, u1, v0);
 }
 
 void BlockRenderer::tesselateTorch(const BlockState* state, float x, float y, float z, float xTilt, float zTilt)
 {
-    tesselateCrossTexture(state, x + xTilt, y, z + zTilt, 0.5f);
-    setShape(0.4375f + xTilt, 0.0f, 0.4375f + zTilt, 0.5625f + xTilt, 0.625f, 0.5625f + zTilt);
-    renderFaceUp(state, x, y, z, getTexture(state, Direction::UP));
+    TextureAtlasSprite* texture = getTexture(state, Direction::DOWN);
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+
+    float u0 = (float)texture->getU0(true);
+    float v0 = (float)texture->getV0(true);
+    float u1 = (float)texture->getU1(true);
+    float v1 = (float)texture->getV1(true);
+
+    float headU0 = (float)texture->getU(2.4375);
+    float headV0 = (float)texture->getV(2.375);
+    float headU1 = (float)texture->getU(2.53125);
+    float headV1 = (float)texture->getV(2.5);
+    texture->adjustUVs(headU0, headU1, headV0, headV1);
+
+    float capU0 = (float)texture->getU(2.4375);
+    float capV0 = (float)texture->getV(2.65625);
+    float capU1 = (float)texture->getU(2.53125);
+    float capV1 = (float)texture->getV(2.71875);
+    texture->adjustUVs(capU0, capU1, capV0, capV1);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    float top = y + 0.625f;
+    float xc = x + 0.5f + xTilt * 0.375f;
+    float zc = z + 0.5f + zTilt * 0.375f;
+    float xc0 = xc - 0.0625f;
+    float xc1 = xc + 0.0625f;
+    float zc0 = zc - 0.0625f;
+    float zc1 = zc + 0.0625f;
+
+    builder->vertexUV(xc0, top, zc0, headU0, headV0);
+    builder->vertexUV(xc0, top, zc1, headU0, headV1);
+    builder->vertexUV(xc1, top, zc1, headU1, headV1);
+    builder->vertexUV(xc1, top, zc0, headU1, headV0);
+
+    float xb0 = x + 0.4375f;
+    float xb1 = x + 0.5625f;
+    float zb0 = z + 0.4375f;
+    float zb1 = z + 0.5625f;
+
+    builder->vertexUV(xb1 + xTilt, y, zb0 + zTilt, capU1, capV0);
+    builder->vertexUV(xb1 + xTilt, y, zb1 + zTilt, capU1, capV1);
+    builder->vertexUV(xb0 + xTilt, y, zb1 + zTilt, capU0, capV1);
+    builder->vertexUV(xb0 + xTilt, y, zb0 + zTilt, capU0, capV0);
+
+    float yTop = y + 1.0f;
+
+    builder->vertexUV(xb0, yTop, z, u0, v0);
+    builder->vertexUV(xb0 + xTilt, y, z + zTilt, u0, v1);
+    builder->vertexUV(xb0 + xTilt, y, z + 1.0f + zTilt, u1, v1);
+    builder->vertexUV(xb0, yTop, z + 1.0f, u1, v0);
+    builder->vertexUV(xb1, yTop, z + 1.0f, u0, v0);
+    builder->vertexUV(xb1 + xTilt, y, z + 1.0f + zTilt, u0, v1);
+    builder->vertexUV(xb1 + xTilt, y, z + zTilt, u1, v1);
+    builder->vertexUV(xb1, yTop, z, u1, v0);
+
+    builder->vertexUV(x, yTop, zb1, u0, v0);
+    builder->vertexUV(x + xTilt, y, zb1 + zTilt, u0, v1);
+    builder->vertexUV(x + 1.0f + xTilt, y, zb1 + zTilt, u1, v1);
+    builder->vertexUV(x + 1.0f, yTop, zb1, u1, v0);
+    builder->vertexUV(x + 1.0f, yTop, zb0, u0, v0);
+    builder->vertexUV(x + 1.0f + xTilt, y, zb0 + zTilt, u0, v1);
+    builder->vertexUV(x + xTilt, y, zb0 + zTilt, u1, v1);
+    builder->vertexUV(x, yTop, zb0, u1, v0);
 }
 
 bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPos& pos)
@@ -1394,14 +1516,49 @@ bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPo
 
 void BlockRenderer::tesselateAnvilPiece(const BlockState* state, const BlockPos& pos, int part, float x0, float y0, float x1, float y1, bool rotate, bool flip)
 {
-    int rotation = mFaceRotation1;
-    bool flipped = mFlipTexture;
-    mFaceRotation1 = rotate ? part : 0;
-    mFlipTexture = flip;
-    setShape(x0, y0, x0, x1, y1, x1);
-    tesselateBlockInWorld(state, pos, 0x3f);
-    mFaceRotation1 = rotation;
-    mFlipTexture = flipped;
+    float widthA = rotate ? y1 : y0;
+    float widthB = rotate ? y0 : y1;
+
+    setShape(0.5f - widthA * 0.5f, x0, 0.5f - widthB * 0.5f, widthA * 0.5f + 0.5f, x0 + x1, widthB * 0.5f + 0.5f);
+
+    if (!flip)
+    {
+        tesselateBlockInWorld(state, pos);
+    }
+    else
+    {
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+        builder->begin();
+        builder->normal(0.0f, -1.0f, 0.0f);
+        renderFaceDown(state, 0.0, 0.0, 0.0, getTexture(state, Direction::DOWN));
+        builder->end();
+
+        builder->begin();
+        builder->normal(0.0f, 1.0f, 0.0f);
+        renderFaceUp(state, 0.0, 0.0, 0.0, getTexture(state, Direction::UP));
+        builder->end();
+
+        builder->begin();
+        builder->normal(0.0f, 0.0f, -1.0f);
+        renderNorth(state, 0.0, 0.0, 0.0, getTexture(state, Direction::NORTH));
+        builder->end();
+
+        builder->begin();
+        builder->normal(0.0f, 0.0f, 1.0f);
+        renderSouth(state, 0.0, 0.0, 0.0, getTexture(state, Direction::SOUTH));
+        builder->end();
+
+        builder->begin();
+        builder->normal(-1.0f, 0.0f, 0.0f);
+        renderWest(state, 0.0, 0.0, 0.0, getTexture(state, Direction::WEST));
+        builder->end();
+
+        builder->begin();
+        builder->normal(1.0f, 0.0f, 0.0f);
+        renderEast(state, 0.0, 0.0, 0.0, getTexture(state, Direction::EAST));
+        builder->end();
+    }
 }
 
 bool BlockRenderer::tesselateAnvilInWorld(const BlockState* state, const BlockPos& pos, bool inventory)
@@ -1520,32 +1677,204 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
 
 bool BlockRenderer::tesselateCactusInWorld(const BlockState* state, const BlockPos& pos, float red, float green, float blue)
 {
-    setShape(0.0625f, 0.0f, 0.0625f, 0.9375f, 1.0f, 0.9375f);
-    bool rendered = tesselateBlockInWorld(state, pos, red, green, blue);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    Block* block = state->getBlock();
+    int lightAtPos = block->getLightColor(state, mLevelSource, pos, -1);
+
+    if (mMinY <= 0.0f)
+    {
+        BlockPos lightPos = pos.offset(0, -1, 0);
+        builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+    }
+    else
+    {
+        builder->tex2(lightAtPos);
+    }
+    builder->color(red * 0.5f, green * 0.5f, blue * 0.5f);
+    renderFaceDown(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::DOWN));
+
+    if (mMaxY >= 1.0f)
+    {
+        BlockPos lightPos = pos.offset(0, 1, 0);
+        builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+    }
+    else
+    {
+        builder->tex2(lightAtPos);
+    }
+    builder->color(red, green, blue);
+    renderFaceUp(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::UP));
+
+    builder->tex2(lightAtPos);
+    builder->color(red * 0.8f, green * 0.8f, blue * 0.8f);
+    builder->addOffset(0.0f, 0.0f, 0.0625f);
+    renderNorth(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::NORTH));
+    builder->addOffset(0.0f, 0.0f, -0.0625f);
+    builder->addOffset(0.0f, 0.0f, -0.0625f);
+    renderSouth(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::SOUTH));
+    builder->addOffset(0.0f, 0.0f, 0.0625f);
+
+    builder->color(red * 0.6f, green * 0.6f, blue * 0.6f);
+    builder->addOffset(0.0625f, 0.0f, 0.0f);
+    renderWest(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::WEST));
+    builder->addOffset(-0.0625f, 0.0f, 0.0f);
+    builder->addOffset(-0.0625f, 0.0f, 0.0f);
+    renderEast(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::EAST));
+    builder->addOffset(0.0625f, 0.0f, 0.0f);
+
+    return true;
 }
 
 void BlockRenderer::tesselateSunflowerCrossTexture(const BlockState* state, float x, float y, float z)
 {
-    tesselateCrossTexture(state, x, y, z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    TextureAtlasSprite* texture = getTexture(state, Direction::UP);
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+    float u1 = (float)texture->getU1(true);
+    float v0 = (float)texture->getV(8.0);
+    float u0 = (float)texture->getU0(true);
+    float v1 = (float)texture->getV1(true);
+    float y1 = y + 0.5f;
+    float x0 = x + 0.05f;
+    float x1 = x + 0.95f;
+    float z0 = z + 0.05f;
+    float z1 = z + 0.95f;
+    builder->vertexUV(x0, y1, z0, u0, v0);
+    builder->vertexUV(x0, y, z0, u0, v1);
+    builder->vertexUV(x1, y, z1, u1, v1);
+    builder->vertexUV(x1, y1, z1, u1, v0);
+    builder->vertexUV(x1, y1, z1, u1, v0);
+    builder->vertexUV(x1, y, z1, u1, v1);
+    builder->vertexUV(x0, y, z0, u0, v1);
+    builder->vertexUV(x0, y1, z0, u0, v0);
+    builder->vertexUV(x0, y1, z1, u0, v0);
+    builder->vertexUV(x0, y, z1, u0, v1);
+    builder->vertexUV(x1, y, z0, u1, v1);
+    builder->vertexUV(x1, y1, z0, u1, v0);
+    builder->vertexUV(x1, y1, z0, u1, v0);
+    builder->vertexUV(x1, y, z0, u1, v1);
+    builder->vertexUV(x0, y, z1, u0, v1);
+    builder->vertexUV(x0, y1, z1, u0, v0);
 }
 
 void BlockRenderer::tesselateSunflowerDirTexture(const BlockState* state, float x, float y, float z)
 {
-    tesselateStemDirTexture(state, Direction::NORTH, x, y, z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    DoublePlantBlock* block = static_cast<DoublePlantBlock*>(state->getBlock());
+    TextureAtlasSprite* sideTexture = block->getTexture(state, DoublePlantBlock::Variant::SIDE);
+    TextureAtlasSprite* inventoryTexture = block->getTexture(state, DoublePlantBlock::Variant::INVENTORY);
+    float sideU0 = (float)sideTexture->getU0(true);
+    float sideV1 = (float)sideTexture->getV1(true);
+    float sideU1 = (float)sideTexture->getU1(true);
+    float sideV0 = (float)sideTexture->getV0(true);
+    float invU0 = (float)inventoryTexture->getU0(true);
+    float invV1 = (float)inventoryTexture->getV1(true);
+    float invU1 = (float)inventoryTexture->getU1(true);
+    float invV0 = (float)inventoryTexture->getV0(true);
+    float angle = 22.5f * 0.01745329238474369f;
+    float cosAngle = Mth::cos(angle);
+    float sinAngle = Mth::sin(angle);
+    float leftX = x + 0.5f + 0.5625f * sinAngle + 0.1f * cosAngle;
+    float leftY = y + 0.5f - 0.5625f * cosAngle + 0.1f * sinAngle;
+    float rightX = x + 0.5f - 0.4375f * sinAngle + 0.1f * cosAngle;
+    float rightY = y + 0.5f + 0.4375f * cosAngle + 0.1f * sinAngle;
+    float z0 = z + 0.0625f;
+    float z1 = z + 0.9375f;
+    builder->vertexUV(leftX, leftY, z0, sideU0, sideV0);
+    builder->vertexUV(rightX, rightY, z0, sideU0, sideV1);
+    builder->vertexUV(rightX, rightY, z1, sideU1, sideV1);
+    builder->vertexUV(leftX, leftY, z1, sideU1, sideV0);
+    builder->vertexUV(leftX, leftY, z1, invU0, invV0);
+    builder->vertexUV(rightX, rightY, z1, invU0, invV1);
+    builder->vertexUV(rightX, rightY, z0, invU1, invV1);
+    builder->vertexUV(leftX, leftY, z0, invU1, invV0);
 }
 
 bool BlockRenderer::tesselateDoublePlantInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateSunflowerCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z);
-    tesselateSunflowerDirTexture(state, (float)pos.x, (float)pos.y, (float)pos.z);
+    if (state->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER])
+    {
+        const BlockState* below = mLevelSource->getBlockState(pos.below());
+        if (below->getBlock() != Blocks::double_plant)
+            return false;
+    }
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    if (mMinecraft->mOptions->mAnaglyph3d)
+    {
+        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
+        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
+        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+    builder->color(red, green, blue);
+
+    float x = (float)pos.x;
+    float y = (float)pos.y;
+    float z = (float)pos.z;
+
+    DoublePlantBlock* block = static_cast<DoublePlantBlock*>(state->getBlock());
+    const BlockState* virtualState = block->fillVirtualBlockStateProperties(state, mLevelSource, pos);
+    if (virtualState->getValue(DoublePlantBlock::VARIANT) == DoublePlantBlock::VARIANTS[0] &&
+        virtualState->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER])
+    {
+        tesselateSunflowerCrossTexture(state, x, y, z);
+        tesselateSunflowerDirTexture(state, x, y, z);
+    }
+    else
+    {
+        tesselateCrossTexture(state, x, y, z, 1.0f);
+    }
     return true;
 }
 
 bool BlockRenderer::tesselateKelpInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    if (mMinecraft->mOptions->mAnaglyph3d)
+    {
+        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
+        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
+        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+    builder->color(red, green, blue);
+
+    float x = (float)pos.x;
+    float y = (float)pos.y;
+    float z = (float)pos.z;
+
+    int aboveId = mLevelSource->getBlockId((int)pos.x, (int)pos.y + 1, (int)pos.z);
+    if (aboveId == 258)
+    {
+        int dir1 = Mth::abs(pos.getRandomSeed()) % 4;
+        int dir2 = (dir1 + Mth::abs(pos.getRandomSeed()) % 3 + 1) % 4;
+        TextureAtlasSprite* texture1 = getTexture(state, Direction::from3DDataValue(dir1));
+        TextureAtlasSprite* texture2 = getTexture(state, Direction::from3DDataValue(dir2));
+        tesselateCrossTexture(texture1, texture2, x, y, z, 1.0f);
+    }
+    else
+    {
+        TextureAtlasSprite* texture = getTexture(state, Direction::WEST);
+        tesselateCrossTexture(texture, texture, x, y, z, 1.0f);
+    }
     return true;
 }
 
@@ -1563,24 +1892,137 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
 
 void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direction* direction, float x, float y, float z, float scale)
 {
-    int rotation = mFaceRotation0;
-    mFaceRotation0 = direction->get3DDataValue();
-    tesselateCrossTexture(state, x, y, z, scale);
-    mFaceRotation0 = rotation;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    StemBlock* stemBlock = static_cast<StemBlock*>(state->getBlock());
+    TextureAtlasSprite* texture = stemBlock->getAngledTexture();
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+
+    float u0 = (float)texture->getU0(true);
+    float v0 = (float)texture->getV0(true);
+    float u1 = (float)texture->getU1(true);
+    float v1 = (float)texture->getV1(true);
+
+    float yPlus1 = y + 1.0f;
+    float yHalf = y + 0.5f;
+    float scaleHalf = scale + 0.5f;
+    float scalePlus1 = scale + 1.0f;
+    float xz = z + x;
+
+    float ua = u0;
+    float ub = u1;
+    if (direction == Direction::NORTH || direction == Direction::EAST)
+    {
+        ua = u1;
+        ub = u0;
+    }
+
+    if (direction == Direction::WEST || direction == Direction::EAST)
+    {
+        builder->vertexUV(y, xz, scaleHalf, ua, v0);
+        builder->vertexUV(y, z, scaleHalf, ua, v1);
+        builder->vertexUV(yPlus1, z, scaleHalf, ub, v1);
+        builder->vertexUV(yPlus1, xz, scaleHalf, ub, v0);
+        builder->vertexUV(yPlus1, xz, scaleHalf, ub, v0);
+        builder->vertexUV(yPlus1, z, scaleHalf, ub, v1);
+        builder->vertexUV(y, z, scaleHalf, ua, v1);
+        builder->vertexUV(y, xz, scaleHalf, ua, v0);
+    }
+    else
+    {
+        builder->vertexUV(yHalf, xz, scalePlus1, ua, v0);
+        builder->vertexUV(yHalf, z, scalePlus1, ua, v1);
+        builder->vertexUV(yHalf, z, scale, ub, v1);
+        builder->vertexUV(yHalf, xz, scale, ub, v0);
+        builder->vertexUV(yHalf, xz, scale, ub, v0);
+        builder->vertexUV(yHalf, z, scale, ub, v1);
+        builder->vertexUV(yHalf, z, scalePlus1, ua, v1);
+        builder->vertexUV(yHalf, xz, scalePlus1, ua, v0);
+    }
 }
 
 bool BlockRenderer::tesselateStemInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateStemTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    if (mMinecraft->mOptions->mAnaglyph3d)
+    {
+        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
+        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
+        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
+    builder->color(red, green, blue);
+
+    float x = (float)pos.x;
+    float y = (float)pos.y - 0.0625f;
+    float z = (float)pos.z;
+
+    const Direction* direction = state->getValue<const Direction*>(StemBlock::FACING);
+    if (direction == Direction::UP)
+    {
+        tesselateStemTexture(state, x, y, z, mMaxY);
+    }
+    else
+    {
+        tesselateStemTexture(state, x, y, z, 0.5f);
+        tesselateStemDirTexture(state, direction, x, y, z, mMaxY);
+    }
     return true;
 }
 
 bool BlockRenderer::tesselateLilypadInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.015625f, 1.0f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    TextureAtlasSprite* texture = getTexture(state, Direction::UP);
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+
+    float u0 = (float)texture->getU0(true);
+    float v0 = (float)texture->getV0(true);
+    float u1 = (float)texture->getU1(true);
+    float v1 = (float)texture->getV1(true);
+
+    unsigned int hash = (unsigned int)pos.x * 0x2fc20fu ^ (unsigned int)pos.z * 0x6ebfff5u ^ (unsigned int)pos.y;
+    hash = hash * hash * 0x285b825u + hash * 0xbu >> 0x10;
+    unsigned int rotation = hash & 3;
+    unsigned int rotation1 = rotation + 1;
+
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+
+    float x0 = (float)pos.x + 0.5f;
+    float z0 = (float)pos.z + 0.5f;
+    float y = (float)pos.y + 0.015625f;
+    float xOff = (float)(int)(rotation & 1) * 0.5f * (float)((int)(rotation >> 1) * -2 + 1);
+    float zOff = (float)(int)(rotation1 & 1) * 0.5f * (float)((int)((rotation1 >> 1) & 1) * -2 + 1);
+
+    float a = x0 + xOff;
+    float b = z0 + xOff;
+    float c = x0 - xOff;
+    float d = z0 - xOff;
+
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    builder->color(color);
+    builder->vertexUV(a - zOff, y, b + zOff, u0, v0);
+    builder->vertexUV(a + zOff, y, d + zOff, u1, v0);
+    builder->vertexUV(c + zOff, y, d - zOff, u1, v1);
+    builder->vertexUV(c - zOff, y, b - zOff, u0, v1);
+
+    color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    builder->color((color & 0xfefefe) >> 1);
+    builder->vertexUV(c - zOff, y, b - zOff, u0, v1);
+    builder->vertexUV(c + zOff, y, d - zOff, u1, v1);
+    builder->vertexUV(a + zOff, y, d + zOff, u1, v0);
+    builder->vertexUV(a - zOff, y, b + zOff, u0, v0);
+
+    return true;
 }
 
 bool BlockRenderer::tesselateTorchInWorld(const BlockState* state, const BlockPos& pos)
@@ -1841,17 +2283,55 @@ bool BlockRenderer::tesselateEggInWorld(const BlockState* state, const BlockPos&
 bool BlockRenderer::tesselateFenceInWorld(const BlockState* state, const BlockPos& pos)
 {
     setShape(0.375f, 0.0f, 0.375f, 0.625f, 1.0f, 0.625f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    return tesselateBlockInWorld(state, pos);
 }
 
 bool BlockRenderer::tesselateWallInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(0.25f, 0.0f, 0.25f, 0.75f, 1.0f, 0.75f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    WallBlock* wallBlock = static_cast<WallBlock*>(state->getBlock());
+    bool east = wallBlock->connectsTo(mLevelSource, pos.offset(-1, 0, 0), Direction::EAST);
+    bool west = wallBlock->connectsTo(mLevelSource, pos.offset(1, 0, 0), Direction::WEST);
+    bool south = wallBlock->connectsTo(mLevelSource, pos.offset(0, 0, -1), Direction::SOUTH);
+    bool north = wallBlock->connectsTo(mLevelSource, pos.offset(0, 0, 1), Direction::NORTH);
+
+    bool northSouthThrough = south && north && !east && !west;
+    bool eastWestThrough = !south && !north && east && west;
+    bool aboveEmpty = mLevelSource->isEmptyBlock(pos.offset(0, 1, 0));
+
+    if ((northSouthThrough || eastWestThrough) && aboveEmpty)
+    {
+        if (northSouthThrough)
+            setShape(0.3125f, 0.0f, 0.0f, 0.6875f, 0.875f, 1.0f);
+        else
+            setShape(0.0f, 0.0f, 0.3125f, 1.0f, 0.875f, 0.6875f);
+        tesselateBlockInWorld(state, pos);
+    }
+    else
+    {
+        setShape(0.25f, 0.0f, 0.25f, 0.75f, 1.0f, 0.75f);
+        tesselateBlockInWorld(state, pos);
+        if (east)
+        {
+            setShape(0.0f, 0.0f, 0.3125f, 0.25f, 0.875f, 0.6875f);
+            tesselateBlockInWorld(state, pos);
+        }
+        if (west)
+        {
+            setShape(0.75f, 0.0f, 0.3125f, 1.0f, 0.875f, 0.6875f);
+            tesselateBlockInWorld(state, pos);
+        }
+        if (south)
+        {
+            setShape(0.3125f, 0.0f, 0.0f, 0.6875f, 0.875f, 0.25f);
+            tesselateBlockInWorld(state, pos);
+        }
+        if (north)
+        {
+            setShape(0.3125f, 0.0f, 0.75f, 0.6875f, 0.875f, 1.0f);
+            tesselateBlockInWorld(state, pos);
+        }
+    }
+    return true;
 }
 
 bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPos& pos)
@@ -1889,11 +2369,52 @@ bool BlockRenderer::tesselateBedInWorld(const BlockState* state, const BlockPos&
 
 void BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos, const Direction* direction)
 {
-    int rotation = mFaceRotation1;
-    mFaceRotation1 = direction->get3DDataValue();
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.125f, 1.0f);
-    tesselateBlockInWorld(state, pos, 0x3f);
-    mFaceRotation1 = rotation;
+    tesselateBlockInWorld(state, pos);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    builder->color(1.0f, 1.0f, 1.0f);
+
+    TextureAtlasSprite* texture = getTexture(state, Direction::UP);
+    float u0 = (float)texture->getU0(true);
+    float u1 = (float)texture->getU1(true);
+    float v0 = (float)texture->getV0(true);
+    float v1 = (float)texture->getV1(true);
+
+    float x0 = (float)pos.x;
+    float x1 = x0 + 1.0f;
+    float z0 = (float)pos.z;
+    float z1 = z0 + 1.0f;
+    float y = (float)pos.y + 0.125f;
+
+    if (direction == Direction::NORTH)
+    {
+        builder->vertexUV(x1, y, z1, u0, v0);
+        builder->vertexUV(x1, y, z0, u0, v1);
+        builder->vertexUV(x0, y, z0, u1, v1);
+        builder->vertexUV(x0, y, z1, u1, v0);
+    }
+    else if (direction == Direction::EAST)
+    {
+        builder->vertexUV(x0, y, z1, u0, v0);
+        builder->vertexUV(x1, y, z1, u0, v1);
+        builder->vertexUV(x1, y, z0, u1, v1);
+        builder->vertexUV(x0, y, z0, u1, v0);
+    }
+    else if (direction == Direction::WEST)
+    {
+        builder->vertexUV(x1, y, z0, u0, v0);
+        builder->vertexUV(x0, y, z0, u0, v1);
+        builder->vertexUV(x0, y, z1, u1, v1);
+        builder->vertexUV(x1, y, z1, u1, v0);
+    }
+    else
+    {
+        builder->vertexUV(x0, y, z0, u0, v0);
+        builder->vertexUV(x0, y, z1, u0, v1);
+        builder->vertexUV(x1, y, z1, u1, v1);
+        builder->vertexUV(x1, y, z0, u1, v0);
+    }
 }
 
 bool BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos)
@@ -1928,12 +2449,38 @@ bool BlockRenderer::tesselatePistonBaseInWorld(const BlockState* state, const Bl
 
 void BlockRenderer::renderPistonArmUpDown(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
 {
-    setShape(x0, y0, z0, x1, 1.0f, z1);
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    float u0 = (float)texture->getU0(false);
+    float v0 = (float)texture->getV0(false);
+    float u1 = (float)texture->getU(z1);
+    float v1 = (float)texture->getV(0.25);
+    texture->adjustUVs(u0, u1, v0, v1);
+    builder->color(x1, x1, x1);
+    builder->vertexUV(x, x0, y0, u1, v0);
+    builder->vertexUV(x, z, y0, u0, v0);
+    builder->vertexUV(y, z, z0, u0, v1);
+    builder->vertexUV(y, x0, z0, u1, v1);
 }
 
 void BlockRenderer::renderPistonArmNorthSouth(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
 {
-    setShape(x0, y0, z0, x1, z1, 1.0f);
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    float u0 = (float)texture->getU0(false);
+    float v0 = (float)texture->getV0(false);
+    float u1 = (float)texture->getU(z1);
+    float v1 = (float)texture->getV(0.25);
+    texture->adjustUVs(u0, u1, v0, v1);
+    builder->color(x1, x1, x1);
+    builder->vertexUV(x, z, z0, u1, v0);
+    builder->vertexUV(x, z, y0, u0, v0);
+    builder->vertexUV(y, x0, y0, u0, v1);
+    builder->vertexUV(y, x0, z0, u1, v1);
 }
 
 void BlockRenderer::renderPistonArmEastWest(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
@@ -2155,7 +2702,64 @@ bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const B
 
 bool BlockRenderer::tesselateObserverInWorld(const BlockState* state, const BlockPos& pos)
 {
-    return tesselateHorizontalDirectionalInWorld(state, pos);
+    int facing = state->getValue<const Direction*>(DirectionalBlock::FACING_PROPERTY)->get3DDataValue();
+    if (facing < 3)
+    {
+        if (facing == 0)
+        {
+            mFaceRotation4 = 3;
+            mFaceRotation5 = 3;
+            tesselateBlockInWorld(state, pos);
+        }
+        else if (facing == 1)
+        {
+            mFaceTransform1 = 1;
+            mFaceRotation4 = 3;
+            mFaceTransform0 = 1;
+            tesselateBlockInWorld(state, pos);
+        }
+        else
+        {
+            mFaceRotation5 = 3;
+            mFaceRotation4 = 3;
+            tesselateBlockInWorld(state, pos);
+        }
+    }
+    else if (facing < 4)
+    {
+        mFaceRotation4 = 0;
+        mFaceRotation5 = 0;
+        tesselateBlockInWorld(state, pos);
+    }
+    else if (facing == 4)
+    {
+        mFaceRotation4 = 1;
+        mFaceRotation5 = 2;
+        tesselateBlockInWorld(state, pos);
+    }
+    else if (facing == 5)
+    {
+        mFaceRotation4 = 2;
+        mFaceRotation5 = 1;
+        tesselateBlockInWorld(state, pos);
+    }
+    else
+    {
+        tesselateBlockInWorld(state, pos);
+    }
+    mFaceTransform2 = 0;
+    mFaceTransform4 = 0;
+    mFaceRotation2 = 0;
+    mFaceTransform1 = 0;
+    mFaceRotation3 = 0;
+    mFaceTransform0 = 0;
+    mFaceRotation4 = 0;
+    mFaceRotation5 = 0;
+    mFaceRotation0 = 0;
+    mFaceTransform3 = 0;
+    mFaceTransform5 = 0;
+    mFaceRotation1 = 0;
+    return true;
 }
 
 void BlockRenderer::tesselateTurtleEgg(const BlockState* state, const BlockPos& pos, float red, float green, float blue)
@@ -2168,7 +2772,55 @@ void BlockRenderer::tesselateTurtleEgg(const BlockState* state, const BlockPos& 
 
 bool BlockRenderer::tessellateSeagrassInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateCrossTexture(state, (float)pos.x, (float)pos.y, (float)pos.z, 1.0f);
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    Block* block = state->getBlock();
+    builder->tex2(getLightColor(block, mLevelSource, pos));
+    builder->color(0.5f, 0.5f, 0.5f);
+    TextureAtlasSprite* texture = getTexture(state, Direction::DOWN);
+
+    float x = (float)pos.x;
+    float y = (float)pos.y - 0.0625f;
+    float z = (float)pos.z;
+
+    Block* belowBlock = mLevelSource->getBlock(pos.below());
+    BlockPos seedPos = Block::getId(belowBlock) == 0x10e ? pos.below() : pos;
+    Random random(seedPos.getRandomSeed());
+    bool swap = random.nextBoolean();
+
+    float u0 = (float)texture->getU0(true);
+    float u1 = (float)texture->getU1(true);
+    float v0 = (float)texture->getV0(true);
+    float v1 = (float)texture->getV1(true);
+
+    float uA = swap ? u1 : u0;
+    float uB = swap ? u0 : u1;
+
+    float x0 = x + 0.25f;
+    float x1 = x + 0.75f;
+    float z0 = z + 0.25f;
+    float z1 = z + 0.75f;
+    float yTop = y + 1.0f;
+    float zFull1 = z + 1.0f;
+    float xFull1 = x + 1.0f;
+
+    builder->vertexUV(x0, yTop, z, uA, v0);
+    builder->vertexUV(x0, y, z, uA, v1);
+    builder->vertexUV(x0, y, zFull1, uB, v1);
+    builder->vertexUV(x0, yTop, zFull1, uB, v0);
+    builder->vertexUV(x1, yTop, zFull1, uA, v0);
+    builder->vertexUV(x1, y, zFull1, uA, v1);
+    builder->vertexUV(x1, y, z, uB, v1);
+    builder->vertexUV(x1, yTop, z, uB, v0);
+
+    builder->vertexUV(x, yTop, z0, uA, v0);
+    builder->vertexUV(x, y, z0, uA, v1);
+    builder->vertexUV(xFull1, y, z0, uB, v1);
+    builder->vertexUV(xFull1, yTop, z0, uB, v0);
+    builder->vertexUV(xFull1, yTop, z1, uA, v0);
+    builder->vertexUV(xFull1, y, z1, uA, v1);
+    builder->vertexUV(x, y, z1, uB, v1);
+    builder->vertexUV(x, yTop, z1, uB, v0);
+
     return true;
 }
 
@@ -2184,8 +2836,31 @@ bool BlockRenderer::tessellateIndividualSeaPickleInWorld(const BlockState* state
 
 bool BlockRenderer::tessellateSeaPickleInWorld(const BlockState* state, const BlockPos& pos)
 {
-    Vec3 offset(0.5, 0.0, 0.5);
-    return tessellateIndividualSeaPickleInWorld(state, pos, 0.375, &offset);
+    extern AbstractProperty<int>* SeaPickle_PICKLES;
+    int index = state->getValue(SeaPickle_PICKLES) - 1;
+    if (index == 0)
+    {
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.5, 0.0, 0.5));
+    }
+    else if (index == 1)
+    {
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.35, 0.0, 0.35));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.245, Vec3::newTemp(0.65, 0.0, 0.65));
+    }
+    else if (index < 3)
+    {
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.245, Vec3::newTemp(0.5, 0.0, 0.7));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.435, Vec3::newTemp(0.3, 0.0, 0.3));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.6, 0.0, 0.35));
+    }
+    else if (index == 3)
+    {
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.375, Vec3::newTemp(0.29, 0.0, 0.31));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.245, Vec3::newTemp(0.71, 0.0, 0.76));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.305, Vec3::newTemp(0.69, 0.0, 0.27));
+        tessellateIndividualSeaPickleInWorld(state, pos, 0.435, Vec3::newTemp(0.25, 0.0, 0.67));
+    }
+    return true;
 }
 
 bool BlockRenderer::tesselateCommandBlockInWorld(const BlockState* state, const BlockPos& pos)

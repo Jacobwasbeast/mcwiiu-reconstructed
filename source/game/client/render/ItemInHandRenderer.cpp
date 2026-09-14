@@ -67,7 +67,6 @@ void buildBlockItemDisplayList(int listId)
     const float zero = 0.0f;
     const float one = 1.0f;
     const float negOne = -1.0f;
-    const float negTwo = -2.0f;
     const float uvBase = 0.001953125f;
     const float uvStep = 0.0625f;
     const float uvScale = 0.00390625f;
@@ -88,12 +87,12 @@ void buildBlockItemDisplayList(int listId)
             builder->vertexUV(x1, y0, zero, v1, u1);
             builder->vertexUV(x1, y1, zero, v1, u1);
             builder->vertexUV(x0, y1, zero, v1, u1);
-            builder->normal(zero, zero, negTwo);
+            builder->normal(zero, zero, negOne);
             builder->vertexUV(x0, y1, negHalf, v1, u1);
             builder->vertexUV(x1, y1, negHalf, v1, u1);
             builder->vertexUV(x1, y0, negHalf, v1, u1);
             builder->vertexUV(x0, y0, negHalf, v1, u1);
-            builder->normal(negTwo, zero, zero);
+            builder->normal(negOne, zero, zero);
             builder->vertexUV(x0, y0, negHalf, v1, u1);
             builder->vertexUV(x0, y0, zero, v1, u1);
             builder->vertexUV(x0, y1, zero, v1, u1);
@@ -108,7 +107,7 @@ void buildBlockItemDisplayList(int listId)
             builder->vertexUV(x0, y0, zero, v1, u1);
             builder->vertexUV(x0, y0, negHalf, v1, u1);
             builder->vertexUV(x1, y0, negHalf, v1, u1);
-            builder->normal(zero, negTwo, zero);
+            builder->normal(zero, negOne, zero);
             builder->vertexUV(x1, y1, negHalf, v1, u1);
             builder->vertexUV(x0, y1, negHalf, v1, u1);
             builder->vertexUV(x0, y1, zero, v1, u1);
@@ -127,7 +126,6 @@ void buildExtrudedItemDisplayList(int listId, float layerScale, float depth)
     const float zero = 0.0f;
     const float one = 1.0f;
     const float negOne = -1.0f;
-    const float negTwo = -2.0f;
     const float uvEnd = 0.05882352963089943f;
     const float uvInset = 0.029411764815449715f;
     float halfDepth = depth / layerScale;
@@ -136,12 +134,12 @@ void buildExtrudedItemDisplayList(int listId, float layerScale, float depth)
     builder->vertexUV(one, zero, zero, zero, uvEnd);
     builder->vertexUV(one, one, zero, zero, zero);
     builder->vertexUV(zero, one, zero, uvEnd, zero);
-    builder->normal(zero, zero, negTwo);
+    builder->normal(zero, zero, negOne);
     builder->vertexUV(zero, one, negOne, uvEnd, zero);
     builder->vertexUV(one, one, negOne, zero, zero);
     builder->vertexUV(one, zero, negOne, zero, uvEnd);
     builder->vertexUV(zero, zero, negOne, uvEnd, uvEnd);
-    builder->normal(negTwo, zero, zero);
+    builder->normal(negOne, zero, zero);
     float layerWidth = one / layerScale;
     for (int layer = 0; layer < (int)layerScale; ++layer)
     {
@@ -173,7 +171,7 @@ void buildExtrudedItemDisplayList(int listId, float layerScale, float depth)
         builder->vertexUV(zero, x + layerWidth, negOne, uvEnd, u);
         builder->vertexUV(one, x + layerWidth, negOne, zero, u);
     }
-    builder->normal(zero, negTwo, zero);
+    builder->normal(zero, negOne, zero);
     for (int layer = 0; layer < 4; ++layer)
     {
         float x = (float)layer / layerScale;
@@ -195,10 +193,10 @@ void buildFlatItemDisplayList(int listId)
     const float zero = 0.0f;
     const float one = 1.0f;
     const float negHalf = -0.0625f;
-    const float negTwo = -2.0f;
+    const float negOne = -1.0f;
     const float uv0 = 0.05859375f;
     const float uv1 = 0.02757352963089943f;
-    builder->normal(zero, zero, negTwo);
+    builder->normal(zero, zero, negOne);
     builder->vertexUV(zero, one, negHalf, uv0, zero);
     builder->vertexUV(one, one, negHalf, zero, zero);
     builder->vertexUV(one, zero, negHalf, zero, uv1);
@@ -215,51 +213,43 @@ void buildGuiItemDisplayList(int listId)
     const float zero = 0.0f;
     const float one = 1.0f;
     const float negHalf = -0.0625f;
-    const float negTwo = -2.0f;
-    const float uvA = 0.05859375f;
+    const float negOne = -1.0f;
+    const float uvStep = 0.0625f;
     const float uvB = 0.029411764815449715f;
     const float uvC = 0.02757352963089943f;
     const float uvD = 0.0018382353009656072f;
+    const float uvE = 0.05859375f;
+    const float uvF = 0.00390625f;
     builder->normal(zero, zero, one);
-    builder->vertexUV(zero, zero, zero, uvA, uvB);
+    builder->vertexUV(zero, zero, zero, uvStep, uvB);
     builder->vertexUV(one, zero, zero, zero, uvB);
     builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(zero, one, zero, uvA, zero);
-    builder->normal(zero, zero, negTwo);
-    builder->vertexUV(zero, one, negHalf, uvA, zero);
+    builder->vertexUV(zero, one, zero, uvStep, zero);
+    builder->normal(zero, zero, negOne);
+    builder->vertexUV(zero, one, negHalf, uvStep, zero);
     builder->vertexUV(one, one, negHalf, zero, zero);
     builder->vertexUV(one, zero, negHalf, zero, uvB);
-    builder->vertexUV(zero, zero, negHalf, uvA, uvB);
-    builder->normal(negTwo, zero, zero);
-    builder->vertexUV(zero, zero, negHalf, uvA, uvB);
-    builder->vertexUV(zero, zero, zero, uvA, uvB);
-    builder->vertexUV(zero, one, zero, uvA, zero);
-    builder->vertexUV(zero, one, negHalf, uvA, zero);
+    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
+    builder->normal(negOne, zero, zero);
+    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
+    builder->vertexUV(zero, zero, zero, uvStep, uvB);
+    builder->vertexUV(zero, one, zero, uvE, zero);
+    builder->vertexUV(zero, one, negHalf, uvE, zero);
     builder->normal(one, zero, zero);
     builder->vertexUV(one, one, negHalf, zero, zero);
     builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(one, zero, zero, zero, uvB);
-    builder->vertexUV(one, zero, negHalf, zero, uvB);
+    builder->vertexUV(one, zero, zero, uvF, uvB);
+    builder->vertexUV(one, zero, negHalf, uvF, uvB);
     builder->normal(zero, one, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(zero, one, negHalf, uvA, zero);
-    builder->vertexUV(zero, one, zero, uvA, zero);
-    builder->vertexUV(one, one, zero, zero, zero);
-    builder->normal(zero, negTwo, zero);
-    builder->vertexUV(one, zero, negHalf, zero, uvB);
-    builder->vertexUV(zero, zero, negHalf, uvA, uvB);
-    builder->vertexUV(zero, zero, zero, uvA, uvB);
-    builder->vertexUV(one, zero, zero, zero, uvB);
-    builder->normal(negTwo, zero, zero);
-    builder->vertexUV(one, one, negHalf, zero, zero);
-    builder->vertexUV(one, one, zero, zero, zero);
-    builder->vertexUV(one, one, zero, uvD, zero);
-    builder->vertexUV(one, one, negHalf, uvD, zero);
-    builder->normal(one, zero, zero);
-    builder->vertexUV(one, zero, negHalf, zero, uvC);
     builder->vertexUV(one, zero, zero, zero, uvC);
-    builder->vertexUV(one, zero, zero, uvD, uvC);
-    builder->vertexUV(one, zero, negHalf, uvD, uvC);
+    builder->vertexUV(zero, zero, zero, uvStep, uvB);
+    builder->vertexUV(zero, zero, negHalf, uvStep, uvB);
+    builder->vertexUV(one, zero, negHalf, zero, uvC);
+    builder->normal(zero, negOne, zero);
+    builder->vertexUV(one, one, negHalf, zero, zero);
+    builder->vertexUV(zero, one, negHalf, uvStep, uvD);
+    builder->vertexUV(zero, one, zero, uvStep, uvD);
+    builder->vertexUV(one, one, zero, zero, uvD);
     builder->end();
     GlStateManager::endList(0);
 }
@@ -272,7 +262,6 @@ void buildHighResBlockItemDisplayList(int listId)
     const float zero = 0.0f;
     const float one = 1.0f;
     const float negOne = -1.0f;
-    const float negTwo = -2.0f;
     const float uvBase = 0.0009191176504828036f;
     const float uvStep = 0.0625f;
     const float uvScale = 0.029411764815449715f;
@@ -292,12 +281,12 @@ void buildHighResBlockItemDisplayList(int listId)
             builder->vertexUV(x1, y0, zero, u1, v1);
             builder->vertexUV(x1, y1, zero, u1, v1);
             builder->vertexUV(x0, y1, zero, u1, v1);
-            builder->normal(zero, zero, negTwo);
+            builder->normal(zero, zero, negOne);
             builder->vertexUV(x0, y1, negHalf, u1, v1);
             builder->vertexUV(x1, y1, negHalf, u1, v1);
             builder->vertexUV(x1, y0, negHalf, u1, v1);
             builder->vertexUV(x0, y0, negHalf, u1, v1);
-            builder->normal(negTwo, zero, zero);
+            builder->normal(negOne, zero, zero);
             builder->vertexUV(x0, y0, negHalf, u1, v1);
             builder->vertexUV(x0, y0, zero, u1, v1);
             builder->vertexUV(x0, y1, zero, u1, v1);
@@ -312,7 +301,7 @@ void buildHighResBlockItemDisplayList(int listId)
             builder->vertexUV(x0, y0, zero, u1, v1);
             builder->vertexUV(x0, y0, negHalf, u1, v1);
             builder->vertexUV(x1, y0, negHalf, u1, v1);
-            builder->normal(zero, negTwo, zero);
+            builder->normal(zero, negOne, zero);
             builder->vertexUV(x1, y1, negHalf, u1, v1);
             builder->vertexUV(x0, y1, negHalf, u1, v1);
             builder->vertexUV(x0, y1, zero, u1, v1);
@@ -355,7 +344,8 @@ void ensureItemDisplayListsBuilt()
 }
 
 ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
-    : mMinecraft(minecraft), mMainHandItem(), mOffHandItem(), mMainHandHeight(0.0f), mOffHandHeight(0.0f),
+    : mMinecraft(minecraft), mMainHandItem(ItemInstance::EMPTY), mOffHandItem(ItemInstance::EMPTY),
+      mMainHandHeight(0.0f), mOffHandHeight(0.0f),
       mMainHandHeightOld(0.0f), mOffHandHeightOld(0.0f),
       mEntityRenderDispatcher(minecraft->getEntityRenderDispatcher()), mItemRenderer(minecraft->getItemRenderer()), mListId(-1)
 {
@@ -368,16 +358,16 @@ unsigned long long ItemInHandRenderer::renderItem3D(Tesselator*, float x, float 
     switch (mode)
     {
     case ITEM_RENDER_MODE_NONE:
-        listId = sItemRenderDisplayLists[0];
+        listId = sItemRenderDisplayLists[3];
         break;
     case ITEM_RENDER_MODE_GUI:
         listId = sItemRenderDisplayLists[1];
         break;
     case ITEM_RENDER_MODE_3D:
-        listId = sItemRenderDisplayLists[2];
+        listId = sItemRenderDisplayLists[0];
         break;
     case ITEM_RENDER_MODE_FLAT:
-        listId = sItemRenderDisplayLists[3];
+        listId = sItemRenderDisplayLists[2];
         break;
     case ITEM_RENDER_MODE_EXTRUDED:
         listId = sItemRenderDisplayLists[4];
@@ -388,12 +378,12 @@ unsigned long long ItemInHandRenderer::renderItem3D(Tesselator*, float x, float 
     default:
         return 0;
     }
-    GlStateManager::matrixMode(5889);
+    GlStateManager::matrixMode(2);
     GlStateManager::loadIdentity();
     GlStateManager::translatef(x, y, 0.0f);
     GlStateManager::callList(listId);
     GlStateManager::loadIdentity();
-    GlStateManager::matrixMode(5888);
+    GlStateManager::matrixMode(0);
     return 0;
 }
 
@@ -1064,19 +1054,19 @@ void ItemInHandRenderer::tick()
         {
             CalculateNewHandHeights(true);
         }
-        if (mMainHandHeight <= 0.1f)
-        {
-            mMainHandItem = mainHandItem;
-        }
-        if (mOffHandHeight < 0.1f)
-        {
-            mOffHandItem = offHandItem;
-        }
     }
     else
     {
         mMainHandHeight = Mth::clamp(mMainHandHeight - 0.4f, 0.0f, 1.0f);
         mOffHandHeight = Mth::clamp(mOffHandHeight - 0.4f, 0.0f, 1.0f);
+    }
+    if (mMainHandHeight <= 0.1f)
+    {
+        mMainHandItem = mainHandItem;
+    }
+    if (mOffHandHeight < 0.1f)
+    {
+        mOffHandItem = offHandItem;
     }
 }
 

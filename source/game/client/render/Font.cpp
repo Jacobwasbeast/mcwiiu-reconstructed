@@ -14,7 +14,7 @@
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
 std::wstring trimString(const std::wstring& text);
 
-Font::Font(Options*, const std::wstring& name, Textures* textures, bool anaglyph,
+Font::Font(Options*, const std::wstring& name, Textures* textures, bool,
            ResourceLocation* location, int characterWidth, int characterHeight,
            int textureWidth, int textureHeight, unsigned short* characterMap)
     : mWidths(0), mCharacters(0), mRandom(new Random()), mCharacterCount(characterWidth * characterHeight),
@@ -24,23 +24,50 @@ Font::Font(Options*, const std::wstring& name, Textures* textures, bool anaglyph
       mLocation(location), mGlyphCount(characterMap == 0 ? 0 : mCharacterCount)
 {
     mWidths = new float[mCharacterCount]();
+    if (characterMap != 0)
+    {
+        for (int i = 0; i < mCharacterCount; ++i)
+            mCharacterMap[characterMap[i]] = i;
+    }
     mTexture = location->getTexture();
     BufferedImage* image = textures->readImage(static_cast<_TEXTURE_NAME>(mTexture), name);
     const unsigned int imageWidth = image->getWidth();
     const unsigned int imageHeight = image->getHeight();
     std::vector<int> pixels(imageWidth * imageHeight);
     image->getRGB(0, 0, imageWidth, static_cast<int>(imageHeight), arrayWithLength<int>(pixels), 0, imageWidth, 0);
-    delete image;
-    if (characterMap != 0)
+    for (int i = 0; i < mCharacterCount; ++i)
     {
-        for (int i = 0; i < mCharacterCount; ++i)
-            mCharacterMap[characterMap[i]] = i;
+        const int row = i / mCharacterWidth;
+        const int col = i % mCharacterWidth;
+        int glyphColumn = mTextureWidth - 1;
+        if (mTextureWidth > 0)
+        {
+            bool found = false;
+            for (int x = mTextureWidth - 1; x >= 0 && !found; --x)
+            {
+                for (int y = 0; y < mTextureHeight; ++y)
+                {
+                    const int pixelIndex = (row * mTextureHeight + y) * static_cast<int>(imageWidth) +
+                                            (col * mTextureWidth + x);
+                    if ((static_cast<unsigned int>(pixels[pixelIndex]) >> 24) != 0)
+                    {
+                        found = true;
+                        glyphColumn = x;
+                        break;
+                    }
+                }
+                if (!found)
+                    glyphColumn = x - 1;
+            }
+        }
+        if (i == 0x20)
+            glyphColumn = 2;
+        mWidths[i] = static_cast<float>(glyphColumn + 2);
     }
+    delete image;
     mCharacters = new Character[mCharacterCount];
     for (int i = 0; i < mCharacterCount; ++i)
         cacheCharacter(i);
-    if (anaglyph)
-        mEnforceUnicodeSheet = false;
 }
 
 bool Font::CharacterExists(wchar_t character)
@@ -191,19 +218,43 @@ void Font::drawShadow(const std::wstring& text, int x, int y, int color)
 int Font::wordWrapHeight(const std::wstring& text, int wrapWidth)
 {
     std::vector<std::wstring> lines = stringSplit(text, L'\n');
-    int height = 0;
-    for (std::vector<std::wstring>::const_iterator it = lines.begin(); it != lines.end(); ++it)
+    if (lines.size() > 1)
     {
-        std::wstring line = *it;
-        while (width(line) > wrapWidth)
-        {
-            std::wstring::size_type split = line.find_last_of(L' ', static_cast<std::wstring::size_type>(wrapWidth));
-            if (split == std::wstring::npos) split = line.size() > 1 ? 1 : line.size();
-            line.erase(0, split + (split < line.size() ? 1 : 0));
-            height += 8;
-        }
-        height += 8;
+        int height = 0;
+        for (std::vector<std::wstring>::const_iterator it = lines.begin(); it != lines.end(); ++it)
+            height += wordWrapHeight(*it, wrapWidth);
+        return height;
     }
+
+    std::vector<std::wstring> words = stringSplit(text, L' ');
+    int height = 0;
+    std::vector<std::wstring>::size_type index = 0;
+    while (index < words.size())
+    {
+        std::wstring line = words[index] + L" ";
+        ++index;
+        while (index < words.size() && width(line + words[index]) < wrapWidth)
+        {
+            line += words[index] + L" ";
+            ++index;
+        }
+        if (width(line) > wrapWidth)
+        {
+            do
+            {
+                std::wstring::size_type fit = 0;
+                while (width(line.substr(0, fit + 1)) <= wrapWidth)
+                    ++fit;
+                if (!trimString(line.substr(0, fit)).empty())
+                    height += 8;
+                line = line.substr(fit);
+            } while (width(line) > wrapWidth);
+        }
+        if (!trimString(line).empty())
+            height += 8;
+    }
+    if (height < 8)
+        height += 8;
     return height;
 }
 

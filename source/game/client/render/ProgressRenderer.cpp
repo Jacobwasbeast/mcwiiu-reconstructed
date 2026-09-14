@@ -20,7 +20,7 @@ ProgressRenderer::TextField::TextField(const TextField& other)
 }
 
 ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
-    : mStatus(), mMinecraft(minecraft), mTitle(), mStartTime(0), mNoAbort(false), mPercent(0)
+    : mStatus(), mMinecraft(minecraft), mTitle(), mStartTime(0), mNoAbort(false)
 {
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
 }

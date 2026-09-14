@@ -7,8 +7,6 @@ MobSkinMemTextureProcessor::~MobSkinMemTextureProcessor()
 
 void MobSkinMemTextureProcessor::setNoAlpha(int x0, int y0, int x1, int y1)
 {
-    if (m_data == NULL)
-        return;
     int y;
     for (y = y0; y < y1; ++y)
     {
@@ -20,8 +18,6 @@ void MobSkinMemTextureProcessor::setNoAlpha(int x0, int y0, int x1, int y1)
 
 uint32_t MobSkinMemTextureProcessor::hasAlpha(int x0, int y0, int x1, int y1)
 {
-    if (m_data == NULL)
-        return 0;
     int y;
     for (y = y0; y < y1; ++y)
     {
@@ -39,8 +35,6 @@ void MobSkinMemTextureProcessor::setForceAlpha(int x0, int y0, int x1, int y1)
 {
     if (hasAlpha(x0, y0, x1, y1) == 0)
     {
-        if (m_data == NULL)
-            return;
         int y;
         for (y = y0; y < y1; ++y)
         {

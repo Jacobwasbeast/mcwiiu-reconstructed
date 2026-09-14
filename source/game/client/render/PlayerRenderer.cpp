@@ -249,11 +249,38 @@ void PlayerRenderer::showAdditionalModelParts(boost::shared_ptr<Player> player)
 void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    if (player->isInvisible() && !player->hasInvisiblePrivilege()) return;
+    if (player->isLocalPlayer() && player->IsSpectatingOtherPlayer())
+    {
+        return;
+    }
+    if (player->hasInvisiblePrivilege())
+    {
+        return;
+    }
+
     setModelProperties(player, partialTick);
-    if (player->SpectateAsInvisible()) hideAdditionalModelParts(player);
-    else showAdditionalModelParts(player);
+
+    if (player->isSpectator())
+    {
+        if (player->SpectateAsInvisible() || player->IsSpectatingOtherPlayer())
+        {
+            hideAdditionalModelParts(player);
+        }
+        else
+        {
+            showAdditionalModelParts(player);
+        }
+    }
+    else
+    {
+        showAdditionalModelParts(player);
+    }
+    GlStateManager::setProfile();
+
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
+
+    GlStateManager::unsetProfile();
+    hideAdditionalModelParts(player);
 }
 
 const ResourceLocation* PlayerRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
@@ -356,11 +383,13 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
                                     float partialTicks)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
-    if (player->isSleeping())
+    if (player->isAlive() && player->isSleeping())
     {
         GlStateManager::rotatef(player->getSleepRotation(), 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(getFlipDegrees(entity), 0.0f, 0.0f, 1.0f);
+        return;
     }
+    LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
 }
 
 void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha,
@@ -380,7 +409,7 @@ void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
 bool PlayerRenderer::bindTexture(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    return EntityRenderer::bindTexture(entity);
+    return EntityRenderer::bindTexture(player->mSkinLocation, player->getTexture());
 }
 
 void PlayerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,

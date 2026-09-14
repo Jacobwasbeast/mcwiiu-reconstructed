@@ -309,13 +309,30 @@ void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
                                        float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                        float headPitch, float scale)
 {
-    if (!entity || mModel == NULL)
+    bool visible = isVisible(entity);
+    bool solid = false;
+    if (!visible)
+    {
+        boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
+        visible = !entity->isInvisibleTo(localPlayer);
+        solid = visible;
+    }
+
+    if (!visible)
         return;
 
     boost::shared_ptr<Entity> baseEntity = boost::static_pointer_cast<Entity>(entity);
-    mModel->prepareMobModel(entity, limbSwing, limbSwingAmount, ageInTicks);
-    mModel->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                   scale, true);
+    if (!bindTexture(baseEntity))
+        return;
+
+    if (solid)
+        GlStateManager::setProfile();
+
+    Model* model = getModel(entity);
+    model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+
+    if (solid)
+        GlStateManager::unsetProfile();
 }
 
 bool LivingEntityRenderer::isVisible(boost::shared_ptr<LivingEntity>& entity)

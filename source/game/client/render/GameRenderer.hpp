@@ -140,7 +140,9 @@ private:
     SmoothFloat mZoom;
     SmoothFloat mView;
     SmoothFloat mLight;
-    unsigned char mData[8752];
+    unsigned char mData[8612];
+    not_null_ptr<ItemInstance> mActivationItems[4];
+    unsigned char mDataTail[108];
     FloatBuffer* mBuffer;
     bool mRenderBlockOutline;
 };

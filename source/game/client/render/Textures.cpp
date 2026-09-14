@@ -41,6 +41,29 @@ MemTextureFields& memTextureFields(MemTexture* texture)
 {
     return *reinterpret_cast<MemTextureFields*>(texture);
 }
+
+unsigned int rotateChannelsRight(unsigned int value)
+{
+    return (value >> 8) | (value << 24);
+}
+
+unsigned int rotateChannelsLeft(unsigned int value)
+{
+    return (value << 8) | (value >> 24);
+}
+
+int mipLevelsFor(int dimension)
+{
+    int levels = 1;
+    if (dimension > 16)
+    {
+        do
+        {
+            ++levels;
+        } while ((8 << levels) < dimension);
+    }
+    return levels;
+}
 }
 
 Textures::Textures(TexturePackRepository* texturePackRepository, Options* options)
@@ -160,7 +183,8 @@ arrayWithLength<int> Textures::anaglyph(arrayWithLength<int> pixels)
 
 void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool clamp)
 {
-    bind(texture);
+    MemSect(0x21);
+    GlStateManager::bindTexture(texture);
     GlStateManager::texParameteri(1, 0);
     GlStateManager::texParameteri(2, 0);
     if (blur)
@@ -170,10 +194,19 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     }
     GlStateManager::texParameteri(3, clamp ? 0 : 1);
     GlStateManager::texParameteri(4, clamp ? 0 : 1);
-    arrayWithLength<int> pixels = loadTexturePixels(image);
+    int width = (int)image->getWidth();
+    int height = (int)image->getHeight();
+    arrayWithLength<int> pixels((unsigned int)(width * height), true);
+    image->getRGB(0, 0, width, height, pixels, 0, width, 0);
+    if (mOptions != NULL && *(reinterpret_cast<unsigned char*>(mOptions) + 0x15) != 0)
+    {
+        pixels = anaglyph(pixels);
+    }
     ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)(pixels.length * 4));
+    buffer->clear();
     arrayWithLength<unsigned char> bytes((unsigned int)(pixels.length * 4), true);
-    for (unsigned int i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
+    unsigned int i;
+    for (i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
     {
         unsigned int value = (unsigned int)pixels.data[i];
         bytes.data[i * 4] = (unsigned char)(value >> 16);
@@ -184,8 +217,86 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     buffer->put(bytes);
     buffer->position(0);
     buffer->limit(bytes.length);
-    GlStateManager::texImage2D(0, 0, 0, (int)image->getWidth(), (int)image->getHeight(), 0, 0, 0, buffer);
+    int levels = 1;
+    if (sTextureMipmap)
+    {
+        int levelsW = mipLevelsFor(width);
+        int levelsH = mipLevelsFor(height);
+        levels = levelsH < levelsW ? levelsH : levelsW;
+        if (levels > 5) levels = 5;
+    }
+    GlStateManager::texImage2D(0, 0, 0, width, height, 0, 0, 0, buffer);
+    if (sTextureMipmap)
+    {
+        int* sourceData = pixels.data;
+        int sourceWidth = width;
+        bool ownsSourceData = false;
+        int level;
+        for (level = 1; level < levels; ++level)
+        {
+            int mipWidth = width >> level;
+            int mipHeight = height >> level;
+            unsigned int mipCount = (unsigned int)(mipWidth * mipHeight);
+            arrayWithLength<int> mip(mipCount, true);
+            int* precomputed = image->getData(level);
+            if (precomputed != NULL)
+            {
+                memcpy(mip.data, precomputed, mipCount * 4);
+                unsigned int j;
+                for (j = 0; j < mipCount; ++j)
+                {
+                    mip.data[j] = (int)rotateChannelsLeft((unsigned int)mip.data[j]);
+                }
+            }
+            else
+            {
+                int row, col;
+                for (row = 0; row < mipHeight; ++row)
+                {
+                    for (col = 0; col < mipWidth; ++col)
+                    {
+                        int r0 = (row * 2) * sourceWidth;
+                        int r1 = (row * 2 + 1) * sourceWidth;
+                        int c0 = col * 2;
+                        int c1 = col * 2 + 1;
+                        unsigned int a = rotateChannelsRight((unsigned int)sourceData[r0 + c0]);
+                        unsigned int b = rotateChannelsRight((unsigned int)sourceData[r0 + c1]);
+                        unsigned int c = rotateChannelsRight((unsigned int)sourceData[r1 + c0]);
+                        unsigned int d = rotateChannelsRight((unsigned int)sourceData[r1 + c1]);
+                        unsigned int top = Texture::crispBlend((int)a, (int)b);
+                        unsigned int bottom = Texture::crispBlend((int)c, (int)d);
+                        unsigned int blended = Texture::crispBlend((int)top, (int)bottom);
+                        mip.data[row * mipWidth + col] = (int)rotateChannelsLeft(blended);
+                    }
+                }
+            }
+            ByteBuffer* mipBuffer = MemoryTracker::createByteBuffer((int)(mipCount * 4));
+            mipBuffer->clear();
+            arrayWithLength<unsigned char> mipBytes(mipCount * 4, true);
+            unsigned int k;
+            for (k = 0; k < mipCount; ++k)
+            {
+                unsigned int value = (unsigned int)mip.data[k];
+                mipBytes.data[k * 4] = (unsigned char)(value >> 16);
+                mipBytes.data[k * 4 + 1] = (unsigned char)(value >> 8);
+                mipBytes.data[k * 4 + 2] = (unsigned char)value;
+                mipBytes.data[k * 4 + 3] = (unsigned char)(value >> 24);
+            }
+            mipBuffer->put(mipBytes);
+            mipBuffer->position(0);
+            mipBuffer->limit(mipBytes.length);
+            GlStateManager::texImage2D(0, level, 0, mipWidth, mipHeight, 0, 0, 0, mipBuffer);
+            delete mipBuffer;
+            if (ownsSourceData) delete[] sourceData;
+            sourceData = mip.data;
+            sourceWidth = mipWidth;
+            ownsSourceData = true;
+        }
+        if (ownsSourceData) delete[] sourceData;
+    }
+    delete[] pixels.data;
     delete buffer;
+    MemSect(0);
 }
 
 int Textures::loadTexture(_TEXTURE_NAME textureName, const std::wstring& name)
@@ -194,14 +305,18 @@ int Textures::loadTexture(_TEXTURE_NAME textureName, const std::wstring& name)
     if (found != end()) return found->second;
     setTextureFormat(name);
     int texture = MemoryTracker::genTextures();
-    BufferedImage* image = readImage(textureName, name);
-    if (image->getWidth() > 0 && image->getHeight() > 0)
+    bool blur = name.compare(0, 6, L"_blur_") == 0;
+    std::wstring workingName = blur ? name.substr(6) : name;
+    bool clamp = name.compare(0, 7, L"_clamp_") == 0;
+    if (clamp) workingName = name.substr(7);
+    BufferedImage* image = readImage(textureName, workingName);
+    if (image->isMipmapDisabled()) sTextureMipmap = false;
+    if (image->getHeight() > 0 && image->getWidth() > 0)
     {
-        loadTexture(image, texture, false, !sTextureMipmap);
+        loadTexture(image, texture, blur, clamp);
     }
-    (*this)[name] = texture;
     delete image;
-    mTextureFormat = false;
+    (*this)[name] = texture;
     return texture;
 }
 
@@ -252,17 +367,14 @@ int Textures::loadTexture(int textureName)
     if (textureName == -1) return 0;
     if (textureName == 0xf1)
     {
-        Texture* texture = mBlocks->getStitchedTexture();
-        texture->bind(0);
-        return (int)texture->getGlId();
+        mBlocks->getStitchedTexture()->bind(0);
+        return (int)mBlocks->getStitchedTexture()->getGlId();
     }
     if (textureName == 0xf0)
     {
-        Texture* texture = mItems->getStitchedTexture();
-        texture->bind(0);
-        return (int)texture->getGlId();
+        mItems->getStitchedTexture()->bind(0);
+        return (int)mItems->getStitchedTexture()->getGlId();
     }
-    if (textureName < 0 || textureName >= 256) return 0;
     return sIndexedTextures[textureName];
 }
 
@@ -275,14 +387,12 @@ void Textures::bindTexture(const ResourceLocation* location)
 
 void Textures::bindTextureLayers(const ResourceLocation* location)
 {
-    if (location == NULL) return;
+    int count = location->getTextureCount();
     int i;
-    if (!location->isPreloaded())
+    for (i = 0; i < count; ++i)
     {
-        bind(loadTexture((_TEXTURE_NAME)0xf2, location->getPath()));
-        return;
+        loadTexture(location->getTexture(i));
     }
-    for (i = 0; i < location->getTextureCount(); ++i) bind(loadTexture(location->getTexture(i)));
 }
 
 ResourceLocation* Textures::getTextureLocation(int textureName)
@@ -406,27 +516,114 @@ int Textures::addMemTexture(const std::wstring& name, MemTextureProcessor* proce
 
 int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
 {
-    int texture = addMemTexture(name, NULL);
-    if (texture != 0) return texture;
-    if (path.empty()) return -1;
-    return loadTexture((_TEXTURE_NAME)0xf2, path);
+    MemTexture* texture = NULL;
+    EnterCriticalSection(&mMutex);
+    boost::unordered_map<std::wstring, MemTexture*>::iterator found = mMemTextures.find(name);
+    if (found != mMemTextures.end()) texture = found->second;
+    LeaveCriticalSection(&mMutex);
+    if (texture == NULL)
+    {
+        if (!g_pApp->IsFileInMemoryTextures(name))
+        {
+            return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
+        }
+        texture = (MemTexture*)addMemTexture(name, NULL);
+        if (texture == NULL) return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
+    }
+    MemTextureFields& fields = memTextureFields(texture);
+    fields.m_textureFormat = 0;
+    int result;
+    if (fields.m_image == NULL || fields.m_loaded)
+    {
+        result = fields.m_textureId;
+    }
+    else
+    {
+        if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
+        if (fields.m_textureId < 0)
+        {
+            result = getTexture(fields.m_image, (C4JRender::eTextureFormat)0, sTextureMipmap);
+            fields.m_textureId = result;
+            fields.m_loaded = true;
+            sTextureMipmap = true;
+        }
+        else
+        {
+            loadTexture(fields.m_image, fields.m_textureId);
+            result = fields.m_textureId;
+            sTextureMipmap = true;
+            fields.m_loaded = true;
+        }
+    }
+    if (result >= 0) return result;
+    return path.empty() ? -1 : loadTexture((_TEXTURE_NAME)0xf2, path);
 }
 
 int Textures::loadMemTexture(const std::wstring& name, int texture)
 {
-    int result = addMemTexture(name, NULL);
-    if (result != 0) return result;
-    if (texture >= 0)
+    MemTexture* memTex = NULL;
+    EnterCriticalSection(&mMutex);
+    boost::unordered_map<std::wstring, MemTexture*>::iterator found = mMemTextures.find(name);
+    if (found != mMemTextures.end()) memTex = found->second;
+    LeaveCriticalSection(&mMutex);
+    if (memTex == NULL)
     {
-        return loadTexture(texture);
+        if (!g_pApp->IsFileInMemoryTextures(name)) return loadTexture(texture);
+        memTex = (MemTexture*)addMemTexture(name, NULL);
+        if (memTex == NULL) return loadTexture(texture);
     }
-    return loadTexture((_TEXTURE_NAME)0xf2, name);
+    MemTextureFields& fields = memTextureFields(memTex);
+    fields.m_textureFormat = 0;
+    int result;
+    if (fields.m_image == NULL || fields.m_loaded)
+    {
+        result = fields.m_textureId;
+    }
+    else
+    {
+        if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
+        if (fields.m_textureId < 0)
+        {
+            result = getTexture(fields.m_image, (C4JRender::eTextureFormat)0, sTextureMipmap);
+            fields.m_textureId = result;
+            fields.m_loaded = true;
+            sTextureMipmap = true;
+        }
+        else
+        {
+            loadTexture(fields.m_image, fields.m_textureId);
+            result = fields.m_textureId;
+            sTextureMipmap = true;
+            fields.m_loaded = true;
+        }
+    }
+    if (result >= 0) return result;
+    return loadTexture(texture);
 }
 
 void Textures::removeMemTexture(const std::wstring& name)
 {
     EnterCriticalSection(&mMutex);
-    mMemTextures.erase(name);
+    boost::unordered_map<std::wstring, MemTexture*>::iterator found = mMemTextures.find(name);
+    if (found != mMemTextures.end())
+    {
+        MemTexture* texture = found->second;
+        if (texture == NULL)
+        {
+            mMemTextures.erase(name);
+        }
+        else
+        {
+            MemTextureFields& fields = memTextureFields(texture);
+            fields.m_referenceCount = fields.m_referenceCount - 1;
+            if (fields.m_referenceCount == 0)
+            {
+                if (fields.m_textureId >= 0) releaseTexture(fields.m_textureId);
+                mMemTextures.erase(name);
+                delete texture;
+            }
+        }
+    }
     LeaveCriticalSection(&mMutex);
 }
 

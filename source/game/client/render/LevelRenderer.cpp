@@ -2867,6 +2867,24 @@ void LevelRenderer::setBlocksDirty(int minX, int minY, int minZ, int maxX, int m
     setDirty(minX - 1, minY - 1, minZ - 1, maxX + 1, maxY + 1, maxZ + 1, level);
 }
 
+void LevelRenderer::notifyNearbyEntities(Level* level, const BlockPos& pos, bool playing)
+{
+    const AABB* box = AABB::newTemp(pos)->grow(3.0);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
+
+    if (entities != NULL)
+    {
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+        {
+            boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(*it);
+
+            livingEntity->setRecordPlayingNearby(pos, playing);
+        }
+
+        delete entities;
+    }
+}
+
 void LevelRenderer::cull(Culler* culler, float partialTick)
 {
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
@@ -3137,10 +3155,10 @@ void LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool 
 
 void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    if (!entity) return;
-    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-    if (player)
+    if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+
         player->prepareCustomTextures();
     }
 }

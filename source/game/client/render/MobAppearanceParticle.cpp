@@ -30,28 +30,27 @@ void MobAppearanceParticle::tick()
 
     if (guardian == NULL)
     {
-        ElderGuardian* newGuardian = new ElderGuardian(level);
+        boost::shared_ptr<ElderGuardian> newGuardian(new ElderGuardian(level));
         newGuardian->setGhost();
-        guardianReference.reset(newGuardian);
-        guardian = newGuardian;
+        guardianReference = newGuardian;
+        guardian = newGuardian.get();
     }
 }
 
 bool MobAppearanceParticle::isAffected()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (guardian == NULL || minecraft == NULL)
-        return false;
-
-    boost::shared_ptr<Entity> camera = minecraft->getCameraEntity();
-    if (!camera)
-        return false;
-
-    if ((camera->GetType() & ENTITY_TYPE_LIVING_ENTITY) != ENTITY_TYPE_LIVING_ENTITY)
-        return false;
-
-    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(camera);
-    return living && living->hasEffect(MobEffects::DIG_SLOWDOWN);
+    if (guardian != NULL && minecraft != NULL && minecraft->getCameraEntity())
+    {
+        if ((minecraft->getCameraEntity()->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY)
+        {
+            boost::shared_ptr<LivingEntity> living =
+                boost::static_pointer_cast<LivingEntity>(minecraft->getCameraEntity());
+            if (living && living->hasEffect(MobEffects::DIG_SLOWDOWN))
+                return true;
+        }
+    }
+    return false;
 }
 
 void MobAppearanceParticle::render(BufferBuilder*,

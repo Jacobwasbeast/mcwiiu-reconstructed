@@ -1,14 +1,74 @@
 #include "game/client/render/WolfModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
+#include "game/client/render/Tesselator.hpp"
+#include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Wolf.hpp"
-WolfModel::WolfModel(const ModelDefinition& modelDefinition):mHead(NULL),mBody(NULL),mLeg1(NULL),mLeg2(NULL),mLeg3(NULL),mLeg4(NULL),mTail(NULL){
- mHead=new ModelPart(this); mHead->texOffs(0,0)->addBox(-3,-3,-2,6,6,4); mHead->setPos(-1,13,-7);
- mBody=new ModelPart(this); mBody->texOffs(18,14)->addBox(-4,-2,-3,8,12,6); mBody->setPos(0,11,2);
- mLeg1=new ModelPart(this); mLeg2=new ModelPart(this); mLeg3=new ModelPart(this); mLeg4=new ModelPart(this);
- mLeg1->setPos(-2.5f,16,7); mLeg2->setPos(0.5f,16,7); mLeg3->setPos(-2.5f,16,-4); mLeg4->setPos(0.5f,16,-4);
- mTail=new ModelPart(this); mTail->texOffs(0,18)->addBox(-1,0,-1,2,8,2); mTail->setPos(-1,16,7); compileSkinnedDrawlist(); }
+WolfModel::WolfModel(const ModelDefinition& modelDefinition):mHead(NULL),mBody(NULL),mLeg1(NULL),mLeg2(NULL),mLeg3(NULL),mLeg4(NULL),mTail(NULL),mUpperBody(NULL)
+{
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mHasOverriddenParts = true;
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Wolf);
+
+        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
+        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
+        mLeg1 = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
+        mLeg2 = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, 0.0f, NULL);
+        mLeg3 = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, 0.0f, NULL);
+        mLeg4 = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, 0.0f, NULL);
+        mTail = new ModelPartSkin(this, L"tail", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBody = new ModelPartSkin(this, L"upperBody", modelDefinition, NULL, 0.0f, NULL);
+
+        compileSkinnedDrawlist();
+        builder->useDefaultShaders();
+    }
+    else
+    {
+        mHead = new ModelPartSkin(this, 0, 0, NULL);
+        mHead->addBox(-2.0f, -3.0f, -2.0f, 6, 6, 4, 0.0f);
+        mHead->setPos(-1.0f, 13.5f, -7.0f);
+
+        mBody = new ModelPartSkin(this, 18, 14, NULL);
+        mBody->addBox(-3.0f, -2.0f, -3.0f, 6, 9, 6, 0.0f);
+        mBody->setPos(0.0f, 14.0f, 2.0f);
+
+        mUpperBody = new ModelPartSkin(this, 21, 0, NULL);
+        mUpperBody->addBox(-3.0f, -3.0f, -3.0f, 8, 6, 7, 0.0f);
+        mUpperBody->setPos(-1.0f, 14.0f, 2.0f);
+
+        mLeg1 = new ModelPartSkin(this, 0, 18, NULL);
+        mLeg1->addBox(0.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mLeg1->setPos(-2.5f, 16.0f, 7.0f);
+
+        mLeg2 = new ModelPartSkin(this, 0, 18, NULL);
+        mLeg2->addBox(0.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mLeg2->setPos(0.5f, 16.0f, 7.0f);
+
+        mLeg3 = new ModelPartSkin(this, 0, 18, NULL);
+        mLeg3->addBox(0.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mLeg3->setPos(-2.5f, 16.0f, -4.0f);
+
+        mLeg4 = new ModelPartSkin(this, 0, 18, NULL);
+        mLeg4->addBox(0.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mLeg4->setPos(0.5f, 16.0f, -4.0f);
+
+        mTail = new ModelPartSkin(this, 9, 18, NULL);
+        mTail->addBox(0.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
+        mTail->setPos(-1.0f, 12.0f, 8.0f);
+
+        mHead->texOffs(16, 14)->addBox(-2.0f, -5.0f, 0.0f, 2, 2, 1, 0.0f);
+        mHead->texOffs(16, 14)->addBox(2.0f, -5.0f, 0.0f, 2, 2, 1, 0.0f);
+        mHead->texOffs(0, 10)->addBox(-0.5f, 0.0f, -5.0f, 3, 3, 4, 0.0f);
+
+        compileSkinnedDrawlist();
+        builder->useDefaultShaders();
+    }
+}
 WolfModel::~WolfModel(){}
 void WolfModel::render(boost::shared_ptr<Entity>& e, float a, float b, float c, float d, float f, float s, bool u)
 {
@@ -26,7 +86,7 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
                                 float limbSwingAmount, float partialTicks)
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(entity);
-    ModelPart* upperBody = *reinterpret_cast<ModelPart**>(reinterpret_cast<char*>(this) + 0x80);
+    ModelPart* upperBody = mUpperBody;
 
     if (wolf->isAngry())
         mTail->mYRot = 0.0f;

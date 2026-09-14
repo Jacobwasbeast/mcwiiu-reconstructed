@@ -28,12 +28,13 @@ Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 
 const ResourceLocation* FishRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() == 0x000000000D502002ULL)
-        return &FISH_TEXTURE;
-    if (entity->GetType() == 0x000000000D502003ULL)
-        return &PUFFERFISH_TEXTURE;
-    if (entity->GetType() == 0x000000000D502004ULL)
-        return &SALMON_TEXTURE;
+    if (entity->GetType() != 0x000000000D502002ULL)
+    {
+        if (entity->GetType() == 0x000000000D502003ULL)
+            return &PUFFERFISH_TEXTURE;
+        if (entity->GetType() == 0x000000000D502004ULL)
+            return &SALMON_TEXTURE;
+    }
     return &FISH_TEXTURE;
 }
 

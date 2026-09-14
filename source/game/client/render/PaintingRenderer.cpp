@@ -25,10 +25,6 @@ PaintingRenderer::~PaintingRenderer()
 void PaintingRenderer::setBrightness(boost::shared_ptr<Painting> painting, float x, float z)
 {
     Painting* value = painting.get();
-    if (value == NULL)
-    {
-        return;
-    }
 
     BlockPos origin = value->getPos();
     BlockPos pos(origin.x + (int)x, origin.y, origin.z + (int)z);

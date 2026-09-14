@@ -174,22 +174,78 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
 {
     boost::shared_ptr<Ocelot> ocelot = boost::dynamic_pointer_cast<Ocelot>(entity);
 
-    mHead->setPos(0.0f, 0.0f, 0.0f);
-    mBody->setPos(0.0f, 0.0f, 0.0f);
-    mTail1->setPos(0.0f, 0.0f, 0.0f);
-    mTail2->setPos(0.0f, 0.0f, 0.0f);
+    mBody->mY = 0.0f;
+    mBody->mZ = 0.0f;
+    mHead->mY = 0.0f;
+    mHead->mZ = 0.0f;
+    mTail1->mY = 0.0f;
+    mTail1->mZ = 0.0f;
+    mTail2->mY = 0.0f;
+    mTail2->mZ = 0.0f;
+    mFrontLegR->mY = 0.0f;
+    mFrontLegR->mZ = 0.0f;
+    mFrontLegL->mY = 0.0f;
+    mFrontLegL->mZ = 0.0f;
+    mBackLegR->mY = 0.0f;
+    mBackLegR->mZ = 0.0f;
+    mBackLegL->mY = 0.0f;
+    mBackLegL->mZ = 0.0f;
+    mTail1->mXRot = 0.8999999761581421f;
+    mBody->mXRot = 0.0f;
 
-    if (ocelot && ocelot->isSitting())
+    if (ocelot->isSneaking())
     {
+        mBody->mY += 1.0f;
+        mHead->mY += 2.0f;
+        mTail1->mY += 1.0f;
+        mTail2->mY += -4.0f;
+        mTail2->mZ += 2.0f;
+        mTail1->mXRot = 1.5707963705062866f;
+        mTail2->mXRot = 1.5707963705062866f;
         mPose = 0;
     }
-    else if (ocelot && ocelot->isSittingOnBlock())
+    else if (ocelot->isSprinting())
     {
+        mTail2->mY = mTail1->mY;
+        mTail2->mZ += 2.0f;
+        mTail1->mXRot = 1.5707963705062866f;
+        mTail2->mXRot = 1.5707963705062866f;
         mPose = 2;
     }
     else
     {
-        mPose = 1;
+
+        if (ocelot->isSitting())
+        {
+            mBody->mY += -4.0f;
+            mBody->mXRot = -45.0f * 0.01745329238474369f;
+            mBody->mZ += 5.0f;
+            mHead->mY += -3.299999952316284f;
+            mHead->mZ += 1.0f;
+            mTail1->mY += 8.0f;
+            mTail1->mZ += -2.0f;
+            mTail1->mXRot = 1.72787606716156f;
+            mTail2->mY += 2.0f;
+            mTail2->mZ += -0.800000011920929f;
+            mTail2->mXRot = 2.670353889465332f;
+            mFrontLegL->mXRot = -0.15707963705062866f;
+            mFrontLegL->mY = 2.0f;
+            mFrontLegL->mZ = -7.0f;
+            mFrontLegR->mXRot = -0.15707963705062866f;
+            mFrontLegR->mY = 2.0f;
+            mFrontLegR->mZ = -7.0f;
+            mBackLegL->mXRot = -1.5707963705062866f;
+            mBackLegL->mY = 3.0f;
+            mBackLegL->mZ = -4.0f;
+            mBackLegR->mXRot = -1.5707963705062866f;
+            mBackLegR->mY = 3.0f;
+            mBackLegR->mZ = -4.0f;
+            mPose = 3;
+        }
+        else
+        {
+            mPose = 1;
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/ThrownTrident.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -59,39 +60,39 @@ double ThrownTridentRenderer::lerp(double first, double second, double amount)
 void ThrownTridentRenderer::renderLeash(boost::shared_ptr<ThrownTrident>& entity, double x, double y, double z,
                                         float yaw, float partialTick)
 {
-    Tesselator* tesselator = Tesselator::getInstance();
-    if (tesselator == NULL || entity.get() == NULL)
-        return;
-
-    BufferBuilder* builder = tesselator->getBuilder();
-    GlStateManager::disableTexture();
-    GlStateManager::disableLighting();
-    GlStateManager::disableCull();
-    builder->begin(1);
-    float length = 0.5F + partialTick * 0.5F;
-    float phase = yaw * 0.017453292F;
-    int segment;
-    for (segment = 0; segment < 16; ++segment)
+    if (entity->isNoPhysics())
     {
-        float progress = (float)segment / 16.0F;
-        float next = (float)(segment + 1) / 16.0F;
-        float curve = (progress * 2.0F - 1.0F) * (progress * 2.0F - 1.0F) - 1.0F;
-        float nextCurve = (next * 2.0F - 1.0F) * (next * 2.0F - 1.0F) - 1.0F;
-        float px = (float)x + std::sin(phase) * curve * 0.5F;
-        float pz = (float)z + std::cos(phase) * curve * 0.5F;
-        float nx = (float)x + std::sin(phase) * nextCurve * 0.5F;
-        float nz = (float)z + std::cos(phase) * nextCurve * 0.5F;
-        float py = (float)y + progress * length;
-        float ny = (float)y + next * length;
-        float color = (segment & 1) == 0 ? 0.3F : 0.37F;
-        builder->color(color, color, color, 1.0F);
-        builder->vertex(px, py, pz);
-        builder->vertex(nx, ny, nz);
+        Tesselator* tesselator = Tesselator::getInstance();
+        BufferBuilder* builder = tesselator->getBuilder();
+        GlStateManager::disableTexture();
+        GlStateManager::disableLighting();
+        GlStateManager::disableCull();
+        builder->begin(1);
+        float length = 0.5F + partialTick * 0.5F;
+        float phase = yaw * 0.017453292F;
+        int segment;
+        for (segment = 0; segment < 16; ++segment)
+        {
+            float progress = (float)segment / 16.0F;
+            float next = (float)(segment + 1) / 16.0F;
+            float curve = (progress * 2.0F - 1.0F) * (progress * 2.0F - 1.0F) - 1.0F;
+            float nextCurve = (next * 2.0F - 1.0F) * (next * 2.0F - 1.0F) - 1.0F;
+            float px = (float)x + std::sin(phase) * curve * 0.5F;
+            float pz = (float)z + std::cos(phase) * curve * 0.5F;
+            float nx = (float)x + std::sin(phase) * nextCurve * 0.5F;
+            float nz = (float)z + std::cos(phase) * nextCurve * 0.5F;
+            float py = (float)y + progress * length;
+            float ny = (float)y + next * length;
+            float color = (segment & 1) == 0 ? 0.3F : 0.37F;
+            builder->color(color, color, color, 1.0F);
+            builder->vertex(px, py, pz);
+            builder->vertex(nx, ny, nz);
+        }
+        builder->end();
+        GlStateManager::enableLighting();
+        GlStateManager::enableTexture();
+        GlStateManager::enableCull();
     }
-    builder->end();
-    GlStateManager::enableLighting();
-    GlStateManager::enableTexture();
-    GlStateManager::enableCull();
 }
 
 void ThrownTridentRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

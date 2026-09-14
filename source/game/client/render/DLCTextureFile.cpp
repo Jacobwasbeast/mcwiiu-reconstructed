@@ -79,11 +79,7 @@ std::wstring DLCTextureFile::getParameterAsString(DLCManager::EDLCParameterType 
         }
 
         boost::unordered_map<std::wstring, std::wstring>::const_iterator it = m_parameters.find(name);
-        if (it != m_parameters.end())
-        {
-            return it->second;
-        }
-        return L"";
+        return it->second;
     }
 
     if (parameter == DLCManager::eDLCParameterType_DisableMipMap)

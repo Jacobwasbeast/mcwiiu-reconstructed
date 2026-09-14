@@ -11,6 +11,6 @@ public:
  virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity,float limbSwing,float limbSwingAmount,float partialTicks);
  virtual void setupAnim(float limbSwing,float limbSwingAmount,float ageInTicks,float netHeadYaw,float headPitch,float scale,boost::shared_ptr<Entity> entity,_SkinAdjustments skinAdjustments);
  virtual std::wstring getName();
- ModelPart* mHead; ModelPart* mBody; ModelPart* mLeg1; ModelPart* mLeg2; ModelPart* mLeg3; ModelPart* mLeg4; ModelPart* mTail;
+ ModelPart* mHead; ModelPart* mBody; ModelPart* mLeg1; ModelPart* mLeg2; ModelPart* mLeg3; ModelPart* mLeg4; ModelPart* mTail; ModelPart* mUpperBody;
 };
 #endif

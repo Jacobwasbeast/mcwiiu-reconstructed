@@ -137,11 +137,12 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                   float limbSwingAmount, float partialTicks)
 {
-    mFeather->mZRot = mFeather->mZRot;
-    mWing0->mZRot = mWing0Z;
-    mWing1->mZRot = mWing1Z;
-    mHead2->mZRot = mHead2Z;
-    mAnimationState = 0;
+    mFeather->mYRot = mBodyX;
+    mBody->mYRot = mBodyY;
+    mWing0->mYRot = mBodyZ;
+    mWing1->mYRot = mTailY;
+    mLeg0->mYRot = mWing0Z;
+    mLeg1->mYRot = mWing1Y;
 
     if (Minecraft::InMiniGame((EMiniGameId)15, true))
     {
@@ -153,21 +154,33 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
         if (parrot->isPartyParrot())
         {
             mAnimationState = 3;
-            mWing0->mZRot = -0.01745329238474369f * 20.0f;
-            mWing1->mZRot = 0.01745329238474369f * 20.0f;
+            mLeg0->mZRot = -(0.01745329238474369f * 20.0f);
+            mLeg1->mZRot = 0.01745329238474369f * 20.0f;
+        }
+        else if (parrot->isSitting())
+        {
+            mAnimationState = 2;
+            mTail->mYRot = (0.01745329238474369f * 30.0f) + 1.0153000354766846f;
+            mWing0->mZRot = -0.08730000257492065f;
+            mWing1->mZRot = 0.08730000257492065f;
+            mLeg0->mYRot = mLeg0->mYRot + (0.01745329238474369f * 90.0f);
+            mLeg1->mYRot = mLeg1->mYRot + (0.01745329238474369f * 90.0f);
+            mLeg0->mZRot = mWing1X;
+            mLeg1->mZRot = mWing1Z;
         }
         else if (parrot->isFlying())
         {
-            mAnimationState = 2;
-            mTail->mYRot = 1.899999976f;
-            mWing0->mZRot = -0.0873f;
-            mWing1->mZRot = 0.0873f;
+            mAnimationState = 0;
+            mLeg0->mZRot = mWing1X;
+            mLeg1->mZRot = mWing1Z;
         }
         else
         {
             mAnimationState = 1;
-            mLeg0->mYRot = 1.0153f;
-            mLeg1->mYRot = 1.0153f;
+            mLeg0->mYRot = mLeg0->mYRot + (0.01745329238474369f * 1.899999976f);
+            mLeg1->mYRot = mLeg1->mYRot + (0.01745329238474369f * 1.899999976f);
+            mLeg0->mZRot = mWing1X;
+            mLeg1->mZRot = mWing1Z;
         }
     }
 }

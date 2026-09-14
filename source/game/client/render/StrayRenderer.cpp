@@ -9,6 +9,11 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/SkeletonModel.hpp"
 #include "game/client/render/RenderLayer.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/generation/StrayClothingLayer.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -39,15 +44,25 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
                                  float ageInTicks, float netHeadYaw, float headPitch, float scale, float partialTick,
                                  bool overlay)
 {
+    bool visible = isVisible(entity);
     bool invisibleToPlayer = false;
+    if (!visible)
+        invisibleToPlayer = !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
     std::vector<RenderLayer*>::iterator it = mLayers.begin();
     while (it != mLayers.end())
     {
         RenderLayer* layer = *it;
-        if ((mModel->hasOverriddenParts() && !invisibleToPlayer) || layer != mStrayClothingLayer)
+        if ((visible && !invisibleToPlayer) || layer != mStrayClothingLayer)
         {
             bool skipLayer = false;
+            if ((entity->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
+                && boost::static_pointer_cast<Player>(entity)->isSpectator()
+                && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
+                && (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
+            {
+                skipLayer = true;
+            }
 
             if (!skipLayer)
             {

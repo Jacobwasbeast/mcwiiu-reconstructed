@@ -19,15 +19,15 @@
 EntityBlockRenderer* EntityBlockRenderer::instance = NULL;
 
 EntityBlockRenderer::EntityBlockRenderer()
-    : mChestBlockEntity(new ChestBlockEntity(false)),
-      mTrappedChestBlockEntity(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false)),
-      mEnderChestBlockEntity(new EnderChestBlockEntity()),
-      mBannerBlockEntity(new BannerBlockEntity()),
-      mShulkerBoxBlockEntity(new ShulkerBoxBlockEntity()),
-      mSkullBlockEntity(new SkullBlockEntity()),
-      mBedBlockEntity(new BedBlockEntity()),
-      mConduitBlockEntity(new ConduitBlockEntity())
 {
+    mChestBlockEntity.reset(new ChestBlockEntity(false));
+    mTrappedChestBlockEntity.reset(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false));
+    mEnderChestBlockEntity.reset(new EnderChestBlockEntity());
+    mBannerBlockEntity.reset(new BannerBlockEntity());
+    mSkullBlockEntity.reset(new SkullBlockEntity());
+    mShulkerBoxBlockEntity.reset(new ShulkerBoxBlockEntity());
+    mBedBlockEntity.reset(new BedBlockEntity());
+    mConduitBlockEntity.reset(new ConduitBlockEntity());
 }
 
 void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float partialTicks,

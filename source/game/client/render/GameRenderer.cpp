@@ -6,10 +6,12 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/core/Options.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Mth.hpp"
+#include "game/util/Math.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/FloatBuffer.hpp"
@@ -120,6 +122,7 @@ struct ElementStorageWithTick
 C4JEventArrayImpl* sRenderUpdateEvents = NULL;
 OSFastMutex sDeleteMutex;
 bool sDeleteMutexInitialized = false;
+bool sRenderUpdateThreadActive = false;
 
 std::vector<LevelChunk*> sPendingChunkDeletes[2];
 int sPendingChunkDeleteList = 0;
@@ -252,12 +255,40 @@ GameRenderer::GameRenderer(Minecraft* minecraft, ResourceManager* resourceManage
     std::memset(mPrefix, 0, sizeof(mPrefix));
     std::memset(mRandomTail, 0, sizeof(mRandomTail));
     std::memset(mData, 0, sizeof(mData));
+    std::memset(mDataTail, 0, sizeof(mDataTail));
+
+    InitializeCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+
+    mActivationItems[0] = ItemInstance::EMPTY;
+    mActivationItems[1] = ItemInstance::EMPTY;
+    mActivationItems[2] = ItemInstance::EMPTY;
+    mActivationItems[3] = ItemInstance::EMPTY;
+
+    *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11d) = 1;
+    *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x11e) = 1;
+    *reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0x110) = 70.0f;
+    *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x22b0) = 0x18;
+
     mBuffer = MemoryTracker::createFloatBuffer(16);
 }
 
 GameRenderer::~GameRenderer()
 {
-    delete mMapRenderer;
+    unsigned char* extraArrayA;
+    std::memcpy(&extraArrayA, reinterpret_cast<char*>(this) + 0x22cc, sizeof(extraArrayA));
+    if (extraArrayA != NULL)
+        delete[] extraArrayA;
+
+    unsigned char* extraArrayB;
+    std::memcpy(&extraArrayB, reinterpret_cast<char*>(this) + 0x22d0, sizeof(extraArrayB));
+    if (extraArrayB != NULL)
+        delete[] extraArrayB;
+
+    DeleteCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+
+    boost::shared_ptr<Entity>* pointedEntity =
+        reinterpret_cast<boost::shared_ptr<Entity>*>(reinterpret_cast<char*>(this) + 0x64);
+    pointedEntity->reset();
 }
 
 void GameRenderer::renderNameTagInWorld(Font* font, const std::wstring& text, float x, float y, float z,
@@ -584,7 +615,23 @@ void GameRenderer::tickFov()
 
 void GameRenderer::tickLightTexture()
 {
-    return;
+    static const float kFlickerWeight = 0.8999999761581421f;
+
+    char* self = reinterpret_cast<char*>(this);
+    const double r1 = Math::random();
+    const double r2 = Math::random();
+    const double r3 = Math::random();
+    const double r4 = Math::random();
+
+    float* lightValue = reinterpret_cast<float*>(self + 0x15c);
+    float* lightBrightness = reinterpret_cast<float*>(self + 0x158);
+
+    const float newValue =
+        static_cast<float>((r1 - r2) * r3 * r4 + static_cast<double>(*lightValue)) * kFlickerWeight;
+
+    *reinterpret_cast<unsigned char*>(self + 0x22c8) = 1;
+    *lightValue = newValue;
+    *lightBrightness = *lightBrightness + (newValue - *lightBrightness);
 }
 
 AbstractClientPlayer* GameRenderer::getCamera()
@@ -1561,8 +1608,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     GlStateManager::matrixMode(1);
     GlStateManager::loadIdentity();
     if (mMinecraft->mOptions != NULL
-        && *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x15)
-            != 0)
+        && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>((eyeIndex * 2 - 1) * -1);
         GlStateManager::translatef((eyeOffset - kStereoBase) * kProjectionEyeOffset, kHalf, kHalf);
@@ -1587,8 +1633,7 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     GlStateManager::matrixMode(0);
     GlStateManager::loadIdentity();
     if (mMinecraft->mOptions != NULL
-        && *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x15)
-            != 0)
+        && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
         GlStateManager::translatef((eyeOffset - kStereoBase) * kModelEyeOffset, kHalf, kHalf);
@@ -1723,7 +1768,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     }
 
     if (mMinecraft->mOptions != NULL
-        && *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x15) != 0)
+        && mMinecraft->mOptions->mAnaglyph3d)
     {
         GlStateManager::matrixMode(1);
         GlStateManager::loadIdentity();
@@ -1750,7 +1795,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     GlStateManager::matrixMode(0);
     GlStateManager::loadIdentity();
     if (mMinecraft->mOptions != NULL
-        && *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x15) != 0)
+        && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float eyeOffset = static_cast<float>(eyeIndex * 2 - 1);
         GlStateManager::translatef((eyeOffset - kStereoBase) * kModelEyeOffset, kHalf, kHalf);
@@ -2174,9 +2219,22 @@ void GameRenderer::getTargetFogColor(const BlockPos&, float& red, float& green, 
     blue = 0.0f;
 }
 
-double GameRenderer::modifyFogDistance(const BlockPos&, float distance, float)
+double GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, float value)
 {
-    return distance;
+    static const float kZero = 0.0f;
+    static const float kFarDistance = 40.0f;
+    static const float kNearFactor = 1.0f;
+    static const float kFarFactor = 0.3333333432674408f;
+
+    const float deltaY = distance - static_cast<float>(pos.y);
+    if (kZero <= deltaY)
+    {
+        if (deltaY < kFarDistance)
+            value = value * Mth::Lerp(kNearFactor, kFarFactor, deltaY / kFarDistance);
+        else
+            value = value * kFarFactor;
+    }
+    return static_cast<double>(value);
 }
 
 void GameRenderer::setupClearColor(float partialTick)
@@ -2477,7 +2535,7 @@ void GameRenderer::setupClearColor(float partialTick)
     }
 
     if (mMinecraft->mOptions != NULL
-        && *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(mMinecraft->mOptions) + 0x15) != 0)
+        && mMinecraft->mOptions->mAnaglyph3d)
     {
         const float sum = red * 0.30f + green * 0.59f + blue * 0.11f;
         *fogRed = (blue * 0.30f + green * 0.59f + red * 0.11f) / kColorBlindDivisor;
@@ -2498,9 +2556,25 @@ FloatBuffer* GameRenderer::getBuffer(float x, float y, float z, float w)
     return mBuffer->flip();
 }
 
-void GameRenderer::resetFogColor(bool)
+void GameRenderer::resetFogColor(bool useBlack)
 {
-    return;
+    static const float kAlpha = 1.0f;
+    static const float kZero = 0.0f;
+
+    if (!useBlack)
+    {
+        char* self = reinterpret_cast<char*>(this);
+        const float red = *reinterpret_cast<float*>(self + 0x2168);
+        const float green = *reinterpret_cast<float*>(self + 0x216c);
+        const float blue = *reinterpret_cast<float*>(self + 0x2170);
+        FloatBuffer* buffer = getBuffer(red, green, blue, kAlpha);
+        GlStateManager::glFog(5, buffer);
+    }
+    else
+    {
+        FloatBuffer* buffer = getBuffer(kZero, kZero, kZero, kAlpha);
+        GlStateManager::glFog(5, buffer);
+    }
 }
 
 void GameRenderer::setupFog(int, float partialTick)
@@ -3839,9 +3913,22 @@ void GameRenderer::renderLevel(float partialTick, long long targetNanoTime)
     }
 }
 
-void GameRenderer::setupGuiScreen(int)
+void GameRenderer::setupGuiScreen(int guiScale)
 {
-    return;
+    static const double kZero = 0.0;
+    static const double kNear = 1000.0;
+    static const double kFar = 3000.0;
+    static const float kZeroF = 0.0f;
+    static const float kTranslateZ = -2000.0f;
+
+    ScreenSizeCalculator screenSize(mMinecraft->mOptions, guiScale);
+
+    GlStateManager::matrixMode(1);
+    GlStateManager::loadIdentity();
+    GlStateManager::ortho(kZero, screenSize.mWidthScale, screenSize.mHeightScale, kZero, kNear, kFar);
+    GlStateManager::matrixMode(0);
+    GlStateManager::loadIdentity();
+    GlStateManager::translatef(kZeroF, kZeroF, kTranslateZ);
 }
 
 void GameRenderer::renderItemActivationAnimation(int width, int height, float partialTick)
@@ -4028,10 +4115,10 @@ int GameRenderer::shouldRenderBlockOutline()
 
 void GameRenderer::resetData()
 {
-    not_null_ptr<ItemInstance>* activationItems =
-        reinterpret_cast<not_null_ptr<ItemInstance>*>(reinterpret_cast<char*>(this) + 0x225c);
-    for (int i = 0; i < 4; ++i)
-        activationItems[i] = ItemInstance::EMPTY;
+    mActivationItems[0] = ItemInstance::EMPTY;
+    mActivationItems[1] = ItemInstance::EMPTY;
+    mActivationItems[2] = ItemInstance::EMPTY;
+    mActivationItems[3] = ItemInstance::EMPTY;
     mMapRenderer->resetData();
 }
 
@@ -4060,14 +4147,42 @@ void GameRenderer::FinishedReassigning()
     return;
 }
 
-void GameRenderer::EnableUpdateThread(int)
+void GameRenderer::EnableUpdateThread(int reason)
 {
-    return;
+    EnterCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+
+    unsigned int mask;
+    std::memcpy(&mask, reinterpret_cast<char*>(this) + 0x2c, sizeof(mask));
+    mask &= ~(1u << (reason & 0x3f));
+    std::memcpy(reinterpret_cast<char*>(this) + 0x2c, &mask, sizeof(mask));
+
+    if (mask == 0 && !sRenderUpdateThreadActive)
+    {
+        sRenderUpdateThreadActive = true;
+        sRenderUpdateEvents->Set(0);
+        sRenderUpdateEvents->Set(1);
+    }
+
+    LeaveCriticalSection(reinterpret_cast<OSFastMutex*>(this));
 }
 
-void GameRenderer::DisableUpdateThread(int)
+void GameRenderer::DisableUpdateThread(int reason)
 {
-    return;
+    EnterCriticalSection(reinterpret_cast<OSFastMutex*>(this));
+
+    unsigned int mask;
+    std::memcpy(&mask, reinterpret_cast<char*>(this) + 0x2c, sizeof(mask));
+    mask |= (1u << (reason & 0x3f));
+    std::memcpy(reinterpret_cast<char*>(this) + 0x2c, &mask, sizeof(mask));
+
+    if (mask != 0 && sRenderUpdateThreadActive)
+    {
+        sRenderUpdateThreadActive = false;
+        sRenderUpdateEvents->Clear(0);
+        sRenderUpdateEvents->WaitForSingle(1, 0xffffffff);
+    }
+
+    LeaveCriticalSection(reinterpret_cast<OSFastMutex*>(this));
 }
 
 void GameRenderer::EnterDeleteThreadCS()

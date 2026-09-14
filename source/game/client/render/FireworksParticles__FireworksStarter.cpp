@@ -151,11 +151,16 @@ void FireworksParticles::FireworksStarter::createParticleBurst(arrayWithLength<i
                                            arrayWithLength<int> fadeColors,
                                            bool trail, bool flicker)
 {
-    for (int i = 0; i < 14; ++i)
+    double xVelocityBase = random.nextGaussian() * 0.05;
+    double zVelocityBase = random.nextGaussian() * 0.05;
+    for (int i = 0; i < 70; ++i)
     {
-        double xVelocity = random.nextGaussian() * 0.05;
-        double yVelocity = random.nextGaussian() * 0.05;
-        double zVelocity = random.nextGaussian() * 0.05;
+        double xNoise = random.nextGaussian();
+        double zNoise = random.nextGaussian();
+        double yNoise = random.nextDouble();
+        double xVelocity = xd * 0.5 + xNoise * 0.15 + xVelocityBase;
+        double yVelocity = yd * 0.5 + yNoise * 0.5;
+        double zVelocity = zd * 0.5 + zNoise * 0.15 + zVelocityBase;
         createParticle(x, y, z, xVelocity, yVelocity, zVelocity,
                        colors, fadeColors, trail, flicker);
     }
