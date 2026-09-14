@@ -110,14 +110,12 @@ void EmptyLevelChunk::removeBlockEntity(const BlockPos&)
 {
 }
 
-bool EmptyLevelChunk::load(bool)
+void EmptyLevelChunk::load(bool)
 {
-    return false;
 }
 
-bool EmptyLevelChunk::unload(bool, bool)
+void EmptyLevelChunk::unload(bool, bool)
 {
-    return false;
 }
 
 bool EmptyLevelChunk::containsPlayer()

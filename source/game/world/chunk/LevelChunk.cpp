@@ -15,7 +15,10 @@
 #include "game/world/block/CompressedBlockStorage.hpp"
 #include "game/data/SparseDataStorage.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/ListTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/EntityIO.hpp"
+#include "game/core/TickNextTickData.hpp"
 #include "game/util/AABB.hpp"
 #include "game/client/render/GameRenderer.hpp"
 #include "game/world/DimensionType.hpp"
@@ -37,7 +40,7 @@ extern CMinecraftApp* g_pApp;
 static unsigned int sLevelChunkThreadStorage = TlsAlloc();
 static OSFastMutex sLevelChunkLightingMutex;
 static OSFastMutex sLevelChunkEntityMutex;
-static OSFastMutex sLevelChunkPostProcessMutex;
+static OSFastMutex sLevelChunkBlockEntityMutex;
 
 LevelChunk::LevelChunk(Level* level, int x, int z)
     : mEntitySectionCount(16), mElements(NULL), level(NULL), mSkyLight(NULL), mSkyLightUpper(NULL), mBlockLight(NULL),
@@ -440,11 +443,11 @@ void LevelChunk::SetInvalid(bool invalid)
         for (int i = 0; i < mEntitySectionCount; ++i)
             mEntitySections[i]->clear();
         LeaveCriticalSection(&sLevelChunkEntityMutex);
-        EnterCriticalSection(&sLevelChunkPostProcessMutex);
+        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
         for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
             level->markForRemoval(it->second);
         mBlockEntityMap.clear();
-        LeaveCriticalSection(&sLevelChunkPostProcessMutex);
+        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
         delete mPendingBlockEntityTag;
         mPendingBlockEntityTag = NULL;
         mUnloaded = true;
@@ -898,10 +901,37 @@ boost::shared_ptr<BlockEntity> LevelChunk::createBlockEntity(const BlockPos& pos
 }
 boost::shared_ptr<BlockEntity> LevelChunk::getBlockEntity(const BlockPos& pos, EntityCreationType type)
 {
+    boost::shared_ptr<BlockEntity> result;
+    EnterCriticalSection(&sLevelChunkBlockEntityMutex);
     BlockEntityMap::iterator it = mBlockEntityMap.find(pos);
+    if (it == mBlockEntityMap.end())
+    {
+        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        if (level->mRemovingBlockEntity)
+            return boost::shared_ptr<BlockEntity>();
+        if (type == IMMEDIATE)
+        {
+            result = createBlockEntity(pos);
+            level->setBlockEntity(pos, result);
+        }
+        else if (type == QUEUED)
+        {
+            mPendingBlockEntities.push_back(pos);
+        }
+        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        it = mBlockEntityMap.find(pos);
+    }
     if (it != mBlockEntityMap.end())
-        return it->second;
-    return boost::shared_ptr<BlockEntity>();
+        result = it->second;
+    LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+    if (result && result->isRemoved())
+    {
+        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        mBlockEntityMap.erase(pos);
+        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        return boost::shared_ptr<BlockEntity>();
+    }
+    return result;
 }
 void LevelChunk::addBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
@@ -923,19 +953,167 @@ void LevelChunk::removeBlockEntity(const BlockPos& pos)
 {
     mBlockEntityMap.erase(pos);
 }
-bool LevelChunk::load(bool full)
+void LevelChunk::load(bool blockEntitiesOnly)
 {
     mLoaded = true;
+    SetInvalid(false);
+    if (level->mIsClientSide && !blockEntitiesOnly)
+    {
+        mUnloaded = false;
+        return;
+    }
+    if (mUnloaded && mPendingBlockEntityTag != NULL)
+    {
+        ListTag* entities = mPendingBlockEntityTag->getList(L"Entities", 10);
+        if (entities != NULL)
+        {
+            for (int i = 0; i < entities->size(); ++i)
+            {
+                CompoundTag* tag = entities->getCompound(i);
+                boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, level);
+                if (entity)
+                {
+                    entity->onLoadedFromSave();
+                    addEntity(entity);
+                    if (tag->contains(L"Riding", 9))
+                    {
+                        ListTag* riders = tag->getList(L"Riding", 10);
+                        for (int j = 0; j < riders->size(); ++j)
+                        {
+                            boost::shared_ptr<Entity> rider = EntityIO::newEntity(riders->getCompound(j), level);
+                            if (rider)
+                            {
+                                addEntity(rider);
+                                rider->startRiding(entity, true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ListTag* blockEntities = mPendingBlockEntityTag->getList(L"TileEntities", 10);
+        if (blockEntities != NULL)
+        {
+            for (int i = 0; i < blockEntities->size(); ++i)
+            {
+                boost::shared_ptr<BlockEntity> entity = BlockEntity::loadStatic(level, blockEntities->getCompound(i));
+                if (entity)
+                    addBlockEntity(entity);
+            }
+        }
+        ListTag* ticks = mPendingBlockEntityTag->getList(L"TileTicks", 10);
+        if (ticks != NULL)
+        {
+            for (int i = 0; i < ticks->size(); ++i)
+            {
+                CompoundTag* tag = ticks->getCompound(i);
+                Block* block = tag->contains(L"i", 8) ? Block::byString(tag->getString(L"i")) : Block::byId(tag->getInt(L"i"));
+                const int tickX = tag->getInt(L"x");
+                const int tickY = tag->getInt(L"y");
+                const int tickZ = tag->getInt(L"z");
+                const BlockPos pos(tickX, tickY, tickZ);
+                const int delay = tag->getInt(L"t");
+                const int priority = tag->getInt(L"p");
+                level->forceAddBlockTick(pos, block, delay, priority);
+            }
+        }
+        delete mPendingBlockEntityTag;
+        mPendingBlockEntityTag = NULL;
+    }
     mUnloaded = false;
-    return true;
+    std::vector<boost::shared_ptr<BlockEntity> > blockEntities;
+    EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+    for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+        blockEntities.push_back(it->second);
+    LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+    level->addAllPendingBlockEntities(blockEntities);
+    if (!blockEntitiesOnly)
+    {
+        EnterCriticalSection(&sLevelChunkEntityMutex);
+        for (int i = 0; i < mEntitySectionCount; ++i)
+            level->addEntities(mEntitySections[i]);
+        LeaveCriticalSection(&sLevelChunkEntityMutex);
+    }
 }
-bool LevelChunk::unload(bool save, bool keepLoaded)
+void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
 {
-    if (save)
-        mUnsaved = false;
-    mUnloaded = !keepLoaded;
-    mLoaded = keepLoaded;
-    return true;
+    mLoaded = false;
+    if (removeBlockEntities)
+    {
+        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+            level->markForRemoval(it->second);
+        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+    }
+    if (removeEntities)
+    {
+        EnterCriticalSection(&sLevelChunkEntityMutex);
+        for (int i = 0; i < mEntitySectionCount; ++i)
+            level->removeEntities(mEntitySections[i]);
+        LeaveCriticalSection(&sLevelChunkEntityMutex);
+    }
+    if (!mUnloaded)
+    {
+        mUnloaded = true;
+        if (!level->mIsClientSide)
+        {
+            delete mPendingBlockEntityTag;
+            mPendingBlockEntityTag = new CompoundTag();
+            PIXBeginNamedEvent(0.0f, "Saving entities");
+            ListTag* entities = new ListTag();
+            EnterCriticalSection(&sLevelChunkEntityMutex);
+            for (int i = 0; i < mEntitySectionCount; ++i)
+            {
+                std::vector<boost::shared_ptr<Entity> >& section = *mEntitySections[i];
+                for (std::vector<boost::shared_ptr<Entity> >::iterator it = section.begin(); it != section.end(); ++it)
+                {
+                    boost::shared_ptr<Entity> entity = *it;
+                    CompoundTag* tag = new CompoundTag();
+                    if (entity->save(tag))
+                        entities->add(tag);
+                }
+                section.clear();
+            }
+            LeaveCriticalSection(&sLevelChunkEntityMutex);
+            mPendingBlockEntityTag->put(L"Entities", entities);
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Saving block entities");
+            ListTag* blockEntities = new ListTag();
+            for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+            {
+                boost::shared_ptr<BlockEntity> entity = it->second;
+                CompoundTag* tag = new CompoundTag();
+                entity->save(tag);
+                blockEntities->add(tag);
+            }
+            mPendingBlockEntityTag->put(L"TileEntities", blockEntities);
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0f, "Saving block tick data");
+            std::vector<TickNextTickData>* ticks = level->fetchTicksInChunk(this, false);
+            if (ticks != NULL)
+            {
+                const long long gameTime = level->getGameTime();
+                ListTag* savedTicks = new ListTag();
+                for (std::size_t i = 0; i < ticks->size(); ++i)
+                {
+                    TickNextTickData tick = ticks->at(i);
+                    CompoundTag* tag = new CompoundTag();
+                    tag->putInt(L"i", Block::getId(tick.getBlock()));
+                    tag->putInt(L"x", tick.pos.x);
+                    tag->putInt(L"y", tick.pos.y);
+                    tag->putInt(L"z", tick.pos.z);
+                    tag->putInt(L"t", static_cast<int>(tick.triggerTick - gameTime));
+                    tag->putInt(L"p", tick.priorityTilt);
+                    savedTicks->add(tag);
+                }
+                mPendingBlockEntityTag->put(L"TileTicks", savedTicks);
+                delete ticks;
+            }
+            PIXEndNamedEvent();
+        }
+        if (removeBlockEntities)
+            mBlockEntityMap.clear();
+    }
 }
 bool LevelChunk::containsPlayer()
 {
@@ -1119,7 +1297,7 @@ void LevelChunk::staticCtor()
 {
     InitializeCriticalSection(&sLevelChunkLightingMutex);
     InitializeCriticalSection(&sLevelChunkEntityMutex);
-    InitializeCriticalSection(&sLevelChunkPostProcessMutex);
+    InitializeCriticalSection(&sLevelChunkBlockEntityMutex);
 }
 void LevelChunk::postProcess()
 {
@@ -1200,23 +1378,34 @@ void LevelChunk::checkChests(ChunkSource* source, int chunkX, int chunkZ)
 }
 void LevelChunk::tick(bool update)
 {
-    if (mHasGapsToCheck && !update)
+    if (mHasGapsToCheck && level->mDimension->isHasSkyLight() && !update)
+    {
+        PIXBeginNamedEvent(0.0f, "Check for gaps");
         recheckGaps(level->mIsClientSide);
-    mLoaded = true;
+        PIXEndNamedEvent();
+    }
+    mLightPopulated = true;
     if (!mPostProcess && isTerrainPopulated())
+    {
+        PIXBeginNamedEvent(0.0f, "postProcess");
         postProcess();
+        PIXEndNamedEvent();
+    }
+    PIXBeginNamedEvent(0.0f, "Process block entities");
     while (!mPendingBlockEntities.empty())
     {
         BlockPos pos = mPendingBlockEntities.front();
         mPendingBlockEntities.pop_front();
-        boost::shared_ptr<BlockEntity> entity = getBlockEntity(pos, IMMEDIATE);
-        if (!entity)
+        bool shouldCreate = !getBlockEntity(pos, static_cast<EntityCreationType>(2))
+            && getBlock(pos)->mBlockEntity;
+        if (shouldCreate)
         {
-            entity = createBlockEntity(pos);
-            if (entity)
-                level->setBlockEntity(pos, entity);
+            boost::shared_ptr<BlockEntity> entity = createBlockEntity(pos);
+            level->setBlockEntity(pos, entity);
+            level->setBlocksDirty(pos, pos);
         }
     }
+    PIXEndNamedEvent();
 }
 ChunkPos LevelChunk::getPos()
 {

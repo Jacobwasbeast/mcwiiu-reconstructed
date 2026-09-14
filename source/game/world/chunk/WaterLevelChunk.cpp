@@ -111,14 +111,12 @@ void WaterLevelChunk::removeBlockEntity(const BlockPos&)
 {
 }
 
-bool WaterLevelChunk::load(bool)
+void WaterLevelChunk::load(bool)
 {
-    return false;
 }
 
-bool WaterLevelChunk::unload(bool, bool)
+void WaterLevelChunk::unload(bool, bool)
 {
-    return false;
 }
 
 bool WaterLevelChunk::containsPlayer()

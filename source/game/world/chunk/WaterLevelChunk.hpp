@@ -42,8 +42,8 @@ public:
     virtual void addBlockEntity(boost::shared_ptr<BlockEntity> entity);
     virtual void setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
     virtual void removeBlockEntity(const BlockPos& pos);
-    virtual bool load(bool full);
-    virtual bool unload(bool save, bool keepLoaded);
+    virtual void load(bool blockEntitiesOnly);
+    virtual void unload(bool removeBlockEntities, bool removeEntities);
     virtual bool containsPlayer();
     virtual void markUnsaved();
     virtual void getEntities(boost::shared_ptr<Entity> except, const AABB* box,
