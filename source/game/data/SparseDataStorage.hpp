@@ -49,12 +49,12 @@ public:
     ~SparseDataStorage();
     PlaneOffsets* allocatePlaneOffsets(unsigned int size);
     static void freePlaneOffsets(PlaneOffsets* offsets, int size);
-    int createDataAndCount(PlaneOffsets* offsets, int size);
+    long long createDataAndCount(PlaneOffsets* offsets, int size);
     PlaneOffsets* getPlaneOffsets();
     unsigned int getPlaneOffsetsDataSize();
     void queueForDelete(unsigned char* data, int size);
     void updateDataAndCount(PlaneOffsets* offsets, int size);
-    uint64_t get(int x, int y, int z);
+    unsigned int get(int x, int y, int z);
     unsigned int tryUpdateDataAndCount(PlaneOffsets* offsets, int size);
     static void staticCtor();
     unsigned int compress();
@@ -73,8 +73,7 @@ public:
     bool isCompressed();
 
 private:
-    unsigned int dataAndCount;
-    PlaneOffsets* planeOffsets;
+    long long dataAndCount;
 };
 
 #endif

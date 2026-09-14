@@ -5,9 +5,10 @@
 #include "game/core/XLockFreeStack.hpp"
 #include <cstdlib>
 #include <string.h>
-#include <vector>
 
 void* XMemCpy(void* destination, const void* source, unsigned int size);
+void* XMemSet(void* destination, int value, unsigned int size);
+long long InterlockedCompareExchangeRelease64(volatile long long* destination, long long exchange, long long comparand);
 
 static int sPendingDeleteList;
 static XLockFreeStack<unsigned char> sPendingDeleteLists[3];
@@ -21,11 +22,19 @@ void SparseDataStorage::Array256_1Bit::init()
 
 unsigned int SparseDataStorage::Array256_1Bit::set(unsigned char index, unsigned char value)
 {
-    unsigned int p = index >> 3; unsigned char mask = (unsigned char)(1 << (index & 7));
-    if (value == bytes[32]) { bytes[p] &= (unsigned char)~mask; return 1; }
-    if (bytes[32] == 255) { bytes[32] = value; bytes[p] &= (unsigned char)~mask; return 1; }
-    if (value == bytes[33]) { bytes[p] |= mask; return 1; }
-    if (bytes[33] == 255) { bytes[33] = value; bytes[p] |= mask; return 1; }
+    const unsigned int shift = index & 7;
+    const unsigned int mask = 1u << shift;
+    unsigned char& packed = bytes[index >> 3];
+    for (unsigned int paletteIndex = 0; paletteIndex < 2; ++paletteIndex)
+    {
+        unsigned char& paletteValue = bytes[32 + paletteIndex];
+        if (value != static_cast<signed char>(paletteValue) && paletteValue != 255)
+            continue;
+        if (paletteValue == 255)
+            paletteValue = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (paletteIndex << shift));
+        return 1;
+    }
     return 0;
 }
 
@@ -41,16 +50,19 @@ void SparseDataStorage::Array256_2Bit::init()
 
 unsigned int SparseDataStorage::Array256_2Bit::set(unsigned char index, unsigned char value)
 {
-    unsigned int p = index >> 2; unsigned int shift = (index & 3) << 1; unsigned char mask = (unsigned char)(3 << shift);
-    unsigned char* slot = &bytes[p];
-    if (value == bytes[64]) { *slot &= (unsigned char)~mask; return 1; }
-    if (bytes[64] == 255) { bytes[64] = value; *slot &= (unsigned char)~mask; return 1; }
-    if (value == bytes[65]) { *slot = (unsigned char)((*slot & ~mask) | (1 << shift)); return 1; }
-    if (bytes[65] == 255) { bytes[65] = value; *slot = (unsigned char)((*slot & ~mask) | (1 << shift)); return 1; }
-    if (value == bytes[66]) { *slot = (unsigned char)((*slot & ~mask) | (2 << shift)); return 1; }
-    if (bytes[66] == 255) { bytes[66] = value; *slot = (unsigned char)((*slot & ~mask) | (2 << shift)); return 1; }
-    if (value == bytes[67]) { *slot |= mask; return 1; }
-    if (bytes[67] == 255) { bytes[67] = value; *slot |= mask; return 1; }
+    const unsigned int shift = (index & 3) * 2;
+    const unsigned int mask = 3u << shift;
+    unsigned char& packed = bytes[index >> 2];
+    for (unsigned int paletteIndex = 0; paletteIndex < 4; ++paletteIndex)
+    {
+        unsigned char& paletteValue = bytes[64 + paletteIndex];
+        if (value != static_cast<signed char>(paletteValue) && paletteValue != 255)
+            continue;
+        if (paletteValue == 255)
+            paletteValue = value;
+        packed = static_cast<unsigned char>((packed & ~mask) | (paletteIndex << shift));
+        return 1;
+    }
     return 0;
 }
 
@@ -74,7 +86,15 @@ unsigned int SparseDataStorage::PlaneOffsets::setData(int plane, int index, int 
     unsigned char* p = (unsigned char*)this + (entry & 0x3fff) * 4;
     if (type == 1) return static_cast<Array256_1Bit*>(static_cast<void*>(p))->set((unsigned char)index, (unsigned char)value);
     if (type == 2) return static_cast<Array256_2Bit*>(static_cast<void*>(p))->set((unsigned char)index, (unsigned char)value);
-    if (type == 3) { p[index >> 1] = (unsigned char)((p[index >> 1] & ~(15 << ((index & 1) << 2))) | ((value & 15) << ((index & 1) << 2))); return 1; }
+    if (type == 3)
+    {
+        const unsigned char position = static_cast<unsigned char>(index);
+        const unsigned int shift = (position & 1) * 4;
+        unsigned char& packed = p[position >> 1];
+        packed = static_cast<unsigned char>((packed & ~(15u << shift)) |
+                                            (static_cast<unsigned int>(value) << shift));
+        return 1;
+    }
     return 0;
 }
 
@@ -87,7 +107,8 @@ unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, int index)
     unsigned char* p = (unsigned char*)this + (entry & 0x3fff) * 4;
     if (type == 1) return static_cast<Array256_1Bit*>(static_cast<void*>(p))->get((unsigned char)index);
     if (type == 2) return static_cast<Array256_2Bit*>(static_cast<void*>(p))->get((unsigned char)index);
-    return (p[index >> 1] >> ((index & 1) << 2)) & 15;
+    unsigned char position = (unsigned char)index;
+    return (p[position >> 1] >> ((position & 1) << 2)) & 15;
 }
 
 unsigned int SparseDataStorage::PlaneOffsets::getValuesInPlane(int plane, char (&values)[16])
@@ -134,69 +155,73 @@ SparseDataStorage::PlaneOffsets* SparseDataStorage::allocatePlaneOffsets(unsigne
     sAllocatedBytes += size;
     return static_cast<PlaneOffsets*>(malloc(size));
 }
-void SparseDataStorage::freePlaneOffsets(PlaneOffsets* offsets, int)
+void SparseDataStorage::freePlaneOffsets(PlaneOffsets* offsets, int size)
 {
-    delete[] static_cast<unsigned char*>(static_cast<void*>(offsets));
+    sAllocatedBytes -= size;
+    free(offsets);
 }
-int SparseDataStorage::createDataAndCount(PlaneOffsets* offsets, int size)
+long long SparseDataStorage::createDataAndCount(PlaneOffsets* offsets, int size)
 {
-    planeOffsets = offsets;
-    dataAndCount = (unsigned int)size << 16;
-    return dataAndCount;
+    return static_cast<long long>((static_cast<unsigned long long>(static_cast<unsigned int>(size)) << 48) |
+                                  static_cast<unsigned int>(reinterpret_cast<uintptr_t>(offsets)));
 }
-SparseDataStorage::SparseDataStorage() : dataAndCount(0), planeOffsets(NULL)
+SparseDataStorage::SparseDataStorage()
 {
-    planeOffsets = allocatePlaneOffsets(0x4080);
-    memset(planeOffsets, 0, 0x4080);
-    dataAndCount = 0x40800000;
-}
-SparseDataStorage::SparseDataStorage(bool) : dataAndCount(0), planeOffsets(NULL)
-{
-    planeOffsets = allocatePlaneOffsets(0x4080);
-    memset(planeOffsets, 0, 0x4080);
-    dataAndCount = 0x40800000;
-}
-SparseDataStorage::SparseDataStorage(SparseDataStorage* other)
-    : dataAndCount(other->dataAndCount), planeOffsets(allocatePlaneOffsets(other->getPlaneOffsetsDataSize()))
-{
-    memcpy(planeOffsets, other->planeOffsets, other->getPlaneOffsetsDataSize());
+    PlaneOffsets* offsets = allocatePlaneOffsets(0x4080);
+    unsigned char* payload = reinterpret_cast<unsigned char*>(offsets) + 0x100;
+    offsets->offsets[0] = 0;
+    for (int plane = 1; plane < 128; ++plane)
+    {
+        offsets->offsets[plane] = 0xc000;
+        offsets->initPlane(plane, payload);
+        payload += 0x80;
+    }
+    XMemSet(reinterpret_cast<unsigned char*>(offsets) + 0x100, 0, 0x3f80);
+    dataAndCount = createDataAndCount(offsets, 0x4080);
 }
 SparseDataStorage::~SparseDataStorage()
 {
-    freePlaneOffsets(planeOffsets, getPlaneOffsetsDataSize());
+    PlaneOffsets* offsets = getPlaneOffsets();
+    freePlaneOffsets(offsets, getPlaneOffsetsDataSize());
 }
 SparseDataStorage::PlaneOffsets* SparseDataStorage::getPlaneOffsets()
 {
-    return planeOffsets;
+    return reinterpret_cast<PlaneOffsets*>(static_cast<uintptr_t>(static_cast<unsigned int>(dataAndCount)));
 }
 unsigned int SparseDataStorage::getPlaneOffsetsDataSize()
 {
-    return dataAndCount >> 16;
+    return static_cast<unsigned long long>(dataAndCount) >> 48;
 }
 void SparseDataStorage::queueForDelete(unsigned char* data, int)
 {
-    if (data != NULL)
-        sPendingDeleteLists[sPendingDeleteList].Push(data);
+    sPendingDeleteLists[sPendingDeleteList].Push(data);
 }
-void SparseDataStorage::updateDataAndCount(PlaneOffsets* p, int size)
+void SparseDataStorage::updateDataAndCount(PlaneOffsets* offsets, int size)
 {
-    PlaneOffsets* old = planeOffsets;
-    planeOffsets = p;
-    dataAndCount = (unsigned int)size << 16;
-    queueForDelete((unsigned char*)old, size);
-}
-uint64_t SparseDataStorage::get(int x, int y, int z)
-{
-    return (uint64_t)planeOffsets->getData(y, x * 16 + z) << 32;
-}
-unsigned int SparseDataStorage::tryUpdateDataAndCount(PlaneOffsets* p, int size)
-{
-    if (planeOffsets != p)
+    const long long replacement = createDataAndCount(offsets, size);
+    const int oldSize = getPlaneOffsetsDataSize();
+    long long previous;
+    do
     {
-        updateDataAndCount(p, size);
-        return 1;
+        previous = dataAndCount;
     }
-    return 0;
+    while (InterlockedCompareExchangeRelease64(&dataAndCount, replacement, previous) != previous);
+    queueForDelete(reinterpret_cast<unsigned char*>(static_cast<uintptr_t>(static_cast<unsigned int>(previous))), oldSize);
+}
+unsigned int SparseDataStorage::get(int x, int y, int z)
+{
+    return getPlaneOffsets()->getData(y, x * 16 + z);
+}
+unsigned int SparseDataStorage::tryUpdateDataAndCount(PlaneOffsets* offsets, int size)
+{
+    PlaneOffsets* oldOffsets = getPlaneOffsets();
+    const int oldSize = getPlaneOffsetsDataSize();
+    const long long previous = dataAndCount;
+    const long long replacement = createDataAndCount(offsets, size);
+    if (InterlockedCompareExchangeRelease64(&dataAndCount, replacement, previous) != previous)
+        return 0;
+    queueForDelete(reinterpret_cast<unsigned char*>(oldOffsets), oldSize);
+    return 1;
 }
 void SparseDataStorage::staticCtor()
 {
@@ -216,139 +241,51 @@ unsigned int SparseDataStorage::compress()
     }
 
     unsigned short localOffsets[128];
-    memcpy(localOffsets, sourceOffsets->offsets, sizeof(localOffsets));
-
-    char uniqueValues[16];
-    int payloadSize = 0;
-    int plane = 0;
-
-    for (int group = 0; group < 0x40; ++group)
+    unsigned int payloadSize = 0;
+    for (int plane = 0; plane < 128; ++plane)
     {
-        unsigned short* firstEntry = &localOffsets[plane];
-        unsigned short* secondEntry = &localOffsets[plane + 1];
-        int valueCount = (int)sourceOffsets->getValuesInPlane(plane, uniqueValues);
-
-        if (valueCount < 5)
+        char uniqueValues[16];
+        unsigned int valueCount = sourceOffsets->getValuesInPlane(plane, uniqueValues);
+        if (valueCount < 2)
         {
-            if (valueCount > 2)
-            {
-                *firstEntry = (*firstEntry & 0x3fff) | 0x8000;
-                payloadSize += 0x44;
-                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
-            }
-            else if (valueCount < 2)
-            {
-                *firstEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
-                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
-            }
-            else
-            {
-                *firstEntry = (*firstEntry & 0x3fff) | 0x4000;
-                payloadSize += 0x24;
-                valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
-                if (valueCount > 4)
-                {
-                    payloadSize += 0x80;
-                    *secondEntry = *secondEntry | 0xc000;
-                    plane += 2;
-                    continue;
-                }
-            }
-
-            if (valueCount < 3)
-            {
-                if (valueCount < 2)
-                    *secondEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
-                else
-                {
-                    payloadSize += 0x24;
-                    *secondEntry = (*secondEntry & 0x3fff) | 0x4000;
-                }
-            }
-            else
-            {
-                payloadSize += 0x44;
-                *secondEntry = (*secondEntry & 0x3fff) | 0x8000;
-            }
+            localOffsets[plane] = static_cast<unsigned short>(uniqueValues[0]) & 0x3fff;
+        }
+        else if (valueCount == 2)
+        {
+            localOffsets[plane] = 0x4000;
+            payloadSize += 0x24;
+        }
+        else if (valueCount <= 4)
+        {
+            localOffsets[plane] = 0x8000;
+            payloadSize += 0x44;
         }
         else
         {
-            *firstEntry = *firstEntry | 0xc000;
+            localOffsets[plane] = 0xc000;
             payloadSize += 0x80;
-            valueCount = (int)sourceOffsets->getValuesInPlane(plane + 1, uniqueValues);
-            if (valueCount < 5)
-            {
-                if (valueCount < 3)
-                {
-                    if (valueCount < 2)
-                        *secondEntry = (unsigned short)(uniqueValues[0] & 0x3fff);
-                    else
-                    {
-                        payloadSize += 0x24;
-                        *secondEntry = (*secondEntry & 0x3fff) | 0x4000;
-                    }
-                }
-                else
-                {
-                    payloadSize += 0x44;
-                    *secondEntry = (*secondEntry & 0x3fff) | 0x8000;
-                }
-            }
-            else
-            {
-                payloadSize += 0x80;
-                *secondEntry = *secondEntry | 0xc000;
-            }
         }
-
-        plane += 2;
     }
 
-    unsigned int newSize = payloadSize + 0x100;
+    const unsigned int newSize = payloadSize + 0x100;
+    currentSize = getPlaneOffsetsDataSize();
     if (newSize != currentSize)
     {
         PlaneOffsets* destination = allocatePlaneOffsets(newSize);
-        unsigned char* dataCursor = (unsigned char*)destination + 0x100;
+        unsigned char* dataCursor = reinterpret_cast<unsigned char*>(destination) + 0x100;
         XMemCpy(destination, localOffsets, 0x100);
-
-        plane = 0;
-        for (int group = 0; group < 0x40; ++group)
+        for (int plane = 0; plane < 128; ++plane)
         {
             destination->initPlane(plane, dataCursor);
-            for (int index = 0; index < 0x100; index += 8)
+            for (int index = 0; index < 256; ++index)
             {
-                destination->setData(plane, index, (int)(unsigned char)sourceOffsets->getData(plane, index));
-                destination->setData(plane, index + 1, (int)(unsigned char)sourceOffsets->getData(plane, index + 1));
-                destination->setData(plane, index + 2, (int)(unsigned char)sourceOffsets->getData(plane, index + 2));
-                destination->setData(plane, index + 3, (int)(unsigned char)sourceOffsets->getData(plane, index + 3));
-                destination->setData(plane, index + 4, (int)(unsigned char)sourceOffsets->getData(plane, index + 4));
-                destination->setData(plane, index + 5, (int)(unsigned char)sourceOffsets->getData(plane, index + 5));
-                destination->setData(plane, index + 6, (int)(unsigned char)sourceOffsets->getData(plane, index + 6));
-                destination->setData(plane, index + 7, (int)(unsigned char)sourceOffsets->getData(plane, index + 7));
+                destination->setData(plane, index, static_cast<unsigned char>(sourceOffsets->getData(plane, index)));
             }
-
-            int firstPlaneSize = destination->getDataSize(plane);
-            destination->initPlane(plane + 1, dataCursor + firstPlaneSize);
-            for (int index = 0; index < 0x100; index += 8)
-            {
-                destination->setData(plane + 1, index, (int)(unsigned char)sourceOffsets->getData(plane + 1, index));
-                destination->setData(plane + 1, index + 1, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 1));
-                destination->setData(plane + 1, index + 2, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 2));
-                destination->setData(plane + 1, index + 3, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 3));
-                destination->setData(plane + 1, index + 4, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 4));
-                destination->setData(plane + 1, index + 5, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 5));
-                destination->setData(plane + 1, index + 6, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 6));
-                destination->setData(plane + 1, index + 7, (int)(unsigned char)sourceOffsets->getData(plane + 1, index + 7));
-            }
-
-            int secondPlaneSize = destination->getDataSize(plane + 1);
-            dataCursor += firstPlaneSize + secondPlaneSize;
-            plane += 2;
+            dataCursor += destination->getDataSize(plane);
         }
 
-        if (tryUpdateDataAndCount(destination, (int)newSize) == 0)
-            queueForDelete((unsigned char*)destination, (int)newSize);
-
+        if (tryUpdateDataAndCount(destination, static_cast<int>(newSize)) == 0)
+            queueForDelete(reinterpret_cast<unsigned char*>(destination), static_cast<int>(newSize));
         LeaveCriticalSection(&sCompressLock);
         return newSize;
     }
@@ -371,6 +308,7 @@ void SparseDataStorage::tick()
 }
 void SparseDataStorage::write(DataOutputStream* stream)
 {
+    PlaneOffsets* planeOffsets = getPlaneOffsets();
     unsigned int nonEmpty = 0;
     for (int plane = 0; plane < 128; ++plane)
         if (planeOffsets->offsets[plane] != 0)
@@ -378,7 +316,7 @@ void SparseDataStorage::write(DataOutputStream* stream)
 
     const unsigned int blockSize = 0x80;
     const unsigned int totalSize = blockSize * (nonEmpty + 1);
-    std::vector<unsigned char> encoded(totalSize, 0);
+    unsigned char* encoded = new unsigned char[totalSize];
     unsigned int block = 0;
     for (int plane = 0; plane < 128; ++plane)
     {
@@ -394,34 +332,36 @@ void SparseDataStorage::write(DataOutputStream* stream)
             const int first = group * 16;
             for (int pair = 0; pair < 8; ++pair)
             {
-                unsigned int low = planeOffsets->getData(plane, first + pair * 2) & 15;
-                unsigned int high = planeOffsets->getData(plane, first + pair * 2 + 1) & 15;
+                unsigned char low = static_cast<unsigned char>(planeOffsets->getData(plane, first + pair * 2));
+                unsigned char high = static_cast<unsigned char>(planeOffsets->getData(plane, first + pair * 2 + 1));
                 destination[group * 8 + pair] = (unsigned char)(low | (high << 4));
             }
         }
     }
     stream->writeInt((int)nonEmpty);
-    arrayWithLength<unsigned char> output(totalSize, false);
-    memcpy(output.data, &encoded[0], totalSize);
+    arrayWithLength<unsigned char> output(encoded, totalSize);
     stream->write(output);
+    delete[] encoded;
 }
 void SparseDataStorage::read(DataInputStream* stream)
 {
     const unsigned int nonEmpty = (unsigned int)stream->readInt();
     const unsigned int inputSize = 0x80 * (nonEmpty + 1);
-    std::vector<unsigned char> encoded(inputSize);
-    arrayWithLength<unsigned char> input(inputSize, false);
+    unsigned char* encoded = static_cast<unsigned char*>(malloc(inputSize));
+    arrayWithLength<unsigned char> input(encoded, inputSize);
     stream->readFully(input);
-    memcpy(&encoded[0], input.data, inputSize);
 
     const unsigned int requiredSize = nonEmpty * 0x80 + 0x100;
-    PlaneOffsets* destination = planeOffsets;
+    PlaneOffsets* destination;
     bool replaced = false;
     if (getPlaneOffsetsDataSize() != requiredSize)
     {
         destination = allocatePlaneOffsets(requiredSize);
-        memset(destination, 0, requiredSize);
         replaced = true;
+    }
+    else
+    {
+        destination = getPlaneOffsets();
     }
     unsigned int payload = 0x100;
     for (int plane = 0; plane < 128; ++plane)
@@ -446,84 +386,5 @@ void SparseDataStorage::read(DataInputStream* stream)
     if (replaced)
         updateDataAndCount(destination, (int)requiredSize);
     compress();
+    free(encoded);
 }
-bool SparseDataStorage::isSameAs(SparseDataStorage* other)
-{
-    return other && dataAndCount == other->dataAndCount &&
-        memcmp(planeOffsets, other->planeOffsets, getPlaneOffsetsDataSize()) == 0;
-}
-unsigned int SparseDataStorage::getValuesInPlane(arrayWithLength<unsigned char> values, unsigned int plane, int, char (&unique)[16])
-{
-    return planeOffsets->getValuesInPlane((int)plane, unique);
-}
-void SparseDataStorage::setData(arrayWithLength<unsigned char> values, unsigned int plane, bool)
-{
-    for (unsigned int i = 0; i < values.length && i < 256; ++i)
-    {
-        planeOffsets->setData((int)plane, (int)i, values.data[i]);
-    }
-}
-void SparseDataStorage::getData(arrayWithLength<unsigned char> values, unsigned int plane, int offset, int count)
-{
-    for (int i = 0; i < count && (unsigned int)i < values.length; ++i)
-    {
-        values.data[i] = (unsigned char)planeOffsets->getData((int)plane, offset + i);
-    }
-}
-void SparseDataStorage::increasePlaneBitdepth(int plane)
-{
-    PlaneOffsets* oldOffsets = getPlaneOffsets();
-    unsigned int oldSize = getPlaneOffsetsDataSize();
-    unsigned int newSize = oldSize + 0x80;
-    PlaneOffsets* newOffsets = allocatePlaneOffsets(newSize);
-    memcpy(newOffsets, oldOffsets, oldSize);
-
-    unsigned char* packed = (unsigned char*)newOffsets + oldSize;
-    for (int index = 0; index < 256; ++index)
-    {
-        unsigned int value = oldOffsets->getData(plane, index) & 0xf;
-        unsigned int byteIndex = (unsigned int)(index >> 1);
-        unsigned int shift = (unsigned int)((index & 1) << 2);
-        packed[byteIndex] = (unsigned char)((packed[byteIndex] & (unsigned char)~(0xf << shift)) | (unsigned char)(value << shift));
-    }
-    newOffsets->setDataOffset(plane, (unsigned short)(((oldSize >> 2) & 0x3fff) | 0xc000));
-    updateDataAndCount(newOffsets, (int)newSize);
-}
-void SparseDataStorage::set(int x, int y, int z, int value) { planeOffsets->setData(y, x * 16 + z, value); }
-bool SparseDataStorage::testSetDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int value, bool* changed)
-{
-    if (changed)
-    {
-        *changed = false;
-    }
-    setDataRegion(values, x, y, z, width, height, depth, value, NULL, NULL);
-    return true;
-}
-void SparseDataStorage::setDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int value, void*, void*)
-{
-    for (int yy = 0; yy < height; ++yy)
-    {
-        for (int zz = 0; zz < depth; ++zz)
-        {
-            for (int xx = 0; xx < width; ++xx)
-            {
-                set(x + xx, y + yy, z + zz, value);
-            }
-        }
-    }
-}
-void SparseDataStorage::getDataRegion(arrayWithLength<unsigned char> values, int x, int y, int z, int width, int height, int depth, int)
-{
-    unsigned int n = 0;
-    for (int yy = 0; yy < height; ++yy)
-    {
-        for (int zz = 0; zz < depth; ++zz)
-        {
-            for (int xx = 0; xx < width && n < values.length; ++xx)
-            {
-                values.data[n++] = (unsigned char)get(x + xx, y + yy, z + zz);
-            }
-        }
-    }
-}
-bool SparseDataStorage::isCompressed() { return getPlaneOffsetsDataSize() < 0x4080; }
