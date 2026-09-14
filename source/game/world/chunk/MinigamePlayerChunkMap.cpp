@@ -77,7 +77,7 @@ void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlay
     if (players != NULL && players->canReceiveAllPackets(player) && player->mConnection != NULL)
     {
         boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-            minX, minZ, maxX, maxZ, true, shouldActuallyDropChunks(), false));
+            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false));
         player->mConnection->send(packet);
     }
 }
