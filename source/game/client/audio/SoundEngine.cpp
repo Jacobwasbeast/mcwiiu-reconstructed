@@ -29,6 +29,21 @@ boost::shared_ptr<MultiplayerLocalPlayer>& musicPlayerSlot(Minecraft* minecraft,
         reinterpret_cast<char*>(minecraft) + 0x44)[index];
 }
 
+struct PlaySoundData
+{
+    float x;
+    float y;
+    float z;
+    float volume;
+    float pitch;
+    const SoundEvent* soundEvent;
+    SoundInstance* instance;
+    unsigned char activeFlag;
+    unsigned char reserved;
+    unsigned char drcOutput;
+    unsigned char padding;
+};
+
 struct MilesSoundBuffer
 {
     float x;
@@ -61,11 +76,17 @@ float soundEngineFloatAt(const SoundEngine* engine, unsigned int offset)
 } // namespace
 
 SoundEngine::SoundEngine()
-    : m_listenerEnabled(0), m_listenerX(0.0f), m_listenerY(0.0f), m_listenerZ(0.0f), m_listenerForwardX(0.0f), m_listenerForwardY(0.0f), m_listenerForwardZ(0.0f), m_musicListenerEnabled(0), m_thirdListenerEnabled(0), m_listenerDistanceScale(0.0f), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0), m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(1.0f), m_streamingPitch(1.0f), m_musicEventStarted(0), m_musicField15c(0), m_musicField160(0), m_musicState(0), m_musicNameDataA(0), m_musicNameDataB(0), m_musicNameCapacity(7), m_currentTrack(-1), m_platformSoundEngine(0), m_platformState(0), m_trackCount(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
+    : m_listenerEnabled(0), m_listenerX(0.0f), m_listenerY(0.0f), m_listenerZ(0.0f), m_listenerForwardX(0.0f), m_listenerForwardY(0.0f), m_listenerForwardZ(0.0f),
+      m_musicListenerEnabled(0), m_musicX(0.0f), m_musicY(0.0f), m_musicZ(0.0f), m_musicForwardX(0.0f), m_musicForwardY(0.0f), m_musicForwardZ(0.0f),
+      m_thirdListenerEnabled(0), m_thirdX(0.0f), m_thirdY(0.0f), m_thirdZ(0.0f), m_thirdForwardX(0.0f), m_thirdForwardY(0.0f), m_thirdForwardZ(0.0f),
+      m_streamListenerEnabled(0), m_streamListenerX(0.0f), m_streamListenerY(0.0f), m_streamListenerZ(0.0f), m_streamListenerForwardX(0.0f), m_streamListenerForwardY(0.0f), m_streamListenerForwardZ(0.0f),
+      m_activeListenerCount(0), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0),
+      m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(1.0f), m_streamingPitch(1.0f), m_musicEventStarted(0),
+      m_platformSoundEngine(0), m_openStreamThread(0), m_currentTrack(-1), m_platformState(0), m_trackCount(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
 {
-    std::memset(m_statePadding, 0, sizeof(m_statePadding));
+    std::memset(m_streamPathBuffer, 0, sizeof(m_streamPathBuffer));
     std::memset(m_currentTrackPadding, 0, sizeof(m_currentTrackPadding));
-    std::memset(m_platformPadding, 0, sizeof(m_platformPadding));
+    std::memset(m_platformPadding2, 0, sizeof(m_platformPadding2));
     std::memset(m_platformStatePadding, 0, sizeof(m_platformStatePadding));
     SetStreamingSounds(0, 11, 12, 15, 16, 17, 18, 23, 24, 27, 28, 31, 32, 41, 42, 42, 62, 68, 87);
     SetMusicID(eMusicType_End);
@@ -207,8 +228,29 @@ void SoundEngine::SetMusicID(eMusicType type)
     case eMusicType_Overworld:
         m_musicTrack = GetNextTrack(m_trackRanges[2], m_trackRanges[3]);
         return;
+    case eMusicType_Nether:
+    case eMusicType_Menu:
+        break;
+    case eMusicType_Boss:
+        m_musicTrack = GetNextTrack(m_trackRanges[4], m_trackRanges[5]);
+        return;
+    case eMusicType_5:
+        m_musicTrack = GetNextTrack(m_trackRanges[6], m_trackRanges[7]);
+        return;
     case eMusicType_End:
         m_musicTrack = GetNextTrack(m_trackRanges[8], m_trackRanges[9]);
+        return;
+    case eMusicType_6:
+        m_musicTrack = GetNextTrack(m_trackRanges[10], m_trackRanges[11]);
+        return;
+    case eMusicType_7:
+        m_musicTrack = GetNextTrack(m_trackRanges[12], m_trackRanges[13]);
+        return;
+    case eMusicType_8:
+        m_musicTrack = GetNextTrack(m_trackRanges[14], m_trackRanges[15]);
+        return;
+    case eMusicType_9:
+        m_musicTrack = GetNextTrack(m_trackRanges[16], m_trackRanges[17]);
         return;
     default:
         break;
@@ -240,20 +282,7 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
         delete[] convertedPath;
     }
 
-    struct PlaySoundData
-    {
-        float x;
-        float y;
-        float z;
-        float volume;
-        float pitch;
-        const SoundEvent* soundEvent;
-        SoundInstance* instance;
-        unsigned char activeFlag;
-        unsigned char reserved;
-        unsigned char drcOutput;
-        unsigned char padding;
-    } data;
+    PlaySoundData data;
 
     data.x = x;
     data.y = y;
@@ -413,8 +442,38 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
 
 void SoundEngine::playUI(const SoundEvent* sound, float volume, float pitch)
 {
-    if (sound != 0)
-        play(sound, 0.0f, 0.0f, 0.0f, volume, pitch, 0);
+    if (sound == 0)
+        return;
+
+    char eventPath[272];
+    if (sound->isSFX())
+        std::strcpy(eventPath, "Minecraft/UI/");
+    else
+        std::strcpy(eventPath, "Minecraft/");
+
+    {
+        char* convertedPath = ConvertSoundPathToName(sound->getName(), false);
+        std::strcat(eventPath, convertedPath);
+        delete[] convertedPath;
+    }
+
+    PlaySoundData data;
+    data.x = 0.0f;
+    data.y = 0.0f;
+    data.z = 0.0f;
+    data.volume = volume;
+    data.pitch = pitch;
+    data.soundEvent = sound;
+    data.instance = 0;
+    data.activeFlag = 1;
+    data.reserved = 0;
+    data.drcOutput = 1;
+    data.padding = 0;
+
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    platform->startSound(&data, 0x20, eventPath);
+    data.drcOutput = 0;
+    platform->startSound(&data, 0x20, eventPath);
 }
 
 void SoundEngine::updateMusicVolume(float volume)
@@ -427,7 +486,7 @@ unsigned int SoundEngine::OpenStreamThreadProc(void* value)
     SetSpecialThreadIDForFS_MilesStreamThread__Fv();
     SoundEngine* engine = static_cast<SoundEngine*>(value);
     PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(engine->m_platformSoundEngine);
-    platform->startStream(reinterpret_cast<char*>(engine) + 0x188, ConfigureSound);
+    platform->startStream(engine->m_streamPathBuffer, ConfigureSound);
     return 0U;
 }
 
@@ -482,8 +541,7 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
     if (buffer->is3D == 0)
         return;
 
-    const int listenerMode = *reinterpret_cast<const int*>(&engine->m_listenerDistanceScale);
-    if (listenerMode < 2)
+    if (engine->m_activeListenerCount < 2)
     {
         *outX = buffer->x;
         *outY = buffer->y;
@@ -561,10 +619,30 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
     *outZ = sqrtf(bestDx * bestDx + bestDy * bestDy + bestDz * bestDz);
 }
 
-void SoundEngine::ConfigureSound(void*, void*, bool*, float* distance, float*, float*, float*, float*, float*)
+void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, float* minDistance,
+                                  float* playbackRate, float* x, float* y, float* z, float* volume)
 {
-    if (distance != 0)
-        *distance = 1.0f;
+    SoundEngine* engine = static_cast<SoundEngine*>(userData);
+
+    if (soundData == 0)
+    {
+        *minDistance = 64.0f;
+        *playbackRate = engine->m_streamingPitch;
+        UpdateSound(userData, 0, is3D, 0, x, y, z, volume);
+        return;
+    }
+
+    AudioInfo* info = static_cast<AudioInfo*>(soundData);
+    double distanceScalar = engine->getDistanceScaler(info);
+    *minDistance = static_cast<float>(distanceScalar);
+
+    const unsigned char routeFlag = *(reinterpret_cast<const unsigned char*>(soundData) + 0x19);
+    if (routeFlag == 0)
+        *playbackRate = *reinterpret_cast<const float*>(reinterpret_cast<const char*>(soundData) + 0x10);
+    else
+        *playbackRate = 0.0f;
+
+    UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
 }
 
 void SoundEngine::playMusicUpdate()
@@ -581,7 +659,7 @@ void SoundEngine::init(Options*)
 {
     PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
     platform->init(0, 0);
-    *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 0x184) = 0;
+    m_openStreamThread = 0;
 }
 
 bool SoundEngine::RouteToDRC(void*, void* value)
@@ -591,7 +669,36 @@ bool SoundEngine::RouteToDRC(void*, void* value)
 
 void SoundEngine::updateMiles()
 {
-    updateSystemMusicPlaying(GetMusicToPlay());
+    float x = 0.0f, y = 0.0f, z = 0.0f, forwardX = 0.0f, forwardY = 0.0f, forwardZ = 1.0f;
+
+    if (m_activeListenerCount == 1)
+    {
+        if (m_listenerEnabled != 0)
+        {
+            x = m_listenerX; y = m_listenerY; z = -m_listenerZ;
+            forwardX = -m_listenerForwardX; forwardY = m_listenerForwardY; forwardZ = m_listenerForwardZ;
+        }
+        else if (m_musicListenerEnabled != 0)
+        {
+            x = m_musicX; y = m_musicY; z = -m_musicZ;
+            forwardX = -m_musicForwardX; forwardY = m_musicForwardY; forwardZ = m_musicForwardZ;
+        }
+        else if (m_thirdListenerEnabled != 0)
+        {
+            x = m_thirdX; y = m_thirdY; z = -m_thirdZ;
+            forwardX = -m_thirdForwardX; forwardY = m_thirdForwardY; forwardZ = m_thirdForwardZ;
+        }
+        else if (m_streamListenerEnabled != 0)
+        {
+            x = m_streamListenerX; y = m_streamListenerY; z = -m_streamListenerZ;
+            forwardX = -m_streamListenerForwardX; forwardY = m_streamListenerForwardY; forwardZ = m_streamListenerForwardZ;
+        }
+    }
+
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    bool systemMusicPlaying = false;
+    platform->tick(this, x, y, z, forwardX, forwardY, forwardZ, ConfigureSound, UpdateSound, RouteToDRC, &systemMusicPlaying);
+    updateSystemMusicPlaying(systemMusicPlaying);
 }
 
 void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>*, float)

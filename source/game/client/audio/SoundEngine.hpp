@@ -8,7 +8,7 @@ struct AudioInfo { float distance; SoundEvent* soundEvent; };
 struct SoundTrack { int sortKey; int trackIndex; };
 class SoundEngine : public ConsoleSoundEngine {
 public:
- enum eMusicType { eMusicType_Overworld, eMusicType_Nether, eMusicType_End, eMusicType_Menu };
+ enum eMusicType { eMusicType_Overworld, eMusicType_Nether, eMusicType_End, eMusicType_Menu, eMusicType_Boss, eMusicType_5, eMusicType_6, eMusicType_7, eMusicType_8, eMusicType_9, eMusicType_None };
  SoundEngine(); virtual ~SoundEngine(); static int TracksSortFunction(const void*,const void*);
  void BuildTrackList(int,int,bool);
  void SetStreamingSounds(int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int,int);
@@ -28,13 +28,15 @@ public:
 private:
  unsigned char m_listenerEnabled; float m_listenerX,m_listenerY,m_listenerZ,m_listenerForwardX,m_listenerForwardY,m_listenerForwardZ;
  unsigned char m_musicListenerEnabled; float m_musicX,m_musicY,m_musicZ,m_musicForwardX,m_musicForwardY,m_musicForwardZ;
- unsigned char m_thirdListenerEnabled; float m_thirdX,m_thirdY,m_thirdZ,m_thirdForwardX,m_thirdForwardY;
- double m_listenerDistanceX; double m_listenerDistanceY; double m_listenerDistanceZ; double m_listenerDistanceW; float m_listenerDistanceScale;
+ unsigned char m_thirdListenerEnabled; float m_thirdX,m_thirdY,m_thirdZ,m_thirdForwardX,m_thirdForwardY,m_thirdForwardZ;
+ unsigned char m_streamListenerEnabled; float m_streamListenerX,m_streamListenerY,m_streamListenerZ,m_streamListenerForwardX,m_streamListenerForwardY,m_streamListenerForwardZ;
+ int m_activeListenerCount;
  Random* m_random; int m_musicTrack; int m_musicDelayTicks; unsigned char m_musicActive; unsigned char m_musicActivePadding[3];
- int m_musicPlayState; int m_musicPlayAux; int m_musicDelayReset; float m_streamingX,m_streamingY,m_streamingZ; float m_streamingVolume,m_streamingPitch; unsigned char m_streamingPadding[4];
- unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3]; int m_musicField15c; int m_musicField160; short m_musicState; unsigned char m_statePadding[14];
- int m_musicNameDataA; int m_musicNameDataB; int m_musicNameCapacity;
- void* m_platformSoundEngine; unsigned char m_platformPadding[188]; int m_currentTrack; unsigned char m_currentTrackPadding[24];
- void* m_platformState; unsigned char m_platformStatePadding[40]; int m_trackRanges[18]; int m_trackCount; unsigned char* m_trackUsed; SoundTrack* m_trackData; int m_streamingTrackIndex;
+ int m_musicPlayState; int m_musicPlayAux; int m_musicDelayReset; float m_streamingX,m_streamingY,m_streamingZ; float m_streamingVolume,m_streamingPitch;
+ unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3];
+ unsigned char m_platformPadding2[40];
+ void* m_platformSoundEngine; void* m_openStreamThread; char m_streamPathBuffer[92];
+ int m_currentTrack; unsigned char m_currentTrackPadding[24];
+ void* m_platformState; unsigned char m_platformStatePadding[132]; int m_trackRanges[18]; int m_trackCount; unsigned char* m_trackUsed; SoundTrack* m_trackData; int m_streamingTrackIndex;
 };
 #endif
