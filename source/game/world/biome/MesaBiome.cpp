@@ -47,7 +47,7 @@ MesaBiome::~MesaBiome()
 
 void MesaBiome::staticCtor()
 {
-    sClay = BlockPair(172, Blocks::hardened_clay->defaultBlockState()->mElementId);
+    sClay = BlockPair(172, Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
     sOrange = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(1)->mElementId);
     sYellow = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(4)->mElementId);
     sBrown = BlockPair(159, Blocks::stained_hardened_clay->getBlockState(12)->mElementId);
@@ -95,8 +95,8 @@ void MesaBiome::generateBands(long long seed)
     int count = random.nextInt(4) + 2;
     for (i = 0; i < count; ++i)
     {
-        int start = random.nextInt(64);
         int length = random.nextInt(3) + 1;
+        int start = random.nextInt(64);
         int j;
         for (j = 0; j < length && start + j < 64; ++j) mClayBands[start + j] = sYellow;
     }
@@ -105,10 +105,12 @@ void MesaBiome::generateBands(long long seed)
     for (i = 0; i < count; ++i)
     {
         band += random.nextInt(16) + 4;
-        if (band >= 64) break;
-        mClayBands[band] = sWhite;
-        if (band > 1 && random.nextBoolean()) mClayBands[band - 1] = sBrown;
-        if (band < 63 && random.nextBoolean()) mClayBands[band + 1] = sBrown;
+        if (band < 64)
+        {
+            mClayBands[band] = sWhite;
+            if (band > 1 && random.nextBoolean()) mClayBands[band - 1] = sBrown;
+            if (band < 63 && random.nextBoolean()) mClayBands[band + 1] = sBrown;
+        }
     }
 }
 
