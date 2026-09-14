@@ -4673,6 +4673,7 @@ std::vector<AABB*>* Level::getCollisionAABBs(boost::shared_ptr<Entity> entity, c
                                               bool includeExtraBlocks)
 {
     mCollisionBoxes.clear();
+    mCollisionBoxes.reserve(8);
     internalGetCollisionAABBs(entity, box, includeEntities, &mCollisionBoxes, includeBorder, false,
                               includeExtraBlocks);
     return &mCollisionBoxes;
@@ -5472,27 +5473,30 @@ void Level::removeAllEntities(bool players, bool mobs, bool items, bool vehicles
             || type == 0x08000008ULL;
         bool isVehicle = (type & 0x0c800000ULL) == 0x0c800000ULL
             || type == 0x0d000005ULL || type == 0x0800000eULL;
-        bool inMiniGame = false;
         if (isVehicle)
         {
-            inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
-        }
-        bool inBounds = entity->mChunkX >= x && entity->mChunkX <= z
-            && entity->mChunkZ >= y && entity->mChunkZ <= radius;
-        if (isVehicle && inMiniGame)
-        {
-            it = entities.erase(it);
-            continue;
-        }
-        if (isVehicle || inBounds)
-        {
-            if ((players || !isPlayer) && (mobs || !isMob)
-                && (items || !isItem)
-                && (vehicles || (isPlayer || isMob || isItem)))
+            bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
+            if (inMiniGame && type != 0x0800000eULL)
             {
                 ++it;
                 continue;
             }
+            it = entities.erase(it);
+            continue;
+        }
+        bool inBounds = entity->mChunkX >= x && entity->mChunkX <= z
+            && entity->mChunkZ >= y && entity->mChunkZ <= radius;
+        if (inBounds)
+        {
+            it = entities.erase(it);
+            continue;
+        }
+        if ((players || !isPlayer) && (mobs || !isMob)
+            && (items || !isItem)
+            && (vehicles || (isPlayer || isMob || isItem)))
+        {
+            ++it;
+            continue;
         }
         it = entities.erase(it);
     }

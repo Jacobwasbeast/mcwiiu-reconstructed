@@ -120,7 +120,9 @@ private:
     int mZSpawn;
     long long mGameTime;
     long long mDayTime;
+    long long mLastPlayed;
     int mSpawnXStronghold;
+    int mSpawnYStronghold;
     int mSpawnZStronghold;
     bool mHasStronghold;
     int mXStrongholdEndPortal;

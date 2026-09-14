@@ -384,18 +384,18 @@ void LevelGenerationOptions::loadGameRulesHeaders(DLCPack* pack, StringTable* ta
 unsigned int LevelGenerationOptions::packMounted(void* data, int mountIndex, unsigned int mounted, unsigned int flags)
 {
     LevelGenerationOptions* options = static_cast<LevelGenerationOptions*>(data);
-    if (options == NULL)
-    {
-        return 0;
-    }
-
     options->mPackMountPending = false;
     if (mounted == 0)
     {
         options->loadGameRulesHeaders(options->mPack, options->mStringTable, options);
-        if (options->requiresBaseSave() && !options->hasBaseSaveData())
+        if (options->requiresBaseSave())
         {
-            options->loadBaseSaveData();
+            std::wstring path = options->getBaseSavePath();
+            if (!path.empty() && !options->hasBaseSaveData())
+            {
+                std::wstring resolved = gApp.getFilePath(options->mPack->GetPackId(), path, true, L"WPACK");
+                options->setBaseSaveData(File(resolved));
+            }
         }
     }
     options->setLoadedData();
@@ -412,17 +412,20 @@ void LevelGenerationOptions::loadBaseSaveData()
     {
         loadGameRulesHeaders(mPack, mStringTable, this);
     }
-
-    if (!requiresBaseSave())
+    else
     {
         setLoadedData();
         return;
     }
 
-    std::wstring path = getBaseSavePath();
-    if (!path.empty() && !hasBaseSaveData())
+    if (requiresBaseSave())
     {
-        setBaseSaveData(File(path));
+        std::wstring path = getBaseSavePath();
+        if (!path.empty())
+        {
+            std::wstring resolved = gApp.getFilePath(mPack->GetPackId(), path, true, L"WPACK");
+            setBaseSaveData(File(resolved));
+        }
     }
     setLoadedData();
 }
