@@ -10,6 +10,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
@@ -159,57 +160,183 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
 
 void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    arrayWithLength<double> noise = mNoise4->getRegion(arrayWithLength<double>(), chunkX * 16, chunkZ * 16,
-                                                        16, 16, 0.0625, 0.0625, 1.0);
+    const int seaLevel = mLevel->getSeaLevel();
+
+    arrayWithLength<double> noise1 = mNoise4->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
+                                                         chunkZ * 16, 0, 16, 16, 1, 0.03125, 0.03125, 1.0);
+    arrayWithLength<double> noise2 = mNoise4->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
+                                                         109, chunkZ * 16, 16, 1, 16, 0.03125, 1.0, 0.03125);
+    arrayWithLength<double> noise3 = mNoise5->getRegion(arrayWithLength<double>(256, true), chunkX * 16,
+                                                         chunkZ * 16, 0, 16, 16, 1, 0.2, 0.2, 0.2);
+
     for (int x = 0; x < 16; ++x)
     {
         for (int z = 0; z < 16; ++z)
         {
+            const int bufIndex = z * 16 + x;
+            const int columnBase = (x << 11) | (z << 7);
+
+            const double randSoulSand = mRandom.nextDouble();
+            const bool useSoulSand = 0.0 < randSoulSand * 0.2 + noise1.data[bufIndex];
+            const double randGravel = mRandom.nextDouble();
+            const double noise2Value = noise2.data[bufIndex];
+            const double noise3Value = noise3.data[bufIndex];
+            const double randThickness = mRandom.nextDouble();
+            const int thickness = static_cast<int>(randThickness * 0.25 + noise3Value / 3.0 + 3.0);
+
             int depth = -1;
-            int thickness = static_cast<int>(noise.data[x * 16 + z] * 3.0 + mRandom.nextDouble() * 0.25 + 3.0);
-            for (int y = 127; y >= 0; --y)
+            const BlockState* top = Blocks::netherrack->defaultBlockState();
+            const BlockState* filler = Blocks::netherrack->defaultBlockState();
+
+            for (int y = 127, remaining = 128; remaining > 0; --y, --remaining)
             {
-                const BlockState* state = primer->getState(x, y, z);
-                if (state == NULL || state->getBlock() == Blocks::AIR)
+                const int cellIndex = columnBase + y;
+                bool wallPlaced = false;
+                const int halfSize = mLevelSize / 2;
+
+                if (chunkX <= -halfSize)
                 {
-                    depth = -1;
-                }
-                else if (state->getBlock() == Blocks::netherrack)
-                {
-                    if (depth == -1)
+                    const int jitter = mRandom.nextInt(4);
+                    if (!((0 < x - jitter) && (-halfSize <= chunkX)))
                     {
-                        depth = thickness;
-                        if (y >= 0 && y < 127)
+                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
+                        wallPlaced = true;
+                    }
+                }
+
+                if (chunkZ <= -halfSize)
+                {
+                    const int jitter = mRandom.nextInt(4);
+                    if (!((0 < z - jitter) && (-halfSize <= chunkZ)))
+                    {
+                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
+                        wallPlaced = true;
+                    }
+                }
+
+                if (halfSize - 1 <= chunkX)
+                {
+                    const int jitter = mRandom.nextInt(4);
+                    if ((15 <= x + jitter) || (halfSize < chunkX))
+                    {
+                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
+                        wallPlaced = true;
+                    }
+                }
+
+                bool buildHere;
+                if (chunkZ < halfSize - 1)
+                {
+                    buildHere = true;
+                }
+                else
+                {
+                    const int jitter = mRandom.nextInt(4);
+                    buildHere = (z + jitter < 15) && (chunkZ <= halfSize);
+                }
+
+                if (buildHere && !wallPlaced)
+                {
+                    int edge = mRandom.nextInt(5);
+                    bool nearCap = (127 - edge <= y);
+                    if (!nearCap)
+                    {
+                        edge = mRandom.nextInt(5);
+                        nearCap = (y <= edge);
+                    }
+
+                    if (nearCap)
+                    {
+                        primer->setState(cellIndex, Blocks::bedrock->defaultBlockState());
+                    }
+                    else
+                    {
+                        const BlockState* state = primer->getState(cellIndex);
+                        if (state == NULL || state->getBlock()->mMaterial == Material::AIR)
                         {
-                            const BlockState* top = Blocks::netherrack->defaultBlockState();
-                            const BlockState* filler = Blocks::netherrack->defaultBlockState();
-                            if (thickness <= 0)
+                            depth = -1;
+                        }
+                        else if (state->getBlock() == Blocks::netherrack)
+                        {
+                            if (depth == -1)
                             {
-                                top = Blocks::AIR->defaultBlockState();
+                                depth = thickness;
+                                if (thickness < 1)
+                                {
+                                    top = Blocks::AIR->defaultBlockState();
+                                    filler = Blocks::netherrack->defaultBlockState();
+                                }
+                                else if (seaLevel - 3 <= y && y <= seaLevel + 2)
+                                {
+                                    top = Blocks::netherrack->defaultBlockState();
+                                    filler = Blocks::netherrack->defaultBlockState();
+                                    if (0.0 < randGravel * 0.2 + noise2Value)
+                                    {
+                                        top = Blocks::gravel->defaultBlockState();
+                                        filler = Blocks::netherrack->defaultBlockState();
+                                    }
+                                    if (useSoulSand)
+                                    {
+                                        top = Blocks::soul_sand->defaultBlockState();
+                                        filler = Blocks::soul_sand->defaultBlockState();
+                                        if (mRandom.nextInt(16) == 0)
+                                        {
+                                            int wartY = y + 1;
+                                            if (127 < wartY)
+                                            {
+                                                wartY = 127;
+                                            }
+                                            const BlockState* wartState = primer->getState(columnBase + wartY);
+                                            if (wartState->getBlock() != Blocks::bedrock)
+                                            {
+                                                primer->setState(columnBase + wartY,
+                                                                 Blocks::nether_wart->defaultBlockState());
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (y < seaLevel + 1 && (top == NULL || top->getBlock()->mMaterial == Material::AIR))
+                                {
+                                    top = Blocks::lava->defaultBlockState();
+                                }
+
+                                if (seaLevel <= y || useSoulSand)
+                                {
+                                    const BlockState* hereState = primer->getState(cellIndex);
+                                    if (hereState->getBlock() != Blocks::bedrock)
+                                    {
+                                        primer->setState(cellIndex, top);
+                                    }
+                                }
+                                else
+                                {
+                                    const BlockState* hereState = primer->getState(cellIndex);
+                                    if (hereState->getBlock() != Blocks::bedrock)
+                                    {
+                                        primer->setState(cellIndex, filler);
+                                    }
+                                }
                             }
-                            else if (y < mLevel->getSeaLevel() - 3)
-                            {
-                                top = Blocks::soul_sand->defaultBlockState();
-                                filler = Blocks::soul_sand->defaultBlockState();
-                            }
-                            primer->setState(x, y, z, top);
-                            if (depth > 0)
+                            else if (0 < depth)
                             {
                                 --depth;
-                                primer->setState(x, y - 1, z, filler);
+                                const BlockState* hereState = primer->getState(z, y, x);
+                                if (hereState->getBlock() != Blocks::bedrock)
+                                {
+                                    primer->setState(z, y, x, filler);
+                                }
                             }
                         }
-                    }
-                    else if (depth > 0)
-                    {
-                        --depth;
-                        primer->setState(x, y, z, Blocks::netherrack->defaultBlockState());
                     }
                 }
             }
         }
     }
-    delete[] noise.data;
+
+    delete[] noise1.data;
+    delete[] noise2.data;
+    delete[] noise3.data;
 }
 
 void NetherLevelSource::lightChunk(LevelChunk* chunk)

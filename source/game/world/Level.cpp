@@ -1697,7 +1697,7 @@ void Level::sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, co
 
 void Level::lightColumnChanged(int x, int z, int fromY, int toY)
 {
-    PIXBeginNamedEvent(0.0f, "LightColumnChanged (%d, %d) %d to %d", x, z, fromY, toY);
+    PIXBeginNamedEvent(0.0f, "LightColumnChanged (%d,%d) %d to %d", x, z, fromY, toY);
 
     int minY = fromY;
     int maxY = toY;
@@ -3319,7 +3319,37 @@ bool Level::hasSignal(const BlockPos& pos, const Direction* direction)
 
 bool Level::hasNeighborSignal(const BlockPos& pos)
 {
-    return getBestNeighborSignal(pos) > 0;
+    if (getSignal(pos.below(), Direction::DOWN) > 0)
+    {
+        return true;
+    }
+
+    if (getSignal(pos.above(), Direction::UP) > 0)
+    {
+        return true;
+    }
+
+    if (getSignal(pos.north(), Direction::NORTH) > 0)
+    {
+        return true;
+    }
+
+    if (getSignal(pos.south(), Direction::SOUTH) > 0)
+    {
+        return true;
+    }
+
+    if (getSignal(pos.west(), Direction::WEST) > 0)
+    {
+        return true;
+    }
+
+    if (getSignal(pos.east(), Direction::EAST) > 0)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 int Level::getBestNeighborSignal(const BlockPos& pos)

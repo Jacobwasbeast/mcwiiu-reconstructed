@@ -15,7 +15,7 @@ LevelData::LevelData()
       mGenerateMapFeatures(false), mHardcore(false), mAllowCommands(false),
       mInitialized(false), mDifficulty(Difficulty::NORMAL), mDifficultyLocked(false), mCloudHeight(128),
       mUseNewSeaLevel(false), mHasBeenInCreative(false), mSpawnBonusChest(false),
-      mXZSize(0), mHellScale(0), mModernEnd(true), mBiomeScale(0),
+      mXZSize(0), mHellScale(0), mModernEnd(false), mBiomeScale(0),
       mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mLoadedPlayerTag(0),
       mLevelName(), mGameRules()
 {
@@ -304,10 +304,7 @@ LevelData::~LevelData()
 CompoundTag* LevelData::createTag()
 {
     CompoundTag* tag = new CompoundTag();
-    tag->putLong(L"RandomSeed", mSeed);
-    tag->putInt(L"SpawnX", mXSpawn); tag->putInt(L"SpawnY", mYSpawn); tag->putInt(L"SpawnZ", mZSpawn);
-    tag->putLong(L"Time", mGameTime); tag->putLong(L"LastUpdate", mDayTime);
-    tag->putString(L"LevelName", mLevelName);
+    setTagData(tag);
     return tag;
 }
 
@@ -324,6 +321,8 @@ void LevelData::addWalkers(DataFixerUpper* fixer)
 
 void LevelData::setTagData(CompoundTag* tag)
 {
+    tag->putInt(L"DataVersion", 0x39a);
+    tag->putLong(L"RandomSeed", mSeed);
     tag->putString(L"generatorName", mGeneratorType->getGeneratorName());
     tag->putInt(L"generatorVersion", mGeneratorType->getVersion());
 

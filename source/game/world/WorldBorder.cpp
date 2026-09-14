@@ -93,13 +93,33 @@ void WorldBorder::addListener(BorderChangeListener* listener) { if (listener != 
 void WorldBorder::setAbsoluteMaxSize(int size) { m_absoluteMaxSize = size; }
 int WorldBorder::getAbsoluteMaxSize() { return m_absoluteMaxSize; }
 double WorldBorder::getDamageSafeZone() { return m_damageSafeZone; }
-void WorldBorder::setDamageSafeZone(double distance) { m_damageSafeZone = distance; }
+void WorldBorder::setDamageSafeZone(double distance)
+{
+    m_damageSafeZone = distance;
+    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+        (*it)->onBorderSetDamageSafeZOne(this, distance);
+}
 double WorldBorder::getDamagePerBlock() { return m_damagePerBlock; }
-void WorldBorder::setDamagePerBlock(double damage) { m_damagePerBlock = damage; }
+void WorldBorder::setDamagePerBlock(double damage)
+{
+    m_damagePerBlock = damage;
+    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+        (*it)->onBorderSetDamagePerBlock(this, damage);
+}
 int WorldBorder::getWarningTime() { return m_warningTime; }
-void WorldBorder::setWarningTime(int time) { m_warningTime = time; }
+void WorldBorder::setWarningTime(int time)
+{
+    m_warningTime = time;
+    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+        (*it)->onBorderSetWarningTime(this, time);
+}
 int WorldBorder::getWarningBlocks() { return m_warningBlocks; }
-void WorldBorder::setWarningBlocks(int blocks) { m_warningBlocks = blocks; }
+void WorldBorder::setWarningBlocks(int blocks)
+{
+    m_warningBlocks = blocks;
+    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+        (*it)->onBorderSetWarningBlocks(this, blocks);
+}
 bool WorldBorder::isWithinBounds(ChunkPos* pos)
 {
     return pos != NULL && isWithinBounds(static_cast<double>(pos->getMinBlockX()), static_cast<double>(pos->getMinBlockZ())) &&

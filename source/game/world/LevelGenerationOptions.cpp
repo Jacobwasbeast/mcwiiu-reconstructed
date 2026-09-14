@@ -45,6 +45,7 @@ LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
     mPack = pack;
     mSource = eSrc_Unknown;
     mGameRulesSource = NULL;
+    mLoadedData = false;
     mBaseSaveData = NULL;
     mBaseSaveDataSize = 0;
     mBaseSaveRoot = L"buckets_";

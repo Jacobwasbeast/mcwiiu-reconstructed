@@ -22,43 +22,43 @@ long long DerivedLevelData::getGameTime() { return mLevelData->getGameTime(); }
 long long DerivedLevelData::getDayTime() { return mLevelData->getDayTime(); }
 long long DerivedLevelData::getSizeOnDisk() { return mLevelData->getSizeOnDisk(); }
 CompoundTag* DerivedLevelData::getLoadedPlayerTag() { return mLevelData->getLoadedPlayerTag(); }
-void DerivedLevelData::setSeed(long long value) { mLevelData->setSeed(value); }
-void DerivedLevelData::setXSpawn(int value) { mLevelData->setXSpawn(value); }
-void DerivedLevelData::setYSpawn(int value) { mLevelData->setYSpawn(value); }
-void DerivedLevelData::setZSpawn(int value) { mLevelData->setZSpawn(value); }
-void DerivedLevelData::setGameTime(long long value) { mLevelData->setGameTime(value); }
-void DerivedLevelData::setDayTime(long long value) { mLevelData->setDayTime(value); }
-void DerivedLevelData::setSizeOnDisk(long long value) { mLevelData->setSizeOnDisk(value); }
-void DerivedLevelData::setLoadedPlayerTag(CompoundTag* tag) { mLevelData->setLoadedPlayerTag(tag); }
-void DerivedLevelData::setSpawn(const BlockPos& pos) { mLevelData->setSpawn(pos); }
+void DerivedLevelData::setSeed(long long) { }
+void DerivedLevelData::setXSpawn(int) { }
+void DerivedLevelData::setYSpawn(int) { }
+void DerivedLevelData::setZSpawn(int) { }
+void DerivedLevelData::setGameTime(long long) { }
+void DerivedLevelData::setDayTime(long long) { }
+void DerivedLevelData::setSizeOnDisk(long long) { }
+void DerivedLevelData::setLoadedPlayerTag(CompoundTag*) { }
+void DerivedLevelData::setSpawn(const BlockPos&) { }
 std::wstring DerivedLevelData::getLevelName() { return mLevelData->getLevelName(); }
-void DerivedLevelData::setLevelName(const std::wstring& name) { mLevelData->setLevelName(name); }
+void DerivedLevelData::setLevelName(const std::wstring&) { }
 int DerivedLevelData::getVersion() { return mLevelData->getVersion(); }
-void DerivedLevelData::setVersion(int value) { mLevelData->setVersion(value); }
+void DerivedLevelData::setVersion(int) { }
 long long DerivedLevelData::getLastPlayed() { return mLevelData->getLastPlayed(); }
 bool DerivedLevelData::isThundering() { return mLevelData->isThundering(); }
 int DerivedLevelData::getThunderTime() { return mLevelData->getThunderTime(); }
 bool DerivedLevelData::isRaining() { return mLevelData->isRaining(); }
 int DerivedLevelData::getRainTime() { return mLevelData->getRainTime(); }
 const GameType* DerivedLevelData::getGameType() { return mLevelData->getGameType(); }
-void DerivedLevelData::setThundering(bool value) { mLevelData->setThundering(value); }
-void DerivedLevelData::setThunderTime(int value) { mLevelData->setThunderTime(value); }
-void DerivedLevelData::setRaining(bool value) { mLevelData->setRaining(value); }
-void DerivedLevelData::setRainTime(int value) { mLevelData->setRainTime(value); }
+void DerivedLevelData::setThundering(bool) { }
+void DerivedLevelData::setThunderTime(int) { }
+void DerivedLevelData::setRaining(bool) { }
+void DerivedLevelData::setRainTime(int) { }
 bool DerivedLevelData::isGenerateMapFeatures() { return mLevelData->isGenerateMapFeatures(); }
-void DerivedLevelData::setGameType(const GameType* type) { mLevelData->setGameType(type); }
+void DerivedLevelData::setGameType(const GameType*) { }
 bool DerivedLevelData::isHardcore() { return mLevelData->isHardcore(); }
 LevelType* DerivedLevelData::getGeneratorType() { return mLevelData->getGeneratorType(); }
-void DerivedLevelData::setGeneratorType(LevelType* type) { mLevelData->setGeneratorType(type); }
+void DerivedLevelData::setGeneratorType(LevelType*) { }
 bool DerivedLevelData::getAllowCommands() { return mLevelData->getAllowCommands(); }
-void DerivedLevelData::setAllowCommands(bool value) { mLevelData->setAllowCommands(value); }
+void DerivedLevelData::setAllowCommands(bool) { }
 bool DerivedLevelData::isInitialized() { return mLevelData->isInitialized(); }
-void DerivedLevelData::setInitialized(bool value) { mLevelData->setInitialized(value); }
+void DerivedLevelData::setInitialized(bool) { }
 GameRules* DerivedLevelData::getGameRules() { return mLevelData->getGameRules(); }
 const Difficulty* DerivedLevelData::getDifficulty() { return mLevelData->getDifficulty(); }
-void DerivedLevelData::setDifficulty(const Difficulty* difficulty) { mLevelData->setDifficulty(difficulty); }
+void DerivedLevelData::setDifficulty(const Difficulty*) { }
 bool DerivedLevelData::isDifficultyLocked() { return mLevelData->isDifficultyLocked(); }
-void DerivedLevelData::setDifficultyLocked(bool value) { mLevelData->setDifficultyLocked(value); }
+void DerivedLevelData::setDifficultyLocked(bool) { }
 void DerivedLevelData::setDimensionData(const DimensionType* dimension, CompoundTag* tag) { mLevelData->setDimensionData(dimension, tag); }
 CompoundTag* DerivedLevelData::getDimensionData(const DimensionType* dimension) { return mLevelData->getDimensionData(dimension); }
 int DerivedLevelData::getXZSize() { return mLevelData->getXZSize(); }
