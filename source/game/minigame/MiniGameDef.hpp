@@ -1,6 +1,7 @@
 #ifndef GAME_MINIGAME_MINIGAMEDEF_HPP
 #define GAME_MINIGAME_MINIGAMEDEF_HPP
 
+#include <deque>
 #include <map>
 #include <string>
 #include <utility>
@@ -226,7 +227,7 @@ public:
     void parsePermissions(const XmlObject& object);
     void parseChestRefill(const XmlObject& object);
     static std::pair<bool, int> parseDistributionMethod(std::wstring name);
-    static not_null_ptr<ItemInstance> parseItemInstance(const XmlObject& object, int* weight);
+    static std::deque<not_null_ptr<ItemInstance> > parseItemInstance(const XmlObject& object, int* weight);
     static void parseKit(std::vector<ChestKitInfo>* kits, const XmlObject& object);
     static void parseEquipment(PlayerEquipmentInfo& equipment, const XmlObject& object);
     static void parseChestItem(std::vector<ChestItemsInfo>* items, const XmlObject& object);

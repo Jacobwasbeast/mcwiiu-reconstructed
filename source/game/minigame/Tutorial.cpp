@@ -488,15 +488,47 @@ unsigned int Tutorial::setHintCompleted(TutorialHint* hint)
 
 int Tutorial::setMessage(TutorialHint* hint, PopupMessageDetails* details)
 {
-    if (details == NULL || (!enabled && !details->force))
+    bool eligible = true;
+    if (!enabled &&
+        (GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0xf)) == 0 ||
+         GameSettings::GetGameSettings(playerId, static_cast<eGameSetting>(0x17)) == 0))
+    {
+        eligible = false;
+    }
+    unsigned int now = GetTickCount();
+    if (details == NULL)
     {
         return 0;
     }
-    if (setMessage(details) != 0)
+    if (!details->allowFade && !eligible)
     {
-        setHintCompleted(hint);
+        return 0;
     }
-    return 1;
+    if (details->isItem)
+    {
+        if (!popupPending)
+        {
+            if (now - static_cast<unsigned int>(visibleTime) <= 2000)
+            {
+                return 0;
+            }
+        }
+        else if (now - static_cast<unsigned int>(messageTime) <= 14000)
+        {
+            return 0;
+        }
+    }
+    int result = static_cast<int>(setMessage(details));
+    if (result != 0)
+    {
+        messageTime = static_cast<int>(now);
+        popupPending = true;
+        if (hint != NULL)
+        {
+            setHintCompleted(hint);
+        }
+    }
+    return result;
 }
 
 unsigned int Tutorial::isSelectedItemState()

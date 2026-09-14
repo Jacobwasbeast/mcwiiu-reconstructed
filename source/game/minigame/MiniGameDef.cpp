@@ -2,24 +2,42 @@
 
 #include <algorithm>
 #include <cwchar>
+#include <deque>
 #include <sstream>
 #include "game/core/L10N.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "game/core/File.hpp"
+#include "game/core/FileInputStream.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/StringFormat.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/core/WeighedTreasure.hpp"
 #include "game/core/XmlConstruct.hpp"
 #include "game/core/XmlObject.hpp"
 #include "game/core/XmlParser.hpp"
+#include "game/item/ArmorItem.hpp"
+#include "game/item/Enchantment.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/ItemPotionFix.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/PotionUtils.hpp"
+#include "game/entity/mob/MobEffect.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/network/ClientboundMGPlayerSettingsUpdatePacket.hpp"
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/util/GameModeUtilities.hpp"
+#include "game/util/Random.hpp"
 #include "game/world/block/Blocks.hpp"
 
+bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
+
 class Block;
+
+static const unsigned int sHostOptionCategoryStringIds[4] =
+{
+    0xfb298fe6u, 0xe1a168a0u, 0x92734c7eu, 0x710952f7u
+};
 
 static MiniGamePlayerSettings sPlayerSettings;
 static OSFastMutex sPlayerSettingsMutex;
@@ -347,12 +365,17 @@ MiniGameDef::ModeVariationLootGroup::~ModeVariationLootGroup() {}
 std::vector<not_null_ptr<ItemInstance> >* MiniGameDef::ModeVariationLootGroup::GetChestItems() const
 {
     std::vector<not_null_ptr<ItemInstance> >* result = new std::vector<not_null_ptr<ItemInstance> >();
+    Random random;
     for (const_iterator it = begin(); it != end(); ++it)
     {
         for (int i = 0; i < it->mWeight; ++i)
         {
             not_null_ptr<ItemInstance> item = it->mItem->copy();
-            item->setCount(it->mMinCount);
+            int count = it->mMinCount;
+            if (it->mMaxCount > it->mMinCount) count += random.nextInt(it->mMaxCount - it->mMinCount);
+            int maxStack = item->getMaxStackSize();
+            if (count > maxStack) count = maxStack;
+            item->setCount(count);
             result->push_back(item);
         }
     }
@@ -449,8 +472,8 @@ MiniGameDef::~MiniGameDef()
 std::pair<bool, int> MiniGameDef::parseTimer(std::wstring name)
 {
     static const wchar_t* names[] = { L"GameInitialise", L"RoundPreparing", L"RoundStartDelay", L"GracePeriod",
-        L"RoundEndDelay", L"CancelTeam", L"LobbyInterval", L"RoundLimit", L"Showdown", L"PostGame", L"TimeToReachEnd" };
-    static const int values[] = { 0, 1, 2, 3, 4, 10, 6, 7, 8, 9, 11 };
+        L"RoundEndDelay", L"LobbyInterval", L"RoundLimit", L"Showdown", L"PostGame", L"TimeToReachEnd" };
+    static const int values[] = { 0, 1, 2, 3, 4, 6, 7, 8, 9, 11 };
     for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); ++i)
         if (name == names[i]) return std::make_pair(true, values[i]);
     return std::make_pair(false, 0);
@@ -521,11 +544,57 @@ void MiniGameDef::parseFoodBalance(const XmlObject& object, FoodBalance* balance
 
 void MiniGameDef::parsePermissions(const XmlObject& object)
 {
-    mDisableBuilding = object[L"disableBuilding"].asBool(false);
-    mPlaceMode = (EBuildMode)object[L"placeMode"].asInt(0);
-    mDestroyMode = (EBuildMode)object[L"destroyMode"].asInt(0);
-    mUseMode = (EBuildMode)object[L"useMode"].asInt(0);
-    mUseBlockMode = (EBuildMode)object[L"useBlockMode"].asInt(0);
+    if (equalsIgnoreCase(object.mName, L""))
+        return;
+
+    EBuildMode* mode;
+    std::vector<int>* exceptions;
+
+    if (equalsIgnoreCase(object.mName, L"DestroyPermissions"))
+    {
+        mode = &mDestroyMode;
+        exceptions = &mMayDestroy;
+    }
+    else if (equalsIgnoreCase(object.mName, L"PlacePermissions"))
+    {
+        mode = &mPlaceMode;
+        exceptions = &mMayPlace;
+    }
+    else if (equalsIgnoreCase(object.mName, L"UsePermissions"))
+    {
+        mode = &mUseMode;
+        exceptions = &mMayUse;
+    }
+    else if (equalsIgnoreCase(object.mName, L"BlockUsePermissions"))
+    {
+        mode = &mUseBlockMode;
+        exceptions = &mMayUseBlock;
+    }
+    else
+    {
+        return;
+    }
+
+    maybe<std::wstring> modeText = object[L"mode"].maybeString();
+    int modeValue = 0;
+    if (modeText.isSet())
+    {
+        std::pair<bool, int> parsed = parseBuildMode(modeText.get());
+        modeValue = parsed.first ? parsed.second : 0;
+    }
+    *mode = (EBuildMode)modeValue;
+
+    if (modeValue != 0)
+    {
+        const std::vector<XmlChild>& children = object.getChildrenRaw();
+        for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+        {
+            if (child->m_type == 1 && equalsIgnoreCase(child->xml()->mName, L"Exception"))
+            {
+                exceptions->push_back((*child->xml())[L"id"].asInt());
+            }
+        }
+    }
 }
 
 void MiniGameDef::parseChestRefill(const XmlObject& object)
@@ -544,13 +613,101 @@ void MiniGameDef::parseChestRefill(const XmlObject& object)
     if (value.isSet()) { mChestRefill.mMaxDistanceEnabled = true; mChestRefill.mMaxDistance = value.get(); }
 }
 
-not_null_ptr<ItemInstance> MiniGameDef::parseItemInstance(const XmlObject& object, int* weight)
+std::deque<not_null_ptr<ItemInstance> > MiniGameDef::parseItemInstance(const XmlObject& object, int* weight)
 {
     int id = object[L"id"].asInt(0);
     int count = object[L"count"].asInt(1);
     int aux = object[L"aux"].asInt(0);
-    if (weight != NULL) *weight = object[L"weight"].asInt(1);
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(id), count, aux));
+    if (weight != NULL)
+    {
+        *weight = object[L"slot"].asInt(-1);
+    }
+
+    not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(id), count, aux));
+
+    std::vector<MobEffectInstance*> effects;
+    std::wstring lastEffectName;
+
+    const std::vector<XmlChild>& children = object.getChildrenRaw();
+    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    {
+        if (child->m_type != 1)
+            continue;
+
+        if (equalsIgnoreCase(child->xml()->mName, L"Enchantment"))
+        {
+            bool overrideEnchantable = (*child->xml())[L"override"].asBool(false);
+            if (item->isEnchantable() || overrideEnchantable)
+            {
+                int enchantId = (*child->xml())[L"id"].asInt();
+                int enchantLevel = (*child->xml())[L"level"].asInt();
+                Enchantment* enchantment = Enchantment::byId(enchantId);
+                if (enchantment != NULL && overrideEnchantable)
+                {
+                    item->enchant(enchantment, enchantLevel);
+                }
+                else
+                {
+                    bool canApply = enchantment != NULL && enchantment->canEnchant(item);
+                    if (canApply)
+                    {
+                        int maxLevel = enchantment->getMaxLevel();
+                        if (maxLevel < enchantLevel) enchantLevel = maxLevel;
+                        item->enchant(enchantment, enchantLevel);
+                    }
+                }
+            }
+        }
+        else if (equalsIgnoreCase(child->xml()->mName, L"Dye"))
+        {
+            ArmorItem* armor = (item->getItem() != NULL) ? dynamic_cast<ArmorItem*>(item->getItem()) : NULL;
+            int rgb = _fromHEXString<int>((*child->xml())[L"rgb"].maybeString().get());
+            if (armor != NULL)
+            {
+                armor->setColor(item, rgb);
+            }
+        }
+        else if (equalsIgnoreCase(child->xml()->mName, L"CustomMobEffect"))
+        {
+            int effectId = (*child->xml())[L"Id"].asInt(0);
+            int amplifier = (*child->xml())[L"Amplifier"].asInt(1);
+            int duration = (*child->xml())[L"Duration"].asInt(200);
+            bool ambient = (*child->xml())[L"Ambient"].asBool(false);
+            lastEffectName = (*child->xml())[L"Name"].XmlConstruct::asString(L"");
+            MobEffect* effect = MobEffect::byId(effectId);
+            if (amplifier < 0) amplifier = 0;
+            effects.push_back(new MobEffectInstance(effect, duration, amplifier, ambient, true));
+        }
+    }
+
+    ItemPotionFix::fix(item);
+    if (!effects.empty())
+    {
+        PotionUtils::setPotionName(item, lastEffectName);
+        PotionUtils::setCustomEffects(item, &effects);
+        for (std::vector<MobEffectInstance*>::iterator it = effects.begin(); it != effects.end(); ++it)
+        {
+            delete *it;
+        }
+        effects.clear();
+    }
+
+    std::deque<not_null_ptr<ItemInstance> > result;
+    if (!item->isStackable() && item->getCount() > 1)
+    {
+        int splitCount = item->getCount();
+        for (int i = 0; i < splitCount; ++i)
+        {
+            not_null_ptr<ItemInstance> single = item->copy();
+            single->setCount(1);
+            result.push_back(single);
+        }
+    }
+    else
+    {
+        result.push_back(item);
+    }
+    return result;
 }
 
 void MiniGameDef::parseKit(std::vector<ChestKitInfo>* kits, const XmlObject& object)
@@ -560,7 +717,7 @@ void MiniGameDef::parseKit(std::vector<ChestKitInfo>* kits, const XmlObject& obj
     kit.mMinPlayers = object[L"minPlayers"].asInt(0);
     kit.mMaxPlayers = object[L"maxPlayers"].asInt(8);
     int ignoredWeight = 0;
-    kit.mItems.push_back(parseItemInstance(object, &ignoredWeight));
+    kit.mItems.push_back(parseItemInstance(object, &ignoredWeight).front());
     kits->push_back(kit);
 }
 
@@ -572,22 +729,41 @@ void MiniGameDef::parseEquipment(PlayerEquipmentInfo& equipment, const XmlObject
         if (slot != NULL)
         {
             int ignoredWeight = 0;
-            equipment.mSlots[i] = maybe<not_null_ptr<ItemInstance> >(parseItemInstance(*slot, &ignoredWeight));
+            equipment.mSlots[i] = maybe<not_null_ptr<ItemInstance> >(parseItemInstance(*slot, &ignoredWeight).front());
         }
     }
 }
 
 void MiniGameDef::parseChestItem(std::vector<ChestItemsInfo>* items, const XmlObject& object)
 {
-    ChestItemsInfo info;
-    info.mItem = parseItemInstance(object, &info.mWeight);
-    info.mMinCount = object[L"minCount"].asInt(1);
-    info.mMaxCount = object[L"maxCount"].asInt(info.mMinCount);
-    info.mMinPlayers = object[L"minPlayers"].asInt(0);
-    info.mMaxPlayers = object[L"maxPlayers"].asInt(8);
-    info.mChance = object[L"chance"].asInt(1);
-    info.mKpScore = object[L"kpScore"].asInt(0);
-    items->push_back(info);
+    maybe<int> minCount = object[L"minCount"].maybeInt();
+    maybe<int> maxCount = object[L"maxCount"].maybeInt();
+    maybe<unsigned int> playersForMin = object[L"playersForMin"].maybeUInt();
+    maybe<unsigned int> kpScore = object[L"kpScore"].maybeUInt();
+    maybe<unsigned int> weight = object[L"weight"].maybeUInt();
+
+    const std::vector<XmlChild>& children = object.getChildrenRaw();
+    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    {
+        if (child->m_type != 1)
+            continue;
+
+        std::deque<not_null_ptr<ItemInstance> > parsedItems = parseItemInstance(*child->xml(), NULL);
+        while (!parsedItems.empty())
+        {
+            ChestItemsInfo info;
+            info.mItem = parsedItems.front();
+            info.mMinCount = minCount.isSet() ? minCount.get() : 1;
+            info.mMaxCount = maxCount.isSet() ? maxCount.get() : 1;
+            info.mWeight = weight.isSet() ? (int)weight.get() : 1;
+            info.mMinPlayers = playersForMin.isSet() ? (int)playersForMin.get() : 0;
+            info.mMaxPlayers = 1;
+            info.mChance = 1;
+            info.mKpScore = kpScore.isSet() ? (int)kpScore.get() : 1;
+            items->push_back(info);
+            parsedItems.pop_front();
+        }
+    }
 }
 
 void MiniGameDef::parseItemOverrideMap(int itemId, const XmlObject& object)
@@ -692,8 +868,18 @@ MiniGameDef* MiniGameDef::parseMiniGameDef(arrayWithLength<unsigned char> data)
 
 MiniGameDef* MiniGameDef::parseMiniGameDef(std::wstring fileName)
 {
-    XmlObject object(fileName);
-    return parseMiniGameDef(&object);
+    fileName = std::wstring(L"Common/res/TitleUpdate/GameRules") + fileName;
+    File file(fileName);
+    FileInputStream stream(file);
+    unsigned int size = stream.filesize();
+    arrayWithLength<unsigned char> data(size, true);
+    bool valid = file.ext() == L".xml" && file.exists();
+    if (valid)
+    {
+        stream.read(data);
+        return parseMiniGameDef(data);
+    }
+    return new MiniGameDef((EMiniGameId)0);
 }
 
 void MiniGameDef::SetPlayerSettings(const MiniGamePlayerSettings& settings) { sPlayerSettings = settings; }
@@ -817,16 +1003,58 @@ void MiniGameDef::SetLootSet(int id) const { const_cast<MiniGamePlayerSettings&>
 
 std::wstring MiniGameDef::GetLootSetText(int id) const
 {
-    if (id < 0 || id >= (int)mLootSets.size()) return std::wstring();
-    return mLootSets[id].getAttribute(L"name", L"");
+    unsigned int mode = GetId();
+    if (mode == 1)
+    {
+        if (id < 3)
+        {
+            if (id == 0) return L10N::GetString(0x9d428428);
+            if (id == 1) return L10N::GetString(0xc344fe91);
+            return L10N::GetString(0xe94778fa);
+        }
+        if (id < 4) return L10N::GetString(0xf49f363);
+        if (id == 4) return L10N::GetString(0x354c6dcc);
+        if (id == 5) return L10N::GetString(0x6482ae73);
+        return std::wstring();
+    }
+    if (mode == 2)
+    {
+        if (id == 0) return L10N::GetString(0x6ea6266a);
+        if (id == 1) return L10N::GetString(0x48a3ac01);
+        if (id < 3) return L10N::GetString(0x304c4139);
+        if (id == 3) return L10N::GetString(0x93162dc9);
+        return std::wstring();
+    }
+    return std::wstring();
 }
 
 std::wstring MiniGameDef::GetLootSetText() const { return GetLootSetText(GetLootSetId()); }
 
 std::wstring MiniGameDef::GetLootSetDescription(int id) const
 {
-    if (id < 0 || id >= (int)mLootSets.size()) return std::wstring();
-    return mLootSets[id].getAttribute(L"description", L"");
+    unsigned int mode = GetId();
+    if (mode == 1)
+    {
+        if (id < 3)
+        {
+            if (id == 0) return L10N::GetString(0xe3d04b5e);
+            if (id == 1) return L10N::GetString(0xfdf2d6af);
+            return L10N::GetString(0x172a369c);
+        }
+        if (id < 4) return L10N::GetString(0x931ab4ad);
+        if (id == 4) return L10N::GetString(0x32400c9a);
+        if (id == 5) return L10N::GetString(0x597a317d);
+        return std::wstring();
+    }
+    if (mode == 2)
+    {
+        if (id == 0) return L10N::GetString(0xdf7a97cc);
+        if (id == 1) return L10N::GetString(0x5486471f);
+        if (id < 3) return L10N::GetString(0xfcc2df67);
+        if (id == 3) return L10N::GetString(0xbb83a837);
+        return std::wstring();
+    }
+    return std::wstring();
 }
 
 MiniGamePlayerSettings MiniGameDef::GetDefaultPlayerSettings() const { return mPlayerSettings; }
@@ -993,21 +1221,136 @@ unsigned int MiniGameDef::HostOption_Time(eCustomGameModeHostOption option) cons
 
 std::wstring MiniGameDef::GetValueText(eCustomGameModeHostOption option, int value) const
 {
-    if (GetOptionType(option) == 0) return value == 0 ? L"Off" : L"On";
-    std::wstringstream text;
-    if (GetOptionType(option) == 2)
+    unsigned int type = GetOptionType(option);
+
+    if (type == 0)
     {
-        int minutes = value / 60;
-        int seconds = value % 60;
-        text << minutes << L":";
-        if (seconds < 10) text << L"0";
-        text << seconds;
+        if (option == 0)
+        {
+            value = (value == 0);
+        }
+        return L10N::GetString(value != 0 ? 0xc8e108fd : 0xf74dab3b);
     }
-    else
+
+    if (type == 1)
     {
-        text << value;
+        if (option == 1)
+        {
+            unsigned int category = HostOption_Category(option, (unsigned int)value);
+            return L10N::GetString((int)sHostOptionCategoryStringIds[category]);
+        }
+
+        if (option > 10)
+        {
+            if (option == 11)
+            {
+                if (value == 0) return L10N::GetString(0x68039067);
+                if (value == 1) return L10N::GetString(0x47958fd3);
+                if (value < 3) return L10N::GetString(0xa7e3639c);
+                if (value != 3) return std::wstring();
+                return L10N::GetString(0xa7369313);
+            }
+            if (option < 13)
+            {
+                unsigned int id = GetId();
+                if (id != 0)
+                {
+                    if (id == 1)
+                    {
+                        if (value == 0) return L10N::GetString(0x189a3627);
+                        if (value == 1) return L10N::GetString(0x9038dc1);
+                        if (value < 3) return L10N::GetString(0x6829d25f);
+                        if (value != 3) return std::wstring();
+                        return L10N::GetString(0xa0f8061a);
+                    }
+                    if (id < 3)
+                    {
+                        if (value < 2)
+                        {
+                            if (value == 0) return L10N::GetString(0x189a3627);
+                            if (value == 1) return L10N::GetString(0x6ea6266a);
+                        }
+                        if (value < 3) return L10N::GetString(0x48a3ac01);
+                        if (value != 3)
+                        {
+                            if (value == 4) return L10N::GetString(0xa0f8061a);
+                            return std::wstring();
+                        }
+                        return L10N::GetString(0x34f502c2);
+                    }
+                    if (id == 3)
+                    {
+                        if (value == 0) return L10N::GetString(0x189a3627);
+                        if (value == 1) return L10N::GetString(0xc45287b7);
+                        if (value == 2) return L10N::GetString(0x1c7d5232);
+                        if (value != 4) return std::wstring();
+                        return L10N::GetString(0xa0f8061a);
+                    }
+                }
+                return std::wstring();
+            }
+            if (option == 13)
+            {
+                unsigned int id = GetId();
+                if (id != 0)
+                {
+                    if (id == 1)
+                    {
+                        if (value == 0) return L10N::GetString(0x9038dc1);
+                        if (value == 1) return L10N::GetString(0x6829d25f);
+                        if (value == 2) return L10N::GetString(0xa0f8061a);
+                        return std::wstring();
+                    }
+                    if (id < 3)
+                    {
+                        if (value == 0) return L10N::GetString(0x6ea6266a);
+                        if (value == 1) return L10N::GetString(0x48a3ac01);
+                        if (value < 3) return L10N::GetString(0x34f502c2);
+                        if (value != 3) return std::wstring();
+                        return L10N::GetString(0xa0f8061a);
+                    }
+                    if (id == 3)
+                    {
+                        if (value == 0) return L10N::GetString(0xc45287b7);
+                        if (value != 1) return std::wstring();
+                        return L10N::GetString(0x1c7d5232);
+                    }
+                }
+                return std::wstring();
+            }
+        }
+        return std::wstring();
     }
-    return text.str();
+
+    if (type == 2)
+    {
+        if (option == 2)
+        {
+            if (value == 0) return L10N::GetString(0x47958fd3);
+            if (value == 1) return L10N::GetString(0xa7e3639c);
+            if (value == 2) return L10N::GetString(0xa7369313);
+            return std::wstring();
+        }
+
+        int seconds = (int)HostOption_Time(option, (unsigned int)value);
+        if (seconds == -2) return L10N::GetString(0xb10b55cf);
+        if (seconds == -1) return L10N::GetString(0xd2691ec2);
+        if (seconds > 0x3b)
+        {
+            std::wstring templateText = L10N::GetString(seconds == 0x3c ? 0xb80e547f : 0x82557e0c);
+            std::wstring minutesText = _toString(seconds / 0x3c);
+            return replaceAll(templateText, L"{MINUTES}", minutesText);
+        }
+        if (seconds >= 0)
+        {
+            std::wstring templateText = L10N::GetString(seconds == 1 ? 0xb58fee78 : 0x4ddf2da3);
+            std::wstring secondsText = _toString(seconds);
+            return replaceAll(templateText, L"{SECONDS}", secondsText);
+        }
+        return std::wstring();
+    }
+
+    return std::wstring();
 }
 
 std::wstring MiniGameDef::getComparisonImageForGameMode(EMiniGameId id)
@@ -1086,16 +1429,34 @@ unsigned int MiniGameDef::AllowSmallSkins() const { return !HostOption_Bool(eCus
 
 std::wstring MiniGameDef::GetFoodBalanceIndexText(int index) const
 {
-    std::wstringstream text;
-    text << L"foodBalance." << index;
-    return text.str();
+    switch (index)
+    {
+    case 0: return L10N::GetString(0x1ea80257);
+    case 1: return L10N::GetString(0xf8a587ee);
+    case 2: return L10N::GetString(0xd2a30d85);
+    case 3: return L10N::GetString(0xaca0931c);
+    case 4: return L10N::GetString(0x869e18b3);
+    case 5: return L10N::GetString(0x609b9e4a);
+    case 6: return L10N::GetString(0x3a9923e1);
+    case 7: return L10N::GetString(0x1496a978);
+    default: return std::wstring();
+    }
 }
 
 std::wstring MiniGameDef::GetFoodBalanceIndexDescription(int index) const
 {
-    std::wstringstream text;
-    text << L"foodBalanceDescription." << index;
-    return text.str();
+    switch (index)
+    {
+    case 0: return L10N::GetString(0x9a084979);
+    case 1: return L10N::GetString(0x3ce24768);
+    case 2: return L10N::GetString(0x175deebb);
+    case 3: return L10N::GetString(0xa7ba696a);
+    case 4: return L10N::GetString(0x4b98883d);
+    case 5: return L10N::GetString(0xabd0762c);
+    case 6: return L10N::GetString(0x6c2ba0ff);
+    case 7: return L10N::GetString(0xfc881bae);
+    default: return std::wstring();
+    }
 }
 
 void MiniGameDef::SetDisabledEditActions(bool disabled) const { const_cast<MiniGameDef*>(this)->mDisableBuilding = disabled; }
