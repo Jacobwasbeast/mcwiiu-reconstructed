@@ -18,6 +18,7 @@ static short adpcm_decode(unsigned int code, unsigned int bits, nn::pia::chat::A
 {
     int step = g_adpcm_steps[state->index];
     int magnitude;
+    int newIndex;
     if (bits == 2)
         magnitude = (code & 1) ? step : 0;
     else if (bits == 3)
@@ -26,10 +27,12 @@ static short adpcm_decode(unsigned int code, unsigned int bits, nn::pia::chat::A
         magnitude = (step >> 3) + ((code & 4) ? step : 0) + ((code & 2) ? (step >> 1) : 0) + ((code & 1) ? (step >> 2) : 0);
     if (code & (1u << (bits - 1))) magnitude = -magnitude;
     state->sample = adpcm_clip((int)state->sample + magnitude);
-    if (bits == 2) state->index += g_adpcm_delta_2[code & 3];
-    else if (bits == 3) state->index += g_adpcm_delta_3[code & 7];
-    else state->index += g_adpcm_delta_4[code & 15];
-    if (state->index > 88) state->index = 0;
+    if (bits == 2) newIndex = (int)state->index + g_adpcm_delta_2[code & 3];
+    else if (bits == 3) newIndex = (int)state->index + g_adpcm_delta_3[code & 7];
+    else newIndex = (int)state->index + g_adpcm_delta_4[code & 15];
+    if (newIndex < 0) newIndex = 0;
+    else if (newIndex > 88) newIndex = 88;
+    state->index = newIndex;
     return state->sample;
 }
 
@@ -42,7 +45,7 @@ static unsigned int adpcm_encode(short target, unsigned int bits, nn::pia::chat:
     if (magnitude < 0) { magnitude = -magnitude; code = 1u << (bits - 1); }
     if (bits == 2) { if (magnitude >= step) code |= 1; }
     else if (bits == 3) { if (magnitude >= step) { code |= 2; magnitude -= step; } if (magnitude >= (step >> 1)) code |= 1; }
-    else { if (magnitude >= step) { code |= 4; magnitude -= step; } if (magnitude >= (step >> 1)) code |= 2; if (magnitude >= (step >> 2)) code |= 1; }
+    else { if (magnitude >= step) { code |= 4; magnitude -= step; } if (magnitude >= (step >> 1)) { code |= 2; magnitude -= (step >> 1); } if (magnitude >= (step >> 2)) code |= 1; }
     adpcm_decode(code, bits, state);
     return code;
 }
