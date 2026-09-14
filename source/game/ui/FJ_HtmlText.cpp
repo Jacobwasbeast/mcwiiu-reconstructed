@@ -92,65 +92,88 @@ void FJ_HtmlText::HandleScrollListArrows(bool positionArrows)
 
 void FJ_HtmlText::UpdateScrolling(FJ_Event*)
 {
-    float step;
+    float factor = 1.0f;
     if (m_iScrollDelay < 1) {
         if (m_iFlickDelay > -1) {
             if (m_iFlickDelay > 0)
                 --m_iFlickDelay;
-            step = 1.0f + (30.0f - static_cast<float>(m_iFlickDelay)) / 176.0f;
+            factor += static_cast<float>(30 - m_iFlickDelay) / 30.0f;
         }
-        step = static_cast<float>(Math::round(120.0f * m_fScrollSpeed * step));
     } else {
-        step = 120.0f * m_fScrollSpeed / 30.0f;
         --m_iScrollDelay;
-        step = static_cast<float>(Math::round(step));
     }
-    if ((!m_bScrollingUp || !CanScroll(true)) && (!m_scrollDirection || !CanScroll(false))) {
-        HandleScrollListArrows(false);
-        FJ_FuiNodeStage* stage = getStage();
-        if (stage != NULL) stage->removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
-        if (!isVisible()) {
-            fuiRect scrollRect;
-            scrollRect.xMin = static_cast<float>(m_iWidth);
-            scrollRect.xMax = m_fWidth;
-            scrollRect.yMin = m_fScrollTop;
-            scrollRect.yMax = m_fScrollBottom;
-            m_pText->setScrollRect(scrollRect);
-            return;
+    float step = static_cast<float>(Math::round((120.0f * m_fScrollSpeed / 30.0f) * factor));
+    if (m_bScrollingUp && CanScroll(true)) {
+        float oldPosition = m_fScrollTop;
+        if (!m_bTouchScrolling) {
+            m_fScrollTop = oldPosition - step;
+            m_fScrollBottom = m_fScrollTop + (m_fScrollBottom - oldPosition);
+        } else {
+            float target = static_cast<float>(m_iTouchTarget);
+            if (!(oldPosition > target)) {
+                m_bTouchScrolling = false;
+                m_bScrollingUp = false;
+            } else {
+                float bottom = target + (m_fScrollBottom - oldPosition);
+                if (target < 0.0f) {
+                    m_fScrollTop = 0.0f;
+                    m_fScrollBottom = bottom - target;
+                } else {
+                    m_fScrollTop = target;
+                    m_fScrollBottom = bottom;
+                }
+            }
         }
-        static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
-        m_pDownArrow->ChangeState(3);
-        m_fScrollTop = m_fScrollTop;
-        m_fScrollBottom = m_fScrollBottom;
-        return;
-    }
-    float oldPosition = m_fScrollTop;
-    float newPosition;
-    if (m_bScrollingUp) {
-        newPosition = oldPosition - step;
-        m_fScrollBottom += newPosition - oldPosition;
+        if (m_bScrollingDown) {
+            float target = static_cast<float>(m_iTargetScroll);
+            if (!(m_fScrollTop > target)) {
+                float height = m_fScrollBottom - m_fScrollTop;
+                m_fScrollTop = target;
+                m_fScrollBottom = target + height;
+                m_bScrollingUp = false;
+            }
+        }
+    } else if (m_scrollDirection && CanScroll(false)) {
+        float oldPosition = m_fScrollTop;
+        if (!m_bTouchScrolling) {
+            m_fScrollTop = oldPosition + step;
+            m_fScrollBottom = m_fScrollTop + (m_fScrollBottom - oldPosition);
+        } else {
+            float target = static_cast<float>(m_iTouchTarget);
+            if (!(oldPosition < target)) {
+                m_bTouchScrolling = false;
+                m_scrollDirection = 0;
+            } else {
+                m_fScrollTop = target;
+                m_fScrollBottom = target + (m_fScrollBottom - oldPosition);
+                float textHeight = m_pText->getHeight();
+                if (m_fScrollTop > textHeight - (m_fScrollBottom - m_fScrollTop)) {
+                    textHeight = m_pText->getHeight();
+                    float height = m_fScrollBottom - m_fScrollTop;
+                    m_fScrollTop = textHeight - height;
+                    m_fScrollBottom = m_fScrollTop + height;
+                }
+            }
+        }
+        if (m_bScrollingDown) {
+            float target = static_cast<float>(m_iTargetScroll);
+            if (!(m_fScrollTop < target)) {
+                float height = m_fScrollBottom - m_fScrollTop;
+                m_fScrollTop = target;
+                m_fScrollBottom = target + height;
+                m_scrollDirection = 0;
+            }
+        }
     } else {
-        newPosition = oldPosition + step;
-        m_fScrollBottom += newPosition - oldPosition;
-    }
-    m_fScrollTop = newPosition;
-    if (m_bTouchScrolling) {
-        float target = static_cast<float>(m_iTouchTarget);
-        if ((m_bScrollingUp && target <= newPosition) || (!m_bScrollingUp && target >= newPosition)) {
-            m_fScrollTop = target;
-            m_fScrollBottom += target - newPosition;
-            m_scrollDirection = 0;
-            fuiRect scrollRect;
-            scrollRect.xMin = static_cast<float>(m_iWidth);
-            scrollRect.xMax = m_fWidth;
-            scrollRect.yMin = m_fScrollTop;
-            scrollRect.yMax = m_fScrollBottom;
-            m_pText->setScrollRect(scrollRect);
-            return;
+        HandleScrollListArrows(false);
+        getStage()->removeEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling);
+        if (isVisible()) {
+            static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
+            m_pDownArrow->ChangeState(3);
         }
     }
     fuiRect scrollRect;
-    scrollRect.xMin = static_cast<float>(m_iWidth);
+    scrollRect.xMin = m_fScrollLeft;
     scrollRect.xMax = m_fWidth;
     scrollRect.yMin = m_fScrollTop;
     scrollRect.yMax = m_fScrollBottom;
@@ -334,7 +357,7 @@ void FJ_HtmlText::Init(const std::wstring& label)
     text->m_multiline = true;
     m_scrollDirection = m_bUseScrollRect ? 1 : 0;
     m_bScrollingEnabled = m_bUseScrollRect;
-    m_iWidth = 0;
+    m_fScrollLeft = 0.0f;
     m_fWidth = width;
     m_fScrollTop = 0.0f;
     m_fScrollBottom = availableHeight;
@@ -377,7 +400,7 @@ void FJ_HtmlText::SetLabel(const std::wstring& label)
         m_fScrollBottom = m_fScrollBottom - m_fScrollTop;
         m_fScrollTop = 0.0f;
         fuiRect scrollRect;
-        scrollRect.xMin = static_cast<float>(m_iWidth);
+        scrollRect.xMin = m_fScrollLeft;
         scrollRect.xMax = m_fWidth;
         scrollRect.yMin = m_fScrollTop;
         scrollRect.yMax = m_fScrollBottom;

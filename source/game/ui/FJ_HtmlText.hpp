@@ -19,7 +19,7 @@ public:
     int m_iFocusDirection;
     float m_fScrollSpeed;
     fuiRenderNode* m_pText;
-    int m_iWidth;
+    float m_fScrollLeft;
     float m_fWidth;
     float m_fScrollTop;
     float m_fScrollBottom;

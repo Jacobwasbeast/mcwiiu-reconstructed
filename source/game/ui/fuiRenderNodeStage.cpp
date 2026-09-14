@@ -24,27 +24,22 @@ fuiRenderNode* fuiRenderNodeStage::getChild()
 
 void fuiRenderNodeStage::gather(bool force)
 {
-    if (m_child != 0)
-        m_child->gather(force);
+    m_child->gather(force);
 }
 
 void fuiRenderNodeStage::preRender()
 {
-    if (m_child != 0)
-        m_child->preRender();
+    m_child->preRender();
 }
 
 void fuiRenderNodeStage::render(fuiRect* rect, fuiMatrix* matrix)
 {
-    if (m_child != 0)
-        m_child->render(rect, matrix);
+    m_child->render(rect, matrix);
 }
 
 fuiRenderNode* fuiRenderNodeStage::findNode(const char* name)
 {
-    if (m_child != 0)
-        return m_child->findNode(name);
-    return 0;
+    return m_child->findNode(name);
 }
 
 double fuiRenderNodeStage::getStageWidth()
