@@ -67,6 +67,7 @@ class TickNextTickData;
 
 class Level : public LevelSource
 {
+    friend class LevelChunk;
     friend class ServerLevel;
 public:
     typedef int ESPAWN_TYPE;
