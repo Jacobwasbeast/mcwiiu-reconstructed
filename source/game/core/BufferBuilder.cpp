@@ -595,16 +595,6 @@ uint32_t BufferBuilder::hasMaxVertices()
     return false;
 }
 
-bool BufferBuilder::getCompactVertices()
-{
-    return mUseCompactVertices;
-}
-
-void BufferBuilder::color(unsigned char red, unsigned char green, unsigned char blue)
-{
-    color((int)red, (int)green, (int)blue);
-}
-
 void BufferBuilder::faceTex2(int brightness0, int brightness1, int brightness2, int brightness3)
 {
     mPackedQuad[6] = brightness0;
@@ -694,35 +684,6 @@ void BufferBuilder::fixupQuadColor(float red, float green, float blue)
                      ((int)(blue * 255.0f) << 8) | 255;
     fixupQuadColor(colorValue);
 }
-
-void BufferBuilder::packCompactQuad()
-{
-    if (mRawBuffer == NULL || mVertexCount < 4)
-    {
-        return;
-    }
-    int start = mRawBufferIndex - 32;
-    if (start < 0)
-    {
-        return;
-    }
-    int* source = mRawBuffer->data + start;
-    for (int vertexIndex = 0; vertexIndex < 4; ++vertexIndex)
-    {
-        int* destination = mRawBuffer->data + start + vertexIndex * 4;
-        float* sourceFloats = (float*)source + vertexIndex * 8;
-        short* compact = (short*)destination;
-        compact[0] = (short)(int)(sourceFloats[0] * 1024.0f);
-        compact[1] = (short)(int)(sourceFloats[1] * 1024.0f);
-        compact[2] = (short)(int)(sourceFloats[2] * 1024.0f);
-        compact[3] = (short)(int)(sourceFloats[3] * 8192.0f);
-        compact[4] = (short)(int)(sourceFloats[4] * 8192.0f);
-        compact[5] = (short)(int)(source[vertexIndex * 8 + 5]);
-        compact[6] = (short)(mPackedQuad[vertexIndex * 7 + 6]);
-        compact[7] = (short)(int)(-mBaseXOffset);
-    }
-}
-
 
 void BufferBuilder::Bounds::addVert(float x, float y, float z)
 {

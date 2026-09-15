@@ -79,12 +79,12 @@ void ChangeStateConstraint::tick(int playerId)
             {
                 unsigned int privileges =
                     minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                        (Player::EPlayerGamePrivileges)0x21);
-                Player::setPlayerGamePrivilege(privileges, (Player::EPlayerGamePrivileges)9,
+                        Player::ePlayerGamePrivilege_All);
+                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_9,
                                                previousGameType == GameType::CREATIVE);
 
                 if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                        (Player::EPlayerGamePrivileges)0x21) != privileges)
+                        Player::ePlayerGamePrivilege_All) != privileges)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];
@@ -121,12 +121,12 @@ void ChangeStateConstraint::tick(int playerId)
 
                 unsigned int privileges =
                     minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                        (Player::EPlayerGamePrivileges)0x21);
-                Player::setPlayerGamePrivilege(privileges, (Player::EPlayerGamePrivileges)9,
+                        Player::ePlayerGamePrivilege_All);
+                Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_9,
                                                gameType == GameType::CREATIVE);
 
                 if (minecraft->mLocalPlayers[playerId]->getPlayerGamePrivilege(
-                        (Player::EPlayerGamePrivileges)0x21) != privileges)
+                        Player::ePlayerGamePrivilege_All) != privileges)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];

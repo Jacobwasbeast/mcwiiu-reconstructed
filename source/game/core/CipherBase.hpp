@@ -5,6 +5,7 @@ class CipherBase
 {
 public:
     CipherBase();
+
     ~CipherBase();
 };
 

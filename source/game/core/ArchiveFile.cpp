@@ -6,14 +6,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/FileInputStream.hpp"
 
-struct _OVERLAPPED;
-
-extern char* wstringtofilename(const std::wstring&, char (&)[256]);
-extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern int SetFilePointer(int, long, int*, unsigned int);
-extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
-extern void CloseHandle(int);
-
 ArchiveFile::ArchiveFile(File file)
 {
     m_data = NULL;
@@ -99,25 +91,28 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
     }
     else
     {
-        char filename[256];
-        wstringtofilename(getPath(), filename);
-        int handle = CreateFileA(filename, 0x80000000, 0, NULL, 3, 0x80, 0);
-        if (handle == -1 || SetFilePointer(handle, static_cast<int>(metadata->offset), NULL, 0) == 0)
+        FileInputStream input(*this);
+        unsigned int remaining = metadata->offset;
+        while (remaining != 0)
         {
-            gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
-            if (handle != -1) CloseHandle(handle);
-            return result;
+            unsigned char buffer[256];
+            unsigned int step = remaining < sizeof(buffer) ? remaining : sizeof(buffer);
+            if (input.read(arrayWithLength<unsigned char>(buffer, step)) != static_cast<int>(step))
+            {
+                gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to set f", 0xF5, name.c_str());
+                return result;
+            }
+            remaining -= step;
         }
         result = arrayWithLength<unsigned char>(metadata->size, true);
-        unsigned int read = 0;
-        if (!ReadFile(handle, result.data, metadata->size, &read, NULL))
+        if (input.read(result) != static_cast<int>(metadata->size))
         {
             gApp.FatalLoadError(L"<ArchiveFile@%d> Failed to read ", 0xEE, name.c_str(), getPath().c_str());
             delete[] result.data;
             result.data = NULL;
             result.length = 0;
         }
-        CloseHandle(handle);
+        input.close();
     }
     if (metadata->compressed && result.data != NULL)
     {

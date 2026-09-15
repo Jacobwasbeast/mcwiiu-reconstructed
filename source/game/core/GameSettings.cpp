@@ -530,7 +530,7 @@ void GameSettings::SetDefaultGameOptions(C4JStorage::PROFILESETTINGS* values, in
         current->mMinecraftLanguage = 0;
     }
 
-    MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(static_cast<EMiniGameId>(1), true);
+    MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(eMiniGameId_Battle, true);
     const MiniGamePlayerSettings playerSettings = miniGame->GetDefaultPlayerSettings();
     current->mGameModeOptions = playerSettings.Get(eCustomGameModeHostOption_All);
 

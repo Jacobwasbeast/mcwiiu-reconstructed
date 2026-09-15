@@ -72,7 +72,7 @@ bool Llama::LlamaDefendTargetGoal::canUse()
     }
     delete entities;
 
-    if (target && target->GetType() == 0x000000000D6C0002ULL)
+    if (target && target->GetType() == ENTITY_TYPE_WOLF)
     {
         if (!boost::static_pointer_cast<Wolf>(target)->isAngry())
             return true;
@@ -92,7 +92,7 @@ Llama::LlamaHurtByTargetGoal::~LlamaHurtByTargetGoal() { }
 bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 {
     Llama* llama = static_cast<Llama*>(mMob);
-    if (llama->GetType() == 0x2D698003ULL && llama->mDidSpit)
+    if (llama->GetType() == ENTITY_TYPE_LLAMA && llama->mDidSpit)
     {
         llama->setDidSpit(false);
         return false;
@@ -464,7 +464,7 @@ bool Llama::canMate(const boost::shared_ptr<Animal>& other)
     if (other == shared_from_this())
         return false;
 
-    if (other->GetType() == 0x000000002D698003ULL && canParent())
+    if (other->GetType() == ENTITY_TYPE_LLAMA && canParent())
     {
         boost::shared_ptr<Llama> partner = boost::static_pointer_cast<Llama>(other);
         return partner->canParent();
@@ -565,4 +565,4 @@ void Llama::followMommy()
     }
 }
 bool Llama::canEatGrass() const { return false; }
-unsigned long long Llama::GetType() { return 0x000000002D698003ULL; }
+unsigned long long Llama::GetType() { return ENTITY_TYPE_LLAMA; }

@@ -1,6 +1,6 @@
 #include "game/core/ByteArrayOutputStream.hpp"
 
-void* XMemCpy(void* destination, const void* source, unsigned int size);
+#include <cstring>
 
 ByteArrayOutputStream::ByteArrayOutputStream()
 {
@@ -58,7 +58,7 @@ void ByteArrayOutputStream::write(arrayWithLength<unsigned char> data, unsigned 
         delete[] (unsigned char*)oldData;
     }
 
-    XMemCpy(mBuffer.data + mCount, data.data + offset, length);
+    std::memcpy(mBuffer.data + mCount, data.data + offset, length);
     mCount += length;
 }
 

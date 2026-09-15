@@ -5,6 +5,7 @@ Buffer::Buffer(unsigned int capacity)
     mCapacity = capacity;
     mPosition = 0;
     mLimit = capacity;
+    mMark = 0;
     mIsWrapped = false;
 }
 

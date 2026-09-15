@@ -7,7 +7,10 @@ BossEvent::BossEvent(const std::wstring& id, int nameId, const std::wstring& nam
       nameId(nameId),
       percent(1.0f),
       color(color),
-      overlay(overlay)
+      overlay(overlay),
+      darkenScreen(false),
+      playBossMusic(false),
+      createWorldFog(false)
 {
 }
 

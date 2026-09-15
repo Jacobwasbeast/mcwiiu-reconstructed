@@ -21,17 +21,17 @@ void AttributeModifier::_init(eMODIFIER_ID id, std::wstring name, double amount,
 
 AttributeModifier::AttributeModifier(double amount, int operation)
 {
-    _init(eMODIFIER_ID_None, name, amount, operation);
+    _init(eMODIFIER_ID_None, std::wstring(), amount, operation);
 }
 
 AttributeModifier::AttributeModifier(eMODIFIER_ID id, double amount, int operation)
 {
-    _init(id, name, amount, operation);
+    _init(id, std::wstring(), amount, operation);
 }
 
 AttributeModifier::AttributeModifier(eMODIFIER_ID id, double amount, int operation, bool serialize)
 {
-    _init(id, name, amount, operation);
+    _init(id, std::wstring(), amount, operation);
 
     this->serialize = serialize;
 }

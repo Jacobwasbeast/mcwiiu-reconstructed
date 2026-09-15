@@ -80,7 +80,7 @@ arrayWithLength<const float> Sheep::createSheepColor(const DyeColor* color)
 
 void Sheep::staticCtor()
 {
-    gSheepSheared = SynchedEntityData::defineId(0x000000002D680002ULL, 0x000000000D680000ULL,
+    gSheepSheared = SynchedEntityData::defineId(ENTITY_TYPE_SHEEP, 0x000000000D680000ULL,
                                                 EntityDataSerializers::BYTE);
 
     for (std::vector<const DyeColor*>::iterator it = DyeColor::COLORS.begin();

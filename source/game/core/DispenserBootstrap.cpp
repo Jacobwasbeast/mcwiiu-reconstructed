@@ -216,7 +216,7 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            if (level->countInstanceOf(0x88000005ULL, false, NULL, NULL) >= 200)
+            if (level->countInstanceOf(FireworksRocketEntity::GetType(), false, NULL, NULL) >= 200)
             {
                 outcome = eOUTCOME_Failure;
                 return item;
@@ -246,7 +246,7 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            if (level->countInstanceOf(0x8A40000400000000ULL, false, NULL, NULL) >= 200)
+            if (level->countInstanceOf(SmallFireball::GetType(), false, NULL, NULL) >= 200)
             {
                 outcome = eOUTCOME_Failure;
                 return item;

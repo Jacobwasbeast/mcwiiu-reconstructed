@@ -5,6 +5,7 @@ class CipherDecoder
 {
 public:
     CipherDecoder();
+
     ~CipherDecoder();
 };
 

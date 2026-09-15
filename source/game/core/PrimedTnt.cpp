@@ -81,7 +81,7 @@ bool PrimedTnt::isPickable()
 
 void PrimedTnt::explode()
 {
-    if (Minecraft::InMiniGame(static_cast<EMiniGameId>(15), true)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
         && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
     {
         mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,

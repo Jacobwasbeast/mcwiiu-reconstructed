@@ -100,7 +100,39 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
 
         if (!pack->doesPackContainFile(DLCManager::eDLCType_All, file, true, true))
         {
+            if (level == 0)
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to find %ls", 0xf4,
+                                    file.c_str());
             return;
+        }
+
+        DLCFile* imageFile = pack->getFile(DLCManager::eDLCType_All, file, true, true);
+        m_mipmapDisabled = imageFile->getParameterAsBool(DLCManager::eDLCParameterType_DisableMipMap);
+
+        unsigned int imageLength = 0;
+        unsigned char* imageData = imageFile->getData(imageLength);
+        if (imageData == NULL || imageLength == 0)
+        {
+            if (level == 0)
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load %ls", 0x101,
+                                    file.c_str());
+            return;
+        }
+
+        int width = 0;
+        int height = 0;
+        if (TextureUtil::LoadTextureData(imageData, imageLength, &width, &height,
+                                         &m_data[level]) != 0)
+        {
+            if (level == 0)
+                gApp.FatalLoadError(L"<BufferedImage@%d> Failed to load %ls", 0x112,
+                                    file.c_str());
+            return;
+        }
+        if (level == 0)
+        {
+            m_width = static_cast<unsigned int>(width);
+            m_height = static_cast<unsigned int>(height);
         }
     }
 }
@@ -146,7 +178,7 @@ void BufferedImage::getRGB(int x, int y, unsigned int width, int height, arrayWi
 }
 
 int* BufferedImage::getData() { return m_data[0]; }
-int* BufferedImage::getData(int mipLevel) { return mipLevel >= 0 && mipLevel < 10 ? m_data[mipLevel] : NULL; }
+int* BufferedImage::getData(int mipLevel) { return m_data[mipLevel]; }
 void* BufferedImage::getGraphics() { return NULL; }
 
 BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
@@ -175,10 +207,3 @@ void BufferedImage::preMultiplyAlpha()
         m_data[0][i] = (int)((a << 24) | (r << 16) | (g << 8) | b);
     }
 }
-
-void BufferedImage::ByteFlip4(unsigned int& value)
-{
-    value = ((value & 0x000000ffu) << 24) | ((value & 0x0000ff00u) << 8) | ((value & 0x00ff0000u) >> 8) | ((value & 0xff000000u) >> 24);
-}
-
-int BufferedImage::getTransparency() { return 3; }

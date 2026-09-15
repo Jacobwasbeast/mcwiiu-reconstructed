@@ -603,7 +603,7 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
         gApp.SetGameHostOption(static_cast<eGameHostOption>(0x1f), 1);
         gameType = static_cast<unsigned char>(GameType::LOBBY->getId());
     }
-    EMiniGameId hostMiniGameId = static_cast<EMiniGameId>(15);
+    EMiniGameId hostMiniGameId = eMiniGameId_Any;
     if (m_launchData.mValue5C != 15)
     {
         hostMiniGameId = static_cast<EMiniGameId>(m_launchData.mValue5C);

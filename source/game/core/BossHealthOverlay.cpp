@@ -1,5 +1,6 @@
 #include "game/core/BossHealthOverlay.hpp"
 
+
 #include "game/core/BossEvent.hpp"
 #include "game/core/LerpingBossEvent.hpp"
 #include "game/network/ClientboundBossEventPacket.hpp"

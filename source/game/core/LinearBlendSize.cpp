@@ -5,13 +5,8 @@
 #include "game/util/Random.hpp"
 
 LinearBlendSize::LinearBlendSize(unsigned int minSize, unsigned int maxSize)
+    : mMinSize(static_cast<int>(minSize)), mMaxSize(static_cast<int>(maxSize))
 {
-    LinearBlendSize* obj = this;
-    if (obj != NULL || (obj = static_cast<LinearBlendSize*>(operator new(0xc)), obj != NULL))
-    {
-        obj->mMaxSize = maxSize;
-        obj->mMinSize = minSize;
-    }
 }
 
 int LinearBlendSize::GetLayerSize(Random& random, double blend) const

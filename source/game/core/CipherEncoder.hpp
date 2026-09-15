@@ -4,6 +4,7 @@
 class CipherEncoder
 {
 public:
+
     CipherEncoder();
     ~CipherEncoder();
 };

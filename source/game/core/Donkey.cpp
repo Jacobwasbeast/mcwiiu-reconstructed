@@ -10,6 +10,7 @@
 #include "game/item/SpawnEggItem.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/block/Blocks.hpp"
 
 Donkey::Donkey(Level* level)
     : AbstractChestedHorse(level)
@@ -23,7 +24,7 @@ Donkey::~Donkey()
 
 void Donkey::addDataWalkers(DataFixerUpper* fixer)
 {
-    AbstractChestedHorse::addDataWalkers(fixer, 0x2d698001ULL);
+    AbstractChestedHorse::addDataWalkers(fixer, ENTITY_TYPE_DONKEY);
 }
 
 ResourceLocation* Donkey::getDefaultLootTable()
@@ -57,7 +58,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
     }
 
     unsigned long long type = other->GetType();
-    if (type != 0x2d698001ULL && type != 0x2d690001ULL)
+    if (type != ENTITY_TYPE_DONKEY && type != ENTITY_TYPE_HORSE)
     {
         return false;
     }
@@ -68,7 +69,7 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
 boost::shared_ptr<AgableMob> Donkey::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AgableMob> child;
-    if (partner->GetType() == 0x2d690001ULL)
+    if (partner->GetType() == ENTITY_TYPE_HORSE)
     {
         child.reset(new Mule(mLevel));
     }
@@ -88,14 +89,15 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     }
 
     not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    unsigned int itemId = Item::getId(item->getItem());
-    bool horseArmor = itemId == 170 || itemId == 260 || itemId == 296 ||
-                      itemId == 322 || itemId == 353 || itemId == 396;
-    bool loveFoodItem = itemId == 322 || itemId == 396;
+    Item* itemType = item->getItem();
+    bool horseArmor = itemType == Items::leatherHorseArmor || itemType == Items::apple ||
+                      itemType == Items::wheat || itemType == Items::goldenApple ||
+                      itemType == Items::sugar || itemType == Items::goldenCarrot;
+    bool loveFoodItem = itemType == Items::goldenApple || itemType == Items::goldenCarrot;
     boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
                                      (Player*)tooltipData.m_pPlayer.get());
 
-    if (itemId == 383)
+    if (itemType == Items::spawnEgg)
     {
         if (SpawnEggItem::fjGetType(item) == GetType())
         {
@@ -113,7 +115,7 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         return 0x551269b5U;
     }
 
-    if (itemId == 420)
+    if (itemType == Items::lead)
     {
         if (!isLeashed())
         {
@@ -126,7 +128,7 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         return 0x497adcf0U;
     }
 
-    if (itemId == 421 && (!player->isSneaking() || !isTamed()))
+    if (itemType == Items::nameTag && (!player->isSneaking() || !isTamed()))
     {
         if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
         {
@@ -155,7 +157,7 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     {
         if (!item->isEmpty())
         {
-            if (horseArmor && itemId != 170)
+            if (horseArmor && itemType != Items::leatherHorseArmor)
             {
                 return 0x82f8d90fU;
             }
@@ -168,7 +170,7 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     }
 
     bool showMountTooltip = player->isSneaking() && (!isVehicle() || hasPassenger(player));
-    if (!showMountTooltip && itemId == 329 && !isSaddled())
+    if (!showMountTooltip && itemType == Items::saddle && !isSaddled())
     {
         showMountTooltip = true;
     }
@@ -177,7 +179,7 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         return 0x41590ad1U;
     }
 
-    if (itemId == 54 && !hasChest())
+    if (itemType == Item::byBlock(Blocks::chest) && !hasChest())
     {
         return 0x7b938f36U;
     }
@@ -206,7 +208,7 @@ bool Donkey::HideUseTooltips()
 
 unsigned long long Donkey::GetType()
 {
-    return 0x000000002D698001ULL;
+    return ENTITY_TYPE_DONKEY;
 }
 
 void Donkey::create(Level* level)

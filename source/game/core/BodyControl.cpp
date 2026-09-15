@@ -5,9 +5,8 @@
 #include <boost/weak_ptr.hpp>
 
 #include "game/core/WitherBoss.hpp"
+#include "game/entity/mob/Entity.hpp"
 #include "game/core/Mth.hpp"
-
-static const unsigned long long ENTITY_TYPE_WITHER_BOSS = 0x000000005D540047ULL;
 
 BodyControl::BodyControl(LivingEntity* mob)
     : mMob(mob)
@@ -39,7 +38,7 @@ float BodyControl::clamp(float base, float value, float maxDifference)
 
 void BodyControl::clientTick()
 {
-    if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS
+    if (mMob->GetType() == WitherBoss::ENTITY_TYPE
         && static_cast<WitherBoss*>(mMob)->IsChargeAttacking())
     {
         mMob->mYBodyRot = mMob->mYHeadRot;
@@ -56,7 +55,7 @@ void BodyControl::clientTick()
 
         if (passengers->empty() || mMob->controllingPassengerIsA(ENTITY_TYPE_MOB))
         {
-            if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
+            if (mMob->GetType() == WitherBoss::ENTITY_TYPE)
             {
                 maxYRotFromBody = 360.0f;
             }
@@ -93,7 +92,7 @@ void BodyControl::clientTick()
 
             mMob->mYBodyRot = clamp(yHeadRot, mMob->mYBodyRot, maxYRotFromBody);
 
-            if (mMob->GetType() == ENTITY_TYPE_WITHER_BOSS)
+            if (mMob->GetType() == WitherBoss::ENTITY_TYPE)
             {
                 mMob->mYRot = mMob->mYBodyRot;
             }
@@ -103,7 +102,7 @@ void BodyControl::clientTick()
     }
 
     mMob->mYBodyRot = mMob->mYRot;
-    if (mMob->GetType() != ENTITY_TYPE_WITHER_BOSS)
+    if (mMob->GetType() != WitherBoss::ENTITY_TYPE)
     {
         mMob->mYHeadRot = clamp(mMob->mYBodyRot, mMob->mYHeadRot, maxYRotFromBody);
     }

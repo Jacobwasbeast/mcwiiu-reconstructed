@@ -110,8 +110,8 @@ Cube* Cube::rotate(float x, float y, float z)
         for (int i = 0; i < mVertexCount; ++i)
         {
             if (x != zero) rotate_axis(x, mVertices[i]->pos->y, mVertices[i]->pos->z);
-            if (y != zero) rotate_axis(y, mVertices[i]->pos->y, mVertices[i]->pos->z);
-            if (z != zero) rotate_axis(z, mVertices[i]->pos->y, mVertices[i]->pos->z);
+            if (y != zero) rotate_axis(y, mVertices[i]->pos->x, mVertices[i]->pos->z);
+            if (z != zero) rotate_axis(z, mVertices[i]->pos->x, mVertices[i]->pos->y);
         }
     }
     return this;

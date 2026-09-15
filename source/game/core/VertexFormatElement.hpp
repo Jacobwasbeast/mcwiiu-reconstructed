@@ -1,38 +1,58 @@
-/* VertexFormatElement - generated reconstruction header. */
-#ifndef RECON_C_GAME_V_VERTEXFORMATELEMENT_HPP
-#define RECON_C_GAME_V_VERTEXFORMATELEMENT_HPP 1
+#ifndef GAME_CORE_VERTEX_FORMAT_ELEMENT_HPP
+#define GAME_CORE_VERTEX_FORMAT_ELEMENT_HPP
 
-#include "guest_ns.hpp"
+#include <string>
 
-namespace recon {
-struct VertexFormatElement_Type;
-struct VertexFormatElement_Usage;
+class VertexFormatElement
+{
+public:
+    class Type
+    {
+    public:
+        enum EType : int;
+        Type(int size, const std::wstring& name, int glType, EType type);
+        int getSize() const;
+        std::wstring getName() const;
+        int getGlType() const;
+        int getId() const;
+    private:
+        int size;
+        std::wstring name;
+        int glType;
+        EType type;
+    };
 
-#pragma pack(push, 1)
-struct VertexFormatElement {
-    be<int32_t> field_0x0;
-    be<int32_t> field_0x4;
-    be<int32_t> field_0x8;
-    be<int32_t> field_0xc;
+    class Usage
+    {
+    public:
+        enum EUsage : int;
+        Usage(const std::wstring& name, EUsage usage);
+        int getId() const;
+        std::wstring getName() const;
+    private:
+        std::wstring name;
+        EUsage usage;
+    };
 
-    /* interface: 5 methods recovered, 4 without a recoverable signature;
-     * implementation: 5 reconstructed bodies, 0 lowered drafts, 4 closed */
-    VertexFormatElement(gptr<VertexFormatElement> a1);   /* reconstructed */
-    VertexFormatElement(int32_t a1, gptr<VertexFormatElement_Type> a2, gptr<VertexFormatElement_Usage> a3, int32_t a4);   /* reconstructed */
-    VertexFormatElement() {}   /* generated shell; the real ctor is dispatch-only */
-    bool isPosition();   /* closed */
-    uint32_t getUsage();   /* closed */
-    uint32_t getIndex();   /* closed */
-    int32_t getByteSize();
-    uint32_t supportsUsage(int32_t a1, gptr<VertexFormatElement_Usage> a2);   /* closed */
-    /* unrecovered: toString() const [0x00000000] */
-    /* unrecovered: getType() const [0x00000000] */
-    /* unrecovered: getCount() const [0x00000000] */
-    /* unrecovered: equals(VertexFormatElement*) const [0x00000000] */
+    VertexFormatElement(const VertexFormatElement& source);
+    VertexFormatElement(int elementIndex, const Type* elementType,
+                        const Usage* elementUsage, int elementCount);
+    bool isPosition() const;
+    const Usage* getUsage() const;
+    int getIndex() const;
+    int getByteSize() const;
+    bool supportsUsage(int elementIndex, const Usage* elementUsage) const;
+    std::wstring toString() const;
+    const Type* getType() const;
+    int getCount() const;
+    bool equals(const VertexFormatElement* other) const;
+
+
+private:
+    const Type* type;
+    const Usage* usage;
+    int index;
+    int count;
 };
-static_assert(sizeof(VertexFormatElement) == 0x10, "layout");
-#pragma pack(pop)
-
-}  /* namespace recon */
 
 #endif

@@ -57,7 +57,7 @@ AbstractContainerMenu* MinecartChest::createMenu(boost::shared_ptr<Inventory> in
 
 int MinecartChest::getTypeId(bool large)
 {
-    return 0;
+    return (int)0xE08B6A47;
 }
 
 void MinecartChest::addDataWalkers(DataFixerUpper* fixer)

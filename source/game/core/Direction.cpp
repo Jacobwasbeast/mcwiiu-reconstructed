@@ -427,7 +427,7 @@ bool Direction::Plane::apply(const Direction* direction) const
     return direction != NULL && direction->getAxis()->getPlane() == this;
 }
 
-bool notUpFunction__FPC9Direction(const Direction* direction)
+bool isNotUp(const Direction* direction)
 {
     return direction != Direction::UP;
 }

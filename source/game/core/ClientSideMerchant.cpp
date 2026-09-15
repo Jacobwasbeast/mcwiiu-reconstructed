@@ -34,6 +34,7 @@ boost::shared_ptr<Player> ClientSideMerchant::getTradingPlayer()
 
 void ClientSideMerchant::setTradingPlayer(const boost::shared_ptr<Player>& player)
 {
+    mTradingPlayer = player;
 }
 
 MerchantRecipeList* ClientSideMerchant::getOffers(const boost::shared_ptr<Player>& player)
@@ -49,10 +50,7 @@ void ClientSideMerchant::overrideOffers(MerchantRecipeList* offers)
 
 void ClientSideMerchant::notifyTrade(MerchantRecipe* recipe)
 {
-    if (recipe != NULL)
-    {
-        recipe->increaseUses();
-    }
+    recipe->increaseUses();
 }
 
 void ClientSideMerchant::notifyTradeUpdated(const not_null_ptr<ItemInstance>& item)
@@ -83,9 +81,4 @@ Level* ClientSideMerchant::getLevel()
 BlockPos ClientSideMerchant::getPosition()
 {
     return BlockPos(mTradingPlayer);
-}
-
-MerchantContainer* ClientSideMerchant::getContainer()
-{
-    return mContainer;
 }

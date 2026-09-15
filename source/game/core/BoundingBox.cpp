@@ -10,17 +10,6 @@
 #include "game/util/Math.hpp"
 #include "game/data/IntArrayTag.hpp"
 
-BoundingBox::BoundingBox(arrayWithLength<int> values)
-    : x0(values.data[0]), y0(values.data[1]), z0(values.data[2]),
-      x1(values.data[3]), y1(values.data[4]), z1(values.data[5])
-{
-}
-
-BoundingBox::BoundingBox(Vec3i min, Vec3i max)
-    : x0(min.x), y0(min.y), z0(min.z), x1(max.x), y1(max.y), z1(max.z)
-{
-}
-
 BoundingBox::BoundingBox()
     : x0(0), y0(0), z0(0), x1(0), y1(0), z1(0)
 {
@@ -92,17 +81,6 @@ bool BoundingBox::intersects(int minX, int minZ, int maxX, int maxZ)
     return x1 >= minX && x0 <= maxX && z1 >= minZ && z0 <= maxZ;
 }
 
-bool BoundingBox::intersects(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
-{
-    return x1 >= minX && x0 <= maxX && z1 >= minZ && z0 <= maxZ && y1 >= minY && y0 <= maxY;
-}
-
-BoundingBox* BoundingBox::getIntersection(BoundingBox* box)
-{
-    return new BoundingBox(Math::_max(x0, box->x0), Math::_max(y0, box->y0), Math::_max(z0, box->z0),
-                           Math::_min(x1, box->x1), Math::_min(y1, box->y1), Math::_min(z1, box->z1));
-}
-
 void BoundingBox::expand(BoundingBox* box)
 {
     x0 = Math::_min(x0, box->x0);
@@ -121,11 +99,6 @@ void BoundingBox::move(int x, int y, int z)
     x1 += x;
     y1 += y;
     z1 += z;
-}
-
-void BoundingBox::move(Vec3i offset)
-{
-    move(offset.x, offset.y, offset.z);
 }
 
 bool BoundingBox::isInside(Vec3i pos)
@@ -148,28 +121,9 @@ int BoundingBox::getZSpan()
     return z1 - z0 + 1;
 }
 
-Vec3i BoundingBox::getLength()
-{
-    return Vec3i(getXSpan(), getYSpan(), getZSpan());
-}
-
 BlockPos BoundingBox::getCenter()
 {
     return BlockPos(x0 + getXSpan() / 2, y0 + getYSpan() / 2, z0 + getZSpan() / 2);
-}
-
-
-IntArrayTag* BoundingBox::createTag(const std::wstring& name)
-{
-    (void)name;
-    arrayWithLength<int> values(6, true);
-    values.data[0] = x0;
-    values.data[1] = y0;
-    values.data[2] = z0;
-    values.data[3] = x1;
-    values.data[4] = y1;
-    values.data[5] = z1;
-    return new IntArrayTag(values);
 }
 
 void BoundingBox::write(DataOutputStream* output)

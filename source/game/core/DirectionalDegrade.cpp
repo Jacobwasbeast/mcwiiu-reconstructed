@@ -20,6 +20,8 @@ DirectionalDegrade::~DirectionalDegrade()
 
 void DirectionalDegrade::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
+    (void)saveInterface;
+    (void)extraAttributeCount;
 }
 
 void DirectionalDegrade::addAttribute(const std::wstring& name, const std::wstring& value)

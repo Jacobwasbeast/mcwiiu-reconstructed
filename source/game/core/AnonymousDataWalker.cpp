@@ -17,7 +17,7 @@ CompoundTag* AnonymousDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int v
 
         for (int i = 0; i < entitiesTag->size(); ++i)
         {
-            CompoundTag* entityTag = (CompoundTag*)entitiesTag->get(i);
+            CompoundTag* entityTag = static_cast<CompoundTag*>(entitiesTag->get(i));
 
             if (entityTag->contains(std::wstring(L"nbt"), 10))
             {
@@ -32,7 +32,7 @@ CompoundTag* AnonymousDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int v
 
         for (int i = 0; i < blocksTag->size(); ++i)
         {
-            CompoundTag* blockTag = (CompoundTag*)blocksTag->get(i);
+            CompoundTag* blockTag = static_cast<CompoundTag*>(blocksTag->get(i));
 
             if (blockTag->contains(std::wstring(L"nbt"), 10))
             {
