@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <type_traits>
 
 #include "nn/nex/RootObject.hpp"
 
@@ -113,6 +114,22 @@ public:
     unsigned int size() const
     {
         return m_size;
+    }
+
+    iterator find(const T& element) const
+    {
+        iterator position = begin();
+        while (position != end() && *position != element)
+            ++position;
+        return position;
+    }
+
+    iterator find(const typename std::remove_pointer<T>::type* element) const
+    {
+        iterator position = begin();
+        while (position != end() && *position != element)
+            ++position;
+        return position;
     }
 
     T& front()

@@ -13,6 +13,10 @@ namespace nex
 
 class String;
 class qBuffer;
+class SystemSetting;
+
+extern SystemSetting g_ddlConnectionEncoding;
+extern unsigned int g_ddlStringEncoding;
 
 class _Type_byte
 {
@@ -84,7 +88,7 @@ public:
     typedef String CPPType;
 
     static void Add(Message* pMessage, const String& rSource);
-    static void Extract(Message* pMessage, String* pDestination);
+    static bool Extract(Message* pMessage, String* pDestination);
 };
 
 class _Type_qBuffer

@@ -14,6 +14,7 @@ class Buffer;
 class EndPoint;
 class Message;
 class OperationManager;
+class Operation;
 class ProtocolCallContext;
 class ProtocolRequestBrokerInterface;
 
@@ -38,6 +39,8 @@ public:
     virtual const wchar_t* GetType() const;
     virtual bool IsAKindOf(const wchar_t* pType) const;
     virtual void EnforceDeclareSysComponentMacro();
+    virtual bool BeginInitialization();
+    virtual bool BeginTermination();
     virtual _Type GetProtocolType() const = 0;
     virtual void EndPointDisconnected(EndPoint* pEndPoint);
     virtual void FaultDetected(EndPoint* pEndPoint, unsigned int uiReason);
@@ -56,13 +59,14 @@ public:
 
     OperationManager* GetOperationManager() const;
     EndPoint* GetIncomingConnection() const;
+    void SetIncomingConnection(EndPoint* pEndPoint);
     EndPoint* GetOutgoingConnection() const;
     void SetOutgoingConnection(EndPoint* pEndPoint);
     void UseLocalLoopback(unsigned int uiCallerPID, unsigned int uiCallerCID);
     unsigned int GetCallerPID() const;
     unsigned int GetCallerCID() const;
     unsigned int GetOwnPID() const;
-    void* GetCurrentOperation();
+    Operation* GetCurrentOperation();
     void AssociateProtocolRequestBroker(ProtocolRequestBrokerInterface* pRequestBroker);
     void CopyMembers(const Protocol* pProtocol);
 
