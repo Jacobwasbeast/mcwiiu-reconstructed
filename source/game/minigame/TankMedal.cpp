@@ -8,9 +8,7 @@ TankMedal::TankMedal(int name, float target, unsigned int weight)
 {
 }
 
-TankMedal::~TankMedal()
-{
-}
+TankMedal::~TankMedal() = default;
 
 double TankMedal::GetScore(PlayerStats* playerStats) const
 {

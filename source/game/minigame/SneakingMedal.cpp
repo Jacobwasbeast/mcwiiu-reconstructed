@@ -2,9 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-SneakingMedal::~SneakingMedal()
-{
-}
+SneakingMedal::~SneakingMedal() = default;
 
 double SneakingMedal::GetScore(PlayerStats* playerStats) const
 {

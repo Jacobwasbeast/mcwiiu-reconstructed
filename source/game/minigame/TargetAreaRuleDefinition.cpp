@@ -16,9 +16,7 @@ TargetAreaRuleDefinition::TargetAreaRuleDefinition()
     addIntAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(72), &mPointValue);
 }
 
-TargetAreaRuleDefinition::~TargetAreaRuleDefinition()
-{
-}
+TargetAreaRuleDefinition::~TargetAreaRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType TargetAreaRuleDefinition::getActionType()
 {

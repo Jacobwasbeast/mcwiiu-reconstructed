@@ -1,11 +1,18 @@
 #include "game/minigame/CompleteAllRuleDefinition.hpp"
 
 #include "game/core/GameRule.hpp"
+#include "game/core/StringConversion.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/item/ItemInstance.hpp"
 
 std::wstring CompleteAllRuleDefinition::generateDescriptionString(const std::wstring& description, void* value, int count)
 {
-    return description;
+    std::wstring text = description;
+    const int* values = static_cast<const int*>(value);
+
+    text = replaceAll(text, L"___progress___", _toString(values[1]));
+    text = replaceAll(text, L"___goal___", _toString(values[0]));
+    return text;
 }
 
 void CompleteAllRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)

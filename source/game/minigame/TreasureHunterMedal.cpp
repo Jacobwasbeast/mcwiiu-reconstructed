@@ -2,9 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-TreasureHunterMedal::~TreasureHunterMedal()
-{
-}
+TreasureHunterMedal::~TreasureHunterMedal() = default;
 
 double TreasureHunterMedal::GetScore(PlayerStats* playerStats) const
 {

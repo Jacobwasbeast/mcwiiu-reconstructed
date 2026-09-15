@@ -8,9 +8,7 @@ SniperMedal::SniperMedal(int name, float target, unsigned int weight)
 {
 }
 
-SniperMedal::~SniperMedal()
-{
-}
+SniperMedal::~SniperMedal() = default;
 
 double SniperMedal::GetScore(PlayerStats* playerStats) const
 {

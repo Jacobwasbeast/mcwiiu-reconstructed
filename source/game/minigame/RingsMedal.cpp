@@ -19,9 +19,7 @@ RingsMedal::RingsMedal(int name, unsigned int weight, eRingMedalAmount* amounts,
     std::memcpy(&mFirstAmount, amounts, sizeof(eRingMedalAmount) * 3);
 }
 
-RingsMedal::~RingsMedal()
-{
-}
+RingsMedal::~RingsMedal() = default;
 
 bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {

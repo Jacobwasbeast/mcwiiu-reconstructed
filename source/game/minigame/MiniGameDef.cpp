@@ -5,6 +5,9 @@
 #include <deque>
 #include <sstream>
 #include "game/core/L10N.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/core/File.hpp"
 #include "game/core/FileInputStream.hpp"
@@ -21,6 +24,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemPotionFix.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/PotionUtils.hpp"
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -28,11 +32,14 @@
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
 #include "game/util/GameModeUtilities.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/LevelRules.hpp"
 #include "game/world/block/Blocks.hpp"
 
 bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
 
 class Block;
+
+static bool sCrcTableBuilt = false;
 
 static const unsigned int sHostOptionCategoryStringIds[4] =
 {
@@ -207,17 +214,14 @@ MiniGameDef::ChestItemsInfo::ChestItemsInfo(const ChestItemsInfo& other)
 
 MiniGameDef::ChestItemsInfo& MiniGameDef::ChestItemsInfo::operator=(const ChestItemsInfo& other)
 {
-    if (this != &other)
-    {
-        mItem = other.mItem;
-        mMinCount = other.mMinCount;
-        mMaxCount = other.mMaxCount;
-        mWeight = other.mWeight;
-        mMinPlayers = other.mMinPlayers;
-        mMaxPlayers = other.mMaxPlayers;
-        mChance = other.mChance;
-        mKpScore = other.mKpScore;
-    }
+    mItem = other.mItem;
+    mMinCount = other.mMinCount;
+    mMaxCount = other.mMaxCount;
+    mWeight = other.mWeight;
+    mMinPlayers = other.mMinPlayers;
+    mMaxPlayers = other.mMaxPlayers;
+    mChance = other.mChance;
+    mKpScore = other.mKpScore;
     return *this;
 }
 
@@ -714,22 +718,38 @@ void MiniGameDef::parseKit(std::vector<ChestKitInfo>* kits, const XmlObject& obj
 {
     ChestKitInfo kit;
     kit.mWeight = object[L"weight"].asInt(1);
-    kit.mMinPlayers = object[L"minPlayers"].asInt(0);
-    kit.mMaxPlayers = object[L"maxPlayers"].asInt(8);
-    int ignoredWeight = 0;
-    kit.mItems.push_back(parseItemInstance(object, &ignoredWeight).front());
+    kit.mMinPlayers = 0;
+    kit.mMaxPlayers = 0;
+
+    const std::vector<XmlChild>& children = object.getChildrenRaw();
+    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    {
+        if (child->m_type != 1)
+            continue;
+
+        std::deque<not_null_ptr<ItemInstance> > items = parseItemInstance(*child->xml(), NULL);
+        while (!items.empty())
+        {
+            kit.mItems.push_back(items.front());
+            items.pop_front();
+        }
+    }
     kits->push_back(kit);
 }
 
 void MiniGameDef::parseEquipment(PlayerEquipmentInfo& equipment, const XmlObject& object)
 {
-    for (int i = 0; i < 6; ++i)
+    const std::vector<XmlChild>& children = object.getChildrenRaw();
+    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
     {
-        const XmlObject* slot = object.child(EquipmentSlot::SLOTS[i]->getName());
-        if (slot != NULL)
+        if (child->m_type != 1)
+            continue;
+
+        int slot = -1;
+        std::deque<not_null_ptr<ItemInstance> > items = parseItemInstance(*child->xml(), &slot);
+        if ((unsigned int)slot < 6)
         {
-            int ignoredWeight = 0;
-            equipment.mSlots[i] = maybe<not_null_ptr<ItemInstance> >(parseItemInstance(*slot, &ignoredWeight).front());
+            equipment.mSlots[slot] = maybe<not_null_ptr<ItemInstance> >(items.front());
         }
     }
 }
@@ -768,13 +788,42 @@ void MiniGameDef::parseChestItem(std::vector<ChestItemsInfo>* items, const XmlOb
 
 void MiniGameDef::parseItemOverrideMap(int itemId, const XmlObject& object)
 {
-    mItemOverrides[itemId] = object[L"replacement"].asInt(itemId);
-    mBaseDamage[itemId] = object[L"baseDamage"].asDouble(0.0);
-    mNutrition[itemId] = object[L"nutrition"].asInt(0);
-    mSaturationModifiers[itemId] = object[L"saturationModifier"].asFloat(0.0f);
-    mPotionDurations[itemId] = object[L"potionDuration"].asInt(0);
-    mLingeringDurations[itemId] = object[L"lingeringDuration"].asInt(0);
-    mProjectilePower[itemId] = object[L"throwPower"].asDouble(0.0);
+    const std::wstring& name = object[L"name"].asString();
+    if (equalsIgnoreCase(name, L"BaseDamage"))
+    {
+        mBaseDamage[itemId] = object[L"value"].asDouble(0.0);
+        return;
+    }
+    if (equalsIgnoreCase(name, L"Protection"))
+    {
+        mNutrition[itemId] = object[L"value"].asInt(0);
+        return;
+    }
+    if (equalsIgnoreCase(name, L"Degradation"))
+    {
+        mProjectilePower[itemId] = object[L"value"].asDouble(0.0);
+        return;
+    }
+    if (equalsIgnoreCase(name, L"Nutrition"))
+    {
+        mNutrition[itemId] = object[L"value"].asInt(0);
+        return;
+    }
+    if (equalsIgnoreCase(name, L"SaturationFactor"))
+    {
+        mSaturationModifiers[itemId] = object[L"value"].asFloat(0.0f);
+        return;
+    }
+
+    if (equalsIgnoreCase(name, L"PotionDuration") && (itemId == 0x175 || itemId == 0x1B6))
+    {
+        mPotionDurations[object[L"effectId"].asInt(0)] = object[L"value"].asInt(0);
+        return;
+    }
+    if (equalsIgnoreCase(name, L"LingeringDuration") && itemId == 0x1B9)
+    {
+        mLingeringDurations[object[L"effectId"].asInt(0)] = object[L"value"].asInt(0);
+    }
 }
 
 void MiniGameDef::parseMatchmakingFilter(const XmlObject& object)
@@ -821,12 +870,11 @@ unsigned int MiniGameDef::GetOptionsDefault(eCustomGameModeHostOption option) co
     if (option == eCustomGameModeHostOption_All)
     {
         GameModeOptions options;
-        for (int i = 0; i < eCustomGameModeHostOption_Nothing; ++i)
+        for (int i = 0; i < eCustomGameModeHostOption_All; ++i)
             options.Set((eCustomGameModeHostOption)i, GetOptionsDefault((eCustomGameModeHostOption)i));
         return options.Get(eCustomGameModeHostOption_All);
     }
-    boost::unordered_map<int, unsigned int>::const_iterator it = mOptionDefaults.find(option);
-    return it == mOptionDefaults.end() ? 0 : it->second;
+    return mOptionDefaults.at(option);
 }
 
 MiniGameDef* MiniGameDef::parseMiniGameDef(XmlObject* object)
@@ -844,10 +892,12 @@ void MiniGameDef::MakeCRCTable()
             value = (value & 1) != 0 ? (value >> 1) ^ 0xedb88320U : value >> 1;
         sCrcTable[i] = value;
     }
+    sCrcTableBuilt = true;
 }
 
 unsigned int MiniGameDef::UpdateCRC(unsigned int crc, unsigned char* data, int length)
 {
+    if (!sCrcTableBuilt) MakeCRCTable();
     for (int i = 0; i < length; ++i) crc = sCrcTable[(crc ^ data[i]) & 0xff] ^ (crc >> 8);
     return crc;
 }
@@ -1061,7 +1111,7 @@ MiniGamePlayerSettings MiniGameDef::GetDefaultPlayerSettings() const { return mP
 
 boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> MiniGameDef::GetPlayerSettingsPacket() const
 {
-    return boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket>(new ClientboundMGPlayerSettingsUpdatePacket(mPlayerSettings));
+    return boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket>(new ClientboundMGPlayerSettingsUpdatePacket(sPlayerSettings));
 }
 
 std::wstring MiniGameDef::getVersionString() const
@@ -1203,8 +1253,26 @@ int MiniGameDef::getNutrition(int itemId, int value) const { return atMaybe(mNut
 float MiniGameDef::getSaturationModifier(int itemId, float value) const { return atMaybe(mSaturationModifiers, itemId, value); }
 int MiniGameDef::getPotionDuration(int effectId, int value) const { return atMaybe(mPotionDurations, effectId, value); }
 int MiniGameDef::getLingeringDuration(int effectId, int value) const { return atMaybe(mLingeringDurations, effectId, value); }
-double MiniGameDef::getThrowPower(unsigned long long itemId, double value) const { return atMaybe(mProjectilePower, (int)itemId, value); }
-double MiniGameDef::getThrowAngle(unsigned long long itemId, double value) const { return atMaybe(mBaseDamage, (int)itemId, value); }
+double MiniGameDef::getThrowPower(unsigned long long itemId, double value) const
+{
+    if (itemId == (unsigned long long)Item::getId(Items::splashPotion)) return getBaseDamage(Item::getId(Items::splashPotion), value);
+    if (itemId == (unsigned long long)Item::getId(Items::experienceBottle)) return getBaseDamage(Item::getId(Items::experienceBottle), value);
+    if (itemId == (unsigned long long)Item::getId(Items::enderPearl)) return getBaseDamage(Item::getId(Items::enderPearl), value);
+    if (itemId == (unsigned long long)Item::getId(Items::egg)) return getBaseDamage(Item::getId(Items::egg), value);
+    if (itemId == (unsigned long long)Item::getId(Items::snowball)) return getBaseDamage(Item::getId(Items::snowball), value);
+    return value;
+}
+
+double MiniGameDef::getThrowAngle(unsigned long long itemId, double value) const
+{
+    bool isThrowable = itemId == (unsigned long long)Item::getId(Items::splashPotion) ||
+                        itemId == (unsigned long long)Item::getId(Items::experienceBottle) ||
+                        itemId == (unsigned long long)Item::getId(Items::enderPearl) ||
+                        itemId == (unsigned long long)Item::getId(Items::egg) ||
+                        itemId == (unsigned long long)Item::getId(Items::snowball);
+    if (isThrowable && getThrowPower(itemId, -1.0) != -1.0) return 0.0;
+    return value;
+}
 bool MiniGameDef::shouldTickBlocks() const { return mShouldTickBlocksSet ? mShouldTickBlocks : true; }
 bool MiniGameDef::shouldTickBlock(int blockId) const { return atMaybe(mBlockData.mMayPlace, blockId, mShouldTickBlocks); }
 bool MiniGameDef::canLavaConvertWater() const { return mCanLavaConvertWaterSet ? mCanLavaConvertWater : false; }
@@ -1395,7 +1463,13 @@ int MiniGameDef::GetHostOptionIndexFrom_Time(eCustomGameModeHostOption option, i
 
 int MiniGameDef::GetHostOptionIndexFrom_Category(eCustomGameModeHostOption option, int value) const
 {
-    return GetHostOptionIndexFrom_Time(option, value);
+    const std::vector<int> values = GetOptionsList(option);
+    for (unsigned int index = 0; index < values.size(); ++index)
+    {
+        if (values[index] == value)
+            return static_cast<int>(index);
+    }
+    return 0;
 }
 
 unsigned int MiniGameDef::GetHostOptionIndexFrom_Bool(eCustomGameModeHostOption, bool value) const { return value ? 1 : 0; }
@@ -1521,8 +1595,28 @@ void MiniGameDef::AddLabelForOption(std::vector<HtmlString>& labels, eCustomGame
 
 void MiniGameDef::GetGameSettingsDescription(std::vector<HtmlString>& labels, unsigned int flags) const
 {
-    for (int option = 0; option < eCustomGameModeHostOption_Nothing; ++option)
-        if ((flags & (1U << option)) != 0) AddLabelForOption(labels, (eCustomGameModeHostOption)option, GetHostOption((eCustomGameModeHostOption)option));
+    std::wstring header = formatwstr(L"%ls: %ls", L10N::GetString(0xc0ae8c5e), L10N::GetString(GetName()));
+    labels.push_back(HtmlString(header, eMinecraftColour_HTMLColor_White, false, false, 0));
+
+    unsigned int id = GetId();
+    if (id == 0) return;
+    if (id == 1)
+    {
+        AddLabelForOption(labels, eCustomGameModeHostOption_GameVariant, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_NoSmallSkins, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_SpectateMode, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_RoundLength, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_MaxPlayers, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_CentreSpawn, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_PointsActive, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_PowerupsActive, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_EnableVoting, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_IsTeams, flags);
+        AddLabelForOption(labels, eCustomGameModeHostOption_Nothing, flags);
+        return;
+    }
+    if (id > 3) return;
+    AddLabelForOption(labels, eCustomGameModeHostOption_GameVariant, flags);
 }
 
 void MiniGameDef::SetDefaultMatchmakingSearchData(bool joining, LaunchMoreOptionsMenuInitData* data) const
@@ -1602,11 +1696,37 @@ bool MiniGameDef::AllowsUGC() const { return mAllowsUGC; }
 
 bool MiniGameDef::HasMultipleMaps() const
 {
-    if (mId == eMiniGameId_Tumble) return GetOptionsCount(eCustomGameModeHostOption_MapVariant) > 1;
-    return mId == eMiniGameId_Battle || mId == eMiniGameId_Glide;
+    unsigned int id = mId;
+    if (id == eMiniGameId_Lobby)
+    {
+        CommonMasterGameMode* mode = CommonMasterGameMode::GetMasterOrClient();
+        if (mode != NULL) id = mode->GetNextGameMode();
+        if (id == 0) return false;
+    }
+    if (id == eMiniGameId_Tumble) return false;
+
+    LevelRules::ELevelRuleType type = (id == 0 || id > eMiniGameId_Build) ?
+        LevelRules::eLevelRuleType_Unknown : (LevelRules::ELevelRuleType)id;
+    std::vector<LevelRules::LevelRulesetGroup*> groups;
+    gApp.getLevelRules()->getRulesByType(type, &groups, false);
+    return groups.size() > 1;
 }
 
-bool MiniGameDef::HasMultipleVariants() const { return GetGameVariantCount() > 1; }
+bool MiniGameDef::HasMultipleVariants() const
+{
+    EMiniGameId id = mId;
+    if (id == eMiniGameId_Lobby)
+    {
+        CommonMasterGameMode* mode = CommonMasterGameMode::GetMasterOrClient();
+        if (mode != NULL)
+            id = mode->GetNextGameMode();
+        if (id == eMiniGameId_Lobby)
+            return false;
+    }
+
+    MiniGameDef* definition = GetCustomGameModeById(id, true);
+    return definition != NULL && definition->GetLootSetCount() > 1;
+}
 
 unsigned int MiniGameDef::VotableType() const
 {
@@ -1626,18 +1746,36 @@ bool MiniGameDef::HasTeamGameOption() const { return GetOptionsCount(eCustomGame
 bool MiniGameDef::IsHUDDisabled() const { return mId == eMiniGameId_Tumble || mId == eMiniGameId_Glide; }
 bool MiniGameDef::ArePortalsDisabled() const { return true; }
 bool MiniGameDef::IsBatSqueakDisabled() const { return mId == eMiniGameId_Glide; }
-unsigned int MiniGameDef::GetLayerCount() const { return mPlayerSettings.mLayerCount.isSet() ? mPlayerSettings.mLayerCount.get() : 0; }
+unsigned int MiniGameDef::GetLayerCount() const
+{
+    unsigned int count = _fromString<unsigned int>(getCurrentLootSet().getAttribute(L"layerCount", L"1"));
+    if (mPlayerSettings.mLayerCount.isSet())
+        count = mPlayerSettings.mLayerCount.get();
+    return count;
+}
 double MiniGameDef::GetLayerScale(float value) const { return mPlayerSettings.mArenaSizeMultiplier.isSet() ? mPlayerSettings.mArenaSizeMultiplier.get() : value; }
 unsigned int MiniGameDef::GetMapSizeOverride() const { return mPlayerSettings.mMapSizeOverride.isSet() ? mPlayerSettings.mMapSizeOverride.get() : 0; }
 
 std::wstring MiniGameDef::GetMapSizeOverrideText(int value) const
 {
+    if (value == 0) return L10N::GetString(0xcf546b6);
+    if (value == 1) return L10N::GetString(0xba592d3e);
+    if (value == 2) return L10N::GetString(0x4ef02404);
     std::wstringstream text;
     text << L"mapSize." << value;
     return text.str();
 }
 
-std::wstring MiniGameDef::getTextureName() const { return mTextureName; }
+std::wstring MiniGameDef::getTextureName() const
+{
+    if (mId != eMiniGameId_Lobby)
+    {
+        if (mId == eMiniGameId_Battle) return L"BattleModeIcon";
+        if (mId < eMiniGameId_Glide) return L"MG02icon";
+        if (mId == eMiniGameId_Glide) return L"MG03icon";
+    }
+    return L"MinecraftBroken";
+}
 std::wstring MiniGameDef::getIcon() const
 {
     return std::wstring(L"Graphics\\") + getTextureName() + L".png";

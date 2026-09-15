@@ -1,8 +1,6 @@
 #include "game/minigame/ThemeSuggestionMedal.hpp"
 
-ThemeSuggestionMedal::~ThemeSuggestionMedal()
-{
-}
+ThemeSuggestionMedal::~ThemeSuggestionMedal() = default;
 
 double ThemeSuggestionMedal::GetScore(PlayerStats* playerStats) const
 {

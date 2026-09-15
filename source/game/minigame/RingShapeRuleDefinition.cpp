@@ -13,9 +13,7 @@ RingShapeRuleDefinition::RingShapeRuleDefinition()
     scaleAttribute->setMax(2.0);
 }
 
-RingShapeRuleDefinition::~RingShapeRuleDefinition()
-{
-}
+RingShapeRuleDefinition::~RingShapeRuleDefinition() = default;
 
 ConsoleGameRules::EGameRuleType RingShapeRuleDefinition::getActionType()
 {
