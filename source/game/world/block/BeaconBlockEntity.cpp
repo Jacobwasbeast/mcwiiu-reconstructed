@@ -198,12 +198,12 @@ void BeaconBlockEntity::setContainerData(int id, int value)
     }
     if (id == 1)
     {
-        mPrimaryPower = (MobEffect*)getValidEffectById(value);
+        mPrimaryPower = MobEffect::byId(getValidEffectById(value));
         return;
     }
     if (id == 2)
     {
-        mSecondaryPower = (MobEffect*)getValidEffectById(value);
+        mSecondaryPower = MobEffect::byId(getValidEffectById(value));
     }
 }
 

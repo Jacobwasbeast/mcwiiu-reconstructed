@@ -8,7 +8,7 @@ class Block;
 class BlockEventData : public BlockPos
 {
 public:
-    BlockEventData(const BlockPos& pos, Block* block, int paramA, int paramB);
+    BlockEventData(const BlockPos& pos, Block* block, int eventId, int eventParam);
     BlockPos getPos();
     int getParamA();
     int getParamB();
@@ -17,8 +17,8 @@ public:
 
 private:
     Block* block;
-    int paramA;
-    int paramB;
+    int eventId;
+    int eventParam;
 };
 
 #endif

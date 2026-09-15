@@ -1,5 +1,11 @@
 #include "game/world/block/DoorBlock.hpp"
 
+namespace {
+const unsigned int kDoorTooltipMetalLocked = 0x4c36cd96;
+const unsigned int kDoorTooltipUnavailable = 0xffffffff;
+const unsigned int kDoorTooltipInteract = 0xea4e897e;
+}
+
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
@@ -344,10 +350,11 @@ unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     if (mMaterial == Material::METAL)
     {
         if (!tooltipData.m_bUseItem && !tooltipData.m_bCanDestroy) return tooltip;
-        if (tooltip == 0x4c36cd96 || tooltip == 0xffffffff) return 0xffffffff;
+        if (tooltip == kDoorTooltipMetalLocked || tooltip == kDoorTooltipUnavailable)
+            return kDoorTooltipUnavailable;
     }
     if (!tooltipData.m_bUseItem && !tooltipData.m_bCanDestroy) return tooltip;
-    return 0xea4e897e;
+    return kDoorTooltipInteract;
 }
 const BlockState* DoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {

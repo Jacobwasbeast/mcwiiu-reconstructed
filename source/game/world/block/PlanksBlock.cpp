@@ -13,17 +13,17 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 PlanksBlock::Variant* PlanksBlock::Variant::OAK =
-    new PlanksBlock::Variant(0, L"oak", 0x13035FA5, MaterialColor::WOOD);
+    new PlanksBlock::Variant(Variant::eDataOak, L"oak", Variant::eTranslationKeyOak, MaterialColor::WOOD);
 PlanksBlock::Variant* PlanksBlock::Variant::SPRUCE =
-    new PlanksBlock::Variant(1, L"spruce", 0x7A4DF272, MaterialColor::PODZOL);
+    new PlanksBlock::Variant(Variant::eDataSpruce, L"spruce", Variant::eTranslationKeySpruce, MaterialColor::PODZOL);
 PlanksBlock::Variant* PlanksBlock::Variant::BIRCH =
-    new PlanksBlock::Variant(2, L"birch", 0x9BC6104A, MaterialColor::SAND);
+    new PlanksBlock::Variant(Variant::eDataBirch, L"birch", Variant::eTranslationKeyBirch, MaterialColor::SAND);
 PlanksBlock::Variant* PlanksBlock::Variant::JUNGLE =
-    new PlanksBlock::Variant(3, L"jungle", 0x8CE369FC, MaterialColor::DIRT);
+    new PlanksBlock::Variant(Variant::eDataJungle, L"jungle", Variant::eTranslationKeyJungle, MaterialColor::DIRT);
 PlanksBlock::Variant* PlanksBlock::Variant::ACACIA =
-    new PlanksBlock::Variant(4, L"acacia", 0x674A2380, MaterialColor::COLOR_ORANGE);
+    new PlanksBlock::Variant(Variant::eDataAcacia, L"acacia", Variant::eTranslationKeyAcacia, MaterialColor::COLOR_ORANGE);
 PlanksBlock::Variant* PlanksBlock::Variant::DARK_OAK =
-    new PlanksBlock::Variant(5, L"dark_oak", 0x0458BC59, MaterialColor::COLOR_BROWN);
+    new PlanksBlock::Variant(Variant::eDataDarkOak, L"dark_oak", Variant::eTranslationKeyDarkOak, MaterialColor::COLOR_BROWN);
 
 PlanksBlock::Variant* gPlankVariants[6] = {
     PlanksBlock::Variant::OAK,
@@ -76,22 +76,27 @@ const MaterialColor* PlanksBlock::Variant::getMaterialColor()
 
 PlanksBlock::Variant* PlanksBlock::Variant::byData(int data)
 {
-    if (data > 5 || data < 0)
+    switch (data)
     {
-        data = 0;
+    case Variant::eDataSpruce: return Variant::SPRUCE;
+    case Variant::eDataBirch: return Variant::BIRCH;
+    case Variant::eDataJungle: return Variant::JUNGLE;
+    case Variant::eDataAcacia: return Variant::ACACIA;
+    case Variant::eDataDarkOak: return Variant::DARK_OAK;
+    case Variant::eDataOak:
+    default: return Variant::OAK;
     }
-    return gPlankVariants[data];
 }
 
 void PlanksBlock::blockStaticCtor()
 {
     boost::unordered_set<Variant*> values;
-    values.insert(gPlankVariants[0]);
-    values.insert(gPlankVariants[1]);
-    values.insert(gPlankVariants[2]);
-    values.insert(gPlankVariants[3]);
-    values.insert(gPlankVariants[4]);
-    values.insert(gPlankVariants[5]);
+    values.insert(Variant::OAK);
+    values.insert(Variant::SPRUCE);
+    values.insert(Variant::BIRCH);
+    values.insert(Variant::JUNGLE);
+    values.insert(Variant::ACACIA);
+    values.insert(Variant::DARK_OAK);
     PlanksVariantPredicate predicate;
     VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant), values, &predicate);
 }
@@ -100,7 +105,7 @@ PlanksBlock::PlanksBlock()
     : Block(Material::WOOD)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(gPlankVariants[0]);
+    TypedBoxed<Variant*> value(Variant::OAK);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
     for (int i = 0; i < 6; ++i)
     {

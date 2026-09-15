@@ -114,7 +114,7 @@ bool EnderChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    Entity* entity = (Entity*)player.get();
+    Entity* entity = static_cast<Entity*>(player.get());
     return entity->distanceAsIfHitscanned(mPos, *entity->mBoundingBox) <= 30.25;
 }
 

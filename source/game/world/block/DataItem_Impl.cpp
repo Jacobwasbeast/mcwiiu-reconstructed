@@ -73,14 +73,3 @@ void DataItem_Impl<const Rotations*>::setValue(const Rotations* value)
 
     LeaveCriticalSection(&sDataItemLock);
 }
-
-template <>
-bool DataItem_Impl<const Rotations*>::shouldUpdate(const Rotations* value)
-{
-    if (mValue == NULL || value == NULL)
-    {
-        return mValue != value;
-    }
-
-    return !mValue->equals(value);
-}

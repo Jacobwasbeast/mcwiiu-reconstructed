@@ -59,12 +59,22 @@ boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level* level, int)
     return entity;
 }
 
-void CommandBlock::neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&)
+void CommandBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
+                                   Block* block, const BlockPos& fromPos)
 {
+    (void)state;
+    (void)level;
+    (void)pos;
+    (void)block;
+    (void)fromPos;
 }
 
-void CommandBlock::tick(Level*, const BlockPos&, const BlockState*, Random*)
+void CommandBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
+    (void)level;
+    (void)pos;
+    (void)state;
+    (void)random;
 }
 
 int CommandBlock::getTickDelay(Level*)

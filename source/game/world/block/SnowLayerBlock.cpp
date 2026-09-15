@@ -20,7 +20,7 @@ AbstractProperty<int>* SnowLayerBlock::LAYERS = static_cast<AbstractProperty<int
 
 SnowLayerBlock::SnowLayerBlock() : FallingBlock(Material::TOP_SNOW)
 {
-    mBlockType = static_cast<EBlockType>(10);
+    mBlockType = static_cast<EBlockType>(EBLOCK_TYPE_NONE + 10);
     DerivedInit();
     TypedBoxed<int> layers(1);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(LAYERS, &layers));

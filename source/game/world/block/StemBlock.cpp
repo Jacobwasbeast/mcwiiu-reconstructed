@@ -84,14 +84,14 @@ const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* s
 
     if (state->getValue(AGE) == 7)
     {
-        const Direction* directions[] = { Direction::NORTH, Direction::SOUTH,
-                                          Direction::WEST, Direction::EAST };
+        const Direction* horizontalDirections[] = { Direction::NORTH, Direction::SOUTH,
+                                                    Direction::WEST, Direction::EAST };
         for (int i = 0; i < 4; ++i)
         {
-            BlockPos neighbourPos = pos.relative(directions[i]);
+            BlockPos neighbourPos = pos.relative(horizontalDirections[i]);
             if (levelSource->getBlockState(neighbourPos)->getBlock() == mFruitType)
             {
-                TypedBoxed<const Direction*> facing(directions[i]);
+                TypedBoxed<const Direction*> facing(horizontalDirections[i]);
                 return state->setBoxedValue(FACING, &facing);
             }
         }

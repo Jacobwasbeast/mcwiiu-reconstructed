@@ -23,8 +23,10 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Math.hpp"
 
-static Property* gDaylightDetectorPower = IntegerProperty::create(L"power", 0, 15);
+static AbstractProperty<int>* gDaylightDetectorPower =
+    static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
 static const AABB* gDaylightDetectorShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.375, 1.0);
+static const unsigned int DAYLIGHT_DETECTOR_ADVENTURE_TOOLTIP = 0xfe985704u;
 
 DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
     : BaseEntityBlock(Material::WOOD), mTopIcon(NULL), mInvertedTopIcon(NULL), mSideIcon(NULL), mInverted(inverted)
@@ -52,7 +54,7 @@ const AABB* DaylightDetectorBlock::getShape(const BlockState*, LevelSource*, con
 
 int DaylightDetectorBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(static_cast<const AbstractProperty<int>*>(gDaylightDetectorPower));
+    return state->getValue(gDaylightDetectorPower);
 }
 
 void DaylightDetectorBlock::updateSignalStrength(Level* level, const BlockPos& pos)
@@ -74,7 +76,7 @@ void DaylightDetectorBlock::updateSignalStrength(Level* level, const BlockPos& p
             strength = Math::round((float)strength * Mth::cos((target - sunAngle) * 0.2f + sunAngle));
         }
         int value = Mth::clamp(strength, 0, 15);
-        if (oldState->getValue(static_cast<const AbstractProperty<int>*>(gDaylightDetectorPower)) != value)
+        if (oldState->getValue(gDaylightDetectorPower) != value)
         {
             TypedBoxed<int> boxed(value);
             const BlockState* state = oldState->setBoxedValue(gDaylightDetectorPower, &boxed);
@@ -96,14 +98,14 @@ bool DaylightDetectorBlock::use(Level* level, const BlockPos& pos, const BlockSt
     {
         if (mInverted)
         {
-            TypedBoxed<int> boxed(state->getValue(static_cast<const AbstractProperty<int>*>(gDaylightDetectorPower)));
+            TypedBoxed<int> boxed(state->getValue(gDaylightDetectorPower));
             Block* block = Blocks::daylight_detector;
             level->setBlock(pos, block->defaultBlockState()->setBoxedValue(gDaylightDetectorPower, &boxed), 4, false);
             static_cast<DaylightDetectorBlock*>(block)->updateSignalStrength(level, pos);
             return true;
         }
 
-        TypedBoxed<int> boxed(state->getValue(static_cast<const AbstractProperty<int>*>(gDaylightDetectorPower)));
+        TypedBoxed<int> boxed(state->getValue(gDaylightDetectorPower));
         Block* block = Blocks::daylight_detector_inverted;
         level->setBlock(pos, block->defaultBlockState()->setBoxedValue(gDaylightDetectorPower, &boxed), 4, false);
         static_cast<DaylightDetectorBlock*>(block)->updateSignalStrength(level, pos);
@@ -154,7 +156,7 @@ const BlockState* DaylightDetectorBlock::getBlockState(int data)
 
 int DaylightDetectorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(static_cast<const AbstractProperty<int>*>(gDaylightDetectorPower));
+    return state->getValue(gDaylightDetectorPower);
 }
 
 unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -163,7 +165,7 @@ unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHol
     {
         if (!tooltipData.m_pPlayer->Player::GetGameMode()->isAdventure())
         {
-            return 0xfe985704u;
+            return DAYLIGHT_DETECTOR_ADVENTURE_TOOLTIP;
         }
     }
     return Block::GetInteractTooltip(tooltipData);
@@ -184,7 +186,7 @@ BlockStateDefinition* DaylightDetectorBlock::createBlockStateDefinition()
 
 EPistonPushReaction DaylightDetectorBlock::getPistonPushReaction(const BlockState*)
 {
-    return (EPistonPushReaction)0;
+    return PISTON_PUSH_NORMAL;
 }
 
 EBlockFaceShape DaylightDetectorBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
@@ -205,3 +207,4 @@ void DaylightDetectorBlock::registerIcons(IconRegister* iconRegister)
     mInvertedTopIcon = iconRegister->registerIcon(mIconName + L"_inverted_top");
     mSideIcon = iconRegister->registerIcon(mIconName + L"_side");
 }
+

@@ -1,6 +1,7 @@
 #include "game/world/block/EndGatewayBlock.hpp"
 
 #include "game/client/render/ParticleType.hpp"
+#include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/entity/mob/TheEndGatewayEntity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -67,7 +68,8 @@ int EndGatewayBlock::getResourceCount(Random*)
 void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() == NULL || blockEntity->GetType() != 0x1300201ULL)
+    if (blockEntity.get() == NULL
+        || blockEntity->GetType() != BlockEntityRenderDispatcher::kEndGatewayBlockEntityType)
         return;
 
     boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);

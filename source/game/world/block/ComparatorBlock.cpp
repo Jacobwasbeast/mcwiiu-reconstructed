@@ -288,8 +288,15 @@ const BlockState* ComparatorBlock::getStateForPlacement(Level* level, const Bloc
     return DiodeBlock::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setBoxedValue(sModeProperty, new TypedBoxed<ComparatorMode*>(sCompareMode));
 }
 
-EBlockRenderShape ComparatorBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(37); }
-bool ComparatorBlock::TestUse() { return true; }
+EBlockRenderShape ComparatorBlock::getRenderShape(const BlockState*)
+{
+    return static_cast<EBlockRenderShape>(37);
+}
+
+bool ComparatorBlock::TestUse()
+{
+    return true;
+}
 TextureAtlasSprite* ComparatorBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     if (direction != Direction::DOWN)

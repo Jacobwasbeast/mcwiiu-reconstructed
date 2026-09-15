@@ -40,12 +40,6 @@ namespace
     };
 }
 
-void __T4()
-{
-    for (int i = 0; i < 3; ++i)
-        gAnvilTopIconNames[i].~basic_string();
-}
-
 AnvilBlock::AnvilBlock()
     : FallingBlock(Material::HEAVY_METAL), mTextureType(0), mTopIcons()
 {

@@ -13,6 +13,7 @@ class Level;
 class BlockInWorld
 {
 public:
+
     class BlockInWorldPredicate : public Predicate<BlockInWorld*>
     {
     public:

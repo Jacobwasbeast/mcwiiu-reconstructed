@@ -1,6 +1,7 @@
 #include "game/world/block/AnvilBlockItem.hpp"
 
 #include <typeinfo>
+#include <cassert>
 
 #include "game/core/Boxed.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -26,7 +27,8 @@ AnvilBlockItem::~AnvilBlockItem()
 int AnvilBlockItem::AnvilBlockNameResolver(int damage)
 {
     Boxed* boxed = AnvilBlock::DAMAGE->getValueAtIndex((unsigned int)damage);
-    TypedBoxed<int>* value = boxed->isA(typeid(int)) ? static_cast<TypedBoxed<int>*>(boxed) : NULL;
+    assert(boxed->isA(typeid(int)));
+    TypedBoxed<int>* value = static_cast<TypedBoxed<int>*>(boxed);
     return ANVIL_BLOCK_NAME_IDS[value->getValue()];
 }
 

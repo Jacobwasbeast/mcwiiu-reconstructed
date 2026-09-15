@@ -96,7 +96,10 @@ int LiquidBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int)
 int LiquidBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState*)
 {
     if (mMaterial != Material::WATER)
-        return 0xffffff;
+    {
+        const int nonWaterColor = 0xffffff;
+        return nonWaterColor;
+    }
     return BiomeColors::getAverageWaterColor(levelSource, pos);
 }
 
@@ -439,7 +442,7 @@ double LiquidBlock::getLiquidHeight(const BlockState* state, LevelSource* levelS
 
 EBlockFaceShape LiquidBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
-    return (EBlockFaceShape)8;
+    return BLOCK_FACE_UNDEFINED;
 }
 
 void LiquidBlock::setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool remove, int flags)

@@ -16,6 +16,7 @@
 #include "game/world/block/BlockEntity.hpp"
 
 static Random gDispenserRandom;
+const unsigned long long DispenserBlockEntity::TYPE_ID = 0x0000000003C00200ULL;
 
 DispenserBlockEntity::DispenserBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY))
@@ -128,7 +129,7 @@ int DispenserBlockEntity::addItem(not_null_ptr<ItemInstance> item)
 void DispenserBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
     fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                     (DataWalker*)new ItemListDataWalker(0x3c00200ULL, L"Items"));
+                     (DataWalker*)new ItemListDataWalker(DispenserBlockEntity::TYPE_ID, L"Items"));
 }
 
 void DispenserBlockEntity::load(CompoundTag* tag)
@@ -180,5 +181,5 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 
 unsigned long long DispenserBlockEntity::GetType()
 {
-    return 0x0000000003C00200ULL;
+    return DispenserBlockEntity::TYPE_ID;
 }

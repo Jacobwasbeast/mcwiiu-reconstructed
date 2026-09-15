@@ -1,8 +1,8 @@
 #include "game/world/block/BlockEventData.hpp"
 #include "game/world/block/Block.hpp"
 
-BlockEventData::BlockEventData(const BlockPos& pos, Block* blockValue, int paramAValue, int paramBValue)
-    : BlockPos(), block(blockValue), paramA(paramAValue), paramB(paramBValue)
+BlockEventData::BlockEventData(const BlockPos& pos, Block* blockValue, int eventIdValue, int eventParamValue)
+    : BlockPos(), block(blockValue), eventId(eventIdValue), eventParam(eventParamValue)
 {
     Vec3i::operator=(pos);
 }
@@ -14,12 +14,12 @@ BlockPos BlockEventData::getPos()
 
 int BlockEventData::getParamA()
 {
-    return paramA;
+    return eventId;
 }
 
 int BlockEventData::getParamB()
 {
-    return paramB;
+    return eventParam;
 }
 
 Block* BlockEventData::getBlock()
@@ -29,5 +29,5 @@ Block* BlockEventData::getBlock()
 
 bool BlockEventData::equals(BlockEventData& other)
 {
-    return BlockPos::equals(other) && paramA == other.paramA && paramB == other.paramB && block == other.block;
+    return BlockPos::equals(other) && eventId == other.eventId && eventParam == other.eventParam && block == other.block;
 }

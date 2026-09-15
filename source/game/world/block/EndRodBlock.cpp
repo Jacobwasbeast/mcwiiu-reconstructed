@@ -131,17 +131,17 @@ EBlockFaceShape EndRodBlock::getBlockFaceShape(LevelSource*, const BlockState*, 
 {
     return BLOCK_FACE_UNDEFINED;
 }
-EBlockRenderShape EndRodBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(44); }
+EBlockRenderShape EndRodBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_END_ROD; }
 
 const AABB* EndRodBlock::getShapeRod(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
-    case 0: return END_ROD_DOWN_ROD;
-    case 2: return END_ROD_NORTH_ROD;
-    case 3: return END_ROD_SOUTH_ROD;
-    case 4: return END_ROD_WEST_ROD;
-    case 5: return END_ROD_EAST_ROD;
+    case Direction::eDirection_Down: return END_ROD_DOWN_ROD;
+    case Direction::eDirection_North: return END_ROD_NORTH_ROD;
+    case Direction::eDirection_South: return END_ROD_SOUTH_ROD;
+    case Direction::eDirection_West: return END_ROD_WEST_ROD;
+    case Direction::eDirection_East: return END_ROD_EAST_ROD;
     default: return END_ROD_UP_ROD;
     }
 }
@@ -150,11 +150,11 @@ const AABB* EndRodBlock::getShapeBase(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
-    case 0: return END_ROD_DOWN_BASE;
-    case 2: return END_ROD_NORTH_BASE;
-    case 3: return END_ROD_SOUTH_BASE;
-    case 4: return END_ROD_WEST_BASE;
-    case 5: return END_ROD_EAST_BASE;
+    case Direction::eDirection_Down: return END_ROD_DOWN_BASE;
+    case Direction::eDirection_North: return END_ROD_NORTH_BASE;
+    case Direction::eDirection_South: return END_ROD_SOUTH_BASE;
+    case Direction::eDirection_West: return END_ROD_WEST_BASE;
+    case Direction::eDirection_East: return END_ROD_EAST_BASE;
     default: return END_ROD_UP_BASE;
     }
 }

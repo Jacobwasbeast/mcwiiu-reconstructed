@@ -21,6 +21,26 @@ public:
     class Variant
     {
     public:
+        enum Data
+        {
+            eDataOak = 0,
+            eDataSpruce = 1,
+            eDataBirch = 2,
+            eDataJungle = 3,
+            eDataAcacia = 4,
+            eDataDarkOak = 5
+        };
+
+        enum TranslationKey
+        {
+            eTranslationKeyOak = 0x13035FA5,
+            eTranslationKeySpruce = 0x7A4DF272,
+            eTranslationKeyBirch = 0x9BC6104A,
+            eTranslationKeyJungle = 0x8CE369FC,
+            eTranslationKeyAcacia = 0x674A2380,
+            eTranslationKeyDarkOak = 0x0458BC59
+        };
+
         Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;

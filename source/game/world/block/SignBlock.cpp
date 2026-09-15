@@ -17,6 +17,8 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 
+static const unsigned long long SIGN_BLOCK_ENTITY_TYPE = 0x01000202ULL;
+
 SignBlock::SignBlock()
     : BaseEntityBlock(Material::WOOD)
 {
@@ -85,7 +87,7 @@ bool SignBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
         return true;
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() == NULL || blockEntity->GetType() != 0x01000202ULL)
+    if (blockEntity.get() == NULL || blockEntity->GetType() != SIGN_BLOCK_ENTITY_TYPE)
         return false;
 
     boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);

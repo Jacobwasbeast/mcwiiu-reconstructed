@@ -11,6 +11,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/Block.hpp"
@@ -28,6 +29,9 @@
 #include "game/world/generation/Player.hpp"
 
 DirectionProperty* EnderChestBlock::FACING = NULL;
+
+static const AABB* ENDER_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 / 16.0,
+                                                         15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
 
 EnderChestBlock::EnderChestBlock()
     : BaseEntityBlock(Material::STONE)
@@ -55,7 +59,7 @@ void EnderChestBlock::blockStaticCtor()
 
 const AABB* EnderChestBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return ENDER_CHEST_SHAPE;
 }
 
 bool EnderChestBlock::isSolidRender(const BlockState*) const
@@ -124,10 +128,10 @@ bool EnderChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (inventory)
     {
-        if (blockEntity->GetType() == 0x1200208ULL && !ChestBlock::isChestBlockedAt(level, pos) && !clientSide)
+        boost::shared_ptr<EnderChestBlockEntity> chest =
+            boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
+        if (chest && !ChestBlock::isChestBlockedAt(level, pos) && !clientSide)
         {
-            boost::shared_ptr<EnderChestBlockEntity> chest =
-                boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
             inventory->setActiveChest(chest);
             player->openContainer(inventory);
         }
@@ -195,7 +199,7 @@ BlockStateDefinition* EnderChestBlock::createBlockStateDefinition()
 
 EBlockFaceShape EnderChestBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)
 {
-    return static_cast<EBlockFaceShape>(8);
+    return BLOCK_FACE_UNDEFINED;
 }
 
 void EnderChestBlock::registerIcons(IconRegister* iconRegister)

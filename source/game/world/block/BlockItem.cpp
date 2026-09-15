@@ -156,10 +156,10 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             }
 
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-            if (blockEntity.get() != NULL && blockEntity->GetType() == 0x01200212ULL)
+            boost::shared_ptr<ConduitBlockEntity> conduit =
+                boost::dynamic_pointer_cast<ConduitBlockEntity>(blockEntity);
+            if (conduit.get() != NULL)
             {
-                boost::shared_ptr<ConduitBlockEntity> conduit =
-                    boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
                 int rotation = Mth::absFloor((double)(player->mYRot * 16.0f / 360.0f) + 0.5) & 15;
                 conduit->mActiveRotation = (float)rotation * 360.0f / 16.0f;
             }

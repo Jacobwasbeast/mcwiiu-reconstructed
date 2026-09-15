@@ -52,13 +52,10 @@ BlockPattern::BlockLoadingCache* BlockPattern::createLevelCache(Level* level, bo
 BlockPos BlockPattern::translateAndRotate(const BlockPos& pos, const Direction* forwards,
                                            const Direction* up, int x, int y, int z)
 {
-    if (forwards != up)
-    {
-        up->getOpposite();
-    }
+    const Direction* adjustedUp = forwards != up ? up->getOpposite() : up;
 
     Vec3i forward(forwards->getStepX(), forwards->getStepY(), forwards->getStepZ());
-    Vec3i upVector(up->getStepX(), up->getStepY(), up->getStepZ());
+    Vec3i upVector(adjustedUp->getStepX(), adjustedUp->getStepY(), adjustedUp->getStepZ());
     Vec3i cross = forward.cross(upVector);
 
     return pos.offset(cross.x * x - upVector.x * y + forward.x * z,

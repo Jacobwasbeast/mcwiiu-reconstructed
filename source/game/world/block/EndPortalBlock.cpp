@@ -18,6 +18,15 @@
 #include "game/world/block/TheEndPortalBlockEntity.hpp"
 #include "game/core/IconRegister.hpp"
 
+namespace
+{
+const unsigned long long PORTAL_EXCLUDED_ENTITY_TYPE = ENTITY_TYPE_ENTITY | 3ULL;
+const unsigned long long PORTAL_PROJECTILE_ENTITY_MASK = 0x8A020000ULL;
+const unsigned long long PORTAL_PLAYER_ENTITY_MASK = 0x0C800000ULL;
+const _eTerrainFeatureType STRONGHOLD_END_PORTAL_FEATURE =
+    static_cast<_eTerrainFeatureType>(eTerrainFeatureType_0 + 6);
+}
+
 EndPortalBlock::EndPortalBlock(Material* material)
     : BaseEntityBlock(material), EntityBlock()
 {
@@ -72,10 +81,10 @@ int EndPortalBlock::getResourceCount(Random*)
 void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                   const boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() == 0x08000003ULL)
+    if (entity->GetType() == PORTAL_EXCLUDED_ENTITY_TYPE)
         return;
 
-    if (Minecraft::InMiniGame((EMiniGameId)15, true)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)
         && Minecraft::GetInstance()->GetMiniGame()->ArePortalsDisabled())
         return;
 
@@ -83,7 +92,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
         return;
 
     AABB* portalBox;
-    if ((entity->GetType() & 0x8A020000ULL) == 0x8A020000ULL)
+    if ((entity->GetType() & PORTAL_PROJECTILE_ENTITY_MASK) == PORTAL_PROJECTILE_ENTITY_MASK)
     {
         portalBox = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1.0, pos.y + 1.0, pos.z + 1.0);
     }
@@ -99,12 +108,12 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                           portalBox->mMaxX, portalBox->mMaxY, portalBox->mMaxZ))
         return;
 
-    if ((entity->GetType() & 0x0C800000ULL) == 0x0C800000ULL)
+    if ((entity->GetType() & PORTAL_PLAYER_ENTITY_MASK) == PORTAL_PLAYER_ENTITY_MASK)
     {
         int x = 0;
         int z = 0;
         if (level->mDimension == NULL && !level->getLevelData()->getHasStrongholdEndPortal()
-            && g_pApp->GetTerrainFeaturePosition((_eTerrainFeatureType)6, &x, &z))
+            && g_pApp->GetTerrainFeaturePosition(STRONGHOLD_END_PORTAL_FEATURE, &x, &z))
         {
             level->getLevelData()->setXStrongholdEndPortal(x);
             level->getLevelData()->setZStrongholdEndPortal(z);
@@ -139,7 +148,7 @@ const MaterialColor* EndPortalBlock::getMapColor(const BlockState*, LevelSource*
 EBlockFaceShape EndPortalBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,
                                                    const Direction*)
 {
-    return (EBlockFaceShape)8;
+    return BLOCK_FACE_UNDEFINED;
 }
 
 bool EndPortalBlock::isWaterBlocking() const

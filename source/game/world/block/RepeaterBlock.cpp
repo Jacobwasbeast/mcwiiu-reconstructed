@@ -27,6 +27,8 @@
 
 static AbstractProperty<int>* sDelayProperty = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"delay", 1, 4));
 static AbstractProperty<bool>* sLockedProperty = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"locked"));
+static const eGameHostOption REPEATER_INTERACTION_HOST_OPTION = static_cast<eGameHostOption>(0x1f);
+static const EBlockRenderShape REPEATER_RENDER_SHAPE = static_cast<EBlockRenderShape>(15);
 
 RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
 {
@@ -71,7 +73,7 @@ bool RepeaterBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
     if (!clientSide && player && !player->isSneaking())
     {
         int priority = 3;
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) != 0)
+        if (g_pApp->GetGameHostOption(REPEATER_INTERACTION_HOST_OPTION) != 0)
             priority = 0x25;
         TypedBoxed<int> delay(state->getValue(sDelayProperty) == 4 ? 1 : state->getValue(sDelayProperty) + 1);
         level->setBlock(pos, state->setBoxedValue(sDelayProperty, &delay), priority, false);
@@ -185,5 +187,5 @@ bool RepeaterBlock::TestUse()
 
 EBlockRenderShape RepeaterBlock::getRenderShape(const BlockState*)
 {
-    return static_cast<EBlockRenderShape>(15);
+    return REPEATER_RENDER_SHAPE;
 }
