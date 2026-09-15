@@ -33,6 +33,4 @@ bool ArrowInfiniteEnchantment::checkCompatibility(const Enchantment* other) cons
     return Enchantment::checkCompatibility(other);
 }
 
-ArrowInfiniteEnchantment::~ArrowInfiniteEnchantment()
-{
-}
+ArrowInfiniteEnchantment::~ArrowInfiniteEnchantment() = default;

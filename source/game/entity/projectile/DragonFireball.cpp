@@ -40,9 +40,7 @@ DragonFireball::DragonFireball(Level* level, double x, double y, double z,
     setSize(1.0f, 0.4f);
 }
 
-DragonFireball::~DragonFireball()
-{
-}
+DragonFireball::~DragonFireball() = default;
 
 void DragonFireball::addDataWalkers(DataFixerUpper* fixer)
 {

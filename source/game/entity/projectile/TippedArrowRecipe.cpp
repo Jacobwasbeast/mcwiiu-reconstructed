@@ -109,7 +109,7 @@ bool TippedArrowRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCon
 not_null_ptr<ItemInstance> TippedArrowRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     not_null_ptr<ItemInstance> ingredient = craftingContainer->getItem(1, 1);
-    if (ingredient->isEmpty() || ingredient->getItem() != Items::lingeringPotion)
+    if (ingredient->getItem() != Items::lingeringPotion)
     {
         return ItemInstance::EMPTY;
     }

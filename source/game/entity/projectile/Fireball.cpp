@@ -77,9 +77,7 @@ Fireball::Fireball(Level* level, boost::shared_ptr<LivingEntity> owner, double x
     }
 }
 
-Fireball::~Fireball()
-{
-}
+Fireball::~Fireball() = default;
 
 bool Fireball::shouldTick()
 {
@@ -200,7 +198,7 @@ bool Fireball::isPickable()
 
 double Fireball::getPickRadius()
 {
-    return 1.0;
+    return static_cast<double>(1.0);
 }
 
 bool Fireball::hurt(const DamageSource* source, float)
@@ -235,7 +233,7 @@ bool Fireball::hurt(const DamageSource* source, float)
 
 float Fireball::getBrightness()
 {
-    return 1.0f;
+    return static_cast<float>(1.0);
 }
 
 int Fireball::getLightColor()
@@ -245,7 +243,7 @@ int Fireball::getLightColor()
 
 const ParticleType* Fireball::getTrailParticleType()
 {
-    return 0;
+    return static_cast<const ParticleType*>(0);
 }
 
 bool Fireball::shouldBurn()

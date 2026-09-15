@@ -3,12 +3,11 @@
 #include "game/entity/projectile/TippableArrow.hpp"
 
 ArrowItem::ArrowItem()
+    : Item()
 {
 }
 
-ArrowItem::~ArrowItem()
-{
-}
+ArrowItem::~ArrowItem() = default;
 
 boost::shared_ptr<Arrow> ArrowItem::createArrow(Level* level,
                                                 not_null_ptr<ItemInstance> itemInstance,
