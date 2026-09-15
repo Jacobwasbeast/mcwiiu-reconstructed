@@ -3,6 +3,9 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/MemoryTracker.hpp"
 #include "game/ui/UIComponent_Tooltips.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/world/generation/MultiPlayerGameMode.hpp"
+#include "game/minigame/Tutorial.hpp"
 
 UIGroup::UIGroup(EUIGroup group, int player)
     : m_component(0), m_componentSecondary(0), m_componentTertiary(0),
@@ -84,17 +87,32 @@ void UIGroup::DestroyAll()
 
 void UIGroup::ReloadAll()
 {
-    int lastLayer = 8;
-    for (int i = 0; i < 8; ++i)
+    int lastLayer;
+    int i;
+
+    if (m_layers[0]->hidesLowerScenes() || m_layers[1]->hidesLowerScenes() ||
+        m_layers[2]->hidesLowerScenes() || m_layers[3]->hidesLowerScenes())
     {
-        if (m_layers[i]->hidesLowerScenes())
+        lastLayer = 4;
+    }
+    else
+    {
+        lastLayer = 8;
+        for (i = 4; i < 8; ++i)
         {
-            lastLayer = i + 1;
-            break;
+            if (m_layers[i]->hidesLowerScenes())
+            {
+                lastLayer = i;
+                break;
+            }
         }
     }
-    for (int i = lastLayer - 1; i >= 0; --i)
-        m_layers[i]->ReloadAll(i != 4);
+
+    for (i = lastLayer; i >= 0; --i)
+    {
+        if (i < 8)
+            m_layers[i]->ReloadAll(i != 4);
+    }
 }
 
 void UIGroup::_UpdateFocusState()
@@ -156,7 +174,7 @@ void UIGroup::render()
 }
 int UIGroup::hidesLowerScenes()
 {
-    if (m_player >= 0)
+    if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
         return 0;
     for (int i = 7; i >= 0; --i)
         if (m_layers[i]->hidesLowerScenes())
@@ -207,6 +225,14 @@ int UIGroup::NavigateBack(int player, EUIScene scene, EUILayer layer)
 
 void UIGroup::closeAllScenes()
 {
+    Minecraft* mc = Minecraft::GetInstance();
+    if (m_player >= 0 && mc != 0 && mc->mGameModes[m_player] != 0)
+    {
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_player]->getTutorial();
+        if (tutorial != 0)
+            tutorial->showTutorialPopup(true);
+    }
+
     for (int i = 0; i < 8; ++i)
         if (i != 2)
             m_layers[i]->closeAllScenes();
@@ -262,35 +288,35 @@ void UIGroup::ReloadAllLayers(){int i;for(i=0;i<8;++i)m_layers[i]->ReloadAll(tru
 void UIGroup::SetViewportType(C4JRender::eViewportType viewport){if(m_viewportType!=(int)viewport){m_viewportType=(int)viewport;ReloadAllLayers();}}
 void UIGroup::HandleDLCMountingComplete()
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
         for (int i = 0; i < 8; ++i)
             m_layers[i]->HandleDLCMountingComplete();
 }
 
 void UIGroup::HandleDLCInstalled()
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
         for (int i = 0; i < 8; ++i)
             m_layers[i]->HandleDLCInstalled();
 }
 
 void UIGroup::HandleDLCLicenseChange()
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
         for (int i = 0; i < 8; ++i)
             m_layers[i]->HandleDLCLicenseChange();
 }
 
 void UIGroup::HandleTMSBanFileRetrieved()
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
         for (int i = 0; i < 8; ++i)
             m_layers[i]->HandleTMSBanFileRetrieved();
 }
 
 void UIGroup::HandleMessage(EUIMessage message, void* data)
 {
-    if (m_player < 0)
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
         for (int i = 0; i < 8; ++i)
             m_layers[i]->HandleMessage(message, data);
 }

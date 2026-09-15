@@ -86,18 +86,47 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
 {
     if (m_caret == NULL)
         return;
+
     m_cursorAtLineEnd = atEnd;
-    if (!m_caretVisible) {
-        m_caret->SetTextOnly(L"");
-    } else {
-        const std::wstring& label = *(std::wstring*)m_label->GetLabel();
-        int index = position + (force ? 0 : GetCaretOffset(position));
-        if (index >= static_cast<int>(label.size()))
-            index = static_cast<int>(label.size()) - 1;
-        if (index < 0)
-            index = 0;
-        m_caret->SetTextOnly(label.substr(0, index) + L"#" + label.substr(index));
-        m_label->SetTextOnly(label);
+    if (!m_caretVisible)
+        m_caret->SetTextOnly(L" ");
+
+    const std::wstring& label = *(std::wstring*)m_label->GetLabel();
+    if (label.empty())
+    {
+        m_caret->setX(m_label->getX());
+        m_caret->setY(m_label->getY());
+    }
+    else
+    {
+        const int index = position + (force ? 0 : GetCaretOffset(position));
+        int clampedIndex = index;
+        bool wasClamped = false;
+        if (clampedIndex >= static_cast<int>(label.size()))
+        {
+            clampedIndex = static_cast<int>(label.size()) - 1;
+            wasClamped = true;
+        }
+
+        if (label.substr(clampedIndex, 1).empty())
+        {
+            if (!force)
+            {
+                const std::wstring marked = label.substr(0, index) + L"#" + label.substr(index);
+                m_caret->SetTextOnly(marked);
+                SetCaretPosition(index, atEnd, true);
+                m_label->SetTextOnly(label);
+            }
+        }
+        else
+        {
+            const std::pair<float, float> boundsAtIndex = m_label->GetTextField()->getCharBoundaries(clampedIndex);
+            const std::pair<float, float> boundsAtStart = m_label->GetTextField()->getCharBoundaries(0);
+            const float widthAdjust = m_cursorAtLineEnd ? 0.0f : 1.0f;
+            const float extraWidth = wasClamped ? (boundsAtIndex.second - boundsAtIndex.first) : 0.0f;
+            m_caret->setX(m_label->getX() + boundsAtIndex.first - boundsAtStart.first - widthAdjust + extraWidth);
+            m_caret->setY(m_label->getY());
+        }
     }
     m_caretVisible = true;
 }
@@ -218,10 +247,60 @@ void FJ_BookAndQuillMenu::OnFocusChange(bool focused)
 
 void FJ_BookAndQuillMenu::DoHorizontalResizeCheck()
 {
-    for (int i = 0; m_pageNode != NULL && i < m_pageNode->getNumChildren(); ++i) {
-        FJ_FuiNode* child = m_pageNode->getChildAt(i);
+    FJ_FuiNode* signNode = getChildByName("ButtonSign");
+    FJ_FuiNode* closeNode = getChildByName("ButtonClose");
+
+    int signWidth = 0;
+    int signX = 0;
+    int closeX = 0;
+    if (signNode != NULL && closeNode != NULL)
+    {
+        signWidth = static_cast<int>(signNode->getWidth());
+        signX = static_cast<int>(signNode->getX());
+        closeX = static_cast<int>(closeNode->getX());
+    }
+
+    bool anyLabelTooWide = false;
+    int maxNewWidth = 0;
+    for (int i = 0; i < m_root->getNumChildren(); ++i)
+    {
+        FJ_FuiNode* child = m_root->getChildAt(i);
         FJ_Base* base = child != NULL ? child->asFJ_Base() : NULL;
-        if (base != NULL && base->isFJ_Button() && base->getNewWidth() > 0)
-            base->ResizingComplete();
+        if (base != NULL && base->isFJ_Button())
+        {
+            if (maxNewWidth < static_cast<int>(base->getNewWidth()))
+                maxNewWidth = static_cast<int>(base->getNewWidth());
+            if (base->getLabelTooWide())
+                anyLabelTooWide = true;
+        }
+    }
+
+    if (anyLabelTooWide)
+    {
+        for (int i = 0; i < m_root->getNumChildren(); ++i)
+        {
+            FJ_FuiNode* child = m_root->getChildAt(i);
+            FJ_Base* base = child != NULL ? child->asFJ_Base() : NULL;
+            if (base != NULL && base->isFJ_Button())
+                base->SetNewObjectWidth(maxNewWidth);
+        }
+    }
+
+    for (int i = 0; i < m_root->getNumChildren(); ++i)
+    {
+        FJ_FuiNode* child = m_root->getChildAt(i);
+        if (child != NULL && child->isFJ_Base())
+            child->asFJ_Base()->ResizingComplete();
+    }
+
+    const bool closeFound = (getChildByName("ButtonClose") != NULL);
+    bool signFound = false;
+    if (closeFound)
+        signFound = (getChildByName("ButtonSign") != NULL);
+
+    if (closeFound && signFound)
+    {
+        signNode->setX(static_cast<float>(signX + signWidth) - signNode->getWidth());
+        closeNode->setX(static_cast<float>(closeX));
     }
 }

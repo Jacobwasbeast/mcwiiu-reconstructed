@@ -20,6 +20,12 @@ AbstractContainerMenu::AbstractContainerMenu()
 
 AbstractContainerMenu::~AbstractContainerMenu()
 {
+    unsigned int i;
+    for (i = 0; i < m_slots.size(); ++i)
+    {
+        if (m_slots.at(i) != NULL)
+            delete m_slots.at(i);
+    }
 }
 
 Slot* AbstractContainerMenu::addSlot(Slot* slot)
@@ -500,13 +506,21 @@ void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Lev
     {
         unsigned int i;
         for (i = 0; i < container->getContainerSize(); ++i)
-            player->drop(container->removeItemNoUpdate(i), false);
+        {
+            not_null_ptr<ItemInstance> item = container->removeItemNoUpdate(i);
+            if (!item->isEmpty())
+                player->drop(item, false);
+        }
     }
     else
     {
         unsigned int i;
         for (i = 0; i < container->getContainerSize(); ++i)
-            player->mInventory->placeItemBackInInventory(level, container->removeItemNoUpdate(i));
+        {
+            not_null_ptr<ItemInstance> item = container->removeItemNoUpdate(i);
+            if (!item->isEmpty())
+                player->mInventory->placeItemBackInInventory(level, item);
+        }
     }
 }
 

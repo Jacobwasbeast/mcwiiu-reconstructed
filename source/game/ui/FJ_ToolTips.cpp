@@ -47,7 +47,6 @@ void FJ_ToolTips::init(FJ_Event*)
         "Touch_12", "Touch_13", "Touch_14", "Touch_15"
     };
     m_toolTipSuffix.assign(L"  ");
-    m_toolTipNodes.clear();
     for (int i = 0; i < 16; i += 2)
     {
         FJ_FuiNode* first = getChildByName(std::string(names[i]));
@@ -59,7 +58,6 @@ void FJ_ToolTips::init(FJ_Event*)
     }
     getStage()->addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
     m_touchControlsAvailable = false;
-    m_touchNodes.clear();
     FJ_FuiNode* firstTouchNode = getChildByName(std::string(touchNames[0]));
     if (firstTouchNode != 0)
     {

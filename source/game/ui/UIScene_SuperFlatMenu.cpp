@@ -186,6 +186,7 @@ void UIScene_SuperFlatMenu::UpdateParamsList()
 
 void UIScene_SuperFlatMenu::LoadPreset(SuperflatConfig* config)
 {
+    m_presetsFlag = false;
     *m_config = *config;
     m_generatorInfo.setEqualTo(m_config);
     PopulateLayersList();
@@ -685,11 +686,15 @@ void UIScene_SuperFlatMenu::customDraw(const char* name, fuiRect* rect)
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     int slot = -1;
     if (m_activeTab == eTabLayers)
-        std::sscanf(name, "slot_%d", &slot);
-    else if (m_activeTab == eTabBiomes)
-        std::sscanf(name, "slot_%d", &slot);
+        std::sscanf(name, "slot_0_%d", &slot);
+    if (m_activeTab == eTabBiomes)
+    {
+        std::sscanf(name, "slot_1_%d", &slot);
+        if (slot != -1)
+            item = SuperflatMenu::getBiomeInfoA()[slot].mItem;
+    }
     if (!item->isEmpty())
-        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, true, false);
+        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
 }
 
 void UIScene_SuperFlatMenu::SetSelectedLayer(int index)

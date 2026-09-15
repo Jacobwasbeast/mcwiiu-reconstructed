@@ -16,6 +16,8 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/INetworkPlayer.hpp"
+#include "game/network/Packet.hpp"
+#include "game/network/PlayerInfoPacket.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_InGamePlayerOptions.hpp"
 #include "game/ui/UIString.hpp"
@@ -81,7 +83,7 @@ static void addPlayerOptions(UIScene_InGamePlayerOptionsMenu* scene, int playerI
             }
             const GameType* gameType = GameType::byId(g_pApp->GetPlayerGameType(scene->m_smallId));
             scene->m_playerOptions.AddNewSlider(std::wstring(L10N::GetString(gameType->getSliderLabel())),
-                0xb, 0, gameType->getId(), g_pApp->GetPlayerGameType(scene->m_smallId), false, 7, 3);
+                0xb, 0, GameType::ADVENTURE->getId(), g_pApp->GetPlayerGameType(scene->m_smallId), false, 7, 3);
             addPlayerButton(&scene->m_playerOptions, 0x88f67c3e, 0xc);
         }
     }
@@ -106,7 +108,7 @@ static void addPlayerOptions(UIScene_InGamePlayerOptionsMenu* scene, int playerI
             static_cast<Player::EPlayerGamePrivileges>(10)) == 0);
     }
 
-    if (player != 0 && player->IsLocal())
+    if (localPlayer != 0 && localPlayer->IsHost())
     {
         addPlayerCheckbox(&scene->m_playerOptions, 0xee5328fd, 5,
             Player::getPlayerGamePrivilege(scene->m_privileges,
@@ -136,10 +138,17 @@ static void addPlayerOptions(UIScene_InGamePlayerOptionsMenu* scene, int playerI
                 static_cast<Player::EPlayerGamePrivileges>(0x10)) != 0);
             const GameType* gameType = GameType::byId(g_pApp->GetPlayerGameType(scene->m_smallId));
             scene->m_playerOptions.AddNewSlider(std::wstring(L10N::GetString(gameType->getSliderLabel())),
-                0xb, 0, gameType->getId(), g_pApp->GetPlayerGameType(scene->m_smallId), false, 7, 3);
+                0xb, 0, GameType::ADVENTURE->getId(), g_pApp->GetPlayerGameType(scene->m_smallId), false, 7, 3);
             addPlayerButton(&scene->m_playerOptions, 0x88f67c3e, 0xc);
         }
     }
+
+    if (!host && player != 0 && !player->IsLocal() &&
+        !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
+    {
+        addPlayerButton(&scene->m_playerOptions, 0x4c8183da, 10);
+    }
+
     scene->resetCheatCheckboxes();
 }
 
@@ -147,26 +156,21 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
     : UIScene(sceneType, layer), m_gamertag(), m_playerOptions()
 {
     initialiseMovie();
-    m_smallId = *static_cast<unsigned char*>(data);
-    m_privileges = *(unsigned int*)((unsigned char*)data + 4);
+    m_smallId = *(static_cast<unsigned char*>(data) + 4);
+    m_privileges = *reinterpret_cast<unsigned int*>(static_cast<unsigned char*>(data) + 8);
     m_cheatsEnabled = false;
     m_navigatingBack = false;
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_smallId);
     if (player != 0)
         m_gamertag.init(UIString(player->GetDisplayName()));
     addPlayerOptions(this, m_playerId);
-    if (m_movie != 0)
-    {
-        fuiRenderNode* root = m_movie->getRootNode();
-        if (root != 0 && root->getFuiNode() != 0)
-        {
-            FJ_InGamePlayerOptions* document = static_cast<FJ_InGamePlayerOptions*>(root->getFuiNode());
-            document->SetPlayerIcon(g_pApp->GetPlayerColour(m_smallId));
-            document->InitMenu();
-        }
-    }
+
+    FJ_InGamePlayerOptions* document = static_cast<FJ_InGamePlayerOptions*>(m_movie->getRootNode()->getFuiNode());
+    document->SetPlayerIcon(g_pApp->GetPlayerColour(m_smallId));
+    resetCheatCheckboxes();
     addTimer(0, 100);
     CGameNetworkManager::sInstance.RegisterPlayerChangedCallback(m_playerId, OnPlayerChanged, this);
+    document->InitMenu();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -251,49 +255,119 @@ void UIScene_InGamePlayerOptionsMenu::handleInput(int, int action, bool repeat, 
     }
     if (action != 0x15 || !pressed)
         return;
-    m_privileges = g_pApp->GetPlayerPrivileges(m_smallId);
+
+    INetworkPlayer* localPlayer = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_smallId);
-    if (!m_isHost && player != 0 && !player->IsHost())
+    m_privileges = g_pApp->GetPlayerPrivileges(m_smallId);
+    bool sentGameModeChange = false;
+    const unsigned int hostOption = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xc));
+    const unsigned int multiplayer = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf));
+    const bool host = localPlayer != 0 && localPlayer == player;
+    m_isHost = host;
+
+    if (host)
     {
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0),
-                                       m_playerOptions.GetCheckboxValue(0) ^ 1);
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(1),
-                                       m_playerOptions.GetCheckboxValue(0) ^ 1);
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xb),
-                                       m_playerOptions.GetCheckboxValue(1));
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xc),
-                                       m_playerOptions.GetCheckboxValue(2));
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(3),
-                                       m_playerOptions.GetCheckboxValue(3) ^ 1);
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(10),
-                                       m_playerOptions.GetCheckboxValue(4) ^ 1);
-    }
-    if (player != 0 && player->IsLocal())
-    {
-        Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(4),
-                                       m_playerOptions.GetCheckboxValue(5));
-        if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0xf)) != 0)
+        if (multiplayer != 0)
         {
-            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xd),
-                                           m_playerOptions.GetCheckboxValue(9));
-            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xe),
-                                           m_playerOptions.GetCheckboxValue(7));
-            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xf),
-                                           m_playerOptions.GetCheckboxValue(8));
-            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0x10),
-                                           m_playerOptions.GetCheckboxValue(6));
+            if (Player::getPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xd)) != 0)
+            {
+                Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(7),
+                                               m_playerOptions.GetCheckboxValue(9));
+                Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(8),
+                                               m_playerOptions.GetCheckboxValue(9));
+            }
+            if (Player::getPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(9)) == 0)
+            {
+                if (Player::getPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xe)) != 0)
+                {
+                    Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(5),
+                                                   m_playerOptions.GetCheckboxValue(7));
+                }
+                if (Player::getPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xf)) != 0)
+                {
+                    Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(6),
+                                                   m_playerOptions.GetCheckboxValue(8));
+                }
+            }
+            const unsigned int gameType = m_playerOptions.GetSliderValue(0xb);
+            if (g_pApp->GetPlayerGameType(m_smallId) != gameType)
+            {
+                ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
+                if (connection != 0)
+                {
+                    sentGameModeChange = true;
+                    connection->send(GameModeCommand::preparePacket(player->GetUID(),
+                                                                     static_cast<unsigned char>(gameType)));
+                }
+            }
         }
     }
-    const unsigned int gameType = m_playerOptions.GetSliderValue(0xb);
-    if (gameType != g_pApp->GetPlayerGameType(m_smallId))
+    else
+    {
+        if (hostOption == 0 && player != 0 && !player->IsHost())
+        {
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0),
+                                           m_playerOptions.GetCheckboxValue(0) ^ 1);
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(1),
+                                           m_playerOptions.GetCheckboxValue(0) ^ 1);
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xb),
+                                           m_playerOptions.GetCheckboxValue(1));
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xc),
+                                           m_playerOptions.GetCheckboxValue(2));
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(3),
+                                           m_playerOptions.GetCheckboxValue(3) ^ 1);
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(10),
+                                           m_playerOptions.GetCheckboxValue(4) ^ 1);
+        }
+
+        if (localPlayer != 0 && localPlayer->IsHost())
+        {
+            Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(4),
+                                           m_playerOptions.GetCheckboxValue(5));
+            if (multiplayer != 0)
+            {
+                Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xd),
+                                               m_playerOptions.GetCheckboxValue(9));
+                if (Player::getPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(9)) == 0)
+                {
+                    Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xe),
+                                                   m_playerOptions.GetCheckboxValue(7));
+                    Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0xf),
+                                                   m_playerOptions.GetCheckboxValue(8));
+                }
+                Player::setPlayerGamePrivilege(m_privileges, static_cast<Player::EPlayerGamePrivileges>(0x10),
+                                               m_playerOptions.GetCheckboxValue(6));
+
+                const unsigned int gameType = m_playerOptions.GetSliderValue(0xb);
+                if (g_pApp->GetPlayerGameType(m_smallId) != gameType)
+                {
+                    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
+                    if (connection != 0)
+                    {
+                        sentGameModeChange = true;
+                        connection->send(GameModeCommand::preparePacket(player->GetUID(),
+                                                                         static_cast<unsigned char>(gameType)));
+                    }
+                }
+            }
+        }
+    }
+
+    if (sentGameModeChange || g_pApp->GetPlayerPrivileges(m_smallId) != m_privileges)
     {
         ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         if (connection != 0)
-            connection->send(GameModeCommand::preparePacket(player->GetUID(), static_cast<unsigned char>(gameType)));
+        {
+            unsigned char gameTypeByte = static_cast<unsigned char>(g_pApp->GetPlayerGameType(m_smallId));
+            if (localPlayer != 0 && localPlayer->IsHost() && multiplayer != 0)
+            {
+                gameTypeByte = static_cast<unsigned char>(m_playerOptions.GetSliderValue(0xb));
+            }
+            connection->send(boost::shared_ptr<Packet>(
+                new PlayerInfoPacket(m_smallId, -1, m_privileges, gameTypeByte)));
+        }
     }
-    if (player != 0)
-        g_pApp->UpdatePlayerInfo(m_smallId, -1, m_privileges,
-                                 static_cast<unsigned char>(g_pApp->GetPlayerGameType(m_smallId)));
+
     navigateBack();
     handled = true;
 }

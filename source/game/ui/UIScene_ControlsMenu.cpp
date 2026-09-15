@@ -306,6 +306,16 @@ void UIScene_ControlsMenu::tick()
     }
     if (m_flags[1])
         UpdateControls(m_playerId);
+    if (m_flags[3])
+    {
+        SetControlsHelp(m_playerId, m_controls.getCurrentSelection(), L10N::GetString(0x4add6081));
+        m_flags[3] = 0;
+    }
+    if (m_flags[4])
+    {
+        SetControlsHelp(m_playerId, 0, L"");
+        m_flags[4] = 0;
+    }
     UIScene::tick();
 }
 

@@ -11,7 +11,6 @@
 #include "game/ui/UIControl_SlotList.hpp"
 #include "game/item/not_null_ptr.hpp"
 
-class Merchant;
 class MerchantMenu;
 class MerchantRecipe;
 class UILayer;

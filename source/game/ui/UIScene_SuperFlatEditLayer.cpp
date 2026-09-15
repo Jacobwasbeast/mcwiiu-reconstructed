@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "game/core/ConsoleUIController.hpp"
+#include "game/core/L10N.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/FJ_SuperFlatEditLayerMenu.hpp"
@@ -123,7 +124,32 @@ int UIScene_SuperFlatEditLayer::getSlotId(const _UIVec2D& point)
 
 void UIScene_SuperFlatEditLayer::SetPointerText(not_null_ptr<ItemInstance> item)
 {
-    m_cursor.setVisible(item.get() != 0);
+    if (item->isEmpty())
+    {
+        m_cursor.setLabel(UIString(L""), false, false);
+        return;
+    }
+
+    m_cursor.setLabel(UIString(0xddb4dec5), false, false);
+
+    std::vector<HtmlString>* lines;
+    if (Item::getId(item->getItem()) == 0)
+    {
+        lines = new std::vector<HtmlString>();
+        lines->push_back(HtmlString(L10N::GetString(0x2825e7e3), static_cast<eMinecraftColour>(0), false, false, 0));
+    }
+    else
+    {
+        lines = item->getTooltipLines(boost::shared_ptr<Player>(), false);
+        if (lines != NULL && !lines->empty())
+        {
+            lines->at(0).mColour = static_cast<eMinecraftColour>(item->getRarity());
+            if (item->hasCustomHoverName())
+                lines->at(0).mColour = static_cast<eMinecraftColour>(0x1b9);
+        }
+    }
+    m_cursor.setLabel(UIString(HtmlString::Compose(lines)), false, true);
+    delete lines;
 }
 
 unsigned int UIScene_SuperFlatEditLayer::switchFocus(UIControl* control)
@@ -560,9 +586,9 @@ void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repe
 
 void UIScene_SuperFlatEditLayer::handlePress(int, int) { }
 void UIScene_SuperFlatEditLayer::handleSliderMove(int id, int value) { if (id == 1) { m_heightSlider.handleSliderMove(value); m_layer.setHeight(value < 1 ? 1 : value); updateLayerButtons(); } }
-void UIScene_SuperFlatEditLayer::customDraw(const char* name, fuiRect* rect)
+void UIScene_SuperFlatEditLayer::customDraw(const char*, fuiRect*)
 {
-    UIScene::customDraw(name, rect);
+    m_slotDrawPending = false;
 }
 
 void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int touchX, int touchY,

@@ -10,7 +10,7 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/InputStreamReader.hpp"
 #include "game/client/audio/SoundEvents.hpp"
-#include "game/core/CTelemetryManager.hpp"
+#include "game/core/UnityClient6.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -38,7 +38,6 @@
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
 extern CMinecraftApp* g_pApp;
-extern CTelemetryManager gTelemetryManager;
 
 namespace
 {
@@ -329,7 +328,7 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
             return;
         }
         gProfile->QuerySigninStatus();
-        gTelemetryManager.RecordUpsellPresented(playerId, static_cast<ESen_UpsellID>(1), 1);
+        telemetryManagerInstance->RecordUpsellPresented(playerId, static_cast<ESen_UpsellID>(1), 1);
         gProfile->DisplayFullVersionPurchase(false, playerId, 1);
         return;
     }

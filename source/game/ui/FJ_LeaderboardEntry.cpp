@@ -26,8 +26,7 @@ FJLeaderboardEntryIterator __CPR264__insert__Q2_3std86vector__tm__72_P19FJJ_Lead
 
 FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_state(0), m_rankText(NULL), m_gamertagText(NULL),
-      m_unknown48(0), m_unknown4c(0), m_unknown50(0), m_unknown54(0),
-      m_unknown58(0), m_unknown5c(0), m_unknown60(0), m_firstValuePosition(0), m_numColumns(0),
+      m_firstValuePosition(0), m_numColumns(0),
       m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_columnTextWidth(0.0f)
 {
     int i;
@@ -38,6 +37,13 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     m_columnText[4] = NULL;
     m_columnText[5] = NULL;
     m_columnText[6] = NULL;
+    m_columnPosition[0] = 0;
+    m_columnPosition[1] = 0;
+    m_columnPosition[2] = 0;
+    m_columnPosition[3] = 0;
+    m_columnPosition[4] = 0;
+    m_columnPosition[5] = 0;
+    m_columnPosition[6] = 0;
 
     FJ_FuiNode* rankContainer = getChildByName("RankContainer")->getChildAt(0)->asMovieClip();
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();
@@ -81,7 +87,9 @@ void FJ_LeaderboardEntry::Init(int count, int firstValue, int spacing, int offse
             m_columnText[i]->setVisibility(false);
         else
         {
-            m_columnText[i]->setX((float)(firstValue + offset + i * spacing));
+            int x = firstValue + offset + i * spacing;
+            m_columnPosition[i] = x;
+            m_columnText[i]->setX((float)x);
             m_columnText[i]->setVisibility(true);
         }
     }

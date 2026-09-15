@@ -50,7 +50,6 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
     mPosition = position;
     mRepairCost = 0;
     mMaterialCost = 0;
-    mItemName.clear();
     mItemNameCensored = false;
     mPlayer = player;
 
@@ -304,17 +303,21 @@ not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> p
     bool moved;
     if (index == 2)
     {
-        moved = moveItemStackTo(item, 3, (int)m_slots.size(), true, true, true) != 0;
-        if (moved)
-        {
-            slot->onQuickCraft(item, copy);
-        }
+        moved = moveItemStackTo(item, 3, 39, true, true, true) != 0;
+        if (!moved) return ItemInstance::EMPTY;
+        player->OnTakeFromAnvil(copy);
+        slot->onQuickCraft(item, copy);
     }
     else if (index < 3)
-        moved = moveItemStackTo(item, 3, (int)m_slots.size(), false, true, true) != 0;
-    else
+    {
+        moved = moveItemStackTo(item, 3, 39, false, true, true) != 0;
+        if (!moved) return ItemInstance::EMPTY;
+    }
+    else if ((unsigned int)(index - 3) < 0x24)
+    {
         moved = moveItemStackTo(item, 0, 2, false, true, true) != 0;
-    if (!moved) return ItemInstance::EMPTY;
+        if (!moved) return ItemInstance::EMPTY;
+    }
     if (item->isEmpty()) slot->set(ItemInstance::EMPTY);
     else slot->setChanged();
     if (item->getCount() == copy->getCount()) return ItemInstance::EMPTY;

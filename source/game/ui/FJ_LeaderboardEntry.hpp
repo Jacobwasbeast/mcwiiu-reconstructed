@@ -32,13 +32,7 @@ private:
     fuiRenderNodeEditText* m_rankText;
     fuiRenderNodeEditText* m_gamertagText;
     fuiRenderNodeEditText* m_columnText[7];
-    int m_unknown48;
-    int m_unknown4c;
-    int m_unknown50;
-    int m_unknown54;
-    int m_unknown58;
-    int m_unknown5c;
-    int m_unknown60;
+    int m_columnPosition[7];
     int m_firstValuePosition;
     int m_numColumns;
     float m_rankTextWidth;

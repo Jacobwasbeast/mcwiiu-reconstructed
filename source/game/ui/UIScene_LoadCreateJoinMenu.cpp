@@ -426,8 +426,25 @@ void UIScene_LoadCreateJoinMenu::handleDestroy()
 
 void UIScene_LoadCreateJoinMenu::handleReload()
 {
+    const int savedCreateSelection = m_state44;
+    const int savedLoadSelection = m_state3c;
     _init(m_customGame != 0);
-    reloadMovie(true);
+    SelectTab(m_activeTab);
+    m_state3c = savedLoadSelection;
+    m_state44 = savedCreateSelection;
+    if (m_customGame != 0)
+    {
+        if (m_activeTab == 0)
+        {
+            m_loadList.setCurrentSelection(savedLoadSelection, false, true);
+            m_loadList.updateChildFocus(savedLoadSelection);
+        }
+        else if (m_activeTab == 1)
+        {
+            m_createList.setCurrentSelection(savedCreateSelection, false, true);
+            m_createList.updateChildFocus(m_state44);
+        }
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::handlePress(int first, int second)
@@ -654,9 +671,24 @@ void UIScene_LoadCreateJoinMenu::ShowNoGamesLabel(bool show)
 
 uint32_t UIScene_LoadCreateJoinMenu::DeleteSaveDataReturned(void* context, bool success)
 {
-    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
-    if (menu != 0)
-        menu->m_saveOperationPending = success ? 0 : 1;
+    gConsoleUIController.EnterCallbackIdCriticalSection();
+    UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(
+        static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
+    if (callbackScene != 0 && callbackScene != reinterpret_cast<UIScene*>(0xac))
+    {
+        UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(callbackScene);
+        if (!success)
+        {
+            menu->m_ignoreInput = 0;
+            menu->updateTooltips();
+        }
+        else
+        {
+            menu->m_state28 = 3;
+            menu->updateTooltips();
+        }
+    }
+    gConsoleUIController.LeaveCallbackIdCriticalSection();
     return 0;
 }
 
@@ -680,10 +712,16 @@ void UIScene_LoadCreateJoinMenu::Initialise()
     else
     {
         if (gStorage->GetSaveDisabled() == 0)
+        {
             gStorage->EnoughSpaceForAMinSaveGame();
-        m_state28 = 1;
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
+        }
+        else
+        {
+            m_state28 = 1;
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(false);
+        }
     }
-    gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
 }
 
 bool UIScene_LoadCreateJoinMenu::DoesLoadListHaveFocus()
@@ -703,7 +741,23 @@ bool UIScene_LoadCreateJoinMenu::DoesGamesListHaveFocus()
 
 uint32_t UIScene_LoadCreateJoinMenu::RenameSaveDataReturned(void* context, bool success)
 {
-    return DeleteSaveDataReturned(context, success);
+    UIScene* callbackScene = gConsoleUIController.GetSceneFromCallbackId(
+        static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context)));
+    if (callbackScene != 0 && callbackScene != reinterpret_cast<UIScene*>(0xac))
+    {
+        UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(callbackScene);
+        if (!success)
+        {
+            menu->m_ignoreInput = 0;
+            menu->updateTooltips();
+        }
+        else
+        {
+            menu->m_state28 = 1;
+            menu->updateTooltips();
+        }
+    }
+    return 0;
 }
 
 uint32_t UIScene_LoadCreateJoinMenu::KeyboardCompleteWorldNameCallback(void* context, bool complete)
@@ -764,7 +818,7 @@ uint32_t UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int u
     return 0;
 }
 
-uint32_t UIScene_LoadCreateJoinMenu::LoadSaveDataForUploadReturned(void* context, bool success, bool)
+int UIScene_LoadCreateJoinMenu::LoadSaveDataForUploadReturned(void* context, bool success, bool)
 {
     return DeleteSaveDataReturned(context, success);
 }
@@ -775,16 +829,29 @@ uint32_t UIScene_LoadCreateJoinMenu::CrossSaveUploadFinishedCallback(void* conte
     return CopySaveDialogReturned(context, userIndex, result);
 }
 
-uint32_t UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void*)
+uint32_t UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
 {
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
+    if (menu == 0)
+        return 0;
+    menu->m_saveOperationPending = 0;
+    SAVE_DETAILS* saves = gStorage->ReturnSavesInfo();
+    if (saves == 0 || menu->m_state3c < 0 || menu->m_state3c >= saves->count)
+        return 0;
+    menu->m_saveOperationPending = 1;
+    const int result = gStorage->LoadSaveData(&saves->saves[menu->m_state3c],
+                                              &LoadSaveDataForUploadReturned, menu);
+    if (result != 7)
+        menu->m_saveOperationPending = 0;
     return 0;
 }
 
 void UIScene_LoadCreateJoinMenu::CancelSaveUploadCallback(void* context)
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
-    if (menu != 0)
-        menu->m_saveOperationPending = 0;
+    menu->m_focusChanged = 1;
+    gConsoleUIController.SetTooltips(0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    menu->m_ignoreInput = 1;
 }
 
 void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()

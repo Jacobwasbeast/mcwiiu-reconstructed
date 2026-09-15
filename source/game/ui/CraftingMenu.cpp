@@ -10,6 +10,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/Player.hpp"
 
 CraftingMenu::CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos)
     : AbstractContainerMenu(),
@@ -107,6 +108,9 @@ not_null_ptr<ItemInstance> CraftingMenu::quickMoveStack(boost::shared_ptr<Player
         slot->set(ItemInstance::EMPTY);
     else
         slot->setChanged();
+
+    if (index == 0)
+        player->drop(oldItem, false);
 
     if (item->getCount() == oldItem->getCount())
         return ItemInstance::EMPTY;

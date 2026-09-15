@@ -13,7 +13,7 @@ extern unsigned int XGetLanguage();
 
 UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
     : UIScene(type, layer), m_currentCredit(-1), m_creditCount(0), m_requestMoreData(false),
-      m_dlcCredits(), m_unknownE0(0), m_seenCreditText(), m_unknownF0(0)
+      m_dlcCredits(), m_seenCreditText(), m_unknownF0(0)
 {
     initialiseMovie();
     m_creditCount = 0x220;

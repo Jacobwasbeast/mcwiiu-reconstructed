@@ -161,11 +161,16 @@ void FJ_Document::handlePress(FJ_Event* event)
 void FJ_Document::keyDownHandler(FJ_Event* event)
 {
     FJ_FuiNodeStage* stage = getStage();
-    FJ_FuiNode* previous = stage->getFocus();
-    if (!previous->isFJ_Base())
+    if (!stage->getFocus()->isFJ_Base())
         return;
 
-    FJ_Base* base = stage->getFocus()->asFJ_Base();
+    FJ_FuiNode* previous = stage->getFocus();
+    if (previous == NULL)
+        return;
+    if (previous->asFJ_Base() == NULL)
+        return;
+
+    FJ_Base* base = previous->asFJ_Base();
 
     const int code = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
     if (code == 3)

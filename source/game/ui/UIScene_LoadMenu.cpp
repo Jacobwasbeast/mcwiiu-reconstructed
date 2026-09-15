@@ -362,9 +362,8 @@ unsigned int UIScene_LoadMenu::getSubSceneType() const
 void UIScene_LoadMenu::tick()
 {
     IUIScene_StartGame::tick();
-    if (m_customGame || m_battleGame)
+    if (gConsoleUIController.IsSceneInStack(m_playerId, static_cast<EUIScene>(0x2b)))
     {
-        UpdateIfPublicGamesAllowed();
         MiniGameDef* game = MiniGameDef::GetCustomGameModeById(
             static_cast<EMiniGameId>(m_gameMode), true);
         if (game != NULL && game->HasGameVariants())

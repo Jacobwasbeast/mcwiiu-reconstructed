@@ -88,6 +88,7 @@ public:
     Slot* m_lastHoveredSlot;
     unsigned char m_inventorySmall;
     unsigned char m_touchEnabled;
+    unsigned char m_canNavigateBack;
 
     IUIScene_AbstractContainerMenu();
     virtual bool IsSectionSlotList(ESceneSection section);

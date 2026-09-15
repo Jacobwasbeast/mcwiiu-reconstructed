@@ -80,30 +80,35 @@ void UIScene_JoinMenu::AddDescriptionForOption(std::vector<HtmlString>& descript
 {
     unsigned int title = 0;
     const wchar_t* value = L"";
-    unsigned int state = g_pApp->GetGameHostOption((unsigned int)options, option);
+    unsigned int state;
     if (option == static_cast<eGameHostOption>(0))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = 0xb55c15d6;
         value = L10N::GetString(state == 1 ? 0xb558efd9 : state == 2 ? 0x5d131124 :
                                 state == 3 ? 0xf70f3270 : 0x4e52b99a);
     }
     else if (option == static_cast<eGameHostOption>(4))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = 0x8ca04f68;
         value = L10N::GetString(state ? 0xc8e108fd : 0xf74dab3b);
     }
     else if (option == static_cast<eGameHostOption>(7))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = 0xb0408364;
         value = L10N::GetString(state ? 0xf37d7beb : 0x1494c206);
     }
     else if (option == static_cast<eGameHostOption>(8))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = 0xa79e83bb;
         value = L10N::GetString(state ? 0xc8e108fd : 0xf74dab3b);
     }
     else if (option == static_cast<eGameHostOption>(0xb))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = 0x550744a3;
         value = L10N::GetString(state ? 0xc8e108fd : 0xf74dab3b);
     }
@@ -111,6 +116,7 @@ void UIScene_JoinMenu::AddDescriptionForOption(std::vector<HtmlString>& descript
              option == static_cast<eGameHostOption>(0xd) ||
              option == static_cast<eGameHostOption>(0xe))
     {
+        state = g_pApp->GetGameHostOption((unsigned int)options, option);
         title = option == static_cast<eGameHostOption>(0xc) ? 0x0927db69 :
                 option == static_cast<eGameHostOption>(0xd) ? 0xd6b53f5b : 0xc412c970;
         value = L10N::GetString(state ? 0xc8e108fd : 0xf74dab3b);

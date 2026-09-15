@@ -257,11 +257,11 @@ void UIScene_SuperFlatPresets::customDraw(const char* name, fuiRect* rect)
 {
     int slot = -1;
     std::sscanf(name, "slot_0_%d", &slot);
-    if (slot >= 0)
+    if (slot != -1)
     {
         not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(GetIcon(slot)), 1, 0));
         if (!item->isEmpty())
-            customDrawSlotControlFui(rect, slot, item, 1.0f, false, false, false);
+            customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
     }
 }
 

@@ -187,35 +187,45 @@ not_null_ptr<ItemInstance> BrewingStandMenu::quickMoveStack(boost::shared_ptr<Pl
 
     if (index < 5)
     {
-        if (!moveItemStackTo(item, 5, (int)m_slots.size(), true, true, true))
+        if (!moveItemStackTo(item, 5, 41, true, true, true))
             return ItemInstance::EMPTY;
         source->onQuickCraft(item, original);
     }
-    else if (PotionSlot::mayPlaceItem(item))
+    else
     {
-        if (!moveItemStackTo(item, 0, 3, false, true, true))
-            return ItemInstance::EMPTY;
-    }
-    else if (!moveItemStackTo(item, 3, 4, false, true, true))
-    {
-        if (FuelSlot::mayPlaceItem(item))
+        bool wantsIngredient = false;
+        if (!mIngredientSlot->hasItem())
+            wantsIngredient = mIngredientSlot->mayPlace(item);
+
+        if (wantsIngredient)
+        {
+            if (!moveItemStackTo(item, 3, 4, false, true, true))
+                return ItemInstance::EMPTY;
+        }
+        else if (PotionSlot::mayPlaceItem(item))
+        {
+            if (!moveItemStackTo(item, 0, 3, false, true, true))
+                return ItemInstance::EMPTY;
+        }
+        else if (FuelSlot::mayPlaceItem(item))
         {
             if (!moveItemStackTo(item, 4, 5, false, true, true))
                 return ItemInstance::EMPTY;
         }
-        else if (index - 5 < 27)
+        else if ((unsigned int)(index - 5) < 27)
         {
-            if (!moveItemStackTo(item, 32, (int)m_slots.size(), false, true, true))
+            if (!moveItemStackTo(item, 32, 41, false, true, true))
                 return ItemInstance::EMPTY;
         }
-        else if (index - 32 < 9)
+        else if ((unsigned int)(index - 32) < 9)
         {
             if (!moveItemStackTo(item, 5, 32, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else
         {
-            return ItemInstance::EMPTY;
+            if (!moveItemStackTo(item, 5, 41, false, true, true))
+                return ItemInstance::EMPTY;
         }
     }
 

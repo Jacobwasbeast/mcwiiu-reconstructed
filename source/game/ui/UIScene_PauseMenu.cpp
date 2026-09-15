@@ -11,12 +11,14 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/L10N.hpp"
 #include "game/minigame/MiniGameDef.hpp"
+#include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/DLCPack.hpp"
+#include "game/core/cCommerce.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/util/AABB.hpp"
@@ -24,6 +26,7 @@
 #include "game/core/Compression.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
+#include "platform/wiiu/cCommerceNintendoWiiU.hpp"
 
 extern void Sleep(unsigned int milliseconds);
 extern CMinecraftApp* g_pApp;
@@ -32,7 +35,6 @@ extern ConsoleUIController gConsoleUIController;
 
 void UIScene_PauseMenu::Init()
 {
-    const MiniGameDef* miniGame = Minecraft::GetInstance() == NULL ? NULL : Minecraft::GetInstance()->GetMiniGame();
     m_buttonList.AddNewMenuButton(L10N::GetString(0xb9b3004c), 0);
     m_buttonList.AddNewMenuButton(L10N::GetString(0x2b1e9f0e), 1);
     if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) == 0)
@@ -44,14 +46,18 @@ void UIScene_PauseMenu::Init()
                 m_buttonList.EnableItem(5, false, true);
         }
     }
-    else if (miniGame != NULL)
+    else
     {
-        if (miniGame->IsCustomGame())
-            m_buttonList.AddNewMenuButton(L10N::GetString(0x66f20471), 8);
-        else if (miniGame->GetId() == 1)
-            m_buttonList.AddNewMenuButton(L10N::GetString(0xd9c9100d), 7);
-        else if (miniGame->GetId() == 2)
-            m_buttonList.AddNewMenuButton(L10N::GetString(0x6044b44e), 7);
+        MiniGamePlayerSettings settings;
+        MiniGameDef::GetPlayerSettings(settings);
+        unsigned int firstMiniGameId = Minecraft::GetInstance()->GetFirstMiniGame()->GetId();
+        if (MiniGameDef::IsCustomGame(static_cast<EMiniGameId>(firstMiniGameId), settings))
+        {
+            if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == 1)
+                m_buttonList.AddNewMenuButton(L10N::GetString(0xd9c9100d), 7);
+            else if (Minecraft::GetInstance()->GetFirstMiniGame()->GetId() == 2)
+                m_buttonList.AddNewMenuButton(L10N::GetString(0x6044b44e), 7);
+        }
     }
     m_buttonList.AddNewMenuButton(L10N::GetString(0x2686c8e5), 6);
     if (IsBanEnabled() == 0)
@@ -154,9 +160,17 @@ void UIScene_PauseMenu::handlePress(int, int item)
 void UIScene_PauseMenu::ShowScene(bool) {}
 void UIScene_PauseMenu::SetIgnoreInput(bool ignore) { m_ignoreInput = ignore; }
 
-unsigned int UIScene_PauseMenu::BuyTexturePack_SignInReturned(void*, bool signedIn, int, int)
+unsigned int UIScene_PauseMenu::BuyTexturePack_SignInReturned(void*, bool signedIn, int userIndex, int)
 {
-    return signedIn ? 1U : 0U;
+    if (signedIn && gProfile->IsSignedInLive(userIndex))
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        TexturePackRepository* repository = minecraft->mTexturePackRepository;
+        DLCPack* pack = repository->getSelected()->getDLCPack();
+        if (pack != NULL)
+            gApp.GetCommerceInstance()->PurchaseDLCByPackID(pack->GetPackId());
+    }
+    return 0;
 }
 
 unsigned int UIScene_PauseMenu::IsBanEnabled()
@@ -310,8 +324,12 @@ void UIScene_PauseMenu::OpenExitGameDialog(
 int UIScene_PauseMenu::WarningTrialTexturePackReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     if (result == static_cast<C4JStorage::EMessageResult>(4) && context != NULL)
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &button, 1,
-                                                  gConsoleUIController.GetWinUserIndex(), NULL, NULL, NULL, true);
+    {
+        int parameters[1];
+        parameters[0] = static_cast<int>(0xb9a1bf4dU);
+        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, parameters, 1,
+                                                  button, NULL, NULL, NULL, true);
+    }
     return 0;
 }
 
@@ -326,18 +344,25 @@ int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int button, C4JStor
 int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
     UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
-    if (result == static_cast<C4JStorage::EMessageResult>(5) && scene != NULL)
-        g_pApp->SetAction(scene->getSubSceneType(), static_cast<eXuiAction>(1), NULL);
+    UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
+    if (result == static_cast<C4JStorage::EMessageResult>(5))
+    {
+        if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+            pauseMenu->SetIgnoreInput(true);
+        g_pApp->SetAction(button, static_cast<eXuiAction>(3), NULL);
+    }
     return 0;
 }
 
 int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int button, C4JStorage::EMessageResult result)
 {
+    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
+    UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
     if (result == static_cast<C4JStorage::EMessageResult>(5))
     {
-        UIScene* scene = gConsoleUIController.GetSceneFromCallbackId((unsigned int)context);
-        if (scene != NULL)
-            g_pApp->SetAction(scene->getSubSceneType(), static_cast<eXuiAction>(1), NULL);
+        if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+            pauseMenu->SetIgnoreInput(true);
+        g_pApp->SetAction(button, static_cast<eXuiAction>(3), NULL);
     }
     return 0;
 }

@@ -26,14 +26,17 @@ static void addItem(std::vector<const UIScene_CreativeMenu::ItemBuilder*>* items
 
 void MenuBuilder::ITEM_BLOCKSTATE(const BlockState* state)
 {
-    Block* block = state->getBlock();
-    ItemInstance item(block, 1, block->convertBlockStateToLegacyData(state));
-    addItem(mItems, item);
+    ItemInstance* item = new ItemInstance(state->getBlock(), 1,
+        state->getBlock()->convertBlockStateToLegacyData(state));
+    ADD(not_null_ptr<ItemInstance>(item));
 }
 
 void MenuBuilder::ADD(const not_null_ptr<ItemInstance>& item)
 {
-    addItem(mItems, *item);
+    ItemInstance* copy = item->copy_not_shared();
+    addItem(mItems, *copy);
+    *copy = *item;
+    delete copy;
 }
 
 template <typename T>
@@ -138,7 +141,8 @@ void MenuBuilder::BANNER(const DyeColor* color, const BannerPattern* pattern)
     ListTag* patterns = NULL;
     not_null_ptr<ItemInstance> item(BannerItem::makeBanner(color, patterns));
     BannerBlockEntity::addTags(item, color->getItemData(), patterns);
-    BannerBlockEntity::fjAddPatternToItem(item, pattern, DyeColor::WHITE);
+    if (pattern != NULL)
+        BannerBlockEntity::fjAddPatternToItem(item, pattern, DyeColor::BLACK);
     addItem(mItems, *item);
 }
 

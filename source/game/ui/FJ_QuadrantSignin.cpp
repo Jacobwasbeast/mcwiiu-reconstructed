@@ -70,7 +70,7 @@ void FJ_QuadrantSignin::SetABSwap(bool swap)
     for (int i = 0; i < 4; ++i)
     {
         FJ_FuiNode* graphic = mControllers[i]->getChildByName("ButtonGraphic");
-        graphic->gotoAndStop(swap ? "StopX" : "StopO");
+        graphic->gotoAndStop(swap ? "StopO" : "StopX");
     }
 }
 void FJ_QuadrantSignin::JoinButtonPressed(int controller)

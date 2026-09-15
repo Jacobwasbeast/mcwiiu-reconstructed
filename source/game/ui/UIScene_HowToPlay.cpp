@@ -283,7 +283,6 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
         if (names[i] == NULL)
             continue;
         m_labels[i].setupControl(this, root, names[i]);
-        m_controls.push_back(&m_labels[i]);
     }
     m_controls.push_back(&m_dynamicHtmlText);
     m_controls.push_back(&m_container);
@@ -291,6 +290,35 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
     m_controls.push_back(&m_enchantmentBooks[0]);
     m_controls.push_back(&m_enchantmentBooks[1]);
     m_controls.push_back(&m_enchantmentBooks[2]);
+    m_controls.push_back(&m_labels[8]);
+    m_controls.push_back(&m_labels[7]);
+    m_controls.push_back(&m_labels[5]);
+    m_controls.push_back(&m_labels[6]);
+    m_controls.push_back(&m_labels[4]);
+    m_controls.push_back(&m_labels[3]);
+    m_controls.push_back(&m_labels[11]);
+    m_controls.push_back(&m_labels[2]);
+    m_controls.push_back(&m_labels[1]);
+    m_controls.push_back(&m_labels[0]);
+    m_controls.push_back(&m_labels[9]);
+    m_controls.push_back(&m_labels[10]);
+    m_controls.push_back(&m_labels[12]);
+    m_controls.push_back(&m_labels[13]);
+    m_controls.push_back(&m_labels[14]);
+    m_controls.push_back(&m_labels[15]);
+    m_controls.push_back(&m_labels[23]);
+    m_controls.push_back(&m_labels[22]);
+    m_controls.push_back(&m_labels[19]);
+    m_controls.push_back(&m_labels[21]);
+    m_controls.push_back(&m_labels[18]);
+    m_controls.push_back(&m_labels[17]);
+    m_controls.push_back(&m_labels[16]);
+    m_controls.push_back(&m_labels[24]);
+    m_controls.push_back(&m_labels[25]);
+    m_controls.push_back(&m_labels[26]);
+    m_controls.push_back(&m_labels[27]);
+    m_controls.push_back(&m_labels[28]);
+    m_controls.push_back(&m_labels[29]);
     return 1;
 }
 

@@ -306,23 +306,21 @@ void FJ_TextInput::SetCharLimit(int limit)
 
 void FJ_TextInput::HandleDirectInput(unsigned int character)
 {
-    if (m_pTextField == 0)
-        return;
     std::wstring text = m_label;
     if (character == 8)
     {
         if (!m_label.empty() && m_caretIndex > 0)
         {
             text.erase(static_cast<std::wstring::size_type>(m_caretIndex - 1), 1);
-            FJ_Base::SetLabel(text);
+            SetLabel(text);
             SetCaretIndex(m_caretIndex - 1, false, true);
         }
         return;
     }
-    if (static_cast<int>(m_label.size()) < m_charLimit || m_charLimit == -1)
+    if (m_label.size() < m_charLimit || m_charLimit == -1)
     {
         text.insert(static_cast<std::wstring::size_type>(m_caretIndex), 1, static_cast<wchar_t>(character & 0xffff));
-        FJ_Base::SetLabel(text);
+        SetLabel(text);
         SetCaretIndex(m_caretIndex + 1, true, false);
     }
 }

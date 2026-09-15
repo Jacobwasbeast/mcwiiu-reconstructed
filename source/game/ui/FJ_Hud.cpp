@@ -391,8 +391,79 @@ void FJ_Hud::SetActiveSlot(int slot)
         hudInt(this, 0x370) = slot;
     }
 }
-void FJ_Hud::SetHealth(int health, bool highlight, bool hardcore, bool hide) { m_iTabIndex = health; ShowHealth(!hide); ShowArmorBar(highlight); ShowArmour(hardcore); }
-void FJ_Hud::SetFood(int food, bool highlight) { m_iTabIndex = food; ShowFood(true); ShowArmorBar(highlight); }
+void FJ_Hud::SetHealth(int health, bool highlight, bool hardcore, bool hide)
+{
+    static const int kNormalFrame[4] = { 1, 4, 3, 2 };
+    static const int kHideFrame[4] = { 1, 8, 7, 2 };
+    static const int kHardcoreFrame[4] = { 1, 0xc, 0xb, 2 };
+
+    FJ_FuiNode** healthIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x108);
+
+    for (int i = 0; i < 10; ++i)
+    {
+        int threshold = 2 * (i + 1);
+        int state;
+        if (health < threshold - 1)
+            state = 0;
+        else if (health < threshold)
+            state = 1;
+        else
+            state = 2;
+
+        int index = highlight ? 3 + state : state;
+        if (index > 3)
+            index = 3;
+
+        int frame;
+        if (!hardcore)
+            frame = kNormalFrame[index];
+        else if (!hide)
+            frame = kHideFrame[index];
+        else
+            frame = kHardcoreFrame[index];
+
+        healthIcons[i]->gotoAndStop(frame);
+    }
+
+    if (!hardcore)
+    {
+        hudByte(this, 0x3a0) = 0;
+        hudInt(this, 0x350) = health;
+        hudByte(this, 0x3a1) = hide;
+    }
+    else
+    {
+        hudByte(this, 0x3a0) = hardcore;
+        hudByte(this, 0x3a1) = hide;
+        hudInt(this, 0x350) = health;
+    }
+}
+void FJ_Hud::SetFood(int food, bool highlight)
+{
+    static const int kFoodFrame[4] = { 1, 1, 3, 5 };
+    FJ_FuiNode** foodIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x134);
+
+    for (int i = 0; i < 10; ++i)
+    {
+        int threshold = 2 * (i + 1);
+        int state;
+        if (food < threshold - 1)
+            state = 0;
+        else if (food < threshold)
+            state = 1;
+        else
+            state = 2;
+
+        int index = state * 2 + (highlight ? 1 : 0);
+        if (index > 3)
+            index = 3;
+
+        foodIcons[i]->gotoAndStop(kFoodFrame[index]);
+    }
+
+    hudInt(this, 0x354) = food;
+    hudByte(this, 0x3a0) = highlight;
+}
 void FJ_Hud::SetAir(int air)
 {
     HudGlobalNames& names = hudGlobalNames();
@@ -408,7 +479,23 @@ void FJ_Hud::SetAir(int air)
     }
     hudInt(this, 0x35c) = air;
 }
-void FJ_Hud::SetArmour(int armour) { m_iTabIndex = armour; ShowArmour(armour > 0); }
+void FJ_Hud::SetArmour(int armour)
+{
+    FJ_FuiNode** icons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x18c);
+    for (int i = 0; i < 10; ++i)
+    {
+        int threshold = 2 * (i + 1);
+        int frame;
+        if (armour < threshold - 1)
+            frame = 1;
+        else if (armour < threshold)
+            frame = 2;
+        else
+            frame = 3;
+        icons[i]->gotoAndStop(frame);
+    }
+    hudInt(this, 0x358) = armour;
+}
 void FJ_Hud::SetRegenerationEffect(bool enabled) { ShowHealth(enabled); }
 void FJ_Hud::SetJukeBoxLabelPos()
 {
@@ -471,7 +558,37 @@ void FJ_Hud::SetSelectedLabel(const std::wstring& label, bool visible)
 
     SetJukeBoxLabelPos();
 }
-void FJ_Hud::SetHealthAbsorb(bool visible, int health) { SetHealth(health, visible, false, !visible); }
+void FJ_Hud::SetHealthAbsorb(bool visible, int health)
+{
+    hudNode(this, 0x5c)->setVisible(visible);
+    hudByte(this, 0x43) = visible;
+
+    FJ_FuiNode** absorbIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x60);
+    for (int i = 0; i < 10; ++i)
+    {
+        FJ_FuiNode* icon = absorbIcons[i];
+        icon->setVisible(2 * i < health);
+
+        int frame;
+        if (health >= 2 * i + 2)
+            frame = 1;
+        else if (health >= 2 * i + 1)
+            frame = 2;
+        else
+            frame = 0;
+        icon->gotoAndStop(frame);
+    }
+
+    if (!visible || health < 1)
+        hudNode(this, 0x188)->setY(0.0f);
+    else
+        hudNode(this, 0x188)->setY(-hudNode(this, 0x104)->getY());
+
+    hudInt(this, 0x364) = health;
+    hudByte(this, 0x368) = visible;
+
+    SetSelectedLabel(std::wstring(), false);
+}
 void FJ_Hud::SetFoodSaturationLevel(int level) { m_iTabIndex = level; }
 void FJ_Hud::ShowExpBar(bool visible) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health)
@@ -512,10 +629,82 @@ void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health)
     hudInt(this, 0x388) = health;
     hudByte(this, 0x385) = riding;
 }
-void FJ_Hud::SetHorseHealth(int health, bool highlight) { m_iTabIndex = health; ShowHorseHealth(health >= 0); ShowArmorBar(highlight); }
+void FJ_Hud::SetHorseHealth(int health, bool highlight)
+{
+    static const int kFrame[4] = { 1, 4, 3, 2 };
+
+    if (hudByte(this, 0x385) != 0)
+    {
+        FJ_FuiNode** horseIcons = reinterpret_cast<FJ_FuiNode**>(reinterpret_cast<char*>(this) + 0x8c);
+        int highlightOffset = highlight ? 3 : 0;
+        bool grow = hudInt(this, 0x388) < health;
+
+        for (int n = 0; n < 30; ++n)
+        {
+            FJ_FuiNode* icon = horseIcons[n];
+            bool visible;
+            if (grow)
+            {
+                visible = (2 * n < health);
+                icon->setVisible(visible);
+            }
+            else
+            {
+                visible = icon->isVisible();
+            }
+
+            if (visible)
+            {
+                int threshold = 2 * n + 2;
+                int state;
+                if (health < threshold - 1)
+                    state = 0;
+                else if (health < threshold)
+                    state = 1;
+                else
+                    state = 2;
+
+                int index = highlightOffset + state;
+                if (index > 3)
+                    index = 3;
+
+                icon->gotoAndStop(kFrame[index]);
+            }
+        }
+
+        if (hudInt(this, 0x388) < health)
+            hudInt(this, 0x388) = health;
+        hudInt(this, 0x38c) = health;
+    }
+}
 void FJ_Hud::SetExpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("expBar"); if (node != NULL) node->setAlpha(progress); }
 void FJ_Hud::SetHorseJumpBarProgress(float progress) { FJ_FuiNode* node = getChildByName("horseJumpBar"); if (node != NULL) node->setAlpha(progress); }
-void FJ_Hud::ShowQuickSelect(bool visible) { FJ_FuiNode* node = getChildByName("quickSelect"); if (node != NULL) node->setVisible(visible); }
+void FJ_Hud::ShowQuickSelect(bool visible)
+{
+    hudNode(this, 0x244)->setVisible(visible);
+    getChildByName("SelectedLabel")->setVisible(visible);
+    hudNode(this, 0x54)->setVisible(hudByte(this, 0x4da) != 0 && visible);
+
+    if (hudNode(this, 0x1bc)->isVisible())
+    {
+        if (visible)
+        {
+            hudNode(this, 0x1bc)->setY(hudNode(this, 0x1b4)->getY());
+        }
+        else
+        {
+            float hotBarY = hudNode(this, 0x244)->getY();
+            float hotBarHeight = hudNode(this, 0x244)->getHeight();
+            float rootScaleY1 = hudNode(this, 0x58)->getScaleY();
+            float aliveHeight = hudNode(this, 0x1bc)->getHeight();
+            float rootScaleY2 = hudNode(this, 0x58)->getScaleY();
+            float value = (hotBarY + hotBarHeight / rootScaleY1) - aliveHeight / rootScaleY2;
+            hudNode(this, 0x1bc)->setY(-static_cast<float>(Math::round(value)));
+        }
+    }
+
+    hudByte(this, 0x4a) = visible;
+}
 void FJ_Hud::ShowCrosshair(bool visible) { FJ_FuiNode* node = getChildByName("crosshair"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::UpdateBossBarPositions()
 {
@@ -890,9 +1079,24 @@ void FJ_Hud::InitDamageIndicators()
             m_damageIndicators[i]->setAlpha(0.0f);
     }
 }
-int FJ_Hud::GetHotBarX() { return (int)getX(); }
-int FJ_Hud::GetHotBarWidth() { return (int)getWidth(); }
-int FJ_Hud::GetHotBarY() { return (int)getY(); }
+int FJ_Hud::GetHotBarX()
+{
+    if (hudNode(this, 0x58) == NULL || hudNode(this, 0x244) == NULL)
+        return 0;
+    return static_cast<int>(hudNode(this, 0x244)->getX() * hudNode(this, 0x58)->getScaleX() + hudNode(this, 0x58)->getX());
+}
+int FJ_Hud::GetHotBarWidth()
+{
+    if (hudNode(this, 0x58) == NULL || hudNode(this, 0x244) == NULL)
+        return 0;
+    return static_cast<int>(hudNode(this, 0x244)->getWidth() * hudNode(this, 0x58)->getScaleX());
+}
+int FJ_Hud::GetHotBarY()
+{
+    if (hudNode(this, 0x58) == NULL || hudNode(this, 0x244) == NULL)
+        return 0;
+    return static_cast<int>(hudNode(this, 0x244)->getY() * hudNode(this, 0x58)->getScaleY() + hudNode(this, 0x58)->getY());
+}
 void FJ_Hud::SetupOffhandSlot()
 {
     if (m_offhandSlot == NULL)
@@ -1491,10 +1695,28 @@ void FJ_Hud::LoadHud(int hudSize)
         }
     }
 }
-void FJ_Hud::init(FJ_Event* event) { InitHud(event); }
+void FJ_Hud::init(FJ_Event* event)
+{
+    hudInt(this, 0x464) = -1;
+    hudInt(this, 0x460) = -1;
+    hudInt(this, 0x354) = 0x14;
+    hudInt(this, 0x35c) = 10;
+    hudInt(this, 0x358) = 0;
+    hudInt(this, 0x350) = 0x14;
+    hudField<std::wstring>(this, 0x468) = L"";
+    LoadHud(1);
+}
 void FJ_Hud::_init(FJ_FuiNode*, FJ_Event*) { }
-int FJ_Hud::GetHotBarHeight() { return (int)getHeight(); }
-unsigned char FJ_Hud::GetHudLoading() { return 0; }
+int FJ_Hud::GetHotBarHeight()
+{
+    if (hudNode(this, 0x58) == NULL || hudNode(this, 0x244) == NULL)
+        return 0;
+    return static_cast<int>(hudNode(this, 0x244)->getHeight() * hudNode(this, 0x58)->getScaleY());
+}
+unsigned char FJ_Hud::GetHudLoading()
+{
+    return *reinterpret_cast<unsigned char*>(reinterpret_cast<char*>(this) + 0x4ec);
+}
 void FJ_Hud::SetSafeZone(int left, int top, int right, int bottom)
 {
     hudInt(this, 0x30) = left;
@@ -1594,7 +1816,23 @@ void FJ_Hud::SetIsRightHanded(bool rightHanded)
     m_rightHanded = rightHanded;
     SetupOffhandSlot();
 }
-void FJ_Hud::ShowDirectionalDamage(int, int, float alpha) { SetAlpha(alpha); }
+void FJ_Hud::ShowDirectionalDamage(int direction, int, float alpha)
+{
+    float timer = alpha * 30.0f;
+    if (direction == 8)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            hudNode(this, 0x260 + static_cast<size_t>(i) * 4)->setAlpha(1.0f);
+            hudFloat(this, 0x280 + static_cast<size_t>(i) * 4) = timer;
+        }
+    }
+    else
+    {
+        hudNode(this, 0x260 + static_cast<size_t>(direction) * 4)->setAlpha(1.0f);
+        hudFloat(this, 0x280 + static_cast<size_t>(direction) * 4) = timer;
+    }
+}
 void FJ_Hud::SetHudGameMode(int gameMode)
 {
     m_gameMode = gameMode;
@@ -1671,8 +1909,47 @@ void FJ_Hud::SetHudGameMode(int gameMode)
             icon->gotoAndStop(3);
     }
 }
-void FJ_Hud::SetPosition(int, const std::wstring&, bool visible) { setVisible(visible); }
-void FJ_Hud::SetSpeedometer(int value) { m_iTabIndex = value; }
+void FJ_Hud::SetPosition(int position, const std::wstring& label, bool visible)
+{
+    FJ_FuiNode* labelNode;
+    FJ_FuiNode* iconNode;
+    if (position == 0)
+    {
+        labelNode = hudNode(this, 0x334);
+        iconNode = hudNode(this, 0x328);
+    }
+    else if (position == 1)
+    {
+        labelNode = hudNode(this, 0x338);
+        iconNode = hudNode(this, 0x32c);
+    }
+    else if (position == 2)
+    {
+        labelNode = hudNode(this, 0x33c);
+        iconNode = hudNode(this, 0x330);
+    }
+    else
+    {
+        return;
+    }
+
+    labelNode->asFJ_Label()->SetLabel(label);
+    labelNode->setVisible(visible);
+    iconNode->setVisible(visible);
+}
+void FJ_Hud::SetSpeedometer(int value)
+{
+    if (value < 1)
+    {
+        hudNode(this, 0x2b4)->getChildAt(0)->gotoAndStop(1);
+    }
+    else
+    {
+        if (value > 0xc)
+            value = 0xc;
+        hudNode(this, 0x2b4)->getChildAt(0)->gotoAndStop(value);
+    }
+}
 void FJ_Hud::SetTimerIcon(int value, int time)
 {
     FJ_FuiNode* clip = hudNode(this, 0x2ac)->getChildAt(0)->asMovieClip();
@@ -1711,7 +1988,11 @@ void FJ_Hud::SetScoreIcon(int value)
         hudInt(this, 0x4e8) = hudInt(this, 0x4e4);
     }
 }
-void FJ_Hud::ShowScore(bool visible) { ShowQuickSelect(visible); }
+void FJ_Hud::ShowScore(bool visible)
+{
+    hudNode(this, 0x2b8)->setVisible(visible);
+    hudNode(this, 0x2bc)->setVisible(visible);
+}
 void FJ_Hud::ShowArmorBar(bool visible) { FJ_FuiNode* node = getChildByName("armorBar"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::ShowArmorIcons(int armour, bool visible)
 {
@@ -1741,8 +2022,8 @@ void FJ_Hud::SetWrongWayLabel(const std::wstring& label)
     if (node != NULL && node->asFJ_Base() != NULL)
         node->asFJ_Base()->SetTextOnly(label);
 }
-unsigned int FJ_Hud::GetStatusEffectsYOffset() { return 0; }
-void FJ_Hud::HideSelectedLabel() { SetSelectedLabel(std::wstring(), false); }
+unsigned int FJ_Hud::GetStatusEffectsYOffset() { return hudInt(this, 0x42c); }
+void FJ_Hud::HideSelectedLabel() { getChildByName("SelectedLabel")->gotoAndPlay(std::string("Fade")); }
 void FJ_Hud::UpdateStatusEffectTile(int activeCount, int slot, int effect, bool ambient, float alpha)
 {
     static const int kEffectRemap[4] = { -1, 12, 9, 2 };
@@ -1920,7 +2201,11 @@ void FJ_Hud::SetBossBar(int index, float progress, const std::wstring& name)
     bossBarSlot[index]->asFJ_Base()->SetLabel(name);
     UpdateBossBarPositions();
 }
-void FJ_Hud::ShowGameModePlayers(bool visible) { ShowQuickSelect(visible); }
+void FJ_Hud::ShowGameModePlayers(bool visible)
+{
+    hudNode(this, 0x1bc)->setVisible(visible);
+    hudByte(this, 0x48) = visible;
+}
 void FJ_Hud::SetGameModeNumPlayers(int count, bool visible)
 {
     if (hudByte(this, 0x20) == 0)
@@ -2149,9 +2434,27 @@ void FJ_Hud::AddCheckpointAtPercentage(float percentage)
     addChild(node);
     m_checkpointNodes.push_back(node);
 }
-void FJ_Hud::ClearCheckpointPositions() { m_checkpointNodes.clear(); }
+void FJ_Hud::ClearCheckpointPositions()
+{
+    for (std::vector<FJ_FuiNode*>::size_type i = 0; i < m_checkpointNodes.size(); ++i)
+        hudNode(this, 0x2c0)->removeChild(m_checkpointNodes[i], true);
+    m_checkpointNodes.clear();
+}
 void FJ_Hud::AnimateCheckpoint(int index) { if (index >= 0 && index < (int)m_checkpointNodes.size() && m_checkpointNodes[index] != NULL) m_checkpointNodes[index]->gotoAndPlay(2); }
-void FJ_Hud::SetGlideHealth(int health) { SetHealth(health, false, false, false); }
+void FJ_Hud::SetGlideHealth(int health)
+{
+    static const int kGlideHealthFrame[4] = { 1, 4, 3, 2 };
+    char buffer[64];
+
+    for (int slot = 0; slot < 3; ++slot)
+    {
+        std::snprintf(buffer, sizeof(buffer), "FJ_Health_0%d", slot);
+        FJ_FuiNode* icon = hudNode(this, 0x2c8)->getChildByName(buffer);
+        hudNode(this, 0x2cc + static_cast<size_t>(slot) * 4) = icon;
+        int state = (slot < health) ? 2 : 0;
+        icon->gotoAndStop(kGlideHealthFrame[state]);
+    }
+}
 void FJ_Hud::ShowHealth(bool visible) { FJ_FuiNode* node = getChildByName("health"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::ShowHorseHealth(bool visible) { FJ_FuiNode* node = getChildByName("horseHealth"); if (node != NULL) node->setVisible(visible); }
 void FJ_Hud::ShowFood(bool visible) { FJ_FuiNode* node = getChildByName("food"); if (node != NULL) node->setVisible(visible); }

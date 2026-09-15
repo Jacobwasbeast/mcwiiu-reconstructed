@@ -10,12 +10,15 @@
 #include "game/core/Minecraft.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+#include "game/network/CGameNetworkManager.hpp"
 #include "game/ui/AnvilMenu.hpp"
 #include "game/ui/FJ_AnvilMenu.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
+
+#include <wchar.h>
 
 extern CInput* g_pInput;
 extern CMinecraftApp* g_pApp;
@@ -376,8 +379,37 @@ void UIScene_AnvilMenu::showCross(bool show)
 
 void UIScene_AnvilMenu::handleTick()
 {
-    updateItemName();
-    showCross(false);
+    std::wstring label;
+    bool showCostLabel = true;
+
+    if (m_pendingName != 0)
+    {
+        bool censored = g_pApp->IsConsoleChatCensored();
+        bool isHost = CGameNetworkManager::sInstance.IsHost();
+        m_itemName->set(m_pendingName->name, m_pendingName->itemName, censored, isHost);
+        delete m_pendingName;
+        m_pendingName = 0;
+    }
+
+    if (m_anvilMenu->mRepairCost > 0 && m_anvilMenu->mRepairCost < 40)
+    {
+        if (m_anvilMenu->getSlot(2)->hasItem())
+        {
+            wchar_t buffer[256];
+            swprintf(buffer, 0x100, L10N::GetString(0xf3a668fd));
+            label = buffer;
+        }
+    }
+
+    setCostLabel(label, showCostLabel);
+
+    bool showCrossFlag = false;
+    if (m_anvilMenu->getSlot(0)->hasItem() || m_anvilMenu->getSlot(1)->hasItem())
+    {
+        if (!m_anvilMenu->getSlot(2)->hasItem())
+            showCrossFlag = true;
+    }
+    showCross(showCrossFlag);
 }
 
 void UIScene_AnvilMenu::tick()
@@ -410,8 +442,10 @@ void UIScene_AnvilMenu::handleDestroy()
 
 void UIScene_AnvilMenu::updateItemName()
 {
-    if (m_pendingName != 0)
-        setEditNameValue(m_pendingName->name);
+    bool censored = g_pApp->IsConsoleChatCensored();
+    std::wstring name = m_itemName->get();
+    setEditNameValue(name);
+    m_anvilMenu->setItemName(m_itemName->raw(), censored);
 }
 
 void UIScene_AnvilMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)

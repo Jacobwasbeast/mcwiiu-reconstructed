@@ -194,6 +194,7 @@ void UIScene_AchievementsMenu::handleReload()
     }
     m_achievementName.init(UIString(0x31dacd58));
     m_achievementDescription.init(UIString(L"CommandBlockMenuSplit"));
+    updateTooltips();
     UpdateAchievementDetails();
 }
 

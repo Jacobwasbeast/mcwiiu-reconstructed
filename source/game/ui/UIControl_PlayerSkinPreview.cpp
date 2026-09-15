@@ -10,6 +10,7 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/ui/ScreenSizeCalculator.hpp"
 #include "game/ui/fuiRect.hpp"
@@ -193,7 +194,9 @@ void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, dou
     GlStateManager::rotatef(180.0f - (float)mRotation, 0.0f, 1.0f, 0.0f);
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0f, 0.9375f, 0.9375f);
+    MemSect(0x1f);
     bindTexture(mTexturePath, mTextureName);
+    MemSect(0);
     PlayerModel* model = static_cast<PlayerModel*>(renderer->getModel());
     if (model != NULL)
     {

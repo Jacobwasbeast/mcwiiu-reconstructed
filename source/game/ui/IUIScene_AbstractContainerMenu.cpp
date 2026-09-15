@@ -12,8 +12,13 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Item.hpp"
 #include "game/core/Slot.hpp"
 #include "game/core/HtmlString.hpp"
+#include "game/core/GameModeConstraints.hpp"
+#include "game/minigame/Tutorial.hpp"
+#include "game/ui/UILayer.hpp"
+#include "game/ui/UIGroup.hpp"
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
     : m_menu(0), m_smallInventoryRequested(0), m_takeAllEnabled(0), m_quickCraftDisabled(0),
@@ -26,7 +31,7 @@ IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
       m_pointerItem(0), m_pointerFlags(0), m_lastInput(0),
       m_dragSection(0), m_dragSlot(0), m_dragButton(0), m_dragCount(0),
       m_hoverSection(0), m_hoverSlot(0), m_hoverX(0), m_hoverY(0), m_hoverFlags(0),
-      m_lastHoveredSlot(0), m_inventorySmall(0), m_touchEnabled(0)
+      m_lastHoveredSlot(0), m_inventorySmall(0), m_touchEnabled(0), m_canNavigateBack(0)
 {
     m_tooltipButtons[0] = 0;
     m_tooltipButtons[1] = 0;
@@ -187,9 +192,10 @@ void IUIScene_AbstractContainerMenu::Initialize(bool takeAll, int containerId, A
 std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot* slot)
 {
     if (slot == 0) return 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[getPad()];
     not_null_ptr<ItemInstance> item = slot->getItem();
-    std::vector<HtmlString>* description = item->getTooltipLines(
-        Minecraft::GetInstance()->GetPlayerByPlayerIndex(getPad()), false);
+    std::vector<HtmlString>* description = item->getTooltipLines(player, false);
     if (description != 0 && !description->empty())
     {
         description->at(0).mColour = static_cast<eMinecraftColour>(item->getRarity());
@@ -298,15 +304,103 @@ void IUIScene_AbstractContainerMenu::handleQuickCraft()
 
 unsigned int IUIScene_AbstractContainerMenu::handleKeyDown(int key, int value, bool repeat)
 {
-    m_lastInput = key;
-    if (repeat) m_pointerFlags |= value;
-    if (key == 0 && canTakeAll())
-        handleTakeAll(value);
-    else if (key == 1 && canQuickCraft())
-        handleQuickCraft();
-    else
-        handleAdditionalKeyPress(key);
-    return 1;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[getPad()];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+            tutorial->handleUIInput(value);
+    }
+
+    unsigned int returnValue = 0;
+    switch (value)
+    {
+    case 1:
+    case 0x12:
+    {
+        gConsoleUIController.SetTooltips(key, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                          -1, -1, -1, false, false);
+        if (!m_canNavigateBack)
+        {
+            gConsoleUIController.CloseUIScenes(key, false);
+            return 0;
+        }
+        gConsoleUIController.NavigateBack(key, false, EUIScene_None, (EUILayer)8);
+        return 0;
+    }
+    case 4:
+        m_dragStart = 1;
+        handleAdditionalKeyPress(value);
+        UpdateTooltips();
+        return returnValue;
+    case 5:
+        m_dragStart = 2;
+        handleAdditionalKeyPress(value);
+        UpdateTooltips();
+        return returnValue;
+    case 6:
+        m_dragStart = 4;
+        handleAdditionalKeyPress(value);
+        UpdateTooltips();
+        return returnValue;
+    case 7:
+        m_dragStart = 3;
+        handleAdditionalKeyPress(value);
+        UpdateTooltips();
+        return returnValue;
+    case 8:
+        if (canQuickCraft())
+            handleQuickCraft();
+        returnValue = 1;
+        break;
+    case 9:
+    {
+        if (IsSectionSlotList(static_cast<ESceneSection>(m_dragEnd)))
+        {
+            int currentIndex = getCurrentIndex(static_cast<ESceneSection>(m_dragEnd));
+            int sectionStart = getSectionStartOffset(static_cast<ESceneSection>(m_dragEnd));
+            int slotIndex = currentIndex - sectionStart;
+            if (!isSlotEmpty(static_cast<ESceneSection>(m_dragEnd), slotIndex) &&
+                minecraft->mGameModes[key] != 0)
+            {
+                Tutorial* slotTutorial = minecraft->mGameModes[key]->getTutorial();
+                if (slotTutorial != 0)
+                {
+                    not_null_ptr<ItemInstance> item =
+                        getSlotItem(static_cast<ESceneSection>(m_dragEnd), slotIndex)->copy();
+                    Tutorial::PopupMessageDetails details;
+                    details.titleId = item->getUseDescriptionId();
+                    details.itemDescriptionId = item->getDescriptionId(-1);
+                    if (item->getItem() != 0)
+                        details.itemDescription = item->getHoverName();
+                    details.itemInstance = item;
+                    details.itemId = Item::VALIDgetId(item->getItem());
+                    details.itemAuxValue = item->getAuxValue();
+                    details.allowFade = true;
+                    details.force = true;
+                    slotTutorial->setMessage(0, &details);
+                }
+            }
+        }
+        returnValue = 1;
+        break;
+    }
+    case 0xb:
+        if (!repeat && canTakeAll())
+        {
+            handleTakeAll(0);
+            handleAdditionalKeyPress(value);
+            UpdateTooltips();
+            return returnValue;
+        }
+        break;
+    default:
+        break;
+    }
+    handleAdditionalKeyPress(value);
+    UpdateTooltips();
+    return returnValue;
 }
 
 unsigned int IUIScene_AbstractContainerMenu::handleValidKeyPress(int key, int value, int player)

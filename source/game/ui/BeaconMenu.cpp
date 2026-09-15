@@ -100,7 +100,8 @@ not_null_ptr<ItemInstance> BeaconMenu::quickMoveStack(boost::shared_ptr<Player> 
     }
     else
     {
-        return ItemInstance::EMPTY;
+        if (!moveItemStackTo(item, 1, 37, false, true, true))
+            return ItemInstance::EMPTY;
     }
 
     if (item->isEmpty())

@@ -15,6 +15,7 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/Recipe.hpp"
 #include "game/item/Recipes.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -71,13 +72,28 @@ int IUIScene_CraftingMenu::GetRecipeId(int group, int recipe)
         return m_recipeTable[m_currentGroup][2];
     if (m_currentTab != 3)
         return m_recipeTable[group][recipe + 2];
-    if (m_currentGroup != 0 && !m_recipeIngredients.empty())
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    if (!m_recipeIngredients.empty())
     {
-        not_null_ptr<ItemInstance> item = m_recipeIngredients[m_customRecipeSlots[m_horizontalSlot]];
+        item = m_recipeIngredients[m_customRecipeSlots[m_horizontalSlot]];
         item->setCount(1);
-        return m_recipeTable[m_currentGroup][item->getItem() == 0 ? 2 : m_customRecipeSlots[m_horizontalSlot] + 2];
     }
-    return m_recipeTable[group][recipe + 2];
+    if (m_currentGroup != 0)
+    {
+        if (item->getItem() == Items::bed)
+            return m_recipeTable[m_currentGroup][m_customRecipeSlots[1] + 2];
+        return m_recipeTable[m_currentGroup][2];
+    }
+    if (item->getItem() == Items::leatherHelmet)
+        return m_recipeTable[m_currentGroup][2];
+    if (item->getItem() == Items::leatherChestplate)
+        return m_recipeTable[m_currentGroup][3];
+    if (item->getItem() == Items::leatherLeggings)
+        return m_recipeTable[m_currentGroup][4];
+    if (item->getItem() == Items::leatherBoots)
+        return m_recipeTable[m_currentGroup][5];
+    int idx = item->getItem() == Items::leatherHorseArmor ? 4 : 0;
+    return m_recipeTable[m_currentGroup][idx + 2];
 }
 
 bool IUIScene_CraftingMenu::isSpinnerGroup()
@@ -163,57 +179,54 @@ not_null_ptr<ItemInstance> IUIScene_CraftingMenu::GetBaseItemSlot(int column, in
 
 not_null_ptr<ItemInstance> IUIScene_CraftingMenu::GetSpinnerSlot(int spinner, int slot, bool& enabled)
 {
-    enabled = false;
     if (m_currentTab == 2)
     {
         if (m_currentGroup == 0)
         {
-            if (spinner >= 0 && spinner < 3 &&
-                slot >= 0 && slot < (int)m_customRecipes[spinner].size())
-            {
-                enabled = m_customRecipes[spinner][slot].second;
-                return m_customRecipes[spinner][slot].first;
-            }
-        }
-        else if (m_currentGroup == 1)
-        {
             if (spinner == 0)
-            {
-                if (slot >= 0 && slot < (int)m_recipeIngredients.size())
-                {
-                    enabled = true;
-                    return m_recipeIngredients[slot];
-                }
-            }
-            else if (slot >= 0 && slot < (int)m_customRecipes[0].size())
             {
                 enabled = m_customRecipes[0][slot].second;
                 return m_customRecipes[0][slot].first;
             }
+            if (spinner == 1)
+            {
+                enabled = m_customRecipes[1][slot].second;
+                return m_customRecipes[1][slot].first;
+            }
+            enabled = m_customRecipes[2][slot].second;
+            return m_customRecipes[2][slot].first;
         }
-        else if (slot >= 0 && slot < (int)m_customRecipes[0].size())
+        if (m_currentGroup == 1)
         {
+            if (spinner == 0)
+            {
+                enabled = true;
+                if (!m_recipeIngredients.empty())
+                    return m_recipeIngredients[slot];
+                return ItemInstance::EMPTY;
+            }
             enabled = m_customRecipes[0][slot].second;
             return m_customRecipes[0][slot].first;
         }
-    }
-    else
-    {
         if (spinner == 0)
         {
-            if (slot >= 0 && slot < (int)m_recipeIngredients.size())
-            {
-                enabled = true;
-                return m_recipeIngredients[slot];
-            }
+            enabled = m_hasGunpowder;
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::gunpowder, 1));
         }
-        else if (slot >= 0 && slot < (int)m_customRecipeIngredients.size())
-        {
-            enabled = m_customRecipeIngredients[slot].second;
-            return m_customRecipeIngredients[slot].first;
-        }
+        enabled = true;
+        if (!m_recipeIngredients.empty())
+            return m_recipeIngredients[slot];
+        return ItemInstance::EMPTY;
     }
-    return ItemInstance::EMPTY;
+    if (spinner == 0)
+    {
+        enabled = true;
+        if (!m_recipeIngredients.empty())
+            return m_recipeIngredients[slot];
+        return ItemInstance::EMPTY;
+    }
+    enabled = m_customRecipeIngredients[slot].second;
+    return m_customRecipeIngredients[slot].first;
 }
 
 int IUIScene_CraftingMenu::GetCustomIngredientCount(not_null_ptr<ItemInstance> item)
@@ -239,13 +252,49 @@ int IUIScene_CraftingMenu::GetCustomIngredientCount(not_null_ptr<ItemInstance> i
 
 bool IUIScene_CraftingMenu::isValidCustomRecipeIngredient(int index, not_null_ptr<ItemInstance> item)
 {
-    if (!item || item->isEmpty() || index < 0)
+    int itemId = Item::getId(item->getItem());
+    if (m_currentTab != 2)
+    {
+        if (m_currentTab != 3)
+            return true;
+        return GetCustomIngredientCount(item) != 0;
+    }
+    if (m_currentGroup == 1 && itemId == 0x192)
         return false;
-    if (index >= (int)m_recipeIngredients.size())
-        return true;
-    not_null_ptr<ItemInstance> required = m_recipeIngredients[index];
-    return ItemInstance::isSame(required, item) &&
-           GetCustomIngredientCount(item) < required->getCount();
+    for (unsigned int i = 0; i < m_stackedRecipeCounts.size(); ++i)
+    {
+        int recipeIdx = m_stackedRecipeCounts[i];
+        not_null_ptr<ItemInstance> ingredient = m_recipeIngredients[recipeIdx];
+        int ingredientId = Item::getId(ingredient->getItem());
+        if (index != recipeIdx)
+        {
+            if (!ingredient->isEmpty() &&
+                (itemId == 0x120 || itemId == 0x173 || itemId == 0x181 || itemId == 0x18d))
+            {
+                if (ingredientId == 0x120 || ingredientId == 0x173 ||
+                    ingredientId == 0x181 || ingredientId == 0x18d)
+                    return false;
+            }
+        }
+    }
+    int matches = 0;
+    int count = m_craftingMode == 0 ? 4 : 9;
+    for (int slot = 0; slot < count; ++slot)
+    {
+        not_null_ptr<ItemInstance> slotItem = m_recipeIngredients[slot];
+        if (!slotItem->isEmpty() && !m_stackedRecipeCounts.empty() &&
+            m_stackedRecipeCounts.back() != slot)
+        {
+            int slotId = Item::getId(slotItem->getItem());
+            if (slotId == 0x121 && itemId == 0x121)
+            {
+                ++matches;
+                if (matches > 2)
+                    return false;
+            }
+        }
+    }
+    return GetCustomIngredientCount(item) != 0;
 }
 
 int IUIScene_CraftingMenu::GetCustomIngredientIndex(not_null_ptr<ItemInstance> item)
@@ -512,24 +561,122 @@ bool IUIScene_CraftingMenu::canAddCustomRecipeIngredient(not_null_ptr<ItemInstan
 
 void IUIScene_CraftingMenu::UpdateTooltips()
 {
-    int primary = isCustomRecipe() ? 0x9219698b : 0xded2ef45;
-    int secondary = canAddMoreStacks() ? 0x91d18454 : -1;
-    gConsoleUIController.SetTooltips((unsigned int)getPad(), primary, secondary, -1, -1,
+    Recipe::INGREDIENTS_REQUIRED* ingredients =
+        Recipes::getInstance()->getRecipeIngredientsArray((Recipes::ERecipeCategory)m_currentTab);
+    int count = getCurrentVSlotCount();
+    bool haveAvailable = false;
+    if (count != 0)
+    {
+        int vslot = count > 1 ? m_verticalSlots[m_verticalColumn] : 0;
+        int recipe = GetRecipeId(m_horizontalSlot, vslot);
+        haveAvailable = ingredients[recipe].available[getPad()] != 0;
+    }
+    if (m_currentTab == 2 || m_currentTab == 3)
+    {
+        bool enabled = false;
+        not_null_ptr<ItemInstance> item =
+            GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+        bool canAdd = canAddCustomRecipeIngredient(item) && enabled;
+        int a2 = m_customRecipeValid ? 0x5f116e91 : -1;
+        int a4 = m_stackedRecipeCounts.empty() ? -1 : 0x9219698b;
+        int a5 = canAdd ? 0x91d18454 : -1;
+        gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, a4, a5,
+                                         -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, false, false);
+        return;
+    }
+    if (m_currentTab != 1)
+    {
+        int a2 = haveAvailable ? 0x5f116e91 : -1;
+        gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, 0xfdec4423, -1,
+                                         -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, false, false);
+        return;
+    }
+    if (m_currentGroup != 0)
+    {
+        int a2 = m_customIngredientCounts.empty() ? -1 : 0x5f116e91;
+        int a5 = (haveAvailable && canAddMoreStacks()) ? 0x91d18454 : -1;
+        gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, 0x9219698b, a5,
+                                         -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, false, false);
+        return;
+    }
+    int vslot = m_verticalSlots[m_verticalColumn];
+    bool isDup = isDuplicateItem();
+    bool duplicateAvailable = isDup && vslot >= 0 && vslot < (int)m_duplicateRecipes.size() &&
+                              m_duplicateRecipes[vslot].second;
+    bool isInv = isInventoryItem();
+    bool showAvailable = haveAvailable && !isInv && !duplicateAvailable;
+    bool haveList = (isInv && !m_inventoryRecipes.empty()) || (isDup && !m_duplicateRecipes.empty());
+    int a2 = isDup ? (duplicateAvailable ? 0xfe4f3a12 : -1) : (showAvailable ? 0x5f116e91 : -1);
+    if (!haveAvailable && !haveList)
+        a2 = -1;
+    if (!isDup)
+    {
+        if (!isInv)
+        {
+            if (haveAvailable && canAddMoreStacks())
+            {
+                gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, -1, 0x91d18454,
+                                                 -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                                 -1, -1, -1, -1, -1, false, false);
+                return;
+            }
+        }
+        else if (!m_inventoryRecipes.empty())
+        {
+            gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, -1, 0x8d6323ed,
+                                             -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                             -1, -1, -1, -1, -1, false, false);
+            return;
+        }
+    }
+    else if (duplicateAvailable)
+    {
+        gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, -1, 0x8d6323ed,
+                                         -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, false, false);
+        return;
+    }
+    gConsoleUIController.SetTooltips((unsigned int)getPad(), a2, 0xded2ef45, -1, -1,
                                      -2, 0xf73b4f2d, -2, 0x06974812, -1, -1, -1,
                                      -1, -1, -1, -1, -1, false, false);
 }
 
 void IUIScene_CraftingMenu::UpdateHighlight()
 {
-    showTabHighlight(m_currentTab, true);
-    if (isInventoryItem())
-        setInventorySlotHighlighted(m_verticalSlots[m_verticalColumn]);
-    else if (isCustomRecipe())
-        setIngredientSlotHighlighted(m_selectedCustomIngredient);
-    SetCraftingMenu(m_horizontalSlot, m_verticalSlots[m_verticalColumn], isSpinnerGroup());
-    DisplayIngredients();
-    UpdateDescriptionText(false);
     updateHighlightAndScrollPositions();
+    bool haveSelection = true;
+    if (getCurrentVSlotCount() == 0 && m_currentTab != 2 && m_currentTab != 3)
+        haveSelection = false;
+    if (!haveSelection)
+    {
+        setDescriptionTextTop(L"");
+        DisplayIngredients();
+        ShowDescriptionPanel(false);
+        UpdateTooltips();
+        UpdateDescriptionText(false);
+        return;
+    }
+    int vslot = m_verticalSlots[m_verticalColumn];
+    not_null_ptr<ItemInstance> item;
+    if (isInventoryItem())
+        item = m_maintainedInventory->getItem(m_inventoryRecipes[vslot]);
+    else if (isDuplicateItem())
+        item = m_maintainedInventory->getItem(m_duplicateRecipes[vslot].first);
+    else
+    {
+        Recipe::INGREDIENTS_REQUIRED* ingredients =
+            Recipes::getInstance()->getRecipeIngredientsArray((Recipes::ERecipeCategory)m_currentTab);
+        int recipe = GetRecipeId(m_horizontalSlot, getCurrentVSlotCount() > 1 ? vslot : 0);
+        item = not_null_ptr<ItemInstance>(new ItemInstance(*ingredients[recipe].recipe->getResultItem()));
+    }
+    setDescriptionTextTop(L10N::GetString(item->getDescriptionId(-1)));
+    DisplayIngredients();
+    ShowDescriptionPanel(false);
+    UpdateTooltips();
+    UpdateDescriptionText(true);
 }
 
 void IUIScene_CraftingMenu::UpdateSlotsAndHighlight()
@@ -541,35 +688,25 @@ void IUIScene_CraftingMenu::UpdateSlotsAndHighlight()
 
 void IUIScene_CraftingMenu::RemoveLastCustomRecipeIngredient()
 {
-    if (m_customRecipeIngredients.empty())
-        return;
-    m_customRecipeIngredients.pop_back();
-    m_selectedCustomIngredient = (int)m_customRecipeIngredients.size() - 1;
-    UpdateMaintainedInventory();
-    CheckRecipesAvailable();
-    DisplayCustomRecipeIngredients(m_selectedCustomIngredient);
+    if (!m_stackedRecipeCounts.empty())
+    {
+        m_recipeIngredients[m_stackedRecipeCounts.back()] = ItemInstance::EMPTY;
+        m_stackedRecipeCounts.pop_back();
+    }
+    DisplayCustomRecipeIngredients(GetRecipeId(-1, -1));
+    not_null_ptr<ItemInstance> resultItem =
+        Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, 0, (Recipes::ERecipeCategory)0);
+    setCraftingOutputSlotItem(getPad(), resultItem);
     UpdateDescriptionText(true);
+    CheckRecipesAvailable();
     UpdateSlotsAndHighlight();
+    UpdateVerticalSlots();
 }
 
 void IUIScene_CraftingMenu::updateAccumulatedItem()
 {
-    if (m_baseRecipeIngredients.empty())
-    {
-        m_accumulatedItem = ItemInstance::EMPTY;
-        return;
-    }
-    int recipe = m_baseRecipeIngredients.back().first;
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray((Recipes::ERecipeCategory)m_currentTab);
-    if (ingredients == 0 || ingredients[recipe].recipe == 0 ||
-        ingredients[recipe].recipe->getResultItem() == 0)
-    {
-        m_accumulatedItem = ItemInstance::EMPTY;
-        return;
-    }
-    m_accumulatedItem =
-        not_null_ptr<ItemInstance>(new ItemInstance(*ingredients[recipe].recipe->getResultItem()));
+    m_accumulatedItem = m_baseRecipeItem;
+    setPreviewSlotItem(getPad(), m_accumulatedItem);
 }
 
 int IUIScene_CraftingMenu::getCurrentVSlotMax()
@@ -635,8 +772,8 @@ void IUIScene_CraftingMenu::ClearCustomRecipeIngredients()
     if (m_stackedRecipeCounts.empty())
         return;
     m_stackedRecipeCounts.clear();
-    for (int slot = 0; slot < 9; ++slot)
-        m_inventoryItems[slot] = ItemInstance::EMPTY;
+    for (int i = 0; i < 9; ++i)
+        m_recipeIngredients[i] = ItemInstance::EMPTY;
     if (isCustomRecipe())
     {
         DisplayCustomRecipeIngredients(GetRecipeId(-1, -1));
@@ -744,6 +881,17 @@ bool IUIScene_CraftingMenu::isCustomIngredientInBaseRecipe(not_null_ptr<ItemInst
     unsigned int slots = m_craftingMode == 0 ? 4 : 9;
     for (unsigned int i = 0; i < slots; ++i)
     {
+        bool skip = false;
+        for (unsigned int j = 0; j < m_stackedRecipeCounts.size(); ++j)
+        {
+            if ((unsigned int)m_stackedRecipeCounts[j] == i)
+            {
+                skip = true;
+                break;
+            }
+        }
+        if (skip)
+            continue;
         not_null_ptr<ItemInstance> slot = m_craftingContainer->getItem(i);
         if (ItemInstance::matches(slot, item, true))
             return true;
@@ -753,16 +901,38 @@ bool IUIScene_CraftingMenu::isCustomIngredientInBaseRecipe(not_null_ptr<ItemInst
 
 void IUIScene_CraftingMenu::AddCustomRecipeIngredient(not_null_ptr<ItemInstance> item)
 {
-    if (!canAddCustomRecipeIngredient(item))
-        return;
-    int index = GetCustomIngredientIndex(item);
-    m_customRecipeIngredients.push_back(std::make_pair(item, true));
-    m_selectedCustomIngredient = (int)m_customRecipeIngredients.size() - 1;
-    if (index >= 0)
-        ++m_customRecipeSlots[index % 3];
-    UpdateMaintainedInventory();
-    CheckRecipesAvailable();
-    DisplayCustomRecipeIngredients(m_selectedCustomIngredient);
+    int size = m_craftingMode == 0 ? 2 : 3;
+    bool placed = false;
+    int slot = 0;
+    for (int row = 0; row < size && !placed; ++row)
+    {
+        for (int col = 0; col < size && !placed; ++col, ++slot)
+        {
+            not_null_ptr<ItemInstance> existing = m_craftingContainer->getItem(slot);
+            if (existing->isEmpty())
+            {
+                item->setCount(1);
+                setIngredientSlotItem(getPad(), slot, item);
+                m_craftingContainer->setItem(slot, item);
+                m_stackedRecipeCounts.push_back(slot);
+                placed = true;
+            }
+        }
+    }
+    if (m_stackedRecipeCounts.size() == 1 && isCustomIngredientInBaseRecipe(item))
+    {
+        int index = GetCustomIngredientIndex(item);
+        GameMode::RemoveCustomRecipeItemsFromInventory(index, m_maintainedInventory);
+    }
+    DisplayCustomRecipeIngredients(GetRecipeId(-1, -1));
+    not_null_ptr<ItemInstance> resultItem;
+    if (m_currentTab == 2)
+        resultItem = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, 0, (Recipes::ERecipeCategory)0);
+    else if (m_currentGroup == 0)
+        resultItem = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, 0, (Recipes::ERecipeCategory)0);
+    else
+        resultItem = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, 0, (Recipes::ERecipeCategory)0);
+    setCraftingOutputSlotItem(getPad(), resultItem);
     UpdateDescriptionText(true);
 }
 

@@ -55,7 +55,6 @@ private:
     int m_creditCount;
     bool m_requestMoreData;
     std::vector<SCreditTextItemDef*> m_dlcCredits;
-    int m_unknownE0;
     std::vector<std::wstring> m_seenCreditText;
     int m_unknownF0;
 };

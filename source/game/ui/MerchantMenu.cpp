@@ -14,10 +14,10 @@ MerchantMenu::MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared
 {
     boost::shared_ptr<Player> player = merchant ? merchant->getTradingPlayer() : boost::shared_ptr<Player>();
     mTradeContainer.reset(new MerchantContainer(player, merchant));
-    addSlot(new Slot(mTradeContainer, 0, 36, 24));
-    addSlot(new Slot(mTradeContainer, 1, 62, 24));
+    addSlot(new Slot(mTradeContainer, 0, 36, 53));
+    addSlot(new Slot(mTradeContainer, 1, 62, 53));
     addSlot(new MerchantResultSlot(player.get(),
-                                   merchant, mTradeContainer, 2, 120, 35));
+                                   merchant, mTradeContainer, 2, 120, 53));
 
     int row;
     int column;
@@ -83,7 +83,7 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
         {
             return empty;
         }
-        slot->onQuickCraft(original, item);
+        slot->onQuickCraft(item, original);
     }
     else if (index == 0 || index == 1)
     {
@@ -124,6 +124,7 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
 
 void MerchantMenu::removed(boost::shared_ptr<Player> player)
 {
+    AbstractContainerMenu::removed(player);
     AbstractContainerMenu::removed(player);
     if (!mLevel->mIsClientSide)
     {

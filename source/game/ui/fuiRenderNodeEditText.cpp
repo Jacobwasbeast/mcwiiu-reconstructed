@@ -280,8 +280,6 @@ void fuiRenderNodeEditText::newLine(RenderStringStateData& state)
 
 bool fuiRenderNodeEditText::isHtmlTagType(const std::wstring& tag, const std::wstring& type)
 {
-    if (tag.size() < type.size())
-        return false;
     for (std::wstring::size_type i = 0; i < type.size(); ++i)
     {
         wchar_t c = tag[i];

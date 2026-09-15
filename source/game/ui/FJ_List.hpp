@@ -67,6 +67,7 @@ public:
     void MoveItem(int index, bool down);
 
 protected:
+    unsigned char m_unknownBaseTail[64];
     bool m_checkboxTick;
 
 private:

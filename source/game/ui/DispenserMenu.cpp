@@ -52,12 +52,10 @@ not_null_ptr<ItemInstance> DispenserMenu::quickMoveStack(boost::shared_ptr<Playe
             if (moveItemStackTo(item, smallInventory ? 36 : 9, 45, true, true, true) != 1) {
                 return ItemInstance::EMPTY;
             }
-        } else if (index < 45) {
+        } else {
             if (moveItemStackTo(item, 0, 9, false, true, true) != 1) {
                 return ItemInstance::EMPTY;
             }
-        } else {
-            return ItemInstance::EMPTY;
         }
 
         if (item->getCount() == 0) {

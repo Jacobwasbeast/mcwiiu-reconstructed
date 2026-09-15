@@ -49,7 +49,7 @@ void CreateWorldScreen::updateResultFolder()
     std::wstring name = trimString(mNameEdit->getValue());
     mResultFolder = name;
 
-    const wchar_t invalidCharacters[] = L"/\n\r\t\f<>|\":";
+    const wchar_t invalidCharacters[15] = L"/\n\r\t\f<>|\":";
     int pass;
     for (pass = 0; pass < 3; ++pass)
     {

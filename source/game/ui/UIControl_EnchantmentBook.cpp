@@ -51,22 +51,24 @@ void UIControl_EnchantmentBook::tickBook()
     if (!ItemInstance::matches(itemInstance, mItemInstance, true))
     {
         mItemInstance = itemInstance;
-        mBookOpenPrev = mBookOpen;
-        mBookRotationPrev = mBookRotation;
-        ++mBookTick;
+        float target = mBookOpenTarget;
+        do
+        {
+            int r1 = mRandom.nextInt(4);
+            int r2 = mRandom.nextInt(4);
+            target = target + static_cast<float>(r1 - r2);
+            mBookOpenTarget = target;
+            if (target + 1.0F < mBookOpen)
+            {
+                break;
+            }
+        } while (target - 1.0F <= mBookOpen);
     }
+    mBookOpenPrev = mBookOpen;
+    mBookRotationPrev = mBookRotation;
+    ++mBookTick;
 
-    mBookOpenTarget = mBookOpenTarget
-        + static_cast<float>(mRandom.nextInt(4) - mRandom.nextInt(4));
-
-    if (enchantingMenu == NULL)
-    {
-        mBookRotation -= 0.2F;
-    }
-    else
-    {
-        mBookRotation += 0.2F;
-    }
+    mBookRotation += 0.2F;
 
     if (mBookRotation < 0.0F)
     {

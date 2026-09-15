@@ -106,6 +106,11 @@ void SelectWorldScreen::worldSelected(int index)
     {
         mSelecting = true;
         mMinecraft->mWidth = 0;
+        std::wstring worldId = getWorldId(index);
+        if (worldId.empty())
+        {
+            worldId = std::wstring(L"World") + _toString(index);
+        }
     }
 }
 

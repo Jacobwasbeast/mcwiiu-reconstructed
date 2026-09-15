@@ -91,7 +91,7 @@ public:
     static bool CopySaveDataProgress(void* context, int progress);
     static uint32_t CopySaveThreadProc(void* context);
     static uint32_t CopySaveDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result);
-    static uint32_t LoadSaveDataForUploadReturned(void* context, bool success, bool complete);
+    static int LoadSaveDataForUploadReturned(void* context, bool success, bool complete);
     static uint32_t CrossSaveUploadFinishedCallback(void* context, int userIndex,
                                                      C4JStorage::EMessageResult result);
     static uint32_t UploadNintendoLanSaveThreadProc(void* context);

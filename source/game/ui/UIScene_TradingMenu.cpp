@@ -18,11 +18,12 @@
 #include "game/minigame/Tutorial.hpp"
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ServerboundCustomPayloadPacket.hpp"
+#include "game/network/TradeItemPacket.hpp"
 #include "game/ui/FJ_TradingMenu.hpp"
 #include "game/ui/MerchantMenu.hpp"
 #include "game/ui/fuiFile.hpp"
+#include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRect.hpp"
-#include "game/network/TradeItemPacket.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
@@ -32,9 +33,16 @@
 extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 
+struct TradingMenuData
+{
+    boost::shared_ptr<Inventory> inventory;
+    boost::shared_ptr<Merchant> merchant;
+    Level* level;
+};
+
 UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer),
-      m_scrollRightShown(false),
+      m_scrollRightShown(true),
       m_scrollLeftShown(true),
       m_merchantMenuPtr(NULL),
       m_merchantMenu(),
@@ -43,6 +51,7 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
       m_tradeRow(0),
       m_tradeOffset(0),
       m_tradeFocusSet(false),
+      m_tutorialHintValue(0),
       m_mainPanel(),
       m_tradingBar(),
       m_request1(),
@@ -56,22 +65,57 @@ UIScene_TradingMenu::UIScene_TradingMenu(int type, void* data, UILayer* layer)
       m_inventoryLabel()
 {
     initialiseMovie();
-    m_villagerText.init(UIString(L"HotBar"));
-    m_requiredLabel.init(UIString(L10N::GetString(0x14630b9e)));
+    m_requiredLabel.init(UIString(L"HotBar"));
+    m_villagerText.init(UIString(L10N::GetString(0x14630b9e)));
     m_request1Label.init(UIString(L10N::GetString(0x3dbed919)));
     m_request2Label.init(UIString(L"HotBar"));
     m_inventoryLabel.init(UIString(L"HotBar"));
+
+    Minecraft* minecraft = Minecraft::GetInstance();
+    MultiPlayerGameMode* gameMode = minecraft->mGameModes[m_playerId];
+    if (gameMode != 0)
+    {
+        Tutorial* tutorial = gameMode->getTutorial();
+        if (tutorial != 0)
+        {
+            m_tutorialHintValue = tutorial->currentState;
+            tutorial->changeTutorialState(static_cast<eTutorial_State>(0x19), this);
+        }
+    }
+
+    TradingMenuData* sceneData = static_cast<TradingMenuData*>(data);
+    m_merchantMenu = boost::shared_ptr<MerchantMenu>(new MerchantMenu(
+        sceneData->inventory, sceneData->merchant, sceneData->level));
+    m_merchantMenuPtr = m_merchantMenu.get();
+    minecraft->mLocalPlayers[m_playerId]->mContainerMenu = m_merchantMenuPtr;
+
     m_request1.addSlots(0x27, 1);
     m_request2.addSlots(0x28, 1);
     m_tradingBar.addSlots(0x29, 7);
     m_inventory.addSlots(3, 0x1b);
     m_hotBar.addSlots(0x1e, 9);
+
+    gConsoleUIController.OverrideSFX(m_playerId, 0, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 0x14, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 0xb, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 10, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 7, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 6, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 4, true);
+    gConsoleUIController.OverrideSFX(m_playerId, 5, true);
+    g_pApp->SetRichPresenceContext(m_playerId, 0xd);
 }
 
 UIScene_TradingMenu::~UIScene_TradingMenu()
 {
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
     if (m_merchantMenuPtr != NULL)
-        delete m_merchantMenuPtr;
+    {
+        m_merchantMenuPtr->removed(player);
+        if (player && player->mContainerMenu == m_merchantMenuPtr)
+            player->closeContainer();
+        m_merchantMenuPtr = NULL;
+    }
 }
 
 unsigned int UIScene_TradingMenu::mapElementsAndNames()
@@ -172,23 +216,25 @@ void UIScene_TradingMenu::setTradeRedBox(int trade, bool show)
 
 void UIScene_TradingMenu::setTitle(const std::wstring& title)
 {
-    m_villagerText.init(UIString(title));
+    m_villagerText.setLabel(UIString(title), false, false);
 }
 
 void UIScene_TradingMenu::setOfferDescription(std::vector<HtmlString>* description)
 {
-    if (description != 0)
-        m_mainPanel.setVisible(true);
+    fuiRenderNode* root = m_movie->getRootNode();
+    FJ_TradingMenu* document = static_cast<FJ_TradingMenu*>(
+        root->getFuiNode()->asFJ_Document());
+    document->SetOfferDescription(HtmlString::Compose(description));
 }
 
 void UIScene_TradingMenu::setRequest1Name(const std::wstring& name)
 {
-    m_request1Label.init(UIString(name));
+    m_request1Label.setLabel(UIString(name), false, false);
 }
 
 void UIScene_TradingMenu::setRequest2Name(const std::wstring& name)
 {
-    m_request2Label.init(UIString(name));
+    m_request2Label.setLabel(UIString(name), false, false);
 }
 
 void UIScene_TradingMenu::setRequest1RedBox(bool show)
@@ -334,11 +380,25 @@ void UIScene_TradingMenu::handleReload()
 
 void UIScene_TradingMenu::showScrollRightArrow(bool show)
 {
+    if (m_scrollRightShown == show)
+        return;
+
+    fuiRenderNode* root = m_movie->getRootNode();
+    FJ_TradingMenu* document = static_cast<FJ_TradingMenu*>(
+        root->getFuiNode()->asFJ_Document());
+    document->ShowScrollRightArrow(show);
     m_scrollRightShown = show;
 }
 
 void UIScene_TradingMenu::showScrollLeftArrow(bool show)
 {
+    if (m_scrollLeftShown == show)
+        return;
+
+    fuiRenderNode* root = m_movie->getRootNode();
+    FJ_TradingMenu* document = static_cast<FJ_TradingMenu*>(
+        root->getFuiNode()->asFJ_Document());
+    document->ShowScrollLeftArrow(show);
     m_scrollLeftShown = show;
 }
 
@@ -374,7 +434,13 @@ void UIScene_TradingMenu::tick()
 void UIScene_TradingMenu::moveSelector(bool right)
 {
     if (m_movie != 0)
-        m_movie->setVisible("MainPanel", true);
+    {
+        fuiRenderNode* root = m_movie->getRootNode();
+        FJ_TradingMenu* document = root == 0 ? 0 :
+            static_cast<FJ_TradingMenu*>(root->getFuiNode()->asFJ_Document());
+        if (document != 0)
+            document->MoveSelector(right);
+    }
 }
 
 int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
@@ -406,6 +472,7 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
             return 1;
 
         MerchantRecipe* recipe = m_trades[selectedIndex].first;
+        const int originalIndex = m_trades[selectedIndex].second;
         if (recipe->isDeprecated())
             return 1;
 
@@ -416,11 +483,11 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         const int matchesA = player->mInventory->countMatches(buyA);
         const int matchesB = player->mInventory->countMatches(buyB);
 
-        if (buyA->isEmpty() || matchesA < buyA->getCount() ||
+        if ((!buyA->isEmpty() && matchesA < buyA->getCount()) ||
             (!buyB->isEmpty() && matchesB < buyB->getCount()))
             return 1;
 
-        boost::shared_ptr<Merchant> merchant = m_merchantMenu->getMerchant();
+    boost::shared_ptr<Merchant> merchant = m_merchantMenu->getMerchant();
         merchant->notifyTrade(recipe);
 
         player->mInventory->removeResources(buyA);
@@ -429,6 +496,12 @@ int UIScene_TradingMenu::handleKeyDown(int, int action, bool)
         not_null_ptr<ItemInstance> sellItemCopy = recipe->getSellItem()->copy();
         if (!player->mInventory->add(sellItemCopy))
             player->drop(sellItemCopy, false);
+
+        const int containerId = *reinterpret_cast<const int*>(
+            reinterpret_cast<const unsigned char*>(m_merchantMenuPtr) + 0x20);
+        ClientPacketListener* connection = minecraft->getConnection(m_playerId);
+        connection->send(boost::shared_ptr<Packet>(
+            new TradeItemPacket(containerId, originalIndex)));
 
         updateDisplay();
         return 1;
@@ -525,7 +598,7 @@ void UIScene_TradingMenu::customDraw(const char* name, fuiRect* rect)
 
     if (slotId < 0x27)
     {
-        Slot* slot = m_merchantMenu->getSlot(slotId);
+        Slot* slot = m_merchantMenuPtr->getSlot(slotId);
         item = slot->getItem();
     }
     else if (slotId < 0x29)

@@ -28,13 +28,43 @@ extern std::wstring trimString(const std::wstring& text);
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_book(static_cast<ItemInstance*>(data)), m_pages(0), m_caretPosition(0),
-      m_currentPage(0), m_pageCount(1), m_pageText(), m_secondPageText(), m_titleText(),
-      m_bookHasFocus(false), m_signing(false), m_unusedWord(0), m_textLength(0), m_canEdit(true),
+    : UIScene(type, layer), m_book(*static_cast<not_null_ptr<ItemInstance>*>(data)), m_pages(0), m_caretPosition(0),
+      m_currentPage(0), m_pageCount(0), m_pageText(), m_secondPageText(), m_titleText(),
+      m_bookHasFocus(false), m_signing(false), m_unusedWord(0), m_textLength(0),
+      m_canEdit(reinterpret_cast<const unsigned char*>(data)[12] != 0),
       m_textChanged(false), m_titleChanged(false), m_controlState(0), m_bookIsSigned(false), m_unused(false),
       m_unusedControlByte(0)
 {
+    m_playerId = static_cast<const int*>(data)[2];
+    std::memset(m_reserved + 1, 0, 0x80);
+
+    wchar_t signButtonLabels[2][256];
+    wchar_t doneButtonLabels[2][256];
+    swprintf(signButtonLabels[0], 256, L"%ls", L10N::GetString(0xdb6de516));
+    swprintf(signButtonLabels[1], 256, L"%ls", L10N::GetString(0xa16c845c));
+    m_signButton.setAllPossibleLabels(0, 2, signButtonLabels);
+    swprintf(doneButtonLabels[0], 256, L"%ls", L10N::GetString(0x6d2a309c));
+    swprintf(doneButtonLabels[1], 256, L"%ls", L10N::GetString(0x4fcbc7e7));
+    m_doneButton.setAllPossibleLabels(0, 2, doneButtonLabels);
+
+    m_doneButton.init(UIString(L10N::GetString(0x6d2a309c)), 1);
+    if (!m_canEdit)
+        SetBookIsSigned();
+    else
+        m_signButton.init(UIString(L10N::GetString(0xdb6de516)), 0);
+    m_pageLabel.init(UIString(L""));
+
+    doHorizontalResizeCheck();
     Init();
+    RetrieveBookText();
+    SetCaretPosition(m_caretPosition);
+    FormatAndDisplayText(EFormatTextType_Display);
+    layer->addComponent(type, (EUIScene)0x48, 0);
+    m_unusedControlByte = 0;
+    m_bookTouch.init(2);
+    m_leftTouch.init(3);
+    m_rightTouch.init(4);
+    gConsoleUIController.TouchBoxRebuild(this);
 }
 
 UIScene_WritableBookMenu::~UIScene_WritableBookMenu()
@@ -157,12 +187,27 @@ void UIScene_WritableBookMenu::SetCaretPosition(int position)
 
 int UIScene_WritableBookMenu::FormatAndDisplayText(EFormatTextType type)
 {
+    if (!m_unused)
+    {
+        std::wstring text = m_pageText;
+        FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
+        return menu->SetPageText(text, type) ? 1 : 0;
+    }
+
+    m_titleText = L10N::GetString(0x27364e1b);
+    size_t pos = m_titleText.find(L"\\r", 0);
+    m_textLength = static_cast<int>(pos) + 1;
+    SetCaretPosition(m_caretPosition);
+    while (pos != std::wstring::npos)
+    {
+        m_titleText.replace(pos, 2, L"\n");
+        pos = m_titleText.find(L"\\r", 0);
+    }
+    pos = m_titleText.find(L"%s", 0);
+    m_titleText.replace(pos, 2, m_secondPageText);
+
     FJ_BookAndQuillMenu* menu = static_cast<FJ_BookAndQuillMenu*>(m_movie->getRootNode()->getFuiNode());
-    if (menu == 0)
-        return 0;
-    if (type == EFormatTextType_Keyboard)
-        return menu->SetPageText(m_pageText, 2) ? 1 : 0;
-    return menu->SetPageText(m_pageText, type == EFormatTextType_Sign ? 1 : 0) ? 1 : 0;
+    return menu->SetPageText(m_titleText, type) ? 1 : 0;
 }
 
 void UIScene_WritableBookMenu::tick()
@@ -356,8 +401,6 @@ bool UIScene_WritableBookMenu::SaveChanges(bool signing)
         return false;
     if (!m_bookIsSigned || signing)
     {
-        if (m_book == 0)
-            return false;
         if (!m_book->hasTag())
             m_book->setTag(new CompoundTag());
         CompoundTag* tag = m_book->getTag();

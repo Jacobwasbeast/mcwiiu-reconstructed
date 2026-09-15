@@ -5,6 +5,7 @@
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_HtmlTextPanel.hpp"
 #include "game/ui/FJ_ScrollArrowH.hpp"
+#include "game/ui/FJ_SlotList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/util/Math.hpp"
 
@@ -48,36 +49,40 @@ unsigned int FJ_TradingMenu::getType()
 
 void FJ_TradingMenu::init(FJ_Event* event)
 {
-    FJ_Document::init(event);
-
     FJ_FuiNode* mainPanel = child(this, "MainPanel");
     FJ_FuiNode* tradingBar = child(mainPanel, "TradingBar");
     FJ_FuiNode* selector = child(mainPanel, "TradingSelector");
     FJ_FuiNode* offer = child(mainPanel, "OfferDescription");
-    m_scrollRight = child(mainPanel, "ScrollRight");
-    m_scrollLeft = child(mainPanel, "ScrollLeft");
 
-    if (tradingBar != 0)
-        m_slotWidth = static_cast<int>(tradingBar->getWidth());
-    if (m_slotWidth != 0 && selector != 0)
-        m_visibleSlots = Math::round((tradingBar->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f);
+    m_slotWidth = static_cast<int>(tradingBar->asFJ_SlotList()->getWidth());
+    m_visibleSlots = Math::round(tradingBar->getWidth() / static_cast<float>(m_slotWidth));
     m_selectorSlot = 0;
 
-    if (selector != 0 && tradingBar != 0)
+    selector->setX(tradingBar->getX() -
+                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
+                    static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY() -
+                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
+
+    m_scrollRight = child(mainPanel, "ScrollRight");
+    m_scrollLeft = child(mainPanel, "ScrollLeft");
+    static_cast<FJ_ScrollArrowH*>(m_scrollRight)->ChangeState(2);
+    static_cast<FJ_ScrollArrowH*>(m_scrollLeft)->ChangeState(0);
+
+    offer->setX(selector->getX() + selector->getWidth());
+    offer->setY(selector->getY());
+
+    fuiRect leftRect = m_scrollLeft->getRect(m_scrollLeft);
+    if (tradingBar->getX() < leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getX() + m_scrollLeft->getWidth())
     {
-        selector->setX(tradingBar->getX() + tradingBar->getWidth() - static_cast<float>(m_slotWidth));
-        selector->setY(tradingBar->getY() + tradingBar->getHeight() - static_cast<float>(m_slotWidth));
+        fuiRect rightRect = m_scrollRight->getRect(m_scrollRight);
+        const float rightEdgeWorld = rightRect.xMin * m_scrollRight->getScaleX() + m_scrollRight->getX();
+        fuiRect leftRect2 = m_scrollLeft->getRect(m_scrollLeft);
+        const float tradingBarRight = tradingBar->getX() + tradingBar->getWidth();
+        const float innerLeft = leftRect2.xMin * m_scrollLeft->getScaleX() -
+                                 (tradingBar->getX() - m_scrollLeft->getWidth());
+        m_scrollLeft->setX(-innerLeft - static_cast<float>(static_cast<int>(rightEdgeWorld - tradingBarRight)));
     }
-    if (m_scrollRight != 0)
-        static_cast<FJ_ScrollArrowH*>(m_scrollRight)->ChangeState(2);
-    if (m_scrollLeft != 0)
-        static_cast<FJ_ScrollArrowH*>(m_scrollLeft)->ChangeState(0);
-    if (offer != 0 && selector != 0)
-    {
-        offer->setX(selector->getX() + selector->getWidth());
-        offer->setY(selector->getY());
-    }
-    PositionOfferDescription();
 }
 
 void FJ_TradingMenu::SetSafeZone(int top, int bottom, int left, int right)
@@ -120,42 +125,59 @@ void FJ_TradingMenu::PositionOfferDescription()
 
 void FJ_TradingMenu::MoveSelector(bool right)
 {
-    if (right)
+    FJ_FuiNode* mainPanel = child(this, "MainPanel");
+    FJ_FuiNode* tradingBar = child(mainPanel, "TradingBar");
+    FJ_FuiNode* selector = child(mainPanel, "TradingSelector");
+
+    if (!right)
     {
-        if (m_selectorSlot < m_visibleSlots - 1)
-            ++m_selectorSlot;
-        else if (m_scrollRight != 0 && m_scrollRight->isVisible())
-            ScrollRight();
+        if (m_selectorSlot < 1)
+        {
+            if (m_scrollLeft->isVisible())
+                ScrollLeft();
+        }
+        else
+        {
+            --m_selectorSlot;
+        }
+    }
+    else if (m_selectorSlot < m_visibleSlots - 1)
+    {
+        ++m_selectorSlot;
     }
     else
     {
-        if (m_selectorSlot > 0)
-            --m_selectorSlot;
-        else if (m_scrollLeft != 0 && m_scrollLeft->isVisible())
-            ScrollLeft();
+        if (m_scrollRight->isVisible())
+            ScrollRight();
     }
-    SetSelectorSlot(m_selectorSlot);
+
+    selector->setX(tradingBar->getX() -
+                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
+                    static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY() -
+                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
+    PositionOfferDescription();
 }
 
 void FJ_TradingMenu::SetSelectorSlot(int slot)
 {
+    FJ_FuiNode* mainPanel = child(this, "MainPanel");
+    FJ_FuiNode* tradingBar = child(mainPanel, "TradingBar");
+    FJ_FuiNode* selector = child(mainPanel, "TradingSelector");
+
     m_selectorSlot = slot;
-    FJ_FuiNode* selector = child(this, "MainPanel.TradingSelector");
-    FJ_FuiNode* tradingBar = child(this, "MainPanel.TradingBar");
-    if (selector != 0 && tradingBar != 0)
-    {
-        selector->setX(tradingBar->getX() + tradingBar->getWidth() - static_cast<float>(m_slotWidth) +
-                       static_cast<float>(m_selectorSlot * m_slotWidth));
-        selector->setY(tradingBar->getY() + tradingBar->getHeight() - static_cast<float>(m_slotWidth));
-    }
+    selector->setX(tradingBar->getX() -
+                    static_cast<float>(Math::round((selector->getWidth() - static_cast<float>(m_slotWidth)) * 0.5f)) +
+                    static_cast<float>(m_selectorSlot * m_slotWidth));
+    selector->setY(tradingBar->getY() -
+                    static_cast<float>(Math::round((selector->getHeight() - static_cast<float>(m_slotWidth)) * 0.5f)));
     PositionOfferDescription();
 }
 
 void FJ_TradingMenu::SetOfferDescription(const std::wstring& description)
 {
     FJ_FuiNode* offer = child(this, "MainPanel.OfferDescription");
-    if (offer != 0)
-        offer->asFJ_HtmlTextPanel()->SetLabel(description);
+    offer->asFJ_HtmlTextPanel()->SetLabel(description);
     PositionOfferDescription();
 }
 

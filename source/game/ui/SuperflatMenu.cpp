@@ -477,8 +477,11 @@ SuperflatMenu::BiomeInfo::~BiomeInfo()
 }
 
 SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()
-    : boost::unordered_map<int, not_null_ptr<ItemInstance> >()
+    : boost::unordered_map<int, not_null_ptr<ItemInstance> >(), mMaxId(0)
 {
+    addItem(0, new ItemInstance(Blocks::AIR, 1, 0));
+    addItem(1, new ItemInstance(Blocks::WATER, 1, 0));
+    addItem(2, new ItemInstance(Blocks::lava, 1, 0));
 }
 
 SuperflatMenu::CustomSuperflatBlocks::~CustomSuperflatBlocks()
@@ -524,30 +527,137 @@ bool SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(int id)
     return hasRestrictedPlacement(Block::byId(id));
 }
 
-bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int*, int*, int layer)
+bool SuperflatMenu::CustomSuperflatBlocks::sanitiseLayer(int* ids, int* data, int layer)
 {
-    return layer >= 0 && layer < 256;
+    int below = layer - 1;
+    if (below < 0)
+        return false;
+    if (layer + 1 > 0xff)
+        return false;
+    Block* current = Block::byId(ids[layer]);
+    Block* above = Block::byId(ids[layer + 1]);
+    Block* underneath = Block::byId(ids[below]);
+    if (current == Blocks::WATER)
+    {
+        if (underneath == Blocks::concrete_powder)
+        {
+            ids[below] = 0xfb;
+            return false;
+        }
+        if (underneath == Blocks::lava)
+        {
+            ids[below] = Block::getId(Blocks::obsidian);
+            data[below] = 0;
+            return false;
+        }
+    }
+    if ((current == Blocks::lava && underneath == Blocks::WATER) ||
+        (current == Blocks::WATER && (underneath == Blocks::magma || underneath == Blocks::soul_sand)))
+    {
+        ids[below] = Block::getId(Blocks::stone);
+        data[below] = 0;
+        return false;
+    }
+    if (current == Blocks::mycelium || current == Blocks::grass)
+    {
+        if (above->isSolidBlockingCube(above->defaultBlockState()))
+        {
+            ids[layer] = Block::getId(Blocks::dirt);
+            data[layer] = 0;
+            return true;
+        }
+    }
+    if (current == Blocks::AIR || current == Blocks::lava)
+        return false;
+    if (static_cast<FireBlock*>(Blocks::FIRE)->getFlameOdds(current) < 1)
+        return false;
+    int scan = below;
+    int limit = layer - 3;
+    for (; scan >= 0 && scan >= limit; --scan)
+    {
+        Block* scanned = Block::byId(ids[scan]);
+        if (scanned != Blocks::AIR)
+        {
+            if (scanned != Blocks::lava)
+                return false;
+            ids[layer] = 1;
+            data[layer] = 0;
+            return true;
+        }
+    }
+    if (Blocks::lava != NULL)
+        return false;
+    ids[layer] = 1;
+    data[layer] = 0;
+    return true;
 }
 void SuperflatMenu::CustomSuperflatBlocks::sanitise(FlatGeneratorInfo& info)
 {
-    int ids[256];
-    int data[256];
-    std::vector<FlatLayerInfo> layers;
+    int ids[256] = { 0 };
+    int data[256] = { 0 };
     info.getLayers(ids, data);
     for (int i = 0; i < 256; ++i)
-    {
         sanitiseLayer(ids, data, i);
+    std::vector<FlatLayerInfo> layers;
+    for (int i = 0; i < 256; ++i)
         layers.push_back(FlatLayerInfo(1, 1, Block::byId(ids[i]), data[i]));
-    }
     info.setLayers(layers);
+    info.reduceLayers();
+    int biome = info.getBiome();
+    if (biome == 0 || biome == 0x18)
+    {
+        int replacement = 0;
+        if (info.hasOceanMonument())
+            replacement = 0x18;
+        info.setBiome(replacement);
+    }
+    else if (biome == 0x28 || biome == 0x29)
+    {
+        int replacement = 0x28;
+        if (info.hasOceanMonument())
+            replacement = 0x29;
+        info.setBiome(replacement);
+    }
+    else if (biome == 0x2a || biome == 0x2b)
+    {
+        int replacement = 0x2a;
+        if (info.hasOceanMonument())
+            replacement = 0x2b;
+        info.setBiome(replacement);
+    }
+    else if (biome == 0x2c || biome == 0x2d)
+    {
+        int replacement = 0x2c;
+        if (info.hasOceanMonument())
+            replacement = 0x2d;
+        info.setBiome(replacement);
+    }
+    else if (biome == 0x2e || biome == 0x2f)
+    {
+        int replacement = 0x2e;
+        if (info.hasOceanMonument())
+            replacement = 0x2f;
+        info.setBiome(replacement);
+    }
 }
 uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitData*, SuperflatConfig* config)
 {
-    if (config == NULL)
-        return 0x6e694430;
-    FlatGeneratorInfo info(config, true);
+    SuperflatConfig localConfig(*config);
+    FlatGeneratorInfo info(&localConfig, false);
     info.reduceLayers();
+    std::vector<FlatLayerInfo> layers;
+    info.getLayers(layers);
     const int biome = info.getBiome();
+    if (info.hasVillage() && biome != 1 && biome != 2 && biome != 5 && biome != 0xc && biome != 0x1e && biome != 0x23)
+        return 0xa8872c87;
+    for (std::vector<FlatLayerInfo>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+    {
+        Block* block = Block::byId(it->getId());
+        if (block == NULL)
+            return 0x6e694430;
+        if (it->getHeight() > 1 && hasRestrictedPlacement(block))
+            return 0x16c16d5e;
+    }
     if (info.hasBiomeSpecific() && biome != 2 && biome != 0x15 && biome != 6 && biome != 0x1e &&
         biome != 0xc && biome != 0x18 && biome != 0x2e && biome != 0x2f && biome != 0x2c &&
         biome != 0x2d && biome != 0x2a && biome != 0x2b && biome != 0x28 && biome != 0x29)
@@ -563,16 +673,6 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
         return 0xdae45b4d;
     if ((info.hasCaves() && info.getHeight() <= 1) || (info.hasCanyons() && info.getHeight() <= 3))
         return 0x258655f1;
-    std::vector<FlatLayerInfo> layers;
-    info.getLayers(layers);
-    for (std::vector<FlatLayerInfo>::const_iterator it = layers.begin(); it != layers.end(); ++it)
-    {
-        Block* block = Block::byId(it->getId());
-        if (block == NULL)
-            return 0x6e694430;
-        if (it->getHeight() > 1 && hasRestrictedPlacement(block))
-            return 0x16c16d5e;
-    }
     return 0;
 }
 

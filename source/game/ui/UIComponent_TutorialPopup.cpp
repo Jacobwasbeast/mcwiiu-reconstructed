@@ -2,31 +2,25 @@
 
 #include <cwchar>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
+#include "game/core/CMinecraftApp.hpp"
+#include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/StringUtils.hpp"
+#include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 #include "game/ui/FJ_TutorialPopup.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fui.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/UIString.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
-void replaceAll(std::wstring& result, const std::wstring& source,
-                const std::wstring& search, const std::wstring& replacement);
 void stripWhitespaceForHtml(std::wstring& text, bool collapse);
-
-static void replaceTutorialToken(std::wstring& text, const wchar_t* token)
-{
-    std::wstring empty;
-    std::wstring key(token);
-    std::size_t position = text.find(key);
-    while (position != std::wstring::npos)
-    {
-        text.replace(position, key.size(), empty);
-        position = text.find(key, position);
-    }
-}
 
 UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer)
     : UIScene(sceneType, layer), m_interactScene(0), m_previousInteractScene(0),
@@ -76,19 +70,136 @@ void UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item, int it
                                          int descriptionId, bool showIcon,
                                          const wchar_t* image)
 {
-    m_showIcon = showIcon;
-    if (descriptionId == -1 && !item->isEmpty())
+    std::wstring text(image);
+    bool usesIconHolderPreset = false;
+
+    if (itemId == -1)
     {
-        if (item->getCount() == 0)
-            item->setCount(1);
-        m_icon = item;
-        m_description = image == 0 ? L"" : image;
-        m_hasDescription = true;
-        return;
+        m_showIcon = showIcon;
+
+        if (text.find(L"{*CraftingTableIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::crafting_table, 1, 0));
+        }
+        else if (text.find(L"{*SticksIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::stick, 1, 0));
+        }
+        else if (text.find(L"{*PlanksIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::planks, 1, 0));
+        }
+        else if (text.find(L"{*WoodenShovelIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenShovel, 1, 0));
+        }
+        else if (text.find(L"{*WoodenHatchetIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenAxe, 1, 0));
+        }
+        else if (text.find(L"{*WoodenPickaxeIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenPickaxe, 1, 0));
+        }
+        else if (text.find(L"{*FurnaceIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::furnace, 1, 0));
+        }
+        else if (text.find(L"{*WoodenDoorIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::woodenDoor, 1, 0));
+        }
+        else if (text.find(L"{*TorchIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::torch, 1, 0));
+        }
+        else if (text.find(L"{*BoatIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::boat, 1, 0));
+        }
+        else if (text.find(L"{*FishingRodIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::fishingRod, 1, 0));
+        }
+        else if (text.find(L"{*FishIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::fish, 1, 0));
+        }
+        else if (text.find(L"{*MinecartIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::minecart, 1, 0));
+        }
+        else if (text.find(L"{*RailIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::rail, 1, 0));
+        }
+        else if (text.find(L"{*PoweredRailIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::golden_rail, 1, 0));
+        }
+        else if (text.find(L"{*StructuresIcon*}") != std::wstring::npos)
+        {
+            usesIconHolderPreset = true;
+            setupIconHolder(static_cast<EIcons>(9));
+        }
+        else if (text.find(L"{*ToolsIcon*}") != std::wstring::npos)
+        {
+            usesIconHolderPreset = true;
+            setupIconHolder(static_cast<EIcons>(10));
+        }
+        else if (text.find(L"{*BannerIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::banner, 1, 0));
+        }
+        else if (text.find(L"{*SlimeBlockIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::slime, 1, 0));
+        }
+        else if (text.find(L"{*PistonIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Blocks::piston, 1, 0));
+        }
+        else if (text.find(L"{*BlazePowderIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::blazePowder, 1, 0));
+        }
+        else if (text.find(L"{*ElytraIcon*}") != std::wstring::npos)
+        {
+            m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Items::elytra, 1, 0));
+        }
+        else
+        {
+            m_icon = ItemInstance::EMPTY;
+        }
     }
-    m_icon.reset();
-    m_description.clear();
-    m_hasDescription = false;
+    else
+    {
+        m_showIcon = false;
+        m_icon = item;
+        if (m_icon->isEmpty())
+        {
+            Item* fallbackItem = Item::byId(itemId);
+            if (fallbackItem == 0)
+            {
+                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Block::byId(itemId), 1));
+            }
+            else
+            {
+                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(fallbackItem, 1));
+            }
+        }
+    }
+
+    if (!usesIconHolderPreset)
+    {
+        if (!m_icon->isEmpty())
+        {
+            setupIconHolder(EIcons_None);
+        }
+        m_icon->setAuxValue(descriptionId);
+    }
+
+    m_iconHolderControl.setVisible(usesIconHolderPreset || !m_icon->isEmpty());
 }
 
 std::wstring UIComponent_TutorialPopup::_SetImage(std::wstring& image)
@@ -99,17 +210,26 @@ std::wstring UIComponent_TutorialPopup::_SetImage(std::wstring& image)
 void UIComponent_TutorialPopup::ParseDescription(int, std::wstring& description)
 {
     static const wchar_t* tokens[] = {
-        L"__CraftingTableIcon__", L"__SticksIcon__", L"__PlanksIcon__",
-        L"__WoodenShovelIcon__", L"__WoodenHatchetIcon__", L"__WoodenPickaxeIcon__",
-        L"__FurnaceIcon__", L"__WoodenDoorIcon__", L"__TorchIcon__",
-        L"__MinecartIcon__", L"__StoneIcon__", L"__BannerIcon__",
-        L"__SlimeBlockIcon__", L"__PistonIcon__", L"__BlazePowderIcon__",
-        L"__ElytraIcon__"
+        L"{*CraftingTableIcon*}", L"{*SticksIcon*}", L"{*PlanksIcon*}",
+        L"{*WoodenShovelIcon*}", L"{*WoodenHatchetIcon*}", L"{*WoodenPickaxeIcon*}",
+        L"{*FurnaceIcon*}", L"{*WoodenDoorIcon*}", L"{*TorchIcon*}",
+        L"{*MinecartIcon*}", L"{*BoatIcon*}", L"{*FishingRodIcon*}",
+        L"{*FishIcon*}", L"{*RailIcon*}", L"{*PoweredRailIcon*}",
+        L"{*StructuresIcon*}", L"{*ToolsIcon*}", L"{*StoneIcon*}",
+        L"{*BannerIcon*}", L"{*SlimeBlockIcon*}", L"{*PistonIcon*}",
+        L"{*BlazePowderIcon*}", L"{*ElytraIcon*}"
     };
     std::size_t i;
     for (i = 0; i < sizeof(tokens) / sizeof(tokens[0]); ++i)
-        replaceTutorialToken(description, tokens[i]);
-    replaceTutorialToken(description, L"__EXIT_PICTURE__");
+    {
+        description = replaceAll(description, tokens[i], L"{*ICON*}");
+    }
+
+    bool hasExitPicture = description.find(L"{*EXIT_PICTURE*}") != std::wstring::npos;
+    description = replaceAll(description, L"{*EXIT_PICTURE*}", L"{*ICON*}");
+    m_exitScreenshotControl.setVisible(hasExitPicture);
+
+    m_title = description;
 }
 
 void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstring& title,
@@ -117,18 +237,18 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
                                                 bool showExitScreenshot, int descriptionId)
 {
     m_interactScene = scene;
-    m_title = title;
     m_description = description;
-    m_hasDescription = !description.empty();
     if (m_interactScene != m_previousInteractScene)
         m_previousInteractScene = 0;
-    if (!m_hasDescription)
+
+    if (title.empty())
     {
         SetVisible(false);
         addTimer(1, 500);
         killTimer(0);
         return;
     }
+
     SetVisible(true);
     addTimer(1, 500);
     if (!showTitle)
@@ -140,20 +260,36 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     else
     {
         addTimer(0, descriptionId < 0 ? 7000 : descriptionId);
-        m_showTitleTimer = true;
+        m_showTitleTimer = showTitle;
         m_showExitScreenshot = showExitScreenshot;
     }
-    m_descriptionLabel.setLabel(UIString(m_title), true, false);
-    m_titleLabel.setLabel(UIString(m_description), true, false);
-    m_titleLabel.setVisible(!m_description.empty());
-    m_exitScreenshotControl.setVisible(showExitScreenshot);
-    m_splitScreen = GameSettings::GetGameSettings(0, eGameSetting_SkinAdjustments) != 0;
-    if (m_movie != 0 && m_movie->getRootNode() != 0)
+
+    std::wstring titleText;
+    if (!showExitScreenshot)
     {
-        FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
-        if (popup != 0)
-            popup->AdjustLayout(m_splitScreen && !m_showExitScreenshot);
+        titleText = title;
     }
+    else
+    {
+        titleText = L10N::GetString(0x63f2c751);
+        titleText += title;
+    }
+    stripWhitespaceForHtml(titleText, true);
+
+    wchar_t colorTag[40];
+    swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(static_cast<eMinecraftColour>(437)));
+    std::wstring coloredTitle(colorTag);
+    coloredTitle += titleText;
+
+    m_descriptionLabel.setLabel(UIString(coloredTitle), true, false);
+    m_titleLabel.setLabel(UIString(description), true, false);
+    m_titleLabel.setVisible(!description.empty());
+    m_exitScreenshotControl.setVisible(showExitScreenshot);
+
+    m_hasDescription = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(14)) != 0;
+
+    FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
+    popup->AdjustLayout(m_hasDescription && !m_containerMenuDisplayed);
 }
 
 void UIComponent_TutorialPopup::SetTutorialDescription(_TutorialPopupInfo* info)
@@ -220,8 +356,23 @@ std::wstring UIComponent_TutorialPopup::getMoviePath()
 void UIComponent_TutorialPopup::handleReload()
 {
     if (IsVisible())
-        _SetDescription(m_interactScene, m_title, m_description, m_showTitleTimer,
-                        m_showExitScreenshot, -1);
+    {
+        std::wstring formattedTitle = gApp.FormatHTMLString(m_playerId, m_title, -1);
+        if (formattedTitle.empty())
+        {
+            _SetDescription(m_interactScene, L"", L"", m_showTitleTimer, m_showExitScreenshot, -1);
+        }
+        else
+        {
+            _SetDescription(m_interactScene, formattedTitle, m_description, m_showTitleTimer,
+                            m_showExitScreenshot, -1);
+        }
+    }
+
+    bool adjustSplit = GameSettings::GetGameSettings(m_playerId, static_cast<eGameSetting>(14)) != 0 &&
+                        !m_containerMenuDisplayed;
+    FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
+    popup->AdjustLayout(adjustSplit);
     setupIconHolder(m_iconHolder);
 }
 
@@ -232,14 +383,22 @@ void UIComponent_TutorialPopup::render(int width, int height, C4JRender::eViewpo
         UIScene::render(width, height, viewport);
         return;
     }
+
+    gConsoleUIController.setupRenderPosition(0, static_cast<int>(getSafeZoneHalfHeight()));
+
     if (gFui != 0)
         gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 }
 
 void UIComponent_TutorialPopup::customDraw(const char*, fuiRect* rect)
 {
-    if (m_icon && !m_icon->isEmpty())
-        customDrawSlotControlFui(rect, 0, m_icon, 1.0f, true, false, false);
+    if (m_icon->getItem() != 0)
+    {
+        if (m_icon->getCount() == 0)
+            m_icon->setCount(1);
+        bool highlight = m_icon->getItem()->isFoil(m_icon) || m_showIcon;
+        customDrawSlotControlFui(rect, m_playerId, m_icon, 1.0f, highlight, false, false);
+    }
 }
 
 void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)

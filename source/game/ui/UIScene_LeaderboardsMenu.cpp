@@ -12,10 +12,13 @@
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
+#include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
 extern unsigned int XGetLanguage();
@@ -415,6 +418,24 @@ void UIScene_LeaderboardsMenu::staticCtor()
     gLeaderboardDescriptors[1].assign(second, second + 4);
     gLeaderboardDescriptors[2].assign(third, third + 4);
     gLeaderboardDescriptors[3].assign(fourth, fourth + 4);
+
+    gLeaderboardIconIds[0] = 32003;
+    gLeaderboardIconIds[1] = 32002;
+    gLeaderboardIconIds[2] = Item::getId(Items::minecart);
+    gLeaderboardIconIds[3] = Item::getId(Items::boat);
+    gLeaderboardIconIds[7] = Block::getId(Blocks::dirt);
+    gLeaderboardIconIds[8] = Block::getId(Blocks::cobblestone);
+    gLeaderboardIconIds[9] = Block::getId(Blocks::sand);
+    gLeaderboardIconIds[10] = Block::getId(Blocks::stone);
+    gLeaderboardIconIds[11] = Block::getId(Blocks::gravel);
+    gLeaderboardIconIds[12] = Block::getId(Blocks::clay);
+    gLeaderboardIconIds[13] = Block::getId(Blocks::obsidian);
+    gLeaderboardIconIds[14] = Item::getId(Items::egg);
+    gLeaderboardIconIds[15] = Item::getId(Items::wheat);
+    gLeaderboardIconIds[16] = Block::getId(Blocks::brown_mushroom);
+    gLeaderboardIconIds[17] = Item::getId(Items::reeds);
+    gLeaderboardIconIds[18] = Item::getId(Items::milkBucket);
+    gLeaderboardIconIds[19] = Block::getId(Blocks::pumpkin);
 }
 
 unsigned int UIScene_LeaderboardsMenu::mapElementsAndNames()

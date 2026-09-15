@@ -249,6 +249,7 @@ void FJ_CraftingMenu::init(FJ_Event* event) {
     for (int i = 0; i < 5; ++i) {
         m_ingredients[i] = false;
     }
+    m_descriptionBaseY = 0;
     showPanelDisplay(1);
     ShowDescriptionPanel(false);
     ShowSuperCraftingSlots(0);

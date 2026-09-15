@@ -48,7 +48,14 @@ unsigned int UIScene_HorseInventoryMenu::IsVisible(
     if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x48) ||
         section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x49))
         return 1;
-    return IsSectionSlotList(section) ? 1U : 0U;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4a))
+        return (m_horse->GetType() & 0x0d698000ULL) == 0x0d698000ULL &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest() ? 1U : 0U;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4b))
+        return m_horse->wearsArmor() ? 1U : 0U;
+    if (section == static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4c))
+        return m_horse->canBeSaddled() ? 1U : 0U;
+    return 0;
 }
 
 unsigned int UIScene_HorseInventoryMenu::getSectionColumns(
@@ -238,23 +245,42 @@ void UIScene_HorseInventoryMenu::SetHasSaddle(bool hasSaddle)
 
 void UIScene_HorseInventoryMenu::setUp(bool enabled)
 {
-    const bool hasChest = m_horse && boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
-    const int columns = hasChest ? boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns() : 2;
+    const bool hasChest = (m_horse->GetType() & 0x0d698000ULL) == 0x0d698000ULL &&
+        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
+    const int sectionCount = hasChest
+        ? boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns() * 3 + 2
+        : 2;
     m_sceneInterface->Initialize(enabled, m_sceneInterface->m_containerId,
-                                 m_sceneInterface->m_menu, true, columns * 3 + 2,
+                                 m_sceneInterface->m_menu, true, sectionCount,
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x48),
                                  static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(0x4d), false);
-    if (!hasChest)
+    if (!m_horse->wearsArmor())
+    {
         SetInventoryType(1);
+    }
     else
     {
-        SetInventoryType(0);
+        int type = 0;
+        if (m_horse->GetType() == 0x2d698003ULL)
+            type = 2;
+        SetInventoryType(type);
         m_armorSlot.addSlots(1, 1);
-        m_inventoryList.addSlots(2, columns * 3);
-        SetHasInventory(true);
     }
-    SetHasSaddle(m_horse && m_horse->isSaddled());
-    m_saddleSlot.addSlots(0, 1);
+    const bool hasInventory = (m_horse->GetType() & 0x0d698000ULL) == 0x0d698000ULL &&
+        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
+    if (hasInventory)
+    {
+        SetHasInventory(true);
+        const int columns = boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns();
+        m_inventoryList.addSlots(2, columns * 3);
+    }
+    else
+    {
+        SetHasInventory(false);
+    }
+    SetHasSaddle(m_horse->canBeSaddled());
+    if (m_horse->canBeSaddled())
+        m_saddleSlot.addSlots(0, 1);
 }
 
 unsigned int UIScene_HorseInventoryMenu::mapElementsAndNames()

@@ -204,26 +204,97 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
 {
     if (!initial)
     {
-        if (up && m_activeRow < m_firstVisibleRow)
+        if (!up)
+        {
+            if (m_firstVisibleRow + m_visibleRows <= m_activeRow)
+            {
+                m_firstVisibleRow = m_activeRow + 1 - m_visibleRows;
+                if (m_downArrow != 0)
+                    m_downArrow->ChangeState(4);
+            }
+        }
+        else if (m_activeRow < m_firstVisibleRow)
+        {
             m_firstVisibleRow = m_activeRow;
-        if (!up && m_activeRow >= m_firstVisibleRow + m_visibleRows)
-            m_firstVisibleRow = m_activeRow - m_visibleRows + 1;
+            if (m_upArrow != 0)
+                m_upArrow->ChangeState(1);
+        }
     }
-    if (m_firstVisibleRow < 0)
-        m_firstVisibleRow = 0;
-    if (m_firstVisibleRow >= static_cast<int>(m_items.size()) && !m_items.empty())
-        m_firstVisibleRow = static_cast<int>(m_items.size()) - 1;
+
     unsigned int row;
     for (row = 0; row < m_items.size(); ++row)
     {
-        bool visible = row >= static_cast<unsigned int>(m_firstVisibleRow) &&
-            row < static_cast<unsigned int>(m_firstVisibleRow + m_visibleRows);
+        bool reachedLimit = false;
+        float heightBeforeFirstVisible = 0.0f;
+        float heightBeforeRow = 0.0f;
+        float visibleHeight = 0.0f;
+        unsigned int r;
+        for (r = 0; r < m_items.size(); ++r)
+        {
+            float itemHeight = m_items[r][0]->getHeight();
+            if (static_cast<int>(r) < m_firstVisibleRow)
+                heightBeforeFirstVisible += itemHeight + static_cast<float>(m_itemSpacing);
+            if (r < row)
+                heightBeforeRow += itemHeight + static_cast<float>(m_itemSpacing);
+            if (static_cast<int>(r) >= m_firstVisibleRow && !reachedLimit)
+            {
+                visibleHeight += itemHeight;
+                m_visibleRows = static_cast<int>(r) - m_firstVisibleRow;
+                if (visibleHeight <= static_cast<float>(m_listHeight))
+                    visibleHeight += static_cast<float>(m_itemSpacing);
+                else
+                    reachedLimit = true;
+            }
+        }
+        if (!reachedLimit)
+            m_visibleRows += 1;
+
         unsigned int column;
         for (column = 0; column < m_items[row].size(); ++column)
-            if (m_items[row][column] != 0)
-                m_items[row][column]->setVisible(visible);
+        {
+            FJ_FuiNode* item = m_items[row][column];
+            fuiRect rect = item->getRect(item);
+            float itemX = static_cast<float>(Math::round(getX() +
+                static_cast<float>(column) * m_items[0][0]->getWidth() +
+                static_cast<float>(static_cast<int>(column) * m_itemSpacing) - rect.xMin));
+            item->setX(itemX);
+            rect = item->getRect(item);
+            float itemY = static_cast<float>(Math::round(getY() + heightBeforeRow - rect.yMin -
+                heightBeforeFirstVisible));
+            item->setY(itemY);
+            if (item->isFJ_Base())
+            {
+                FJ_Base* base = item->asFJ_Base();
+                std::vector<FJ_FuiNode*>::iterator objIt;
+                for (objIt = base->m_objects.begin(); objIt != base->m_objects.end(); ++objIt)
+                    (*objIt)->setY(item->getY());
+            }
+        }
+
+        if (row < static_cast<unsigned int>(m_firstVisibleRow) ||
+            static_cast<unsigned int>(m_firstVisibleRow + m_visibleRows) <= row)
+        {
+            if (!immediate && row == static_cast<unsigned int>(m_activeRow))
+            {
+                ScrollList(up, initial, true);
+                if (!initial)
+                    HandleScrollListArrows(false);
+                if (m_scrollDelegate != 0)
+                    m_scrollDelegate(m_scrollDelegateNode);
+                return;
+            }
+            for (column = 0; column < m_items[row].size(); ++column)
+                m_items[row][column]->setVisible(false);
+        }
+        else
+        {
+            for (column = 0; column < m_items[row].size(); ++column)
+                m_items[row][column]->setVisible(true);
+        }
     }
-    HandleScrollListArrows(!immediate);
+
+    if (!initial)
+        HandleScrollListArrows(false);
     if (m_scrollDelegate != 0)
         m_scrollDelegate(m_scrollDelegateNode);
 }
@@ -258,26 +329,74 @@ void FJ_List2D::SetNewObjectWidth(int width)
 
 void FJ_List2D::addNewListItem(FJ_Base* item, int id)
 {
-    if (item == 0)
-        return;
     int index = 0;
-    unsigned int row;
-    for (row = 0; row < m_items.size(); ++row)
-        index += static_cast<int>(m_items[row].size());
+    unsigned int r;
+    for (r = 0; r < m_items.size(); ++r)
+        index += static_cast<int>(m_items[r].size());
     item->setId(id);
     item->setListId(index);
     item->setObjListParent(this);
-    int columns = m_itemsPerRow;
-    if (columns < 1)
-        columns = 1;
-    row = static_cast<unsigned int>(index / columns);
-    if (row >= m_items.size())
+
+    int newCount = index + 1;
+    int itemWidth = static_cast<int>(item->getWidth());
+    int cellWidth = itemWidth + m_itemSpacing;
+    int availableWidth = Math::round(getWidth());
+    int row;
+    int rowStart;
+    if (availableWidth < cellWidth * newCount - m_itemSpacing)
+    {
+        row = index / m_itemsPerRow;
+        rowStart = m_itemsPerRow * row;
+    }
+    else
+    {
+        row = index / newCount;
+        rowStart = newCount * row;
+        m_itemsPerRow = newCount;
+    }
+    int column = index - rowStart;
+
+    if (column == 0)
         m_items.push_back(std::vector<FJ_FuiNode*>());
     m_items[row].push_back(item);
-    FJ_FuiNode* parent = getParent();
-    if (parent != 0)
-        parent->addChild(item);
+
+    item->m_navLinkName[2] = m_navLinkName[2];
+    item->m_navLinkName[3] = m_navLinkName[3];
+    item->m_navLinkName[0] = m_navLinkName[0];
+    item->m_navLinkName[1] = m_navLinkName[1];
+
+    if (column == 0)
+    {
+        if (row >= 1)
+        {
+            FJ_FuiNode* prevRowLast = m_items[row - 1][m_itemsPerRow - 1];
+            item->m_navLinkName[2] = prevRowLast->getName();
+            prevRowLast->asFJ_Base()->m_navLinkName[3] = item->getName();
+        }
+    }
+    else
+    {
+        FJ_FuiNode* prevItem = m_items[row][column - 1];
+        item->m_navLinkName[2] = prevItem->getName();
+        prevItem->asFJ_Base()->m_navLinkName[3] = item->getName();
+    }
+
+    if (row >= 1)
+    {
+        unsigned int col;
+        for (col = 0; col < m_items[row - 1].size(); ++col)
+        {
+            if (static_cast<int>(col) > column)
+                m_items[row - 1][col]->asFJ_Base()->m_navLinkName[1] = item->getName();
+        }
+        FJ_FuiNode* above = m_items[row - 1][column];
+        item->m_navLinkName[0] = above->getName();
+        above->asFJ_Base()->m_navLinkName[1] = item->getName();
+    }
+
     item->addEventListener(eFJEventType_FocusIn, this, _ItemFocusInHandler, false);
+    FJ_FuiNode* parent = getParent();
+    parent->addChild(item);
     if (index == m_activeItem)
         SetListFocus();
     ScrollList(false, true, false);

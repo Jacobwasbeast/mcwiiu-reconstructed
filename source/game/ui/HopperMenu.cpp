@@ -65,9 +65,6 @@ not_null_ptr<ItemInstance> HopperMenu::quickMoveStack(boost::shared_ptr<Player> 
         } else {
             slot->setChanged();
         }
-        if (item->getCount() == result->getCount()) {
-            return ItemInstance::EMPTY;
-        }
     }
     return result;
 }

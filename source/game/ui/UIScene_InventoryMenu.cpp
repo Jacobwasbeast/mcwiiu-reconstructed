@@ -250,7 +250,7 @@ UIControl* UIScene_InventoryMenu::getSection(IUIScene_AbstractContainerMenu::ESc
 
 void UIScene_InventoryMenu::customDraw(const char* name, fuiRect* rect)
 {
-    if (Minecraft::GetInstance() != 0 && std::string(name) == std::string("px____0")) { m_playerControl.render(rect); return; }
+    if (Minecraft::GetInstance() != 0 && std::string(name) == std::string("player")) { m_playerControl.render(rect); return; }
     UIScene_AbstractContainerMenu::customDraw(name, rect);
 }
 

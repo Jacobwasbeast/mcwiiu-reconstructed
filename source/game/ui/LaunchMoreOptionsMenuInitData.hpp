@@ -13,6 +13,7 @@ class LaunchMoreOptionsMenuInitData
 public:
     LaunchMoreOptionsMenuInitData();
 
+
     friend class IUIScene_StartGame;
     friend class MiniGameDef;
     friend class UIScene_LoadMenu;

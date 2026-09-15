@@ -2,11 +2,26 @@
 
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/item/Container.hpp"
+#include "game/ui/ChestMenu.hpp"
+#include "game/ui/ShulkerBoxMenu.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void*, UILayer* layer)
+namespace
+{
+struct _ContainerMenuArgs
+{
+    boost::shared_ptr<Container> first;
+    boost::shared_ptr<Container> second;
+    int containerId;
+};
+}
+
+UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer),
       m_largeChest(false),
       m_containerList(),
@@ -14,8 +29,53 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int type, void*, UILayer* layer)
       m_sceneInterface(0)
 {
     m_sceneInterface = this;
+
+    _ContainerMenuArgs* args = static_cast<_ContainerMenuArgs*>(data);
+    m_largeChest = args->second->getContainerSize() > 27;
+
     initialiseMovie();
-    m_chestLabel.init(UIString(L10N::GetString(0x24fee045)));
+
+    const int openedSize = static_cast<int>(args->second->getContainerSize());
+    const std::wstring openedName = args->second->getName();
+    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[type];
+    AbstractContainerMenu* menu = 0;
+
+    if (openedName.empty())
+    {
+        switch (openedSize)
+        {
+        case 0xd:
+            m_chestLabel.init(UIString(L10N::GetString(0xf1fc8097)));
+            break;
+        case 0xf:
+            m_chestLabel.init(UIString(L10N::GetString(0xdaf7bb26)));
+            break;
+        case 0xe:
+            m_chestLabel.init(UIString(L10N::GetString(0x68521aaf)));
+            break;
+        case 0x10:
+            m_chestLabel.init(UIString(L10N::GetString(0x917ea687)));
+            break;
+        case 0x15:
+            m_chestLabel.init(UIString(L10N::GetString(0x7b0460c8)));
+            menu = new ShulkerBoxMenu(args->first, args->second, player);
+            break;
+        default:
+            m_chestLabel.init(UIString(L10N::GetString(0x24fee045)));
+            break;
+        }
+    }
+    else
+    {
+        m_chestLabel.init(UIString(openedName));
+        if (openedSize == 0x15)
+            menu = new ShulkerBoxMenu(args->first, args->second, player);
+    }
+
+    if (menu == 0)
+        menu = new ChestMenu(args->first, args->second, player);
+
+    delete args;
 }
 
 UIScene_ContainerMenu::~UIScene_ContainerMenu()

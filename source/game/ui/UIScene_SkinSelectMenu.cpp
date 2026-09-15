@@ -11,8 +11,10 @@
 #include "game/core/DLCPack.hpp"
 #include "game/core/DLCSkinFile.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/L10N.hpp"
 #include "game/core/cDLCInfo.hpp"
 #include "game/ui/FJ_SkinSelect.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -115,11 +117,30 @@ void UIScene_SkinSelectMenu::setCharacterBlocked(bool blocked)
 void UIScene_SkinSelectMenu::setActivePackIndex()
 {
     m_activePackId = 0;
-    if (m_packTypeId > 1)
+    m_hasSelectedPack = false;
+    if (gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin) != 0)
     {
-        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_packTypeId);
+        DLCPack* pack = gApp.mDLCManager.getPackContainingSkin(m_skinName);
         if (pack != 0)
             m_activePackId = static_cast<int>(pack->GetPackId());
+
+        const unsigned int count = GameSettings::GetPlayerFavoriteSkinsCount(m_playerId);
+        for (unsigned int i = 0; i < count; ++i)
+        {
+            const unsigned int skin = GameSettings::GetPlayerFavoriteSkin(m_playerId, i);
+            bool isDefault = false;
+            bool hasPurchased = false;
+            DLCFile* file = gApp.mDLCManager.getSkinFile(static_cast<int>(skin), isDefault,
+                                                         hasPurchased);
+            if (file == 0)
+                continue;
+            if (file->m_path == m_skinName)
+            {
+                m_activePackId = 0;
+                m_hasSelectedPack = true;
+                break;
+            }
+        }
     }
 }
 
@@ -177,11 +198,68 @@ int UIScene_SkinSelectMenu::getPreviousSkinIndex(unsigned int index)
 
 void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 {
-    if (m_packTypeId == 1)
-        m_selectedSkinId = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, m_skinIndex));
-    else if (m_activePackId != 0)
-        m_selectedSkinId = m_skinIndex;
     m_skinChanging = false;
+    m_favouriteChanged = false;
+    setCharacterSelected(false);
+    m_skinBoxes = 0;
+    m_skinTitle1.init(UIString(L""));
+    m_skinTitle2.init(UIString(L""));
+
+    if (m_packTypeId == 0)
+    {
+        m_selectedSkinId = m_skinIndex;
+        m_defaultSkinName = m_skinIndex == 0 ? L"default" : L"";
+        setCharacterLocked(false);
+        setCharacterBlocked(false);
+        m_characterPanel.setVisible(true);
+        m_packIcon.setTextureName(std::wstring(), false);
+        return;
+    }
+
+    if (m_packTypeId == 1)
+    {
+        const unsigned int count = GameSettings::GetPlayerFavoriteSkinsCount(m_playerId);
+        if (count == 0)
+        {
+            m_characterPanel.setVisible(false);
+            m_hasSelectedPack = true;
+            return;
+        }
+        m_selectedSkinId = static_cast<int>(GameSettings::GetPlayerFavoriteSkin(
+            m_playerId, static_cast<unsigned int>(m_skinIndex)));
+        m_favouriteChanged = IsFavoriteSkin(m_playerId, m_selectedSkinId) != 0;
+        m_characterPanel.setVisible(true);
+        setCharacterSelected(true);
+        setCharacterLocked(false);
+        setCharacterBlocked(false);
+        return;
+    }
+
+    DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_activePackId);
+    if (pack == 0)
+    {
+        setCharacterLocked(false);
+        setCharacterBlocked(false);
+        return;
+    }
+    m_selectedSkinId = m_skinIndex;
+    DLCSkinFile* file = static_cast<DLCSkinFile*>(pack->getSkinFile(
+        static_cast<unsigned int>(m_skinIndex)));
+    if (file == 0)
+    {
+        setCharacterSelected(false);
+        setCharacterLocked(false);
+        setCharacterBlocked(false);
+        return;
+    }
+    m_skinName = file->m_path;
+    m_skinBoxes = file->getAdditionalBoxes();
+    const bool selected = m_skinName == GameSettings::GetPlayerSkinName(m_playerId);
+    const bool blocked = !file->isFree() && !pack->hasPurchasedPack();
+    setCharacterSelected(selected);
+    setCharacterLocked(!selected && !blocked);
+    setCharacterBlocked(blocked);
+    m_characterPanel.setVisible(true);
 }
 
 unsigned int UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
@@ -229,9 +307,30 @@ bool UIScene_SkinSelectMenu::SORTALPHABETICALLY(int first, int second)
 
 void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 {
+    if (!m_dlcChanged)
+        return;
+    m_dlcChanged = false;
+    m_packIds.clear();
+    m_newPackIds.clear();
+    m_selectedPackIds.clear();
     m_skinButtonList.clearList();
-    m_skinButtonList.AddNewButton(L"Default", 0, true);
-    m_skinButtonList.AddNewButton(L"Favorites", 1, true);
+    m_skinButtonList.AddNewButton(L10N::GetString(0xa6517d6b), 0, true);
+    m_skinButtonList.AddNewButton(L10N::GetString(0x70a431bd), 1, true);
+
+    const unsigned int count = gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin);
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        DLCPack* pack = gApp.mDLCManager.getPack(i, DLCManager::eDLCType_Skin);
+        if (pack == 0 || IsTrialDiscontinuedPack(static_cast<int>(pack->GetPackId())) != 0)
+            continue;
+        const int id = static_cast<int>(pack->GetPackId());
+        if (pack->getSkinCount() == 0)
+            continue;
+        m_packIds.push_back(id);
+        if (GetIsNewPack(id) != 0)
+            m_newPackIds.push_back(id);
+    }
+    std::sort(m_packIds.begin(), m_packIds.end(), SORTALPHABETICALLY);
     for (std::vector<int>::const_iterator it = m_packIds.begin(); it != m_packIds.end(); ++it)
     {
         DLCPack* pack = gApp.mDLCManager.getPackFromPackID(*it);
@@ -301,12 +400,46 @@ unsigned int UIScene_SkinSelectMenu::IsFavoriteSkin(int player, int skin)
 
 void UIScene_SkinSelectMenu::updateTooltips()
 {
-    UIScene::updateTooltips();
+    int skinTooltip = -1;
+    unsigned int player = static_cast<unsigned int>(m_playerId);
+
+    if (m_packTypeId == 1)
+    {
+        if (GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0)
+            skinTooltip = 0x3de1e040;
+    }
+    else
+    {
+        skinTooltip = 0x855b0987;
+        if (m_packTypeId == 0)
+        {
+            if (IsFavoriteSkin(m_playerId, m_selectedSkinId) != 0)
+                skinTooltip = 0x3de1e040;
+        }
+        else
+        {
+            DLCPack* pack = gApp.mDLCManager.getPackFromPackID(m_packTypeId);
+            DLCSkinFile* file = pack == 0 ? 0 : static_cast<DLCSkinFile*>(pack->getSkinFile(static_cast<unsigned int>(m_selectedSkinId)));
+            if (file != 0)
+            {
+                int skinId = CMinecraftApp::getSkinIdFromPath(file->m_path);
+                if (IsFavoriteSkin(m_playerId, skinId) != 0)
+                    skinTooltip = 0x3de1e040;
+                if (!pack->hasPurchasedPack() && !file->isFree())
+                    skinTooltip = -1;
+            }
+        }
+    }
+
+    const int primaryTooltip = m_characterFacing ? -1 : 0x4d09d95;
+    gConsoleUIController.SetTooltips(player, primaryTooltip, 0xe21d8023, -1, skinTooltip,
+                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     -1, 0x2336ec22, false, false);
 }
 
 void UIScene_SkinSelectMenu::updateComponents()
 {
-    UIScene::updateComponents();
+    m_layer->showComponent(m_playerId, static_cast<EUIScene>(0x43), false);
 }
 
 void UIScene_SkinSelectMenu::handleAnimationEnd()

@@ -255,6 +255,7 @@ public:
         static bool inlist(const int* list, int value);
         ~CustomSuperflatBlocks();
         int itemcount() const;
+        int mMaxId;
     };
     static BiomeInfo* getBiomeInfoA();
 };

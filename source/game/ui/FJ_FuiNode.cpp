@@ -305,10 +305,6 @@ FJ_MenuButton* FJ_FuiNode::asFJ_MenuButton()
     return dynamic_cast<FJ_MenuButton*>(this);
 }
 
-bool FJ_FuiNode::isFJ_MenuButton()
-{
-    return asFJ_MenuButton() != NULL;
-}
 
 bool FJ_FuiNode::isFJ_Label()
 {
@@ -350,10 +346,6 @@ FJ_Label_HUD_SplashVita* FJ_FuiNode::asFJ_Label_HUD_SplashVita()
     return dynamic_cast<FJ_Label_HUD_SplashVita*>(this);
 }
 
-bool FJ_FuiNode::isFJ_Label_HUD_SplashVita()
-{
-    return asFJ_Label_HUD_SplashVita() != NULL;
-}
 
 FJ_Label_Blink* FJ_FuiNode::asFJ_Label_Blink()
 {
@@ -390,10 +382,6 @@ FJ_List_MenuButton* FJ_FuiNode::asFJ_List_MenuButton()
     return dynamic_cast<FJ_List_MenuButton*>(this);
 }
 
-bool FJ_FuiNode::isFJ_List_MenuButton()
-{
-    return asFJ_List_MenuButton() != NULL;
-}
 
 FJ_ListButton* FJ_FuiNode::asFJ_ListButton()
 {
@@ -405,15 +393,6 @@ bool FJ_FuiNode::isFJ_ListButton()
     return asFJ_ListButton() != NULL;
 }
 
-FJ_UpsellButton* FJ_FuiNode::asFJ_UpsellButton()
-{
-    return dynamic_cast<FJ_UpsellButton*>(this);
-}
-
-bool FJ_FuiNode::isFJ_UpsellButton()
-{
-    return asFJ_UpsellButton() != NULL;
-}
 
 FJ_ListButtonController* FJ_FuiNode::asFJ_ListButtonController()
 {
@@ -435,35 +414,18 @@ bool FJ_FuiNode::isFJ_List_ListButton()
     return asFJ_List_ListButton() != NULL;
 }
 
-FJ_List_ListButtonAchievement* FJ_FuiNode::asFJ_List_ListButtonAchievement()
-{
-    return dynamic_cast<FJ_List_ListButtonAchievement*>(this);
-}
-
-bool FJ_FuiNode::isFJ_List_ListButtonAchievement()
-{
-    return asFJ_List_ListButtonAchievement() != NULL;
-}
 
 FJ_List_ListButtonPlayerList* FJ_FuiNode::asFJ_List_ListButtonPlayerList()
 {
     return dynamic_cast<FJ_List_ListButtonPlayerList*>(this);
 }
 
-bool FJ_FuiNode::isFJ_List_ListButtonPlayerList()
-{
-    return asFJ_List_ListButtonPlayerList() != NULL;
-}
 
 FJ_List_ListButtonScoreBoard* FJ_FuiNode::asFJ_List_ListButtonScoreBoard()
 {
     return dynamic_cast<FJ_List_ListButtonScoreBoard*>(this);
 }
 
-bool FJ_FuiNode::isFJ_List_ListButtonScoreBoard()
-{
-    return asFJ_List_ListButtonScoreBoard() != NULL;
-}
 
 FJ_HtmlText* FJ_FuiNode::asFJ_HtmlText()
 {
@@ -525,35 +487,18 @@ bool FJ_FuiNode::isFJ_TextInput()
     return asFJ_TextInput() != NULL;
 }
 
-FJ_DragonHealth* FJ_FuiNode::asFJ_DragonHealth()
-{
-    return dynamic_cast<FJ_DragonHealth*>(this);
-}
-
-bool FJ_FuiNode::isFJ_DragonHealth()
-{
-    return asFJ_DragonHealth() != NULL;
-}
 
 FJ_HorseJumpBar* FJ_FuiNode::asFJ_HorseJumpBar()
 {
     return dynamic_cast<FJ_HorseJumpBar*>(this);
 }
 
-bool FJ_FuiNode::isFJ_HorseJumpBar()
-{
-    return asFJ_HorseJumpBar() != NULL;
-}
 
 FJ_ExperienceBar* FJ_FuiNode::asFJ_ExperienceBar()
 {
     return dynamic_cast<FJ_ExperienceBar*>(this);
 }
 
-bool FJ_FuiNode::isFJ_ExperienceBar()
-{
-    return asFJ_ExperienceBar() != NULL;
-}
 
 FJ_Cursor* FJ_FuiNode::asFJ_Cursor()
 {
@@ -570,70 +515,37 @@ FJ_SlotList* FJ_FuiNode::asFJ_SlotList()
     return dynamic_cast<FJ_SlotList*>(this);
 }
 
-bool FJ_FuiNode::isFJ_SlotList()
-{
-    return asFJ_SlotList() != NULL;
-}
 
 FJ_ScrollArrow* FJ_FuiNode::asFJ_ScrollArrow()
 {
     return dynamic_cast<FJ_ScrollArrow*>(this);
 }
 
-bool FJ_FuiNode::isFJ_ScrollArrow()
-{
-    return asFJ_ScrollArrow() != NULL;
-}
 
 FJ_MobEffect* FJ_FuiNode::asFJ_MobEffect()
 {
     return dynamic_cast<FJ_MobEffect*>(this);
 }
 
-bool FJ_FuiNode::isFJ_MobEffect()
-{
-    return asFJ_MobEffect() != NULL;
-}
 
-FJ_MobEffect_Tile* FJ_FuiNode::asFJ_MobEffect_Tile()
-{
-    return dynamic_cast<FJ_MobEffect_Tile*>(this);
-}
-
-bool FJ_FuiNode::isFJ_MobEffect_Tile()
-{
-    return asFJ_MobEffect_Tile() != NULL;
-}
 
 FJ_ProgressBar* FJ_FuiNode::asFJ_ProgressBar()
 {
     return dynamic_cast<FJ_ProgressBar*>(this);
 }
 
-bool FJ_FuiNode::isFJ_ProgressBar()
-{
-    return asFJ_ProgressBar() != NULL;
-}
 
 FJ_BitmapIcon* FJ_FuiNode::asFJ_BitmapIcon()
 {
     return dynamic_cast<FJ_BitmapIcon*>(this);
 }
 
-bool FJ_FuiNode::isFJ_BitmapIcon()
-{
-    return asFJ_BitmapIcon() != NULL;
-}
 
 FJ_IconSlot* FJ_FuiNode::asFJ_IconSlot()
 {
     return dynamic_cast<FJ_IconSlot*>(this);
 }
 
-bool FJ_FuiNode::isFJ_IconSlot()
-{
-    return asFJ_IconSlot() != NULL;
-}
 
 FJ_Label_Book* FJ_FuiNode::asFJ_Label_Book()
 {
@@ -650,10 +562,6 @@ FJ_List_MultiList* FJ_FuiNode::asFJ_List_MultiList()
     return dynamic_cast<FJ_List_MultiList*>(this);
 }
 
-bool FJ_FuiNode::isFJ_List_MultiList()
-{
-    return asFJ_List_MultiList() != NULL;
-}
 
 FJ_Document* FJ_FuiNode::asFJ_Document()
 {
@@ -765,10 +673,6 @@ void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
     }
 }
 
-void FJ_FuiNode::stop()
-{
-    static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline())->setPlaying(false);
-}
 
 std::string FJ_FuiNode::currentLabel()
 {
@@ -838,10 +742,6 @@ void FJ_FuiNode::setWidth(float fWidth)
     m_pRenderNode->setWidth(fWidth);
 }
 
-void FJ_FuiNode::decWidth(float fAmount)
-{
-    setWidth(getWidth() - fAmount);
-}
 
 void FJ_FuiNode::incWidth(float fAmount)
 {
@@ -873,10 +773,6 @@ void FJ_FuiNode::setAlpha(float fAlpha)
     m_pRenderNode->setAlpha(fAlpha);
 }
 
-void FJ_FuiNode::decAlpha(float fAmount)
-{
-    setAlpha(getAlpha() - fAmount);
-}
 
 void FJ_FuiNode::incAlpha(float fAmount)
 {

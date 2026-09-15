@@ -219,7 +219,7 @@ void UIScene_HUD::ShowArmorIcons(int armour, bool visible)
 
 bool UIScene_HUD::SORTBYTIMELEFT(MobEffectInstance* first, MobEffectInstance* second)
 {
-    return second->getDuration() > first->getDuration();
+    return second->getDuration() < first->getDuration();
 }
 
 void UIScene_HUD::updateEffectsDisplay()
@@ -360,7 +360,13 @@ void UIScene_HUD::SetHudSize(int size)
 
 void UIScene_HUD::SetDisplayName(const std::wstring& name)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->SetGamertag(name);
+    if (name.compare(m_displayNameText) != 0 && m_splitScreen)
+    {
+        m_displayNameText = name;
+        if (getFJ_Hud() != 0)
+            getFJ_Hud()->SetGamertag(name);
+        m_displayName.setVisible(m_displayNameVisible);
+    }
 }
 
 void UIScene_HUD::repositionHud()
