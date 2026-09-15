@@ -7,7 +7,6 @@
 OwnerHurtByTargetGoal::OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal)
     : TargetGoal(tamableAnimal, false),
       mTamableAnimal(tamableAnimal),
-      mOwnerLastHurtByTimestamp(0),
       mOwnerLastHurtBy(),
       mTimestamp(0)
 {
@@ -16,6 +15,8 @@ OwnerHurtByTargetGoal::OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal)
 
 OwnerHurtByTargetGoal::~OwnerHurtByTargetGoal()
 {
+    mOwnerLastHurtBy.reset();
+    mTamableAnimal = 0;
 }
 
 bool OwnerHurtByTargetGoal::canUse()
@@ -29,9 +30,8 @@ bool OwnerHurtByTargetGoal::canUse()
         return false;
 
     mOwnerLastHurtBy = target;
-    mOwnerLastHurtByTimestamp = owner->getLastHurtByMobTimestamp();
 
-    if (mOwnerLastHurtByTimestamp == mTimestamp)
+    if (owner->getLastHurtByMobTimestamp() == mTimestamp)
         return false;
 
     if (!canAttack(target, false))
@@ -48,7 +48,7 @@ bool OwnerHurtByTargetGoal::canUse()
 
 void OwnerHurtByTargetGoal::start()
 {
-    mMob->setTarget(mOwnerLastHurtBy);
+    mMob->setTarget(mOwnerLastHurtBy.lock());
 
     boost::shared_ptr<LivingEntity> owner = mTamableAnimal->getOwner();
     if (owner)

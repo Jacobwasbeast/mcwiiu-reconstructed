@@ -19,6 +19,8 @@ LeapAtTargetGoal::LeapAtTargetGoal(Mob* mob, float yd)
 
 LeapAtTargetGoal::~LeapAtTargetGoal()
 {
+    mTarget.reset();
+    mMob = 0;
 }
 
 bool LeapAtTargetGoal::canUse()

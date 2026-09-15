@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_FOLLOWMOBGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -40,7 +41,7 @@ public:
 private:
     Mob* mMob;
     FollowPredicate* mPredicate;
-    boost::shared_ptr<Entity> mTarget;
+    boost::weak_ptr<Entity> mTarget;
     double mSpeedModifier;
     PathNavigation* mNavigation;
     int mTimeToRecalcPath;

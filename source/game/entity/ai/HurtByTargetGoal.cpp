@@ -50,8 +50,7 @@ void HurtByTargetGoal::alertOthers()
     double followDistance = getFollowDistance();
     AABB* box = mMob->mBoundingBox->grow(followDistance, 4.0, followDistance);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(PathfinderMob), box);
-    boost::shared_ptr<LivingEntity> attacker = mMob->getTarget();
+        mMob->mLevel->getEntitiesOfClass(typeid(*mMob), box);
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
@@ -60,7 +59,8 @@ void HurtByTargetGoal::alertOthers()
             boost::dynamic_pointer_cast<PathfinderMob>(*it);
         if (!mob || mob.get() == mMob || mob->getTarget())
             continue;
-        if (mMob->isAlliedTo(mob))
+
+        if (mob->isAlliedTo(mMob->getLastHurtByMob()))
             continue;
 
         bool excluded = false;
@@ -76,8 +76,7 @@ void HurtByTargetGoal::alertOthers()
         if (excluded)
             continue;
 
-        if (mAlertSameType || mob->GetType() == mMob->GetType())
-            alertOther(mob, attacker);
+        alertOther(mob, mMob->getLastHurtByMob());
     }
 
     delete entities;

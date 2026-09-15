@@ -6,6 +6,7 @@
 #include "game/core/Sensing.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/util/AABB.hpp"
 
 RangedAttackGoal::RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval, float attackRadius)
     : mMob(NULL), mRangedAttackMob(NULL), mAttackTime(0), mUnknown(0),
@@ -53,7 +54,7 @@ bool RangedAttackGoal::canUse()
 
 bool RangedAttackGoal::canContinueToUse()
 {
-    return !mMob->getNavigation()->isDone();
+    return canUse() || !mMob->getNavigation()->isDone();
 }
 
 void RangedAttackGoal::stop()
@@ -68,7 +69,7 @@ void RangedAttackGoal::tick()
     if (!mTarget)
         return;
 
-    double distance = mTarget->distanceToSqr(mMob->mX, mMob->mY, mMob->mZ);
+    double distance = mMob->distanceToSqr(mTarget->mX, mTarget->mBoundingBox->mMinY, mTarget->mZ);
     bool canSee = mMob->getSensing()->canSee(mTarget);
     if (canSee)
         ++mSeeTime;
@@ -85,18 +86,16 @@ void RangedAttackGoal::tick()
     --mAttackTime;
     if (mAttackTime < 0)
     {
-        if (canSee && distance <= (double)mAttackRadiusSqr)
-        {
-            float distanceFactor = Mth::clamp((float)(Mth::sqrt(distance) / (double)mAttackRadius), 0.1f, 1.0f);
-            mRangedAttackMob->performRangedAttack(mTarget, distanceFactor);
-            float distanceRatio = (float)(Mth::sqrt(distance) / (double)mAttackRadius);
-            mAttackTime = Mth::floor(distanceRatio * (float)(mAttackIntervalMax - mAttackIntervalMin) +
-                                     (float)mAttackIntervalMin);
-        }
-        else
-        {
-            mAttackTime = 20;
-        }
+        float distanceFactor = (float)(Mth::sqrt(distance) / (double)mAttackRadius);
+        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin) +
+                                 (float)mAttackIntervalMin);
+    }
+    else if (mAttackTime < 1 && canSee)
+    {
+        float distanceFactor = Mth::clamp((float)(Mth::sqrt(distance) / (double)mAttackRadius), 0.1f, 1.0f);
+        mRangedAttackMob->performRangedAttack(mTarget, distanceFactor);
+        mAttackTime = Mth::floor(distanceFactor * (float)(mAttackIntervalMax - mAttackIntervalMin) +
+                                 (float)mAttackIntervalMin);
     }
 }
 

@@ -16,6 +16,11 @@ NodeEvaluator::NodeEvaluator()
 
 NodeEvaluator::~NodeEvaluator()
 {
+    mNodeMap.clear();
+    mBlockStateMap.clear();
+    mBlockPathTypeMap.clear();
+    mLevelSource = 0;
+    mMob = 0;
 }
 
 void NodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)

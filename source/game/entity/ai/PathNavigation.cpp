@@ -5,10 +5,14 @@
 #include "game/core/Mth.hpp"
 #include "game/core/System.hpp"
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/Region.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/ai/MoveControl.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/util/AABB.hpp"
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
@@ -85,9 +89,16 @@ Path* PathNavigation::createPath(boost::shared_ptr<Entity> entity)
 Path* PathNavigation::createDirectPath(const BlockPos& pos)
 {
     if (!canUpdatePath()) return 0;
+    if (mPath != 0 && !mPath->isDone() && pos.equals(mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    return mPathFinder->findDirectPath(mLevel, mMob, pos, (float)getMaxDist());
+    double maxDist = getMaxDist();
+    BlockPos mobPos(mMob);
+    int radius = (int)(maxDist + 8.0);
+    BlockPos min = mobPos.offset(-radius, -radius, -radius);
+    BlockPos max = mobPos.offset(radius, radius, radius);
+    Region region(mLevel, min, max, 0);
+    return mPathFinder->findDirectPath(&region, mMob, *mTargetPos, (float)maxDist);
 }
 
 bool PathNavigation::moveTo(double x, double y, double z, double speed)
@@ -119,14 +130,36 @@ void PathNavigation::tick()
     ++mTick;
     if (mHasDelayedRecomputation) recomputePath();
     if (isDone()) return;
-    if (!canUpdatePath())
+    if (canUpdatePath())
     {
-        Vec3* p = getTempMobPos();
-        Vec3* next = mPath->getPos(boost::shared_ptr<Entity>(), mPath->getIndex());
-        if (next->y < p->y && !mMob->mOnGround) return;
-        if (std::floor(p->x) == std::floor(next->x) && std::floor(p->z) == std::floor(next->z)) mPath->setIndex(mPath->getIndex() + 1);
+        PIXBeginNamedEvent(0.0f, "updatePath");
+        updatePath();
+        PIXEndNamedEvent();
     }
-    else updatePath();
+    else
+    {
+        if (mPath != 0 && mPath->getIndex() < mPath->getSize())
+        {
+            Vec3* p = getTempMobPos();
+            Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
+            if (next->y < p->y && !mMob->mOnGround)
+            {
+                if (std::floor(p->x) == std::floor(next->x) && std::floor(p->z) == std::floor(next->z)) mPath->setIndex(mPath->getIndex() + 1);
+            }
+        }
+    }
+    if (!isDone())
+    {
+        Vec3* currentPos = mPath->currentPos(mMob->shared_from_this());
+        if (currentPos != 0)
+        {
+            BlockPos below = BlockPos(currentPos).below();
+            const BlockState* blockState = mLevel->getBlockState(below);
+            const AABB* outline = blockState->getOutlineAABB(mLevel, below);
+            Vec3* adjusted = currentPos->subtract(0.0, 1.0 - outline->mMaxY, 0.0);
+            mMob->getMoveControl()->setWantedPosition(adjusted->x, adjusted->y, adjusted->z, mSpeedModifier);
+        }
+    }
 }
 
 void PathNavigation::doStuckDetection(Vec3* pos)
@@ -154,20 +187,54 @@ void PathNavigation::doStuckDetection(Vec3* pos)
 
 void PathNavigation::updatePath()
 {
-    if (mPath == 0 || mPath->isDone()) return;
-    Vec3* mobPos = getTempMobPos();
-    int index = mPath->getIndex();
-    int size = mPath->getSize();
-    int best = index;
-    int i;
-    for (i = index; i < size; ++i)
+    Mob* pathOwner = mMob;
+    if (Entity::instanceof(mMob->getVehicle(), ENTITY_TYPE_MOB)) pathOwner = static_cast<Mob*>(mMob->getVehicle().get());
+    PathNavigation* navigation = pathOwner->getNavigation();
+    Vec3* mobPos;
+    PathNavigation* mover;
+    if (navigation == 0)
     {
-        Node* node = mPath->get(i);
-        Vec3 target((double)node->x + 0.5, (double)node->y, (double)node->z + 0.5);
-        if (!canMoveDirectly(mobPos, &target, (int)std::ceil(mMob->mBbWidth), (int)std::ceil(mMob->mBbHeight), (int)std::ceil(mMob->mBbWidth))) break;
-        best = i;
+        mobPos = getTempMobPos();
+        mover = this;
     }
-    if (best > index) mPath->setIndex(best);
+    else
+    {
+        mobPos = navigation->getTempMobPos();
+        mover = navigation;
+    }
+    int size = mPath->getSize();
+    int stopIndex = size;
+    if (!pathOwner->canFly() && mPath != 0 && mPath->getIndex() < size)
+    {
+        int floorY = Mth::floor(mobPos->y);
+        int i;
+        for (i = mPath->getIndex(); i < size; ++i)
+        {
+            Node* node = mPath->get(i);
+            if (node->y != floorY) { stopIndex = i; break; }
+        }
+    }
+    float halfWidth = pathOwner->mBbWidth;
+    mMaxDistanceToWaypoint = halfWidth <= 0.75f ? 0.75f - halfWidth * 0.5f : halfWidth * 0.5f;
+    Vec3* currentPos = mPath->currentPos();
+    if ((double)Mth::abs((float)(pathOwner->mX - (currentPos->x + 0.5))) < (double)mMaxDistanceToWaypoint &&
+        (double)Mth::abs((float)(pathOwner->mZ - (currentPos->z + 0.5))) < (double)mMaxDistanceToWaypoint &&
+        Mth::abs(pathOwner->mY - currentPos->y) < 1.0)
+    {
+        mPath->setIndex(mPath->getIndex() + 1);
+    }
+    int ceilWidth = (int)std::ceil(pathOwner->mBbWidth);
+    int ceilHeight = (int)std::ceil(pathOwner->mBbHeight);
+    int index = stopIndex - 1;
+    while (mPath->getIndex() <= index)
+    {
+        if (mover->canMoveDirectly(mobPos, mPath->getPos(pathOwner->shared_from_this(), index), ceilWidth, ceilHeight, ceilWidth))
+        {
+            mPath->setIndex(index);
+            break;
+        }
+        --index;
+    }
     doStuckDetection(mobPos);
 }
 bool PathNavigation::isInLiquid() { return mMob->isInWaterOrBubble() || mMob->isInLava(); }

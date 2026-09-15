@@ -27,6 +27,8 @@ MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
 
 MoveIndoorsGoal::~MoveIndoorsGoal()
 {
+    mDoorInfo.reset();
+    mMob = 0;
 }
 
 bool MoveIndoorsGoal::canUse()

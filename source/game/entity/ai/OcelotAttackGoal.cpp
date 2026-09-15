@@ -21,6 +21,9 @@ OcelotAttackGoal::OcelotAttackGoal(Mob* mob)
 
 OcelotAttackGoal::~OcelotAttackGoal()
 {
+    mTarget.reset();
+    mMob = 0;
+    mLevel = 0;
 }
 
 bool OcelotAttackGoal::canUse()
@@ -41,7 +44,8 @@ bool OcelotAttackGoal::canContinueToUse()
     if (mMob->distanceToSqr(mTarget.lock()) > 225.0)
         return false;
 
-    return !mMob->getNavigation()->isDone() || canUse();
+    return !mMob->getNavigation()->isDone() ||
+           mMob->distanceToSqr(mTarget.lock()) <= 16.0;
 }
 
 void OcelotAttackGoal::stop()

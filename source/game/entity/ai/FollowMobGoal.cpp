@@ -62,9 +62,9 @@ bool FollowMobGoal::canUse()
 
 bool FollowMobGoal::canContinueToUse()
 {
-    if (!mTarget || mNavigation->isDone())
+    if (!mTarget.lock() || mNavigation->isDone())
         return false;
-    return mMob->distanceToSqr(mTarget) > (double)(mStopDistance * mStopDistance);
+    return mMob->distanceToSqr(mTarget.lock()) > (double)(mStopDistance * mStopDistance);
 }
 
 void FollowMobGoal::start()
@@ -83,18 +83,33 @@ void FollowMobGoal::stop()
 
 void FollowMobGoal::tick()
 {
-    if (!mTarget)
+    boost::shared_ptr<Entity> target = mTarget.lock();
+    if (!target || mMob->isLeashed())
         return;
 
-    mMob->getLookControl()->setLookAt(mTarget, 10.0f, 30.0f);
+    mMob->getLookControl()->setLookAt(target, 10.0f, (float)mMob->getMaxHeadXRot());
     --mTimeToRecalcPath;
     if (mTimeToRecalcPath < 1)
     {
         mTimeToRecalcPath = 10;
-        if (mMob->distanceToSqr(mTarget) > (double)(mStopDistance * mStopDistance))
-            mNavigation->moveTo(mTarget, mSpeedModifier);
+        double distSq = mMob->distanceToSqr(target);
+        if (distSq > (double)(mStopDistance * mStopDistance))
+        {
+            mNavigation->moveTo(target, mSpeedModifier);
+        }
         else
+        {
             mNavigation->stop();
+            LookControl* targetLook = boost::static_pointer_cast<Mob>(target)->getLookControl();
+            if (distSq <= (double)mStopDistance ||
+                (targetLook->getWantedX() == mMob->mX &&
+                 targetLook->getWantedY() == mMob->mY &&
+                 targetLook->getWantedZ() == mMob->mZ))
+            {
+                mNavigation->moveTo(mMob->mX - (target->mX - mMob->mX), mMob->mY,
+                                     mMob->mZ - (target->mZ - mMob->mZ), mSpeedModifier);
+            }
+        }
     }
 }
 

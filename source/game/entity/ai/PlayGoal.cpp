@@ -22,6 +22,8 @@ PlayGoal::PlayGoal(Villager* villager, double speedModifier)
 
 PlayGoal::~PlayGoal()
 {
+    mTarget.reset();
+    mVillager = 0;
 }
 
 bool PlayGoal::canUse()

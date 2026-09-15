@@ -81,8 +81,11 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
 
 NearestAttackableTargetGoal::~NearestAttackableTargetGoal()
 {
+    mTarget.reset();
     delete mRangeModifier;
     delete mTargetSelector;
+    mRangeModifier = 0;
+    mTargetSelector = 0;
 }
 
 bool NearestAttackableTargetGoal::canUse()

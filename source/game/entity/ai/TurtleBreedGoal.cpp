@@ -17,9 +17,7 @@ TurtleBreedGoal::TurtleBreedGoal(Turtle* turtle, double speedModifier)
 {
 }
 
-TurtleBreedGoal::~TurtleBreedGoal()
-{
-}
+TurtleBreedGoal::~TurtleBreedGoal() = default;
 
 bool TurtleBreedGoal::canUse()
 {
@@ -56,5 +54,5 @@ void TurtleBreedGoal::breed()
 
 std::wstring TurtleBreedGoal::getName()
 {
-    return std::wstring(L"Turtle_Breed");
+    return std::wstring(L"Turtle Breed");
 }

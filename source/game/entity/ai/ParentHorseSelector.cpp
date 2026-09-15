@@ -13,4 +13,5 @@ bool ParentHorseSelector::apply(boost::shared_ptr<Entity> entity) const
 
 ParentHorseSelector::~ParentHorseSelector()
 {
+    static_cast<void>(this);
 }

@@ -19,9 +19,7 @@ TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
     setRequiredControlFlags(3);
 }
 
-TakeFlowerGoal::~TakeFlowerGoal()
-{
-}
+TakeFlowerGoal::~TakeFlowerGoal() = default;
 
 bool TakeFlowerGoal::canUse()
 {
@@ -56,7 +54,8 @@ bool TakeFlowerGoal::canUse()
 
 bool TakeFlowerGoal::canContinueToUse()
 {
-    return mGolem.lock() && mGolem.lock()->getOfferFlowerTick() > 0;
+    boost::shared_ptr<VillagerGolem> golem = mGolem.lock();
+    return golem && golem->getOfferFlowerTick() > 0;
 }
 
 void TakeFlowerGoal::start()

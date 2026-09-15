@@ -150,5 +150,5 @@ int TurtleLayEggGoal::GetNextStartTick(PathfinderMob*)
 
 std::wstring TurtleLayEggGoal::getName()
 {
-    return std::wstring(L"Turtle_Lay_Egg");
+    return std::wstring(L"Turtle Lay Egg");
 }

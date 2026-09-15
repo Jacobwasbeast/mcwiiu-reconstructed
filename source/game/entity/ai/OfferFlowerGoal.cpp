@@ -21,6 +21,8 @@ OfferFlowerGoal::OfferFlowerGoal(VillagerGolem* golem)
 
 OfferFlowerGoal::~OfferFlowerGoal()
 {
+    mTarget.reset();
+    mGolem = 0;
 }
 
 bool OfferFlowerGoal::canUse()

@@ -13,9 +13,7 @@ TurtlePathNavigation::TurtlePathNavigation(Turtle* turtle, Level* level)
     mPathFinder = createPathFinder();
 }
 
-TurtlePathNavigation::~TurtlePathNavigation()
-{
-}
+TurtlePathNavigation::~TurtlePathNavigation() = default;
 
 PathFinder* TurtlePathNavigation::createPathFinder()
 {

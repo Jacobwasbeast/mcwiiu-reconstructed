@@ -18,6 +18,7 @@ PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
 
 PanicGoal::~PanicGoal()
 {
+    mMob = 0;
 }
 
 BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int verticalRange)

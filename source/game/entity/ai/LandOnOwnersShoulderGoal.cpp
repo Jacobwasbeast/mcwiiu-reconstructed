@@ -14,6 +14,9 @@ LandOnOwnersShoulderGoal::LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner)
 
 LandOnOwnersShoulderGoal::~LandOnOwnersShoulderGoal()
 {
+    mPlayer.reset();
+    mOwner = 0;
+    mShoulderRiding = false;
 }
 
 bool LandOnOwnersShoulderGoal::canUse()

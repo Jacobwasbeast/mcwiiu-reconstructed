@@ -34,7 +34,7 @@ bool SitGoal::canUse()
         return true;
     }
 
-    if (mMob->distanceToSqr(livingOwner) < 144.0 && livingOwner->isAlive())
+    if (mMob->distanceToSqr(livingOwner) < 144.0 && livingOwner->getLastHurtByMob())
     {
         return false;
     }

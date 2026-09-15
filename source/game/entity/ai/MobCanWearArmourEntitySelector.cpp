@@ -42,7 +42,7 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
 
     if ((type & ENTITY_TYPE_MOB) == ENTITY_TYPE_MOB)
     {
-        return boost::static_pointer_cast<Mob>(entity)->canPickUpLoot();
+        return boost::static_pointer_cast<Mob>(livingEntity)->canPickUpLoot();
     }
 
     if (type == ENTITY_TYPE_ARMOR_STAND)

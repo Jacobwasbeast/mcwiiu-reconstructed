@@ -12,6 +12,7 @@ OpenDoorGoal::OpenDoorGoal(Mob* mob, bool closeDoor)
 
 OpenDoorGoal::~OpenDoorGoal()
 {
+    mCloseDoorTimer = 0;
 }
 
 bool OpenDoorGoal::canContinueToUse()

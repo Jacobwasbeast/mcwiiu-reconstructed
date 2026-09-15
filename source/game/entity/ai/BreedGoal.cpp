@@ -6,15 +6,20 @@
 #include <vector>
 
 #include "game/core/Path.hpp"
+#include "game/core/ExperienceOrb.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/GameRules.hpp"
 #include "game/core/Sensing.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Animal.hpp"
+#include "game/entity/mob/AgableMob.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 BreedGoal::BreedGoal(Animal* animal, double speedModifier)
     : mAnimal(animal), mPartner(), mLevel(animal->mLevel),
@@ -112,6 +117,47 @@ void BreedGoal::breed()
         mAnimal->resetLove();
         partner->resetLove();
         return;
+    }
+
+    boost::shared_ptr<AgableMob> child = mAnimal->getBreedOffspring(partner);
+    if (child)
+    {
+        child->setAge(-24000);
+        child->setPos(mAnimal->mX, mAnimal->mY, mAnimal->mZ);
+        mLevel->addEntity(child);
+        mLevel->broadcastEntityEvent(child, 12, 0);
+    }
+
+    mAnimal->resetLove();
+    partner->resetLove();
+
+    boost::shared_ptr<Player> player = mAnimal->getLoveCause();
+    if (!player)
+        player = partner->getLoveCause();
+    if (player)
+    {
+        player->awardStat(gStats->get_breedEntity(mAnimal->GetType()),
+                          GenericStats::param_breedEntity(mAnimal->GetType()));
+    }
+
+    Random* random = mAnimal->getRandom();
+    for (int i = 0; i < 7; ++i)
+    {
+        mLevel->addParticle(PARTICLE_HEART,
+                            mAnimal->mX + (random->nextDouble() * 2.0 - 1.0) * mAnimal->mBbWidth,
+                            mAnimal->mY + random->nextDouble() * mAnimal->mBbHeight,
+                            mAnimal->mZ + (random->nextDouble() * 2.0 - 1.0) * mAnimal->mBbWidth,
+                            random->nextGaussian() * 0.02,
+                            random->nextGaussian() * 0.02,
+                            random->nextGaussian() * 0.02,
+                            arrayWithLength<int>());
+    }
+
+    if (mLevel->getGameRules()->getBoolean(4))
+    {
+        boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
+            mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ, random->nextInt(7) + 1));
+        mLevel->addEntity(orb);
     }
 }
 

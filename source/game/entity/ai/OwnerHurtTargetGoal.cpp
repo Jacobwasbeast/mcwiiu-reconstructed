@@ -17,6 +17,8 @@ OwnerHurtTargetGoal::OwnerHurtTargetGoal(TamableAnimal* tamable)
 
 OwnerHurtTargetGoal::~OwnerHurtTargetGoal()
 {
+    mOwnerLastHurt.reset();
+    mTamable = 0;
 }
 
 bool OwnerHurtTargetGoal::canUse()

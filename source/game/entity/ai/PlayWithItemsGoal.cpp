@@ -17,6 +17,7 @@
 
 PlayWithItemsGoal::~PlayWithItemsGoal()
 {
+    mDolphin = 0;
 }
 
 bool PlayWithItemsGoal::canUse()

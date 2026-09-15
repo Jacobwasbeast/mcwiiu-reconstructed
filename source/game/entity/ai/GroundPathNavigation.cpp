@@ -180,7 +180,7 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
             for (int iz = z; iz < z + sizeZ; ++iz)
             {
                 blockPos.setZ(iz);
-                if ((xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z)) >= 0.52 &&
+                if ((xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z)) >= 0.0 &&
                     static_cast<Mob*>(mMob)->getPathfindingMalus(
                         mNodeEvaluator.getBlockPathType(static_cast<Mob*>(mMob), blockPos)) < 0.0F)
                 {
@@ -195,10 +195,33 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
 bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
                                      Vec3* pos, double xStep, double zStep)
 {
-    if (!canWalkAbove(x - sizeX / 2, y - 1, z - sizeZ / 2, sizeX, sizeY, sizeZ,
-                      pos, xStep, zStep))
+    int minX = x - sizeX / 2;
+    int minZ = z - sizeZ / 2;
+    if (!canWalkAbove(minX, y, minZ, sizeX, sizeY, sizeZ, pos, xStep, zStep))
     {
         return false;
+    }
+    if (!static_cast<Mob*>(mMob)->canFly())
+    {
+        MutableBlockPos blockPos(0, y - 1, 0);
+        for (int ix = minX; ix < minX + sizeX; ++ix)
+        {
+            blockPos.setX(ix);
+            for (int iz = minZ; iz < minZ + sizeZ; ++iz)
+            {
+                blockPos.setZ(iz);
+                if (xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z) >= 0.0)
+                {
+                    const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(
+                        mLevel, ix, y, iz, static_cast<Mob*>(mMob), sizeX, sizeY, sizeZ, true, true);
+                    float malus = static_cast<Mob*>(mMob)->getPathfindingMalus(type);
+                    if (malus < 0.0F || malus >= 8.0F)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
     }
     return true;
 }

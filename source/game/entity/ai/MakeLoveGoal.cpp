@@ -24,6 +24,10 @@ MakeLoveGoal::MakeLoveGoal(Villager* villager)
 
 MakeLoveGoal::~MakeLoveGoal()
 {
+    mPartner.reset();
+    mVillage.reset();
+    mVillager = 0;
+    mLevel = 0;
 }
 
 bool MakeLoveGoal::villageNeedsMoreVillagers()

@@ -14,6 +14,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/OwnableEntity.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/WitherSkeleton.hpp"
@@ -34,9 +35,7 @@ TargetGoal::TargetGoal(PathfinderMob* mob, bool mustSee, bool mustReach)
     _init(mob, mustSee, mustReach);
 }
 
-TargetGoal::~TargetGoal()
-{
-}
+TargetGoal::~TargetGoal() = default;
 
 void TargetGoal::_init(PathfinderMob* mob, bool mustSee, bool mustReach)
 {
@@ -85,12 +84,14 @@ bool TargetGoal::canContinueToUse()
 
     if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
     {
-        if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL
-            || boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+        if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
         {
             mMob->setTarget(boost::shared_ptr<LivingEntity>());
             return false;
         }
+
+        if (boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+            return false;
     }
 
     mMob->setTarget(target);
@@ -121,19 +122,38 @@ void TargetGoal::stop()
 bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
                            bool allowInvulnerablePlayers, bool requireSight)
 {
-    if (!target || target.get() == mob || !target->isAlive())
+    if (!target || target == mob->shared_from_this() || !target->isAlive())
+        return false;
+
+    if (!mob->canAttackType(target->GetType()))
         return false;
 
     if (mob->isAlliedTo(target))
         return false;
 
-    if (!target->isAttackable())
-        return false;
-
-    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER
-        && !allowInvulnerablePlayers)
+    OwnableEntity* mobOwnable = dynamic_cast<OwnableEntity*>(mob);
+    if (mobOwnable != NULL)
     {
-        if (target->isCreative() || mob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        std::wstring mobOwnerUUID = mobOwnable->getOwnerUUID();
+        if (!mobOwnerUUID.empty())
+        {
+            boost::shared_ptr<OwnableEntity> targetOwnable =
+                boost::dynamic_pointer_cast<OwnableEntity>(target);
+            if (targetOwnable && targetOwnable->getOwnerUUID() == mobOwnerUUID)
+                return false;
+
+            if (target == mobOwnable->getOwner())
+                return false;
+        }
+    }
+
+    if ((target->GetType() & ENTITY_TYPE_PLAYER) == ENTITY_TYPE_PLAYER)
+    {
+        if (!allowInvulnerablePlayers
+            && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+            return false;
+
+        if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
             return false;
     }
 

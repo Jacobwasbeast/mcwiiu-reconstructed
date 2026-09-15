@@ -82,6 +82,7 @@ void FollowParentGoal::start()
 
 void FollowParentGoal::stop()
 {
+    mTimeToRecalcPath = 0;
     mParentAnimal.reset();
 }
 

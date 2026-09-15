@@ -21,6 +21,8 @@ MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedMod
 
 MoveTowardsTargetGoal::~MoveTowardsTargetGoal()
 {
+    mTarget.reset();
+    mMob = 0;
 }
 
 bool MoveTowardsTargetGoal::canUse()
@@ -31,7 +33,7 @@ bool MoveTowardsTargetGoal::canUse()
         return false;
     }
 
-    if (mTarget.lock()->distanceToSqr(mMob->shared_from_this()) > (double)(mWithin * mWithin))
+    if (mTarget.lock()->distanceToSqr(mMob->shared_from_this()) < (double)(mWithin * mWithin))
     {
         return false;
     }
@@ -66,7 +68,7 @@ bool MoveTowardsTargetGoal::canContinueToUse()
         return false;
     }
 
-    return mTarget.lock()->distanceToSqr(mMob->shared_from_this()) <
+    return mTarget.lock()->distanceToSqr(mMob->shared_from_this()) >
            (double)(mWithin * mWithin);
 }
 

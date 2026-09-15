@@ -4,6 +4,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/ai/TargetGoal.hpp"
 
@@ -22,8 +23,7 @@ public:
 
 private:
     TamableAnimal* mTamableAnimal;
-    int mOwnerLastHurtByTimestamp;
-    boost::shared_ptr<LivingEntity> mOwnerLastHurtBy;
+    boost::weak_ptr<LivingEntity> mOwnerLastHurtBy;
     int mTimestamp;
 };
 

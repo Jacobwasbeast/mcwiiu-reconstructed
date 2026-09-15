@@ -11,9 +11,7 @@ TurtlePanicGoal::TurtlePanicGoal(Turtle* turtle, double speedModifier)
 {
 }
 
-TurtlePanicGoal::~TurtlePanicGoal()
-{
-}
+TurtlePanicGoal::~TurtlePanicGoal() = default;
 
 bool TurtlePanicGoal::canUse()
 {

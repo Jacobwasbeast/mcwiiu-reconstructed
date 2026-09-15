@@ -73,6 +73,7 @@ void RunAroundLikeCrazyGoal::tick()
     }
 
     mHorse->modifyTemper(5);
+    mHorse->ejectPassengers();
     mHorse->makeMad();
 }
 
