@@ -3,11 +3,19 @@
 #include "game/core/CircleShape.hpp"
 #include "game/core/SquareShape.hpp"
 #include "game/core/TemplateShape.hpp"
+#include "game/core/IGameRuleAttribute.hpp"
+
+namespace
+{
+const ConsoleGameRules::EGameRuleType BASIC_SHAPE_ACTION_TYPE =
+    static_cast<ConsoleGameRules::EGameRuleType>(49);
+}
 
 BasicShapeRuleDefinition::BasicShapeRuleDefinition()
     : mShape(L"")
 {
-    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(59), &mShape);
+    addStringAttribute(static_cast<ConsoleGameRules::EGameRuleAttr>(
+                           IGameRuleAttribute::attributeIdFromName(L"type")), &mShape);
 }
 
 BasicShapeRuleDefinition::~BasicShapeRuleDefinition()
@@ -16,7 +24,7 @@ BasicShapeRuleDefinition::~BasicShapeRuleDefinition()
 
 ConsoleGameRules::EGameRuleType BasicShapeRuleDefinition::getActionType()
 {
-    return static_cast<ConsoleGameRules::EGameRuleType>(49);
+    return BASIC_SHAPE_ACTION_TYPE;
 }
 
 LayerShape* BasicShapeRuleDefinition::Generate() const

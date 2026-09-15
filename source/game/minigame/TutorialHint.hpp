@@ -18,7 +18,11 @@ class TutorialHint
 public:
     enum eHintType
     {
-        HINT_NONE = 0
+        HINT_NONE = 0,
+        HINT_START_DESTROY_BLOCK = 1,
+        HINT_CREATE_ITEM_SELECTED = 2,
+        HINT_ITEM_DAMAGED = 3,
+        HINT_WATER_MOVEMENT = 8
     };
 
     TutorialHint(eTutorial_Hint hint, Tutorial* tutorial, int descriptionId,

@@ -11,5 +11,7 @@ ConsolationMedal::~ConsolationMedal()
 
 bool ConsolationMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {
+    (void)uid;
+    (void)gameStats;
     return true;
 }

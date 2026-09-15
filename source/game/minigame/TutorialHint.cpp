@@ -12,7 +12,7 @@ TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, in
       consecutiveTicks(0), lastBlock(NULL), active(true), fadeAllowed(allowFadeValue),
       minimumTime(minimumDisplayTime)
 {
-    tutorial->addMessage(description, repeatMessage && hintType != (eHintType)2, 3);
+    tutorial->addMessage(description, repeatMessage && hintType != HINT_CREATE_ITEM_SELECTED, 3);
 }
 
 TutorialHint::~TutorialHint()
@@ -21,7 +21,7 @@ TutorialHint::~TutorialHint()
 
 int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
-    if (type == (eHintType)1)
+    if (type == HINT_START_DESTROY_BLOCK)
     {
         Block* block = state->getBlock();
         if (block == lastBlock && active)
@@ -44,7 +44,7 @@ int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const Block
 
 unsigned int TutorialHint::destroyBlock(Block* block)
 {
-    if (type == (eHintType)1 && block == lastBlock && consecutiveTicks > 0)
+    if (type == HINT_START_DESTROY_BLOCK && block == lastBlock && consecutiveTicks > 0)
     {
         active = false;
     }
@@ -58,7 +58,7 @@ unsigned int TutorialHint::attack(not_null_ptr<ItemInstance> item, boost::shared
 
 int TutorialHint::createItemSelected(not_null_ptr<ItemInstance> item, bool selected)
 {
-    if (type == (eHintType)2 && !selected)
+    if (type == HINT_CREATE_ITEM_SELECTED && !selected)
     {
         return descriptionId;
     }
@@ -67,7 +67,7 @@ int TutorialHint::createItemSelected(not_null_ptr<ItemInstance> item, bool selec
 
 int TutorialHint::itemDamaged(not_null_ptr<ItemInstance> item)
 {
-    if (type == (eHintType)3)
+    if (type == HINT_ITEM_DAMAGED)
     {
         return descriptionId;
     }
@@ -101,7 +101,7 @@ unsigned int TutorialHint::onGameModeChange(eTutorial_GameMode gameMode)
 
 int TutorialHint::tick()
 {
-    if (type == (eHintType)8)
+    if (type == HINT_WATER_MOVEMENT)
     {
         Minecraft* minecraft = Minecraft::GetInstance();
         MultiplayerLocalPlayer* player = minecraft->mLocalPlayers[tutorial->playerId].get();
