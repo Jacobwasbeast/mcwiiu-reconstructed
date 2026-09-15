@@ -35,7 +35,7 @@ private:
  int m_musicPlayState; int m_musicPlayAux; int m_musicDelayReset; float m_streamingX,m_streamingY,m_streamingZ; float m_streamingVolume,m_streamingPitch;
  unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3];
  unsigned char m_platformPadding2[40];
- void* m_platformSoundEngine; void* m_openStreamThread; char m_streamPathBuffer[92];
+ void* m_platformSoundEngine; void* m_openStreamThread; char m_streamPathBuffer[184];
  int m_currentTrack; unsigned char m_currentTrackPadding[24];
  void* m_platformState; unsigned char m_platformStatePadding[132]; int m_trackRanges[18]; int m_trackCount; unsigned char* m_trackUsed; SoundTrack* m_trackData; int m_streamingTrackIndex;
 };

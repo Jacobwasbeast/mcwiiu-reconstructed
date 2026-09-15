@@ -89,15 +89,12 @@ SoundEngine::SoundEngine()
     std::memset(m_platformPadding2, 0, sizeof(m_platformPadding2));
     std::memset(m_platformStatePadding, 0, sizeof(m_platformStatePadding));
     SetStreamingSounds(0, 11, 12, 15, 16, 17, 18, 23, 24, 27, 28, 31, 32, 41, 42, 42, 62, 68, 87);
-    SetMusicID(eMusicType_End);
+    SetMusicID(static_cast<eMusicType>(2));
     m_platformSoundEngine = new PlatformSoundEngineImpl();
 }
 
 SoundEngine::~SoundEngine()
 {
-    delete m_random;
-    delete[] m_trackUsed;
-    delete[] m_trackData;
 }
 
 int SoundEngine::TracksSortFunction(const void* left, const void* right)
@@ -265,6 +262,9 @@ void SoundEngine::destroy()
 
 void SoundEngine::shutdown()
 {
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    if (platform != 0)
+        platform->shutdown();
     m_platformSoundEngine = 0;
 }
 
@@ -647,7 +647,90 @@ void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, fl
 
 void SoundEngine::playMusicUpdate()
 {
-    updateMusicVolume(getMasterMusicVolume());
+    if (musicVolumeFading)
+    {
+        unsigned int current = static_cast<unsigned int>(getMasterMusicVolume() * 100.0f);
+        unsigned int destination = musicVolumeFadingUp ? unlimitedMusicVolume : targetMusicVolume;
+        unsigned int step = musicVolumeFadeStep == 0 ? 1 : musicVolumeFadeStep;
+        if (musicVolumeFadingUp)
+        {
+            current = current + step >= destination ? destination : current + step;
+        }
+        else
+        {
+            current = current <= destination + step ? destination : current - step;
+        }
+        updateMusicVolume(static_cast<float>(current) / 100.0f);
+        if (current == destination)
+        {
+            musicVolumeFading = false;
+            if (musicVolumeFadingUp)
+                musicVolumeLimited = false;
+        }
+    }
+    if (m_musicDelayReset > 0)
+    {
+        --m_musicDelayReset;
+        if (m_musicDelayReset == 0 && m_musicPlayState == 6)
+            m_musicPlayState = 1;
+    }
+
+    if (m_musicDelayTicks > 0)
+    {
+        --m_musicDelayTicks;
+        if (m_musicDelayTicks == 0 && m_musicPlayState == 0)
+            m_musicPlayState = 1;
+    }
+
+    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    if (platform == 0)
+        return;
+
+    if (m_musicPlayState == 1)
+    {
+        platform->stopStream();
+        m_musicPlayState = 2;
+    }
+    else if (m_musicPlayState == 2)
+    {
+        if (platform->openStream(m_streamPathBuffer))
+        {
+            platform->startStream(this, ConfigureSound);
+            m_musicPlayState = 3;
+        }
+        else
+        {
+            m_musicPlayState = 6;
+        }
+    }
+    else if (m_musicPlayState == 3)
+    {
+        if (platform->isStreamComplete())
+            m_musicPlayState = 4;
+    }
+    else if (m_musicPlayState == 4)
+    {
+        if (!platform->isStreamComplete())
+        {
+            platform->startStream(this, ConfigureSound);
+            m_musicPlayState = 6;
+        }
+        else
+        {
+            m_musicPlayState = 1;
+        }
+    }
+    else if (m_musicPlayState == 6)
+    {
+        platform->setStreamVol(getMasterMusicVolume());
+        platform->updateStreamPos(this, UpdateSound);
+        if (platform->isStreamComplete())
+        {
+            platform->stopStream();
+            m_musicPlayState = 0;
+        }
+    }
+
 }
 
 void SoundEngine::playMusicTick()
@@ -701,9 +784,87 @@ void SoundEngine::updateMiles()
     updateSystemMusicPlaying(systemMusicPlaying);
 }
 
-void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>*, float)
+void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>* players, float partialTick)
 {
     ConsoleSoundEngine::tick();
+
+    m_activeListenerCount = 0;
+    if (players == 0)
+    {
+        m_listenerEnabled = 1;
+        m_musicListenerEnabled = 0;
+        m_thirdListenerEnabled = 0;
+        m_streamListenerEnabled = 0;
+        m_listenerX = 0.0f;
+        m_listenerY = 0.0f;
+        m_listenerZ = 0.0f;
+        m_listenerForwardX = 0.0f;
+        m_listenerForwardY = 0.0f;
+        m_listenerForwardZ = 1.0f;
+        m_activeListenerCount = 1;
+        updateMiles();
+        return;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer>& player = players[i];
+        const unsigned int enabledOffset = 0xb0 + static_cast<unsigned int>(i);
+        unsigned char* enabled = reinterpret_cast<unsigned char*>(this) + enabledOffset;
+        if (!player)
+        {
+            *enabled = 0;
+            continue;
+        }
+
+        *enabled = 1;
+        ++m_activeListenerCount;
+        const char* object = reinterpret_cast<const char*>(player.get());
+        float* listenerX = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb4 + i * 0x1c);
+        float* listenerY = listenerX + 1;
+        float* listenerZ = listenerX + 2;
+        float* forwardX = listenerX + 3;
+        float* forwardY = listenerX + 4;
+        float* forwardZ = listenerX + 5;
+
+        const double x = *reinterpret_cast<const double*>(object + 0x100);
+        const double y = *reinterpret_cast<const double*>(object + 0x108);
+        const double z = *reinterpret_cast<const double*>(object + 0x110);
+        const double oldX = *reinterpret_cast<const double*>(object + 0x118);
+        const double oldY = *reinterpret_cast<const double*>(object + 0x120);
+        const double oldZ = *reinterpret_cast<const double*>(object + 0x128);
+        *listenerX = static_cast<float>((oldX - x) * partialTick + x);
+        *listenerY = static_cast<float>((oldY - y) * partialTick + y);
+        *listenerZ = static_cast<float>((oldZ - z) * partialTick + z);
+
+        const float angle = (*reinterpret_cast<const float*>(object + 0x148) -
+                             *reinterpret_cast<const float*>(object + 0x150)) * partialTick +
+                            *reinterpret_cast<const float*>(object + 0x150);
+        const float radians = -angle * 0.01745329238474369f - 3.1415927410125732f;
+        *forwardX = std::sin(radians);
+        *forwardY = 0.0f;
+        *forwardZ = std::cos(radians);
+    }
+
+    if (m_activeListenerCount == 0)
+    {
+        m_listenerEnabled = 1;
+        m_musicListenerEnabled = 0;
+        m_thirdListenerEnabled = 0;
+        m_streamListenerEnabled = 0;
+        m_listenerX = 0.0f;
+        m_listenerY = 0.0f;
+        m_listenerZ = 0.0f;
+        m_listenerForwardX = 0.0f;
+        m_listenerForwardY = 0.0f;
+        m_listenerForwardZ = 1.0f;
+        m_activeListenerCount = 1;
+    }
+    else
+    {
+        m_listenerEnabled = 1;
+    }
+
     updateMiles();
 }
 
@@ -744,9 +905,4 @@ void SoundEngine::FlagMusicEventStart()
 void SoundEngine::updateSoundEffectVolume(float volume)
 {
     setMasterSoundEffectVolume(volume);
-}
-
-bool SoundEngine::isStreamingWavebankReady()
-{
-    return m_platformSoundEngine != 0;
 }
