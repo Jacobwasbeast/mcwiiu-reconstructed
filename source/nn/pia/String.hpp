@@ -39,7 +39,7 @@ public:
 
 protected:
     String()
-        : m_text(0), m_bufferSize(0), m_bytes(0), m_encoding(static_cast<EncodingType>(0))
+        : m_text(0), m_bufferSize(0), m_bytes(0), m_encoding()
     {
     }
 
@@ -82,7 +82,7 @@ FixedString<LengthT>::FixedString()
         m_buffer[index] = 0;
     m_bytes = 0;
     m_text = m_buffer;
-    m_encoding = static_cast<EncodingType>(0);
+    m_encoding = EncodingType();
 }
 
 template <unsigned int LengthT>
@@ -97,7 +97,7 @@ void FixedString<LengthT>::Clear()
         m_buffer[index] = 0;
     m_text = m_buffer;
     m_bytes = 0;
-    m_encoding = static_cast<EncodingType>(0);
+    m_encoding = EncodingType();
 }
 
 template <unsigned int LengthT>

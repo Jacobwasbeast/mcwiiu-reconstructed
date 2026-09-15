@@ -25,7 +25,7 @@ void String::Clear()
 {
     m_text = 0;
     m_bytes = 0;
-    m_encoding = static_cast<EncodingType>(0);
+    m_encoding = EncodingType();
 }
 
 Result String::SetString(const void* text, unsigned int, EncodingType encoding)
