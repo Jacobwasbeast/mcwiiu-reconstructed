@@ -4,7 +4,18 @@
 #include <boost/shared_ptr.hpp>
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 class File; class Options; class Random; class SoundEvent; class SoundInstance; class MultiplayerLocalPlayer;
-struct AudioInfo { float distance; SoundEvent* soundEvent; };
+class PlatformSoundEngine;
+struct AudioInfo
+{
+    unsigned char padding0[12];
+    float distance;
+    float playbackRate;
+    const SoundEvent* soundEvent;
+    unsigned char padding1;
+    unsigned char routeToDRC;
+    unsigned char padding2[2];
+    SoundInstance* instance;
+};
 struct SoundTrack { int sortKey; int trackIndex; };
 class SoundEngine : public ConsoleSoundEngine {
 public:
@@ -15,7 +26,7 @@ public:
  int GetNextTrack(int,int); void SetMusicID(eMusicType);
  virtual void destroy(); virtual void shutdown();
  virtual void play(const SoundEvent*,float,float,float,float,float,SoundInstance*);
- unsigned char GetMusicToPlay(); void SetMusicID(const std::wstring&);
+ eMusicType GetMusicToPlay(); void SetMusicID(const std::wstring&);
  virtual void playStreaming(const SoundEvent*,float,float,float,float,float,bool,bool,ConsoleSoundEngine::eAudioDelayType);
  virtual void playUI(const SoundEvent*,float,float); void updateMusicVolume(float);
  static unsigned int OpenStreamThreadProc(void*); double getDistanceScaler(AudioInfo*);
@@ -33,9 +44,9 @@ private:
  int m_activeListenerCount;
  Random* m_random; int m_musicTrack; int m_musicDelayTicks; unsigned char m_musicActive; unsigned char m_musicActivePadding[3];
  int m_musicPlayState; int m_musicPlayAux; int m_musicDelayReset; float m_streamingX,m_streamingY,m_streamingZ; float m_streamingVolume,m_streamingPitch;
- unsigned char m_musicEventStarted; unsigned char m_musicEventStartedPadding[3];
- unsigned char m_platformPadding2[40];
- void* m_platformSoundEngine; void* m_openStreamThread; char m_streamPathBuffer[184];
+ float m_streamingField14; unsigned char m_streamingIs3D; unsigned char m_streamingPayloadPadding[3]; SoundInstance* m_streamingInstance;
+ unsigned char m_platformPadding2[36];
+ PlatformSoundEngine* m_platformSoundEngine; void* m_openStreamThread; char m_streamPathBuffer[184];
  int m_currentTrack; unsigned char m_currentTrackPadding[24];
  void* m_platformState; unsigned char m_platformStatePadding[132]; int m_trackRanges[18]; int m_trackCount; unsigned char* m_trackUsed; SoundTrack* m_trackData; int m_streamingTrackIndex;
 };

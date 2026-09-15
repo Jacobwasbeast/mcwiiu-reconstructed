@@ -18,17 +18,6 @@ extern void SetSpecialThreadIDForFS_MilesStreamThread__Fv();
 
 namespace {
 
-unsigned char playerByteAt(const MultiplayerLocalPlayer* player, unsigned int offset)
-{
-    return *reinterpret_cast<const unsigned char*>(reinterpret_cast<const char*>(player) + offset);
-}
-
-boost::shared_ptr<MultiplayerLocalPlayer>& musicPlayerSlot(Minecraft* minecraft, int index)
-{
-    return reinterpret_cast<boost::shared_ptr<MultiplayerLocalPlayer>*>(
-        reinterpret_cast<char*>(minecraft) + 0x44)[index];
-}
-
 struct PlaySoundData
 {
     float x;
@@ -44,33 +33,10 @@ struct PlaySoundData
     unsigned char padding;
 };
 
-struct MilesSoundBuffer
-{
-    float x;
-    float y;
-    float z;
-    float distance;
-    float pitch;
-    float field14;
-    unsigned char is3D;
-    unsigned char pad15[3];
-    SoundInstance* instance;
-};
-
 float absDelta(float a, float b)
 {
     const float delta = a - b;
     return delta < 0.0f ? -delta : delta;
-}
-
-unsigned char soundEngineByteAt(const SoundEngine* engine, unsigned int offset)
-{
-    return *reinterpret_cast<const unsigned char*>(reinterpret_cast<const char*>(engine) + offset);
-}
-
-float soundEngineFloatAt(const SoundEngine* engine, unsigned int offset)
-{
-    return *reinterpret_cast<const float*>(reinterpret_cast<const char*>(engine) + offset);
 }
 
 } // namespace
@@ -81,20 +47,28 @@ SoundEngine::SoundEngine()
       m_thirdListenerEnabled(0), m_thirdX(0.0f), m_thirdY(0.0f), m_thirdZ(0.0f), m_thirdForwardX(0.0f), m_thirdForwardY(0.0f), m_thirdForwardZ(0.0f),
       m_streamListenerEnabled(0), m_streamListenerX(0.0f), m_streamListenerY(0.0f), m_streamListenerZ(0.0f), m_streamListenerForwardX(0.0f), m_streamListenerForwardY(0.0f), m_streamListenerForwardZ(0.0f),
       m_activeListenerCount(0), m_random(new Random()), m_musicTrack(-1), m_musicDelayTicks(0), m_musicActive(0), m_musicPlayState(0), m_musicPlayAux(0), m_musicDelayReset(0),
-      m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(1.0f), m_streamingPitch(1.0f), m_musicEventStarted(0),
+      m_streamingX(0.0f), m_streamingY(0.0f), m_streamingZ(0.0f), m_streamingVolume(1.0f), m_streamingPitch(1.0f), m_streamingField14(0.0f), m_streamingIs3D(0), m_streamingInstance(0),
       m_platformSoundEngine(0), m_openStreamThread(0), m_currentTrack(-1), m_platformState(0), m_trackCount(0), m_trackUsed(0), m_trackData(0), m_streamingTrackIndex(-1)
 {
     std::memset(m_streamPathBuffer, 0, sizeof(m_streamPathBuffer));
     std::memset(m_currentTrackPadding, 0, sizeof(m_currentTrackPadding));
+    std::memset(m_streamingPayloadPadding, 0, sizeof(m_streamingPayloadPadding));
     std::memset(m_platformPadding2, 0, sizeof(m_platformPadding2));
     std::memset(m_platformStatePadding, 0, sizeof(m_platformStatePadding));
     SetStreamingSounds(0, 11, 12, 15, 16, 17, 18, 23, 24, 27, 28, 31, 32, 41, 42, 42, 62, 68, 87);
-    SetMusicID(static_cast<eMusicType>(2));
+    SetMusicID(eMusicType_End);
     m_platformSoundEngine = new PlatformSoundEngineImpl();
 }
 
 SoundEngine::~SoundEngine()
 {
+    if (m_trackCount > 7)
+    {
+        delete[] m_trackUsed;
+    }
+    m_trackData = 0;
+    m_currentTrack = 0;
+    m_trackCount = 7;
 }
 
 int SoundEngine::TracksSortFunction(const void* left, const void* right)
@@ -262,7 +236,7 @@ void SoundEngine::destroy()
 
 void SoundEngine::shutdown()
 {
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
     if (platform != 0)
         platform->shutdown();
     m_platformSoundEngine = 0;
@@ -296,7 +270,7 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
     data.drcOutput = 0;
     data.padding = 0;
 
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
 
     if (instance == 0)
     {
@@ -314,10 +288,8 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
     }
 }
 
-unsigned char SoundEngine::GetMusicToPlay()
+SoundEngine::eMusicType SoundEngine::GetMusicToPlay()
 {
-    static const unsigned char kMiniGameMusicById[] = {0, 6, 7, 8, 9};
-
     Minecraft* minecraft = Minecraft::GetInstance();
     bool noPlayers = true;
     bool anyAlive = false;
@@ -326,7 +298,7 @@ unsigned char SoundEngine::GetMusicToPlay()
 
     for (int i = 0; i < 4; ++i)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer>& slot = musicPlayerSlot(minecraft, i);
+        boost::shared_ptr<MultiplayerLocalPlayer>& slot = minecraft->mLocalPlayers[i];
         if (!slot)
             continue;
 
@@ -340,28 +312,30 @@ unsigned char SoundEngine::GetMusicToPlay()
     }
 
     if (anyAlive)
-        return 4;
+        return eMusicType_Boss;
     if (anyDead)
-        return 0;
+        return eMusicType_Overworld;
     if (noPlayers)
     {
         if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(31)) != 0)
-            return 6;
-        return 2;
+            return eMusicType_6;
+        return eMusicType_End;
     }
 
-    boost::shared_ptr<MultiplayerLocalPlayer> selected = musicPlayerSlot(minecraft, selectedSlot);
+    boost::shared_ptr<MultiplayerLocalPlayer> selected = minecraft->mLocalPlayers[selectedSlot];
     MultiplayerLocalPlayer* player = selected.get();
-    if (player == 0 || playerByteAt(player, 0x70f) == 0 || playerByteAt(player, 0x70e) == 0)
+    if (player == 0 || !player->isAlive() || player->isSleeping())
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         unsigned int id = miniGame->GetId();
         if (id == 0 || id > 4)
-            return 10;
-        return kMiniGameMusicById[id];
+            return eMusicType_None;
+        static const eMusicType kMiniGameMusicById[] = {
+            eMusicType_6, eMusicType_7, eMusicType_8, eMusicType_9};
+        return kMiniGameMusicById[id - 1];
     }
 
-    return 5;
+    return eMusicType_5;
 }
 
 void SoundEngine::SetMusicID(const std::wstring& name)
@@ -394,7 +368,7 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
                                 bool checkPosition, bool waitForMusicStartEvent,
                                 ConsoleSoundEngine::eAudioDelayType delayType)
 {
-    if (sound != NULL || !waitForMusicStartEvent || m_musicEventStarted == 0 ||
+    if (sound != NULL || !waitForMusicStartEvent || m_streamingField14 == 0.0f ||
         (m_streamingX == x && m_streamingY == y && m_streamingZ == z))
     {
         m_streamingVolume = volume;
@@ -415,7 +389,7 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
 
         if (sound == NULL)
         {
-            m_musicEventStarted = 0;
+            m_streamingField14 = 0.0f;
             if (delayType == ConsoleSoundEngine::eAudioDelayType_None)
                 m_musicDelayTicks = 0;
             else if (delayType == ConsoleSoundEngine::eAudioDelayType_Random)
@@ -423,18 +397,18 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
             else if (delayType > ConsoleSoundEngine::eAudioDelayType_ShortRound)
             {
                 m_musicActive = checkPosition ? 1 : 0;
-                SetMusicID(static_cast<eMusicType>(GetMusicToPlay()));
+                SetMusicID(GetMusicToPlay());
                 return;
             }
             else
                 m_musicDelayTicks = 0x3c;
 
             m_musicActive = checkPosition ? 1 : 0;
-            SetMusicID(static_cast<eMusicType>(GetMusicToPlay()));
+            SetMusicID(GetMusicToPlay());
             return;
         }
 
-        m_musicEventStarted = 1;
+        m_streamingField14 = 1.0f;
         SetMusicID(sound->getName());
         m_musicDelayTicks = 0;
     }
@@ -470,7 +444,7 @@ void SoundEngine::playUI(const SoundEvent* sound, float volume, float pitch)
     data.drcOutput = 1;
     data.padding = 0;
 
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
     platform->startSound(&data, 0x20, eventPath);
     data.drcOutput = 0;
     platform->startSound(&data, 0x20, eventPath);
@@ -485,7 +459,7 @@ unsigned int SoundEngine::OpenStreamThreadProc(void* value)
 {
     SetSpecialThreadIDForFS_MilesStreamThread__Fv();
     SoundEngine* engine = static_cast<SoundEngine*>(value);
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(engine->m_platformSoundEngine);
+    PlatformSoundEngine* platform = engine->m_platformSoundEngine;
     platform->startStream(engine->m_streamPathBuffer, ConfigureSound);
     return 0U;
 }
@@ -503,10 +477,24 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
 {
     SoundEngine* engine = static_cast<SoundEngine*>(userData);
     const bool hasInstance = soundData != 0;
-    MilesSoundBuffer* buffer = static_cast<MilesSoundBuffer*>(
-        hasInstance ? soundData : reinterpret_cast<void*>(&engine->m_streamingX));
+    SoundInstance* instance = engine->m_streamingInstance;
+    float x = engine->m_streamingX;
+    float y = engine->m_streamingY;
+    float z = engine->m_streamingZ;
+    float distanceValue = engine->m_streamingVolume;
+    bool is3D = engine->m_streamingIs3D != 0;
 
-    SoundInstance* instance = buffer->instance;
+    if (hasInstance)
+    {
+        AudioInfo* callbackInfo = static_cast<AudioInfo*>(soundData);
+        instance = callbackInfo->instance;
+        x = instance->getX();
+        y = instance->getY();
+        z = instance->getZ();
+        distanceValue = instance->getVolume();
+        is3D = instance->getAttenuation() == SoundInstance::eAttenuation_Linear;
+    }
+
     if (instance != 0)
     {
         if (soundType == 0)
@@ -514,21 +502,20 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
         else if (soundType == 1)
         {
             instance->setSIState(SoundInstance::eSoundState_Playing);
-            buffer->x = instance->getX();
-            buffer->y = instance->getY();
-            buffer->z = instance->getZ();
-            buffer->distance = instance->getVolume();
-            buffer->pitch = instance->getPitch();
+            x = instance->getX();
+            y = instance->getY();
+            z = instance->getZ();
+            distanceValue = instance->getVolume();
         }
         else if (soundType == 2)
             instance->setSIState(SoundInstance::eSoundState_Complete);
     }
 
-    double distance = buffer->distance;
+    double distance = distanceValue;
     const double minDistance = 1.0;
     if (distance > minDistance)
     {
-        buffer->distance = static_cast<float>(minDistance);
+        distanceValue = static_cast<float>(minDistance);
         distance = minDistance;
     }
 
@@ -536,16 +523,16 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
     const double masterVolume = hasInstance ? consoleEngine->getMasterSoundEffectVolume()
                                             : consoleEngine->getMasterMusicVolume();
     *outVolume = static_cast<float>(distance * masterVolume);
-    *is3DOut = buffer->is3D != 0;
+    *is3DOut = is3D;
 
-    if (buffer->is3D == 0)
+    if (!is3D)
         return;
 
     if (engine->m_activeListenerCount < 2)
     {
-        *outX = buffer->x;
-        *outY = buffer->y;
-        *outZ = -buffer->z;
+        *outX = x;
+        *outY = y;
+        *outZ = -z;
         return;
     }
 
@@ -557,9 +544,9 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
 
     if (engine->m_listenerEnabled != 0)
     {
-        const float dx = absDelta(engine->m_listenerX, buffer->x);
-        const float dy = absDelta(engine->m_listenerY, buffer->y);
-        const float dz = absDelta(engine->m_listenerZ, buffer->z);
+        const float dx = absDelta(engine->m_listenerX, x);
+        const float dy = absDelta(engine->m_listenerY, y);
+        const float dz = absDelta(engine->m_listenerZ, z);
         const float sum = dx + dy + dz;
         if (sum < bestSum)
         {
@@ -572,9 +559,9 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
 
     if (engine->m_musicListenerEnabled != 0)
     {
-        const float dx = absDelta(engine->m_musicX, buffer->x);
-        const float dy = absDelta(engine->m_musicY, buffer->y);
-        const float dz = absDelta(engine->m_musicZ, buffer->z);
+        const float dx = absDelta(engine->m_musicX, x);
+        const float dy = absDelta(engine->m_musicY, y);
+        const float dz = absDelta(engine->m_musicZ, z);
         const float sum = dx + dy + dz;
         if (sum < bestSum)
         {
@@ -587,9 +574,9 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
 
     if (engine->m_thirdListenerEnabled != 0)
     {
-        const float dx = absDelta(engine->m_thirdX, buffer->x);
-        const float dy = absDelta(engine->m_thirdY, buffer->y);
-        const float dz = absDelta(engine->m_thirdZ, buffer->z);
+        const float dx = absDelta(engine->m_thirdX, x);
+        const float dy = absDelta(engine->m_thirdY, y);
+        const float dz = absDelta(engine->m_thirdZ, z);
         const float sum = dx + dy + dz;
         if (sum < bestSum)
         {
@@ -600,11 +587,11 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3DOut, in
         }
     }
 
-    if (soundEngineByteAt(engine, 0x104) != 0)
+    if (engine->m_streamListenerEnabled != 0)
     {
-        const float dx = absDelta(soundEngineFloatAt(engine, 0x108), buffer->x);
-        const float dy = absDelta(soundEngineFloatAt(engine, 0x10c), buffer->y);
-        const float dz = absDelta(soundEngineFloatAt(engine, 0x110), buffer->z);
+        const float dx = absDelta(engine->m_streamListenerX, x);
+        const float dy = absDelta(engine->m_streamListenerY, y);
+        const float dz = absDelta(engine->m_streamListenerZ, z);
         const float sum = dx + dy + dz;
         if (sum < bestSum)
         {
@@ -636,13 +623,16 @@ void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, fl
     double distanceScalar = engine->getDistanceScaler(info);
     *minDistance = static_cast<float>(distanceScalar);
 
-    const unsigned char routeFlag = *(reinterpret_cast<const unsigned char*>(soundData) + 0x19);
-    if (routeFlag == 0)
-        *playbackRate = *reinterpret_cast<const float*>(reinterpret_cast<const char*>(soundData) + 0x10);
+    if (info->routeToDRC == 0)
+    {
+        *playbackRate = info->playbackRate;
+        UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
+    }
     else
-        *playbackRate = 0.0f;
-
-    UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
+    {
+        *playbackRate = 100.0f;
+        UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
+    }
 }
 
 void SoundEngine::playMusicUpdate()
@@ -682,7 +672,7 @@ void SoundEngine::playMusicUpdate()
             m_musicPlayState = 1;
     }
 
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
     if (platform == 0)
         return;
 
@@ -740,7 +730,7 @@ void SoundEngine::playMusicTick()
 
 void SoundEngine::init(Options*)
 {
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
     platform->init(0, 0);
     m_openStreamThread = 0;
 }
@@ -778,7 +768,7 @@ void SoundEngine::updateMiles()
         }
     }
 
-    PlatformSoundEngine* platform = static_cast<PlatformSoundEngine*>(m_platformSoundEngine);
+    PlatformSoundEngine* platform = m_platformSoundEngine;
     bool systemMusicPlaying = false;
     platform->tick(this, x, y, z, forwardX, forwardY, forwardZ, ConfigureSound, UpdateSound, RouteToDRC, &systemMusicPlaying);
     updateSystemMusicPlaying(systemMusicPlaying);
@@ -809,8 +799,28 @@ void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>* players, float
     for (int i = 0; i < 4; ++i)
     {
         boost::shared_ptr<MultiplayerLocalPlayer>& player = players[i];
-        const unsigned int enabledOffset = 0xb0 + static_cast<unsigned int>(i);
-        unsigned char* enabled = reinterpret_cast<unsigned char*>(this) + enabledOffset;
+        unsigned char* enabled = 0;
+        float* listenerX = 0;
+        float* listenerY = 0;
+        float* listenerZ = 0;
+        float* forwardX = 0;
+        float* forwardY = 0;
+        float* forwardZ = 0;
+        switch (i)
+        {
+        case 0:
+            enabled = &m_listenerEnabled; listenerX = &m_listenerX; listenerY = &m_listenerY; listenerZ = &m_listenerZ;
+            forwardX = &m_listenerForwardX; forwardY = &m_listenerForwardY; forwardZ = &m_listenerForwardZ; break;
+        case 1:
+            enabled = &m_musicListenerEnabled; listenerX = &m_musicX; listenerY = &m_musicY; listenerZ = &m_musicZ;
+            forwardX = &m_musicForwardX; forwardY = &m_musicForwardY; forwardZ = &m_musicForwardZ; break;
+        case 2:
+            enabled = &m_thirdListenerEnabled; listenerX = &m_thirdX; listenerY = &m_thirdY; listenerZ = &m_thirdZ;
+            forwardX = &m_thirdForwardX; forwardY = &m_thirdForwardY; forwardZ = &m_thirdForwardZ; break;
+        default:
+            enabled = &m_streamListenerEnabled; listenerX = &m_streamListenerX; listenerY = &m_streamListenerY; listenerZ = &m_streamListenerZ;
+            forwardX = &m_streamListenerForwardX; forwardY = &m_streamListenerForwardY; forwardZ = &m_streamListenerForwardZ; break;
+        }
         if (!player)
         {
             *enabled = 0;
@@ -819,27 +829,17 @@ void SoundEngine::tick(boost::shared_ptr<MultiplayerLocalPlayer>* players, float
 
         *enabled = 1;
         ++m_activeListenerCount;
-        const char* object = reinterpret_cast<const char*>(player.get());
-        float* listenerX = reinterpret_cast<float*>(reinterpret_cast<char*>(this) + 0xb4 + i * 0x1c);
-        float* listenerY = listenerX + 1;
-        float* listenerZ = listenerX + 2;
-        float* forwardX = listenerX + 3;
-        float* forwardY = listenerX + 4;
-        float* forwardZ = listenerX + 5;
-
-        const double x = *reinterpret_cast<const double*>(object + 0x100);
-        const double y = *reinterpret_cast<const double*>(object + 0x108);
-        const double z = *reinterpret_cast<const double*>(object + 0x110);
-        const double oldX = *reinterpret_cast<const double*>(object + 0x118);
-        const double oldY = *reinterpret_cast<const double*>(object + 0x120);
-        const double oldZ = *reinterpret_cast<const double*>(object + 0x128);
+        const double x = player->mX;
+        const double y = player->mY;
+        const double z = player->mZ;
+        const double oldX = player->mXo;
+        const double oldY = player->mYo;
+        const double oldZ = player->mZo;
         *listenerX = static_cast<float>((oldX - x) * partialTick + x);
         *listenerY = static_cast<float>((oldY - y) * partialTick + y);
         *listenerZ = static_cast<float>((oldZ - z) * partialTick + z);
 
-        const float angle = (*reinterpret_cast<const float*>(object + 0x148) -
-                             *reinterpret_cast<const float*>(object + 0x150)) * partialTick +
-                            *reinterpret_cast<const float*>(object + 0x150);
+        const float angle = (player->mYRotO - player->mYRot) * partialTick + player->mYRot;
         const float radians = -angle * 0.01745329238474369f - 3.1415927410125732f;
         *forwardX = std::sin(radians);
         *forwardY = 0.0f;
