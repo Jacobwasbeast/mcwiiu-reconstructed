@@ -66,9 +66,9 @@ int32_t FFLiCharModelCreateParam::GetBufferSize(const FFLCharModelDesc* descript
         size += m_resourceManager->GetShapeAlignedMaxSize(resourceType, static_cast<FFLiShapePartsType>(part));
     size += FFLiGetBufferSizeFacelineTexture(resolution, mipmap, description->useMipmap);
     size += FFLiGetBufferSizeMaskTextures(description->expressionFlag, resolution, mipmap, description->useMipmap);
-    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(1));
-    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(10));
-    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(6));
+    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 1));
+    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 10));
+    size += FFLiGetTextureMaxSizeWithAlign(m_resourceManager, resourceType, static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 6));
     return size;
 }
 

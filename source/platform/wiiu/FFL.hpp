@@ -8,6 +8,7 @@
 #include "platform/wiiu/FFLiUtilShader.hpp"
 #include "platform/wiiu/FFLiCharModelCreator.hpp"
 #include "platform/wiiu/FFLiCopySurface.hpp"
+
 #include "vendor/__N_12_FFLiIcon_cpp_65029ad9.hpp"
 struct FFLCharModel { FFLiCharModel model; };
 struct FFLResourceDesc;

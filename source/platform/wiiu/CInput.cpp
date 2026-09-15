@@ -200,9 +200,9 @@ unsigned int XGetLanguage()
 
 int XGetLocale()
 {
-    unsigned int locale = GameSettings::GetMinecraftLocale(0);
-    if (locale != 0)
-        return locale;
+    unsigned int minecraftLocale = GameSettings::GetMinecraftLocale(0);
+    if (minecraftLocale != 0)
+        return minecraftLocale;
     if (s_xLocale == 0xff && SCIGetCafeLanguage(&s_xLocale) != 1)
         s_xLocale = 0xff;
     if (s_xLocale > 0xb)
@@ -1739,10 +1739,6 @@ void CInput::TickErrorViewer()
     nn::erreula::Calc(controllerInfo);
 }
 void CInput::DebugPrintf(const char*, ...)
-{
-}
-
-CInput::~CInput()
 {
 }
 

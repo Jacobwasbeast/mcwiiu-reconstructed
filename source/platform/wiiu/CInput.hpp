@@ -3,6 +3,8 @@
 
 struct _STRING_VERIFY_RESPONSE;
 struct FSClient;
+struct VPADStatus;
+struct KPADStatus;
 
 namespace C_4JInput
 {
@@ -87,13 +89,13 @@ public:
         {
             struct VPAD_STORAGE
             {
-                void* statuses;
+                VPADStatus* statuses;
                 void* padding;
             } vpad;
             struct KPAD_STORAGE
             {
                 void* padding;
-                void* statuses;
+                KPADStatus* statuses;
             } kpad;
         } statusStorage;
         int controllerId;

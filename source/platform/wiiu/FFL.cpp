@@ -41,6 +41,7 @@ extern "C" void GX2SetDepthOnlyControl(int, int, unsigned int);
 extern "C" void GX2SetCullOnlyControl(unsigned int, int, int);
 extern "C" void GX2SetBlendControl(unsigned int, unsigned int, unsigned int, unsigned int, int,
                                unsigned int, unsigned int, unsigned int);
+extern "C" void GX2DrawDone();
 const void* FFLiGetResourceShapeElement__FPUiPCv18FFLiShapePartsType28FFLiResourceShapeElementType(
     uint32_t* size, const void* resource, uint32_t parts, uint32_t element);
 void FFLiSetupRenderTexture__FP17FFLiRenderTexturePC8FFLColorPvUi17_GX2SurfaceFormatPC18FFLiShaderCallback(
@@ -701,9 +702,14 @@ int FFLiGetTempBufferSizeFacelineTexture__FUibT2P19FFLiResourceManager15FFLResou
     uint32_t resolution, bool mipmap, bool useMipmap,
     FFLiResourceManager* resourceManager, FFLResourceType resourceType)
 {
-    int size = static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(resourceManager, resourceType, static_cast<FFLiTexturePartsType>(4)));
-    size += static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(resourceManager, resourceType, static_cast<FFLiTexturePartsType>(5)));
-    size += static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(resourceManager, resourceType, static_cast<FFLiTexturePartsType>(0)));
+    int size = static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(
+        resourceManager, resourceType,
+        static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 4)));
+    size += static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(
+        resourceManager, resourceType,
+        static_cast<FFLiTexturePartsType>(FFLiTexturePartsType_0 + 5)));
+    size += static_cast<int>(FFLiGetTextureMaxSizeWithAlign__FPC19FFLiResourceManager15FFLResourceType20FFLiTexturePartsType(
+        resourceManager, resourceType, FFLiTexturePartsType_0));
     size += static_cast<int>(__N_23_FFLiFacelineTexture_cpp_cff65387::GetDrawParamBufferSize()) * 3;
     if (useMipmap)
     {

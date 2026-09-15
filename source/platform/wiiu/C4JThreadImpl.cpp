@@ -24,8 +24,9 @@ extern void EnterCriticalSection(OSFastMutex*);
 extern int TryEnterCriticalSection(OSFastMutex*);
 extern void DeleteCriticalSection(OSFastMutex*);
 
-void SetThreadName(unsigned int, const char*)
+void SetThreadName(unsigned int, const char* name)
 {
+    OSSetThreadName(OSGetCurrentThread(), name);
 }
 
 void InitializeCriticalSectionAndSpinCount(void* mutex, unsigned long spinCount)
@@ -297,19 +298,19 @@ void SetSpecialThreadIDForFS_MilesStreamThread__Fv()
     s_specialThreadIDForFS_MilesStreamThread = 0x40000000u;
 }
 
-void __CPR229___Insert_n__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ36JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyQ4_3stdJ139JJ166J9size_typeRCZ1Z_v(
+static void insertThreads(
     C4JThreadVector& vector, C4JThreadVectorIterator position, size_t count, C4JThreadImpl* const& value)
 {
     vector.insert(position, count, value);
 }
 
-C4JThreadVectorIterator __CPR252__insert__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ33JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_AltyRCZ1Z_Q2_3stdJ99J(
+static C4JThreadVectorIterator insertThread(
     C4JThreadVector& vector, C4JThreadVectorIterator position, C4JThreadImpl* const& value)
 {
     return vector.insert(position, value);
 }
 
-C4JThreadVectorIterator __CPR246__erase__Q2_3std74vector__tm__60_P13C4JJThreadImplQ2_3std34allocator__tm__17_PJ32JFQ2_3std68_Vector_iterator__tm__44_Z1ZQ3_3std25_Vector_val__tm__7_Z1ZZ2Z5_Alty_Q2_3stdJ98J(
+static C4JThreadVectorIterator eraseThread(
     C4JThreadVector& vector, C4JThreadVectorIterator position)
 {
     return vector.erase(position);

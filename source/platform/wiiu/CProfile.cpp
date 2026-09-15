@@ -262,7 +262,6 @@ CProfile::CProfile()
     std::memset(mAchievementsByPad, 0, sizeof(mAchievementsByPad));
     InitializeCriticalSection(&mProfileCriticalSection);
     InitializeCriticalSection(&mInitSaveDirCriticalSection);
-    mMiiData = new MiiData();
     mLoadedMiiData->mSysUserMiis = mMiiData->mSysUserMiis;
     mLoadedMiiData->mGuestMiis = mMiiData->mGuestMiis;
     mLoadedMiiData->mMiiMakerMiis = mMiiData->mMiiMakerMiis;

@@ -162,11 +162,6 @@ int MicSndFrameThread(int iArgc, void* pArgv)
     return static_cast<SndMicDevice*>(pArgv)->MicSndFrameThreadImpl();
 }
 
-static int MicSndFrameThreadWut(int iArgc, const char** pArgv)
-{
-    return MicSndFrameThread(iArgc, const_cast<void*>(reinterpret_cast<const void*>(pArgv)));
-}
-
 int SndMicDevice::RSMP32to8(short* pSrc, int iSrcSamples, short* pDst)
 {
     int iDstSamples = 0;
@@ -757,8 +752,7 @@ void SndMicDevice::InitializeMicSndCommon(SND_PARAM* pParam)
         m_pMicSndThread = OSGetDefaultThread(0);
     }
 
-    if (OSRunThread(m_pMicSndThread, MicSndFrameThreadWut, 0,
-                    reinterpret_cast<const char**>(this)) == 0)
+    if (OSRunThread(m_pMicSndThread, MicSndFrameThread, 0, this) == 0)
     {
         OSPanic(__FILE__, __LINE__, "Can't run micsnd thread\n");
     }

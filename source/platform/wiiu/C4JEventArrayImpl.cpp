@@ -1,5 +1,10 @@
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 
+static unsigned long long elapsedMilliseconds(unsigned long long ticks)
+{
+    return ticks * 1000ULL / (static_cast<unsigned long long>(OSGetSystemInfo()->busClockSpeed) >> 2);
+}
+
 C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode)
     : m_count(count), m_mode(mode), m_events(0)
 {
@@ -53,7 +58,7 @@ unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
         return 0;
     }
 
-    unsigned long long remaining = static_cast<unsigned long long>(timeout) * 1000000ULL;
+    int remaining = timeout;
     for (int index = 0; index < m_count; ++index)
     {
         unsigned long long start = OSGetTick();
@@ -61,7 +66,7 @@ unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
         {
             return 0x102;
         }
-        unsigned long long elapsed = OSGetTick() - start;
+        int elapsed = static_cast<int>(elapsedMilliseconds(OSGetTick() - start));
         if (elapsed >= remaining)
         {
             remaining = 0;
@@ -76,11 +81,6 @@ unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
 
 unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
 {
-    if (m_count < 1)
-    {
-        return 0x102;
-    }
-
     if (timeout == -1)
     {
         for (;;)
@@ -96,7 +96,7 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
     }
 
     unsigned long long start = OSGetTick();
-    unsigned long long remaining = static_cast<unsigned long long>(timeout) * 1000000ULL;
+    int timeoutDuration = timeout;
     for (;;)
     {
         for (int index = 0; index < m_count; ++index)
@@ -106,8 +106,8 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
                 return 0;
             }
         }
-        unsigned long long elapsed = OSGetTick() - start;
-        if (elapsed >= remaining)
+        int elapsed = static_cast<int>(elapsedMilliseconds(OSGetTick() - start));
+        if (timeoutDuration >= 0 && elapsed >= timeoutDuration)
         {
             return 0x102;
         }
@@ -127,4 +127,5 @@ unsigned int C4JEventArrayImpl::WaitForSingle(int index, int timeout)
 
 void C4JEventArrayImpl::Cancel()
 {
+    (void)m_count;
 }

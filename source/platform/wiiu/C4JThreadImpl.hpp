@@ -2,6 +2,7 @@
 #define PLATFORM_WIIU_C4JTHREADIMPL_HPP
 
 #include <stdint.h>
+#include <coreinit/thread.h>
 
 #include "platform/wiiu/C4JEventImpl.hpp"
 

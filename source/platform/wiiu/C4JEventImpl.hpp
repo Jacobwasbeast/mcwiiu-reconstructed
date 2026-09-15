@@ -2,18 +2,9 @@
 #define SOURCE_PLATFORM_WIIU_C4JEVENTIMPL_HPP
 
 #include <coreinit/event.h>
+#include "platform/wiiu/C4JEvent.hpp"
 
-class C4JEvent
-{
-public:
-    enum EMode
-    {
-        Mode0 = 0,
-        Mode1 = 1
-    };
-};
-
-class C4JEventImpl
+class C4JEventImpl : public C4JEvent
 {
 public:
     C4JEventImpl(C4JEvent::EMode mode);
