@@ -15,6 +15,12 @@
 #include <coreinit/thread.h>
 #include <coreinit/event.h>
 
+class C4JThreadImpl
+{
+public:
+    static unsigned int OSCreateThread4J(OSThread*, int (*)(int, void*), int, void*, void*, unsigned int, unsigned int, unsigned short);
+};
+
 
 namespace pead
 {
@@ -1160,17 +1166,33 @@ void ExpHeap::dumpUseList() const { for (MemBlock* block = mUseHead; block; bloc
 void ExpHeap::dumpFreeList() const { for (MemBlock* block = mFreeHead; block; block = block->next) { char text[96]; ::snprintf(text, sizeof(text), "free %p %u", block->address, block->span); system::PrintString(text, 0); } }
 
 FindContainHeapCache::FindContainHeapCache() : mHeap(0) {}
-bool FindContainHeapCache::tryRemoveHeap(Heap* heap) { if (mHeap != heap) return false; mHeap = 0; return true; }
+bool FindContainHeapCache::tryRemoveHeap(Heap* heap)
+{
+    if (mHeap == heap) { mHeap = reinterpret_cast<Heap*>(uintptr_t(1)); return true; }
+    return (reinterpret_cast<uintptr_t>(mHeap) & ~uintptr_t(1)) != reinterpret_cast<uintptr_t>(heap);
+}
 
-HeapMgr::HeapMgr() : mRootHeap(0), mCurrentHeap(0) {}
-HeapMgr::~HeapMgr() {}
+HeapMgr::HeapMgr() : mRootHeap(0), mCurrentHeap(0), mUnknown8(), mLock(), mCacheOwner(0), mCacheList(0) {}
+HeapMgr::~HeapMgr()
+{
+    mLock.lock();
+    mCurrentHeap = 0;
+    mRootHeap = 0;
+    mCacheOwner = 0;
+    mCacheList = 0;
+    mLock.unlock();
+}
 void HeapMgr::initialize(Arena*) { if (!sHeapMgr) sHeapMgr = new HeapMgr(); initializeImpl_(); }
 void HeapMgr::destroy() { delete sHeapMgr; sHeapMgr = 0; }
 Heap* HeapMgr::findContainHeap(const void* address) const { return mRootHeap ? mRootHeap->findContainHeap_(address) : 0; }
 Heap* HeapMgr::getCurrentHeap() const { return mCurrentHeap ? mCurrentHeap : mRootHeap; }
 bool HeapMgr::isContainedInAnyHeap(const void* address) { return sHeapMgr && sHeapMgr->findContainHeap(address); }
 HeapMgr* HeapMgr::instance() { return sHeapMgr; }
-void HeapMgr::createRootHeap_() {}
+void HeapMgr::createRootHeap_()
+{
+    if (sHeapMgr && sHeapMgr->mRootHeap)
+        sHeapMgr->mCurrentHeap = sHeapMgr->mRootHeap;
+}
 void HeapMgr::initializeImpl_() { createRootHeap_(); }
 Heap* HeapMgr::findHeapByName_(Heap* heap, const SafeStringBase<char>& name, int* index)
 {
@@ -1183,7 +1205,35 @@ Heap* HeapMgr::findHeapByName_(Heap* heap, const SafeStringBase<char>& name, int
     }
     return 0;
 }
-void HeapMgr::removeFromFindContainHeapCache_(Heap*) {}
+void HeapMgr::removeFromFindContainHeapCache_(Heap* heap)
+{
+    if (!heap || !sHeapMgr) return;
+    unsigned char* manager = reinterpret_cast<unsigned char*>(sHeapMgr);
+    FindContainHeapCache* primaryOwner = *reinterpret_cast<FindContainHeapCache**>(manager + 0x58);
+    FindContainHeapCache* primary = primaryOwner ? reinterpret_cast<FindContainHeapCache*>(reinterpret_cast<unsigned char*>(primaryOwner) + 0x70) : 0;
+    if (primary)
+    {
+        while (!primary->tryRemoveHeap(heap)) Thread::sleep(TickSpan(OSNanosecondsToTicks(10000)));
+    }
+    CriticalSection* lock = reinterpret_cast<CriticalSection*>(manager + 0x1c);
+    unsigned char* sentinel = manager + 0x10;
+    for (;;)
+    {
+        lock->lock();
+        unsigned char* node = *reinterpret_cast<unsigned char**>(manager + 0x14);
+        bool retry = false;
+        while (node != sentinel)
+        {
+            void* owner = *reinterpret_cast<void**>(node + 8);
+            FindContainHeapCache* cache = owner ? reinterpret_cast<FindContainHeapCache*>(reinterpret_cast<unsigned char*>(owner) + 0x70) : 0;
+            if (!cache || !cache->tryRemoveHeap(heap)) { retry = true; break; }
+            node = *reinterpret_cast<unsigned char**>(node + 4);
+        }
+        lock->unlock();
+        if (!retry) return;
+        Thread::sleep(TickSpan(OSNanosecondsToTicks(10000)));
+    }
+}
 
 void* allocateFromSeadHeap(unsigned int size, Heap* heap)
 {
@@ -1238,39 +1288,90 @@ void Event::resetSignal() { OSResetEvent(reinterpret_cast<OSEvent*>(mStorage)); 
 
 MessageQueue::MessageQueue() : mMessages(0), mCapacity(0), mCount(0), mRead(0), mWrite(0), mHeap(0) {}
 MessageQueue::~MessageQueue() { free(); }
-void MessageQueue::allocate(int capacity, Heap* heap) { free(); mMessages = static_cast<int*>(allocateFromSeadHeap(sizeof(int) * capacity, heap, 4)); mCapacity = mMessages ? capacity : 0; mHeap = heap; }
+void MessageQueue::allocate(int capacity, Heap* heap) { free(); mMessages = static_cast<int*>(allocateFromSeadHeap(sizeof(int) * (capacity << 4), heap, 4)); mCapacity = mMessages ? capacity : 0; mHeap = heap; }
 void MessageQueue::free() { if (mMessages) freeToSeadHeap(mMessages); mMessages = 0; mCapacity = mCount = mRead = mWrite = 0; }
-bool MessageQueue::push(int value, BlockType) { if (mCount >= mCapacity) return false; mMessages[mWrite] = value; mWrite = (mWrite + 1) % mCapacity; ++mCount; return true; }
-int MessageQueue::pop(BlockType) { if (!mCount) return 0; int value = mMessages[mRead]; mRead = (mRead + 1) % mCapacity; --mCount; return value; }
-bool MessageQueue::jam(int value, BlockType) { if (mCount >= mCapacity) return false; mRead = (mRead + mCapacity - 1) % mCapacity; mMessages[mRead] = value; ++mCount; return true; }
+bool MessageQueue::push(int value, BlockType block) { if (mCount >= mCapacity) return false; mMessages[mWrite] = value; mWrite = (mWrite + 1) % mCapacity; ++mCount; (void)block; return true; }
+int MessageQueue::pop(BlockType block) { if (!mCount) return 0; int value = mMessages[mRead]; mRead = (mRead + 1) % mCapacity; --mCount; (void)block; return value; }
+bool MessageQueue::jam(int value, BlockType block) { if (mCount >= mCapacity) return false; mRead = (mRead + mCapacity - 1) % mCapacity; mMessages[mRead] = value; ++mCount; (void)block; return true; }
 
-Thread::Thread(Heap* heap, OSThread* thread) : IDisposer(heap, cHeapNullOption_Allow), mThread(thread), mMessageQueue(), mStack(0), mStackSize(0), mPriority(0), mBlockType(MessageQueue::cBlock), mQuitRequested(false) {}
-Thread::Thread(const SafeStringBase<char>&, Heap* heap, int priority, MessageQueue::BlockType blockType, int, int stackSize, int)
-    : IDisposer(heap, cHeapNullOption_Allow), mThread(0), mMessageQueue(), mStack(0), mStackSize(stackSize), mPriority(priority), mBlockType(blockType), mQuitRequested(false) {}
+Thread::Thread(Heap* heap, OSThread* thread) : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName("_pead__MainThread"), mMessageQueue(), mStackSize(0), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(static_cast<MessageQueue::BlockType>(1)), mUnknown78(0x7fffffff), mMessageState(static_cast<int>(reinterpret_cast<uintptr_t>(thread))), mThreadState(1), mAffinityMask(1), mThread(thread), mStack(0), mPriority(thread ? OSGetThreadPriority(thread) : 0) {
+    mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this));
+    mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(thread));
+    if (thread)
+    {
+        unsigned char* raw = reinterpret_cast<unsigned char*>(thread);
+        const unsigned int stackTop = *reinterpret_cast<unsigned int*>(raw + 0x398);
+        mStack = reinterpret_cast<void*>(static_cast<uintptr_t>(stackTop));
+        mStackSize = static_cast<int>(*reinterpret_cast<unsigned int*>(raw + 0x394) - stackTop);
+    }
+    mMessageQueue.allocate(0x20, heap);
+}
+Thread::Thread(const SafeStringBase<char>& name, Heap* heap, int priority, MessageQueue::BlockType blockType, int affinityMask, int stackSize, int)
+    : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName(name.cstr()), mMessageQueue(), mStackSize(stackSize), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(blockType), mUnknown78(0x7fffffff), mMessageState(0), mThreadState(0), mAffinityMask(static_cast<unsigned int>(affinityMask)), mThread(0), mStack(0), mPriority(priority) {
+    mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this));
+    if (mStackSize > 0) mStack = allocateFromSeadHeap(static_cast<unsigned int>(mStackSize), heap, 8);
+    mThread = static_cast<OSThread*>(allocateFromSeadHeap(1696, heap, 8));
+    if (mThread)
+    {
+        unsigned char* raw = reinterpret_cast<unsigned char*>(mThread);
+        *reinterpret_cast<unsigned int*>(raw + 0x394) = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(mStack));
+        *reinterpret_cast<unsigned int*>(raw + 0x398) = 0xffffffffu;
+    }
+    mMessageQueue.allocate(0x20, heap);
+}
 Thread::~Thread() { if (mStack) freeToSeadHeap(mStack); }
-void Thread::waitDone() { if (mThread) OSJoinThread(mThread, 0); }
-int Thread::cafeThreadFunc_(int argument, void* context) { static_cast<Thread*>(context)->run_(); return argument; }
-void Thread::start() { if (mThread) OSResumeThread(mThread); }
+void Thread::waitDone() { if (mThreadState != 0 && mThreadState != 4) { OSJoinThread(mThread, 0); mThreadState = 4; } }
+int Thread::cafeThreadFunc_(int, void* context)
+{
+    Thread* thread = static_cast<Thread*>(context);
+    thread->run_();
+    thread->mThreadState = 3;
+    return 0;
+}
+unsigned int Thread::start()
+{
+    if (mThreadState != 0 || !mThread || !mStack || mStackSize <= 0) return 0;
+    if (!C4JThreadImpl::OSCreateThread4J(mThread, cafeThreadFunc_, 0, this,
+                                         static_cast<unsigned char*>(mStack) + mStackSize,
+                                         static_cast<unsigned int>(mStackSize),
+                                         static_cast<unsigned int>(mPriority), 0)) return 0;
+    OSSetThreadName(mThread, mThreadName);
+    unsigned short platformMask = 0;
+    for (unsigned int id = 0; id < 3; ++id)
+        if (mAffinityMask & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
+    OSSetThreadAffinity(mThread, platformMask);
+    mThreadState = 1;
+    mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(mThread));
+    OSResumeThread(mThread);
+    return 1;
+}
 void Thread::sleep(TickSpan span) { OSSleepTicks(span.getTicks()); }
 void Thread::yield() { OSYieldThread(); }
 void Thread::setPriority(int priority) { mPriority = priority; if (mThread) OSSetThreadPriority(mThread, priority); }
 int Thread::getPriority() const { return mThread ? OSGetThreadPriority(mThread) : mPriority; }
-void Thread::setAffinity(const CoreIdMask& mask) { if (mThread) OSSetThreadAffinity(mThread, mask.value()); }
-void* Thread::getStackCheckStartAddress_() const { return mStack; }
-void Thread::destroy() { delete this; }
+void Thread::setAffinity(const CoreIdMask& mask)
+{
+    mAffinityMask = mask.value();
+    unsigned short platformMask = 0;
+    for (unsigned int id = 0; id < 3; ++id)
+        if (mAffinityMask & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
+    if (mThread) OSSetThreadAffinity(mThread, platformMask);
+}
+void* Thread::getStackCheckStartAddress_() const { return mStack ? static_cast<unsigned char*>(mStack) + 4 : 0; }
+void Thread::destroy() { waitDone(); }
 MessageQueue* Thread::getMessageQueue() const { return const_cast<MessageQueue*>(&mMessageQueue); }
-bool Thread::sendMessage(int message, MessageQueue::BlockType block) { return mMessageQueue.push(message, block); }
-int Thread::recvMessage(MessageQueue::BlockType block) { return mMessageQueue.pop(block); }
-void Thread::quit(bool jam) { mQuitRequested = true; if (jam) mMessageQueue.jam(0, mBlockType); else mMessageQueue.push(0, mBlockType); }
+bool Thread::sendMessage(int message, MessageQueue::BlockType block) { if (!message || mThreadState == 3 || mThreadState == 4 || message == mUnknown78) return false; return mMessageQueue.push(message, block); }
+int Thread::recvMessage(MessageQueue::BlockType block) { if (mThreadState == 2) return 0; return mMessageQueue.pop(block); }
+void Thread::quit(bool jam) { mThreadState = 2; if (jam) mMessageQueue.jam(0, mBlockType); else mMessageQueue.push(0, mBlockType); }
 void Thread::quitAndDestroySingleThread(bool jam) { quitAndWaitDoneSingleThread(jam); destroy(); }
 void Thread::quitAndWaitDoneSingleThread(bool jam) { quit(jam); waitDone(); }
 MessageQueue::BlockType Thread::getBlockType() const { return mBlockType; }
 int Thread::getStackSize() const { return mStackSize; }
-void Thread::run_() { while (!mQuitRequested) calc_(recvMessage(mBlockType)); }
+void Thread::run_() { int message; while ((message = recvMessage(mBlockType)) != mUnknown78) calc_(message); }
 int Thread::calcStackUsedSizePeak() const { return 0; }
 
-MainThread::MainThread(Heap* heap, OSThread* thread) : Thread(heap, thread) {}
-MainThread::~MainThread() {}
+MainThread::MainThread(Heap* heap, OSThread* thread) : Thread(heap, thread) { mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)); mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(thread)); mStack = 0; }
+MainThread::~MainThread() { mThreadState = 3; }
 void MainThread::destroy() {}
 void MainThread::quit(bool) {}
 void MainThread::waitDone() {}
@@ -1280,20 +1381,84 @@ void MainThread::calc_(int) {}
 
 DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap, int priority, MessageQueue::BlockType block, int queueSize, int stackSize, int affinity)
     : Thread(name, heap, priority, block, queueSize, stackSize, affinity), mDelegate(delegate) {}
-DelegateThread::~DelegateThread() { delete mDelegate; }
+DelegateThread::~DelegateThread() {}
 void DelegateThread::calc_(int message) { if (mDelegate) mDelegate->invoke(this, message); }
 
 ThreadMgr::SingletonDisposer_::~SingletonDisposer_() { ThreadMgr::deleteInstance(); }
-ThreadMgr::ThreadMgr() : mMainThread(0) {}
-ThreadMgr::~ThreadMgr() { destroyMainThread_(); }
+namespace
+{
+struct ThreadEntry
+{
+    ListNode node;
+    Thread* thread;
+    explicit ThreadEntry(Thread* value) : node(), thread(value) {}
+};
+std::vector<ThreadEntry*> sThreadEntries;
+}
+
+ThreadMgr::ThreadMgr()
+    : mUnknown0(), mThreadList(), mUnknown18(0), mLock(), mCurrentThread(0), mMainThread(0) {}
+ThreadMgr::~ThreadMgr()
+{
+    mLock.lock();
+    for (ListNode* node = mThreadList.next(); node != &mThreadList; )
+    {
+        ThreadEntry* entry = reinterpret_cast<ThreadEntry*>(node);
+        node = node->next();
+        entry->node.erase_();
+        delete entry;
+    }
+    sThreadEntries.clear();
+    mLock.unlock();
+    destroyMainThread_();
+    mCurrentThread = 0;
+    sThreadMgr = 0;
+}
 void ThreadMgr::createInstance(Heap* heap) { if (!sThreadMgr) { sThreadMgr = new ThreadMgr(); sThreadMgr->initialize(heap); } }
 void ThreadMgr::deleteInstance() { delete sThreadMgr; sThreadMgr = 0; }
-void ThreadMgr::initMainThread_(Heap* heap) { mMainThread = new MainThread(heap, 0); }
-unsigned int ThreadMgr::getCurrentThreadID_() { return 0; }
-void ThreadMgr::initialize(Heap* heap) { initMainThread_(heap); }
-void ThreadMgr::destroyMainThread_() { delete mMainThread; mMainThread = 0; }
+void ThreadMgr::initMainThread_(Heap* heap)
+{
+    mMainThread = new MainThread(heap, OSGetCurrentThread());
+    mCurrentThread = mMainThread;
+    ThreadEntry* entry = new ThreadEntry(mMainThread);
+    mThreadList.insertBack_(&entry->node);
+    sThreadEntries.push_back(entry);
+}
+unsigned int ThreadMgr::getCurrentThreadID_()
+{
+    return static_cast<unsigned int>(reinterpret_cast<uintptr_t>(OSGetCurrentThread()));
+}
+void ThreadMgr::initialize(Heap* heap) { if (!mMainThread) initMainThread_(heap); }
+void ThreadMgr::destroyMainThread_()
+{
+    if (!mMainThread) return;
+    mLock.lock();
+    for (std::vector<ThreadEntry*>::iterator it = sThreadEntries.begin(); it != sThreadEntries.end(); ++it)
+        if ((*it)->thread == mMainThread) { (*it)->node.erase_(); delete *it; sThreadEntries.erase(it); break; }
+    mLock.unlock();
+    delete mMainThread;
+    mMainThread = 0;
+}
 void ThreadMgr::destroy() { destroyMainThread_(); }
-Thread* ThreadMgr::getCurrentThread() const { return mMainThread; }
+Thread* ThreadMgr::getCurrentThread() const
+{
+    ThreadMgr* self = const_cast<ThreadMgr*>(this);
+    self->mLock.lock();
+    const unsigned int id = getCurrentThreadID_();
+    for (ListNode* node = self->mThreadList.next(); node != &self->mThreadList; node = node->next())
+    {
+        ThreadEntry* entry = reinterpret_cast<ThreadEntry*>(node);
+        if (entry->thread && static_cast<unsigned int>(reinterpret_cast<uintptr_t>(entry->thread->mThread)) == id)
+        {
+            Thread* result = entry->thread;
+            self->mLock.unlock();
+            return result;
+        }
+    }
+    Thread* result = self->mCurrentThread;
+    self->mLock.unlock();
+    return result;
+}
 void ThreadMgr::waitDoneMultipleThread(const Thread** threads, int count) { for (int index = 0; index < count; ++index) const_cast<Thread*>(threads[index])->waitDone(); }
 void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); for (int index = 0; index < count; ++index) threads[index]->waitDone(); }
 

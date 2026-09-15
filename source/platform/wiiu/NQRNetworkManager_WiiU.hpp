@@ -6,10 +6,13 @@
 #include <string>
 #include <vector>
 
+#include <nn/result.h>
+
 #include "game/core/CriticalSection.hpp"
 #include "game/network/INQRNetworkManagerListener.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
+#include "nn/pia/session/Session.hpp"
 
 class C4JEventImpl;
 class C4JThreadImpl;
@@ -181,16 +184,16 @@ public:
     void TickSendQueue();
     void Pia_InitializeCommon(unsigned char* buffer, unsigned int size, unsigned long long stationId, bool host, bool online);
     void Pia_InitializeInet();
-    void Pia_InitializeSession(const void* setting);
+    void Pia_InitializeSession(const nn::pia::session::Session::Setting& setting);
     ConnectedStation* GetConnectedStation(unsigned long long stationId);
     void AddConnectedStation(unsigned long long stationId);
     void Pia_SignalLeaveSession();
-    static void Pia_SessionCallback(int eventType, unsigned long long stationId, void* context);
+    static void Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId, void* context);
     bool NexFacadeLogin(unsigned int principalId);
     void InitialiseAfterOnline();
     void OnlineCheck();
     void FriendSearchTick();
-    static void FriendPresenceLoginCallback(unsigned int result, void* context);
+    static void FriendPresenceLoginCallback(nn::Result result, void* context);
     void Session_CleanupSession();
     bool Inet_Logout();
     void Inet_FinalizeNetwork();
@@ -199,7 +202,7 @@ public:
     void Pia_FinalizeCommon();
     void Pia_Finalize();
     void Pia_Shutdown();
-    void SetLastNetworkError(int result);
+    void SetLastNetworkError(nn::pia::Result result);
     void UpdateApplicationConnected();
     bool Pia_CreateSession();
     bool canRunRateControlledEvent();

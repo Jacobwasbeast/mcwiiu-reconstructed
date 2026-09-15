@@ -868,6 +868,20 @@ private:
     Heap* mHeap;
 };
 
+class CriticalSection : public IDisposer
+{
+public:
+    CriticalSection();
+    CriticalSection(Heap*);
+    virtual ~CriticalSection();
+    void lock();
+    void unlock();
+    bool tryLock();
+    void dump(StackSymbolResolver*);
+private:
+    unsigned int mStorage[11];
+};
+
 class HeapMgr
 {
 public:
@@ -893,6 +907,10 @@ private:
     static void removeFromFindContainHeapCache_(Heap*);
     Heap* mRootHeap;
     Heap* mCurrentHeap;
+    unsigned char mUnknown8[0x14];
+    CriticalSection mLock;
+    void* mCacheOwner;
+    void* mCacheList;
 };
 
 void* allocateFromSeadHeap(unsigned int, Heap*);
@@ -918,20 +936,6 @@ void DeleteArray(T* array)
     while (count) array[--count].~T();
     freeToSeadHeap(array);
 }
-
-class CriticalSection : public IDisposer
-{
-public:
-    CriticalSection();
-    CriticalSection(Heap*);
-    virtual ~CriticalSection();
-    void lock();
-    void unlock();
-    bool tryLock();
-    void dump(StackSymbolResolver*);
-private:
-    unsigned int mStorage[11];
-};
 
 class Mutex : public IDisposer
 {
@@ -1021,6 +1025,7 @@ private:
 
 class Thread : public IDisposer
 {
+    friend class ThreadMgr;
 public:
     Thread(Heap*, OSThread*);
     Thread(const SafeStringBase<char>&, Heap*, int, MessageQueue::BlockType, int, int, int);
@@ -1029,7 +1034,7 @@ public:
     virtual bool sendMessage(int, MessageQueue::BlockType);
     virtual int recvMessage(MessageQueue::BlockType);
     virtual MessageQueue* getMessageQueue() const;
-    virtual void start();
+    virtual unsigned int start();
     virtual void quit(bool);
     virtual void waitDone();
     virtual void quitAndDestroySingleThread(bool);
@@ -1053,13 +1058,25 @@ public:
     void initStackCheck_();
     void initStackCheckWithCurrentStackPointer_();
 protected:
-    OSThread* mThread;
+    unsigned int mThreadNameVtable;
+    const char* mThreadName;
+    /* MessageQueue is at 0x18 in the Wii U object. */
     MessageQueue mMessageQueue;
-    void* mStack;
     int mStackSize;
-    int mPriority;
+    int mUnknown5c;
+    int mUnknown60;
+    int mUnknown64;
+    int mUnknown68;
+    int mUnknown6c;
+    FindContainHeapCache mFindContainHeapCache;
     MessageQueue::BlockType mBlockType;
-    bool mQuitRequested;
+    int mUnknown78;
+    int mMessageState;
+    int mThreadState;
+    unsigned int mAffinityMask;
+    OSThread* mThread;
+    void* mStack;
+    int mPriority;
 };
 
 class MainThread : public Thread
@@ -1111,6 +1128,11 @@ private:
     void initMainThread_(Heap*);
     void destroyMainThread_();
     static unsigned int getCurrentThreadID_();
+    unsigned int mUnknown0[4];
+    ListNode mThreadList;
+    unsigned int mUnknown18;
+    CriticalSection mLock;
+    Thread* mCurrentThread;
     MainThread* mMainThread;
 };
 

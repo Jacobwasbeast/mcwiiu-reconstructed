@@ -269,7 +269,7 @@ public:
     unsigned int GetSaveTransferConnectionFromSessionBrowse();
     static void GetSaveTransferConnectionThreadProc(void* context);
     void Pia_ShutdownForOnline();
-    void CreateSessionForSaveTransfer(int userIndex, void* data, int dataSize, void* metadata, long long saveId, unsigned int worldId, unsigned int titleVersion, wchar_t* name);
+    void CreateSessionForSaveTransfer(int dataSize, void* data, int metadataSize, void* metadata, long long saveId, unsigned int worldId, unsigned int titleVersion, wchar_t* name);
     unsigned int FindSessionForSaveTransfer();
     void JoinSaveTransferConnection();
 
@@ -351,6 +351,7 @@ private:
     unsigned int m_saveTransferOffset;
     bool m_saveTransferPacketPending;
     unsigned int m_saveTransferSessionId;
+
 };
 
 #endif
