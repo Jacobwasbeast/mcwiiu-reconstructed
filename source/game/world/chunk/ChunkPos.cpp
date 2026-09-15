@@ -1,8 +1,6 @@
 #include "game/world/chunk/ChunkPos.hpp"
 
 #include <boost/functional/hash.hpp>
-#include <sstream>
-
 #include "game/entity/mob/Entity.hpp"
 
 ChunkPos::ChunkPos(int x, int z)

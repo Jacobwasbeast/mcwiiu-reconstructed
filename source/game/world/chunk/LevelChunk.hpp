@@ -46,7 +46,7 @@ public:
     friend class ServerChunkCache;
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
-    enum EntityCreationType { IMMEDIATE, QUEUED };
+    enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
     class BlockChange
     {
     public:

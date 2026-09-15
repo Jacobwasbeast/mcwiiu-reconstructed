@@ -1133,7 +1133,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     const BlockState* oldState = Block::getStateByElementId(oldValue);
     if (oldState == state)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
         return false;
     }
     Block* newBlock = state->getBlock();
@@ -1229,7 +1229,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     }
     if (oldBlock->mBlockEntity && !commandBlockChange)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
     }
     PIXEndNamedEvent();
     if (!level->mIsClientSide && oldBlock != newBlock)
@@ -1242,7 +1242,7 @@ bool LevelChunk::internalSetBlock(bool extra, const BlockPos& pos, const BlockSt
     }
     if (newBlock->mBlockEntity)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
         if (!pending)
         {
             boost::shared_ptr<BlockEntity> created = createBlockEntity(pos);
@@ -1272,7 +1272,7 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
     const BlockState* oldState = Block::getStateByElementId(oldValue);
     if (oldBlockId == blockId && (oldValue & 0xf) == data)
     {
-        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+        boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
         return false;
     }
     Block* oldBlock = Block::byId(oldBlockId);
@@ -1343,12 +1343,12 @@ bool LevelChunk::setBlockAndData(int x, int y, int z, int blockId, int data, boo
         {
             if (0 < oldBlockId && oldBlock->mBlockEntity)
             {
-                boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+                boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
             }
         }
         else if (newBlock->mBlockEntity && !commandBlockChange)
         {
-            boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, static_cast<EntityCreationType>(2));
+            boost::shared_ptr<BlockEntity> pending = getBlockEntity(pos, NO_CREATE);
             if (!pending)
             {
                 EntityBlock* entityBlock = dynamic_cast<EntityBlock*>(newBlock);
@@ -2011,7 +2011,7 @@ void LevelChunk::tick(bool update)
     {
         BlockPos pos = mPendingBlockEntities.front();
         mPendingBlockEntities.pop_front();
-        bool shouldCreate = !getBlockEntity(pos, static_cast<EntityCreationType>(2))
+        bool shouldCreate = !getBlockEntity(pos, NO_CREATE)
             && getBlock(pos)->mBlockEntity;
         if (shouldCreate)
         {

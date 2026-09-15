@@ -4,6 +4,7 @@
 
 #include "game/client/render/LevelRenderer.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/Tesselator.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -44,11 +45,11 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     {
         players = gMinecraftServer->getPlayers();
     }
-
+    int playerCount = players->getPlayerCount();
     int size;
     int centreChunkX;
     int centreChunkZ;
-    if (players->getPlayerCount() < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
+    if (playerCount < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
     {
         boost::shared_ptr<Player> player =
             boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
@@ -110,10 +111,10 @@ void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float widt
     for (int column = 0; column < xzSize; column++)
     {
         int chunkX = column - halfXZSize;
-
         for (int row = 0; row < xzSize; row++)
         {
-            sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
+            LevelChunk* chunk = sClientChunkSource->getChunk(chunkX, row - halfXZSize);
+            chunk->getSparseBlockAndDataMemoryAllocated();
         }
     }
 
@@ -125,7 +126,8 @@ void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float widt
 
         for (int row = 0; row < xzSize; row++)
         {
-            sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
+            LevelChunk* chunk = sClientChunkSource->getChunk(chunkX, row - halfXZSize);
+            chunk->getSparseBlockAndDataMemoryAllocated();
         }
 
         bufferBuilder->end();
