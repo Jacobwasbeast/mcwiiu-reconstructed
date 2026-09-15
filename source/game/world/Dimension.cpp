@@ -162,8 +162,8 @@ BlockPos* Dimension::getSpawnPos() const { return NULL; }
 int Dimension::getSpawnYPosition() { return mLevelType == LevelType::FLAT ? 4 : 64; }
 bool Dimension::isFoggyAt(int x, int z) { return false; }
 WorldBorder* Dimension::createWorldBorder(Level* level) { return new WorldBorder(level); }
-void Dimension::saveData() {}
-void Dimension::tick() {}
+void Dimension::saveData() { return; }
+void Dimension::tick() { return; }
 bool Dimension::canUnloadChunk(int x, int z) { return true; }
 int Dimension::getXZSize() { return mXZSize; }
 
@@ -204,6 +204,6 @@ unsigned char Dimension::isUltraWarm() { return mUltraWarm; }
 unsigned char Dimension::isHasCeiling() { return mHasCeiling; }
 unsigned char Dimension::isHasSkyLight() { return mHasSkyLight; }
 float* Dimension::getBrightnessRamp() { return mBrightnessRamp; }
-void Dimension::onPlayerJoin(const boost::shared_ptr<ServerPlayer>& player) {}
-void Dimension::onPlayerLeave(const boost::shared_ptr<ServerPlayer>& player) {}
+void Dimension::onPlayerJoin(const boost::shared_ptr<ServerPlayer>& player) { (void)player; }
+void Dimension::onPlayerLeave(const boost::shared_ptr<ServerPlayer>& player) { (void)player; }
 int Dimension::getSeaLevel() { return mSeaLevel; }

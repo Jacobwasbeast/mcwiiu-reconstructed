@@ -11,30 +11,43 @@ CustomLevelSource::~CustomLevelSource()
 {
 }
 
-void CustomLevelSource::prepareHeights(int, int, ChunkPrimer*)
+void CustomLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
+    static_cast<void>(chunkX);
+    static_cast<void>(chunkZ);
+    static_cast<void>(primer);
 }
 
-LevelChunk* CustomLevelSource::createChunk(int, int)
+LevelChunk* CustomLevelSource::createChunk(int chunkX, int chunkZ)
 {
+    static_cast<void>(chunkX);
+    static_cast<void>(chunkZ);
     return NULL;
 }
 
-void CustomLevelSource::lightChunk(LevelChunk*)
+void CustomLevelSource::lightChunk(LevelChunk* chunk)
 {
+    static_cast<void>(chunk);
 }
 
-void CustomLevelSource::postProcess(int, int)
+void CustomLevelSource::postProcess(int chunkX, int chunkZ)
 {
+    static_cast<void>(chunkX);
+    static_cast<void>(chunkZ);
 }
 
-bool CustomLevelSource::postProcessLoadedChunk(LevelChunk*, int, int)
+bool CustomLevelSource::postProcessLoadedChunk(LevelChunk* chunk, int chunkX, int chunkZ)
 {
+    static_cast<void>(chunk);
+    static_cast<void>(chunkX);
+    static_cast<void>(chunkZ);
     return false;
 }
 
-std::vector<Biome::MobSpawnerData*> CustomLevelSource::getMobsAt(MobCategory*, const BlockPos&)
+std::vector<Biome::MobSpawnerData*> CustomLevelSource::getMobsAt(MobCategory* category, const BlockPos& pos)
 {
+    static_cast<void>(category);
+    static_cast<void>(pos);
     return std::vector<Biome::MobSpawnerData*>();
 }
 
@@ -52,11 +65,19 @@ bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, cons
     return false;
 }
 
-BlockPos* CustomLevelSource::findNearestMapFeature(Level*, const std::wstring&, const BlockPos&, bool)
+BlockPos* CustomLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
+                                                   const BlockPos& pos, bool findUnexplored)
 {
+    static_cast<void>(level);
+    static_cast<void>(feature);
+    static_cast<void>(pos);
+    static_cast<void>(findUnexplored);
     return NULL;
 }
 
-void CustomLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int, int)
+void CustomLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int chunkX, int chunkZ)
 {
+    static_cast<void>(chunk);
+    static_cast<void>(chunkX);
+    static_cast<void>(chunkZ);
 }

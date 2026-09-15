@@ -36,12 +36,6 @@
 #include "game/world/generation/VillageFeature.hpp"
 #include "game/world/generation/WoodlandMansionFeature.hpp"
 
-void* XPhysicalAlloc(unsigned long size, unsigned long upperAddress, unsigned long alignment, unsigned int protect);
-void XPhysicalFree(void* address);
-void* XMemSet128(void* destination, int value, unsigned int count);
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
 OverworldLevelSource::OverworldLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config)
     : mRandom(),
       mPopulationRandom(),
@@ -281,14 +275,9 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
 void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     arrayWithLength<Biome*> biomes;
-    PIXBeginNamedEvent(0.0f, "Getting raw biome block");
     mLevel->getBiomeSource()->getRawBiomeBlock(biomes, chunkX * 4 - 2, chunkZ * 4 - 2, 10, 10);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Get heights");
     arrayWithLength<double> heights(425, true);
     getHeights(chunkX * 4, 0, chunkZ * 4, biomes, heights);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Generating");
 
     for (int cellX = 0; cellX < 4; ++cellX)
     {
@@ -359,8 +348,6 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
             }
         }
     }
-
-    PIXEndNamedEvent();
     delete[] heights.data;
     delete[] biomes.data;
 }
@@ -369,20 +356,15 @@ void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* pr
                                          arrayWithLength<Biome*> biomes)
 {
     arrayWithLength<double> surfaceDepths(256, true);
-    PIXBeginNamedEvent(0.0f, "Getting noise region");
     mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16,
                              0.0625, 0.0625, 0.5);
-    PIXEndNamedEvent();
     for (int x = 0; x < 16; ++x)
     {
         for (int z = 0; z < 16; ++z)
         {
             int index = x * 16 + z;
-            PIXBeginNamedEvent(0.0f, "Building surface for biome %ls",
-                               biomes.data[index]->getName(false).c_str());
             biomes.data[index]->buildSurfaceAt(mLevel, mRandom, primer, chunkX * 16 + x,
                                                 chunkZ * 16 + z, surfaceDepths.data[index]);
-            PIXEndNamedEvent();
         }
     }
     delete[] surfaceDepths.data;
@@ -392,113 +374,74 @@ LevelChunk* OverworldLevelSource::createChunk(int chunkX, int chunkZ)
 {
     mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL
                     + static_cast<long long>(chunkZ) * 132897987541LL);
-    PIXBeginNamedEvent(0.0f, "Setting up primer");
-    unsigned short* elements = static_cast<unsigned short*>(XPhysicalAlloc(0x10000, 0xFFFFFFFF, 0x1000, 4));
-    XMemSet128(elements, 0, 0x10000);
+    unsigned short* elements = new unsigned short[0x8000]();
     arrayWithLength<unsigned short> elementData;
     elementData.data = elements;
     elementData.length = 0x8000;
     ChunkPrimer primer(false, elementData);
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Preparing heights");
     prepareHeights(chunkX, chunkZ, &primer);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Getting biome block");
     arrayWithLength<Biome*> biomes;
     mLevel->getBiomeSource()->getBiomeBlock(biomes, chunkX << 4, chunkZ << 4, 16, 16, true);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Building surfaces");
     buildSurfaces(chunkX, chunkZ, &primer, biomes);
-    PIXEndNamedEvent();
     delete[] biomes.data;
 
     if (mSettings->useCaves)
     {
-        PIXBeginNamedEvent(0.0f, "Applying underwater caves");
         mUnderwaterCaves->apply(mLevel, chunkX, chunkZ, &primer);
-        PIXEndNamedEvent();
     }
     if (mSettings->useRavines)
     {
-        PIXBeginNamedEvent(0.0f, "Applying underwater ravines");
         mUnderwaterRavines->apply(mLevel, chunkX, chunkZ, &primer);
-        PIXEndNamedEvent();
     }
     if (mSettings->useCaves)
     {
-        PIXBeginNamedEvent(0.0f, "Applying caves");
         mCaves->apply(mLevel, chunkX, chunkZ, &primer);
-        PIXEndNamedEvent();
     }
     if (mSettings->useRavines)
     {
-        PIXBeginNamedEvent(0.0f, "Applying ravines");
         mRavines->apply(mLevel, chunkX, chunkZ, &primer);
-        PIXEndNamedEvent();
     }
     if (mGenerateStructures)
     {
         if (mSettings->useMineShafts)
         {
-            PIXBeginNamedEvent(0.0f, "Applying mineshafts");
             mMineshaft->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useVillages)
         {
-            PIXBeginNamedEvent(0.0f, "Applying villages");
             mVillage->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useStrongholds)
         {
-            PIXBeginNamedEvent(0.0f, "Applying strongholds");
             mStronghold->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useTemples)
         {
-            PIXBeginNamedEvent(0.0f, "Applying scatterd features");
             mTemple->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useOceanRuins)
         {
-            PIXBeginNamedEvent(0.0f, "Applying ruin feature");
             mOceanRuin->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useMonuments)
         {
-            PIXBeginNamedEvent(0.0f, "Applying ocean monuments");
             mMonument->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useMansions)
         {
-            PIXBeginNamedEvent(0.0f, "Applying woodland mansions");
             mMansion->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useShipwrecks)
         {
-            PIXBeginNamedEvent(0.0f, "Applying shipwreck feature");
             mShipwreck->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
         if (mSettings->useBuriedTreasure)
         {
-            PIXBeginNamedEvent(0.0f, "Applying buried treasure");
             mBuriedTreasure->apply(mLevel, chunkX, chunkZ, &primer);
-            PIXEndNamedEvent();
         }
     }
-
-    PIXBeginNamedEvent(0.0f, "Creating chunk");
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
-    PIXEndNamedEvent();
-    XPhysicalFree(elements);
+    delete[] elements;
     return chunk;
 }
 
@@ -577,8 +520,6 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
                                + static_cast<long long>(chunkZ) * oddZ) ^ mLevel->getSeed());
     ChunkPos chunkPos(chunkX, chunkZ);
     bool villageGenerated = false;
-
-    PIXBeginNamedEvent(0.0f, "Structure postprocessing");
     if (mGenerateStructures)
     {
         if (mSettings->useMineShafts) mMineshaft->postProcess(mLevel, mPopulationRandom, &chunkPos);
@@ -591,9 +532,6 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
         if (mSettings->useBuriedTreasure) mBuriedTreasure->postProcess(mLevel, mPopulationRandom, &chunkPos);
         if (mSettings->useShipwrecks) mShipwreck->postProcess(mLevel, mPopulationRandom, &chunkPos);
     }
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Lakes");
     if (biome != Biome::DESERT && biome != Biome::DESERT_HILLS && mSettings->useWaterLakes
         && !villageGenerated && mPopulationRandom.nextInt(mSettings->waterLakeChance) == 0)
     {
@@ -601,8 +539,6 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
             origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128),
                           mPopulationRandom.nextInt(16) + 8));
     }
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Lava");
     if (!villageGenerated && mPopulationRandom.nextInt(mSettings->lavaLakeChance / 10) == 0
         && mSettings->useLavaLakes)
     {
@@ -614,8 +550,6 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
             LakeFeature(Blocks::lava).place(mLevel, mPopulationRandom, pos);
         }
     }
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Monster rooms");
     if (mSettings->useDungeons)
     {
         for (int i = 0; i < mSettings->dungeonChance; ++i)
@@ -625,16 +559,9 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
                               mPopulationRandom.nextInt(16) + 8));
         }
     }
-    PIXEndNamedEvent();
-
-    PIXBeginNamedEvent(0.0f, "Biome decorate");
     biome->decorate(mLevel, mPopulationRandom, origin);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Post process mobs");
     NaturalMobSpawner::spawnMobsForChunkGeneration(mLevel, biome, origin.x + 8, origin.z + 8,
                                                     16, 16, &mPopulationRandom);
-    PIXEndNamedEvent();
-    PIXBeginNamedEvent(0.0f, "Update ice and snow");
     origin = origin.offset(8, 0, 8);
     for (int x = 0; x < 16; ++x)
     {
@@ -649,7 +576,6 @@ void OverworldLevelSource::postProcess(int chunkX, int chunkZ)
             mLevel->tryToPlaceTopSnow(top, true, true);
         }
     }
-    PIXEndNamedEvent();
     FallingBlock::fallInstantly = false;
 }
 
