@@ -335,7 +335,15 @@ void SynchedEntityData::assignValue(DataItem_Impl<BlockPos*>* target, DataItem_I
 template <>
 void SynchedEntityData::assignValue(DataItem_Impl<CompoundTag*>* target, DataItem_Impl<CompoundTag*>* source)
 {
-    target->setValue(source->getValue());
+    if (source->getValue() == NULL)
+    {
+        target->setValue(NULL);
+    }
+    else
+    {
+        target->setValue(source->getValue());
+    }
+
     mEntity->onSyncedDataUpdated(source->getAccessor());
 }
 
@@ -408,8 +416,39 @@ void SynchedEntityData::assignValues(std::vector<DataItem*>* items)
 }
 
 template void SynchedEntityData::createDateItem<not_null_ptr<ItemInstance> >(const EntityDataAccessor<not_null_ptr<ItemInstance> >*, not_null_ptr<ItemInstance>);
+template void SynchedEntityData::createDateItem<std::wstring>(const EntityDataAccessor<std::wstring>*, std::wstring);
+template void SynchedEntityData::createDateItem<BlockPos>(const EntityDataAccessor<BlockPos>*, BlockPos);
+template void SynchedEntityData::createDateItem<float>(const EntityDataAccessor<float>*, float);
+template void SynchedEntityData::createDateItem<int>(const EntityDataAccessor<int>*, int);
+template void SynchedEntityData::createDateItem<bool>(const EntityDataAccessor<bool>*, bool);
+template void SynchedEntityData::createDateItem<unsigned char>(const EntityDataAccessor<unsigned char>*, unsigned char);
+template void SynchedEntityData::createDateItem<const BlockState*>(const EntityDataAccessor<const BlockState*>*, const BlockState*);
+template void SynchedEntityData::createDateItem<BlockPos*>(const EntityDataAccessor<BlockPos*>*, BlockPos*);
+template void SynchedEntityData::createDateItem<const Direction*>(const EntityDataAccessor<const Direction*>*, const Direction*);
+template void SynchedEntityData::createDateItem<CompoundTag*>(const EntityDataAccessor<CompoundTag*>*, CompoundTag*);
 
 template void SynchedEntityData::set<not_null_ptr<ItemInstance> >(const EntityDataAccessor<not_null_ptr<ItemInstance> >*, not_null_ptr<ItemInstance>, bool);
 template void SynchedEntityData::set<std::wstring>(const EntityDataAccessor<std::wstring>*, std::wstring, bool);
+template void SynchedEntityData::set<BlockPos>(const EntityDataAccessor<BlockPos>*, BlockPos, bool);
+template void SynchedEntityData::set<BlockPos*>(const EntityDataAccessor<BlockPos*>*, BlockPos*, bool);
+template void SynchedEntityData::set<unsigned char>(const EntityDataAccessor<unsigned char>*, unsigned char, bool);
+template void SynchedEntityData::set<bool>(const EntityDataAccessor<bool>*, bool, bool);
+template void SynchedEntityData::set<float>(const EntityDataAccessor<float>*, float, bool);
+template void SynchedEntityData::set<const BlockState*>(const EntityDataAccessor<const BlockState*>*, const BlockState*, bool);
+template void SynchedEntityData::set<CompoundTag*>(const EntityDataAccessor<CompoundTag*>*, CompoundTag*, bool);
+template void SynchedEntityData::set<const Direction*>(const EntityDataAccessor<const Direction*>*, const Direction*, bool);
+
+template void SynchedEntityData::writeDataItem<not_null_ptr<ItemInstance> >(DataOutputStream*, DataItem_Impl<not_null_ptr<ItemInstance> >*);
+template void SynchedEntityData::writeDataItem<std::wstring>(DataOutputStream*, DataItem_Impl<std::wstring>*);
+template void SynchedEntityData::writeDataItem<const Rotations*>(DataOutputStream*, DataItem_Impl<const Rotations*>*);
 
 template void SynchedEntityData::assignValue<not_null_ptr<ItemInstance> >(DataItem_Impl<not_null_ptr<ItemInstance> >*, DataItem_Impl<not_null_ptr<ItemInstance> >*);
+template void SynchedEntityData::assignValue<std::wstring>(DataItem_Impl<std::wstring>*, DataItem_Impl<std::wstring>*);
+template void SynchedEntityData::assignValue<const Rotations*>(DataItem_Impl<const Rotations*>*, DataItem_Impl<const Rotations*>*);
+template void SynchedEntityData::assignValue<BlockPos>(DataItem_Impl<BlockPos>*, DataItem_Impl<BlockPos>*);
+template void SynchedEntityData::assignValue<unsigned char>(DataItem_Impl<unsigned char>*, DataItem_Impl<unsigned char>*);
+template void SynchedEntityData::assignValue<int>(DataItem_Impl<int>*, DataItem_Impl<int>*);
+template void SynchedEntityData::assignValue<float>(DataItem_Impl<float>*, DataItem_Impl<float>*);
+template void SynchedEntityData::assignValue<bool>(DataItem_Impl<bool>*, DataItem_Impl<bool>*);
+template void SynchedEntityData::assignValue<const BlockState*>(DataItem_Impl<const BlockState*>*, DataItem_Impl<const BlockState*>*);
+template void SynchedEntityData::assignValue<const Direction*>(DataItem_Impl<const Direction*>*, DataItem_Impl<const Direction*>*);

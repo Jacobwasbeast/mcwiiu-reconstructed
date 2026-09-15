@@ -3147,8 +3147,8 @@ unsigned int Entity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
 {
     if (tooltipData.m_pItemInstance
         && Item::getId(tooltipData.m_pItemInstance->getItem()) == 421
-        && !tooltipData.m_pItemInstance->hasCustomHoverName()
-        && tooltipData.m_pItemInstance->getHoverName() != getCustomName())
+        && tooltipData.m_pItemInstance->hasCustomHoverName()
+        && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName()))
     {
         return 0x5592C692;
     }
@@ -3632,8 +3632,8 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
         case ENTITY_LOCATION_CHEST_LEFT:
         case ENTITY_LOCATION_CHEST_RIGHT:
             return getPos(partialTicks)->add(
-                Vec3::newTemp(0.0, (double)(mBbHeight * 0.5f), 0.0)
-                    ->yRot(-(mYRot * 0.01745329238474369f)));
+                Vec3::newTemp(0.0, getEyeHeight(), 0.0)
+                    ->yRot(-(getYHeadRot() * 0.01745329238474369f)));
 
         default:
             return getPos(partialTicks);
@@ -4123,15 +4123,24 @@ bool Entity::hasCustomName()
     }
 
     bool ownerIsLocal = g_pApp->IsUUIDLocal(getOwnerUUID());
-    bool censored = g_pApp->IsConsoleChatCensored();
+    bool restrictedCase = false;
 
-    if (!ownerIsLocal && mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER) && censored)
+    if (!ownerIsLocal)
+    {
+        if (g_pApp->IsConsoleChatCensored() || mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER))
+        {
+            restrictedCase = true;
+        }
+    }
+
+    bool hostRestrictedCase = !mEntityData->get(DATA_CREATED_ON_HOST) && restrictedCase;
+
+    if (CGameNetworkManager::sInstance.IsHost() && hostRestrictedCase)
     {
         return false;
     }
 
-    if (!mEntityData->get(DATA_CREATED_ON_HOST) && !CGameNetworkManager::sInstance.IsHost()
-        && censored)
+    if (!CGameNetworkManager::sInstance.IsHost() && restrictedCase)
     {
         return false;
     }
@@ -4155,7 +4164,7 @@ void Entity::teleportTo(double x, double y, double z)
 
     setPos(x, y, z);
 
-    mLevel->ensureAdded(shared_from_this());
+    mLevel->tick(shared_from_this(), false);
 }
 
 bool Entity::shouldShowName()

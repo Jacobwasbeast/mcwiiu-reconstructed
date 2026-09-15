@@ -84,7 +84,7 @@ void WitherSkeleton::setWitherParent(const boost::shared_ptr<WitherBoss>& parent
 
 boost::shared_ptr<WitherBoss> WitherSkeleton::getWitherParent()
 {
-    return mWitherParent;
+    return mWitherParent.lock();
 }
 
 void WitherSkeleton::die(const DamageSource* source)
@@ -111,7 +111,7 @@ void WitherSkeleton::tick()
     AbstractSkeleton::tick();
 
     boost::shared_ptr<LivingEntity> target = getTarget();
-    boost::shared_ptr<WitherBoss> parent = mWitherParent;
+    boost::shared_ptr<WitherBoss> parent = mWitherParent.lock();
     if (target && parent && target.get() == parent.get())
     {
         setLastHurtByMob(boost::shared_ptr<LivingEntity>());

@@ -17,6 +17,8 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundType.hpp"
+#include "game/core/Mule.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<int>* Horse::DATA_VARIANT = NULL;
@@ -86,9 +88,10 @@ void Horse::addAdditonalSaveData(CompoundTag* tag)
 {
     AbstractHorse::addAdditonalSaveData(tag);
     tag->putInt(L"Variant", getVariant());
-    if (mArmorType != NULL && !mArmorItem->isEmpty())
+    not_null_ptr<ItemInstance> armor = mInventory->getItem(1);
+    if (!armor->isEmpty())
     {
-        tag->put(L"ArmorItem", mArmorItem->save(new CompoundTag()));
+        tag->put(L"ArmorItem", armor->save(new CompoundTag()));
     }
 }
 
@@ -106,10 +109,16 @@ void Horse::setVariant(int variant)
 void Horse::readAdditionalSaveData(CompoundTag* tag)
 {
     AbstractHorse::readAdditionalSaveData(tag);
-    if (tag->contains(L"Variant"))
+    setVariant(tag->getInt(L"Variant"));
+    if (tag->contains(L"ArmorItem", 10))
     {
-        setVariant(tag->getInt(L"Variant"));
+        not_null_ptr<ItemInstance> armorItem(new ItemInstance(tag->getCompound(L"ArmorItem")));
+        if (!armorItem->isEmpty() && HorseArmorItem::isHorseArmor(armorItem->getItem()))
+        {
+            mInventory->setItem(1, armorItem);
+        }
     }
+    updateEquipment();
 }
 
 void Horse::rebuildLayeredTextureInfo()
@@ -154,8 +163,8 @@ bool Horse::isWearingDyedArmor()
 
 int Horse::getDyedArmorColor()
 {
-    if (mArmorType != NULL && mWearingDyedArmor) mDyedArmorColor = mArmorType->getDyedColor(mArmorItem);
-    return mDyedArmorColor;
+    not_null_ptr<ItemInstance> item = getEntityData()->get(DATA_ARMOR);
+    return getArmorType()->getDyedColor(item);
 }
 
 int Horse::getDyedArmorLayer()
@@ -168,26 +177,18 @@ int Horse::getDyedArmorLayer()
 
 void Horse::setArmorType(const not_null_ptr<ItemInstance>& item)
 {
-    mArmorItem = item;
-    mArmorType = NULL;
-    if (!item->isEmpty() && HorseArmorItem::isHorseArmor(item->getItem()))
-    {
-        mArmorType = static_cast<HorseArmorItem*>(item->getItem());
-        mWearingDyedArmor = mArmorType->isDyeable();
-        mDyedArmorLayer = mArmorType->getTextureCount() > 0 ? 0 : -1;
-    }
-    else
-    {
-        mWearingDyedArmor = false;
-        mDyedArmorLayer = -1;
-    }
+    mArmorType = HorseArmorItem::isHorseArmor(item->getItem())
+        ? static_cast<HorseArmorItem*>(item->getItem())
+        : NULL;
+    getEntityData()->set(DATA_ARMOR, item, true);
     clearLayeredTextureInfo();
 }
 
 void Horse::updateEquipment()
 {
     AbstractHorse::updateEquipment();
-    clearLayeredTextureInfo();
+    not_null_ptr<ItemInstance> item = mInventory->getItem(1);
+    setArmorType(item);
 }
 
 void Horse::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -213,8 +214,14 @@ void Horse::registerAttributes()
 
 void Horse::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Horse tick");
     AbstractHorse::tick();
-    if (mLayeredTextureHashName.empty()) rebuildLayeredTextureInfo();
+    if (getEntityData()->isDirty())
+    {
+        getEntityData()->clearDirty();
+        clearLayeredTextureInfo();
+    }
+    PIXEndNamedEvent();
 }
 
 const SoundEvent* Horse::getAmbientSound() { AbstractHorse::getAmbientSound(); return SoundEvents::HORSE_AMBIENT; }
@@ -367,16 +374,66 @@ bool Horse::HideUseTooltips() { return true; }
 
 bool Horse::canMate(const boost::shared_ptr<Animal>& other)
 {
-    return AbstractHorse::canMate(other) && other.get() != this;
+    if (other.get() == this)
+    {
+        return false;
+    }
+    unsigned long long otherType = other->GetType();
+    if (otherType != ENTITY_TYPE_DONKEY && otherType != ENTITY_TYPE_HORSE)
+    {
+        return false;
+    }
+    if (!canParent())
+    {
+        return false;
+    }
+    boost::shared_ptr<AbstractHorse> otherHorse = boost::static_pointer_cast<AbstractHorse>(other);
+    return otherHorse->canParent();
 }
 
 boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
-    Horse* child = new Horse(mLevel);
-    child->setVariant(getVariant());
-    Horse* horse = dynamic_cast<Horse*>(partner.get());
-    if (horse != NULL) child->setVariant((getVariant() + horse->getVariant()) / 2);
-    return boost::shared_ptr<AgableMob>(child);
+    boost::shared_ptr<AbstractHorse> child;
+    if (partner->GetType() == ENTITY_TYPE_DONKEY)
+    {
+        child = boost::shared_ptr<AbstractHorse>(new Mule(mLevel));
+    }
+    else
+    {
+        boost::shared_ptr<Horse> partnerHorse = boost::static_pointer_cast<Horse>(partner);
+        boost::shared_ptr<Horse> horseChild(new Horse(mLevel));
+        int colour;
+        int roll = getRandom()->nextInt(9);
+        if (roll < 4)
+        {
+            colour = getVariant() & 0xff;
+        }
+        else if (roll < 8)
+        {
+            colour = partnerHorse->getVariant() & 0xff;
+        }
+        else
+        {
+            colour = getRandom()->nextInt(7);
+        }
+        int markingRoll = getRandom()->nextInt(5);
+        if (markingRoll < 2)
+        {
+            colour |= getVariant() & 0xff00;
+        }
+        else if (markingRoll < 4)
+        {
+            colour |= partnerHorse->getVariant() & 0xff00;
+        }
+        else
+        {
+            colour |= (getRandom()->nextInt(5) & 0xff) << 8;
+        }
+        horseChild->setVariant(colour);
+        child = boost::static_pointer_cast<AbstractHorse>(horseChild);
+    }
+    setOffspringAttributes(partner, child);
+    return boost::static_pointer_cast<AgableMob>(child);
 }
 
 bool Horse::wearsArmor() { return true; }

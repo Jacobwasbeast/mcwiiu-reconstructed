@@ -6,6 +6,7 @@
 #include "game/core/Painting.hpp"
 #include "game/core/Stats.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/HangingEntity.hpp"
 #include "game/item/ItemFrame.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/world/generation/Player.hpp"
@@ -24,21 +25,24 @@ HangingEntityItem::~HangingEntityItem()
 {
 }
 
-void HangingEntityItem::createEntity(Level* level, const BlockPos& pos, const Direction* direction,
-                                     int auxValue)
+boost::shared_ptr<HangingEntity> HangingEntityItem::createEntity(Level* level, const BlockPos& pos,
+                                                                  const Direction* direction, int auxValue)
 {
     if (mEntityType == 0x000000000A080001ULL)
     {
         boost::shared_ptr<Painting> painting(new Painting(level, pos, direction));
         painting->PaintingPostConstructor(direction, -1);
         level->addEntity(boost::static_pointer_cast<Entity>(painting));
+        return boost::static_pointer_cast<HangingEntity>(painting);
     }
     else if (mEntityType == 0x000000000A080002ULL)
     {
         boost::shared_ptr<ItemFrame> itemFrame(new ItemFrame(level, pos, direction));
         level->updateObservingBlocksAt(pos, NULL);
         level->addEntity(boost::static_pointer_cast<Entity>(itemFrame));
+        return boost::static_pointer_cast<HangingEntity>(itemFrame);
     }
+    return boost::shared_ptr<HangingEntity>();
 }
 
 InteractionResult::EInteractionResult HangingEntityItem::useOn(

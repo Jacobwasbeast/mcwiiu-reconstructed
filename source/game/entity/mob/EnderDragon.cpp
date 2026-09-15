@@ -5,6 +5,8 @@
 
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/BinaryHeap.hpp"
+#include "game/core/L10N.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -65,7 +67,9 @@ EnderDragon::~EnderDragon()
 
 std::wstring EnderDragon::getDisplayName()
 {
-    return L"entity.EnderDragon.name";
+    if (hasCustomName())
+        return getCustomName();
+    return std::wstring(L10N::GetString(0x5157a755));
 }
 
 float EnderDragon::getMaxHealth() { return 200.0f; }
@@ -80,13 +84,82 @@ unsigned int EnderDragon::getSynchedAction()
 
 int EnderDragon::setSynchedAction(EEnderdragonAction action, bool force)
 {
-    if (!force && action == static_cast<EEnderdragonAction>(mDragonPhase))
+    bool changed = false;
+    switch (getSynchedAction())
+    {
+    case ACTION_NONE:
+        if (action == ACTION_1 || action == ACTION_2)
+            changed = true;
+        break;
+    case ACTION_1:
+        if (action == ACTION_NONE || action == ACTION_2)
+            changed = true;
+        break;
+    case ACTION_2:
+        if (action == ACTION_3)
+            changed = true;
+        break;
+    case ACTION_3:
+        if (action == ACTION_5 || action == ACTION_6)
+            changed = true;
+        break;
+    case ACTION_4:
+        if (action == ACTION_NONE)
+            changed = true;
+        break;
+    case ACTION_5:
+        if (action == ACTION_4 || action == ACTION_6 || action == ACTION_7)
+            changed = true;
+        break;
+    case ACTION_6:
+        if (action == ACTION_4 || action == ACTION_5 || action == ACTION_7)
+            changed = true;
+        break;
+    case ACTION_7:
+        if (action == ACTION_4 || action == ACTION_5 || action == ACTION_6)
+            changed = true;
+        break;
+    default:
+        break;
+    }
+
+    if (force || changed)
+        getEntityData()->set(DATA_DRAGON_PHASE, static_cast<int>(action), true);
+
+    if (!force && !changed)
         return 0;
-    mDragonPhase = static_cast<int>(action);
     return 1;
 }
 
-unsigned int EnderDragon::findClosestNode(double, double, double) { return 0; }
+unsigned int EnderDragon::findClosestNode(double x, double y, double z)
+{
+    Node* target = new Node(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(z)));
+    double bestDistance = 100.0;
+    unsigned int bestIndex = 0;
+    unsigned int start = 0;
+    if (mDragonFight == NULL || mDragonFight->getCrystalsAlive() == 0)
+        start = 12;
+    if (start < 24)
+    {
+        DragonNodeList* nodeList =
+            *reinterpret_cast<DragonNodeList**>(reinterpret_cast<char*>(this) + 0xdb0);
+        for (unsigned int i = start; i < 24; ++i)
+        {
+            Node* node = nodeList->nodes[i];
+            if (node != NULL)
+            {
+                const double distance = node->distanceTo(target);
+                if (distance < bestDistance)
+                {
+                    bestIndex = i;
+                    bestDistance = distance;
+                }
+            }
+        }
+    }
+    delete target;
+    return bestIndex;
+}
 
 namespace
 {
@@ -442,7 +515,26 @@ Path* EnderDragon::findPath(int start, int end, Node* target)
 void EnderDragon::navigateToNextPathNode()
 {
     if (mPath != NULL && !mPath->isDone())
+    {
+        Vec3* target = mPath->currentPos();
         mPath->next();
+        mPosHistory[0][0] = target->x;
+        if (getSynchedAction() == 2 && mPath->isDone())
+        {
+            mPosHistory[0][1] = target->y;
+            mPosHistory[0][2] = target->z;
+        }
+        else
+        {
+            double newY;
+            do
+            {
+                newY = target->y + (double)(float)(mRandom->nextFloat() * 20.0f);
+            } while (newY < target->y);
+            mPosHistory[0][1] = newY;
+            mPosHistory[0][2] = target->z;
+        }
+    }
 }
 
 void EnderDragon::strafeAttackTarget()
@@ -982,9 +1074,26 @@ void EnderDragon::readAdditionalSaveData(CompoundTag* tag)
 
 double EnderDragon::getHeadPartYOffset(int part, arrayWithLength<double> first, arrayWithLength<double> second)
 {
-    if (part == 6 || first.data == NULL || second.data == NULL)
-        return static_cast<double>(part);
-    return second.data[1] - first.data[1];
+    double result = 0.0;
+    const EEnderdragonAction action = static_cast<EEnderdragonAction>(getSynchedAction());
+    if (action == ACTION_3 || action == ACTION_4)
+    {
+        const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
+        const double distSq = distanceToSqr(0.0, static_cast<double>(top.y), 0.0);
+        double scale = std::sqrt(distSq) * 0.25;
+        if (scale < 1.0)
+            scale = 1.0;
+        result = static_cast<double>(part) / scale;
+    }
+    else if (action == ACTION_5 || action == ACTION_6 || action == ACTION_7)
+    {
+        result = static_cast<double>(part);
+    }
+    else if (part != 6)
+    {
+        result = second.data[1] - first.data[1];
+    }
+    return result;
 }
 
 double EnderDragon::getHeadPartYRotDiff(int, arrayWithLength<double> first, arrayWithLength<double> second)

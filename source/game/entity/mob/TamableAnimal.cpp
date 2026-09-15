@@ -26,6 +26,7 @@ TamableAnimal::TamableAnimal(Level* level) : Animal(level), mSitGoal(NULL)
 
 TamableAnimal::~TamableAnimal()
 {
+    delete mSitGoal;
 }
 
 std::wstring TamableAnimal::getOwnerUUID()

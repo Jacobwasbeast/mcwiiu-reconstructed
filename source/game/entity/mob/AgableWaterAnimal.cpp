@@ -59,7 +59,7 @@ int AgableWaterAnimal::getExperienceReward(boost::shared_ptr<Player>)
     return mLevel->mRandom->nextInt(3) + 1;
 }
 
-WaterBoundPathNavigation* AgableWaterAnimal::createNavigation(Level* level)
+PathNavigation* AgableWaterAnimal::createNavigation(Level* level)
 {
     return new WaterBoundPathNavigation(this, level, true, false);
 }

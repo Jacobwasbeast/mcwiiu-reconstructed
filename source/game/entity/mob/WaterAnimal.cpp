@@ -71,7 +71,7 @@ int WaterAnimal::getExperienceReward(boost::shared_ptr<Player>)
     return mLevel->mRandom->nextInt(3) + 1;
 }
 
-WaterBoundPathNavigation* WaterAnimal::createNavigation(Level* level)
+PathNavigation* WaterAnimal::createNavigation(Level* level)
 {
     return new WaterBoundPathNavigation(this, level, true, false);
 }

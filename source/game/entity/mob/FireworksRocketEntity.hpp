@@ -2,6 +2,7 @@
 #define GAME_ENTITY_MOB_FIREWORKSROCKETENTITY_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -52,7 +53,7 @@ public:
 private:
     int mLife;
     int mLifetime;
-    boost::shared_ptr<LivingEntity> mAttachedToEntity;
+    boost::weak_ptr<LivingEntity> mAttachedToEntity;
     bool mHasDirectionalData;
     int mDirectionalX;
     int mDirectionalY;

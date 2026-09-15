@@ -221,7 +221,7 @@ CompoundTag* BaseMobSpawner::save(CompoundTag* tag)
 boost::shared_ptr<Entity> BaseMobSpawner::getOrCreateDisplayEntity(Level* level)
 {
     if (!mDisplayEntity)
-        mDisplayEntity = OldChunkStorage::loadEntity(mNextSpawnData->getTag(), level, false);
+        mDisplayEntity = OldChunkStorage::loadEntity(mNextSpawnData->getTag(), getLevel(), false);
     return mDisplayEntity;
 }
 
@@ -229,12 +229,16 @@ int BaseMobSpawner::onEventTriggered(int event)
 {
     if (event == 2)
     {
-        getLevel()->levelEvent(1001, getPos(), 0);
+        Level* level = getLevel();
+        if (level->mIsClientSide)
+            level->levelEvent(1001, getPos(), 0);
         return 1;
     }
     if (event == 1)
     {
-        mDelay = mMinSpawnDelay;
+        Level* level = getLevel();
+        if (level->mIsClientSide)
+            mDelay = mMinSpawnDelay;
         return 1;
     }
     return 0;

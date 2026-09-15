@@ -5,6 +5,7 @@
 
 #include "game/entity/mob/AgableMob.hpp"
 
+class PathNavigation;
 class Level;
 class Player;
 class WaterBoundPathNavigation;
@@ -20,7 +21,7 @@ public:
     virtual bool checkSpawnObstruction();
     virtual int getAmbientSoundInterval();
     virtual int getExperienceReward(boost::shared_ptr<Player> player);
-    virtual WaterBoundPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual void aiStep();
     virtual bool isPushedByWater();
     virtual bool breathesAir();

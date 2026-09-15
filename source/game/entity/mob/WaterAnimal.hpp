@@ -5,6 +5,7 @@
 
 #include "game/entity/mob/PathfinderMob.hpp"
 
+class PathNavigation;
 class Level;
 class Player;
 class SoundEvent;
@@ -22,7 +23,7 @@ public:
     virtual int getAmbientSoundInterval();
     virtual bool removeWhenFarAway();
     virtual int getExperienceReward(boost::shared_ptr<Player> player);
-    virtual WaterBoundPathNavigation* createNavigation(Level* level);
+    virtual PathNavigation* createNavigation(Level* level);
     virtual const SoundEvent* getFlopSound() const;
     virtual void aiStep();
     virtual void baseTick();

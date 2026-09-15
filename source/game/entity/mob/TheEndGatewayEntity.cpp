@@ -4,16 +4,21 @@
 #include <vector>
 
 #include "game/core/Mth.hpp"
+#include "game/core/ThrownEnderpearl.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 #include "game/util/NbtUtils.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/AABB.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/EndGatewayFeature.hpp"
@@ -52,7 +57,8 @@ BlockPos TheEndGatewayEntity::findTallestBlock(Level* level, const BlockPos& ori
             {
                 BlockPos candidate = origin.offset(x, y, z);
                 const BlockState* state = level->getBlockState(candidate);
-                if (state != NULL && (!skipAir || !level->isEmptyBlock(candidate)))
+                if (state != NULL && state->getBlock() != Blocks::bedrock &&
+                    (!skipAir || !level->isEmptyBlock(candidate)))
                 {
                     delete result;
                     result = new BlockPos(candidate);
@@ -111,17 +117,31 @@ BlockPos* TheEndGatewayEntity::findValidSpawnInChunk(LevelChunk* chunk)
 
 void TheEndGatewayEntity::createExitPortal(const BlockPos& position)
 {
-    if (mLevel == NULL)
-        return;
     Random random;
     EndGatewayFeature feature(mExactTeleport ? 1 : 0);
     feature.place(mLevel, random, position);
+    boost::shared_ptr<BlockEntity> other = mLevel->getBlockEntity(position);
+    if (other.get() != NULL && other->GetType() == 0x1300201ULL)
+    {
+        boost::shared_ptr<TheEndGatewayEntity> otherGateway = boost::static_pointer_cast<TheEndGatewayEntity>(other);
+        otherGateway->SetExitPortal(new BlockPos(getBlockPos()));
+        otherGateway->setChanged();
+    }
 }
 
 void TheEndGatewayEntity::findExitPortal()
 {
     if (mLevel == NULL)
         return;
+    if (mExitPortal != NULL)
+    {
+        BlockPos origin = ChunkPos(0, 0).getMiddleBlockPosition(0);
+        BlockPos tallest = findTallestBlock(mLevel, origin, 7, true);
+        SetExitPortal(new BlockPos(tallest.above(10)));
+        createExitPortal(*mExitPortal);
+        setChanged();
+        return;
+    }
     BlockPos origin = getBlockPos();
     LevelChunk* chunk = mLevel->getChunkAt(origin);
     SetExitPortal(findValidSpawnInChunk(chunk));
@@ -149,17 +169,63 @@ void TheEndGatewayEntity::triggerCooldown()
 
 void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
 {
-    if (entity.get() == NULL || mLevel == NULL || mLevel->mIsClientSide || isCoolingDown())
+    if (mLevel->mIsClientSide)
         return;
+    if (isCoolingDown())
+        return;
+    if (entity->GetType() == 0x8a200003ULL)
+    {
+        boost::shared_ptr<ThrownEnderpearl> pearl = boost::static_pointer_cast<ThrownEnderpearl>(entity);
+        boost::shared_ptr<LivingEntity> owner = pearl->getOwner();
+        if (owner.get() != NULL)
+        {
+            teleportEntity(owner);
+            entity->remove();
+        }
+        return;
+    }
+    mCooldown = 100;
     if (mExitPortal == NULL)
+    {
         findExitPortal();
-    if (mExitPortal == NULL)
-        return;
-    BlockPos target = *mExitPortal;
-    if (!mExactTeleport)
-        target = target.above();
-    entity->stopRidingBeforeTeleport();
-    entity->teleportTo(target.x + 0.5, target.y + 1.0, target.z + 0.5);
+        if (mExitPortal == NULL)
+        {
+            triggerCooldown();
+            return;
+        }
+    }
+    if (entity->isPassenger())
+    {
+        entity->stopRidingBeforeTeleport();
+    }
+    else if (entity->isVehicle())
+    {
+        std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
+        while (!passengers->empty())
+        {
+            boost::shared_ptr<Entity> passenger = passengers->front().lock();
+            passenger->stopRiding();
+        }
+    }
+    mLevel->getChunkSource()->getOrCreateChunk(mExitPortal->x >> 4, mExitPortal->z >> 4, false);
+    BlockPos target;
+    if (mExactTeleport)
+    {
+        target = *mExitPortal;
+    }
+    else
+    {
+        target = findExitPosition();
+        if (target.equals(*mExitPortal) || target.equals(mExitPortal->above()))
+        {
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 1, 0), Blocks::bedrock->defaultBlockState());
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 2, 0), Blocks::bedrock->defaultBlockState());
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 3, 0), Blocks::AIR->defaultBlockState());
+            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 4, 0), Blocks::AIR->defaultBlockState());
+            target = mExitPortal->offset(0, 3, 0);
+        }
+    }
+    entity->teleportTo((double)target.x, (double)target.y, (double)target.z);
     triggerCooldown();
 }
 
@@ -226,7 +292,9 @@ double TheEndGatewayEntity::getCooldownPercent(float partialTick)
 
 boost::shared_ptr<Packet> TheEndGatewayEntity::getUpdatePacket()
 {
-    return BlockEntity::getUpdatePacket();
+    int dimension = mLevel->mDimension->getType()->getId();
+    CompoundTag* tag = getUpdateTag();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 8, dimension, tag));
 }
 
 CompoundTag* TheEndGatewayEntity::getUpdateTag()
@@ -272,12 +340,10 @@ int TheEndGatewayEntity::getParticleAmount()
 boost::shared_ptr<BlockEntity> TheEndGatewayEntity::clone()
 {
     boost::shared_ptr<TheEndGatewayEntity> copy(new TheEndGatewayEntity());
+    BlockEntity::clone(copy);
     copy->mAge = mAge;
     copy->mCooldown = mCooldown;
-    copy->mExactTeleport = mExactTeleport;
-    if (mExitPortal != NULL)
-        copy->mExitPortal = new BlockPos(*mExitPortal);
-    copy->BlockEntity::operator=(*this);
+    copy->mExitPortal = new BlockPos(*mExitPortal);
     return copy;
 }
 

@@ -21,6 +21,7 @@
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 #include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
 #include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/mob/AbstractSkeleton.hpp"
@@ -30,10 +31,13 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MoveThroughVillageGoal.hpp"
+#include "game/world/generation/Villager.hpp"
+#include "game/world/generation/ZombieVillager.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -83,10 +87,9 @@ void Zombie::create(Level* level)
 
 void Zombie::staticCtor()
 {
-    gZombieBabyId = SynchedEntityData::defineId<bool>(0, 0, EntityDataSerializers::BOOLEAN);
-    gZombieAggressiveId = SynchedEntityData::defineId<bool>(0, 0, EntityDataSerializers::BOOLEAN);
-    gZombieJockeyId = SynchedEntityData::defineId<bool>(0, 0, EntityDataSerializers::BOOLEAN);
-    gZombieConvertingId = SynchedEntityData::defineId<bool>(0, 0, EntityDataSerializers::BOOLEAN);
+    gZombieBabyId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
+    gZombieAggressiveId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
+    gZombieConvertingId = SynchedEntityData::defineId<bool>(0x5D550040ULL, 0x4D540000ULL, EntityDataSerializers::BOOLEAN);
 }
 
 void Zombie::_init()
@@ -101,7 +104,10 @@ void Zombie::_init()
 
 void Zombie::registerGoals()
 {
-    Monster::registerGoals();
+    mGoalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false), true);
+    mGoalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0), true);
+    mGoalSelector.addGoal(7, new SinkInWaterRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
     addBehaviourGoals();
 }
 
@@ -143,13 +149,12 @@ void Zombie::defineSynchedData()
 
 void Zombie::setAggressive(bool aggressive)
 {
-    if (mEntityData && gZombieAggressiveId)
-        mEntityData->set(gZombieAggressiveId, aggressive, true);
+    getEntityData()->set(gZombieAggressiveId, aggressive, true);
 }
 
 bool Zombie::isAggressive()
 {
-    return mEntityData && gZombieAggressiveId ? mEntityData->get(gZombieAggressiveId) : false;
+    return getEntityData()->get(gZombieAggressiveId);
 }
 
 bool Zombie::canBreakDoors()
@@ -172,7 +177,7 @@ void Zombie::setCanBreakDoors(bool canBreakDoors)
 
 bool Zombie::isBaby()
 {
-    return mEntityData && gZombieBabyId ? mEntityData->get(gZombieBabyId) : false;
+    return getEntityData()->get(gZombieBabyId);
 }
 
 bool Zombie::isJockey()
@@ -190,9 +195,8 @@ int Zombie::getExperienceReward(boost::shared_ptr<Player> player)
 
 void Zombie::setBaby(bool baby)
 {
-    if (mEntityData && gZombieBabyId)
-        mEntityData->set(gZombieBabyId, baby, true);
-    setSize(0.6f, 1.95f);
+    getEntityData()->set(gZombieBabyId, baby, true);
+    internalSetSize(baby ? 0.5f : 1.0f);
 }
 
 void Zombie::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
@@ -303,7 +307,16 @@ bool Zombie::hurt(const DamageSource* source, float damage)
 
 bool Zombie::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    return Monster::doHurtTarget(target);
+    bool hurt = Monster::doHurtTarget(target);
+    if (hurt)
+    {
+        float difficulty = mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
+        if (getMainHandItem()->isEmpty() && isOnFire() && mRandom->nextFloat() < difficulty * 0.3f)
+        {
+            target->setSecondsOnFire((int)difficulty << 1);
+        }
+    }
+    return hurt;
 }
 
 bool Zombie::isSunSensitive() const
@@ -363,21 +376,60 @@ void Zombie::addDataWalkers(DataFixerUpper* fixer)
 
 void Zombie::addAdditonalSaveData(CompoundTag* tag)
 {
-    Monster::addAdditonalSaveData(tag);
-    tag->putBoolean(std::wstring(L"CanBreakDoors"), mCanBreakDoors);
-    tag->putInt(std::wstring(L"ConversionTime"), mConversionTime);
+    Mob::addAdditonalSaveData(tag);
+    if (isBaby())
+        tag->putBoolean(std::wstring(L"IsBaby"), true);
+    tag->putBoolean(std::wstring(L"CanBreakDoors"), canBreakDoors());
+    tag->putBoolean(std::wstring(L"IsJockey"), mIsJockey);
+    tag->putInt(std::wstring(L"InWaterTime"), mWaterConversionTime);
+    tag->putInt(std::wstring(L"DrownedConversionTime"), mConversionTime);
 }
 
 void Zombie::readAdditionalSaveData(CompoundTag* tag)
 {
-    Monster::readAdditionalSaveData(tag);
-    mCanBreakDoors = tag->getBoolean(std::wstring(L"CanBreakDoors"));
-    mConversionTime = tag->getInt(std::wstring(L"ConversionTime"));
+    Mob::readAdditionalSaveData(tag);
+    if (tag->getBoolean(std::wstring(L"IsBaby")))
+        setBaby(true);
+    setCanBreakDoors(tag->getBoolean(std::wstring(L"CanBreakDoors")));
+    mIsJockey = tag->getBoolean(std::wstring(L"IsJockey"));
+    mConversionTime = tag->getInt(std::wstring(L"DrownedConversionTime"));
+    getEntityData()->set(gZombieConvertingId, mConversionTime != 0, true);
+    mWaterConversionTime = tag->getInt(std::wstring(L"InWaterTime"));
 }
 
 void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 {
     Entity::killed(entity);
+
+    if (mLevel->getDifficulty() == Difficulty::NORMAL || mLevel->getDifficulty() == Difficulty::HARD)
+    {
+        if (entity->GetType() == 0x0D600001ULL && mLevel->canCreateMore(0x5D550040ULL, 0) &&
+            (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
+        {
+            boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
+            boost::shared_ptr<ZombieVillager> zombieVillager(new ZombieVillager(mLevel));
+
+            zombieVillager->copyPosition(villager);
+            mLevel->removeEntity(villager);
+
+            DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(villager));
+            ZombieGroupData* group = new ZombieGroupData(false, false, true);
+            zombieVillager->finalizeMobSpawn(difficulty, group, std::wstring());
+
+            zombieVillager->setProfession(villager->getProfession());
+            zombieVillager->setBaby(villager->isBaby());
+            zombieVillager->setNoAi(villager->isNoAi());
+            if (villager->hasCustomName())
+            {
+                zombieVillager->setCustomName(villager->getCustomName(), villager->getOwnerUUID(),
+                                               wasNamedByRestrictedPlayer());
+                zombieVillager->setCustomNameVisible(villager->isCustomNameVisible());
+            }
+
+            mLevel->addEntity(zombieVillager);
+            mLevel->levelEvent(boost::shared_ptr<Player>(), 0x402, BlockPos(this), 0);
+        }
+    }
 }
 
 double Zombie::getEyeHeight()
@@ -412,20 +464,27 @@ bool Zombie::canHoldItem(not_null_ptr<ItemInstance> item)
 MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring& dataString)
 {
-    Monster::finalizeMobSpawn(difficulty, data, dataString);
+    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring());
+
+    float specialMultiplier = difficulty.getSpecialMultiplier();
+    setCanPickUpLoot(mRandom->nextFloat() < specialMultiplier * 0.55f);
+    setCanBreakDoors(mRandom->nextFloat() < specialMultiplier * 0.1f);
+
+    populateDefaultEquipmentSlots(difficulty);
+    populateDefaultEquipmentEnchantments(difficulty);
+
     return data;
 }
 
 bool Zombie::isConverting()
 {
-    return mConversionTime > 0;
+    return getEntityData()->get(gZombieConvertingId);
 }
 
 void Zombie::startConverting(int conversionTime)
 {
     mConversionTime = conversionTime;
-    if (mEntityData && gZombieConvertingId)
-        mEntityData->set(gZombieConvertingId, true, true);
+    getEntityData()->set(gZombieConvertingId, true, true);
     mLevel->broadcastEntityEvent(shared_from_this(), 0x10, 0);
 }
 
@@ -461,7 +520,7 @@ void Zombie::internalSetSize(float scale)
 
 not_null_ptr<ItemInstance> Zombie::getSkull()
 {
-    return ItemInstance::EMPTY;
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 2));
 }
 
 double Zombie::getRidingHeight()
@@ -497,26 +556,26 @@ void Zombie::finishConversion()
     boost::shared_ptr<Drowned> drowned(new Drowned(mLevel));
     drowned->copyPosition(shared_from_this());
 
-    BlockPos pos(this);
-    DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(pos);
     if (isBaby())
     {
         ZombieGroupData* group = new ZombieGroupData(true, isJockey(), false);
+        DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(drowned));
         drowned->finalizeMobSpawn(difficulty, group, std::wstring());
     }
     else
     {
         ZombieGroupData* group = new ZombieGroupData(false, false, false);
+        DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(drowned));
         drowned->finalizeMobSpawn(difficulty, group, std::wstring());
     }
 
-    playSound(SoundEvents::DROWNED_CONVERTED, 1.0f, 0.4f);
-    mLevel->addEntity(drowned);
+    playSound(SoundEvents::DROWNED_CONVERTED, 1.0f, 1.0f);
+    mLevel->removeEntity(shared_from_this());
     dropEquipment(true, 0);
     drowned->setNoAi(isNoAi());
     drowned->setCanPickUpLoot(canPickUpLoot());
-    drowned->setPersistenceRequired(isPersistenceRequired());
-    mConversionTime = 0;
+    drowned->setCanBreakDoors(canBreakDoors());
+    mLevel->addEntity(drowned);
 }
 
 unsigned long long Zombie::GetType()

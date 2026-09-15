@@ -97,7 +97,6 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/TrapDoorBlock.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-#include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
@@ -1164,12 +1163,12 @@ void LivingEntity::addEffectNoUpdate(MobEffectInstance* effectInstance)
 
     if (mActiveEffects.find(effectInstance->getEffect()) != mActiveEffects.end())
     {
-        mActiveEffects[effectInstance->getEffect()] = effectInstance;
-        onEffectAdded(effectInstance);
+        mActiveEffects[effectInstance->getEffect()]->update(effectInstance);
     }
     else
     {
-        mActiveEffects[effectInstance->getEffect()]->update(effectInstance);
+        mActiveEffects[effectInstance->getEffect()] = effectInstance;
+        onEffectAdded(effectInstance);
     }
 }
 
@@ -3420,7 +3419,7 @@ void LivingEntity::updateFallFlying()
         {
             flying = true;
 
-            if ((mTickCount & 19) == 0)
+            if ((mTickCount + 1) % 20 == 0)
             {
                 chest->hurtAndBreak(1, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
             }
@@ -3429,6 +3428,16 @@ void LivingEntity::updateFallFlying()
 
     if (!mLevel->mIsClientSide)
     {
+        if (!flying && g_pApp->GetFirstMiniGameType() == eMiniGameId_Glide && TakeGlideCollisionDamage())
+        {
+            float health = getHealth();
+
+            if (hurt(DamageSource::FALL, health + 1.0f))
+            {
+                playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
+            }
+        }
+
         setSharedFlag(9, flying);
     }
 }
@@ -3811,14 +3820,14 @@ void LivingEntity::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     Entity::onSyncedDataUpdated(accessor);
 
-    if (DATA_LIVING_ENTITY_FLAGS != accessor)
+    if (DATA_LIVING_ENTITY_FLAGS != accessor || !mLevel->mIsClientSide)
     {
         return;
     }
 
-    if (mLevel->mIsClientSide)
+    if (isUsingItem())
     {
-        if (isUsingItem() && mUseItem->isEmpty())
+        if (mUseItem->isEmpty())
         {
             mUseItem = getItemInHand(getUsedItemHand());
 
@@ -3830,8 +3839,7 @@ void LivingEntity::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
             return;
         }
     }
-
-    if (!isUsingItem() && !mUseItem->isEmpty())
+    else if (!mUseItem->isEmpty())
     {
         mUseItem = ItemInstance::EMPTY;
         mUseItemRemaining = 0;
@@ -3901,7 +3909,7 @@ void LivingEntity::completeUsingItem()
 
     mUseItem->finishUsingItem(mLevel, boost::dynamic_pointer_cast<Player>(shared_from_this()));
 
-    getUsedItemHand();
+    setItemInHand(getUsedItemHand(), mUseItem);
     stopUsingItem();
 }
 

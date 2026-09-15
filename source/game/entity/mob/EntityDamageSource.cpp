@@ -44,7 +44,7 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
             attackerName = entity->getCustomName();
     }
 
-    std::wstring victimName = victim->getDisplayName();
+    std::wstring victimName = victim->getNetworkName();
     if (item->hasCustomHoverName())
         return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, deathMessage, entity, attackerName, item->getHoverName()));
     return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, message, entity, attackerName));

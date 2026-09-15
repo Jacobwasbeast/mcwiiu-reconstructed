@@ -10,20 +10,27 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Math.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/MobGroupData.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/entity/ai/FleeSunGoal.hpp"
+#include "game/entity/ai/HurtByTargetGoal.hpp"
+#include "game/entity/ai/RandomLookAroundGoal.hpp"
 #include "game/entity/ai/RangedBowAttackGoal.hpp"
+#include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/projectile/TippableArrow.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
@@ -77,7 +84,7 @@ void AbstractSkeleton::setAggressive(bool aggressive)
 
 void AbstractSkeleton::staticCtor()
 {
-    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(0x4D54044000000000ULL,
+    DATA_ID_ATTACKING = SynchedEntityData::defineId<bool>(0x4D540440ULL,
                                                            ENTITY_TYPE_MONSTER,
                                                            EntityDataSerializers::BOOLEAN);
 }
@@ -117,9 +124,10 @@ void AbstractSkeleton::tick()
 
 void AbstractSkeleton::registerGoals()
 {
-    Mob::registerGoals();
-    if (mMeleeGoal != NULL)
-        mGoalSelector.addGoal(4, mMeleeGoal, false);
+    mGoalSelector.addGoal(5, new SinkInWaterRandomStrollGoal(this, 1.0), true);
+    mGoalSelector.addGoal(3, new FleeSunGoal(this, 1.0), true);
+    mGoalSelector.addGoal(6, new RandomLookAroundGoal(this), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, false, arrayWithLength<unsigned long long>()), true);
 }
 
 void AbstractSkeleton::registerAttributes()
@@ -146,19 +154,38 @@ EMobType AbstractSkeleton::getMobType()
 
 void AbstractSkeleton::aiStep()
 {
-    if (mLevel != NULL && !mLevel->mIsClientSide && mLevel->isDay() && !isInWater())
+    if (!mLevel->mIsClientSide && mLevel->isDay())
     {
-        not_null_ptr<ItemInstance> item = getMainHandItem();
-        if (item->isEmpty())
-            setSecondsOnFire(8);
-        else if (item->isDamageableItem())
+        float brightness = getBrightness();
+        boost::shared_ptr<Entity> vehicle = getVehicle();
+        BlockPos pos(mX, (double)Math::round(mY), mZ);
+        if (Entity::instanceof(vehicle, ENTITY_TYPE_BOAT))
+            pos = pos.above();
+
+        if (brightness > 0.5f
+            && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) + (brightness - 0.4f)
+            && mLevel->canSeeSky(pos))
         {
-            item->setAuxValue(item->getDamageValue() + mRandom->nextInt(2));
-            if (item->getDamageValue() >= item->getMaxDamage())
-                setItemSlot(EquipmentSlot::MAINHAND, not_null_ptr<ItemInstance>(new ItemInstance()));
+            not_null_ptr<ItemInstance> item = getMainHandItem();
+            if (!item->isEmpty())
+            {
+                if (item->isDamageableItem())
+                {
+                    item->setAuxValue(item->getDamageValue() + mRandom->nextInt(2));
+                    if (item->getDamageValue() >= item->getMaxDamage())
+                    {
+                        breakItem(item);
+                        setItemSlot(EquipmentSlot::MAINHAND, ItemInstance::EMPTY);
+                    }
+                }
+            }
+            else
+            {
+                setSecondsOnFire(8);
+            }
         }
     }
-    bool inWater = isInWater();
+    bool inWater = isUnderLiquid(Material::WATER);
     if (inWater != mInWater)
         mReassessWeaponGoal = true;
     mInWater = inWater;
@@ -168,8 +195,12 @@ void AbstractSkeleton::aiStep()
 void AbstractSkeleton::rideTick()
 {
     LivingEntity::rideTick();
-    if (mVehicle)
-        mYRot = mVehicle->mYRot;
+    boost::shared_ptr<Entity> vehicle = getVehicle();
+    if (vehicle.get() != NULL && (vehicle->GetType() & 0xd400000ULL) == 0xd400000ULL)
+    {
+        boost::shared_ptr<PathfinderMob> pathfinder = boost::static_pointer_cast<PathfinderMob>(getVehicle());
+        mYRot = pathfinder->mYRot;
+    }
 }
 
 void AbstractSkeleton::die(const DamageSource* source)
@@ -211,6 +242,7 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
     mReassessWeaponGoal = true;
+    setCanPickUpLoot(mRandom->nextFloat() < 0.55f * difficulty.getSpecialMultiplier());
     return data;
 }
 

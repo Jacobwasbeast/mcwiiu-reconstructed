@@ -11,7 +11,9 @@
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
+#include "game/entity/mob/ItemEntity.hpp"
 #include "game/util/AABB.hpp"
+#include "game/util/Vec3i.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/DiodeBlock.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
@@ -222,7 +224,15 @@ void HangingEntity::readAdditionalSaveData(CompoundTag* tag)
 
 boost::shared_ptr<ItemEntity> HangingEntity::spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset)
 {
-    return Entity::spawnAtLocation(itemInstance, yOffset);
+    Vec3i normal = mDirection->getNormal();
+    boost::shared_ptr<ItemEntity> item(new ItemEntity(mLevel,
+        mX + static_cast<double>(normal.x) * 0.15,
+        mY + static_cast<double>(yOffset),
+        mZ + static_cast<double>(normal.z) * 0.15,
+        itemInstance));
+    item->setDefaultPickUpDelay();
+    mLevel->addEntity(item);
+    return item;
 }
 
 bool HangingEntity::repositionEntityAfterLoad()

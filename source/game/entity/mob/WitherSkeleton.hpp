@@ -2,6 +2,7 @@
 #define GAME_ENTITY_MOB_WITHERSKELETON_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/AbstractSkeleton.hpp"
 
@@ -42,7 +43,7 @@ public:
     virtual unsigned long long GetType();
 
 private:
-    boost::shared_ptr<WitherBoss> mWitherParent;
+    boost::weak_ptr<WitherBoss> mWitherParent;
 };
 
 #endif

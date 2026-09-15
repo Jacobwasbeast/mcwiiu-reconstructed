@@ -96,8 +96,10 @@ void SkeletonHorse::playUnderwaterSound(const BlockPos& pos, Block* block)
 
 void SkeletonHorse::playGallopSound(const SoundType* sound)
 {
-    playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER,
-              sound->getVolume() * 0.15f, sound->getPitch());
+    if (isInWater())
+        playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER, sound->getVolume() * 0.15f, sound->getPitch());
+    else
+        playSound(SoundEvents::HORSE_GALLOP, sound->getVolume() * 0.15f, sound->getPitch());
 }
 
 const SoundEvent* SkeletonHorse::getJumpSound()
@@ -138,12 +140,9 @@ ResourceLocation* SkeletonHorse::getDefaultLootTable()
     return &BuiltInLootTables::SKELETON_HORSE;
 }
 
-boost::shared_ptr<AgableMob> SkeletonHorse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
+boost::shared_ptr<AgableMob> SkeletonHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<SkeletonHorse> child(new SkeletonHorse(mLevel));
-    child->setOffspringAttributes(boost::static_pointer_cast<AgableMob>(shared_from_this()),
-                                  boost::static_pointer_cast<AbstractHorse>(partner));
-    return child;
+    return boost::shared_ptr<AgableMob>(new SkeletonHorse(mLevel));
 }
 
 bool SkeletonHorse::isTamed()
@@ -196,16 +195,42 @@ bool SkeletonHorse::breathesWater()
 bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
                                 InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> item = getItemInHand(hand);
-    if (!item->isEmpty() && item->getItem() == Items::saddle)
-    {
+    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+    bool notEmpty = !item->isEmpty();
+
+    if (notEmpty && item->getItem() == Items::spawnEgg)
         return AbstractHorse::mobInteract(player, hand);
-    }
-    if (!isVehicle() && !item->isEmpty())
-    {
+
+    if (!isTamed() && notEmpty)
         return false;
+
+    if (isLeashedToPlayer(player))
+        return false;
+
+    if (isBaby())
+        return AbstractHorse::mobInteract(player, hand);
+
+    if (player->isSneaking())
+    {
+        openInventory(player);
+        return true;
     }
-    AbstractHorse::doPlayerRide(player);
+
+    if (isVehicle())
+        return AbstractHorse::mobInteract(player, hand);
+
+    if (notEmpty)
+    {
+        if (item->getItem() == Items::saddle && !isSaddled())
+        {
+            openInventory(player);
+            return true;
+        }
+        if (item->interactEnemy(player, boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand))
+            return true;
+    }
+
+    doPlayerRide(player);
     return true;
 }
 

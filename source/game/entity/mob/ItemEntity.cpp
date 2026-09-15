@@ -74,10 +74,7 @@ void ItemEntity::_init(Level*, double x, double y, double z)
 
 void ItemEntity::setItem(not_null_ptr<ItemInstance> item)
 {
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-        mEntityData->set(DATA_ITEM, item, true);
-    mItem = item;
-    mHealth = 5;
+    mEntityData->set(DATA_ITEM, item, true);
 }
 
 void ItemEntity::setDefaultPickUpDelay()
@@ -105,16 +102,12 @@ bool ItemEntity::makeStepSound()
 
 void ItemEntity::defineSynchedData()
 {
-    Entity::defineSynchedData();
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-        mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 not_null_ptr<ItemInstance> ItemEntity::getItem()
 {
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-        return mEntityData->get(DATA_ITEM);
-    return mItem;
+    return mEntityData->get(DATA_ITEM);
 }
 
 void ItemEntity::setUnderwaterMovement()
@@ -126,12 +119,31 @@ void ItemEntity::setUnderwaterMovement()
 
 bool ItemEntity::merge(boost::shared_ptr<ItemEntity> entity)
 {
-    if (!entity || entity.get() == this || entity->getItem()->isEmpty())
+    if (entity.get() == this)
         return false;
-    if (getItem()->getItem() != entity->getItem()->getItem() || !getItem()->sameItem(entity->getItem()))
+    if (!entity->isAlive() || !isAlive())
         return false;
-    getItem()->grow(entity->getItem()->getCount());
-    entity->remove();
+    if (mPickupDelay == 32767 || entity->mPickupDelay == 32767)
+        return false;
+    not_null_ptr<ItemInstance> thisItem = getItem();
+    not_null_ptr<ItemInstance> otherItem = entity->getItem();
+    if (!otherItem->sameItem(thisItem))
+        return false;
+    if (otherItem->getCount() < thisItem->getCount())
+        return entity->merge(boost::dynamic_pointer_cast<ItemEntity>(shared_from_this()));
+    if (otherItem->getCount() + thisItem->getCount() > otherItem->getMaxStackSize())
+        return false;
+    otherItem->grow(thisItem->getCount());
+    int mergedPickupDelay = mPickupDelay;
+    if (entity->mPickupDelay > mergedPickupDelay)
+        mergedPickupDelay = entity->mPickupDelay;
+    int mergedAge = mAge;
+    if (entity->mAge < mergedAge)
+        mergedAge = entity->mAge;
+    entity->mPickupDelay = mergedPickupDelay;
+    entity->mAge = mergedAge;
+    entity->setItem(otherItem);
+    remove();
     return true;
 }
 
@@ -157,16 +169,42 @@ void ItemEntity::tick()
         remove();
         return;
     }
-    if (mAge != 0x7fffffff)
-        ++mAge;
-    if (mAge >= 6000)
-        remove();
-    if (isInWater())
+    Entity::tick();
+    if (mPickupDelay > 0 && mPickupDelay != 32767)
+        --mPickupDelay;
+
+    mXo = mX;
+    mYo = mY;
+    mZo = mZ;
+
+    double oldXd = mXd;
+    double oldYd = mYd;
+    double oldZd = mZd;
+
+    if (isUnderLiquid(Material::WATER))
+    {
+        setNoGravity(true);
         setUnderwaterMovement();
+    }
     else
-        mYd -= 0.04;
+    {
+        setNoGravity(false);
+        if (mAge % 25 == 0)
+            mergeWithNeighbours();
+        if (!isNoGravity())
+            mYd -= 0.04;
+    }
     move(eMoverType_Self, mXd, mYd, mZd, true);
-    mergeWithNeighbours();
+    mXd *= 0.98;
+    mYd *= 0.98;
+    mZd *= 0.98;
+    updateInWaterState();
+    if (!mLevel->mIsClientSide &&
+        (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) + (mZd - oldZd) * (mZd - oldZd) > 0.01)
+        mHasImpulse = true;
+    ++mAge;
+    if (!mLevel->mIsClientSide && mAge > 5999)
+        remove();
 }
 
 void ItemEntity::setShortLifeTime()
@@ -197,13 +235,17 @@ void ItemEntity::burn(int damage)
 
 bool ItemEntity::hurt(const DamageSource* source, float damage)
 {
-    if (isInvulnerableTo(source))
+    if (mLevel->mIsClientSide || isInvulnerableTo(source))
         return false;
-    mHealth -= static_cast<int>(damage);
-    markHurt();
-    if (mHealth <= 0)
-        remove();
-    return true;
+    bool immune = !getItem()->isEmpty() && getItem()->getItem() == Items::netherStar && source->isExplosion();
+    if (!immune)
+    {
+        markHurt();
+        mHealth -= static_cast<int>(damage);
+        if (mHealth <= 0)
+            remove();
+    }
+    return false;
 }
 
 std::wstring ItemEntity::getThrower()
@@ -294,13 +336,15 @@ std::wstring ItemEntity::getName()
 {
     if (hasCustomName())
         return getCustomName();
-    return std::wstring();
+    return L"";
 }
 
 boost::shared_ptr<Entity> ItemEntity::changeDimension(int dimension)
 {
-    mergeWithNeighbours();
-    return Entity::changeDimension(dimension);
+    boost::shared_ptr<Entity> newEntity = Entity::changeDimension(dimension);
+    if (!mLevel->mIsClientSide && newEntity && newEntity->GetType() == GetType())
+        boost::static_pointer_cast<ItemEntity>(newEntity)->mergeWithNeighbours();
+    return newEntity;
 }
 
 bool ItemEntity::isAttackable()

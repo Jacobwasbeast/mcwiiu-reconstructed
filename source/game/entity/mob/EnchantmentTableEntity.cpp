@@ -163,8 +163,8 @@ boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
     copy->mBookSpread = mBookSpread;
     copy->mBookSpreadOld = mBookSpreadOld;
     copy->mBookRotationAngle = mBookRotationAngle;
-    copy->mCustomName->set(mCustomName->raw(), std::wstring(), false, true);
-    copy->BlockEntity::operator=(*this);
+    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    BlockEntity::clone(copy);
     return copy;
 }
 

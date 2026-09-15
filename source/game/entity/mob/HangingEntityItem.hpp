@@ -9,6 +9,7 @@
 #include "game/item/not_null_ptr.hpp"
 
 class BlockPos;
+class HangingEntity;
 class HtmlString;
 class Level;
 class Player;
@@ -19,7 +20,7 @@ public:
     explicit HangingEntityItem(unsigned long long entityType);
     virtual ~HangingEntityItem();
 
-    void createEntity(Level* level, const BlockPos& pos, const Direction* direction, int auxValue);
+    boost::shared_ptr<HangingEntity> createEntity(Level* level, const BlockPos& pos, const Direction* direction, int auxValue);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

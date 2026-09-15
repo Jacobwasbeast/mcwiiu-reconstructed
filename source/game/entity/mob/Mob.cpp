@@ -17,7 +17,9 @@
 #include "game/core/LootTable.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/LootTables.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Path.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/FloatTag.hpp"
 #include "game/data/ListTag.hpp"
@@ -185,7 +187,9 @@ void Mob::registerAttributes()
 void Mob::fjDerivedCtorCalls()
 {
     LivingEntity::fjDerivedCtorCalls();
-    createBodyControl();
+    mBodyControl = createBodyControl();
+    mNavigation = createNavigation(mLevel);
+    registerGoals();
 }
 
 void Mob::defineSynchedData()
@@ -198,9 +202,9 @@ void Mob::registerGoals()
 {
 }
 
-void Mob::createNavigation(Level* level)
+PathNavigation* Mob::createNavigation(Level* level)
 {
-    mNavigation = new GroundPathNavigation(this, level, true);
+    return new GroundPathNavigation(this, level, true);
 }
 
 float Mob::getPathfindingMalus(const BlockPathTypes* type)
@@ -216,9 +220,9 @@ void Mob::setPathfindingMalus(const BlockPathTypes* type, float malus)
     mPathfindingMalus[type] = malus;
 }
 
-void Mob::createBodyControl()
+BodyControl* Mob::createBodyControl()
 {
-    mBodyControl = new BodyControl(this);
+    return new BodyControl(this);
 }
 
 LookControl* Mob::getLookControl()
@@ -231,7 +235,7 @@ MoveControl* Mob::getMoveControl()
     return mMoveControl;
 }
 
-void* Mob::getJumpControl()
+JumpControl* Mob::getJumpControl()
 {
     return mJumpControl;
 }
@@ -476,11 +480,6 @@ void Mob::dropEquipment(bool hitByPlayer, int lootingLevel)
     }
 }
 
-void Mob::addDataWalkers(DataFixerUpper* fixer)
-{
-    LivingEntity::addDataWalkers(fixer);
-}
-
 void Mob::addDataWalkers(DataFixerUpper* fixer, unsigned long long entityType)
 {
     std::vector<std::wstring> itemNames;
@@ -569,12 +568,6 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
     if (isNoAi())
         tag->putBoolean(L"NoAI", true);
 
-    if (mLootTable != NULL)
-    {
-        tag->putString(L"DeathLootTable", mLootTable->toString());
-        if (mLootTableSeed != 0)
-            tag->putLong(L"DeathLootTableSeed", mLootTableSeed);
-    }
 }
 
 void Mob::setPersistenceRequired(bool required)
@@ -641,11 +634,6 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
 
     setNoAi(tag->getBoolean(L"NoAI"));
 
-    if (tag->contains(L"DeathLootTable"))
-    {
-        mLootTable = new ResourceLocation(tag->getString(L"DeathLootTable"));
-        mLootTableSeed = tag->getLong(L"DeathLootTableSeed");
-    }
 }
 
 ResourceLocation* Mob::getDefaultLootTable()
@@ -701,16 +689,19 @@ void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSourc
     delete builder;
 }
 
-void Mob::setZza(float)
+void Mob::setZza(float zza)
 {
+    mZza = zza;
 }
 
-void Mob::setYya(float)
+void Mob::setYya(float yya)
 {
+    mYya = yya;
 }
 
-void Mob::setXxa(float)
+void Mob::setXxa(float xxa)
 {
+    mXxa = xxa;
 }
 
 void Mob::setSpeed(float speed)
@@ -767,16 +758,9 @@ const EquipmentSlot* Mob::getEquipmentSlotForItem(not_null_ptr<ItemInstance> ite
 
 void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
 {
-    if (!entity)
-        return;
     not_null_ptr<ItemInstance> incoming = entity->getItem();
-    if (incoming.get() == NULL || incoming->isEmpty())
-        return;
 
     const EquipmentSlot* slot = getEquipmentSlotForItem(incoming);
-    if (slot == NULL || !isValidSlotForItem(slot, incoming)
-        || EnchantmentHelper::hasBindingCurse(incoming))
-        return;
 
     not_null_ptr<ItemInstance> equipped = getItemSlot(slot);
     bool accept = equipped->isEmpty();
@@ -787,6 +771,8 @@ void Mob::pickUpItem(boost::shared_ptr<ItemEntity> entity)
         accept = equipped->getCount() < equipped->getMaxStackSize();
     }
     if (!accept)
+        return;
+    if (!canHoldItem(incoming))
         return;
 
     setItemSlot(slot, incoming);
@@ -833,22 +819,68 @@ void Mob::checkDespawn()
 
 void Mob::serverAiStep()
 {
+    PIXBeginNamedEvent(4.5f, "Tick target selector for %I64d", GetType());
+    MemSect(0x33);
     ++mAmbientSoundTime;
+
+    PIXBeginNamedEvent(4.5f, "Check despawn");
     checkDespawn();
-    if (mSensing != NULL)
-        mSensing->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick sensing");
+    mSensing->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick target selector");
     mTargetSelector.tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick goal selectors");
     mGoalSelector.tick();
-    if (mNavigation != NULL)
-        mNavigation->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick navigation");
+    mNavigation->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick server ai mob step");
     customServerAiStep();
-    if (mLookControl != NULL)
-        mLookControl->tick();
-    if (mMoveControl != NULL)
-        mMoveControl->tick();
-    if (mJumpControl != NULL)
-        mJumpControl->tick();
-    considerForExtraWandering(shouldFollow() != 0);
+    PIXEndNamedEvent();
+
+    if (isPassenger())
+    {
+        boost::shared_ptr<Entity> vehicle = getVehicle();
+        if (Entity::instanceof(vehicle, ENTITY_TYPE_MOB))
+        {
+            boost::shared_ptr<Mob> vehicleMob = boost::static_pointer_cast<Mob>(getVehicle());
+
+            PathNavigation* navigation = getNavigation();
+            Path* currentPath = navigation->getPath();
+            Path* clonedPath = currentPath != NULL ? currentPath->clone() : NULL;
+            vehicleMob->getNavigation()->moveTo(clonedPath, 1.5);
+
+            vehicleMob->getMoveControl()->copyFrom(getMoveControl());
+        }
+    }
+
+    PIXBeginNamedEvent(4.5f, "Tick look");
+    mLookControl->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick move");
+    mMoveControl->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Tick jump");
+    mJumpControl->tick();
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(4.5f, "Consider extra wandering");
+    considerForExtraWandering(isDespawnProtected());
+    PIXEndNamedEvent();
+
+    MemSect(0);
+    PIXEndNamedEvent();
 }
 
 void Mob::customServerAiStep()
@@ -920,12 +952,12 @@ bool Mob::checkSpawnObstruction()
            !mLevel->containsAnyLiquid_NoLoad(mBoundingBox);
 }
 
-float Mob::getSizeScale()
+double Mob::getSizeScale()
 {
     return 1.0f;
 }
 
-float Mob::getHeadSizeScale()
+double Mob::getHeadSizeScale()
 {
     return 1.0f;
 }
@@ -979,13 +1011,10 @@ void Mob::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item
 
 not_null_ptr<ItemInstance> Mob::getItemSlot(const EquipmentSlot* slot)
 {
-    if (slot != NULL)
-    {
-        if (slot->getType() == EquipmentSlot::HAND && slot->getIndex() < 2)
-            return mHandItems[slot->getIndex()];
-        if (slot->getType() == EquipmentSlot::ARMOR && slot->getIndex() < 4)
-            return mArmorItems[slot->getIndex()];
-    }
+    if (slot->getType() == EquipmentSlot::HAND)
+        return mHandItems[slot->getIndex()];
+    if (slot->getType() == EquipmentSlot::ARMOR)
+        return mArmorItems[slot->getIndex()];
     return ItemInstance::EMPTY;
 }
 
@@ -1173,7 +1202,20 @@ void Mob::setCanPickUpLoot(bool canPickUp)
 
 bool Mob::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    return mobInteract(player, hand);
+    not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
+    Item* heldItemType = heldItem->getItem();
+
+    if (heldItemType == Items::lead && canBeLeashed(player) && player->isAllowedToAttackAnimals())
+    {
+        setLeashedTo(player, true);
+        heldItem->shrink(1);
+        return true;
+    }
+
+    if (mobInteract(player, hand))
+        return true;
+
+    return Entity::interact(player, hand);
 }
 
 bool Mob::mobInteract(const boost::shared_ptr<Player>&, InteractionHand::EInteractionHand)
@@ -1190,7 +1232,9 @@ void Mob::underwaterEjectRider()
 
 bool Mob::canBeLeashed(const boost::shared_ptr<Player>&)
 {
-    return !isLeashed();
+    if (isLeashed())
+        return false;
+    return (GetType() & 0x40000000ULL) == 0;
 }
 
 bool Mob::startRiding(boost::shared_ptr<Entity> entity, bool force)
@@ -1258,12 +1302,12 @@ bool Mob::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 
 bool Mob::isControlledByLocalInstance()
 {
-    return isEffectiveAi() && Entity::isControlledByLocalInstance();
+    return canBeControlledByRider() && Entity::isControlledByLocalInstance();
 }
 
 bool Mob::isEffectiveAi()
 {
-    return !isNoAi();
+    return LivingEntity::isEffectiveAi() && !isNoAi();
 }
 
 void Mob::setNoAi(bool noAi)
