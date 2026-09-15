@@ -56,6 +56,10 @@ ModelPart::ModelPart(Model* model, const std::wstring& name, const ModelDefiniti
 
 ModelPart::~ModelPart()
 {
+    mCubes.clear();
+    mChildren.clear();
+    if (mCompiled)
+        MemoryTracker::releaseLists(mDisplayList);
 }
 
 void ModelPart::_init()

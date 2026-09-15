@@ -140,19 +140,6 @@ Texture::Texture(const std::wstring& name, int type, int width, int height, int 
     _init(name, type, width, height, format, filter, wrap, target, mipLevels, image, mipmap);
 }
 
-Texture::Texture(const std::wstring& name, int type, int width, int height, int format, int filter,
-                 int wrap, int target, bool mipmap)
-    : m_glId(0), m_managerId(0), m_type(0), m_width(0), m_height(0), m_format(0), m_filter(0),
-      m_wrap(0), m_target(0), m_mipmap(false), m_hasMipmaps(false), m_immediateUpdate(false),
-      m_name(), m_rect(NULL), m_mipLevels(1), m_dirty(false)
-{
-    int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    m_filter = 7;
-    m_rect = new Rect2i(0, 0, 0, 0);
-    _init(name, type, width, height, format, filter, wrap, 1, 1, NULL, mipmap);
-}
-
 Texture::~Texture()
 {
     int i;
@@ -188,13 +175,19 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     m_rect->width = width;
     m_rect->height = height;
     m_managerId = TextureManager::getInstance()->createTextureID();
-    if (type == 2) m_glId = (unsigned int)-1;
-    else m_glId = (unsigned int)GlStateManager::genTexture();
-    GlStateManager::bindTexture((int)m_glId);
-    GlStateManager::texParameteri(m_target, 1, filter);
-    GlStateManager::texParameteri(m_target, 2, wrap);
-    GlStateManager::texParameteri(m_target, 3, filter);
-    GlStateManager::texParameteri(m_target, 4, filter);
+    if (type == 2)
+    {
+        m_glId = (unsigned int)-1;
+    }
+    else
+    {
+        m_glId = (unsigned int)GlStateManager::genTexture();
+        GlStateManager::bindTexture((int)m_glId);
+        GlStateManager::texParameteri(m_target, 1, filter);
+        GlStateManager::texParameteri(m_target, 2, wrap);
+        GlStateManager::texParameteri(m_target, 3, filter);
+        GlStateManager::texParameteri(m_target, 4, filter);
+    }
     if (image != NULL)
     {
         transferFromImage(image);
@@ -329,28 +322,41 @@ unsigned int Texture::getHeight() { return (unsigned int)m_height; }
 unsigned int Texture::getWidth() { return (unsigned int)m_width; }
 unsigned int Texture::getManagerId() { return m_managerId; }
 unsigned int Texture::getGlId() { return m_glId; }
-Rect2i* Texture::getRect() { return m_rect; }
-std::wstring Texture::getName() { return m_name; }
-void Texture::setImmediateUpdate(bool immediate) { m_immediateUpdate = immediate; }
 
-void Texture::blit(int x, int y, Texture* texture) { blit(x, y, texture, false); }
 void Texture::blit(int x, int y, Texture* texture, bool flip)
 {
-    if (texture == NULL || m_data[0] == NULL || texture->m_data[0] == NULL) return;
-    unsigned int rows = texture->getHeight();
-    unsigned int cols = texture->getWidth();
-    unsigned int row;
-    unsigned char* src = texture->m_data[0]->getBuffer();
-    unsigned char* dst = m_data[0]->getBuffer();
-    unsigned int stride = (unsigned int)m_width * 4;
-    for (row = 0; row < rows; ++row) {
-        unsigned int sourceRow = flip ? rows - row - 1 : row;
-        if (y + (int)row < 0 || y + (int)row >= m_height) continue;
-        if (x < 0 || x + (int)cols > m_width) continue;
-        std::memcpy(dst + (y + row) * stride + x * 4, src + sourceRow * cols * 4, cols * 4);
+    if (texture == NULL)
+        return;
+
+    unsigned int level;
+    for (level = 0; level < m_mipLevels; ++level)
+    {
+        ByteBuffer* sourceData = texture->m_data[level];
+        ByteBuffer* destinationData = m_data[level];
+        if (sourceData == NULL || destinationData == NULL)
+            break;
+
+        const unsigned int sourceWidth = texture->getWidth() >> level;
+        const unsigned int sourceHeight = texture->getHeight() >> level;
+        const unsigned int destinationWidth = (unsigned int)m_width >> level;
+        const int destinationX = x >> level;
+        const int destinationY = y >> level;
+        unsigned char* source = sourceData->getBuffer();
+        unsigned char* destination = destinationData->getBuffer();
+        unsigned int row;
+        for (row = 0; row < sourceHeight; ++row)
+        {
+            const unsigned int sourceRow = flip ? sourceHeight - row - 1 : row;
+            std::memcpy(destination + ((destinationY + row) * destinationWidth + destinationX) * 4,
+                        source + (sourceRow * sourceWidth) * 4, sourceWidth * 4);
+        }
     }
+
     m_dirty = true;
-    if (m_immediateUpdate) updateOnGPU();
+    if (m_immediateUpdate)
+        updateOnGPU();
+    else
+        textureGpuSynced(this) = false;
 }
 
 void Texture::bind(int textureUnit)
@@ -359,32 +365,4 @@ void Texture::bind(int textureUnit)
     GlStateManager::activeTexture(textureUnit);
     GlStateManager::bindTexture((int)m_glId);
     if (m_dirty) updateOnGPU();
-}
-
-void Texture::fill(const Rect2i* rect, int color)
-{
-    if (rect == NULL || m_data[0] == NULL) return;
-    unsigned char* data = m_data[0]->getBuffer();
-    int y;
-    for (y = rect->y; y < rect->y + rect->height; ++y) {
-        int x;
-        if (y < 0 || y >= m_height) continue;
-        for (x = rect->x; x < rect->x + rect->width; ++x) if (x >= 0 && x < m_width)
-            std::memcpy(data + (y * m_width + x) * 4, &color, 4);
-    }
-    m_dirty = true;
-}
-
-void Texture::writeAsBMP(const std::wstring& fileName) { (void)fileName; }
-void Texture::writeAsPNG(const std::wstring& fileName) { (void)fileName; }
-void Texture::transferFromBuffer(arrayWithLength<int> pixels)
-{
-    if (pixels.data == NULL) return;
-    arrayWithLength<unsigned char> bytes(pixels.length * 4, false);
-    std::memcpy(bytes.data, pixels.data, pixels.length * 4);
-    delete m_data[0];
-    m_data[0] = ByteBuffer::allocateDirect((int)bytes.length);
-    m_data[0]->put(bytes);
-    m_data[0]->limit(bytes.length);
-    m_dirty = true;
 }

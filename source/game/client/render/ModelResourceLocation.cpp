@@ -68,10 +68,6 @@ ModelResourceLocation* ModelResourceLocation::Make(const std::wstring& location)
     return Make(location, DEFAULT_VARIANT);
 }
 
-std::wstring ModelResourceLocation::getVariant() const {
-    return variant;
-}
-
 std::wstring ModelResourceLocation::toString() const {
     std::wstring text = ResourceLocation::toString() + L'#';
 

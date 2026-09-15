@@ -17,6 +17,7 @@ FishRenderer::FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType
 
 FishRenderer::~FishRenderer()
 {
+    return;
 }
 
 Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)

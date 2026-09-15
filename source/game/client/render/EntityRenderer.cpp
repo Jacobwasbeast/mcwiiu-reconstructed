@@ -432,7 +432,7 @@ Model* EntityRenderer::getModel()
 
 std::wstring EntityRenderer::getModelName()
 {
-    return L"";
+    return L"void";
 }
 
 Model* EntityRenderer::createModel(const ModelDefinition&)

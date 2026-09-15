@@ -114,6 +114,7 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
     mBody->render(scale, useDisplayList, false);
     mTail1->render(scale, useDisplayList, false);
+    mBackLegL->render(scale, useDisplayList, false);
     mBackLegR->render(scale, useDisplayList, false);
     mFrontLegL->render(scale, useDisplayList, false);
     mFrontLegR->render(scale, useDisplayList, false);

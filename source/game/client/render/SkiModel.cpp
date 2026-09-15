@@ -5,24 +5,7 @@
 
 #include <math.h>
 
-SkiModel::SkiModel(bool mirrored)
-{
-    _init(mirrored);
-}
-
-SkiModel::SkiModel(const ModelDefinition& modelDefinition)
-{
-    _init(modelDefinition.DoesOverrideModel());
-}
-
 SkiModel::~SkiModel() { }
-
-void SkiModel::_init(bool mirrored)
-{
-    mMirrored = mirrored;
-    mTexWidth = 64;
-    mTexHeight = 32;
-}
 
 void SkiModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {

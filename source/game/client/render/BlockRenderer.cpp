@@ -27,6 +27,7 @@
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DoorBlock.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/core/Options.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
@@ -1633,20 +1634,122 @@ bool BlockRenderer::tesselateTreeInWorld(const BlockState* state, const BlockPos
 
 bool BlockRenderer::tesselateQuartzInWorld(const BlockState* state, const BlockPos& pos)
 {
-    mFaceRotation0 = mFaceRotation1 = 1;
     bool rendered = tesselateBlockInWorld(state, pos);
-    mFaceRotation0 = mFaceRotation1 = 0;
+    mFaceRotation0 = 0;
+    mFaceRotation1 = 0;
+    mFaceRotation2 = 0;
+    mFaceRotation3 = 0;
+    mFaceRotation4 = 0;
+    mFaceRotation5 = 0;
     return rendered;
 }
 
 bool BlockRenderer::tesselateHorizontalDirectionalInWorld(const BlockState* state, const BlockPos& pos)
 {
-    mFaceRotation2 = 2;
-    mFaceRotation3 = 1;
-    mFaceRotation4 = mFaceRotation5 = 3;
-    bool rendered = tesselateBlockInWorld(state, pos);
-    mFaceRotation2 = mFaceRotation3 = mFaceRotation4 = mFaceRotation5 = 0;
-    return rendered;
+    const Direction* facing = state->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+    if (facing == Direction::SOUTH)
+    {
+        mFaceTransform3 = 0;
+        mFaceRotation4 = 0;
+        mFaceTransform5 = 1;
+        mFaceRotation1 = 2;
+        mFaceRotation0 = 1;
+        mFaceRotation5 = 0;
+        mFaceTransform2 = 3;
+        mFaceTransform0 = 3;
+        bool rendered = tesselateBlockInWorld(state, pos);
+        mFaceTransform0 = 0;
+        mFaceTransform3 = 0;
+        mFaceTransform4 = 0;
+        mFaceRotation0 = 0;
+        mFaceRotation1 = 0;
+        mFaceTransform5 = 0;
+        mFaceRotation4 = 0;
+        mFaceTransform1 = 0;
+        mFaceRotation2 = 0;
+        mFaceTransform2 = 0;
+        mFaceRotation3 = 0;
+        mFaceRotation5 = 0;
+        return rendered;
+    }
+    else if (facing == Direction::NORTH)
+    {
+        mFaceTransform2 = 0;
+        mFaceTransform0 = 2;
+        mFaceRotation1 = 1;
+        mFaceRotation5 = 3;
+        mFaceRotation0 = 2;
+        mFaceTransform3 = 3;
+        mFaceTransform5 = 1;
+        mFaceRotation4 = 3;
+        bool rendered = tesselateBlockInWorld(state, pos);
+        mFaceTransform2 = 0;
+        mFaceTransform4 = 0;
+        mFaceRotation2 = 0;
+        mFaceTransform1 = 0;
+        mFaceRotation3 = 0;
+        mFaceTransform0 = 0;
+        mFaceRotation4 = 0;
+        mFaceRotation5 = 0;
+        mFaceRotation0 = 0;
+        mFaceTransform3 = 0;
+        mFaceTransform5 = 0;
+        mFaceRotation1 = 0;
+        return rendered;
+    }
+    else if (facing == Direction::WEST)
+    {
+        mFaceTransform2 = 2;
+        mFaceRotation5 = 2;
+        mFaceRotation3 = 2;
+        mFaceTransform5 = 1;
+        mFaceTransform1 = 3;
+        mFaceRotation2 = 1;
+        mFaceTransform0 = 0;
+        mFaceRotation4 = 1;
+        bool rendered = tesselateBlockInWorld(state, pos);
+        mFaceTransform0 = 0;
+        mFaceRotation0 = 0;
+        mFaceRotation2 = 0;
+        mFaceRotation1 = 0;
+        mFaceTransform2 = 0;
+        mFaceTransform5 = 0;
+        mFaceTransform1 = 0;
+        mFaceRotation5 = 0;
+        mFaceRotation4 = 0;
+        mFaceRotation3 = 0;
+        mFaceTransform3 = 0;
+        mFaceTransform4 = 0;
+        return rendered;
+    }
+    else
+    {
+        if (facing == Direction::EAST)
+        {
+            mFaceTransform1 = 0;
+            mFaceRotation5 = 1;
+            mFaceTransform0 = 3;
+            mFaceTransform2 = 2;
+            mFaceTransform5 = 1;
+            mFaceRotation4 = 2;
+            mFaceRotation3 = 1;
+            mFaceRotation2 = 2;
+        }
+        bool rendered = tesselateBlockInWorld(state, pos);
+        mFaceTransform4 = 0;
+        mFaceTransform2 = 0;
+        mFaceTransform1 = 0;
+        mFaceRotation2 = 0;
+        mFaceTransform0 = 0;
+        mFaceRotation3 = 0;
+        mFaceRotation5 = 0;
+        mFaceRotation4 = 0;
+        mFaceTransform3 = 0;
+        mFaceRotation0 = 0;
+        mFaceRotation1 = 0;
+        mFaceTransform5 = 0;
+        return rendered;
+    }
 }
 
 float BlockRenderer::getWaterHeight(const BlockPos& pos, Material* material)
@@ -2419,21 +2522,72 @@ void BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPo
 
 bool BlockRenderer::tesselateDiodeInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateDiodeInWorld(state, pos, Direction::NORTH);
+    const Direction* direction = state->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+    tesselateDiodeInWorld(state, pos, direction);
     return true;
 }
 
 bool BlockRenderer::tesselateRepeaterInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateDiodeInWorld(state, pos, Direction::NORTH);
-    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y + 0.125f, (float)pos.z + 0.25f, 0.0f, 0.0f);
+    const Direction* direction = state->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+    tesselateDiodeInWorld(state, pos, direction);
+    float x0 = (float)pos.x + 0.5f;
+    float z0 = (float)pos.z + 0.25f;
+    float x1 = (float)pos.x + 0.5f;
+    float z1 = (float)pos.z + 0.75f;
+    if (direction == Direction::SOUTH)
+    {
+        z0 = (float)pos.z + 0.75f;
+        z1 = (float)pos.z + 0.25f;
+    }
+    else if (direction == Direction::EAST)
+    {
+        x0 = (float)pos.x + 0.75f;
+        x1 = (float)pos.x + 0.25f;
+        z0 = z1 = (float)pos.z + 0.5f;
+    }
+    else if (direction == Direction::WEST)
+    {
+        x0 = (float)pos.x + 0.25f;
+        x1 = (float)pos.x + 0.75f;
+        z0 = z1 = (float)pos.z + 0.5f;
+    }
+    tesselateTorch(state, x0, (float)pos.y + 0.125f, z0, 0.0f, 0.0f);
+    tesselateTorch(state, x1, (float)pos.y + 0.125f, z1, 0.0f, 0.0f);
     return true;
 }
 
 bool BlockRenderer::tesselateComparatorInWorld(const BlockState* state, const BlockPos& pos)
 {
-    tesselateDiodeInWorld(state, pos, Direction::NORTH);
-    tesselateTorch(state, (float)pos.x + 0.5f, (float)pos.y + 0.125f, (float)pos.z + 0.5f, 0.0f, 0.0f);
+    const Direction* direction = state->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+    tesselateDiodeInWorld(state, pos, direction);
+    float side0x = (float)pos.x + 0.25f;
+    float side1x = (float)pos.x + 0.75f;
+    float sidez = (float)pos.z + 0.25f;
+    float rearx = (float)pos.x + 0.5f;
+    float rearz = (float)pos.z + 0.75f;
+    if (direction == Direction::SOUTH)
+    {
+        sidez = (float)pos.z + 0.75f;
+        rearz = (float)pos.z + 0.25f;
+    }
+    else if (direction == Direction::EAST)
+    {
+        side0x = side1x = (float)pos.x + 0.75f;
+        sidez = (float)pos.z + 0.25f;
+        rearx = (float)pos.x + 0.25f;
+        rearz = (float)pos.z + 0.5f;
+    }
+    else if (direction == Direction::WEST)
+    {
+        side0x = side1x = (float)pos.x + 0.25f;
+        sidez = (float)pos.z + 0.75f;
+        rearx = (float)pos.x + 0.75f;
+        rearz = (float)pos.z + 0.5f;
+    }
+    tesselateTorch(state, side0x, (float)pos.y + 0.125f, sidez, 0.0f, 0.0f);
+    tesselateTorch(state, side1x, (float)pos.y + 0.125f, sidez, 0.0f, 0.0f);
+    tesselateTorch(state, rearx, (float)pos.y + 0.125f, rearz, 0.0f, 0.0f);
     return true;
 }
 
@@ -2442,6 +2596,8 @@ bool BlockRenderer::tesselatePistonBaseInWorld(const BlockState* state, const Bl
     const BlockState* renderState = actualState == NULL ? state : actualState;
     if (extended)
         setShape(0.0f, 0.0f, 0.0f, 1.0f, 0.75f, 1.0f);
+    else
+        setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
     bool rendered = tesselateBlockInWorld(renderState, pos, 0x3f);
     setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
     return rendered;
@@ -2485,7 +2641,20 @@ void BlockRenderer::renderPistonArmNorthSouth(float x, float y, float z, float x
 
 void BlockRenderer::renderPistonArmEastWest(float x, float y, float z, float x0, float y0, float z0, float x1, float z1)
 {
-    setShape(x0, y0, z0, 1.0f, x1, z1);
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    if (hasFixedTexture())
+        texture = mFixedTexture;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    float u0 = (float)texture->getU0(false);
+    float v0 = (float)texture->getV0(false);
+    float u1 = (float)texture->getU(z1);
+    float v1 = (float)texture->getV(0.25);
+    texture->adjustUVs(u0, u1, v0, v1);
+    builder->color(x1, x1, x1);
+    builder->vertexUV(y, z, y0, u1, v0);
+    builder->vertexUV(x, z, y0, u0, v0);
+    builder->vertexUV(x, x0, z0, u0, v1);
+    builder->vertexUV(y, x0, z0, u1, v1);
 }
 
 bool BlockRenderer::tesselatePistonExtensionInWorld(const BlockState* state, const BlockPos& pos, bool shortHead, const BlockState* actualState)
@@ -2575,14 +2744,40 @@ bool BlockRenderer::tesselateCocoaInWorld(const BlockState* state, const BlockPo
 
 bool BlockRenderer::tesselateBeaconInWorld(const BlockState* state, const BlockPos& pos)
 {
-    setShape(0.1875f, 0.1875f, 0.1875f, 0.8125f, 0.8125f, 0.8125f);
-    bool rendered = tesselateBlockInWorld(state, pos, 0x3f);
-    setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-    return rendered;
+    if (!hasFixedTexture())
+    {
+        setFixedTexture(getTexture(Blocks::glass, Direction::UP));
+        setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+        tesselateBlockInWorld(state, pos);
+        mFlipTexture = true;
+        setFixedTexture(getTexture(Blocks::obsidian, Direction::UP));
+        setShape(0.125f, 0.00625f, 0.125f, 0.875f, 0.1875f, 0.875f);
+        tesselateBlockInWorld(state, pos);
+        setFixedTexture(getTexture(Blocks::beacon, Direction::UP));
+        setShape(0.1875f, 0.1875f, 0.1875f, 0.8125f, 0.875f, 0.8125f);
+        tesselateBlockInWorld(state, pos);
+        mFlipTexture = false;
+        clearFixedTexture();
+    }
+    else
+    {
+        setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+        tesselateBlockInWorld(state, pos);
+    }
+    return true;
 }
 
 bool BlockRenderer::tesselateHopperInWorld(const BlockState* state, const BlockPos& pos)
 {
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    Block* block = state->getBlock();
+    int lightColor = block->getLightColor(state, mLevelSource, pos, -1);
+    builder->tex2(lightColor);
+    int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
+    float green = (float)(color >> 8 & 255) / 255.0f;
+    float red = (float)(color >> 16 & 255) / 255.0f;
+    float blue = (float)(color & 255) / 255.0f;
+    builder->color(red, green, blue);
     return tesselateHopperInWorld(state, pos, false);
 }
 

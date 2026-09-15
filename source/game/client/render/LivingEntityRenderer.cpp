@@ -347,9 +347,28 @@ void LivingEntityRenderer::setupPosition(boost::shared_ptr<LivingEntity>&, doubl
     GlStateManager::translatef((float)x, (float)y, (float)z);
 }
 
-void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>&, float, float rotationYaw, float)
+void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw, float partialTicks)
 {
     GlStateManager::rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
+
+    if (entity->mDeathTime > 0)
+    {
+        float progress = ((float)entity->mDeathTime + partialTicks - 1.0F) / 20.0F * 1.6F;
+        if (progress < 0.0F)
+            progress = 0.0F;
+        if (progress > 1.0F)
+            progress = 1.0F;
+        GlStateManager::rotatef(progress * (float)getFlipDegrees(entity), 0.0F, 0.0F, 1.0F);
+    }
+
+    std::wstring name = entity->getDisplayName();
+    if (name == L"Dinnerbone" || name == L"Grumm")
+    {
+        GlStateManager::translatef(0.0F, 0.1F, 0.0F);
+        GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+    }
+
+    (void)ageInTicks;
 }
 
 float LivingEntityRenderer::getAttackAnim(boost::shared_ptr<LivingEntity>&, float)

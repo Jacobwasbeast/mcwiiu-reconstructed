@@ -4,6 +4,7 @@
 
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/Painting.hpp"
@@ -26,8 +27,21 @@ void PaintingRenderer::setBrightness(boost::shared_ptr<Painting> painting, float
 {
     Painting* value = painting.get();
 
-    BlockPos origin = value->getPos();
-    BlockPos pos(origin.x + (int)x, origin.y, origin.z + (int)z);
+    int lightX = (int)value->mX;
+    int lightY = (int)(value->mY + (double)(z * 0.0625F));
+    int lightZ = (int)value->mZ;
+
+    const Direction* direction = value->getDirection();
+    if (direction == Direction::NORTH)
+        lightX = (int)(value->mX + (double)(x * 0.0625F));
+    if (direction == Direction::WEST)
+        lightZ = (int)(value->mZ - (double)(x * 0.0625F));
+    if (direction == Direction::SOUTH)
+        lightX = (int)(value->mX - (double)(x * 0.0625F));
+    if (direction == Direction::EAST)
+        lightZ = (int)(value->mZ + (double)(x * 0.0625F));
+
+    BlockPos pos(lightX, lightY, lightZ);
     Level* level = value->getCommandSenderWorld();
     int light = level->getLightColor(pos, 0, -1);
     GlStateManager::multiTexCoord2f((float)(light & 65535), (float)((unsigned int)light >> 16));

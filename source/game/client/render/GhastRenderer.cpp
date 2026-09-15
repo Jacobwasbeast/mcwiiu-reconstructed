@@ -16,6 +16,7 @@ GhastRenderer::GhastRenderer(EntityRenderDispatcher* dispatcher)
 
 GhastRenderer::~GhastRenderer()
 {
+    return;
 }
 
 const ResourceLocation* GhastRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

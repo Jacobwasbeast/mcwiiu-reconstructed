@@ -18,6 +18,9 @@ DLCTextureFile::DLCTextureFile(const std::wstring& path)
 
 DLCTextureFile::~DLCTextureFile()
 {
+    delete[] m_pData;
+    m_pData = NULL;
+    m_dataSize = 0;
 }
 
 void DLCTextureFile::addData(unsigned char* pData, unsigned int size)

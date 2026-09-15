@@ -27,6 +27,7 @@ GuardianRenderer::GuardianRenderer(EntityRenderDispatcher* dispatcher)
 
 GuardianRenderer::~GuardianRenderer()
 {
+    return;
 }
 
 Vec3* GuardianRenderer::getPosition(boost::shared_ptr<Entity>& entity, double yOffset, float partialTicks)

@@ -18,9 +18,7 @@ PufferfishRenderer::PufferfishRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-PufferfishRenderer::~PufferfishRenderer()
-{
-}
+PufferfishRenderer::~PufferfishRenderer() = default;
 
 void PufferfishRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                                 float yaw, float partialTick)

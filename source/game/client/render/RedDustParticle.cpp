@@ -9,9 +9,7 @@ RedDustParticle::RedDustParticle(Level* level, double x, double y, double z,
     init(level, x, y, z, 1.0f, red, green, blue);
 }
 
-RedDustParticle::~RedDustParticle()
-{
-}
+RedDustParticle::~RedDustParticle() = default;
 
 void RedDustParticle::init(Level* level, double x, double y, double z,
                            float alpha, float red, float green, float blue)

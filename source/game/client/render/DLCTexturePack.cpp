@@ -102,7 +102,7 @@ void DLCTexturePack::loadDescription()
 
 std::wstring DLCTexturePack::getResource(const std::wstring& fileName)
 {
-    return L"description";
+    return L"";
 }
 
 DLCPack* DLCTexturePack::getDLCPack()
@@ -121,7 +121,7 @@ std::wstring DLCTexturePack::getDesc1()
 std::wstring DLCTexturePack::getName()
 {
     std::wstring name = m_stringTable->getString(L"IDS_DISPLAY_NAME");
-    if (name == L"")
+    if (name.empty())
         name = m_stringTable->getString(L"title");
     return name;
 }

@@ -327,7 +327,8 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
 
 bool EntityRenderDispatcher::hasSecondPass(boost::shared_ptr<Entity>& entity)
 {
-    return getRenderer(entity)->hasSecondPass();
+    EntityRenderer* renderer = getRenderer(entity);
+    return renderer != NULL && renderer->hasSecondPass();
 }
 
 bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,

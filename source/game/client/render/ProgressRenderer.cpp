@@ -25,9 +25,7 @@ ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
 }
 
-ProgressRenderer::~ProgressRenderer()
-{
-}
+ProgressRenderer::~ProgressRenderer() = default;
 
 void ProgressRenderer::internalProgressStart(const TextField& field)
 {

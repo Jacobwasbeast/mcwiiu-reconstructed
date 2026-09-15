@@ -14,6 +14,7 @@ HumanoidHeadModel::HumanoidHeadModel(const ModelDefinition& modelDefinition)
 
 HumanoidHeadModel::~HumanoidHeadModel()
 {
+    delete mHead;
 }
 
 void HumanoidHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,

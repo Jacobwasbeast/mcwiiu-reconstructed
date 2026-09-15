@@ -143,5 +143,7 @@ void SilverfishModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
 
 std::wstring SilverfishModel::getName()
 {
-    return L"silverfish";
+    std::wstring result;
+    result.assign(L"silverfish");
+    return result;
 }

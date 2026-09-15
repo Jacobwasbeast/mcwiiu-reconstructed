@@ -7,6 +7,7 @@
 
 FolderTexturePack::~FolderTexturePack()
 {
+    return;
 }
 
 InputStream* FolderTexturePack::getResourceImplementation(const std::wstring& fileName)
@@ -20,7 +21,8 @@ InputStream* FolderTexturePack::getResourceImplementation(const std::wstring& fi
 
 bool FolderTexturePack::hasFile(const std::wstring& fileName)
 {
-    File file(getPath(false, NULL) + fileName);
+    const std::wstring path = getPath(false, NULL) + fileName;
+    File file(path);
     return file.exists() && file.isFile();
 }
 
@@ -31,8 +33,15 @@ bool FolderTexturePack::isTerrainUpdateCompatible()
 
 std::wstring FolderTexturePack::getPath(bool bTitleUpdate, const char* pFileName)
 {
-    std::wstring strPath = L"Common\\" + m_pFile->getPath() + L"\\";
-    return strPath;
+    std::wstring path = L"Common\\" + m_pFile->getPath() + L"\\";
+    if (bTitleUpdate)
+        path = L"TitleUpdate\\" + m_pFile->getPath() + L"\\";
+    if (pFileName != NULL)
+    {
+        std::string name(pFileName);
+        path += std::wstring(name.begin(), name.end());
+    }
+    return path;
 }
 
 void FolderTexturePack::loadUI()

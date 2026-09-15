@@ -56,9 +56,7 @@ SheepFurModel::SheepFurModel(const ModelDefinition& modelDefinition)
     }
 }
 
-SheepFurModel::~SheepFurModel()
-{
-}
+SheepFurModel::~SheepFurModel() = default;
 
 void SheepFurModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                     float limbSwingAmount, float partialTicks)
@@ -81,5 +79,7 @@ void SheepFurModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
 std::wstring SheepFurModel::getName()
 {
-    return L"sheep";
+    std::wstring result;
+    result.assign(L"sheep");
+    return result;
 }

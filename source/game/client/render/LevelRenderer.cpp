@@ -30,6 +30,8 @@
 #include "game/core/Options.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/DyeItem.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/System.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -50,8 +52,12 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/core/Gui.hpp"
 #include "game/item/RecordItem.hpp"
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/CauldronBlock.hpp"
+#include "game/world/block/DragonEggBlock.hpp"
 #include "game/world/block/LeafBlock.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
@@ -72,6 +78,64 @@ LevelRenderer* gLevelRenderer;
 static boost::unordered_map<int, int> gDisplayListLengths;
 
 extern void instructionSynchronize();
+
+extern const SoundEvent* gLevelEventSound_104c4084;
+extern const SoundEvent* gLevelEventSound_104c4088;
+extern const SoundEvent* gLevelEventSound_104c408c;
+extern const SoundEvent* gLevelEventSound_104c40f4;
+extern const SoundEvent* gLevelEventSound_104c4178;
+extern const SoundEvent* gLevelEventSound_104c42c8;
+extern const SoundEvent* gLevelEventSound_104c4744;
+extern const SoundEvent* gLevelEventSound_104c474c;
+extern const SoundEvent* gLevelEventSound_104c415c;
+extern const SoundEvent* gLevelEventSound_104c4188;
+extern const SoundEvent* gLevelEventSound_104c42c4;
+extern const SoundEvent* gLevelEventSound_104c4740;
+extern const SoundEvent* gLevelEventSound_104c4748;
+extern const SoundEvent* gLevelEventSound_104c4158;
+extern const SoundEvent* gLevelEventSound_104c41d4;
+extern const SoundEvent* gLevelEventSound_104c41d0;
+extern const SoundEvent* gLevelEventSound_104c3fd4;
+extern const SoundEvent* gLevelEventSound_104c48d4;
+extern const SoundEvent* gLevelEventSound_104c48d8;
+extern const SoundEvent* gLevelEventSound_104c48dc;
+extern const SoundEvent* gLevelEventSound_104c48e0;
+extern const SoundEvent* gLevelEventSound_104c48e4;
+extern const SoundEvent* gLevelEventSound_104c48e8;
+extern const SoundEvent* gLevelEventSound_104c48ec;
+extern const SoundEvent* gLevelEventSound_104c48f0;
+extern const SoundEvent* gLevelEventSound_104c48f4;
+extern const ParticleType* gLevelEventParticle_104c4084;
+extern const ParticleType* gLevelEventParticle_104c4088;
+extern const ParticleType* gLevelEventParticle_104c408c;
+extern const ParticleType* gLevelEventParticle_104c40f4;
+extern const ParticleType* gLevelEventParticle_104c4178;
+extern const ParticleType* gLevelEventParticle_104c42c8;
+extern const ParticleType* gLevelEventParticle_104c4744;
+extern const ParticleType* gLevelEventParticle_104c474c;
+extern const ParticleType* gLevelEventParticle_104c415c;
+extern const ParticleType* gLevelEventParticle_104c4188;
+extern const ParticleType* gLevelEventParticle_104c42c4;
+extern const ParticleType* gLevelEventParticle_104c4740;
+extern const ParticleType* gLevelEventParticle_104c4748;
+extern const ParticleType* gLevelEventParticle_104c4158;
+extern const ParticleType* gLevelEventParticle_104c41d4;
+extern const ParticleType* gLevelEventParticle_104c41d0;
+extern const ParticleType* gLevelEventParticle_104c3fd4;
+extern const ParticleType* gLevelEventParticle_104c4718;
+extern const ParticleType* gLevelEventParticle_104c48b0;
+extern const ParticleType* gLevelEventParticle_104c40dc;
+extern const ParticleType* gLevelEventParticle_104c48d4;
+extern const ParticleType* gLevelEventParticle_104c48d8;
+extern const ParticleType* gLevelEventParticle_104c48dc;
+extern const ParticleType* gLevelEventParticle_104c48e0;
+extern const ParticleType* gLevelEventParticle_104c48e4;
+extern const ParticleType* gLevelEventParticle_104c48e8;
+extern const ParticleType* gLevelEventParticle_104c48ec;
+extern const ParticleType* gLevelEventParticle_104c48f0;
+extern const ParticleType* gLevelEventParticle_104c48f4;
+extern const BlockState* gLevelCheckBlockState_104c190c;
+extern const BlockState* gLevelCheckBlockState_104c18fc;
 
 int getChunkIndex(int dimension, int x, int y, int z)
 {
@@ -3122,6 +3186,48 @@ void LevelRenderer::playerRemoved(boost::shared_ptr<Entity> player)
 {
 }
 
+int LevelRenderer::checkAllPresentChunks(bool* present)
+{
+    if (present == NULL || mMinecraft == NULL)
+        return 0;
+
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+    if (camera == NULL)
+        return 0;
+
+    int userIndex = boost::static_pointer_cast<LocalPlayer>(camera)->mUserIndex;
+    Level* level = mLevels[userIndex];
+    ClipChunk* chunks = mClipChunks[userIndex].data;
+    unsigned int count = mClipChunks[userIndex].length;
+    int missing = 0;
+    *present = false;
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        ClipChunk& clip = chunks[i];
+        if (clip.mChunk != NULL && (level == NULL ||
+                                    !level->reallyHasChunk(clip.mChunk->mX >> 4, clip.mChunk->mZ >> 4)))
+        {
+            ++missing;
+            for (int x = 4; x < 13; ++x)
+            {
+                for (int z = 4; z <= 12; z += 4)
+                {
+                    for (int dx = 0; dx < 4; ++dx)
+                    {
+                        BlockPos neighbor(clip.mX + x, 0, clip.mZ + z + dx);
+                        const BlockState* state = level == NULL ? NULL : level->getBlockState(neighbor);
+                        if (state != gLevelCheckBlockState_104c190c &&
+                            state != gLevelCheckBlockState_104c18fc)
+                            *present = true;
+                    }
+                }
+            }
+        }
+    }
+    return missing;
+}
+
 void LevelRenderer::playStreamingMusic(const SoundEvent* sound, const BlockPos& pos, bool playing)
 {
     if (sound != NULL)
@@ -3180,34 +3286,187 @@ void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
 
 void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)
 {
-    levelEvent(boost::shared_ptr<Player>(), type, pos, data);
+    if (mMinecraft == NULL || mMinecraft->mLevel == NULL || mMinecraft->mLevel->mDimension == NULL)
+        return;
+
+    int dimension = getDimensionIndexFromId(mMinecraft->mLevel->mDimension->getType()->getId());
+    Level* level = mLevels[dimension];
+    if (level == NULL || mMinecraft->mParticleEngine == NULL)
+        return;
+
+    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+    if (camera == NULL)
+        return;
+
+    double x = (double)pos.x - camera->mX;
+    double y = (double)pos.y - camera->mY;
+    double z = (double)pos.z - camera->mZ;
+    double distance = std::sqrt(x * x + y * y + z * z);
+    if (distance > 176.0)
+    {
+        x += x / distance * 1.4;
+        y += y / distance * 1.4;
+        z += z / distance * 1.4;
+    }
+
+    if (type == 1023)
+    {
+        addParticle(level, gLevelEventParticle_104c4718, camera->mX + x,
+                    camera->mY + y, camera->mZ + z, 0.0078125, 0.0, 0.0,
+                    arrayWithLength<int>());
+    }
+    else if (type == 1038)
+    {
+        addParticle(level, gLevelEventParticle_104c48b0, camera->mX + x,
+                    camera->mY + y, camera->mZ + z, 0.0078125, 0.0, 0.0,
+                    arrayWithLength<int>());
+    }
+    else if (type == 1028)
+    {
+        addParticle(level, gLevelEventParticle_104c40dc, camera->mX + x,
+                    camera->mY + y, camera->mZ + z, 0.0078125, -4.0, 16.0,
+                    arrayWithLength<int>());
+    }
 }
 
 void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)
 {
     if (mMinecraft == NULL) return;
-    Level* level = mMinecraft->mLevel;
+    Level* world = mMinecraft->mLevel;
+    if (world == NULL || world->mDimension == NULL) return;
+    int dimension = getDimensionIndexFromId(world->mDimension->getType()->getId());
+    Level* level = mLevels[dimension];
     if (level == NULL) return;
     Random* random = level->mRandom;
 
+    const auto playBlockEventSound = [level, &pos](const SoundEvent* sound, float volume,
+                                                    float pitch, float range)
+    {
+        if (sound != NULL)
+        {
+            level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z, sound,
+                                  SoundSource::eSoundSource_Blocks, volume, pitch, false, range);
+        }
+    };
+
+    const auto playLevelEventParticle = [this, level, &pos](const ParticleType* particle,
+                                                              double xa, double ya, double za,
+                                                              double offset)
+    {
+        if (particle != NULL)
+            addParticle(level, particle, pos.x + offset, pos.y + offset, pos.z + offset,
+                        xa, ya, za, arrayWithLength<int>());
+    };
+
+    if (type >= 2048 && type <= 3000)
+    {
+        const ParticleType* particle = ParticleType::byId(static_cast<ePARTICLE_TYPE>(data));
+        if (particle != NULL)
+        {
+            arrayWithLength<int> params(1, false);
+            params.data[0] = data;
+            addParticle(level, particle, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
+                        0.0, 0.0, 0.0, params);
+        }
+        return;
+    }
+
     switch (type)
     {
+    case 1000: playLevelEventParticle(gLevelEventParticle_104c4084, 0.0, 0.0, 0.0, 0.0); break;
+    case 1001: playLevelEventParticle(gLevelEventParticle_104c4088, 0.0, 0.0, 0.0, 0.0); break;
+    case 1002: playLevelEventParticle(gLevelEventParticle_104c408c, 0.0, 0.0, 0.0, 0.0); break;
+    case 1003: playLevelEventParticle(gLevelEventParticle_104c40f4, 0.0, 0.0, 0.0, 0.0); break;
+    case 1004: playLevelEventParticle(gLevelEventParticle_104c4178, 0.0, 0.0, 0.0, 0.0); break;
+    case 1005: playLevelEventParticle(gLevelEventParticle_104c42c8, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1006: playLevelEventParticle(gLevelEventParticle_104c4744, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1007: playLevelEventParticle(gLevelEventParticle_104c474c, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1008: playLevelEventParticle(gLevelEventParticle_104c415c, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1009:
+        playLevelEventParticle(gLevelEventParticle_104c4188,
+                               random != NULL ? random->nextFloat() : 0.0,
+                               random != NULL ? random->nextFloat() : 0.0,
+                               random != NULL ? random->nextFloat() : 0.0, 1.0);
+        break;
+    case 1010:
+    {
+        if (data == 0)
+        {
+            level->playStreamingMusic(pos, NULL, false);
+        }
+        else
+        {
+            RecordItem* record = dynamic_cast<RecordItem*>(Item::byId(data));
+            level->playStreamingMusic(pos, record != NULL ? record->getSound() : NULL, true);
+        }
+        if (player != NULL)
+        {
+            boost::shared_ptr<MultiplayerLocalPlayer> local =
+                boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(player);
+            if (local != NULL) local->updateRichPresence();
+        }
+        break;
+    }
+    case 1011: playLevelEventParticle(gLevelEventParticle_104c42c4, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1012: playLevelEventParticle(gLevelEventParticle_104c4740, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1013: playLevelEventParticle(gLevelEventParticle_104c4748, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1014: playLevelEventParticle(gLevelEventParticle_104c4158, 0.0, random != NULL ? random->nextFloat() : 0.0, 0.0, 1.0); break;
+    case 1015: playLevelEventParticle(gLevelEventParticle_104c41d4, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1016: playLevelEventParticle(gLevelEventParticle_104c41d0, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1017: break;
+    case 1018: playLevelEventParticle(gLevelEventParticle_104c3fd4, random != NULL ? random->nextFloat() : 0.0, random != NULL ? random->nextFloat() : 0.0, 1.0, 1.0); break;
+    case 1019: playBlockEventSound(SoundEvents::ANVIL_BREAK, 1.0f, 1.0f, 16.0f); break;
+    case 1020: playBlockEventSound(SoundEvents::ANVIL_USE, 1.0f, 1.0f, 16.0f); break;
+    case 1021: playBlockEventSound(SoundEvents::ANVIL_LAND, 1.0f, 1.0f, 16.0f); break;
+    case 1022:
+    case 1023:
+        break;
+    case 1024: playBlockEventSound(SoundEvents::PORTAL_TRAVEL, 1.0f, 1.0f, 16.0f); break;
+    case 1025: playBlockEventSound(SoundEvents::CHORUS_FLOWER_GROW, 1.0f, 1.0f, 16.0f); break;
+    case 1026: playBlockEventSound(SoundEvents::CHORUS_FLOWER_DEATH, 1.0f, 1.0f, 16.0f); break;
+    case 1027: playBlockEventSound(SoundEvents::END_PORTAL_SPAWN, 1.0f, 1.0f, 16.0f); break;
+    case 1028:
+    {
+        boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
+        if (camera != NULL)
+        {
+            addParticle(level, ePARTICLE_ENDER, false, camera->mX, camera->mY, camera->mZ,
+                        0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        break;
+    }
+    case 1029: playBlockEventSound(SoundEvents::ENDERCHEST_OPEN, 1.0f, 1.0f, 16.0f); break;
+    case 1030: playBlockEventSound(SoundEvents::ENDERCHEST_CLOSE, 1.0f, 1.0f, 16.0f); break;
+    case 1031: playBlockEventSound(SoundEvents::IRONGOLEM_ATTACK, 1.0f, 1.0f, 16.0f); break;
+    case 1032: playBlockEventSound(SoundEvents::UI_BUTTON_CLICK, 1.0f, 1.0f, 16.0f); break;
+    case 1033: playBlockEventSound(SoundEvents::IRONGOLEM_HURT, 1.0f, 1.0f, 16.0f); break;
+    case 1034: playBlockEventSound(SoundEvents::IRONGOLEM_DEATH, 1.0f, 1.0f, 16.0f); break;
+    case 1035: playBlockEventSound(SoundEvents::IRONGOLEM_STEP, 1.0f, 1.0f, 16.0f); break;
+    case 1036: playBlockEventSound(SoundEvents::ITEMFRAME_ADD_ITEM, 1.0f, 1.0f, 16.0f); break;
+    case 1037: playBlockEventSound(SoundEvents::ITEMFRAME_REMOVE_ITEM, 1.0f, 1.0f, 16.0f); break;
     case 2000:
     {
-        int dir = data % 6;
-        double xa = 0.0, ya = 0.0, za = 0.0;
-        if (dir == 0) ya = -0.1;
-        else if (dir == 1) ya = 0.1;
-        else if (dir == 2) za = -0.1;
-        else if (dir == 3) za = 0.1;
-        else if (dir == 4) xa = -0.1;
-        else if (dir == 5) xa = 0.1;
-        for (int i = 0; i < 10; ++i)
+        int xOffset = data % 3 - 1;
+        int zOffset = (data / 3) % 3 - 1;
+        for (int i = 0; i < 5; ++i)
         {
-            double px = pos.x + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
-            double py = pos.y + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
-            double pz = pos.z + 0.5 + (random ? (random->nextDouble() - 0.5) * 0.2 : 0.0);
-            addParticle(level, ePARTICLE_SMOKE, false, px, py, pz, xa, ya, za, arrayWithLength<int>());
+            double r0 = random != NULL ? random->nextDouble() : 0.5;
+            double r1 = random != NULL ? random->nextDouble() : 0.5;
+            double r2 = random != NULL ? random->nextDouble() : 0.5;
+            double r3 = random != NULL ? random->nextDouble() : 0.0;
+            double g0 = random != NULL ? random->nextGaussian() : 0.0;
+            double g1 = random != NULL ? random->nextGaussian() : 0.0;
+            double g2 = random != NULL ? random->nextGaussian() : 0.0;
+            double px = pos.x + 0.5 + xOffset * 0.2 + (r0 - 0.5) * 0.2;
+            double py = pos.y + 0.5 + (r1 - 0.5) * 0.2;
+            double pz = pos.z + 0.5 + zOffset * 0.2 + (r2 - 0.5) * 0.2;
+            double xa = g0 * 0.0078125;
+            double ya = g1 * 0.0078125;
+            double za = g2 * 0.0078125;
+            addParticle(level, ePARTICLE_BLOCK_CRACK, false, px, py, pz, xa, ya, za,
+                        arrayWithLength<int>());
+            addParticle(level, ePARTICLE_BLOCK_CRACK, false, px, py, pz, -xa, ya, -za,
+                        arrayWithLength<int>());
         }
         break;
     }
@@ -3216,23 +3475,146 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
         Block* block = Block::byId(data & 0xFFF);
         if (block != NULL)
         {
-            for (int i = 0; i < 10; ++i)
+            BlockPos blockPos(pos.x, pos.y, pos.z);
+            const SoundType* soundType = block->getSoundType();
+            if (soundType != NULL)
             {
-                double px = pos.x + (random ? random->nextDouble() : 0.5);
-                double py = pos.y + (random ? random->nextDouble() : 0.5);
-                double pz = pos.z + (random ? random->nextDouble() : 0.5);
-                double xa = (px - (pos.x + 0.5)) * 4.0;
-                double ya = (py - (pos.y + 0.5)) * 4.0;
-                double za = (pz - (pos.z + 0.5)) * 4.0;
-                arrayWithLength<int> p(1, false);
-                p.data[0] = data;
-                addParticle(level, ePARTICLE_BLOCK_CRACK, false, px, py, pz, xa, ya, za, p);
+                level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
+                                      soundType->getBreakSound(), SoundSource::eSoundSource_Blocks,
+                                      (soundType->getVolume() + 0.5f) * 1.0f,
+                                      soundType->getPitch() * 0.8f, false, 16.0f);
+            }
+            const BlockState* state = block->getBlockState(data >> 12 & 0xFF);
+            if (state != NULL && mMinecraft->mParticleEngine != NULL)
+            {
+                mMinecraft->mParticleEngine->destroy(blockPos, state);
             }
         }
+        break;
+    }
+    case 2002:
+        break;
+    case 2003:
+    {
+        if (random == NULL)
+        {
+            break;
+        }
+
+        int itemData[2] = { Item::getId(Items::enderEye), 0 };
+        arrayWithLength<int> params(itemData, 2);
+        for (int i = 0; i < 2; ++i)
+        {
+            double angle = random->nextDouble() * 6.283185307179586;
+            addParticle(level, ePARTICLE_ICON_CRACK, false,
+                        pos.x + 0.5 + std::cos(angle), pos.y + 0.5,
+                        pos.z + 0.5 + std::sin(angle), std::cos(angle), 0.0,
+                        std::sin(angle), params);
+        }
+        break;
+    }
+    case 2004:
+    {
+        if (random == NULL)
+        {
+            break;
+        }
+
+        for (int i = 0; i < 10; ++i)
+        {
+            addParticle(level, ePARTICLE_SMOKE, false,
+                        pos.x + (random->nextDouble() - 0.5) * 2.0,
+                        pos.y + (random->nextDouble() - 0.5) * 2.0,
+                        pos.z + (random->nextDouble() - 0.5) * 2.0,
+                        0.0, 0.0, 0.0, arrayWithLength<int>());
+            addParticle(level, ePARTICLE_FLAME, false,
+                        pos.x + (random->nextDouble() - 0.5) * 2.0,
+                        pos.y + (random->nextDouble() - 0.5) * 2.0,
+                        pos.z + (random->nextDouble() - 0.5) * 2.0,
+                        0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        break;
+    }
+    case 2005:
+    {
+        DyeItem::addGrowthParticles(level, pos, data);
+        break;
+    }
+    case 2006:
+    {
+        if (random != NULL)
+        {
+            for (int i = 0; i < 50; ++i)
+            {
+                double angle = random->nextDouble() * 6.283185307179586;
+                double radius = random->nextDouble() * 5.0;
+                addParticleInternal(level, ePARTICLE_SPELL, false, false,
+                                    pos.x + std::cos(angle) * radius,
+                                    pos.y + 1.0,
+                                    pos.z + std::sin(angle) * radius,
+                                    std::cos(angle), random->nextDouble() * 0.3,
+                                    std::sin(angle), arrayWithLength<int>());
+            }
+        }
+        break;
+    }
+    case 2007:
+        break;
+    case 3501:
+        playLevelEventParticle(gLevelEventParticle_104c48d4, 0.0,
+                               random != NULL ? random->nextGaussian() * 0.2 + 1.0 : 1.0,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnExplosionParticles(level, pos.x, pos.y, pos.z, random, data, 10);
+        break;
+    case 3502:
+        playLevelEventParticle(gLevelEventParticle_104c48d8, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnSplashParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3503:
+        playLevelEventParticle(gLevelEventParticle_104c48dc, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3504:
+    case 3505:
+        playLevelEventParticle(type == 3504 ? gLevelEventParticle_104c48e4 : gLevelEventParticle_104c48e8,
+                               0.0, random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnPotionParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3506:
+        playLevelEventParticle(gLevelEventParticle_104c48ec, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3507:
+        playLevelEventParticle(gLevelEventParticle_104c48f0, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnSplashParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3508:
+        playLevelEventParticle(gLevelEventParticle_104c48f4, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 3509:
+        playLevelEventParticle(gLevelEventParticle_104c48e0, 0.0,
+                               random != NULL ? random->nextFloat() * 0.1f + 0.9f : 0.9f,
+                               0.0, 0.0);
+        if (random != NULL) CauldronBlock::spawnBubbleParticles(level, pos.x, pos.y, pos.z, random, data, 2);
+        break;
+    case 9002:
+    {
+        DragonEggBlock::generateTeleportParticles(level, pos.x, pos.y, pos.z, data);
         break;
     }
     default:
         break;
     }
 }
-

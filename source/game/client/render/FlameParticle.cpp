@@ -25,6 +25,7 @@ FlameParticle::FlameParticle(Level* level, double x, double y, double z,
 
 FlameParticle::~FlameParticle()
 {
+    return;
 }
 
 void FlameParticle::move(double xa, double ya, double za)

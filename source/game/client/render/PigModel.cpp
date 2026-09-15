@@ -23,7 +23,7 @@ PigModel::PigModel(float scale, const ModelDefinition& modelDefinition)
 {
     if (!modelDefinition.DoesOverrideModel())
     {
-        mHead->texOffs(16, 16)->addBox(-0.8f, 1.035f, -9.0f, 4, 3, 1, scale);
+        mHead->texOffs(16, 16)->addBox(-0.8f, 1.035f, -9.0f, 4, 3, 1, -8.0f);
         mScale = 4.0f;
         compileSkinnedDrawlist();
     }

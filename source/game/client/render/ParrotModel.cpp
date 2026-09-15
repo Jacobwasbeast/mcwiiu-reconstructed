@@ -65,6 +65,11 @@ ParrotModel::ParrotModel(const ModelDefinition& modelDefinition)
         mLeg1 = new ModelPartSkin(this, 14, 18, NULL);
         mLeg1->addBox(-0.5f, 0.0f, -1.0f, 1, 2, 1);
         mLeg1->setPos(-1.0f, -2.15f, -1.05f);
+
+        mHead->addChild(mHead2);
+        mHead->addChild(mBeak1);
+        mHead->addChild(mBeak2);
+        mHead->addChild(mFeather);
     }
     compileSkinnedDrawlist();
 }

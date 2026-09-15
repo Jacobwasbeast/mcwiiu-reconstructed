@@ -26,6 +26,7 @@ ExplodeParticle::ExplodeParticle(Level* level, double x, double y, double z, dou
 
 ExplodeParticle::~ExplodeParticle()
 {
+    return;
 }
 
 uint64_t ExplodeParticle::GetType()

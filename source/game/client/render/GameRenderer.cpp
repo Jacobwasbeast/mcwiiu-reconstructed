@@ -433,9 +433,12 @@ void GameRenderer::renderNameTagInWorld(Font* font, const std::wstring& text, fl
     GlStateManager::popMatrix();
 }
 
-unsigned int GameRenderer::getLightTexture(int, Level*)
+unsigned int GameRenderer::getLightTexture(int index, Level* level)
 {
-    return 0;
+    unsigned int texture = 0;
+    std::memcpy(&texture, reinterpret_cast<const char*>(level) + 0x128 + index * 4,
+                sizeof(texture));
+    return texture;
 }
 
 void GameRenderer::runUpdate(void*)
@@ -546,7 +549,15 @@ unsigned int GameRenderer::postEffectActive()
 
 void GameRenderer::shutdownEffect()
 {
-    return;
+    PostChain* postChain = NULL;
+    std::memcpy(&postChain, reinterpret_cast<char*>(this) + 0x22AC, sizeof(postChain));
+    if (postChain != NULL)
+        postChain->destroy();
+
+    postChain = NULL;
+    std::memcpy(reinterpret_cast<char*>(this) + 0x22AC, &postChain, sizeof(postChain));
+    const int inactiveEffect = 0x18;
+    std::memcpy(reinterpret_cast<char*>(this) + 0x22B0, &inactiveEffect, sizeof(inactiveEffect));
 }
 
 void GameRenderer::checkEntityPostEffect(boost::shared_ptr<Entity>)
@@ -581,13 +592,20 @@ void GameRenderer::onResourceManagerReload(ResourceManager*)
 double GameRenderer::GetFovVal()
 {
     double value;
-    std::memcpy(&value, mData + 24, sizeof(value));
+    std::memcpy(&value, reinterpret_cast<const char*>(this) + 0x110, sizeof(value));
     return value;
 }
 
 void GameRenderer::UpdateElementStorageDeleteTicks()
 {
-    return;
+    EnterCriticalSection(&sDeleteMutex);
+    for (size_t i = 0; i < sPendingElementStorageDeletes.size(); ++i)
+    {
+        ElementStorageWithTick& entry = sPendingElementStorageDeletes[i];
+        if (entry.tick != 0)
+            --entry.tick;
+    }
+    LeaveCriticalSection(&sDeleteMutex);
 }
 
 void GameRenderer::tickFov()
@@ -2212,11 +2230,49 @@ double GameRenderer::getTargetFogDistance(const BlockPos& pos)
     return static_cast<double>(distanceSum / weightSum);
 }
 
-void GameRenderer::getTargetFogColor(const BlockPos&, float& red, float& green, float& blue)
+void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& green, float& blue)
 {
-    red = 0.0f;
-    green = 0.0f;
-    blue = 0.0f;
+    static const float kByteScale = 0.00390625f;
+    const BlockPos* table = reinterpret_cast<const BlockPos*>(getFogOffsets());
+    const BlockPos* groups = table - 12;
+    Level* level = mMinecraft->mLevel;
+
+    float redSum = 0.0f;
+    float greenSum = 0.0f;
+    float blueSum = 0.0f;
+    float weight = 0.0f;
+
+    for (int group = 0; group < 6; ++group)
+    {
+        const BlockPos* slot = groups + group * 12;
+        for (int sample = 0; sample < 4; ++sample)
+        {
+            const BlockPos& delta = slot[12 + sample * 3];
+            Biome* biome = level->getBiome(pos.offset(delta.x, delta.y, delta.z));
+            const unsigned int colour = biome->getUnderWaterFogColor();
+            redSum += static_cast<float>((colour >> 16) & 255u) * kByteScale;
+            greenSum += static_cast<float>((colour >> 8) & 255u) * kByteScale;
+            blueSum += static_cast<float>(colour & 255u) * kByteScale;
+            weight += 1.0f;
+        }
+    }
+
+    const BlockPos* tail =
+        reinterpret_cast<const BlockPos*>(reinterpret_cast<const char*>(table) + 0x114);
+    for (int sample = 0; sample < 3; ++sample)
+    {
+        const BlockPos& delta = tail[sample + 1];
+        Biome* biome = level->getBiome(pos.offset(delta.x, delta.y, delta.z));
+        const unsigned int colour = biome->getUnderWaterFogColor();
+        redSum += static_cast<float>((colour >> 16) & 255u) * kByteScale;
+        greenSum += static_cast<float>((colour >> 8) & 255u) * kByteScale;
+        blueSum += static_cast<float>(colour & 255u) * kByteScale;
+        weight += 1.0f;
+    }
+
+    red = redSum / weight;
+    green = greenSum / weight;
+    blue = blueSum / weight;
 }
 
 double GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, float value)
@@ -4127,19 +4183,25 @@ MapRenderer* GameRenderer::getMapRenderer()
     return mMapRenderer;
 }
 
-void GameRenderer::AddForDelete(SparseLightStorage*)
+void GameRenderer::AddForDelete(SparseLightStorage* storage)
 {
-    return;
+    EnterCriticalSection(&sDeleteMutex);
+    sPendingLightDeletes[sPendingLightDeleteList].push_back(storage);
 }
 
-void GameRenderer::AddForDelete(LevelChunk*)
+void GameRenderer::AddForDelete(LevelChunk* chunk)
 {
-    return;
+    EnterCriticalSection(&sDeleteMutex);
+    sPendingChunkDeletes[sPendingChunkDeleteList].push_back(chunk);
 }
 
-void GameRenderer::AddForDelete(ElementStorage*)
+void GameRenderer::AddForDelete(ElementStorage* storage)
 {
-    return;
+    EnterCriticalSection(&sDeleteMutex);
+    ElementStorageWithTick entry;
+    entry.tick = 2;
+    entry.storage = storage;
+    sPendingElementStorageDeletes.push_back(entry);
 }
 
 void GameRenderer::FinishedReassigning()

@@ -26,6 +26,7 @@ HorseRenderer::HorseRenderer(EntityRenderDispatcher* dispatcher)
 
 HorseRenderer::~HorseRenderer()
 {
+    return;
 }
 
 void HorseRenderer::bindTexture(const ResourceLocation* location)

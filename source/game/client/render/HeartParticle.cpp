@@ -11,6 +11,7 @@ HeartParticle::HeartParticle(Level* level, double x, double y, double z,
 
 HeartParticle::~HeartParticle()
 {
+    return;
 }
 
 void HeartParticle::render(BufferBuilder* buffer,

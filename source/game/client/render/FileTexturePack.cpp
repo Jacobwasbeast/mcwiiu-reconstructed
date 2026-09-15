@@ -2,6 +2,7 @@
 
 FileTexturePack::~FileTexturePack()
 {
+    return;
 }
 
 void FileTexturePack::unload(Textures* textures)

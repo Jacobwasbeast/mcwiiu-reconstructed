@@ -24,9 +24,7 @@ ShulkerRenderer::ShulkerRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(new ShulkerHeadLayer(this));
 }
 
-ShulkerRenderer::~ShulkerRenderer()
-{
-}
+ShulkerRenderer::~ShulkerRenderer() = default;
 
 void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {

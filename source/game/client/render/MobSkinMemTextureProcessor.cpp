@@ -51,7 +51,7 @@ BufferedImage* MobSkinMemTextureProcessor::process(BufferedImage* image)
         return NULL;
     m_height = 0x20;
     m_width = 0x40;
-    BufferedImage* result = new BufferedImage(1, m_width, m_height);
+    BufferedImage* result = new BufferedImage(m_width, m_height, 1);
     result->getGraphics();
     m_data = result->getData();
     setNoAlpha(0, 0, 0x20, 0x10);

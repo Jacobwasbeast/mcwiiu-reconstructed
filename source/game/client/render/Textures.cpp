@@ -72,7 +72,7 @@ Textures::Textures(TexturePackRepository* texturePackRepository, Options* option
       mReloading(false), mLoaded(false)
 {
     InitializeCriticalSection(&mMutex);
-    mMissingImage = new BufferedImage(3, 16, 16);
+    mMissingImage = new BufferedImage(16, 16, 3);
     mBlocks = new TextureAtlas(0, L"terrain", L"textures_blocks_", mMissingImage, true);
     mItems = new TextureAtlas(1, L"items", L"textures_items_", mMissingImage, true);
     loadIndexedTextures();

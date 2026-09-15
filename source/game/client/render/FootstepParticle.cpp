@@ -25,6 +25,7 @@ FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, d
 
 FootstepParticle::~FootstepParticle()
 {
+    return;
 }
 
 void FootstepParticle::render(BufferBuilder* buffer,

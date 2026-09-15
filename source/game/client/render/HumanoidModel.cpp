@@ -39,6 +39,15 @@ HumanoidModel::HumanoidModel(C4JRender::eVertexType vertexType, C4JRender::ePixe
 
 HumanoidModel::~HumanoidModel()
 {
+    delete mHead;
+    delete mHat;
+    delete mBody;
+    delete mRightArm;
+    delete mLeftArm;
+    delete mRightLeg;
+    delete mLeftLeg;
+    delete mRightItem;
+    delete mLeftItem;
 }
 
 ModelPart* HumanoidModel::createModelPart(bool skinned, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale)
@@ -66,6 +75,13 @@ void HumanoidModel::_init(float scale, float yOffset, int texWidth, int texHeigh
     mTexWidth = texWidth;
     mTexHeight = texHeight;
     mYOffset = yOffset;
+    mHead = NULL;
+    mHat = NULL;
+    mBody = NULL;
+    mRightArm = NULL;
+    mLeftArm = NULL;
+    mRightLeg = NULL;
+    mLeftLeg = NULL;
     mRightItem = NULL;
     mLeftItem = NULL;
 

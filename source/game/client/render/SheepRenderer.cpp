@@ -21,9 +21,7 @@ SheepRenderer::SheepRenderer(EntityRenderDispatcher* dispatcher, Model*, Model*,
     addLayer(new SheepFurLayer(this));
 }
 
-SheepRenderer::~SheepRenderer()
-{
-}
+SheepRenderer::~SheepRenderer() = default;
 
 Model* SheepRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {

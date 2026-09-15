@@ -53,9 +53,7 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
     compileSkinnedDrawlist();
 }
 
-QuadrupedModel::~QuadrupedModel()
-{
-}
+QuadrupedModel::~QuadrupedModel() = default;
 
 void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                             float ageInTicks, float netHeadYaw, float headPitch, float scale,

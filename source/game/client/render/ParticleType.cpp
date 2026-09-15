@@ -134,16 +134,6 @@ ParticleType::ParticleType(const std::string& name, ePARTICLE_TYPE id, bool over
     this->id = id;
 }
 
-std::string ParticleType::getName() const
-{
-    return this->name;
-}
-
-bool ParticleType::isPartial() const
-{
-    return this->id >= ePARTICLE_BLOCK_CRACK;
-}
-
 int ParticleType::getParamCount() const
 {
     return this->paramCount;
@@ -156,5 +146,6 @@ bool ParticleType::getOverrideLimiter() const
 
 const ParticleType* ParticleType::byId(ePARTICLE_TYPE id)
 {
-    return sParticleTypes[id];
+    boost::unordered_map<ePARTICLE_TYPE, const ParticleType*>::const_iterator it = sParticleTypes.find(id);
+    return it == sParticleTypes.end() ? NULL : it->second;
 }

@@ -43,6 +43,7 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
 
 FireworksParticles::FireworksStarter::~FireworksStarter()
 {
+    return;
 }
 
 void FireworksParticles::FireworksStarter::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

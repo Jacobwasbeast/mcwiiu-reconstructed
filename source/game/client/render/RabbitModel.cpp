@@ -113,9 +113,7 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-RabbitModel::~RabbitModel()
-{
-}
+RabbitModel::~RabbitModel() = default;
 
 void RabbitModel::setRotation(ModelPartSkin* part, float x, float y, float z)
 {
@@ -176,19 +174,19 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
 void RabbitModel::render(RabbitModel* model, float scale, bool useDisplayList)
 {
-    mRearFootLeft->render(scale, useDisplayList, false);
-    mRearFootRight->render(scale, useDisplayList, false);
-    mHaunchLeft->render(scale, useDisplayList, false);
-    mHaunchRight->render(scale, useDisplayList, false);
-    mBody->render(scale, useDisplayList, false);
-    mFrontLegLeft->render(scale, useDisplayList, false);
-    mFrontLegRight->render(scale, useDisplayList, false);
-    mHead->render(scale, useDisplayList, false);
-    mEarRight->render(scale, useDisplayList, false);
-    mEarLeft->render(scale, useDisplayList, false);
-    mTail->render(scale, useDisplayList, false);
-    mNose->render(scale, useDisplayList, false);
-    callSkinnedDrawlist();
+    model->callSkinnedDrawlist();
+    model->mRearFootLeft->render(scale, useDisplayList, false);
+    model->mRearFootRight->render(scale, useDisplayList, false);
+    model->mHaunchLeft->render(scale, useDisplayList, false);
+    model->mHaunchRight->render(scale, useDisplayList, false);
+    model->mBody->render(scale, useDisplayList, false);
+    model->mFrontLegLeft->render(scale, useDisplayList, false);
+    model->mFrontLegRight->render(scale, useDisplayList, false);
+    model->mHead->render(scale, useDisplayList, false);
+    model->mEarRight->render(scale, useDisplayList, false);
+    model->mEarLeft->render(scale, useDisplayList, false);
+    model->mTail->render(scale, useDisplayList, false);
+    model->mNose->render(scale, useDisplayList, false);
 }
 
 void RabbitModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
@@ -227,5 +225,7 @@ void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
 
 std::wstring RabbitModel::getName()
 {
-    return L"rabbit";
+    std::wstring result;
+    result.assign(L"rabbit");
+    return result;
 }

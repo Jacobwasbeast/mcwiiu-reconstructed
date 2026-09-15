@@ -49,6 +49,10 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
 
 ShulkerModel::~ShulkerModel()
 {
+    delete mBase;
+    delete mLid;
+    delete mHead;
+    delete mHeadSkin;
 }
 
 void ShulkerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
@@ -108,5 +112,7 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
 
 std::wstring ShulkerModel::getName()
 {
-    return L"shulker";
+    std::wstring result;
+    result.assign(L"shulker");
+    return result;
 }

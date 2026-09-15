@@ -63,6 +63,7 @@ GhastModel::GhastModel(const ModelDefinition& modelDefinition)
 
 GhastModel::~GhastModel()
 {
+    return;
 }
 
 void GhastModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

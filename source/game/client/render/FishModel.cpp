@@ -114,6 +114,7 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
 
 FishModel::~FishModel()
 {
+    return;
 }
 
 void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,

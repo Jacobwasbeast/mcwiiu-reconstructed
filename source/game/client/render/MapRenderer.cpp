@@ -186,7 +186,7 @@ void MapRenderer::MapInstance::fjUpdateWithRenderContext()
 {
     if (mTexture == -1)
     {
-        BufferedImage image(0, 128, 128);
+        BufferedImage image(128, 128, 0);
         mTexture = mRenderer->mTextures->getTexture(&image, (C4JRender::eTextureFormat)0, false);
         mTextureDirty = true;
     }

@@ -189,11 +189,6 @@ void CFontData::release()
     m_glyphAdvances = NULL;
 }
 
-std::string CFontData::getFontName()
-{
-    return m_fontData->fontName;
-}
-
 unsigned int CFontData::getUnicode(unsigned short glyphId)
 {
     return g_glyphUnicodes[glyphId];

@@ -19,6 +19,7 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
 
 FireworksParticles::FireworksSparkParticle::~FireworksSparkParticle()
 {
+    return;
 }
 
 void FireworksParticles::FireworksSparkParticle::setTrail(bool trail)

@@ -21,11 +21,6 @@ ParticleEngine::ParticleList::ParticleList()
 {
 }
 
-ParticleEngine::ParticleList::~ParticleList()
-{
-    delete[] particles;
-}
-
 void ParticleEngine::ParticleList::ClearParticles()
 {
     unsigned int count = particleCount;
@@ -261,9 +256,10 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
         return;
     }
     int type = 0;
+    BufferBuilder* buffer = Tesselator::getInstance()->getBuilder();
     for (int i = 0; i < particles[type * 10 + layer * 2].size(); ++i)
     {
-        particles[type * 10 + layer * 2].at(i)->render(NULL, entity, partialTick, 0, 0, 0, 0, 0);
+        particles[type * 10 + layer * 2].at(i)->render(buffer, entity, partialTick, 0, 0, 0, 0, 0);
     }
 }
 

@@ -259,15 +259,52 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
     GlStateManager::pushMatrix();
     GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
 
+    Block* block = rawItem != NULL ? Block::byItem(rawItem) : NULL;
+    if (block != NULL)
+    {
+        const BlockState* state = block->defaultBlockState();
+        if (state != NULL && block->getRenderShape(state) == BLOCK_RENDER_MODEL)
+        {
+            BlockRenderDispatcher* dispatcher = Minecraft::GetInstance()->getBlockRenderer();
+            if (dispatcher != NULL && dispatcher->canRenderGeneric(block))
+            {
+                GlStateManager::translatef(0.5F, 0.5F, 0.5F);
+                dispatcher->renderSingleBlock(state, 1.0F, 1.0F, true);
+                GlStateManager::popMatrix();
+                GlStateManager::popMatrix();
+                GlStateManager::disableRescaleNormal();
+                GlStateManager::disableBlend();
+                if (mIsGui3d)
+                    GlStateManager::disableAlphaTest();
+                GlStateManager::popMatrix();
+                PIXEndNamedEvent();
+                return;
+            }
+        }
+    }
+
     if (sprite == NULL && rawItem != NULL)
         sprite = rawItem->getIcon(item);
     if (sprite != NULL)
+    {
+        if (mIsGui3d)
+        {
+            int color = mItemColors->getColor(item, 0);
+            GlStateManager::color4f((float)((color >> 16) & 255) / 255.0F,
+                                    (float)((color >> 8) & 255) / 255.0F,
+                                    (float)(color & 255) / 255.0F, alpha);
+        }
         blit(0.0F, 0.0F, sprite, 1.0F, 1.0F);
+        if (item->hasFoil())
+            renderFoilLayer(Tesselator::getInstance());
+    }
 
     GlStateManager::popMatrix();
     GlStateManager::popMatrix();
     GlStateManager::disableRescaleNormal();
     GlStateManager::disableBlend();
+    if (mIsGui3d)
+        GlStateManager::disableAlphaTest();
     GlStateManager::popMatrix();
     PIXEndNamedEvent();
 }
