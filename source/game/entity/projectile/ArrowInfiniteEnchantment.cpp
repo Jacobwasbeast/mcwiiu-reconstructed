@@ -2,11 +2,13 @@
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/MendingEnchantment.hpp"
 
+static const int ARROW_INFINITY_DESCRIPTION_ID = static_cast<int>(0xd251ec6a);
+
 ArrowInfiniteEnchantment::ArrowInfiniteEnchantment(const Rarity* rarity,
                                                    arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, EnchantmentCategory::BOW, slots)
 {
-    setDescriptionId(0xd251ec6a);
+    setDescriptionId(ARROW_INFINITY_DESCRIPTION_ID);
 }
 
 int ArrowInfiniteEnchantment::getMinCost(int)

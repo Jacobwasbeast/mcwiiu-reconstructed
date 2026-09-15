@@ -100,11 +100,11 @@ void Arrow::onHitEntity(const HitResult* result)
     boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Entity>(mOwner);
     boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(shared_from_this());
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    bool fire = miniGame != NULL && miniGame->HasFeatureArrowCanKnockback();
+    const bool fire = miniGame != NULL && miniGame->HasFeatureArrowCanKnockback();
     boost::shared_ptr<DamageSource> source = DamageSource::CreateArrow(arrow, owner, fire);
 
     int wholeDamage = static_cast<int>(damage);
-    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
+    if (fire)
         wholeDamage = 0;
 
     if (!result->mEntity->hurt(source.get(), static_cast<float>(wholeDamage)))
