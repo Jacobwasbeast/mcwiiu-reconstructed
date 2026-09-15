@@ -23,6 +23,7 @@ void AchievementCommand::execute(boost::shared_ptr<CommandSender> sender, arrayW
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+    (void)sender;
     byteStream.mBuffer.data = NULL;
     byteStream.mBuffer.length = 0;
     byteStream.mCount = 0;
@@ -39,6 +40,7 @@ boost::shared_ptr<GameCommandPacket> AchievementCommand::preparePacket(unsigned 
 {
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
-
+    (void)achievementId;
+    (void)stream;
     return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
 }

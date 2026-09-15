@@ -22,20 +22,8 @@ int CloneCommand::getPermissionLevel()
 void CloneCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
 {
     ByteArrayInputStream byteStream(data);
-    DataInputStream stream(&byteStream);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    DataInputStream inputStream(&byteStream);
+    (void)sender;
+    (void)inputStream;
 }
 
-boost::shared_ptr<GameCommandPacket> CloneCommand::preparePacket(unsigned char mode)
-{
-    ByteArrayOutputStream byteStream;
-    DataOutputStream stream(&byteStream);
-
-    stream.writeByte(mode);
-
-    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket(eGameCommand_Clone, byteStream.toByteArray()));
-}
