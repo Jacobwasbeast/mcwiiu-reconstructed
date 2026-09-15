@@ -22,7 +22,7 @@ namespace
 ClientboundPreLoginPacket::ClientboundPreLoginPacket()
     : mPlayers(0), mPlayerCount(0), mGameMode(0), mSeed(0),
       mHostPlayer(0), mDifficulty(0), mGameType(0), mProtocolVersion(0), mHardcore(false),
-      mMiniGameId(static_cast<EMiniGameId>(7)), mName(L""), mMaxPlayers(0)
+      mMiniGameId(EMiniGameId(7)), mName(L""), mMaxPlayers(0)
 {
     unsigned int index;
     for (index = 0; index < 14; ++index)

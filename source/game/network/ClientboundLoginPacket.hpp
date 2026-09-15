@@ -19,6 +19,7 @@ class ClientboundLoginPacket : public Packet, public boost::enable_shared_from_t
     friend class ClientPacketListener;
     friend class ServerConnectionListener;
 public:
+
     ClientboundLoginPacket();
     ClientboundLoginPacket(const std::wstring&, int, LevelType*, long long, int, int, int, char, unsigned char,
         unsigned char, char, int, unsigned char, bool, unsigned int, int, int, int, bool, unsigned char, int, int, int);
@@ -50,8 +51,8 @@ private:
     bool mIsFlat;
     LevelType* mLevelType;
     int mCurrentTick;
-    int mUnknownValue1;
-    int mUnknownValue2;
+    int mXZSize;
+    int mHellScale;
     int mMaxTick;
     bool mIsFlatWorld;
     unsigned char mPlayerFlags;

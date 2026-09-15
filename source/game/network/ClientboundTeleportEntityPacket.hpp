@@ -1,8 +1,9 @@
 #ifndef GAME_NETWORK_CLIENTBOUNDTELEPORTENTITYPACKET_HPP
 #define GAME_NETWORK_CLIENTBOUNDTELEPORTENTITYPACKET_HPP
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
 #include "game/network/Packet.hpp"
+
+#include <boost/shared_ptr.hpp>
 class Entity;
 class DataInputStream;
 class DataOutputStream;
@@ -20,11 +21,23 @@ public:
     virtual int getEstimatedSize();
     virtual bool canBeInvalidated();
     virtual bool isInvalidatedBy(boost::shared_ptr<Packet> packet);
-    int getId(); int getX(); int getY(); int getZ();
-    unsigned char getyRot(); unsigned char getxRot(); unsigned char isOnGround();
+    int getId();
+    int getX();
+    int getY();
+    int getZ();
+    unsigned char getyRot();
+    unsigned char getxRot();
+    unsigned char isOnGround();
+
     static boost::shared_ptr<Packet> create();
+
 private:
-    int mId; int mX; int mY; int mZ;
-    unsigned char myRot; unsigned char mxRot; unsigned char mOnGround;
+    int mId;
+    int mX;
+    int mY;
+    int mZ;
+    unsigned char myRot;
+    unsigned char mxRot;
+    unsigned char mOnGround;
 };
 #endif

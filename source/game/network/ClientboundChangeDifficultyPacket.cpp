@@ -7,6 +7,7 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundChangeDifficultyPacket::ClientboundChangeDifficultyPacket()
+    : difficulty(0), locked(false)
 {
 }
 

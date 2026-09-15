@@ -5,16 +5,23 @@
 #include "game/network/Packet.hpp"
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 class DataInputStream; class DataOutputStream; class PacketListener;
-class ClientboundMGPlayerSettingsUpdatePacket : public Packet, public boost::enable_shared_from_this<ClientboundMGPlayerSettingsUpdatePacket>
+class ClientboundMGPlayerSettingsUpdatePacket : public Packet,
+                                                public boost::enable_shared_from_this<ClientboundMGPlayerSettingsUpdatePacket>
 {
 public:
- ClientboundMGPlayerSettingsUpdatePacket();
- ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings);
- virtual ~ClientboundMGPlayerSettingsUpdatePacket();
- virtual void read(DataInputStream* input); virtual void write(DataOutputStream* output);
- virtual void handle(PacketListener* listener); virtual int getEstimatedSize();
- const MiniGamePlayerSettings& getSettings() const; virtual int getPacketId();
- static boost::shared_ptr<Packet> create();
-private: MiniGamePlayerSettings mSettings;
+    ClientboundMGPlayerSettingsUpdatePacket();
+    ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings);
+    virtual ~ClientboundMGPlayerSettingsUpdatePacket();
+
+    virtual void read(DataInputStream* input);
+    virtual void write(DataOutputStream* output);
+    virtual void handle(PacketListener* listener);
+    virtual int getEstimatedSize();
+    const MiniGamePlayerSettings& getSettings() const;
+    virtual int getPacketId();
+    static boost::shared_ptr<Packet> create();
+
+private:
+    MiniGamePlayerSettings mSettings;
 };
 #endif

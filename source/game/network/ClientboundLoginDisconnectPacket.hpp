@@ -6,6 +6,7 @@ class ClientboundLoginDisconnectPacket
 public:
     ClientboundLoginDisconnectPacket();
     ~ClientboundLoginDisconnectPacket();
+
 };
 
 #endif

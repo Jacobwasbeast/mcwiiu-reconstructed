@@ -9,7 +9,12 @@ ClientboundUpdateAttributesPacket::AttributeSnapshot::AttributeSnapshot(
     eATTRIBUTE_ID attributeId, double baseValue,
     boost::unordered_set<AttributeModifier*>* sourceModifiers)
     : id(attributeId), base(baseValue), modifiers() {
-    if (sourceModifiers != 0) modifiers = *sourceModifiers;
+    if (sourceModifiers != 0) {
+        for (boost::unordered_set<AttributeModifier*>::iterator it = sourceModifiers->begin();
+             it != sourceModifiers->end(); ++it) {
+            modifiers.insert(new AttributeModifier(**it));
+        }
+    }
 }
 
 ClientboundUpdateAttributesPacket::AttributeSnapshot::~AttributeSnapshot() {
@@ -64,15 +69,16 @@ void ClientboundUpdateAttributesPacket::read(DataInputStream* input) {
 }
 
 void ClientboundUpdateAttributesPacket::write(DataOutputStream* output) {
-    output->writeVarInt(entityId);
-    output->writeVarInt(static_cast<int>(values.size()));
+    output->writeShort(static_cast<short>(entityId));
+    output->writeInt(entityType);
+    output->writeByte(static_cast<unsigned char>(values.size()));
     for (boost::unordered_set<AttributeSnapshot*>::iterator it = values.begin(); it != values.end(); ++it) {
         AttributeSnapshot* value = *it;
-        output->writeVarInt(static_cast<int>(value->getId()));
+        output->writeByte(static_cast<unsigned char>(value->getId()));
         output->writeDouble(value->getBase());
-        output->writeVarInt(static_cast<int>(value->getModifiers()->size()));
+        output->writeByte(static_cast<unsigned char>(value->getModifiers()->size()));
         for (boost::unordered_set<AttributeModifier*>::iterator modifier = value->getModifiers()->begin(); modifier != value->getModifiers()->end(); ++modifier) {
-            output->writeLong(static_cast<long long>((*modifier)->getId()));
+            output->writeByte(static_cast<unsigned char>((*modifier)->getId()));
             output->writeDouble((*modifier)->getAmount());
             output->writeByte(static_cast<unsigned char>((*modifier)->getOperation()));
         }

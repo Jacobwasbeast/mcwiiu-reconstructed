@@ -9,12 +9,6 @@ ClientboundSetCameraPacket::ClientboundSetCameraPacket()
 {
 }
 
-ClientboundSetCameraPacket::ClientboundSetCameraPacket(boost::shared_ptr<Entity> camera)
-    : cameraId(0)
-{
-    (void)camera;
-}
-
 ClientboundSetCameraPacket::~ClientboundSetCameraPacket()
 {
 }

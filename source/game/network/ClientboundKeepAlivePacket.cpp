@@ -9,11 +9,6 @@ ClientboundKeepAlivePacket::ClientboundKeepAlivePacket()
 {
 }
 
-ClientboundKeepAlivePacket::ClientboundKeepAlivePacket(int id)
-    : mId(id)
-{
-}
-
 ClientboundKeepAlivePacket::~ClientboundKeepAlivePacket()
 {
 }

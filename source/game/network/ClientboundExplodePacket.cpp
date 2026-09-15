@@ -68,9 +68,9 @@ void ClientboundExplodePacket::write(DataOutputStream* output)
     output->writeBoolean(knockbackOnly);
     if (!knockbackOnly)
     {
-        output->writeDouble((float)x);
-        output->writeDouble((float)y);
-        output->writeDouble((float)z);
+        output->writeDouble(x);
+        output->writeDouble(y);
+        output->writeDouble(z);
         output->writeFloat(power);
         output->writeInt((int)toBlow.size());
         for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end(); ++it)

@@ -42,7 +42,7 @@ void ClientboundAddGlobalEntityPacket::read(DataInputStream* input)
 void ClientboundAddGlobalEntityPacket::write(DataOutputStream* output)
 {
     output->writeInt(mId);
-    output->writeInt(mType);
+    output->writeByte(mType);
     output->writeInt(mX);
     output->writeInt(mY);
     output->writeInt(mZ);

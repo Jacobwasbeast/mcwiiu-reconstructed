@@ -7,6 +7,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 
 ClientboundCustomPayloadPacket::ClientboundCustomPayloadPacket()
+    : dataLength(0)
 {
 }
 
@@ -32,10 +33,12 @@ void ClientboundCustomPayloadPacket::read(DataInputStream* input)
     identifier = Packet::readUtf(input, 25);
     dataLength = input->readShort();
 
+    delete[] data.data;
+    data.data = NULL;
+    data.length = 0;
+
     if (dataLength > 0 && dataLength < 32767)
     {
-        delete[] data.data;
-
         data = arrayWithLength<unsigned char>(dataLength, true);
         input->readFully(data);
     }

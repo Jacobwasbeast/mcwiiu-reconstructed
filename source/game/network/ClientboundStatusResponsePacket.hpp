@@ -6,6 +6,7 @@ class ClientboundStatusResponsePacket
 public:
     ClientboundStatusResponsePacket();
     ~ClientboundStatusResponsePacket();
+
 };
 
 #endif

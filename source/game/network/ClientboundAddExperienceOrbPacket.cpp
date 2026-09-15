@@ -14,7 +14,8 @@ ClientboundAddExperienceOrbPacket::ClientboundAddExperienceOrbPacket()
     mValue = 0;
 }
 
-ClientboundAddExperienceOrbPacket::ClientboundAddExperienceOrbPacket(boost::shared_ptr<ExperienceOrb> entity, int unused1, int unused2, int x, int y, int z)
+ClientboundAddExperienceOrbPacket::ClientboundAddExperienceOrbPacket(
+    boost::shared_ptr<ExperienceOrb> entity, int, int, int x, int y, int z)
 {
     mId = entity->getId();
     mX = x;

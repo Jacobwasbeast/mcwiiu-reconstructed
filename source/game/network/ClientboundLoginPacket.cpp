@@ -24,8 +24,8 @@ ClientboundLoginPacket::ClientboundLoginPacket()
     mIsFlat = false;
     mLevelType = NULL;
     mCurrentTick = 0;
-    mUnknownValue1 = 0x36;
-    mUnknownValue2 = 3;
+    mXZSize = 54;
+    mHellScale = 3;
     mMaxTick = 0x80;
     mIsFlatWorld = true;
     mPlayerFlags = 0;
@@ -43,7 +43,7 @@ ClientboundLoginPacket::ClientboundLoginPacket()
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, LevelType* levelType,
     long long seed, int gameType, int dimension, int difficulty, char gameMode, unsigned char difficultyValue,
     unsigned char maxPlayers, char playerFlag, int chunkDistance, unsigned char reducedDebugInfo, bool isFlat,
-    unsigned int currentTick, int unknownValue1, int unknownValue2, int maxTick, bool isFlatWorld,
+    unsigned int currentTick, int xzSize, int hellScale, int maxTick, bool isFlatWorld,
     unsigned char playerFlags, int spawnProtection, int simulationDistance, int unknownValue3)
     : mPlayerUID(0), mPlayerUID2(0)
 {
@@ -64,8 +64,8 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mIsFlat = isFlat;
     mLevelType = levelType;
     mCurrentTick = static_cast<int>(currentTick);
-    mUnknownValue1 = unknownValue1;
-    mUnknownValue2 = unknownValue2;
+    mXZSize = xzSize;
+    mHellScale = hellScale;
     mMaxTick = maxTick;
     mIsFlatWorld = isFlatWorld;
     mPlayerFlags = playerFlags;
@@ -102,8 +102,8 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mIsFlat = false;
     mLevelType = NULL;
     mCurrentTick = 0;
-    mUnknownValue1 = 0x36;
-    mUnknownValue2 = 3;
+    mXZSize = 54;
+    mHellScale = 3;
     mMaxTick = 0x80;
     mIsFlatWorld = true;
     mPlayerFlags = 0;

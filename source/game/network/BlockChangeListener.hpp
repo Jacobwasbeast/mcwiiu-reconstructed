@@ -41,7 +41,6 @@ public:
     const Chunk& GetChunk(long long key) const;
     Chunk& GetChunk(long long key);
     int GetChangesForChunk(int x, int z) const;
-    ServerLevel* GetLevel() const { return mLevel; }
     bool ShouldLoadOnClient(int x, int z) const;
     Chunk& GetChunk(int x, int z, bool create);
     static int GetBlockKey(const BlockPos& pos);

@@ -54,6 +54,7 @@ void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overri
     this->count = count;
     this->overrideLimiter = overrideLimiter;
 
+    delete[] this->params.data;
     this->params.length = params.length;
 
     if (params.length == 0)
@@ -97,6 +98,10 @@ void ClientboundLevelParticlesPacket::read(DataInputStream* input)
     count = input->readInt();
 
     int paramCount = type->getParamCount();
+
+    delete[] params.data;
+    params.data = NULL;
+    params.length = 0;
 
     if (paramCount > 0)
     {

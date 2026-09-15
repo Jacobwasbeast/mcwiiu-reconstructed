@@ -1,6 +1,12 @@
 #include "game/network/BlockChangeListener.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include <utility>
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
+#include "game/world/chunk/LevelChunk.hpp"
 
 BlockChangeListener::BlockChangeListener(ServerLevel* level)
     : mLevel(level), mChunks(new boost::unordered_map<long long, Chunk>())
@@ -55,12 +61,14 @@ BlockChangeListener::Chunk& BlockChangeListener::GetChunk(int x, int z, bool cre
 
 int BlockChangeListener::GetBlockKey(const BlockPos& pos)
 {
-    return (pos.y & 255) | ((pos.z << 8) & 0xf00) | ((pos.x << 12) & 0xf000);
+    return LevelChunk::PackBlockPos(pos);
 }
 
-void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState*, int, bool)
+void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int, bool)
 {
     GetChunk(pos.x >> 4, pos.z >> 4, true).AddBlockChange(pos);
+    if (gMinecraftServer != NULL && newState != NULL && newState->getBlock() == Blocks::AIR)
+        gMinecraftServer->mMasterGameMode->BlockDestroyedAt(pos);
 }
 
 void BlockChangeListener::invalidateChunksOutsideArea(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ)

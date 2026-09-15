@@ -6,6 +6,7 @@
 class ClientboundChatAutoCompletePacket : public Packet
 {
 public:
+
 };
 
 #endif

@@ -3,6 +3,7 @@
 
 class ClientStatusPacketListener
 {
+
 public:
     ClientStatusPacketListener();
     ~ClientStatusPacketListener();
