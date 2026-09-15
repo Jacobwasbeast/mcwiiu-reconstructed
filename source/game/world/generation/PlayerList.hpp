@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <deque>
 
 #include <boost/shared_ptr.hpp>
 
@@ -49,7 +50,7 @@ public:
     void saveAll(ProgressListener* listener, bool announce);
     void remove(boost::shared_ptr<ServerPlayer> player);
     void removeAll();
-    void load(boost::shared_ptr<ServerPlayer> player);
+    uint32_t load(boost::shared_ptr<ServerPlayer> player);
     void validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player);
     void updatePlayerGameMode(boost::shared_ptr<ServerPlayer> oldPlayer,
                               boost::shared_ptr<ServerPlayer> newPlayer, Level* level);
@@ -121,8 +122,8 @@ private:
     int mMaxRange;
     std::vector<boost::shared_ptr<ServerPlayer> > mReceivingPlayers[3];
     std::vector<boost::shared_ptr<ServerPlayer> > mPendingPlayers;
-    std::vector<unsigned char> mPlayersToKick;
-    std::vector<unsigned char> mListenersToClose;
+    std::deque<unsigned char> mPlayersToKick;
+    std::deque<unsigned char> mListenersToClose;
     bool mAllowCheatsForAllPlayers;
     GameType* mOverrideGameMode;
     int mUnknownState;

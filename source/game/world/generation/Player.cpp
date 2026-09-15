@@ -7,10 +7,13 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/Material.hpp"
+#include "game/util/Math.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/render/PlayerEnderChestContainer.hpp"
 #include "game/client/render/PlayerModelPart.hpp"
+#include "game/item/Container.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemCooldowns.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -29,6 +32,7 @@
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/data/ListTag.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
@@ -39,13 +43,17 @@
 #include "game/item/Items.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ArmorItem.hpp"
+#include "game/item/ShieldItem.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/FenceGateBlock.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include <boost/functional/hash.hpp>
 #include <climits>
 #include <cmath>
@@ -58,6 +66,7 @@ const EntityDataAccessor<unsigned char>* Player::DATA_PLAYER_MODE_CUSTOMISATION 
 const EntityDataAccessor<unsigned char>* Player::DATA_MAIN_HAND = NULL;
 const EntityDataAccessor<CompoundTag*>* Player::DATA_SHOULDER_LEFT = NULL;
 const EntityDataAccessor<CompoundTag*>* Player::DATA_SHOULDER_RIGHT = NULL;
+std::vector<unsigned int> Player::sDlcSkinIds;
 
 Player::ChatVisiblity::ChatVisiblity(int id) : mId(id)
 {
@@ -115,6 +124,36 @@ void Player::staticCtor()
     DATA_MAIN_HAND = SynchedEntityData::defineId(ENTITY_TYPE_PLAYER, ENTITY_TYPE_LIVING_ENTITY, EntityDataSerializers::BYTE);
     DATA_SHOULDER_LEFT = SynchedEntityData::defineId(ENTITY_TYPE_PLAYER, ENTITY_TYPE_LIVING_ENTITY, EntityDataSerializers::COMPOUND_TAG);
     DATA_SHOULDER_RIGHT = SynchedEntityData::defineId(ENTITY_TYPE_PLAYER, ENTITY_TYPE_LIVING_ENTITY, EntityDataSerializers::COMPOUND_TAG);
+
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00000107"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin20000107"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00000111"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin20000111"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00000222"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin20000222"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00000223"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin20000223"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin20000231"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00000320"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002056"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002057"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002518"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002715"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002716"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00001626"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00001244"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00001246"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00001248"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00001254"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002405"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002417"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002421"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002411"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002424"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00003225"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002730"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002715"));
+    sDlcSkinIds.push_back(CMinecraftApp::getSkinIdFromPath(L"dlcskin00002104"));
 }
 
 void Player::defineSynchedData()
@@ -174,9 +213,7 @@ void Player::resetPos()
 
 void Player::handleEntityEvent(uint8_t event, int32_t data)
 {
-    if (event == 9) {
-        completeUsingItem();
-    } else if (event == 22) {
+    if (event == 22) {
         mReducedDebugInfo = 1;
     } else if (event == 23) {
         mReducedDebugInfo = 0;
@@ -564,7 +601,7 @@ bool Player::ShouldRenderShadow()
 
 std::wstring Player::getDisplayName()
 {
-    return mName;
+    return mDisplayName;
 }
 
 void Player::stopSpinAttack()
@@ -921,12 +958,16 @@ void Player::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> i
     if (!mInventory || slot == NULL) return;
     int index = slot->getEIndex() == EquipmentSlot::eIndex_OffHand ? 40 : slot->getIndex();
     if (slot->getType() == EquipmentSlot::ARMOR) index += 36;
+    not_null_ptr<ItemInstance> previous = mInventory->getItem(index);
+    if (!ItemInstance::matches(previous, item, false)) playEquipSound(item);
     mInventory->setItem(index, item);
 }
 
 uint32_t Player::addItem(not_null_ptr<ItemInstance> item)
 {
-    return mInventory && mInventory->add(item);
+    if (!mInventory) return 0;
+    playEquipSound(item);
+    return mInventory->add(item);
 }
 
 double Player::getCurrentItemAttackStrengthDelay()
@@ -1022,7 +1063,7 @@ bool Player::IsCreativeFlying()
 
 uint32_t Player::IsSpectatingOtherPlayer()
 {
-    if (mCamera || mField0x808 != -1) {
+    if ((mCamera || mField0x808 != -1) && isSpectator()) {
         return 1;
     }
     return 0;
@@ -1041,7 +1082,7 @@ void Player::SetCamera(boost::shared_ptr<Entity> entity)
     boost::shared_ptr<Entity> self = shared_from_this();
     if (!entity || entity == self) {
         mCamera.reset();
-    } else if (boost::dynamic_pointer_cast<Player>(entity)) {
+    } else if ((entity->GetType() & ENTITY_TYPE_LIVING_ENTITY) == ENTITY_TYPE_LIVING_ENTITY) {
         mCamera = entity;
     } else {
         mCamera.reset();
@@ -1100,8 +1141,45 @@ bool Player::canDestroy(const BlockState* state)
 float Player::getDestroySpeed(const BlockState* state)
 {
     float speed = mInventory->getDestroySpeed(state);
-    if (isInWater() && !EnchantmentHelper::hasAquaAffinity(
-            boost::static_pointer_cast<LivingEntity>(shared_from_this()))) speed /= 5.0f;
+    if (speed > 1.0f) {
+        boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+        int efficiencyLevel = static_cast<int>(EnchantmentHelper::getBlockEfficiency(self));
+        not_null_ptr<ItemInstance> item = getMainHandItem();
+        if (efficiencyLevel > 0 && !item->isEmpty()) {
+            speed += static_cast<float>(efficiencyLevel * efficiencyLevel + 1);
+        }
+    }
+
+    int digSpeedAmplifier = 0;
+    if (hasEffect(MobEffects::DIG_SPEED)) {
+        digSpeedAmplifier = getEffect(MobEffects::DIG_SPEED)->getAmplifier();
+    }
+    if (hasEffect(MobEffects::CONDUIT_POWER)) {
+        int conduitAmplifier = getEffect(MobEffects::CONDUIT_POWER)->getAmplifier();
+        if (digSpeedAmplifier < conduitAmplifier + 1) digSpeedAmplifier = conduitAmplifier + 1;
+    }
+    if (digSpeedAmplifier > 0) {
+        speed *= static_cast<float>(digSpeedAmplifier + 1) * 0.20000000298023224f + 1.0f;
+    }
+
+    if (hasEffect(MobEffects::DIG_SLOWDOWN)) {
+        int amplifier = getEffect(MobEffects::DIG_SLOWDOWN)->getAmplifier();
+        float multiplier;
+        if (amplifier == 0) multiplier = 0.30000001192092896f;
+        else if (amplifier == 1) multiplier = 0.09000000357627869f;
+        else if (amplifier == 2) multiplier = 0.0027000000700354576f;
+        else multiplier = 0.0008100000559352338f;
+        speed *= multiplier;
+    }
+
+    bool underWater = false;
+    bool noAquaAffinity = false;
+    if (isUnderLiquid(Material::WATER)) {
+        underWater = true;
+        boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+        if (!EnchantmentHelper::hasAquaAffinity(self)) noAquaAffinity = true;
+    }
+    if (underWater && noAquaAffinity) speed /= 5.0f;
     if (!mOnGround) speed /= 5.0f;
     return speed;
 }
@@ -1203,7 +1281,8 @@ Scoreboard* Player::GetScoreboard()
 Team* Player::getTeam()
 {
     PlayerUID uid = mXuid == PlayerUID(0) ? m_0x798 : mXuid;
-    return GetScoreboard()->getPlayersTeam(uid);
+    Scoreboard* scoreboard = GetScoreboard();
+    return scoreboard != NULL ? scoreboard->getPlayersTeam(uid) : NULL;
 }
 
 double Player::getSleepRotation()
@@ -1228,14 +1307,15 @@ const SoundEvent* Player::getFallDamageSound(int32_t damage)
 
 bool Player::canUnlock(LockCode* lock)
 {
-    if (lock->isEmpty()) return true;
+    if (lock == NULL || lock->isEmpty()) return true;
     not_null_ptr<ItemInstance> item = getMainHandItem();
-    return !item->isEmpty() && item->hasCustomHoverName() && item->getHoverName() == lock->getKey();
+    if (item->isEmpty() || item->hasCustomHoverName() == false) return false;
+    return item->getHoverName() == lock->getKey();
 }
 
 bool Player::isInvisibleTo(boost::shared_ptr<Player> player)
 {
-    if (!isInvisible()) return false;
+    if (!isInvisible() || !player) return false;
     if (player->isLocalPlayer() && !isLocalPlayer()) return false;
     Team* team = getTeam();
     if (team != NULL && team == player->getTeam() && team->canSeeFriendlyInvisibles()) return false;
@@ -1257,12 +1337,12 @@ uint32_t Player::CanRecordStats(Stat* stat, arrayWithLength<unsigned char> param
 void Player::setAbsorptionAmount(float amount)
 {
     if (amount < 0.0f) amount = 0.0f;
-    mEntityData->set(DATA_PLAYER_ABSORPTION_ID, amount, true);
+    if (mEntityData != NULL) mEntityData->set(DATA_PLAYER_ABSORPTION_ID, amount, true);
 }
 
 float Player::getAbsorptionAmount()
 {
-    return mEntityData->get(DATA_PLAYER_ABSORPTION_ID);
+    return mEntityData != NULL ? mEntityData->get(DATA_PLAYER_ABSORPTION_ID) : 0.0f;
 }
 
 const HumanoidArm* Player::getMainArm()
@@ -1278,6 +1358,7 @@ void Player::setMainArm(const HumanoidArm* arm)
 void Player::ResetTimerAchievement(int32_t index)
 {
     if (mLevel != NULL && mLevel->mIsClientSide) return;
+    if (index < 0 || index >= 4) return;
     mTimerAchievementTicks[index] = 0;
 }
 
@@ -1420,7 +1501,12 @@ bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
     }
     for (int i = 2; i < 6; ++i) {
         if (slot == EquipmentSlot::SLOTS[i]->getIndex() + 100) {
+            if (!item->isEmpty() && item->getItem() != NULL) {
+                const EquipmentSlot* naturalSlot = Mob::getEquipmentSlotForItem(item);
+                if (naturalSlot != EquipmentSlot::SLOTS[i]) return 0;
+            }
             setItemSlot(EquipmentSlot::SLOTS[i], item);
+            OnEquipArmor(item);
             return 1;
         }
     }
@@ -1526,29 +1612,41 @@ void Player::tickCamera()
 {
     if (mField0x808 != -1 && !mCamera) mField0x808 = -1;
     if (!isSpectator() && mCamera) StopSpectatingPlayer();
+    if (mCamera && mField0x814 && Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
+        mYRot += Mth::clamp(Mth::wrapDegrees(mCamera->mYRot - mYRot), -2.25f, 2.25f);
+        mXRot += Mth::clamp(Mth::wrapDegrees(mCamera->mXRot - mXRot), -2.25f, 2.25f);
+    }
 }
 
 void Player::PlayerRingSoundEffect(int ring)
 {
     if (mLevel == NULL || !mLevel->mIsClientSide) return;
-    mField0x83c = !mField0x83c;
-    if (ring > 6) mField0x83c = 0;
+    if (ring < 5) {
+        mField0x83c ^= 1;
+    } else if (ring == 5 || ring == 6) {
+        mField0x83c ^= 1;
+    } else {
+        mField0x83c ^= 1;
+    }
 }
 
 void Player::prepareCustomTextures()
 {
-    if (g_pApp->GetMojangDataForXuid(m_0x798) != NULL) mField0x804 = 0;
+    MOJJANG_DATA* data = g_pApp->GetMojangDataForXuid(m_0x798);
+    if (data != NULL && data->capePath[0] != L'\0') {
+        mDisplayName.assign(data->capePath, std::wcslen(data->capePath));
+    }
 }
 
 void Player::_init()
 {
     mInventory = boost::shared_ptr<Inventory>(new Inventory(this));
-    mEnderChestInventory.reset(new PlayerEnderChestContainer());
-    mInventoryMenu = NULL;
-    mContainerMenu = NULL;
     mPrevCameraYaw = 0.0f;
     mCameraYaw = 0.0f;
     mTakeXpDelay = 0;
+    mSkinLocation = L"";
+    mCapeLocation = L"";
+    mField0x66c = 0;
     mPrevChasingPosX = 0.0;
     mPrevChasingPosY = 0.0;
     mPrevChasingPosZ = 0.0;
@@ -1559,34 +1657,97 @@ void Player::_init()
     mField0x6c4 = NULL;
     mField0x6c8 = 0;
     mField0x6cc = 0;
+    mField0x6d0 = 0.0f;
+    mField0x6d4 = 0.0f;
+    mField0x6d8 = 0.0f;
+    mField0x6dc = 0;
+    mField0x6e0 = NULL;
+    mField0x6e4 = 0;
+    mField0x6e8 = NULL;
+    mField0x6ec = 0;
+    mField0x6f0 = 0;
+    mField0x6f4 = 0;
+    mField0x6f8 = 0;
+    mField0x6fc = 0;
+    mField0x700 = 0;
+    mField0x704 = 0;
+    mField0x708 = 0;
+    mField0x61c = 0;
     mExperienceLevel = 0;
     mTotalExperience = 0;
     mExperienceProgress = 0.0f;
     mFishing.reset();
     mEnchantmentSeed = mRandom->nextInt();
+    mField0x734 = 0.02f;
     mField0x738 = NULL;
+    mLastLevelUpTime = 0;
+    mName = L"";
+    mDisplayName = L"";
+    mReducedDebugInfo = 0;
+    mEnderChestInventory.reset(new PlayerEnderChestContainer());
     mField0x77c = NULL;
-    mField0x780 = false;
+    mField0x780 = true;
+    mField0x7c0 = 0;
+    mField0x781 = 0;
     mDebugOptions = 0;
     mField0x7fc = 0;
     mAdditionalModelParts = NULL;
     mField0x804 = 0;
     mField0x805 = 0;
     mField0x808 = -1;
+    mCamera.reset();
+    mField0x814 = false;
+    mField0x815 = false;
     mField0x818 = 1.0;
     mField0x820 = mY;
+    mField0x82c = 0;
+    mFlap = 0.0f;
+    mFlapSpeed = 0.0f;
+    mOFlapSpeed = 0.0f;
+    mOFlap = 0.0f;
+    mField0x850 = 1.0f;
+    mField0x854 = 15.0f;
+    mField0x858 = 0.0f;
+    mField0x85c = 0;
+    mField0x85d = 0;
+    mField0x85e = 0;
+    mTimerAchievementTicks[0] = 0;
+    mTimerAchievementTicks[1] = 0;
 }
 
 void Player::tick()
 {
-    updateFrameTick();
+    if (!g_pApp->IsAppPaused()) CheckTimerAchievements();
+
+    mField0x782 = isFallFlying();
+
+    if (mLevel->mIsClientSide) updateFrameTick();
+
+    if (isOnFire() && (mAbilities.mInvulnerable || hasInvulnerablePrivilege())) clearFire();
+
+    LivingEntity::tick();
+    tickCamera();
+    moveCloak();
+
+    if (!mLevel->mIsClientSide) mFoodData.tick(boost::static_pointer_cast<Player>(shared_from_this()));
+
+    double clampedX = mX;
+    double clampedZ = mZ;
+    double clampedY = mY;
+    mLevel->clampWithinLevelBounds(clampedX, clampedZ, 0.0);
+    mLevel->clampWithinLevelHeight(clampedY, static_cast<double>(mBbHeight));
+    if (clampedX != mX || clampedZ != mZ || clampedY != mY) setPos(clampedX, clampedY, clampedZ);
+
+    not_null_ptr<ItemInstance> heldItem = getMainHandItem();
+    if (!ItemInstance::matches(mField0x764, heldItem, true)
+        && !ItemInstance::isSameIgnoreDurability(mField0x764, heldItem)) {
+        resetAttackStrengthTicker();
+    }
+    mField0x764 = heldItem->isEmpty() ? ItemInstance::EMPTY : heldItem->copy();
+
     tickArmor();
     if (mField0x738 != NULL) mField0x738->tick();
-    LivingEntity::tick();
-    if (mInventory) mInventory->tick();
-    tickCamera();
-    calculateFlapping();
-    CheckTimerAchievements();
+    updatePlayerSize();
 }
 
 void Player::rideTick()
@@ -1599,8 +1760,41 @@ void Player::rideTick()
 
 void Player::aiStep()
 {
+    if (mField0x61c > 0) --mField0x61c;
+
+    mInventory->tick();
     LivingEntity::aiStep();
-    checkMovementStatistiscs(mX - mXOld, mY - mYOld, mZ - mZOld);
+
+    if (!mLevel->mIsClientSide) {
+        getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(mAbilities.getWalkingSpeed());
+    }
+
+    mPrevCameraYaw = mCameraYaw;
+    double horizontalSpeedSq = mXd * mXd + mZd * mZd;
+    float horizontalSpeed = static_cast<float>(std::sqrt(horizontalSpeedSq));
+    if (horizontalSpeedSq < 9.999999747378752e-06) horizontalSpeed = 0.0f;
+    float verticalAngle = static_cast<float>(std::atan(-mYd * 0.20000000298023224)) * 15.0f;
+    if (verticalAngle > 0.10000000149011612f) verticalAngle = 0.10000000149011612f;
+    mCameraYaw = (horizontalSpeed - mCameraYaw) * 0.4000000059604645f + mCameraYaw;
+    mYBodyRotO = (verticalAngle - mYBodyRotO) * 0.800000011920929f + mYBodyRotO;
+
+    if (getHealth() > 0.0f && !isSpectator() && !isPassenger()) {
+        AABB* touchBox = mBoundingBox->grow(1.0, 0.5, 1.0);
+        std::vector<boost::shared_ptr<Entity> > nearby;
+        mLevel->getEntities(shared_from_this(), touchBox, &nearby);
+        for (unsigned int i = 0; i < nearby.size(); ++i) {
+            touch(nearby[i]);
+        }
+    }
+
+    playShoulderEntityAmbientSound(getShoulderEntityLeft());
+    playShoulderEntityAmbientSound(getShoulderEntityRight());
+    if (!mLevel->mIsClientSide
+        && (mFallDistance > 0.5f || isInWater() || isPassenger() || mAbilities.mFlying)) {
+        removeEntitiesOnShoulder();
+    }
+
+    calculateFlapping();
 }
 
 void Player::touch(boost::shared_ptr<Entity> entity)
@@ -1616,7 +1810,7 @@ void Player::destroyVanishingCursedItems()
     for (unsigned int i = 0; i < mInventory->getContainerSize(); ++i) {
         not_null_ptr<ItemInstance> item = mInventory->getItem(i);
         if (!item->isEmpty() && EnchantmentHelper::hasVanishingCurse(item))
-            mInventory->setItem(i, ItemInstance::EMPTY);
+            mInventory->removeItem(i, item->getCount());
     }
 }
 
@@ -1629,32 +1823,105 @@ void Player::addWalkers(DataFixerUpper* fixer)
 void Player::readAdditionalSaveData(CompoundTag* tag)
 {
     LivingEntity::readAdditionalSaveData(tag);
+
+    mInventory->load(tag->getList(L"Inventory", 10));
+
+    mField0x6c0 = tag->getBoolean(L"Sleeping");
+    mField0x6c8 = tag->getShort(L"SleepTimer");
+
     mExperienceLevel = tag->getInt(L"XpLevel");
     mTotalExperience = tag->getInt(L"XpTotal");
     mEnchantmentSeed = tag->getInt(L"XpSeed");
-    mField0x6e4 = tag->getBoolean(L"SpawnForced");
+    if (mEnchantmentSeed == 0) mEnchantmentSeed = mRandom->nextInt();
+
+    setScore(tag->getInt(L"Score"));
+
+    if (mField0x6c0 != 0) {
+        if (mField0x6c4 == NULL) mField0x6c4 = new BlockPos();
+        *mField0x6c4 = BlockPos(shared_from_this());
+        stopSleepInBed(true, true, false);
+    }
+
+    if (tag->contains(L"SpawnX", 99) && tag->contains(L"SpawnY", 99) && tag->contains(L"SpawnZ", 99)) {
+        if (mField0x6e0 == NULL) mField0x6e0 = new BlockPos();
+        *mField0x6e0 = BlockPos(tag->getInt(L"SpawnX"), tag->getInt(L"SpawnY"), tag->getInt(L"SpawnZ"));
+        mField0x6e4 = tag->getBoolean(L"SpawnForced");
+    }
+
+    mFoodData.readAdditionalSaveData(tag);
     mAbilities.loadSaveData(tag);
+
+    if (tag->contains(L"EnderItems", 9)) {
+        mEnderChestInventory->setItemsByTag(tag->getList(L"EnderItems", 10));
+    }
+
+    mField0x7fc = tag->getInt(L"GamePrivileges");
 }
 
 void Player::addAdditonalSaveData(CompoundTag* tag)
 {
     LivingEntity::addAdditonalSaveData(tag);
+
+    tag->put(L"Inventory", mInventory->save(new ListTag(0)));
+
+    tag->putBoolean(L"Sleeping", mField0x6c0 != 0);
+    tag->putShort(L"SleepTimer", static_cast<short>(mField0x6c8));
+
     tag->putInt(L"XpLevel", mExperienceLevel);
     tag->putInt(L"XpTotal", mTotalExperience);
     tag->putInt(L"XpSeed", mEnchantmentSeed);
-    tag->putBoolean(L"SpawnForced", mField0x6e4 != 0);
+    tag->putInt(L"Score", static_cast<int>(getScore()));
+
+    if (mField0x6e0 != NULL) {
+        tag->putInt(L"SpawnX", mField0x6e0->x);
+        tag->putInt(L"SpawnY", mField0x6e0->y);
+        tag->putInt(L"SpawnZ", mField0x6e0->z);
+        tag->putBoolean(L"SpawnForced", mField0x6e4 != 0);
+    }
+
+    mFoodData.addAdditonalSaveData(tag);
     mAbilities.addSaveData(tag);
+
+    tag->put(L"EnderItems", mEnderChestInventory->createTag());
+
+    not_null_ptr<ItemInstance> selected = mInventory->getSelected();
+    if (!selected->isEmpty() && selected->getItem() != NULL) {
+        tag->put(L"SelectedItem", selected->save(new CompoundTag()));
+    }
+
+    tag->putInt(L"GamePrivileges", mField0x7fc);
 }
 
 boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool randomThrow, bool retainOwnership)
 {
     if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
-    boost::shared_ptr<ItemEntity> dropped = spawnAtLocation(item, 0.0f);
-    if (!dropped) return dropped;
+
+    boost::shared_ptr<ItemEntity> dropped(new ItemEntity(mLevel, mX, mY - 0.30000001192092896 + getEyeHeight(), mZ, item));
     dropped->setPickUpDelay(40);
-    dropped->setThrower(getName());
-    if (retainOwnership) dropped->setOwner(getName());
-    if (randomThrow) dropped->setExtendedLifetime();
+    if (retainOwnership) {
+        dropped->setThrower(getName());
+    }
+
+    if (!randomThrow) {
+        float yaw = mYRot * 0.01745329238474369f;
+        float pitch = mXRot * 0.01745329238474369f;
+        dropped->mXd = -static_cast<double>(sinf(yaw) * cosf(pitch)) * 0.30000001192092896;
+        dropped->mZd = static_cast<double>(cosf(yaw) * cosf(pitch)) * 0.30000001192092896;
+        dropped->mYd = -static_cast<double>(sinf(pitch)) * 0.30000001192092896 + 0.10000000149011612;
+
+        float randAngle = mRandom->nextFloat() * 6.2831854820251465f;
+        float randRadius = 0.019999999552965164f * mRandom->nextFloat();
+        dropped->mXd = dropped->mXd + static_cast<double>(cosf(randAngle) * randRadius);
+        dropped->mZd = dropped->mZd + static_cast<double>((mRandom->nextFloat() - mRandom->nextFloat()) * 0.10000000149011612f);
+        dropped->mYd = dropped->mYd + static_cast<double>(sinf(randAngle) * randRadius);
+    } else {
+        float speed = mRandom->nextFloat() * 0.5f;
+        float angle = mRandom->nextFloat() * 6.2831854820251465f;
+        dropped->mXd = -static_cast<double>(sinf(angle) * speed);
+        dropped->mZd = static_cast<double>(cosf(angle) * speed);
+        dropped->mYd = 0.20000000298023224;
+    }
+
     return reallyDrop(dropped);
 }
 
@@ -1675,7 +1942,10 @@ boost::shared_ptr<ItemEntity> Player::drop(bool dropAll)
 
 boost::shared_ptr<ItemEntity> Player::reallyDrop(boost::shared_ptr<ItemEntity> item)
 {
-    if (item) item->setThrower(getName());
+    if (item) {
+        item->setThrower(getName());
+        if (mLevel != NULL) mLevel->addEntity(item);
+    }
     return item;
 }
 
@@ -1697,17 +1967,44 @@ const SoundEvent* Player::getHurtSound(const DamageSource* source)
 
 bool Player::hurt(const DamageSource* source, float damage)
 {
-    if (hasInvulnerablePrivilege() && source != NULL && !source->isBypassInvul()) return false;
-    if (source != NULL) {
-        boost::shared_ptr<Player> attacker = boost::dynamic_pointer_cast<Player>(source->getEntity());
-        if (attacker && !canHarmPlayer(attacker)) return false;
+    boost::shared_ptr<Entity> sourceEntity = source->getEntity();
+
+    if (damage == 0.0f) {
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && sourceEntity) {
+            unsigned long long type = sourceEntity->GetType();
+            if (type != 0x88000006ULL && type != 0x8a200001ULL && type != 0x8a200002ULL && type != 0x800000bULL) {
+                if ((type & 0x8a020000ULL) != 0x8a020000ULL
+                    || !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()) {
+                    return false;
+                }
+            }
+        }
+        return LivingEntity::hurt(source, damage);
     }
+
+    if (isInvulnerableTo(source)) return false;
+    if (mAbilities.mInvulnerable && !source->isBypassInvul()) return false;
+    if (hasInvulnerablePrivilege()) return false;
+    if (isSpectator()) return false;
+    if (source == DamageSource::FALL && isAllowedToFly() && mAbilities.mFlying) return false;
+
+    mDeathScore = 0;
+    if (getHealth() > 0.0f) {
+        if (isSleeping() && !mLevel->mIsClientSide) stopSleepInBed(true, true, false);
+        removeEntitiesOnShoulder();
+    }
+
     return LivingEntity::hurt(source, damage);
 }
 
 void Player::blockUsingShield(const boost::shared_ptr<LivingEntity>& attacker)
 {
     LivingEntity::blockUsingShield(attacker);
+    if (attacker) {
+        not_null_ptr<ItemInstance> held = attacker->getMainHandItem();
+        if (!held->isEmpty() && dynamic_cast<ShieldItem*>(held->getItem()) != NULL)
+            disableShield(true);
+    }
 }
 
 void Player::actuallyHurt(const DamageSource* source, float damage)
@@ -1718,32 +2015,152 @@ void Player::actuallyHurt(const DamageSource* source, float damage)
 
 void Player::checkRidingStatistiscs(double x, double y, double z)
 {
-    int distance = static_cast<int>(std::sqrt(x * x + y * y + z * z) * 100.0);
-    if (distance <= 0 || gStats == NULL) return;
-    awardStat(gStats->get_minecartOneM(), gStats->getParam_minecartOneM(distance));
+    if (!isPassenger()) return;
+
+    int cm = static_cast<int>(Math::round(std::sqrt(x * x + y * y + z * z) * 100.0));
+    if (cm <= 0) return;
+
+    boost::shared_ptr<Entity> vehicle = getVehicle();
+    unsigned long long vehicleType = vehicle->GetType();
+
+    if ((vehicleType & 0xa800000ULL) == 0xa800000ULL) {
+        mField0x700 += cm;
+        if (mField0x700 >= 100) {
+            int meters = mField0x700 / 100;
+            mField0x700 %= 100;
+            awardStat(gStats->get_minecartOneM(), GenericStats::param_minecart(meters));
+        }
+
+        if (mField0x6e8 == NULL) {
+            mField0x6e8 = new BlockPos(shared_from_this());
+            return;
+        }
+
+        double distance = mField0x6e8->dist(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ));
+        if (!mField0x781 && distance > 499.0) {
+            awardStat(GenericStats::onARail(), GenericStats::param_onARail(static_cast<int>(distance)));
+            mField0x781 = 1;
+        }
+        return;
+    }
+
+    if (vehicleType == 0x8000008ULL) {
+        mField0x704 += cm;
+        if (mField0x704 >= 100) {
+            int meters = mField0x704 / 100;
+            mField0x704 %= 100;
+            awardStat(gStats->get_boatOneM(), GenericStats::param_boat(meters));
+        }
+        return;
+    }
+
+    if (getVehicle()->GetType() == 0x2d680003ULL) {
+        mField0x708 += cm;
+        if (mField0x708 >= 100) {
+            int meters = mField0x708 / 100;
+            mField0x708 %= 100;
+            awardStat(gStats->get_pigOneM(), GenericStats::param_pig(meters));
+        }
+    }
 }
 
 void Player::checkMovementStatistiscs(double x, double y, double z)
 {
-    int horizontal = static_cast<int>(std::sqrt(x * x + z * z) * 100.0);
-    int total = static_cast<int>(std::sqrt(x * x + y * y + z * z) * 100.0);
-    if (gStats == NULL) return;
-    if (isSwimming() || isInWater()) {
-        if (total > 0) awardStat(gStats->get_swimOneM(), gStats->getParam_swimOneM(total));
-    } else if (isFallFlying()) {
-        if (total > 0) awardStat(gStats->get_walkOneM(), gStats->getParam_walkOneM(total));
-    } else if (horizontal > 0) {
-        awardStat(gStats->get_walkOneM(), gStats->getParam_walkOneM(horizontal));
+    if (isPassenger()) {
+        boost::shared_ptr<Entity> vehicle = getVehicle();
+        if (vehicle->GetType() == 0x8000008ULL) {
+            ResetTimerAchievement(1);
+        }
+        causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+        return;
     }
+
+    if (gStats == NULL) return;
+
+    bool underLiquid = isUnderLiquid(Material::WATER);
+    bool alive = isAlive();
+
+    if (!alive || !isInWater() || !underLiquid) {
+        ResetTimerAchievement(1);
+        if (!underLiquid) {
+            if (!isInWater()) {
+                if (!onLadder()) {
+                    if (mOnGround) {
+                        int cm = static_cast<int>(Math::round(std::sqrt(x * x + z * z) * 100.0));
+                        if (cm > 0) {
+                            mField0x6ec += cm;
+                            if (mField0x6ec >= 100) {
+                                int meters = mField0x6ec / 100;
+                                mField0x6ec %= 100;
+                                awardStat(gStats->get_walkOneM(), GenericStats::param_walk(meters));
+                            }
+                            if (isSprinting()) {
+                                causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSprint()) * cm * 0.009999999776482582f);
+                            } else if (isSneaking()) {
+                                causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSneak()) * cm * 0.009999999776482582f);
+                            } else {
+                                causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionWalk()) * cm * 0.009999999776482582f);
+                            }
+                            return;
+                        }
+                    }
+                } else if (y > 0.0) {
+                    int cm = static_cast<int>(Math::round(y * 100.0));
+                    mField0x6f4 += cm;
+                    if (mField0x6f4 >= 100) {
+                        int meters = mField0x6f4 / 100;
+                        mField0x6f4 %= 100;
+                        awardStat(gStats->get_climbOneM(), GenericStats::param_climb(meters));
+                    }
+                    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+                    return;
+                }
+            } else {
+                int cm = static_cast<int>(Math::round(std::sqrt(x * x + z * z) * 100.0));
+                if (cm > 0) {
+                    mField0x6f0 += cm;
+                    if (mField0x6f0 >= 100) {
+                        int meters = mField0x6f0 / 100;
+                        mField0x6f0 %= 100;
+                        awardStat(gStats->get_swimOneM(), GenericStats::param_swim(meters));
+                    }
+                    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSwim()) * cm * 0.009999999776482582f);
+                    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+                    return;
+                }
+            }
+        }
+    } else {
+        int cm = static_cast<int>(Math::round(std::sqrt(x * x + y * y + z * z) * 100.0));
+        if (cm > 0) {
+            mField0x6f4 += cm;
+            if (mField0x6f4 >= 100) {
+                int meters = mField0x6f4 / 100;
+                mField0x6f4 %= 100;
+                awardStat(gStats->get_swimOneM(), GenericStats::param_swim(meters));
+            }
+            causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSwim()) * cm * 0.009999999776482582f);
+            causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+            return;
+        }
+    }
+
+    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
 }
 
 void Player::causeFallDamage(float distance, float multiplier)
 {
     if (mAbilities.mFlying) return;
+    if (distance >= 2.0f) {
+        mField0x6f8 += static_cast<int>(Math::round(distance * 100.0));
+        if (mField0x6f8 >= 100) {
+            int meters = mField0x6f8 / 100;
+            mField0x6f8 %= 100;
+            if (gStats != NULL)
+                awardStat(gStats->get_fallOneM(), gStats->getParam_fallOneM(meters));
+        }
+    }
     LivingEntity::causeFallDamage(distance, multiplier);
-    int statistic = static_cast<int>(distance * 100.0f);
-    if (statistic > 0 && gStats != NULL)
-        awardStat(gStats->get_fallOneM(), gStats->getParam_fallOneM(statistic));
 }
 
 void Player::travel(float x, float y, float z)
@@ -1798,15 +2215,35 @@ void Player::remove()
 
 uint32_t Player::startSleepInBed(const BlockPos& position, bool force)
 {
-    if (isSleeping() || !isAlive()) return 1;
-    if (!force && !bedInRange(const_cast<BlockPos*>(&position), NULL)) return 2;
-    if (!force && mLevel->isDay()) return 3;
-    SetSmallSize();
-    mField0x6c4 = new BlockPos(position);
+    if (!mLevel->mIsClientSide || force) {
+        const BlockState* state = mLevel->getBlockState(position);
+        bool underWater = mLevel->isUnderWater(position, state);
+        if ((underWater && !hasEffect(MobEffects::WATER_BREATHING) && !hasEffect(MobEffects::CONDUIT_POWER))
+            || isSleeping() || !isAlive()) {
+            return 4;
+        }
+        if (!bedInRange(const_cast<BlockPos*>(&position), NULL)) return 3;
+        if (force) return 0;
+        if (mLevel->isDay()) return 2;
+    }
+
+    if (isPassenger()) stopRiding();
+    removeEntitiesOnShoulder();
+    SetNormalSize();
+    setSize(0.20000000298023224f, 0.20000000298023224f);
+
+    if (mField0x6c4 == NULL) mField0x6c4 = new BlockPos();
+    *mField0x6c4 = position;
+    mXd = 0.0;
+    mYd = 0.0;
+    mZd = 0.0;
+    setPos(position.x + 0.5, position.y + 0.6875, position.z + 0.5);
+
     mField0x6c0 = 1;
     mField0x6c8 = 0;
-    setPos(position.x + 0.5, position.y + 0.6875, position.z + 0.5);
+
     if (!mLevel->mIsClientSide) mLevel->updateSleepingPlayerList();
+
     return 0;
 }
 
@@ -1839,11 +2276,13 @@ void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ,
 
 void Player::killed(boost::shared_ptr<LivingEntity> entity)
 {
-    if (!entity || gStats == NULL) return;
-    boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(entity);
-    if (mob) awardStat(GenericStats::killEnemy(),
-                       GenericStats::param_mobKill(boost::static_pointer_cast<Player>(shared_from_this()),
-                                                   mob, getLastDamageSource()));
+    unsigned long long type = entity->GetType();
+    if ((type & 0x40000000ULL) != 0x40000000ULL
+        && type != 0x5d0000c1ULL && type != 0x5d108000ULL
+        && type != 0x5d108001ULL && type != 0xd000005ULL) {
+        return;
+    }
+    awardStat(GenericStats::killEnemy(), GenericStats::param_noArgs());
 }
 
 int Player::getItemInHandIcon(not_null_ptr<ItemInstance> item, int frame)
@@ -1865,35 +2304,71 @@ uint32_t Player::mayUseItemAt(const BlockPos& position, const Direction* directi
 
 uint32_t Player::isAllowedToUse(Block* block)
 {
-    if (block == NULL || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0) return 1;
     unsigned int id = Block::getId(block);
-    if (getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(12)) != 0) {
-        if (id == 0x17 || id == 0x36 || id == 0x3a || id == 0x3d || id == 0x3e
-            || id == 0x74 || id == 0x75 || id == 0x82 || id == 0x8a || id == 0x91
-            || id == 0x92 || id == 0x9a || id == 0x9e || (id > 0xda && id < 0xeb)) return 1;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return Minecraft::GetInstance()->GetMiniGame()->MayUseBlock(static_cast<int>(id));
+    if (block == NULL || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0)
+        return 1;
+
+    const bool isDoorOrGate = DoorBlock::isDoor(block) || FenceGateBlock::isFenceGate(block);
+    const bool p11 = getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(0x0b)) != 0;
+    const bool p12 = getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(0x0c)) != 0;
+    const bool special = (id < 0x95 && id != 0x45 && id != 0x4d && id != 0x60 && id != 0x8f)
+        || (id > 0x97 && id != 0xa7 && id != 0xb2 && (id < 0x132 || id > 0x136));
+    bool restrictedByP11 = false;
+    if (p11)
+        restrictedByP11 = !special || isDoorOrGate;
+
+    if (p12) {
+        if (id == 0x17 || id == 0x36 || id == 0x3a || (id > 0x3c && id < 0x3f)
+            || (id > 0x73 && id < 0x76) || id == 0x82 || id == 0x8a
+            || (id > 0x90 && id < 0x93) || id == 0x9a || id == 0x9e
+            || (id > 0xda && id < 0xeb))
+            return 1;
     }
-    return getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) == 0;
+    if (restrictedByP11) return 1;
+    if (getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) != 0) return 0;
+
+    if (id == 0x17 || id == 0x36 || id == 0x3a || (id > 0x3c && id < 0x3f)
+        || id == 0x45 || id == 0x4d || id == 0x60 || (id > 0x73 && id < 0x76)
+        || id == 0x82 || id == 0x8a || id == 0x8f || (id > 0x90 && id < 0x93)
+        || (id > 0x97 && id < 0x98) || id == 0x9a || id == 0x9e || id == 0xa7
+        || id == 0xb2 || (id > 0xda && id < 0xeb) || (id > 0x131 && id < 0x137))
+        return 0;
+    return isDoorOrGate ? 0 : 1;
 }
 
 uint32_t Player::isAllowedToUse(not_null_ptr<ItemInstance> item)
 {
-    if (item->isEmpty() || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0) return 1;
     unsigned int id = Item::getId(item->getItem());
-    if (id == 0x104 || id == 0x105 || (id >= 0x107 && id <= 0x10a)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+        return Minecraft::GetInstance()->GetMiniGame()->MayUse(static_cast<int>(id));
+    if (item->isEmpty() || g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0)
+        return 1;
+    const bool allowedWithoutPrivilege = getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) == 0;
+    const bool restrictedItem = id == 0x104 || id == 0x105 || (id >= 0x107 && id <= 0x10a)
         || id == 0x10d || id == 0x110 || id == 0x114 || id == 0x11a || id == 0x11b
         || (id >= 0x129 && id <= 0x13d) || id == 0x13e || id == 0x140 || id == 0x142
         || id == 0x15d || id == 0x15e || id == 0x165 || id == 0x168
         || (id >= 0x16b && id <= 0x16f) || id == 0x175 || id == 0x180
-        || id == 0x1b6 || id == 0x1b9) return 1;
-    return getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) == 0;
+        || id == 0x1b6 || id == 0x1b9;
+    return restrictedItem ? 1 : static_cast<uint32_t>(allowedWithoutPrivilege);
 }
 
 bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true)) {
+        if (!entity) return false;
+        if (entity->GetType() == 0x0c000001ULL) return false;
+    }
     if (!entity) return false;
     if (g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x0c)) != 0) return true;
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-    if (player) return getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(12)) != 0;
+    if (player) {
+        if (getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(12)) != 0) return true;
+        return getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) == 0
+            && getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(0)) == 0;
+    }
     return getPlayerGamePrivilege(static_cast<EPlayerGamePrivileges>(1)) == 0;
 }
 
@@ -1937,35 +2412,120 @@ int32_t Player::AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemIns
 
 uint32_t Player::interactOn(boost::shared_ptr<Entity> entity, InteractionHand::EInteractionHand hand)
 {
-    if (!entity || !isAllowedToInteract(entity)) return 0;
-    boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
-    if (entity->interact(self, hand)) return 1;
     not_null_ptr<ItemInstance> item = getItemInHand(hand);
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    if (living && !item->isEmpty() && item->interactEnemy(self, living, hand)) return 1;
+    boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
+
+    if (isSpectator()) {
+        boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(entity);
+        if (!container) return 1;
+        openContainer(container);
+        return 0;
+    }
+
+    not_null_ptr<ItemInstance> beforeItem = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
+
+    if (entity->interact(self, hand)) {
+        if (mAbilities.mInstabuild) {
+            not_null_ptr<ItemInstance> afterItem = getItemInHand(hand);
+            if (afterItem == item && afterItem->getCount() < beforeItem->getCount()) {
+                afterItem->setCount(beforeItem->getCount());
+            }
+        }
+        return 1;
+    }
+
+    if (item->isEmpty()) return 0;
+
+    if ((entity->GetType() & 0xc000000ULL) == 0xc000000ULL) {
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+        if (item->interactEnemy(self, living, hand)) {
+            if (item->isEmpty() && !mAbilities.mInstabuild) {
+                setItemInHand(hand, ItemInstance::EMPTY);
+            }
+            return 1;
+        }
+    }
     return 0;
 }
 
 uint64_t Player::attack(boost::shared_ptr<Entity> entity)
 {
-    if (!entity || !entity->isAttackable() || entity->skipAttackInteraction(shared_from_this())
-        || !isAllowedToHurtEntity(entity)) return 0;
+    if (!entity->isAttackable()) return 0;
+    if (entity->skipAttackInteraction(shared_from_this()) || isSpectator()) return 0;
 
-    AttributeInstance* attackDamage = getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE);
-    float strength = static_cast<float>(getAttackStrengthScale(0.5f));
-    float damage = attackDamage == NULL ? 1.0f : static_cast<float>(attackDamage->getValue());
-    damage *= 0.2f + strength * strength * 0.8f;
+    float damage = static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
+
+    bool targetIsLiving = (entity->GetType() & 0xc000000ULL) == 0xc000000ULL;
+    boost::shared_ptr<LivingEntity> targetLiving;
+    if (targetIsLiving) targetLiving = boost::static_pointer_cast<LivingEntity>(entity);
+
+    not_null_ptr<ItemInstance> item = getMainHandItem();
+    float enchantDamage = static_cast<float>(EnchantmentHelper::getDamageBonus(item, targetLiving));
+    int knockback = EnchantmentHelper::getKnockbackBonus(
+        boost::static_pointer_cast<LivingEntity>(shared_from_this()), targetLiving);
+    if (isSprinting()) ++knockback;
+
+    if (damage <= 0.0f && enchantDamage <= 0.0f) return 0;
+
+    bool isCritical = mFallDistance > 0.0f && !mOnGround && !onLadder() && !isInWater()
+        && !hasEffect(MobEffects::BLINDNESS) && !isPassenger() && targetIsLiving;
+    if (isCritical && damage > 0.0f) damage *= 1.5f;
+
+    float totalDamage = damage + enchantDamage;
+
+    int fireAspect = EnchantmentHelper::getFireAspect(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+    bool startedFire = false;
+    if (targetLiving) {
+        if (fireAspect > 0 && !entity->isOnFire()) {
+            startedFire = true;
+            entity->setSecondsOnFire(1);
+        }
+    }
+
     EntityDamageSource* source =
         DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(shared_from_this()));
-    bool damaged = entity->hurt(source, damage);
+    bool damaged = entity->hurt(source, totalDamage);
     delete source;
-    if (damaged) {
-        boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-        not_null_ptr<ItemInstance> item = getMainHandItem();
-        if (living && !item->isEmpty()) item->hurtEnemy(living,
-            boost::static_pointer_cast<Player>(shared_from_this()));
-        causeFoodExhaustion(0.10000000149011612f);
+
+    if (!damaged) {
+        if (startedFire) entity->clearFire();
+        resetAttackStrengthTicker();
+        return 0;
     }
+
+    if (knockback > 0) {
+        float yaw = mYRot * 0.01745329238474369f;
+        entity->push(-static_cast<double>(Mth::sin(yaw)) * knockback * 0.5,
+                     0.1, static_cast<double>(Mth::cos(yaw)) * knockback * 0.5);
+        mXd *= 0.6;
+        mZd *= 0.6;
+        setSprinting(false);
+    }
+
+    if (isCritical) crit(entity);
+    if (enchantDamage > 0.0f) magicCrit(entity);
+
+    if (totalDamage >= 18.0f) {
+        awardStat(GenericStats::overkill(), GenericStats::param_overkill(static_cast<int>(damage + enchantDamage)));
+    }
+
+    if (targetIsLiving) {
+        EnchantmentHelper::doPostHurtEffects(targetLiving, boost::static_pointer_cast<Entity>(shared_from_this()));
+    }
+    EnchantmentHelper::doPostDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), entity);
+
+    if (!item->isEmpty() && targetIsLiving) {
+        item->hurtEnemy(targetLiving, boost::static_pointer_cast<Player>(shared_from_this()));
+        if (item->isEmpty()) {
+            setItemInHand(static_cast<InteractionHand::EInteractionHand>(0), ItemInstance::EMPTY);
+        }
+    }
+
+    if (targetIsLiving && fireAspect > 0) {
+        entity->setSecondsOnFire(fireAspect * 4);
+    }
+
+    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionAttack()));
     resetAttackStrengthTicker();
-    return damaged ? 1 : 0;
+    return 1;
 }

@@ -89,20 +89,18 @@ public:
         ~MansionGrid();
         void recursiveCorridor(SimpleGrid* grid, int x, int y, const Direction* direction, int length);
         static bool isHouse(SimpleGrid* grid, int x, int y);
-        void cleanEdges(SimpleGrid* grid);
+        bool cleanEdges(SimpleGrid* grid);
         void identifyRooms(SimpleGrid* floor, SimpleGrid* rooms);
-        bool isRoomId(SimpleGrid* grid, int x, int y, int roomId, int value);
-        int get1x2RoomDirection(SimpleGrid* grid, int x, int y, int roomId, int value);
+        bool isRoomId(SimpleGrid* grid, int x, int y, int floor, int roomId);
+        const Direction* get1x2RoomDirection(SimpleGrid* grid, int x, int y, int floor, int roomId);
         void setupThirdFloor();
         void print();
         SimpleGrid* mBaseGrid;
         SimpleGrid* mSecondFloorGrid;
-        SimpleGrid* mThirdFloorGrid;
-        SimpleGrid* mThirdFloorRooms;
+        SimpleGrid** mThirdFloorRooms;
+        int mThirdFloorRoomsCount;
         int mStartX;
         int mStartY;
-        int mWidth;
-        int mHeight;
     };
 
     struct PlacementData

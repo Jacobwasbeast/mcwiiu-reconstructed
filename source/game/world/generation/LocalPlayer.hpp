@@ -141,7 +141,7 @@ public:
     bool isSolidBlock(int x, int y, int z);
     not_null_ptr<ItemInstance> getCarriedItem();
     MultiPlayerGameMode* GetLocalGameMode();
-    unsigned int GetGameMode();
+    GameMode* GetGameMode();
     void StartSpectating();
     void OnEquipArmor(not_null_ptr<ItemInstance> item);
     void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);

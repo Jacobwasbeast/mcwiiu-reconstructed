@@ -520,7 +520,7 @@ void StructurePiece::generateFullSphere(Level* level, BoundingBox* box, int cent
         {
             for (int z = centreZ - radius; z <= centreZ + radius; ++z)
             {
-                if (existingOnly && getBlock(level, x, y, z, box) == NULL)
+                if (existingOnly && getBlock(level, x, y, z, box)->getBlock() == Block::byId(0))
                 {
                     continue;
                 }
@@ -651,7 +651,7 @@ bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& ran
         x, y, z, box);
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if ((blockEntity->GetType() & 0x03C00200ULL) == 0x03C00200ULL)
+    if (blockEntity && (blockEntity->GetType() & 0x03C00200ULL) == 0x03C00200ULL)
     {
         boost::shared_ptr<DispenserBlockEntity> dispenser =
             boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);

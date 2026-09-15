@@ -141,6 +141,7 @@ private:
     not_null_ptr<ItemInstance> mDestroyItem;
     float mDestroyProgress;
     short mDestroyTicks;
+    int mDestroyDelay;
     ClientPacketListener* mConnection;
     int mPlayerId;
 

@@ -172,6 +172,7 @@ private:
     StatsUID mStatsUID;
     std::wstring mName;
     int mCurrentRound;
+    unsigned char m_unknownHeaderTail[8];
     std::vector<const GameMedal*> mMedals;
     int mWinningMedal;
     int mLastMedal;

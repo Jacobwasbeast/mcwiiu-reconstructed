@@ -17,6 +17,8 @@
 #include "game/ui/Tooltips.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/MobEffects.hpp"
+#include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -32,6 +34,7 @@
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/block/BeaconBlockEntity.hpp"
@@ -226,6 +229,8 @@ void LocalPlayer::openTextEdit(boost::shared_ptr<SignBlockEntity> sign)
 
 void LocalPlayer::openCommandBlock(boost::shared_ptr<CommandBlockEntity> block)
 {
+    if (block && g_pApp->LoadCommandBlockMenu(mPlayerIndex, block) != 0)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_BUTTON_CLICK);
 }
 
 int LocalPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int level)
@@ -444,7 +449,15 @@ bool LocalPlayer::IsWaitingForScoreboard()
 
 bool LocalPlayer::doesLevelAllowBlockToBreak(const BlockPos& pos)
 {
-    return true;
+    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
+    if (gameMode == NULL)
+        return false;
+    Level* level = gameMode->GetLevel();
+    if (level == NULL)
+        return false;
+    Block* block = level->getBlockState(pos)->getBlock();
+    return (block == Blocks::bedrock || pos.y > 0) &&
+           (block != Blocks::AIR || pos.y < 127);
 }
 
 unsigned int LocalPlayer::pickBlock(bool select)
@@ -998,42 +1011,124 @@ bool LocalPlayer::isAutoJumpEnabled()
 
 void LocalPlayer::updateAutoJump(float xMovement, float zMovement)
 {
-    if (!isAutoJumpEnabled() || mAutoJumpTime > 0 || !mOnGround || isSneaking() ||
-        isPassenger() || isInWater() || isInLava() || isFallFlying())
-    {
+    if (!isAutoJumpEnabled() || mAutoJumpTime > 0)
         return;
-    }
 
-    double movementLengthSquared = xMovement * xMovement + zMovement * zMovement;
-    if (movementLengthSquared <= 1.0e-7)
-    {
+    if ((!mOnGround || isPassenger()) &&
+        (((isSneaking() || !isPassenger()) && !isInLava()) || mNoPhysics))
         return;
-    }
 
-    double movementLength = std::sqrt(movementLengthSquared);
-    double directionX = xMovement / movementLength;
-    double directionZ = zMovement / movementLength;
+    Vec3* movement = Vec3::newTemp(xMovement, 0.0, zMovement);
+    double lengthSquared = movement->lengthSqr();
+    double speed = getSpeed();
+    if (lengthSquared <= 1.0e-7)
+    {
+        Vec3* view = getViewVector(1.0f);
+        if (view == NULL)
+            return;
+        double angle = static_cast<double>(mYRot) * 0.01745329238474369;
+        double sine = Mth::sin(angle);
+        double cosine = Mth::cos(angle);
+        double viewX = view->x * speed;
+        double viewZ = view->z * speed;
+        movement = Vec3::newTemp(viewX * cosine - viewZ * sine, 0.0,
+                                 viewZ * cosine + viewX * sine);
+        lengthSquared = movement->lengthSqr();
+    }
+    if (lengthSquared <= 1.0e-7)
+        return;
+
+    double inputLength = std::sqrt(lengthSquared);
+    movement = movement->scale(Mth::fastInvSqrt(lengthSquared));
     Vec3* view = getViewVector(1.0f);
-    if (view == 0 || view->x * directionX + view->z * directionZ < -0.15)
-    {
+    if (view == NULL || (view->x == 0.0 && view->z == 0.0) ||
+        view->x * movement->x + view->z * movement->z < -0.15)
         return;
+    if (isFallFlying())
+        return;
+
+    double distance = speed * 0.9;
+    if (distance < 1.0 / inputLength)
+        distance = 1.0 / inputLength;
+
+    Vec3* start = Vec3::newTemp(mX, mBoundingBox->mMinY, mZ);
+    Vec3* target = Vec3::newTemp(mX + xMovement, mBoundingBox->mMinY, mZ + zMovement);
+    target->add(movement->x * distance, 0.0, movement->z * distance);
+    BlockPos startBlock(start);
+    BlockPos targetBlock(target);
+
+    const BlockState* startState = mLevel->getBlockState(startBlock);
+    const BlockState* startAboveState = mLevel->getBlockState(startBlock.above());
+    if ((startState != NULL && startState->getShape(mLevel, startBlock) != NULL) ||
+        (startAboveState != NULL && startAboveState->getShape(mLevel, startBlock.above()) != NULL))
+        return;
+
+    double jumpHeight = 1.2;
+    MobEffectInstance* jump = getEffect(MobEffects::JUMP);
+    if (jump != NULL)
+        jumpHeight += static_cast<double>(jump->getAmplifier() + 1) * 0.75;
+
+    AABB* probe = AABB::newTemp(startBlock, targetBlock)->grow(mBbWidth, 0.0, mBbWidth);
+    std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), probe,
+                                                                false, false, false);
+    if (collisions == NULL)
+        return;
+
+    Vec3* up = Vec3::newTemp(0.0, 1.0, 0.0);
+    Vec3* side = Vec3::newTemp(movement)->cross(up)->scale(mBbWidth * 0.5);
+    start->add(0.51, 0.0, 0.51);
+    target->add(0.51, 0.0, 0.51);
+    Vec3* fromLeft = Vec3::newTemp(start)->subtract(side);
+    Vec3* toLeft = Vec3::newTemp(target)->subtract(side);
+    Vec3* fromRight = Vec3::newTemp(start)->add(side);
+    Vec3* toRight = Vec3::newTemp(target)->add(side);
+
+    const double sentinel = static_cast<double>(1.1754943508222875e-38f);
+    double highest = sentinel;
+    for (std::vector<AABB*>::const_iterator it = collisions->begin();
+         it != collisions->end(); ++it)
+    {
+        if (*it != NULL && ((*it)->intersects(fromLeft, toLeft) ||
+                            (*it)->intersects(fromRight, toRight)))
+        {
+            double candidateHeight = static_cast<double>(static_cast<float>((*it)->mMaxY));
+            BlockPos obstacle((*it)->getCenter());
+            unsigned int step = 1;
+            while (true)
+            {
+                if (step > 1)
+                {
+                    BlockPos immediateAbove = obstacle.above();
+                    const BlockState* immediateState = mLevel->getBlockState(immediateAbove);
+                    const AABB* immediateShape = immediateState == NULL ? NULL :
+                        immediateState->getShape(mLevel, immediateAbove);
+                    if (immediateShape != NULL)
+                        return;
+                }
+                ++step;
+                if (jumpHeight <= static_cast<double>(step) - 1.0)
+                    break;
+                BlockPos above = obstacle.above(static_cast<int>(step));
+                const BlockState* aboveState = mLevel->getBlockState(above);
+                const AABB* aboveShape = aboveState == NULL ? NULL :
+                    aboveState->getShape(mLevel, above);
+                if (aboveShape != NULL)
+                {
+                    float top = static_cast<float>(aboveShape->mMaxY) +
+                        static_cast<float>(static_cast<double>(step) - 1.0);
+                    candidateHeight = static_cast<double>(top);
+                    if (jumpHeight < candidateHeight - mBoundingBox->mMinY)
+                        return;
+                }
+            }
+            highest = candidateHeight;
+            break;
+        }
     }
 
-    double lookAhead = getSpeed() * 7.0;
-    if (lookAhead < 1.0 / movementLength)
-    {
-        lookAhead = 1.0 / movementLength;
-    }
-
-    int targetX = (int)std::floor(mX + directionX * lookAhead);
-    int targetY = (int)std::floor(mY);
-    int targetZ = (int)std::floor(mZ + directionZ * lookAhead);
-    if (isSolidBlock(targetX, targetY, targetZ) &&
-        !isSolidBlock(targetX, targetY + 1, targetZ) &&
-        !isSolidBlock(targetX, targetY + 2, targetZ))
-    {
+    double height = highest - mBoundingBox->mMinY;
+    if (highest != sentinel && height > distance && !(jumpHeight < height))
         mAutoJumpTime = 1;
-    }
 }
 
 void LocalPlayer::mapPlayerChunk(unsigned int targetBlockId)
@@ -1134,9 +1229,9 @@ MultiPlayerGameMode* LocalPlayer::GetLocalGameMode()
     return 0;
 }
 
-unsigned int LocalPlayer::GetGameMode()
+GameMode* LocalPlayer::GetGameMode()
 {
-    return (unsigned int)GetLocalGameMode();
+    return GetLocalGameMode();
 }
 
 void LocalPlayer::StartSpectating()
@@ -1205,13 +1300,8 @@ double LocalPlayer::getUnderwaterVisionClarity()
 
 void LocalPlayer::DoAutoAttackOnTouch(boost::shared_ptr<Entity> entity)
 {
-    if (mMinecraft == NULL || mUserIndex < 0 || !entity)
-        return;
-    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
-    if (gameMode == NULL)
-        return;
     boost::shared_ptr<Player> self = boost::static_pointer_cast<Player>(shared_from_this());
-    gameMode->attack(self, entity);
+    mMinecraft->mGameModes[mUserIndex]->attack(self, entity);
 }
 
 double LocalPlayer::GetPercentageTraversed() const

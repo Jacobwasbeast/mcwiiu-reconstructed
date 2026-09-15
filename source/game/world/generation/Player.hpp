@@ -97,6 +97,7 @@ public:
     static const EntityDataAccessor<unsigned char>* DATA_MAIN_HAND;
     static const EntityDataAccessor<CompoundTag*>* DATA_SHOULDER_LEFT;
     static const EntityDataAccessor<CompoundTag*>* DATA_SHOULDER_RIGHT;
+    static std::vector<unsigned int> sDlcSkinIds;
 
 
     class ChatVisiblity {
@@ -156,7 +157,7 @@ public:
     int32_t mField0x6dc;
     BlockPos* mField0x6e0;
     uint8_t mField0x6e4;
-    int32_t mField0x6e8;
+    BlockPos* mField0x6e8;
     int32_t mField0x6ec;
     int32_t mField0x6f0;
     int32_t mField0x6f4;
