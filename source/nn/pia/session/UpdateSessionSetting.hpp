@@ -20,8 +20,8 @@ public:
     virtual void Trace(unsigned long long value) const;
 
     unsigned int GetModificationFlag() const;
-    bool IsModificationFlagSet(ModificationFlag flag) const;
-    bool IsSetApplicationData() const;
+    virtual bool IsModificationFlagSet(ModificationFlag flag) const;
+    virtual bool IsSetApplicationData() const;
 
     unsigned int m_modificationFlag;
 };
