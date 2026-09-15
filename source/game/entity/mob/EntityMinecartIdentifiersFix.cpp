@@ -35,7 +35,7 @@ CompoundTag* EntityMinecartIdentifiersFix::fix(CompoundTag* tag)
 
     int type = tag->getInt(L"Type");
 
-    if (type >= 0 && type < MINECART_IDS[0].size())
+    if (type >= 0 && type < static_cast<int>(sizeof(MINECART_IDS) / sizeof(MINECART_IDS[0])))
     {
         id = MINECART_IDS[type];
     }

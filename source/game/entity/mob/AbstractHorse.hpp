@@ -27,6 +27,8 @@ class ItemInstance;
 class AgableMob;
 template <class T> class EntityDataAccessor;
 
+extern const unsigned long long ENTITY_TYPE_ABSTRACT_HORSE;
+
 class AbstractHorse : public Animal, public net_minecraft_world::ContainerListener, public OwnableEntity
 {
 public:

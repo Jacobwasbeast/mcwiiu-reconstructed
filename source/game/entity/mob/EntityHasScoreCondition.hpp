@@ -18,8 +18,9 @@ class Scoreboard;
 class EntityHasScoreCondition : public LootItemCondition
 {
 public:
-    EntityHasScoreCondition(boost::unordered_map<std::wstring, RandomValueBounds> scores,
-                            LootTableContext::EntityTarget entityTarget);
+    EntityHasScoreCondition(
+        boost::unordered_map<std::wstring, RandomValueBounds> scores,
+        LootTableContext::EntityTarget entityTarget);
 
     bool hasScore(const boost::shared_ptr<Entity>& entity,
                   Scoreboard* scoreboard,
