@@ -34,6 +34,7 @@ void DerivedServerLevel::postConstruct()
 {
     setSavedDataStorage(mLevel->getSavedDataStorage());
     serverScoreboard = mLevel->GetServerScoreboard();
+    mLootTables = mLevel->getLootTables();
 
     std::wstring id = Villages::getFileId(mDimension);
     SavedDataStorage* storage = getSavedDataStorage();
@@ -42,10 +43,12 @@ void DerivedServerLevel::postConstruct()
     if (!villages)
     {
         villages.reset(new Villages(this));
+        mVillages = villages;
         storage->set(id, villages);
     }
     else
     {
+        mVillages = villages;
         villages->setLevel(this);
     }
 }

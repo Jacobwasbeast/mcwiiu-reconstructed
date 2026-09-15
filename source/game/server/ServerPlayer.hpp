@@ -4,6 +4,7 @@
 
 #include "game/world/generation/Player.hpp"
 #include <cstdint>
+#include <cstddef>
 #include <list>
 #include <string>
 #include <vector>
@@ -88,8 +89,8 @@ public:
     bool mIsChangingQuantityOnly;
     uint8_t mPadding6[4];
     int32_t latency;
-    uint8_t mFallFlying;
     bool mRespawnState;
+    uint8_t mFallFlying;
     uint8_t mChangedDimension;
     uint8_t mPadding7[4];
     int32_t mTeleportPending;
@@ -144,7 +145,7 @@ public:
     uint32_t canHarmPlayer(boost::shared_ptr<Player> parameterOne);
     int32_t canHarmPlayer(std::wstring parameterOne);
     virtual void addEffect(MobEffectInstance* parameterOne, const boost::shared_ptr<Entity>& parameterTwo);   
-    uint64_t changeDimension(uint32_t parameterOne, int32_t parameterTwo);   
+    virtual boost::shared_ptr<Entity> changeDimension(int dimension) override;
     uint32_t broadcastToPlayer(boost::shared_ptr<ServerPlayer>* parameterOne);   
     uint64_t take(boost::shared_ptr<Entity>* parameterOne, int32_t parameterTwo);   
     int32_t startSleepInBed(BlockPos* parameterOne, bool parameterTwo);   
@@ -152,8 +153,9 @@ public:
     uint32_t startRiding(boost::shared_ptr<Entity>* parameterOne);   
     void stopRiding();   
     void stopRidingBeforeTeleport();   
-    uint8_t isChangingDimension();   
-    uint32_t isInvulnerableTo(DamageSource* parameterOne);   
+    uint8_t isChangingDimension();
+    bool hasChangedDimensionState() const { return mChangedDimension != 0; }
+    virtual bool isInvulnerableTo(const DamageSource* parameterOne);
     void checkFallDamage(double parameterOne, bool parameterTwo, Block* parameterThree, BlockPos* parameterFour);   
     uint64_t doCheckFallDamage(double parameterOne, bool parameterTwo);   
     void nextContainerCounter();   
@@ -206,5 +208,12 @@ public:
     void getStats();
     void getLastActionTime();
 };
+
+#if UINTPTR_MAX == 0xffffffffu
+static_assert(offsetof(ServerPlayer, mRespawnState) == 0x934,
+              "ServerPlayer respawn state must retain the Wii U +0x934 byte");
+static_assert(offsetof(ServerPlayer, mFallFlying) == 0x935,
+              "ServerPlayer fall-flying state must retain the Wii U +0x935 byte");
+#endif
 
 #endif

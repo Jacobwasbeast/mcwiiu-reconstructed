@@ -98,6 +98,7 @@ public:
  uint32_t primedTntCount;
  uint32_t fallingBlockCount;
  uint32_t fireworksRocketCount;
+ uint32_t beaconCount;
  std::list<boost::shared_ptr<Entity> > itemEntities;
  std::list<boost::shared_ptr<Entity> > hangingEntities;
  std::list<boost::shared_ptr<Entity> > arrowEntities;
@@ -119,7 +120,7 @@ public:
  ChunkSource* createChunkSource(); 
  void postConstruct(); 
  uint32_t allPlayersAreSleeping(); 
- uint64_t stopWeather(); 
+ void stopWeather();
  uint64_t awakenAllPlayers(); 
  void save(bool first, ProgressListener* second, bool third); 
  uint32_t doBlockEvent(BlockEventData* first); 
@@ -132,7 +133,7 @@ public:
  void validateSpawn(); 
  bool hasChunk(int32_t first, int32_t second, bool third); 
  LevelChunk* getChunkIfHasChunk(int32_t first, int32_t second, bool third); 
- void findLightingTargetAround(BlockPos* first); 
+ BlockPos findLightingTargetAround(const BlockPos& first); 
  void tickBlocks();
  bool isBlockToBeTickedAt(const BlockPos& pos, Block* block);
  bool hasTickNextTick(const BlockPos& pos, Block* block);
@@ -145,7 +146,7 @@ public:
  bool tickPendingTicks(bool runAll);
  std::vector<TickNextTickData>* fetchTicksInChunk(LevelChunk* chunk, bool removeTicks);
  std::vector<TickNextTickData>* fetchTicksInArea(BoundingBox* box, bool removeTicks);
- void isAnimalsAllowed();
+ bool isAnimalsAllowed();
  void isNpcsAllowed();
  void tick(boost::shared_ptr<Entity> first, bool second); 
  uint64_t forceTick(boost::shared_ptr<Entity> first, bool second); 
@@ -182,7 +183,7 @@ public:
  uint64_t findNearestMapFeature(std::wstring* first, BlockPos* second, bool third); 
  boost::shared_ptr<ServerPlayer> getPlayer(const PlayerUID& playerUID) const; 
  void queueSendBlockUpdate(int32_t first, int32_t second, int32_t third, BlockState* fourth, BlockState* fifth); 
- bool atBlockEntityLimit(int32_t first, uint32_t second); 
+ bool atBlockEntityLimit(Block* first);
  uint32_t setBlock(BlockPos* first, BlockState* second, int32_t third, bool fourth); 
  bool addEntity(boost::shared_ptr<Entity> first); 
  bool atEntityLimit(boost::shared_ptr<Entity> first); 

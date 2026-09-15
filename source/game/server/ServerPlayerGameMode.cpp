@@ -62,7 +62,7 @@ void ServerPlayerGameMode::RestoreFromOld(ServerPlayerGameMode* oldMode)
 }
 boost::shared_ptr<ServerPlayer> ServerPlayerGameMode::getServerPlayer() const
 {
-    return boost::static_pointer_cast<ServerPlayer>(mPlayer);
+    return boost::static_pointer_cast<ServerPlayer>(mPlayer->shared_from_this());
 }
 int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
 {
@@ -168,8 +168,24 @@ int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
 
     return result;
 }
-void ServerPlayerGameMode::stopDestroyBlock(const BlockPos& pos) { mPreviousDestroyPos = pos; mDestroying = false; }
-void ServerPlayerGameMode::abortDestroyBlock() { mDestroying = false; mDestroyProgress = 0; }
+void ServerPlayerGameMode::stopDestroyBlock(const BlockPos& pos)
+{
+    if (pos.equals(mDestroyPos))
+    {
+        const BlockState* state = mLevel->getBlockState(pos);
+        if (state->getMaterial() != Material::AIR)
+        {
+            mDestroying = false;
+            mLevel->destroyBlockProgress(mPlayer->getId(), pos, -1);
+            destroyBlock(pos);
+        }
+    }
+}
+void ServerPlayerGameMode::abortDestroyBlock()
+{
+    mDestroying = false;
+    mLevel->destroyBlockProgress(mPlayer->getId(), mDestroyPos, -1);
+}
 bool ServerPlayerGameMode::useItemOn(boost::shared_ptr<Player> player, Level* level,
                                      not_null_ptr<ItemInstance> item,
                                      InteractionHand::EInteractionHand hand, const BlockPos& pos,
@@ -255,18 +271,19 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
 void ServerPlayerGameMode::SetGameType(const GameType* gameType)
 {
     mGameType = gameType;
-    boost::shared_ptr<ServerPlayer> serverPlayer = getServerPlayer();
-    if (!serverPlayer)
-        return;
 
-    gameType->updatePlayerAbilities(&serverPlayer->mAbilities);
-    serverPlayer->onUpdateAbilities();
-    serverPlayer->UpdateSize();
+    gameType->updatePlayerAbilities(&mPlayer->mAbilities);
+    mPlayer->onUpdateAbilities();
+    mPlayer->UpdateSize();
+
+    PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->getPlayers() : NULL;
 
     boost::shared_ptr<ClientboundGameEventPacket> packet(
         new ClientboundGameEventPacket(3, static_cast<float>(gameType->getId()),
-                                       serverPlayer->mPlayerIndex));
-    gMinecraftServer->getPlayers()->broadcastAll(packet);
+                                       mPlayer->mPlayerIndex));
+    players->broadcastAll(packet);
+
+    mLevel->updateSleepingPlayerList();
 }
 const GameType* ServerPlayerGameMode::GetGameType() { return mGameType; }
 bool ServerPlayerGameMode::IsNearCentreOf(const AABB* box, ServerPlayer* player, double x, double y, double z)
@@ -569,9 +586,33 @@ void ServerPlayerGameMode::RecordSpawnedAtCheckpoint(int checkpoint)
 
     masterGameMode->mGameStats.RecordSpawnedAtCheckpoint(player->getSUID(), checkpoint);
 }
-void ServerPlayerGameMode::RecordBlockPlaced(const BlockPos& pos, int blockId) { mPreviousDestroyPos = pos; }
-void ServerPlayerGameMode::RecordBlockDestroyed(const BlockPos& pos, int blockId) { mPreviousDestroyPos = pos; }
-void ServerPlayerGameMode::RecordBlockPresent(const BlockPos& pos, int blockId) { mPreviousDestroyPos = pos; }
+void ServerPlayerGameMode::RecordBlockPlaced(const BlockPos& pos, int blockId)
+{
+    MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
+    if (masterGameMode == NULL || isSpectator())
+        return;
+
+    boost::shared_ptr<ServerPlayer> player = getServerPlayer();
+    masterGameMode->mGameStats.RecordBlockPlaced(player->getSUID(), pos, blockId);
+}
+void ServerPlayerGameMode::RecordBlockDestroyed(const BlockPos& pos, int blockId)
+{
+    MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
+    if (masterGameMode == NULL || isSpectator())
+        return;
+
+    boost::shared_ptr<ServerPlayer> player = getServerPlayer();
+    masterGameMode->mGameStats.RecordBlockDestroyed(player->getSUID(), pos, blockId);
+}
+void ServerPlayerGameMode::RecordBlockPresent(const BlockPos& pos, int blockId)
+{
+    MasterGameMode* masterGameMode = gMinecraftServer->mMasterGameMode;
+    if (masterGameMode == NULL || isSpectator())
+        return;
+
+    boost::shared_ptr<ServerPlayer> player = getServerPlayer();
+    masterGameMode->mGameStats.RecordBlockPresent(player->getSUID(), pos, blockId);
+}
 void ServerPlayerGameMode::RecordLayerTime()
 {
     if (isLobby())
@@ -640,5 +681,5 @@ void ServerPlayerGameMode::RecordLanding(const BlockPos& pos)
     }
 }
 const MiniGameDef* ServerPlayerGameMode::GetMiniGame() { return NULL; }
-boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer() { return mPlayer; }
+boost::shared_ptr<Player> ServerPlayerGameMode::GetPlayer() { return boost::static_pointer_cast<Player>(mPlayer->shared_from_this()); }
 Level* ServerPlayerGameMode::GetLevel() { return mLevel; }
