@@ -5,26 +5,16 @@
 #include "game/core/FileEntry.hpp"
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path)
+    : m_saveFile(saveFile), m_fileEntry(NULL)
 {
-    ConsoleSaveFileOutputStream* obj = this;
-    if (obj != NULL || (obj = static_cast<ConsoleSaveFileOutputStream*>(operator new(0xc)), obj != NULL))
-    {
-        obj->m_saveFile = saveFile;
-        FileEntry* fileEntry = saveFile->createFile(path);
-        obj->m_fileEntry = fileEntry;
-        saveFile->writeFile(fileEntry, NULL, 0, NULL);
-    }
+    m_fileEntry = saveFile->createFile(path);
+    saveFile->writeFile(m_fileEntry, NULL, 0, NULL);
 }
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
+    : m_saveFile(saveFile), m_fileEntry(fileEntry)
 {
-    ConsoleSaveFileOutputStream* obj = this;
-    if (obj != NULL || (obj = static_cast<ConsoleSaveFileOutputStream*>(operator new(0xc)), obj != NULL))
-    {
-        obj->m_fileEntry = fileEntry;
-        obj->m_saveFile = saveFile;
-        saveFile->writeFile(fileEntry, NULL, 0, NULL);
-    }
+    saveFile->writeFile(m_fileEntry, NULL, 0, NULL);
 }
 
 ConsoleSaveFileOutputStream::~ConsoleSaveFileOutputStream()

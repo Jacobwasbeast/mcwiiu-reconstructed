@@ -45,18 +45,19 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
 {
     found = false;
     count = 0;
-    std::vector<std::wstring> locale;
+    std::vector<std::wstring> localeNames;
     if (g_pApp != NULL)
-        g_pApp->getLocale(locale);
+        g_pApp->getLocale(localeNames);
 
     std::wstring selected;
     std::vector<std::pair<std::wstring, int> >::iterator entry;
-    for (std::vector<std::wstring>::iterator wanted = locale.begin(); wanted != locale.end(); ++wanted)
+    for (std::vector<std::wstring>::iterator localeName = localeNames.begin();
+         localeName != localeNames.end(); ++localeName)
     {
         count = 0;
         for (entry = m_entries.begin(); entry != m_entries.end(); ++entry)
         {
-            if (entry->first == *wanted)
+            if (entry->first == *localeName)
             {
                 found = true;
                 return entry->first;

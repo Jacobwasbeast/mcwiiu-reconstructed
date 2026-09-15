@@ -133,11 +133,15 @@ bool ConsoleSaveFileReadOnly::readFile(FileEntry* entry, void* buffer, unsigned 
     return _readFile(entry, buffer, bytesToRead, bytesRead);
 }
 
-void ConsoleSaveFileReadOnly::Flush(bool, bool)
+void ConsoleSaveFileReadOnly::Flush(bool commit, bool force)
 {
+    (void)commit;
+    (void)force;
 }
 
-std::vector<FileEntry*>* ConsoleSaveFileReadOnly::getRegionFilesByDimension(unsigned int)
+std::vector<FileEntry*>* ConsoleSaveFileReadOnly::getRegionFilesByDimension(unsigned int dimension)
 {
-    return NULL;
+    (void)dimension;
+    std::vector<FileEntry*>* regionFiles = NULL;
+    return regionFiles;
 }
