@@ -113,8 +113,9 @@ MinecartCommandBlock::MinecartBaseCommandBlock::~MinecartBaseCommandBlock()
 
 void MinecartCommandBlock::MinecartBaseCommandBlock::onUpdated()
 {
-    mMinecart->getEntityData()->set(MinecartCommandBlock::DATA_COMMAND_ID, getCommand(), true);
-    mMinecart->getEntityData()->set(MinecartCommandBlock::DATA_LAST_OUTPUT_ID, getLastOutput(), true);
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    minecart->getEntityData()->set(MinecartCommandBlock::DATA_COMMAND_ID, getCommand(), true);
+    minecart->getEntityData()->set(MinecartCommandBlock::DATA_LAST_OUTPUT_ID, getLastOutput(), true);
 }
 
 unsigned int MinecartCommandBlock::MinecartBaseCommandBlock::getType()
@@ -124,30 +125,36 @@ unsigned int MinecartCommandBlock::MinecartBaseCommandBlock::getType()
 
 void MinecartCommandBlock::MinecartBaseCommandBlock::writeCoordinates(DataOutputStream* output)
 {
-    output->writeInt(mMinecart->getId());
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    output->writeInt(minecart->getId());
 }
 
 BlockPos MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderBlockPosition()
 {
-    return BlockPos(Vec3::newTemp(mMinecart->mX, mMinecart->mY + 0.5, mMinecart->mZ));
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    return BlockPos(Vec3::newTemp(minecart->mX, minecart->mY + 0.5, minecart->mZ));
 }
 
 Vec3* MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderWorldPosition()
 {
-    return Vec3::newTemp(mMinecart->mX, mMinecart->mY, mMinecart->mZ);
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    return Vec3::newTemp(minecart->mX, minecart->mY, minecart->mZ);
 }
 
 Level* MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderWorld()
 {
-    return mMinecart->mLevel;
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    return minecart->mLevel;
 }
 
 boost::shared_ptr<Entity> MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderEntity()
 {
-    return boost::shared_ptr<Entity>(mMinecart);
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    return boost::shared_ptr<Entity>(minecart);
 }
 
 MinecraftServer* MinecartCommandBlock::MinecartBaseCommandBlock::getServer()
 {
-    return mMinecart->mLevel->getServer();
+    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
+    return minecart->mLevel->getServer();
 }

@@ -36,14 +36,18 @@ ReedsBlock::~ReedsBlock()
 bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
     int bottom = pos.y;
-    while (bottom - 1 > pos.y - 4 && bottom - 1 > 0 && level->getBlockId(pos.x, bottom - 1, pos.z) == 83)
+    int lower = bottom - 4;
+    while (lower < bottom - 1 && bottom - 1 > 0 && level->getBlockId(pos.x, bottom - 1, pos.z) == 83)
     {
+        --lower;
         --bottom;
     }
 
+    int upper = pos.y + 4;
     int top = pos.y;
-    while (top + 1 < pos.y + 4 && top + 1 < level->getHeight() && level->getBlockId(pos.x, top + 1, pos.z) == 83)
+    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight() && level->getBlockId(pos.x, top + 1, pos.z) == 83)
     {
+        ++upper;
         ++top;
     }
 
@@ -55,19 +59,23 @@ bool ReedsBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
     return true;
 }
 
-void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
+void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState*)
 {
     int bottom = pos.y;
-    while (bottom - 1 > pos.y - 4 && bottom - 1 > 0
+    int lower = bottom - 4;
+    while (lower < bottom - 1 && bottom - 1 > 0
            && level->getBlockId(pos.x, bottom - 1, pos.z) == 83)
     {
+        --lower;
         --bottom;
     }
 
+    int upper = pos.y + 4;
     int top = pos.y;
-    while (top + 1 < pos.y + 4 && top + 1 < level->getHeight()
+    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
            && level->getBlockId(pos.x, top + 1, pos.z) == 83)
     {
+        ++upper;
         ++top;
     }
 

@@ -48,11 +48,10 @@ BrewingStandBlock::~BrewingStandBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, int data)
+boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BrewingStandBlockEntity> blockEntity(new BrewingStandBlockEntity());
-    blockEntity->setLevelForLoading(level);
-    blockEntity->setData(data);
+    blockEntity->setLevel(level);
     return blockEntity;
 }
 
@@ -123,10 +122,10 @@ void BrewingStandBlock::animateTick(const BlockState*, Level* level, const Block
 void BrewingStandBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
-        boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity);
-    if (brewingStand.get() != NULL)
-        Containers::dropContents(level, pos, brewingStand);
+    if (boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity).get() != NULL)
+    {
+        Containers::dropContents(level, pos, boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity));
+    }
     BaseEntityBlock::onRemove(level, pos, state);
 }
 
@@ -137,7 +136,7 @@ Item* BrewingStandBlock::getResource(const BlockState*, Random*, int)
 
 not_null_ptr<ItemInstance> BrewingStandBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this)));
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::brewingStand));
 }
 
 bool BrewingStandBlock::hasAnalogOutputSignal(const BlockState*)

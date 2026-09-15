@@ -23,6 +23,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/DoublePlantBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
@@ -189,7 +190,8 @@ void TallGrassBlock::playerDestroy(Level* level, boost::shared_ptr<Player> playe
     {
         player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
                           GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state))));
+        Variant* variant = state->getValue(VARIANT);
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tallgrass, 1, variant->getData())));
         return;
     }
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
@@ -197,7 +199,7 @@ void TallGrassBlock::playerDestroy(Level* level, boost::shared_ptr<Player> playe
 
 not_null_ptr<ItemInstance> TallGrassBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state)));
+    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, state->getBlock()->convertBlockStateToLegacyData(state)));
 }
 
 const BlockState* TallGrassBlock::getBlockState(int data)

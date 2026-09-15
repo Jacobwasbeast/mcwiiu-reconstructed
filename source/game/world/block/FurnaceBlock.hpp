@@ -59,6 +59,8 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
 
 private:
+    static bool sKeepInventory;
+
     bool mLit;
     TextureAtlasSprite* mTopIcon;
     TextureAtlasSprite* mFrontIcon;

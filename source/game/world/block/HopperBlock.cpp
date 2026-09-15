@@ -38,7 +38,9 @@ HopperBlock::~HopperBlock()
 
 boost::shared_ptr<BlockEntity> HopperBlock::newBlockEntity(Level* level, int data)
 {
-    return boost::shared_ptr<BlockEntity>(new HopperBlockEntity());
+    boost::shared_ptr<HopperBlockEntity> blockEntity(new HopperBlockEntity());
+    blockEntity->setLevel(level);
+    return blockEntity;
 }
 
 void HopperBlock::blockStaticCtor()
@@ -116,11 +118,14 @@ bool HopperBlock::use(Level* level, const BlockPos& pos, const BlockState* state
                       boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                       const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
 {
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<HopperBlockEntity> hopper = boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity);
-    if (hopper)
+    if (!level->mIsClientSide)
     {
-        player->openContainer(hopper);
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        boost::shared_ptr<HopperBlockEntity> hopper = boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity);
+        if (hopper)
+        {
+            player->openContainer(hopper);
+        }
     }
     return true;
 }

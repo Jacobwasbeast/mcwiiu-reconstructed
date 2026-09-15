@@ -68,13 +68,15 @@ public:
     static bool canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction);
     static bool canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction);
     static bool canMergeItems(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
-    bool tryMoveInItem(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction);
+    static not_null_ptr<ItemInstance> tryMoveInItem(Container* source, Container* destination,
+                                                      not_null_ptr<ItemInstance> item, int slot,
+                                                      const Direction* direction);
     static not_null_ptr<ItemInstance> addItem(Container* source, Container* destination,
                                                not_null_ptr<ItemInstance> item, const Direction* direction);
     static bool tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction);
     static bool addItem(Container* source, Container* destination, const boost::shared_ptr<ItemEntity>& entity);
     static bool suckInItems(Hopper* hopper);
-    static bool isFullContainer(boost::shared_ptr<Container> container, const Direction* direction);
+    bool isFullContainer(boost::shared_ptr<Container> container, const Direction* direction);
     virtual std::wstring getDisplayName();
     virtual unsigned long long GetType();
 
@@ -82,7 +84,7 @@ private:
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     int mCooldown;
     int mTransferCooldown;
-    bool mEnabled;
+    int mEnabled;
 };
 
 #endif

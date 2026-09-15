@@ -21,7 +21,8 @@
 
 static StoneSlabBlock::Variant* gStoneSlabVariants[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 static EnumProperty<StoneSlabBlock::Variant*>* gStoneSlabVariantProperty = NULL;
-static Property* gStoneSlabSeamlessProperty = BooleanProperty::create(L"seamless");
+static AbstractProperty<bool>* gStoneSlabSeamlessProperty =
+    static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"seamless"));
 
 StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int translationKey)
     : mData(data), mName(name), mTranslationKey(translationKey), mColor(materialColor)
@@ -132,7 +133,14 @@ const BlockState* StoneSlabBlock::getBlockState(int data)
 int StoneSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(gStoneSlabVariantProperty)->getData();
-    if (!isFullSize() && state->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP)
+    if (isFullSize())
+    {
+        if (state->getValue(gStoneSlabSeamlessProperty))
+        {
+            data |= 8;
+        }
+    }
+    else if (state->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP)
     {
         data |= 8;
     }
@@ -142,7 +150,8 @@ int StoneSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 BlockStateDefinition* StoneSlabBlock::createBlockStateDefinition()
 {
     const Property* properties[2] = {
-        isFullSize() ? gStoneSlabSeamlessProperty : HalfSlabBlock::TYPE,
+        isFullSize() ? static_cast<const Property*>(gStoneSlabSeamlessProperty)
+                     : static_cast<const Property*>(HalfSlabBlock::TYPE),
         gStoneSlabVariantProperty
     };
     return new BlockStateDefinition(this, properties, 2);

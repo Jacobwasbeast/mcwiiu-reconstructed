@@ -67,8 +67,7 @@ void TntBlock::wasExploded(Level* level, const BlockPos& pos, Explosion* explosi
 
     boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5, pos.y, pos.z + 0.5,
         explosion->getSourceMob()));
-    int life = primedTnt->getLife();
-    primedTnt->setFuse(level->mRandom->nextInt(life / 4) + life / 8);
+    primedTnt->setFuse(level->mRandom->nextInt(primedTnt->getLife() / 4) + primedTnt->getLife() / 8);
     level->addEntity(primedTnt);
 }
 

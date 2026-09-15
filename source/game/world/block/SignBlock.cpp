@@ -26,10 +26,10 @@ SignBlock::~SignBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> SignBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> SignBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<SignBlockEntity> entity(new SignBlockEntity());
-    entity->setData(data);
+    entity->setLevel(level);
     return entity;
 }
 

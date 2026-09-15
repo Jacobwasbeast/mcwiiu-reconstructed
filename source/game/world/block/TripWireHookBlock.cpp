@@ -106,10 +106,33 @@ void TripWireHookBlock::notifyNeighbors(Level* level, const BlockPos& pos, const
 
 void TripWireHookBlock::playSound(Level* level, const BlockPos& pos, bool attached, bool powered, bool oldAttached, bool oldPowered)
 {
-    if (attached != oldAttached)
-        level->playSoundToAllPlayers(pos, attached ? SoundEvents::TRIPWIRE_ATTACH : SoundEvents::TRIPWIRE_DETACH, SoundSource::eSoundSource_Blocks, 0.4f, 0.6f, 16.0f);
-    if (powered != oldPowered)
-        level->playSoundToAllPlayers(pos, powered ? SoundEvents::TRIPWIRE_CLICK_ON : SoundEvents::TRIPWIRE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.4f, 0.7f, 16.0f);
+    if (!powered)
+    {
+        if (oldPowered)
+        {
+            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.4f, 0.5f, 16.0f);
+            return;
+        }
+    }
+    else if (!oldPowered)
+    {
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_ON, SoundSource::eSoundSource_Blocks, 0.4f, 0.6f, 16.0f);
+        return;
+    }
+
+    if (!attached)
+    {
+        if (oldAttached)
+        {
+            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_DETACH, SoundSource::eSoundSource_Blocks, 0.4f, 1.2f / (level->mRandom->nextFloat() * 0.2f + 0.9f), 16.0f);
+            return;
+        }
+    }
+    else if (!oldAttached)
+    {
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_ATTACH, SoundSource::eSoundSource_Blocks, 0.4f, 0.7f, 16.0f);
+        return;
+    }
 }
 
 const BlockState* TripWireHookBlock::calculateState(Level* level, const BlockPos& pos, const BlockState* state, bool attached, bool powered, int distance, const BlockState* replacement)
@@ -206,7 +229,15 @@ void TripWireHookBlock::tick(Level* level, const BlockPos& pos, const BlockState
 
 void TripWireHookBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (state->getValue(POWERED) || state->getValue(ATTACHED)) calculateState(level, pos, state, true, false, -1, NULL);
+    if (state->getValue(ATTACHED) || state->getValue(POWERED))
+    {
+        calculateState(level, pos, state, true, false, -1, NULL);
+        if (state->getValue(POWERED))
+        {
+            level->updateNeighborsAt(pos, this, false);
+            level->updateNeighborsAt(pos.relative(state->getValue(FACING)->getOpposite()), this, false);
+        }
+    }
     Block::onRemove(level, pos, state);
 }
 

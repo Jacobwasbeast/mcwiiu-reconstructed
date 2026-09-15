@@ -54,7 +54,6 @@ void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
         boost::dynamic_pointer_cast<DispenserBlockEntity>(source.getEntity());
     if (!dispenser)
     {
-        level->levelEvent(1001, pos, 0);
         return;
     }
 
@@ -69,7 +68,7 @@ void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
     if (item->isEmpty())
         return;
 
-    const Direction* direction = source.getBlockState()->getValue(FACING);
+    const Direction* direction = level->getBlockState(pos)->getValue(FACING);
     BlockPos destinationPos = pos.relative(direction);
     boost::shared_ptr<Container> container = HopperBlockEntity::getContainerAt(
         level, static_cast<double>(destinationPos.x), static_cast<double>(destinationPos.y),

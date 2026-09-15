@@ -23,6 +23,8 @@
 #include "game/world/block/FurnaceBlockEntity.hpp"
 #include "game/world/block/Material.hpp"
 
+bool FurnaceBlock::sKeepInventory = false;
+
 FurnaceBlock::FurnaceBlock(bool lit)
     : BaseEntityBlock(Material::STONE), mLit(lit), mTopIcon(NULL), mFrontIcon(NULL)
 {
@@ -109,13 +111,21 @@ bool FurnaceBlock::use(Level* level, const BlockPos& pos, const BlockState* stat
 
 void FurnaceBlock::setLit(bool lit, Level* level, const BlockPos& pos)
 {
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     const BlockState* state = level->getBlockState(pos);
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     Block* block = lit ? Blocks::lit_furnace : Blocks::furnace;
-    TypedBoxed<const Direction*> facing(state->getValue(DirectionalBlock::FACING_PROPERTY));
-    const BlockState* replacement = block->defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
-    level->setBlock(pos, replacement, 3, false);
-    if (blockEntity != NULL) level->setBlockEntity(pos, blockEntity);
+    sKeepInventory = true;
+    TypedBoxed<const Direction*> facing1(state->getValue(DirectionalBlock::FACING_PROPERTY));
+    level->setBlock(pos, block->defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing1), 3, false);
+    TypedBoxed<const Direction*> facing2(state->getValue(DirectionalBlock::FACING_PROPERTY));
+    level->setBlock(pos, block->defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing2), 3, false);
+    sKeepInventory = false;
+    if (blockEntity != NULL)
+    {
+        sKeepInventory = false;
+        blockEntity->clearRemoved();
+        level->setBlockEntity(pos, blockEntity);
+    }
 }
 
 void FurnaceBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance> itemInstance)
@@ -164,7 +174,8 @@ EBlockRenderShape FurnaceBlock::getRenderShape(const BlockState*)
 
 const BlockState* FurnaceBlock::getInventoryRenderState(const BlockState*)
 {
-    return Blocks::furnace->defaultBlockState();
+    TypedBoxed<const Direction*> facing(Direction::SOUTH);
+    return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
 }
 
 const BlockState* FurnaceBlock::getBlockState(int data)

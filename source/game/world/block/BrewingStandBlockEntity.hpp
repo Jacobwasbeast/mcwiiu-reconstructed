@@ -16,6 +16,7 @@ class CompoundTag;
 class DataFixerUpper;
 class Direction;
 class Inventory;
+class Item;
 class ItemInstance;
 class Player;
 class BrewingStandMenu;
@@ -70,9 +71,8 @@ public:
 private:
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     int mBrewTime;
-    int mUnknown0;
-    int mUnknown1;
-    int mUnknown2;
+    arrayWithLength<unsigned char> mLastPotionBits;
+    Item* mLastIngredientItem;
     int mFuel;
     boost::shared_ptr<CensoredString> mCustomName;
 };

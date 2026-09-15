@@ -352,45 +352,49 @@ const BlockState* LeverBlock::rotate(const BlockState* state, Rotation* rotation
 {
     if (rotation->getType() == Rotation::eTYPE_None) return state;
     int data = state->getValue(FACING)->getData();
+    LeverDirection* result;
     if (rotation->getType() == Rotation::eTYPE_Clockwise180)
     {
         switch (data)
         {
-        case 1: data = 2; break;
-        case 2: data = 1; break;
-        case 3: data = 4; break;
-        case 4: data = 3; break;
+        case 1: result = LeverDirection::WEST; break;
+        case 2: result = LeverDirection::EAST; break;
+        case 3: result = LeverDirection::NORTH; break;
+        case 4: result = LeverDirection::SOUTH; break;
+        default: return state;
         }
     }
     else if (rotation->getType() == Rotation::eTYPE_Clockwise90)
     {
         switch (data)
         {
-        case 0: data = 7; break;
-        case 1: data = 3; break;
-        case 2: data = 4; break;
-        case 3: data = 2; break;
-        case 4: data = 1; break;
-        case 5: data = 6; break;
-        case 6: data = 5; break;
-        case 7: data = 0; break;
+        case 0: result = LeverDirection::DOWN_Z; break;
+        case 1: result = LeverDirection::SOUTH; break;
+        case 2: result = LeverDirection::NORTH; break;
+        case 3: result = LeverDirection::WEST; break;
+        case 4: result = LeverDirection::EAST; break;
+        case 5: result = LeverDirection::UP_X; break;
+        case 6: result = LeverDirection::UP_Z; break;
+        case 7: result = LeverDirection::DOWN_X; break;
+        default: return state;
         }
     }
     else
     {
         switch (data)
         {
-        case 0: data = 7; break;
-        case 1: data = 4; break;
-        case 2: data = 3; break;
-        case 3: data = 1; break;
-        case 4: data = 2; break;
-        case 5: data = 6; break;
-        case 6: data = 5; break;
-        case 7: data = 0; break;
+        case 0: result = LeverDirection::DOWN_Z; break;
+        case 1: result = LeverDirection::NORTH; break;
+        case 2: result = LeverDirection::SOUTH; break;
+        case 3: result = LeverDirection::EAST; break;
+        case 4: result = LeverDirection::WEST; break;
+        case 5: result = LeverDirection::UP_X; break;
+        case 6: result = LeverDirection::UP_Z; break;
+        case 7: result = LeverDirection::DOWN_X; break;
+        default: return state;
         }
     }
-    TypedBoxed<LeverDirection*> facing(LeverDirection::byData(data));
+    TypedBoxed<LeverDirection*> facing(result);
     return state->setBoxedValue(FACING, &facing);
 }
 

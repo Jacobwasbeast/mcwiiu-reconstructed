@@ -360,7 +360,7 @@ int BlockStateDefinition::BlockStateImpl::getRenderShape() const
 
 int BlockStateDefinition::BlockStateImpl::getLightColor(LevelSource* levelSource, const BlockPos& pos) const
 {
-    return mBlock->getLightColor(this, levelSource, pos, 0);
+    return mBlock->getLightColor(this, levelSource, pos, -1);
 }
 
 float BlockStateDefinition::BlockStateImpl::getShadeBrightness() const
@@ -380,7 +380,8 @@ bool BlockStateDefinition::BlockStateImpl::isSolidBlockingCubeAndNotSignalSource
 
 bool BlockStateDefinition::BlockStateImpl::isSolidBlockingBlock() const
 {
-    return mBlock->isSolidBlockingCube(this) || mBlock->isSolidBlockingCubeAndNotSignalSource(this);
+    return isSolid() &&
+        (mBlock->isSolidBlockingCube(this) || mBlock->isSolidBlockingCubeAndNotSignalSource(this));
 }
 
 bool BlockStateDefinition::BlockStateImpl::canProvideSupport(const Direction* direction,

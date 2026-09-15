@@ -90,34 +90,34 @@ InteractionResult::EInteractionResult SlabBlockItem::useOn(boost::shared_ptr<Pla
                                                             bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->isEmpty())
+    if (itemInstance->isEmpty() || !player->mayUseItemAt(pos, direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (itemInstance->useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate))
-    {
-        return InteractionResult::eInteractionResult_Success;
-    }
+    Boxed* type = mHalfSlab->getTypeForItem(itemInstance);
 
     const BlockState* state = level->getBlockState(pos);
-    if (state->getBlock() == mHalfSlab && (direction == Direction::UP || direction == Direction::DOWN))
+    if (state->getBlock() == mHalfSlab)
     {
-        Property* property = mHalfSlab->getTypeProperty();
-        Boxed* currentType = state->getBoxedValue(property);
         TypedBoxed<HalfSlabBlock::Half*>* half =
-            static_cast<TypedBoxed<HalfSlabBlock::Half*>*>(currentType);
+            static_cast<TypedBoxed<HalfSlabBlock::Half*>*>(state->getBoxedValue(HalfSlabBlock::TYPE));
         if (half != NULL && ((direction == Direction::UP && half->getValue() == HalfSlabBlock::BOTTOM)
                               || (direction == Direction::DOWN && half->getValue() == HalfSlabBlock::TOP)))
         {
-            Boxed* type = mHalfSlab->getTypeForItem(itemInstance);
-            if (tryConvertTargetBlock(player, itemInstance, level, pos, type, simulate))
-            {
-                return InteractionResult::eInteractionResult_Success;
-            }
+            tryConvertTargetBlock(player, itemInstance, level, pos, type, simulate);
+            delete type;
+            return InteractionResult::eInteractionResult_Success;
         }
     }
 
+    if (tryConvertTargetBlock(player, itemInstance, level, pos.relative(direction), type, simulate))
+    {
+        delete type;
+        return InteractionResult::eInteractionResult_Success;
+    }
+
+    delete type;
     return BlockItem::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
 }
 

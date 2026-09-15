@@ -15,7 +15,7 @@ public:
         Entity(); virtual ~Entity(); static BlockEntity* create();
         virtual void load(CompoundTag* tag); virtual CompoundTag* save(CompoundTag* tag);
         virtual unsigned long long GetType(); virtual boost::shared_ptr<BlockEntity> clone();
-        not_null_ptr<ItemInstance> getRecord(); void setRecord(not_null_ptr<ItemInstance> record);
+        virtual not_null_ptr<ItemInstance> getRecord(); virtual void setRecord(not_null_ptr<ItemInstance> record);
     private: not_null_ptr<ItemInstance> mRecord;
     };
     JukeboxBlock(); virtual ~JukeboxBlock();

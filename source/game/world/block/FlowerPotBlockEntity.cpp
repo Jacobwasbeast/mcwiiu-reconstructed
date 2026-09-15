@@ -35,6 +35,10 @@ Item* FlowerPotBlockEntity::getPlantItem()
 
 not_null_ptr<ItemInstance> FlowerPotBlockEntity::getPlantItemInstance()
 {
+    if (mPlantItem == NULL)
+    {
+        return ItemInstance::EMPTY;
+    }
     return not_null_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData));
 }
 
@@ -65,7 +69,14 @@ CompoundTag* FlowerPotBlockEntity::save(CompoundTag* tag)
 void FlowerPotBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    mPlantItem = Item::byId(tag->getInt(L"Item"));
+    if (tag->contains(L"Item", 8))
+    {
+        mPlantItem = Item::byString(tag->getString(L"Item"));
+    }
+    else if (tag->getInt(L"Item") != 0)
+    {
+        mPlantItem = Item::byId(tag->getInt(L"Item"));
+    }
     mItemData = tag->getInt(L"Data");
 }
 
@@ -85,8 +96,11 @@ CompoundTag* FlowerPotBlockEntity::getUpdateTag()
 
 boost::shared_ptr<BlockEntity> FlowerPotBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new FlowerPotBlockEntity(mPlantItem, mItemData));
+    boost::shared_ptr<BlockEntity> result(new FlowerPotBlockEntity());
     BlockEntity::clone(result);
+    FlowerPotBlockEntity* clone = static_cast<FlowerPotBlockEntity*>(result.get());
+    clone->mPlantItem = mPlantItem;
+    clone->mItemData = mItemData;
     return result;
 }
 

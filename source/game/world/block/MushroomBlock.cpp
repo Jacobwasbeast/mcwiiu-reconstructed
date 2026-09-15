@@ -95,11 +95,12 @@ void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
     BlockPos currentPos = pos;
     for (int attempt = 0; attempt < 5; ++attempt)
     {
-        BlockPos target = currentPos.offset(random->nextInt(3) - 1,
-                                     random->nextInt(2) - random->nextInt(2),
-                                     random->nextInt(3) - 1);
-        const BlockState* targetState = defaultBlockState();
-        if (level->isEmptyBlock(target) && canSurvive(level, target, targetState))
+        int dx = random->nextInt(3) - 1;
+        int dy1 = random->nextInt(2);
+        int dy2 = random->nextInt(2);
+        int dz = random->nextInt(3) - 1;
+        BlockPos target = currentPos.offset(dx, dy1 - dy2, dz);
+        if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
         {
             currentPos = target;
             if (attempt == 4)

@@ -4,6 +4,7 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/core/FoliageColor.hpp"
+#include "game/core/GenericStats.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -15,6 +16,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/Player.hpp"
 
 static EnumProperty<PlanksBlock::Variant*>* gOldLeafVariantProperty = NULL;
 static Property* gOldLeafDecayableProperty = NULL;
@@ -144,13 +146,14 @@ void OldLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
                                   const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                   not_null_ptr<ItemInstance> tool)
 {
-    if (!level->mIsClientSide && tool->getItem() == Items::shears)
+    if (level->mIsClientSide || tool->getItem() != Items::shears)
     {
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(this, 1,
-            getSpawnResourcesAuxValue(state))));
+        Block::playerDestroy(level, player, pos, state, blockEntity, tool);
         return;
     }
-    Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
+        state->getValue(VARIANT)->getData())));
 }
 
 int OldLeafBlock::getWoodType(const BlockState* state)

@@ -7,6 +7,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -110,7 +111,7 @@ boost::shared_ptr<BlockEntity> FlowerPotBlock::newBlockEntity(Level*, int data)
     case Contents::DARK_OAK_SAPLING: item = Item::byBlock(Blocks::sapling); itemData = PlanksBlock::Variant::DARK_OAK->getData(); break;
     case Contents::MUSHROOM_RED: item = Item::byBlock(Blocks::red_mushroom); break;
     case Contents::MUSHROOM_BROWN: item = Item::byBlock(Blocks::brown_mushroom); break;
-    case Contents::DEAD_BUSH: item = Item::byBlock(Blocks::deadbush); break;
+    case Contents::DEAD_BUSH: item = Item::byBlock(Blocks::tallgrass); itemData = TallGrassBlock::Variant::DEAD_BUSH->getData(); break;
     case Contents::FERN: item = Item::byBlock(Blocks::tallgrass); itemData = gFern->getData(); break;
     case Contents::GRASS: item = Item::byBlock(Blocks::tallgrass); itemData = gTallGrass->getData(); break;
     default: break;
@@ -136,7 +137,12 @@ bool FlowerPotBlock::isCubeShaped(const BlockState*) { return false; }
 
 boost::shared_ptr<FlowerPotBlockEntity> FlowerPotBlock::getFlowerPotEntity(Level* level, const BlockPos& pos)
 {
-    return boost::dynamic_pointer_cast<FlowerPotBlockEntity>(level->getBlockEntity(pos));
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    if (blockEntity.get() == NULL || blockEntity->GetType() != 0x100020dULL)
+    {
+        return boost::shared_ptr<FlowerPotBlockEntity>();
+    }
+    return boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
 }
 
 int FlowerPotBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex)
@@ -163,7 +169,7 @@ bool FlowerPotBlock::canBePotted(const not_null_ptr<ItemInstance>& item)
     return block == Blocks::tallgrass && item->getAuxValue() == gTallGrass->getData();
 }
 
-bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState*,
+bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
                          boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                          const Direction*, float, float, float, bool)
 {
@@ -176,34 +182,48 @@ bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState*,
     not_null_ptr<ItemInstance> plant = entity->getPlantItemInstance();
     if (plant.get() != NULL && !plant->isEmpty())
     {
-        if (item->isEmpty())
+        if (!item->isEmpty())
         {
             if (!player->addItem(plant))
             {
                 player->drop(plant, false);
             }
-            entity->setItemInstance(ItemInstance::EMPTY);
-            return true;
         }
-        return false;
+        else
+        {
+            player->setItemInHand(hand, plant);
+        }
+        entity->setItemInstance(ItemInstance::EMPTY);
     }
-    if (!canBePotted(item))
+    else
     {
-        return false;
+        if (!canBePotted(item))
+        {
+            return false;
+        }
+        entity->setItemInstance(item);
+        if (!player->mAbilities.mInstabuild)
+        {
+            item->shrink(1);
+        }
     }
-    entity->setItemInstance(item);
-    if (!player->mAbilities.mInstabuild)
-    {
-        item->shrink(1);
-    }
+    level->sendBlockUpdated(pos, state, state, 3, true);
+    level->updateObservingBlocksAt(pos, this);
     return true;
 }
 
 not_null_ptr<ItemInstance> FlowerPotBlock::getCloneItemInstance(Level* level, const BlockPos& pos, const BlockState*)
 {
     boost::shared_ptr<FlowerPotBlockEntity> entity = getFlowerPotEntity(level, pos);
-    return entity.get() == NULL ? not_null_ptr<ItemInstance>(new ItemInstance(Blocks::flower_pot))
-                                : entity->getPlantItemInstance();
+    if (entity.get() != NULL)
+    {
+        not_null_ptr<ItemInstance> plant = entity->getPlantItemInstance();
+        if (!plant->isEmpty())
+        {
+            return plant;
+        }
+    }
+    return not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot));
 }
 
 void FlowerPotBlock::CanSurvive(const BlockState* state)
@@ -226,7 +246,8 @@ void FlowerPotBlock::onRemove(Level* level, const BlockPos& pos, const BlockStat
     boost::shared_ptr<FlowerPotBlockEntity> entity = getFlowerPotEntity(level, pos);
     if (entity.get() != NULL && entity->getPlantItem() != NULL)
     {
-        Block::popResource(level, pos, entity->getPlantItemInstance());
+        Block::popResource(level, pos,
+            not_null_ptr<ItemInstance>(new ItemInstance(entity->getPlantItem(), 1, entity->getItemData())));
     }
     BaseEntityBlock::onRemove(level, pos, state);
 }
@@ -234,7 +255,16 @@ void FlowerPotBlock::onRemove(Level* level, const BlockPos& pos, const BlockStat
 bool FlowerPotBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                        boost::shared_ptr<Player> player)
 {
-    return Block::playerWillDestroy(level, pos, state, player);
+    bool result = Block::playerWillDestroy(level, pos, state, player);
+    if (player->mAbilities.mInstabuild)
+    {
+        boost::shared_ptr<FlowerPotBlockEntity> entity = getFlowerPotEntity(level, pos);
+        if (entity.get() != NULL)
+        {
+            entity->setItemInstance(ItemInstance::EMPTY);
+        }
+    }
+    return result;
 }
 
 Item* FlowerPotBlock::getResource(const BlockState*, Random*, int) { return Item::byBlock(Blocks::flower_pot); }

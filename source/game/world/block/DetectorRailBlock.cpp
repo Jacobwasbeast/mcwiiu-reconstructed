@@ -10,10 +10,12 @@
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/block/BaseCommandBlock.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/MinecartCommandBlock.hpp"
 #include "game/world/block/Predicate.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -149,8 +151,22 @@ const Property* DetectorRailBlock::getShapeProperty()
 
 bool DetectorRailBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
 
-int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level*, const BlockPos&)
+int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
+    const BlockState* railState = level->getBlockState(pos);
+    if (!railState->getValue(gDetectorRailPoweredProperty))
+        return 0;
+    std::vector<boost::shared_ptr<Entity> >* commandCarts =
+        getInteractingMinecartOfType(level, pos, typeid(MinecartCommandBlock), NULL);
+    if (!commandCarts->empty())
+    {
+        boost::shared_ptr<MinecartCommandBlock> commandCart =
+            boost::static_pointer_cast<MinecartCommandBlock>(commandCarts->at(0));
+        int successCount = commandCart->getCommandBlock()->getSuccessCount();
+        delete commandCarts;
+        return successCount;
+    }
+    delete commandCarts;
     return state->getValue(gDetectorRailPoweredProperty) ? 15 : 0;
 }
 

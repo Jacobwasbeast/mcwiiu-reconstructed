@@ -6,6 +6,7 @@
 
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Boxed.hpp"
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -117,14 +118,17 @@ void RedstoneTorchBlock::randomTick(Level*, const BlockPos&, const BlockState*, 
 void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     bool powered = hasNeighborSignal(level, pos, state);
+    int flags = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) ? 0x25 : 3;
     if (!mLit && !powered && !isToggledTooFrequently(level, pos, false))
-        level->setBlock(pos, copyTorchState(state, Blocks::redstone_torch->defaultBlockState()), 3, false);
+        level->setBlock(pos, copyTorchState(state, Blocks::redstone_torch->defaultBlockState()), flags, false);
     else if (mLit && powered)
     {
-        level->setBlock(pos, copyTorchState(state, Blocks::unlit_redstone_torch->defaultBlockState()), 3, false);
+        level->setBlock(pos, copyTorchState(state, Blocks::unlit_redstone_torch->defaultBlockState()), flags, false);
         if (isToggledTooFrequently(level, pos, true) && random != NULL)
             for (int i = 0; i < 5; ++i)
-                level->addParticle(PARTICLE_RED_DUST, pos.x + random->nextDouble(), pos.y + random->nextDouble(), pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+                level->addParticle(PARTICLE_RED_DUST, pos.x + 0.2 + random->nextDouble() * 0.6,
+                    pos.y + 0.2 + random->nextDouble() * 0.6, pos.z + 0.2 + random->nextDouble() * 0.6,
+                    0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
 

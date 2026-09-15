@@ -59,7 +59,7 @@ public:
     static double getSlopeAngle(LevelSource* levelSource, const BlockPos& pos, Material* material, const BlockState* state);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
-    virtual void updateLiquid(Level* level, const BlockPos& pos, const BlockState* state);
+    virtual bool updateLiquid(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos);
     virtual void fizz(Level* level, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);

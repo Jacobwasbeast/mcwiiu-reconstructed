@@ -210,7 +210,7 @@ bool SkullBlock::canSpawnMob(Level* level, const BlockPos& pos, not_null_ptr<Ite
 
 void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
                                boost::shared_ptr<SkullBlockEntity> skull,
-                               boost::shared_ptr<Player>)
+                               boost::shared_ptr<Player> player)
 {
     if (!skull || skull->getSkullType() != 1 || pos.y <= 1 || level->mIsClientSide)
         return;
@@ -219,7 +219,8 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
         return;
     if (level->getDifficulty() == Difficulty::PEACEFUL)
     {
-        delete match;
+        if (player)
+            player->displayClientMessage(0xd97fdba2, true);
         return;
     }
     bool canCreate = level->canCreateMore(0x000000005d540047ULL, 0);
@@ -241,6 +242,14 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
         wither->moveTo(spawn.x + 0.5, spawn.y + 0.55, spawn.z + 0.5, 0.0f, 0.0f);
         wither->makeInvulnerable();
         level->addEntity(wither);
+    }
+    for (int x = 0; x < match->getWidth(); ++x)
+    {
+        for (int y = 0; y < match->getHeight(); ++y)
+        {
+            BlockInWorld* block = match->getBlock(x, y, 0);
+            level->blockUpdated(block->getPos(), Blocks::AIR, false);
+        }
     }
     delete match;
 }

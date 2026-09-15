@@ -15,6 +15,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/item/Items.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -116,26 +117,32 @@ bool TurtleEggBlock::mayPlace(Level* level, const BlockPos& pos)
     return below->getBlock() != NULL && below->getBlock()->isSolidRender(below);
 }
 
-bool TurtleEggBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool)
+bool TurtleEggBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
-    if (!player)
-        return false;
-    not_null_ptr<ItemInstance> held = player->getItemInHand(hand);
+    not_null_ptr<ItemInstance> held = player->getMainHandItem();
     if (held->isEmpty() || held->getItem() != Item::byBlock(this))
+        return false;
+    if (level->mIsClientSide)
+        return true;
+    if (level->getBlockState(pos)->getBlock() != Blocks::turtle_egg)
         return false;
     int count = state->getValue(TURTLE_EGG_COUNT);
     if (count >= 3)
         return false;
     TypedBoxed<int> value(count + 1);
-    level->setBlock(pos, state->setBoxedValue(TURTLE_EGG_COUNT, &value), 3, false);
+    const BlockState* newState = state->setBoxedValue(TURTLE_EGG_COUNT, &value);
     if (!player->mAbilities.mInstabuild)
         held->shrink(1);
+    level->setBlock(pos, newState, 3, false);
     return true;
 }
 
-bool TurtleEggBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>)
+bool TurtleEggBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    return state->getValue(TURTLE_EGG_COUNT) != 3;
+    if (state->getValue(TURTLE_EGG_COUNT) == 3)
+        return false;
+    not_null_ptr<ItemInstance> held = player->getMainHandItem();
+    return held->getItem() == Item::byBlock(Blocks::turtle_egg);
 }
 
 unsigned int TurtleEggBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

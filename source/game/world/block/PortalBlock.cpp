@@ -201,20 +201,98 @@ bool PortalBlock::trySpawnPortal(Level* level, const BlockPos& pos, bool create)
 void PortalBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
     Direction::Axis* axis = state->getValue(gPortalAxis);
-    PortalShape shape(level, pos, axis);
-    if (!shape.isValid())
-        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+    if (axis == Direction::Axis::X)
+    {
+        PortalShape shape(level, pos, axis);
+        if (!shape.isValid() || shape.mNumPortalBlocks < shape.mWidth * shape.mHeight)
+        {
+            level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+        }
+    }
+    else if (axis == Direction::Axis::Z)
+    {
+        PortalShape shape(level, pos, axis);
+        if (!shape.isValid() || shape.mNumPortalBlocks < shape.mWidth * shape.mHeight)
+        {
+            level->setBlockAndUpdate(pos, Blocks::AIR->defaultBlockState());
+        }
+    }
 }
 
 bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    const BlockState* neighbour = levelSource->getBlockState(pos.relative(direction));
-    if (neighbour->getBlock() == this)
+    BlockPos neighbourPos = pos.relative(direction);
+    Direction::Axis* axis = NULL;
+
+    if (state->getBlock() == this)
+    {
+        axis = state->getValue(gPortalAxis);
+        if (axis == NULL)
+        {
+            return false;
+        }
+        if (axis == Direction::Axis::Z && direction != Direction::EAST && direction != Direction::WEST)
+        {
+            return false;
+        }
+        if (axis == Direction::Axis::X && direction != Direction::SOUTH && direction != Direction::NORTH)
+        {
+            return false;
+        }
+    }
+
+    bool westOpen = false;
+    if (levelSource->getBlockState(neighbourPos.west())->getBlock() == this)
+    {
+        if (levelSource->getBlockState(neighbourPos.west(2))->getBlock() != this)
+        {
+            westOpen = true;
+        }
+    }
+
+    bool eastOpen = false;
+    if (levelSource->getBlockState(neighbourPos.east())->getBlock() == this)
+    {
+        if (levelSource->getBlockState(neighbourPos.east(2))->getBlock() != this)
+        {
+            eastOpen = true;
+        }
+    }
+
+    bool northOpen = false;
+    if (levelSource->getBlockState(neighbourPos.north())->getBlock() == this)
+    {
+        if (levelSource->getBlockState(neighbourPos.north(2))->getBlock() != this)
+        {
+            northOpen = true;
+        }
+    }
+
+    bool southOpen = false;
+    if (levelSource->getBlockState(neighbourPos.south())->getBlock() == this)
+    {
+        if (levelSource->getBlockState(neighbourPos.south(2))->getBlock() != this)
+        {
+            southOpen = true;
+        }
+    }
+
+    bool westEastAllowed = true;
+    if (!westOpen && !eastOpen && axis != Direction::Axis::X)
+    {
+        westEastAllowed = false;
+    }
+    bool northSouthAllowed = true;
+    if (!northOpen && !southOpen && axis != Direction::Axis::Z)
+    {
+        northSouthAllowed = false;
+    }
+    if ((!westEastAllowed || (direction != Direction::WEST && direction != Direction::EAST))
+        && (!northSouthAllowed || (direction != Direction::NORTH && direction != Direction::SOUTH)))
+    {
         return false;
-    Direction::Axis* axis = state->getValue(gPortalAxis);
-    if (axis == Direction::Axis::X)
-        return direction == Direction::NORTH || direction == Direction::SOUTH;
-    return direction == Direction::EAST || direction == Direction::WEST;
+    }
+    return true;
 }
 
 int PortalBlock::getResourceCount(Random* random) { return 0; }
@@ -344,29 +422,112 @@ bool PortalBlock::PortalShape::isEmptyBlock(Block* block)
 
 int PortalBlock::PortalShape::getDistanceUntilEdge(const BlockPos& pos, const Direction* direction)
 {
+    int base = 0;
     int distance = 0;
-    while (distance < 21 && isEmptyBlock(mLevel->getBlock(pos.relative(direction, distance)))) ++distance;
-    return distance;
+    int steps = 11;
+    do
+    {
+        distance = base;
+        BlockPos at = pos.relative(direction, base);
+        if (!isEmptyBlock(mLevel->getBlock(at)))
+        {
+            break;
+        }
+        if (mLevel->getBlock(at.below()) != Blocks::obsidian)
+        {
+            break;
+        }
+        distance = base + 1;
+        BlockPos at2 = pos.relative(direction, distance);
+        if (!isEmptyBlock(mLevel->getBlock(at2)))
+        {
+            break;
+        }
+        if (mLevel->getBlock(at2.below()) != Blocks::obsidian)
+        {
+            break;
+        }
+        --steps;
+        base += 2;
+        distance = base;
+    } while (steps != 0);
+
+    if (mLevel->getBlock(pos.relative(direction, distance)) == Blocks::obsidian)
+    {
+        return distance;
+    }
+    return 0;
 }
 
 void PortalBlock::PortalShape::calculatePortalHeight()
 {
-    for (int height = 0; height < 21; ++height)
+    int height = 0;
+    for (; height < 21; ++height)
     {
-        for (int width = 0; width < mWidth; ++width)
+        mHeight = height;
+        if (mWidth > 0)
         {
-            BlockPos at = mBottomLeft->relative(mLeftDir, width).above(height);
-            if (!isEmptyBlock(mLevel->getBlock(at)))
+            int width = 0;
+            bool rowFailed = false;
+            do
             {
-                mHeight = 0;
-                mWidth = 0;
-                mBottomLeft = NULL;
-                return;
+                BlockPos at = mBottomLeft->relative(mLeftDir, width).above(mHeight);
+                Block* block = mLevel->getBlock(at);
+                if (!isEmptyBlock(block))
+                {
+                    rowFailed = true;
+                    break;
+                }
+                if (block == Blocks::portal)
+                {
+                    ++mNumPortalBlocks;
+                }
+                if (width == 0)
+                {
+                    if (mLevel->getBlock(at.relative(mRightDir)) != Blocks::obsidian)
+                    {
+                        rowFailed = true;
+                        break;
+                    }
+                }
+                else if (width == mWidth - 1)
+                {
+                    if (mLevel->getBlock(at.relative(mLeftDir)) != Blocks::obsidian)
+                    {
+                        rowFailed = true;
+                        break;
+                    }
+                }
+                ++width;
+            } while (width < mWidth);
+            if (rowFailed)
+            {
+                break;
             }
         }
-        mHeight = height + 1;
     }
-    if (mHeight < 3 || mHeight > 20) { mHeight = 0; mWidth = 0; mBottomLeft = NULL; }
+    mHeight = height;
+
+    for (int width = 0; width < mWidth; ++width)
+    {
+        BlockPos at = mBottomLeft->relative(mLeftDir, width).above(mHeight);
+        if (mLevel->getBlock(at) != Blocks::obsidian)
+        {
+            mBottomLeft = NULL;
+            mHeight = 0;
+            mWidth = 0;
+            return;
+        }
+    }
+
+    if ((unsigned int)(mHeight - 3) < 19)
+    {
+        return;
+    }
+
+    mBottomLeft = NULL;
+    mHeight = 0;
+    mWidth = 0;
 }
 
 bool PortalBlock::PortalShape::isValid() { return mWidth >= 2 && mWidth <= 21 && mHeight >= 3 && mHeight <= 20; }

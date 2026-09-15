@@ -27,10 +27,10 @@ BannerBlock::~BannerBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> BannerBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> BannerBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BannerBlockEntity> entity(new BannerBlockEntity());
-    entity->setData(data);
+    entity->setLevel(level);
     return entity;
 }
 
@@ -90,7 +90,7 @@ not_null_ptr<ItemInstance> BannerBlock::getCloneItemInstance(Level* level, const
                                                                const BlockState* state)
 {
     not_null_ptr<ItemInstance> item = getItemInstanceFromBlockEntity(level, pos, state);
-    if (item.get() != NULL && !item->isEmpty())
+    if (!item->isEmpty())
         return item;
     return not_null_ptr<ItemInstance>(new ItemInstance(Items::banner));
 }

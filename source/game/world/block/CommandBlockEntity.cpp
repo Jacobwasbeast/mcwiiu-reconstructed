@@ -186,8 +186,6 @@ boost::shared_ptr<BlockEntity> CommandBlockEntity::clone()
     copy->mCommandBlock->setCommand(mCommandBlock->getCommand());
     copy->mCommandBlock->setName(mCommandBlock->getName(), true);
     copy->setAutomatic(isAutomatic() != 0);
-    copy->mPowered = mPowered;
-    copy->mConditionMet = mConditionMet;
     BlockEntity::clone(result);
     return result;
 }

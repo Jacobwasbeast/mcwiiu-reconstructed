@@ -12,13 +12,14 @@
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
 
 BannerBlockEntity::BannerBlockEntity()
-    : BlockEntity(), mBaseColor(DyeColor::WHITE), mPatterns(NULL), mPatternListCreated(false),
+    : BlockEntity(), mBaseColor(DyeColor::BLACK), mPatterns(NULL), mPatternListCreated(false),
       mPatternList(), mColorList(), mTextureHashName(L""), mCustomName(new CensoredString())
 {
 }
 
 BannerBlockEntity::~BannerBlockEntity()
 {
+    delete mPatterns;
 }
 
 std::wstring BannerBlockEntity::getName()
@@ -137,7 +138,7 @@ CompoundTag* BannerBlockEntity::getUpdateTag()
 
 const DyeColor* BannerBlockEntity::getBaseColor(const not_null_ptr<ItemInstance>& item)
 {
-    return getColor(item);
+    return DyeColor::byItemData(item->getAuxValue());
 }
 
 int BannerBlockEntity::getPatternCount(const not_null_ptr<ItemInstance>& item)

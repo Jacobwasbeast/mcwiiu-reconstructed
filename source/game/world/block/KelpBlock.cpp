@@ -98,7 +98,7 @@ void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, cons
     for (int y = top + 1; y <= top + growth; ++y)
     {
         BlockPos target(pos.x, y, pos.z);
-        if (!level->isEmptyWaterBlock(target))
+        if (!mayPlace(level, target))
             return;
         level->setBlockAndData(pos.x, y, pos.z, 258, 0, 3);
     }
@@ -136,11 +136,9 @@ EBlockRenderShape KelpBlock::getRenderShape(const BlockState*)
 
 void KelpBlock::checkAlive(Level* level, const BlockPos& pos)
 {
-    if (level->getExtraBlock(pos) == NULL)
+    if (!canSurvive(level, pos, NULL))
     {
-        Item* item = getResource(NULL, NULL, 0);
-        if (item != NULL)
-            Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(item)));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::kelp)));
         level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
     }
 }

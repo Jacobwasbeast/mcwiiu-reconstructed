@@ -32,11 +32,10 @@ JukeboxBlock::~JukeboxBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int data)
+boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<Entity> result(new Entity());
-    result->setLevelForLoading(level);
-    result->setData(data);
+    result->setLevel(level);
     return result;
 }
 
@@ -57,7 +56,7 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
     boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(blockEntity);
     if (entity.get() == NULL) return;
     not_null_ptr<ItemInstance> record = entity->getRecord();
-    if (record.get() == NULL || record->isEmpty()) return;
+    if (record->isEmpty()) return;
     level->levelEvent(1010, pos, 0);
     Random* random = level->mRandom;
     boost::shared_ptr<ItemEntity> item(new ItemEntity(level, pos.x + random->nextFloat() * 0.7 + 0.15, pos.y + random->nextFloat() * 0.7 + 0.66, pos.z + random->nextFloat() * 0.7 + 0.15, record->copy()));
@@ -106,10 +105,10 @@ int JukeboxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
         return 0;
 
     not_null_ptr<ItemInstance> record = entity->getRecord();
-    if (record.get() == NULL || record->isEmpty())
+    if (record->isEmpty())
         return 0;
 
-    return Item::getId(record->getItem()) + 1 - Item::getId(Items::air);
+    return Item::getId(record->getItem()) + 1 - Item::getId(Items::record13);
 }
 EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*)
 {
@@ -154,16 +153,16 @@ void JukeboxBlock::Entity::load(CompoundTag* tag)
     BlockEntity::load(tag);
     if (tag->contains(L"RecordItem", 10))
     {
-        mRecord = not_null_ptr<ItemInstance>(
-            new ItemInstance(tag->getCompound(L"RecordItem")));
+        setRecord(not_null_ptr<ItemInstance>(
+            new ItemInstance(tag->getCompound(L"RecordItem"))));
     }
     else if (tag->getInt(L"Record") > 0)
     {
-        mRecord = not_null_ptr<ItemInstance>(
-            new ItemInstance(Item::byId(tag->getInt(L"Record")), 1, 0));
+        setRecord(not_null_ptr<ItemInstance>(
+            new ItemInstance(Item::byId(tag->getInt(L"Record")), 1, 0)));
     }
 }
-CompoundTag* JukeboxBlock::Entity::save(CompoundTag* tag) { BlockEntity::save(tag); if (mRecord.get() != NULL && !mRecord->isEmpty()) tag->put(L"RecordItem", mRecord->save(new CompoundTag())); return tag; }
+CompoundTag* JukeboxBlock::Entity::save(CompoundTag* tag) { BlockEntity::save(tag); if (!getRecord()->isEmpty()) tag->put(L"RecordItem", getRecord()->save(new CompoundTag())); return tag; }
 not_null_ptr<ItemInstance> JukeboxBlock::Entity::getRecord() { return mRecord; }
 void JukeboxBlock::Entity::setRecord(not_null_ptr<ItemInstance> record) { mRecord = record; setChanged(); }
 boost::shared_ptr<BlockEntity> JukeboxBlock::Entity::clone() { boost::shared_ptr<Entity> result(new Entity()); BlockEntity::clone(result); result->mRecord = mRecord; return result; }

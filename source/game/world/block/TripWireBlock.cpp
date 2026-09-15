@@ -11,6 +11,7 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Item.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -85,7 +86,7 @@ bool TripWireBlock::isSolidRender(const BlockState*) const { return false; }
 bool TripWireBlock::isCubeShaped(const BlockState*) { return false; }
 int TripWireBlock::getRenderLayer() { return 1; }
 Item* TripWireBlock::getResource(const BlockState*, Random*, int) { return Item::byBlock(this); }
-not_null_ptr<ItemInstance> TripWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this))); }
+not_null_ptr<ItemInstance> TripWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(Items::string)); }
 
 void TripWireBlock::updateSource(Level* level, const BlockPos& pos, const BlockState* state)
 {
@@ -123,10 +124,19 @@ void TripWireBlock::onRemove(Level* level, const BlockPos& pos, const BlockState
 
 bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    if (!level->mIsClientSide && player)
+    if (!level->mIsClientSide)
     {
-        TypedBoxed<bool> disarmed(true);
-        level->setBlock(pos, state->setBoxedValue(DISARMED, &disarmed), 4, false);
+        bool wasShears = false;
+        not_null_ptr<ItemInstance> mainHand = player->getMainHandItem();
+        if (!mainHand->isEmpty() && mainHand->getItem() == Items::shears)
+        {
+            wasShears = true;
+        }
+        if (wasShears)
+        {
+            TypedBoxed<bool> disarmed(true);
+            level->setBlock(pos, state->setBoxedValue(DISARMED, &disarmed), 4, false);
+        }
     }
     return false;
 }

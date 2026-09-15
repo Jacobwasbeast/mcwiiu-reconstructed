@@ -3,6 +3,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include "game/core/Minecart.hpp"
 #include "game/world/block/BaseCommandBlock.hpp"
 #include "game/world/block/EntityDataAccessor.hpp"
@@ -31,7 +32,7 @@ public:
         virtual boost::shared_ptr<Entity> getCommandSenderEntity();
         virtual MinecraftServer* getServer();
     private:
-        boost::shared_ptr<MinecartCommandBlock> mMinecart;
+        boost::weak_ptr<MinecartCommandBlock> mMinecart;
     };
 
     MinecartCommandBlock(Level* level);

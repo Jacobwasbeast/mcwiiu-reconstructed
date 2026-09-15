@@ -105,7 +105,7 @@ bool ChestBlockEntity::isEmpty()
     unsigned int i;
     for (i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i] || !mItems[i]->isEmpty())
+        if (!mItems[i]->isEmpty())
         {
             return false;
         }
@@ -200,7 +200,10 @@ void ChestBlockEntity::load(CompoundTag* tag)
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
-    ContainerHelper::loadAllItems(tag, mItems);
+    if (!tryLoadLootTable(tag))
+    {
+        ContainerHelper::loadAllItems(tag, mItems);
+    }
     mLarge = tag->getBoolean(L"bonus");
 }
 
@@ -295,10 +298,6 @@ bool ChestBlockEntity::isSameChest(const BlockPos& position)
 
 boost::shared_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
 {
-    if (!mLevel || !direction)
-    {
-        return boost::shared_ptr<ChestBlockEntity>();
-    }
     BlockPos position = mPos.relative(direction);
     if (!isSameChest(position))
     {

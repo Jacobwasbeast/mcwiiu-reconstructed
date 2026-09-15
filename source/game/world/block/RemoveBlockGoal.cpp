@@ -107,7 +107,7 @@ void RemoveBlockGoal::tick()
             }
             if (mTicks > 60)
             {
-                mMob->mLevel->destroyBlock(*position, false);
+                mMob->mLevel->removeBlock(*position);
                 mMob->playSound(mEndSound, 1.0f, 1.0f);
             }
         }

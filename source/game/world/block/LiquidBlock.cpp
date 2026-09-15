@@ -2,6 +2,9 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Math.hpp"
 #include "game/util/Vec3.hpp"
@@ -138,6 +141,8 @@ bool LiquidBlock::isSolidFace(LevelSource* levelSource, const BlockPos& pos, con
         return false;
     if (direction == Direction::UP)
         return true;
+    if (state->getMaterial() == Material::AIR)
+        return false;
     return !Block::isExceptionBlockForAttachingPlusPiston(state->getBlock()) &&
            !state->getBlock()->isSolidFace(levelSource, pos, direction);
 }
@@ -219,8 +224,11 @@ Vec3* LiquidBlock::getFlow(LevelSource* levelSource, const BlockPos& pos, const 
     return Vec3::newTemp(x, y, z)->normalize();
 }
 
-Vec3* LiquidBlock::handleEntityInside(Level*, const BlockPos&, boost::shared_ptr<Entity>, Vec3* motion)
+Vec3* LiquidBlock::handleEntityInside(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, Vec3* motion)
 {
+    const BlockState* state = level->getBlockState(entity->mTickCache, pos);
+    Vec3* flow = getFlow(level, pos, state);
+    motion->add(flow);
     return motion;
 }
 
@@ -234,7 +242,7 @@ int LiquidBlock::getTickDelay(Level* level)
     if (mMaterial == Material::WATER)
         return 5;
     if (mMaterial == Material::LAVA)
-        return 30;
+        return level->mDimension != NULL && level->mDimension->isHasCeiling() ? 10 : 30;
     return 0;
 }
 
@@ -313,10 +321,35 @@ void LiquidBlock::neighborChanged(const BlockState* state, Level* level, const B
     updateLiquid(level, pos, state);
 }
 
-void LiquidBlock::updateLiquid(Level* level, const BlockPos& pos, const BlockState* state)
+bool LiquidBlock::updateLiquid(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (level != NULL && state != NULL)
-        level->getBlockState(pos);
+    if (mMaterial != Material::LAVA)
+        return false;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !Minecraft::GetInstance()->GetMiniGame()->canLavaConvertWater())
+        return false;
+    for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+    {
+        const Direction* direction = Direction::VALUES[i];
+        if (direction == Direction::DOWN)
+            continue;
+        Block* neighborBlock = level->getLiquidBlock(pos.relative(direction));
+        if (neighborBlock->mMaterial == Material::WATER)
+        {
+            int depth = state->getValue(LEVEL);
+            if (depth != 0)
+            {
+                if (depth > 4)
+                    return false;
+                level->setBlockAndUpdate(pos, Blocks::cobblestone->defaultBlockState());
+                fizz(level, pos);
+                return true;
+            }
+            level->setBlockAndUpdate(pos, Blocks::obsidian->defaultBlockState());
+            fizz(level, pos);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool LiquidBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
@@ -326,9 +359,10 @@ bool LiquidBlock::mayReplaceWithPlace(LevelSource*, const BlockPos&)
 
 void LiquidBlock::fizz(Level* level, const BlockPos& pos)
 {
+    float pitch = (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f + 1.2f;
     level->playLocalSound(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
                           SoundEvents::LAVA_EXTINGUISH, SoundSource::eSoundSource_Blocks,
-                          0.5f, Math::random() * 0.8f + 1.2f, false, 16.0f);
+                          0.5f, pitch, false, 16.0f);
     for (int i = 0; i < 8; ++i)
     {
         level->addParticle(PARTICLE_LARGE_SMOKE,

@@ -2,10 +2,14 @@
 
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
+#include "game/item/not_null_ptr.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/Property.hpp"
 
 LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
@@ -46,11 +50,11 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
     int auxValue;
     unsigned int i;
 
-    if (state == NULL || state->getBlock() == NULL)
+    block = state->getBlock();
+    if (block == NULL)
     {
         return 0;
     }
-    block = state->getBlock();
     for (i = 0; i < mStateCount; ++i)
     {
         if (mStates[i] != NULL && mStateIds[i] == block)
@@ -70,23 +74,30 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
 
     item = Item::byBlock(block);
     details = new Tutorial::PopupMessageDetails();
-    details->allowFade = true;
-    details->messageId = mDescriptionId == -2 ? -1 :
+    details->isItem = true;
+    details->itemId = mDescriptionId == -2 ? -1 :
         (mDescriptionId < 0 ? (item == NULL ? Block::getId(block) : Item::getId(item)) : mDescriptionId);
     auxValue = mAuxValue;
     if (auxValue < 0)
     {
-        auxValue = block->getDescriptionId(-1);
+        auxValue = block->convertBlockStateToLegacyData(matchingState);
     }
-    details->promptId = auxValue;
+    details->itemAuxValue = auxValue;
     if (item == NULL)
     {
         details->titleId = block->getUseDescriptionId(-1);
+        details->itemDescriptionId = block->getDescriptionId(auxValue);
     }
     else
     {
-        details->titleId = Item::getId(item);
-        details->promptId = auxValue;
+        not_null_ptr<ItemInstance> itemInstance(new ItemInstance(item, 1, auxValue));
+        if (item == Items::banner)
+        {
+            BannerBlockEntity::addTags(itemInstance, 0xf, NULL);
+        }
+        details->itemInstance = itemInstance;
+        details->titleId = itemInstance->getUseDescriptionId();
+        details->itemDescriptionId = itemInstance->getDescriptionId(-1);
     }
     return tutorial->setMessage(this, details);
 }
@@ -94,22 +105,45 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
 unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos,
                                              const BlockState* state)
 {
-    ItemInstance* itemInstance;
+    Block* block;
+    bool found;
+    unsigned int i;
+    not_null_ptr<ItemInstance> itemInstance;
     Tutorial::PopupMessageDetails* details;
 
-    if (state == NULL || state->getBlock() == NULL || level == NULL)
+    block = state->getBlock();
+    if (block == NULL || block != Blocks::skull)
     {
         return 0;
     }
-    itemInstance = state->getBlock()->getCloneItemInstance(level, pos, state).get();
-    if (itemInstance == NULL || itemInstance->getAuxValue() == -1)
+    found = false;
+    for (i = 0; i < mStateCount; ++i)
+    {
+        if (mStateIds[i] == block)
+        {
+            found = true;
+            break;
+        }
+    }
+    if (!found)
+    {
+        return 0;
+    }
+    itemInstance = block->getCloneItemInstance(level, pos, state);
+    if (itemInstance->getAuxValue() == -1)
     {
         return 0;
     }
     details = new Tutorial::PopupMessageDetails();
-    details->titleId = itemInstance->getItem() == NULL ? -1 : Item::VALIDgetId(itemInstance->getItem());
-    details->message = itemInstance->getDescriptionId(-1);
-    details->promptId = itemInstance->getAuxValue();
+    details->titleId = itemInstance->getUseDescriptionId();
+    details->itemDescriptionId = itemInstance->getDescriptionId(-1);
+    if (itemInstance->getItem() != NULL)
+    {
+        details->itemDescription = itemInstance->getHoverName();
+    }
+    details->itemInstance = itemInstance;
+    details->itemId = Item::VALIDgetId(itemInstance->getItem());
+    details->itemAuxValue = itemInstance->getAuxValue();
     details->allowFade = true;
     details->force = true;
     return tutorial->setMessage(this, details);

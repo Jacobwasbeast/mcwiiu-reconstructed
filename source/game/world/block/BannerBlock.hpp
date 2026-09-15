@@ -23,7 +23,7 @@ class BannerBlock : public BaseEntityBlock
 public:
     BannerBlock();
     virtual ~BannerBlock();
-    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
+    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int);
 
     static DirectionProperty* FACING;
     static void blockStaticCtor();

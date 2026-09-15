@@ -11,16 +11,17 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 #include "game/item/PotionBrewing.hpp"
+#include "game/item/Items.hpp"
 #include "game/ui/BrewingStandMenu.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/Player.hpp"
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
       mBrewTime(0),
-      mUnknown0(0),
-      mUnknown1(0),
-      mUnknown2(0),
+      mLastPotionBits(),
+      mLastIngredientItem(NULL),
       mFuel(0),
       mCustomName(new CensoredString())
 {
@@ -112,11 +113,11 @@ int BrewingStandBlockEntity::getMaxStackSize()
 
 bool BrewingStandBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (player.get() == NULL)
+    if (mLevel->getBlockEntity(mPos).get() != this)
     {
         return false;
     }
-    return !isRemoved();
+    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
 }
 
 void BrewingStandBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -291,18 +292,44 @@ void BrewingStandBlockEntity::doBrew()
 
 void BrewingStandBlockEntity::tick()
 {
-    bool brewable = isBrewable();
-    if (mBrewTime > 0)
+    if (mFuel < 1)
     {
-        --mBrewTime;
-        if (mBrewTime == 0 && brewable)
+        if (mItems[4]->getItem() != NULL && mItems[4]->getItem() == Items::blazePowder)
         {
-            doBrew();
+            mFuel = 20;
+            mItems[4]->shrink(1);
+            setChanged();
+        }
+    }
+
+    bool brewable = isBrewable();
+    if (mBrewTime != 0)
+    {
+        if (!brewable)
+        {
+            mBrewTime = 0;
+            setChanged();
+        }
+        else
+        {
+            --mBrewTime;
+            if (mBrewTime == 0)
+            {
+                doBrew();
+                setChanged();
+            }
+            else if (mItems[3]->getItem() != mLastIngredientItem)
+            {
+                mBrewTime = 0;
+                setChanged();
+            }
         }
     }
     else if (brewable && mFuel > 0)
     {
         mBrewTime = 400;
+        mLastIngredientItem = mItems[3]->getItem();
+        setChanged();
     }
 }
 
@@ -310,6 +337,7 @@ void BrewingStandBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mBrewTime = tag->getShort(L"BrewTime");
     mFuel = tag->getByte(L"Fuel");
@@ -328,9 +356,16 @@ CompoundTag* BrewingStandBlockEntity::save(CompoundTag* tag)
 boost::shared_ptr<BlockEntity> BrewingStandBlockEntity::clone()
 {
     boost::shared_ptr<BrewingStandBlockEntity> copy(new BrewingStandBlockEntity());
-    copy->mItems = mItems;
+    BlockEntity::clone(copy);
     copy->mBrewTime = mBrewTime;
+    copy->mLastPotionBits = mLastPotionBits;
+    copy->mLastIngredientItem = mLastIngredientItem;
     copy->mFuel = mFuel;
+    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    for (unsigned int i = 0; i < mItems.size(); ++i)
+    {
+        copy->mItems[i] = mItems[i]->copy();
+    }
     return copy;
 }
 

@@ -62,7 +62,14 @@ HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::byData(int data)
     {
         data = 0;
     }
-    return gHugeMushroomVariantPointers[data];
+    for (int i = 0; i < 13; ++i)
+    {
+        if (gHugeMushroomVariantPointers[i]->getData() == data)
+        {
+            return gHugeMushroomVariantPointers[i];
+        }
+    }
+    return NULL;
 }
 
 std::wstring HugeMushroomBlock::Variant::toString() const

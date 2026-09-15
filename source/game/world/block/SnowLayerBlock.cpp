@@ -48,9 +48,9 @@ EBlockFaceShape SnowLayerBlock::getBlockFaceShape(LevelSource*, const BlockState
     return direction == Direction::DOWN ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
 }
 
-const AABB* SnowLayerBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
+const AABB* SnowLayerBlock::getClipAABB(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return AABB::newTemp(getShape(state, levelSource, pos));
+    return AABB::newTemp(0.0, 0.0, 0.0, 1.0, (double)(state->getValue(LAYERS) - 1) * 0.125, 1.0);
 }
 
 double SnowLayerBlock::getHeight(Level* level, int x, int y, int z)
@@ -95,7 +95,7 @@ bool SnowLayerBlock::canSurvive(Level* level, const BlockPos& pos, const BlockSt
 
 void SnowLayerBlock::playerDestroy(Level* level, boost::shared_ptr<Player>, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity>, not_null_ptr<ItemInstance>)
 {
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::snowball, state->getValue(LAYERS), 0)));
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::snowball, state->getValue(LAYERS) + 1, 0)));
     level->removeBlock(pos);
 }
 

@@ -52,9 +52,11 @@ unsigned int CommandBlock::getMode()
     return static_cast<unsigned int>(mMode);
 }
 
-boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level*, int)
+boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level* level, int)
 {
-    return boost::shared_ptr<BlockEntity>(new CommandBlockEntity(static_cast<CommandBlock::Mode>(mMode)));
+    boost::shared_ptr<BlockEntity> entity(new CommandBlockEntity(static_cast<CommandBlock::Mode>(mMode)));
+    entity->setLevel(level);
+    return entity;
 }
 
 void CommandBlock::neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&)
@@ -83,25 +85,24 @@ bool CommandBlock::hasAnalogOutputSignal(const BlockState*)
 int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
-    if (commandBlockEntity.get() == NULL)
+    if (blockEntity && blockEntity->GetType() == 0x1000209ULL)
     {
-        return 0;
+        boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
+        return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
     }
-    return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
+    return 0;
 }
 
 void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
-    if (commandBlockEntity.get() == NULL)
+    if (blockEntity->GetType() == 0x1000209ULL)
     {
-        return;
-    }
-    if (itemInstance->hasCustomHoverName())
-    {
-        commandBlockEntity->getCommandBlock()->setName(itemInstance->getHoverName(), true);
+        boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
+        if (itemInstance->hasCustomHoverName())
+        {
+            commandBlockEntity->getCommandBlock()->setName(itemInstance->getHoverName(), true);
+        }
     }
 }
 

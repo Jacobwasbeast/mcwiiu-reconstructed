@@ -32,7 +32,7 @@ boost::shared_ptr<BlockEntity> DropperBlockEntity::clone()
 {
     boost::shared_ptr<DropperBlockEntity> result(new DropperBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), std::wstring(), false, false);
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return result;
 }
 

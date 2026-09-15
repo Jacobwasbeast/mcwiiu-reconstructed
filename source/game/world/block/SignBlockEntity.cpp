@@ -1,11 +1,16 @@
 #include "game/world/block/SignBlockEntity.hpp"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <cwchar>
 
 #include "game/data/CompoundTag.hpp"
 #include "game/network/ClientboundBlockEntityDataPacket.hpp"
+#include "game/server/ServerLevel.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockPos.hpp"
 #include "game/core/CriticalSection.hpp"
 
 class BlockState;
@@ -168,7 +173,8 @@ void SignBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> SignBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 9, 0, getUpdateTag()));
+    int dimensionId = mLevel->mDimension->getType()->getId();
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 9, dimensionId, getUpdateTag()));
 }
 
 CompoundTag* SignBlockEntity::getUpdateTag()
@@ -195,22 +201,37 @@ std::wstring SignBlockEntity::getCreatedPlayerUUID()
 
 unsigned int SignBlockEntity::StringVerifyCallback(void* context, _STRING_VERIFY_RESPONSE* response)
 {
-    boost::shared_ptr<SignBlockEntity>* sign = static_cast<boost::shared_ptr<SignBlockEntity>*>(context);
-    if (sign != NULL && *sign)
+    boost::weak_ptr<SignBlockEntity>* weakSign = static_cast<boost::weak_ptr<SignBlockEntity>*>(context);
+    boost::shared_ptr<SignBlockEntity> sign = weakSign->lock();
+    if (sign)
     {
-        (*sign)->mVerified = true;
-        (*sign)->mCensored = false;
+        sign->mVerified = true;
+        sign->mCensored = false;
         if (response != NULL)
         {
             for (unsigned int i = 0; i < response->count; ++i)
             {
                 if (response->results[i] != 0)
                 {
-                    (*sign)->mCensored = true;
+                    sign->mCensored = true;
                 }
             }
         }
-        (*sign)->setUniqueId();
+        if (sign->mLevel != NULL && !sign->mLevel->mIsClientSide)
+        {
+            Level* level = sign->mLevel;
+            BlockPos pos = sign->getBlockPos();
+            if (level->hasChunkAt(pos, false))
+            {
+                BlockState* state = const_cast<BlockState*>(level->getBlockState(pos));
+                static_cast<ServerLevel*>(level)->queueSendBlockUpdate(pos.x, pos.y, pos.z, state, state);
+            }
+        }
+        sign->setUniqueId();
+    }
+    if (context != NULL)
+    {
+        delete weakSign;
     }
     return 0;
 }

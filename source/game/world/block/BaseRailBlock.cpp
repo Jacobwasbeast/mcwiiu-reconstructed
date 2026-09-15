@@ -337,10 +337,77 @@ bool BaseRailBlock::Rail::hasNeighborRail(const BlockPos& pos)
 
 void BaseRailBlock::Rail::connectTo(Rail* rail)
 {
-    if (rail == NULL)
-        return;
     mConnections.push_back(rail->mPos);
-    rail->mConnections.push_back(mPos);
+
+    BlockPos north = mPos.north();
+    BlockPos south = mPos.south();
+    BlockPos west = mPos.west();
+    BlockPos east = mPos.east();
+
+    bool hasNorth = hasConnection(north);
+    bool hasSouth = hasConnection(south);
+    bool hasWest = hasConnection(west);
+    bool hasEast = hasConnection(east);
+
+    RailShape* shape = NULL;
+    if (hasNorth || hasSouth)
+        shape = gRailShapes[0];
+    if (hasWest || hasEast)
+        shape = gRailShapes[1];
+
+    if (!mPowered)
+    {
+        if (!hasSouth)
+        {
+            if (hasNorth)
+            {
+                if (hasWest)
+                {
+                    shape = gRailShapes[8];
+                    if (hasEast)
+                        shape = gRailShapes[1];
+                }
+                else if (hasEast)
+                {
+                    shape = gRailShapes[9];
+                }
+            }
+        }
+        else if (!hasWest)
+        {
+            if (hasEast)
+                shape = hasNorth ? gRailShapes[1] : gRailShapes[6];
+            else
+                shape = gRailShapes[0];
+        }
+        else
+        {
+            shape = gRailShapes[7];
+            if (hasNorth || hasEast)
+                shape = gRailShapes[1];
+        }
+    }
+
+    if (shape == gRailShapes[0])
+    {
+        if (BaseRailBlock::isRail(mLevel, north.above()))
+            shape = gRailShapes[4];
+        if (BaseRailBlock::isRail(mLevel, south.above()))
+            shape = gRailShapes[5];
+    }
+    if (shape == gRailShapes[1])
+    {
+        if (BaseRailBlock::isRail(mLevel, east.above()))
+            shape = gRailShapes[2];
+        if (BaseRailBlock::isRail(mLevel, west.above()))
+            shape = gRailShapes[3];
+    }
+    if (shape == NULL)
+        shape = gRailShapes[0];
+
+    const Property* shapeProperty = static_cast<BaseRailBlock*>(mBlock)->getShapeProperty();
+    mState = mState->setBoxedValue(shapeProperty, new TypedBoxed<RailShape*>(shape));
+    mLevel->setBlock(mPos, mState, 3, false);
 }
 
 BaseRailBlock::Rail* BaseRailBlock::Rail::place(bool powered, bool forceUpdate)
@@ -383,9 +450,11 @@ bool BaseRailBlock::Rail::hasRail(const BlockPos& pos)
 int BaseRailBlock::Rail::countPotentialConnections()
 {
     int count = 0;
-    const BlockPos positions[4] = { mPos.north(), mPos.south(), mPos.west(), mPos.east() };
-    for (int i = 0; i < 4; ++i)
-        if (hasRail(positions[i]))
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; ++i)
+    {
+        if (hasRail(mPos.relative(directions.data[i])))
             ++count;
+    }
     return count;
 }

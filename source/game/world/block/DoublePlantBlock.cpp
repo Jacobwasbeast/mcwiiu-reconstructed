@@ -11,15 +11,23 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/biome/BiomeColors.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/Predicates.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
+#include "game/core/GenericStats.hpp"
+#include "game/core/Stats.hpp"
+#include "game/item/Items.hpp"
+#include "game/client/audio/SoundType.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
 AbstractProperty<DoublePlantBlock::Variant*>* DoublePlantBlock::VARIANT = NULL;
@@ -56,9 +64,14 @@ std::wstring DoublePlantBlock::Variant::getSerializedName() const { return mName
 int DoublePlantBlock::Variant::getNameId() { return mNameId; }
 int DoublePlantBlock::Variant::getDescriptionId() { return mDescriptionId; }
 
-DoublePlantBlock::DoublePlantBlock() : Bush()
+DoublePlantBlock::DoublePlantBlock() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
+    TypedBoxed<Variant*> variantBox(VARIANTS[0]);
+    TypedBoxed<Half*> halfBox(HALVES[Half::LOWER]);
+    TypedBoxed<const Direction*> facingBox(Direction::NORTH);
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variantBox)->setBoxedValue(HALF, &halfBox)->setBoxedValue(FACING, &facingBox));
+    setDestroyTime(0.0f)->setSoundType(SoundType::GRASS);
 }
 DoublePlantBlock::~DoublePlantBlock() {}
 
@@ -77,7 +90,7 @@ bool DoublePlantBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const
 void DoublePlantBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
 {
     Variant* variant = state->getValue(VARIANT);
-    if (variant != NULL) placeAt(level, pos, variant, 2);
+    placeAt(level, pos, variant, 2);
 }
 void DoublePlantBlock::blockStaticCtor()
 {
@@ -125,7 +138,27 @@ bool DoublePlantBlock::mayReplaceWithPlace(LevelSource* levelSource, const Block
 bool DoublePlantBlock::canContainLiquid(const BlockState*) const { return false; }
 void DoublePlantBlock::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!canSurvive(level, pos, state)) level->blockUpdated(pos, this, true);
+    if (canSurvive(level, pos, state)) return;
+    if (state->getValue(HALF) != HALVES[Half::UPPER])
+    {
+        BlockPos abovePos = pos.above();
+        if (level->getBlockState(abovePos)->getBlock() == this)
+        {
+            level->setBlock(abovePos, Blocks::AIR->defaultBlockState(), 2, false);
+        }
+        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 3, false);
+        spawnResources(level, pos, state, 0);
+    }
+    else
+    {
+        BlockPos belowPos = pos.below();
+        bool belowIsThis = level->getBlockState(belowPos)->getBlock() == this;
+        level->setBlock(pos, Blocks::AIR->defaultBlockState(), 2, false);
+        if (belowIsThis)
+        {
+            level->setBlock(belowPos, Blocks::AIR->defaultBlockState(), 3, false);
+        }
+    }
 }
 bool DoublePlantBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
@@ -138,7 +171,14 @@ Item* DoublePlantBlock::getResource(const BlockState* state, Random* random, int
     if (type == 2 || type == 3) return Block::getResource(state, random, lootBonus);
     return Item::byBlock(this);
 }
-int DoublePlantBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
+int DoublePlantBlock::getSpawnResourcesAuxValue(const BlockState* state)
+{
+    if (state->getValue(HALF) != HALVES[Half::UPPER] && state->getValue(VARIANT) != gDoublePlantGrass)
+    {
+        return state->getValue(VARIANT)->getData();
+    }
+    return 0;
+}
 int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int) { return getColor(levelSource, pos, levelSource->getBlockState(pos)); }
 int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
@@ -158,23 +198,48 @@ void DoublePlantBlock::setPlacedBy(Level* level, const BlockPos& pos, const Bloc
     TypedBoxed<Half*> upper(HALVES[Half::UPPER]);
     level->setBlock(pos.above(), state->setBoxedValue(HALF, &upper), 2, false);
 }
-int DoublePlantBlock::popGrassResources(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player>)
+int DoublePlantBlock::popGrassResources(Level* level, const BlockPos& pos, const BlockState* state,
+                                        boost::shared_ptr<Player> player)
 {
-    if (state->getValue(HALF) == HALVES[Half::UPPER])
-    {
-        level->setBlock(pos, defaultBlockState(), 2, false);
-        return 1;
-    }
-    return 0;
+    Variant* variant = state->getValue(VARIANT);
+    if (variant != gDoublePlantGrass && variant != gDoublePlantFern)
+        return 0;
+
+    player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
+                      GenericStats::param_blocksMined(state, 1));
+    Block::popResource(level, pos,
+                       not_null_ptr<ItemInstance>(new ItemInstance(
+                           Blocks::tallgrass, 2,
+                           variant == gDoublePlantGrass ? TallGrassBlock::Variant::GRASS->getData()
+                                                        : TallGrassBlock::Variant::FERN->getData())));
+    return 1;
 }
 void DoublePlantBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos, const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity, not_null_ptr<ItemInstance> tool)
 {
-    popGrassResources(level, pos, state, player);
+    if (!level->mIsClientSide && tool->getItem() == Items::shears && state->getValue(HALF) == HALVES[Half::LOWER])
+    {
+        if (popGrassResources(level, pos, state, player) != 0) return;
+    }
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
 }
 bool DoublePlantBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
 {
-    popGrassResources(level, pos, state, player);
+    if (state->getValue(HALF) == HALVES[Half::UPPER])
+    {
+        BlockPos belowPos = pos.below();
+        if (level->getBlockState(belowPos)->getBlock() == this)
+        {
+            level->destroyBlock(belowPos, true);
+        }
+    }
+    else
+    {
+        BlockPos abovePos = pos.above();
+        if (level->getBlockState(abovePos)->getBlock() == this)
+        {
+            level->setBlock(abovePos, Blocks::AIR->defaultBlockState(), 2, false);
+        }
+    }
     return Block::playerWillDestroy(level, pos, state, player);
 }
 not_null_ptr<ItemInstance> DoublePlantBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState* state)
@@ -202,9 +267,11 @@ const BlockState* DoublePlantBlock::fillVirtualBlockStateProperties(const BlockS
 }
 int DoublePlantBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int result = state->getValue(VARIANT)->getData();
-    if (state->getValue(HALF) == HALVES[Half::UPPER]) result |= 8;
-    return result;
+    if (state->getValue(HALF) == HALVES[Half::UPPER])
+    {
+        return state->getValue(FACING)->get2DDataValue() | 8;
+    }
+    return state->getValue(VARIANT)->getData();
 }
 unsigned int DoublePlantBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData) { return Block::GetInteractTooltip(tooltipData); }
 BlockStateDefinition* DoublePlantBlock::createBlockStateDefinition()
@@ -215,8 +282,15 @@ BlockStateDefinition* DoublePlantBlock::createBlockStateDefinition()
 EBlockOffsetType DoublePlantBlock::getOffsetType() { return BLOCK_OFFSET_XZ; }
 EBlockRenderShape DoublePlantBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)41; }
 TextureAtlasSprite* DoublePlantBlock::getTexture(const BlockState* state, Variant::ETexture texture) { return state->getValue(VARIANT)->getIcon(texture); }
-TextureAtlasSprite* DoublePlantBlock::getIconTexture(const Direction*, const BlockState* state) { return getTexture(state, Variant::BOTTOM); }
-TextureAtlasSprite* DoublePlantBlock::getTexture(const Direction*, const BlockState* state) { return getTexture(state, Variant::BOTTOM); }
+TextureAtlasSprite* DoublePlantBlock::getIconTexture(const Direction*, const BlockState* state)
+{
+    if (state->getValue(VARIANT) == VARIANTS[0]) return getTexture(state, Variant::SIDE);
+    return getTexture(state, Variant::BOTTOM);
+}
+TextureAtlasSprite* DoublePlantBlock::getTexture(const Direction*, const BlockState* state)
+{
+    return getTexture(state, state->getValue(HALF) != HALVES[Half::UPPER] ? Variant::TOP : Variant::BOTTOM);
+}
 void DoublePlantBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int variantIndex = 0; variantIndex < 6; ++variantIndex)

@@ -135,7 +135,10 @@ void PistonBaseBlock::neighborChanged(const BlockState* state, Level* level, con
 
 void PistonBaseBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    checkIfExtend(level, pos, state);
+    if (!level->mIsClientSide)
+    {
+        checkIfExtend(level, pos, state);
+    }
 }
 
 const Direction* PistonBaseBlock::getFacingFromPlayer(Level*, const BlockPos& pos, boost::shared_ptr<LivingEntity> placer)
@@ -273,10 +276,15 @@ BlockStateDefinition* PistonBaseBlock::createBlockStateDefinition()
     return new BlockStateDefinition(this, properties, 2);
 }
 
-EBlockFaceShape PistonBaseBlock::getBlockFaceShape(LevelSource*, const BlockState* state,
-                                                    const BlockPos&, const Direction* direction)
+EBlockFaceShape PistonBaseBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
+                                                    const BlockPos& pos, const Direction* direction)
 {
-    return state->getValue(FACING)->getOpposite() == direction ? BLOCK_FACE_SOLID : BLOCK_FACE_UNDEFINED;
+    const BlockState* virtualState = fillVirtualBlockStateProperties(state, levelSource, pos);
+    if (virtualState->getValue(FACING)->getOpposite() != direction && virtualState->getValue(EXTENDED))
+    {
+        return BLOCK_FACE_UNDEFINED;
+    }
+    return BLOCK_FACE_SOLID;
 }
 
 TextureAtlasSprite* PistonBaseBlock::getTexture(const Direction* direction, const BlockState* state)

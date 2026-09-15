@@ -4,6 +4,7 @@
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/core/ExperienceOrb.hpp"
 #include "game/world/block/BlockImpl.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/AirBlock.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
@@ -361,7 +362,7 @@ Block* Block::byId(int id)
             return NULL;
         }
     }
-    else if (id > 0x100)
+    else if (id > 0x13E)
     {
         return NULL;
     }
@@ -1416,7 +1417,7 @@ void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const 
 {
     Block* minedBlock = state->getBlock();
 
-    if (minedBlock != byId(63) && minedBlock != byId(64) && minedBlock != byId(65))
+    if (minedBlock != Blocks::wheat && minedBlock != Blocks::carrots && minedBlock != Blocks::potatoes)
     {
         player->awardStat(Stats::blockMinedStats.data[getId(this)], GenericStats::param_blocksMined(state, 1));
     }

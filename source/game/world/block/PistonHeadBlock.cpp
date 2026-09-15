@@ -97,10 +97,17 @@ const AABB* PistonHeadBlock::getShape(const BlockState* state, LevelSource*, con
 
 const AABB* PistonHeadBlock::getArmShape(const BlockState* state)
 {
-    const Direction* facing = state->getValue(FACING);
     bool shortened = state->getValue(SHORT);
-    int index = facing->get3DDataValue();
-    return pistonArmShapes[index * 2 + (shortened ? 1 : 0)];
+    const Direction* facing = state->getValue(FACING);
+    switch (facing->get3DDataValue())
+    {
+    case 1: return pistonArmShapes[shortened ? 6 : 0];
+    case 2: return pistonArmShapes[shortened ? 9 : 3];
+    case 3: return pistonArmShapes[shortened ? 8 : 2];
+    case 4: return pistonArmShapes[shortened ? 11 : 5];
+    case 5: return pistonArmShapes[shortened ? 10 : 4];
+    default: return pistonArmShapes[shortened ? 7 : 1];
+    }
 }
 
 void PistonHeadBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos,

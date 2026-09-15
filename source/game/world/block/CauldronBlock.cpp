@@ -73,7 +73,16 @@ bool CauldronBlock::isCubeShaped(const BlockState*)
 void CauldronBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                  const boost::shared_ptr<Entity>& entity)
 {
-    Block::entityInside(level, pos, state, entity);
+    int waterLevel = convertBlockStateToLegacyData(state);
+    float waterHeight = ((float)(waterLevel * 2) + 5.0f) * 0.0625f;
+    if (!level->mIsClientSide && entity->isOnFire() && 0 < waterLevel)
+    {
+        if (entity->mBoundingBox->mMinY <= (double)(waterHeight + (float)pos.y))
+        {
+            entity->clearFire();
+            setWaterLevel(level, pos, state, waterLevel - 1);
+        }
+    }
 }
 
 bool CauldronBlock::TestUse()
@@ -92,8 +101,12 @@ void CauldronBlock::useInventory(boost::shared_ptr<Player> player, not_null_ptr<
 
 void CauldronBlock::spawnCauldronEvent(Level* level, const BlockState*, const BlockPos& pos, int event) const
 {
-    if (level != NULL)
-        level->levelEvent(event, pos, 0);
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    if (blockEntity.get() != NULL && blockEntity->GetType() == 0x1000211)
+    {
+        boost::shared_ptr<CauldronBlockEntity> cauldronEntity = boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
+        level->levelEvent(event, pos, cauldronEntity->getColor());
+    }
 }
 
 void CauldronBlock::explodeCauldronContents(Level* level, const BlockState* state, const BlockPos& pos)
@@ -221,7 +234,20 @@ TextureAtlasSprite* CauldronBlock::getTexture(const std::wstring& name)
 }
 EBlockRenderShape CauldronBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)24; }
 void CauldronBlock::spawnPotionParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2000, BlockPos((int)x, (int)y, (int)z), color); }
-void CauldronBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random) { if (level != NULL && random != NULL && random->nextInt(10) == 0) level->levelEvent(2000, pos, 0); }
+void CauldronBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
+{
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    if (blockEntity.get() != NULL && blockEntity->GetType() == 0x1000211)
+    {
+        int waterLevel = convertBlockStateToLegacyData(state);
+        boost::shared_ptr<CauldronBlockEntity> cauldronEntity = boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
+        if (0 < waterLevel && cauldronEntity->getPotionId() != L"")
+        {
+            int color = cauldronEntity->getPotionColor();
+            spawnPotionParticles(level, (double)pos.x, (double)pos.y, (double)pos.z, random, color, 1);
+        }
+    }
+}
 void CauldronBlock::spawnSplashParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2001, BlockPos((int)x, (int)y, (int)z), color); }
 void CauldronBlock::spawnBubbleParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2002, BlockPos((int)x, (int)y, (int)z), color); }
 void CauldronBlock::spawnExplosionParticles(Level* level, double x, double y, double z, Random*, int color, int count) { if (level != NULL) level->levelEvent(count + 2003, BlockPos((int)x, (int)y, (int)z), color); }

@@ -79,21 +79,24 @@ const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* s
                                                               LevelSource* levelSource,
                                                               const BlockPos& pos)
 {
-    if (state->getValue(AGE) != 7)
-        return state;
+    TypedBoxed<const Direction*> defaultFacing(Direction::UP);
+    const BlockState* result = state->setBoxedValue(FACING, &defaultFacing);
 
-    const Direction* directions[] = { Direction::NORTH, Direction::SOUTH,
-                                      Direction::WEST, Direction::EAST };
-    for (int i = 0; i < 4; ++i)
+    if (state->getValue(AGE) == 7)
     {
-        BlockPos neighbourPos = pos.relative(directions[i]);
-        if (levelSource->getBlockState(neighbourPos)->getBlock() == mFruitType)
+        const Direction* directions[] = { Direction::NORTH, Direction::SOUTH,
+                                          Direction::WEST, Direction::EAST };
+        for (int i = 0; i < 4; ++i)
         {
-            TypedBoxed<const Direction*> facing(directions[i]);
-            return state->setBoxedValue(FACING, &facing);
+            BlockPos neighbourPos = pos.relative(directions[i]);
+            if (levelSource->getBlockState(neighbourPos)->getBlock() == mFruitType)
+            {
+                TypedBoxed<const Direction*> facing(directions[i]);
+                return state->setBoxedValue(FACING, &facing);
+            }
         }
     }
-    return state;
+    return result;
 }
 
 bool StemBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)

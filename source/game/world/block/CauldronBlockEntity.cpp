@@ -68,7 +68,7 @@ bool CauldronBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i] || !mItems[i]->isEmpty())
+        if (!mItems[i]->isEmpty())
         {
             return false;
         }
@@ -202,9 +202,9 @@ int CauldronBlockEntity::getMixDyeColor()
 void CauldronBlockEntity::mixDyes()
 {
     setCustomColor(getMixDyeColor());
-    for (int slot = 2; slot <= 3; ++slot)
+    for (unsigned int slot = 2; slot < 10; ++slot)
     {
-        removeItemNoUpdate(slot);
+        setItem(slot, ItemInstance::EMPTY);
     }
 }
 
@@ -251,7 +251,7 @@ void CauldronBlockEntity::tick() { BlockEntity::tick(); }
 
 boost::shared_ptr<Packet> CauldronBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 12, 0, getUpdateTag()));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 12, 0, getUpdateTag()));
 }
 
 CompoundTag* CauldronBlockEntity::getUpdateTag()
@@ -269,7 +269,11 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
     result->mPotionType = mPotionType;
     result->mHasCustomColor = mHasCustomColor;
     result->mCustomColor = mCustomColor;
-    result->mItems = mItems;
+    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    for (unsigned int i = 0; i < mItems.size(); ++i)
+    {
+        result->mItems[i] = mItems[i]->copy();
+    }
     return result;
 }
 

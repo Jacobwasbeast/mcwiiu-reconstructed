@@ -24,7 +24,7 @@ MobSpawnerBlock::~MobSpawnerBlock()
 boost::shared_ptr<BlockEntity> MobSpawnerBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BlockEntity> blockEntity(MobSpawnerBlockEntity::create());
-    blockEntity->setLevelForLoading(level);
+    blockEntity->setLevel(level);
     return blockEntity;
 }
 

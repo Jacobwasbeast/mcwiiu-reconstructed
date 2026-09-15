@@ -29,9 +29,11 @@ EndPortalBlock::~EndPortalBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int)
+boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int data)
 {
-    return boost::shared_ptr<TheEndPortalBlockEntity>(new TheEndPortalBlockEntity());
+    boost::shared_ptr<TheEndPortalBlockEntity> entity(new TheEndPortalBlockEntity());
+    entity->setData(data);
+    return entity;
 }
 
 const AABB* EndPortalBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)

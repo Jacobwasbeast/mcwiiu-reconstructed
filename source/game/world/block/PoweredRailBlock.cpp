@@ -200,32 +200,81 @@ int PoweredRailBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* PoweredRailBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    int shape = convertBlockStateToLegacyData(state);
-    int data = shape & 7;
-    static const int clockwise90[10] = { 1, 0, 3, 2, 5, 4, 8, 9, 7, 6 };
-    static const int clockwise180[10] = { 0, 1, 5, 4, 3, 2, 9, 8, 6, 7 };
-    static const int counterClockwise90[10] = { 1, 0, 4, 5, 2, 3, 9, 8, 6, 7 };
-    switch (rotation->getType())
+    Rotation::eTYPE type = rotation->getType();
+    if (type == Rotation::eTYPE_None)
+        return state;
+    int data = state->getValue(gPoweredRailShapeProperty)->getData();
+    if (type == Rotation::eTYPE_Clockwise180)
     {
-    case Rotation::eTYPE_Clockwise90: data = clockwise90[data]; break;
-    case Rotation::eTYPE_Clockwise180: data = clockwise180[data]; break;
-    case Rotation::eTYPE_CounterClockwise90: data = counterClockwise90[data]; break;
-    default: break;
+        switch (data)
+        {
+        case 2: data = 3; break;
+        case 3: data = 2; break;
+        case 4: data = 5; break;
+        case 5: data = 4; break;
+        case 6: data = 8; break;
+        case 7: data = 9; break;
+        case 8: data = 6; break;
+        case 9: data = 7; break;
+        default: data = (data == 0) ? 1 : 0; break;
+        }
     }
-    return poweredRailState(state, gPoweredRailShapeProperty, gPoweredRailShapes[data], (shape & 8) != 0);
+    else
+    {
+        switch (data)
+        {
+        case 0: data = 1; break;
+        case 1: data = 0; break;
+        case 2: data = 4; break;
+        case 3: data = 5; break;
+        case 4: data = 3; break;
+        case 5: data = 2; break;
+        case 6: data = 9; break;
+        case 7: data = 6; break;
+        case 8: data = 7; break;
+        case 9: data = 8; break;
+        default: break;
+        }
+    }
+    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(gPoweredRailShapes[data]);
+    return state->setBoxedValue(gPoweredRailShapeProperty, &shapeValue);
 }
 
 const BlockState* PoweredRailBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    int shape = convertBlockStateToLegacyData(state);
-    int data = shape & 7;
-    static const int leftRight[10] = { 0, 1, 4, 5, 2, 3, 6, 9, 8, 7 };
-    static const int frontBack[10] = { 0, 1, 5, 4, 3, 2, 9, 8, 7, 6 };
+    int data = state->getValue(gPoweredRailShapeProperty)->getData();
     if (mirror->getType() == Mirror::eTYPE_LeftRight)
-        data = leftRight[data];
+    {
+        switch (data)
+        {
+        case 4: data = 5; break;
+        case 5: data = 4; break;
+        case 6: data = 9; break;
+        case 7: data = 8; break;
+        case 8: data = 7; break;
+        case 9: data = 6; break;
+        default: return Block::mirror(state, mirror);
+        }
+    }
     else if (mirror->getType() == Mirror::eTYPE_FrontBack)
-        data = frontBack[data];
-    return poweredRailState(state, gPoweredRailShapeProperty, gPoweredRailShapes[data], (shape & 8) != 0);
+    {
+        switch (data)
+        {
+        case 2: data = 3; break;
+        case 3: data = 2; break;
+        case 6: data = 7; break;
+        case 7: data = 6; break;
+        case 8: data = 9; break;
+        case 9: data = 8; break;
+        default: return Block::mirror(state, mirror);
+        }
+    }
+    else
+    {
+        return Block::mirror(state, mirror);
+    }
+    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(gPoweredRailShapes[data]);
+    return state->setBoxedValue(gPoweredRailShapeProperty, &shapeValue);
 }
 
 BlockStateDefinition* PoweredRailBlock::createBlockStateDefinition()

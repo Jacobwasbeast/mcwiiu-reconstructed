@@ -114,13 +114,32 @@ bool FenceGateBlock::use(Level* level, const BlockPos& pos, const BlockState* st
                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
     bool open = state->getValue(OPEN);
-    TypedBoxed<bool> value(!open);
     if (!clientSide)
     {
-        level->setBlock(pos, state->setBoxedValue(OPEN, &value)->setBoxedValue(POWERED, &value), 11, false);
+        const BlockState* newState;
+        if (!open)
+        {
+            Entity* entity = (Entity*)player.get();
+            const Direction* facing = Direction::fromYRot((double)entity->mYRot);
+            if (state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) == facing->getOpposite())
+            {
+                TypedBoxed<const Direction*> facingValue(facing);
+                state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
+            }
+            TypedBoxed<bool> value(true);
+            newState = state->setBoxedValue(OPEN, &value);
+        }
+        else
+        {
+            TypedBoxed<bool> value(false);
+            newState = state->setBoxedValue(OPEN, &value);
+        }
+        level->setBlock(pos, newState, 11, false);
+        level->levelEvent(player, newState->getValue(OPEN) ? 1008 : 1014, pos, 0);
+        return true;
     }
-    level->levelEvent(player, open ? 1011 : 1009, pos, 0);
-    return true;
+    level->levelEvent(player, open ? 1008 : 1014, pos, 0);
+    return false;
 }
 
 void FenceGateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)

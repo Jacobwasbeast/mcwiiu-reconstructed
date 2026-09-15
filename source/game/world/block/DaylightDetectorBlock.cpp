@@ -1,6 +1,7 @@
 #include "game/world/block/DaylightDetectorBlock.hpp"
 
 #include "game/core/Boxed.hpp"
+#include "game/core/GameMode.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mth.hpp"
 #include "game/item/Item.hpp"
@@ -19,6 +20,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/util/Math.hpp"
 
 static Property* gDaylightDetectorPower = IntegerProperty::create(L"power", 0, 15);
@@ -157,6 +159,13 @@ int DaylightDetectorBlock::convertBlockStateToLegacyData(const BlockState* state
 
 unsigned int DaylightDetectorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
+    if (tooltipData.m_bUseItem || tooltipData.m_bCanPlace)
+    {
+        if (!tooltipData.m_pPlayer->Player::GetGameMode()->isAdventure())
+        {
+            return 0xfe985704u;
+        }
+    }
     return Block::GetInteractTooltip(tooltipData);
 }
 

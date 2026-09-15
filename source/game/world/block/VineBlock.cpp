@@ -126,8 +126,28 @@ unsigned char VineBlock::countFaces(const BlockState* state)
 
 bool VineBlock::updateSurvival(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (countFaces(state) == 0) return false;
-    level->setBlock(pos, state, 2, false);
+    const BlockState* newState = state;
+    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    for (unsigned int i = 0; i < directions.length; i++)
+    {
+        const Direction* direction = directions.data[i];
+        AbstractProperty<bool>* property = getPropertyForFace(direction);
+        if (newState->getValue(property))
+        {
+            if (!canAttachTo(level, pos, direction->getOpposite()))
+            {
+                const BlockState* aboveState = level->getBlockState(pos.above());
+                if (aboveState->getBlock() == this && aboveState->getValue(property))
+                {
+                    continue;
+                }
+                TypedBoxed<bool> value(false);
+                newState = newState->setBoxedValue(property, &value);
+            }
+        }
+    }
+    if (countFaces(newState) == 0) return false;
+    if (state != newState) level->setBlock(pos, newState, 2, false);
     return true;
 }
 
@@ -170,7 +190,7 @@ void VineBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, co
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
-        popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(this, 1, 0)));
+        popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::vine, 1, 0)));
         return;
     }
     Block::playerDestroy(level, player, pos, state, blockEntity, tool);
@@ -206,17 +226,68 @@ BlockStateDefinition* VineBlock::createBlockStateDefinition()
 
 const BlockState* VineBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    bool up = state->getValue(UP); bool north = state->getValue(NORTH); bool south = state->getValue(SOUTH); bool west = state->getValue(WEST); bool east = state->getValue(EAST);
-    if (rotation->getType() == Rotation::eTYPE_Clockwise90 || rotation->getType() == Rotation::eTYPE_CounterClockwise90) { bool old = north; north = south; south = old; old = west; west = east; east = old; }
-    else if (rotation->getType() == Rotation::eTYPE_Clockwise180) { bool old = north; north = south; south = old; old = west; west = east; east = old; }
-    TypedBoxed<bool> value(up); const BlockState* result = state->setBoxedValue(UP, &value);
-    value = TypedBoxed<bool>(north); result = result->setBoxedValue(NORTH, &value);
-    value = TypedBoxed<bool>(south); result = result->setBoxedValue(SOUTH, &value);
-    value = TypedBoxed<bool>(west); result = result->setBoxedValue(WEST, &value);
-    value = TypedBoxed<bool>(east); return result->setBoxedValue(EAST, &value);
+    bool north = state->getValue(NORTH);
+    bool south = state->getValue(SOUTH);
+    bool west = state->getValue(WEST);
+    bool east = state->getValue(EAST);
+    if (rotation->getType() == Rotation::eTYPE_Clockwise90)
+    {
+        TypedBoxed<bool> value(north);
+        const BlockState* result = state->setBoxedValue(EAST, &value);
+        value = TypedBoxed<bool>(east);
+        result = result->setBoxedValue(SOUTH, &value);
+        value = TypedBoxed<bool>(south);
+        result = result->setBoxedValue(WEST, &value);
+        value = TypedBoxed<bool>(west);
+        return result->setBoxedValue(NORTH, &value);
+    }
+    if (rotation->getType() == Rotation::eTYPE_Clockwise180)
+    {
+        TypedBoxed<bool> value(west);
+        const BlockState* result = state->setBoxedValue(EAST, &value);
+        value = TypedBoxed<bool>(north);
+        result = result->setBoxedValue(SOUTH, &value);
+        value = TypedBoxed<bool>(east);
+        result = result->setBoxedValue(WEST, &value);
+        value = TypedBoxed<bool>(south);
+        return result->setBoxedValue(NORTH, &value);
+    }
+    if (rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    {
+        TypedBoxed<bool> value(south);
+        const BlockState* result = state->setBoxedValue(EAST, &value);
+        value = TypedBoxed<bool>(west);
+        result = result->setBoxedValue(SOUTH, &value);
+        value = TypedBoxed<bool>(north);
+        result = result->setBoxedValue(WEST, &value);
+        value = TypedBoxed<bool>(east);
+        return result->setBoxedValue(NORTH, &value);
+    }
+    return state;
 }
 
-const BlockState* VineBlock::mirror(const BlockState* state, Mirror* mirror) { return rotate(state, mirror->getRotation(Direction::NORTH)); }
+const BlockState* VineBlock::mirror(const BlockState* state, Mirror* mirror)
+{
+    if (mirror->getType() == Mirror::eTYPE_LeftRight)
+    {
+        bool west = state->getValue(WEST);
+        bool east = state->getValue(EAST);
+        TypedBoxed<bool> value(west);
+        const BlockState* result = state->setBoxedValue(EAST, &value);
+        value = TypedBoxed<bool>(east);
+        return result->setBoxedValue(WEST, &value);
+    }
+    if (mirror->getType() == Mirror::eTYPE_FrontBack)
+    {
+        bool north = state->getValue(NORTH);
+        bool south = state->getValue(SOUTH);
+        TypedBoxed<bool> value(north);
+        const BlockState* result = state->setBoxedValue(SOUTH, &value);
+        value = TypedBoxed<bool>(south);
+        return result->setBoxedValue(NORTH, &value);
+    }
+    return Block::mirror(state, mirror);
+}
 EBlockFaceShape VineBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return (EBlockFaceShape)8; }
 EBlockRenderShape VineBlock::getRenderShape(const BlockState*) { return (EBlockRenderShape)20; }
 bool VineBlock::shouldBlockTick(Level*, const BlockPos&, const BlockState*) { return !Minecraft::InMiniGame((EMiniGameId)15, true); }

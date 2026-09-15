@@ -130,13 +130,9 @@ InteractionObject::NameData EnderChestBlockEntity::GetNetworkNameData()
 
 boost::shared_ptr<BlockEntity> EnderChestBlockEntity::clone()
 {
-    boost::shared_ptr<EnderChestBlockEntity> copy(new EnderChestBlockEntity());
-    copy->mOpen = mOpen;
-    copy->mOpenOld = mOpenOld;
-    copy->mOpenCount = mOpenCount;
-    copy->mTickCount = mTickCount;
-    copy->BlockEntity::operator=(*this);
-    return copy;
+    boost::shared_ptr<BlockEntity> result(new EnderChestBlockEntity());
+    BlockEntity::clone(result);
+    return result;
 }
 
 unsigned long long EnderChestBlockEntity::GetType()

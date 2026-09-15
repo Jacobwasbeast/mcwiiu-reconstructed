@@ -27,10 +27,10 @@ BeaconBlock::~BeaconBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> BeaconBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> BeaconBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BeaconBlockEntity> entity(new BeaconBlockEntity());
-    entity->setData(data);
+    entity->setLevel(level);
     return entity;
 }
 

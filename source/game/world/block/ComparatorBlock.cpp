@@ -4,6 +4,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Mirror.hpp"
@@ -141,8 +142,14 @@ boost::shared_ptr<ItemFrame> ComparatorBlock::getItemFrame(Level* level, const D
     AABB* box = AABB::newTemp(pos);
     EntitySelector selector(direction);
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(ItemFrame), box, &selector, false);
-    if (entities == NULL || entities->size() != 1) return boost::shared_ptr<ItemFrame>();
-    return boost::dynamic_pointer_cast<ItemFrame>(entities->at(0));
+    if (entities->size() != 1)
+    {
+        delete entities;
+        return boost::shared_ptr<ItemFrame>();
+    }
+    boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(entities->at(0));
+    delete entities;
+    return frame;
 }
 
 int ComparatorBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockState* state)
@@ -174,7 +181,10 @@ bool ComparatorBlock::use(Level* level, const BlockPos& pos, const BlockState* s
 void ComparatorBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, const BlockState* state)
 {
     if (level->isBlockToBeTickedAt(pos, this)) return;
-    if (shouldTurnOn(level, pos, state) != mOn) level->addToTickNextTick(pos, this, getTurnOnDelay(state), shouldPrioritize(level, pos, state) ? -3 : -2);
+    int newOutput = calculateOutputSignal(level, pos, state);
+    int oldOutput = getOutputSignal(level, pos, state);
+    if (newOutput == oldOutput && isOn(state) == shouldTurnOn(level, pos, state)) return;
+    level->addToTickNextTick(pos, this, getTurnOnDelay(state), shouldPrioritize(level, pos, state) ? -1 : 0);
 }
 
 void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state)
@@ -184,7 +194,25 @@ void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, cons
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<ComparatorBlockEntity> comparator = boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
     if (comparator) comparator->setOutputSignal(output);
-    if (output != oldOutput) level->blockUpdated(pos, this, false);
+    if (oldOutput == output && state->getValue(sModeProperty) != sSubtractMode) return;
+
+    bool shouldOn = shouldTurnOn(level, pos, state);
+    bool currentOn = isOn(state);
+    int flags = g_pApp->GetGameHostOption(static_cast<eGameHostOption>(0x1f)) ? 0x24 : 2;
+    if (!currentOn)
+    {
+        if (shouldOn)
+        {
+            TypedBoxed<bool> powered(true);
+            level->setBlock(pos, state->setBoxedValue(sPoweredProperty, &powered), flags, false);
+        }
+    }
+    else if (!shouldOn)
+    {
+        TypedBoxed<bool> powered(false);
+        level->setBlock(pos, state->setBoxedValue(sPoweredProperty, &powered), flags, false);
+    }
+    updateNeighborsInFront(level, pos, state);
 }
 
 void ComparatorBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
@@ -207,7 +235,13 @@ void ComparatorBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
 
 bool ComparatorBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId, int eventParam)
 {
-    return Block::triggerEvent(state, level, pos, eventId, eventParam);
+    Block::triggerEvent(state, level, pos, eventId, eventParam);
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    if (!blockEntity)
+    {
+        return false;
+    }
+    return blockEntity->triggerEvent(eventId, eventParam);
 }
 
 const BlockState* ComparatorBlock::getBlockState(int data)
@@ -221,8 +255,8 @@ const BlockState* ComparatorBlock::getBlockState(int data)
 int ComparatorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
+    if (state->getValue(sPoweredProperty)) data |= 8;
     if (state->getValue(sModeProperty) == sSubtractMode) data |= 4;
-    if (mOn) data |= 8;
     return data;
 }
 
@@ -256,4 +290,19 @@ const BlockState* ComparatorBlock::getStateForPlacement(Level* level, const Bloc
 
 EBlockRenderShape ComparatorBlock::getRenderShape(const BlockState*) { return static_cast<EBlockRenderShape>(37); }
 bool ComparatorBlock::TestUse() { return true; }
-TextureAtlasSprite* ComparatorBlock::getTexture(const Direction* direction, const BlockState* state) { return DiodeBlock::getTexture(direction, state); }
+TextureAtlasSprite* ComparatorBlock::getTexture(const Direction* direction, const BlockState* state)
+{
+    if (direction != Direction::DOWN)
+    {
+        if (direction == Direction::UP)
+        {
+            return mIcon;
+        }
+        return Blocks::stone_slab->getTexture(direction);
+    }
+    if (state->getValue(sPoweredProperty))
+    {
+        return Blocks::redstone_torch->getTexture(direction);
+    }
+    return Blocks::unlit_redstone_torch->getTexture(direction);
+}

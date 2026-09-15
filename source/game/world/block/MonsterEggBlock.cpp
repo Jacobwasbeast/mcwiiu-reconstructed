@@ -193,6 +193,10 @@ TextureAtlasSprite* MonsterEggBlock::getTexture(const Direction* direction, cons
     {
         return Blocks::cobblestone->getTexture(direction);
     }
+    if (variant == &gMonsterEggVariant2)
+    {
+        return Blocks::stonebrick->getTexture(direction);
+    }
     return Blocks::stonebrick->getTexture(direction, Blocks::stonebrick->getBlockState(variant->getData() - 2));
 }
 

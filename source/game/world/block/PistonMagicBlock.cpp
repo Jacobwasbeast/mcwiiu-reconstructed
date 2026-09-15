@@ -66,11 +66,15 @@ void PistonMagicBlock::blockStaticCtor()
 void PistonMagicBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    boost::shared_ptr<PistonMovingBlockEntity> moving = boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity);
-    if (moving)
+    if (boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity))
+    {
+        boost::shared_ptr<PistonMovingBlockEntity> moving = boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity);
         moving->finalTick();
+    }
     else
+    {
         BaseEntityBlock::onRemove(level, pos, state);
+    }
 }
 
 bool PistonMagicBlock::mayPlace(Level*, const BlockPos&)
@@ -125,7 +129,11 @@ boost::shared_ptr<PistonMovingBlockEntity> PistonMagicBlock::getEntity(LevelSour
                                                                         const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> entity = levelSource->getBlockEntity(pos);
-    return boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity);
+    if (boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity))
+    {
+        return boost::dynamic_pointer_cast<PistonMovingBlockEntity>(entity);
+    }
+    return boost::shared_ptr<PistonMovingBlockEntity>();
 }
 
 void PistonMagicBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,

@@ -5,6 +5,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/client/render/ParticleType.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -121,13 +122,15 @@ bool EnderChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, 
 {
     boost::shared_ptr<PlayerEnderChestContainer> inventory = player->getEnderChestInventory();
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (!clientSide && blockEntity && blockEntity->GetType() == 0x1200208ULL
-        && !ChestBlock::isChestBlockedAt(level, pos))
+    if (inventory)
     {
-        boost::shared_ptr<EnderChestBlockEntity> chest =
-            boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
-        inventory->setActiveChest(chest);
-        player->openContainer(inventory);
+        if (blockEntity->GetType() == 0x1200208ULL && !ChestBlock::isChestBlockedAt(level, pos) && !clientSide)
+        {
+            boost::shared_ptr<EnderChestBlockEntity> chest =
+                boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
+            inventory->setActiveChest(chest);
+            player->openContainer(inventory);
+        }
     }
     return true;
 }
@@ -139,12 +142,12 @@ void EnderChestBlock::animateTick(const BlockState*, Level* level, const BlockPo
         double xSign = (double)(random->nextInt(2) * 2 - 1);
         double zSign = (double)(random->nextInt(2) * 2 - 1);
         double x = (double)pos.x + 0.5 + xSign * 0.25;
-        double y = (double)pos.y + 0.5 + (double)random->nextFloat();
+        double y = (double)pos.y + (double)random->nextFloat();
         double z = (double)pos.z + 0.5 + zSign * 0.25;
         double xa = (double)random->nextFloat() * xSign;
         double ya = ((double)random->nextFloat() - 0.5) * 0.125;
         double za = (double)random->nextFloat() * zSign;
-        level->addParticle(ePARTICLE_PORTAL, false, x, y, z, xa, ya, za, arrayWithLength<int>());
+        level->addParticle(PARTICLE_PORTAL, x, y, z, xa, ya, za, arrayWithLength<int>());
     }
 }
 
