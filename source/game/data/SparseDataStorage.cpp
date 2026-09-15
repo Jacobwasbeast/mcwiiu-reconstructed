@@ -126,7 +126,7 @@ unsigned int SparseDataStorage::PlaneOffsets::getValuesInPlane(int plane, char (
                 break;
             }
         }
-        if (!found && count < 16)
+        if (!found)
         {
             values[count++] = (char)value;
         }

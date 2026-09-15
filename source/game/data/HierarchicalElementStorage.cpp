@@ -183,11 +183,6 @@ void HierarchicalElementStorage::SubChunkHeader::setType(unsigned int section, u
     mSections[section] = (unsigned short)((mSections[section] & (swapBytes(0xFFF) | swapBytes(0x1000))) | swapBytes((unsigned short)((sectionType & 7) << 13)));
 }
 
-void HierarchicalElementStorage::SubChunkHeader::setOffset(unsigned int section, unsigned short offset)
-{
-    mSections[section] = (unsigned short)((mSections[section] & (swapBytes(0xF000))) | swapBytes(offset));
-}
-
 unsigned int HierarchicalElementStorage::SubChunkHeader::getType(unsigned int section)
 {
     return swapBytes(mSections[section]) >> 13;
@@ -2171,11 +2166,6 @@ bool HierarchicalElementStorage::sectionContainsElementData(int x, int y, int z,
 int HierarchicalElementStorage::getAllocatedBytes()
 {
     return mSubChunkCount * SUBCHUNK_PAGE_BYTES;
-}
-
-unsigned char* HierarchicalElementStorage::getAllocatedRawData()
-{
-    return mData;
 }
 
 int HierarchicalElementStorage::getRawData(unsigned char* rawData)

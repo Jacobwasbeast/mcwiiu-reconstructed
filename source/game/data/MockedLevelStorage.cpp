@@ -44,7 +44,7 @@ File MockedLevelStorage::getFolder()
 
 ConsoleSavePath MockedLevelStorage::getDataFile(const std::wstring& name)
 {
-    return ConsoleSavePath(L"none");
+    return ConsoleSavePath(L"");
 }
 
 std::wstring MockedLevelStorage::getLevelId()

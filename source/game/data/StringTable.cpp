@@ -277,18 +277,45 @@ unsigned long long StringTable::copyStringToTable(const std::wstring& key, Strin
 void StringTable::write(DataOutputStream* stream)
 {
     stream->writeInt(2);
-    stream->writeBoolean(m_isLanguageTable);
     stream->writeInt((int)m_languages.size());
+
+    stream->writeBoolean(m_isLanguageTable);
+    if (m_isLanguageTable)
+    {
+        stream->writeInt((int)m_ids.size());
+        for (std::vector<int>::const_iterator id = m_ids.begin(); id != m_ids.end(); ++id)
+            stream->writeInt(*id);
+    }
+    else
+    {
+        stream->writeInt((int)m_keys.size());
+        for (std::vector<std::wstring>::const_iterator key = m_keys.begin(); key != m_keys.end(); ++key)
+            stream->writeUTF(*key);
+    }
+
     boost::unordered_map<std::wstring, _LanguageData>::iterator lang;
     for (lang = m_languages.begin(); lang != m_languages.end(); ++lang)
     {
         stream->writeUTF(lang->first);
-        stream->writeInt((int)lang->second.strings.size());
-        boost::unordered_map<std::wstring, std::wstring>::iterator item;
-        for (item = lang->second.strings.begin(); item != lang->second.strings.end(); ++item)
+        const _LanguageData& data = lang->second;
+        if (m_isLanguageTable)
         {
-            stream->writeUTF(item->first);
-            stream->writeUTF(item->second);
+            stream->writeInt((int)data.stringsById.size());
+            for (boost::unordered_map<int, std::wstring>::const_iterator item = data.stringsById.begin();
+                 item != data.stringsById.end(); ++item)
+            {
+                stream->writeUTF(item->second);
+            }
+        }
+        else
+        {
+            stream->writeInt((int)data.strings.size());
+            for (boost::unordered_map<std::wstring, std::wstring>::const_iterator item = data.strings.begin();
+                 item != data.strings.end(); ++item)
+            {
+                stream->writeUTF(item->first);
+                stream->writeUTF(item->second);
+            }
         }
     }
 }

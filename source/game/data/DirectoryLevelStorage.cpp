@@ -159,11 +159,11 @@ void DirectoryLevelStorage::saveAllCachedData()
     boost::unordered_map<std::wstring, ByteArrayOutputStream*>::iterator it;
     for (it = mCachedData.begin(); it != mCachedData.end(); ++it)
     {
-        if (it->second == 0 || !mSaveFile)
-            continue;
         ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(it->first));
-        output.write(it->second->toByteArray());
+        output.write(it->second->toByteArray(), 0, it->second->mCount);
+        delete it->second;
     }
+    mCachedData.clear();
 }
 
 void DirectoryLevelStorage::flushSaveFile(bool force)

@@ -35,7 +35,7 @@ LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, 
 
 std::wstring DirectoryLevelStorageSource::getName()
 {
-    return std::wstring(L"Old Format");
+    return std::wstring(L"Old_Format");
 }
 
 std::vector<LevelSummary*>* DirectoryLevelStorageSource::getLevelList()

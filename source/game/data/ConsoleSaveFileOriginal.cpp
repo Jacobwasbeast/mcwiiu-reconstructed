@@ -145,6 +145,7 @@ bool ConsoleSaveFileOriginal::readFile(FileEntry* entry, void* buffer, unsigned 
 void ConsoleSaveFileOriginal::Flush(bool, bool)
 {
     LockSaveAccess();
+    finalizeWrite();
     unsigned int fileSize = mFileHeader.GetFileSize();
     unsigned int compressedSize = fileSize + 8;
     unsigned char* compressedData = new unsigned char[compressedSize];
@@ -155,7 +156,6 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
     g_pApp->GetSaveThumbnail(NULL, NULL);
     fjGetSaveThumbnailData(thumbnail, sizeof(thumbnail));
     delete[] compressedData;
-    finalizeWrite();
     ReleaseSaveAccess();
 }
 
