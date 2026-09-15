@@ -6,13 +6,15 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundSetCreativeModeSlotPacket::ServerboundSetCreativeModeSlotPacket()
-    : slot(0), item(new ItemInstance())
+    : slot(0)
 {
+    item = ItemInstance::EMPTY;
 }
 
 ServerboundSetCreativeModeSlotPacket::ServerboundSetCreativeModeSlotPacket(int slot, not_null_ptr<ItemInstance> item)
-    : slot(slot), item(item)
+    : slot(slot)
 {
+    this->item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
 ServerboundSetCreativeModeSlotPacket::~ServerboundSetCreativeModeSlotPacket()

@@ -122,15 +122,13 @@ void ServerConnection::tick()
 
     std::vector<boost::shared_ptr<ServerConnectionListener> >::iterator listenerIterator;
     for (listenerIterator = listeners.begin(); listenerIterator != listeners.end(); ++listenerIterator) {
-        if (*listenerIterator) {
-            (*listenerIterator)->tick();
-        }
+        (*listenerIterator)->tick();
     }
 
     EnterCriticalSection(&mCriticalSection);
     listenerIterator = mListeners.begin();
     while (listenerIterator != mListeners.end()) {
-        if (*listenerIterator && (*listenerIterator)->isDisconnected()) {
+        if ((*listenerIterator)->isDisconnected()) {
             listenerIterator = mListeners.erase(listenerIterator);
         } else {
             ++listenerIterator;
@@ -140,13 +138,9 @@ void ServerConnection::tick()
 
     std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator playerIterator;
     for (playerIterator = mPlayers.begin(); playerIterator != mPlayers.end(); ++playerIterator) {
-        if (*playerIterator) {
-            (*playerIterator)->tick();
-            Connection* connection = (*playerIterator)->getConnection();
-            if (connection) {
-                connection->flush();
-            }
-        }
+        (*playerIterator)->tick();
+        Connection* connection = (*playerIterator)->getConnection();
+        connection->flush();
     }
 }
 

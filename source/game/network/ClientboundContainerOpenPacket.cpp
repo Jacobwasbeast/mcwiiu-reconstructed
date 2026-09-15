@@ -134,7 +134,13 @@ std::wstring ClientboundContainerOpenPacket::getTitle()
     {
         return L"";
     }
-    return mNameData.name;
+    if ((!g_pApp->IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
+        g_pApp->IsUUIDLocal(mNameData.ownerUuid) ||
+        (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
+    {
+        return mNameData.name;
+    }
+    return L"";
 }
 
 int ClientboundContainerOpenPacket::getSize()

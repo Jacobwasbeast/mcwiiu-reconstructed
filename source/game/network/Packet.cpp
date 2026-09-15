@@ -2,6 +2,7 @@
 
 #include <sstream>
 
+#include <boost/assert.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
@@ -313,6 +314,7 @@ boost::shared_ptr<Packet> Packet::getPacket(int packetId)
 
 bool Packet::canSendToAnyClient(boost::shared_ptr<Packet> packet)
 {
+    BOOST_ASSERT(packet);
     return sSendToAnyClientPacketIds.count(packet->getPacketId()) != 0;
 }
 
@@ -342,6 +344,7 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
     }
 
     boost::shared_ptr<Packet> packet = getPacket(packetId);
+    BOOST_ASSERT(packet);
     packet->read(input);
     ++packetsRead;
 
@@ -350,6 +353,7 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
 
 void Packet::writePacket(boost::shared_ptr<Packet> packet, DataOutputStream* output, bool isServer, unsigned int& packetsWritten)
 {
+    BOOST_ASSERT(packet);
     output->write(packet->getPacketId());
     packet->write(output);
     ++packetsWritten;

@@ -20,13 +20,14 @@ ClientboundBlockCollectionDestructionPacket::~ClientboundBlockCollectionDestruct
 
 void ClientboundBlockCollectionDestructionPacket::read(DataInputStream* input)
 {
-    sourceId = input->readVarInt();
+    sourceId = input->readInt();
     progress = input->readByte();
     int count = input->readVarInt();
     positions.clear();
+    positions.resize(count);
     for (int i = 0; i < count; ++i)
     {
-        positions.push_back(input->readBlockPos());
+        positions[i] = input->readBlockPos();
     }
 }
 

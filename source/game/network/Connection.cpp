@@ -7,8 +7,13 @@
 #include "game/core/ShutdownManager.hpp"
 #include "game/core/Socket.hpp"
 #include "game/core/System.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "game/network/ClientboundKeepAlivePacket.hpp"
 #include "game/network/Packet.hpp"
 #include "game/network/PacketListener.hpp"
+#include "game/network/ServerboundKeepAlivePacket.hpp"
+#include "game/network/ServerboundPlayerActionPacket.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
@@ -129,8 +134,18 @@ uint32_t Connection::writeTick()
     if (m_output == 0 || m_packetOutput == 0) return 0;
     boost::shared_ptr<Packet> packet;
     EnterCriticalSection(&m_queueMutex);
-    if (!m_sendQueue.empty()) { packet = m_sendQueue.front(); m_sendQueue.pop_front(); }
-    else if (!m_delayedQueue.empty()) { packet = m_delayedQueue.front(); m_delayedQueue.pop_front(); }
+    if (!m_sendQueue.empty())
+    {
+        packet = m_sendQueue.front();
+        m_sendQueue.pop_front();
+        m_bytesWritten -= packet->getEstimatedSize() + 1;
+    }
+    else if (!m_delayedQueue.empty())
+    {
+        packet = m_delayedQueue.front();
+        m_delayedQueue.pop_front();
+        m_bytesWritten -= packet->getEstimatedSize() + 1;
+    }
     LeaveCriticalSection(&m_queueMutex);
     if (packet == 0) return 0;
     Packet::writePacket(packet, m_output, m_listener->isServerPacketListener(), m_packetsWritten);
@@ -143,8 +158,14 @@ uint32_t Connection::runWrite(int32_t argument)
     Connection* connection = (Connection*)(intptr_t)argument;
     if (connection != 0) {
         Compression::CreateNewThreadStorage();
-        while (connection->m_running && ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite)) {
-            connection->writeTick();
+        while (connection->m_running) {
+            if (!ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite))
+                break;
+            uint64_t start = System::processTimeInMilliSecs();
+            uint32_t sent;
+            do {
+                sent = connection->writeTick();
+            } while (sent != 0 && (System::processTimeInMilliSecs() - start) < 200);
             connection->m_writeEvent->WaitForSignal(100);
             if (connection->m_output != 0)
                 connection->m_output->flush();
@@ -222,16 +243,70 @@ void Connection::close(DisconnectPacket::eDisconnectReason reason)
 
 void Connection::tick()
 {
-    if (m_compressionError) close(DisconnectPacket::eDisconnectReason_BadPacket);
+    if (m_compressionError) close(DisconnectPacket::eDisconnectReason_NetworkError);
     if (m_bytesWritten > 0x100000) close(DisconnectPacket::eDisconnectReason_SendQueueOverflow);
+
     EnterCriticalSection(&m_readMutex);
-    if (m_receivedPackets.empty()) ++m_idleTicks; else m_idleTicks = 0;
-    while (!m_receivedPackets.empty()) {
+    bool receivedEmpty = m_receivedPackets.empty();
+    LeaveCriticalSection(&m_readMutex);
+
+    if (receivedEmpty)
+    {
+        if (m_idleTicks++ == 0x4b0)
+            close(DisconnectPacket::eDisconnectReason_TimedOut);
+    }
+    else
+    {
+        m_idleTicks = 0;
+    }
+
+    if (System::processTimeInMilliSecs() - m_lastSendTime > 1000)
+    {
+        boost::shared_ptr<Packet> keepAlive;
+        if (m_listener->isServerPacketListener())
+            keepAlive = boost::shared_ptr<Packet>(new ClientboundKeepAlivePacket());
+        else
+            keepAlive = boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket());
+        send(keepAlive);
+    }
+
+    std::deque<boost::shared_ptr<Packet> > toHandle;
+    EnterCriticalSection(&m_readMutex);
+    int budget = 1000;
+    while (!CGameNetworkManager::sInstance.IsLeavingGame() &&
+           CGameNetworkManager::sInstance.IsInSession() &&
+           !m_receivedPackets.empty() &&
+           budget-- > 0)
+    {
         boost::shared_ptr<Packet> packet = m_receivedPackets.front();
+        if (!m_closing)
+        {
+            if (packet->getPacketId() == 14)
+            {
+                boost::shared_ptr<ServerboundPlayerActionPacket> action =
+                    boost::static_pointer_cast<ServerboundPlayerActionPacket>(packet);
+                ServerboundPlayerActionPacket::Action a = action->getAction();
+                if (a == ServerboundPlayerActionPacket::DROP_ALL_ITEMS || a == ServerboundPlayerActionPacket::DROP_ITEM)
+                {
+                    toHandle.push_front(packet);
+                    m_receivedPackets.pop_front();
+                    continue;
+                }
+            }
+            toHandle.push_back(packet);
+        }
         m_receivedPackets.pop_front();
-        if (packet != 0) packet->handle(m_listener);
     }
     LeaveCriticalSection(&m_readMutex);
+
+    for (unsigned int i = 0; i < toHandle.size(); ++i)
+    {
+        boost::shared_ptr<Packet> packet = toHandle[i];
+        PIXBeginNamedEvent(0.0f, "Handling packet %d\n", packet->getPacketId());
+        packet->handle(m_listener);
+        PIXEndNamedEvent();
+    }
+
     flush();
 }
 

@@ -36,11 +36,9 @@ ServerConnectionListener::~ServerConnectionListener()
 
 void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
-    if (m_connection != 0)
-    {
-        m_connection->send(boost::shared_ptr<Packet>(new DisconnectPacket(reason)));
-        m_connection->sendAndQuit();
-    }
+    boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
+    m_connection->send(packet);
+    m_connection->sendAndQuit();
     m_disconnected = true;
 }
 
@@ -210,10 +208,8 @@ void ServerConnectionListener::handleGetInfo(boost::shared_ptr<GetInfoPacket>)
 {
     boost::shared_ptr<Packet> packet(new DisconnectPacket(
         static_cast<DisconnectPacket::eDisconnectReason>(0x0D)));
-    if (m_connection != 0)
-        m_connection->send(packet);
-    if (m_connection != 0)
-        m_connection->sendAndQuit();
+    m_connection->send(packet);
+    m_connection->sendAndQuit();
     m_disconnected = true;
 }
 

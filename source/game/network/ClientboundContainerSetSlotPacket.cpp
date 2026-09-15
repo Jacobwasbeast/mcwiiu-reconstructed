@@ -7,18 +7,16 @@
 ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket()
     : containerId(0)
     , slot(0)
-    , item(ItemInstance::EMPTY)
 {
+    item = ItemInstance::EMPTY;
 }
 
 ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket(int containerId, int slot,
                                                                        not_null_ptr<ItemInstance> item)
     : containerId(containerId)
     , slot(slot)
-    , item(item)
 {
-    if (!item->isEmpty())
-        this->item = item->copy_not_shared();
+    this->item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
 ClientboundContainerSetSlotPacket::~ClientboundContainerSetSlotPacket()

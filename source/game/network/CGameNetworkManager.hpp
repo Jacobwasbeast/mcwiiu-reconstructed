@@ -35,7 +35,7 @@ public:
     bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const FriendPresence* presence);
     bool SetLocalGame(bool localGame);
     static int JoinFromInvite_SignInReturned(void* data, bool result, int error);
-    bool HandleInviteWhenInMenus(int userIndex, const FriendPresence* presence);
+    void HandleInviteWhenInMenus(int userIndex, const FriendPresence* presence);
     void ProcessInvite(unsigned int userIndex, unsigned int flags, FriendPresence* presence);
     void GameInviteReceived(int userIndex, FriendPresence* presence);
     bool TickInvitePending();
@@ -155,20 +155,27 @@ public:
     std::wstring GetOnlineName(int userIndex);
 
 private:
-    C4JEventImpl* m_serverStoppedEvent;
+    unsigned char m_unknown00[4];
     C4JEventImpl* m_serverReadyEvent;
-    CPlatformNetworkManager* m_platform;
+    bool m_initialised;
+    unsigned char m_initialisedPadding[3];
     int m_pendingInviteUserIndex;
     unsigned int m_pendingInviteUserMask;
     FriendPresence* m_pendingInvitePresence;
-    std::vector<ClientPacketListener*> m_connections;
-    OSFastMutex m_connectionsMutex;
-    bool m_initialised;
+    int m_unknown18;
+    unsigned char m_pendingInvitePresenceData[0x28];
+    CPlatformNetworkManager* m_platform;
+    C4JEventImpl* m_serverStoppedEvent;
+    unsigned char m_eventStatePadding[8];
     bool m_networkThreadRunning;
     bool m_disconnectError;
     bool m_unknownState;
     bool m_publicJoinable;
     void* m_inviteInfo;
+    std::vector<ClientPacketListener*> m_connections;
+    unsigned char m_connectionsPadding[4];
+    OSFastMutex m_connectionsMutex;
+    int m_unknown9c;
 };
 
 #endif

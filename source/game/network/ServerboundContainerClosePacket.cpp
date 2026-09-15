@@ -5,7 +5,6 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundContainerClosePacket::ServerboundContainerClosePacket()
-    : mContainerId(0)
 {
 }
 

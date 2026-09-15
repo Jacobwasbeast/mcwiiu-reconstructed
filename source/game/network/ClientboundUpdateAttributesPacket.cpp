@@ -13,6 +13,7 @@ ClientboundUpdateAttributesPacket::AttributeSnapshot::AttributeSnapshot(
 }
 
 ClientboundUpdateAttributesPacket::AttributeSnapshot::~AttributeSnapshot() {
+    for (boost::unordered_set<AttributeModifier*>::iterator it = modifiers.begin(); it != modifiers.end(); ++it) delete *it;
 }
 
 boost::unordered_set<AttributeModifier*>* ClientboundUpdateAttributesPacket::AttributeSnapshot::getModifiers() { return &modifiers; }
@@ -42,12 +43,23 @@ ClientboundUpdateAttributesPacket::~ClientboundUpdateAttributesPacket() {
 }
 
 void ClientboundUpdateAttributesPacket::read(DataInputStream* input) {
-    entityId = input->readVarInt();
-    int count = input->readVarInt();
+    entityId = input->readUnsignedShort();
+    entityType = input->readInt();
+    int count = input->readByte();
     for (int i = 0; i < count; ++i) {
-        eATTRIBUTE_ID id = static_cast<eATTRIBUTE_ID>(input->readVarInt());
+        eATTRIBUTE_ID id = static_cast<eATTRIBUTE_ID>(input->readByte());
         double baseValue = input->readDouble();
-        values.insert(new AttributeSnapshot(id, baseValue, 0));
+        boost::unordered_set<AttributeModifier*> modifiers;
+        int modifierCount = input->readByte();
+        for (int j = 0; j < modifierCount; ++j) {
+            eMODIFIER_ID modifierId = static_cast<eMODIFIER_ID>(input->readByte());
+            double amount = input->readDouble();
+            int operation = input->readByte();
+            modifiers.insert(new AttributeModifier(modifierId, amount, operation));
+        }
+        values.insert(new AttributeSnapshot(id, baseValue, &modifiers));
+        for (boost::unordered_set<AttributeModifier*>::iterator it = modifiers.begin(); it != modifiers.end(); ++it)
+            delete *it;
     }
 }
 

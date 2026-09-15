@@ -35,7 +35,7 @@ void ServerboundClientCommandPacket::write(DataOutputStream* output)
 
 void ServerboundClientCommandPacket::handle(PacketListener* listener)
 {
-    listener->handleClientCommand(shared_from_this());
+    listener->handleClientCommand(boost::dynamic_pointer_cast<ServerboundClientCommandPacket>(shared_from_this()));
 }
 
 int ServerboundClientCommandPacket::getEstimatedSize()
