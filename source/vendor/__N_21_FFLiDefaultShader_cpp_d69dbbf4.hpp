@@ -14,10 +14,6 @@ typedef uint32_t FFLModulateMode;
 typedef uint32_t FFLDrawType;
 typedef uint32_t FFLSpecularMode;
 
-struct FFLiDefaultShaderDrawParam
-{
-    uint32_t value[32];
-};
 struct FFLiDefaultShaderLight { uint32_t value[16]; };
 struct FFLiDefaultShaderMaterial { uint32_t value[14]; };
 struct FFLiDefaultShaderParam
@@ -42,8 +38,8 @@ public:
     static uint8_t ModulateModeToValue(FFLModulateMode mode);
     static void SetupModulateMode(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, FFLModulateMode mode);
     static void SetupModulate(__N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLModulateParam& param);
-    static void SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLiDefaultShaderDrawParam& param);
-    static void ShaderCallbackDraw(void* shader, const FFLiDefaultShaderDrawParam* param);
+    static void SetupMaterial(const __N_21_FFLiDefaultShader_cpp_d69dbbf4* shader, const FFLDrawParam& param);
+    static void ShaderCallbackDraw(void* shader, const FFLDrawParam* param);
     static void ShaderCallbackSetMatrix(void* shader, const _Mat44* matrix);
     static void Identity(float (*matrix)[4]);
     static void InitLightParam(FFLiDefaultShaderLight* param);
@@ -60,7 +56,7 @@ public:
 
     void* m_callbackData;
     _GX2ContextState* m_contextState;
-    void (*m_drawCallback)(void*, const FFLiDefaultShaderDrawParam*);
+    void (*m_drawCallback)(void*, const FFLDrawParam*);
     void (*m_matrixCallback)(void*, const _Mat44*);
     _GX2VertexShader* m_vertexShader;
     _GX2PixelShader* m_pixelShader;
