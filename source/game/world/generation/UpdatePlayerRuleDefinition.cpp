@@ -17,6 +17,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/minigame/EMiniGameId.hpp"
 
 std::string formatstr(const char* format, ...);
 
@@ -182,12 +183,12 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
         x = static_cast<double>(mSpawnPosition->x) + 0.5;
         z = static_cast<double>(mSpawnPosition->z) + 0.5;
 
-        if (Minecraft::InMiniGame(static_cast<EMiniGameId>(3), false))
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
             y = static_cast<double>(mSpawnPosition->y);
         }
-        else if (!Minecraft::InMiniGame(static_cast<EMiniGameId>(0), true)
-                 && !Minecraft::InMiniGame(static_cast<EMiniGameId>(1), true))
+        else if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true)
+                 && !Minecraft::InMiniGame(eMiniGameId_Battle, true))
         {
             y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y) + 0.5
                               + static_cast<double>(player->mBbHeight) * 0.5, z, player);

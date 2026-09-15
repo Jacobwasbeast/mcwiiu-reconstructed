@@ -2,9 +2,6 @@
 
 #include "game/core/IntCache.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
 AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     : Layer(seed)
 {
@@ -20,8 +17,6 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
     int parentWidth = width + 2;
     int parentHeight = height + 2;
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
-
-    PIXBeginNamedEvent(0.0f, "AddIslandLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -114,6 +109,5 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
         }
     }
 
-    PIXEndNamedEvent();
     return area;
 }

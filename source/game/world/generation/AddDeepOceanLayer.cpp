@@ -1,9 +1,7 @@
 #include "game/world/generation/AddDeepOceanLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/world/biome/Biome.hpp"
 
 AddDeepOceanLayer::AddDeepOceanLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     : Layer(seed)
@@ -21,8 +19,6 @@ arrayWithLength<int> AddDeepOceanLayer::getArea(int x, int z, int width, int hei
     int parentHeight = height + 2;
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
 
-    PIXBeginNamedEvent(0.0f, "AddDeepOceanLayer::getArea");
-
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
     for (int i = 0; i < height; i++)
@@ -39,25 +35,25 @@ arrayWithLength<int> AddDeepOceanLayer::getArea(int x, int z, int width, int hei
                 && isShallowOcean(northWest) && isShallowOcean(northEast)
                 && isShallowOcean(southWest) && isShallowOcean(southEast))
             {
-                if (centre == 0)
+                if (centre == Biome::eBiomeIDs_Ocean)
                 {
-                    centre = 24;
+                    centre = Biome::eBiomeIDs_DeepOcean;
                 }
-                else if (centre == 40)
+                else if (centre == Biome::eBiomeIDs_WarmOcean)
                 {
-                    centre = 41;
+                    centre = Biome::eBiomeIDs_DeepWarmOcean;
                 }
-                else if (centre == 42)
+                else if (centre == Biome::eBiomeIDs_LukewarmOcean)
                 {
-                    centre = 43;
+                    centre = Biome::eBiomeIDs_DeepLukewarmOcean;
                 }
-                else if (centre == 44)
+                else if (centre == Biome::eBiomeIDs_ColdOcean)
                 {
-                    centre = 45;
+                    centre = Biome::eBiomeIDs_DeepColdOcean;
                 }
-                else if (centre == 46)
+                else if (centre == Biome::eBiomeIDs_FrozenOcean)
                 {
-                    centre = 47;
+                    centre = Biome::eBiomeIDs_DeepFrozenOcean;
                 }
             }
 
@@ -65,6 +61,5 @@ arrayWithLength<int> AddDeepOceanLayer::getArea(int x, int z, int width, int hei
         }
     }
 
-    PIXEndNamedEvent();
     return area;
 }

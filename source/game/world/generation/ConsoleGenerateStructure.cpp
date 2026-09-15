@@ -189,10 +189,13 @@ EStructurePiece ConsoleGenerateStructure::GetType()
 
 void ConsoleGenerateStructure::addAdditionalSaveData(DataOutputStream* output)
 {
+    (void)output;
 }
 
 void ConsoleGenerateStructure::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
+    (void)input;
+    (void)structureManager;
 }
 
 bool ConsoleGenerateStructure::checkIntersects(const BlockPos& min, const BlockPos& max)

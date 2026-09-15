@@ -15,8 +15,3 @@ CompoundTag* EntityZombieVillagerTypeFix::fix(CompoundTag* tag)
 {
     return tag;
 }
-
-int EntityZombieVillagerTypeFix::getVillagerProfession(int profession)
-{
-    return profession >= 0 && profession < 6 ? profession : -1;
-}

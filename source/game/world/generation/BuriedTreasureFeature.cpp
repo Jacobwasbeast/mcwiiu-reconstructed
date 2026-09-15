@@ -14,6 +14,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
@@ -24,6 +25,10 @@
 static std::vector<Biome*> gBuriedTreasureSpawnBiomes;
 static std::vector<Biome*> gBuriedTreasureAllowedBiomes;
 static FjFeatureBiomeRequirements gBuriedTreasureBiomeRequirements;
+
+static const int BURIED_TREASURE_SALT = 0x100fe9d;
+static const int BURIED_TREASURE_TERRAIN_FEATURE_ID = 10;
+static const unsigned long long CHEST_BLOCK_ENTITY_TYPE = 0x1e00201ULL;
 
 void BuriedTreasureFeature::staticCtor()
 {
@@ -68,7 +73,7 @@ BlockPos* BuriedTreasureFeature::getNearestGeneratedFeature(Level* levelIn,
 {
     level = levelIn;
     return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, 4, 2, 0x100fe9d, true, 100, skipExistingChunks);
+        levelIn, this, pos, 4, 2, BURIED_TREASURE_SALT, true, 100, skipExistingChunks);
 }
 
 StructureStart* BuriedTreasureFeature::createStructureStart(int chunkX, int chunkZ)
@@ -82,12 +87,13 @@ bool BuriedTreasureFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorl
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
         ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random& chunkRandom = *level->getRandomFor(center.x, center.z, 0x100fe9d);
+    Random& chunkRandom = *level->getRandomFor(center.x, center.z, BURIED_TREASURE_SALT);
     bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_BuriedTreasure, chunkX, chunkZ);
     if (result)
-        g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)10, chunkX, chunkZ);
+        g_pApp->AddTerrainFeaturePosition(
+            static_cast<_eTerrainFeatureType>(BURIED_TREASURE_TERRAIN_FEATURE_ID), chunkX, chunkZ);
     return result;
 }
 
@@ -115,13 +121,14 @@ bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
     while (levelIn->isEmptyBlock(position.below()))
         position = position.below();
 
-    levelIn->setBlock(position, Block::byId(12)->defaultBlockState(), 3, false);
+    levelIn->setBlock(position, Blocks::sand->defaultBlockState(), 3, false);
     boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(position);
-    if (blockEntity != NULL && blockEntity->GetType() == 0x01e00201ULL)
+    if (blockEntity != NULL && blockEntity->GetType() == CHEST_BLOCK_ENTITY_TYPE)
     {
         boost::shared_ptr<ChestBlockEntity> chest =
             boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
-        chest->setLootTable(&BuiltInLootTables::BURIEDTREASURE, randomIn.nextLong());
+        chest->setLootTable(&BuiltInLootTables::BURIEDTREASURE,
+                            static_cast<long long>(randomIn.nextInt()));
     }
     return true;
 }
@@ -145,7 +152,7 @@ void BuriedTreasureFeature::BuriedTreasurePiece::handleDataMarker(
         direction = rotation->rotate(Direction::NORTH);
 
     TypedBoxed<const Direction*> facing(direction);
-    const BlockState* state = Block::byId(54)->defaultBlockState()->setBoxedValue(
+    const BlockState* state = Blocks::chest->defaultBlockState()->setBoxedValue(
         DirectionalBlock::FACING_PROPERTY, &facing);
     createChest(levelIn, box, randomIn, position, &BuiltInLootTables::BURIEDTREASURE, state);
 }

@@ -1,9 +1,7 @@
 #include "game/world/generation/AddOceanTemperatureLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/world/biome/Biome.hpp"
 
 AddOceanTemperatureLayer::AddOceanTemperatureLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
@@ -17,8 +15,6 @@ AddOceanTemperatureLayer::~AddOceanTemperatureLayer()
 
 arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, int height)
 {
-    PIXBeginNamedEvent(0.0f, "AddOceanTemperatureLayer::getArea");
-
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
     for (int i = 0; i < height; i++)
@@ -30,27 +26,26 @@ arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, 
             float temperature = (float)nextRandom(100) / 100.0f;
             if (temperature < 0.075f)
             {
-                area.data[j + i * width] = 40;
+                area.data[j + i * width] = Biome::eBiomeIDs_WarmOcean;
             }
             else if (temperature < 0.4f)
             {
-                area.data[j + i * width] = 42;
+                area.data[j + i * width] = Biome::eBiomeIDs_LukewarmOcean;
             }
             else if (temperature < 0.675f)
             {
-                area.data[j + i * width] = 0;
+                area.data[j + i * width] = Biome::eBiomeIDs_Ocean;
             }
             else if (temperature < 0.95f)
             {
-                area.data[j + i * width] = 44;
+                area.data[j + i * width] = Biome::eBiomeIDs_ColdOcean;
             }
             else
             {
-                area.data[j + i * width] = 46;
+                area.data[j + i * width] = Biome::eBiomeIDs_FrozenOcean;
             }
         }
     }
 
-    PIXEndNamedEvent();
     return area;
 }

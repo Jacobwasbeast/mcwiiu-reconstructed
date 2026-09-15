@@ -626,7 +626,7 @@ int LocalPlayer::getIndicatorSegment(float value, float maxValue)
 
 void LocalPlayer::updateProximityIndicator()
 {
-    if (gApp.GetFirstMiniGameType() != static_cast<EMiniGameId>(3))
+    if (gApp.GetFirstMiniGameType() != eMiniGameId_Glide)
         return;
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();

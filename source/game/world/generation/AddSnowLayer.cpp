@@ -2,9 +2,6 @@
 
 #include "game/core/IntCache.hpp"
 
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
-
 AddSnowLayer::AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
 {
@@ -21,8 +18,6 @@ arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
     int parentHeight = height + 2;
 
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
-
-    PIXBeginNamedEvent(0.0f, "AddSnowLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -99,8 +94,6 @@ arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
             area.data[width - 1 + i * width] = last;
         }
     }
-
-    PIXEndNamedEvent();
 
     return area;
 }

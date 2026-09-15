@@ -1,9 +1,7 @@
 #include "game/world/generation/AddOceanEdgeLayer.hpp"
 
 #include "game/core/IntCache.hpp"
-
-void PIXBeginNamedEvent(float colour, const char* name, ...);
-void PIXEndNamedEvent();
+#include "game/world/biome/Biome.hpp"
 
 AddOceanEdgeLayer::AddOceanEdgeLayer(long long seed, boost::shared_ptr<Layer> parent, bool useOceanTemperatures)
     : Layer(seed)
@@ -23,8 +21,6 @@ arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int hei
 
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
 
-    PIXBeginNamedEvent(0.0f, "AddOceanEdgeLayer::getArea");
-
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
     for (int row = 0; row < height; row++)
@@ -39,26 +35,24 @@ arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int hei
             int south = parentArea.data[column + 1 + (row + 2) * parentWidth];
             int centre = parentArea.data[column + 1 + (row + 1) * parentWidth];
 
-            if (centre == 40)
+            if (centre == Biome::eBiomeIDs_WarmOcean)
             {
-                if (north == 46 || east == 46 || west == 46 || south == 46)
+                if (north == Biome::eBiomeIDs_FrozenOcean || east == Biome::eBiomeIDs_FrozenOcean || west == Biome::eBiomeIDs_FrozenOcean || south == Biome::eBiomeIDs_FrozenOcean)
                 {
-                    centre = 0;
+                    centre = Biome::eBiomeIDs_Ocean;
                 }
             }
-            else if (centre == 46)
+            else if (centre == Biome::eBiomeIDs_FrozenOcean)
             {
-                if (north == 40 || east == 40 || west == 40 || south == 40)
+                if (north == Biome::eBiomeIDs_WarmOcean || east == Biome::eBiomeIDs_WarmOcean || west == Biome::eBiomeIDs_WarmOcean || south == Biome::eBiomeIDs_WarmOcean)
                 {
-                    centre = 0;
+                    centre = Biome::eBiomeIDs_Ocean;
                 }
             }
 
             area.data[column + row * width] = centre;
         }
     }
-
-    PIXEndNamedEvent();
 
     return area;
 }
