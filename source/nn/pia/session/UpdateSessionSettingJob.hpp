@@ -8,6 +8,7 @@
 namespace nn { namespace pia { namespace session {
 
 class IMatchmakeSession;
+class Session;
 class UpdateSessionSetting;
 
 class UpdateSessionSettingJob : public common::StepSequenceJob
@@ -21,12 +22,17 @@ public:
                    IMatchmakeSession* matchmakeSession, const UpdateSessionSetting* setting,
                    bool isJointSession);
     void CompleteProcess();
-    void Cleanup();
+    virtual void Cleanup();
+    virtual void SetCurrentSessionOpenStatus(unsigned int status);
+    virtual void SetBufferSessionOpenStatus(unsigned int status);
+    virtual Result StartupImpl(unsigned int sessionId, IMatchmakeSession* matchmakeSession,
+                               const UpdateSessionSetting* setting, bool isJointSession) = 0;
 
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;
     unsigned int m_sessionId;
 };
+
 
 }}}
 

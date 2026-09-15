@@ -1,17 +1,76 @@
 #include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
+#include "nn/pia/session/IMatchmakeSession.hpp"
+#include "nn/pia/session/Session.hpp"
+
 namespace nn { namespace pia { namespace session {
 
 UpdateSessionSettingJob::UpdateSessionSettingJob()
     : common::StepSequenceJob(),
       m_callerContext(0),
-      m_callContext(),
-      m_sessionId(0)
+      m_callContext()
 {
 }
 
 UpdateSessionSettingJob::~UpdateSessionSettingJob()
 {
+}
+
+Result UpdateSessionSettingJob::Startup(common::CallContext* callerContext,
+                                        unsigned int sessionId,
+                                        IMatchmakeSession* matchmakeSession,
+                                        const UpdateSessionSetting* setting,
+                                        bool isJointSession)
+{
+    if (callerContext == 0)
+        return 0x10c07;
+
+    if (!matchmakeSession->IsMatchmakeOwner())
+        return 0x10c08;
+
+    const Result result = StartupImpl(sessionId, matchmakeSession, setting, isJointSession);
+    if (result != 0)
+        return result;
+
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    m_sessionId = sessionId;
+    Reset(true);
+    return 0;
+}
+
+void UpdateSessionSettingJob::Cleanup()
+{
+    if (m_callerContext != 0)
+    {
+        if (m_callerContext->m_state == common::CallContext::cStateInProgress)
+            m_callerContext->SignalCancel();
+        m_callerContext = 0;
+    }
+
+    if (m_callContext.m_state == common::CallContext::cStateInProgress)
+        m_callContext.SignalCancel();
+    m_callContext.Reset();
+    m_sessionId = 0;
+}
+
+void UpdateSessionSettingJob::CompleteProcess()
+{
+    Result result = 0;
+    m_callerContext->SignalSuccess(result);
+    m_callerContext = 0;
+}
+
+void UpdateSessionSettingJob::SetCurrentSessionOpenStatus(unsigned int status)
+{
+    g_piaSession->SetCurrentSessionOpenStatus(
+        static_cast<Session::SessionOpenStatus>(status));
+}
+
+void UpdateSessionSettingJob::SetBufferSessionOpenStatus(unsigned int status)
+{
+    g_piaSession->SetBufferSessionOpenStatus(
+        static_cast<Session::SessionOpenStatus>(status));
 }
 
 void UpdateSessionSettingJob::Trace(unsigned long long value) const

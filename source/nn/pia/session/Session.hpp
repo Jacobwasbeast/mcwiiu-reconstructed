@@ -24,6 +24,18 @@ class Session
 public:
     typedef unsigned int ProcessType;
 
+    enum EventType : unsigned int
+    {
+        cEventTypeJoin = 0,
+        cEventTypeLeave = 1
+    };
+
+    enum SessionOpenStatus
+    {
+        cSessionOpenStatusClosed = 0,
+        cSessionOpenStatusOpen = 1
+    };
+
     class StartupSetting
     {
     public:
@@ -37,6 +49,20 @@ public:
         const transport::Station::IdentificationToken* m_identificationToken;
     };
 
+    class Setting
+    {
+    public:
+        unsigned int m_field00;
+        unsigned int m_field04;
+        unsigned short m_field08;
+        unsigned short m_field0a;
+        unsigned int m_field0c;
+        unsigned int m_field10;
+    };
+    static_assert(sizeof(Setting) == 20, "Session::Setting ABI");
+
+    static Result CreateInstance(const Setting& setting);
+
     typedef bool (*JoiningApprovalCallback)(
         const transport::Station::IdentificationToken* identificationToken);
 
@@ -44,6 +70,13 @@ public:
     void SetSyncClockPulseInterval(int interval);
     bool IsHost() const;
     bool IsJointSessionHost() const;
+    unsigned int GetStatus() const;
+    unsigned int GetJoinMeshState() const;
+    unsigned int GetSessionOpenStatus() const;
+    void SetCurrentSessionOpenStatus(SessionOpenStatus status);
+    void SetBufferSessionOpenStatus(SessionOpenStatus status);
+    bool UpdateStationIdToBecomeClient();
+    void ChangeStatusToDisconnectedNetwork();
     transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
     static bool SessionJoiningApprovalCallback(
         const transport::Station::IdentificationToken* identificationToken);
@@ -56,12 +89,13 @@ public:
                                          const UpdateSessionSetting* setting,
                                          bool isJointSession);
 
+    unsigned char m_prefix[0x98];
+    common::CallContext m_callContext;
     MeshLayerController* m_meshLayerController;
     SessionStatusCheckJob* m_sessionStatusCheckJob;
     JointSessionJob* m_jointSessionJob;
     JoinSessionJob* m_joinSessionJob;
     UpdateSessionSettingJob* m_updateSessionSettingJob;
-    common::CallContext m_callContext;
     bool m_joinSessionJobRunning;
     unsigned int m_asyncOperationState;
     JoiningApprovalCallback m_joiningApprovalCallback;
@@ -75,6 +109,7 @@ public:
     unsigned char m_currentSessionIndex;
     IMatchmakeSession* m_matchmakeSession[2];
     unsigned int m_sessionId[2];
+    unsigned int m_sessionOpenStatus[2];
     common::ListBase m_validStationIdList;
     common::ListBase m_validStationIdFreeList;
     int m_stationIdNodeOffset;
@@ -82,6 +117,9 @@ public:
     unsigned short m_playerNum;
     unsigned short m_participantNum;
 };
+
+static_assert(offsetof(Session, m_callContext) == 0x98, "Session::CallContext ABI");
+static_assert(sizeof(Session) == 0x150, "Session ABI");
 
 extern Session* g_piaSession;
 extern unsigned char g_piaMatchmakeAnalysisEnabled;

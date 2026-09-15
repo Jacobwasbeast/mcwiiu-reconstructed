@@ -99,6 +99,46 @@ bool Session::IsJointSessionHost() const
     return bufferSession->IsMatchmakeOwner();
 }
 
+unsigned int Session::GetStatus() const
+{
+    return m_matchmakeStatus;
+}
+
+unsigned int Session::GetJoinMeshState() const
+{
+    return g_piaMesh != 0 ? g_piaMesh->GetJoinMeshState() : 0;
+}
+
+unsigned int Session::GetSessionOpenStatus() const
+{
+    if (!IsHost())
+        return cSessionOpenStatusClosed;
+    return m_sessionOpenStatus[m_currentSessionIndex];
+}
+
+void Session::SetCurrentSessionOpenStatus(SessionOpenStatus status)
+{
+    m_sessionOpenStatus[m_currentSessionIndex] = static_cast<unsigned int>(status);
+}
+
+void Session::SetBufferSessionOpenStatus(SessionOpenStatus status)
+{
+    const unsigned int bufferIndex = m_currentSessionIndex == 0 ? 1 : 0;
+    m_sessionOpenStatus[bufferIndex] = static_cast<unsigned int>(status);
+}
+
+bool Session::UpdateStationIdToBecomeClient()
+{
+    return false;
+}
+
+void Session::ChangeStatusToDisconnectedNetwork()
+{
+    m_disconnectStatus = 3;
+    if (m_sessionDisconnectReason == 0)
+        m_sessionDisconnectReason = 8;
+}
+
 transport::Station::IdentificationToken* Session::GetMatchmakeAnalysisToken()
 {
     return &m_matchmakeAnalysisToken;

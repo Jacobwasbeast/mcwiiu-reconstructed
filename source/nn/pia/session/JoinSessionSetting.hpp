@@ -12,15 +12,14 @@ public:
     JoinSessionSetting();
     virtual ~JoinSessionSetting();
 
+    virtual const ISessionInfo* GetSessionInfoPtr() const;
+    virtual void SetSessionId(unsigned int sessionId);
+    virtual unsigned int GetSessionId() const;
+    virtual void SetMaxParticipantNum(unsigned short participantNum);
+    virtual unsigned int GetMaxParticipantNum() const;
+    virtual void SetSessionInfoPtr(const ISessionInfo* sessionInfo);
     virtual void Reset();
-    virtual void Trace(unsigned long long value) const;
-
-    const ISessionInfo* GetSessionInfoPtr() const;
-    void SetSessionInfoPtr(const ISessionInfo* sessionInfo);
-    void SetSessionId(unsigned int sessionId);
-    unsigned int GetSessionId() const;
-    void SetMaxParticipantNum(unsigned short participantNum);
-    unsigned int GetMaxParticipantNum() const;
+    void Trace(unsigned long long value) const;
 
     const ISessionInfo* m_sessionInfo;
     unsigned int m_sessionId;
