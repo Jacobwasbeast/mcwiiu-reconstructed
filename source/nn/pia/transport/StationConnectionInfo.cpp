@@ -1,89 +1,9 @@
 #include "nn/pia/transport/StationConnectionInfo.hpp"
+#include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
-StationLocation::StationLocation()
-    : common::StationAddress(),
-      m_field0c(0),
-      m_field10(0),
-      m_field14(0),
-      m_field18(0),
-      m_field1c(0),
-      m_field20(0),
-      m_field21(0),
-      m_field22(0),
-      m_field23(0),
-      m_field24(0),
-      m_field25(0),
-      m_field26(0),
-      m_inetAddress()
-{
-}
-
-StationLocation::StationLocation(const StationLocation& other)
-    : common::StationAddress(other)
-{
-    SetStationLocation(other);
-}
-
-StationLocation::~StationLocation()
-{
-}
-
-void StationLocation::SetStationLocation(const StationLocation& other)
-{
-    common::StationAddress::operator=(other);
-    m_field10 = other.m_field10;
-    m_field14 = other.m_field14;
-    m_field18 = other.m_field18;
-    m_field1c = other.m_field1c;
-    m_field20 = other.m_field20;
-    m_field21 = other.m_field21;
-    m_field22 = other.m_field22;
-    m_field23 = other.m_field23;
-    m_field24 = other.m_field24;
-    m_field25 = other.m_field25;
-    m_field26 = other.m_field26;
-    m_inetAddress = other.m_inetAddress;
-}
-
-void StationLocation::SetStationAddress(const common::StationAddress& address)
-{
-    common::StationAddress::operator=(address);
-}
-
-bool StationLocation::operator==(const StationLocation& other) const
-{
-    return common::StationAddress::operator==(other);
-}
-
-StationLocation& StationLocation::operator=(const StationLocation& other)
-{
-    if (this != &other)
-        SetStationLocation(other);
-    return *this;
-}
-
-void StationLocation::GetLocationString(common::String*) const
-{
-}
-
-unsigned int StationLocation::GetSerializedSize() const
-{
-    return 35;
-}
-
-void StationLocation::Serialize(unsigned char*, unsigned int*, unsigned int) const
-{
-}
-
-void StationLocation::Deserialize(const unsigned char*)
-{
-}
-
-void StationLocation::Trace(unsigned long long) const
-{
-}
+using common::Result;
 
 StationConnectionInfo::StationConnectionInfo()
     : StationLocation(),
@@ -126,12 +46,34 @@ unsigned int StationConnectionInfo::GetSerializedSize() const
     return StationLocation::GetSerializedSize() + m_localStationLocation.GetSerializedSize();
 }
 
-void StationConnectionInfo::Serialize(unsigned char*, unsigned int*, unsigned int) const
+Result StationConnectionInfo::Serialize(unsigned char* buffer, unsigned int* size,
+                                         unsigned int maxSize) const
 {
+    if (buffer == 0 || size == 0)
+        return 0x10c07;
+    if (maxSize < GetSerializedSize())
+        return 0x4c0d;
+
+    unsigned int written = 0;
+    Result result = StationLocation::Serialize(buffer, &written, maxSize);
+    if (result != 0)
+        return result;
+    unsigned int localWritten = 0;
+    result = m_localStationLocation.Serialize(buffer + written, &localWritten,
+                                               maxSize - written);
+    if (result == 0)
+        *size = written + localWritten;
+    return result;
 }
 
-void StationConnectionInfo::Deserialize(const unsigned char*)
+Result StationConnectionInfo::Deserialize(const unsigned char* buffer)
 {
+    if (buffer == 0)
+        return 0x10c07;
+    Result result = StationLocation::Deserialize(buffer);
+    if (result != 0)
+        return result;
+    return m_localStationLocation.Deserialize(buffer + StationLocation::GetSerializedSize());
 }
 
 unsigned int StationConnectionInfo::GetStreamlinedSerializedSize() const
@@ -139,24 +81,86 @@ unsigned int StationConnectionInfo::GetStreamlinedSerializedSize() const
     return 0x60;
 }
 
-void StationConnectionInfo::StreamlinedSerialize(unsigned char*, unsigned int*, unsigned int) const
+Result StationConnectionInfo::StreamlinedSerialize(unsigned char* buffer, unsigned int* size,
+                                                    unsigned int maxSize) const
 {
+    if (buffer == 0 || size == 0)
+        return 0x10c07;
+    if (maxSize < GetStreamlinedSerializedSize())
+        return 0x4c0d;
+
+    unsigned int written = 0;
+    Result result = common::StationAddress::Serialize(buffer, &written, maxSize);
+    if (result != 0)
+        return result;
+    unsigned int localWritten = 0;
+    result = static_cast<const common::StationAddress&>(m_localStationLocation).Serialize(
+        buffer + written, &localWritten, maxSize - written);
+    if (result != 0)
+        return result;
+    written += localWritten;
+    written += LittleMembersSerialize(buffer + written, *this);
+    written += LittleMembersSerialize(buffer + written, m_localStationLocation);
+    *size = written;
+    return 0;
 }
 
-void StationConnectionInfo::StreamlinedDeserialize(const unsigned char*)
+Result StationConnectionInfo::StreamlinedDeserialize(const unsigned char* buffer)
 {
+    if (buffer == 0)
+        return 0x10c07;
+    common::InetAddress address;
+    Result result = address.Deserialize(buffer);
+    if (result != 0)
+        return result;
+    result = SetInetAddress(address);
+    if (result != 0)
+        return result;
+    result = address.Deserialize(buffer + 6);
+    if (result != 0)
+        return result;
+    result = m_localStationLocation.SetInetAddress(address);
+    if (result != 0)
+        return result;
+    LittleMembersDeserialize(this, buffer + 12);
+    LittleMembersDeserialize(&m_localStationLocation, buffer + 32);
+    return 0;
 }
 
 void StationConnectionInfo::Trace(unsigned long long) const
 {
 }
 
-void StationConnectionInfo::LittleMembersSerialize(unsigned char*, const StationLocation&) const
+unsigned int StationConnectionInfo::LittleMembersSerialize(unsigned char* buffer,
+                                                            const StationLocation& location) const
 {
+    common::serializeU32(buffer, static_cast<unsigned int>(location.m_field10));
+    common::serializeU32(buffer + 4, static_cast<unsigned int>(location.m_field14));
+    common::serializeU32(buffer + 8, location.m_field25);
+    common::serializeU32(buffer + 12, (location.m_field18 & 0x3fffffU)
+        | ((location.m_field20 & 3U) << 22) | (location.m_field21 << 24));
+    common::serializeU32(buffer + 16, (location.m_field1c & 0x3fffffU)
+        | ((location.m_field23 & 3U) << 24) | ((location.m_field24 & 3U) << 26)
+        | (location.m_field22 << 28));
+    return 20;
 }
 
-void StationConnectionInfo::LittleMembersDeserialize(StationLocation*, const unsigned char*)
+unsigned int StationConnectionInfo::LittleMembersDeserialize(StationLocation* location,
+                                                              const unsigned char* buffer)
 {
+    location->m_field10 = static_cast<int>(common::deserializeU32(buffer));
+    location->m_field14 = static_cast<int>(common::deserializeU32(buffer + 4));
+    location->m_field25 = static_cast<unsigned char>(common::deserializeU32(buffer + 8));
+    unsigned int first = common::deserializeU32(buffer + 12);
+    location->m_field18 = first & 0x3fffffU;
+    location->m_field20 = static_cast<unsigned char>((first >> 22) & 3U);
+    location->m_field21 = static_cast<unsigned char>(first >> 24);
+    unsigned int second = common::deserializeU32(buffer + 16);
+    location->m_field1c = second & 0x3fffffU;
+    location->m_field23 = static_cast<unsigned char>((second >> 24) & 3U);
+    location->m_field24 = static_cast<unsigned char>((second >> 26) & 3U);
+    location->m_field22 = static_cast<unsigned char>(second >> 28);
+    return 20;
 }
 
 }}}
