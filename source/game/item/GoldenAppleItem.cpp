@@ -21,7 +21,9 @@ GoldenAppleItem::~GoldenAppleItem()
 
 bool GoldenAppleItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 {
-    return Item::isFoil(itemInstance) || itemInstance->getAuxValue() > 0;
+    const bool enchanted = Item::isFoil(itemInstance);
+    const int auxValue = itemInstance->getAuxValue();
+    return enchanted || auxValue > 0;
 }
 
 const Rarity* GoldenAppleItem::getRarity(not_null_ptr<ItemInstance> itemInstance)

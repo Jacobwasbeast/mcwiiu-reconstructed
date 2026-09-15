@@ -51,7 +51,8 @@ std::wstring Inventory::getName()
 
 std::wstring Inventory::getCustomName()
 {
-    return std::wstring(L"");
+    std::wstring customName;
+    return customName;
 }
 
 bool Inventory::hasCustomName()
@@ -161,7 +162,9 @@ void Inventory::pickSlot(int slot)
 {
     int selected = getSuitableHotbarSlot();
     m_selected = selected;
-    std::swap(m_items[selected], m_items[slot]);
+    not_null_ptr<ItemInstance> selectedItem = m_items[selected];
+    m_items[selected] = m_items[slot];
+    m_items[slot] = selectedItem;
 }
 
 void Inventory::setPickedItem(not_null_ptr<ItemInstance> item)
@@ -302,6 +305,7 @@ int Inventory::addResource(int slot, not_null_ptr<ItemInstance> item)
         {
             current->setTag(item->getTag()->copy());
         }
+        m_player->handleCollectItem(item);
         setItem(slot, current);
     }
 
@@ -692,7 +696,8 @@ void Inventory::setCarried(not_null_ptr<ItemInstance> item)
 
 not_null_ptr<ItemInstance> Inventory::getCarried()
 {
-    return m_carried;
+    not_null_ptr<ItemInstance> carried = m_carried;
+    return carried;
 }
 
 bool Inventory::stillValid(boost::shared_ptr<Player> player)

@@ -13,7 +13,7 @@ class MerchantRecipe
 public:
     MerchantRecipe(CompoundTag* tag);
     MerchantRecipe(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemInstance> buyB,
-                   not_null_ptr<ItemInstance> sell, int maxUses, int xp);
+                   not_null_ptr<ItemInstance> sell, int uses, int maxUses);
     MerchantRecipe(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemInstance> sell);
     MerchantRecipe(not_null_ptr<ItemInstance> buyA, Item* sell);
     MerchantRecipe(not_null_ptr<ItemInstance> buyA, Block* sell);

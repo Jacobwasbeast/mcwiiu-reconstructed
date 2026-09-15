@@ -23,5 +23,5 @@ not_null_ptr<ItemInstance> BowlFoodItem::finishUsingItem(not_null_ptr<ItemInstan
     {
         return not_null_ptr<ItemInstance>(new ItemInstance(Items::bowl));
     }
-    return itemInstance;
+    return ItemInstance::EMPTY;
 }

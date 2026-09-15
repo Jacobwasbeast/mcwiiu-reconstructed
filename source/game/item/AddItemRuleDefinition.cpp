@@ -45,7 +45,7 @@ not_null_ptr<ItemInstance> AddItemRuleDefinition::getItem()
         }
         return itemInstance;
     }
-    return not_null_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> container,

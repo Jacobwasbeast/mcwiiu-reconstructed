@@ -5,6 +5,7 @@
 #include "game/item/Enchantment.hpp"
 #include "game/item/EnchantmentInstance.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 
 EnchantedBookItem::EnchantedBookItem()
     : Item()
@@ -103,7 +104,7 @@ void EnchantedBookItem::addEnchantment(not_null_ptr<ItemInstance> itemInstance,
 
 not_null_ptr<ItemInstance> EnchantedBookItem::createForEnchantment(EnchantmentInstance* instance)
 {
-    not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(403)));
+    not_null_ptr<ItemInstance> item(new ItemInstance(Items::enchantedBook));
     addEnchantment(item, instance);
     return item;
 }

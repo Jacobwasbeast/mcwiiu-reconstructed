@@ -5,6 +5,7 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/HitResult.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/data/DataFixTypes.hpp"
@@ -18,8 +19,11 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemDataWalker.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/item/Items.hpp"
 #include "game/item/Potion.hpp"
+#include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
+#include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -37,14 +41,15 @@ ThrownPotion::ThrownPotion(Level* level, boost::shared_ptr<LivingEntity> owner, 
     : ThrowableProjectile(level, owner), mItem()
 {
     _init();
-    setItem(item);
+    mEntityData->set(DATA_ITEM, item, false);
 }
 
 ThrownPotion::ThrownPotion(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
     : ThrowableProjectile(level, x, y, z), mItem()
 {
     _init();
-    setItem(item);
+    if (!item->isEmpty())
+        setItem(item);
 }
 
 ThrownPotion::~ThrownPotion()
@@ -58,7 +63,10 @@ void ThrownPotion::create(Level* level)
 
 not_null_ptr<ItemInstance> ThrownPotion::getItem()
 {
-    return mItem;
+    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ITEM);
+    if (item->getItem() != Items::splashPotion && item->getItem() != Items::lingeringPotion)
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion));
+    return item;
 }
 
 void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
@@ -81,13 +89,14 @@ void ThrownPotion::applyWater()
 {
     if (mLevel == NULL || mBoundingBox == NULL)
         return;
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), mBoundingBox->grow(4.0, 2.0, 4.0));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(
+        typeid(Entity), mBoundingBox->grow(4.0, 2.0, 4.0), new WATER_SENSITIVE(), false);
     if (entities == NULL)
         return;
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
-        if (isWaterSensitiveEntity(*it) && distanceToSqr(*it) < 16.0)
+        if (distanceToSqr(*it) < 16.0 && isWaterSensitiveEntity(*it))
             (*it)->clearFire();
     }
 }
@@ -100,15 +109,34 @@ bool ThrownPotion::isLingering()
 void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item, Potion* potion)
 {
     AreaEffectCloud* cloud = new AreaEffectCloud(mLevel, mX, mY, mZ);
-    cloud->setOwner(boost::shared_ptr<LivingEntity>());
-    cloud->setPotion(potion);
-    std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(item);
-    if (effects != NULL)
+
+    std::vector<MobEffectInstance*>* mobEffects = PotionUtils::getMobEffects(item);
+    if (mobEffects->size() == 1)
     {
-        std::vector<MobEffectInstance*>::iterator it;
-        for (it = effects->begin(); it != effects->end(); ++it)
-            cloud->addEffect(*it);
+        MobEffectInstance* effectInstance = mobEffects->at(0);
+        int lingeringDuration = Minecraft::GetInstance()->GetMiniGame()->getLingeringDuration(
+            effectInstance->getAmplifier(), cloud->getDuration());
+        cloud->setDuration(lingeringDuration);
     }
+
+    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
+        cloud->setDuration(80);
+
+    cloud->setOwner(getOwner());
+    cloud->setRadius(3.0f);
+    cloud->setRadiusOnUse(-0.5f);
+    cloud->setWaitTime(10);
+    cloud->setRadiusPerTick((float)(-cloud->getRadius() / (double)cloud->getDuration()));
+    cloud->setPotion(potion);
+
+    std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(item);
+    std::vector<MobEffectInstance*>::iterator it;
+    for (it = effects->begin(); it != effects->end(); ++it)
+    {
+        MobEffectInstance* orig = *it;
+        cloud->addEffect(new MobEffectInstance(orig->getEffect(), orig->getDuration(), orig->getAmplifier()));
+    }
+
     mLevel->addEntity(boost::shared_ptr<Entity>(cloud));
 }
 
@@ -159,21 +187,51 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
 
 bool ThrownPotion::onHit(const HitResult* result)
 {
-    Potion* potion = PotionUtils::getPotion(getItem());
-    std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(getItem());
-    if (isLingering())
-        makeAreaOfEffectCloud(getItem(), potion);
-    else
-        applySplash(result, effects);
-    if (mLevel != NULL)
-        mLevel->levelEvent(potion != NULL && potion->hasInstantEffects() ? 0x7D7 : 0x7D2, BlockPos(this), PotionUtils::getColor(getItem()));
+    Projectile::onHit(result);
+    if (mLevel->mIsClientSide)
+        return true;
+
+    not_null_ptr<ItemInstance> item = getItem();
+    Potion* potion = PotionUtils::getPotion(item);
+    std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
+    bool noEffects = effects == NULL || effects->empty();
+    bool isWaterSplash = potion == Potions::WATER && noEffects;
+
+    if (isWaterSplash && result->mType == HitResult::BLOCK)
+    {
+        BlockPos pos = result->getBlockPos().relative(result->mDirection);
+        dowseFire(pos, result->mDirection);
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        for (unsigned int i = 0; i < directions.length; ++i)
+            dowseFire(pos.relative(directions.data[i]), directions.data[i]);
+    }
+
+    bool invertedGrenades = Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades();
+
+    if (isWaterSplash && !invertedGrenades)
+    {
+        applyWater();
+        if (isLingering())
+            makeAreaOfEffectCloud(item, potion);
+    }
+    else if (!(noEffects && !invertedGrenades))
+    {
+        if (isLingering())
+            makeAreaOfEffectCloud(item, potion);
+        else
+            applySplash(result, effects);
+    }
+
+    bool hasInstant = potion->hasInstantEffects();
+    mLevel->levelEvent(hasInstant ? 0x7D7 : 0x7D2, BlockPos(this), PotionUtils::getColor(item));
+    delete effects;
     remove();
     return true;
 }
 
 void ThrownPotion::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId(0, 0x8A200004ULL,
+    DATA_ITEM = SynchedEntityData::defineId(0x8A200004ULL, 0x8A200000ULL,
                                             EntityDataSerializers::ITEM_INSTANCE);
 }
 
@@ -184,9 +242,7 @@ void ThrownPotion::_init()
 
 void ThrownPotion::setItem(not_null_ptr<ItemInstance> item)
 {
-    mItem = item;
-    if (mEntityData)
-        mEntityData->set(DATA_ITEM, item, true);
+    mEntityData->set(DATA_ITEM, item, true);
 }
 
 void ThrownPotion::addDataWalkers(DataFixerUpper* fixer)
@@ -199,12 +255,11 @@ void ThrownPotion::addDataWalkers(DataFixerUpper* fixer)
 void ThrownPotion::readAdditionalSaveData(CompoundTag* tag)
 {
     ThrowableProjectile::readAdditionalSaveData(tag);
-    if (tag != NULL && tag->contains(L"Potion"))
-    {
-        not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"Potion")));
-        if (!item->isEmpty())
-            setItem(item);
-    }
+    not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"Potion")));
+    if (!item->isEmpty())
+        setItem(item);
+    else
+        remove();
 }
 
 void ThrownPotion::addAdditonalSaveData(CompoundTag* tag)
@@ -221,7 +276,6 @@ double ThrownPotion::getGravity()
 
 void ThrownPotion::defineSynchedData()
 {
-    ThrowableProjectile::defineSynchedData();
     mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
 }
 

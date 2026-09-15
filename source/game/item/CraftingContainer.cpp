@@ -22,7 +22,7 @@ std::wstring CraftingContainer::getName()
 
 std::wstring CraftingContainer::getCustomName()
 {
-    return getName();
+    return std::wstring();
 }
 
 bool CraftingContainer::hasCustomName()
@@ -54,7 +54,7 @@ bool CraftingContainer::isEmpty()
 
 not_null_ptr<ItemInstance> CraftingContainer::getItem(unsigned int slot)
 {
-    if (slot >= mItems.size())
+    if (slot >= getContainerSize())
     {
         return ItemInstance::EMPTY;
     }
@@ -65,7 +65,7 @@ not_null_ptr<ItemInstance> CraftingContainer::getItem(unsigned int row, unsigned
 {
     if (row >= mHeight || column >= mWidth)
         return ItemInstance::EMPTY;
-    return getItem(row * mWidth + column);
+    return getItem(row + column * mHeight);
 }
 
 not_null_ptr<ItemInstance> CraftingContainer::removeItem(unsigned int slot, int count)

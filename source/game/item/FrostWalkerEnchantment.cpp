@@ -2,7 +2,9 @@
 
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/Enchantments.hpp"
+#include "game/core/Direction.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -41,7 +43,8 @@ int FrostWalkerEnchantment::getMaxLevel()
 void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>& entity,
                                            Level* level, const BlockPos& pos, int levelValue)
 {
-    if (!entity || !entity->mOnGround)
+    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+    if (!entity->mOnGround || (player && player->mAbilities.mFlying))
     {
         return;
     }
@@ -59,7 +62,7 @@ void FrostWalkerEnchantment::onEntityMoved(const boost::shared_ptr<LivingEntity>
         {
             const BlockPos above = current->above();
             if (level->getBlockState(above)->getBlock() == Blocks::AIR
-                && level->mayPlace(Blocks::frosted_ice, *current, false, NULL,
+                && level->mayPlace(Blocks::frosted_ice, *current, false, Direction::DOWN,
                                    boost::shared_ptr<Entity>()))
             {
                 level->setBlock(*current, Blocks::frosted_ice->defaultBlockState(), 3, false);

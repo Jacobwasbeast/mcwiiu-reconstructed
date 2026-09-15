@@ -10,6 +10,7 @@
 #include "game/util/AABB.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/ui/ItemTooltipDataHolder.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -338,7 +339,7 @@ void SpawnEggItem::DisplaySpawnError(boost::shared_ptr<Player> player, int error
     default: return;
     }
 
-    player->sendMessage(message, NULL, 0, NULL, 0);
+    player->displayClientMessage((int32_t)message, true);
 }
 
 InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Player> player,
@@ -403,6 +404,11 @@ bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player,
 
 unsigned int SpawnEggItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return TestUse(NULL, boost::shared_ptr<Player>(), InteractionHand::eInteractionHand_MainHand)
-        ? 0x4c36cd96u : 0xffffffffu;
+    if (TestUse((Level*)tooltipData.m_pLevel,
+                (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
+                InteractionHand::eInteractionHand_MainHand))
+    {
+        return 0x4c36cd96u;
+    }
+    return 0xffffffffu;
 }

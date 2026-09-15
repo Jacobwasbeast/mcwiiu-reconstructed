@@ -48,12 +48,44 @@ void MerchantContainer::updateSellItem()
     {
         return;
     }
-    MerchantRecipe* recipe = mOffers->getMatchingRecipeFor(mItems[0], mItems[1], ItemInstance::EMPTY);
-    if (recipe != 0)
+
+    not_null_ptr<ItemInstance> first = mItems[0];
+    not_null_ptr<ItemInstance> second = mItems[1];
+    if (first->isEmpty())
+    {
+        first = mItems[1];
+        second = ItemInstance::EMPTY;
+    }
+
+    if (first->isEmpty())
+    {
+        setItem(2, ItemInstance::EMPTY);
+        return;
+    }
+
+    MerchantRecipe* recipe = mOffers->getRecipeFor(first, second, mSelectionHint);
+    if (recipe != 0 && !recipe->isDeprecated())
     {
         mActiveRecipe = recipe;
-        mItems[2] = recipe->getSellItem();
+        setItem(2, recipe->getSellItem()->copy());
+        return;
     }
+
+    if (second->isEmpty())
+    {
+        setItem(2, ItemInstance::EMPTY);
+        return;
+    }
+
+    recipe = mOffers->getRecipeFor(second, first, mSelectionHint);
+    if (recipe == 0 || recipe->isDeprecated())
+    {
+        setItem(2, ItemInstance::EMPTY);
+        return;
+    }
+
+    mActiveRecipe = recipe;
+    setItem(2, recipe->getSellItem()->copy());
 }
 
 void MerchantContainer::setSelectionHint(int hint)
@@ -91,8 +123,14 @@ bool MerchantContainer::isPaymentSlot(int slot)
 
 not_null_ptr<ItemInstance> MerchantContainer::removeItem(unsigned int slot, int count)
 {
+    not_null_ptr<ItemInstance> item = mItems[slot];
+    if (slot == 2 && !item->isEmpty())
+    {
+        return ContainerHelper::removeItem(mItems, 2, (unsigned int)item->getCount());
+    }
+
     not_null_ptr<ItemInstance> removed = ContainerHelper::removeItem(mItems, slot, (unsigned int)count);
-    if (isPaymentSlot((int)slot))
+    if (!removed->isEmpty() && isPaymentSlot((int)slot))
     {
         updateSellItem();
     }
@@ -170,5 +208,4 @@ void MerchantContainer::clearContent()
     {
         mItems[i] = ItemInstance::EMPTY;
     }
-    mActiveRecipe = 0;
 }

@@ -92,10 +92,6 @@ BannerRecipes::BannerRecipes()
 {
 }
 
-BannerRecipes::~BannerRecipes()
-{
-}
-
 ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pattern)
 {
     ItemInstance* result = new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData());
@@ -364,14 +360,7 @@ void BannerRecipes::BannerAddPatternRecipe::recipeRequires(INGREDIENTS_REQUIRED*
 
 boost::shared_ptr<CraftingContainer> BannerRecipes::BannerAddPatternRecipe::generateExpectedCraftSlots()
 {
-    boost::shared_ptr<CraftingContainer> result;
-    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
-    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
-    {
-        storage[0] = 0;
-        storage[1] = 0;
-    }
-    return result;
+    return boost::shared_ptr<CraftingContainer>();
 }
 
 BannerRecipes::BannerDuplicateRecipe::~BannerDuplicateRecipe()
@@ -463,12 +452,5 @@ void BannerRecipes::BannerDuplicateRecipe::recipeRequires(INGREDIENTS_REQUIRED* 
 
 boost::shared_ptr<CraftingContainer> BannerRecipes::BannerDuplicateRecipe::generateExpectedCraftSlots()
 {
-    boost::shared_ptr<CraftingContainer> result;
-    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
-    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
-    {
-        storage[0] = 0;
-        storage[1] = 0;
-    }
-    return result;
+    return boost::shared_ptr<CraftingContainer>();
 }

@@ -252,10 +252,11 @@ boost::shared_ptr<CraftingContainer> ShapedRecipe::generateExpectedCraftSlots()
         {
             if (column < mWidth && row < mHeight)
             {
-                ItemInstance* ingredient = mIngredients[column + row * mWidth];
+                unsigned int slotIndex = static_cast<unsigned int>(column + row * 3);
+                ItemInstance* ingredient = mIngredients[slotIndex];
                 if (ingredient != NULL && !ingredient->isEmpty())
                 {
-                    result->setItem(static_cast<unsigned int>(column + row * 3), ingredient->copy());
+                    result->setItem(slotIndex, ingredient->copy());
                 }
             }
         }

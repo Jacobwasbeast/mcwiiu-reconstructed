@@ -5,11 +5,13 @@
 #include <vector>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/unordered_map.hpp>
 #include "game/core/Attribute.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/core/InteractionResult.hpp"
 #include "game/core/CensoredString.hpp"
 
 class Block;
@@ -59,11 +61,11 @@ public:
     void grow(int amount);
     void shrink(int amount);
     not_null_ptr<ItemInstance> split(int amount);
-    int useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
+    InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     float getDestroySpeed(const BlockState* state);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     void use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    void finishUsingItem(Level* level, boost::shared_ptr<Player> player);
+    not_null_ptr<ItemInstance> finishUsingItem(Level* level, boost::shared_ptr<Player> player);
     CompoundTag* save(CompoundTag* tag);
     int getMaxStackSize();
     bool hasTag();
@@ -78,7 +80,7 @@ public:
     int getMaxDamage();
     bool hurt(int amount, Random* random);
     void hurtAndBreak(int amount, boost::shared_ptr<LivingEntity> entity);
-    bool hurtEnemy(boost::shared_ptr<LivingEntity> entity, boost::shared_ptr<Player> player);
+    void hurtEnemy(boost::shared_ptr<LivingEntity> entity, boost::shared_ptr<Player> player);
     void mineBlock(Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<Player> player);
     bool canDestroySpecial(const BlockState* state);
     bool interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand);
@@ -109,8 +111,8 @@ public:
     bool wasCreatedByRestrictedPlayer();
     std::wstring getHoverNameUnfiltered();
     std::wstring getHoverName();
-    void setTranslatableName(int name);
-    void setHoverName(const std::wstring& name);
+    not_null_ptr<ItemInstance> setTranslatableName(int name);
+    not_null_ptr<ItemInstance> setHoverName(const std::wstring& name);
     void setCensorshipInfo(const std::wstring& name, bool censored);
     std::wstring getOwnerUUID();
     bool wasCreatedOnHost();
@@ -151,7 +153,7 @@ private:
     unsigned char mEmptyCache;
     int mAuxValue;
     unsigned char mUnknown;
-    boost::shared_ptr<ItemFrame> mFrame;
+    boost::weak_ptr<ItemFrame> mFrame;
     boost::shared_ptr<CensoredString> mCensorshipInfo;
     Block* mBreakBlock;
     unsigned char mCanBreak;

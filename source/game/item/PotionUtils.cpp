@@ -96,8 +96,35 @@ void PotionUtils::addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<
             int amplifier = effect->getAmplifier();
             if (amplifier > 0)
             {
-                static const wchar_t* names[] = { L"", L" II", L" III", L" IV", L" V", L" VI" };
-                if (amplifier < 6) text += names[amplifier];
+                if (amplifier == 1)
+                {
+                    text += L" ";
+                    text += L10N::GetString(0xe0296084);
+                }
+                else if (amplifier == 2)
+                {
+                    text += L" ";
+                    text += L10N::GetString(0x5230cfbf);
+                }
+                else if (amplifier == 3)
+                {
+                    text += L" ";
+                    text += L10N::GetString(0x2c2e5556);
+                }
+                else if (amplifier == 4)
+                {
+                    text += L" ";
+                    text += L10N::GetString(0x6e21f149);
+                }
+                else if (amplifier == 5)
+                {
+                    text += L" ";
+                    text += L10N::GetString(0x481f76e0);
+                }
+                else
+                {
+                    text += L10N::GetString(0x62bdaed);
+                }
             }
             if (effect->getDuration() > 20)
             {
@@ -188,7 +215,7 @@ not_null_ptr<ItemInstance> PotionUtils::setCustomEffects(not_null_ptr<ItemInstan
 
 not_null_ptr<ItemInstance> PotionUtils::setPotionAndCustomEffects(not_null_ptr<ItemInstance> target, not_null_ptr<ItemInstance> source)
 {
-    setPotion(target, getPotion(source));
+    target = setPotion(target, getPotion(source));
     return setCustomEffects(target, getCustomEffects(source));
 }
 

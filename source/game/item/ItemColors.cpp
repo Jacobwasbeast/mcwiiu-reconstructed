@@ -20,20 +20,18 @@ ItemColors::ItemColors() : mItemColorIds(new IdMapper<ItemColor*>()), mColors() 
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)
 {
-    int id = mItemColorIds->getId(color);
-    if (id < 0) { id = (int)mColors.size(); mItemColorIds->addMapping(color, id); }
     for (unsigned int i = 0; i < items.length; ++i)
-        if (items.data[i] != NULL) mColors[items.data[i]] = id;
+    {
+        mItemColorIds->addMapping(color, Item::getId(items.data[i]));
+    }
 }
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Block*> blocks)
 {
-    std::vector<Item*> mappedItems;
     for (unsigned int i = 0; i < blocks.length; ++i)
-        if (blocks.data[i] != NULL && Item::byBlock(blocks.data[i]) != NULL)
-            mappedItems.push_back(Item::byBlock(blocks.data[i]));
-    arrayWithLength<Item*> mapped(mappedItems);
-    registerColor(color, mapped);
+    {
+        mItemColorIds->addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
+    }
 }
 
 ItemColors* ItemColors::createDefault(BlockColors* blockColors)

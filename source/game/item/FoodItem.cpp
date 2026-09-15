@@ -127,7 +127,12 @@ bool FoodItem::canEat(boost::shared_ptr<Player> player)
 
 unsigned int FoodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return canEat(tooltipData.m_pPlayer) ? 0xD26C6DB5u : 0xFFFFFFFFu;
+    const bool canUse = canEat(tooltipData.m_pPlayer);
+    if (canUse)
+    {
+        return 0xD26C6DB5u;
+    }
+    return 0xFFFFFFFFu;
 }
 
 int FoodItem::getNutrition(not_null_ptr<ItemInstance> itemInstance)

@@ -3,6 +3,7 @@
 #include <string>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/DamageSource.hpp"
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -19,6 +20,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/Minecraft.hpp"
 
@@ -68,14 +70,8 @@ void ItemFrame::_init()
 
 void ItemFrame::defineSynchedData()
 {
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-    {
-        mEntityData->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
-    }
-    if (mEntityData != NULL && DATA_ROTATION != NULL)
-    {
-        mEntityData->createDateItem(DATA_ROTATION, 0);
-    }
+    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->createDateItem(DATA_ROTATION, 0);
 }
 
 double ItemFrame::getPickRadius()
@@ -85,26 +81,21 @@ double ItemFrame::getPickRadius()
 
 not_null_ptr<ItemInstance> ItemFrame::getItem()
 {
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-    {
-        return mEntityData->get(DATA_ITEM);
-    }
-    return ItemInstance::EMPTY;
+    return getEntityData()->get(DATA_ITEM);
 }
 
 void ItemFrame::setItem(not_null_ptr<ItemInstance> item, bool showParticles)
 {
-    if (item->isEmpty())
+    if (!item->isEmpty())
     {
-        item = ItemInstance::EMPTY;
+        item = item->copy();
+        item->setCount(1);
+        item->setFramed(boost::static_pointer_cast<ItemFrame>(shared_from_this()));
     }
-    if (mEntityData != NULL && DATA_ITEM != NULL)
-    {
-        mEntityData->set(DATA_ITEM, item, true);
-    }
+    getEntityData()->set(DATA_ITEM, item, true);
     if (showParticles)
     {
-        playPlacementSound();
+        mLevel->updateNeighbourForOutputSignal(mPos, Blocks::AIR);
     }
 }
 
@@ -115,11 +106,28 @@ void ItemFrame::setItem(not_null_ptr<ItemInstance> item)
 
 bool ItemFrame::hurt(const DamageSource* source, float damage)
 {
-    if (mRemoved || isInvulnerableTo(source))
+    if (isInvulnerableTo(source))
     {
         return false;
     }
-    dropItem(boost::shared_ptr<Entity>(), true);
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if (attacker && (attacker->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    {
+        boost::shared_ptr<Player> attackerPlayer = boost::dynamic_pointer_cast<Player>(attacker);
+        if (!attackerPlayer->isAllowedToHurtEntity(shared_from_this()))
+        {
+            return false;
+        }
+    }
+    if (source->isExplosion() || getItem()->isEmpty())
+    {
+        return HangingEntity::hurt(source, damage);
+    }
+    if (!mLevel->mIsClientSide)
+    {
+        dropItem(source->getEntity(), false);
+        setItem(ItemInstance::EMPTY);
+    }
     return true;
 }
 
@@ -147,24 +155,45 @@ void ItemFrame::removeFramedMap(not_null_ptr<ItemInstance> item)
 {
     if (!item->isEmpty())
     {
+        if (item->getItem() == Items::filledMap)
+        {
+            MapItem* map = static_cast<MapItem*>(Items::filledMap);
+            boost::shared_ptr<MapItemSavedData> data = map->getSavedData(item, mLevel);
+            boost::shared_ptr<ItemFrame> frame = item->getFrame();
+            if (frame)
+            {
+                data->fjRemoveDecorationByEntityId(frame->getId());
+            }
+        }
         item->setFramed(boost::shared_ptr<ItemFrame>());
     }
 }
 
 void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf)
 {
-    not_null_ptr<ItemInstance> item = getItem();
-    if (!item->isEmpty())
+    if (!mLevel->getGameRules()->getBoolean(6))
     {
-        removeFramedMap(item);
-        if (dropSelf)
+        return;
+    }
+    mLevel->updateObservingBlocksAt(mPos, Blocks::AIR);
+    not_null_ptr<ItemInstance> item = getItem();
+    if (breaker && (breaker->GetType() & 0xC800000ULL) == 0xC800000ULL)
+    {
+        boost::shared_ptr<Player> breakerPlayer = boost::static_pointer_cast<Player>(breaker);
+        if (breakerPlayer->mAbilities.mInstabuild)
         {
-            setItem(ItemInstance::EMPTY, false);
+            removeFramedMap(item);
+            return;
         }
     }
     if (dropSelf)
     {
-        remove();
+        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame)), 0.0f);
+    }
+    if (!item->isEmpty() && mRandom->nextFloat() < mDropChance)
+    {
+        removeFramedMap(item);
+        spawnAtLocation(item->copy(), 0.0f);
     }
 }
 
@@ -178,20 +207,16 @@ void ItemFrame::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     if (accessor == DATA_ITEM)
     {
         not_null_ptr<ItemInstance> item = getItem();
-        if (!item->isEmpty())
+        if (!item->isEmpty() && item->getFrame() != shared_from_this())
         {
-            item->setFramed(boost::shared_ptr<ItemFrame>());
+            item->setFramed(boost::static_pointer_cast<ItemFrame>(shared_from_this()));
         }
     }
 }
 
 int ItemFrame::getRotation()
 {
-    if (mEntityData != NULL && DATA_ROTATION != NULL)
-    {
-        return mEntityData->get(DATA_ROTATION);
-    }
-    return 0;
+    return getEntityData()->get(DATA_ROTATION);
 }
 
 void ItemFrame::setRotation(int rotation, bool update)
@@ -292,22 +317,36 @@ bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)
 
 bool ItemFrame::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    if (!player)
+    if (!player->isAllowedToInteract(shared_from_this()))
     {
         return false;
     }
-    not_null_ptr<ItemInstance> held = ItemInstance::EMPTY;
-    if (getItem()->isEmpty() && !held->isEmpty())
+    not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
+    if (!mLevel->mIsClientSide)
     {
-        setItem(held);
-        return true;
+        not_null_ptr<ItemInstance> item = getItem();
+        bool takeItem = item->isEmpty() && !Minecraft::InMiniGame(eMiniGameId_Any, true);
+        if (takeItem)
+        {
+            if (!heldItem->isEmpty())
+            {
+                setItem(heldItem);
+                mLevel->updateObservingBlocksAt(BlockPos(this), Blocks::AIR);
+                if (!player->mAbilities.mInstabuild)
+                {
+                    heldItem->shrink(1);
+                }
+                fjTryAwardMapRoom(player);
+            }
+        }
+        else
+        {
+            setRotation(getRotation() + 1);
+            fjTryAwardMapRoom(player);
+            mLevel->updateObservingBlocksAt(BlockPos(this), Blocks::AIR);
+        }
     }
-    if (!getItem()->isEmpty())
-    {
-        setRotation(getRotation() + 1);
-        return true;
-    }
-    return false;
+    return true;
 }
 
 unsigned int ItemFrame::GetInteractTooltip(const EntityTooltipDataHolder& holder)
@@ -315,6 +354,10 @@ unsigned int ItemFrame::GetInteractTooltip(const EntityTooltipDataHolder& holder
     if (!getItem()->isEmpty())
     {
         return 0x4cbef584U;
+    }
+    if (!holder.m_pItemInstance->isEmpty() && !Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        return 0x4c36cd96U;
     }
     return 0xffffffffU;
 }

@@ -66,7 +66,7 @@ void PowerupItems::BroadcastTimedPowerup(boost::shared_ptr<Player> player,
 {
     if (!player->mLevel->mIsClientSide)
     {
-        PlayerList* players = gMinecraftServer->getPlayers();
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
         boost::shared_ptr<Packet> packet(new ClientboundPowerupPacket(powerupId, time));
         players->broadcastToAllExceptTeam(player, packet);
     }
@@ -105,7 +105,7 @@ void PowerupItems::DoSetInvulnerable(boost::shared_ptr<Player> player, int time)
     if (!player->mLevel->mIsClientSide)
     {
         player->mAbilities.mInvulnerable = true;
-        PlayerList* players = gMinecraftServer->getPlayers();
+        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
         boost::shared_ptr<Packet> packet(new ClientboundPlayerAbilitiesPacket(&player->mAbilities,
                                                                                 player->getId()));
         players->broadcastAll(packet);

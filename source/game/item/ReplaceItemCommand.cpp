@@ -6,10 +6,6 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/GameCommandPacket.hpp"
 
-ReplaceItemCommand::ReplaceItemCommand()
-{
-}
-
 ReplaceItemCommand::~ReplaceItemCommand()
 {
 }

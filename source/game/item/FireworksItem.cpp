@@ -53,17 +53,18 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
                                       static_cast<double>(pos.z) + hitZ,
                                       itemInstance));
         level->addEntity(rocket);
+
+        if (!player->mAbilities.mInstabuild)
+        {
+            itemInstance->shrink(1);
+        }
     }
     else
     {
         boost::shared_ptr<FireworksRocketEntity> rocket(
             new FireworksRocketEntity(level, player, itemInstance));
         level->addEntity(rocket);
-    }
-
-    if (!player->mAbilities.mInstabuild)
-    {
-        itemInstance->shrink(1);
+        player->getCooldowns()->addCooldown(this, 10);
     }
 
     return InteractionResult::eInteractionResult_Success;
@@ -94,7 +95,7 @@ InteractionResultHolder FireworksItem::use(Level* level,
     }
     else
     {
-        if (!player->isUsingItem())
+        if (!player->isFallFlying())
         {
             return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
         }
@@ -104,7 +105,6 @@ InteractionResultHolder FireworksItem::use(Level* level,
             boost::shared_ptr<FireworksRocketEntity> rocket(
                 new FireworksRocketEntity(level, itemInstance, player));
             level->addEntity(rocket);
-            player->getCooldowns()->addCooldown(this, 10);
             if (!player->mAbilities.mInstabuild)
             {
                 itemInstance->shrink(1);

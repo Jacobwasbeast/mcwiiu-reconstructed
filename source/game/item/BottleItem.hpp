@@ -20,7 +20,7 @@ class BottleItem : public Item
 public:
     BottleItem();
     virtual ~BottleItem();
-    void turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
+    not_null_ptr<ItemInstance> turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
                             boost::shared_ptr<Player> player,
                             not_null_ptr<ItemInstance> result);
     virtual InteractionResultHolder use(Level* level,

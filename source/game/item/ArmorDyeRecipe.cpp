@@ -34,19 +34,24 @@ bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContai
         HorseArmorItem* horseArmorItem = dynamic_cast<HorseArmorItem*>(itemType);
         if (armorItem != NULL)
         {
-            if (armorItem->getMaterial() != ArmorItem::ArmorMaterial::LEATHER || !armor->isEmpty())
+            if (armorItem->getMaterial() != ArmorItem::ArmorMaterial::LEATHER)
             {
-                return false;
+                if (horseArmorItem == NULL)
+                {
+                    return false;
+                }
+                if (!horseArmorItem->isDyeable())
+                {
+                    return false;
+                }
             }
-            armor = item;
         }
-        else if (horseArmorItem != NULL && horseArmorItem->isDyeable())
+        else if (horseArmorItem != NULL)
         {
-            if (!armor->isEmpty())
+            if (!horseArmorItem->isDyeable())
             {
                 return false;
             }
-            armor = item;
         }
         else if (itemType != Items::dye)
         {
@@ -55,7 +60,14 @@ bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContai
         else
         {
             dyes.push_back(item);
+            continue;
         }
+
+        if (!armor->isEmpty())
+        {
+            return false;
+        }
+        armor = item;
     }
 
     return !armor->isEmpty() && !dyes.empty();

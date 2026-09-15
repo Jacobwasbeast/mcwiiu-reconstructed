@@ -107,7 +107,8 @@ bool HoeItem::hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
                         boost::shared_ptr<LivingEntity> target,
                         boost::shared_ptr<LivingEntity> attacker)
 {
-    itemInstance->hurtAndBreak(1, attacker);
+    const int durability = 1;
+    itemInstance->hurtAndBreak(durability, attacker);
     return true;
 }
 

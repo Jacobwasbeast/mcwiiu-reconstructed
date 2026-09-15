@@ -57,11 +57,6 @@ Uniform* Effect::safeGetUniform(const std::wstring& name)
     return reinterpret_cast<Uniform*>(sDefaultUniform);
 }
 
-void Effect::updateLocations()
-{
-    mDirty = false;
-}
-
 void Effect::setSampler(std::wstring name, RenderTarget* target)
 {
     boost::unordered_map<std::wstring, RenderTarget*>::iterator it = mSamplers.find(name);
@@ -69,24 +64,4 @@ void Effect::setSampler(std::wstring name, RenderTarget* target)
         mSamplers.erase(it);
     mSamplers[name] = target;
     markDirty();
-}
-
-Program* Effect::getVertexProgram()
-{
-    return 0;
-}
-
-Program* Effect::getFragmentProgram()
-{
-    return 0;
-}
-
-std::wstring Effect::getName()
-{
-    return mName;
-}
-
-int Effect::getId()
-{
-    return 0;
 }

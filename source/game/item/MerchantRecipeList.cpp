@@ -55,17 +55,48 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
                                                  int hint)
 {
     unsigned int count = static_cast<unsigned int>(std::vector<MerchantRecipe*>::size());
-    if (count == 0)
+
+    if (hint >= 1 && static_cast<unsigned int>(hint) < count)
     {
-        return NULL;
+        MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(static_cast<unsigned int>(hint));
+        bool matched = false;
+        if (isRequiredItem(first, recipe->getBuyAItem()))
+        {
+            if (!second->isEmpty() && !recipe->hasSecondaryBuyItem())
+            {
+                matched = false;
+            }
+            else if (recipe->hasSecondaryBuyItem())
+            {
+                matched = isRequiredItem(second, recipe->getBuyAItem());
+            }
+            else
+            {
+                matched = true;
+            }
+        }
+        if (!matched)
+        {
+            return NULL;
+        }
+
+        bool countOk = first->getCount() >= recipe->getBuyAItem()->getCount();
+        if (countOk && recipe->hasSecondaryBuyItem())
+        {
+            countOk = second->getCount() >= recipe->getBuyBItem()->getCount();
+        }
+        if (!countOk)
+        {
+            return NULL;
+        }
+        return recipe;
     }
-    unsigned int start = hint > 0 && static_cast<unsigned int>(hint) < count ? static_cast<unsigned int>(hint) : 0;
-    for (unsigned int pass = 0; pass < count; ++pass)
+
+    for (unsigned int index = 0; index < count; ++index)
     {
-        unsigned int index = (start + pass) % count;
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
         not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
-        if (!ItemInstance::isSame(first, buyA) || first->getCount() < buyA->getCount())
+        if (!isRequiredItem(first, buyA) || first->getCount() < buyA->getCount())
         {
             continue;
         }
@@ -78,7 +109,7 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
             continue;
         }
         not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
-        if (ItemInstance::isSame(second, buyB) && second->getCount() >= buyB->getCount())
+        if (isRequiredItem(second, buyB) && second->getCount() >= buyB->getCount())
         {
             return recipe;
         }
@@ -110,26 +141,29 @@ MerchantRecipe* MerchantRecipeList::getMatchingRecipeFor(not_null_ptr<ItemInstan
                                                          not_null_ptr<ItemInstance> second,
                                                          not_null_ptr<ItemInstance> result)
 {
-    for (iterator it = std::vector<MerchantRecipe*>::begin(); it != std::vector<MerchantRecipe*>::end(); ++it)
+    unsigned int count = static_cast<unsigned int>(std::vector<MerchantRecipe*>::size());
+    for (unsigned int index = 0; index < count; ++index)
     {
-        MerchantRecipe* recipe = *it;
-        not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
-        not_null_ptr<ItemInstance> sell = recipe->getSellItem();
-        if (!ItemInstance::isSame(first, buyA) || first->getCount() < buyA->getCount() ||
-            !ItemInstance::isSame(result, sell))
+        MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
+        bool matched = false;
+        if (first->getItem() == recipe->getBuyAItem()->getItem() &&
+            first->getCount() >= recipe->getBuyAItem()->getCount())
+        {
+            matched = result->getItem() == recipe->getSellItem()->getItem();
+        }
+
+        if (!matched)
         {
             continue;
         }
-        if (!recipe->hasSecondaryBuyItem())
+
+        if (recipe->hasSecondaryBuyItem())
         {
-            if (second->isEmpty())
-            {
-                return recipe;
-            }
-            continue;
+            matched = !second->isEmpty() && second->getItem() == recipe->getBuyBItem()->getItem() &&
+                      second->getCount() >= recipe->getBuyBItem()->getCount();
         }
-        not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
-        if (ItemInstance::isSame(second, buyB) && second->getCount() >= buyB->getCount())
+
+        if (matched)
         {
             return recipe;
         }

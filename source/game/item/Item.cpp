@@ -343,6 +343,10 @@ Item* Item::byBlock(Block* block)
 
 Item* Item::byId(int id)
 {
+    if (id < 0)
+    {
+        return NULL;
+    }
     return itemRegistry.byId(id);
 }
 
@@ -779,7 +783,9 @@ bool Item::hasCraftingRemainingItem()
 
 std::wstring Item::getIconName()
 {
-    return mIconName;
+    std::wstring iconName;
+    iconName.assign(mIconName);
+    return iconName;
 }
 
 const wchar_t* Item::getDescription()
@@ -824,7 +830,8 @@ HitResult* Item::getPlayerPOVHitResult(Level* level, boost::shared_ptr<Player> p
 
 not_null_ptr<ItemInstance> Item::getDefaultInstance()
 {
-    return not_null_ptr<ItemInstance>(new ItemInstance(this));
+    not_null_ptr<ItemInstance> result(new ItemInstance(this));
+    return result;
 }
 
 bool Item::verifyTagAfterLoad(CompoundTag* tag)
@@ -852,7 +859,10 @@ InteractionResult::EInteractionResult Item::useOn(boost::shared_ptr<Player> play
 
 float Item::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
-    return 1.0f;
+    (void)itemInstance;
+    (void)state;
+    const float defaultSpeed = 1.0f;
+    return defaultSpeed;
 }
 
 bool Item::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
@@ -864,14 +874,16 @@ InteractionResultHolder Item::use(Level* level,
                                   boost::shared_ptr<Player> player,
                                   InteractionHand::EInteractionHand hand)
 {
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, player->getItemInHand(hand));
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 }
 
 not_null_ptr<ItemInstance> Item::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                  Level* level,
                                                  boost::shared_ptr<LivingEntity> entity)
 {
-    return itemInstance;
+    not_null_ptr<ItemInstance> result = itemInstance;
+    return result;
 }
 
 int Item::getMaxStackSize()
@@ -1001,7 +1013,8 @@ void Item::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
 std::wstring Item::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    return L10N::GetString(getDescriptionId(itemInstance));
+    const int descriptionId = getDescriptionId(itemInstance);
+    return std::wstring(L10N::GetString(descriptionId));
 }
 
 bool Item::isFoil(not_null_ptr<ItemInstance> itemInstance)

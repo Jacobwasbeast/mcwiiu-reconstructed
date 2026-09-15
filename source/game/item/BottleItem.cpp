@@ -28,7 +28,7 @@ BottleItem::~BottleItem()
 {
 }
 
-void BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
+not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
                                     boost::shared_ptr<Player> player,
                                     not_null_ptr<ItemInstance> result)
 {
@@ -42,7 +42,10 @@ void BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
         {
             player->drop(result, false);
         }
+        return itemInstance;
     }
+
+    return result;
 }
 
 InteractionResultHolder BottleItem::use(Level* level,
@@ -60,7 +63,7 @@ InteractionResultHolder BottleItem::use(Level* level,
             boost::static_pointer_cast<AreaEffectCloud>(entities->at(0));
         cloud->setRadius(cloud->getRadius() - 0.5f);
         player->awardStat(GenericStats::youNeedAMint(), GenericStats::param_youNeedAMint());
-        not_null_ptr<ItemInstance> result(new ItemInstance(Items::lingeringPotion));
+        not_null_ptr<ItemInstance> result(new ItemInstance(Items::dragonBreath));
         PotionUtils::setPotion(result, Potions::WATER);
         turnBottleIntoItem(itemInstance, player, result);
         delete entities;
@@ -74,6 +77,7 @@ InteractionResultHolder BottleItem::use(Level* level,
     {
         BlockPos pos = hit->getBlockPos();
         if (level->mayInteract(player, pos, NULL)
+            && player->mayUseItemAt(pos, hit->mDirection, itemInstance) == 1
             && level->getBlockState(pos)->getMaterial() == Material::WATER)
         {
             not_null_ptr<ItemInstance> result(new ItemInstance(Items::potion));
@@ -96,13 +100,25 @@ bool BottleItem::TestUse(Level* level,
         return true;
     }
 
+    not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);
+
     HitResult* hit = getPlayerPOVHitResult(level, player, true);
     if (hit == NULL || hit->mType != HitResult::BLOCK)
     {
         return false;
     }
 
-    return level->mayInteract(player, hit->getBlockPos(), NULL);
+    BlockPos pos = hit->getBlockPos();
+    if (!level->mayInteract(player, pos, NULL))
+    {
+        return false;
+    }
+    if (player->mayUseItemAt(pos, hit->mDirection, itemInHand) != 1)
+    {
+        return false;
+    }
+
+    return level->getBlockState(pos)->getMaterial() == Material::WATER;
 }
 
 unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
