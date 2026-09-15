@@ -30,11 +30,12 @@ void StationAddress::Clear()
 Result StationAddress::Serialize(unsigned char* buffer, unsigned int* size,
                                  unsigned int maxSize) const
 {
+    const unsigned int serializedSize = cSerializedSize;
     if (buffer == 0)
         return 0x10c07;
     if (size == 0)
         return 0x10c07;
-    if (maxSize < cSerializedSize)
+    if (maxSize < serializedSize)
         return 0x10c07;
 
     unsigned int inetAddressSize;
@@ -42,7 +43,7 @@ Result StationAddress::Serialize(unsigned char* buffer, unsigned int* size,
     if (result != 0)
         return result;
 
-    *size = cSerializedSize;
+    *size = serializedSize;
     return 0;
 }
 

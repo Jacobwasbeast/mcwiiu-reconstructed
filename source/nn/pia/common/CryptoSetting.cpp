@@ -1,13 +1,13 @@
 #include "nn/pia/common/CryptoSetting.hpp"
 
-#include <string.h>
+#include <cstring>
 
 namespace nn { namespace pia { namespace common {
 
 CryptoSetting::CryptoSetting()
-    : m_field00(0)
+    : m_mode(0)
 {
-    memset(m_key, 0, sizeof(m_key));
+    std::memset(m_key, 0, sizeof(m_key));
 }
 
 }}}

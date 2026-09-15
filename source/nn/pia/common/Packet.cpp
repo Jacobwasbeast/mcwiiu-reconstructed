@@ -6,6 +6,16 @@
 
 namespace nn { namespace pia { namespace common {
 
+namespace {
+
+const Result cEncryptInvalidPacket = static_cast<Result>(0x10c08);
+const Result cEncryptUnsupportedMode = static_cast<Result>(0xc0b);
+const Result cDecryptInvalidPacket = static_cast<Result>(0x2c03);
+const Result cDecryptUnsupportedMode = static_cast<Result>(0xc0b);
+const unsigned int cEncryptedPayloadLimit = Packet::cPayloadSizeMax + 1;
+
+}
+
 Packet::Header::~Header()
 {
 }
@@ -178,6 +188,77 @@ void Packet::CopyFrom(const Packet& packet)
     m_field604 = packet.m_field604;
     m_field608 = packet.m_field608;
     m_field614 = packet.m_field614;
+}
+
+Result Packet::Encrypt(const Crypto::Setting& setting)
+{
+    if (IsValid() == 0 || m_packetData.m_header.m_version != 1)
+        return cEncryptInvalidPacket;
+
+    if (setting.m_mode == 0)
+        return 0;
+    if (setting.m_mode != 1)
+        return cEncryptUnsupportedMode;
+
+    const unsigned int payloadSize = m_size - cHeaderSize;
+    if (payloadSize < 1)
+        return 0;
+
+    const unsigned int blockSize = Crypto::GetBlockSize(setting.m_mode);
+    const unsigned int encryptedSize =
+        ((payloadSize + blockSize - 1) / blockSize) * blockSize;
+    if (encryptedSize >= cEncryptedPayloadLimit)
+        return cEncryptInvalidPacket;
+
+    unsigned char source[cPayloadSizeMax];
+    OSBlockMove(source, m_packetData.GetPayload(), payloadSize, FALSE);
+    const unsigned int paddingSize = encryptedSize - payloadSize;
+    if (paddingSize != 0)
+        OSBlockSet(source + payloadSize, 0xff, paddingSize);
+
+    const Result result = Crypto::Encrypt(
+        m_packetData.GetPayload(), source, encryptedSize,
+        m_packetData.m_header.m_field18, sizeof(m_packetData.m_header.m_field18), setting);
+    if (result != 0)
+        return result;
+
+    m_packetData.m_header.m_version = 2;
+    m_size += paddingSize;
+    return 0;
+}
+
+Result Packet::Decrypt(const Crypto::Setting& setting)
+{
+    if (IsValid() == 0)
+        return cDecryptInvalidPacket;
+    if (m_packetData.m_header.m_version == 1)
+        return 0;
+    if (setting.m_mode != 1)
+        return cDecryptUnsupportedMode;
+    if (m_packetData.m_header.m_version != 2)
+        return cDecryptInvalidPacket;
+
+    const unsigned int encryptedSize = m_size - cHeaderSize;
+    if (encryptedSize == 0)
+    {
+        m_packetData.m_header.m_version = 1;
+        return 0;
+    }
+
+    const unsigned int blockSize = Crypto::GetBlockSize(setting.m_mode);
+    if (encryptedSize % blockSize != 0 || encryptedSize >= cEncryptedPayloadLimit)
+        return cDecryptInvalidPacket;
+
+    unsigned char destination[cPayloadSizeMax];
+    const Result result = Crypto::Decrypt(
+        destination, m_packetData.GetPayload(), encryptedSize,
+        m_packetData.m_header.m_field18, sizeof(m_packetData.m_header.m_field18), setting);
+    if (result != 0)
+        return result;
+
+    m_packetData.SetPayload(destination, encryptedSize);
+    m_packetData.m_header.m_version = 1;
+    return 0;
 }
 
 void Packet::Trace(unsigned long long value, bool isVerbose) const

@@ -8,7 +8,7 @@ class CryptoSetting
 public:
     CryptoSetting();
 
-    unsigned int m_field00;
+    unsigned int m_mode;
     unsigned char m_key[16];
 };
 

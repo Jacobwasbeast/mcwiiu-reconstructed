@@ -44,7 +44,8 @@ void Watermark::Reset()
 
 void Watermark::Update(long long value)
 {
-    if (!m_enabled) return;
+    if (!m_enabled)
+        return;
 
     m_maximum = maximum(m_maximum, value);
     m_minimum = minimum(m_minimum, value);

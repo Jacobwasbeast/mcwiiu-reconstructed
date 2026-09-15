@@ -8,7 +8,8 @@ namespace
 {
 long long GetFrequency()
 {
-    return static_cast<long long>(OSGetSystemInfo()->busClockSpeed >> 2);
+    const unsigned int busClockSpeed = OSGetSystemInfo()->busClockSpeed;
+    return static_cast<long long>(busClockSpeed >> 2);
 }
 
 TimeSpan s_ticksPerMSec;

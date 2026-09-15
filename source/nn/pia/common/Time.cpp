@@ -6,7 +6,8 @@ namespace nn { namespace pia { namespace common {
 
 void Time::SetNow()
 {
-    m_tick = static_cast<unsigned long long>(OSGetSystemTime());
+    const unsigned long long currentTime = static_cast<unsigned long long>(OSGetSystemTime());
+    m_tick = currentTime;
 }
 
 Time Time::Create(unsigned long long tick)

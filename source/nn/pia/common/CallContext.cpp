@@ -2,6 +2,7 @@
 
 namespace nn { namespace pia { namespace common {
 
+
 CallContext::CallContext()
     : m_state(cStateNotCalled), m_result(0)
 {
