@@ -145,16 +145,21 @@ void CompoundContainer::stopOpen(boost::shared_ptr<Player> player)
 
 bool CompoundContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
+    (void)slot;
+    (void)item;
     return true;
 }
 
 int CompoundContainer::getContainerData(int id)
 {
+    (void)id;
     return 0;
 }
 
 void CompoundContainer::setContainerData(int id, int value)
 {
+    (void)id;
+    (void)value;
 }
 
 int CompoundContainer::getContainerDataCount()

@@ -149,6 +149,7 @@ int MinecartContainer::getMaxStackSize()
 
 void MinecartContainer::setChanged()
 {
+    (void)mItems;
 }
 
 bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
@@ -163,10 +164,12 @@ bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
 
 void MinecartContainer::startOpen(boost::shared_ptr<Player> player)
 {
+    (void)player;
 }
 
 void MinecartContainer::stopOpen(boost::shared_ptr<Player> player)
 {
+    (void)player;
 }
 
 bool MinecartContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -176,11 +179,14 @@ bool MinecartContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 
 int MinecartContainer::getContainerData(int id)
 {
+    (void)id;
     return 0;
 }
 
 void MinecartContainer::setContainerData(int id, int value)
 {
+    (void)id;
+    (void)value;
 }
 
 int MinecartContainer::getContainerDataCount()
@@ -205,6 +211,7 @@ bool MinecartContainer::isLocked()
 
 void MinecartContainer::setLocked(LockCode* lockCode)
 {
+    (void)lockCode;
 }
 
 LockCode* MinecartContainer::getLockKeyCode()
@@ -214,6 +221,7 @@ LockCode* MinecartContainer::getLockKeyCode()
 
 void MinecartContainer::unlock()
 {
+    (void)mLootTable;
 }
 
 ResourceLocation* MinecartContainer::getLootTable()

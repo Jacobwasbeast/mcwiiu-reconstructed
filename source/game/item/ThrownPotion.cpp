@@ -29,6 +29,15 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+namespace
+{
+const unsigned long long kThrownPotionType = 0x8A200004ULL;
+const unsigned long long kThrownPotionEntityType = 0x8A200000ULL;
+const unsigned long long kWaterSensitiveTypeOne = 0x5D540043ULL;
+const unsigned long long kWaterSensitiveTypeTwo = 0x5D540045ULL;
+const unsigned long long kWaterSensitiveTypeThree = 0x2D580001ULL;
+}
+
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
 
 ThrownPotion::ThrownPotion(Level* level)
@@ -82,7 +91,7 @@ bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entit
     if (!entity)
         return true;
     unsigned long long type = entity->GetType();
-    return type == 0x5D540043ULL || type == 0x5D540045ULL || type == 0x2D580001ULL;
+    return type == kWaterSensitiveTypeOne || type == kWaterSensitiveTypeTwo || type == kWaterSensitiveTypeThree;
 }
 
 void ThrownPotion::applyWater()
@@ -231,7 +240,7 @@ bool ThrownPotion::onHit(const HitResult* result)
 
 void ThrownPotion::staticCtor()
 {
-    DATA_ITEM = SynchedEntityData::defineId(0x8A200004ULL, 0x8A200000ULL,
+    DATA_ITEM = SynchedEntityData::defineId(kThrownPotionType, kThrownPotionEntityType,
                                             EntityDataSerializers::ITEM_INSTANCE);
 }
 
@@ -249,7 +258,7 @@ void ThrownPotion::addDataWalkers(DataFixerUpper* fixer)
 {
     if (fixer != NULL)
         fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance,
-                         (DataWalker*)new ItemDataWalker(0x8a200004ULL, L"Potion"));
+                         (DataWalker*)new ItemDataWalker(kThrownPotionType, L"Potion"));
 }
 
 void ThrownPotion::readAdditionalSaveData(CompoundTag* tag)
@@ -281,7 +290,7 @@ void ThrownPotion::defineSynchedData()
 
 unsigned long long ThrownPotion::GetType()
 {
-    return 0x8A200004ULL;
+    return kThrownPotionType;
 }
 
 bool ThrownPotion::WATER_SENSITIVE::apply(boost::shared_ptr<Entity> entity) const

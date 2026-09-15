@@ -111,6 +111,7 @@ InteractionResultHolder BoatItem::use(Level* level,
     }
     if (blocked)
     {
+        delete hit;
         return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
     }
 
@@ -132,6 +133,7 @@ InteractionResultHolder BoatItem::use(Level* level,
         boat->mYRot = player->mYRot;
         if (level->getCollisionAABBs(boat, boat->Entity::mBoundingBox->grow(-0.1), false, false, false)->size() != 0)
         {
+            delete hit;
             return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
         }
         if (!level->mIsClientSide)

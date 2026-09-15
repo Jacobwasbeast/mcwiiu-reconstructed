@@ -42,14 +42,13 @@ AreaEffectCloud::~AreaEffectCloud()
 void AreaEffectCloud::staticCtor()
 {
     const unsigned long long type = 0x000000000800000FULL;
-    const unsigned long long parent = 0x0000000008000000ULL;
-    DATA_RADIUS = SynchedEntityData::defineId<float>(type, parent, EntityDataSerializers::FLOAT);
-    DATA_COLOR = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
-    DATA_WAITING = SynchedEntityData::defineId<bool>(type, parent, EntityDataSerializers::BOOLEAN);
-    DATA_PARTICLE = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
-    DATA_PARTICLE_PARAM_1 = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
-    DATA_PARTICLE_PARAM_2 = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
-    DATA_PARTICLE_RATE = SynchedEntityData::defineId<int>(type, parent, EntityDataSerializers::INT);
+    DATA_RADIUS = SynchedEntityData::defineId<float>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::FLOAT);
+    DATA_COLOR = SynchedEntityData::defineId<int>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_WAITING = SynchedEntityData::defineId<bool>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::BOOLEAN);
+    DATA_PARTICLE = SynchedEntityData::defineId<int>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_PARTICLE_PARAM_1 = SynchedEntityData::defineId<int>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_PARTICLE_PARAM_2 = SynchedEntityData::defineId<int>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
+    DATA_PARTICLE_RATE = SynchedEntityData::defineId<int>(type, ENTITY_TYPE_ENTITY, EntityDataSerializers::INT);
 }
 
 void AreaEffectCloud::setRadius(float radius)

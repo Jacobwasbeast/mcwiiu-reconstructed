@@ -16,7 +16,7 @@ static arrayWithLength<T> makeColorArray(T* values, unsigned int count)
     return arrayWithLength<T>(result);
 }
 
-ItemColors::ItemColors() : mItemColorIds(new IdMapper<ItemColor*>()), mColors() {}
+ItemColors::ItemColors() : mItemColorIds(new IdMapper<ItemColor*>()) {}
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)
 {
@@ -142,7 +142,6 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
 
 int ItemColors::getColor(not_null_ptr<ItemInstance> item, int layer)
 {
-    boost::unordered_map<Item*, int>::iterator found = mColors.find(item->getItem());
-    ItemColor* color = mItemColorIds->byId(found == mColors.end() ? -1 : found->second);
+    ItemColor* color = mItemColorIds->byId(Item::getId(item->getItem()));
     return color == NULL ? -1 : color->getColor(item, layer);
 }

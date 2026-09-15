@@ -17,6 +17,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 BottleItem::BottleItem()
@@ -123,8 +125,8 @@ bool BottleItem::TestUse(Level* level,
 
 unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (TestUse((Level*)tooltipData.m_pLevel,
-                (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
+    if (TestUse(static_cast<Level*>(tooltipData.m_pLevel),
+                boost::static_pointer_cast<Player>(tooltipData.m_pPlayer),
                 InteractionHand::eInteractionHand_MainHand))
     {
         return 0x4c4246b3u;

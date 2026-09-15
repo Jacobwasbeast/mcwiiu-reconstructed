@@ -2,7 +2,6 @@
 #define GAME_ITEM_ITEMCOLORS_HPP
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
-#include <boost/unordered_map.hpp>
 #include "game/world/block/IdMapper.hpp"
 class Block; class BlockColors; class Item; class ItemInstance;
 class ItemColors {
@@ -15,6 +14,5 @@ public:
  int getColor(not_null_ptr<ItemInstance> item,int layer);
 private:
     IdMapper<ItemColor*>* mItemColorIds;
-    boost::unordered_map<Item*, int> mColors;
 };
 #endif

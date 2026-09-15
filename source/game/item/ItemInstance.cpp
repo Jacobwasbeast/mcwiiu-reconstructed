@@ -311,8 +311,8 @@ void ItemInstance::hurtAndBreak(int amount, boost::shared_ptr<LivingEntity> enti
 boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 if (player && player->mAbilities.mInstabuild) return;
 if (!isDamageableItem()) return;
-if (Minecraft::InMiniGame(static_cast<EMiniGameId>(2), true) ||
-    Minecraft::InMiniGame(static_cast<EMiniGameId>(3), true)) return;
+if (Minecraft::InMiniGame(eMiniGameId_Tumble, true) ||
+    Minecraft::InMiniGame(eMiniGameId_Glide, true)) return;
 if (hurt(amount, entity->getRandom())) {
     entity->handleEntityEvent(47, 0);
     shrink(1);

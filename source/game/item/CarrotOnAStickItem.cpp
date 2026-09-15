@@ -36,17 +36,12 @@ bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    bool ridingPig = false;
+    boost::shared_ptr<Pig> pig = player->isPassenger()
+        ? boost::dynamic_pointer_cast<Pig>(player->getVehicle())
+        : boost::shared_ptr<Pig>();
 
-    if (player->isPassenger())
+    if (pig)
     {
-        ridingPig = player->getVehicle()->GetType() == 0x2D680003ULL;
-    }
-
-    if (ridingPig)
-    {
-        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
-
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->testboost())
         {
             return true;
@@ -71,17 +66,12 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
             itemInstance);
     }
 
-    bool ridingPig = false;
+    boost::shared_ptr<Pig> pig = player->isPassenger()
+        ? boost::dynamic_pointer_cast<Pig>(player->getVehicle())
+        : boost::shared_ptr<Pig>();
 
-    if (player->isPassenger())
+    if (pig)
     {
-        ridingPig = player->getVehicle()->GetType() == 0x2D680003ULL;
-    }
-
-    if (ridingPig)
-    {
-        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
-
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->boost())
         {
             itemInstance->hurtAndBreak(7, player);
